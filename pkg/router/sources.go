@@ -12,6 +12,7 @@ const (
 	sourceCoreURL       = "core_url"
 	sourceLocalPlugin   = "local-plugin"
 	sourceDev           = "dev"
+	sourceExternal      = "external"
 	aggregateSourceName = "aggregate:"
 )
 

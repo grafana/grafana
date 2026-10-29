@@ -59,6 +59,15 @@ func declareManifestRoles(service ac.Service, group, pluginName string, manifest
 	return service.DeclareFixedRoles(registrations...)
 }
 
+// ManifestRoleRegistrations returns the fixed roles the router declares for a
+// manifest's group, with pluginName as their display group.
+func ManifestRoleRegistrations(pluginName string, manifest *app.ManifestData) []ac.RoleRegistration {
+	if manifest == nil {
+		return nil
+	}
+	return manifestRoleRegistrations(manifest.Group, pluginName, manifest)
+}
+
 // manifestRoleRegistrations converts a manifest's roles and role bindings into
 // RBAC registrations.
 //

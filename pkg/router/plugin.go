@@ -67,6 +67,10 @@ type PluginDependencies struct {
 	Tracer             tracing.Tracer             // needed for proxy (legacy)
 	Features           featuremgmt.FeatureToggles // needed for proxy (legacy)
 	Cfg                *setting.Cfg
+
+	// ExternalManifests serves app manifests that no plugin ships; nil when
+	// there is no such source.
+	ExternalManifests ExternalManifestSource
 }
 
 type PluginLoaderDependencies struct {
@@ -177,13 +181,16 @@ func ProvidePluginLoaderDependenciesWithClients(
 	)
 }
 
-func initLocalPlugins(ctx context.Context, deps PluginLoaderDependencies) error {
+// initLocalPlugins declares the local plugins' roles and returns the manifest
+// groups they serve.
+func initLocalPlugins(ctx context.Context, deps PluginLoaderDependencies) (map[string]struct{}, error) {
 	// Declare roles during dependency construction, before startup registers fixed
 	// roles. Reconciliation must not append the same declarations on every load.
 	pluginDefs, err := loadLocalPluginDefinitions(ctx, deps.PluginSources, false)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	groups := map[string]struct{}{}
 	for _, plugin := range pluginDefs {
 		// The handler installs settings on a copy of the storage config, so resolve
 		// the wildcard default where the shared dual-write service reads it.
@@ -193,11 +200,14 @@ func initLocalPlugins(ctx context.Context, deps PluginLoaderDependencies) error 
 
 		for _, manifest := range plugin.Manifests {
 			if err := declareLocalManifestRoles(ctx, deps.ACService, plugin.JSONData.ID, plugin.JSONData.Name, manifest); err != nil {
-				return err
+				return nil, err
+			}
+			if manifest != nil {
+				groups[manifest.Group] = struct{}{}
 			}
 		}
 	}
-	return nil
+	return groups, nil
 }
 
 // declareLocalManifestRoles declares the roles of a manifest served by the
@@ -230,6 +240,9 @@ type PluginLoader struct {
 
 	// dev serves the [router.dev.<name>] sections; nil when none is set.
 	dev *devTargets
+
+	// external serves deps.ExternalManifests; nil without one.
+	external *externalManifests
 }
 
 func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry, schemas bool) ([]definition.PluginDefinition, error) {
@@ -255,20 +268,22 @@ func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry, 
 }
 
 func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
-	dev := pl.dev.backends(ctx)
-	if pl.deps.PluginSources == nil {
-		return dev, nil
-	}
-	pluginDefs, err := loadLocalPluginDefinitions(ctx, pl.deps.PluginSources, true)
-	if err != nil {
-		return nil, err
-	}
-	backends, err := pl.prepareBackends(ctx, pluginDefs)
-	if err != nil {
-		return nil, err
+	// External manifests come first, so a local plugin or dev target serving
+	// the same group replaces them.
+	backends := pl.external.backends(ctx)
+	if pl.deps.PluginSources != nil {
+		pluginDefs, err := loadLocalPluginDefinitions(ctx, pl.deps.PluginSources, true)
+		if err != nil {
+			return nil, err
+		}
+		pluginBackends, err := pl.prepareBackends(ctx, pluginDefs)
+		if err != nil {
+			return nil, err
+		}
+		backends = append(backends, pluginBackends...)
 	}
 	// Dev targets come last, so they replace a local plugin serving the same group.
-	return append(backends, dev...), nil
+	return append(backends, pl.dev.backends(ctx)...), nil
 }
 
 func (pl PluginLoader) prepareBackends(ctx context.Context, pluginDefs []definition.PluginDefinition) ([]Backend, error) {
@@ -336,10 +351,36 @@ func isAppPluginID(id string) bool {
 }
 
 func (pl PluginLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
+	// TODO? is there a plugin registry with update events?
+	dirty := make(chan struct{}, 1)
 	if pl.dev != nil {
-		return pl.dev.notify(ctx)
+		devDirty, err := pl.dev.notify(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if pl.external == nil {
+			return devDirty, nil
+		}
+		go forwardWakes(ctx, devDirty, dirty)
 	}
-	return make(chan struct{}), nil // TODO? is there a plugin registry with update events?
+	go pl.external.forward(ctx, dirty)
+	return dirty, nil
+}
+
+// forwardWakes wakes dirty for every wake from changed, until ctx is done or
+// changed is closed.
+func forwardWakes(ctx context.Context, changed <-chan struct{}, dirty chan<- struct{}) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case _, ok := <-changed:
+			if !ok {
+				return
+			}
+			wake(dirty)
+		}
+	}
 }
 
 //-----------------------

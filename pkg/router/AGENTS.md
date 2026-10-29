@@ -149,6 +149,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Cloud loader: settings, source priority | `cloud_router.go` |
 | Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
 | Dev targets (`router.dev.<name>`), served by the local plugin loader | `dev_targets.go` |
+| External manifests (`ExternalManifestSource`), served by both loaders | `external_manifests.go` |
 | Managed plugins (`plugins_url`) and core APIs (`core_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
 | Local plugin loader, `PluginBackend` and plugin roles | `plugin.go`, `plugin_roles.go` |
 | Single-tenant (ST) fallback, its per-stack discovery cache, and the `dashboard.grafana.app` split | `st_fallback.go`, `st_discovery_cache.go`, `st_resources.go` |
@@ -158,12 +159,13 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 
 Exactly one loader serves:
 
-1. **The cloud loader**, only in the standalone router, when any `[cloud_router]` source or
-   `[router.aggregate.<name>]` target is configured (see Settings). `pkg/server` builds it with
+1. **The cloud loader**, only in the standalone router, when any `[cloud_router]` source,
+   `[router.aggregate.<name>]` target or external manifest source is configured (see Settings). `pkg/server` builds it with
    `ProvideCloudRoutesLoader`. Grafana itself never polls the cloud sources.
 2. **Otherwise the local plugin loader** (`ProvideRoutesLoader`), when plugin sources are
-   available or any `[router.dev.<name>]` target is set. Dev targets come after the local
-   plugins, so they win a shared group.
+   available, any `[router.dev.<name>]` target is set, or an external manifest source is
+   configured. External manifests come first, then the local plugins, then dev targets, so a
+   later one wins a shared group.
 3. **Otherwise no groups** (`noRoutesLoader`). The dummy loader that serves static groups is in
    `dummy_test.go`, for tests only.
 
@@ -181,17 +183,32 @@ earlier ones:
    requester's namespace is not a stack (for example `*`).
 2. **Aggregate targets**, discovered by polling each target's `/apis`. The first target in INI section
    order wins when multiple targets discover the same group.
-3. **Core APIs**, from `core_url` (for example playlists). Same format and backends as managed
+3. **External manifests**, from `PluginDependencies.ExternalManifests`: app manifests that no
+   plugin ships. They override aggregate targets, which is how an app moves from an
+   apiextensions apiserver to the router.
+4. **Core APIs**, from `core_url` (for example playlists). Same format and backends as managed
    plugins, without `plugins_group_regex` filtering.
-4. **Managed plugins**, from `plugins_url`. These are `PluginBackend`s reached over gRPC, wrapped to
+5. **Managed plugins**, from `plugins_url`. These are `PluginBackend`s reached over gRPC, wrapped to
    authenticate `X-Access-Token`.
 
 Entries from `plugins_url` must have an app plugin ID (with a hyphen and no dots), as local plugins
 must, since the tokens the router sends them name that ID as their audience. Entries from
 `core_url` may have no ID; their tokens name their API group instead.
 
+**External manifests** (`ExternalManifestSource` in `types.go`) are served like `core_url` entries
+without a plugin ID: the same clients and connections, and no app-access check. Only the interface
+exists, with no implementation, and nothing in `pkg/server` wires one in yet.
+  - Unlike the polled sources, the source is read on every `Load`, and its `Notify` channel is
+    forwarded to the router's wake. So the cloud loader reads it before its first-poll check.
+  - A failed read keeps serving the last set read.
+  - A kind with no plural gets lowercase kind + "s" (`withDefaultPlurals`), the resource name
+    apiextensions stores it under, so the router serves the same objects.
+  - In ST, their roles are declared once, at startup, like local plugins', except for groups a
+    local plugin serves, which keep the plugin's roles.
+
 Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
-`managed:<pluginId>:<hash>`, `core:<pluginId>:<hash>`, `dev:<pluginId>:<hash>`, `p:<hash>` or
+`managed:<pluginId>:<hash>`, `core:<pluginId>:<hash>`, `dev:<pluginId>:<hash>`,
+`external:<name>:<hash>`, `p:<hash>` or
 `st:<hash>`.
 
 ## Serving and discovery

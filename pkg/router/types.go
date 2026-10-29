@@ -70,6 +70,35 @@ type CallerScopedDiscovery interface {
 	CallerScopedDiscovery()
 }
 
+// ExternalManifestSource supplies app manifests that no plugin ships, such as
+// manifests kept in source control. The router serves each one like a managed
+// plugin without a plugin ID. A plugin that serves the same group wins.
+type ExternalManifestSource interface {
+	// Manifests returns the full current set; never a delta. On an error the
+	// router keeps serving the last set it read.
+	Manifests(context.Context) ([]ExternalManifest, error)
+
+	// Notify wakes the router when the set may have changed: a coalescing wake
+	// with no payload, after which the router calls Manifests again. A nil
+	// channel means the set never changes.
+	Notify() <-chan struct{}
+}
+
+// ExternalManifest is one app from an ExternalManifestSource.
+type ExternalManifest struct {
+	// Name identifies the manifest within its source. It must be a DNS
+	// subdomain, and is part of the backend key.
+	Name string
+
+	Manifest *app.ManifestData
+
+	// Host is the app's operator: an http or https URL for an operator written
+	// for apiextensions-apiserver, reached through baasbridge, or a gRPC
+	// address otherwise. Empty when the app has no operator, so that only its
+	// storage-backed kinds work.
+	Host string
+}
+
 type RoutesLoader interface {
 	// Load all known routes
 	// NOTE: this implies that the set of ALL routes is always reasonable to hold in memory

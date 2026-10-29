@@ -136,8 +136,13 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		return nil, err
 	}
 
+	external, err := newExternalManifests(cfg, deps)
+	if err != nil {
+		return nil, err
+	}
+
 	singleTenantDiscoveryURL := section.Key("st_discovery_url").MustString("")
-	if len(aggregateTargetConfigs) == 0 && pluginsTarget == nil && coreTarget == nil && singleTenantDiscoveryURL == "" {
+	if len(aggregateTargetConfigs) == 0 && pluginsTarget == nil && coreTarget == nil && external == nil && singleTenantDiscoveryURL == "" {
 		// The appmanifest apiserver source was removed. Fail loudly, or a
 		// config that still relies on it would silently fall back to the
 		// dummy loader and serve no routes.
@@ -229,7 +234,12 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		}
 	}
 
-	return newCloudLoader(aggregateTargets, pluginsTarget, coreTarget, singleTenantFallback)
+	l, err := newCloudLoader(aggregateTargets, pluginsTarget, coreTarget, singleTenantFallback)
+	if err != nil {
+		return nil, err
+	}
+	l.external = external
+	return l, nil
 }
 
 // cloudLoader is a RoutesLoader and a dskit service. It merges the configured
@@ -250,6 +260,9 @@ type cloudLoader struct {
 	// coreTarget serves core APIs in the plugin manifests format: nil unless
 	// core_url is configured.
 	coreTarget *pluginManifestsTarget
+
+	// external serves PluginDependencies.ExternalManifests: nil without one.
+	external *externalManifests
 
 	// Until all requests are moved to MT, we can fallback to ST instances
 	singleTenantFallback *singleTenantFallback
@@ -299,6 +312,12 @@ func (l *cloudLoader) running(ctx context.Context) error {
 			return nil
 		})
 	}
+	if l.external != nil {
+		g.Go(func() error {
+			l.external.forward(gctx, l.dirty)
+			return nil
+		})
+	}
 	if err := g.Wait(); err != nil {
 		return err
 	}
@@ -317,6 +336,10 @@ func (l *cloudLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
 var errFirstPollPending = errors.New("router: waiting for the first poll of")
 
 func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
+	// External manifests are read here rather than polled, so they are read
+	// before the check below, which would otherwise wait for them forever.
+	external := l.external.backends(ctx)
+
 	// Until every source has polled once, the snapshots of those that haven't
 	// are empty but not failed. Serving then would report ready with groups
 	// missing from discovery, so wait. A failed first poll ends the wait too.
@@ -360,6 +383,12 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 		for _, b := range target.Backends() {
 			put(b)
 		}
+	}
+
+	// External manifests override aggregate targets, which is how an app moves
+	// from an apiextensions apiserver to the router.
+	for _, b := range external {
+		put(b)
 	}
 
 	// Core APIs
@@ -437,6 +466,9 @@ func (l *cloudLoader) sourceStatuses() []sourceStatus {
 	}
 	for _, target := range l.aggregateTargets {
 		statuses = append(statuses, target.status.status(aggregateSource(target.name)))
+	}
+	if l.external != nil {
+		statuses = append(statuses, l.external.status.status(sourceExternal))
 	}
 	if l.coreTarget != nil {
 		statuses = append(statuses, l.coreTarget.status.status(sourceCoreURL))

@@ -27,17 +27,23 @@ func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (Route
 	if err != nil {
 		return nil, err
 	}
-	if deps.PluginSources != nil || dev != nil {
+	external, err := newExternalManifests(cfg, deps.PluginDependencies)
+	if err != nil {
+		return nil, err
+	}
+	if deps.PluginSources != nil || dev != nil || external != nil {
 		if middlewareEnabled(cfg, deps.Features) {
 			// When running in ST grafana as middleware, declare plugin roles and resolve settings storage defaults
+			var pluginGroups map[string]struct{}
 			if deps.PluginSources != nil {
-				if err := initLocalPlugins(context.Background(), deps); err != nil {
+				if pluginGroups, err = initLocalPlugins(context.Background(), deps); err != nil {
 					return nil, err
 				}
 			}
 			dev.declareRoles(context.Background(), deps.ACService)
+			external.declareRoles(context.Background(), deps.ACService, pluginGroups)
 		}
-		return &PluginLoader{deps: deps, settings: settingsEnabled(cfg, deps.Features), dev: dev}, nil
+		return &PluginLoader{deps: deps, settings: settingsEnabled(cfg, deps.Features), dev: dev, external: external}, nil
 	}
 
 	return noRoutesLoader{}, nil

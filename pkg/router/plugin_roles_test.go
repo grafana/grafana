@@ -178,3 +178,10 @@ func roleTestManifest() *app.ManifestData {
 		{Name: "v2", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "TestKind", Plural: "TestKinds", Scope: "Namespaced"}}},
 	}}
 }
+
+func TestExportedManifestRoleRegistrations(t *testing.T) {
+	manifest := roleTestManifest()
+	require.Equal(t, manifestRoleRegistrations(manifest.Group, "Example", manifest),
+		ManifestRoleRegistrations("Example", manifest), "the roles are those of the manifest's own group")
+	require.Nil(t, ManifestRoleRegistrations("Example", nil))
+}
