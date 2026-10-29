@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
+import { autoUpdate, offset, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { FocusScope } from '@react-aria/focus';
 import { type FormEvent, type MouseEvent, useState } from 'react';
 
@@ -7,6 +7,7 @@ import { dateTime, getDefaultTimeRange, type GrafanaTheme2, type TimeRange, type
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { getPositioningMiddleware } from '../../utils/floating';
 import { Icon } from '../Icon/Icon';
 import { getInputStyles } from '../Input/Input';
 
@@ -88,6 +89,10 @@ export const TimeRangeInput = ({
     onOpenChange: setIsOpen,
     placement: 'bottom-start',
     strategy: 'fixed',
+    // Transforms would create a containing block for the fixed-position calendar.
+    transform: false,
+    middleware: [offset(4), ...getPositioningMiddleware('bottom-start')],
+    whileElementsMounted: autoUpdate,
   });
 
   const dismiss = useDismiss(context, {
@@ -130,7 +135,6 @@ export const TimeRangeInput = ({
               onChange={onRangeChange}
               quickOptions={getQuickOptions()}
               onChangeTimeZone={onChangeTimeZone}
-              className={styles.content}
               hideTimeZone={hideTimeZone}
               isReversed={isReversed}
               hideQuickRanges={hideQuickRanges}
@@ -151,9 +155,6 @@ const getStyles = (theme: GrafanaTheme2, disabled = false) => {
       position: 'relative',
     }),
     content: css({
-      marginLeft: 0,
-      position: 'absolute',
-      top: '116%',
       zIndex: theme.zIndex.modal,
     }),
     pickerInput: cx(

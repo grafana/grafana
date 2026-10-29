@@ -2,7 +2,7 @@ import type React from 'react';
 
 import { store } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, logWarning } from '@grafana/runtime';
+import { logWarning } from '@grafana/runtime';
 import {
   NewSceneObjectAddedEvent,
   type SceneObjectState,
@@ -115,11 +115,7 @@ export class TabItem
   public getOutlineChildren(isEditing?: boolean): SceneObject[] {
     const layoutChildren = this.state.layout.getOutlineChildren();
     if (isEditing && this.state.$variables) {
-      return [
-        ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [this.getFiltersSet()] : []),
-        this.state.$variables,
-        ...layoutChildren,
-      ];
+      return [this.getFiltersSet(), this.state.$variables, ...layoutChildren];
     }
     return layoutChildren;
   }

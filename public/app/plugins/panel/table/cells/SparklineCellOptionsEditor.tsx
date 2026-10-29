@@ -2,6 +2,8 @@ import { css } from '@emotion/css';
 import { useId, useMemo } from 'react';
 
 import { createFieldConfigRegistry, type SetFieldConfigOptionsArgs, type StandardEditorContext } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type GraphFieldConfig, type TableSparklineCellOptions } from '@grafana/schema';
 import { Field, useStyles2 } from '@grafana/ui';
 import { defaultSparklineCellConfig } from '@grafana/ui/internal';
@@ -13,6 +15,7 @@ type OptionKey = keyof TableSparklineCellOptions;
 
 const optionIds: Array<keyof TableSparklineCellOptions> = [
   'hideValue',
+  'showTooltip',
   'drawStyle',
   'lineInterpolation',
   'barAlignment',
@@ -34,6 +37,12 @@ function getChartCellConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<Gr
       builder.addBooleanSwitch({
         path: 'hideValue',
         name: 'Hide value',
+      });
+      builder.addBooleanSwitch({
+        path: 'showTooltip',
+        name: t('table.name-sparkline-show-tooltip', 'Show hover tooltip'),
+        defaultValue: false,
+        showIf: () => getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
       });
     },
   };

@@ -156,8 +156,8 @@ export function JsonModelEditViewRenderer({ model }: SceneComponentProps<JsonMod
             </p>
             <Box paddingTop={2}>
               <Stack alignItems="center">
-                {cancelButton}
                 {saveButton(true, disabled)}
+                {cancelButton}
               </Stack>
             </Box>
           </Alert>

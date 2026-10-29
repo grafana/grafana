@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import { useAsync } from 'react-use';
 
 import {
@@ -140,12 +140,16 @@ export function useDataSourceInstanceListItem(
  * function reference changes. Wrap inline filter callbacks in `useCallback`
  * to avoid unnecessary re-fetches.
  *
+ * `items` keeps the same reference across renders until the result changes. While loading and after
+ * an error it is an empty array that belongs to this hook instance and is not shared with other callers.
+ *
  * @public
  */
 export function useDataSourceInstanceList(filters?: GetDataSourceInstanceListFilters): UseDataSourceInstanceListResult {
   const filterValuesKey = filtersKey(filters);
   const filterFunc = filters?.filter;
   const cacheGeneration = useDataSourceCacheGeneration();
+  const emptyItems = useMemo<DataSourceInstanceListItem[]>(() => [], []);
 
   const { loading, error, value } = useAsync(
     () => getDataSourceInstanceList(filters),
@@ -153,7 +157,7 @@ export function useDataSourceInstanceList(filters?: GetDataSourceInstanceListFil
     [filterValuesKey, filterFunc, cacheGeneration]
   );
 
-  return { isLoading: loading, error, items: value ?? [] };
+  return { isLoading: loading, error, items: value ?? emptyItems };
 }
 
 /**

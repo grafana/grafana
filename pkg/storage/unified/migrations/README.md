@@ -168,7 +168,8 @@ API rejected are accounted for and do not fail validation on their own.
 
 - **`CountValidation`** — compares legacy row count with unified storage. `Where` scopes to the org,
   `Distinct` counts unique values, and `Join` adds an inner join so orphaned rows the migrator skips are not
-  counted. Uses direct table queries on SQLite and `GetStats` elsewhere.
+  counted. On SQLite it reads within the migration transaction: current KV revisions for SQLKV, or the
+  `resource` table for the SQL backend. Other databases use `GetStats`.
 - **`FolderTreeValidation`** — compares folder parent maps built from legacy and unified storage to confirm
   the hierarchy survived.
 
@@ -297,7 +298,7 @@ of your definition:
 
 ```go
 func MyValidation(resource schema.GroupResource) ValidatorFactory {
-    return func(client resourcepb.ResourceIndexClient, driverName string) Validator {
+    return func(client resourcepb.ResourceIndexClient, opts ValidatorOptions) Validator {
         return &MyValidator{resource: resource, client: client}
     }
 }

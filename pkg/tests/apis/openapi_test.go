@@ -24,9 +24,10 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	h := NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction:      false, // required for experimental APIs
-		RBACSingleOrganization: true,  // required for the Users API
-		EnableGlobalSearch:     true,  // the search that spans resource types
+		AppModeProduction:        false, // required for experimental APIs
+		RBACSingleOrganization:   true,  // required for the Users API
+		EnableGlobalSearch:       true,  // the search that spans resource types
+		EnableGlobalHybridSearch: true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagQueryService,                         // Query Library
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // library panels in v0
@@ -138,6 +139,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	}, {
 		Group:   "rules.alerting.grafana.app",
 		Version: "v0alpha1",
+	}, {
+		Group:   "rules.alerting.grafana.app",
+		Version: "v1beta1",
 	}, {
 		Group:   "historian.alerting.grafana.app",
 		Version: "v0alpha1",

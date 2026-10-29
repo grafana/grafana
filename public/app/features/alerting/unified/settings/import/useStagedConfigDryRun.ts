@@ -20,7 +20,7 @@ interface StagedConfigDryRun {
 /**
  * Dry-runs a promote of the already-staged Alertmanager config to build the impact preview shown in
  * the promote modal. Reuses the staged YAML + templates (no datasource/file resolution needed), so we
- * call the dry-run mutation directly rather than the wizard's useDryRunNotifications.
+ * call the dry-run mutation directly rather than the wizard's signature-keyed dry-run query.
  */
 export function useStagedConfigDryRun(stagedConfig: StagedExtraConfig): StagedConfigDryRun {
   const [dryRun, { data, isLoading, error }] = convertToGMAApi.useDryRunAlertmanagerConfigMutation();

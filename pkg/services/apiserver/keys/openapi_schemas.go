@@ -1,32 +1,28 @@
 package keys
 
 import (
-	"maps"
 	"strings"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/util"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	commonv0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	storagev0 "github.com/grafana/grafana/pkg/apis/storage/v0alpha1"
 )
 
 const componentPrefix = "#/components/schemas/"
 
 // Go names, because that is how the generated definitions are keyed.
-const listKeyRequestGoName = "github.com/grafana/grafana/pkg/apis/storage/v0alpha1." + storagev0.KindListKeyRequest
-
-// The response is a standard meta.k8s.io/v1 type.
-var partialListGoName = metav1.PartialObjectMetadataList{}.OpenAPIModelName()
+const (
+	listKeyRequestGoName  = "github.com/grafana/grafana/pkg/apis/storage/v0alpha1." + storagev0.KindListKeyRequest
+	listKeyResponseGoName = "github.com/grafana/grafana/pkg/apis/storage/v0alpha1." + storagev0.KindListKeyResponse
+)
 
 // Each group version's spec is self-contained, so the components have to travel
 // with the route. Dependencies are followed rather than listed because a missing
 // one renders as an empty model with no error.
 func envelopeSchemas(roots ...string) map[string]spec.Schema {
 	defs := storagev0.GetOpenAPIDefinitions(schemaRef)
-	maps.Copy(defs, commonv0.GetOpenAPIDefinitions(schemaRef))
 
 	out := map[string]spec.Schema{}
 	queue := append([]string{}, roots...)
@@ -61,13 +57,14 @@ func schemaRef(goName string) spec.Ref {
 	return spec.MustCreateRef(componentPrefix + friendly(goName))
 }
 
-func jsonContent(goName string) map[string]*spec3.MediaType {
+func jsonContent(goName string, example any) map[string]*spec3.MediaType {
 	return map[string]*spec3.MediaType{
 		"application/json": {
 			MediaTypeProps: spec3.MediaTypeProps{
 				Schema: &spec.Schema{
 					SchemaProps: spec.SchemaProps{Ref: schemaRef(goName)},
 				},
+				Example: example,
 			},
 		},
 	}

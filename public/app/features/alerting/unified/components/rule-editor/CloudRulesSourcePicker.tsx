@@ -1,6 +1,6 @@
 import { type JSX, useCallback } from 'react';
 
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceListItem } from '@grafana/data';
 import {
   DataSourcePicker,
   type DataSourcePickerProps,
@@ -8,9 +8,12 @@ import {
 
 import { useRulesSourcesWithRuler } from '../../hooks/useRuleSourcesWithRuler';
 
+// Picked fields keep the callbacks compatible with both the current picker and the slim list item.
+type RulesSourceOption = Pick<DataSourceInstanceListItem, 'uid' | 'name' | 'type'>;
+
 interface Props extends DataSourcePickerProps {
   disabled?: boolean;
-  onChange: (ds: DataSourceInstanceSettings) => void;
+  onChange: (ds: RulesSourceOption) => void;
   value: string | null;
   onBlur?: () => void;
   name?: string;
@@ -20,7 +23,7 @@ export function CloudRulesSourcePicker({ value, disabled, ...props }: Props): JS
   const { rulesSourcesWithRuler: dataSourcesWithRuler, isLoading } = useRulesSourcesWithRuler();
 
   const dataSourceFilter = useCallback(
-    (ds: DataSourceInstanceSettings): boolean => {
+    (ds: RulesSourceOption): boolean => {
       return dataSourcesWithRuler.some(({ uid }) => uid === ds.uid);
     },
     [dataSourcesWithRuler]

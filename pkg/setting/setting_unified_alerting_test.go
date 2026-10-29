@@ -594,3 +594,39 @@ func TestQueriesServedByLoki(t *testing.T) {
 		})
 	}
 }
+
+func TestHasAlertStateMetrics(t *testing.T) {
+	testCases := []struct {
+		name         string
+		stateHistory UnifiedAlertingStateHistorySettings
+		want         bool
+	}{
+		{
+			name:         "disabled state history",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: false, Backend: "prometheus", PrometheusTargetDatasourceUID: "prom"},
+			want:         false,
+		},
+		{
+			name:         "no target data source",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "prometheus"},
+			want:         false,
+		},
+		{
+			name:         "prometheus backend with a target data source",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "prometheus", PrometheusTargetDatasourceUID: "prom"},
+			want:         true,
+		},
+		{
+			// Grafana Cloud: a separate ruler service writes the metrics, this Grafana only writes to Loki
+			name:         "loki backend with a target data source",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "loki", PrometheusTargetDatasourceUID: "prom"},
+			want:         true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.want, tc.stateHistory.HasAlertStateMetrics())
+		})
+	}
+}

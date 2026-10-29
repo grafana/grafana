@@ -3,7 +3,7 @@ import { StrictMode } from 'react';
 
 import { SandboxFrame, type SandboxFrameProps, WATCHDOG_TIMEOUT_MS } from './SandboxFrame';
 import { loadSandboxMermaid, loadSandboxRuntime } from './loadSandboxRuntime';
-import { textSandboxPolicy } from './sandboxPolicy';
+import { MAX_BLOCKED_URL_CHARS, textSandboxPolicy } from './sandboxPolicy';
 import { TEXT_FRAME_PROTOCOL } from './sandboxProtocol';
 
 jest.mock('./loadSandboxRuntime', () => ({
@@ -160,6 +160,84 @@ it('retains the visible frame and reports a late violation', async () => {
     status: 'ready',
     resources: [{ directive: 'img-src', origin: 'https://external.test' }],
   });
+});
+
+it('merges reported URLs per origin, keeping the highest count and dropping URLs from other origins', async () => {
+  const options = props();
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  notify(element, 'ready');
+  const origin = 'https://external.test';
+  notify(element, 'blocked', {
+    resources: [
+      {
+        directive: 'img-src',
+        origin,
+        urls: [
+          { url: `${origin}/a.png`, count: 1 },
+          { url: 'https://elsewhere.test/b.png', count: 1 },
+        ],
+      },
+    ],
+  });
+  notify(element, 'blocked', {
+    resources: [
+      {
+        directive: 'img-src',
+        origin,
+        urls: [
+          { url: `${origin}/a.png`, count: 4 },
+          { url: `${origin}/c.png`, count: 1 },
+        ],
+      },
+    ],
+  });
+  expect(options.onState).toHaveBeenLastCalledWith({
+    status: 'loading',
+    resources: [
+      {
+        directive: 'img-src',
+        origin,
+        urls: [
+          { url: `${origin}/a.png`, count: 4 },
+          { url: `${origin}/c.png`, count: 1 },
+        ],
+      },
+    ],
+  });
+  const count = jest.mocked(options.onState).mock.calls.length;
+  notify(element, 'blocked', {
+    resources: [{ directive: 'img-src', origin, urls: [{ url: `${origin}/a.png`, count: 2 }] }],
+  });
+  expect(options.onState).toHaveBeenCalledTimes(count);
+});
+
+it('keeps the truncated flag from a report', async () => {
+  const options = props();
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  notify(element, 'ready');
+  const urls = [{ url: 'https://external.test/collect?d=x', count: 1 }];
+  notify(element, 'blocked', {
+    resources: [{ directive: 'img-src', origin: 'https://external.test', urls, truncated: true }],
+  });
+  expect(options.onState).toHaveBeenLastCalledWith({
+    status: 'loading',
+    resources: [{ directive: 'img-src', origin: 'https://external.test', urls, truncated: true }],
+  });
+});
+
+it.each([
+  ['a non-string URL', [{ url: 1, count: 1 }]],
+  ['a zero count', [{ url: 'https://external.test/a.png', count: 0 }]],
+  ['URLs over the budget', [{ url: `https://external.test/${'x'.repeat(MAX_BLOCKED_URL_CHARS)}`, count: 1 }]],
+])('ignores reports with %s', async (_, urls) => {
+  const options = props();
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  notify(element, 'ready');
+  notify(element, 'blocked', { resources: [{ directive: 'img-src', origin: 'https://external.test', urls }] });
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'loading', resources: [] });
 });
 
 it('omits CSP and sandbox completely without data', async () => {

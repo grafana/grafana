@@ -16,9 +16,8 @@ import {
   type PluginMeta,
   urlUtil,
 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { getPluginSettings, reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getAppPluginMetas, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { getPluginSettings } from '@grafana/runtime/unstable';
 import { Modal } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { isRecord } from 'app/core/utils/isRecord';

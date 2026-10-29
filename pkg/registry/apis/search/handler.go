@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
@@ -21,6 +22,7 @@ import (
 
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -47,6 +49,9 @@ type kindRef struct {
 	// so it cannot name one kind the way a per-kind route does, and a Kubernetes
 	// kind cannot be derived from a group and resource without its manifest.
 	kinds map[schema.GroupResource]string
+	// reportedKinds are the kinds the search server named for one response, by
+	// {group}/{resource}. They win over kinds.
+	reportedKinds map[string]string
 }
 
 // spansResourceTypes reports whether results of this route carry their own
@@ -89,7 +94,9 @@ func (h *Handler) SearchFor(kind kindRef) http.HandlerFunc {
 			if err := decodeBody(r, &q); err != nil {
 				return nil, nil, err
 			}
-			req, ferrs := TranslateSearchQuery(&q, kind.gvr(), namespace, h.provider)
+			allowFolderTree := openfeature.NewDefaultClient().Boolean(r.Context(), featuremgmt.FlagSearchPerResourceFolderTree, false, openfeature.TransactionContext(r.Context()))
+			gvr := kind.gvr()
+			req, ferrs := translateSearchQuery(&q, gvr, namespace, newFieldSet(gvr, h.provider, allowFolderTree))
 			return req, ferrs, nil
 		},
 		func(res *resourcepb.ResourceSearchResponse, limit int64) (any, error) {
@@ -114,7 +121,7 @@ func (h *Handler) GlobalSearchFor(kinds map[schema.GroupResource]string) http.Ha
 			return req, ferrs, nil
 		},
 		func(res *resourcepb.ResourceSearchResponse, limit int64) (any, error) {
-			return searchResults(res, kind, limit)
+			return globalSearchResults(res, kind, limit)
 		},
 	)
 }

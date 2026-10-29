@@ -5,15 +5,22 @@ import { test, expect } from '@grafana/plugin-e2e';
 type Fixtures = Parameters<Parameters<typeof test>[2]>[0];
 
 test.use({
-  featureToggles: {
-    queryLibrary: false,
-  },
   openFeature: {
     flags: {
       'queryHistory.localOnly': true,
       'queryHistory.recentQueriesUI': true,
     },
   },
+});
+
+// Recent queries is only shown when the query library is unavailable, which is the case in OSS
+// builds. Enterprise builds always mount the query library provider, which hides it.
+test.beforeEach(async ({ request }) => {
+  const settings = await (await request.get('/api/frontend/settings')).json();
+  test.skip(
+    settings.buildInfo?.edition !== 'Open Source',
+    'Recent queries is hidden when the query library is available (non-OSS builds)'
+  );
 });
 
 async function runQueryAndWaitForResults(

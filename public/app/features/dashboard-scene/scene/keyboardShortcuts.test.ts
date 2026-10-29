@@ -4,6 +4,7 @@ import { type GrafanaConfig, LegacyGraphHoverClearEvent, locationUtil, SetPanelA
 import { config, HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
 import { behaviors, sceneGraph, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
@@ -86,6 +87,7 @@ describe('setupKeyboardShortcuts', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+    setTestFlags({});
   });
 
   it('should setup keyboard shortcuts and return cleanup function', () => {
@@ -98,6 +100,18 @@ describe('setupKeyboardShortcuts', () => {
     // Call cleanup function
     cleanup();
     expect(mockKeybindingSet.removeAll).toHaveBeenCalled();
+  });
+
+  it('keeps panel editing available without registering the obsolete Preview shortcut', () => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+    try {
+      setupKeyboardShortcuts(mockScene);
+      const keys = mockKeybindingSet.addBinding.mock.calls.map(([binding]) => binding.key);
+      expect(keys).toContain('e');
+      expect(keys).not.toContain('d p');
+    } finally {
+      setTestFlags({});
+    }
   });
 
   describe('mod+o shortcut (toggle shared crosshair)', () => {
@@ -148,6 +162,16 @@ describe('setupKeyboardShortcuts', () => {
       expect(appEvents.publish).toHaveBeenCalledWith(expect.any(LegacyGraphHoverClearEvent));
       expect(sceneGraph.getTimeRange).toHaveBeenCalledWith(mockScene);
       expect(mockOnRefresh).toHaveBeenCalled();
+    });
+
+    it.each(['view', 'composer'] as const)('should toggle cursor sync in %s mode', (mode) => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      mockScene.setState({ mode, isEditing: mode === 'composer' });
+      mockCursorSync.setState({ sync: DashboardCursorSync.Off });
+
+      modOHandler();
+
+      expect(mockCursorSync.setState).toHaveBeenCalledWith({ sync: DashboardCursorSync.Crosshair });
     });
 
     it('should handle missing CursorSync behavior gracefully', () => {
@@ -285,7 +309,7 @@ describe('setupKeyboardShortcuts', () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
       mockScene.setState({
-        planning: { planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
+        planning: { phase: 'preview', planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
       });
       setupKeyboardShortcuts(mockScene);
 
@@ -312,6 +336,64 @@ describe('setupKeyboardShortcuts', () => {
       await getBinding('i')();
       expect(mockScene.showModal).not.toHaveBeenCalled();
     });
+  });
+
+  it.each([
+    { mode: 'view' as const, editable: true, fullscreen: false },
+    { mode: 'view' as const, editable: true, fullscreen: true },
+    { mode: 'view' as const, editable: false, fullscreen: false },
+    { mode: 'view' as const, editable: false, fullscreen: true },
+    { mode: 'agent' as const, editable: true, fullscreen: false },
+    { mode: 'agent' as const, editable: true, fullscreen: true },
+    { mode: 'agent' as const, editable: false, fullscreen: false },
+    { mode: 'agent' as const, editable: false, fullscreen: true },
+  ])(
+    'panel edit shortcut enters Editing from $mode only when editable=$editable (fullscreen=$fullscreen)',
+    async ({ mode, editable, fullscreen }) => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      try {
+        const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
+        mockScene.setState({
+          mode,
+          isEditing: true,
+          editable,
+          viewPanel: fullscreen ? 'panel-1' : undefined,
+          body: DefaultGridLayoutManager.fromVizPanels([panel]),
+        });
+        jest.mocked(findVizPanelByPathId).mockReturnValue(panel);
+        locationService.replace(fullscreen ? '/d/test-uid?viewPanel=panel-1' : '/d/test-uid');
+        setupKeyboardShortcuts(mockScene);
+        const attentionHandler = jest.mocked(appEvents.subscribe).mock.calls[0][1];
+        attentionHandler(new SetPanelAttentionEvent({ panelId: 'panel-1' }));
+        const binding = mockKeybindingSet.addBinding.mock.calls.find(([binding]) => binding.key === 'e')![0];
+        await binding.onTrigger();
+        expect(mockScene.state.mode).toBe(editable ? 'edit' : mode);
+        expect(locationService.getSearchObject().editPanel).toBe(editable ? '1' : undefined);
+        expect(locationService.getSearchObject().viewPanel).toBe(fullscreen && !editable ? 'panel-1' : undefined);
+      } finally {
+        setTestFlags({});
+      }
+    }
+  );
+
+  it.each([
+    { mode: 'view' as const, editable: true },
+    { mode: 'view' as const, editable: false },
+    { mode: 'agent' as const, editable: true },
+    { mode: 'agent' as const, editable: false },
+  ])('dashboard settings shortcut enters Editing from $mode only when editable=$editable', ({ mode, editable }) => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+    try {
+      mockScene.setState({ mode, isEditing: true, editable });
+      locationService.replace('/d/test-uid');
+      setupKeyboardShortcuts(mockScene);
+      const binding = mockKeybindingSet.addBinding.mock.calls.find(([binding]) => binding.key === 'd s')![0];
+      binding.onTrigger();
+      expect(mockScene.state.mode).toBe(editable ? 'edit' : mode);
+      expect(locationService.getSearchObject().editview).toBe(editable ? 'settings' : undefined);
+    } finally {
+      setTestFlags({});
+    }
   });
 
   describe('navigation when Grafana is served from a sub-path', () => {
@@ -392,6 +474,21 @@ describe('setupKeyboardShortcuts', () => {
     it('should setup save shortcut (mod+s) when can edit', () => {
       const modSBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 'mod+s');
       expect(modSBinding).toBeDefined();
+    });
+
+    it.each([
+      { mode: 'view', opens: false },
+      { mode: 'edit', opens: true },
+      { mode: 'agent', opens: true },
+    ] as const)('save shortcut (mod+s) opens the save drawer in $mode mode: $opens', ({ mode, opens }) => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      mockScene.setState({ mode, isEditing: true });
+      const openSaveDrawer = jest.spyOn(mockScene, 'openSaveDrawer').mockResolvedValue(undefined);
+      const modSBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 'mod+s');
+
+      modSBinding![0].onTrigger();
+
+      expect(openSaveDrawer).toHaveBeenCalledTimes(opens ? 1 : 0);
     });
 
     it('should setup dashboard settings shortcut (d s) when can edit', () => {
@@ -663,6 +760,20 @@ describe('setupKeyboardShortcuts', () => {
 
         expect(mockScene.pastePanel).toHaveBeenCalledTimes(1);
         expect(DashboardInteractions.trackPastePanelClick).toHaveBeenCalledWith('keyboard', 'dashboard', 'keyboard');
+      });
+
+      it('ignores paste in Viewing and enables the same shortcut after returning to Editing', () => {
+        setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+        mockScene.setState({ isEditing: true, mode: 'view' });
+        localStorageMock.setItem(LS_PANEL_COPY_KEY, JSON.stringify({ panelId: 'panel-1' }));
+        setupKeyboardShortcuts(mockScene);
+
+        getBinding('p v')!.onTrigger();
+        expect(mockScene.pastePanel).not.toHaveBeenCalled();
+
+        mockScene.setState({ mode: 'edit' });
+        getBinding('p v')!.onTrigger();
+        expect(mockScene.pastePanel).toHaveBeenCalledTimes(1);
       });
 
       it('does not paste when not editing', () => {

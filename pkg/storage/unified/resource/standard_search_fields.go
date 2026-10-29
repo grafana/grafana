@@ -6,10 +6,9 @@ package resource
 //
 // Not every standard field appears here. Fields excluded:
 //
-//   - Pseudo / wire-only columns (_id, _legacy_id, _score, _explain,
-//     _all_columns, rv, kind, namespace, group/resource): they exist solely
-//     to populate ResourceTable column metadata in the gRPC response and are
-//     not indexed.
+//   - Pseudo / response-only fields (_id, _legacy_id, _score, _explain,
+//     _all_columns, rv, kind, namespace, group/resource): their values come
+//     from row metadata or are derived when building a response.
 //   - Sub-document fields under "manager." and "source.": nested documents
 //     whose bleve mappings are emitted hardcoded.
 //   - Fields under "labels." and "reference.": open key sets, served by
@@ -40,9 +39,8 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 		{
 			Name: SEARCH_FIELD_DESCRIPTION,
 			Type: SearchFieldTypeString,
-			// unranked: description is indexed as text (the proto column declares
-			// FreeText:true), but no caller scores against it today; skipping
-			// BM25 frequency and length stats keeps the index small.
+			// Keep description indexing compact: text matching works without
+			// storing full BM25 frequency and length stats.
 			Capabilities: []SearchCapability{SearchCapabilityText, SearchCapabilityRetrieve, SearchCapabilityUnranked},
 			Description:  "Free-text description of the resource.",
 		},
@@ -82,25 +80,43 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 			Capabilities: []SearchCapability{SearchCapabilityFacet},
 			Description:  "Manager identity in format {kind}:{id}; used for faceting.",
 		},
-		// created and updated are unix-millis timestamps. They are stored so search
-		// results can return them, but a retrieve-only non-string field is not
-		// indexed, so they cannot be filtered, sorted or used in a range query.
-		//
-		// Giving them filter (which is what a range query needs) or sort would index
-		// them, changing the index-affecting hash and rebuilding every kind's index.
-		// That is worth doing once someone needs to query on a timestamp; exact
-		// equality to the millisecond is not a useful query on its own.
+		{
+			Name:         SEARCH_FIELD_UPDATED_BY,
+			Type:         SearchFieldTypeString,
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+			Description:  "Who last updated the resource (format: user:<uid>).",
+		},
 		{
 			Name:         SEARCH_FIELD_CREATED,
 			Type:         SearchFieldTypeInt64,
-			Capabilities: []SearchCapability{SearchCapabilityRetrieve},
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilitySort, SearchCapabilityRetrieve},
 			Description:  "Creation timestamp (unix millis).",
 		},
 		{
 			Name:         SEARCH_FIELD_UPDATED,
 			Type:         SearchFieldTypeInt64,
-			Capabilities: []SearchCapability{SearchCapabilityRetrieve},
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilitySort, SearchCapabilityRetrieve},
 			Description:  "Update timestamp (unix millis).",
+		},
+		// The manager fields live in the manager sub-document, so their names are
+		// paths into it.
+		{
+			Name:         SEARCH_FIELD_MANAGER_KIND,
+			Type:         SearchFieldTypeString,
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+			Description:  "Kind of tool that manages the resource, such as repo for Git Sync. Empty when nothing manages it.",
+		},
+		{
+			Name:         SEARCH_FIELD_MANAGER_ID,
+			Type:         SearchFieldTypeString,
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+			Description:  "Which instance of that tool manages the resource, such as the repository name.",
+		},
+		{
+			Name:         SEARCH_FIELD_MANAGER_ALLOW_EDITS,
+			Type:         SearchFieldTypeBoolean,
+			Capabilities: []SearchCapability{SearchCapabilityRetrieve},
+			Description:  "Whether the manager allows others to edit the resource.",
 		},
 	}
 }

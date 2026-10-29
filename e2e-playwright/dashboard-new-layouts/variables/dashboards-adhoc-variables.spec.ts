@@ -1,14 +1,12 @@
 import { test, expect } from '../fixtures';
 import { flows, type Variable } from '../helpers';
 
-import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './flows';
+import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './helpers/flows';
 
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
-    groupByVariable: true,
-    dashboardUnifiedDrilldownControls: false,
   },
 });
 
@@ -28,7 +26,7 @@ test.describe(
       };
       const dataSource = 'gdev-e2etestdatasource';
 
-      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewGenericVariable(sidebar, controls, variable);
       await sidebar.variableOptions.adhoc.selectDatasource(dataSource);
 
       const variableLabel = controls.variables.getLabel(variable.label);
@@ -53,7 +51,7 @@ test.describe(
 
       await controls.enterEditMode();
       await sidebar.toolbar.clickButton('Outline');
-      await sidebar.contentOutline.toggleNode('Variables');
+      await sidebar.contentOutline.toggleNode('Filters');
       await sidebar.contentOutline.clickItem(variable.label);
 
       await expect(sidebar.getPaneTitle()).toHaveText('Filter');

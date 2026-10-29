@@ -406,6 +406,32 @@ describe('backendSrv', () => {
       });
     });
 
+    describe('when the login ping fails with a server error', () => {
+      it('does not show an alert', async () => {
+        jest.useFakeTimers();
+        const { backendSrv, appEventsMock, fromFetchMock, logoutMock } = getTestContext({ authenticatedBy: 'jwt' });
+        const serverErrorResponse = {
+          ...createUnauthorizedResponse(),
+          status: 500,
+          statusText: 'Internal Server Error',
+          text: jest.fn().mockResolvedValue(JSON.stringify({ message: 'Internal Server Error' })),
+        } as unknown as Response;
+
+        fromFetchMock.mockImplementation((input) =>
+          of(String(input).includes('/api/login/ping') ? serverErrorResponse : createUnauthorizedResponse())
+        );
+
+        await expect(backendSrv.request({ url: '/api/dashboards/1', method: 'GET', retry: 0 })).rejects.toMatchObject({
+          status: 500,
+        });
+        jest.advanceTimersByTime(50);
+
+        expect(appEventsMock.emit).not.toHaveBeenCalled();
+        expect(logoutMock).not.toHaveBeenCalled();
+        jest.useRealTimers();
+      });
+    });
+
     describe('when showing error alert', () => {
       describe('when showErrorAlert is undefined and url is a normal api call', () => {
         it('It should emit alert event for normal api errors', async () => {

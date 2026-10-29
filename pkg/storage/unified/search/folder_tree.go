@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"sync"
 	"time"
@@ -20,14 +21,13 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// folderTree is the folder tree of a global index, held in memory so a search
+// folderTree is the hierarchy of a global or folder index, held in memory so a search
 // of a folder and everything below it is worked out when searching. Storing the
 // folders above each document instead would need every document below a folder
 // rewritten when the folder moves.
 //
 // It is read from the index's own folder documents the first time a search
-// needs it, and kept up to date by every write after that. Reconcile repairs
-// the folder documents, so the tree follows.
+// needs it, and kept up to date by every write after that.
 type folderTree struct {
 	mu     sync.Mutex
 	loaded bool
@@ -62,7 +62,11 @@ func (t *folderTree) commit(items []*resource.BulkIndexItem, write func() error)
 	for _, item := range items {
 		switch {
 		case item.Action == resource.ActionIndex && item.Doc != nil && isFolderKey(item.Doc.Key):
-			t.set(item.Doc.Key.Name, item.Doc.Folder)
+			if item.Doc.IsDeleted != nil && *item.Doc.IsDeleted {
+				t.remove(item.Doc.Key.Name)
+			} else {
+				t.set(item.Doc.Key.Name, item.Doc.Folder)
+			}
 		case item.Action == resource.ActionDelete && isFolderKey(item.Key):
 			t.remove(item.Key.Name)
 		}
@@ -127,6 +131,13 @@ func (t *folderTree) below(roots []string) []string {
 // folderSubtree returns the named folders and every folder below them, loading
 // the tree first if no search has needed it yet.
 func (b *bleveIndex) folderSubtree(ctx context.Context, roots []string) ([]string, error) {
+	// The helper index can close independently of the index being searched.
+	b.updaterMu.Lock()
+	closed := b.updaterShutdown
+	b.updaterMu.Unlock()
+	if closed {
+		return nil, fmt.Errorf("cannot read folder tree: %w", bleve.ErrorIndexClosed)
+	}
 	b.folders.mu.Lock()
 	defer b.folders.mu.Unlock()
 	if !b.folders.loaded {
@@ -149,87 +160,51 @@ func (b *bleveIndex) loadFolderTreeLocked(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	advanced, err := b.index.Advanced()
-	if err != nil {
-		return err
-	}
-	reader, err := advanced.Reader()
-	if err != nil {
-		return err
-	}
-	defer func() { _ = reader.Close() }()
-	searcher, err := scopeQuery(q, false, 0).Searcher(ctx, reader, b.index.Mapping(), search.SearcherOptions{})
-	if err != nil {
-		return err
-	}
-	defer func() { _ = searcher.Close() }()
-	folders, err := reader.DocValueReader([]string{resource.SEARCH_FIELD_FOLDER})
-	if err != nil {
-		return err
-	}
-
 	// Built aside and kept only once fully read, so a failed load leaves nothing
 	// half loaded.
 	tree := folderTree{parent: map[string]string{}, children: map[string]map[string]struct{}{}}
-	sctx := &search.SearchContext{DocumentMatchPool: search.NewDocumentMatchPool(searcher.DocumentMatchPoolSize(), 0)}
-	for {
-		if err := ctx.Err(); err != nil {
-			return err
-		}
-		match, err := searcher.Next(sctx)
-		if err != nil {
-			return err
-		}
-		if match == nil {
-			break
-		}
-		id, err := reader.ExternalID(match.IndexInternalID)
-		if err != nil {
-			return err
-		}
+	err = b.visitLiveDocuments(ctx, q, []string{resource.SEARCH_FIELD_FOLDER}, func(_ index.IndexReader, id string, internal index.IndexInternalID, docValues index.DocValueReader) error {
 		var key resourcepb.ResourceKey
 		if err := resource.ReadSearchID(&key, id); err != nil {
 			return err
 		}
 		// A folder at the top holds no folder value at all.
 		folder := ""
-		if err := folders.VisitDocValues(match.IndexInternalID, func(_ string, value []byte) {
+		if err := docValues.VisitDocValues(internal, func(_ string, value []byte) {
 			folder = string(value)
 		}); err != nil {
 			return err
 		}
 		tree.set(key.Name, folder)
-		sctx.DocumentMatchPool.Put(match)
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	b.folders.parent, b.folders.children = tree.parent, tree.children
 	b.folders.loaded = true
-	b.logger.Info("Loaded the folder tree of the global search index", "folders", len(b.folders.parent), "duration", time.Since(start))
+	b.logger.Info("Loaded the folder tree of the search index", "folders", len(b.folders.parent), "duration", time.Since(start))
 	return nil
 }
 
 // folderTreeQuery turns a folderTree filter into a filter on the folder each
 // document is in: the named folders and every folder below them.
-func (b *bleveIndex) folderTreeQuery(ctx context.Context, req *resourcepb.Requirement) (query.Query, *resourcepb.ErrorResult) {
-	if !b.key.IsGlobal() {
-		return nil, resource.NewBadRequestError(resource.SEARCH_FIELD_FOLDER_TREE + " can only be searched in the global search index")
+func (b *bleveIndex) folderTreeQuery(ctx context.Context, req *resourcepb.Requirement, folderIndex *bleveIndex) (query.Query, *resourcepb.ErrorResult) {
+	if err := resource.ValidateFolderTreeRequirement(req); err != nil {
+		return nil, err
 	}
-	switch selection.Operator(req.Operator) {
-	case selection.In:
-	case selection.Equals, selection.DoubleEquals:
-		// Several values would mean every one of them, as on other fields, which a
-		// document in one folder never matches; in is how to name several.
-		if len(req.Values) != 1 {
-			return nil, resource.NewBadRequestError(resource.SEARCH_FIELD_FOLDER_TREE + " takes one value with =, and several with in")
-		}
-	default:
-		return nil, resource.NewBadRequestError(resource.SEARCH_FIELD_FOLDER_TREE + " only supports in and =")
+	if len(req.Values) == 0 {
+		return bleve.NewMatchNoneQuery(), nil
 	}
 	// Everything is below the top.
 	if slices.ContainsFunc(req.Values, foldermodel.IsRootFolderUID) {
 		return nil, nil
 	}
-	folders, err := b.folderSubtree(ctx, req.Values)
+	if folderIndex == nil {
+		return nil, resource.NewBadRequestError(resource.SEARCH_FIELD_FOLDER_TREE + " requires a folder index")
+	}
+	folders, err := folderIndex.folderSubtree(ctx, req.Values)
 	if err != nil {
 		return nil, resource.AsErrorResult(err)
 	}

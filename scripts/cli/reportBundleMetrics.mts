@@ -11,7 +11,7 @@ async function main() {
   const sizesOnly = firstArgument === '--sizes-only';
   const buildDirectory = path.resolve(REPO_ROOT, (sizesOnly ? secondArgument : firstArgument) || 'public/build');
 
-  const sizeMetrics = await readBundleSizes(buildDirectory, { includeRspack: !sizesOnly });
+  const sizeMetrics = await readBundleSizes(buildDirectory);
   for (const [name, value] of Object.entries(sizeMetrics)) {
     console.log(`${sizesOnly ? '' : 'bundleSize.'}${name} ${value}`);
   }
@@ -20,7 +20,7 @@ async function main() {
     return;
   }
 
-  const rsdoctorMetrics = await readRsdoctorMetrics(path.join(buildDirectory, 'rspack', '.rsdoctor'));
+  const rsdoctorMetrics = await readRsdoctorMetrics(path.join(buildDirectory, '.rsdoctor'));
   for (const [name, value] of Object.entries(rsdoctorMetrics)) {
     console.log(`build.rspack.${name} ${value}`);
   }

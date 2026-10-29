@@ -127,7 +127,7 @@ func (f *finalizer) process(ctx context.Context,
 		cause := ""
 		if err != nil {
 			outcome = metricutils.ErrorOutcome
-			cause = classifyTokenErrorCause(err)
+			cause = classifyDeletionErrorCause(err)
 		}
 
 		f.metrics.RecordFinalizer(finalizer, outcome, cause, count, time.Since(start).Seconds())

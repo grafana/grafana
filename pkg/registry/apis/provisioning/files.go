@@ -242,10 +242,14 @@ func (c *filesConnector) handleDirectoryListing(ctx context.Context, name string
 
 // handleMethodRequest routes the request to the appropriate handler based on HTTP method.
 func (c *filesConnector) handleMethodRequest(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, isDir bool, dualReadWriter *resources.DualReadWriter, readWriter repository.ReaderWriter, authorizer resources.Authorizer) (*provisioning.ResourceWrapper, error) {
-	if c.folderMetadataEnabled && r.Method != http.MethodGet && resources.IsFolderMetadataFile(opts.Path) {
+	metadataPath := opts.Path
+	if r.Method == http.MethodPost && resources.IsFolderMetadataFile(opts.OriginalPath) {
+		metadataPath = opts.OriginalPath
+	}
+	if r.Method != http.MethodGet && resources.IsFolderMetadataFile(metadataPath) {
 		return nil, apierrors.NewForbidden(
 			provisioning.RepositoryResourceInfo.GroupResource(),
-			opts.Path,
+			metadataPath,
 			errors.New("folder metadata is managed by the system and cannot be modified directly"),
 		)
 	}

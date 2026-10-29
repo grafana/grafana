@@ -26,7 +26,6 @@ import (
 func TestShouldUseSearchForList(t *testing.T) {
 	tests := map[string]struct {
 		disableSearch   bool
-		allowlist       []string
 		noRegistry      bool
 		req             *resourcepb.ListRequest
 		expectedAllowed bool
@@ -61,53 +60,43 @@ func TestShouldUseSearchForList(t *testing.T) {
 			},
 			expectedAllowed: false,
 		},
-		"true when no selectors and resource is allowlisted": {
-			allowlist: []string{"advisor.grafana.app/advisors"},
+		"false when no selectors for a known resource": {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
 				},
 			},
-			expectedAllowed: true,
+			expectedAllowed: false,
 		},
 		"false when resource version is set": {
-			allowlist: []string{"advisor.grafana.app/advisors"},
 			req: &resourcepb.ListRequest{
 				Source:          resourcepb.ListRequest_STORE,
 				ResourceVersion: 42,
 				Options: &resourcepb.ListOptions{
-					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+					Labels: []*resourcepb.Requirement{{Key: "test", Operator: "=", Values: []string{"true"}}},
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
 				},
 			},
 			expectedAllowed: false,
 		},
 		"false when list has a name": {
-			allowlist: []string{"advisor.grafana.app/advisors"},
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
-					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors", Name: "named"},
-				},
-			},
-			expectedAllowed: false,
-		},
-		"false when no selectors and resource is not allowlisted": {
-			req: &resourcepb.ListRequest{
-				Source: resourcepb.ListRequest_STORE,
-				Options: &resourcepb.ListOptions{
-					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+					Labels: []*resourcepb.Requirement{{Key: "test", Operator: "=", Values: []string{"true"}}},
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors", Name: "named"},
 				},
 			},
 			expectedAllowed: false,
 		},
 		"false when keys only": {
-			allowlist: []string{"advisor.grafana.app/advisors"},
 			req: &resourcepb.ListRequest{
 				Source:   resourcepb.ListRequest_STORE,
 				KeysOnly: true,
 				Options: &resourcepb.ListOptions{
-					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+					Labels: []*resourcepb.Requirement{{Key: "test", Operator: "=", Values: []string{"true"}}},
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
 				},
 			},
 			expectedAllowed: false,
@@ -195,15 +184,14 @@ func TestShouldUseSearchForList(t *testing.T) {
 			},
 			expectedAllowed: true,
 		},
-		"true when no selectors and an allowlisted resource has no manifest": {
-			allowlist: []string{"mobile.ext.grafana.app/mobileusersettings"},
+		"false when no selectors and a resource has no manifest": {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "mobile.ext.grafana.app", Resource: "mobileusersettings"},
 				},
 			},
-			expectedAllowed: true,
+			expectedAllowed: false,
 		},
 		"false when continuing a list that started on the store scan": {
 			req: &resourcepb.ListRequest{
@@ -292,11 +280,6 @@ func TestShouldUseSearchForList(t *testing.T) {
 			if !tc.disableSearch {
 				s.searchClient = &stubSearchClient{}
 			}
-			allowed := make(map[string]bool, len(tc.allowlist))
-			for _, resource := range tc.allowlist {
-				allowed[resource] = true
-			}
-			s.searchBackedListResources = SearchBackedListConfig{AllowedResources: allowed}
 			if !tc.noRegistry {
 				// Stands in for what a manifest watcher would load, including a kind this
 				// binary was not compiled with.
@@ -309,21 +292,6 @@ func TestShouldUseSearchForList(t *testing.T) {
 			require.Equal(t, tc.expectedAllowed, s.shouldUseSearchForList(tc.req))
 		})
 	}
-}
-
-func TestSearchBackedListConfigAllowed(t *testing.T) {
-	config := SearchBackedListConfig{AllowedResources: map[string]bool{
-		"dashboard.grafana.app/dashboards": true,
-		"*.ext.grafana.app":                true,
-		"disabled.ext.grafana.app":         false,
-		"[invalid":                         true,
-	}}
-
-	require.True(t, config.Allowed("dashboard.grafana.app", "dashboards"))
-	require.False(t, config.Allowed("dashboard.grafana.app", "folders"))
-	require.True(t, config.Allowed("exampletodoapp.ext.grafana.app", "todos"))
-	require.False(t, config.Allowed("disabled.ext.grafana.app", "todos"))
-	require.False(t, config.Allowed("exampletodoapp.grafana.app", "todos"))
 }
 
 func TestFilterSelectors(t *testing.T) {
@@ -411,42 +379,23 @@ func TestDecodeSearchListPage(t *testing.T) {
 	const resourceVersion = int64(1958241239561142273)
 	key := &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"}
 	want := []listSearchRow{{key: key, resourceVersion: resourceVersion, sortFields: []string{"title", "a"}}}
-
-	for _, test := range []struct {
-		name     string
-		response *resourcepb.ResourceSearchResponse
-	}{
-		{
-			name: "unspecified resource table",
-			response: &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
-				Rows: []*resourcepb.ResourceTableRow{{
-					Key: key, ResourceVersion: resourceVersion, SortFields: []string{"title", "a"},
-				}},
-			}},
-		},
-		{
-			name: "explicit resource table",
-			response: &resourcepb.ResourceSearchResponse{
-				ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
-				Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{{
-					Key: key, ResourceVersion: resourceVersion, SortFields: []string{"title", "a"},
-				}}},
-			},
-		},
-		{
-			name: "field values",
-			response: &resourcepb.ResourceSearchResponse{
-				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-				Rows: []*resourcepb.ResourceSearchRow{{
-					Key: key, ResourceVersion: resourceVersion, SortFields: []string{"title", "a"},
-				}},
-			},
-		},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			page, err := decodeSearchListPage(test.response, 0)
+	response := &resourcepb.ResourceSearchResponse{
+		ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		ResourceVersion: 100,
+		Rows: []*resourcepb.ResourceSearchRow{{
+			Key: key, ResourceVersion: resourceVersion, SortFields: []string{"title", "a"},
+		}},
+	}
+	for _, listRV := range []int64{0, 50} {
+		t.Run(fmt.Sprintf("listRV=%d", listRV), func(t *testing.T) {
+			page, err := decodeSearchListPage(response, listRV)
 			require.NoError(t, err)
 			require.Equal(t, want, page.rows)
+			if listRV == 0 {
+				require.Equal(t, response.ResourceVersion, page.resourceVersion)
+			} else {
+				require.Equal(t, listRV, page.resourceVersion)
+			}
 		})
 	}
 }
@@ -462,10 +411,19 @@ func TestDecodeSearchListPageRejectsMalformedResponses(t *testing.T) {
 			response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_ResultFormat(99)},
 		},
 		{
-			name: "table row without key",
-			response: &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
-				Rows: []*resourcepb.ResourceTableRow{{}},
-			}},
+			name:     "unspecified format",
+			response: &resourcepb.ResourceSearchResponse{},
+		},
+		{
+			name:     "resource table format",
+			response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE},
+		},
+		{
+			name: "nil field-value row",
+			response: &resourcepb.ResourceSearchResponse{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Rows:         []*resourcepb.ResourceSearchRow{nil},
+			},
 		},
 		{
 			name: "field-value row without key",
@@ -487,7 +445,7 @@ func TestListWithSelectors(t *testing.T) {
 
 	t.Run("label selectors reach search unprefixed, fields are prefixed", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
-		searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{ResourceVersion: searchServerRv}}
+		searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, ResourceVersion: searchServerRv}}
 		s := createTestServer(searchClient, 1024)
 		req := &resourcepb.ListRequest{
 			Limit: 10,
@@ -675,7 +633,7 @@ func TestListWithSelectors(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := identity.WithServiceIdentityContext(context.Background(), 1)
-			rows := []*resourcepb.ResourceTableRow{
+			rows := []*resourcepb.ResourceSearchRow{
 				{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"}, ResourceVersion: 1, SortFields: []string{"s1"}},
 				{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"}, ResourceVersion: 2, SortFields: tc.lastSortFields},
 			}
@@ -685,7 +643,8 @@ func TestListWithSelectors(t *testing.T) {
 			searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
 				ResourceVersion: searchServerRv,
 				TotalHitsExact:  !tc.inexactTotal,
-				Results:         &resourcepb.ResourceTable{Rows: rows},
+				ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Rows:            rows,
 			}}
 			s := createTestServer(searchClient, 1024)
 			s.backend = &fakeBackend{forbidden: tc.forbidden}
@@ -723,7 +682,7 @@ func TestListWithSelectors(t *testing.T) {
 				require.Equal(t, []string{"s2"}, token.SearchAfter)
 				require.Equal(t, wantRV, token.ResourceVersion)
 
-				searchClient.resp = &resourcepb.ResourceSearchResponse{ResourceVersion: searchServerRv + 1}
+				searchClient.resp = &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, ResourceVersion: searchServerRv + 1}
 				req.NextPageToken = resp.NextPageToken
 				lastPage, err := s.listWithSelectors(ctx, req)
 				require.NoError(t, err)
@@ -744,11 +703,10 @@ func TestListWithSelectors(t *testing.T) {
 			resp: &resourcepb.ResourceSearchResponse{
 				ResourceVersion: searchServerRv,
 				TotalHitsExact:  true,
-				Results: &resourcepb.ResourceTable{
-					Rows: []*resourcepb.ResourceTableRow{
-						{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"}, ResourceVersion: 1, SortFields: []string{"s1"}},
-						{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"}, ResourceVersion: 2, SortFields: []string{"s2"}},
-					},
+				ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Rows: []*resourcepb.ResourceSearchRow{
+					{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"}, ResourceVersion: 1, SortFields: []string{"s1"}},
+					{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"}, ResourceVersion: 2, SortFields: []string{"s2"}},
 				},
 			},
 		}
@@ -809,18 +767,17 @@ func TestListWithSelectors(t *testing.T) {
 		searchClient := &stubSearchClient{
 			resp: &resourcepb.ResourceSearchResponse{
 				ResourceVersion: searchServerRv,
-				Results: &resourcepb.ResourceTable{
-					Rows: []*resourcepb.ResourceTableRow{
-						{
-							Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"},
-							ResourceVersion: 1,
-							SortFields:      []string{"s1"},
-						},
-						{
-							Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"},
-							ResourceVersion: 2,
-							SortFields:      []string{"s2"},
-						},
+				ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Rows: []*resourcepb.ResourceSearchRow{
+					{
+						Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"},
+						ResourceVersion: 1,
+						SortFields:      []string{"s1"},
+					},
+					{
+						Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"},
+						ResourceVersion: 2,
+						SortFields:      []string{"s2"},
 					},
 				},
 			},
@@ -899,18 +856,17 @@ func TestListWithSelectors(t *testing.T) {
 		searchClient := &stubSearchClient{
 			resp: &resourcepb.ResourceSearchResponse{
 				ResourceVersion: searchServerRv,
-				Results: &resourcepb.ResourceTable{
-					Rows: []*resourcepb.ResourceTableRow{
-						{
-							Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"},
-							ResourceVersion: 2,
-							SortFields:      []string{"s2"},
-						},
-						{
-							Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "c"},
-							ResourceVersion: 2,
-							SortFields:      []string{"s3"},
-						},
+				ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Rows: []*resourcepb.ResourceSearchRow{
+					{
+						Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"},
+						ResourceVersion: 2,
+						SortFields:      []string{"s2"},
+					},
+					{
+						Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "c"},
+						ResourceVersion: 2,
+						SortFields:      []string{"s3"},
 					},
 				},
 			},
@@ -950,18 +906,17 @@ func TestListWithSelectors(t *testing.T) {
 		searchClient := &stubSearchClient{
 			resp: &resourcepb.ResourceSearchResponse{
 				ResourceVersion: searchServerRv,
-				Results: &resourcepb.ResourceTable{
-					Rows: []*resourcepb.ResourceTableRow{
-						{
-							Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"},
-							ResourceVersion: 1,
-							SortFields:      []string{"s1"},
-						},
-						{
-							Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"},
-							ResourceVersion: 2,
-							SortFields:      []string{"s2"},
-						},
+				ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Rows: []*resourcepb.ResourceSearchRow{
+					{
+						Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"},
+						ResourceVersion: 1,
+						SortFields:      []string{"s1"},
+					},
+					{
+						Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"},
+						ResourceVersion: 2,
+						SortFields:      []string{"s2"},
 					},
 				},
 			},
@@ -992,7 +947,7 @@ func TestListWithSelectors(t *testing.T) {
 	t.Run("a search with no rows returns an empty list", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
 		searchClient := &stubSearchClient{
-			resp: &resourcepb.ResourceSearchResponse{ResourceVersion: searchServerRv},
+			resp: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, ResourceVersion: searchServerRv},
 		}
 		s := createTestServer(searchClient, 1024)
 		req := &resourcepb.ListRequest{
@@ -1067,10 +1022,11 @@ func TestListWithSelectorsUsesBatchReadsAndAuthorization(t *testing.T) {
 	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
 	searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
 		ResourceVersion: 100,
-		Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{
+		ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Rows: []*resourcepb.ResourceSearchRow{
 			{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"}, ResourceVersion: 1},
 			{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"}, ResourceVersion: 2},
-		}},
+		},
 	}}
 	backend := &batchFakeBackend{fakeBackend: &fakeBackend{}}
 	access := denyByNameAccess{deny: map[string]struct{}{"b": {}}}
@@ -1092,43 +1048,20 @@ func TestListWithSelectorsUsesBatchReadsAndAuthorization(t *testing.T) {
 	require.Zero(t, backend.readCalls)
 }
 
-func TestListUsesSearchForAnAllowlistedResourceWithoutSelectors(t *testing.T) {
-	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
-	searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{ResourceVersion: 100}}
-	s := createTestServer(searchClient, 1024)
-	s.searchBackedListResources = SearchBackedListConfig{AllowedResources: map[string]bool{
-		"advisor.grafana.app/advisors": true,
-	}}
-
-	resp, err := s.List(ctx, &resourcepb.ListRequest{
-		Source: resourcepb.ListRequest_STORE,
-		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
-			Namespace: "nsx",
-			Group:     "advisor.grafana.app",
-			Resource:  "advisors",
-		}},
-	})
-
-	require.NoError(t, err)
-	require.Empty(t, resp.Items)
-	require.NotNil(t, searchClient.last)
-	require.Empty(t, searchClient.last.Options.Fields)
-	require.Empty(t, searchClient.last.Options.Labels)
-}
-
 func TestListWithSelectorsStopsReadingAtPageCutoff(t *testing.T) {
 	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
 
-	rows := make([]*resourcepb.ResourceTableRow, 0, 30)
-	for i := 0; i < cap(rows); i++ {
-		rows = append(rows, &resourcepb.ResourceTableRow{
+	rows := make([]*resourcepb.ResourceSearchRow, 0, 30)
+	for i := range cap(rows) {
+		rows = append(rows, &resourcepb.ResourceSearchRow{
 			Key:        &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: fmt.Sprintf("item-%d", i)},
 			SortFields: []string{fmt.Sprintf("s%d", i)},
 		})
 	}
 	searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
 		ResourceVersion: 100,
-		Results:         &resourcepb.ResourceTable{Rows: rows},
+		ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Rows:            rows,
 	}}
 	backend := &batchFakeBackend{fakeBackend: &fakeBackend{}}
 
@@ -1177,11 +1110,12 @@ func TestListWithSelectorsAuthorizesBatchedRows(t *testing.T) {
 	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
 	searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
 		ResourceVersion: 100,
-		Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{
+		ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Rows: []*resourcepb.ResourceSearchRow{
 			{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"}, ResourceVersion: 1, SortFields: []string{"s1"}},
 			{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"}, ResourceVersion: 2, SortFields: []string{"s2"}},
 			{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "c"}, ResourceVersion: 3, SortFields: []string{"s3"}},
-		}},
+		},
 	}}
 	backend := &batchFakeBackend{fakeBackend: &fakeBackend{}}
 	s := createTestServer(searchClient, 1024)
@@ -1207,10 +1141,11 @@ func TestListWithSelectorsAuthorizesErroredRows(t *testing.T) {
 	newSearch := func() *stubSearchClient {
 		return &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
 			ResourceVersion: 100,
-			Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{
+			ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Rows: []*resourcepb.ResourceSearchRow{
 				{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"}, ResourceVersion: 1, SortFields: []string{"s1"}},
 				{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"}, ResourceVersion: 2, SortFields: []string{"s2"}},
-			}},
+			},
 		}}
 	}
 	req := func() *resourcepb.ListRequest {
@@ -1319,11 +1254,12 @@ func TestListWithSelectorsSurfacesKVRuntimeFailuresBeforeAuthorization(t *testin
 			newServer := func() *server {
 				search := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
 					ResourceVersion: rv,
-					Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{{
+					ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+					Rows: []*resourcepb.ResourceSearchRow{{
 						Key:             appsKey("failed"),
 						ResourceVersion: rv,
 						SortFields:      []string{"failed"},
-					}}},
+					}},
 				}}
 				s := createTestServer(search, 1024)
 				s.backend = backend
@@ -1763,36 +1699,26 @@ func TestListWithSelectorsWithoutIndexedFoldersAuthorizesAfterReading(t *testing
 	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
 	backend := setupTestStorageBackend(t)
 	rv := seedResource(t, backend, ctx, "item", "open")
-	for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
-		resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
-		resourcepb.ResourceSearchRequest_FIELD_VALUES,
-	} {
-		t.Run(format.String(), func(t *testing.T) {
-			searchResp := &resourcepb.ResourceSearchResponse{
-				ResourceVersion: rv,
-				ResultFormat:    format,
-				Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{
-					{Key: appsKey("item"), ResourceVersion: rv},
-				}},
-				Rows: []*resourcepb.ResourceSearchRow{{Key: appsKey("item"), ResourceVersion: rv}},
-			}
-			s := createTestServer(&stubSearchClient{resp: searchResp}, 1<<20)
-			s.authorizeBeforeFetchEnabled = true
-			s.backend = backend
-			access := &folderAccess{deny: map[string]bool{"": true}}
-			s.access = access
-
-			resp, err := s.listWithSelectors(ctx, &resourcepb.ListRequest{
-				Options: &resourcepb.ListOptions{Key: appsKey(""), Fields: []*resourcepb.Requirement{{Key: "spec.foo"}}},
-			})
-
-			require.NoError(t, err)
-			require.Nil(t, resp.Error)
-			require.Len(t, resp.Items, 1)
-			require.Zero(t, access.batches, "an unknown folder must not be authorized as root")
-			require.Equal(t, []string{"open"}, access.checkedFolders)
-		})
+	searchResp := &resourcepb.ResourceSearchResponse{
+		ResourceVersion: rv,
+		ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Rows:            []*resourcepb.ResourceSearchRow{{Key: appsKey("item"), ResourceVersion: rv}},
 	}
+	s := createTestServer(&stubSearchClient{resp: searchResp}, 1<<20)
+	s.authorizeBeforeFetchEnabled = true
+	s.backend = backend
+	access := &folderAccess{deny: map[string]bool{"": true}}
+	s.access = access
+
+	resp, err := s.listWithSelectors(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: appsKey(""), Fields: []*resourcepb.Requirement{{Key: "spec.foo"}}},
+	})
+
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.Len(t, resp.Items, 1)
+	require.Zero(t, access.batches, "an unknown folder must not be authorized as root")
+	require.Equal(t, []string{"open"}, access.checkedFolders)
 }
 
 // k6Access behaves like authlib for a user: the single Check hides the k6 folder,

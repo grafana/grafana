@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"iter"
 	"net/http"
-	"path"
 	"slices"
-	"strings"
 
 	"github.com/grafana/authlib/authz"
 	claims "github.com/grafana/authlib/types"
@@ -214,48 +212,30 @@ func decodeSearchListPage(response *resourcepb.ResourceSearchResponse, listRV in
 		page.resourceVersion = response.GetResourceVersion()
 	}
 
-	var rows []listSearchRow
-	switch response.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		table := response.GetResults()
-		if table == nil {
-			return page, nil
-		}
-		rows = make([]listSearchRow, 0, len(table.GetRows()))
-		for i, row := range table.GetRows() {
-			if row == nil || row.GetKey() == nil {
-				return nil, fmt.Errorf("resource table row %d has no key", i)
-			}
-			rows = append(rows, listSearchRow{
-				key:             row.GetKey(),
-				resourceVersion: row.GetResourceVersion(),
-				sortFields:      row.GetSortFields(),
-			})
-		}
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		folderField := slices.IndexFunc(response.GetFields(), func(f *resourcepb.ResourceSearchField) bool {
-			return f.GetName() == SEARCH_FIELD_FOLDER
-		})
-		page.folderIndexed = folderField >= 0
-		rows = make([]listSearchRow, 0, len(response.GetRows()))
-		for i, row := range response.GetRows() {
-			if row == nil || row.GetKey() == nil {
-				return nil, fmt.Errorf("field-value row %d has no key", i)
-			}
-			listRow := listSearchRow{
-				key:             row.GetKey(),
-				resourceVersion: row.GetResourceVersion(),
-				sortFields:      row.GetSortFields(),
-			}
-			for _, value := range row.GetValues() {
-				if folderField >= 0 && value.GetFieldIndex() == uint32(folderField) && len(value.GetStringValues()) > 0 {
-					listRow.folder = value.GetStringValues()[0]
-				}
-			}
-			rows = append(rows, listRow)
-		}
-	default:
+	if response.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return nil, fmt.Errorf("unsupported search result format %d", response.GetResultFormat())
+	}
+
+	folderField := slices.IndexFunc(response.GetFields(), func(f *resourcepb.ResourceSearchField) bool {
+		return f.GetName() == SEARCH_FIELD_FOLDER
+	})
+	page.folderIndexed = folderField >= 0
+	rows := make([]listSearchRow, 0, len(response.GetRows()))
+	for i, row := range response.GetRows() {
+		if row == nil || row.GetKey() == nil {
+			return nil, fmt.Errorf("field-value row %d has no key", i)
+		}
+		listRow := listSearchRow{
+			key:             row.GetKey(),
+			resourceVersion: row.GetResourceVersion(),
+			sortFields:      row.GetSortFields(),
+		}
+		for _, value := range row.GetValues() {
+			if folderField >= 0 && value.GetFieldIndex() == uint32(folderField) && len(value.GetStringValues()) > 0 {
+				listRow.folder = value.GetStringValues()[0]
+			}
+		}
+		rows = append(rows, listRow)
 	}
 	page.rows = rows
 	return page, nil
@@ -377,7 +357,7 @@ func (s *server) authorizeSearchRows(ctx context.Context, rows []listSearchRow) 
 	for i, err := range authz.FilterAuthorized(ctx, s.access, batched, func(i int) authz.BatchCheckItem {
 		row := rows[i]
 		return listAuthorizationItem(row.key, row.key.Name, row.folder, row.resourceVersion)
-	}, authz.WithTracer(tracer)) {
+	}, authz.WithTracer(tracer), authz.WithSizeHint(len(rows))) {
 		if err != nil {
 			return nil, AsErrorResult(err)
 		}
@@ -525,33 +505,6 @@ func indexableSelectorOperator(op string) bool {
 	}
 }
 
-type SearchBackedListConfig struct {
-	AllowedResources map[string]bool
-}
-
-func (c SearchBackedListConfig) Allowed(group, resource string) bool {
-	return resourceAllowed(c.AllowedResources, group, resource)
-}
-
-func resourceAllowed(allowed map[string]bool, group, resource string) bool {
-	if enabled, ok := allowed[group+"/"+resource]; ok {
-		return enabled
-	}
-	if enabled, ok := allowed[group]; ok {
-		return enabled
-	}
-	for pattern, enabled := range allowed {
-		if !enabled || strings.Contains(pattern, "/") {
-			continue
-		}
-		matched, err := path.Match(pattern, group)
-		if err == nil && matched {
-			return true
-		}
-	}
-	return false
-}
-
 func (s *server) shouldUseSearchForList(req *resourcepb.ListRequest) bool {
 	if (s.searchClient == nil && s.search == nil) || req.Source != resourcepb.ListRequest_STORE {
 		return false
@@ -569,7 +522,7 @@ func (s *server) shouldUseSearchForList(req *resourcepb.ListRequest) bool {
 		return false
 	}
 	hasSelectors := len(req.Options.Fields) > 0 || len(req.Options.Labels) > 0
-	if !hasSelectors && !s.searchBackedListResources.Allowed(req.Options.Key.Group, req.Options.Key.Resource) {
+	if !hasSelectors {
 		return false
 	}
 

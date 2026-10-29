@@ -2,14 +2,13 @@ package rbac
 
 import (
 	"fmt"
-	"maps"
 	"slices"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/datasourcek8s"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
-	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 // Mapping maps a verb to a RBAC action and a resource name to a RBAC scope.
@@ -109,13 +108,10 @@ type MapperRegistry interface {
 	// Get returns the permission mapper for the given group and resource.
 	// If no translation is found, it returns false.
 	Get(group, resource, subresource string) (Mapping, bool)
-	// GetAPIResourceName returns the API resource name (e.g. "repositories") for the given group and resource.
-	// Use this to send the canonical resource name in Check requests instead of legacy names (e.g. "provisioning.repositories").
-	// Returns ("", false) if no translation is found.
-	GetAPIResourceName(group, resource string) (string, bool)
 	// GetAll returns all the translations for the given group
 	GetAll(group string) []Mapping
-	// ResourceMappings returns all translations for the given group with their API resource names.
+	// ResourceMappings returns registered translations with their API resource names.
+	// Request aliases are resolved by Get, not included in this enumeration.
 	ResourceMappings(group string) []ResourceMapping
 	// GetGroups returns all registered group names
 	GetGroups() []string
@@ -281,17 +277,6 @@ func newFolderTranslation() translation {
 func newDatasourceQueryTranslation() translation {
 	dsTranslation := newResourceTranslation("datasources", "uid", false, map[string]bool{utils.VerbCreate: true})
 
-	// Proxy routes carry existing RBAC actions as verbs and retain datasource UID scopes.
-	maps.Copy(dsTranslation.verbMapping, map[string]string{
-		datasources.ActionQuery:                                datasources.ActionQuery,
-		accesscontrol.ActionAlertingRuleExternalRead:           accesscontrol.ActionAlertingRuleExternalRead,
-		accesscontrol.ActionAlertingRuleExternalWrite:          accesscontrol.ActionAlertingRuleExternalWrite,
-		accesscontrol.ActionAlertingInstancesExternalRead:      accesscontrol.ActionAlertingInstancesExternalRead,
-		accesscontrol.ActionAlertingInstancesExternalWrite:     accesscontrol.ActionAlertingInstancesExternalWrite,
-		accesscontrol.ActionAlertingNotificationsExternalRead:  accesscontrol.ActionAlertingNotificationsExternalRead,
-		accesscontrol.ActionAlertingNotificationsExternalWrite: accesscontrol.ActionAlertingNotificationsExternalWrite,
-	})
-
 	dsTranslation.actionSetMapping = map[string][]string{
 		// utils.VerbWatch: {"datasources:query"},
 		utils.VerbGet:              {"datasources:query", "datasources:admin", "datasources:edit"},
@@ -414,6 +399,27 @@ func newAlertmanagerImportsTranslation() translation {
 		},
 		folderSupport:   false,
 		skipScopeOnVerb: map[string]bool{utils.VerbCreate: true},
+	}
+}
+
+// newAlertingConfigTranslation maps an alerting app's per-org Config singleton
+// (and its /status subresource) to its read/update actions, mirroring the
+// app's own authorizer. Delete is deliberately unmapped because the singleton
+// can never be deleted; the app authorizer additionally restricts create to
+// the service identity, which a verb mapping cannot express.
+func newAlertingConfigTranslation(scopeRoot, readAction, updateAction string) translation {
+	return translation{
+		resource:  scopeRoot,
+		attribute: "uid",
+		verbMapping: map[string]string{
+			utils.VerbGet:    readAction,
+			utils.VerbList:   readAction,
+			utils.VerbWatch:  readAction,
+			utils.VerbCreate: updateAction,
+			utils.VerbUpdate: updateAction,
+			utils.VerbPatch:  updateAction,
+		},
+		folderSupport: false,
 	}
 }
 
@@ -589,12 +595,32 @@ func NewMapperRegistry() MapperRegistry {
 			// No silence kind is served here yet; the translation exists so folder-scoped
 			// silence capability checks resolve. See newSilenceTranslation.
 			"silences": newSilenceTranslation(),
+			"configs": newAlertingConfigTranslation(
+				accesscontrol.AlertingConfigResource,
+				accesscontrol.ActionAlertingConfigRead,
+				accesscontrol.ActionAlertingConfigUpdate,
+			),
+			"configs/status": newAlertingConfigTranslation(
+				accesscontrol.AlertingConfigResource,
+				accesscontrol.ActionAlertingConfigRead,
+				accesscontrol.ActionAlertingConfigStatusUpdate,
+			),
 		},
 		"rules.alerting.grafana.app": {
 			// All rule resources share the folder-scoped alert.rules:* actions.
 			"alertrules":     newAlertRuleTranslation(),
 			"recordingrules": newAlertRuleTranslation(),
 			"rulesequences":  newAlertRuleTranslation(),
+			"configs": newAlertingConfigTranslation(
+				accesscontrol.AlertingRulesConfigScopeRoot,
+				accesscontrol.ActionAlertingRulesConfigRead,
+				accesscontrol.ActionAlertingRulesConfigUpdate,
+			),
+			"configs/status": newAlertingConfigTranslation(
+				accesscontrol.AlertingRulesConfigScopeRoot,
+				accesscontrol.ActionAlertingRulesConfigRead,
+				accesscontrol.ActionAlertingRulesConfigStatusUpdate,
+			),
 		},
 		// Assistant-pushed alert-rule embeddings, authorized like the native rule kinds above.
 		"assistant.alertrules.ext.grafana.app": {
@@ -751,30 +777,9 @@ func NewMapperRegistry() MapperRegistry {
 			"securevalues": newResourceTranslation("secret.securevalues", "uid", false, nil),
 			"keepers":      newResourceTranslation("secret.keepers", "uid", false, nil),
 		},
-		"query.grafana.app": {
-			"query": translation{
-				resource:  "datasources",
-				attribute: "uid",
-				verbMapping: map[string]string{
-					utils.VerbCreate: "datasources:query",
-				},
-				folderSupport:   false,
-				skipScopeOnVerb: nil,
-			},
-		},
 		"datasource.grafana.app": {
 			// Unified storage keeps every datasource type under this group
 			"datasources": newDatasourceQueryTranslation(),
-			// duplicate the query group here
-			"query": translation{
-				resource:  "datasources",
-				attribute: "uid",
-				verbMapping: map[string]string{
-					utils.VerbCreate: "datasources:query",
-				},
-				folderSupport:   false,
-				skipScopeOnVerb: nil,
-			},
 			"datasources/query": translation{
 				resource:  "datasources",
 				attribute: "uid",
@@ -834,44 +839,7 @@ func NewMapperRegistry() MapperRegistry {
 		},
 	})
 
-	mapper["*.datasource.grafana.app"] = map[string]translation{
-		"datasources":         mapper["datasource.grafana.app"]["datasources"],
-		"datasources/query":   mapper["datasource.grafana.app"]["datasources/query"],
-		"datasources/caching": mapper["datasource.grafana.app"]["datasources/caching"],
-	}
-
 	return mapper
-}
-
-// findGroupKey returns the registry key for group, using exact match first,
-// then wildcard match. A wildcard key has the form "*.<suffix>" (e.g. "*.datasource.grafana.app");
-// group matches if it has that suffix, is longer than the suffix (non-empty prefix), and the prefix
-// contains no dot (so "loki.datasource.grafana.app" matches but "foo.loki.datasource.grafana.app" does not).
-// Group starting with "*" never matches (so we never exact-match a wildcard registry key as input).
-func (m mapper) findGroupKey(group string) (string, bool) {
-	if strings.HasPrefix(group, "*") {
-		return "", false
-	}
-	if _, ok := m[group]; ok {
-		return group, true
-	}
-	for key := range m {
-		// is this a wildcard key?
-		if len(key) < 2 || key[0] != '*' || key[1] != '.' {
-			continue
-		}
-		suffix := key[1:]                              // remove the leading "*"
-		prefix, ok := strings.CutSuffix(group, suffix) // loki.datasource.grafana.app -> loki
-		if !ok || prefix == "" {
-			continue
-		}
-		// prefix must be a single segment (no nested dots)
-		if strings.Contains(prefix, ".") {
-			continue
-		}
-		return key, true
-	}
-	return "", false
 }
 
 // newPermissionsDelegationTranslation maps a delegation check to the RBAC
@@ -893,6 +861,7 @@ func newPermissionsDelegationTranslation(action string) Mapping {
 }
 
 func (m mapper) Get(group, resource, subresource string) (Mapping, bool) {
+	group, resource, subresource = datasourcek8s.AuthorizationResource(group, resource, subresource)
 	// Delegation checks name the RBAC action being delegated as the subresource
 	// of the permissions pseudo-resource. The actions are open-ended, so the
 	// translation is built from the request instead of the static table. Only
@@ -902,7 +871,7 @@ func (m mapper) Get(group, resource, subresource string) (Mapping, bool) {
 		return newPermissionsDelegationTranslation(subresource), true
 	}
 
-	groupKey, ok := m.findGroupKey(group)
+	resources, ok := m[group]
 	if !ok {
 		return nil, false
 	}
@@ -912,7 +881,6 @@ func (m mapper) Get(group, resource, subresource string) (Mapping, bool) {
 		lookupResource = resource + "/" + subresource
 	}
 
-	resources := m[groupKey]
 	t, ok := resources[lookupResource]
 	if !ok {
 		return nil, false
@@ -921,55 +889,25 @@ func (m mapper) Get(group, resource, subresource string) (Mapping, bool) {
 	return &t, true
 }
 
-func (m mapper) GetAPIResourceName(group, resource string) (string, bool) {
-	groupKey, ok := m.findGroupKey(group)
-	if !ok {
-		return "", false
-	}
-	resources := m[groupKey]
-	if _, ok := resources[resource]; ok {
-		return resource, true
-	}
-	// Fall back to matching on the translation's scope resource. Iterate in sorted
-	// key order so the result is deterministic when several API resources share the
-	// same scope resource (e.g. rules.alerting.grafana.app alertrules/recordingrules/
-	// rulesequences all map to "alert.rules"); map iteration order must never decide it.
-	apiResources := make([]string, 0, len(resources))
-	for apiResource := range resources {
-		apiResources = append(apiResources, apiResource)
-	}
-	slices.Sort(apiResources)
-	for _, apiResource := range apiResources {
-		if resources[apiResource].Resource() == resource {
-			return apiResource, true
-		}
-	}
-	return "", false
-}
-
 func (m mapper) GetAll(group string) []Mapping {
-	groupKey, ok := m.findGroupKey(group)
-	if !ok {
+	mappings := m.ResourceMappings(group)
+	if mappings == nil {
 		return nil
 	}
-
-	resources := m[groupKey]
-
-	translations := make([]Mapping, 0, len(resources))
-	for _, t := range resources {
-		translations = append(translations, &t)
+	translations := make([]Mapping, 0, len(mappings))
+	for _, mapping := range mappings {
+		translations = append(translations, mapping.Mapping)
 	}
 
 	return translations
 }
 
 func (m mapper) ResourceMappings(group string) []ResourceMapping {
-	groupKey, ok := m.findGroupKey(group)
+	resources, ok := m[group]
 	if !ok {
 		return nil
 	}
 
-	resources := m[groupKey]
 	mappings := make([]ResourceMapping, 0, len(resources))
 	for apiResource, t := range resources {
 		mapping := t

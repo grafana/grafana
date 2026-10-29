@@ -35,7 +35,7 @@ import {
   MappingType,
 } from '@grafana/schema';
 import { FIXED_UNIT, UPlotConfigBuilder, type UPlotConfigPrepFn, type VizLegendItem } from '@grafana/ui';
-import { preparePlotData2, getStackingGroups } from '@grafana/ui/internal';
+import { preparePlotData2, getStackingGroups, shouldShowLegend } from '@grafana/ui/internal';
 import { findFrameWithNullTimeValue } from 'app/features/panel/frames/validation';
 
 import { getConfig, type TimelineCoreOptions } from './timeline';
@@ -621,7 +621,7 @@ export function prepareTimelineLegendItems(
   options: VizLegendOptions,
   theme: GrafanaTheme2
 ): VizLegendItem[] | undefined {
-  if (!frames || options.showLegend === false) {
+  if (!frames || !shouldShowLegend(options)) {
     return undefined;
   }
 

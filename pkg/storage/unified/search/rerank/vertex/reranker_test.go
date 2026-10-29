@@ -3,6 +3,7 @@ package vertex
 import (
 	"context"
 	"errors"
+	"strconv"
 	"testing"
 	"time"
 
@@ -18,10 +19,12 @@ type fakeClient struct {
 	gotModel string
 	gotQuery string
 	gotTexts []string
+	calls    int
 	sleep    time.Duration
 }
 
 func (f *fakeClient) Rank(ctx context.Context, model, query string, texts []string) ([]RecordScore, error) {
+	f.calls++
 	f.gotModel, f.gotQuery, f.gotTexts = model, query, texts
 	if f.sleep > 0 {
 		select {
@@ -34,16 +37,27 @@ func (f *fakeClient) Rank(ctx context.Context, model, query string, texts []stri
 }
 
 func TestReranker_MapsScoresByRecordID(t *testing.T) {
-	// out of order + one missing id: missing stays 0
-	c := &fakeClient{out: []RecordScore{{ID: "2", Score: 0.9}, {ID: "0", Score: 0.4}}}
-	r := NewReranker(c, "semantic-ranker-fast-004")
+	for _, count := range []int{3, 500} {
+		t.Run(strconv.Itoa(count), func(t *testing.T) {
+			texts := make([]string, count)
+			for i := range texts {
+				texts[i] = "text " + strconv.Itoa(i)
+			}
+			// Out-of-order records map back to the input order; omitted records stay zero.
+			c := &fakeClient{out: []RecordScore{{ID: strconv.Itoa(count - 1), Score: 0.9}, {ID: "0", Score: 0.4}}}
+			r := NewReranker(c, "semantic-ranker-fast-004")
 
-	scores, err := r.Score(context.Background(), "q", []string{"a", "b", "c"})
-	require.NoError(t, err)
-	assert.Equal(t, []float64{0.4, 0, 0.9}, scores)
-	assert.Equal(t, "semantic-ranker-fast-004", c.gotModel)
-	assert.Equal(t, "q", c.gotQuery)
-	assert.Equal(t, []string{"a", "b", "c"}, c.gotTexts)
+			scores, err := r.Score(context.Background(), "q", texts)
+			require.NoError(t, err)
+			want := make([]float64, count)
+			want[0], want[count-1] = 0.4, 0.9
+			assert.Equal(t, want, scores)
+			assert.Equal(t, 1, c.calls)
+			assert.Equal(t, "semantic-ranker-fast-004", c.gotModel)
+			assert.Equal(t, "q", c.gotQuery)
+			assert.Equal(t, texts, c.gotTexts)
+		})
+	}
 }
 
 func TestReranker_IgnoresUnknownIDs(t *testing.T) {

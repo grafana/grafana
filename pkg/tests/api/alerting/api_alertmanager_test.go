@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -57,7 +58,7 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 	}
 
 	// Create alertmanager config
-	cfg := apimodels.PostableUserConfig{}
+	cfg := store.AMConfigDB{}
 	amConfig := `
 		{
 			"alertmanager_config": {

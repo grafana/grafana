@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/alertmanager/matchers/compat"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/alerting/logging"
 	notificationHistorian "github.com/grafana/alerting/notify/historian"
 	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/alerting/notify/nfstatus"
@@ -25,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/expr"
@@ -252,7 +254,7 @@ func (ng *AlertNG) init() error {
 	// using the UTF-8 parser and then fallsback to the classic parser on error.
 	// UTF-8 is permitted in label names. This should be removed when the compat package
 	// is removed from Alertmanager.
-	compat.InitFromFlags(ng.Log, featurecontrol.NoopFlags{})
+	compat.InitFromFlags(logging.NewSlogLogger(ng.Log), featurecontrol.NoopFlags{})
 
 	// Configure the remote Alertmanager.
 	// If toggles for both modes are enabled, remote primary takes precedence.
@@ -263,10 +265,8 @@ func (ng *AlertNG) init() error {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
-	//nolint:staticcheck // not yet migrated to OpenFeature
 	remoteSecondaryWithRemoteState := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondaryWithRemoteState)
-	if remotePrimary || remoteSecondary || remoteSecondaryWithRemoteState {
+	if remotePrimary || remoteSecondaryWithRemoteState {
 		m := ng.Metrics.GetRemoteAlertmanagerMetrics()
 		runtimeConfig := remoteClient.RuntimeConfig{
 			DispatchTimer: notifier.GetDispatchTimer(ng.FeatureToggles).String(),
@@ -572,7 +572,7 @@ func (ng *AlertNG) init() error {
 	// Both provisioning.LimitsProvider and notifier.LimitsProvider interfaces have identical
 	// signatures, so NoopLimitsProvider and RemoteLimitsProvider satisfy both via structural typing.
 	var limitsProvider provisioning.LimitsProvider
-	if remotePrimary || remoteSecondary || remoteSecondaryWithRemoteState {
+	if remotePrimary || remoteSecondaryWithRemoteState {
 		// For remote alertmanager, create a MimirClient to fetch limits
 		remoteURL, err := url.Parse(ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL)
 		if err != nil {
@@ -732,15 +732,9 @@ func (ng *AlertNG) BackfillFolderFullpaths(ctx context.Context) error {
 		default:
 		}
 
-		// Get all unique folder UIDs for this org from alert_rule table where folder_fullpath is NULL
-		var folderUIDs []string
-		err := ng.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-			return sess.SQL(`
-				SELECT DISTINCT namespace_uid
-				FROM alert_rule
-				WHERE org_id = ? AND folder_fullpath IS NULL
-			`, orgID).Find(&folderUIDs)
-		})
+		// A routed legacy database provider needs the org identity during startup too.
+		orgCtx, _ := identity.WithServiceIdentity(ctx, orgID)
+		folderUIDs, err := ng.ruleStore.GetFolderUIDsWithMissingFullpath(orgCtx, orgID)
 		if err != nil {
 			ng.Log.Error("Failed to fetch folder UIDs for backfill", "org_id", orgID, "error", err)
 			continue

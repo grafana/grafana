@@ -38,10 +38,14 @@ var appManifestData = app.ManifestData{
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
-					Kind:       "Playlist",
-					Plural:     "Playlists",
-					Scope:      "Namespaced",
-					Conversion: true,
+					Kind:         "Playlist",
+					Plural:       "Playlists",
+					Scope:        "Namespaced",
+					Conversion:   true,
+					FolderScoped: func(b bool) *bool { return &b }(false),
+					Search: &app.ManifestVersionKindSearch{
+						Global: func(b bool) *bool { return &b }(true),
+					},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
 							Operations: []app.AdmissionOperation{
@@ -66,10 +70,14 @@ var appManifestData = app.ManifestData{
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
-					Kind:       "Playlist",
-					Plural:     "Playlists",
-					Scope:      "Namespaced",
-					Conversion: true,
+					Kind:         "Playlist",
+					Plural:       "Playlists",
+					Scope:        "Namespaced",
+					Conversion:   true,
+					FolderScoped: func(b bool) *bool { return &b }(false),
+					Search: &app.ManifestVersionKindSearch{
+						Global: func(b bool) *bool { return &b }(true),
+					},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
 							Operations: []app.AdmissionOperation{

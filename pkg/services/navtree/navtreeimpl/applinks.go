@@ -21,9 +21,6 @@ import (
 
 // The Knowledge Graph's version of the "Application" page.
 const assertsServicesPath = "/a/grafana-asserts-app/services"
-
-// The Knowledge Graph's fleet-wide "Operations" page, shown under "Application".
-const assertsOperationsPath = "/a/grafana-asserts-app/operations"
 const appObservabilityAppID = "grafana-app-observability-app"
 const assistantAppID = "grafana-assistant-app"
 const assistantOnboardingAppID = "grafana-assistant-onboarding-app"
@@ -38,6 +35,7 @@ var assistantOSSNavigationPaths = map[string]struct{}{
 var assistantTrialNavigationPaths = map[string]struct{}{
 	assistantAppHomePath:                 {},
 	"/a/grafana-assistant-app/workspace": {},
+	"/a/grafana-assistant-app/pages":     {},
 }
 
 func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) error {
@@ -135,59 +133,8 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 	}
 
 	s.nestMaintenanceWindowsUnderSLO(treeRoot)
-	// Must run after the App Observability de-duplication above, so the final
-	// "Application" entry is already decided.
-	s.nestOperationsUnderApplication(treeRoot)
 
 	return nil
-}
-
-// nestOperationsUnderApplication moves the Knowledge Graph "Operations" page from
-// the top level of the Observability section to be a child of whichever
-// "Application" entry is shown: App Observability's when present, otherwise the
-// Knowledge Graph's. If there is no Operations page or no Application entry, the
-// tree is left unchanged.
-func (s *ServiceImpl) nestOperationsUnderApplication(treeRoot *navtree.NavTreeRoot) {
-	obsSection := treeRoot.FindById(navtree.NavIDObservability)
-	if obsSection == nil {
-		return
-	}
-
-	operationsURL := s.cfg.AppSubURL + assertsOperationsPath
-	assertsApplicationURL := s.cfg.AppSubURL + assertsServicesPath
-	appObservabilityID := "plugin-page-" + appObservabilityAppID
-
-	var operations, appObservability, assertsApplication *navtree.NavLink
-	for _, child := range obsSection.Children {
-		switch {
-		case child.Url == operationsURL:
-			operations = child
-		case child.Id == appObservabilityID:
-			appObservability = child
-		case child.Url == assertsApplicationURL:
-			assertsApplication = child
-		}
-	}
-
-	parent := appObservability
-	if parent == nil {
-		parent = assertsApplication
-	}
-	if operations == nil || parent == nil {
-		return
-	}
-
-	children := make([]*navtree.NavLink, 0, len(obsSection.Children)-1)
-	for _, child := range obsSection.Children {
-		if child != operations {
-			children = append(children, child)
-		}
-	}
-	obsSection.Children = children
-
-	// Reset the weight so Operations sorts after the Application's existing children.
-	operations.SortWeight = 0
-	parent.Children = append(parent.Children, operations)
 }
 
 func (s *ServiceImpl) nestMaintenanceWindowsUnderSLO(treeRoot *navtree.NavTreeRoot) {
@@ -203,7 +150,6 @@ func (s *ServiceImpl) nestMaintenanceWindowsUnderSLO(treeRoot *navtree.NavTreeRo
 	treeRoot.RemoveSectionByID(mwNode.Id)
 
 	mwNode.Id = "standalone-plugin-page-" + mwPluginID
-	mwNode.IsNew = true
 	// Reset the standalone app's plugin SortWeight so it falls back to its
 	// appended position and sorts last among SLO's child pages.
 	mwNode.SortWeight = 0
@@ -267,6 +213,19 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 				}
 			} else {
 				link.Url = s.cfg.AppSubURL + "/plugins/" + plugin.ID + "/page/" + include.Slug
+			}
+
+			if s.canCreateAssistantPage(plugin, include, c) {
+				// no plugin id: the frontend registers a catch-all app route for every plugin nav item,
+				// which would make the top-level pages section own every assistant app url
+				link.Children = append(link.Children, &navtree.NavLink{
+					Id:             "assistant/pages/new",
+					Text:           "New Grafana Page",
+					Icon:           "plus",
+					Url:            s.cfg.AppSubURL + assistantAppHomePath + "/pages/new",
+					HideFromTabs:   true,
+					IsCreateAction: true,
+				})
 			}
 
 			// Register standalone plugin pages to certain sections using the Grafana config
@@ -366,6 +325,11 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 	}
 
 	return nil
+}
+
+func (s *ServiceImpl) canCreateAssistantPage(plugin pluginstore.Plugin, include *plugins.Includes, c *contextmodel.ReqContext) bool {
+	return plugin.ID == assistantAppID && include.Path == assistantAppHomePath+"/pages" && include.AddToNav &&
+		ac.HasAccess(s.accessControl, c)(ac.EvalPermission("assistant.ext.grafana.app/pages:create"))
 }
 
 func (s *ServiceImpl) isAssistantTrialMode(plugin pluginstore.Plugin, c *contextmodel.ReqContext) bool {
@@ -638,7 +602,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 6, Text: "Incident"},
 		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 7, Text: "OnCall"},
 		"grafana-assistant-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAssistant, Text: "AI", SubTitle: "AI-powered assistant for Grafana", Icon: "ai-sparkle"},
-		"grafana-workflows-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightWorkflows, Text: "Workflows", SubTitle: "Create and manage automated workflows"},
+		"grafana-workflows-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightWorkflows, Text: "Workflows", SubTitle: "Create and manage automated workflows", Icon: "workflows"},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAIAndML, Text: "Machine Learning", SubTitle: "Explore AI and machine learning features", Icon: "gf-ml-alt"},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfgPlugins, SortWeight: 3},
 		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 1},

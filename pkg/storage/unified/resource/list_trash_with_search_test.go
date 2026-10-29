@@ -164,13 +164,11 @@ func TestShouldUseSearchForTrash(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		mutate      func(*resourcepb.ListRequest)
-		disable     bool
-		allowlisted bool
-		want        bool
+		mutate  func(*resourcepb.ListRequest)
+		disable bool
+		want    bool
 	}{
-		"approved kind": {want: true},
-		"approved kind in search-backed list config": {allowlisted: true, want: true},
+		"approved kind":    {want: true},
 		"no search":        {disable: true},
 		"store source":     {mutate: func(req *resourcepb.ListRequest) { req.Source = resourcepb.ListRequest_STORE }},
 		"cross namespace":  {mutate: func(req *resourcepb.ListRequest) { req.Options.Key.Namespace = "" }},
@@ -181,7 +179,7 @@ func TestShouldUseSearchForTrash(t *testing.T) {
 			req.ResourceVersion = 42
 			req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_NotOlderThan
 		}},
-		"kind not approved for trash": {allowlisted: true, mutate: func(req *resourcepb.ListRequest) {
+		"kind not approved for trash": {mutate: func(req *resourcepb.ListRequest) {
 			req.Options.Key.Group = "runtime.test"
 			req.Options.Key.Resource = "runtimekinds"
 		}},
@@ -198,11 +196,6 @@ func TestShouldUseSearchForTrash(t *testing.T) {
 			if !tc.disable {
 				s.searchClient = &stubSearchClient{}
 			}
-			allowed := map[string]bool{}
-			if tc.allowlisted {
-				allowed[req.Options.Key.Group+"/"+req.Options.Key.Resource] = true
-			}
-			s.searchBackedListResources = SearchBackedListConfig{AllowedResources: allowed}
 			require.Equal(t, tc.want, s.shouldUseSearchForTrash(req))
 		})
 	}

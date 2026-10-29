@@ -3,7 +3,6 @@ package router
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
 
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
@@ -26,8 +25,8 @@ var errPluginClientPanic = errors.New("router: plugin client panicked")
 // Failures to reach the client and panics count against it. Errors in plugin
 // responses (including admission rejection and HTTP 5xx) say nothing about reachability.
 func pluginClientOutcome(ctx context.Context, err error) error {
-	if ctx.Err() != nil {
-		return fmt.Errorf("%w: %w", errCallerGone, ctx.Err())
+	if gone := callerGone(ctx); gone != nil {
+		return gone
 	}
 	if err == nil {
 		return nil
@@ -47,11 +46,11 @@ func pluginClientOutcome(ctx context.Context, err error) error {
 }
 
 func allowPluginCall(ctx context.Context) (func(error), error) {
-	cb, ok := ctx.Value(clientBreakerKey{}).(*groupBreaker)
-	if !ok {
+	call := backendCallFrom(ctx)
+	if call == nil || call.breaker == nil {
 		return func(error) {}, nil
 	}
-	done, err := cb.Allow()
+	done, err := call.breaker.Allow()
 	if err != nil {
 		setContextFailure(ctx, failureBreakerOpen)
 		return nil, apierrors.NewServiceUnavailable("plugin backend unavailable")

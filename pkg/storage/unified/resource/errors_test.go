@@ -82,6 +82,99 @@ func TestAsErrorResult_NamespaceMismatchIsForbidden(t *testing.T) {
 	}
 }
 
+func TestAsErrorResult_ContextErrors(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name     string
+		err      error
+		httpCode int32
+		grpcCode codes.Code
+	}{
+		{"canceled", context.Canceled, 499, codes.Canceled},
+		{"deadline exceeded", context.DeadlineExceeded, http.StatusGatewayTimeout, codes.DeadlineExceeded},
+		{"grpc canceled", status.Error(codes.Canceled, "canceled read"), 499, codes.Canceled},
+		{"grpc deadline exceeded", status.Error(codes.DeadlineExceeded, "expired read"), http.StatusGatewayTimeout, codes.DeadlineExceeded},
+		{"backend failure", errors.New("storage failed"), http.StatusInternalServerError, codes.Internal},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			for name, err := range map[string]error{
+				"bare":        tc.err,
+				"wrapped":     fmt.Errorf("reading resource: %w", tc.err),
+				"joined":      errors.Join(tc.err),
+				"both joined": errors.Join(tc.err, fmt.Errorf("reading body: %w", tc.err)),
+				"nested join": fmt.Errorf("reading resource: %w", errors.Join(errors.Join(tc.err))),
+			} {
+				t.Run(name, func(t *testing.T) {
+					got := AsErrorResult(err)
+					require.Equal(t, tc.httpCode, got.Code)
+					require.Equal(t, err.Error(), got.Message)
+					require.Equal(t, tc.grpcCode, status.Code(errorResultStatus(got)))
+				})
+			}
+		})
+	}
+}
+
+func TestAsErrorResult_MixedJoinedErrors(t *testing.T) {
+	t.Parallel()
+
+	backendErr := errors.New("storage failed")
+	withDetails := func(code codes.Code, httpCode int32) error {
+		st, err := status.New(code, "canceled read with details").WithDetails(&resourcepb.ErrorResult{Code: httpCode})
+		require.NoError(t, err)
+		return st.Err()
+	}
+	for _, cancellation := range []error{
+		context.Canceled,
+		context.DeadlineExceeded,
+		status.Error(codes.Canceled, "canceled read"),
+		status.Error(codes.DeadlineExceeded, "expired read"),
+		withDetails(codes.Canceled, 499),
+		withDetails(codes.DeadlineExceeded, http.StatusGatewayTimeout),
+	} {
+		t.Run(cancellation.Error(), func(t *testing.T) {
+			t.Parallel()
+			for name, err := range map[string]error{
+				"failure first":      errors.Join(backendErr, cancellation),
+				"cancellation first": errors.Join(cancellation, backendErr),
+				"nested join":        fmt.Errorf("reading resource: %w", errors.Join(cancellation, errors.Join(backendErr, cancellation))),
+			} {
+				t.Run(name, func(t *testing.T) {
+					got := AsErrorResult(err)
+					require.Equal(t, int32(http.StatusInternalServerError), got.Code)
+					require.Equal(t, err.Error(), got.Message)
+					require.Equal(t, codes.Internal, status.Code(errorResultStatus(got)))
+					require.Equal(t, int32(http.StatusInternalServerError), AsErrorResult(StatusErrorFromResponse(nil, err)).Code)
+				})
+			}
+		})
+	}
+}
+
+func TestHandleQueueError_ContextErrors(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		err  error
+		want codes.Code
+	}{
+		{context.Canceled, codes.Canceled},
+		{context.DeadlineExceeded, codes.DeadlineExceeded},
+	} {
+		t.Run(tc.want.String(), func(t *testing.T) {
+			t.Parallel()
+			queueErr := fmt.Errorf("failed to enqueue for tenant stacks-13: %w", tc.err)
+			response, err := HandleQueueError(queueErr, func(e *resourcepb.ErrorResult) *resourcepb.ReadResponse {
+				return &resourcepb.ReadResponse{Error: e}
+			})
+			require.NoError(t, err)
+			require.Equal(t, tc.want, status.Code(errorResultStatus(response.Error)))
+		})
+	}
+}
+
 func TestErrorFromResponse(t *testing.T) {
 	t.Parallel()
 

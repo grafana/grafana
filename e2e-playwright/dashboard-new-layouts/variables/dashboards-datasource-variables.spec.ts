@@ -1,13 +1,12 @@
 import { test, expect } from '../fixtures';
 import { flows, type Variable } from '../helpers';
 
-import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './flows';
+import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './helpers/flows';
 
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
-    groupByVariable: true,
   },
 });
 
@@ -27,7 +26,7 @@ test.describe(
       };
       // We keep only the provisioned instances because other suites create Prometheus data sources, so the options stay deterministic.
       const nameFilter = '/^gdev-/';
-      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewGenericVariable(sidebar, controls, variable);
 
       await sidebar.variableOptions.datasource.selectType('Prometheus');
       await sidebar.variableOptions.datasource.setNameFilter(nameFilter);
@@ -57,9 +56,7 @@ test.describe(
       await expect(markdownContent).toContainText('VariableUnderTest: gdev-slow-prometheus-uid');
 
       await controls.enterEditMode();
-      await sidebar.toolbar.clickButton('Outline');
-      await sidebar.contentOutline.toggleNode('Variables');
-      await sidebar.contentOutline.clickItem(variable.label);
+      await flows.contentOutline.selectVariable(sidebar, variable.label);
 
       await expect(sidebar.getPaneTitle()).toHaveText('Data source variable');
       await expect(sidebar.variableOptions.getNameInput()).toHaveValue(variable.name);

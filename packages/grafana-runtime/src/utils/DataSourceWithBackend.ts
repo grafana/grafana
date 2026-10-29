@@ -35,7 +35,7 @@ import { getDataSourceInstanceSettings } from '../services/dataSource/settings';
 
 import { ExpressionDatasourceRef, isExpressionReference } from './expressionRef';
 import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
-import { isQueryServiceCompatible } from './qscheck';
+import { isDatasourceAuthCompatible, isQueryServiceCompatible } from './qscheck';
 import { type BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 import { UserStorage } from './userStorage';
 
@@ -245,18 +245,16 @@ class DataSourceWithBackend<
     let url = '/api/ds/query?ds_type=' + this.type;
 
     // Use the new query service
-    if (config.featureToggles.queryServiceFromUI) {
-      // @ts-expect-error featuremgmt/registry.go does not support object feature flags yet
-      const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.querier.fe-allowed-types', {
-        types: [],
-      });
-      if (isQueryServiceCompatible(datasources, allowedTypes)) {
-        let apiGroup = 'query.grafana.app';
-        if (getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesQuerierNewName, false)) {
-          apiGroup = 'datasource.grafana.app';
-        }
-        url = `/apis/${apiGroup}/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
+    // @ts-expect-error featuremgmt/registry.go does not support object feature flags yet
+    const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.querier.fe-allowed-types', {
+      types: [],
+    });
+    if (isQueryServiceCompatible(datasources, allowedTypes)) {
+      let apiGroup = 'query.grafana.app';
+      if (getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesQuerierNewName, false)) {
+        apiGroup = 'datasource.grafana.app';
       }
+      url = `/apis/${apiGroup}/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
     }
 
     if (hasExpr) {
@@ -443,7 +441,11 @@ class DataSourceWithBackend<
       return false;
     }
     const pluginIds = allowedTypes[endpoint];
-    return Array.isArray(pluginIds) && (pluginIds.includes('*') || pluginIds.includes(this.meta?.id ?? this.type));
+    return (
+      Array.isArray(pluginIds) &&
+      (pluginIds.includes('*') || pluginIds.includes(this.meta?.id ?? this.type)) &&
+      isDatasourceAuthCompatible(this.datasourceInstanceSettings)
+    );
   }
 
   /**

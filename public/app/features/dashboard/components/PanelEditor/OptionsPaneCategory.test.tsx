@@ -32,6 +32,12 @@ describe('OptionsPaneCategory', () => {
     window.localStorage.clear();
   });
 
+  it('labels the expanded options group with the category title', () => {
+    setup();
+
+    expect(screen.getByRole('group', { name: 'Test category' })).toHaveTextContent(childText);
+  });
+
   describe('initial expanded state', () => {
     it('labels expanded content when the category id contains whitespace', () => {
       setup({ id: 'category with spaces' });
