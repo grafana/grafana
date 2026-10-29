@@ -26,6 +26,7 @@ const (
 	ResourceStore_List_FullMethodName                = "/resource.ResourceStore/List"
 	ResourceStore_Watch_FullMethodName               = "/resource.ResourceStore/Watch"
 	ResourceStore_ListStoredResources_FullMethodName = "/resource.ResourceStore/ListStoredResources"
+	ResourceStore_ListTerminating_FullMethodName     = "/resource.ResourceStore/ListTerminating"
 )
 
 // ResourceStoreClient is the client API for ResourceStore service.
@@ -53,6 +54,10 @@ type ResourceStoreClient interface {
 	// storage, without returning counts. This is a cheap alternative to
 	// GetStats for callers that only need to know what is stored, not how much.
 	ListStoredResources(ctx context.Context, in *ListStoredResourcesRequest, opts ...grpc.CallOption) (*ListStoredResourcesResponse, error)
+	// List the objects of one kind that are soft-deleted but still held by
+	// finalizers, across all namespaces. The result is a hint: callers must
+	// re-fetch each object. Backends that do not track this return Unimplemented.
+	ListTerminating(ctx context.Context, in *ListTerminatingRequest, opts ...grpc.CallOption) (*ListTerminatingResponse, error)
 }
 
 type resourceStoreClient struct {
@@ -156,6 +161,16 @@ func (c *resourceStoreClient) ListStoredResources(ctx context.Context, in *ListS
 	return out, nil
 }
 
+func (c *resourceStoreClient) ListTerminating(ctx context.Context, in *ListTerminatingRequest, opts ...grpc.CallOption) (*ListTerminatingResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListTerminatingResponse)
+	err := c.cc.Invoke(ctx, ResourceStore_ListTerminating_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ResourceStoreServer is the server API for ResourceStore service.
 // All implementations should embed UnimplementedResourceStoreServer
 // for forward compatibility
@@ -181,6 +196,10 @@ type ResourceStoreServer interface {
 	// storage, without returning counts. This is a cheap alternative to
 	// GetStats for callers that only need to know what is stored, not how much.
 	ListStoredResources(context.Context, *ListStoredResourcesRequest) (*ListStoredResourcesResponse, error)
+	// List the objects of one kind that are soft-deleted but still held by
+	// finalizers, across all namespaces. The result is a hint: callers must
+	// re-fetch each object. Backends that do not track this return Unimplemented.
+	ListTerminating(context.Context, *ListTerminatingRequest) (*ListTerminatingResponse, error)
 }
 
 // UnimplementedResourceStoreServer should be embedded to have forward compatible implementations.
@@ -207,6 +226,9 @@ func (UnimplementedResourceStoreServer) Watch(*WatchRequest, ResourceStore_Watch
 }
 func (UnimplementedResourceStoreServer) ListStoredResources(context.Context, *ListStoredResourcesRequest) (*ListStoredResourcesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListStoredResources not implemented")
+}
+func (UnimplementedResourceStoreServer) ListTerminating(context.Context, *ListTerminatingRequest) (*ListTerminatingResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListTerminating not implemented")
 }
 
 // UnsafeResourceStoreServer may be embedded to opt out of forward compatibility for this service.
@@ -349,6 +371,24 @@ func _ResourceStore_ListStoredResources_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ResourceStore_ListTerminating_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListTerminatingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceStoreServer).ListTerminating(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceStore_ListTerminating_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceStoreServer).ListTerminating(ctx, req.(*ListTerminatingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ResourceStore_ServiceDesc is the grpc.ServiceDesc for ResourceStore service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -379,6 +419,10 @@ var ResourceStore_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListStoredResources",
 			Handler:    _ResourceStore_ListStoredResources_Handler,
+		},
+		{
+			MethodName: "ListTerminating",
+			Handler:    _ResourceStore_ListTerminating_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

@@ -7,6 +7,7 @@ const (
 	EventsSection                 = "unified/events"
 	LastImportTimeSection         = "unified/lastimport"
 	PendingDeleteSection          = "unified/pendingdelete"
+	TerminatingSection            = "unified/terminating"
 	LeasesSection                 = "unified/leases"
 	SearchSnapshotManifestSection = "search/snapshot-manifest"
 	SearchSnapshotDataSection     = "search/snapshot-data"
@@ -31,6 +32,7 @@ var AllSections = []string{
 	LastImportTimeSection,
 	LeasesSection,
 	PendingDeleteSection,
+	TerminatingSection,
 }
 
 func IsSupportedSection(section string) bool {

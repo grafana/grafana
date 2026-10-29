@@ -680,6 +680,24 @@ service ResourceStore {
   // storage, without returning counts. This is a cheap alternative to
   // GetStats for callers that only need to know what is stored, not how much.
   rpc ListStoredResources(ListStoredResourcesRequest) returns (ListStoredResourcesResponse);
+
+  // List the objects of one kind that are soft-deleted but still held by
+  // finalizers, across all namespaces. The result is a hint: callers must
+  // re-fetch each object. Backends that do not track this return Unimplemented.
+  rpc ListTerminating(ListTerminatingRequest) returns (ListTerminatingResponse);
+}
+
+message ListTerminatingRequest {
+  string group = 1;
+  string resource = 2;
+}
+
+message ListTerminatingResponse {
+  message Item {
+    string namespace = 1;
+    string name = 2;
+  }
+  repeated Item items = 1;
 }
 
 // Discovery filter for ListStoredResources.

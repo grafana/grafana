@@ -20,6 +20,8 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -110,6 +112,15 @@ func (h *Handler) listKeys(kind kindRef, namespaced bool) http.HandlerFunc {
 			return
 		}
 
+		if r.URL.Query().Get(TerminatingParam) == "true" {
+			if namespaced {
+				errhttp.Write(ctx, apierrors.NewBadRequest(TerminatingParam+" is only served cluster-wide"), w)
+				return
+			}
+			h.listTerminating(ctx, w, kind)
+			return
+		}
+
 		req := &resourcepb.ListRequest{
 			KeysOnly:      true,
 			Limit:         opts.Limit,
@@ -154,6 +165,34 @@ func (h *Handler) listKeys(kind kindRef, namespaced bool) http.HandlerFunc {
 
 		writeJSON(w, keysResults(res))
 	}
+}
+
+// TerminatingParam is the query parameter that narrows the cluster-wide list to objects that are
+// soft-deleted but still held by finalizers. It is a single unpaged page without resourceVersions:
+// a hint for a controller to re-fetch, not a snapshot.
+const TerminatingParam = "terminating"
+
+func (h *Handler) listTerminating(ctx context.Context, w http.ResponseWriter, kind kindRef) {
+	res, err := h.store.ListTerminating(ctx, &resourcepb.ListTerminatingRequest{Group: kind.group, Resource: kind.resource})
+	if status.Code(err) == codes.Unimplemented {
+		// Reads as "route absent" to the client, which then falls back to the full list.
+		errhttp.Write(ctx, apierrors.NewMethodNotSupported(schema.GroupResource{Group: kind.group, Resource: kind.resource}, "list-terminating"), w)
+		return
+	}
+	if err != nil {
+		h.log.FromContext(ctx).Error("list-terminating failed", "group", kind.group, "resource", kind.resource, "error", err)
+		errhttp.Write(ctx, resource.StatusError(resource.AsErrorResult(err)), w)
+		return
+	}
+	out := &storagev0.ListKeyResponse{
+		TypeMeta:        metav1.TypeMeta{APIVersion: storagev0.APIVERSION, Kind: storagev0.KindListKeyResponse},
+		ResourceVersion: "0",
+		Items:           make([]storagev0.ListKeyItem, 0, len(res.GetItems())),
+	}
+	for _, item := range res.GetItems() {
+		out.Items = append(out.Items, storagev0.ListKeyItem{Namespace: item.GetNamespace(), Name: item.GetName(), ResourceVersion: "0"})
+	}
+	writeJSON(w, out)
 }
 
 // kindRef identifies the kind a route serves. Only group and resource reach the

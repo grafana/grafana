@@ -86,6 +86,7 @@ type kvStorageBackend struct {
 	resourceVersions       *snowflakeResourceVersionGenerator
 	resourceVersionMaxWait time.Duration
 	kv                     KV
+	terminating            *terminatingStore
 	bulkLock               *BulkLock
 	dataStore              *dataStore
 	eventStore             *eventStore
@@ -481,10 +482,11 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	dataStore.fastLatestKeyLookup = opts.FastLatestKeyLookup
 
 	backend := &kvStorageBackend{
-		kv:         kv,
-		bulkLock:   NewBulkLock(),
-		dataStore:  dataStore,
-		eventStore: eventStore,
+		kv:          kv,
+		terminating: newTerminatingStore(kv),
+		bulkLock:    NewBulkLock(),
+		dataStore:   dataStore,
+		eventStore:  eventStore,
 		notifier: newNotifier(eventStore, notifierOptions{
 			log:                logger,
 			useChannelNotifier: opts.UseChannelNotifier,
@@ -1245,6 +1247,10 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 
 	if err := k.dataStore.Save(ctx, dataKey, bytes.NewReader(event.Value)); err != nil {
 		return 0, fmt.Errorf("failed to write data: %w", err)
+	}
+
+	if err := k.terminating.sync(ctx, event.Key, action, obj); err != nil {
+		return 0, fmt.Errorf("failed to update terminating hint: %w", err)
 	}
 
 	// The data is now durably committed. From here on the data store and event
@@ -2870,6 +2876,11 @@ func (k *kvStorageBackend) GetResourceStatsWithLimit(ctx context.Context, nsr Na
 	defer span.End()
 
 	return k.dataStore.GetResourceStatsWithLimit(ctx, nsr, minCount, countLimit)
+}
+
+// ListTerminating streams the objects of one kind that are soft-deleted but still held by finalizers.
+func (k *kvStorageBackend) ListTerminating(ctx context.Context, group, resource string) iter.Seq2[ObjectKey, error] {
+	return k.terminating.Keys(ctx, group, resource)
 }
 
 // ListStoredResources discovers resource identities in the storage backend.
