@@ -7,14 +7,12 @@ import { type VizPanel } from '@grafana/scenes';
 import { Button, Text, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { duplicatePanel } from '../../actions/layout/duplicatePanel';
-import { getEditableElementForSelection } from '../../sidebar/shared';
+import { removePanel, removePanels } from '../../actions/layout/removePanels';
 import { getRenderedInstanceCount, isRepeatCloneOrChildOf } from '../../utils/clone';
-import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 import { useGroupSelection } from '../layouts-shared/GroupSelectedActions';
 import { useSelectedPanelsFor, useSelectionCountFor } from '../layouts-shared/useIsMultiSelection';
-import { isBulkActionElement } from '../types/BulkActionElement';
 import { getDashboardSceneLike } from '../types/dashboard';
 
 import {
@@ -84,11 +82,9 @@ export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
   };
 
   const onClickDelete = () => {
-    const panelId = getPanelIdForVizPanel(panel);
-    DashboardInteractions.panelActionClicked('delete', panelId, 'edit_popover');
+    removePanel(panel, 'edit_popover');
     // Same element type name the sidebar reports, so removals stay comparable across both surfaces.
     DashboardInteractions.trackDeleteDashboardElement('panel', 'edit_popover');
-    getLayoutManagerFor(panel).removePanel?.(panel);
   };
 
   return (
@@ -147,14 +143,7 @@ export function PanelEditActionsBulk({ panel }: { panel: VizPanel }) {
   const { rowGrouping, tabGrouping, group } = useGroupSelection(panels, 'edit_popover');
 
   const onClickDelete = () => {
-    const element = getEditableElementForSelection(
-      getDashboardSceneLike(panel).state.sidebar,
-      panels.map((panel) => ({ id: panel.state.key! }))
-    );
-
-    if (element && isBulkActionElement(element)) {
-      element.onDelete('edit_popover');
-    }
+    removePanels(getDashboardSceneLike(panel), panels, 'edit_popover');
   };
 
   return (

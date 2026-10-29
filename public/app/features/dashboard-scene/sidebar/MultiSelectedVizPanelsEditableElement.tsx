@@ -5,7 +5,7 @@ import { appEvents } from 'app/core/app_events';
 import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { endBatch, startBatch } from '../actions/utils/batch';
+import { removePanels } from '../actions/layout/removePanels';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { getGroupSelectedCategory } from '../scene/layouts-shared/GroupSelectedActions';
 import { type BulkActionElement } from '../scene/types/BulkActionElement';
@@ -54,23 +54,6 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
   }
 
   public onDelete(source: EditActionSource = 'edit_pane') {
-    const panels = this.getPanels();
-
-    startBatch(
-      this._dashboard,
-      t('dashboard.edit-actions.remove-multiple', 'Remove {{typeName}} ({{num}})', {
-        num: panels.length,
-        typeName: this.getEditableElementInfo().typeName.toLowerCase(),
-      }),
-      { actionId: 'panel.remove', scope: 'multiple' }
-    );
-
-    try {
-      this._panels.forEach((panel) => {
-        panel.onDelete(source);
-      });
-    } finally {
-      endBatch(this._dashboard);
-    }
+    removePanels(this._dashboard, this.getPanels(), source);
   }
 }
