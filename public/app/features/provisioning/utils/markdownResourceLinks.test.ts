@@ -3,7 +3,7 @@ import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 import { createGrafanaLinkResolver } from './markdownResourceLinks';
 
 function resource(overrides: Partial<ResourceListItem>): ResourceListItem {
-  return { group: '', hash: '', name: '', path: '', resource: '', ...overrides };
+  return { group: '', hash: '', name: '', path: '', resource: '', kind: '', ...overrides };
 }
 
 describe('createGrafanaLinkResolver', () => {

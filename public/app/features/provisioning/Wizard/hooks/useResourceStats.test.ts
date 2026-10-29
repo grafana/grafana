@@ -53,10 +53,10 @@ describe('useResourceStats', () => {
   it('sums instance stats for known kinds and renders a generic total', () => {
     mockStats({
       instance: [
-        { group: 'dashboard.grafana.app', resource: 'dashboards', count: 3 },
-        { group: 'folders', resource: 'folders', count: 2 },
+        { group: 'dashboard.grafana.app', resource: 'dashboards', kind: 'Dashboard', count: 3 },
+        { group: 'folders', resource: 'folders', kind: 'Folder', count: 2 },
         // Unknown kind is ignored so the total only reflects kinds the UI knows about.
-        { group: 'secret.grafana.app', resource: 'secrets', count: 9 },
+        { group: 'secret.grafana.app', resource: 'secrets', kind: 'SecureValue', count: 9 },
       ],
     });
 
@@ -67,7 +67,7 @@ describe('useResourceStats', () => {
   });
 
   it('uses the singular label for a single resource', () => {
-    mockStats({ instance: [{ group: 'dashboards', resource: 'dashboards', count: 1 }] });
+    mockStats({ instance: [{ group: 'dashboards', resource: 'dashboards', kind: 'Dashboard', count: 1 }] });
 
     const { result } = renderHook(() => useResourceStats('repo', 'instance', false, { isHealthy: true }));
 
@@ -77,8 +77,8 @@ describe('useResourceStats', () => {
   it('counts non-repo managed stats as unmanaged and repo-managed stats as managed', () => {
     mockStats({
       managed: [
-        { kind: 'repo', stats: [{ group: 'dashboards', resource: 'dashboards', count: 4 }] },
-        { kind: 'terraform', stats: [{ group: 'folders', resource: 'folders', count: 6 }] },
+        { kind: 'repo', stats: [{ group: 'dashboards', resource: 'dashboards', kind: 'Dashboard', count: 4 }] },
+        { kind: 'terraform', stats: [{ group: 'folders', resource: 'folders', kind: 'Folder', count: 6 }] },
       ],
     });
 
@@ -111,7 +111,7 @@ describe('useResourceStats', () => {
 
   describe('migration and skip logic', () => {
     it('requires migration for instance sync whenever resources exist', () => {
-      mockStats({ instance: [{ group: 'dashboards', resource: 'dashboards', count: 2 }] });
+      mockStats({ instance: [{ group: 'dashboards', resource: 'dashboards', kind: 'Dashboard', count: 2 }] });
 
       const { result } = renderHook(() => useResourceStats('repo', 'instance', false, { isHealthy: true }));
 
@@ -120,7 +120,7 @@ describe('useResourceStats', () => {
     });
 
     it('only migrates folder sync when the user opts in', () => {
-      mockStats({ instance: [{ group: 'dashboards', resource: 'dashboards', count: 2 }] });
+      mockStats({ instance: [{ group: 'dashboards', resource: 'dashboards', kind: 'Dashboard', count: 2 }] });
 
       const optIn = renderHook(() => useResourceStats('repo', 'folder', true, { isHealthy: true }));
       expect(optIn.result.current.requiresMigration).toBe(true);
@@ -141,7 +141,9 @@ describe('useResourceStats', () => {
     it.each(['folder', 'folderless'] as const)(
       'does not skip sync for %s target when instance resources exist',
       (target) => {
-        mockStats({ instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 2 }] });
+        mockStats({
+          instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', kind: 'Dashboard', count: 2 }],
+        });
 
         const { result } = renderHook(() => useResourceStats('repo', target, false, { isHealthy: true }));
 
