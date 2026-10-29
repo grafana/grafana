@@ -1,11 +1,13 @@
+import { unByKey } from 'ol/Observable';
 import MVT from 'ol/format/MVT';
 import VectorTileLayer from 'ol/layer/VectorTile';
 import VectorTileSource from 'ol/source/VectorTile';
 import { applyBackground, applyStyle } from 'ol-mapbox-style';
-import { PMTilesVectorSource } from 'ol-pmtiles';
 
 import { type GrafanaTheme2, type MapLayerHandler, type MapLayerRegistryItem } from '@grafana/data';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+
+import { PMTilesVectorSource } from './pmtilesSource';
 
 // The build is an ODbL Produced Work, so the OpenStreetMap credit must stay visible
 const ATTRIBUTION = `<a href="https://protomaps.com">Protomaps</a> <a href="https://www.openstreetmap.org/copyright">©OpenStreetMap</a> contributors`;
@@ -186,7 +188,7 @@ export enum ProtomapsFlavor {
 }
 
 export enum TileDelivery {
-  /** One archive file read with HTTP range requests, decoded in the browser by ol-pmtiles */
+  /** One archive file read with HTTP range requests, decoded in the browser */
   PMTiles = 'pmtiles',
   /** Conventional `{z}/{x}/{y}.mvt` URLs, as an edge function in front of the archive would serve */
   ZXY = 'zxy',
@@ -457,11 +459,23 @@ function createSource(delivery: TileDelivery | undefined, server: URL) {
       url: `${new URL('tiles/', server).href}{z}/{x}/{y}.mvt`,
     });
   }
-  return new PMTilesVectorSource({
+  const source = new PMTilesVectorSource({
     attributions: ATTRIBUTION,
     format,
+    maxZoom: MAX_TILE_ZOOM,
     url: new URL('planet.pmtiles', server).href,
   });
+  // The source also changes for reasons unrelated to the archive, so keep listening until it leaves `loading`
+  const listener = source.on('change', () => {
+    const state = source.getState();
+    if (state === 'error') {
+      console.warn(`Failed to load Protomaps basemap archive from ${source.getArchiveUrl()}:`, source.getError());
+    }
+    if (state !== 'loading') {
+      unByKey(listener);
+    }
+  });
+  return source;
 }
 
 /**

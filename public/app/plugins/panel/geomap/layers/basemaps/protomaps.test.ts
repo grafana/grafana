@@ -1,7 +1,6 @@
 import type OpenLayersMap from 'ol/Map';
 import type VectorTileLayer from 'ol/layer/VectorTile';
 import type VectorTileSource from 'ol/source/VectorTile';
-import { type PMTilesVectorSource } from 'ol-pmtiles';
 
 import { type EventBus, type GrafanaTheme2, type MapLayerOptions } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
@@ -15,6 +14,7 @@ jest.mock('ol-mapbox-style', () => ({
   applyBackground: (...args: unknown[]) => applyBackgroundMock(...args),
 }));
 
+import { PMTilesVectorSource } from './pmtilesSource';
 import { protomaps, ProtomapsFlavor, type ProtomapsConfig, TileDelivery } from './protomaps';
 
 const map = {} as OpenLayersMap;
@@ -179,8 +179,49 @@ describe('Protomaps basemap', () => {
   it('reads tiles from the PMTiles archive by default', async () => {
     const layer = await createLayer({});
 
-    const source = layer.getSource() as PMTilesVectorSource;
-    expect(source.pmtiles_.source.getKey()).toBe('http://localhost:8095/planet.pmtiles');
+    const source = layer.getSource();
+    expect(source).toBeInstanceOf(PMTilesVectorSource);
+    expect((source as PMTilesVectorSource).getArchiveUrl()).toBe('http://localhost:8095/planet.pmtiles');
+  });
+
+  // On a live map the source changes for other reasons before the archive request settles
+  it('still warns when the source changed while the archive was loading', async () => {
+    jest
+      .spyOn(global, 'fetch')
+      .mockImplementation(async (input) =>
+        String(input).endsWith('.json')
+          ? new Response(JSON.stringify(STYLE))
+          : new Response('', { status: 404, statusText: 'Not Found' })
+      );
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const layer = await createLayer({});
+    layer.getSource()!.changed();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(warn).toHaveBeenCalledWith(
+      'Failed to load Protomaps basemap archive from http://localhost:8095/planet.pmtiles:',
+      new Error('Bad response code: 404')
+    );
+  });
+
+  it('warns with the cause when the PMTiles archive cannot be opened', async () => {
+    jest
+      .spyOn(global, 'fetch')
+      .mockImplementation(async (input) =>
+        String(input).endsWith('.json')
+          ? new Response(JSON.stringify(STYLE))
+          : new Response('', { status: 404, statusText: 'Not Found' })
+      );
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const layer = await initLayer({});
+
+    expect(layer.getSource()?.getState()).toBe('error');
+    expect(warn).toHaveBeenCalledWith(
+      'Failed to load Protomaps basemap archive from http://localhost:8095/planet.pmtiles:',
+      new Error('Bad response code: 404')
+    );
   });
 
   it('requests one URL per tile for ZXY delivery', async () => {

@@ -191,23 +191,11 @@ func NewStorageBackend(
 			DisablePruner:           cfg.DisablePruner,
 			DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 			BatchTransactionTimeout: cfg.ResourceVersionBatchTransactionTimeout,
-			// TODO: remove this when sql/backend backwards compatibility is no longer needed.
-			LogCalls: cfg.LogSQLBackendCalls,
 		})
 	}
 
 	if kvStore == nil {
 		return nil, fmt.Errorf("storage_type=%s: kv store missing", storageType)
-	}
-
-	ctx := context.Background()
-	dbConn, err := eDB.Init(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error initializing DB: %w", err)
-	}
-	dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
-	if dialect == nil {
-		return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
 	}
 
 	kvBackendOpts := resource.NewKVBackendOptions(cfg)
@@ -223,20 +211,6 @@ func NewStorageBackend(
 
 	for _, opt := range opts {
 		opt(&kvBackendOpts)
-	}
-
-	if cfg.EnableSQLKVCompatibilityMode {
-		rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
-			Dialect:                 dialect,
-			DB:                      dbConn,
-			BatchTransactionTimeout: cfg.ResourceVersionBatchTransactionTimeout,
-			Reg:                     reg,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to create resource version manager: %w", err)
-		}
-
-		kvBackendOpts.RvManager = rvManager
 	}
 
 	return resource.NewKVStorageBackend(kvBackendOpts)
@@ -320,11 +294,6 @@ type BackendOptions struct {
 	// manager. Zero selects the rvmanager default.
 	BatchTransactionTimeout time.Duration
 
-	// LogCalls enables temporary smoke-test logging of every call that reaches
-	// an exported method of the SQL backend.
-	// TODO: remove after confirming sql/backend receives no production traffic.
-	LogCalls bool
-
 	// BlobURL selects the same external blob backend as the resource server.
 	BlobURL string
 }
@@ -371,7 +340,6 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		blobGCMetrics:           resource.NewBlobGCMetricsIfEnabled(opts.Reg, "sql", garbageCollection.Enabled && garbageCollection.BlobEnabled),
 		blobURL:                 opts.BlobURL,
 		gcGate:                  opts.GCGate,
-		logCalls:                opts.LogCalls,
 	}
 	if err := backend.Init(ctx); err != nil {
 		return nil, err
@@ -452,23 +420,6 @@ type backend struct {
 	// Fields to control the cleanup of "lastImportTime" rows (used to find indexes to rebuild)
 	lastImportTimeMaxAge       time.Duration
 	lastImportTimeDeletionTime atomic.Pointer[time.Time]
-
-	// logCalls enables temporary smoke-test logging in logCall.
-	// TODO: remove after confirming sql/backend receives no production traffic.
-	logCalls bool
-}
-
-// logCall is temporary smoke-test instrumentation: it records every call that
-// reaches an exported method of the legacy SQL backend. Used to confirm that no
-// production traffic is still routed to sql/backend before removing the sqlkv
-// backwards-compatibility layer. Remove once that verification is complete.
-//
-// TODO: remove after confirming sql/backend receives no production traffic.
-func (b *backend) logCall(method string) {
-	if !b.logCalls {
-		return
-	}
-	b.log.Warn("SMOKETEST sql/backend method called", "method", method)
 }
 
 func (b *backend) Init(ctx context.Context) error {
@@ -783,7 +734,6 @@ func (b *backend) Stop(_ context.Context) error {
 
 // GetResourceStats implements Backend.
 func (b *backend) GetResourceStats(ctx context.Context, nsr resource.NamespacedResource, minCount int) ([]resource.ResourceStats, error) {
-	b.logCall("GetResourceStats")
 	ctx, span := tracer.Start(ctx, "sql.backend.GetResourceStats", trace.WithAttributes(
 		attribute.String("namespace", nsr.Namespace),
 		attribute.String("group", nsr.Group),
@@ -832,7 +782,6 @@ func (b *backend) GetResourceStatsWithLimit(ctx context.Context, nsr resource.Na
 
 // ListStoredResources implements Backend.
 func (b *backend) ListStoredResources(ctx context.Context, filter resource.NamespacedResource) ([]resource.NamespacedResource, error) {
-	b.logCall("ListStoredResources")
 	ctx, span := tracer.Start(ctx, "sql.backend.ListStoredResources", trace.WithAttributes(
 		attribute.String("namespace", filter.Namespace),
 		attribute.String("group", filter.Group),
@@ -881,7 +830,6 @@ func toMicrosecondRV(rv int64) int64 {
 }
 
 func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (int64, error) {
-	b.logCall("WriteEvent")
 	if b.disableStorageServices {
 		return 0, fmt.Errorf("storage backend is not enabled")
 	}
@@ -1129,7 +1077,6 @@ func (*backend) BatchReadResource(context.Context, []resource.BatchReadRequest, 
 }
 
 func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
-	b.logCall("ReadResource")
 	_, span := tracer.Start(ctx, "sql.backend.ReadResource")
 	defer span.End()
 
@@ -1173,7 +1120,6 @@ func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest)
 }
 
 func (b *backend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
-	b.logCall("ListIterator")
 	ctx, span := tracer.Start(ctx, "sql.backend.ListIterator")
 	defer span.End()
 
@@ -1198,7 +1144,6 @@ func (b *backend) ListIterator(ctx context.Context, req *resourcepb.ListRequest,
 }
 
 func (b *backend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
-	b.logCall("ListHistory")
 	ctx, span := tracer.Start(ctx, "sql.backend.ListHistory")
 	defer span.End()
 
@@ -1258,7 +1203,6 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 // ListModifiedSince will return all resources that have changed since the given resource version.
 // If a resource has changes, only the latest change will be returned.
 func (b *backend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
-	b.logCall("ListModifiedSince")
 	sinceRv = toMicrosecondRV(sinceRv)
 
 	// Validate key before doing latest RV check
@@ -1542,7 +1486,6 @@ func (b *backend) WatchWrittenKeys(context.Context, []schema.GroupResource, func
 }
 
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
-	b.logCall("WatchWriteEvents")
 	if b.disableStorageServices {
 		return nil, fmt.Errorf("watcher is not enabled")
 	}
@@ -1666,7 +1609,6 @@ func (b *backend) ListResourceLastImportTimes(ctx context.Context) (map[resource
 }
 
 func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
-	b.logCall("GetResourceLastImportTimes")
 	ctx, span := tracer.Start(ctx, "sql.backend.GetResourceLastImportTimes")
 	defer span.End()
 
