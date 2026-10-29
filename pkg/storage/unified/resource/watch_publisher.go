@@ -6,7 +6,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
 )
@@ -28,7 +27,7 @@ type EventPublisher interface {
 // actionToWatchNotificationType maps the stored data action onto the wire event
 // type, mirroring how server.go derives WatchEvent.Type. An unknown action maps
 // to UNKNOWN so it is not mistaken for a real change.
-func actionToWatchNotificationType(action kv.DataAction) resourcepb.WatchNotification_Type {
+func actionToWatchNotificationType(action DataAction) resourcepb.WatchNotification_Type {
 	switch action {
 	case DataActionCreated:
 		return resourcepb.WatchNotification_ADDED
