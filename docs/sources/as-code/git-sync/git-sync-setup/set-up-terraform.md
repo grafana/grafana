@@ -55,17 +55,17 @@ Use this Terraform configuration to configure the [Grafana provider](https://reg
       }
 
       provider "grafana" {
-        url = "https://<your-stack>.grafana.net/"
-        auth = var.grafana_service_account_token
-        stack_id = var.grafana_stack_id
+        url = "https://<STACK-URL>.grafana.net/"
+        auth = <YOUR-SERVICE-ACCOUNT-TOKEN>
+        stack_id = <YOUR-STACK-ID>
       }
    ```
 
 Replace the following field values:
 
-- `<Stack-URL>` with the URL of your Grafana stack (for example, `https://my-stack.grafana.net/`)
-- `<Service-account-token>` with the service account token that you created (or `<USERNAME>:<PASSWORD>` for basic auth)
-- `<Stack-ID>` with the Grafana stack ID, if you are using a Grafana Cloud stack
+- `<STACK-URL>` with the URL of your Grafana stack. For example, `https://my-stack.grafana.net/`.
+- `<YOUR-SERVICE-ACCOUNT-TOKEN>` with the service account token that you created, or `<USERNAME>:<PASSWORD>` for basic auth.
+- `<YOUR-STACK-ID>` with the Grafana stack ID, if you are using a Grafana Cloud stack.
 
 {{< admonition type="caution" >}}
 
@@ -79,7 +79,92 @@ The Git Sync Terraform resources are App Platform resources and talk directly to
 
 You need two resources for configure and manage Git Sync:
 
-- The repository resource configures the Git repository to sync Grafana resources with. For examples, refer to [Repository resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_provisioning_repository_v0alpha1) in the Terraform registry.
-- The connection resource configures your Git provider credentials. For examples, refer to [Connection resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_provisioning_connection_v0alpha1) in the Terraform registry.
+- The [connection resource](#configure-the-connection-resource) configures your Git provider credentials. 
+- The [repository resource](#configure-the-repository-resource) configures the Git repository to sync Grafana resources with. 
+
 
 For better understanding of the required resources, refer to [Git Sync key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/key-concepts).
+
+### Configure the Connection resource
+
+The Connection resource manages the Git Sync connections used by repositories for provider authentication.
+
+```terraform
+resource "grafana_apps_provisioning_connection_v0alpha1" "example" {
+  metadata {
+    uid = "my-connection"
+  }
+
+  spec {
+    title       = "My Connection"
+    description = "Connection used by a folder-scoped Git Sync repository"
+    type        = "<CONNECTION-TYPE>"
+    url         = "https://connection.com"
+  }
+
+  secure {
+    private_key = {
+      create = filebase64("${path.module}/private-key.pem")
+    }
+  }
+  secure_version = 1
+}
+```
+
+Replace the following field values:
+
+- `<CONNECTION-TYPE>` with the connection provider type. For example, GitHub, GitLab or BitBucket.
+
+For more details, optional fields, and examples, refer to [Connection resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_provisioning_connection_v0alpha1) in the Terraform registry.
+
+### Configure the Repository resource
+
+The Repository resource manages your Git Sync repositories for provisioning dashboards and related resources.
+
+For example, for a GitHub repository with token authentication:
+
+```terraform
+resource "grafana_apps_provisioning_repository_v0alpha1" "example" {
+  metadata {
+    uid = "my-github-folder-repo"
+  }
+
+  spec {
+    title       = "My GitHub Folder Repository"
+    description = "Folder-scoped GitHub repository authenticated directly with a token"
+    type        = "github"
+
+    workflows = ["write", "branch"]
+
+    sync {
+      enabled          = true
+      target           = "folder"
+      interval_seconds = 60
+    }
+
+    github {
+      url    = "https://github.com/example/grafana-dashboards"
+      branch = "main"
+      path   = "grafanatftest"
+    }
+
+    webhook {
+      base_url = "https://grafana.example.com"
+    }
+  }
+
+  secure {
+    token = {
+      create = "replace-me"
+    }
+  }
+  secure_version = 1
+}
+```
+
+Replace the following field values:
+
+- `<CONNECTION-TYPE>
+
+For more details and examples such as a GitHub repository via GitHub App Connection or a GitLab/Bitbucket repository with a token authentication, refer to [Repository resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_provisioning_repository_v0alpha1) in the Terraform registry.
+
