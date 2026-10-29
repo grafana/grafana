@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -11,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/transport"
 )
 
 func TestDiscoveryClient_GetPreferredVersion(t *testing.T) {
@@ -49,7 +51,7 @@ func TestDiscoveryClient_GetPreferredVersion(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := newTestDiscoveryClient(t, tt.groups...)
+			c := newTestDiscoveryClient(t, nil, tt.groups...)
 
 			gvr, gvk, err := c.GetPreferredVersion(t.Context(), schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"})
 			if tt.wantErr != "" {
@@ -72,9 +74,33 @@ func TestDiscoveryClient_GetPreferredVersion(t *testing.T) {
 	}
 }
 
+func TestDiscoveryClient_GetPreferredVersionForKindUsesContext(t *testing.T) {
+	type ctxKey struct{}
+	var seen []any
+	wrap := func(rt http.RoundTripper) http.RoundTripper {
+		return roundTripperFunc(func(r *http.Request) (*http.Response, error) {
+			seen = append(seen, r.Context().Value(ctxKey{}))
+			return rt.RoundTrip(r)
+		})
+	}
+	c := newTestDiscoveryClient(t, wrap,
+		discoveryGroup("playlist.grafana.app", "v1", apidiscoveryv2.DiscoveryFreshnessCurrent, discoveryResource("playlists", "Playlist")))
+
+	_, _, err := c.GetPreferredVersionForKind(context.WithValue(t.Context(), ctxKey{}, "requester"), schema.GroupKind{Group: "playlist.grafana.app", Kind: "Playlist"})
+	require.NoError(t, err)
+	require.NotEmpty(t, seen)
+	for _, v := range seen {
+		require.Equal(t, "requester", v)
+	}
+}
+
+type roundTripperFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripperFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
+
 const aggregatedDiscoveryContentType = "application/json;g=apidiscovery.k8s.io;v=v2;as=APIGroupDiscoveryList"
 
-func newTestDiscoveryClient(t *testing.T, groups ...apidiscoveryv2.APIGroupDiscovery) *DiscoveryClientImpl {
+func newTestDiscoveryClient(t *testing.T, wrap transport.WrapperFunc, groups ...apidiscoveryv2.APIGroupDiscovery) *DiscoveryClientImpl {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		list := apidiscoveryv2.APIGroupDiscoveryList{
@@ -88,7 +114,7 @@ func newTestDiscoveryClient(t *testing.T, groups ...apidiscoveryv2.APIGroupDisco
 	}))
 	t.Cleanup(server.Close)
 
-	c, err := NewDiscoveryClient(&rest.Config{Host: server.URL})
+	c, err := NewDiscoveryClient(&rest.Config{Host: server.URL, WrapTransport: wrap})
 	require.NoError(t, err)
 	return c
 }

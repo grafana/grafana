@@ -86,7 +86,7 @@ func (d *DiscoveryClientImpl) GetKindForResource(gvr schema.GroupVersionResource
 }
 
 func (d *DiscoveryClientImpl) preferredResources(ctx context.Context, group string) ([]*metav1.APIResourceList, error) {
-	apiList, err := d.ServerPreferredResources()
+	apiList, err := discovery.ToDiscoveryInterfaceWithContext(d.DiscoveryInterface).ServerPreferredResourcesWithContext(ctx)
 	var failed *discovery.ErrGroupDiscoveryFailed
 	if err == nil || !errors.As(err, &failed) {
 		return apiList, err
