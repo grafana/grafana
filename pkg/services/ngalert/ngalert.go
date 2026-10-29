@@ -262,8 +262,8 @@ func (ng *AlertNG) init() error {
 	moaLogger := log.New("ngalert.multiorg.alertmanager")
 	crypto := notifier.NewCrypto(ng.SecretsService, ng.store, moaLogger)
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
-	if remotePrimary {
+	remoteAMEnabled := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
+	if remoteAMEnabled {
 		m := ng.Metrics.GetRemoteAlertmanagerMetrics()
 		runtimeConfig := remoteClient.RuntimeConfig{
 			DispatchTimer: notifier.GetDispatchTimer(ng.FeatureToggles).String(),
@@ -280,9 +280,9 @@ func (ng *AlertNG) init() error {
 			RuntimeConfig:     runtimeConfig,
 		}
 
-		ng.Log.Debug("Starting Grafana with remote primary mode enabled")
-		m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
-		override := remote.NewRemotePrimaryFactory(cfg, ng.KVStore, crypto, m, ng.tracer, ng.FeatureToggles)
+		ng.Log.Debug("Starting Grafana with remote Alertmanager enabled")
+		m.Info.Set(1)
+		override := remote.NewFactory(cfg, ng.KVStore, crypto, m, ng.tracer, ng.FeatureToggles)
 		skipClustering = true
 
 		opts = append(opts, notifier.WithAlertmanagerOverride(override))
@@ -546,12 +546,12 @@ func (ng *AlertNG) init() error {
 		ng.MultiOrgAlertmanager,
 	)
 
-	// Create limits provider based on alertmanager mode.
+	// Create limits provider depending on whether the remote Alertmanager is enabled.
 	// The provider is used for both template and silence limit validation.
 	// Both provisioning.LimitsProvider and notifier.LimitsProvider interfaces have identical
 	// signatures, so NoopLimitsProvider and RemoteLimitsProvider satisfy both via structural typing.
 	var limitsProvider provisioning.LimitsProvider
-	if remotePrimary {
+	if remoteAMEnabled {
 		// For remote alertmanager, create a MimirClient to fetch limits
 		remoteURL, err := url.Parse(ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL)
 		if err != nil {
