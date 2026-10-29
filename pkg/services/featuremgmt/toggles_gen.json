@@ -2807,6 +2807,34 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardGridShadowCheck",
+        "resourceVersion": "1793281251559",
+        "creationTimestamp": "2026-10-29T13:40:51Z"
+      },
+      "spec": {
+        "description": "Compares the custom grid's layout helpers with react-grid-layout on a sample of dashboard loads and reports differences as counts",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.dashboardNewGridView",
+        "resourceVersion": "1793272924924",
+        "creationTimestamp": "2026-10-29T11:22:04Z"
+      },
+      "spec": {
+        "description": "Renders dynamic dashboards in view mode with the new custom grid; requires grafana.dashboardUnifiedDragAndDrop",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dashboardPreviewMode",
         "resourceVersion": "1791498226102",
         "creationTimestamp": "2026-09-23T10:21:03Z",
@@ -2834,6 +2862,20 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.dashboardUnifiedDragAndDrop",
+        "resourceVersion": "1793272924924",
+        "creationTimestamp": "2026-10-29T11:22:04Z"
+      },
+      "spec": {
+        "description": "Uses the unified drag and drop engine and new custom grid when editing dynamic dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
