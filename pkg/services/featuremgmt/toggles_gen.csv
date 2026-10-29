@@ -76,6 +76,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-10-06,dashboards.libraryPanelRepeatFromServerResolution,experimental,@grafana/dashboards-squad,false,false,true
 2026-10-06,dashboards.publicDashboardBadgeFromApi,experimental,@grafana/dashboards-squad,false,false,true
 2026-10-08,dashboards.libraryPanelHorizontalRepeatFullWidth,experimental,@grafana/dashboards-squad,false,false,true
+2026-10-29,dashboards.disableLiveSaveNotices,experimental,@grafana/grafana-backend-services-squad,false,false,true
 2026-08-05,disableScriptedDashboards,deprecated,@grafana/dashboards-squad,false,false,true
 2026-07-09,dashboard.notebooks,preview,@grafana/sharing-squad,false,false,false
 2026-10-19,grafana.dashboardComposer,experimental,@grafana/dashboards-squad,false,false,true
