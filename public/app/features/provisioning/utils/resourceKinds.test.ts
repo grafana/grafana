@@ -48,7 +48,7 @@ describe('resourceKinds registry', () => {
     expect(resourceKindInfos.folder.icon).toBe(getIconForKind('folder'));
   });
   it('gives each entry a `key` equal to its registry key', () => {
-    // The type only requires `key` to be some ResourceKindKey; this guards against an entry pointing
+    // The type only requires `key` to be a string; this guards against an entry pointing
     // at the wrong key (e.g. the playlist entry carrying `key: 'dashboard'`), which would silently
     // mislabel commit messages and telemetry.
     for (const [key, info] of Object.entries(resourceKindInfos)) {
@@ -170,9 +170,17 @@ describe('getKindInfoByStat', () => {
     expect(getKindInfoByStat({ group: 'folders' })).toBe(resourceKindInfos.folder);
   });
 
-  it('returns undefined when neither resource nor group is known', () => {
-    expect(getKindInfoByStat({ group: 'alert.grafana.app', resource: 'rules' })).toBeUndefined();
-    expect(getKindInfoByStat({})).toBeUndefined();
+  it('returns defaults from the stat when neither resource nor group is known', () => {
+    const info = getKindInfoByStat({ group: 'alert.grafana.app', resource: 'rules', kind: 'AlertRule' });
+    expect(info).toMatchObject({ group: 'alert.grafana.app', resource: 'rules', kind: 'AlertRule', listRoute: '' });
+    expect(info.getLabel()).toBe('AlertRule');
+    expect(getKindInfoByStat({}).itemType).toBe('File');
+  });
+
+  it('does not match a known group with an unknown kind', () => {
+    expect(
+      getKindInfoByStat({ group: 'dashboard.grafana.app', resource: 'variables', kind: 'Variable' }).listRoute
+    ).toBe('');
   });
 });
 

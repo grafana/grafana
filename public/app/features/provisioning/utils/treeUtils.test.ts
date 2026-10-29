@@ -207,15 +207,16 @@ describe('getItemType', () => {
     expect(result).toBe('File');
   });
 
-  it('should return File when resource type is unknown', () => {
+  it('should return the API kind when resource type is unknown', () => {
     const unknownResource = {
       ...mockResource,
       resource: 'unknown-type',
+      kind: 'UnknownType',
     };
 
     const result = getItemType('some/path', unknownResource);
 
-    expect(result).toBe('File');
+    expect(result).toBe('UnknownType');
   });
 });
 
