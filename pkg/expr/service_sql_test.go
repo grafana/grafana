@@ -382,6 +382,9 @@ func TestSQLServiceDataSourcePanic(t *testing.T) {
 			require.NoError(t, res.Responses["B"].Error)
 			require.Len(t, res.Responses["B"].Frames, 1)
 
+			require.Equal(t, 1.0, counterVal(t, s.metrics.DSRequests, "failure", "false", "test"))
+			require.Equal(t, 1.0, counterVal(t, s.metrics.DSRequests, "success", "false", "test"))
+
 			require.NoError(t, res.Responses["S"].Error)
 			require.Equal(t, int64(1), res.Responses["S"].Frames[0].Fields[0].At(0))
 

@@ -164,9 +164,7 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 	return vars, nil
 }
 
-// executeNode runs node.Execute and turns a panic into an error for that
-// node. Core plugins run in-process without the recovery that the plugin SDK
-// gives external plugins, so without this one panic fails the whole request.
+// executeNode isolates panics so unrelated nodes can still execute.
 func executeNode(ctx context.Context, node ExecutableNode, now time.Time, vars mathexp.Vars, s *Service) (res mathexp.Results, err error) {
 	defer func() {
 		if p := recover(); p != nil {
