@@ -25,7 +25,7 @@ interface ScopeNodeSpec {
   nodeType: 'container' | 'leaf';
   title: string;
   description?: string;
-  disableMultiSelect?: boolean;
+  disableMultiSelect: boolean;
   linkType?: 'scope';
   linkId?: string;
   parentName: string;
@@ -38,24 +38,6 @@ export interface ScopeNode {
   spec: ScopeNodeSpec;
 }
 
-interface ScopeDashboardBindingSpec {
-  dashboard: string;
-  scope: string;
-}
-
-interface ScopeDashboardBindingStatus {
-  dashboardTitle: string;
-  groups?: string[];
-}
-
-export interface ScopeDashboardBinding {
-  metadata: {
-    name: string;
-  };
-  spec: ScopeDashboardBindingSpec;
-  status: ScopeDashboardBindingStatus;
-}
-
 export interface ScopeNavigation {
   metadata: {
     name: string;
@@ -65,7 +47,6 @@ export interface ScopeNavigation {
     scope: string;
     subScope?: string;
     preLoadSubScopeChildren?: boolean;
-    expandOnLoad?: boolean;
     disableSubScopeSelection?: boolean;
   };
   status: {
@@ -186,8 +167,8 @@ const scopeNavigationsGenerator = (
         return [
           ...acc,
           {
-            // The drawer uses the name as the item id and dedupes by URL, so a dashboard shared by
-            // several scopes keeps one name to render as a single item.
+            // The drawer keys items by URL, so a dashboard shared by several scopes renders once. The name
+            // is the item id that tests select by, so it stays the dashboard key without a scope prefix.
             metadata: { name: dashboard },
             spec: {
               url: `/d/${dashboard}`,
@@ -249,14 +230,6 @@ export const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   ),
 ];
 
-export const MOCK_SCOPE_DASHBOARD_BINDINGS: ScopeDashboardBinding[] = MOCK_SCOPE_NAVIGATIONS.map(
-  ({ metadata, spec, status }) => ({
-    metadata: { name: `${spec.scope}-${metadata.name}` },
-    spec: { dashboard: metadata.name, scope: spec.scope },
-    status: { dashboardTitle: status.title, groups: status.groups },
-  })
-);
-
 export const MOCK_NODES: ScopeNode[] = [
   {
     metadata: { name: 'applications' },
@@ -264,6 +237,7 @@ export const MOCK_NODES: ScopeNode[] = [
       nodeType: 'container',
       title: 'Applications',
       description: 'Application Scopes',
+      disableMultiSelect: false,
       parentName: '',
     },
   },
@@ -285,6 +259,7 @@ export const MOCK_NODES: ScopeNode[] = [
       nodeType: 'leaf',
       title: 'Grafana',
       description: 'Grafana',
+      disableMultiSelect: false,
       linkType: 'scope',
       linkId: 'grafana',
       parentName: 'applications',
@@ -296,6 +271,7 @@ export const MOCK_NODES: ScopeNode[] = [
       nodeType: 'leaf',
       title: 'Mimir',
       description: 'Mimir',
+      disableMultiSelect: false,
       linkType: 'scope',
       linkId: 'mimir',
       parentName: 'applications',
@@ -307,6 +283,7 @@ export const MOCK_NODES: ScopeNode[] = [
       nodeType: 'leaf',
       title: 'Loki',
       description: 'Loki',
+      disableMultiSelect: false,
       linkType: 'scope',
       linkId: 'loki',
       parentName: 'applications',
@@ -318,6 +295,7 @@ export const MOCK_NODES: ScopeNode[] = [
       nodeType: 'leaf',
       title: 'Tempo',
       description: 'Tempo',
+      disableMultiSelect: false,
       linkType: 'scope',
       linkId: 'tempo',
       parentName: 'applications',
@@ -329,6 +307,7 @@ export const MOCK_NODES: ScopeNode[] = [
       nodeType: 'container',
       title: 'Cloud',
       description: 'Application/Cloud Scopes',
+      disableMultiSelect: false,
       linkType: 'scope',
       linkId: 'cloud',
       parentName: 'applications',
@@ -340,6 +319,7 @@ export const MOCK_NODES: ScopeNode[] = [
       nodeType: 'leaf',
       title: 'Dev',
       description: 'Dev',
+      disableMultiSelect: false,
       linkType: 'scope',
       linkId: 'dev',
       parentName: 'applications-cloud',
@@ -351,6 +331,7 @@ export const MOCK_NODES: ScopeNode[] = [
       nodeType: 'leaf',
       title: 'Ops',
       description: 'Ops',
+      disableMultiSelect: false,
       linkType: 'scope',
       linkId: 'ops',
       parentName: 'applications-cloud',
@@ -362,6 +343,7 @@ export const MOCK_NODES: ScopeNode[] = [
       nodeType: 'leaf',
       title: 'Prod',
       description: 'Prod',
+      disableMultiSelect: false,
       linkType: 'scope',
       linkId: 'prod',
       parentName: 'applications-cloud',
@@ -373,6 +355,7 @@ export const MOCK_NODES: ScopeNode[] = [
       nodeType: 'leaf',
       title: 'Dev',
       description: 'Dev',
+      disableMultiSelect: false,
       linkType: 'scope',
       linkId: 'dev',
       parentName: 'cloud',
@@ -384,6 +367,7 @@ export const MOCK_NODES: ScopeNode[] = [
       nodeType: 'leaf',
       title: 'Ops',
       description: 'Ops',
+      disableMultiSelect: false,
       linkType: 'scope',
       linkId: 'ops',
       parentName: 'cloud',
@@ -395,6 +379,7 @@ export const MOCK_NODES: ScopeNode[] = [
       nodeType: 'leaf',
       title: 'Prod',
       description: 'Prod',
+      disableMultiSelect: false,
       linkType: 'scope',
       linkId: 'prod',
       parentName: 'cloud',
@@ -406,6 +391,7 @@ export const MOCK_NODES: ScopeNode[] = [
       nodeType: 'container',
       title: 'Applications',
       description: 'Cloud/Application Scopes',
+      disableMultiSelect: false,
       parentName: 'cloud',
     },
   },
@@ -415,6 +401,7 @@ export const MOCK_NODES: ScopeNode[] = [
       nodeType: 'leaf',
       title: 'Grafana',
       description: 'Grafana',
+      disableMultiSelect: false,
       linkType: 'scope',
       linkId: 'grafana',
       parentName: 'cloud-applications',
@@ -426,6 +413,7 @@ export const MOCK_NODES: ScopeNode[] = [
       nodeType: 'leaf',
       title: 'Mimir',
       description: 'Mimir',
+      disableMultiSelect: false,
       linkType: 'scope',
       linkId: 'mimir',
       parentName: 'cloud-applications',
@@ -437,6 +425,7 @@ export const MOCK_NODES: ScopeNode[] = [
       nodeType: 'leaf',
       title: 'Loki',
       description: 'Loki',
+      disableMultiSelect: false,
       linkType: 'scope',
       linkId: 'loki',
       parentName: 'cloud-applications',
@@ -448,6 +437,7 @@ export const MOCK_NODES: ScopeNode[] = [
       nodeType: 'leaf',
       title: 'Tempo',
       description: 'Tempo',
+      disableMultiSelect: false,
       linkType: 'scope',
       linkId: 'tempo',
       parentName: 'cloud-applications',
@@ -469,6 +459,7 @@ export const MOCK_NODES: ScopeNode[] = [
       nodeType: 'container',
       title: 'Development',
       description: 'Development Environment',
+      disableMultiSelect: false,
       linkType: 'scope',
       linkId: 'dev-env',
       parentName: 'environments',
@@ -480,6 +471,7 @@ export const MOCK_NODES: ScopeNode[] = [
       nodeType: 'container',
       title: 'Production',
       description: 'Production Environment',
+      disableMultiSelect: false,
       linkType: 'scope',
       linkId: 'prod-env',
       parentName: 'environments',
