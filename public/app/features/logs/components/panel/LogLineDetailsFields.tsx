@@ -596,7 +596,7 @@ const getClipboardButtonStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export const MultipleValue = ({
+const MultipleValue = ({
   links,
   onLinkClick,
   showCopy,
@@ -630,7 +630,7 @@ export const MultipleValue = ({
   );
 };
 
-export const SingleValue = ({
+const SingleValue = ({
   links,
   value: originalValue,
   prettifyJSON,
