@@ -3,7 +3,6 @@ import { isEmpty } from 'lodash';
 import { useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { base64UrlEncode } from '@grafana/alerting';
 import {
   ContactPointSelector as GrafanaManagedContactPointSelector,
   notificationsAPIv1beta1,
@@ -27,10 +26,9 @@ export function ContactPointSelector({ alertManager }: ContactPointSelectorProps
 
   // check if the contact point still exists, we'll use listReceiver to check if the contact point exists because getReceiver doesn't work with
   // contact point titles but with UUIDs (which is not what we store on the alert rule definition)
-  const encodedContactPoint = contactPointInForm ? base64UrlEncode(contactPointInForm) : '';
   const { currentData, status } = notificationsAPIv1beta1.endpoints.listReceiver.useQuery(
     {
-      fieldSelector: stringifyFieldSelector([['metadata.name', encodedContactPoint]]),
+      fieldSelector: stringifyFieldSelector([['spec.title', contactPointInForm ?? '']]),
     },
     { skip: !contactPointInForm }
   );

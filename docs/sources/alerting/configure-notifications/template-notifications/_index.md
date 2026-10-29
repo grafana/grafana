@@ -34,6 +34,8 @@ However, there are limitations. You cannot:
 - Modify Visual Appearance: Add HTML or CSS to email notifications for visual changes. Alter the design of notifications in messaging services like Slack or Microsoft Teams, such as adding custom blocks or adaptive cards.
 - Manage Media and Data: Customize the data structure or format passed to the templates, like adding new JSON fields or sending XML data for webhooks. Modify HTTP headers in webhooks beyond those defined in the configuration, or adjust the number, size, or placement of images.
 
+In Grafana Cloud, you can create up to 30 notification templates by default. Template changes can take 1 to 2 minutes to take effect while a background job synchronizes them with storage.
+
 Here's an [example](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/examples/) that displays the summary and description annotations for each alert in the notification:
 
 ```go

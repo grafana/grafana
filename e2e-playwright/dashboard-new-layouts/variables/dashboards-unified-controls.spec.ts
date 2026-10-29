@@ -71,7 +71,8 @@ test.describe('Dashboard edit - Unified controls', { tag: ['@dashboards'] }, () 
       'placeholder',
       variable.dataSource
     );
-    await expect(sidebar.variableOptions.adhoc.getEnableGroupByCheckbox()).not.toBeChecked();
+    // We use { checked: false } because @grafana/plugin-e2e's toBeChecked does not support .not: it waits the full timeout.
+    await expect(sidebar.variableOptions.adhoc.getEnableGroupByCheckbox()).toBeChecked({ checked: false });
   });
 
   test('preserves a Filter variable with both a filter and a group-by key after save and reload', async ({

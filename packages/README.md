@@ -61,11 +61,11 @@ The `release-npm.yml` workflow publishes packages and is given the version to pu
 
 > You must be logged in to NPM as part of Grafana NPM org before attempting to publish to the npm registry.
 
-1. Run `yarn packages:clean` script from the root directory. This will delete any previous builds of the packages.
-2. Run `yarn packages:prepare <version>` script from the root directory, for example `yarn packages:prepare 6.3.0-alpha.1`. This writes the version to every package in the release group. The version should be the same as the one being released.
+1. Run `pnpm packages:clean` script from the root directory. This will delete any previous builds of the packages.
+2. Run `pnpm packages:prepare <version>` script from the root directory, for example `pnpm packages:prepare 6.3.0-alpha.1`. This writes the version to every package in the release group. The version should be the same as the one being released.
    - Make sure you use semver convention. So, _place a dot between prerelease id and prerelease number_, i.e. 6.3.0-alpha.1
-3. Run `yarn packages:build` script that compiles distribution code in `packages/grafana-*/dist`.
-4. Run `yarn packages:pack` script to compress each package into `npm-artifacts/*.tgz` files. This is required for yarn to replace properties in the package.json files declared in the `publishConfig` property.
+3. Run `pnpm packages:build` script that compiles distribution code in `packages/grafana-*/dist`.
+4. Run `pnpm packages:pack` script to compress each package into `npm-artifacts/*.tgz` files. This is required for pnpm to replace properties in the package.json files declared in the `publishConfig` property.
 5. Depending on whether or not it's a prerelease:
    - When releasing a prerelease run `./scripts/publish-npm-packages.sh --dist-tag 'next' --registry 'https://registry.npmjs.org/'` to publish new versions.
    - When releasing a stable version run `./scripts/publish-npm-packages.sh --dist-tag 'latest' --registry 'https://registry.npmjs.org/'` to publish new versions.
@@ -78,7 +78,7 @@ The `release-npm.yml` workflow publishes packages and is given the version to pu
 To build individual packages, run:
 
 ```
-yarn nx run @grafana/<data|e2e-selectors|runtime|schema|ui>:build
+pnpm nx run @grafana/<data|e2e-selectors|runtime|schema|ui>:build
 ```
 
 ### Setting up @grafana/\* packages for local development
@@ -95,7 +95,7 @@ From your terminal:
 
 1. Navigate to `devenv/local-npm` directory.
 2. Run `docker compose up`. This will start your local npm registry, available at http://localhost:4873/.
-3. To test `@grafana` packages published to your local npm registry uncomment `npmScopes` and `unsafeHttpWhitelist` properties in the `.yarnrc` file.
+3. To test `@grafana` packages published to your local npm registry, add `@grafana:registry=http://localhost:4873/` to the `.npmrc` file of the project that installs them.
 
 #### Publishing packages to local npm registry
 
@@ -103,10 +103,10 @@ You need to follow [manual packages release procedure](#manual-release). The onl
 
 From your terminal:
 
-1. Run `yarn packages:clean`.
-2. Run `yarn packages:prepare`.
-3. Run `yarn packages:build`.
-4. Run `yarn packages:pack`.
+1. Run `pnpm packages:clean`.
+2. Run `pnpm packages:prepare`.
+3. Run `pnpm packages:build`.
+4. Run `pnpm packages:pack`.
 5. Run `NPM_TOKEN=NONE ./scripts/publish-npm-packages.sh`.
 6. Navigate to http://localhost:4873 and verify the version was published
 

@@ -400,11 +400,6 @@ export interface FeatureToggles {
   */
   kubernetesAggregatorCapTokenAuth?: boolean;
   /**
-  * Enable groupBy variable support in scenes dashboards
-  * @default false
-  */
-  groupByVariable?: boolean;
-  /**
   * Enables the use of scope filters in Grafana
   * @default false
   */
@@ -425,11 +420,6 @@ export interface FeatureToggles {
   */
   newDashboardWithFiltersAndGroupBy?: boolean;
   /**
-  * Renders ad hoc filters and group by in a single unified control
-  * @default true
-  */
-  dashboardUnifiedDrilldownControls?: boolean;
-  /**
   * Updates CloudWatch label parsing to be more accurate
   * @default true
   */
@@ -444,11 +434,6 @@ export interface FeatureToggles {
   * @default false
   */
   grafanaManagedRecordingRules?: boolean;
-  /**
-  * Enables Saved queries (query library) feature
-  * @default true
-  */
-  queryLibrary?: boolean;
   /**
   * Enables RBAC for playlists
   * @default false
@@ -686,16 +671,6 @@ export interface FeatureToggles {
   */
   teamHttpHeadersFromAppPlatform?: boolean;
   /**
-  * Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
-  * @default false
-  */
-  teamLBACApiReadFromAppPlatform?: boolean;
-  /**
-  * Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server
-  * @default false
-  */
-  teamLBACApiWriteFromAppPlatform?: boolean;
-  /**
   * Enables less memory intensive Elasticsearch result parsing
   * @default false
   */
@@ -925,11 +900,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertmanagerRemoteSecondaryWithRemoteState?: boolean;
-  /**
-  * Enables sharing a list of APIs with a list of plugins
-  * @default true
-  */
-  restrictedPluginApis?: boolean;
   /**
   * Enable favorite datasources
   * @default false
@@ -1204,7 +1174,7 @@ export interface FeatureToggles {
   lokiAlignedQuerySplitting?: boolean;
   /**
   * Enables heatmap visualization support for Pyroscope profiles
-  * @default false
+  * @default true
   */
   profilesHeatmap?: boolean;
   /**

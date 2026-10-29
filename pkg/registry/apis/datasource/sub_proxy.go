@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -212,12 +213,17 @@ func (b *DataSourceAPIBuilder) checkProxyRouteAccess(ctx context.Context, user i
 	if err != nil {
 		return false, err
 	}
-	result, err := b.accessClient.Check(ctx, user, authlib.CheckRequest{
+	check := authlib.CheckRequest{
 		Namespace: ns.Value,
 		Group:     b.GetGroupVersion().Group,
 		Resource:  "datasources",
 		Name:      uid,
 		Verb:      action,
-	}, "")
+	}
+	if action == datasources.ActionQuery {
+		check.Subresource = "query"
+		check.Verb = utils.VerbCreate
+	}
+	result, err := b.accessClient.Check(ctx, user, check, "")
 	return result.Allowed, err
 }

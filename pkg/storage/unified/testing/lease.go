@@ -24,8 +24,8 @@ import (
 )
 
 // RunLeaseTest runs the lease contract suite against a single shared kv.KV. The
-// suite is shared between unit tests (using an in-memory map KV) and integration
-// tests (Badger and sqlkv), and isolates cases from one another via lease names.
+// suite is shared between in-memory map, Badger, and SQLKV tests, and isolates
+// cases from one another via lease names.
 func RunLeaseTest(t *testing.T, store kv.KV) {
 	t.Helper()
 

@@ -21,6 +21,14 @@ export function buildCleanBaseUrl(url: string) {
   return stripSlashes(url.trim()).replace(/\.git\/?$/i, '');
 }
 
+export function withGitSuffix(spec: RepositorySpec): RepositorySpec | undefined {
+  const url = spec.type === 'git' ? spec.git?.url && stripSlashes(spec.git.url.trim()) : undefined;
+  if (!spec.git || !url || /\.git$/i.test(url)) {
+    return undefined;
+  }
+  return { ...spec, git: { ...spec.git, url: `${url}.git` } };
+}
+
 /**
  * Formats a repository URL for display by extracting the path portion.
  * e.g., "https://github.com/owner/repo/tree/main/path" -> "owner/repo/tree/main/path"

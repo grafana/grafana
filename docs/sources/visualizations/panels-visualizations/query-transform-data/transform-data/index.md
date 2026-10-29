@@ -160,6 +160,38 @@ You can also filter by annotations (which includes exemplars) to apply transform
 
 The filter icon is always displayed if your panel has more than one query or source of data (that is, panel or annotation data) but it may not work if previous transformations for merging the queries’ outputs are applied. This is because one transformation takes the output of the previous one.
 
+## Set a static refId for a transformation
+
+Some transformations build the refId of their output from the refIds of their input. For example, a **Merge series/tables** transformation applied to queries A and B outputs a frame with the refId `merge-A-B`. If you add, remove, or rename a query, or a query returns no data, that refId changes, and a later [Filter data by query refId](#filter-data-by-query-refid) transformation stops selecting the frame. To keep the refId stable, give the transformation a static refId. The transformation row calls this the transformation name.
+
+You can set a static refId on the following transformations:
+
+- [Merge series/tables](#merge-seriestables)
+- [Join by field](#join-by-field)
+- [Join by labels](#join-by-labels)
+- [Series to rows](#series-to-rows)
+- [Reduce](#reduce), in any mode except **Reduce fields**
+
+Other transformations don't offer this setting.
+
+To set a static refId:
+
+1. Click the name to the left of the transformation type in the transformation row.
+1. Enter a name.
+1. Press Enter or click outside the field.
+
+To go back to the generated refId, clear the field.
+
+When you haven't set a static refId, the row shows the refId the transformation generates, in italics. If the transformation doesn't output exactly one frame, the row shows **(Auto)** instead.
+
+A static refId can't:
+
+- Contain a variable, because the refId would then change with the variable's value.
+- Match the static refId of another transformation in the panel.
+- Match a refId that a query or an earlier transformation already uses.
+
+If a name breaks one of these rules, Grafana shows an error and doesn't save it.
+
 ## Delete a transformation
 
 We recommend that you remove transformations that you don't need. When you delete a transformation, you remove the data from the visualization.

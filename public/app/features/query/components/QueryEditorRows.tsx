@@ -19,6 +19,7 @@ import { SafeSerializableSceneObject, type SceneObjectRef, type VizPanel } from 
 import { type DataSourceRef } from '@grafana/schema';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { trackReorder } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/tracking';
+import { type QueryEditorInsertionRegistrationV1 } from 'app/features/explore/SignalExplorer/internalInsertionContract';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { QueryEditorRow } from './QueryEditorRow';
@@ -58,6 +59,8 @@ export interface Props {
   scrollToRefId?: string;
   /** Called after the row identified by scrollToRefId has been scrolled into view. */
   onScrollIntoView?: () => void;
+  /** Lets the row's query editor tell the host where its cursor is, so text can be inserted there. */
+  getQueryEditorInsertion?: (refId: string) => QueryEditorInsertionRegistrationV1;
 }
 
 export function QueryEditorRows({
@@ -85,6 +88,7 @@ export function QueryEditorRows({
   panelRef,
   scrollToRefId,
   onScrollIntoView,
+  getQueryEditorInsertion,
 }: Props) {
   /**
    * Switch the group over to the datasource implied by `newQueries`, if it differs from the
@@ -284,6 +288,7 @@ export function QueryEditorRows({
                     isOpen={isOpen}
                     scrollIntoView={scrollToRefId !== undefined && query.refId === scrollToRefId}
                     onScrollIntoView={onScrollIntoView}
+                    queryEditorInsertion={getQueryEditorInsertion?.(query.refId)}
                   />
                 );
 

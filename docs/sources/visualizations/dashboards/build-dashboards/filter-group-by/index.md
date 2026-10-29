@@ -129,11 +129,24 @@ To enable this functionality, you need to add an override for every field by whi
 In the override:
 
 - Select a field name.
-- Enable the **Filterable** switch.
-
-{{< figure src="/media/docs/grafana/dashboards/screenshot-panel-filter-override-v13.2.png" max-width="400px" alt="Field override making some fields filterable" >}}
+- Add the **Standard options > Filter from values** override property.
+- Enable the **Filter from values** switch to allow viewers to update dashboard filters by interacting with the panel.
 
 You can also do this programmatically by returning the data frame with the appropriate `filterable` property on the desired fields.
+
+For provisioned dashboards, **Filter from values** uses the JSON property ID `filterable`.
+For example, add the following override to the panel's `fieldConfig.overrides` array to enable filtering from the `service` field:
+
+```json
+{
+  "matcher": { "id": "byName", "options": "service" },
+  "properties": [{ "id": "filterable", "value": true }]
+}
+```
+
+Replace `service` with the name of the field you want to filter by.
+This requires a supported visualization and data source support for dashboard filters.
+The standard `filterable` property updates dashboard filters.
 
 Cross-filtering is supported for the following visualizations:
 

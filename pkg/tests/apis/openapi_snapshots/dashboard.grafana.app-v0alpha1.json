@@ -3163,6 +3163,10 @@
             "description": "When set to true, the snapshot exists in a remote server",
             "type": "boolean"
           },
+          "externalDeleteUrl": {
+            "description": "The server-provided URL for deleting the external snapshot",
+            "type": "string"
+          },
           "externalUrl": {
             "description": "The external URL where the snapshot can be seen",
             "type": "string"
@@ -3342,7 +3346,7 @@
             "default": ""
           },
           "resources": {
-            "description": "Resources is required for global hybrid search and rejected by per-resource routes. It must be nonempty and contain unique group/resource pairs.",
+            "description": "Resources selects unique group/resource pairs for global hybrid search. On Grafana's HTTP route, omitted or empty uses configured defaults, if any. Per-resource routes reject it.",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.HybridSearchResource"
@@ -3418,6 +3422,14 @@
             "type": "number",
             "format": "double",
             "default": 0
+          },
+          "tags": {
+            "description": "Tags from the lexical index. Omitted when unavailable.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-kubernetes-list-type": "atomic"
           },
           "title": {
             "type": "string",

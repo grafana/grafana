@@ -581,9 +581,12 @@ func TestSearchServicePermissions(t *testing.T) {
 	} {
 		for _, mode := range []string{"direct", "delegated"} {
 			t.Run(mode+"/"+name, func(t *testing.T) {
-				req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
-					Namespace: "stacks-1", Group: "dashboard.grafana.app", Resource: "dashboards",
-				}}}
+				req := &resourcepb.ResourceSearchRequest{
+					Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+						Namespace: "stacks-1", Group: "dashboard.grafana.app", Resource: "dashboards",
+					}},
+					ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				}
 				if tc.mutate != nil {
 					tc.mutate(req)
 				}
@@ -737,9 +740,12 @@ func TestSearchServicePermissionsIdentityErrors(t *testing.T) {
 				ctx = authlib.WithAuthInfo(ctx, tc.id)
 			}
 			s := newPermissionTestSearchServer(newLimitedClient(t))
-			resp, err := s.Search(ctx, &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
-				Namespace: "stacks-1", Group: "dashboard.grafana.app", Resource: "dashboards",
-			}}})
+			resp, err := s.Search(ctx, &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Namespace: "stacks-1", Group: "dashboard.grafana.app", Resource: "dashboards",
+				}},
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			})
 			require.NoError(t, err)
 			require.Equal(t, tc.wantCode, resp.Error.GetCode())
 		})
@@ -770,10 +776,12 @@ func TestAuthzLimitedClient_BatchCheckReturnsMissingResultError(t *testing.T) {
 	require.Equal(t, otelcodes.Error, recorder.Ended()[0].Status().Code)
 }
 
-// checkPermissions checks req against the types its index draws from, as Search does.
+// checkPermissions checks req as Search does, returning the types a global
+// search leaves out.
 func checkPermissions(s *searchServer, ctx context.Context, req *resourcepb.ResourceSearchRequest) ([]string, error) {
-	key := req.Options.Key
-	return s.checkSearchServicePermissions(ctx, req, s.indexSources(NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}))
+	key := NamespacedResource{Namespace: req.Options.Key.Namespace, Group: req.Options.Key.Group, Resource: req.Options.Key.Resource}
+	_, skipped, err := s.checkSearchServicePermissions(ctx, req, s.indexSources(key))
+	return skipped, err
 }
 
 func newPermissionTestSearchServer(client authlib.AccessClient) *searchServer {
@@ -798,13 +806,15 @@ func (allUncheckedClient) IsCompatibleWithRBAC(string, string) bool { return fal
 // recordingIndex answers every search with no hits and keeps the last request.
 type recordingIndex struct {
 	*MockResourceIndex
-	req *resourcepb.ResourceSearchRequest
+	req     *resourcepb.ResourceSearchRequest
+	indexes *SearchIndexes
 	// duringSearch, if set, runs while the index is searched.
 	duringSearch func()
 }
 
-func (r *recordingIndex) Search(_ context.Context, _ authlib.AccessClient, req *resourcepb.ResourceSearchRequest, _ []ResourceIndex, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
+func (r *recordingIndex) Search(_ context.Context, _ authlib.AccessClient, req *resourcepb.ResourceSearchRequest, indexes *SearchIndexes, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
 	r.req = req
+	r.indexes = indexes
 	if r.duringSearch != nil {
 		r.duringSearch()
 	}
@@ -817,9 +827,12 @@ func (r *recordingIndex) Search(_ context.Context, _ authlib.AccessClient, req *
 func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 	const dashboards, folders = "dashboard.grafana.app/dashboards", "folder.grafana.app/folders"
 	globalRequest := func() *resourcepb.ResourceSearchRequest {
-		return &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
-			Namespace: "stacks-1", Group: GlobalSearchGroup, Resource: GlobalSearchResource,
-		}}}
+		return &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+				Namespace: "stacks-1", Group: GlobalSearchGroup, Resource: GlobalSearchResource,
+			}},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		}
 	}
 
 	for mode, withPermissions := range map[string]func(...string) *identity.StaticRequester{
@@ -890,9 +903,9 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 		s := newPermissionTestSearchServer(newLimitedClient(t))
 		s.globalIndexEnabled = true
 		s.search = &mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{GlobalSearchKey("stacks-1"): index}}
-		s.globalCoverage = NewGlobalSearchCoverageRegistry(AppManifests())
-		s.globalCoverage.Reload(AppManifests(), []*app.ManifestData{pages})
-		s.globalCoverage.Reload(AppManifests(), nil)
+		s.globalCoverage = NewGlobalSearchCoverageRegistry(testBuiltinManifests())
+		s.globalCoverage.Reload(testBuiltinManifests(), []*app.ManifestData{pages})
+		s.globalCoverage.Reload(testBuiltinManifests(), nil)
 		ctx := authlib.WithAuthInfo(t.Context(), serviceWithPermissions("dashboard.grafana.app:get", "folder.grafana.app:get", "x.ext.grafana.app:get"))
 
 		rsp, err := s.Search(ctx, globalRequest())
@@ -911,8 +924,8 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 		s := newPermissionTestSearchServer(newLimitedClient(t))
 		s.globalIndexEnabled = true
 		s.search = &mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{GlobalSearchKey("stacks-1"): index}}
-		s.globalCoverage = NewGlobalSearchCoverageRegistry(AppManifests())
-		s.globalCoverage.Reload(AppManifests(), []*app.ManifestData{testGlobalManifest("x.ext.grafana.app", testGlobalKind("Page", "Pages", &yes))})
+		s.globalCoverage = NewGlobalSearchCoverageRegistry(testBuiltinManifests())
+		s.globalCoverage.Reload(testBuiltinManifests(), []*app.ManifestData{testGlobalManifest("x.ext.grafana.app", testGlobalKind("Page", "Pages", &yes))})
 		ctx := authlib.WithAuthInfo(t.Context(), serviceWithPermissions("dashboard.grafana.app:get", "folder.grafana.app:get", "x.ext.grafana.app:get"))
 
 		rsp, err := s.Search(ctx, globalRequest())
@@ -931,9 +944,9 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 		s := newPermissionTestSearchServer(newLimitedClient(t))
 		s.globalIndexEnabled = true
 		s.search = &mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{GlobalSearchKey("stacks-1"): index}}
-		s.globalCoverage = NewGlobalSearchCoverageRegistry(AppManifests())
-		s.globalCoverage.Reload(AppManifests(), []*app.ManifestData{testGlobalManifest("x.ext.grafana.app", testGlobalKind("Page", "Pages", &yes))})
-		index.duringSearch = func() { s.globalCoverage.Reload(AppManifests(), nil) }
+		s.globalCoverage = NewGlobalSearchCoverageRegistry(testBuiltinManifests())
+		s.globalCoverage.Reload(testBuiltinManifests(), []*app.ManifestData{testGlobalManifest("x.ext.grafana.app", testGlobalKind("Page", "Pages", &yes))})
+		index.duringSearch = func() { s.globalCoverage.Reload(testBuiltinManifests(), nil) }
 		ctx := authlib.WithAuthInfo(t.Context(), serviceWithPermissions("dashboard.grafana.app:get", "folder.grafana.app:get", "x.ext.grafana.app:get"))
 
 		rsp, err := s.Search(ctx, globalRequest())
@@ -1019,9 +1032,12 @@ func TestSearchPermissionFailureMonitoring(t *testing.T) {
 			logger := &permissionTestLogger{}
 			s := newPermissionTestSearchServer(authlib.FixedAccessClient(true))
 			s.log = logger
-			resp, err := s.Search(authlib.WithAuthInfo(t.Context(), id), &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
-				Namespace: "stacks-1", Group: "dashboard.grafana.app", Resource: "dashboards",
-			}}})
+			resp, err := s.Search(authlib.WithAuthInfo(t.Context(), id), &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Namespace: "stacks-1", Group: "dashboard.grafana.app", Resource: "dashboards",
+				}},
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			})
 			require.NoError(t, err)
 			require.Equal(t, int32(http.StatusInternalServerError), resp.Error.GetCode())
 			require.Equal(t, 1.0, testutil.ToFloat64(s.indexMetrics.SearchServicePermissionFailures.WithLabelValues("dashboard.grafana.app", "dashboards", utils.VerbGet, mode, "false")))
@@ -1044,9 +1060,12 @@ func TestSearchServicePermissionsDoesNotDependOnClient(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			s := newPermissionTestSearchServer(client)
-			req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
-				Namespace: "stacks-1", Group: "dashboard.grafana.app", Resource: "dashboards",
-			}}}
+			req := &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Namespace: "stacks-1", Group: "dashboard.grafana.app", Resource: "dashboards",
+				}},
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			}
 			for mode, id := range map[string]authlib.AuthInfo{
 				"direct":    serviceWithPermissions("folder.grafana.app:get"),
 				"delegated": tokenWithoutDelegation(),

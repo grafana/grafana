@@ -1,4 +1,4 @@
-import { groupOTelAttributes } from './details';
+import { classifyErrorAttributes, groupOTelAttributes } from './details';
 
 describe('groupOTelAttributes', () => {
   const getKey = (item: { key: string }) => item.key;
@@ -124,5 +124,79 @@ describe('groupOTelAttributes', () => {
 
     expect(grouped.map(({ category }) => category.id)).toEqual(['database']);
     expect(grouped[0].items).toHaveLength(2);
+  });
+});
+
+describe('classifyErrorAttributes', () => {
+  const getKey = (item: { key: string }) => item.key;
+
+  it.each([
+    'exception.stacktrace',
+    'error.stack_trace',
+    'statusStack',
+    'status_stack',
+    'status.stack',
+    'err.stack',
+    'error.stack',
+    'exception.stack',
+    'errorStack',
+    'exceptionStack',
+    'errStack',
+  ])('classifies %s as a stacktrace', (key) => {
+    const item = { key, value: 'at main' };
+
+    expect(classifyErrorAttributes([item], getKey)).toEqual({
+      messages: [],
+      stacktraces: [item],
+      other: [],
+    });
+  });
+
+  it.each(['error', 'err', 'exception', 'errorMessage', 'exceptionMessage', 'err.message', 'errMessage'])(
+    'classifies %s as an error message',
+    (key) => {
+      const item = { key, value: 'failed' };
+
+      expect(classifyErrorAttributes([item], getKey)).toEqual({
+        messages: [item],
+        stacktraces: [],
+        other: [],
+      });
+    }
+  );
+
+  it('classifies err.type with the other error attributes', () => {
+    const item = { key: 'err.type', value: 'Error' };
+
+    expect(classifyErrorAttributes([item], getKey)).toEqual({
+      messages: [],
+      stacktraces: [],
+      other: [item],
+    });
+  });
+
+  it.each(['tech_stack', 'techStack', 'full_stack', 'stack', 'addedInfo'])(
+    'leaves %s out of the error groups',
+    (key) => {
+      const item = { key, value: 'value' };
+
+      expect(classifyErrorAttributes([item], getKey)).toEqual({
+        messages: [],
+        stacktraces: [],
+        other: [],
+      });
+    }
+  );
+
+  it('splits an error namespace into message, stacktrace, and other attributes', () => {
+    const message = { key: 'error.message', value: 'failed' };
+    const stack = { key: 'error.stack', value: 'at main' };
+    const type = { key: 'error.type', value: 'timeout' };
+
+    expect(classifyErrorAttributes([message, stack, type], getKey)).toEqual({
+      messages: [message],
+      stacktraces: [stack],
+      other: [type],
+    });
   });
 });
