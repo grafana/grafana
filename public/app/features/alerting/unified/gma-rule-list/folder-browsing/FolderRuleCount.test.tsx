@@ -1,15 +1,18 @@
 import { render, screen } from 'test/test-utils';
 
 import { setupMswServer } from '../../mockApi';
-import { mockFolderCounts } from '../mocks/handlers';
+import { alertRuleFactory, folderFactory, recordingRuleFactory } from '../mocks/factories';
+import { setupRuleListBackend } from '../mocks/ruleListBackend';
 
 import { FolderRuleCount } from './FolderRuleCount';
 
 setupMswServer();
 
+const ROOT = folderFactory.build({ metadata: { name: 'root' } });
+
 describe('FolderRuleCount', () => {
   it('names the count with its explanation, so it is not only a hover tooltip', async () => {
-    mockFolderCounts('alert', { root: 3 });
+    setupRuleListBackend({ folders: [ROOT], alertRules: alertRuleFactory.inFolder('root').buildList(3) });
 
     render(<FolderRuleCount folderUid="root" kind="alert" />);
 
@@ -21,7 +24,7 @@ describe('FolderRuleCount', () => {
   });
 
   it('explains on hover that the count covers only rules directly in the folder', async () => {
-    mockFolderCounts('alert', { root: 2 });
+    setupRuleListBackend({ folders: [ROOT], alertRules: alertRuleFactory.inFolder('root').buildList(2) });
 
     const { user } = render(<FolderRuleCount folderUid="root" kind="alert" />);
     await user.hover(await screen.findByText('2 alert rules'));
@@ -32,7 +35,7 @@ describe('FolderRuleCount', () => {
   });
 
   it('counts the rule kind it is given', async () => {
-    mockFolderCounts('recording', { root: 1 });
+    setupRuleListBackend({ folders: [ROOT], recordingRules: recordingRuleFactory.inFolder('root').buildList(1) });
 
     render(<FolderRuleCount folderUid="root" kind="recording" />);
 

@@ -39,7 +39,6 @@ describe('useRuleListSearchState', () => {
 
     expect(locationService.getSearchObject()).toEqual({
       tab: 'active',
-      view: 'list',
       search: '"high load"   folder:f1',
     });
     expect(result.current.query).toBe('"high load"   folder:f1');
@@ -80,17 +79,17 @@ describe('useRuleListSearchState view mode', () => {
     expect(result.current.mode).toBe(mode);
   });
 
-  it('switches to List and writes view=list when a non-folder filter is applied', () => {
+  it('switches to List without writing view when a non-folder filter is applied', () => {
     const { result } = renderAt('?search=folder%3Af1');
 
     act(() => result.current.applyQuery('folder:f1 label:team=api'));
 
-    expect(locationService.getSearchObject()).toEqual({ search: 'folder:f1 label:team=api', view: 'list' });
+    expect(locationService.getSearchObject()).toEqual({ search: 'folder:f1 label:team=api' });
     expect(result.current.mode).toBe('list');
   });
 
   it('returns to Folders, keeping the folder filter, when the last non-folder filter is cleared', () => {
-    const { result } = renderAt('?search=folder%3Af1%20cpu&view=list');
+    const { result } = renderAt('?search=folder%3Af1%20cpu');
 
     act(() => result.current.applyQuery('folder:f1'));
 
@@ -104,6 +103,15 @@ describe('useRuleListSearchState view mode', () => {
     act(() => result.current.applyQuery('folder:f1'));
 
     expect(locationService.getSearchObject()).toEqual({ search: 'folder:f1', view: 'list' });
+  });
+
+  it('keeps a chosen List mode when the last non-folder filter is cleared', () => {
+    const { result } = renderAt('?search=cpu&view=list');
+
+    act(() => result.current.applyQuery(''));
+
+    expect(locationService.getSearchObject()).toEqual({ search: '', view: 'list' });
+    expect(result.current.mode).toBe('list');
   });
 
   it('writes view=list for List and removes view for Folders', () => {

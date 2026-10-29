@@ -103,7 +103,7 @@ describe('RecordingRulesPage', () => {
   });
 
   it('shows a retryable error instead of the empty state when the first page fails', async () => {
-    const callCount = failFirstCall('post', ruleSearchUrl('recording'), {
+    const callCount = failFirstCall(ruleSearchUrl('recording'), {
       items: [ruleItem('recording', 'rule-1', 'cpu:usage:rate5m', 'folder-1')],
       metadata: {},
     });

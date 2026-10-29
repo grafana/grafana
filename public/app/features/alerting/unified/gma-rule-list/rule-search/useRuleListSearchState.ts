@@ -24,8 +24,8 @@ export interface UseRuleListSearchStateResult {
 
 /**
  * The applied query lives in the `search` URL parameter as typed, so reloads, links and Back/Forward restore it.
- * Any non-folder filter shows List, whatever `view` says. Applying one writes `view=list`; clearing the last
- * removes `view` so the page returns to Folders. A bare `view=list` is kept.
+ * Any non-folder filter shows List, whatever `view` says, so `view` records only the mode the user chose and
+ * clearing the last such filter returns to it.
  */
 export function useRuleListSearchState(kind: RuleKind): UseRuleListSearchStateResult {
   const [queryParams, updateQueryParams] = useURLSearchParams();
@@ -35,7 +35,6 @@ export function useRuleListSearchState(kind: RuleKind): UseRuleListSearchStateRe
 
   const parsed = useMemo(() => parse(query, kind), [query, kind]);
 
-  // Enforced on read too, so an incoming URL with `view` missing still opens List for a non-folder filter.
   const hasNonFolderFilters = hasNonFolderCriteria(parsed);
   const mode: RuleListMode = hasNonFolderFilters || viewParam === 'list' ? 'list' : 'folders';
 
@@ -45,15 +44,9 @@ export function useRuleListSearchState(kind: RuleKind): UseRuleListSearchStateRe
       if (next === query) {
         return;
       }
-      let view = viewParam ?? undefined;
-      if (hasNonFolderCriteria(parse(next, kind))) {
-        view = 'list';
-      } else if (hasNonFolderFilters) {
-        view = undefined;
-      }
-      updateQueryParams({ search: next, view });
+      updateQueryParams({ search: next });
     },
-    [updateQueryParams, query, viewParam, kind, hasNonFolderFilters]
+    [updateQueryParams, query]
   );
 
   const setMode = useCallback(
