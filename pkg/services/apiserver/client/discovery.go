@@ -22,7 +22,7 @@ var (
 )
 
 type DiscoveryClient interface {
-	discovery.DiscoveryInterface
+	discovery.DiscoveryInterfaces
 	GetResourceForKind(ctx context.Context, gvk schema.GroupVersionKind) (schema.GroupVersionResource, error)
 	GetKindForResource(gvr schema.GroupVersionResource) (schema.GroupVersionKind, error)
 	GetPreferredVersion(ctx context.Context, gr schema.GroupResource) (schema.GroupVersionResource, schema.GroupVersionKind, error)
@@ -32,7 +32,7 @@ type DiscoveryClient interface {
 
 type DiscoveryClientImpl struct {
 	restConfig *rest.Config
-	*discovery.DiscoveryClient
+	discovery.DiscoveryInterfaces
 }
 
 func NewDiscoveryClient(restConfig *rest.Config) (*DiscoveryClientImpl, error) {
@@ -41,8 +41,8 @@ func NewDiscoveryClient(restConfig *rest.Config) (*DiscoveryClientImpl, error) {
 		return nil, err
 	}
 	return &DiscoveryClientImpl{
-		restConfig:      restConfig,
-		DiscoveryClient: discoveryClient,
+		restConfig:          restConfig,
+		DiscoveryInterfaces: discoveryClient,
 	}, nil
 }
 
