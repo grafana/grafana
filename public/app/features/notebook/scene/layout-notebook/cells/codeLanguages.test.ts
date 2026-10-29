@@ -1,4 +1,4 @@
-import { CODE_MIRROR_LANGUAGES } from '@grafana/ui/unstable';
+import { CODE_MIRROR_LANGUAGES } from '@grafana/ui';
 
 import {
   canonicalLanguage,

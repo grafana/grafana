@@ -12,6 +12,7 @@ import { mockThemeContext } from '../../themes/ThemeContext';
 import { CodeEditor } from './CodeEditor';
 import { loadLanguageExtension } from './languageLoader';
 import { createCodeEditorTheme } from './theme';
+import { type CodeMirrorExtensionContext, type CodeMirrorThemeOverrides } from './types';
 
 let capturedProps: ReactCodeMirrorProps | undefined;
 
@@ -144,6 +145,40 @@ describe('CodeMirror CodeEditor', () => {
     expect(getAutocompleteSources()).toEqual([existingSource]);
   });
 
+  it('builds custom extensions once for a stable callback inside the editor', () => {
+    const customSource = jest.fn();
+    const factory = jest.fn(({ theme }: CodeMirrorExtensionContext) => [
+      EditorState.languageData.of(() => [{ autocomplete: customSource, themeName: theme.name }]),
+    ]);
+    const onChange = jest.fn();
+    const { rerender } = render(<CodeEditor value="" onChange={onChange} extensions={factory} />);
+    expect(getAutocompleteSources()).toEqual([customSource]);
+    expect(factory).toHaveBeenCalledWith(
+      expect.objectContaining({
+        theme: expect.objectContaining({ name: expect.any(String) }),
+        signatureHelp: expect.any(Function),
+        variableCompletion: expect.any(Function),
+      })
+    );
+
+    rerender(<CodeEditor value="updated" onChange={onChange} extensions={factory} />);
+    expect(factory).toHaveBeenCalledTimes(1);
+  });
+
+  it('rebuilds callback extensions with the current Grafana theme', () => {
+    const factory = jest.fn((_context: CodeMirrorExtensionContext) => []);
+    const { rerender } = render(<CodeEditor value="" onChange={jest.fn()} extensions={factory} />);
+    const initialTheme = factory.mock.calls[0]?.[0]?.theme;
+    const nextTheme = createTheme({ colors: { mode: initialTheme?.isDark ? 'light' : 'dark' } });
+    const restoreThemeContext = mockThemeContext(nextTheme);
+    try {
+      rerender(<CodeEditor value="" onChange={jest.fn()} extensions={factory} />);
+      expect(factory).toHaveBeenLastCalledWith(expect.objectContaining({ theme: nextTheme }));
+    } finally {
+      restoreThemeContext();
+    }
+  });
+
   it('binds Tab to accept completions before the default indent behavior', () => {
     render(<CodeEditor value="" onChange={jest.fn()} />);
 
@@ -229,18 +264,42 @@ describe('CodeMirror CodeEditor', () => {
 
     rerender(<CodeEditor value="" onChange={jest.fn()} />);
 
-    expect(createCodeEditorThemeMock).toHaveBeenLastCalledWith(nextTheme);
+    expect(createCodeEditorThemeMock).toHaveBeenLastCalledWith(nextTheme, undefined);
     expect(capturedProps?.theme).toBe(createCodeEditorThemeMock.mock.results.at(-1)?.value);
 
     restoreThemeContext();
   });
 
-  it('passes a provided theme through to CodeMirror, replacing the default Grafana theme', () => {
-    const customTheme = EditorView.theme({ '&': { backgroundColor: 'rgb(7, 7, 7)' } });
+  it.each(['extension array', 'extension object'] as const)(
+    'passes a provided %s theme through to CodeMirror',
+    (shape) => {
+      const extension = EditorView.theme({ '&': { backgroundColor: 'rgb(7, 7, 7)' } });
+      const customTheme = shape === 'extension object' ? { extension } : extension;
 
-    render(<CodeEditor value="" onChange={jest.fn()} theme={customTheme} />);
+      render(<CodeEditor value="" onChange={jest.fn()} theme={customTheme} />);
 
-    expect(capturedProps?.theme).toBe(customTheme);
+      expect(capturedProps?.theme).toBe(customTheme);
+    }
+  );
+
+  it('merges declarative theme overrides and restores defaults when they are removed', () => {
+    const onChange = jest.fn();
+    const overrides: CodeMirrorThemeOverrides = {
+      '&': { backgroundColor: 'transparent' },
+      '.cm-gutters': { backgroundColor: 'transparent' },
+    };
+    const { rerender } = render(<CodeEditor value="" onChange={onChange} theme={overrides} />);
+    expect(createCodeEditorThemeMock).toHaveBeenLastCalledWith(expect.anything(), overrides);
+    expect(capturedProps?.theme).toBe(createCodeEditorThemeMock.mock.results.at(-1)?.value);
+
+    rerender(<CodeEditor value="" onChange={onChange} />);
+    expect(createCodeEditorThemeMock).toHaveBeenLastCalledWith(expect.anything(), undefined);
+    expect(capturedProps?.theme).toBe(createCodeEditorThemeMock.mock.results.at(-1)?.value);
+  });
+
+  it.each(['light', 'dark', 'none'] as const)('passes the %s theme keyword through to CodeMirror', (theme) => {
+    render(<CodeEditor value="" onChange={jest.fn()} theme={theme} />);
+    expect(capturedProps?.theme).toBe(theme);
   });
 
   it('forwards basicSetup to CodeMirror so consumers can disable default features', () => {

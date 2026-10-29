@@ -2,7 +2,7 @@ import { type EditorView, ViewPlugin } from '@codemirror/view';
 import { getJSONSchema, jsonSchema, updateSchema } from 'codemirror-json-schema';
 import { useCallback, useContext, useMemo, useRef, useState } from 'react';
 
-import { CodeMirrorEditor, type CodeMirrorExtension } from '@grafana/ui/unstable';
+import { CodeMirrorEditor, type CodeMirrorExtension } from '@grafana/ui';
 
 import { NamespaceContext } from './contexts';
 import { schemaAnnotations } from './schemaAnnotations';

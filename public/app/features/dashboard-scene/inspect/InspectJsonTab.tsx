@@ -18,8 +18,7 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
-import { Alert, Button, Field, Select, useStyles2 } from '@grafana/ui';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import { Alert, Button, Field, Select, useStyles2, CodeMirrorEditor } from '@grafana/ui';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';

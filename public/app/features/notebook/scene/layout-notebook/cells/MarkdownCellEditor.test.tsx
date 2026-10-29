@@ -4,11 +4,11 @@ import { type CellContentKind } from 'app/features/notebook/types';
 
 import { MarkdownCellEditor } from './MarkdownCellEditor';
 
-jest.mock('@grafana/ui/unstable', () => {
+jest.mock('@grafana/ui', () => {
   const { useEffect, useRef } = require('react');
 
   return {
-    ...jest.requireActual('@grafana/ui/unstable'),
+    ...jest.requireActual('@grafana/ui'),
     CodeMirrorEditor: ({
       value,
       basicSetup,

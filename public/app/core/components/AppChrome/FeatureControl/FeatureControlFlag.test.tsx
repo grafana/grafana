@@ -4,7 +4,7 @@ import type { ComponentProps } from 'react';
 
 import { getLocalStorageProvider } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
-import type { CodeMirrorEditor } from '@grafana/ui/unstable';
+import type { CodeMirrorEditor } from '@grafana/ui';
 
 import { FeatureControlFlag, type FeatureControlFlagProps } from './FeatureControlFlag';
 
@@ -26,8 +26,8 @@ jest.mock('@grafana/runtime/internal', () => ({
   } as never),
 }));
 
-jest.mock('@grafana/ui/unstable', () => ({
-  ...jest.requireActual('@grafana/ui/unstable'),
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
   CodeMirrorEditor: ({
     value,
     onChange,
