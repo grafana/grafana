@@ -211,7 +211,7 @@ func annotationLegacyAccessControl(t *testing.T, ac *acimpl.AccessControl, permi
 
 type annotationLegacyEvaluator struct {
 	accesscontrol.AccessControl
-	client legacyclient.LegacyAccessControl
+	client legacyclient.LegacyAccessClient
 }
 
 func (a *annotationLegacyEvaluator) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {

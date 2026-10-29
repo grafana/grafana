@@ -173,7 +173,7 @@ func TestClient_LegacyCheckRequest(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			server := &legacyCheckServer{}
-			var client LegacyAccessControl = newLegacyTransportClient(t, server)
+			var client LegacyAccessClient = newLegacyTransportClient(t, server)
 
 			allowed, err := client.LegacyCheck(t.Context(), tc.req)
 

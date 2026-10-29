@@ -6,10 +6,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-// LegacyAccessControl checks legacy RBAC expressions without exposing the RPC contract.
+// LegacyAccessClient checks legacy RBAC expressions without exposing the RPC contract.
 // The client uses its configured transport to authenticate the caller; Subject
 // identifies the identity being checked, which may differ from that caller.
-type LegacyAccessControl interface {
+type LegacyAccessClient interface {
 	LegacyCheck(ctx context.Context, req LegacyCheckRequest) (bool, error)
 }
 

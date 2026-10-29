@@ -10,7 +10,7 @@ import (
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
-var _ LegacyAccessControl = (*LegacyClient)(nil)
+var _ LegacyAccessClient = (*LegacyClient)(nil)
 
 // LegacyCheck executes the deprecated legacy-RBAC compatibility check through
 // the local AuthZ compatibility API.
