@@ -106,7 +106,7 @@ export const QueryField = memo(function QueryField({
       },
     };
   });
-  useEffect(() => () => runOnChangeDebounced.cancel(), [runOnChangeDebounced]);
+  useEffect(() => () => runOnChangeDebounced.flush(), [runOnChangeDebounced]);
 
   const [plugins] = useState<Array<Plugin<Editor>>>(() =>
     [
