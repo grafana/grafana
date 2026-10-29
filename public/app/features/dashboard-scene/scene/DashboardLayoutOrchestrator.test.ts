@@ -1,6 +1,8 @@
 import { type PointerEvent as ReactPointerEvent } from 'react';
 
+import { FlagKeys } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { moveGridItem } from '../actions/layout/moveGridItem';
 import { reorderAutoGridItems } from '../actions/layout/reorderAutoGridItems';
@@ -339,6 +341,144 @@ describe('grid item drags and the optional drop target hooks', () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+
+  describe('with the unified drag and drop flag on', () => {
+    beforeEach(() => setTestFlags({ [FlagKeys.GrafanaDashboardUnifiedDragAndDrop]: true }));
+    afterEach(() => setTestFlags({}));
+
+    it('moves the item on drop straight away when the source layout drives the drag itself', () => {
+      const scene = setupWithTwoTabs();
+      const orchestrator = scene.dashboard.state.layoutOrchestrator!;
+      const onDragEnd = jest.fn(() => expect(moveGridItemMock).toHaveBeenCalledTimes(1));
+      orchestrator.startDraggingSync({ clientX: 130, clientY: 70 } as ReactPointerEvent, scene.gridItem, {
+        onDrag: jest.fn(),
+        onDragEnd,
+      });
+      pointerOver('tab2-manager');
+      movePointer(140, 80);
+
+      drop();
+
+      // Before the source resets its drag preview, so the item never shows in its old place first
+      expect(moveGridItemMock).toHaveBeenCalledTimes(1);
+      expect(onDragEnd).toHaveBeenCalledTimes(1);
+    });
+
+    it('still defers the move until react-grid-layout finished its own drag handling', () => {
+      jest.useFakeTimers();
+      try {
+        setupGridItemDrag();
+        pointerOver('tab2-manager');
+        movePointer(140, 80);
+
+        drop();
+
+        expect(moveGridItemMock).not.toHaveBeenCalled();
+        jest.runAllTimers();
+        expect(moveGridItemMock).toHaveBeenCalledTimes(1);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('measures the auto grid an item is dragged from, for targets that size the item from it', () => {
+      const scene = setupWithTwoTabs();
+      const autoGridElement = document.createElement('div');
+      jest.spyOn(autoGridElement, 'clientWidth', 'get').mockReturnValue(1208);
+      autoGridElement.style.columnGap = '8px';
+      (scene.tab1Manager.state.layout.containerRef as { current: HTMLDivElement | null }).current = autoGridElement;
+      const orchestrator = scene.dashboard.state.layoutOrchestrator!;
+
+      orchestrator.startDraggingSync({ clientX: 130, clientY: 70 } as ReactPointerEvent, scene.gridItem);
+
+      expect(orchestrator.getGridItemDragInfo()?.autoGrid).toEqual({ width: 1208, columnGap: 8 });
+    });
+
+    describe('new panels from the Add pane', () => {
+      let requestAnimationFrame: jest.SpyInstance;
+
+      beforeEach(() => {
+        requestAnimationFrame = jest
+          .spyOn(window, 'requestAnimationFrame')
+          .mockImplementation((callback: FrameRequestCallback) => {
+            callback(0);
+            return 0;
+          });
+      });
+
+      afterEach(() => requestAnimationFrame.mockRestore());
+
+      function setupNewPanelDrag(action: 'newPanel' | 'paste') {
+        const scene = setupWithTwoTabs();
+        const orchestrator = scene.dashboard.state.layoutOrchestrator!;
+        const onNewPanelDragOver = jest.fn();
+        const onExternalDragLeave = jest.fn();
+        Object.assign(scene.tab2Manager, { onNewPanelDragOver, onExternalDragLeave });
+        let addPanel = () => {};
+        const added = new Promise<void>((resolve) => (addPanel = resolve));
+        // Adding a new panel loads its defaults first
+        Object.assign(orchestrator, { _addNewPanelToLayout: jest.fn(() => added), _pastePanelToLayout: jest.fn() });
+
+        orchestrator.startDraggingNewPanel(action);
+
+        return { ...scene, orchestrator, onNewPanelDragOver, onExternalDragLeave, addPanel };
+      }
+
+      it('passes every pointer move over a target to its onNewPanelDragOver', () => {
+        const { onNewPanelDragOver, onExternalDragLeave } = setupNewPanelDrag('newPanel');
+
+        pointerOver('tab2-manager');
+        movePointer(140, 80);
+        movePointer(150, 90);
+
+        expect(onNewPanelDragOver.mock.calls.map(([evt]) => [evt.clientX, evt.clientY])).toEqual([
+          [140, 80],
+          [150, 90],
+        ]);
+        expect(onExternalDragLeave).not.toHaveBeenCalled();
+      });
+
+      it('ends the preview once the pointer leaves the target', () => {
+        const { onExternalDragLeave } = setupNewPanelDrag('newPanel');
+        pointerOver('tab2-manager');
+        movePointer(140, 80);
+
+        pointerOver('tab1-manager');
+        movePointer(120, 60);
+
+        expect(onExternalDragLeave).toHaveBeenCalledTimes(1);
+      });
+
+      it('keeps the preview until the dropped panel is added, so the panel takes its place', async () => {
+        const { orchestrator, onExternalDragLeave, addPanel } = setupNewPanelDrag('newPanel');
+        pointerOver('tab2-manager');
+        movePointer(140, 80);
+
+        drop();
+
+        // @ts-expect-error - accessing private property for testing
+        expect(orchestrator._addNewPanelToLayout).toHaveBeenCalled();
+        expect(orchestrator.isDragging()).toBe(false);
+        expect(onExternalDragLeave).not.toHaveBeenCalled();
+
+        addPanel();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(onExternalDragLeave).toHaveBeenCalledTimes(1);
+      });
+
+      it('does not preview pasted panels', () => {
+        const { onNewPanelDragOver } = setupNewPanelDrag('paste');
+
+        pointerOver('tab2-manager');
+        movePointer(140, 80);
+        drop();
+
+        expect(onNewPanelDragOver).not.toHaveBeenCalled();
+      });
+    });
   });
 });
 

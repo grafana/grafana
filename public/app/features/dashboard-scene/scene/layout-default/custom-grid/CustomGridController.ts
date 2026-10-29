@@ -16,6 +16,7 @@ import {
 
 import { getLayoutKey, gridItemsToLayout } from './gridItemLayout';
 import {
+  autoGridItemSizeToGridSize,
   cellFromPixels,
   compact,
   type GridLayoutItem,
@@ -37,6 +38,9 @@ export const NARROW_GRID_MAX_WIDTH = 768;
 /** How far the pointer moves before a press on a panel header lifts the panel, so a click stays a click */
 const DRAG_THRESHOLD_PX = 4;
 
+/** Where a new panel is held while it is dragged in from the Add pane: about the middle of its header */
+const NEW_PANEL_GRAB_TOP_PX = 16;
+
 /**
  * Position of the dragged item and size of the resized item. They are set on that item's element on
  * every pointer move instead of being rendered, so only the item is restyled. Set on the item rather
@@ -47,10 +51,16 @@ export const DRAG_TOP_VAR = '--custom-grid-drag-top';
 export const RESIZE_WIDTH_VAR = '--custom-grid-resize-width';
 export const RESIZE_HEIGHT_VAR = '--custom-grid-resize-height';
 
-/** A drag or resize of one of the grid's items, as the grid renders it */
+/** Layout key of a new panel from the Add pane while it is previewed, before it gets its own key */
+export const NEW_PANEL_DROP_KEY = 'custom-grid-new-panel';
+
+/**
+ * A drag or resize of one of the grid's items, or an item from elsewhere (another layout, or a new panel)
+ * previewed where it would be dropped, as the grid renders it
+ */
 export interface CustomGridInteraction {
-  kind: 'drag' | 'resize';
-  /** Layout key of the dragged or resized item */
+  kind: 'drag' | 'resize' | 'drop';
+  /** Layout key of the dragged, resized or dropped item */
   key: string;
   /** A press only becomes a drag once the pointer moved a bit. Until then nothing moves. */
   isActive: boolean;
@@ -78,6 +88,16 @@ interface Session extends CustomGridInteraction {
   onCancel?: () => void;
 }
 
+/** An item from elsewhere dragged over the grid */
+interface ExternalDrop {
+  key: string;
+  /** Layout when the item came over the grid, restored on undo */
+  before: GridLayoutItem[];
+  preview: GridLayoutItem[];
+  /** Pixel size of the item in this grid */
+  size: { width: number; height: number };
+}
+
 type PointerPosition = Pick<PointerEvent, 'clientX' | 'clientY' | 'buttons'>;
 type PointerPress = Pick<PointerEvent, 'clientX' | 'clientY' | 'button' | 'target'>;
 
@@ -102,6 +122,7 @@ export class CustomGridController {
   private _hasRenderFailed = false;
   private _container: HTMLElement | null = null;
   private _session: Session | null = null;
+  private _externalDrop: ExternalDrop | null = null;
   private _interaction: CustomGridInteraction | null = null;
 
   public constructor(public readonly grid: SceneGridLayout) {}
@@ -203,6 +224,9 @@ export class CustomGridController {
     // The grid can be mounted again mid-drag, e.g. when the drag switches back to the grid's tab
     if (element && this._session?.kind === 'drag' && this._session.isActive) {
       this._setDragPosition(this._session.left, this._session.top);
+    }
+    if (!element) {
+      this.endExternalDrop();
     }
   };
 
@@ -376,6 +400,103 @@ export class CustomGridController {
     }
   };
 
+  /**
+   * Previews a grid item dragged in from another layout where it would be dropped, live, at the cell
+   * under the pointer. Items from another custom grid keep their size. Items from an auto grid get about
+   * the size they were shown with: the same share of the row, and their height in grid rows.
+   */
+  public previewExternalDrag(gridItem: SceneGridItemLike, evt: PointerPosition, info: GridItemDragInfo) {
+    const [cell] = gridItemsToLayout([gridItem]);
+    const size = info.autoGrid
+      ? autoGridItemSizeToGridSize(info, info.autoGrid)
+      : { w: Math.min(Math.max(cell.w, 1), GRID_COLUMN_COUNT), h: Math.max(cell.h, 1) };
+    this._previewExternalDrop(cell.i, size, evt, info);
+  }
+
+  /**
+   * Previews a new panel from the Add pane where it would be dropped. The pointer holds the panel by the
+   * middle of its top edge, like a panel is held by its header.
+   */
+  public previewNewPanelDrag(evt: PointerPosition, size: { w: number; h: number }) {
+    const width = this._container ? pixelRectFor(this._container.clientWidth, { x: 0, y: 0, ...size }).width : 0;
+    this._previewExternalDrop(NEW_PANEL_DROP_KEY, size, evt, { offsetX: width / 2, offsetY: NEW_PANEL_GRAB_TOP_PX });
+  }
+
+  /** Stops previewing an item from elsewhere, so the grid shows its own layout again */
+  public endExternalDrop = () => {
+    if (this._externalDrop) {
+      this._externalDrop = null;
+      this._publishInteraction();
+    }
+  };
+
+  /**
+   * Positions of this grid's items before and after the previewed grid item is dropped, for a drop from
+   * another layout. Applied on top of that move, so the item lands where it was previewed and undo puts
+   * every item back.
+   */
+  public getExternalDropSnapshot(): LayoutSnapshot | null {
+    const drop = this._externalDrop;
+    if (!drop || drop.key === NEW_PANEL_DROP_KEY) {
+      return null;
+    }
+    return { target: this, before: drop.before, after: drop.preview };
+  }
+
+  /** Same as `getExternalDropSnapshot`, for the previewed new panel, which is added with the given key */
+  public getNewPanelDropSnapshot(panelKey: string): LayoutSnapshot | null {
+    const drop = this._externalDrop;
+    if (drop?.key !== NEW_PANEL_DROP_KEY) {
+      return null;
+    }
+    const after = drop.preview.map((item) => (item.i === NEW_PANEL_DROP_KEY ? { ...item, i: panelKey } : item));
+    return { target: this, before: drop.before, after };
+  }
+
+  private _previewExternalDrop(
+    key: string,
+    size: { w: number; h: number },
+    evt: Pick<PointerEvent, 'clientX' | 'clientY'>,
+    grab: Pick<GridItemDragInfo, 'offsetX' | 'offsetY'>
+  ) {
+    const container = this._container;
+    // Narrow grids show every item at full width in reading order, so there is no cell to preview
+    if (!container || container.clientWidth <= NARROW_GRID_MAX_WIDTH || this._session) {
+      this.endExternalDrop();
+      return;
+    }
+
+    const containerWidth = container.clientWidth;
+    const rect = container.getBoundingClientRect();
+    const cell = cellFromPixels(
+      containerWidth,
+      evt.clientX - rect.left - grab.offsetX,
+      evt.clientY - rect.top - grab.offsetY,
+      size.w,
+      size.h
+    );
+
+    const current = this._externalDrop?.key === key ? this._externalDrop : null;
+    if (!current) {
+      const before = this.getLayout();
+      const { width, height } = pixelRectFor(containerWidth, { x: 0, y: 0, ...size });
+      this._externalDrop = {
+        key,
+        before,
+        preview: previewInsert(before, { i: key, x: 0, y: 0, ...size }, cell.x, cell.y),
+        size: { width, height },
+      };
+      this._publishInteraction();
+      return;
+    }
+
+    const preview = previewMove(current.preview, key, cell.x, cell.y);
+    if (!isSameLayout(preview, current.preview)) {
+      current.preview = preview;
+      this._publishInteraction();
+    }
+  }
+
   /** Starts resizing a grid item from its bottom-right corner, until the pointer is released */
   public startResize = (
     evt: PointerPress & Pick<PointerEvent, 'preventDefault' | 'stopPropagation'>,
@@ -528,28 +649,44 @@ export class CustomGridController {
 
   private _publishInteraction() {
     const session = this._session;
-    this._interaction = session && {
-      kind: session.kind,
-      key: session.key,
-      isActive: session.isActive,
-      preview: session.preview,
-      isOutside: session.isOutside,
-      startSize: session.startSize,
-    };
+    const drop = this._externalDrop;
+    if (session) {
+      this._interaction = {
+        kind: session.kind,
+        key: session.key,
+        isActive: session.isActive,
+        preview: session.preview,
+        isOutside: session.isOutside,
+        startSize: session.startSize,
+      };
+    } else if (drop) {
+      this._interaction = {
+        kind: 'drop',
+        key: drop.key,
+        isActive: true,
+        preview: drop.preview,
+        isOutside: false,
+        startSize: drop.size,
+      };
+    } else {
+      this._interaction = null;
+    }
     this._notify();
   }
 
   /**
    * Whether the pointer is over a drop target other than this grid, where the layout orchestrator would
-   * drop the item. The first drop target under the pointer is the innermost one; the grid is one only
-   * while its own item is dragged.
+   * drop the item. The first drop target under the pointer is the innermost one. The row or tab right
+   * around the grid counts as the grid, like for the layout orchestrator: a drop on its header or empty
+   * area lands in the grid.
    */
   private _isOverOtherDropTarget(clientX: number, clientY: number): boolean {
     const container = this._container;
     const dropTarget = document
       .elementsFromPoint(clientX, clientY)
       .find((element) => element.hasAttribute(DASHBOARD_DROP_TARGET_KEY_ATTR));
-    return !!dropTarget && dropTarget !== container;
+    const section = container?.parentElement?.closest(`[${DASHBOARD_DROP_TARGET_KEY_ATTR}]`);
+    return !!dropTarget && dropTarget !== container && dropTarget !== section;
   }
 
   private _setDragPosition(left: number, top: number) {

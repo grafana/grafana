@@ -33,7 +33,7 @@ interface Props {
   controller: CustomGridController;
   /** Today's grid, rendered instead if the new grid fails */
   fallback: ReactNode;
-  /** Key the grid is found by as a drop target while one of its items is dragged */
+  /** Key the grid is found by as a drop target, for its own items and items dragged in from elsewhere */
   dropTargetKey?: string;
 }
 

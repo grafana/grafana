@@ -16,7 +16,13 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardEditActionEvent, type DashboardEditActionEventPayload } from '../../../sidebar/events';
 import { DashboardScene } from '../../DashboardScene';
+import { AutoGridItem } from '../../layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from '../../layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from '../../layout-auto-grid/AutoGridLayoutManager';
+import { RowItem } from '../../layout-rows/RowItem';
+import { RowsLayoutManager } from '../../layout-rows/RowsLayoutManager';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR, isDashboardDropTarget } from '../../types/DashboardDropTarget';
+import { type DashboardLayoutManager } from '../../types/DashboardLayoutManager';
 import { DashboardGridItem } from '../DashboardGridItem';
 import { DefaultGridLayoutManager } from '../DefaultGridLayoutManager';
 
@@ -26,6 +32,8 @@ import { CustomGridRenderer } from './CustomGridRenderer';
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   logError: jest.fn(),
+  // New panels get the default data source, these tests have none
+  getDataSourceInstanceSettings: jest.fn().mockResolvedValue(undefined),
 }));
 
 jest.mock('react-use', () => ({
@@ -57,8 +65,8 @@ function gridItem(id: number, x: number, y: number) {
   });
 }
 
-function createManager() {
-  const grid = new SceneGridLayout({ children: [gridItem(1, 0, 0), gridItem(2, 12, 0)] });
+function createManager(children = [gridItem(1, 0, 0), gridItem(2, 12, 0)]) {
+  const grid = new SceneGridLayout({ children });
   return new DefaultGridLayoutManager({ grid });
 }
 
@@ -270,7 +278,6 @@ describe('DefaultGridLayoutManager drags', () => {
         { key: 'grid-item-1', x: 0, y: 0 },
         { key: 'grid-item-2', x: 0, y: 8 },
       ]);
-      expect(gridContainer).not.toHaveAttribute(DASHBOARD_DROP_TARGET_KEY_ATTR);
       expect(scene.state.layoutOrchestrator!.isDragging()).toBe(false);
 
       act(() => edits[0].undo());
@@ -302,6 +309,239 @@ describe('DefaultGridLayoutManager drags', () => {
         { key: 'grid-item-1', x: 0, y: 0 },
         { key: 'grid-item-2', x: 12, y: 0 },
       ]);
+    });
+  });
+  describe('drops from other layouts, with the flag on', () => {
+    // 1200px wide grids at the top-left of the viewport: columns are 50.33px apart, rows 38px apart
+    const COLUMN_PX = (GRID_WIDTH + 8) / 24;
+    const ROW_PX = 38;
+
+    beforeEach(() => setTestFlags({ [FlagKeys.GrafanaDashboardUnifiedDragAndDrop]: true }));
+
+    /** A dashboard with one row per layout. Only the given custom grids are rendered, without their rows. */
+    async function renderRows(layouts: DashboardLayoutManager[], rendered: DefaultGridLayoutManager[]) {
+      const rows = layouts.map((layout, index) => new RowItem({ key: `row-${index}`, title: `Row ${index}`, layout }));
+      const scene = new DashboardScene({
+        title: 'Rows',
+        $timeRange: new SceneTimeRange({}),
+        body: new RowsLayoutManager({ rows }),
+        isEditing: true,
+      });
+      const result = render(
+        <>
+          {rendered.map((manager) => (
+            <manager.Component key={manager.state.key} model={manager} />
+          ))}
+        </>
+      );
+      await act(async () => {});
+      act(() => rendered.forEach((manager) => manager.state.grid.setState({ isDraggable: true })));
+      return { ...result, scene, rows, orchestrator: scene.state.layoutOrchestrator! };
+    }
+
+    function gridContainerOf(container: HTMLElement, manager: DefaultGridLayoutManager): Element {
+      return container.querySelector(`${CUSTOM_GRID} > [${DASHBOARD_DROP_TARGET_KEY_ATTR}="${manager.state.key}"]`)!;
+    }
+
+    function pointer(type: 'pointermove' | 'pointerup', clientX: number, clientY: number) {
+      act(() => {
+        document.body.dispatchEvent(
+          new MouseEvent(type, { clientX, clientY, buttons: type === 'pointermove' ? 1 : 0 })
+        );
+      });
+    }
+
+    function cells(manager: DefaultGridLayoutManager) {
+      return manager.state.grid.state.children
+        .map(({ state }) => ({
+          panel: 'body' in state && state.body instanceof VizPanel ? state.body.state.key : undefined,
+          x: state.x,
+          y: state.y,
+          width: state.width,
+          height: state.height,
+        }))
+        .sort((a, b) => (a.panel ?? '').localeCompare(b.panel ?? ''));
+    }
+
+    const TWO_PANELS = [
+      { panel: 'panel-1', x: 0, y: 0, width: 12, height: 8 },
+      { panel: 'panel-2', x: 12, y: 0, width: 12, height: 8 },
+    ];
+
+    function autoGridItem(id: number) {
+      return new AutoGridItem({
+        key: `auto-grid-item-${id}`,
+        body: new VizPanel({ key: `panel-${id}`, title: `Panel ${id}`, pluginId: 'text' }),
+      });
+    }
+
+    it('previews a panel from an auto grid live, sized like it was shown, and drops it there with exact undo and redo', async () => {
+      const autoGridLayout = new AutoGridLayout({ children: [autoGridItem(5), autoGridItem(6)] });
+      const autoGrid = new AutoGridLayoutManager({ layout: autoGridLayout });
+      const target = createManager();
+      const { scene, orchestrator, container } = await renderRows([autoGrid, target], [target]);
+      const edits = recordEdits(scene);
+      const targetContainer = gridContainerOf(container, target);
+
+      // The auto grid is as wide as the custom grid, the panel a third of it and 320px high
+      const autoGridElement = document.createElement('div');
+      autoGridElement.style.columnGap = '8px';
+      (autoGridLayout.containerRef as { current: HTMLDivElement | null }).current = autoGridElement;
+      const [dragged] = autoGridLayout.state.children;
+      const itemElement = document.createElement('div');
+      itemElement.getBoundingClientRect = () => ({ left: 0, top: 0, width: 397, height: 320 }) as DOMRect;
+      (dragged.containerRef as { current: HTMLDivElement | null }).current = itemElement;
+
+      // The auto grid drives the drag of its item itself
+      orchestrator.startDraggingSync({ clientX: 10, clientY: 10 } as ReactPointerEvent, dragged, {
+        onDrag: jest.fn(),
+        onDragEnd: jest.fn(),
+      });
+      document.elementsFromPoint = () => [targetContainer];
+      pointer('pointermove', 10, 8 * ROW_PX + 10);
+
+      expect(target.getCustomGridController().getInteraction()?.preview).toContainEqual({
+        i: 'panel-5',
+        x: 0,
+        y: 8,
+        w: 8,
+        h: 9,
+      });
+
+      // Leaving the grid shows its own layout again
+      document.elementsFromPoint = () => [];
+      pointer('pointermove', 10, 2000);
+      expect(target.getCustomGridController().getInteraction()).toBeNull();
+
+      document.elementsFromPoint = () => [targetContainer];
+      pointer('pointermove', 10, 8 * ROW_PX + 10);
+      pointer('pointerup', 10, 8 * ROW_PX + 10);
+      // Let the dropped panel finish loading its plugin
+      await act(async () => {});
+
+      const dropped = [...TWO_PANELS, { panel: 'panel-5', x: 0, y: 8, width: 8, height: 9 }];
+      // Moved straight away, so the panel never shows in its old place first
+      expect(edits.map(({ meta }) => meta.actionId)).toEqual(['panel.move']);
+      expect(cells(target)).toEqual(dropped);
+      expect(autoGridLayout.state.children.map((child) => child.state.body.state.key)).toEqual(['panel-6']);
+      expect(target.getCustomGridController().getInteraction()).toBeNull();
+
+      await act(async () => edits[0].undo());
+      expect(cells(target)).toEqual(TWO_PANELS);
+      expect(autoGridLayout.state.children.map((child) => child.state.body.state.key)).toEqual(['panel-5', 'panel-6']);
+
+      await act(async () => edits[0].perform());
+      expect(cells(target)).toEqual(dropped);
+      expect(autoGridLayout.state.children.map((child) => child.state.body.state.key)).toEqual(['panel-6']);
+    });
+
+    it('moves a panel from a custom grid in another row where it was previewed, closing the gap, with exact undo and redo', async () => {
+      const source = createManager([gridItem(3, 0, 0), gridItem(4, 0, 8)]);
+      const target = createManager();
+      const { scene, container } = await renderRows([source, target], [source, target]);
+      const edits = recordEdits(scene);
+      const sourceContainer = gridContainerOf(container, source);
+      const targetContainer = gridContainerOf(container, target);
+
+      document.elementsFromPoint = () => [sourceContainer];
+      pressDragHandle(source, 'panel-3', 10, 10);
+      // Over the top-right cell of the other grid
+      document.elementsFromPoint = () => [targetContainer];
+      pointer('pointermove', 12 * COLUMN_PX + 10, 10);
+
+      // The source closes the gap as soon as the panel left, the target makes room for it
+      expect(source.getCustomGridController().getInteraction()?.preview).toEqual([
+        { i: 'panel-4', x: 0, y: 0, w: 12, h: 8 },
+      ]);
+      expect(target.getCustomGridController().getInteraction()?.preview).toEqual(
+        expect.arrayContaining([
+          { i: 'panel-3', x: 12, y: 0, w: 12, h: 8 },
+          { i: 'panel-2', x: 12, y: 8, w: 12, h: 8 },
+        ])
+      );
+
+      pointer('pointerup', 12 * COLUMN_PX + 10, 10);
+      await act(async () => {});
+
+      const sourceAfter = [{ panel: 'panel-4', x: 0, y: 0, width: 12, height: 8 }];
+      const targetAfter = [
+        { panel: 'panel-1', x: 0, y: 0, width: 12, height: 8 },
+        { panel: 'panel-2', x: 12, y: 8, width: 12, height: 8 },
+        { panel: 'panel-3', x: 12, y: 0, width: 12, height: 8 },
+      ];
+      const sourceBefore = [
+        { panel: 'panel-3', x: 0, y: 0, width: 12, height: 8 },
+        { panel: 'panel-4', x: 0, y: 8, width: 12, height: 8 },
+      ];
+      expect(edits.map(({ meta }) => meta.actionId)).toEqual(['panel.move']);
+      expect(cells(source)).toEqual(sourceAfter);
+      expect(cells(target)).toEqual(targetAfter);
+
+      await act(async () => edits[0].undo());
+      expect(cells(source)).toEqual(sourceBefore);
+      expect(cells(target)).toEqual(TWO_PANELS);
+
+      await act(async () => edits[0].perform());
+      expect(cells(source)).toEqual(sourceAfter);
+      expect(cells(target)).toEqual(targetAfter);
+    });
+
+    it('moves a panel dropped on the header of its own row within the grid, instead of to the bottom', async () => {
+      const manager = createManager();
+      const { scene, rows, container } = await renderRows([manager], [manager]);
+      const edits = recordEdits(scene);
+      const gridContainer = gridContainerOf(container, manager);
+      // The row's element wraps its header and the grid, like the row renderer does
+      container.setAttribute(DASHBOARD_DROP_TARGET_KEY_ATTR, rows[0].state.key!);
+      const rowHeader = document.createElement('div');
+      container.prepend(rowHeader);
+
+      document.elementsFromPoint = () => [gridContainer, container];
+      pressDragHandle(manager, 'panel-2', 12 * COLUMN_PX + 10, 10);
+      document.elementsFromPoint = () => [rowHeader, container];
+      pointer('pointermove', 10, 5);
+      pointer('pointerup', 10, 5);
+
+      expect(edits.map(({ meta }) => meta)).toEqual([{ actionId: 'panel.move', scope: 'custom-grid' }]);
+      expect(cells(manager)).toEqual([
+        { panel: 'panel-1', x: 0, y: 8, width: 12, height: 8 },
+        { panel: 'panel-2', x: 0, y: 0, width: 12, height: 8 },
+      ]);
+      expect(rows[0].state.isDropTarget).toBeFalsy();
+    });
+
+    it('adds a new panel from the Add pane where the grid previewed it, undoably', async () => {
+      const target = createManager();
+      const { scene, orchestrator, container } = await renderRows([target], [target]);
+      const edits = recordEdits(scene);
+      const targetContainer = gridContainerOf(container, target);
+
+      // The drop is deferred to the next frame
+      const requestAnimationFrame = jest
+        .spyOn(window, 'requestAnimationFrame')
+        .mockImplementation((callback: FrameRequestCallback) => {
+          callback(0);
+          return 0;
+        });
+      orchestrator.startDraggingNewPanel('newPanel');
+      document.elementsFromPoint = () => [targetContainer];
+      // A new 12 x 8 panel is held by the middle of its header: over the second column, below the panels
+      pointer('pointermove', 12 * COLUMN_PX + GRID_WIDTH / 4, 16 * ROW_PX + 16);
+      expect(target.getCustomGridController().getInteraction()).toMatchObject({ kind: 'drop' });
+
+      pointer('pointerup', 12 * COLUMN_PX + GRID_WIDTH / 4, 16 * ROW_PX + 16);
+      await act(async () => {});
+      requestAnimationFrame.mockRestore();
+
+      const added = [...TWO_PANELS, { panel: 'panel-3', x: 12, y: 8, width: 12, height: 8 }];
+      expect(edits.map(({ meta }) => meta.actionId)).toEqual(['panel.add']);
+      expect(cells(target)).toEqual(added);
+      expect(target.getCustomGridController().getInteraction()).toBeNull();
+
+      act(() => edits[0].undo());
+      expect(cells(target)).toEqual(TWO_PANELS);
+      act(() => edits[0].perform());
+      expect(cells(target)).toEqual(added);
     });
   });
 });

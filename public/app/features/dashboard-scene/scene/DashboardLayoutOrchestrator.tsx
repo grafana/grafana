@@ -26,12 +26,14 @@ import { getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
-import { type DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { type RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
+import { isUnifiedDragAndDropEnabled } from './layouts-shared/unifiedDragAndDrop';
 import {
   AUTO_GRID_ITEM_DROP_TARGET_ATTR,
   DASHBOARD_DROP_TARGET_KEY_ATTR,
@@ -119,8 +121,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _dragCallbacks: GridItemDragCallbacks | null = null;
   /** Grab offset and size of the grid item being dragged, for drop targets that preview the drop */
   private _dragInfo: GridItemDragInfo | null = null;
-  /** Drop target that last received `onExternalDragOver`, so it gets `onExternalDragLeave` */
+  /** Drop target that last received `onExternalDragOver` or `onNewPanelDragOver`, so it gets `onExternalDragLeave` */
   private _externalDragOverTarget: DashboardDropTarget | null = null;
+  /** Whether the new-panel drag in progress adds a new panel, which drop targets may preview (pasted panels are not) */
+  private _isNewPanelDrag = false;
 
   public constructor() {
     super({});
@@ -192,6 +196,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   }
 
   public startDraggingNewPanel(action: 'newPanel' | 'paste'): void {
+    this._isNewPanelDrag = action === 'newPanel';
     this._dropNewItemPointerUpHandler = (evt: PointerEvent) => this._dropNew(evt, action);
     document.body.addEventListener('pointermove', this._onNewPanelPointerMove, true);
     document.body.addEventListener('pointerup', this._dropNewItemPointerUpHandler, true);
@@ -232,8 +237,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     } else if (gridItem && sourceDropTarget && effectiveDropTarget && sourceDropTarget !== effectiveDropTarget) {
       // Read before the drag state is reset below, the targets compute them from their drag previews
       const layoutSnapshots = getLayoutSnapshots(sourceDropTarget, effectiveDropTarget);
-      // Defer is needed so the legacy grid's own native drag-stop handling finishes first.
-      setTimeout(() => {
+      const move = () =>
         moveGridItem({
           source: sourceDropTarget,
           destination: effectiveDropTarget,
@@ -242,7 +246,14 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
           destinationIndex: dropPosition ?? undefined,
           ...(layoutSnapshots.length > 0 && { layoutSnapshots }),
         });
-      });
+      if (isUnifiedDragAndDropEnabled() && this._dragCallbacks) {
+        // The source layout drives the drag itself, not react-grid-layout, so the move can happen before the
+        // layouts reset their drag previews: the panel goes straight from the preview to where it lands.
+        move();
+      } else {
+        // Defer is needed so the legacy grid's own native drag-stop handling finishes first.
+        setTimeout(move);
+      }
     } else if (!gridItem) {
       const warningMessage = 'No grid item to drag';
       console.warn(warningMessage);
@@ -574,6 +585,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       document.body.removeEventListener('pointerup', this._dropNewItemPointerUpHandler, true);
       this._dropNewItemPointerUpHandler = null;
     }
+    this._endExternalDragOver();
+    this._isNewPanelDrag = false;
     this._lastDropTarget = null;
   }
 
@@ -590,12 +603,15 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     }
     // defer so the droppable doesn't rerender during dnd drag-end, resulting in a console warning
     requestAnimationFrame(() => {
-      if (action === 'paste') {
-        this._pastePanelToLayout(lastDropTarget);
-      } else {
-        this._addNewPanelToLayout(lastDropTarget);
-      }
+      // A target that previews the drop keeps the preview until the panel is added in its place
+      const previewTarget = this._externalDragOverTarget;
+      this._externalDragOverTarget = null;
+      const added =
+        action === 'paste' ? this._pastePanelToLayout(lastDropTarget) : this._addNewPanelToLayout(lastDropTarget);
       this._cleanupDragState();
+      if (previewTarget) {
+        void Promise.resolve(added).finally(() => previewTarget.onExternalDragLeave?.());
+      }
     });
     return;
   };
@@ -722,7 +738,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
   /** Expects `_captureDragOffset` to have run for the same drag */
   private _captureDragInfo(gridItem: SceneGridItemLike): GridItemDragInfo {
-    return { offsetX: this._dragOffsetX, offsetY: this._dragOffsetY, ...measureGridItem(gridItem) };
+    const info = { offsetX: this._dragOffsetX, offsetY: this._dragOffsetY, ...measureGridItem(gridItem) };
+    // Measured now, the auto grid may not be rendered any more when the item is dropped in another tab
+    const autoGrid = isUnifiedDragAndDropEnabled() ? measureAutoGrid(gridItem) : undefined;
+    return autoGrid ? { ...info, autoGrid } : info;
   }
 
   private _captureRowDimensions(row: RowItem): void {
@@ -904,6 +923,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _onNewPanelPointerMove = (evt: PointerEvent): void => {
     const dropTarget = this._getDropTargetUnderMouse(evt) ?? this._sourceDropTarget;
 
+    this._updateNewPanelDragOver(dropTarget, evt);
+
     if (!dropTarget) {
       return;
     }
@@ -974,6 +995,18 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     if (target && gridItem && dragInfo) {
       target.onExternalDragOver?.(gridItem, evt, dragInfo);
     }
+  }
+
+  /** Lets drop targets that preview new panels themselves follow the pointer. No-op for the other targets. */
+  private _updateNewPanelDragOver(dropTarget: DashboardDropTarget | null, evt: PointerEvent): void {
+    const target = this._isNewPanelDrag && dropTarget?.onNewPanelDragOver ? dropTarget : null;
+
+    if (target !== this._externalDragOverTarget) {
+      this._endExternalDragOver();
+      this._externalDragOverTarget = target;
+    }
+
+    target?.onNewPanelDragOver?.(evt);
   }
 
   private _endExternalDragOver(): void {
@@ -1079,7 +1112,20 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       return null;
     }
 
-    return this._findDropTargetByKey(key);
+    const dropTarget = this._findDropTargetByKey(key);
+
+    // The row or tab right around the new custom grid a panel is dragged from belongs to that grid: a drop
+    // on its header or empty area lands in the grid, where the grid previews it, instead of at the bottom
+    if (
+      this._sourceDropTarget instanceof DefaultGridLayoutManager &&
+      dropTarget &&
+      'layout' in dropTarget.state &&
+      dropTarget.state.layout === this._sourceDropTarget
+    ) {
+      return null;
+    }
+
+    return dropTarget;
   }
 
   private _findDropTargetByKey(key: string): DashboardDropTarget | null {
@@ -1107,6 +1153,17 @@ function getGridItemElement(gridItem: SceneGridItemLike): HTMLElement | null {
     }
   }
   return null;
+}
+
+function measureAutoGrid(gridItem: SceneGridItemLike): GridItemDragInfo['autoGrid'] {
+  const element =
+    gridItem instanceof AutoGridItem && gridItem.parent instanceof AutoGridLayout
+      ? gridItem.parent.containerRef.current
+      : null;
+  if (!element) {
+    return undefined;
+  }
+  return { width: element.clientWidth, columnGap: parseFloat(getComputedStyle(element).columnGap) || 0 };
 }
 
 function measureGridItem(gridItem: SceneGridItemLike): { width: number; height: number } {
