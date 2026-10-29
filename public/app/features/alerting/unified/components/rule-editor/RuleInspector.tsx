@@ -6,7 +6,8 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, CodeEditor, Drawer, Icon, Tab, TabsBar, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Drawer, Icon, Tab, TabsBar, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
 import { type RulerRuleDTO } from '../../../../../types/unified-alerting-dto';
 import { type RuleFormValues } from '../../types/rule-form';
@@ -88,6 +89,7 @@ const InspectorYamlTab = ({ onSubmit }: YamlTabProps) => {
 
   const yamlValues = formValuesToRulerRuleDTO(getValues());
   const [alertRuleAsYaml, setAlertRuleAsYaml] = useState(dump(yamlValues));
+  const [yamlDraft, setYamlDraft] = useState(alertRuleAsYaml);
 
   const onApply = () => {
     const rulerRule = load(alertRuleAsYaml) as RulerRuleDTO;
@@ -111,17 +113,13 @@ const InspectorYamlTab = ({ onSubmit }: YamlTabProps) => {
       <div className={styles.content}>
         <AutoSizer disableWidth>
           {({ height }) => (
-            <CodeEditor
-              width="100%"
-              height={height}
+            <CodeMirrorEditor
+              height={`${height}px`}
               language="yaml"
-              value={alertRuleAsYaml}
+              aria-label={t('alerting.inspector-yaml-tab.editor-label', 'Alert rule YAML')}
+              value={yamlDraft}
+              onChange={setYamlDraft}
               onBlur={setAlertRuleAsYaml}
-              monacoOptions={{
-                minimap: {
-                  enabled: false,
-                },
-              }}
             />
           )}
         </AutoSizer>
