@@ -1,4 +1,4 @@
-import { type Scope, type ScopeDashboardBinding, type ScopeNode } from '@grafana/data';
+import { type Scope, type ScopeNode } from '@grafana/data';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
 import type { FindDefaultScope } from 'app/api/clients/scope/v0alpha1/endpoints.gen';
@@ -194,40 +194,6 @@ export class ScopesApiClient {
       subscription.unsubscribe();
     }
   }
-
-  public fetchDashboards = async (scopeNames: string[]): Promise<ScopeDashboardBinding[]> => {
-    const subscription = dispatch(
-      scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate(
-        {
-          scope: scopeNames,
-        },
-        { subscribe: false }
-      )
-    );
-    try {
-      const result = await subscription;
-
-      if ('data' in result && result.data) {
-        // The generated API returns items compatible with @grafana/data ScopeDashboardBinding
-        return result.data.items ?? [];
-      }
-
-      if ('error' in result) {
-        const errorMessage = getMessageFromError(result.error);
-        console.error('Failed to fetch dashboards for scopes:', scopeNames, errorMessage);
-      }
-
-      return [];
-    } catch (err) {
-      const errorMessage = getMessageFromError(err);
-      console.error('Failed to fetch dashboards for scopes:', scopeNames, errorMessage);
-      return [];
-    } finally {
-      // Unsubscribe for extra safety, even though with subscribe: false and awaiting,
-      // the request completes before return, so this is mostly a no-op
-      subscription.unsubscribe();
-    }
-  };
 
   public fetchScopeNavigations = async (
     scopeNames: string[],
