@@ -1456,7 +1456,8 @@
       },
       "recording-rules": {
         "no-rules": "No recording rules found",
-        "rules-error": "Failed to load recording rules"
+        "rules-error": "Failed to load recording rules",
+        "search-issues": "Change the search to see results"
       },
       "result-count": {
         "alert-rules_one": "{{formatted}} alert rule",
@@ -4209,9 +4210,9 @@
   "app-chrome": {
     "skip-content-button": "Skip to main content",
     "st-loading": {
-      "background-tooltip": "{{itemName}} is starting up",
-      "pending-dots-aria-label": "Page is starting up",
-      "pending-dots-aria-label-named": "{{itemName}} is starting up"
+      "background-tooltip": "Preparing {{itemName}}",
+      "pending-dots-aria-label": "Preparing page",
+      "pending-dots-aria-label-named": "Preparing {{itemName}}"
     },
     "top-bar": {
       "sign-in": "Sign in"
@@ -6215,6 +6216,7 @@
       "tooltip-previous": "Previous"
     },
     "modes": {
+      "agent-edit": "Agent editing",
       "change-mode": "Change dashboard mode",
       "composer": "Composer",
       "composer-description": "Point at anything and ask Assistant to change it.",
@@ -15041,7 +15043,7 @@
       "resources-to-migrate-migrate-selected_one": "Migrate selected ({{count}})",
       "resources-to-migrate-migrate-selected_other": "Migrate selected ({{count}})",
       "resources-to-migrate-search": "Search folders and resources",
-      "resources-to-migrate-subtitle": "Pick whole folders, or individual resources within them. Selecting a folder migrates only the resources directly inside it — anything in subfolders migrates through its own folder.",
+      "resources-to-migrate-subtitle": "Pick whole folders, or individual resources within them. Selecting a folder also selects everything in its subfolders.",
       "retain-resources-description": "Keep the migrated resources on this instance while the pull request is open, so they stay live until the branch is merged. These resources must be manually deleted before the pull request is merged or else there will be errors during sync due to conflicting resources.",
       "retain-resources-label": "Keep existing resources during review",
       "retain-resources-warning-body": "You must delete the migrated resources yourself before merging the pull request. If they still exist when the branch merges, they will conflict with the incoming managed resources and will not be reconciled.",
@@ -15861,6 +15863,12 @@
       "show": "Show",
       "show-all-tooltip": "Show selected",
       "toolbar-label": "Bulk actions"
+    },
+    "datasource-error": {
+      "load-failed": "Failed to load datasource",
+      "load-failed-named": "Failed to load datasource: {{datasource}}",
+      "not-found": "Datasource not found: {{datasource}}",
+      "settings-not-found": "Datasource settings not found for uid: {{datasource}}"
     },
     "delete-modal": {
       "body-transformation": "Removing one transformation may break others."
@@ -16735,6 +16743,17 @@
     "generate-suggestion": "Generate suggestion",
     "improve-query": "Improve query"
   },
+  "st-pod-ready": {
+    "error": {
+      "body-with-support": "Something went wrong while this was starting up. Contact support and we'll help you get this up and running.",
+      "support-ack": "If you've already reached out, we have your request and we're on it.",
+      "title": "Couldn't load {{pageTitle}}",
+      "title-fallback": "Couldn't load page"
+    },
+    "timeout": {
+      "banner": "Hang tight. This is taking a bit longer than expected, but we're on it."
+    }
+  },
   "stars": {
     "mark-as-starred": "Mark as favorite",
     "mark-as-starred-with-title": "Mark \"{{title}}\" as favorite",
@@ -16904,6 +16923,9 @@
     }
   },
   "swagger": {
+    "api-picker": {
+      "preferred": "Preferred"
+    },
     "login": "Login",
     "manifests": {
       "api-docs": "API docs",
@@ -16926,6 +16948,10 @@
     },
     "namespace-unavailable": "Check the namespace before sending requests, or reload the page to try again.",
     "namespace-unavailable-title": "Unable to load namespace",
+    "router-fixtures": {
+      "clear": "Clear fixtures",
+      "title": "Showing saved fixture data, not this server"
+    },
     "router-nav": {
       "api-docs": "API docs",
       "manifests": "Manifests",
@@ -16942,7 +16968,6 @@
       "failures-description": "Of those, the ones counted against the backend: 502, 503 and 504 responses, and failures to proxy, such as connection errors and timeouts. Other errors, and callers that disconnect, are not counted. Consecutive failures open the breaker.",
       "filter-placeholder": "Filter by group, key or plugin",
       "filtered": "{{shown}} of {{total}}",
-      "groups": "Groups",
       "last-failed": "Last reconcile failed",
       "load-failures": "Load failures",
       "never": "never",
@@ -16956,8 +16981,9 @@
       "requests-description": "Requests the group's breaker let through to the backend, or the plugin's client calls when its scope is plugin-calls. Counted since the backend was loaded or the breaker last changed state.",
       "shadowed": "Shadowed groups",
       "shadowed-description": "Groups a source offers that a higher-priority source serves instead.",
-      "sources": "Sources",
-      "stack-lookups": "Stack lookups",
+      "tab-groups": "Groups",
+      "tab-lookups": "Stack lookups",
+      "tab-sources": "Sources",
       "title": "Router status"
     }
   },
@@ -17603,9 +17629,11 @@
       "placeholder-frame": "Frame"
     },
     "config-from-query-transformer-editor": {
+      "description-dynamic-field-name-matcher": "Set properties for field names that are returned by your config query",
       "label-apply-to": "Apply to",
       "label-apply-to-options": "Apply to options",
-      "label-config-query": "Config query"
+      "label-config-query": "Config query",
+      "name-dynamic-field-name-matcher": "Fields with dynamic names"
     },
     "convert-field-type-transformer-editor": {
       "aria-label-add-a-convert-field-type-transformer": "Add a convert field type transformer",

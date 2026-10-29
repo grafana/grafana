@@ -70,7 +70,6 @@ import (
 	_ "github.com/grafana/e2e"
 	_ "github.com/grafana/gofpdf"
 	_ "github.com/grafana/gofpdf/contrib/gofpdi"
-	_ "github.com/grafana/gofpdf/contrib/httpimg"
 	_ "github.com/grafana/gomemcache/memcache"
 	_ "github.com/grafana/grafana-api-golang-client"
 	_ "github.com/grafana/grafana-app-sdk/app"
