@@ -70,6 +70,9 @@ describe('CodeMirror DiffEditor', () => {
     const modified = screen.getByRole('textbox', { name: 'Modified' });
 
     expect(modified).toHaveTextContent('after');
+    if (!inline) {
+      expect(screen.getByRole('textbox', { name: 'Original' })).toHaveTextContent('before');
+    }
     expect(container.querySelector('.cm-deletedChunk, .cm-merge-a .cm-changedLine')).toHaveTextContent('before');
     expect(container.querySelector('.cm-merge-b .cm-changedLine')).toHaveTextContent('after');
     for (const editor of screen.getAllByRole('textbox')) {
@@ -106,6 +109,9 @@ describe('CodeMirror DiffEditor', () => {
 
     await waitFor(() => expect(modifiedView()?.state.facet(language)?.name).toBe('yaml'));
     expect(modifiedView()?.state.doc.toString()).toBe('value: after');
+    if (!inline) {
+      expect(screen.getByRole('textbox', { name: 'Original' })).toHaveTextContent('value: before');
+    }
     expect(container.querySelector('.cm-deletedChunk, .cm-merge-a .cm-changedLine')).toHaveTextContent('value: before');
     expect(container.querySelector('.cm-lineNumbers')).not.toBeInTheDocument();
     expect(container.firstChild).toHaveStyle({ height: '320px' });

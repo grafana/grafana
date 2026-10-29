@@ -1,9 +1,9 @@
-import { getOriginalDoc, originalDocChangeEffect, unifiedMergeView } from '@codemirror/merge';
-import { ChangeSet, Compartment, Text } from '@codemirror/state';
+import { unifiedMergeView } from '@codemirror/merge';
+import { Compartment, Text } from '@codemirror/state';
 import { EditorView, drawSelection, lineNumbers as lineNumbersExtension } from '@codemirror/view';
 import { css } from '@emotion/css';
-import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror';
-import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import CodeMirror from '@uiw/react-codemirror';
+import { type ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
 import CodeMirrorMerge, { type CodeMirrorMergeRef } from 'react-codemirror-merge';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
@@ -32,7 +32,6 @@ export function DiffEditor({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { extension: languageExtension, error: languageError } = useLanguageExtension(language);
-  const inlineEditor = useRef<ReactCodeMirrorRef>(null);
   const editorTheme = useMemo(
     () => [
       createCodeEditorTheme(theme),
@@ -59,40 +58,16 @@ export function DiffEditor({
     ],
     [lineNumbers, languageExtension]
   );
-  const originalExtensions = useMemo(
+  // Reconfigure merge widgets with the theme so deleted text picks up new syntax colors.
+  const inlineExtensions = useMemo(
     () => [
-      ...extensions,
-      EditorView.contentAttributes.of({ 'aria-label': t('grafana-ui.code-mirror.diff-original', 'Original') }),
-    ],
-    [extensions]
-  );
-  const modifiedExtensions = useMemo(
-    () => [
+      editorTheme,
       ...extensions,
       EditorView.contentAttributes.of({ 'aria-label': t('grafana-ui.code-mirror.diff-modified', 'Modified') }),
+      unifiedMergeView({ original, mergeControls: false }),
     ],
-    [extensions]
+    [editorTheme, extensions, original]
   );
-  const inlineExtensions = useMemo(
-    () => (inline ? [...modifiedExtensions, unifiedMergeView({ original, mergeControls: false })] : []),
-    [inline, modifiedExtensions, original]
-  );
-
-  useEffect(() => {
-    const view = inlineEditor.current?.view;
-    if (!inline || !view) {
-      return;
-    }
-
-    // Refresh the baseline and cached deletion styles after language or theme changes.
-    const previousOriginal = getOriginalDoc(view.state);
-    view.dispatch({
-      effects: originalDocChangeEffect(
-        view.state,
-        ChangeSet.of({ from: 0, to: previousOriginal.length, insert: original }, previousOriginal.length)
-      ),
-    });
-  }, [inline, original, languageExtension, theme]);
 
   return (
     <>
@@ -106,22 +81,9 @@ export function DiffEditor({
       )}
       <div className={styles.container} style={{ height }}>
         {inline ? (
-          <CodeMirror
-            {...readOnlyOptions}
-            ref={inlineEditor}
-            value={modified}
-            height="100%"
-            theme={editorTheme}
-            extensions={inlineExtensions}
-          />
+          <CodeMirror {...readOnlyOptions} value={modified} height="100%" theme="none" extensions={inlineExtensions} />
         ) : (
-          <SideBySideDiffEditor
-            original={original}
-            modified={modified}
-            theme={editorTheme}
-            originalExtensions={originalExtensions}
-            modifiedExtensions={modifiedExtensions}
-          />
+          <SideBySideDiffEditor original={original} modified={modified} theme={editorTheme} extensions={extensions} />
         )}
       </div>
     </>
@@ -132,39 +94,24 @@ interface SideBySideDiffEditorProps {
   original: string;
   modified: string;
   theme: CodeMirrorExtension;
-  originalExtensions: CodeMirrorExtension;
-  modifiedExtensions: CodeMirrorExtension;
+  extensions: CodeMirrorExtension;
 }
 
-function SideBySideDiffEditor({
-  original,
-  modified,
-  theme,
-  originalExtensions,
-  modifiedExtensions,
-}: SideBySideDiffEditorProps): ReactElement {
+function SideBySideDiffEditor({ original, modified, theme, extensions }: SideBySideDiffEditorProps): ReactElement {
   const [view, setView] = useState<CodeMirrorMergeRef['view']>();
   const setEditor = useCallback((editor: CodeMirrorMergeRef | null): void => {
     if (editor?.view) {
       setView(editor.view);
     }
   }, []);
-  const [configuration] = useState(() => {
-    const originalCompartment = new Compartment();
-    const modifiedCompartment = new Compartment();
-    return {
-      original: originalCompartment,
-      modified: modifiedCompartment,
-      originalExtensions: [originalCompartment.of([theme, originalExtensions])],
-      modifiedExtensions: [modifiedCompartment.of([theme, modifiedExtensions])],
-    };
-  });
+  const [compartment] = useState(() => new Compartment());
 
   // The merge wrapper only reapplies extensions by recreating editors, which loses focus and scroll.
   useEffect(() => {
-    view?.a.dispatch({ effects: configuration.original.reconfigure([theme, originalExtensions]) });
-    view?.b.dispatch({ effects: configuration.modified.reconfigure([theme, modifiedExtensions]) });
-  }, [view, configuration, theme, originalExtensions, modifiedExtensions]);
+    const effects = compartment.reconfigure([theme, extensions]);
+    view?.a.dispatch({ effects });
+    view?.b.dispatch({ effects });
+  }, [view, compartment, theme, extensions]);
 
   return (
     <CodeMirrorMerge ref={setEditor} theme="none" destroyRerender={false}>
@@ -172,12 +119,18 @@ function SideBySideDiffEditor({
       <CodeMirrorMerge.Original
         {...readOnlyOptions}
         value={original || Text.empty}
-        extensions={configuration.originalExtensions}
+        extensions={[
+          compartment.of([theme, extensions]),
+          EditorView.contentAttributes.of({ 'aria-label': t('grafana-ui.code-mirror.diff-original', 'Original') }),
+        ]}
       />
       <CodeMirrorMerge.Modified
         {...readOnlyOptions}
         value={modified || Text.empty}
-        extensions={configuration.modifiedExtensions}
+        extensions={[
+          compartment.of([theme, extensions]),
+          EditorView.contentAttributes.of({ 'aria-label': t('grafana-ui.code-mirror.diff-modified', 'Modified') }),
+        ]}
       />
     </CodeMirrorMerge>
   );
@@ -186,7 +139,7 @@ function SideBySideDiffEditor({
 const getStyles = (theme: GrafanaTheme2): Record<'container', string> => ({
   container: css({
     minHeight: 0,
-    '.cm-theme, .cm-merge-theme': { height: '100%' },
+    '.cm-theme-none, .cm-merge-theme': { height: '100%' },
     '.cm-mergeView': { height: '100%', overflow: 'auto' },
     '.cm-mergeViewEditor': { minWidth: 0 },
     '.cm-mergeViewEditor + .cm-mergeViewEditor': { borderLeft: `1px solid ${theme.colors.border.weak}` },
