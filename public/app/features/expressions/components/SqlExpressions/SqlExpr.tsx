@@ -25,7 +25,7 @@ import { SqlEditor } from './SqlEditor/SqlEditor';
 import { type SqlCompletionProvider } from './SqlEditor/utils';
 import { SqlQueryActions } from './SqlQueryActions';
 import { useFunctionSignatures } from './hooks/useFunctionSignatures';
-import { useSQLSchemas } from './hooks/useSQLSchemas';
+import { type SQLSchemaField, type SQLSchemas, useSQLSchemas } from './hooks/useSQLSchemas';
 
 const SQLEditor = lazy(() =>
   import('@grafana/plugin-ui').then((module) => ({
@@ -60,6 +60,20 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   // Signature metadata is large, so it is loaded lazily only for the CodeMirror path.
   const functionSignatures = useFunctionSignatures(useCodeMirrorEditor);
 
+  const {
+    schemas,
+    loading: schemasLoading,
+    error: schemasError,
+    isFeatureEnabled: isSchemasFeatureEnabled,
+    refetch: refetchSchemas,
+  } = useSQLSchemas({
+    queries,
+    enabled: true,
+    timeRange: interpolationRange,
+    scopedVars: interpolationScopedVars,
+    filters: interpolationFilters,
+  });
+
   const completionProvider = useMemo<SqlCompletionProvider>(
     () => ({
       tables: () =>
@@ -79,6 +93,16 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
           return [];
         }
 
+        // Share Schema Inspector's source of truth: it reflects SQL-converted columns and includes hidden queries.
+        // Mirror its loading/error states too, since the hook keeps the previous schemas during a refetch.
+        if (isSchemasFeatureEnabled) {
+          if (schemasLoading || schemasError || !table || !schemas) {
+            return [];
+          }
+          const tableSchema = findTableSchema(schemas.sqlSchemas, table);
+          return tableSchema?.error ? [] : toSchemaColumnCompletions(tableSchema?.columns);
+        }
+
         try {
           return await fetchFields(table, queries || [], {
             range: interpolationRange,
@@ -96,7 +120,18 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
           kind: 'function',
         })),
     }),
-    [columnAutoCompleteEnabled, interpolationFilters, interpolationRange, interpolationScopedVars, queries, refIds]
+    [
+      columnAutoCompleteEnabled,
+      interpolationFilters,
+      interpolationRange,
+      interpolationScopedVars,
+      isSchemasFeatureEnabled,
+      queries,
+      refIds,
+      schemas,
+      schemasError,
+      schemasLoading,
+    ]
   );
 
   const legacyCompletionProvider = useMemo(
@@ -134,20 +169,6 @@ LIMIT
   const [isSchemaInspectorOpen = true, setIsSchemaInspectorOpen] = useLocalStorage(SCHEMA_INSPECTOR_OPEN_KEY, true);
 
   const styles = useStyles2((theme) => getStyles(theme));
-
-  const {
-    schemas,
-    loading: schemasLoading,
-    error: schemasError,
-    isFeatureEnabled: isSchemasFeatureEnabled,
-    refetch: refetchSchemas,
-  } = useSQLSchemas({
-    queries,
-    enabled: true,
-    timeRange: interpolationRange,
-    scopedVars: interpolationScopedVars,
-    filters: interpolationFilters,
-  });
 
   const queryContext = useMemo(
     () => ({
@@ -367,6 +388,21 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
   }),
 });
+
+// SQL expression tables resolve case-insensitively on the backend, so `FROM a` reads refId `A`.
+function findTableSchema(sqlSchemas: SQLSchemas, table: string) {
+  const refId = Object.keys(sqlSchemas).find((key) => key.toLowerCase() === table.toLowerCase());
+  return refId === undefined ? undefined : sqlSchemas[refId];
+}
+
+function toSchemaColumnCompletions(columns: SQLSchemaField[] | null | undefined) {
+  return (columns ?? []).map(({ name }) => ({
+    label: name,
+    insertText: quoteIdentifierIfNecessary(name, SQL_EXPRESSIONS_DIALECT),
+    kind: 'column' as const,
+    boost: 50,
+  }));
+}
 
 async function fetchFields(table: string | undefined, queries: DataQuery[], options: FetchSQLFieldsOptions = {}) {
   const fields = await fetchSQLFields({ table }, queries, options);

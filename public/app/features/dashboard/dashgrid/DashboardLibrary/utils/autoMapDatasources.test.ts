@@ -1,6 +1,6 @@
 import { type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
-import { getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
-import { type Input } from 'app/features/dashboard/components/DashExportModal/DashboardExporter';
+import { getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime';
+import { type Input } from 'app/features/dashboard-scene/scene/export/exporters';
 import { type DashboardInput, type DataSourceInput, InputType } from 'app/features/manage-dashboards/types';
 
 import {
@@ -11,8 +11,8 @@ import {
   mapUserSelectedDatasources,
 } from './autoMapDatasources';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceList: jest.fn(),
   getDataSourceInstanceSettings: jest.fn(),
 }));

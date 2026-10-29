@@ -3,13 +3,14 @@ import { delay, HttpResponse } from 'msw';
 import useMountedState from 'react-use/lib/useMountedState';
 
 import { AppEvents } from '@grafana/data';
-import { config, getAppEvents, setBackendSrv } from '@grafana/runtime';
+import { getAppEvents, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import {
   customCreateFolderHandler,
   customCreateFolderHandlerAppPlatform,
   customCreateTeamHandler,
   customSetTeamRolesHandler,
+  setTestFlags,
 } from '@grafana/test-utils/unstable';
 
 import { getWrapper } from '../../../../test/test-utils';
@@ -45,9 +46,22 @@ describe('useCreateTeamOrchestrate', () => {
     mockUseMountedState.mockReturnValue(() => true);
     mockGetAppEvents.mockReturnValue({ publish: mockPublish } as never);
 
+    // foldersAppPlatformAPI defaults to on, but these tests assert against the legacy folder
+    // handlers, so pin it off and let the app-platform cases opt in.
+    // TODO: add app platform folder fixtures and drop this pin, so these tests cover the API
+    // that production actually uses.
+    setTestFlags({ foldersAppPlatformAPI: false });
+
     contextSrv.fetchUserPermissions = jest.fn().mockResolvedValue(undefined);
     contextSrv.licensedAccessControlEnabled = () => false;
     contextSrv.hasPermission = () => true;
+  });
+
+  // The act wrap is needed because resetting fires OpenFeature events while the hook is mounted.
+  afterEach(async () => {
+    await act(async () => {
+      setTestFlags({});
+    });
   });
 
   it('returns undefined statuses before trigger is called', () => {
@@ -279,7 +293,7 @@ describe('useCreateTeamOrchestrate', () => {
     });
 
     it('reports error when the app platform folder API returns an error response', async () => {
-      config.featureToggles.foldersAppPlatformAPI = true;
+      setTestFlags({ foldersAppPlatformAPI: true });
       server.use(
         customCreateFolderHandlerAppPlatform(() =>
           HttpResponse.json({ message: 'Internal server error' }, { status: 500 })
@@ -293,7 +307,6 @@ describe('useCreateTeamOrchestrate', () => {
       });
 
       expect(result.current.folderCreationStatus?.state).toBe('error');
-      config.featureToggles.foldersAppPlatformAPI = false;
     });
 
     it('skips folder creation when autocreateTeamFolder is false', async () => {

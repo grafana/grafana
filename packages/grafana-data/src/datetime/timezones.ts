@@ -1,10 +1,11 @@
 import { memoize } from 'lodash';
-import moment from 'moment-timezone';
 
 import { type TimeZone } from '@grafana/schema';
 
 import { getTimeZone } from './common';
 import { findTimeZoneAt, getTimeZonesAt } from './easytz_lookup';
+import { type MomentTimeZoneInfo } from './luxon_moment_compat/moment';
+import moment from './moment_implementation';
 import { zonesByCountry } from './timezone_countries';
 
 export enum InternalTimeZones {
@@ -27,7 +28,7 @@ export const timeZoneFormatUserFriendly = (timeZone: TimeZone | undefined) => {
   }
 };
 
-export const getZone = (timeZone: string) => {
+export const getZone = (timeZone: string): MomentTimeZoneInfo | null => {
   return moment.tz.zone(timeZone);
 };
 
@@ -174,7 +175,7 @@ const abbrevationWithoutOffset = (abbrevation: string): string => {
 const mapToInfo = (timeZone: TimeZone, timestamp: number): TimeZoneInfo | undefined => {
   // easy-tz curates DST-correct abbreviations (CEST, EDT, ...) and resolves legacy
   // spellings (e.g. Asia/Calcutta) to their canonical entry; zones it does not list
-  // fall back to moment-timezone for zones easy-tz does not list.
+  // fall back to the ICU-backed values from the compat shim.
   const tz = findTimeZoneAt(timeZone, timestamp);
   if (tz) {
     return {

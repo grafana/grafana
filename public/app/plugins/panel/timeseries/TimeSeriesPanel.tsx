@@ -1,3 +1,4 @@
+import memoizeOne from 'memoize-one';
 import { useCallback, useMemo, useState } from 'react';
 
 import {
@@ -32,7 +33,9 @@ import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from './plugins/utils';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
-import { getTimezones, prepareGraphableFields } from './utils';
+import { getComparisonFieldPairs, getTimezones, prepareGraphableFields } from './utils';
+
+const noAnnotations: DataFrame[] = [];
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
@@ -58,8 +61,10 @@ export const TimeSeriesPanel = ({
     canExecuteActions,
     getFiltersBasedOnGrouping,
     onAddAdHocFilters,
+    openExemplar,
   } = usePanelContext();
   const theme = useTheme2();
+  const getVisibleExemplarLabels = useMemo(() => memoizeOne(getVisibleLabels), []);
 
   const { dataLinkPostProcessor } = useDataLinksContext();
 
@@ -67,40 +72,41 @@ export const TimeSeriesPanel = ({
   // Vertical orientation is not available for users through config.
   // It is simplified version of horizontal time series panel and it does not support all plugins.
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
-  const { frames, compareDiffMs } = useMemo(() => {
-    let frames = prepareGraphableFields(data.series, theme, timeRange);
-    if (frames != null) {
-      let compareDiffMs: number[] = [0];
-      // Held separately from `frames` below: TS won't retain the null-check narrowing of `frames`
-      // inside the .map callback once `frames` itself gets reassigned in this scope.
-      const originalFrames = frames;
-
-      frames = originalFrames.map((frame: DataFrame) => {
-        const diffMs = frame.meta?.timeCompare?.diffMs ?? 0;
-
-        frame.fields.forEach((field) => {
-          if (field.type !== FieldType.time) {
-            compareDiffMs.push(diffMs);
-          }
-        });
-
-        if (diffMs !== 0) {
-          // Check if the compared frame needs time alignment
-          // Apply alignment when time ranges match (no shift applied yet)
-          const needsAlignment = shouldAlignTimeCompare(frame, originalFrames, timeRange);
-
-          if (needsAlignment) {
-            return alignTimeRangeCompareData(frame, diffMs, theme);
-          }
-        }
-
-        return frame;
-      });
-
-      return { frames, compareDiffMs };
+  const {
+    frames,
+    compareDiffMs,
+    warning: prepWarning,
+  } = useMemo(() => {
+    const { frames: graphable, warn } = prepareGraphableFields(data.series, theme, timeRange);
+    if (warn) {
+      return { frames: graphable, warning: warn };
     }
 
-    return { frames };
+    const compareDiffMs: number[] = [0];
+
+    const frames = graphable.map((frame: DataFrame) => {
+      const diffMs = frame.meta?.timeCompare?.diffMs ?? 0;
+
+      frame.fields.forEach((field) => {
+        if (field.type !== FieldType.time) {
+          compareDiffMs.push(diffMs);
+        }
+      });
+
+      if (diffMs !== 0) {
+        // Only shift a compare frame that still sits in its historical window, so repeated
+        // preparation of already aligned frames doesn't shift them again
+        const needsAlignment = shouldAlignTimeCompare(frame, timeRange);
+
+        if (needsAlignment) {
+          return alignTimeRangeCompareData(frame, diffMs, theme);
+        }
+      }
+
+      return frame;
+    });
+
+    return { frames, compareDiffMs };
   }, [data.series, timeRange, theme]);
 
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
@@ -134,11 +140,11 @@ export const TimeSeriesPanel = ({
     [getFiltersBasedOnGrouping, onAddAdHocFilters]
   );
 
-  if (!frames || suggestions) {
+  if (!frames?.length || suggestions) {
     return (
       <PanelDataErrorView
         panelId={id}
-        message={suggestions?.message}
+        message={suggestions?.message ?? prepWarning}
         fieldConfig={fieldConfig}
         data={data}
         needsTimeField={true}
@@ -165,6 +171,7 @@ export const TimeSeriesPanel = ({
       onPinnedToSidebarChange={onPinnedToSidebarChange}
     >
       {(uplotConfig, alignedFrame) => {
+        const compFieldPairs = getComparisonFieldPairs(alignedFrame, frames!);
         return (
           <>
             {!options.disableKeyboardEvents && <KeyboardPlugin config={uplotConfig} />}
@@ -215,7 +222,11 @@ export const TimeSeriesPanel = ({
                       dataLinks={dataLinks}
                       filterByGroupedLabels={getFilterByGroupedLabelsModel(alignedFrame, seriesIdx)}
                       canExecuteActions={userCanExecuteActions}
-                      compareDiffMs={compareDiffMs}
+                      timeCompare={{
+                        diffMs: compareDiffMs,
+                        fieldPairs: compFieldPairs,
+                        colorMode: options.timeCompare?.colorMode,
+                      }}
                       assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, frames)}
                     />
                   );
@@ -235,16 +246,15 @@ export const TimeSeriesPanel = ({
                   setNewRange={setNewAnnotationRange}
                 />
                 <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
-                {data.annotations && (
-                  <ExemplarsPlugin
-                    visibleSeries={getVisibleLabels(uplotConfig, frames)}
-                    config={uplotConfig}
-                    exemplars={data.annotations}
-                    timeZone={timeZone}
-                    maxHeight={options.tooltip.maxHeight}
-                    maxWidth={options.tooltip.maxWidth}
-                  />
-                )}
+                <ExemplarsPlugin
+                  openExemplar={openExemplar}
+                  visibleSeries={getVisibleExemplarLabels(uplotConfig, frames)}
+                  config={uplotConfig}
+                  exemplars={data.annotations ?? noAnnotations}
+                  timeZone={timeZone}
+                  maxHeight={options.tooltip.maxHeight}
+                  maxWidth={options.tooltip.maxWidth}
+                />
               </>
             )}
           </>

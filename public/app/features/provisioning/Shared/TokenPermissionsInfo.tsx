@@ -5,6 +5,7 @@ import { t, Trans } from '@grafana/i18n';
 import { Stack, TextLink, useStyles2 } from '@grafana/ui';
 
 import { type InstructionAvailability } from '../Wizard/types';
+import { getServerOrigin } from '../utils/git';
 
 export function TokenPermissionsInfo({ type, url }: { type: InstructionAvailability; url?: string }) {
   const styles = useStyles2(getStyles);
@@ -71,18 +72,6 @@ type Permission = {
   name: string;
   access: string;
 };
-
-// Extract the scheme + host (e.g. https://ghes.example.com) from a GitHub Enterprise repository URL.
-function getServerOrigin(url?: string): string {
-  if (!url) {
-    return '';
-  }
-  try {
-    return new URL(url).origin;
-  } catch {
-    return '';
-  }
-}
 
 function getPermissionsForProvider(type: InstructionAvailability): Permission[] {
   switch (type) {

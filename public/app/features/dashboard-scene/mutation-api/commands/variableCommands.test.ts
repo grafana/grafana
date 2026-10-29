@@ -10,8 +10,10 @@ import { getTestDashboardSceneFromSaveModel } from '../../utils/test-utils';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { MutationResult } from '../types';
 
-function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {}): DashboardScene {
-  const { editable = true, isEditing = false } = options;
+function buildMockScene(
+  options: { editable?: boolean; isEditing?: boolean; isPlanning?: boolean } = {}
+): DashboardScene {
+  const { editable = true, isEditing = false, isPlanning = false } = options;
   const state: Record<string, unknown> = {
     uid: 'test-dash',
     isEditing,
@@ -20,6 +22,8 @@ function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {
   const scene = {
     state,
     canEditDashboard: jest.fn(() => editable),
+    isPlanning: jest.fn(() => isPlanning),
+    recordEditMutation: jest.fn(),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
@@ -179,8 +183,41 @@ describe('Variable mutation commands', () => {
     });
 
     expect(result.success).toBe(true);
-    expect(result.changes.length).toBeGreaterThan(0);
-    expect(result.changes[0].path).toBe('/variables/env');
+    expect(result.changes).toEqual([
+      {
+        path: '/variables/env',
+        previousValue: expect.objectContaining({
+          kind: 'CustomVariable',
+          spec: expect.objectContaining({ name: 'env', query: 'dev,staging,prod' }),
+        }),
+        newValue: expect.objectContaining({
+          kind: 'CustomVariable',
+          spec: expect.objectContaining({ name: 'env', query: 'dev,staging,prod,canary' }),
+        }),
+      },
+    ]);
+  });
+
+  it('UPDATE_VARIABLE preserves the scene key across the replacement', async () => {
+    await client.execute({
+      type: 'ADD_VARIABLE',
+      payload: {
+        variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'dev,prod' } },
+      },
+    });
+    const keyBefore = scene.state.$variables?.state.variables.find((v) => v.state.name === 'env')?.state.key;
+    expect(keyBefore).toBeDefined();
+
+    await client.execute({
+      type: 'UPDATE_VARIABLE',
+      payload: {
+        name: 'env',
+        variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'dev,prod,canary' } },
+      },
+    });
+
+    const keyAfter = scene.state.$variables?.state.variables.find((v) => v.state.name === 'env')?.state.key;
+    expect(keyAfter).toBe(keyBefore);
   });
 
   it('UPDATE_VARIABLE returns error when variable not found', async () => {
@@ -214,10 +251,10 @@ describe('Variable mutation commands', () => {
 
     expect(result.success).toBe(true);
     expect(result.changes).toEqual([{ path: '/isEditing', previousValue: false, newValue: true }]);
-    expect(scene.onEnterEditMode).toHaveBeenCalled();
+    expect(scene.onEnterEditMode).toHaveBeenCalledWith('assistant');
   });
 
-  it('ENTER_EDIT_MODE is a no-op when already editing', async () => {
+  it('ENTER_EDIT_MODE applies the Assistant presentation when already editing', async () => {
     scene = buildMockScene({ editable: true, isEditing: true });
     client = new DashboardMutationClient(scene);
 
@@ -228,6 +265,20 @@ describe('Variable mutation commands', () => {
 
     expect(result.success).toBe(true);
     expect((result.data as { wasAlreadyEditing: boolean }).wasAlreadyEditing).toBe(true);
+    expect(scene.onEnterEditMode).toHaveBeenCalledWith('assistant');
+  });
+
+  it('ENTER_EDIT_MODE refuses while a plan is being previewed, like every other mutating command', async () => {
+    scene = buildMockScene({ editable: true, isPlanning: true });
+    client = new DashboardMutationClient(scene);
+
+    const result = await client.execute({
+      type: 'ENTER_EDIT_MODE',
+      payload: {},
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('read-only');
     expect(scene.onEnterEditMode).not.toHaveBeenCalled();
   });
 
@@ -282,6 +333,8 @@ describe('Variable mutation commands', () => {
       const scene = {
         state,
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -318,6 +371,8 @@ describe('Variable mutation commands', () => {
       const scene = {
         state,
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -351,6 +406,8 @@ describe('Variable mutation commands', () => {
       const scene = {
         state,
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),

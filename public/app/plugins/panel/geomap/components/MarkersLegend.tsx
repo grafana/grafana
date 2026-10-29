@@ -8,8 +8,8 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useStyles2, useTheme2, type VizLegendItem } from '@grafana/ui';
+import { SanitizedSVG } from '@grafana/ui/unstable';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
-import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 import { getThresholdItems } from 'app/core/components/TimelineChart/utils';
 
 import { type StyleConfigState } from '../style/types';
@@ -37,7 +37,7 @@ export function MarkersLegend({ layerName, styleConfig }: MarkersLegendProps) {
         <div className={style.layerName}>{layerName}</div>
         <div className={cx(style.layerBody, style.fixedColorContainer)}>
           <SanitizedSVG
-            src={`${window.__grafana_public_path__}build/${symbol}`}
+            src={`${window.__grafana_build_path__}${symbol}`}
             className={style.legendSymbol}
             title={t('geomap.markers-legend.title-symbol', 'Symbol')}
             style={{ fill: color, opacity: opacity }}

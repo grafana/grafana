@@ -83,7 +83,7 @@ describe('AdHocVariableForm', () => {
   it('should not render code editor when no default keys provided', async () => {
     await setup(defaultProps);
 
-    expect(screen.queryByTestId(selectors.components.CodeEditor.container)).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Static dimensions CSV' })).not.toBeInTheDocument();
   });
 
   it('should render code editor when defaultKeys and onDefaultKeysChange are provided', async () => {
@@ -94,7 +94,7 @@ describe('AdHocVariableForm', () => {
       onDefaultKeysChange: mockOnStaticKeysChange,
     });
 
-    expect(await screen.findByTestId(selectors.components.CodeEditor.container)).toBeInTheDocument();
+    expect(await screen.findByRole('textbox', { name: 'Static dimensions CSV' })).toBeInTheDocument();
   });
 
   it('should call onDefaultKeysChange when toggling on default options', async () => {
@@ -150,6 +150,22 @@ describe('AdHocVariableForm', () => {
     expect(dataSourcePicker).toBeInTheDocument();
     expect(allowCustomValueCheckbox).not.toBeInTheDocument();
     expect(alertText).toBeInTheDocument();
+  });
+
+  describe('enable group by', () => {
+    it('should show Enable group by toggle as on when no datasource is selected', async () => {
+      const { renderer } = await setup({
+        ...defaultProps,
+        datasource: undefined,
+        enableGroupBy: true,
+        onEnableGroupByChange: jest.fn(),
+      });
+
+      expect(renderer.getByText('Enable group by')).toBeInTheDocument();
+      expect(
+        renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.enableGroupByToggle)
+      ).toBeChecked();
+    });
   });
 });
 

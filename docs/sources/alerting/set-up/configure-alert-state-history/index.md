@@ -13,17 +13,6 @@ labels:
     - oss
 title: Configure alert state history
 weight: 250
-refs:
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-  meta-monitoring:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor/
 ---
 
 # Configure alert state history
@@ -108,6 +97,8 @@ The following steps describe a basic configuration:
    # (Optional)  Timeout for writing alert state data to the target data source. Default is 10s.
    # prometheus_write_timeout = 10s
    ```
+
+Grafana reads alert state history from the same data source, so users need the `datasources:query` permission for it to view the [Alerts page](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/alerts-page/).
 
 You can then use **Grafana Explore** to query the alert state metric. For details, refer to [Alerting Meta monitoring](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor/).
 

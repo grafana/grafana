@@ -2,6 +2,7 @@ package quotaimpl
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -42,6 +44,8 @@ import (
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertprovisioning "github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	ngprovenance "github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
+	ngrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -55,6 +59,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -77,6 +82,74 @@ func TestQuotaService(t *testing.T) {
 		err := quotaService.DeleteQuotaForUser(context.Background(), 1)
 		require.NoError(t, err)
 	})
+}
+
+func TestIntegrationCheckQuotaReachedUsage(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := sqlstore.NewTestStore(t)
+	cfg := setting.NewCfg()
+	cfg.Quota.Enabled = true
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+
+	usageErr := errors.New("usage unavailable")
+	tests := []struct {
+		name            string
+		limits          map[quota.Scope]int64
+		params          *quota.ScopeParameters
+		usage           int64
+		usageErr        error
+		missingReporter bool
+		wantReached     bool
+		wantCalls       int
+		wantErr         error
+	}{
+		{name: "no limits"},
+		{name: "unlimited", limits: map[quota.Scope]int64{quota.GlobalScope: -1, quota.OrgScope: -1}},
+		{name: "zero limit", limits: map[quota.Scope]int64{quota.GlobalScope: 0}, wantReached: true},
+		{name: "zero and positive limits", limits: map[quota.Scope]int64{quota.GlobalScope: 10, quota.OrgScope: 0}, wantReached: true},
+		{name: "zero limit without scope", limits: map[quota.Scope]int64{quota.OrgScope: 0}, wantReached: true},
+		{name: "org scope absent", limits: map[quota.Scope]int64{quota.OrgScope: 10}},
+		{name: "user scope absent", limits: map[quota.Scope]int64{quota.UserScope: 10}, params: &quota.ScopeParameters{OrgID: 1}},
+		{name: "below limit", limits: map[quota.Scope]int64{quota.GlobalScope: 10}, usage: 9, wantCalls: 1},
+		{name: "at limit", limits: map[quota.Scope]int64{quota.GlobalScope: 10}, usage: 10, wantReached: true, wantCalls: 1},
+		{name: "org limit", limits: map[quota.Scope]int64{quota.OrgScope: 10}, params: &quota.ScopeParameters{OrgID: 1}, usage: 10, wantReached: true, wantCalls: 1},
+		{name: "multiple limits share usage", limits: map[quota.Scope]int64{quota.GlobalScope: 10, quota.OrgScope: 10, quota.UserScope: 10}, params: &quota.ScopeParameters{OrgID: 1, UserID: 1}, usage: 9, wantCalls: 1},
+		{name: "usage error", limits: map[quota.Scope]int64{quota.GlobalScope: 10}, usageErr: usageErr, wantCalls: 1, wantErr: usageErr},
+		{name: "missing reporter", missingReporter: true, wantErr: quota.ErrInvalidTargetSrv},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			svc := ProvideService(t.Context(), legacysql.NewDatabaseProvider(sqlStore), cfgProvider)
+			limits := &quota.Map{}
+			usage := &quota.Map{}
+			for scope, limit := range tc.limits {
+				tag, err := quota.NewTag("test", "test", scope)
+				require.NoError(t, err)
+				limits.Set(tag, limit)
+				usage.Set(tag, tc.usage)
+			}
+
+			calls := 0
+			if !tc.missingReporter {
+				require.NoError(t, svc.RegisterQuotaReporter(&quota.NewUsageReporter{
+					TargetSrv:     "test",
+					DefaultLimits: limits,
+					Reporter: func(context.Context, *quota.ScopeParameters) (*quota.Map, error) {
+						calls++
+						return usage, tc.usageErr
+					},
+				}))
+			}
+
+			reached, err := svc.CheckQuotaReached(t.Context(), "test", tc.params)
+			require.ErrorIs(t, err, tc.wantErr)
+			require.Equal(t, tc.wantReached, reached)
+			require.Equal(t, tc.wantCalls, calls)
+		})
+	}
 }
 
 func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
@@ -115,7 +188,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotaService)
 	require.NoError(t, err)
 	userService, err := userimpl.ProvideService(
-		sqlStore, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(sqlStore), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
@@ -521,7 +594,7 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 	dashService, err := dashService.ProvideDashboardServiceImpl(
 		cfg,
 		sqlStore,
-		featuremgmt.WithFeatures(),
+		iamapi.Features{},
 		acmock.NewMockedPermissionsService(),
 		ac,
 		actest.FakeService{},
@@ -555,14 +628,18 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 	require.NoError(t, err)
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 
-	ruleStore, err := ngstore.ProvideDBStore(cfg, featuremgmt.WithFeatures(), sqlStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, b)
+	alertingStore, err := ngstore.ProvideDBStore(sqlStore)
+	require.NoError(t, err)
+	provenanceStore := ngprovenance.ProvideProvenanceStore(featuremgmt.WithFeatures(), sqlStore)
+	ruleStore, err := ngrules.ProvideRuleStore(cfg, featuremgmt.WithFeatures(), sqlStore, &foldertest.FakeService{}, ac, provenanceStore)
 	require.NoError(t, err)
 	cfg.UnifiedAlerting.InitializationTimeout = 30 * time.Second
 	_, err = ngalert.ProvideService(
 		cfg, featuremgmt.WithFeatures(), nil, nil, routing.NewRouteRegister(), sqlStore, ngalertfakes.NewFakeKVStore(t), nil, nil, ngalertprovisioning.NoopRuleMutationValidator{}, quotaService,
 		secretsService, nil, m, &foldertest.FakeService{}, &acmock.Mock{}, &dashboards.FakeDashboardService{}, nil, b, &acmock.Mock{},
-		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore, httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), ngalertfakes.NewFakeRoutePermissionsService(), ngalertfakes.NewFakeFolderPermissionsService(), usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
+		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, alertingStore, ruleStore, provenanceStore, httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), ngalertfakes.NewFakeRoutePermissionsService(), ngalertfakes.NewFakeFolderPermissionsService(), usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
 		nil, // clientGenerator
+		nil, // cfgProvider
 	)
 	require.NoError(t, err)
 }

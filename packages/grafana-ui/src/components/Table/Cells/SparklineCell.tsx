@@ -117,6 +117,7 @@ export const SparklineCell = (props: TableCellProps) => {
           sparkline={sparkline}
           config={config}
           theme={tableStyles.theme}
+          showTooltip={cellOptions.showTooltip}
         />
       </div>
     </div>

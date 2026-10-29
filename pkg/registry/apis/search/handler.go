@@ -3,14 +3,17 @@
 package search
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -19,6 +22,7 @@ import (
 
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -39,21 +43,41 @@ type kindRef struct {
 	version  string
 	resource string
 	kind     string
+
+	// kinds answers what the kind field of a result should say, and is set only by
+	// the global route. That route returns hits of several resource types,
+	// so it cannot name one kind the way a per-kind route does, and a Kubernetes
+	// kind cannot be derived from a group and resource without its manifest.
+	kinds map[schema.GroupResource]string
+	// reportedKinds are the kinds the search server named for one response, by
+	// {group}/{resource}. They win over kinds.
+	reportedKinds map[string]string
+}
+
+// spansResourceTypes reports whether results of this route carry their own
+// resource type.
+func (k kindRef) spansResourceTypes() bool {
+	return k.kinds != nil
 }
 
 func (k kindRef) gvr() schema.GroupVersionResource {
 	return schema.GroupVersionResource{Group: k.group, Version: k.version, Resource: k.resource}
 }
 
+// SearchClient allows callers to wrap search without implementing unrelated index operations.
+type SearchClient interface {
+	Search(context.Context, *resourcepb.ResourceSearchRequest, ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error)
+}
+
 // Handler serves the search envelope endpoints for one kind.
 type Handler struct {
-	client   resourcepb.ResourceIndexClient
+	client   SearchClient
 	provider resource.SearchFieldsProvider
 	tracer   trace.Tracer
 	log      log.Logger
 }
 
-func NewHandler(client resourcepb.ResourceIndexClient, provider resource.SearchFieldsProvider, tracer trace.Tracer) *Handler {
+func NewHandler(client SearchClient, provider resource.SearchFieldsProvider, tracer trace.Tracer) *Handler {
 	return &Handler{
 		client:   client,
 		provider: provider,
@@ -70,11 +94,34 @@ func (h *Handler) SearchFor(kind kindRef) http.HandlerFunc {
 			if err := decodeBody(r, &q); err != nil {
 				return nil, nil, err
 			}
-			req, ferrs := TranslateSearchQuery(&q, kind.gvr(), namespace, h.provider)
+			allowFolderTree := openfeature.NewDefaultClient().Boolean(r.Context(), featuremgmt.FlagSearchPerResourceFolderTree, false, openfeature.TransactionContext(r.Context()))
+			gvr := kind.gvr()
+			req, ferrs := translateSearchQuery(&q, gvr, namespace, newFieldSet(gvr, h.provider, allowFolderTree))
 			return req, ferrs, nil
 		},
 		func(res *resourcepb.ResourceSearchResponse, limit int64) (any, error) {
 			return searchResults(res, kind, limit)
+		},
+	)
+}
+
+// GlobalSearchFor returns the POST handler for the search that spans resource
+// types. There is one such endpoint; kinds is only how a result reports the
+// Kubernetes kind of the object it found.
+func (h *Handler) GlobalSearchFor(kinds map[schema.GroupResource]string) http.HandlerFunc {
+	gvr := GlobalSearchGVR()
+	kind := kindRef{group: gvr.Group, version: gvr.Version, resource: gvr.Resource, kinds: kinds}
+	return h.handle(kind, "search.v1.global", searchv0.KindSearchQuery,
+		func(r *http.Request, namespace string) (*resourcepb.ResourceSearchRequest, field.ErrorList, error) {
+			var q searchv0.SearchQuery
+			if err := decodeBody(r, &q); err != nil {
+				return nil, nil, err
+			}
+			req, ferrs := TranslateGlobalSearchQuery(&q, namespace)
+			return req, ferrs, nil
+		},
+		func(res *resourcepb.ResourceSearchResponse, limit int64) (any, error) {
+			return globalSearchResults(res, kind, limit)
 		},
 	)
 }
@@ -131,13 +178,8 @@ func (h *Handler) handle(
 		}
 
 		res, err := h.client.Search(ctx, req)
-		if err != nil {
+		if err := resource.StatusErrorFromResponse(res.GetError(), err); err != nil {
 			errhttp.Write(ctx, err, w)
-			return
-		}
-		// The backend reports failures in the payload, not as a transport error.
-		if res.GetError() != nil {
-			errhttp.Write(ctx, resource.GetError(res.GetError()), w)
 			return
 		}
 

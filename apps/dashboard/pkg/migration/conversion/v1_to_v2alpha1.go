@@ -9,15 +9,12 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/apimachinery/pkg/conversion"
-	"k8s.io/apiserver/pkg/endpoints/request"
 
-	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	schemaversion "github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 // getDefaultDatasourceType gets the default datasource type using the datasource provider
@@ -113,53 +110,20 @@ func buildDashboardDataSourceRef(uid, typ string) *dashv2alpha1.DashboardDataSou
 	return ref
 }
 
-// prepareV1ConversionContext sets up the context with namespace and service identity
-// for v1 dashboard conversions. This context is needed to retrieve datasources for
-// converting dashboard datasource references.
-// A background service identity is used because the user who is reading the specific dashboard
-// may not have access to all the datasources in the dashboard, but the conversion still needs to take place
-// in order to be able to convert between k8s versions.
-func prepareV1ConversionContext(in *dashv1.Dashboard, dsIndexProvider schemaversion.DataSourceIndexProvider) (context.Context, *types.NamespaceInfo, error) {
-	if dsIndexProvider == nil {
-		return nil, nil, fmt.Errorf("datasource index provider not initialized")
-	}
-
-	namespace := in.GetNamespace()
-	if namespace == "" {
-		return context.Background(), nil, nil
-	}
-
-	// Try to parse namespace and set up tenant-aware context
-	ctx := request.WithNamespace(context.Background(), namespace)
-	nsInfo, err := types.ParseNamespace(namespace)
-	if err != nil {
-		return ctx, nil, nil
-	}
-
-	ctx, _ = identity.WithServiceIdentity(ctx, nsInfo.OrgID)
-
-	return ctx, &nsInfo, nil
-}
-
 func ConvertDashboard_V1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.APIVersion = dashv2alpha1.APIVERSION
 	out.Kind = in.Kind
 
-	// get context with namespace and with tracing, merge them
+	if dsIndexProvider == nil {
+		return fmt.Errorf("datasource index provider not initialized")
+	}
+
+	// merge context with tracing
 	ctx := context.Background()
 	if scope != nil && scope.Meta() != nil && scope.Meta().Context != nil {
 		if scopeCtx, ok := scope.Meta().Context.(context.Context); ok {
 			ctx = scopeCtx
-		}
-	}
-	ctxWithNamespace, _, err := prepareV1ConversionContext(in, dsIndexProvider)
-	if err != nil {
-		return fmt.Errorf("failed to prepare conversion context: %w", err)
-	}
-	if ctxWithNamespace != nil {
-		if ns := request.NamespaceValue(ctxWithNamespace); ns != "" {
-			ctx = request.WithNamespace(ctx, ns)
 		}
 	}
 
@@ -2352,6 +2316,11 @@ func transformPanelTransformations(panelMap map[string]interface{}) []dashv2alph
 					Id:      transformationId,
 					Options: options,
 				},
+			}
+
+			// Extract the static refId if present (optional, otherwise derived from the input frames)
+			if refID := schemaversion.GetStringValue(tMap, "refId"); refID != "" {
+				transformationKind.Spec.RefId = &refID
 			}
 
 			// Extract disabled if present (optional, transformations are enabled by default)

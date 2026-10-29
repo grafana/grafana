@@ -14,11 +14,12 @@
 
 import { css } from '@emotion/css';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { formatDuration } from '../../utils/date';
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   TickLabels: css({
     label: 'TickLabels',
     height: '1rem',
@@ -26,7 +27,7 @@ const getStyles = () => ({
   }),
   TickLabelsLabel: css({
     label: 'TickLabelsLabel',
-    color: '#717171',
+    color: theme.colors.text.secondary,
     fontSize: '0.7rem',
     position: 'absolute',
     userSelect: 'none',

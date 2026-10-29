@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
-	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -120,72 +119,6 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 	})
 }
 
-func TestIntegrationSQLStorageAndSQLKVCompatibilityTests(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-	t.Cleanup(db.CleanupTestDB)
-
-	newKvBackend := func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
-		return unitest.NewTestSqlKvBackend(t, ctx, unitest.SQLKVBackendModeRVManager)
-	}
-
-	opts := &unitest.TestOptions{
-		SearchServerFactory: newTestResourceServerWithSearch,
-	}
-
-	t.Run("IsHA (polling notifier)", func(t *testing.T) {
-		if db.IsTestDbSQLite() {
-			t.Skip("sqlite not compatible with HA")
-		}
-
-		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) resource.StorageBackend {
-			return newTestBackend(t, true, 0, 0)
-		}, newKvBackend, opts)
-	})
-
-	t.Run("NotHA (in process notifier)", func(t *testing.T) {
-		if !db.IsTestDbSQLite() {
-			t.Skip("in-process notifier only used with sqlite")
-		}
-
-		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) resource.StorageBackend {
-			return newTestBackend(t, false, 0, 0)
-		}, newKvBackend, opts)
-	})
-}
-
-// newTestResourceServerWithSearch creates a ResourceServer with search enabled for testing
-func newTestResourceServerWithSearch(t *testing.T, backend resource.StorageBackend) resource.ResourceServer {
-	t.Helper()
-
-	// Create test config
-	cfg := setting.NewCfg()
-	cfg.EnableSearch = true
-	cfg.IndexFileThreshold = 1000 // Ensures memory indexing
-	cfg.IndexPath = t.TempDir()   // Temporary directory for indexes
-
-	// Initialize document builders for playlists
-	docBuilders := &resource.TestDocumentBuilderSupplier{
-		GroupsResources: map[string]string{
-			"playlist.grafana.app": "playlists",
-		},
-	}
-
-	// Create search options
-	searchOpts, err := search.NewSearchOptions(cfg, docBuilders, nil, nil, nil)
-	require.NoError(t, err)
-
-	// Create ResourceServer with search enabled
-	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Backend:      backend,
-		AccessClient: types.FixedAccessClient(true), // Allow all operations for testing
-		Search:       searchOpts,
-		Reg:          nil,
-	})
-	require.NoError(t, err)
-
-	return server
-}
-
 func TestIntegrationSearchAndStorage(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -206,6 +139,67 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 
 	// Run the shared storage and search tests
 	unitest.RunTestSearchAndStorage(t, ctx, storage, searchBackend)
+}
+
+// TestIntegrationSearchBackedList runs the search-backed LIST contract against
+// each backend. It uses an isolated backend + index per subtest (the runner
+// builds indexes over everything the backend holds, so it must hold only the
+// resources under test). Batch-read assertions apply only to KV backends; the
+// legacy SQL backend takes the per-resource fallback.
+func TestIntegrationSearchBackedList(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	newBleve := func(t *testing.T) resource.SearchBackend {
+		sb, err := search.NewBleveBackend(search.BleveOptions{FileThreshold: 0, Root: t.TempDir()}, nil)
+		require.NoError(t, err)
+		t.Cleanup(sb.Stop)
+		return sb
+	}
+
+	t.Run("kv backend (batched reads)", func(t *testing.T) {
+		ctx := context.Background()
+		scans := &unitest.DataKeyScanCounter{}
+		backend, _ := unitest.NewTestSqlKvBackendWithKV(t, ctx, scans.Wrap)
+		unitest.RunTestSearchBackedList(t, ctx, backend, newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: true, DataKeyScans: scans.Scans})
+	})
+
+	t.Run("kv backend (batched reads, authorize before fetch)", func(t *testing.T) {
+		ctx := context.Background()
+		scans := &unitest.DataKeyScanCounter{}
+		backend, _ := unitest.NewTestSqlKvBackendWithKV(t, ctx, scans.Wrap)
+		unitest.RunTestSearchBackedList(t, ctx, backend, newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: true, AuthorizeBeforeFetch: true, DataKeyScans: scans.Scans})
+	})
+
+	t.Run("sql backend (per-resource fallback)", func(t *testing.T) {
+		ctx := context.Background()
+		unitest.RunTestSearchBackedList(t, ctx, newTestBackend(t, false, 0, 0), newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: false})
+	})
+}
+
+func TestIntegrationSearchBackedTrashList(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	newBleve := func(t *testing.T) resource.SearchBackend {
+		sb, err := search.NewBleveBackend(search.BleveOptions{
+			FileThreshold: 0,
+			Root:          t.TempDir(),
+		}, nil)
+		require.NoError(t, err)
+		t.Cleanup(sb.Stop)
+		return sb
+	}
+
+	t.Run("kv backend (batched reads)", func(t *testing.T) {
+		ctx := context.Background()
+		scans := &unitest.DataKeyScanCounter{}
+		backend, _ := unitest.NewTestSqlKvBackendWithKV(t, ctx, scans.Wrap)
+		unitest.RunTestSearchBackedTrashList(t, ctx, backend, newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: true, DataKeyScans: scans.Scans})
+	})
+
+	t.Run("sql backend (storage fallback)", func(t *testing.T) {
+		ctx := context.Background()
+		unitest.RunTestSearchBackedTrashList(t, ctx, newTestBackend(t, false, 0, 0), newBleve(t), unitest.SearchBackedListOptions{})
+	})
 }
 
 func TestClientServer(t *testing.T) {
@@ -243,6 +237,7 @@ func TestClientServer(t *testing.T) {
 		}),
 	)
 	require.NoError(t, err)
+	grpcService.Health.Register(svc, resourcepb.ResourceStore_ServiceDesc.ServiceName)
 	var client resourcepb.ResourceStoreClient
 
 	clientCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
@@ -355,6 +350,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	)
 	require.NoError(t, err)
 
+	grpcService.Health.Register(svc, resourcepb.ResourceIndex_ServiceDesc.ServiceName)
 	var client resource.SearchClient
 	// Use identity.WithRequester to set up proper auth context for gRPC client interceptors
 	clientCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
@@ -396,6 +392,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 					Resource:  "playlists",
 				},
 			},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, resp)

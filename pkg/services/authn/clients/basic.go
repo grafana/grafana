@@ -9,7 +9,7 @@ import (
 
 var errDecodingBasicAuthHeader = errutil.BadRequest("basic-auth.invalid-header", errutil.WithPublicMessage("Invalid Basic Auth Header"))
 
-var _ authn.ContextAwareClient = new(Basic)
+var _ authn.ContextAwareClient = (*Basic)(nil)
 
 func ProvideBasic(client authn.PasswordClient) *Basic {
 	return &Basic{client}
@@ -36,7 +36,7 @@ func (c *Basic) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	return c.client.AuthenticatePassword(ctx, r, username, password)
 }
 
-func (c *Basic) IsEnabled() bool {
+func (c *Basic) IsEnabled(context.Context) bool {
 	return true
 }
 

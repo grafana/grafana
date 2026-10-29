@@ -32,7 +32,8 @@ var PreferencesTeamLimit = 25
 // This converts the query into explicitly picking the preferences the caller should have access
 type preferencesStorage struct {
 	grafanarest.Storage
-	gvk schema.GroupVersionKind
+	gvk          schema.GroupVersionKind
+	accessClient authlib.AccessClient
 }
 
 func (s *preferencesStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
@@ -192,8 +193,24 @@ func (s *preferencesStorage) appendOwnerPreferences(ctx context.Context, user id
 			return nil
 		}
 	case utils.TeamResourceOwner:
-		if !isUser || !slices.Contains(user.GetGroups(), owner.Identifier) {
+		if !isUser {
 			return nil
+		}
+		// Explicit team lookups must allow the same readers as a single-resource GET.
+		if !slices.Contains(user.GetGroups(), owner.Identifier) {
+			rsp, err := s.accessClient.Check(ctx, user, authlib.CheckRequest{
+				Verb:      "get",
+				Group:     "iam.grafana.app",
+				Resource:  "teams",
+				Namespace: user.GetNamespace(),
+				Name:      owner.Identifier,
+			}, "")
+			if err != nil {
+				return fmt.Errorf("checking team read permission: %w", err)
+			}
+			if !rsp.Allowed {
+				return nil
+			}
 		}
 	default:
 		return nil // skip

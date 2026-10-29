@@ -8,97 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestExtractPath_DotTraversal(t *testing.T) {
-	obj := map[string]any{
-		"spec": map[string]any{
-			"email": "alice@example.com",
-			"profile": map[string]any{
-				"city": "Brno",
-			},
-		},
-	}
-
-	t.Run("scalar", func(t *testing.T) {
-		v, err := extractPath(obj, "spec.email")
-		require.NoError(t, err)
-		assert.Equal(t, "alice@example.com", v)
-	})
-
-	t.Run("nested scalar", func(t *testing.T) {
-		v, err := extractPath(obj, "spec.profile.city")
-		require.NoError(t, err)
-		assert.Equal(t, "Brno", v)
-	})
-
-	t.Run("missing segment returns nil", func(t *testing.T) {
-		v, err := extractPath(obj, "spec.does.not.exist")
-		require.NoError(t, err)
-		assert.Nil(t, v)
-	})
-
-	t.Run("empty path is an error", func(t *testing.T) {
-		_, err := extractPath(obj, "")
-		require.Error(t, err)
-	})
-}
-
-func TestExtractPath_ScalarArrayPassthrough(t *testing.T) {
-	obj := map[string]any{
-		"spec": map[string]any{
-			"tags": []any{"alpha", "beta", "gamma"},
-		},
-	}
-
-	v, err := extractPath(obj, "spec.tags")
-	require.NoError(t, err)
-	assert.Equal(t, []any{"alpha", "beta", "gamma"}, v)
-}
-
-func TestExtractPath_ArrayProjection(t *testing.T) {
-	obj := map[string]any{
-		"spec": map[string]any{
-			"members": []any{
-				map[string]any{"name": "alice", "role": "admin"},
-				map[string]any{"name": "bob"},
-				map[string]any{"role": "viewer"}, // no name
-			},
-		},
-	}
-
-	t.Run("projects field from each element", func(t *testing.T) {
-		v, err := extractPath(obj, "spec.members[*].name")
-		require.NoError(t, err)
-		// Last element has no name and contributes nil.
-		assert.Equal(t, []any{"alice", "bob", nil}, v)
-	})
-
-	t.Run("identity projection returns the slice", func(t *testing.T) {
-		v, err := extractPath(obj, "spec.members[*]")
-		require.NoError(t, err)
-		got, isSlice := v.([]any)
-		require.True(t, isSlice)
-		require.Len(t, got, 3)
-	})
-
-	t.Run("missing slice", func(t *testing.T) {
-		v, err := extractPath(map[string]any{}, "spec.members[*].name")
-		require.NoError(t, err)
-		assert.Nil(t, v)
-	})
-
-	t.Run("non-slice under projection is an error", func(t *testing.T) {
-		_, err := extractPath(map[string]any{
-			"spec": map[string]any{"members": "not a slice"},
-		}, "spec.members[*].name")
-		require.Error(t, err)
-	})
-
-	t.Run("more than one projection is rejected", func(t *testing.T) {
-		_, err := extractPath(obj, "spec.members[*].nested[*].deep")
-		require.Error(t, err)
-	})
-}
-
 func TestCoerceToFieldShape_String(t *testing.T) {
 	v, ok := coerceToFieldShape("hello", SearchFieldTypeString, false)
 	require.True(t, ok)
@@ -185,7 +94,7 @@ func TestCoerceToFieldShape_Array(t *testing.T) {
 	_, ok = coerceToFieldShape("a", SearchFieldTypeString, true)
 	assert.False(t, ok)
 
-	// Nil elements (produced by extractPath for array-projection entries
+	// Nil elements (produced by array projections for entries
 	// whose sub-path was missing) are skipped, not treated as a coercion
 	// failure for the whole array.
 	v, ok = coerceToFieldShape([]any{"alice", nil, "bob"}, SearchFieldTypeString, true)

@@ -79,48 +79,60 @@ export const getCascaderStyles = (theme: GrafanaTheme2) => {
           background: theme.colors.background.elevated,
           border: `none`,
           borderRadius: theme.shape.radius.lg,
-          boxShadow: theme.shadows.z3,
+          boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
           whiteSpace: 'nowrap',
 
           '&.slide-up-enter, &.slide-up-appear': {
-            animationDuration: '0.3s',
-            animationFillMode: 'both',
             transformOrigin: '0 0',
             opacity: 0,
-            animationTimingFunction: 'cubic-bezier(0.08, 0.82, 0.17, 1)',
-            animationPlayState: 'paused',
+            [theme.transitions.handleMotion('no-preference')]: {
+              animationDuration: '0.3s',
+              animationFillMode: 'both',
+              animationTimingFunction: 'cubic-bezier(0.08, 0.82, 0.17, 1)',
+              animationPlayState: 'paused',
+            },
           },
 
           '&.slide-up-enter.slide-up-enter-active.rc-cascader-menus-placement, &.slide-up-appear.slide-up-appear-active.rc-cascader-menus-placement':
             {
               '&-bottomLeft': {
-                animationName: slideUpIn,
-                animationPlayState: 'running',
+                [theme.transitions.handleMotion('no-preference')]: {
+                  animationName: slideUpIn,
+                  animationPlayState: 'running',
+                },
               },
 
               '&-topLeft': {
-                animationName: slideDownIn,
-                animationPlayState: 'running',
+                [theme.transitions.handleMotion('no-preference')]: {
+                  animationName: slideDownIn,
+                  animationPlayState: 'running',
+                },
               },
             },
 
           '&.slide-up-leave': {
-            animationDuration: '0.3s',
-            animationFillMode: 'both',
             transformOrigin: '0 0',
             opacity: 1,
-            animationTimingFunction: 'cubic-bezier(0.6, 0.04, 0.98, 0.34)',
-            animationPlayState: 'paused',
+            [theme.transitions.handleMotion('no-preference')]: {
+              animationDuration: '0.3s',
+              animationFillMode: 'both',
+              animationTimingFunction: 'cubic-bezier(0.6, 0.04, 0.98, 0.34)',
+              animationPlayState: 'paused',
+            },
 
             '&.slide-up-leave-active.rc-cascader-menus-placement': {
               '&-bottomLeft': {
-                animationName: slideUpOut,
-                animationPlayState: 'running',
+                [theme.transitions.handleMotion('no-preference')]: {
+                  animationName: slideUpOut,
+                  animationPlayState: 'running',
+                },
               },
 
               '&-topLeft': {
-                animationName: slideDownOut,
-                animationPlayState: 'running',
+                [theme.transitions.handleMotion('no-preference')]: {
+                  animationName: slideDownOut,
+                  animationPlayState: 'running',
+                },
               },
             },
           },
@@ -149,8 +161,10 @@ export const getCascaderStyles = (theme: GrafanaTheme2) => {
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            transition: 'all 0.3s ease',
             position: 'relative',
+            [theme.transitions.handleMotion('no-preference')]: {
+              transition: 'all 0.3s ease',
+            },
 
             '&:hover': {
               background: theme.colors.action.hover,

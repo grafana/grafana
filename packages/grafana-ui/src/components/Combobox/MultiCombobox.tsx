@@ -7,7 +7,6 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { useFieldContext } from '../Forms/FieldContext';
 import { Icon } from '../Icon/Icon';
-import { Box } from '../Layout/Box/Box';
 import { Portal } from '../Portal/Portal';
 import { Text } from '../Text/Text';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -43,6 +42,7 @@ export type MultiComboboxProps<T extends string | number> = MultiComboboxBasePro
  */
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
   const {
+    renderOption,
     placeholder,
     onChange,
     value,
@@ -76,6 +76,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   // Handle async options and the 'All' option
   const {
     options: baseOptions,
+    customValueOption,
     updateOptions,
     asyncLoading,
     asyncError,
@@ -186,7 +187,9 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     inputId: id,
     inputValue,
     selectedItem: null,
+    defaultHighlightedIndex: 0,
     isItemDisabled: (item) => !!item?.infoOption,
+    scrollIntoView: () => {},
     stateReducer: (state, actionAndChanges) => {
       const { type } = actionAndChanges;
       let { changes } = actionAndChanges;
@@ -261,6 +264,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           } else if (newSelectedItem) {
             addSelectedItem(newSelectedItem);
           }
+
           break;
         case useCombobox.stateChangeTypes.InputChange:
           // setInputValue is intentionally NOT called here. It is called synchronously in the
@@ -294,11 +298,9 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     <div className={multiStyles.container} ref={containerRef}>
       <div className={cx(multiStyles.wrapper, { [multiStyles.disabled]: disabled })} ref={measureRef}>
         {prefixIcon && (
-          <Box marginLeft={0.5}>
-            <Text color="secondary">
-              <Icon name={prefixIcon} />
-            </Text>
-          </Box>
+          <div className={multiStyles.prefixIcon}>
+            <Icon name={prefixIcon} />
+          </div>
         )}
         <span className={multiStyles.pillWrapper}>
           {visibleItems.map((item, index) => (
@@ -314,7 +316,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             </ValuePill>
           ))}
           {selectedItems.length > visibleItems.length && (
-            <Box display="flex" direction="row" marginLeft={0.5} gap={1} ref={counterMeasureRef}>
+            <div className={multiStyles.overflowWrapper} ref={counterMeasureRef}>
               <Text>...</Text>
               <Tooltip
                 interactive
@@ -328,7 +330,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               >
                 <div className={multiStyles.restNumber}>{selectedItems.length - visibleItems.length}</div>
               </Tooltip>
-            </Box>
+            </div>
           )}
           <input
             className={multiStyles.input}
@@ -395,6 +397,9 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             <ComboboxList
               loading={loading}
               options={options}
+              renderOption={renderOption}
+              customValueOption={customValueOption}
+              allOption={allOptionItem}
               highlightedIndex={highlightedIndex}
               showFocusRing={showFocusRing}
               selectedItems={selectedItems}

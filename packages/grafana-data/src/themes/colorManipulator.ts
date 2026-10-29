@@ -240,7 +240,7 @@ export function getLuminance(color: string, background?: string) {
     rgb[2] = rgb[2] * alpha + backgroundParts.values[2] * (1 - alpha);
   }
 
-  const rgbNumbers = rgb.map((val: any) => {
+  const rgbNumbers = rgb.map((val: number) => {
     if (parts.type !== 'color') {
       val /= 255; // normalized
     }

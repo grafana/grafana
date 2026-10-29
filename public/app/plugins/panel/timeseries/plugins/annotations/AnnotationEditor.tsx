@@ -69,8 +69,7 @@ export const AnnotationEditor = ({ annoVals, annoIdx, dismiss, timeZone, ...othe
 
   const onSubmit = ({ tags, description }: AnnotationEditFormDTO) => {
     operation({
-      // @ts-expect-error @todo https://github.com/grafana/grafana/issues/120097 - id is typed incorrectly as string but breaks annotation API
-      id: annoVals.id?.[annoIdx] ?? undefined,
+      id: annoVals.id?.[annoIdx] != null ? String(annoVals.id[annoIdx]) : undefined,
       tags,
       description,
       from: Math.round(annoVals.time[annoIdx]!),
@@ -172,7 +171,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: theme.colors.background.elevated,
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
-      boxShadow: theme.shadows.z3,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
       userSelect: 'text',
       width: '460px',
     }),

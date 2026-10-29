@@ -90,7 +90,7 @@ func TestIntegrationMigrateSnapshots(t *testing.T) {
 		m := newTestMigrator(secretsfakes.NewFakeSecretsService(), store)
 		insertSnapshot(t, store, &dashboardsnapshots.DashboardSnapshot{
 			OrgID: 1, Name: "ext", Key: "ext-key", DeleteKey: "ext-del", UserID: 42,
-			External: true, ExternalURL: "https://example.com/s",
+			External: true, ExternalURL: "https://example.com/share/ext-key", ExternalDeleteURL: "https://delete.example.com/private/ext-del?token=original",
 			Expires: future, Created: now, Updated: now,
 		})
 
@@ -104,7 +104,8 @@ func TestIntegrationMigrateSnapshots(t *testing.T) {
 		require.NotNil(t, snap.Spec.External)
 		require.True(t, *snap.Spec.External)
 		require.NotNil(t, snap.Spec.ExternalUrl)
-		require.Equal(t, "https://example.com/s", *snap.Spec.ExternalUrl)
+		require.Equal(t, "https://example.com/share/ext-key", *snap.Spec.ExternalUrl)
+		require.Equal(t, "https://delete.example.com/private/ext-del?token=original", snap.GetExternalDeleteURL())
 		require.Nil(t, snap.Spec.Dashboard)
 		require.NotNil(t, snap.Spec.DeleteKey)
 		require.Equal(t, "ext-del", *snap.Spec.DeleteKey)
@@ -195,7 +196,7 @@ func TestIntegrationMigrateSnapshots(t *testing.T) {
 		store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		m := newTestMigrator(secretsfakes.NewFakeSecretsService(), store)
 		const total = 150 // batch limit in MigrateSnapshots is 100
-		for i := 0; i < total; i++ {
+		for i := range total {
 			insertSnapshot(t, store, &dashboardsnapshots.DashboardSnapshot{
 				OrgID: 1, Name: fmt.Sprintf("n%d", i), Key: fmt.Sprintf("k%d", i),
 				External: true, ExternalURL: "x",

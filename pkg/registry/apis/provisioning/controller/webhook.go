@@ -7,8 +7,7 @@ import (
 	"slices"
 	"strconv"
 	"time"
-
-	"github.com/google/uuid"
+	"uuid"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -85,14 +84,20 @@ func webhookOnDelete(ctx context.Context, repo repository.WebhookRepository) err
 	return deleteWebhook(ctx, repo)
 }
 
+func webhookExpected(cfg *provisioning.Repository) bool {
+	return len(cfg.Spec.Workflows) > 0 || !repository.GetID(cfg.Status.Webhook).IsEmpty()
+}
+
 func createWebhook(ctx context.Context, repo repository.WebhookRepository) (repository.WebhookConfig, error) {
-	secret, err := uuid.NewRandom()
-	if err != nil {
-		return nil, fmt.Errorf("could not generate secret: %w", err)
-	}
+	secret := uuid.NewV4()
 
 	hook, err := repo.WebhookClient().CreateWebhook(ctx, repo.WebhookURL(), repo.SubscribedEvents(), secret.String())
 	if err != nil {
+		// Repo is either legitimately deleted or the token no longer has access and this is a private
+		// repo. GitHub only returns 403 for public repos.
+		if errors.Is(err, repository.ErrFileNotFound) {
+			err = repository.ErrPermissionDenied
+		}
 		return nil, err
 	}
 
@@ -147,12 +152,14 @@ func updateWebhook(ctx context.Context, repo repository.WebhookRepository) (repo
 	}
 
 	// Something has changed in the webhook. Let's rotate the secret as well, so as to ensure we end up with a 100% correct webhook.
-	secret, err := uuid.NewRandom()
-	if err != nil {
-		return nil, false, fmt.Errorf("could not generate secret: %w", err)
-	}
+	secret := uuid.NewV4()
 	hook.SetSecret(secret.String())
 	if err := client.EditWebhook(ctx, hook); err != nil {
+		// Repo is either legitimately deleted or the token no longer has access and this is a private
+		// repo. GitHub only returns 403 for public repos.
+		if errors.Is(err, repository.ErrFileNotFound) {
+			err = repository.ErrPermissionDenied
+		}
 		return nil, false, fmt.Errorf("edit webhook: %w", err)
 	}
 
@@ -169,16 +176,18 @@ func deleteWebhook(ctx context.Context, repo repository.WebhookRepository) error
 	id := repository.GetID(status)
 
 	err := repo.WebhookClient().DeleteWebhook(ctx, id)
-	if err != nil && !errors.Is(err, repository.ErrFileNotFound) && !errors.Is(err, repository.ErrUnauthorized) {
-		return fmt.Errorf("delete webhook: %w", err)
-	}
+	// A webhook that is already gone is the only tolerated outcome. Any other
+	// failure -- including revoked credentials (401 ErrUnauthorized) or missing
+	// permissions (403 ErrPermissionDenied) -- fails the cleanup finalizer
+	// rather than orphaning the webhook silently. Forcing deletion of an
+	// unhealthy repository is done by removing the cleanup finalizer, not by
+	// swallowing the error here.
 	if errors.Is(err, repository.ErrFileNotFound) {
 		logger.Warn("webhook no longer exists", "url", status.URL, "id", id)
 		return nil
 	}
-	if errors.Is(err, repository.ErrUnauthorized) {
-		logger.Warn("webhook deletion failed. no longer authorized to delete this webhook", "url", status.URL, "id", id)
-		return nil
+	if err != nil {
+		return fmt.Errorf("delete webhook: %w", err)
 	}
 
 	logger.Info("webhook deleted", "url", status.URL, "id", id)
@@ -207,10 +216,7 @@ func rotateWebhookSecret(ctx context.Context, repo repository.WebhookRepository)
 		return nil, fmt.Errorf("get webhook for rotation: %w", err)
 	}
 
-	secret, err := uuid.NewRandom()
-	if err != nil {
-		return nil, fmt.Errorf("generate rotation secret: %w", err)
-	}
+	secret := uuid.NewV4()
 	hook.SetSecret(secret.String())
 
 	if err := client.EditWebhook(ctx, hook); err != nil {

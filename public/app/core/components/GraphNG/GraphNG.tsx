@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Component } from 'react';
-import { type default as uPlot, type AlignedData } from 'uplot';
+import { type default as uPlot } from 'uplot';
 
 import {
   type DataFrame,
@@ -18,9 +18,11 @@ import { type DashboardCursorSync, type VizLegendOptions } from '@grafana/schema
 import { type Themeable2, VizLayout, type VizLayoutLegendProps } from '@grafana/ui';
 import {
   type AxisProps,
+  getStackingGroups,
   pluginLog,
   type Renderers,
   type ScaleProps,
+  type StackingGroup,
   UPlotChart,
   type UPlotConfigBuilder,
 } from '@grafana/ui/internal';
@@ -98,12 +100,26 @@ function sameProps<T extends Record<string, unknown>>(
   return true;
 }
 
+function sameStackingGroups(prevGroups: StackingGroup[], nextGroups: StackingGroup[]) {
+  return (
+    prevGroups.length === nextGroups.length &&
+    prevGroups.every((prev, i) => {
+      const next = nextGroups[i];
+      return (
+        prev.dir === next.dir &&
+        prev.series.length === next.series.length &&
+        prev.series.every((seriesIdx, j) => seriesIdx === next.series[j])
+      );
+    })
+  );
+}
+
 /**
  * @internal -- not a public API
  */
 export interface GraphNGState {
   alignedFrame: DataFrame;
-  alignedData?: AlignedData;
+  alignedData?: React.ComponentProps<typeof UPlotChart>['data'];
   config?: UPlotConfigBuilder;
 }
 
@@ -121,7 +137,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
   constructor(props: GraphNGProps) {
     super(props);
     let state = this.prepState(props);
-    state.alignedData = state.config!.prepData!([state.alignedFrame]) as AlignedData;
+    state.alignedData = state.config!.prepData!([state.alignedFrame]);
     this.state = state;
     this.plotInstance = React.createRef();
   }
@@ -235,13 +251,20 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
       let newState = this.prepState(this.props, false);
 
       if (newState) {
+        // stack direction is inferred from the values, so it can flip without a structure change
+        const prevStackingGroups = this.state.config?.getStackingGroups() ?? [];
+        const stackingChanged =
+          prevStackingGroups.length > 0 &&
+          !sameStackingGroups(prevStackingGroups, getStackingGroups(newState.alignedFrame, prevStackingGroups));
+
         const shouldReconfig =
           this.state.config === undefined ||
           timeZone !== prevProps.timeZone ||
           cursorSync !== prevProps.cursorSync ||
           structureRev !== prevProps.structureRev ||
           !structureRev ||
-          propsChanged;
+          propsChanged ||
+          stackingChanged;
 
         if (shouldReconfig) {
           newState.config = this.props.prepConfig(
@@ -253,7 +276,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
           pluginLog('GraphNG', false, 'config recreated', newState.config);
         }
 
-        newState.alignedData = newState.config!.prepData!([newState.alignedFrame]) as AlignedData;
+        newState.alignedData = newState.config!.prepData!([newState.alignedFrame]);
 
         this.setState(newState);
       }
@@ -276,7 +299,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
             data={alignedData!}
             width={vizWidth}
             height={vizHeight}
-            plotRef={(u) => ((this.plotInstance as React.MutableRefObject<uPlot>).current = u)}
+            plotRef={(u) => (this.plotInstance.current = u)}
           >
             {children ? children(config, alignedFrame) : null}
           </UPlotChart>

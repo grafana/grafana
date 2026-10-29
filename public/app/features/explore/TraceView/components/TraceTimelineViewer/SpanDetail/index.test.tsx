@@ -14,16 +14,11 @@
 
 jest.mock('../../utils/date');
 
-// SpanDetailLinkButtons resolves data source settings via an async hook; return a
-// synchronous value so rendering doesn't trigger an un-acted state update in tests.
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
-}));
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   useAppPluginInstalled: jest.fn().mockReturnValue({ loading: false, value: false, error: undefined }),
+  // Resolve synchronously so SpanDetailLinkButtons doesn't trigger un-acted state updates.
+  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
 }));
 
 jest.mock('./pluginPromo/attributePluginPromos', () => ({
@@ -210,9 +205,10 @@ describe('<SpanDetail>', () => {
     expect(screen.getByTestId('span-detail-cards-column')).toBeInTheDocument();
   });
 
-  it('shows the operation name', () => {
+  it('shows the operation name without an error icon when the span failed', () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     expect(screen.getByRole('heading', { name: span.operationName })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Span has an error')).not.toBeInTheDocument();
   });
 
   it('lists the service name, duration, start time and kind', () => {
@@ -253,6 +249,36 @@ describe('<SpanDetail>', () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     await userEvent.click(screen.getByRole('switch', { name: /Resource attributes/ }));
     expect(props.processToggle).toHaveBeenLastCalledWith(span.spanID);
+  });
+
+  it('keeps Resource attributes visible with an empty-state message when process.tags is empty', () => {
+    const spanWithoutResourceAttributes = {
+      ...span,
+      process: {
+        ...span.process,
+        tags: [],
+      },
+    };
+
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} span={spanWithoutResourceAttributes} />);
+
+    expect(screen.getByText('Resource attributes')).toBeInTheDocument();
+    expect(screen.getAllByText('No attributes').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole('switch', { name: /Span attributes/ })).toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: /Resource attributes/ })).not.toBeInTheDocument();
+  });
+
+  it('keeps Span attributes visible with an empty-state message when tags are empty', () => {
+    const spanWithoutSpanAttributes = {
+      ...span,
+      tags: [],
+    };
+
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} span={spanWithoutSpanAttributes} />);
+
+    expect(screen.getByText('Span attributes')).toBeInTheDocument();
+    expect(screen.getByText('No attributes')).toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: /Span attributes/ })).not.toBeInTheDocument();
   });
 
   it('renders the logs', async () => {
@@ -406,6 +432,28 @@ describe('<SpanDetail>', () => {
       render(<SpanDetail {...({ ...props, detailState: new DetailState() } as unknown as SpanDetailProps)} />);
       expect(screen.queryByRole('switch', { name: /Summary attributes/ })).not.toBeInTheDocument();
     });
+  });
+
+  it('does not render an exception alert when the span has an exception', () => {
+    const exceptionSpan = {
+      ...span,
+      logs: [
+        {
+          timestamp: 10,
+          name: 'exception',
+          fields: [
+            { key: 'exception.type', value: 'java.lang.NullPointerException' },
+            { key: 'exception.message', value: 'Cannot invoke User.getId()' },
+            { key: 'exception.stacktrace', value: 'at UserService.getUserId' },
+          ],
+        },
+      ],
+    };
+
+    render(<SpanDetail {...({ ...props, span: exceptionSpan } as unknown as SpanDetailProps)} />);
+
+    expect(screen.queryByRole('alert', { name: 'Exception' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Stacktrace' })).not.toBeInTheDocument();
   });
 
   it('should load plugin links for resource attributes', () => {

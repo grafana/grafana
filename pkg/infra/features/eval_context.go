@@ -35,3 +35,10 @@ func EvaluationContextFromBaggage(ctx context.Context) openfeature.EvaluationCon
 func EvaluationContextFromTargetingKey(targetingKey string) openfeature.EvaluationContext {
 	return openfeature.NewEvaluationContext(targetingKey, make(map[string]any))
 }
+
+// WithTransactionContextFromBaggage merges the eval context derived from OTel
+// baggage into ctx as the OpenFeature transaction context. Shared by the HTTP
+// middleware and the gRPC path so evaluation behaves the same on both.
+func WithTransactionContextFromBaggage(ctx context.Context) context.Context {
+	return openfeature.MergeTransactionContext(ctx, EvaluationContextFromBaggage(ctx))
+}

@@ -3,16 +3,16 @@ package acimpl
 import (
 	"context"
 	"fmt"
+	"maps"
 	"slices"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
-
-	claims "github.com/grafana/authlib/types"
 	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -33,6 +33,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/seeding"
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
+	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -41,7 +43,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ pluginaccesscontrol.RoleRegistry = &Service{}
+var _ pluginaccesscontrol.RoleRegistry = (*Service)(nil)
+
+type IAMFeatures interface {
+	UserPermissionsAPIEnabled() bool
+}
 
 const (
 	cacheTTL = 60 * time.Second
@@ -60,6 +66,9 @@ func ProvideService(
 	features featuremgmt.FeatureToggles, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry,
 	lock *serverlock.ServerLockService, zanzanaClient zanzana.Client,
 	restConfigProvider restcfg.RestConfigProvider,
+	iamFeatures IAMFeatures,
+	legacyClient legacyclient.Service, roleCatalog *legacypermissions.RoleCatalog,
+	reg prometheus.Registerer,
 ) (*Service, error) {
 	service := ProvideOSSService(
 		cfg,
@@ -71,7 +80,11 @@ func ProvideService(
 		db,
 		permRegistry,
 		lock,
+		iamFeatures,
+		legacyClient, roleCatalog,
 	)
+
+	service.legacyShadow = NewLegacyUserPermissionsShadow(reg, cfg.RBAC.LegacyUserPermissionsShadowMaxConcurrent)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, userService).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service); err != nil {
@@ -102,19 +115,26 @@ func ProvideOSSService(
 	cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver,
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
 	db db.DB, permRegistry permreg.PermissionRegistry, lock *serverlock.ServerLockService,
+	iamFeatures IAMFeatures,
+	legacyClient legacyclient.Service, roleCatalog *legacypermissions.RoleCatalog,
 ) *Service {
 	s := &Service{
-		actionResolver: actionResolver,
-		cache:          cache,
-		cfg:            cfg,
-		features:       features,
-		log:            log.New("accesscontrol.service"),
-		roles:          accesscontrol.BuildBasicRoleDefinitions(),
-		store:          store,
-		permRegistry:   permRegistry,
-		sql:            db,
-		serverLock:     lock,
+		actionResolver:            actionResolver,
+		cache:                     cache,
+		cfg:                       cfg,
+		features:                  features,
+		userPermissionsAPIEnabled: iamFeatures.UserPermissionsAPIEnabled(),
+		log:                       log.New("accesscontrol.service"),
+		roles:                     accesscontrol.BuildBasicRoleDefinitions(),
+		store:                     store,
+		permRegistry:              permRegistry,
+		sql:                       db,
+		serverLock:                lock,
+		legacyShadow:              NewLegacyUserPermissionsShadow(nil, cfg.RBAC.LegacyUserPermissionsShadowMaxConcurrent),
+		legacyClient:              legacyClient,
+		roleCatalog:               roleCatalog,
 	}
+	s.publishRoleCatalogLocked()
 
 	if backend, ok := store.(*database.AccessControlStore); ok {
 		s.seeder = seeding.New(log.New("accesscontrol.seeder"), backend, backend)
@@ -125,22 +145,31 @@ func ProvideOSSService(
 
 // Service is the service implementing role based access control.
 type Service struct {
-	actionResolver  accesscontrol.ActionResolver
-	cache           *localcache.CacheService
-	cfg             *setting.Cfg
-	features        featuremgmt.FeatureToggles
-	log             log.Logger
-	registrations   accesscontrol.RegistrationList
-	rolesMu         sync.RWMutex
-	roles           map[string]*accesscontrol.RoleDTO
-	store           accesscontrol.Store
-	seeder          *seeding.Seeder
-	permRegistry    permreg.PermissionRegistry
-	isInitialized   bool
-	sql             db.DB
-	serverLock      *serverlock.ServerLockService
-	singleFlight    singleflight.Group
-	zanzanaResolver *ZanzanaPermissionResolver
+	actionResolver            accesscontrol.ActionResolver
+	cache                     *localcache.CacheService
+	cfg                       *setting.Cfg
+	features                  featuremgmt.FeatureToggles
+	userPermissionsAPIEnabled bool
+	log                       log.Logger
+	registrations             accesscontrol.RegistrationList
+	rolesMu                   sync.RWMutex
+	roles                     map[string]*accesscontrol.RoleDTO
+	roleCatalog               *legacypermissions.RoleCatalog
+	store                     accesscontrol.Store
+	seeder                    *seeding.Seeder
+	permRegistry              permreg.PermissionRegistry
+	isInitialized             bool
+	sql                       db.DB
+	serverLock                *serverlock.ServerLockService
+	singleFlight              singleflight.Group
+	legacyShadow              *LegacyUserPermissionsShadow
+	legacyClient              legacyclient.Service
+	userPermissionsClient     accesscontrol.UserPermissionsClient
+	zanzanaResolver           *ZanzanaPermissionResolver
+}
+
+func (s *Service) SetUserPermissionsClient(client accesscontrol.UserPermissionsClient) {
+	s.userPermissionsClient = client
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -154,9 +183,55 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.GetUserPermissions")
 	defer span.End()
 
+	delegate := s.cfg.RBAC.SingleOrganization && user.GetOrgID() != accesscontrol.GlobalOrgID && s.userPermissionsAPIEnabled
+	legacyEnabled := !delegate && LegacyUserPermissionsEnabled(ctx)
+	shadow := legacyEnabled && LegacyUserPermissionsShadowEnabled(ctx)
+	legacy := legacyEnabled && !shadow
+	// The legacy loader owns timing on this route.
+	if !legacy {
+		timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
+		defer timer.ObserveDuration()
+	}
+
+	if delegate {
+		if s.userPermissionsClient == nil {
+			return nil, fmt.Errorf("AuthZ user permissions client is not configured")
+		}
+		return s.userPermissionsClient.GetUserPermissions(ctx, user, options)
+	}
+	// The legacy toggle replaces local enumeration, not the delegated authority.
+	if legacy {
+		return GetLegacyUserPermissions(ctx, s.legacyClient, user, options, s.cfg)
+	}
+	if shadow {
+		return s.legacyShadow.GetUserPermissions(ctx, s.legacyClient, user, options, s.cfg, func() ([]accesscontrol.Permission, error) {
+			return s.getLocalUserPermissions(ctx, user, options)
+		})
+	}
+	return s.getLocalUserPermissions(ctx, user, options)
+}
+
+// GetLocalUserPermissions evaluates effective local permissions without delegating back to AuthZ.
+func (s *Service) GetLocalUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.GetLocalUserPermissions")
+	defer span.End()
+
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
+	return s.getLocalUserPermissions(ctx, user, options)
+}
+
+func (s *Service) getLocalUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+	permissions, err := s.GetRBACUserPermissions(ctx, user, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.mergeZanzanaUserPermissions(ctx, user, permissions, options), nil
+}
+
+func (s *Service) GetRBACUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	var permissions []accesscontrol.Permission
 	var err error
 
@@ -170,14 +245,14 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 		return nil, err
 	}
 
-	return s.mergeZanzanaUserPermissions(ctx, user, permissions, options), nil
+	return permissions, nil
 }
 
 func (s *Service) mergeZanzanaUserPermissions(ctx context.Context, user identity.Requester, legacy []accesscontrol.Permission, options accesscontrol.Options) []accesscontrol.Permission {
 	if s.zanzanaResolver == nil {
 		return legacy
 	}
-	if !s.cfg.RBAC.PermissionCache || !user.HasUniqueId() {
+	if options.SkipZanzanaCache || !s.cfg.RBAC.PermissionCache || !user.HasUniqueId() {
 		return s.zanzanaResolver.MergeCurrentUser(ctx, user, legacy, s.log)
 	}
 
@@ -234,10 +309,13 @@ func (s *Service) getBasicRolePermissions(ctx context.Context, role string, orgI
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getBasicRolePermissions")
 	defer span.End()
 
+	// Clone rather than alias: the returned slice is cached per org, and appending
+	// to a slice that still shares the basic role's backing array would let one
+	// org's managed permissions overwrite another's.
 	var permissions []accesscontrol.Permission
 	s.rolesMu.RLock()
 	if basicRole, ok := s.roles[role]; ok {
-		permissions = basicRole.Permissions
+		permissions = slices.Clone(basicRole.Permissions)
 	}
 	s.rolesMu.RUnlock()
 
@@ -606,6 +684,7 @@ func (s *Service) getBasicRolePermissionsLocked() map[string][]accesscontrol.Per
 // registerRolesLocked processes a single role registration and adds permissions to basic roles.
 // Must be called with s.rolesMu locked.
 func (s *Service) registerRolesLocked(registration accesscontrol.RoleRegistration) {
+	defer s.publishRoleCatalogLocked()
 	for br := range accesscontrol.BuiltInRolesWithParents(registration.Grants) {
 		if basicRole, ok := s.roles[br]; ok {
 			for _, p := range registration.Role.Permissions {
@@ -961,9 +1040,7 @@ func (s *Service) GetStaticRoles(ctx context.Context) map[string]*accesscontrol.
 
 	// Return a copy to avoid external modifications
 	rolesCopy := make(map[string]*accesscontrol.RoleDTO, len(s.roles))
-	for k, v := range s.roles {
-		rolesCopy[k] = v
-	}
+	maps.Copy(rolesCopy, s.roles)
 	return rolesCopy
 }
 

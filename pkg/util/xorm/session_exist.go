@@ -19,6 +19,8 @@ func (session *Session) Exist(bean ...any) (bool, error) {
 		defer session.Close()
 	}
 
+	defer session.resetStatement()
+
 	if session.statement.lastError != nil {
 		return false, session.statement.lastError
 	}

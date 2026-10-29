@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -32,8 +33,10 @@ type IndexProvider struct {
 	hooksService *hooks.HooksService
 	config       *setting.Cfg
 	license      licensing.Licensing
-	bootScript   template.JS
 	previewCfg   fswebassets.PreviewAssetsConfig
+
+	// bootScript is read at startup so rendering never touches disk.
+	bootScript template.JS
 }
 
 type IndexViewData struct {
@@ -77,14 +80,15 @@ type IndexViewData struct {
 	// Feature flag for reducing the usage of Bootdata
 	ReduceBootdataAPI bool
 
-	// Feature flag for the new preferences page
-	NewPreferencesPage bool
-
 	// Feature flag for controlling behaviour of blocking or alerting legacy api usage from the frontend
 	LegacyAPIMode string
 
-	// Feature flag for gradually rolling out the root /ofrep/v1 OFREP route instead of the namespaced route
-	OFREPRootUrlEnabled bool
+	// Feature flag for controlling how the frontend handles reads of the legacy feature toggle map
+	LegacyFeatureToggleMode string
+
+	// ESModuleAssetsEnabled mirrors Assets.ESModule — the template uses it to pick the
+	// matching <script type>.
+	ESModuleAssetsEnabled bool
 }
 
 // Templates setup.
@@ -102,12 +106,14 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksServic
 		return nil, fmt.Errorf("missing index template")
 	}
 
-	bootScriptRaw, err := os.ReadFile(filepath.Join(cfg.StaticRootPath, "build", "boot.js"))
-	if err != nil {
-		return nil, fmt.Errorf("read boot.js: %w", err)
-	}
-
 	logger := logging.DefaultLogger.With("logger", "index-provider")
+
+	bootScriptPath := filepath.Join(cfg.StaticRootPath, webassets.BuildDir, "boot.js")
+	//nolint:gosec
+	rawBootScript, err := os.ReadFile(bootScriptPath)
+	if err != nil {
+		return nil, fmt.Errorf("no boot script found at %s: %w", bootScriptPath, err)
+	}
 
 	// subset of frontend settings needed for the login page
 	// TODO what about enterprise settings here?
@@ -119,8 +125,7 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksServic
 		config:       cfg,
 		license:      license,
 		previewCfg:   previewCfg,
-		//nolint:gosec
-		bootScript: template.JS(bootScriptRaw),
+		bootScript:   template.JS(rawBootScript), //nolint:gosec
 	}, nil
 }
 
@@ -155,14 +160,12 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	ofClient := openfeature.NewDefaultClient()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	useLuxon, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagDatetimeUseLuxon, false, openfeature.TransactionContext(ctx))
-	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
 	meticulousAIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaMeticulousAIMode, "off", openfeature.TransactionContext(ctx))
 	meticulousAIEnabled := meticulousAIMode == "on-prod-env" || meticulousAIMode == "on-dev-env"
 	meticulousAIProductionEnvironmentFlag := meticulousAIMode == "on-prod-env"
 	reduceBootdataAPI := requestConfig.FullFrontendSettings != nil
-	newPreferencesPage, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaNewPreferencesPage, false, openfeature.TransactionContext(ctx))
 	legacyAPIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyAPIHandling, "off", openfeature.TransactionContext(ctx))
-	ofrepRootUrlEnabled := ofClient.Boolean(ctx, featuremgmt.FlagGrafanaOfrepRootUrl, false, openfeature.TransactionContext(ctx))
+	legacyFeatureToggleMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyFeatureToggleHandling, "off", openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
 		AppTitle:                              "Grafana",
@@ -177,15 +180,15 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		FullSettings:                          requestConfig.FullFrontendSettings, // only populated when FlagFrontendServiceReducedBootDataAPI enabled
 		RenderBindingSupported:                renderBindingSupported,
 		UseLuxon:                              useLuxon,
-		AssetSriChecksEnabled:                 grafanaAssetSriChecks,
+		AssetSriChecksEnabled:                 p.config.AssetSriChecksEnabled,
 		MeticulousAIEnabled:                   meticulousAIEnabled,
 		MeticulousAIRecordingToken:            p.config.MeticulousAIRecordingToken,
 		MeticulousAIProductionEnvironmentFlag: meticulousAIProductionEnvironmentFlag,
 		ReduceBootdataAPI:                     reduceBootdataAPI,
-		NewPreferencesPage:                    newPreferencesPage,
 		BootScript:                            p.bootScript,
 		LegacyAPIMode:                         legacyAPIMode,
-		OFREPRootUrlEnabled:                   ofrepRootUrlEnabled,
+		LegacyFeatureToggleMode:               legacyFeatureToggleMode,
+		ESModuleAssetsEnabled:                 assetsManifest.ESModule,
 	}
 
 	// Check for login_error cookie. Two writers exist:
@@ -237,7 +240,7 @@ func (p *IndexProvider) resolveAssets(ctx context.Context, req *http.Request) (d
 	// The cookie only takes effect on stacks that have opted in.
 	if p.previewCfg.Active(k8srequest.NamespaceValue(ctx)) {
 		if cookie, err := req.Cookie(previewAssetsCookieName); err == nil && cookie.Value != "" {
-			assets, err := fswebassets.GetPreviewWebAssets(ctx, p.previewCfg, cookie.Value)
+			assets, err := fswebassets.GetPreviewWebAssets(ctx, p.previewCfg, cookie.Value, webassets.BuildDir)
 			if err == nil {
 				p.log.Info("resolved preview assets", "folder", cookie.Value)
 				return assets, cookie.Value, nil
@@ -246,7 +249,7 @@ func (p *IndexProvider) resolveAssets(ctx context.Context, req *http.Request) (d
 		}
 	}
 
-	assets, err := fswebassets.GetWebAssets(ctx, p.config, p.license)
+	assets, err := fswebassets.GetWebAssets(ctx, p.config, p.license, webassets.BuildDir)
 	return assets, "", err
 }
 

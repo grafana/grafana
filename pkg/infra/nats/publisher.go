@@ -6,19 +6,12 @@ import (
 	"fmt"
 
 	"github.com/grafana/dskit/services"
-	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const publisherName = "nats-publisher"
-
-var connStateErrs = []error{
-	natsclient.ErrReconnectBufExceeded,
-	natsclient.ErrConnectionClosed,
-	natsclient.ErrConnectionDraining,
-}
 
 // Publisher hides nats.go types so callers can mock it.
 type Publisher interface {
@@ -36,7 +29,7 @@ type PublisherService struct {
 func newPublisher(logger log.Logger, m *publisherMetrics, config *Config) *PublisherService {
 	conn := newConnection(rolePublisher, logger, m.connectionMetrics, config, config.PublisherCredentials)
 	p := &PublisherService{connection: conn, metrics: m}
-	p.NamedService = services.NewBasicService(nil, p.running, p.stopping).WithName(publisherName)
+	p.NamedService = services.NewBasicService(p.starting, p.running, p.stopping).WithName(publisherName)
 	return p
 }
 
@@ -63,12 +56,9 @@ func (p *PublisherService) Run(ctx context.Context) error {
 	return p.AwaitTerminated(ctx)
 }
 
-func (p *PublisherService) running(ctx context.Context) error {
-	<-ctx.Done()
-	return nil
-}
-
 func (p *PublisherService) stopping(_ error) error {
+	// close() marks the connection closed before draining, so concurrent Publish
+	// callers see ErrClosed immediately rather than blocking on the drain.
 	p.close()
 	return nil
 }
@@ -77,11 +67,30 @@ func (p *PublisherService) Health(_ context.Context) error {
 	return p.healthy()
 }
 
-func (p *PublisherService) Publish(ctx context.Context, subject string, data []byte) error {
-	nc, err := p.get(ctx)
+// MaxPayload returns the largest message the connected server accepts, or 0
+// while there is no established connection.
+func (p *PublisherService) MaxPayload() int64 {
+	nc, err := p.publishConn()
 	if err != nil {
+		return 0
+	}
+	return nc.MaxPayload()
+}
+
+func (p *PublisherService) Publish(ctx context.Context, subject string, data []byte) error {
+	if err := ctx.Err(); err != nil {
 		return err
 	}
+	nc, err := p.publishConn()
+	if err != nil {
+		if errors.Is(err, ErrDisabled) || errors.Is(err, ErrClosed) {
+			return err
+		}
+		p.metrics.publishErrors.Inc()
+		return fmt.Errorf("publish to %q: %w", subject, err)
+	}
+	// nats.go is safe for concurrent Publish and owns the bounded reconnect
+	// buffer; a full buffer surfaces here as ErrReconnectBufExceeded.
 	if err := nc.Publish(subject, data); err != nil {
 		p.metrics.publishErrors.Inc()
 		if isConnStateErr(err) {
@@ -89,16 +98,7 @@ func (p *PublisherService) Publish(ctx context.Context, subject string, data []b
 		}
 		return fmt.Errorf("publish to %q: %w", subject, err)
 	}
-	p.metrics.messagesPublished.Inc()
-	p.log.Debug("published message", "subject", subject, "bytes", len(data))
+	p.metrics.messagesAccepted.Inc()
+	p.log.Debug("accepted message for publish", "subject", subject, "bytes", len(data), "connected", nc.IsConnected())
 	return nil
-}
-
-func isConnStateErr(err error) bool {
-	for _, target := range connStateErrs {
-		if errors.Is(err, target) {
-			return true
-		}
-	}
-	return false
 }

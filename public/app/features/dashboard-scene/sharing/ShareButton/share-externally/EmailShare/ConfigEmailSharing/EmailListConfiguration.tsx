@@ -105,7 +105,7 @@ export const EmailListConfiguration = ({ dashboard }: { dashboard: DashboardScen
         'public-dashboard.email-sharing.recipient-list-description',
         "Only people you've directly invited can access this dashboard"
       )}
-      className={styles.listField}
+      noMargin
     >
       {!!publicDashboard?.recipients?.length ? (
         <div className={styles.listContainer}>
@@ -123,9 +123,6 @@ export const EmailListConfiguration = ({ dashboard }: { dashboard: DashboardScen
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  listField: css({
-    marginBottom: 0,
-  }),
   listContainer: css({
     maxHeight: '140px',
     overflowY: 'auto',

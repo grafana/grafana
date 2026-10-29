@@ -1,6 +1,8 @@
 package definitions
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -192,6 +194,31 @@ type ProvisionedAlertRule struct {
 	Record *Record `json:"record"`
 	// example: 2
 	MissingSeriesEvalsToResolve *int64 `json:"missingSeriesEvalsToResolve,omitempty"`
+}
+
+// MarshalJSON renders For and KeepFiringFor without the year unit: the API declares
+// them as strfmt durations, which (unlike Prometheus durations) have no "y" unit.
+func (r ProvisionedAlertRule) MarshalJSON() ([]byte, error) {
+	type plain ProvisionedAlertRule
+	return json.Marshal(struct {
+		plain
+		For           string `json:"for"`
+		KeepFiringFor string `json:"keep_firing_for"`
+	}{
+		plain:         plain(r),
+		For:           StrfmtDuration(r.For),
+		KeepFiringFor: StrfmtDuration(r.KeepFiringFor),
+	})
+}
+
+// StrfmtDuration formats d like model.Duration.String, except that whole years are
+// written as days.
+func StrfmtDuration(d model.Duration) string {
+	const day = model.Duration(24 * time.Hour)
+	if d == 0 || d%(365*day) != 0 {
+		return d.String()
+	}
+	return fmt.Sprintf("%dd", int64(d/day))
 }
 
 // swagger:route GET /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RouteGetAlertRuleGroup

@@ -19,6 +19,8 @@ type SyncStatusApplyConfiguration struct {
 	Started *int64 `json:"started,omitempty"`
 	// When the sync job finished
 	Finished *int64 `json:"finished,omitempty"`
+	// When the controller last attempted a sync or an interval check (Unix milliseconds).
+	LastChecked *int64 `json:"lastChecked,omitempty"`
 	// When the next sync check is scheduled
 	Scheduled *int64 `json:"scheduled,omitempty"`
 	// Summary messages (will be shown to users)
@@ -64,6 +66,14 @@ func (b *SyncStatusApplyConfiguration) WithStarted(value int64) *SyncStatusApply
 // If called multiple times, the Finished field is set to the value of the last call.
 func (b *SyncStatusApplyConfiguration) WithFinished(value int64) *SyncStatusApplyConfiguration {
 	b.Finished = &value
+	return b
+}
+
+// WithLastChecked sets the LastChecked field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the LastChecked field is set to the value of the last call.
+func (b *SyncStatusApplyConfiguration) WithLastChecked(value int64) *SyncStatusApplyConfiguration {
+	b.LastChecked = &value
 	return b
 }
 

@@ -14,6 +14,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashboardv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -39,6 +40,7 @@ var (
 )
 
 type Service struct {
+	cfg                    *setting.Cfg
 	unifiedStore           folder.Store
 	log                    *slog.Logger
 	features               featuremgmt.FeatureToggles
@@ -47,6 +49,7 @@ type Service struct {
 	maxNestedFolderDepth   int
 	dashboardK8sClient     client.K8sHandler
 	publicDashboardService publicdashboards.ServiceWrapper
+	variableK8sClient      client.K8sHandler
 
 	mutex    sync.RWMutex
 	registry map[string]folder.RegistryService
@@ -67,6 +70,7 @@ func ProvideService(
 	restConfig apiserver.RestConfigProvider,
 ) *Service {
 	srv := &Service{
+		cfg:                    cfg,
 		log:                    slog.Default().With("logger", "folder-service"),
 		features:               features,
 		accessControl:          ac,
@@ -102,6 +106,15 @@ func ProvideService(
 		resourceClient,
 	)
 	srv.dashboardK8sClient = dashHandler
+
+	variableHandler := client.NewK8sHandler(
+		request.GetNamespaceMapper(cfg),
+		dashboardv2beta1.VariableResourceInfo.GroupVersionResource(),
+		restConfig.GetRestConfig,
+		userService,
+		resourceClient,
+	)
+	srv.variableK8sClient = variableHandler
 
 	return srv
 }
@@ -233,8 +246,8 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 		if !isSubfolder {
 			// Get parents UIDs
 			parentUIDs := make([]string, 0)
-			pathUIDs := strings.Split(f.FullpathUIDs, "/")
-			for _, p := range pathUIDs {
+			pathUIDs := strings.SplitSeq(f.FullpathUIDs, "/")
+			for p := range pathUIDs {
 				if p != "" && p != f.UID {
 					parentUIDs = append(parentUIDs, p)
 				}
@@ -317,7 +330,8 @@ func SplitFullpath(s string) []string {
 }
 
 func toFolderError(err error) error {
-	if apierrors.IsForbidden(err) {
+	statusErr := resource.StatusError(resource.AsErrorResult(err))
+	if apierrors.IsForbidden(statusErr) {
 		return folder.ErrAccessDenied
 	}
 

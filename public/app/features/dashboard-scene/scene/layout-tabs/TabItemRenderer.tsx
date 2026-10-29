@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { Draggable, type DraggableStateSnapshot } from '@hello-pangea/dnd';
+import { type DraggableStateSnapshot } from '@hello-pangea/dnd';
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
@@ -8,6 +8,8 @@ import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/internal';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
@@ -28,7 +30,8 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
 
   const { isSelected, onSelect, isSelectable } = useElementSelection(key);
   const { isSelected: isSourceSelected } = useElementSelection(repeatSourceKey);
-  const { isEditing } = useDashboardState(model);
+  const dashboardState = useDashboardState(model);
+  const isEditing = isFullDashboardEditing(dashboardState);
   const mySlug = model.getSlug();
   const urlKey = parentLayout.getUrlKey();
   const isActive = mySlug === currentTabSlug;
@@ -42,6 +45,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const soloPanelContext = useSoloPanelContext();
 
   const isDraggable = !isClone && isEditing;
+  const { Draggable } = useDragAndDrop(isDraggable);
   const showLayoutIndicator = isEditing && isActive;
   const layoutMode = mapIdToGridLayoutType(layout.descriptor.id);
 
@@ -140,6 +144,8 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             }}
             label={titleInterpolated}
             data-tab-activation-key={key}
+            data-dashboard-element-key={key}
+            data-dashboard-element-type="tab"
             {...titleCollisionProps}
           />
         </div>

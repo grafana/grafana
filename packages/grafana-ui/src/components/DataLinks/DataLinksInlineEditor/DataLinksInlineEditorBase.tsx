@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { type DropResult } from '@hello-pangea/dnd';
 import { cloneDeep } from 'lodash';
 import { useEffect, useState } from 'react';
 
@@ -8,6 +8,7 @@ import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Button } from '../../Button/Button';
+import { useDragAndDrop } from '../../DragAndDrop/useDragAndDrop';
 import { Modal } from '../../Modal/Modal';
 
 import { DataLinksListItemBase } from './DataLinksListItemBase';
@@ -35,6 +36,7 @@ export function DataLinksInlineEditorBase<T extends DataLink | Action>({
   children,
   'data-testid': testId,
 }: DataLinksInlineEditorBaseProps<T>) {
+  const { DragDropContext, Droppable } = useDragAndDrop();
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isNew, setIsNew] = useState(false);
 

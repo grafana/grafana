@@ -10,78 +10,16 @@ import { type FormAmRoute } from '../../../types/amroutes';
 import { defaultGroupBy } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
+import { countChildRoutes } from '../../../utils/routeTree';
 import { ErrorModal } from '../../ErrorModal';
 import { AmRootRouteForm } from '../EditDefaultPolicyForm';
 import { NotificationPoliciesErrorAlert } from '../PolicyUpdateErrorAlert';
 import {
   trackNotificationPolicyCreateError,
   trackNotificationPolicyCreated,
-  trackNotificationPolicyDeleteError,
-  trackNotificationPolicyDeleted,
   trackNotificationPolicyReset,
   trackNotificationPolicyResetError,
 } from '../notificationPolicyAnalytics';
-
-interface DeleteModalProps {
-  isOpen: boolean;
-  onConfirm: () => Promise<unknown>;
-  onDismiss: () => void;
-  routeName: string;
-}
-
-const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen, routeName }: DeleteModalProps) => {
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = useState<unknown | undefined>();
-
-  const onDeleteDismiss = () => {
-    onDismiss();
-    setError(undefined);
-  };
-
-  const onDeleteConfirm = async () => {
-    setIsDeleting(true);
-    onConfirm()
-      .then(() => {
-        trackNotificationPolicyDeleted();
-        onDeleteDismiss();
-      })
-      .catch((err) => {
-        trackNotificationPolicyDeleteError({ error: stringifyErrorLike(err) });
-        setError(err);
-      })
-      .finally(() => {
-        setIsDeleting(false);
-      });
-  };
-  if (error) {
-    return <ErrorModal isOpen={isOpen} onDismiss={onDeleteDismiss} error={error} />;
-  }
-
-  return (
-    <ConfirmModal
-      body={
-        <>
-          <Text element="p">
-            <Trans
-              i18nKey="alerting.policies.delete-modal.permanently-remove"
-              values={{ routeName: isDefaultRoutingTreeName(routeName) ? 'Default Policy' : routeName }}
-            >
-              This action will permanently remove the <code>{'{{routeName}}'}</code> notification policy.
-            </Trans>
-          </Text>
-          <Space v={2} />
-        </>
-      }
-      confirmationText={t('alerting.common.delete', 'Delete')}
-      confirmText={isDeleting ? t('alerting.common.deleting', 'Deleting...') : t('alerting.common.delete', 'Delete')}
-      onDismiss={onDeleteDismiss}
-      onConfirm={onDeleteConfirm}
-      title={t('alerting.policies.delete-modal.title-delete-notification-policy', 'Delete notification policy')}
-      isOpen={isOpen}
-    />
-  );
-});
-DeleteModal.displayName = 'DeleteModal';
 
 function getConfirmText(isResetting: boolean, isActualDefaultPolicy: boolean): string {
   if (isResetting) {
@@ -99,14 +37,16 @@ export interface ResetModalProps {
   onConfirm: () => Promise<unknown>;
   onDismiss: () => void;
   routeName: string;
+  route: RouteWithID | null;
   /** When true (default), shows "Reset" language. When false, shows "Delete" language for non-default policy trees. */
   isActualDefaultPolicy?: boolean;
 }
 
 export const ResetModal = React.memo(
-  ({ onConfirm, onDismiss, isOpen, routeName, isActualDefaultPolicy = true }: ResetModalProps) => {
+  ({ onConfirm, onDismiss, isOpen, routeName, route, isActualDefaultPolicy = true }: ResetModalProps) => {
     const [isResetting, setIsResetting] = useState(false);
     const [error, setError] = useState<unknown | undefined>();
+    const childRouteCount = route ? countChildRoutes(route) : 0;
 
     const onResetDismiss = () => {
       onDismiss();
@@ -150,6 +90,23 @@ export const ResetModal = React.memo(
                 </Trans>
               )}
             </Text>
+            {childRouteCount > 0 && (
+              <>
+                <Space v={2} />
+                <Text element="p" color="error" weight="bold">
+                  <Trans
+                    i18nKey="alerting.policies.reset-modal.warning-child-routes"
+                    count={childRouteCount}
+                    tOptions={{
+                      defaultValue_one: 'This will also remove {{count}} child route.',
+                      defaultValue_other: 'This will also remove {{count}} child routes.',
+                    }}
+                  >
+                    This will also remove {{ count: childRouteCount }} child routes.
+                  </Trans>
+                </Text>
+              </>
+            )}
             <Space v={2} />
           </>
         }

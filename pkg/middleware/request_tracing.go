@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/propagation"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
@@ -107,6 +108,10 @@ func RequestTracing(tracer trace.Tracer, shouldTrace func(*http.Request) bool) w
 
 			ctx, span := tracer.Start(ctx, spanName, trace.WithAttributes(
 				semconv.HTTPURLKey.String(req.RequestURI),
+				// url.path is the routed path with any serve_from_sub_path prefix
+				// already trimmed (unlike RequestURI), so downstream consumers such
+				// as the tracing endpoint filter can match on a stable value.
+				attribute.String("url.path", req.URL.Path),
 				semconv.HTTPMethodKey.String(req.Method),
 			), trace.WithSpanKind(trace.SpanKindServer))
 			defer span.End()

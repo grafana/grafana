@@ -3,12 +3,17 @@ package api
 import (
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/api/webassets"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestHTTPServer_MetricsBasicAuth(t *testing.T) {
@@ -388,4 +393,26 @@ func TestHTTPServer_getListeners(t *testing.T) {
 		assert.Len(t, listeners, 1)
 		_ = listeners[0].Close()
 	})
+}
+
+func TestHTTPServer_mapStaticBuildDir(t *testing.T) {
+	staticRoot := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(staticRoot, webassets.BuildDir), 0o750))
+	require.NoError(t, os.WriteFile(filepath.Join(staticRoot, webassets.BuildDir, "app.js"), []byte("rspack"), 0o644))
+
+	cfg := setting.NewCfg()
+	cfg.Env = setting.Prod
+	cfg.StaticRootPath = staticRoot
+
+	hs := &HTTPServer{Cfg: cfg}
+
+	m := web.New()
+	hs.mapStatic(m, cfg.StaticRootPath, webassets.BuildDir, "public/build")
+
+	recorder := httptest.NewRecorder()
+	m.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/public/build/app.js", nil))
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+	require.Equal(t, "rspack", recorder.Body.String())
+	require.Equal(t, "public, max-age=31536000", recorder.Header().Get("Cache-Control"))
 }

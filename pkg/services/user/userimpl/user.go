@@ -11,7 +11,6 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -25,6 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userk8s"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 )
 
 type Service struct {
@@ -38,14 +39,27 @@ type Service struct {
 
 var _ user.Service = (*Service)(nil)
 
-func ProvideService(db db.DB,
+func ProvideService(sql legacysql.LegacyDatabaseProvider,
 	orgService org.Service,
 	cfg *setting.Cfg,
 	teamService team.Service,
 	cacheService *localcache.CacheService, tracer tracing.Tracer,
 	quotaService quota.Service, bundleRegistry supportbundles.Service,
 	configProvider apiserver.DirectRestConfigProvider) (*Service, error) {
-	legacyService, err := NewLegacyService(db, orgService, cfg, teamService, cacheService, tracer, quotaService, bundleRegistry)
+	return ProvideServiceWithWatch(sql, orgService, cfg, teamService, cacheService, tracer, quotaService, bundleRegistry, configProvider, nil)
+}
+
+// ProvideServiceWithWatch is ProvideService that also announces legacy user
+// writes on the legacy watch subjects. It is separate so wire sets without the
+// NATS bus, such as the CLI's, can keep using ProvideService.
+func ProvideServiceWithWatch(sql legacysql.LegacyDatabaseProvider,
+	orgService org.Service,
+	cfg *setting.Cfg,
+	teamService team.Service,
+	cacheService *localcache.CacheService, tracer tracing.Tracer,
+	quotaService quota.Service, bundleRegistry supportbundles.Service,
+	configProvider apiserver.DirectRestConfigProvider, legacyWatch *legacywatch.Publisher) (*Service, error) {
+	legacyService, err := NewLegacyService(sql, orgService, cfg, teamService, cacheService, tracer, quotaService, bundleRegistry, legacyWatch)
 	if err != nil {
 		return nil, err
 	}

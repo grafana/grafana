@@ -102,7 +102,11 @@ describe('preProcessLogs', () => {
         entry: `35.191.12.195 - accounts.google.com:test@grafana.com [18/Mar/2025:08:58:38 +0000] 200 "POST /grafana/api/ds/query?ds_type=prometheus&requestId=SQR461 HTTP/1.1" 59460 "https://test.example.com/?orgId=1" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36" "95.91.240.90, 34.107.247.24"`,
         logLevel: LogLevel.critical,
       });
-      const logListModel = new LogListModel(logRowModel, { escape: false, timeZone: 'browser ', wrapLogMessage: true });
+      const logListModel = new LogListModel(
+        logRowModel,
+        { escape: false, timeZone: 'browser ', wrapLogMessage: true },
+        0
+      );
       expect(logListModel).toMatchObject(logRowModel);
     });
 
@@ -339,6 +343,68 @@ Value"
       );
       expect(logListModel.body).toBeDefined(); // Triggers parsing
       expect(logListModel.isJSON).toBe(false);
+    });
+
+    describe('hasErrorAttributes', () => {
+      test('is true when a label is an error message or stack trace', () => {
+        const log = createLogLine({
+          labels: {
+            app: 'api',
+            'error.type': 'timeout',
+            'exception.stacktrace': 'at label',
+            tech_stack: 'react',
+          },
+        });
+
+        expect(log.hasErrorAttributes).toBe(true);
+        expect(log.hasStacktrace).toBe(true);
+      });
+
+      test('is true when a dataframe field is an error message or stack trace', () => {
+        const log = createLogLine({
+          labels: { app: 'api' },
+          dataFrame: toDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [1] },
+              { name: 'Line', type: FieldType.string, values: ['line'] },
+              { name: 'error.message', type: FieldType.string, values: ['from field'] },
+            ],
+          }),
+        });
+
+        expect(log.hasErrorAttributes).toBe(true);
+        expect(log.hasStacktrace).toBe(false);
+      });
+
+      test('is false when the log has no error message or stack trace', () => {
+        const log = createLogLine({ labels: { app: 'api', 'error.type': 'timeout', tech_stack: 'react' } });
+
+        expect(log.hasErrorAttributes).toBe(false);
+        expect(log.hasStacktrace).toBe(false);
+      });
+
+      test('ignores the synthetic OTel attributes field', () => {
+        const log = createLogLine(
+          {
+            labels: {
+              [OTEL_PROBE_FIELD]: '9',
+              app: 'api',
+            },
+          },
+          {
+            escape: false,
+            order: LogsSortOrder.Descending,
+            otelLogsFormattingEnabled: true,
+            timeZone: 'browser',
+            wrapLogMessage: true,
+          }
+        );
+
+        expect(log.labels[OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]).toBe('app=api');
+        expect(log.hasErrorAttributes).toBe(false);
+        expect(log.hasStacktrace).toBe(false);
+      });
     });
 
     describe('OTel logs', () => {

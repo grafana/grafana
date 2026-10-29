@@ -72,7 +72,7 @@ func TestFolderConversions(t *testing.T) {
 	require.Equal(t, 1, len(fake.ListUsersByIdOrUidCalls)) // only one call to the user service
 	require.Equal(t, usertest.ListUsersByIdOrUidCall{Uids: []string{"useruid"}, Ids: []int64{2}}, fake.ListUsersByIdOrUidCalls[0])
 	require.Equal(t, folder.Folder{
-		ID:           234,
+		ID:           234, //nolint:staticcheck // Exercise legacy field compatibility.
 		OrgID:        1,
 		Version:      4,
 		UID:          "be79sztagf20wd",

@@ -54,8 +54,8 @@ export function useRulesFilter() {
   );
 
   const setSearchQuery = useCallback(
-    (newSearchQuery: string | undefined) => {
-      updateQueryParams({ search: newSearchQuery });
+    (newSearchQuery: string | undefined, options?: { replace?: boolean }) => {
+      updateQueryParams({ search: newSearchQuery }, options?.replace);
     },
     [updateQueryParams]
   );
@@ -358,7 +358,7 @@ const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filterState: Rules
   });
 };
 
-const RULES_FILTER_KEYS: Set<keyof RulesFilter> = new Set([
+const RULES_FILTER_KEYS = new Set<string>([
   'freeFormWords',
   'namespace',
   'groupName',
@@ -373,6 +373,6 @@ const RULES_FILTER_KEYS: Set<keyof RulesFilter> = new Set([
   'contactPoint',
   'ruleSource',
   'policy',
-]);
+] satisfies Array<keyof RulesFilter>);
 
-const isRuleFilterKey = (key: string): key is keyof RulesFilter => RULES_FILTER_KEYS.has(key as keyof RulesFilter);
+const isRuleFilterKey = (key: string): key is keyof RulesFilter => RULES_FILTER_KEYS.has(key);

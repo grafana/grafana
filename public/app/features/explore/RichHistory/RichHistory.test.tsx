@@ -12,6 +12,10 @@ jest.mock('../state/selectors', () => ({
   selectExploreDSMaps: jest.fn().mockReturnValue({ dsToExplore: [{ datasource: { uid: 'active-ds-uid' } }] }),
 }));
 
+// Stable identity: a fresh array per render would re-trigger effects that
+// depend on the datasource list on every render.
+const mockDataSourceItems = [{ name: 'active-ds', uid: 'active-ds-uid' }];
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => {
@@ -21,14 +25,6 @@ jest.mock('@grafana/runtime', () => ({
       },
     };
   },
-}));
-
-// Stable identity: a fresh array per render would re-trigger effects that
-// depend on the datasource list on every render.
-const mockDataSourceItems = [{ name: 'active-ds', uid: 'active-ds-uid' }];
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   useDataSourceInstanceList: () => ({
     isLoading: false,
     items: mockDataSourceItems,

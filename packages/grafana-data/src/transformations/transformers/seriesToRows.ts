@@ -15,8 +15,11 @@ import {
 import { type DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
+import { applyStaticRefId, getTransformationDynamicRefId } from './utils';
 
-export interface SeriesToRowsTransformerOptions {}
+export interface SeriesToRowsTransformerOptions {
+  refId?: string;
+}
 
 export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsTransformerOptions> = {
   id: DataTransformerID.seriesToRows,
@@ -32,13 +35,13 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsTransforme
 
         data = data.filter((frame) => frame.length > 0);
         if (!isTimeSeriesFrames(data)) {
-          return data;
+          return applyStaticRefId(data, options.refId);
         }
 
         const timeFieldByIndex: Record<number, number> = {};
         const targetFields = new Set<string>();
         const dataFrame = new MutableDataFrame({
-          refId: `${DataTransformerID.seriesToRows}-${data.map((frame) => frame.refId).join('-')}`,
+          refId: options.refId ?? getTransformationDynamicRefId(DataTransformerID.seriesToRows, data),
           fields: [],
         });
         const metricField: Field = {
@@ -90,6 +93,7 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsTransforme
         return [sortDataFrame(dataFrame, 0, true)];
       })
     ),
+  usesDynamicRefId: true,
 };
 
 const copyFieldStructure = (field: Field, name: string): Field => {

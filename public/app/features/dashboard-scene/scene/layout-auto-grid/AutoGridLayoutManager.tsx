@@ -1,6 +1,7 @@
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getAppEvents } from '@grafana/runtime';
+import { getAppEvents } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   type SceneComponentProps,
   type SceneObject,
@@ -12,8 +13,14 @@ import {
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { GRID_CELL_VMARGIN } from 'app/core/constants';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
+import {
+  isDashboardReviewing,
+  isDashboardSceneLike,
+  isFullDashboardEditing,
+} from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { addElement } from '../../actions/element/addElement';
 import { removeElement } from '../../actions/element/removeElement';
@@ -22,15 +29,10 @@ import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/A
 import { NewObjectAddedToCanvasEvent } from '../../sidebar/events';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
-import {
-  forceRenderChildren,
-  getDashboardSceneFor,
-  getGridItemKeyForPanelId,
-  getVizPanelKeyForPanelId,
-  useDashboard,
-} from '../../utils/utils';
+import { forceRenderChildren, getDashboardSceneFor, useDashboard } from '../../utils/utils';
+import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
-import { buildGroupEdit, canGroupSelection } from '../layouts-shared/groupLayout';
+import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
 import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
@@ -47,6 +49,17 @@ interface AutoGridLayoutManagerState extends SceneObjectState {
   rowHeight: AutoGridRowHeight;
   columnWidth: AutoGridColumnWidth;
   fillScreen: boolean;
+  /** Layout-wide default for content-fit. Per-panel overrides via {@link AutoGridItem} `fitContent`. */
+  fitContent?: boolean;
+  /**
+   * Floor (px envelope) for content-fit panels. Distinct from `rowHeight`,
+   * which sizes non-fit panels. `'none'` removes the floor so panels shrink to
+   * their content; `undefined` falls back to the row height.
+   */
+  minHeight?: AutoGridMinHeight;
+  maxHeightMode?: AutoGridMaxHeightMode;
+  maxHeight?: number;
+  matchRowHeights?: boolean;
   /** Whether this grid is currently a drop target */
   isDropTarget?: boolean;
   /** Position index where a placeholder should be shown for external drops */
@@ -55,6 +68,18 @@ interface AutoGridLayoutManagerState extends SceneObjectState {
 
 export type AutoGridColumnWidth = 'narrow' | 'standard' | 'wide' | 'custom' | number;
 export type AutoGridRowHeight = 'short' | 'standard' | 'tall' | 'custom' | number;
+/** Min height for content-fit panels: `'none'` means no floor (the analog of max height's `'unlimited'`). */
+export type AutoGridMinHeight = 'none' | AutoGridRowHeight;
+export type AutoGridMaxHeightMode = 'unlimited' | 'short' | 'standard' | 'tall' | 'custom';
+
+/**
+ * Feature toggle for the whole auto-height (content-fit) panels feature.
+ * Persisted `fitContent` state is kept intact when disabled — only the UI entry
+ * points and the runtime sizing behavior are turned off.
+ */
+export function isAutoHeightPanelsEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardsAutoHeightPanels, false);
+}
 
 const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = 3;
 export const AUTO_GRID_DEFAULT_COLUMN_WIDTH = 'standard';
@@ -93,6 +118,7 @@ export class AutoGridLayoutManager
     const columnWidth = state.columnWidth ?? AUTO_GRID_DEFAULT_COLUMN_WIDTH;
     const rowHeight = state.rowHeight ?? AUTO_GRID_DEFAULT_ROW_HEIGHT;
     const fillScreen = state.fillScreen ?? false;
+    const fitContent = state.fitContent ?? false;
 
     super({
       ...state,
@@ -100,13 +126,35 @@ export class AutoGridLayoutManager
       columnWidth,
       rowHeight,
       fillScreen,
+      fitContent,
       layout:
         state.layout ??
         new AutoGridLayout({
           isDraggable: true,
           templateColumns: getTemplateColumnsTemplate(maxColumnCount, columnWidth),
-          autoRows: getAutoRowsTemplate(rowHeight, fillScreen),
+          autoRows: getAutoRowsTemplate(
+            rowHeight,
+            fillScreen,
+            fitContent && isAutoHeightPanelsEnabled(),
+            state.minHeight
+          ),
         }),
+    });
+
+    this.addActivationHandler(() => {
+      const root = this.getRoot();
+      if (isDashboardSceneLike(root) && isDashboardReviewing(root.state)) {
+        this.editModeChanged(false);
+      }
+      // Children changes (add/remove/drag between grids, undo/redo) can change
+      // whether any panel opts into content-fit, so autoRows must be recomputed.
+      this._subs.add(
+        this.state.layout.subscribeToState((newState, prevState) => {
+          if (newState.children !== prevState.children) {
+            this.updateAutoRows();
+          }
+        })
+      );
     });
   }
 
@@ -133,6 +181,7 @@ export class AutoGridLayoutManager
     const newGridItem = new AutoGridItem({ body: vizPanel });
 
     addElement({
+      meta: { actionId: 'panel.add', scope: 'auto-grid' },
       addedObject: vizPanel,
       source: this,
       perform: () => {
@@ -159,8 +208,9 @@ export class AutoGridLayoutManager
       return;
     }
 
-    if (config.featureToggles.dashboardNewLayouts) {
+    if (isDashboardNewLayoutsEnabled()) {
       edit({
+        meta: { actionId: 'panel.paste', scope: 'auto-grid' },
         description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
         addedObject: panel.state.body,
         source: this,
@@ -190,6 +240,7 @@ export class AutoGridLayoutManager
     const gridItemIndex = this.state.layout.state.children.indexOf(gridItem);
 
     removeElement({
+      meta: { actionId: 'panel.remove', scope: 'auto-grid' },
       removedObject: panel,
       source: this,
       perform: () => {
@@ -253,36 +304,6 @@ export class AutoGridLayoutManager
     this.state.layout.setState({ children: [...this.state.layout.state.children, ...movedChildren] });
   }
 
-  public duplicatePanel(panel: VizPanel) {
-    const gridItem = panel.parent;
-    if (!(gridItem instanceof AutoGridItem)) {
-      console.error('Trying to duplicate a panel that is not inside a DashboardGridItem');
-      return;
-    }
-
-    const newPanelId = dashboardSceneGraph.getNextPanelId(this);
-    const grid = this.state.layout;
-
-    const newPanel = panel.clone({
-      key: getVizPanelKeyForPanelId(newPanelId),
-    });
-
-    const newGridItem = gridItem.clone({
-      key: getGridItemKeyForPanelId(newPanelId),
-      body: newPanel,
-    });
-
-    const sourceIndex = grid.state.children.indexOf(gridItem);
-    const newChildren = [...grid.state.children];
-
-    // insert after
-    newChildren.splice(sourceIndex + 1, 0, newGridItem);
-
-    grid.setState({ children: newChildren });
-
-    this.publishEvent(new NewObjectAddedToCanvasEvent(newPanel), true);
-  }
-
   public getVizPanels(): VizPanel[] {
     const panels: VizPanel[] = [];
 
@@ -302,16 +323,6 @@ export class AutoGridLayoutManager
 
   public canGroupSelectionInto(items: SceneObject[], target: GroupTarget): GroupingResult {
     return canGroupSelection(items, target);
-  }
-
-  public groupSelectionInto(items: SceneObject[], target: GroupTarget): void {
-    const groupEdit = buildGroupEdit(items, target);
-
-    if (!groupEdit) {
-      return;
-    }
-
-    edit({ ...groupEdit, source: getDashboardSceneFor(this) });
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
@@ -341,10 +352,40 @@ export class AutoGridLayoutManager
   }
 
   public onFillScreenChanged(fillScreen: boolean) {
-    this.setState({ fillScreen });
-    this.state.layout.setState({
-      autoRows: getAutoRowsTemplate(this.state.rowHeight, fillScreen),
-    });
+    // Fill screen (stretch to fill) and fit content (size to content) are opposites.
+    this.setState(fillScreen ? { fillScreen, fitContent: false } : { fillScreen });
+    this.updateAutoRows();
+  }
+
+  public onFitContentChanged(fitContent: boolean) {
+    this.setState(fitContent ? { fitContent, fillScreen: false } : { fitContent });
+    this.updateAutoRows();
+  }
+
+  public onMinHeightChanged(minHeight: AutoGridMinHeight) {
+    if (minHeight === 'custom') {
+      const current = this.state.minHeight;
+      // 'none' has no pixel equivalent, so entering custom mode starts from the default height.
+      minHeight = getNamedHeightInPixels(
+        current === undefined || current === 'none' ? AUTO_GRID_DEFAULT_ROW_HEIGHT : current
+      );
+    }
+    this.setState({ minHeight });
+    this.updateAutoRows();
+  }
+
+  public onMaxHeightModeChanged(maxHeightMode: AutoGridMaxHeightMode | undefined) {
+    const maxHeight =
+      maxHeightMode === 'custom' ? (this.state.maxHeight ?? getNamedHeightInPixels('standard')) : this.state.maxHeight;
+    this.setState({ maxHeightMode, maxHeight });
+  }
+
+  public onMaxHeightCustomChanged(maxHeight: number) {
+    this.setState({ maxHeightMode: 'custom', maxHeight });
+  }
+
+  public onMatchRowHeightsChanged(matchRowHeights: boolean) {
+    this.setState({ matchRowHeights });
   }
 
   public onRowHeightChanged(rowHeight: AutoGridRowHeight) {
@@ -353,8 +394,39 @@ export class AutoGridLayoutManager
     }
 
     this.setState({ rowHeight });
+    this.updateAutoRows();
+  }
+
+  /**
+   * Content-fit is active when the layout default is on or any panel opts in.
+   * When active, row tracks must be able to grow to a panel's content height.
+   *
+   * Deliberately does not check plugin capability: plugins load async and
+   * nothing recomputes autoRows on load. A permissive `max-content` track is
+   * benign — non-fit panels are absolutely positioned and contribute no
+   * in-flow height, so the row stays at its floor.
+   */
+  public hasFitContent(): boolean {
+    if (!isAutoHeightPanelsEnabled()) {
+      return false;
+    }
+    if (this.state.fitContent) {
+      return true;
+    }
+    return this.state.layout.state.children.some(
+      (child) => child instanceof AutoGridItem && child.state.fitContent === true
+    );
+  }
+
+  /** Recomputes the grid's `autoRows` from the current state. Call after a per-panel fit change. */
+  public updateAutoRows() {
     this.state.layout.setState({
-      autoRows: getAutoRowsTemplate(rowHeight, this.state.fillScreen),
+      autoRows: getAutoRowsTemplate(
+        this.state.rowHeight,
+        this.state.fillScreen,
+        this.hasFitContent(),
+        this.state.minHeight
+      ),
     });
   }
 
@@ -374,7 +446,7 @@ export class AutoGridLayoutManager
     const layoutManager = AutoGridLayoutManager.createEmpty();
     layoutManager.state.layout.setState({
       children,
-      isDraggable: getDashboardSceneFor(layout).state.isEditing,
+      isDraggable: isFullDashboardEditing(getDashboardSceneFor(layout).state),
     });
 
     return layoutManager;
@@ -495,7 +567,39 @@ function getNamedColumWidthInPixels(columnWidth: AutoGridColumnWidth) {
   }
 }
 
-function getNamedHeightInPixels(rowHeight: AutoGridRowHeight) {
+/**
+ * Resolves the configured max-height mode to pixels; unlimited maps to `undefined`.
+ */
+export function getMaxHeightInPixels(
+  mode: AutoGridMaxHeightMode | undefined,
+  customPixels: number | undefined
+): number | undefined {
+  switch (mode) {
+    case 'short':
+    case 'standard':
+    case 'tall':
+      return getNamedHeightInPixels(mode);
+    case 'custom':
+      return customPixels ?? undefined;
+    case 'unlimited':
+    case undefined:
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Resolves the content-fit floor to pixels: `'none'` removes the floor (0),
+ * no configured min height falls back to the row height.
+ */
+export function getFitMinHeightInPixels(minHeight: AutoGridMinHeight | undefined, rowHeight: AutoGridRowHeight) {
+  if (minHeight === 'none') {
+    return 0;
+  }
+  return getNamedHeightInPixels(minHeight ?? rowHeight);
+}
+
+export function getNamedHeightInPixels(rowHeight: AutoGridRowHeight) {
   if (typeof rowHeight === 'number') {
     return rowHeight;
   }
@@ -512,8 +616,26 @@ function getNamedHeightInPixels(rowHeight: AutoGridRowHeight) {
   }
 }
 
-export function getAutoRowsTemplate(rowHeight: AutoGridRowHeight, fillScreen: boolean) {
+export function getAutoRowsTemplate(
+  rowHeight: AutoGridRowHeight,
+  fillScreen: boolean,
+  hasFitContent?: boolean,
+  minHeight?: AutoGridMinHeight
+) {
   const rowHeightPixels = getNamedHeightInPixels(rowHeight);
-  const maxRowHeightValue = fillScreen ? 'auto' : `${rowHeightPixels}px`;
-  return `minmax(${rowHeightPixels}px, ${maxRowHeightValue})`;
+  // A smaller content-fit floor must also lower the shared row track, otherwise
+  // the panel shrinks inside a row that still reserves the configured row height.
+  // Clamp larger fit minimums to the row height: the fit panel itself contributes
+  // its minimum, without inflating rows that contain only non-fit panels.
+  const minRowHeightPixels =
+    hasFitContent && !fillScreen
+      ? Math.min(rowHeightPixels, getFitMinHeightInPixels(minHeight, rowHeight))
+      : rowHeightPixels;
+
+  // The max grows when:
+  //  - fill screen: stretch to fill the viewport (`auto`)
+  //  - content-fit present: grow to the tallest panel's content (`max-content`)
+  //  - otherwise: fixed at the row height
+  const maxRowHeightValue = fillScreen ? 'auto' : hasFitContent ? 'max-content' : `${rowHeightPixels}px`;
+  return `minmax(${minRowHeightPixels}px, ${maxRowHeightValue})`;
 }

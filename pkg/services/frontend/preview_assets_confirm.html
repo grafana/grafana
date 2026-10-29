@@ -13,10 +13,8 @@
         --text: rgb(36, 41, 46);
         --text-secondary: rgba(36, 41, 46, 0.75);
         --code-bg: rgba(36, 41, 46, 0.07);
-        --warning-bg: rgba(245, 95, 62, 0.08);
-        --warning-border: rgba(245, 95, 62, 0.5);
-        --primary: #f55f3e;
-        --primary-hover: #d94e30;
+        --primary: #1b855e;
+        --primary-hover: #0a764e;
         --secondary-bg: rgba(36, 41, 46, 0.08);
         --secondary-hover: rgba(36, 41, 46, 0.15);
       }
@@ -29,8 +27,6 @@
           --text: rgb(204, 204, 220);
           --text-secondary: rgba(204, 204, 220, 0.65);
           --code-bg: rgba(204, 204, 220, 0.07);
-          --warning-bg: rgba(245, 95, 62, 0.1);
-          --warning-border: rgba(245, 95, 62, 0.5);
           --secondary-bg: rgba(204, 204, 220, 0.1);
           --secondary-hover: rgba(204, 204, 220, 0.16);
         }
@@ -78,11 +74,7 @@
         margin-bottom: 0.75rem;
       }
 
-      .warning {
-        padding: 0.75rem;
-        background: var(--warning-bg);
-        border: 1px solid var(--warning-border);
-        border-radius: 4px;
+      .description {
         font-size: 0.8125rem;
       }
 
@@ -128,16 +120,11 @@
   <body>
     <main>
       <h1>Load preview assets?</h1>
-      <p>
-        You are about to load the frontend assets from the preview build
-        <strong>{{.Folder}}</strong>:
-      </p>
+      <p>Load the frontend preview from <strong>{{.Folder}}</strong>:</p>
       <div class="url">{{.AssetsURL}}</div>
-      <div class="warning">
-        This replaces the Grafana frontend in this browser with unreviewed, unreleased code for
-        {{.Duration}}. Only continue if you trust the pull request these assets were built from.
-        You can undo this at any time by visiting
-        <code>/-/set-preview-assets?clear=1</code>.
+      <div class="description">
+        This sets a cookie in your browser to enable the preview. Share this page’s URL
+        with others so they can preview it in their browsers too.
       </div>
       <form method="GET" action="/-/set-preview-assets">
         <input type="hidden" name="assets" value="{{.Folder}}" />

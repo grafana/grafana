@@ -1,4 +1,6 @@
 import { type SQLDialect } from '@codemirror/lang-sql';
+import { LanguageSupport } from '@codemirror/language';
+import { styleTags, tags } from '@lezer/highlight';
 
 import { type CodeMirrorEditorLanguage, type CodeMirrorExtension, type CodeMirrorSqlDialect } from './types';
 
@@ -9,6 +11,14 @@ const loadGo = async (): Promise<CodeMirrorExtension> =>
 
 const loadHtml = async (): Promise<CodeMirrorExtension> =>
   (await import(/* webpackChunkName: "codemirror-lang-html" */ '@codemirror/lang-html')).html();
+
+const loadIni = async (): Promise<CodeMirrorExtension> => {
+  const [{ LanguageSupport, StreamLanguage }, { properties }] = await Promise.all([
+    import(/* webpackChunkName: "codemirror-lang-ini" */ '@codemirror/language'),
+    import(/* webpackChunkName: "codemirror-lang-ini" */ '@codemirror/legacy-modes/mode/properties'),
+  ]);
+  return new LanguageSupport(StreamLanguage.define(properties));
+};
 
 const loadJson = async (): Promise<CodeMirrorExtension> =>
   (await import(/* webpackChunkName: "codemirror-lang-json" */ '@codemirror/lang-json')).json();
@@ -24,8 +34,25 @@ const loadTypescript = async (): Promise<CodeMirrorExtension> =>
 const loadXml = async (): Promise<CodeMirrorExtension> =>
   (await import(/* webpackChunkName: "codemirror-lang-xml" */ '@codemirror/lang-xml')).xml();
 
-const loadYaml = async (): Promise<CodeMirrorExtension> =>
-  (await import(/* webpackChunkName: "codemirror-lang-yaml" */ '@codemirror/lang-yaml')).yaml();
+const loadYaml = async (): Promise<CodeMirrorExtension> => {
+  const { yaml, yamlLanguage } = await import(/* webpackChunkName: "codemirror-lang-yaml" */ '@codemirror/lang-yaml');
+  const { support } = yaml();
+
+  // YAML scalars use content tags, but styling content globally would also recolor Markdown and markup prose.
+  return new LanguageSupport(
+    yamlLanguage.configure({
+      props: [
+        styleTags({
+          'Literal BlockLiteralContent': tags.string,
+          // A key's scalar can be wrapped in an anchor, a tag, or both in either order.
+          'Key/Anchored/Literal Key/Tagged/Literal Key/Anchored/Tagged/Literal Key/Tagged/Anchored/Literal':
+            tags.definition(tags.propertyName),
+        }),
+      ],
+    }),
+    support
+  );
+};
 
 const loadSql = async (dialect: CodeMirrorSqlDialect): Promise<CodeMirrorExtension> => {
   const [{ sql, StandardSQL, MySQL }, { foldByIndentation }] = await Promise.all([
@@ -56,6 +83,8 @@ const resolveLoad = (
       return { cacheKey: 'go', load: loadGo };
     case 'html':
       return { cacheKey: 'html', load: loadHtml };
+    case 'ini':
+      return { cacheKey: 'ini', load: loadIni };
     case 'json':
       return { cacheKey: 'json', load: loadJson };
     case 'markdown':

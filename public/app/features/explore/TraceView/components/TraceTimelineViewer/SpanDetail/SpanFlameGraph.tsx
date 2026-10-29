@@ -15,19 +15,23 @@ import {
 import { FlameGraph } from '@grafana/flamegraph';
 import { Trans } from '@grafana/i18n';
 import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
-import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
-import { getDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import {
+  DataSourceWithBackend,
+  getTemplateSrv,
+  getDataSourceInstance,
+  useDataSourceInstanceSettings,
+} from '@grafana/runtime';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { type PyroscopeQuery } from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/pyroscope-types';
 
 import {
   defaultProfilingKeys,
-  getFormattedTags,
   pyroscopeProfileIdTagKey,
   scopedVarsFromSpan,
   scopedVarsFromTags,
-  scopedVarsFromTrace,
 } from '../../../createSpanLink';
+import { scopedVarsFromTrace } from '../../../createTraceLink';
+import { getFormattedTags, getSpanTags } from '../../../crossSignalConfig';
 import { type TraceSpan } from '../../types/trace';
 
 import { type TraceFlameGraphs } from '.';
@@ -113,7 +117,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
           traceToProfilesOptions.tags && traceToProfilesOptions.tags.length > 0
             ? traceToProfilesOptions.tags
             : defaultProfilingKeys;
-        labelSelector = `{${getFormattedTags(span, tags)}}`;
+        labelSelector = `{${getFormattedTags(getSpanTags(span), tags)}}`;
       }
 
       const request = {

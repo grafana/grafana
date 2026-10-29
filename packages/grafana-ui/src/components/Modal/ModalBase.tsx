@@ -2,8 +2,9 @@ import { cx } from '@emotion/css';
 import { FloatingFocusManager, useDismiss, useFloating, useInteractions, useRole } from '@floating-ui/react';
 import { OverlayContainer } from '@react-aria/overlays';
 import { type ComponentProps, type PropsWithChildren, useRef } from 'react';
+import { CSSTransition } from 'react-transition-group';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getPortalContainer } from '../Portal/Portal';
 
 import { getModalStyles } from './getModalStyles';
@@ -42,6 +43,8 @@ export function ModalBase({
   'aria-labelledby': ariaLabelledBy,
 }: PropsWithChildren<ModalBaseProps>) {
   const styles = useStyles2(getModalStyles);
+  const theme = useTheme2();
+  const backdropRef = useRef<HTMLDivElement>(null);
 
   const { context, refs } = useFloating({
     open: isOpen,
@@ -51,8 +54,6 @@ export function ModalBase({
       }
     },
   });
-
-  const backdropRef = useRef<HTMLDivElement>(null);
 
   const dismiss = useDismiss(context, {
     escapeKey: closeOnEscape,
@@ -89,22 +90,38 @@ export function ModalBase({
 
   return (
     <OverlayContainer>
-      <div role="presentation" ref={backdropRef} className={styles.modalBackdrop} />
+      <CSSTransition
+        nodeRef={backdropRef}
+        in={true}
+        appear={true}
+        timeout={theme.transitions.duration.standard}
+        classNames={{ appear: styles.modalBackdropAppear, appearActive: styles.modalBackdropActive }}
+      >
+        <div role="presentation" ref={backdropRef} className={styles.modalBackdrop} />
+      </CSSTransition>
       <FloatingFocusManager
         context={context}
         modal={trapFocus}
         initialFocus={initialFocus}
         getInsideElements={() => [getPortalContainer()]}
       >
-        <div
-          className={cx(styles.modal, className)}
-          ref={refs.setFloating}
-          aria-label={ariaLabel}
-          aria-labelledby={ariaLabelledBy}
-          {...getFloatingProps()}
+        <CSSTransition
+          nodeRef={refs.floating}
+          in={true}
+          appear={true}
+          timeout={theme.transitions.duration.shortest}
+          classNames={{ appear: styles.modalAppear, appearActive: styles.modalAppearActive }}
         >
-          {children}
-        </div>
+          <div
+            className={cx(styles.modal, className)}
+            ref={refs.setFloating}
+            aria-label={ariaLabel}
+            aria-labelledby={ariaLabelledBy}
+            {...getFloatingProps()}
+          >
+            {children}
+          </div>
+        </CSSTransition>
       </FloatingFocusManager>
     </OverlayContainer>
   );

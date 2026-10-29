@@ -1,5 +1,4 @@
 import { type Property } from 'csstype';
-import tinycolor from 'tinycolor2';
 
 import {
   type ActionModel,
@@ -183,16 +182,14 @@ export function getCellColors(
 
     if (mode === TableCellBackgroundDisplayMode.Basic) {
       textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
-      bgColor = tinycolor(displayValue.color).toRgbString();
-      bgHoverColor = tinycolor(displayValue.color).setAlpha(1).toRgbString();
+      bgColor = displayValue.color;
+      bgHoverColor = `rgb(from ${displayValue.color} r g b / 1)`;
     } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
-      const hoverColor = tinycolor(displayValue.color).setAlpha(1).toRgbString();
-      const bgColor2 = tinycolor(displayValue.color)
-        .darken(10 * darkeningFactor)
-        .spin(5);
+      const hoverColor = `rgb(from ${displayValue.color} r g b / 1)`;
+      const bgColor2 = `hsl(from ${displayValue.color} calc(h + 5) s calc(l - 10 * ${darkeningFactor}))`;
       textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
-      bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
-      bgHoverColor = `linear-gradient(120deg, ${bgColor2.setAlpha(1).toRgbString()}, ${hoverColor})`;
+      bgColor = `linear-gradient(120deg, ${bgColor2}, ${displayValue.color})`;
+      bgHoverColor = `linear-gradient(120deg, rgb(from ${bgColor2} r g b / 1), ${hoverColor})`;
     }
   }
 

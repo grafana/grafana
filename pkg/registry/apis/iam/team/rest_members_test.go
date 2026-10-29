@@ -7,23 +7,16 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/open-feature/go-sdk/openfeature"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestTeamMembersREST_Connect(t *testing.T) {
-	teamsApiEnabled := true
-	setTeamsApiFlag(t, teamsApiEnabled)
-
 	t.Run("returns members from team spec", func(t *testing.T) {
 		g := &mockGetter{team: teamWithMembers("team1",
 			member("user1", "admin", true),
@@ -51,30 +44,6 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 		require.Equal(t, "user2", resp.Items[1].User)
 		require.Equal(t, "member", resp.Items[1].Permission)
 		require.False(t, resp.Items[1].External)
-	})
-
-	t.Run("returns 403 when feature flag disabled", func(t *testing.T) {
-		teamsApiEnabled := false
-		setTeamsApiFlag(t, teamsApiEnabled)
-		t.Cleanup(func() {
-			teamsApiEnabled = true
-			setTeamsApiFlag(t, teamsApiEnabled)
-		})
-
-		g := &mockGetter{team: teamWithMembers("team1")}
-		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService())
-
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "default"})
-		responder := &mockResponder{}
-
-		h, _ := handler.Connect(ctx, "team1", nil, responder)
-		h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/members", nil).WithContext(ctx))
-
-		require.True(t, responder.called)
-		require.Error(t, responder.err)
-		var se *apierrors.StatusError
-		require.ErrorAs(t, responder.err, &se)
-		require.Equal(t, int32(http.StatusForbidden), se.ErrStatus.Code)
 	})
 
 	t.Run("propagates getter error", func(t *testing.T) {
@@ -236,16 +205,4 @@ func (m *mockGetter) Get(_ context.Context, _ string, _ *metav1.GetOptions) (run
 		return nil, m.err
 	}
 	return m.team, nil
-}
-
-func setTeamsApiFlag(t *testing.T, enabled bool) {
-	t.Helper()
-	provider := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagKubernetesTeamsApi: {
-			Key:            featuremgmt.FlagKubernetesTeamsApi,
-			DefaultVariant: "default",
-			Variants:       map[string]any{"default": enabled},
-		},
-	})
-	require.NoError(t, openfeature.SetProviderAndWait(provider))
 }

@@ -15,11 +15,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialimpl"
+	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
@@ -55,8 +58,30 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+func TestGetEnabledOAuthProvidersUsesCallerContext(t *testing.T) {
+	type contextKey struct{}
+
+	ctx := context.WithValue(t.Context(), contextKey{}, "request-tenant")
+	hs := &HTTPServer{SocialService: &socialtest.FakeSocialService{
+		GetOAuthInfoProvidersFunc: func(gotCtx context.Context) (map[string]*social.OAuthInfo, error) {
+			assert.Equal(t, "request-tenant", gotCtx.Value(contextKey{}))
+			return map[string]*social.OAuthInfo{
+				social.GitHubProviderName: {Name: "GitHub", Icon: "github"},
+			}, nil
+		},
+	}}
+
+	providers := hs.getEnabledOAuthProviders(ctx)
+
+	assert.Equal(t, map[string]any{
+		social.GitHubProviderName: map[string]string{"name": "GitHub", "icon": "github"},
+	}, providers)
+}
+
 func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.FeatureToggles, pstore pluginstore.Store, psettings pluginsettings.Service, passets *pluginassets.Service) (*web.Mux, *HTTPServer) {
 	t.Helper()
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
 	db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	// nolint:staticcheck
 	cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
@@ -110,7 +135,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		pluginsCDNService:     pluginsCDN,
 		pluginAssets:          pluginsAssets,
 		namespacer:            request.GetNamespaceMapper(cfg),
-		SocialService:         socialimpl.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), nil, ssosettingstests.NewFakeService()),
+		SocialService:         socialimpl.ProvideService(context.Background(), cfgProvider, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), nil, ssosettingstests.NewFakeService()),
 		managedPluginsService: managedplugins.NewNoop(),
 		tracer:                tracing.InitializeTracerForTest(),
 		DataSourcesService:    &datafakes.FakeDataSourceService{},

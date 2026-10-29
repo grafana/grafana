@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.26.6
+GO_VERSION = 1.27.3
 GO_HOST_OS := $(shell $(GO) env GOHOSTOS)
 GO_HOST_ARCH := $(shell $(GO) env GOHOSTARCH)
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
@@ -22,6 +22,8 @@ BUILD_VERSION := $(shell sed -n 's/.*"version": *"\(.*\)".*/\1/p' package.json |
 BUILD_COMMIT := $(if $(COMMIT_SHA),$(COMMIT_SHA),$(shell git rev-parse HEAD 2>/dev/null || echo "unknown"))
 BUILD_BRANCH := $(if $(BUILD_BRANCH),$(BUILD_BRANCH),$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main"))
 BUILD_STAMP := $(or $(SOURCE_DATE_EPOCH),$(shell git log -1 --format=%ct 2>/dev/null),$(shell date +%s 2>/dev/null))
+# we do not add "-s -w" to the LDFLAGS because there is tooling that can leverage DWARF symbols
+# and debug information to provide richer data capture, such as eBPF probes.
 GO_LDFLAGS = -X main.version=$(BUILD_VERSION) \
 	-X main.commit=$(BUILD_COMMIT) \
 	-X main.buildBranch=$(BUILD_BRANCH) \
@@ -85,9 +87,9 @@ deps-js: node_modules ## Install frontend dependencies.
 deps: deps-js ## Install all dependencies.
 
 .PHONY: node_modules
-node_modules: package.json yarn.lock ## Install node modules.
+node_modules: package.json pnpm-lock.yaml ## Install node modules.
 	@echo "install frontend dependencies"
-	YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
+	pnpm install --frozen-lockfile
 
 ##@ Swagger
 SPEC_TARGET = public/api-spec.json
@@ -100,13 +102,13 @@ $(NGALERT_SPEC_TARGET):
 
 $(MERGED_SPEC_TARGET): swagger-oss-gen swagger-enterprise-gen $(NGALERT_SPEC_TARGET)  ## Merge generated and ngalert API specs
 	# known conflicts DsPermissionType, AddApiKeyCommand, Json, Duration (identical models referenced by both specs)
-	GODEBUG=gotypesalias=0 $(swagger) mixin -q $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
+	$(swagger) mixin -q $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
 
 .PHONY: swagger-oss-gen
 swagger-oss-gen: ## Generate API Swagger specification
 	@echo "re-generating swagger for OSS"
 	rm -f $(SPEC_TARGET)
-	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(swagger) generate spec -q -m -w pkg/server -o $(SPEC_TARGET) \
+	SWAGGER_GENERATE_EXTENSION=false $(swagger) generate spec -q -m -w pkg/server -o $(SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
@@ -126,7 +128,7 @@ else
 swagger-enterprise-gen: ## Generate API Swagger specification
 	@echo "re-generating swagger for enterprise"
 	rm -f $(ENTERPRISE_SPEC_TARGET)
-	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(swagger) generate spec -q -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
+	SWAGGER_GENERATE_EXTENSION=false $(swagger) generate spec -q -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
@@ -143,7 +145,7 @@ swagger-gen: gen-go $(MERGED_SPEC_TARGET) swagger-validate
 
 .PHONY: swagger-validate
 swagger-validate: $(MERGED_SPEC_TARGET) # Validate API spec
-	GODEBUG=gotypesalias=0 $(swagger) validate --skip-warnings $(<)
+	$(swagger) validate --skip-warnings $(<)
 
 .PHONY: swagger-clean
 swagger-clean:
@@ -168,7 +170,7 @@ openapi3-gen: swagger-gen ## Generates OpenApi 3 specs from the Swagger 2 alread
 .PHONY: generate-openapi
 generate-openapi: openapi3-gen
 	$(GO) test ./pkg/tests/apis || true
-	yarn workspace @grafana/openapi process-specs
+	pnpm --filter @grafana/openapi --fail-if-no-match run process-specs
 
 ##@ Internationalisation
 .PHONY: i18n-extract-enterprise
@@ -179,17 +181,17 @@ i18n-extract-enterprise:
 else
 i18n-extract-enterprise:
 	@echo "Extracting i18n strings for Enterprise"
-	cd public/locales/enterprise && LANG=en_US.UTF-8 yarn run i18next-cli extract --sync-primary
+	cd public/locales/enterprise && LANG=en_US.UTF-8 pnpm exec i18next-cli extract --sync-primary
 endif
 
 .PHONY: i18n-extract
 i18n-extract: i18n-extract-enterprise
 	@echo "Extracting i18n strings for OSS"
-	LANG=en_US.UTF-8 yarn run i18next-cli extract --sync-primary
+	LANG=en_US.UTF-8 pnpm exec i18next-cli extract --sync-primary
 	@echo "Extracting i18n strings for packages"
-	LANG=en_US.UTF-8 yarn run packages:i18n-extract
+	LANG=en_US.UTF-8 pnpm run packages:i18n-extract
 	@echo "Extracting i18n strings for plugins"
-	LANG=en_US.UTF-8 yarn run plugin:i18n-extract
+	LANG=en_US.UTF-8 pnpm run plugin:i18n-extract
 
 ##@ Building
 .PHONY: gen-cue
@@ -271,8 +273,7 @@ gen-enterprise-go: ## Generate Wire graph (Enterprise)
 endif
 gen-go: gen-enterprise-go ## Generate Wire graph
 	@echo "generating Wire graph"
-	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server/bootstrap/wire
-	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server
+	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server/bootstrap/wire ./pkg/server
 
 .PHONY: gen-app-manifests-unistore
 gen-app-manifests-unistore: ## Generate unified storage app manifests list
@@ -352,7 +353,7 @@ build-air: build-go
 .PHONY: build-js
 build-js: ## Build frontend assets.
 	@echo "building frontend"
-	yarn run build
+	pnpm run build
 
 public/build:
 	$(MAKE) build-js
@@ -525,8 +526,8 @@ run-go: ## Build and run web server immediately.
 		./pkg/cmd/grafana -- server -profile -profile-addr=127.0.0.1 -profile-port=6000 -packaging=dev cfg:app_mode=development
 
 .PHONY: run-frontend
-run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
-	yarn start
+run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild.
+	pnpm run start
 
 .PHONY: frontend-service-check
 frontend-service-check:
@@ -608,7 +609,7 @@ test-go-integration-memcached: ## Run integration tests for memcached cache.
 .PHONY: test-js
 test-js: ## Run tests for frontend.
 	@echo "test frontend"
-	yarn test
+	pnpm run test
 
 .PHONY: test
 test: test-go test-js ## Run all tests.
@@ -652,20 +653,20 @@ PLATFORM=linux/amd64
 # default to a production build for frontend
 #
 DOCKER_JS_NODE_ENV_FLAG = production
-DOCKER_JS_YARN_BUILD_FLAG = build
-DOCKER_JS_YARN_INSTALL_FLAG = --immutable
+DOCKER_JS_PNPM_BUILD_FLAG = build
+DOCKER_JS_PNPM_INSTALL_FLAG = --frozen-lockfile
 #
 # if go is in dev mode, also build node in dev mode
 ifneq ($(filter 1 dev,$(GO_BUILD_DEV)),)
   DOCKER_JS_NODE_ENV_FLAG = dev
-  DOCKER_JS_YARN_BUILD_FLAG = dev
-	DOCKER_JS_YARN_INSTALL_FLAG =
+  DOCKER_JS_PNPM_BUILD_FLAG = dev
+	DOCKER_JS_PNPM_INSTALL_FLAG = --no-frozen-lockfile
 endif
 # if NODE_ENV is set in the environment to dev, build frontend in dev mode, and allow go builds to use their default
 ifeq (${NODE_ENV}, dev)
   DOCKER_JS_NODE_ENV_FLAG = dev
-  DOCKER_JS_YARN_BUILD_FLAG = dev
-	DOCKER_JS_YARN_INSTALL_FLAG =
+  DOCKER_JS_PNPM_BUILD_FLAG = dev
+	DOCKER_JS_PNPM_INSTALL_FLAG = --no-frozen-lockfile
 endif
 
 .PHONY: build-docker-full
@@ -675,8 +676,8 @@ build-docker-full: ## Build Docker image for development.
 	--platform $(PLATFORM) \
 	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
 	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
-	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
-	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
+	--build-arg JS_PNPM_INSTALL_FLAG=$(DOCKER_JS_PNPM_INSTALL_FLAG) \
+	--build-arg JS_PNPM_BUILD_FLAG=$(DOCKER_JS_PNPM_BUILD_FLAG) \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
@@ -695,8 +696,8 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--platform $(PLATFORM) \
 	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
 	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
-	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
-	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
+	--build-arg JS_PNPM_INSTALL_FLAG=$(DOCKER_JS_PNPM_INSTALL_FLAG) \
+	--build-arg JS_PNPM_BUILD_FLAG=$(DOCKER_JS_PNPM_BUILD_FLAG) \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
@@ -716,8 +717,8 @@ build-docker-full-distroless: ## Build Docker image based on distroless for deve
 	--platform $(PLATFORM) \
 	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
 	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
-	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
-	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
+	--build-arg JS_PNPM_INSTALL_FLAG=$(DOCKER_JS_PNPM_INSTALL_FLAG) \
+	--build-arg JS_PNPM_BUILD_FLAG=$(DOCKER_JS_PNPM_BUILD_FLAG) \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
@@ -791,6 +792,7 @@ protobuf: ## Compile protobuf definitions
 protobuf-breaking: ## Check protobuf definitions for breaking changes against main
 	bash scripts/protobuf-check.sh
 	buf breaking pkg/registry/apps/annotation/proto --against '.git#branch=main,subdir=pkg/registry/apps/annotation/proto'
+	buf breaking pkg/storage/unified/proto --against '.git#branch=main,subdir=pkg/storage/unified/proto'
 
 .PHONY: clean
 clean: ## Clean up intermediate build artifacts.
@@ -802,7 +804,7 @@ clean: ## Clean up intermediate build artifacts.
 gen-ts:
 	@echo "generating TypeScript definitions"
 	go get github.com/tkrajina/typescriptify-golang-structs/typescriptify@v0.1.7
-	tscriptify -interface -package=github.com/grafana/grafana/pkg/services/live/pipeline -import="import { FieldConfig } from '@grafana/data'" -target=public/app/features/live/pipeline/models.gen.ts pkg/services/live/pipeline/config.go
+	tscriptify -interface -package=github.com/grafana/grafana/apps/live/pkg/pipeline -import="import { FieldConfig } from '@grafana/data'" -target=public/app/features/live/pipeline/models.gen.ts apps/live/pkg/pipeline/config.go
 	go mod tidy
 
 .PHONY: go-race-is-enabled
@@ -832,7 +834,7 @@ help: ## Display this help.
 check-licenses:
 	license_finder --decisions-file .github/license_finder.yaml
 
-GENERATE_POLICY_BOT_CONFIG_SHA := sha256:d05ff5c7d4247da155c85f8c6f1f9f7c6d013d1f3fd9fd9d68eb06f1e7b0393d # v0.2.0
+GENERATE_POLICY_BOT_CONFIG_SHA := sha256:ebd798a15f5d05af418da11366eb7cc01d1c4741f18d0c982fccda032ff405f5 # v0.2.1
 .PHONY: .policy.yml
 .policy.yml:
 	docker run -u "$(shell id -u):$(shell id -g)" \
@@ -851,7 +853,5 @@ GENERATE_POLICY_BOT_CONFIG_SHA := sha256:d05ff5c7d4247da155c85f8c6f1f9f7c6d013d1
 	sed -i.bak '/- Workflow \.github\/workflows\/deploy-frontend-preview/d' .policy.yml; rm -f .policy.yml.bak
 # Make govulncheck non-blocking - accept failure so it doesn't prevent merge
 	sed -i.bak '/name: Workflow \.github\/workflows\/govulncheck\.yml/,/workflows:/{s/- success/- success\n            - failure/;}' .policy.yml; rm -f .policy.yml.bak
-# Make check-frontend-test-coverage non-blocking - accept failure so it doesn't prevent merge
-	sed -i.bak '/name: Workflow \.github\/workflows\/check-frontend-test-coverage\.yml/,/workflows:/{s/- success/- success\n            - failure/;}' .policy.yml; rm -f .policy.yml.bak
 # Make detect-breaking-changes-levitate non-blocking - accept failure so it doesn't prevent merge
 	sed -i.bak '/name: Workflow \.github\/workflows\/detect-breaking-changes-levitate\.yml/,/workflows:/{s/- success/- success\n            - failure/;}' .policy.yml; rm -f .policy.yml.bak

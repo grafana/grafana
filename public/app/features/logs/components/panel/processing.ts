@@ -17,6 +17,7 @@ import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { checkLogsError, checkLogsSampled, escapeUnescapedString, sortLogRows } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { type FieldDef, getAllFields } from '../logParser';
+import { classifyErrorAttributes } from '../otel/details';
 import { identifyOTelLanguage, getOtelAttributesField } from '../otel/formats';
 
 import { generateLogGrammar, generateTextMatchGrammar } from './grammar';
@@ -52,6 +53,7 @@ export class LogListModel implements LogRowModel {
   timeLocal: string;
   timeUtc: string;
   uid: string;
+  readonly uniqueKey: string;
   uniqueLabels: Labels | undefined;
   uniqueLabelsExpanded = false;
 
@@ -62,6 +64,7 @@ export class LogListModel implements LogRowModel {
   private _highlightedLogAttributesTokens: Array<string | Token> | undefined = undefined;
   private _highlightTokens: Array<string | Token> | undefined = undefined;
   private _escapeUnescapedString = false;
+  private _errorAttributePresence: LogErrorAttributePresence | undefined = undefined;
   private _fields: FieldDef[] | undefined = undefined;
   private _getFieldLinks: GetFieldLinksFn | undefined = undefined;
   private _prettifyJSON: boolean;
@@ -80,7 +83,9 @@ export class LogListModel implements LogRowModel {
       timeZone,
       virtualization,
       wrapLogMessage,
-    }: PreProcessLogOptions
+    }: PreProcessLogOptions,
+    // Position of this row within the array being processed.
+    index: number
   ) {
     // LogRowModel
     this.datasourceType = log.datasourceType;
@@ -105,6 +110,9 @@ export class LogListModel implements LogRowModel {
     this.timeLocal = log.timeLocal;
     this.timeUtc = log.timeUtc;
     this.uid = log.uid;
+    // log.uid is not guaranteed unique, which causes troubles with virtualization. To that end, we create a truly unique
+    // identifier, while leaving the data source identifier unmodified
+    this.uniqueKey = `${log.uid}#${index}`;
     this.uniqueLabels = log.uniqueLabels;
 
     // LogListModel
@@ -175,6 +183,22 @@ export class LogListModel implements LogRowModel {
 
   get errorMessage(): string | undefined {
     return checkLogsError(this);
+  }
+
+  get hasErrorAttributes(): boolean {
+    const { hasErrorFields, hasStacktrace } = this.errorAttributePresence;
+    return hasErrorFields || hasStacktrace;
+  }
+
+  get hasStacktrace(): boolean {
+    return this.errorAttributePresence.hasStacktrace;
+  }
+
+  private get errorAttributePresence(): LogErrorAttributePresence {
+    if (this._errorAttributePresence === undefined) {
+      this._errorAttributePresence = getLogErrorAttributePresence(this);
+    }
+    return this._errorAttributePresence;
   }
 
   get fields(): FieldDef[] {
@@ -318,17 +342,21 @@ export const preProcessLogs = (
   grammar?: Grammar
 ): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
-  return orderedLogs.map((log) =>
-    preProcessLog(log, {
-      escape,
-      getFieldLinks,
-      grammar,
-      otelLogsFormattingEnabled,
-      prettifyJSON,
-      timeZone,
-      virtualization,
-      wrapLogMessage,
-    })
+  return orderedLogs.map((log, index) =>
+    preProcessLog(
+      log,
+      {
+        escape,
+        getFieldLinks,
+        grammar,
+        otelLogsFormattingEnabled,
+        prettifyJSON,
+        timeZone,
+        virtualization,
+        wrapLogMessage,
+      },
+      index
+    )
   );
 };
 
@@ -342,8 +370,8 @@ interface PreProcessLogOptions {
   virtualization?: LogLineVirtualization;
   wrapLogMessage: boolean;
 }
-const preProcessLog = (log: LogRowModel, options: PreProcessLogOptions): LogListModel => {
-  return new LogListModel(log, options);
+const preProcessLog = (log: LogRowModel, options: PreProcessLogOptions, index: number): LogListModel => {
+  return new LogListModel(log, options, index);
 };
 
 function logLevelToDisplayLevel(level = '') {
@@ -377,6 +405,27 @@ function countNewLines(log: string, limit = Infinity) {
     }
   }
   return count;
+}
+
+interface LogErrorAttributePresence {
+  hasErrorFields: boolean;
+  hasStacktrace: boolean;
+}
+
+function getLogErrorAttributePresence(log: LogRowModel): LogErrorAttributePresence {
+  const labelKeys = Object.keys(log.labels).filter((key) => key !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME);
+  const classifiedLabels = classifyErrorAttributes(labelKeys, (key) => key);
+  const classifiedFields = classifyErrorAttributes(getAllFields(log), (field) => field.keys[0] ?? '');
+
+  return {
+    hasErrorFields: classifiedLabels.messages.length > 0 || classifiedFields.messages.length > 0,
+    hasStacktrace: classifiedLabels.stacktraces.length > 0 || classifiedFields.stacktraces.length > 0,
+  };
+}
+
+export function logHasErrorAttributes(log: LogRowModel): boolean {
+  const { hasErrorFields, hasStacktrace } = getLogErrorAttributePresence(log);
+  return hasErrorFields || hasStacktrace;
 }
 
 export function getLevelsFromLogs(logs: LogListModel[]) {

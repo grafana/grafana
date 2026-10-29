@@ -18,7 +18,7 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
-import { type GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Field, type GraphThresholdsStyleMode, Icon, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
@@ -221,95 +221,66 @@ export const EmptyQueryWrapper = ({ children }: React.PropsWithChildren<{}>) => 
   return <div className={styles.wrapper}>{children}</div>;
 };
 
-export function MaxDataPointsOption({
-  options,
-  onChange,
-}: {
-  options: AlertQueryOptions;
-  onChange: (options: AlertQueryOptions) => void;
-}) {
-  const value = options.maxDataPoints ?? '';
-
-  const onMaxDataPointsBlur = (event: ChangeEvent<HTMLInputElement>) => {
-    const maxDataPointsNumber = parseInt(event.target.value, 10);
-
-    const maxDataPoints = isNaN(maxDataPointsNumber) || maxDataPointsNumber === 0 ? undefined : maxDataPointsNumber;
-
-    if (maxDataPoints !== options.maxDataPoints) {
-      onChange({
-        ...options,
-        maxDataPoints,
-      });
-    }
-  };
-
+export function MaxDataPointsOption({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   return (
-    <InlineField
-      labelWidth={24}
+    <Field
       label={t('alerting.max-data-points-option.label-max-data-points', 'Max data points')}
-      tooltip={t(
+      description={t(
         'alerting.max-data-points-option.tooltip-max-data-points',
-        'The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer.'
+        'Per series, used directly by some data sources and to calculate auto interval'
       )}
+      noMargin
     >
       <Input
         type="number"
         width={10}
         placeholder={DEFAULT_MAX_DATA_POINTS.toString()}
         spellCheck={false}
-        onBlur={onMaxDataPointsBlur}
-        defaultValue={value}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+        value={value}
       />
-    </InlineField>
+    </Field>
   );
 }
 
 export function MinIntervalOption({
-  options,
+  value,
   onChange,
+  invalid,
+  error,
 }: {
-  options: AlertQueryOptions;
-  onChange: (options: AlertQueryOptions) => void;
+  value: string;
+  onChange: (value: string) => void;
+  invalid?: boolean;
+  error?: string;
 }) {
-  const value = options.minInterval ?? '';
-
-  const onMinIntervalBlur = (event: ChangeEvent<HTMLInputElement>) => {
-    const minInterval = event.target.value;
-    if (minInterval !== value) {
-      onChange({
-        ...options,
-        minInterval,
-      });
-    }
-  };
-
   return (
-    <InlineField
+    <Field
       label={t('alerting.min-interval-option.label-interval', 'Interval')}
-      labelWidth={24}
-      tooltip={
+      description={
         <Trans i18nKey="alerting.min-interval-option.tooltip-interval">
-          Interval sent to the data source. Recommended to be set to write frequency, for example <code>1m</code> if
-          your data is written every minute.
+          Recommended to be set to write frequency, for example <code>1m</code> if your data is written every minute.
         </Trans>
       }
+      invalid={invalid}
+      error={error}
+      noMargin
     >
       <Input
         type="text"
         width={10}
         placeholder={DEFAULT_MIN_INTERVAL}
         spellCheck={false}
-        onBlur={onMinIntervalBlur}
-        defaultValue={value}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+        value={value}
       />
-    </InlineField>
+    </Field>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     label: 'AlertingQueryWrapper',
-    marginBottom: theme.spacing(1),
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
 

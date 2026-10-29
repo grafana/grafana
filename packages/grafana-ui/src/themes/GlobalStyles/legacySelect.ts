@@ -46,7 +46,7 @@ export function getLegacySelectStyles(theme: GrafanaTheme2) {
 
     '.gf-form-select-box__menu': {
       background: theme.colors.background.primary,
-      boxShadow: theme.shadows.z3,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
       position: 'absolute',
       zIndex: theme.zIndex.dropdown,
       minWidth: '100%',

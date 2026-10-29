@@ -22,6 +22,7 @@ export const MENU_OPTION_HEIGHT_DESCRIPTION =
 export const POPOVER_MAX_HEIGHT = MENU_OPTION_HEIGHT * 8.5;
 
 export const getComboboxStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
     menuClosed: css({
       display: 'none',
@@ -29,7 +30,8 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     menu: css({
       label: 'combobox-menu',
       background: theme.components.dropdown.background,
-      boxShadow: theme.shadows.z3,
+      border: `1px solid ${theme.components.dropdown.borderColor}`,
+      boxShadow: visualRefreshEnabled ? theme.shadows.z2 : theme.shadows.z3,
       zIndex: theme.zIndex.dropdown,
       position: 'relative',
       borderRadius: theme.shape.radius.lg,
@@ -90,6 +92,10 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         },
       },
     }),
+    optionDynamic: css({
+      whiteSpace: 'normal',
+      overflow: 'visible',
+    }),
 
     optionAccessory: css({
       label: 'combobox-option-accessory',
@@ -102,6 +108,11 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       flexGrow: 1,
       overflow: 'hidden',
+    }),
+    optionBodyDynamic: css({
+      minWidth: 0,
+      overflow: 'visible',
+      whiteSpace: 'normal',
     }),
 
     optionLabel: css({

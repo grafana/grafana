@@ -10,6 +10,7 @@ import (
 	"github.com/fullstorydev/grpchan"
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -22,12 +23,13 @@ import (
 )
 
 type GRPCInlineClient struct {
-	conn           *grpc.ClientConn
-	tracer         trace.Tracer
-	tokenExchanger authnlib.TokenExchanger
+	conn                       *grpc.ClientConn
+	tracer                     trace.Tracer
+	tokenExchanger             authnlib.TokenExchanger
+	tokenExchangerNamespaceAll bool
 }
 
-var _ contracts.InlineSecureValueSupport = &GRPCInlineClient{}
+var _ contracts.InlineSecureValueSupport = (*GRPCInlineClient)(nil)
 
 type TLSConfig struct {
 	UseTLS             bool
@@ -36,7 +38,14 @@ type TLSConfig struct {
 	InsecureSkipVerify bool
 }
 
-func NewGRPCInlineClient(tokenExchanger authnlib.TokenExchanger, tracer trace.Tracer, address string, tlsConfig TLSConfig, clientLoadBalancingEnabled bool) (*GRPCInlineClient, error) {
+func NewGRPCInlineClient(
+	tokenExchanger authnlib.TokenExchanger,
+	tracer trace.Tracer,
+	address string,
+	tlsConfig TLSConfig,
+	clientLoadBalancingEnabled bool,
+	tokenExchangerNamespaceAll bool,
+) (*GRPCInlineClient, error) {
 	var opts []grpc.DialOption
 	if tlsConfig.UseTLS {
 		creds, err := createTLSCredentials(tlsConfig)
@@ -48,6 +57,8 @@ func NewGRPCInlineClient(tokenExchanger authnlib.TokenExchanger, tracer trace.Tr
 	} else {
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
+
+	opts = append(opts, grpc.WithStatsHandler(otelgrpc.NewClientHandler()))
 
 	if clientLoadBalancingEnabled {
 		// Use round_robin to balances requests more evenly over the available replicas.
@@ -64,9 +75,10 @@ func NewGRPCInlineClient(tokenExchanger authnlib.TokenExchanger, tracer trace.Tr
 	}
 
 	return &GRPCInlineClient{
-		conn:           conn,
-		tracer:         tracer,
-		tokenExchanger: tokenExchanger,
+		conn:                       conn,
+		tracer:                     tracer,
+		tokenExchanger:             tokenExchanger,
+		tokenExchangerNamespaceAll: tokenExchangerNamespaceAll,
 	}, nil
 }
 
@@ -183,10 +195,15 @@ func (g *GRPCInlineClient) getClient(namespace string) (inlinev1beta1.InlineSecu
 		return nil, err
 	}
 
+	tokenExchangerNamespace := namespace
+	if g.tokenExchangerNamespaceAll {
+		tokenExchangerNamespace = "*"
+	}
+
 	tokenExchangerInterceptor := authnlib.NewGrpcClientInterceptor(
 		g.tokenExchanger,
 		authnlib.WithClientInterceptorTracer(g.tracer),
-		authnlib.WithClientInterceptorNamespace(namespace),
+		authnlib.WithClientInterceptorNamespace(tokenExchangerNamespace),
 		authnlib.WithClientInterceptorAudience([]string{secretv1beta1.APIGroup}),
 	)
 

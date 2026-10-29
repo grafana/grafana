@@ -1,8 +1,39 @@
+import { type QueryReturnValue } from '@reduxjs/toolkit/query/react';
+
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
+import {
+  type NotificationsSourceParams,
+  resolveAlertmanagerConfig,
+} from '../components/import-to-gma/resolveAlertmanagerConfig';
 import type { ConvertAlertmanagerResponse } from '../components/import-to-gma/types';
 
-import { alertingApi } from './alertingApi';
+import { type WithNotificationOptions, alertingApi } from './alertingApi';
+
+/** Args for the wizard's interactive dry-run validation. No `promote` — the wizard never promotes from Step 1. */
+export type ValidateAlertmanagerConfigImportArgs = Omit<NotificationsSourceParams, 'promote'>;
+
+function fileSignature(file: File): string {
+  return `${file.name}:${file.size}:${file.lastModified}`;
+}
+
+/**
+ * Built from stable fields, not the raw args, since `File` has no own enumerable properties to
+ * key on. Prefixed with the endpoint's own name since the cache-key namespace is shared across `alertingApi`.
+ */
+function serializeValidateAlertmanagerConfigImportArgs(queryArgs: ValidateAlertmanagerConfigImportArgs): string {
+  const { source, yamlFile, templateFiles = [], datasourceName, configIdentifier } = queryArgs;
+  const signature =
+    source === 'yaml'
+      ? {
+          source,
+          file: yamlFile ? fileSignature(yamlFile) : null,
+          templates: templateFiles.map(fileSignature).sort(),
+          configIdentifier,
+        }
+      : { source, datasourceName, configIdentifier };
+  return `validateAlertmanagerConfigImport(${JSON.stringify(signature)})`;
+}
 
 export const convertToGMAApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
@@ -82,15 +113,15 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
      */
     dryRunAlertmanagerConfig: build.mutation<
       ConvertAlertmanagerResponse,
-      {
+      WithNotificationOptions<{
         alertmanagerConfig: string;
         templateFiles?: Record<string, string>;
         configIdentifier: string;
         /** Also validate the merge into the live config, and the caller's permissions for it. */
         promote?: boolean;
-      }
+      }>
     >({
-      query: ({ alertmanagerConfig, templateFiles = {}, configIdentifier, promote }) => ({
+      query: ({ alertmanagerConfig, templateFiles = {}, configIdentifier, promote, notificationOptions }) => ({
         url: `/api/convert/api/v1/alerts`,
         method: 'POST',
         body: {
@@ -104,7 +135,59 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
           'X-Grafana-Alerting-Config-Force-Replace': 'true',
           ...(promote ? { 'X-Grafana-Alerting-Promote': 'true' } : {}),
         },
+        notificationOptions,
       }),
+    }),
+
+    /**
+     * Interactive Step 1 dry-run validation, keyed by a signature of the inputs so each edit gets
+     * its own isolated cache entry. Reuses `dryRunAlertmanagerConfig`'s request via `.initiate()`.
+     */
+    validateAlertmanagerConfigImport: build.query<ConvertAlertmanagerResponse, ValidateAlertmanagerConfigImportArgs>({
+      serializeQueryArgs: ({ queryArgs }) => serializeValidateAlertmanagerConfigImportArgs(queryArgs),
+      // Explicit return type breaks a circular reference: this queryFn dispatches convertToGMAApi's
+      // own dryRunAlertmanagerConfig endpoint, which TypeScript can't infer while still defining it.
+      queryFn: async (
+        args,
+        { dispatch }
+      ): Promise<QueryReturnValue<ConvertAlertmanagerResponse, unknown, {} | undefined>> => {
+        let resolved;
+        try {
+          resolved = await resolveAlertmanagerConfig(args);
+        } catch (err) {
+          return { error: err instanceof Error ? err : new Error(String(err)) };
+        }
+
+        try {
+          // Reuse the dry-run mutation's request logic (URL, headers, body shape) by dispatching
+          // it directly, rather than duplicating it here.
+          const data = await dispatch(
+            convertToGMAApi.endpoints.dryRunAlertmanagerConfig.initiate({
+              alertmanagerConfig: resolved.alertmanagerConfig,
+              templateFiles: resolved.templateFiles,
+              configIdentifier: args.configIdentifier,
+            })
+          ).unwrap();
+          return { data };
+        } catch (error) {
+          return { error };
+        }
+      },
+    }),
+
+    /**
+     * Merge a staged Alertmanager config into the live one as editable resources. The backend removes the
+     * staged extra config on success, so the staged card empties.
+     */
+    promoteAlertmanagerConfig: build.mutation<ConvertAlertmanagerResponse, { configIdentifier: string }>({
+      query: ({ configIdentifier }) => ({
+        url: `/api/convert/api/v1/alerts/${encodeURIComponent(configIdentifier)}/promote`,
+        method: 'POST',
+      }),
+      // Promote merges into the live config, so invalidate the same tags the config-update mutation
+      // does (alertmanagerApi updateAlertmanagerConfiguration). Invalidating AlertmanagerConfiguration
+      // also refetches the staged-config query (extra_config lives inside the AM config).
+      invalidatesTags: ['AlertmanagerConfiguration', 'ContactPoint', 'ContactPointsStatus', 'Receiver'],
     }),
 
     /** Discard a staged Alertmanager config. The live Grafana Alertmanager config is not affected. */
@@ -115,6 +198,8 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         headers: {
           'X-Grafana-Alerting-Config-Identifier': configIdentifier,
         },
+        // The revert modal reports failures itself; the default toast would duplicate it.
+        notificationOptions: { showErrorAlert: false },
       }),
       // The staged config lives inside the AM config, so refetching it removes the staged card.
       invalidatesTags: ['AlertmanagerConfiguration'],

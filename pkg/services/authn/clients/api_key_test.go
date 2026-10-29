@@ -8,12 +8,13 @@ import (
 	"testing"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
-	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -151,6 +152,15 @@ func TestAPIKey_Test(t *testing.T) {
 			expected: true,
 		},
 		{
+			desc: "should not claim a local plugin access policy token",
+			req: &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{
+					"Authorization": {"Bearer " + v3.LocalAccessPolicyTokenPrefix + "rmD8abc"},
+				},
+			}},
+			expected: false,
+		},
+		{
 			desc:     "should fail when no http request is passed",
 			req:      &authn.Request{},
 			expected: false,
@@ -238,5 +248,5 @@ func genApiKey() (string, string) {
 }
 
 func encodeBasicAuth(username, password string) string {
-	return "Basic " + base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
+	return "Basic " + base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))
 }

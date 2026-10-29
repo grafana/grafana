@@ -182,8 +182,7 @@ async function resolveFolderTitles(results: DeepSearchPanelResult[]): Promise<De
 
   let locationInfo: Record<string, { name: string }> = {};
   try {
-    // TODO: this relies on getGrafanaSearcher doing this lookup at instantiation. It loads 10k folders to create this
-    //  map so customers with more folders won't get the full mapping.
+    // TODO: The folder lookup has a fixed limit, so customers with more folders won't get the full mapping.
     locationInfo = await getGrafanaSearcher().getLocationInfo();
   } catch (error) {
     // If the lookup fails, just omit them for now.

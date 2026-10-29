@@ -12,13 +12,13 @@ import {
   config,
   type DataSourceSrv,
   DataSourceWithBackend,
+  getPluginSettings,
   HealthCheckError,
   type HealthCheckResultDetails,
   isFetchError,
   locationService,
 } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { getPluginSettings } from '@grafana/runtime/unstable';
 import { appEvents } from 'app/core/app_events';
 import { updateNavIndex } from 'app/core/reducers/navModel';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -76,11 +76,16 @@ type parseDataSourceSaveResponse = {
   details?: HealthCheckResultDetails | { message?: string; verboseMessage?: string };
 };
 
-const parseHealthCheckError = (errorResponse: any): parseDataSourceSaveResponse => {
+const parseHealthCheckError = (errorResponse: unknown): parseDataSourceSaveResponse => {
   let message: string | undefined;
   let details: HealthCheckResultDetails;
 
-  if (errorResponse.error && errorResponse.error instanceof HealthCheckError) {
+  if (
+    errorResponse &&
+    typeof errorResponse === 'object' &&
+    'error' in errorResponse &&
+    errorResponse.error instanceof HealthCheckError
+  ) {
     message = errorResponse.error.message;
     details = errorResponse.error.details;
   } else if (isFetchError(errorResponse)) {
@@ -242,9 +247,9 @@ export function loadDataSourceMeta(dataSource: DataSourceSettings): ThunkResult<
 }
 
 export function addDataSource(
-  plugin: DataSourcePluginMeta,
+  plugin: Pick<DataSourcePluginMeta, 'id' | 'name'>,
   editRoute = DATASOURCES_ROUTES.Edit
-): ThunkResult<Promise<void>> {
+): ThunkResult<Promise<string>> {
   return async () => {
     const newInstance = {
       type: plugin.id,
@@ -274,6 +279,8 @@ export function addDataSource(
     });
 
     locationService.push(editRoute.replace(/:uid/gi, uid));
+
+    return uid;
   };
 }
 

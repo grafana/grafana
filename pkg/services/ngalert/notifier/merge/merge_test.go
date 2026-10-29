@@ -6,22 +6,20 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/grafana/alerting/definition"
-	"github.com/prometheus/alertmanager/config"
+	config "github.com/prometheus/alertmanager/config/common"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v3"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
 )
 
 func TestReceivers(t *testing.T) {
 	r := func(name string) *v1.PostableApiReceiver {
-		return &v1.PostableApiReceiver{
-			Name: name,
-		}
+		return new(v1.NewReceiver(name, nil, models.ProvenanceNone))
 	}
 
 	identifier := "dupe"
@@ -36,9 +34,9 @@ func TestReceivers(t *testing.T) {
 		name            string
 		existing        []*v1.PostableApiReceiver
 		incoming        []*v1.PostableApiReceiver
-		expected        []*v1.PostableApiReceiver
+		expected        map[v1.ResourceUID]v1.PostableApiReceiver
 		expectedRenames map[string]string
-		expectedAdded   []string
+		expectedAdded   []v1.ResourceUID
 	}{
 		{
 			name: "should append copies of incoming to existing",
@@ -49,13 +47,13 @@ func TestReceivers(t *testing.T) {
 				r1,
 				r3,
 			},
-			expected: []*v1.PostableApiReceiver{
+			expected: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 				r2,
 				r1,
 				r3,
-			},
+			}),
 			expectedRenames: map[string]string{},
-			expectedAdded:   []string{"r1", "r3"},
+			expectedAdded:   []v1.ResourceUID{v1.ReceiverUID("r1"), v1.ReceiverUID("r3")},
 		},
 		{
 			name: "should rename incoming if there is existing",
@@ -65,14 +63,14 @@ func TestReceivers(t *testing.T) {
 			incoming: []*v1.PostableApiReceiver{
 				r("r2"),
 			},
-			expected: []*v1.PostableApiReceiver{
+			expected: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 				r2,
 				r("r2" + suffix),
-			},
+			}),
 			expectedRenames: map[string]string{
 				"r2": "r2" + suffix,
 			},
-			expectedAdded: []string{"r2" + suffix},
+			expectedAdded: []v1.ResourceUID{v1.ReceiverUID("r2" + suffix)},
 		},
 		{
 			name: "should rename incoming if there is existing after dedup",
@@ -83,15 +81,15 @@ func TestReceivers(t *testing.T) {
 			incoming: []*v1.PostableApiReceiver{
 				r("r2"),
 			},
-			expected: []*v1.PostableApiReceiver{
+			expected: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 				r2,
 				r2s,
 				r("r2" + suffix + "_01"),
-			},
+			}),
 			expectedRenames: map[string]string{
 				"r2": "r2" + suffix + "_01",
 			},
-			expectedAdded: []string{"r2" + suffix + "_01"},
+			expectedAdded: []v1.ResourceUID{v1.ReceiverUID("r2" + suffix + "_01")},
 		},
 		{
 			name: "should keep names unique across both sets",
@@ -103,16 +101,16 @@ func TestReceivers(t *testing.T) {
 				r("r2"),
 				r("r2" + suffix + "_01"),
 			},
-			expected: []*v1.PostableApiReceiver{
+			expected: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 				r2,
 				r2s,
 				r("r2" + suffix + "_02"),
 				r("r2" + suffix + "_01"),
-			},
+			}),
 			expectedRenames: map[string]string{
 				"r2": "r2" + suffix + "_02",
 			},
-			expectedAdded: []string{"r2" + suffix + "_02", "r2" + suffix + "_01"},
+			expectedAdded: []v1.ResourceUID{v1.ReceiverUID("r2" + suffix + "_02"), v1.ReceiverUID("r2" + suffix + "_01")},
 		},
 	}
 	for _, tc := range testCases {
@@ -125,19 +123,10 @@ func TestReceivers(t *testing.T) {
 				incomingNames = append(incomingNames, r.Name)
 			}
 
-			actual, actualRenames, actualAdded := Receivers(tc.existing, tc.incoming, identifier)
-			require.Len(t, actual, len(tc.expected))
+			actual, actualRenames, actualAdded := Receivers(v1.ReceiversFromSlice(tc.existing), tc.incoming, identifier)
+			assert.Equal(t, tc.expected, actual)
 			assert.EqualValues(t, tc.expectedRenames, actualRenames)
 			assert.Equal(t, tc.expectedAdded, actualAdded)
-			for i := range tc.expected {
-				assert.EqualValues(t, tc.expected[i], actual[i])
-				if i < len(tc.existing) {
-					assert.Same(t, tc.existing[i], actual[i])
-				} else {
-					idx := i - len(tc.existing)
-					assert.NotSame(t, tc.incoming[idx], actual[i])
-				}
-			}
 
 			t.Run("items of the lists should not be changed", func(t *testing.T) {
 				var names []string
@@ -157,7 +146,7 @@ func TestReceivers(t *testing.T) {
 
 func TestTimeIntervals(t *testing.T) {
 	ti := func(name string) v1.TimeInterval {
-		return v1.NewTimeInterval(name, nil, models.ProvenanceNone)
+		return v1.NewTimeInterval(v1.TimeIntervalUID(name), name, nil, models.ProvenanceNone)
 	}
 	toMap := func(intervals ...v1.TimeInterval) map[v1.ResourceUID]v1.TimeInterval {
 		m := make(map[v1.ResourceUID]v1.TimeInterval, len(intervals))
@@ -332,6 +321,37 @@ func TestTimeIntervals(t *testing.T) {
 	}
 }
 
+func TestTimeIntervals_UIDCollisionWithOrphanedExisting(t *testing.T) {
+	// An existing interval renamed away from "payments" keeps its old, name-derived UID (UID no
+	// longer moves with a rename). An incoming interval still named "payments" has no name
+	// collision to dedup against, so without the occupancy check it would compute the same UID
+	// and silently overwrite the existing entry.
+	orphanedUID := v1.TimeIntervalUID("payments")
+	existing := map[v1.ResourceUID]v1.TimeInterval{
+		orphanedUID: v1.NewTimeInterval(orphanedUID, "payments-platform", nil, models.ProvenanceNone),
+	}
+	incoming := []v1.TimeInterval{
+		v1.NewTimeInterval(v1.TimeIntervalUID("payments"), "payments", nil, models.ProvenanceNone),
+	}
+
+	result, renames, added := TimeIntervals(existing, incoming, "dupe")
+
+	assert.Empty(t, renames, "the name itself didn't collide, so it should not have been renamed")
+	require.Len(t, result, 2)
+
+	// The orphaned existing entry must survive untouched.
+	stillThere, ok := result[orphanedUID]
+	require.True(t, ok)
+	assert.Equal(t, "payments-platform", stillThere.Title)
+
+	// The incoming interval must have been given a different UID instead of colliding.
+	require.Len(t, added, 1)
+	assert.NotEqual(t, orphanedUID, added[0])
+	addedInterval, ok := result[added[0]]
+	require.True(t, ok)
+	assert.Equal(t, "payments", addedInterval.Title)
+}
+
 //go:embed testdata/mimir_no_intervals.yaml
 var fullMimirNoIntervals string
 
@@ -344,15 +364,17 @@ var fullMimirWithOnlyExtraReceiver string
 //go:embed testdata/mimir_swapped_intervals.yaml
 var fullMimirSwappedIntervals string
 
-func load(t *testing.T, yaml string, mutate ...func(p *v1.PostableApiAlertingConfig)) *v1.AMConfigV1 {
+func load(t *testing.T, raw string, mutate ...func(cfg *v1.AMConfigV1)) *v1.AMConfigV1 {
 	t.Helper()
-	orig, err := definition.LoadCompat([]byte(yaml))
+	orig := store.AMConfigDB{
+		AlertmanagerConfig: store.AlertingConfigDB{},
+	}
+	err := yaml.Unmarshal([]byte(raw), &orig.AlertmanagerConfig)
 	require.NoError(t, err)
-	cfg := v1.ToModel(&definitions.PostableUserConfig{
-		AlertmanagerConfig: *orig,
-	})
+
+	cfg := v1.ToModel(&orig)
 	for _, m := range mutate {
-		m(&cfg.AlertmanagerConfig)
+		m(cfg)
 	}
 	return cfg
 }
@@ -378,7 +400,7 @@ var mergedSuffixedReceiverConfig string
 //go:embed testdata/merged_renamed_intervals.json
 var mergedRenamedIntervalsConfig string
 
-// assertMergedConfig serializes the merged config to its DB (PostableUserConfig) form and compares it against a
+// assertMergedConfig serializes the merged config to its DB (AMConfigDB) form and compares it against a
 // snapshot of the expected merge result.
 func assertMergedConfig(t *testing.T, config v1.AMConfigV1, expected string) {
 	t.Helper()
@@ -392,7 +414,7 @@ func assertMergedConfig(t *testing.T, config v1.AMConfigV1, expected string) {
 func TestMergeExtraConfig(t *testing.T) {
 	identifier := "mimir-12345"
 
-	// withExtra wraps grafana and a raw mimir YAML string into a PostableUserConfig with ExtraConfigs.
+	// withExtra wraps grafana and a raw mimir YAML string into an AMConfigV1 with ExtraConfigs.
 	// Optional mutateFn can adjust the ExtraConfiguration before it's used.
 	withExtra := func(t *testing.T, grafana *v1.AMConfigV1, mimirYAML string, mutateFn ...func(*v1.ExtraConfiguration)) v1.AMConfigV1 {
 		t.Helper()
@@ -433,10 +455,13 @@ func TestMergeExtraConfig(t *testing.T) {
 	})
 
 	t.Run("should append index suffix if rename still collides", func(t *testing.T) {
-		grafana := load(t, fullGrafanaConfig, func(p *v1.PostableApiAlertingConfig) {
-			p.Receivers = append(p.Receivers, &v1.PostableApiReceiver{
-				Name: "grafana-default-email" + getDedupSuffix(identifier),
-			})
+		grafana := load(t, fullGrafanaConfig, func(cfg *v1.AMConfigV1) {
+			name := "grafana-default-email" + getDedupSuffix(identifier)
+			if cfg.Receivers == nil {
+				cfg.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, 1)
+			}
+			r := v1.NewReceiver(name, nil, models.ProvenanceNone)
+			cfg.Receivers[r.UID] = r
 		})
 		input := withExtra(t, grafana, fullMimirWithOnlyExtraReceiver)
 		config, _, err := MergeExtraConfig(context.Background(), &input)
@@ -480,7 +505,7 @@ func TestMergeExtraConfig(t *testing.T) {
 
 	t.Run("should fail if identifier conflicts with existing managed route", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
-		input.ManagedRoutes = v1.ManagedRoutes{identifier: nil}
+		input.ManagedRoutes = map[string]*v1.Route{identifier: nil}
 		_, _, err := MergeExtraConfig(context.Background(), &input)
 		require.ErrorContains(t, err, identifier)
 	})
@@ -552,7 +577,7 @@ func TestMergeExtraConfig(t *testing.T) {
 
 	t.Run("should preserve existing managed routes in result", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
-		input.ManagedRoutes = v1.ManagedRoutes{"existing-managed": {Receiver: "existing"}}
+		input.ManagedRoutes = map[string]*v1.Route{"existing-managed": {Receiver: "existing"}}
 		config, _, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 

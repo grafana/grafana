@@ -362,10 +362,7 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 			return err
 		}
 
-		foundLength := len(foundFiles)
-		if foundLength > pageSize {
-			foundLength = pageSize
-		}
+		foundLength := min(len(foundFiles), pageSize)
 
 		pathToHash := make(map[string]string)
 		hashes := make([]string, 0)
@@ -441,7 +438,7 @@ func (s dbFileStorage) CreateFolder(ctx context.Context, path string) error {
 		var insertErr error
 		sess.MustLogSQL(true)
 		previousFolder := Delimiter
-		for i := 0; i < len(precedingFolders); i++ {
+		for i := range precedingFolders {
 			existing := &file{}
 			currentFolderParentPath := previousFolder
 			previousFolder = Join(previousFolder, getName(precedingFolders[i]))

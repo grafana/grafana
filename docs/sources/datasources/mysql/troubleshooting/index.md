@@ -15,7 +15,7 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot MySQL data source issues
 weight: 400
-review_date: 2026-05-11
+review_date: 2026-08-10
 ---
 
 # Troubleshoot MySQL data source issues
@@ -432,6 +432,7 @@ If you continue to experience issues after following this troubleshooting guide:
 When reporting issues, include:
 
 - Grafana version
+- MySQL data source plugin version, found on the **Administration > Plugins** page. The plugin updates independently of Grafana releases.
 - MySQL version
 - Error messages (redact sensitive information)
 - Steps to reproduce

@@ -113,3 +113,125 @@ describe('fieldConfigSchema matcher validation', () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe('transformation refId', () => {
+  function transformation(spec: Record<string, unknown>) {
+    return { kind: 'Transformation', group: 'limit', spec };
+  }
+
+  function parseUpdatePanelTransformation(spec: Record<string, unknown>) {
+    const result = payloads.updatePanel.safeParse({
+      element: { name: 'panel-1' },
+      panel: { spec: { data: { spec: { transformations: [transformation(spec)] } } } },
+    });
+    if (!result.success) {
+      throw new Error(`expected parse success: ${result.error.message}`);
+    }
+    return result.data.panel!.spec.data!.spec.transformations![0].spec;
+  }
+
+  it('keeps a user-set refId on UPDATE_PANEL', () => {
+    expect(parseUpdatePanelTransformation({ refId: 'T1', options: { limitField: 10 } }).refId).toBe('T1');
+  });
+
+  it('leaves refId unset when the caller omits it', () => {
+    expect(parseUpdatePanelTransformation({ options: {} }).refId).toBeUndefined();
+  });
+
+  it('keeps a user-set refId on ADD_PANEL', () => {
+    const result = payloads.addPanel.safeParse({
+      panel: {
+        spec: {
+          title: 'Transform panel',
+          data: { spec: { queries: [], transformations: [transformation({ refId: 'T1', options: {} })] } },
+          vizConfig: { group: 'timeseries', spec: {} },
+        },
+      },
+    });
+
+    if (!result.success) {
+      throw new Error(`expected parse success: ${result.error.message}`);
+    }
+    expect(result.data.panel.spec.data.spec.transformations[0].spec.refId).toBe('T1');
+  });
+});
+
+describe('GET_METADATA_ANNOTATIONS payload', () => {
+  const key = 'grafana.app/useCrossDashboardVariables';
+
+  it('accepts the allowlisted key', () => {
+    expect(payloads.getMetadataAnnotations.safeParse({ annotations: [key] }).success).toBe(true);
+  });
+
+  it('rejects an empty key list', () => {
+    expect(payloads.getMetadataAnnotations.safeParse({ annotations: [] }).success).toBe(false);
+    expect(payloads.getMetadataAnnotations.safeParse({}).success).toBe(false);
+  });
+
+  it('rejects an unknown annotation key', () => {
+    expect(
+      payloads.getMetadataAnnotations.safeParse({
+        annotations: ['grafana.app/createdBy'],
+      }).success
+    ).toBe(false);
+  });
+});
+
+describe('UPDATE_METADATA_ANNOTATIONS payload', () => {
+  const key = 'grafana.app/useCrossDashboardVariables';
+
+  it('accepts all/none/name-array scopes under the allowlisted key', () => {
+    expect(
+      payloads.updateMetadataAnnotations.safeParse({
+        annotations: { [key]: { global: 'all', folder: 'none' } },
+      }).success
+    ).toBe(true);
+    expect(
+      payloads.updateMetadataAnnotations.safeParse({
+        annotations: { [key]: { global: ['env'], folder: ['cluster'] } },
+      }).success
+    ).toBe(true);
+  });
+
+  it('accepts null to clear the allowlisted annotation', () => {
+    expect(
+      payloads.updateMetadataAnnotations.safeParse({
+        annotations: { [key]: null },
+      }).success
+    ).toBe(true);
+  });
+
+  it('rejects an invalid scope value', () => {
+    expect(
+      payloads.updateMetadataAnnotations.safeParse({
+        annotations: { [key]: { global: 'maybe', folder: 'none' } },
+      }).success
+    ).toBe(false);
+    expect(
+      payloads.updateMetadataAnnotations.safeParse({
+        annotations: { [key]: { global: [1], folder: 'none' } },
+      }).success
+    ).toBe(false);
+    expect(
+      payloads.updateMetadataAnnotations.safeParse({
+        annotations: { [key]: { global: 'all' } },
+      }).success
+    ).toBe(false);
+  });
+
+  it('rejects an unknown annotation key', () => {
+    expect(
+      payloads.updateMetadataAnnotations.safeParse({
+        annotations: { 'grafana.app/createdBy': 'me' },
+      }).success
+    ).toBe(false);
+    expect(
+      payloads.updateMetadataAnnotations.safeParse({
+        annotations: {
+          [key]: { global: 'all', folder: 'none' },
+          'grafana.app/folder': 'folder-1',
+        },
+      }).success
+    ).toBe(false);
+  });
+});

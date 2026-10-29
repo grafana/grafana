@@ -49,12 +49,18 @@ outputs:
   makefile:
     description: Whether any Makefile changed
     value: ${{ steps.changed-files.outputs.makefile_any_modified || 'true' }}
+  golangci-config:
+    description: Whether the golangci-lint config changed
+    value: ${{ steps.changed-files.outputs.golangci_config_any_modified || 'true' }}
   rpm-packaging:
     description: Whether RPM/DEB packaging scripts or the Makefile changed
     value: ${{ steps.changed-files.outputs.rpm_packaging_any_modified || 'true' }}
   devenv:
     description: Whether the devenv or self have changed in any way
     value: ${{ steps.changed-files.outputs.devenv_any_modified || 'true' }}
+  dev-dashboards:
+    description: Whether the dev-dashboards jsonnet codegen inputs (devenv/dev-dashboards/** or devenv/jsonnet/**) or self have changed
+    value: ${{ steps.changed-files.outputs.dev_dashboards_any_modified || 'true' }}
 runs:
   using: composite
   steps:
@@ -75,6 +81,8 @@ runs:
           makefile:
             - 'Makefile'
             - '**/Makefile'
+          golangci_config:
+            - '.golangci.yml'
           docker_build:
             # Mirrors the on.paths trigger of pr-test-docker.yml: files that can
             # affect the built Docker image. Test-only changes are excluded below
@@ -91,10 +99,11 @@ runs:
             - '**/package.json'
             - '**/nx.json'
             - '**/project.json'
-            - '**/yarn.lock'
+            - '**/pnpm-lock.yaml'
             - 'conf/**'
-            - '.yarnrc.yml'
-            - '.yarn/**'
+            - 'pnpm-workspace.yaml'
+            - '.npmrc'
+            - 'patches/**'
             - 'tsconfig.json'
             - '**.js'
             - '*.ts'
@@ -116,8 +125,8 @@ runs:
             - '!**.spec.tsx'
             - '!e2e/**'
             - '!e2e-playwright/**'
-            # test-plugins/* are yarn workspaces copied into the image before
-            # `yarn install --immutable`, so a manifest change there can break the
+            # test-plugins/* are frontend workspaces copied into the image before
+            # dependencies are installed, so a manifest change there can break the
             # build even though the rest of e2e-playwright is test-only.
             - 'e2e-playwright/test-plugins/**/package.json'
           rpm_packaging:
@@ -184,6 +193,7 @@ runs:
           frontend:
             - '.github/actions/setup-enterprise/**'
             - '.github/actions/checkout/**'
+            - '.github/actions/build-frontend/**'
             - 'public/**'
             - '**.js'
             - '**.jsx'
@@ -191,19 +201,20 @@ runs:
             - '**.tsx'
             - '**.css'
             - '**.mjs'
-            - 'yarn.lock'
             - 'package.json'
             - '!**.md'
             - '.github/actions/change-detection/**'
             - '**.cue'
             - '.prettier*'
-            - '.yarnrc.yml'
-            - 'yarn.config.cjs'
+            - '.nvmrc'
             - 'eslint.config.js'
             - 'jest.config.js'
             - 'nx.json'
             - 'tsconfig.json'
-            - '.yarn/**'
+            - 'pnpm-lock.yaml'
+            - 'pnpm-workspace.yaml'
+            - '.npmrc'
+            - 'patches/**'
             - 'apps/dashboard/pkg/migration/**'
             - '${{ inputs.self }}'
           frontend_src:
@@ -211,6 +222,7 @@ runs:
             # gate frontend jobs (e.g. Meticulous) that a test-only PR can't affect.
             - '.github/actions/setup-enterprise/**'
             - '.github/actions/checkout/**'
+            - '.github/actions/build-frontend/**'
             - 'public/**'
             - '**.js'
             - '**.jsx'
@@ -218,19 +230,19 @@ runs:
             - '**.tsx'
             - '**.css'
             - '**.mjs'
-            - 'yarn.lock'
             - 'package.json'
             - '!**.md'
             - '.github/actions/change-detection/**'
             - '**.cue'
             - '.prettier*'
-            - '.yarnrc.yml'
-            - 'yarn.config.cjs'
             - 'eslint.config.js'
             - 'jest.config.js'
             - 'nx.json'
             - 'tsconfig.json'
-            - '.yarn/**'
+            - 'pnpm-lock.yaml'
+            - 'pnpm-workspace.yaml'
+            - '.npmrc'
+            - 'patches/**'
             - 'apps/dashboard/pkg/migration/**'
             - '${{ inputs.self }}'
             - '!**.test.ts'
@@ -244,11 +256,12 @@ runs:
             # apps/dashboard/pkg/migration/** carries Go tests; exclude them too.
             - '!**_test.go'
           frontend_dependencies:
-            - 'yarn.lock'
             - 'package.json'
             - '**/package.json'
-            - '.yarnrc.yml'
-            - 'yarn.config.cjs'
+            - 'pnpm-lock.yaml'
+            - 'pnpm-workspace.yaml'
+            - '.npmrc'
+            - 'patches/**'
           frontend_packages:
             - '.github/actions/checkout/**'
             - '.github/actions/change-detection/**'
@@ -302,6 +315,14 @@ runs:
             - 'devenv/**'
             - '.dockerignore'
             - '${{ inputs.self }}'
+          dev_dashboards:
+            # devenv/dev-dashboards/** is go:embed'd and drives the devenv/jsonnet
+            # codegen (dev-dashboards.libsonnet); devenv/jsonnet/** is that codegen
+            # itself. Narrower than `devenv` so unrelated devenv/** changes (e.g.
+            # devenv/docker/blocks/**) don't trigger backend codegen verification.
+            - 'devenv/dev-dashboards/**'
+            - 'devenv/jsonnet/**'
+            - '${{ inputs.self }}'
     - name: Print all change groups
       shell: bash
       run: |
@@ -337,3 +358,5 @@ runs:
         echo " --> ${{ steps.changed-files.outputs.rpm_packaging_all_modified_files }}"
         echo "devenv: ${{ steps.changed-files.outputs.devenv_any_modified || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.devenv_all_modified_files }}"
+        echo "Dev dashboards: ${{ steps.changed-files.outputs.dev_dashboards_any_modified || 'true' }}"
+        echo " --> ${{ steps.changed-files.outputs.dev_dashboards_all_modified_files }}"

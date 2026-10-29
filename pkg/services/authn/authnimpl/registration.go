@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
@@ -43,8 +44,9 @@ func ProvideRegistration(
 	authInfoService login.AuthInfoService, renderService rendering.Service,
 	features featuremgmt.FeatureToggles, oauthTokenService oauthtoken.OAuthTokenService,
 	socialService social.Service, cache *remotecache.RemoteCache,
-	ldapService service.LDAP, settingsProviderService setting.Provider,
+	ldapService service.LDAP, settingsProvider setting.Provider,
 	tracer tracing.Tracer, tempUserService tempuser.Service, notificationService notifications.Service,
+	pluginAuth *pluginauth.Config,
 ) (Registration, error) {
 	logger := log.New("authn.registration")
 
@@ -95,18 +97,17 @@ func ProvideRegistration(
 	}
 
 	if cfg.JWTAuth.Enabled {
-		orgRoleMapper := connectors.ProvideOrgRoleMapper(cfg, orgService)
+		orgRoleMapper := connectors.ProvideOrgRoleMapper(cfgProvider, orgService)
 		authnSvc.RegisterClient(clients.ProvideJWT(jwtService, orgRoleMapper, cfg, tracer))
 	}
 
-	if cfg.ExtJWTAuth.Enabled {
-		authnSvc.RegisterClient(clients.ProvideExtendedJWT(cfg, tracer))
+	// Also enabled without [auth.extended_jwt] for the tokens of the local
+	// plugin token exchange (see pluginauth.Config).
+	if extJWT := clients.ProvideExtendedJWTWithPluginAuth(cfg, tracer, pluginAuth); extJWT.IsEnabled(ctx) {
+		authnSvc.RegisterClient(extJWT)
 	}
 
-	for name := range socialService.GetOAuthProviders() {
-		clientName := authn.ClientWithPrefix(name)
-		authnSvc.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService, settingsProviderService, features, tracer))
-	}
+	registerOAuthClients(ctx, logger, authnSvc, cfgProvider, oauthTokenService, socialService, settingsProvider, features, tracer)
 
 	if cfg.ProvisioningEnabled {
 		authnSvc.RegisterClient(clients.ProvideProvisioning())
@@ -132,12 +133,9 @@ func ProvideRegistration(
 		authnSvc.RegisterPostAuthHook(userSync.ValidateUserProvisioningHook, 30)
 	}
 
-	rbacSync := sync.ProvideRBACSync(cfg, accessControlService, tracer, permRegistry, features)
+	rbacSync := sync.ProvideRBACSync(cfg, accessControlService, tracer, permRegistry)
 	authnSvc.RegisterPostAuthHook(rbacSync.SyncCloudRoles, 110)
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagCloudRBACRoles) {
-		authnSvc.RegisterPreLogoutHook(gcomsso.ProvideGComSSOService(cfg).LogoutHook, 50)
-	}
+	authnSvc.RegisterPreLogoutHook(gcomsso.ProvideGComSSOService(cfg).LogoutHook, 50)
 
 	authnSvc.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)
 	authnSvc.RegisterPostLoginHook(orgSync.SetDefaultOrgHook, 140)
@@ -149,4 +147,25 @@ func ProvideRegistration(
 	authnSvc.RegisterPostAuthHook(sync.AccessClaimsHook, 160)
 
 	return Registration{}, nil
+}
+
+func registerOAuthClients(
+	ctx context.Context, logger log.Logger, authnSvc authn.Service,
+	cfgProvider configprovider.ConfigProvider, oauthTokenService oauthtoken.OAuthTokenService,
+	socialService social.Service, settingsProvider setting.Provider,
+	features featuremgmt.FeatureToggles, tracer tracing.Tracer,
+) {
+	oauthProviders, err := socialService.GetOAuthProviders(ctx)
+	if err != nil {
+		// OAuth provider settings can be loaded dynamically. Preserve startup
+		// availability if that lookup is temporarily unavailable; no OAuth clients
+		// are registered, and later process restarts can retry the lookup.
+		logger.Error("Failed to get OAuth providers; OAuth clients will not be registered", "err", err)
+		return
+	}
+
+	for name := range oauthProviders {
+		clientName := authn.ClientWithPrefix(name)
+		authnSvc.RegisterClient(clients.ProvideOAuth(clientName, cfgProvider, oauthTokenService, socialService, settingsProvider, features, tracer))
+	}
 }

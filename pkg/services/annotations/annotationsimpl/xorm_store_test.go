@@ -202,7 +202,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		t.Run("Can batch-insert annotations", func(t *testing.T) {
 			count := 10
 			items := make([]annotations.Item, count)
-			for i := 0; i < count; i++ {
+			for i := range count {
 				items[i] = annotations.Item{
 					OrgID: 100,
 					Type:  "batch",
@@ -228,7 +228,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		t.Run("Can batch-insert annotations with tags", func(t *testing.T) {
 			count := 10
 			items := make([]annotations.Item, count)
-			for i := 0; i < count; i++ {
+			for i := range count {
 				items[i] = annotations.Item{
 					OrgID: 101,
 					Type:  "batch",
@@ -236,6 +236,8 @@ func TestIntegrationAnnotations(t *testing.T) {
 				}
 			}
 			items[0].Tags = []string{"type:test"}
+			items[1].Tags = []string{"type:test", "env:prod"}
+			items[2].Tags = []string{"env:prod"}
 
 			err := store.AddMany(context.Background(), items)
 
@@ -245,6 +247,13 @@ func TestIntegrationAnnotations(t *testing.T) {
 			inserted, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
 			assert.Len(t, inserted, count)
+
+			tags, err := store.GetTags(context.Background(), annotations.TagsQuery{OrgID: 101})
+			require.NoError(t, err)
+			assert.ElementsMatch(t, []*annotations.TagsDTO{
+				{Tag: "env:prod", Count: 2},
+				{Tag: "type:test", Count: 2},
+			}, tags.Tags)
 		})
 
 		t.Run("Can query for annotation by id", func(t *testing.T) {
@@ -459,6 +468,17 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.Equal(t, []string{"newtag1", "newtag3"}, items[0].Tags)
 			assert.Equal(t, "something new", items[0].Text)
 			assert.Greater(t, items[0].Updated, items[0].Created)
+
+			var linkedTags []string
+			err = sql.WithDbSession(context.Background(), func(dbSession *db.Session) error {
+				return dbSession.SQL(
+					"SELECT tag.key FROM annotation_tag JOIN tag ON tag.id = annotation_tag.tag_id WHERE annotation_tag.annotation_id = ?",
+					annotationId,
+				).Find(&linkedTags)
+			})
+			require.NoError(t, err)
+			assert.ElementsMatch(t, []string{"newtag1", "newtag3"}, linkedTags,
+				"replaced tags must be deleted from annotation_tag, not just from annotation.tags")
 		})
 
 		t.Run("Can update annotations with data", func(t *testing.T) {
@@ -727,12 +747,12 @@ func benchmarkFindTags(b *testing.B, numAnnotations int) {
 	newAnnotations := make([]annotations.Item, 0, numAnnotations)
 	newTags := make([]tag.Tag, 0, numAnnotations)
 	newAnnotationTags := make([]annotationTag, 0, numAnnotations)
-	for i := 0; i < numAnnotations; i++ {
+	for i := range numAnnotations {
 		newAnnotations = append(newAnnotations, annotations.Item{
 			ID:          int64(i),
 			OrgID:       1,
 			UserID:      1,
-			DashboardID: int64(i),
+			DashboardID: int64(i), //nolint:staticcheck // Exercise legacy field compatibility.
 			Text:        "hello",
 			Type:        "alert",
 			Epoch:       10,
@@ -751,7 +771,7 @@ func benchmarkFindTags(b *testing.B, numAnnotations int) {
 	err := sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		batchSize := 1000
 		numOfBatches := numAnnotations / batchSize
-		for i := 0; i < numOfBatches; i++ {
+		for i := range numOfBatches {
 			_, err := sess.Insert(newAnnotations[i*batchSize : (i+1)*batchSize-1])
 			require.NoError(b, err)
 

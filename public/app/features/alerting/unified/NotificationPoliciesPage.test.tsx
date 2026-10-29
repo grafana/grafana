@@ -9,7 +9,6 @@ import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '@grafan
 import { selectors } from '@grafana/e2e-selectors';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
-import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/hooks/abilities/alertmanager/useNotificationPolicyAbility';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   getErrorResponse,
@@ -28,6 +27,7 @@ import {
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
 import { ALERTING_API_SERVER_BASE_URL } from 'app/features/alerting/unified/mocks/server/utils';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/utils/alertmanagerPermissions';
 import {
   type AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
@@ -85,6 +85,17 @@ const openEditModal = async (
   const user = userEvent.setup();
   await user.click((await ui.moreActions.findAll())[index]);
   await user.click(await ui.editButton.find());
+};
+
+const addChildRouteToDefaultPolicy = async () => {
+  const user = userEvent.setup();
+  const rootRoute = await getRootRoute();
+  await user.click(within(rootRoute).getByRole('button', { name: /add route/i }));
+
+  const addModal = await screen.findByRole('dialog');
+  await user.type(within(addModal).getByPlaceholderText('label'), 'team');
+  await user.type(within(addModal).getByPlaceholderText('value'), 'alerting');
+  await user.click(within(addModal).getByRole('button', { name: /add route/i }));
 };
 
 // This renders the notification policies tree/list page.
@@ -180,7 +191,7 @@ const ui = {
   groupRepeatContainer: byTestId('am-repeat-interval'),
 
   confirmDeleteModal: byRole('dialog'),
-  confirmDeleteButton: byRole('button', { name: /yes, delete policy/i }),
+  confirmDeleteButton: byRole('button', { name: /yes, delete route/i }),
 };
 
 const getRootRoute = async () => {
@@ -447,6 +458,39 @@ describe.each([
     expect(policy).toHaveTextContent(
       `Muted when ${TIME_INTERVAL_NAME_HAPPY_PATH}, ${TIME_INTERVAL_NAME_FILE_PROVISIONED}`
     );
+  });
+
+  it('Can add a child route without permission to read alert instances', async () => {
+    grantUserPermissions([
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingNotificationsWrite,
+      ...PERMISSIONS_NOTIFICATION_POLICIES,
+    ]);
+
+    renderPage();
+    await addChildRouteToDefaultPolicy();
+
+    expect(await screen.findByRole('status')).toHaveTextContent(/updated notification policies/i);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('alert', { name: /failed to add or update notification policy/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it('Keeps the modal open and shows the error when adding a child route fails', async () => {
+    server.use(
+      http.put(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees/:name`, () =>
+        getErrorResponse('user is not authorized to write routing trees', 403)
+      )
+    );
+
+    renderPage();
+    await addChildRouteToDefaultPolicy();
+
+    const errorAlert = await screen.findByRole('alert', { name: /failed to add or update notification policy/i });
+    expect(errorAlert).toHaveTextContent(/user is not authorized to write routing trees/i);
+    expect(screen.getByRole('dialog')).toContainElement(errorAlert);
+    expect(screen.queryByText(/updated notification policies/i)).not.toBeInTheDocument();
   });
 });
 

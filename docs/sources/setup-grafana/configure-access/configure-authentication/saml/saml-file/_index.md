@@ -37,6 +37,12 @@ To configure SAML authentication in Grafana using the configuration file, follow
    - [Configure SAML with Entra ID](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-azuread/)
 4. Save the configuration file and then restart the Grafana server.
 
+{{< admonition type="warning" >}}
+If SAML was ever configured through the SSO Settings API, the SAML UI, Terraform, or [settings updates at runtime](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/settings-updates-at-runtime/), those stored values override this file and nothing in the UI or this file says so. Rotating `private_key`, `certificate`, or the IdP metadata here then has no effect.
+
+Before rotating a credential, refer to [Check for stored settings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/settings-updates-at-runtime/#check-for-stored-settings).
+{{< /admonition >}}
+
 Here's an example of a Grafana configuration file with SAML:
 
 ```ini

@@ -4,22 +4,13 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // TimeNow makes it possible to test usage of time
 var TimeNow = time.Now
-
-// AlertDefinitionMaxTitleLength is the maximum length of the alert definition title
-const AlertDefinitionMaxTitleLength = 190
 
 // AlertingStore is the database interface used by the Alertmanager service.
 type AlertingStore interface {
@@ -33,43 +24,17 @@ type AlertingStore interface {
 	GetHistoricalConfiguration(ctx context.Context, orgID int64, id int64) (*models.HistoricAlertConfiguration, error)
 }
 
-// DBstore stores the alert definitions and instances in the database.
+// DBstore stores the Alertmanager configuration, admin configuration, alert instances and images.
+// Rules and provenance have their own stores and are deliberately not re-exported here.
 type DBstore struct {
-	Cfg              setting.UnifiedAlertingSettings
-	FeatureToggles   featuremgmt.FeatureToggles
-	SQLStore         db.DB
-	Logger           log.Logger
-	FolderService    folder.Service
-	DashboardService dashboards.DashboardService
-	AccessControl    accesscontrol.AccessControl
-	Bus              bus.Bus
+	SQLStore db.DB
+	Logger   log.Logger
 }
 
-func ProvideDBStore(
-	cfg *setting.Cfg,
-	featureToggles featuremgmt.FeatureToggles,
-	sqlstore db.DB,
-	folderService folder.Service,
-	dashboards dashboards.DashboardService,
-	ac accesscontrol.AccessControl,
-	bus bus.Bus,
-) (*DBstore, error) {
+func ProvideDBStore(sqlstore db.DB) (*DBstore, error) {
 	store := DBstore{
-		Cfg:              cfg.UnifiedAlerting,
-		FeatureToggles:   featureToggles,
-		SQLStore:         sqlstore,
-		Logger:           log.New("ngalert.dbstore"),
-		FolderService:    folderService,
-		DashboardService: dashboards,
-		AccessControl:    ac,
-		Bus:              bus,
-	}
-	if err := folderService.RegisterService(store); err != nil {
-		return nil, err
+		SQLStore: sqlstore,
+		Logger:   log.New("ngalert.dbstore"),
 	}
 	return &store, nil
-}
-
-type RuleChangeEvent struct {
-	RuleKeys []models.AlertRuleKey
 }

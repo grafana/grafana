@@ -61,6 +61,7 @@ export function usePagination(frames?: DataFrame[], perPage?: number) {
         className={paginationStyles.paginationElement}
         currentPage={currentPageCapped}
         numberOfPages={numberOfPages}
+        hideWhenSinglePage
         showSmallVersion={showSmallVersion}
         onNavigate={setCurrentPage}
       />

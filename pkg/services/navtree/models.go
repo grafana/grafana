@@ -15,13 +15,14 @@ const (
 	WeightBookmarks
 	WeightSavedItems
 	WeightDashboard
+	WeightNotebooks
 	WeightExplore
 	WeightDrilldown
-	WeightNotebooks
 	WeightAssistant
 	WeightSigil
 	WeightAlerting
 	WeightAlertsAndIncidents
+	WeightWorkflows
 	WeightAIAndML
 	WeightAdaptiveTelemetry
 	WeightCMAB
@@ -161,6 +162,14 @@ func (root *NavTreeRoot) RemoveEmptyAdminSections() {
 func (root *NavTreeRoot) RemoveEmptyConnectionsSection() {
 	if sec := root.FindById("connections"); sec != nil && len(sec.Children) == 0 {
 		root.RemoveSectionByID("connections")
+	}
+}
+
+// RemoveEmptyDrilldownSection removes the Drilldown section if it has no children.
+// Must be called AFTER all hooks have had a chance to add their nav items.
+func (root *NavTreeRoot) RemoveEmptyDrilldownSection() {
+	if sec := root.FindById(NavIDDrilldown); sec != nil && len(sec.Children) == 0 {
+		root.RemoveSectionByID(NavIDDrilldown)
 	}
 }
 

@@ -1,4 +1,4 @@
-type UsePluginComponent<Props extends object = {}> = (componentId: string) => UsePluginComponentResult<Props>;
+type UsePluginComponent = <Props extends object = {}>(componentId: string) => UsePluginComponentResult<Props>;
 
 export type UsePluginComponentResult<Props = {}> = {
   component: React.ComponentType<Props> | undefined | null;
@@ -19,5 +19,5 @@ export function usePluginComponent<Props extends object = {}>(componentId: strin
   if (!singleton) {
     throw new Error('setPluginComponentHook(options) can only be used after the Grafana instance has started.');
   }
-  return singleton(componentId) as UsePluginComponentResult<Props>;
+  return singleton<Props>(componentId);
 }

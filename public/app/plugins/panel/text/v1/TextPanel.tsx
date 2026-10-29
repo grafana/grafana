@@ -41,13 +41,16 @@ export function TextPanel(props: Props) {
 
   if (processed.mode === TextMode.Code) {
     const code = props.options.code ?? defaultCodeOptions;
+    // Monaco needs an explicit height. In fit-content mode there is none, so
+    // approximate from the line count (the cell's CSS max-height caps it).
+    const codeHeight = props.fitContent ? estimateCodeHeight(processed.content) : props.height;
     return (
       <CodeEditor
         key={`${code.showLineNumbers}/${code.showMiniMap}`} // will reinit-on change
         value={processed.content}
         language={code.language ?? defaultCodeOptions.language!}
         width={props.width}
-        height={props.height}
+        height={codeHeight}
         containerStyles={styles.codeEditorContainer}
         showMiniMap={code.showMiniMap}
         showLineNumbers={code.showLineNumbers}
@@ -56,18 +59,34 @@ export function TextPanel(props: Props) {
     );
   }
 
+  const content = (
+    <DangerouslySetHtmlContent
+      allowRerender
+      html={processed.content}
+      className={cx('markdown-html', styles.markdownHtml)}
+      data-testid="TextPanel-converted-content"
+    />
+  );
+
+  // Fit-content: render in normal flow so the markdown defines the height. No
+  // size containment and no inner scroll — the cell's CSS bounds the result.
+  if (props.fitContent) {
+    return <div className={cx('markdown-html', styles.markdownHtmlFit)}>{content}</div>;
+  }
+
   return (
     <div className={styles.containStrict}>
-      <ScrollContainer minHeight="100%">
-        <DangerouslySetHtmlContent
-          allowRerender
-          html={processed.content}
-          className={cx('markdown-html', styles.markdownHtml)}
-          data-testid="TextPanel-converted-content"
-        />
-      </ScrollContainer>
+      <ScrollContainer minHeight="100%">{content}</ScrollContainer>
     </div>
   );
+}
+
+const CODE_LINE_HEIGHT = 18;
+const CODE_VERTICAL_PADDING = 16;
+
+function estimateCodeHeight(content: string): number {
+  const lines = content ? content.split('\n').length : 1;
+  return lines * CODE_LINE_HEIGHT + CODE_VERTICAL_PADDING;
 }
 
 function processContent(options: Options, interpolate: InterpolateFunction, disableSanitizeHtml: boolean): string {
@@ -113,5 +132,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   markdownHtml: css({
     height: '100%',
+  }),
+  // Flow layout for fit-content mode: no size containment, no fixed height, so
+  // the content defines the panel's height.
+  markdownHtmlFit: css({
+    height: 'auto',
   }),
 });

@@ -406,7 +406,7 @@ function graphToTimeseriesOptions(angular: any): {
 
   // timeRegions migration
   if (angular.timeRegions?.length) {
-    let regions = angular.timeRegions.map((old: GraphTimeRegionConfig, idx: number) => ({
+    let regions: MigratedGraphTimeRegion[] = angular.timeRegions.map((old: GraphTimeRegionConfig, idx: number) => ({
       name: `T${idx}`,
       color: old.colorMode !== 'custom' ? old.colorMode : old.fillColor,
       line: old.line,
@@ -417,7 +417,7 @@ function graphToTimeseriesOptions(angular: any): {
       to: old.to,
     }));
 
-    regions.forEach((region: GraphTimeRegionConfig, idx: number) => {
+    regions.forEach((region, idx) => {
       const anno: AnnotationQuery<GrafanaQuery> = {
         datasource: {
           type: 'datasource',
@@ -429,7 +429,7 @@ function graphToTimeseriesOptions(angular: any): {
           exclude: false,
           ids: [angular.panel.id],
         },
-        iconColor: region.fillColor ?? (region as any).color,
+        iconColor: region.fillColor ?? region.color,
         name: `Time region for panel ${angular.panel.title}${idx > 0 ? ` ${idx}` : ''}`,
         target: {
           queryType: GrafanaQueryType.TimeRegions,
@@ -478,7 +478,9 @@ function graphToTimeseriesOptions(angular: any): {
     let area = false;
     let line = false;
 
-    const sorted = (angular.thresholds as AngularThreshold[]).sort((a, b) => (a.value > b.value ? 1 : -1));
+    const sorted: AngularThreshold[] = angular.thresholds.sort((a: AngularThreshold, b: AngularThreshold) =>
+      a.value > b.value ? 1 : -1
+    );
 
     for (let idx = 0; idx < sorted.length; idx++) {
       const threshold = sorted[idx];
@@ -581,6 +583,12 @@ interface GraphTimeRegionConfig extends TimeRegionConfig {
   line: boolean;
   lineColor: string;
 }
+
+type MigratedGraphTimeRegion = Omit<GraphTimeRegionConfig, 'colorMode' | 'fillColor' | 'lineColor'> & {
+  color: string;
+  fillColor?: GraphTimeRegionConfig['fillColor'];
+  lineColor?: GraphTimeRegionConfig['lineColor'];
+};
 
 function getThresholdColor(threshold: AngularThreshold): string {
   if (threshold.colorMode === 'critical') {

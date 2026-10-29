@@ -11,6 +11,7 @@ import {
   LoadingState,
   type QueryFixAction,
   type ScopedVars,
+  type TimeRange,
 } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
@@ -219,6 +220,30 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
       resourceName,
       customNamespace,
     });
+  }
+
+  getDimensionValues(
+    subscriptionId: string,
+    resourceGroup: string,
+    metricNamespace: string,
+    resourceName: string,
+    metricName: string,
+    dimension: string,
+    range: TimeRange,
+    customNamespace?: string
+  ) {
+    return this.azureMonitorDatasource.getDimensionValues(
+      {
+        subscription: subscriptionId,
+        resourceGroup,
+        metricNamespace,
+        resourceName,
+        metricName,
+        dimension,
+        customNamespace,
+      },
+      range
+    );
   }
 
   getSubscriptions() {

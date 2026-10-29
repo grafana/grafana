@@ -14,27 +14,6 @@ labels:
 menuTitle: Amazon SNS
 title: Configure Amazon SNS for Alerting
 weight: 102
-refs:
-  notification-templates:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
-  configure-contact-points:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/
-  test-contact-point:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/#test-a-contact-point
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/#test-a-contact-point
-  enable-contact-point-notifications:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/#enable-notifications-for-a-contact-point
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/#enable-notifications-for-a-contact-point
 ---
 
 # Configure Amazon SNS notifications
@@ -61,7 +40,7 @@ To create a contact point with a SNS integration, complete the following steps.
 1. Set up the required [settings](#sns-settings) for your SNS configuration.
 1. Click **Save contact point**.
 
-For more details on contact points, including how to test them and enable notifications, refer to [Configure contact points](ref:configure-contact-points).
+For more details on contact points, including how to test them and enable notifications, refer to [Configure contact points](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/).
 
 ## SNS Settings
 
@@ -77,8 +56,8 @@ For more details on contact points, including how to test them and enable notifi
 - **SNS topic ARN**: (Optional) If you don't specify this value, you must specify a value for the `Phone number` or `Target ARN`. If you are using a FIFO SNS topic you should set a message group interval longer than 5 minutes to prevent messages with the same group key being deduplicated by the SNS default deduplication window.
 - **Phone number**: (Optional) Phone number if message is delivered via SMS in E.164 format. If you don't specify this value, you must specify a value for the `SNS topic ARN` or `Target ARN`.
 - **Target ARN**: (Optional) The mobile platform endpoint ARN if message is delivered via mobile notifications. If you don't specify this value, you must specify a value for the `SNS topic ARN` or `Phone number`.
-- **Subject**: (Optional) Customize the subject. This field supports [notification templates](ref:notification-templates) and, by default, uses the default title template (`default.title`). It **cannot be an empty string**.
-- **Message**: (Optional) Customize the message. This field supports [notification templates](ref:notification-templates) and, by default, uses the default message template (`default.message`).
+- **Subject**: (Optional) Customize the subject. This field supports [notification templates](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/) and, by default, uses the default title template (`default.title`). It **cannot be an empty string**.
+- **Message**: (Optional) Customize the message. This field supports [notification templates](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/) and, by default, uses the default message template (`default.message`).
 - **Attributes**: (Optional) Add any SNS message attributes.
 
 ## Example using an Access Key
@@ -153,11 +132,11 @@ Follow the steps in [configure Amazon SNS for a contact point](#configure-amazon
   - **Secret Key**: `<YOUR_SECRET_ACCESS_KEY>`
 - **SNS topic ARN**: `arn:aws:sns:<region>:<account_id>:<topic_name>`
 
-[Test the contact point](ref:test-contact-point) to ensure it's working, or [enable notifications](ref:enable-contact-point-notifications) for it.
+[Test the contact point](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/#test-a-contact-point) to ensure it's working, or [enable notifications](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/#enable-notifications-for-a-contact-point) for it.
 
 ## Additional Resources
 
-- [Configure contact points](ref:configure-contact-points)
+- [Configure contact points](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/)
 - [Amazon SNS Documentation](https://docs.aws.amazon.com/sns/index.html)
 - [Amazon IAM Documentation](https://docs.aws.amazon.com/iam/index.html)
 - [Prometheus Alertmanager SNS Configuration](https://prometheus.io/docs/alerting/configuration/#sns_config)

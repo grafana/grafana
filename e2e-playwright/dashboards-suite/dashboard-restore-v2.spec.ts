@@ -148,7 +148,7 @@ test.describe(
 
       await page.getByRole('button', { name: 'Delete' }).click();
       // Wait for the delete modal to finish loading folder contents.
-      await expect(page.getByRole('alert', { name: /contains other resources that will be deleted/i })).toBeVisible();
+      await expect(page.getByRole('alert', { name: /contains resources that will be deleted/i })).toBeVisible();
       await page.getByPlaceholder('Type "Delete" to confirm').fill('Delete');
       await page.getByTestId(selectors.pages.ConfirmModal.delete).click();
 

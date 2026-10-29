@@ -23,6 +23,7 @@ import { type DashboardLayoutItem } from '../types/DashboardLayoutItem';
 import { getOptions } from './AutoGridItemEditor';
 import { AutoGridItemRenderer } from './AutoGridItemRenderer';
 import { AutoGridLayout } from './AutoGridLayout';
+import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 
 export interface AutoGridItemState extends SceneObjectState {
   body: VizPanel;
@@ -32,6 +33,12 @@ export interface AutoGridItemState extends SceneObjectState {
   isHidden?: boolean;
   conditionalRendering?: ConditionalRenderingGroup;
   repeatedConditionalRendering?: ConditionalRenderingGroup[];
+  /**
+   * Per-panel content-fit override. `undefined` follows the layout default,
+   * `true`/`false` force fit on/off for this panel. Only takes effect when the
+   * panel's plugin supports content-fit ({@link PanelPlugin.supportsFitContent}).
+   */
+  fitContent?: boolean;
 }
 
 export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements DashboardLayoutItem {
@@ -73,6 +80,16 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
 
   public setElementBody(body: VizPanel): void {
     this.setState({ body });
+  }
+
+  /**
+   * Overrides the layout's content-fit default for this panel. `undefined`
+   * follows the layout. Refreshes the grid's row tracks so they can grow when
+   * a panel opts in (or stop growing when the last opt-in is removed).
+   */
+  public setFitContent(fitContent: boolean | undefined): void {
+    this.setState({ fitContent });
+    sceneGraph.getAncestor(this, AutoGridLayoutManager).updateAutoRows();
   }
 
   public performRepeat() {

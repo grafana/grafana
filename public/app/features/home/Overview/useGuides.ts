@@ -5,7 +5,8 @@ import { t } from '@grafana/i18n';
 import { useTheme2 } from '@grafana/ui';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
-import { canAccessPluginPage, isPluginEnabled, probePlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { isPluginEnabled, probePlugin } from 'app/features/alerting/unified/hooks/pluginBridgeProbe';
+import { canAccessPluginPage } from 'app/features/alerting/unified/hooks/usePluginBridge';
 
 import type { GuideProps } from './Guide';
 
@@ -125,7 +126,7 @@ export function useGuides() {
         icon: 'open-telemetry',
         color: theme.visualization.getColorByName('blue'),
         cta: t('home.overview.get-started.cards.opentelemetry.cta', 'Start setup'),
-        href: '/a/grafana-setupguide-app/getting-started/opentelemetry',
+        href: '/a/grafana-setupguide-app/getting-started/otel',
       },
       {
         id: 'kubernetes',

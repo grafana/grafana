@@ -70,29 +70,53 @@ export async function expectRepeatedTabTitlesToBe(
   });
 }
 
-// Asserts the tab title and content are visible, and returns the content
-// locator so the caller can scope further lookups to it
-export async function expectTabToBeVisible(tabTitle: string, tabs: Tabs): Promise<Locator> {
-  return test.step(`Expect tab "${tabTitle}" to be visible`, async () => {
-    await expect(tabs.getTitle(tabTitle)).toBeVisible();
+// Asserts the tab title and content visibility
+export async function expectTabVisibility(
+  tabTitle: string,
+  tabs: Tabs,
+  visibility: 'visible' | 'hidden'
+): Promise<{
+  title: Locator;
+  content: Locator;
+}> {
+  return test.step(`Expect tab "${tabTitle}" to be ${visibility}`, async () => {
+    const title = tabs.getTitle(tabTitle);
+    const content = tabs.getContent(tabTitle);
 
-    const tabContent = tabs.getContent(tabTitle);
-    await expect(tabContent).toBeVisible();
+    if (visibility === 'visible') {
+      await expect(title).toBeVisible();
+      await expect(content).toBeVisible();
+    } else {
+      await expect(title).not.toBeVisible();
+      await expect(content).not.toBeVisible();
+    }
 
-    return tabContent;
+    return { title, content };
   });
 }
 
-// Asserts the row title and content are visible, and returns the content
-// locator so the caller can scope further lookups to it
-export async function expectRowToBeVisible(rowTitle: string, rows: Rows): Promise<Locator> {
-  return test.step(`Expect row "${rowTitle}" to be visible`, async () => {
-    await expect(rows.getTitle(rowTitle)).toBeVisible();
+// Asserts the row title and content visibility
+export async function expectRowVisibility(
+  rowTitle: string,
+  rows: Rows,
+  visibility: 'visible' | 'hidden'
+): Promise<{
+  title: Locator;
+  content: Locator;
+}> {
+  return test.step(`Expect row "${rowTitle}" to be ${visibility}`, async () => {
+    const title = rows.getTitle(rowTitle);
+    const content = rows.getContent(rowTitle);
 
-    const rowContent = rows.getContent(rowTitle);
-    await expect(rowContent).toBeVisible();
+    if (visibility === 'visible') {
+      await expect(title).toBeVisible();
+      await expect(content).toBeVisible();
+    } else {
+      await expect(title).not.toBeVisible();
+      await expect(content).not.toBeVisible();
+    }
 
-    return rowContent;
+    return { title, content };
   });
 }
 
@@ -106,7 +130,18 @@ export async function expectDashboardChangesToContain(
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
 
     await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Changes')).click();
-    await expect(page.getByText('Full JSON diff').locator('..')).toContainText(changeText);
+
+    // The Monaco diff editor virtualizes its DOM, so assert against the loaded text models
+    // instead of the rendered text
+    await expect(page.locator('.monaco-diff-editor')).toBeVisible();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          (text) => window.monaco.editor.getModels().some((model) => model.getValue().includes(text)),
+          changeText
+        )
+      )
+      .toBe(true);
 
     await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.close).click();
   });

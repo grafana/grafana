@@ -51,8 +51,12 @@ export interface PropsWithScreenSize extends Props {
   isFullscreen: boolean;
 }
 
-interface FormProps extends Omit<Props, 'history'> {
+interface NarrowScreenFormProps extends Omit<Props, 'history'> {
   historyOptions?: TimeOption[];
+}
+
+interface FullScreenFormProps extends NarrowScreenFormProps {
+  calendarAnchor: HTMLElement | null;
 }
 
 export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
@@ -79,6 +83,7 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
   const historyOptions = mapToHistoryOptions(history, timeZone);
   const baseTimeOption = useTimeOption(value.raw, quickOptions);
   const [searchTerm, setSearchQuery] = useState('');
+  const [calendarAnchor, setCalendarAnchor] = useState<HTMLDivElement | null>(null);
 
   const { filteredQuickOptions, customTimeOption } = useMemo(() => {
     const filtered = quickOptions.filter((o) => o.display.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -102,7 +107,7 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
   };
 
   return (
-    <div id="TimePickerContent" className={cx(styles.container, className)}>
+    <div id="TimePickerContent" ref={setCalendarAnchor} className={cx(styles.container, className)}>
       <div className={styles.body}>
         {(!isFullscreen || !hideQuickRanges) && (
           <div className={styles.rightSide}>
@@ -125,7 +130,7 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
         )}
         {isFullscreen && (
           <div className={styles.leftSide}>
-            <FullScreenForm {...props} historyOptions={historyOptions} />
+            <FullScreenForm {...props} historyOptions={historyOptions} calendarAnchor={calendarAnchor} />
           </div>
         )}
       </div>
@@ -148,7 +153,7 @@ export const TimePickerContent = (props: Props) => {
   return <TimePickerContentWithScreenSize {...props} isFullscreen={isFullscreen} />;
 };
 
-const NarrowScreenForm = (props: FormProps) => {
+const NarrowScreenForm = (props: NarrowScreenFormProps) => {
   const { value, hideQuickRanges, onChange, timeZone, historyOptions = [], showHistory, onError, weekStart } = props;
   const styles = useStyles2(getNarrowScreenStyles);
   const isAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
@@ -206,8 +211,18 @@ const NarrowScreenForm = (props: FormProps) => {
   );
 };
 
-const FullScreenForm = (props: FormProps) => {
-  const { onChange, value, timeZone, fiscalYearStartMonth, isReversed, historyOptions, onError, weekStart } = props;
+const FullScreenForm = (props: FullScreenFormProps) => {
+  const {
+    onChange,
+    value,
+    timeZone,
+    fiscalYearStartMonth,
+    isReversed,
+    historyOptions,
+    onError,
+    weekStart,
+    calendarAnchor,
+  } = props;
   const styles = useStyles2(getFullScreenStyles, props.hideQuickRanges);
   const onChangeTimeOption = (timeOption: TimeOption) => {
     return onChange(mapOptionToTimeRange(timeOption, timeZone));
@@ -227,6 +242,7 @@ const FullScreenForm = (props: FormProps) => {
           fiscalYearStartMonth={fiscalYearStartMonth}
           onApply={onChange}
           isFullscreen={true}
+          calendarAnchor={calendarAnchor}
           isReversed={isReversed}
           onError={onError}
           weekStart={weekStart}
@@ -297,49 +313,52 @@ const getStyles = (
   hideQuickRanges?: boolean,
   isContainerTall?: boolean,
   isFullscreen?: boolean
-) => ({
-  container: css({
-    background: theme.colors.background.elevated,
-    boxShadow: theme.shadows.z3,
-    width: `${isFullscreen ? '546px' : '262px'}`,
-    borderRadius: theme.shape.radius.lg,
-    border: `1px solid ${theme.colors.border.weak}`,
-    [`${isReversed ? 'left' : 'right'}`]: 0,
-    display: 'flex',
-    flexDirection: 'column',
-  }),
-  body: css({
-    display: 'flex',
-    flexDirection: 'row-reverse',
-    height: `${isContainerTall ? '381px' : '217px'}`,
-    maxHeight: '100vh',
-  }),
-  leftSide: css({
-    display: 'flex',
-    flexDirection: 'column',
-    borderRight: `${isReversed ? 'none' : `1px solid ${theme.colors.border.weak}`}`,
-    width: `${!hideQuickRanges ? '60%' : '100%'}`,
-    overflow: 'auto',
-    scrollbarWidth: 'thin',
-    order: isReversed ? 1 : 0,
-  }),
-  rightSide: css({
-    width: `${isFullscreen ? '40%' : '100%'}; !important`,
-    borderRight: isReversed ? `1px solid ${theme.colors.border.weak}` : 'none',
-    display: 'flex',
-    flexDirection: 'column',
-  }),
-  timeRangeFilter: css({
-    padding: theme.spacing(1),
-  }),
-  spacing: css({
-    marginTop: '16px',
-  }),
-  scrollContent: css({
-    overflowY: 'auto',
-    scrollbarWidth: 'thin',
-  }),
-});
+) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  return {
+    container: css({
+      background: theme.colors.background.elevated,
+      boxShadow: visualRefreshEnabled ? theme.shadows.z2 : theme.shadows.z3,
+      width: `${isFullscreen ? '546px' : '262px'}`,
+      borderRadius: theme.shape.radius.lg,
+      border: `1px solid ${theme.colors.border.weak}`,
+      [`${isReversed ? 'left' : 'right'}`]: 0,
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    body: css({
+      display: 'flex',
+      flexDirection: 'row-reverse',
+      height: `${isContainerTall ? '381px' : '217px'}`,
+      maxHeight: '100vh',
+    }),
+    leftSide: css({
+      display: 'flex',
+      flexDirection: 'column',
+      borderRight: `${isReversed ? 'none' : `1px solid ${theme.colors.border.weak}`}`,
+      width: `${!hideQuickRanges ? '60%' : '100%'}`,
+      overflow: 'auto',
+      scrollbarWidth: 'thin',
+      order: isReversed ? 1 : 0,
+    }),
+    rightSide: css({
+      width: `${isFullscreen ? '40%' : '100%'}; !important`,
+      borderRight: isReversed ? `1px solid ${theme.colors.border.weak}` : 'none',
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    timeRangeFilter: css({
+      padding: theme.spacing(1),
+    }),
+    spacing: css({
+      marginTop: '16px',
+    }),
+    scrollContent: css({
+      overflowY: 'auto',
+      scrollbarWidth: 'thin',
+    }),
+  };
+};
 
 const getNarrowScreenStyles = (theme: GrafanaTheme2) => ({
   header: css({

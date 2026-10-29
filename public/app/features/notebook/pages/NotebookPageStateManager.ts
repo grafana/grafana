@@ -1,12 +1,24 @@
+import { dateTimeFormat } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { getPanelPluginMetasMap } from '@grafana/runtime/internal';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { type Resource } from 'app/features/apiserver/types';
 import { dispatch } from 'app/store/store';
 
+import { NotebookAnalytics } from '../analytics/main';
+import {
+  NOTEBOOK_ENTRY_POINT,
+  NOTEBOOK_LOAD_SOURCE,
+  type NotebookEntryPoint,
+  type NotebookLoadSource,
+} from '../analytics/types';
+import { notebookResourceFor } from '../api/notebookResource';
 import { type NotebookScene } from '../scene/NotebookScene';
+import { NotebookDeletedEvent } from '../scene/events';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
-import { type Spec as NotebookSpec } from '../types';
+import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from '../types';
 
 /**
  * A load failure normalized to the fields the error UI needs. RTK rejects with `{ status, data }`
@@ -18,6 +30,17 @@ export interface NotebookLoadError {
   messageId?: string;
   message: string;
 }
+
+/**
+ * Names a new notebook after the moment it was created, because autosave creates them without asking
+ * for a name and a library of identical titles is unreadable.
+ *
+ * The format is pinned rather than left to the user's date settings so that sorting the list by title
+ * still puts these in the order they were made. Minute precision, so two notebooks created in the same
+ * minute do share a title — titles are not unique (the uid comes from the apiserver's generateName),
+ * and the seconds are noise the rest of the time.
+ */
+const NEW_TITLE_DATE_FORMAT = 'YYYY-MM-DD HH:mm';
 
 export interface NotebookPageState {
   scene?: NotebookScene;
@@ -31,8 +54,33 @@ export interface NotebookPageState {
  * dashboard analytics (DashboardView meta-analytics, dashboardInitialized, the dashboard_view
  * query profile) and forced the notebook through the dashboard envelope/transform.
  */
+/**
+ * Scenes by uid, shared across every manager instance rather than held per instance.
+ *
+ * A notebook can be on screen more than once — the route plus an embed of the same notebook in a
+ * host that is not the route. Each consumer gets its own manager, so its own loading and error
+ * state, but they must resolve the SAME scene: a scene owns its autosave, and two scenes for one
+ * notebook means two autosaves writing the whole spec over each other, the later one silently
+ * undoing edits made through the other. Scene activation is reference counted, so one scene safely
+ * serves several consumers and tears down when the last releases it.
+ */
+const sceneCache = new Map<string, { generation?: number; scene: NotebookScene }>();
+
 export class NotebookPageStateManager extends StateManagerBase<NotebookPageState> {
-  private cache = new Map<string, { generation?: number; scene: NotebookScene }>();
+  /**
+   * `embedded` is for a host other than the notebook route, which reports its loads as such. The route's
+   * singleton below leaves it off.
+   */
+  public constructor(
+    initialState: NotebookPageState,
+    private readonly embedded = false
+  ) {
+    super(initialState);
+  }
+
+  private get cache() {
+    return sceneCache;
+  }
 
   // Identifies the load the page currently wants. `await` does not cancel, so a load started for an
   // earlier request still resumes and would write over a newer one — the page renders whatever is in
@@ -46,8 +94,20 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
   // outcome — but the counter is correct by construction and does not depend on that.
   private requestSeq = 0;
 
-  public async loadNotebook(uid: string): Promise<void> {
+  // The blank notebook that newNotebook() hands out, kept here until it saves itself or gets replaced.
+  // It has no uid yet, so the cache above can't hold it. Once its first save creates it, the page moves
+  // to the real url. Without this field, that move would fetch the notebook fresh from the server and
+  // throw away the scene someone is typing in, along with its caret and undo history.
+  private unsavedScene?: NotebookScene;
+
+  /** `source` is where the reader came from, for the `loaded` event. A caller that knows nothing leaves it off. */
+  public async loadNotebook(uid: string, source: NotebookLoadSource = NOTEBOOK_LOAD_SOURCE.DIRECT): Promise<void> {
     const seq = ++this.requestSeq;
+
+    if (this.adoptUnsavedScene(uid)) {
+      return;
+    }
+
     this.setState({ isLoading: true, loadError: undefined });
 
     try {
@@ -69,13 +129,26 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
       const notebook = result.data as unknown as Resource<NotebookSpec>;
 
       const cached = this.cache.get(uid);
-      if (cached && cached.generation === notebook.metadata.generation) {
+      // The generation this was loaded at goes stale the moment the page saves, because autosave advances
+      // the server's copy without reloading. Where the scene has saved since, that is the newer number, and
+      // it is what separates this page's own write from somebody else's.
+      const cachedGeneration = cached ? (cached.scene.autosave.state.savedGeneration ?? cached.generation) : undefined;
+      if (cached && isAtLeastAsNew(cachedGeneration, notebook.metadata.generation)) {
         if (this.isSuperseded(seq)) {
           return;
         }
+        // Here rather than in the scene's own activation or teardown, both of which have the url in the
+        // way: `UrlSyncContextProvider` applies the url to the scene before the scene activates, so
+        // resetting there would throw away a `?from=&to=` somebody was linked to, and its cleanup runs
+        // after the scene's, by which point the router has moved on to the next page.
+        cached.scene.autosave.discardViewOnlyTimeChanges();
+        NotebookAnalytics.loaded(cached.scene, true, this.embedded, source);
         this.setState({ scene: cached.scene, isLoading: false });
         return;
       }
+
+      // Panel cells are built synchronously below.
+      await getPanelPluginMetasMap();
 
       // RTK Query freezes cached responses (Immer). The scene pipeline mutates nested panel
       // fieldConfig (e.g. threshold base → -Infinity), so clone before transforming.
@@ -83,11 +156,12 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
 
       // Cache even when superseded: the work is already paid for, so a later visit to this uid can
       // reuse it. Only the state write has to be suppressed.
-      this.cache.set(uid, { generation: notebook.metadata.generation, scene });
+      this.cacheScene(uid, notebook.metadata.generation, scene);
 
       if (this.isSuperseded(seq)) {
         return;
       }
+      NotebookAnalytics.loaded(scene, false, this.embedded, source);
       this.setState({ scene, isLoading: false });
     } catch (error) {
       // A superseded failure must not surface either, or a stale 404 would replace the notebook the
@@ -107,9 +181,87 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
     }
   }
 
+  /**
+   * Builds an empty notebook with no resource behind it, for the blank route.
+   *
+   * Nothing is fetched and nothing is written: the notebook is created by its first save, which is
+   * what leaves `uid` unset here. It is deliberately not cached either, because the cache is keyed by
+   * uid and this notebook has none.
+   */
+  public async newNotebook(source: NotebookEntryPoint = NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST): Promise<void> {
+    // A load already in flight would otherwise resolve on top of this and replace the blank notebook
+    // with whichever one the page was previously asked for.
+    const seq = ++this.requestSeq;
+
+    this.setState({ isLoading: true, loadError: undefined });
+
+    try {
+      // The first visualization block inserted into the blank notebook is built synchronously.
+      await getPanelPluginMetasMap();
+
+      if (this.isSuperseded(seq)) {
+        return;
+      }
+
+      const spec: NotebookSpec = {
+        ...defaultNotebookSpec(),
+        title: t('notebooks.new.default-title-with-date', 'Notebook {{date}}', {
+          date: dateTimeFormat(Date.now(), { format: NEW_TITLE_DATE_FORMAT }),
+        }),
+      };
+
+      // Held so the page can keep this exact scene once its first save gives it a uid.
+      this.unsavedScene = transformNotebookToScene(notebookResourceFor(undefined, spec));
+      this.unsavedScene.autosave.setEntryPoint(source);
+
+      this.setState({ scene: this.unsavedScene, isLoading: false, loadError: undefined });
+    } catch (error) {
+      if (this.isSuperseded(seq)) {
+        return;
+      }
+
+      this.setState({
+        isLoading: false,
+        loadError: {
+          status: getStatusFromError(error),
+          message: getMessageFromError(error),
+          messageId: getMessageIdFromError(error),
+        },
+      });
+    }
+  }
+
+  /**
+   * Takes up the blank notebook once its first save has created it, instead of fetching a notebook we
+   * already have on screen.
+   *
+   * Reads the uid off the scene instead of having autosave report it. If autosave called into the page
+   * directly, that would create an import cycle back through `transformNotebookToScene`.
+   */
+  private adoptUnsavedScene(uid: string): boolean {
+    const scene = this.unsavedScene;
+    if (scene?.state.uid !== uid) {
+      return false;
+    }
+
+    this.unsavedScene = undefined;
+    // Into the keyed cache, so coming back to this notebook later reuses it too rather than rebuilding
+    // it from a fetch. The generation is the one its create returned.
+    this.cacheScene(uid, scene.autosave.state.savedGeneration, scene);
+    this.setState({ scene, isLoading: false, loadError: undefined });
+
+    return true;
+  }
+
   /** Whether a newer load (or a page teardown) has taken over since the given one started. */
   private isSuperseded(seq: number): boolean {
     return seq !== this.requestSeq;
+  }
+
+  /** Caches a scene by uid and wires it to evict itself once deleted. */
+  private cacheScene(uid: string, generation: number | undefined, scene: NotebookScene): void {
+    this.cache.set(uid, { generation, scene });
+    scene.subscribeToEvent(NotebookDeletedEvent, () => this.removeSceneCache(uid));
   }
 
   public clearState(): void {
@@ -119,6 +271,22 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
     this.setState({ scene: undefined, isLoading: false, loadError: undefined });
   }
 
+  /**
+   * @internal -- test seam.
+   *
+   * Deliberately goes through `this.cache`, the same accessor `loadNotebook` reads, rather than the
+   * module map directly: reaching for the module map would make the sharing test pass even if the
+   * cache went back to being per instance, which is the regression it exists to catch.
+   */
+  public setSceneCacheForTests(uid: string, scene: NotebookScene): void {
+    this.cacheScene(uid, undefined, scene);
+  }
+
+  /** @internal -- test seam, as above. */
+  public getCachedSceneForTests(uid: string): NotebookScene | undefined {
+    return this.cache.get(uid)?.scene;
+  }
+
   public removeSceneCache(uid: string): void {
     this.cache.delete(uid);
   }
@@ -126,6 +294,19 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
   public clearSceneCache(): void {
     this.cache.clear();
   }
+}
+
+/**
+ * Deliberately not an equality check. `generation` only ever goes up, and the query layer can answer a load
+ * with a response it recorded before this page's own save, which a rebuild would then undo. Only a higher
+ * number means somebody else wrote. Falls back to equality when either side is missing.
+ */
+function isAtLeastAsNew(cached: number | undefined, fetched: number | undefined): boolean {
+  if (cached === undefined || fetched === undefined) {
+    return cached === fetched;
+  }
+
+  return cached >= fetched;
 }
 
 let notebookPageStateManager: NotebookPageStateManager | undefined;

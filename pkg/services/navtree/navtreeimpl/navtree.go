@@ -19,10 +19,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/navtree"
+	"github.com/grafana/grafana/pkg/services/notebooks"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -307,15 +309,15 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 }
 
 // buildNotebooksNavLink returns the top-level Notebooks section, or nil when the feature is off
-// or the user cannot read dashboards. Notebooks reuse dashboard RBAC actions, so an unscoped
-// dashboards:read is what grants access to the list page; the apiserver then filters the list
-// down to the notebooks the user may actually see.
+// or the user cannot read notebooks. An unscoped notebooks:read is what grants access to the list
+// page; the apiserver then filters the list down to the notebooks the user may actually see.
 func (s *ServiceImpl) buildNotebooksNavLink(c *contextmodel.ReqContext) *navtree.NavLink {
 	if !c.IsSignedIn {
 		return nil
 	}
 
-	if !ac.HasAccess(s.accessControl, c)(ac.EvalPermission(dashboards.ActionDashboardsRead)) {
+	hasAccess := ac.HasAccess(s.accessControl, c)
+	if !hasAccess(ac.EvalPermission(notebooks.ActionNotebooksRead)) {
 		return nil
 	}
 
@@ -328,14 +330,22 @@ func (s *ServiceImpl) buildNotebooksNavLink(c *contextmodel.ReqContext) *navtree
 		return nil
 	}
 
-	return &navtree.NavLink{
+	link := &navtree.NavLink{
 		Text:       "Notebooks",
 		Id:         navtree.NavIDNotebooks,
-		SubTitle:   "Investigation notebooks created from workspaces, dashboards, alerts, and incidents.",
+		SubTitle:   "Create and manage notebooks to tell a story with your data",
 		Icon:       "book",
 		SortWeight: navtree.WeightNotebooks,
 		Url:        s.cfg.AppSubURL + "/notebooks",
 	}
+	if hasAccess(ac.EvalPermission(notebooks.ActionNotebooksCreate)) {
+		link.Children = append(link.Children, &navtree.NavLink{
+			Text: "New notebook", Id: "notebooks/new", Icon: "plus",
+			Url:          s.cfg.AppSubURL + "/notebooks/new?edit=true",
+			HideFromTabs: true, IsCreateAction: true,
+		})
+	}
+	return link
 }
 
 func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {
@@ -347,8 +357,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 	// with the playlist page and API which both serve anonymous Viewers.
 	if c.IsSignedIn || c.IsAnonymous {
 		showPlaylist := c.HasRole(org.RoleViewer)
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPlaylistsRBAC) {
+		if openfeature.NewDefaultClient().Boolean(c.Req.Context(), featuremgmt.FlagPlaylistsRBAC, false, openfeature.TransactionContext(c.Req.Context())) {
 			showPlaylist = hasAccess(ac.EvalPermission(playlistregistry.ActionPlaylistsRead))
 		}
 		if showPlaylist {
@@ -378,12 +387,9 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 		})
 
 		if openfeature.NewDefaultClient().Boolean(c.Req.Context(), featuremgmt.FlagGrafanaDashboardGlobalVariables, false, openfeature.TransactionContext(c.Req.Context())) &&
-			hasAccess(ac.EvalAny(
-				ac.EvalPermission(dashboards.ActionDashboardsCreate),
-				ac.EvalPermission(dashboards.ActionDashboardsWrite),
-			)) {
+			hasAccess(ac.EvalPermission(ac.ActionVariablesRead)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-				Text:     "Variables",
+				Text:     "Cross-dashboard variables",
 				SubTitle: "Template variables shared across dashboards, globally or per folder",
 				Id:       "dashboards/variables",
 				Url:      s.cfg.AppSubURL + "/dashboards/variables",
@@ -391,7 +397,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			})
 		}
 
-		if s.cfg.PublicDashboardsEnabled {
+		if publicdashboards.Enabled(c.Req.Context(), s.cfg) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "Public dashboards",
 				Id:   "dashboards/public",
@@ -426,8 +432,12 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	var alertChildNavs []*navtree.NavLink
 
+	// The alert activity page reads the alert state metrics from Prometheus, so it only shows up when a data
+	// source is set for them. The feature flag is kept so the page can still be turned off.
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage) {
+	alertActivityEnabled := s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage) && s.cfg.UnifiedAlerting.StateHistory.HasAlertStateMetrics()
+
+	if alertActivityEnabled {
 		alertRulesAccess := hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead)))
 		instanceAccess := hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead)))
 
@@ -453,7 +463,29 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		}
 	}
 
-	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
+	gmaOnlyListView := openfeature.NewDefaultClient().Boolean(c.Req.Context(), featuremgmt.FlagAlertingGmaOnlyListView, false, openfeature.TransactionContext(c.Req.Context()))
+
+	if gmaOnlyListView {
+		// Gated on Grafana-managed read only, unlike the legacy entry which also accepts data source-managed read.
+		if hasAccess(ac.EvalPermission(ac.ActionAlertingRuleRead)) {
+			alertChildNavs = append(alertChildNavs,
+				&navtree.NavLink{
+					Text:     "Alert rules",
+					SubTitle: "Rules that determine whether an alert will fire",
+					Id:       "alert-rules",
+					Url:      s.cfg.AppSubURL + "/alerting/rules/alert",
+					Icon:     "list-ul",
+				},
+				&navtree.NavLink{
+					Text:     "Recording rules",
+					SubTitle: "Rules that pre-compute and record values as new time series",
+					Id:       "recording-rules",
+					Url:      s.cfg.AppSubURL + "/alerting/rules/recording",
+					Icon:     "list-ul",
+				},
+			)
+		}
+	} else if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
 		navLink := &navtree.NavLink{
 			Text:     "Alert rules",
 			SubTitle: "Rules that determine whether an alert will fire",
@@ -535,9 +567,9 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	}
 
 	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead))) {
-		// In V2 navigation with triage enabled, Alert groups is shown as a tab under Alert activity
+		// In V2 navigation with alert activity enabled, Alert groups is shown as a tab under Alert activity
 		//nolint:staticcheck // not yet migrated to OpenFeature
-		isV2WithTriage := s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage)
+		isV2WithTriage := s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) && alertActivityEnabled
 		if !isV2WithTriage {
 			alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Alert groups", SubTitle: "See grouped alerts with active notifications", Id: "groups", Url: s.cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
 		}
@@ -554,11 +586,11 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		}
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if c.GetOrgRole() == org.RoleAdmin && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertRuleRestore) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingRuleRecoverDeleted) {
-		// Only show as standalone item in legacy navigation (V2 shows it as a tab under Alert rules)
+	if c.GetOrgRole() == org.RoleAdmin {
+		// Only show as standalone item in legacy navigation (V2 shows it as a tab under Alert rules).
+		// The gmaOnlyListView pages have their own Recently deleted tabs.
 		//nolint:staticcheck // not yet migrated to OpenFeature
-		if !s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
+		if !s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) && !gmaOnlyListView {
 			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 				Text:     "Recently deleted",
 				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
@@ -566,9 +598,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 				Url:      s.cfg.AppSubURL + "/alerting/recently-deleted",
 			})
 		}
-	}
 
-	if c.GetOrgRole() == org.RoleAdmin {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 			Text: "Settings", Id: "alerting-admin", Url: s.cfg.AppSubURL + "/alerting/admin",
 			Icon: "cog",

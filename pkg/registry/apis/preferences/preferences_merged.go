@@ -147,6 +147,11 @@ func merge(defaults preferences.PreferencesSpec, items []preferences.Preferences
 		sources = append(sources, item.Name)
 	}
 
+	// Resolved here so the configured defaults fill the slot below.
+	if p.Spec.HomeDashboardUID != nil && *p.Spec.HomeDashboardUID == preferences.GlobalHomeDashboardUID {
+		p.Spec.HomeDashboardUID = nil
+	}
+
 	// Home precedence, highest first (matches legacy GetHomeDashboard):
 	//  1. HomeDashboardUID from preferences (user > team > org)
 	//  2. home_page from settings

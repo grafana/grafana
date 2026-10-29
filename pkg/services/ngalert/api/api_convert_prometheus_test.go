@@ -32,7 +32,7 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -349,7 +349,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		acFake := &acfakes.FakeRuleService{}
 		srv, _, _ := createConvertPrometheusSrv(t, withFakeAccessControlRuleService(acFake))
 
-		acFake.AuthorizeRuleChangesFunc = func(context.Context, identity.Requester, *store.GroupDelta) error {
+		acFake.AuthorizeRuleChangesFunc = func(context.Context, identity.Requester, *rulestore.GroupDelta) error {
 			return datasources.ErrDataSourceAccessDenied
 		}
 
@@ -2131,6 +2131,26 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 
 	ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 	srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+	for _, tc := range []struct {
+		name   string
+		header string
+	}{
+		{name: "import"},
+		{name: "dry run", header: dryRunHeader},
+		{name: "promote", header: promoteHeader},
+	} {
+		t.Run("rejects unknown fields on "+tc.name, func(t *testing.T) {
+			rc := createRequestCtx()
+			if tc.header != "" {
+				rc.Req.Header.Set(tc.header, "true")
+			}
+			response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, apimodels.AlertmanagerUserConfig{
+				AlertmanagerConfig: "route: {receiver: default}\nreceivers:\n  - name: default\n    foo_configs: [{}]",
+			})
+			require.Equal(t, http.StatusBadRequest, response.Status())
+		})
+	}
 
 	t.Run("should parse headers and call SaveAndApplyExtraConfiguration", func(t *testing.T) {
 		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything, mock.MatchedBy(func(extraConfig v1.ExtraConfiguration) bool {

@@ -146,7 +146,7 @@ func (s RuleGroupsSorter) Less(i, j int) bool { return s.by(&s.groups[i], &s.gro
 // adapted from cortex
 // swagger:model
 type AlertingRule struct {
-	// State can be "pending", "firing", "inactive".
+	// State can be "pending", "firing", "inactive", or "recovering"
 	// required: true
 	State string `json:"state,omitempty"`
 	// required: true
@@ -176,6 +176,7 @@ type Rule struct {
 	// required: true
 	Query  string            `json:"query"`
 	Labels promlabels.Labels `json:"labels,omitzero"`
+	// Health can be "unknown", "error", "ok", or "nodata"
 	// required: true
 	Health    string `json:"health"`
 	LastError string `json:"lastError,omitempty"`
@@ -280,7 +281,7 @@ func (by AlertsBy) TopK(alerts []Alert, k int) []Alert {
 	// Go version of this algorithm taken from Prometheus (promql/engine.go)
 
 	heap.Init(&h)
-	for i := 0; i < len(alerts); i++ {
+	for i := range alerts {
 		a := alerts[i]
 
 		// We build a heap of up to k elements, with the smallest element at heap[0].

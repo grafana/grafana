@@ -96,6 +96,20 @@ export interface PanelProps<T = any> {
   /** Current height of the panel in pixels */
   height: number;
 
+  /**
+   * When true the panel is rendered in a content-fit layout: it has no fixed
+   * height and should size to its content (the cell enforces min/max via CSS).
+   * Only set for plugins that opt in via {@link PanelPlugin.setFitContentSupport}.
+   * Fit-aware panels must not rely on `height` in this mode.
+   */
+  fitContent?: boolean;
+
+  /**
+   * In fit-content mode, the most height (px) the layout allows the panel's content.
+   * Undefined when the layout does not cap it.
+   */
+  fitMaxHeight?: number;
+
   /** Field options configuration. Controls how field values are displayed (e.g., units, min, max, decimals, thresholds) */
   fieldConfig: FieldConfigSource;
 
@@ -181,10 +195,10 @@ export type PanelOptionEditorsRegistry = Registry<PanelOptionsEditorItem>;
 export interface PanelOptionsEditorProps<TValue> extends StandardEditorProps<TValue> {}
 
 export interface PanelOptionsEditorItem<TOptions = any, TValue = any, TSettings = any>
-  extends OptionsEditorItem<TOptions, TSettings, PanelOptionsEditorProps<TValue>, TValue> {}
+  extends OptionsEditorItem<TOptions, TSettings, PanelOptionsEditorProps<TValue>, TValue, TOptions> {}
 
 export interface PanelOptionsEditorConfig<TOptions, TSettings = any, TValue = any>
-  extends OptionEditorConfig<TOptions, TSettings, TValue> {}
+  extends OptionEditorConfig<TOptions, TSettings, TValue, TOptions> {}
 
 /**
  * @internal

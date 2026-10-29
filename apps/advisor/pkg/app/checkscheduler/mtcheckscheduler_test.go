@@ -14,6 +14,8 @@ import (
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/metrics"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -141,6 +143,72 @@ func TestDiscoverNamespaces_Pagination(t *testing.T) {
 	assert.Equal(t, []string{"stacks-1", "stacks-2"}, ns)
 	assert.Len(t, last, 2)
 	assert.Equal(t, int32(2), listCalls.Load())
+}
+
+func TestDiscoverNamespaces_LatestCreationAcrossPages(t *testing.T) {
+	older := metav1.NewTime(time.Now().Add(-15 * 24 * time.Hour))
+	newer := metav1.NewTime(time.Now().Add(-8 * 24 * time.Hour))
+	check := func(ns, name string, created metav1.Time) advisorv0alpha1.Check {
+		return advisorv0alpha1.Check{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name, CreationTimestamp: created}}
+	}
+	// stacks-1 spans both pages, with its newest Check on the first page and an
+	// older one on the second: folding page by page must keep the newest.
+	pages := []*advisorv0alpha1.CheckList{
+		{
+			ListMeta: metav1.ListMeta{Continue: "page-2"},
+			Items:    []advisorv0alpha1.Check{check("stacks-1", "a", newer)},
+		},
+		{
+			ListMeta: metav1.ListMeta{Continue: "page-3"},
+			Items:    []advisorv0alpha1.Check{check("stacks-1", "b", older), check("stacks-2", "c", older)},
+		},
+		{
+			Items: []advisorv0alpha1.Check{check("stacks-2", "d", newer)},
+		},
+	}
+	var listCalls atomic.Int32
+	mockClient := &MockClient{
+		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+			n := listCalls.Add(1)
+			return pages[n-1], nil
+		},
+	}
+	r := &Runner{
+		checksMetadata: metadataGetterFromClient(mockClient),
+		log:            &logging.NoOpLogger{},
+	}
+	ns, last, err := r.discoverNamespaces(context.Background(), &logging.NoOpLogger{})
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"stacks-1", "stacks-2"}, ns)
+	assert.Equal(t, newer.Time, last["stacks-1"])
+	assert.Equal(t, newer.Time, last["stacks-2"])
+	assert.Equal(t, int32(3), listCalls.Load())
+}
+
+func TestDiscoverNamespaces_PageErrorFailsDiscovery(t *testing.T) {
+	old := metav1.NewTime(time.Now().Add(-15 * 24 * time.Hour))
+	var listCalls atomic.Int32
+	mockClient := &MockClient{
+		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+			if listCalls.Add(1) == 1 {
+				return &advisorv0alpha1.CheckList{
+					ListMeta: metav1.ListMeta{Continue: "page-2"},
+					Items: []advisorv0alpha1.Check{
+						{ObjectMeta: metav1.ObjectMeta{Namespace: "stacks-1", Name: "a", CreationTimestamp: old}},
+					},
+				}, nil
+			}
+			return nil, errors.New("page 2 failed")
+		},
+	}
+	r := &Runner{
+		checksMetadata: metadataGetterFromClient(mockClient),
+		log:            &logging.NoOpLogger{},
+	}
+	ns, last, err := r.discoverNamespaces(context.Background(), &logging.NoOpLogger{})
+	assert.Error(t, err)
+	assert.Nil(t, ns)
+	assert.Nil(t, last)
 }
 
 func TestDiscoverNamespaces_IgnoresNonStacksNamespaces(t *testing.T) {
@@ -304,7 +372,7 @@ func TestRunTickParallelMT_TicksAllStaleNamespaces(t *testing.T) {
 
 	namespaces := make([]string, 0, namespaceCount)
 	lastCreated := make(map[string]time.Time, namespaceCount)
-	for i := 0; i < namespaceCount; i++ {
+	for i := range namespaceCount {
 		ns := fmt.Sprintf("stacks-%d", i)
 		namespaces = append(namespaces, ns)
 		lastCreated[ns] = stale
@@ -438,7 +506,73 @@ func TestTickNamespace_SyncFailureAbortsCheckCreation(t *testing.T) {
 	assert.False(t, createCalled.Load(), "tickNamespace must not create checks when CheckType sync fails")
 }
 
+// TestTickNamespace_NamespaceSkipper verifies that a stale namespace is skipped, and counted
+// with the reason, when the check registry returns a skip reason for it, and is ticked as
+// usual when it returns none or the lookup fails.
+func TestTickNamespace_NamespaceSkipper(t *testing.T) {
+	tests := []struct {
+		name       string
+		reason     string
+		err        error
+		wantCreate bool
+		wantResult string
+	}{
+		{name: "stack deleted", reason: "stack_deleted", wantCreate: false, wantResult: "skipped_stack_deleted"},
+		{name: "no plugins registered", reason: "no_plugins", wantCreate: false, wantResult: "skipped_no_plugins"},
+		{name: "no reason", wantCreate: true, wantResult: "success"},
+		{name: "lookup fails", err: errors.New("cloud config unavailable"), wantCreate: true, wantResult: "success"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var createCalled atomic.Bool
+			var lookedUp string
+			mockClient := &MockClient{
+				listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+					return &advisorv0alpha1.CheckList{Items: []advisorv0alpha1.Check{}}, nil
+				},
+				createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+					createCalled.Store(true)
+					return obj, nil
+				},
+			}
+			r := &Runner{
+				checkRegistry: &mockNamespaceSkipperCheckService{
+					MockCheckService: MockCheckService{checks: []checks.Check{&mockCheck{id: "test-check"}}},
+					skipReasonFunc: func(ctx context.Context, namespace string) (string, error) {
+						lookedUp = namespace
+						return tt.reason, tt.err
+					},
+				},
+				checksClient:        mockClient,
+				checkTypeSyncer:     &mockCheckTypeSyncer{},
+				defaultEvalInterval: 1 * time.Hour,
+				maxHistory:          defaultMaxHistory,
+				log:                 &logging.NoOpLogger{},
+			}
+			before := testutil.ToFloat64(metrics.MTSchedulerNamespaceTicksTotal.WithLabelValues(tt.wantResult))
+			stale := time.Now().Add(-2 * time.Hour)
+			newLast, err := r.tickNamespace(context.Background(), &logging.NoOpLogger{}, "stacks-1", stale)
+			assert.NoError(t, err)
+			assert.Equal(t, "stacks-1", lookedUp)
+			assert.Equal(t, tt.wantCreate, createCalled.Load())
+			assert.Equal(t, before+1, testutil.ToFloat64(metrics.MTSchedulerNamespaceTicksTotal.WithLabelValues(tt.wantResult)))
+			if !tt.wantCreate {
+				assert.Equal(t, stale, newLast)
+			}
+		})
+	}
+}
+
 // MT test helpers
+
+type mockNamespaceSkipperCheckService struct {
+	MockCheckService
+	skipReasonFunc func(ctx context.Context, namespace string) (string, error)
+}
+
+func (m *mockNamespaceSkipperCheckService) SkipReason(ctx context.Context, namespace string) (string, error) {
+	return m.skipReasonFunc(ctx, namespace)
+}
 
 // createTestMTRunner returns a Runner with no stackID and no orgService,
 // which routes Run() to the multi-tenant scheduler path.

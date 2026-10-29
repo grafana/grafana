@@ -1,11 +1,4 @@
-import { config } from '@grafana/runtime';
-import {
-  type AdHocFiltersVariable,
-  type GroupByVariable,
-  type MultiValueVariable,
-  sceneGraph,
-  SceneRefreshPicker,
-} from '@grafana/scenes';
+import { type AdHocFiltersVariable, type MultiValueVariable, sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
 import { type Dashboard, type VariableModel } from '@grafana/schema';
 import {
   type Spec as DashboardV2Spec,
@@ -19,19 +12,14 @@ import {
   type QueryVariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
-import {
-  AnnoKeyDashboardSnapshotOriginalUrl,
-  AnnoKeyIgnorePredefinedVariables,
-  DENY_ALL_PREDEFINED,
-} from 'app/features/apiserver/types';
+import { AnnoKeyDashboardSnapshotOriginalUrl, AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { type DashboardScene } from '../scene/DashboardScene';
-import { serializeIgnorePredefinedVariables } from '../utils/predefinedVariableDenyList';
+import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getTestDashboardSceneFromSaveModel } from '../utils/test-utils';
-import { findVizPanelByKey } from '../utils/utils';
 
 import { V1DashboardSerializer, V2DashboardSerializer } from './DashboardSceneSerializer';
 import nestedDashboard from './testfiles/nested_dashboard.json';
@@ -80,6 +68,12 @@ describe('DashboardSceneSerializer', () => {
       expect(result.diffCount).toBe(0);
     });
 
+    it('reports a dashboard as new by its missing identity, not by its version', () => {
+      expect(setup({ uid: '', version: 0 }).getDashboardChanges().isNew).toBe(true);
+      // A previewed repo file carries version 0 but already has a uid: saving it updates the file
+      expect(setup({ version: 0 }).getDashboardChanges().isNew).toBe(false);
+    });
+
     it('Can detect time changed', () => {
       const dashboard = setup();
 
@@ -112,11 +106,11 @@ describe('DashboardSceneSerializer', () => {
       expect(result.hasFolderChanges).toBe(true);
     });
 
-    it('Can detect predefined variables denylist change', () => {
+    it('Can detect cross-dashboard variables selection change', () => {
       const dashboard = setup();
       dashboard.onEnterEditMode();
 
-      const annotation = serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]);
+      const annotation = '{"global":"all","folder":"all"}';
       dashboard.setState({
         meta: {
           ...dashboard.state.meta,
@@ -124,7 +118,7 @@ describe('DashboardSceneSerializer', () => {
             ...dashboard.state.meta.k8s,
             annotations: {
               ...dashboard.state.meta.k8s?.annotations,
-              [AnnoKeyIgnorePredefinedVariables]: annotation,
+              [AnnoKeyUseCrossDashboardVariables]: annotation,
             },
           },
         },
@@ -191,65 +185,6 @@ describe('DashboardSceneSerializer', () => {
       });
 
       describe('Experimental variables', () => {
-        beforeAll(() => {
-          config.featureToggles.groupByVariable = true;
-        });
-
-        afterAll(() => {
-          config.featureToggles.groupByVariable = false;
-        });
-
-        it('Can detect group by static options change', () => {
-          const dashboard = transformSaveModelToScene({
-            dashboard: {
-              title: 'hello',
-              uid: 'my-uid',
-              schemaVersion: 30,
-              panels: [
-                {
-                  id: 1,
-                  title: 'Panel 1',
-                  type: 'text',
-                },
-              ],
-              version: 10,
-              templating: {
-                list: [
-                  {
-                    type: 'groupby',
-                    datasource: {
-                      type: 'ds',
-                      uid: 'ds-uid',
-                    },
-                    name: 'GroupBy',
-                    options: [
-                      {
-                        text: 'Host',
-                        value: 'host',
-                      },
-                      {
-                        text: 'Region',
-                        value: 'region',
-                      },
-                    ],
-                  },
-                ],
-              },
-            },
-            meta: {},
-          });
-          const initialSaveModel = transformSceneToSaveModel(dashboard);
-          dashboard.setInitialSaveModel(initialSaveModel);
-
-          const variable = sceneGraph.lookupVariable('GroupBy', dashboard) as GroupByVariable;
-          variable.setState({ defaultOptions: [{ text: 'Host', value: 'host' }] });
-          const result = dashboard.getDashboardChanges(false, true);
-
-          expect(result.hasVariableValueChanges).toBe(false);
-          expect(result.hasChanges).toBe(true);
-          expect(result.diffCount).toBe(1);
-        });
-
         it('Can detect adhoc filter static options change', () => {
           const adhocVar = {
             id: 'adhoc',
@@ -555,11 +490,11 @@ describe('DashboardSceneSerializer', () => {
       expect(result.hasFolderChanges).toBe(true);
     });
 
-    it('Can detect predefined variables denylist change', () => {
+    it('Can detect cross-dashboard variables selection change', () => {
       const dashboard = setupV2();
       dashboard.onEnterEditMode();
 
-      const annotation = serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]);
+      const annotation = '{"global":"all","folder":"all"}';
       dashboard.setState({
         meta: {
           ...dashboard.state.meta,
@@ -567,7 +502,7 @@ describe('DashboardSceneSerializer', () => {
             ...dashboard.state.meta.k8s,
             annotations: {
               ...dashboard.state.meta.k8s?.annotations,
-              [AnnoKeyIgnorePredefinedVariables]: annotation,
+              [AnnoKeyUseCrossDashboardVariables]: annotation,
             },
           },
         },
@@ -634,56 +569,6 @@ describe('DashboardSceneSerializer', () => {
       });
 
       describe('Experimental variables', () => {
-        beforeAll(() => {
-          config.featureToggles.groupByVariable = true;
-        });
-
-        afterAll(() => {
-          config.featureToggles.groupByVariable = false;
-        });
-
-        it('Can detect group by static options change', () => {
-          const dashboard = setupV2({
-            variables: [
-              {
-                kind: 'GroupByVariable',
-                group: 'ds',
-                datasource: {
-                  name: 'ds-uid',
-                },
-                spec: {
-                  current: {
-                    text: 'Host',
-                    value: 'host',
-                  },
-                  name: 'GroupBy',
-                  options: [
-                    {
-                      text: 'Host',
-                      value: 'host',
-                    },
-                    {
-                      text: 'Region',
-                      value: 'region',
-                    },
-                  ],
-                  multi: false,
-                  hide: 'dontHide',
-                  skipUrlSync: false,
-                },
-              },
-            ],
-          });
-
-          const variable = sceneGraph.lookupVariable('GroupBy', dashboard) as GroupByVariable;
-          variable.setState({ defaultOptions: [{ text: 'Host', value: 'host' }] });
-          const result = dashboard.getDashboardChanges(false, true);
-
-          expect(result.hasVariableValueChanges).toBe(false);
-          expect(result.hasChanges).toBe(true);
-          expect(result.diffCount).toBe(1);
-        });
-
         it('Can detect adhoc filter static options change', () => {
           const dashboard = setupV2({
             variables: [
@@ -879,7 +764,6 @@ describe('DashboardSceneSerializer', () => {
                 transformations: [],
               },
             },
-            description: '',
             id: 1,
             links: [],
             title: 'Panel 1',

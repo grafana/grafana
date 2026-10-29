@@ -1,8 +1,9 @@
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+
 import {
   type AdHocVariableFilter,
   DataSourceApi,
   type DataSourceInstanceSettings,
-  type DataSourcePluginMeta,
   dateTime,
   type ExploreUrlState,
   type GrafanaConfig,
@@ -12,7 +13,7 @@ import {
   serializeStateToUrlParam,
 } from '@grafana/data';
 import { setDataSourceSrv, setTemplateSrv, type DataSourceSrv, type TemplateSrv } from '@grafana/runtime';
-import { initDataSourceInstanceSettings, setDataSourcePluginImporter } from '@grafana/runtime/internal';
+import { setDataSourceInstanceSettings, setDataSourcePluginImporter } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -35,57 +36,18 @@ const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   range: DEFAULT_RANGE,
 };
 
-// The migration under test swaps getDataSourceSrv().get() for getDataSourceInstance() from
-// @grafana/runtime/unstable. We deliberately seed the *real* new-API caches (instance settings +
-// plugin importer) rather than delegate getDataSourceInstance back to a legacy mock. A
-// delegate-to-legacy mock reasserts the old semantics by construction, so it can never fail on the
-// template-variable identity gap that got the original migration (#127578) reverted (#127870).
+// Seeds the real async-API caches instead of delegating to a legacy mock, which could never
+// catch the template-variable identity gap that got the original migration reverted.
 const interpolateMockLoki = jest.fn().mockReturnValue([{ refId: 'a', expr: 'replaced testDs loki' }]);
 const interpolateMockProm = jest.fn().mockReturnValue([{ refId: 'a', expr: 'replaced testDs2 prom' }]);
 const interpolateByUid: Record<string, jest.Mock> = { ds1: interpolateMockLoki, ds2: interpolateMockProm };
 
-function makeSettings(
-  uid: string,
-  name: string,
-  type: string,
-  opts: { isDefault?: boolean; mixed?: boolean } = {}
-): DataSourceInstanceSettings {
-  return {
-    id: 1,
-    uid,
-    name,
-    type,
-    access: 'direct',
-    jsonData: {},
-    readOnly: false,
-    isDefault: opts.isDefault ?? false,
-    meta: {
-      id: type,
-      name: type,
-      type: 'datasource',
-      module: '',
-      baseUrl: '',
-      mixed: opts.mixed ?? false,
-      metrics: true,
-      info: {
-        author: { name: '' },
-        description: '',
-        links: [],
-        logos: { small: '', large: '' },
-        screenshots: [],
-        updated: '',
-        version: '',
-      },
-    } as unknown as DataSourcePluginMeta,
-  } as DataSourceInstanceSettings;
-}
-
 const DEFAULT_DS_NAME = 'default datasource';
 const dsSettings: Record<string, DataSourceInstanceSettings> = {
-  default: makeSettings('default-uid', DEFAULT_DS_NAME, 'test-db', { isDefault: true }),
-  ds1: makeSettings('ds1', 'testDs', 'loki'),
-  ds2: makeSettings('ds2', 'testDs2', 'prom'),
-  dsMixed: makeSettings('dsMixed', 'testDSMixed', 'mixed', { mixed: true }),
+  default: makeDataSourceSettings('default-uid', DEFAULT_DS_NAME, 'test-db', { isDefault: true }),
+  ds1: makeDataSourceSettings('ds1', 'testDs', 'loki'),
+  ds2: makeDataSourceSettings('ds2', 'testDs2', 'prom'),
+  dsMixed: makeDataSourceSettings('dsMixed', 'testDSMixed', 'mixed', { mixed: true }),
 };
 
 // Unlike a preset-instance mock, this class derives its identity from the settings the loader
@@ -108,7 +70,7 @@ class TestDataSource extends DataSourceApi<DataQuery> {
 const pluginImporter = jest.fn().mockResolvedValue({ DataSourceClass: TestDataSource, components: {} });
 
 beforeEach(() => {
-  initDataSourceInstanceSettings(dsSettings, DEFAULT_DS_NAME);
+  setDataSourceInstanceSettings(dsSettings, DEFAULT_DS_NAME);
   setDataSourcePluginImporter(pluginImporter);
   // Resolve the datasource template variable to a concrete uid, mirroring dashboard interpolation.
   setTemplateSrv({

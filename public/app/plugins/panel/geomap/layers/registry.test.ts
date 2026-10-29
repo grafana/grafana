@@ -1,3 +1,6 @@
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+
 import { getLayersOptions } from './registry';
 
 let mockHasAlphaPanels = false;
@@ -14,7 +17,10 @@ jest.mock('app/core/config', () => ({
 // Mocking the barrels also avoids loading real data layers, which pull ol/source -> geotiff
 // (untransformed ESM under jest).
 jest.mock('./basemaps', () => ({
-  basemapLayers: [{ id: 'base-a', name: 'Base A' }],
+  basemapLayers: [
+    { id: 'base-a', name: 'Base A' },
+    { id: 'protomaps', name: 'Protomaps' },
+  ],
 }));
 jest.mock('./data', () => {
   const { PluginState } = jest.requireActual('@grafana/data');
@@ -26,6 +32,9 @@ jest.mock('./data', () => {
     ],
   };
 });
+// The registry also imports the CARTO layer directly rather than through the barrel above, which
+// pulls in ol-mapbox-style (untransformed ESM under jest).
+jest.mock('ol-mapbox-style', () => ({}));
 
 const ids = (opts: Array<{ value?: string }>) => opts.map((o) => o.value);
 
@@ -72,6 +81,25 @@ describe('getLayersOptions', () => {
       expect(alpha!.icon).toBe('bolt');
       // alpha layers are appended after the regular (non-alpha) layers
       expect(ids(options).indexOf('data-alpha')).toBeGreaterThan(ids(options).indexOf('data-a'));
+    });
+  });
+
+  describe('Protomaps basemap flag', () => {
+    afterEach(() => setTestFlags({}));
+
+    it('offers the Protomaps basemap when grafana.geomapProtomapsBasemap is on', () => {
+      setTestFlags({ [FlagKeys.GrafanaGeomapProtomapsBasemap]: true });
+
+      expect(ids(getLayersOptions(true).options)).toEqual(['default', 'base-a', 'protomaps']);
+    });
+
+    // Read on every call, so flipping the flag mid-session changes the picker without a reload
+    it('drops the Protomaps basemap again once the flag turns off', () => {
+      setTestFlags({ [FlagKeys.GrafanaGeomapProtomapsBasemap]: true });
+      getLayersOptions(true);
+      setTestFlags({ [FlagKeys.GrafanaGeomapProtomapsBasemap]: false });
+
+      expect(ids(getLayersOptions(true).options)).toEqual(['default', 'base-a']);
     });
   });
 });

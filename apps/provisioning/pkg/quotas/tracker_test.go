@@ -113,11 +113,9 @@ func TestQuotaTracker_ConcurrentAccess(t *testing.T) {
 
 	// Launch 200 goroutines each trying to acquire
 	for range 200 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			acquired <- tracker.TryAcquire()
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -173,11 +171,9 @@ func TestQuotaTracker_ConcurrentAcquireAndRelease(t *testing.T) {
 
 	// Release 10 slots concurrently
 	for range 10 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			tracker.Release()
-		}()
+		})
 	}
 	wg.Wait()
 

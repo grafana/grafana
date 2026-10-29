@@ -1,0 +1,120 @@
+{
+  "apiVersion": "apps.grafana.app/v1alpha2",
+  "kind": "AppManifest",
+  "metadata": {
+    "name": "test-app-with-sdk-manifest"
+  },
+  "spec": {
+    "appName": "test-app-with-sdk-manifest",
+    "group": "test-app-with-backend.ext.grafana.app",
+    "versions": [
+      {
+        "name": "v1",
+        "kinds": [
+          {
+            "kind": "Thing",
+            "plural": "things",
+            "scope": "Namespaced",
+            "folderScoped": false,
+            "schemas": {
+              "Thing": {
+                "type": "object",
+                "properties": {
+                  "spec": {
+                    "type": "object",
+                    "properties": {
+                      "foo": {
+                        "type": "string"
+                      },
+                      "count": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "foo"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "status": {
+                    "type": "object",
+                    "properties": {
+                      "state": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "spec"
+                ]
+              }
+            },
+            "routes": {
+              "reload": {
+                "get": {
+                  "operationId": "reloadThing",
+                  "responses": {
+                    "200": {
+                      "description": "OK"
+                    }
+                  }
+                }
+              }
+            },
+            "searchFields": [
+              {
+                "name": "foo",
+                "path": "spec.foo",
+                "type": "string",
+                "capabilities": [
+                  "filter"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "Widget",
+            "plural": "widgets",
+            "scope": "Namespaced",
+            "schemas": {
+              "Widget": {
+                "type": "object",
+                "properties": {
+                  "spec": {
+                    "type": "object",
+                    "properties": {
+                      "foo": {
+                        "type": "string"
+                      },
+                      "count": {
+                        "type": "integer"
+                      },
+                      "tier": {
+                        "type": "string",
+                        "default": "standard"
+                      }
+                    },
+                    "required": [
+                      "foo"
+                    ]
+                  },
+                  "status": {
+                    "type": "object",
+                    "properties": {
+                      "state": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "spec"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

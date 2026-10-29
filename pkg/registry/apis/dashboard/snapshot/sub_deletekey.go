@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"net/http"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // deleteKeyREST exposes the plaintext deleteKey via a dedicated subresource
@@ -19,12 +19,14 @@ import (
 // It reads from the unwrapped inner storage which retains the deleteKey in the spec,
 // unlike the public-facing storage wrapper which strips it on GET/LIST.
 type deleteKeyREST struct {
-	getter rest.Getter
+	getter        rest.Getter
+	accessControl ac.AccessControl
+	blobs         resourcepb.BlobStoreClient
 }
 
 // NewDeleteKeyREST creates a new subresource handler for the deleteKey endpoint.
-func NewDeleteKeyREST(getter rest.Getter) (rest.Storage, error) {
-	return &deleteKeyREST{getter: getter}, nil
+func NewDeleteKeyREST(getter rest.Getter, accessControl ac.AccessControl, blobs resourcepb.BlobStoreClient) (rest.Storage, error) {
+	return &deleteKeyREST{getter: getter, accessControl: accessControl, blobs: blobs}, nil
 }
 
 var (
@@ -55,8 +57,11 @@ func (r *deleteKeyREST) ProducesObject(verb string) interface{} {
 }
 
 func (r *deleteKeyREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	// Read from the inner (unwrapped) storage which retains deleteKey in the spec.
-	obj, err := r.getter.Get(ctx, name, &metav1.GetOptions{})
+	lookupCtx, err := snapshotLookupContext(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	obj, err := r.getter.Get(lookupCtx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -66,17 +71,9 @@ func (r *deleteKeyREST) Connect(ctx context.Context, name string, opts runtime.O
 		return nil, fmt.Errorf("expected Snapshot, got %T", obj)
 	}
 
-	// Snapshots are org-scoped, but lookups by key are global. The store stamps the
-	// snapshot's namespace from its owning org, so reject requests that resolve a
-	// snapshot owned by a different org than the caller's namespace — otherwise the
-	// caller could read another org's secret deleteKey using only the public key.
-	// Return NotFound so the endpoint does not leak cross-org existence.
-	ns, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
+	// Disclosure of the capability requires the same policy as administrative deletion.
+	if err := authorizeSnapshotDelete(ctx, snap, r.accessControl, r.blobs); err != nil {
 		return nil, err
-	}
-	if snap.Namespace != ns.Value {
-		return nil, apierrors.NewNotFound(dashv0.SnapshotResourceInfo.GroupResource(), name)
 	}
 
 	deleteKey := ""
@@ -88,6 +85,7 @@ func (r *deleteKeyREST) Connect(ctx context.Context, name string, opts runtime.O
 		// Return the snapshot with deleteKey, but strip it from the embedded spec
 		result := snap.DeepCopy()
 		result.Spec.DeleteKey = nil
+		result.Spec.ExternalDeleteUrl = nil
 
 		responder.Object(http.StatusOK, &dashv0.DashboardSnapshotWithDeleteKey{
 			Snapshot:  *result,

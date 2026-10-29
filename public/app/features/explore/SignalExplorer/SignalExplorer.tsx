@@ -1,20 +1,29 @@
 import { css } from '@emotion/css';
-import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { type DataSourceApi, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { useDataSourceInstanceList } from '@grafana/runtime';
 import { useDatasourcePluginMetas } from '@grafana/runtime/internal';
-import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { useContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
 import { QUERIES_PANEL_ID } from '../ContentOutline/ContentOutlineItem';
 import { scrollOutlineItemIntoView } from '../ContentOutline/scrollIntoView';
-import { isPrometheusType } from '../utils/prometheus';
+import {
+  type ExprTextKind,
+  getPrometheusEditorMode,
+  isPrometheusType,
+  type PrometheusEditorMode,
+} from '../utils/prometheus';
 
+import { MetricDetailPanel } from './MetricDetailPanel';
 import { MetricsList } from './MetricsList';
 import { SignalCard } from './SignalCard';
+import { dsKey, rangeKey } from './data/metricResourceClient';
+import { trackSignalExplorerPanelOpened } from './tracking';
+import { type MetricSelection } from './types';
 
 interface CardDescriptor {
   refId: string;
@@ -30,6 +39,8 @@ interface CardDescriptor {
    */
   dsUid?: string;
   dsType?: string;
+  /** Only set for a Prometheus card; `undefined` there leaves the mode to the datasource's default editor. */
+  editorMode?: PrometheusEditorMode;
 }
 
 interface Props {
@@ -44,22 +55,28 @@ interface Props {
   scroller: HTMLElement | undefined;
   /** Owned by ContentOutline, which holds the collapse state for the whole sidebar. */
   toggleButton: ReactNode;
+  /** Appends text to the expression of the query with `refId`. Without it, rows offer no way to add to a query. */
+  onAddToQuery?: (refId: string, text: string, kind: ExprTextKind) => void;
 }
 
 /**
  * Datasource explorer sidebar: one card per query, so Mixed mode makes it clear
  * which query and datasource the user is interacting with.
  */
-export function SignalExplorer({ queries, paneDatasource, timeRange, scroller, toggleButton }: Props) {
+export function SignalExplorer({ queries, paneDatasource, timeRange, scroller, toggleButton, onAddToQuery }: Props) {
   const styles = useStyles2(getStyles);
   const { outlineItems } = useContentOutlineContext() ?? { outlineItems: [] };
   const [expandedRefIds, setExpandedRefIds] = useState<Set<string>>(new Set());
+  const [selectedMetric, setSelectedMetric] = useState<MetricSelection | null>(null);
 
   // The whole list once, rather than a lookup per ref: a card's datasource is resolved inside the
   // memo below, and one hook per query would break the rules of hooks as queries come and go.
   // `all` because a query can target any datasource, whatever capabilities its plugin reports, and
   // `mixed` so a Mixed pane's own datasource resolves for a query that carries no ref of its own.
-  const { items: dataSourceItems } = useDataSourceInstanceList({ all: true, mixed: true });
+  const { items: dataSourceItems, isLoading: dataSourcesLoading } = useDataSourceInstanceList({
+    all: true,
+    mixed: true,
+  });
   // Logos come from the plugin metas keyed by type, not from the resolved instance, so a ref that
   // matches no instance still shows its plugin's logo alongside the type it names.
   const { value: pluginMetas } = useDatasourcePluginMetas();
@@ -87,41 +104,97 @@ export function SignalExplorer({ queries, paneDatasource, timeRange, scroller, t
       // and the settings lookup this replaced resolved either form.
       const item = ref?.uid ? dataSourceItems.find((ds) => ds.uid === ref.uid || ds.name === ref.uid) : undefined;
       const type = item?.type ?? ref?.type;
+      const isPrometheus = isPrometheusType(type);
 
       return {
         refId: query.refId,
         datasourceName: item?.name ?? type ?? t('explore.signal-explorer.unknown-datasource', 'Unknown datasource'),
         datasourceLogo: type ? logosByType.get(type) : undefined,
         // Prometheus is currently the only datasource with an explorer to open.
-        isExpandable: isPrometheusType(type),
+        isExpandable: isPrometheus,
         // The resolved uid rather than the ref's: a ref naming a datasource by name resolves to the
         // uid here, and the uid is what the metric cache keys its entries on.
         dsUid: item?.uid ?? ref?.uid,
         dsType: type,
+        editorMode: isPrometheus ? getPrometheusEditorMode(query) : undefined,
       };
     });
   }, [queries, paneDatasource, dataSourceItems, logosByType]);
+
+  useEffect(() => {
+    trackSignalExplorerPanelOpened({
+      // A Mixed pane's own type is the unhelpful `datasource`, and no one card speaks for the pane;
+      // the per-card type reaches the other three events instead.
+      data_source_type: paneDatasource?.meta?.mixed ? 'mixed' : paneDatasource?.type,
+      stacked_queries_count: cards.length,
+    });
+    // Mount only: ContentOutline renders this component only while the sidebar is visible, so
+    // mounting is the opening the event describes. Both values above are read as they were then.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // A card's expanded state has to go away with the card's ability to expand:
   // - a deleted query, because Explore hands out the lowest unused refId when a query is
   //   added, so the next query in that slot would render already expanded;
   // - a query that moved to a datasource with no explorer, because the card collapses on
   //   screen and would otherwise reopen by itself if the query moved back.
+  // The selected metric goes with them, and also when its card keeps its refId but changes
+  // datasource, because the list underneath is then a different catalog.
   useEffect(() => {
+    // Keyed by `dsKey`, not uid, so a card compares on the identity its catalog is fetched under.
+    const expandable = new Map(
+      cards
+        .filter((card) => card.isExpandable)
+        .map((card) => [card.refId, dsKey({ uid: card.dsUid, type: card.dsType })])
+    );
+
     setExpandedRefIds((prev) => {
       if (prev.size === 0) {
         return prev;
       }
 
-      const expandable = new Set(cards.filter((card) => card.isExpandable).map((card) => card.refId));
       const next = new Set([...prev].filter((refId) => expandable.has(refId)));
 
       // Returning the previous set lets React skip the extra render.
       return next.size === prev.size ? prev : next;
     });
+
+    setSelectedMetric((prev) => {
+      if (!prev) {
+        return prev;
+      }
+      // A refId that has left the pane reads `undefined`, which no key can equal.
+      return expandable.get(prev.refId) === prev.dsKey ? prev : null;
+    });
   }, [cards]);
 
+  // Opens a Prometheus first card once per mount, so a user's collapse sticks. A layout effect, so the
+  // card never paints closed first.
+  const defaultExpansionDecidedRef = useRef(false);
+  useLayoutEffect(() => {
+    const first = cards[0];
+    // A ref without a type only resolves with the datasource list, and may never resolve at all.
+    if (defaultExpansionDecidedRef.current || (first && !first.dsType && dataSourcesLoading)) {
+      return;
+    }
+
+    defaultExpansionDecidedRef.current = true;
+    if (first?.isExpandable) {
+      setExpandedRefIds((prev) => new Set(prev).add(first.refId));
+    }
+  }, [cards, dataSourcesLoading]);
+
+  // A new range fetches a new catalog, which need not still hold the selected metric. Keyed on
+  // `rangeKey`, not the range object Explore rebuilds every refresh tick, so a refresh changes
+  // nothing here for the same reason it refetches nothing.
+  const range = rangeKey(timeRange);
+  useEffect(() => {
+    setSelectedMetric(null);
+  }, [range]);
+
   const toggleExpanded = (refId: string) => {
+    const collapsing = expandedRefIds.has(refId);
+
     setExpandedRefIds((prev) => {
       const next = new Set(prev);
       if (!next.delete(refId)) {
@@ -129,7 +202,29 @@ export function SignalExplorer({ queries, paneDatasource, timeRange, scroller, t
       }
       return next;
     });
+
+    // A collapsing card takes its metric rows with it.
+    if (collapsing) {
+      setSelectedMetric((prev) => (prev?.refId === refId ? null : prev));
+    }
   };
+
+  // One callback for every card, so `MetricsList`'s `memo()` holds while the explorer re-renders on
+  // every keystroke in a query editor. Hence the card identifying itself in the argument.
+  const selectMetric = useCallback((selection: MetricSelection) => {
+    // Re-picking the open metric closes the panel, which is what `aria-pressed` on the row announces.
+    setSelectedMetric((prev) =>
+      prev?.refId === selection.refId && prev.metric.name === selection.metric.name ? null : selection
+    );
+  }, []);
+
+  // Through a ref, so `MetricsList`'s `memo()` holds even if the caller hands over a new callback per render.
+  const onAddToQueryRef = useRef(onAddToQuery);
+  onAddToQueryRef.current = onAddToQuery;
+  const addToQuery = useCallback(
+    (refId: string, text: string, kind: ExprTextKind) => onAddToQueryRef.current?.(refId, text, kind),
+    []
+  );
 
   const jumpToQuery = (refId: string) => {
     // Query rows register themselves as children of the Queries outline item, so
@@ -154,33 +249,56 @@ export function SignalExplorer({ queries, paneDatasource, timeRange, scroller, t
       </div>
 
       <div className={styles.sectionLabel}>{t('explore.signal-explorer.section-label-queries', 'Queries')}</div>
-      <ScrollContainer>
-        <div className={styles.cards}>
-          {/* Explore always hands over at least one query today, because the sidebar is
-              gated on a Prometheus datasource being present. Kept because an empty list
-              is a legal input to this component. */}
-          {cards.length === 0 ? (
-            <div className={styles.emptyText}>
-              {t('explore.signal-explorer.empty-text', 'Add a query to browse its datasource.')}
-            </div>
-          ) : (
-            cards.map((card) => (
-              <SignalCard
-                key={card.refId}
-                refId={card.refId}
-                datasourceName={card.datasourceName}
-                datasourceLogo={card.datasourceLogo}
-                isExpandable={card.isExpandable}
-                isExpanded={expandedRefIds.has(card.refId)}
-                onToggleExpanded={() => toggleExpanded(card.refId)}
-                onJumpToQuery={() => jumpToQuery(card.refId)}
-              >
-                <MetricsList dsUid={card.dsUid} dsType={card.dsType} timeRange={timeRange} />
-              </SignalCard>
-            ))
-          )}
-        </div>
-      </ScrollContainer>
+      <div className={styles.cardsViewport}>
+        <ScrollContainer>
+          <div className={styles.cards}>
+            {/* Explore always hands over at least one query today, because the sidebar is
+                gated on a Prometheus datasource being present. Kept because an empty list
+                is a legal input to this component. */}
+            {cards.length === 0 ? (
+              <div className={styles.emptyText}>
+                {t('explore.signal-explorer.empty-text', 'Add a query to browse its datasource.')}
+              </div>
+            ) : (
+              cards.map((card) => (
+                <SignalCard
+                  key={card.refId}
+                  refId={card.refId}
+                  datasourceName={card.datasourceName}
+                  datasourceLogo={card.datasourceLogo}
+                  isExpandable={card.isExpandable}
+                  isExpanded={expandedRefIds.has(card.refId)}
+                  isOnlyCard={cards.length === 1}
+                  onToggleExpanded={() => toggleExpanded(card.refId)}
+                  onJumpToQuery={() => jumpToQuery(card.refId)}
+                >
+                  <MetricsList
+                    refId={card.refId}
+                    dsUid={card.dsUid}
+                    dsType={card.dsType}
+                    stackedQueriesCount={cards.length}
+                    timeRange={timeRange}
+                    selectedMetric={selectedMetric?.refId === card.refId ? selectedMetric.metric.name : undefined}
+                    onSelectMetric={selectMetric}
+                    editorMode={card.editorMode}
+                    onAddToQuery={onAddToQuery ? addToQuery : undefined}
+                  />
+                </SignalCard>
+              ))
+            )}
+          </div>
+        </ScrollContainer>
+      </div>
+
+      {/* A sibling of the scroll region, not the last thing inside it, so it stays put while the
+          cards scroll. */}
+      {selectedMetric && (
+        <MetricDetailPanel
+          refId={selectedMetric.refId}
+          metric={selectedMetric.metric}
+          onClose={() => setSelectedMetric(null)}
+        />
+      )}
     </div>
   );
 }
@@ -230,6 +348,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.secondary,
     }),
+    // A size container, so an expanded card can size itself to the visible card area in `cqh`.
+    cardsViewport: css({
+      label: 'signal-explorer-cards-viewport',
+      display: 'flex',
+      flexDirection: 'column',
+      flex: '1 1 auto',
+      minHeight: 0,
+      containerType: 'size',
+    }),
+    // SignalCard's expanded height subtracts this gap and bottom padding, so change them together.
     cards: css({
       label: 'signal-explorer-cards',
       display: 'flex',

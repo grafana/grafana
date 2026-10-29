@@ -1,6 +1,7 @@
 /**
  * Shared validation utilities for import-to-gma steps
  */
+import { isAutoSyncSelected } from '../Wizard/steps';
 
 /** RFC 1123 subdomain pattern — must match the backend's identifier validation */
 const POLICY_TREE_NAME_PATTERN = /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/;
@@ -26,7 +27,7 @@ export function validatePolicyTreeName(value: string): string | true {
 /**
  * Validates that a source selection has the required data based on the source type
  */
-export function hasValidSourceSelection(
+function hasValidSourceSelection(
   source: 'yaml' | 'datasource',
   yamlFile: File | null | undefined,
   datasourceUID: string | null | undefined
@@ -62,10 +63,12 @@ export interface Step1ValidationParams {
   notificationsYamlFile: File | null;
   notificationsDatasourceUID: string | null | undefined;
   notificationsTemplateFiles: File[];
+  autoSyncNotificationsEnabled: boolean;
 }
 
 /**
- * Validates that Step 1 form is complete and valid
+ * Validates that Step 1 form is complete and valid. When Auto-sync is selected, only a data
+ * source is required — there's no staged config to name or dry-run.
  */
 export function isStep1Valid(params: Step1ValidationParams): boolean {
   const {
@@ -74,7 +77,12 @@ export function isStep1Valid(params: Step1ValidationParams): boolean {
     notificationsYamlFile,
     notificationsDatasourceUID,
     notificationsTemplateFiles,
+    autoSyncNotificationsEnabled,
   } = params;
+
+  if (isAutoSyncSelected(autoSyncNotificationsEnabled, notificationsSource)) {
+    return Boolean(notificationsDatasourceUID);
+  }
 
   if (!policyTreeName || validatePolicyTreeName(policyTreeName) !== true) {
     return false;
@@ -83,6 +91,17 @@ export function isStep1Valid(params: Step1ValidationParams): boolean {
     return false;
   }
   return hasValidSourceSelection(notificationsSource, notificationsYamlFile, notificationsDatasourceUID);
+}
+
+/**
+ * Auto-sync always returns false here, unlike isStep1Valid — it has no staged config to
+ * validate, even though a selected Auto-sync datasource is sufficient for isStep1Valid.
+ */
+export function canRunDryRun(params: Step1ValidationParams): boolean {
+  if (isAutoSyncSelected(params.autoSyncNotificationsEnabled, params.notificationsSource)) {
+    return false;
+  }
+  return isStep1Valid({ ...params, autoSyncNotificationsEnabled: false });
 }
 
 export interface Step2ValidationParams {

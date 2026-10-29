@@ -117,8 +117,7 @@ func schema_pkg_apis_appplugin_v0alpha1_Settings(ref common.ReferenceCallback) c
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+										Ref: ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -164,8 +163,7 @@ func schema_pkg_apis_appplugin_v0alpha1_SettingsList(ref common.ReferenceCallbac
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Settings{}.OpenAPIModelName()),
+										Ref: ref(Settings{}.OpenAPIModelName()),
 									},
 								},
 							},

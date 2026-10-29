@@ -18,17 +18,6 @@ labels:
     - oss
 title: Configure high availability
 weight: 600
-refs:
-  state-history:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state-history/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-alert-state-history/
-  meta-monitoring:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor/
 ---
 
 # Configure high availability
@@ -86,7 +75,7 @@ Memberlist is the preferred option for high availability. Use Redis only in envi
 1. Optional: Set the username and password if authentication is enabled on Redis Sentinel using `ha_redis_sentinel_username` and `ha_redis_sentinel_password`.
 1. Optional: Set `ha_redis_prefix` to something unique if you plan to share the Redis server with multiple Grafana instances.
 1. Optional: Set `ha_redis_tls_enabled` to `true` and configure the corresponding `ha_redis_tls_*` fields to secure communications between Grafana and Redis with Transport Layer Security (TLS).
-1. Set `[ha_advertise_address]` to `ha_advertise_address = "${POD_IP}:9094"` This is required if the instance doesn't have an IP address that is part of RFC 6890 with a default route.
+1. Set `[ha_advertise_address]` to `ha_advertise_address = "${POD_IP}:9094"`. This is required if the instance doesn't have an IP address that is part of RFC 6890 with a default route.
 
 For a demo, see this [example using Docker Compose](https://github.com/grafana/alerting-ha-docker-examples/tree/main/redis).
 
@@ -163,8 +152,6 @@ For a demo, see this [example using Docker Compose](https://github.com/grafana/a
 
 ## Single-node evaluation mode
 
-{{< docs/public-preview product="Single-node evaluation mode" >}}
-
 By default, all Grafana instances in a high-availability cluster evaluate all alert rules. This means query load on data sources is multiplied by the number of Grafana instances. Single-node evaluation mode changes this so that only one instance evaluates alert rules, reducing query load from N times to 1.
 
 **To enable single-node evaluation mode**, add the following to your `[unified_alerting]` section:
@@ -235,7 +222,7 @@ The default value is `200`. This setting applies to both Memberlist and Redis HA
 
 ## Verify your high availability setup
 
-When running multiple Grafana instances, all alert rules are evaluated on every instance by default. This multiple evaluation of alert rules is visible in the [state history](ref:state-history) and provides a straightforward way to verify that your high availability configuration is working correctly.
+When running multiple Grafana instances, all alert rules are evaluated on every instance by default. This multiple evaluation of alert rules is visible in the [state history](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state-history/) and provides a straightforward way to verify that your high availability configuration is working correctly.
 
 {{< admonition type="note" >}}
 
@@ -280,7 +267,7 @@ Note that these alerting high availability metrics are exposed via the `/metrics
         - grafana:3000
 ```
 
-For more information on monitoring alerting metrics, refer to [Alerting meta-monitoring](ref:meta-monitoring). For a demo, see [alerting high availability examples using Docker Compose](https://github.com/grafana/alerting-ha-docker-examples/).
+For more information on monitoring alerting metrics, refer to [Alerting meta-monitoring](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor/). For a demo, see [alerting high availability examples using Docker Compose](https://github.com/grafana/alerting-ha-docker-examples/).
 
 ## Prevent duplicate notifications
 

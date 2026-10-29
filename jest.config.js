@@ -4,6 +4,7 @@
 process.env.TZ = 'Pacific/Easter'; // UTC-06:00 or UTC-05:00 depending on daylight savings
 
 const esModules = [
+  '@faker-js/faker',
   '@wojtekmaj/date-utils',
   'ol',
   'd3',
@@ -28,6 +29,8 @@ const esModules = [
   '@bsull/augurs',
   '@grafana/react-data-grid',
   '@grafana/llm',
+  '@grafana/prometheus',
+  '@grafana/plugin-ui',
   'pkce-challenge',
   'quickselect',
   'rbush',
@@ -38,6 +41,7 @@ const esModules = [
   '@react-hookz/web',
   '@ver0/deep-equal',
   '@marcbachmann/cel-js',
+  'yaml',
 ].join('|');
 
 module.exports = {
@@ -57,10 +61,18 @@ module.exports = {
     // Transform listed ESM packages at the top level or nested under another package
     // (e.g. @grafana/plugin-ui → uuid). Top-level still uses prefix matching so
     // entries like `d3` continue to cover related packages (d3-force, etc.).
-    `/node_modules/(?!(?:${esModules})|(?:.*/(?:${esModules})/))`,
+    // pnpm stores packages in node_modules/.pnpm/<name>@<version>/node_modules/<name>, so the
+    // `.pnpm` segment is skipped and the inner node_modules segment decides.
+    `/node_modules/(?!\\.pnpm/|(?:${esModules})|(?:.*/(?:${esModules})/))`,
   ],
   moduleDirectories: ['public', 'node_modules'],
-  roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages', '<rootDir>/scripts/tests'],
+  roots: [
+    '<rootDir>/public/app',
+    '<rootDir>/public/swagger',
+    '<rootDir>/public/test',
+    '<rootDir>/packages',
+    '<rootDir>/scripts/tests',
+  ],
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'cjs'],
   setupFiles: ['jest-canvas-mock', './public/test/jest-setup.ts'],
@@ -94,7 +106,6 @@ module.exports = {
     '/node_modules/',
     // Decoupled plugins run their own tests so ignoring them here.
     '<rootDir>/public/app/plugins/datasource/azuremonitor',
-    '<rootDir>/public/app/plugins/datasource/cloudwatch',
     '<rootDir>/public/app/plugins/datasource/grafana-testdata-datasource',
     '<rootDir>/public/app/plugins/datasource/graphite',
   ],

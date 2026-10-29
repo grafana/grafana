@@ -52,6 +52,7 @@
     ],
     "time_intervals": [
       {
+        "uid": "brmsc0nuyaadpb3ob2onl9mwm",
         "name": "mti-1",
         "time_intervals": [
           {
@@ -65,6 +66,7 @@
         ]
       },
       {
+        "uid": "dphipr9md4erhvovlqlyovqmj",
         "name": "mti-2",
         "time_intervals": [
           {
@@ -78,6 +80,7 @@
         ]
       },
       {
+        "uid": "dzo4w18a2z4z70ucpyqsu36if",
         "name": "ti-1",
         "time_intervals": [
           {
@@ -89,6 +92,7 @@
         ]
       },
       {
+        "uid": "9g8b1a5jnk04f8qlt7cnmkn1v",
         "name": "ti-2",
         "time_intervals": [
           {
@@ -114,20 +118,6 @@
             "disableResolveMessage": false,
             "settings": {
               "addresses": "<example@example.com>"
-            }
-          }
-        ]
-      },
-      {
-        "name": "test-webhook",
-        "grafana_managed_receiver_configs": [
-          {
-            "uid": "12345",
-            "name": "",
-            "type": "webhook",
-            "disableResolveMessage": false,
-            "settings": {
-              "url": "http://localhost/api/v1/alerts"
             }
           }
         ]
@@ -181,6 +171,20 @@
             }
           }
         ]
+      },
+      {
+        "name": "test-webhook",
+        "grafana_managed_receiver_configs": [
+          {
+            "uid": "12345",
+            "name": "",
+            "type": "webhook",
+            "disableResolveMessage": false,
+            "settings": {
+              "url": "http://localhost/api/v1/alerts"
+            }
+          }
+        ]
       }
     ]
   },
@@ -215,8 +219,8 @@
     }
   },
   "managed_inhibition_rules": {
-    "83e6a846175a154d": {
-      "name": "83e6a846175a154d",
+    "a1d38b33ebc9330": {
+      "name": "a1d38b33ebc9330",
       "source_matchers": [
         "alertname=\"test\"",
         "__grafana_managed_route__=\"mimir-12345\""

@@ -19,8 +19,6 @@ import * as React from 'react';
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
-import { autoColor } from '../Theme';
-
 const getStyles = (divider: boolean) => (theme: GrafanaTheme2) => {
   return {
     LabeledList: css({
@@ -43,7 +41,7 @@ const getStyles = (divider: boolean) => (theme: GrafanaTheme2) => {
       display: 'inline-block',
       ...(divider
         ? {
-            borderRight: `1px solid ${autoColor(theme, '#ddd')}`,
+            borderRight: `1px solid ${theme.colors.border.weak}`,
             padding: '0 8px',
           }
         : { padding: '0 4px' }),

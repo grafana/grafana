@@ -1,5 +1,4 @@
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type SceneObject, type SceneVariableSet, sceneUtils } from '@grafana/scenes';
 
 import {
@@ -7,9 +6,9 @@ import {
   type EditableDashboardElementInfo,
   isEditableDashboardElement,
 } from '../../scene/types/EditableDashboardElement';
-import { partitionVariablesByDisplay } from '../../sidebar/dashboard/DashboardVariablesList';
 import { filterSectionRepeatLocalVariables } from '../../variables/utils';
 
+import { partitionVariablesByDisplay } from './partitionVariables';
 import { isVariableEditable } from './utils';
 
 export class VariableSetEditableElement implements EditableDashboardElement {
@@ -27,13 +26,9 @@ export class VariableSetEditableElement implements EditableDashboardElement {
   }
 
   public getOutlineChildren() {
-    let variables = filterSectionRepeatLocalVariables(this.set.state.variables, this.set).filter((variable) =>
-      isVariableEditable(variable)
+    const variables = filterSectionRepeatLocalVariables(this.set.state.variables, this.set).filter(
+      (variable) => isVariableEditable(variable) && !sceneUtils.isAdHocVariable(variable)
     );
-
-    if (config.featureToggles.dashboardUnifiedDrilldownControls) {
-      variables = variables.filter((variable) => !sceneUtils.isAdHocVariable(variable));
-    }
 
     const { visible, controlsMenu, hidden } = partitionVariablesByDisplay(variables);
     return [...visible, ...controlsMenu, ...hidden];

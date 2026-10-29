@@ -1,6 +1,6 @@
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { render, screen, within } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 import { byTestId } from 'testing-library-selector';
 
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
@@ -29,7 +29,6 @@ import { KnownProvenance } from '../../types/knownProvenance';
 import { DataSourceType } from '../../utils/datasource';
 import { K8sAnnotations } from '../../utils/k8s/constants';
 
-import { countPolicies } from './PoliciesList';
 import * as analytics from './notificationPolicyAnalytics';
 
 jest.mock('../../useRouteGroupsMatcher');
@@ -131,6 +130,21 @@ describe('PoliciesList', () => {
     setAllRoutingTreePermissions({ canWrite: false, canDelete: false, canAdmin: false });
   });
 
+  it('keeps the matching policy visible when its displayed matcher is pasted into search', async () => {
+    const user = userEvent.setup();
+    renderNotificationPolicies();
+
+    await user.click(await screen.findByRole('button', { name: 'Expand all' }));
+    const matcherText = (await screen.findByText('level = one')).textContent!;
+    await user.click(screen.getByRole('textbox'));
+    await user.paste(matcherText);
+
+    await waitFor(() => expect(ui.rootRouteContainer.getAll()).toHaveLength(1));
+    expect(screen.getByText('level = one')).toBeVisible();
+    expect(screen.queryByText('severity = critical')).not.toBeInTheDocument();
+    expect(screen.queryByText('Query must use valid matcher syntax')).not.toBeInTheDocument();
+  });
+
   describe('Route headers and metadata', () => {
     const allRoutes = getRoutingTreeList();
     expect(allRoutes).toHaveLength(5);
@@ -185,10 +199,6 @@ describe('PoliciesList', () => {
         if (isProvisioned) {
           expect(routeEl).toHaveTextContent(/Provisioned/i);
         }
-
-        // Check subpolicies exist in the tree data
-        const size = countPolicies(route.spec);
-        expect(size).toBeGreaterThanOrEqual(0);
       }
     );
   });

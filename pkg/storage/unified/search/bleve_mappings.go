@@ -21,24 +21,84 @@ type kindSearchFields struct {
 	// keywordFields maps a filter, sort or facet field name to the
 	// keyword-analyzed index field backing it.
 	keywordFields map[string]keywordField
-	// storedFacetFields maps a facet field name to the stored canonical field
-	// post-rank authorization loads for app-side aggregation.
-	storedFacetFields map[string]string
+	// numberOrBoolFields maps a field name to the boolean or numeric index field
+	// backing it. Those have no keyword form, so keywordFields cannot describe
+	// them.
+	numberOrBoolFields map[string]numberOrBoolField
 	// textQueryKinds maps physical index field names to the query their analyzer
 	// needs.
 	textQueryKinds map[string]textQueryKind
+	// sortableFields holds the names a request may sort on.
+	sortableFields map[string]bool
 	// variants drives the index-time copy of per-kind values into the variant
 	// fields this kind's mapping declares.
 	variants []fieldVariant
+
+	// resultFields maps request field names to their declared response shape.
+	resultFields map[string]resource.SearchFieldDefinition
+	// allResultFields is the curated default response field list.
+	allResultFields []resource.SearchFieldDefinition
 }
 
 func newKindSearchFields(provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) kindSearchFields {
+	resultFields, allResultFields := fieldValueDefinitions(provider, group, kindResource)
 	return kindSearchFields{
-		keywordFields:     keywordFieldsForMapping(provider, group, kindResource, selectableFields),
-		storedFacetFields: storedFacetFieldsForMapping(provider, group, kindResource),
-		textQueryKinds:    textQueryKindsForMapping(provider, group, kindResource, selectableFields),
-		variants:          fieldVariantsOf(fieldDefinitionsForMapping(provider, group, kindResource)),
+		keywordFields:      keywordFieldsForMapping(provider, group, kindResource, selectableFields),
+		numberOrBoolFields: numberOrBoolFieldsForMapping(provider, group, kindResource),
+		textQueryKinds:     textQueryKindsForMapping(provider, group, kindResource, selectableFields),
+		sortableFields:     sortableFieldsForMapping(provider, group, kindResource),
+		variants:           fieldVariantsOf(fieldDefinitionsForMapping(provider, group, kindResource)),
+		resultFields:       resultFields,
+		allResultFields:    allResultFields,
 	}
+}
+
+// declaredField is one search field together with one name it can be found by.
+type declaredField struct {
+	key    string
+	prefix string // "fields." for a per-kind field, empty for a standard one
+	def    resource.SearchFieldDefinition
+}
+
+// declaredFields lists every search field a kind has, each under the name it is
+// stored as in the index. Per-kind fields are stored with a "fields." prefix, so
+// an alert rule's paused is listed as "fields.paused".
+//
+// Use this to build a map that is looked up by index field name.
+func declaredFields(provider resource.SearchFieldsProvider, group, kindResource string) []declaredField {
+	standard, trash := resource.IndexFieldDefinitions(group, kindResource)
+	perKind := fieldDefinitionsForMapping(provider, group, kindResource)
+
+	out := make([]declaredField, 0, len(standard)+len(trash)+len(perKind))
+	for _, def := range standard {
+		out = append(out, declaredField{key: def.Name, def: def})
+	}
+	for _, def := range trash {
+		out = append(out, declaredField{key: def.Name, def: def})
+	}
+	for _, def := range perKind {
+		out = append(out, declaredField{key: resource.SEARCH_FIELD_PREFIX + def.Name, prefix: resource.SEARCH_FIELD_PREFIX, def: def})
+	}
+	return out
+}
+
+// requestableFields lists the same fields under the names a search request can ask
+// for: everything declaredFields returns, plus the short name of each per-kind
+// field, because a request may say "paused" as well as "fields.paused".
+//
+// A short name is left out when a top-level field already uses it. A request
+// naming it means that field (see resolveFieldName), so pointing it at the
+// per-kind field would search the wrong one.
+//
+// Use this to build a map that is looked up with a name from a request.
+func requestableFields(provider resource.SearchFieldsProvider, group, kindResource string) []declaredField {
+	out := declaredFields(provider, group, kindResource)
+	for _, def := range fieldDefinitionsForMapping(provider, group, kindResource) {
+		if !isReservedTopLevelField(def.Name) {
+			out = append(out, declaredField{key: def.Name, prefix: resource.SEARCH_FIELD_PREFIX, def: def})
+		}
+	}
+	return out
 }
 
 // fieldDefinitionsForMapping returns the SearchFieldDefinition slice that
@@ -94,14 +154,9 @@ func textQueryKindsForMapping(provider resource.SearchFieldsProvider, group, kin
 		}
 	}
 
-	for _, def := range resource.StandardSearchFieldDefinitions() {
-		add(def, "")
-	}
-	for _, def := range resource.TrashSearchFieldDefinitions() {
-		add(def, "")
-	}
-	for _, def := range fieldDefinitionsForMapping(provider, group, kindResource) {
-		add(def, resource.SEARCH_FIELD_PREFIX)
+	// Keyed by physical index field, so the unprefixed names do not apply.
+	for _, f := range declaredFields(provider, group, kindResource) {
+		add(f.def, f.prefix)
 	}
 	// Selectable fields are keyword-mapped (see getBleveDocMappings).
 	for _, name := range selectableFields {
@@ -138,36 +193,29 @@ func (k keywordField) term(value string) string {
 // that keyword form lives, from the declarations that produced the mapping, so
 // the query side cannot drift from it (see keywordVariant).
 //
-// Keys are the names filters, sorts and facets arrive with. Labels are absent on
-// purpose: the label sub-document has no keyword analyzer.
+// Keys are the names filters, sorts and facets arrive with. Label keys are
+// absent because they are dynamic; a label filter is exact anyway, because bleve
+// analyzes it with the label sub-document's keyword analyzer.
 func keywordFieldsForMapping(provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) map[string]keywordField {
 	fields := map[string]keywordField{}
-	add := func(key string, def resource.SearchFieldDefinition, prefix string) {
-		name, ok := keywordVariant(def)
-		if !ok {
-			return
+	for _, f := range requestableFields(provider, group, kindResource) {
+		// This is backend support only: the public field declaration deliberately
+		// does not advertise sorting until its callers have an old-server fallback.
+		if f.prefix == "" && f.def.Name == resource.SEARCH_FIELD_DELETED_RV {
+			fields[f.key] = keywordField{name: resource.SEARCH_FIELD_DELETED_RV_SORT}
+			continue
 		}
-		fields[key] = keywordField{
-			name: prefix + name,
-			// A keyword form under a different name is a lowercased copy.
-			lowered:    name != def.Name,
-			filterable: def.HasCapability(resource.SearchCapabilityFilter),
-			facetable:  def.HasCapability(resource.SearchCapabilityFacet),
-		}
-	}
 
-	for _, def := range resource.StandardSearchFieldDefinitions() {
-		add(def.Name, def, "")
-	}
-	for _, def := range resource.TrashSearchFieldDefinitions() {
-		add(def.Name, def, "")
-	}
-	for _, def := range fieldDefinitionsForMapping(provider, group, kindResource) {
-		add(resource.SEARCH_FIELD_PREFIX+def.Name, def, resource.SEARCH_FIELD_PREFIX)
-		// Requests may name a per-kind field without the internal fields prefix.
-		// A standard field of the same name wins, matching resolveFieldName.
-		if _, taken := fields[def.Name]; !taken {
-			add(def.Name, def, resource.SEARCH_FIELD_PREFIX)
+		name, ok := keywordVariant(f.def)
+		if !ok {
+			continue
+		}
+		fields[f.key] = keywordField{
+			name: f.prefix + name,
+			// A keyword form under a different name is a lowercased copy.
+			lowered:    name != f.def.Name,
+			filterable: f.def.HasCapability(resource.SearchCapabilityFilter),
+			facetable:  f.def.HasCapability(resource.SearchCapabilityFacet),
 		}
 	}
 	// Selectable fields and the keyword sub-documents exist to be filtered on,
@@ -185,13 +233,81 @@ func keywordFieldsForMapping(provider resource.SearchFieldsProvider, group, kind
 // standardKeywordFields covers an index opened without per-kind declarations.
 var standardKeywordFields = keywordFieldsForMapping(nil, "", "", nil)
 
+// sortableFieldsForMapping derives which field names a request may sort on from
+// the declarations that produced the mapping.
+//
+// Keys are the names sorts arrive with. Labels and selectable fields are absent
+// because they declare no capabilities and exist to be filtered on.
+func sortableFieldsForMapping(provider resource.SearchFieldsProvider, group, kindResource string) map[string]bool {
+	fields := map[string]bool{}
+	for _, f := range requestableFields(provider, group, kindResource) {
+		// Kept backend-only for mixed-version rollout; see keywordFieldsForMapping.
+		if f.prefix == "" && f.def.Name == resource.SEARCH_FIELD_DELETED_RV {
+			fields[f.key] = true
+			continue
+		}
+		if !f.def.HasCapability(resource.SearchCapabilitySort) {
+			continue
+		}
+		fields[f.key] = true
+		// Callers that name a physical title variant directly still mean title.
+		if f.key == resource.SEARCH_FIELD_TITLE {
+			fields[resource.SEARCH_FIELD_TITLE_PHRASE] = true
+		}
+	}
+	return fields
+}
+
+// standardSortableFields covers an index opened without per-kind declarations.
+var standardSortableFields = sortableFieldsForMapping(nil, "", "")
+
+// filterable is separate from the type because such a field can be indexed for
+// sorting alone, or only stored.
+type numberOrBoolField struct {
+	name       string
+	fieldType  resource.SearchFieldType
+	filterable bool
+}
+
+// isBoolean splits the two shapes nonStringFieldMapping emits, so a query
+// cannot disagree with what was indexed.
+func (f numberOrBoolField) isBoolean() bool {
+	return f.fieldType == resource.SearchFieldTypeBoolean
+}
+
+// Derived from the declarations that produced the mapping, so the query side
+// cannot drift from it (see nonStringFieldMapping).
+//
+// Keys are the names filters arrive with. Fields that cannot be filtered are
+// listed too, so a filter on one is refused rather than matching nothing.
+func numberOrBoolFieldsForMapping(provider resource.SearchFieldsProvider, group, kindResource string) map[string]numberOrBoolField {
+	fields := map[string]numberOrBoolField{}
+	for _, f := range requestableFields(provider, group, kindResource) {
+		// date is left out because no kind declares one and whether its values are
+		// RFC3339 or unix millis is still open. An unrecognised type stays on the
+		// string path rather than being guessed at.
+		switch f.def.Type {
+		case resource.SearchFieldTypeBoolean, resource.SearchFieldTypeInt64, resource.SearchFieldTypeDouble:
+		default:
+			continue
+		}
+		fields[f.key] = numberOrBoolField{
+			name:       f.prefix + f.def.Name,
+			fieldType:  f.def.Type,
+			filterable: f.def.HasCapability(resource.SearchCapabilityFilter),
+		}
+	}
+	return fields
+}
+
+// standardNumberOrBoolFields covers an index opened without per-kind declarations.
+var standardNumberOrBoolFields = numberOrBoolFieldsForMapping(nil, "", "")
+
 // keywordSubDocumentFields are keyword-mapped fields that live in sub-documents
-// and so are not modellable as SearchFieldDefinitions yet (see
-// managerSubDocumentMapping and sourceSubDocumentMapping). The labels
-// sub-document is deliberately absent: it has no keyword default analyzer.
+// and are not declared as SearchFieldDefinitions (see sourceSubDocumentMapping).
+// The labels and reference sub-documents are absent because their keys are
+// dynamic.
 var keywordSubDocumentFields = []string{
-	resource.SEARCH_FIELD_MANAGER_KIND,
-	resource.SEARCH_FIELD_MANAGER_ID,
 	resource.SEARCH_FIELD_SOURCE_PATH,
 	resource.SEARCH_FIELD_SOURCE_CHECKSUM,
 }
@@ -200,31 +316,22 @@ var keywordSubDocumentFields = []string{
 // are resource kinds, so they cannot be enumerated up front.
 const referenceFieldPrefix = "reference."
 
-// storedFacetFieldsForMapping returns the stored keyword field that post-rank
-// authorization can load for each facet-capable API field. Facet terms come
-// from the keyword variant even when a field also declares text, so loading
-// this form preserves native Bleve facet casing and term boundaries.
-func storedFacetFieldsForMapping(provider resource.SearchFieldsProvider, group, kindResource string) map[string]string {
-	fields := make(map[string]string)
-	add := func(def resource.SearchFieldDefinition, prefix string) {
-		if !def.HasCapability(resource.SearchCapabilityFacet) {
-			return
-		}
+// labelFieldPrefix is the keyword-analyzed labels sub-document. Its keys are
+// label names, so they cannot be enumerated up front.
+const labelFieldPrefix = resource.SEARCH_FIELD_LABELS + "."
 
-		logicalName := prefix + def.Name
-		fields[logicalName] = prefix + keywordVariantName(def.Name, def.HasCapability(resource.SearchCapabilityText))
+// storedFacetField is the keyword form even for a field that also declares text,
+// because that is what preserves Bleve's facet casing and term boundaries. Empty
+// when the field cannot be faceted.
+func (k kindSearchFields) storedFacetField(name string) string {
+	fields := k.keywordFields
+	if fields == nil {
+		fields = standardKeywordFields
 	}
-
-	for _, def := range resource.StandardSearchFieldDefinitions() {
-		add(def, "")
+	if kf, ok := fields[name]; ok && kf.facetable {
+		return kf.name
 	}
-	for _, def := range fieldDefinitionsForMapping(provider, group, kindResource) {
-		add(def, resource.SEARCH_FIELD_PREFIX)
-		if storedName, ok := fields[resource.SEARCH_FIELD_PREFIX+def.Name]; ok {
-			fields[def.Name] = storedName
-		}
-	}
-	return fields
+	return ""
 }
 
 // addCapabilityFieldMappings adds bleve field mappings to parent for a single
@@ -270,14 +377,14 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 	// only filter, sort and retrieve reach here for non-strings.
 	if def.Type != resource.SearchFieldTypeString {
 		if hasFilter || hasSort || hasRetrieve {
-			m := typedNonStringFieldMapping(def.Type)
+			m := nonStringFieldMapping(def.Type)
 			// bleve can sort an indexed numeric field even without doc values, so
 			// sort only needs the field indexed.
 			m.Index = hasFilter || hasSort
 			m.Store = hasRetrieve
 			m.DocValues = hasSort
 			m.IncludeInAll = false
-			parent.AddFieldMappingsAt(def.Name, m)
+			addFieldMappingAt(parent, def.Name, m)
 		}
 		return
 	}
@@ -293,7 +400,7 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 		// when the canonical text field is also stored for retrieval.
 		m.Store = hasFacet || (hasRetrieve && !hasText)
 		m.IncludeInAll = false
-		parent.AddFieldMappingsAt(keywordName, m)
+		addFieldMappingAt(parent, keywordName, m)
 	}
 
 	if hasText {
@@ -304,7 +411,7 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 		m.Store = hasRetrieve || hasFacet
 		m.IncludeInAll = false
 		m.SkipFreqNorm = hasUnranked
-		parent.AddFieldMappingsAt(def.Name, m)
+		addFieldMappingAt(parent, def.Name, m)
 	}
 
 	if ngramName, ok := ngramVariant(def); ok {
@@ -316,7 +423,7 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 		// or text variant already stores the value.
 		m.Store = false
 		m.IncludeInAll = false
-		parent.AddFieldMappingsAt(ngramName, m)
+		addFieldMappingAt(parent, ngramName, m)
 	}
 
 	// A retrieve-only string has no mapping above, so store it explicitly;
@@ -329,15 +436,30 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 		m.SkipFreqNorm = true
 		m.DocValues = false
 		m.IncludeInAll = false
-		parent.AddFieldMappingsAt(def.Name, m)
+		addFieldMappingAt(parent, def.Name, m)
 	}
 }
 
-// typedNonStringFieldMapping returns a bleve field mapping matching a
+// addFieldMappingAt maps a field whose name may be a path into sub-documents,
+// such as manager.kind, so the indexed field keeps that full name.
+func addFieldMappingAt(parent *mapping.DocumentMapping, name string, m *mapping.FieldMapping) {
+	path := strings.Split(name, ".")
+	for _, part := range path[:len(path)-1] {
+		sub, ok := parent.Properties[part]
+		if !ok {
+			sub = bleve.NewDocumentStaticMapping()
+			parent.AddSubDocumentMapping(part, sub)
+		}
+		parent = sub
+	}
+	parent.AddFieldMappingsAt(path[len(path)-1], m)
+}
+
+// nonStringFieldMapping returns a bleve field mapping matching a
 // non-string search field's type, so the value is indexed and stored in its
 // native form instead of being coerced through keyword analysis (which drops
 // it).
-func typedNonStringFieldMapping(t resource.SearchFieldType) *mapping.FieldMapping {
+func nonStringFieldMapping(t resource.SearchFieldType) *mapping.FieldMapping {
 	switch t {
 	case resource.SearchFieldTypeBoolean:
 		return bleve.NewBooleanFieldMapping()
@@ -495,22 +617,25 @@ func GetBleveMappings(provider resource.SearchFieldsProvider, group, kindResourc
 func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) *mapping.DocumentMapping {
 	mapper := bleve.NewDocumentStaticMapping()
 
+	standard, trash := resource.IndexFieldDefinitions(group, kindResource)
+
 	// Standard top-level search fields are declared as SearchFieldDefinitions
 	// and emitted through the capability helper.
-	for _, def := range resource.StandardSearchFieldDefinitions() {
+	for _, def := range standard {
 		addCapabilityFieldMappings(mapper, def)
 	}
 
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_IS_DELETED, internalBoolField())
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_IS_PROVISIONED, internalBoolField())
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_RV_STRING, internalStoredStringField())
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_DELETED_RV_SORT, internalSortableStringField())
 
 	// Trash fields sit at the top level next to the standard ones, so /trash reads
 	// them by the names the API layer already uses.
-	for _, def := range resource.TrashSearchFieldDefinitions() {
+	for _, def := range trash {
 		addCapabilityFieldMappings(mapper, def)
 	}
 
-	mapper.AddSubDocumentMapping("manager", managerSubDocumentMapping())
 	mapper.AddSubDocumentMapping("source", sourceSubDocumentMapping())
 
 	// NOTE: reference and labels use dynamic mappings because their keys aren't
@@ -521,7 +646,10 @@ func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindReso
 	referenceMapper.DefaultAnalyzer = keyword.Name
 	mapper.AddSubDocumentMapping(strings.TrimSuffix(referenceFieldPrefix, "."), referenceMapper)
 
+	// Keyword so a label selector, which compares whole values case-sensitively,
+	// cannot match one word of a multi-word value.
 	labelMapper := bleve.NewDocumentMapping()
+	labelMapper.DefaultAnalyzer = keyword.Name
 	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_LABELS, labelMapper)
 
 	// Static so undeclared keys are dropped rather than dynamically indexed
@@ -574,6 +702,31 @@ func internalBoolField() *mapping.FieldMapping {
 	return m
 }
 
+// internalStoredStringField maps a value that search results return but nothing
+// queries, so it is stored without being indexed. Mapped here rather than
+// declared as a SearchFieldDefinition for the same reasons as internalBoolField.
+func internalStoredStringField() *mapping.FieldMapping {
+	m := bleve.NewKeywordFieldMapping()
+	m.Store = true
+	m.Index = false
+	m.DocValues = false
+	m.IncludeInAll = false
+	m.IncludeTermVectors = false
+	m.SkipFreqNorm = true
+	return m
+}
+
+// internalSortableStringField maps a fixed-width value used only for ordering.
+func internalSortableStringField() *mapping.FieldMapping {
+	m := bleve.NewKeywordFieldMapping()
+	m.Store = false
+	m.DocValues = true
+	m.IncludeInAll = false
+	m.IncludeTermVectors = false
+	m.SkipFreqNorm = true
+	return m
+}
+
 // keywordSubField returns a keyword (exact-match) field mapping for use inside
 // a sub-document. Sub-document fields are not modellable as
 // SearchFieldDefinitions today; this helper centralizes their shared shape.
@@ -587,13 +740,6 @@ func keywordSubField() *mapping.FieldMapping {
 		IncludeInAll:       false,
 		SkipFreqNorm:       true,
 	}
-}
-
-func managerSubDocumentMapping() *mapping.DocumentMapping {
-	m := bleve.NewDocumentStaticMapping()
-	m.AddFieldMappingsAt("kind", keywordSubField())
-	m.AddFieldMappingsAt("id", keywordSubField())
-	return m
 }
 
 func sourceSubDocumentMapping() *mapping.DocumentMapping {

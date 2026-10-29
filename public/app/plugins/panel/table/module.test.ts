@@ -1,6 +1,15 @@
-import { createDataFrame, FieldType, getPanelDataSummary, PanelPlugin, standardEditorsRegistry } from '@grafana/data';
+import {
+  createDataFrame,
+  FieldType,
+  getPanelDataSummary,
+  PanelPlugin,
+  standardEditorsRegistry,
+  standardFieldConfigEditorRegistry,
+} from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { TableCellDisplayMode } from '@grafana/schema';
-import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { TablePanel } from './TablePanel';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
@@ -11,6 +20,9 @@ import { tableSuggestionsSupplier } from './suggestions';
 // which resolves the 'stats-picker' standard editor; initialise the registry so
 // this file does not depend on another test having done so first
 standardEditorsRegistry.setInit(getAllOptionEditors);
+// the standard properties (displayName, unit, ...) only reach the plugin's registry if this is
+// initialised too - createFieldConfigRegistry reads it to decide what to register
+standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 function customConfigItem(path: string) {
   const item = plugin.fieldConfigRegistry.list().find((i) => i.path === path);
@@ -21,6 +33,24 @@ function customConfigItem(path: string) {
 }
 
 describe('table module', () => {
+  afterEach(() => setTestFlags({}));
+
+  it.each([
+    { refresh: false, newFeatures: false, shown: true },
+    { refresh: true, newFeatures: false, shown: true },
+    { refresh: false, newFeatures: true, shown: true },
+    { refresh: true, newFeatures: true, shown: false },
+  ])(
+    'offers the Column filter setting and new override when refresh=$refresh and newFeatures=$newFeatures',
+    ({ refresh, newFeatures, shown }) => {
+      setTestFlags({ [FlagKeys.TableRefresh]: refresh, [FlagKeys.TableRefreshNewFeatures]: newFeatures });
+      const filterable = customConfigItem('filterable');
+
+      expect(filterable.showIf?.({}, undefined)).toBe(shown);
+      expect(filterable.showIfOverride?.({ data: [] })).toBe(shown);
+    }
+  );
+
   it('exports a PanelPlugin rendering TablePanel', () => {
     expect(plugin).toBeInstanceOf(PanelPlugin);
     expect(plugin.panel).toBe(TablePanel);
@@ -62,6 +92,10 @@ describe('table module', () => {
     );
   });
 
+  it('replaces inherited footer calculations with override values', () => {
+    expect(customConfigItem('footer.reducers').arrayOverrideStrategy).toBe('replace');
+  });
+
   describe('"Cell value inspect" visibility', () => {
     const showIf = (type: TableCellDisplayMode) =>
       // showIf receives the custom field config; only cellOptions.type gates this switch
@@ -82,6 +116,34 @@ describe('table module', () => {
         expect(showIf(cellType)).toBe(shown);
       }
     );
+  });
+
+  describe('"Display name" visibility', () => {
+    const displayNameItem = () => {
+      const item = plugin.fieldConfigRegistry.getIfExists('displayName');
+      if (!item) {
+        throw new Error('expected the standard displayName property to stay registered');
+      }
+      return item;
+    };
+
+    const showIf = (defaults: { displayName?: string }) => displayNameItem().showIf!(defaults, undefined);
+
+    it('is hidden for a panel that has never set one', () => {
+      expect(showIf({})).toBe(false);
+    });
+
+    it('is shown for a panel that already has one, so the value can be seen and cleared', () => {
+      expect(showIf({ displayName: 'Total' })).toBe(true);
+    });
+
+    it('is hidden for a legacy empty value', () => {
+      expect(showIf({ displayName: '' })).toBe(false);
+    });
+
+    it('stays available for override rules, where renaming a single column is valid', () => {
+      expect(displayNameItem().hideFromOverrides).toBeFalsy();
+    });
   });
 
   describe('"Tooltip placement" visibility', () => {

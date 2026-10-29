@@ -1,6 +1,6 @@
 import prettier from 'prettier';
 
-import type { EventData } from './types.mts';
+import type { EventData, EventPropertySchema } from './types.mts';
 
 const makeMarkdownTable = (properties: Array<Record<string, string | undefined>>): string => {
   if (properties.length === 0) {
@@ -24,6 +24,23 @@ const makeMarkdownTable = (properties: Array<Record<string, string | undefined>>
   return [header, border, ...rows].join('\n');
 };
 
+// One row per variant, one column per property any variant declares. An empty cell means that
+// variant does not carry the property, which the flattened Properties table cannot express.
+const makeVariantsTable = (variants: EventPropertySchema[][]): string => {
+  const names = [...new Set(variants.flatMap((variant) => variant.map((property) => property.name)))];
+
+  const rows = variants.map((variant) => {
+    return Object.fromEntries(
+      names.map((name) => {
+        const property = variant.find((candidate) => candidate.name === name);
+        return [name, property ? '`' + property.type + '`' : ''];
+      })
+    );
+  });
+
+  return makeMarkdownTable(rows);
+};
+
 export const formatEventAsMarkdown = (event: EventData): string => {
   const preparedProperties =
     event.properties?.map((property) => {
@@ -36,11 +53,15 @@ export const formatEventAsMarkdown = (event: EventData): string => {
 
   const propertiesTable = event.properties && event.properties.length > 0 ? makeMarkdownTable(preparedProperties) : '';
 
+  // A single variant carries no combination information the Properties table is missing.
+  const hasCombinations = event.variants !== undefined && event.variants.length > 1;
+
   const markdownRows = [
     `#### \`${event.fullEventName}\``,
     `**Description**: ${event.description}`,
     event.owner ? `**Owner:** ${event.owner}` : undefined,
     ...(event.properties ? [`**Properties**:`, propertiesTable] : []),
+    ...(hasCombinations ? [`**Valid combinations**:`, makeVariantsTable(event.variants ?? [])] : []),
   ].filter(Boolean);
 
   return markdownRows.join('\n\n');

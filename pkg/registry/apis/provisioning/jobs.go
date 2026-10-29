@@ -14,6 +14,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 type JobQueueGetter interface {
@@ -37,7 +39,6 @@ type jobsConnector struct {
 	clients               resources.ClientFactory
 	folderMetadataEnabled bool
 	perfTestingEnabled    func(ctx context.Context) bool
-	exportEnabled         bool
 }
 
 func NewJobsConnector(
@@ -49,7 +50,6 @@ func NewJobsConnector(
 	clients resources.ClientFactory,
 	folderMetadataEnabled bool,
 	perfTestingEnabled func(ctx context.Context) bool,
-	exportEnabled bool,
 ) *jobsConnector {
 	return &jobsConnector{
 		repoGetter:            repoGetter,
@@ -60,7 +60,6 @@ func NewJobsConnector(
 		clients:               clients,
 		folderMetadataEnabled: folderMetadataEnabled,
 		perfTestingEnabled:    perfTestingEnabled,
-		exportEnabled:         exportEnabled,
 	}
 }
 
@@ -314,13 +313,15 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 	if spec.Action == provisioning.JobActionTest && (c.perfTestingEnabled == nil || !c.perfTestingEnabled(ctx)) {
 		return apierrors.NewBadRequest("test jobs require the provisioning.performance feature flag")
 	}
+
+	exportEnabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningExport, false, openfeature.TransactionContext(ctx))
 	// Reject export (push) and migrate jobs up front when the feature is disabled,
 	// so the API user gets a clear error at creation time instead of a job that is
 	// created only to complete as a no-op.
-	if spec.Action == provisioning.JobActionPush && !c.exportEnabled {
+	if spec.Action == provisioning.JobActionPush && !exportEnabled {
 		return apierrors.NewBadRequest("push jobs require the provisioningExport feature flag")
 	}
-	if spec.Action == provisioning.JobActionMigrate && !c.exportEnabled {
+	if spec.Action == provisioning.JobActionMigrate && !exportEnabled {
 		return apierrors.NewBadRequest("migrate jobs require the provisioningExport feature flag")
 	}
 
@@ -348,17 +349,22 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 }
 
 // newJobAuthorizer creates an Authorizer for the given repository. Returns an error
-// if the repository does not implement Reader.
+// if the repository does not implement ReaderWriter.
 func (c *jobsConnector) newJobAuthorizer(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository) (resources.Authorizer, error) {
-	reader, ok := repo.(repository.Reader)
+	rw, ok := repo.(repository.ReaderWriter)
 	if !ok {
-		return nil, apierrors.NewBadRequest("repository does not support reading")
+		return nil, apierrors.NewBadRequest("repository does not support reading and writing")
 	}
 	clients, err := c.clients.Clients(ctx, cfg.Namespace)
 	if err != nil {
 		return nil, fmt.Errorf("create clients for authorization: %w", err)
 	}
-	return resources.NewAuthorizer(cfg, reader, c.access, clients, c.folderMetadataEnabled), nil
+	folderClient, folderGVK, err := clients.Folder(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get folder client for authorization: %w", err)
+	}
+	folders := resources.NewFolderManager(rw, folderClient, resources.NewEmptyFolderTree(), folderGVK, resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
+	return resources.NewAuthorizer(cfg, rw, c.access, clients, folders, c.folderMetadataEnabled), nil
 }
 
 // authorizeResourceRefs fetches each referenced resource and checks that the user

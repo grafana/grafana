@@ -1,5 +1,6 @@
 import { identityOverrideProcessor, FieldConfigProperty, PanelPlugin, standardEditorsRegistry } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   TableCellDisplayMode,
   type TableCellOptions,
@@ -22,10 +23,17 @@ function getTableNoValuePlaceholder(): string {
 export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
   .setMigrationHandler(tableMigrationHandler)
+  .setFitContentSupport()
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Actions]: {
         hideFromDefaults: false,
+      },
+      [FieldConfigProperty.DisplayName]: {
+        // A defaults-level display name renames every column to the same thing, which breaks the
+        // table. Panels that already have one keep the editor so the value stays visible and can be
+        // cleared; everyone else is steered to a per-column override or a Rename transformation.
+        showIf: (defaults) => Boolean(defaults.displayName),
       },
       [FieldConfigProperty.NoValue]: {
         settings: {
@@ -35,7 +43,13 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
     },
     useCustomConfig: (builder) => {
       addTableCustomConfig(builder, {
-        filters: true,
+        filters: () => {
+          const client = getFeatureFlagClient();
+          return (
+            !client.getBooleanValue(FlagKeys.TableRefresh, false) ||
+            !client.getBooleanValue(FlagKeys.TableRefreshNewFeatures, false)
+          );
+        },
         wrapHeaderText: true,
         hideFields: true,
       });
@@ -53,6 +67,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         defaultValue: [],
         process: identityOverrideProcessor,
         shouldApply: () => true,
+        // A footer override sets the calculations for that field instead of adding to the panel's
+        arrayOverrideStrategy: 'replace',
         settings: {
           allowMultiple: true,
         },
@@ -139,3 +155,10 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
     addTableCustomPanelOptions(builder);
   })
   .setSuggestionsSupplier(tableSuggestionsSupplier);
+
+// `table.refresh` gives the header its own surface, which reads as a chrome element of the panel
+// rather than of the table — so it runs edge to edge, with the panel's own padding out of the way.
+// TablePanel then passes `noPanelPadding` down so the table can re-align its content itself.
+if (getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefresh, false)) {
+  plugin.setNoPadding();
+}

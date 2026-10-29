@@ -8,8 +8,10 @@ import (
 	"github.com/grafana/dskit/services"
 	"golang.org/x/sync/errgroup"
 
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
@@ -17,6 +19,7 @@ import (
 )
 
 var _ Store = (*Service)(nil)
+var _ v3.ClientV3Loader = (*Service)(nil)
 
 const ServiceName = "plugins.store"
 
@@ -128,8 +131,17 @@ func (s *Service) stopping(failureReason error) error {
 	return s.shutdown(context.Background())
 }
 
+// awaitStartup only waits while the store is starting. Once it is running, AwaitRunning would make dskit pick
+// randomly between an expired context and the closed running channel, so loaded plugins would look missing.
+func (s *Service) awaitStartup(ctx context.Context) error {
+	if s.State() == services.Running {
+		return nil
+	}
+	return s.AwaitRunning(ctx)
+}
+
 func (s *Service) Plugin(ctx context.Context, pluginID string) (Plugin, bool) {
-	if err := s.AwaitRunning(ctx); err != nil {
+	if err := s.awaitStartup(ctx); err != nil {
 		log.New(ServiceName).FromContext(ctx).Error("Failed to get plugin", "error", err)
 		return Plugin{}, false
 	}
@@ -142,7 +154,7 @@ func (s *Service) Plugin(ctx context.Context, pluginID string) (Plugin, bool) {
 }
 
 func (s *Service) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []Plugin {
-	if err := s.AwaitRunning(ctx); err != nil {
+	if err := s.awaitStartup(ctx); err != nil {
 		log.New(ServiceName).FromContext(ctx).Error("Failed to get plugins", "error", err)
 		return []Plugin{}
 	}
@@ -179,6 +191,18 @@ func (s *Service) plugin(ctx context.Context, pluginID string) (*plugins.Plugin,
 	return p, true
 }
 
+func (s *Service) ClientV3(ctx context.Context, pluginID string) (appclientv3.Client, bool) {
+	if err := s.awaitStartup(ctx); err != nil {
+		log.New(ServiceName).FromContext(ctx).Error("Failed to get plugin", "error", err)
+		return nil, false
+	}
+	p, exists := s.plugin(ctx, pluginID)
+	if !exists {
+		return nil, false
+	}
+	return p.ClientV3(ctx)
+}
+
 // availablePlugins returns all non-decommissioned plugins from the registry sorted by alphabetic order on `plugin.ID`
 func (s *Service) availablePlugins(ctx context.Context) []*plugins.Plugin {
 	ps := s.pluginRegistry.Plugins(ctx)
@@ -196,7 +220,7 @@ func (s *Service) availablePlugins(ctx context.Context) []*plugins.Plugin {
 }
 
 func (s *Service) Routes(ctx context.Context) []*plugins.StaticRoute {
-	if err := s.AwaitRunning(ctx); err != nil {
+	if err := s.awaitStartup(ctx); err != nil {
 		log.New(ServiceName).FromContext(ctx).Error("Failed to get routes", "error", err)
 		return []*plugins.StaticRoute{}
 	}

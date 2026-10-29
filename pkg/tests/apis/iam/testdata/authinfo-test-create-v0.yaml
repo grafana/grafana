@@ -1,0 +1,9 @@
+apiVersion: iam.grafana.app/v0alpha1
+kind: AuthInfo
+metadata:
+  namespace: default
+spec:
+  userRef:
+    name: ""
+  authModule: "ldap"
+  authID: "cn=test,dc=example,dc=com"

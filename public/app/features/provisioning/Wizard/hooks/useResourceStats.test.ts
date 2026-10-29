@@ -129,10 +129,26 @@ describe('useResourceStats', () => {
       expect(optOut.result.current.requiresMigration).toBe(false);
     });
 
-    it('skips sync when a folder target has no resources and no files', () => {
-      const { result } = renderHook(() => useResourceStats('repo', 'folder', false, { isHealthy: true }));
+    it.each(['folder', 'folderless'] as const)(
+      'skips sync for %s target when there are no resources and no files',
+      (target) => {
+        const { result } = renderHook(() => useResourceStats('repo', target, false, { isHealthy: true }));
 
-      expect(result.current.shouldSkipSync).toBe(true);
-    });
+        expect(result.current.shouldSkipSync).toBe(true);
+      }
+    );
+
+    it.each(['folder', 'folderless'] as const)(
+      'does not skip sync for %s target when instance resources exist',
+      (target) => {
+        mockStats({ instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 2 }] });
+
+        const { result } = renderHook(() => useResourceStats('repo', target, false, { isHealthy: true }));
+
+        expect(result.current.shouldSkipSync).toBe(false);
+        // Folder and folderless only migrate when the user opts in.
+        expect(result.current.requiresMigration).toBe(false);
+      }
+    );
   });
 });

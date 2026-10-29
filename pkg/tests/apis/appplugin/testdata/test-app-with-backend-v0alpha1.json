@@ -590,12 +590,7 @@
             "description": "Secure values allows setting values that are never shown to users. The returned properties are only the names of the configured values.",
             "type": "object",
             "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
             }
           },
           "spec": {
@@ -632,12 +627,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.appplugin.v0alpha1.Settings"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.appplugin.v0alpha1.Settings"
             }
           },
           "kind": {

@@ -1,31 +1,154 @@
-import { SceneObjectBase, type SceneObjectState, type VizPanel } from '@grafana/scenes';
-import { type DashboardLayoutItem } from 'app/features/dashboard-scene/scene/types/DashboardLayoutItem';
+import { isEqual } from 'lodash';
 
+import { type PanelPluginVisualizationSuggestion } from '@grafana/data';
+import {
+  isSceneObject,
+  type SceneObjectState,
+  SceneObjectBase,
+  SceneReactObject,
+  type SceneTimeRangeLike,
+  type VizPanel,
+} from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
+import { type DashboardLayoutItem } from 'app/features/dashboard-scene/scene/types/DashboardLayoutItem';
+import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
+
+import { type NotebookBlockInsertVia } from '../../analytics/types';
 import { type CellContentKind } from '../../types';
 
+import { type NotebookLayoutManager } from './NotebookLayoutManager';
+import { NotebookPanelTitle } from './PanelTitleEditor';
+import { type CellTimeRangeSpec } from './cellTimeRange';
+import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
+import { isNotebookLayoutManager } from './isNotebookLayoutManager';
+
 export interface NotebookCellItemState extends SceneObjectState {
-  // Name of the element this cell references in the notebook `elements` map. Kept so
-  // serialize() can round-trip the cell back to a NotebookLayoutItem.
+  // Key into the notebook's `elements` map — lets serialize() round-trip the cell.
   elementName: string;
   source: 'assistant' | 'user';
   // Optional to mirror the schema: an omitted `collapsed` must round-trip as omitted, not `false`.
   collapsed?: boolean;
-  // A cell is either a panel or narrative content, never both. `body` deliberately follows the
-  // DashboardLayoutItem convention (every layout item exposes its wrapped VizPanel at
-  // `.state.body`, set via setElementBody) so the panel editor and scene-graph tooling can find
-  // it when edit mode is added. A markdown/code cell instead carries its content spec, which the
-  // cell type registry renders.
+  // A cell is either a panel or narrative content, never both. `body` follows the DashboardLayoutItem
+  // convention (wrapped VizPanel at `.state.body`, set via setElementBody) so the panel editor and
+  // scene-graph tooling can find it. A markdown/code cell carries `content` instead.
   body?: VizPanel;
   content?: CellContentKind;
+  // Absent means sceneGraph.getTimeRange() resolves up to the notebook's own range, same as no
+  // override at all.
+  $timeRange?: SceneTimeRangeLike;
 }
 
 export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> implements DashboardLayoutItem {
+  private lastSuggestedQuery?: DataQuery;
+  private autoSuggestEnabled = false;
+  private autoSuggestInitialized = false;
+
+  public initializeAutoSuggest(enabled: boolean): void {
+    if (!this.autoSuggestInitialized) {
+      this.autoSuggestEnabled = enabled;
+      this.autoSuggestInitialized = true;
+    }
+  }
+
+  public shouldAutoSuggest(query: DataQuery): boolean {
+    return this.autoSuggestEnabled && !isEqual(this.lastSuggestedQuery, query);
+  }
+
+  public disableAutoSuggest(): void {
+    this.autoSuggestEnabled = false;
+  }
+
+  public recordSuggestedQuery(query: DataQuery | undefined): void {
+    this.lastSuggestedQuery = query;
+  }
+
   public readonly isNotebookCell = true as const;
-  // A panel cell is the panel's parent in the scene graph, so it must be a
-  // DashboardLayoutItem for the panel editor to open and apply edits.
+  // A panel cell is the panel's parent in the scene graph, so it must be a DashboardLayoutItem.
   public readonly isDashboardLayoutItem = true;
 
-  public setElementBody(body: VizPanel) {
-    this.setState({ body });
+  public setPanelTitleEditing(isEditing: boolean): void {
+    const panel = this.state.body;
+    if (!panel) {
+      return;
+    }
+    const previous = panel.state.titleItems;
+    if (!isEditing || isLibraryPanel(panel)) {
+      if (Array.isArray(previous) && previous.some((item) => item instanceof NotebookPanelTitle)) {
+        const items = previous.filter((item) => !(item instanceof NotebookPanelTitle));
+        panel.setState({ titleItems: items.length ? items : undefined });
+      }
+      return;
+    }
+    if (Array.isArray(previous) && previous.some((item) => item instanceof NotebookPanelTitle)) {
+      return;
+    }
+    const items = Array.isArray(previous)
+      ? previous
+      : previous
+        ? [isSceneObject(previous) ? previous : new SceneReactObject({ reactNode: previous })]
+        : [];
+    panel.setState({ titleItems: [...items, new NotebookPanelTitle({})] });
+  }
+
+  // Also clears `content` to hold the "never both" invariant above. `elementName` is optional to
+  // match the DashboardLayoutItem interface's signature, but NotebookLayoutManager.convertCellToPanel
+  // (the only caller) always passes one: this cell may still share its old name with a sibling.
+  public setElementBody(body: VizPanel, elementName?: string) {
+    this.setState({ body, content: undefined, elementName: elementName ?? this.state.elementName });
+    if (this.parent && isNotebookLayoutManager(this.parent)) {
+      this.setPanelTitleEditing(Boolean(this.parent.state.isEditing));
+    }
+  }
+
+  /**
+   * Records an edit to this cell's narrative content. Routed through the layout manager rather than
+   * straight onto this cell: two cells may legally share one `elementName`, and only the manager can
+   * see siblings to keep them all up to date (serialize() would otherwise drop the edit on reload).
+   */
+  public onContentChange(content: CellContentKind): void {
+    this.getParentLayout().setCellContent(this, content);
+  }
+
+  /** Converts this cell's content to `type` in place — see NotebookLayoutManager.convertCell. */
+  public onConvert(type: NotebookBlockType, via?: NotebookBlockInsertVia): void {
+    this.getParentLayout().convertCell(this, type, via);
+  }
+
+  public onQueryChange(queries: DataQuery[]): void {
+    this.getParentLayout().setCellQueries(this, queries);
+  }
+
+  public onQueryStructureChange(label: string, queries: DataQuery[]): void {
+    this.getParentLayout().runQueryEdit(this, label, queries);
+  }
+
+  public onTimeRangeChange(spec: CellTimeRangeSpec | undefined): void {
+    this.getParentLayout().setCellTimeRange(this, spec);
+  }
+
+  public onPanelTitleChange(title: string): void {
+    this.getParentLayout().setPanelTitle(this, title);
+  }
+
+  public onPanelTitleCommit(): void {
+    this.getParentLayout().commitPanelTitleEdit();
+  }
+
+  public onVisualizationChange(suggestion: PanelPluginVisualizationSuggestion): Promise<void> {
+    return this.getParentLayout().changePanelVisualization(this, suggestion);
+  }
+
+  /** Throws rather than returning undefined: a cell outside a layout is a wiring mistake. */
+  public getParentLayout(): NotebookLayoutManager {
+    let parent = this.parent;
+
+    while (parent) {
+      if (isNotebookLayoutManager(parent)) {
+        return parent;
+      }
+      parent = parent.parent;
+    }
+
+    throw new Error('NotebookCellItem is not inside a NotebookLayoutManager');
   }
 }

@@ -18,6 +18,7 @@ import {
   type FieldToConfigMapping,
   type HandlerArguments,
   lookUpConfigHandler as findConfigHandlerFor,
+  FieldConfigHandlerKey,
 } from '../fieldToConfigMapping/fieldToConfigMapping';
 
 import {
@@ -33,12 +34,23 @@ export interface Props {
   withNameAndValue?: boolean;
 }
 
+const nameAndValueHandlerKeys: string[] = [
+  FieldConfigHandlerKey.Value,
+  FieldConfigHandlerKey.Label,
+  FieldConfigHandlerKey.Name,
+];
+
 export function FieldToConfigMappingEditor({ frame, mappings, onChange, withReducers, withNameAndValue }: Props) {
   const styles = useStyles2(getStyles);
   const rows = getViewModelRows(frame, mappings, withNameAndValue);
-  const configProps = configMapHandlers.map((def) => configHandlerToSelectOption(def, false)) as Array<
-    SelectableValue<string>
-  >;
+  const configProps = configMapHandlers
+    .map((def) => {
+      if (!withNameAndValue && nameAndValueHandlerKeys.includes(def.key)) {
+        return undefined;
+      }
+      return configHandlerToSelectOption(def, false);
+    })
+    .filter((v) => !!v);
   const hasAdditionalSettings = mappings.reduce(
     (prev, mapping) => prev || createsArgumentsEditor(mapping.handlerKey),
     false
@@ -202,6 +214,11 @@ function getViewModelRows(
   return Object.values(rows);
 }
 
+function configHandlerToSelectOption(def: FieldToConfigMapHandler, isAutomatic: boolean): SelectableValue<string>;
+function configHandlerToSelectOption(
+  def: FieldToConfigMapHandler | null,
+  isAutomatic: boolean
+): SelectableValue<string> | null;
 function configHandlerToSelectOption(
   def: FieldToConfigMapHandler | null,
   isAutomatic: boolean

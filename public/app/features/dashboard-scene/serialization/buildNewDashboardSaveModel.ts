@@ -1,5 +1,7 @@
+import { type AdHocVariableModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, getDataSourceInstance } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type VariableModel, defaultDashboard } from '@grafana/schema';
 import {
   type AdhocVariableKind,
@@ -9,12 +11,12 @@ import {
   defaultTimeSettingsSpec,
   type GroupByVariableKind,
   type Spec as DashboardV2Spec,
+  defaultAutoGridLayoutKind,
   defaultGridLayoutKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { type DashboardDTO } from 'app/types/dashboard';
 
 import { contextSrv } from '../../../core/services/context_srv';
@@ -22,9 +24,9 @@ import { contextSrv } from '../../../core/services/context_srv';
 export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise<DashboardDTO> {
   let variablesList = defaultDashboard.templating?.list;
 
-  if (config.featureToggles.newDashboardWithFiltersAndGroupBy) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.NewDashboardWithFiltersAndGroupBy, false)) {
     // Add filter and group by variables if the datasource supports it
-    const defaultDs = await getDatasourceSrv().get();
+    const defaultDs = await getDataSourceInstance();
 
     const datasourceRef = {
       type: defaultDs.meta.id,
@@ -32,14 +34,14 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
     };
 
     if (defaultDs.getTagKeys) {
-      const filterVariable = {
+      const filterVariable: VariableModel & Pick<AdHocVariableModel, 'filters' | 'type'> = {
         datasource: datasourceRef,
         filters: [],
         name: 'Filter',
         type: 'adhoc',
       };
 
-      variablesList = (variablesList || []).concat([filterVariable as VariableModel]);
+      variablesList = (variablesList || []).concat([filterVariable]);
     }
 
     if (defaultDs.getGroupByKeys) {
@@ -67,6 +69,9 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
       title: t('dashboard-scene.build-new-dashboard-save-model.data.title.new-dashboard', 'New dashboard'),
       panels: [],
       timezone: contextSrv.user?.timezone || defaultDashboard.timezone,
+      // Seed from the instance default so the value is persisted on first save. Authors can flip it
+      // afterwards and their choice wins, because nothing reads the config again after creation.
+      preload: config.dashboardDefaultPreload,
     },
   };
 
@@ -87,10 +92,13 @@ export async function buildNewDashboardSaveModelV2(
   urlFolderUid?: string
 ): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
   let variablesList = defaultDashboardV2Spec().variables;
+  const defaultLayout = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardAutoGridDefault, true)
+    ? defaultAutoGridLayoutKind()
+    : defaultGridLayoutKind();
 
-  if (config.featureToggles.newDashboardWithFiltersAndGroupBy) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.NewDashboardWithFiltersAndGroupBy, false)) {
     // Add filter and group by variables if the datasource supports it
-    const defaultDs = await getDatasourceSrv().get();
+    const defaultDs = await getDataSourceInstance();
 
     const datasourceRef = {
       type: defaultDs.meta.id,
@@ -137,6 +145,10 @@ export async function buildNewDashboardSaveModelV2(
         ...defaultTimeSettingsSpec(),
         timezone: contextSrv.user?.timezone || defaultTimeSettingsSpec().timezone,
       },
+      // Overrides the schema default, which is a hardcoded false. v2 requires a concrete boolean, so
+      // seeding here is what lets the instance default reach v2 dashboards at all.
+      preload: config.dashboardDefaultPreload,
+      layout: defaultLayout,
     },
     access: {
       canStar: false,
@@ -164,7 +176,7 @@ export async function buildNewDashboardSaveModelV2(
   // Initialize default preferences to be same as the default layout
   data.spec.preferences = {
     ...data.spec.preferences,
-    layout: defaultGridLayoutKind(),
+    layout: defaultLayout,
   };
 
   return data;

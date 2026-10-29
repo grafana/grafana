@@ -6,9 +6,8 @@ keywords:
   - trace
   - tracing
   - API
-menuTitle: Tracing API
-title: Grafana Cloud tracing API 
-menuTitle: Grafana Cloud tracing API 
+title: Grafana Cloud tracing API
+menuTitle: Grafana Cloud tracing API
 weight: 300
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/tracing-api/
 ---

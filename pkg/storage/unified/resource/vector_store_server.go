@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
 )
 
 // maxWriteBatch caps inputs per upsert and uids per delete. The proto
@@ -26,6 +27,15 @@ const maxWriteBatch = 500
 // maxMetadataBytes mirrors the proto contract (metadata ≤ 4 KiB JSON).
 const maxMetadataBytes = 4096
 
+// maxContentBytes keeps content's tsvector under Postgres's 1 MiB limit
+// (the write path stores one per external row).
+const maxContentBytes = 128 * 1024
+
+// maxFilterValues caps total $in/$nin values in a filter. Each value expands
+// to a few SQL parameters, so this keeps a filter well under Postgres's 65535
+// parameter limit instead of failing as Internal at execution.
+const maxFilterValues = 1000
+
 // maxKeyFieldLen mirrors the VARCHAR(256) width of the uid and subresource
 // columns — reject before spending an embedding on a row Postgres will bounce.
 const maxKeyFieldLen = 256
@@ -34,11 +44,12 @@ const maxKeyFieldLen = 256
 // service needs.
 type vectorWriteStore interface {
 	ResolveCollection(ctx context.Context, group, resource string) (vector.Collection, bool, error)
-	EnsureCollection(ctx context.Context, group, resource string, isExternal bool) (vector.Collection, error)
+	EnsureCollectionWithScope(ctx context.Context, group, resource string, isExternal bool, scope vector.CollectionScope) (vector.Collection, error)
 	Upsert(ctx context.Context, vectors []vector.Vector) error
 	UpsertReplaceSubresources(ctx context.Context, namespace, model, resource, uid string, changed []vector.Vector, metadataOnly []vector.VectorMeta, desired []string) error
 	GetSubresourceContent(ctx context.Context, namespace, model, resource, uid string) (map[string]string, string, error)
 	DeleteRows(ctx context.Context, namespace, model, resource string, sel vector.DeleteSelector) (int64, bool, error)
+	UpdateMetadata(ctx context.Context, namespace, resource string, f *filter.Filter, set json.RawMessage, unset []string) (int64, error)
 	WithEntityLock(ctx context.Context, namespace, resource, uid string, fn func(context.Context) error) error
 }
 
@@ -46,23 +57,21 @@ type vectorWriteStore interface {
 // for externally-pushed vector collections. Failures are gRPC status codes
 // only — responses carry no ErrorResult.
 type VectorStoreServer struct {
-	store           vectorWriteStore
-	embedder        *embedder.Embedder
-	allowlist       vector.CollectionAllowlist
-	allowedServices map[string]struct{}
-	log             log.Logger
-	metrics         *VectorMetrics
+	store            vectorWriteStore
+	embedder         *embedder.Embedder
+	allowlist        vector.CollectionAllowlist
+	allowedServices  map[string]struct{}
+	sharedPublishers map[string]map[string]struct{}
+	log              log.Logger
+	metrics          *VectorMetrics
 }
 
 var _ resourcepb.VectorStoreServer = (*VectorStoreServer)(nil)
 
-// NewVectorStoreServer builds the write service. externalAllowlist entries
-// are "group/resource" pairs (vector_allowed_external_collections config);
-// only allowlisted external collections are writable. allowedServices are
-// the service identities permitted to write (vector_allowed_write_services
-// config); empty means no identity restriction. Per-collection ownership is
-// a planned follow-up.
-func NewVectorStoreServer(store vector.VectorBackend, emb *embedder.Embedder, externalAllowlist, allowedServices []string, metrics *VectorMetrics) *VectorStoreServer {
+// NewVectorStoreServer builds the external write service. Tenant-scoped collections
+// retain their optional service gate; shared collections require a dedicated
+// nonempty publisher identity and store rows in the shared namespace.
+func NewVectorStoreServer(store vector.VectorBackend, emb *embedder.Embedder, externalAllowlist, allowedServices []string, sharedPublishers map[string][]string, metrics *VectorMetrics) *VectorStoreServer {
 	services := make(map[string]struct{}, len(allowedServices))
 	for _, s := range allowedServices {
 		// A stray comma in the config must not admit identity-less tokens.
@@ -70,22 +79,34 @@ func NewVectorStoreServer(store vector.VectorBackend, emb *embedder.Embedder, ex
 			services[s] = struct{}{}
 		}
 	}
+	shared := make(map[string]map[string]struct{}, len(sharedPublishers))
+	for collection, publishers := range sharedPublishers {
+		services := make(map[string]struct{}, len(publishers))
+		for _, publisher := range publishers {
+			if publisher != "" {
+				services[publisher] = struct{}{}
+			}
+		}
+		shared[collection] = services
+	}
+	// Recording sites should not have to check for nil.
+	if metrics == nil {
+		metrics = ProvideVectorMetrics(nil)
+	}
 	return &VectorStoreServer{
-		store:           store,
-		embedder:        emb,
-		allowlist:       vector.NewCollectionAllowlist(nil, externalAllowlist),
-		allowedServices: services,
-		log:             log.New("vector-store-server"),
-		metrics:         metrics,
+		store:            store,
+		embedder:         emb,
+		allowlist:        vector.NewCollectionAllowlist(nil, externalAllowlist),
+		allowedServices:  services,
+		sharedPublishers: shared,
+		log:              log.New("vector-store-server"),
+		metrics:          metrics,
 	}
 }
 
 // observe records one RPC observation. Wrap in defer at the top of each
 // handler: defer s.observe("upsert", time.Now(), &retErr).
 func (s *VectorStoreServer) observe(rpc string, start time.Time, errp *error) {
-	if s.metrics == nil {
-		return
-	}
 	code := codes.OK
 	if errp != nil && *errp != nil {
 		code = status.Code(*errp)
@@ -95,7 +116,7 @@ func (s *VectorStoreServer) observe(rpc string, start time.Time, errp *error) {
 
 // countRows adds written/deleted rows for one collection.
 func (s *VectorStoreServer) countRows(rpc, group, resource string, n int64) {
-	if s.metrics == nil || n == 0 {
+	if n == 0 {
 		return
 	}
 	s.metrics.WriteRowsTotal.WithLabelValues(rpc, group, resource).Add(float64(n))
@@ -122,49 +143,130 @@ func writeStatusError(ctx context.Context, err error, msg string) error {
 	return status.Error(codes.Internal, msg)
 }
 
-// ensureExternalCollection provisions/returns the collection, mapping a kind
-// mismatch (catalog says internal) to the same NotFound as an allowlist miss
-// so callers can't distinguish internal collections from absent ones.
-func (s *VectorStoreServer) ensureExternalCollection(ctx context.Context, group, resource string) (vector.Collection, error) {
-	coll, err := s.store.EnsureCollection(ctx, group, resource, true)
-	if err != nil {
-		if errors.Is(err, vector.ErrCollectionKindMismatch) {
-			return vector.Collection{}, status.Errorf(codes.NotFound, "collection %s/%s not found", group, resource)
-		}
-		s.log.Error("vector store: ensure collection", "err", err, "group", group, "resource", resource)
-		return vector.Collection{}, writeStatusError(ctx, err, "provision collection")
-	}
-	return coll, nil
+// writeTarget keeps caller identity separate from the namespace used for storage.
+type writeTarget struct {
+	collection       vector.Collection
+	group            string
+	resource         string
+	storageNamespace string
+	shared           bool
 }
 
-// authorize runs the common request prefix: key fields present, token
-// namespace matches, collection allowlisted. Returns nil when the request
-// may proceed to collection resolution.
-func (s *VectorStoreServer) authorize(ctx context.Context, namespace, group, resource string) error {
+// resolveWriteTarget checks the authenticated publisher and enrollment before
+// validation and storage. Its scope is never derived from request namespace spelling.
+func (s *VectorStoreServer) resolveWriteTarget(ctx context.Context, namespace, group, resource string) (writeTarget, error) {
 	if namespace == "" || group == "" || resource == "" {
-		return status.Error(codes.InvalidArgument, "namespace, group and resource are required")
+		return writeTarget{}, status.Error(codes.InvalidArgument, "namespace, group and resource are required")
 	}
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		return status.Error(codes.Unauthenticated, "no identity in context")
+		return writeTarget{}, status.Error(codes.Unauthenticated, "no identity in context")
 	}
 	if !claims.NamespaceMatches(user.GetNamespace(), namespace) {
-		return status.Error(codes.PermissionDenied, "namespace mismatch")
+		return writeTarget{}, status.Error(codes.PermissionDenied, "namespace mismatch")
 	}
-	if len(s.allowedServices) > 0 {
-		svc := ""
-		if ids := user.GetExtra()[authnlib.ServiceIdentityKey]; len(ids) > 0 {
-			svc = ids[0]
+	identity := ""
+	if ids := user.GetExtra()[authnlib.ServiceIdentityKey]; len(ids) > 0 {
+		identity = ids[0]
+	}
+	key := vector.Collection{Group: group, Resource: resource, IsExternal: true}
+	publishers, shared := s.sharedPublishers[group+"/"+resource]
+	tenantScoped := s.allowlist.Allows(key)
+	if shared && tenantScoped {
+		s.log.Error("vector store: overlapping collection enrollment", "group", group, "resource", resource)
+		return writeTarget{}, status.Error(codes.Internal, "invalid collection enrollment")
+	}
+	if shared {
+		if len(publishers) == 0 {
+			s.log.Error("vector store: missing shared publishers", "group", group, "resource", resource)
+			return writeTarget{}, status.Error(codes.Internal, "invalid shared publisher configuration")
 		}
-		if _, ok := s.allowedServices[svc]; !ok {
-			return status.Error(codes.PermissionDenied, "service identity not allowed to write vectors")
+		if _, ok := publishers[identity]; !ok {
+			return writeTarget{}, status.Error(codes.PermissionDenied, "service identity not allowed to publish shared vectors")
+		}
+	} else if len(s.allowedServices) > 0 {
+		if _, ok := s.allowedServices[identity]; !ok {
+			return writeTarget{}, status.Error(codes.PermissionDenied, "service identity not allowed to write vectors")
 		}
 	}
-	// Only external collections are writable through this API. Allowlist
-	// misses and unprovisioned collections answer identically so callers
-	// can't probe which collections exist.
-	if !s.allowlist.Allows(vector.Collection{Group: group, Resource: resource, IsExternal: true}) {
-		return status.Errorf(codes.NotFound, "collection %s/%s not found", group, resource)
+	if !shared && !tenantScoped {
+		return writeTarget{}, status.Errorf(codes.NotFound, "collection %s/%s not found", group, resource)
+	}
+	storageNamespace := namespace
+	if shared {
+		storageNamespace = vector.SharedNamespace
+	}
+	return writeTarget{group: group, resource: resource, storageNamespace: storageNamespace, shared: shared}, nil
+}
+
+// resolveWriteCollection verifies the catalog agrees with trusted enrollment.
+// Only upserts may provision a missing collection.
+func (s *VectorStoreServer) resolveWriteCollection(ctx context.Context, target writeTarget, provision bool) (writeTarget, error) {
+	group, resource := target.group, target.resource
+	scope := vector.ScopeTenant
+	if target.shared {
+		scope = vector.ScopeShared
+	}
+	var coll vector.Collection
+	if provision {
+		var err error
+		coll, err = s.store.EnsureCollectionWithScope(ctx, group, resource, true, scope)
+		if err != nil {
+			if errors.Is(err, vector.ErrCollectionKindMismatch) && !target.shared {
+				return writeTarget{}, status.Errorf(codes.NotFound, "collection %s/%s not found", group, resource)
+			}
+			s.log.Error("vector store: ensure collection", "err", err, "group", group, "resource", resource)
+			return writeTarget{}, writeStatusError(ctx, err, "provision collection")
+		}
+	} else {
+		var found bool
+		var err error
+		coll, found, err = s.store.ResolveCollection(ctx, group, resource)
+		if err != nil {
+			s.log.Error("vector store: resolve collection", "err", err, "group", group, "resource", resource)
+			return writeTarget{}, writeStatusError(ctx, err, "resolve collection")
+		}
+		if !found {
+			return writeTarget{}, status.Errorf(codes.NotFound, "collection %s/%s not found", group, resource)
+		}
+	}
+	if !coll.IsExternal && !target.shared {
+		return writeTarget{}, status.Errorf(codes.NotFound, "collection %s/%s not found", group, resource)
+	}
+	if !coll.IsExternal || coll.Scope != scope {
+		s.log.Error("vector store: collection policy mismatch", "group", group, "resource", resource, "scope", coll.Scope, "external", coll.IsExternal)
+		return writeTarget{}, status.Error(codes.Internal, "collection policy mismatch")
+	}
+	target.collection = coll
+	return target, nil
+}
+
+// parseFilter parses, rejects an empty filter, and bounds the value count so a
+// huge $in can't exceed Postgres's parameter limit at execution time.
+func parseFilter(raw []byte) (*filter.Filter, error) {
+	f, err := filter.Parse(raw)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid filter: %v", err)
+	}
+	if f == nil {
+		return nil, status.Error(codes.InvalidArgument, "filter must not be empty")
+	}
+	if n := filter.ValueCount(f); n > maxFilterValues {
+		return nil, status.Errorf(codes.InvalidArgument, "filter has too many values: %d > %d", n, maxFilterValues)
+	}
+	return f, nil
+}
+
+// validateMetadataObject rejects metadata that is valid JSON but not a
+// top-level object. The filter dialect and metadata patches operate on object
+// keys, so arrays/scalars/null could never behave per the contract.
+func validateMetadataObject(raw []byte) error {
+	var v any
+	if err := json.Unmarshal(raw, &v); err != nil {
+		return fmt.Errorf("metadata is not valid JSON")
+	}
+	if _, ok := v.(map[string]any); !ok {
+		return fmt.Errorf("metadata must be a JSON object")
 	}
 	return nil
 }
@@ -189,16 +291,29 @@ func validateInputs(inputs []*resourcepb.EmbeddingInput, requireUID string) erro
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: uid exceeds %d chars", i, maxKeyFieldLen)
 		case utf8.RuneCountInString(in.Subresource) > maxKeyFieldLen:
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: subresource exceeds %d chars", i, maxKeyFieldLen)
+		case utf8.RuneCountInString(in.Folder) > maxKeyFieldLen:
+			return status.Errorf(codes.InvalidArgument, "inputs[%d]: folder exceeds %d chars", i, maxKeyFieldLen)
 		case requireUID != "" && in.Uid != "" && in.Uid != requireUID:
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: uid %q does not match request uid %q", i, in.Uid, requireUID)
 		case in.Content == "":
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: content is required", i)
+		case len(in.Content) > maxContentBytes:
+			return status.Errorf(codes.InvalidArgument, "inputs[%d]: content exceeds %d bytes", i, maxContentBytes)
 		case in.Title == "":
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: title is required", i)
 		case len(in.Metadata) > maxMetadataBytes:
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: metadata exceeds %d bytes", i, maxMetadataBytes)
-		case len(in.Metadata) > 0 && !json.Valid(in.Metadata):
-			return status.Errorf(codes.InvalidArgument, "inputs[%d]: metadata is not valid JSON", i)
+		case len(in.Metadata) > 0 && validateMetadataObject(in.Metadata) != nil:
+			return status.Errorf(codes.InvalidArgument, "inputs[%d]: %v", i, validateMetadataObject(in.Metadata))
+		}
+	}
+	return nil
+}
+
+func validateSharedFolders(inputs []*resourcepb.EmbeddingInput) error {
+	for _, in := range inputs {
+		if in.Folder != "" {
+			return status.Error(codes.InvalidArgument, "shared vectors cannot have a folder")
 		}
 	}
 	return nil
@@ -207,7 +322,7 @@ func validateInputs(inputs []*resourcepb.EmbeddingInput, requireUID string) erro
 // embedInputs embeds every input's content (retrieval-document task) and
 // returns one Vector per input, stamped with the collection's partition key.
 // Embedding is all-or-nothing per batch: a provider failure fails the call.
-func (s *VectorStoreServer) embedInputs(ctx context.Context, namespace string, coll vector.Collection, uid string, inputs []*resourcepb.EmbeddingInput) ([]vector.Vector, error) {
+func (s *VectorStoreServer) embedInputs(ctx context.Context, publisherNamespace, storageNamespace string, coll vector.Collection, uid string, inputs []*resourcepb.EmbeddingInput) ([]vector.Vector, error) {
 	texts := make([]string, len(inputs))
 	for i, in := range inputs {
 		texts[i] = in.Content
@@ -216,7 +331,7 @@ func (s *VectorStoreServer) embedInputs(ctx context.Context, namespace string, c
 		Texts:     texts,
 		Normalize: s.embedder.ShouldNormalize(),
 		Task:      embedder.TaskRetrievalDocument,
-		Tenant:    namespace,
+		Tenant:    publisherNamespace,
 	})
 	if err != nil {
 		s.log.Error("vector store: embed batch", "err", err, "group", coll.Group, "resource", coll.Resource)
@@ -232,11 +347,12 @@ func (s *VectorStoreServer) embedInputs(ctx context.Context, namespace string, c
 			rowUID = uid
 		}
 		rows[i] = vector.Vector{
-			Namespace:   namespace,
+			Namespace:   storageNamespace,
 			Resource:    coll.PartitionKey,
 			UID:         rowUID,
 			Title:       in.Title,
 			Subresource: in.Subresource,
+			Folder:      in.Folder,
 			Content:     in.Content,
 			Metadata:    in.Metadata,
 			Embedding:   out.Embeddings[i].Dense,
@@ -249,19 +365,27 @@ func (s *VectorStoreServer) embedInputs(ctx context.Context, namespace string, c
 func (s *VectorStoreServer) Upsert(ctx context.Context, req *resourcepb.VectorUpsertRequest) (resp *resourcepb.VectorUpsertResponse, retErr error) {
 	defer s.observe("upsert", time.Now(), &retErr)
 
-	if err := s.authorize(ctx, req.Namespace, req.Group, req.Resource); err != nil {
-		return nil, err
-	}
-	if err := validateInputs(req.Inputs, ""); err != nil {
-		return nil, err
-	}
-
-	coll, err := s.ensureExternalCollection(ctx, req.Group, req.Resource)
+	target, err := s.resolveWriteTarget(ctx, req.Namespace, req.Group, req.Resource)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := s.embedInputs(ctx, req.Namespace, coll, "", req.Inputs)
+	if err := validateInputs(req.Inputs, ""); err != nil {
+		return nil, err
+	}
+
+	if target.shared {
+		if err := validateSharedFolders(req.Inputs); err != nil {
+			return nil, err
+		}
+	}
+	target, err = s.resolveWriteCollection(ctx, target, true)
+	if err != nil {
+		return nil, err
+	}
+	coll := target.collection
+
+	rows, err := s.embedInputs(ctx, req.Namespace, target.storageNamespace, coll, "", req.Inputs)
 	if err != nil {
 		return nil, err
 	}
@@ -276,9 +400,11 @@ func (s *VectorStoreServer) Upsert(ctx context.Context, req *resourcepb.VectorUp
 func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourcepb.VectorUpsertSubresourcesRequest) (resp *resourcepb.VectorUpsertSubresourcesResponse, retErr error) {
 	defer s.observe("upsert_subresources", time.Now(), &retErr)
 
-	if err := s.authorize(ctx, req.Namespace, req.Group, req.Resource); err != nil {
+	target, err := s.resolveWriteTarget(ctx, req.Namespace, req.Group, req.Resource)
+	if err != nil {
 		return nil, err
 	}
+
 	if req.Uid == "" {
 		return nil, status.Error(codes.InvalidArgument, "uid is required")
 	}
@@ -296,14 +422,20 @@ func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourc
 		seen[in.Subresource] = struct{}{}
 	}
 
-	coll, err := s.ensureExternalCollection(ctx, req.Group, req.Resource)
+	if target.shared {
+		if err := validateSharedFolders(req.Inputs); err != nil {
+			return nil, err
+		}
+	}
+	target, err = s.resolveWriteCollection(ctx, target, true)
 	if err != nil {
 		return nil, err
 	}
+	coll := target.collection
 
 	resp = &resourcepb.VectorUpsertSubresourcesResponse{}
-	err = s.store.WithEntityLock(ctx, req.Namespace, coll.PartitionKey, req.Uid, func(ctx context.Context) error {
-		stored, _, err := s.store.GetSubresourceContent(ctx, req.Namespace, s.embedder.Model, coll.PartitionKey, req.Uid)
+	err = s.store.WithEntityLock(ctx, target.storageNamespace, coll.PartitionKey, req.Uid, func(ctx context.Context) error {
+		stored, _, err := s.store.GetSubresourceContent(ctx, target.storageNamespace, s.embedder.Model, coll.PartitionKey, req.Uid)
 		if err != nil {
 			return writeStatusError(ctx, err, "read stored subresources")
 		}
@@ -326,11 +458,12 @@ func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourc
 				resp.Updated++
 				toEmbed = append(toEmbed, in)
 			default:
-				// Content unchanged: title/metadata still refresh so sync
-				// markers stay current without re-embed cost.
+				// Content unchanged: title/folder/metadata still refresh so
+				// sync markers (and folder moves) land without re-embed cost.
 				metadataOnly = append(metadataOnly, vector.VectorMeta{
 					Subresource: in.Subresource,
 					Title:       in.Title,
+					Folder:      in.Folder,
 					Metadata:    in.Metadata,
 				})
 			}
@@ -339,12 +472,12 @@ func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourc
 
 		var changed []vector.Vector
 		if len(toEmbed) > 0 {
-			changed, err = s.embedInputs(ctx, req.Namespace, coll, req.Uid, toEmbed)
+			changed, err = s.embedInputs(ctx, req.Namespace, target.storageNamespace, coll, req.Uid, toEmbed)
 			if err != nil {
 				return err // already a status error
 			}
 		}
-		if err := s.store.UpsertReplaceSubresources(ctx, req.Namespace, s.embedder.Model, coll.PartitionKey, req.Uid, changed, metadataOnly, desired); err != nil {
+		if err := s.store.UpsertReplaceSubresources(ctx, target.storageNamespace, s.embedder.Model, coll.PartitionKey, req.Uid, changed, metadataOnly, desired); err != nil {
 			s.log.Error("vector store: replace subresources", "err", err, "group", req.Group, "resource", req.Resource, "uid", req.Uid)
 			return writeStatusError(ctx, err, "replace subresources")
 		}
@@ -366,20 +499,17 @@ const deleteAllPageSize = 10000
 func (s *VectorStoreServer) Delete(ctx context.Context, req *resourcepb.VectorDeleteRequest) (resp *resourcepb.VectorDeleteResponse, retErr error) {
 	defer s.observe("delete", time.Now(), &retErr)
 
-	if err := s.authorize(ctx, req.Namespace, req.Group, req.Resource); err != nil {
+	target, err := s.resolveWriteTarget(ctx, req.Namespace, req.Group, req.Resource)
+	if err != nil {
 		return nil, err
 	}
 
-	// Deletes never provision: an unknown collection is NOT_FOUND, and
-	// callers treat delete-NOT_FOUND as benign.
-	coll, found, err := s.store.ResolveCollection(ctx, req.Group, req.Resource)
+	// Deletes never provision: an unknown collection is NOT_FOUND.
+	target, err = s.resolveWriteCollection(ctx, target, false)
 	if err != nil {
-		s.log.Error("vector store: resolve collection", "err", err, "group", req.Group, "resource", req.Resource)
-		return nil, writeStatusError(ctx, err, "resolve collection")
+		return nil, err
 	}
-	if !found || !coll.IsExternal {
-		return nil, status.Errorf(codes.NotFound, "collection %s/%s not found", req.Group, req.Resource)
-	}
+	coll := target.collection
 
 	// External collections have no backfill, so rows embedded under a prior
 	// model would be unreachable orphans — delete across all models.
@@ -401,12 +531,17 @@ func (s *VectorStoreServer) Delete(ctx context.Context, req *resourcepb.VectorDe
 		sel.All = true
 		sel.Limit = deleteAllPageSize
 	case *resourcepb.VectorDeleteRequest_Filter:
-		return nil, status.Error(codes.Unimplemented, "filter deletes ship with the metadata filter dialect")
+		f, err := parseFilter(sl.Filter)
+		if err != nil {
+			return nil, err
+		}
+		sel.Filter = f
+		sel.Limit = deleteAllPageSize
 	default:
 		return nil, status.Error(codes.InvalidArgument, "a selector is required")
 	}
 
-	deleted, hasMore, err := s.store.DeleteRows(ctx, req.Namespace, s.embedder.Model, coll.PartitionKey, sel)
+	deleted, hasMore, err := s.store.DeleteRows(ctx, target.storageNamespace, s.embedder.Model, coll.PartitionKey, sel)
 	if err != nil {
 		s.log.Error("vector store: delete rows", "err", err, "group", req.Group, "resource", req.Resource)
 		return nil, writeStatusError(ctx, err, "delete rows")
@@ -415,12 +550,46 @@ func (s *VectorStoreServer) Delete(ctx context.Context, req *resourcepb.VectorDe
 	return &resourcepb.VectorDeleteResponse{Deleted: deleted, HasMore: hasMore}, nil
 }
 
-// UpdateMetadata ships with the metadata filter dialect.
 func (s *VectorStoreServer) UpdateMetadata(ctx context.Context, req *resourcepb.VectorUpdateMetadataRequest) (resp *resourcepb.VectorUpdateMetadataResponse, retErr error) {
 	defer s.observe("update_metadata", time.Now(), &retErr)
 
-	if err := s.authorize(ctx, req.Namespace, req.Group, req.Resource); err != nil {
+	target, err := s.resolveWriteTarget(ctx, req.Namespace, req.Group, req.Resource)
+	if err != nil {
 		return nil, err
 	}
-	return nil, status.Error(codes.Unimplemented, "UpdateMetadata ships with the metadata filter dialect")
+
+	f, err := parseFilter(req.Filter)
+	if err != nil {
+		return nil, err
+	}
+	if len(req.Set) == 0 && len(req.Unset) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "at least one of set or unset is required")
+	}
+	// The 4 KiB cap is checked on the incoming patch only, not the merged
+	// result: it's a soft limit (search-response size), an oversized row is
+	// harmless, and unbounded growth needs a caller repeatedly adding distinct
+	// keys — not worth a per-row size guard that would silently skip updates.
+	if len(req.Set) > 0 {
+		if err := validateMetadataObject(req.Set); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "set: %v", err)
+		}
+		if len(req.Set) > maxMetadataBytes {
+			return nil, status.Errorf(codes.InvalidArgument, "set exceeds %d bytes", maxMetadataBytes)
+		}
+	}
+
+	// Metadata updates never provision.
+	target, err = s.resolveWriteCollection(ctx, target, false)
+	if err != nil {
+		return nil, err
+	}
+	coll := target.collection
+
+	updated, err := s.store.UpdateMetadata(ctx, target.storageNamespace, coll.PartitionKey, f, req.Set, req.Unset)
+	if err != nil {
+		s.log.Error("vector store: update metadata", "err", err, "group", req.Group, "resource", req.Resource)
+		return nil, writeStatusError(ctx, err, "update metadata")
+	}
+	s.countRows("update_metadata", req.Group, req.Resource, updated)
+	return &resourcepb.VectorUpdateMetadataResponse{Updated: updated}, nil
 }

@@ -176,6 +176,18 @@ describe('BarGauge', () => {
       const styles = getBasicAndGradientStyles(props);
       expect(styles.emptyBar.width).toBe('150px');
     });
+
+    it('should keep empty region the same width as colored bar when value is hidden', () => {
+      const props = getProps({
+        width: 150,
+        value: getValue(50, 'ServerA'),
+        orientation: VizOrientation.Vertical,
+        valueDisplayMode: BarGaugeValueMode.Hidden,
+      });
+      const styles = getBasicAndGradientStyles(props);
+      expect(styles.emptyBar.width).toBe('150px');
+      expect(styles.emptyBar.width).toBe(styles.bar.width);
+    });
   });
 
   describe('Vertical bar without title', () => {
@@ -313,6 +325,18 @@ describe('BarGauge', () => {
       const styles = getBasicAndGradientStyles(props);
       expect(styles.emptyBar.height).toBe('150px');
     });
+
+    it('should keep empty region the same height as colored bar when value is hidden', () => {
+      const props = getProps({
+        height: 150,
+        value: getValue(50, 'ServerA'),
+        orientation: VizOrientation.Horizontal,
+        valueDisplayMode: BarGaugeValueMode.Hidden,
+      });
+      const styles = getBasicAndGradientStyles(props);
+      expect(styles.emptyBar.height).not.toBe('0px');
+      expect(styles.emptyBar.height).toBe(styles.bar.height);
+    });
   });
 
   describe('Gradient', () => {
@@ -372,7 +396,7 @@ describe('BarGauge', () => {
         valueDisplayMode: BarGaugeValueMode.Text,
       });
       const styles = getBasicAndGradientStyles(props);
-      expect(styles.bar.background).toBe('rgba(255, 0, 0, 0.35)');
+      expect(styles.bar.background).toBe('rgb(from #FF0000 r g b / 0.35)');
       expect(styles.value.color).toBe('rgb(204, 204, 220)');
     });
   });
@@ -386,7 +410,7 @@ describe('BarGauge', () => {
         valueDisplayMode: BarGaugeValueMode.Color,
       });
       const styles = getBasicAndGradientStyles(props);
-      expect(styles.bar.background).toBe('rgba(255, 0, 0, 0.35)');
+      expect(styles.bar.background).toBe('rgb(from #FF0000 r g b / 0.35)');
       expect(styles.value.color).toBe('#FF0000');
     });
   });

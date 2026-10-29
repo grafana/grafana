@@ -104,6 +104,7 @@ func TestAuthzLimitedClient_Check(t *testing.T) {
 		expected bool
 	}{
 		{"dashboard.grafana.app", "dashboards", false},
+		{"dashboard.grafana.app", "variables", false},
 		{"folder.grafana.app", "folders", false},
 		{"unknown.group", "unknown.resource", true},
 	}
@@ -131,6 +132,7 @@ func TestAuthzLimitedClient_Compile(t *testing.T) {
 		expected bool
 	}{
 		{"dashboard.grafana.app", "dashboards", false},
+		{"dashboard.grafana.app", "variables", false},
 		{"folder.grafana.app", "folders", false},
 		{"unknown.group", "unknown.resource", true},
 	}
@@ -252,11 +254,14 @@ func TestValidateAuthzOptions(t *testing.T) {
 
 	for _, value := range []string{
 		"dashboard.grafana.app/dashboards",
+		"dashboard.grafana.app/variables",
+		"dashboard.grafana.app/notebooks",
 		"folder.grafana.app/folders",
 		"iam.grafana.app/users",
 		"iam.grafana.app/teams",
 		"iam.grafana.app/serviceaccounts",
 		"plugin.ext.grafana.app/widgets",
+		"grafana-example-app/widgets",
 	} {
 		t.Run("rejects already enforced exemption "+value, func(t *testing.T) {
 			err := ValidateAuthzOptions(AuthzOptions{ExemptResources: []string{value}})
@@ -293,7 +298,11 @@ func TestAuthzLimitedClientExemptionGate(t *testing.T) {
 		isEnforced bool
 	}{
 		{"disabled enforces allowlist resource", AuthzOptions{}, "dashboard.grafana.app", "dashboards", true},
+		{"disabled enforces notebooks", AuthzOptions{}, "dashboard.grafana.app", "notebooks", true},
 		{"disabled enforces extension group", AuthzOptions{}, "plugin.ext.grafana.app", "widgets", true},
+		{"disabled enforces app plugin group", AuthzOptions{}, "grafana-example-app", "widgets", true},
+		{"disabled bypasses dotted app suffix", AuthzOptions{}, "example.grafana-app", "widgets", false},
+		{"disabled bypasses bare app suffix", AuthzOptions{}, "-app", "widgets", false},
 		{"disabled bypasses unknown resource", AuthzOptions{}, "example.grafana.app", "widgets", false},
 		{"disabled ignores exemptions", AuthzOptions{ExemptResources: exempted.ExemptResources}, "example.grafana.app", "widgets", false},
 		{"enabled without exemptions enforces unknown resource", AuthzOptions{ExemptionEnabled: true}, "example.grafana.app", "widgets", true},
@@ -316,5 +325,28 @@ func TestAuthzLimitedClientExemptionGate(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, !tt.isEnforced, check.Allowed)
 		})
+	}
+}
+
+func TestBatchSizeBucket(t *testing.T) {
+	// Ranges below assume this chunk size; revisit them before changing it.
+	require.Equal(t, 50, batchCheckChunkSize)
+
+	for _, tt := range []struct {
+		size int
+		want string
+	}{
+		{0, "1"},
+		{1, "1"},
+		{2, "2-10"},
+		{10, "2-10"},
+		{11, "11-25"},
+		{25, "11-25"},
+		{26, "26-50"},
+		{50, "26-50"},
+		{51, "51+"},
+		{500, "51+"},
+	} {
+		require.Equal(t, tt.want, batchSizeBucket(tt.size), "size %d", tt.size)
 	}
 }

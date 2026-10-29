@@ -1,8 +1,7 @@
-import useAsyncFn from 'react-use/lib/useAsyncFn';
+import { lazy, Suspense } from 'react';
 
-import { store, type SelectableValue } from '@grafana/data';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
+import { formattedValueToString, getValueFormat, store, type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
   type SceneComponentProps,
   sceneGraph,
@@ -11,8 +10,8 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
-import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { Spinner } from '@grafana/ui';
+import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { getDashboardSnapshotSrv, type SnapshotSharingOptions } from 'app/features/dashboard/services/SnapshotSrv';
@@ -27,32 +26,49 @@ import {
 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { DashboardInteractions } from '../utils/interactions';
 
+import { getExpireOptions } from './snapshotOptions';
 import { type SceneShareTabState, type ShareView } from './types';
 
-const selectors = e2eSelectors.pages.ShareDashboardModal.SnapshotScene;
+const ShareSnapshotTabRenderer = lazy(() =>
+  import('./ShareRenderers').then((m) => ({ default: m.ShareSnapshotTabRenderer }))
+);
 
-export const getExpireOptions = () => {
-  const DEFAULT_EXPIRE_OPTION: SelectableValue<number> = {
-    label: t('share-modal.snapshot.expire-week', '1 Week'),
-    value: 60 * 60 * 24 * 7,
-  };
+function LazyShareSnapshotTabRenderer(props: SceneComponentProps<ShareSnapshotTab>) {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <ShareSnapshotTabRenderer {...props} />
+    </Suspense>
+  );
+}
 
-  return [
-    {
-      label: t('share-modal.snapshot.expire-hour', '1 Hour'),
-      value: 60 * 60,
-    },
-    {
-      label: t('share-modal.snapshot.expire-day', '1 Day'),
-      value: 60 * 60 * 24,
-    },
-    DEFAULT_EXPIRE_OPTION,
-    {
-      label: t('share-modal.snapshot.expire-never', `Never`),
-      value: 0,
-    },
-  ];
-};
+// A snapshot embeds every panel's query results, so a dashboard that repeats panels over many
+// variable values can serialize to a body no request can deliver. This mirrors the apiserver's
+// MaxRequestBodyBytes, the lower of the two ceilings a create request can hit, so the check is
+// valid whether the request goes to /apis or to the legacy /api endpoint. A reverse proxy in
+// front of Grafana may also cap body size and reject the request before it reaches Grafana at
+// all, leaving no response we can turn into a useful message.
+const MAX_SNAPSHOT_PAYLOAD_BYTES = 16 * 1024 * 1024;
+
+// JSON.stringify().length counts UTF-16 code units, which undercounts every non-ASCII series
+// name or label value in the embedded data, so measure the encoded length actually sent.
+export function getSnapshotPayloadSizeBytes(payload: object): number {
+  return new Blob([JSON.stringify(payload)]).size;
+}
+
+const SIZE_DECIMALS = 1;
+
+// IEC units to match the 1024-based limit above.
+function formatBytes(bytes: number): string {
+  return formattedValueToString(getValueFormat('bytes')(bytes, SIZE_DECIMALS));
+}
+
+// Rounds up to the precision we render, so a payload only slightly over the limit is never
+// reported as equal to it ("16.0 MiB, over the 16.0 MiB limit").
+export function formatSnapshotSize(bytes: number): string {
+  const unit = 1024 ** Math.floor(Math.log2(Math.max(bytes, 1)) / 10);
+  const step = unit / 10 ** SIZE_DECIMALS;
+  return formatBytes(Math.ceil(bytes / step) * step);
+}
 
 const SNAPSHOT_SHARE_CONFIGURATION = 'grafana.dashboard.snapshot.shareConfiguration';
 
@@ -99,7 +115,10 @@ interface DashboardV2SpecWithUid extends DashboardV2Spec {
 
 export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> implements ShareView {
   public tabId = shareDashboardType.snapshot;
-  static Component = ShareSnapshotTabRenderer;
+  static Component = LazyShareSnapshotTabRenderer;
+
+  // Overridable so the size guard can be exercised without building a payload this large
+  protected maxPayloadSizeBytes = MAX_SNAPSHOT_PAYLOAD_BYTES;
 
   public constructor(
     state: Omit<ShareSnapshotTabState, 'snapshotName' | 'selectedExpireOption' | 'snapshotSharingOptions'>
@@ -183,7 +202,28 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
       external,
     };
 
+    const payloadSizeBytes = getSnapshotPayloadSizeBytes(cmdData);
+
     try {
+      if (payloadSizeBytes > this.maxPayloadSizeBytes) {
+        const message = t(
+          'snapshot.share.too-large-body',
+          'This snapshot is {{size}}, over the {{limit}} limit. Snapshot a single panel, shorten the time range, or select fewer template variable values, then try again.',
+          {
+            size: formatSnapshotSize(payloadSizeBytes),
+            limit: formatBytes(this.maxPayloadSizeBytes),
+          }
+        );
+
+        dispatch(
+          notifyApp(
+            createErrorNotification(t('snapshot.share.too-large-title', 'Snapshot is too large to publish'), message)
+          )
+        );
+
+        throw new Error(message);
+      }
+
       const response = await getDashboardSnapshotSrv().create(cmdData);
       dispatch(
         notifyApp(createSuccessNotification(t('snapshot.share.success-creation', 'Your snapshot has been created')))
@@ -211,133 +251,4 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
     );
     return response;
   };
-}
-
-function ShareSnapshotTabRenderer({ model }: SceneComponentProps<ShareSnapshotTab>) {
-  const { snapshotName, selectedExpireOption, modalRef, snapshotSharingOptions } = model.useState();
-
-  const [snapshotResult, createSnapshot] = useAsyncFn(async (external = false) => {
-    return model.onSnapshotCreate(external);
-  });
-
-  const [deleteSnapshotResult, deleteSnapshot] = useAsyncFn(async (key: string) => {
-    return await getDashboardSnapshotSrv().deleteSnapshot(key);
-  });
-
-  // If snapshot has been deleted - show message and allow to close modal
-  if (deleteSnapshotResult.value) {
-    return (
-      <Trans i18nKey="share-modal.snapshot.deleted-message">
-        The snapshot has been deleted. If you have already accessed it once, then it might take up to an hour before
-        before it is removed from browser caches or CDN caches.
-      </Trans>
-    );
-  }
-
-  return (
-    <>
-      {/* Before snapshot has been created show configuration  */}
-      {!Boolean(snapshotResult.value) && (
-        <>
-          <div>
-            <p>
-              <Trans i18nKey="share-modal.snapshot.info-text-1">
-                A snapshot is an instant way to share an interactive dashboard publicly. When created, we strip
-                sensitive data like queries (metric, template, and annotation) and panel links, leaving only the visible
-                metric data and series names embedded in your dashboard.
-              </Trans>
-            </p>
-            <p>
-              <Trans i18nKey="share-modal.snapshot.info-text-2">
-                Keep in mind, your snapshot <em>can be viewed by anyone</em> that has the link and can access the URL.
-                Share wisely.
-              </Trans>
-            </p>
-          </div>
-
-          <Field label={t('share-modal.snapshot.name', `Snapshot name`)}>
-            <Input
-              id="snapshot-name-input"
-              width={30}
-              defaultValue={snapshotName}
-              onBlur={(e) => model.onSnasphotNameChange(e.target.value)}
-            />
-          </Field>
-
-          <Field label={t('share-modal.snapshot.expire', `Expire`)}>
-            <RadioButtonGroup<number>
-              id="expire-select-input"
-              options={getExpireOptions()}
-              value={selectedExpireOption?.value}
-              onChange={model.onExpireChange}
-            />
-          </Field>
-
-          <Modal.ButtonRow>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                modalRef?.resolve().onDismiss();
-              }}
-              fill="outline"
-            >
-              <Trans i18nKey="share-modal.snapshot.cancel-button">Cancel</Trans>
-            </Button>
-
-            {snapshotSharingOptions?.externalEnabled && (
-              <Button variant="secondary" disabled={snapshotResult.loading} onClick={() => createSnapshot(true)}>
-                {snapshotSharingOptions?.externalSnapshotName}
-              </Button>
-            )}
-            <Button
-              variant="primary"
-              disabled={snapshotResult.loading}
-              onClick={() => createSnapshot()}
-              data-testid={selectors.PublishSnapshot}
-            >
-              <Trans i18nKey="share-modal.snapshot.local-button">Publish Snapshot</Trans>
-            </Button>
-          </Modal.ButtonRow>
-        </>
-      )}
-
-      {/* When snapshot has been created - show link and allow copy/deletion */}
-      {snapshotResult.value && (
-        <Stack direction="column" gap={0}>
-          <Field label={t('share-modal.snapshot.url-label', 'Snapshot URL')}>
-            <Input
-              data-testid={selectors.CopyUrlInput}
-              id="snapshot-url-input"
-              value={snapshotResult.value.url}
-              readOnly
-              addonAfter={
-                <ClipboardButton
-                  data-testid={selectors.CopyUrlButton}
-                  icon="copy"
-                  variant="primary"
-                  getText={() => snapshotResult.value!.url}
-                >
-                  <Trans i18nKey="share-modal.snapshot.copy-link-button">Copy</Trans>
-                </ClipboardButton>
-              }
-            />
-          </Field>
-
-          <div style={{ alignSelf: 'flex-end', padding: '5px' }}>
-            <Trans i18nKey="share-modal.snapshot.mistake-message">Did you make a mistake? </Trans>&nbsp;
-            <Button
-              fill="outline"
-              size="md"
-              variant="destructive"
-              onClick={() => {
-                deleteSnapshot(snapshotResult.value!.key);
-              }}
-            >
-              <Trans i18nKey="share-modal.snapshot.delete-button">Delete snapshot.</Trans>
-            </Button>
-          </div>
-        </Stack>
-      )}
-    </>
-  );
 }

@@ -15,30 +15,23 @@ import (
 // why. A field that is neither set nor listed here fails the test below, so
 // adding an option forces a decision about where its value comes from.
 var callerSuppliedFields = map[string]string{
-	"KvStore":                  "the store itself; chosen by the wiring",
-	"ExperimentalKV":           "an alternative store; chosen by the wiring",
-	"Reg":                      "metrics registry owned by the caller",
-	"Log":                      "logger owned by the caller",
-	"DBKeepAlive":              "reference to the caller's database provider",
-	"GCGate":                   "shared with the caller's startup sequencing",
-	"UseChannelNotifier":       "derived from high-availability detection, not from a single setting",
-	"RvManager":                "built by the caller from a live database connection",
-	"EventPublisher":           "NATS publisher injected by the caller",
-	"EventSubscriber":          "NATS subscriber injected by the caller",
-	"EnableNatsNotifier":       "set together with EventSubscriber by the caller",
-	"EnableNatsNotifierShadow": "set together with EventSubscriber by the caller",
-	"EmbeddingDeleter":         "vector backend injected by the caller",
+	"KvStore":                   "the store itself; chosen by the wiring",
+	"Reg":                       "metrics registry owned by the caller",
+	"Log":                       "logger owned by the caller",
+	"DBKeepAlive":               "reference to the caller's database provider",
+	"GCGate":                    "shared with the caller's startup sequencing",
+	"UseChannelNotifier":        "derived from high-availability detection, not from a single setting",
+	"EventPublisher":            "NATS publisher injected by the caller",
+	"WatchNotificationMetadata": "set together with EventPublisher by the caller",
+	"WatchInvalidator":          "shared watch invalidation injected by the caller",
+	"EventSubscriber":           "NATS subscriber injected by the caller",
+	"EnableNatsNotifier":        "set together with EventSubscriber by the caller",
+	"EnableNatsNotifierShadow":  "set together with EventSubscriber by the caller",
+	"EmbeddingDeleter":          "vector backend injected by the caller",
 	// Derived from cfg.Target rather than a setting of its own, and false for a
 	// process that runs everything, so the non-zero walk cannot check it.
 	// TestNewKVBackendOptionsDisableStorageServices covers it instead.
 	"DisableStorageServices": "derived from cfg.Target, and false when this process runs the storage server",
-
-	// The lease options are set together, and the holder comes from
-	// sql.ResolveLeaseHolder, which this package cannot import.
-	"EnableKVLeases": "set together with Holder, which the caller resolves",
-	"Holder":         "resolved by sql.ResolveLeaseHolder, which this package cannot call",
-	"LeaseTTL":       "set together with Holder, which the caller resolves",
-	"LeaseAutoRenew": "set together with Holder, which the caller resolves",
 
 	"WatchOptions.BufferSize": "no setting; defaulted in WatchOptions.normalize",
 	"WatchOptions.MinBackoff": "no setting; defaulted in WatchOptions.normalize",
@@ -136,11 +129,15 @@ func TestNewKVBackendOptionsValues(t *testing.T) {
 	cfg.DashboardVersionsToKeep = 7
 	cfg.EnableGarbageCollection = true
 	cfg.GarbageCollectionDryRun = true
+	cfg.BlobGarbageCollectionEnabled = true
+	cfg.BlobGarbageCollectionDryRun = true
 	cfg.GarbageCollectionInterval = 6 * time.Minute
 	cfg.GarbageCollectionBatchSize = 8
 	cfg.GarbageCollectionBatchWait = 7 * time.Minute
 	cfg.GarbageCollectionMaxAge = 8 * time.Minute
 	cfg.DashboardsGarbageCollectionMaxAge = 9 * time.Minute
+	cfg.KVLeaseTTL = 9 * time.Minute
+	cfg.FastLatestKeyLookupEnabled = true
 
 	opts := NewKVBackendOptions(cfg)
 
@@ -150,9 +147,14 @@ func TestNewKVBackendOptionsValues(t *testing.T) {
 	require.Equal(t, 4*time.Minute, opts.SearchLookback)
 	require.Equal(t, WatchOptions{SettleDelay: 5 * time.Minute}, opts.WatchOptions)
 	require.Equal(t, 7, opts.DashboardVersionsToKeep)
+	require.NotEmpty(t, opts.Holder)
+	require.Equal(t, 9*time.Minute, opts.LeaseTTL)
+	require.True(t, opts.FastLatestKeyLookup)
 	require.Equal(t, GarbageCollectionConfig{
 		Enabled:          true,
 		DryRun:           true,
+		BlobEnabled:      true,
+		BlobDryRun:       true,
 		Interval:         6 * time.Minute,
 		BatchSize:        8,
 		BatchWait:        7 * time.Minute,

@@ -22,28 +22,51 @@ func TestIntegrationFeatures(t *testing.T) {
 
 	// Enable a random flag -- check that it is reported as enabled
 	flag := featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs
-	// the test below tests using enable_api = true, without that, the runtime_config has been instructed to skip the API
+	// the static provider is what evaluates the flag locally in this test
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		OpenFeatureAPIEnabled: true,
-		AppModeProduction:     true,
-		DisableAnonymous:      false, // allow anon user
+		OpenFeatureStaticProvider: true,
+		AppModeProduction:         true,
+		DisableAnonymous:          false, // allow anon user
 		EnableFeatureToggles: []string{
 			flag, // used in test below
 		},
 	})
 
-	t.Run("Test evaluate flags", func(t *testing.T) {
-		rsp := apis.DoRequest(helper, apis.RequestParams{
-			Method: http.MethodPost,
-			Path:   "/apis/features.grafana.app/v0alpha1/namespaces/default/ofrep/v1/evaluate/flags/" + flag,
-			User:   helper.Org1.Admin,
-		}, &map[string]any{})
+	// The evaluation endpoint is served on two prefixes: the canonical /ofrep path and
+	// the deprecated API-server-flavored path kept for backwards compatibility.
+	paths := map[string]string{
+		"canonical /ofrep path":               "/ofrep/v1/evaluate/flags/" + flag,
+		"deprecated api-server-flavored path": "/apis/features.grafana.app/v0alpha1/namespaces/default/ofrep/v1/evaluate/flags/" + flag,
+	}
 
-		require.Equal(t, 200, rsp.Response.StatusCode)
-		require.JSONEq(t, `{
-			"value": true,
-			"key":"`+flag+`",
-			"reason":"static provider evaluation result",
-			"variant":"default"}`, string(rsp.Body))
-	})
+	// The endpoint has no ReqSignedIn gate, so both signed-in and anonymous callers can
+	// reach it -- anonymous access matters because the frontend evaluates flags before a
+	// user is logged in. With the static provider the result is identical for both: public
+	// flag gating only applies to the remote provider path. A zero-value User sends no
+	// credentials, producing an anonymous request.
+	users := map[string]apis.User{
+		"logged-in as admin": helper.Org1.Admin,
+		"anonymous":          {},
+	}
+
+	expectedBody := `{
+		"value": true,
+		"key":"` + flag + `",
+		"reason":"static provider evaluation result",
+		"variant":"default"}`
+
+	for pathName, path := range paths {
+		for userName, user := range users {
+			t.Run("Test evaluate flags: "+pathName+", "+userName, func(t *testing.T) {
+				rsp := apis.DoRequest(helper, apis.RequestParams{
+					Method: http.MethodPost,
+					Path:   path,
+					User:   user,
+				}, &map[string]any{})
+
+				require.Equal(t, 200, rsp.Response.StatusCode)
+				require.JSONEq(t, expectedBody, string(rsp.Body))
+			})
+		}
+	}
 }

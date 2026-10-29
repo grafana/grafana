@@ -282,7 +282,7 @@ func TestIntegrationAnnotationGraphite(t *testing.T) {
 		User:   helper.Org1.Admin,
 		Method: http.MethodPost,
 		Path:   path,
-		Body:   []byte(fmt.Sprintf(`{"what":"deployment","when":%d,"data":"v1.2.3","tags":["release","prod"]}`, when)),
+		Body:   fmt.Appendf(nil, `{"what":"deployment","when":%d,"data":"v1.2.3","tags":["release","prod"]}`, when),
 	}, &annotationV0.Annotation{})
 	require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
 	require.NotEmpty(t, rsp.Result.GetName())

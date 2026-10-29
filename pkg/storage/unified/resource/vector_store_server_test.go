@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -17,7 +18,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
 )
 
 // fakeWriteStore implements vectorWriteStore for handler tests.
@@ -27,6 +30,7 @@ type fakeWriteStore struct {
 	collection   vector.Collection
 	ensureErr    error
 	resolveErr   error
+	resolveCalls int
 
 	// recorded calls
 	ensured      []string // "group/resource"
@@ -41,6 +45,16 @@ type fakeWriteStore struct {
 	deleted      int64
 	hasMore      bool
 	lockCalls    int
+	updateCalls  []updateMetadataCall
+	updateErr    error
+	updated      int64
+}
+
+type updateMetadataCall struct {
+	Namespace, Resource string
+	Filter              *filter.Filter
+	Set                 json.RawMessage
+	Unset               []string
 }
 
 type replaceCall struct {
@@ -56,6 +70,7 @@ type deleteRowsCall struct {
 }
 
 func (f *fakeWriteStore) ResolveCollection(_ context.Context, group, resource string) (vector.Collection, bool, error) {
+	f.resolveCalls++
 	if f.resolveErr != nil {
 		return vector.Collection{}, false, f.resolveErr
 	}
@@ -65,7 +80,7 @@ func (f *fakeWriteStore) ResolveCollection(_ context.Context, group, resource st
 	return f.collectionFor(group, resource), true, nil
 }
 
-func (f *fakeWriteStore) EnsureCollection(_ context.Context, group, resource string, isExternal bool) (vector.Collection, error) {
+func (f *fakeWriteStore) EnsureCollectionWithScope(_ context.Context, group, resource string, isExternal bool, scope vector.CollectionScope) (vector.Collection, error) {
 	if f.ensureErr != nil {
 		return vector.Collection{}, f.ensureErr
 	}
@@ -77,7 +92,7 @@ func (f *fakeWriteStore) collectionFor(group, resource string) vector.Collection
 	if f.collection.PartitionKey != "" {
 		return f.collection
 	}
-	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource + "_external", IsExternal: true}
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource + "_external", IsExternal: true, Scope: vector.ScopeTenant}
 }
 
 func (f *fakeWriteStore) Upsert(_ context.Context, vs []vector.Vector) error {
@@ -108,15 +123,33 @@ func (f *fakeWriteStore) DeleteRows(_ context.Context, ns, model, res string, se
 	return f.deleted, f.hasMore, nil
 }
 
+func (f *fakeWriteStore) UpdateMetadata(_ context.Context, ns, res string, fl *filter.Filter, set json.RawMessage, unset []string) (int64, error) {
+	if f.updateErr != nil {
+		return 0, f.updateErr
+	}
+	f.updateCalls = append(f.updateCalls, updateMetadataCall{ns, res, fl, set, unset})
+	return f.updated, nil
+}
+
 func (f *fakeWriteStore) WithEntityLock(ctx context.Context, _, _, _ string, fn func(context.Context) error) error {
 	f.lockCalls++
 	return fn(ctx)
 }
 
 func newTestVectorStoreServer(store *fakeWriteStore) *VectorStoreServer {
-	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), []string{"g/r"}, nil, nil)
+	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), []string{"g/r"}, nil, nil, nil)
 	s.store = store // swap the nil concrete backend for the fake
 	return s
+}
+
+type countingTextEmbedder struct {
+	client *fakeTextEmbedder
+	calls  int
+}
+
+func (c *countingTextEmbedder) EmbedText(ctx context.Context, in embedder.EmbedTextInput) (embedder.EmbedTextOutput, error) {
+	c.calls++
+	return c.client.EmbedText(ctx, in)
 }
 
 func vsAuthedCtx() context.Context {
@@ -158,7 +191,7 @@ func TestVectorStore_ServiceIdentityGate(t *testing.T) {
 	// A stray comma in the config (empty entry) must not admit
 	// identity-less tokens.
 	s = newTestVectorStoreServer(&fakeWriteStore{})
-	s2 := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), []string{"g/r"}, []string{"", "assistant"}, nil)
+	s2 := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), []string{"g/r"}, []string{"", "assistant"}, nil, nil)
 	s2.store = s.store
 	_, err = s2.Upsert(vsAuthedCtx(), validUpsertReq())
 	require.Error(t, err)
@@ -214,15 +247,6 @@ func TestVectorStore_MissingKeyFieldsIsInvalidArgument(t *testing.T) {
 	}
 }
 
-func TestVectorStore_UpdateMetadataUnimplemented(t *testing.T) {
-	s := newTestVectorStoreServer(&fakeWriteStore{})
-	_, err := s.UpdateMetadata(vsAuthedCtx(), &resourcepb.VectorUpdateMetadataRequest{
-		Namespace: "ns", Group: "g", Resource: "r", Filter: []byte(`{}`), Set: []byte(`{}`),
-	})
-	require.Error(t, err)
-	assert.Equal(t, codes.Unimplemented, status.Code(err))
-}
-
 func TestVectorStore_UpsertHappyPath(t *testing.T) {
 	store := &fakeWriteStore{}
 	s := newTestVectorStoreServer(store)
@@ -230,7 +254,7 @@ func TestVectorStore_UpsertHappyPath(t *testing.T) {
 	resp, err := s.Upsert(vsAuthedCtx(), &resourcepb.VectorUpsertRequest{
 		Namespace: "ns", Group: "g", Resource: "r",
 		Inputs: []*resourcepb.EmbeddingInput{
-			{Uid: "u1", Content: "hello", Title: "One", Metadata: []byte(`{"k":"v"}`)},
+			{Uid: "u1", Content: "hello", Title: "One", Folder: "fold-1", Metadata: []byte(`{"k":"v"}`)},
 			{Uid: "u2", Subresource: "chunk/1", Content: "world", Title: "Two"},
 		},
 	})
@@ -248,9 +272,11 @@ func TestVectorStore_UpsertHappyPath(t *testing.T) {
 	assert.Equal(t, "test/model-1", rows[0].Model)
 	assert.Equal(t, "u1", rows[0].UID)
 	assert.Equal(t, "One", rows[0].Title)
+	assert.Equal(t, "fold-1", rows[0].Folder)
 	assert.Equal(t, "hello", rows[0].Content)
 	assert.NotEmpty(t, rows[0].Embedding)
 	assert.Equal(t, "chunk/1", rows[1].Subresource)
+	assert.Empty(t, rows[1].Folder, "folder is optional and per-input")
 }
 
 func TestVectorStore_UpsertValidation(t *testing.T) {
@@ -272,9 +298,16 @@ func TestVectorStore_UpsertValidation(t *testing.T) {
 			r.Inputs[0].Metadata = []byte(`{"k":"` + strings.Repeat("x", 4096) + `"}`)
 		}},
 		{"invalid metadata json", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Metadata = []byte(`{not json`) }},
+		{"metadata array not object", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Metadata = []byte(`[1,2]`) }},
+		{"metadata scalar not object", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Metadata = []byte(`"x"`) }},
+		{"metadata null not object", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Metadata = []byte(`null`) }},
 		{"oversized uid", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Uid = strings.Repeat("u", 257) }},
 		{"oversized multibyte uid", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Uid = strings.Repeat("ü", 257) }},
 		{"oversized subresource", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Subresource = strings.Repeat("s", 257) }},
+		{"oversized content", func(r *resourcepb.VectorUpsertRequest) {
+			r.Inputs[0].Content = strings.Repeat("x", maxContentBytes+1)
+		}},
+		{"oversized folder", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Folder = strings.Repeat("f", 257) }},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -293,7 +326,7 @@ func TestVectorStore_UpsertValidation(t *testing.T) {
 
 func TestVectorStore_UpsertEmbedFailureIsInternal(t *testing.T) {
 	store := &fakeWriteStore{}
-	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4, wantErr: errors.New("provider down")}), []string{"g/r"}, nil, nil)
+	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4, wantErr: errors.New("provider down")}), []string{"g/r"}, nil, nil, nil)
 	s.store = store
 	_, err := s.Upsert(vsAuthedCtx(), validUpsertReq())
 	require.Error(t, err)
@@ -320,9 +353,9 @@ func TestVectorStore_UpsertSubresourcesDiff(t *testing.T) {
 	resp, err := s.UpsertSubresources(vsAuthedCtx(), &resourcepb.VectorUpsertSubresourcesRequest{
 		Namespace: "ns", Group: "g", Resource: "r", Uid: "ent-1",
 		Inputs: []*resourcepb.EmbeddingInput{
-			{Subresource: "chunk/1", Content: "same", Title: "T1", Metadata: []byte(`{"embeddedAt":2}`)},
-			{Subresource: "chunk/2", Content: "new", Title: "T2"},
-			{Subresource: "chunk/4", Content: "brand", Title: "T4"},
+			{Subresource: "chunk/1", Content: "same", Title: "T1", Folder: "fold-2", Metadata: []byte(`{"embeddedAt":2}`)},
+			{Subresource: "chunk/2", Content: "new", Title: "T2", Folder: "fold-2"},
+			{Subresource: "chunk/4", Content: "brand", Title: "T4", Folder: "fold-2"},
 		},
 	})
 	require.NoError(t, err)
@@ -339,7 +372,11 @@ func TestVectorStore_UpsertSubresourcesDiff(t *testing.T) {
 	require.Len(t, call.Changed, 2) // chunk/2 + chunk/4 embedded
 	require.Len(t, call.MetadataOnly, 1)
 	assert.Equal(t, "chunk/1", call.MetadataOnly[0].Subresource)
+	assert.Equal(t, "fold-2", call.MetadataOnly[0].Folder, "folder refreshes even without re-embed")
 	assert.JSONEq(t, `{"embeddedAt":2}`, string(call.MetadataOnly[0].Metadata))
+	for _, v := range call.Changed {
+		assert.Equal(t, "fold-2", v.Folder)
+	}
 }
 
 func TestVectorStore_UpsertSubresourcesValidation(t *testing.T) {
@@ -412,6 +449,39 @@ func TestVectorStore_DeleteByUIDs(t *testing.T) {
 	assert.Empty(t, store.ensured, "delete must never provision")
 }
 
+func TestVectorStoreScopeConflictStopsUpsertsBeforeEmbedding(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		write func(*VectorStoreServer) error
+	}{
+		{name: "upsert", write: func(s *VectorStoreServer) error {
+			_, err := s.Upsert(vsAuthedCtx(), validUpsertReq())
+			return err
+		}},
+		{name: "upsert subresources", write: func(s *VectorStoreServer) error {
+			_, err := s.UpsertSubresources(vsAuthedCtx(), &resourcepb.VectorUpsertSubresourcesRequest{
+				Namespace: "ns", Group: "g", Resource: "r", Uid: "same-uid",
+				Inputs: []*resourcepb.EmbeddingInput{{Subresource: "chunk/1", Content: "content", Title: "Title"}},
+			})
+			return err
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := &fakeWriteStore{ensureErr: fmt.Errorf("catalog scope conflict: %w", vector.ErrCollectionScopeMismatch)}
+			s := newTestVectorStoreServer(store)
+			counter := &countingTextEmbedder{client: &fakeTextEmbedder{dim: 4}}
+			s.embedder.TextEmbedder = counter
+
+			err := tc.write(s)
+			require.Equal(t, codes.Internal, status.Code(err))
+			require.Zero(t, counter.calls, "scope conflicts must stop before embedding")
+			require.Empty(t, store.upserts)
+			require.Empty(t, store.replaceCalls)
+			require.Zero(t, store.lockCalls)
+		})
+	}
+}
+
 func TestVectorStore_DeleteAll(t *testing.T) {
 	store := &fakeWriteStore{resolveFound: true, deleted: 10000, hasMore: true}
 	s := newTestVectorStoreServer(store)
@@ -465,13 +535,124 @@ func TestVectorStore_DeleteSelectorValidation(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, codes.InvalidArgument, status.Code(err))
 
-	// Filter selector ships with the metadata filter dialect.
+	// Empty filter ({} parses to no filter) is rejected.
 	_, err = s.Delete(vsAuthedCtx(), &resourcepb.VectorDeleteRequest{
 		Namespace: "ns", Group: "g", Resource: "r",
 		Selector: &resourcepb.VectorDeleteRequest_Filter{Filter: []byte(`{}`)},
 	})
 	require.Error(t, err)
-	assert.Equal(t, codes.Unimplemented, status.Code(err))
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+
+	// Malformed filter is rejected.
+	_, err = s.Delete(vsAuthedCtx(), &resourcepb.VectorDeleteRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Selector: &resourcepb.VectorDeleteRequest_Filter{Filter: []byte(`{"$and": "not-an-array"}`)},
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+}
+
+func TestVectorStore_DeleteByFilter(t *testing.T) {
+	store := &fakeWriteStore{resolveFound: true, deleted: 3}
+	s := newTestVectorStoreServer(store)
+
+	resp, err := s.Delete(vsAuthedCtx(), &resourcepb.VectorDeleteRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Selector: &resourcepb.VectorDeleteRequest_Filter{Filter: []byte(`{"status":"stale"}`)},
+	})
+	require.NoError(t, err)
+	assert.EqualValues(t, 3, resp.Deleted)
+	require.Len(t, store.deleteCalls, 1)
+	sel := store.deleteCalls[0].Sel
+	require.NotNil(t, sel.Filter)
+	assert.True(t, sel.AllModels)
+	assert.Empty(t, sel.UIDs)
+	assert.False(t, sel.All)
+}
+
+func TestVectorStore_UpdateMetadata(t *testing.T) {
+	store := &fakeWriteStore{resolveFound: true, updated: 2}
+	s := newTestVectorStoreServer(store)
+
+	resp, err := s.UpdateMetadata(vsAuthedCtx(), &resourcepb.VectorUpdateMetadataRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Filter: []byte(`{"status":"open"}`),
+		Set:    []byte(`{"status":"resolved"}`),
+		Unset:  []string{"owner"},
+	})
+	require.NoError(t, err)
+	assert.EqualValues(t, 2, resp.Updated)
+	require.Len(t, store.updateCalls, 1)
+	c := store.updateCalls[0]
+	assert.Equal(t, "r_external", c.Resource)
+	require.NotNil(t, c.Filter)
+	assert.JSONEq(t, `{"status":"resolved"}`, string(c.Set))
+	assert.Equal(t, []string{"owner"}, c.Unset)
+}
+
+func TestVectorStore_UpdateMetadataValidation(t *testing.T) {
+	store := &fakeWriteStore{resolveFound: true}
+	s := newTestVectorStoreServer(store)
+	base := func() *resourcepb.VectorUpdateMetadataRequest {
+		return &resourcepb.VectorUpdateMetadataRequest{
+			Namespace: "ns", Group: "g", Resource: "r",
+			Filter: []byte(`{"status":"open"}`), Set: []byte(`{"a":1}`),
+		}
+	}
+	cases := []struct {
+		name   string
+		mutate func(*resourcepb.VectorUpdateMetadataRequest)
+	}{
+		{"empty filter", func(r *resourcepb.VectorUpdateMetadataRequest) { r.Filter = []byte(`{}`) }},
+		{"malformed filter", func(r *resourcepb.VectorUpdateMetadataRequest) { r.Filter = []byte(`{"$or":5}`) }},
+		{"no set or unset", func(r *resourcepb.VectorUpdateMetadataRequest) { r.Set = nil; r.Unset = nil }},
+		{"set not an object", func(r *resourcepb.VectorUpdateMetadataRequest) { r.Set = []byte(`[1,2]`) }},
+		{"set is null", func(r *resourcepb.VectorUpdateMetadataRequest) { r.Set = []byte(`null`) }},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := base()
+			tc.mutate(req)
+			_, err := s.UpdateMetadata(vsAuthedCtx(), req)
+			require.Error(t, err)
+			assert.Equal(t, codes.InvalidArgument, status.Code(err))
+		})
+	}
+}
+
+func TestVectorStore_FilterTooManyValuesIsInvalidArgument(t *testing.T) {
+	store := &fakeWriteStore{resolveFound: true}
+	s := newTestVectorStoreServer(store)
+
+	vals := make([]string, maxFilterValues+1)
+	for i := range vals {
+		vals[i] = "v"
+	}
+	b, _ := json.Marshal(map[string]any{"uid": map[string]any{"$in": vals}})
+
+	_, err := s.Delete(vsAuthedCtx(), &resourcepb.VectorDeleteRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Selector: &resourcepb.VectorDeleteRequest_Filter{Filter: b},
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+
+	_, err = s.UpdateMetadata(vsAuthedCtx(), &resourcepb.VectorUpdateMetadataRequest{
+		Namespace: "ns", Group: "g", Resource: "r", Filter: b, Set: []byte(`{"a":1}`),
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+}
+
+func TestVectorStore_UpdateMetadataUnprovisionedIsNotFound(t *testing.T) {
+	store := &fakeWriteStore{resolveFound: false}
+	s := newTestVectorStoreServer(store)
+	_, err := s.UpdateMetadata(vsAuthedCtx(), &resourcepb.VectorUpdateMetadataRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Filter: []byte(`{"status":"open"}`), Set: []byte(`{"a":1}`),
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.NotFound, status.Code(err))
 }
 
 func TestVectorStore_DeleteUnprovisionedIsNotFound(t *testing.T) {
@@ -520,7 +701,7 @@ func TestVectorStore_DeleteResolveFailureWithCancelledContextIsCanceled(t *testi
 func TestVectorStore_UpsertSubresourcesNoChangesSkipsEmbed(t *testing.T) {
 	fake := &fakeTextEmbedder{dim: 4}
 	store := &fakeWriteStore{stored: map[string]string{"c": "same"}}
-	s := NewVectorStoreServer(nil, newTestEmbedder(fake), []string{"g/r"}, nil, nil)
+	s := NewVectorStoreServer(nil, newTestEmbedder(fake), []string{"g/r"}, nil, nil, nil)
 	s.store = store
 
 	resp, err := s.UpsertSubresources(vsAuthedCtx(), &resourcepb.VectorUpsertSubresourcesRequest{
@@ -540,7 +721,7 @@ func TestVectorStore_UpsertEmbedQuotaErrorKeepsRetryableCode(t *testing.T) {
 	store := &fakeWriteStore{}
 	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{
 		dim: 4, wantErr: status.Error(codes.ResourceExhausted, "provider quota"),
-	}), []string{"g/r"}, nil, nil)
+	}), []string{"g/r"}, nil, nil, nil)
 	s.store = store
 
 	_, err := s.Upsert(vsAuthedCtx(), validUpsertReq())
@@ -573,4 +754,196 @@ func TestVectorStore_InternalCollectionMismatchIsNotFound(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.Equal(t, codes.NotFound, status.Code(err))
+}
+
+func sharedWriteServer(store *fakeWriteStore) *VectorStoreServer {
+	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), nil, nil, map[string][]string{"g/r": {"publisher"}}, nil)
+	s.store = store
+	return s
+}
+
+func TestSharedVectorStoreRequiresPublisherAcrossMutations(t *testing.T) {
+	store := &fakeWriteStore{resolveFound: true, collection: vector.Collection{Group: "g", Resource: "r", PartitionKey: "r_external", IsExternal: true, Scope: vector.ScopeShared}}
+	s := sharedWriteServer(store)
+	for _, service := range []string{"", "tenant-scoped-service"} {
+		ctx := vsAuthedCtxAs(service)
+		_, err := s.Upsert(ctx, validUpsertReq())
+		require.Equal(t, codes.PermissionDenied, status.Code(err))
+		_, err = s.UpsertSubresources(ctx, &resourcepb.VectorUpsertSubresourcesRequest{Namespace: "ns", Group: "g", Resource: "r", Uid: "u", Inputs: []*resourcepb.EmbeddingInput{{Content: "a", Title: "t"}}})
+		require.Equal(t, codes.PermissionDenied, status.Code(err))
+		_, err = s.Delete(ctx, &resourcepb.VectorDeleteRequest{Namespace: "ns", Group: "g", Resource: "r", Selector: &resourcepb.VectorDeleteRequest_DeleteAll{DeleteAll: true}})
+		require.Equal(t, codes.PermissionDenied, status.Code(err))
+		_, err = s.UpdateMetadata(ctx, &resourcepb.VectorUpdateMetadataRequest{Namespace: "ns", Group: "g", Resource: "r", Filter: []byte(`{"x":1}`), Set: []byte(`{"x":2}`)})
+		require.Equal(t, codes.PermissionDenied, status.Code(err))
+	}
+	require.Empty(t, store.upserts)
+	require.Empty(t, store.deleteCalls)
+	require.Empty(t, store.updateCalls)
+}
+
+func TestSharedVectorStorePublishersAreCollectionSpecificAcrossMutations(t *testing.T) {
+	for _, tc := range []struct{ resource, allowed, denied string }{
+		{"r", "publisher-a", "publisher-b"},
+		{"other", "publisher-b", "publisher-a"},
+	} {
+		for _, method := range []string{"Upsert", "UpsertSubresources", "Delete", "UpdateMetadata"} {
+			t.Run(tc.resource+"/"+method, func(t *testing.T) {
+				store := &fakeWriteStore{resolveFound: true, collection: vector.Collection{Group: "g", Resource: tc.resource, PartitionKey: "r_external", IsExternal: true, Scope: vector.ScopeShared}}
+				embed := &countingTextEmbedder{client: &fakeTextEmbedder{dim: 4}}
+				s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), nil, nil, map[string][]string{"g/r": {"publisher-a"}, "g/other": {"publisher-b"}}, nil)
+				s.store = store
+				s.embedder.TextEmbedder = embed
+				call := func(service string) error {
+					ctx := vsAuthedCtxAs(service)
+					switch method {
+					case "Upsert":
+						req := validUpsertReq()
+						req.Resource = tc.resource
+						_, err := s.Upsert(ctx, req)
+						return err
+					case "UpsertSubresources":
+						_, err := s.UpsertSubresources(ctx, &resourcepb.VectorUpsertSubresourcesRequest{Namespace: "ns", Group: "g", Resource: tc.resource, Uid: "u", Inputs: []*resourcepb.EmbeddingInput{{Content: "a", Title: "t"}}})
+						return err
+					case "Delete":
+						_, err := s.Delete(ctx, &resourcepb.VectorDeleteRequest{Namespace: "ns", Group: "g", Resource: tc.resource, Selector: &resourcepb.VectorDeleteRequest_DeleteAll{DeleteAll: true}})
+						return err
+					default:
+						_, err := s.UpdateMetadata(ctx, &resourcepb.VectorUpdateMetadataRequest{Namespace: "ns", Group: "g", Resource: tc.resource, Filter: []byte(`{"x":1}`), Set: []byte(`{"x":2}`)})
+						return err
+					}
+				}
+				require.Equal(t, codes.PermissionDenied, status.Code(call(tc.denied)))
+				require.Empty(t, store.ensured)
+				require.Zero(t, store.resolveCalls)
+				require.Empty(t, store.upserts)
+				require.Empty(t, store.replaceCalls)
+				require.Empty(t, store.deleteCalls)
+				require.Empty(t, store.updateCalls)
+				require.Zero(t, embed.calls)
+				require.NoError(t, call(tc.allowed))
+				require.NotZero(t, len(store.ensured)+store.resolveCalls)
+			})
+		}
+	}
+}
+
+func TestSharedVectorStoreWritesUseSharedNamespace(t *testing.T) {
+	store := &fakeWriteStore{resolveFound: true, collection: vector.Collection{Group: "g", Resource: "r", PartitionKey: "r_external", IsExternal: true, Scope: vector.ScopeShared}}
+	s := sharedWriteServer(store)
+	embed := &fakeTextEmbedder{dim: 4}
+	s.embedder.TextEmbedder = embed
+	ctx := vsAuthedCtxAs("publisher")
+	_, err := s.Upsert(ctx, validUpsertReq())
+	require.NoError(t, err)
+	require.Equal(t, vector.SharedNamespace, store.upserts[0][0].Namespace)
+	require.Equal(t, "ns", embed.gotIn.Tenant)
+	_, err = s.UpsertSubresources(ctx, &resourcepb.VectorUpsertSubresourcesRequest{Namespace: "ns", Group: "g", Resource: "r", Uid: "u", Inputs: []*resourcepb.EmbeddingInput{{Content: "a", Title: "t"}}})
+	require.NoError(t, err)
+	require.Equal(t, vector.SharedNamespace, store.replaceCalls[0].Namespace)
+	require.Equal(t, vector.SharedNamespace, store.replaceCalls[0].Changed[0].Namespace)
+	_, err = s.Delete(ctx, &resourcepb.VectorDeleteRequest{Namespace: "ns", Group: "g", Resource: "r", Selector: &resourcepb.VectorDeleteRequest_DeleteAll{DeleteAll: true}})
+	require.NoError(t, err)
+	require.Equal(t, vector.SharedNamespace, store.deleteCalls[0].Namespace)
+	_, err = s.UpdateMetadata(ctx, &resourcepb.VectorUpdateMetadataRequest{Namespace: "ns", Group: "g", Resource: "r", Filter: []byte(`{"x":1}`), Set: []byte(`{"x":2}`)})
+	require.NoError(t, err)
+	require.Equal(t, vector.SharedNamespace, store.updateCalls[0].Namespace)
+}
+
+func TestSharedVectorStoreRejectsFolders(t *testing.T) {
+	store := &fakeWriteStore{}
+	s := sharedWriteServer(store)
+	embed := &countingTextEmbedder{client: &fakeTextEmbedder{dim: 4}}
+	s.embedder.TextEmbedder = embed
+	req := validUpsertReq()
+	req.Inputs[0].Folder = "private"
+	_, err := s.Upsert(vsAuthedCtxAs("publisher"), req)
+	require.Equal(t, codes.InvalidArgument, status.Code(err))
+	_, err = s.UpsertSubresources(vsAuthedCtxAs("publisher"), &resourcepb.VectorUpsertSubresourcesRequest{
+		Namespace: "ns", Group: "g", Resource: "r", Uid: "u",
+		Inputs: []*resourcepb.EmbeddingInput{{Subresource: "section", Content: "body", Title: "title", Folder: "private"}},
+	})
+	require.Equal(t, codes.InvalidArgument, status.Code(err))
+	require.Empty(t, store.ensured, "rejected folders must not provision a collection")
+	require.Empty(t, store.upserts)
+	require.Empty(t, store.replaceCalls)
+	require.Zero(t, embed.calls, "rejected folders must not be embedded")
+}
+
+func TestSharedVectorStoreFailsClosedOnPolicyDisagreement(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		tenantScoped []string
+		shared       map[string][]string
+		catalogScope vector.CollectionScope
+		want         codes.Code
+	}{
+		{name: "missing enrollment", catalogScope: vector.ScopeShared, want: codes.NotFound},
+		{name: "empty publisher list", shared: map[string][]string{"g/r": {}}, catalogScope: vector.ScopeShared, want: codes.Internal},
+		{name: "empty publisher identity", shared: map[string][]string{"g/r": {""}}, catalogScope: vector.ScopeShared, want: codes.Internal},
+		{name: "overlapping enrollment", tenantScoped: []string{"g/r"}, shared: map[string][]string{"g/r": {"publisher"}}, catalogScope: vector.ScopeShared, want: codes.Internal},
+		{name: "shared enrollment tenant catalog", shared: map[string][]string{"g/r": {"publisher"}}, catalogScope: vector.ScopeTenant, want: codes.Internal},
+		{name: "tenant-scoped enrollment shared catalog", tenantScoped: []string{"g/r"}, catalogScope: vector.ScopeShared, want: codes.Internal},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := &fakeWriteStore{collection: vector.Collection{Group: "g", Resource: "r", PartitionKey: "r_external", IsExternal: true, Scope: tc.catalogScope}}
+			s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), tc.tenantScoped, nil, tc.shared, nil)
+			s.store = store
+			_, err := s.Upsert(vsAuthedCtxAs("publisher"), validUpsertReq())
+			require.Equal(t, tc.want, status.Code(err))
+			require.Empty(t, store.upserts)
+		})
+	}
+}
+
+func TestSharedVectorStoreMarkerNamedTenantHasNoAuthority(t *testing.T) {
+	store := &fakeWriteStore{}
+	s := sharedWriteServer(store)
+	ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{UserID: 1, UserUID: "u", Namespace: vector.SharedNamespace, Type: authlib.TypeUser})
+	req := validUpsertReq()
+	req.Namespace = vector.SharedNamespace
+	_, err := s.Upsert(ctx, req)
+	require.Equal(t, codes.PermissionDenied, status.Code(err))
+	req.Namespace = "different-tenant"
+	_, err = s.Upsert(ctx, req)
+	require.Equal(t, codes.PermissionDenied, status.Code(err))
+	require.Empty(t, store.ensured)
+}
+
+func TestSharedVectorStoreDeleteAndMetadataDoNotProvisionOnMissingOrFailedLookup(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		lookupErr error
+		want      codes.Code
+	}{
+		{name: "missing collection", want: codes.NotFound},
+		{name: "catalog unavailable", lookupErr: errors.New("catalog unavailable"), want: codes.Internal},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := &fakeWriteStore{resolveErr: tc.lookupErr}
+			s := sharedWriteServer(store)
+			ctx := vsAuthedCtxAs("publisher")
+			_, err := s.Delete(ctx, &resourcepb.VectorDeleteRequest{Namespace: "ns", Group: "g", Resource: "r", Selector: &resourcepb.VectorDeleteRequest_DeleteAll{DeleteAll: true}})
+			require.Equal(t, tc.want, status.Code(err))
+			_, err = s.UpdateMetadata(ctx, &resourcepb.VectorUpdateMetadataRequest{Namespace: "ns", Group: "g", Resource: "r", Filter: []byte(`{"x":1}`), Set: []byte(`{"x":2}`)})
+			require.Equal(t, tc.want, status.Code(err))
+			require.Empty(t, store.deleteCalls)
+			require.Empty(t, store.updateCalls)
+			require.Empty(t, store.ensured)
+		})
+	}
+}
+
+func TestSharedVectorStoreUnchangedSubresourcesSkipEmbedding(t *testing.T) {
+	store := &fakeWriteStore{stored: map[string]string{"chunk": "same"}, collection: vector.Collection{Group: "g", Resource: "r", PartitionKey: "r_external", IsExternal: true, Scope: vector.ScopeShared}}
+	s := sharedWriteServer(store)
+	embed := &countingTextEmbedder{client: &fakeTextEmbedder{dim: 4}}
+	s.embedder.TextEmbedder = embed
+	resp, err := s.UpsertSubresources(vsAuthedCtxAs("publisher"), &resourcepb.VectorUpsertSubresourcesRequest{Namespace: "ns", Group: "g", Resource: "r", Uid: "uid", Inputs: []*resourcepb.EmbeddingInput{{Subresource: "chunk", Content: "same", Title: "new title"}}})
+	require.NoError(t, err)
+	require.Zero(t, embed.calls)
+	require.Zero(t, resp.Created)
+	require.Zero(t, resp.Updated)
+	require.Len(t, store.replaceCalls, 1)
+	require.Equal(t, vector.SharedNamespace, store.replaceCalls[0].Namespace)
+	require.Len(t, store.replaceCalls[0].MetadataOnly, 1)
 }

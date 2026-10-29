@@ -9,8 +9,9 @@ import {
   type DataSourcePluginOptionsEditorProps,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
+import { useDataSourceInstance } from '@grafana/plugin-compat/datasources';
 import { ConfigDescriptionLink, ConfigSection } from '@grafana/plugin-ui';
-import { DataSourcePicker, DataSourceWithBackend, getDataSourceSrv } from '@grafana/runtime';
+import { DataSourcePicker, DataSourceWithBackend } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
 
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';
@@ -43,9 +44,7 @@ export function TraceToProfilesSettings({ options, onOptionsChange }: Props) {
     return placeholder;
   }, [options.jsonData.tracesToProfiles?.datasourceUid, profileTypes]);
 
-  const { value: dataSource } = useAsync(async () => {
-    return await getDataSourceSrv().get(options.jsonData.tracesToProfiles?.datasourceUid);
-  }, [options.jsonData.tracesToProfiles?.datasourceUid]);
+  const { dataSource } = useDataSourceInstance(options.jsonData.tracesToProfiles?.datasourceUid);
 
   const { value: pTypes } = useAsync(async () => {
     if (

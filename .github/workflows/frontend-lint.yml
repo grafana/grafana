@@ -55,8 +55,12 @@ jobs:
       uses: ./.github/actions/setup-node
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
-    - run: yarn run prettier:check
-    - run: yarn run lint
+    - run: npm run prettier:check
+    - run: npm run lint
+    - name: Verify generated theme styles
+      run: |
+        npm run themes-generate
+        git diff --exit-code -- public/sass/grafana.dark.css public/sass/grafana.light.css
   lint-frontend-prettier-enterprise:
     needs: detect-changes
     permissions:
@@ -74,7 +78,7 @@ jobs:
       uses: ./.github/actions/setup-node
     - name: Get GitHub App token
       id: get-github-app-token
-      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
       with:
         github_app: grafana-ci-bot
     - name: Setup Enterprise
@@ -83,8 +87,12 @@ jobs:
         token: ${{ steps.get-github-app-token.outputs.token }}
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
-    - run: yarn run prettier:check
-    - run: yarn run lint
+    - run: npm run prettier:check
+    - run: npm run lint
+    - name: Verify generated theme styles
+      run: |
+        npm run themes-generate
+        git diff --exit-code -- public/sass/grafana.dark.css public/sass/grafana.light.css
   lint-frontend-typecheck:
     needs: detect-changes
     permissions:
@@ -105,8 +113,8 @@ jobs:
       uses: ./.github/actions/setup-node
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
-    - run: yarn run typecheck
-    - run: yarn run typecheck:smoke
+    - run: npm run typecheck
+    - run: npm run typecheck:smoke
   lint-frontend-typecheck-enterprise:
     needs: detect-changes
     permissions:
@@ -126,7 +134,7 @@ jobs:
       uses: ./.github/actions/setup-node
     - name: Get GitHub App token
       id: get-github-app-token
-      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
       with:
         github_app: grafana-ci-bot
     - name: Setup Enterprise
@@ -135,8 +143,8 @@ jobs:
         token: ${{ steps.get-github-app-token.outputs.token }}
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
-    - run: yarn run typecheck
-    - run: yarn run typecheck:smoke
+    - run: npm run typecheck
+    - run: npm run typecheck:smoke
   lint-frontend-api-clients:
     permissions:
       contents: read
@@ -157,11 +165,11 @@ jobs:
     - name: Generate API clients
       run: |
         extract_error_message='ERROR! API client generation failed!'
-        yarn generate-apis || (echo "${extract_error_message}" && false)
+        npm run generate-apis || (echo "${extract_error_message}" && false)
     - name: Verify generated clients
       run: |
-        uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
-        file_diff="$(git diff ':!conf')"
+        uncommited_error_message="ERROR! API client generation has not been committed. Please run 'npm run generate-apis', commit the changes and push again."
+        file_diff="$(git diff ':!conf' ':!go.mod' ':!go.sum')"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"
             echo "${uncommited_error_message}"
@@ -194,12 +202,12 @@ jobs:
     - name: Generate OpenAPI specs
       run: |
         extract_error_message='ERROR! OpenAPI generation failed!'
-        yarn generate:openapi || (echo "${extract_error_message}" && false)
+        npm run generate:openapi || (echo "${extract_error_message}" && false)
     - name: Verify generated specs
       run: |
         git add -N .
-        uncommited_error_message="ERROR! OpenAPI generation has not been committed. Please run 'yarn generate:openapi', commit the changes and push again."
-        file_diff="$(git diff --name-only ':!conf')"
+        uncommited_error_message="ERROR! OpenAPI generation has not been committed. Please run 'npm run generate:openapi', commit the changes and push again."
+        file_diff="$(git diff --name-only ':!conf' ':!go.mod' ':!go.sum')"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"
             echo "${uncommited_error_message}"
@@ -221,7 +229,7 @@ jobs:
       uses: ./.github/actions/setup-node
     - name: Get GitHub App token
       id: get-github-app-token
-      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
       with:
         github_app: grafana-ci-bot
     - name: Setup Enterprise
@@ -233,11 +241,14 @@ jobs:
     - name: Generate API clients
       run: |
         extract_error_message='ERROR! API client generation failed!'
-        yarn generate-apis || (echo "${extract_error_message}" && false)
+        npm run generate-apis || (echo "${extract_error_message}" && false)
     - name: Verify generated clients
       run: |
-        uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
-        file_diff="$(git diff ':!conf')"
+        uncommited_error_message="ERROR! API client generation has not been committed. Please run 'npm run generate-apis', commit the changes and push again."
+        # LICENSE is swapped to the Enterprise License Agreement by the "Setup Enterprise"
+        # step above (grafana-enterprise's build.sh overlay), not by API client generation.
+        # The overlay also edits go.mod files in the root and app modules.
+        file_diff="$(git diff -- . ':!conf' ':!LICENSE' ':(exclude,glob)**/go.mod' ':(exclude,glob)**/go.sum')"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"
             echo "${uncommited_error_message}"
@@ -248,7 +259,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: github.event_name != 'pull_request' || needs.detect-changes.outputs.changed-frontend-packages == 'true'
+    if: github.event_name != 'pull_request' || needs.detect-changes.outputs.changed-frontend-packages == 'true' || needs.detect-changes.outputs.changed-frontend-dependencies == 'true'
     name: Verify packed frontend packages
     runs-on: ubuntu-x64
     steps:
@@ -262,8 +273,8 @@ jobs:
       uses: ./.github/actions/yarn-install
     - name: Build and pack packages
       run: |
-        yarn run packages:build
-        yarn run packages:pack
+        npm run packages:build
+        npm run packages:pack
     - name: Validate packages
       run: ./scripts/validate-npm-packages.sh
   lint-circular-dependencies:
@@ -292,7 +303,7 @@ jobs:
       # the first sed command is used to clean the output
       working-directory: ./pr
       run: |
-        yarn lint:circular &> /tmp/pr-circular.txt || true
+        npm run --silent lint:circular &> /tmp/pr-circular.txt || true
         sed -n '/.*Found \([0-9]*\) circular.*/,$p' /tmp/pr-circular.txt > /tmp/pr-circular-clean.txt
         echo "Circular dependencies on PR:"
         pr_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/pr-circular-clean.txt)
@@ -316,7 +327,7 @@ jobs:
       working-directory: ./main
       # the first sed command is used to clean the output
       run: |
-        yarn lint:circular &> /tmp/main-circular.txt || true
+        npm run --silent lint:circular &> /tmp/main-circular.txt || true
         sed -n '/.*Found \([0-9]*\) circular.*/,$p' /tmp/main-circular.txt > /tmp/main-circular-clean.txt
         echo "Circular dependencies on main:"
         main_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/main-circular-clean.txt)
@@ -348,7 +359,7 @@ jobs:
         persist-credentials: false
     - name: Get GitHub App token
       id: get-github-app-token
-      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
       with:
         github_app: grafana-ci-bot
     - name: Setup Enterprise
@@ -360,7 +371,11 @@ jobs:
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - name: Run knip
-      run: yarn run knip
+      run: npm run knip
+    - name: Run knip (production)
+      # in production mode, we cannot tell the difference between unused exports and those used in tests
+      # if something is truly unused, it will be caught by the non-production knip run
+      run: npm run knip -- --production --exclude exports,types
 
   yarn-install-validation:
     needs:
@@ -377,26 +392,17 @@ jobs:
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
 
-    # Deliberately not using the yarn-install action for exact control over the command for extra checks
     - name: Install yarn dependencies
-      run: yarn install --immutable --check-cache
-      env:
-        YARN_ENABLE_HARDENED_MODE: 1
+      id: frontend-install
+      uses: ./.github/actions/yarn-install
+      with:
+        hardened-mode: 'true'
 
-    - name: Check yarn.lock is deduplicated
-      id: yarn-dedupe
-      run: yarn dedupe --check
-    - name: Report yarn dedupe failure
-      if: failure() && steps.yarn-dedupe.outcome == 'failure'
+    - name: Check lockfile is deduplicated
+      id: dedupe
+      run: pnpm dedupe --check
+    - name: Report dedupe failure
+      if: failure() && steps.dedupe.outcome == 'failure'
       run: |
-        echo "::error::yarn.lock contains duplicate dependencies. Run 'yarn dedupe' locally, commit the updated yarn.lock, and push again."
-        exit 1
-
-    - name: Check yarn constraints
-      id: yarn-constraints
-      run: yarn constraints
-    - name: Report yarn constraints failure
-      if: failure() && steps.yarn-constraints.outcome == 'failure'
-      run: |
-        echo "::error::Yarn constraints check failed. Run 'yarn constraints --fix' locally, commit the changes, and push again."
+        echo "::error::The lockfile contains duplicate dependencies. Run pnpm dedupe locally, commit the updated lockfile, and push again."
         exit 1

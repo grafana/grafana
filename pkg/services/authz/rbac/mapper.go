@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/datasourcek8s"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 )
@@ -16,7 +17,10 @@ type Mapping interface {
 	// If no action is found, it returns false.
 	Action(verb string) (string, bool)
 	// ActionSets returns the action sets for the given verb.
-	// If no action sets are found, it returns an empty slice. This is expected for resources that do not have action sets (anything apart from dashboards and folders).
+	// Empty is expected for resources that are not granted via managed folder/dashboard
+	// (or other) action sets. Folder-scoped kinds such as dashboards, folders, alert
+	// rules, and variables must include folders:view/edit/admin so onlyStoreActionSets
+	// grants still authorize.
 	ActionSets(verb string) []string
 	// scope returns the scope for the given resource name.
 	Scope(name string) string
@@ -104,14 +108,19 @@ type MapperRegistry interface {
 	// Get returns the permission mapper for the given group and resource.
 	// If no translation is found, it returns false.
 	Get(group, resource, subresource string) (Mapping, bool)
-	// GetAPIResourceName returns the API resource name (e.g. "repositories") for the given group and resource.
-	// Use this to send the canonical resource name in Check requests instead of legacy names (e.g. "provisioning.repositories").
-	// Returns ("", false) if no translation is found.
-	GetAPIResourceName(group, resource string) (string, bool)
 	// GetAll returns all the translations for the given group
 	GetAll(group string) []Mapping
+	// ResourceMappings returns registered translations with their API resource names.
+	// Request aliases are resolved by Get, not included in this enumeration.
+	ResourceMappings(group string) []ResourceMapping
 	// GetGroups returns all registered group names
 	GetGroups() []string
+}
+
+// ResourceMapping pairs a registered API resource name with its translation.
+type ResourceMapping struct {
+	APIResource string
+	Mapping     Mapping
 }
 
 type mapper map[string]map[string]translation
@@ -174,6 +183,69 @@ func newDashboardTranslation() translation {
 	return dashTranslation
 }
 
+// Snapshot permissions are unscoped in Grafana RBAC; storage checks must use
+// those actions rather than falling back to K8s-native resource permissions.
+func newSnapshotTranslation() translation {
+	return translation{
+		resource: "snapshots",
+		verbMapping: map[string]string{
+			utils.VerbGet:    "snapshots:read",
+			utils.VerbList:   "snapshots:read",
+			utils.VerbWatch:  "snapshots:read",
+			utils.VerbCreate: "snapshots:create",
+			utils.VerbDelete: "snapshots:delete",
+		},
+		skipScopeOnVerb: map[string]bool{
+			utils.VerbGet:    true,
+			utils.VerbList:   true,
+			utils.VerbWatch:  true,
+			utils.VerbCreate: true,
+			utils.VerbDelete: true,
+		},
+	}
+}
+
+// newNotebookTranslation creates a translation for notebooks. Notebooks have their own
+// notebooks:* actions and a notebooks:uid: scope, but are folder-scoped like dashboards, so
+// their verbs map onto the folder action sets (folders:view/edit/admin) and folder grants
+// cover them. The notebooks:view/edit/admin object action sets (for per-notebook sharing) are
+// added later together with the notebook resource-permission service.
+func newNotebookTranslation() translation {
+	nbTranslation := newResourceTranslation("notebooks", "uid", true, nil)
+
+	actionSetMapping := make(map[string][]string)
+	for verb, rbacAction := range nbTranslation.verbMapping {
+		var actionSets []string
+
+		// Notebook creation is only part of the folder action sets, so handle it separately.
+		if rbacAction == "notebooks:create" {
+			actionSets = append(actionSets, "folders:edit")
+			actionSets = append(actionSets, "folders:admin")
+		}
+		// The permission verbs come from the default translation. set_permissions is never a granted
+		// notebook action (no per-notebook permissions management) — it's mapped to folders:admin only
+		// so the trash folder-admin check (TrashAuthorizer.FolderAdmin) resolves. get_permissions
+		// falls through with no action set (nothing reads a notebook's permission list), so it's denied.
+		if rbacAction == "notebooks.permissions:write" {
+			actionSets = append(actionSets, "folders:admin")
+		}
+
+		if slices.Contains(ossaccesscontrol.NotebookViewActions, rbacAction) {
+			actionSets = append(actionSets, "folders:view")
+		}
+		if slices.Contains(ossaccesscontrol.NotebookEditActions, rbacAction) {
+			actionSets = append(actionSets, "folders:edit")
+		}
+		if slices.Contains(ossaccesscontrol.NotebookAdminActions, rbacAction) {
+			actionSets = append(actionSets, "folders:admin")
+		}
+		actionSetMapping[verb] = actionSets
+	}
+
+	nbTranslation.actionSetMapping = actionSetMapping
+	return nbTranslation
+}
+
 // newFolderTranslation creates a translation for folders and also maps the actions to action sets
 func newFolderTranslation() translation {
 	folderTranslation := newResourceTranslation("folders", "uid", true, nil)
@@ -217,6 +289,24 @@ func newDatasourceQueryTranslation() translation {
 		utils.VerbSetPermissions:   {"datasources:admin"},
 	}
 	return dsTranslation
+}
+
+// newAppSettingsTranslation matches the legacy plugin settings permissions, scoped by plugin ID
+func newAppSettingsTranslation() translation {
+	return translation{
+		resource:  "plugins",
+		attribute: "id",
+		verbMapping: map[string]string{
+			utils.VerbGet:              "plugins.app:access",
+			utils.VerbList:             "plugins.app:access",
+			utils.VerbWatch:            "plugins.app:access",
+			utils.VerbCreate:           "plugins:write",
+			utils.VerbUpdate:           "plugins:write",
+			utils.VerbPatch:            "plugins:write",
+			utils.VerbDelete:           "plugins:write",
+			utils.VerbDeleteCollection: "plugins:write",
+		},
+	}
 }
 
 // newServiceAccountTranslation creates a translation for service accounts and maps actions to action sets.
@@ -312,6 +402,27 @@ func newAlertmanagerImportsTranslation() translation {
 	}
 }
 
+// newAlertingConfigTranslation maps an alerting app's per-org Config singleton
+// (and its /status subresource) to its read/update actions, mirroring the
+// app's own authorizer. Delete is deliberately unmapped because the singleton
+// can never be deleted; the app authorizer additionally restricts create to
+// the service identity, which a verb mapping cannot express.
+func newAlertingConfigTranslation(scopeRoot, readAction, updateAction string) translation {
+	return translation{
+		resource:  scopeRoot,
+		attribute: "uid",
+		verbMapping: map[string]string{
+			utils.VerbGet:    readAction,
+			utils.VerbList:   readAction,
+			utils.VerbWatch:  readAction,
+			utils.VerbCreate: updateAction,
+			utils.VerbUpdate: updateAction,
+			utils.VerbPatch:  updateAction,
+		},
+		folderSupport: false,
+	}
+}
+
 // newAlertRuleTranslation maps the rule resources in rules.alerting.grafana.app
 // (alertrules, recordingrules, rulesequences) to the alert.rules:* actions.
 //
@@ -350,6 +461,78 @@ func newAlertRuleTranslation() translation {
 		folderSupport: true,
 	}
 
+	actionSetMapping := make(map[string][]string)
+	for verb, rbacAction := range t.verbMapping {
+		var actionSets []string
+		if slices.Contains(ossaccesscontrol.FolderViewActions, rbacAction) {
+			actionSets = append(actionSets, "folders:view")
+		}
+		if slices.Contains(ossaccesscontrol.FolderEditActions, rbacAction) {
+			actionSets = append(actionSets, "folders:edit")
+		}
+		if slices.Contains(ossaccesscontrol.FolderAdminActions, rbacAction) {
+			actionSets = append(actionSets, "folders:admin")
+		}
+		actionSetMapping[verb] = actionSets
+	}
+	t.actionSetMapping = actionSetMapping
+	return t
+}
+
+// newSilenceTranslation maps silences to the alert.silences:* actions.
+//
+// Silences have no App Platform kind of their own — they are still served by the
+// legacy Alertmanager API — but their permissions are folder-scoped exactly like
+// alert rules, so folder-scoped capability questions ("can this user create a
+// silence in folder F?") need a translation to resolve. The resource is
+// "alert.silences" for the same reason newAlertRuleTranslation uses
+// "alert.rules": the direct-scope check builds Scope(name) from the request's
+// object name, and alert.silences:uid:<name> is a scope no grant ever has, so
+// that check is a guaranteed no-op and folder inheritance decides access.
+//
+// There is no alert.silences:delete action; expiring a silence is a write.
+func newSilenceTranslation() translation {
+	t := translation{
+		resource:  "alert.silences",
+		attribute: "uid",
+		verbMapping: map[string]string{
+			utils.VerbGet:              accesscontrol.ActionAlertingSilencesRead,
+			utils.VerbList:             accesscontrol.ActionAlertingSilencesRead,
+			utils.VerbWatch:            accesscontrol.ActionAlertingSilencesRead,
+			utils.VerbCreate:           accesscontrol.ActionAlertingSilencesCreate,
+			utils.VerbUpdate:           accesscontrol.ActionAlertingSilencesWrite,
+			utils.VerbPatch:            accesscontrol.ActionAlertingSilencesWrite,
+			utils.VerbDelete:           accesscontrol.ActionAlertingSilencesWrite,
+			utils.VerbDeleteCollection: accesscontrol.ActionAlertingSilencesWrite,
+		},
+		folderSupport: true,
+	}
+
+	return withFolderActionSets(t)
+}
+
+// newVariableTranslation maps dashboard.grafana.app/variables to variables:*
+// and to the folder view/edit/admin action sets. Managed folder roles only
+// persist those action-set tokens when onlyStoreActionSets is on, so without
+// this mapping an Editor with folder Edit cannot create/update/delete
+// folder-scoped variables even though FolderEditActions includes variables:*.
+func newVariableTranslation() translation {
+	return withFolderActionSets(newResourceTranslation("variables", "uid", true, nil))
+}
+
+// newLibraryPanelTranslation maps dashboard.grafana.app/librarypanels to
+// library.panels:* and to the folder view/edit/admin action sets. Library panels
+// have no action sets of their own — they are only granted through folder
+// permissions — so without this mapping a user holding folder Edit via a managed
+// role cannot be seen to create/update/delete library panels in that folder.
+func newLibraryPanelTranslation() translation {
+	return withFolderActionSets(newResourceTranslation("library.panels", "uid", true, nil))
+}
+
+// withFolderActionSets attaches the folder view/edit/admin action sets to every
+// verb whose action belongs to the corresponding folder bundle. Use it for
+// resources that are granted purely through folder permissions.
+func withFolderActionSets(t translation) translation {
 	actionSetMapping := make(map[string][]string)
 	for verb, rbacAction := range t.verbMapping {
 		var actionSets []string
@@ -409,16 +592,46 @@ func NewMapperRegistry() MapperRegistry {
 		"notifications.alerting.grafana.app": {
 			"routingtrees":        newRoutingTreeTranslation(),
 			"alertmanagerimports": newAlertmanagerImportsTranslation(),
+			// No silence kind is served here yet; the translation exists so folder-scoped
+			// silence capability checks resolve. See newSilenceTranslation.
+			"silences": newSilenceTranslation(),
+			"configs": newAlertingConfigTranslation(
+				accesscontrol.AlertingConfigResource,
+				accesscontrol.ActionAlertingConfigRead,
+				accesscontrol.ActionAlertingConfigUpdate,
+			),
+			"configs/status": newAlertingConfigTranslation(
+				accesscontrol.AlertingConfigResource,
+				accesscontrol.ActionAlertingConfigRead,
+				accesscontrol.ActionAlertingConfigStatusUpdate,
+			),
 		},
 		"rules.alerting.grafana.app": {
 			// All rule resources share the folder-scoped alert.rules:* actions.
 			"alertrules":     newAlertRuleTranslation(),
 			"recordingrules": newAlertRuleTranslation(),
 			"rulesequences":  newAlertRuleTranslation(),
+			"configs": newAlertingConfigTranslation(
+				accesscontrol.AlertingRulesConfigScopeRoot,
+				accesscontrol.ActionAlertingRulesConfigRead,
+				accesscontrol.ActionAlertingRulesConfigUpdate,
+			),
+			"configs/status": newAlertingConfigTranslation(
+				accesscontrol.AlertingRulesConfigScopeRoot,
+				accesscontrol.ActionAlertingRulesConfigRead,
+				accesscontrol.ActionAlertingRulesConfigStatusUpdate,
+			),
+		},
+		// Assistant-pushed alert-rule embeddings, authorized like the native rule kinds above.
+		"assistant.alertrules.ext.grafana.app": {
+			"alertrules": newAlertRuleTranslation(),
 		},
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
-			"librarypanels": newResourceTranslation("library.panels", "uid", true, nil),
+			"snapshots":     newSnapshotTranslation(),
+			"notebooks":     newNotebookTranslation(),
+			"librarypanels": newLibraryPanelTranslation(),
+			"variables":     newVariableTranslation(),
 			// Annotations subresource for dashboards
 			// Uses dashboard scope (dashboards:uid:...) but annotation actions
 			"dashboards/annotations": translation{
@@ -454,7 +667,7 @@ func NewMapperRegistry() MapperRegistry {
 		"playlist.grafana.app": {
 			// Playlists only define two actions (playlists:read / playlists:write) and are
 			// neither folder-scoped nor scope-checked by their own authorizer, so writes map
-			// to playlists:write and create skips scope. This lets the provisioning export
+			// to playlists:write and every verb skips scope. This lets the provisioning export
 			// preflight (run under the requesting user) authorize playlists like other kinds.
 			"playlists": translation{
 				resource:  "playlists",
@@ -470,7 +683,7 @@ func NewMapperRegistry() MapperRegistry {
 					utils.VerbDeleteCollection: "playlists:write",
 				},
 				folderSupport:   false,
-				skipScopeOnVerb: map[string]bool{utils.VerbCreate: true},
+				skipScopeOnVerb: skipScopeOnAllVerbs,
 			},
 		},
 		"iam.grafana.app": {
@@ -564,29 +777,8 @@ func NewMapperRegistry() MapperRegistry {
 			"securevalues": newResourceTranslation("secret.securevalues", "uid", false, nil),
 			"keepers":      newResourceTranslation("secret.keepers", "uid", false, nil),
 		},
-		"query.grafana.app": {
-			"query": translation{
-				resource:  "datasources",
-				attribute: "uid",
-				verbMapping: map[string]string{
-					utils.VerbCreate: "datasources:query",
-				},
-				folderSupport:   false,
-				skipScopeOnVerb: nil,
-			},
-		},
-		"datasource.grafana.app": { // duplicate the query group here
-			"query": translation{
-				resource:  "datasources",
-				attribute: "uid",
-				verbMapping: map[string]string{
-					utils.VerbCreate: "datasources:query",
-				},
-				folderSupport:   false,
-				skipScopeOnVerb: nil,
-			},
-		},
-		"*.datasource.grafana.app": {
+		"datasource.grafana.app": {
+			// Unified storage keeps every datasource type under this group
 			"datasources": newDatasourceQueryTranslation(),
 			"datasources/query": translation{
 				resource:  "datasources",
@@ -597,10 +789,39 @@ func NewMapperRegistry() MapperRegistry {
 				folderSupport:   false,
 				skipScopeOnVerb: nil,
 			},
+			// Only datasources:admin carries the caching actions.
+			"datasources/caching": translation{
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:              "datasources.caching:read",
+					utils.VerbList:             "datasources.caching:read",
+					utils.VerbWatch:            "datasources.caching:read",
+					utils.VerbCreate:           "datasources.caching:write",
+					utils.VerbUpdate:           "datasources.caching:write",
+					utils.VerbPatch:            "datasources.caching:write",
+					utils.VerbDelete:           "datasources.caching:write",
+					utils.VerbDeleteCollection: "datasources.caching:write",
+				},
+				actionSetMapping: map[string][]string{
+					utils.VerbGet:              {"datasources:admin"},
+					utils.VerbList:             {"datasources:admin"},
+					utils.VerbWatch:            {"datasources:admin"},
+					utils.VerbCreate:           {"datasources:admin"},
+					utils.VerbUpdate:           {"datasources:admin"},
+					utils.VerbPatch:            {"datasources:admin"},
+					utils.VerbDelete:           {"datasources:admin"},
+					utils.VerbDeleteCollection: {"datasources:admin"},
+				},
+				folderSupport:   false,
+				skipScopeOnVerb: nil,
+			},
 		},
 		"plugins.grafana.app": {
 			"plugins": newResourceTranslation("plugins.plugins", "uid", false, nil),
 			"metas":   newResourceTranslation("plugins.metas", "uid", false, nil),
+			// Unified storage keeps every app plugin's settings here, named by plugin ID
+			"app": newAppSettingsTranslation(),
 		},
 		"advisor.grafana.app": {
 			"checks":       newResourceTranslation("advisor.checks", "uid", false, nil),
@@ -621,39 +842,36 @@ func NewMapperRegistry() MapperRegistry {
 	return mapper
 }
 
-// findGroupKey returns the registry key for group, using exact match first,
-// then wildcard match. A wildcard key has the form "*.<suffix>" (e.g. "*.datasource.grafana.app");
-// group matches if it has that suffix, is longer than the suffix (non-empty prefix), and the prefix
-// contains no dot (so "loki.datasource.grafana.app" matches but "foo.loki.datasource.grafana.app" does not).
-// Group starting with "*" never matches (so we never exact-match a wildcard registry key as input).
-func (m mapper) findGroupKey(group string) (string, bool) {
-	if strings.HasPrefix(group, "*") {
-		return "", false
+// newPermissionsDelegationTranslation maps a delegation check to the RBAC
+// action being delegated. It mirrors the static permissions entry, except the
+// action comes from the request rather than a fixed verb mapping, so holding
+// a permissions:type:* scope on one action cannot authorize delegating another.
+func newPermissionsDelegationTranslation(action string) Mapping {
+	return &translation{
+		resource:  "permissions",
+		attribute: "type",
+		verbMapping: map[string]string{
+			utils.VerbCreate: action,
+			utils.VerbUpdate: action,
+			utils.VerbPatch:  action,
+		},
+		folderSupport: false,
+		skipWildcard:  true,
 	}
-	if _, ok := m[group]; ok {
-		return group, true
-	}
-	for key := range m {
-		// is this a wildcard key?
-		if len(key) < 2 || key[0] != '*' || key[1] != '.' {
-			continue
-		}
-		suffix := key[1:]                              // remove the leading "*"
-		prefix, ok := strings.CutSuffix(group, suffix) // loki.datasource.grafana.app -> loki
-		if !ok || prefix == "" {
-			continue
-		}
-		// prefix must be a single segment (no nested dots)
-		if strings.Contains(prefix, ".") {
-			continue
-		}
-		return key, true
-	}
-	return "", false
 }
 
 func (m mapper) Get(group, resource, subresource string) (Mapping, bool) {
-	groupKey, ok := m.findGroupKey(group)
+	group, resource, subresource = datasourcek8s.AuthorizationResource(group, resource, subresource)
+	// Delegation checks name the RBAC action being delegated as the subresource
+	// of the permissions pseudo-resource. The actions are open-ended, so the
+	// translation is built from the request instead of the static table. Only
+	// action-shaped values (containing a colon) are captured, so a real
+	// subresource of a future permissions resource falls through untouched.
+	if group == "iam.grafana.app" && resource == "permissions" && strings.Contains(subresource, ":") {
+		return newPermissionsDelegationTranslation(subresource), true
+	}
+
+	resources, ok := m[group]
 	if !ok {
 		return nil, false
 	}
@@ -663,7 +881,6 @@ func (m mapper) Get(group, resource, subresource string) (Mapping, bool) {
 		lookupResource = resource + "/" + subresource
 	}
 
-	resources := m[groupKey]
 	t, ok := resources[lookupResource]
 	if !ok {
 		return nil, false
@@ -672,37 +889,35 @@ func (m mapper) Get(group, resource, subresource string) (Mapping, bool) {
 	return &t, true
 }
 
-func (m mapper) GetAPIResourceName(group, resource string) (string, bool) {
-	groupKey, ok := m.findGroupKey(group)
-	if !ok {
-		return "", false
+func (m mapper) GetAll(group string) []Mapping {
+	mappings := m.ResourceMappings(group)
+	if mappings == nil {
+		return nil
 	}
-	resources := m[groupKey]
-	if _, ok := resources[resource]; ok {
-		return resource, true
+	translations := make([]Mapping, 0, len(mappings))
+	for _, mapping := range mappings {
+		translations = append(translations, mapping.Mapping)
 	}
-	for apiResource, t := range resources {
-		if t.Resource() == resource {
-			return apiResource, true
-		}
-	}
-	return "", false
+
+	return translations
 }
 
-func (m mapper) GetAll(group string) []Mapping {
-	groupKey, ok := m.findGroupKey(group)
+func (m mapper) ResourceMappings(group string) []ResourceMapping {
+	resources, ok := m[group]
 	if !ok {
 		return nil
 	}
 
-	resources := m[groupKey]
-
-	translations := make([]Mapping, 0, len(resources))
-	for _, t := range resources {
-		translations = append(translations, &t)
+	mappings := make([]ResourceMapping, 0, len(resources))
+	for apiResource, t := range resources {
+		mapping := t
+		mappings = append(mappings, ResourceMapping{
+			APIResource: apiResource,
+			Mapping:     &mapping,
+		})
 	}
 
-	return translations
+	return mappings
 }
 
 func (m mapper) GetGroups() []string {

@@ -1,5 +1,7 @@
 // defaultDataQueryKind is not re-exported by ../types (that seam covers the notebook-specific and
 // forked names); it is a shared leaf type, so it comes straight from the generated module.
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { defaultDataQueryKind } from '@grafana/schema/apis/notebook/v2beta1';
 import { type Resource } from 'app/features/apiserver/types';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
@@ -9,6 +11,11 @@ import { defaultSpec as defaultNotebookSpec, type NotebookElement, type Spec as 
 
 import { transformNotebookSceneToSaveModel } from './transformNotebookSceneToSaveModel';
 import { transformNotebookToScene } from './transformNotebookToScene';
+
+setPluginImportUtils({
+  importPanelPlugin: async (id) => getPanelPlugin({ id }).useFieldConfig(),
+  getPanelPluginFromCache: () => undefined,
+});
 
 // The spec fixture is written in the serializer's canonical form (explicit datasource per query,
 // description always present on panels, version '' etc.) so spec → scene → spec is an exact
@@ -141,12 +148,45 @@ describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
     expect(scene).toBeInstanceOf(NotebookScene);
     expect(scene.state.title).toBe('Checkout latency investigation');
     expect(scene.state.uid).toBe('nb-1');
-    expect(scene.state.hideTimeControls).toBe(false);
     expect(scene.state.$timeRange.state.from).toBe('now-6h');
     expect(scene.state.body.state.cells).toHaveLength(4);
     // Title and tags are surfaced on the layout manager for the document header.
     expect(scene.state.body.state.title).toBe('Checkout latency investigation');
     expect(scene.state.body.state.tags).toEqual(['incident', 'checkout']);
+  });
+
+  // A notebook has no way to show the picker again, so a stored `true` must neither hide it nor survive a save.
+  it('ignores a stored hideTimepicker and saves it back as false', () => {
+    const resource = notebookResource();
+    resource.spec.timeSettings.hideTimepicker = true;
+
+    const scene = transformNotebookToScene(resource);
+
+    expect(transformNotebookSceneToSaveModel(scene).timeSettings.hideTimepicker).toBe(false);
+  });
+
+  it("seeds autosave's savedResourceVersion from the resource this scene was loaded from", () => {
+    const resource = notebookResource();
+    resource.metadata.resourceVersion = '1755';
+    resource.metadata.generation = 4;
+
+    const scene = transformNotebookToScene(resource);
+
+    expect(scene.autosave.state.savedResourceVersion).toBe('1755');
+    expect(scene.autosave.state.savedGeneration).toBe(4);
+  });
+
+  // A blank/draft notebook has no resource yet, so there is nothing to protect before its first
+  // create lands — seeding `undefined` here is correct, not an oversight. Mirrors what
+  // notebookResourceFor(undefined, spec) actually produces: a metadata with no resourceVersion at all.
+  it('leaves savedResourceVersion unset for a notebook with no resourceVersion yet', () => {
+    const resource = notebookResource();
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- exercising metadata that genuinely lacks resourceVersion, same shape notebookResourceFor(undefined, spec) builds
+    const draft = { ...resource, metadata: { name: resource.metadata.name } } as Resource<NotebookSpec>;
+
+    const scene = transformNotebookToScene(draft);
+
+    expect(scene.autosave.state.savedResourceVersion).toBeUndefined();
   });
 
   // V2PanelSpec.subtitle is deliberately absent from the fixture: neither buildVizPanelState nor
@@ -160,6 +200,31 @@ describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
     expect(saveModel).toEqual(spec);
   });
 
+  it("round-trips a panel cell's own time range via queryOptions.timeFrom/.timeTo", () => {
+    const resource = notebookResource();
+    const panelElement = resource.spec.elements['latency-panel'];
+    if (panelElement.kind === 'Panel') {
+      panelElement.spec.data.spec.queryOptions = { timeFrom: 'now-24h', timeTo: 'now' };
+    }
+
+    const scene = transformNotebookToScene(resource);
+    const cell = scene.state.body.state.cells.find((c) => c.state.elementName === 'latency-panel')!;
+
+    expect(cell.state.$timeRange?.state.from).toBe('now-24h');
+    expect(cell.state.$timeRange?.state.to).toBe('now');
+    // Confirms timeFrom/timeTo were stripped before buildVizPanelState ran: otherwise it would have
+    // auto-attached its own PanelTimeRange here, which would shadow this cell-level override via
+    // sceneGraph.getTimeRange's check-self-before-parent resolution order.
+    expect(cell.state.body?.state.$timeRange).toBeUndefined();
+
+    const saveModel = transformNotebookSceneToSaveModel(scene);
+    const savedElement = saveModel.elements['latency-panel'];
+    expect(savedElement.kind === 'Panel' && savedElement.spec.data.spec.queryOptions).toEqual({
+      timeFrom: 'now-24h',
+      timeTo: 'now',
+    });
+  });
+
   // The save path borrows the dashboard's vizPanelToSchemaV2, which is only safe here because both
   // optional args are omitted: a dsReferencesMapping routes it through getElementIdentifierForVizPanel
   // -> getDashboardSceneFor, which throws for a NotebookScene root. Nothing in the signature says so,
@@ -171,5 +236,77 @@ describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
 
     expect(() => getDashboardSceneFor(panel)).toThrow();
     expect(() => transformNotebookSceneToSaveModel(scene)).not.toThrow();
+  });
+
+  it('saves panel title and visualization changes', async () => {
+    const scene = transformNotebookToScene(notebookResource());
+    const cell = scene.state.body.state.cells.find((item) => item.state.elementName === 'latency-panel')!;
+
+    scene.state.body.setPanelTitle(cell, 'Updated latency');
+    await scene.state.body.changePanelVisualization(cell, {
+      name: 'Table',
+      pluginId: 'table',
+      hash: 'table',
+      options: { showHeader: true },
+    });
+
+    const saved = transformNotebookSceneToSaveModel(scene).elements['latency-panel'];
+    expect(saved.kind).toBe('Panel');
+    if (saved.kind === 'Panel') {
+      expect(saved.spec.title).toBe('Updated latency');
+      expect(saved.spec.vizConfig.group).toBe('table');
+      expect(saved.spec.vizConfig.spec.options).toMatchObject({ showHeader: true });
+    }
+  });
+
+  // The block the editor keeps at the bottom is dropped from the layout, so its element has to go too
+  // or `elements` keeps an entry that no layout item points at.
+  it('leaves no orphan element behind when the trailing empty block is dropped', () => {
+    const scene = transformNotebookToScene(notebookResource());
+    const trailing = scene.state.body.appendSystemCell(scene.state.body.state.cells.length)!;
+
+    const saveModel = transformNotebookSceneToSaveModel(scene);
+
+    expect(saveModel.elements[trailing.state.elementName]).toBeUndefined();
+    expect(saveModel.layout.spec.cells.map((cell) => cell.spec.element.name)).not.toContain(trailing.state.elementName);
+    // Everything else is untouched, so this drops one cell rather than changing the document.
+    expect(saveModel.layout.spec.cells).toHaveLength(4);
+  });
+
+  // The element survives being referenced twice even when one of the two references is the dropped
+  // trailing cell, because elements are keyed off the cells that stay.
+  it('keeps an element that the dropped block shares with a cell that stays', () => {
+    const scene = transformNotebookToScene(notebookResource());
+    const cells = scene.state.body.state.cells;
+    const shared = cells[0].state.elementName;
+    const trailing = scene.state.body.appendSystemCell(cells.length)!;
+    trailing.setState({ elementName: shared });
+
+    const saveModel = transformNotebookSceneToSaveModel(scene);
+
+    expect(saveModel.elements[shared]).toBeDefined();
+  });
+
+  // Two layout items referencing one element is legal, and the deserializer gives each its own cell.
+  // getElements folds them back into a single elements[name] entry by walking cells in order, so the
+  // last one wins: an edit applied to only the edited cell is silently dropped by the duplicate that
+  // follows it, and the exported notebook still carries the original code.
+  it('keeps an edit to a cell whose element is referenced twice', () => {
+    const resource = notebookResource();
+    resource.spec.layout.spec.cells.push({
+      kind: 'NotebookLayoutItem',
+      spec: { element: { kind: 'ElementReference', name: 'query' }, source: 'user' },
+    });
+
+    const scene = transformNotebookToScene(resource);
+    const [first] = scene.state.body.state.cells.filter((cell) => cell.state.elementName === 'query');
+    expect(scene.state.body.state.cells.filter((cell) => cell.state.elementName === 'query')).toHaveLength(2);
+
+    scene.state.body.setCellContent(first, { kind: 'Code', spec: { language: 'sql', code: 'select 2' } });
+
+    expect(transformNotebookSceneToSaveModel(scene).elements.query).toEqual({
+      kind: 'Cell',
+      spec: { content: { kind: 'Code', spec: { language: 'sql', code: 'select 2' } } },
+    });
   });
 });

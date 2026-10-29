@@ -102,8 +102,7 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 			Do(t.Context())
 		// Note: This might fail if branch doesn't exist, but the important thing is it doesn't return MethodNotAllowed
 		if result.Error() != nil {
-			var statusErr *apierrors.StatusError
-			if errors.As(result.Error(), &statusErr) {
+			if statusErr, ok := errors.AsType[*apierrors.StatusError](result.Error()); ok {
 				require.NotEqual(t, int32(http.StatusMethodNotAllowed), statusErr.ErrStatus.Code, "should not return MethodNotAllowed for branch delete")
 			}
 		}

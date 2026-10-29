@@ -19,4 +19,6 @@ export interface AlertStateInfo {
   dashboardUID: string | undefined;
   panelId: number;
   state: AlertState;
+  /** UID of the Grafana-managed alert rule linked to this panel, when known. */
+  ruleUID?: string;
 }

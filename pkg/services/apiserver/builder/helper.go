@@ -24,7 +24,6 @@ import (
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	"k8s.io/apiserver/pkg/util/openapi"
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
-	k8stracing "k8s.io/component-base/tracing"
 	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/common"
 
@@ -86,8 +85,15 @@ var PathRewriters = []filters.PathRewriter{
 }
 
 func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
+	watchMetrics := newWatchMetrics(reg)
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
 		handler := filters.WithTracingHTTPLoggingAttributes(delegateHandler)
+
+		// Runs inside DefaultBuildHandlerChain so RequestInfo and the resource-named
+		// request span are available: marks watch spans so long-running watch
+		// connections can be told apart from GET/LIST and filtered out downstream,
+		// and records how long the watch takes to establish.
+		handler = filters.WithWatchInstrumentation(handler, watchMetrics.observeEstablishment)
 
 		// auditing.HTTPInjectAuditAnnotationMiddleware extracts the innermost service caller identity from the request
 		// and injects it into the k8s audit event context (used for audit log suppression).
@@ -108,7 +114,10 @@ func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.
 
 		handler = filters.WithAcceptHeader(handler)
 		handler = filters.WithPathRewriters(handler, PathRewriters)
-		handler = k8stracing.WithTracing(handler, c.TracerProvider, "KubernetesAPI")
+		// Skip the top-level "KubernetesAPI" span for watch requests: their span
+		// would stay open for the whole long-running connection. See
+		// filters.WithWatchInstrumentation for the upstream request span.
+		handler = withoutWatchServerSpan(handler, c.TracerProvider)
 		handler = filters.WithExtractJaegerTrace(handler)
 		// Configure filters.WithPanicRecovery to not crash on panic
 		utilruntime.ReallyCrash = false
@@ -253,7 +262,10 @@ func SetupConfig(
 	serverConfig.OpenAPIV3Config.Info.Version = buildVersion
 
 	serverConfig.SkipOpenAPIInstallation = false
-	serverConfig.BuildHandlerChainFunc = buildHandlerChainFuncFromBuilders(builders, reg)
+	// The chain gets a registerer labelled with the server it belongs to, so a
+	// process that builds more than one chain can register the same collectors
+	// for each.
+	serverConfig.BuildHandlerChainFunc = buildHandlerChainFuncFromBuilders(builders, ServerRegisterer(reg, ServerMain))
 
 	// set priority for aggregated discovery
 	for i, b := range builders {
@@ -308,23 +320,17 @@ func servedVersionsForResource(scheme *runtime.Scheme, gr schema.GroupResource, 
 	return scheme.PrioritizedVersionsForGroup(gr.Group)
 }
 
-func InstallAPIs(
+// NewDualWriteBuilder shares the storage migration policy with handlers that
+// install API groups independently of the embedded server.
+func NewDualWriteBuilder(
 	scheme *runtime.Scheme,
-	codecs serializer.CodecFactory,
-	server *genericapiserver.GenericAPIServer,
-	optsGetter generic.RESTOptionsGetter,
-	builders []APIGroupBuilder,
 	storageOpts *options.StorageOptions,
-	reg prometheus.Registerer,
 	dualWriteService dualwrite.Service,
-	optsregister apistore.StorageOptionsRegister,
-	features featuremgmt.FeatureToggles,
 	builderMetrics *BuilderMetrics,
-	apiResourceConfig *serverstorage.ResourceConfig,
-) error {
-	dualWrite := func(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error) {
+) grafanarest.DualWriteBuilder {
+	return func(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error) {
 		key := gr.String()
-		if resourceConfig, ok := storageOpts.UnifiedStorageConfig[key]; ok {
+		if resourceConfig, ok := storageOpts.UnifiedStorageConfig[key]; ok && builderMetrics != nil {
 			builderMetrics.RecordDualWriterTargetMode(gr.Resource, gr.Group, resourceConfig.DualWriterMode)
 		}
 		// unified must never serve an apiVersion the scheme never registered; with no
@@ -339,6 +345,23 @@ func InstallAPIs(
 		}
 		return dualWriteService.NewStorage(gr, legacy, storage)
 	}
+}
+
+func InstallAPIs(
+	scheme *runtime.Scheme,
+	codecs serializer.CodecFactory,
+	server *genericapiserver.GenericAPIServer,
+	optsGetter generic.RESTOptionsGetter,
+	builders []APIGroupBuilder,
+	storageOpts *options.StorageOptions,
+	reg prometheus.Registerer,
+	dualWriteService dualwrite.Service,
+	optsregister apistore.StorageOptionsRegister,
+	features featuremgmt.FeatureToggles,
+	builderMetrics *BuilderMetrics,
+	apiResourceConfig *serverstorage.ResourceConfig,
+) error {
+	dualWrite := NewDualWriteBuilder(scheme, storageOpts, dualWriteService, builderMetrics)
 
 	// NOTE: we build a map structure by version only for the purposes of InstallAPIGroup
 	// in other places, working with a flat []APIGroupBuilder list is much nicer

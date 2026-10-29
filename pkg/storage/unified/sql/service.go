@@ -16,13 +16,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc"
 
 	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/netutil"
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
-	appsdk "github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/authz"
@@ -54,6 +54,8 @@ type service struct {
 	subservicesWatcher *services.FailureWatcher
 
 	// -- Shared Components
+	watchExpiry   resource.WatchExpiry
+	blobBackend   resource.BlobSupport
 	backend       resource.StorageBackend
 	vectorBackend vector.VectorBackend
 	embedder      *embedder.Embedder
@@ -79,6 +81,7 @@ type service struct {
 	searchRing       *ring.Ring
 	ringLifecycler   *ring.BasicLifecycler // Ring state for sharding
 	searchStandalone bool
+	drainGRPC        func()
 	authenticator    interceptors.AuthenticatorFunc
 
 	// uninitializedSearchServer holds the server created during module init, whose Init() is
@@ -90,12 +93,26 @@ type service struct {
 // ServiceOption allows customizing service behavior
 type ServiceOption func(*service)
 
+// WithGRPCDrain keeps search indexes available until accepted RPCs finish.
+func WithGRPCDrain(drain func()) ServiceOption {
+	return func(s *service) { s.drainGRPC = drain }
+}
+
+// WithWatchExpiry shares notification invalidation with the resource server.
+func WithWatchExpiry(expiry resource.WatchExpiry) ServiceOption {
+	return func(s *service) { s.watchExpiry = expiry }
+}
+
 // WithAuthenticator sets a custom authenticator for the service
 // This is primarily intended for testing scenarios
 func WithAuthenticator(authn func(ctx context.Context) (context.Context, error)) ServiceOption {
 	return func(s *service) {
 		s.authenticator = authn
 	}
+}
+
+func WithBlobBackend(blob resource.BlobSupport) ServiceOption {
+	return func(s *service) { s.blobBackend = blob }
 }
 
 // WithDashboardStats sets the dashboard stats used by the vector backfiller
@@ -181,10 +198,10 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	}
 
 	if cfg.QOSEnabled {
-		qosReg := prometheus.WrapRegistererWithPrefix("resource_server_qos_", reg)
 		queue := scheduler.NewQueue(&scheduler.QueueOptions{
-			MaxSizePerTenant: cfg.QOSMaxSizePerTenant,
-			Registerer:       qosReg,
+			MaxSizePerTenant:       cfg.QOSMaxSizePerTenant,
+			MaxConcurrentPerTenant: cfg.QOSMaxConcurrentPerTenant,
+			Registerer:             reg,
 		})
 		scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
 			NumWorkers: cfg.QOSNumberWorker,
@@ -395,7 +412,7 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 	}
 
 	var snapshotStore search.RemoteIndexStore
-	if s.cfg.IndexSnapshotEnabled && s.cfg.IndexSnapshotStorageKV {
+	if s.cfg.IndexSnapshotEnabled {
 		snapshotStore, err = BuildKVSnapshotStore(s.cfg, s.backend, s.log)
 		if err != nil {
 			return err
@@ -408,18 +425,12 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 	}
 
 	// When configured, run the manifest watcher as a subservice. It reloads into
-	// the search registry that NewSearchOptions just created; registerServer runs
+	// the registries that NewSearchOptions just created; registerServer runs
 	// before initializeSubservicesManager, so the watcher joins the manager and
 	// its initial poll completes before the index is built.
-	if registry := searchOptions.SearchFields; registry != nil {
+	if searchOptions.SearchFields != nil || searchOptions.EmbeddingConfig != nil {
 		if mwCfg := resource.NewManifestWatcherConfig(s.cfg); mwCfg != nil {
-			watcher, err := resource.NewManifestWatcher(*mwCfg, s.reg, func(live []appsdk.Manifest) {
-				if err := resource.ApplyManifests(registry, resource.AppManifests(), live); err != nil {
-					s.log.Error("manifest reload failed, keeping current search fields", "error", err)
-					return
-				}
-				s.log.Info("manifest reload applied", "live_manifests", len(live))
-			})
+			watcher, err := resource.NewManifestWatcher(*mwCfg, s.reg, searchOptions.ManifestReloader(s.log))
 			if err != nil {
 				return err
 			}
@@ -428,7 +439,9 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 	}
 
 	serverOptions := ServerOptions{
+		WatchExpiry:    s.watchExpiry,
 		Backend:        s.backend,
+		BlobBackend:    s.blobBackend,
 		VectorBackend:  s.vectorBackend,
 		Embedder:       s.embedder,
 		Reranker:       s.reranker,
@@ -466,15 +479,6 @@ func (s *service) running(ctx context.Context) error {
 	case err := <-s.subservicesWatcher.Chan():
 		return fmt.Errorf("subservice failure: %w", err)
 	case <-ctx.Done():
-		s.log.Info("Stopping resource server")
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		if err := s.serverStopper.Stop(ctx); err != nil {
-			s.log.Warn("Failed to stop resource server", "error", err)
-		} else {
-			s.log.Info("Resource server stopped")
-		}
-
 		return nil
 	}
 }
@@ -494,6 +498,20 @@ func (s *service) CheckHealth(ctx context.Context) (bool, error) {
 }
 
 func (s *service) stopping(_ error) error {
+	// The gRPC module normally stops after its dependents, which is too late for active searches.
+	if s.drainGRPC != nil {
+		s.drainGRPC()
+	}
+
+	s.log.Info("Stopping resource server")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := s.serverStopper.Stop(ctx); err != nil {
+		s.log.Warn("Failed to stop resource server", "error", err)
+	} else {
+		s.log.Info("Resource server stopped")
+	}
+
 	if s.subservicesMngr != nil {
 		err := services.StopManagerAndAwaitStopped(context.Background(), s.subservicesMngr)
 		if err != nil {
@@ -576,7 +594,7 @@ func (s *service) createAndRegisterServer(provider grpcserver.Provider, opts Ser
 
 	var vs *resource.VectorStoreServer
 	if opts.Cfg.EnableVectorStore && opts.VectorBackend != nil && opts.Embedder != nil {
-		vs = resource.NewVectorStoreServer(opts.VectorBackend, opts.Embedder, opts.Cfg.VectorAllowedExternalCollections, opts.Cfg.VectorAllowedWriteServices, opts.VectorMetrics)
+		vs = resource.NewVectorStoreServer(opts.VectorBackend, opts.Embedder, opts.Cfg.VectorAllowedExternalCollections, opts.Cfg.VectorAllowedWriteServices, opts.Cfg.VectorSharedExternalCollections, opts.VectorMetrics)
 	}
 	s.registerUnifiedResourceServer(provider, server, vs)
 	return nil
@@ -596,9 +614,13 @@ func (s *service) registerSearchServer(provider grpcserver.Provider, server reso
 		handler = &searchServerWithAuth{SearchServer: server, ServiceWithAuth: sa}
 	}
 	srv := provider.GetServer()
-	resourcepb.RegisterResourceIndexServer(srv, handler)
-	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
-	resourcepb.RegisterDiagnosticsServer(srv, handler)
+	for _, desc := range []*grpc.ServiceDesc{
+		&resourcepb.ResourceIndex_ServiceDesc,
+		&resourcepb.ManagedObjectIndex_ServiceDesc,
+		&resourcepb.Diagnostics_ServiceDesc,
+	} {
+		srv.RegisterService(s.withErrorResultConversion(desc), handler)
+	}
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
 	return nil
 }
@@ -629,15 +651,26 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 	// Storage services. ResourceStore is wrapped with the request-duration interceptor
 	// so we get group/resource-labeled metrics for Read/Create/Update/Delete/List.
 	metricsInt := resource.UnaryRequestDurationInterceptor(s.storageMetrics)
-	srv.RegisterService(grpchan.InterceptServer(&resourcepb.ResourceStore_ServiceDesc, metricsInt, nil), handler)
-	resourcepb.RegisterResourceStatsServer(srv, handler)
-	resourcepb.RegisterBulkStoreServer(srv, handler)
-	resourcepb.RegisterBlobStoreServer(srv, handler)
-	resourcepb.RegisterDiagnosticsServer(srv, handler)
-	resourcepb.RegisterQuotasServer(srv, handler)
-	// Search services
-	resourcepb.RegisterResourceIndexServer(srv, handler)
-	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
+	for _, desc := range []*grpc.ServiceDesc{
+		&resourcepb.ResourceStore_ServiceDesc,
+		&resourcepb.ResourceStats_ServiceDesc,
+		&resourcepb.BulkStore_ServiceDesc,
+		&resourcepb.BlobStore_ServiceDesc,
+		&resourcepb.BlobStoreStreaming_ServiceDesc,
+		&resourcepb.Diagnostics_ServiceDesc,
+		&resourcepb.Quotas_ServiceDesc,
+		&resourcepb.ResourceIndex_ServiceDesc,
+		&resourcepb.ManagedObjectIndex_ServiceDesc,
+	} {
+		wrapped := s.withErrorResultConversion(desc)
+		if desc == &resourcepb.ResourceStore_ServiceDesc {
+			wrapped = grpchan.InterceptServer(wrapped, metricsInt, nil)
+		}
+		if desc == &resourcepb.BlobStoreStreaming_ServiceDesc {
+			wrapped = grpchan.InterceptServer(wrapped, nil, resource.BlobStreamServerInterceptor(server))
+		}
+		srv.RegisterService(wrapped, handler)
+	}
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
 
 	// VectorStore write service: storage-server surface only (standalone
@@ -651,9 +684,20 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 	}
 }
 
+func (s *service) withErrorResultConversion(desc *grpc.ServiceDesc) *grpc.ServiceDesc {
+	if s.cfg != nil && s.cfg.UnifiedStorageGRPCErrorResultToStatus {
+		var streamInterceptor grpc.StreamServerInterceptor
+		if desc == &resourcepb.BlobStoreStreaming_ServiceDesc {
+			streamInterceptor = resource.BlobStreamErrorResultInterceptor()
+		}
+		return grpchan.InterceptServer(desc, resource.UnaryErrorResultInterceptor(), streamInterceptor)
+	}
+	return desc
+}
+
 // BuildKVSnapshotStore wires a KVRemoteIndexStore that shares the KV
 // store and lease manager with the storage backend. The caller is
-// responsible for ensuring cfg.IndexSnapshotStorageKV is true. This
+// responsible for ensuring cfg.IndexSnapshotEnabled is true. This
 // function validates the remaining preconditions and fails loudly so
 // misconfiguration is caught at process start rather than at the first
 // snapshot operation.
@@ -663,25 +707,12 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 // reuse the same construction and validation when they build their
 // own search options.
 func BuildKVSnapshotStore(cfg *setting.Cfg, backend resource.StorageBackend, logger log.Logger) (search.RemoteIndexStore, error) {
-	if cfg.IndexSnapshotBucketURL != "" {
-		return nil, fmt.Errorf("index_snapshot_storage_kv and index_snapshot_bucket_url are mutually exclusive")
-	}
-	if !cfg.EnableKVLeases {
-		return nil, fmt.Errorf("index_snapshot_storage_kv requires enable_kv_leases")
-	}
-
 	kvBackend, ok := backend.(resource.KVBackend)
 	if !ok {
-		return nil, fmt.Errorf("index_snapshot_storage_kv requires a KV-backed storage backend (got %T)", backend)
+		return nil, fmt.Errorf("index_snapshot_enabled requires a KV-backed storage backend (got %T)", backend)
 	}
 
 	leaseMgr := kvBackend.LeaseManager()
-	if leaseMgr == nil {
-		// Defensive: enable_kv_leases above should already have triggered
-		// lease manager creation in the backend.
-		return nil, fmt.Errorf("storage backend has no lease manager; cannot use index_snapshot_storage_kv")
-	}
-
 	store, err := search.NewKVRemoteIndexStore(search.KVRemoteIndexStoreConfig{
 		KV:               kvBackend.KV(),
 		LeaseManager:     leaseMgr,

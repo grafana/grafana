@@ -124,10 +124,7 @@ func fixGroupResource(sess *xorm.Session, quoteFn func(string) string, mg *migra
 
 	// Apply updates in batches
 	for start := 0; start < len(updates); start += rvFixBatchSize {
-		end := start + rvFixBatchSize
-		if end > len(updates) {
-			end = len(updates)
-		}
+		end := min(start+rvFixBatchSize, len(updates))
 		batch := updates[start:end]
 
 		if err := updatePrevRVRefs(sess, quoteFn, gr, batch); err != nil {
@@ -450,7 +447,8 @@ func updatePrevRVRefs(sess *xorm.Session, q func(string) string, gr groupResourc
 	}
 
 	if len(histResults) > 0 {
-		caseClause := "CASE guid"
+		var caseClause strings.Builder
+		caseClause.WriteString("CASE guid")
 		guidList := make([]string, 0, len(histResults))
 		for _, row := range histResults {
 			guid := string(row["guid"])
@@ -459,18 +457,18 @@ func updatePrevRVRefs(sess *xorm.Session, q func(string) string, gr groupResourc
 				return fmt.Errorf("parsing history previous_resource_version for guid %q: %w", guid, err)
 			}
 			if newRV, ok := rvMap[prevRV]; ok {
-				caseClause += fmt.Sprintf(" WHEN '%s' THEN %d", guid, newRV)
+				caseClause.WriteString(fmt.Sprintf(" WHEN '%s' THEN %d", guid, newRV))
 				guidList = append(guidList, fmt.Sprintf("'%s'", guid))
 			}
 		}
-		caseClause += " END"
+		caseClause.WriteString(" END")
 
 		if len(guidList) > 0 {
 			updateSQL := fmt.Sprintf(`
 				UPDATE resource_history
 				SET previous_resource_version = %s
 				WHERE guid IN (%s)`,
-				caseClause, strings.Join(guidList, ", "),
+				caseClause.String(), strings.Join(guidList, ", "),
 			)
 			if _, err := sess.Exec(updateSQL); err != nil {
 				return fmt.Errorf("updating history prev RV refs: %w", err)
@@ -492,7 +490,8 @@ func updatePrevRVRefs(sess *xorm.Session, q func(string) string, gr groupResourc
 	}
 
 	if len(resResults) > 0 {
-		caseClause := "CASE guid"
+		var caseClause strings.Builder
+		caseClause.WriteString("CASE guid")
 		guidList := make([]string, 0, len(resResults))
 		for _, row := range resResults {
 			guid := string(row["guid"])
@@ -501,18 +500,18 @@ func updatePrevRVRefs(sess *xorm.Session, q func(string) string, gr groupResourc
 				return fmt.Errorf("parsing resource previous_resource_version for guid %q: %w", guid, err)
 			}
 			if newRV, ok := rvMap[prevRV]; ok {
-				caseClause += fmt.Sprintf(" WHEN '%s' THEN %d", guid, newRV)
+				caseClause.WriteString(fmt.Sprintf(" WHEN '%s' THEN %d", guid, newRV))
 				guidList = append(guidList, fmt.Sprintf("'%s'", guid))
 			}
 		}
-		caseClause += " END"
+		caseClause.WriteString(" END")
 
 		if len(guidList) > 0 {
 			updateSQL := fmt.Sprintf(`
 				UPDATE resource
 				SET previous_resource_version = %s
 				WHERE guid IN (%s)`,
-				caseClause, strings.Join(guidList, ", "),
+				caseClause.String(), strings.Join(guidList, ", "),
 			)
 			if _, err := sess.Exec(updateSQL); err != nil {
 				return fmt.Errorf("updating resource prev RV refs: %w", err)
@@ -528,25 +527,27 @@ func updateHistoryRVs(sess *xorm.Session, batch []rvUpdateEntry) error {
 		return nil
 	}
 
-	rvCase := "CASE guid"
-	keyPathCase := "CASE guid"
+	var rvCase strings.Builder
+	rvCase.WriteString("CASE guid")
+	var keyPathCase strings.Builder
+	keyPathCase.WriteString("CASE guid")
 	guidList := make([]string, 0, len(batch))
 
 	for _, u := range batch {
 		quotedGUID := fmt.Sprintf("'%s'", u.guid)
-		rvCase += fmt.Sprintf(" WHEN %s THEN %d", quotedGUID, u.newRV)
-		keyPathCase += fmt.Sprintf(" WHEN %s THEN '%s'", quotedGUID, u.keyPath)
+		rvCase.WriteString(fmt.Sprintf(" WHEN %s THEN %d", quotedGUID, u.newRV))
+		keyPathCase.WriteString(fmt.Sprintf(" WHEN %s THEN '%s'", quotedGUID, u.keyPath))
 		guidList = append(guidList, quotedGUID)
 	}
 
-	rvCase += " END"
-	keyPathCase += " END"
+	rvCase.WriteString(" END")
+	keyPathCase.WriteString(" END")
 
 	sql := fmt.Sprintf(`
 		UPDATE resource_history
 		SET resource_version = %s, key_path = %s
 		WHERE guid IN (%s)`,
-		rvCase, keyPathCase, strings.Join(guidList, ", "),
+		rvCase.String(), keyPathCase.String(), strings.Join(guidList, ", "),
 	)
 
 	if _, err := sess.Exec(sql); err != nil {
@@ -560,21 +561,22 @@ func updateResourceRVs(sess *xorm.Session, batch []rvUpdateEntry) error {
 		return nil
 	}
 
-	rvCase := "CASE guid"
+	var rvCase strings.Builder
+	rvCase.WriteString("CASE guid")
 	guidList := make([]string, 0, len(batch))
 
 	for _, u := range batch {
 		quotedGUID := fmt.Sprintf("'%s'", u.guid)
-		rvCase += fmt.Sprintf(" WHEN %s THEN %d", quotedGUID, u.newRV)
+		rvCase.WriteString(fmt.Sprintf(" WHEN %s THEN %d", quotedGUID, u.newRV))
 		guidList = append(guidList, quotedGUID)
 	}
-	rvCase += " END"
+	rvCase.WriteString(" END")
 
 	sql := fmt.Sprintf(`
 		UPDATE resource
 		SET resource_version = %s
 		WHERE guid IN (%s)`,
-		rvCase, strings.Join(guidList, ", "),
+		rvCase.String(), strings.Join(guidList, ", "),
 	)
 
 	if _, err := sess.Exec(sql); err != nil {

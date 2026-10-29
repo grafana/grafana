@@ -10,6 +10,7 @@ import { initReactI18next } from 'react-i18next';
 
 import { matchers } from '@grafana/test-utils';
 
+import { setPluginComponentsHook } from '../../packages/grafana-runtime/src/services/pluginExtensions/usePluginComponents';
 import { getEnvConfig } from '../../scripts/cli/env-util';
 
 const config = getEnvConfig(path.resolve(__dirname, '../..'));
@@ -64,6 +65,10 @@ jest.mock('app/features/plugins/extensions/usePluginComponents', () => ({
   ...jest.requireActual('app/features/plugins/extensions/usePluginComponents'),
   usePluginComponents: jest.fn().mockReturnValue({ components: [], isLoading: false }),
 }));
+
+// Runtime consumers also need a default hook because tests do not run Grafana's startup registration.
+// Register once per suite so tests can override it with setPluginComponentsHook.
+setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
 // our tests are heavy in CI due to parallelisation and monaco and kusto
 // so we increase the default timeout to 2secs to avoid flakiness

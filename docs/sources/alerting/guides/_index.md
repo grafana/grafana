@@ -11,17 +11,6 @@ labels:
 menuTitle: Guides
 title: Guides
 weight: 170
-refs:
-  examples:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/examples/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/examples/
-  tutorials:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/examples/tutorials/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/examples/tutorials/
 ---
 
 # Guides
@@ -32,4 +21,4 @@ These guides cover topics such as:
 
 {{< section >}}
 
-For more hands-on examples, refer to [Examples](ref:examples) and [Tutorials](ref:tutorials).
+For more hands-on examples, refer to [Examples](/docs/grafana/<GRAFANA_VERSION>/alerting/examples/) and [Tutorials](/docs/grafana/<GRAFANA_VERSION>/alerting/examples/tutorials/).

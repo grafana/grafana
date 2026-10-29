@@ -1,3 +1,5 @@
+import { sortedIndex, sortedLastIndex } from 'lodash';
+
 import {
   cacheFieldDisplayNames,
   type DataFrame,
@@ -68,6 +70,49 @@ export interface HeatmapData {
 
   // Errors
   warning?: string;
+}
+
+export function getExemplarYValues(heatmap: DataFrame, exemplars: DataFrame): Array<number | undefined> {
+  const values: number[] = exemplars.fields[1].values;
+  const meta = readHeatmapRowsCustomMeta(heatmap);
+
+  if (meta.yOrdinalDisplay == null || !meta.yMatchWithLabel) {
+    return values;
+  }
+
+  const labels = meta.yOrdinalLabel;
+  if (!labels) {
+    return new Array<number | undefined>(values.length).fill(undefined);
+  }
+
+  const labelField = exemplars.fields.find((field) => field.name === meta.yMatchWithLabel);
+  if (labelField) {
+    const labelIndices = new Map<string, number>();
+    for (let i = 0; i < labels.length; i++) {
+      if (!labelIndices.has(labels[i])) {
+        labelIndices.set(labels[i], i);
+      }
+    }
+    return labelField.values.map((label) => labelIndices.get(label) ?? -1);
+  }
+
+  if (meta.yMatchWithLabel !== 'ge' && meta.yMatchWithLabel !== 'le') {
+    return new Array<number | undefined>(values.length).fill(undefined);
+  }
+
+  // Some sources provide raw exemplar values without the histogram's bucket label.
+  const bounds = labels.map((label) => parseSampleValue(label));
+  if (!bounds.length || bounds.some(Number.isNaN)) {
+    return new Array<number | undefined>(values.length).fill(undefined);
+  }
+
+  if (meta.yMatchWithLabel === 'ge') {
+    const min = bounds[0];
+    return values.map((value) => (value != null && value >= min ? sortedLastIndex(bounds, value) - 1 : undefined));
+  }
+
+  const max = bounds[bounds.length - 1];
+  return values.map((value) => (value != null && value <= max ? sortedIndex(bounds, value) : undefined));
 }
 
 interface PrepareHeatmapDataOptions {

@@ -103,7 +103,7 @@ describe('CheckboxCell', () => {
       selectedItemsRepoUID: undefined,
       isInLockedRepo: () => true,
       isCrossRepo: false,
-      isUidInReadOnlyRepo: () => false,
+      isItemInReadOnlyRepo: () => false,
     });
   });
 
@@ -214,7 +214,7 @@ describe('CheckboxCell', () => {
       selectedItemsRepoUID: undefined,
       isInLockedRepo: () => true,
       isCrossRepo: false,
-      isUidInReadOnlyRepo: () => true,
+      isItemInReadOnlyRepo: () => true,
     });
 
     setup(item);
@@ -242,7 +242,7 @@ describe('CheckboxCell', () => {
       selectedItemsRepoUID: 'repo-a',
       isInLockedRepo: () => false,
       isCrossRepo: false,
-      isUidInReadOnlyRepo: () => false,
+      isItemInReadOnlyRepo: () => false,
     });
     setup(item);
 
@@ -258,7 +258,7 @@ describe('CheckboxCell', () => {
       selectedItemsRepoUID: undefined,
       isInLockedRepo: () => false,
       isCrossRepo: false,
-      isUidInReadOnlyRepo: () => false,
+      isItemInReadOnlyRepo: () => false,
     });
     setup(item);
 

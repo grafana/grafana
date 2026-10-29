@@ -16,6 +16,8 @@ import { configureStore } from 'app/store/configureStore';
 import { ctaClicked } from '../analytics/main';
 
 import { IncidentsCard } from './IncidentsCard';
+import { type FilterSelection } from './filterSelection';
+import { ACTIVE_INCIDENTS_QUERY, QUERY_PREVIEWS_PATH, mockIncidents } from './mockIncidentsApi';
 import { useIncidents } from './useIncidents';
 
 jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
@@ -34,8 +36,6 @@ setupMockServer();
 
 const mockUsePluginBridge = jest.mocked(usePluginBridge);
 
-const QUERY_PREVIEWS_PATH = '/api/plugins/:pluginId/resources/api/v1/IncidentsService.QueryIncidentPreviews';
-
 const activeIncidents: IncidentPreview[] = [
   {
     incidentID: '101',
@@ -51,14 +51,6 @@ const activeIncidents: IncidentPreview[] = [
   },
 ];
 
-function mockIncidents(incidents: IncidentPreview[], { hasMore = false } = {}) {
-  server.use(
-    http.post(QUERY_PREVIEWS_PATH, () =>
-      HttpResponse.json({ incidentPreviews: incidents, cursor: { hasMore, nextValue: hasMore ? 'next' : '' } })
-    )
-  );
-}
-
 beforeEach(() => {
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
   // Default: plugin installed. Individual tests override availability as needed.
@@ -73,8 +65,8 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-function IncidentsCardWithData() {
-  const data = useIncidents();
+function IncidentsCardWithData({ filter }: { filter?: FilterSelection } = {}) {
+  const data = useIncidents(filter);
   return <IncidentsCard data={data} />;
 }
 
@@ -114,6 +106,16 @@ describe('IncidentsCard', () => {
     expect(screen.queryByRole('link', { name: 'Database outage' })).not.toBeInTheDocument();
   });
 
+  it('names only the selected value in the empty message and scopes the request to its field', async () => {
+    const queries = mockIncidents([]);
+
+    render(<IncidentsCardWithData filter="squad:Frontend" />);
+
+    expect(await screen.findByText('All quiet! No active incidents for Frontend.')).toBeInTheDocument();
+    expect(screen.queryByText('All quiet! No active incidents.')).not.toBeInTheDocument();
+    expect(queries).toEqual([`${ACTIVE_INCIDENTS_QUERY} field:squad:"Frontend"`]);
+  });
+
   it('treats a 404 (org not onboarded) as the empty state, not an error', async () => {
     server.use(http.post(QUERY_PREVIEWS_PATH, () => new HttpResponse(null, { status: 404 })));
 
@@ -130,7 +132,7 @@ describe('IncidentsCard', () => {
 
     expect(await screen.findByText('Could not load active incidents')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
-    expect(screen.queryByText('No active incidents.')).not.toBeInTheDocument();
+    expect(screen.queryByText('All quiet! No active incidents.')).not.toBeInTheDocument();
   });
 
   it('renders incident titles as plain text when the user cannot access the incidents page', async () => {
@@ -236,7 +238,7 @@ describe('IncidentsCard', () => {
 
     render(<IncidentsCardWithData />);
 
-    expect(await screen.findByText('No active incidents.')).toBeInTheDocument();
+    expect(await screen.findByText('All quiet! No active incidents.')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /declare an incident/i })).not.toBeInTheDocument();
   });
 
@@ -279,6 +281,8 @@ describe('IncidentsCard', () => {
     mockIncidents([activeIncidents[0]]);
     render(<IncidentsCardWithData />, { store });
 
+    // The cached list shows straight away while the refetch runs, not a skeleton.
+    expect(screen.getByRole('link', { name: /declare an incident/i })).toBeInTheDocument();
     // refetchOnMountOrArgChange forces a refetch on remount; without it the stale empty
     // cache would persist and this assertion would time out.
     expect(await screen.findByText('Database outage')).toBeInTheDocument();

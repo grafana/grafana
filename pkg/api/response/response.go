@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"reflect"
 
@@ -97,9 +98,7 @@ func (r *NormalResponse) WriteTo(ctx *contextmodel.ReqContext) {
 	}
 
 	header := ctx.Resp.Header()
-	for k, v := range r.header {
-		header[k] = v
-	}
+	maps.Copy(header, r.header)
 	ctx.Resp.WriteHeader(r.status)
 	if _, err := ctx.Resp.Write(r.body.Bytes()); err != nil {
 		ctx.Logger.Error("Error writing to response", "err", err)
@@ -117,8 +116,7 @@ func (r *NormalResponse) writeLogLine(c *contextmodel.ReqContext) {
 	}
 
 	logger := c.Logger.Error
-	var gfErr errutil.Error
-	if errors.As(r.err, &gfErr) {
+	if gfErr, ok := errors.AsType[errutil.Error](r.err); ok {
 		logger = gfErr.LogLevel.LogFunc(c.Logger)
 	}
 	logger(r.errMessage, "error", r.err, "remote_addr", c.RemoteAddr(), "traceID", traceID)
@@ -152,9 +150,7 @@ func (r StreamingResponse) Body() []byte {
 // Required to implement api.Response.
 func (r StreamingResponse) WriteTo(ctx *contextmodel.ReqContext) {
 	header := ctx.Resp.Header()
-	for k, v := range r.header {
-		header[k] = v
-	}
+	maps.Copy(header, r.header)
 	ctx.Resp.WriteHeader(r.status)
 
 	// Use a configuration that's compatible with the standard library

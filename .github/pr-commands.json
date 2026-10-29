@@ -18,10 +18,10 @@
       "scripts/circle-release-next-packages.sh",
       "scripts/ci-frontend-metrics.sh",
       "scripts/grunt/**/*",
-      "scripts/webpack/**/*",
+      "scripts/rspack/**/*",
       "package.json",
       "tsconfig.json",
-      "lerna.json",
+      "nx.json",
       ".prettierrc.js",
       ".eslintrc",
       "**/*.mdx"
@@ -40,6 +40,27 @@
     ],
     "action": "updateLabel",
     "addLabel": "area/backend"
+  },
+  {
+    "type": "changedfiles",
+    "matches": [
+      "pkg/services/ssosettings/**/*",
+      "pkg/services/auth/**/*",
+      "pkg/services/authn/**/*",
+      "pkg/services/ldap/**/*",
+      "pkg/services/login/**/*",
+      "pkg/services/loginattempt/**/*",
+      "pkg/services/oauthtoken/**/*",
+      "pkg/services/serviceaccounts/**/*",
+      "pkg/services/signingkeys/**/*",
+      "pkg/services/scimutil/**/*",
+      "pkg/login/**/*",
+      "public/app/features/auth-config/**/*",
+      "conf/ldap.toml",
+      "conf/ldap_multiple.toml"
+    ],
+    "action": "updateLabel",
+    "addLabel": "area/auth"
   },
   {
     "type": "changedfiles",
@@ -79,15 +100,6 @@
     ],
     "action": "updateLabel",
     "addLabel": "datasource/Azure"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/cloudwatch/**/*",
-      "pkg/tsdb/cloudwatch/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/CloudWatch"
   },
   {
     "type": "changedfiles",
@@ -153,16 +165,6 @@
     ],
     "action": "updateLabel",
     "addLabel": "area/panel/geomap"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/panel/graph/**/*",
-      "/packages/grafana-ui/src/components/Graph/**/*",
-      "/packages/grafana-ui/src/components/GraphNG/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "area/panel/graph"
   },
   {
     "type": "changedfiles",
@@ -301,6 +303,14 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/190"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/660"
     }
   },
   {

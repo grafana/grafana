@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"errors"
+	"maps"
 	"net/url"
 	"strings"
 	"sync"
@@ -16,12 +17,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/template"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const emptyLabelKeyPrefix = "__empty_label_key__"
 
 type ruleStates struct {
-	states map[data.Fingerprint]*State
+	states             map[data.Fingerprint]*State
+	lastCaptureAttempt *CaptureAttempt
 }
 
 type cache struct {
@@ -40,6 +43,30 @@ func newCache() *cache {
 	return &cache{
 		states: make(map[int64]map[string]*ruleStates),
 	}
+}
+
+func (c *cache) getLastScreenshotAttempt(ruleKey ngModels.AlertRuleKey) *CaptureAttempt {
+	c.mtxStates.RLock()
+	defer c.mtxStates.RUnlock()
+	rs, ok := c.states[ruleKey.OrgID][ruleKey.UID]
+	if !ok {
+		return nil
+	}
+	return rs.lastCaptureAttempt
+}
+
+func (c *cache) setLastScreenshotAttempt(ruleKey ngModels.AlertRuleKey, attempt *CaptureAttempt) {
+	c.mtxStates.Lock()
+	defer c.mtxStates.Unlock()
+	if _, ok := c.states[ruleKey.OrgID]; !ok {
+		c.states[ruleKey.OrgID] = make(map[string]*ruleStates)
+	}
+	rs, ok := c.states[ruleKey.OrgID][ruleKey.UID]
+	if !ok {
+		rs = &ruleStates{states: make(map[data.Fingerprint]*State)}
+		c.states[ruleKey.OrgID][ruleKey.UID] = rs
+	}
+	rs.lastCaptureAttempt = attempt
 }
 
 func (c *cache) reset() {
@@ -121,7 +148,7 @@ func (c *cache) RegisterMetrics(r prometheus.Registerer) {
 	r.MustRegister(newAlertCountByState(eval.Recovering))
 }
 
-func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) (data.Labels, data.Labels) {
+func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL, maxLabelValueSize int, stateMetrics *metrics.State) (data.Labels, data.Labels) {
 	var reserved []string
 	resultLabels := result.Instance
 	if len(resultLabels) > 0 {
@@ -157,6 +184,8 @@ func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *
 	// In the future, we want to show these errors to the user somehow.
 	labels, _ := expand(ctx, log, alertRule.Title, alertRule.Labels, templateData, externalURL, result.EvaluatedAt)
 	annotations, _ := expand(ctx, log, alertRule.Title, alertRule.Annotations, templateData, externalURL, result.EvaluatedAt)
+	labels = clampExpandedValues(log, labels, "label", maxLabelValueSize, alertRule.Title, alertRule.UID, stateMetrics)
+	annotations = clampExpandedValues(log, annotations, "annotation", maxLabelValueSize, alertRule.Title, alertRule.UID, stateMetrics)
 
 	// If the result contains an error, we want to add the ref_id and datasource_uid labels
 	// to the new state if the alert rule should be in the ErrorErrState.
@@ -173,12 +202,8 @@ func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *
 
 	lbs := make(data.Labels, len(extraLabels)+len(labels)+len(resultLabels)+len(errorLabels))
 	dupes := make(data.Labels)
-	for key, val := range extraLabels {
-		lbs[key] = val
-	}
-	for key, val := range errorLabels {
-		lbs[key] = val
-	}
+	maps.Copy(lbs, extraLabels)
+	maps.Copy(lbs, errorLabels)
 	for key, val := range labels {
 		ruleVal, ok := lbs[key]
 		// if duplicate labels exist, reserved label will take precedence
@@ -207,6 +232,39 @@ func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *
 		log.Debug("Evaluation result contains either reserved labels or labels declared in the rules. Those labels from the result will be ignored", "labels", dupes)
 	}
 	return lbs, annotations
+}
+
+// clampExpandedValues truncates any value in vals exceeding maxSize bytes.
+// A non-positive maxSize disables the clamp and returns vals unmodified.
+// This bounds what expandAnnotationsAndLabels writes into state.State (and,
+// from there, into the persisted AlertInstance.Labels/Annotations columns)
+// against pathological template expansions; it does not replace the
+// sender-side clamp, which only protects the external-Alertmanager send
+// path and never sees un-fired/resolved instances.
+func clampExpandedValues(log log.Logger, vals map[string]string, kind string, maxSize int, ruleTitle, ruleUID string, stateMetrics *metrics.State) map[string]string {
+	if maxSize <= 0 {
+		return vals
+	}
+	var clamped map[string]string
+	for k, v := range vals {
+		if len(v) <= maxSize {
+			continue
+		}
+		if clamped == nil {
+			clamped = make(map[string]string, len(vals))
+			maps.Copy(clamped, vals)
+		}
+		clamped[k] = util.TruncateUTF8(v, maxSize)
+		log.Warn("Truncating expanded label/annotation value exceeding size cap",
+			"kind", kind, "name", k, "size", len(v), "cap", maxSize, "rule", ruleTitle, "rule_uid", ruleUID)
+		if stateMetrics != nil {
+			stateMetrics.TruncatedStrings.WithLabelValues(kind).Inc()
+		}
+	}
+	if clamped != nil {
+		return clamped
+	}
+	return vals
 }
 
 // expand returns the expanded templates of all annotations or labels for the template data.
@@ -261,6 +319,11 @@ func (c *cache) setRuleStates(ruleKey ngModels.AlertRuleKey, s ruleStates) {
 	defer c.mtxStates.Unlock()
 	if _, ok := c.states[ruleKey.OrgID]; !ok {
 		c.states[ruleKey.OrgID] = make(map[string]*ruleStates)
+	}
+	// The capture attempt belongs to the rule, not to a particular set of states,
+	// so it has to outlive the states map being replaced here.
+	if existing, ok := c.states[ruleKey.OrgID][ruleKey.UID]; ok {
+		s.lastCaptureAttempt = existing.lastCaptureAttempt
 	}
 	c.states[ruleKey.OrgID][ruleKey.UID] = &s
 }
@@ -393,9 +456,7 @@ func (c *cache) GetAlertInstances() []ngModels.AlertInstance {
 // if duplicate labels exist, keep the value from the first set
 func mergeLabels(a, b data.Labels) data.Labels {
 	newLbs := make(data.Labels, len(a)+len(b))
-	for k, v := range a {
-		newLbs[k] = v
-	}
+	maps.Copy(newLbs, a)
 	for k, v := range b {
 		if _, ok := newLbs[k]; !ok {
 			newLbs[k] = v

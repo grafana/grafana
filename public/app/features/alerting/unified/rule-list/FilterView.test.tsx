@@ -1,13 +1,16 @@
-import { act, render, screen, waitForElementToBeRemoved } from 'test/test-utils';
+import { render, screen, waitForElementToBeRemoved } from 'test/test-utils';
 
-import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
+import { setPluginComponentsHook, setPluginLinksHook, setReturnToPreviousHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
+import { installControllableIntersectionObserver } from '../mocks/intersectionObserver';
 import { setPrometheusRules } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
 import { type RulesFilter } from '../search/rulesSearchParser';
+import { setupPrometheusAlertingPlugin } from '../testSetup/prometheusAlertingPlugin';
+import { SupportedPlugin } from '../types/pluginBridges';
 
 import { FilterView } from './FilterView';
 
@@ -17,6 +20,8 @@ jest.mock('@grafana/assistant', () => ({
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
+const returnToPrevious = jest.fn();
+setReturnToPreviousHook(() => returnToPrevious);
 
 grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 
@@ -36,13 +41,14 @@ const mimirDs = alertingFactory.dataSource.build({ name: 'Mimir', uid: 'mimir' }
 const prometheusDs = alertingFactory.dataSource.build({ name: 'Prometheus', uid: 'prometheus' });
 
 beforeEach(() => {
+  returnToPrevious.mockClear();
   setPrometheusRules(mimirDs, mimirGroups);
   setPrometheusRules(prometheusDs, prometheusGroups);
 });
 
 // The global IntersectionObserver mock in public/test/jest-setup.ts auto-fires
 // isIntersecting on observe(), which would cause runaway pagination here. Install
-// a controllable mock that only fires when enterNode()/leaveNode() is called.
+// a controllable mock that only fires when enterNode() is called.
 const io = installControllableIntersectionObserver();
 
 describe('RuleList - FilterView', () => {
@@ -140,9 +146,7 @@ describe('RuleList - FilterView', () => {
 });
 
 async function loadMoreResults() {
-  act(() => {
-    io.enterNode(screen.getByTestId('load-more-helper'));
-  });
+  io.enterNode(screen.getByTestId('load-more-helper'));
   await waitForElementToBeRemoved(screen.queryAllByTestId('alert-rule-list-item-loader'));
 }
 
@@ -155,66 +159,32 @@ function getFilter(overrides: Partial<RulesFilter> = {}): RulesFilter {
   };
 }
 
-function installControllableIntersectionObserver() {
-  type Registration = {
-    callback: IntersectionObserverCallback;
-    observer: IntersectionObserver;
-    elements: Set<Element>;
-  };
-  const registrations: Registration[] = [];
+describe('RuleList - FilterView with the Prometheus Alerting plugin', () => {
+  setupPrometheusAlertingPlugin();
 
-  global.IntersectionObserver = jest.fn().mockImplementation((callback: IntersectionObserverCallback) => {
-    const registration: Registration = {
-      callback,
-      observer: null as unknown as IntersectionObserver,
-      elements: new Set(),
-    };
-    const observer: IntersectionObserver = {
-      root: null,
-      rootMargin: '',
-      scrollMargin: '',
-      thresholds: [],
-      observe: (element: Element) => {
-        registration.elements.add(element);
-      },
-      unobserve: (element: Element) => {
-        registration.elements.delete(element);
-      },
-      disconnect: () => {
-        registration.elements.clear();
-        const idx = registrations.indexOf(registration);
-        if (idx >= 0) {
-          registrations.splice(idx, 1);
-        }
-      },
-      takeRecords: () => [],
-    };
-    registration.observer = observer;
-    registrations.push(registration);
-    return observer;
-  }) as unknown as typeof IntersectionObserver;
+  it('leaves data source managed rules out and says where they went', async () => {
+    render(<FilterView filterState={getFilter({ dataSourceNames: ['Mimir'] })} />);
 
-  const fire = (element: Element, isIntersecting: boolean) => {
-    for (const reg of registrations) {
-      if (!reg.elements.has(element)) {
-        continue;
-      }
-      const rect = element.getBoundingClientRect();
-      const entry: IntersectionObserverEntry = {
-        target: element,
-        isIntersecting,
-        intersectionRatio: isIntersecting ? 1 : 0,
-        boundingClientRect: rect,
-        intersectionRect: rect,
-        rootBounds: null,
-        time: performance.now(),
-      };
-      reg.callback([entry], reg.observer);
-    }
-  };
+    expect(await screen.findByRole('link', { name: /view rules in prometheus alerting/i })).toHaveAttribute(
+      'href',
+      `/a/${SupportedPlugin.PrometheusAlerting}/rules`
+    );
 
-  return {
-    enterNode: (element: Element) => fire(element, true),
-    leaveNode: (element: Element) => fire(element, false),
-  };
-}
+    // The only data source in the filter is one the plugin owns, so nothing is left to list.
+    await loadMoreResults();
+    expect(screen.queryAllByRole('treeitem')).toHaveLength(0);
+  });
+
+  it('offers to run the same search in the plugin when nothing matched', async () => {
+    const { user } = render(<FilterView filterState={getFilter({ groupName: 'non-existing-group' })} />);
+
+    await loadMoreResults();
+
+    expect(await screen.findByText(/No matching rules found/)).toBeInTheDocument();
+    const link = screen.getByRole('link', { name: /search data source managed rules/i });
+    expect(link).toHaveAttribute('href', `/a/${SupportedPlugin.PrometheusAlerting}/rules`);
+    link.addEventListener('click', (event) => event.preventDefault());
+    await user.click(link);
+    expect(returnToPrevious).toHaveBeenCalledWith('Alert rules');
+  });
+});

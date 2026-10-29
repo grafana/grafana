@@ -1,7 +1,8 @@
 import { PanelPlugin, type PanelProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
+  sceneGraph,
   type SceneObject,
   SceneObjectBase,
   type SceneObjectState,
@@ -11,11 +12,14 @@ import {
 } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
+import { GRID_COLUMN_COUNT } from 'app/core/constants';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
-import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
+import { getDashboardSceneFor } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelLinksBehavior } from './PanelMenuBehavior';
@@ -74,7 +78,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     titleItems.push(new PanelNotices());
 
     let title;
-    if (config.featureToggles.preferLibraryPanelTitle) {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.PreferLibraryPanelTitle, false)) {
       title = libPanelModel.title ?? vizPanel.state.title;
     } else {
       title = vizPanel.state.title ?? libPanelModel.title;
@@ -117,28 +121,47 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     // (a notebook cell included). Inside this branch the root is necessarily a DashboardScene, so the
     // lookup below cannot fail — if it ever does, that is a bug worth surfacing rather than skipping.
     if (libPanelModel.repeat && layoutElement instanceof DashboardGridItem) {
-      // Skip migrating repeat options from library panel when using dynamic dashboards (dashboardNewLayouts),
-      // as repeat options should only come from the dashboard panel instance (grid item),
-      // not from the library panel definition.
-      // Exception: Public dashboards and scripted dashboards still need this migration
-      // even when dashboardNewLayouts is enabled. This is because public and scripted dashboard migrations are still handled in the frontend.
-      const dashboard = getDashboardSceneFor(this);
-      const isPublicDashboard = dashboard.state.meta.publicDashboardEnabled === true;
-      const isScriptedDashboard = dashboard.state.meta.fromScript === true;
-      const shouldSkipRepeatMigration =
-        config.featureToggles.dashboardNewLayouts && !isPublicDashboard && !isScriptedDashboard;
+      if (this.shouldMigrateRepeat(layoutElement)) {
+        const repeatDirection = libPanelModel.repeatDirection === 'h' ? 'h' : 'v';
+        const expandToGridWidth =
+          repeatDirection === 'h' &&
+          getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardsLibraryPanelHorizontalRepeatFullWidth, false);
 
-      // Migrate repeat options to layout element (only for legacy dashboards, or public/scripted dashboards)
-      if (!shouldSkipRepeatMigration) {
         layoutElement.setState({
           variableName: libPanelModel.repeat,
-          repeatDirection: libPanelModel.repeatDirection === 'h' ? 'h' : 'v',
+          repeatDirection,
           maxPerRow: libPanelModel.maxPerRow,
           itemHeight: layoutElement.state.height ?? 10,
+          ...(expandToGridWidth && { width: GRID_COLUMN_COUNT }),
         });
         layoutElement.performRepeat();
+
+        if (expandToGridWidth) {
+          // The grid reads item widths only when it re-renders.
+          sceneGraph.getLayout(layoutElement)?.forceRender();
+        }
       }
     }
+  }
+
+  /**
+   * With server-resolution handling enabled, copy the library repeat only when
+   * the dashboard is unresolved and the grid item has no instance repeat.
+   */
+  private shouldMigrateRepeat(layoutElement: DashboardGridItem): boolean {
+    const dashboard = getDashboardSceneFor(this);
+
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardsLibraryPanelRepeatFromServerResolution, false)) {
+      if (layoutElement.state.variableName) {
+        return false;
+      }
+
+      return dashboard.state.meta.libraryPanelRepeatUnresolved === true;
+    }
+
+    const isPublicDashboard = dashboard.state.meta.publicDashboardEnabled === true;
+    const isScriptedDashboard = dashboard.state.meta.fromScript === true;
+    return !(isDashboardNewLayoutsEnabled() && !isPublicDashboard && !isScriptedDashboard);
   }
 
   /**

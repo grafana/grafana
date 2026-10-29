@@ -126,6 +126,18 @@ func TestCookiesMiddleware(t *testing.T) {
 			require.EqualValues(t, "cookie2=", cdt.QueryDataReq.Headers[cookieHeaderName])
 		})
 
+		t.Run("Should forward cookies when calling QueryChunkedData", func(t *testing.T) {
+			err = cdt.MiddlewareHandler.QueryChunkedData(req.Context(), &backend.QueryChunkedDataRequest{
+				PluginContext: pluginCtx,
+				Headers:       map[string]string{otherHeader: "test"},
+			}, nopChunkedWriter{})
+			require.NoError(t, err)
+			require.NotNil(t, cdt.QueryChunkedDataReq)
+			require.Len(t, cdt.QueryChunkedDataReq.Headers, 2)
+			require.Equal(t, "test", cdt.QueryChunkedDataReq.Headers[otherHeader])
+			require.EqualValues(t, "cookie2=", cdt.QueryChunkedDataReq.Headers[cookieHeaderName])
+		})
+
 		t.Run("Should forward cookies when calling CallResource", func(t *testing.T) {
 			err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 				PluginContext: pluginCtx,
@@ -149,6 +161,38 @@ func TestCookiesMiddleware(t *testing.T) {
 			require.Len(t, cdt.CheckHealthReq.Headers, 2)
 			require.Equal(t, "test", cdt.CheckHealthReq.Headers[otherHeader])
 			require.EqualValues(t, "cookie2=", cdt.CheckHealthReq.Headers[cookieHeaderName])
+		})
+
+		t.Run("Should forward cookies with nil QueryData headers", func(t *testing.T) {
+			require.NotPanics(t, func() {
+				_, err := cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{PluginContext: pluginCtx})
+				require.NoError(t, err)
+			})
+			require.Equal(t, map[string]string{cookieHeaderName: "cookie2="}, cdt.QueryDataReq.Headers)
+		})
+
+		t.Run("Should forward cookies with nil QueryChunkedData headers", func(t *testing.T) {
+			require.NotPanics(t, func() {
+				err := cdt.MiddlewareHandler.QueryChunkedData(req.Context(), &backend.QueryChunkedDataRequest{PluginContext: pluginCtx}, nopChunkedWriter{})
+				require.NoError(t, err)
+			})
+			require.Equal(t, map[string]string{cookieHeaderName: "cookie2="}, cdt.QueryChunkedDataReq.Headers)
+		})
+
+		t.Run("Should forward cookies with nil CallResource headers", func(t *testing.T) {
+			require.NotPanics(t, func() {
+				err := cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{PluginContext: pluginCtx}, nopCallResourceSender)
+				require.NoError(t, err)
+			})
+			require.Equal(t, map[string][]string{cookieHeaderName: {"cookie2="}}, cdt.CallResourceReq.Headers)
+		})
+
+		t.Run("Should forward cookies with nil CheckHealth headers", func(t *testing.T) {
+			require.NotPanics(t, func() {
+				_, err := cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{PluginContext: pluginCtx})
+				require.NoError(t, err)
+			})
+			require.Equal(t, map[string]string{cookieHeaderName: "cookie2="}, cdt.CheckHealthReq.Headers)
 		})
 	})
 

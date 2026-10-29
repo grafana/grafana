@@ -597,8 +597,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 
 			if tt.expectedError != nil {
 				require.Error(t, err)
-				var statusErr *apierrors.StatusError
-				if errors.As(tt.expectedError, &statusErr) {
+				if statusErr, ok := errors.AsType[*apierrors.StatusError](tt.expectedError); ok {
 					var actualStatusErr *apierrors.StatusError
 					require.True(t, errors.As(err, &actualStatusErr))
 					require.Equal(t, statusErr.Status().Code, actualStatusErr.Status().Code)
@@ -1921,7 +1920,7 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 			getRepoError:  repo.ErrFileNotFound,
 			expectGetRepo: true,
 			expectedResult: &provisioning.TestResults{
-				Code:    http.StatusBadRequest,
+				Code:    http.StatusNotFound,
 				Success: false,
 				Errors: []provisioning.ErrorDetails{{
 					Type:   metav1.CauseTypeFieldValueInvalid,

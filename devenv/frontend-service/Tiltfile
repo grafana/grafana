@@ -13,34 +13,51 @@ port_faro     = base_port + 5   # +5  faro receiver
 port_goff     = base_port + 6   # +6  go feature flag
 # port_tilt   = base_port + 9   # +9  tilt UI (set in run.sh)
 
-# A cold build (yarn install + serial plugin builds + main webpack compile) can take
-# longer than Tilt's default 5m readiness timeout before 'yarn start' is ready, which
-# fails `tilt ci` in CI even though the build succeeds. Raise the readiness timeout.
+# --- Build output
+manifest_path = 'public/build/assets-manifest.json'
+boot_path = 'public/build/boot.js'
+
+# A cold build (pnpm install + serial plugin builds + main rspack compile) can take
+# longer than Tilt's default 5m readiness timeout, which fails `tilt ci` even though the
+# build succeeds.
 ci_settings(readiness_timeout='15m')
 
 # --- Frontend processes
 local_resource(
-  'yarn install',
-  cmd='yarn install',
+  'pnpm install',
+  cmd='pnpm install',
   deps=[
-    'yarn.lock',
+    'pnpm-lock.yaml',
   ],
   labels=["local"]
 )
 
 local_resource(
-  'yarn start',
-  cmd='rm -rf public/build/assets-manifest.json',
-  serve_cmd='yarn start:noLint',
-  resource_deps=['yarn install'],
+  'pnpm start',
+  cmd='rm -rf %s' % manifest_path,
+  # noHmr: this stack serves assets from a disk-backed CDN mount, so the build has to write
+  # files rather than hold them in a dev server.
+  # Keep a literal separator for Nx.
+  serve_cmd='pnpm run start:noHmr -- --env noTsCheck=1 --env noLint=1',
+  resource_deps=['pnpm install'],
 
-  # Note: this doesn't seem to work as expected - the assets-manifest is somehow created before
-  # the webpack build is complete?
   readiness_probe=probe(
     initial_delay_secs=10,
     period_secs=1,
-    exec=exec_action(["bash", "-c", "stat public/build/assets-manifest.json"]),
+    exec=exec_action(["bash", "-c", "stat %s" % manifest_path]),
   ),
+  allow_parallel=True,
+  labels=["local"]
+)
+
+# boot.js has its own rspack config, so the watch that 'pnpm start' runs no longer rebuilds
+# it. The image copies boot.js and live_update syncs it, so without this an edit to
+# public/boot would never reach the container.
+local_resource(
+  'rspack boot',
+  cmd='pnpm run build:boot --env develop',
+  deps=['../../public/boot'],
+  resource_deps=['pnpm install'],
   allow_parallel=True,
   labels=["local"]
 )
@@ -65,6 +82,11 @@ local_resource(
 # --- Docker Compose
 base_config = read_yaml('./docker-compose.yaml')
 
+grafana_api_env = {
+  'GF_SERVER_CDN_URL': 'http://localhost:%d' % port_cdn,
+  'GF_AUTH_LOGIN_COOKIE_NAME': 'grafana_fs_%s_login' % workspace_name,
+}
+
 # Ports and port-dependent environment variables are set here rather than in
 # docker-compose.yaml so they can be derived from PORT.
 compose_overrides = {'services': {
@@ -76,10 +98,7 @@ compose_overrides = {'services': {
   },
   'grafana-api': {
     'ports': ['%d:3000' % port_api],
-    'environment': {
-      'GF_SERVER_CDN_URL': 'http://localhost:%d' % port_cdn,
-      'GF_AUTH_LOGIN_COOKIE_NAME': 'grafana_fs_%s_login' % workspace_name,
-    },
+    'environment': grafana_api_env,
   },
   'frontend-service': {
     'ports': ['%d:3000' % port_fs],
@@ -114,11 +133,11 @@ dc_resource("proxy",
   labels=["services"]
 )
 dc_resource("grafana-api",
-  resource_deps=["yarn start", "backend-build"],
+  resource_deps=["pnpm start", "backend-build"],
   labels=["services"]
 )
 dc_resource("frontend-service",
-  resource_deps=["yarn start", "backend-build"],
+  resource_deps=["pnpm start", "backend-build"],
   labels=["services"],
 )
 dc_resource("alloy", labels=["observability"])
@@ -150,8 +169,8 @@ docker_build('grafana-fs-dev',
     'public/views',
     'public/dashboards',
     'public/app/plugins',
-    'public/build/assets-manifest.json',
-    'public/build/boot.js',
+    manifest_path,
+    boot_path,
     'public/gazetteer',
     'public/maps',
     'public/img/bg',
@@ -166,8 +185,8 @@ docker_build('grafana-fs-dev',
     sync('../../public/views', '/grafana/public/views'),
     sync('../../public/dashboards', '/grafana/public/dashboards'),
     sync('../../public/app/plugins', '/grafana/public/app/plugins'),
-    sync('../../public/build/assets-manifest.json', '/grafana/public/build/assets-manifest.json'),
-    sync('../../public/build/boot.js', '/grafana/public/build/boot.js'),
+    sync('../../' + manifest_path, '/grafana/' + manifest_path),
+    sync('../../' + boot_path, '/grafana/' + boot_path),
     sync('./provisioning', '/ignore/provisioning'),  # Just to trigger a restart instead of rebuild
     sync('./configs/grafana-api.local.ini', '/ignore/grafana-api.local.ini'),  # Just to trigger a restart instead of rebuild
     sync('./configs/frontend-service.local.ini', '/ignore/frontend-service.local.ini'),  # Just to trigger a restart instead of rebuild

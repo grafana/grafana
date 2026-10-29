@@ -3,8 +3,6 @@ package repository
 import (
 	"context"
 	"fmt"
-	"path/filepath"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -13,12 +11,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
-
-// ErrRepositoryDuplicatePath is returned when a repository has the same path as another
-var ErrRepositoryDuplicatePath = fmt.Errorf("duplicate repository path")
-
-// ErrRepositoryParentFolderConflict is returned when a repository path conflicts with a parent folder
-var ErrRepositoryParentFolderConflict = fmt.Errorf("repository path conflicts with existing repository")
 
 type VerifyAgainstExistingRepositoriesValidator struct {
 	lister      RepositoryLister
@@ -38,7 +30,6 @@ func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister, quot
 // This validator enforces the following rules:
 // - You can only create an instance sync repository if no other repositories exist in the namespace.
 // - You cannot create a non-instance (folder or folderless) sync repository if an instance repository already exists in the namespace.
-// - Git repositories must not have duplicate or overlapping paths with existing repositories.
 // - The total number of repositories in a single namespace cannot exceed the configured limit (default 10, 0 = unlimited).
 func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Context, cfg *provisioning.Repository) field.ErrorList {
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
@@ -70,43 +61,23 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		}
 	}
 
-	// If repo is git and sync is enabled, ensure no other repository is defined with a conflicting path.
-	// Path checks are skipped when sync is disabled to allow the onboarding wizard to create repositories
-	// in multiple steps (first with empty path, then configure path, then enable sync).
-	if cfg.Spec.Type.IsGit() && cfg.Spec.Sync.Enabled {
-		for _, v := range all {
-			// skip itself
-			if cfg.Name == v.Name {
-				continue
-			}
-			if v.URL() == cfg.URL() && v.Branch() == cfg.Branch() {
-				if v.Path() == cfg.Path() {
-					return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"),
-						cfg.Path(),
-						fmt.Sprintf("%s: %s", ErrRepositoryDuplicatePath.Error(), v.Name))}
-				}
-
-				// Skip parent/child conflict check when both paths are empty (both at repository root)
-				if v.Path() != "" || cfg.Path() != "" {
-					relPath, err := filepath.Rel(v.Path(), cfg.Path())
-					if err != nil {
-						return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(), "failed to evaluate path: "+err.Error())}
-					}
-					// https://pkg.go.dev/path/filepath#Rel
-					// Rel will return "../" if the relative paths are not related
-					if !strings.HasPrefix(relPath, "../") {
-						return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(),
-							fmt.Sprintf("%s: %s", ErrRepositoryParentFolderConflict.Error(), v.Name))}
-					}
-				}
-			}
-		}
-	}
-
 	// Get quota status for the namespace
 	quotaStatus, err := v.quotaGetter.GetQuotaStatus(ctx, cfg.Namespace)
 	if err != nil {
-		return field.ErrorList{field.InternalError(field.NewPath(""), fmt.Errorf("failed to get quota status: %w", err))}
+		isExistingRepo := false
+		for i := range all {
+			if all[i].Name == cfg.Name {
+				quotaStatus = all[i].Status.Quota
+				isExistingRepo = true
+				break
+			}
+		}
+
+		// A repository is new only when it is absent from storage. ObservedGeneration may remain zero
+		// when the first reconciliation fails after caching quota.
+		if !isExistingRepo {
+			return field.ErrorList{field.InternalError(field.NewPath(""), fmt.Errorf("failed to get quota status: %w", err))}
+		}
 	}
 
 	// Check repository limit (0 = unlimited, > 0 = use value).

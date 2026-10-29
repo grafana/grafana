@@ -2,15 +2,18 @@ package middleware
 
 import (
 	"bufio"
+	"compress/gzip"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"strings"
 
-	gzip "github.com/klauspost/pgzip"
-
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+var gzipLogger = log.New("middleware.gzip")
 
 type gzipResponseWriter struct {
 	w *gzip.Writer
@@ -22,19 +25,66 @@ func (grw *gzipResponseWriter) WriteHeader(c int) {
 	grw.ResponseWriter.WriteHeader(c)
 }
 
-func (grw gzipResponseWriter) Write(p []byte) (int, error) {
-	if grw.Header().Get("Content-Type") == "" {
-		grw.Header().Set("Content-Type", http.DetectContentType(p))
-	}
-	grw.Header().Del("Content-Length")
+func (grw *gzipResponseWriter) Write(p []byte) (int, error) {
+	prepareCompressedHeaders(grw.Header(), p)
+
 	return grw.w.Write(p)
 }
 
-func (grw gzipResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	if hijacker, ok := grw.ResponseWriter.(http.Hijacker); ok {
+func (grw *gzipResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return hijack(grw.ResponseWriter)
+}
+
+// headResponseWriter serves a HEAD request that would have been compressed. The
+// response has no body, so there is nothing to compress, but the headers still
+// have to describe the response the equivalent GET would return
+// (RFC 9110 §9.3.2) - including the missing Content-Length, since the size of a
+// compressed body is not known ahead of time.
+type headResponseWriter struct {
+	web.ResponseWriter
+}
+
+func (hrw *headResponseWriter) WriteHeader(c int) {
+	hrw.Header().Del("Content-Length")
+	hrw.ResponseWriter.WriteHeader(c)
+}
+
+func (hrw *headResponseWriter) Write(p []byte) (int, error) {
+	prepareCompressedHeaders(hrw.Header(), p)
+	return hrw.ResponseWriter.Write(p)
+}
+
+func (hrw *headResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return hijack(hrw.ResponseWriter)
+}
+
+func prepareCompressedHeaders(h http.Header, p []byte) {
+	if h.Get("Content-Type") == "" {
+		h.Set("Content-Type", http.DetectContentType(p))
+	}
+	// The length of the compressed body is unknown until it has been written.
+	h.Del("Content-Length")
+}
+
+func hijack(rw web.ResponseWriter) (net.Conn, *bufio.ReadWriter, error) {
+	if hijacker, ok := rw.(http.Hijacker); ok {
 		return hijacker.Hijack()
 	}
 	return nil, nil, fmt.Errorf("GZIP ResponseWriter doesn't implement the Hijacker interface")
+}
+
+// gzipSink detects short writes without an error because compress/gzip only
+// checks the underlying writer's error, not the number of bytes written.
+type gzipSink struct {
+	w io.Writer
+}
+
+func (s *gzipSink) Write(p []byte) (int, error) {
+	n, err := s.w.Write(p)
+	if err == nil && n != len(p) {
+		err = io.ErrShortWrite
+	}
+	return n, err
 }
 
 type matcher func(s string) bool
@@ -71,13 +121,36 @@ func Gziper() func(http.Handler) http.Handler {
 				return
 			}
 
-			grw := &gzipResponseWriter{gzip.NewWriter(rw), rw.(web.ResponseWriter)}
+			// A HEAD response has no body, so running one through a compressor is
+			// pure overhead.
+			if req.Method == http.MethodHead {
+				hrw := &headResponseWriter{rw.(web.ResponseWriter)}
+				hrw.Header().Set("Content-Encoding", "gzip")
+				hrw.Header().Set("Vary", "Accept-Encoding")
+
+				next.ServeHTTP(hrw, req)
+				return
+			}
+
+			sink := &gzipSink{w: rw}
+			grw := &gzipResponseWriter{gzip.NewWriter(sink), rw.(web.ResponseWriter)}
 			grw.Header().Set("Content-Encoding", "gzip")
 			grw.Header().Set("Vary", "Accept-Encoding")
 
 			next.ServeHTTP(grw, req)
-			// We can't really handle close errors at this point and we can't report them to the caller
-			_ = grw.w.Close()
+
+			// A failed response write cannot be reported to the caller at this
+			// point, and this is the only signal it produces, so log it rather than
+			// discard it.
+			if err := grw.w.Close(); err != nil {
+				logger := gzipLogger.FromContext(req.Context())
+				if req.Context().Err() != nil {
+					// The client hung up. Expected traffic, not a server problem.
+					logger.Debug("Failed to write gzipped response", "path", req.URL.Path, "error", err)
+				} else {
+					logger.Warn("Failed to write gzipped response", "path", req.URL.Path, "error", err)
+				}
+			}
 		})
 	}
 }

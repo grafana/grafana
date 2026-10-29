@@ -194,18 +194,26 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"library.panels:read",   // ActionLibraryPanelsRead
 	"library.panels:write",  // ActionLibraryPanelsWrite
 	"library.panels:delete", // ActionLibraryPanelsDelete
+	"variables:create",      // ActionVariablesCreate
+	"variables:read",        // ActionVariablesRead
+	"variables:write",       // ActionVariablesWrite
+	"variables:delete",      // ActionVariablesDelete
+	"alert.rules:read",      // ActionAlertingRuleRead — rules API deletion requires read and delete.
 	"alert.rules:delete",    // ActionAlertingRuleDelete — folder cascade delete removes contained alert rules.
 	"playlists:read",        // playlist.ActionPlaylistsRead
 	"playlists:write",       // playlist.ActionPlaylistsWrite
 	"alert.provisioning:write",
 	"alert.provisioning.secrets:read",
-	"notifications.alerting.grafana.app/configs:get",           // accesscontrol.ActionAlertingConfigRead — ExternalAMSyncer reads spec.externalAlertmanagerSync.datasourceUid.
-	"notifications.alerting.grafana.app/configs:update",        // accesscontrol.ActionAlertingConfigUpdate — ExternalAMSyncer creates the Config singleton on first sync.
+	"rules.alerting.grafana.app/configs:delete",         // Config cleanup on org deletion; not granted to human roles.
+	"notifications.alerting.grafana.app/configs:get",    // accesscontrol.ActionAlertingConfigRead — ExternalAMSyncer reads spec.externalAlertmanagerSync.datasourceUid.
+	"notifications.alerting.grafana.app/configs:update", // accesscontrol.ActionAlertingConfigUpdate — ExternalAMSyncer creates the Config singleton on first sync.
 	"notifications.alerting.grafana.app/configs/status:update", // accesscontrol.ActionAlertingConfigStatusUpdate — service-only; humans never write status directly.
-	"users:read",           // accesscontrol.ActionUsersRead,
-	"org.users:read",       // accesscontrol.ActionOrgUsersRead,
-	"teams:read",           // accesscontrol.ActionTeamsRead,
-	"serviceaccounts:read", // serviceaccounts.ActionRead,
+	"alert.notifications.external:read",                        // accesscontrol.ActionAlertingNotificationsExternalRead — the Alertmanager datasource plugin's GET api/v1/alerts route requires this; ExternalAMSyncer fetches the upstream config through it.
+	"users:read",                                               // accesscontrol.ActionUsersRead,
+	"org.users:read",                                           // accesscontrol.ActionOrgUsersRead,
+	"teams:read",                                               // accesscontrol.ActionTeamsRead,
+	"serviceaccounts:read",                                     // serviceaccounts.ActionRead,
+	"plugins.app:access",                                       // pluginaccesscontrol.ActionAppAccess
 )
 
 // Note: Any wildcard-prefixed permissions here must be whitelisted in authlib: https://github.com/grafana/authlib/blob/main/authz/service_permissions.go
@@ -215,6 +223,7 @@ var serviceIdentityTokenPermissions = []string{
 	"playlist.grafana.app:*",
 	"secret.grafana.app:*",
 	"query.grafana.app:*",
+	"queries.grafana.app:*", // saved queries
 	"datasource.grafana.app:*",
 	"iam.grafana.app:*",
 	"provisioning.grafana.app:*",
@@ -236,6 +245,12 @@ var serviceIdentityTokenPermissions = []string{
 
 	// Allow access to all apiextensions.k8s.io resources
 	"*.ext.grafana.app:*",
+
+	// Allow access to app plugin API groups, which are named by plugin ID
+	"*-app:*",
+
+	// Named explicitly: the *.ext.grafana.app wildcard only matches single-segment prefixes.
+	"assistant.alertrules.ext.grafana.app:*",
 
 	// Allow access to apps.grafana.app resources (e.g. AppManifest)
 	"apps.grafana.app:*",

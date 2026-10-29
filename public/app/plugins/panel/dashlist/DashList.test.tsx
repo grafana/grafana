@@ -1,4 +1,4 @@
-import { render, screen, testWithFeatureToggles } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
@@ -33,20 +33,7 @@ const defaultOptions: Options = {
 const findStarButton = (title: string, isStarred: boolean) =>
   screen.findByRole('button', { name: new RegExp(`^${isStarred ? 'unmark' : 'mark'} "${title}" as favorite`, 'i') });
 
-const fixtures: Array<
-  [
-    // Test title
-    string,
-    // Feature toggle setup
-    Parameters<typeof testWithFeatureToggles>[0],
-  ]
-> = [
-  ['DashList - app platform APIs enabled', { enable: ['starsFromAPIServer'] }],
-  ['DashList - app platform APIs disabled', {}],
-];
-describe.each(fixtures)('%s', (_title, featureTogglesSetup) => {
-  testWithFeatureToggles(featureTogglesSetup);
-
+describe('DashList', () => {
   it('renders different groups of dashboards', async () => {
     const props = getPanelProps({
       ...defaultOptions,

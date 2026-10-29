@@ -19,6 +19,12 @@ const (
 	RESOURCEGROUP = RESOURCE + "." + GROUP
 )
 
+// GlobalHomeDashboardUID is the reserved spec.homeDashboardUID value for "use the
+// instance default home". An empty string means unset and falls through to
+// lower-precedence preferences (legacy SQL stores it as NULL), so an explicit
+// choice needs a distinct value that survives that round-trip.
+const GlobalHomeDashboardUID = "global-home"
+
 var PreferencesResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	RESOURCE, "preferences", "Preferences",
 	func() runtime.Object { return &Preferences{} },

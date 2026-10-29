@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/searchfields"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var searchFieldLogger = log.New("search-field-hash")
@@ -32,8 +31,8 @@ const (
 	// SearchCapabilityPartial enables substring matching (Bleve ngram
 	// analyzer). Requires SearchCapabilityText.
 	SearchCapabilityPartial SearchCapability = "partial"
-	// SearchCapabilitySort makes the field sortable. It also enables DocValues
-	// on the keyword variant for column-wise reads and stable sort tie-breakers.
+	// SearchCapabilitySort enables sorting on the field. A search request can only
+	// sort on fields that declare it.
 	SearchCapabilitySort     SearchCapability = "sort"
 	SearchCapabilityFacet    SearchCapability = "facet"    // facetable on the keyword variant
 	SearchCapabilityRetrieve SearchCapability = "retrieve" // value is stored and returned in search results
@@ -52,29 +51,26 @@ const (
 type SearchFieldType string
 
 const (
-	// SearchFieldTypeUnknown is the zero value, used for column shapes that
-	// have no corresponding SearchFieldType (OBJECT, BINARY, UNKNOWN_TYPE from
-	// the protobuf enum). Downstream switches can reference it by name.
+	// SearchFieldTypeUnknown is used for fields without a scalar response type,
+	// such as engine-specific explanations.
 	SearchFieldTypeUnknown SearchFieldType = ""
 	SearchFieldTypeString  SearchFieldType = "string"
-	// SearchFieldTypeInt64 covers integer-shaped fields. The protobuf column
-	// enum distinguishes INT32 and INT64; this SFD type set collapses them
-	// into a single int64. Standard fields never use INT32 today, and
-	// numeric search behaviour is identical (bleve indexes through float64
-	// internally).
+	// SearchFieldTypeInt64 covers integer-shaped fields. Bleve indexes them
+	// through float64 internally.
+	//
+	// That float64 is exact only up to 2^53, which is far above a timestamp in
+	// millis but below a resource version. Declare a field whose values can reach
+	// that far as a string, the way SEARCH_FIELD_DELETED_RV is: filters and sorts
+	// on a larger int64 cannot tell neighbouring values apart.
 	SearchFieldTypeInt64 SearchFieldType = "int64"
-	// SearchFieldTypeDouble covers floating-point fields. The protobuf-level
-	// distinction between FLOAT and DOUBLE is similarly collapsed; SFDs use
-	// float64 for both.
+	// SearchFieldTypeDouble covers floating-point fields.
 	SearchFieldTypeDouble  SearchFieldType = "double"
 	SearchFieldTypeBoolean SearchFieldType = "boolean"
 	SearchFieldTypeDate    SearchFieldType = "date"
 )
 
 // SearchFieldDefinition is the internal representation of a single searchable
-// field declared by a kind's manifest. It replaces the use of
-// *resourcepb.ResourceTableColumnDefinition for search-mapping decisions.
-// The protobuf type stays as the wire format for legacy table responses.
+// field declared by a kind's manifest.
 type SearchFieldDefinition struct {
 	// Name is the logical field name as declared in the manifest.
 	// It must be unique within a (group, resource, version) and must not
@@ -112,72 +108,6 @@ type SearchFieldDefinition struct {
 // HasCapability reports whether the field declares the given capability.
 func (f SearchFieldDefinition) HasCapability(c SearchCapability) bool {
 	return slices.Contains(f.Capabilities, c)
-}
-
-// SearchFieldDefinitionsToTableColumns builds legacy
-// *resourcepb.ResourceTableColumnDefinition entries from a list of
-// SearchFieldDefinitions. Used by the unified bleve search response and
-// the IAM legacy SQL backends, both of which still populate column
-// metadata in their wire-API responses. Both consumers go away when the
-// new search endpoint replaces them.
-//
-// Lossy by design: SFD is search-only, so Properties.UniqueValues and
-// Properties.NotNull are not carried over; SearchFieldTypeInt64 maps to
-// INT64 (was sometimes INT32 in hand-written column-defs). Filterable is
-// set when the SFD has SearchCapabilityFilter; FreeText when it has
-// SearchCapabilityText. Name, Description, IsArray pass through.
-func SearchFieldDefinitionsToTableColumns(sfds []SearchFieldDefinition) []*resourcepb.ResourceTableColumnDefinition {
-	out := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(sfds))
-	for _, def := range sfds {
-		col := &resourcepb.ResourceTableColumnDefinition{
-			Name:        def.Name,
-			Type:        protoTypeFromSearchFieldType(def.Type),
-			IsArray:     def.Array,
-			Description: def.Description,
-		}
-		filterable := def.HasCapability(SearchCapabilityFilter)
-		freeText := def.HasCapability(SearchCapabilityText)
-		if filterable || freeText {
-			col.Properties = &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: filterable,
-				FreeText:   freeText,
-			}
-		}
-		out = append(out, col)
-	}
-	return out
-}
-
-// TableColumnsByName keys the table columns by field name, so the IAM legacy
-// SQL search backends can look one up by a requested field name.
-func TableColumnsByName(sfds []SearchFieldDefinition) map[string]*resourcepb.ResourceTableColumnDefinition {
-	cols := SearchFieldDefinitionsToTableColumns(sfds)
-	out := make(map[string]*resourcepb.ResourceTableColumnDefinition, len(cols))
-	for _, c := range cols {
-		out[c.Name] = c
-	}
-	return out
-}
-
-// protoTypeFromSearchFieldType maps a SearchFieldType back to its proto
-// counterpart. SearchFieldType does not preserve INT32 / FLOAT / DATE_TIME
-// distinctions, so this returns the wider variant (INT64, DOUBLE, DATE)
-// in every case.
-func protoTypeFromSearchFieldType(t SearchFieldType) resourcepb.ResourceTableColumnDefinition_ColumnType {
-	switch t {
-	case SearchFieldTypeString:
-		return resourcepb.ResourceTableColumnDefinition_STRING
-	case SearchFieldTypeInt64:
-		return resourcepb.ResourceTableColumnDefinition_INT64
-	case SearchFieldTypeDouble:
-		return resourcepb.ResourceTableColumnDefinition_DOUBLE
-	case SearchFieldTypeBoolean:
-		return resourcepb.ResourceTableColumnDefinition_BOOLEAN
-	case SearchFieldTypeDate:
-		return resourcepb.ResourceTableColumnDefinition_DATE
-	default:
-		return resourcepb.ResourceTableColumnDefinition_UNKNOWN_TYPE
-	}
 }
 
 // SearchFieldsProvider is the read-only interface that consumers of the new
@@ -504,6 +434,20 @@ type hashablePayload struct {
 	Versions []hashableVersion `json:"v"`
 }
 
+// StandardSearchFieldsHash fingerprints the standard fields alone, for a kind
+// that declares no fields of its own.
+func StandardSearchFieldsHash() string {
+	blob, err := json.Marshal(hashablePayload{Standard: canonicalHashableFields(StandardSearchFieldDefinitions())})
+	if err != nil {
+		// Returning nothing disables the rebuild-on-change check, so the log line is
+		// the only sign. See IndexAffectingHash for why this cannot happen today.
+		searchFieldLogger.Error("failed to marshal the standard search fields for hashing", "err", err)
+		return ""
+	}
+	sum := sha256.Sum256(blob)
+	return hex.EncodeToString(sum[:])
+}
+
 // canonicalHashableFields normalises a SearchFieldDefinition slice into
 // hashableField form: capabilities sorted, fields sorted by name, only the
 // index-affecting subset retained.
@@ -603,6 +547,23 @@ func (r *SearchFieldsRegistry) For(key LowerGroupResource) (selectableFields []s
 	return r.selectableFields[key], r.searchFieldsHashes[key], r.searchFieldsProvider[key]
 }
 
+// ForKey is For for a whole index key. A namespace-wide index declares its own
+// fields and covers a fixed set of resource types, so none of its inputs come
+// from a manifest.
+//
+// A kind declaring no fields of its own still gets a hash, of the standard
+// fields, so its indexes are rebuilt when those change too.
+func (r *SearchFieldsRegistry) ForKey(key NamespacedResource) (selectableFields []string, hash string, provider SearchFieldsProvider) {
+	if key.IsGlobal() {
+		return nil, GlobalSearchFieldsHash(), nil
+	}
+	selectableFields, hash, provider = r.For(NewLowerGroupResource(key.Group, key.Resource))
+	if hash == "" {
+		hash = StandardSearchFieldsHash()
+	}
+	return selectableFields, hash, provider
+}
+
 // Replace atomically swaps all three maps. Callers must not mutate the maps
 // afterwards. A live-manifest source uses this to reload search fields.
 func (r *SearchFieldsRegistry) Replace(
@@ -612,7 +573,27 @@ func (r *SearchFieldsRegistry) Replace(
 ) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	r.warnRemovedKinds(searchFieldsProvider)
 	r.selectableFields = selectableFields
 	r.searchFieldsHashes = searchFieldsHashes
 	r.searchFieldsProvider = searchFieldsProvider
+}
+
+// warnRemovedKinds logs kinds that have search fields now but would not after
+// the swap. Losing a kind's search fields is silent otherwise: searches on
+// those fields still succeed and simply match nothing, and the index has to be
+// rebuilt to get them back. Caller holds the lock.
+func (r *SearchFieldsRegistry) warnRemovedKinds(next map[LowerGroupResource]SearchFieldsProvider) {
+	var removed []string
+	for key := range r.searchFieldsProvider {
+		if _, ok := next[key]; !ok {
+			removed = append(removed, key.Group+"/"+key.Resource)
+		}
+	}
+	if len(removed) == 0 {
+		return
+	}
+	slices.Sort(removed)
+	searchFieldLogger.Warn("search fields removed for kinds that had them; searches on those fields will match nothing until the manifests declaring them are restored and the index is rebuilt",
+		"kinds", strings.Join(removed, ","))
 }

@@ -8,7 +8,7 @@ import type * as z from 'zod';
 
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
-import { getVizPanelKeyForPanelId } from '../../utils/utils';
+import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';

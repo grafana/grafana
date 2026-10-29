@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -18,12 +19,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamk8s"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 )
 
 type Service struct {
 	legacyService     *LegacyService
 	k8sService        team.Service
 	openFeatureClient *openfeature.Client
+	iamFeatures       iamapi.Features
 	logger            log.Logger
 	tracer            tracing.Tracer
 }
@@ -35,8 +38,15 @@ func (s *Service) LegacySearchService() team.Service {
 	return s.legacyService
 }
 
-func ProvideService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider) (*Service, error) {
-	legacyService, err := NewLegacyService(sql, tracer)
+func ProvideService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider, iamFeatures iamapi.Features) (*Service, error) {
+	return ProvideServiceWithWatch(sql, cfg, tracer, configProvider, iamFeatures, nil)
+}
+
+// ProvideServiceWithWatch is ProvideService that also announces legacy team
+// writes on the legacy watch subjects. It is separate so wire sets without the
+// NATS bus, such as the CLI's, can keep using ProvideService.
+func ProvideServiceWithWatch(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider, iamFeatures iamapi.Features, legacyWatch *legacywatch.Publisher) (*Service, error) {
+	legacyService, err := NewLegacyService(sql, tracer, legacyWatch)
 	if err != nil {
 		return nil, err
 	}
@@ -47,6 +57,7 @@ func ProvideService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, trac
 		legacyService:     legacyService,
 		k8sService:        k8sService,
 		openFeatureClient: openfeature.NewDefaultClient(),
+		iamFeatures:       iamFeatures,
 		logger:            log.New("team"),
 		tracer:            tracer,
 	}, nil
@@ -202,11 +213,10 @@ func (s *Service) isK8sRedirectEnabled(ctx context.Context) bool {
 	if s.openFeatureClient == nil {
 		return false
 	}
-	txCtx := openfeature.TransactionContext(ctx)
-	if !s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, txCtx) {
+	if !s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx)) {
 		return false
 	}
-	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, txCtx)
+	return s.iamFeatures.UsersAPI
 }
 
 // shouldFallbackToLegacy determines whether to fallback to the legacy service for a given request.

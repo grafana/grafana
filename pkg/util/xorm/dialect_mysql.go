@@ -212,20 +212,20 @@ func (db *mysql) SqlType(c *core.Column) string {
 	case core.Enum: // mysql enum
 		res = core.Enum
 		res += "("
-		opts := ""
+		var opts strings.Builder
 		for v := range c.EnumOptions {
-			opts += fmt.Sprintf(",'%v'", v)
+			opts.WriteString(fmt.Sprintf(",'%v'", v))
 		}
-		res += strings.TrimLeft(opts, ",")
+		res += strings.TrimLeft(opts.String(), ",")
 		res += ")"
 	case core.Set: // mysql set
 		res = core.Set
 		res += "("
-		opts := ""
+		var opts strings.Builder
 		for v := range c.SetOptions {
-			opts += fmt.Sprintf(",'%v'", v)
+			opts.WriteString(fmt.Sprintf(",'%v'", v))
 		}
-		res += strings.TrimLeft(opts, ",")
+		res += strings.TrimLeft(opts.String(), ",")
 		res += ")"
 	case core.NVarchar:
 		res = core.Varchar
@@ -625,8 +625,8 @@ func (p *mysqlDriver) Parse(driverName, dataSourceName string) (*core.Uri, error
 			uri.DbName = match
 		case "params":
 			if len(match) > 0 {
-				kvs := strings.Split(match, "&")
-				for _, kv := range kvs {
+				kvs := strings.SplitSeq(match, "&")
+				for kv := range kvs {
 					splits := strings.Split(kv, "=")
 					if len(splits) == 2 {
 						switch splits[0] {

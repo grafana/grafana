@@ -21,10 +21,15 @@ import (
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	k8stesting "k8s.io/client-go/testing"
 
+	authlib "github.com/grafana/authlib/types"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -37,7 +42,18 @@ func newDashboardCascade(store grafanarest.Storage, searcher resourcepb.Resource
 	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: func(context.Context) (*dynamic.NamespaceableResourceInterface, error) {
 		c := dyn.Resource(gvr)
 		return &c, nil
-	}}
+	}, variableClient: nilVariableClient}
+	return s, dyn
+}
+
+func newVariableCascade(store grafanarest.Storage, searcher resourcepb.ResourceIndexClient, objs ...runtime.Object) (*cascadeDeleteStorage, *dynamicfake.FakeDynamicClient) {
+	gvr := dashv2beta1.VariableResourceInfo.GroupVersionResource()
+	dyn := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(),
+		map[schema.GroupVersionResource]string{gvr: "VariableList"}, objs...)
+	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, variableClient: func(context.Context) (*dynamic.NamespaceableResourceInterface, error) {
+		c := dyn.Resource(gvr)
+		return &c, nil
+	}, dashboardClient: nilDashboardClient}
 	return s, dyn
 }
 
@@ -129,11 +145,14 @@ type fakeCascadeSearcher struct {
 	resourcepb.ResourceIndexClient
 	childrenByParent   map[string][]string
 	dashboardsByFolder map[string][]string
+	variablesByFolder  map[string][]string
 	searchCtx          context.Context
+	requests           []*resourcepb.ResourceSearchRequest
 }
 
 func (s *fakeCascadeSearcher) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	s.searchCtx = ctx
+	s.requests = append(s.requests, req)
 	var names []string
 	for _, uid := range folderFilterValues(req) {
 		switch req.Options.Key.Resource {
@@ -141,11 +160,13 @@ func (s *fakeCascadeSearcher) Search(ctx context.Context, req *resourcepb.Resour
 			names = append(names, s.childrenByParent[uid]...)
 		case dashv1.DashboardResourceInfo.GroupVersionResource().Resource:
 			names = append(names, s.dashboardsByFolder[uid]...)
+		case dashv2beta1.VariableResourceInfo.GroupVersionResource().Resource:
+			names = append(names, s.variablesByFolder[uid]...)
 		}
 	}
-	rows := make([]*resourcepb.ResourceTableRow, 0, len(names))
+	rows := make([]*resourcepb.ResourceSearchRow, 0, len(names))
 	for _, n := range names {
-		rows = append(rows, &resourcepb.ResourceTableRow{Key: &resourcepb.ResourceKey{Name: n}})
+		rows = append(rows, &resourcepb.ResourceSearchRow{Key: &resourcepb.ResourceKey{Name: n}})
 	}
 
 	// Honor offset/limit so multi-page enumeration is exercised.
@@ -155,7 +176,7 @@ func (s *fakeCascadeSearcher) Search(ctx context.Context, req *resourcepb.Resour
 	if req.Limit > 0 && start+req.Limit < end {
 		end = start + req.Limit
 	}
-	return &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{Rows: rows[start:end]}, TotalHits: total}, nil
+	return &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, Rows: rows[start:end], TotalHits: total}, nil
 }
 
 func folderFilterValues(req *resourcepb.ResourceSearchRequest) []string {
@@ -184,8 +205,20 @@ func unstructuredDashboard(namespace, name string) *unstructured.Unstructured {
 	return u
 }
 
+func unstructuredVariable(namespace, name string) *unstructured.Unstructured {
+	u := &unstructured.Unstructured{}
+	u.SetGroupVersionKind(dashv2beta1.VariableResourceInfo.GroupVersionKind())
+	u.SetNamespace(namespace)
+	u.SetName(name)
+	return u
+}
+
 // nilDashboardClient stands in for deployments where no dashboard apiserver client is configured.
 func nilDashboardClient(context.Context) (*dynamic.NamespaceableResourceInterface, error) {
+	return nil, nil
+}
+
+func nilVariableClient(context.Context) (*dynamic.NamespaceableResourceInterface, error) {
 	return nil, nil
 }
 
@@ -216,6 +249,10 @@ func TestCascadeDelete_DeletesSubtreeDepthFirst(t *testing.T) {
 
 	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.NoError(t, err)
+	for _, request := range searcher.requests {
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, request.ResultFormat)
+		require.Equal(t, []string{resource.SEARCH_FIELD_NAME}, request.Fields)
+	}
 
 	// Leaves are deleted before their parents, and every folder in the subtree is stamped.
 	require.Equal(t, []string{"leaf", "child", "root"}, store.deleted)
@@ -296,11 +333,39 @@ func TestCascadeDelete_PropagatesDeleteOptionsToDashboards(t *testing.T) {
 	require.Equal(t, int64(0), *got.GracePeriodSeconds)
 }
 
-// recordingContentsDeleter records the folders whose contents were requested for deletion.
-type recordingContentsDeleter struct{ folders []string }
+func TestCascadeDelete_DeletesAllVariablesInFolder(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	searcher := &fakeCascadeSearcher{variablesByFolder: map[string][]string{"root": {"var-1", "var-2"}}}
+	s, dyn := newVariableCascade(store, searcher,
+		unstructuredVariable("default", "var-1"), unstructuredVariable("default", "var-2"))
 
-func (r *recordingContentsDeleter) DeleteInFolder(_ context.Context, _, folderUID string) error {
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+	require.NoError(t, err)
+	for _, request := range searcher.requests {
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, request.ResultFormat)
+		require.Equal(t, []string{resource.SEARCH_FIELD_NAME}, request.Fields)
+	}
+
+	gvr := dashv2beta1.VariableResourceInfo.GroupVersionResource()
+	for _, name := range []string{"var-1", "var-2"} {
+		_, err := dyn.Resource(gvr).Namespace("default").Get(ctxWithNamespace(), name, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "variable %s should be deleted", name)
+	}
+}
+
+// recordingContentsDeleter records the folders whose contents were requested for deletion, the
+// requester each deletion was attributed to, and the ctx each call received.
+type recordingContentsDeleter struct {
+	folders   []string
+	deletedBy []identity.Requester
+	gotCtx    []context.Context
+}
+
+func (r *recordingContentsDeleter) DeleteInFolder(ctx context.Context, _, folderUID string, user identity.Requester) error {
 	r.folders = append(r.folders, folderUID)
+	r.deletedBy = append(r.deletedBy, user)
+	r.gotCtx = append(r.gotCtx, ctx)
 	return nil
 }
 
@@ -312,11 +377,75 @@ func TestCascadeDelete_DeletesContentsPerFolder(t *testing.T) {
 	}}
 	searcher := &fakeCascadeSearcher{childrenByParent: map[string][]string{"root": {"child"}}}
 	deleter := &recordingContentsDeleter{}
-	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient, contentsDeleter: deleter}
+	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient, variableClient: nilVariableClient, contentsDeleter: deleter}
 
 	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.NoError(t, err)
 	require.ElementsMatch(t, []string{"root", "child"}, deleter.folders)
+
+	requester, err := identity.GetRequester(ctxWithNamespace())
+	require.NoError(t, err)
+	for _, got := range deleter.deletedBy {
+		require.Equal(t, requester, got, "contents must be attributed to the real requester, not the service identity used to enumerate the cascade")
+	}
+}
+
+func TestCascadeDelete_MarksUncheckedDeleteAuthorizedOnlyWhenAccessClientChecked(t *testing.T) {
+	t.Run("accessClient wired and checks pass: ctx is marked for this folder", func(t *testing.T) {
+		setKubernetesFolderCascadeDeleteToggle(t, true)
+		store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+		deleter := &recordingContentsDeleter{}
+		s := &cascadeDeleteStorage{
+			Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient,
+			variableClient: nilVariableClient, contentsDeleter: deleter, accessClient: &recordingAccessClient{},
+		}
+
+		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+		require.NoError(t, err)
+		require.Len(t, deleter.gotCtx, 1)
+
+		requester, err := identity.GetRequester(ctxWithNamespace())
+		require.NoError(t, err)
+		require.True(t, folder.IsUncheckedDeleteAuthorized(deleter.gotCtx[0], 1, requester, []string{"root"}),
+			"an Unchecked contentsDeleter must be able to trust ctx once checkFolderContentsAccess has passed")
+	})
+
+	t.Run("no accessClient wired: ctx is not marked, since nothing was actually checked", func(t *testing.T) {
+		setKubernetesFolderCascadeDeleteToggle(t, true)
+		store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+		deleter := &recordingContentsDeleter{}
+		s := &cascadeDeleteStorage{
+			Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient,
+			variableClient: nilVariableClient, contentsDeleter: deleter,
+		}
+
+		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+		require.NoError(t, err)
+		require.Len(t, deleter.gotCtx, 1)
+
+		requester, err := identity.GetRequester(ctxWithNamespace())
+		require.NoError(t, err)
+		require.False(t, folder.IsUncheckedDeleteAuthorized(deleter.gotCtx[0], 1, requester, []string{"root"}),
+			"checkFolderContentsAccess is a no-op without an accessClient, so ctx must not claim authorization")
+	})
+}
+
+func TestCascadeDelete_RejectsEnumerationIdentityAsRequester(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	deleter := &recordingContentsDeleter{}
+	s := &cascadeDeleteStorage{Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient, variableClient: nilVariableClient, contentsDeleter: deleter}
+
+	// Simulates the original bug: the real requester was lost somewhere upstream and Delete
+	// captured the enumeration identity (the one WithServiceIdentityContext mints) in its place.
+	ctx, _ := identity.WithServiceIdentity(apirequest.WithNamespace(context.Background(), "default"), 1)
+
+	_, _, err := s.Delete(ctx, "root", nil, forceDelete())
+	require.True(t, apierrors.IsForbidden(err), "must be a 403, not a generic error: %v", err)
+	require.Empty(t, store.deleted, "folder must not be deleted when the requester is the enumeration identity")
+	require.Empty(t, store.stamped, "folder must not be left stamped terminating when this guard rejects the request")
+	require.Empty(t, deleter.folders)
 }
 
 func TestCascadeDelete_SkipsContentsOnDryRun(t *testing.T) {
@@ -325,7 +454,7 @@ func TestCascadeDelete_SkipsContentsOnDryRun(t *testing.T) {
 	// A server-side dry-run must not mutate contents: DeleteInFolders has no dry-run mode.
 	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
 	deleter := &recordingContentsDeleter{}
-	s := &cascadeDeleteStorage{Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient, contentsDeleter: deleter}
+	s := &cascadeDeleteStorage{Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient, variableClient: nilVariableClient, contentsDeleter: deleter}
 
 	opts := forceDelete()
 	opts.DryRun = []string{metav1.DryRunAll}
@@ -353,7 +482,7 @@ func TestCascadeDelete_DashboardClientNilSkips(t *testing.T) {
 	// No dashboard client configured: dashboards are skipped but the folder still cascades.
 	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
 	searcher := &fakeCascadeSearcher{dashboardsByFolder: map[string][]string{"root": {"dash-1"}}}
-	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient}
+	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient, variableClient: nilVariableClient}
 
 	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.NoError(t, err)
@@ -367,7 +496,7 @@ func TestCascadeDelete_DashboardClientErrorAborts(t *testing.T) {
 	searcher := &fakeCascadeSearcher{dashboardsByFolder: map[string][]string{"root": {"dash-1"}}}
 	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: func(context.Context) (*dynamic.NamespaceableResourceInterface, error) {
 		return nil, errors.New("boom")
-	}}
+	}, variableClient: nilVariableClient}
 
 	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.Error(t, err)
@@ -398,7 +527,7 @@ func TestCascadeDelete_IdempotentOnMissingChild(t *testing.T) {
 	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
 	searcher := &fakeCascadeSearcher{childrenByParent: map[string][]string{"root": {"ghost"}}}
 
-	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient}
+	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient, variableClient: nilVariableClient}
 
 	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.NoError(t, err)
@@ -434,7 +563,7 @@ func TestCascadeDelete_MissingRequestedFolderReturnsNotFound(t *testing.T) {
 
 	// Deleting a folder that doesn't exist must still return 404, not a fake success.
 	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}
-	s := &cascadeDeleteStorage{Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient}
+	s := &cascadeDeleteStorage{Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient, variableClient: nilVariableClient}
 
 	_, _, err := s.Delete(ctxWithNamespace(), "ghost", nil, forceDelete())
 	require.True(t, apierrors.IsNotFound(err))
@@ -445,7 +574,7 @@ func TestCascadeDelete_DryRunDoesNotMutate(t *testing.T) {
 
 	// A dry-run force delete must not stamp or delete anything.
 	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
-	s := &cascadeDeleteStorage{Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient}
+	s := &cascadeDeleteStorage{Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient, variableClient: nilVariableClient}
 
 	opts := forceDelete()
 	opts.DryRun = []string{metav1.DryRunAll}
@@ -487,7 +616,7 @@ func TestCascadeDelete_StalePreconditionAbortsBeforeCascade(t *testing.T) {
 	root.UID = "uid-1"
 	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": root, "child": newFolder("child")}}
 	searcher := &fakeCascadeSearcher{childrenByParent: map[string][]string{"root": {"child"}}}
-	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient}
+	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient, variableClient: nilVariableClient}
 
 	stale := apitypes.UID("uid-stale")
 	opts := forceDelete()
@@ -510,7 +639,7 @@ func TestCascadeDelete_MatchingPreconditionProceeds(t *testing.T) {
 	child.UID = "uid-2"
 	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": root, "child": child}}
 	searcher := &fakeCascadeSearcher{childrenByParent: map[string][]string{"root": {"child"}}}
-	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient}
+	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient, variableClient: nilVariableClient}
 
 	uid := apitypes.UID("uid-1")
 	opts := forceDelete()
@@ -525,7 +654,7 @@ func TestCascadeDelete_ForwardsOptionalInterfaces(t *testing.T) {
 	setKubernetesFolderCascadeDeleteToggle(t, false)
 
 	inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}}
-	s := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nil, nil)
+	s := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil)
 
 	watcher, ok := s.(rest.Watcher)
 	require.True(t, ok, "watch must be exposed when the wrapped store supports it")
@@ -545,7 +674,7 @@ func TestCascadeDelete_RejectsForcedCollectionDelete(t *testing.T) {
 
 	// A forced collection delete can't cascade, so it's rejected rather than orphaning content.
 	inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}}
-	deleter := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nil, nil).(rest.CollectionDeleter)
+	deleter := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil).(rest.CollectionDeleter)
 
 	_, err := deleter.DeleteCollection(ctxWithNamespace(), nil, forceDelete(), nil)
 	require.True(t, apierrors.IsBadRequest(err))
@@ -559,7 +688,7 @@ func TestCascadeDelete_RejectsForcedCollectionDelete(t *testing.T) {
 
 func TestCascadeDelete_OptionalInterfacesNotExposedWhenUnsupported(t *testing.T) {
 	// Wrapped store lacks Watcher/CollectionDeleter: the wrapper must not advertise those verbs.
-	s := newCascadeDeleteStorage(&fakeFolderStorage{}, &fakeCascadeSearcher{}, nilDashboardClient, nil, nil)
+	s := newCascadeDeleteStorage(&fakeFolderStorage{}, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil)
 
 	_, isWatcher := s.(rest.Watcher)
 	require.False(t, isWatcher)
@@ -575,7 +704,7 @@ func TestCascadeDelete_SearchesRunUnderServiceIdentity(t *testing.T) {
 	// context, so it enumerates resources the requester can't individually see.
 	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
 	searcher := &fakeCascadeSearcher{dashboardsByFolder: map[string][]string{"root": {"dash-1"}}}
-	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient}
+	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient, variableClient: nilVariableClient}
 
 	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.NoError(t, err)
@@ -591,7 +720,7 @@ func TestCascadeDelete_DisabledDelegates(t *testing.T) {
 	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root"), "child": newFolder("child")}}
 	searcher := &fakeCascadeSearcher{childrenByParent: map[string][]string{"root": {"child"}}}
 
-	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient}
+	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient, variableClient: nilVariableClient}
 
 	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.NoError(t, err)
@@ -599,4 +728,116 @@ func TestCascadeDelete_DisabledDelegates(t *testing.T) {
 	// With the flag off only the requested folder is deleted; no cascade, no stamping.
 	require.Equal(t, []string{"root"}, store.deleted)
 	require.Empty(t, store.stamped)
+}
+
+// recordingAccessClient records Check calls and optionally filters by allow.
+type recordingAccessClient struct {
+	checks []contentsAccessCheck
+	allow  func(req authlib.CheckRequest, folder string) bool
+	err    error
+}
+
+func (c *recordingAccessClient) Check(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+	c.checks = append(c.checks, contentsAccessCheck{req: req, folder: folder})
+	if c.err != nil {
+		return authlib.CheckResponse{}, c.err
+	}
+	allowed := true
+	if c.allow != nil {
+		allowed = c.allow(req, folder)
+	}
+	return authlib.CheckResponse{Allowed: allowed}, nil
+}
+
+func (c *recordingAccessClient) BatchCheck(context.Context, authlib.AuthInfo, authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	return authlib.BatchCheckResponse{}, nil
+}
+
+func (c *recordingAccessClient) Compile(context.Context, authlib.AuthInfo, authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return func(string, string) bool { return false }, authlib.NoopZookie{}, nil
+}
+
+func TestCheckFolderContentsAccess(t *testing.T) {
+	user := &identity.StaticRequester{}
+	folderGVR := foldersv1.FolderResourceInfo.GroupVersionResource()
+	varGVR := dashv2beta1.VariableResourceInfo.GroupVersionResource()
+
+	t.Run("nil accessClient is a no-op", func(t *testing.T) {
+		s := &cascadeDeleteStorage{}
+		require.NoError(t, s.checkFolderContentsAccess(context.Background(), user, "default", "folder", "parent"))
+	})
+
+	t.Run("without global variables, checks alert.rules:delete and folders:write only", func(t *testing.T) {
+		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagGrafanaDashboardGlobalVariables: false})
+		ac := &recordingAccessClient{}
+		s := &cascadeDeleteStorage{accessClient: ac}
+		require.NoError(t, s.checkFolderContentsAccess(context.Background(), user, "default", "folder", "parent"))
+		require.Equal(t, []contentsAccessCheck{
+			{authlib.CheckRequest{Namespace: "default", Verb: utils.VerbDelete, Group: cascadeAlertRuleGroup, Resource: cascadeAlertRuleResource}, "folder"},
+			{authlib.CheckRequest{Namespace: "default", Verb: utils.VerbUpdate, Group: folderGVR.Group, Resource: folderGVR.Resource, Name: "folder"}, "parent"},
+		}, ac.checks)
+	})
+
+	t.Run("with global variables, also checks variables:delete on the folder", func(t *testing.T) {
+		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagGrafanaDashboardGlobalVariables: true})
+		ac := &recordingAccessClient{}
+		s := &cascadeDeleteStorage{accessClient: ac}
+		require.NoError(t, s.checkFolderContentsAccess(context.Background(), user, "default", "folder", "parent"))
+		require.Equal(t, []contentsAccessCheck{
+			{authlib.CheckRequest{Namespace: "default", Verb: utils.VerbDelete, Group: cascadeAlertRuleGroup, Resource: cascadeAlertRuleResource}, "folder"},
+			{authlib.CheckRequest{Namespace: "default", Verb: utils.VerbUpdate, Group: folderGVR.Group, Resource: folderGVR.Resource, Name: "folder"}, "parent"},
+			{authlib.CheckRequest{Namespace: "default", Verb: utils.VerbDelete, Group: varGVR.Group, Resource: varGVR.Resource}, "folder"},
+		}, ac.checks)
+	})
+
+	t.Run("root folder uses General as the folders:write parent, folder UID for variables", func(t *testing.T) {
+		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagGrafanaDashboardGlobalVariables: true})
+		ac := &recordingAccessClient{}
+		s := &cascadeDeleteStorage{accessClient: ac}
+		require.NoError(t, s.checkFolderContentsAccess(context.Background(), user, "default", "root", ""))
+		require.Equal(t, folder.GeneralFolderUID, ac.checks[1].folder)
+		require.Equal(t, "root", ac.checks[2].folder)
+	})
+
+	t.Run("denies when variables:delete is not allowed", func(t *testing.T) {
+		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagGrafanaDashboardGlobalVariables: true})
+		ac := &recordingAccessClient{allow: func(req authlib.CheckRequest, _ string) bool {
+			return req.Resource != varGVR.Resource
+		}}
+		s := &cascadeDeleteStorage{accessClient: ac}
+		err := s.checkFolderContentsAccess(context.Background(), user, "default", "folder", "parent")
+		require.True(t, apierrors.IsForbidden(err))
+	})
+
+	t.Run("surfaces Check transport error", func(t *testing.T) {
+		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagGrafanaDashboardGlobalVariables: false})
+		ac := &recordingAccessClient{err: errors.New("boom")}
+		s := &cascadeDeleteStorage{accessClient: ac}
+		err := s.checkFolderContentsAccess(context.Background(), user, "default", "folder", "parent")
+		require.ErrorContains(t, err, "boom")
+	})
+}
+
+func TestCascadeDelete_ForbiddenWithoutVariablesDelete(t *testing.T) {
+	setOpenFeatureToggles(t, map[string]bool{
+		featuremgmt.FlagKubernetesFolderCascadeDelete:   true,
+		featuremgmt.FlagGrafanaDashboardGlobalVariables: true,
+	})
+
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	varGVR := dashv2beta1.VariableResourceInfo.GroupVersionResource()
+	ac := &recordingAccessClient{allow: func(req authlib.CheckRequest, _ string) bool {
+		return req.Resource != varGVR.Resource
+	}}
+	s := &cascadeDeleteStorage{
+		Storage:         store,
+		searcher:        &fakeCascadeSearcher{},
+		dashboardClient: nilDashboardClient,
+		variableClient:  nilVariableClient,
+		accessClient:    ac,
+	}
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+	require.True(t, apierrors.IsForbidden(err))
+	require.Empty(t, store.deleted, "folder must not be deleted when variables:delete is denied")
 }

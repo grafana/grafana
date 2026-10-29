@@ -158,6 +158,14 @@ export const ScaleDistributionEditor = ({
     value?.linearThreshold != null ? String(value.linearThreshold) : ''
   );
   const [linearThresholdWarning, setLinearThresholdWarning] = useState<string | undefined>();
+  const threshold = value?.linearThreshold;
+  const [previousThreshold, setPreviousThreshold] = useState(threshold);
+
+  if (!Object.is(previousThreshold, threshold)) {
+    setPreviousThreshold(threshold);
+    setLocalLinearThreshold(threshold == null ? '' : String(threshold));
+    setLinearThresholdWarning(undefined);
+  }
 
   const DISTRIBUTION_OPTIONS: Array<SelectableValue<ScaleDistribution>> = [
     {
@@ -176,17 +184,19 @@ export const ScaleDistributionEditor = ({
 
   return (
     <Stack direction="column" gap={2}>
-      <RadioButtonGroup
-        value={type}
-        options={DISTRIBUTION_OPTIONS}
-        onChange={(v) => {
-          onChange({
-            ...value,
-            type: v!,
-            log: v === ScaleDistribution.Linear ? undefined : log,
-          });
-        }}
-      />
+      <Stack direction="row">
+        <RadioButtonGroup
+          value={type}
+          options={DISTRIBUTION_OPTIONS}
+          onChange={(v) => {
+            onChange({
+              ...value,
+              type: v!,
+              log: v === ScaleDistribution.Linear ? undefined : log,
+            });
+          }}
+        />
+      </Stack>
       {(type === ScaleDistribution.Log || type === ScaleDistribution.Symlog) && (
         <Field label={t('grafana-ui.axis-builder.log-base', 'Log base')} noMargin>
           <Select

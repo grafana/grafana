@@ -1,38 +1,18 @@
 import { useState } from 'react';
-import { useAsync } from 'react-use';
 
 import { store } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 
-import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
+import { DELETED_DASHBOARDS_LIMIT, deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 
-export const DELETED_DASHBOARDS_LIMIT = 1000;
 export const DISMISS_STORAGE_KEY = 'grafana.recently-deleted-limit-banner.dismissed';
 
-interface Props {
-  /**
-   * Trigger used to re-read the cache after mutations. Pass the page's
-   * `searchState.result` so the banner refreshes whenever a completed
-   * search replaces the reference (which happens after every delete / restore
-   * cycle that invalidates the cache).
-   */
-  resultToken: unknown;
-}
-
-export function DeletedDashboardsLimitBanner({ resultToken }: Props) {
-  const { value: data } = useAsync(() => deletedDashboardsCache.getAsTable(), [resultToken]);
+// Read during render, so it is current whenever the page re-renders after a search completes.
+export function DeletedDashboardsLimitBanner() {
   const [dismissed, setDismissed] = useState<boolean>(() => store.getObject(DISMISS_STORAGE_KEY) === true);
 
-  if (!data || dismissed) {
-    return null;
-  }
-
-  const count = data.rows.length;
-  const lowerBoundOfMissing = data.metadata.remainingItemCount ?? (data.metadata.continue ? 1 : 0);
-  const atLimit = count + lowerBoundOfMissing >= DELETED_DASHBOARDS_LIMIT;
-
-  if (!atLimit) {
+  if (dismissed || !deletedDashboardsCache.isTrashTruncated()) {
     return null;
   }
 
@@ -43,12 +23,17 @@ export function DeletedDashboardsLimitBanner({ resultToken }: Props) {
 
   return (
     <Alert
-      severity="warning"
-      title={t('recently-deleted.limit-banner.at-limit-title', 'Deleted dashboards limit reached')}
+      severity="info"
+      title={t('recently-deleted.limit-banner.at-limit-title', 'Showing at most {{limit}} deleted dashboards', {
+        limit: DELETED_DASHBOARDS_LIMIT,
+      })}
       onRemove={handleDismiss}
     >
+      {/* No claim about which dashboards these are: the order follows the chosen sort, so
+          "the most recent" would not always be true. */}
       <Trans i18nKey="recently-deleted.limit-banner.at-limit-body" values={{ limit: DELETED_DASHBOARDS_LIMIT }}>
-        Grafana retains up to {'{{limit}}'} recently deleted dashboards. Older entries are permanently removed.
+        This list is limited to {'{{limit}}'} dashboards. If more have been deleted, use the search box to find a
+        specific one.
       </Trans>
     </Alert>
   );

@@ -103,7 +103,7 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 				progress.On("HasDirPathFailedCreation", "folder1/file1.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
 				repoResources.On("WriteResourceFromFile", mock.Anything, "folder1/file1.json", "new-ref").
-					Return("", schema.GroupVersionKind{}, folderErr).Once()
+					Return("", schema.GroupVersionKind{}, 0, folderErr).Once()
 
 				// First file recorded with error, automatically tracked
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
@@ -135,7 +135,7 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
 				// File deletion fails (deletions don't check HasDirPathFailedCreation)
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/file1.json", "old-ref").
-					Return("dashboard-1", "folder-uid", schema.GroupVersionKind{Kind: "Dashboard"}, fmt.Errorf("permission denied")).Once()
+					Return("dashboard-1", "folder-uid", schema.GroupVersionKind{Kind: "Dashboard"}, 0, fmt.Errorf("permission denied")).Once()
 
 				// Error recorded, automatically tracked in failedDeletions
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
@@ -170,7 +170,7 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 				progress.On("HasDirPathFailedCreation", "folder1/new.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
 				repoResources.On("WriteResourceFromFile", mock.Anything, "folder1/new.json", "new-ref").
-					Return("", schema.GroupVersionKind{}, folderErr).Once()
+					Return("", schema.GroupVersionKind{}, 0, folderErr).Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "folder1/new.json" && r.Error() != nil
@@ -178,7 +178,7 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 
 				// Deletion proceeds (NOT checking HasDirPathFailedCreation for deletions)
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "folder1/old.json", "old-ref").
-					Return("old-resource", "", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
+					Return("old-resource", "", schema.GroupVersionKind{Kind: "Dashboard"}, 0, nil).Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "folder1/old.json" &&
@@ -231,14 +231,14 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 				// Success path works
 				progress.On("HasDirPathFailedCreation", "success/file1.json").Return(false).Once()
 				repoResources.On("WriteResourceFromFile", mock.Anything, "success/file1.json", "new-ref").
-					Return("resource-1", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
+					Return("resource-1", schema.GroupVersionKind{Kind: "Dashboard"}, 0, nil).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "success/file1.json" && r.Error() == nil
 				})).Return().Once()
 
 				progress.On("HasDirPathFailedCreation", "success/nested/file2.json").Return(false).Once()
 				repoResources.On("WriteResourceFromFile", mock.Anything, "success/nested/file2.json", "new-ref").
-					Return("resource-2", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
+					Return("resource-2", schema.GroupVersionKind{Kind: "Dashboard"}, 0, nil).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "success/nested/file2.json" && r.Error() == nil
 				})).Return().Once()
@@ -276,8 +276,8 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 				// Rename fails with PathCreationError for destination folder
 				progress.On("HasDirPathFailedCreation", "newfolder/file.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "newfolder/", Err: fmt.Errorf("permission denied")}
-				repoResources.On("RenameResourceFile", mock.Anything, "oldfolder/file.json", "old-ref", "newfolder/file.json", "new-ref").
-					Return("", "", schema.GroupVersionKind{}, folderErr).Once()
+				repoResources.On("RenameResourceFile", mock.Anything, "oldfolder/file.json", "old-ref", "newfolder/file.json", "new-ref", mock.Anything).
+					Return("", "", schema.GroupVersionKind{}, 0, folderErr).Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "newfolder/file.json" &&
@@ -362,7 +362,7 @@ func runHierarchicalErrorHandlingTest(t *testing.T, tt struct {
 
 	tt.setupMocks(mockVersioned, repoResources, progress)
 
-	err := IncrementalSync(context.Background(), repo, tt.previousRef, tt.currentRef, repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), false)
+	err := IncrementalSync(context.Background(), withIncrementalSyncReader(t, repo, repoResources), tt.previousRef, tt.currentRef, repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), false)
 
 	if tt.expectError {
 		require.Error(t, err)
@@ -423,12 +423,12 @@ func TestIncrementalSync_HierarchicalErrorHandling_FailedFolderCreation(t *testi
 
 	progress.On("HasDirPathFailedCreation", "other/file.json").Return(false).Once()
 	repoResources.On("WriteResourceFromFile", mock.Anything, "other/file.json", "new-ref").
-		Return("test-resource", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
+		Return("test-resource", schema.GroupVersionKind{Kind: "Dashboard"}, 0, nil).Once()
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "other/file.json" && r.Action() == repository.FileActionCreated && r.Error() == nil
 	})).Return().Once()
 
-	err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), false)
+	err := IncrementalSync(context.Background(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), false)
 	require.NoError(t, err)
 	progress.AssertExpectations(t)
 }
@@ -453,7 +453,7 @@ func TestIncrementalSync_HierarchicalErrorHandling_FailedFileDeletion(t *testing
 
 	// Deletions don't check HasDirPathFailedCreation, they go straight to removal
 	repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/file1.json", "old-ref").
-		Return("dashboard-1", "folder-uid", schema.GroupVersionKind{Kind: "Dashboard"}, fmt.Errorf("permission denied")).Once()
+		Return("dashboard-1", "folder-uid", schema.GroupVersionKind{Kind: "Dashboard"}, 0, fmt.Errorf("permission denied")).Once()
 
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "dashboards/file1.json" && r.Action() == repository.FileActionDeleted &&
@@ -473,7 +473,7 @@ func TestIncrementalSync_HierarchicalErrorHandling_FailedFileDeletion(t *testing
 			r.Warning() != nil
 	})).Return().Once()
 
-	err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), false)
+	err := IncrementalSync(context.Background(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), false)
 	require.NoError(t, err)
 	progress.AssertExpectations(t)
 	repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
@@ -499,7 +499,7 @@ func TestIncrementalSync_HierarchicalErrorHandling_DeletionNotAffectedByCreation
 	// Creation fails
 	progress.On("HasDirPathFailedCreation", "folder1/file.json").Return(false).Once()
 	repoResources.On("WriteResourceFromFile", mock.Anything, "folder1/file.json", "new-ref").
-		Return("", schema.GroupVersionKind{}, &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}).Once()
+		Return("", schema.GroupVersionKind{}, 0, &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}).Once()
 
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "folder1/file.json" && r.Error() != nil
@@ -508,13 +508,13 @@ func TestIncrementalSync_HierarchicalErrorHandling_DeletionNotAffectedByCreation
 	// Deletion should NOT be skipped (not checking HasDirPathFailedCreation for deletions)
 	// Deletions don't check HasDirPathFailedCreation, they go straight to removal
 	repoResources.On("RemoveResourceFromFile", mock.Anything, "folder1/old.json", "old-ref").
-		Return("old-resource", "", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
+		Return("old-resource", "", schema.GroupVersionKind{Kind: "Dashboard"}, 0, nil).Once()
 
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "folder1/old.json" && r.Action() == repository.FileActionDeleted && r.Error() == nil
 	})).Return().Once()
 
-	err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), false)
+	err := IncrementalSync(context.Background(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), false)
 	require.NoError(t, err)
 	progress.AssertExpectations(t)
 }
@@ -558,7 +558,7 @@ func TestIncrementalSync_HierarchicalErrorHandling_MultiLevelNesting(t *testing.
 			r.Warning() != nil && r.Warning().Error() == "resource was not processed because the parent folder could not be created"
 	})).Return().Once()
 
-	err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), false)
+	err := IncrementalSync(context.Background(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), false)
 	require.NoError(t, err)
 	progress.AssertExpectations(t)
 }
@@ -584,14 +584,14 @@ func TestIncrementalSync_HierarchicalErrorHandling_MixedSuccessAndFailure(t *tes
 
 	progress.On("HasDirPathFailedCreation", "success/file1.json").Return(false).Once()
 	repoResources.On("WriteResourceFromFile", mock.Anything, "success/file1.json", "new-ref").
-		Return("resource-1", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
+		Return("resource-1", schema.GroupVersionKind{Kind: "Dashboard"}, 0, nil).Once()
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "success/file1.json" && r.Action() == repository.FileActionCreated && r.Error() == nil
 	})).Return().Once()
 
 	progress.On("HasDirPathFailedCreation", "success/nested/file2.json").Return(false).Once()
 	repoResources.On("WriteResourceFromFile", mock.Anything, "success/nested/file2.json", "new-ref").
-		Return("resource-2", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
+		Return("resource-2", schema.GroupVersionKind{Kind: "Dashboard"}, 0, nil).Once()
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "success/nested/file2.json" && r.Action() == repository.FileActionCreated && r.Error() == nil
 	})).Return().Once()
@@ -609,7 +609,7 @@ func TestIncrementalSync_HierarchicalErrorHandling_MixedSuccessAndFailure(t *tes
 			r.Warning() != nil && r.Warning().Error() == "resource was not processed because the parent folder could not be created"
 	})).Return().Once()
 
-	err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), false)
+	err := IncrementalSync(context.Background(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), false)
 	require.NoError(t, err)
 	progress.AssertExpectations(t)
 	repoResources.AssertExpectations(t)
@@ -637,7 +637,7 @@ func TestIncrementalSync_HierarchicalErrorHandling_RenameWithFailedFolderCreatio
 			r.Warning() != nil && r.Warning().Error() == "resource was not processed because the parent folder could not be created"
 	})).Return().Once()
 
-	err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), false)
+	err := IncrementalSync(context.Background(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), false)
 	require.NoError(t, err)
 	progress.AssertExpectations(t)
 }

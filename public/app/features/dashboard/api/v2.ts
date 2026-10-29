@@ -15,7 +15,6 @@ import {
   type ResourceClient,
   type ResourceForCreate,
   type ResourceList,
-  type TableResponse,
 } from 'app/features/apiserver/types';
 import { convertSpecToWireFormat } from 'app/features/dashboard-scene/serialization/transformationCompat';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
@@ -34,9 +33,8 @@ import {
   DashboardVersionError,
   type DashboardWithAccessInfo,
   type ListDashboardHistoryOptions,
-  type ListDeletedDashboardsOptions,
 } from './types';
-import { buildRestorePayload, fetchDeletedDashboard, isV0V1StoredVersion } from './utils';
+import { buildRestorePayload, fetchDeletedDashboard, getRequestOptions, isV0V1StoredVersion } from './utils';
 
 export function getK8sV2DashboardApiConfig() {
   return {
@@ -155,16 +153,19 @@ export class K8sDashboardV2API
       [AnnoKeyGrantPermissions]: 'default',
     };
 
-    if (obj.metadata.name) {
-      // remove resource version when updating
-      delete obj.metadata.resourceVersion;
+    // remove resource version when updating
+    delete obj.metadata.resourceVersion;
+
+    const requestOptions = getRequestOptions(options);
+
+    if (obj.metadata.name && !options.create) {
       delete obj.metadata.labels?.[DeprecatedInternalId];
-      return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
+      return this.client.update(obj, undefined, requestOptions).then((v) => this.asSaveDashboardResponseDTO(v));
     }
 
     // clear the deprecated id label so the backend generates a new unique id to prevent duplicate ids.
     delete obj.metadata.labels?.[DeprecatedInternalId];
-    return await this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
+    return await this.client.create(obj, undefined, requestOptions).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
   asSaveDashboardResponseDTO(v: Resource<DashboardV2Spec>): SaveDashboardResponseDTO {
@@ -251,10 +252,6 @@ export class K8sDashboardV2API
       message: `Restored from version ${version}`,
       folderUid: currentDashboard.metadata?.annotations?.[AnnoKeyFolder],
     });
-  }
-
-  async listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<TableResponse> {
-    return this.client.listAsTable({ ...options, labelSelector: 'grafana.app/get-trash=true' });
   }
 
   async getDeletedDashboard(name: string): Promise<Resource<DashboardV2Spec> | undefined> {

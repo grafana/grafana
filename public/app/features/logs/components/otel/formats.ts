@@ -73,19 +73,28 @@ export function getSuggestedFieldsForLogs(logs: LogListModel[] | LogRowModel[]):
 
   const fields = [...new Set([...suggestedFields, ...otelFields])];
 
-  const availableLabels = new Set<string>();
+  const labelsByLowerCase = new Map<string, string>();
   logs.forEach((log) => {
     for (const label in log.labels) {
-      availableLabels.add(label.toLowerCase());
+      labelsByLowerCase.set(label.toLowerCase(), label);
     }
   });
 
-  return fields.filter(
-    (field) =>
-      field === LOG_LINE_BODY_FIELD_NAME ||
-      field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME ||
-      availableLabels.has(field.toLowerCase())
-  );
+  const suggestedFieldNames: string[] = [];
+  for (const field of fields) {
+    if (field === LOG_LINE_BODY_FIELD_NAME || field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME) {
+      suggestedFieldNames.push(field);
+      continue;
+    }
+    // Return the label as it appears in the logs, not the normalized suggestion:
+    // consumers look the value up with `labels[field]`, which is case-sensitive.
+    const label = labelsByLowerCase.get(field.toLowerCase());
+    if (label !== undefined) {
+      suggestedFieldNames.push(label);
+    }
+  }
+
+  return [...new Set(suggestedFieldNames)];
 }
 
 function getSuggestedFieldsForAnyLogs() {

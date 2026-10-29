@@ -1,5 +1,6 @@
 import { type DataSourceApi, PluginType, VariableSupportType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from './buildNewDashboardSaveModel';
 
@@ -41,9 +42,7 @@ const fakeDsMock: DataSourceApi = {
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
-    featureToggles: {
-      newDashboardWithFiltersAndGroupBy: false,
-    },
+    featureToggles: {},
     apps: {},
     bootData: {
       ...jest.requireActual('@grafana/runtime').config.bootData,
@@ -52,11 +51,7 @@ jest.mock('@grafana/runtime', () => ({
       },
     },
   },
-  getDataSourceSrv: () => ({
-    get: (): Promise<DataSourceApi> => {
-      return Promise.resolve(fakeDsMock);
-    },
-  }),
+  getDataSourceInstance: (): Promise<DataSourceApi> => Promise.resolve(fakeDsMock),
 }));
 
 describe('buildNewDashboardSaveModelV1', () => {
@@ -65,12 +60,27 @@ describe('buildNewDashboardSaveModelV1', () => {
     expect(result.dashboard.templating).toBeUndefined();
   });
 
-  describe('when featureToggles.newDashboardWithFiltersAndGroupBy is true', () => {
+  describe('preload', () => {
+    const originalDefault = config.dashboardDefaultPreload;
+    afterEach(() => {
+      config.dashboardDefaultPreload = originalDefault;
+    });
+
+    it('seeds preload from the instance default', async () => {
+      config.dashboardDefaultPreload = true;
+      expect((await buildNewDashboardSaveModel()).dashboard.preload).toBe(true);
+
+      config.dashboardDefaultPreload = false;
+      expect((await buildNewDashboardSaveModel()).dashboard.preload).toBe(false);
+    });
+  });
+
+  describe('when the newDashboardWithFiltersAndGroupBy flag is on', () => {
     beforeAll(() => {
-      config.featureToggles.newDashboardWithFiltersAndGroupBy = true;
+      setTestFlags({ newDashboardWithFiltersAndGroupBy: true });
     });
     afterAll(() => {
-      config.featureToggles.newDashboardWithFiltersAndGroupBy = false;
+      setTestFlags({});
     });
 
     it('should add filter and group by variables if the datasource supports it and is set as default', async () => {
@@ -88,17 +98,55 @@ describe('buildNewDashboardSaveModelV1', () => {
 });
 
 describe('buildNewDashboardSaveModelV2', () => {
+  beforeEach(() => {
+    setTestFlags({ 'grafana.dashboardAutoGridDefault': false });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
+
   it('should not have template variables defined by default', async () => {
     const result = await buildNewDashboardSaveModelV2();
     expect(result.spec.variables).toEqual([]);
   });
 
-  describe('when featureToggles.newDashboardWithFiltersAndGroupBy is true', () => {
-    beforeAll(() => {
-      config.featureToggles.newDashboardWithFiltersAndGroupBy = true;
+  describe('preload', () => {
+    const originalDefault = config.dashboardDefaultPreload;
+    afterEach(() => {
+      config.dashboardDefaultPreload = originalDefault;
     });
-    afterAll(() => {
-      config.featureToggles.newDashboardWithFiltersAndGroupBy = false;
+
+    // The v2 schema default is a hardcoded false, so this has to win over the spread.
+    it('seeds preload from the instance default', async () => {
+      config.dashboardDefaultPreload = true;
+      expect((await buildNewDashboardSaveModelV2()).spec.preload).toBe(true);
+
+      config.dashboardDefaultPreload = false;
+      expect((await buildNewDashboardSaveModelV2()).spec.preload).toBe(false);
+    });
+  });
+
+  it('should use custom grid for the dashboard and its default layout when the feature toggle is disabled', async () => {
+    const result = await buildNewDashboardSaveModelV2();
+
+    expect(result.spec.layout.kind).toBe('GridLayout');
+    expect(result.spec.preferences?.layout?.kind).toBe('GridLayout');
+  });
+
+  it('should use auto grid for the dashboard and its default layout when the feature toggle is enabled', async () => {
+    setTestFlags({ 'grafana.dashboardAutoGridDefault': true });
+
+    const result = await buildNewDashboardSaveModelV2();
+
+    expect(result.spec.layout.kind).toBe('AutoGridLayout');
+    expect(result.spec.preferences?.layout?.kind).toBe('AutoGridLayout');
+  });
+
+  describe('when the newDashboardWithFiltersAndGroupBy flag is on', () => {
+    // setTestFlags replaces the whole flag set, so re-apply the outer beforeEach's flag alongside this one.
+    beforeEach(() => {
+      setTestFlags({ 'grafana.dashboardAutoGridDefault': false, newDashboardWithFiltersAndGroupBy: true });
     });
 
     it('should add filter and group by variables if the datasource supports it and is set as default', async () => {

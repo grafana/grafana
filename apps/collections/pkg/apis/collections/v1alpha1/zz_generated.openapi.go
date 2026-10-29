@@ -95,8 +95,7 @@ func schema_pkg_apis_collections_v1alpha1_StarsList(ref common.ReferenceCallback
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Stars{}.OpenAPIModelName()),
+										Ref: ref(Stars{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -143,9 +142,8 @@ func schema_pkg_apis_collections_v1alpha1_StarsResource(ref common.ReferenceCall
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -170,8 +168,7 @@ func schema_pkg_apis_collections_v1alpha1_StarsSpec(ref common.ReferenceCallback
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(StarsResource{}.OpenAPIModelName()),
+										Ref: ref(StarsResource{}.OpenAPIModelName()),
 									},
 								},
 							},

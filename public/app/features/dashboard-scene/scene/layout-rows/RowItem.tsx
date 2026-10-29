@@ -1,8 +1,8 @@
 import React from 'react';
 
-import { store } from '@grafana/data';
+import { locationUtil, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, logWarning } from '@grafana/runtime';
+import { locationService, logWarning } from '@grafana/runtime';
 import {
   NewSceneObjectAddedEvent,
   sceneGraph,
@@ -44,6 +44,7 @@ import { useSidebarOptions } from './RowItemEditor';
 import { RowItemRenderer } from './RowItemRenderer';
 import { RowItems } from './RowItems';
 import { RowsLayoutManager } from './RowsLayoutManager';
+import { getRowSlugPath } from './scrollToRow';
 
 export interface RowItemState extends SceneObjectState {
   layout: DashboardLayoutManager;
@@ -116,11 +117,7 @@ export class RowItem
   public getOutlineChildren(isEditing?: boolean): SceneObject[] {
     const layoutChildren = this.state.layout.getOutlineChildren();
     if (isEditing && this.state.$variables) {
-      return [
-        ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [this.getFiltersSet()] : []),
-        this.state.$variables,
-        ...layoutChildren,
-      ];
+      return [this.getFiltersSet(), this.state.$variables, ...layoutChildren];
     }
     return layoutChildren;
   }
@@ -138,6 +135,15 @@ export class RowItem
     return getSlugForRowOrTab(this, siblings);
   }
 
+  /** Returns an absolute url that scrolls this row into view when the dashboard is opened */
+  public getUrl(): string {
+    const urlWithRowParam = locationUtil.getUrlForPartial(locationService.getLocation(), {
+      drow: getRowSlugPath(this),
+    });
+
+    return new URL(urlWithRowParam, window.location.origin).toString();
+  }
+
   public switchLayout(layout: DashboardLayoutManager, skipUndo?: boolean) {
     const currentLayout = this.state.layout;
 
@@ -152,6 +158,7 @@ export class RowItem
     }
 
     edit({
+      meta: { actionId: 'layout.switch', scope: 'row' },
       description: t('dashboard.edit-actions.switch-layout-row', 'Switch layout'),
       source: this,
       perform,
@@ -190,7 +197,10 @@ export class RowItem
   }
 
   public createMultiSelectedElement(items: SceneObject[]): RowItems {
-    return new RowItems(items.filter((item) => item instanceof RowItem));
+    return new RowItems(
+      items.filter((item) => item instanceof RowItem),
+      getDashboardSceneFor(this)
+    );
   }
 
   public onDuplicate() {

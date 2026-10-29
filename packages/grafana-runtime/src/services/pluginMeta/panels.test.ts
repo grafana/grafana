@@ -1,5 +1,6 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
+import { config } from '../../config';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import { getLogger, setLogger } from '../logging/registry';
@@ -51,6 +52,13 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
       setPanelPluginMetas({});
       jest.resetAllMocks();
       initPluginMetasMock.mockResolvedValue({ items: [v0alpha1Response.items[0]] });
+      setLogger('grafana/runtime.plugins.meta', {
+        logDebug: jest.fn(),
+        logError: jest.fn(),
+        logInfo: jest.fn(),
+        logMeasurement: jest.fn(),
+        logWarning: jest.fn(),
+      });
     });
 
     it('getPanelPluginMetas should call initPluginMetas and return correct result', async () => {
@@ -74,29 +82,17 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
     });
 
-    it('getPanelPluginMetasMapSync should return empty map', () => {
+    it('getPanelPluginMetasMapSync should return empty map and report an error', () => {
       const panels = getPanelPluginMetasMapSync();
+
+      const logError = jest.mocked(getLogger('grafana/runtime.plugins.meta').logError);
 
       expect(panels).toEqual({});
       expect(initPluginMetasMock).not.toHaveBeenCalled();
-    });
-
-    describe('when process is under development', () => {
-      let originalNodeEnv = process.env.NODE_ENV;
-      beforeEach(() => {
-        process.env.NODE_ENV = 'development';
-      });
-
-      afterEach(() => {
-        process.env.NODE_ENV = originalNodeEnv;
-      });
-
-      it('getPanelPluginMetasMapSync should throw', () => {
-        expect(() => getPanelPluginMetasMapSync()).toThrow(
-          new Error('getPanelPluginMetasMapSync() was called before panel plugins map was initialized!')
-        );
-        expect(initPluginMetasMock).not.toHaveBeenCalled();
-      });
+      expect(logError).toHaveBeenCalledTimes(1);
+      expect(logError.mock.calls[0][0].message).toBe(
+        'PluginMeta: getPanelPluginMetasMapSync() was called before the panel plugins map was initialized'
+      );
     });
 
     it('getPanelPluginMeta should call initPluginMetas and return correct result', async () => {
@@ -271,24 +267,6 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
       expect(initPluginMetasMock).not.toHaveBeenCalled();
     });
 
-    describe('when process is under development', () => {
-      let originalNodeEnv = process.env.NODE_ENV;
-      beforeEach(() => {
-        process.env.NODE_ENV = 'development';
-      });
-
-      afterEach(() => {
-        process.env.NODE_ENV = originalNodeEnv;
-      });
-
-      it('getPanelPluginMetasMapSync should not throw', () => {
-        const panels = getPanelPluginMetasMapSync();
-
-        expect(panels).toEqual({ 'grafana-test-panel': panel });
-        expect(initPluginMetasMock).not.toHaveBeenCalled();
-      });
-    });
-
     it('getPanelPluginMeta should not call initPluginMetas and return correct result', async () => {
       const result = await getPanelPluginMeta('grafana-test-panel');
 
@@ -460,6 +438,35 @@ describe('when plugins.useMTPlugins flag is disabled', () => {
       expect(panels).toEqual({});
       expect(initPluginMetasMock).not.toHaveBeenCalled();
     });
+
+    /* eslint-disable @grafana/no-config-panels -- boot data is the input under test here */
+    describe('and bootdata carries panels', () => {
+      const originalConfigPanels = config.panels;
+
+      beforeEach(() => {
+        config.panels = { 'grafana-test-panel': panel };
+        setLogger('grafana/runtime.plugins.meta', {
+          logDebug: jest.fn(),
+          logError: jest.fn(),
+          logInfo: jest.fn(),
+          logMeasurement: jest.fn(),
+          logWarning: jest.fn(),
+        });
+      });
+
+      afterEach(() => {
+        config.panels = originalConfigPanels;
+      });
+
+      it('getPanelPluginMetasMapSync should seed from bootdata without reporting an error', () => {
+        const panels = getPanelPluginMetasMapSync();
+
+        expect(panels).toEqual({ 'grafana-test-panel': panel });
+        expect(initPluginMetasMock).not.toHaveBeenCalled();
+        expect(getLogger('grafana/runtime.plugins.meta').logError).not.toHaveBeenCalled();
+      });
+    });
+    /* eslint-enable @grafana/no-config-panels */
 
     it('getPanelPluginMeta should not call initPluginMetas and return correct result', async () => {
       const result = await getPanelPluginMeta('grafana-test-panel');

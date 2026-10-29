@@ -1,4 +1,4 @@
-import { type Meta } from '@storybook/react-webpack5';
+import { type Meta } from '@storybook/react';
 import { useState } from 'react';
 
 import { Button } from '../../Button/Button';

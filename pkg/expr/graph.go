@@ -96,8 +96,7 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 		// dependency-error path — no separate transitive propagation needed.
 		if disabledErr := node.DisabledErr(); disabledErr != nil {
 			if node.NodeType() == TypeCMDNode && node.(*CMDNode).CMDType == TypeSQL {
-				var sqlErr *sql.ErrorWithCategory
-				if errors.As(disabledErr, &sqlErr) {
+				if sqlErr, ok := errors.AsType[*sql.ErrorWithCategory](disabledErr); ok {
 					s.metrics.SqlCommandCount.WithLabelValues("error", sqlErr.Category()).Inc()
 				}
 			}
@@ -118,8 +117,7 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 						// although the SQL expression won't be executed,
 						// we track a dependency error on the metric.
 						eType := e.Category()
-						var errWithType *sql.ErrorWithCategory
-						if errors.As(res.Error, &errWithType) {
+						if errWithType, ok := errors.AsType[*sql.ErrorWithCategory](res.Error); ok {
 							// If it is already SQL error with type (e.g. limit exceeded, input conversion, capture the type as that)
 							eType = errWithType.Category()
 						}
@@ -221,8 +219,7 @@ func (s *Service) buildPipeline(ctx context.Context, req *Request) (DataPipeline
 	}
 
 	instrumentSQLError := func(err error, span trace.Span) {
-		var sqlErr *sql.ErrorWithCategory
-		if errors.As(err, &sqlErr) {
+		if sqlErr, ok := errors.AsType[*sql.ErrorWithCategory](err); ok {
 			// The SQL expression (and the entire pipeline) will not be executed, so we
 			// track the attempt to execute here.
 			s.metrics.SqlCommandCount.WithLabelValues("error", sqlErr.Category()).Inc()

@@ -247,6 +247,26 @@ var adminCommands = []*cli.Command{
 
 var Commands = []*cli.Command{
 	{
+		Name:  "write-openapi",
+		Usage: "write-openapi <manifest.json> [--api-version <version>] -o <path>",
+		Description: "Render OpenAPI v3 from one app-sdk manifest file without starting Grafana. " +
+			"Reads plugin.json beside the manifest when present; no Grafana configuration is needed.\n\n" +
+			"   Use --api-version to write one version to --output or stdout. Otherwise every served " +
+			"version is written to the --output directory as <group>-<version>.json.",
+		Action: writeOpenAPICommand,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "api-version",
+				Usage: "Manifest API version to render; defaults to all served versions",
+			},
+			&cli.StringFlag{
+				Name:    "output",
+				Aliases: []string{"o"},
+				Usage:   "File to write one version to, or directory to write every version to",
+			},
+		},
+	},
+	{
 		Name:        "plugins",
 		Usage:       "Manage plugins for grafana",
 		Subcommands: pluginCommands,

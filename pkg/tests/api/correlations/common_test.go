@@ -168,7 +168,7 @@ func (c TestContext) createUser(cmd user.CreateUserCommand) User {
 	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(store), c.env.Cfg, quotaService)
 	require.NoError(c.t, err)
 	usrSvc, err := userimpl.ProvideService(
-		store, orgService, c.env.Cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(store), orgService, c.env.Cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(c.t, err)

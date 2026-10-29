@@ -6,10 +6,9 @@ package resource
 //
 // Not every standard field appears here. Fields excluded:
 //
-//   - Pseudo / wire-only columns (_id, _legacy_id, _score, _explain,
-//     _all_columns, rv, kind, namespace, group/resource): they exist solely
-//     to populate ResourceTable column metadata in the gRPC response and are
-//     not indexed.
+//   - Pseudo / response-only fields (_id, _legacy_id, _score, _explain,
+//     _all_columns, rv, kind, namespace, group/resource): their values come
+//     from row metadata or are derived when building a response.
 //   - Sub-document fields under "manager." and "source.": nested documents
 //     whose bleve mappings are emitted hardcoded.
 //   - Fields under "labels." and "reference.": open key sets, served by
@@ -40,9 +39,8 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 		{
 			Name: SEARCH_FIELD_DESCRIPTION,
 			Type: SearchFieldTypeString,
-			// unranked: description is indexed as text (the proto column declares
-			// FreeText:true), but no caller scores against it today; skipping
-			// BM25 frequency and length stats keeps the index small.
+			// Keep description indexing compact: text matching works without
+			// storing full BM25 frequency and length stats.
 			Capabilities: []SearchCapability{SearchCapabilityText, SearchCapabilityRetrieve, SearchCapabilityUnranked},
 			Description:  "Free-text description of the resource.",
 		},
@@ -82,23 +80,43 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 			Capabilities: []SearchCapability{SearchCapabilityFacet},
 			Description:  "Manager identity in format {kind}:{id}; used for faceting.",
 		},
-		// created and updated are unix-millis timestamps, mapped as numeric bleve
-		// fields and stored so retrieve returns the value in search results. They
-		// are retrieve-only: filtering would need range queries, which the search
-		// API does not support (and exact-millisecond equality is not a useful
-		// query), and sort would first require every index to carry the numeric
-		// mapping.
+		{
+			Name:         SEARCH_FIELD_UPDATED_BY,
+			Type:         SearchFieldTypeString,
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+			Description:  "Who last updated the resource (format: user:<uid>).",
+		},
 		{
 			Name:         SEARCH_FIELD_CREATED,
 			Type:         SearchFieldTypeInt64,
-			Capabilities: []SearchCapability{SearchCapabilityRetrieve},
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilitySort, SearchCapabilityRetrieve},
 			Description:  "Creation timestamp (unix millis).",
 		},
 		{
 			Name:         SEARCH_FIELD_UPDATED,
 			Type:         SearchFieldTypeInt64,
-			Capabilities: []SearchCapability{SearchCapabilityRetrieve},
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilitySort, SearchCapabilityRetrieve},
 			Description:  "Update timestamp (unix millis).",
+		},
+		// The manager fields live in the manager sub-document, so their names are
+		// paths into it.
+		{
+			Name:         SEARCH_FIELD_MANAGER_KIND,
+			Type:         SearchFieldTypeString,
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+			Description:  "Kind of tool that manages the resource, such as repo for Git Sync. Empty when nothing manages it.",
+		},
+		{
+			Name:         SEARCH_FIELD_MANAGER_ID,
+			Type:         SearchFieldTypeString,
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+			Description:  "Which instance of that tool manages the resource, such as the repository name.",
+		},
+		{
+			Name:         SEARCH_FIELD_MANAGER_ALLOW_EDITS,
+			Type:         SearchFieldTypeBoolean,
+			Capabilities: []SearchCapability{SearchCapabilityRetrieve},
+			Description:  "Whether the manager allows others to edit the resource.",
 		},
 	}
 }
@@ -132,7 +150,9 @@ func TrashSearchFieldDefinitions() []SearchFieldDefinition {
 		},
 		// A string, unlike deletion_time: resource versions are snowflake ids around
 		// 1.8e18, where a float64 can only represent multiples of 256, so a number
-		// would come back rounded. Restore submits this value, so it has to be exact.
+		// would come back rounded. The search backend prepares a separate fixed-width
+		// sort key, but the public capability remains disabled until clients can fall
+		// back from search servers deployed before that mapping.
 		{
 			Name:         SEARCH_FIELD_DELETED_RV,
 			Type:         SearchFieldTypeString,
@@ -150,6 +170,23 @@ var trashSearchFieldNames = func() map[string]bool {
 	}
 	return names
 }()
+
+// internalSearchFieldNames are index fields no caller may name. They are mapped
+// without being declared as search fields, so nothing else refuses them.
+//
+// Not every underscore-prefixed name belongs here: _id, _score, _explain and
+// _all_columns are part of the request API.
+var internalSearchFieldNames = map[string]bool{
+	SEARCH_FIELD_IS_DELETED:      true,
+	SEARCH_FIELD_IS_PROVISIONED:  true,
+	SEARCH_FIELD_RV_STRING:       true,
+	SEARCH_FIELD_DELETED_RV_SORT: true,
+}
+
+// IsInternalSearchField reports whether name is an index field callers cannot use.
+func IsInternalSearchField(name string) bool {
+	return internalSearchFieldNames[name]
+}
 
 // IsTrashSearchField reports whether name is a field only deleted documents carry.
 func IsTrashSearchField(name string) bool {

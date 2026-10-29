@@ -51,15 +51,48 @@ describe('DatasourceAPIVersions', () => {
 describe('ScopedResourceClient', () => {
   let client: ScopedResourceClient;
   let postMock: jest.Mock;
+  let putMock: jest.Mock;
   const gvr: GroupVersionResource = { group: 'test.grafana.app', version: 'v1', resource: 'testresources' };
 
   beforeEach(() => {
     jest.clearAllMocks();
     postMock = jest.fn().mockResolvedValue({ metadata: { name: 'created-resource' } });
+    putMock = jest.fn().mockResolvedValue({ metadata: { name: 'updated-resource' } });
     (getBackendSrv as jest.Mock).mockReturnValue({
       post: postMock,
+      put: putMock,
     });
     client = new ScopedResourceClient(gvr);
+  });
+
+  describe('request options', () => {
+    it('forwards showErrorAlert to the backend on create so callers can render the error themselves', async () => {
+      await client.create({ metadata: { name: 'a' }, spec: {} }, undefined, { showErrorAlert: false });
+
+      expect(postMock.mock.calls[0][2]).toEqual({ params: undefined, showErrorAlert: false });
+    });
+
+    it('forwards showErrorAlert to the backend on update so callers can render the error themselves', async () => {
+      await client.update(
+        {
+          apiVersion: 'test.grafana.app/v1',
+          kind: 'TestResource',
+          metadata: { name: 'a', resourceVersion: '1', creationTimestamp: '1' },
+          spec: {},
+          status: {},
+        },
+        undefined,
+        { showErrorAlert: false }
+      );
+
+      expect(putMock.mock.calls[0][2]).toEqual({ params: undefined, showErrorAlert: false });
+    });
+
+    it('leaves the global error alert enabled when no request options are given', async () => {
+      await client.create({ metadata: { name: 'a' }, spec: {} });
+
+      expect(postMock.mock.calls[0][2]).not.toHaveProperty('showErrorAlert');
+    });
   });
 
   describe('create', () => {

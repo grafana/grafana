@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -48,8 +49,7 @@ func notAuthorized(c *contextmodel.ReqContext) {
 		writeRedirectCookie(c)
 	}
 
-	var tokenRotationErr authn.TokenNeedsRotationError
-	if errors.As(c.LookupTokenErr, &tokenRotationErr) {
+	if _, ok := errors.AsType[authn.TokenNeedsRotationError](c.LookupTokenErr); ok {
 		if !c.UseSessionStorageRedirect {
 			c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate")
 			return
@@ -186,13 +186,7 @@ func normalizeIncludePath(p string) string {
 
 func RoleAuth(roles ...org.RoleType) web.Handler {
 	return func(c *contextmodel.ReqContext) {
-		ok := false
-		for _, role := range roles {
-			if role == c.OrgRole {
-				ok = true
-				break
-			}
-		}
+		ok := slices.Contains(roles, c.OrgRole)
 		if !ok {
 			accessForbidden(c)
 		}
@@ -216,8 +210,7 @@ func Auth(options *AuthOptions) web.Handler {
 		requireLogin := !c.AllowAnonymous || forceLogin || options.ReqNoAnonynmous
 
 		if !c.IsSignedIn && options.ReqSignedIn && requireLogin {
-			var revokedErr *auth.TokenRevokedError
-			if errors.As(c.LookupTokenErr, &revokedErr) {
+			if revokedErr, ok := errors.AsType[*auth.TokenRevokedError](c.LookupTokenErr); ok {
 				tokenRevoked(c, revokedErr)
 				return
 			}

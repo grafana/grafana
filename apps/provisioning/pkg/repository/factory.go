@@ -2,13 +2,20 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
+	"time"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
+
+// TODO: Accept the build timeout as a parameter to Factory.Build.
+const buildTimeout = 30 * time.Second
 
 type Mutator func(ctx context.Context, obj runtime.Object) error
 
@@ -16,7 +23,7 @@ type Mutator func(ctx context.Context, obj runtime.Object) error
 type Extra interface {
 	Type() provisioning.RepositoryType
 	Build(ctx context.Context, r *provisioning.Repository) (Repository, error)
-	Mutate(ctx context.Context, obj runtime.Object) error
+	Mutate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) error
 	Validate(ctx context.Context, obj runtime.Object) field.ErrorList
 }
 
@@ -24,19 +31,21 @@ type Extra interface {
 type Factory interface {
 	Types() []provisioning.RepositoryType
 	Build(ctx context.Context, r *provisioning.Repository) (Repository, error)
-	Mutate(ctx context.Context, obj runtime.Object) error
+	Mutate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) error
 	Validate(ctx context.Context, obj runtime.Object) field.ErrorList
 }
 
 type factory struct {
 	extras  map[provisioning.RepositoryType]Extra
 	enabled map[provisioning.RepositoryType]struct{}
+	tracer  trace.Tracer
 }
 
-func ProvideFactory(enabled map[provisioning.RepositoryType]struct{}, extras []Extra) (Factory, error) {
+func ProvideFactory(enabled map[provisioning.RepositoryType]struct{}, extras []Extra, tracer trace.Tracer) (Factory, error) {
 	f := &factory{
 		enabled: enabled,
 		extras:  make(map[provisioning.RepositoryType]Extra, len(extras)),
+		tracer:  tracer,
 	}
 
 	for _, e := range extras {
@@ -64,21 +73,57 @@ func (f *factory) Types() []provisioning.RepositoryType {
 	return types
 }
 
+// Build applies buildTimeout to repository construction and classifies deadline
+// failures as ErrServerUnavailable for health reporting and retries. Earlier
+// caller deadlines take precedence. Provider and context errors remain available
+// through error unwrapping, and the caller's context stays usable after a build timeout.
 func (f *factory) Build(ctx context.Context, r *provisioning.Repository) (Repository, error) {
+	ctx, cancel := context.WithTimeout(ctx, buildTimeout)
+	defer cancel()
+
+	// Build is the single chokepoint every caller (job driver, HTTP handlers,
+	// controllers) funnels through to construct a repository, and it is where the
+	// repo's secrets (token, commit-signing-key, webhook secret) are decrypted via
+	// the secrets service. Tracing it here — rather than per caller — gives those
+	// decrypt calls a descriptive parent regardless of who triggered the build.
+	ctx, span := f.tracer.Start(ctx, "provisioning.repository.build",
+		trace.WithAttributes(
+			attribute.String("repository.name", r.GetName()),
+			attribute.String("repository.namespace", r.GetNamespace()),
+			attribute.String("repository.type", string(r.Spec.Type)),
+		),
+	)
+	defer span.End()
+
 	for _, e := range f.extras {
 		if e.Type() == r.Spec.Type {
 			if _, enabled := f.enabled[e.Type()]; !enabled {
-				return nil, fmt.Errorf("repository type %q is not enabled", e.Type())
+				err := fmt.Errorf("repository type %q is not enabled", e.Type())
+				span.RecordError(err)
+				return nil, err
 			}
 
-			return e.Build(ctx, r)
+			repo, err := e.Build(ctx, r)
+			if ctxErr := ctx.Err(); ctxErr != nil && !errors.Is(err, ctxErr) {
+				err = errors.Join(err, ctxErr)
+			}
+			if errors.Is(err, context.DeadlineExceeded) && !errors.Is(err, ErrServerUnavailable) {
+				err = fmt.Errorf("repository build timed out: %w: %w", ErrServerUnavailable, err)
+			}
+			if err != nil {
+				span.RecordError(err)
+				return nil, err
+			}
+			return repo, nil
 		}
 	}
 
-	return nil, fmt.Errorf("repository type %q is not supported", r.Spec.Type)
+	err := fmt.Errorf("repository type %q is not supported", r.Spec.Type)
+	span.RecordError(err)
+	return nil, err
 }
 
-func (f *factory) Mutate(ctx context.Context, obj runtime.Object) error {
+func (f *factory) Mutate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) error {
 	repo, ok := obj.(*provisioning.Repository)
 	if !ok {
 		return nil
@@ -87,7 +132,7 @@ func (f *factory) Mutate(ctx context.Context, obj runtime.Object) error {
 	// Find the extra that matches this repository type
 	for _, e := range f.extras {
 		if e.Type() == repo.Spec.Type {
-			return e.Mutate(ctx, obj)
+			return e.Mutate(ctx, obj, oldObj)
 		}
 	}
 

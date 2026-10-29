@@ -2,7 +2,7 @@ import { type Page, type Locator } from '@playwright/test';
 
 import { test, expect, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { getCell, getCellHeight, getColumnIdx, getSelectedFilterCount, waitForTableLoad } from './table-utils';
+import { getCell, getCellHeight, getColumnIdx, waitForTableLoad } from './table-utils';
 
 const DASHBOARD_UID = 'dcb9f5e9-8066-4397-889e-864b99555dbb';
 
@@ -61,7 +61,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // to avoid a race condition when counting up , wait for react-data-grid to finish rendering.
     await waitForTableLoad(page);
 
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
     const longTextColIdx = await getColumnIdx(table, 'Long Text');
 
     // text wrapping is enabled by default on this panel.
@@ -158,7 +158,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     ).toBeVisible();
 
     // click the "State" column header to sort it.
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
     const stateColumnHeader = getCell(table, 0, 1);
 
     await stateColumnHeader.getByText('Info').click();
@@ -185,7 +185,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     await waitForTableLoad(page);
 
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
 
     const infoColumnIdx = await getColumnIdx(table, 'Info');
 
@@ -275,7 +275,20 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
   });
 
   test('Tests DataLinks (single and multi) and actions', async ({ gotoDashboardPage, selectors, page }) => {
+    // section is collapsed when the panel has no links, so we need to open it first
+    const expandDataLinksGroup = async () => {
+      const toggle = dashboardPage.getByGrafanaSelector(
+        selectors.components.OptionsGroup.toggle('Data links and actions')
+      );
+      await expect(toggle).toBeVisible();
+      if ((await toggle.getAttribute('aria-expanded')) !== 'true') {
+        await toggle.click();
+      }
+    };
+
     const addDataLink = async (title: string, url: string) => {
+      await expandDataLinksGroup();
+
       await dashboardPage
         .getByGrafanaSelector(
           selectors.components.PanelEditor.OptionsPane.fieldLabel('Data links and actions Data links')
@@ -310,7 +323,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     await disableAllTextWrap(page, selectors);
 
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
 
     // - pills column currently does not support DataLinks.
     // - we don't apply DataLinks to Actions or DataLinks columns.
@@ -333,8 +346,8 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
       const cell = getCell(table, 1, colIdx);
       await expect(cell.locator('a')).toBeVisible();
-      expect(cell.locator('a')).toHaveAttribute('href');
-      expect(cell.locator('a')).not.toHaveAttribute('aria-haspopup', 'menu');
+      await expect(cell.locator('a')).toHaveAttribute('href');
+      await expect(cell.locator('a')).not.toHaveAttribute('aria-haspopup', 'menu');
     }
 
     const headerContainer = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer);
@@ -349,7 +362,21 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
         continue;
       }
 
-      await cell.locator('a').click({ force: true });
+      // Inline links can extend past the clipping cell; click the center of their visible intersection.
+      await cell.scrollIntoViewIfNeeded();
+      const position = await cell.evaluate((element) => {
+        const cellBounds = element.getBoundingClientRect();
+        const linkBounds = element.querySelector('a')!.getBoundingClientRect();
+        return {
+          x:
+            (Math.max(cellBounds.left, linkBounds.left) + Math.min(cellBounds.right, linkBounds.right)) / 2 -
+            cellBounds.left,
+          y:
+            (Math.max(cellBounds.top, linkBounds.top) + Math.min(cellBounds.bottom, linkBounds.bottom)) / 2 -
+            cellBounds.top,
+        };
+      });
+      await cell.click({ position });
       await expect(page.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper)).toBeVisible();
 
       await headerContainer.click(); // convenient just to click the header to close the tooltip.
@@ -358,86 +385,6 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     // add an Action to the whole table and check that the action button is added to the tooltip.
     // TODO -- saving for another day.
-  });
-
-  test('Cross-filter: second filter popup only shows values reachable after first filter', async ({
-    gotoDashboardPage,
-    selectors,
-    page,
-  }) => {
-    const dashboardPage = await gotoDashboardPage({
-      uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '1' }),
-    });
-
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
-    ).toBeVisible();
-
-    await waitForTableLoad(page);
-
-    const table = page.locator('.rdg');
-
-    const infoColumnIdx = await getColumnIdx(table, 'Info');
-    const minColumnIdx = await getColumnIdx(table, 'Min');
-
-    // --- Baseline: collect the full set of Min option titles from the Min filter popup ---
-    const minHeader = page.getByRole('columnheader').nth(minColumnIdx);
-    await minHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
-    const minFilterContainer = dashboardPage.getByGrafanaSelector(
-      selectors.components.Panels.Visualization.TableNG.Filters.Container
-    );
-    await expect(minFilterContainer, 'filter popup for min is visible after click').toBeVisible();
-
-    // Count all option rows in the Min filter popup before any cross-filter is applied.
-    // The List component is virtualized so we can't rely on DOM element count — instead click
-    // "Select all" (which operates on the full data array) and parse the "N selected" label.
-    await minFilterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
-    const allMinOptionCount = await getSelectedFilterCount(minFilterContainer, selectors);
-
-    // Close without applying
-    await minFilterContainer.getByRole('button', { name: 'Cancel' }).click();
-    await expect(minFilterContainer, 'filter popup for min is not visible after close').not.toBeVisible();
-
-    // --- Sort by Info and confirm that the first value is not "up" to compare later in the test ---
-    const infoHeader = page.getByRole('columnheader').nth(infoColumnIdx);
-    await infoHeader.getByText('Info').click();
-    await expect(infoHeader, 'info column header is sorted ascending after click').toHaveAttribute(
-      'aria-sort',
-      'ascending'
-    );
-    const firstInfoCell = getCell(table, 1, infoColumnIdx);
-    expect(firstInfoCell, 'first info cell is not "up" after sorting').not.toHaveText('up');
-
-    // --- Apply a filter on Info to only show "up" rows ---
-    await infoHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
-    const infoFilterContainer = dashboardPage.getByGrafanaSelector(
-      selectors.components.Panels.Visualization.TableNG.Filters.Container
-    );
-    await expect(infoFilterContainer, 'filter popup for info is visible after click').toBeVisible();
-    await infoFilterContainer.getByTitle('up', { exact: true }).locator('label').click();
-    await infoFilterContainer.getByRole('button', { name: 'Ok' }).click();
-    await expect(infoFilterContainer).not.toBeVisible();
-
-    // Table should now show only "up" rows
-    await expect(firstInfoCell, 'first info cell is "up" after filtering').toHaveText('up');
-
-    // --- Open the Min filter popup again; cross-filter should restrict the options ---
-    await minHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
-    await expect(minFilterContainer, 'filter popup for min is visible after click').toBeVisible();
-
-    await minFilterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
-    const crossFilteredMinOptionCount = await getSelectedFilterCount(minFilterContainer, selectors);
-
-    // With Info filtered to "up" only, Min options must be a subset of (or equal to) the full set.
-    // In practice the data has multiple Info values, so the Min option list should be smaller.
-    expect(
-      crossFilteredMinOptionCount,
-      'cross-filtered min option count is less than all min option count'
-    ).toBeLessThan(allMinOptionCount);
-
-    // Close the filter popup
-    await minFilterContainer.getByRole('button', { name: 'Cancel' }).click();
   });
 
   test('Tests tooltip interactions', async ({ gotoDashboardPage, selectors }) => {
@@ -543,7 +490,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     await waitForTableLoad(page);
 
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
 
     const infoColumnIdx = await getColumnIdx(table, 'Info');
     const dataLinkColumnIdx = await getColumnIdx(table, 'Data Link');
@@ -608,7 +555,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
     await waitForTableLoad(panelContent);
 
-    const table = panelContent.locator('.rdg');
+    const table = panelContent.locator('.rdg:not([aria-hidden="true"])');
 
     const frameCombobox = panelContent.getByRole('combobox');
     await expect(frameCombobox).toBeVisible();

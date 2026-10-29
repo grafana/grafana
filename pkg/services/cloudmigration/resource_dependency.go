@@ -1,6 +1,8 @@
 package cloudmigration
 
 import (
+	"maps"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
@@ -40,13 +42,9 @@ var alertingResourceDependency = DependencyMap{
 // by snapshot creation on instances where alerting is disabled.
 func ResourceDependency(alertingEnabled bool) DependencyMap {
 	depMap := make(DependencyMap, len(baseResourceDependency)+len(alertingResourceDependency))
-	for resourceType, dependencies := range baseResourceDependency {
-		depMap[resourceType] = dependencies
-	}
+	maps.Copy(depMap, baseResourceDependency)
 	if alertingEnabled {
-		for resourceType, dependencies := range alertingResourceDependency {
-			depMap[resourceType] = dependencies
-		}
+		maps.Copy(depMap, alertingResourceDependency)
 	}
 	return depMap
 }

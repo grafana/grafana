@@ -3,8 +3,11 @@ import { memo, useState } from 'react';
 
 import { type DataFrame, type GrafanaTheme2, type LoadingState, type SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { useFlagRawPrometheusTableNg } from '@grafana/runtime/internal';
+import { type TimeZone } from '@grafana/schema';
 import { RadioButtonGroup, Table, type AdHocFilterItem, PanelChrome, useStyles2 } from '@grafana/ui';
 import { PANEL_BORDER } from 'app/core/constants';
+import { CommonTableNG } from 'app/features/table/CommonTableNG';
 import { TABLE_RESULTS_STYLE, TABLE_RESULTS_STYLES, type TableResultsStyle } from 'app/types/explore';
 
 import { MetaInfoText } from '../MetaInfoText';
@@ -25,6 +28,7 @@ const getStyles = (_theme: GrafanaTheme2) => ({
 export interface RawPrometheusContainerPureProps {
   /** Pre-processed DataFrames to display */
   tableResult: DataFrame[];
+  timeZone: TimeZone;
   /** Width of the container in pixels */
   width: number;
   /** Loading state for panel chrome indicator */
@@ -46,11 +50,13 @@ export const RawPrometheusContainerPure = memo(
     loading,
     onCellFilterAdded,
     tableResult,
+    timeZone,
     width,
     ariaLabel,
     showRawPrometheus,
   }: RawPrometheusContainerPureProps) => {
     const styles = useStyles2(getStyles);
+    const useTableNG = useFlagRawPrometheusTableNg();
 
     // If resultsStyle is undefined we won't render the toggle, and the default table will be rendered
     const [resultsStyle, setResultsStyle] = useState<TableResultsStyle | undefined>(
@@ -106,7 +112,21 @@ export const RawPrometheusContainerPure = memo(
       <PanelChrome title={title} actions={label} loadingState={loading}>
         {frames?.length && (
           <>
-            {renderTable && (
+            {renderTable && useTableNG && (
+              // TableNG sizes its root grid via CSS (blockSize: 100%) rather than the height prop, so it
+              // needs a definite-size ancestor to resolve against.
+              <div style={{ width: tableWidth, height }}>
+                <CommonTableNG
+                  ariaLabel={ariaLabel}
+                  data={frames[0]}
+                  timeZone={timeZone}
+                  width={tableWidth}
+                  height={height}
+                  onCellFilterAdded={onCellFilterAdded}
+                />
+              </div>
+            )}
+            {renderTable && !useTableNG && (
               <Table
                 ariaLabel={ariaLabel}
                 data={frames[0]}

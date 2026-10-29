@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"go.opentelemetry.io/otel/attribute"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 // HistoryWriter stores completed jobs
@@ -31,6 +33,13 @@ func NewAPIClientHistoryWriter(provisioningClient client.ProvisioningV0alpha1Int
 
 // WriteJob implements HistoryWriter.
 func (w *apiClientHistoryWriter) WriteJob(ctx context.Context, job *provisioning.Job) error {
+	ctx, span := tracing.Start(ctx, "provisioning.jobs.write_history",
+		attribute.String("job.name", job.GetName()),
+		attribute.String("job.namespace", job.GetNamespace()),
+		attribute.String("history.backend", "apiserver"),
+	)
+	defer span.End()
+
 	if job.UID == "" {
 		return fmt.Errorf("missing UID in job '%s'", job.GetName())
 	}
@@ -63,6 +72,9 @@ func (w *apiClientHistoryWriter) WriteJob(ctx context.Context, job *provisioning
 	}
 
 	_, err := w.client.HistoricJobs(job.Namespace).Create(ctx, historicJob, metav1.CreateOptions{})
+	if err != nil {
+		span.RecordError(err)
+	}
 
 	return err
 }

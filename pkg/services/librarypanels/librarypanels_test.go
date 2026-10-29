@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -16,11 +17,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/libraryelements/fake"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -60,6 +63,87 @@ func TestIntegrationLibraryPanelFolderOperations(t *testing.T) {
 				model.GetLibraryElementCommand{UID: sc.initialResult.Result.UID, FolderName: sc.folder.Title})
 			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
 		})
+
+	scenarioWithLibraryPanel(t, "once marked, DeleteInFoldersUnchecked deletes library panels without consulting AccessControl",
+		func(t *testing.T, sc scenarioContext) {
+			le, ok := sc.elementService.(*libraryelements.LibraryElementService)
+			require.True(t, ok)
+			// sc.user only has folder.ActionFoldersRead, but a deny-all AccessControl proves the unchecked path doesn't consult it at all.
+			le.AccessControl = acmock.New()
+
+			ctx := folder.WithUncheckedDeleteAuthorized(context.Background(), sc.user.OrgID, sc.user, []string{sc.folder.UID}, true)
+			err := sc.lps.DeleteInFoldersUnchecked(ctx, sc.user.OrgID, []string{sc.folder.UID}, sc.user)
+			require.NoError(t, err)
+
+			_, err = sc.elementService.GetElement(sc.ctx, sc.user,
+				model.GetLibraryElementCommand{UID: sc.initialResult.Result.UID, FolderName: sc.folder.Title})
+			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
+		})
+}
+
+// orderTrackingLibraryElementService wraps the fake libraryelements.Service to record whether
+// DeleteInFolders deletes a folder before every folder in the batch has passed its permission
+// check.
+type orderTrackingLibraryElementService struct {
+	*fake.LibraryElementService
+	denyFolderUID string
+	deletedUIDs   []string
+	deletedOrgIDs []int64
+}
+
+func (f *orderTrackingLibraryElementService) RequireEditPermissionsOnFolder(ctx context.Context, user identity.Requester, folderUID string) error {
+	if folderUID == f.denyFolderUID {
+		return folder.ErrAccessDenied
+	}
+	return nil
+}
+
+func (f *orderTrackingLibraryElementService) DeleteLibraryElementsInFolderUnchecked(ctx context.Context, orgID int64, signedInUser identity.Requester, folderUID string) error {
+	f.deletedUIDs = append(f.deletedUIDs, folderUID)
+	f.deletedOrgIDs = append(f.deletedOrgIDs, orgID)
+	return nil
+}
+
+func TestDeleteInFolders_ChecksAllFoldersBeforeDeletingAny(t *testing.T) {
+	fakeElementService := &orderTrackingLibraryElementService{
+		LibraryElementService: &fake.LibraryElementService{},
+		denyFolderUID:         "folder-b",
+	}
+	lps := LibraryPanelService{LibraryElementService: fakeElementService}
+	usr := &user.SignedInUser{OrgID: 1}
+
+	err := lps.DeleteInFolders(context.Background(), usr.OrgID, []string{"folder-a", "folder-b"}, usr)
+	require.ErrorIs(t, err, folder.ErrAccessDenied)
+	require.Empty(t, fakeElementService.deletedUIDs,
+		"folder-a must not be deleted when folder-b, checked later in the same batch, fails its permission check")
+}
+
+func TestDeleteInFoldersUnchecked_UsesTargetOrgNotRequesterOrg(t *testing.T) {
+	fakeElementService := &orderTrackingLibraryElementService{LibraryElementService: &fake.LibraryElementService{}}
+	lps := LibraryPanelService{LibraryElementService: fakeElementService}
+
+	// A Grafana Admin cascading a folder in an org other than their own: orgID is the target org, distinct from admin.OrgID.
+	admin := &user.SignedInUser{OrgID: 1, IsGrafanaAdmin: true}
+	ctx := folder.WithUncheckedDeleteAuthorized(context.Background(), 2, admin, []string{"folder-a"}, true)
+	require.NoError(t, lps.DeleteInFoldersUnchecked(ctx, 2, []string{"folder-a"}, admin))
+
+	require.Equal(t, []int64{2}, fakeElementService.deletedOrgIDs, "must delete in the target org, not the requester's own org")
+}
+
+func TestLibraryPanelService_DeleteInFoldersUnchecked(t *testing.T) {
+	// orgID must win over signedInUser.GetOrgID(), which can differ for some callers.
+	elementSvc := &orderTrackingLibraryElementService{LibraryElementService: &fake.LibraryElementService{}}
+	lps := LibraryPanelService{LibraryElementService: elementSvc}
+
+	requester := &identity.StaticRequester{OrgID: 99}
+	require.ErrorIs(t, lps.DeleteInFoldersUnchecked(context.Background(), 7, []string{"fold1"}, requester), folder.ErrUncheckedDeleteNotAuthorized)
+	assert.Empty(t, elementSvc.deletedUIDs, "must not delete anything without the unchecked-delete marker")
+
+	ctx := folder.WithUncheckedDeleteAuthorized(context.Background(), 7, requester, []string{"fold1"}, true)
+	require.NoError(t, lps.DeleteInFoldersUnchecked(ctx, 7, []string{"fold1"}, requester))
+
+	assert.Equal(t, []string{"fold1"}, elementSvc.deletedUIDs)
+	assert.Equal(t, []int64{7}, elementSvc.deletedOrgIDs, "must use the orgID argument, not signedInUser.GetOrgID()")
 }
 
 func TestIntegrationImportLibraryPanelsForDashboard(t *testing.T) {
@@ -491,7 +575,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		mockDashboardService := dashboards.NewFakeDashboardService(t)
 		mockFolderService := foldertest.NewFakeService()
 		mockFolder := &folder.Folder{
-			ID:        1,
+			ID:        1, //nolint:staticcheck // Exercise legacy field compatibility.
 			UID:       "test-folder-uid",
 			Title:     "Test Folder",
 			URL:       "/dashboards/f/test-folder-uid/test-folder",
@@ -533,7 +617,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotaService)
 		require.NoError(t, err)
 		usrSvc, err := userimpl.ProvideService(
-			sqlStore, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
+			legacysql.NewDatabaseProvider(sqlStore), orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
 			quotaService, supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)

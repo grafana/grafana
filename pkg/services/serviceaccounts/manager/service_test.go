@@ -40,6 +40,10 @@ func (f *FakeServiceAccountStore) RetrieveServiceAccount(ctx context.Context, qu
 	return f.ExpectedServiceAccountProfileDTO, f.ExpectedError
 }
 
+func (f *FakeServiceAccountStore) RetrieveServiceAccountsByUIDs(context.Context, int64, []string) ([]*serviceaccounts.ServiceAccountProfileDTO, error) {
+	return nil, f.ExpectedError
+}
+
 // RetrieveServiceAccountIdByName is a fake retrieving a service account id by name.
 func (f *FakeServiceAccountStore) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
 	return f.ExpectedServiceAccountID, f.ExpectedError

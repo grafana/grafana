@@ -15,6 +15,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -65,9 +66,11 @@ func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, 
 		RudderstackV3SdkUrl:                  cfg.RudderstackV3SDKURL,
 		RudderstackConfigUrl:                 cfg.RudderstackConfigURL,
 		RudderstackIntegrationsUrl:           cfg.RudderstackIntegrationsURL,
+		RudderstackBatchInterval:             cfg.RudderstackBatchInterval,
 		PostHogToken:                         cfg.PostHogToken,
 		PostHogHost:                          cfg.PostHogHost,
 		AnalyticsConsoleReporting:            cfg.FrontendAnalyticsConsoleReporting,
+		PluginImportTelemetryPackages:        cfg.PluginImportTelemetryPackages,
 		DashboardPerformanceMetrics:          cfg.DashboardPerformanceMetrics,
 		PanelSeriesLimit:                     cfg.PanelSeriesLimit,
 		DashboardDefaultPreload:              cfg.DashboardDefaultPreload,
@@ -97,7 +100,7 @@ func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, 
 		PluginRestrictedAPIsAllowList:    cfg.PluginRestrictedAPIsAllowList,
 		PluginRestrictedAPIsBlockList:    cfg.PluginRestrictedAPIsBlockList,
 		PublicDashboardAccessToken:       reqCtx.PublicDashboardAccessToken,
-		PublicDashboardsEnabled:          cfg.PublicDashboardsEnabled,
+		PublicDashboardsEnabled:          publicdashboards.Enabled(reqCtx.Req.Context(), cfg),
 		CloudMigrationEnabled:            cfg.CloudMigration.Enabled,
 		CloudMigrationIsTarget:           isCloudMigrationTarget,
 		CloudMigrationPollIntervalMs:     int(cfg.CloudMigration.FrontendPollInterval.Milliseconds()),
@@ -198,7 +201,8 @@ func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, 
 			Backend: cfg.UnifiedAlerting.StateHistory.Backend,
 			Primary: cfg.UnifiedAlerting.StateHistory.MultiPrimary,
 		}
-		if cfg.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID != "" {
+		// The frontend shows the alert activity page when this is set, using the same check as the nav tree.
+		if cfg.UnifiedAlerting.StateHistory.HasAlertStateMetrics() {
 			frontendSettings.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID = cfg.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID
 		}
 		if cfg.UnifiedAlerting.StateHistory.PrometheusMetricName != "" {
@@ -211,6 +215,7 @@ func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, 
 	}
 
 	frontendSettings.UnifiedAlerting.RecordingRulesEnabled = cfg.UnifiedAlerting.RecordingRules.Enabled
+	frontendSettings.UnifiedAlerting.NotificationHistoryEnabled = cfg.UnifiedAlerting.NotificationHistory.Enabled
 	frontendSettings.UnifiedAlerting.DefaultRecordingRulesTargetDatasourceUID = cfg.UnifiedAlerting.RecordingRules.DefaultDatasourceUID
 
 	if cfg.UnifiedAlerting.Enabled != nil {

@@ -12,7 +12,6 @@ import {
   type GrafanaTheme2,
   hasToggleableQueryFiltersSupport,
   LoadingState,
-  matchPluginId,
   type QueryFixAction,
   type RawTimeRange,
   type SplitOpenOptions,
@@ -21,8 +20,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { reportInteraction, getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import {
   type AdHocFilterItem,
@@ -55,6 +53,7 @@ import { QueryRows } from './QueryRows';
 import RawPrometheusContainer from './RawPrometheus/RawPrometheusContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
 import { SecondaryActions } from './SecondaryActions';
+import { createQueryEditorInsertionRegistry } from './SignalExplorer/queryEditorInsertion';
 import TableContainer from './Table/TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { changeDatasource } from './state/datasource';
@@ -62,6 +61,7 @@ import { changeSize, changeCompactMode } from './state/explorePane';
 import { splitOpen } from './state/main';
 import {
   addQueryRow,
+  changeQueries,
   modifyQueries,
   scanStart,
   scanStopAction,
@@ -71,7 +71,7 @@ import {
 } from './state/query';
 import { isSplit, selectExploreDSMaps } from './state/selectors';
 import { updateTimeRange } from './state/time';
-import { isPrometheusType } from './utils/prometheus';
+import { appendToQueryExpr, type ExprTextKind, isPrometheusPane } from './utils/prometheus';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -79,7 +79,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'exploreMain',
       // Is needed for some transition animations to work.
       position: 'relative',
-      marginTop: theme.spacing(3),
+      marginTop: theme.spacing(1),
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
@@ -92,13 +92,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'exploreContainer',
       display: 'flex',
       flexDirection: 'column',
-      paddingRight: theme.spacing(2),
       marginBottom: theme.spacing(2),
     }),
     wrapper: css({
       position: 'absolute',
       top: 0,
-      left: theme.spacing(2),
+      left: 0,
       right: 0,
       bottom: 0,
       display: 'flex',
@@ -149,6 +148,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   graphEventBus: EventBus;
   logsEventBus: EventBus;
+  queryEditorInsertion = createQueryEditorInsertionRegistry();
 
   constructor(props: Props) {
     super(props);
@@ -167,6 +167,14 @@ export class Explore extends PureComponent<Props, ExploreState> {
   // Use this in help pages to set page to a single query
   onClickExample = (query: DataQuery) => {
     this.props.setQueries(this.props.exploreId, [query]);
+  };
+
+  onAddToQuery = (refId: string, text: string, kind: ExprTextKind) => {
+    if (this.queryEditorInsertion.insert(refId, text, kind)) {
+      return;
+    }
+    const { changeQueries, exploreId, queries } = this.props;
+    changeQueries({ exploreId, queries: appendToQueryExpr(queries, refId, text, kind) });
   };
 
   onCellFilterAdded = (filter: AdHocFilterItem) => {
@@ -600,14 +608,13 @@ export class Explore extends PureComponent<Props, ExploreState> {
       editSavedQueryRef,
       addingSavedQuery,
     } = this.props;
+
     const { contentOutlineVisible } = this.state;
     const styles = getStyles(theme);
     // Prometheus is the only datasource with an explorer to offer, so the whole sidebar
     // waits for one instead of showing cards that cannot be opened. Mixed panes count if
     // any query uses it.
-    const isPrometheusSelected = datasourceInstance?.meta.mixed
-      ? this.props.queries.some((q) => isPrometheusType(q.datasource?.type))
-      : !!datasourceInstance && matchPluginId('prometheus', datasourceInstance.meta);
+    const isPrometheusSelected = isPrometheusPane(datasourceInstance, this.props.queries);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const showNoData =
       queryResponse.state === LoadingState.Done &&
@@ -690,18 +697,19 @@ export class Explore extends PureComponent<Props, ExploreState> {
           style={{
             position: 'relative',
             height: '100%',
-            paddingLeft: theme.spacing(2),
           }}
         >
           <div className={styles.wrapper}>
             {contentOutlineVisible && !compact && (
               <ContentOutline
                 scroller={this.scrollElement}
+                exploreId={exploreId}
                 panelId={`content-outline-container-${exploreId}`}
                 showSignalExplorer={isPrometheusSelected}
                 queries={this.props.queries}
                 paneDatasource={datasourceInstance}
                 timeRange={this.props.range}
+                onAddToQuery={this.onAddToQuery}
               />
             )}
             <ScrollContainer
@@ -731,6 +739,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                           changeCompactMode={(compact: boolean) =>
                             this.props.changeCompactMode(this.props.exploreId, false)
                           }
+                          getQueryEditorInsertion={this.queryEditorInsertion.registrarFor}
                         />
                         <SecondaryActions
                           // do not allow people to add queries with potentially different datasources in correlations editor mode
@@ -908,6 +917,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
 
 const mapDispatchToProps = {
   changeDatasource,
+  changeQueries,
   changeSize,
   modifyQueries,
   scanStart,

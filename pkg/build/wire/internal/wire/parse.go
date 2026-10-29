@@ -19,10 +19,12 @@ import (
 	"errors"
 	"fmt"
 	"go/ast"
+	"go/parser"
 	"go/token"
 	"go/types"
 	"os"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -249,7 +251,7 @@ type Field struct {
 // In case of duplicate environment variables, the last one in the list
 // takes precedence.
 func Load(ctx context.Context, wd string, env []string, tags string, patterns []string) (*Info, []error) {
-	pkgs, errs := load(ctx, wd, env, tags, patterns)
+	pkgs, errs := load(ctx, wd, env, tags, patterns, packages.LoadAllSyntax)
 	if len(errs) > 0 {
 		return nil, errs
 	}
@@ -339,8 +341,9 @@ func Load(ctx context.Context, wd string, env []string, tags string, patterns []
 	return info, ec.errors
 }
 
-// load typechecks the packages that match the given patterns and
-// includes source for all transitive dependencies. The patterns are
+// load typechecks the packages that match the given patterns. LoadAllSyntax
+// includes source for all transitive dependencies; LoadSyntax reuses cached
+// dependency types, retaining source for Wire declarations. The patterns are
 // defined by the underlying build system. For the go tool, this is
 // described at https://golang.org/cmd/go/#hdr-Package_lists_and_patterns
 //
@@ -349,14 +352,14 @@ func Load(ctx context.Context, wd string, env []string, tags string, patterns []
 // env is nil or empty, it is interpreted as an empty set of variables.
 // In case of duplicate environment variables, the last one in the list
 // takes precedence.
-func load(ctx context.Context, wd string, env []string, tags string, patterns []string) ([]*packages.Package, []error) {
+func load(ctx context.Context, wd string, env []string, tags string, patterns []string, mode packages.LoadMode) ([]*packages.Package, []error) {
 	cfg := &packages.Config{
 		Context:    ctx,
-		Mode:       packages.LoadAllSyntax,
+		Mode:       mode,
 		Dir:        wd,
 		Env:        env,
 		BuildFlags: []string{"-tags=wireinject"},
-		// TODO(light): Use ParseFile to skip function bodies and comments in indirect packages.
+		ParseFile:  parseFile,
 	}
 	if len(tags) > 0 {
 		cfg.BuildFlags[0] += " " + tags
@@ -364,6 +367,41 @@ func load(ctx context.Context, wd string, env []string, tags string, patterns []
 	escaped := make([]string, len(patterns))
 	for i := range patterns {
 		escaped[i] = "pattern=" + patterns[i]
+	}
+	var roots []*packages.Package
+	if mode == packages.LoadSyntax {
+		cfg.Mode = packages.NeedName | packages.NeedImports | packages.NeedDeps
+		var err error
+		roots, err = packages.Load(cfg, escaped...)
+		if err != nil {
+			return nil, []error{err}
+		}
+		rootIDs := make(map[string]bool, len(roots))
+		for _, pkg := range roots {
+			rootIDs[pkg.ID] = true
+		}
+		var sourcePaths []string
+		packages.Visit(roots, func(pkg *packages.Package) bool {
+			// Wire's private binding-version constant is absent from export data.
+			needsSource := isWireImport(pkg.PkgPath)
+			for path := range pkg.Imports {
+				if isWireImport(path) {
+					needsSource = true
+				}
+			}
+			if needsSource && !rootIDs[pkg.ID] {
+				sourcePaths = append(sourcePaths, pkg.PkgPath)
+			}
+			return true
+		}, nil)
+		slices.Sort(sourcePaths)
+		for _, path := range sourcePaths {
+			escaped = append(escaped, "pattern="+path)
+		}
+		// Source roots also retain their importers' source, including forwarded sets.
+		cfg.Mode = mode
+		// Probe current export data without compiling dependencies on a cache miss.
+		cfg.BuildFlags = append(cfg.BuildFlags, "-n")
 	}
 	pkgs, err := packages.Load(cfg, escaped...)
 	if err != nil {
@@ -378,7 +416,39 @@ func load(ctx context.Context, wd string, env []string, tags string, patterns []
 	if len(errs) > 0 {
 		return nil, errs
 	}
+	if mode == packages.LoadSyntax {
+		byID := make(map[string]*packages.Package, len(pkgs))
+		for _, pkg := range pkgs {
+			byID[pkg.ID] = pkg
+		}
+		requested := make([]*packages.Package, len(roots))
+		for i, root := range roots {
+			pkg := byID[root.ID]
+			if pkg == nil {
+				return nil, []error{fmt.Errorf("package %q disappeared while loading dependencies", root.ID)}
+			}
+			requested[i] = pkg
+		}
+		return requested, nil
+	}
 	return pkgs, nil
+}
+
+func parseFile(fset *token.FileSet, filename string, src []byte) (*ast.File, error) {
+	// Wire resolves names through go/types, so parser object resolution is redundant.
+	const mode = parser.AllErrors | parser.SkipObjectResolution
+	f, err := parser.ParseFile(fset, filename, src, mode)
+	if err != nil {
+		return f, err
+	}
+	for _, imp := range f.Imports {
+		path, err := strconv.Unquote(imp.Path.Value)
+		if err == nil && isWireImport(path) {
+			// Only files with injectors can contribute comments to the generated file.
+			return parser.ParseFile(fset, filename, src, mode|parser.ParseComments)
+		}
+	}
+	return f, nil
 }
 
 // Info holds the result of Load.

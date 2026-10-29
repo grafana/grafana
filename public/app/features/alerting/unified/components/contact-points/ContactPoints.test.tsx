@@ -1,9 +1,11 @@
 import { type MemoryHistoryBuildOptions } from 'history';
+import { HttpResponse, http } from 'msw';
 import { type ComponentProps, type ReactNode } from 'react';
 import { render, screen, userEvent, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
+import { receiverUidFor } from 'app/features/alerting/unified/mocks/server/handlers/k8s/receivers.k8s';
 import { flushMicrotasks } from 'app/features/alerting/unified/test/test-utils';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 import {
@@ -186,6 +188,18 @@ describe('contact points', () => {
       });
     });
 
+    it('warns that legacy integrations are excluded when exporting all contact points', async () => {
+      server.use(http.get('/api/v1/provisioning/contact-points/export/', () => HttpResponse.text('')));
+      const user = userEvent.setup();
+
+      renderWithProvider(<ContactPointsPageContents />);
+      await waitForElementToBeRemoved(screen.queryByText('Loading...'));
+      await user.click(screen.getByRole('button', { name: 'export all' }));
+
+      expect(await screen.findByText('Legacy integrations are not included')).toBeInTheDocument();
+      expect(screen.getByText(/Contact points that contain only legacy integrations are omitted/)).toBeInTheDocument();
+    });
+
     it('should show / hide loading states, have all actions enabled', async () => {
       renderWithProvider(<ContactPointsPageContents />);
 
@@ -208,10 +222,13 @@ describe('contact points', () => {
 
       // Check view buttons by their href to verify which contact points they belong to
       // The url is the same but the form should be readonly
-      expect(viewButtons[0]).toHaveAttribute('href', '/alerting/notifications/receivers/grafana-default-email/edit');
+      expect(viewButtons[0]).toHaveAttribute(
+        'href',
+        `/alerting/notifications/receivers/${receiverUidFor('grafana-default-email')}/edit`
+      );
       expect(viewButtons[1]).toHaveAttribute(
         'href',
-        '/alerting/notifications/receivers/provisioned-contact-point/edit'
+        `/alerting/notifications/receivers/${receiverUidFor('provisioned-contact-point')}/edit`
       );
 
       viewButtons.forEach((button) => {
@@ -223,14 +240,17 @@ describe('contact points', () => {
       expect(editButtons).toHaveLength(3);
 
       // Check edit buttons by their href to verify which contact points they belong to
-      expect(editButtons[0]).toHaveAttribute('href', '/alerting/notifications/receivers/lotsa-emails/edit');
+      expect(editButtons[0]).toHaveAttribute(
+        'href',
+        `/alerting/notifications/receivers/${receiverUidFor('lotsa-emails')}/edit`
+      );
       expect(editButtons[1]).toHaveAttribute(
         'href',
-        '/alerting/notifications/receivers/OnCall%20Conctact%20point/edit'
+        `/alerting/notifications/receivers/${encodeURIComponent(receiverUidFor('OnCall Conctact point'))}/edit`
       );
       expect(editButtons[2]).toHaveAttribute(
         'href',
-        '/alerting/notifications/receivers/Slack%20with%20multiple%20channels/edit'
+        `/alerting/notifications/receivers/${encodeURIComponent(receiverUidFor('Slack with multiple channels'))}/edit`
       );
 
       editButtons.forEach((button) => {
@@ -380,7 +400,7 @@ describe('contact points', () => {
     it('should be able to search', async () => {
       const { user } = renderWithProvider(<ContactPointsPageContents />);
 
-      const searchInput = await screen.findByRole('textbox', { name: 'search contact points' });
+      const searchInput = await screen.findByRole('textbox', { name: 'Search by name or type' });
       await user.type(searchInput, 'slack');
       expect(searchInput).toHaveValue('slack');
 
@@ -390,7 +410,7 @@ describe('contact points', () => {
       });
 
       // ⚠️ for some reason, the query params are preserved for all tests so don't forget to clear the input
-      const clearButton = screen.getByRole('button', { name: 'clear' });
+      const clearButton = screen.getByRole('button', { name: /clear/i });
       await user.click(clearButton);
       expect(searchInput).toHaveValue('');
     });

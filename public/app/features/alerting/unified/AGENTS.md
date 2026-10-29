@@ -29,13 +29,18 @@ This file provides context for AI agents when working on the Grafana Alerting co
 2. **Testing Guidelines**: [../../../../../contribute/style-guides/testing.md](../../../../../contribute/style-guides/testing.md)
    - React Testing Library, query priorities, user event setup
 
-3. **Styling Guide**: [../../../../../contribute/style-guides/styling.md](../../../../../contribute/style-guides/styling.md)
+3. **`frontend-testing-strategy` skill** — invoke with the Skill tool for this repo's testing
+   conventions: assert real behavior (not existence), avoiding AI-slop tests, and the anti-flake
+   rules. Read it before writing or reviewing tests here, alongside the Alerting Testing Guide
+   below.
+
+4. **Styling Guide**: [../../../../../contribute/style-guides/styling.md](../../../../../contribute/style-guides/styling.md)
    - Emotion usage, `useStyles2` hook patterns
 
-4. **Redux Framework**: [../../../../../contribute/style-guides/redux.md](../../../../../contribute/style-guides/redux.md)
+5. **Redux Framework**: [../../../../../contribute/style-guides/redux.md](../../../../../contribute/style-guides/redux.md)
    - Redux Toolkit patterns, reducer testing
 
-5. **Alerting Testing Guide**: [./TESTING.md](./TESTING.md)
+6. **Alerting Testing Guide**: [./TESTING.md](./TESTING.md)
    - MSW API mocking, permission mocking, data source setup
 
 ### Alerting-Specific Conventions
@@ -248,7 +253,7 @@ For Kubernetes APIs and new schemas – use the `@grafana/alerting` package.
 Mock factories are defined in `packages/grafana-alerting/src/grafana/api/notifications/v1beta1/mocks/fakes`
 MSW handlers in `packages/grafana-alerting/src/grafana/api/notifications/v1beta1/mocks/handlers`
 
-And there are "scenarios" that combine the two above. An example of such is `packages/grafana-alerting/src/grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.test.scenario.ts` and is used for integration tests.
+And there are "scenarios" that combine the two above. An example of such is `packages/grafana-alerting/src/grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.scenario.ts` and is used for integration tests.
 
 Additionally alerting uses **`alertingFactory`** from `mocks/server/db` for building test data:
 
@@ -311,13 +316,31 @@ mockFolder();
 
 A full list of features can be found in `pkg/services/featuremgmt/toggles_gen.csv` – focus on feature toggles owned by `@grafana/alerting-squad`.
 
-```typescript
-import { config } from '@grafana/runtime';
+Read flags through OpenFeature. Reading `config.featureToggles` is blocked by the
+`@grafana/no-config-feature-toggles` lint rule — that map is empty in the multi-tenant frontend
+service, so flags read from it are always `false` there.
 
-if (config.featureToggles.alertingTriage) {
+```typescript
+import { useFlagAlertingTriage } from '@grafana/runtime/internal';
+
+const isTriageEnabled = useFlagAlertingTriage();
+if (isTriageEnabled) {
   // Render triage view
 }
 ```
+
+Outside React — including the page-access predicates in `utils/pageAccess.ts`, which run during
+redux store creation — use the client instead:
+
+```typescript
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+
+getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingTriage, false);
+```
+
+If a flag has no OpenFeature target yet, see the migration steps in
+`contribute/feature-toggles.md`. In tests, gate migrated flags with `setTestFlags` from
+`@grafana/test-utils/unstable` rather than `testWithFeatureToggles`.
 
 A common configuration setting would be `unifiedAlertingEnabled` which allows a user to configure Grafana without any alerting UI or backend enabled at all.
 
@@ -565,12 +588,12 @@ Skip proposing an update if the correction is:
 
 ## Dependency Security
 
-- **No new dependencies without explicit approval**: Do NOT run `yarn add` or otherwise introduce new packages. If a task would benefit from a new dependency, stop and ask the user for approval first — explain what package you want, why, and its publish date.
+- **No new dependencies without explicit approval**: Do NOT run `pnpm add` or otherwise introduce new packages. If a task would benefit from a new dependency, stop and ask the user for approval first — explain what package you want, why, and its publish date.
 - **7-day quarantine**: Even with approval, never add a dependency whose latest version was published less than 7 days ago. Check publish date with `npm view <package> time --json` before proposing.
 - **Prefer established packages**: Favor well-known, actively maintained packages. Avoid packages with very few downloads or no recent maintenance.
-- **No postinstall script overrides**: The repo has `enableScripts: false`. Do not add per-package script overrides without approval from @grafana/frontend-ops.
-- **Lock file integrity**: Always use `yarn install --immutable`. Never manually edit `yarn.lock`.
-- **Report suspicious packages**: If a dependency shows signs of compromise (unexpected scripts, obfuscated code, ownership transfer), flag it in the PR and tag @grafana/frontend-ops.
+- **No postinstall script overrides**: Dependency install scripts are blocked unless `allowBuilds` in `pnpm-workspace.yaml` sets them to `true`. Do not add exceptions without explicit approval from someone else.
+- **Lock file integrity**: Always use `pnpm install --frozen-lockfile`. Never manually edit `pnpm-lock.yaml`.
+- **Report suspicious packages**: If a dependency shows signs of compromise (unexpected scripts, obfuscated code, ownership transfer), flag it for human review.
 
 ## Getting Help
 

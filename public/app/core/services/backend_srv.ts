@@ -266,11 +266,6 @@ export class BackendSrv implements BackendService {
       }
     }
 
-    if (!!this.deviceID) {
-      options.headers = options.headers ?? {};
-      options.headers['X-Grafana-Device-Id'] = `${this.deviceID}`;
-    }
-
     return parseUrlFromOptions(options).pipe(
       this.getFromFetchStream<T>(options),
       this.handleStreamResponse<T>(options),
@@ -301,6 +296,11 @@ export class BackendSrv implements BackendService {
       if (orgId) {
         options.headers = options.headers ?? {};
         options.headers['X-Grafana-Org-Id'] = orgId;
+      }
+
+      if (!!this.deviceID) {
+        options.headers = options.headers ?? {};
+        options.headers['X-Grafana-Device-Id'] = `${this.deviceID}`;
       }
 
       if (options.url.startsWith('/')) {
@@ -521,6 +521,9 @@ export class BackendSrv implements BackendService {
                     authChecker = this.rotateToken();
                   }
                 }
+                if (error.data?.messageId === 'session.token.rotate') {
+                  authChecker = this.rotateToken();
+                }
 
                 return from(authChecker).pipe(
                   catchError((err) => {
@@ -641,12 +644,21 @@ export class BackendSrv implements BackendService {
       return this._loginPingInProgress;
     }
 
-    this._loginPingInProgress = this.fetch({ url: '/api/login/ping', method: 'GET', retry: 1 }).pipe(
+    this._loginPingInProgress = this.fetch({
+      url: '/api/login/ping',
+      method: 'GET',
+      retry: 1,
+      showErrorAlert: false,
+    }).pipe(
       // Runs once against the shared source, upstream of share(), so a failure logs out exactly once
       // no matter how many requests are waiting on this same ping.
-      catchError((err) => {
+      catchError((err: FetchError) => {
         if (err.status === 401) {
           this.dependencies.logout();
+        } else {
+          // The ping is a background session check, so the user can't act on its failure. Marking it
+          // handled stops the request that triggered the ping from alerting with this error.
+          err.isHandled = true;
         }
         return throwError(() => err);
       }),

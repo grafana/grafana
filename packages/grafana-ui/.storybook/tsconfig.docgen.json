@@ -1,0 +1,8 @@
+{
+  // react-docgen-typescript builds its TS program from this file. The grafana-alerting
+  // stories live outside grafana-ui, so their components have to be in the program or they
+  // come out with no props and those stories render with empty controls.
+  // Kept separate from tsconfig.json so the storybook type check keeps its narrower scope.
+  "extends": "./tsconfig.json",
+  "include": ["../src/**/*.ts*", "../../grafana-alerting/src/**/*.ts*", "../../../public/app/types/svg.d.ts"]
+}

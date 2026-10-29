@@ -466,7 +466,7 @@ export const validateVariableSelectionState = (
       return Promise.resolve();
     }
 
-    const current = variableInState.current || ({} as unknown as VariableOption);
+    const current: VariableWithOptions['current'] = variableInState.current || {};
     const setValue = variableAdapters.get(variableInState.type).setValue;
 
     if (Array.isArray(current.value)) {

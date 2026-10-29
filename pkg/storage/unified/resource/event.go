@@ -53,9 +53,11 @@ func (e *WriteEvent) Validate() error {
 
 // WrittenEvent is a WriteEvent reported with a resource version.
 type WrittenEvent struct {
-	Type       resourcepb.WatchEvent_Type
-	Key        *resourcepb.ResourceKey
-	PreviousRV int64
+	Type           resourcepb.WatchEvent_Type
+	Key            *resourcepb.ResourceKey
+	PreviousRV     int64
+	PreviousAction DataAction
+	PreviousFolder string
 
 	// The json payload (without resourceVersion)
 	Value []byte

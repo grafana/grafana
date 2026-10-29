@@ -83,6 +83,29 @@ func TestConvertDeletedToK8sResources(t *testing.T) {
 	require.NotNil(t, got.DeletionTimestamp, "deleted rule should carry a deletion timestamp")
 }
 
+func TestExpressionsConvertToDomainInRefIDOrder(t *testing.T) {
+	rule := ngmodels.RuleGen.With(ngmodels.RuleGen.WithOrgID(1)).GenerateRef()
+	rule.Record = nil
+	query := rule.Data[0]
+	refIDs := []string{"H", "G", "F", "E", "D", "C", "B", "A"}
+	rule.Data = make([]ngmodels.AlertQuery, 0, len(refIDs))
+	for _, refID := range refIDs {
+		q := query
+		q.RefID = refID
+		rule.Data = append(rule.Data, q)
+	}
+	rule.Condition = "D"
+
+	k8sRule, err := convertToK8sResource(1, rule, utils.ManagerProperties{}, nsMapperForTest())
+	require.NoError(t, err)
+
+	domainRule, _, err := convertToDomainModel(1, k8sRule)
+	require.NoError(t, err)
+	for i, refID := range []string{"A", "B", "C", "D", "E", "F", "G", "H"} {
+		assert.Equal(t, refID, domainRule.Data[i].RefID)
+	}
+}
+
 func TestPrometheusRuleDefinitionRoundTrip(t *testing.T) {
 	mapper := nsMapperForTest()
 	gen := ngmodels.RuleGen

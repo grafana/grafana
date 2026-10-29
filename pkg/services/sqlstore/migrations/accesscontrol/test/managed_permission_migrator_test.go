@@ -207,7 +207,7 @@ func TestManagedPermissionsMigrationRunTwice(t *testing.T) {
 			_, errDeleteRole := x.Exec(`DELETE FROM role`)
 			require.NoError(t, errDeleteRole)
 
-			for i := 0; i < 2; i++ {
+			for i := range 2 {
 				if i == 0 {
 					// put permissions
 					putTestPermissions(t, x, tc.putRolePerms)

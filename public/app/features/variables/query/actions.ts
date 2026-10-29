@@ -1,6 +1,6 @@
 import { Subscription } from 'rxjs';
 
-import { getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
+import { toDataQueryError, getDataSourceInstance } from '@grafana/runtime';
 import { type ThunkResult } from 'app/types/store';
 
 import { getVariable } from '../state/selectors';
@@ -27,7 +27,7 @@ export const updateQueryVariableOptions = (
         return;
       }
 
-      const datasource = await getDataSourceSrv().get(variableInState.datasource ?? '');
+      const datasource = await getDataSourceInstance(variableInState.datasource ?? '');
 
       // We need to await the result from variableQueryRunner before moving on otherwise variables dependent on this
       // variable will have the wrong current value as input
@@ -46,25 +46,6 @@ export const updateQueryVariableOptions = (
     }
   };
 };
-
-export function hasSelfReferencingQuery(name: string, query: any): boolean {
-  if (typeof query === 'string' && query.match(new RegExp('\\$' + name + '(/| |$)'))) {
-    return true;
-  }
-
-  const flattened = flattenQuery(query);
-
-  for (let prop in flattened) {
-    if (flattened.hasOwnProperty(prop)) {
-      const value = flattened[prop];
-      if (typeof value === 'string' && value.match(new RegExp('\\$' + name + '(/| |$)'))) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
 
 /*
  * Function that takes any object and flattens all props into one level deep object

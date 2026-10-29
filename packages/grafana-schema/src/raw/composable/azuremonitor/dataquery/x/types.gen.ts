@@ -36,10 +36,18 @@ export interface AzureMonitorQuery extends common.DataQuery {
    */
   customNamespace?: string;
   /**
+   * Dimension used in template variable queries
+   */
+  dimension?: string;
+  /**
    * @deprecated Legacy template variable support.
    */
   grafanaTemplateVariableFn?: GrafanaTemplateVariableQuery;
   keepCookies?: Array<string>;
+  /**
+   * Metric name used in template variable queries
+   */
+  metricName?: string;
   /**
    * Namespace used in template variable queries
    */
@@ -89,6 +97,8 @@ export enum AzureQueryType {
   AzureTraces = 'Azure Traces',
   CustomMetricNamesQuery = 'Azure Custom Metric Names',
   CustomNamespacesQuery = 'Azure Custom Namespaces',
+  DimensionValuesQuery = 'Azure Dimension Values',
+  DimensionsQuery = 'Azure Dimensions',
   GrafanaTemplateVariableFn = 'Grafana Template Variable Function',
   LocationsQuery = 'Azure Regions',
   LogAnalytics = 'Azure Log Analytics',
@@ -204,6 +214,10 @@ export interface AzureLogsQuery {
    * @deprecated Use dashboardTime instead
    */
   intersectTime?: boolean;
+  /**
+   * Discriminates which Logs tier the query targets: "Basic" or "Auxiliary". Both tiers share the /search endpoint (gated by basicLogsQuery). When basicLogsQuery is true and logTier is unset, the query is treated as Basic for back-compat with dashboards saved before Auxiliary support was added.
+   */
+  logTier?: ('Basic' | 'Auxiliary');
   /**
    * Denotes if logs query editor is in builder mode
    */

@@ -16,7 +16,7 @@ func WithSpanProcessor(sp tracesdk.SpanProcessor) TracerForTestOption {
 
 func InitializeTracerForTest(opts ...TracerForTestOption) Tracer {
 	exp := tracetest.NewInMemoryExporter()
-	tp, _ := initTracerProvider(exp, "grafana", "testing", tracesdk.AlwaysSample())
+	tp, _ := initTracerProvider(exp, "grafana", "testing", tracesdk.AlwaysSample(), false)
 
 	for _, opt := range opts {
 		opt(tp)

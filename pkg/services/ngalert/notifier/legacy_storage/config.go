@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
 )
 
 type crypto interface {
@@ -20,8 +21,8 @@ type amConfigStore interface {
 	UpdateAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error
 }
 
-func DeserializeAlertmanagerConfig(config []byte) (*v1.AMConfigDB, error) {
-	result := v1.AMConfigDB{}
+func DeserializeAlertmanagerConfig(config []byte) (*store.AMConfigDB, error) {
+	result := store.AMConfigDB{}
 	if err := json.Unmarshal(config, &result); err != nil {
 		return nil, makeErrBadAlertmanagerConfiguration(err)
 	}

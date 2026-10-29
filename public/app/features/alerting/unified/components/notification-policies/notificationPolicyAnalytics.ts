@@ -8,14 +8,6 @@ export function trackNotificationPolicyCreateError(payload: { error: string }) {
   reportInteraction('grafana_alerting_notification_policy_create_error', payload);
 }
 
-export function trackNotificationPolicyDeleted() {
-  reportInteraction('grafana_alerting_notification_policy_deleted');
-}
-
-export function trackNotificationPolicyDeleteError(payload: { error: string }) {
-  reportInteraction('grafana_alerting_notification_policy_delete_error', payload);
-}
-
 export function trackNotificationPolicyReset() {
   reportInteraction('grafana_alerting_notification_policy_reset');
 }

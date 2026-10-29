@@ -3,11 +3,13 @@ package migrations
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
@@ -54,11 +56,12 @@ func filterResponse(response *resourcepb.BulkResponse, resources []schema.GroupR
 }
 
 type CountValidator struct {
-	name       string
-	client     resourcepb.ResourceIndexClient
-	resource   schema.GroupResource
-	opts       CountValidationOptions
-	driverName string
+	name               string
+	client             resourcepb.ResourceIndexClient
+	resource           schema.GroupResource
+	opts               CountValidationOptions
+	driverName         string
+	enableSQLKVBackend bool
 }
 
 func newCountValidator(
@@ -66,7 +69,7 @@ func newCountValidator(
 	resource schema.GroupResource,
 	opts CountValidationOptions,
 	driverName string,
-) Validator {
+) *CountValidator {
 	return &CountValidator{
 		name:       "CountValidator",
 		client:     client,
@@ -131,12 +134,13 @@ func (v *CountValidator) Validate(ctx context.Context, sess *xorm.Session, respo
 
 	var unifiedCount int64
 	if v.driverName == migrator.SQLite {
-		unifiedCount, err = sess.Table("resource").
-			Where("namespace = ? AND `group` = ? AND resource = ?",
-				summary.Namespace, summary.Group, summary.Resource).
-			Count()
+		unifiedCount, err = CountUnifiedResourcesSQLite(ctx, sess, resource.ListRequestKey{
+			Namespace: summary.Namespace,
+			Group:     summary.Group,
+			Resource:  summary.Resource,
+		}, v.enableSQLKVBackend)
 		if err != nil {
-			return fmt.Errorf("failed to count resource table for %s/%s in namespace %s: %w",
+			return fmt.Errorf("failed to count unified resources for %s/%s in namespace %s: %w",
 				summary.Group, summary.Resource, summary.Namespace, err)
 		}
 	} else {
@@ -145,7 +149,7 @@ func (v *CountValidator) Validate(ctx context.Context, sess *xorm.Session, respo
 			Namespace: summary.Namespace,
 			Kinds:     []string{fmt.Sprintf("%s/%s", summary.Group, summary.Resource)},
 		})
-		if err != nil {
+		if err := resource.ErrorFromResponse(statsResp.GetError(), err); err != nil {
 			return fmt.Errorf("failed to get stats for %s/%s in namespace %s: %w",
 				summary.Group, summary.Resource, summary.Namespace, err)
 		}
@@ -181,17 +185,18 @@ func (v *CountValidator) Validate(ctx context.Context, sess *xorm.Session, respo
 }
 
 type FolderTreeValidator struct {
-	name       string
-	client     resourcepb.ResourceIndexClient
-	resource   schema.GroupResource
-	driverName string
+	name               string
+	client             resourcepb.ResourceIndexClient
+	resource           schema.GroupResource
+	driverName         string
+	enableSQLKVBackend bool
 }
 
 func newFolderTreeValidator(
 	client resourcepb.ResourceIndexClient,
 	resource schema.GroupResource,
 	driverName string,
-) Validator {
+) *FolderTreeValidator {
 	return &FolderTreeValidator{
 		name:       "FolderTreeValidator",
 		client:     client,
@@ -248,7 +253,7 @@ func (v *FolderTreeValidator) Validate(ctx context.Context, sess *xorm.Session, 
 	// Build unified storage folder parent map
 	var unifiedParentMap map[string]string
 	if v.driverName == migrator.SQLite {
-		unifiedParentMap, err = v.buildUnifiedFolderParentMapSQLite(sess, summary.Namespace, log)
+		unifiedParentMap, err = v.buildUnifiedFolderParentMapSQLite(ctx, sess, summary.Namespace, log)
 	} else {
 		unifiedParentMap, err = v.buildUnifiedFolderParentMap(ctx, summary.Namespace, log)
 	}
@@ -331,48 +336,63 @@ func (v *FolderTreeValidator) buildLegacyFolderParentMap(sess *xorm.Session, org
 	return parentMap, nil
 }
 
+// A variable so tests can page over a handful of folders.
+var folderSearchPageSize int64 = 10000
+
 func (v *FolderTreeValidator) buildUnifiedFolderParentMap(ctx context.Context, namespace string, log log.Logger) (map[string]string, error) {
-	// Search for all folders in this namespace
-	searchResp, err := v.client.Search(ctx, &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{
-			Key: &resourcepb.ResourceKey{
-				Namespace: namespace,
-				Group:     v.resource.Group,
-				Resource:  v.resource.Resource,
-			},
-		},
-		Limit: 100000, // Large limit to get all folders
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to search folders in unified storage: %w", err)
-	}
-
-	if searchResp.Results == nil {
-		return make(map[string]string), nil
-	}
-
 	parentMap := make(map[string]string)
-	for _, row := range searchResp.Results.Rows {
-		if row.Key == nil {
-			continue
+
+	// Paging with the cursor of the last row read, rather than with an offset,
+	// because a folder created or deleted while we page shifts every offset after
+	// it and would hide or duplicate folders.
+	var cursor []string
+	for page := 1; ; page++ {
+		searchResp, err := v.client.Search(ctx, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: namespace,
+					Group:     v.resource.Group,
+					Resource:  v.resource.Resource,
+				},
+			},
+			Limit:        folderSearchPageSize,
+			SearchAfter:  cursor,
+			Fields:       []string{resource.SEARCH_FIELD_FOLDER},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to search folders in unified storage (page %d): %w", page, err)
+		}
+		if searchResp == nil {
+			return nil, fmt.Errorf("failed to search folders in unified storage (page %d): empty response", page)
+		}
+		if searchResp.GetError() != nil {
+			return nil, fmt.Errorf("failed to search folders in unified storage (page %d): %w", page, resource.StatusError(searchResp.GetError()))
 		}
 
-		folderUID := row.Key.Name
-		parentUID := ""
-
-		folderColIdx := -1
-		for i, col := range searchResp.Results.Columns {
-			if col.Name == "folder" {
-				folderColIdx = i
-				break
-			}
+		rows, err := decodeFolderRows(searchResp)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode folders from unified storage (page %d): %w", page, err)
+		}
+		for _, row := range rows {
+			parentMap[row.name] = row.parent
 		}
 
-		if folderColIdx >= 0 && folderColIdx < len(row.Cells) {
-			parentUID = string(row.Cells[folderColIdx])
+		// Only a full page can be followed by another one.
+		if int64(len(rows)) < folderSearchPageSize {
+			break
 		}
 
-		parentMap[folderUID] = parentUID
+		next := rows[len(rows)-1].cursor
+		// Without a usable cursor the next request would repeat this page forever,
+		// and the map built so far may be missing folders.
+		if len(next) == 0 {
+			return nil, fmt.Errorf("failed to page folders in unified storage: page %d of %d folders carries no pagination cursor", page, len(rows))
+		}
+		if slices.Equal(next, cursor) {
+			return nil, fmt.Errorf("failed to page folders in unified storage: page %d did not move past cursor %v", page, cursor)
+		}
+		cursor = next
 	}
 
 	log.Debug("Built unified folder parent map",
@@ -382,19 +402,73 @@ func (v *FolderTreeValidator) buildUnifiedFolderParentMap(ctx context.Context, n
 	return parentMap, nil
 }
 
-func (v *FolderTreeValidator) buildUnifiedFolderParentMapSQLite(sess *xorm.Session, namespace string, log log.Logger) (map[string]string, error) {
-	var folders []unifiedFolder
-	err := sess.Table("resource").
-		Cols("guid", "name", "folder").
-		Where("namespace = ? AND resource = ?", namespace, "folder").
-		Find(&folders)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query unified folders: %w", err)
+type unifiedFolderRow struct {
+	name   string
+	parent string
+	// Sort values of this row, passed back as SearchAfter to continue paging.
+	cursor []string
+}
+
+func decodeFolderRows(response *resourcepb.ResourceSearchResponse) ([]unifiedFolderRow, error) {
+	if response == nil {
+		return nil, nil
 	}
 
+	if response.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
+		return nil, fmt.Errorf("unsupported search result format %d", response.GetResultFormat())
+	}
+
+	rows := make([]unifiedFolderRow, 0, len(response.GetRows()))
+	for i, row := range response.GetRows() {
+		if row == nil || row.GetKey() == nil {
+			return nil, fmt.Errorf("row %d has no key", i)
+		}
+		values, err := resource.DecodeSearchValues(response.GetFields(), row)
+		if err != nil {
+			return nil, fmt.Errorf("row %d: %w", i, err)
+		}
+		parentUID := ""
+		if value, ok := values[resource.SEARCH_FIELD_FOLDER]; ok {
+			var valid bool
+			parentUID, valid = value.(string)
+			if !valid {
+				return nil, fmt.Errorf("row %d field %q is not a string", i, resource.SEARCH_FIELD_FOLDER)
+			}
+		}
+		rows = append(rows, unifiedFolderRow{
+			name:   row.GetKey().GetName(),
+			parent: parentUID,
+			cursor: row.GetSortFields(),
+		})
+	}
+	return rows, nil
+}
+
+func (v *FolderTreeValidator) buildUnifiedFolderParentMapSQLite(ctx context.Context, sess *xorm.Session, namespace string, log log.Logger) (map[string]string, error) {
 	parentMap := make(map[string]string)
-	for _, folder := range folders {
-		parentMap[folder.Name] = folder.Folder
+	if v.enableSQLKVBackend {
+		for key, err := range listUnifiedResourceKeysSQLite(ctx, sess, resource.ListRequestKey{
+			Namespace: namespace,
+			Group:     v.resource.Group,
+			Resource:  v.resource.Resource,
+		}) {
+			if err != nil {
+				return nil, fmt.Errorf("failed to query unified folders: %w", err)
+			}
+			parentMap[key.Name] = key.Folder
+		}
+	} else {
+		var folders []unifiedFolder
+		err := sess.Table("resource").
+			Cols("guid", "name", "folder").
+			Where("namespace = ? AND `group` = ? AND resource = ?", namespace, v.resource.Group, v.resource.Resource).
+			Find(&folders)
+		if err != nil {
+			return nil, fmt.Errorf("failed to query unified folders: %w", err)
+		}
+		for _, folder := range folders {
+			parentMap[folder.Name] = folder.Folder
+		}
 	}
 
 	if len(parentMap) == 0 {
@@ -429,15 +503,19 @@ type CountValidationOptions struct {
 // CountValidation creates a ValidatorFactory for count-based validation.
 // It compares the count of resources in the legacy table with unified storage.
 func CountValidation(resource schema.GroupResource, opts CountValidationOptions) ValidatorFactory {
-	return func(client resourcepb.ResourceIndexClient, driverName string) Validator {
-		return newCountValidator(client, resource, opts, driverName)
+	return func(client resourcepb.ResourceIndexClient, validationOpts ValidatorOptions) Validator {
+		v := newCountValidator(client, resource, opts, validationOpts.DriverName)
+		v.enableSQLKVBackend = validationOpts.EnableSQLKVBackend
+		return v
 	}
 }
 
 // FolderTreeValidation creates a ValidatorFactory for folder tree structure validation.
 // It validates that folder parent relationships are preserved after migration.
 func FolderTreeValidation(resource schema.GroupResource) ValidatorFactory {
-	return func(client resourcepb.ResourceIndexClient, driverName string) Validator {
-		return newFolderTreeValidator(client, resource, driverName)
+	return func(client resourcepb.ResourceIndexClient, opts ValidatorOptions) Validator {
+		v := newFolderTreeValidator(client, resource, opts.DriverName)
+		v.enableSQLKVBackend = opts.EnableSQLKVBackend
+		return v
 	}
 }

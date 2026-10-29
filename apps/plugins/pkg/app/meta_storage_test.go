@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 
@@ -124,6 +125,81 @@ func TestMetaStorage_List_SkipsFailedPlugins(t *testing.T) {
 	assert.Equal(t, "good-plugin", list.Items[0].Name)
 }
 
+func TestMetaStorage_List_FiltersAlphaPlugins(t *testing.T) {
+	alphaState := pluginsv0alpha1.MetaJSONDataStateAlpha
+	provider := meta.NewProviderManager(&byIDProvider{
+		metaByID: map[string]pluginsv0alpha1.MetaSpec{
+			"stable-plugin": {PluginJson: pluginsv0alpha1.MetaJSONData{Id: "stable-plugin"}},
+			"alpha-plugin":  {PluginJson: pluginsv0alpha1.MetaJSONData{Id: "alpha-plugin", State: &alphaState}},
+		},
+	})
+
+	mockClient := &mockResourceClient{
+		listFunc: func(_ context.Context, _ string, _ resource.ListOptions) (resource.ListObject, error) {
+			return &pluginsv0alpha1.PluginList{
+				Items: []pluginsv0alpha1.Plugin{
+					{ObjectMeta: metav1.ObjectMeta{Name: "stable-plugin", Namespace: "default"}, Spec: pluginsv0alpha1.PluginSpec{Id: "stable-plugin", Version: "1.0.0"}},
+					{ObjectMeta: metav1.ObjectMeta{Name: "alpha-plugin", Namespace: "default"}, Spec: pluginsv0alpha1.PluginSpec{Id: "alpha-plugin", Version: "1.0.0"}},
+				},
+			}, nil
+		},
+	}
+
+	storage := NewMetaStorage(&logging.NoOpLogger{}, provider, func(_ context.Context) (*pluginsv0alpha1.PluginClient, error) {
+		return pluginsv0alpha1.NewPluginClient(mockClient), nil
+	})
+
+	result, err := storage.List(testContext("default"), nil)
+	require.NoError(t, err)
+
+	list := result.(*pluginsv0alpha1.MetaList)
+	require.Len(t, list.Items, 1)
+	assert.Equal(t, "stable-plugin", list.Items[0].Name)
+}
+
+func TestMetaStorage_Get_AlphaPlugin_ReturnsNotFound(t *testing.T) {
+	alphaState := pluginsv0alpha1.MetaJSONDataStateAlpha
+	provider := meta.NewProviderManager(&byIDProvider{
+		metaByID: map[string]pluginsv0alpha1.MetaSpec{
+			"alpha-plugin": {PluginJson: pluginsv0alpha1.MetaJSONData{Id: "alpha-plugin", State: &alphaState}},
+		},
+	})
+
+	mockClient := &mockResourceClient{
+		getFunc: func(_ context.Context, _ resource.Identifier) (resource.Object, error) {
+			return &pluginsv0alpha1.Plugin{
+				ObjectMeta: metav1.ObjectMeta{Name: "alpha-plugin", Namespace: "default"},
+				Spec:       pluginsv0alpha1.PluginSpec{Id: "alpha-plugin", Version: "1.0.0"},
+			}, nil
+		},
+	}
+
+	storage := NewMetaStorage(&logging.NoOpLogger{}, provider, func(_ context.Context) (*pluginsv0alpha1.PluginClient, error) {
+		return pluginsv0alpha1.NewPluginClient(mockClient), nil
+	})
+
+	_, err := storage.Get(testContext("default"), "alpha-plugin", nil)
+	require.Error(t, err)
+	assert.True(t, apierrors.IsNotFound(err))
+}
+
+// byIDProvider returns MetaSpecs keyed by plugin ID.
+type byIDProvider struct {
+	metaByID map[string]pluginsv0alpha1.MetaSpec
+}
+
+func (b *byIDProvider) Name() string {
+	return "byID"
+}
+
+func (b *byIDProvider) GetMeta(_ context.Context, ref meta.PluginRef) (*meta.Result, error) {
+	m, ok := b.metaByID[ref.ID]
+	if !ok {
+		return nil, meta.ErrMetaNotFound
+	}
+	return &meta.Result{Meta: m, TTL: time.Hour}, nil
+}
+
 // stubProvider always returns the same MetaSpec.
 type stubProvider struct {
 	meta pluginsv0alpha1.MetaSpec
@@ -178,14 +254,19 @@ func (s *selectiveProvider) GetMeta(_ context.Context, ref meta.PluginRef) (*met
 	return nil, meta.ErrMetaNotFound
 }
 
-// mockResourceClient implements resource.Client with only List wired up.
+// mockResourceClient implements resource.Client with only List/Get wired up.
 type mockResourceClient struct {
 	resource.Client
 	listFunc func(ctx context.Context, namespace string, opts resource.ListOptions) (resource.ListObject, error)
+	getFunc  func(ctx context.Context, identifier resource.Identifier) (resource.Object, error)
 }
 
 func (m *mockResourceClient) List(ctx context.Context, namespace string, opts resource.ListOptions) (resource.ListObject, error) {
 	return m.listFunc(ctx, namespace, opts)
+}
+
+func (m *mockResourceClient) Get(ctx context.Context, identifier resource.Identifier) (resource.Object, error) {
+	return m.getFunc(ctx, identifier)
 }
 
 func (m *mockResourceClient) ListInto(ctx context.Context, namespace string, opts resource.ListOptions, into resource.ListObject) error {

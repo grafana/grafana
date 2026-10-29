@@ -204,6 +204,29 @@ export const pluginMeta = {
     module: 'public/plugins/grafana-ml-app/module.js',
     baseUrl: 'public/plugins/grafana-ml-app',
   } satisfies PluginMeta,
+  [SupportedPlugin.PrometheusAlerting]: {
+    id: SupportedPlugin.PrometheusAlerting,
+    name: 'Prometheus Alerting',
+    type: PluginType.app,
+    enabled: true,
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: '',
+      },
+      description: 'Data source managed alerting',
+      links: [],
+      logos: {
+        small: 'public/plugins/grafana-prometheusalerting-app/img/logo.svg',
+        large: 'public/plugins/grafana-prometheusalerting-app/img/logo.svg',
+      },
+      screenshots: [],
+      version: 'local-dev',
+      updated: '2024-04-09',
+    },
+    module: 'public/plugins/grafana-prometheusalerting-app/module.js',
+    baseUrl: 'public/plugins/grafana-prometheusalerting-app',
+  } satisfies PluginMeta,
 };
 
 export const plugins: PluginMeta[] = [

@@ -11,8 +11,11 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { reportInteraction, getDataSourceInstance } from '@grafana/runtime';
+import {
+  useFlagGrafanaLogDetailsDisplayedFieldControls,
+  useFlagGrafanaOtelLogDetails,
+} from '@grafana/runtime/internal';
 import { Box, ControlledCollapse, InlineField, InlineSwitch, Stack, useStyles2 } from '@grafana/ui';
 
 import { getLabelTypeFromRow } from '../../utils';
@@ -20,10 +23,12 @@ import { createLogLineLinks } from '../logParser';
 import { useAttributesExtensionLinks } from '../useAttributesExtensionLinks';
 
 import { LogLineDetailsDisplayedFields } from './LogLineDetailsDisplayedFields';
+import { LogLineDetailsError } from './LogLineDetailsError';
 import { type LabelWithLinks, LogLineDetailsFields, LogLineDetailsLabelFields } from './LogLineDetailsFields';
 import { LogLineDetailsLinks } from './LogLineDetailsLinks';
 import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { LogLineDetailsTrace } from './LogLineDetailsTrace';
+import { LogLineDetailsOTelComponent } from './LogLineOTelDetailsComponent';
 import { useLogListContext } from './LogListContext';
 import { reportInteractionOnce } from './analytics';
 import { getTempoTraceFromLinks } from './links';
@@ -39,7 +44,41 @@ interface LogLineDetailsComponentProps {
   timeZone: string;
 }
 
-export const LogLineDetailsComponent = memo(
+export const LogLineDetailsComponent = ({
+  log,
+  logs,
+  prettifyDetailsJSON,
+  search = '',
+  setPrettifyDetailsJSON,
+  timeRange,
+  timeZone,
+}: LogLineDetailsComponentProps) => {
+  const otelLogDetailsEnabled = useFlagGrafanaOtelLogDetails();
+
+  return log.otelLanguage && otelLogDetailsEnabled ? (
+    <LogLineDetailsOTelComponent
+      log={log}
+      logs={logs}
+      prettifyDetailsJSON={prettifyDetailsJSON}
+      search={search}
+      setPrettifyDetailsJSON={setPrettifyDetailsJSON}
+      timeRange={timeRange}
+      timeZone={timeZone}
+    />
+  ) : (
+    <LogLineDetailsLegacyComponent
+      log={log}
+      logs={logs}
+      prettifyDetailsJSON={prettifyDetailsJSON}
+      search={search}
+      setPrettifyDetailsJSON={setPrettifyDetailsJSON}
+      timeRange={timeRange}
+      timeZone={timeZone}
+    />
+  );
+};
+
+const LogLineDetailsLegacyComponent = memo(
   ({
     log,
     logs,
@@ -49,12 +88,21 @@ export const LogLineDetailsComponent = memo(
     timeRange,
     timeZone,
   }: LogLineDetailsComponentProps) => {
-    const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields, syntaxHighlighting } =
-      useLogListContext();
+    const {
+      displayedFields,
+      noInteractions,
+      logOptionsStorageKey,
+      setDisplayedFields,
+      syntaxHighlighting,
+      syntaxHighlightingUnavailable,
+    } = useLogListContext();
 
     const [ds, setDs] = useState<DataSourceApi | null | undefined>(undefined);
+    // Collapse the log line by default if heavy logs are present
     const [logLineOpen, setLogLineOpen] = useState(
-      logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.log-details.logLineOpen`, false) : false
+      !syntaxHighlightingUnavailable && logOptionsStorageKey
+        ? store.getBool(`${logOptionsStorageKey}.log-details.logLineOpen`, false)
+        : false
     );
     const styles = useStyles2(getStyles);
 
@@ -62,8 +110,8 @@ export const LogLineDetailsComponent = memo(
 
     const fieldsWithLinks = useMemo(() => {
       const fieldsWithLinks = log.fields.filter((f) => f.links?.length);
-      const displayedFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex !== log.entryFieldIndex).sort();
-      const hiddenFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex === log.entryFieldIndex).sort();
+      const displayedFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex !== log.entryFieldIndex);
+      const hiddenFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex === log.entryFieldIndex);
       const fieldsWithLinksFromVariableMap = createLogLineLinks(hiddenFieldsWithLinks);
       return {
         links: displayedFieldsWithLinks,
@@ -112,6 +160,13 @@ export const LogLineDetailsComponent = memo(
     }, [ds, labelsWithLinks, log]);
 
     const labelGroups = useMemo(() => Object.keys(groupedLabels), [groupedLabels]);
+
+    useEffect(() => {
+      // Disable prettify by default when highlighting has been disabled because of heavy logs
+      if (syntaxHighlightingUnavailable) {
+        setPrettifyDetailsJSON(false);
+      }
+    }, [setPrettifyDetailsJSON, syntaxHighlightingUnavailable]);
 
     const linksOpen = logOptionsStorageKey
       ? store.getBool(`${logOptionsStorageKey}.log-details.linksOpen`, true)
@@ -174,6 +229,8 @@ export const LogLineDetailsComponent = memo(
         .catch(() => setDs(null));
     }, [log.datasourceUid]);
 
+    const displayedFieldsControlEnabled = useFlagGrafanaLogDetailsDisplayedFieldControls();
+
     // Wait for ds to be resolved to DataSourceApi or null on error
     if (ds === undefined) {
       return null;
@@ -208,7 +265,10 @@ export const LogLineDetailsComponent = memo(
             prettifyJSON={prettifyDetailsJSON}
           />
         </ControlledCollapse>
-        {displayedFields.length > 0 && setDisplayedFields && (
+
+        <LogLineDetailsError className={styles.errorContainer} fields={fieldsWithoutLinks} labels={labelsWithLinks} />
+
+        {displayedFieldsControlEnabled && displayedFields.length > 0 && setDisplayedFields && (
           <ControlledCollapse
             label={t('logs.log-line-details.displayed-fields-section', 'Organize displayed fields')}
             isOpen={displayedFieldsOpen}
@@ -280,13 +340,16 @@ export const LogLineDetailsComponent = memo(
     );
   }
 );
-LogLineDetailsComponent.displayName = 'LogLineDetailsComponent';
+LogLineDetailsLegacyComponent.displayName = 'LogLineDetailsLegacyComponent';
 
 function groupOptionName(group: string) {
   return `${camelCase(group)}Open`;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  errorContainer: css({
+    margin: theme.spacing(0, 0.5, 1, 0.5),
+  }),
   collapsable: css({
     '&:last-of-type': {
       marginBottom: 0,
@@ -294,5 +357,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   componentWrapper: css({
     padding: theme.spacing(0, 1, 1, 1),
+    marginTop: theme.spacing(1),
   }),
 });

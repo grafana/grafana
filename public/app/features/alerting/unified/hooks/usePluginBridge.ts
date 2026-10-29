@@ -1,55 +1,18 @@
 import { useAsync } from 'react-use';
 
 import { OrgRole, type PluginMeta } from '@grafana/data';
-import { isAppPluginInstalled, isFetchError } from '@grafana/runtime';
-import { getPluginSettings } from '@grafana/runtime/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { type PluginID } from '../components/PluginBridge';
 import { SupportedPlugin } from '../types/pluginBridges';
+
+import { type BridgeProbe, isPluginEnabled, probePlugin } from './pluginBridgeProbe';
 
 interface PluginBridgeHookResponse {
   loading: boolean;
   installed?: boolean;
   error?: Error;
   settings?: PluginMeta<{}>;
-}
-
-/**
- * A settled probe is always a defined object, so `value === undefined` unambiguously means
- * "still resolving" and can never be confused with "settled, but nothing found".
- */
-interface BridgeProbe {
-  settings?: PluginMeta<{}>;
-}
-
-/**
- * Every plugin used with a bridge is an *app* plugin — createBridgeURL deep-links to `/a/<id>`,
- * which only exists for apps. So we can check bootdata (free, no request) for whether the app is
- * installed at all before asking the backend for its settings. Without this gate, checking for an
- * app that isn't installed 404s on every mount: the rejection evicts the promise from the settings
- * cache instead of being deduped for the session, and gets reported as an error to telemetry.
- */
-export async function probePlugin(plugin: PluginID): Promise<BridgeProbe> {
-  if (!plugin || !(await isAppPluginInstalled(plugin))) {
-    return {};
-  }
-
-  try {
-    return { settings: await getPluginSettings(plugin) };
-  } catch (error) {
-    // getLegacySettings wraps the raw fetch error as the `cause`. A 404 means the plugin is
-    // not installed after all — treat it as a normal absence, not an error.
-    const cause = error instanceof Error ? error.cause : error;
-    if (isFetchError(cause) && cause.status === 404) {
-      return {};
-    }
-    throw error;
-  }
-}
-
-export function isPluginEnabled(settings?: PluginMeta<{}>): boolean {
-  return settings?.enabled ?? false;
 }
 
 function toBridgeResponse(probe: BridgeProbe | undefined, error: unknown): PluginBridgeHookResponse {

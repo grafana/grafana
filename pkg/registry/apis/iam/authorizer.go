@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	authzlib "github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
@@ -13,6 +14,7 @@ import (
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 )
@@ -52,6 +54,7 @@ func newIAMAuthorizer(
 	// Identity specific resources
 	legacyAuthorizer := gfauthorizer.NewResourceAuthorizer(legacyAccessClient)
 	resourceAuthorizer["display"] = legacyAuthorizer
+	resourceAuthorizer["whoami"] = newWhoamiAuthorizer()
 
 	// Temporary security fix: Block Watch on ResourcePermissions until proper filtering is implemented
 	blockWatchAuthorizer := authorizer.AuthorizerFunc(func(
@@ -72,33 +75,72 @@ func newIAMAuthorizer(
 
 	// Access specific resources
 	resourceAuthorizer[iamv0.RoleInfo.GetName()] = roleApiInstaller.GetAuthorizer()
-	resourceAuthorizer[iamv0.TeamLBACRuleInfo.GetName()] = teamLbacApiInstaller.GetAuthorizer()
+	resourceAuthorizer[iamv0.TeamLBACRuleInfo.GetName()] = newTeamLBACRuleAuthorizer(teamLbacApiInstaller.GetAuthorizer())
 	resourceAuthorizer[iamv0.ResourcePermissionInfo.GetName()] = blockWatchAuthorizer // Block Watch, allow others (storage-layer handles authorization)
 	resourceAuthorizer[iamv0.RoleBindingInfo.GetName()] = roleBindingsApiInstaller.GetAuthorizer()
 	resourceAuthorizer[iamv0.ServiceAccountResourceInfo.GetName()] = newServiceAccountAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = newUserAuthorizer(accessClient)
+	resourceAuthorizer[iamv0.AuthInfoResourceInfo.GetName()] = serviceIdentityAuthorizer
 	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = newTeamAuthorizer(accessClient)
-	// The SSOSetting kind had no k8s-API consumers, so no authorizer was ever
-	// registered. Interim: allow authenticated identities; real settings:write
-	// RBAC is a follow-up (tracked with the SSO settings migration).
-	resourceAuthorizer[legacyiamv0.SSOSettingResourceInfo.GetName()] = authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-		requester, err := identity.GetRequester(ctx)
-		if err != nil || requester == nil {
-			return authorizer.DecisionDeny, "cannot access ssosettings without an identity", nil
-		}
-		if requester.IsIdentityType(authlib.TypeAnonymous) {
-			return authorizer.DecisionDeny, "anonymous identities cannot access ssosettings", nil
-		}
-		return authorizer.DecisionAllow, "", nil
-	})
+	resourceAuthorizer[legacyiamv0.SSOSettingResourceInfo.GetName()] = newSSOSettingAuthorizer(accessClient)
 	resourceAuthorizer["searchUsers"] = serviceAuthorizer
 	resourceAuthorizer["searchTeams"] = serviceAuthorizer
+	resourceAuthorizer["teamlbacusage"] = teamLbacApiInstaller.GetTeamLBACUsageAuthorizer()
 	// TODO: Implement fine-grained authorization for external group mapping search on the search level
 	resourceAuthorizer["searchExternalGroupMappings"] = serviceIdentityAuthorizer
 
 	resourceAuthorizer[iamv0.GlobalRoleInfo.GetName()] = globalRoleApiInstaller.GetAuthorizer()
 
 	return &iamAuthorizer{resourceAuthorizer: resourceAuthorizer}
+}
+
+func newTeamLBACRuleAuthorizer(base authorizer.Authorizer) authorizer.Authorizer {
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		if attr.GetSubresource() != "for-subject" {
+			// Base CRUD is authorized by the storage wrapper after it resolves the
+			// TeamLBACRule to the datasource whose permissions must be checked.
+			return base.Authorize(ctx, attr)
+		}
+
+		// The caller chooses the subject evaluated by this subresource, so user
+		// requests must not reach it even when they carry delegated service
+		// permissions. Only a direct service call with TeamLBACRule read access
+		// may evaluate rules for another identity.
+		authInfo, ok := authlib.AuthInfoFrom(ctx)
+		if !ok {
+			return authorizer.DecisionDeny, "for-subject requires an authenticated service identity", nil
+		}
+		// for-subject lets a service select which user's rules are returned. Check
+		// the exact TeamLBACRule read permission instead of trusting attr to
+		// describe the permission this sensitive operation requires.
+		resource := iamv0.TeamLBACRuleInfo.GroupResource()
+		servicePermission := authzlib.CheckServicePermissions(authInfo, resource.Group, resource.Resource, utils.VerbGet)
+		if !servicePermission.ServiceCall {
+			return authorizer.DecisionDeny, "for-subject only accepts direct service calls", nil
+		}
+		if !servicePermission.Allowed {
+			return authorizer.DecisionDeny, "calling service lacks TeamLBACRule read permission", nil
+		}
+		return authorizer.DecisionAllow, "", nil
+	})
+}
+
+func newWhoamiAuthorizer() authorizer.Authorizer {
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		// Kubernetes treats GET on a resource path without a name as a list request.
+		// For whoami/permissions, it parses permissions as the resource name.
+		readWhoami := attr.GetName() == "" && (attr.GetVerb() == utils.VerbList || attr.GetVerb() == utils.VerbGet)
+		readPermissions := attr.GetName() == "permissions" && attr.GetVerb() == utils.VerbGet
+		if !attr.IsResourceRequest() || attr.GetResource() != "whoami" ||
+			attr.GetSubresource() != "" || attr.GetNamespace() != "" ||
+			(!readWhoami && !readPermissions) {
+			return authorizer.DecisionDeny, "only reading the current identity is supported", nil
+		}
+		if _, ok := authlib.AuthInfoFrom(ctx); !ok {
+			return authorizer.DecisionDeny, "cannot read current user without an identity", nil
+		}
+		return authorizer.DecisionAllow, "", nil
+	})
 }
 
 func (s *iamAuthorizer) Authorize(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -112,6 +154,16 @@ func (s *iamAuthorizer) Authorize(ctx context.Context, attr authorizer.Attribute
 	}
 
 	return authz.Authorize(ctx, attr)
+}
+
+// ConditionsAwareAuthorize implements authorizer.Authorizer.
+func (s *iamAuthorizer) ConditionsAwareAuthorize(ctx context.Context, attr authorizer.Attributes) authorizer.ConditionsAwareDecision {
+	return authorizer.ConditionsAwareDecisionFromParts(s.Authorize(ctx, attr))
+}
+
+// EvaluateConditions implements authorizer.Authorizer.
+func (s *iamAuthorizer) EvaluateConditions(_ context.Context, _ authorizer.ConditionsAwareDecision, _ authorizer.ConditionsData) (authorizer.Decision, string, error) {
+	return authorizer.DecisionDeny, "", authorizer.ErrorConditionEvaluationNotSupported
 }
 
 // allowListAuthorizer allows a nameless list (resource request, no subresource, no name, verb=list)
@@ -170,13 +222,56 @@ func newTeamAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer 
 	return allowListAuthorizer(base)
 }
 
+// newSSOSettingAuthorizer authorizes ssosettings against the legacy settings RBAC:
+// the check targets the foreign setting.grafana.app/settings resource named
+// auth.<provider>. The identity guards run first, so a nameless list and create
+// (neither carries a provider name at authz time) are only allowed after the
+// no-identity/anonymous denials; the redacting store then filters per-provider.
+func newSSOSettingAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		// The "~" login singleton is public and secret-free, not a provider; skip RBAC.
+		if attr.GetVerb() == utils.VerbGet && attr.GetName() == sso.LoginConfigName {
+			return authorizer.DecisionAllow, "", nil
+		}
+
+		requester, err := identity.GetRequester(ctx)
+		if err != nil || requester == nil {
+			return authorizer.DecisionDeny, "cannot access ssosettings without an identity", nil
+		}
+		if requester.IsIdentityType(authlib.TypeAnonymous) {
+			return authorizer.DecisionDeny, "anonymous identities cannot access ssosettings", nil
+		}
+
+		// Neither a nameless list nor a create carries a provider name at authz time;
+		// the redacting store filters the list and enforces per-provider write on create.
+		if (attr.GetVerb() == utils.VerbList && attr.GetName() == "") || attr.GetVerb() == utils.VerbCreate {
+			return authorizer.DecisionAllow, "", nil
+		}
+
+		res, err := accessClient.Check(ctx, requester, authlib.CheckRequest{
+			Verb:      attr.GetVerb(),
+			Group:     sso.SettingsAuthzGroup,
+			Resource:  sso.SettingsAuthzResource,
+			Namespace: attr.GetNamespace(),
+			Name:      "auth." + attr.GetName(),
+		}, "")
+		if err != nil {
+			return authorizer.DecisionDeny, "", err
+		}
+		if !res.Allowed {
+			return authorizer.DecisionDeny, "requires settings permission for the provider", nil
+		}
+		return authorizer.DecisionAllow, "", nil
+	})
+}
+
 // allowSelfAuthorizer allows any authenticated identity to GET the current-user
-// endpoint (users/~). That handler only ever returns the caller's own display
-// info derived from context, so it needs no users:read permission.
+// endpoints (users/~ and users/~/permissions). Those handlers only return data
+// for the caller derived from context, so they need no users:read permission.
 func allowSelfAuthorizer(base authorizer.Authorizer) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 		if attr.IsResourceRequest() && attr.GetResource() == iamv0.UserResourceInfo.GetName() &&
-			attr.GetSubresource() == "" && attr.GetName() == display.CurrentUserName &&
+			(attr.GetSubresource() == "" || attr.GetSubresource() == "permissions") && attr.GetName() == display.CurrentUserName &&
 			attr.GetVerb() == utils.VerbGet {
 			if _, ok := authlib.AuthInfoFrom(ctx); ok {
 				return authorizer.DecisionAllow, "", nil

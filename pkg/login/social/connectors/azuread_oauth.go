@@ -9,15 +9,17 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"slices"
 	"strings"
 	"time"
+	"uuid"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	jose "github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
-	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -26,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/oauth2"
 )
@@ -93,8 +94,11 @@ type keySetJWKS struct {
 	jose.JSONWebKeySet
 }
 
-func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialAzureAD {
-	s := newSocialBaseWithCache(social.AzureADProviderName, orgRoleMapper, info, features, cfg, cache)
+func NewAzureADProvider(ctx context.Context, info *social.OAuthInfo, cfgProvider configprovider.ConfigProvider, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) (*SocialAzureAD, error) {
+	s, err := newSocialBaseWithCache(social.AzureADProviderName, ctx, orgRoleMapper, info, features, cfgProvider, cache)
+	if err != nil {
+		return nil, err
+	}
 
 	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
 	if err != nil {
@@ -112,9 +116,11 @@ func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper 
 		appendUniqueScope(provider.Config, social.OfflineAccessScope)
 	}
 
-	ssoSettings.RegisterReloadable(social.AzureADProviderName, provider)
+	if ssoSettings != nil {
+		ssoSettings.RegisterReloadable(social.AzureADProviderName, provider)
+	}
 
-	return provider
+	return provider, nil
 }
 
 func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
@@ -166,7 +172,11 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 			userInfo.IsGrafanaAdmin = &grafanaAdmin
 		}
 
-		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(ctx, s.orgMappingCfg, userInfo.Groups, directlyMappedRole)
+		var err error
+		userInfo.OrgRoles, err = s.orgRoleMapper.MapOrgRolesContext(ctx, s.orgMappingCfg, userInfo.Groups, directlyMappedRole)
+		if err != nil {
+			return nil, fmt.Errorf("map organization roles: %w", err)
+		}
 		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
 			return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
 		}
@@ -428,7 +438,9 @@ func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettin
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(ctx, social.AzureADProviderName, newInfo)
+	if err := s.updateInfo(ctx, social.AzureADProviderName, newInfo); err != nil {
+		return err
+	}
 
 	if newInfo.UseRefreshToken {
 		appendUniqueScope(s.Config, social.OfflineAccessScope)
@@ -473,6 +485,10 @@ func (s *SocialAzureAD) Validate(ctx context.Context, newSettings ssoModels.SSOS
 
 func validateAllowedGroups(info *social.OAuthInfo, requester identity.Requester) error {
 	for _, groupId := range info.AllowedGroups {
+		// Preserve case-insensitive URN prefixes accepted in existing configurations.
+		if len(groupId) >= len("urn:uuid:") && strings.EqualFold(groupId[:len("urn:uuid:")], "urn:uuid:") {
+			groupId = "urn:uuid:" + groupId[len("urn:uuid:"):]
+		}
 		_, err := uuid.Parse(groupId)
 		if err != nil {
 			return ssosettings.ErrInvalidOAuthConfig("One or more of the Allowed groups are not in the correct format. Allowed groups should be a list of Object Ids.")
@@ -533,10 +549,8 @@ func validateFederatedCredentialAudience(info *social.OAuthInfo, requester ident
 	if info.ClientAuthentication != social.ManagedIdentity {
 		return nil
 	}
-	for _, supportedFederatedCredentialAudience := range supportedFederatedCredentialAudiences {
-		if info.FederatedCredentialAudience == supportedFederatedCredentialAudience {
-			return nil
-		}
+	if slices.Contains(supportedFederatedCredentialAudiences, info.FederatedCredentialAudience) {
+		return nil
 	}
 	return ssosettings.ErrInvalidOAuthConfig("FIC audience is not a supported audience.")
 }
@@ -668,12 +682,10 @@ func (s *SocialAzureAD) extractGroups(ctx context.Context, client *http.Client, 
 	}()
 
 	if res.StatusCode != http.StatusOK {
-		if res.StatusCode == http.StatusForbidden {
-			logger.Warn("AzureAD OAuth: Token need GroupMember.Read.All permission to fetch all groups")
-		} else {
-			body, _ := io.ReadAll(res.Body)
-			logger.Warn("AzureAD OAuth: could not fetch user groups", "code", res.StatusCode, "body", string(body))
-		}
+		// A 403 is not always a missing GroupMember.Read.All permission (e.g. Conditional Access),
+		// and the Graph error body carries the error code and request ID needed to tell the causes apart.
+		body, _ := io.ReadAll(io.LimitReader(res.Body, 4096))
+		logger.Warn("AzureAD OAuth: could not fetch user groups", "code", res.StatusCode, "body", string(body))
 		return []string{}, nil
 	}
 
@@ -739,10 +751,5 @@ func (s *SocialAzureAD) isAllowedTenant(logger log.Logger, tenantID string) bool
 		return true
 	}
 
-	for _, t := range s.allowedOrganizations {
-		if t == tenantID {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(s.allowedOrganizations, tenantID)
 }
