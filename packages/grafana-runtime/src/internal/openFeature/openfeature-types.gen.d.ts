@@ -200,7 +200,8 @@ declare module "@openfeature/core" {
     | "datasources.gatewayAuditPolicy"
     | "grafana.geomapProtomapsBasemap"
     | "reporting.removeLogoUrlField"
-    | "dashboards.disablePublicDashboards";
+    | "dashboards.disablePublicDashboards"
+    | "grafana.folderPickerFolderEditAccess";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =
