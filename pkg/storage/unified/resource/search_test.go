@@ -1115,20 +1115,27 @@ func TestSmallGlobalIndexRequestsWaitForSharedBuild(t *testing.T) {
 
 // A search waits only so long for a global index to be built, then gets 503
 // while the build carries on for the next search. Per-resource builds are
-// waited for as before.
+// waited for as before, however long they take.
 func TestGlobalIndexBuildWaitIsBounded(t *testing.T) {
-	release := make(chan struct{})
-	var releaseOnce sync.Once
-	t.Cleanup(func() { releaseOnce.Do(func() { close(release) }) })
+	releaseGlobal := make(chan struct{})
+	releaseResource := make(chan struct{})
+	var releaseOnce, releaseResourceOnce sync.Once
 	var calls atomic.Int32
 	backend := &initialBuildTestBackend{beforeBuild: func(_ context.Context, key NamespacedResource, _ BuildIndexOptions) error {
 		if key.IsGlobal() {
 			calls.Add(1)
-			<-release
+			<-releaseGlobal
+		} else {
+			<-releaseResource
 		}
 		return nil
 	}}
 	server := newInitialBuildTestServer(t, backend, nil, 1)
+	// After the server's cleanup, so it runs first: stopping waits for these builds.
+	t.Cleanup(func() {
+		releaseOnce.Do(func() { close(releaseGlobal) })
+		releaseResourceOnce.Do(func() { close(releaseResource) })
+	})
 	server.globalIndexBuildWait = 20 * time.Millisecond
 	require.NoError(t, server.init(t.Context()))
 
@@ -1138,15 +1145,109 @@ func TestGlobalIndexBuildWaitIsBounded(t *testing.T) {
 	require.Equal(t, NewServiceUnavailableError("the global search index for this namespace is still being built"), AsErrorResult(err))
 	require.Equal(t, int32(1), calls.Load(), "a search that gives up must not start another build")
 
-	releaseOnce.Do(func() { close(release) })
+	releaseOnce.Do(func() { close(releaseGlobal) })
 	require.Eventually(t, func() bool { return backend.GetIndex(GlobalSearchKey("large")) != nil }, 5*time.Second, time.Millisecond,
 		"the build finishes without the search that started it")
 	idx, err := server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("large"), "test")
 	require.NoError(t, err)
 	require.Same(t, backend.GetIndex(GlobalSearchKey("large")), idx)
 
-	_, err = server.getOrCreateIndex(t.Context(), nil, dashboardType("large"), "test")
-	require.NoError(t, err)
+	resourceDone := make(chan error, 1)
+	go func() {
+		_, err := server.getOrCreateIndex(t.Context(), nil, dashboardType("large"), "test")
+		resourceDone <- err
+	}()
+	select {
+	case err := <-resourceDone:
+		t.Fatalf("a per-resource search returned before its build finished: %v", err)
+	case <-time.After(5 * server.globalIndexBuildWait):
+	}
+	releaseResourceOnce.Do(func() { close(releaseResource) })
+	require.NoError(t, <-resourceDone)
+}
+
+// The search that started a build can go away, and another search still gets
+// the same build rather than starting its own.
+func TestBuildOutlivesTheSearchThatStartedIt(t *testing.T) {
+	started := make(chan struct{})
+	release := make(chan struct{})
+	var releaseOnce sync.Once
+	var calls atomic.Int32
+	backend := &initialBuildTestBackend{beforeBuild: func(ctx context.Context, key NamespacedResource, _ BuildIndexOptions) error {
+		if key.IsGlobal() && calls.Add(1) == 1 {
+			close(started)
+		}
+		// Fails if the build stops with the search that started it.
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-release:
+			return nil
+		}
+	}}
+	server := newInitialBuildTestServer(t, backend, nil, 1)
+	// After the server's cleanup, so it runs first: stopping waits for the build.
+	t.Cleanup(func() { releaseOnce.Do(func() { close(release) }) })
+	server.globalIndexBuildWait = time.Minute
+	require.NoError(t, server.init(t.Context()))
+
+	first, cancel := context.WithCancel(t.Context())
+	firstDone := make(chan error, 1)
+	go func() {
+		_, err := server.getOrCreateIndex(first, nil, GlobalSearchKey("ns"), "test")
+		firstDone <- err
+	}()
+	select {
+	case <-started:
+	case err := <-firstDone:
+		t.Fatalf("the search returned before its build started: %v", err)
+	case <-time.After(5 * time.Second):
+		t.Fatal("the search did not start a build")
+	}
+	cancel()
+	require.ErrorIs(t, <-firstDone, context.Canceled)
+
+	secondDone := make(chan error, 1)
+	go func() {
+		_, err := server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("ns"), "test")
+		secondDone <- err
+	}()
+	releaseOnce.Do(func() { close(release) })
+	require.NoError(t, <-secondDone)
+	require.Equal(t, int32(1), calls.Load(), "the second search shares the first one's build")
+}
+
+// A build that fails after its search got 503 leaves nothing behind: the next
+// search starts a new build.
+func TestSearchAfterAFailedBuildStartsANewOne(t *testing.T) {
+	release := make(chan struct{})
+	var releaseOnce sync.Once
+	var calls atomic.Int32
+	backend := &initialBuildTestBackend{beforeBuild: func(_ context.Context, key NamespacedResource, _ BuildIndexOptions) error {
+		if !key.IsGlobal() {
+			return nil
+		}
+		if calls.Add(1) == 1 {
+			<-release
+			return errors.New("storage unavailable")
+		}
+		return nil
+	}}
+	server := newInitialBuildTestServer(t, backend, nil, 1)
+	// After the server's cleanup, so it runs first: stopping waits for the build.
+	t.Cleanup(func() { releaseOnce.Do(func() { close(release) }) })
+	server.globalIndexBuildWait = 20 * time.Millisecond
+	require.NoError(t, server.init(t.Context()))
+
+	_, err := server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("ns"), "test")
+	require.Equal(t, NewServiceUnavailableError("the global search index for this namespace is still being built"), AsErrorResult(err))
+	releaseOnce.Do(func() { close(release) })
+
+	require.Eventually(t, func() bool {
+		idx, err := server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("ns"), "test")
+		return err == nil && idx != nil
+	}, 5*time.Second, time.Millisecond)
+	require.Equal(t, int32(2), calls.Load())
 }
 
 // A build a search gave up on keeps running, but not past shutdown: stopping
