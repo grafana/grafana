@@ -191,6 +191,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "include",
+										In:          "query",
+										Description: "extra results to include. pathToCreatable lists only the folders the user can create dashboards in, and the folders that lead to them, and sets field.canCreate on each. Only valid with type=folder",
+										Required:    false,
+										Schema:      spec.StringProperty().WithEnum("pathToCreatable"),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "sort",
 										In:          "query",
 										Description: "sortable field",
