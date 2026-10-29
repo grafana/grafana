@@ -161,11 +161,14 @@ To group select panels on a dashboard:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Press the `Shift` key and select all the panels you want to group.
+1. Hold `Shift` and click each panel you want to group.
    A dotted blue line surrounds the selected panels.
-   You can select panels that are already in other groupings.
+   You can select panels inside an existing grouping, but all selected panels must be in the same row, tab, or grid to group them together.
 
-1. In the sidebar, select **Group into row** or **Group into tab**.
+1. Do one of the following:
+   - In the sidebar, select **Group into row** or **Group into tab**.
+   - Hover your cursor over one of the selected panels and, in the actions tooltip, click **Group into row** or **Group into tab**.
+
    The panels you've selected are grouped and any remaining panels are added to another grouping of the same type.
 
 1. Set the [grouping configuration options](#grouping-configuration-options) in the sidebar.
