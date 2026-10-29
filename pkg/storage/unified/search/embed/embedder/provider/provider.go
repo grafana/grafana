@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
@@ -30,9 +31,9 @@ import (
 // means unregistered metrics, for callers without a registry.
 //
 // The configured provider's connection fields (project ID for Vertex, region
-// + credentials for Bedrock, endpoint + AZURE_OPENAI_API_KEY for Azure) must
-// be present when the provider is set; missing required fields return an error
-// so misconfiguration fails at startup, not at first request.
+// + credentials for Bedrock, endpoint for Azure) must be present when the
+// provider is set. Azure uses AZURE_OPENAI_API_KEY when set, otherwise the
+// default Azure credential chain (including Workload Identity).
 func ProvideEmbedder(cfg *setting.Cfg, vectorMetrics *resource.VectorMetrics) (*embedder.Embedder, error) {
 	if vectorMetrics == nil {
 		vectorMetrics = resource.ProvideVectorMetrics(nil)
@@ -105,11 +106,17 @@ func newAzureEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec, token
 	if cfg.AzureEndpoint == "" {
 		return nil, fmt.Errorf("vector_embedder.provider=azure requires azure_endpoint")
 	}
-	apiKey := os.Getenv("AZURE_OPENAI_API_KEY")
-	if apiKey == "" {
-		return nil, fmt.Errorf("vector_embedder.provider=azure requires the AZURE_OPENAI_API_KEY env var")
+	var client azure.Client
+	var err error
+	if apiKey := os.Getenv("AZURE_OPENAI_API_KEY"); apiKey != "" {
+		client, err = azure.NewClient(cfg.AzureEndpoint, cfg.AzureDeployment, cfg.AzureAPIVersion, apiKey)
+	} else {
+		credential, credentialErr := azidentity.NewDefaultAzureCredential(nil)
+		if credentialErr != nil {
+			return nil, fmt.Errorf("azure credential: %w", credentialErr)
+		}
+		client, err = azure.NewClientWithTokenCredential(cfg.AzureEndpoint, cfg.AzureDeployment, cfg.AzureAPIVersion, credential)
 	}
-	client, err := azure.NewClient(cfg.AzureEndpoint, cfg.AzureDeployment, cfg.AzureAPIVersion, apiKey)
 	if err != nil {
 		return nil, fmt.Errorf("azure client: %w", err)
 	}
