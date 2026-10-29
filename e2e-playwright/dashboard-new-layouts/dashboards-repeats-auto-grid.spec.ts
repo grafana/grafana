@@ -1,6 +1,6 @@
 import testV2DashWithRepeats from '../dashboards/V2DashWithRepeats.json';
 
-import { test, expect } from './fixtures';
+import { dragAndDropOpenFeature, expect, test } from './fixtures';
 import {
   expectRepeatedPanelTitlesToBe,
   expectDashboardChangesToContain,
@@ -19,11 +19,7 @@ test.use({
     dashboardNewLayouts: true,
   },
   // the Undo/Redo toolbar buttons are gated by an OpenFeature flag, not a feature toggle
-  openFeature: {
-    flags: {
-      dashboardUndoRedo: true,
-    },
-  },
+  openFeature: dragAndDropOpenFeature({ dashboardUndoRedo: true }),
 });
 
 test.use({
@@ -243,7 +239,7 @@ test.describe(
       });
     });
 
-    test.describe('Move', () => {
+    test.describe('Move', { tag: ['@drag-and-drop'] }, () => {
       test('can move repeated panels', async ({ selectors, page, controls, sidebar, panels }) => {
         // drag, undo/redo, then save and reload
         test.slow();

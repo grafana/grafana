@@ -4,7 +4,7 @@ import { type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import v2DashboardRowsWithAutoGrids from '../dashboards/V2DashRowsWithAutoGridsDnd.json';
 
-import { test, expect } from './fixtures';
+import { dragAndDropOpenFeature, expect, test } from './fixtures';
 import {
   COLLAPSED_ROW,
   expectNoUnsavedChanges,
@@ -19,11 +19,7 @@ test.use({
     dashboardNewLayouts: true,
   },
   // the Undo/Redo toolbar buttons are gated by an OpenFeature flag, not a feature toggle
-  openFeature: {
-    flags: {
-      dashboardUndoRedo: true,
-    },
-  },
+  openFeature: dragAndDropOpenFeature({ dashboardUndoRedo: true }),
   viewport: { width: 1920, height: 1080 },
 });
 
@@ -37,7 +33,7 @@ async function importDashboard(page: Page, selectors: E2ESelectorGroups, title: 
   });
 }
 
-test.describe('Dashboard panels cross-row drag and drop', { tag: ['@dashboards'] }, () => {
+test.describe('Dashboard panels cross-row drag and drop', { tag: ['@dashboards', '@drag-and-drop'] }, () => {
   test('moves a panel dropped on a collapsed row header into that row, which stays collapsed', async ({
     page,
     selectors,

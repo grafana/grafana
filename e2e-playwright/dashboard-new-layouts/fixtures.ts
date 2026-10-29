@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks -- `use` is the Playwright fixture API, not a React hook */
 import { type APIRequestContext, type Page, type TestInfo } from '@playwright/test';
 
-import { DashboardPage, type E2ESelectorGroups, test as base } from '@grafana/plugin-e2e';
+import { DashboardPage, type E2ESelectorGroups, type PluginOptions, test as base } from '@grafana/plugin-e2e';
 
 import { Canvas, Controls, Panels, Rows, Sidebar, Tabs } from './page-objects';
 import { type GetByGrafanaSelector } from './page-objects/PageObject';
@@ -14,6 +14,18 @@ interface PageObjectFixtures {
   tabs: Tabs;
   canvas: Canvas;
 }
+
+interface DragAndDropWorkerOptions {
+  /**
+   * Turns on the unified drag and drop flag in specs that set their flags with
+   * `dragAndDropOpenFeature()`. Set by the `dashboard-new-layouts-unified-dnd` project.
+   */
+  unifiedDragAndDrop: boolean;
+}
+
+const UNIFIED_DRAG_AND_DROP_FLAG = 'grafana.dashboardUnifiedDragAndDrop';
+
+type OpenFeatureOption = PluginOptions['openFeature'];
 
 interface BaseArgs {
   page: Page;
@@ -49,7 +61,21 @@ function buildGetByGrafanaSelector(
  * });
  * ```
  */
-export const test = base.extend<PageObjectFixtures>({
+export const test = base.extend<PageObjectFixtures, DragAndDropWorkerOptions & { unifiedDragAndDropGuard: void }>({
+  unifiedDragAndDrop: [false, { scope: 'worker', option: true }],
+  // A spec that sets `openFeature` directly would silently run with the flag off in the unified
+  // drag and drop project, so fail its tests there instead
+  unifiedDragAndDropGuard: [
+    async ({ unifiedDragAndDrop, openFeature }, use) => {
+      if (unifiedDragAndDrop && openFeature.flags[UNIFIED_DRAG_AND_DROP_FLAG] !== true) {
+        throw new Error(
+          `${UNIFIED_DRAG_AND_DROP_FLAG} is off: set the spec's flags with test.use({ openFeature: dragAndDropOpenFeature(...) })`
+        );
+      }
+      await use();
+    },
+    { scope: 'worker', auto: true },
+  ],
   controls: async ({ page, request, selectors, components, grafanaVersion }, use, testInfo) => {
     const getByGrafanaSelector = buildGetByGrafanaSelector({ page, request, selectors, grafanaVersion }, testInfo);
     await use(new Controls({ page, selectors, components, getByGrafanaSelector }));
@@ -75,5 +101,29 @@ export const test = base.extend<PageObjectFixtures>({
     await use(new Canvas({ page, selectors, components, getByGrafanaSelector }));
   },
 });
+
+/**
+ * `openFeature` option for drag and drop specs: `flags` plus the unified drag and drop flag, which
+ * is on in the `dashboard-new-layouts-unified-dnd` project and off everywhere else, so one spec
+ * covers both drag and drop paths. Tag the drag and drop tests with `@drag-and-drop` so that
+ * project picks them up. `openFeature` is worker-scoped, so pass this to a top-level `test.use()`:
+ *
+ * ```typescript
+ * test.use({ openFeature: dragAndDropOpenFeature({ dashboardUndoRedo: true }) });
+ * ```
+ */
+export function dragAndDropOpenFeature(
+  flags: OpenFeatureOption['flags'] = {}
+): [
+  (options: DragAndDropWorkerOptions, use: (openFeature: OpenFeatureOption) => Promise<void>) => Promise<void>,
+  { scope: 'worker' },
+] {
+  return [
+    async ({ unifiedDragAndDrop }, use) => {
+      await use({ flags: { ...flags, [UNIFIED_DRAG_AND_DROP_FLAG]: unifiedDragAndDrop } });
+    },
+    { scope: 'worker' },
+  ];
+}
 
 export { expect } from '@grafana/plugin-e2e';

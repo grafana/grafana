@@ -1,6 +1,6 @@
 import v2DashboardWithTabs from '../dashboards/V2DashRowsWithTabs.json';
 
-import { test, expect } from './fixtures';
+import { dragAndDropOpenFeature, expect, test } from './fixtures';
 import { dragTo, expectNoUnsavedChanges, flows } from './helpers';
 import { type Rows, type Tabs } from './page-objects';
 
@@ -9,11 +9,7 @@ test.use({
     dashboardNewLayouts: true,
   },
   // the Undo/Redo toolbar buttons are gated by an OpenFeature flag, not a feature toggle
-  openFeature: {
-    flags: {
-      dashboardUndoRedo: true,
-    },
-  },
+  openFeature: dragAndDropOpenFeature({ dashboardUndoRedo: true }),
   viewport: { width: 1920, height: 1080 },
 });
 
@@ -37,7 +33,7 @@ async function expectRowTabs({ rows, tabs }: { rows: Rows; tabs: Tabs }, expecte
   }
 }
 
-test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards'] }, () => {
+test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards', '@drag-and-drop'] }, () => {
   test('drag a tab within the same manager and then to a different row', async ({
     selectors,
     page,

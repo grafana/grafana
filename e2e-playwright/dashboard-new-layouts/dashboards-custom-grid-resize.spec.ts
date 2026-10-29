@@ -2,7 +2,7 @@ import { type Page } from '@playwright/test';
 
 import { type DashboardPage, type DashboardPageArgs, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { test, expect } from './fixtures';
+import { dragAndDropOpenFeature, expect, test } from './fixtures';
 import { getPanelBox, flows, undockMegaMenu } from './helpers';
 import { type Panels, type Sidebar } from './page-objects';
 
@@ -10,6 +10,7 @@ test.use({
   featureToggles: {
     dashboardNewLayouts: true,
   },
+  openFeature: dragAndDropOpenFeature(),
 });
 
 test.use({
@@ -19,7 +20,7 @@ test.use({
 test.describe(
   'Dashboard custom grid resize',
   {
-    tag: ['@dashboards'],
+    tag: ['@dashboards', '@drag-and-drop'],
   },
   () => {
     test('can resize a panel by dragging its corner', async ({

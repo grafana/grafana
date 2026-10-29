@@ -2,7 +2,7 @@ import { type Page } from '@playwright/test';
 
 import { type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { test, expect } from './fixtures';
+import { dragAndDropOpenFeature, expect, test } from './fixtures';
 import { flows } from './helpers';
 import { type Controls, type Sidebar } from './page-objects';
 
@@ -10,6 +10,7 @@ test.use({
   featureToggles: {
     dashboardNewLayouts: true,
   },
+  openFeature: dragAndDropOpenFeature(),
 });
 
 test.use({
@@ -22,7 +23,7 @@ const RESIZE_ZONE_TESTID = 'auto-grid-resize-intercept';
 test.describe(
   'Dashboard auto grid resize intercept',
   {
-    tag: ['@dashboards'],
+    tag: ['@dashboards', '@drag-and-drop'],
   },
   () => {
     test('intercepts a resize gesture and can switch the panel to a custom grid', async ({

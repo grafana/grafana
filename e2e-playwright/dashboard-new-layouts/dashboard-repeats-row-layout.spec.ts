@@ -1,6 +1,6 @@
 import V2DashWithRowRepeats from '../dashboards/V2DashWithRowRepeats.json';
 
-import { test, expect } from './fixtures';
+import { dragAndDropOpenFeature, expect, test } from './fixtures';
 import {
   expectDashboardChangesToContain,
   expectRepeatedTabTitlesToBe,
@@ -22,11 +22,7 @@ test.use({
     dashboardNewLayouts: true,
   },
   // the Undo/Redo toolbar buttons are gated by an OpenFeature flag, not a feature toggle
-  openFeature: {
-    flags: {
-      dashboardUndoRedo: true,
-    },
-  },
+  openFeature: dragAndDropOpenFeature({ dashboardUndoRedo: true }),
 });
 
 test.use({
@@ -377,7 +373,7 @@ test.describe(
 test.describe(
   'Repeats - Dashboard rows layout with bypass CSP',
   {
-    tag: ['@dashboards'],
+    tag: ['@dashboards', '@drag-and-drop'],
   },
   () => {
     // bypassing CSP to ensure the Save button is correctly updated
