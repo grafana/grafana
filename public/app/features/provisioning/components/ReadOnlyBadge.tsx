@@ -1,5 +1,4 @@
-import { t } from '@grafana/i18n';
-import { Badge } from '@grafana/ui';
+import { ReadOnlyBadge as BaseReadOnlyBadge } from 'app/core/components/ReadOnlyBadge/ReadOnlyBadge';
 
 import { type RepoType } from '../Wizard/types';
 import { getReadOnlyTooltipText } from '../utils/tooltip';
@@ -14,11 +13,5 @@ interface ReadOnlyBadgeProps {
  * managing repository. Shown alongside `ManagedBadge` on folder and dashboard pages.
  */
 export function ReadOnlyBadge({ repoType }: ReadOnlyBadgeProps) {
-  return (
-    <Badge
-      color="darkgrey"
-      text={t('provisioning.read-only-badge.text', 'Read only')}
-      tooltip={getReadOnlyTooltipText({ isLocal: repoType === 'local' })}
-    />
-  );
+  return <BaseReadOnlyBadge tooltip={getReadOnlyTooltipText({ isLocal: repoType === 'local' })} />;
 }

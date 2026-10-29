@@ -2953,6 +2953,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.folderPickerFolderEditAccess",
+        "resourceVersion": "1793220276242",
+        "creationTimestamp": "2026-10-28T20:44:36Z"
+      },
+      "spec": {
+        "description": "Shows folders the user cannot edit as read only in the folder picker, instead of hiding them",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.frontendLegacyAPIHandling",
         "resourceVersion": "1789557808090",
         "creationTimestamp": "2026-07-08T09:41:08Z",

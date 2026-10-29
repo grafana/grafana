@@ -196,6 +196,8 @@ export const FlagKeys = {
   GrafanaExtensionSidebarFloating: "grafana.extensionSidebarFloating",
   /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
   GrafanaFilterablePanels: "grafana.filterablePanels",
+  /** Shows folders the user cannot edit as read only in the folder picker, instead of hiding them */
+  GrafanaFolderPickerFolderEditAccess: "grafana.folderPickerFolderEditAccess",
   /** Adds an experimental Protomaps vector basemap to the geomap panel */
   GrafanaGeomapProtomapsBasemap: "grafana.geomapProtomapsBasemap",
   /** Enables PLG-focused growth redesign of the unified homepage */
@@ -1399,6 +1401,17 @@ export const useFlagGrafanaExtensionSidebarFloating = (options?: ReactFlagEvalua
  */
 export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.filterablePanels", true, options).value;
+};
+
+/**
+ * Shows folders the user cannot edit as read only in the folder picker, instead of hiding them
+ *
+ * **Details:**
+ * - flag key: `grafana.folderPickerFolderEditAccess`
+ * - default value: `false`
+ */
+export const useFlagGrafanaFolderPickerFolderEditAccess = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.folderPickerFolderEditAccess", false, options).value;
 };
 
 /**
