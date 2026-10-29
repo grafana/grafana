@@ -202,6 +202,56 @@ func TestDashboardPreferencesAuthorizer(t *testing.T) {
 	})
 }
 
+func TestDashboardPreferencesAuthorizerProvisioningRuleIsForAccessPolicyIdentities(t *testing.T) {
+	const (
+		provisioned = "dashboard preferences can't be provisioned"
+		notOwner    = "only the owner can access user dashboard preferences"
+	)
+
+	original := dashboardPreferencesIsProvisioning
+	t.Cleanup(func() { dashboardPreferencesIsProvisioning = original })
+	// With every requester standing in for the provisioning identity, only the identity type decides who
+	// gets the provisioning rule.
+	dashboardPreferencesIsProvisioning = func(authlib.AuthInfo) bool { return true }
+	setDashboardPreferencesToggle(t, true)
+	authz := newDashboardPreferencesAuthorizer(&dashboardPreferencesAccessClient{}, grafanaauthorizer.NewServiceAuthorizer())
+	token := dashboardPreferencesToken("dashboard.grafana.app/dashboardpreferences:*")
+
+	tests := []struct {
+		name       string
+		requester  identity.Requester
+		verbs      []string
+		wantAllow  bool
+		wantReason string
+	}{
+		{name: "a user is always judged by the tier rules", requester: dashboardPreferencesRequester(authlib.TypeUser, "u2", identity.RoleViewer), verbs: []string{"get", "list", "update", "delete"}, wantReason: notOwner},
+		{name: "a service account is always judged by the tier rules", requester: dashboardPreferencesRequester(authlib.TypeServiceAccount, "sa", identity.RoleAdmin), verbs: []string{"get", "update"}, wantReason: notOwner},
+		{name: "an access-policy identity gets the provisioning rule for reads and deletes", requester: token, verbs: []string{"get", "list", "delete"}, wantAllow: true},
+		// The token's writes would otherwise get the access-policy token reason, so this row shows the stand-in
+		// took effect.
+		{name: "an access-policy identity gets the provisioning rule for writes", requester: token, verbs: []string{"create", "update", "patch"}, wantReason: provisioned},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := identity.WithRequester(context.Background(), tt.requester)
+			for _, verb := range tt.verbs {
+				t.Run(verb, func(t *testing.T) {
+					decision, reason, err := authz.Authorize(ctx, dashboardPreferencesAuthzAttributes(verb, "user-u1"))
+
+					require.NoError(t, err)
+					if tt.wantAllow {
+						require.Equal(t, authorizer.DecisionAllow, decision)
+					} else {
+						require.Equal(t, authorizer.DecisionDeny, decision)
+					}
+					require.Equal(t, tt.wantReason, reason)
+				})
+			}
+		})
+	}
+}
+
 // NoOpinion would fall through to the role authorizer, which lets any Editor write.
 func TestDashboardPreferencesAuthorizerNeverNoOpinion(t *testing.T) {
 	authz := newDashboardPreferencesAuthorizer(

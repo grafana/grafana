@@ -14,6 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
+// A variable so tests can stand in for Git Sync's provisioning identity.
+var dashboardPreferencesIsProvisioning = identity.IsProvisioningServiceIdentity
+
 // newDashboardPreferencesAuthorizer authorizes dashboard.grafana.app/dashboardpreferences requests by tier.
 //
 // It never returns NoOpinion for a resource request: NoOpinion falls through to the role
@@ -61,7 +64,8 @@ func newDashboardPreferencesAuthorizer(accessClient authlib.AccessClient, servic
 
 			// A repository file could otherwise create any tier, and the object would then be managed by
 			// the repository, so its owner could not remove it.
-			if identity.IsProvisioningServiceIdentity(requester) {
+			// Only an access-policy identity can be Git Sync's provisioning identity.
+			if requester.IsIdentityType(authlib.TypeAccessPolicy) && dashboardPreferencesIsProvisioning(requester) {
 				switch verb {
 				case utils.VerbGet, utils.VerbList, utils.VerbDelete:
 					return authorizer.DecisionAllow, "", nil
