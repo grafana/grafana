@@ -906,6 +906,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/PasswordField/ @grafana/grafana-frontend-platform
 /public/app/core/components/PluginHelp/ @grafana/grafana-catalog
 /public/app/core/components/QueryOperationRow/ @grafana/dashboards-squad
+/public/app/core/components/ReadOnlyBadge/ @grafana/grafana-frontend-navigation
 /public/app/core/components/RolePickerDrawer/ @grafana/identity-access-team
 /public/app/core/components/Select/ @grafana/grafana-frontend-platform
 /public/app/core/components/SharedPreferences/ @grafana/grafana-frontend-platform

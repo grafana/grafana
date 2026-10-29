@@ -57,6 +57,8 @@ export interface DashboardsTreeItem<T extends DashboardViewItemWithUIItems = Das
   isOpen: boolean;
   parentUID?: string;
   disabled?: boolean;
+  /** The user can see this folder but can't create dashboards in it */
+  readOnly?: boolean;
 }
 
 interface RendererUserProps {

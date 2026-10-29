@@ -14,7 +14,7 @@ import { PAGE_SIZE } from '../../../features/browse-dashboards/api/constants';
 import { getPaginationPlaceholders } from '../../../features/browse-dashboards/state/utils';
 
 import { type UseFoldersQueryProps } from './useFoldersQuery';
-import { getRootFolderItem } from './utils';
+import { getRootFolderItem, toReadOnlyTreeItem } from './utils';
 
 type GetFolderChildrenQuery = ReturnType<
   ReturnType<typeof dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select>
@@ -39,6 +39,7 @@ export function useFoldersQueryAppPlatform({
   rootFolderUID,
   rootFolderItem,
   permission,
+  showReadOnly,
 }: UseFoldersQueryProps) {
   const dispatch = useDispatch();
 
@@ -103,7 +104,10 @@ export function useFoldersQueryAppPlatform({
         return;
       }
 
-      const args = { folder: finalParentUid, type: 'folder', permission } as const;
+      // With read only folders shown, the server lists the folders on the way to a creatable one and marks which is which
+      const args = showReadOnly
+        ? ({ folder: finalParentUid, type: 'folder', include: 'pathToCreatable' } as const)
+        : ({ folder: finalParentUid, type: 'folder', permission } as const);
 
       // Make a request
       const subscription = dispatch(dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.initiate(args));
@@ -115,7 +119,7 @@ export function useFoldersQueryAppPlatform({
       // the subscriptions are saved in a ref so they can be unsubscribed on unmount
       requestsRef.current = requestsRef.current.concat([subscription]);
     },
-    [state, dispatch, permission]
+    [state, dispatch, permission, showReadOnly]
   );
 
   // Unsubscribe from all requests when the component is unmounted
@@ -152,7 +156,7 @@ export function useFoldersQueryAppPlatform({
       const list: DashboardsTreeItem[] = folders.flatMap((item) => {
         const name = item.name;
         const folderIsOpen = openFolders[name];
-        const flatItem: DashboardsTreeItem = {
+        const treeItem: DashboardsTreeItem = {
           isOpen: Boolean(folderIsOpen),
           level: level,
           disabled: item.name === sharedWithMeFolderToken,
@@ -168,6 +172,9 @@ export function useFoldersQueryAppPlatform({
             parentUID: isRootFolderUID(item.folder) ? undefined : item.folder,
           },
         };
+        // Only a folder the server marks as not creatable is read only
+        const readOnly = showReadOnly && 'field' in item && item.field?.canCreate === false;
+        const flatItem = readOnly ? toReadOnlyTreeItem(treeItem) : treeItem;
 
         const childResponse = folderIsOpen && state.responseByParent[name];
         if (childResponse) {
@@ -198,7 +205,7 @@ export function useFoldersQueryAppPlatform({
     rootFlatTree.unshift(rootFolderItem || getRootFolderItem());
 
     return rootFlatTree;
-  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem]);
+  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem, showReadOnly]);
 
   return {
     emptyFolders,
