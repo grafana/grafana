@@ -280,8 +280,8 @@ func (ng *AlertNG) init() error {
 			RuntimeConfig:     runtimeConfig,
 		}
 
-		ng.Log.Debug("Starting Grafana with remote primary mode enabled")
-		m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
+		ng.Log.Debug("Starting Grafana with remote Alertmanager enabled")
+		m.Info.Set(1)
 		override := remote.NewRemotePrimaryFactory(cfg, ng.KVStore, crypto, m, ng.tracer, ng.FeatureToggles)
 		skipClustering = true
 

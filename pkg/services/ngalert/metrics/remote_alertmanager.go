@@ -6,10 +6,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-const ModeRemotePrimary = "remote_primary"
-
 type RemoteAlertmanager struct {
-	Info                  *prometheus.GaugeVec
+	Info                  prometheus.Gauge
 	RequestLatency        *instrument.HistogramCollector
 	LastReadinessCheck    prometheus.Gauge
 	ConfigSyncsTotal      prometheus.Counter
@@ -22,12 +20,12 @@ type RemoteAlertmanager struct {
 
 func NewRemoteAlertmanagerMetrics(r prometheus.Registerer) *RemoteAlertmanager {
 	return &RemoteAlertmanager{
-		Info: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
+		Info: promauto.With(r).NewGauge(prometheus.GaugeOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
 			Name:      "remote_alertmanager_info",
 			Help:      "Information about the remote Alertmanager.",
-		}, []string{"mode"}),
+		}),
 		RequestLatency: instrument.NewHistogramCollector(promauto.With(r).NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
