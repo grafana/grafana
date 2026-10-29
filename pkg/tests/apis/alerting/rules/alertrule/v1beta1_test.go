@@ -35,7 +35,7 @@ func TestIntegrationV1beta1(t *testing.T) {
 
 	// Legacy storage serves modes 0-3 and unified storage mode 4. The dual writer
 	// in between can hand either one the object in the version of the request.
-	for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode0, grafanarest.Mode2, grafanarest.Mode4} {
+	for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode0, grafanarest.Mode2, grafanarest.Mode4, grafanarest.Mode5} {
 		t.Run(fmt.Sprintf("dualWriterMode=%d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -126,6 +126,31 @@ func readUnified(t *testing.T, helper *apis.K8sTestHelper, resource, name string
 		require.NoError(c, json.Unmarshal(rsp.Value, &out))
 	}, 5*time.Second, 50*time.Millisecond)
 	return out
+}
+
+// seedUnified writes a copy of a rule straight into unified storage, bypassing the dual
+// writer, so a test can observe whether a later write touches it.
+func seedUnified(t *testing.T, helper *apis.K8sTestHelper, resource string, rule map[string]any) {
+	t.Helper()
+	ctx, _ := identity.WithServiceIdentity(context.Background(), helper.Org1.OrgID)
+	name := field(t, rule, "metadata", "name").(string)
+	value, err := json.Marshal(map[string]any{
+		"apiVersion": rule["apiVersion"],
+		"kind":       rule["kind"],
+		"metadata": map[string]any{
+			"name":        name,
+			"namespace":   "default",
+			"annotations": field(t, rule, "metadata", "annotations"),
+		},
+		"spec": rule["spec"],
+	})
+	require.NoError(t, err)
+	rsp, err := helper.GetEnv().ResourceClient.Create(ctx, &resourcepb.CreateRequest{
+		Key:   &resourcepb.ResourceKey{Namespace: "default", Group: v1beta1.GroupVersion.Group, Resource: resource, Name: name},
+		Value: value,
+	})
+	require.NoError(t, err)
+	require.Nil(t, rsp.Error)
 }
 
 func field(t *testing.T, obj map[string]any, path ...string) any {
@@ -284,7 +309,8 @@ func runV1beta1Tests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest.
 		require.True(t, apierrors.IsNotFound(err), "expected not found, got %v", err)
 	})
 
-	// Modes 1-3 keep status in legacy storage and mirror it to unified storage.
+	// Modes 1-3 keep status in legacy storage and mirror it to unified storage. Modes 4-5
+	// write status to unified storage directly.
 	t.Run("status written as either version is stored and mirrored", func(t *testing.T) {
 		for _, tc := range []struct {
 			resource string
@@ -301,8 +327,8 @@ func runV1beta1Tests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest.
 					name := field(t, created, "metadata", "name").(string)
 					t.Cleanup(func() { _ = beta.delete(ctx, tc.resource, name) })
 
-					if mode >= grafanarest.Mode1 && mode <= grafanarest.Mode3 {
-						// Wait for the dual writer's unified copy, which is what gets mirrored to.
+					if mode >= grafanarest.Mode1 {
+						// Wait for the unified copy, which is what gets mirrored to (or served from in modes 4-5).
 						readUnified(t, helper, tc.resource, name)
 					}
 
@@ -316,11 +342,49 @@ func runV1beta1Tests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest.
 					require.NoError(t, err)
 					require.Equal(t, tc.status, got["status"])
 
-					if mode >= grafanarest.Mode1 && mode <= grafanarest.Mode3 {
+					if mode >= grafanarest.Mode1 {
 						require.Equal(t, tc.status, readUnified(t, helper, tc.resource, name)["status"])
 					}
 				})
 			}
+		}
+	})
+
+	// Mode 0 serves from legacy only, so status must not be mirrored even if a unified
+	// copy exists. The copy is seeded directly because in mode 0 the dual writer never
+	// creates one.
+	t.Run("status is not mirrored to unified in mode 0", func(t *testing.T) {
+		if mode != grafanarest.Mode0 {
+			t.Skip("only mode 0 skips the mirror")
+		}
+		for _, tc := range []struct {
+			resource string
+			body     func(*testing.T) map[string]any
+			status   map[string]any
+		}{
+			{alertRules, alertRuleBody, map[string]any{"state": "Firing", "health": "OK"}},
+			{recordingRules, recordingRuleBody, map[string]any{"health": "Error", "lastError": "boom"}},
+		} {
+			t.Run(tc.resource, func(t *testing.T) {
+				created, err := beta.create(ctx, tc.resource, tc.body(t))
+				require.NoError(t, err)
+				name := field(t, created, "metadata", "name").(string)
+				t.Cleanup(func() { _ = beta.delete(ctx, tc.resource, name) })
+
+				seedUnified(t, helper, tc.resource, created)
+
+				obj, err := beta.get(ctx, tc.resource, name)
+				require.NoError(t, err)
+				obj["status"] = tc.status
+				_, err = beta.updateStatus(ctx, tc.resource, obj)
+				require.NoError(t, err)
+
+				got, err := beta.get(ctx, tc.resource, name)
+				require.NoError(t, err)
+				require.Equal(t, tc.status, got["status"], "legacy stays the source of truth")
+
+				require.Empty(t, readUnified(t, helper, tc.resource, name)["status"])
+			})
 		}
 	})
 
