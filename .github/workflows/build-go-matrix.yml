@@ -79,6 +79,7 @@ jobs:
         uses: ./.github/actions/setup-go
         with:
           cache-build: 'false'
+          cache: 'false'
       - name: Build Go (${{ matrix.name }})
         env:
           CGO_ENABLED: "0"
@@ -154,6 +155,7 @@ jobs:
         uses: ./.github/actions/setup-go
         with:
           cache-build: 'false'
+          cache: 'false'
       - name: Build Go (${{ matrix.name }})
         env:
           CGO_ENABLED: "0"
