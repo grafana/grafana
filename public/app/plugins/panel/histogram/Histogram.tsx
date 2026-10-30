@@ -313,8 +313,8 @@ export const Histogram = ({
 }: HistogramProps) => {
   const theme = useTheme2();
   const [config, setConfig] = useState(() => prepConfig(alignedFrame, theme));
-  // the props the current config was built against
-  const [prev, setPrev] = useState({ alignedFrame, options, bucketCount, bucketSize, structureRev });
+  // inputs as of the last alignedFrame change
+  const [prev, setPrev] = useState({ alignedFrame, options, bucketCount, bucketSize, structureRev, theme });
 
   // adjust state during render (rather than in an effect) so uPlot never sees a stale config/data pair
   let currentConfig = config;
@@ -323,10 +323,11 @@ export const Histogram = ({
       bucketCount !== prev.bucketCount ||
       bucketSize !== prev.bucketSize ||
       options !== prev.options ||
+      theme !== prev.theme ||
       structureRev !== prev.structureRev ||
       !structureRev;
 
-    setPrev({ alignedFrame, options, bucketCount, bucketSize, structureRev });
+    setPrev({ alignedFrame, options, bucketCount, bucketSize, structureRev, theme });
     if (shouldReconfig) {
       currentConfig = prepConfig(alignedFrame, theme);
       setConfig(currentConfig);
