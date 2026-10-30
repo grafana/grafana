@@ -49,6 +49,17 @@ func parseKeys(req []string) dispKeys {
 					AvatarURL:   dtos.GetGravatarUrl(fakeCfgForGravatar, string(t)),
 				})
 				continue
+			case authlib.TypeAccessPolicy:
+				// Access policies are not users or service accounts in either identity store.
+				keys.disp = append(keys.disp, iam.Display{
+					Identity: iam.IdentityRef{
+						Type: t,
+						Name: key,
+					},
+					DisplayName: "Access policy",
+					AvatarURL:   dtos.GetGravatarUrl(fakeCfgForGravatar, string(t)),
+				})
+				continue
 			case authlib.TypeProvisioning:
 				keys.disp = append(keys.disp, iam.Display{
 					Identity: iam.IdentityRef{
