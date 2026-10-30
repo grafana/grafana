@@ -12,12 +12,13 @@ import { waitFor } from '@testing-library/react';
 import { cloneDeep } from 'lodash';
 
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
+import { applyDashboardSpec } from '../../actions/dashboard/applyDashboardSpec';
 import { buildPanelEditScene } from '../../panel-edit/PanelEditor';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { dashboardViews } from '../../scene/dashboardViewRegistry';
@@ -29,7 +30,8 @@ import { getLibraryPanelBehavior } from '../../utils/utils';
 
 import { applySpecCommand } from './applySpec';
 import { getSpecCommand } from './getSpec';
-import { type MutationContext } from './types';
+import { endBatchCommand, getLastActionCommand, redoCommand, startBatchCommand, undoCommand } from './history';
+import { enterEditModeIfNeeded, type MutationContext } from './types';
 
 // Entering edit mode starts the change tracker, which spawns a real web worker jsdom does not have.
 jest.mock('../../saving/createDetectChangesWorker', () => ({
@@ -39,6 +41,7 @@ jest.mock('../../saving/createDetectChangesWorker', () => ({
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({ getInstanceSettings: jest.fn() }),
+  reportInteraction: jest.fn(),
 }));
 
 jest.mock('app/features/library-panels/state/api', () => ({
@@ -411,5 +414,121 @@ describe('APPLY_SPEC keeps the rebuilt layout draggable', () => {
 
     expect((await applySpec(scene, makeSpec())).success).toBe(true);
     await waitFor(() => expect(isDraggable(scene)).toBe(true));
+  });
+});
+
+describe('mutation API history of APPLY_SPEC edits', () => {
+  const titled = (title: string) =>
+    makeSpec((spec) => {
+      spec.title = title;
+    });
+
+  const applyTitle = (scene: DashboardScene, title: string) => applySpec(scene, titled(title));
+  const userEdit = (scene: DashboardScene, title: string) =>
+    applyDashboardSpec({ scene, spec: titled(title), description: 'Code pane edit', scope: 'code' });
+
+  const startBatch = (scene: DashboardScene) =>
+    startBatchCommand.handler({ description: 'Assistant dashboard changes' }, { scene });
+  const endBatch = (scene: DashboardScene) => endBatchCommand.handler({}, { scene });
+  const lastAction = async (scene: DashboardScene) => (await getLastActionCommand.handler({}, { scene })).data;
+  const undo = (scene: DashboardScene) => undoCommand.handler({ expectedActor: 'mutation-api' }, { scene });
+  const redo = (scene: DashboardScene) => redoCommand.handler({ expectedActor: 'mutation-api' }, { scene });
+
+  afterEach(() => {
+    setTestFlags({});
+  });
+
+  it('collects the applies of a batch into one entry that undoes and redoes as a whole', async () => {
+    const scene = buildScene(titled('Before'));
+    await startBatch(scene);
+    await applyTitle(scene, 'First');
+    await applyTitle(scene, 'Second');
+    await endBatch(scene);
+
+    expect(scene.state.sidebar.state.undoStack).toHaveLength(1);
+    expect((await undo(scene)).data).toEqual({ undone: true });
+    expect((await readSpec(scene)).title).toBe('Before');
+
+    expect((await redo(scene)).data).toEqual({ redone: true });
+    expect((await readSpec(scene)).title).toBe('Second');
+  });
+
+  it('adds no entry for a batch without edits', async () => {
+    const scene = buildScene(titled('Before'));
+    await startBatch(scene);
+    await endBatch(scene);
+
+    expect(scene.state.sidebar.state.undoStack).toHaveLength(0);
+  });
+
+  it('reports the actor of the newest undo and undone entries', async () => {
+    const scene = buildScene(titled('Before'));
+    await applyTitle(scene, 'Assistant edit');
+    userEdit(scene, 'User edit');
+    scene.state.sidebar.undoAction();
+
+    expect(await lastAction(scene)).toEqual({
+      action: { description: 'Assistant schema edit', actor: 'mutation-api' },
+      undoneAction: { description: 'Code pane edit', actor: undefined },
+    });
+  });
+
+  it('refuses to undo when a user edit sits on top', async () => {
+    const scene = buildScene(titled('Before'));
+    await applyTitle(scene, 'Assistant edit');
+    userEdit(scene, 'User edit');
+
+    expect((await undo(scene)).success).toBe(false);
+    expect((await readSpec(scene)).title).toBe('User edit');
+    expect(scene.state.sidebar.state.undoStack).toHaveLength(2);
+  });
+
+  it('refuses to redo a user edit, and redoes nothing once a new edit cleared the redo history', async () => {
+    const scene = buildScene(titled('Before'));
+    enterEditModeIfNeeded(scene);
+    userEdit(scene, 'User edit');
+    scene.state.sidebar.undoAction();
+    expect((await redo(scene)).success).toBe(false);
+
+    await applyTitle(scene, 'Assistant edit');
+    await undo(scene);
+    userEdit(scene, 'Another user edit');
+    expect((await redo(scene)).data).toEqual({ redone: false });
+    expect((await readSpec(scene)).title).toBe('Another user edit');
+  });
+
+  it('reports undo and redo it runs as triggered by the mutation API', async () => {
+    const scene = buildScene(titled('Before'));
+    await applyTitle(scene, 'After');
+    jest.mocked(reportInteraction).mockClear();
+
+    await undo(scene);
+    await redo(scene);
+
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_dashboard_undo',
+      expect.objectContaining({ scope: 'mutation-api', trigger: 'mutation-api' })
+    );
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_dashboard_redo',
+      expect.objectContaining({ scope: 'mutation-api', trigger: 'mutation-api' })
+    );
+  });
+
+  it('undoes an Assistant edit made while the dashboard shows the agent presentation', async () => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+    const scene = buildScene(titled('Before'));
+    scene.onEnterEditMode();
+    scene.setDashboardMode('view');
+
+    try {
+      await scene.withAssistantWrite(() => applyTitle(scene, 'After'));
+      expect(scene.state.mode).toBe('agent');
+
+      expect((await undo(scene)).data).toEqual({ undone: true });
+      expect((await readSpec(scene)).title).toBe('Before');
+    } finally {
+      scene.exitEditMode({ skipConfirm: true });
+    }
   });
 });

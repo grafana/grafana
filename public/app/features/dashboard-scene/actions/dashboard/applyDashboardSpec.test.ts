@@ -329,6 +329,23 @@ describe('applyDashboardSpec', () => {
     expect(scene.state.body).toBe(newBody);
   });
 
+  it('re-evaluates the time range swapped back in on undo and redo, so its panels re-query', () => {
+    jest.useFakeTimers({ now: Date.parse('2026-10-28T12:00:00Z') });
+    const scene = buildScene(makeSpec('Old title'));
+    const evaluatedTo = () => sceneGraph.getTimeRange(scene).state.value.to.valueOf();
+
+    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec', scope: 'code-pane' });
+
+    jest.setSystemTime(Date.parse('2026-10-28T12:05:00Z'));
+    scene.state.sidebar.undoAction();
+    expect(evaluatedTo()).toBe(Date.parse('2026-10-28T12:05:00Z'));
+
+    jest.setSystemTime(Date.parse('2026-10-28T12:10:00Z'));
+    scene.state.sidebar.redoAction();
+    expect(evaluatedTo()).toBe(Date.parse('2026-10-28T12:10:00Z'));
+    jest.useRealTimers();
+  });
+
   it('re-publishes NewSceneObjectAddedEvent for the restored children on undo, so url sync re-attaches', () => {
     const scene = buildScene(makeSpec('Old title'));
     const originalBody = scene.state.body;
