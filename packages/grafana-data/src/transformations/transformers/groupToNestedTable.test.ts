@@ -893,4 +893,44 @@ describe('GroupToSubframe transformer - V2 native config', () => {
       expect(subframeKeys).toEqual(['web,us', 'db,eu', 'web,eu']);
     });
   });
+
+  it.each([ReducerID.count, ReducerID.max, ReducerID.uniqueValues, ReducerID.distinctCount, ReducerID.last])(
+    'should emit an empty aggregation field instead of throwing on empty input with reducer %s',
+    async (reducer) => {
+      const testSeries = toDataFrame({
+        name: 'A',
+        fields: [
+          { name: 'message', type: FieldType.string, values: [] },
+          { name: 'values', type: FieldType.number, values: [] },
+        ],
+      });
+
+      const cfg: DataTransformerConfig<GroupToNestedTableTransformerOptionsV2> = {
+        id: DataTransformerID.groupToNestedTable,
+        options: {
+          rules: [
+            {
+              matcher: { id: FieldMatcherID.byName, options: 'message' },
+              operation: GroupByOperationID.groupBy,
+              aggregations: [],
+            },
+            {
+              matcher: { id: FieldMatcherID.byName, options: 'values' },
+              operation: GroupByOperationID.aggregate,
+              aggregations: [reducer],
+            },
+          ],
+        },
+      };
+
+      await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+        const result = received[0];
+        expect(result[0].length).toBe(0);
+
+        const aggregationField = result[0].fields.find((f: Field) => f.name === `values (${reducer})`);
+        expect(aggregationField).toBeDefined();
+        expect(aggregationField!.values).toEqual([]);
+      });
+    }
+  );
 });

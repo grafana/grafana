@@ -522,6 +522,7 @@
         "save": "Save"
       },
       "error-title": "Failed to save alert rule",
+      "form-errors": "There are errors in the form. Please correct them and try again!",
       "no-group-success": "Rule added successfully"
     },
     "alert-rule-name-and-metric": {
@@ -530,8 +531,8 @@
       "label-metric": "Metric",
       "label-name": "Name",
       "message": {
-        "must-enter-a-metric-name": "Must enter a metric name",
-        "must-enter-a-name": "Must enter a name",
+        "metric-name-required": "Metric name is required",
+        "name-required": "Name is required",
         "please-select-a-data-source": "Please select a data source"
       },
       "metric-aria-label-metric": "metric",
@@ -1314,7 +1315,7 @@
     "folder-selector": {
       "description-select-folder": "Select a folder to store your rule in.",
       "message": {
-        "select-a-folder": "Select a folder"
+        "folder-required": "Folder is required"
       }
     },
     "folderAndGroup": {
@@ -1442,11 +1443,24 @@
     },
     "gma-rule-list": {
       "alert-rules": {
+        "folders-error": "Failed to load folders",
+        "load-more-rules-in-folder": "Load more rules in {{title}}",
+        "loading-folders": "Loading folders...",
         "no-rules": "No alert rules found",
+        "no-rules-in-folder": "No alert rules in this folder",
+        "no-rules-match-folder": "No alert rules match this folder",
+        "retry-rules-in-folder": "Retry loading rules in {{title}}",
         "rules-error": "Failed to load rules",
         "search-issues": "Change the search to see results"
       },
       "datasources": "{{numSources}} data sources",
+      "folder-row": {
+        "collapse": "Collapse {{title}}",
+        "count-description": "{{label}}. {{explanation}}",
+        "count-tooltip": "Rules directly in this folder. Subfolders are listed separately.",
+        "count-unavailable": "Count unavailable",
+        "expand": "Expand {{title}}"
+      },
       "interval": "Evaluated every {{interval}}",
       "labels_one": "{{formatted}} label",
       "labels_other": "{{formatted}} labels",
@@ -1459,7 +1473,7 @@
         "rules-error": "Failed to load recording rules",
         "search-issues": "Change the search to see results"
       },
-      "result-count": {
+      "rule-count": {
         "alert-rules_one": "{{formatted}} alert rule",
         "alert-rules_other": "{{formatted}} alert rules",
         "recording-rules_one": "{{formatted}} recording rule",
@@ -1467,6 +1481,7 @@
       },
       "search": {
         "default-policy-unavailable": "Filtering by the default policy isn't available yet.",
+        "folders-disabled": "Clear filters to browse by folder",
         "help": {
           "contact-point": "Direct contact point (mutually exclusive with policy:).",
           "dashboard": "Dashboard the rule is linked to (canonical value is the dashboard UID).",
@@ -1515,6 +1530,9 @@
         "renamed-value": "Use {{to}} instead of {{from}}.",
         "unavailable-tokens": "Some filters are not available yet: {{tokens}}",
         "unclosed-quote": "A quote in the search is not closed.",
+        "view": "View",
+        "view-folders": "Folders",
+        "view-list": "List",
         "wildcard-in-text": "Search text cannot contain * or %."
       },
       "shared": {
@@ -1551,11 +1569,10 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "Loading groups...",
       "message": {
-        "must-be-a-positive-integer": "Must be a positive integer.",
-        "must-enter-a-group-name": "Must enter a group name"
+        "evaluation-group-required": "Evaluation group is required",
+        "must-be-a-positive-integer": "Must be a positive integer."
       },
       "missing-series-resolve-placeholder": "Default: 2",
-      "or": "or",
       "placeholder-select-an-evaluation-group": "Select an evaluation group...",
       "text-configure-no-data-and-error-handling": "Configure no data and error handling",
       "title-set-evaluation-behavior": "Set evaluation behavior"
@@ -2981,7 +2998,7 @@
           "alerting": "Turn on to pause evaluation for this alert rule.",
           "recording": "Turn on to pause evaluation for this recording rule."
         },
-        "select-folder-before": "Select a folder before setting evaluation group and interval",
+        "select-folder-first-tooltip": "Select a folder first",
         "ungroup-warning": "This action is irreversible. After you save, you will not be able to add it back to a group.",
         "ungroup-warning-title": "This will remove the alert rule from its group"
       },
@@ -4210,9 +4227,9 @@
   "app-chrome": {
     "skip-content-button": "Skip to main content",
     "st-loading": {
-      "background-tooltip": "{{itemName}} is starting up",
-      "pending-dots-aria-label": "Page is starting up",
-      "pending-dots-aria-label-named": "{{itemName}} is starting up"
+      "background-tooltip": "Preparing {{itemName}}",
+      "pending-dots-aria-label": "Preparing page",
+      "pending-dots-aria-label-named": "Preparing {{itemName}}"
     },
     "top-bar": {
       "sign-in": "Sign in"
@@ -6216,6 +6233,7 @@
       "tooltip-previous": "Previous"
     },
     "modes": {
+      "agent-edit": "Agent editing",
       "change-mode": "Change dashboard mode",
       "composer": "Composer",
       "composer-description": "Point at anything and ask Assistant to change it.",
@@ -7292,11 +7310,15 @@
       "modal": {
         "cancel": "Cancel",
         "discard": "Discard",
+        "keep-working": "Keep working",
         "save": "Save",
+        "stop-and-leave": "Stop and leave",
         "text": {
+          "leave-composer": "Assistant is still making changes to this dashboard. Leaving Composer stops it. Changes it has already made stay.",
           "save-changes-question": "Do you want to save your changes?"
         },
         "title": {
+          "leave-composer": "Leave Composer?",
           "unsaved-changes": "Unsaved changes"
         }
       },
@@ -9054,6 +9076,12 @@
         "inspect-value": "Inspect value",
         "show-details": "Show details",
         "view-log-line": "View log line"
+      },
+      "error-attribute": {
+        "error-fields-label": "Has error fields",
+        "error-fields-tooltip": "This log line contains error-related fields.",
+        "stacktrace-label": "Has a stack trace",
+        "stacktrace-tooltip": "This log line contains a stack trace."
       },
       "loki-time-sort-tooltip": "Sorting this column only changes the order of the displayed results. To update the query's time-based sort order, use the Sort control on the right."
     },
@@ -11102,6 +11130,7 @@
         "add-all": "Add all displayed values to the filter",
         "blanks": "(Blanks)",
         "button": "Filter {{name}}",
+        "include-missing": "Include missing values",
         "operator": {
           "contains": "Contains",
           "equals": "Equals",
@@ -11126,6 +11155,7 @@
       "filter-popup-heading": "Filter by values:",
       "filter-popup-input-placeholder": "Filter values",
       "filter-popup-match-case": "Match case",
+      "filter-popup-row-count": "{{selected}} of {{total}} rows",
       "footer": {
         "reducer": {
           "count": "Count"
@@ -11142,6 +11172,18 @@
       "no-rows": "No rows",
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
+      "range": {
+        "apply": "Apply",
+        "empty": "No finite values match the other filters.",
+        "end": "End",
+        "histogram": "Value distribution, {{amount}} finite values",
+        "invalid": "Enter valid bounds with minimum no greater than maximum.",
+        "label": "Filter {{field}}",
+        "maximum": "Maximum",
+        "minimum": "Minimum",
+        "start": "Start",
+        "unbounded": "No limit"
+      },
       "reorder-column-label": "Reorder {{columnName}}",
       "show-column-label": "Show {{columnName}}",
       "sort-by-column": "Sort by column {{column}}",
@@ -12313,6 +12355,7 @@
     },
     "log-details": {
       "error": {
+        "diagnose-with-assistant": "Diagnose with assistant",
         "error-details": "Error details"
       }
     },
@@ -13691,6 +13734,7 @@
       "add-title": "Add title",
       "change-visualization": "Change visualization",
       "edit-query": "Edit query",
+      "edit-with-assistant": "Edit with Assistant",
       "hide-query": "Hide query editor",
       "open-explore": "Open in Explore",
       "rename": "Edit panel title",
@@ -15044,7 +15088,7 @@
       "resources-to-migrate-migrate-selected_one": "Migrate selected ({{count}})",
       "resources-to-migrate-migrate-selected_other": "Migrate selected ({{count}})",
       "resources-to-migrate-search": "Search folders and resources",
-      "resources-to-migrate-subtitle": "Pick whole folders, or individual resources within them. Selecting a folder migrates only the resources directly inside it — anything in subfolders migrates through its own folder.",
+      "resources-to-migrate-subtitle": "Pick whole folders, or individual resources within them. Selecting a folder also selects everything in its subfolders.",
       "retain-resources-description": "Keep the migrated resources on this instance while the pull request is open, so they stay live until the branch is merged. These resources must be manually deleted before the pull request is merged or else there will be errors during sync due to conflicting resources.",
       "retain-resources-label": "Keep existing resources during review",
       "retain-resources-warning-body": "You must delete the migrated resources yourself before merging the pull request. If they still exist when the branch merges, they will conflict with the incoming managed resources and will not be reconciled.",
@@ -15864,6 +15908,12 @@
       "show": "Show",
       "show-all-tooltip": "Show selected",
       "toolbar-label": "Bulk actions"
+    },
+    "datasource-error": {
+      "load-failed": "Failed to load datasource",
+      "load-failed-named": "Failed to load datasource: {{datasource}}",
+      "not-found": "Datasource not found: {{datasource}}",
+      "settings-not-found": "Datasource settings not found for uid: {{datasource}}"
     },
     "delete-modal": {
       "body-transformation": "Removing one transformation may break others."
@@ -16738,6 +16788,17 @@
     "generate-suggestion": "Generate suggestion",
     "improve-query": "Improve query"
   },
+  "st-pod-ready": {
+    "error": {
+      "body-with-support": "Something went wrong while this was starting up. Contact support and we'll help you get this up and running.",
+      "support-ack": "If you've already reached out, we have your request and we're on it.",
+      "title": "Couldn't load {{pageTitle}}",
+      "title-fallback": "Couldn't load page"
+    },
+    "timeout": {
+      "banner": "Hang tight. This is taking a bit longer than expected, but we're on it."
+    }
+  },
   "stars": {
     "mark-as-starred": "Mark as favorite",
     "mark-as-starred-with-title": "Mark \"{{title}}\" as favorite",
@@ -16932,6 +16993,10 @@
     },
     "namespace-unavailable": "Check the namespace before sending requests, or reload the page to try again.",
     "namespace-unavailable-title": "Unable to load namespace",
+    "router-fixtures": {
+      "clear": "Clear fixtures",
+      "title": "Showing saved fixture data, not this server"
+    },
     "router-nav": {
       "api-docs": "API docs",
       "manifests": "Manifests",
@@ -16948,7 +17013,8 @@
       "failures-description": "Of those, the ones counted against the backend: 502, 503 and 504 responses, and failures to proxy, such as connection errors and timeouts. Other errors, and callers that disconnect, are not counted. Consecutive failures open the breaker.",
       "filter-placeholder": "Filter by group, key or plugin",
       "filtered": "{{shown}} of {{total}}",
-      "groups": "Groups",
+      "internal": "internal",
+      "internal-description": "Only access policies see this group. Every other caller gets a 404 for it, and it is not listed in their discovery.",
       "last-failed": "Last reconcile failed",
       "load-failures": "Load failures",
       "never": "never",
@@ -16962,8 +17028,9 @@
       "requests-description": "Requests the group's breaker let through to the backend, or the plugin's client calls when its scope is plugin-calls. Counted since the backend was loaded or the breaker last changed state.",
       "shadowed": "Shadowed groups",
       "shadowed-description": "Groups a source offers that a higher-priority source serves instead.",
-      "sources": "Sources",
-      "stack-lookups": "Stack lookups",
+      "tab-groups": "Groups",
+      "tab-lookups": "Stack lookups",
+      "tab-sources": "Sources",
       "title": "Router status"
     }
   },
@@ -17609,9 +17676,11 @@
       "placeholder-frame": "Frame"
     },
     "config-from-query-transformer-editor": {
+      "description-dynamic-field-name-matcher": "Set properties for field names that are returned by your config query",
       "label-apply-to": "Apply to",
       "label-apply-to-options": "Apply to options",
-      "label-config-query": "Config query"
+      "label-config-query": "Config query",
+      "name-dynamic-field-name-matcher": "Fields with dynamic names"
     },
     "convert-field-type-transformer-editor": {
       "aria-label-add-a-convert-field-type-transformer": "Add a convert field type transformer",

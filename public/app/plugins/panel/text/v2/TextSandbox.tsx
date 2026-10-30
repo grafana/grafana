@@ -22,11 +22,12 @@ export interface TextSandboxProps {
   hasData?: boolean;
   testId?: string;
   className?: string;
+  minHeight?: number;
   /** Reports blocked sources to the consent banner. */
   consent?: { panelId?: number; panelTitle: string; dashboardUid?: string };
 }
 
-export function TextSandbox({ html, hasData = true, testId, className, consent }: TextSandboxProps) {
+export function TextSandbox({ html, hasData = true, testId, className, minHeight, consent }: TextSandboxProps) {
   const theme = useTheme2();
   const host = useRef<HTMLDivElement>(null);
   const consentKey = useId();
@@ -76,6 +77,7 @@ export function TextSandbox({ html, hasData = true, testId, className, consent }
           mermaid={mermaid}
           diagramError={t('textng.sandbox.diagram-error', 'Diagram could not be rendered')}
           title={t('textng.sandbox.title', 'Text panel content')}
+          minHeight={minHeight}
           onState={onState}
           onHeight={onHeight}
         />

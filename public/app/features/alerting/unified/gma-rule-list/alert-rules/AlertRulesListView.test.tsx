@@ -3,7 +3,7 @@ import { render, screen, userEvent } from 'test/test-utils';
 import { setupMswServer } from '../../mockApi';
 import { ruleItem } from '../mocks/factories';
 import { mockFolderParents, mockRuleSearch } from '../mocks/handlers';
-import { createEmptyFilter } from '../rule-search/ruleSearchFilter';
+import { createEmptyFilter } from '../rule-search/sharedRuleFilter';
 
 import { AlertRulesListView } from './AlertRulesListView';
 

@@ -9,11 +9,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
+	appplugin "github.com/grafana/grafana-app-sdk/plugin"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
-	"github.com/open-feature/go-sdk/openfeature"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -337,16 +338,21 @@ func (p *EnvVarsProvider) signingKeysEnvVars(plugin *plugins.Plugin) []string {
 		p.logger.Error("Failed to get the local plugin signing keys", "pluginId", plugin.PluginID(), "error", err)
 		return nil
 	}
-	return []string{p.envVar(v3.EnvVarSigningKeys, jwks)}
+	return []string{p.envVar(appplugin.EnvVarGrafanaJWKS, jwks)}
 }
 
-// apiAccessHostEnvVars are the API_ACCESS_* variables that configure where and
+// apiAccessHostEnvVars are the GF_API_ACCESS_* variables that configure where and
 // how the app SDK calls Grafana's API. go-plugin forwards the host environment
 // after the variables Grafana sets, so host values would win over them.
 var apiAccessHostEnvVars = []string{
-	v3.EnvVarRouterURL,
-	v3.EnvVarTokenExchangeURL,
-	v3.EnvVarAccessPolicyToken,
+	appplugin.EnvVarAPIAccessRouterURL,
+	appplugin.EnvVarAPIAccessTokenExchangeURL,
+	appplugin.EnvVarAPIAccessCAPToken,
+	appplugin.EnvVarAPIAccessBearerToken, //nolint:gosec,staticcheck // SA1019: deprecated variable name, not a credential
+	// The app SDK still reads these unprefixed names when the GF_ ones are unset.
+	"API_ACCESS_ROUTER_URL",
+	"API_ACCESS_TOKEN_EXCHANGE_URL",
+	"API_ACCESS_CAP_TOKEN",
 	"API_ACCESS_BEARER_TOKEN",
 }
 
@@ -388,9 +394,9 @@ func (p *EnvVarsProvider) apiAccessEnvVars(plugin *plugins.Plugin) []string {
 		return nil
 	}
 	return []string{
-		p.envVar(v3.EnvVarRouterURL, apiURL),
-		p.envVar(v3.EnvVarTokenExchangeURL, apiURL+pluginauth.TokenExchangePath),
-		p.envVar(v3.EnvVarAccessPolicyToken, token),
+		p.envVar(appplugin.EnvVarAPIAccessRouterURL, apiURL),
+		p.envVar(appplugin.EnvVarAPIAccessTokenExchangeURL, apiURL+pluginauth.TokenExchangePath),
+		p.envVar(appplugin.EnvVarAPIAccessCAPToken, token),
 	}
 }
 

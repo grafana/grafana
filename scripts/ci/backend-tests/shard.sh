@@ -121,14 +121,15 @@ if [[ $n -eq 1 && $m -eq 1 ]]; then
     exit 0
 fi
 
-readarray -t PACKAGES <<< "$(go list -f '{{.Dir}}' -e "${dirs[@]}")"
+# Each runner must assign the same package to the same shard.
+readarray -t PACKAGES <<< "$(go list -f '{{.Dir}}' -e "${dirs[@]}" | LC_ALL=C sort -u)"
 if [[ ${#PACKAGES[@]} -eq 0 ]]; then
     echo "No packages found in directories: ${dirs[*]}" >&2
     exit 1
 fi
 
 for i in "${!PACKAGES[@]}"; do
-    if [ -z "$(find "${PACKAGES[i]}" -maxdepth 1 -type f -name '*_test.go' -printf '.' -quit)" ]; then
+    if [ -z "$(find "${PACKAGES[i]}" -maxdepth 1 -type f -name '*_test.go' -print -quit)" ]; then
         # There are no test files in this package.
         unset 'PACKAGES[i]'
     fi

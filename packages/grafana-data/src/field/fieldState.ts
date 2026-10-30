@@ -48,7 +48,7 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
     return `Series (${frame.refId})`;
   }
 
-  return `Series (${index})`;
+  return index === undefined ? 'Series' : `Series (${index})`;
 }
 
 export function cacheFieldDisplayNames(frames: DataFrame[]) {

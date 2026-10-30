@@ -173,7 +173,7 @@ func (b *bleveIndex) hitsToFieldValues(
 				if definition.Name != resource.SEARCH_FIELD_LEGACY_ID {
 					return nil, nil, fmt.Errorf("row %d field %q: %w", rowIndex, definition.Name, err)
 				}
-				// Table results ignore legacy ID conversion errors, so keep that compatibility.
+				// A malformed legacy ID must not fail an otherwise valid search.
 				b.logger.Debug("ignoring malformed legacy ID in search result", "resource", match.ID, "error", err)
 			}
 			if !ok || value == nil {

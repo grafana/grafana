@@ -27,7 +27,7 @@ import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { DashboardScene } from './DashboardScene';
 import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
-import { canManuallyEditDashboard, isViewingDashboard } from './dashboardModes';
+import { canManuallyEditDashboard, getDashboardMode, isViewingDashboard } from './dashboardModes';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
@@ -289,7 +289,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
         key: 'mod+s',
         onTrigger: () => {
           // Viewing keeps the edit session open (isEditing stays true), so gate on the mode as well
-          if (!isViewingDashboard(scene.state)) {
+          if (getDashboardMode(scene.state) !== 'view') {
             scene.openSaveDrawer({});
           }
         },
