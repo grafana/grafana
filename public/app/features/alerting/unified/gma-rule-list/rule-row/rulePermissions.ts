@@ -8,7 +8,16 @@ export interface RulePermissions {
   canEdit: boolean;
   canPause: boolean;
   canDelete: boolean;
-  canDuplicate: boolean;
+  /**
+   * True for provisioned and externally managed (non-plugin) rules.
+   * Duplicate shows a confirmation modal for these before cloning.
+   */
+  isRestricted: boolean;
+  /**
+   * True for plugin-managed rules. Duplicate is hidden for these
+   * (in addition to Edit, Pause, and Delete).
+   */
+  isPluginManaged: boolean;
   /** True while the full rule is still loading. All mutation actions are disabled. */
   isLoading: boolean;
 }
@@ -24,12 +33,26 @@ type Rule = Pick<AlertRule | RecordingRule, 'metadata' | 'spec'>;
  */
 export function getRulePermissions(rule: Rule | undefined, isLoading = false): RulePermissions {
   if (isLoading) {
-    return { canEdit: false, canPause: false, canDelete: false, canDuplicate: false, isLoading: true };
+    return {
+      canEdit: false,
+      canPause: false,
+      canDelete: false,
+      isRestricted: false,
+      isPluginManaged: false,
+      isLoading: true,
+    };
   }
 
   if (rule === undefined) {
     // Fetch failed — allow actions that only need the UID (View, Duplicate, Copy link, Silence).
-    return { canEdit: false, canPause: false, canDelete: false, canDuplicate: true, isLoading: false };
+    return {
+      canEdit: false,
+      canPause: false,
+      canDelete: false,
+      isRestricted: false,
+      isPluginManaged: false,
+      isLoading: false,
+    };
   }
 
   const canWrite = getAnnotation(rule, K8sAnnotations.AccessWrite) === 'true';
@@ -43,7 +66,9 @@ export function getRulePermissions(rule: Rule | undefined, isLoading = false): R
     canEdit: canWrite && !restricted,
     canPause: canWrite && !restricted,
     canDelete: canDelete && !restricted,
-    canDuplicate: true,
+    // Provisioned and managed rules show the confirmation modal; plugin rules hide Duplicate entirely.
+    isRestricted: restricted,
+    isPluginManaged: isPlugin,
     isLoading: false,
   };
 }

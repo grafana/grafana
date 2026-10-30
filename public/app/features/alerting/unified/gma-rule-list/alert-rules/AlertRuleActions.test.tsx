@@ -3,9 +3,17 @@ import { render, screen, userEvent } from 'test/test-utils';
 
 import { API_GROUP, API_VERSION, type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
+import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
 import { setupMswServer } from '../../mockApi';
 import { K8sAnnotations } from '../../utils/k8s/constants';
 import { mockK8sAlertRule } from '../mocks/handlers';
+
+// Default: org admin has create permission. Override per-test for permission-gating tests.
+jest.mock('../../hooks/useAbilities', () => ({
+  ...jest.requireActual('../../hooks/useAbilities'),
+  useAlertingAbility: jest.fn(),
+}));
+const mockUseAlertingAbility = jest.mocked(useAlertingAbility);
 
 import { AlertRuleActions } from './AlertRuleActions';
 import { type AlertRuleSearchHit } from './alertRuleSearchHit';
@@ -59,6 +67,11 @@ function renderActions(searchHit: AlertRuleSearchHit, rule: AlertRule | undefine
 }
 
 describe('AlertRuleActions', () => {
+  beforeEach(() => {
+    // Default: org admin has create permission so Duplicate is visible.
+    mockUseAlertingAbility.mockReturnValue([true, true]);
+  });
+
   it('renders Edit and More buttons when canEdit is true', () => {
     renderActions(baseHit(), ruleWithPerms());
 
@@ -86,7 +99,6 @@ describe('AlertRuleActions', () => {
     expect(screen.getByRole('button', { name: 'More' })).toBeEnabled();
     await userEvent.click(screen.getByRole('button', { name: 'More' }));
     expect(await screen.findByRole('menuitem', { name: /View/i })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: /Duplicate/i })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /Copy link/i })).toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: /Pause/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: /Delete/i })).not.toBeInTheDocument();
@@ -139,16 +151,46 @@ describe('AlertRuleActions', () => {
     expect(screen.queryByRole('menuitem', { name: /Delete/i })).not.toBeInTheDocument();
   });
 
-  it('always shows View, Duplicate and Copy link in More menu', async () => {
+  it('always shows View and Copy link in More menu regardless of permissions', async () => {
     renderActions(baseHit(), ruleWithPerms({ canWrite: false, canDelete: false }));
 
     await userEvent.click(screen.getByRole('button', { name: 'More' }));
     expect(await screen.findByRole('menuitem', { name: /View/i })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: /Duplicate/i })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /Copy link/i })).toBeInTheDocument();
   });
 
-  it('calls PATCH to delete the rule after confirmation', async () => {
+  it('shows Duplicate when user has create permission and rule is not plugin-managed', async () => {
+    renderActions(baseHit(), ruleWithPerms());
+
+    await userEvent.click(screen.getByRole('button', { name: 'More' }));
+    expect(await screen.findByRole('menuitem', { name: /Duplicate/i })).toBeInTheDocument();
+  });
+
+  it('hides Duplicate when user lacks create permission', async () => {
+    mockUseAlertingAbility.mockReturnValue([true, false]);
+    renderActions(baseHit(), ruleWithPerms());
+
+    await userEvent.click(screen.getByRole('button', { name: 'More' }));
+    await screen.findByRole('menuitem', { name: /View/i });
+    expect(screen.queryByRole('menuitem', { name: /Duplicate/i })).not.toBeInTheDocument();
+  });
+
+  it('hides Duplicate for plugin-managed rules', async () => {
+    const pluginRule = {
+      ...ruleWithPerms(),
+      spec: {
+        ...ruleWithPerms().spec,
+        labels: { __grafana_origin: 'plugin/my-plugin' },
+      },
+    };
+    renderActions(baseHit(), pluginRule);
+
+    await userEvent.click(screen.getByRole('button', { name: 'More' }));
+    await screen.findByRole('menuitem', { name: /View/i });
+    expect(screen.queryByRole('menuitem', { name: /Duplicate/i })).not.toBeInTheDocument();
+  });
+
+  it('calls DELETE to delete the rule after confirmation', async () => {
     let deleteCalled = false;
     server.use(
       http.delete(`/apis/${API_GROUP}/${API_VERSION}/namespaces/:namespace/alertrules/:name`, () => {
@@ -163,5 +205,14 @@ describe('AlertRuleActions', () => {
     await userEvent.click(await screen.findByRole('button', { name: /Delete/i }));
 
     expect(deleteCalled).toBe(true);
+  });
+
+  it('opens the Silence drawer when Silence notifications is clicked', async () => {
+    renderActions(baseHit(), ruleWithPerms());
+
+    await userEvent.click(screen.getByRole('button', { name: 'More' }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: /Silence notifications/i }));
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 });

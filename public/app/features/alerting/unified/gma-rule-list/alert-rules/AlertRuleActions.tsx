@@ -19,8 +19,8 @@ import SilenceGrafanaRuleDrawer from 'app/features/alerting/unified/components/s
 import { isGranted } from 'app/features/alerting/unified/hooks/abilities/abilityUtils';
 import { useEnrichmentAbility } from 'app/features/alerting/unified/hooks/abilities/otherAbilities';
 import { EnrichmentAction } from 'app/features/alerting/unified/hooks/abilities/types';
+import { AlertingAction, useAlertingAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { isK8sEntityProvisioned } from 'app/features/alerting/unified/utils/k8s/utils';
 import { type GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 
 import { grafanaRulesNav } from '../../utils/navigation';
@@ -54,17 +54,34 @@ export function AlertRuleActions({ searchHit, rule, ruleIsLoading = false }: Ale
     isGranted(enrichmentReadAbility) && alertEnrichmentEnabled && alertingEnrichmentPerRuleEnabled;
 
   const isPaused = rule?.spec?.paused ?? false;
-  const isProvisioned = rule ? isK8sEntityProvisioned(rule) : false;
+
+  const [createSupported, createAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
+  const canDuplicate = createSupported && createAllowed && !perms.isPluginManaged;
 
   const identifier: GrafanaRuleIdentifier = { ruleSourceName: GRAFANA_RULES_SOURCE_NAME, uid };
 
   const handlePauseResume = async () => {
-    await updateAlertRule({ name: uid, patch: { spec: { paused: !isPaused } } });
+    try {
+      await updateAlertRule({ name: uid, patch: { spec: { paused: !isPaused } } }).unwrap();
+    } catch {
+      appEvents.emit(AppEvents.alertError, [
+        t('alerting.gma-rule-list.actions.pause-error', 'Failed to {{action}} rule', {
+          action: isPaused
+            ? t('alerting.gma-rule-list.actions.resume', 'resume')
+            : t('alerting.gma-rule-list.actions.pause', 'pause'),
+          interpolation: { escapeValue: false },
+        }),
+      ]);
+    }
   };
 
   const handleDelete = async () => {
     setShowDeleteConfirm(false);
-    await deleteAlertRule({ name: uid });
+    try {
+      await deleteAlertRule({ name: uid }).unwrap();
+    } catch {
+      appEvents.emit(AppEvents.alertError, [t('alerting.gma-rule-list.actions.delete-error', 'Failed to delete rule')]);
+    }
   };
 
   const handleCopyLink = async () => {
@@ -86,11 +103,13 @@ export function AlertRuleActions({ searchHit, rule, ruleIsLoading = false }: Ale
         icon="eye"
         url={grafanaRulesNav.viewLink(uid)}
       />
-      <Menu.Item
-        label={t('alerting.gma-rule-list.actions.duplicate', 'Duplicate')}
-        icon="copy"
-        onClick={() => setRedirectToClone(true)}
-      />
+      {canDuplicate && (
+        <Menu.Item
+          label={t('alerting.gma-rule-list.actions.duplicate', 'Duplicate')}
+          icon="copy"
+          onClick={() => setRedirectToClone(true)}
+        />
+      )}
       <Menu.Item
         label={t('alerting.gma-rule-list.actions.copy-link', 'Copy link')}
         icon="link"
@@ -176,7 +195,7 @@ export function AlertRuleActions({ searchHit, rule, ruleIsLoading = false }: Ale
       {redirectToClone && (
         <RedirectToCloneRule
           identifier={identifier}
-          isProvisioned={isProvisioned}
+          isProvisioned={perms.isRestricted}
           onDismiss={() => setRedirectToClone(false)}
         />
       )}
