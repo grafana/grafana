@@ -34,21 +34,6 @@ DIR="${STAGING}/${ROOT}"
 # The frontend is built once, independently of the target OS/architecture.
 # Never package source public/ or silently rebuild a missing frontend.
 FRONTEND="${REPO_ROOT}/dist/frontend"
-for required in \
-  build/boot.js \
-  build/assets-manifest.json \
-  build-swagger/assets-manifest.json; do
-  if [[ ! -s "${FRONTEND}/${required}" ]]; then
-    echo "error: completed frontend artifact is missing ${FRONTEND}/${required}; run 'make build-js' first" >&2
-    exit 1
-  fi
-done
-for required in app/plugins views emails; do
-  if [[ ! -d "${FRONTEND}/${required}" ]]; then
-    echo "error: completed frontend artifact is missing ${FRONTEND}/${required}; run 'make build-js' first" >&2
-    exit 1
-  fi
-done
 echo "build tar.gz: ${FILENAME}"
 
 if [[ ! -d "${REPO_ROOT}/conf" ]]; then

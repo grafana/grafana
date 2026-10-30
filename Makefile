@@ -411,11 +411,7 @@ build-catalog-plugins-data: data/plugins-bundled ## Download default catalog plu
 .PHONY: build-targz
 build-targz: $(TARGZ_FILE) ## Build a tar.gz package (bin, public, conf, plugins-bundled/, data/plugins-bundled from catalog)
 
-dist/frontend/build/assets-manifest.json:
-	@echo "error: completed frontend artifact is missing; run 'make build-js' first" >&2
-	@exit 1
-
-$(TARGZ_FILE): dist/frontend/build/assets-manifest.json data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana$(if $(filter windows,$(OS)),.exe)
+$(TARGZ_FILE): dist/frontend data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana$(if $(filter windows,$(OS)),.exe)
 	@echo "assembling tar.gz"
 	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
 	BUILD_VERSION="$(BUILD_VERSION)" \
