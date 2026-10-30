@@ -206,12 +206,12 @@ describe('applyPluginNav', () => {
     it('places section-mapped apps and sorts them by their configured weight', () => {
       const merged = merge(
         app('grafana-k8s-app', 'Kubernetes App', [page('Clusters', '/a/grafana-k8s-app/clusters')]),
-        app('grafana-sigil-app', 'Sigil', [page('AI', '/a/grafana-sigil-app/home')])
+        app('grafana-agento11y-app', 'Agent', [page('Agent', '/a/grafana-agento11y-app/home')])
       );
 
       const observability = findById(merged, NavID.observability);
       expect(ids(observability?.children ?? [])).toEqual([
-        'plugin-page-grafana-sigil-app',
+        'plugin-page-grafana-agento11y-app',
         'plugin-page-grafana-k8s-app',
       ]);
       expect(findById(merged, 'plugin-page-grafana-k8s-app')?.text).toBe('Kubernetes');

@@ -82,13 +82,6 @@ const APP_NAV_CONFIG: Record<string, AppNavConfig> = {
   ///////////////////
   // Observability //
   ///////////////////
-  // Kept alongside grafana-agento11y-app until the sigil→agento11y rename completes
-  'grafana-sigil-app': {
-    sectionId: NavID.observability,
-    sortWeight: 1,
-    text: 'AI',
-    isNew: true,
-  },
   'grafana-agento11y-app': {
     sectionId: NavID.observability,
     sortWeight: 1,
