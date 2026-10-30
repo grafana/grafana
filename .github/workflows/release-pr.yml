@@ -244,7 +244,7 @@ jobs:
           # Target VERSION explicitly and skip if already there; a relative bump isn't safe to re-run.
           current_version=$(node -p "require('./package.json').version")
           if [ "$current_version" != "$VERSION" ]; then
-            pnpm version "$VERSION" --no-git-tag-version
+            pnpm version "$VERSION" --no-git-tag-version --no-git-checks
             # Release branches cut before lerna was replaced with nx release still have lerna.json
             if [ -f lerna.json ]; then
               pnpm exec lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
