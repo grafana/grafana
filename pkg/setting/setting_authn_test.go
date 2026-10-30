@@ -58,6 +58,17 @@ func TestApplyAuthnSettings(t *testing.T) {
 		_, err = grafanaCom.NewKey("url", "http://localhost:13001")
 		require.NoError(t, err)
 
+		quota, err := settings.NewSection("quota")
+		require.NoError(t, err)
+		_, err = quota.NewKey("enabled", "true")
+		require.NoError(t, err)
+		_, err = quota.NewKey("global_user", "42")
+		require.NoError(t, err)
+		_, err = quota.NewKey("org_user", "17")
+		require.NoError(t, err)
+		_, err = quota.NewKey("user_org", "3")
+		require.NoError(t, err)
+
 		cfg := NewCfg()
 		err = cfg.ApplyAuthnSettings(settings)
 		require.NoError(t, err)
@@ -79,6 +90,10 @@ func TestApplyAuthnSettings(t *testing.T) {
 		assert.Equal(t, "http://localtest.example.com:8080/", cfg.AppURL)
 		assert.Empty(t, cfg.AppSubURL)
 		assert.Equal(t, "http://localhost:13001", cfg.GrafanaComURL)
+		assert.True(t, cfg.Quota.Enabled)
+		assert.EqualValues(t, 42, cfg.Quota.Global.User)
+		assert.EqualValues(t, 17, cfg.Quota.Org.User)
+		assert.EqualValues(t, 3, cfg.Quota.User.Org)
 	})
 
 	t.Run("applies Grafana defaults", func(t *testing.T) {
@@ -104,6 +119,10 @@ func TestApplyAuthnSettings(t *testing.T) {
 		assert.Equal(t, http.SameSiteLaxMode, cfg.CookieSameSiteMode)
 		assert.Equal(t, "http://localhost:3000/", cfg.AppURL)
 		assert.Equal(t, "https://grafana.com", cfg.GrafanaComURL)
+		assert.False(t, cfg.Quota.Enabled)
+		assert.EqualValues(t, -1, cfg.Quota.Global.User)
+		assert.EqualValues(t, 10, cfg.Quota.Org.User)
+		assert.EqualValues(t, 10, cfg.Quota.User.Org)
 	})
 
 	t.Run("does not mutate compatibility globals", func(t *testing.T) {
