@@ -1443,18 +1443,77 @@
     "gma-rule-list": {
       "alert-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
+      "datasources": "",
       "interval": "",
+      "recorded-metric": {
+        "records": "",
+        "to": ""
+      },
       "recording-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
       "result-count": {
         "alert-rules_one": "",
         "alert-rules_other": "",
         "recording-rules_one": "",
         "recording-rules_other": ""
+      },
+      "search": {
+        "default-policy-unavailable": "",
+        "help": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "label": "",
+          "metric": "",
+          "panel-id": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "help-availability": "",
+        "help-available": "",
+        "help-expression": "",
+        "help-filter-type": "",
+        "help-intro": "",
+        "help-title": "",
+        "invalid-tokens": "",
+        "invalid-value": "",
+        "label": "",
+        "not-paused-unavailable": "",
+        "placeholder": "",
+        "property": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "labels": "",
+          "metric": "",
+          "panel": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule-name": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "rejected-filter": "",
+        "rejected-search": "",
+        "renamed-value": "",
+        "unavailable-tokens": "",
+        "unclosed-quote": "",
+        "wildcard-in-text": ""
       },
       "shared": {
         "load-more": "",
@@ -1473,7 +1532,9 @@
         "recording": "",
         "recovering": "",
         "unavailable": ""
-      }
+      },
+      "labels_one": "",
+      "labels_other": ""
     },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "Para alterar a configuração do seu Alertmanager, aceda à página de Administração de alertas. Se não tiver acesso, contacte o seu Administrador.",
@@ -5663,6 +5724,17 @@
       "ungroup-rows": "Desagrupar linhas",
       "ungroup-tabs": "Desagrupar separadores"
     },
+    "composer": {
+      "annotation-pin": "",
+      "apply-undo-title": "",
+      "overlay": {
+        "hint-panel": "",
+        "hint-region": ""
+      },
+      "region": "",
+      "untitled-panel": "",
+      "wait-for-assistant": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -5843,7 +5915,20 @@
     "edit-actions": {
       "add": "Adicionar {{typeName}}",
       "add-conditional-rule": "Adicionar regra {{ruleDescription}}",
+      "auto-grid-column-width": "",
+      "auto-grid-fill-screen-disable": "",
+      "auto-grid-fill-screen-enable": "",
+      "auto-grid-fit-content-disable": "",
+      "auto-grid-fit-content-enable": "",
+      "auto-grid-match-row-heights-disable": "",
+      "auto-grid-match-row-heights-enable": "",
+      "auto-grid-max-columns": "",
+      "auto-grid-max-height": "",
+      "auto-grid-min-height": "",
+      "auto-grid-row-height": "",
+      "change-settings": "",
       "collapse-all-rows": "Recolher todas as linhas",
+      "collapse-row": "",
       "dashboard-description": "Alterar a descrição do painel de controlo",
       "dashboard-title": "Alterar o título do painel de controlo",
       "duplicate": "Duplicar {{typeName}}",
@@ -5852,6 +5937,7 @@
       "edit-template-variable-rule": "Alterar regra de variável de modelo",
       "edit-time-range-rule": "Alterar regra de intervalo de tempo",
       "expand-all-rows": "Expandir todas as linhas",
+      "expand-row": "",
       "group-into-row": "Agrupar em linha",
       "group-into-tab": "Agrupar em separador",
       "move": "Mover {{typeName}}",
@@ -5865,8 +5951,10 @@
       "panel-repeat-variable": "Repetição do painel por",
       "panel-title": "alteração do título do painel",
       "paste-panel": "Colar painel",
+      "paste-panel-styles": "",
       "remove": "Remover {{typeName}}",
       "remove-multiple": "Remover {{typeName}} ({{num}})",
+      "rename": "",
       "replace-panel": "",
       "row-fill-screen-disable": "Desativar o ecrã de preenchimento de linha",
       "row-fill-screen-enable": "Ativar o ecrã de preenchimento de linha",
@@ -5874,16 +5962,39 @@
       "row-repeat-variable": "Repetição da linha por",
       "row-show-header": "Mostrar o cabeçalho da linha",
       "row-title": "Alterar título da linha",
+      "rows-hide-header": "",
+      "rows-show-header": "",
       "switch-layout": "Mudar o layout",
       "switch-layout-row": "Mudar o layout",
       "switch-layout-tab": "Mudar o layout",
       "tab-repeat-variable": "Repetição do separador por",
       "tab-title": "Alterar título do separador",
+      "unlink-library-panel": "",
+      "variable-adhoc-default-filters": "",
+      "variable-adhoc-default-group-by": "",
+      "variable-adhoc-default-keys": "",
+      "variable-adhoc-enable-group-by": "",
+      "variable-allow-custom-value": "",
+      "variable-constant-value": "",
+      "variable-custom-all-value": "",
+      "variable-datasource": "",
+      "variable-datasource-name-filter": "",
+      "variable-datasource-type": "",
       "variable-description": "Alterar a descrição da variável",
       "variable-hide": "Alterar opção de ocultar variável",
+      "variable-include-all": "",
+      "variable-interval-auto": "",
+      "variable-interval-min-interval": "",
+      "variable-interval-step-count": "",
+      "variable-interval-values": "",
       "variable-label": "Alterar etiqueta da variável",
+      "variable-multi-value": "",
       "variable-name": "Alterar nome da variável",
-      "variable-type": "Alterar tipo de variável"
+      "variable-refresh": "",
+      "variable-switch-values": "",
+      "variable-textbox-value": "",
+      "variable-type": "Alterar tipo de variável",
+      "view-panel-option": ""
     },
     "empty": {
       "add-library-panel-body": "Adicione visualizações que são partilhadas com outros painéis de controlo.",
@@ -6107,6 +6218,11 @@
     "modes": {
       "agent-edit": "",
       "change-mode": "",
+      "composer": "",
+      "composer-description": "",
+      "composer-no-permission": "",
+      "composer-save-first": "",
+      "composer-unsupported": "",
       "current": "",
       "discard": "",
       "discard-body": "",
@@ -7019,7 +7135,8 @@
         "change-annotation-controls-display": "Alterar apresentação dos controlos de anotação",
         "change-annotation-enabled-state": "Alterar estado de ativação da anotação",
         "change-annotation-name": "Alterar nome da anotação",
-        "change-annotation-panel-filter": "Alterar filtro do painel de anotações"
+        "change-annotation-panel-filter": "Alterar filtro do painel de anotações",
+        "change-annotation-query": ""
       },
       "edit-query": "Editar consulta"
     },
@@ -7967,7 +8084,7 @@
       }
     },
     "unlink-modal": {
-      "body-unlink-panel": "Se desassociar este painel, poderá editá-lo sem afetar quaisquer outros painéis. No entanto, depois de fazer uma alteração, não poderá reverter para o painel reutilizável original.",
+      "body-unlink-panel": "",
       "confirmText-yes-unlink": "Sim, desassociar",
       "title-really-unlink-panel": "Tem a certeza de que pretende desassociar este painel?"
     },
@@ -9205,10 +9322,6 @@
       "attribute-category": {
         "other": "Outro"
       },
-      "exception-message": "Mensagem:",
-      "exception-stacktrace": "Rastreio da pilha",
-      "exception-title": "Exceção",
-      "exception-type": "Tipo:",
       "label": {
         "kind": "Tipo:",
         "library-name": "Nome da biblioteca:",
@@ -9314,6 +9427,7 @@
     },
     "trace-page-header": {
       "aria-label-share-dropdown": "Abrir menu de partilha e feedback",
+      "copy-trace-id": "",
       "critical-path": "Caminho crítico",
       "critical-path-tooltip": "Seleciona intervalos no caminho crítico – a sequência mais longa de tarefas dependentes que determinam a duração mínima do rastreio.",
       "duration": "Duração",
@@ -9337,7 +9451,7 @@
       "share-group": "Partilhar",
       "share-tooltip": "Partilhar e dar feedback",
       "spans": "Intervalos",
-      "start-time": "Hora de início",
+      "start-time": "",
       "success-indicator": "Rastreio bem-sucedido",
       "target": "Destino",
       "tooltip-url": "{{route}} ou {{url}} ou {{target}} ou {{path}}",
@@ -9346,6 +9460,12 @@
       "trace-banner-metrics": "{{duration}} · {{percent}}% do rastreio",
       "trace-banner-warning": "Banner de aviso de rastreio",
       "trace-id": "ID de rastreio",
+      "trace-summary-error": "",
+      "trace-summary-error-status": "",
+      "trace-summary-hide-stacktrace": "",
+      "trace-summary-show-stacktrace": "",
+      "trace-summary-warning": "",
+      "trace-summary-warning-status": "",
       "url": "URL",
       "warning-indicator": "O rastreio contém erros de cliente"
     },
@@ -12199,10 +12319,14 @@
     },
     "log-line": {
       "has-error": "Contém erros",
+      "has-error-fields": "",
+      "has-stacktrace": "",
       "is-sampled": "É amostrado",
       "show-less": "mostrar menos",
       "show-more": "mostrar mais",
-      "tooltip-error": "Erro: {{errorMessage}}"
+      "tooltip-error": "Erro: {{errorMessage}}",
+      "tooltip-error-fields": "",
+      "tooltip-stacktrace": ""
     },
     "log-line-context": {
       "center-matched-line": "Centrar linha correspondente",
@@ -13424,7 +13548,6 @@
     "add-panel": {
       "cancel": "Cancelar",
       "card-author": "Por {{author}}",
-      "card-selected": "{{title}} (selecionados)",
       "card-updated": "Atualizado a {{when}}",
       "create-name": "Nome do bloco de notas",
       "create-name-required": "O nome do bloco de notas é obrigatório",
@@ -13435,6 +13558,7 @@
       "error-open-conflict": "",
       "list-error": "Falha ao carregar os blocos de notas",
       "list-error-body": "Ocorreu um erro ao carregar os seus blocos de notas. Tente novamente ou crie um novo.",
+      "list-label": "",
       "list-no-matches": "Nenhum bloco de notas corresponde a estes filtros.",
       "list-none": "Ainda não tem blocos de notas. Em vez disso, crie um.",
       "list-none-read-only": "Ainda não tem blocos de notas e não tem permissão para criar um.",
@@ -14907,7 +15031,7 @@
       "resources-to-migrate-empty": "Nenhuma pasta ou recurso corresponde à pesquisa atual.",
       "resources-to-migrate-heading": "Recursos a migrar",
       "resources-to-migrate-search": "Pesquisar pastas e recursos",
-      "resources-to-migrate-subtitle": "Escolha pastas inteiras ou recursos individuais dentro delas. Selecionar uma pasta migra apenas os recursos diretamente dentro dela — qualquer coisa em subpastas migra através da sua própria pasta.",
+      "resources-to-migrate-subtitle": "",
       "retain-resources-description": "Mantenha os recursos migrados nesta instância enquanto o pedido de extração estiver aberto, para que permaneçam ativos até que o ramo seja combinado. Estes recursos têm de ser eliminados manualmente antes de o pedido de extração ser combinado, caso contrário haverá erros durante a sincronização devido a recursos em conflito.",
       "retain-resources-label": "Manter recursos existentes durante a revisão",
       "retain-resources-warning-body": "Tem de eliminar os recursos migrados por si antes de combinar o pedido de extração. Se ainda existirem quando a ramificação for unida, entrarão em conflito com os recursos geridos recebidos e não serão reconciliados.",
@@ -15738,6 +15862,12 @@
       "delete-transformations-confirm-title_one": "Eliminar {{count}} transformação?",
       "delete-transformations-confirm-title_other": "Eliminar {{count}} transformações?"
     },
+    "datasource-error": {
+      "load-failed": "",
+      "load-failed-named": "",
+      "not-found": "",
+      "settings-not-found": ""
+    },
     "delete-modal": {
       "body-transformation": "Remover uma transformação pode danificar outras."
     },
@@ -16068,6 +16198,7 @@
       "exchange": "Alterar o âmbito da raiz para {{scope}}",
       "expand": "Expandir",
       "filter": "",
+      "filterAriaLabel": "",
       "loading": "A carregar painéis de controlo",
       "megaMenuSectionHeading": "",
       "noResultsForFilter": "Não foram encontrados resultados para a sua consulta",
@@ -16076,7 +16207,6 @@
       "noResultsNoScopes": "Nenhum âmbito selecionado",
       "toggle": {
         "collapse": "Recolher lista de painéis de controlo sugeridos",
-        "disabled": "A lista de painéis de controlo sugeridos está desativada devido ao modo apenas de leitura",
         "expand": "Expandir lista de painéis de controlo sugeridos"
       }
     },
@@ -16326,8 +16456,8 @@
       "copy-link-button": "Copiar",
       "info-text": "Crie um link direto para este painel de controlo ou painel, personalizado com as opções abaixo.",
       "link-url": "URL do link",
-      "render-alert": "Plugin de renderização de imagem não instalado",
-      "render-instructions": "Para renderizar uma imagem, tem de instalar o <2>plugin de renderização de imagens Grafana</2>. Entre em contacto com o seu administrador Grafana para instalar o plugin.",
+      "render-alert": "",
+      "render-instructions": "",
       "rendered-image": "Link direto para imagem renderizada",
       "save-alert": "O painel de controlo não está guardado",
       "save-dashboard": "Para processar uma imagem de painel, tem de guardar o painel de controlo primeiro.",
@@ -16611,6 +16741,17 @@
     "generate-suggestion": "Gerar sugestão",
     "improve-query": "Melhorar consulta"
   },
+  "st-pod-ready": {
+    "error": {
+      "body-with-support": "",
+      "support-ack": "",
+      "title": "",
+      "title-fallback": ""
+    },
+    "timeout": {
+      "banner": ""
+    }
+  },
   "stars": {
     "mark-as-starred": "Marcar como favorito",
     "mark-as-starred-with-title": "Marcar \"{{title}}\" como favorito",
@@ -16780,6 +16921,9 @@
     }
   },
   "swagger": {
+    "api-picker": {
+      "preferred": ""
+    },
     "login": "Entrar",
     "manifests": {
       "api-docs": "",
@@ -17142,6 +17286,9 @@
     "truncation": {
       "label": "",
       "tooltip": ""
+    },
+    "variable-suggestions": {
+      "reduced-field": ""
     }
   },
   "theme-playground": {
@@ -17476,9 +17623,11 @@
       "placeholder-frame": "Frame"
     },
     "config-from-query-transformer-editor": {
+      "description-dynamic-field-name-matcher": "",
       "label-apply-to": "Aplicar a",
       "label-apply-to-options": "Aplicar a opções",
-      "label-config-query": "Consulta de configuração"
+      "label-config-query": "Consulta de configuração",
+      "name-dynamic-field-name-matcher": ""
     },
     "convert-field-type-transformer-editor": {
       "aria-label-add-a-convert-field-type-transformer": "Adicionar um transformador de tipo de campo convert",

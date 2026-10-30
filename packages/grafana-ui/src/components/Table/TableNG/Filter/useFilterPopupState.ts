@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   type Field,
@@ -12,6 +12,7 @@ import { type ValueSetOptions } from '@grafana/data/internal';
 import { useTheme2 } from '../../../../themes/ThemeContext';
 import { useTableFilters } from '../TableFilterContext';
 import { tableFilterKey } from '../transformations/filterByValue';
+import { createRangePredicate } from '../transformations/rangeFilter';
 import { createValuePredicate, unsupportedFilterReason } from '../transformations/valueFilter';
 import { FilterOperator, type TableRow } from '../types';
 import { getDisplayName } from '../utils';
@@ -73,8 +74,31 @@ export function useFilterPopupState({
   const range: RangeValueMatcherOptions<number> | undefined =
     predicate?.id === 'between' ? predicate.options : undefined;
   const filterKey = useMemo(() => (field ? tableFilterKey(field, parentIndex) : name), [field, parentIndex, name]);
+  const setOpenFilterKey = view?.setOpenFilterKey;
 
-  const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
+  const [localPopoverVisible, setLocalPopoverVisible] = useState(false);
+  const isPopoverVisible = view ? view.openFilterKey === filterKey : localPopoverVisible;
+  const setPopoverVisible = useCallback<React.Dispatch<React.SetStateAction<boolean>>>(
+    (next) => {
+      if (!setOpenFilterKey) {
+        setLocalPopoverVisible(next);
+        return;
+      }
+      setOpenFilterKey((current) => {
+        const visible = current === filterKey;
+        const nextVisible = typeof next === 'function' ? next(visible) : next;
+        return nextVisible ? filterKey : visible ? undefined : current;
+      });
+    },
+    [setOpenFilterKey, filterKey]
+  );
+
+  useEffect(
+    () => () => {
+      setOpenFilterKey?.((current) => (current === filterKey ? undefined : current));
+    },
+    [setOpenFilterKey, filterKey]
+  );
   const [searchFilter, setSearchFilter] = useState('');
   const [operator, setOperator] = useState<SelectableValue<FilterOperator>>(
     operatorSelectableValues()[FilterOperator.CONTAINS]
@@ -86,7 +110,7 @@ export function useFilterPopupState({
     if (unsupportedReason) {
       setPopoverVisible(false);
     }
-  }, [snapshot, unsupportedReason]);
+  }, [snapshot, unsupportedReason, setPopoverVisible]);
 
   // Show options scoped to the current cross-filter state:
   // - Active filter: rows available before that filter was applied (keeps its own options visible).
@@ -121,6 +145,9 @@ export function useFilterPopupState({
         continue;
       }
       const raw = row[fieldName];
+      if (selection.includeMissing !== undefined && raw == null) {
+        continue;
+      }
       if (selected.has(formattedValueToString(previousDisplay(raw)))) {
         currentValues.add(formattedValueToString(currentDisplay(raw)));
       }
@@ -135,9 +162,10 @@ export function useFilterPopupState({
     unsupportedReason,
     popupProps: {
       stateKey: snapshot,
-      onApplyValues: (values) => {
+      rangeFiltersEnabled: view?.rangeFiltersEnabled,
+      onApplyValues: (values, includeMissing) => {
         if (view && field) {
-          if (values.length === 0) {
+          if (values.length === 0 && !includeMissing) {
             view.clearFilter(field, parentIndex);
           } else {
             view.applyFilter(
@@ -146,7 +174,8 @@ export function useFilterPopupState({
                 field,
                 values.map((item) => item.value),
                 selection,
-                timeZone
+                timeZone,
+                includeMissing
               ),
               parentIndex
             );
@@ -156,25 +185,14 @@ export function useFilterPopupState({
       onApplyRange:
         view && field
           ? ({ min, max, includeMissing }) =>
-              view.applyFilter(
-                field,
-                {
-                  id: 'between',
-                  options: {
-                    from: min,
-                    to: max,
-                    inclusive: true,
-                    allowOpenBounds: true,
-                    includeMissing,
-                  } satisfies RangeValueMatcherOptions<number>,
-                },
-                parentIndex
-              )
+              view.applyFilter(field, createRangePredicate({ min, max, includeMissing }), parentIndex)
           : undefined,
       onClear: () => field && view?.clearFilter(field, parentIndex),
+      timeZone,
+      includeMissing: selection?.includeMissing,
       range: range ? { min: range.from, max: range.to, includeMissing: range.includeMissing === true } : undefined,
       rows: rowsForPopup,
-      filterValue,
+      filterValue: filterValue ?? (range && !view?.rangeFiltersEnabled ? [] : undefined),
       field,
       onClose: () => setPopoverVisible(false),
       searchFilter,

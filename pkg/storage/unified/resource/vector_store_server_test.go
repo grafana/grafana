@@ -30,6 +30,7 @@ type fakeWriteStore struct {
 	collection   vector.Collection
 	ensureErr    error
 	resolveErr   error
+	resolveCalls int
 
 	// recorded calls
 	ensured      []string // "group/resource"
@@ -69,6 +70,7 @@ type deleteRowsCall struct {
 }
 
 func (f *fakeWriteStore) ResolveCollection(_ context.Context, group, resource string) (vector.Collection, bool, error) {
+	f.resolveCalls++
 	if f.resolveErr != nil {
 		return vector.Collection{}, false, f.resolveErr
 	}
@@ -135,7 +137,7 @@ func (f *fakeWriteStore) WithEntityLock(ctx context.Context, _, _, _ string, fn 
 }
 
 func newTestVectorStoreServer(store *fakeWriteStore) *VectorStoreServer {
-	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), []string{"g/r"}, nil, nil, nil, nil)
+	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), []string{"g/r"}, nil, nil, nil)
 	s.store = store // swap the nil concrete backend for the fake
 	return s
 }
@@ -189,7 +191,7 @@ func TestVectorStore_ServiceIdentityGate(t *testing.T) {
 	// A stray comma in the config (empty entry) must not admit
 	// identity-less tokens.
 	s = newTestVectorStoreServer(&fakeWriteStore{})
-	s2 := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), []string{"g/r"}, []string{"", "assistant"}, nil, nil, nil)
+	s2 := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), []string{"g/r"}, []string{"", "assistant"}, nil, nil)
 	s2.store = s.store
 	_, err = s2.Upsert(vsAuthedCtx(), validUpsertReq())
 	require.Error(t, err)
@@ -324,7 +326,7 @@ func TestVectorStore_UpsertValidation(t *testing.T) {
 
 func TestVectorStore_UpsertEmbedFailureIsInternal(t *testing.T) {
 	store := &fakeWriteStore{}
-	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4, wantErr: errors.New("provider down")}), []string{"g/r"}, nil, nil, nil, nil)
+	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4, wantErr: errors.New("provider down")}), []string{"g/r"}, nil, nil, nil)
 	s.store = store
 	_, err := s.Upsert(vsAuthedCtx(), validUpsertReq())
 	require.Error(t, err)
@@ -699,7 +701,7 @@ func TestVectorStore_DeleteResolveFailureWithCancelledContextIsCanceled(t *testi
 func TestVectorStore_UpsertSubresourcesNoChangesSkipsEmbed(t *testing.T) {
 	fake := &fakeTextEmbedder{dim: 4}
 	store := &fakeWriteStore{stored: map[string]string{"c": "same"}}
-	s := NewVectorStoreServer(nil, newTestEmbedder(fake), []string{"g/r"}, nil, nil, nil, nil)
+	s := NewVectorStoreServer(nil, newTestEmbedder(fake), []string{"g/r"}, nil, nil, nil)
 	s.store = store
 
 	resp, err := s.UpsertSubresources(vsAuthedCtx(), &resourcepb.VectorUpsertSubresourcesRequest{
@@ -719,7 +721,7 @@ func TestVectorStore_UpsertEmbedQuotaErrorKeepsRetryableCode(t *testing.T) {
 	store := &fakeWriteStore{}
 	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{
 		dim: 4, wantErr: status.Error(codes.ResourceExhausted, "provider quota"),
-	}), []string{"g/r"}, nil, nil, nil, nil)
+	}), []string{"g/r"}, nil, nil, nil)
 	s.store = store
 
 	_, err := s.Upsert(vsAuthedCtx(), validUpsertReq())
@@ -755,7 +757,7 @@ func TestVectorStore_InternalCollectionMismatchIsNotFound(t *testing.T) {
 }
 
 func sharedWriteServer(store *fakeWriteStore) *VectorStoreServer {
-	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), nil, nil, []string{"g/r"}, []string{"publisher"}, nil)
+	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), nil, nil, map[string][]string{"g/r": {"publisher"}}, nil)
 	s.store = store
 	return s
 }
@@ -777,6 +779,52 @@ func TestSharedVectorStoreRequiresPublisherAcrossMutations(t *testing.T) {
 	require.Empty(t, store.upserts)
 	require.Empty(t, store.deleteCalls)
 	require.Empty(t, store.updateCalls)
+}
+
+func TestSharedVectorStorePublishersAreCollectionSpecificAcrossMutations(t *testing.T) {
+	for _, tc := range []struct{ resource, allowed, denied string }{
+		{"r", "publisher-a", "publisher-b"},
+		{"other", "publisher-b", "publisher-a"},
+	} {
+		for _, method := range []string{"Upsert", "UpsertSubresources", "Delete", "UpdateMetadata"} {
+			t.Run(tc.resource+"/"+method, func(t *testing.T) {
+				store := &fakeWriteStore{resolveFound: true, collection: vector.Collection{Group: "g", Resource: tc.resource, PartitionKey: "r_external", IsExternal: true, Scope: vector.ScopeShared}}
+				embed := &countingTextEmbedder{client: &fakeTextEmbedder{dim: 4}}
+				s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), nil, nil, map[string][]string{"g/r": {"publisher-a"}, "g/other": {"publisher-b"}}, nil)
+				s.store = store
+				s.embedder.TextEmbedder = embed
+				call := func(service string) error {
+					ctx := vsAuthedCtxAs(service)
+					switch method {
+					case "Upsert":
+						req := validUpsertReq()
+						req.Resource = tc.resource
+						_, err := s.Upsert(ctx, req)
+						return err
+					case "UpsertSubresources":
+						_, err := s.UpsertSubresources(ctx, &resourcepb.VectorUpsertSubresourcesRequest{Namespace: "ns", Group: "g", Resource: tc.resource, Uid: "u", Inputs: []*resourcepb.EmbeddingInput{{Content: "a", Title: "t"}}})
+						return err
+					case "Delete":
+						_, err := s.Delete(ctx, &resourcepb.VectorDeleteRequest{Namespace: "ns", Group: "g", Resource: tc.resource, Selector: &resourcepb.VectorDeleteRequest_DeleteAll{DeleteAll: true}})
+						return err
+					default:
+						_, err := s.UpdateMetadata(ctx, &resourcepb.VectorUpdateMetadataRequest{Namespace: "ns", Group: "g", Resource: tc.resource, Filter: []byte(`{"x":1}`), Set: []byte(`{"x":2}`)})
+						return err
+					}
+				}
+				require.Equal(t, codes.PermissionDenied, status.Code(call(tc.denied)))
+				require.Empty(t, store.ensured)
+				require.Zero(t, store.resolveCalls)
+				require.Empty(t, store.upserts)
+				require.Empty(t, store.replaceCalls)
+				require.Empty(t, store.deleteCalls)
+				require.Empty(t, store.updateCalls)
+				require.Zero(t, embed.calls)
+				require.NoError(t, call(tc.allowed))
+				require.NotZero(t, len(store.ensured)+store.resolveCalls)
+			})
+		}
+	}
 }
 
 func TestSharedVectorStoreWritesUseSharedNamespace(t *testing.T) {
@@ -823,20 +871,22 @@ func TestSharedVectorStoreRejectsFolders(t *testing.T) {
 
 func TestSharedVectorStoreFailsClosedOnPolicyDisagreement(t *testing.T) {
 	for _, tc := range []struct {
-		name                             string
-		tenantScoped, shared, publishers []string
-		catalogScope                     vector.CollectionScope
-		want                             codes.Code
+		name         string
+		tenantScoped []string
+		shared       map[string][]string
+		catalogScope vector.CollectionScope
+		want         codes.Code
 	}{
 		{name: "missing enrollment", catalogScope: vector.ScopeShared, want: codes.NotFound},
-		{name: "empty publisher list", shared: []string{"g/r"}, catalogScope: vector.ScopeShared, want: codes.Internal},
-		{name: "overlapping enrollment", tenantScoped: []string{"g/r"}, shared: []string{"g/r"}, publishers: []string{"publisher"}, catalogScope: vector.ScopeShared, want: codes.Internal},
-		{name: "shared enrollment tenant catalog", shared: []string{"g/r"}, publishers: []string{"publisher"}, catalogScope: vector.ScopeTenant, want: codes.Internal},
+		{name: "empty publisher list", shared: map[string][]string{"g/r": {}}, catalogScope: vector.ScopeShared, want: codes.Internal},
+		{name: "empty publisher identity", shared: map[string][]string{"g/r": {""}}, catalogScope: vector.ScopeShared, want: codes.Internal},
+		{name: "overlapping enrollment", tenantScoped: []string{"g/r"}, shared: map[string][]string{"g/r": {"publisher"}}, catalogScope: vector.ScopeShared, want: codes.Internal},
+		{name: "shared enrollment tenant catalog", shared: map[string][]string{"g/r": {"publisher"}}, catalogScope: vector.ScopeTenant, want: codes.Internal},
 		{name: "tenant-scoped enrollment shared catalog", tenantScoped: []string{"g/r"}, catalogScope: vector.ScopeShared, want: codes.Internal},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			store := &fakeWriteStore{collection: vector.Collection{Group: "g", Resource: "r", PartitionKey: "r_external", IsExternal: true, Scope: tc.catalogScope}}
-			s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), tc.tenantScoped, nil, tc.shared, tc.publishers, nil)
+			s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), tc.tenantScoped, nil, tc.shared, nil)
 			s.store = store
 			_, err := s.Upsert(vsAuthedCtxAs("publisher"), validUpsertReq())
 			require.Equal(t, tc.want, status.Code(err))
