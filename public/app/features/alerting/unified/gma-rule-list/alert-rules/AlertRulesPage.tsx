@@ -62,7 +62,7 @@ function AlertRulesPageHeader() {
       <Menu.Item
         label={t('alerting.gma-rule-list.header.design-for-provisioning', 'Design rule for provisioning')}
         icon="download-alt"
-        url="/alerting/new/grafana?view=provisioning"
+        url="/alerting/export-new-rule"
       />
     </Menu>
   );
