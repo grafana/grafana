@@ -74,7 +74,7 @@ Use this Terraform configuration to configure the [Grafana provider](https://reg
 Replace the following field values:
 
 - _`<STACK-URL>`_: The URL of your Grafana stack. For example, `https://my-stack.grafana.net/`.
-- _`<YOUR-SERVICE-ACCOUNT-TOKEN>`: The service account token that you created, or `<USERNAME>:<PASSWORD>` for basic auth.
+- _`<YOUR-SERVICE-ACCOUNT-TOKEN>`_: The service account token that you created, or `<USERNAME>:<PASSWORD>` for basic auth.
 - _`<YOUR-STACK-ID>`_: The Grafana stack ID, if you're using a Grafana Cloud stack.
 
 {{< admonition type="caution" >}}
