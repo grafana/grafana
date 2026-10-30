@@ -267,9 +267,19 @@ func New(config Config) (FieldSelectorService, error) {
 		pageSize = config.PageSize
 	}
 
-	subscribe := config.CacheTTL >= 0 && config.EventSubscriber != nil && config.EventSubscriber.Enabled()
+	svc := &remoteSettingService{
+		restClient: restClient,
+		log:        log,
+		pageSize:   pageSize,
+		metrics:    metrics,
+	}
+
+	subscribed := false
+	if config.CacheTTL >= 0 && config.EventSubscriber != nil && config.EventSubscriber.Enabled() {
+		subscribed = svc.subscribe(config.EventSubscriber)
+	}
 	cacheTTL := DefaultCacheTTL
-	if subscribe {
+	if subscribed {
 		cacheTTL = DefaultSubscribedCacheTTL
 	}
 	if config.CacheTTL > 0 {
@@ -280,26 +290,13 @@ func New(config Config) (FieldSelectorService, error) {
 		cacheMaxEntries = config.CacheMaxEntries
 	}
 
-	var cache *expirable.LRU[string, []*Setting]
-	var fetchMutexes *expirable.LRU[string, *sync.Mutex]
 	if config.CacheTTL >= 0 {
-		cache = expirable.NewLRU[string, []*Setting](cacheMaxEntries, nil, cacheTTL)
-		fetchMutexes = expirable.NewLRU[string, *sync.Mutex](cacheMaxEntries, nil, 2*cacheTTL)
+		// events can arrive as soon as we subscribe, so publish the caches under the lock
+		svc.cacheMu.Lock()
+		svc.cache = expirable.NewLRU[string, []*Setting](cacheMaxEntries, nil, cacheTTL)
+		svc.fetchMutexes = expirable.NewLRU[string, *sync.Mutex](cacheMaxEntries, nil, 2*cacheTTL)
+		svc.cacheMu.Unlock()
 		metrics.cacheMaxSize.Set(float64(cacheMaxEntries))
-	}
-
-	svc := &remoteSettingService{
-		restClient:   restClient,
-		log:          log,
-		pageSize:     pageSize,
-		metrics:      metrics,
-		cache:        cache,
-		fetchMutexes: fetchMutexes,
-	}
-	if subscribe && !svc.subscribe(config.EventSubscriber) && config.CacheTTL == 0 {
-		// no events will arrive, so the longer TTL would only serve stale data
-		svc.cache = expirable.NewLRU[string, []*Setting](cacheMaxEntries, nil, DefaultCacheTTL)
-		svc.fetchMutexes = expirable.NewLRU[string, *sync.Mutex](cacheMaxEntries, nil, 2*DefaultCacheTTL)
 	}
 	return svc, nil
 }
@@ -328,6 +325,9 @@ func (s *remoteSettingService) handleEvent(subject string, data []byte) {
 	defer s.cacheMu.Unlock()
 	s.invalidations.Add(1)
 	s.metrics.cacheInvalidationTotal.WithLabelValues(invalidationReasonEvent).Inc()
+	if s.cache == nil {
+		return
+	}
 	prefix := n.Namespace + "|"
 	for _, key := range s.cache.Keys() {
 		if strings.HasPrefix(key, prefix) {
@@ -337,7 +337,7 @@ func (s *remoteSettingService) handleEvent(subject string, data []byte) {
 }
 
 func (s *remoteSettingService) handleReconnect() {
-	s.log.Info("settings event subscription reconnected, flushing cache", "entries", s.cache.Len())
+	s.log.Info("settings event subscription reconnected, flushing cache")
 	s.invalidateAll(invalidationReasonReconnect)
 }
 
@@ -346,7 +346,9 @@ func (s *remoteSettingService) invalidateAll(reason string) {
 	defer s.cacheMu.Unlock()
 	s.invalidations.Add(1)
 	s.metrics.cacheInvalidationTotal.WithLabelValues(reason).Inc()
-	s.cache.Purge()
+	if s.cache != nil {
+		s.cache.Purge()
+	}
 }
 
 func (s *remoteSettingService) ListAsIni(ctx context.Context, labelSelector metav1.LabelSelector) (*ini.File, error) {
