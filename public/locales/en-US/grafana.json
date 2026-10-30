@@ -1462,6 +1462,15 @@
         "count-unavailable": "Count unavailable",
         "expand": "Expand {{title}}"
       },
+      "instances": {
+        "error": "error",
+        "firing": "firing",
+        "healthy": "normal",
+        "nodata": "no data",
+        "pending": "pending",
+        "recovering": "recovering",
+        "view-instances": "View instances"
+      },
       "interval": "Evaluated every {{interval}}",
       "labels_one": "{{formatted}} label",
       "labels_other": "{{formatted}} labels",
@@ -1473,6 +1482,11 @@
         "no-rules": "No recording rules found",
         "rules-error": "Failed to load recording rules",
         "search-issues": "Change the search to see results"
+      },
+      "routing": {
+        "default-policy": "Default policy",
+        "delivered-to": "Delivered to",
+        "policy": "Policy: {{name}}"
       },
       "rule-count": {
         "alert-rules_one": "{{formatted}} alert rule",
