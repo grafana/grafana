@@ -8,9 +8,6 @@ import variableListDashboard from './fixtures/VariableListDashboard.json';
 import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './helpers/flows';
 
 test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
   viewport: { width: 1920, height: 1080 },
 });
 

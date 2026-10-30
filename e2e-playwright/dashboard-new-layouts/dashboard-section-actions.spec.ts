@@ -5,9 +5,6 @@ import { flows } from './helpers';
 import { type Canvas, type Panels, type Rows, type Sidebar, type Tabs } from './page-objects';
 
 test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
   viewport: { width: 1920, height: 1080 },
 });
 

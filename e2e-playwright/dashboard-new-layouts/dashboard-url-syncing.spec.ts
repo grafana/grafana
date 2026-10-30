@@ -2,14 +2,8 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import v2DashboardWithTabsForSlug from '../dashboards/V2DashboardWithTabsForSlugTest.json';
 
-import { test, expect } from './fixtures';
+import { expect, test } from './fixtures';
 import { flows } from './helpers';
-
-test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
-});
 
 function buildDashboardPathWithSearch(dashboardUid: string, searchParams: Record<string, string>): string {
   const base = new URL(`http://grafana.test/d/${dashboardUid}`);
