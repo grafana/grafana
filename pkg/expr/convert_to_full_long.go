@@ -152,7 +152,8 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 	for _, frame := range frames {
 		var timeField *data.Field
 		for _, f := range frame.Fields {
-			if f.Type() == data.FieldTypeTime {
+			// Classic expressions accept a nullable time field, so SQL does too.
+			if f.Type().Time() {
 				timeField = f
 				break
 			}
@@ -171,7 +172,11 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 				hasDisplayCol = true
 			}
 			for i := 0; i < f.Len(); i++ {
-				t := timeField.At(i).(time.Time)
+				tv, ok := timeField.ConcreteAt(i)
+				if !ok {
+					return nil, fmt.Errorf("time field %q has a null value at row %d", timeField.Name, i)
+				}
+				t := tv.(time.Time)
 				v, err := f.FloatAt(i)
 				if err != nil {
 					continue
@@ -255,7 +260,8 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 
 	var timeField *data.Field
 	for _, f := range frame.Fields {
-		if f.Type() == data.FieldTypeTime {
+		// Classic expressions accept a nullable time field, so SQL does too.
+		if f.Type().Time() {
 			timeField = f
 			break
 		}
@@ -306,7 +312,11 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 			hasDisplayCol = true
 		}
 		for i := range timeLen {
-			t := timeField.At(i).(time.Time)
+			tv, ok := timeField.ConcreteAt(i)
+			if !ok {
+				return nil, fmt.Errorf("time field %q has a null value at row %d", timeField.Name, i)
+			}
+			t := tv.(time.Time)
 			v, err := f.FloatAt(i)
 			if err != nil {
 				continue

@@ -516,3 +516,70 @@ func TestConvertToFullLongLabelNamedLikeGeneratedColumn(t *testing.T) {
 		})
 	}
 }
+
+func TestConvertToFullLongNullableTime(t *testing.T) {
+	t0, t1 := time.Unix(0, 0), time.Unix(10, 0)
+
+	multi := func(times []*time.Time) data.Frames {
+		return data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, times),
+				data.NewField("cpu", data.Labels{"host": "a"}, []float64{1.0, 2.0}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
+		}
+	}
+	wide := func(times []*time.Time) data.Frames {
+		return data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, times),
+				data.NewField("cpu", data.Labels{"host": "a"}, []float64{1.0, 2.0}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesWide}),
+		}
+	}
+
+	expected := data.NewFrame("",
+		data.NewField("time", nil, []time.Time{t0, t1}),
+		data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(2.0)}),
+		data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu"}),
+		data.NewField("host", nil, []*string{new("a"), new("a")}),
+	).SetMeta(&data.FrameMeta{Type: timeseriesFullLongType})
+
+	for name, build := range map[string]func([]*time.Time) data.Frames{
+		"TimeSeriesMulti": multi,
+		"TimeSeriesWide":  wide,
+	} {
+		t.Run(name+" nullable time is read", func(t *testing.T) {
+			output, err := ConvertToFullLong(build([]*time.Time{&t0, &t1}))
+			require.NoError(t, err)
+			require.Len(t, output, 1)
+			if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+				require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
+			}
+		})
+
+		t.Run(name+" null time is an error", func(t *testing.T) {
+			_, err := ConvertToFullLong(build([]*time.Time{&t0, nil}))
+			require.EqualError(t, err, `time field "time" has a null value at row 1`)
+		})
+	}
+
+	t.Run("TimeSeriesMulti mixes nullable and non-nullable time", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, []*time.Time{&t0}),
+				data.NewField("cpu", data.Labels{"host": "a"}, []float64{1.0}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
+			data.NewFrame("",
+				data.NewField("time", nil, []time.Time{t1}),
+				data.NewField("cpu", data.Labels{"host": "a"}, []float64{2.0}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
+		}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		require.Len(t, output, 1)
+		if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
+		}
+	})
+}

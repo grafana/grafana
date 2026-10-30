@@ -245,3 +245,64 @@ func TestSQLServiceErrors(t *testing.T) {
 		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", sql.ErrCategoryQueryTooLong))
 	})
 }
+
+func TestSQLServiceNullableTime(t *testing.T) {
+	// Some data sources, such as OpenSearch and InfluxDB Flux, send a typed
+	// time series frame whose time field is nullable. Math and Reduce accept it.
+	t0, t1 := time.Unix(1, 0), time.Unix(2, 0)
+
+	run := func(t *testing.T, frameType data.FrameType, times []*time.Time) backend.Responses {
+		t.Helper()
+		frame := data.NewFrame("",
+			data.NewField("time", nil, times),
+			data.NewField("value", data.Labels{"host": "a"}, []*float64{new(1.0), new(2.0)}),
+		).SetMeta(&data.FrameMeta{Type: frameType})
+
+		queries := []Query{
+			{
+				RefID:      "A",
+				DataSource: &datasources.DataSource{OrgID: 1, UID: "test", Type: "test"},
+				JSON:       json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+				TimeRange:  AbsoluteTimeRange{},
+			},
+			{
+				RefID:      "B",
+				DataSource: dataSourceModel(),
+				JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "sql", "expression": "SELECT time, __value__, host FROM A ORDER BY time" }`),
+				TimeRange:  AbsoluteTimeRange{},
+			},
+		}
+		s, req := newMockQueryService(map[string]backend.DataResponse{"A": {Frames: data.Frames{frame}}}, queries)
+		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+
+		pl, err := s.BuildPipeline(t.Context(), req)
+		require.NoError(t, err)
+		rsp, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+		require.NoError(t, err)
+		return rsp.Responses
+	}
+
+	for _, frameType := range []data.FrameType{data.FrameTypeTimeSeriesMulti, data.FrameTypeTimeSeriesWide} {
+		t.Run(string(frameType)+" with nullable time returns rows", func(t *testing.T) {
+			res := run(t, frameType, []*time.Time{&t0, &t1})["B"]
+			require.NoError(t, res.Error)
+			require.Len(t, res.Frames, 1)
+
+			expected := data.NewFrame("B",
+				data.NewField("time", nil, []time.Time{t0, t1}),
+				data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(2.0)}),
+				data.NewField("host", nil, []*string{new("a"), new("a")}),
+			)
+			expected.RefID = "B"
+			if diff := cmp.Diff(expected, res.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+				require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
+			}
+		})
+
+		t.Run(string(frameType)+" with a null time returns an error that names the input", func(t *testing.T) {
+			err := run(t, frameType, []*time.Time{&t0, nil})["A"].Error
+			require.ErrorContains(t, err, "query [A]")
+			require.ErrorContains(t, err, `time field "time" has a null value at row 1`)
+		})
+	}
+}
