@@ -27,7 +27,7 @@ As your alerting setup grows, you may find that different targets require differ
 
 Instead of duplicating alert rules, you can assign a **different threshold value to each target**—while keeping the same condition. This simplifies alert maintenance.
 
-This example shows how to do that using [multi-dimensional alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/multi-dimensional-alerts/) and a [Math expression](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#math).
+This example shows how to do that using [multi-dimensional alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/examples/multi-dimensional-alerts/) and a [Math expression](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#math).
 
 ## Example overview
 
@@ -46,7 +46,7 @@ But the team quickly finds that some services require stricter thresholds. For e
 
 You want to avoid creating one alert rule per service—this is harder to maintain.
 
-In Grafana Alerting, you can define one alert rule that monitors multiple similar components like this scenario. This is called [multi-dimensional alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/multi-dimensional-alerts/): one alert rule, many alert instances—**one per unique label set**.
+In Grafana Alerting, you can define one alert rule that monitors multiple similar components like this scenario. This is called [multi-dimensional alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/examples/multi-dimensional-alerts/): one alert rule, many alert instances—**one per unique label set**.
 
 But there's an issue: Grafana supports only **one alert condition per rule**.
 
@@ -110,7 +110,7 @@ _1 items **dropped from union(s)**: ["$A > $B": ($B: {service=payment-api})]_
 - `$B` returns series `{host="web01"}` 10 and `{host="web02"}` 0.
 - `$A` + `$B` returns `{host="web01", job="event"}` 40 and `{host="web02", job="event"}` 20.
 
-## Try it with TestData
+### Try it with TestData
 
 You can use the [TestData data source](/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/) to replicate this example:
 
@@ -151,7 +151,7 @@ You can use the [TestData data source](/docs/grafana/<GRAFANA_VERSION>/datasourc
 
    The `value` column is a numeric value used for the alert comparison.
 
-   For details on CSV format requirements, see [table data examples](/docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/table-data/).
+   For details on CSV format requirements, see [table data examples](/docs/grafana/<GRAFANA_VERSION>/alerting/examples/table-data/).
 
 1. Add a new **Reduce** expression (`$C`).
    - Type: Reduce
@@ -170,23 +170,129 @@ You can use the [TestData data source](/docs/grafana/<GRAFANA_VERSION>/datasourc
 
 1. **Preview** the alert.
 
-   {{< figure src="/media/docs/alerting/example-dynamic-thresholds-preview-v3.png" max-width="750px" caption="Alert preview evaluating multiple series with distinct threshold values" >}}
+   {{< figure src="/media/docs/alerting/example-dynamic-thresholds-preview-v3.png" max-width="750px" caption="Alert preview evaluating multiple series with distinct threshold values using a Math expression" >}}
 
    {{< admonition type="tip" >}}
    You can explore this **[alerting example in Grafana Play](https://play.grafana.org/alerting/grafana/dynamic-thresholds/view?tech=docs&pg=alerting-examples&plcmt=callout-tip&cta=alert-dynamic-thresholds)**.
 
-   Open the example to view alert evaluation results, generated alert instances, the alert history timeline, and alert rule details.
+   Open the example to view alert evaluation results, generated alert instances, and alert rule details.
+   {{< /admonition >}}
+
+
+## Dynamic thresholds using a SQL expression
+
+Instead of a Math expression, you can define dynamic thresholds with a [SQL expression](/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/sql-expressions/).
+
+{{< admonition type="note" >}}
+SQL expressions can only query data from backend data sources. You can't use them with the output of other expressions, such as Math or Reduce.
+{{< /admonition >}}
+
+With SQL expressions, you don't need a second query for the thresholds. The SQL expression can compare each series against its own threshold and returns the alert condition result. 
+
+The following table illustrates the evaluation:
+
+| $A: p95 latency query         | $B: Threshold | $B: SQL result | State      |
+| :--------------------------- | :------------ | :--------------------------- | :--------- |
+| `{service="checkout-api"} 3` | `1.5`         | `{service="checkout-api"} 1` | **Firing** |
+| `{service="auth-api"} 1`     | `1.5`         | `{service="auth-api"} 0`     | **Normal** |
+| `{service="catalog-api"} 2`  | `3`           | `{service="catalog-api"} 0`  | **Normal** |
+| `{service="sync-work"} 3`    | `5`           | `{service="sync-work"} 0`    | **Normal** |
+
+You can define the thresholds inside the query with a `CASE` statement:
+
+```sql
+SELECT
+  A.service AS service,
+  CASE
+    WHEN A.__value__ > CASE A.service
+                     WHEN 'checkout-api' THEN 1.5
+                     WHEN 'auth-api' THEN 1.5
+                     WHEN 'catalog-api' THEN 3
+                     WHEN 'sync-work' THEN 5
+                     ELSE 2.0 -- default threshold
+                   END
+    THEN 1 ELSE 0
+  END AS alert_result
+FROM A
+```
+
+In this example:
+
+- `A` is the data returned by the p95 latency query.
+- The inner `CASE` assigns a threshold to each `service`.  Unlike the Math expression, the `ELSE` clause lets unlisted services use the default threshold of `2.0` instead of being dropped from the result.
+
+- The outer `CASE` compares the latency `A.__value__` against the threshold and returns  returns `1` when the latency exceeds the threshold, and `0` otherwise.
+
+- The `service` column becomes the label of each alert instance and the `alert_result` column is the numeric output used as the **alert condition**.
+
+  > The output of the SQL expression must follow the [table data format](/docs/grafana/<GRAFANA_VERSION>/alerting/examples/table-data/): only one numeric column, which Grafana uses to evaluate the alert condition. You can return multiple non-numeric columns, each of which becomes a label of the alert instances. 
+
+  The SQL expression is the **alert condition**, so it sets the firing state when `alert_result` is `1`.
+
+
+### Try it with TestData
+
+You can use the [TestData data source](/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/) to replicate this example:
+
+1. Add the **TestData** data source through the **Connections** menu.
+1. Create an alert rule.
+
+   Navigate to **Alerting** → **Alert rules** and click **New alert rule**.
+
+1. Simulate a query (`$A`) that returns latencies for each service.
+
+   Select **TestData** as the data source and configure the scenario. From **Scenario**, select **CSV Content** and paste this CSV:
+
+   ```
+    service, __value__
+    checkout-api, 5
+    auth-api,  1
+    catalog-api, 3
+    sync-work, 8
+    public-api, 3
+   ```
+
+1. Add a SQL expression (`$B`) to define the dynamic threshold.
+
+   Click **Add expression**, select **SQL**, and paste this query:
+
+   ```sql
+    SELECT
+      A.service AS service,
+      CASE
+        WHEN A.__value__ > CASE A.service
+                        WHEN 'checkout-api' THEN 1.5
+                        WHEN 'auth-api' THEN 1.5
+                        WHEN 'catalog-api' THEN 3
+                        WHEN 'sync-work' THEN 5
+                        ELSE 2.0 -- default threshold
+                      END
+        THEN 1 ELSE 0
+      END AS alert_result
+    FROM A
+   ```
+
+1. Set the SQL expression (`$B`) as the **alert condition**.
+
+1. **Preview** the alert.
+
+   {{< figure src="/media/docs/alerting/example-dynamic-thresholds-with-sql-expression-preview.png" max-width="750px" caption="Alert preview evaluating multiple series with distinct threshold values using an SQL expression" >}}
+
+   {{< admonition type="tip" >}}
+   You can explore this **[alerting example in Grafana Play](https://play.grafana.org/alerting/grafana/dynamic-thresholds/view?tech=docs&pg=alerting-examples&plcmt=callout-tip&cta=alert-dynamic-thresholds)**.
+
+   Open the example to view alert evaluation results, generated alert instances, and alert rule details.
    {{< /admonition >}}
 
 ## Other use cases
 
-This example showed how to build a single alert rule with different thresholds per series using [multi-dimensional alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/multi-dimensional-alerts/) and [Math expressions](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#math).
+This example showed how to build a single alert rule with different thresholds per series using [multi-dimensional alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/examples/multi-dimensional-alerts/).
 
 This approach scales well when monitoring similar components with distinct reliability goals.
 
 By aligning series from two queries, you can apply a dynamic threshold—one value per label set—without duplicating rules.
 
-While this example uses static CSV content to define thresholds, the same technique works in other scenarios:
+While this example uses static content to define thresholds, the same technique works in other scenarios:
 
 - **Dynamic thresholds from queries or recording rules**: Fetch threshold values from a real-time query, or from [custom recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/).
 - **Combine multiple conditions**: Build more advanced threshold logic by combining multiple conditions—such as latency, error rate, or traffic volume.
