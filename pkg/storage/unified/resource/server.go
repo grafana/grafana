@@ -2912,10 +2912,15 @@ func (s *server) authorizeBlobPut(ctx context.Context, req *resourcepb.PutBlobRe
 
 func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest) (*resourcepb.QuotaUsageResponse, error) {
 	if s.overridesService == nil {
-		return &resourcepb.QuotaUsageResponse{Error: &resourcepb.ErrorResult{
-			Message: "overrides service not configured on resource server",
-			Code:    http.StatusNotImplemented,
-		}}, nil
+		// No overrides file means quotas are not configured. Limit 0 is
+		// "not enforced". Callers, including the dashboard browser, must
+		// not receive 501 for that.
+		s.log.FromContext(ctx).Debug("overrides service not configured, quota usage is not enforced",
+			"namespace", req.GetKey().GetNamespace(),
+			"group", req.GetKey().GetGroup(),
+			"resource", req.GetKey().GetResource(),
+		)
+		return &resourcepb.QuotaUsageResponse{}, nil
 	}
 	nsr := NamespacedResource{
 		Namespace: req.Key.Namespace,
