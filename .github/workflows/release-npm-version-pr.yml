@@ -1,0 +1,182 @@
+name: Release NPM version PR
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.nx/version-plans/**'
+  workflow_dispatch:
+    inputs:
+      groups:
+        description: Comma-separated nx release groups to release
+        type: string
+        default: plugin-compat
+      dry_run:
+        description: Show what would change without pushing a branch or opening a pull request
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions: {}
+
+env:
+  RELEASE_BRANCH: nx-release-branch--main
+  PR_TITLE: 'Release: Frontend packages'
+
+jobs:
+  release-pr:
+    name: Create or update release PR
+    # Merging the release PR deletes the version plans, which also matches the push paths filter above.
+    # GitHub cannot tell an added file from a deleted one, so the job skips itself instead.
+    if: "github.repository == 'grafana/grafana' && !startsWith(github.event.head_commit.message, 'Release: Frontend packages')"
+    runs-on: ubuntu-x64
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      RELEASE_GROUPS: ${{ inputs.groups || 'plugin-compat' }}
+      DRY_RUN: ${{ inputs.dry_run || 'false' }}
+    steps:
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+        with:
+          github_app: grafana-pr-automation
+          permission_set: main
+
+      # grafana-writer is the only app allowed to push here: it carries workflows:write, which
+      # skips the pre-receive workflow-file scan that times out on this repository.
+      - name: Get GitHub App token (writer)
+        id: get-writer-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+        with:
+          github_app: grafana-writer
+          permission_set: release-writer-main
+
+      - name: Checkout main
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
+
+      - name: Install dependencies
+        uses: ./.github/actions/yarn-install
+        with:
+          hardened-mode: 'true'
+
+      - name: Find pending version plans
+        id: plans
+        run: |
+          count=$(find .nx/version-plans -maxdepth 1 -type f -name '*.md' ! -name 'README.md' | wc -l | tr -d ' ')
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          echo "Pending version plans: $count"
+
+      - name: Close stale release PR
+        if: steps.plans.outputs.count == '0'
+        env:
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+        run: |
+          existing=$(gh pr list --head "$RELEASE_BRANCH" --base main --state open --json number --jq '.[0].number // empty')
+          if [ -z "$existing" ]; then
+            echo "No version plans and no open release PR, nothing to do."
+            exit 0
+          fi
+          if [ "$DRY_RUN" = 'true' ]; then
+            echo "Dry run: would close release PR #$existing."
+            exit 0
+          fi
+          gh pr close "$existing" --delete-branch --comment "There are no pending version plans on main, so this release PR is no longer needed."
+
+      - name: Version and generate changelogs
+        if: steps.plans.outputs.count != '0'
+        run: pnpm exec nx release --groups="$RELEASE_GROUPS" --skip-publish
+
+      - name: Describe the release
+        id: describe
+        if: steps.plans.outputs.count != '0'
+        run: |
+          git status --short
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "The requested groups produced no changes."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          {
+            echo "This pull request applies the pending version plans in \`.nx/version-plans\` to the independently versioned packages below. Merging it publishes them to npm."
+            echo
+            echo "| Package | Version |"
+            echo "| --- | --- |"
+            git diff --name-only -- '**/package.json' | while read -r manifest; do
+              name=$(jq -r .name "$manifest")
+              new=$(jq -r .version "$manifest")
+              old=$(git show "HEAD:$manifest" | jq -r .version)
+              if [ "$old" != "$new" ]; then
+                echo "| \`$name\` | $old -> $new |"
+              fi
+            done
+            echo
+            echo "This pull request is generated and is rebuilt from main whenever a version plan changes. Do not edit it."
+          } > "$RUNNER_TEMP/pr-body.md"
+          cat "$RUNNER_TEMP/pr-body.md"
+          git diff --stat
+
+      - name: Reset release branch to main
+        if: steps.describe.outputs.changed == 'true' && env.DRY_RUN != 'true'
+        env:
+          GH_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
+        run: |
+          base_sha=$(git rev-parse HEAD)
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${RELEASE_BRANCH}" > /dev/null 2>&1; then
+            gh api "repos/${GITHUB_REPOSITORY}/git/refs/heads/${RELEASE_BRANCH}" \
+              --method PATCH \
+              -f "sha=${base_sha}" \
+              -F force=true
+          else
+            gh api "repos/${GITHUB_REPOSITORY}/git/refs" \
+              --method POST \
+              -f "ref=refs/heads/${RELEASE_BRANCH}" \
+              -f "sha=${base_sha}"
+          fi
+
+      # Commits made through the Git Data API with an app token are signed by the app, which
+      # satisfies the signed-commits rule, and the single commit includes the deleted plan files.
+      - name: Commit release changes
+        if: steps.describe.outputs.changed == 'true' && env.DRY_RUN != 'true'
+        uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
+        with:
+          commit_message: ${{ env.PR_TITLE }}
+          repo: ${{ github.repository }}
+          branch: ${{ env.RELEASE_BRANCH }}
+          empty: 'false'
+          file_pattern: '**'
+        env:
+          GITHUB_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
+
+      - name: Create or update release PR
+        if: steps.describe.outputs.changed == 'true' && env.DRY_RUN != 'true'
+        env:
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+        run: |
+          existing=$(gh pr list --head "$RELEASE_BRANCH" --base main --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh pr edit "$existing" \
+              --title "$PR_TITLE" \
+              --body-file "$RUNNER_TEMP/pr-body.md"
+          else
+            gh pr create \
+              --base main \
+              --head "$RELEASE_BRANCH" \
+              --title "$PR_TITLE" \
+              --body-file "$RUNNER_TEMP/pr-body.md" \
+              --label "no-changelog" \
+              --label "area/frontend" \
+              --label "npm-release"
+          fi
