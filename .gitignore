@@ -242,7 +242,8 @@ public/api-spec.json
 
 deployment_tools_config.json
 
-.nx
+.nx/cache
+.nx/workspace-data
 
 # Temporary file for backporting PRs
 .pr-body.txt
