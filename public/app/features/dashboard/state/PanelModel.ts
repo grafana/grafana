@@ -21,6 +21,7 @@ import {
   generateUUID,
 } from '@grafana/data';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
+import { getPanelPluginMetasMapSync } from '@grafana/runtime/internal';
 import { type LibraryPanel, type LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
@@ -244,7 +245,13 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     }
 
     // defaults
-    defaultsDeep(this, cloneDeep(defaults));
+    defaultsDeep(
+      this,
+      cloneDeep({
+        ...defaults,
+        targets: getPanelPluginMetasMapSync()[this.type]?.skipDefaultQuery ? [] : defaults.targets,
+      })
+    );
 
     // queries must have refId
     this.ensureQueryIds();

@@ -10,7 +10,7 @@ export function createPanelDataProvider(
   panelMetas: PanelPluginMetas = getPanelPluginMetasMapSync()
 ): SceneDataProvider | undefined {
   // Skip setting query runner for panels without queries
-  if (!panel.targets?.length) {
+  if (!panel.targets?.length && !panelMetas[panel.type]?.skipDefaultQuery) {
     return undefined;
   }
 
@@ -23,8 +23,10 @@ export function createPanelDataProvider(
 
   dataProvider = new SceneQueryRunner({
     // If panel.datasource is not defined, we use the first datasource from the targets (queries)
-    datasource: panel.datasource ?? findFirstDatasource(panel.targets),
-    queries: panel.targets,
+    datasource: panel.datasource ?? findFirstDatasource(panel.targets ?? []),
+    queries: panel.targets ?? [],
+    // Scenes waits for a first result; an intentionally empty runner has none to fetch.
+    _hasFetchedData: !panel.targets?.length || undefined,
     maxDataPoints: panel.maxDataPoints ?? undefined,
     maxDataPointsFromWidth: true,
     cacheTimeout: panel.cacheTimeout,

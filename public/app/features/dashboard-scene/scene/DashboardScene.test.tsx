@@ -3,6 +3,7 @@ import { createBrowserHistory } from 'history';
 
 import {
   CoreApp,
+  type PanelPluginMeta,
   type DataSourceInstanceSettings,
   type GrafanaConfig,
   LiveChannelEventType,
@@ -13,6 +14,7 @@ import {
   store,
 } from '@grafana/data';
 import { config, getDataSourceInstanceSettings, locationService, RefreshEvent } from '@grafana/runtime';
+import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   sceneGraph,
   SceneGridLayout,
@@ -63,6 +65,7 @@ import * as utils from '../utils/utils';
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import { DashboardFiltersOverviewDrawer } from './dashboard-filters-overview/DashboardFiltersOverviewDrawer';
 import { dashboardViews } from './dashboardViewRegistry';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
@@ -4701,3 +4704,23 @@ function getVersionMock(): DecoratedRevisionModel {
     ageString: '7 years ago',
   };
 }
+
+describe('changing to a plugin that skips default queries', () => {
+  afterEach(() => setPanelPluginMetas({}));
+
+  it.each([
+    [UNCONFIGURED_PANEL_PLUGIN_ID, [{ refId: 'A' }], []],
+    ['timeseries', [{ refId: 'A' }], [{ refId: 'A' }]],
+    [UNCONFIGURED_PANEL_PLUGIN_ID, [{ refId: 'A', hide: true }], [{ refId: 'A', hide: true }]],
+  ])('preserves configured queries from %s', async (pluginId, queries, expected) => {
+    setPanelPluginMetas({ custom: { skipDefaultQuery: true } as PanelPluginMeta });
+    const runner = new SceneQueryRunner({ queries });
+    const panel = new VizPanel({ pluginId, $data: runner });
+    jest.spyOn(panel, 'changePluginType').mockResolvedValue();
+    const scene = new DashboardScene({
+      body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [] }) }),
+    });
+    await scene.changePanelPlugin(panel, 'custom');
+    expect(runner.state.queries).toEqual(expected);
+  });
+});

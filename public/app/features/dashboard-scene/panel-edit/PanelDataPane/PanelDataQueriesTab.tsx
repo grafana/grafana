@@ -221,7 +221,9 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     const currentQueries = queryRunner.state.queries;
 
     // We need to pass in newSettings.uid as well here as that can be a variable expression and we want to store that in the query model not the current ds variable value
-    const queries = defaultQueries || (await updateQueries(nextDS, newSettings.uid, currentQueries, currentDS));
+    const keepEmpty = this.state.panelRef.resolve().getPlugin()?.meta.skipDefaultQuery && currentQueries.length === 0;
+    const queries =
+      defaultQueries ?? (keepEmpty ? [] : await updateQueries(nextDS, newSettings.uid, currentQueries, currentDS));
 
     queryRunner.setState({ datasource: getDataSourceRef(newSettings), queries });
 

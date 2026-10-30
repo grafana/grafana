@@ -559,6 +559,26 @@ describe('PanelDataQueriesTab', () => {
     });
 
     describe('data source change', () => {
+      it('keeps opted-in panels empty when the datasource changes', async () => {
+        const { queriesTab, panel } = await setupScene('panel-1');
+        jest.spyOn(panel, 'getPlugin').mockReturnValue(getPanelPlugin({ skipDefaultQuery: true }));
+        queriesTab.queryRunner.setState({ queries: [] });
+        const settings = queriesTab.state.dsSettings;
+        if (!settings) {
+          throw new Error('Expected datasource settings');
+        }
+        await queriesTab.onChangeDataSource({
+          ...settings,
+          uid: instance2SettingsMock.uid,
+          type: instance2SettingsMock.type,
+        });
+        expect(queriesTab.queryRunner.state.queries).toEqual([]);
+        expect(queriesTab.queryRunner.state.datasource).toEqual({
+          uid: instance2SettingsMock.uid,
+          type: instance2SettingsMock.type,
+        });
+      });
+
       it('should load new data source', async () => {
         const { queriesTab, panel } = await setupScene('panel-1');
         panel.state.$data?.activate();
@@ -757,6 +777,26 @@ describe('PanelDataQueriesTab', () => {
     });
 
     describe('data source change', () => {
+      it('keeps opted-in panels empty when the datasource changes', async () => {
+        const { queriesTab, panel } = await setupScene('panel-1');
+        jest.spyOn(panel, 'getPlugin').mockReturnValue(getPanelPlugin({ skipDefaultQuery: true }));
+        queriesTab.queryRunner.setState({ queries: [] });
+        const settings = queriesTab.state.dsSettings;
+        if (!settings) {
+          throw new Error('Expected datasource settings');
+        }
+        await queriesTab.onChangeDataSource({
+          ...settings,
+          uid: instance2SettingsMock.uid,
+          type: instance2SettingsMock.type,
+        });
+        expect(queriesTab.queryRunner.state.queries).toEqual([]);
+        expect(queriesTab.queryRunner.state.datasource).toEqual({
+          uid: instance2SettingsMock.uid,
+          type: instance2SettingsMock.type,
+        });
+      });
+
       it('changing from one plugin to another', async () => {
         const { queriesTab } = await setupScene('panel-1');
 

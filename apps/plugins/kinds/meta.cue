@@ -73,11 +73,13 @@ metaV0Alpha1: {
 	// +listType=atomic
 	routes?: [...#Route]
 	skipDataQuery?: bool
-	state?:         "alpha" | "beta" | "stable" | "deprecated"
-	streaming?:     bool
-	suggestions?:   bool
-	tracing?:       bool
-	iam?:           #IAM
+	// Alpha: suppress automatic starter queries without disabling explicit queries.
+	skipDefaultQuery?: bool
+	state?:            "alpha" | "beta" | "stable" | "deprecated"
+	streaming?:        bool
+	suggestions?:      bool
+	tracing?:          bool
+	iam?:              #IAM
 	// +listType=atomic
 	roles?: [...#Role]
 	extensions?: #Extensions

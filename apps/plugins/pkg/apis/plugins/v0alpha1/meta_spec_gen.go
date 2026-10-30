@@ -36,13 +36,15 @@ type MetaJSONData struct {
 	Preload                   *bool             `json:"preload,omitempty"`
 	QueryOptions              *MetaQueryOptions `json:"queryOptions,omitempty"`
 	// +listType=atomic
-	Routes        []MetaRoute        `json:"routes,omitempty"`
-	SkipDataQuery *bool              `json:"skipDataQuery,omitempty"`
-	State         *MetaJSONDataState `json:"state,omitempty"`
-	Streaming     *bool              `json:"streaming,omitempty"`
-	Suggestions   *bool              `json:"suggestions,omitempty"`
-	Tracing       *bool              `json:"tracing,omitempty"`
-	Iam           *MetaIAM           `json:"iam,omitempty"`
+	Routes        []MetaRoute `json:"routes,omitempty"`
+	SkipDataQuery *bool       `json:"skipDataQuery,omitempty"`
+	// Alpha: suppress automatic starter queries without disabling explicit queries.
+	SkipDefaultQuery *bool              `json:"skipDefaultQuery,omitempty"`
+	State            *MetaJSONDataState `json:"state,omitempty"`
+	Streaming        *bool              `json:"streaming,omitempty"`
+	Suggestions      *bool              `json:"suggestions,omitempty"`
+	Tracing          *bool              `json:"tracing,omitempty"`
+	Iam              *MetaIAM           `json:"iam,omitempty"`
 	// +listType=atomic
 	Roles      []MetaRole      `json:"roles,omitempty"`
 	Extensions *MetaExtensions `json:"extensions,omitempty"`

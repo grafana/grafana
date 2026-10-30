@@ -1,3 +1,5 @@
+import { type PanelPluginMeta } from '@grafana/data';
+import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
 import {
   defaultDataQueryKind,
@@ -9,11 +11,15 @@ import {
   type PanelQueryKind,
   type QueryOptionsSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { PlanPlaceholderBadge } from '../../scene/PlanPlaceholderBadge';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
+import { createPanelDataProvider } from '../../utils/createPanelDataProvider';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
+import { vizPanelToPanel } from '../transformSceneToSaveModel';
 import { vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 
 import { buildVizPanel, ensureUniqueRefIds, getPanelDataSource, getRuntimePanelDataSource } from './utils';
@@ -585,5 +591,50 @@ describe('buildVizPanel', () => {
 
       expect(viz.state.options).toEqual({ mode: 'markdown', content: 'Real planned note' });
     });
+  });
+});
+
+describe('empty panel query defaults', () => {
+  afterEach(() => setPanelPluginMetas({}));
+
+  it.each([true, false, undefined])('honors skipDefaultQuery=%s through a v2 round trip', (skipDefaultQuery) => {
+    setPanelPluginMetas({ custom: { skipDefaultQuery } as PanelPluginMeta });
+    const panel: PanelKind = { kind: 'Panel', spec: defaultPanelSpec() };
+    panel.spec.vizConfig.group = 'custom';
+    panel.spec.data.spec.queries = [];
+    const loaded = buildVizPanel(panel);
+    expect(getQueryRunnerFor(loaded)?.state.queries ?? []).toEqual(
+      skipDefaultQuery ? [] : [{ refId: 'A', hide: false }]
+    );
+    if (skipDefaultQuery) {
+      expect(getQueryRunnerFor(loaded)?.isDataReadyToDisplay()).toBe(true);
+      const saved = vizPanelToSchemaV2(loaded, undefined, false) as PanelKind;
+      expect(saved.spec.data.spec.queries).toEqual([]);
+      expect(getQueryRunnerFor(buildVizPanel(saved))?.state.queries ?? []).toEqual([]);
+    }
+  });
+
+  it('preserves explicit queries for opted-in plugins', () => {
+    setPanelPluginMetas({ custom: { skipDefaultQuery: true } as PanelPluginMeta });
+    const panel: PanelKind = { kind: 'Panel', spec: defaultPanelSpec() };
+    panel.spec.vizConfig.group = 'custom';
+    panel.spec.data.spec.queries = [defaultPanelQueryKind()];
+    expect(getQueryRunnerFor(buildVizPanel(panel))?.state.queries).toEqual([{ refId: 'A', hide: false }]);
+  });
+});
+
+describe('legacy panel query defaults', () => {
+  afterEach(() => setPanelPluginMetas({}));
+
+  it.each([[], undefined])('preserves empty or absent queries for opted-in panels', (targets) => {
+    setPanelPluginMetas({ custom: { skipDefaultQuery: true } as PanelPluginMeta });
+    const model = new PanelModel({ type: 'custom', targets, transformations: [{ id: 'reduce', options: {} }] });
+    expect(model.targets).toEqual([]);
+    const viz = new VizPanel({ key: 'panel-1', pluginId: 'custom', $data: createPanelDataProvider(model) });
+    expect(getQueryRunnerFor(viz)?.isDataReadyToDisplay()).toBe(true);
+    const saved = vizPanelToPanel(viz);
+    expect(saved.targets).toEqual([]);
+    expect(saved.transformations).toEqual([{ id: 'reduce', options: {} }]);
+    expect(new PanelModel(saved).targets).toEqual([]);
   });
 });

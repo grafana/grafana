@@ -38,6 +38,7 @@ import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { DashboardEditActionEvent } from '../sidebar/events';
 import { SIDEBAR_COLLAPSED_KEY } from '../sidebar/shared';
+import { clearDefaultQuery } from '../utils/clearDefaultQuery';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
@@ -310,6 +311,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     }
 
     if (!skipDataQuery) {
+      if (plugin.meta.skipDefaultQuery && this.state.isNewPanel && this.state.isInitializing) {
+        clearDefaultQuery(panel);
+      }
+
       if (!this.state.dataPane) {
         const dataPane = createPanelDataPane(this.getPanel(), this.state.useQueryExperienceNext);
         this.setState({ dataPane });
@@ -328,7 +333,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
               datasource: {
                 uid: ds,
               },
-              queries: [{ refId: 'A' }],
+              queries: plugin.meta.skipDefaultQuery ? [] : [{ refId: 'A' }],
+              _hasFetchedData: plugin.meta.skipDefaultQuery || undefined,
             }),
             transformations: [],
           }),
