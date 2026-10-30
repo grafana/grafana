@@ -66,8 +66,10 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
     error: schemasError,
     isFeatureEnabled: isSchemasFeatureEnabled,
     refetch: refetchSchemas,
+    getCurrentSchemas,
   } = useSQLSchemas({
     queries,
+    expressionRefId: query.refId,
     enabled: true,
     timeRange: interpolationRange,
     scopedVars: interpolationScopedVars,
@@ -94,12 +96,16 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
         }
 
         // Share Schema Inspector's source of truth: it reflects SQL-converted columns and includes hidden queries.
-        // Mirror its loading/error states too, since the hook keeps the previous schemas during a refetch.
+        // Waiting for current schemas keeps completions and Schema Inspector in agreement after source queries change.
         if (isSchemasFeatureEnabled) {
-          if (schemasLoading || schemasError || !table || !schemas) {
+          if (!table) {
             return [];
           }
-          const tableSchema = findTableSchema(schemas.sqlSchemas, table);
+          const currentSchemas = await getCurrentSchemas();
+          if (!currentSchemas) {
+            return [];
+          }
+          const tableSchema = findTableSchema(currentSchemas.sqlSchemas, table);
           return tableSchema?.error ? [] : toSchemaColumnCompletions(tableSchema?.columns);
         }
 
@@ -122,15 +128,13 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
     }),
     [
       columnAutoCompleteEnabled,
+      getCurrentSchemas,
       interpolationFilters,
       interpolationRange,
       interpolationScopedVars,
       isSchemasFeatureEnabled,
       queries,
       refIds,
-      schemas,
-      schemasError,
-      schemasLoading,
     ]
   );
 
