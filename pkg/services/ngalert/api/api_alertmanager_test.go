@@ -199,7 +199,7 @@ func TestAlertmanagerAutogenConfig(t *testing.T) {
 		require.NoError(t, err)
 
 		cOpt := []cmp.Option{
-			cmpopts.IgnoreUnexported(apimodels.PostableUserConfig{}, apimodels.Route{}, labels.Matcher{}, time.Location{}),
+			cmpopts.IgnoreUnexported(apimodels.Route{}, labels.Matcher{}, time.Location{}),
 			cmpopts.IgnoreFields(apimodels.PostableGrafanaReceiver{}, "UID", "Settings"),
 		}
 		if !cmp.Equal(test, exp, cOpt...) {
@@ -243,11 +243,11 @@ func TestAlertmanagerAutogenConfig(t *testing.T) {
 			require.Equal(t, 200, response.Status())
 
 			var status struct {
-				Config apimodels.PostableApiAlertingConfig `json:"config"`
+				Config apimodels.GettableApiAlertingConfig `json:"config"`
 			}
 			err := json.Unmarshal(response.Body(), &status)
 			require.NoError(t, err)
-			configBody, err := json.Marshal(apimodels.PostableUserConfig{
+			configBody, err := json.Marshal(apimodels.GettableUserConfig{
 				TemplateFiles:      map[string]string{"a": "template"},
 				AlertmanagerConfig: status.Config,
 			})

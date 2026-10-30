@@ -97,5 +97,15 @@ describe('patchFetchForLegacyAPIMode', () => {
       await expect(window.fetch(new Request('http://localhost/api/dashboards'))).rejects.toThrow('/api/dashboards');
       expect(fetchMock).not.toHaveBeenCalled();
     });
+
+    it('forwards allowlisted /api/health calls so the ST pod readiness poller can run', async () => {
+      patchFetchForLegacyAPIMode();
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      await window.fetch('/api/health');
+
+      expect(fetchMock).toHaveBeenCalledWith('/api/health', undefined);
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('/api/health'));
+    });
   });
 });

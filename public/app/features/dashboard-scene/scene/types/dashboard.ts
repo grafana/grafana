@@ -92,23 +92,41 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
 }
 
 export function isFullDashboardEditing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
-  return Boolean(state.isEditing && (!dashboardModesEnabled() || getDashboardMode(state) === 'edit'));
+  const mode = getDashboardMode(state);
+  return Boolean(state.isEditing && mode !== 'composer' && (!dashboardModesEnabled() || mode === 'edit'));
 }
 
 export function isDashboardReviewing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
-  return dashboardModesEnabled() && getDashboardMode(state) !== 'edit';
+  const mode = getDashboardMode(state);
+  return mode === 'composer' || (dashboardModesEnabled() && mode !== 'edit');
 }
 
-export interface DashboardPlanningState {
+interface DashboardPlanningBase {
   /** Identifies the plan being previewed, so a stale request against a superseded plan can be refused. */
   planId: string;
   /** Title of the plan being previewed, shown in the banner. */
   planTitle: string;
+}
+
+/** The plan rendered with sample data, waiting for the user to build or dismiss it. */
+export interface DashboardPlanPreviewState extends DashboardPlanningBase {
+  phase: 'preview';
   /** Build the plan: attach real queries to the scaffolded panels. */
   onBuild: () => void;
   /** Discard the plan and remove its scaffolded panels. */
   onDismiss: () => void;
 }
+
+/**
+ * The user chose Build and the builder has not written anything yet. The dashboard shows a
+ * loading screen, with nothing left to decide, until the build's first write replaces it or
+ * END_PLANNING clears it.
+ */
+interface DashboardPlanBuildingState extends DashboardPlanningBase {
+  phase: 'building';
+}
+
+export type DashboardPlanningState = DashboardPlanPreviewState | DashboardPlanBuildingState;
 
 interface DashboardScenePreferences {
   defaultLayoutTemplate?: DashboardLayoutManager;

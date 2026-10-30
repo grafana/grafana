@@ -6,7 +6,8 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { addPanelToExistingNotebook } from '../addPanel/addPanelToNotebook';
+import { addToExistingNotebook } from '../addPanel/addPanelToNotebook';
+import { type AppendedElement } from '../addPanel/appendPanelToNotebook';
 import { useNotebookPicker } from '../addPanel/useNotebookPicker';
 import { type NotebookRow } from '../list/useNotebooksList';
 
@@ -19,8 +20,8 @@ jest.mock('../addPanel/useNotebookPicker', () => ({
 
 jest.mock('../addPanel/addPanelToNotebook', () => ({
   ...jest.requireActual('../addPanel/addPanelToNotebook'),
-  addPanelToExistingNotebook: jest.fn(),
-  createNotebookWithPanel: jest.fn(),
+  addToExistingNotebook: jest.fn(),
+  createNotebookWithContent: jest.fn(),
 }));
 
 // The create fields offer the library's existing tags, which reads a facet off this module. It
@@ -32,7 +33,16 @@ jest.mock('../list/notebookSearchApi', () => ({
 }));
 
 const mockUseNotebookPicker = jest.mocked(useNotebookPicker);
-const addToExisting = jest.mocked(addPanelToExistingNotebook);
+const addToExisting = jest.mocked(addToExistingNotebook);
+
+/** The one panel the form handed over, as stored. */
+function onlyPanel(cells: AppendedElement[]) {
+  const [cell] = cells;
+  if (cells.length !== 1 || cell.kind !== 'panel' || cell.panel.kind !== 'Panel') {
+    throw new Error('expected a single Panel cell');
+  }
+  return { element: cell.panel, isLibraryPanel: cell.isLibraryPanel };
+}
 
 const panel: Panel = {
   title: 'Checkout latency',
@@ -55,7 +65,7 @@ function row(uid: string, title: string): NotebookRow {
 
 async function addToCheckoutErrorSpike(user: ReturnType<typeof render>['user']) {
   await user.click(await screen.findByRole('radio', { name: 'Existing notebook' }));
-  await user.click(screen.getByRole('button', { name: 'Checkout error spike' }));
+  await user.click(screen.getByRole('radio', { name: 'Checkout error spike' }));
   await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 }
 
@@ -116,14 +126,11 @@ describe('AddToNotebookFormExposedComponent', () => {
     await waitFor(() => expect(addToExisting).toHaveBeenCalledTimes(1));
     // Built on submit, so a panel edited while the form was open is the one that lands.
     expect(buildPanel).toHaveBeenCalledTimes(1);
-    const [uid, element, entryPoint, isLibraryPanel] = addToExisting.mock.calls[0];
+    const [uid, cells, entryPoint] = addToExisting.mock.calls[0];
+    const { element, isLibraryPanel } = onlyPanel(cells);
     expect(uid).toBe('nb2');
     expect(entryPoint).toBe('plugin');
     expect(isLibraryPanel).toBe(false);
-    expect(element.kind).toBe('Panel');
-    if (element.kind !== 'Panel') {
-      throw new Error('expected a Panel element');
-    }
     expect(element.spec.title).toBe('Checkout latency');
     expect(element.spec.vizConfig.group).toBe('timeseries');
     expect(element.spec.data.spec.queries[0].spec.refId).toBe('A');
@@ -132,6 +139,22 @@ describe('AddToNotebookFormExposedComponent', () => {
     expect(element.spec.data.spec.queryOptions.timeFrom).toBeUndefined();
     expect(element.spec.data.spec.queryOptions.timeTo).toBeUndefined();
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('attributes a single panel to the source given', async () => {
+    const { user } = render(
+      <AddToNotebookFormExposedComponent
+        onClose={onClose}
+        buildPanel={() => panel}
+        capturedTimeRange={{ from: 'now-6h', to: 'now', timeZone: 'utc' }}
+        source="assistant"
+      />
+    );
+
+    await addToCheckoutErrorSpike(user);
+
+    await waitFor(() => expect(addToExisting).toHaveBeenCalledTimes(1));
+    expect(addToExisting.mock.calls[0][3]).toBe('assistant');
   });
 
   it('does not open the form for a reader who can neither create nor write', () => {
@@ -168,14 +191,52 @@ describe('AddToNotebookFormExposedComponent', () => {
     await addToCheckoutErrorSpike(user);
 
     await waitFor(() => expect(addToExisting).toHaveBeenCalledTimes(1));
-    const element = addToExisting.mock.calls[0][1];
-    expect(element.kind).toBe('Panel');
-    if (element.kind !== 'Panel') {
-      throw new Error('expected a Panel element');
-    }
+    const { element } = onlyPanel(addToExisting.mock.calls[0][1]);
     expect(element.spec.data.spec.queryOptions).toMatchObject({
       timeFrom: '2026-10-05T08:00:00.000Z',
       timeTo: '2026-10-05T09:30:00.000Z',
     });
+  });
+
+  it('adds ordered cells, attributed to the source given, and reports the notebook', async () => {
+    const onAdded = jest.fn();
+    const { user } = render(
+      <AddToNotebookFormExposedComponent
+        onClose={onClose}
+        source="assistant"
+        onAdded={onAdded}
+        cells={[
+          { kind: 'markdown', text: 'Errors spiked after the deploy.' },
+          { kind: 'panel', panel, capturedTimeRange: { from: 'now-6h', to: 'now', timeZone: 'utc' } },
+        ]}
+      />
+    );
+
+    await addToCheckoutErrorSpike(user);
+
+    await waitFor(() => expect(addToExisting).toHaveBeenCalledTimes(1));
+    const [uid, cells, entryPoint, source] = addToExisting.mock.calls[0];
+    expect([uid, entryPoint, source]).toEqual(['nb2', 'plugin', 'assistant']);
+    expect(cells[0]).toEqual({ kind: 'markdown', text: 'Errors spiked after the deploy.' });
+    expect(cells[1].kind === 'panel' && cells[1].panel.spec.title).toBe('Checkout latency');
+    expect(onAdded).toHaveBeenCalledWith({ uid: 'nb2', title: 'Checkout error spike', url: '/notebooks/nb2' });
+  });
+
+  it.each([
+    ['neither content prop', {}],
+    [
+      'both content props',
+      {
+        buildPanel: () => panel,
+        capturedTimeRange: { from: 'now-6h', to: 'now', timeZone: 'utc' },
+        cells: [{ kind: 'markdown' as const, text: 'x' }],
+      },
+    ],
+  ])('renders nothing when given %s', (_label, contentProps) => {
+    const error = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const { container } = render(<AddToNotebookFormExposedComponent onClose={onClose} {...contentProps} />);
+
+    expect(container).toBeEmptyDOMElement();
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('exactly one of'));
   });
 });

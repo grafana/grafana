@@ -130,14 +130,18 @@ Every kind can query and retrieve these without declaring anything. They are the
 | `tags` | string array | filter, facet, retrieve | Unique tags | `spec.tags`. Non-string entries are skipped |
 | `folder` | string | filter, sort, retrieve | Kubernetes name of the containing folder | The `grafana.app/folder` annotation |
 | `createdBy` | string | filter, retrieve | Who created it, as `user:<uid>` | The `grafana.app/createdBy` annotation |
+| `updatedBy` | string | filter, retrieve | Who last updated it, as `user:<uid>` | The `grafana.app/updatedBy` annotation |
 | `ownerReferences` | string array | filter, retrieve | Owner references, as `{group}/{kind}/{name}` | `metadata.ownerReferences` |
 | `managedBy` | string | facet | Manager identity, as `{kind}:{id}` | Manager properties |
-| `created` | int64 | retrieve | Creation timestamp, unix millis | `metadata.creationTimestamp` |
-| `updated` | int64 | retrieve | Update timestamp, unix millis | The `grafana.app/updatedTimestamp` annotation |
+| `created` | int64 | filter, sort, retrieve | Creation timestamp, unix millis | `metadata.creationTimestamp` |
+| `updated` | int64 | filter, sort, retrieve | Update timestamp, unix millis | The `grafana.app/updatedTimestamp` annotation |
+| `manager.kind` | string | filter, retrieve | Kind of tool that manages it, such as `repo` for Git Sync | Manager properties |
+| `manager.id` | string | filter, retrieve | Which instance of that tool manages it, such as the repository name | Manager properties |
+| `manager.allowEdits` | boolean | retrieve | Whether the manager allows others to edit it | Manager properties |
 
 So `title`, `description` and `tags` come from your spec: name them that way and they are indexed with no work from you. A kind with its own document builder can overwrite any of these, as dashboards do from their parsed summary.
 
-Note that `created` and `updated` only declare `retrieve`. They can be returned, but they cannot be filtered, sorted or used in a range query, so "everything updated in the last week" is not a query you can write today. This is a limitation of the standard fields rather than something for your kind to work around, and it is likely to change: if you need it, say so and the standard fields can be given those capabilities.
+`created` and `updated` can be filtered with a `range` leaf, so "everything updated in the last week" is a query you can write, and sorted, so results can be ordered by time.
 
 ## 4. Request
 
@@ -192,9 +196,21 @@ The global search (`.../namespaces/{namespace}/global/search`) also offers `fold
 { "filter": { "field": "folderTree", "operator": "In", "values": ["team-a"] } }
 ```
 
-Several values are ORed. Only `In` is supported. The named folders themselves are not returned, only what they hold; to match only what is directly in a folder, filter on `folder` instead. The root folder is named `general`, and an empty value is rejected: `folderTree` with `general` matches everything, the same as no filter. A search of one kind rejects `folderTree` as an unknown field, because only the global index holds folders together with what is in them.
+Several values are ORed. Only `In` is supported. The named folders themselves are not returned, only what they hold; to match only what is directly in a folder, filter on `folder` instead. The root folder is named `general`, and an empty value is rejected: `folderTree` with `general` matches everything, the same as no filter.
 
 `folderTree` is not stored with each item: the global search works it out from the folders it has indexed when it searches. Like the rest of that index it is eventually consistent, so just after a folder moves, a search can still find what is below it in its old place.
+
+The global search answers with `GlobalSearchResults`. When it cannot search a type, because the calling service may not search it on the user's behalf or because the deployment does not check its results against the user, it leaves that type out instead of failing, and names it in `metadata.skippedTypes`. The results are then incomplete. It fails only when no type is left.
+
+##### Experimental recursive searches of one kind
+
+The same `folderTree` filter is available on per-resource `/search` endpoints only when `search.perResourceFolderTree` is enabled. This experimental flag defaults to off and is evaluated for each request, so it can be enabled for selected stacks during load and latency testing. With the flag off, the API rejects the field with 422 before calling the search server. Existing global search is unaffected.
+
+The search stays scoped to the resource type in the URL. Its folder index supplies the hierarchy without adding folder documents to the results. The filter supports only `In` and cannot be returned, sorted, faceted, or searched as text or regex. It is not available on `/trash`, even with the flag enabled.
+
+Deploy search-server support for recursive per-resource queries before enabling the flag. An older server rejects the filter; the API returns that error rather than silently running a non-recursive search.
+
+The folder and resource indexes use the existing per-resource refresh policy. The hierarchy and results are not read in one snapshot, so concurrent folder moves can affect results. This query must not be the sole check that a folder is empty before deletion; preventing concurrent writes requires coordination with those writes.
 
 #### Requiring every value
 
@@ -286,7 +302,7 @@ The sampled path already exists: when per-item authorization runs after ranking,
 - **400 Bad Request**: the request could not be understood. Malformed JSON, an unknown top-level key, an empty body, more than one JSON object, a missing namespace, or `namespace=*`. Searching across namespaces is not supported.
 - **405 Method Not Allowed**: the kind is served, but has no search endpoint. It opted out, or it is cluster-scoped. No route is mounted, so the router answers before any search code runs.
 - **404 Not Found**: the resource itself is not served by this apiserver.
-- **503 Service Unavailable** (`/trash` only): the index does not keep deleted documents because indexing them is disabled, or because the index still needs to be rebuilt after indexing was enabled.
+- **503 Service Unavailable**: for `/trash`, the index does not keep deleted documents because indexing them is disabled, or because the index still needs to be rebuilt after indexing was enabled. For the global search, the namespace's index is still being built; retry shortly.
 
 ## 7. Authorization
 
@@ -301,8 +317,9 @@ Individual results are then filtered per item using the same access client that 
 
 - **Unified storage only**, and a kind whose data has not migrated returns an empty result rather than an error. This is the most common reason search appears not to work, see the prerequisite at the top.
 - **The first request for a kind may wait for an index build.** Indexes are created on demand.
+- **The global search index of a namespace is closed after some hours without a search**, and opened again by the next one. That search can wait a few seconds or get 503, and it can miss changes made while the index was closed, until the index catches up with storage.
 - **Trash is limited to dashboards today**, so other kinds get `/search` only. A kind has to be accepted by `resource.TrashSearchAllowed` to get `/trash`. That policy grows as the access rule trash uses is checked against more kinds. Once your kind is allowed, `trash: false` opts back out.
-- **Sorting** works on any indexed field that declares `sort`. One exception: non-string retrieve-only fields fall back to the `name` tie-breaker instead of failing, so `created` and `updated` cannot be sorted on.
+- **Sorting** works on any indexed field that declares `sort`. A field that does not declare it is rejected with 422.
 - **A field without `retrieve` cannot be returned**, even if you can filter on it.
 
 ## Hybrid search
@@ -601,6 +618,17 @@ Without reranking, resource types are interleaved in request order. Filters appl
 to every requested type; multi-resource queries support only `uid` and `folder`.
 A failure searching any resource fails the request. Each result includes its own
 group and resource; `kind` is empty when no manifest supplies it.
+
+To let clients omit `resources`, configure defaults in the Grafana HTTP process:
+
+```ini
+[unified_storage]
+hybrid_search_default_resources = dashboard.grafana.app/dashboards,folder.grafana.app/folders
+```
+
+An omitted or empty list uses these defaults; an explicit list overrides them.
+Keep group/resource pairs unique; an empty setting still requires explicit resources.
+Configured targets pass existing validation and authorization checks.
 
 ## Where to look
 

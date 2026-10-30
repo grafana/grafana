@@ -50,25 +50,6 @@ func buildDataImportRows(count int) []DataImportRow {
 	return rows
 }
 
-func buildLegacyDataImportRows(count int) []DataImportRow {
-	rows := buildDataImportRows(count)
-	for i := range rows {
-		rows[i].Legacy = &DataImportLegacyFields{
-			Group:           "group",
-			Resource:        "resource",
-			Namespace:       "ns",
-			Name:            fmt.Sprintf("name-%04d", i),
-			Action:          1,
-			Folder:          "folder",
-			ResourceVersion: int64(i + 1),
-			PreviousRV:      int64(i),
-			Generation:      int64(i + 10),
-		}
-	}
-
-	return rows
-}
-
 func TestDataImportBatchStatementCount(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -230,9 +211,9 @@ func TestSQLKVInsertDataImportBatchRollsBackOnExecError(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestSQLKVInsertDataImportBatchUsesLegacyFields(t *testing.T) {
+func TestSQLKVInsertDataImportBatchUsesPlaceholderFields(t *testing.T) {
 	sqlKV, _, mock := setupSQLKVMock(t, "sqlite")
-	rows := buildLegacyDataImportRows(1)
+	rows := buildDataImportRows(1)
 
 	mock.ExpectBegin()
 	mock.ExpectExec("(?i)insert into .*resource_history").
@@ -240,16 +221,7 @@ func TestSQLKVInsertDataImportBatchUsesLegacyFields(t *testing.T) {
 			rows[0].GUID,
 			rows[0].KeyPath,
 			rows[0].Value,
-			rows[0].Legacy.Group,
-			rows[0].Legacy.Resource,
-			rows[0].Legacy.Namespace,
-			rows[0].Legacy.Name,
-			rows[0].Legacy.Action,
-			rows[0].Legacy.Folder,
-			rows[0].Legacy.ResourceVersion,
-			rows[0].Legacy.PreviousRV,
-			rows[0].Legacy.Generation,
-			nil,
+			"", "", "", "", 0, "",
 		).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
@@ -297,51 +269,4 @@ func TestSQLKV_Batch_RejectsDataSection(t *testing.T) {
 	require.ErrorIs(t, err, ErrBatchNotSupportedOnDataSection)
 	// Reject must short-circuit before touching the DB.
 	require.NoError(t, mock.ExpectationsWereMet())
-}
-
-func TestSQLKVInsertDataImportBatchRejectsMixedLegacyRows(t *testing.T) {
-	tests := []struct {
-		name      string
-		buildRows func() []DataImportRow
-	}{
-		{
-			name: "legacy after non-legacy",
-			buildRows: func() []DataImportRow {
-				rows := buildDataImportRows(2)
-				rows[1].Legacy = &DataImportLegacyFields{
-					Group:           "group",
-					Resource:        "resource",
-					Namespace:       "ns",
-					Name:            "name-0001",
-					Action:          1,
-					Folder:          "folder",
-					ResourceVersion: 2,
-					PreviousRV:      1,
-					Generation:      11,
-				}
-				return rows
-			},
-		},
-		{
-			name: "non-legacy after legacy",
-			buildRows: func() []DataImportRow {
-				rows := buildLegacyDataImportRows(2)
-				rows[1].Legacy = nil
-				return rows
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			sqlKV, _, mock := setupSQLKVMock(t, "sqlite")
-
-			mock.ExpectBegin()
-			mock.ExpectRollback()
-
-			err := sqlKV.InsertDataImportBatch(context.Background(), tc.buildRows())
-			require.ErrorContains(t, err, "mixed legacy import rows")
-			require.NoError(t, mock.ExpectationsWereMet())
-		})
-	}
 }

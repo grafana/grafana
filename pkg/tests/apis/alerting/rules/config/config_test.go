@@ -148,7 +148,7 @@ func configWildcardPermission(actions ...string) resourcepermissions.SetResource
 //   - patch/update gated by rules-configs:update, granted to Admin only.
 //   - create is service-identity only: forbidden for every human (the singleton
 //     is seeded by the sync worker).
-//   - delete/deletecollection is rejected for everyone ("cannot be deleted").
+//   - delete/deletecollection is rejected for humans ("cannot be deleted").
 //   - /status writes require the service-identity-only rules-configs/status:update
 //     and are forbidden for every human, including Admin.
 func TestIntegrationConfigAccessControl(t *testing.T) {

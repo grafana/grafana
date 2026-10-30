@@ -1,12 +1,15 @@
 // add unit test for the DataSourceVariableEditor component
 
-import { render, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { JSX } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourceVariable } from '@grafana/scenes';
+import { mockBoundingClientRect } from '@grafana/test-utils';
+
+import { addToEditedDashboard } from '../variableEditTestUtils';
 
 import { DataSourceVariableEditor, getDataSourceVariableOptions } from './DataSourceVariableEditor';
 
@@ -38,10 +41,12 @@ const dsList = [
   },
 ];
 
+const mockGetList = jest.fn((_args?: { pluginId?: string }) => dsList);
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
-    getList: () => dsList,
+    getList: (args: { pluginId?: string }) => mockGetList(args),
   }),
   getDataSourceInstanceList: jest.fn(async () => dsList),
 }));
@@ -205,6 +210,32 @@ describe('getDataSourceVariableOptions', () => {
   });
 });
 
+describe('getDataSourceVariableOptions undo/redo', () => {
+  it('records a name filter change as one undoable action', async () => {
+    const { nameFilter } = selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable;
+    const variable = new DataSourceVariable({ name: 'dsVariable', pluginId: 'dsTestDataSource', regex: '/1$/' });
+    const sidebar = addToEditedDashboard(variable);
+    const nameFilterItem = getDataSourceVariableOptions(variable).find(
+      (item) => item.props.id === 'datasource-options-name-filter'
+    );
+    const { user } = setup(nameFilterItem!.props.render(nameFilterItem!));
+
+    await user.clear(screen.getByTestId(nameFilter));
+    await user.type(screen.getByTestId(nameFilter), '/2$/');
+    await user.tab();
+    expect(variable.state.regex).toBe('/2$/');
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    act(() => sidebar.undoAction());
+    expect(variable.state.regex).toBe('/1$/');
+    expect(screen.getByTestId(nameFilter)).toHaveValue('/1$/');
+
+    act(() => sidebar.redoAction());
+    expect(variable.state.regex).toBe('/2$/');
+    expect(screen.getByTestId(nameFilter)).toHaveValue('/2$/');
+  });
+});
+
 // based on styleguide recomendation
 function setup(jsx: JSX.Element) {
   return {
@@ -212,3 +243,59 @@ function setup(jsx: JSX.Element) {
     ...render(jsx),
   };
 }
+
+describe('data source selection undo/redo', () => {
+  afterEach(() => mockGetList.mockImplementation(() => dsList));
+
+  it('restores the selected data source when undoing a name filter', async () => {
+    const { nameFilter } = selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable;
+    const variable = new DataSourceVariable({
+      name: 'dsVariable',
+      pluginId: 'dsTestDataSource',
+      value: 'ds2',
+      text: 'DataSourceInstance2',
+    });
+    const sidebar = addToEditedDashboard(variable);
+    await lastValueFrom(variable.validateAndUpdate!());
+    expect(variable.state.value).toBe('ds2');
+    const item = getDataSourceVariableOptions(variable).find(
+      (item) => item.props.id === 'datasource-options-name-filter'
+    )!;
+    const { user } = setup(item.props.render(item));
+    await user.type(screen.getByTestId(nameFilter), '/1$/');
+    await user.tab();
+    expect(variable.state.value).toBe('ds1');
+
+    act(() => sidebar.undoAction());
+    expect(variable.state).toMatchObject({ regex: '', value: 'ds2', text: 'DataSourceInstance2' });
+
+    act(() => sidebar.redoAction());
+    expect(variable.state).toMatchObject({ regex: '/1$/', value: 'ds1', text: 'DataSourceInstance1' });
+  });
+
+  it('restores a non-default data source selection when undoing a type change', async () => {
+    mockBoundingClientRect();
+    mockGetList.mockImplementation((args) => dsList.filter((ds) => ds.meta.id === args?.pluginId));
+    const variable = new DataSourceVariable({
+      name: 'dsVariable',
+      pluginId: 'dsTestDataSource',
+      value: 'ds2',
+      text: 'DataSourceInstance2',
+    });
+    const sidebar = addToEditedDashboard(variable);
+    await lastValueFrom(variable.validateAndUpdate!());
+    expect(variable.state.value).toBe('ds2');
+    const item = getDataSourceVariableOptions(variable).find((item) => item.props.id === 'datasource-options-type')!;
+    const { user } = setup(item.props.render(item));
+    const select = screen.getByRole('combobox');
+    await user.click(select);
+    await user.click(await screen.findByRole('option', { name: 'abDS' }));
+    expect(variable.state).toMatchObject({ pluginId: 'ABCDS', value: 'ds3' });
+
+    act(() => sidebar.undoAction());
+    expect(variable.state).toMatchObject({ pluginId: 'dsTestDataSource', value: 'ds2', text: 'DataSourceInstance2' });
+
+    act(() => sidebar.redoAction());
+    expect(variable.state).toMatchObject({ pluginId: 'ABCDS', value: 'ds3', text: 'ABCDataSourceInstance' });
+  });
+});

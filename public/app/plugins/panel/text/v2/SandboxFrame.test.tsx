@@ -339,6 +339,43 @@ it('updates height and pagination metrics only from valid runtime messages', asy
   expect(element.style.height).toBe('180px');
 });
 
+it.each(['dark', 'light'])(
+  'declares the host %s color scheme so the empty shell paints transparent',
+  async (scheme) => {
+    const original = window.getComputedStyle;
+    const spy = jest.spyOn(window, 'getComputedStyle').mockImplementation((element, pseudo) => {
+      const style = original(element, pseudo);
+      return element instanceof HTMLIFrameElement ? ({ ...style, colorScheme: scheme } as CSSStyleDeclaration) : style;
+    });
+    try {
+      render(<SandboxFrame {...props()} />);
+      const element = await frame();
+      const shell = new DOMParser().parseFromString(element.srcdoc, 'text/html');
+      expect(shell.head.querySelector('meta[name="color-scheme"]')?.getAttribute('content')).toBe(scheme);
+    } finally {
+      spy.mockRestore();
+    }
+  }
+);
+
+it('is a block element so its baseline gap cannot overflow a container sized to the frame', async () => {
+  render(<SandboxFrame {...props()} />);
+  expect((await frame()).style.display).toBe('block');
+});
+
+it('fills the minimum height without reporting it as content height', async () => {
+  const options = props({ minHeight: 300 });
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  notify(element, 'ready');
+  notify(element, 'resize', { height: 11, contentHeight: 11 });
+  expect(element.style.height).toBe('300px');
+  expect(element).toHaveAttribute('data-text-content-height', '11');
+  expect(options.onHeight).toHaveBeenLastCalledWith(11, 11);
+  notify(element, 'resize', { height: 450, contentHeight: 450 });
+  expect(element.style.height).toBe('450px');
+});
+
 it.each(['html', 'policy', 'globalCss'] as const)(
   'recreates on %s changes and ignores the old generation',
   async (field) => {

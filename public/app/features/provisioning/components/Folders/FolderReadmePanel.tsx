@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useIntersection } from 'react-use';
 
@@ -19,10 +19,12 @@ import { useFolderDocs } from '../../hooks/useFolderDocs';
 import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderReadme';
 import { type FolderDoc, FOLDER_DOC_TAB_PARAM, getDocTabLabel } from '../../utils/folderDocConventions';
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
+import { splitFrontmatter } from '../../utils/markdownFrontmatter';
 import { RESOURCE_PATH_ATTR, rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
 import { createGrafanaLinkResolver } from '../../utils/markdownResourceLinks';
 import { splitPath } from '../utils/path';
 
+import { MarkdownFrontmatterTable } from './MarkdownFrontmatterTable';
 import { FolderReadmeEvents } from './analytics/main';
 
 export const FOLDER_README_ANCHOR_ID = 'folder-readme';
@@ -231,14 +233,22 @@ function RenderedMarkdown({
   const repositoryName = repository.name;
   const repositoryPath = repository.path;
 
-  // renderMarkdown's default sanitizer strips the href of bare relative links
-  // (e.g. `dashboard.json`, `subfolder/`), leaving `<a href>` that resolves to
-  // the app root — so folder/dashboard links can't be rewritten or resolved.
-  // Render without it and rely on textUtil.sanitize below (the XSS boundary),
-  // which preserves relative links.
-  const html = renderMarkdown(markdown, { noSanitize: true });
-  const rewritten = rewriteRelativeMarkdownLinks(html, { repository, baseDirInRepo });
-  const safe = textUtil.sanitize(rewritten);
+  // The parent re-renders on every intersection change; keep marked and the
+  // sanitizer off the scroll path.
+  const { frontmatter, safe } = useMemo(() => {
+    // Front matter isn't markdown: left in, marked turns the `---` fences into an
+    // <hr> and a heading. Show it as a metadata table instead, like GitHub does.
+    const { frontmatter, body } = splitFrontmatter(markdown);
+
+    // renderMarkdown's default sanitizer strips the href of bare relative links
+    // (e.g. `dashboard.json`, `subfolder/`), leaving `<a href>` that resolves to
+    // the app root — so folder/dashboard links can't be rewritten or resolved.
+    // Render without it and rely on textUtil.sanitize (the XSS boundary), which
+    // preserves relative links.
+    const html = renderMarkdown(body, { noSanitize: true });
+    const rewritten = rewriteRelativeMarkdownLinks(html, { repository, baseDirInRepo });
+    return { frontmatter, safe: textUtil.sanitize(rewritten) };
+  }, [markdown, repository, baseDirInRepo]);
   const containerRef = useRef<HTMLDivElement>(null);
   // Only the latest async (first-click) resolution navigates, so overlapping
   // clicks can't race and push an earlier link's destination after a later one.
@@ -343,7 +353,14 @@ function RenderedMarkdown({
 
   useMermaidDiagrams(containerRef, safe);
 
-  return <MarkdownHTML ref={containerRef} className={cx('markdown-html', styles.markdownBody)} html={safe} />;
+  // The metadata table sits outside the markdown container so the link-click
+  // handler and the mermaid hook only ever see rendered markdown.
+  return (
+    <>
+      {frontmatter && <MarkdownFrontmatterTable data={frontmatter} />}
+      <MarkdownHTML ref={containerRef} className={cx('markdown-html', styles.markdownBody)} html={safe} />
+    </>
+  );
 }
 
 /**

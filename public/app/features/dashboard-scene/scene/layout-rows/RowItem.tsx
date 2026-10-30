@@ -2,7 +2,7 @@ import React from 'react';
 
 import { locationUtil, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, locationService, logWarning } from '@grafana/runtime';
+import { locationService, logWarning } from '@grafana/runtime';
 import {
   NewSceneObjectAddedEvent,
   sceneGraph,
@@ -117,11 +117,7 @@ export class RowItem
   public getOutlineChildren(isEditing?: boolean): SceneObject[] {
     const layoutChildren = this.state.layout.getOutlineChildren();
     if (isEditing && this.state.$variables) {
-      return [
-        ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [this.getFiltersSet()] : []),
-        this.state.$variables,
-        ...layoutChildren,
-      ];
+      return [this.getFiltersSet(), this.state.$variables, ...layoutChildren];
     }
     return layoutChildren;
   }

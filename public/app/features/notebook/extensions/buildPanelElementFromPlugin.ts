@@ -11,7 +11,7 @@ import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/uti
 import { type PanelElement } from '../types';
 
 /**
- * The id only has to be free within this throwaway panel — appendPanelToNotebook mints the one the
+ * The id only has to be free within this throwaway panel — appendElementsToNotebook mints the one the
  * notebook actually stores. Same as the Explore builder.
  */
 const TRANSIENT_PANEL_ID = 1;

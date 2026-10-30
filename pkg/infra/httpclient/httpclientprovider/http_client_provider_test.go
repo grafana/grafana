@@ -124,3 +124,17 @@ func TestNewForConfigPreservesProcessTimeouts(t *testing.T) {
 	t.Cleanup(client.CloseIdleConnections)
 	require.Equal(t, 30*time.Second, client.Timeout)
 }
+
+func TestSDKDefaultTimeoutOptionsSurvivesOverride(t *testing.T) {
+	original := sdkhttpclient.DefaultTimeoutOptions
+	t.Cleanup(func() { sdkhttpclient.DefaultTimeoutOptions = original })
+	sdkDefaults := SDKDefaultTimeoutOptions()
+
+	cfg := setting.NewCfg()
+	cfg.DataProxyTimeout = 175
+	New(cfg, validations.ProvideURLValidator(), tracing.InitializeTracerForTest())
+
+	require.Equal(t, 175*time.Second, sdkhttpclient.DefaultTimeoutOptions.Timeout)
+	require.Equal(t, sdkDefaults, SDKDefaultTimeoutOptions())
+	require.Equal(t, 30*time.Second, SDKDefaultTimeoutOptions().Timeout)
+}

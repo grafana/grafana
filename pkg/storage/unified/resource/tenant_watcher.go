@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"io"
 	"math/rand/v2"
 	"net/http"
 	"strings"
@@ -638,8 +637,7 @@ func (tw *TenantWatcher) doEditResourceLabel(ctx context.Context, dataKey DataKe
 	if err != nil {
 		return fmt.Errorf("reading resource: %w", err)
 	}
-	value, err := io.ReadAll(reader)
-	_ = reader.Close()
+	value, err := kvpkg.ReadAllAndClose(reader)
 	if err != nil {
 		return fmt.Errorf("reading resource bytes: %w", err)
 	}

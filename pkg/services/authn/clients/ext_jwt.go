@@ -90,6 +90,7 @@ func ProvideExtendedJWTWithPluginAuth(cfg *setting.Cfg, tracer trace.Tracer, plu
 		log:                 logger,
 		namespaceMapper:     request.GetNamespaceMapper(cfg),
 		accessTokenVerifier: accessTokenVerifier,
+		accessTokenKeys:     keys,
 		idTokenVerifier:     idTokenVerifier,
 		tracer:              tracer,
 	}
@@ -102,6 +103,7 @@ type ExtendedJWT struct {
 	localKeys           bool
 	log                 log.Logger
 	accessTokenVerifier authlib.Verifier[authlib.AccessTokenClaims]
+	accessTokenKeys     authlib.KeyRetriever
 	idTokenVerifier     authlib.Verifier[authlib.IDTokenClaims]
 	namespaceMapper     request.NamespaceMapper
 	tracer              trace.Tracer
@@ -113,7 +115,7 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 
 	jwtToken := s.retrieveAuthenticationToken(r.HTTPRequest)
 
-	accessTokenClaims, err := s.accessTokenVerifier.Verify(ctx, jwtToken)
+	accessTokenClaims, err := authn.VerifyAccessTokenForRequest(ctx, jwtToken, r.HTTPRequest, s.accessTokenVerifier, s.accessTokenKeys)
 	if err != nil {
 		return nil, errExtJWTInvalid.Errorf("failed to verify access token: %w", err)
 	}

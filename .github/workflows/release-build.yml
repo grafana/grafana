@@ -19,6 +19,12 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}
+  # Let builds finish even when main receives commits faster than we can build them.
+  # The default queue keeps only the newest pending run, so builds can catch up.
+  cancel-in-progress: false
+
 # Builds the following artifacts:
 #
 # targz:grafana:* (via make build-targz)
@@ -217,13 +223,15 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-node
       - name: Install JS dependencies
-        run: yarn install --immutable
+        uses: ./.github/actions/yarn-install
       - name: Build frontend
-        run: yarn build
+        run: npm run build
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: release-frontend
-          path: public
+          path: |
+            public/
+            !public/**/node_modules/
           retention-days: 1
 
   build-backend:
@@ -293,7 +301,7 @@ jobs:
 
   build-targz:
     name: targz / ${{ matrix.name }}
-    runs-on: ubuntu-x64-large
+    runs-on: ubuntu-x64-small
     continue-on-error: ${{ matrix.allow-failure == true }}
     needs:
       - setup
@@ -388,7 +396,7 @@ jobs:
 
   build-deb-rpm:
     name: deb / rpm / ${{ matrix.name }}
-    runs-on: ubuntu-x64-large
+    runs-on: ubuntu-x64-small
     continue-on-error: ${{ matrix.allow-failure == true }}
     needs:
       - setup
@@ -489,7 +497,7 @@ jobs:
 
   verify-rpm-stig:
     name: verify rpm stig (linux-amd64)
-    runs-on: ubuntu-x64-large
+    runs-on: ubuntu-x64-small
     needs:
       - build-deb-rpm
     permissions:
@@ -601,7 +609,7 @@ jobs:
       docker-ubuntu-artifact-name: artifacts-docker-ubuntu-linux-amd64
 
   build-windows:
-    runs-on: ubuntu-x64-large
+    runs-on: ubuntu-x64-small
     needs:
       - setup
       - build-targz
@@ -929,7 +937,7 @@ jobs:
   run-meticulous-tests:
     if: github.repository == 'grafana/grafana' && needs.setup.outputs.run-meticulous == 'true'
     name: Run Meticulous tests
-    runs-on: ubuntu-x64-large
+    runs-on: ubuntu-x64
     continue-on-error: true
     needs:
       - setup

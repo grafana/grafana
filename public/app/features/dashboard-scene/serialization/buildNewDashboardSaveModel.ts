@@ -24,7 +24,7 @@ import { contextSrv } from '../../../core/services/context_srv';
 export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise<DashboardDTO> {
   let variablesList = defaultDashboard.templating?.list;
 
-  if (config.featureToggles.newDashboardWithFiltersAndGroupBy) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.NewDashboardWithFiltersAndGroupBy, false)) {
     // Add filter and group by variables if the datasource supports it
     const defaultDs = await getDataSourceInstance();
 
@@ -96,7 +96,7 @@ export async function buildNewDashboardSaveModelV2(
     ? defaultAutoGridLayoutKind()
     : defaultGridLayoutKind();
 
-  if (config.featureToggles.newDashboardWithFiltersAndGroupBy) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.NewDashboardWithFiltersAndGroupBy, false)) {
     // Add filter and group by variables if the datasource supports it
     const defaultDs = await getDataSourceInstance();
 

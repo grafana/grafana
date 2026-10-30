@@ -1,4 +1,4 @@
-import { OpenFeatureTestProvider } from '@openfeature/react-sdk';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, render, screen } from '@testing-library/react';
 import type { JSX } from 'react';
 import { Provider } from 'react-redux';
@@ -7,6 +7,8 @@ import { AppPlugin, PluginType, renderMarkdown } from '@grafana/data';
 import { getMockPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { configureStore } from 'app/store/configureStore';
 
 import { usePluginConfig } from '../hooks/usePluginConfig';
@@ -26,7 +28,7 @@ function renderWithStore(component: JSX.Element) {
 
   return render(
     <Provider store={store}>
-      <OpenFeatureTestProvider>{component}</OpenFeatureTestProvider>
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>{component}</OpenFeatureProvider>
     </Provider>
   );
 }
@@ -49,6 +51,12 @@ describe('PluginDetailsBody', () => {
   });
   beforeEach(() => {
     usePluginConfigMock.mockReturnValue({ value: null, loading: false });
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      setTestFlags({});
+    });
   });
 
   const tcs = [
@@ -130,7 +138,7 @@ describe('PluginDetailsBody', () => {
 
   it('should render data source connections tab content for installed data source plugin', async () => {
     const plugin = getCatalogPluginMock({ type: PluginType.datasource });
-    config.featureToggles.datasourceConnectionsTab = true;
+    setTestFlags({ [FlagKeys.DatasourceConnectionsTab]: true });
     await act(async () => {
       renderWithStore(
         <PluginDetailsBody

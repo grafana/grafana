@@ -238,18 +238,21 @@ func TestQueue(t *testing.T) {
 	t.Run("DequeueWithTimeout", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
-		q := NewQueue(QueueOptionsWithDefaults(nil))
-		require.NoError(t, services.StartAndAwaitRunning(ctx, q))
-		require.NoError(t, q.AwaitRunning(ctx), "Queue should be running")
+		synctest.Test(t, func(t *testing.T) {
+			ctx := t.Context()
+			q := NewQueue(QueueOptionsWithDefaults(nil))
+			require.NoError(t, services.StartAndAwaitRunning(ctx, q))
+			require.NoError(t, q.AwaitRunning(ctx), "Queue should be running")
 
-		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-		defer cancel()
+			ctx, cancel := context.WithTimeout(t.Context(), 100*time.Millisecond)
+			defer cancel()
 
-		// This should timeout since nothing is in the queue
-		runnable, err := q.Dequeue(ctx)
-		require.Nil(t, runnable, "Runnable should be nil on timeout")
-		require.ErrorIs(t, err, context.DeadlineExceeded, "Expected context deadline exceeded error")
+			// This should timeout since nothing is in the queue
+			runnable, err := q.Dequeue(ctx)
+			require.Nil(t, runnable, "Runnable should be nil on timeout")
+			require.ErrorIs(t, err, context.DeadlineExceeded, "Expected context deadline exceeded error")
+			require.NoError(t, services.StopAndAwaitTerminated(t.Context(), q))
+		})
 	})
 
 	t.Run("EnqueueAfterStopped", func(t *testing.T) {
@@ -304,215 +307,219 @@ func TestQueue(t *testing.T) {
 	t.Run("ConcurrentEnqueuersAndDequeuers", func(t *testing.T) {
 		t.Parallel()
 
-		q := NewQueue(QueueOptionsWithDefaults(&QueueOptions{MaxSizePerTenant: 100}))
-		require.NoError(t, q.StartAsync(context.Background()), "Queue should start")
-		require.NoError(t, q.AwaitRunning(context.Background()), "Queue should be running")
+		synctest.Test(t, func(t *testing.T) {
+			q := NewQueue(QueueOptionsWithDefaults(&QueueOptions{MaxSizePerTenant: 100}))
+			require.NoError(t, q.StartAsync(t.Context()), "Queue should start")
+			require.NoError(t, q.AwaitRunning(t.Context()), "Queue should be running")
 
-		const numProducers = 5
-		const numConsumers = 3
-		const itemsPerProducer = 20
-		const totalItems = numProducers * itemsPerProducer
+			const numProducers = 5
+			const numConsumers = 3
+			const itemsPerProducer = 20
+			const totalItems = numProducers * itemsPerProducer
 
-		// Track items to verify all are processed
-		processedItems := make(map[string]int)
-		var mu sync.Mutex
-		var wg sync.WaitGroup
+			// Track items to verify all are processed
+			processedItems := make(map[string]int)
+			var mu sync.Mutex
+			var wg sync.WaitGroup
 
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		// Start consumers first (they'll block until items are available)
-		for i := range numConsumers {
-			wg.Add(1)
-			go func(consumerID int) {
-				defer wg.Done()
+			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+			defer cancel()
+			// Start consumers first (they'll block until items are available)
+			for i := range numConsumers {
+				wg.Add(1)
+				go func(consumerID int) {
+					defer wg.Done()
 
-				for {
-					runnable, err := q.Dequeue(ctx)
-					if err != nil {
-						if errors.Is(err, context.DeadlineExceeded) {
+					for {
+						runnable, err := q.Dequeue(ctx)
+						if err != nil {
+							if errors.Is(err, context.DeadlineExceeded) {
+								return
+							}
+							require.NoError(t, err)
 							return
 						}
-						require.NoError(t, err)
-						return
-					}
 
-					// Execute the runnable which will update our tracking
-					runnable()
+						// Execute the runnable which will update our tracking
+						runnable()
 
-					// Check if we've processed all expected items
-					mu.Lock()
-					totalProcessed := 0
-					for _, count := range processedItems {
-						totalProcessed += count
-					}
-					done := totalProcessed >= totalItems
-					mu.Unlock()
-
-					if done {
-						return
-					}
-				}
-			}(i)
-		}
-
-		// Start producers
-		for i := range numProducers {
-			wg.Add(1)
-			go func(producerID int) {
-				defer wg.Done()
-				tenantID := fmt.Sprintf("tenant-%d", producerID%3) // Use 3 different tenants
-
-				for j := range itemsPerProducer {
-					itemID := fmt.Sprintf("p%d-item%d", producerID, j)
-
-					err := q.Enqueue(ctx, tenantID, func() {
+						// Check if we've processed all expected items
 						mu.Lock()
-						processedItems[itemID] = 1
+						totalProcessed := 0
+						for _, count := range processedItems {
+							totalProcessed += count
+						}
+						done := totalProcessed >= totalItems
 						mu.Unlock()
-					})
 
-					if err != nil {
-						// Context might have been canceled if test is slow
-						if errors.Is(err, context.DeadlineExceeded) ||
-							errors.Is(err, ErrQueueClosed) {
+						if done {
 							return
 						}
-						require.NoError(t, err)
 					}
+				}(i)
+			}
 
-					// Small sleep to reduce contention
-					time.Sleep(time.Millisecond)
-				}
-			}(i)
-		}
+			// Start producers
+			for i := range numProducers {
+				wg.Add(1)
+				go func(producerID int) {
+					defer wg.Done()
+					tenantID := fmt.Sprintf("tenant-%d", producerID%3) // Use 3 different tenants
 
-		// Wait for all goroutines to finish
-		wg.Wait()
+					for j := range itemsPerProducer {
+						itemID := fmt.Sprintf("p%d-item%d", producerID, j)
 
-		// Check that all items were processed
-		mu.Lock()
-		require.Equal(t, totalItems, len(processedItems),
-			"All enqueued items should have been processed")
-		mu.Unlock()
+						err := q.Enqueue(ctx, tenantID, func() {
+							mu.Lock()
+							processedItems[itemID] = 1
+							mu.Unlock()
+						})
 
-		// Verify queue is now empty
-		require.Equal(t, 0, q.Len(), "Queue should be empty after processing all items")
-		require.Equal(t, 0, q.ActiveTenantsLen(), "No active tenants should remain after processing")
-		// Stop the queue
-		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), q))
+						if err != nil {
+							// Context might have been canceled if test is slow
+							if errors.Is(err, context.DeadlineExceeded) ||
+								errors.Is(err, ErrQueueClosed) {
+								return
+							}
+							require.NoError(t, err)
+						}
+
+						// Small sleep to reduce contention
+						time.Sleep(time.Millisecond)
+					}
+				}(i)
+			}
+
+			// Wait for all goroutines to finish
+			wg.Wait()
+
+			// Check that all items were processed
+			mu.Lock()
+			require.Equal(t, totalItems, len(processedItems),
+				"All enqueued items should have been processed")
+			mu.Unlock()
+
+			// Verify queue is now empty
+			require.Equal(t, 0, q.Len(), "Queue should be empty after processing all items")
+			require.Equal(t, 0, q.ActiveTenantsLen(), "No active tenants should remain after processing")
+			// Stop the queue
+			require.NoError(t, services.StopAndAwaitTerminated(t.Context(), q))
+		})
 	})
 
 	t.Run("SlowDequeuerHandling", func(t *testing.T) {
 		t.Parallel()
 
-		q := NewQueue(QueueOptionsWithDefaults(&QueueOptions{MaxSizePerTenant: 5}))
-		require.NoError(t, q.StartAsync(context.Background()), "Queue should start")
-		require.NoError(t, q.AwaitRunning(context.Background()), "Queue should be running")
+		synctest.Test(t, func(t *testing.T) {
+			q := NewQueue(QueueOptionsWithDefaults(&QueueOptions{MaxSizePerTenant: 5}))
+			require.NoError(t, q.StartAsync(t.Context()), "Queue should start")
+			require.NoError(t, q.AwaitRunning(t.Context()), "Queue should be running")
 
-		ctx := context.Background()
-		tenantA := "tenant-a"
-		tenantB := "tenant-b"
-		tenantC := "tenant-c"
+			ctx := t.Context()
+			tenantA := "tenant-a"
+			tenantB := "tenant-b"
+			tenantC := "tenant-c"
 
-		// Create channels to track execution order
-		completionOrder := make(chan string, 10)
-		var wg sync.WaitGroup
+			// Create channels to track execution order
+			completionOrder := make(chan string, 10)
+			var wg sync.WaitGroup
 
-		// Enqueue a slow item for tenant A
-		wg.Add(1)
-		err := q.Enqueue(ctx, tenantA, func() {
-			defer wg.Done()
-			time.Sleep(300 * time.Millisecond) // Simulate slow processing
-			completionOrder <- "A-slow"
-		})
-		require.NoError(t, err)
-
-		// Enqueue regular items for other tenants
-		for i := range 2 {
+			// Enqueue a slow item for tenant A
 			wg.Add(1)
-			err := q.Enqueue(ctx, tenantB, func() {
+			err := q.Enqueue(ctx, tenantA, func() {
 				defer wg.Done()
-				completionOrder <- fmt.Sprintf("B-%d", i)
+				time.Sleep(300 * time.Millisecond) // Simulate slow processing
+				completionOrder <- "A-slow"
 			})
 			require.NoError(t, err)
 
+			// Enqueue regular items for other tenants
+			for i := range 2 {
+				wg.Add(1)
+				err := q.Enqueue(ctx, tenantB, func() {
+					defer wg.Done()
+					completionOrder <- fmt.Sprintf("B-%d", i)
+				})
+				require.NoError(t, err)
+
+				wg.Add(1)
+				err = q.Enqueue(ctx, tenantC, func() {
+					defer wg.Done()
+					completionOrder <- fmt.Sprintf("C-%d", i)
+				})
+				require.NoError(t, err)
+			}
+
+			// Enqueue another item for tenant A
 			wg.Add(1)
-			err = q.Enqueue(ctx, tenantC, func() {
+			err = q.Enqueue(ctx, tenantA, func() {
 				defer wg.Done()
-				completionOrder <- fmt.Sprintf("C-%d", i)
+				completionOrder <- "A-fast"
 			})
 			require.NoError(t, err)
-		}
 
-		// Enqueue another item for tenant A
-		wg.Add(1)
-		err = q.Enqueue(ctx, tenantA, func() {
-			defer wg.Done()
-			completionOrder <- "A-fast"
-		})
-		require.NoError(t, err)
-
-		// Start multiple dequeuer goroutines
-		for range 3 {
-			go func() {
-				for range 2 { // Each will dequeue 2 items
-					dequeueCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
-					runnable, err := q.Dequeue(dequeueCtx)
-					cancel()
-					if err != nil {
-						return
+			// Start multiple dequeuer goroutines
+			for range 3 {
+				go func() {
+					for range 2 { // Each will dequeue 2 items
+						dequeueCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+						runnable, err := q.Dequeue(dequeueCtx)
+						cancel()
+						if err != nil {
+							return
+						}
+						runnable()
 					}
-					runnable()
+				}()
+			}
+
+			// Wait for all processing to complete
+			wg.Wait()
+			close(completionOrder)
+
+			// Collect completion order
+			execOrder := make([]string, 0, len(completionOrder))
+			for item := range completionOrder {
+				execOrder = append(execOrder, item)
+			}
+
+			// Verify that despite A-slow being dequeued first, other tenants' work completed while it was running
+			slowAPos := -1
+			fastAPos := -1
+			for i, item := range execOrder {
+				if item == "A-slow" {
+					slowAPos = i
 				}
-			}()
-		}
-
-		// Wait for all processing to complete
-		wg.Wait()
-		close(completionOrder)
-
-		// Collect completion order
-		execOrder := make([]string, 0, len(completionOrder))
-		for item := range completionOrder {
-			execOrder = append(execOrder, item)
-		}
-
-		// Verify that despite A-slow being dequeued first, other tenants' work completed while it was running
-		slowAPos := -1
-		fastAPos := -1
-		for i, item := range execOrder {
-			if item == "A-slow" {
-				slowAPos = i
+				if item == "A-fast" {
+					fastAPos = i
+				}
 			}
-			if item == "A-fast" {
-				fastAPos = i
+
+			// The slow A task was started first but should finish later
+			require.True(t, slowAPos > 0, "A-slow should be in the execution order")
+			require.True(t, fastAPos > 0, "A-fast should be in the execution order")
+
+			// Verify some items from other tenants completed between the two A items
+			// This confirms round-robin fairness even with slow consumers
+			firstTenantBFoundPos := -1
+			for i, item := range execOrder {
+				if strings.HasPrefix(item, "B-") || strings.HasPrefix(item, "C-") {
+					firstTenantBFoundPos = i
+					break
+				}
 			}
-		}
 
-		// The slow A task was started first but should finish later
-		require.True(t, slowAPos > 0, "A-slow should be in the execution order")
-		require.True(t, fastAPos > 0, "A-fast should be in the execution order")
+			// Make sure at least one other tenant item completed
+			require.True(t, firstTenantBFoundPos >= 0,
+				"At least one B or C item should be in execution order")
 
-		// Verify some items from other tenants completed between the two A items
-		// This confirms round-robin fairness even with slow consumers
-		firstTenantBFoundPos := -1
-		for i, item := range execOrder {
-			if strings.HasPrefix(item, "B-") || strings.HasPrefix(item, "C-") {
-				firstTenantBFoundPos = i
-				break
-			}
-		}
+			// Verify length is now 0
+			require.Equal(t, 0, q.Len())
+			require.Equal(t, 0, q.ActiveTenantsLen())
 
-		// Make sure at least one other tenant item completed
-		require.True(t, firstTenantBFoundPos >= 0,
-			"At least one B or C item should be in execution order")
-
-		// Verify length is now 0
-		require.Equal(t, 0, q.Len())
-		require.Equal(t, 0, q.ActiveTenantsLen())
-
-		// Stop the queue
-		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), q))
+			// Stop the queue
+			require.NoError(t, services.StopAndAwaitTerminated(t.Context(), q))
+		})
 	})
 
 	t.Run("ActiveTenantsLength", func(t *testing.T) {
@@ -623,28 +630,38 @@ grafana_resource_server_qos_in_flight 32
 		})
 
 		t.Run("TenantIsolation", func(t *testing.T) {
-			q := newExecutionTestQueue(t, 4)
-			startExecutionTestScheduler(t, q, 32)
+			synctest.Test(t, func(t *testing.T) {
+				q := newExecutionTestQueue(t, 4)
+				startExecutionTestScheduler(t, q, 32)
 
-			release := make(chan struct{})
-			unblock := sync.OnceFunc(func() { close(release) })
-			t.Cleanup(unblock)
-			started := make(chan struct{}, 5)
-			for range 5 {
-				require.NoError(t, q.Enqueue(t.Context(), "slow", func() { started <- struct{}{}; <-release }))
-			}
-			for range 4 {
+				release := make(chan struct{})
+				unblock := sync.OnceFunc(func() { close(release) })
+				t.Cleanup(unblock)
+				started := make(chan struct{}, 5)
+				for range 5 {
+					require.NoError(t, q.Enqueue(t.Context(), "slow", func() { started <- struct{}{}; <-release }))
+				}
+				for range 4 {
+					awaitExecutionSignal(t, started)
+				}
+				healthy := make(chan struct{})
+				require.NoError(t, q.Enqueue(t.Context(), "healthy", func() { close(healthy) }))
+				awaitExecutionSignal(t, healthy)
+				require.Equal(t, 1, q.Len())
+				require.Len(t, started, 0, "the fifth request must remain queued")
+
+				// Finish the healthy request while the four slow requests remain blocked.
+				synctest.Wait()
+
+				require.Equal(t, float64(4), testutil.ToFloat64(q.inFlight))
+				unblock()
 				awaitExecutionSignal(t, started)
-			}
-			healthy := make(chan struct{})
-			require.NoError(t, q.Enqueue(t.Context(), "healthy", func() { close(healthy) }))
-			awaitExecutionSignal(t, healthy)
-			require.Equal(t, 1, q.Len())
-			require.Len(t, started, 0, "the fifth request must remain queued")
-			require.Eventually(t, func() bool { return testutil.ToFloat64(q.inFlight) == 4 }, time.Second, time.Millisecond)
-			unblock()
-			awaitExecutionSignal(t, started)
-			require.Eventually(t, func() bool { return testutil.ToFloat64(q.inFlight) == 0 }, time.Second, time.Millisecond)
+
+				// Drain the released requests and their reservations before reading the gauge.
+				synctest.Wait()
+
+				require.Zero(t, testutil.ToFloat64(q.inFlight))
+			})
 		})
 
 		t.Run("FairnessAndFIFO", func(t *testing.T) {
@@ -692,14 +709,21 @@ grafana_resource_server_qos_in_flight 32
 
 		t.Run("Cancellation", func(t *testing.T) {
 			t.Run("queued cancellation frees queue space without a worker", func(t *testing.T) {
-				q := newExecutionTestQueue(t, 1)
-				ctx, cancel := context.WithCancel(t.Context())
-				require.NoError(t, q.Enqueue(ctx, "a", func() { t.Error("canceled work ran") }))
-				cancel()
-				require.Eventually(t, func() bool { return q.Len() == 0 && q.ActiveTenantsLen() == 0 }, time.Second, time.Millisecond)
-				require.Equal(t, float64(1), testutil.ToFloat64(q.discardedRequests.WithLabelValues("a", "context_canceled")))
-				require.NoError(t, q.Enqueue(t.Context(), "a", func() {}))
-				dequeueExecution(t, q)()
+				synctest.Test(t, func(t *testing.T) {
+					q := newExecutionTestQueue(t, 1)
+					ctx, cancel := context.WithCancel(t.Context())
+					require.NoError(t, q.Enqueue(ctx, "a", func() { t.Error("canceled work ran") }))
+					cancel()
+
+					// Let cancellation remove the queued request and its tenant without a worker.
+					synctest.Wait()
+
+					require.Zero(t, q.Len())
+					require.Zero(t, q.ActiveTenantsLen())
+					require.Equal(t, float64(1), testutil.ToFloat64(q.discardedRequests.WithLabelValues("a", "context_canceled")))
+					require.NoError(t, q.Enqueue(t.Context(), "a", func() {}))
+					dequeueExecution(t, q)()
+				})
 			})
 			t.Run("queued cancellation preserves FIFO", func(t *testing.T) {
 				for _, canceled := range []int{0, 1, 2} {
@@ -719,7 +743,10 @@ grafana_resource_server_qos_in_flight 32
 								require.NoError(t, q.Enqueue(itemCtx, "a", func() { order = append(order, i) }))
 							}
 							cancel()
+
+							// Finish removing the cancelled queued item before checking FIFO order among survivors.
 							synctest.Wait()
+
 							require.Equal(t, 2, q.Len())
 							for range 2 {
 								dequeueExecution(t, q)()
@@ -796,7 +823,10 @@ grafana_resource_server_qos_in_flight 32
 							fn, err := q.Dequeue(ctx)
 							result <- dequeueResponse{runnable: fn, err: err}
 						}()
+
+						// Let Dequeue block on the empty queue before cancelling its context.
 						synctest.Wait()
+
 						cancel()
 						response := <-result
 						require.ErrorIs(t, response.err, context.Canceled)
@@ -833,7 +863,10 @@ grafana_resource_server_qos_in_flight 32
 						results[i] <- dequeueResponse{runnable: fn, err: err}
 					}()
 				}
+
+				// Let every worker enter Dequeue before cancelling one waiting worker.
 				synctest.Wait()
+
 				cancel()
 				canceled := <-results[1]
 				require.ErrorIs(t, canceled.err, context.Canceled)
@@ -886,7 +919,10 @@ grafana_resource_server_qos_in_flight 32
 					for range waitingWorkers {
 						go func() { _, err := q.Dequeue(context.Background()); result <- err }()
 					}
+
+					// Let all workers block in Dequeue before shutting down the queue.
 					synctest.Wait()
+
 					require.NoError(t, services.StopAndAwaitTerminated(t.Context(), q))
 					for range waitingWorkers {
 						require.ErrorIs(t, <-result, ErrQueueClosed)
@@ -918,38 +954,45 @@ grafana_resource_server_qos_in_flight 32
 		})
 
 		t.Run("ConcurrentDispatchCancellation", func(t *testing.T) {
-			q := newExecutionTestQueue(t, 2)
-			startExecutionTestScheduler(t, q, 8)
-			var inFlight, executed atomic.Int32
-			var exceeded atomic.Bool
-			var wg sync.WaitGroup
-			for range 8 {
-				wg.Go(func() {
-					for i := range 100 {
-						ctx := t.Context()
-						cancel := func() {}
-						if i%2 == 0 {
-							ctx, cancel = context.WithCancel(ctx)
-						}
-						err := q.Enqueue(ctx, "a", func() {
-							if inFlight.Add(1) > 2 {
-								exceeded.Store(true)
+			synctest.Test(t, func(t *testing.T) {
+				q := newExecutionTestQueue(t, 2)
+				startExecutionTestScheduler(t, q, 8)
+				var inFlight, executed atomic.Int32
+				var exceeded atomic.Bool
+				var wg sync.WaitGroup
+				for range 8 {
+					wg.Go(func() {
+						for i := range 100 {
+							ctx := t.Context()
+							cancel := func() {}
+							if i%2 == 0 {
+								ctx, cancel = context.WithCancel(ctx)
 							}
-							executed.Add(1)
-							inFlight.Add(-1)
-						})
-						if err != nil {
-							t.Errorf("enqueue: %v", err)
+							err := q.Enqueue(ctx, "a", func() {
+								if inFlight.Add(1) > 2 {
+									exceeded.Store(true)
+								}
+								executed.Add(1)
+								inFlight.Add(-1)
+							})
+							if err != nil {
+								t.Errorf("enqueue: %v", err)
+							}
+							cancel()
 						}
-						cancel()
-					}
-				})
-			}
-			wg.Wait()
-			require.NoError(t, q.Enqueue(t.Context(), "a", func() { executed.Add(1) }))
-			require.Eventually(t, func() bool { return q.Len() == 0 && testutil.ToFloat64(q.inFlight) == 0 }, 5*time.Second, time.Millisecond)
-			require.False(t, exceeded.Load())
-			require.GreaterOrEqual(t, executed.Load(), int32(401), "all 400 uncanceled requests and the final request must execute")
+					})
+				}
+				wg.Wait()
+				require.NoError(t, q.Enqueue(t.Context(), "a", func() { executed.Add(1) }))
+
+				// Finish dispatch, cancellation callbacks, and execution before checking all reservations.
+				synctest.Wait()
+
+				require.Zero(t, q.Len())
+				require.Zero(t, testutil.ToFloat64(q.inFlight))
+				require.False(t, exceeded.Load())
+				require.GreaterOrEqual(t, executed.Load(), int32(401), "all 400 uncanceled requests and the final request must execute")
+			})
 		})
 	})
 }

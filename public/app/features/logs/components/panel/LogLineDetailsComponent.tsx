@@ -266,9 +266,12 @@ const LogLineDetailsLegacyComponent = memo(
           />
         </ControlledCollapse>
 
-        <div className={styles.errorContainer}>
-          <LogLineDetailsError fields={fieldsWithoutLinks} labels={labelsWithLinks} />
-        </div>
+        <LogLineDetailsError
+          className={styles.errorContainer}
+          fields={fieldsWithoutLinks}
+          labels={labelsWithLinks}
+          otelLanguage={log.otelLanguage}
+        />
 
         {displayedFieldsControlEnabled && displayedFields.length > 0 && setDisplayedFields && (
           <ControlledCollapse

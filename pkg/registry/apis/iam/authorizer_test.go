@@ -3,13 +3,17 @@ package iam
 import (
 	"context"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -103,6 +107,13 @@ func TestWhoamiAuthorizer(t *testing.T) {
 	}{
 		{name: "list", verb: "list", want: authorizer.DecisionAllow},
 		{name: "get", verb: "get", want: authorizer.DecisionAllow},
+		{name: "permissions", verb: "get", resourceName: "permissions", want: authorizer.DecisionAllow},
+		{name: "permissions missing identity", verb: "get", resourceName: "permissions", noIdentity: true, want: authorizer.DecisionDeny},
+		{name: "permissions list", verb: "list", resourceName: "permissions", want: authorizer.DecisionDeny},
+		{name: "permissions create", verb: "create", resourceName: "permissions", want: authorizer.DecisionDeny},
+		{name: "permissions watch", verb: "watch", resourceName: "permissions", want: authorizer.DecisionDeny},
+		{name: "permissions subresource", verb: "get", resourceName: "permissions", subresource: "other", want: authorizer.DecisionDeny},
+		{name: "permissions namespaced", verb: "get", resourceName: "permissions", namespace: "org-1", want: authorizer.DecisionDeny},
 		{name: "missing identity", verb: "list", noIdentity: true, want: authorizer.DecisionDeny},
 		{name: "create", verb: "create", want: authorizer.DecisionDeny},
 		{name: "watch", verb: "watch", want: authorizer.DecisionDeny},
@@ -123,6 +134,28 @@ func TestWhoamiAuthorizer(t *testing.T) {
 			require.Equal(t, tc.want, decision)
 		})
 	}
+}
+
+func TestWhoamiAuthorizerPermissionsRequest(t *testing.T) {
+	factory := &request.RequestInfoFactory{APIPrefixes: sets.NewString("apis")}
+	req := httptest.NewRequest(http.MethodGet, "/apis/iam.grafana.app/v0alpha1/whoami/permissions", nil)
+	info, err := factory.NewRequestInfo(req)
+	require.NoError(t, err)
+
+	ctx := types.WithAuthInfo(req.Context(), newTestAuthInfo())
+	decision, _, err := newWhoamiAuthorizer().Authorize(ctx, authorizer.AttributesRecord{
+		ResourceRequest: info.IsResourceRequest,
+		APIGroup:        info.APIGroup,
+		APIVersion:      info.APIVersion,
+		Resource:        info.Resource,
+		Name:            info.Name,
+		Subresource:     info.Subresource,
+		Namespace:       info.Namespace,
+		Verb:            info.Verb,
+		Path:            info.Path,
+	})
+	require.NoError(t, err)
+	require.Equal(t, authorizer.DecisionAllow, decision)
 }
 
 func TestAllowSelfAuthorizerAllowsCurrentUserPermissions(t *testing.T) {

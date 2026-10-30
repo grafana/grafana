@@ -102,6 +102,9 @@ type IndexMeta struct {
 	// Zero-value means "unknown"; readers must not treat it as a freshness
 	// signal.
 	BuildTime time.Time `json:"build_time,omitempty"`
+	// ReconciledAt is when the global index was last checked against storage.
+	// Zero means unknown.
+	ReconciledAt time.Time `json:"reconciled_at,omitempty"`
 	// IndexFormat identifies the Bleve segment format that wrote this snapshot
 	// (for example, "zap/16"). Empty on legacy snapshots means "unknown, assume compatible".
 	IndexFormat string `json:"index_format,omitempty"`

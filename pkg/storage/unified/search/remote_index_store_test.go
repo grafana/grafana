@@ -130,6 +130,7 @@ func TestRemoteIndexStore_ListIndexes_LegacyMetaWithoutBuildStartTime(t *testing
 	assert.True(t, listed[indexKey].BuildTime.IsZero(),
 		"legacy manifest should decode to zero-valued BuildTime, got %s",
 		listed[indexKey].BuildTime)
+	assert.True(t, listed[indexKey].ReconciledAt.IsZero(), "legacy manifests have no reconciliation time")
 	assert.Equal(t, "11.0.0", listed[indexKey].BuildVersion)
 	assert.Equal(t, int64(42), listed[indexKey].LatestResourceVersion)
 }

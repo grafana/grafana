@@ -43,7 +43,10 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
       },
       overflowItemsRef
     );
-    const { dialogProps } = useDialog({}, overflowItemsRef);
+    const { dialogProps } = useDialog(
+      { 'aria-label': t('grafana-ui.toolbar-button-row.dialog-label', 'More items') },
+      overflowItemsRef
+    );
     const theme = useTheme2();
     const overflowButtonOrder = alignment === 'left' ? childVisibility.indexOf(false) - 1 : childVisibility.length;
     const styles = getStyles(theme, overflowButtonOrder, alignment);

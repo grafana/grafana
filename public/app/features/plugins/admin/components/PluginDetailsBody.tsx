@@ -5,7 +5,7 @@ import { type GrafanaTheme2, PluginContextProvider, type UrlQueryMap, PluginType
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { type PageInfoItem } from '@grafana/runtime/internal';
+import { type PageInfoItem, useFlagDatasourceConnectionsTab } from '@grafana/runtime/internal';
 import { type CellProps, type Column, InteractiveTable, Stack, useStyles2, Carousel, MarkdownHTML } from '@grafana/ui';
 
 import { AssistantOverview } from '../components/AssistantOverview/AssistantOverview';
@@ -33,6 +33,7 @@ type Cell<T extends keyof Permission = keyof Permission> = CellProps<Permission,
 export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetails }: Props): JSX.Element {
   const styles = useStyles2(getStyles);
   const { value: pluginConfig, loading: pluginConfigLoading } = usePluginConfig(plugin);
+  const isDatasourceConnectionsTabEnabled = useFlagDatasourceConnectionsTab();
   const columns: Array<Column<Permission>> = useMemo(
     () => [
       {
@@ -104,7 +105,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
   }
 
   if (
-    config.featureToggles.datasourceConnectionsTab &&
+    isDatasourceConnectionsTabEnabled &&
     pageId === PluginTabIds.DATASOURCE_CONNECTIONS &&
     plugin.type === PluginType.datasource
   ) {
