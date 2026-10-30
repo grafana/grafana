@@ -1,3 +1,4 @@
+import { escapeRegExp } from 'lodash';
 import { from, lastValueFrom, map, mergeMap, type Observable } from 'rxjs';
 
 import {
@@ -89,13 +90,43 @@ function restoreSQLDisplayNames(response: DataQueryResponse, queries: Expression
   };
 }
 
+// A refId counts as used when it appears as a whole word, ignoring case, in an expression or a
+// classic condition. So `A` matches `$A`, `${A}` and `FROM a`, but not `SELECT`. The check errs
+// toward keeping a query: a false match only sends a query that the backend gets today anyway.
+function getUsedRefIdMatcher(request: DataQueryRequest<ExpressionQuery>): (refId: string) => boolean {
+  const templateSrv = getTemplateSrv();
+  const texts = request.targets
+    .filter((query) => isExpressionReference(query.datasource))
+    .flatMap((query) => [
+      query.expression ?? '',
+      templateSrv.replace(query.expression ?? '', request.scopedVars),
+      ...(query.conditions ?? []).flatMap((condition) => condition.query?.params ?? []),
+    ]);
+  return (refId) => {
+    const pattern = new RegExp(`(?<!\\w)${escapeRegExp(refId)}(?!\\w)`, 'i');
+    return texts.some((text) => pattern.test(text));
+  };
+}
+
 // Each data source gets all of its queries in one call, as it does in a panel, so it can resolve
 // references between them (such as Graphite's `#A`). Results are matched back by refId because
 // a data source may return them in a different order.
 async function interpolateQueriesByDataSource(request: DataQueryRequest<ExpressionQuery>): Promise<ExpressionQuery[]> {
-  const instances = await Promise.all(
+  const resolved = await Promise.all(
     request.targets.map((query) => getDataSourceInstance(query.datasource, request.scopedVars))
   );
+
+  // Without an expression, `runRequest` drops queries that fail their data source's `filterQuery`,
+  // such as empty or hidden queries. A request with an expression comes here before that step, so
+  // drop them here too. Keep a query that an expression uses: hidden queries are often SQL expression
+  // inputs, and an expression that uses an empty query should fail as it does today.
+  const isUsed = getUsedRefIdMatcher(request);
+  const keep = request.targets.map(
+    (query, i) =>
+      isExpressionReference(query.datasource) || isUsed(query.refId) || (resolved[i].filterQuery?.(query) ?? true)
+  );
+  const instances = resolved.filter((_, i) => keep[i]);
+  request = { ...request, targets: request.targets.filter((_, i) => keep[i]) };
 
   const groups = new Map<string | undefined, { ds: DataSourceApi; indexes: number[] }>();
   instances.forEach((ds, i) => {
