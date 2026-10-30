@@ -1,14 +1,19 @@
 #!/usr/bin/env node
 
-const { execFile } = require('node:child_process');
-const { readFile } = require('node:fs/promises');
-const path = require('node:path');
-const { promisify } = require('node:util');
+import { execFile } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
 
-const { CODEOWNERS_BY_FILENAME_JSON_PATH } = require('./codeowners-manifest/constants.js');
+import constants from './codeowners-manifest/constants.js';
+import coverageFiles from './codeowners-manifest/coverage-files.js';
+
+const { CODEOWNERS_BY_FILENAME_JSON_PATH } = constants;
 
 const execFileAsync = promisify(execFile);
-const ROOT = path.resolve(__dirname, '..');
+const SCRIPT_DIR = fileURLToPath(new URL('.', import.meta.url));
+const ROOT = path.resolve(SCRIPT_DIR, '..');
 const INSTALL = 'npm install --global @alwaysmeticulous/cli@latest';
 const TOKEN_HELP =
   'Create a Grafana API token at https://app.meticulous.ai/settings/grafana/projects/grafana/api-tokens\n' +
@@ -45,10 +50,13 @@ function normalizePath(filename) {
   return normalized;
 }
 
-function parseCoveragePage(output) {
-  const [header, ...lines] = output.trimEnd().split(/\r?\n/);
+function parseCoveragePage(output, includeRanges = false) {
+  const [header, ...lines] = output.replace(/[\r\n]+$/, '').split(/\r?\n/);
   const columns = header.split('\t');
   const required = ['repoFilePath', 'executedLines', 'executableLines'];
+  if (includeRanges) {
+    required.push('executedRanges', 'executableRanges');
+  }
   if (required.some((column) => columns.filter((value) => value === column).length !== 1)) {
     throw new Error(`Invalid Meticulous coverage columns. Update the CLI: ${INSTALL}`);
   }
@@ -68,13 +76,39 @@ function parseCoveragePage(output) {
     ) {
       throw new Error('Invalid Meticulous coverage row; no totals were generated.');
     }
-    return { path: normalizePath(value('repoFilePath')), executedLines, executableLines };
+    return {
+      path: normalizePath(value('repoFilePath')),
+      executedLines,
+      executableLines,
+      ...(includeRanges
+        ? {
+            executedRanges: parseLineRanges(value('executedRanges')),
+            executableRanges: parseLineRanges(value('executableRanges')),
+          }
+        : {}),
+    };
   });
 }
 
-async function fetchCoverage(testRunId, cli = runCli) {
+function parseLineRanges(value) {
+  if (value === '') {
+    return [];
+  }
+  return value.split(';').map((range) => {
+    if (!/^\d+(?:-\d+)?$/.test(range)) {
+      throw new Error('Invalid Meticulous line range.');
+    }
+    const [start, end = start] = range.split('-').map(Number);
+    if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 1 || end < start) {
+      throw new Error('Invalid Meticulous line range.');
+    }
+    return [start, end];
+  });
+}
+
+async function fetchCoverage(testRunId, cli = runCli, includeRanges = false) {
   const selector = testRunId ? [`--testRunId=${testRunId}`] : ['--latestForProject'];
-  const base = ['agent', 'js-coverage', '--project=grafana/grafana', '--dontWaitForTestRunToComplete'];
+  const base = ['agent', 'js-coverage', '--project=grafana/grafana'];
   const rawSummary = await cli([...base, ...selector, '--summary', '--json']);
   let source;
   try {
@@ -102,11 +136,13 @@ async function fetchCoverage(testRunId, cli = runCli) {
         `--testRunId=${source.testRunId}`,
         '--includeAllFiles',
         '--includeLineCounts',
+        ...(includeRanges ? ['--includeExecutedRanges', '--includeExecutableRanges'] : []),
         '--orderBy=repoFilePath',
         '--order=asc',
         `--limit=${PAGE_SIZE}`,
         `--offset=${offset}`,
-      ])
+      ]),
+      includeRanges
     );
     if (page.length > PAGE_SIZE || page.some((file) => seen.has(file.path))) {
       throw new Error('Inconsistent Meticulous pagination; no totals were generated.');
@@ -119,7 +155,7 @@ async function fetchCoverage(testRunId, cli = runCli) {
       files.push(file);
     }
     if (page.length < PAGE_SIZE) {
-      return { source, files };
+      return { source, files: files.filter((file) => coverageFiles.isCoverageSourceFile(file.path)) };
     }
   }
 }
@@ -193,7 +229,8 @@ function renderReport({ source, files }, manifest, team) {
   const sections = [
     `Meticulous coverage: grafana/grafana, run ${source.testRunId}${source.commitSha ? `, commit ${source.commitSha}` : ''}`,
     'Ownership: current checkout. Shared files count for each owner; team totals can overlap.',
-    'Only files returned by Meticulous are counted. Missing files are unknown, not zero-covered.',
+    'Jest codeowner source exclusions applied. Only eligible files returned by Meticulous are counted.',
+    'Missing files are unknown, not zero-covered.',
   ];
   if (source.filesFailedToParse > 0) {
     sections.push(
@@ -201,27 +238,22 @@ function renderReport({ source, files }, manifest, team) {
     );
   }
   sections.push(renderTable(rows));
-  if (team) {
-    sections.push(
-      renderTable([
-        ['File', 'Covered lines', 'Executable lines', 'Coverage'],
-        ...[...teams.get(team)]
-          .sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
-          .map((file) => [file.path, ...totals([file]).slice(1)]),
-      ])
-    );
-  }
   return sections.join('\n\n');
 }
 
 async function main(args = process.argv.slice(2)) {
-  const yargs = require('yargs/yargs');
+  const { default: yargs } = await import('yargs/yargs');
   const argv = yargs(args)
-    .scriptName('yarn test:coverage:meticulous:by-codeowner')
+    .scriptName('pnpm test:coverage:meticulous:by-codeowner')
     .usage('$0 [team] [--test-run-id <id>]')
     .option('test-run-id', {
       type: 'string',
       description: 'Use a specific test run instead of latest project coverage',
+    })
+    .option('open', {
+      type: 'boolean',
+      default: process.env.CI !== 'true',
+      description: 'Open team HTML report in the browser (use --no-open to disable)',
     })
     .check((args) => {
       if (args._.length > 1 || args['test-run-id'] === '') {
@@ -234,29 +266,40 @@ async function main(args = process.argv.slice(2)) {
     .version(false)
     .parse();
 
-  await runReport(argv._[0], argv['test-run-id']);
+  await runReport(argv._[0], argv['test-run-id'], argv.open);
 }
 
-async function runReport(team, testRunId) {
+async function runReport(team, testRunId, shouldOpen = process.env.CI !== 'true') {
   await runCli(['--version']);
   if (!process.env.METICULOUS_API_TOKEN?.trim()) {
     throw new Error(`METICULOUS_API_TOKEN is required.\n${TOKEN_HELP}`);
   }
-  await execFileAsync(process.execPath, [path.join(__dirname, 'codeowners-manifest/index.js')], { cwd: ROOT });
+  await execFileAsync(process.execPath, [path.join(SCRIPT_DIR, 'codeowners-manifest/index.js')], {
+    cwd: ROOT,
+  });
   const manifest = JSON.parse(await readFile(path.join(ROOT, CODEOWNERS_BY_FILENAME_JSON_PATH), 'utf8'));
   if (team && !attributeCoverage([], manifest).teams.has(team)) {
     throw new Error(`Codeowner "${team}" was not found among Grafana teams.`);
   }
   console.error('Fetching Meticulous coverage for grafana/grafana...');
-  const coverage = await fetchCoverage(testRunId);
+  const coverage = await fetchCoverage(testRunId, runCli, Boolean(team));
+  let reportURL;
+  if (team) {
+    const { writeTeamReport } = await import('./meticulous-coverage-report.mjs');
+    const files = attributeCoverage(coverage.files, manifest).teams.get(team);
+    reportURL = await writeTeamReport({ ...coverage, files }, team, { repoRoot: ROOT, shouldOpen });
+  }
   console.log(renderReport(coverage, manifest, team));
+  if (reportURL) {
+    console.log(`Coverage report saved to ${reportURL}`);
+  }
 }
 
-if (require.main === module) {
+if (import.meta.main) {
   main().catch((error) => {
     console.error(redact(error.message, process.env.METICULOUS_API_TOKEN));
     process.exitCode = 1;
   });
 }
 
-module.exports = { runCli, parseCoveragePage, fetchCoverage, attributeCoverage, renderReport, runReport };
+export { runCli, parseCoveragePage, fetchCoverage, attributeCoverage, renderReport, runReport };

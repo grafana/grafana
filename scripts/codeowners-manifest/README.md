@@ -89,31 +89,68 @@ Run the installation command again if the CLI reports unsupported options.
 
 ```bash
 # All Grafana teams, using the project's latest successful coverage
-yarn test:coverage:meticulous:by-codeowner
+pnpm test:coverage:meticulous:by-codeowner
 
-# One team's total and per-file line coverage
-yarn test:coverage:meticulous:by-codeowner '@grafana/dataviz-squad'
+# One team's total and browsable Monocart report (opens automatically)
+pnpm test:coverage:meticulous:by-codeowner '@grafana/dataviz-squad'
+
+# Save a team report without opening the browser
+pnpm test:coverage:meticulous:by-codeowner '@grafana/dataviz-squad' --no-open
 
 # A specific test run (can also be combined with a team)
-yarn test:coverage:meticulous:by-codeowner --test-run-id '<run ID>'
+pnpm test:coverage:meticulous:by-codeowner --test-run-id '<run ID>'
 
 # Help requires neither CLI installation nor authentication
-yarn test:coverage:meticulous:by-codeowner --help
+pnpm test:coverage:meticulous:by-codeowner --help
 ```
 
 The command refreshes the cached manifest automatically. It resolves coverage to
 one run and fetches every page, including files with zero executed lines. Output
-shows the run ID and commit when available. In-progress or unavailable coverage
-fails instead of producing partial totals.
+shows the run ID and commit when available. Unavailable coverage fails instead
+of producing partial totals.
 
 Coverage is the sum of executed lines divided by the sum of executable lines,
 not an average of file percentages. Shared files count fully for every owning
 `@grafana/` team; the overall total counts each file once. Files without a Grafana
 team, including paths absent from the local manifest, appear in a separate row.
 
-Only files returned by Meticulous enter the denominator. Files missing from its
+Jest and Meticulous share the source-file filter in `coverage-files.js`. Tests,
+mocks, stories, generated files, declarations, graveyard code, scripts, Jest
+configs, panel module entrypoints, and all `e2e-playwright/` files (including
+helpers and test plugins) are excluded from both reports. Exclusions apply
+before calculating team or overall totals and before generating HTML.
+
+Only eligible files returned by Meticulous enter the denominator. Files missing from its
 inventory are unknown, not zero-covered. Teams without returned files show
 `No coverage data`; files with zero executable lines show `N/A`. The report warns
 when Meticulous reports source files it could not parse. Coverage may describe a
 different commit from the checkout used for ownership attribution, so these
 percentages should not be compared directly with Jest coverage percentages.
+
+Individual team reports are saved under
+`coverage/meticulous/by-team/teams/team-grafana-<team>/html/index.html`. The terminal
+prints the team total and report URL; the HTML provides a searchable file list
+and source-line highlighting. Reports open automatically except when `CI=true`
+or `--no-open` is supplied. Teams without coverage data do not generate a report.
+
+The report uses executable and executed line ranges from Meticulous. Only the
+Lines metric is shown: the Istanbul adapter represents each executable line as
+a synthetic statement, with binary covered/uncovered hits. It does not measure
+statement, function, branch, or execution-count coverage.
+
+Source text is loaded from the run's `commitSha` using Git, never from modified
+working-tree files. If the commit or source file is unavailable locally, fetch
+the run's commit and retry. The script does not fetch Git history automatically.
+Ownership still comes from the current checkout. The run and source commit are
+shown in the HTML report.
+
+### Testing the Meticulous scripts
+
+The CLI tests use Jest's ESM support with an isolated Node configuration; the
+report tests use Node's test runner and generate real Monocart HTML in a temporary
+Git repository. Neither suite needs a Meticulous token.
+
+```bash
+node --experimental-vm-modules node_modules/jest/bin/jest.js scripts/tests/meticulous-coverage-by-codeowner.test.js --watch=false --runInBand --config '{"testEnvironment":"node","roots":["<rootDir>/scripts/tests"],"transform":{}}'
+node --test scripts/tests/meticulous-coverage-report.test.mjs scripts/tests/codeowner-coverage-files.test.mjs
+```

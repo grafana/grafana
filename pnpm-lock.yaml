@@ -1051,6 +1051,9 @@ importers:
       memfs:
         specifier: ^3.5.3
         version: 3.5.3
+      monocart-coverage-reports:
+        specifier: 2.12.6
+        version: 2.12.6
       msw:
         specifier: 2.10.4
         version: 2.10.4(@types/node@26.6.5)(@typescript/typescript6@6.0.2)

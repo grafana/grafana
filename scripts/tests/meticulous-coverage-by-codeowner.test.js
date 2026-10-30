@@ -5,13 +5,17 @@ const { execFile } = require('node:child_process');
 const { readFile } = require('node:fs/promises');
 const path = require('node:path');
 
-const {
-  runCli,
-  parseCoveragePage,
-  fetchCoverage,
-  renderReport,
-  runReport,
-} = require('../meticulous-coverage-by-codeowner.js');
+jest.unstable_mockModule('node:child_process', () => ({ execFile }));
+jest.unstable_mockModule('node:fs/promises', () => ({ readFile }));
+const writeTeamReport = jest.fn();
+jest.unstable_mockModule('../meticulous-coverage-report.mjs', () => ({ writeTeamReport }));
+
+let runCli, parseCoveragePage, fetchCoverage, renderReport, runReport;
+beforeAll(async () => {
+  ({ runCli, parseCoveragePage, fetchCoverage, renderReport, runReport } = await import(
+    '../meticulous-coverage-by-codeowner.mjs'
+  ));
+});
 
 const HEADER = 'repoFilePath\texecutedLines\texecutableLines\tuncoveredLines\n';
 const source = { testRunId: 'run-1', commitSha: 'abc123', filesFailedToParse: 0 };
@@ -78,20 +82,11 @@ it('pins latest coverage to one run and fetches all pages, including uncovered f
   expect(result.files).toHaveLength(1001);
   expect(result.files[1000]).toEqual({ path: 'last.ts', executedLines: 0, executableLines: 10 });
   expect(cli.mock.calls.map(([args]) => args)).toEqual([
+    ['agent', 'js-coverage', '--project=grafana/grafana', '--latestForProject', '--summary', '--json'],
     [
       'agent',
       'js-coverage',
       '--project=grafana/grafana',
-      '--dontWaitForTestRunToComplete',
-      '--latestForProject',
-      '--summary',
-      '--json',
-    ],
-    [
-      'agent',
-      'js-coverage',
-      '--project=grafana/grafana',
-      '--dontWaitForTestRunToComplete',
       '--testRunId=run-1',
       '--includeAllFiles',
       '--includeLineCounts',
@@ -104,7 +99,6 @@ it('pins latest coverage to one run and fetches all pages, including uncovered f
       'agent',
       'js-coverage',
       '--project=grafana/grafana',
-      '--dontWaitForTestRunToComplete',
       '--testRunId=run-1',
       '--includeAllFiles',
       '--includeLineCounts',
@@ -123,7 +117,6 @@ it('uses explicit run selection and accepts a header-only empty page', async () 
     'agent',
     'js-coverage',
     '--project=grafana/grafana',
-    '--dontWaitForTestRunToComplete',
     '--testRunId=run-1',
     '--summary',
     '--json',
@@ -172,18 +165,15 @@ it('reports weighted team totals, shared ownership, unknown data, and unique ove
   expect(report).toContain('Ownership: current checkout');
 });
 
-it('prints only selected team and its files, including zero-covered files', () => {
+it('prints a compact team summary without the per-file table', () => {
   const report = renderReport(coverage, manifest, '@grafana/a');
   expect(
     report
       .split('\n')
-      .filter((line) => line.startsWith('public/'))
-      .map((row) => row.split(/ {2,}/))
-  ).toEqual([
-    ['public/a.ts', '10', '10', '100.00%'],
-    ['public/b.ts', '0', '90', '0.00%'],
-  ]);
-  expect(report).not.toContain('@grafana/b');
+      .find((line) => line.startsWith('@grafana/a'))
+      .split(/ {2,}/)
+  ).toEqual(['@grafana/a', '2', '10', '100', '10.00%']);
+  expect(report).not.toContain('public/a.ts');
 });
 
 it('rejects unknown teams', () => {
@@ -240,26 +230,33 @@ it('prints help without CLI or authentication', () => {
   const { execFileSync } = jest.requireActual('node:child_process');
   const output = execFileSync(
     process.execPath,
-    [path.resolve(__dirname, '../meticulous-coverage-by-codeowner.js'), '--help'],
+    [path.resolve(__dirname, '../meticulous-coverage-by-codeowner.mjs'), '--help'],
     {
       encoding: 'utf8',
       env: { PATH: '', METICULOUS_API_TOKEN: '' },
     }
   );
-  expect(output).toContain('yarn test:coverage:meticulous:by-codeowner [team]');
+  expect(output).toContain('pnpm test:coverage:meticulous:by-codeowner [team]');
   expect(output).toContain('--test-run-id');
 });
 
-it('prints a complete report after refreshing the manifest and fetching coverage', async () => {
+it.each([true, false])('generates a team report with browser opening set to %s', async (shouldOpen) => {
   jest.replaceProperty(process, 'env', { METICULOUS_API_TOKEN: 'secret-token' });
   const log = jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'error').mockImplementation(() => {});
   mockProcess('3.4.0');
   mockProcess('manifest generated');
   mockProcess(JSON.stringify(source));
-  mockProcess(`${HEADER}public/a.ts\t10\t10\t0`);
+  mockProcess(`${HEADER.trimEnd()}\texecutedRanges\texecutableRanges\npublic/a.ts\t10\t10\t0\t1-10\t1-10`);
+  writeTeamReport.mockResolvedValue('file:///tmp/team/html/index.html');
   jest.mocked(readFile).mockResolvedValue(JSON.stringify(manifest));
-  await runReport('@grafana/a');
+  await runReport('@grafana/a', undefined, shouldOpen);
+  expect(writeTeamReport).toHaveBeenCalledWith(
+    { source, files: [{ ...coverage.files[0], executedRanges: [[1, 10]], executableRanges: [[1, 10]] }] },
+    '@grafana/a',
+    { repoRoot: path.resolve(__dirname, '../..'), shouldOpen }
+  );
+  expect(log).toHaveBeenCalledWith('Coverage report saved to file:///tmp/team/html/index.html');
   expect(
     log.mock.calls[0][0]
       .split('\n')
@@ -284,4 +281,59 @@ it('prints no report when coverage retrieval fails', async () => {
   jest.mocked(readFile).mockResolvedValue(JSON.stringify(manifest));
   await expect(runReport()).rejects.toThrow('network failed');
   expect(log).not.toHaveBeenCalled();
+});
+
+it('parses inclusive line ranges and empty ranges for uncovered files', () => {
+  expect(
+    parseCoveragePage(`${HEADER.trimEnd()}\texecutedRanges\texecutableRanges\npublic/a.ts\t0\t3\t3\t\t1;3-4\n`, true)
+  ).toEqual([
+    {
+      path: 'public/a.ts',
+      executedLines: 0,
+      executableLines: 3,
+      executedRanges: [],
+      executableRanges: [
+        [1, 1],
+        [3, 4],
+      ],
+    },
+  ]);
+});
+
+it.each(['0', '3-1', '1,no', '1-2-3'])('rejects invalid source ranges: %s', (range) => {
+  expect(() =>
+    parseCoveragePage(`${HEADER.trimEnd()}\texecutedRanges\texecutableRanges\na.ts\t1\t1\t0\t${range}\t1`, true)
+  ).toThrow('Invalid Meticulous line range');
+});
+
+it('excludes Jest-ineligible files before team and overall reporting', async () => {
+  const cli = jest
+    .fn()
+    .mockResolvedValueOnce(JSON.stringify(source))
+    .mockResolvedValueOnce(
+      `${HEADER}public/a.ts\t1\t2\t1\npublic/a.test.ts\t100\t100\t0\ne2e-playwright/helper.ts\t50\t100\t50\nscripts/tool.js\t50\t100\t50\npublic/types.ts\t5\t10\t5`
+    );
+  const result = await fetchCoverage(undefined, cli);
+  expect(result.files).toEqual([{ path: 'public/a.ts', executedLines: 1, executableLines: 2 }]);
+  const report = renderReport(result, manifest);
+  expect(
+    report
+      .split('\n')
+      .find((line) => line.startsWith('Overall'))
+      .split(/ {2,}/)
+  ).toEqual(['Overall (unique files)', '1', '1', '2', '50.00%']);
+});
+
+it('continues pagination when a whole page contains excluded files', async () => {
+  const firstPage =
+    HEADER + Array.from({ length: 1000 }, (_, i) => `e2e-playwright/helper-${i}.ts\t1\t2\t1`).join('\n');
+  const cli = jest
+    .fn()
+    .mockResolvedValueOnce(JSON.stringify(source))
+    .mockResolvedValueOnce(firstPage)
+    .mockResolvedValueOnce(`${HEADER}public/a.ts\t1\t2\t1`);
+  expect((await fetchCoverage(undefined, cli)).files).toEqual([
+    { path: 'public/a.ts', executedLines: 1, executableLines: 2 },
+  ]);
+  expect(cli.mock.calls[2][0]).toContain('--offset=1000');
 });
