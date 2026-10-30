@@ -34,17 +34,7 @@ type Options struct {
 }
 
 func LoadPluginDefinition(ctx context.Context, pluginSources sources.Registry, opts Options) ([]PluginDefinition, error) {
-	var pluginInfo []PluginDefinition
-
-	if opts.Filter == nil {
-		// Keep all plugins
-		opts.Filter = func(j plugins.JSONData) bool { return true }
-	}
-
-	// It's possible that the same plugin will be found in different sources.
-	// Registering the same plugin twice in the API is Probably A Bad Thing,
-	// so this map keeps track of uniques, so we can skip duplicates.
-	var uniquePlugins = map[string]bool{}
+	c := newCollector(opts)
 
 	for _, pluginSource := range pluginSources.List(ctx) {
 		res, err := pluginSource.Discover(ctx)
@@ -52,37 +42,75 @@ func LoadPluginDefinition(ctx context.Context, pluginSources sources.Registry, o
 			return nil, err
 		}
 		for _, p := range res {
-			if opts.Filter(p.Primary.JSONData) {
-				if _, found := uniquePlugins[p.Primary.JSONData.ID]; found {
-					backend.Logger.Info("Found duplicate plugin when registering API groups", "pluginId", p.Primary.JSONData.ID)
-					continue
-				}
-				info, err := loadInfo(p.Primary.FS, p.Primary.JSONData, opts)
-				if err != nil {
-					return nil, err
-				}
-				uniquePlugins[info.JSONData.ID] = true
-				pluginInfo = append(pluginInfo, info)
+			if err := c.add(p.Primary.FS, p.Primary.JSONData); err != nil {
+				return nil, err
 			}
-
 			for _, child := range p.Children {
-				if opts.Filter(child.JSONData) {
-					if _, found := uniquePlugins[child.JSONData.ID]; found {
-						backend.Logger.Info("Found duplicate plugin when registering API groups", "pluginId", child.JSONData.ID)
-						continue
-					}
-
-					info, err := loadInfo(child.FS, child.JSONData, opts)
-					if err != nil {
-						return nil, err
-					}
-					uniquePlugins[info.JSONData.ID] = true
-					pluginInfo = append(pluginInfo, info)
+				if err := c.add(child.FS, child.JSONData); err != nil {
+					return nil, err
 				}
 			}
 		}
 	}
-	return pluginInfo, nil
+	return c.pluginInfo, nil
+}
+
+// LoadedPlugin is a plugin that is already loaded, with the files to read its
+// definition from.
+type LoadedPlugin struct {
+	FS       fs.FS
+	JSONData plugins.JSONData
+}
+
+// LoadPluginDefinitionFromPlugins reads the definitions of plugins that are
+// already loaded, such as those in the plugin store, instead of discovering
+// them from a source. Children must be listed as plugins of their own, as the
+// store does.
+func LoadPluginDefinitionFromPlugins(loaded []LoadedPlugin, opts Options) ([]PluginDefinition, error) {
+	c := newCollector(opts)
+	for _, p := range loaded {
+		if p.FS == nil {
+			continue
+		}
+		if err := c.add(p.FS, p.JSONData); err != nil {
+			return nil, err
+		}
+	}
+	return c.pluginInfo, nil
+}
+
+type collector struct {
+	opts       Options
+	pluginInfo []PluginDefinition
+	// It's possible that the same plugin will be found more than once.
+	// Registering the same plugin twice in the API is Probably A Bad Thing,
+	// so this keeps track of uniques, so we can skip duplicates.
+	uniquePlugins map[string]bool
+}
+
+func newCollector(opts Options) *collector {
+	if opts.Filter == nil {
+		// Keep all plugins
+		opts.Filter = func(j plugins.JSONData) bool { return true }
+	}
+	return &collector{opts: opts, uniquePlugins: map[string]bool{}}
+}
+
+func (c *collector) add(rootfs fs.FS, jsondata plugins.JSONData) error {
+	if !c.opts.Filter(jsondata) {
+		return nil
+	}
+	if c.uniquePlugins[jsondata.ID] {
+		backend.Logger.Info("Found duplicate plugin when registering API groups", "pluginId", jsondata.ID)
+		return nil
+	}
+	info, err := loadInfo(rootfs, jsondata, c.opts)
+	if err != nil {
+		return err
+	}
+	c.uniquePlugins[jsondata.ID] = true
+	c.pluginInfo = append(c.pluginInfo, info)
+	return nil
 }
 
 func loadInfo(rootfs fs.FS, jsondata plugins.JSONData, opts Options) (PluginDefinition, error) {

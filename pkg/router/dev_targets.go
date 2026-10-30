@@ -123,7 +123,7 @@ func readDevManifest(path string) (*app.ManifestData, error) {
 	return manifest, nil
 }
 
-// declareRoles registers each target's manifest roles, as initLocalPlugins
+// declareRoles registers each target's manifest roles, as initLocalPlugin
 // does for local plugins. Roles are declared once, at startup, so a change to
 // a manifest's roles needs a restart. A target whose roles fail is only
 // logged, so one bad manifest can't stop Grafana from starting.

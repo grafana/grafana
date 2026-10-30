@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
@@ -27,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
-	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -42,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/appsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -74,7 +75,8 @@ type PluginLoaderDependencies struct {
 	PluginDependencies
 
 	ClientV3Loader v3.ClientV3Loader
-	PluginSources  sources.Registry
+	PluginStore    pluginstore.Store
+	PluginNotifier pluginstore.Notifier
 	ACService      accesscontrol.Service
 }
 
@@ -82,7 +84,8 @@ func ProvidePluginLoaderDependencies(
 	pluginClient plugins.Client,
 	contextProvider appsettings.PluginContextWrapper,
 	clientV3Loader v3.ClientV3Loader,
-	pluginSources sources.Registry,
+	pluginStore pluginstore.Store,
+	pluginNotifier pluginstore.Notifier,
 	pluginSettings pluginsettings.Service,
 	acService accesscontrol.Service,
 	accessControl accesscontrol.AccessControl,
@@ -101,7 +104,8 @@ func ProvidePluginLoaderDependencies(
 ) PluginLoaderDependencies {
 	return PluginLoaderDependencies{
 		ClientV3Loader: clientV3Loader,
-		PluginSources:  pluginSources,
+		PluginStore:    pluginStore,
+		PluginNotifier: pluginNotifier,
 		ACService:      acService,
 		PluginDependencies: PluginDependencies{
 			PluginClient:       pluginClient,
@@ -142,7 +146,8 @@ func ProvidePluginLoaderDependenciesWithClients(
 	pluginClient plugins.Client,
 	contextProvider appsettings.PluginContextWrapper,
 	clientV3Loader v3.ClientV3Loader,
-	pluginSources sources.Registry,
+	pluginStore pluginstore.Store,
+	pluginNotifier pluginstore.Notifier,
 	pluginSettings pluginsettings.Service,
 	acService accesscontrol.Service,
 	accessControl accesscontrol.AccessControl,
@@ -159,7 +164,8 @@ func ProvidePluginLoaderDependenciesWithClients(
 		pluginClient,
 		contextProvider,
 		clientV3Loader,
-		pluginSources,
+		pluginStore,
+		pluginNotifier,
 		pluginSettings,
 		acService,
 		accessControl,
@@ -178,24 +184,68 @@ func ProvidePluginLoaderDependenciesWithClients(
 	)
 }
 
-func initLocalPlugins(ctx context.Context, deps PluginLoaderDependencies) error {
-	// Declare roles during dependency construction, before startup registers fixed
-	// roles. Reconciliation must not append the same declarations on every load.
-	pluginDefs, err := loadLocalPluginDefinitions(ctx, deps.PluginSources, false)
-	if err != nil {
-		return err
-	}
-	for _, plugin := range pluginDefs {
-		// The handler installs settings on a copy of the storage config, so resolve
-		// the wildcard default where the shared dual-write service reads it.
-		if deps.Cfg != nil {
-			appsettings.ApplyDefaultSettingsStorageConfig(deps.Cfg.UnifiedStorage, plugin.JSONData.ID)
-		}
+// localPluginInits runs initLocalPlugin once for each plugin this Grafana
+// runs, and again when its definition changes. Reconcile reads every plugin on
+// each wake, and declaring the same roles repeatedly would append them again.
+type localPluginInits struct {
+	mu   sync.Mutex
+	done map[string]string // plugin ID -> fingerprint of the definition last initialized
+}
 
-		for _, manifest := range plugin.Manifests {
-			if err := declareLocalManifestRoles(ctx, deps.ACService, plugin.JSONData.ID, plugin.JSONData.Name, manifest); err != nil {
-				return err
-			}
+func newLocalPluginInits() *localPluginInits {
+	return &localPluginInits{done: map[string]string{}}
+}
+
+// run initializes the plugins that are new or changed since the last call. A
+// plugin that fails is logged, left to retry on the next wake, and does not
+// keep the others, or its own backends, from loading.
+func (l *localPluginInits) run(ctx context.Context, deps PluginLoaderDependencies, defs []definition.PluginDefinition) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	for _, plugin := range defs {
+		key, err := pluginDefinitionKey(plugin)
+		if err != nil {
+			logging.FromContext(ctx).Warn("router: skipping init of unfingerprintable plugin", "pluginId", plugin.JSONData.ID, "err", err)
+			continue
+		}
+		if l.done[plugin.JSONData.ID] == key {
+			continue
+		}
+		if err := initLocalPlugin(ctx, deps, plugin); err != nil {
+			logging.FromContext(ctx).Warn("router: init of local plugin failed", "pluginId", plugin.JSONData.ID, "err", err)
+			continue
+		}
+		l.done[plugin.JSONData.ID] = key
+	}
+}
+
+// pluginDefinitionKey fingerprints what initLocalPlugin reads: the plugin's
+// metadata and all of its manifests, but not the schemas.
+func pluginDefinitionKey(plugin definition.PluginDefinition) (string, error) {
+	plugin.Schemas = nil
+	plugin.Manifest = nil //nolint:staticcheck
+	raw, err := json.Marshal(plugin)
+	if err != nil {
+		return "", err
+	}
+	sum := sha256.Sum256(raw)
+	return hex.EncodeToString(sum[:]), nil
+}
+
+// initLocalPlugin does what a plugin run by this Grafana needs before the
+// router serves it: it resolves the settings storage default and declares the
+// roles of its manifests. Roles of a plugin that is later removed stay
+// declared until restart, which is harmless once its group is no longer routed.
+func initLocalPlugin(ctx context.Context, deps PluginLoaderDependencies, plugin definition.PluginDefinition) error {
+	// The handler installs settings on a copy of the storage config, so resolve
+	// the wildcard default where the shared dual-write service reads it.
+	if deps.Cfg != nil {
+		appsettings.ApplyDefaultSettingsStorageConfig(deps.Cfg.UnifiedStorage, plugin.JSONData.ID)
+	}
+
+	for _, manifest := range plugin.Manifests {
+		if err := declareLocalManifestRoles(ctx, deps.ACService, plugin.JSONData.ID, plugin.JSONData.Name, manifest); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -231,24 +281,34 @@ type PluginLoader struct {
 
 	// dev serves the [router.dev.<name>] sections; nil when none is set.
 	dev *devTargets
+
+	// inits initializes each local plugin as it appears; nil outside middleware
+	// mode, where the router declares nothing for the plugins it serves.
+	inits *localPluginInits
 }
 
-func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry, schemas bool) ([]definition.PluginDefinition, error) {
-	pluginDefs, err := definition.LoadPluginDefinition(ctx, registry, definition.Options{
+func loadLocalPluginDefinitions(ctx context.Context, store pluginstore.Store, schemas bool) ([]definition.PluginDefinition, error) {
+	loaded := make([]definition.LoadedPlugin, 0)
+	for _, p := range store.Plugins(ctx, plugins.TypeApp) {
+		if p.Error != nil || p.FS == nil {
+			continue
+		}
+		loaded = append(loaded, definition.LoadedPlugin{FS: p.FS, JSONData: p.JSONData})
+	}
+	// The store lists plugins in map order, and the load must be stable.
+	slices.SortFunc(loaded, func(a, b definition.LoadedPlugin) int { return strings.Compare(a.JSONData.ID, b.JSONData.ID) })
+
+	pluginDefs, err := definition.LoadPluginDefinitionFromPlugins(loaded, definition.Options{
 		Filter: func(jsonData plugins.JSONData) bool {
-			if jsonData.Type == plugins.TypeApp {
-				if !isAppPluginID(jsonData.ID) {
-					logging.FromContext(ctx).Warn("invalid app plugin id", "pluginId", jsonData.ID)
-					return false
-				}
-				return true
+			if !isAppPluginID(jsonData.ID) {
+				logging.FromContext(ctx).Warn("invalid app plugin id", "pluginId", jsonData.ID)
+				return false
 			}
-			return false
+			return true
 		},
 		Schemas:     schemas,
 		AppManifest: true, // Load manifests
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("error getting list of app plugins: %w", err)
 	}
@@ -257,12 +317,16 @@ func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry, 
 
 func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
 	dev := pl.dev.backends(ctx)
-	if pl.deps.PluginSources == nil {
+	if pl.deps.PluginStore == nil {
 		return dev, nil
 	}
-	pluginDefs, err := loadLocalPluginDefinitions(ctx, pl.deps.PluginSources, true)
+
+	pluginDefs, err := loadLocalPluginDefinitions(ctx, pl.deps.PluginStore, true)
 	if err != nil {
 		return nil, err
+	}
+	if pl.inits != nil {
+		pl.inits.run(ctx, pl.deps, pluginDefs)
 	}
 	backends, err := pl.prepareBackends(ctx, pluginDefs)
 	if err != nil {
@@ -336,11 +400,53 @@ func isAppPluginID(id string) bool {
 	return strings.Contains(id, "-") && !strings.Contains(id, ".")
 }
 
+// Notify wakes on changes to the plugin store and to the dev manifests.
 func (pl PluginLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
+	var wakes []<-chan struct{}
 	if pl.dev != nil {
-		return pl.dev.notify(ctx)
+		ch, err := pl.dev.notify(ctx)
+		if err != nil {
+			return nil, err
+		}
+		wakes = append(wakes, ch)
 	}
-	return make(chan struct{}), nil // TODO? is there a plugin registry with update events?
+	if pl.deps.PluginNotifier != nil {
+		wakes = append(wakes, pl.deps.PluginNotifier.Notify(ctx))
+	}
+	switch len(wakes) {
+	case 0:
+		return make(chan struct{}), nil
+	case 1:
+		return wakes[0], nil
+	}
+	return mergeWakes(ctx, wakes...), nil
+}
+
+// mergeWakes folds wake channels into one that coalesces them. It closes once
+// every input is closed or ctx is done.
+func mergeWakes(ctx context.Context, in ...<-chan struct{}) <-chan struct{} {
+	out := make(chan struct{}, 1)
+	var wg sync.WaitGroup
+	for _, ch := range in {
+		wg.Go(func() {
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case _, ok := <-ch:
+					if !ok {
+						return
+					}
+					wake(out)
+				}
+			}
+		})
+	}
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	return out
 }
 
 //-----------------------
