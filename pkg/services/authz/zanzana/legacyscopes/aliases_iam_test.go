@@ -13,6 +13,8 @@ import (
 
 	"github.com/grafana/authlib/types"
 
+	"github.com/grafana/authlib/types"
+
 	"github.com/stretchr/testify/require"
 	clientrest "k8s.io/client-go/rest"
 
@@ -157,4 +159,30 @@ func TestScopeAliasesUIDOnlyObjectNeverProducesIDZero(t *testing.T) {
 	require.Contains(t, got, ac.Permission{Action: "serviceaccounts:read", Scope: "serviceaccounts:id:9"})
 	require.Equal(t, int64(1), lists.Load(), "the namespace remains warm")
 	require.Equal(t, int64(1), gets.Load(), "refresh the missing mapping after its shorter cache lifetime")
+}
+
+func TestScopeAliasesReverseLookupFollowsFilteredPages(t *testing.T) {
+	var calls atomic.Int64
+	iam := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls.Add(1)
+		require.Equal(t, utils.LabelKeyDeprecatedInternalID+"=42", r.URL.Query().Get("labelSelector"))
+		w.Header().Set("Content-Type", "application/json")
+		body := map[string]any{"apiVersion": "iam.grafana.app/v0alpha1", "kind": "TeamList", "metadata": map[string]string{}, "items": []any{}}
+		if r.URL.Query().Get("continue") == "" {
+			body["metadata"] = map[string]string{"continue": "next"}
+		} else {
+			body["items"] = []any{map[string]any{"apiVersion": "iam.grafana.app/v0alpha1", "kind": "Team", "metadata": map[string]any{"name": "platform", "namespace": "default", "labels": map[string]string{utils.LabelKeyDeprecatedInternalID: "42"}}}}
+		}
+		require.NoError(t, json.NewEncoder(w).Encode(body))
+	}))
+	t.Cleanup(iam.Close)
+	resolver := NewUIDResolver(aliasRESTConfig(func(context.Context) (*clientrest.Config, error) { return &clientrest.Config{Host: iam.URL}, nil }))
+	ns := types.NamespaceInfo{Value: "default", OrgID: 1}
+	uid, err := resolver.ResolveScope(t.Context(), ns, ScopeReference{Resource: "teams", Attribute: "id", Value: "42"})
+	require.NoError(t, err)
+	require.Equal(t, "platform", uid)
+	id, err := resolver.ResolveScope(t.Context(), ns, ScopeReference{Resource: "teams", Attribute: "uid", Value: "platform"})
+	require.NoError(t, err)
+	require.Equal(t, "42", id)
+	require.Equal(t, int64(2), calls.Load(), "both directions are cached after the complete filtered lookup")
 }
