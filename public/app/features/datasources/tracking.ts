@@ -1,3 +1,4 @@
+import { type DataSourceJsonData } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
 /**
@@ -55,6 +56,40 @@ type DataSourceTestedProps = {
   success: boolean;
   /** The URL path that points to the page where the event was triggered. We are using this to be able to distinguish between the performance of different datasource edit locations. */
   path?: string;
+  /**
+   * The authentication method configured on the datasource, only set for plugins listed in `authTypeResolvers`.
+   * Values are plugin specific, so compare them per `plugin_id`.
+   */
+  authentication_type?: string;
+};
+
+type AuthTypeJsonData = DataSourceJsonData & { authenticationType?: unknown };
+
+type AuthTypeResolver = (jsonData: AuthTypeJsonData) => string | undefined;
+
+const GOOGLE_AUTH_TYPES = ['jwt', 'gce', 'workloadIdentityFederation', 'forwardOAuthIdentity'];
+
+// Both Google plugins default to a service account key (`jwt`) when `authenticationType` is not set.
+const googleAuthType: AuthTypeResolver = (jsonData) => {
+  const authType = jsonData.authenticationType ?? 'jwt';
+  return typeof authType === 'string' && GOOGLE_AUTH_TYPES.includes(authType) ? authType : undefined;
+};
+
+/**
+ * Maps a plugin id to a function that reads its auth method from `jsonData`. Plugins use different fields
+ * for this (e.g. `authenticationType`, `authType`, `azureAuthType`), so each plugin has to be added explicitly.
+ *
+ * A resolver must only return a short value from a fixed set, never raw `jsonData`.
+ */
+const authTypeResolvers: Record<string, AuthTypeResolver> = {
+  'grafana-bigquery-datasource': googleAuthType,
+  stackdriver: googleAuthType,
+};
+
+/** Returns the configured auth method for plugins listed in `authTypeResolvers`, otherwise undefined. */
+export const getDataSourceAuthType = (pluginId: string, jsonData?: AuthTypeJsonData): string | undefined => {
+  const resolver = Object.hasOwn(authTypeResolvers, pluginId) ? authTypeResolvers[pluginId] : undefined;
+  return resolver && jsonData ? resolver(jsonData) : undefined;
 };
 
 type DataSourceGeneralTrackingProps = {

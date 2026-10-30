@@ -43,6 +43,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: jest.fn().mockReturnValue({ get: jest.fn() }),
 }));
 jest.mock('../tracking', () => ({
+  ...jest.requireActual('../tracking'),
   trackDataSourceCreated: jest.fn(),
   trackDataSourceTested: jest.fn(),
 }));
@@ -255,6 +256,28 @@ describe('testDataSource', () => {
         success: true,
         path: '/datasources/edit/CloudWatch',
       });
+    });
+
+    it('then the configured auth type is tracked for supported plugins', async () => {
+      const dependencies: TestDataSourceDependencies = {
+        getDatasourceSrv: () => ({
+          get: jest.fn().mockReturnValue({
+            testDatasource: jest.fn().mockReturnValue({ status: 'success', message: '' }),
+            meta: { id: 'stackdriver' },
+            uid: 'GCM1234',
+          }),
+          getInstanceSettings: jest.fn().mockReturnValue({ jsonData: { authenticationType: 'gce' } }),
+        }),
+        getBackendSrv: getBackendSrvMock,
+      };
+      const state = { testingStatus: { status: 'success', message: '', details: {} } };
+      await thunkTester(state)
+        .givenThunk(testDataSource)
+        .whenThunkIsDispatched('GCM', DATASOURCES_ROUTES.Edit, dependencies);
+
+      expect(trackDataSourceTested).toHaveBeenCalledWith(
+        expect.objectContaining({ plugin_id: 'stackdriver', success: true, authentication_type: 'gce' })
+      );
     });
 
     it('then testDataSourceFailed should be dispatched', async () => {
