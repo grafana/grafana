@@ -1,4 +1,4 @@
-import { waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 
 import { CoreApp, DataSourceApi, getDefaultTimeRange, LoadingState, PanelPlugin, toDataFrame } from '@grafana/data';
 import { getPanelDataStatusItems, PanelStatusStore } from '@grafana/data/internal';
@@ -20,7 +20,7 @@ jest.mock('@grafana/runtime', () => ({
 class InspectorDatasource extends DataSourceApi {
   query = jest.fn();
   testDatasource = jest.fn();
-  components = { MetadataInspector: () => null, ErrorsAndNoticesInspector: () => null };
+  components = { MetadataInspector: () => null, ErrorsAndNoticesInspector: () => <div>Custom query details</div> };
 }
 
 function datasource(uid: string) {
@@ -114,6 +114,47 @@ function withQueryData() {
 }
 
 describe('Tab availability', () => {
+  it.each(['panel warning', 'plugin-load error'])(
+    'shows a %s after successful custom-inspector queries',
+    async (kind) => {
+      jest.mocked(getDataSourceInstance).mockResolvedValue(datasource('first'));
+      const { store, panel, drawer } = setup();
+      if (kind === 'panel warning') {
+        store.createSource().set([{ id: 'panel', severity: 'warning', text: 'Choose field' }]);
+      } else {
+        panel.setState({ _pluginLoadError: 'Plugin failed to load' });
+      }
+
+      await act(async () => {
+        activateDrawer(drawer);
+      });
+      render(<drawer.Component model={drawer} />);
+
+      expect(
+        await screen.findByText(kind === 'panel warning' ? 'Choose field' : 'Plugin failed to load')
+      ).toBeVisible();
+    }
+  );
+
+  it('shows the remaining panel warning when custom-inspector query errors clear', async () => {
+    const customDatasource = datasource('first');
+    jest.mocked(getDataSourceInstance).mockResolvedValue(customDatasource);
+    const { store, data, drawer } = withQueryData();
+    store.createSource().set([{ id: 'panel', severity: 'warning', text: 'Choose field' }]);
+    await act(async () => {
+      activateDrawer(drawer);
+    });
+    render(<drawer.Component model={drawer} />);
+    expect(await screen.findByText('Custom query details')).toBeVisible();
+
+    await act(async () => {
+      data.setState({ data: { ...data.state.data!, state: LoadingState.Done, errors: [] } });
+    });
+
+    expect(await screen.findByText('Choose field')).toBeVisible();
+    expect(screen.queryByText('Custom query details')).not.toBeInTheDocument();
+  });
+
   it('shows an existing panel notice on a non-query panel', async () => {
     plugin.meta.skipDataQuery = true;
     const { store, drawer, tabs } = setup();

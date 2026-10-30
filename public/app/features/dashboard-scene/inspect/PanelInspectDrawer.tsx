@@ -60,14 +60,19 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
       const data = provider.state.data;
       const [metadataDataSource, noticesDataSource] = await Promise.all([
         getDataSourceWithInspector(data).catch(() => undefined),
-        getDataSourceWithErrorsAndNoticesInspector(data).catch(() => undefined),
+        hasErrorsOrNotices(data) ? getDataSourceWithErrorsAndNoticesInspector(data).catch(() => undefined) : undefined,
       ]);
       // A newer result, provider replacement, or drawer close invalidates this discovery.
       if (version !== discoveryVersion) {
         return;
       }
       this.updateMetadataTab(metadataDataSource, data);
-      if (!this.noticesTab || this.noticesTab.state.dataSource !== noticesDataSource) {
+      // Preserve the visible tab while a loading refresh temporarily clears query notices.
+      if (
+        !this.noticesTab ||
+        (this.noticesTab.state.dataSource !== noticesDataSource &&
+          (noticesDataSource || data?.state !== LoadingState.Loading))
+      ) {
         this.noticesTab = new InspectErrorsAndNoticesTab({
           panelRef: this.state.panelRef,
           dataSource: noticesDataSource,
