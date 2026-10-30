@@ -61,9 +61,8 @@ export function AlertRuleActions({ searchHit, rule, ruleIsLoading = false }: Ale
   const identifier: GrafanaRuleIdentifier = { ruleSourceName: GRAFANA_RULES_SOURCE_NAME, uid };
 
   const handlePauseResume = async () => {
-    try {
-      await updateAlertRule({ name: uid, patch: { spec: { paused: !isPaused } } }).unwrap();
-    } catch {
+    const result = await updateAlertRule({ name: uid, patch: { spec: { paused: !isPaused } } });
+    if ('error' in result) {
       appEvents.emit(AppEvents.alertError, [
         t('alerting.gma-rule-list.actions.pause-error', 'Failed to {{action}} rule', {
           action: isPaused
@@ -77,9 +76,8 @@ export function AlertRuleActions({ searchHit, rule, ruleIsLoading = false }: Ale
 
   const handleDelete = async () => {
     setShowDeleteConfirm(false);
-    try {
-      await deleteAlertRule({ name: uid }).unwrap();
-    } catch {
+    const result = await deleteAlertRule({ name: uid });
+    if ('error' in result) {
       appEvents.emit(AppEvents.alertError, [t('alerting.gma-rule-list.actions.delete-error', 'Failed to delete rule')]);
     }
   };
