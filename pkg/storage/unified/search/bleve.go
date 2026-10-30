@@ -563,7 +563,7 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 	}
 }
 
-func (b *bleveBackend) shouldUpload(key resource.NamespacedResource, idx *bleveIndex, now time.Time) (bool, error) {
+func (b *bleveBackend) shouldUpload(ctx context.Context, key resource.NamespacedResource, idx *bleveIndex, now time.Time) (bool, error) {
 	docCount, err := idx.index.DocCount()
 	if err != nil {
 		return false, fmt.Errorf("reading document count for %v: %w", key, err)
@@ -574,7 +574,12 @@ func (b *bleveBackend) shouldUpload(key resource.NamespacedResource, idx *bleveI
 
 	lastUploadTime, ok := b.getUploadTracking(key)
 	if !ok {
-		return true, nil
+		// An index reopened from disk has no tracking even when the store already
+		// holds a copy of its build.
+		lastUploadTime, ok = b.seedUploadTrackingFromRemote(ctx, key, idx, now)
+		if !ok {
+			return true, nil
+		}
 	}
 	if b.opts.Snapshot.UploadInterval > 0 && now.Sub(lastUploadTime) < b.opts.Snapshot.UploadInterval {
 		return false, nil
@@ -650,17 +655,6 @@ func (b *bleveBackend) uploadSnapshotsPeriodically(ctx context.Context) {
 }
 
 func (b *bleveBackend) runUploadSnapshots(ctx context.Context) {
-	var (
-		seedLookups int
-		seeded      int
-		seedElapsed time.Duration
-	)
-	defer func() {
-		if seedLookups > 0 {
-			b.log.Info("Snapshot upload tick seeded tracking from remote", "looked_up", seedLookups, "seeded", seeded, "elapsed", seedElapsed)
-		}
-	}()
-
 	for _, key := range b.GetOpenIndexes() {
 		idx := b.peekCachedIndex(key)
 		if idx == nil || idx.indexStorage != indexStorageFile {
@@ -678,30 +672,11 @@ func (b *bleveBackend) runUploadSnapshots(ctx context.Context) {
 			continue
 		}
 
-		shouldUpload, err := b.shouldUpload(key, idx, time.Now())
+		shouldUpload, err := b.shouldUpload(ctx, key, idx, time.Now())
 		if err != nil {
 			b.recordSnapshotUploadStatus(snapshotUploadStatusError)
 			b.log.Warn("failed to evaluate snapshot upload eligibility", "key", key, "err", err)
 			continue
-		}
-		// An index reopened from disk has no tracking even when the store already
-		// holds a copy of its build. shouldUpload is checked first so indexes below
-		// MinDocCount never touch the store; the tracked check is needed because a
-		// tracked index can also be due through the mutation or refresh rules.
-		if _, tracked := b.getUploadTracking(key); shouldUpload && !tracked {
-			seedLookups++
-			seedStart := time.Now()
-			ok := b.seedUploadTrackingFromRemote(ctx, key, idx)
-			seedElapsed += time.Since(seedStart)
-			if ok {
-				seeded++
-				shouldUpload, err = b.shouldUpload(key, idx, time.Now())
-				if err != nil {
-					b.recordSnapshotUploadStatus(snapshotUploadStatusError)
-					b.log.Warn("failed to evaluate snapshot upload eligibility", "key", key, "err", err)
-					continue
-				}
-			}
 		}
 		if !shouldUpload {
 			b.recordSnapshotUploadStatus(snapshotUploadStatusSkipNoChanges)
