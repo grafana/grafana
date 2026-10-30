@@ -215,17 +215,13 @@ func annotationLegacyAccessControl(t *testing.T, ac *acimpl.AccessControl, permi
 
 type annotationLegacyEvaluator struct {
 	accesscontrol.AccessControl
-	client *legacyclient.LegacyClient
+	client legacyclient.LegacyAccessClient
 }
 
 func (a *annotationLegacyEvaluator) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
-	expression, err := accesscontrol.ToLegacyExpression(evaluator)
-	if err != nil {
-		return false, err
-	}
-	return a.client.LegacyCheck(ctx, &authzextv1.LegacyCheckRequest{
-		Namespace:  types.OrgNamespaceFormatter(user.GetOrgID()),
-		Subject:    user.GetUID(),
-		Expression: expression,
+	return a.client.LegacyCheck(ctx, legacyclient.LegacyCheckRequest{
+		Namespace: types.OrgNamespaceFormatter(user.GetOrgID()),
+		Subject:   user.GetUID(),
+		Evaluator: evaluator,
 	})
 }

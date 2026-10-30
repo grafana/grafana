@@ -21,8 +21,8 @@ import (
 const manifestDiscoveryStatus = manifestDiscoveryPrefix + "/status"
 
 // routerStatusDoc is the router's live status, for debugging. Only Grafana
-// admins can read it, except in development. It still holds no credentials, addresses, URLs or error
-// text: only names, states and counts.
+// admins can read it, except in development. It lists every group, hidden ones too, and still holds no
+// credentials, addresses, URLs or error text: only names, states and counts.
 type routerStatusDoc struct {
 	Ready        bool               `json:"ready"`
 	Reconciler   reconcilerDoc      `json:"reconciler"`
@@ -102,6 +102,9 @@ type groupStatusDoc struct {
 	Plugin   *PluginStatus    `json:"plugin,omitempty"`
 	LoadedAt time.Time        `json:"loadedAt"`
 	Manifest bool             `json:"manifest"`
+	// Visibility is internal for a group only access policies see, and
+	// public otherwise. Either way, a namespace filter may hide it too.
+	Visibility string `json:"visibility"`
 	// Discovery is where the group's aggregated discovery comes from:
 	// provided by the backend when it loaded (a DiscoveryProvider, never
 	// fetched per request), cached (fetched, and fresh for
@@ -230,6 +233,10 @@ func (r *GrafanaRouter) groupStatus(name string, entry servingEntry) groupStatus
 		Plugin:   entry.plugin,
 		LoadedAt: entry.loadedAt.UTC(),
 		Manifest: entry.hasManifest,
+	}
+	g.Visibility = "public"
+	if _, internal := r.internalGroups[name]; internal {
+		g.Visibility = "internal"
 	}
 	if entry.watching != nil {
 		g.Watches = entry.watching.Load()

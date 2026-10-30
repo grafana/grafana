@@ -1,11 +1,15 @@
-import { buildAlertRuleLeaves } from '../alert-rules/alertRuleSearchQuery';
-
+import { type RuleSearchSchema } from './filterDefinitions';
 import { parse } from './parser';
+import { buildSharedLeaves } from './searchQueryLeaves';
 import { getRejectionIssues } from './searchRejection';
+import { sharedFilters } from './sharedFilters';
+import { type SharedRuleFilter, createEmptyFilter } from './sharedRuleFilter';
+
+const schema: RuleSearchSchema<SharedRuleFilter> = { filters: Object.values(sharedFilters), createEmptyFilter };
 
 function rejectionOf(query: string, causes: Array<{ field?: string; message: string }>) {
   const error = { status: 422, data: { message: 'invalid', details: { causes } } };
-  return getRejectionIssues(error, buildAlertRuleLeaves(parse(query, 'alert').filter));
+  return getRejectionIssues(error, buildSharedLeaves(parse(query, schema).filter));
 }
 
 describe('getRejectionIssues', () => {
@@ -17,12 +21,12 @@ describe('getRejectionIssues', () => {
 
   it('names the filter of each rejected leaf of an and', () => {
     const causes = [
-      { field: 'where.and[1].regex.pattern', message: 'missing )' },
-      { field: 'where.and[2].filter.values', message: 'bad uid' },
+      { field: 'where.and[2].regex.pattern', message: 'missing )' },
+      { field: 'where.and[1].filter.values', message: 'bad uid' },
     ];
-    expect(rejectionOf('cpu label:team=~( panelId:4 dashboard:d', causes)).toEqual([
+    expect(rejectionOf('cpu folder:f1 label:team=~(', causes)).toEqual([
       { key: 'label', reason: 'rejected', message: 'missing )' },
-      { key: 'dashboard', reason: 'rejected', message: 'bad uid' },
+      { key: 'folder', reason: 'rejected', message: 'bad uid' },
     ]);
   });
 
