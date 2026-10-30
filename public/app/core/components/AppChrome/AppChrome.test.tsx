@@ -6,7 +6,7 @@ import { render, screen, waitFor, act, getWrapper, within } from 'test/test-util
 
 import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, setBackendSrv, useScopes } from '@grafana/runtime';
+import { config, locationService, setBackendSrv, useScopes } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -24,11 +24,18 @@ import {
   useExtensionSidebarContext,
 } from './ExtensionSidebar/ExtensionSidebarProvider';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
-  useScopes: jest.fn(),
-}));
+jest.mock('@grafana/runtime', () => {
+  const actual = jest.requireActual('@grafana/runtime');
+  return {
+    ...actual,
+    // A getter, because the test wrapper swaps the location service and a spread would keep the first one
+    get locationService() {
+      return actual.locationService;
+    },
+    usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
+    useScopes: jest.fn(),
+  };
+});
 
 jest.mock('app/core/hooks/useMediaQueryMinWidth');
 
@@ -390,6 +397,16 @@ describe('AppChrome', () => {
 
       const nav = within(await sectionNav());
 
+      expect(nav.getByRole('link', { name: 'Users', current: 'page' })).toBeInTheDocument();
+    });
+
+    it('follows the URL when navigating into Administration', async () => {
+      setup(<div>Not yet a Page</div>, { extraNav: administrationNav, path: '/' });
+      expect(screen.queryByRole('navigation', { name: 'Administration' })).not.toBeInTheDocument();
+
+      act(() => locationService.push('/admin/users'));
+
+      const nav = within(await sectionNav());
       expect(nav.getByRole('link', { name: 'Users', current: 'page' })).toBeInTheDocument();
     });
 
