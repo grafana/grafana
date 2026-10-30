@@ -182,7 +182,7 @@ func validatePermissionGrant(grant *openfgav1.TupleKey) error {
 	typ, name, ok := strings.Cut(grant.GetObject(), ":")
 	subject, subjectRelation, _ := strings.Cut(grant.GetUser(), "#")
 	subjectType, subjectName, subjectOK := strings.Cut(subject, ":")
-	if !ok || name == "" || name == "*" || !subjectOK || subjectName == "" || subjectName == "*" {
+	if !ok || name == "" || strings.Contains(name, "*") || !subjectOK || subjectName == "" || subjectName == "*" {
 		return unsupportedPermissionGrant()
 	}
 	if typ == common.TypeResource {
