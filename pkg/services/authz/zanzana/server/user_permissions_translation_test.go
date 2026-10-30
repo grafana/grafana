@@ -125,6 +125,8 @@ func TestUserPermissionsTranslatesEverySupportedRelation(t *testing.T) {
 func TestUserPermissionsRejectsUnsupportedGrantShapes(t *testing.T) {
 	for _, grant := range []*openfgav1.TupleKey{
 		common.NewFolderTuple("user:alice", common.RelationGet, "*"),
+		common.NewResourceTuple("user:alice", common.RelationGet, dashboardGroup, dashboardResource, "", "*"),
+		common.NewResourceTuple("user:alice", common.RelationGet, dashboardGroup, dashboardResource, "", "dashboard*"),
 		common.NewFolderTuple("user:alice", common.RelationGet, "bad#folder"),
 		common.NewFolderTuple("user:alice", "can_get", "folder"),
 		common.NewTypedTuple(common.TypeRole, "user:alice", common.RelationAssignee, "role#assignee"),
