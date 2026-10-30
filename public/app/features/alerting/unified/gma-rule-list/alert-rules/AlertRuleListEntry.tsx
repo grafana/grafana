@@ -14,7 +14,7 @@ interface AlertRuleListEntryProps {
 /** Runs the per-rule lookups once so the row stays presentation-only. */
 export function AlertRuleListEntry({ searchHit, showFolderPath }: AlertRuleListEntryProps) {
   const folderPath = useFolderPath(showFolderPath ? searchHit.folderUid : undefined);
-  const { data: fullRule } = useGetAlertRuleQuery({ name: searchHit.uid });
+  const { data: fullRule, isLoading: ruleIsLoading } = useGetAlertRuleQuery({ name: searchHit.uid });
 
-  return <AlertRuleRow searchHit={searchHit} folderPath={folderPath} rule={fullRule} />;
+  return <AlertRuleRow searchHit={searchHit} folderPath={folderPath} rule={fullRule} ruleIsLoading={ruleIsLoading} />;
 }

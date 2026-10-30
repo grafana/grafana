@@ -24,9 +24,11 @@ interface AlertRuleRowProps {
   folderPath?: string[];
   /** Full rule resource; absent while loading or when the fetch failed. */
   rule?: AlertRule;
+  /** True while the rule fetch is in flight; false once settled (success or failure). */
+  ruleIsLoading?: boolean;
 }
 
-export function AlertRuleRow({ searchHit, folderPath, rule }: AlertRuleRowProps) {
+export function AlertRuleRow({ searchHit, folderPath, rule, ruleIsLoading = false }: AlertRuleRowProps) {
   const titleId = useId();
 
   return (
@@ -49,7 +51,7 @@ export function AlertRuleRow({ searchHit, folderPath, rule }: AlertRuleRowProps)
       right={
         <Stack alignItems="center" gap={1.5} wrap={false}>
           {searchHit.interval && <RuleInterval interval={searchHit.interval} />}
-          <AlertRuleActions searchHit={searchHit} rule={rule} />
+          <AlertRuleActions searchHit={searchHit} rule={rule} ruleIsLoading={ruleIsLoading} />
         </Stack>
       }
       meta={[
