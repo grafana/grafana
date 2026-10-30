@@ -530,20 +530,6 @@ func createFolder(t *testing.T, ctx context.Context, helper *apis.K8sTestHelper,
 	require.Equal(t, http.StatusOK, code)
 }
 
-// TestIntegrationPluginManifestServiceLoading covers manifests loaded during service startup.
-func TestIntegrationPluginManifestServiceLoading(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := setupHelperWithManifest(t, rest.Mode5,
-		featuremgmt.FlagGrafanaUseRouterMiddleware,
-		featuremgmt.FlagPluginStoreServiceLoading,
-	)
-
-	disco, err := helper.GetGroupVersionInfoJSON(testAppGroup)
-	require.NoError(t, err)
-	require.Contains(t, disco, `"resource": "things"`)
-}
-
 // TestIntegrationPluginManifestKindRoutes covers routes a manifest declares on a
 // kind. They mount as subresources of one object, resolve that object from
 // storage, and dispatch to the plugin's v3 route service.

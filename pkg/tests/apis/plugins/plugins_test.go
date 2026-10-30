@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -178,9 +177,6 @@ func setupHelper(t *testing.T) *apis.K8sTestHelper {
 		AppModeProduction:      true,
 		DisableAnonymous:       true,
 		APIServerRuntimeConfig: "plugins.grafana.app/v0alpha1=true",
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagPluginStoreServiceLoading,
-		},
 	})
 	t.Cleanup(func() { helper.Shutdown() })
 	return helper

@@ -958,11 +958,6 @@ export interface FeatureToggles {
   */
   jaegerEnableGrpcEndpoint?: boolean;
   /**
-  * Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded
-  * @default false
-  */
-  pluginStoreServiceLoading?: boolean;
-  /**
   * When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
   * @default true
   */

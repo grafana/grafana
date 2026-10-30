@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
@@ -39,15 +38,12 @@ func ProvideAppInstaller(
 	restConfigProvider apiserver.RestConfigProvider,
 	pluginStore pluginstore.Store, moduleHashCalc *modulehash.Calculator,
 	accessControlService accesscontrol.Service, accessClient authlib.AccessClient,
-	features featuremgmt.FeatureToggles, registerer prometheus.Registerer,
+	registerer prometheus.Registerer,
 ) (*AppInstaller, error) {
 	metrics.MustRegister(registerer)
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagPluginStoreServiceLoading) {
-		if err := registerAccessControlRoles(accessControlService); err != nil {
-			return nil, fmt.Errorf("registering access control roles: %w", err)
-		}
+	if err := registerAccessControlRoles(accessControlService); err != nil {
+		return nil, fmt.Errorf("registering access control roles: %w", err)
 	}
 
 	logger := logging.DefaultLogger.With("app", "plugins.app")
