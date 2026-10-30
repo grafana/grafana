@@ -13,13 +13,13 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// Inline blob version 1 limits keep base64 payloads below the default 4 MiB
-// gRPC receive limit. Resource metadata and spec still need to fit that limit.
+// Blob size matches the streaming backend's per-blob limit. Bulk blob bytes
+// travel in bounded chunks, not base64 inside a resource gRPC message.
 const (
 	InlineBlobVersion    = 1
 	MaxInlineBlobEntries = 16
-	MaxInlineBlobSize    = 1 << 20
-	MaxInlineBlobsSize   = 2 << 20
+	MaxInlineBlobSize    = 64 << 20
+	BulkBlobChunkSize    = 64 << 10
 )
 
 // InlineBlobMetadataKey carries the required version in BulkProcess request
@@ -69,7 +69,6 @@ func DecodeBlobEntries(value json.RawMessage) (map[string]BlobEntry, error) {
 		return nil, fmt.Errorf("blobs: %w", err)
 	}
 	result := make(map[string]BlobEntry, len(entries))
-	total := 0
 	hasInline := false
 	for name, raw := range entries {
 		entry, inline, err := decodeBlobEntry(raw)
@@ -80,10 +79,6 @@ func DecodeBlobEntries(value json.RawMessage) (map[string]BlobEntry, error) {
 			hasInline = true
 			if len(entries) > MaxInlineBlobEntries {
 				return nil, fmt.Errorf("inline blobs allow at most %d entries", MaxInlineBlobEntries)
-			}
-			total += len(entry.Data)
-			if total > MaxInlineBlobsSize {
-				return nil, fmt.Errorf("inline blobs exceed %d decoded bytes", MaxInlineBlobsSize)
 			}
 		}
 		result[name] = entry
@@ -141,27 +136,39 @@ func decodeBlobEntry(raw json.RawMessage) (BlobEntry, bool, error) {
 	if err := json.Unmarshal(fields["contentType"], &entry.ContentType); err != nil || entry.ContentType == "" {
 		return BlobEntry{}, true, fmt.Errorf("contentType must be a nonempty media type")
 	}
-	mediaType, _, err := mime.ParseMediaType(entry.ContentType)
-	if err != nil || !strings.Contains(mediaType, "/") || strings.Contains(mediaType, "*") {
-		return BlobEntry{}, true, fmt.Errorf("contentType must be a concrete media type")
+	if err := validateBlobContentType(entry.ContentType); err != nil {
+		return BlobEntry{}, true, err
 	}
+	entry.Data, err = decodeInlineBlobData(data, MaxInlineBlobSize)
+	return entry, true, err
+}
+
+func validateBlobContentType(contentType string) error {
+	mediaType, _, err := mime.ParseMediaType(contentType)
+	if err != nil || !strings.Contains(mediaType, "/") || strings.Contains(mediaType, "*") {
+		return fmt.Errorf("contentType must be a concrete media type")
+	}
+	return nil
+}
+
+func decodeInlineBlobData(raw json.RawMessage, maxSize int) ([]byte, error) {
 	var encoded string
-	if err := json.Unmarshal(data, &encoded); err != nil || encoded == "" {
-		return BlobEntry{}, true, fmt.Errorf("data must be nonempty base64")
+	if err := json.Unmarshal(raw, &encoded); err != nil || encoded == "" {
+		return nil, fmt.Errorf("data must be nonempty base64")
 	}
 	// Bound allocations before decoding. Reject whitespace and noncanonical
 	// encodings so every accepted string has one unambiguous byte representation.
-	if len(encoded) > base64.StdEncoding.EncodedLen(MaxInlineBlobSize) {
-		return BlobEntry{}, true, fmt.Errorf("data exceeds %d decoded bytes", MaxInlineBlobSize)
+	if len(encoded) > base64.StdEncoding.EncodedLen(maxSize) {
+		return nil, fmt.Errorf("data exceeds %d decoded bytes", maxSize)
 	}
-	entry.Data, err = base64.StdEncoding.Strict().DecodeString(encoded)
-	if err != nil || base64.StdEncoding.EncodeToString(entry.Data) != encoded {
-		return BlobEntry{}, true, fmt.Errorf("data must be canonical padded base64")
+	data, err := base64.StdEncoding.Strict().DecodeString(encoded)
+	if err != nil || base64.StdEncoding.EncodeToString(data) != encoded {
+		return nil, fmt.Errorf("data must be canonical padded base64")
 	}
-	if len(entry.Data) > MaxInlineBlobSize {
-		return BlobEntry{}, true, fmt.Errorf("data exceeds %d decoded bytes", MaxInlineBlobSize)
+	if len(data) > maxSize {
+		return nil, fmt.Errorf("data exceeds %d decoded bytes", maxSize)
 	}
-	return entry, true, nil
+	return data, nil
 }
 
 // Duplicate names could otherwise validate one value and persist another when

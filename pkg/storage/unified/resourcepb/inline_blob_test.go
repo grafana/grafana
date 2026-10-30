@@ -88,35 +88,49 @@ func TestDecodeBlobEntriesRejectsInvalidInput(t *testing.T) {
 	}
 }
 
-func TestInlineBlobLimits(t *testing.T) {
-	blob := func(size int) BlobEntry {
-		return BlobEntry{ContentType: "application/octet-stream", Data: bytes.Repeat([]byte{255}, size)}
+func TestInlineBlobDataLimit(t *testing.T) {
+	// Exercise both encoded-length and exact decoded-length boundaries without
+	// allocating backend-sized bodies in unit tests.
+	const limit = 4
+	for _, size := range []int{3, 4, 5, 7} {
+		raw, err := json.Marshal(bytes.Repeat([]byte{255}, size))
+		if err != nil {
+			t.Fatal(err)
+		}
+		data, err := decodeInlineBlobData(raw, limit)
+		if (err != nil) != (size > limit) {
+			t.Fatalf("size %d: error = %v", size, err)
+		}
+		if err == nil && len(data) != size {
+			t.Fatalf("size %d: decoded %d bytes", size, len(data))
+		}
 	}
-	for _, tc := range []struct {
-		name    string
-		entries map[string]BlobEntry
-		wantErr bool
-	}{
-		{"individual boundary", map[string]BlobEntry{"a": blob(MaxInlineBlobSize)}, false},
-		{"individual overflow", map[string]BlobEntry{"a": blob(MaxInlineBlobSize + 1)}, true},
-		{"aggregate boundary", map[string]BlobEntry{"a": blob(MaxInlineBlobSize), "b": blob(MaxInlineBlobSize)}, false},
-		{"aggregate overflow", map[string]BlobEntry{"a": blob(MaxInlineBlobSize), "b": blob(MaxInlineBlobSize), "c": blob(1)}, true},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			raw, err := json.Marshal(tc.entries)
-			if err != nil {
-				t.Fatal(err)
-			}
-			_, err = DecodeBlobEntries(raw)
-			if (err != nil) != tc.wantErr {
-				t.Fatalf("error = %v, wantErr = %v", err, tc.wantErr)
-			}
-		})
+}
+
+func TestInlineBlobsDoNotHaveResourceMessageSizeLimits(t *testing.T) {
+	// HTTP input is split before gRPC transport. Neither a 1 MiB per-blob cap
+	// nor a 2 MiB aggregate cap should be inferred from gRPC message limits.
+	blob := BlobEntry{ContentType: "application/octet-stream", Data: bytes.Repeat([]byte{255}, 2<<20+1)}
+	raw, err := json.Marshal(map[string]BlobEntry{"a": blob, "b": blob})
+	if err != nil {
+		t.Fatal(err)
 	}
+	entries, err := DecodeBlobEntries(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, entry := range entries {
+		if !bytes.Equal(entry.Data, blob.Data) {
+			t.Fatalf("blob %q lost bytes", name)
+		}
+	}
+}
+
+func TestInlineBlobEntryLimit(t *testing.T) {
 	for _, count := range []int{MaxInlineBlobEntries, MaxInlineBlobEntries + 1} {
 		entries := make(map[string]BlobEntry)
 		for i := range count {
-			entries[fmt.Sprint(i)] = blob(1)
+			entries[fmt.Sprint(i)] = BlobEntry{ContentType: "application/octet-stream", Data: []byte{255}}
 		}
 		raw, err := json.Marshal(entries)
 		if err != nil {

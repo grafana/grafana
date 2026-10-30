@@ -41,21 +41,25 @@ normalization must replace inline bytes with authoritative references before sto
   a required concrete `contentType` (parameters allowed). Empty content is unsupported.
 - References require a nonblank `uid`; metadata is optional and not authoritative.
   Preserve unknown reference fields and unrelated resource fields during normalization.
-- Inline-bearing objects require nonblank names and allow at most **16 entries**,
-  **1 MiB decoded per blob**, and **2 MiB decoded aggregate**. Reference-only objects
-  are exempt from these new limits. Base64 adds about 33%; the complete message must
-  still fit transport limits (normally 4 MiB for gRPC).
+- Inline-bearing objects require nonblank names and allow at most **16 entries**
+  and **64 MiB decoded per blob**, matching the streaming backend. There is no
+  separate aggregate decoded-size cap. HTTP request limits still apply; base64 adds
+  about 33%. Resource gRPC messages keep their existing transport limits.
 
-The bulk endpoint discovers only `blobs.<name>.data`, never resource-specific `spec`
-fields. After authorization and key/body validation, it uploads under the validated
-resource identity and forwards references to either backend. `SkipValidation` and
-absence of handshake metadata must not bypass normalization. Deletes and ordinary
-dry-runs must not upload. Upload errors (transport or embedded `Error`) prevent
-publication; resource failure afterward may leave an orphan, never a dangling
-published reference. Support requires GC protection until references become visible,
-safe orphan cleanup, and tested cancellation/partial commits—not bulk-wide rollback.
-There is no generic GET/LIST rehydration. Existing direct/streaming uploads, snapshot
-`/dashboard` and legacy reads, provisioning previews, and GC exemptions stay unchanged.
+The HTTP resource API splits only `blobs.<name>.data`, never resource-specific
+`spec` fields: it uploads bytes through blob streaming and sends reference-only
+resources to resource gRPC. Bulk producers instead split input into the frames below;
+`BulkProcess` handles their uploads without a separate producer-side blob RPC.
+Plain resource gRPC bodies must not contain inline `data` or placeholder references.
+
+Both paths authorize and validate identity before uploading under that identity,
+then publish authoritative references. `SkipValidation` must not bypass blob checks.
+Deletes and ordinary dry-runs must not upload. Upload errors (transport or embedded
+`Error`) prevent publication; resource failure afterward may leave an orphan, never
+a dangling published reference. Support requires GC protection until references are
+visible, safe orphan cleanup, and tested cancellation/partial commits—not bulk-wide
+rollback. Existing direct uploads, snapshot `/dashboard` and legacy reads,
+provisioning previews, and GC exemptions stay unchanged; there is no GET/LIST rehydration.
 
 ### Automatic BulkProcess negotiation
 
@@ -70,7 +74,7 @@ The bulk client negotiates on each import stream before sending **any** bodies:
    `ValidateInlineBlobAcknowledgement`; missing, duplicate, or non-v1 values fail closed.
    On failure/timeout, cancel the stream without sending bodies or falling back to inline
    persistence. Stop the timer after negotiation; do not shorten the entire import deadline.
-4. Send resources; the endpoint handles blob uploads and reference replacement. Require
+4. Send framed resources; the endpoint handles uploads and reference insertion. Require
    successful final `CloseAndRecv`, a nonnil response, and no embedded `Error` before
    considering the import complete. An acknowledgement alone is not import success.
 
@@ -78,8 +82,37 @@ Older servers may wait for bodies before sending headers; timeout/cancellation m
 unblock the header wait without goroutine leaks. Never cache acknowledgement across
 streams/replicas; retries negotiate again and proxies must honor downstream support.
 Existing non-inline clients need no handshake. Bulk support does not imply ordinary
-Create/Update support. Future server tests must cover remote/in-process negotiation,
-reference-only GET/LIST, persisted/history bodies, and watch events.
+Create/Update support.
+
+### Chunk framing in the existing BulkRequest
+
+Fields 1–4 remain unchanged. Additive fields `blob_uploads` (5) and `blob_chunk` (6)
+carry a sequential resource/blob group after the v1 handshake:
+
+```text
+resource { key, action, value, folder, blob_uploads: [{name, content_type, size}, ...] }
+chunk    { blob_chunk: {name, value: <raw bytes>} }  // repeat, 1..64 KiB each
+end      { blob_chunk: {name, last: true} }          // empty value, explicit EOF
+...next declared blob, then next resource...
+```
+
+The resource body omits the declared blob slots entirely, preserving other references
+and unrelated fields; declarations must not collide with existing entries. The server
+fills these slots with authoritative references only after all declared uploads succeed.
+Chunk frames set no resource fields and inherit the pending resource identity. Uploads
+follow declaration order without interleaving resources/blobs; names must match and the
+received total must equal the declared size (1..64 MiB). EOF/new resource before a blob's
+end marker, extra bytes, duplicate end markers, or chunks without a declaration fail the
+stream. Earlier resources may already have committed; the incomplete resource must not.
+
+The endpoint streams one blob at a time with bounded buffers/backpressure, not a full
+resource-sized blob buffer. Chunk frames never reach either resource backend or count
+as resource writes; the final response accounts for completed resource operations only.
+`ValidateBulkBlobFrame` checks individual frame shapes; sequence, byte totals, identity,
+resource JSON, and lifecycle checks belong to the server implementation. No server or
+producer uses these fields yet. Older servers ignore new fields, so acknowledgement
+before sending is mandatory. Future server tests must cover ordering/size failures,
+remote/in-process negotiation, reference-only GET/LIST, stored/history bodies, and watches.
 
 ## Remote blob streaming
 
