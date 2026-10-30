@@ -4,7 +4,5 @@
   "projectType": "library",
   "tags": ["scope:package", "type:ui"],
   "// targets": "to see all targets run: nx show project @grafana/o11y-ds-frontend --web",
-  "targets": {
-    "pack:artifacts": {}
-  }
+  "targets": {}
 }
