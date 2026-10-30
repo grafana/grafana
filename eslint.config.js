@@ -13,7 +13,7 @@ const reactPreferFunctionComponentPlugin = require('eslint-plugin-react-prefer-f
 const testingLibraryPlugin = require('eslint-plugin-testing-library');
 const unicornPlugin = require('eslint-plugin-unicorn');
 
-const grafanaConfig = require('@grafana/eslint-config/flat');
+const grafanaConfig = require('@grafana/eslint-config').default;
 const grafanaPlugin = require('@grafana/eslint-plugin');
 const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
 
