@@ -259,7 +259,7 @@ jobs:
             if [ -f lerna.json ]; then
               npm exec --no -- lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
             else
-              npm exec --no -- nx release version "$VERSION"
+              npm exec --no -- nx release version --groups=grafana "$VERSION"
             fi
           fi
       - name: Refresh lockfile
