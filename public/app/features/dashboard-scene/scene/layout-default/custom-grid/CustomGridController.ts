@@ -756,7 +756,12 @@ export class CustomGridController {
   }
 }
 
-function isOutsidePage({ clientX, clientY, target }: Pick<PointerEvent, 'clientX' | 'clientY' | 'target'>): boolean {
+/** Whether a pointer event happened outside the page, e.g. outside the window, where nothing can take a dragged panel */
+export function isOutsidePage({
+  clientX,
+  clientY,
+  target,
+}: Pick<PointerEvent, 'clientX' | 'clientY' | 'target'>): boolean {
   const isOutsideWindow = clientX < 0 || clientY < 0 || clientX > window.innerWidth || clientY > window.innerHeight;
   return isOutsideWindow || !(target instanceof Node && document.body.contains(target));
 }

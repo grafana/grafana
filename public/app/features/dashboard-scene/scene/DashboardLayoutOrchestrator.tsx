@@ -385,6 +385,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     }
 
     const layout = sourceDropTarget.state.layout;
+    // Released outside of its grid, where nothing takes the item: the drag is cancelled
+    if (layout.state.isDraggedItemOutside) {
+      return;
+    }
     const children = layout.state.children;
     const finalOrder = layout.state.draggedChildren ?? children;
     const fromIndex = children.findIndex((child) => child === gridItem);
@@ -726,7 +730,9 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   }
 
   private _captureItemDimensions(gridItem: SceneGridItemLike): void {
-    const { width, height } = measureGridItem(gridItem);
+    // Measured at drag start: an auto grid item outside of its grid has no size of its own any more
+    const { width, height } =
+      isUnifiedDragAndDropEnabled() && this._dragInfo ? this._dragInfo : measureGridItem(gridItem);
     this._previewWidth = width;
     this._previewHeight = height;
   }

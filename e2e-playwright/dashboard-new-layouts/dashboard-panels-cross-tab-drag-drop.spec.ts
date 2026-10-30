@@ -95,41 +95,57 @@ test.describe('Dashboard panels cross-tab drag and drop', { tag: ['@dashboards',
       await expectTabPanels({ tabs, panels }, 'Tab 2', ['Q1']);
     });
 
-    // Today Escape does not cancel a panel drag: the release still commits the move
-    test.fixme(
-      'keeps the panel in place when the drag is cancelled with Escape',
-      async ({ page, selectors, controls, sidebar, tabs, panels }) => {
-        await importDashboard(page, selectors, 'Cancel panel drag with Escape');
-        await controls.enterEditMode();
-        const boxesBefore = await getTab1PanelBoxes(panels);
+    test('keeps the panel in place when the drag is cancelled with Escape', async ({
+      page,
+      selectors,
+      controls,
+      sidebar,
+      tabs,
+      panels,
+      unifiedDragAndDrop,
+    }) => {
+      test.fixme(
+        !unifiedDragAndDrop,
+        'Escape does not cancel a panel drag: the release still commits the move (#136465)'
+      );
+      await importDashboard(page, selectors, 'Cancel panel drag with Escape');
+      await controls.enterEditMode();
+      const boxesBefore = await getTab1PanelBoxes(panels);
 
-        const drag = await startPointerDrag(page, 'panel "P1"', panels.getHeader('P1'));
-        await drag.moveTo(panels.getHeader('P3'));
-        await drag.pressEscape();
-        await drag.drop();
+      const drag = await startPointerDrag(page, 'panel "P1"', panels.getHeader('P1'));
+      await drag.moveTo(panels.getHeader('P3'));
+      await drag.pressEscape();
+      await drag.drop();
 
-        await expectTab1Unchanged({ tabs, panels }, boxesBefore);
-        await expect(sidebar.toolbar.getButton('Undo')).toBeDisabled();
-      }
-    );
+      await expectTab1Unchanged({ tabs, panels }, boxesBefore);
+      await expect(sidebar.toolbar.getButton('Undo')).toBeDisabled();
+    });
 
-    // Today a release outside the viewport never ends the drag: the panel is left floating off-screen
-    test.fixme(
-      'keeps the panel in place when it is dropped outside the browser viewport',
-      async ({ page, selectors, controls, sidebar, tabs, panels }) => {
-        await importDashboard(page, selectors, 'Drop panel outside viewport');
-        await controls.enterEditMode();
-        const boxesBefore = await getTab1PanelBoxes(panels);
+    test('keeps the panel in place when it is dropped outside the browser viewport', async ({
+      page,
+      selectors,
+      controls,
+      sidebar,
+      tabs,
+      panels,
+      unifiedDragAndDrop,
+    }) => {
+      test.fixme(
+        !unifiedDragAndDrop,
+        'A release outside the viewport never ends the drag: the panel is left floating off-screen (#136466)'
+      );
+      await importDashboard(page, selectors, 'Drop panel outside viewport');
+      await controls.enterEditMode();
+      const boxesBefore = await getTab1PanelBoxes(panels);
 
-        const drag = await startPointerDrag(page, 'panel "P1"', panels.getHeader('P1'));
-        // straight to the left, so the pointer leaves the viewport without crossing other panels
-        await drag.moveToPoint({ x: -50, y: boxesBefore[0].y + 10 });
-        await drag.drop();
+      const drag = await startPointerDrag(page, 'panel "P1"', panels.getHeader('P1'));
+      // straight to the left, so the pointer leaves the viewport without crossing other panels
+      await drag.moveToPoint({ x: -50, y: boxesBefore[0].y + 10 });
+      await drag.drop();
 
-        await expectTab1Unchanged({ tabs, panels }, boxesBefore);
-        await expect(sidebar.toolbar.getButton('Undo')).toBeDisabled();
-      }
-    );
+      await expectTab1Unchanged({ tabs, panels }, boxesBefore);
+      await expect(sidebar.toolbar.getButton('Undo')).toBeDisabled();
+    });
   });
 
   test('opens a hovered tab after the activation delay and drops the panel into it', async ({
