@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -350,7 +351,8 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 					return
 				}
 
-				resp, queryErr = qsDSClient.QueryData(ctx, *k8sReq)
+				// data.QueryDataRequest has no headers, so pass them on the context.
+				resp, queryErr = qsDSClient.QueryData(clientapi.WithRequestHeaders(ctx, req.Headers), *k8sReq)
 			}
 
 			if queryErr != nil {
@@ -444,8 +446,9 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 			return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 		}
 
-		// make the query with a mt client
-		resp, err = qsDSClient.QueryData(ctx, *k8sReq)
+		// make the query with a mt client. data.QueryDataRequest has no headers,
+		// so pass them on the context.
+		resp, err = qsDSClient.QueryData(clientapi.WithRequestHeaders(ctx, req.Headers), *k8sReq)
 
 		// handle error
 		if err != nil {
