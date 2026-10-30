@@ -59,6 +59,7 @@ func TestWithProvisioningIdentity(t *testing.T) {
 	ctx, requester, err := identity.WithProvisioningIdentity(context.Background(), "default")
 	require.NoError(t, err)
 	require.NotNil(t, requester)
+	require.Equal(t, []string{"*"}, requester.GetPermissions()["plugins.app:access"])
 
 	fromCtx, err := identity.GetRequester(ctx)
 	require.NoError(t, err)

@@ -120,8 +120,24 @@ type GrafanaRouter struct {
 	// apiGroupList and openapiIndex are the synthesized /apis and /openapi/v3
 	// root documents, rebuilt from served (not the raw Load result) on every
 	// reconcile so discovery only advertises what is actually served.
-	apiGroupList atomic.Pointer[cachedDoc]
-	openapiIndex atomic.Pointer[cachedDoc]
+	// They are the view of callers that are not access policies; the
+	// internal ones are the access policies' view, the same documents when no
+	// group is internal. Callers with a namespace filter get documents built
+	// per request (rootDocsFor).
+	apiGroupList         atomic.Pointer[cachedDoc]
+	openapiIndex         atomic.Pointer[cachedDoc]
+	internalAPIGroupList atomic.Pointer[cachedDoc]
+	internalOpenAPIIndex atomic.Pointer[cachedDoc]
+
+	// internalGroups and namespaceGroups decide which groups each caller
+	// sees (SetGroupVisibility). visibilityScoped is set when any caller may
+	// see fewer groups than another, and filterNamespaces when the namespace
+	// filter is not the default that allows every group. Set before the
+	// router serves, and never changed.
+	internalGroups   map[string]struct{}
+	namespaceGroups  NamespaceGroups
+	visibilityScoped bool
+	filterNamespaces bool
 
 	// manifestDocs is the /discovery tree, published from served with the
 	// root documents. manifestFingerprint is the group/key set it was built
@@ -183,14 +199,12 @@ func NewGrafanaRouter(loader RoutesLoader, tokens authn.TokenAuthenticator) *Gra
 		authn:           tokens,
 		served:          map[string]*handlerEntry{},
 		watchAuthorizer: grafanaauthz.NewWatchRestrictionAuthorizer(),
+		namespaceGroups: allNamespaceGroups{},
 	}
 	r.watches, r.endWatches = context.WithCancel(context.Background())
 	empty := map[string]servingEntry{}
 	r.snapshot.Store(&empty)
-	emptyGroups := buildAPIGroupList(context.Background(), nil)
-	r.apiGroupList.Store(&emptyGroups)
-	emptyIndex := buildOpenAPIV3Index(context.Background(), nil)
-	r.openapiIndex.Store(&emptyIndex)
+	r.publishRootDocs(context.Background(), nil)
 	r.publishManifestDocs(context.Background(), nil)
 	return r
 }
@@ -227,6 +241,14 @@ func serveNotFound(w http.ResponseWriter, req *http.Request) {
 	http.NotFound(w, req)
 }
 
+// serveHidden answers a request for a group the caller may not see with the
+// same 404 as serveNotFound, so the caller can't tell the group exists. Only
+// the route label tells them apart.
+func serveHidden(w http.ResponseWriter, req *http.Request) {
+	setRoute(req, routeHidden)
+	http.NotFound(w, req)
+}
+
 // handleAPIs serves the /apis tree: discovery, and each group's requests
 // proxied to its backend.
 func (r *GrafanaRouter) handleAPIs(w http.ResponseWriter, req *http.Request) {
@@ -252,6 +274,16 @@ func (r *GrafanaRouter) handleAPIs(w http.ResponseWriter, req *http.Request) {
 	if !authorizeNamespace(w, req, info.Namespace) {
 		return
 	}
+
+	// A hidden group does not exist for the caller, so it gets a 404 before
+	// any other check could answer differently, such as the watch
+	// restriction's 403, and not even the unregistered-group handler may
+	// serve it. Root discovery names no group.
+	group := info.APIGroup
+	if group != "" && !r.visible(req.Context(), r.viewFor(req.Context(), info), group) {
+		serveHidden(w, req)
+		return
+	}
 	if info.IsResourceRequest && info.Verb == "watch" {
 		decision, reason, err := r.watchAuthorizer.Authorize(req.Context(), authorizer.AttributesRecord{Verb: info.Verb, ResourceRequest: true})
 		if err != nil || decision == authorizer.DecisionDeny {
@@ -264,7 +296,7 @@ func (r *GrafanaRouter) handleAPIs(w http.ResponseWriter, req *http.Request) {
 	// Built by the router, and checked before group dispatch so the tree is
 	// never mistaken for a group.
 	if isDiscoveryPath(path) {
-		r.serveManifestDiscovery(w, req)
+		r.serveManifestDiscovery(w, req, info)
 		return
 	}
 
@@ -272,13 +304,12 @@ func (r *GrafanaRouter) handleAPIs(w http.ResponseWriter, req *http.Request) {
 	// across every group; synthesize it router-side.
 	if path == apisPrefix || path == apisPrefix+"/" {
 		setRoute(req, routeDiscovery)
-		r.serveAPIGroupList(w, req)
+		r.serveAPIGroupList(w, req, info)
 		return
 	}
 
 	// Parsing rejects an invalid group name, so a group no backend serves is
 	// one that could exist: the unregistered-group handler may serve it.
-	group := info.APIGroup
 	handlers := *r.snapshot.Load()
 	entry, ok := handlers[group]
 	if !ok {

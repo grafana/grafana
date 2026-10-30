@@ -558,9 +558,8 @@ type searchServer struct {
 	bgTaskCancel func()
 	// bgTaskCtx ends when the server stops. Builds started by a search run in it
 	// rather than in the search's context, so other searches can still use them.
-	bgTaskMu      sync.Mutex
-	bgTaskCtx     context.Context
-	bgTaskStopped bool
+	bgTaskMu  sync.Mutex
+	bgTaskCtx context.Context
 
 	rebuildQueue   *debouncer.Queue[rebuildRequest]
 	rebuildWorkers int
@@ -595,10 +594,11 @@ type searchServer struct {
 // resource: dashboards use IndexRebuildInterval (cfg.IndexRebuildInterval),
 // other resources use MaxFileIndexAge. Zero means "no age-based rebuild".
 //
-// A namespace-wide index holds dashboards too, and it is the more expensive one
-// to rebuild, so it follows the dashboard interval rather than the default.
+// Dashboards are rebuilt more often to pick up usage insights. A global index
+// holds none, and its hourly reconcile already repairs what changed, so it
+// follows the default.
 func (s *searchServer) getIndexMaxAge(key NamespacedResource) time.Duration {
-	if key.Resource == dashboardv1.DASHBOARD_RESOURCE || key.IsGlobal() {
+	if key.Resource == dashboardv1.DASHBOARD_RESOURCE {
 		return s.dashboardIndexMaxAge
 	}
 	return s.maxIndexAge
@@ -1878,11 +1878,10 @@ func (s *searchServer) init(ctx context.Context) error {
 }
 
 func (s *searchServer) stop() {
-	// No search may start a build from now on, so Wait cannot miss one.
+	// Cancelled under the lock, so no search can start a build that Wait misses.
 	s.bgTaskMu.Lock()
-	s.bgTaskStopped = true
-	s.bgTaskMu.Unlock()
 	s.bgTaskCancel()
+	s.bgTaskMu.Unlock()
 	s.bgTaskWg.Wait()
 
 	// Stop the backend after search-server workers so no rebuild can race with closing indexes.
@@ -2440,13 +2439,6 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 			return idx, nil
 		})
 
-		// The build carries on without this request, so the next search finds it.
-		var buildWait <-chan time.Time
-		if key.IsGlobal() {
-			timer := time.NewTimer(s.globalIndexBuildWait)
-			defer timer.Stop()
-			buildWait = timer.C
-		}
 		select {
 		case res := <-ch:
 			if res.Err != nil {
@@ -2454,7 +2446,8 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 			}
 			stats.AddIndexBuildTime(time.Since(buildStartTime))
 			idx = res.Val.(ResourceIndex)
-		case <-buildWait:
+		case <-s.globalIndexBuildWaitChan(key):
+			// The build carries on without this request, so the next search finds it.
 			return nil, StatusError(NewServiceUnavailableError("the global search index for this namespace is still being built"))
 		case <-ctx.Done():
 			return nil, tracing.Error(span, fmt.Errorf("failed to get index: %w", ctx.Err()))
@@ -2483,19 +2476,28 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 	return idx, nil
 }
 
+// globalIndexBuildWaitChan fires when a search has waited long enough for a
+// global index to be built. A search for any other index waits for the build.
+func (s *searchServer) globalIndexBuildWaitChan(key NamespacedResource) <-chan time.Time {
+	if !key.IsGlobal() {
+		return nil
+	}
+	return time.After(s.globalIndexBuildWait)
+}
+
 // detachBuild gives a build started by a search a context that outlives the
 // search, keeping its tracing spans, but ends when the server stops. The server
 // waits for it before closing the backend.
 func (s *searchServer) detachBuild(ctx context.Context) (context.Context, func(), error) {
 	s.bgTaskMu.Lock()
 	defer s.bgTaskMu.Unlock()
-	if s.bgTaskStopped {
-		return nil, nil, errors.New("search server is stopping")
-	}
 	detached := context.WithoutCancel(ctx)
 	if s.bgTaskCtx == nil {
 		// Not initialized, so there is nothing to stop yet.
 		return detached, func() {}, nil
+	}
+	if s.bgTaskCtx.Err() != nil {
+		return nil, nil, errors.New("search server is stopping")
 	}
 	detached, cancel := context.WithCancel(detached)
 	stop := context.AfterFunc(s.bgTaskCtx, cancel)

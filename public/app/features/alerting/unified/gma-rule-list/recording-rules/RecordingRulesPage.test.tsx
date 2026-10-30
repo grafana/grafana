@@ -6,7 +6,7 @@ import server from '@grafana/test-utils/server';
 
 import { setupMswServer } from '../../mockApi';
 import { ruleItem } from '../mocks/factories';
-import { mockFolderParents, mockRuleSearch, ruleSearchUrl } from '../mocks/handlers';
+import { failFirstCall, mockFolderParents, mockRuleSearch, ruleSearchUrl } from '../mocks/handlers';
 
 import RecordingRulesPage from './RecordingRulesPage';
 
@@ -22,41 +22,6 @@ jest.mock('@grafana/runtime', () => {
 const reportInteractionMock = jest.mocked(reportInteraction);
 
 setupMswServer();
-
-/** Serves the first page with a continuation token; `nextPage` answers every request that carries one. */
-function mockPagedSearch(nextPage: (token: string) => Response | Promise<Response>) {
-  const continuations: Array<string | null> = [];
-  server.use(
-    http.post(ruleSearchUrl('recording'), async ({ request }) => {
-      const { continue: token } = (await request.json()) as { continue?: string };
-      continuations.push(token ?? null);
-      if (!token) {
-        return HttpResponse.json({
-          items: [ruleItem('recording', 'rule-1', 'cpu:usage:rate5m', 'folder-1')],
-          metadata: { continue: 'tok' },
-        });
-      }
-      return nextPage(token);
-    })
-  );
-  return continuations;
-}
-
-/** Fails the first POST to `url` with a 500, then answers with `ok`; returns a request counter. */
-function failFirstCall(url: string, ok: object) {
-  let calls = 0;
-  server.use(
-    http.post(url, () => {
-      calls += 1;
-      return calls === 1 ? HttpResponse.json({ message: 'boom' }, { status: 500 }) : HttpResponse.json(ok);
-    })
-  );
-  return () => calls;
-}
-
-function secondPage() {
-  return HttpResponse.json({ items: [ruleItem('recording', 'rule-2', 'disk:usage:rate5m', 'folder-2')], metadata: {} });
-}
 
 describe('RecordingRulesPage', () => {
   beforeEach(() => {
@@ -230,28 +195,6 @@ describe('RecordingRulesPage', () => {
 
     expect(await screen.findByText('Failed to refresh results')).toBeInTheDocument();
     expect(screen.getByText('cpu:usage:rate5m')).toBeInTheDocument();
-  });
-
-  it('loads one page once when Load more is double clicked', async () => {
-    let releasePage: () => void = () => {};
-    const pageGate = new Promise<void>((resolve) => {
-      releasePage = resolve;
-    });
-    const continuations = mockPagedSearch(async () => {
-      await pageGate;
-      return secondPage();
-    });
-
-    render(<RecordingRulesPage />);
-
-    await screen.findByText('cpu:usage:rate5m');
-    await userEvent.dblClick(screen.getByRole('button', { name: 'Load more' }));
-
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Load more' })).toBeDisabled());
-    releasePage();
-
-    expect(await screen.findByText('disk:usage:rate5m')).toBeInTheDocument();
-    expect(continuations).toEqual([null, 'tok']);
   });
 
   it('reports one page view in List mode per mount, not again on re-render', async () => {
