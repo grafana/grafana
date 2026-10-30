@@ -401,6 +401,13 @@ func (l *cloudLoader) counters() []loaderCounter {
 	return l.singleTenantFallback.counters()
 }
 
+func (l *cloudLoader) durations() []loaderDuration {
+	if l.singleTenantFallback == nil {
+		return nil
+	}
+	return l.singleTenantFallback.durations()
+}
+
 func (l *cloudLoader) sourceStatuses() []sourceStatus {
 	statuses := make([]sourceStatus, 0, len(l.sources))
 	for _, source := range l.sources {

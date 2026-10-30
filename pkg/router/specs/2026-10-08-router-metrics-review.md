@@ -1,7 +1,7 @@
 # Router: Metrics review follow-ups
 
-Status: in progress. Done: M1 (#134524), M3 (#134532), M4 (#134486). Not pursued: M2, M8.
-Open: M5–M7, M9–M12 (checked against `main` on 2026-10-10).
+Status: done. Done: M1 (#134524), M3 (#134532), M4 (#134486), and M5–M7 and M9–M12 on 2026-10-30.
+Not pursued: M2, M8.
 Package: `pkg/router`
 
 Changes from a review of request coverage, async failure modes and cardinality. No label carries a
@@ -47,28 +47,32 @@ only the middleware mode serves, are out of scope.
 - [x] **M4. Instrument managed plugin gRPC connections.** Done in #134486. `pluginClients`
   (`plugin_manifests.go`) created connections without interceptors or a stats handler, so outbound
   calls to managed plugins had no client metrics or spans.
-- [ ] **M5. Export breaker transitions for the ST fallback's per-destination breakers.**
+- [x] **M5. Export breaker transitions for the ST fallback's per-destination breakers.**
   `breakerForDestination` (`st_fallback.go`) creates breakers without an observer. Add a counter
   without a group label, since ST groups can be unregistered, and count evictions from the host
   and breaker caches.
-- [ ] **M6. Measure stack lookup latency.** `newGComURLResolver` uses `http.DefaultClient`. Give it
-  a client with the tracing transport, and add a histogram of lookup duration.
-- [ ] **M7. Attribute discovery failures.** Discovery sub-requests (`readDiscovery`) go through the
+- [x] **M6. Measure stack lookup latency.** `newGComURLResolver` uses `http.DefaultClient`. Give it
+  a client with the tracing transport, and add a histogram of lookup duration. Done: `stack_lookup_duration_seconds{result}`.
+- [x] **M7. Attribute discovery failures.** Discovery sub-requests (`readDiscovery`) go through the
   group's breaker but detach the request outcome, so they can trip a breaker with no matching
   `backend_failures_total` entries. Record their failures, and track fetches still running past
-  their deadline (`discoveryCache`), which today can't be seen.
+  their deadline (`discoveryCache`), which today can't be seen. Done: a discovery read has its own outcome and its
+  failures count in `backend_failures_total` under the group; `discovery_fetches_overdue` is the
+  number of fetches past their deadline.
 
 ## Low priority
 
 - ~~**M8.** Have `PluginLoader` implement `loaderStatus`, so `local-plugin` appears in
   `source_polls_total`.~~ Not pursued: local plugins are out of scope.
-- [ ] **M9.** Count watches the router ends itself, on route change or shutdown, by reason.
-- [ ] **M10.** Add duration histograms for reconciles and source polls.
-- [ ] **M11.** Delete series for groups that are no longer served from the label-based metrics
+- [x] **M9.** Count watches the router ends itself, on route change or shutdown, by reason.
+  Done: `watches_ended_total{group,reason}`, counted only when the client was still connected.
+- [x] **M10.** Add duration histograms for reconciles and source polls.
+- [x] **M11.** Delete series for groups that are no longer served from the label-based metrics
   (`backend_failures_total`, `breaker_transitions_total`, `discovery_results_total`,
   `longrunning_requests`).
-- [ ] **M12.** Outside `pkg/router`: check whether
+- [x] **M12.** Outside `pkg/router`: check whether
   `grafana_apiserver_watch_establishment_duration_seconds{group,resource}`
   (`pkg/apiserver/endpoints/filters/watch_instrumentation.go`), which in-process plugin apiservers
   register on the router's registry, can get a new `resource` value from a watch on a resource that
-  doesn't exist.
+  doesn't exist. Done, and it could: a refused watch (such as a 404 for an unknown resource) wrote
+  its header, which recorded the resource from the path. Only a 2xx start is recorded now.

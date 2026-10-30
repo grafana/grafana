@@ -35,6 +35,8 @@ type sourceStatus struct {
 	Failures  uint64 `json:"failures"`
 	// Skipped is the number of backends the latest successful load skipped.
 	Skipped int `json:"skipped"`
+	// Duration is how long the source's attempts took, for metrics.
+	Duration durationSnapshot `json:"-"`
 }
 
 // shadowedGroup is a group that one source offered but a higher-priority
@@ -68,6 +70,21 @@ type loaderCounter struct {
 	ByResult map[string]uint64
 }
 
+// loaderDurations is an optional interface of a loader that reports how long
+// its own operations took, by result, such as the single-tenant fallback's
+// stack lookups. The router reports each as the histogram
+// grafana_router_<Metric>{result}. Like counters, the set must not change once
+// the loader is built.
+type loaderDurations interface {
+	durations() []loaderDuration
+}
+
+type loaderDuration struct {
+	Metric   string
+	Help     string
+	ByResult map[string]durationSnapshot
+}
+
 // unregisteredGroupLoader is an optional RoutesLoader interface for a loader
 // that serves the groups no backend does, in the standalone router.
 type unregisteredGroupLoader interface {
@@ -83,6 +100,7 @@ type pollStatus struct {
 	successes   atomic.Uint64
 	failures    atomic.Uint64
 	skipped     atomic.Int64
+	duration    durationStats // of each attempt, failed or not
 }
 
 // recordSuccess records a successful attempt, and reports whether it was the
@@ -115,7 +133,7 @@ func (p *pollStatus) recordSkipped(skipped int) {
 }
 
 func (p *pollStatus) status(source string) sourceStatus {
-	s := sourceStatus{Source: source, Successes: p.successes.Load(), Failures: p.failures.Load(), Skipped: int(p.skipped.Load())}
+	s := sourceStatus{Source: source, Successes: p.successes.Load(), Failures: p.failures.Load(), Skipped: int(p.skipped.Load()), Duration: p.duration.snapshot()}
 	if ns := p.lastSuccess.Load(); ns != 0 {
 		s.LastSuccess = time.Unix(0, ns).UTC()
 	}
@@ -204,6 +222,7 @@ func (p *polledSource) poll(ctx context.Context, dirty chan<- struct{}) {
 	prev := p.current()
 
 	backends, skipped, err := p.fetcher.fetch(ctx)
+	p.status.duration.observe(time.Since(now))
 	if err != nil {
 		p.cooldown.OnFailure(now)
 		logging.FromContext(ctx).Warn("router: source poll failed, keeping its last backends and backing off", "source", p.source, "err", err)

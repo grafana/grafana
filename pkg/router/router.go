@@ -180,11 +180,20 @@ type GrafanaRouter struct {
 	reconciles      atomic.Uint64
 	reconcileErrors atomic.Uint64
 	lastReconcile   atomic.Int64
+	// reconcileDuration is how long each reconcile took, for metrics.
+	reconcileDuration durationStats
 
 	// onBreakerChange and onDiscovery report events to the metrics; nil when
 	// the router is not instrumented. Set before Run.
 	onBreakerChange func(group string, to gobreaker.State)
 	onDiscovery     func(group, result string)
+	// onBackendFailure reports a backend failure the router saw outside a
+	// client request, such as in a discovery read. onWatchEnded reports a
+	// watch the router ended itself, and onGroupsRemoved the groups that are
+	// no longer served.
+	onBackendFailure func(group, pluginID, reason string)
+	onWatchEnded     func(group, reason string)
+	onGroupsRemoved  func(groups []string)
 
 	watchAuthorizer authorizer.Authorizer
 
@@ -331,7 +340,7 @@ func (r *GrafanaRouter) handleAPIs(w http.ResponseWriter, req *http.Request) {
 			entry.watching.Add(1)
 			defer entry.watching.Add(-1)
 		}
-		r.serveWatch(w, req, entry.watches, serve)
+		r.serveWatch(w, req, group, entry.watches, serve)
 		return
 	}
 	serve(w, req)
@@ -361,7 +370,7 @@ func (r *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.
 			return
 		}
 		if verb == "watch" {
-			r.serveWatch(w, req, nil, r.unregisteredGroupHandler.ServeHTTP)
+			r.serveWatch(w, req, group, nil, r.unregisteredGroupHandler.ServeHTTP)
 			return
 		}
 		r.unregisteredGroupHandler.ServeHTTP(w, req)
