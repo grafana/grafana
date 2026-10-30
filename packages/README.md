@@ -62,6 +62,10 @@ Below 1.0 Nx shifts the bump down one level (its [`adjustSemverBumpsForZeroMajor
 
 When a releasing change lands on `main`, the `Release NPM version PR` workflow opens or updates one pull request titled `Release: Frontend packages` from the `nx-release-branch--main` branch. It writes the new versions and changelog entries. Merging that pull request releases the packages. To preview it, run the workflow from the Actions tab with `dry_run` enabled.
 
+After the release pull request is merged, the `Release NPM independent packages` workflow builds and packs every package tagged `release:independent`, skips versions that are already on npm, validates the rest and publishes them to the `latest` dist-tag from the `npm-publish` environment. It only publishes stable versions and fails on a prerelease. If a publish fails, fix the cause and run the workflow again from the Actions tab; it publishes only what is still missing. Run it with `dry_run` enabled to build, pack and validate without publishing.
+
+Publishing uses npm trusted publishing, so there is no npm token. Each independent package needs a one-time trusted publisher entry on npmjs.com (package settings, "Trusted Publisher", GitHub Actions) with the organization `grafana`, the repository `grafana`, the workflow filename `release-npm-independent-packages.yml` and the environment `npm-publish`. To make another package independent, add it to a release group in `nx.json`, add the `release:independent` tag to its `project.json`, and register its trusted publisher.
+
 Nx finds the changes since the last release from the `<name>@<version>` git tag of the package, for example `@grafana/plugin-compat@0.10.0`, which the publish workflow creates. Do not delete these tags.
 
 ### Stable releases
