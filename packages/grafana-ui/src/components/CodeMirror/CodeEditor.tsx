@@ -2,13 +2,14 @@ import { acceptCompletion, autocompletion, startCompletion } from '@codemirror/a
 import { EditorState, Prec } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror';
-import { memo, useMemo, useRef } from 'react';
+import { memo, useMemo, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
 
+import { createOverviewRulerExtension, OverviewRuler, type OverviewRulerState } from './OverviewRuler';
 import { createCodeEditorTheme } from './theme';
 import {
   type CodeMirrorCompletionMode,
@@ -105,6 +106,7 @@ export const CodeEditor = memo(function CodeEditor({
   indentWithTab = true,
   readOnly = false,
   lineWrapping = false,
+  overviewRuler = false,
 }: CodeMirrorEditorProps) {
   const theme = useTheme2();
   const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language, sqlDialect);
@@ -115,6 +117,11 @@ export const CodeEditor = memo(function CodeEditor({
   const sources = useShallowStable(completionSources);
   const basicSetup = useShallowStable(basicSetupProp);
   const editorRef = useRef<ReactCodeMirrorRef>(null);
+  const [overviewRulerState, setOverviewRulerState] = useState<OverviewRulerState | null>(null);
+  const overviewRulerExtension = useMemo(
+    () => (overviewRuler ? createOverviewRulerExtension(setOverviewRulerState) : []),
+    [overviewRuler]
+  );
   const handleChange = useStableCallback(onChange);
   const handleBlur = useStableCallback(() => {
     const editorView = editorRef.current?.view;
@@ -136,6 +143,7 @@ export const CodeEditor = memo(function CodeEditor({
       ...(languageExtension ? [languageExtension] : []),
       ...getCompletionExtensions(sources, completionMode, completeOnSpace),
       ...(lineWrapping ? [EditorView.lineWrapping] : []),
+      ...overviewRulerExtension,
       ...(additionalExtensions ?? []),
     ],
     [
@@ -148,6 +156,7 @@ export const CodeEditor = memo(function CodeEditor({
       completionMode,
       completeOnSpace,
       lineWrapping,
+      overviewRulerExtension,
       additionalExtensions,
     ]
   );
@@ -173,6 +182,7 @@ export const CodeEditor = memo(function CodeEditor({
         indentWithTab={indentWithTab}
         readOnly={readOnly}
       />
+      {overviewRuler && overviewRulerState && <OverviewRuler editor={overviewRulerState} />}
     </>
   );
 });

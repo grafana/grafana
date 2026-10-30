@@ -1,4 +1,5 @@
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { EditorView } from '@codemirror/view';
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { draft07Config } from 'json-schema-library';
 import { useState } from 'react';
@@ -123,6 +124,61 @@ describe('DashboardSchemaEditor with CodeMirror', () => {
       expect(screen.getByRole('radio', { name: 'YAML' })).toBeEnabled();
     });
 
+    it.each([
+      { error: 'schema', invalid: '{\n  "spec": {\n    "title": 123\n  }\n}', selection: { from: 27, to: 30 } },
+      { error: 'syntax', invalid: '{\n  "spec": {\n    "title": "Edited",\n  }\n}', selection: { from: 39, to: 39 } },
+    ])(
+      'shows JSON $error errors only in the scrollbar strip, jumps to them, and clears them after a fix',
+      async ({ invalid, selection }) => {
+        const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+        const onValidationChange = jest.fn();
+        const { container } = render(<ControlledEditor onValidationChange={onValidationChange} />);
+        const editor = await screen.findByRole('textbox', { name: 'Dashboard schema' });
+        await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
+
+        await replaceBuffer(user, invalid);
+        await act(async () => jest.advanceTimersByTime(100));
+        const overview = screen.getByRole('group', { name: 'Errors' });
+        expect(overview).toBeVisible();
+        expect(screen.queryByRole('listbox', { name: 'Diagnostics' })).not.toBeInTheDocument();
+        expect(container.querySelector('.cm-lint-marker-error')).not.toBeInTheDocument();
+
+        await user.click(within(overview).getByRole('button', { name: /^Line / }));
+        const view = EditorView.findFromDOM(editor)!;
+        expect(view.state.selection.main).toMatchObject(selection);
+        expect(editor).toHaveFocus();
+
+        await replaceBuffer(user, initialValue);
+        await act(async () => jest.advanceTimersByTime(100));
+        expect(onValidationChange).toHaveBeenLastCalledWith(false);
+        expect(screen.queryByRole('group', { name: 'Errors' })).not.toBeInTheDocument();
+      }
+    );
+
+    it('remounts the error strip when returning from a diff', async () => {
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      const value = '{"spec":{"title":123}}';
+      const { rerender } = render(<DashboardSchemaEditor value={value} />);
+      await screen.findByRole('textbox', { name: 'Dashboard schema' });
+      expect(await screen.findByRole('group', { name: 'Errors' })).toBeVisible();
+
+      await act(async () => {
+        rerender(<DashboardSchemaEditor value={value} contentOverride={<div>Dashboard diff</div>} />);
+      });
+      expect(screen.getByText('Dashboard diff')).toBeVisible();
+      expect(screen.queryByRole('group', { name: 'Errors' })).not.toBeInTheDocument();
+
+      await act(async () => {
+        rerender(<DashboardSchemaEditor value={value} />);
+      });
+      const editor = await screen.findByRole('textbox', { name: 'Dashboard schema' });
+      const overview = await screen.findByRole('group', { name: 'Errors' });
+      await user.click(within(overview).getByRole('button', { name: /^Line 1:/ }));
+      const view = EditorView.findFromDOM(editor)!;
+      expect(view.state.sliceDoc(view.state.selection.main.from, view.state.selection.main.to)).toBe('123');
+      expect(editor).toHaveFocus();
+    });
+
     it('preserves the YAML draft, emits JSON, and recovers from invalid YAML', async () => {
       const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
       const onChange = jest.fn();
@@ -150,6 +206,7 @@ describe('DashboardSchemaEditor with CodeMirror', () => {
       await act(async () => jest.advanceTimersByTime(100));
       expect(onValidationChange).toHaveBeenLastCalledWith(true);
       expect(onParseErrorChange).toHaveBeenLastCalledWith(true);
+      expect(screen.queryByRole('group', { name: 'Errors' })).not.toBeInTheDocument();
       expect(screen.getByRole('radio', { name: 'JSON' })).toBeDisabled();
       expect(onChange).not.toHaveBeenCalled();
 

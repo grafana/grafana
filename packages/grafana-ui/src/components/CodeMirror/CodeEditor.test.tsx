@@ -1,8 +1,10 @@
 import { acceptCompletion, autocompletion, startCompletion, type CompletionSource } from '@codemirror/autocomplete';
+import { diagnosticCount, linter, setDiagnostics } from '@codemirror/lint';
 import { EditorState } from '@codemirror/state';
 import { keymap, type EditorView as CodeMirrorEditorView } from '@codemirror/view';
-import { render, screen, waitFor } from '@testing-library/react';
-import { EditorView, type ReactCodeMirrorProps } from '@uiw/react-codemirror';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import CodeMirror, { EditorView, type ReactCodeMirrorProps } from '@uiw/react-codemirror';
 
 import { createTheme, type GrafanaTheme2 } from '@grafana/data';
 import { faro } from '@grafana/faro-web-sdk';
@@ -288,5 +290,76 @@ describe('CodeMirror CodeEditor', () => {
         }),
       })
     );
+  });
+
+  describe('overview ruler with a real editor', () => {
+    const originalCreateCodeEditorTheme = createCodeEditorThemeMock.getMockImplementation()!;
+
+    beforeEach(() => {
+      const ActualCodeMirror = jest.requireActual('@uiw/react-codemirror').default;
+      jest.mocked(CodeMirror).mockImplementation((props) => <ActualCodeMirror {...props} />);
+      createCodeEditorThemeMock.mockImplementation(jest.requireActual('./theme').createCodeEditorTheme);
+    });
+
+    afterEach(() => {
+      jest.mocked(CodeMirror).mockImplementation((props) => {
+        capturedProps = props;
+        return null;
+      });
+      createCodeEditorThemeMock.mockImplementation(originalCreateCodeEditorTheme);
+    });
+
+    it('defaults off and can be toggled without replacing the editor or clearing diagnostics', async () => {
+      const extensions = [linter(null)];
+      const { rerender } = render(<CodeEditor value={'one\ntwo'} onChange={jest.fn()} extensions={extensions} />);
+      const editor = await screen.findByRole('textbox');
+      const view = EditorView.findFromDOM(editor)!;
+      act(() => {
+        view.dispatch(setDiagnostics(view.state, [{ from: 4, to: 7, severity: 'error', message: 'Invalid value' }]));
+      });
+      expect(diagnosticCount(view.state)).toBe(1);
+      expect(screen.queryByRole('group', { name: 'Errors' })).not.toBeInTheDocument();
+
+      rerender(<CodeEditor value={'one\ntwo'} onChange={jest.fn()} extensions={extensions} overviewRuler />);
+      expect(await screen.findByRole('button', { name: 'Line 2: Invalid value' })).toBeVisible();
+      expect(screen.getByRole('textbox')).toBe(editor);
+
+      rerender(<CodeEditor value={'one\ntwo'} onChange={jest.fn()} extensions={extensions} overviewRuler={false} />);
+      expect(screen.getByRole('textbox')).toBe(editor);
+      expect(diagnosticCount(view.state)).toBe(1);
+      expect(screen.queryByRole('group', { name: 'Errors' })).not.toBeInTheDocument();
+    });
+
+    it('groups errors by line, ignores warnings, and jumps to positions mapped through edits', async () => {
+      const user = userEvent.setup();
+      render(<CodeEditor value={'one\ntwo\nthree\nfour\nfive\nsix'} onChange={jest.fn()} overviewRuler />);
+      const editor = await screen.findByRole('textbox');
+      const view = EditorView.findFromDOM(editor)!;
+      act(() => {
+        view.dispatch(
+          setDiagnostics(view.state, [
+            { from: 4, to: 5, severity: 'error', message: 'First error' },
+            { from: 6, to: 7, severity: 'error', message: 'Second error' },
+            { from: 8, to: 13, severity: 'warning', message: 'A warning' },
+            { from: 14, to: 18, severity: 'error', message: 'Last error' },
+          ])
+        );
+      });
+      const overview = within(screen.getByRole('group', { name: 'Errors' }));
+      expect(overview.getAllByRole('button')).toHaveLength(2);
+      expect(overview.getByRole('button', { name: 'Line 2: First error\nSecond error' })).toHaveStyle({ top: '20%' });
+      expect(overview.getByRole('button', { name: 'Line 4: Last error' })).toHaveStyle({ top: '60%' });
+
+      await user.click(editor);
+      await user.keyboard('{Control>}{Home}{/Control}{Enter}');
+      const marker = overview.getByRole('button', { name: 'Line 5: Last error' });
+      expect(parseFloat(marker.style.top)).toBeCloseTo(66.67, 1);
+      await user.click(marker);
+      expect(view.state.sliceDoc(view.state.selection.main.from, view.state.selection.main.to)).toBe('four');
+      expect(editor).toHaveFocus();
+
+      act(() => view.dispatch(setDiagnostics(view.state, [])));
+      expect(screen.queryByRole('group', { name: 'Errors' })).not.toBeInTheDocument();
+    });
   });
 });
