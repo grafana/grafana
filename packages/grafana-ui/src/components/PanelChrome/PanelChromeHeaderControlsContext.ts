@@ -13,6 +13,11 @@ export interface PanelChromeHeaderControls {
    * of panels with a hover header. Nothing is rendered while it is null.
    */
   hoverSlot: HTMLElement | null;
+  /**
+   * Element that receives the drag handle apart from the rest of the hover widget contents. Left undefined, the drag
+   * handle renders in the hover slot; while it is null, the drag handle is not rendered.
+   */
+  dragHandleSlot?: HTMLElement | null;
   /** Leaves the drag handle out of the hover widget contents, e.g. while the panel is not in a grid. */
   hideDragHandle?: boolean;
 }
