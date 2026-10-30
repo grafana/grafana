@@ -46,7 +46,7 @@ You need the three files described in this document to set up Git Sync with Terr
 
 ## Configure the Grafana Terraform provider
 
-Use this Terraform configuration to configure the [Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) with the authentication required to set up Git Sync.
+Configure the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) with the authentication required to set up Git Sync.
 
 1. Create a service account and token in Grafana. For more information refer to [Service account tokens](https://grafana.com/docs/grafana/latest/administration/service-accounts/#service-account-tokens) or [Create and manage a Grafana Cloud stack using Terraform](https://grafana.com/docs/grafana-cloud/as-code/terraform/terraform-cloud-stack/).
 
@@ -79,7 +79,9 @@ Replace the following field values:
 
 {{< admonition type="caution" >}}
 
-**Do not use Grafana Cloud provider settings in this configuration**. Configure the provider with `url` and `auth` (not `cloud_api_url` and `cloud_access_policy_token`). If you're using Grafana Cloud, set `stack_id` to your stack ID.
+**Don't use your Grafana Cloud provider settings in this configuration**. 
+
+The Git Sync resources are App Platform resources and talk directly to the Grafana stack's API. Configure the Terraform provider with `url` and `auth`, not `cloud_api_url` nor `cloud_access_policy_token`. If you're using Grafana Cloud, set `stack_id` to your stack ID.
 
 {{< /admonition >}}
 
