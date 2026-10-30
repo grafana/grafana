@@ -249,6 +249,26 @@ it('opens the mode picker from the caret and switches the editing policy', async
   expect(isFullDashboardEditing(scene.state)).toBe(true);
 });
 
+it('disables the mode picker in Viewing on mobile when mobileEditDeprecation is enabled', async () => {
+  setTestFlags({
+    'grafana.dashboardPreviewMode': true,
+    'grafana.mobileEditDeprecation': true,
+  });
+  const dashboard = setup();
+  render(
+    <TestProvider>
+      <DashboardModePicker dashboard={dashboard} />
+    </TestProvider>
+  );
+  const user = userEvent.setup();
+  expect(screen.getByRole('button', { name: 'Dashboard mode: Viewing' })).toBeDisabled();
+  const caret = screen.getByRole('button', { name: 'Change dashboard mode' });
+  expect(caret).toBeDisabled();
+  await user.click(caret);
+  expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  expect(isFullDashboardEditing(dashboard.state)).toBe(false);
+});
+
 it('switches modes directly from the main button and describes the next mode in its tooltip', async () => {
   const dashboard = setup();
   render(
