@@ -1012,7 +1012,7 @@ func TestShouldUpload(t *testing.T) {
 		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, UploadInterval: time.Hour, MinDocChanges: 1000})
 		idx := newUploadTestIndex(t, be, key, 42)
 
-		should, err := be.shouldUpload(key, idx, time.Now())
+		should, err := be.shouldUpload(t.Context(), key, idx, time.Now())
 		require.NoError(t, err)
 		assert.True(t, should)
 	})
@@ -1021,7 +1021,7 @@ func TestShouldUpload(t *testing.T) {
 		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 2, UploadInterval: time.Hour, MinDocChanges: 1000})
 		idx := newUploadTestIndex(t, be, key, 42)
 
-		should, err := be.shouldUpload(key, idx, time.Now())
+		should, err := be.shouldUpload(t.Context(), key, idx, time.Now())
 		require.NoError(t, err)
 		assert.False(t, should)
 	})
@@ -1032,7 +1032,7 @@ func TestShouldUpload(t *testing.T) {
 		require.NoError(t, writeSnapshotMutationCount(idx.index, 5))
 		be.setUploadTracking(key, time.Now().Add(-30*time.Minute))
 
-		should, err := be.shouldUpload(key, idx, time.Now())
+		should, err := be.shouldUpload(t.Context(), key, idx, time.Now())
 		require.NoError(t, err)
 		assert.False(t, should)
 	})
@@ -1043,7 +1043,7 @@ func TestShouldUpload(t *testing.T) {
 		require.NoError(t, writeSnapshotMutationCount(idx.index, 50))
 		be.setUploadTracking(key, time.Now().Add(-2*time.Minute))
 
-		should, err := be.shouldUpload(key, idx, time.Now())
+		should, err := be.shouldUpload(t.Context(), key, idx, time.Now())
 		require.NoError(t, err)
 		assert.False(t, should)
 	})
@@ -1055,7 +1055,7 @@ func TestShouldUpload(t *testing.T) {
 		now := time.Now()
 		be.setUploadTracking(key, now.Add(-2*time.Hour))
 
-		should, err := be.shouldUpload(key, idx, now)
+		should, err := be.shouldUpload(t.Context(), key, idx, now)
 		require.NoError(t, err)
 		assert.False(t, should)
 	})
@@ -1067,7 +1067,7 @@ func TestShouldUpload(t *testing.T) {
 		now := time.Now()
 		be.setUploadTracking(key, now.Add(-5*time.Hour))
 
-		should, err := be.shouldUpload(key, idx, now)
+		should, err := be.shouldUpload(t.Context(), key, idx, now)
 		require.NoError(t, err)
 		assert.True(t, should)
 	})
@@ -1079,7 +1079,7 @@ func TestShouldUpload(t *testing.T) {
 		now := time.Now()
 		be.setUploadTracking(key, now.Add(-2*time.Hour))
 
-		should, err := be.shouldUpload(key, idx, now)
+		should, err := be.shouldUpload(t.Context(), key, idx, now)
 		require.NoError(t, err)
 		assert.False(t, should)
 	})
@@ -1090,7 +1090,37 @@ func TestShouldUpload(t *testing.T) {
 		require.NoError(t, writeSnapshotMutationCount(idx.index, 30))
 		be.setUploadTracking(key, time.Now().Add(-2*time.Minute))
 
-		should, err := be.shouldUpload(key, idx, time.Now())
+		should, err := be.shouldUpload(t.Context(), key, idx, time.Now())
+		require.NoError(t, err)
+		assert.True(t, should)
+	})
+
+	seededBackend := func(t *testing.T, mutations int64) (*bleveBackend, *bleveIndex, time.Time) {
+		t.Helper()
+		store := newHookableStore(t)
+		be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store, MinDocCount: 1, UploadInterval: time.Hour, MinDocChanges: 1000, MaxIndexAge: 240 * time.Hour})
+		idx := newUploadTestIndex(t, be, key, 42)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, mutations))
+		bi, err := getBuildInfo(idx.index)
+		require.NoError(t, err)
+		uploadedAt := time.Now().Add(-2 * time.Hour).UTC()
+		seedBuildSnapshot(t, store, key, bi.BuildVersion, time.Unix(bi.BuildTime, 0), uploadedAt)
+		return be, idx, uploadedAt
+	}
+
+	t.Run("skips untracked index when the store holds a copy of its build", func(t *testing.T) {
+		be, idx, uploadedAt := seededBackend(t, 0)
+
+		should, err := be.shouldUpload(t.Context(), key, idx, time.Now())
+		require.NoError(t, err)
+		assert.False(t, should)
+		requireTrackedAt(t, be, key, uploadedAt)
+	})
+
+	t.Run("uploads untracked index seeded from the store when mutation count is large enough", func(t *testing.T) {
+		be, idx, _ := seededBackend(t, 1000)
+
+		should, err := be.shouldUpload(t.Context(), key, idx, time.Now())
 		require.NoError(t, err)
 		assert.True(t, should)
 	})

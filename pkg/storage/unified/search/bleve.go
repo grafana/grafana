@@ -563,7 +563,7 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 	}
 }
 
-func (b *bleveBackend) shouldUpload(key resource.NamespacedResource, idx *bleveIndex, now time.Time) (bool, error) {
+func (b *bleveBackend) shouldUpload(ctx context.Context, key resource.NamespacedResource, idx *bleveIndex, now time.Time) (bool, error) {
 	docCount, err := idx.index.DocCount()
 	if err != nil {
 		return false, fmt.Errorf("reading document count for %v: %w", key, err)
@@ -574,7 +574,12 @@ func (b *bleveBackend) shouldUpload(key resource.NamespacedResource, idx *bleveI
 
 	lastUploadTime, ok := b.getUploadTracking(key)
 	if !ok {
-		return true, nil
+		// An index reopened from disk has no tracking even when the store already
+		// holds a copy of its build.
+		lastUploadTime, ok = b.seedUploadTrackingFromRemote(ctx, key, idx, now)
+		if !ok {
+			return true, nil
+		}
 	}
 	if b.opts.Snapshot.UploadInterval > 0 && now.Sub(lastUploadTime) < b.opts.Snapshot.UploadInterval {
 		return false, nil
@@ -667,7 +672,7 @@ func (b *bleveBackend) runUploadSnapshots(ctx context.Context) {
 			continue
 		}
 
-		shouldUpload, err := b.shouldUpload(key, idx, time.Now())
+		shouldUpload, err := b.shouldUpload(ctx, key, idx, time.Now())
 		if err != nil {
 			b.recordSnapshotUploadStatus(snapshotUploadStatusError)
 			b.log.Warn("failed to evaluate snapshot upload eligibility", "key", key, "err", err)
