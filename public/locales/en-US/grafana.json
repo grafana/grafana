@@ -16245,12 +16245,15 @@
         "removeAll": "Remove all scopes",
         "tooltip": "Select scope"
       },
+      "metadata": {
+        "description": "Description",
+        "filters": "Filters"
+      },
       "title": "Select scopes"
     },
     "tree": {
       "headline": {
         "noResults": "No results found for your query",
-        "recommended": "Recommended",
         "results": "Results"
       },
       "search": "Search {{parentTitle}}"

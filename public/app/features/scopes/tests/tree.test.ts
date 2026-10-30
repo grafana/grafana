@@ -333,13 +333,11 @@ describe('Tree', () => {
     });
   });
 
-  it('Should only show Recommended when there are no leaf container nodes visible', async () => {
+  it('Should not show a headline when there is no search query', async () => {
     await openSelector();
     await expandResultApplications();
     await expandResultApplicationsCloud();
-    await waitFor(() => {
-      expectScopesHeadline('Recommended');
-    });
+    expect(screen.queryByTestId('scopes-tree-headline')).not.toBeInTheDocument();
   });
 
   it('Should open to a specific path when scopes and scope_node are applied', async () => {
@@ -458,7 +456,13 @@ describe('Tree', () => {
       const selectedItem = screen.getByRole('treeitem', { selected: true });
       expect(selectedItem).toBeTruthy();
 
-      // Reset with Escape
+      // The first Escape only dismisses the highlighted item's metadata tooltip. The highlight and the selector stay.
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: 'Search Applications' })).toBeInTheDocument();
+      expect(screen.getByRole('treeitem', { selected: true })).toBeInTheDocument();
+
+      // The second Escape resets the highlight
       await user.keyboard('{Escape}');
       expect(screen.queryByRole('treeitem', { selected: true })).toBeFalsy();
     });
