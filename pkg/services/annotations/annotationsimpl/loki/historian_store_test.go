@@ -887,8 +887,8 @@ func TestUseStore(t *testing.T) {
 			cfg := setting.UnifiedAlertingStateHistorySettings{
 				Enabled:          true,
 				Backend:          "multiple",
-				MultiPrimary:     "annotations",
-				MultiSecondaries: []string{"annotations", "invalid-backend"},
+				MultiPrimary:     "loki",
+				MultiSecondaries: []string{"prometheus", "invalid-backend"},
 			}
 			use := useStore(cfg)
 			require.False(t, use)
@@ -904,34 +904,54 @@ func TestUseStore(t *testing.T) {
 		require.False(t, use)
 	})
 
-	t.Run("false if Loki is part of multi backend", func(t *testing.T) {
-		t.Run("primary", func(t *testing.T) {
+	t.Run("false if Loki is only a secondary of multi backend", func(t *testing.T) {
+		cfg := setting.UnifiedAlertingStateHistorySettings{
+			Enabled:          true,
+			Backend:          "multiple",
+			MultiPrimary:     "annotations",
+			MultiSecondaries: []string{"loki"},
+		}
+		use := useStore(cfg)
+		require.False(t, use)
+	})
+
+	t.Run("false if Loki is the primary but annotations is a secondary", func(t *testing.T) {
+		cfg := setting.UnifiedAlertingStateHistorySettings{
+			Enabled:          true,
+			Backend:          "multiple",
+			MultiPrimary:     "loki",
+			MultiSecondaries: []string{"prometheus", "annotations"},
+		}
+		use := useStore(cfg)
+		require.False(t, use)
+	})
+
+	t.Run("true if only backend is Loki", func(t *testing.T) {
+		cfg := setting.UnifiedAlertingStateHistorySettings{
+			Enabled: true,
+			Backend: "loki",
+		}
+		use := useStore(cfg)
+		require.True(t, use)
+	})
+
+	t.Run("true if Loki is the primary of multi backend", func(t *testing.T) {
+		t.Run("without secondaries", func(t *testing.T) {
 			cfg := setting.UnifiedAlertingStateHistorySettings{
 				Enabled:      true,
 				Backend:      "multiple",
 				MultiPrimary: "loki",
 			}
 			use := useStore(cfg)
-			require.False(t, use)
+			require.True(t, use)
 		})
 
-		t.Run("secondary", func(t *testing.T) {
+		t.Run("with a prometheus secondary", func(t *testing.T) {
 			cfg := setting.UnifiedAlertingStateHistorySettings{
 				Enabled:          true,
-				Backend:          "multiple",
-				MultiPrimary:     "annotations",
-				MultiSecondaries: []string{"loki"},
-			}
-			use := useStore(cfg)
-			require.False(t, use)
-		})
-	})
-
-	t.Run("true if only backend is Loki", func(t *testing.T) {
-		t.Run("only", func(t *testing.T) {
-			cfg := setting.UnifiedAlertingStateHistorySettings{
-				Enabled: true,
-				Backend: "loki",
+				Backend:          " Multiple ",
+				MultiPrimary:     " Loki ",
+				MultiSecondaries: []string{"prometheus"},
 			}
 			use := useStore(cfg)
 			require.True(t, use)
