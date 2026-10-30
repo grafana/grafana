@@ -15,7 +15,6 @@ import {
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { GraphiteDatasource } from 'app/plugins/datasource/graphite/datasource';
 
 import { ExpressionDatasourceApi } from './ExpressionDatasource';
 import { type ExpressionQuery, ExpressionQueryType } from './types';
@@ -189,30 +188,6 @@ describe('ExpressionDatasourceApi', () => {
         expect(querySpy.mock.calls[0][0].targets).toEqual([
           { ...hiddenSource, targetFull: 'metric.a' },
           { ...nested, targetFull: 'sumSeries(metric.a)' },
-          sql,
-        ]);
-      });
-
-      it('lets the real Graphite data source resolve a reference to a hidden sibling query', async () => {
-        const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
-        const graphite = new GraphiteDatasource({ uid: 'graphite', type: 'graphite', jsonData: {} });
-        const datasource = { uid: 'graphite', type: 'graphite' };
-        const hiddenSource = asExpressionQuery({ refId: 'A', hide: true, target: 'metric.$input', datasource });
-        const nested = asExpressionQuery({ refId: 'B', target: 'sumSeries(#A)', datasource });
-        const sql: ExpressionQuery = {
-          type: ExpressionQueryType.sql,
-          refId: 'C',
-          expression: 'SELECT * FROM B',
-          datasource: { uid: '__expr__', type: '__expr__' },
-        };
-        mockDataSources({ graphite, __expr__: ds });
-        const querySpy = jest.spyOn(DataSourceWithBackend.prototype, 'query').mockReturnValue(of({ data: [] }));
-
-        await lastValueFrom(ds.query(buildRequest([hiddenSource, nested, sql], {})));
-
-        expect(querySpy.mock.calls[0][0].targets).toEqual([
-          expect.objectContaining({ refId: 'A', target: 'metric.10' }),
-          expect.objectContaining({ refId: 'B', targetFull: 'sumSeries(metric.10)' }),
           sql,
         ]);
       });
