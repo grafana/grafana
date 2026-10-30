@@ -173,6 +173,16 @@ func TestClient_LegacyCheckRequest(t *testing.T) {
 		want *authzextv1.LegacyCheckRequest
 	}{
 		{
+			name: "organization action restriction",
+			req:  LegacyCheckRequest{Namespace: "org-12", Subject: "user:u-1", Evaluator: accesscontrol.EvalPermission("dashboards:read"), Restriction: &LegacyActionRestriction{Actions: []string{"dashboards:read"}}},
+			want: &authzextv1.LegacyCheckRequest{Namespace: "org-12", Subject: "user:u-1", Expression: permission("dashboards:read"), Restriction: &authzextv1.LegacyActionRestriction{Actions: []string{"dashboards:read"}}},
+		},
+		{
+			name: "empty restriction survives transport",
+			req:  LegacyCheckRequest{Namespace: "org-12", Subject: "user:u-1", Evaluator: accesscontrol.EvalPermission("dashboards:read"), Restriction: &LegacyActionRestriction{}},
+			want: &authzextv1.LegacyCheckRequest{Namespace: "org-12", Subject: "user:u-1", Expression: permission("dashboards:read"), Restriction: &authzextv1.LegacyActionRestriction{}},
+		},
+		{
 			name: "internal profile with concrete namespace",
 			req: LegacyCheckRequest{
 				Namespace: "org-12", Evaluator: accesscontrol.EvalPermission("dashboards:create"),
@@ -223,18 +233,18 @@ func TestClient_LegacyCheckRequest(t *testing.T) {
 			},
 		},
 		{
-			name: "global evaluation preserves effective action restrictions",
+			name: "global evaluation preserves requester org",
 			req: LegacyCheckRequest{
 				Namespace: "default", Subject: "user:checked-user", Evaluator: accesscontrol.EvalPermission("users:read"),
-				GlobalEvaluation: &LegacyGlobalEvaluation{RequesterOrgID: accesscontrol.GlobalOrgID, PermittedActions: []string{"users:read"}},
+				GlobalEvaluation: &LegacyGlobalEvaluation{RequesterOrgID: accesscontrol.GlobalOrgID},
 			},
 			want: &authzextv1.LegacyCheckRequest{
 				Namespace: "default", Subject: "user:checked-user", Expression: permission("users:read"),
-				GlobalEvaluation: &authzextv1.LegacyGlobalEvaluation{RequesterOrgId: accesscontrol.GlobalOrgID, PermittedActions: []string{"users:read"}},
+				GlobalEvaluation: &authzextv1.LegacyGlobalEvaluation{RequesterOrgId: accesscontrol.GlobalOrgID},
 			},
 		},
 		{
-			name: "empty global restrictions remain distinct from organization evaluation",
+			name: "NoOrgID remains distinct from organization evaluation",
 			req: LegacyCheckRequest{
 				Namespace: "stacks-123", Subject: "user:checked-user", Evaluator: accesscontrol.EvalPermission("users:read"),
 				GlobalEvaluation: &LegacyGlobalEvaluation{RequesterOrgID: accesscontrol.NoOrgID},

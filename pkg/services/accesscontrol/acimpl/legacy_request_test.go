@@ -32,6 +32,7 @@ func TestBuildLegacyCheckRequest(t *testing.T) {
 		),
 	)
 	expected := legacyclient.LegacyCheckRequest{
+		Restriction:         &legacyclient.LegacyActionRestriction{},
 		Namespace:           "stacks-123",
 		Subject:             "user:user-uid",
 		Teams:               []string{"team-1", "team-2"},
@@ -102,6 +103,7 @@ func TestBuildLegacyCheckRequestIdentity(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ac := ProvideAccessControlTest()
 			expected := legacyclient.LegacyCheckRequest{
+				Restriction:         &legacyclient.LegacyActionRestriction{},
 				Namespace:           "org-2",
 				Subject:             tc.subject,
 				Evaluator:           accesscontrol.EvalPermission("dashboards:read"),
@@ -215,6 +217,7 @@ func TestBuildLegacyCheckRequestWithoutResolvers(t *testing.T) {
 
 			require.NoError(t, err)
 			expected := legacyclient.LegacyCheckRequest{
+				Restriction:         &legacyclient.LegacyActionRestriction{},
 				Namespace:           "stacks-123",
 				Subject:             "user:user-uid",
 				Evaluator:           accesscontrol.EvalPermission("dashboards:read", "dashboards:id:1"),
@@ -377,12 +380,12 @@ func TestBuildLegacyCheckRequestGlobalEvaluation(t *testing.T) {
 				Permissions: tc.permissions,
 			}
 			want := legacyclient.LegacyCheckRequest{
-				Namespace: tc.wantNamespace,
-				Subject:   "user:user-uid",
-				Evaluator: accesscontrol.EvalPermission("users:read"),
+				Restriction: &legacyclient.LegacyActionRestriction{Actions: tc.permittedActions},
+				Namespace:   tc.wantNamespace,
+				Subject:     "user:user-uid",
+				Evaluator:   accesscontrol.EvalPermission("users:read"),
 				GlobalEvaluation: &legacyclient.LegacyGlobalEvaluation{
-					RequesterOrgID:   tc.orgID,
-					PermittedActions: tc.permittedActions,
+					RequesterOrgID: tc.orgID,
 				},
 			}
 
@@ -409,9 +412,10 @@ func TestBuildLegacyCheckRequestCloudOrganization(t *testing.T) {
 		OrgID:   1,
 	}
 	want := legacyclient.LegacyCheckRequest{
-		Namespace: "stacks-123",
-		Subject:   "user:user-uid",
-		Evaluator: accesscontrol.EvalPermission("users:read"),
+		Restriction: &legacyclient.LegacyActionRestriction{},
+		Namespace:   "stacks-123",
+		Subject:     "user:user-uid",
+		Evaluator:   accesscontrol.EvalPermission("users:read"),
 	}
 
 	got, err := ProvideAccessControlTest().buildLegacyCheckRequest(
@@ -423,4 +427,39 @@ func TestBuildLegacyCheckRequestCloudOrganization(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, want, got)
+}
+
+func TestBuildLegacyCheckRequestEffectiveActions(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		permissions map[int64]map[string][]string
+		want        []string
+	}{
+		{name: "missing permission map"},
+		{name: "empty effective permissions", permissions: map[int64]map[string][]string{12: {}}},
+		{name: "other organization and global grants are excluded", permissions: map[int64]map[string][]string{
+			0:  {"users:delete": {"*"}},
+			13: {"dashboards:write": {"*"}},
+		}},
+		{name: "effective actions include resolver dependencies and action-only grants", permissions: map[int64]map[string][]string{
+			12: {"library.panels:read": {"folders:uid:parent"}, "folders:read": {"folders:uid:parent"}, "users:read": {}},
+		}, want: []string{"folders:read", "library.panels:read", "users:read"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			requester := &user.SignedInUser{
+				UserID: 1, UserUID: "u-1", OrgID: 12, Permissions: tc.permissions,
+			}
+			req, err := ProvideAccessControlTest().buildLegacyCheckRequest(
+				requester, accesscontrol.EvalPermission("library.panels:read"), false, types.OrgNamespaceFormatter,
+			)
+			require.NoError(t, err)
+			require.NotNil(t, req.Restriction)
+			require.Equal(t, tc.want, req.Restriction.Actions)
+
+			if len(tc.want) > 0 {
+				delete(requester.Permissions[12], "folders:read")
+				require.Equal(t, tc.want, req.Restriction.Actions)
+			}
+		})
+	}
 }
