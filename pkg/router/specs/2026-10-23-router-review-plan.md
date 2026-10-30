@@ -57,7 +57,7 @@ The new sections in this plan:
 - **D**: dangling features and dead code to remove.
 - **F**: performance.
 
-Metrics follow-ups (M5–M7, M9–M12) are in `2026-10-08-router-metrics-review.md`; all were done on
+Metrics follow-ups (M5–M7, M9–M12; M9 was not pursued) are in `2026-10-08-router-metrics-review.md`; all were done on
 2026-10-30.
 
 IDs from earlier plans are kept. Tick an item here when it lands, and note the PR number.

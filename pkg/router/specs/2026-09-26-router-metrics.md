@@ -85,14 +85,13 @@ retried with backoff.
 | `grafana_router_breaker_state` | gauge | `group`, `state` | 1 for the group's current breaker state (`closed`, `half-open`, `open`), 0 for the others. An open breaker stays `open` past its timeout until a request makes the trial: scrapes never move it |
 | `grafana_router_breaker_transitions_total` | counter | `group`, `state` | Breaker state changes, by the state entered |
 | `grafana_router_backend_failures_total` | counter | `group`, `plugin_id`, `reason` | Requests whose backend failed: `breaker_open`, `timeout`, `transport`, `redirect_rejected`, `stack_origin_mismatch`, `auth` (a plugin token exchange failed) |
-| `grafana_router_watches_ended_total` | counter | `group`, `reason` | Watches the router ended while the client was still connected: `route_changed` (the group's backend was replaced or removed) or `shutdown`. Clients re-establish them |
 | `grafana_router_discovery_results_total` | counter | `group`, `result` | How aggregated discovery was obtained: `provided`, `cached`, `fetched`, `stale`, `unavailable` |
 
 A failure in a discovery read (`/apis` and each version's resource list, from a group's backend or
 the unregistered-group handler) counts in `grafana_router_backend_failures_total` under the group, or
 the empty group for the unregistered-group handler. When a group is no longer served, its series in
 `backend_failures_total`, `breaker_transitions_total`, `discovery_results_total`,
-`longrunning_requests` and `watches_ended_total` are deleted, so the metrics don't keep every group
+and `longrunning_requests` are deleted, so the metrics don't keep every group
 that ever existed. A group served again starts from zero.
 
 Groups on the single-tenant fallback keep one breaker per destination host and group, so they have no
@@ -200,7 +199,6 @@ sum by (plugin_id) (
 | Stack lookup cache hit ratio | `rate(grafana_router_stack_lookups_total{result="cache_hit"}[5m]) / sum(rate(grafana_router_stack_lookups_total[5m]))` |
 | p99 stack lookup latency | `histogram_quantile(0.99, sum by (le) (rate(grafana_router_stack_lookup_duration_seconds_bucket[5m])))` |
 | Stack cache churn | `sum by (result) (rate(grafana_router_stack_cache_evictions_total[5m]))` |
-| Watches the router ended | `sum by (group, reason) (rate(grafana_router_watches_ended_total[5m]))` |
 | Stuck discovery fetches | `grafana_router_discovery_fetches_overdue > 0` |
 | Throttled stack lookups | `rate(grafana_router_stack_lookups_total{result="throttled"}[5m])` |
 | Stack discovery cache hit ratio | `rate(grafana_router_stack_discovery_cache_total{result="hit"}[5m]) / sum(rate(grafana_router_stack_discovery_cache_total[5m]))` |

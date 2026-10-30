@@ -33,7 +33,6 @@ type routerMetrics struct {
 	backendFailures    *prometheus.CounterVec
 	breakerTransitions *prometheus.CounterVec
 	discoveryResults   *prometheus.CounterVec
-	watchesEnded       *prometheus.CounterVec
 }
 
 func newRouterMetrics(reg prometheus.Registerer) *routerMetrics {
@@ -85,12 +84,6 @@ func newRouterMetrics(reg prometheus.Registerer) *routerMetrics {
 			Name:      "discovery_results_total",
 			Help:      "How each group's aggregated discovery was obtained: provided, cached, fetched, stale or unavailable.",
 		}, []string{"group", "result"}),
-		watchesEnded: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "grafana",
-			Subsystem: "router",
-			Name:      "watches_ended_total",
-			Help:      "Watches the router ended itself while the client was still connected, by group and reason: route_changed (the group's backend was replaced or removed) or shutdown. Clients re-establish them.",
-		}, []string{"group", "reason"}),
 	}
 	m.inFlight = registerOrReuse(reg, m.inFlight)
 	m.longRunning = registerOrReuse(reg, m.longRunning)
@@ -99,7 +92,6 @@ func newRouterMetrics(reg prometheus.Registerer) *routerMetrics {
 	m.backendFailures = registerOrReuse(reg, m.backendFailures)
 	m.breakerTransitions = registerOrReuse(reg, m.breakerTransitions)
 	m.discoveryResults = registerOrReuse(reg, m.discoveryResults)
-	m.watchesEnded = registerOrReuse(reg, m.watchesEnded)
 	return m
 }
 
@@ -133,10 +125,6 @@ func (m *routerMetrics) backendFailure(group, pluginID, reason string) {
 	m.backendFailures.WithLabelValues(group, pluginID, reason).Inc()
 }
 
-func (m *routerMetrics) watchEnded(group, reason string) {
-	m.watchesEnded.WithLabelValues(group, reason).Inc()
-}
-
 // forgetGroups deletes the series of groups the router no longer serves, so
 // the label-based metrics don't keep every group that ever existed. A watch
 // still running on a removed group holds its own gauge, so its end does not
@@ -148,7 +136,6 @@ func (m *routerMetrics) forgetGroups(groups []string) {
 		m.breakerTransitions.DeletePartialMatch(match)
 		m.discoveryResults.DeletePartialMatch(match)
 		m.longRunning.DeletePartialMatch(match)
-		m.watchesEnded.DeletePartialMatch(match)
 	}
 }
 

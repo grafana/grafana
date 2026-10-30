@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
-	"testing/synctest"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -70,7 +69,6 @@ func TestRemovedGroupsLoseTheirSeries(t *testing.T) {
 		m.backendFailure(group, "", failureTimeout)
 		m.breakerChanged(group, 2)
 		m.discoveryResult(group, discoveryCached)
-		m.watchEnded(group, watchEndedShutdown)
 		m.longRunning.WithLabelValues(group).Inc()
 	}
 
@@ -78,73 +76,11 @@ func TestRemovedGroupsLoseTheirSeries(t *testing.T) {
 	require.NoError(t, svc.router.reconcile(t.Context()))
 	for name, collector := range map[string]prometheus.Collector{
 		"backend_failures": m.backendFailures, "breaker_transitions": m.breakerTransitions, "discovery_results": m.discoveryResults,
-		"watches_ended": m.watchesEnded, "longrunning": m.longRunning,
+		"longrunning": m.longRunning,
 	} {
 		require.Equal(t, 1, testutil.CollectAndCount(collector), name)
 	}
 	require.Equal(t, 1.0, testutil.ToFloat64(m.longRunning.WithLabelValues(kept)))
-}
-
-// A watch the router ends is counted by why, and one the client ends is not.
-func TestWatchesEndedByTheRouterAreCounted(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		backend := newWatchBackend()
-		loader := &mutableLoader{backends: []Backend{&fakeBackend{group: metav1.APIGroup{Name: watchGroup}, key: "1", handler: backend}}}
-		router := NewGrafanaRouter(loader, nil)
-		svc := newService(router, prometheus.NewRegistry())
-		require.NoError(t, router.reconcile(t.Context()))
-		server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			svc.metrics.instrumentRequest(router, w, req.WithContext(authenticatedTestContext(req.Context())))
-		}))
-		client := server.Client()
-		t.Cleanup(func() {
-			select {
-			case <-backend.release:
-			default:
-				close(backend.release)
-			}
-		})
-		ended := func(reason string) float64 {
-			return testutil.ToFloat64(svc.metrics.watchesEnded.WithLabelValues(watchGroup, reason))
-		}
-
-		// The client leaves.
-		ctx, cancel := context.WithCancel(t.Context())
-		events := openWatchWithClient(ctx, t, server.URL+watchPath+"?watch=true", client)
-		requireEvent(t, events, addedEvent)
-		cancel()
-		synctest.Wait()
-		require.Zero(t, ended(watchEndedRouteChanged)+ended(watchEndedShutdown))
-
-		// The backend changes.
-		events = openWatchWithClient(t.Context(), t, server.URL+watchPath+"?watch=true", client)
-		requireEvent(t, events, addedEvent)
-		loader.backends = []Backend{&fakeBackend{group: metav1.APIGroup{Name: watchGroup}, key: "2", handler: backend}}
-		require.NoError(t, router.reconcile(t.Context()))
-		requireCleanEnd(t, events)
-		synctest.Wait()
-		require.Equal(t, 1.0, ended(watchEndedRouteChanged))
-
-		// The group is removed: its series are deleted, and the watch's end does
-		// not create them again.
-		events = openWatchWithClient(t.Context(), t, server.URL+watchPath+"?watch=true", client)
-		requireEvent(t, events, addedEvent)
-		loader.backends = nil
-		require.NoError(t, router.reconcile(t.Context()))
-		requireCleanEnd(t, events)
-		synctest.Wait()
-		require.Zero(t, testutil.CollectAndCount(svc.metrics.watchesEnded))
-		loader.backends = []Backend{&fakeBackend{group: metav1.APIGroup{Name: watchGroup}, key: "3", handler: backend}}
-		require.NoError(t, router.reconcile(t.Context()))
-
-		// The router shuts down.
-		events = openWatchWithClient(t.Context(), t, server.URL+watchPath+"?watch=true", client)
-		requireEvent(t, events, addedEvent)
-		router.closeWatches()
-		requireCleanEnd(t, events)
-		synctest.Wait()
-		require.Equal(t, 1.0, ended(watchEndedShutdown))
-	})
 }
 
 // A failure the backend reports while its discovery is read is counted under

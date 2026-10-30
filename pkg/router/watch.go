@@ -20,50 +20,21 @@ func rejectUpgrade(w http.ResponseWriter, req *http.Request) bool {
 	return true
 }
 
-// Why the router ended a watch, for grafana_router_watches_ended_total.
-const (
-	watchEndedRouteChanged = "route_changed" // its group's backend was replaced or removed
-	watchEndedShutdown     = "shutdown"      // the router closed its watches on shutdown
-)
-
-var (
-	errWatchRouteChanged = errors.New(watchEndedRouteChanged)
-	errWatchShutdown     = errors.New(watchEndedShutdown)
-)
-
 // serveWatch runs a watch whose lifetime the router controls: it ends when
 // scope ends (its group's backend was replaced or removed) or when the router
 // closes its watches on shutdown. Clients then re-establish the watch, as they
 // do when an apiserver ends one. Ordinary requests are not affected.
-func (r *GrafanaRouter) serveWatch(w http.ResponseWriter, req *http.Request, group string, scope context.Context, serve func(http.ResponseWriter, *http.Request)) {
-	ctx, cancel := context.WithCancelCause(req.Context())
-	defer cancel(nil)
+func (r *GrafanaRouter) serveWatch(w http.ResponseWriter, req *http.Request, scope context.Context, serve func(http.ResponseWriter, *http.Request)) {
+	ctx, cancel := context.WithCancel(req.Context())
+	defer cancel()
 	if scope != nil {
-		stopScope := context.AfterFunc(scope, func() { cancel(errWatchRouteChanged) })
+		stopScope := context.AfterFunc(scope, cancel)
 		defer stopScope()
 	}
 	if r.watches != nil {
-		stopRouter := context.AfterFunc(r.watches, func() { cancel(errWatchShutdown) })
+		stopRouter := context.AfterFunc(r.watches, cancel)
 		defer stopRouter()
 	}
-	// The client may leave at the same moment; only a watch the router ended
-	// while its client was still there counts. A watch whose group was removed
-	// is not counted: the group's series were just deleted, and counting it
-	// would create them again.
-	defer func() {
-		if r.onWatchEnded == nil || req.Context().Err() != nil {
-			return
-		}
-		cause := context.Cause(ctx)
-		if errors.Is(cause, errWatchRouteChanged) {
-			if _, served := (*r.snapshot.Load())[group]; !served {
-				return
-			}
-		} else if !errors.Is(cause, errWatchShutdown) {
-			return
-		}
-		r.onWatchEnded(group, cause.Error())
-	}()
 
 	defer func() {
 		p := recover()

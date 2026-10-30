@@ -1,7 +1,7 @@
 # Router: Metrics review follow-ups
 
-Status: done. Done: M1 (#134524), M3 (#134532), M4 (#134486), and M5–M7 and M9–M12 on 2026-10-30.
-Not pursued: M2, M8.
+Status: done. Done: M1 (#134524), M3 (#134532), M4 (#134486), and M5–M7 and M10–M12 on 2026-10-30.
+Not pursued: M2, M8, M9.
 Package: `pkg/router`
 
 Changes from a review of request coverage, async failure modes and cardinality. No label carries a
@@ -64,8 +64,8 @@ only the middleware mode serves, are out of scope.
 
 - ~~**M8.** Have `PluginLoader` implement `loaderStatus`, so `local-plugin` appears in
   `source_polls_total`.~~ Not pursued: local plugins are out of scope.
-- [x] **M9.** Count watches the router ends itself, on route change or shutdown, by reason.
-  Done: `watches_ended_total{group,reason}`, counted only when the client was still connected.
+- ~~**M9.** Count watches the router ends itself, on route change or shutdown, by reason.~~ Not
+  pursued: it happens almost never, so a metric isn't worth its code (user decision, 2026-10-30).
 - [x] **M10.** Add duration histograms for reconciles and source polls.
 - [x] **M11.** Delete series for groups that are no longer served from the label-based metrics
   (`backend_failures_total`, `breaker_transitions_total`, `discovery_results_total`,
