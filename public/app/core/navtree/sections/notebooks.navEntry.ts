@@ -16,7 +16,7 @@ export const notebooksNavEntry: NavEntryBuilder = {
     text: 'Notebooks',
     id: NavID.notebooks,
     subTitle: 'Create and manage notebooks to tell a story with your data',
-    icon: 'book',
+    icon: 'gf-notebook',
     sortWeight: NavWeight.notebooks,
     url: '/notebooks',
   }),

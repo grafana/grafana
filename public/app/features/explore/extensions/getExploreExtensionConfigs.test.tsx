@@ -50,7 +50,7 @@ describe('getExploreExtensionConfigs', () => {
           title: 'Add to notebook',
           description: 'Add the query and panel from explore to a notebook',
           targets: [PluginExtensionPoints.ExploreToolbarAction],
-          icon: 'book',
+          icon: 'gf-notebook',
           configure: expect.any(Function),
           onClick: expect.any(Function),
           category: 'Dashboards',
