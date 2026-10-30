@@ -1435,11 +1435,24 @@
     },
     "gma-rule-list": {
       "alert-rules": {
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
       "datasources": "",
+      "folder-row": {
+        "collapse": "",
+        "count-description": "",
+        "count-tooltip": "",
+        "count-unavailable": "",
+        "expand": ""
+      },
       "interval": "",
       "recorded-metric": {
         "records": "",
@@ -1450,12 +1463,13 @@
         "rules-error": "",
         "search-issues": ""
       },
-      "result-count": {
+      "rule-count": {
         "alert-rules_other": "",
         "recording-rules_other": ""
       },
       "search": {
         "default-policy-unavailable": "",
+        "folders-disabled": "",
         "help": {
           "contact-point": "",
           "dashboard": "",
@@ -1504,6 +1518,9 @@
         "renamed-value": "",
         "unavailable-tokens": "",
         "unclosed-quote": "",
+        "view": "",
+        "view-folders": "",
+        "view-list": "",
         "wildcard-in-text": ""
       },
       "shared": {
@@ -7240,11 +7257,15 @@
       "modal": {
         "cancel": "Batalkan",
         "discard": "Buang",
+        "keep-working": "",
         "save": "Simpan",
+        "stop-and-leave": "",
         "text": {
+          "leave-composer": "",
           "save-changes-question": "Ingin menyimpan perubahan?"
         },
         "title": {
+          "leave-composer": "",
           "unsaved-changes": "Perubahan belum tersimpan"
         }
       },
@@ -8990,6 +9011,12 @@
         "inspect-value": "Periksa nilai",
         "show-details": "Tampilkan detail",
         "view-log-line": "Lihat baris log"
+      },
+      "error-attribute": {
+        "error-fields-label": "",
+        "error-fields-tooltip": "",
+        "stacktrace-label": "",
+        "stacktrace-tooltip": ""
       },
       "loki-time-sort-tooltip": "Mengurutkan kolom ini hanya mengubah urutan hasil yang ditampilkan. Untuk memperbarui pengurutan berdasarkan waktu pada kueri, gunakan kontrol Urutkan di sebelah kanan."
     },
@@ -11017,6 +11044,7 @@
         "add-all": "Tambahkan semua nilai yang ditampilkan ke filter",
         "blanks": "(Kosong)",
         "button": "Filter {{name}}",
+        "include-missing": "",
         "operator": {
           "contains": "Berisi",
           "equals": "Sama dengan",
@@ -11041,6 +11069,7 @@
       "filter-popup-heading": "Filter menurut nilai:",
       "filter-popup-input-placeholder": "Filter nilai",
       "filter-popup-match-case": "Cocok huruf besar kecil",
+      "filter-popup-row-count": "",
       "footer": {
         "reducer": {
           "count": "Jumlah"
@@ -11057,6 +11086,18 @@
       "no-rows": "Tidak ada baris",
       "no-values-label": "Tidak ada nilai",
       "pagination-summary": "{{itemsRangeStart}}—{{displayedEnd}} dari {{numRows}} baris",
+      "range": {
+        "apply": "",
+        "empty": "",
+        "end": "",
+        "histogram": "",
+        "invalid": "",
+        "label": "",
+        "maximum": "",
+        "minimum": "",
+        "start": "",
+        "unbounded": ""
+      },
       "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "Urutkan berdasarkan kolom {{column}}",
@@ -12204,6 +12245,7 @@
     },
     "log-details": {
       "error": {
+        "diagnose-with-assistant": "",
         "error-details": ""
       }
     },
@@ -16804,6 +16846,10 @@
     },
     "namespace-unavailable": "Periksa namespace sebelum mengirim permintaan, atau muat ulang halaman untuk mencoba lagi.",
     "namespace-unavailable-title": "Tidak dapat memuat namespace",
+    "router-fixtures": {
+      "clear": "",
+      "title": ""
+    },
     "router-nav": {
       "api-docs": "",
       "manifests": "",
@@ -16820,7 +16866,6 @@
       "failures-description": "",
       "filter-placeholder": "",
       "filtered": "",
-      "groups": "",
       "last-failed": "",
       "load-failures": "",
       "never": "",
@@ -16834,8 +16879,9 @@
       "requests-description": "",
       "shadowed": "",
       "shadowed-description": "",
-      "sources": "",
-      "stack-lookups": "",
+      "tab-groups": "",
+      "tab-lookups": "",
+      "tab-sources": "",
       "title": ""
     }
   },

@@ -130,7 +130,7 @@ func TestSettingsCreate(t *testing.T) {
 func TestSettingsCreate_JSONDataTooLarge(t *testing.T) {
 	storage := newTestStorage(map[string]*pluginsettings.DTO{})
 	storage.pluginSettings = &pluginsettings.FakePluginSettings{
-		UpdateErr: pluginsettings.ErrPluginSettingJSONDataTooLarge.Errorf("too large"),
+		UpdateErr: pluginsettings.ErrPluginSettingDataTooLarge.Errorf("too large"),
 	}
 
 	ctx := request.WithNamespace(context.Background(), "default")

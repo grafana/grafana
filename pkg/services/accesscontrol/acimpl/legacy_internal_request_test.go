@@ -83,7 +83,7 @@ func TestBuildLegacyCheckInternalIdentity(t *testing.T) {
 			req, err := ac.buildLegacyCheckRequest(tc.requester, evaluator, false, tc.mapper)
 			if tc.wantError {
 				require.Error(t, err)
-				require.Nil(t, req)
+				require.Empty(t, req)
 
 				return
 			}
@@ -94,7 +94,7 @@ func TestBuildLegacyCheckInternalIdentity(t *testing.T) {
 			require.Empty(t, req.Subject)
 			require.Nil(t, req.GlobalEvaluation)
 			require.True(t, req.SkipScopeResolution)
-			require.Equal(t, legacyRequestPermissionExpression("dashboards:create", "folders:uid:target"), req.Expression)
+			require.Equal(t, accesscontrol.EvalPermission("dashboards:create", "folders:uid:target"), req.Evaluator)
 		})
 	}
 }

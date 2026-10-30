@@ -26,51 +26,51 @@ const (
 func TestLegacyCheckInternalProfiles(t *testing.T) {
 	tests := []struct {
 		name        string
-		expression  *authzv1.LegacyExpression
+		evaluator   accesscontrol.Evaluator
 		wantAllowed bool
 	}{
 		{
 			name:        "create provisioned dashboard",
-			expression:  legacyPermissionExpression("dashboards:create", "folders:uid:target"),
+			evaluator:   accesscontrol.EvalPermission("dashboards:create", "folders:uid:target"),
 			wantAllowed: true,
 		},
 		{
 			name:        "read nonexistent panel without lookup",
-			expression:  legacyPermissionExpression("library.panels:read", "library.panels:uid:missing"),
+			evaluator:   accesscontrol.EvalPermission("library.panels:read", "library.panels:uid:missing"),
 			wantAllowed: true,
 		},
 		{
 			name:        "action only",
-			expression:  legacyPermissionExpression("dashboards:write"),
+			evaluator:   accesscontrol.EvalPermission("dashboards:write"),
 			wantAllowed: true,
 		},
 		{
-			name:       "ungranted action",
-			expression: legacyPermissionExpression("users:delete"),
+			name:      "ungranted action",
+			evaluator: accesscontrol.EvalPermission("users:delete"),
 		},
 		{
 			name: "all retains denied action",
-			expression: legacyAllExpression(
-				legacyPermissionExpression("dashboards:create"),
-				legacyPermissionExpression("users:delete"),
+			evaluator: accesscontrol.EvalAll(
+				accesscontrol.EvalPermission("dashboards:create"),
+				accesscontrol.EvalPermission("users:delete"),
 			),
 		},
 		{
 			name: "any allows granted action",
-			expression: legacyAnyExpression(
-				legacyPermissionExpression("users:delete"),
-				legacyPermissionExpression("dashboards:create"),
+			evaluator: accesscontrol.EvalAny(
+				accesscontrol.EvalPermission("users:delete"),
+				accesscontrol.EvalPermission("dashboards:create"),
 			),
 			wantAllowed: true,
 		},
 		{
 			name:        "empty all with nonempty grants",
-			expression:  legacyAllExpression(),
+			evaluator:   accesscontrol.EvalAll(),
 			wantAllowed: true,
 		},
 		{
-			name:       "empty any",
-			expression: legacyAnyExpression(),
+			name:      "empty any",
+			evaluator: accesscontrol.EvalAny(),
 		},
 	}
 
@@ -88,7 +88,7 @@ func TestLegacyCheckInternalProfiles(t *testing.T) {
 				t.Run(tc.name, func(t *testing.T) {
 					for _, skipScopeResolution := range []bool{false, true} {
 						t.Run(fmt.Sprintf("skip_scope_resolution=%t", skipScopeResolution), func(t *testing.T) {
-							req := internalLegacyRequest(profile.String(), tc.expression)
+							req := internalLegacyRequest(profile.String(), tc.evaluator)
 							req.SkipScopeResolution = skipScopeResolution
 
 							allowed, err := client.LegacyCheck(t.Context(), req)
@@ -108,53 +108,53 @@ func TestLegacyCheckInternalIdentityValidation(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		modify func(*authzv1.LegacyCheckRequest)
+		modify func(*legacyclient.LegacyCheckRequest)
 	}{
 		{
 			name: "unknown profile",
-			modify: func(r *authzv1.LegacyCheckRequest) {
+			modify: func(r *legacyclient.LegacyCheckRequest) {
 				r.InternalIdentity.Profile = "unknown"
 			},
 		},
 		{
 			name: "empty profile",
-			modify: func(r *authzv1.LegacyCheckRequest) {
+			modify: func(r *legacyclient.LegacyCheckRequest) {
 				r.InternalIdentity.Profile = ""
 			},
 		},
 		{
 			name: "ambiguous subject",
-			modify: func(r *authzv1.LegacyCheckRequest) {
+			modify: func(r *legacyclient.LegacyCheckRequest) {
 				r.Subject = types.NewTypeID(types.TypeUser, legacyInternalTestUserUID)
 			},
 		},
 		{
 			name: "global user evaluation",
-			modify: func(r *authzv1.LegacyCheckRequest) {
-				r.GlobalEvaluation = &authzv1.LegacyGlobalEvaluation{}
+			modify: func(r *legacyclient.LegacyCheckRequest) {
+				r.GlobalEvaluation = &legacyclient.LegacyGlobalEvaluation{}
 			},
 		},
 		{
 			name: "wildcard target",
-			modify: func(r *authzv1.LegacyCheckRequest) {
+			modify: func(r *legacyclient.LegacyCheckRequest) {
 				r.Namespace = "*"
 			},
 		},
 		{
 			name: "missing target",
-			modify: func(r *authzv1.LegacyCheckRequest) {
+			modify: func(r *legacyclient.LegacyCheckRequest) {
 				r.Namespace = ""
 			},
 		},
 		{
 			name: "unconfigured stack",
-			modify: func(r *authzv1.LegacyCheckRequest) {
+			modify: func(r *legacyclient.LegacyCheckRequest) {
 				r.Namespace = "stacks-123"
 			},
 		},
 		{
 			name: "plain access policy",
-			modify: func(r *authzv1.LegacyCheckRequest) {
+			modify: func(r *legacyclient.LegacyCheckRequest) {
 				r.InternalIdentity = nil
 				r.Subject = types.NewTypeID(types.TypeAccessPolicy, identity.InternalIdentityService.String())
 			},
@@ -163,8 +163,8 @@ func TestLegacyCheckInternalIdentityValidation(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			req := internalLegacyRequest(identity.InternalIdentityService.String(), legacyPermissionExpression("dashboards:create"))
-			tc.modify(req)
+			req := internalLegacyRequest(identity.InternalIdentityService.String(), accesscontrol.EvalPermission("dashboards:create"))
+			tc.modify(&req)
 
 			allowed, err := client.LegacyCheck(t.Context(), req)
 			require.Error(t, err)
@@ -197,7 +197,7 @@ func TestLegacyCheckInternalIdentityRequiresEmbeddedServer(t *testing.T) {
 			}
 
 			client := legacyclient.NewLegacyClient(channel)
-			req := internalLegacyRequest(identity.InternalIdentityService.String(), legacyPermissionExpression("dashboards:create"))
+			req := internalLegacyRequest(identity.InternalIdentityService.String(), accesscontrol.EvalPermission("dashboards:create"))
 
 			allowed, err := client.LegacyCheck(t.Context(), req)
 			if tc.embedded {
@@ -216,7 +216,11 @@ func TestLegacyCheckInternalClientPreservesUserGrants(t *testing.T) {
 	client := newEmbeddedLegacyCheckTestClient(service)
 	subject := types.NewTypeID(types.TypeUser, legacyInternalTestUserUID)
 
-	allowed, err := client.LegacyCheck(t.Context(), legacyPermissionRequest(subject, "dashboards:create"))
+	allowed, err := client.LegacyCheck(t.Context(), legacyclient.LegacyCheckRequest{
+		Namespace: types.OrgNamespaceFormatter(legacyInternalTestOrgID),
+		Subject:   subject,
+		Evaluator: accesscontrol.EvalPermission("dashboards:create"),
+	})
 	require.NoError(t, err)
 	require.False(t, allowed)
 }
@@ -280,8 +284,8 @@ func TestLegacyCheckInternalResolverRequester(t *testing.T) {
 			service := NewTestService(legacyInternalTestUserUID, nil, nil).WithLegacyScopeResolvers(registry, types.OrgNamespaceFormatter)
 			service.store, service.permissionStore = nil, nil
 			client := newEmbeddedLegacyCheckTestClient(service)
-			expression := legacyPermissionExpression(tc.action, fmt.Sprintf("users:id:%d", targetUserID))
-			req := internalLegacyRequest(identity.InternalIdentityService.String(), expression)
+			evaluator := accesscontrol.EvalPermission(tc.action, fmt.Sprintf("users:id:%d", targetUserID))
+			req := internalLegacyRequest(identity.InternalIdentityService.String(), evaluator)
 
 			allowed, err := client.LegacyCheck(t.Context(), req)
 			require.NoError(t, err)
@@ -304,10 +308,10 @@ func newEmbeddedLegacyCheckTestClient(service *Service) *legacyclient.LegacyClie
 	return legacyclient.NewLegacyClient(channel, legacyclient.WithLegacyTracerClientOption(service.tracer))
 }
 
-func internalLegacyRequest(profile string, expression *authzv1.LegacyExpression) *authzv1.LegacyCheckRequest {
-	return &authzv1.LegacyCheckRequest{
+func internalLegacyRequest(profile string, evaluator accesscontrol.Evaluator) legacyclient.LegacyCheckRequest {
+	return legacyclient.LegacyCheckRequest{
 		Namespace:        types.OrgNamespaceFormatter(legacyInternalTestOrgID),
-		InternalIdentity: &authzv1.LegacyInternalIdentity{Profile: profile},
-		Expression:       expression,
+		InternalIdentity: &legacyclient.LegacyInternalIdentity{Profile: profile},
+		Evaluator:        evaluator,
 	}
 }

@@ -215,10 +215,6 @@ const (
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
 
-	// FlagAlertmanagerRemoteSecondary
-	// Enable Grafana to sync configuration and state with a remote Alertmanager.
-	FlagAlertmanagerRemoteSecondary = "alertmanagerRemoteSecondary"
-
 	// FlagAlertingProvenanceLockWrites
 	// Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL
 	FlagAlertingProvenanceLockWrites = "alertingProvenanceLockWrites"
@@ -733,6 +729,10 @@ const (
 	// FlagGrafanaDashboardVariablesMigration
 	// Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables
 	FlagGrafanaDashboardVariablesMigration = "grafana.dashboardVariablesMigration"
+
+	// FlagGrafanaDashboardPreferences
+	// Enables org, folder and user preferences for new dashboards and panels (DashboardPreferences in dashboard.grafana.app)
+	FlagGrafanaDashboardPreferences = "grafana.dashboardPreferences"
 
 	// FlagSecretsManagementAppPlatformAwsKeeper
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager

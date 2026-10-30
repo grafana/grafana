@@ -30,7 +30,7 @@ if [ ! -f "data/openapi/scope.grafana.app-v0alpha1.json" ]; then
 fi
 
 echo "Step 1: Generating Enterprise API client from OpenAPI spec..."
-npm run --prefix packages/grafana-openapi process-specs && npm exec --prefix packages/grafana-api-clients --no -- rtk-query-codegen-openapi ./local/generate-enterprise-apis.ts
+pnpm --filter @grafana/openapi --fail-if-no-match run process-specs && pnpm --filter @grafana/api-clients --fail-if-no-match exec rtk-query-codegen-openapi ../../local/generate-enterprise-apis.ts
 
 if [ ! -f "$ENTERPRISE_SCOPE_API_DIR/endpoints.gen.ts" ]; then
   echo "Error: Enterprise endpoints.gen.ts not found after generation"

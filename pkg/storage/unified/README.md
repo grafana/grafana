@@ -1327,8 +1327,12 @@ message ResourceSearchRequest {
 ```
 
 **Example gRPC/Protocol Buffer Usage:**
+
+Search requests must set `ResultFormat` to `FIELD_VALUES`; other formats are rejected. Responses contain typed `Rows` described by the shared `Fields` schema.
+
 ```go
 searchRequest := &resourcepb.ResourceSearchRequest{
+    ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
     Options: &resourcepb.ListOptions{
         Key: dashboardKey, // Primary: search dashboards
     },
