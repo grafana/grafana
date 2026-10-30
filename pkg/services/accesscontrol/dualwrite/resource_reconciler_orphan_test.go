@@ -11,9 +11,11 @@ import (
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	zclient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 )
 
 type fakeZanzanaClient struct {
+	zclient.NoopClient
 	readTuples []*authzextv1.Tuple
 	writeReqs  []*authzextv1.WriteRequest
 }
