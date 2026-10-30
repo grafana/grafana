@@ -75,11 +75,11 @@ metaV0Alpha1: {
 	skipDataQuery?: bool
 	// Alpha: suppress automatic starter queries without disabling explicit queries.
 	skipDefaultQuery?: bool
-	state?:         "alpha" | "beta" | "stable" | "deprecated"
-	streaming?:     bool
-	suggestions?:   bool
-	tracing?:       bool
-	iam?:           #IAM
+	state?:            "alpha" | "beta" | "stable" | "deprecated"
+	streaming?:        bool
+	suggestions?:      bool
+	tracing?:          bool
+	iam?:              #IAM
 	// +listType=atomic
 	roles?: [...#Role]
 	extensions?: #Extensions
