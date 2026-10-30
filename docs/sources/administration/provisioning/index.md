@@ -457,6 +457,9 @@ If you save a provisioned dashboard in the UI and remove the provisioning source
 If you set `allowUiUpdates` to `false`, you can't save changes to a provisioned dashboard.
 When you try to save changes to a provisioned dashboard, Grafana brings up a _Cannot save provisioned dashboard_ dialog box.
 
+Grafana stores this option on each provisioned resource as the `grafana.app/managerAllowsEdits` annotation.
+To compare how other as-code tools handle edits, refer to [Managed resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/managed-resources/).
+
 Grafana offers options to export the JSON definition of a dashboard.
 To export the dashboard JSON definition, follow these steps:
 
