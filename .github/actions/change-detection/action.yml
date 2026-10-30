@@ -273,6 +273,7 @@ runs:
             - 'e2e/**'
             - 'e2e-playwright/**'
             - '.github/actions/setup-enterprise/**'
+            - '.github/actions/setup-grafana-e2e/**'
             - '.github/actions/checkout/**'
             - 'emails/**'
             - 'pkg/**'

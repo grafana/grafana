@@ -36,15 +36,20 @@ jobs:
         uses: ./.github/actions/setup-playwright
       - name: Build Grafana backend
         run: make build-go
-      # The e2e server symlinks the source public/ directory, so it needs the compiler
-      # output in public/build; a restored dist/frontend alone is not enough.
       - name: Build Grafana frontend
         uses: ./.github/actions/build-frontend
         with:
           sourcemaps: 'false'
-          cache: 'false'
+      - name: Setup Grafana for E2E tests
+        uses: ./.github/actions/setup-grafana-e2e
+        with:
+          built-backend-dir: bin
+          built-frontend-dir: dist/frontend
       - name: Run dashboard scenes e2e
-        run: pnpm run e2e:schema-v2 || echo "Test failed but marking as success since schema V2 is behind a feature flag and should not block PRs"
+        env:
+          GRAFANA_URL: http://localhost:3001
+          KUBERNETES_DASHBOARDS: 'true'
+        run: pnpm run e2e:playwright --project=dashboards || echo "Test failed but marking as success since schema V2 is behind a feature flag and should not block PRs"
       - name: Always succeed # This is a workaround to make the job pass even if the previous step fails
         if: failure()
         run: exit 0
