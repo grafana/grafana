@@ -96,7 +96,7 @@ jobs:
 
       - name: Version and generate changelogs
         if: steps.plans.outputs.count != '0'
-        run: pnpm exec nx release --groups="$RELEASE_GROUPS" --skip-publish
+        run: ./.github/workflows/scripts/apply-version-plans.sh "$RELEASE_GROUPS"
 
       - name: Describe the release
         id: describe
