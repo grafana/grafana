@@ -42,7 +42,7 @@ export interface SearchQuery {
 }
 
 export interface DashboardQueryResult {
-  kind: string; // panel, dashboard, folder
+  kind: string; // panel, dashboard, folder, or a registered kind's group/Kind
   name: string;
   uid: string;
   url: string; // link to value (unique)

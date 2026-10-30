@@ -3,8 +3,9 @@ import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
+import { type SearchResults } from 'app/features/apiserver/search';
 
-import { type ResultItem, type SearchResults, useSearchNotebooksInfiniteQuery } from './notebookSearchApi';
+import { type ResultItem, useSearchNotebooksInfiniteQuery } from './notebookSearchApi';
 import { NOTEBOOKS_PAGE_LIMIT, useNotebooksList } from './useNotebooksList';
 
 jest.mock('app/api/clients/iam/v0alpha1', () => ({

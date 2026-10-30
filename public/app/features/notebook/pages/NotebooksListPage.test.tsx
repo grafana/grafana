@@ -7,6 +7,7 @@ import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
+import { type WhereNode } from 'app/features/apiserver/search';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { NotebookAnalytics } from '../analytics/main';
@@ -15,7 +16,6 @@ import {
   useLazyNotebookFieldFacetQuery,
   type NotebookSearchQuery,
   type ResultItem,
-  type WhereNode,
   useSearchNotebooksInfiniteQuery,
 } from '../list/notebookSearchApi';
 import { NOTEBOOKS_PAGE_LIMIT } from '../list/useNotebooksList';

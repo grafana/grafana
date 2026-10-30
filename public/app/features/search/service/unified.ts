@@ -5,7 +5,6 @@ import {
   BASE_URL as v0alphaBaseURL,
   type ManagedBy,
 } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import {
   arrayToDataFrame,
   type DataFrame,
@@ -19,7 +18,13 @@ import { generatedAPI, type ListStarsApiResponse } from 'app/api/clients/collect
 import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import kbn from 'app/core/utils/kbn';
-import { starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
+import { searchStarredResources } from 'app/features/stars/kindSearch';
+import {
+  getStarredKinds,
+  type KindSearchStarredKind,
+  loadStarredKindsFor,
+  resolvesThroughKindSearch,
+} from 'app/features/stars/kinds';
 import { findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
 import { dispatch } from 'app/store/store';
 
@@ -39,7 +44,7 @@ import { appendFrame, replaceCurrentFolderQuery } from './utils';
 const searchURI = `${v0alphaBaseURL}/search`;
 
 export type SearchHit = {
-  resource: string; // dashboards | folders
+  resource: string; // dashboards | folders, or a registered kind's plural
   name: string;
   title: string;
   description?: string;
@@ -51,6 +56,8 @@ export type SearchHit = {
   // calculated in the frontend
   url: string;
   managedBy?: ManagedBy;
+  // Hits built here from a kind's own search carry their kind; dashboard search hits derive it from `resource`
+  kind?: string;
 };
 
 export type SearchAPIResponse = {
@@ -67,6 +74,35 @@ export type SearchAPIResponse = {
 };
 
 const folderViewSort = 'name_sort';
+// Shared so each starred() call doesn't construct a collator just to order a handful of kind-search rows
+const titleCollator = new Intl.Collator();
+
+/**
+ * Appends rows from another index after the last server page. They cannot be server-sorted with
+ * the paged rows, so they go on the end, once, as soon as every paged row is loaded. Their fields
+ * are a subset of the paged rows', so the view built over the first page can show them.
+ */
+function withTrailingRows(response: QueryResponse, trailing: DataFrame): QueryResponse {
+  const { view } = response;
+  let appended = false;
+  const appendOnceComplete = () => {
+    if (!appended && view.dataFrame.length >= response.totalRows) {
+      appendFrame(view.dataFrame, trailing);
+      appended = true;
+    }
+  };
+  appendOnceComplete();
+
+  return {
+    ...response,
+    totalRows: response.totalRows + trailing.length,
+    loadMoreItems: async (stopIndex) => {
+      await response.loadMoreItems(stopIndex);
+      appendOnceComplete();
+    },
+    isItemLoaded: (index) => index < view.dataFrame.length,
+  };
+}
 
 export class UnifiedSearcher implements GrafanaSearcher {
   private locationInfo = loadLocationInfo();
@@ -82,26 +118,85 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
     }
-    // get the starred items — dashboards, plus folders when starred folders are enabled
     const result: { data: ListStarsApiResponse } = await dispatch(
       generatedAPI.endpoints.listStars.initiate({
         fieldSelector: userStarsFieldSelector(),
       })
     );
-    let starsIds = findStarredNames(result.data, DASHBOARD_API_GROUP, 'Dashboard');
-    if (starredFoldersEnabled()) {
-      starsIds = [...new Set([...starsIds, ...findStarredNames(result.data, FOLDER_API_GROUP, 'Folder')])];
+    // Dashboards and folders resolve through the dashboard search, every other kind through its own search endpoint
+    await loadStarredKindsFor(result.data);
+    const searchNames = new Set<string>();
+    const kindSearches: Array<Promise<SearchHit[]>> = [];
+    for (const kind of getStarredKinds()) {
+      const names = findStarredNames(result.data, kind.group, kind.kind);
+      if (resolvesThroughKindSearch(kind)) {
+        kindSearches.push(this.starredKindHits(kind, names, query));
+      } else {
+        names.forEach((name) => searchNames.add(name));
+      }
     }
 
-    if (starsIds.length) {
-      return this.doSearchQuery({
-        ...query,
-        name: starsIds,
-        query: query.query ?? '*',
-      });
+    const sort = query.sort ?? '';
+    const [dashboards, kindSearchHits] = await Promise.all([
+      searchNames.size > 0
+        ? this.doSearchQuery({ ...query, name: [...searchNames], query: query.query ?? '*' })
+        : undefined,
+      Promise.all(kindSearches).then((hits) => hits.flat()),
+    ]);
+
+    if (kindSearchHits.length === 0) {
+      return dashboards ?? noDataResponse();
     }
-    // Nothing is starred
-    return noDataResponse();
+    const kindSearchRsp = { hits: kindSearchHits, totalHits: kindSearchHits.length };
+    // Without dashboard rows the kind-search rows are the whole result and the frame is built from
+    // them: a view over an empty frame has no fields to show appended rows in
+    if (!dashboards || dashboards.totalRows === 0) {
+      return this.toQueryResponse(kindSearchRsp, sort);
+    }
+    return withTrailingRows(dashboards, toDashboardResults(kindSearchRsp, sort));
+  }
+
+  /**
+   * Starred objects of a registered kind as search hits, resolved through the kind's own search
+   * endpoint since they are not in the dashboard index. Filters that only dashboards can satisfy
+   * yield none. Sorted by title here: the rows trail the server-sorted dashboard rows, so they can
+   * only be ordered among themselves.
+   */
+  private async starredKindHits(
+    kind: KindSearchStarredKind,
+    names: string[],
+    query: SearchQuery
+  ): Promise<SearchHit[]> {
+    const dashboardOnlyFilter =
+      query.panel_type ||
+      query.ds_type ||
+      query.ds_uid ||
+      query.createdBy ||
+      query.ownerReference?.length ||
+      query.deleted;
+    // Registered kinds never live at the root, so a root-folder filter cannot match one
+    if (names.length === 0 || dashboardOnlyFilter || query.location === 'general') {
+      return [];
+    }
+    const resources = await searchStarredResources(kind, names, {
+      text: query.query,
+      tags: query.tags,
+      folder: query.location || undefined,
+    });
+    const descending = toSortParam(query.sort ?? '') === '-title';
+    return resources
+      .sort((a, b) => (descending ? -1 : 1) * titleCollator.compare(a.title, b.title))
+      .map(({ name, resource, title, description, folder, tags }) => ({
+        resource,
+        kind: kind.searchKind,
+        name,
+        title,
+        description,
+        folder,
+        tags,
+        field: {},
+        url: kind.url(name),
+      }));
   }
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
@@ -153,7 +248,19 @@ export class UnifiedSearcher implements GrafanaSearcher {
       rsp = await this.fetchResponse(uri);
     }
 
-    const first = toDashboardResults(rsp, query.sort ?? '');
+    return this.toQueryResponse(rsp, query.sort ?? '', (offset) => this.fetchResponse(`${uri}&offset=${offset}`));
+  }
+
+  /**
+   * Builds the paged response for a search result. `fetchPage` loads the server page starting at
+   * `offset`; omitted when `rsp` already holds every row.
+   */
+  private async toQueryResponse(
+    rsp: SearchAPIResponse,
+    sort: string,
+    fetchPage?: (offset: number) => Promise<SearchAPIResponse>
+  ): Promise<QueryResponse> {
+    const first = toDashboardResults(rsp, sort);
 
     // We add parent folder information into meta.custom of the data frame. This is loaded separately in
     // loadLocationInfo. Used to show parent information upstream.
@@ -192,12 +299,11 @@ export class UnifiedSearcher implements GrafanaSearcher {
     const getNextPage = async () => {
       while (loadMax > view.dataFrame.length) {
         const offset = view.dataFrame.length;
-        if (offset >= meta.count) {
+        if (offset >= meta.count || !fetchPage) {
           return;
         }
-        const nextPageUrl = `${uri}&offset=${offset}`;
-        const resp = await this.fetchResponse(nextPageUrl);
-        const frame = toDashboardResults(resp, query.sort ?? '');
+        const resp = await fetchPage(offset);
+        const frame = toDashboardResults(resp, sort);
         if (!frame) {
           console.log('no results', frame);
           return;
@@ -448,7 +554,8 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
     return {
       ...hit,
       uid: hit.name,
-      url: toURL(hit.resource, hit.name, hit.title),
+      // Hits from a kind's own search carry their url; dashboard search hits derive it from the resource
+      url: hit.kind ? hit.url : toURL(hit.resource, hit.name, hit.title),
       // Sort tags so we aren't reliant on the backend having done this for us
       // Sorting order can be different between APIs/search implementations
       tags: (hit.tags || []).sort(),
@@ -459,7 +566,7 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
       folder,
       location,
       name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID
-      kind: hit.resource.substring(0, hit.resource.length - 1), // dashboard "kind" is not plural
+      kind: hit.kind ?? hit.resource.substring(0, hit.resource.length - 1), // dashboard "kind" is not plural
       managedBy: hit.managedBy,
       ...field,
     };

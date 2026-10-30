@@ -14,6 +14,7 @@ import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge, Box } from '@g
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useIsStPodLoading } from 'app/core/navigation/useIsStPodLoading';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
+import { findStarredKindBySearchKind } from 'app/features/stars/kinds';
 
 import { Indent } from '../../Indent/Indent';
 
@@ -141,17 +142,9 @@ export function MegaMenuItem({
   }
 
   // Announce the kind on starred-leaf icons so a same-named dashboard/folder pair doesn't read
-  // as two identical links to screen readers. Only the two icons starredNavEntry produces are
-  // mapped; anything else stays untitled (and thus aria-hidden), so a future kind never gets a
-  // wrong label. Level-0 section icons must stay aria-hidden or they double-announce the label.
-  let starredLeafIconTitle: string | undefined;
-  if (isStarredLeaf) {
-    if (link.icon === 'folder') {
-      starredLeafIconTitle = t('navigation.megamenu-item.starred-folder-icon', 'Folder');
-    } else if (link.icon === 'apps') {
-      starredLeafIconTitle = t('navigation.megamenu-item.starred-dashboard-icon', 'Dashboard');
-    }
-  }
+  // as two identical links to screen readers. Other icons stay untitled (and thus aria-hidden):
+  // level-0 section icons must, or they double-announce the label.
+  const starredLeafIconTitle = link.starredKind ? findStarredKindBySearchKind(link.starredKind)?.title : undefined;
 
   let iconElement: React.JSX.Element | null = null;
 

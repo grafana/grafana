@@ -1,5 +1,5 @@
 import { setupMockUserPreferences } from './preferences';
-import { setupMockStarredDashboards, setupMockStarredFolders } from './starred';
+import { setupMockStarredDashboards, setupMockStarredFolders, setupMockStarredPluginKinds } from './starred';
 import { setupMockTeams } from './teams';
 
 /**
@@ -8,6 +8,7 @@ import { setupMockTeams } from './teams';
 export const resetFixtures = () => {
   setupMockStarredDashboards();
   setupMockStarredFolders();
+  setupMockStarredPluginKinds();
   setupMockTeams();
   setupMockUserPreferences();
 };

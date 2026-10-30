@@ -7,6 +7,7 @@ import {
   isVirtualTeamFolder,
 } from 'app/features/browse-dashboards/utils/dashboards';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { findStarredKindBySearchKind } from 'app/features/stars/kinds';
 
 import { type ManagerKind } from '../../apiserver/types';
 import { type DashboardViewItem, type DashboardViewItemKind } from '../types';
@@ -74,10 +75,6 @@ function delay(ms: number) {
 }
 
 export function getIconForKind(kind: string, isOpen?: boolean): IconName {
-  if (kind === 'dashboard') {
-    return 'apps';
-  }
-
   if (kind === 'folder') {
     return isOpen ? 'folder-open' : 'folder';
   }
@@ -86,7 +83,8 @@ export function getIconForKind(kind: string, isOpen?: boolean): IconName {
     return 'users-alt';
   }
 
-  return 'question-circle';
+  // Dashboards, and the kinds app plugins declare as starrable
+  return findStarredKindBySearchKind(kind)?.icon ?? 'question-circle';
 }
 
 export function getIconForItem(item: DashboardViewItemWithUIItems, isOpen?: boolean): IconName {

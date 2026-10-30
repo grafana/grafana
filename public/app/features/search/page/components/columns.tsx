@@ -15,6 +15,7 @@ import { type PanelPluginMetas } from '@grafana/runtime/internal';
 import { Checkbox, Icon, type IconName, TagList, Text, Tooltip } from '@grafana/ui';
 import { formatDate } from 'app/core/internationalization/dates';
 import { PluginIconName } from 'app/features/plugins/admin/types';
+import { findStarredKindBySearchKind } from 'app/features/stars/kinds';
 
 import { DescriptionTooltip } from '../../components/DescriptionTooltip';
 import { type QueryResponse, type SearchResultMeta } from '../../service/types';
@@ -456,39 +457,34 @@ function makeTypeColumn(
       let txt = 'Dashboard';
       if (kind) {
         txt = kind;
-        switch (txt) {
-          case 'dashboard':
-            txt = t('search.results-table.type-dashboard', 'Dashboard');
-            break;
-
-          case 'folder':
-            icon = 'folder';
-            txt = t('search.results-table.type-folder', 'Folder');
-            break;
-
-          case 'panel':
-            icon = `${PluginIconName.panel}`;
-            const type = typeField.values[i];
-            if (type) {
-              txt = type;
-              const info = panelPluginMetas[txt];
-              if (info?.name) {
-                txt = info.name;
-              } else {
-                switch (type) {
-                  case 'row':
-                    txt = 'Row';
-                    icon = `bars`;
-                    break;
-                  case 'singlestat': // auto-migration
-                    txt = 'Singlestat';
-                    break;
-                  default:
-                    icon = `question-circle`; // plugin not found
-                }
+        // Dashboards, folders and registered kinds are what people star; the registry names them
+        const starredKind = findStarredKindBySearchKind(kind);
+        if (starredKind) {
+          icon = starredKind.icon;
+          txt = starredKind.title;
+        }
+        if (kind === 'panel') {
+          icon = `${PluginIconName.panel}`;
+          const type = typeField.values[i];
+          if (type) {
+            txt = type;
+            const info = panelPluginMetas[txt];
+            if (info?.name) {
+              txt = info.name;
+            } else {
+              switch (type) {
+                case 'row':
+                  txt = 'Row';
+                  icon = `bars`;
+                  break;
+                case 'singlestat': // auto-migration
+                  txt = 'Singlestat';
+                  break;
+                default:
+                  icon = `question-circle`; // plugin not found
               }
             }
-            break;
+          }
         }
       }
       const { key, ...cellProps } = p.cellProps;
