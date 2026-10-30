@@ -7,7 +7,6 @@ import (
 )
 
 type RemoteAlertmanager struct {
-	Info                  *prometheus.GaugeVec
 	RequestLatency        *instrument.HistogramCollector
 	LastReadinessCheck    prometheus.Gauge
 	ConfigSyncsTotal      prometheus.Counter
@@ -20,12 +19,6 @@ type RemoteAlertmanager struct {
 
 func NewRemoteAlertmanagerMetrics(r prometheus.Registerer) *RemoteAlertmanager {
 	return &RemoteAlertmanager{
-		Info: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: Namespace,
-			Subsystem: Subsystem,
-			Name:      "remote_alertmanager_info",
-			Help:      "Information about the remote Alertmanager.",
-		}, nil),
 		RequestLatency: instrument.NewHistogramCollector(promauto.With(r).NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
@@ -75,4 +68,15 @@ func NewRemoteAlertmanagerMetrics(r prometheus.Registerer) *RemoteAlertmanager {
 			Help:      "Timestamp of the last successful state sync to the remote Alertmanager in seconds.",
 		}),
 	}
+}
+
+// RegisterRemoteAlertmanagerInfo registers the info metric of the remote Alertmanager.
+// It is only registered when the remote Alertmanager is enabled, so joins on it select remote Alertmanager instances.
+func RegisterRemoteAlertmanagerInfo(r prometheus.Registerer) {
+	promauto.With(r).NewGauge(prometheus.GaugeOpts{
+		Namespace: Namespace,
+		Subsystem: Subsystem,
+		Name:      "remote_alertmanager_info",
+		Help:      "Information about the remote Alertmanager.",
+	}).Set(1)
 }
