@@ -65,13 +65,23 @@ func validatePermissionCondition(grant *openfgav1.TupleKey) error {
 	return nil
 }
 
+func validatePermissionGrants(ctx context.Context, grants []*openfgav1.TupleKey) error {
+	for _, grant := range grants {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		if err := validatePermissionGrant(grant); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Translate only the schema's direct grants and computed local relations.
 // Parent edges are deliberately absent: legacy scopes describe grant locations.
 func translatePermissionGrants(ctx context.Context, grants []*openfgav1.TupleKey) ([]permissionListResult, error) {
-	for _, grant := range grants {
-		if err := validatePermissionGrant(grant); err != nil {
-			return nil, err
-		}
+	if err := validatePermissionGrants(ctx, grants); err != nil {
+		return nil, err
 	}
 	results := make([]permissionListResult, 0, len(common.SupportedActions()))
 	for _, entry := range common.SupportedActions() {
@@ -82,6 +92,9 @@ func translatePermissionGrants(ctx context.Context, grants []*openfgav1.TupleKey
 		relation := common.VerbMapping[entry.Verb]
 		list := &authzv1.ListResponse{}
 		for _, grant := range grants {
+			if err := ctx.Err(); err != nil {
+				return nil, err
+			}
 			typ, name, _ := strings.Cut(grant.GetObject(), ":")
 			granted := grant.GetRelation()
 			switch {

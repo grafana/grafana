@@ -15,7 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
-const permissionPrincipalCacheLimit = 10000
+const (
+	permissionPrincipalCacheLimit     = 10000
+	permissionPrincipalCacheMaxTuples = 100000
+)
 
 type permissionPrincipalKey struct{ store, model, principal string }
 type permissionPrincipalEntry struct {
@@ -74,7 +77,8 @@ func (s *Server) cachedPermissionContribution(ctx context.Context, key permissio
 			return nil, err
 		}
 		cache.mu.Lock()
-		if cache.generation == generation && cache.clock.Now().Before(expires) {
+		// Large grants still resolve completely; only cache admission is bounded.
+		if contribution.tupleCount <= permissionPrincipalCacheMaxTuples && cache.generation == generation && cache.clock.Now().Before(expires) {
 			cache.entries.Add(key, permissionPrincipalEntry{contribution: contribution, expires: expires})
 		}
 		cache.mu.Unlock()
