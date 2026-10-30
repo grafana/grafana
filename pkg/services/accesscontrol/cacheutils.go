@@ -7,11 +7,16 @@ import (
 	"fmt"
 	"hash/fnv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
+
+// PermissionCacheTTL keeps legacy permissions and principal contributions on the
+// same freshness bound.
+const PermissionCacheTTL = 60 * time.Second
 
 func (s *SearchOptions) HashString() (string, error) {
 	if s == nil {

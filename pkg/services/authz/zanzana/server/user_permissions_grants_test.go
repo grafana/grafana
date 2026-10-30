@@ -151,7 +151,7 @@ func (s *permissionDatastore) ReadAuthorizationModel(ctx context.Context, store,
 	return s.OpenFGADatastore.ReadAuthorizationModel(ctx, store, modelID)
 }
 
-func newPermissionTestServer(t testing.TB, tuples []*openfgav1.TupleKey) (*Server, *permissionDatastore, *zanzana.StoreInfo) {
+func newPermissionTestServer(t testing.TB, tuples []*openfgav1.TupleKey, configure ...func(*setting.Cfg)) (*Server, *permissionDatastore, *zanzana.StoreInfo) {
 	t.Helper()
 	ds := &permissionDatastore{
 		OpenFGADatastore: memory.New(memory.WithMaxTuplesPerWrite(10000)),
@@ -164,6 +164,10 @@ func newPermissionTestServer(t testing.TB, tuples []*openfgav1.TupleKey) (*Serve
 	cfg.ZanzanaServer.CacheSettings.ListObjectsIteratorCacheEnabled = false
 	cfg.ZanzanaServer.CacheSettings.CacheControllerEnabled = false
 	cfg.ZanzanaServer.CacheSettings.SharedIteratorEnabled = false
+	cfg.RBAC.PermissionCache = false
+	for _, configure := range configure {
+		configure(cfg)
+	}
 	srv, err := NewEmbeddedZanzanaServer(cfg, ds, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector(), nil)
 	require.NoError(t, err)
 	t.Cleanup(func() {

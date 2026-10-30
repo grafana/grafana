@@ -46,9 +46,10 @@ same user with different contextual teams can share the user's stored contributi
 without sharing contextual memberships.
 
 Entries are isolated by store ID, immutable model ID and typed principal. Model
-validation uses a separate key within the same bounded cache. The cache uses the
-existing `check_query_cache_enabled`, `check_query_cache_ttl` (default 10 seconds),
-and `check_cache_limit` (default 10,000 entries) settings. Entries expire from the
+validation uses a separate key within the same bounded cache. The cache honors
+`[rbac] permission_cache` and uses the shared 60-second permission-cache TTL,
+matching legacy permission caches. Its LRU holds at most 10,000 entries. OpenFGA
+query-cache settings do not control these contributions. Entries expire from the
 start of the read. Reads are coalesced per key and invalidation generation. A
 shared load has a 10-second bound, while each waiter can cancel independently.
 Principal reads run with concurrency 8. A request is limited to 100,000 tuples and

@@ -23,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const cacheTTL = 60 * time.Second
+const cacheTTL = ac.PermissionCacheTTL
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions")
 

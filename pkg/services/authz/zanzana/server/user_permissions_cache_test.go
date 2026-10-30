@@ -3,11 +3,13 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"testing"
 	"time"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/jonboulle/clockwork"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/openfga/openfga/pkg/storage"
 	"github.com/stretchr/testify/require"
@@ -15,12 +17,11 @@ import (
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func enablePrincipalCache(srv *Server) {
-	srv.cfg.CacheSettings.CheckQueryCacheEnabled = true
-	srv.cfg.CacheSettings.CheckQueryCacheTTL = time.Minute
-	srv.cfg.CacheSettings.CheckCacheLimit = 100
+	srv.permissionCacheEnabled = true
 	srv.permissionScopeResolver = permissionIDs{}
 }
 
@@ -80,15 +81,33 @@ func TestUserPermissionsBypassesPrincipalCache(t *testing.T) {
 	require.NotEmpty(t, permissionPairs(t, srv, "user:alice", nil, false), "bypass must not populate or replace shared entries")
 }
 
-func TestUserPermissionsCacheTTLObservesExternalRevocation(t *testing.T) {
-	grant := common.NewResourceTuple("user:alice", common.RelationGet, dashboardGroup, dashboardResource, "", "dashboard")
+func TestUserPermissionsCachesSharedTeamForLegacyTTL(t *testing.T) {
+	grant := common.NewResourceTuple("team:shared#member", common.RelationGet, dashboardGroup, dashboardResource, "", "dashboard")
 	srv, ds, store := newPermissionTestServer(t, []*openfgav1.TupleKey{grant})
 	enablePrincipalCache(srv)
-	srv.cfg.CacheSettings.CheckQueryCacheTTL = 20 * time.Millisecond
-	require.NotEmpty(t, permissionPairs(t, srv, "user:alice", nil, false))
+	srv.cfg.CacheSettings.CheckQueryCacheTTL = 10 * time.Second
+	clock := clockwork.NewFakeClock()
+	srv.principalCache().clock = clock
+	key := [2]string{"dashboards:read", "dashboards:uid:dashboard"}
+	require.True(t, permissionPairs(t, srv, "user:alice", []string{"shared"}, false)[key])
 	require.NoError(t, ds.Write(t.Context(), store.ID, []*openfgav1.TupleKeyWithoutCondition{{User: grant.User, Relation: grant.Relation, Object: grant.Object}}, nil))
-	time.Sleep(25 * time.Millisecond)
-	require.Empty(t, permissionPairs(t, srv, "user:alice", nil, false))
+	clock.Advance(59 * time.Second)
+	ds.reset()
+	require.True(t, permissionPairs(t, srv, "user:alice", []string{"shared"}, false)[key], "reuse the cached team until the legacy 60-second TTL")
+	_, total := ds.counts()
+	require.Zero(t, total)
+	require.True(t, permissionPairs(t, srv, "user:bob", []string{"shared"}, false)[key], "another user reuses the same team at 59 seconds")
+	counts, _ := ds.counts()
+	require.Equal(t, map[string]int{"read": 1}, counts)
+	clock.Advance(time.Second)
+	ds.reset()
+	require.False(t, permissionPairs(t, srv, "user:alice", []string{"shared"}, false)[key], "external changes are visible when the shared contribution expires")
+	counts, _ = ds.counts()
+	require.Equal(t, map[string]int{"model": 1, "read": 2}, counts)
+	ds.reset()
+	require.False(t, permissionPairs(t, srv, "user:bob", []string{"shared"}, false)[key], "Bob reuses the refreshed empty team, not a flattened user result")
+	_, total = ds.counts()
+	require.Zero(t, total)
 }
 
 func TestUserPermissionsWriteEvictsNegativeContribution(t *testing.T) {
@@ -256,4 +275,31 @@ func TestUserPermissionsDoesNotCacheFailedRead(t *testing.T) {
 	require.Empty(t, stream.permissions)
 	ds.failIterator = nil
 	require.NotEmpty(t, permissionPairs(t, srv, "user:alice", nil, false))
+}
+
+func TestUserPermissionsUsesLegacyPermissionCacheFlag(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		t.Run(fmt.Sprintf("enabled=%t", enabled), func(t *testing.T) {
+			srv, ds, _ := newPermissionTestServer(t, nil, func(cfg *setting.Cfg) {
+				cfg.RBAC.PermissionCache = enabled
+				cfg.ZanzanaServer.CacheSettings.CheckQueryCacheEnabled = !enabled
+				cfg.ZanzanaServer.CacheSettings.CheckQueryCacheTTL = time.Minute
+				cfg.ZanzanaServer.CacheSettings.CheckCacheLimit = 100
+				if enabled {
+					cfg.ZanzanaServer.CacheSettings.CheckQueryCacheTTL = 0
+					cfg.ZanzanaServer.CacheSettings.CheckCacheLimit = 0
+				}
+			})
+			srv.permissionScopeResolver = permissionIDs{}
+			require.Empty(t, permissionPairs(t, srv, "user:nobody", nil, false))
+			ds.reset()
+			require.Empty(t, permissionPairs(t, srv, "user:nobody", nil, false))
+			_, total := ds.counts()
+			if enabled {
+				require.Zero(t, total)
+			} else {
+				require.Equal(t, 2, total)
+			}
+		})
+	}
 }
