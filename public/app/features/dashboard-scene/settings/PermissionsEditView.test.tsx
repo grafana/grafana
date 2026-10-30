@@ -6,6 +6,21 @@ import { activateFullSceneTree } from '../utils/test-utils';
 import { PermissionsEditView } from './PermissionsEditView';
 
 describe('PermissionsEditView', () => {
+  it('resolves the dashboard and URL key before loading the settings renderers', () => {
+    const rendererPath = require.resolve('./SettingsRenderers');
+    const permissionsView = new PermissionsEditView({});
+    const dashboard = new DashboardScene({ uid: 'dash-1', editview: permissionsView });
+    const deactivate = permissionsView.activate();
+
+    try {
+      expect(permissionsView.getDashboard()).toBe(dashboard);
+      expect(permissionsView.getUrlKey()).toBe('permissions');
+      expect(require.cache[rendererPath]).toBeUndefined();
+    } finally {
+      deactivate();
+    }
+  });
+
   describe('Dashboard permissions state', () => {
     let dashboard: DashboardScene;
     let permissionsView: PermissionsEditView;

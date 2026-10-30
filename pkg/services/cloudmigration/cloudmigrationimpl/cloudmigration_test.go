@@ -9,9 +9,10 @@ import (
 	"slices"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,6 +41,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertprovisioning "github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	ngalertprovenance "github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
+	ngalertrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
@@ -86,379 +89,258 @@ func Test_CreateGetAndDeleteToken(t *testing.T) {
 }
 
 func Test_GetSnapshotStatusFromGMS(t *testing.T) {
-	t.Parallel()
+	for _, tc := range []struct {
+		state cloudmigration.SnapshotState
+		want  cloudmigration.SnapshotStatus
+	}{
+		{state: cloudmigration.SnapshotStateInitialized, want: cloudmigration.SnapshotStatusPendingProcessing},
+		{state: cloudmigration.SnapshotStateProcessing, want: cloudmigration.SnapshotStatusProcessing},
+		{state: cloudmigration.SnapshotStateFinished, want: cloudmigration.SnapshotStatusFinished},
+		{state: cloudmigration.SnapshotStateCanceled, want: cloudmigration.SnapshotStatusCanceled},
+		{state: cloudmigration.SnapshotStateError, want: cloudmigration.SnapshotStatusError},
+		{state: cloudmigration.SnapshotStateUnknown, want: cloudmigration.SnapshotStatusPendingProcessing},
+	} {
+		t.Run(string(tc.state), func(t *testing.T) {
+			s, gms, query := setUpSnapshotStatusTest(t, cloudmigration.SnapshotStatusPendingProcessing)
 
-	setupTest := func(ctx context.Context) (service *Service, snapshotUID string, sessionUID string) {
-		s := setUpServiceTest(t).(*Service)
+			synctest.Test(t, func(t *testing.T) {
+				t.Cleanup(func() { stopSnapshotStatusSync(s) })
 
-		gmsClientFake := &gmsClientMock{}
-		s.gmsClient = gmsClientFake
+				gms.getSnapshotResponse = &cloudmigration.GetSnapshotStatusResponse{State: tc.state}
 
-		// Insert a session and snapshot into the database before we start
-		createTokenResp, err := s.CreateToken(ctx)
-		assert.NoError(t, err)
-		assert.NotEmpty(t, createTokenResp.Token)
+				snapshot, err := s.GetSnapshot(t.Context(), query)
+				require.NoError(t, err)
+				require.Equal(t, cloudmigration.SnapshotStatusPendingProcessing, snapshot.Status)
 
-		sess, err := s.store.CreateMigrationSession(ctx, cloudmigration.CloudMigrationSession{
-			AuthToken: createTokenResp.Token,
-		})
-		require.NoError(t, err)
+				// Let the initial GMS request finish before checking the persisted local state.
+				synctest.Wait()
 
-		uid := "test uid"
+				snapshot, err = s.GetSnapshot(t.Context(), query)
+				require.NoError(t, err)
+				require.Equal(t, tc.want, snapshot.Status)
 
-		err = s.store.CreateSnapshot(ctx, cloudmigration.CloudMigrationSnapshot{
-			UID:            uid,
-			SessionUID:     sess.UID,
-			Status:         cloudmigration.SnapshotStatusCreating,
-			GMSSnapshotUID: "gms uid",
-		})
-		require.NoError(t, err)
-
-		// Make sure status is coming from the db only
-		snapshot, err := s.GetSnapshot(ctx, cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: uid,
-			SessionUID:  sess.UID,
-		})
-		assert.NoError(t, err)
-		assert.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
-		assert.Never(t, func() bool { return gmsClientFake.GetSnapshotStatusCallCount() > 0 }, time.Second, 10*time.Millisecond)
-
-		// Make the status pending processing to ensure GMS gets called and initialize a resource
-		err = s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
-			UID:       uid,
-			SessionID: sess.UID,
-			Status:    cloudmigration.SnapshotStatusPendingProcessing,
-			LocalResourcesToCreate: []cloudmigration.CloudMigrationResource{
-				{
-					Name:   "A name",
-					Type:   cloudmigration.DatasourceDataType,
-					RefID:  "A",
-					Status: cloudmigration.ItemStatusPending,
-				},
-			},
-		})
-		assert.NoError(t, err)
-
-		return s, uid, sess.UID
-	}
-
-	checkStatusSync := func(ctx context.Context, s *Service, snapshotUID, sessionUID string, status cloudmigration.SnapshotStatus) func() bool {
-		return func() bool {
-			snapshot, err := s.GetSnapshot(ctx, cloudmigration.GetSnapshotsQuery{
-				SnapshotUID: snapshotUID,
-				SessionUID:  sessionUID,
+				// Let the second GetSnapshot attempt a sync before checking for duplicate GMS calls.
+				synctest.Wait()
+				require.Equal(t, 1, gms.GetSnapshotStatusCallCount())
 			})
-			if err != nil {
-				return false
-			}
-
-			return snapshot.Status == status
-		}
+		})
 	}
-
-	t.Run("test case: gms snapshot initialized", func(t *testing.T) {
-		t.Parallel()
-
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
-
-		s, snapshotUID, sessionUID := setupTest(ctx)
-
-		gmsClientFake := &gmsClientMock{
-			getSnapshotResponse: &cloudmigration.GetSnapshotStatusResponse{
-				State: cloudmigration.SnapshotStateInitialized,
-			},
-		}
-		s.gmsClient = gmsClientFake
-
-		_, err := s.GetSnapshot(ctx, cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: snapshotUID,
-			SessionUID:  sessionUID,
-		})
-		require.NoError(t, err)
-		require.Eventually(t, checkStatusSync(ctx, s, snapshotUID, sessionUID, cloudmigration.SnapshotStatusPendingProcessing), time.Second, 10*time.Millisecond)
-		require.Eventually(t, gmsClientFake.ValidateSnapshotStatusCallCount, time.Second, 10*time.Millisecond)
-	})
-
-	t.Run("test case: gms snapshot processing", func(t *testing.T) {
-		t.Parallel()
-
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
-
-		s, snapshotUID, sessionUID := setupTest(ctx)
-
-		gmsClientFake := &gmsClientMock{
-			getSnapshotResponse: &cloudmigration.GetSnapshotStatusResponse{
-				State: cloudmigration.SnapshotStateProcessing,
-			},
-		}
-		s.gmsClient = gmsClientFake
-
-		_, err := s.GetSnapshot(ctx, cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: snapshotUID,
-			SessionUID:  sessionUID,
-		})
-		require.NoError(t, err)
-		require.Eventually(t, checkStatusSync(ctx, s, snapshotUID, sessionUID, cloudmigration.SnapshotStatusProcessing), time.Second, 10*time.Millisecond)
-		require.Eventually(t, gmsClientFake.ValidateSnapshotStatusCallCount, time.Second, 10*time.Millisecond)
-	})
-
-	t.Run("test case: gms snapshot finished", func(t *testing.T) {
-		t.Parallel()
-
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
-
-		s, snapshotUID, sessionUID := setupTest(ctx)
-
-		gmsClientFake := &gmsClientMock{
-			getSnapshotResponse: &cloudmigration.GetSnapshotStatusResponse{
-				State: cloudmigration.SnapshotStateFinished,
-			},
-		}
-		s.gmsClient = gmsClientFake
-
-		_, err := s.GetSnapshot(ctx, cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: snapshotUID,
-			SessionUID:  sessionUID,
-		})
-		require.NoError(t, err)
-		require.Eventually(t, checkStatusSync(ctx, s, snapshotUID, sessionUID, cloudmigration.SnapshotStatusFinished), time.Second, 10*time.Millisecond)
-		require.Eventually(t, gmsClientFake.ValidateSnapshotStatusCallCount, time.Second, 10*time.Millisecond)
-	})
-
-	t.Run("test case: gms snapshot canceled", func(t *testing.T) {
-		t.Parallel()
-
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
-
-		s, snapshotUID, sessionUID := setupTest(ctx)
-
-		gmsClientFake := &gmsClientMock{
-			getSnapshotResponse: &cloudmigration.GetSnapshotStatusResponse{
-				State: cloudmigration.SnapshotStateCanceled,
-			},
-		}
-		s.gmsClient = gmsClientFake
-
-		_, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: snapshotUID,
-			SessionUID:  sessionUID,
-		})
-		require.NoError(t, err)
-		require.Eventually(t, checkStatusSync(ctx, s, snapshotUID, sessionUID, cloudmigration.SnapshotStatusCanceled), time.Second, 10*time.Millisecond)
-		require.Eventually(t, gmsClientFake.ValidateSnapshotStatusCallCount, time.Second, 10*time.Millisecond)
-	})
-
-	t.Run("test case: gms snapshot error", func(t *testing.T) {
-		t.Parallel()
-
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
-
-		s, snapshotUID, sessionUID := setupTest(ctx)
-
-		gmsClientFake := &gmsClientMock{
-			getSnapshotResponse: &cloudmigration.GetSnapshotStatusResponse{
-				State: cloudmigration.SnapshotStateError,
-			},
-		}
-		s.gmsClient = gmsClientFake
-
-		_, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: snapshotUID,
-			SessionUID:  sessionUID,
-		})
-		require.NoError(t, err)
-		require.Eventually(t, checkStatusSync(ctx, s, snapshotUID, sessionUID, cloudmigration.SnapshotStatusError), time.Second, 10*time.Millisecond)
-		require.Eventually(t, gmsClientFake.ValidateSnapshotStatusCallCount, time.Second, 10*time.Millisecond)
-	})
-
-	t.Run("test case: gms snapshot unknown", func(t *testing.T) {
-		t.Parallel()
-
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
-
-		s, snapshotUID, sessionUID := setupTest(ctx)
-
-		gmsClientFake := &gmsClientMock{
-			getSnapshotResponse: &cloudmigration.GetSnapshotStatusResponse{
-				State: cloudmigration.SnapshotStateUnknown,
-			},
-		}
-		s.gmsClient = gmsClientFake
-
-		snapshot, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: snapshotUID,
-			SessionUID:  sessionUID,
-		})
-		require.NoError(t, err)
-		require.NotNil(t, snapshot)
-
-		// snapshot status should remain unchanged
-		require.Eventually(t, func() bool { return gmsClientFake.GetSnapshotStatusCallCount() == 1 }, time.Second, 10*time.Millisecond)
-
-		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: snapshotUID,
-			SessionUID:  sessionUID,
-		})
-		require.NoError(t, err)
-		require.NotNil(t, snapshot)
-		require.Equal(t, cloudmigration.SnapshotStatusPendingProcessing, snapshot.Status)
-	})
 
 	t.Run("GMS results applied to local snapshot", func(t *testing.T) {
-		t.Parallel()
+		s, gms, query := setUpSnapshotStatusTest(t, cloudmigration.SnapshotStatusPendingProcessing)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
-
-		s, snapshotUID, sessionUID := setupTest(ctx)
-
-		gmsClientFake := &gmsClientMock{
-			getSnapshotResponse: &cloudmigration.GetSnapshotStatusResponse{
-				State: cloudmigration.SnapshotStateFinished,
-				Results: []cloudmigration.CloudMigrationResource{
-					{
-						Name:   "A name",
-						Type:   cloudmigration.DatasourceDataType,
-						RefID:  "A",
-						Status: cloudmigration.ItemStatusError,
-						Error:  "fake",
-					},
-				},
-			},
+		query.SnapshotResultQueryParams = cloudmigration.SnapshotResultQueryParams{
+			ResultLimit: 10,
+			ResultPage:  1,
+			SortColumn:  cloudmigration.SortColumnID,
+			SortOrder:   cloudmigration.SortOrderAsc,
 		}
-		s.gmsClient = gmsClientFake
 
-		// ensure it is persisted
-		snapshot, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: snapshotUID,
-			SessionUID:  sessionUID,
+		synctest.Test(t, func(t *testing.T) {
+			t.Cleanup(func() { stopSnapshotStatusSync(s) })
+
+			resource := cloudmigration.CloudMigrationResource{
+				Name:   "A name",
+				Type:   cloudmigration.DatasourceDataType,
+				RefID:  "A",
+				Status: cloudmigration.ItemStatusPending,
+			}
+			require.NoError(t, s.store.UpdateSnapshot(t.Context(), cloudmigration.UpdateSnapshotCmd{
+				UID:                    query.SnapshotUID,
+				SessionID:              query.SessionUID,
+				LocalResourcesToCreate: []cloudmigration.CloudMigrationResource{resource},
+			}))
+			resource.Status = cloudmigration.ItemStatusError
+			resource.Error = "fake"
+
+			gms.getSnapshotResponse = &cloudmigration.GetSnapshotStatusResponse{
+				State:   cloudmigration.SnapshotStateFinished,
+				Results: []cloudmigration.CloudMigrationResource{resource},
+			}
+
+			_, err := s.GetSnapshot(t.Context(), query)
+			require.NoError(t, err)
+
+			// Let the GMS results reach the database before checking the returned resource errors.
+			synctest.Wait()
+
+			snapshot, err := s.GetSnapshot(t.Context(), query)
+			require.NoError(t, err)
+			require.Equal(t, cloudmigration.SnapshotStatusFinished, snapshot.Status)
+			require.Len(t, snapshot.Resources, 1)
+			require.Equal(t, resource.RefID, snapshot.Resources[0].RefID)
+			require.Equal(t, resource.Status, snapshot.Resources[0].Status)
+			require.Equal(t, resource.Error, snapshot.Resources[0].Error)
+
+			// Run the read's background task so an unwanted second GMS call cannot escape this check.
+			synctest.Wait()
+			require.Equal(t, 1, gms.GetSnapshotStatusCallCount())
 		})
-		require.NoError(t, err)
-		require.NotNil(t, snapshot)
-		require.Eventually(t, func() bool { return gmsClientFake.GetSnapshotStatusCallCount() == 1 }, time.Second, 10*time.Millisecond)
+	})
 
-		require.EventuallyWithTf(t, func(t *assert.CollectT) {
-			snapshot, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
-				SnapshotUID: snapshotUID,
-				SessionUID:  sessionUID,
-				SnapshotResultQueryParams: cloudmigration.SnapshotResultQueryParams{
-					ResultLimit: 10,
-					ResultPage:  1,
-					SortColumn:  cloudmigration.SortColumnID,
-					SortOrder:   cloudmigration.SortOrderAsc,
-				},
-			})
-			assert.NoError(t, err)
-			assert.NotNil(t, snapshot)
-			assert.Len(t, snapshot.Resources, 1)
-			assert.Equal(t, "A", snapshot.Resources[0].RefID)
-			assert.Equal(t, "fake", snapshot.Resources[0].Error)
-		}, 5*time.Second, 100*time.Millisecond, "DB wasn't applied to local snapshot in time")
+	t.Run("polls until finished without starting another sync", func(t *testing.T) {
+		s, gms, query := setUpSnapshotStatusTest(t, cloudmigration.SnapshotStatusPendingProcessing)
+
+		synctest.Test(t, func(t *testing.T) {
+			t.Cleanup(func() { stopSnapshotStatusSync(s) })
+
+			gms.getSnapshotResponse = &cloudmigration.GetSnapshotStatusResponse{
+				State: cloudmigration.SnapshotStateProcessing,
+			}
+
+			_, err := s.GetSnapshot(t.Context(), query)
+			require.NoError(t, err)
+
+			// Finish the initial sync so the poller is waiting on its first tick.
+			synctest.Wait()
+			require.Equal(t, 1, gms.GetSnapshotStatusCallCount())
+
+			snapshot, err := s.GetSnapshot(t.Context(), query)
+			require.NoError(t, err)
+			require.Equal(t, cloudmigration.SnapshotStatusProcessing, snapshot.Status)
+
+			// Let the second GetSnapshot try to start a sync while the existing poller is active.
+			synctest.Wait()
+			require.Equal(t, 1, gms.GetSnapshotStatusCallCount())
+
+			gms.getSnapshotResponse = &cloudmigration.GetSnapshotStatusResponse{
+				State: cloudmigration.SnapshotStateFinished,
+			}
+
+			// Move the fake clock just before the 10-second poll to check that no request
+			// happens early. Sleep also waits for the bubble's goroutines to settle.
+			synctest.Sleep(10*time.Second - time.Nanosecond)
+			require.Equal(t, 1, gms.GetSnapshotStatusCallCount())
+
+			// Cross the exact polling boundary and wait for the resulting sync to finish.
+			synctest.Sleep(time.Nanosecond)
+
+			snapshot, err = s.GetSnapshot(t.Context(), query)
+			require.NoError(t, err)
+			require.Equal(t, cloudmigration.SnapshotStatusFinished, snapshot.Status)
+
+			// Let the final read attempt a sync before checking that it cannot restart polling.
+			synctest.Wait()
+			require.Equal(t, 2, gms.GetSnapshotStatusCallCount())
+
+			// Advance through three more polling intervals to catch polling after completion.
+			synctest.Sleep(30 * time.Second)
+			require.Equal(t, 2, gms.GetSnapshotStatusCallCount())
+		})
 	})
 }
 
 func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
-	t.Parallel()
+	s, gms, query := setUpSnapshotStatusTest(t, cloudmigration.SnapshotStatusCreating)
 
+	gms.getSnapshotResponse = &cloudmigration.GetSnapshotStatusResponse{
+		State: cloudmigration.SnapshotStateFinished,
+	}
+
+	synctest.Test(t, func(t *testing.T) {
+		t.Cleanup(func() { stopSnapshotStatusSync(s) })
+
+		for _, tc := range []struct {
+			status    cloudmigration.SnapshotStatus
+			wantCalls int
+		}{
+			{status: cloudmigration.SnapshotStatusCreating, wantCalls: 0},
+			{status: cloudmigration.SnapshotStatusPendingUpload, wantCalls: 0},
+			{status: cloudmigration.SnapshotStatusUploading, wantCalls: 0},
+			{status: cloudmigration.SnapshotStatusFinished, wantCalls: 0},
+			{status: cloudmigration.SnapshotStatusCanceled, wantCalls: 0},
+			{status: cloudmigration.SnapshotStatusError, wantCalls: 0},
+			{status: cloudmigration.SnapshotStatusPendingProcessing, wantCalls: 1},
+			{status: cloudmigration.SnapshotStatusProcessing, wantCalls: 1},
+		} {
+			callsBefore := gms.GetSnapshotStatusCallCount()
+			if tc.wantCalls > 0 {
+				// Each sync must finish and release the service-wide guard before the next snapshot starts, without cancellation between snapshots.
+				query.SnapshotUID = uuid.NewV4().String()
+				require.NoError(t, s.store.CreateSnapshot(t.Context(), cloudmigration.CloudMigrationSnapshot{
+					UID:            query.SnapshotUID,
+					SessionUID:     query.SessionUID,
+					Status:         tc.status,
+					GMSSnapshotUID: "gms uid 2",
+				}))
+			} else {
+				require.NoError(t, s.store.UpdateSnapshot(t.Context(), cloudmigration.UpdateSnapshotCmd{
+					UID:       query.SnapshotUID,
+					SessionID: query.SessionUID,
+					Status:    tc.status,
+				}))
+			}
+
+			snapshot, err := s.GetSnapshot(t.Context(), query)
+			require.NoError(t, err)
+			require.Equal(t, tc.status, snapshot.Status)
+
+			// Let the background sync persist GMS results or skip polling for this local status.
+			synctest.Wait()
+
+			wantStatus := tc.status
+			if tc.wantCalls > 0 {
+				wantStatus = cloudmigration.SnapshotStatusFinished
+			}
+
+			snapshot, err = s.GetSnapshot(t.Context(), query)
+			require.NoError(t, err)
+			require.Equal(t, wantStatus, snapshot.Status)
+
+			// Include the second read's background task when checking for unwanted GMS calls.
+			synctest.Wait()
+			require.Equal(t, callsBefore+tc.wantCalls, gms.GetSnapshotStatusCallCount())
+
+			// Across three polling intervals, local states must never query GMS,
+			// and snapshots that finished syncing must not query it again.
+			synctest.Sleep(30 * time.Second)
+			require.Equal(t, callsBefore+tc.wantCalls, gms.GetSnapshotStatusCallCount())
+		}
+	})
+}
+
+func setUpSnapshotStatusTest(t *testing.T, status cloudmigration.SnapshotStatus) (*Service, *gmsClientMock, cloudmigration.GetSnapshotsQuery) {
+	t.Helper()
+
+	// Set up serially and outside synctest: migrations and tracing use shared state.
 	s := setUpServiceTest(t).(*Service)
+	gms := &gmsClientMock{}
+	s.gmsClient = gms
 
-	gmsClientMock := &gmsClientMock{
-		getSnapshotResponse: &cloudmigration.GetSnapshotStatusResponse{
-			State: cloudmigration.SnapshotStateFinished,
-		},
-	}
-	s.gmsClient = gmsClientMock
+	token, err := s.CreateToken(t.Context())
+	require.NoError(t, err)
 
-	// Insert a snapshot into the database before we start
-	createTokenResp, err := s.CreateToken(context.Background())
-	assert.NoError(t, err)
-	assert.NotEmpty(t, createTokenResp.Token)
-
-	sess, err := s.store.CreateMigrationSession(context.Background(), cloudmigration.CloudMigrationSession{
-		AuthToken: createTokenResp.Token,
+	session, err := s.store.CreateMigrationSession(t.Context(), cloudmigration.CloudMigrationSession{
+		AuthToken: token.Token,
 	})
 	require.NoError(t, err)
 
-	uid := uuid.NewString()
-	err = s.store.CreateSnapshot(context.Background(), cloudmigration.CloudMigrationSnapshot{
-		UID:            uid,
-		SessionUID:     sess.UID,
-		Status:         cloudmigration.SnapshotStatusCreating,
+	query := cloudmigration.GetSnapshotsQuery{
+		OrgID:       session.OrgID,
+		SessionUID:  session.UID,
+		SnapshotUID: uuid.NewV4().String(),
+	}
+	require.NoError(t, s.store.CreateSnapshot(t.Context(), cloudmigration.CloudMigrationSnapshot{
+		UID:            query.SnapshotUID,
+		SessionUID:     query.SessionUID,
+		Status:         status,
 		GMSSnapshotUID: "gms uid",
-	})
-	require.NoError(t, err)
+	}))
 
-	// make sure GMS is not called when snapshot is creating, pending upload, uploading, finished, canceled, or errored
-	for _, status := range []cloudmigration.SnapshotStatus{
-		cloudmigration.SnapshotStatusCreating,
-		cloudmigration.SnapshotStatusPendingUpload,
-		cloudmigration.SnapshotStatusUploading,
-		cloudmigration.SnapshotStatusFinished,
-		cloudmigration.SnapshotStatusCanceled,
-		cloudmigration.SnapshotStatusError,
-	} {
-		err = s.store.UpdateSnapshot(context.Background(), cloudmigration.UpdateSnapshotCmd{
-			UID:       uid,
-			SessionID: sess.UID,
-			Status:    status,
-		})
-		assert.NoError(t, err)
-		_, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: uid,
-			SessionUID:  sess.UID,
-		})
-		assert.NoError(t, err)
-		assert.Never(t, func() bool { return gmsClientMock.GetSnapshotStatusCallCount() > 0 }, time.Second, 10*time.Millisecond)
+	return s, gms, query
+}
+
+func stopSnapshotStatusSync(s *Service) {
+	// Synchronize with the poller before reading its shared cancellation function.
+	synctest.Wait()
+
+	// GetSnapshot detaches polling from the request context.
+	if s.cancelFunc != nil {
+		s.cancelFunc()
+
+		// Stop polling and release the sync guard before the database is closed by cleanup.
+		synctest.Wait()
 	}
-
-	// make sure GMS is called when snapshot is pending processing or processing
-	for _, status := range []cloudmigration.SnapshotStatus{
-		cloudmigration.SnapshotStatusPendingProcessing,
-		cloudmigration.SnapshotStatusProcessing,
-	} {
-		// in this case since the background sync will run, we can create a brand new snapshot to avoid race problems.
-		snapshotUID := uuid.NewString()
-		require.NoError(t, s.store.CreateSnapshot(context.Background(), cloudmigration.CloudMigrationSnapshot{
-			UID:            snapshotUID,
-			SessionUID:     sess.UID,
-			Status:         status,
-			GMSSnapshotUID: "gms uid 2",
-		}))
-
-		snapshot, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: snapshotUID,
-			SessionUID:  sess.UID,
-		})
-		assert.NoError(t, err)
-		assert.Equal(t, status, snapshot.Status)
-
-		// The status is persisted before the sync releases its service-wide guard.
-		require.Eventually(
-			t,
-			func() bool {
-				cms, err := s.store.GetSnapshotByUID(context.Background(), sess.OrgID, sess.UID, snapshotUID, cloudmigration.SnapshotResultQueryParams{})
-				return err == nil && cms != nil && cms.Status == cloudmigration.SnapshotStatusFinished &&
-					s.isSyncSnapshotStatusFromGMSRunning.Load() == 0
-			},
-			5*time.Second,
-			100*time.Millisecond,
-			"Snapshot status should be updated to Finished after sync completes",
-		)
-	}
-
-	assert.Never(
-		t,
-		func() bool { return gmsClientMock.GetSnapshotStatusCallCount() > 2 },
-		5*time.Second,
-		100*time.Millisecond,
-		"GMS client mock GetSnapshotStatus called more than expected: %d times", gmsClientMock.GetSnapshotStatusCallCount(),
-	)
 }
 
 // Implementation inspired by ChatGPT, OpenAI's language model.
@@ -918,7 +800,7 @@ func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigrat
 
 	cfg.CloudMigration.Enabled = true
 	cfg.CloudMigration.IsDeveloperMode = true // ensure local implementations are used
-	cfg.CloudMigration.SnapshotFolder = filepath.Join(os.TempDir(), uuid.NewString())
+	cfg.CloudMigration.SnapshotFolder = filepath.Join(os.TempDir(), uuid.NewV4().String())
 
 	dashboardService := dashboards.NewFakeDashboardService(t)
 
@@ -947,15 +829,19 @@ func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigrat
 	cfg.UnifiedAlerting.DefaultRuleEvaluationInterval = time.Minute
 	cfg.UnifiedAlerting.BaseInterval = time.Minute
 	cfg.UnifiedAlerting.InitializationTimeout = 30 * time.Second
-	ruleStore, err := ngalertstore.ProvideDBStore(cfg, featureToggles, sqlStore, mockFolder, dashboardService, accessControl, bus)
+	alertingStore, err := ngalertstore.ProvideDBStore(sqlStore)
+	require.NoError(t, err)
+	provenanceStore := ngalertprovenance.ProvideProvenanceStore(featureToggles, sqlStore)
+	ruleStore, err := ngalertrules.ProvideRuleStore(cfg, featureToggles, sqlStore, mockFolder, accessControl, provenanceStore)
 	require.NoError(t, err)
 
 	ng, err := ngalert.ProvideService(
 		cfg, featureToggles, nil, nil, rr, sqlStore, kvStore, nil, nil, ngalertprovisioning.NoopRuleMutationValidator{}, quotatest.New(false, nil),
 		secretsService, nil, alertMetrics, mockFolder, accessControl, dashboardService, nil, bus, fakeAccessControlService,
-		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore,
+		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, alertingStore, ruleStore, provenanceStore,
 		httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), ngalertfakes.NewFakeRoutePermissionsService(), ngalertfakes.NewFakeFolderPermissionsService(), usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
 		nil, // clientGenerator
+		nil, // cfgProvider
 	)
 	require.NoError(t, err)
 
@@ -1079,8 +965,4 @@ func (m *gmsClientMock) GetSnapshotStatusCallCount() int {
 	defer m.mu.RUnlock()
 
 	return m.getStatusCalled
-}
-
-func (m *gmsClientMock) ValidateSnapshotStatusCallCount() bool {
-	return m.GetSnapshotStatusCallCount() >= 1
 }

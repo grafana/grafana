@@ -8,6 +8,7 @@
   "name": "with-team-and-user",
   "rv": 1234,
   "_rv": "1234",
+  "groupResource": "iam.grafana.app/teambindings",
   "title": "with-team-and-user",
   "title_ngram": "with-team-and-user",
   "title_phrase": "with-team-and-user",

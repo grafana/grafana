@@ -1,8 +1,9 @@
+import { Global } from '@emotion/react';
 import { useEffect } from 'react';
 import { useMatch, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box } from '@grafana/ui';
@@ -11,9 +12,18 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 
 import { NotebookAnalytics } from '../analytics/main';
-import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
+import { useTrackNotebookVisitForFeedback } from '../feedback/useTrackNotebookVisitForFeedback';
+import { NotebookPrompt } from '../scene/NotebookPrompt';
 import { type NotebookScene } from '../scene/NotebookScene';
-import { NOTEBOOK_NEW_URL, notebookViewUrl } from '../urls';
+import { NotebookSceneControls } from '../scene/NotebookSceneControls';
+import {
+  NOTEBOOK_NEW_URL,
+  newNotebookEntryPoint,
+  notebookViewUrl,
+  readNotebookLoadSource,
+  removeNotebookLoadSourceParam,
+  searchWithoutNotebookSource,
+} from '../urls';
 
 import { NotebookPageError } from './NotebookPageError';
 import { getNotebookPageStateManager } from './NotebookPageStateManager';
@@ -36,12 +46,14 @@ export function NotebookScenePage() {
   useEffect(() => {
     if (notebooksEnabled) {
       if (uid) {
-        stateManager.loadNotebook(uid);
+        stateManager.loadNotebook(uid, readNotebookLoadSource());
+        // Taken off straight away, so a copied address is clean. Reading it again here would find nothing,
+        // which is why it is read in this effect and not while rendering: removing it changes the url.
+        removeNotebookLoadSourceParam();
       } else if (isNew) {
-        stateManager.newNotebook();
-        // The list's create button is the only link to this route today, so the source is fixed here.
-        // A second way in has to pass its own, or this event keeps naming the list.
-        NotebookAnalytics.newStarted(NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST);
+        const source = newNotebookEntryPoint();
+        stateManager.newNotebook(source);
+        NotebookAnalytics.newStarted(source);
       }
     }
 
@@ -54,7 +66,7 @@ export function NotebookScenePage() {
     return <PageNotFound />;
   }
 
-  if (!scene) {
+  if (!scene || (isNew && scene.state.uid)) {
     return loadError ? (
       <NotebookPageError error={loadError} />
     ) : (
@@ -82,16 +94,21 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
   // uid comes off the scene rather than the route param: it is the notebook's identity
   // (metadata.name), and the scene already carries it for the same reason it carries the title.
   const { title, uid } = scene.useState();
+  // Varies with the mega menu, and this page is what knows there is an app header at all.
+  const headerHeight = useChromeHeaderHeight();
 
   useEffect(() => scene.activate(), [scene]);
+  useTrackNotebookVisitForFeedback();
 
   // A blank notebook that has just been created by its first save: point the url at it instead of the
   // route that made it. Replace rather than push, or Back lands back on the blank route and reads as a
-  // second empty notebook. Keep the current search params: they hold the scene's own time range, and
-  // dropping them would reset the range to nothing.
+  // second empty notebook. Keep the scene's time range, but discard the launcher's analytics source.
   useEffect(() => {
     if (isNew && uid) {
-      locationService.replace({ pathname: notebookViewUrl(uid), search: locationService.getLocation().search });
+      locationService.replace({
+        pathname: notebookViewUrl(uid),
+        search: searchWithoutNotebookSource(locationService.getLocation().search),
+      });
     }
   }, [isNew, uid]);
 
@@ -100,7 +117,16 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
 
   return (
     <Page navId="notebooks" pageNav={pageNav} layout={PageLayoutType.Custom}>
+      {/* The page scrolls on `body`, so undo and redo make the scrollbar come and go and the content
+          would shift by its width. Only this surface: the embedded view and the PDF capture do not
+          use this page. */}
+      <Global styles={{ html: { scrollbarGutter: 'stable' } }} />
+      {/* Composed here rather than by the scene: whether a surface shows the controls row is a
+          property of the surface. Page's own wrapper is already a flex column, so this and the
+          document below sit in it as siblings. The toolbar rides inside the row. */}
+      <NotebookSceneControls model={scene} stickyOffset={headerHeight ?? 0} />
       <scene.Component model={scene} />
+      <NotebookPrompt scene={scene} />
     </Page>
   );
 }

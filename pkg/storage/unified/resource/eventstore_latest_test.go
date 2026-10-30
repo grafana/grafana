@@ -11,11 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func durableWatchEvent(rv int64) Event {
-	return Event{Namespace: watchTestNamespace, Group: watchTestGroup, Resource: watchTestResource,
-		Name: fmt.Sprintf("playlist-%d", rv), ResourceVersion: rv, Action: DataActionCreated}
-}
-
 func TestIntegrationEventStoreLatestThroughRV(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	for _, store := range []struct {

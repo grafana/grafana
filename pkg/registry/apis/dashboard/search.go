@@ -12,19 +12,23 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	claims "github.com/grafana/authlib/types"
+	dashboardmanifest "github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	foldermanifest "github.com/grafana/grafana/apps/folder/pkg/apis/manifestdata"
 	commonv0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -115,6 +119,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "name",
+										In:          "query",
+										Description: "only include resources with these names (UIDs)",
+										Required:    false,
+										Schema:      spec.ArrayProperty(spec.StringProperty()),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "facet",
 										In:          "query",
 										Description: "count distinct terms for selected fields",
@@ -171,9 +184,9 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 									ParameterProps: spec3.ParameterProps{
 										Name:        "permission",
 										In:          "query",
-										Description: "permission needed for the resource (view, edit, admin)",
+										Description: "permission needed for the resource (view, edit, admin, create). create is only valid with type=folder",
 										Required:    false,
-										Schema:      spec.StringProperty().WithEnum("view", "edit", "admin"),
+										Schema:      spec.StringProperty().WithEnum("view", "edit", "admin", "create"),
 									},
 								},
 								{
@@ -248,15 +261,6 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Description: "filter by the user who created the resource (format: user:<uid>)",
 										Required:    false,
 										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "explain",
-										In:          "query",
-										Description: "add debugging info that may help explain why the result matched",
-										Required:    false,
-										Schema:      spec.BoolProperty(),
 									},
 								},
 								{
@@ -538,6 +542,9 @@ func permissionToActions(p dashboardaccess.PermissionType) (dashboardAction stri
 		return dashboards.ActionDashboardsWrite, foldermodel.ActionFoldersWrite
 	case dashboardaccess.PERMISSION_ADMIN:
 		return dashboards.ActionDashboardsPermissionsWrite, foldermodel.ActionFoldersPermissionsWrite
+	case dashboardaccess.PERMISSION_CREATE:
+		// dashboards:create is granted on folder scopes, so it is read as the folder action.
+		return dashboards.ActionDashboardsCreate, dashboards.ActionDashboardsCreate
 	case dashboardaccess.PERMISSION_VIEW:
 		fallthrough
 	default:
@@ -553,9 +560,20 @@ func permissionFromQueryParams(queryParams url.Values) dashboardaccess.Permissio
 		return dashboardaccess.PERMISSION_VIEW
 	case "admin":
 		return dashboardaccess.PERMISSION_ADMIN
+	case "create":
+		return dashboardaccess.PERMISSION_CREATE
 	default:
 		return 0
 	}
+}
+
+// effectivePermission treats create as edit while folderPickerCreatePermission is off.
+func effectivePermission(ctx context.Context, p dashboardaccess.PermissionType) dashboardaccess.PermissionType {
+	if p == dashboardaccess.PERMISSION_CREATE &&
+		!openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagFolderPickerCreatePermission, false, openfeature.TransactionContext(ctx)) {
+		return dashboardaccess.PERMISSION_EDIT
+	}
+	return p
 }
 
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
@@ -574,7 +592,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	searchRequest, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, user, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
+	searchRequest, err := convertHttpSearchRequestToResourceSearchRequest(ctx, queryParams, user, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
 		return s.getDashboardsUIDsSharedWithUser(ctx, user, requestedPermission)
 	})
 	if err != nil {
@@ -588,12 +606,8 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagDashboardSearchFieldValueResults) { // nolint:staticcheck
-		searchRequest.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
-	}
-
 	result, err := s.client.Search(ctx, searchRequest)
-	if err != nil {
+	if err := resource.StatusErrorFromResponse(result.GetError(), err); err != nil {
 		errhttp.Write(ctx, err, w)
 		return
 	}
@@ -672,11 +686,11 @@ func (s *SearchHandler) DoVectorSearch(w http.ResponseWriter, r *http.Request) {
 			errhttp.Write(ctx, errVectorSearchNotConfigured.Errorf("vector search is not configured on this instance"), w)
 			return
 		}
-		errhttp.Write(ctx, resource.GetError(resource.AsErrorResult(err)), w)
+		errhttp.Write(ctx, resource.StatusError(resource.AsErrorResult(err)), w)
 		return
 	}
 	if result.GetError() != nil {
-		errhttp.Write(ctx, resource.GetError(result.GetError()), w)
+		errhttp.Write(ctx, resource.StatusError(result.GetError()), w)
 		return
 	}
 
@@ -750,7 +764,7 @@ func (s *SearchHandler) DoHybridSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req := &resourcepb.HybridSearchRequest{
-		Key:           key,
+		Key:           key, //nolint:staticcheck // Older search servers require key.
 		Query:         queryParams.Get("query"),
 		SemanticQuery: queryParams.Get("semanticQuery"),
 		Limit:         int64(limit),
@@ -774,7 +788,7 @@ func (s *SearchHandler) DoHybridSearch(w http.ResponseWriter, r *http.Request) {
 			errhttp.Write(ctx, errHybridSearchNotConfigured.Errorf("hybrid search is not configured on this instance"), w)
 			return
 		}
-		errhttp.Write(ctx, resource.GetError(resource.AsErrorResult(err)), w)
+		errhttp.Write(ctx, resource.StatusError(resource.AsErrorResult(err)), w)
 		return
 	}
 
@@ -814,6 +828,7 @@ func hybridSearchResultsToSearchResults(response *resourcepb.HybridSearchRespons
 			Title:    r.GetTitle(),
 			Folder:   r.GetFolder(),
 			Score:    r.GetScore(),
+			Tags:     r.GetTags(),
 			ManagedBy: dashboardv0alpha1.ManagedBy{
 				Kind: utils.ManagerKind(r.GetManagedByKind()),
 				ID:   r.GetManagedById(),
@@ -829,10 +844,42 @@ func hybridSearchResultsToSearchResults(response *resourcepb.HybridSearchRespons
 	return out
 }
 
+var dashboardSearchResponseFields = func() map[string]bool {
+	dashboard := dashboardmanifest.LocalManifest()
+	folder := foldermanifest.LocalManifest()
+	provider := resource.NewManifestBackedProvider(dashboard.ManifestData, folder.ManifestData)
+
+	fields := map[string]bool{
+		resource.SEARCH_FIELD_RV:              true,
+		resource.SEARCH_FIELD_LEGACY_ID:       true,
+		resource.SEARCH_FIELD_SCORE:           true,
+		resource.SEARCH_FIELD_SOURCE_PATH:     true,
+		resource.SEARCH_FIELD_SOURCE_CHECKSUM: true,
+		resource.SEARCH_FIELD_SOURCE_TIME:     true,
+	}
+	for _, definition := range resource.StandardSearchFieldDefinitions() {
+		fields[definition.Name] = true
+	}
+	for _, gvr := range []schema.GroupVersionResource{
+		{Group: dashboardv0alpha1.GROUP, Resource: dashboardv0alpha1.DASHBOARD_RESOURCE},
+		{Group: folders.GROUP, Resource: folders.RESOURCE},
+	} {
+		for _, definition := range provider.Fields(gvr) {
+			fields[definition.Name] = true
+			fields[resource.SEARCH_FIELD_PREFIX+definition.Name] = true
+		}
+	}
+	return fields
+}()
+
+func isDashboardSearchResponseField(field string) bool {
+	return dashboardSearchResponseFields[field] || strings.HasPrefix(field, resource.SEARCH_FIELD_LABELS+".")
+}
+
 // convertHttpSearchRequestToResourceSearchRequest create ResourceSearchRequest from query parameters.
 // Supplied function is used to get dashboards shared with user.
 // nolint:gocyclo
-func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, user identity.Requester, getDashboardsUIDsSharedWithUser func(requestedPermission dashboardaccess.PermissionType) ([]string, error)) (*resourcepb.ResourceSearchRequest, error) {
+func convertHttpSearchRequestToResourceSearchRequest(ctx context.Context, queryParams url.Values, user identity.Requester, getDashboardsUIDsSharedWithUser func(requestedPermission dashboardaccess.PermissionType) ([]string, error)) (*resourcepb.ResourceSearchRequest, error) {
 	// get limit and offset from query params
 	limit := 50
 	facetLimit := 50
@@ -852,24 +899,25 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	}
 
 	searchRequest := &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{},
-		Query:   queryParams.Get("query"),
-		Limit:   int64(limit),
-		Offset:  int64(offset),
-		Page:    int64(page), // for modes 0-2 (legacy)
-		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
+		Options:      &resourcepb.ListOptions{},
+		Query:        queryParams.Get("query"),
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Limit:        int64(limit),
+		Offset:       int64(offset),
+		Page:         int64(page), // for modes 0-2 (legacy)
 	}
 	fields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id", resource.SEARCH_FIELD_OWNER_REFERENCES}
 	if queryParams.Has("field") {
 		// add fields to search and exclude duplicates
 		for _, f := range queryParams["field"] {
-			if f != "" && !slices.Contains(fields, f) {
+			if isDashboardSearchResponseField(f) && !slices.Contains(fields, f) {
 				fields = append(fields, f)
 			}
 		}
 	}
 	searchRequest.Fields = fields
-	accessPermission := permissionFromQueryParams(queryParams)
+	requestedPermission := permissionFromQueryParams(queryParams)
+	accessPermission := effectivePermission(ctx, requestedPermission)
 	if accessPermission > 0 {
 		searchRequest.Permission = int64(accessPermission)
 	}
@@ -878,6 +926,9 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	types := queryParams["type"]
 	hasDash := len(types) == 0 || slices.Contains(types, "dashboard")
 	hasFolder := len(types) == 0 || slices.Contains(types, "folder")
+	if requestedPermission == dashboardaccess.PERMISSION_CREATE && (hasDash || !hasFolder) {
+		return nil, apierrors.NewBadRequest("permission=create is only supported with type=folder")
+	}
 	// If both types are present, we need to search both dashboards and folders, by default is nothing is set we also search both.
 	var err error
 	if (hasDash && hasFolder) || (!hasDash && !hasFolder) {
@@ -1153,9 +1204,13 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 			}},
 		},
 	}
+	if requestedPermission == dashboardaccess.PERMISSION_CREATE {
+		// Federated folders are authorized as read, which would drop create-only folders.
+		dashboardSearchRequest = nameLookupRequest(folderKey, dashboardUids, requestedPermission)
+	}
 	// get all dashboards user has access to, along with their parent folder uid
 	dashboardResult, err := s.client.Search(ctx, dashboardSearchRequest)
-	if err != nil {
+	if err := resource.StatusErrorFromResponse(dashboardResult.GetError(), err); err != nil {
 		return sharedDashboards, err
 	}
 
@@ -1163,7 +1218,9 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	if err != nil {
 		return sharedDashboards, err
 	}
-	if !searchResponseHasField(dashboardResult, resource.SEARCH_FIELD_FOLDER) {
+	if !slices.ContainsFunc(dashboardResult.GetFields(), func(field *resourcepb.ResourceSearchField) bool {
+		return field.GetName() == resource.SEARCH_FIELD_FOLDER
+	}) {
 		return sharedDashboards, fmt.Errorf("error retrieving folder information")
 	}
 
@@ -1177,23 +1234,10 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		}
 	}
 
-	folderSearchRequest := &resourcepb.ResourceSearchRequest{
-		Fields:       []string{resource.SEARCH_FIELD_FOLDER},
-		Limit:        int64(len(allFolders)),
-		Permission:   int64(requestedPermission),
-		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-		Options: &resourcepb.ListOptions{
-			Key: folderKey,
-			Fields: []*resourcepb.Requirement{{
-				Key:      "name",
-				Operator: "in",
-				Values:   allFolders,
-			}},
-		},
-	}
+	folderSearchRequest := nameLookupRequest(folderKey, allFolders, requestedPermission)
 	// only folders the user has access to will be returned here
 	foldersResult, err := s.client.Search(ctx, folderSearchRequest)
-	if err != nil {
+	if err := resource.StatusErrorFromResponse(foldersResult.GetError(), err); err != nil {
 		return sharedDashboards, err
 	}
 
@@ -1216,13 +1260,20 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	return sharedDashboards, nil
 }
 
-func searchResponseHasField(response *resourcepb.ResourceSearchResponse, name string) bool {
-	if response.GetResultFormat() == resourcepb.ResourceSearchRequest_FIELD_VALUES {
-		return slices.ContainsFunc(response.GetFields(), func(field *resourcepb.ResourceSearchField) bool {
-			return field.GetName() == name
-		})
+// nameLookupRequest finds resources of one type by name, returning their parent folder.
+func nameLookupRequest(key *resourcepb.ResourceKey, names []string, permission dashboardaccess.PermissionType) *resourcepb.ResourceSearchRequest {
+	return &resourcepb.ResourceSearchRequest{
+		Fields:       []string{resource.SEARCH_FIELD_FOLDER},
+		Limit:        int64(len(names)),
+		Permission:   int64(permission),
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Options: &resourcepb.ListOptions{
+			Key: key,
+			Fields: []*resourcepb.Requirement{{
+				Key:      "name",
+				Operator: "in",
+				Values:   names,
+			}},
+		},
 	}
-	return slices.ContainsFunc(response.GetResults().GetColumns(), func(field *resourcepb.ResourceTableColumnDefinition) bool {
-		return field.GetName() == name
-	})
 }

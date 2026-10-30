@@ -10,6 +10,7 @@ import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { SectionVariableControls } from '../VariableControls';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
+import { isFullDashboardEditing } from '../types/dashboard';
 
 import { RowHeader } from './RowHeader';
 import { type RowItem } from './RowItem';
@@ -42,7 +43,8 @@ export function RowContainer({
   } = model.useState();
   const contentId = useId();
   const isCollapsed = Boolean(collapse) && !isHeaderHidden;
-  const { isEditing } = useDashboardState(model);
+  const dashboardState = useDashboardState(model);
+  const isEditing = isFullDashboardEditing(dashboardState);
   const { isSelected, onSelect } = useElementSelection(key);
   const { isSelected: isSourceSelected } = useElementSelection(repeatSourceKey);
   const title = useInterpolatedTitle(model);

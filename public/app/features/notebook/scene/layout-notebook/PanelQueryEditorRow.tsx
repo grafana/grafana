@@ -10,11 +10,7 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import {
-  getDataSourceInstance,
-  getDataSourceInstanceSettings,
-  useDataSourceInstanceSettings,
-} from '@grafana/runtime/unstable';
+import { getDataSourceInstance, getDataSourceInstanceSettings, useDataSourceInstanceSettings } from '@grafana/runtime';
 import { type SceneQueryRunner } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';

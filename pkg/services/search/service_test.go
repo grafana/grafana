@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	starapi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -35,26 +34,6 @@ func reqContextOnRequest(t *testing.T, signedInUser *user.SignedInUser) *http.Re
 	}
 	ctx := ctxkey.Set(req.Context(), reqCtx)
 	return req.WithContext(ctx)
-}
-
-func TestSearch_UsesFieldValueResultsWhenEnabled(t *testing.T) {
-	dashboardService := dashboards.NewFakeDashboardService(t)
-	dashboardService.On("SearchDashboards", mock.Anything, mock.MatchedBy(func(query *dashboards.FindPersistedDashboardsQuery) bool {
-		return query.UseFieldValueResults
-	})).Return(model.HitList{}, nil)
-
-	signedInUser := &user.SignedInUser{}
-	req := reqContextOnRequest(t, signedInUser)
-	starClient := starapi.NewMockK8sClients(t)
-	starClient.On("GetStars", mock.Anything).Return([]string{}, nil)
-	svc := &SearchService{
-		starClient:       starClient,
-		dashboardService: dashboardService,
-		features:         featuremgmt.WithFeatures(featuremgmt.FlagDashboardApiSearchFieldValueResults),
-	}
-
-	_, err := svc.SearchHandler(req.Context(), &Query{SignedInUser: signedInUser})
-	require.NoError(t, err)
 }
 
 func TestSearch_SortedResults(t *testing.T) {
@@ -80,7 +59,6 @@ func TestSearch_SortedResults(t *testing.T) {
 		sqlstore:         db,
 		starClient:       starClient,
 		dashboardService: ds,
-		features:         &featuremgmt.FeatureManager{},
 	}
 
 	query := &Query{
@@ -125,7 +103,6 @@ func TestSearch_StarredResults(t *testing.T) {
 		sqlstore:         db,
 		starClient:       starClient,
 		dashboardService: ds,
-		features:         &featuremgmt.FeatureManager{},
 	}
 
 	query := &Query{

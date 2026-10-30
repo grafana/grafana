@@ -5,7 +5,6 @@ import { useMedia } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { useSceneObjectState } from '@grafana/scenes';
 import {
   ElementSelectionContext,
@@ -17,6 +16,7 @@ import {
 } from '@grafana/ui';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
@@ -39,10 +39,13 @@ interface Props {
   isPlanning?: boolean;
   body?: React.ReactNode;
   controls?: React.ReactNode;
+  /** Covers the controls and body, for example the Composer overlay. */
+  overlay?: React.ReactNode;
 }
 
 export function DashboardSidebarSplitter(props: Props) {
-  if (config.featureToggles.dashboardNewLayouts) {
+  const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
+  if (dashboardNewLayoutsEnabled) {
     return <DashboardSidebarSplitterNewLayouts {...props} />;
   } else {
     return <DashboardSidebarSplitterLegacy {...props} />;
@@ -63,7 +66,7 @@ function DashboardSidebarSplitterLegacy({ dashboard, isPlanning, body, controls 
   );
 }
 
-function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, body, controls }: Props) {
+function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, body, controls, overlay }: Props) {
   const { sidebar } = dashboard.state;
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
@@ -76,7 +79,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
    */
   useUpdateAppChromeActions(dashboard);
 
-  const { selectionContext, openPane, previousState } = useSceneObjectState(sidebar, {
+  const { selectionContext, openPane, previousState, isLoading } = useSceneObjectState(sidebar, {
     shouldActivateOrKeepAlive: true,
   });
 
@@ -92,13 +95,14 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
   const theme = useTheme2();
   const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
   const sidebarContext = useSidebar({
-    hasOpenPane: Boolean(openPane),
+    hasOpenPane: Boolean(openPane) || Boolean(isLoading),
     contentMargin: 1,
     position: 'right',
     persistenceKey: isEditing ? 'dashboard' : 'dashboard-view',
     hiddenPersistenceKey: 'dashboard',
     defaultToDocked: isEditing ? true : false,
-    onClosePane: () => sidebar.closePane(),
+    onClosePane: () => sidebar.closePane('explicit'),
+    onClickAway: () => sidebar.closePane('click-away'),
     onGoBack: () => sidebar.goBackToPrevious(),
     canGoBack: previousState !== undefined,
     defaultIsHidden: isEditing ? false : isMobile,
@@ -130,7 +134,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
   function renderBody() {
     const renderWithoutSidebar = isPlaying || kioskMode === KioskMode.Full;
 
-    // In kiosk mode the full document body scrolls so we don't need to wrap in our own scrollbar
+    // Full-page views use document scrolling.
     if (renderWithoutSidebar) {
       return (
         <div
@@ -146,12 +150,12 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
       <div
         className={styles.bodyWrapper}
         data-testid={selectors.components.DashboardSidebarSplitter.primaryBody}
-        {...sidebarContext.outerWrapperProps}
+        {...(renderWithoutSidebar ? {} : sidebarContext.outerWrapperProps)}
       >
         <div
           className={cx(
             styles.scrollContainer,
-            sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar,
+            (renderWithoutSidebar || sidebarContext.isHiddenPreference) && styles.scrollContainerNoSidebar,
             isPlanning && styles.planningCanvas
           )}
           ref={onBodyRef}
@@ -166,9 +170,11 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
           {body}
         </div>
 
-        <Sidebar contextValue={sidebarContext}>
-          <DashboardSidebarRenderer dashboard={dashboard} />
-        </Sidebar>
+        {!renderWithoutSidebar && (
+          <Sidebar contextValue={sidebarContext}>
+            <DashboardSidebarRenderer dashboard={dashboard} />
+          </Sidebar>
+        )}
       </div>
     );
   }
@@ -185,6 +191,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
           {renderBody()}
         </ElementSelectionContext.Provider>
       </EditActionsLayoutProvider>
+      {overlay}
     </div>
   );
 }

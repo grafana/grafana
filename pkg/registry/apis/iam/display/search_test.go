@@ -1,10 +1,15 @@
 package display
 
 import (
-	"encoding/binary"
+	"errors"
+	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	authlib "github.com/grafana/authlib/types"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
@@ -12,6 +17,33 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
+
+func TestGetDisplayListSearchErrors(t *testing.T) {
+	plainErr := errors.New("index down")
+	for name, input := range map[string]struct {
+		resp *resourcepb.ResourceSearchResponse
+		err  error
+	}{
+		"embedded": {resp: &resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{
+			Code: http.StatusServiceUnavailable, Message: "index unavailable",
+		}}},
+		"transport": {err: status.Error(codes.Unavailable, "index unavailable")},
+		"plain":     {err: plainErr},
+	} {
+		t.Run(name, func(t *testing.T) {
+			client := resource.NewMockResourceClient(t)
+			client.EXPECT().Search(mock.Anything, mock.Anything).Return(input.resp, input.err).Twice()
+			provider := NewSearchDisplayProvider(client)
+			result, err := provider.GetDisplayList(t.Context(), authlib.NamespaceInfo{Value: "stacks-1"}, []string{"user:user-1"})
+			require.Nil(t, result)
+			if name == "plain" {
+				require.ErrorIs(t, err, plainErr)
+			} else {
+				require.True(t, apierrors.IsServiceUnavailable(err), "got %v", err)
+			}
+		})
+	}
+}
 
 func TestBuildSearchJobsRequestsFieldValues(t *testing.T) {
 	provider := &SearchDisplayProvider{}
@@ -42,23 +74,7 @@ func TestBuildSearchJobsRequestsFieldValues(t *testing.T) {
 	}
 }
 
-func TestAppendDisplayRowsDecodesBothResultFormats(t *testing.T) {
-	legacyID := make([]byte, 8)
-	binary.BigEndian.PutUint64(legacyID, 42)
-	tableResponse := &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{Name: resource.SEARCH_FIELD_TITLE},
-				{Name: builders.USER_EMAIL},
-				{Name: builders.USER_LOGIN},
-				{Name: resource.SEARCH_FIELD_LEGACY_ID},
-			},
-			Rows: []*resourcepb.ResourceTableRow{{
-				Key:   &resourcepb.ResourceKey{Name: "user-1"},
-				Cells: [][]byte{[]byte(""), []byte("user@example.com"), []byte("login"), legacyID},
-			}},
-		},
-	}
+func TestAppendDisplayRowsDecodesFieldValues(t *testing.T) {
 	typedResponse := &resourcepb.ResourceSearchResponse{
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Fields: []*resourcepb.ResourceSearchField{
@@ -86,11 +102,22 @@ func TestAppendDisplayRowsDecodesBothResultFormats(t *testing.T) {
 		return list, foundUIDs, foundIDs
 	}
 
-	tableList, tableUIDs, tableIDs := decode(tableResponse)
 	typedList, typedUIDs, typedIDs := decode(typedResponse)
-	require.Equal(t, tableList, typedList)
-	require.Equal(t, tableUIDs, typedUIDs)
-	require.Equal(t, tableIDs, typedIDs)
+	require.Equal(t, map[string]struct{}{"user-1": {}}, typedUIDs)
+	require.Equal(t, map[int64]struct{}{42: {}}, typedIDs)
 	require.Equal(t, "login", typedList.Items[0].DisplayName)
 	require.Equal(t, int64(42), typedList.Items[0].InternalID)
+}
+
+func TestDecodeDisplayRowsRejectsLegacyFormats(t *testing.T) {
+	for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+		resourcepb.ResourceSearchRequest_UNSPECIFIED,
+		resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+		99,
+	} {
+		t.Run(format.String(), func(t *testing.T) {
+			_, err := decodeDisplayRows(&resourcepb.ResourceSearchResponse{ResultFormat: format})
+			require.ErrorContains(t, err, "unsupported search result format")
+		})
+	}
 }

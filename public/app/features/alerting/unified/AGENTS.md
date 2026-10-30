@@ -253,7 +253,7 @@ For Kubernetes APIs and new schemas – use the `@grafana/alerting` package.
 Mock factories are defined in `packages/grafana-alerting/src/grafana/api/notifications/v1beta1/mocks/fakes`
 MSW handlers in `packages/grafana-alerting/src/grafana/api/notifications/v1beta1/mocks/handlers`
 
-And there are "scenarios" that combine the two above. An example of such is `packages/grafana-alerting/src/grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.test.scenario.ts` and is used for integration tests.
+And there are "scenarios" that combine the two above. An example of such is `packages/grafana-alerting/src/grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.scenario.ts` and is used for integration tests.
 
 Additionally alerting uses **`alertingFactory`** from `mocks/server/db` for building test data:
 
@@ -588,12 +588,12 @@ Skip proposing an update if the correction is:
 
 ## Dependency Security
 
-- **No new dependencies without explicit approval**: Do NOT run `yarn add` or otherwise introduce new packages. If a task would benefit from a new dependency, stop and ask the user for approval first — explain what package you want, why, and its publish date.
+- **No new dependencies without explicit approval**: Do NOT run `pnpm add` or otherwise introduce new packages. If a task would benefit from a new dependency, stop and ask the user for approval first — explain what package you want, why, and its publish date.
 - **7-day quarantine**: Even with approval, never add a dependency whose latest version was published less than 7 days ago. Check publish date with `npm view <package> time --json` before proposing.
 - **Prefer established packages**: Favor well-known, actively maintained packages. Avoid packages with very few downloads or no recent maintenance.
-- **No postinstall script overrides**: The repo has `enableScripts: false`. Do not add per-package script overrides without approval from @grafana/frontend-ops.
-- **Lock file integrity**: Always use `yarn install --immutable`. Never manually edit `yarn.lock`.
-- **Report suspicious packages**: If a dependency shows signs of compromise (unexpected scripts, obfuscated code, ownership transfer), flag it in the PR and tag @grafana/frontend-ops.
+- **No postinstall script overrides**: Dependency install scripts are blocked unless `allowBuilds` in `pnpm-workspace.yaml` sets them to `true`. Do not add exceptions without explicit approval from someone else.
+- **Lock file integrity**: Always use `pnpm install --frozen-lockfile`. Never manually edit `pnpm-lock.yaml`.
+- **Report suspicious packages**: If a dependency shows signs of compromise (unexpected scripts, obfuscated code, ownership transfer), flag it for human review.
 
 ## Getting Help
 

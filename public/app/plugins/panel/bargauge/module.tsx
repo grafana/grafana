@@ -1,6 +1,12 @@
 import { PanelPlugin, VizOrientation } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeSizing, BarGaugeValueMode } from '@grafana/schema';
+import {
+  BarGaugeDisplayMode,
+  BarGaugeNamePlacement,
+  BarGaugeSizing,
+  BarGaugeValueMode,
+  BigValueTextMode,
+} from '@grafana/schema';
 import { commonOptionsBuilder, sharedSingleStatPanelChangedHandler } from '@grafana/ui';
 
 import { addOrientationOption, addStandardDataReduceOptions } from '../stat/common';
@@ -83,6 +89,24 @@ export const plugin = new PanelPlugin<Options>(BarGaugePanel)
         },
         defaultValue: defaultOptions.namePlacement,
         showIf: (options) => options.orientation === VizOrientation.Vertical,
+      })
+      .addSelect({
+        path: 'textMode',
+        name: t('bargauge.name-text-mode', 'Text mode'),
+        category,
+        settings: {
+          options: [
+            { value: BigValueTextMode.Auto, label: t('bargauge.text-mode-options.label-auto', 'Auto') },
+            {
+              value: BigValueTextMode.ValueAndName,
+              label: t('bargauge.text-mode-options.label-value-and-name', 'Value and name'),
+            },
+            { value: BigValueTextMode.Value, label: t('bargauge.text-mode-options.label-value', 'Value') },
+            { value: BigValueTextMode.Name, label: t('bargauge.text-mode-options.label-name', 'Name') },
+            { value: BigValueTextMode.None, label: t('bargauge.text-mode-options.label-none', 'None') },
+          ],
+        },
+        defaultValue: defaultOptions.textMode,
       })
       .addBooleanSwitch({
         path: 'showUnfilled',

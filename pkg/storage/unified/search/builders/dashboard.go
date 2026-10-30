@@ -92,7 +92,7 @@ type DashboardStats interface {
 
 type DashboardStatsLookup = func(ctx context.Context, uid string) map[string]int64
 
-var _ resource.DocumentBuilder = &DashboardDocumentBuilder{}
+var _ resource.DocumentBuilder = (*DashboardDocumentBuilder)(nil)
 
 func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
 	if s.Namespace != "" && s.Namespace != key.Namespace {

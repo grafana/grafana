@@ -9,9 +9,12 @@ import {
   ReducerID,
 } from '@grafana/data';
 import { type DataQuery, defaultDashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec, defaultSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { contextSrv } from 'app/core/services/context_srv';
 import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
 import { type NotifiersState, type ReceiversState } from 'app/features/alerting/unified/types/alerting';
+import { AnnoKeyFolderTitle } from 'app/features/apiserver/types';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { type ExpressionQuery, ExpressionQueryType, ReducerMode } from 'app/features/expressions/types';
 import {
   type AlertManagerCortexConfig,
@@ -44,6 +47,7 @@ import {
   type GrafanaAlertState,
   GrafanaAlertStateDecision,
   type GrafanaPromAlertingRuleDTO,
+  type GrafanaPromRuleGroupDTO,
   type GrafanaRuleDefinition,
   PromAlertingRuleState,
   PromRuleType,
@@ -237,6 +241,15 @@ export const mockGrafanaPromAlertingRule = (
     ...partial,
   };
 };
+
+export const mockGrafanaPromRuleGroup = (partial: Partial<GrafanaPromRuleGroupDTO> = {}): GrafanaPromRuleGroupDTO => ({
+  name: 'my-group',
+  file: 'my-folder',
+  folderUid: 'NAMESPACE_UID',
+  interval: 60,
+  rules: [mockGrafanaPromAlertingRule()],
+  ...partial,
+});
 
 export const mockGrafanaRulerRule = (partial: Partial<GrafanaRuleDefinition> = {}): RulerGrafanaRuleDTO => {
   return {
@@ -748,6 +761,56 @@ export function mockDashboardDto(
       ...dashboard,
     },
     meta: { ...meta },
+  };
+}
+
+interface MockV2Panel {
+  id: number;
+  title?: string;
+  type?: string;
+  libraryPanel?: { uid: string; name: string };
+}
+
+export function mockDashboardV2Dto(dashboard: {
+  uid?: string;
+  title?: string;
+  folderTitle?: string;
+  panels?: MockV2Panel[];
+}): DashboardWithAccessInfo<DashboardV2Spec> {
+  const elements: DashboardV2Spec['elements'] = {};
+  for (const { id, title = '', type = 'timeseries', libraryPanel } of dashboard.panels ?? []) {
+    elements[`panel-${id}`] = libraryPanel
+      ? { kind: 'LibraryPanel', spec: { id, title, libraryPanel } }
+      : {
+          kind: 'Panel',
+          spec: {
+            id,
+            title,
+            description: '',
+            links: [],
+            data: { kind: 'QueryGroup', spec: { queries: [], transformations: [], queryOptions: {} } },
+            vizConfig: {
+              kind: 'VizConfig',
+              group: type,
+              version: '1.0.0',
+              spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } },
+            },
+          },
+        };
+  }
+
+  return {
+    apiVersion: 'dashboard.grafana.app/v2beta1',
+    kind: 'DashboardWithAccessInfo',
+    metadata: {
+      name: dashboard.uid ?? 'dashboard-test',
+      generation: 1,
+      resourceVersion: '1',
+      creationTimestamp: new Date().toISOString(),
+      annotations: dashboard.folderTitle ? { [AnnoKeyFolderTitle]: dashboard.folderTitle } : {},
+    },
+    access: {},
+    spec: { ...defaultSpec(), title: dashboard.title ?? 'Dashboard test', elements },
   };
 }
 

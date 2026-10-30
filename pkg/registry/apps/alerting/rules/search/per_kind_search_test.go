@@ -36,37 +36,17 @@ import (
 // handler test can assert on both what went down and what came back.
 type fakeIndex struct {
 	resourcepb.ResourceIndexClient
-	resp    *resourcepb.ResourceSearchResponse
-	err     error
-	got     *resourcepb.ResourceSearchRequest
-	perKind bool
+	resp *resourcepb.ResourceSearchResponse
+	err  error
+	got  *resourcepb.ResourceSearchRequest
 }
 
 func (f *fakeIndex) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	f.got = req
-	f.perKind = isPerKindSearch(ctx)
 	if f.err != nil {
 		return nil, f.err
 	}
 	return f.resp, nil
-}
-
-// legacyRows builds the result table the legacy backend would return for the
-// given rules, so a handler test reads real encoded cells rather than a
-// hand-built table that could disagree with the encoders.
-func legacyRows(t *testing.T, rules ...*ngmodels.AlertRule) *resourcepb.ResourceSearchResponse {
-	t.Helper()
-	table := &resourcepb.ResourceTable{Columns: resultColumnDefinitions()}
-	for _, r := range rules {
-		cells, err := ruleCells(ruleColumnValues(r))
-		require.NoError(t, err)
-		table.Rows = append(table.Rows, &resourcepb.ResourceTableRow{Key: ruleKey("default", r), Cells: cells})
-	}
-	return &resourcepb.ResourceSearchResponse{
-		Results:        table,
-		TotalHits:      int64(len(rules)),
-		TotalHitsExact: true,
-	}
 }
 
 func fieldValueRows(key *resourcepb.ResourceKey, fields []*resourcepb.ResourceSearchField, values ...*resourcepb.ResourceSearchValue) *resourcepb.ResourceSearchResponse {
@@ -108,7 +88,7 @@ func realRuleIndex(t *testing.T, key *resourcepb.ResourceKey, value string, getB
 			Action: unifiedresource.ActionIndex,
 			Doc:    doc,
 		}}})
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, unifiedresource.BuildIndexOptions{})
 	require.NoError(t, err)
 	return index
 }
@@ -123,7 +103,7 @@ func callWithBody(t *testing.T, body string, resp *resourcepb.ResourceSearchResp
 func callWith(t *testing.T, body io.ReadCloser, resp *resourcepb.ResourceSearchResponse) (*httptest.ResponseRecorder, *fakeIndex) {
 	t.Helper()
 	index := &fakeIndex{resp: resp}
-	h := NewHandler(index, &fakeIndex{})
+	h := newUnifiedHandler(index, &fakeIndex{})
 	rec := httptest.NewRecorder()
 	err := WithAPIStatusErrorResponse(h.SearchAlertRules)(context.Background(), rec, &app.CustomRouteRequest{
 		ResourceIdentifier: resource.FullIdentifier{Namespace: "default"},
@@ -131,7 +111,7 @@ func callWith(t *testing.T, body io.ReadCloser, resp *resourcepb.ResourceSearchR
 	})
 	require.NoError(t, err)
 	if index.got != nil {
-		require.True(t, index.perKind)
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, index.got.ResultFormat)
 	}
 	return rec, index
 }
@@ -218,7 +198,7 @@ func decodeResults(t *testing.T, rec *httptest.ResponseRecorder) searchv0.Search
 // TestSearch_requestBody covers decoding. The body is required, because the
 // envelope inside it is what identifies the contract being spoken.
 func TestPerKindSearch_requestBody(t *testing.T) {
-	empty := &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}
+	empty := &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}
 
 	t.Run("accepts a well-formed body", func(t *testing.T) {
 		rec, _ := callWithBody(t, validBody, empty)
@@ -254,7 +234,7 @@ func TestPerKindSearch_requestBody(t *testing.T) {
 	// handler stops early.
 	t.Run("closes the body", func(t *testing.T) {
 		body := readCloser(validBody)
-		h := NewHandler(&fakeIndex{resp: empty}, &fakeIndex{})
+		h := newUnifiedHandler(&fakeIndex{resp: empty}, &fakeIndex{})
 		require.NoError(t, h.SearchAlertRules(context.Background(), httptest.NewRecorder(), &app.CustomRouteRequest{
 			ResourceIdentifier: resource.FullIdentifier{Namespace: "default"},
 			Body:               body,
@@ -283,7 +263,7 @@ func TestPerKindSearch_backendErrorInPayload(t *testing.T) {
 	index := &fakeIndex{resp: &resourcepb.ResourceSearchResponse{
 		Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "bad field"},
 	}}
-	h := NewHandler(index, &fakeIndex{})
+	h := newUnifiedHandler(index, &fakeIndex{})
 	err := h.SearchAlertRules(context.Background(), httptest.NewRecorder(), &app.CustomRouteRequest{
 		ResourceIdentifier: resource.FullIdentifier{Namespace: "default"},
 		Body:               readCloser(validBody),
@@ -296,7 +276,7 @@ func TestPerKindSearch_backendErrorInPayload(t *testing.T) {
 // search group, not the alerting group serving it, so the wire response does not
 // change when the generic endpoint takes these routes over.
 func TestPerKindSearch_responseEnvelope(t *testing.T) {
-	rec, index := callWithBody(t, validBody, legacyRows(t, testAlertRule()))
+	rec, index := callWithBody(t, validBody, ruleRows(t, testAlertRule()))
 	require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, index.got.ResultFormat)
 	out := decodeResults(t, rec)
 
@@ -418,13 +398,14 @@ func TestPerKindSearch_fieldValuesFromRealIndex(t *testing.T) {
 			kind := tc.kind(t)
 			translated := buildPerKindSearchRequest(&searchv0.SearchQuery{Fields: tc.fields}, nil, tc.key.Namespace, kind)
 
-			resp, err := index.Search(t.Context(), nil, translated.req, nil, nil)
+			resp, err := index.Search(t.Context(), nil, buildUnifiedRequest(translated), nil, nil)
 			require.NoError(t, err)
 			require.Nil(t, resp.Error)
 			require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, resp.ResultFormat)
 
-			items, err := NewHandler(nil, nil).resultItems(t.Context(), tc.key.Namespace, resp, tc.fields, kind)
+			result, err := NewUnifiedClient(&fakeIndex{resp: resp}).Search(t.Context(), translated)
 			require.NoError(t, err)
+			items := resultItems(result, tc.fields, kind)
 			require.Len(t, items, 1)
 			assert.Equal(t, tc.key.Name, items[0].Resource.Name)
 			assert.Equal(t, tc.want, items[0].Fields.Object)
@@ -435,13 +416,9 @@ func TestPerKindSearch_fieldValuesFromRealIndex(t *testing.T) {
 func TestPerKindSearch_omitsBackendScore(t *testing.T) {
 	for _, score := range []float64{0, 2.5} {
 		t.Run(fmt.Sprint(score), func(t *testing.T) {
-			table, err := unifiedresource.NewTableBuilder([]*resourcepb.ResourceTableColumnDefinition{
-				{Name: unifiedresource.SEARCH_FIELD_SCORE, Type: resourcepb.ResourceTableColumnDefinition_DOUBLE},
-			})
-			require.NoError(t, err)
-			require.NoError(t, table.AddRow(ruleKey("default", testAlertRule()), 0, map[string]any{unifiedresource.SEARCH_FIELD_SCORE: score}))
-			rec, index := callWithBody(t, `{"apiVersion":"`+searchv0.APIVERSION+`","kind":"SearchQuery","where":{"text":{"value":"cpu"}},"fields":["interval"]}`,
-				&resourcepb.ResourceSearchResponse{Results: &table.ResourceTable, TotalHits: 1, TotalHitsExact: true})
+			response := fieldValueRows(ruleKey("default", testAlertRule()), nil)
+			response.Rows[0].Score = &score
+			rec, index := callWithBody(t, `{"apiVersion":"`+searchv0.APIVERSION+`","kind":"SearchQuery","where":{"text":{"value":"cpu"}},"fields":["interval"]}`, response)
 			require.Equal(t, http.StatusOK, rec.Code)
 			require.Equal(t, []string{fieldInterval}, index.got.Fields)
 			out := decodeResults(t, rec)
@@ -456,7 +433,7 @@ func TestPerKindSearch_omitsBackendScore(t *testing.T) {
 // values, unshaped: that is what the generic endpoint returns for the same
 // fields, so re-shaping them here would make the response change at migration.
 func TestPerKindSearch_projection(t *testing.T) {
-	resp := legacyRows(t, testAlertRule())
+	resp := ruleRows(t, testAlertRule())
 
 	t.Run("defaults to title and folder", func(t *testing.T) {
 		rec, _ := callWithBody(t, validBody, resp)
@@ -477,9 +454,6 @@ func TestPerKindSearch_projection(t *testing.T) {
 		values := decodeResults(t, rec).Items[0].Fields.Object
 
 		assert.Equal(t, true, values["paused"])
-		// Eight digits is exactly the width of the int64 fast path in
-		// resourceTableColumn.Decode, so a panel ID written as a decimal string
-		// would decode to an unrelated number instead of failing.
 		assert.EqualValues(t, 12345678, values["panelID"])
 		assert.Equal(t, "1m", values["interval"])
 		assert.Equal(t, "5m", values["for"])
@@ -502,7 +476,7 @@ func TestPerKindSearch_projection(t *testing.T) {
 	// A field the rule does not carry is absent rather than present and empty, so
 	// a client can tell "unset" from "set to nothing".
 	t.Run("omits fields the rule does not carry", func(t *testing.T) {
-		rec, _ := callWithBody(t, projection("title", "dashboardUID", "receiver"), legacyRows(t, minimalAlertRule()))
+		rec, _ := callWithBody(t, projection("title", "dashboardUID", "receiver"), ruleRows(t, minimalAlertRule()))
 		values := decodeResults(t, rec).Items[0].Fields.Object
 
 		assert.Equal(t, "bare", values["title"])
@@ -531,7 +505,7 @@ func TestPerKindSearch_recordingRuleEndpoint(t *testing.T) {
 		&resourcepb.ResourceSearchValue{FieldIndex: 1, StringValues: []string{"ds-target"}},
 	)
 	alerts, recordings := &fakeIndex{}, &fakeIndex{resp: resp}
-	h := NewHandler(alerts, recordings)
+	h := newUnifiedHandler(alerts, recordings)
 
 	rec := httptest.NewRecorder()
 	require.NoError(t, h.SearchRecordingRules(context.Background(), rec, &app.CustomRouteRequest{
@@ -555,7 +529,7 @@ func TestPerKindSearch_recordingRuleEndpoint(t *testing.T) {
 // resumes from where this one stopped. The token is opaque, so the test reads it
 // back through the same encoding rather than asserting on its text.
 func TestPerKindSearch_continueToken(t *testing.T) {
-	resp := legacyRows(t, testAlertRule())
+	resp := ruleRows(t, testAlertRule())
 	resp.TotalHits = 5
 
 	rec, _ := callWithBody(t, validBody, resp)
@@ -618,5 +592,16 @@ func minimalAlertRule() *ngmodels.AlertRule {
 		Title:           "bare",
 		NamespaceUID:    "folder1",
 		IntervalSeconds: 60,
+	}
+}
+
+func testRecordingRule() *ngmodels.AlertRule {
+	return &ngmodels.AlertRule{
+		UID:             "rec1",
+		Title:           "cpu recording",
+		NamespaceUID:    "folder1",
+		IntervalSeconds: 60,
+		Record:          &ngmodels.Record{Metric: "cpu_total", TargetDatasourceUID: "ds-target"},
+		Data:            []ngmodels.AlertQuery{{DatasourceUID: "ds1"}},
 	}
 }

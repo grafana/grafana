@@ -301,6 +301,20 @@ func schema_pkg_apis_datasource_v0alpha1_DataSourceConnection(ref common.Referen
 							Format: "",
 						},
 					},
+					"labels": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"title", "name", "group", "version"},
 			},
@@ -510,12 +524,6 @@ func schema_pkg_apis_datasource_v0alpha1_GenericDataSourceSpec(ref common.Refere
 						},
 					},
 					"readOnly": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-					"isDefault": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"boolean"},
 							Format: "",

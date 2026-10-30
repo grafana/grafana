@@ -138,8 +138,8 @@ func TestRedirection(t *testing.T) {
 	}
 }
 
-var _ builder.APIGroupBuilder = &mockAPIGroupPostStartHookProvider{}
-var _ builder.APIGroupPostStartHookProvider = &mockAPIGroupPostStartHookProvider{}
+var _ builder.APIGroupBuilder = (*mockAPIGroupPostStartHookProvider)(nil)
+var _ builder.APIGroupPostStartHookProvider = (*mockAPIGroupPostStartHookProvider)(nil)
 
 type mockAPIGroupPostStartHookProvider struct {
 	hooks map[string]server.PostStartHookFunc

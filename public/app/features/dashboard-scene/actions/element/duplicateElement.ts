@@ -1,10 +1,12 @@
 import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 
+import { type DashboardActionMeta } from '../../sidebar/events';
 import { edit } from '../utils/edit';
-import { getEditableElementFor } from '../utils/getEditableElementFor';
+import { getElementTypeName } from '../utils/getElementTypeName';
 
 interface DuplicateElementActionHelperProps<T extends SceneObject = SceneObject> {
+  meta: DashboardActionMeta;
   duplicatedObject: T;
   source: SceneObject;
   /** Extra state applied to the clone, e.g. a renamed title. A fresh key is always generated. */
@@ -20,15 +22,15 @@ interface DuplicateElementActionHelperProps<T extends SceneObject = SceneObject>
 export function duplicateElement<T extends SceneObject>(props: DuplicateElementActionHelperProps<T>) {
   const { duplicatedObject, source, cloneState, perform, undo } = props;
 
-  const element = getEditableElementFor(duplicatedObject);
-  if (!element) {
+  const typeName = getElementTypeName(duplicatedObject);
+  if (typeName === undefined) {
     throw new Error('Duplicated object is not an editable element');
   }
 
-  const typeName = element.getEditableElementInfo().typeName;
   const addedObject = duplicatedObject.clone({ ...cloneState, key: undefined });
 
   edit({
+    meta: props.meta,
     description: t('dashboard.edit-actions.duplicate', 'Duplicate {{typeName}}', { typeName }),
     addedObject,
     source,

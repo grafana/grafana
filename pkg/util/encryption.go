@@ -137,7 +137,7 @@ func Encrypt(payload []byte, secret string) ([]byte, error) {
 	}
 
 	//nolint:staticcheck
-	stream := cipher.NewCFBEncrypter(block, iv)
+	stream := cipher.NewCFBEncrypter(block, iv) //nolint:gosec // G407: legacy code, deprecated.
 	stream.XORKeyStream(ciphertext[saltLength+aes.BlockSize:], payload)
 
 	return ciphertext, nil

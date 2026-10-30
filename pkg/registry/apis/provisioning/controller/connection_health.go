@@ -176,13 +176,15 @@ func (hc *ConnectionHealthChecker) refreshHealth(ctx context.Context, conn *prov
 	logger := logging.FromContext(ctx)
 	start := time.Now()
 	outcome := utils.SuccessOutcome
+	cause := ""
 	defer func() {
-		hc.healthMetricsRecorder.RecordHealthCheck("connection", outcome, time.Since(start).Seconds())
+		hc.healthMetricsRecorder.RecordHealthCheck("connection", outcome, cause, time.Since(start).Seconds())
 	}()
 
 	res, err := hc.tester.TestConnection(ctx, conn)
 	if err != nil {
 		outcome = utils.ErrorOutcome
+		cause = classifyHealthCheckErrorCause(err)
 		logger.Error("failed to test connection", "error", err)
 		return nil, existingStatus, fmt.Errorf("failed to test connection: %w", err)
 	}

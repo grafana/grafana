@@ -5,11 +5,12 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"slices"
 	"sync"
 	"time"
+	"uuid"
 
 	"github.com/bwmarrin/snowflake"
-	"github.com/google/uuid"
 	"k8s.io/apiserver/pkg/admission"
 
 	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
@@ -90,7 +91,8 @@ func oauthAppChanged(new, old *provisioning.Connection) bool {
 	if new.Spec.Type != old.Spec.Type || new.Spec.URL != old.Spec.URL || new.Spec.OAuth.ClientID != old.Spec.OAuth.ClientID {
 		return true
 	}
-	if githubEnterpriseServerURL(new) != githubEnterpriseServerURL(old) {
+	if githubEnterpriseServerURL(new) != githubEnterpriseServerURL(old) || gitOAuthTokenURL(new) != gitOAuthTokenURL(old) ||
+		!slices.Equal(gitOAuthScopes(new), gitOAuthScopes(old)) {
 		return true
 	}
 	return !new.Secure.ClientSecret.Create.IsZero() ||
@@ -102,6 +104,20 @@ func githubEnterpriseServerURL(c *provisioning.Connection) string {
 		return ""
 	}
 	return c.Spec.GitHubEnterpriseOAuth.ServerURL
+}
+
+func gitOAuthTokenURL(c *provisioning.Connection) string {
+	if c.Spec.GitOAuth == nil {
+		return ""
+	}
+	return c.Spec.GitOAuth.TokenURL
+}
+
+func gitOAuthScopes(c *provisioning.Connection) []string {
+	if c.Spec.GitOAuth == nil {
+		return nil
+	}
+	return c.Spec.GitOAuth.Scopes
 }
 
 /*
@@ -134,14 +150,7 @@ func generateShortUID() string {
 
 	// Use UUIDs if snowflake failed (should be never)
 	if node == nil {
-		uid, err := uuid.NewRandom()
-		if err != nil {
-			// This should never happen... but this seems better than a panic
-			for i := range uid {
-				uid[i] = byte(uidrand.Intn(255))
-			}
-		}
-		uuid := uid.String()
+		uuid := uuid.NewV4().String()
 		if rune(uuid[0]) < rune('a') {
 			uuid = string(hexLetters[uidrand.Intn(len(hexLetters))]) + uuid[1:]
 		}

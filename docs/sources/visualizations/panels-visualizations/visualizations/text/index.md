@@ -18,27 +18,36 @@ labels:
 description: Configure options for Grafana's text visualization
 title: Text
 weight: 100
-refs:
-  disable-sanitize-html:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#disable_sanitize_html
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#disable_sanitize_html
-  variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/variable-syntax/
 ---
 
 # Text
 
-Text visualizations let you include text or HTML in your dashboards.
-This can be used to add contextual information and descriptions or embed complex HTML.
+{{< admonition type="note" >}}
+The new text panel is currently in public preview.
+Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 
-For example, if you want to display important links on your dashboard, you can use a text visualization to add these links:
+To use this feature, enable the `grafana.newTextPanel` and `text.newFeatures` feature toggles in your Grafana configuration file or contact Support.
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-text-visualization-v11.6.png" max-width="750px" alt="A text panel showing important links" >}}
+For information about the generally available experience, refer to the [latest OSS documentation](https://grafana.com/docs/grafana/latest/visualizations/panels-visualizations/visualizations/text/).
+{{< /admonition >}}
+
+Text visualizations let you include text, HTML, code blocks, or Mermaid diagrams in your dashboards.
+You can use them to add contextual information and descriptions or to embed complex HTML.
+With text visualizations, you can build things like lightweight data-driven tables, cards, lists, and status summaries.
+
+The following images show different uses of the text visualization.
+
+Here, text visualizations use Markdown and HTML modes:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-text-markdown-html-v13.3.png" max-width="750px" alt="Text visualizations in Markdown and HTML mode" >}}
+
+In this example, one text visualization is in TypeScript mode and the other is using Handlebars templating:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-text-code-handlebars-v13.3.png" max-width="750px" alt="Text visualizations in TypeScript mode and using Handlebars templating" >}}
+
+Finally, this image shows one text visualization using per row render mode and another using pagination:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-text-render-pagination-v13.3.png" max-width="750px" alt="Text visualizations using per row render mode and pagination" >}}
 
 {{< docs/play title="Text Panel" url="https://play.grafana.org/d/adl33bxy1ih34b/" >}}
 
@@ -48,6 +57,139 @@ Use a text visualization when you need to:
 - Provide instructions or guidance on how to interpret different panels, configure settings, or take specific actions based on the displayed data.
 - Announce any scheduled maintenance or downtime that might impact your dashboards.
 
+## Text visualization editor
+
+The editor is where you enter and preview the content of a text visualization.
+It's where you set text modes, like Markdown, HTML, or a specific coding language.
+Additionally, it provides formatting options and syntax highlighting, as well as variable and diagram support.
+
+To learn more, click the following links:
+
+- [Editor views](#views)
+- [Formatting toolbar](#toolbar)
+- [Modes](#modes)
+
+### Views
+
+The editor provides three views:
+
+- **Preview**: See only the preview block.
+- **Split**: See the authoring and preview blocks at the same time.
+- **Write**: See only the authoring block.
+
+### Toolbar
+
+The toolbar provides formatting options for common Markdown and HTML operations, like bold or italic text and lists.
+You can also insert:
+
+- Tables
+- Mermaid diagrams
+- Dashboard variables
+
+Dashboard variables autocomplete as you enter them, and they're interpolated in the content.
+
+The options displayed in the formatting toolbar depend on whether you select Markdown or HTML.
+
+### Modes
+
+The visualization mode determines how embedded content appears.
+Choose from:
+
+- **Markdown**: Formats the content as [Markdown](https://en.wikipedia.org/wiki/Markdown).
+- **HTML**: Renders the content as [sanitized](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/text/sanitize.ts) HTML. If you require more direct control over the output, you can set the [`disable_sanitize_html`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#disable_sanitize_html) flag which enables you to directly enter HTML.
+- **Code**: Renders content inside a read-only code editor. [Variables](/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/variable-syntax/) in the content are expanded for display. The code options are: Go, HTML, JSON, Markdown, Plain text, SQL, TypeScript, XML, YAML.
+
+The editor provides syntax highlighting in the authoring block.
+
+{{< admonition type="note" >}}
+When a text visualization has query data, an iframe only loads after you allow its source.
+For more information, refer to the [Security and external documentation](#security-and-external-content).
+
+To embed Grafana pages in an iframe, also set [`allow_embedding`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#allow_embedding) to `true` in your Grafana configuration file or environment variables.
+This setting controls whether browsers can show Grafana in a frame. Other websites control this with their own settings.
+{{< /admonition >}}
+
+## Render query results as text with Handlebars templates
+
+Use `${__value}`, `${__field}`, `${__series}`, and `${__data}` macros to reference query results in the visualization content, and [Handlebars templating](https://handlebarsjs.com/guide/) for more control.
+Choose what data to display, repeat content for each row with `{{#each}}`, and add if/then logic with `{{#if}}` helpers.
+
+![Text visualization with Handlebars support](/media/docs/grafana/panels-visualizations/screenshot-text-handlebars-v13.3.png)
+
+## Style content with theme colors
+
+Use the [`$__theme` variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/built-in-variables/#__theme) in inline styles to match the current Grafana theme.
+The content updates when a user switches between light and dark themes.
+
+For example, the following HTML shows a card with the theme's background, border, and secondary text colors:
+
+```html
+<div
+  style="padding: 12px; background: ${__theme.colors.background.secondary}; border: 1px solid ${__theme.colors.border.weak}; border-radius: ${__theme.shape.radius.default}"
+>
+  <strong>checkout</strong>
+  <div style="color: ${__theme.colors.text.secondary}; font-size: ${__theme.typography.size.sm}">182 ms</div>
+</div>
+```
+
+The variable works in Markdown and HTML modes, and in the output of Handlebars templates.
+For example, use `{{#if}}` to choose a success or error color for each row.
+
+## Security and external content
+
+When a text visualization has query data, Grafana renders its content in an isolated frame.
+This protects the dashboard and your Grafana session from the content of the panel.
+
+### What the frame blocks
+
+Inside the frame, the content can't:
+
+- Run scripts, including inline scripts and event handlers.
+- Read your Grafana session, cookies, or the rest of the dashboard.
+- Call the Grafana API or send requests to other services.
+- Submit forms or embed plugins with `<object>` or `<embed>`.
+- Load images, stylesheets, fonts, audio, video, or iframes from a URL, unless you allow its source.
+
+Grafana always sanitizes HTML in the frame, even when [`disable_sanitize_html`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#disable_sanitize_html) is enabled.
+Inline styles, `data:` images, and Mermaid diagrams still work.
+By default, links open in a new tab.
+
+### Review blocked resources
+
+In most cases, when a panel tries to load content from a URL, Grafana blocks it and shows a banner at the top of the dashboard and in the panel editor.
+To load the content, complete the following steps:
+
+1. In the banner, click **Review**.
+1. Review each source and the full list of URLs that it requests.
+1. Select the sources that you trust.
+1. Click **Allow** or **Always allow**.
+
+You can't allow a source that requests too many URLs to list, because you can't review all of them.
+
+### Allow and Always allow
+
+The two options differ in where the approval applies and how long it lasts:
+
+- **Allow**: Loads content from the source in the text visualizations listed in the review. The approval only applies to the current dashboard and ends when you close the browser tab.
+- **Always allow**: Loads content from the source in any text visualization. The approval applies to any dashboard and lasts for 30 days.
+
+Approvals apply only to you, in the current organization and browser.
+They're stored in your browser, not in Grafana, and they aren't shared with other users.
+
+### What an approval allows
+
+When you allow a source, you allow its whole website, for example `https://example.com`, not only the URLs listed in the review.
+The panel can then load images, stylesheets, fonts, audio, video, and iframes from that website.
+
+Before you allow a source, consider the following risks:
+
+- **Data in URLs**: Panel content can put dashboard variables and query results into URLs. The website receives that data with each request.
+- **Viewer information**: The website receives your IP address, your browser details, and the time of each request. The requests don't include the address of your Grafana instance or the dashboard, unless the panel content puts it in a URL.
+- **Content changes**: The website can change what it serves after you allow it. An approval doesn't lock the content that you reviewed.
+- **Embedded pages**: An iframe from the website can show any content in the panel, and it can load content from other websites. However, it can't run scripts, submit forms, or read your Grafana session or the dashboard.
+
+Only allow websites that you trust with the data on the dashboard.
+
 ## Configuration options
 
 {{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
@@ -56,18 +198,38 @@ Use a text visualization when you need to:
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-### Text options
+### Data options
 
-Use the following options to refine your text visualization.
+Use the following options to control how data is rendered in the text visualization.
 
-<!-- prettier-ignore-start -->
+#### Render mode
 
-| Option | Description |
-| ------ | ----------- |
-| Mode | Determines how embedded content appears. Choose from:<ul><li>**Markdown** - Formats the content as [markdown](https://en.wikipedia.org/wiki/Markdown).</li><li>**HTML** - Renders the content as [sanitized](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/text/sanitize.ts) HTML. If you require more direct control over the output, you can set the [disable_sanitize_html](ref:disable-sanitize-html) flag which enables you to directly enter HTML.</li><li>**Code** - Renders content inside a read-only code editor. [Variables](ref:variables) in the content are expanded for display.</li></ul><p>To allow embedding of iframes and other websites, you need set `allow_embedding = true` in your Grafana `config.ini` or environment variables, depending on your deployment.</p> |
-| Content | Enter the text to display. The content supports Markdown, HTML, or code, depending on **Mode**. Dashboard variables are interpolated in the content. |
-| Language | When you choose **Code** as your text mode, select an appropriate language to apply syntax highlighting to the embedded text. Choose from JSON, YAML, XML, TypeScript, SQL, Go, Markdown, HTML, or Plain text. The default is Plain text. |
-| Show line numbers | Displays line numbers in the panel preview when you choose **Code** as your text mode. |
-| Show mini map | Displays a small outline of the embedded text in the panel preview when you choose **Code** as your text mode. |
+Select a render mode to control how your template is applied:
 
-<!-- prettier-ignore-end -->
+- **Once**: Render the whole result.
+- **Per row**: Each row in the data gets its own repeated block of content.
+
+You can also select which data frame to display.
+
+![Text visualization with Render mode set to per row](/media/docs/grafana/panels-visualizations/screenshot-text-render-mode-2-v13.3.png)
+
+#### Page size
+
+When a query returns many rows, pagination lets you move through the full result instead of showing only a limited number of rows.
+Grafana automatically adjusts the number of rows on each page to fit the panel or you can set a range from 1-1000 rows.
+
+This option only displays when you set **Render mode** to **Per row** and when there are 100 rows or more.
+
+### Value mappings
+
+{{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Thresholds
+
+{{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+<!-- Show line numbers: Displays line numbers in the panel preview when you choose **Code** as your text mode. -->

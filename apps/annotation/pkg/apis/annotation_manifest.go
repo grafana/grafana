@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	rawSchemaAnnotationv0alpha1     = []byte(`{"Annotation":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"dashboardUID":{"type":"string"},"panelID":{"type":"integer"},"scopes":{"items":{"type":"string"},"type":"array"},"tags":{"items":{"type":"string"},"type":"array"},"text":{"type":"string"},"time":{"type":"integer"},"timeEnd":{"type":"integer"}},"required":["text","time"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	rawSchemaAnnotationv0alpha1     = []byte(`{"Annotation":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"dashboardUID":{"description":"UID of the dashboard the annotation belongs to.\nOptional. Omit it for an organization-wide annotation.","type":"string"},"panelID":{"description":"ID of the panel the annotation belongs to, within the dashboard set by dashboardUID.\nOptional. Omit it to show the annotation on every panel of the dashboard.","type":"integer"},"scopes":{"description":"Names of the scopes the annotation applies to.","items":{"type":"string"},"type":"array"},"tags":{"description":"Tags used to categorize and filter annotations.","items":{"type":"string"},"type":"array"},"text":{"description":"Text of the annotation.","type":"string"},"time":{"description":"Start time of the annotation, in Unix milliseconds.","type":"integer"},"timeEnd":{"description":"End time of the annotation, in Unix milliseconds.\nOptional. Set it to make the annotation a region.","type":"integer"}},"required":["text","time"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
 	versionSchemaAnnotationv0alpha1 app.VersionSchema
 	_                               = json.Unmarshal(rawSchemaAnnotationv0alpha1, &versionSchemaAnnotationv0alpha1)
 )
@@ -49,6 +49,7 @@ var appManifestData = app.ManifestData{
 					},
 				},
 			},
+			// nolint:staticcheck
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
 					"/graphite": {
@@ -59,34 +60,38 @@ var appManifestData = app.ManifestData{
 
 								RequestBody: &spec3.RequestBody{
 									RequestBodyProps: spec3.RequestBodyProps{
-
-										Required: true,
+										Description: "Annotation event in the Graphite events format.",
+										Required:    true,
 										Content: map[string]*spec3.MediaType{
 											"application/json": {
 												MediaTypeProps: spec3.MediaTypeProps{
 													Schema: &spec.Schema{
 														SchemaProps: spec.SchemaProps{
-															Type: []string{"object"},
+															Type:        []string{"object"},
+															Description: "Annotation event in the Graphite events format.",
 															Properties: map[string]spec.Schema{
 																"data": {
 																	SchemaProps: spec.SchemaProps{
-																		Type: []string{"string"},
+																		Type:        []string{"string"},
+																		Description: "Additional event details, appended to the annotation text on a new line.",
 																	},
 																},
 																"tags": {
 																	SchemaProps: spec.SchemaProps{
 
-																		Description: "tags accepts either an array of strings or a single space-separated string",
+																		Description: "Tags of the event, as an array of strings or a single space-separated string.",
 																	},
 																},
 																"what": {
 																	SchemaProps: spec.SchemaProps{
-																		Type: []string{"string"},
+																		Type:        []string{"string"},
+																		Description: "Title of the event. Becomes the first line of the annotation text.",
 																	},
 																},
 																"when": {
 																	SchemaProps: spec.SchemaProps{
-																		Type: []string{"integer"},
+																		Type:        []string{"integer"},
+																		Description: "Time of the event, in Unix seconds. Defaults to the current time.",
 																	},
 																},
 															},
@@ -323,10 +328,8 @@ var appManifestData = app.ManifestData{
 																		},
 																		"spec": {
 																			SchemaProps: spec.SchemaProps{
-																				Type: []string{"object"},
-																				AdditionalProperties: &spec.SchemaOrBool{
-																					Allows: true,
-																				},
+
+																				Ref: spec.MustCreateRef("#/components/schemas/createGraphiteAnnotationSpec"),
 																			},
 																		},
 																	},
@@ -351,6 +354,175 @@ var appManifestData = app.ManifestData{
 
 								OperationId: "getSearch",
 
+								Parameters: []*spec3.Parameter{
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name:        "continue",
+											In:          "query",
+											Description: "Continue token from the metadata.continue field of the previous page for pagination.",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:        []string{"string"},
+													Description: "Continue token from the metadata.continue field of the previous page for pagination.",
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name:        "createdBy",
+											In:          "query",
+											Description: "Return only annotations created by the user with this UID.",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:        []string{"string"},
+													Description: "Return only annotations created by the user with this UID.",
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name:        "dashboardUID",
+											In:          "query",
+											Description: "Return only annotations on the dashboard with this UID.",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:        []string{"string"},
+													Description: "Return only annotations on the dashboard with this UID.",
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name:        "from",
+											In:          "query",
+											Description: "Start of the time range, in Unix milliseconds.",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:        []string{"integer"},
+													Description: "Start of the time range, in Unix milliseconds.",
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name:        "limit",
+											In:          "query",
+											Description: "Maximum number of annotations to return in one page. Defaults to 100.",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:        []string{"integer"},
+													Description: "Maximum number of annotations to return in one page. Defaults to 100.",
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name:        "panelID",
+											In:          "query",
+											Description: "Return only annotations on the panel with this ID.",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:        []string{"integer"},
+													Description: "Return only annotations on the panel with this ID.",
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name:        "scope",
+											In:          "query",
+											Description: "Return only annotations with these scopes. Repeat the parameter to pass several scopes.",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:        []string{"array"},
+													Description: "Return only annotations with these scopes. Repeat the parameter to pass several scopes.",
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name:        "scopesMatchAny",
+											In:          "query",
+											Description: "If true (the default), match annotations that have any of the scopes. If false, an annotation must have all of them.",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:        []string{"boolean"},
+													Description: "If true (the default), match annotations that have any of the scopes. If false, an annotation must have all of them.",
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name:        "tag",
+											In:          "query",
+											Description: "Return only annotations with these tags. Repeat the parameter to pass several tags.",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:        []string{"array"},
+													Description: "Return only annotations with these tags. Repeat the parameter to pass several tags.",
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name:        "tagsMatchAny",
+											In:          "query",
+											Description: "If true, match annotations that have any of the tags. If false (the default), an annotation must have all of them.",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:        []string{"boolean"},
+													Description: "If true, match annotations that have any of the tags. If false (the default), an annotation must have all of them.",
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name:        "to",
+											In:          "query",
+											Description: "End of the time range, in Unix milliseconds.",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:        []string{"integer"},
+													Description: "End of the time range, in Unix milliseconds.",
+												},
+											},
+										},
+									},
+								},
+
 								Responses: &spec3.Responses{
 									ResponsesProps: spec3.ResponsesProps{
 										Default: &spec3.Response{
@@ -363,41 +535,36 @@ var appManifestData = app.ManifestData{
 																SchemaProps: spec.SchemaProps{
 																	Type: []string{"object"},
 																	Properties: map[string]spec.Schema{
-																		"apiVersion": {
-																			SchemaProps: spec.SchemaProps{
-																				Type:        []string{"string"},
-																				Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-																			},
-																		},
 																		"items": {
 																			SchemaProps: spec.SchemaProps{
-																				Type: []string{"array"},
+																				Type:        []string{"array"},
+																				Description: "List of annotations matching the query.",
 																				Items: &spec.SchemaOrArray{
 																					Schema: &spec.Schema{
 																						SchemaProps: spec.SchemaProps{
-																							Type: []string{"object"},
-																							AdditionalProperties: &spec.SchemaOrBool{
-																								Schema: &spec.Schema{
-																									SchemaProps: spec.SchemaProps{},
-																								},
-																							},
+
+																							Ref: spec.MustCreateRef("#/components/schemas/getSearchAnnotationItem"),
 																						}},
 																				},
 																			},
 																		},
-																		"kind": {
+																		"metadata": {
 																			SchemaProps: spec.SchemaProps{
-																				Type:        []string{"string"},
-																				Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																				Type: []string{"object"},
+																				Properties: map[string]spec.Schema{
+																					"continue": {
+																						SchemaProps: spec.SchemaProps{
+																							Type:        []string{"string"},
+																							Description: "Token for the next page. Pass it as the continue parameter. Empty on the last page.",
+																						},
+																					},
+																				},
 																			},
 																		},
 																	},
 																	Required: []string{
-																		"apiVersion",
-																		"kind",
+																		"metadata",
 																		"items",
-																		"apiVersion",
-																		"kind",
 																	},
 																}},
 														}},
@@ -413,6 +580,51 @@ var appManifestData = app.ManifestData{
 							OperationProps: spec3.OperationProps{
 
 								OperationId: "getTags",
+
+								Parameters: []*spec3.Parameter{
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name:        "contains",
+											In:          "query",
+											Description: "Return tags that contain this value.",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:        []string{"string"},
+													Description: "Return tags that contain this value.",
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name:        "limit",
+											In:          "query",
+											Description: "Maximum number of tags to return. Defaults to 100.",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:        []string{"integer"},
+													Description: "Maximum number of tags to return. Defaults to 100.",
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name:        "prefix",
+											In:          "query",
+											Description: "Return tags that start with this value.",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:        []string{"string"},
+													Description: "Return tags that start with this value.",
+												},
+											},
+										},
+									},
+								},
 
 								Responses: &spec3.Responses{
 									ResponsesProps: spec3.ResponsesProps{
@@ -440,7 +652,8 @@ var appManifestData = app.ManifestData{
 																		},
 																		"tags": {
 																			SchemaProps: spec.SchemaProps{
-																				Type: []string{"array"},
+																				Type:        []string{"array"},
+																				Description: "List of unique tags and their counts.",
 																				Items: &spec.SchemaOrArray{
 																					Schema: &spec.Schema{
 																						SchemaProps: spec.SchemaProps{
@@ -448,12 +661,14 @@ var appManifestData = app.ManifestData{
 																							Properties: map[string]spec.Schema{
 																								"count": {
 																									SchemaProps: spec.SchemaProps{
-																										Type: []string{"number"},
+																										Type:        []string{"number"},
+																										Description: "Count of annotations with this tag.",
 																									},
 																								},
 																								"tag": {
 																									SchemaProps: spec.SchemaProps{
-																										Type: []string{"string"},
+																										Type:        []string{"string"},
+																										Description: "Tag value.",
 																									},
 																								},
 																							},
@@ -482,8 +697,183 @@ var appManifestData = app.ManifestData{
 					},
 				},
 				Cluster: map[string]spec3.PathProps{},
-				Schemas: map[string]spec.Schema{},
+				Schemas: map[string]spec.Schema{
+					"createGraphiteAnnotationSpec": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"dashboardUID": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "UID of the dashboard the annotation belongs to.\nOptional. Omit it for an organization-wide annotation.",
+									},
+								},
+								"panelID": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"integer"},
+										Description: "ID of the panel the annotation belongs to, within the dashboard set by dashboardUID.\nOptional. Omit it to show the annotation on every panel of the dashboard.",
+									},
+								},
+								"scopes": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"array"},
+										Description: "Names of the scopes the annotation applies to.",
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
+									},
+								},
+								"tags": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"array"},
+										Description: "Tags used to categorize and filter annotations.",
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
+									},
+								},
+								"text": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "Text of the annotation.",
+									},
+								},
+								"time": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"integer"},
+										Description: "Start time of the annotation, in Unix milliseconds.",
+									},
+								},
+								"timeEnd": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"integer"},
+										Description: "End time of the annotation, in Unix milliseconds.\nOptional. Set it to make the annotation a region.",
+									},
+								},
+							},
+							Required: []string{
+								"text",
+								"time",
+							},
+						},
+					},
+					"getSearchAnnotationItem": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"apiVersion": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"kind": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"metadata": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Allows: true,
+										},
+									},
+								},
+								"spec": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/getSearchAnnotationSpec"),
+									},
+								},
+							},
+							Required: []string{
+								"apiVersion",
+								"kind",
+								"metadata",
+								"spec",
+							},
+						},
+					},
+					"getSearchAnnotationSpec": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"dashboardUID": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "UID of the dashboard the annotation belongs to.\nOptional. Omit it for an organization-wide annotation.",
+									},
+								},
+								"panelID": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"integer"},
+										Description: "ID of the panel the annotation belongs to, within the dashboard set by dashboardUID.\nOptional. Omit it to show the annotation on every panel of the dashboard.",
+									},
+								},
+								"scopes": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"array"},
+										Description: "Names of the scopes the annotation applies to.",
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
+									},
+								},
+								"tags": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"array"},
+										Description: "Tags used to categorize and filter annotations.",
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
+									},
+								},
+								"text": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "Text of the annotation.",
+									},
+								},
+								"time": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"integer"},
+										Description: "Start time of the annotation, in Unix milliseconds.",
+									},
+								},
+								"timeEnd": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"integer"},
+										Description: "End time of the annotation, in Unix milliseconds.\nOptional. Set it to make the annotation a region.",
+									},
+								},
+							},
+							Required: []string{
+								"text",
+								"time",
+							},
+						},
+					},
+				},
 			},
+			OpenAPI: func() app.ManifestVersionOpenAPI {
+				var openAPI app.ManifestVersionOpenAPI
+				if err := json.Unmarshal([]byte("{\"paths\":{\"/namespaces/{namespace}/graphite\":{\"post\":{\"operationId\":\"createGraphite\",\"requestBody\":{\"description\":\"Annotation event in the Graphite events format.\",\"content\":{\"application/json\":{\"schema\":{\"description\":\"Annotation event in the Graphite events format.\",\"type\":\"object\",\"required\":[\"what\",\"tags\"],\"properties\":{\"data\":{\"description\":\"Additional event details, appended to the annotation text on a new line.\",\"type\":\"string\"},\"tags\":{\"description\":\"Tags of the event, as an array of strings or a single space-separated string.\",\"oneOf\":[{\"type\":\"string\"},{\"type\":\"array\",\"items\":{\"type\":\"string\"}}]},\"what\":{\"description\":\"Title of the event. Becomes the first line of the annotation text.\",\"type\":\"string\"},\"when\":{\"description\":\"Time of the event, in Unix seconds. Defaults to the current time.\",\"type\":\"integer\"}},\"additionalProperties\":false}}},\"required\":true},\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"spec\",\"apiVersion\",\"kind\",\"metadata\"],\"properties\":{\"apiVersion\":{\"description\":\"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\",\"type\":\"string\"},\"kind\":{\"description\":\"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\",\"type\":\"string\"},\"metadata\":{\"type\":\"object\",\"properties\":{\"annotations\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}},\"creationTimestamp\":{\"type\":\"string\",\"format\":\"date-time\"},\"deletionGracePeriodSeconds\":{\"type\":\"integer\",\"format\":\"int64\"},\"deletionTimestamp\":{\"type\":\"string\",\"format\":\"date-time\"},\"finalizers\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"generateName\":{\"type\":\"string\"},\"generation\":{\"type\":\"integer\",\"format\":\"int64\"},\"labels\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}},\"managedFields\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"fieldsType\":{\"type\":\"string\"},\"fieldsV1\":{\"type\":\"object\"},\"manager\":{\"type\":\"string\"},\"operation\":{\"type\":\"string\"},\"subresource\":{\"type\":\"string\"},\"time\":{\"type\":\"string\",\"format\":\"date-time\"}}}},\"name\":{\"type\":\"string\"},\"namespace\":{\"type\":\"string\"},\"ownerReferences\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"apiVersion\",\"kind\",\"name\",\"uid\"],\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"blockOwnerDeletion\":{\"type\":\"boolean\"},\"controller\":{\"type\":\"boolean\"},\"kind\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"uid\":{\"type\":\"string\"}}}},\"resourceVersion\":{\"type\":\"string\"},\"selfLink\":{\"type\":\"string\"},\"uid\":{\"type\":\"string\"}},\"x-grafana-app-uses-kubernetes-object-metadata\":true},\"spec\":{\"$ref\":\"#/components/schemas/createGraphiteAnnotationSpec\"}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]},\"/namespaces/{namespace}/search\":{\"get\":{\"operationId\":\"getSearch\",\"parameters\":[{\"name\":\"continue\",\"in\":\"query\",\"description\":\"Continue token from the metadata.continue field of the previous page for pagination.\",\"schema\":{\"description\":\"Continue token from the metadata.continue field of the previous page for pagination.\",\"type\":\"string\"}},{\"name\":\"createdBy\",\"in\":\"query\",\"description\":\"Return only annotations created by the user with this UID.\",\"schema\":{\"description\":\"Return only annotations created by the user with this UID.\",\"type\":\"string\"}},{\"name\":\"dashboardUID\",\"in\":\"query\",\"description\":\"Return only annotations on the dashboard with this UID.\",\"schema\":{\"description\":\"Return only annotations on the dashboard with this UID.\",\"type\":\"string\"}},{\"name\":\"from\",\"in\":\"query\",\"description\":\"Start of the time range, in Unix milliseconds.\",\"schema\":{\"description\":\"Start of the time range, in Unix milliseconds.\",\"type\":\"integer\"}},{\"name\":\"limit\",\"in\":\"query\",\"description\":\"Maximum number of annotations to return in one page. Defaults to 100.\",\"schema\":{\"description\":\"Maximum number of annotations to return in one page. Defaults to 100.\",\"type\":\"integer\"}},{\"name\":\"panelID\",\"in\":\"query\",\"description\":\"Return only annotations on the panel with this ID.\",\"schema\":{\"description\":\"Return only annotations on the panel with this ID.\",\"type\":\"integer\"}},{\"name\":\"scope\",\"in\":\"query\",\"description\":\"Return only annotations with these scopes. Repeat the parameter to pass several scopes.\",\"schema\":{\"description\":\"Return only annotations with these scopes. Repeat the parameter to pass several scopes.\",\"type\":\"array\",\"items\":{\"type\":\"string\"}}},{\"name\":\"scopesMatchAny\",\"in\":\"query\",\"description\":\"If true (the default), match annotations that have any of the scopes. If false, an annotation must have all of them.\",\"schema\":{\"description\":\"If true (the default), match annotations that have any of the scopes. If false, an annotation must have all of them.\",\"type\":\"boolean\"}},{\"name\":\"tag\",\"in\":\"query\",\"description\":\"Return only annotations with these tags. Repeat the parameter to pass several tags.\",\"schema\":{\"description\":\"Return only annotations with these tags. Repeat the parameter to pass several tags.\",\"type\":\"array\",\"items\":{\"type\":\"string\"}}},{\"name\":\"tagsMatchAny\",\"in\":\"query\",\"description\":\"If true, match annotations that have any of the tags. If false (the default), an annotation must have all of them.\",\"schema\":{\"description\":\"If true, match annotations that have any of the tags. If false (the default), an annotation must have all of them.\",\"type\":\"boolean\"}},{\"name\":\"to\",\"in\":\"query\",\"description\":\"End of the time range, in Unix milliseconds.\",\"schema\":{\"description\":\"End of the time range, in Unix milliseconds.\",\"type\":\"integer\"}}],\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"metadata\",\"items\"],\"properties\":{\"items\":{\"description\":\"List of annotations matching the query.\",\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/getSearchAnnotationItem\"}},\"metadata\":{\"type\":\"object\",\"properties\":{\"continue\":{\"description\":\"Token for the next page. Pass it as the continue parameter. Empty on the last page.\",\"type\":\"string\"}},\"additionalProperties\":false}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]},\"/namespaces/{namespace}/tags\":{\"get\":{\"operationId\":\"getTags\",\"parameters\":[{\"name\":\"contains\",\"in\":\"query\",\"description\":\"Return tags that contain this value.\",\"schema\":{\"description\":\"Return tags that contain this value.\",\"type\":\"string\"}},{\"name\":\"limit\",\"in\":\"query\",\"description\":\"Maximum number of tags to return. Defaults to 100.\",\"schema\":{\"description\":\"Maximum number of tags to return. Defaults to 100.\",\"type\":\"integer\"}},{\"name\":\"prefix\",\"in\":\"query\",\"description\":\"Return tags that start with this value.\",\"schema\":{\"description\":\"Return tags that start with this value.\",\"type\":\"string\"}}],\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"tags\",\"apiVersion\",\"kind\"],\"properties\":{\"apiVersion\":{\"description\":\"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\",\"type\":\"string\"},\"kind\":{\"description\":\"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\",\"type\":\"string\"},\"tags\":{\"description\":\"List of unique tags and their counts.\",\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"tag\",\"count\"],\"properties\":{\"count\":{\"description\":\"Count of annotations with this tag.\",\"type\":\"number\"},\"tag\":{\"description\":\"Tag value.\",\"type\":\"string\"}},\"additionalProperties\":false}}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]}},\"components\":{\"schemas\":{\"createGraphiteAnnotationSpec\":{\"type\":\"object\",\"required\":[\"text\",\"time\"],\"properties\":{\"dashboardUID\":{\"description\":\"UID of the dashboard the annotation belongs to.\\nOptional. Omit it for an organization-wide annotation.\",\"type\":\"string\"},\"panelID\":{\"description\":\"ID of the panel the annotation belongs to, within the dashboard set by dashboardUID.\\nOptional. Omit it to show the annotation on every panel of the dashboard.\",\"type\":\"integer\"},\"scopes\":{\"description\":\"Names of the scopes the annotation applies to.\",\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"tags\":{\"description\":\"Tags used to categorize and filter annotations.\",\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"text\":{\"description\":\"Text of the annotation.\",\"type\":\"string\"},\"time\":{\"description\":\"Start time of the annotation, in Unix milliseconds.\",\"type\":\"integer\"},\"timeEnd\":{\"description\":\"End time of the annotation, in Unix milliseconds.\\nOptional. Set it to make the annotation a region.\",\"type\":\"integer\"}},\"additionalProperties\":false},\"getSearchAnnotationItem\":{\"type\":\"object\",\"required\":[\"apiVersion\",\"kind\",\"metadata\",\"spec\"],\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"kind\":{\"type\":\"string\"},\"metadata\":{\"type\":\"object\",\"additionalProperties\":true},\"spec\":{\"$ref\":\"#/components/schemas/getSearchAnnotationSpec\"}},\"additionalProperties\":false},\"getSearchAnnotationSpec\":{\"type\":\"object\",\"required\":[\"text\",\"time\"],\"properties\":{\"dashboardUID\":{\"description\":\"UID of the dashboard the annotation belongs to.\\nOptional. Omit it for an organization-wide annotation.\",\"type\":\"string\"},\"panelID\":{\"description\":\"ID of the panel the annotation belongs to, within the dashboard set by dashboardUID.\\nOptional. Omit it to show the annotation on every panel of the dashboard.\",\"type\":\"integer\"},\"scopes\":{\"description\":\"Names of the scopes the annotation applies to.\",\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"tags\":{\"description\":\"Tags used to categorize and filter annotations.\",\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"text\":{\"description\":\"Text of the annotation.\",\"type\":\"string\"},\"time\":{\"description\":\"Start time of the annotation, in Unix milliseconds.\",\"type\":\"integer\"},\"timeEnd\":{\"description\":\"End time of the annotation, in Unix milliseconds.\\nOptional. Set it to make the annotation a region.\",\"type\":\"integer\"}},\"additionalProperties\":false}}}}"), &openAPI); err != nil {
+					panic(err)
+				}
+				return openAPI
+			}(),
 		},
 	},
 }

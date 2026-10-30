@@ -126,7 +126,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		token, err := s.signer.SignIDToken(ctx, idClaims)
 		if err != nil {
 			s.metrics.failedTokenSigningCounter.Inc()
-			return resultType{}, nil
+			return resultType{}, fmt.Errorf("failed to sign id token: %w", err)
 		}
 
 		extracted, err := s.extractTokenClaims(token)
@@ -206,8 +206,12 @@ func getAudience(orgID int64) jwt.Audience {
 	return jwt.Audience{fmt.Sprintf("org:%d", orgID)}
 }
 
+// getCacheKey must include every input of the signed claims that can differ between two
+// authentications of the same identity. authenticatedBy is one of them: a render (for example a
+// scheduled report) and the user's browser session sign in as the same user, and without it in
+// the key one would get the other's token.
 func (s *Service) getCacheKey(ident identity.Requester) string {
-	return cachePrefix + ident.GetCacheKey() + string(ident.GetOrgRole()) + hashGroups(s.resolveGroupsClaim(ident))
+	return cachePrefix + ident.GetCacheKey() + string(ident.GetOrgRole()) + ident.GetAuthenticatedBy() + hashGroups(s.resolveGroupsClaim(ident))
 }
 
 func shouldLogErr(err error) bool {

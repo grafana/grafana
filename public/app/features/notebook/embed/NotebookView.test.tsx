@@ -1,5 +1,7 @@
+import { type ReactElement } from 'react';
 import { act, render, screen } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -12,7 +14,7 @@ import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutMa
 import * as transformModule from '../serialization/transformNotebookToScene';
 import { defaultSpec as defaultNotebookSpec, type Spec as NotebookSpec } from '../types';
 
-import { NotebookView } from './NotebookView';
+import { NotebookView, type DraftNotebookViewProps } from './NotebookView';
 
 const NOTEBOOKS_FLAG = 'dashboard.notebooks';
 
@@ -36,10 +38,10 @@ function captureStateManager() {
   return { instances, loadedUids };
 }
 
-function aNotebookScene(title = 'Checkout latency investigation') {
+function aNotebookScene(title = 'Checkout latency investigation', uid = 'nb-1') {
   return new NotebookScene({
     title,
-    uid: 'nb-1',
+    uid,
     body: new NotebookLayoutManager({ cells: [] }),
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     timePicker: new SceneTimePicker({}),
@@ -93,14 +95,6 @@ describe('NotebookView', () => {
     expect(await screen.findByRole('radio', { name: 'Edit' })).toBeInTheDocument();
   });
 
-  // The sticky controls row offsets itself by the app header's height, which is not this host's
-  // coordinate space -- left alone the row floats over the first cells as they scroll past it.
-  /**
-   * It renders without an app header above it, but it must not say so ON THE SCENE: the same scene
-   * object is shared with the /notebooks route, which does have one, so a flag there would answer
-   * for both and leave the route's sticky controls row under its header. The answer travels with the
-   * tree instead — see NotebookEmbeddedContext.
-   */
   it('does not mark the shared scene as embedded', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     const { instances } = captureStateManager();
@@ -128,6 +122,21 @@ describe('NotebookView', () => {
     });
 
     expect(onTitleChange).toHaveBeenCalledWith('Q2 latency regression');
+  });
+
+  it('paints the sticky controls row with the host-supplied background', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    const { instances } = captureStateManager();
+
+    render(<NotebookView uid="nb-1" controlsBackground="rebeccapurple" />);
+
+    await act(async () => {
+      instances[0].setState({ isLoading: false, scene: aNotebookScene() });
+    });
+
+    expect(screen.getByTestId(selectors.pages.Notebooks.Item.controls)).toHaveStyle({
+      background: 'rebeccapurple',
+    });
   });
 
   // Without the route's breadcrumb to carry it, the body is the only place the difference between
@@ -178,9 +187,131 @@ describe('NotebookView', () => {
     expect(instances[0].state.scene).toBeUndefined();
   });
 
+  // The assistant opens a notebook right after adding to it; what was added should be editable there.
+  describe('enterEditMode', () => {
+    async function renderLoaded(scene: NotebookScene, enterEditMode?: boolean) {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const { instances } = captureStateManager();
+      const view = render(<NotebookView uid="nb-1" enterEditMode={enterEditMode} />);
+      await act(async () => {
+        instances[0].setState({ isLoading: false, scene });
+      });
+      return view;
+    }
+
+    it('opens the notebook in edit mode', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      const scene = aNotebookScene();
+
+      await renderLoaded(scene, true);
+
+      expect(scene.state.isEditing).toBe(true);
+    });
+
+    it('enters edit mode when it turns on after the notebook is shown', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      const scene = aNotebookScene();
+      const { rerender } = await renderLoaded(scene);
+      expect(scene.state.isEditing).toBeFalsy();
+
+      await act(async () => {
+        rerender(<NotebookView uid="nb-1" enterEditMode />);
+      });
+
+      expect(scene.state.isEditing).toBe(true);
+    });
+
+    // The assistant clears its request as soon as it has passed it on, which is before a new notebook loads.
+    it('still enters edit mode when the prop turns off again before the notebook has loaded', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const { instances } = captureStateManager();
+      const scene = aNotebookScene();
+      const { rerender } = render(<NotebookView uid="nb-1" enterEditMode />);
+      rerender(<NotebookView uid="nb-1" enterEditMode={false} />);
+
+      await act(async () => {
+        instances[0].setState({ isLoading: false, scene });
+      });
+
+      expect(scene.state.isEditing).toBe(true);
+    });
+
+    it('edits only the notebook it was asked for when the host switches notebooks', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const { instances } = captureStateManager();
+      const previous = aNotebookScene('Previous', 'nb-1');
+      const next = aNotebookScene('Next', 'nb-2');
+      const { rerender } = render(<NotebookView uid="nb-1" />);
+      await act(async () => {
+        instances[0].setState({ isLoading: false, scene: previous });
+      });
+      // Spied rather than read back: leaving the view deactivates the scene, which ends edit mode anyway.
+      const enterPrevious = jest.spyOn(previous, 'onEnterEditMode');
+
+      await act(async () => {
+        rerender(<NotebookView uid="nb-2" enterEditMode />);
+      });
+      expect(enterPrevious).not.toHaveBeenCalled();
+
+      await act(async () => {
+        instances[0].setState({ isLoading: false, scene: next });
+      });
+      expect(next.state.isEditing).toBe(true);
+    });
+
+    it('drops a request still waiting on its notebook when the host moves to another one', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const { instances } = captureStateManager();
+      const next = aNotebookScene('Next', 'nb-2');
+      const { rerender } = render(<NotebookView uid="nb-1" enterEditMode />);
+      rerender(<NotebookView uid="nb-1" enterEditMode={false} />);
+
+      await act(async () => {
+        rerender(<NotebookView uid="nb-2" />);
+      });
+      await act(async () => {
+        instances[0].setState({ isLoading: false, scene: next });
+      });
+
+      expect(next.state.isEditing).toBeFalsy();
+    });
+
+    it('leaves a reader without write permission in view mode', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      const scene = aNotebookScene();
+
+      await renderLoaded(scene, true);
+
+      expect(scene.state.isEditing).toBeFalsy();
+    });
+
+    // An add through the open scene already started editing; starting again would reset its session.
+    it('does not restart a session that is already open', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      const scene = aNotebookScene();
+      scene.onEnterEditMode();
+      const start = jest.spyOn(scene.editSession, 'start');
+
+      await renderLoaded(scene, true);
+
+      expect(scene.state.isEditing).toBe(true);
+      expect(start).not.toHaveBeenCalled();
+    });
+  });
+
   // A host holding a document nobody has chosen to save: the assistant's canvas, where a notebook is
   // edited against the conversation and only becomes a resource when someone publishes it.
   describe('a draft', () => {
+    /** The heading only exists once the panel metas have loaded and the scene has been built. */
+    async function renderDraft(ui: ReactElement<DraftNotebookViewProps>) {
+      const result = render(ui);
+      await screen.findByRole('heading', { name: ui.props.spec.title });
+      return result;
+    }
+
     /** A document with no cells, off the generated default so every field the transform reads is there. */
     function aDraftSpec(title = 'Untitled investigation'): NotebookSpec {
       return { ...defaultNotebookSpec(), title };
@@ -233,7 +364,7 @@ describe('NotebookView', () => {
       const updateNotebook = jest.spyOn(notebookResource, 'updateNotebook');
       const draftScene = captureDraftScene();
 
-      render(<NotebookView spec={aDraftSpec()} onChange={jest.fn()} />);
+      await renderDraft(<NotebookView spec={aDraftSpec()} onChange={jest.fn()} />);
 
       // Both halves are needed for autosave to treat this as a writer edit: it ignores changes made
       // outside edit mode, and the mode switch alone is compared against the baseline recorded at
@@ -257,7 +388,7 @@ describe('NotebookView', () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
       const { loadedUids } = captureStateManager();
 
-      render(<NotebookView spec={aDraftSpec()} />);
+      await renderDraft(<NotebookView spec={aDraftSpec()} />);
 
       // Editable, and nothing was fetched: a draft has no uid to load.
       expect(await screen.findByRole('radio', { name: 'Edit' })).toBeInTheDocument();
@@ -268,7 +399,7 @@ describe('NotebookView', () => {
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
       const onTitleChange = jest.fn();
 
-      render(<NotebookView spec={aDraftSpec('Checkout latency')} onTitleChange={onTitleChange} />);
+      await renderDraft(<NotebookView spec={aDraftSpec('Checkout latency')} onTitleChange={onTitleChange} />);
 
       expect(onTitleChange).toHaveBeenCalledWith('Checkout latency');
     });
@@ -287,7 +418,7 @@ describe('NotebookView', () => {
       const onChange = jest.fn();
       const draftScene = captureDraftScene();
 
-      render(<NotebookView spec={aDraftSpecWithCell()} onChange={onChange} />);
+      await renderDraft(<NotebookView spec={aDraftSpecWithCell()} onChange={onChange} />);
 
       await act(async () => {
         const scene = draftScene();
@@ -316,7 +447,7 @@ describe('NotebookView', () => {
       const onDirtyChange = jest.fn();
       const draftScene = captureDraftScene();
 
-      render(<NotebookView spec={aDraftSpec()} onChange={onChange} onDirtyChange={onDirtyChange} />);
+      await renderDraft(<NotebookView spec={aDraftSpec()} onChange={onChange} onDirtyChange={onDirtyChange} />);
 
       await act(async () => {
         // A state change that is not part of the serialized document, as query results are not.
@@ -337,7 +468,7 @@ describe('NotebookView', () => {
       const onDirtyChange = jest.fn();
       const draftScene = captureDraftScene();
 
-      render(<NotebookView spec={aDraftSpecWithCell()} onChange={onChange} onDirtyChange={onDirtyChange} />);
+      await renderDraft(<NotebookView spec={aDraftSpecWithCell()} onChange={onChange} onDirtyChange={onDirtyChange} />);
 
       await act(async () => {
         const scene = draftScene();
@@ -366,7 +497,7 @@ describe('NotebookView', () => {
       const onDirtyChange = jest.fn();
       const draftScene = captureDraftScene();
 
-      render(<NotebookView spec={aDraftSpec('Before')} onChange={onChange} onDirtyChange={onDirtyChange} />);
+      await renderDraft(<NotebookView spec={aDraftSpec('Before')} onChange={onChange} onDirtyChange={onDirtyChange} />);
 
       await act(async () => {
         draftScene().setState({ title: 'After' });
@@ -388,7 +519,7 @@ describe('NotebookView', () => {
       const onChange = jest.fn();
       const draftScene = captureDraftScene();
 
-      const { unmount } = render(<NotebookView spec={aDraftSpecWithCell()} onChange={onChange} />);
+      const { unmount } = await renderDraft(<NotebookView spec={aDraftSpecWithCell()} onChange={onChange} />);
 
       await act(async () => {
         const scene = draftScene();

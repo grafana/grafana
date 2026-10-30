@@ -4,230 +4,344 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
+	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"regexp"
+	"slices"
 	"sync"
-	"sync/atomic"
-	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
-	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
+	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/logging"
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana-app-sdk/plugin/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	backendgrpcplugin "github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
-	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
-	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/util/errhttp"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/baasbridge" //nolint:staticcheck // deprecated shim, used until HTTP operators move to gRPC
 )
 
 // pluginManifestsTarget discovers remote plugin deployments and builds their API handlers.
 type pluginManifestsTarget struct {
-	url      string
-	client   *http.Client
-	patterns []*regexp.Regexp
-	deps     PluginDependencies
-	authn    authn.TokenAuthenticator
+	polledSource
+	*pluginConnections
 
-	cooldown *cooldown
+	keyPrefix string // prefixes every backend Key, so sources never share a key
+	url       string
+	client    *http.Client
+	patterns  []*regexp.Regexp
+	deps      PluginDependencies
+}
 
-	snapshot atomic.Pointer[[]Backend]
-	lastKeys atomic.Pointer[map[string]struct{}]
+// pluginConnections holds the connections to the plugin deployments of one
+// source, and builds their clients.
+type pluginConnections struct {
+	grpcConfig pluginGRPCConfig
+	// httpTransport serves the baasbridge clients of deployments whose host is
+	// an HTTP URL.
+	httpTransport http.RoundTripper
+
+	// requestDuration records every gRPC call to a plugin deployment, by
+	// plugin, method and status code.
+	requestDuration *prometheus.HistogramVec
+	// requestRetries counts the retries of unary calls, by plugin and method.
+	requestRetries *prometheus.CounterVec
 
 	connectionsMu sync.Mutex
-	connections   map[string]*grpc.ClientConn
+	connections   map[pluginConnectionKey]*pluginConnection
 	closed        bool
 }
 
+func newPluginConnections(source string, grpcConfig pluginGRPCConfig, reg prometheus.Registerer) *pluginConnections {
+	return &pluginConnections{
+		grpcConfig:      grpcConfig,
+		httpTransport:   baasbridge.NewTransport(grpcConfig.TLS, backendResponseHeaderTimeout), //nolint:staticcheck
+		requestDuration: newPluginGRPCRequestDuration(reg, source),
+		requestRetries:  newPluginGRPCRequestRetries(reg, source),
+	}
+}
+
+// pluginConnection is a connection to a plugin deployment, and the number of
+// loaded handlers that use it. It closes when the last one is destroyed.
+type pluginConnection struct {
+	conn *grpc.ClientConn
+	refs int
+}
+
+// pluginConnectionKey identifies a connection by plugin as well as host,
+// because each connection records its calls under one plugin ID.
+type pluginConnectionKey struct {
+	host     string
+	pluginID string
+}
+
 func newPluginManifestsTarget(
+	source string,
 	rawURL string,
 	patterns []*regexp.Regexp,
 	client *http.Client,
+	grpcConfig pluginGRPCConfig,
 	deps PluginDependencies,
-	authn authn.TokenAuthenticator,
 ) (*pluginManifestsTarget, error) {
 	parsed, err := url.Parse(rawURL)
 	if err != nil {
-		return nil, fmt.Errorf("router: parsing plugins_url %q: %w", rawURL, err)
+		return nil, fmt.Errorf("router: parsing %s %q: %w", source, rawURL, err)
 	}
-	// Same rationale as newAggregateTarget's check: url.Parse alone accepts
-	// empty/relative values without error, which would otherwise build a
-	// target that polls a URL it can never reach and only ever surfaces as a
-	// recurring background WARN.
+	// url.Parse accepts empty and relative URLs; see newAggregateTarget.
 	if parsed.Scheme == "" || parsed.Host == "" {
-		return nil, fmt.Errorf("router: plugins_url must be absolute (scheme and host required): url=%q", rawURL)
+		return nil, fmt.Errorf("router: %s must be absolute (scheme and host required): url=%q", source, rawURL)
 	}
 
+	// Managed plugins have no local plugin settings for the legacy app-access
+	// check, so it always grants access (pluginManifestAccessControl).
+	deps.AccessControl = pluginManifestAccessControl{}
 	t := &pluginManifestsTarget{
-		deps:     deps,
-		url:      rawURL,
-		client:   client,
-		patterns: patterns,
-		authn:    authn,
+		pluginConnections: newPluginConnections(source, grpcConfig, deps.MetricsRegister),
+		keyPrefix:         source,
+		deps:              deps,
+		url:               rawURL,
+		client:            client,
+		patterns:          patterns,
+	}
+	t.polledSource = polledSource{
+		source:   source,
+		fetcher:  t,
 		cooldown: newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
 	}
-	empty := []Backend{}
-	t.snapshot.Store(&empty)
-	emptyKeys := map[string]struct{}{}
-	t.lastKeys.Store(&emptyKeys)
 	return t, nil
 }
 
-// Backends returns the current polled-and-filtered backend snapshot. Safe
-// to call from any goroutine.
-func (t *pluginManifestsTarget) Backends() []Backend {
-	return *t.snapshot.Load()
-}
-
-// run polls until ctx is done, paced entirely by t.cooldown -- identical
-// shape to aggregateTarget.run; see that method's doc for why there is
-// deliberately only one timing source.
-func (t *pluginManifestsTarget) run(ctx context.Context, dirty chan<- struct{}) {
-	defer t.closeConnections()
-	timer := time.NewTimer(0) // fire immediately; don't wait an interval for the first attempt
-	defer timer.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-timer.C:
-			t.poll(ctx, dirty)
-			timer.Reset(t.cooldown.Until(time.Now()))
+// validatePluginID checks an entry's plugin ID before any backend is built for
+// it. Tokens the router sends a plugin name its ID as their audience, so the ID
+// must have the shape of an app plugin ID, as local plugins must. Core APIs may
+// have no ID, and so may bridge entries; their tokens name their API group instead.
+func (t *pluginManifestsTarget) validatePluginID(id string) error {
+	if id == "" {
+		if t.source == sourceCore || t.source == sourceBridge {
+			return nil
 		}
+		return errors.New("missing plugin ID")
 	}
+	if !isAppPluginID(id) {
+		return fmt.Errorf("invalid app plugin ID %q", id)
+	}
+	return nil
 }
 
-// poll performs one fetch-and-decode attempt and records its outcome on the
-// cooldown, which schedules the next attempt. No pacing check of its own --
-// run()'s timer is the only gate.
-func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{}) {
-	now := time.Now()
-
+// fetch implements [sourceFetcher]: one fetch of the deployments, each
+// manifest a backend.
+func (t *pluginManifestsTarget) fetch(ctx context.Context) ([]Backend, int, error) {
 	deployment, err := fetchPluginManifests(ctx, t.client, t.url)
 	if err != nil {
-		t.cooldown.OnFailure(now)
-		slog.Warn("router: plugin manifests poll failed, backing off", "url", t.url, "err", err)
-		return
+		return nil, 0, err
 	}
-	t.cooldown.OnSuccess(now)
 
 	backends := make([]Backend, 0, len(deployment.Plugins))
-	keys := make(map[string]struct{}, len(deployment.Plugins))
+	skipped := 0
 	for _, entry := range deployment.Plugins {
-		if entry.Definition.Manifest == nil {
+		if err := t.validatePluginID(entry.Definition.JSONData.ID); err != nil {
+			if len(entry.Definition.Manifests) > 0 {
+				logging.FromContext(ctx).Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
+				skipped++
+			}
 			continue
 		}
-		group := apiGroupFromManifestData(*entry.Definition.Manifest)
-		if !matchesAnyPattern(group.Name, t.patterns) {
-			continue
-		}
+		for _, manifest := range entry.Definition.Manifests {
+			if manifest == nil || !matchesAnyPattern(manifest.Group, t.patterns) {
+				continue
+			}
 
-		clients := func(ctx context.Context, id string) (plugins.Client, v3.ClientV3, error) {
-			return t.pluginClients(entry.Host)
-		}
+			// A connection records its calls under one plugin_id. A core_url
+			// entry may have no plugin ID, so its connection is labeled by its
+			// API group instead, which keeps core APIs on one host apart. The
+			// backend's requests are recorded under the same ID.
+			connectionID := entry.Definition.JSONData.ID
+			if connectionID == "" {
+				connectionID = manifest.Group
+			}
+			clients := func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error) {
+				return t.pluginClients(entry.Host, connectionID, manifest)
+			}
 
-		// Remove any dependencies that may try to load settings
-		// After the manifest CRUD works, we can explore getting these wired properly
-		deps := t.deps
-		deps.PluginClient = nil
-		deps.ContextProvider = nil
-		deps.PluginSettings = nil
-		deps.DualWrite = nil
-		deps.AccessControl = pluginManifestAccessControl{}
+			backend, err := newPluginBackend(entry.Definition.JSONData.ID, manifest, clients, t.deps, nil)
 
-		backend, err := NewPluginBackend(entry.Definition, clients, deps)
+			if err != nil {
+				logging.FromContext(ctx).Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
+				skipped++
+				continue
+			}
 
-		if err != nil {
-			slog.Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
-			continue
+			backend.metricsID = connectionID
+			backend.info = entry.Definition.JSONData.Info
+			// Without a host, the deployment has no backend to call.
+			backend.hasBackend = entry.Host != ""
+			// An HTTP operator is reached through baasbridge, with no gRPC
+			// connection to hold.
+			if host := entry.Host; host != "" && !baasbridge.IsHTTPHost(host) { //nolint:staticcheck
+				backend.acquire = func() (func(), error) { return t.acquireConnection(host, connectionID) }
+			}
+
+			// The host is outside PluginDefinition, but changing it must reload the backend.
+			key, keyErr := pluginDeploymentKey(t.keyPrefix, entry, manifest)
+			if keyErr != nil {
+				logging.FromContext(ctx).Warn("router: skipping unfingerprintable plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", keyErr)
+				skipped++
+				continue
+			}
+			backend.key, backend.source = key, t.source
+			backends = append(backends, backend)
 		}
-		// The host is outside PluginDefinition, but changing it must reload the backend.
-		key, keyErr := pluginDeploymentKey(entry)
-		if keyErr != nil {
-			slog.Warn("router: skipping unfingerprintable plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", keyErr)
-			continue
-		}
-		deploymentBackend := &pluginDeploymentBackend{Backend: backend, key: key, authn: t.authn}
-		backends = append(backends, deploymentBackend)
-		keys[deploymentBackend.Key()] = struct{}{}
 	}
-
-	t.snapshot.Store(&backends)
-
-	lastKeys := *t.lastKeys.Load()
-	if !sameKeySet(lastKeys, keys) {
-		t.lastKeys.Store(&keys)
-		select {
-		case dirty <- struct{}{}:
-		default: // already pending; coalesce
-		}
-	}
+	return backends, skipped, nil
 }
 
-func (t *pluginManifestsTarget) pluginClients(host string) (plugins.Client, v3.ClientV3, error) {
+// close implements [sourceCloser].
+func (t *pluginManifestsTarget) close() {
+	t.closeConnections()
+}
+
+// pluginClients returns the clients for a deployment's host. A host that is an
+// http or https URL is an operator written for apiextensions-apiserver, which
+// serves only the v3 calls, over HTTP; manifest declares its admission hooks.
+func (p *pluginConnections) pluginClients(host, pluginID string, manifest *app.ManifestData) (plugins.Client, appclientv3.Client, error) {
 	if host == "" {
 		return nil, nil, nil // no client exists
 	}
-
-	t.connectionsMu.Lock()
-	defer t.connectionsMu.Unlock()
-	if t.closed {
-		return nil, nil, fmt.Errorf("router: plugin manifests target is closed")
+	p.connectionsMu.Lock()
+	defer p.connectionsMu.Unlock()
+	if p.closed {
+		return nil, nil, fmt.Errorf("router: plugin connections are closed")
 	}
-	conn := t.connections[host]
-	if conn == nil {
-		// Plugin deployments expose plaintext gRPC on the internal cluster network.
-		var err error
-		conn, err = grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	// Temporarily support the BaaS HTTP style operators
+	if baasbridge.IsHTTPHost(host) { //nolint:staticcheck
+		clientV3, err := baasbridge.NewClient(host, manifest, baasbridge.Options{ //nolint:staticcheck
+			HTTPClient:       &http.Client{Transport: p.httpTransport},
+			MaxResponseBytes: int64(p.grpcConfig.Message.MaxRecvSize),
+			RouteCredentials: forwardRouteCredentials,
+		})
 		if err != nil {
-			return nil, nil, fmt.Errorf("router: creating plugin client for %q: %w", host, err)
+			return nil, nil, err
 		}
-		if t.connections == nil {
-			t.connections = make(map[string]*grpc.ClientConn)
-		}
-		t.connections[host] = conn
+		return nil, clientV3, nil
+	}
+
+	c, err := p.connectionLocked(pluginConnectionKey{host: host, pluginID: pluginID})
+	if err != nil {
+		return nil, nil, err
+	}
+	conn := c.conn
+	// Caller authentication is added by PluginBackend.Load.
+	clientV3, err := grpcplugin.NewClientV3FromConn(conn, grpcplugin.ClientV3Options{})
+	if err != nil {
+		return nil, nil, err
 	}
 	// NOTE: ClientV2 is missing ALL the middleware...
 	return &backendgrpcplugin.ClientV2{
-			DiagnosticsClient: pluginv2.NewDiagnosticsClient(conn),
-			ResourceClient:    pluginv2.NewResourceClient(conn),
-			DataClient:        pluginv2.NewDataClient(conn),
-			StreamClient:      pluginv2.NewStreamClient(conn),
-			AdmissionClient:   pluginv2.NewAdmissionControlClient(conn),
-			ConversionClient:  pluginv2.NewResourceConversionClient(conn),
-		}, &grpcplugin.ClientV3{
-			AdmissionServiceClient:  pluginv3.NewAdmissionServiceClient(conn),
-			ConversionServiceClient: pluginv3.NewConversionServiceClient(conn),
-			RouteServiceClient:      pluginv3.NewRouteServiceClient(conn),
-		}, nil
+		DiagnosticsClient: pluginv2.NewDiagnosticsClient(conn),
+		ResourceClient:    pluginv2.NewResourceClient(conn),
+		DataClient:        pluginv2.NewDataClient(conn),
+		StreamClient:      pluginv2.NewStreamClient(conn),
+		AdmissionClient:   pluginv2.NewAdmissionControlClient(conn),
+		ConversionClient:  pluginv2.NewResourceConversionClient(conn),
+	}, clientV3, nil
 }
 
-func (t *pluginManifestsTarget) closeConnections() {
-	t.connectionsMu.Lock()
-	defer t.connectionsMu.Unlock()
-	t.closed = true
-	for _, conn := range t.connections {
-		_ = conn.Close()
+// forwardRouteCredentials sends an HTTP operator's route the caller's identity
+// as apiextensions-apiserver's custom-route proxy does, with raw tokens: the ID
+// token always, and the access token, a bearer credential the operator could
+// replay, only when no declared check authorized the route, leaving the
+// operator to authorize it.
+func forwardRouteCredentials(ctx context.Context, header http.Header) error {
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil
 	}
-	t.connections = nil
+	if token := requester.GetIDToken(); token != "" {
+		header.Set("X-Grafana-Id", token)
+	}
+	if !baasbridge.DeclaredAccessChecked(ctx) { //nolint:staticcheck
+		if token := requester.GetAccessToken(); token != "" {
+			header.Set("X-Access-Token", token)
+		}
+	}
+	return nil
 }
 
-// fetchPluginManifests fetches and decodes the plugin-manifests operator's
-// GET /plugins response into definition.PluginDeployments -- the
-// {"key","plugins":[{"definition":{"jsonData","manifest"},"host"}]} envelope
-// that type describes, confirmed against a live operator instance. Unlike
-// the k8s-style APIGroupList discoverGroups fetches for the aggregate
-// targets, this is a bespoke, cloud-router-specific format.
+// acquireConnection takes a reference to the connection for host and plugin,
+// for a handler about to be loaded. The returned release drops it, when the
+// handler is destroyed or fails to load, and the connection closes with its
+// last reference. A handler from a superseded entry keeps its connection
+// until it is destroyed, since the router may still serve it.
+func (p *pluginConnections) acquireConnection(host, pluginID string) (func(), error) {
+	key := pluginConnectionKey{host: host, pluginID: pluginID}
+	p.connectionsMu.Lock()
+	defer p.connectionsMu.Unlock()
+	c, err := p.connectionLocked(key)
+	if err != nil {
+		return nil, err
+	}
+	c.refs++
+	var once sync.Once
+	return func() {
+		once.Do(func() {
+			p.connectionsMu.Lock()
+			defer p.connectionsMu.Unlock()
+			c.refs--
+			// After closeConnections, every connection is already closed.
+			if c.refs == 0 && !p.closed && p.connections[key] == c {
+				_ = c.conn.Close()
+				delete(p.connections, key)
+			}
+		})
+	}, nil
+}
+
+// connectionLocked returns the connection for key, creating it if needed.
+func (p *pluginConnections) connectionLocked(key pluginConnectionKey) (*pluginConnection, error) {
+	if p.closed {
+		return nil, fmt.Errorf("router: plugin connections are closed")
+	}
+	if c := p.connections[key]; c != nil {
+		return c, nil
+	}
+	labels := prometheus.Labels{"plugin_id": key.pluginID}
+	requestDuration := p.requestDuration.MustCurryWith(labels).(*prometheus.HistogramVec)
+	requestRetries := p.requestRetries.MustCurryWith(labels)
+	conn, err := grpc.NewClient(key.host, p.grpcConfig.dialOptions(requestDuration, requestRetries)...)
+	if err != nil {
+		return nil, fmt.Errorf("router: creating plugin client for %q: %w", key.host, err)
+	}
+	if p.connections == nil {
+		p.connections = make(map[pluginConnectionKey]*pluginConnection)
+	}
+	c := &pluginConnection{conn: conn}
+	p.connections[key] = c
+	return c, nil
+}
+
+func (p *pluginConnections) closeConnections() {
+	p.connectionsMu.Lock()
+	defer p.connectionsMu.Unlock()
+	p.closed = true
+	for _, c := range p.connections {
+		_ = c.conn.Close()
+	}
+	p.connections = nil
+}
+
+// maxPluginManifestsBytes bounds the plugin manifests response, which holds
+// every deployment's manifest and schemas.
+const maxPluginManifestsBytes = 32 << 20 // 32MB
+
+// fetchPluginManifests fetches the plugin-manifests operator's GET /plugins
+// response, decoded as definition.PluginDeployments.
 func fetchPluginManifests(ctx context.Context, client *http.Client, rawURL string) (*definition.PluginDeployments, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
@@ -243,66 +357,39 @@ func fetchPluginManifests(ctx context.Context, client *http.Client, rawURL strin
 	}
 
 	deployment := &definition.PluginDeployments{}
-	if err := json.NewDecoder(resp.Body).Decode(deployment); err != nil {
+	if err := decodeLimitedJSON(resp.Body, maxPluginManifestsBytes, deployment); err != nil {
 		return nil, fmt.Errorf("router: decoding plugin manifests from %s: %w", rawURL, err)
 	}
+
+	// Move any deprecated singular manifest properties to the multiple flavor
+	// nolint:staticcheck
+	for i := range deployment.Plugins {
+		plugin := &deployment.Plugins[i]
+		if plugin.Definition.Manifest == nil {
+			continue // OK
+		}
+		// The plural entry is authoritative when both formats contain the same group.
+		if !slices.ContainsFunc(plugin.Definition.Manifests, func(manifest *app.ManifestData) bool {
+			return manifest != nil && manifest.Group == plugin.Definition.Manifest.Group
+		}) {
+			plugin.Definition.Manifests = append(plugin.Definition.Manifests, plugin.Definition.Manifest)
+		}
+		plugin.Definition.Manifest = nil
+	}
+	for _, plugin := range deployment.Plugins {
+		for _, manifest := range plugin.Definition.Manifests {
+			definition.MigrateDeprecatedRoutes(manifest)
+		}
+	}
+
 	return deployment, nil
 }
 
-func pluginDeploymentKey(entry definition.PluginDeployment) (string, error) {
-	body, err := json.Marshal(entry)
+func pluginDeploymentKey(keyPrefix string, entry definition.PluginDeployment, manifest *app.ManifestData) (string, error) {
+	body, err := pluginManifestKeyData(entry.Definition, manifest, entry.Host)
 	if err != nil {
 		return "", fmt.Errorf("router: fingerprinting plugin manifest entry %q: %w", entry.Definition.JSONData.ID, err)
 	}
 	sum := sha256.Sum256(body)
-	return "managed:" + entry.Definition.JSONData.ID + ":" + hex.EncodeToString(sum[:])[:16], nil
-}
-
-// Standard plugin, but with OBO authentication and custom key
-type pluginDeploymentBackend struct {
-	Backend
-	key   string
-	authn authn.TokenAuthenticator
-}
-
-func (b *pluginDeploymentBackend) Key() string { return b.key }
-
-func (b *pluginDeploymentBackend) Load(ctx context.Context) (http.Handler, error) {
-	if b.authn == nil {
-		return nil, fmt.Errorf("router: plugin deployment requires a token authenticator")
-	}
-
-	handler, err := b.Backend.Load(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return &authenticatingWrapper{
-		Handler: handler,
-		authn:   b.authn,
-	}, nil
-}
-
-type authenticatingWrapper struct {
-	http.Handler
-	authn authn.TokenAuthenticator
-}
-
-func (a *authenticatingWrapper) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-
-	token := req.Header.Get("X-Access-Token")
-	if token == "" {
-		_ = errhttp.Write(ctx, apierrors.NewUnauthorized("missing access token header"), w)
-		return
-	}
-
-	info, err := a.authn.AuthenticateToken(ctx, token)
-	if err != nil {
-		_ = errhttp.Write(ctx, err, w)
-		return
-	}
-
-	ctx = identity.WithRequester(ctx, info)
-	a.Handler.ServeHTTP(w, req.WithContext(ctx))
+	return keyPrefix + ":" + entry.Definition.JSONData.ID + ":" + hex.EncodeToString(sum[:])[:16], nil
 }

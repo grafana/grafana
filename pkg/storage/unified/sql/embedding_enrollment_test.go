@@ -30,7 +30,7 @@ func TestEmbeddingEnrollmentUsesInitialAndReloadedManifests(t *testing.T) {
 		Embedder:      &embedder.Embedder{},
 		SearchOptions: resource.SearchOptions{EmbeddingConfig: configs},
 	}
-	var serverOpts resource.ResourceServerOptions
+	serverOpts := resource.ResourceServerOptions{VectorMetrics: resource.ProvideVectorMetrics(nil)}
 	require.NoError(t, withSearch(opts, &serverOpts), "live declarations are not required during construction")
 	require.NoError(t, withVectorIndexers(opts, &serverOpts))
 	require.NotNil(t, serverOpts.VectorReconciler)
@@ -73,7 +73,7 @@ func TestEmbeddingEnrollmentUsesBuiltinDeclarations(t *testing.T) {
 		},
 		VectorBackend: struct{ vector.VectorBackend }{},
 	}
-	var serverOpts resource.ResourceServerOptions
+	serverOpts := resource.ResourceServerOptions{VectorMetrics: resource.ProvideVectorMetrics(nil)}
 	require.NoError(t, withSearch(opts, &serverOpts))
 	provider := serverOpts.Search.EmbeddingBuilders
 	require.NoError(t, provider.Validate())
@@ -99,11 +99,18 @@ func TestEmbeddingEnrollmentDisabledWithoutSearchOrIndexing(t *testing.T) {
 		},
 		VectorBackend: struct{ vector.VectorBackend }{},
 	}
-	var serverOpts resource.ResourceServerOptions
+	serverOpts := resource.ResourceServerOptions{VectorMetrics: resource.ProvideVectorMetrics(nil)}
 	require.NoError(t, withSearch(opts, &serverOpts))
 	require.Nil(t, serverOpts.Search.EmbeddingBuilders, "disabled consumers must not validate unavailable live declarations at startup")
 	require.Nil(t, serverOpts.Search.EmbeddingConfig)
 	require.Equal(t, opts.Cfg.VectorAllowedExternalCollections, serverOpts.Search.AllowedExternalCollections)
+}
+
+func TestServerRejectsSharedEnrollmentWithoutPublishers(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.VectorSharedExternalCollections = map[string][]string{"docs.example.com/articles": {}}
+	_, err := buildResourceServerOptions(&ServerOptions{Cfg: cfg})
+	require.ErrorContains(t, err, "identity")
 }
 
 func TestVectorIndexersRespectSharedAllowlistAndGlobalControls(t *testing.T) {
@@ -132,7 +139,7 @@ func TestVectorIndexersRespectSharedAllowlistAndGlobalControls(t *testing.T) {
 				VectorBackend: struct{ vector.VectorBackend }{},
 				Embedder:      &embedder.Embedder{},
 			}
-			var serverOpts resource.ResourceServerOptions
+			serverOpts := resource.ResourceServerOptions{VectorMetrics: resource.ProvideVectorMetrics(nil)}
 			require.NoError(t, withSearch(opts, &serverOpts))
 			require.NoError(t, withVectorIndexers(opts, &serverOpts))
 			if tc.active {

@@ -9,9 +9,9 @@ import (
 	"os"
 	"sync"
 	"time"
+	"uuid"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
-	"github.com/google/uuid"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -153,7 +153,6 @@ func buildKeyPath(key *resourcepb.ResourceKey, rv int64, action resourcepb.BulkR
 }
 
 func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resourcepb.BulkResponse {
-	b.logCall("ProcessBulk")
 	if b.disableStorageServices {
 		return &resourcepb.BulkResponse{
 			Error: resource.AsErrorResult(errors.New("storage backend is not enabled")),
@@ -685,7 +684,7 @@ func (b *backend) insertHistoryBatch(ctx context.Context, tx db.ContextExecer, b
 				PreviousRV: -1, // Used for WATCH, but we want to skip watch events
 			},
 			Folder:          req.Folder,
-			GUID:            uuid.New().String(),
+			GUID:            uuid.NewV4().String(),
 			ResourceVersion: resourceVersion,
 			KeyPath:         buildKeyPath(req.Key, resourceVersion, req.Action, req.Folder),
 		})

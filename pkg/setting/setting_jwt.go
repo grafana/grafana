@@ -41,10 +41,11 @@ type AuthJWTSettings struct {
 }
 
 type ExtJWTSettings struct {
-	Enabled      bool
-	ExpectIssuer string
-	JWKSUrl      string
-	Audiences    []string
+	Enabled       bool
+	ExpectIssuer  string
+	JWKSUrl       string
+	Audiences     []string
+	WildcardOrgID int64
 }
 
 func (cfg *Cfg) readAuthExtJWTSettings() {
@@ -52,8 +53,13 @@ func (cfg *Cfg) readAuthExtJWTSettings() {
 	jwtSettings := ExtJWTSettings{}
 	jwtSettings.Enabled = authExtendedJWT.Key("enabled").MustBool(false)
 	jwtSettings.JWKSUrl = authExtendedJWT.Key("jwks_url").MustString("")
-	// for Grafana, this is hard coded, but we leave it as a configurable param for other use-cases
-	jwtSettings.Audiences = []string{extJWTAccessTokenExpectAudience}
+	jwtSettings.WildcardOrgID = authExtendedJWT.Key("wildcard_org_id").MustInt64(0)
+	// for Grafana, this defaults to hard coded value, but we leave it as a configurable param for other use-cases
+	audiences := extJWTAccessTokenExpectAudience
+	if authExtendedJWT.HasKey("audiences") {
+		audiences = authExtendedJWT.Key("audiences").String()
+	}
+	jwtSettings.Audiences = util.SplitString(audiences)
 
 	cfg.ExtJWTAuth = jwtSettings
 }

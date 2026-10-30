@@ -29,16 +29,31 @@ export interface ActiveIncidents {
   hasMore: boolean;
 }
 
-// Subset of the Incident API's custom-field definitions — only what's needed to list the `team` options.
-// GetFields returns archived fields but already drops archived select options server-side.
+// Subset of the Incident API's custom-field definitions — only what's needed to list filter options.
 interface IncidentFieldDto {
   slug: string;
+  name: string;
+  // 'labels' for the fields the Incident app shows as labels; other custom fields are 'incident'.
+  domainName: string;
   archived?: boolean;
-  selectoptions?: Array<{ value: string }>;
+  selectoptions?: Array<{ value: string; archived?: boolean }>;
 }
 
 interface GetFieldsResponse {
   fields?: IncidentFieldDto[];
+  // Label pairs archived org-wide; fields are returned unfiltered, so pickers hide these themselves.
+  archived?: Array<{ key: string; value: string }>;
+}
+
+/** A custom-field clause to narrow the active-incidents query to. */
+export interface IncidentFieldFilter {
+  slug: string;
+  value: string;
+}
+
+/** One value of an incident label field, offered as a filter option. */
+export interface IncidentFilterOption extends IncidentFieldFilter {
+  fieldName: string;
 }
 
 const ACTIVE_INCIDENTS_QUERY = 'isdrill:false status:active';
@@ -50,12 +65,41 @@ function quoteQueryValue(value: string) {
 
 // A value with both quote kinds can't be quoted, so it's never offered as an option.
 // Blank values would render as an empty row and '' collides with the default-scope selection.
-function isFilterableTeamValue(value: string) {
+function isFilterableValue(value: string) {
   return value.trim() !== '' && !(value.includes('"') && value.includes("'"));
 }
 
-function buildActiveIncidentsQuery(team?: string) {
-  return team ? `${ACTIVE_INCIDENTS_QUERY} field:team:${quoteQueryValue(team)}` : ACTIVE_INCIDENTS_QUERY;
+// Same rule the Incident app uses to decide what counts as a label. The free-form `tags`
+// field (either casing on the wire) isn't curated like the others, so its values aren't offered.
+function isLabelField(field: IncidentFieldDto) {
+  return !field.archived && field.domainName === 'labels' && field.slug.toLowerCase() !== 'tags';
+}
+
+function buildActiveIncidentsQuery(filter?: IncidentFieldFilter) {
+  return filter
+    ? `${ACTIVE_INCIDENTS_QUERY} field:${filter.slug}:${quoteQueryValue(filter.value)}`
+    : ACTIVE_INCIDENTS_QUERY;
+}
+
+const labelPairKey = (slug: string, value: string) => `${slug}:${value}`;
+
+// Options that can be offered for one field: live, quotable, and not archived org-wide.
+function getFieldFilterOptions(field: IncidentFieldDto, archivedPairs: Set<string>): IncidentFilterOption[] {
+  return (field.selectoptions ?? [])
+    .filter(
+      (option) =>
+        !option.archived &&
+        isFilterableValue(option.value) &&
+        !archivedPairs.has(labelPairKey(field.slug, option.value))
+    )
+    .map((option) => ({ slug: field.slug, fieldName: field.name, value: option.value }));
+}
+
+/** Exported for unit tests; consumers go through the `getIncidentFilterOptions` query. */
+export function toIncidentFilterOptions(response: GetFieldsResponse): IncidentFilterOption[] {
+  const archivedPairs = new Set((response.archived ?? []).map(({ key, value }) => labelPairKey(key, value)));
+  const labelFields = (response.fields ?? []).filter(isLabelField);
+  return labelFields.flatMap((field) => getFieldFilterOptions(field, archivedPairs));
 }
 
 const getProxyApiUrl = (path: string, pluginId: string) => `/api/plugins/${pluginId}/resources${path}`;
@@ -70,12 +114,12 @@ export const incidentsApi = alertingApi.injectEndpoints({
         showErrorAlert: false,
       }),
     }),
-    getActiveIncidents: build.query<ActiveIncidents, { pluginId: string; team?: string }>({
-      query: ({ pluginId, team }) => ({
+    getActiveIncidents: build.query<ActiveIncidents, { pluginId: string; filter?: IncidentFieldFilter }>({
+      query: ({ pluginId, filter }) => ({
         url: getProxyApiUrl('/api/v1/IncidentsService.QueryIncidentPreviews', pluginId),
         data: {
           query: {
-            queryString: buildActiveIncidentsQuery(team),
+            queryString: buildActiveIncidentsQuery(filter),
             orderField: 'createdTime',
             orderDirection: 'DESC',
             limit: ACTIVE_INCIDENTS_QUERY_LIMIT,
@@ -89,18 +133,15 @@ export const incidentsApi = alertingApi.injectEndpoints({
         hasMore: response.cursor?.hasMore ?? false,
       }),
     }),
-    // Values of the org's `team` custom field; empty when the org has no such field.
-    getIncidentTeamValues: build.query<string[], { pluginId: string }>({
+    // Values of every label field in the org; empty when there are none.
+    getIncidentFilterOptions: build.query<IncidentFilterOption[], { pluginId: string }>({
       query: ({ pluginId }) => ({
         url: getProxyApiUrl('/api/v1/FieldsService.GetFields', pluginId),
         data: {},
         method: 'POST',
         showErrorAlert: false,
       }),
-      transformResponse: (response: GetFieldsResponse): string[] => {
-        const teamField = response.fields?.find((field) => field.slug === 'team' && !field.archived);
-        return (teamField?.selectoptions ?? []).map((option) => option.value).filter(isFilterableTeamValue);
-      },
+      transformResponse: toIncidentFilterOptions,
     }),
   }),
 });

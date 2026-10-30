@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createRef } from 'react';
 
 import { colorManipulator, createTheme, getThemeById, ThemeContext } from '@grafana/data';
@@ -15,6 +15,9 @@ function shadowStyle(element: HTMLElement | null, edge: 'before' | 'after', prop
       if (
         rule instanceof CSSStyleRule &&
         rule.selectorText.split(',').some((selector) => {
+          if (selector.includes('.rdg-header-row') && selector.endsWith(`::${edge}`)) {
+            return element?.matches(selector.slice(0, -`::${edge}`.length));
+          }
           return Array.from(element?.classList ?? []).some((className) => selector.trim() === `.${className}::${edge}`);
         })
       ) {
@@ -22,7 +25,7 @@ function shadowStyle(element: HTMLElement | null, edge: 'before' | 'after', prop
       }
     }
   }
-  return value;
+  return value.replace(/var\((--[\w-]+)\)/g, (_, name: string) => element?.style.getPropertyValue(name) ?? '');
 }
 
 function makeProps(overrides: Partial<TableDataGridProps> = {}): TableDataGridProps {
@@ -268,18 +271,29 @@ describe('TableDataGrid', () => {
       expect(edgeRules.map((rule) => rule.style.getPropertyValue('inset-inline-end'))).toContain('1px');
     });
 
-    it('renders the refreshed outer border unless the table is flush with its panel', () => {
+    it.each(['grid', 'treegrid'] as const)('preserves the refreshed frame for transparent %s panels', (role) => {
       const theme = createTheme();
-      const props = makeProps({ tableRefreshEnabled: true });
+      const props = makeProps({ tableRefreshEnabled: true, role });
       const { rerender } = render(<TableDataGrid {...props} />);
 
-      expect(getGridFrameOverlayStyleRule()?.style.getPropertyValue('border')).toBe(
+      expect(getGridFrameOverlayStyleRule(role)?.style.getPropertyValue('border')).toBe(
         `1px solid ${theme.components.table.border}`
       );
 
       rerender(<TableDataGrid {...props} noPanelPadding />);
 
-      expect(getGridFrameOverlayStyleRule()).toBeUndefined();
+      expect(getGridFrameOverlayStyleRule(role)).toBeUndefined();
+
+      rerender(<TableDataGrid {...props} noPanelPadding transparent />);
+
+      expect(getGridFrameOverlayStyleRule(role)?.style.getPropertyValue('border')).toBe(
+        `1px solid ${theme.components.table.border}`
+      );
+      expect(window.getComputedStyle(screen.getByRole(role).parentElement!.parentElement!).overflow).toBe('hidden');
+
+      rerender(<TableDataGrid {...props} noPanelPadding transparent tableRefreshEnabled={false} />);
+
+      expect(getGridFrameOverlayStyleRule(role)).toBeUndefined();
     });
 
     it.each([
@@ -308,6 +322,60 @@ describe('TableDataGrid', () => {
     });
   });
 
+  describe('summary stacking', () => {
+    afterEach(() => jest.restoreAllMocks());
+
+    it.each([false, true])(
+      'keeps the summary row above active and hovered cells with table.refresh=%s',
+      async (tableRefreshEnabled) => {
+        jest.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(800);
+        jest.spyOn(Element.prototype, 'clientHeight', 'get').mockReturnValue(100);
+        const props = makeProps({
+          tableRefreshEnabled,
+          hasFooter: true,
+          footerHeight: 36,
+          columns: [
+            { key: 'frozen', name: 'Frozen', frozen: true, renderSummaryCell: () => 'Total' },
+            { key: 'value', name: 'Value' },
+          ],
+          rows: [{ __index: 0, __depth: 0, frozen: 'Frozen value', value: 'Body value' }],
+          renderers: {
+            renderRow: (key, props) => <Row key={key} {...props} />,
+            renderCell: (key, props) => <Cell key={key} {...props} />,
+          },
+        });
+        render(<TableDataGrid {...props} />);
+
+        const summaryRow = (await screen.findByRole('gridcell', { name: 'Total' })).closest('[role="row"]')!;
+        const summaryZIndex = Number(window.getComputedStyle(summaryRow).zIndex);
+        for (const [idx, name] of ['Frozen value', 'Body value'].entries()) {
+          await act(async () => {
+            props.gridRef.current?.setActivePosition({ rowIdx: 0, idx });
+          });
+          const cell = screen.getByRole('gridcell', { name });
+          expect(cell).toHaveAttribute('aria-selected', 'true');
+          expect(summaryZIndex).toBeGreaterThan(Number(window.getComputedStyle(cell).zIndex));
+        }
+
+        // jsdom does not apply :hover; inspect this grid's hover layers in Emotion's rules.
+        const gridClass = Array.from(screen.getByRole('grid').classList).find((name) => name.startsWith('css-'));
+        const hoverLayers = Array.from(document.styleSheets)
+          .flatMap((sheet) => Array.from(sheet.cssRules))
+          .filter((rule): rule is CSSStyleRule => rule instanceof CSSStyleRule)
+          .filter(
+            (rule) =>
+              rule.selectorText.includes(`.${gridClass} `) &&
+              rule.selectorText.includes(':hover') &&
+              rule.style.getPropertyValue('z-index') !== ''
+          )
+          .map((rule) => Number(rule.style.getPropertyValue('z-index')));
+        expect(hoverLayers).toContain(createTheme().zIndex.tooltip - 2);
+        expect(summaryZIndex).toBeGreaterThan(Math.max(...hoverLayers));
+        expect(summaryZIndex).toBeLessThan(createTheme().zIndex.tooltip);
+      }
+    );
+  });
+
   describe('layout', () => {
     it('lets its wrapper shrink below the content height', () => {
       // The multi-frame panel stacks the frame picker under the table in a flex column. The grid
@@ -321,6 +389,53 @@ describe('TableDataGrid', () => {
   });
 
   describe('scroll shadows', () => {
+    it.each([
+      { name: 'narrower than the viewport', widths: [100, 200], expected: '300px' },
+      { name: 'equal to the viewport', widths: [200, 300], expected: '500px' },
+      { name: 'wider than the viewport', widths: [300, 400], expected: '500px' },
+    ])('limits both shadows to columns $name', ({ widths, expected }) => {
+      render(
+        <TableDataGrid
+          {...makeProps({
+            tableRefreshEnabled: true,
+            columns: widths.map((width, index) => ({ key: String(index), name: String(index), width })),
+          })}
+        />
+      );
+      const grid = screen.getByRole('grid');
+      Object.defineProperty(grid, 'clientWidth', { configurable: true, value: 500 });
+      scrollTo(grid, { scrollTop: 150, clientHeight: 100, scrollHeight: 400 });
+
+      for (const edge of ['before', 'after'] as const) {
+        expect(shadowStyle(grid.parentElement, edge, 'opacity')).toBe('1');
+        expect(shadowStyle(grid.parentElement, edge, 'inline-size')).toBe(expected);
+      }
+    });
+
+    it('updates shadow width when column tracks change without a parent render', async () => {
+      render(
+        <TableDataGrid
+          {...makeProps({ tableRefreshEnabled: true, columns: [{ key: 'value', name: 'Value', width: 200 }] })}
+        />
+      );
+      const grid = screen.getByRole('grid');
+      Object.defineProperty(grid, 'clientWidth', { configurable: true, value: 500 });
+      scrollTo(grid, { scrollTop: 150, clientHeight: 100, scrollHeight: 400 });
+      expect(shadowStyle(grid.parentElement, 'before', 'inline-size')).toBe('200px');
+
+      // react-data-grid can resize its tracks without changing the surrounding viewport.
+      grid.style.gridTemplateColumns = '350px';
+      await waitFor(() => {
+        expect(shadowStyle(grid.parentElement, 'before', 'inline-size')).toBe('350px');
+      });
+      expect(shadowStyle(grid.parentElement, 'after', 'inline-size')).toBe('350px');
+
+      Object.defineProperty(grid, 'clientWidth', { configurable: true, value: 250 });
+      act(() => resizeObservers.at(-1)?.callback([], resizeObservers.at(-1) as unknown as ResizeObserver));
+      expect(shadowStyle(grid.parentElement, 'before', 'inline-size')).toBe('250px');
+      expect(shadowStyle(grid.parentElement, 'after', 'inline-size')).toBe('250px');
+    });
+
     // jsdom has no layout, so the grid reports every scroll metric as 0. Fake the viewport the hook
     // reads, then fire the scroll it would have listened to.
     function scrollTo(
@@ -364,7 +479,7 @@ describe('TableDataGrid', () => {
       expect(onScroll).toHaveBeenCalledTimes(3);
     });
 
-    it('keeps visible shadows colored for the current theme after switching themes', () => {
+    it('matches ScrollContainer shadow colors and sizes after switching themes', () => {
       const props = makeProps({ tableRefreshEnabled: true });
       const { rerender } = render(
         <ThemeContext.Provider value={createTheme({ colors: { mode: 'dark' } })}>
@@ -379,13 +494,15 @@ describe('TableDataGrid', () => {
             <TableDataGrid {...props} />
           </ThemeContext.Provider>
         );
-        const color = mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)';
+        const color = mode === 'dark' ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.08)';
         expect(shadowStyle(grid.parentElement, 'before', 'background')).toBe(
           `linear-gradient(0deg, transparent, ${color})`
         );
         expect(shadowStyle(grid.parentElement, 'after', 'background')).toBe(
           `linear-gradient(180deg, transparent, ${color})`
         );
+        expect(shadowStyle(grid.parentElement, 'before', 'block-size')).toBe('max(5%, 24px)');
+        expect(shadowStyle(grid.parentElement, 'after', 'block-size')).toBe('max(5%, 24px)');
         expect(shadowStyle(grid.parentElement, 'before', 'opacity')).toBe('1');
         expect(shadowStyle(grid.parentElement, 'after', 'opacity')).toBe('1');
       }
@@ -619,6 +736,24 @@ describe('TableDataGrid', () => {
       const grid = window.getComputedStyle(screen.getByRole('grid'));
       expect(grid.getPropertyValue('--rdg-header-background-color')).toBe(theme.components.panel.background);
       expect(grid.getPropertyValue('--rdg-row-hover-background-color')).toBe(theme.components.table.rowHoverBackground);
+    });
+
+    it.each([false, true])('gates tabular-nums through the theme with table.refresh=%s', (tableRefreshEnabled) => {
+      const theme = createTheme();
+      const { rerender } = render(
+        <ThemeContext.Provider value={{ ...theme, flags: { ...theme.flags, tabularNums: false } }}>
+          <TableDataGrid {...makeProps({ tableRefreshEnabled })} />
+        </ThemeContext.Provider>
+      );
+      expect(window.getComputedStyle(screen.getByRole('grid')).fontVariantNumeric).toBe('normal');
+
+      rerender(
+        <ThemeContext.Provider value={{ ...theme, flags: { ...theme.flags, tabularNums: true } }}>
+          <TableDataGrid {...makeProps({ tableRefreshEnabled })} />
+        </ThemeContext.Provider>
+      );
+      // The grid stylesheet supplies tabular-nums; it is not loaded in jsdom.
+      expect(window.getComputedStyle(screen.getByRole('grid')).fontVariantNumeric).toBe('');
     });
   });
 

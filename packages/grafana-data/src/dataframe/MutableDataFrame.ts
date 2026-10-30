@@ -29,7 +29,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
   meta?: QueryResultMeta;
   fields: MutableField[] = [];
 
-  private first: any[] = [];
+  private first: unknown[] = [];
   private creator: MutableVectorCreator;
 
   constructor(source?: DataFrame | DataFrameDTO, creator?: MutableVectorCreator) {
@@ -38,7 +38,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     // This creates the underlying storage buffers
     this.creator = creator
       ? creator
-      : (buffer?: any[]) => {
+      : (buffer?: unknown[]) => {
           return buffer ?? [];
         };
 
@@ -87,7 +87,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
   }
 
   addField(f: Field | FieldDTO, startLength?: number): Field {
-    let buffer: any[] | undefined = undefined;
+    let buffer: unknown[] | undefined = undefined;
 
     if (f.values) {
       buffer = f.values;

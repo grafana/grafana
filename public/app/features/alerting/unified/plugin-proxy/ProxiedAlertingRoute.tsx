@@ -4,7 +4,7 @@
  *
  * Loaded on demand from `withRouteProxy.tsx`, so this module is free to import whatever it needs.
  */
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Navigate } from 'react-router-dom-v5-compat';
 import { useAsync, useLocation } from 'react-use';
 
@@ -12,6 +12,7 @@ import { t } from '@grafana/i18n';
 import { getLogger } from '@grafana/runtime/unstable';
 import { LoadingPlaceholder } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { type GrafanaRouteComponent, type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { withTimeout } from '../utils/promise';
@@ -134,8 +135,31 @@ export function withRouteProxy(proxy: RouteProxy, RoutePage: GrafanaRouteCompone
       return <RoutePage {...props} />;
     }
 
-    return <Navigate replace to={resolved.url} />;
+    return <RedirectToPlugin to={resolved.url} />;
   };
+}
+
+/**
+ * Sending someone somewhere without saying so is disorienting, especially when the destination looks
+ * nothing like the page they asked for. The notification lives in the redux store, so it outlives
+ * this component and shows up on the plugin's page.
+ */
+function RedirectToPlugin({ to }: { to: string }) {
+  const notifyApp = useAppNotification();
+
+  useEffect(() => {
+    notifyApp.info(
+      t('alerting.proxied-alerting-route.redirected-title', 'Opened in the Prometheus Alerting plugin'),
+      t(
+        'alerting.proxied-alerting-route.redirected-body',
+        'Data source managed alerting is handled by the Prometheus Alerting plugin.'
+      )
+    );
+    // Only ever announce the redirect once, when we decide to make it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return <Navigate replace to={to} />;
 }
 
 /**

@@ -11,6 +11,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana-app-sdk/logging"
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -23,8 +25,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+var userResource = iamv0alpha1.UserResourceInfo.GroupResource()
 
 type LegacyService struct {
 	store        store
@@ -34,6 +39,7 @@ type LegacyService struct {
 	cfg          *setting.Cfg
 	tracer       tracing.Tracer
 	sql          legacysql.LegacyDatabaseProvider
+	watch        *legacywatch.Publisher
 }
 
 func NewLegacyService(
@@ -43,6 +49,7 @@ func NewLegacyService(
 	teamService team.Service,
 	cacheService *localcache.CacheService, tracer tracing.Tracer,
 	quotaService quota.Service, bundleRegistry supportbundles.Service,
+	watch *legacywatch.Publisher,
 ) (user.Service, error) {
 	store := ProvideStore(sql, cfg)
 	s := &LegacyService{
@@ -53,6 +60,7 @@ func NewLegacyService(
 		cacheService: cacheService,
 		tracer:       tracer,
 		sql:          sql,
+		watch:        watch,
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -180,6 +188,9 @@ func (s *LegacyService) Create(ctx context.Context, cmd *user.CreateUserCommand)
 		return nil, fmt.Errorf("get legacy DB: %w", err)
 	}
 
+	// The IAM User resource is a user's membership of an org, so a user created
+	// without one is announced once a membership is added (see orgimpl.AddOrgUser).
+	addsOrgUser := !cmd.SkipOrgSetup && !usr.IsProvisioned
 	err = dbHelper.DB.InTransaction(ctx, func(ctx context.Context) error {
 		_, err = s.store.Insert(ctx, usr)
 		if err != nil {
@@ -187,7 +198,7 @@ func (s *LegacyService) Create(ctx context.Context, cmd *user.CreateUserCommand)
 		}
 
 		// create org user link
-		if !cmd.SkipOrgSetup && !usr.IsProvisioned {
+		if addsOrgUser {
 			orgUser := org.OrgUser{
 				OrgID:   orgID,
 				UserID:  usr.ID,
@@ -208,6 +219,9 @@ func (s *LegacyService) Create(ctx context.Context, cmd *user.CreateUserCommand)
 		}
 		return nil
 	})
+	if err == nil && addsOrgUser && !usr.IsServiceAccount {
+		s.watch.Publish(ctx, legacywatch.Added, userResource, orgID, usr.UID, usr.Updated.UnixMilli())
+	}
 	return usr, err
 }
 
@@ -217,12 +231,18 @@ func (s *LegacyService) Delete(ctx context.Context, cmd *user.DeleteUserCommand)
 	))
 	defer span.End()
 
-	_, err := s.store.GetByID(ctx, cmd.UserID)
+	usr, err := s.store.GetByID(ctx, cmd.UserID)
 	if err != nil {
 		return err
 	}
 
-	return s.store.Delete(ctx, cmd.UserID)
+	if err := s.store.Delete(ctx, cmd.UserID); err != nil {
+		return err
+	}
+	if usr != nil && !usr.IsServiceAccount {
+		s.watch.Publish(ctx, legacywatch.Deleted, userResource, usr.OrgID, usr.UID, 0)
+	}
+	return nil
 }
 
 func (s *LegacyService) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*user.User, error) {
@@ -329,7 +349,14 @@ func (s *LegacyService) Update(ctx context.Context, cmd *user.UpdateUserCommand)
 		}
 	}
 
-	return s.store.Update(ctx, cmd)
+	if err := s.store.Update(ctx, cmd); err != nil {
+		return err
+	}
+	if usr != nil && !usr.IsServiceAccount {
+		// The store sets the updated time itself, so the resource version is unknown here.
+		s.watch.Publish(ctx, legacywatch.Modified, userResource, usr.OrgID, usr.UID, 0)
+	}
+	return nil
 }
 
 func (s *LegacyService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
@@ -351,6 +378,7 @@ func (s *LegacyService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUs
 		return user.ErrLastSeenUpToDate
 	}
 
+	// Not announced on the legacy watch: it changes on user activity, not on an edit.
 	return s.store.UpdateLastSeenAt(ctx, cmd)
 }
 
@@ -437,7 +465,25 @@ func (s *LegacyService) BatchDisableUsers(ctx context.Context, cmd *user.BatchDi
 	))
 	defer span.End()
 
-	return s.store.BatchDisableUsers(ctx, cmd)
+	if err := s.store.BatchDisableUsers(ctx, cmd); err != nil {
+		return err
+	}
+	if !s.watch.Enabled() || len(cmd.UserIDs) == 0 {
+		return nil
+	}
+	// disabled is part of each user's spec. The write has committed, so look the
+	// users up even if the request has since been cancelled.
+	users, err := s.store.ListByIdOrUID(context.WithoutCancel(ctx), nil, cmd.UserIDs)
+	if err != nil {
+		logging.FromContext(ctx).Warn("failed to list disabled users for legacy watch notifications", "error", err)
+		return nil
+	}
+	for _, usr := range users {
+		if !usr.IsServiceAccount {
+			s.watch.Publish(ctx, legacywatch.Modified, userResource, usr.OrgID, usr.UID, 0)
+		}
+	}
+	return nil
 }
 
 func (s *LegacyService) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {

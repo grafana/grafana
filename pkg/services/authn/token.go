@@ -3,6 +3,7 @@ package authn
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 
 	authnlib "github.com/grafana/authlib/authn"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -18,10 +20,21 @@ type TokenAuthenticator interface {
 	AuthenticateToken(ctx context.Context, token string) (identity.Requester, error)
 }
 
+// RequestTokenAuthenticator can additionally validate audiences scoped to an HTTP request.
+type RequestTokenAuthenticator interface {
+	AuthenticateTokenForRequest(ctx context.Context, token string, req *http.Request) (identity.Requester, error)
+}
+
+var _ RequestTokenAuthenticator = (*GrafanaTokenAuthenticator)(nil)
 var _ TokenAuthenticator = (*GrafanaTokenAuthenticator)(nil)
 
 type GrafanaTokenAuthenticator struct {
 	verifier authnlib.Verifier[authnlib.AccessTokenClaims]
+	keys     authnlib.KeyRetriever
+	// wildcardOrgID is the OrgID a "*" namespace token resolves to. Defaults to
+	// GlobalOrgID; cloud overrides it via cfg.ExtJWTAuth.WildcardOrgID since it
+	// runs against org 1 rather than the global org.
+	wildcardOrgID int64
 }
 
 func NewGrafanaTokenAuthenticator(cfg *setting.Cfg) (*GrafanaTokenAuthenticator, error) {
@@ -37,10 +50,16 @@ func NewGrafanaTokenAuthenticator(cfg *setting.Cfg) (*GrafanaTokenAuthenticator,
 		verifier: authnlib.NewAccessTokenVerifier(authnlib.VerifierConfig{
 			AllowedAudiences: cfg.ExtJWTAuth.Audiences,
 		}, keys),
+		keys:          keys,
+		wildcardOrgID: cfg.ExtJWTAuth.WildcardOrgID,
 	}, nil
 }
 
 func (t *GrafanaTokenAuthenticator) AuthenticateToken(ctx context.Context, token string) (identity.Requester, error) {
+	return t.AuthenticateTokenForRequest(ctx, token, nil)
+}
+
+func (t *GrafanaTokenAuthenticator) AuthenticateTokenForRequest(ctx context.Context, token string, req *http.Request) (identity.Requester, error) {
 	token = strings.TrimPrefix(token, "Bearer ")
 	if token == "" {
 		return nil, apierrors.NewUnauthorized("empty token")
@@ -48,7 +67,7 @@ func (t *GrafanaTokenAuthenticator) AuthenticateToken(ctx context.Context, token
 	if t.verifier == nil {
 		return nil, apierrors.NewUnauthorized("token verifier is not configured")
 	}
-	claims, err := t.verifier.Verify(ctx, token)
+	claims, err := VerifyAccessTokenForRequest(ctx, token, req, t.verifier, t.keys)
 	if err != nil || claims == nil {
 		return nil, apierrors.NewUnauthorized("invalid access token")
 	}
@@ -67,7 +86,17 @@ func (t *GrafanaTokenAuthenticator) AuthenticateToken(ctx context.Context, token
 	}
 	orgID := ns.OrgID
 	if ns.Value == "*" {
-		orgID = GlobalOrgID
+		orgID = t.wildcardOrgID
+	}
+	var orgRoles map[int64]org.RoleType
+	if claims.Rest.IsOnBehalfOfUser() {
+		actor := claims.Rest.Actor
+		for actor.Actor != nil {
+			actor = actor.Actor
+		}
+		if actor.Role != "" {
+			orgRoles = map[int64]org.RoleType{orgID: org.RoleType(actor.Role)}
+		}
 	}
 	return &grafanaTokenRequester{
 		Identity: Identity{
@@ -80,6 +109,7 @@ func (t *GrafanaTokenAuthenticator) AuthenticateToken(ctx context.Context, token
 			EmailVerified:     info.GetEmailVerified(),
 			Groups:            info.GetGroups(),
 			OrgID:             orgID,
+			OrgRoles:          orgRoles,
 			Namespace:         ns.Value,
 			AuthID:            claims.Subject,
 			AuthenticatedBy:   login.ExtendedJWTModule,

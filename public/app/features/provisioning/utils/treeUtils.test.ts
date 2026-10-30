@@ -1240,20 +1240,16 @@ describe('getStatusCategory', () => {
   });
 
   it('should return the sync status when there is no warning', () => {
-    expect(getStatusCategory(item({ status: 'synced' }), true)).toBe('synced');
-    expect(getStatusCategory(item({ status: 'pending' }), true)).toBe('pending');
+    expect(getStatusCategory(item({ status: 'synced' }))).toBe('synced');
+    expect(getStatusCategory(item({ status: 'pending' }))).toBe('pending');
   });
 
   it('should return undefined when there is no status', () => {
-    expect(getStatusCategory(item({ status: undefined }), true)).toBeUndefined();
+    expect(getStatusCategory(item({ status: undefined }))).toBeUndefined();
   });
 
-  it('should return warning when missing folder metadata and warnings are included', () => {
-    expect(getStatusCategory(item({ status: 'pending', missingFolderMetadata: true }), true)).toBe('warning');
-  });
-
-  it('should ignore missing folder metadata when warnings are not included', () => {
-    expect(getStatusCategory(item({ status: 'pending', missingFolderMetadata: true }), false)).toBe('pending');
+  it('should return warning when folder metadata is missing', () => {
+    expect(getStatusCategory(item({ status: 'pending', missingFolderMetadata: true }))).toBe('warning');
   });
 });
 
@@ -1353,7 +1349,7 @@ describe('filterByStatusCategories', () => {
     expect(result[0].children).toHaveLength(0);
   });
 
-  it('should match the warning category only when warnings are included', () => {
+  it('should match the warning category when folder metadata is missing', () => {
     const tree: TreeItem[] = [
       {
         path: 'folder',
@@ -1366,8 +1362,6 @@ describe('filterByStatusCategories', () => {
       },
     ];
 
-    expect(filterByStatusCategories(tree, ['warning'], true)).toHaveLength(1);
-    // Without warnings included the item is categorized as pending, so 'warning' does not match.
-    expect(filterByStatusCategories(tree, ['warning'], false)).toHaveLength(0);
+    expect(filterByStatusCategories(tree, ['warning'])).toHaveLength(1);
   });
 });

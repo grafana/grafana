@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -24,6 +25,7 @@ type embeddingBuilderProvider struct {
 func (p embeddingBuilderProvider) Validate() error                 { return p.validate() }
 func (p embeddingBuilderProvider) Snapshot() embed.BuilderSnapshot { return p.snapshot() }
 func (p embeddingBuilderProvider) Has(group, resource string) bool { return p.has(group, resource) }
+func (p embeddingBuilderProvider) Allowed() []schema.GroupResource { return nil }
 
 type enrolledBuilder struct {
 	embed.Builder
@@ -56,7 +58,7 @@ func TestEmbeddingEnrollmentGatesQueries(t *testing.T) {
 			}
 			t.Run(name, func(t *testing.T) {
 				backend := &fakeVectorBackend{collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r", IsExternal: tc.external}}
-				s, _, provider := newHybridTestServer(lexTableResponse(), backend)
+				s, _, provider := newHybridTestServer(lexFieldValueResponse(), backend)
 				calls := 0
 				s.embeddingBuilders = embeddingBuilderProvider{
 					validate: func() error { return tc.validationErr },

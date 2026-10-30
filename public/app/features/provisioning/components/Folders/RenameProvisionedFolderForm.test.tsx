@@ -1,9 +1,8 @@
 import { HttpResponse, delay, http } from 'msw';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { type FolderDTO } from 'app/types/folders';
 
@@ -34,6 +33,11 @@ jest.mock('../../hooks/useGetRepositoryFolders', () => ({
 
 jest.mock('../../hooks/useProvisionedFolderFormData', () => ({
   useProvisionedFolderFormData: jest.fn(),
+}));
+
+jest.mock('../../hooks/useGetResourceRepositoryView', () => ({
+  ...jest.requireActual('../../hooks/useGetResourceRepositoryView'),
+  useGetResourceRepositoryView: jest.fn(),
 }));
 
 jest.mock('react-router-dom-v5-compat', () => {
@@ -67,6 +71,7 @@ const mockRepository: RepositoryView = {
   target: 'folder' as const,
   title: 'Test Repository',
   type: 'git' as const,
+  branch: 'main',
   workflows: ['write', 'branch'],
 };
 
@@ -74,7 +79,6 @@ const mockFormData = {
   repo: 'test-repo',
   path: 'folders/test-folder/',
   ref: 'main',
-  workflow: 'write' as const,
   comment: '',
   title: 'Test Folder',
 };
@@ -166,7 +170,7 @@ describe('RenameProvisionedFolderForm', () => {
   });
 
   describe('form submission', () => {
-    it('should call replaceFile with folder metadata body for branch workflow', async () => {
+    it('should call replaceFile with folder metadata body when renaming on a branch', async () => {
       server.use(
         http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           const url = new URL(request.url);
@@ -177,7 +181,6 @@ describe('RenameProvisionedFolderForm', () => {
 
       const branchFormData = {
         ...mockFormData,
-        workflow: 'branch' as const,
         ref: 'my-branch',
       };
       const { user } = setup({}, { ...defaultHookData, initialValues: branchFormData });
@@ -216,7 +219,7 @@ describe('RenameProvisionedFolderForm', () => {
             ...defaultHookData.repository!,
             commit: { singleResourceMessageTemplate: 'chore({{resourceKind}}s): {{action}} {{title}}' },
           },
-          initialValues: { ...mockFormData, workflow: 'branch' as const, ref: 'my-branch' },
+          initialValues: { ...mockFormData, ref: 'my-branch' },
         }
       );
 
@@ -229,7 +232,7 @@ describe('RenameProvisionedFolderForm', () => {
       expect(request.url.searchParams.get('message')).toBe('chore(folders): rename Test Folder');
     });
 
-    it('should clear ref for write workflow', async () => {
+    it('should clear ref on the configured branch', async () => {
       server.use(
         http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           const url = new URL(request.url);
@@ -240,7 +243,6 @@ describe('RenameProvisionedFolderForm', () => {
 
       const writeFormData = {
         ...mockFormData,
-        workflow: 'write' as const,
         ref: 'main',
       };
       const { user, onDismiss } = setup({}, { ...defaultHookData, initialValues: writeFormData });
@@ -253,7 +255,7 @@ describe('RenameProvisionedFolderForm', () => {
       });
 
       const request = requireCapturedRequest(capturedRequest);
-      // Write workflow sends no ref query param
+      // The configured branch sends no ref query param
       expect(request.url.searchParams.get('ref')).toBeNull();
 
       // The real request handler dismisses the form after a successful save
@@ -273,7 +275,6 @@ describe('RenameProvisionedFolderForm', () => {
 
       const branchFormData = {
         ...mockFormData,
-        workflow: 'branch' as const,
         ref: 'my-branch',
       };
       const { user } = setup({}, { ...defaultHookData, initialValues: branchFormData });
@@ -312,7 +313,6 @@ describe('RenameProvisionedFolderForm', () => {
       const formDataWithTrailingSlash = {
         ...mockFormData,
         path: 'folders/my-folder/',
-        workflow: 'branch' as const,
         ref: 'my-branch',
       };
       const { user } = setup({}, { ...defaultHookData, initialValues: formDataWithTrailingSlash });
@@ -417,17 +417,6 @@ describe('RenameProvisionedFolderForm', () => {
 });
 
 describe('RenameProvisionedFolderForm commit message template', () => {
-  beforeEach(() => {
-    setTestFlags({ 'provisioning.gitConventions': true });
-  });
-
-  afterEach(async () => {
-    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
-    await act(async () => {
-      setTestFlags({});
-    });
-  });
-
   it('pre-fills Comment from the repository template', async () => {
     setup(
       {},

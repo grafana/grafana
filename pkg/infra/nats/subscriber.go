@@ -71,7 +71,7 @@ type SubscriberService struct {
 func newSubscriber(logger log.Logger, m *subscriberMetrics, config *Config) *SubscriberService {
 	conn := newConnection(roleSubscriber, logger, m.connectionMetrics, config, config.SubscriberCredentials)
 	s := &SubscriberService{connection: conn, metrics: m}
-	s.NamedService = services.NewBasicService(nil, s.running, s.stopping).WithName(subscriberName)
+	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(subscriberName)
 	return s
 }
 
@@ -98,11 +98,6 @@ func (s *SubscriberService) Run(ctx context.Context) error {
 	return s.AwaitTerminated(ctx)
 }
 
-func (s *SubscriberService) running(ctx context.Context) error {
-	<-ctx.Done()
-	return nil
-}
-
 // stopping drains the connection, which auto-unsubscribes any active
 // subscriptions and flushes in-flight handler deliveries.
 func (s *SubscriberService) stopping(_ error) error {
@@ -119,6 +114,11 @@ func (s *SubscriberService) Subscribe(ctx context.Context, subject string, handl
 	for _, opt := range opts {
 		opt(&cfg)
 	}
+	var remove func()
+	if cfg.onReconnect != nil {
+		// Register before SUB so a reconnect during subscription setup cannot be lost.
+		remove = s.onReconnect(cfg.onReconnect)
+	}
 	sub, err := s.subscribe(ctx, subject, func(nc *natsclient.Conn, cb natsclient.MsgHandler) (*natsclient.Subscription, error) {
 		if cfg.queue != "" {
 			return nc.QueueSubscribe(subject, cfg.queue, cb)
@@ -126,12 +126,15 @@ func (s *SubscriberService) Subscribe(ctx context.Context, subject string, handl
 		return nc.Subscribe(subject, cb)
 	}, handler)
 	if err != nil {
+		if remove != nil {
+			remove()
+		}
 		return nil, err
 	}
-	if cfg.onReconnect != nil {
+	if remove != nil {
 		// Fire the callback on every reconnect, and stop firing it once this
 		// subscription is unsubscribed.
-		sub = &reconnectingSubscription{Subscription: sub, remove: s.onReconnect(cfg.onReconnect)}
+		sub = &reconnectingSubscription{Subscription: sub, remove: remove}
 	}
 	return sub, nil
 }

@@ -17,32 +17,6 @@ labels:
 menuTitle: Handle connectivity errors
 title: Handle connectivity errors in alerts
 weight: 1020
-refs:
-  pending-period:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/
-  notifications:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/
-  no-data-and-error-alerts:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#no-data-and-error-alerts
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#no-data-and-error-alerts
-  configure-nodata-and-error-handling:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#modify-the-no-data-or-error-state
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#modify-the-no-data-or-error-state
-  missing-data-guide:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/missing-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/missing-data/
 ---
 
 # Handle connectivity errors in alerts
@@ -100,7 +74,7 @@ But this alert rule might result in noisy alerts as one single scrape failure wi
 
 `up == 0 for: 5m`
 
-The `for` option in Prometheus (or [pending period](ref:pending-period) in Grafana) delays the alert until the condition has been true for the full duration.
+The `for` option in Prometheus (or [pending period](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/) in Grafana) delays the alert until the condition has been true for the full duration.
 
 In this example, waiting for 5 minutes means the single scrape error won't result in a fired alert. Since Prometheus scrapes metrics every minute by default, the alert only fires after five consecutive failures.
 
@@ -132,7 +106,7 @@ One way to work around these issues is to smooth the signal by averaging the `up
 
 This alert rule fires when the target is unreachable for more than 20% of the last 10 minutes, rather than looking for consecutive scrape failures. With a one minute scrape interval, three or more failed scrapes within the last 10 minutes now triggers the alert.
 
-Since this query uses a threshold and time window to control accuracy, you can now lower the `for` duration (or [pending period](ref:pending-period) in Grafana) to something shorter—`0m` or `1m`—so the alert fires faster.
+Since this query uses a threshold and time window to control accuracy, you can now lower the `for` duration (or [pending period](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/) in Grafana) to something shorter—`0m` or `1m`—so the alert fires faster.
 
 This approach gives you more flexibility in detecting real crashes or network issues. As always, adjust the threshold and period based on your noise tolerance and how critical the target is.
 
@@ -172,7 +146,7 @@ If your alert only checks the general `up` metric without breaking it down by la
 
 This isn't a connectivity error in this context — it’s not that the alert or Prometheus can't reach anything, it’s that one or more specific targets have gone silent. These kinds of problems aren’t caught by `up == 0` alerts.
 
-For these cases, see the complementary [guide on handling missing data](ref:missing-data-guide) — it covers common scenarios where the alert queries return no data at all, or where only some targets stop reporting. These aren't full availability failures or execution errors, but they can still lead to blind spots in alert detection.
+For these cases, see the complementary [guide on handling missing data](/docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/missing-data/) — it covers common scenarios where the alert queries return no data at all, or where only some targets stop reporting. These aren't full availability failures or execution errors, but they can still lead to blind spots in alert detection.
 
 ## Handle query errors in Grafana Alerting
 
@@ -184,7 +158,7 @@ This difference matters. Availability issues are typically handled using metrics
 
 Grafana Alerting has built-in handling for execution errors, regardless of the data source. That includes Prometheus, and others like Graphite, InfluxDB, PostgreSQL, etc. By default, Grafana Alerting automatically handles query errors so you don’t miss critical failures. When an alert rule fails to execute, Grafana fires a special `DatasourceError` alert.
 
-You can configure this behavior depending on how critical the alert is and on whether you already have other alerts detecting the issue. In [**Configure no data and error handling**](ref:configure-nodata-and-error-handling), click **Alert state if execution error or timeout**, and choose the desired option for the alert:
+You can configure this behavior depending on how critical the alert is and on whether you already have other alerts detecting the issue. In [**Configure no data and error handling**](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#modify-the-no-data-or-error-state), click **Alert state if execution error or timeout**, and choose the desired option for the alert:
 
 - **Error (default)**: Triggers a separate `DatasourceError` alert. This default ensures alert rules always inform about query errors but can create noise.
 - **Alerting**: Treats the error as if the alert condition is firing. Grafana transitions all existing instances for that rule to the `Alerting` state.
@@ -208,8 +182,8 @@ Any alert rule query can fail to reach its data source, including one built spec
 Create a separate alert rule dedicated to detecting when the data source itself is unreachable, distinct from any application-specific rules that happen to query it:
 
 1. Reuse a query you already know returns data reliably when the data source is healthy. Any small, cheap query works, since the result doesn't matter—only whether the query executes.
-1. In [Configure no data and error handling](ref:configure-nodata-and-error-handling), set **Alert state if execution error or timeout** to **Alerting**.
-1. Add a [pending period](ref:pending-period), for example `5m`, so the rule fires only once the data source has stayed unreachable for a sustained period, not for a single blip.
+1. In [Configure no data and error handling](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#modify-the-no-data-or-error-state), set **Alert state if execution error or timeout** to **Alerting**.
+1. Add a [pending period](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/), for example `5m`, so the rule fires only once the data source has stayed unreachable for a sustained period, not for a single blip.
 
 Set the same option to **Normal** or **Keep Last State** on your application-specific rules instead, so a transient error from the data source doesn't also fire a `DatasourceError` alert alongside the condition you're actually trying to detect. Which value to use isn't a one-time default—decide it per rule, based on whether that rule already has a dedicated connectivity alert covering it.
 
@@ -227,7 +201,7 @@ Consider not treating these alerts in the same way as the original alerts, and i
 
 - Route `DatasourceError` alerts separately, sending them to different teams or channels depending on their impact and urgency.
 
-For details on how to configure grouping and routing, refer to [handling notifications](ref:notifications) and [`No Data` and `Error` alerts](ref:no-data-and-error-alerts) documentation.
+For details on how to configure grouping and routing, refer to [handling notifications](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/) and [`No Data` and `Error` alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#no-data-and-error-alerts) documentation.
 
 ## Conclusion
 
@@ -237,10 +211,10 @@ Connectivity issues are one of the common causes of noisy or misleading alerts. 
 
 - **Query execution errors**, where the alert rule can't reach its data source (e.g., due to timeouts, invalid queries, or data source outages).
 
-These problems come from different parts of your stack, and require its own techniques. Prometheus and Grafana allow you to detect them, and combining distinct techniques can make your alerts more resilient.
+These problems come from different parts of your stack, and require their own techniques. Prometheus and Grafana allow you to detect them, and combining distinct techniques can make your alerts more resilient.
 
 With Prometheus, avoid relying solely on `up == 0`. Smooth queries to account for intermittent failures, and use synthetic monitoring to detect reachability issues from outside your network.
 
 In Grafana Alerting, configure error handling explicitly. Not all alerts are equal or have the same urgency. Tune the error-handling behavior based on the reliability and severity of the alerts and whether you already have alerts dedicated to connectivity problems.
 
-And don’t forget the third case: **missing data**. If only one host from a fleet silently disappears, you might not get alerted. If you're dealing with individual instances that stopped reporting data, see the [Guide on handling missing data](ref:missing-data-guide) to continue exploring this topic.
+And don’t forget the third case: **missing data**. If only one host from a fleet silently disappears, you might not get alerted. If you're dealing with individual instances that stopped reporting data, see the [Guide on handling missing data](/docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/missing-data/) to continue exploring this topic.

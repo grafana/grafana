@@ -18,10 +18,10 @@
       "scripts/circle-release-next-packages.sh",
       "scripts/ci-frontend-metrics.sh",
       "scripts/grunt/**/*",
-      "scripts/webpack/**/*",
+      "scripts/rspack/**/*",
       "package.json",
       "tsconfig.json",
-      "lerna.json",
+      "nx.json",
       ".prettierrc.js",
       ".eslintrc",
       "**/*.mdx"
@@ -100,15 +100,6 @@
     ],
     "action": "updateLabel",
     "addLabel": "datasource/Azure"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/cloudwatch/**/*",
-      "pkg/tsdb/cloudwatch/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/CloudWatch"
   },
   {
     "type": "changedfiles",

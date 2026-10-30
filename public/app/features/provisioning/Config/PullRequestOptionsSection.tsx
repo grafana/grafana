@@ -1,4 +1,3 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import { type FieldValues, type Path, type UseFormRegister } from 'react-hook-form';
 
@@ -29,9 +28,8 @@ interface Props<T extends FieldValues> {
  * Pull request options (RepositorySpec.pullRequest / PullRequestOptions). Only
  * meaningful for providers that support pull/merge requests (GitHub, GitLab,
  * Bitbucket) — not the pure git type — so the caller is responsible for only
- * rendering it for those. The template fields are gated behind the
- * provisioning.gitConventions flag; the section still renders when the GitHub
- * dashboard previews toggle is shown.
+ * rendering it for those. Dashboard previews are shown alongside the title
+ * template when the provider supports them.
  */
 export function PullRequestOptionsSection<T extends FieldValues>({
   register,
@@ -40,7 +38,6 @@ export function PullRequestOptionsSection<T extends FieldValues>({
   dashboardPreviewName,
   repoType,
 }: Props<T>) {
-  const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
   // Previews are GitHub-only, so skip the settings query for other providers.
   const settings = useGetFrontendSettingsQuery(
     !dashboardPreviewName || !isGitHubBased(repoType) ? skipToken : undefined
@@ -50,10 +47,6 @@ export function PullRequestOptionsSection<T extends FieldValues>({
   const showDashboardPreviews = Boolean(
     isGitHubBased(repoType) && dashboardPreviewName && checkImageRenderingAllowed(settings.data)
   );
-
-  if (!gitConventionsEnabled && !showDashboardPreviews) {
-    return null;
-  }
 
   return (
     <ControlledCollapse
@@ -68,48 +61,41 @@ export function PullRequestOptionsSection<T extends FieldValues>({
             disabled={!checkImageRenderer() || !checkPublicAccess()}
           />
         )}
-        {gitConventionsEnabled && (
-          <>
-            <Field
-              noMargin
-              label={t('provisioning.pull-request-options.label-title-template', 'Pull request title template')}
-              description={t(
-                'provisioning.pull-request-options.description-title-template',
-                'Template for the pull request title opened by the branch workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Leave empty to use the first line of the commit message.',
-                {
-                  actionVar: '{{action}}',
-                  kindVar: '{{resourceKind}}',
-                  titleVar: '{{title}}',
-                  userLoginVar: '{{userLogin}}',
-                }
-              )}
-            >
-              <Input
-                id="pull-request-title-template"
-                {...register(titleTemplateName)}
-                placeholder={t(
-                  'provisioning.pull-request-options.placeholder-title-template',
-                  '{{actionVar}}: {{titleVar}}',
-                  { actionVar: '{{action}}', titleVar: '{{title}}' }
-                )}
-              />
-            </Field>
+        <Field
+          noMargin
+          label={t('provisioning.pull-request-options.label-title-template', 'Pull request title template')}
+          description={t(
+            'provisioning.pull-request-options.description-title-template',
+            'Template for the pull request title opened by the branch workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Leave empty to use the first line of the commit message.',
+            {
+              actionVar: '{{action}}',
+              kindVar: '{{resourceKind}}',
+              titleVar: '{{title}}',
+              userLoginVar: '{{userLogin}}',
+            }
+          )}
+        >
+          <Input
+            id="pull-request-title-template"
+            {...register(titleTemplateName)}
+            placeholder={t(
+              'provisioning.pull-request-options.placeholder-title-template',
+              '{{actionVar}}: {{titleVar}}',
+              { actionVar: '{{action}}', titleVar: '{{title}}' }
+            )}
+          />
+        </Field>
 
-            <Field noMargin>
-              <Checkbox
-                {...register(enforceTemplateName)}
-                label={t(
-                  'provisioning.pull-request-options.label-enforce-template',
-                  'Enforce pull request title template'
-                )}
-                description={t(
-                  'provisioning.pull-request-options.description-enforce-template',
-                  'Pre-fill the pull request title in save dialogs from the template above and make it read-only.'
-                )}
-              />
-            </Field>
-          </>
-        )}
+        <Field noMargin>
+          <Checkbox
+            {...register(enforceTemplateName)}
+            label={t('provisioning.pull-request-options.label-enforce-template', 'Enforce pull request title template')}
+            description={t(
+              'provisioning.pull-request-options.description-enforce-template',
+              'Pre-fill the pull request title in save dialogs from the template above and make it read-only.'
+            )}
+          />
+        </Field>
       </Stack>
     </ControlledCollapse>
   );

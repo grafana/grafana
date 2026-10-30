@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Alert, Box, Tab, TabContent, TabsBar, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
+import { isNotificationHistoryEnabled } from '../../../featureToggles';
 import { NotificationsScene } from '../../../notifications/NotificationsScene';
 import { StateHistoryImplementation, useStateHistoryImplementation } from '../../../utils/config';
 import { DOCS_URL_CONFIGURE_ALERT_STATE_HISTORY } from '../../../utils/docs';
@@ -22,7 +22,7 @@ enum ActiveTab {
 function HistoryPage() {
   const styles = useStyles2(getStyles);
   const [queryParams, setQueryParams] = useQueryParams();
-  const notificationsEnabled = config.featureToggles.alertingNotificationHistoryGlobal;
+  const notificationsEnabled = isNotificationHistoryEnabled();
   const implementation = useStateHistoryImplementation();
   // only Loki can answer history queries that are not scoped to a single rule
   const alertHistoryEnabled = implementation === StateHistoryImplementation.Loki;

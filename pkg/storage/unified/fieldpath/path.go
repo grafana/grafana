@@ -33,8 +33,8 @@ const arrayProjection = "[*]"
 // JSON null, including before a projection. Within a projection, those
 // values appear as nil entries in the result. An error is returned for an
 // empty path, a non-slice at a [*] step, or an incompatible intermediate
-// type during dot traversal. Traversal errors within a projection fail
-// the entire extraction.
+// type during a dot traversal before a projection. Within a projection, a
+// traversal error contributes a nil entry instead of failing the extraction.
 func Extract(obj map[string]any, path string) (any, error) {
 	if path == "" {
 		return nil, fmt.Errorf("empty path")
@@ -70,7 +70,10 @@ func Extract(obj map[string]any, path string) (any, error) {
 			}
 			sub, err = Extract(elemMap, post)
 			if err != nil {
-				return nil, fmt.Errorf("path %q: %w", path, err)
+				// Union-shaped elements may not have this path, such as a legacy
+				// string datasource reference beside a structured reference.
+				out = append(out, nil)
+				continue
 			}
 		}
 		if values, ok := sub.([]any); ok {

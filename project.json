@@ -5,17 +5,7 @@
   "targets": {
     "start": {
       "dependsOn": [
-        "check-frontend-dev",
-        "themes-generate",
-        {
-          "projects": ["tag:scope:plugin"],
-          "target": "build"
-        }
-      ]
-    },
-    "start:rspack": {
-      "dependsOn": [
-        "build:rspack:boot:dev",
+        "build:boot:dev",
         "check-frontend-dev",
         "themes-generate",
         {
@@ -25,9 +15,9 @@
       ],
       "cache": false
     },
-    "start:rspack:noHmr": {
+    "start:noHmr": {
       "dependsOn": [
-        "build:rspack:boot:dev",
+        "build:boot:dev",
         "check-frontend-dev",
         "themes-generate",
         {
@@ -48,7 +38,7 @@
       "outputs": ["{workspaceRoot}/public/build", "{workspaceRoot}/public/build-swagger"],
       "cache": true
     },
-    "dev": {
+    "build:nominify": {
       "dependsOn": [
         "themes-generate",
         {
@@ -56,12 +46,11 @@
           "target": "build"
         }
       ],
-      "outputs": ["{workspaceRoot}/public/build"],
-      "cache": true
+      "cache": false
     },
-    "dev:rspack": {
+    "dev": {
       "dependsOn": [
-        "build:rspack:boot:dev",
+        "build:boot:dev",
         "themes-generate",
         "build:swagger",
         {
@@ -71,7 +60,7 @@
       ],
       "cache": false
     },
-    "build:rspack:boot:dev": {
+    "build:boot:dev": {
       "cache": false
     },
     "build:swagger": {
@@ -85,6 +74,10 @@
     "themes-generate": {
       "inputs": [
         "{workspaceRoot}/scripts/cli/generateSassVariableFiles.ts",
+        "{workspaceRoot}/scripts/cli/themeTemplates/**",
+        "{workspaceRoot}/public/sass/_angular.scss",
+        "{workspaceRoot}/public/sass/grafana.dark.scss",
+        "{workspaceRoot}/public/sass/grafana.light.scss",
         "{workspaceRoot}/packages/grafana-data/src/themes/**",
         "{workspaceRoot}/packages/grafana-ui/src/themes/**",
         "{workspaceRoot}/package.json"
@@ -93,6 +86,8 @@
         "{workspaceRoot}/public/sass/_variables.generated.scss",
         "{workspaceRoot}/public/sass/_variables.dark.generated.scss",
         "{workspaceRoot}/public/sass/_variables.light.generated.scss",
+        "{workspaceRoot}/public/sass/grafana.dark.css",
+        "{workspaceRoot}/public/sass/grafana.light.css",
         "{workspaceRoot}/public/app/features/theme-playground/schema.json"
       ],
       "cache": true

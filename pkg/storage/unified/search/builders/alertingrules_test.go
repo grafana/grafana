@@ -237,10 +237,8 @@ func TestRecordingRuleBuilder_extracts_and_computes_fields(t *testing.T) {
 	assert.ElementsMatch(t, []string{"team", "team=obs"}, doc.Fields[ruleSearchLabels])
 }
 
-// TestRuleSearchFields_derivedFromManifest verifies the rule kinds' manifest
-// declares the search fields and that the column-definition view derived from
-// them (the same view the search backend uses) matches the declared types and
-// capabilities.
+// TestRuleSearchFields_derivedFromManifest verifies that field lookups preserve
+// the types and capabilities declared in the manifest.
 func TestRuleSearchFields_derivedFromManifest(t *testing.T) {
 	info, err := GetAlertRuleSearchBuilder(nil)
 	require.NoError(t, err)
@@ -253,31 +251,25 @@ func TestRuleSearchFields_derivedFromManifest(t *testing.T) {
 	fields := rulesSearchFieldsProvider.Fields(gvr)
 	require.NotEmpty(t, fields, "alert rule search fields should be declared in the manifest")
 
-	cols := resource.SearchFieldDefinitionsToTableColumns(fields)
-	byName := make(map[string]*resourcepb.ResourceTableColumnDefinition, len(cols))
-	for _, c := range cols {
-		byName[c.Name] = c
-	}
+	lookup, err := resource.NewSearchableDocumentFields(fields)
+	require.NoError(t, err)
 
-	// A path-declared string filter field.
-	interval := byName[testFieldInterval]
+	interval := lookup.Field(testFieldInterval)
 	require.NotNil(t, interval)
-	assert.Equal(t, resourcepb.ResourceTableColumnDefinition_STRING, interval.Type)
+	assert.Equal(t, resource.SearchFieldTypeString, interval.Type)
+	assert.True(t, interval.HasCapability(resource.SearchCapabilityFilter))
 
-	// Boolean field.
-	paused := byName[testFieldPaused]
+	paused := lookup.Field(testFieldPaused)
 	require.NotNil(t, paused)
-	assert.Equal(t, resourcepb.ResourceTableColumnDefinition_BOOLEAN, paused.Type)
+	assert.Equal(t, resource.SearchFieldTypeBoolean, paused.Type)
 
-	// Int64 field.
-	panelID := byName[testFieldPanelID]
+	panelID := lookup.Field(testFieldPanelID)
 	require.NotNil(t, panelID)
-	assert.Equal(t, resourcepb.ResourceTableColumnDefinition_INT64, panelID.Type)
+	assert.Equal(t, resource.SearchFieldTypeInt64, panelID.Type)
 
-	// Array field carries IsArray.
-	labels := byName[ruleSearchLabels]
+	labels := lookup.Field(ruleSearchLabels)
 	require.NotNil(t, labels)
-	assert.True(t, labels.IsArray)
+	assert.True(t, labels.Array)
 }
 
 // TestRuleSearchFields_hashDiffersPerKind verifies the manifest declares a
@@ -393,50 +385,42 @@ func TestRecordingRuleBuilder_omits_alert_only_status_fields(t *testing.T) {
 		"kind": "RecordingRule",
 		"metadata": {"name": "r1"},
 		"spec": {"trigger": {"interval": "1m"}, "expressions": {}},
-		"status": {"state": "Alerting", "stateReason": "threshold exceeded"}
+		"status": {"state": "Alerting", "stateReason": "threshold exceeded", "totals": {"healthy": 1, "firing": 2, "pending": 3, "recovering": 4, "nodata": 5, "error": 6}}
 	}`)
 
 	assert.NotContains(t, doc.Fields, testFieldState)
 	assert.NotContains(t, doc.Fields, testFieldStateReason)
+	for _, name := range []string{"totalsHealthy", "totalsFiring", "totalsPending", "totalsRecovering", "totalsNoData", "totalsError"} {
+		assert.NotContains(t, doc.Fields, name)
+	}
 }
 
-func TestRuleSearchFields_status_fields_are_retrieve_only(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name string
-		gvr  schema.GroupVersionResource
+func TestAlertRuleBuilder_totals(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		status string
+		want   map[string]any
 	}{
-		{
-			name: "alert rule",
-			gvr:  rulesv0alpha1.AlertRuleKind().GroupVersionResource(),
-		},
-		{
-			name: "recording rule",
-			gvr:  rulesv0alpha1.RecordingRuleKind().GroupVersionResource(),
-		},
-	}
-
-	for _, tc := range tests {
+		{name: "absent", status: `{}`},
+		{name: "null", status: `{"totals":null}`},
+		{name: "empty", status: `{"totals":{}}`},
+		{name: "null count", status: `{"totals":{"healthy":null}}`},
+		{name: "zero", status: `{"totals":{"healthy":0}}`, want: map[string]any{"totalsHealthy": int64(0)}},
+		{name: "complete", status: `{"totals":{"healthy":1,"firing":2,"pending":3,"recovering":4,"nodata":5,"error":6}}`,
+			want: map[string]any{"totalsHealthy": int64(1), "totalsFiring": int64(2), "totalsPending": int64(3), "totalsRecovering": int64(4), "totalsNoData": int64(5), "totalsError": int64(6)}},
+	} {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			byName := make(map[string]resource.SearchFieldDefinition)
-			for _, field := range rulesSearchFieldsProvider.Fields(tc.gvr) {
-				byName[field.Name] = field
+			doc := buildAlertRuleDoc(t, fmt.Sprintf(`{
+				"apiVersion":"rules.alerting.grafana.app/v0alpha1","kind":"AlertRule",
+				"metadata":{"name":"r1"},"spec":{"expressions":{}},"status":%s
+			}`, tc.status))
+			for _, name := range []string{"totalsHealthy", "totalsFiring", "totalsPending", "totalsRecovering", "totalsNoData", "totalsError"} {
+				if value, ok := tc.want[name]; ok {
+					assert.Equal(t, value, doc.Fields[name])
+				} else {
+					assert.NotContains(t, doc.Fields, name)
+				}
 			}
-
-			for _, name := range []string{testFieldHealth, testFieldLastEvaluationTime, testFieldLastError} {
-				field, ok := byName[name]
-				require.True(t, ok, "%s should be declared", name)
-				assert.Equal(t, resource.SearchFieldTypeString, field.Type)
-				assert.Equal(t, []resource.SearchCapability{resource.SearchCapabilityRetrieve}, field.Capabilities)
-			}
-
-			duration, ok := byName[testFieldEvaluationDuration]
-			require.True(t, ok, "evaluationDuration should be declared")
-			assert.Equal(t, resource.SearchFieldTypeDouble, duration.Type)
-			assert.Equal(t, []resource.SearchCapability{resource.SearchCapabilityRetrieve}, duration.Capabilities)
 		})
 	}
 }

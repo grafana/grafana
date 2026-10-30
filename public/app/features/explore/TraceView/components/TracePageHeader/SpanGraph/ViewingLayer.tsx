@@ -20,7 +20,6 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { withTheme2, stylesFactory, Button } from '@grafana/ui';
 
-import { autoColor } from '../../Theme';
 import {
   type TUpdateViewRangeTimeFunction,
   type ViewRangeTimeUpdate,
@@ -59,7 +58,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     }),
     ViewingLayerGraph: css({
       label: 'ViewingLayerGraph',
-      border: `1px solid ${autoColor(theme, '#999')}`,
+      // The canvas behind this matches the panel, so this border is the only thing
+      // marking out the minimap — it needs more contrast than a hairline divider.
+      border: `1px solid ${theme.colors.border.strong}`,
+      borderRadius: theme.shape.radius.default,
       /* need !important here to overcome something from semantic UI */
       overflow: 'visible !important',
       position: 'relative',
@@ -68,11 +70,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     }),
     ViewingLayerInactive: css({
       label: 'ViewingLayerInactive',
-      fill: autoColor(theme, 'rgba(214, 214, 214, 0.5)'),
+      fill: theme.colors.action.hover,
     }),
     ViewingLayerCursorGuide: css({
       label: 'ViewingLayerCursorGuide',
-      stroke: autoColor(theme, '#f44'),
+      stroke: theme.colors.error.main,
       strokeWidth: 1,
     }),
     ViewingLayerDraggedShift: css({
@@ -81,7 +83,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     }),
     ViewingLayerDrag: css({
       label: 'ViewingLayerDrag',
-      fill: autoColor(theme, '#44f'),
+      fill: theme.colors.accent.main,
     }),
     ViewingLayerFullOverlay: css({
       label: 'ViewingLayerFullOverlay',

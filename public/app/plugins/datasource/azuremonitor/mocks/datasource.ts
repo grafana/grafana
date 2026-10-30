@@ -75,6 +75,8 @@ export default function createMockDatasource(overrides?: DeepPartial<Datasource>
     getVariablesRaw: jest.fn().mockReturnValue([]),
     getDefaultSubscriptionId: jest.fn().mockReturnValue('defaultSubscriptionId'),
     getMetricNamespaces: jest.fn().mockResolvedValueOnce([]),
+    getMetricNames: jest.fn().mockResolvedValue([]),
+    getDimensionValues: jest.fn().mockResolvedValue([]),
     getLocations: jest.fn().mockResolvedValueOnce([]),
     getAzureLogAnalyticsWorkspaces: jest.fn().mockResolvedValueOnce([]),
     getSubscriptions: jest.fn().mockResolvedValue([]),

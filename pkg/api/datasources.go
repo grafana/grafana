@@ -556,7 +556,7 @@ func (hs *HTTPServer) updateDataSourceByID(c *contextmodel.ReqContext, ds *datas
 	}
 
 	query := datasources.GetDataSourceQuery{
-		ID:    cmd.ID,
+		ID:    cmd.ID, //nolint:staticcheck // Preserve legacy field compatibility.
 		OrgID: c.GetOrgID(),
 	}
 
@@ -582,7 +582,7 @@ func (hs *HTTPServer) updateDataSourceByID(c *contextmodel.ReqContext, ds *datas
 
 func (hs *HTTPServer) getRawDataSourceById(ctx context.Context, id int64, orgID int64) (*datasources.DataSource, error) {
 	query := datasources.GetDataSourceQuery{
-		ID:    id,
+		ID:    id, //nolint:staticcheck // Preserve legacy field compatibility.
 		OrgID: orgID,
 	}
 

@@ -44,26 +44,18 @@ func ValidateNoOwnedFolders(ctx context.Context, searcher resourcepb.ResourceInd
 		Limit:        1,
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err != nil {
+	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+		logging.FromContext(ctx).Error("Failed to search folders owned by team", "namespace", namespace, "teamUID", teamUID, "error", err)
 		return err
 	}
 	if resp == nil {
 		return fmt.Errorf("search for folders owned by team %q returned no response", teamUID)
 	}
-	if resp.Error != nil {
-		return resource.GetError(resp.Error)
-	}
 
-	hasRows := false
-	switch resp.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		hasRows = len(resp.GetResults().GetRows()) > 0
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		hasRows = len(resp.GetRows()) > 0
-	default:
+	if resp.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return fmt.Errorf("unsupported search result format %d", resp.GetResultFormat())
 	}
-	if resp.TotalHits > 0 || hasRows {
+	if resp.TotalHits > 0 || len(resp.GetRows()) > 0 {
 		return fmt.Errorf("%w: team %q; remove folder ownership before deleting the team", ErrTeamOwnsFolders, teamUID)
 	}
 

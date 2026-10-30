@@ -88,6 +88,7 @@ export function DeleteActionButton({
   onConfirm,
   disabledReason,
   confirm = true,
+  tooltip: tooltipOverride,
 }: {
   title: string;
   text: string;
@@ -95,6 +96,7 @@ export function DeleteActionButton({
   onConfirm: () => void;
   confirm?: boolean;
   disabledReason?: string;
+  tooltip?: string;
 }) {
   const styles = useStyles2(getActionStyles);
   const { closePopover } = useEditActionsPopover();
@@ -115,7 +117,8 @@ export function DeleteActionButton({
     );
   }, [closePopover, title, text, yesText, onConfirm, confirm]);
 
-  const tooltip = disabledReason ?? t('dashboard-scene.control-edit-actions.delete-tooltip', 'Delete');
+  const tooltip =
+    disabledReason ?? tooltipOverride ?? t('dashboard-scene.control-edit-actions.delete-tooltip', 'Delete');
 
   return (
     <IconButton

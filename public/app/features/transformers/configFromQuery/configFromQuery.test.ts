@@ -4,10 +4,12 @@ import { mockTransformationsRegistry } from '@grafana/data/internal';
 import { FieldConfigHandlerKey } from '../fieldToConfigMapping/fieldToConfigMapping';
 
 import {
+  CustomCFQMatchers,
   extractConfigFromQuery,
   getConfigFromDataTransformer,
   type ConfigFromQueryTransformOptions,
 } from './configFromQuery';
+import * as importDynamic from './configFromQueryDynamic';
 
 describe('config from data', () => {
   const config = toDataFrame({
@@ -112,6 +114,66 @@ describe('config from data', () => {
     expect(results[0].fields[1].config.decimals).toBeUndefined();
   });
 
+  function extractColorConfig(value: unknown) {
+    const colorConfig = toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1] },
+        { name: 'Color', type: typeof value === 'number' ? FieldType.number : FieldType.string, values: [value] },
+      ],
+      refId: 'A',
+    });
+
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [{ fieldName: 'Color', handlerKey: 'color' }],
+    };
+
+    const results = extractConfigFromQuery(options, [colorConfig, seriesA]);
+    expect(results.length).toBe(1);
+    return results[0].fields[1].config.color;
+  }
+
+  it.each([
+    ['Grafana named color', 'green'],
+    ['Grafana shade', 'dark-red'],
+    ['CSS color name', 'rebeccapurple'],
+    ['hex', '#ff0000'],
+    ['rgb', 'rgb(255, 0, 0)'],
+    ['rgba', 'rgba(255, 0, 0, 0.5)'],
+    ['hsl', 'hsl(120, 100%, 50%)'],
+    ['hsla', 'hsla(120, 100%, 50%, 0.5)'],
+  ])('Maps a %s to a fixed color', (_name, value) => {
+    expect(extractColorConfig(value)).toEqual({ fixedColor: value, mode: 'fixed' });
+  });
+
+  it.each([
+    ['number', -3],
+    ['numeric string', '-3'],
+    ['non-color name', 'notacolor'],
+    ['hex without a hash', 'ff0000'],
+    ['rgb without parentheses', 'rgb 255 0 0'],
+    ['rgb with non-numeric channels', 'rgb(foo)'],
+    ['rgb with no channels', 'rgb()'],
+    ['hex with non-hex digits', '#zz'],
+  ])('Skips a color mapping with a %s value', (_name, value) => {
+    expect(extractColorConfig(value)).toBeUndefined();
+  });
+
+  it('Skips a color mapping that uses the All values reducer', () => {
+    const colorConfig = toDataFrame({
+      fields: [{ name: 'Color', type: FieldType.string, values: ['red', 'yellow', 'orange'] }],
+      refId: 'A',
+    });
+
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [{ fieldName: 'Color', handlerKey: 'color', reducerId: ReducerID.allValues }],
+    };
+
+    const results = extractConfigFromQuery(options, [colorConfig, seriesA]);
+    expect(results[0].fields[1].config.color).toBeUndefined();
+  });
+
   it('With custom reducer', () => {
     const options: ConfigFromQueryTransformOptions = {
       configRefId: 'A',
@@ -168,6 +230,22 @@ describe('config from data', () => {
     const results = extractConfigFromQuery(options, [config, seriesA]);
     expect(results.length).toBe(1);
     expect(results[0].fields[1].config.displayName).toBe('first-name');
+  });
+
+  it('Should delegate to dynamic handler if the matcher is dynamic', () => {
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [],
+      applyTo: {
+        id: CustomCFQMatchers.dynamicFieldName,
+      },
+    };
+
+    const mock = jest.spyOn(importDynamic, 'extractConfigFromQueryDynamic');
+    mock.mockReturnValue([]);
+
+    extractConfigFromQuery(options, [config, seriesA]);
+    expect(mock).toHaveBeenCalled();
   });
 });
 

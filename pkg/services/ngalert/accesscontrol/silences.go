@@ -10,6 +10,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 )
 
 const (
@@ -79,16 +80,12 @@ var (
 	}
 )
 
-type RuleUIDToNamespaceStore interface {
-	GetNamespacesByRuleUID(ctx context.Context, orgID int64, uids ...string) (map[string]string, error)
-}
-
 type SilenceService struct {
 	genericService
-	store RuleUIDToNamespaceStore
+	store rulestore.RuleNamespaceLookup
 }
 
-func NewSilenceService(ac ac.AccessControl, store RuleUIDToNamespaceStore) *SilenceService {
+func NewSilenceService(ac ac.AccessControl, store rulestore.RuleNamespaceLookup) *SilenceService {
 	return &SilenceService{
 		genericService: genericService{
 			ac: ac,

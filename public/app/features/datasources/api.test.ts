@@ -3,10 +3,11 @@ import { of } from 'rxjs';
 import { type DataSourceInstanceSettings, type DataSourceSettings } from '@grafana/data';
 import { config, type BackendSrvRequest, type FetchResponse } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient, setDataSourceInstanceSettings } from '@grafana/runtime/internal';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { type BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 
 import {
   getDataSourceByUid,
+  createDataSourceWithK8sAPI,
   deleteDataSource,
   convertK8sDatasourceSettingsToLegacyDatasourceSettings,
   convertLegacyDatasourceSettingsToK8sDatasourceSettings,
@@ -196,6 +197,33 @@ describe('Datasources / API', () => {
       expect(convertK8sDatasourceSettingsToLegacyDatasourceSettings(dsK8sSettings)).toEqual(dsLegacySettings);
     });
 
+    it.each([
+      { name: 'legacy spec', isDefault: true, labels: undefined, expected: true },
+      { name: 'default label', isDefault: undefined, labels: { default: 'true' }, expected: true },
+      { name: 'label with a false spec', isDefault: false, labels: { default: 'true' }, expected: true },
+      { name: 'spec with a false label', isDefault: true, labels: { default: 'false' }, expected: true },
+      { name: 'false label', isDefault: undefined, labels: { default: 'false' }, expected: false },
+      { name: 'missing default', isDefault: undefined, labels: undefined, expected: false },
+    ])('reads default status from $name', ({ isDefault, labels, expected }) => {
+      const result = convertK8sDatasourceSettingsToLegacyDatasourceSettings({
+        kind: 'DataSource',
+        apiVersion: 'marvin.datasource.grafana.app/v0alpha1',
+        metadata: { name: 'abc123', labels },
+        spec: {
+          title: 'Marvin',
+          access: 'proxy',
+          url: '',
+          user: '',
+          database: '',
+          basicAuth: false,
+          basicAuthUser: '',
+          isDefault,
+        },
+      });
+
+      expect(result.isDefault).toBe(expected);
+    });
+
     it('should default jsonData to an empty object when the apiserver omits it', () => {
       const dsK8sSettings: DataSourceSettingsK8s = {
         kind: 'DataSource',
@@ -218,6 +246,34 @@ describe('Datasources / API', () => {
       };
 
       expect(convertK8sDatasourceSettingsToLegacyDatasourceSettings(dsK8sSettings).jsonData).toEqual({});
+    });
+  });
+
+  describe('createDataSourceWithK8sAPI()', () => {
+    it.each([
+      { isDefault: true, metadata: { generateName: 'g', labels: { default: 'true' } } },
+      { isDefault: false, metadata: { generateName: 'g' } },
+      { isDefault: undefined, metadata: { generateName: 'g' } },
+    ])('writes default status $isDefault to labels only', async ({ isDefault, metadata }) => {
+      const post = jest.fn().mockResolvedValue({});
+      jest.mocked(getBackendSrv).mockReturnValueOnce({ post } as unknown as BackendSrv);
+
+      await createDataSourceWithK8sAPI({ type: 'marvin', name: 'Marvin', isDefault });
+
+      expect(post).toHaveBeenCalledWith('/apis/marvin.datasource.grafana.app/v0alpha1/namespaces/default/datasources', {
+        apiVersion: 'marvin.datasource.grafana.app/v0alpha1',
+        metadata,
+        spec: {
+          title: 'Marvin',
+          access: '',
+          jsonData: {},
+          url: '',
+          basicAuth: false,
+          basicAuthUser: '',
+          user: '',
+          database: '',
+        },
+      });
     });
   });
 
@@ -297,7 +353,7 @@ describe('Datasources / API', () => {
         name: 'fortytwo',
         namespace: 'default',
         resourceVersion: '2',
-        labels: { 'grafana.app/deprecatedInternalID': '42' },
+        labels: { 'grafana.app/deprecatedInternalID': '42', default: 'true' },
         annotations: {},
       };
       let k8sSpec: DatasourceInstanceK8sSpec = {
@@ -307,7 +363,6 @@ describe('Datasources / API', () => {
         url: 'example.com',
         basicAuth: true,
         basicAuthUser: 'zaphod',
-        isDefault: true,
         user: 'zaphod',
         database: 'universe',
         readOnly: true,
@@ -323,6 +378,14 @@ describe('Datasources / API', () => {
       expect(
         convertLegacyDatasourceSettingsToK8sDatasourceSettings(dsLegacySettings, k8sNamespace, k8sVersion)
       ).toEqual(dsK8sSettings);
+
+      const nonDefault = convertLegacyDatasourceSettingsToK8sDatasourceSettings(
+        { ...dsLegacySettings, isDefault: false },
+        k8sNamespace,
+        k8sVersion
+      );
+      expect(nonDefault.metadata.labels).toEqual({ 'grafana.app/deprecatedInternalID': '42' });
+      expect(nonDefault.spec).not.toHaveProperty('isDefault');
     });
   });
 });

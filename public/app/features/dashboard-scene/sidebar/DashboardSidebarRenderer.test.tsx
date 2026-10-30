@@ -1,18 +1,20 @@
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
-import { setPluginImportUtils, setPluginLinksHook, config } from '@grafana/runtime';
+import { setPluginImportUtils, setPluginLinksHook } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { isFullDashboardEditing } from '../scene/types/dashboard';
 import { DashboardInteractions } from '../utils/interactions';
-import { activateFullSceneTree } from '../utils/test-utils';
+import { activateFullSceneTree, createDeferred } from '../utils/test-utils';
 
 import { DashboardSidebarSplitter } from './DashboardSidebarSplitter';
 
@@ -27,13 +29,7 @@ jest.mock('app/core/hooks/useMediaQueryMinWidth', () => ({
   useMediaQueryMinWidth: () => true,
 }));
 
-jest.mock('../utils/interactions', () => ({
-  DashboardInteractions: {
-    editSessionStarted: jest.fn(),
-    dashboardOutlineClicked: jest.fn(),
-    outlineItemClicked: jest.fn(),
-  },
-}));
+jest.mock('../utils/interactions');
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -76,9 +72,11 @@ export function buildTestScene() {
   return testScene;
 }
 
+afterEach(() => setTestFlags({}));
+
 describe('DashboardSidebarRenderer', () => {
   beforeEach(() => {
-    config.featureToggles.dashboardNewLayouts = true;
+    setTestFlags({ dashboardNewLayouts: true });
     // Sidebar state is persisted to localStorage — clear between tests so each test
     // starts with the default visibility/dock state.
     window.localStorage.clear();
@@ -87,6 +85,8 @@ describe('DashboardSidebarRenderer', () => {
   afterEach(() => {
     jest.clearAllMocks();
     window.localStorage.clear();
+    cleanup();
+    setTestFlags({});
   });
 
   it('Should render sidebar', async () => {
@@ -99,6 +99,39 @@ describe('DashboardSidebarRenderer', () => {
     expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
   });
 
+  it('does not render a cross-dashboard variables toolbar button', async () => {
+    const scene = buildTestScene();
+
+    act(() => activateFullSceneTree(scene));
+    render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
+
+    expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Cross-dashboard' })).not.toBeInTheDocument();
+  });
+
+  it('opens a cancellable loading pane and keeps it closed after the request settles', async () => {
+    const scene = buildTestScene();
+    const sidebar = scene.state.sidebar;
+    const pending = createDeferred<void>();
+    act(() => activateFullSceneTree(scene));
+    const { user } = render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
+    let opening!: Promise<void>;
+    act(() => {
+      opening = sidebar.runPaneRequest(() => pending.promise);
+    });
+
+    expect(await screen.findByRole('status', { name: 'Loading sidebar' })).toBeVisible();
+    await user.click(screen.getByTestId(selectors.components.Sidebar.closePane));
+    expect(screen.queryByRole('status', { name: 'Loading sidebar' })).not.toBeInTheDocument();
+    await act(async () => {
+      pending.resolve();
+      await opening;
+    });
+    expect(screen.queryByTestId(selectors.components.Sidebar.closePane)).not.toBeInTheDocument();
+    await user.click(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton));
+    expect(await screen.findByTestId(selectors.components.Sidebar.headerTitle)).toHaveTextContent('Content outline');
+  });
+
   it('opens the add pane when the Add button is clicked', async () => {
     const user = userEvent.setup();
     const scene = buildTestScene();
@@ -109,6 +142,39 @@ describe('DashboardSidebarRenderer', () => {
     await user.click(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.addButton));
 
     await waitFor(() => expect(scene.state.sidebar.state.openPane?.getId()).toBe('add'));
+  });
+
+  describe('returning from Viewing', () => {
+    beforeEach(() => setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true }));
+    afterEach(() => {
+      cleanup();
+      setTestFlags({});
+    });
+
+    it('restores the docked dashboard options pane after switching back to Editing', async () => {
+      const scene = buildTestScene();
+      scene.setState({ uid: 'saved-dashboard', meta: { canEdit: true, canSave: true } });
+      act(() => activateFullSceneTree(scene));
+      function SidebarWithMode() {
+        const state = scene.useState();
+        return <DashboardSidebarSplitter dashboard={scene} isEditing={isFullDashboardEditing(state)} />;
+      }
+      const user = userEvent.setup();
+      render(<SidebarWithMode />);
+      await user.click(screen.getByTestId(selectors.pages.Dashboard.Sidebar.optionsButton));
+      expect(await screen.findByTestId(selectors.components.Sidebar.dockToggle)).toBeInTheDocument();
+      expect(scene.state.sidebar.getSelectedObject()).toBe(scene);
+      expect(scene.state.sidebar.state.isDocked).toBe(true);
+
+      act(() => scene.setDashboardMode('view'));
+      expect(screen.queryByTestId(selectors.components.Sidebar.dockToggle)).not.toBeInTheDocument();
+      act(() => scene.setDashboardMode('edit'));
+
+      expect(await screen.findByTestId(selectors.components.Sidebar.dockToggle)).toBeInTheDocument();
+      expect(scene.state.sidebar.getSelectedObject()).toBe(scene);
+      expect(scene.state.sidebar.state.openPane?.getId()).toBe('element');
+      expect(scene.state.sidebar.state.isDocked).toBe(true);
+    });
   });
 
   it('Should sync sidebar docked state with sidebar state', async () => {
@@ -143,6 +209,24 @@ describe('DashboardSidebarRenderer', () => {
       await user.click(outlineButton);
       expect(DashboardInteractions.dashboardOutlineClicked).toHaveBeenCalled();
     });
+  });
+
+  it('keeps the viewing sidebar but drops editing actions when switching to Viewing with an active edit session', async () => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+    const scene = buildTestScene();
+    scene.setState({ uid: 'saved-dashboard', mode: 'edit', meta: { canEdit: true, canSave: true } });
+    act(() => activateFullSceneTree(scene));
+    function SidebarWithMode() {
+      const state = scene.useState();
+      return <DashboardSidebarSplitter dashboard={scene} isEditing={isFullDashboardEditing(state)} />;
+    }
+    render(<SidebarWithMode />);
+    expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.addButton)).toBeInTheDocument();
+
+    act(() => scene.setDashboardMode('view'));
+    expect(scene.state.isEditing).toBe(true);
+    expect(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.pages.Dashboard.Sidebar.addButton)).not.toBeInTheDocument();
   });
 
   describe('hide button', () => {

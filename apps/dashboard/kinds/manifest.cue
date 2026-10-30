@@ -172,6 +172,10 @@ manifest: {
 						spec:   v1.DashboardSpec
 						status: DashboardStatus
 					}
+					search: {
+						hybrid: true
+						global: true
+					}
 					searchFields: _dashboardSearchFields
 				},
 			]
@@ -188,6 +192,10 @@ manifest: {
 					schema: {
 						spec:   v0.DashboardSpec
 						status: DashboardStatus
+					}
+					search: {
+						hybrid: true
+						global: true
 					}
 					searchFields: _dashboardSearchFields
 				},
@@ -206,6 +214,10 @@ manifest: {
 					schema: {
 						spec:   v1.DashboardSpec
 						status: DashboardStatus
+					}
+					search: {
+						hybrid: true
+						global: true
 					}
 					searchFields: _dashboardSearchFields
 				},
@@ -229,6 +241,10 @@ manifest: {
 						spec:   v2alpha1.DashboardSpec
 						status: DashboardStatus
 					}
+					search: {
+						hybrid: true
+						global: true
+					}
 					searchFields: _dashboardSearchFields
 				},
 			]
@@ -250,6 +266,10 @@ manifest: {
 					schema: {
 						spec:   v2beta1.DashboardSpec
 						status: DashboardStatus
+					}
+					search: {
+						hybrid: true
+						global: true
 					}
 					searchFields: _dashboardSearchFields
 				},
@@ -274,6 +294,10 @@ manifest: {
 					schema: {
 						spec:   v2.DashboardSpec
 						status: DashboardStatus
+					}
+					search: {
+						hybrid: true
+						global: true
 					}
 					searchFields: _dashboardSearchFields
 				},

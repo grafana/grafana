@@ -5,17 +5,16 @@ import { type AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 
-import { MoveDirection } from '../AnnotationsEditView';
-
 import { AnnotationSettingsList, BUTTON_TITLE } from './AnnotationSettingsList';
+import { MoveDirection } from './MoveDirection';
 
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',
   type: 'test',
 });
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceSettings: jest.fn(async () => ({ ...defaultDatasource })),
 }));
 

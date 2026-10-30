@@ -14,11 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -320,6 +321,38 @@ func TestIntegrationLegacyTableIsStale(t *testing.T) {
 				require.True(t, stale, "mode %d", mode)
 			})
 		}
+	})
+
+	t.Run("library panels migration makes legacy counts stale in dual-write mode", func(t *testing.T) {
+		ctx := context.Background()
+		testDB, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		require.NoError(t, migrations.EnsureMigrationLogTable(ctx, testDB, cfg))
+		helper, err := legacysql.NewDatabaseProvider(testDB)(ctx)
+		require.NoError(t, err)
+		s := &LegacyStatsGetter{Cfg: cfgWithMode(libraryPanelResource, grafanarest.Mode1)}
+		insertLog := "INSERT INTO " + helper.Table(migrationLogTable) + " (" + helper.DB.Quote("migration_id") + ", " +
+			helper.DB.Quote("sql") + ", " + helper.DB.Quote("success") + ", " + helper.DB.Quote("error") + ", " +
+			helper.DB.Quote("timestamp") + ") VALUES (?, ?, ?, ?, ?)"
+		require.NoError(t, testDB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			stale, err := s.legacyTableIsStale(sess, helper, libraryPanelResource)
+			require.NoError(t, err)
+			require.False(t, stale)
+
+			_, err = sess.Exec(insertLog,
+				libraryPanelMigration, "test", false, "test failure", time.Now())
+			require.NoError(t, err)
+			stale, err = s.legacyTableIsStale(sess, helper, libraryPanelResource)
+			require.NoError(t, err)
+			require.False(t, stale)
+
+			_, err = sess.Exec(insertLog,
+				libraryPanelMigration, "test", true, "", time.Now())
+			require.NoError(t, err)
+			stale, err = s.legacyTableIsStale(sess, helper, libraryPanelResource)
+			require.NoError(t, err)
+			require.True(t, stale)
+			return nil
+		}))
 	})
 
 	t.Run("nil Cfg falls back to the per-stack kv_store marker", func(t *testing.T) {

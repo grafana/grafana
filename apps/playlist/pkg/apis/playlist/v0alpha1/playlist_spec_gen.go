@@ -2,6 +2,7 @@
 
 package v0alpha1
 
+// Shared item definition for all versions
 // +k8s:openapi-gen=true
 type PlaylistItem = PlaylistPlaylistItem
 
@@ -23,6 +24,9 @@ type PlaylistPlaylistItem struct {
 	//  dashboards behind the tag will be added to the playlist.
 	//  - dashboard_by_uid: The value is the dashboard UID
 	Value string `json:"value"`
+	// Optional per-item display interval (e.g. "30s", "2m"). When unset, the
+	// playlist's global spec.interval is used.
+	Interval *string `json:"interval,omitempty"`
 }
 
 // NewPlaylistPlaylistItem creates a new PlaylistPlaylistItem object.

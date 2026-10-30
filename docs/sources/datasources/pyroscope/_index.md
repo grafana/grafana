@@ -55,6 +55,10 @@ The following documents help you get started with the Pyroscope data source:
 
 Before you query profiles, [configure your application to send profiles](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/) to Pyroscope.
 
+To explore profiling data from a Pyroscope data source, try Grafana Profiles Drilldown on Grafana Play:
+
+{{< docs/play title="Grafana Profiles Drilldown" url="https://play.grafana.org/a/grafana-pyroscope-app/explore" >}}
+
 ## Continuous profiling
 
 While code profiling has been a long-standing practice, continuous profiling represents a modern and more advanced approach to performance monitoring.
@@ -100,6 +104,17 @@ Combined traces and profiles let you see granular line-level detail when availab
 For more information, refer to [Configure Trace to profiles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure-traces-to-profiles/) and [Link tracing and profiling with span profiles](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/trace-span-profiles/).
 
 {{< youtube id="AG8VzfFMLxo" >}}
+
+{{< docs/shared source="grafana" lookup="datasources/query-with-gcx.md" version="<GRAFANA_VERSION>" >}}
+
+For example, to run a profiling query against your Pyroscope data source, use `gcx datasources pyroscope query`:
+
+```sh
+gcx datasources pyroscope query -d <DATASOURCE_UID> '{service_name="frontend"}' \
+  --profile-type process_cpu:cpu:nanoseconds:cpu:nanoseconds --since 1h
+```
+
+Replace _`<DATASOURCE_UID>`_ with the UID of your Pyroscope data source. The query takes a label selector (`{service_name="frontend"}`), a profile type (`--profile-type`), and a time range (`--since`).
 
 ## Related Pyroscope documentation
 

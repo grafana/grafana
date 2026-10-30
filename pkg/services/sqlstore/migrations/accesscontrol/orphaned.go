@@ -18,7 +18,7 @@ func AddOrphanedMigrations(mg *migrator.Migrator) {
 	mg.AddMigration(orphanedServiceAccountsPermissions, &orphanedServiceAccountPermissions{})
 }
 
-var _ migrator.CodeMigration = new(alertingScopeRemovalMigrator)
+var _ migrator.CodeMigration = (*alertingScopeRemovalMigrator)(nil)
 
 type orphanedServiceAccountPermissions struct {
 	migrator.MigrationBase

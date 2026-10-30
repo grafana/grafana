@@ -10,7 +10,6 @@ import (
 	"go.opentelemetry.io/otel"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
-	"gocloud.dev/blob/memblob"
 )
 
 func setupSnapshotSpanRecorder(t *testing.T) *tracetest.SpanRecorder {
@@ -63,7 +62,7 @@ func TestSnapshotDownloadEmitsSpan(t *testing.T) {
 
 	store := newHookableStore(t)
 	dt := newDownloadTest(t, store)
-	seedDownloadableSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now()), &IndexMeta{
+	seedDownloadableSnapshot(t, t.Context(), store.inner, dt.ns, makeULID(t, time.Now()), &IndexMeta{
 		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 42,
 		UploadTimestamp:       time.Now(),
@@ -98,13 +97,11 @@ func TestSnapshotCleanupEmitsSpanAndLockEvents(t *testing.T) {
 	recorder := setupSnapshotSpanRecorder(t)
 
 	ctx := t.Context()
-	bucket := memblob.OpenBucket(nil)
-	t.Cleanup(func() { _ = bucket.Close() })
-	store := newTestRemoteIndexStore(t, bucket)
+	store := newTestKVRemoteIndexStore(t)
 	ns := newTestNsResource()
 	now := time.Now()
-	seedSnapshot(t, ctx, bucket, ns, makeULID(t, now.Add(-3*time.Hour)), mkMeta("11.5.0", 100, now.Add(-3*time.Hour)))
-	seedSnapshot(t, ctx, bucket, ns, makeULID(t, now.Add(-2*time.Hour)), mkMeta("11.5.0", 200, now.Add(-2*time.Hour)))
+	seedSnapshot(t, ctx, store, ns, makeULID(t, now.Add(-3*time.Hour)), mkMeta("11.5.0", 100, now.Add(-3*time.Hour)))
+	seedSnapshot(t, ctx, store, ns, makeULID(t, now.Add(-2*time.Hour)), mkMeta("11.5.0", 200, now.Add(-2*time.Hour)))
 
 	be, _ := newCleanupTestBackend(t, store, nil)
 	be.runCleanup(ctx)

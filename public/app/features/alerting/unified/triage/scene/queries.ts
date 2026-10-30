@@ -109,6 +109,18 @@ function orSelectors(selectors: string[]): string {
   return `(${selectors.join(' or ')})`;
 }
 
+function withLastOverTime(selectors: string[], lookback: string): string[] {
+  return selectors.map((selector) => `last_over_time(${selector}[${lookback}])`);
+}
+
+/**
+ * Same as withLastOverTime, but ORs the bare selector back in, so a step shorter than the
+ * sampling cadence still gets the bare selector's 5m default lookback instead of a narrower one.
+ */
+function withLastOverTimeFallback(selectors: string[], lookback: string): string[] {
+  return selectors.map((selector) => `(last_over_time(${selector}[${lookback}]) or ${selector})`);
+}
+
 /** Time series for the summary bar chart: count by alertstate */
 export function summaryChartQuery(filter: string): SceneDataQuery {
   return getDataQuery(`count by (alertstate) (${orSelectors(buildMetricSelectors(filter))})`, {
@@ -116,10 +128,15 @@ export function summaryChartQuery(filter: string): SceneDataQuery {
   });
 }
 
-/** Range table query (A) for tree rows + deduplicated instant query (B) for badge counts */
+/**
+ * Range table query (A) for tree rows + deduplicated instant query (B) for badge counts.
+ * Query A's step-robust wrapping matches alertRuleInstancesQuery — see its docstring.
+ */
 export function getWorkbenchQueries(countBy: string, filter: string): [SceneDataQuery, SceneDataQuery] {
+  const lookbackSelectors = withLastOverTimeFallback(buildMetricSelectors(filter), '$__interval');
+
   return [
-    getDataQuery(`count by (${countBy}) (${orSelectors(buildMetricSelectors(filter))})`, {
+    getDataQuery(`count by (${countBy}) (${orSelectors(lookbackSelectors)})`, {
       refId: 'A',
       format: 'table',
     }),
@@ -137,7 +154,11 @@ export function summaryInstanceCountQuery(filter: string): SceneDataQuery {
   return getDataQuery(getAlertsSummariesQuery('alertstate', filter), { instant: true, format: 'table' });
 }
 
-/** Instance timeseries for a specific alert rule, optionally scoped to parent group labels. */
+/**
+ * Instance timeseries for a specific alert rule, optionally scoped to parent group labels.
+ * Uses withLastOverTimeFallback so a short-lived instance can't fall between grid points and
+ * vanish once the step exceeds Prometheus's 5m lookback delta — see its docstring.
+ */
 export function alertRuleInstancesQuery(
   ruleUID: string,
   filter: string,
@@ -153,9 +174,10 @@ export function alertRuleInstancesQuery(
     { name: 'grafana_rule_uid', operator: '=', value: ruleUID },
     ...groupMatchers,
   ]);
+  const lookbackSelectors = withLastOverTimeFallback(selectors, '$__interval');
 
   return getDataQuery(
-    `count without (alertname, grafana_alertstate, grafana_folder, grafana_rule_uid) (${orSelectors(selectors)})`,
+    `count without (alertname, grafana_alertstate, grafana_folder, grafana_rule_uid) (${orSelectors(lookbackSelectors)})`,
     { format: 'timeseries', legendFormat: '{{alertstate}}' }
   );
 }
@@ -172,8 +194,8 @@ export function alertRuleInstancesQuery(
 function uniqueAlertInstancesExpr(filter: string): string {
   const firingSelectors = buildMetricSelectors(filter, [{ name: 'alertstate', operator: '=', value: 'firing' }]);
   const pendingSelectors = buildMetricSelectors(filter, [{ name: 'alertstate', operator: '=', value: 'pending' }]);
-  const firingExpr = orSelectors(firingSelectors.map((selector) => `last_over_time(${selector}[$__range])`));
-  const pendingExpr = orSelectors(pendingSelectors.map((selector) => `last_over_time(${selector}[$__range])`));
+  const firingExpr = orSelectors(withLastOverTime(firingSelectors, '$__range'));
+  const pendingExpr = orSelectors(withLastOverTime(pendingSelectors, '$__range'));
 
   return (
     `${firingExpr} or ` + `(${pendingExpr} ` + `unless ignoring(alertstate, grafana_alertstate) ` + `${firingExpr})`

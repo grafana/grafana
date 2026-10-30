@@ -1,5 +1,5 @@
 import { type AnnotationQuery, getDataSourceRef } from '@grafana/data';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceSettings } from '@grafana/runtime';
 import {
   type SceneDataLayerProviderState,
   type SceneDataLayerProvider,
@@ -39,8 +39,11 @@ export class DashboardDataLayerSet
     this._subs.add(
       this.subscribeToState((newState, oldState) => {
         if (newState.annotationLayers !== oldState.annotationLayers) {
-          this.querySub?.unsubscribe();
+          const previousSubscription = this.querySub;
+          this.querySub = undefined;
+          // Keep retained layers active so their mounted controls do not lose state subscriptions.
           this.subscribeToAllLayers(this.getAllLayers());
+          previousSubscription?.unsubscribe();
         }
       })
     );

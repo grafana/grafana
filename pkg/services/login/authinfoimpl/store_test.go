@@ -36,7 +36,7 @@ func TestIntegrationAuthInfoStore(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sql := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	store, err := ProvideStore(context.Background(), legacysql.NewDatabaseProvider(sql), secretstest.NewFakeSecretsService())
+	store, err := ProvideLegacyStore(context.Background(), legacysql.NewDatabaseProvider(sql), secretstest.NewFakeSecretsService())
 	require.NoError(t, err)
 
 	t.Run("should be able to auth lables for users", func(t *testing.T) {
@@ -235,7 +235,7 @@ func TestStoreUsesProviderTables(t *testing.T) {
 
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "test_schema"."user_auth"`)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
-	store, err := ProvideStore(ctx, provider, secretstest.NewFakeSecretsService())
+	store, err := ProvideLegacyStore(ctx, provider, secretstest.NewFakeSecretsService())
 	require.NoError(t, err)
 
 	mock.ExpectQuery(regexp.QuoteMeta("FROM `test_schema`.`user_auth`")).

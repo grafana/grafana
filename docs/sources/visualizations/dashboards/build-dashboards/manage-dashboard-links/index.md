@@ -60,9 +60,9 @@ Dashboard links can also be used as shortcuts to external systems, such as submi
 To see an example of dashboard links in action, check out:
 
 - [Dashboard links with variables](https://play.grafana.org/d/rUpVRdamz/dashboard-links-with-variables?orgId=1)
-- [Prometheus repeat](https://play.grafana.org/d/000000036/prometheus-repeat?orgId=1)
+- [Prometheus repeat](https://play.grafana.org/d/dbg1erw7kech6oe/placeholder-dashboard)
 
-Once you've added a dashboard link, it appears in the upper right corner of your dashboard.
+After you've added a dashboard link, it appears in the upper right corner of your dashboard.
 
 ### Add links to dashboards
 
@@ -72,8 +72,8 @@ To add a link to another dashboard at the top of your current dashboard, follow 
 
 1. In the dashboard you want to link, click **Edit**.
 1. In the toolbar, click the **Dashboard options** icon.
-1. In the sidebar, click **Settings**.
-1. Go to the **Links** tab and then click **Add dashboard link**.
+1. In the sidebar, click **View all settings**.
+1. Go to the **Links** tab and then click **Add dashboard link**. If the dashboard already has links, click **New link**.
 
 {{< shared id="add-dashboard-link" >}}
 
@@ -116,8 +116,8 @@ To add a URL link to your dashboard, follow these steps:
 
 1. In the dashboard you want to link, click **Edit**.
 1. In the toolbar, click the **Dashboard options** icon.
-1. In the sidebar, click **Settings**.
-1. Go to the **Links** tab and then click **Add dashboard link**.
+1. In the sidebar, click **View all settings**.
+1. Go to the **Links** tab and then click **Add dashboard link**. If the dashboard already has links, click **New link**.
 
 {{< shared id="url-dashboard-link" >}}
 
@@ -148,7 +148,7 @@ To edit, duplicate, or delete dashboard link, follow these steps:
 
 1. In the dashboard you want to link, click **Edit**.
 1. In the toolbar, click the **Dashboard options** icon.
-1. In the sidebar, click **Settings**.
+1. In the sidebar, click **View all settings**.
 1. Go to the **Links** tab.
 1. Do one of the following:
    - **Edit** - Click the name of the link and update the link settings.

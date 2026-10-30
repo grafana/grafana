@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/datasourcek8s"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
@@ -127,44 +126,7 @@ func (s *ResourcePermSqlBackend) latestUpdate(ctx context.Context, dbHelper *leg
 
 // getRbacAssignmentsWithTx queries resource permissions based on the provided ListResourcePermissionsQuery and groups them by resource (e.g. {folder.grafana.app, folders, fold1})
 func (s *ResourcePermSqlBackend) getRbacAssignmentsWithTx(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, tx *session.SessionTx, query *ListResourcePermissionsQuery) ([]rbacAssignment, error) {
-	rawQuery, args, err := buildListResourcePermissionsQueryFromTemplate(dbHelper, query, true)
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := tx.Query(ctx, rawQuery, args...)
-	if err != nil {
-		if rows != nil {
-			_ = rows.Close()
-		}
-		if isDatasourceTypeColumnMissing(err) {
-			return s.getRbacAssignmentsNoDsTypeWithTx(ctx, dbHelper, tx, query)
-		}
-		return nil, fmt.Errorf("querying resource permissions: %w", err)
-	}
-	defer func() {
-		_ = rows.Close()
-	}()
-
-	permissions := make([]rbacAssignment, 0, 8)
-	for rows.Next() {
-		var perm rbacAssignment
-		if err := rows.Scan(
-			&perm.ID, &perm.Action, &perm.Scope, &perm.Created, &perm.Updated, &perm.RoleName,
-			&perm.SubjectUID, &perm.SubjectType, &perm.IsServiceAccount, &perm.DatasourceType,
-		); err != nil {
-			return nil, fmt.Errorf("scanning resource permission: %w", err)
-		}
-		permissions = append(permissions, perm)
-	}
-
-	return permissions, nil
-}
-
-// getRbacAssignmentsNoDsTypeWithTx is a fallback for databases where the datasource_type
-// column does not yet exist in the permission table (e.g. before the migration runs).
-func (s *ResourcePermSqlBackend) getRbacAssignmentsNoDsTypeWithTx(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, tx *session.SessionTx, query *ListResourcePermissionsQuery) ([]rbacAssignment, error) {
-	rawQuery, args, err := buildListResourcePermissionsQueryFromTemplate(dbHelper, query, false)
+	rawQuery, args, err := buildListResourcePermissionsQueryFromTemplate(dbHelper, query)
 	if err != nil {
 		return nil, err
 	}
@@ -193,19 +155,6 @@ func (s *ResourcePermSqlBackend) getRbacAssignmentsNoDsTypeWithTx(ctx context.Co
 	}
 
 	return permissions, nil
-}
-
-// isDatasourceTypeColumnMissing returns true when the error indicates that the
-// datasource_type column does not exist in the database (pre-migration state).
-func isDatasourceTypeColumnMissing(err error) bool {
-	if err == nil {
-		return false
-	}
-	msg := strings.ToLower(err.Error())
-	return strings.Contains(msg, "datasource_type") &&
-		(strings.Contains(msg, "unknown column") ||
-			strings.Contains(msg, "does not exist") ||
-			strings.Contains(msg, "no such column"))
 }
 
 // getResourcePermission retrieves a single ResourcePermission by its name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs)
@@ -325,8 +274,7 @@ func (s *ResourcePermSqlBackend) storeRbacAssignment(ctx context.Context, dbHelp
 
 // buildRbacAssignments builds the list of assignments (role assignments and permissions) for a given ResourcePermission spec
 // It resolves user/team/service account UIDs to internal IDs for the role name and assignee subjectID
-// datasourceType is the plugin type (e.g. "loki") extracted from the resource group; empty for non-datasource resources.
-func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns types.NamespaceInfo, mapper Mapper, v0ResourcePerm []v0alpha1.ResourcePermissionspecPermission, rbacScope, datasourceType string) ([]rbacAssignmentCreate, error) {
+func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns types.NamespaceInfo, mapper Mapper, v0ResourcePerm []v0alpha1.ResourcePermissionspecPermission, rbacScope string) ([]rbacAssignmentCreate, error) {
 	assignments := make([]rbacAssignmentCreate, 0, len(v0ResourcePerm))
 
 	for _, perm := range v0ResourcePerm {
@@ -354,7 +302,6 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 				SubjectID:        fmt.Sprintf("%d", userID.ID),
 				Action:           rbacActionSet,
 				Scope:            rbacScope,
-				DatasourceType:   datasourceType,
 			})
 		case v0alpha1.ResourcePermissionSpecPermissionKindTeam:
 			teamID, err := s.identityStore.GetTeamInternalID(ctx, ns, legacy.GetTeamInternalIDQuery{
@@ -374,7 +321,6 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 				SubjectID:        fmt.Sprintf("%d", teamID.ID),
 				Action:           rbacActionSet,
 				Scope:            rbacScope,
-				DatasourceType:   datasourceType,
 			})
 		case v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount:
 			saID, err := s.identityStore.GetServiceAccountInternalID(ctx, ns, legacy.GetServiceAccountInternalIDQuery{
@@ -394,7 +340,6 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 				SubjectID:        fmt.Sprintf("%d", saID.ID),
 				Action:           rbacActionSet,
 				Scope:            rbacScope,
-				DatasourceType:   datasourceType,
 			})
 		case v0alpha1.ResourcePermissionSpecPermissionKindBasicRole:
 			if !allowedBasicRoles[perm.Name] {
@@ -407,7 +352,6 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 				SubjectID:        perm.Name,
 				Action:           rbacActionSet,
 				Scope:            rbacScope,
-				DatasourceType:   datasourceType,
 			})
 		default:
 			return nil, fmt.Errorf("unknown permission kind: %q: %w", perm.Kind, errInvalidSpec)
@@ -443,7 +387,7 @@ func (s *ResourcePermSqlBackend) createResourcePermission(
 		return 0, apierrors.NewBadRequest(fmt.Sprintf("resolving scope for %q: %v", grn.Name, err))
 	}
 
-	assignments, err := s.buildRbacAssignments(ctx, ns, mapper, v0ResourcePerm.Spec.Permissions, rbacScope, datasourcek8s.DSTypeFromDatasourceAPIGroup(grn.Group))
+	assignments, err := s.buildRbacAssignments(ctx, ns, mapper, v0ResourcePerm.Spec.Permissions, rbacScope)
 	if err != nil {
 		return 0, err
 	}
@@ -489,7 +433,7 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 		}
 
 		if len(permissionsToRemove) > 0 {
-			permsToRemove, err := s.buildRbacAssignments(ctx, ns, mapper, permissionsToRemove, rbacScope, datasourcek8s.DSTypeFromDatasourceAPIGroup(grn.Group))
+			permsToRemove, err := s.buildRbacAssignments(ctx, ns, mapper, permissionsToRemove, rbacScope)
 			if err != nil {
 				return err
 			}
@@ -514,7 +458,7 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 		}
 
 		if len(permissionsToAdd) > 0 {
-			permsToAdd, err := s.buildRbacAssignments(ctx, ns, mapper, permissionsToAdd, rbacScope, datasourcek8s.DSTypeFromDatasourceAPIGroup(grn.Group))
+			permsToAdd, err := s.buildRbacAssignments(ctx, ns, mapper, permissionsToAdd, rbacScope)
 			if err != nil {
 				return fmt.Errorf("could not build rbac assignments: %w", err)
 			}
@@ -641,7 +585,7 @@ func (s *ResourcePermSqlBackend) ListDirectPermissionsForSubject(ctx context.Con
 	}
 	result := make([]v0alpha1.PermissionSpec, 0, len(assignments))
 	for _, a := range assignments {
-		grn, err := s.mappers.ParseScopeCtx(ctx, ns, s.identityStore, a.Scope, a.DatasourceType)
+		grn, err := s.mappers.ParseScopeCtx(ctx, ns, s.identityStore, a.Scope)
 		if err != nil {
 			logger.Warn("Dropping permission with unresolvable scope", "scope", a.Scope, "action", a.Action, "error", err)
 			continue

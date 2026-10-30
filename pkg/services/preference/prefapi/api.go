@@ -58,7 +58,7 @@ func UpdatePreferencesFor(ctx context.Context,
 		Language:         dtoCmd.Language,
 		Timezone:         dtoCmd.Timezone,
 		WeekStart:        dtoCmd.WeekStart,
-		HomeDashboardID:  dtoCmd.HomeDashboardID,
+		HomeDashboardID:  dtoCmd.HomeDashboardID, //nolint:staticcheck // Preserve legacy field compatibility.
 		HomeDashboardUID: dtoCmd.HomeDashboardUID,
 		QueryHistory:     dtoCmd.QueryHistory,
 		Navbar:           dtoCmd.Navbar,

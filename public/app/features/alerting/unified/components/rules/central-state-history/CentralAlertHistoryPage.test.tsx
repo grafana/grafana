@@ -1,4 +1,4 @@
-import { render, screen, testWithFeatureToggles } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
@@ -73,7 +73,15 @@ describe('CentralAlertHistoryPage', () => {
     }
   );
 
-  describe('when alertingNotificationHistoryGlobal is disabled', () => {
+  describe('when notification history is disabled', () => {
+    beforeEach(() => {
+      config.unifiedAlerting.notificationHistoryEnabled = false;
+    });
+
+    afterEach(() => {
+      config.unifiedAlerting.notificationHistoryEnabled = undefined;
+    });
+
     it('should not render tabs', () => {
       renderHistoryPage();
 
@@ -97,8 +105,14 @@ describe('CentralAlertHistoryPage', () => {
     });
   });
 
-  describe('when alertingNotificationHistoryGlobal is enabled', () => {
-    testWithFeatureToggles({ enable: ['alertingNotificationHistoryGlobal'] });
+  describe('when notification history is enabled', () => {
+    beforeEach(() => {
+      config.unifiedAlerting.notificationHistoryEnabled = true;
+    });
+
+    afterEach(() => {
+      config.unifiedAlerting.notificationHistoryEnabled = undefined;
+    });
 
     it('keeps notifications accessible when alert event history is unavailable', async () => {
       config.unifiedAlerting.stateHistory = { backend: 'annotations' };

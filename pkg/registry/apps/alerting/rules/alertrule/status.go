@@ -12,15 +12,16 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"sigs.k8s.io/structured-merge-diff/v6/fieldpath"
 
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/convert"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
 
 // ruleStatusWriter persists the serialized status subresource for a single rule.
-// Satisfied by *store.DBstore (SaveAlertRuleStatus).
 type ruleStatusWriter interface {
 	SaveAlertRuleStatus(ctx context.Context, orgID int64, ruleUID string, data []byte) error
 }
@@ -87,7 +88,7 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 	if err != nil {
 		return nil, false, err
 	}
-	newRule, ok := obj.(*model.AlertRule)
+	newRule, ok := obj.(*v1beta1.AlertRule)
 	if !ok {
 		return nil, false, fmt.Errorf("expected AlertRule but got %T", obj)
 	}
@@ -121,7 +122,7 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 // Legacy is the source of truth. When the object is not in unified storage — Mode0
 // (unified disabled) or a best-effort write lag in Mode1 — this is an expected skip,
 // so NotFound is swallowed silently; only unexpected errors are logged.
-func (s *statusDualWriter) mirrorToUnified(ctx context.Context, name string, status model.AlertRuleStatus, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, options *metav1.UpdateOptions) {
+func (s *statusDualWriter) mirrorToUnified(ctx context.Context, name string, status v1beta1.AlertRuleStatus, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, options *metav1.UpdateOptions) {
 	unified, err := s.status.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
@@ -129,12 +130,19 @@ func (s *statusDualWriter) mirrorToUnified(ctx context.Context, name string, sta
 		}
 		return
 	}
-	u, ok := unified.(*model.AlertRule)
-	if !ok {
+	// The unified store serves the request version, which can be v0alpha1.
+	u, err := convert.Hub[*v1beta1.AlertRule](unified)
+	if err != nil {
+		logging.FromContext(ctx).Warn("unable to convert unified alert rule for status mirroring", "error", err)
 		return
 	}
 	u.Status = status
-	if _, _, err := s.status.Update(ctx, name, rest.DefaultUpdatedObjectInfo(u), createValidation, updateValidation, false, options); err != nil {
+	out, err := convert.Like(u, unified.(resource.Object))
+	if err != nil {
+		logging.FromContext(ctx).Warn("unable to convert alert rule status for mirroring", "error", err)
+		return
+	}
+	if _, _, err := s.status.Update(ctx, name, rest.DefaultUpdatedObjectInfo(out), createValidation, updateValidation, false, options); err != nil {
 		logging.FromContext(ctx).Warn("failed to mirror alert rule status to unified storage", "error", err)
 	}
 }

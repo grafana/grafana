@@ -4650,8 +4650,10 @@ export type CreateOrUpdateReport = {
 export type ReportEmail = {
   /** Comma-separated list of emails to which to send the report to. */
   emails?: string;
-  /** Send the report to the emails specified in the report. Required if emails is not present. */
+  /** Numeric ID of the report. Can send either ID or UID. If both are present, UID takes precedence. */
   id?: string;
+  /** UID of the report. Can send either ID or UID. If both are present, UID takes precedence. */
+  uid?: string;
   /** Send the report to the emails specified in the report. Required if emails is not present. */
   useEmailsFromReport?: boolean;
 };
@@ -4791,7 +4793,7 @@ export type Extension = {
   Id?: AnObjectIdentifierRepresentsAnAsn1ObjectIdentifier;
   Value?: number[];
 };
-export type AttributeTypeAndValue = {
+export type AttributeTypeAndValueMirrorsTheAsn1StructureOfTheSameNameInRfc5280Section4124 = {
   Type?: AnObjectIdentifierRepresentsAnAsn1ObjectIdentifier;
   Value?: any;
 };
@@ -4801,13 +4803,13 @@ export type Name = {
   /** ExtraNames contains attributes to be copied, raw, into any marshaled
     distinguished names. Values override any attributes with the same OID.
     The ExtraNames field is not populated when parsing, see Names. */
-  ExtraNames?: AttributeTypeAndValue[];
+  ExtraNames?: AttributeTypeAndValueMirrorsTheAsn1StructureOfTheSameNameInRfc5280Section4124[];
   Locality?: string[];
   /** Names contains all parsed attributes. When parsing distinguished names,
     this can be used to extract non-standard attributes that are not parsed
     by this package. When marshaling to RDNSequences, the Names field is
     ignored, see ExtraNames. */
-  Names?: AttributeTypeAndValue[];
+  Names?: AttributeTypeAndValueMirrorsTheAsn1StructureOfTheSameNameInRfc5280Section4124[];
   Organization?: string[];
   OrganizationalUnit?: string[];
   PostalCode?: string[];
@@ -4942,6 +4944,7 @@ export type ACertificateRepresentsAnX509Certificate = {
   PublicKeyAlgorithm?: PublicKeyAlgorithm;
   Raw?: number[];
   RawIssuer?: number[];
+  RawSignatureAlgorithm?: number[];
   RawSubject?: number[];
   RawSubjectPublicKeyInfo?: number[];
   RawTBSCertificate?: number[];
@@ -5126,7 +5129,10 @@ export type PreferencesQueryHistoryPreference = {
   homeTab?: string;
 };
 export type PreferencesSpec = {
-  /** UID for the home dashboard */
+  /** UID for the home dashboard. The reserved value "global-home" is not a
+    dashboard UID: it selects the instance default home (home_page, the
+    configured home dashboard file, or the built-in home page) instead of
+    falling through to lower-precedence preferences. */
   homeDashboardUID?: string;
   /** Explicit home URL (NOTE: this can only be modified in the system settings) */
   homeURL?: string;

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"iter"
 
 	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -50,8 +49,7 @@ func (s *PendingDeleteStore) Get(ctx context.Context, name string) (PendingDelet
 	if err != nil {
 		return PendingDeleteRecord{}, err
 	}
-	data, err := io.ReadAll(reader)
-	_ = reader.Close()
+	data, err := kvpkg.ReadAllAndClose(reader)
 	if err != nil {
 		return PendingDeleteRecord{}, fmt.Errorf("reading pending delete record: %w", err)
 	}

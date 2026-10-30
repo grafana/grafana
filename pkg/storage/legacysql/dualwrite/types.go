@@ -52,11 +52,3 @@ type Service interface {
 	// change the status (finish migration etc)
 	Update(ctx context.Context, status StorageStatus) (StorageStatus, error)
 }
-
-type SearchAdapter struct {
-	Service
-}
-
-func NewSearchAdapter(s Service) *SearchAdapter {
-	return &SearchAdapter{Service: s}
-}

@@ -1,18 +1,25 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 import { type Props } from 'react-virtualized-auto-sizer';
 
 import { type DataFrame, FieldType } from '@grafana/data';
+import { joinByFieldTransformer, mockTransformationsRegistry } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { type TableNG } from '@grafana/ui/unstable';
 
 import { InspectDataTab } from './InspectDataTab';
+import { downloadDataFrameAsCsv } from './utils/download';
 
 type TableNGProps = ComponentProps<typeof TableNG>;
+
+jest.mock('./utils/download', () => ({
+  ...jest.requireActual('./utils/download'),
+  downloadDataFrameAsCsv: jest.fn(),
+}));
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return ({ children }: Props) =>
@@ -28,6 +35,8 @@ jest.mock('react-virtualized-auto-sizer', () => {
 // frame to TableNG — snapshotted here, before TableNG's own fallback caching pass (which mutates
 // field.state on the same object in place) can run and mask the thing we're trying to observe.
 let dataArrivedWithCachedDisplayNames: boolean | undefined;
+let tableNGFrames: DataFrame[] = [];
+let tableNGTimeZone: string | undefined;
 jest.mock('@grafana/ui/unstable', () => {
   const actual = jest.requireActual('@grafana/ui/unstable');
   return {
@@ -35,6 +44,8 @@ jest.mock('@grafana/ui/unstable', () => {
     // Delegate to the real component so the "grid renders" assertions keep working.
     TableNG: (props: TableNGProps) => {
       dataArrivedWithCachedDisplayNames = props.data.fields.every((f) => Boolean(f.state?.displayName));
+      tableNGFrames.push(props.data);
+      tableNGTimeZone = props.timeZone;
       return <actual.TableNG {...props} />;
     },
   };
@@ -74,16 +85,19 @@ const createProps = (propsOverride?: Partial<ComponentProps<typeof InspectDataTa
 
 describe('InspectDataTab', () => {
   describe('when panel is not passed as prop (Explore)', () => {
-    it('should render InspectDataTab', () => {
+    it('should render InspectDataTab', async () => {
       render(<InspectDataTab {...createProps()} />);
+      await screen.findByRole('table');
       expect(screen.getByTestId(selectors.components.PanelInspector.Data.content)).toBeInTheDocument();
     });
-    it('should render Data Option row', () => {
+    it('should render Data Option row', async () => {
       render(<InspectDataTab {...createProps()} />);
+      await screen.findByRole('table');
       expect(screen.getByText(/Data options/i)).toBeInTheDocument();
     });
     it('should show available options', async () => {
       render(<InspectDataTab {...createProps()} />);
+      await screen.findByRole('table');
       const dataOptions = screen.getByText(/Data options/i);
       await userEvent.click(dataOptions);
       expect(screen.getByText(/Show data frame/i)).toBeInTheDocument();
@@ -91,13 +105,14 @@ describe('InspectDataTab', () => {
     });
     it('should show available dataFrame options', async () => {
       render(<InspectDataTab {...createProps()} />);
+      await screen.findByRole('table');
       const dataOptions = screen.getByText(/Data options/i);
       await userEvent.click(dataOptions);
       const dataFrameInput = screen.getByRole('combobox', { name: /Select dataframe/i });
       await userEvent.click(dataFrameInput);
       expect(screen.getByText(/Second data frame/i)).toBeInTheDocument();
     });
-    it('should show download logs button if logs data', () => {
+    it('should show download logs button if logs data', async () => {
       const oldConfig = config.exploreHideLogsDownload;
       config.exploreHideLogsDownload = false;
       const dataWithLogs = [
@@ -115,10 +130,11 @@ describe('InspectDataTab', () => {
         },
       ] as unknown as DataFrame[];
       render(<InspectDataTab {...createProps({ data: dataWithLogs })} />);
+      await screen.findByRole('table');
       expect(screen.getByText(/Download logs/i)).toBeInTheDocument();
       config.exploreHideLogsDownload = oldConfig;
     });
-    it('should not show download logs button if logs data but config disabled', () => {
+    it('should not show download logs button if logs data but config disabled', async () => {
       const oldConfig = config.exploreHideLogsDownload;
       config.exploreHideLogsDownload = true;
       const dataWithLogs = [
@@ -136,14 +152,16 @@ describe('InspectDataTab', () => {
         },
       ] as unknown as DataFrame[];
       render(<InspectDataTab {...createProps({ data: dataWithLogs })} />);
+      await screen.findByRole('table');
       expect(screen.queryByText(/Download logs/i)).not.toBeInTheDocument();
       config.exploreHideLogsDownload = oldConfig;
     });
-    it('should not show download logs button if no logs data', () => {
+    it('should not show download logs button if no logs data', async () => {
       render(<InspectDataTab {...createProps()} />);
+      await screen.findByRole('table');
       expect(screen.queryByText(/Download logs/i)).not.toBeInTheDocument();
     });
-    it('should show download traces button if traces data', () => {
+    it('should show download traces button if traces data', async () => {
       const dataWithtraces = [
         {
           name: 'Data frame with traces',
@@ -201,13 +219,15 @@ describe('InspectDataTab', () => {
         },
       ] as unknown as DataFrame[];
       render(<InspectDataTab {...createProps({ data: dataWithtraces })} />);
+      await screen.findByRole('table');
       expect(screen.getByText(/Download traces/i)).toBeInTheDocument();
     });
-    it('should not show download traces button if no traces data', () => {
+    it('should not show download traces button if no traces data', async () => {
       render(<InspectDataTab {...createProps()} />);
+      await screen.findByRole('table');
       expect(screen.queryByText(/Download traces/i)).not.toBeInTheDocument();
     });
-    it('should show download service graph button', () => {
+    it('should show download service graph button', async () => {
       const sgFrames = [
         {
           name: 'Nodes',
@@ -233,13 +253,48 @@ describe('InspectDataTab', () => {
           })}
         />
       );
+      await screen.findByRole('table');
       expect(screen.getByText(/Download service graph/i)).toBeInTheDocument();
+    });
+    it('should download the displayed data frame when the selected one no longer exists', async () => {
+      const { rerender } = render(<InspectDataTab {...createProps()} />);
+      await screen.findByRole('table');
+      await userEvent.click(screen.getByText(/Data options/i));
+      await userEvent.click(screen.getByRole('combobox', { name: /Select dataframe/i }));
+      await userEvent.click(screen.getByText('Second data frame (1)'));
+
+      const [first] = createProps().data!;
+      rerender(<InspectDataTab {...createProps({ data: [first] })} />);
+      await userEvent.click(screen.getByText(/Download CSV/i));
+
+      expect(downloadDataFrameAsCsv).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'First data frame' }),
+        undefined,
+        {},
+        'noop',
+        false
+      );
     });
   });
 
   describe('when useTableNG is true', () => {
+    beforeAll(() => {
+      mockTransformationsRegistry([joinByFieldTransformer]);
+    });
+
     beforeEach(() => {
       dataArrivedWithCachedDisplayNames = undefined;
+      tableNGFrames = [];
+    });
+
+    it('passes inspector timezone to TableNG for value filtering', () => {
+      render(
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <InspectDataTab {...createProps({ useTableNG: true, timeZone: 'Pacific/Auckland' })} />
+        </OpenFeatureProvider>
+      );
+      expect(screen.getByRole('grid')).toBeInTheDocument();
+      expect(tableNGTimeZone).toBe('Pacific/Auckland');
     });
 
     it('should render the data with TableNG instead of the legacy Table', () => {
@@ -268,6 +323,66 @@ describe('InspectDataTab', () => {
       );
 
       expect(dataArrivedWithCachedDisplayNames).toBe(true);
+    });
+
+    it('should not prefix display names with the frame name when there are multiple frames', () => {
+      render(
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <InspectDataTab {...createProps({ useTableNG: true })} />
+        </OpenFeatureProvider>
+      );
+
+      expect(tableNGFrames.at(-1)!.fields.map((f) => f.state?.displayName)).toEqual(['time', 'name', 'value']);
+    });
+
+    it('should not show a join computed from older data after the data refreshes', async () => {
+      const hasValue = (frame: DataFrame, value: string) => frame.fields.some((f) => f.values.includes(value));
+      const selectDataFrame = async (label: string) => {
+        await userEvent.click(screen.getByRole('combobox', { name: /Select dataframe/i }));
+        await userEvent.click(screen.getByText(label));
+      };
+      const renderTab = (data?: DataFrame[]) => (
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <InspectDataTab {...createProps({ useTableNG: true, ...(data && { data }) })} />
+        </OpenFeatureProvider>
+      );
+
+      const { rerender } = render(renderTab());
+      await userEvent.click(screen.getByText(/Data options/i));
+      await selectDataFrame('Series joined by time');
+      await waitFor(() => expect(hasValue(tableNGFrames.at(-1)!, 'd')).toBe(true));
+      expect(hasValue(tableNGFrames.at(-1)!, 'uniqueA')).toBe(true);
+
+      await selectDataFrame('First data frame (0)');
+      const [first, second] = createProps().data!;
+      const refreshedFirst = {
+        ...first,
+        fields: first.fields.map((f) => (f.name === 'name' ? { ...f, values: ['uniqueB', 'b', 'c'] } : f)),
+      };
+      rerender(renderTab([refreshedFirst, second]));
+
+      tableNGFrames = [];
+      await selectDataFrame('Series joined by time');
+      await waitFor(() => expect(hasValue(tableNGFrames.at(-1)!, 'd')).toBe(true));
+      expect(hasValue(tableNGFrames.at(-1)!, 'uniqueB')).toBe(true);
+      expect(tableNGFrames.some((frame) => hasValue(frame, 'uniqueA'))).toBe(false);
+    });
+
+    it('should show the joined frame when panel transformations are applied', async () => {
+      const hasValue = (frame: DataFrame, value: string) => frame.fields.some((f) => f.values.includes(value));
+      render(
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <InspectDataTab
+            {...createProps({ useTableNG: true, options: { withTransforms: true, withFieldConfig: false } })}
+          />
+        </OpenFeatureProvider>
+      );
+
+      await userEvent.click(screen.getByText(/Data options/i));
+      await userEvent.click(screen.getByRole('combobox', { name: /Select dataframe/i }));
+      await userEvent.click(screen.getByText('Series joined by time'));
+      await waitFor(() => expect(hasValue(tableNGFrames.at(-1)!, 'd')).toBe(true));
+      expect(hasValue(tableNGFrames.at(-1)!, 'uniqueA')).toBe(true);
     });
   });
 });

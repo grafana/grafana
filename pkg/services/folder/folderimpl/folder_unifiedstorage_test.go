@@ -3,20 +3,28 @@ package folderimpl
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"slices"
+	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/protobuf/proto"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
 	clientrest "k8s.io/client-go/rest"
 
+	dashboardapp "github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	dashv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -37,12 +45,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
-	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	ngrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
@@ -65,23 +75,18 @@ type folderResult struct {
 }
 
 func buildFolderSearchResponse(results ...folderResult) *resourcepb.ResourceSearchResponse {
-	if len(results) == 0 {
-		return &resourcepb.ResourceSearchResponse{TotalHits: 0}
-	}
-	rows := make([]*resourcepb.ResourceTableRow, len(results))
+	rows := make([]*resourcepb.ResourceSearchRow, len(results))
 	for i, r := range results {
-		rows[i] = &resourcepb.ResourceTableRow{
-			Key:   &resourcepb.ResourceKey{Name: r.uid, Resource: "folders"},
-			Cells: [][]byte{[]byte(r.parentUID)},
-		}
+		rows[i] = &resourcepb.ResourceSearchRow{Key: &resourcepb.ResourceKey{Name: r.uid, Resource: "folders"}, Values: []*resourcepb.ResourceSearchValue{
+			{FieldIndex: 0, StringValues: []string{r.parentUID}},
+		}}
 	}
 	return &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-			},
-			Rows: rows,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING},
 		},
+		Rows:      rows,
 		TotalHits: int64(len(results)),
 	}
 }
@@ -113,7 +118,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	unifiedStorageFolder.Kind = "folder"
 
 	fooFolder := &folder.Folder{
-		ID:        123,
+		ID:        123, //nolint:staticcheck // Exercise legacy field compatibility.
 		Title:     "Foo Folder",
 		OrgID:     orgID,
 		UID:       "foo",
@@ -123,7 +128,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	}
 
 	notFooFolder := &folder.Folder{
-		ID:        543,
+		ID:        543, //nolint:staticcheck // Exercise legacy field compatibility.
 		Title:     "Foo Folder",
 		OrgID:     orgID,
 		UID:       "not-foo",
@@ -290,7 +295,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			}),
 	}}
 
-	alertingStore := ngstore.DBstore{
+	alertingStore := ngrules.RuleStore{
 		SQLStore:      db,
 		Cfg:           cfg.UnifiedAlerting,
 		Logger:        log.New("test-alerting-store"),
@@ -311,7 +316,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 
 	fakeK8sClient := new(client.MockK8sHandler)
 	variableK8sClient := new(client.MockK8sHandler)
-	variableK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil)
+	variableK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil)
 	folderService := &Service{
 		log:                    slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
 		unifiedStore:           unifiedStore,
@@ -406,7 +411,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 
 			t.Run("When deleting folder by uid should not return access denied error - ForceDeleteRules false", func(t *testing.T) {
 				searchMock.On("Search", mock.Anything, mock.Anything).Return(buildFolderSearchResponse(), nil).Once()
-				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
+				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil).Once()
 				publicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
@@ -420,7 +425,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 
 			t.Run("When deleting folder by uid, expectedForceDeleteRules as false,should not return access denied error", func(t *testing.T) {
 				searchMock.On("Search", mock.Anything, mock.Anything).Return(buildFolderSearchResponse(), nil).Once()
-				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
+				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil).Once()
 
 				expectedForceDeleteRules := false
 				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
@@ -434,7 +439,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 
 			t.Run("When deleting folder by uid, expectedForceDeleteRules as true, should not return access denied error", func(t *testing.T) {
 				searchMock.On("Search", mock.Anything, mock.Anything).Return(buildFolderSearchResponse(), nil).Once()
-				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
+				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil).Once()
 
 				expectedForceDeleteRules := true
 				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
@@ -476,7 +481,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				emptyString := ""
 				query := &folder.GetFolderQuery{
 					UID:          &emptyString,
-					ID:           &id,
+					ID:           &id, //nolint:staticcheck // Exercise legacy field compatibility.
 					OrgID:        1,
 					SignedInUser: usr,
 				}
@@ -490,7 +495,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				searchMock.On("Search", mock.Anything, mock.Anything).Return(buildFolderSearchResponse(), nil).Once()
 				id := int64(111111)
 				query := &folder.GetFolderQuery{
-					ID:           &id,
+					ID:           &id, //nolint:staticcheck // Exercise legacy field compatibility.
 					OrgID:        1,
 					SignedInUser: usr,
 				}
@@ -556,7 +561,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				idZero := int64(0)
 				actual, err := folderService.Get(ctx, &folder.GetFolderQuery{
 					UID:          &emptyString,
-					ID:           &idZero,
+					ID:           &idZero, //nolint:staticcheck // Exercise legacy field compatibility.
 					Title:        &emptyString,
 					OrgID:        1,
 					SignedInUser: usr,
@@ -575,7 +580,7 @@ func TestSearchFolders(t *testing.T) {
 	folderStore := folder.NewFakeStore()
 	folderStore.ExpectedFolder = &folder.Folder{
 		UID:   "parent-uid",
-		ID:    2,
+		ID:    2, //nolint:staticcheck // Exercise legacy field compatibility.
 		Title: "parent title",
 	}
 	tracer := noop.NewTracerProvider().Tracer("TestSearchFolders")
@@ -610,37 +615,24 @@ func TestSearchFolders(t *testing.T) {
 			},
 			Page:  1,
 			Limit: folderSearchLimit}).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "uid1", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"folder0"}},
+						{FieldIndex: 1, StringValues: []string{""}},
 					},
 				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid1",
-							Resource: "folder",
-						},
-						Cells: [][]byte{
-							[]byte("folder0"),
-							[]byte(""),
-						},
-					},
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid2",
-							Resource: "folder",
-						},
-						Cells: [][]byte{
-							[]byte("folder1"),
-							[]byte(""),
-						},
+				{
+					Key: &resourcepb.ResourceKey{Name: "uid2", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"folder1"}},
+						{FieldIndex: 1, StringValues: []string{""}},
 					},
 				},
 			},
@@ -702,27 +694,17 @@ func TestSearchFolders(t *testing.T) {
 			},
 			Page:  1,
 			Limit: folderSearchLimit}).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "foo",
-							Resource: "folder",
-						},
-						Cells: [][]byte{
-							[]byte("folder1"),
-							[]byte(""),
-						},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "foo", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"folder1"}},
+						{FieldIndex: 1, StringValues: []string{""}},
 					},
 				},
 			},
@@ -750,7 +732,7 @@ func TestSearchFolders(t *testing.T) {
 		fakeFolderStore := folder.NewFakeStore()
 		fakeFolderStore.ExpectedFolder = &folder.Folder{
 			UID:   "parent-uid",
-			ID:    2,
+			ID:    2, //nolint:staticcheck // Exercise legacy field compatibility.
 			Title: "parent title",
 		}
 		service.unifiedStore = fakeFolderStore
@@ -832,75 +814,26 @@ func TestSearchFolders(t *testing.T) {
 		fakeK8sClient.AssertExpectations(t)
 	})
 
-	// Unified storage/search can deploy separately from the Grafana API layer, so a search
-	// server that predates the field-value format answers the same request with a
-	// ResourceTable. The client has to keep reading that shape (see pkg/storage/unified/AGENTS.md).
-	t.Run("Search by title falls back to table results from an older search server", func(t *testing.T) {
-		fakeFolderStore := folder.NewFakeStore()
-		fakeFolderStore.ExpectedFolder = &folder.Folder{
-			UID:   "parent-uid",
-			ID:    2,
-			Title: "parent title",
+	t.Run("Search by title rejects unsupported result formats", func(t *testing.T) {
+		for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+			resourcepb.ResourceSearchRequest_UNSPECIFIED,
+			resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+			99,
+		} {
+			t.Run(format.String(), func(t *testing.T) {
+				fakeK8sClient.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+					return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES && req.Query == "*test*"
+				})).Return(&resourcepb.ResourceSearchResponse{ResultFormat: format}, nil).Once()
+				result, err := service.SearchFolders(ctx, folder.SearchFoldersQuery{Title: "test", SignedInUser: user})
+				require.ErrorContains(t, err, "unsupported search result format")
+				require.Empty(t, result)
+				fakeK8sClient.AssertExpectations(t)
+			})
 		}
-		service.unifiedStore = fakeFolderStore
-		fakeK8sClient.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
-			return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES && req.Query == "*test*"
-		})).Return(&resourcepb.ResourceSearchResponse{
-			// No ResultFormat set: an old server echoes nothing and returns a table.
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid",
-							Resource: "folder",
-						},
-						Cells: [][]byte{
-							[]byte("testing-123"),
-							[]byte("parent-uid"),
-						},
-					},
-				},
-			},
-			TotalHits: 1,
-		}, nil).Once()
-
-		result, err := service.SearchFolders(ctx, folder.SearchFoldersQuery{
-			Title:        "test",
-			SignedInUser: user,
-		})
-		require.NoError(t, err)
-
-		require.Equal(t, model.HitList{
-			{
-				UID:       "uid",
-				FolderUID: "parent-uid",
-				OrgID:     1,
-				Type:      model.DashHitFolder,
-				URI:       "db/testing-123",
-				Title:     "testing-123",
-				URL:       "/dashboards/f/uid/testing-123",
-			},
-		}, result)
-		fakeK8sClient.AssertExpectations(t)
 	})
 
-	// The subtests above assert the request shape against a mock, which never validates the
-	// response fields — that is how #132508 shipped a request asking for "labels", a field with
-	// no typed field-value definition. Run the real request through a real, populated folder
-	// index in both result formats: an unsupported field in
-	// dashboardsearch.FieldValueIncludeFields fails here, and so does a format that stops
-	// returning the values folder search depends on.
-	t.Run("Search by title returns the same usable values in both result formats", func(t *testing.T) {
+	// A real index catches unknown response fields that the request mocks cannot validate.
+	t.Run("Search by title returns usable field values from a populated index", func(t *testing.T) {
 		var captured *resourcepb.ResourceSearchRequest
 		fakeK8sClient.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 			captured = req
@@ -949,52 +882,50 @@ func TestSearchFolders(t *testing.T) {
 					}).UpdateCopyFields(),
 				}},
 			})
-		}, nil, false, time.Time{}, 0)
+		}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 		require.NoError(t, err)
 
-		// Both formats must be usable: unified storage/search may deploy separately from the API
-		// layer, so the same request can be answered either way during a rollout.
-		runFormat := func(format resourcepb.ResourceSearchRequest_ResultFormat) dashv0alpha1.SearchResults {
-			captured.ResultFormat = format
+		res, err := index.Search(ctx, nil, captured, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error, "the folder search index rejected the request SearchFolders built")
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, res.ResultFormat)
 
-			res, err := index.Search(ctx, nil, captured, nil, nil)
-			require.NoError(t, err)
-			require.Nil(t, res.Error, "the folder search index rejected the request SearchFolders built")
-
-			parsed, err := dashboardsearch.ParseResults(res, 0)
-			require.NoError(t, err)
-			return parsed
-		}
-
-		fieldValues := runFormat(resourcepb.ResourceSearchRequest_FIELD_VALUES)
-		table := runFormat(resourcepb.ResourceSearchRequest_RESOURCE_TABLE)
-
-		// Compare what SearchFolders actually reads off a hit. The formats differ in the extras
-		// bag for fields with no value — the table format emits an explicit nil per requested
-		// column, field values omits the key — so comparing whole hits would fail on data the
-		// folder code never touches.
-		consumed := func(t *testing.T, results dashv0alpha1.SearchResults) map[string]any {
-			require.Len(t, results.Hits, 1)
-			hit := results.Hits[0]
-			return map[string]any{
-				"uid":         hit.Name,
-				"title":       hit.Title,
-				"folder":      hit.Folder,
-				"description": hit.Description,
-				"legacyID":    hit.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
-			}
-		}
-
-		expected := map[string]any{
-			"uid":         "uid",
-			"title":       "testing-123",
-			"folder":      "parent-uid",
-			"description": "a folder",
-			"legacyID":    int64(2),
-		}
-		require.Equal(t, expected, consumed(t, fieldValues))
-		require.Equal(t, expected, consumed(t, table), "both result formats must yield the same usable values")
+		parsed, err := dashboardsearch.ParseResults(res, 0)
+		require.NoError(t, err)
+		require.Len(t, parsed.Hits, 1)
+		hit := parsed.Hits[0]
+		require.Equal(t, "uid", hit.Name)
+		require.Equal(t, "testing-123", hit.Title)
+		require.Equal(t, "parent-uid", hit.Folder)
+		require.Equal(t, "a folder", hit.Description)
+		require.Equal(t, int64(2), hit.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID))
 	})
+}
+
+func TestFolderLookupSearchErrors(t *testing.T) {
+	id, title := int64(1), "title"
+	for name, lookup := range map[string]folder.GetFolderQuery{
+		"by ID":    {ID: &id}, //nolint:staticcheck // Exercise legacy lookup compatibility.
+		"by title": {Title: &title},
+	} {
+		for _, tc := range folderStorageFailures(t) {
+			t.Run(name+"/"+tc.name, func(t *testing.T) {
+				cli := new(client.MockK8sHandler)
+				cli.On("GetNamespace", int64(1)).Return("default").Once()
+				cli.On("Search", mock.Anything, int64(1), mock.Anything).Return(tc.searchResponse(), tc.err).Once()
+				svc := &Service{k8sclient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
+				query := lookup
+				query.OrgID = 1
+				query.SignedInUser = &user.SignedInUser{OrgID: 1}
+
+				got, err := svc.Get(t.Context(), &query)
+
+				require.Nil(t, got)
+				requireFolderStorageError(t, tc.want, err)
+				cli.AssertExpectations(t)
+			})
+		}
+	}
 }
 
 func TestGetFolderByTitle(t *testing.T) {
@@ -1002,7 +933,7 @@ func TestGetFolderByTitle(t *testing.T) {
 	folderStore := folder.NewFakeStore()
 	folderStore.ExpectedFolder = &folder.Folder{
 		UID:   "parent-uid",
-		ID:    2,
+		ID:    2, //nolint:staticcheck // Exercise legacy field compatibility.
 		Title: "parent title",
 	}
 	tracer := noop.NewTracerProvider().Tracer("TestGetFolderByTitle")
@@ -1028,7 +959,7 @@ func TestGetFolderByTitle(t *testing.T) {
 		fakeFolderStore.ExpectedFolder = &folder.Folder{
 			UID:       "foouid",
 			ParentUID: "parentuid",
-			ID:        2,
+			ID:        2, //nolint:staticcheck // Exercise legacy field compatibility.
 			OrgID:     1,
 			Title:     "foo title",
 			URL:       "/dashboards/f/foouid/foo-title",
@@ -1047,20 +978,18 @@ func TestGetFolderByTitle(t *testing.T) {
 			},
 			Limit: folderSearchLimit}).
 			Return(&resourcepb.ResourceSearchResponse{
-				Results: &resourcepb.ResourceTable{
-					Columns: []*resourcepb.ResourceTableColumnDefinition{{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					}, {
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					}},
-					Rows: []*resourcepb.ResourceTableRow{{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Fields: []*resourcepb.ResourceSearchField{
+					{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+					{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+				},
+				Rows: []*resourcepb.ResourceSearchRow{
+					{
 						Key: &resourcepb.ResourceKey{Name: "uid", Resource: "folder"},
-						Cells: [][]byte{
-							[]byte("foouid"),
-							[]byte("parentuid"),
-						}},
+						Values: []*resourcepb.ResourceSearchValue{
+							{FieldIndex: 0, StringValues: []string{"foouid"}},
+							{FieldIndex: 1, StringValues: []string{"parentuid"}},
+						},
 					},
 				},
 				TotalHits: 1,
@@ -1078,7 +1007,7 @@ func TestGetFolderByTitle(t *testing.T) {
 		fakeFolderStore.ExpectedFolder = &folder.Folder{
 			UID:       "foouid",
 			ParentUID: "parentuid",
-			ID:        2,
+			ID:        2, //nolint:staticcheck // Exercise legacy field compatibility.
 			OrgID:     1,
 			Title:     "foo title",
 			URL:       "/dashboards/f/foouid/foo-title",
@@ -1101,23 +1030,18 @@ func TestGetFolderByTitle(t *testing.T) {
 			},
 			Limit: folderSearchLimit}).
 			Return(&resourcepb.ResourceSearchResponse{
-				Results: &resourcepb.ResourceTable{
-					Columns: []*resourcepb.ResourceTableColumnDefinition{{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					}, {
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					}},
-					Rows: []*resourcepb.ResourceTableRow{{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid",
-							Resource: "folder",
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Fields: []*resourcepb.ResourceSearchField{
+					{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+					{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+				},
+				Rows: []*resourcepb.ResourceSearchRow{
+					{
+						Key: &resourcepb.ResourceKey{Name: "uid", Resource: "folder"},
+						Values: []*resourcepb.ResourceSearchValue{
+							{FieldIndex: 0, StringValues: []string{"foouid"}},
+							{FieldIndex: 1, StringValues: []string{"parentuid"}},
 						},
-						Cells: [][]byte{
-							[]byte("foouid"),
-							[]byte("parentuid"),
-						}},
 					},
 				},
 				TotalHits: 1,
@@ -1128,7 +1052,7 @@ func TestGetFolderByTitle(t *testing.T) {
 		require.NoError(t, err)
 
 		expectedResult := &folder.Folder{
-			ID:        2,
+			ID:        2, //nolint:staticcheck // Exercise legacy field compatibility.
 			UID:       "foouid",
 			ParentUID: "parentuid",
 			Title:     "foo title",
@@ -1138,6 +1062,210 @@ func TestGetFolderByTitle(t *testing.T) {
 		compareFoldersNormalizeTime(t, expectedResult, result)
 		fakeK8sClient.AssertExpectations(t)
 	})
+}
+
+type folderDeletionSearchClient struct {
+	client.K8sHandler
+	index         resource.ResourceIndex
+	access        *folderSearchAccessClient
+	resourceName  string
+	requester     identity.Requester
+	fields        []string
+	deleted       []string
+	calls         int
+	responseBytes int
+}
+
+func (c *folderDeletionSearchClient) Search(ctx context.Context, _ int64, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	c.calls++
+	c.requester, _ = identity.GetRequester(ctx)
+	c.fields = slices.Clone(req.Fields)
+	req.Options.Key = &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: c.resourceName}
+	res, err := c.index.Search(ctx, c.access, req, nil, nil)
+	if err == nil && res != nil && c.responseBytes == 0 {
+		c.responseBytes = proto.Size(res)
+	}
+	return res, err
+}
+
+func (c *folderDeletionSearchClient) Delete(_ context.Context, name string, _ int64, _ metav1.DeleteOptions) error {
+	c.deleted = append(c.deleted, name)
+	return nil
+}
+
+func newFolderDeletionSearchClient(t testing.TB, resourceName string, count int, cfg search.PostRankAuthzConfig) *folderDeletionSearchClient {
+	t.Helper()
+	backend, err := search.NewBleveBackend(search.BleveOptions{
+		Root:                 t.TempDir(),
+		FileThreshold:        100,
+		PostRankAuthzEnabled: true,
+		PostRankAuthz:        cfg,
+		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+			resource.NewLowerGroupResource("dashboard.grafana.app", resourceName): resource.NewManifestBackedProvider(dashboardapp.LocalManifest().ManifestData),
+		}),
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	index, err := backend.BuildIndex(t.Context(), resource.NamespacedResource{
+		Namespace: "default", Group: "dashboard.grafana.app", Resource: resourceName,
+	}, int64(count), "test", func(idx resource.ResourceIndex) (int64, error) {
+		items := make([]*resource.BulkIndexItem, count)
+		for i := range items {
+			name := fmt.Sprintf("resource-%05d", i)
+			parent := "allowed"
+			if i%2 == 1 {
+				parent = "denied"
+			}
+			doc := &resource.IndexableDocument{
+				Key:  &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: resourceName, Name: name},
+				Name: name, Title: name, Folder: parent, RV: 1,
+				Description: "Shared observability configuration managed from a repository.",
+				Created:     1700000000000,
+				Updated:     1700000001000,
+				CreatedBy:   "user:creator",
+				UpdatedBy:   "user:editor",
+				Labels: map[string]string{
+					utils.LabelKeyDeprecatedInternalID: fmt.Sprint(i + 1), //nolint:staticcheck
+					"team":                             "observability",
+				},
+				Manager: &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "test-repository"},
+				Source:  &utils.SourceProperties{Path: resourceName + "/" + name + ".json", Checksum: "test-checksum", TimestampMillis: 1700000001000},
+			}
+			if resourceName == "dashboards" {
+				doc.Tags = []string{"metrics", fmt.Sprintf("service-%03d", i%100)}
+			}
+			items[i] = &resource.BulkIndexItem{Action: resource.ActionIndex, Doc: doc}
+		}
+		return int64(count), idx.BulkIndex(&resource.BulkIndexRequest{Items: items, ResourceVersion: 1})
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+	return &folderDeletionSearchClient{
+		index: index, resourceName: resourceName,
+		access: &folderSearchAccessClient{AccessClient: claims.FixedAccessClient(true)},
+	}
+}
+
+func searchFolderDeletionResources(ctx context.Context, cli *folderDeletionSearchClient, fields []string, limit int64, folders []string) (dashv0alpha1.SearchResults, error) {
+	return dashboardsearch.SearchAll(ctx, 1, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Fields: []*resourcepb.Requirement{{
+			Key: resource.SEARCH_FIELD_FOLDER, Operator: string(selection.In), Values: folders,
+		}}},
+		Fields: fields, Limit: limit, ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}, cli.Search)
+}
+
+func TestFolderDeletionSearchFields(t *testing.T) {
+	for _, resourceName := range []string{"dashboards", "variables"} {
+		for _, tc := range []struct {
+			name           string
+			count          int
+			allowedFolders map[string]bool
+			cfg            search.PostRankAuthzConfig
+		}{
+			{name: "empty"},
+			{name: "all readable", count: 35},
+			{name: "restricted", count: 35, allowedFolders: map[string]bool{"allowed": true}},
+			{name: "denied", count: 35, allowedFolders: map[string]bool{}},
+			{name: "candidate budget", count: 35, allowedFolders: map[string]bool{"allowed": true},
+				cfg: search.PostRankAuthzConfig{MaxWindow: 7, MaxCandidates: 9}},
+		} {
+			t.Run(fmt.Sprintf("%s/%s", resourceName, tc.name), func(t *testing.T) {
+				cli := newFolderDeletionSearchClient(t, resourceName, tc.count, tc.cfg)
+				cli.access.allowedFolders = tc.allowedFolders
+				ctx := claims.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, Namespace: "default"})
+				folders := []string{"allowed", "denied"}
+				var want []string
+				for i := range tc.count {
+					if tc.allowedFolders == nil || tc.allowedFolders["allowed"] && i%2 == 0 {
+						want = append(want, fmt.Sprintf("resource-%05d", i))
+					}
+				}
+				for _, fields := range [][]string{nil, {resource.SEARCH_FIELD_NAME}} {
+					results, err := searchFolderDeletionResources(ctx, cli, fields, 11, folders)
+					require.NoError(t, err)
+					var got []string
+					for _, hit := range results.Hits {
+						got = append(got, hit.Name)
+					}
+					require.Equal(t, want, got, "UID order and pagination must not depend on response fields")
+				}
+			})
+		}
+	}
+}
+
+func TestDeleteVariablesInFoldersServiceIdentity(t *testing.T) {
+	cli := newFolderDeletionSearchClient(t, "variables", 6, search.PostRankAuthzConfig{})
+	service := &Service{variableK8sClient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
+	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{OrgID: 1})
+	require.NoError(t, service.deleteVariablesInFolders(ctx, 1, []string{"allowed"}))
+	require.Equal(t, []string{"resource-00000", "resource-00002", "resource-00004"}, cli.deleted)
+	_, serviceIdentity := identity.WithServiceIdentity(t.Context(), 1)
+	require.Equal(t, serviceIdentity, cli.requester)
+	require.Equal(t, []string{resource.SEARCH_FIELD_NAME}, cli.fields)
+}
+
+func TestDeleteVariablesInFoldersSearchErrors(t *testing.T) {
+	for _, tc := range folderStorageFailures(t) {
+		t.Run(tc.name, func(t *testing.T) {
+			cli := new(client.MockK8sHandler)
+			cli.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+				return slices.Equal(req.Fields, []string{resource.SEARCH_FIELD_NAME})
+			})).Return(tc.searchResponse(), tc.err).Once()
+			service := &Service{variableK8sClient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
+			err := service.deleteVariablesInFolders(t.Context(), 1, []string{"allowed"})
+			require.ErrorContains(t, err, tc.want.Error())
+			if tc.err != nil {
+				require.ErrorIs(t, err, tc.err)
+			}
+			cli.AssertExpectations(t)
+		})
+	}
+}
+
+// This measures search and decoding only, without delete RPCs or real authorization-service latency.
+func BenchmarkFolderDeletionSearchFields(b *testing.B) {
+	for _, resourceName := range []string{"dashboards", "variables"} {
+		for _, count := range []int{1000, 10000} {
+			for _, restricted := range []bool{false, true} {
+				for _, selected := range []bool{false, true} {
+					b.Run(fmt.Sprintf("%s/docs=%d/restricted=%t/selected=%t", resourceName, count, restricted, selected), func(b *testing.B) {
+						cli := newFolderDeletionSearchClient(b, resourceName, count, search.PostRankAuthzConfig{})
+						ctx := identity.WithServiceIdentityContext(b.Context(), 1)
+						want := count
+						if restricted {
+							ctx = claims.WithAuthInfo(b.Context(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, Namespace: "default"})
+							cli.access.allowedFolders = map[string]bool{"allowed": true}
+							want = (count + 1) / 2
+						}
+						var fields []string
+						if selected {
+							fields = []string{resource.SEARCH_FIELD_NAME}
+						}
+						folders := []string{"allowed", "denied"}
+						results, err := searchFolderDeletionResources(ctx, cli, fields, folderSearchLimit, folders)
+						require.NoError(b, err)
+						require.Len(b, results.Hits, want)
+						cli.calls, cli.access.checked = 0, 0
+						b.ReportAllocs()
+						for b.Loop() {
+							results, err := searchFolderDeletionResources(ctx, cli, fields, folderSearchLimit, folders)
+							if err != nil {
+								b.Fatal(err)
+							}
+							if len(results.Hits) != want {
+								b.Fatalf("got %d UIDs, want %d", len(results.Hits), want)
+							}
+						}
+						b.ReportMetric(float64(cli.calls)/float64(b.N), "searches/op")
+						b.ReportMetric(float64(cli.access.checked)/float64(b.N), "authz-hits/op")
+						b.ReportMetric(float64(cli.responseBytes), "response-bytes")
+					})
+				}
+			}
+		}
+	}
 }
 
 func TestIntegrationDeleteFolders(t *testing.T) {
@@ -1166,7 +1294,7 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 	ctx := identity.WithRequester(context.Background(), user)
 	db, cfg := sqlstore.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
-	alertingStore := ngstore.DBstore{
+	alertingStore := ngrules.RuleStore{
 		SQLStore:      db,
 		Cfg:           cfg.UnifiedAlerting,
 		Logger:        log.New("test-alerting-store"),
@@ -1186,13 +1314,26 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 	require.NoError(t, service.RegisterService(lps))
 
 	fieldValueRequest := mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
-		return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES
+		return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES &&
+			slices.Equal(req.Fields, []string{resource.SEARCH_FIELD_NAME})
 	})
+
+	for _, tc := range folderStorageFailures(t) {
+		t.Run("dashboard search error/"+tc.name, func(t *testing.T) {
+			dashboardK8sclient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(tc.searchResponse(), tc.err).Once()
+			err := service.Delete(ctx, &folder.DeleteFolderCommand{UID: "uid", OrgID: 1, SignedInUser: user})
+			require.ErrorContains(t, err, tc.want.Error())
+			if tc.err != nil {
+				require.ErrorIs(t, err, tc.err)
+			}
+			dashboardK8sclient.AssertExpectations(t)
+		})
+	}
 
 	t.Run("Should delete folder", func(t *testing.T) {
 		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{}).Return(nil).Once()
-		dashboardK8sclient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
-		variableK8sClient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
+		dashboardK8sclient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil).Once()
+		variableK8sClient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil).Once()
 		err := service.Delete(ctx, &folder.DeleteFolderCommand{
 			UID:          "uid1",
 			OrgID:        1,
@@ -1210,6 +1351,7 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 		dashboardK8sclient.On("Delete", mock.Anything, "test2", int64(1), mock.Anything).Return(nil).Once()
 		dashboardK8sclient.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields:       []string{resource.SEARCH_FIELD_NAME},
 			Options: &resourcepb.ListOptions{
 				Labels: []*resourcepb.Requirement{},
 				Fields: []*resourcepb.Requirement{
@@ -1222,44 +1364,31 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 			},
 			Page:  1,
 			Limit: folderSearchLimit}).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "test", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"uid"}},
+						{FieldIndex: 1, StringValues: []string{""}},
 					},
 				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "test",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("uid"),
-							[]byte(""),
-						},
-					},
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "test2",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("uid2"),
-							[]byte(""),
-						},
+				{
+					Key: &resourcepb.ResourceKey{Name: "test2", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"uid2"}},
+						{FieldIndex: 1, StringValues: []string{""}},
 					},
 				},
 			},
 			TotalHits: 1,
 		}, nil).Once()
 		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"test", "test2"}).Return(nil).Once()
-		variableK8sClient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
+		variableK8sClient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil).Once()
 		err := service.Delete(ctx, &folder.DeleteFolderCommand{
 			UID:          "uid",
 			OrgID:        1,
@@ -1273,17 +1402,15 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 	t.Run("Should delete variables within the folder", func(t *testing.T) {
 		fakeFolderStore.ExpectedFolders = nil
 		variableK8sClient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: "title", Type: resourcepb.ResourceTableColumnDefinition_STRING},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "var1",
-							Resource: "variables",
-						},
-						Cells: [][]byte{[]byte("my-var")},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "var1", Resource: "variables"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"my-var"}},
 					},
 				},
 			},
@@ -1299,5 +1426,258 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 		})
 		require.NoError(t, err)
 		variableK8sClient.AssertExpectations(t)
+	})
+}
+
+type dashboardDeleteClient struct {
+	client.K8sHandler
+	uids                       []string
+	deleteFn                   func(context.Context, string) error
+	mu                         sync.Mutex
+	active, maximum, completed int
+	calls                      []string
+	badOptions                 bool
+	requester                  identity.Requester
+	badRequester               bool
+}
+
+func (c *dashboardDeleteClient) Search(context.Context, int64, *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	rows := make([]*resourcepb.ResourceSearchRow, len(c.uids))
+	for i, uid := range c.uids {
+		rows[i] = &resourcepb.ResourceSearchRow{Key: &resourcepb.ResourceKey{Name: uid}}
+	}
+	return &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, Rows: rows, TotalHits: int64(len(rows))}, nil
+}
+func (c *dashboardDeleteClient) Delete(ctx context.Context, uid string, orgID int64, opts metav1.DeleteOptions) error {
+	requester, _ := identity.GetRequester(ctx)
+	c.mu.Lock()
+	c.calls = append(c.calls, uid)
+	c.badOptions = c.badOptions || orgID != 1 || opts.GracePeriodSeconds != nil || opts.Preconditions != nil
+	c.badRequester = c.badRequester || requester != c.requester
+	c.active++
+	c.maximum = max(c.maximum, c.active)
+	c.mu.Unlock()
+	defer func() { c.mu.Lock(); c.active--; c.completed++; c.mu.Unlock() }()
+	if c.deleteFn != nil {
+		return c.deleteFn(ctx, uid)
+	}
+	return nil
+}
+
+// dashboardDeletePublicService records how many dashboard deletes had finished when the public
+// dashboard cleanup ran, which must be all of them.
+type dashboardDeletePublicService struct {
+	publicdashboards.ServiceWrapper
+	client             *dashboardDeleteClient
+	uids               []string
+	completedAtCleanup int
+}
+
+func (p *dashboardDeletePublicService) DeleteByDashboardUIDs(_ context.Context, _ int64, uids []string) error {
+	p.uids = uids
+	p.client.mu.Lock()
+	p.completedAtCleanup = p.client.completed
+	p.client.mu.Unlock()
+	return nil
+}
+
+type dashboardDeleteStore struct {
+	folder.Store
+	deleted bool
+}
+
+func (s *dashboardDeleteStore) GetDescendants(context.Context, int64, string) ([]*folder.Folder, error) {
+	return nil, nil
+}
+func (s *dashboardDeleteStore) Delete(context.Context, []string, int64) error {
+	s.deleted = true
+	return nil
+}
+
+type emptyFolderRegistry struct{ folder.RegistryService }
+
+func (*emptyFolderRegistry) CountInFolders(context.Context, int64, []string, identity.Requester) (int64, error) {
+	return 0, nil
+}
+func (*emptyFolderRegistry) DeleteInFolders(context.Context, int64, []string, identity.Requester) error {
+	return nil
+}
+
+// withParallelDashboardDelete serves the parallel delete flag for the duration of the test. Call it outside a
+// synctest bubble: the OpenFeature provider is process-global.
+func withParallelDashboardDelete(t *testing.T, concurrency int) {
+	featuremgmt.WithFlagValues(t, map[string]any{featuremgmt.FlagFoldersParallelDashboardDeleteConcurrency: concurrency})
+}
+
+func newDashboardDeleteService(t *testing.T, count int) (*Service, *dashboardDeleteClient, *folder.DeleteFolderCommand, context.Context) {
+	requester := &user.SignedInUser{UserID: 42, OrgID: 1}
+	cli := &dashboardDeleteClient{requester: requester}
+	for i := range count {
+		cli.uids = append(cli.uids, fmt.Sprintf("dashboard-%d", i))
+	}
+	svc := &Service{
+		cfg: setting.NewCfg(), dashboardK8sClient: cli, variableK8sClient: &dashboardDeleteClient{}, unifiedStore: &dashboardDeleteStore{},
+		publicDashboardService: &dashboardDeletePublicService{client: cli},
+		tracer:                 noop.NewTracerProvider().Tracer("test"), log: slog.New(logtest.NewNopHandler(t)),
+		registry: map[string]folder.RegistryService{entity.StandardKindAlertRule: &emptyFolderRegistry{}, entity.StandardKindLibraryPanel: &emptyFolderRegistry{}},
+	}
+	return svc, cli, &folder.DeleteFolderCommand{UID: "folder", OrgID: 1, SignedInUser: requester}, identity.WithRequester(context.Background(), requester)
+}
+
+// deleteGate holds every delete until open is called, so a test can see how many run at once.
+type deleteGate struct {
+	entered chan struct{}
+	release chan struct{}
+	once    sync.Once
+}
+
+func newDeleteGate(t *testing.T) *deleteGate {
+	g := &deleteGate{entered: make(chan struct{}, 100), release: make(chan struct{})}
+	t.Cleanup(g.open)
+	return g
+}
+
+func (g *deleteGate) hold(context.Context, string) error {
+	g.entered <- struct{}{}
+	<-g.release
+	return nil
+}
+
+func (g *deleteGate) open() { g.once.Do(func() { close(g.release) }) }
+
+func (g *deleteGate) waitForDeletes(t *testing.T, n int) {
+	t.Helper()
+	synctest.Wait()
+	require.Len(t, g.entered, n, "unexpected number of in-flight deletes")
+}
+
+func runInBackground(f func() error) <-chan error {
+	done := make(chan error, 1)
+	go func() { done <- f() }()
+	return done
+}
+
+func waitForResult(t *testing.T, done <-chan error) error {
+	t.Helper()
+	synctest.Wait()
+	select {
+	case err := <-done:
+		return err
+	default:
+		t.Fatal("delete did not finish")
+		return nil
+	}
+}
+
+func TestDeleteFolderDashboardConcurrency(t *testing.T) {
+	for _, tc := range []struct {
+		name                 string
+		workers, count, want int
+	}{
+		{"one worker deletes in order", 1, 12, 1},
+		{"bounded by the worker count", 4, 12, 4},
+		{"more workers than dashboards", 8, 2, 2},
+		{"non-positive worker count deletes in order", 0, 12, 1},
+		{"empty folder", 4, 0, 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			withParallelDashboardDelete(t, tc.workers)
+			synctest.Test(t, func(t *testing.T) {
+				svc, cli, cmd, ctx := newDashboardDeleteService(t, tc.count)
+				gate := newDeleteGate(t)
+				cli.deleteFn = gate.hold
+				done := runInBackground(func() error { return svc.Delete(ctx, cmd) })
+
+				gate.waitForDeletes(t, tc.want)
+				gate.open()
+				require.NoError(t, waitForResult(t, done))
+
+				require.Equal(t, tc.want, cli.maximum)
+				if tc.workers > 1 {
+					require.ElementsMatch(t, cli.uids, cli.calls)
+				} else {
+					require.Equal(t, cli.uids, cli.calls)
+				}
+				require.False(t, cli.badOptions)
+				require.False(t, cli.badRequester)
+				public := svc.publicDashboardService.(*dashboardDeletePublicService)
+				require.Equal(t, tc.count, public.completedAtCleanup)
+				require.ElementsMatch(t, cli.uids, public.uids)
+				require.True(t, svc.unifiedStore.(*dashboardDeleteStore).deleted)
+			})
+		})
+	}
+}
+
+func TestDeleteFolderDashboardRequestCancellation(t *testing.T) {
+	withParallelDashboardDelete(t, 4)
+	synctest.Test(t, func(t *testing.T) {
+		svc, cli, cmd, ctx := newDashboardDeleteService(t, 20)
+		ctx, cancel := context.WithCancel(ctx)
+		gate := newDeleteGate(t)
+		cli.deleteFn = func(ctx context.Context, uid string) error {
+			_ = gate.hold(ctx, uid)
+			<-ctx.Done()
+			return ctx.Err()
+		}
+		done := runInBackground(func() error { return svc.Delete(ctx, cmd) })
+
+		gate.waitForDeletes(t, 4)
+		cancel()
+		synctest.Wait()
+		select {
+		case <-done:
+			t.Fatal("returned before in-flight deletes finished")
+		default:
+		}
+		gate.open()
+
+		require.ErrorIs(t, waitForResult(t, done), context.Canceled)
+		require.Len(t, cli.calls, 4)
+		require.Nil(t, svc.publicDashboardService.(*dashboardDeletePublicService).uids)
+		require.False(t, svc.unifiedStore.(*dashboardDeleteStore).deleted)
+	})
+}
+
+func TestDeleteFolderDashboardFailureLetsInFlightDeletesFinish(t *testing.T) {
+	withParallelDashboardDelete(t, 4)
+	synctest.Test(t, func(t *testing.T) {
+		svc, cli, cmd, ctx := newDashboardDeleteService(t, 20)
+		gate := newDeleteGate(t)
+		releaseFailure := make(chan struct{})
+		canceled := make(chan string, 20)
+		failure := errors.New("dashboard delete failed")
+		cli.deleteFn = func(ctx context.Context, uid string) error {
+			gate.entered <- struct{}{}
+			if uid == "dashboard-0" {
+				<-releaseFailure
+				return failure
+			}
+			select {
+			case <-ctx.Done():
+				canceled <- uid
+				return ctx.Err()
+			case <-gate.release:
+				return nil
+			}
+		}
+		done := runInBackground(func() error { return svc.Delete(ctx, cmd) })
+
+		gate.waitForDeletes(t, 4)
+		close(releaseFailure)
+		synctest.Wait()
+		select {
+		case uid := <-canceled:
+			t.Fatalf("a failed sibling canceled the in-flight delete of %s", uid)
+		case <-done:
+			t.Fatal("returned before in-flight deletes finished")
+		default:
+		}
+		gate.open()
+
+		require.ErrorIs(t, waitForResult(t, done), failure)
+		require.Len(t, cli.calls, 4, "no new deletes may start after the first failure")
+		require.Nil(t, svc.publicDashboardService.(*dashboardDeletePublicService).uids)
+		require.False(t, svc.unifiedStore.(*dashboardDeleteStore).deleted)
 	})
 }

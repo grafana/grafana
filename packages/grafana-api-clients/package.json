@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/api-clients",
-  "version": "13.3.0-pre",
+  "version": "13.4.0-pre",
   "description": "Grafana API client utilities",
   "keywords": [
     "grafana",
@@ -177,6 +177,12 @@
       "types": "./dist/types/clients/rtkq/preferences/v1/index.d.ts",
       "import": "./dist/esm/clients/rtkq/preferences/v1/index.mjs",
       "require": "./dist/cjs/clients/rtkq/preferences/v1/index.cjs"
+    },
+    "./rtkq/rules.alerting/v1beta1": {
+      "@grafana-app/source": "./src/clients/rtkq/rules.alerting/v1beta1/index.ts",
+      "types": "./dist/types/clients/rtkq/rules.alerting/v1beta1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/rules.alerting/v1beta1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/rules.alerting/v1beta1/index.cjs"
     }
   },
   "publishConfig": {
@@ -195,7 +201,7 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json",
-    "generate-apis": "yarn workspace @grafana/openapi process-specs && NODE_OPTIONS='--disable-warning=ExperimentalWarning' rtk-query-codegen-openapi ./src/scripts/generate-rtk-apis.ts",
+    "generate-apis": "pnpm --filter @grafana/openapi --fail-if-no-match run process-specs && NODE_OPTIONS='--disable-warning=ExperimentalWarning' rtk-query-codegen-openapi ./src/scripts/generate-rtk-apis.ts",
     "generate:api-client": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/generator/generate.ts"
   },
   "devDependencies": {

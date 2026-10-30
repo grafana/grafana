@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -83,6 +84,34 @@ func TestGrafanaTokenAuthenticator(t *testing.T) {
 			Rest:   authnlib.AccessTokenClaims{Namespace: "stacks-5457", Permissions: []string{"plugins.grafana.app:*"}, DelegatedPermissions: []string{"plugins.grafana.app/plugins:get"}, ServiceIdentity: "edge"},
 		}
 	}
+	for _, audience := range []string{"grafana", "iam.grafana.app", "example-aisdk-app", "github-datasource", datasourceAudience} {
+		for _, path := range []string{"/apis/iam.grafana.app/v0alpha1/whoami", "/apis/iam.grafana.app", "/apis/folder.grafana.app/v1/folders", "/apis/example-aisdk-app/v1", "/apis/github-datasource/v1", "/apis/example-aisdk-app%2fv1", "/apis/example-aisdk-app/../github-datasource/v1", "/apis/loki.datasource.grafana.app/v0alpha1/namespaces/stacks-5457/datasources", "/apis/datasource.grafana.app/v0alpha1", "/apis", "/api/user", "/openapi/v3"} {
+			t.Run(audience+path, func(t *testing.T) {
+				claims := validClaims()
+				claims.Audience = jwt.Audience{audience}
+				token := sign(claims, key, authnlib.TokenTypeAccess)
+				req := httptest.NewRequest(http.MethodGet, path, nil)
+				requester, err := authenticator.AuthenticateTokenForRequest(t.Context(), "Bearer "+token, req)
+				if audience == "grafana" ||
+					audience == "iam.grafana.app" && (path == "/apis/iam.grafana.app/v0alpha1/whoami" || path == "/apis/iam.grafana.app") ||
+					audience == "example-aisdk-app" && path == "/apis/example-aisdk-app/v1" ||
+					audience == "github-datasource" && path == "/apis/github-datasource/v1" ||
+					// Every datasource group accepts the datasource audience, as datasource API servers do.
+					audience == datasourceAudience && path == "/apis/loki.datasource.grafana.app/v0alpha1/namespaces/stacks-5457/datasources" {
+					require.NoError(t, err)
+					require.Equal(t, "access-policy:policy-1", requester.GetUID())
+				} else {
+					require.True(t, apierrors.IsUnauthorized(err), "%v", err)
+					require.Nil(t, requester)
+				}
+				if audience != "grafana" {
+					_, err = authenticator.AuthenticateToken(t.Context(), token)
+					require.True(t, apierrors.IsUnauthorized(err), "token-only authentication must still require a configured audience")
+				}
+			})
+		}
+	}
+
 	for _, prefix := range []string{"", "Bearer "} {
 		t.Run("access policy/"+prefix, func(t *testing.T) {
 			token := sign(validClaims(), key, authnlib.TokenTypeAccess)
@@ -95,6 +124,7 @@ func TestGrafanaTokenAuthenticator(t *testing.T) {
 			require.Equal(t, validClaims().Rest.Permissions, requester.GetTokenPermissions())
 			require.Equal(t, token, requester.GetAccessToken())
 			require.False(t, requester.GetIsGrafanaAdmin())
+			require.Equal(t, org.RoleNone, requester.GetOrgRole())
 			require.Equal(t, map[string][]string{
 				authnlib.ServiceIdentityKey:          {"edge"},
 				authnlib.InnermostServiceIdentityKey: {"edge"},
@@ -128,12 +158,53 @@ func TestGrafanaTokenAuthenticator(t *testing.T) {
 			require.Equal(t, "alice@example.com", requester.GetEmail())
 			require.True(t, requester.GetEmailVerified())
 			require.Equal(t, []string{"team-1"}, requester.GetGroups())
+			require.Equal(t, org.RoleNone, requester.GetOrgRole())
 			require.Empty(t, requester.GetTokenPermissions())
 			require.Equal(t, claims.Rest.DelegatedPermissions, requester.GetTokenDelegatedPermissions())
 			require.Equal(t, map[string][]string{
 				authnlib.ServiceIdentityKey:          {"edge"},
 				authnlib.InnermostServiceIdentityKey: {"origin"},
 			}, requester.GetExtra())
+		})
+	}
+	for _, tc := range []struct {
+		name     string
+		typ      types.IdentityType
+		role     org.RoleType
+		nested   bool
+		wantRole org.RoleType
+	}{
+		{name: "user viewer", typ: types.TypeUser, role: org.RoleViewer, wantRole: org.RoleViewer},
+		{name: "service account editor", typ: types.TypeServiceAccount, role: org.RoleEditor, wantRole: org.RoleEditor},
+		{name: "nested user admin", typ: types.TypeUser, role: org.RoleAdmin, nested: true, wantRole: org.RoleAdmin},
+		{name: "nested service account viewer", typ: types.TypeServiceAccount, role: org.RoleViewer, nested: true, wantRole: org.RoleViewer},
+		{name: "missing innermost role", typ: types.TypeUser, nested: true, wantRole: org.RoleNone},
+		{name: "explicit none", typ: types.TypeUser, role: org.RoleNone, wantRole: org.RoleNone},
+		{name: "access policy role ignored", typ: types.TypeAccessPolicy, role: org.RoleAdmin, wantRole: org.RoleNone},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			claims := validClaims()
+			claims.Rest.Namespace = "org-12"
+			claims.Rest.Actor = &authnlib.ActorClaims{
+				Subject:       types.NewTypeID(tc.typ, "42"),
+				IDTokenClaims: authnlib.IDTokenClaims{Type: tc.typ, Identifier: "actor-uid", Role: string(tc.role)},
+			}
+			if tc.nested {
+				claims.Rest.Actor = &authnlib.ActorClaims{
+					Subject:       "access-policy:intermediate",
+					IDTokenClaims: authnlib.IDTokenClaims{Role: string(org.RoleEditor)},
+					Actor:         claims.Rest.Actor,
+				}
+			}
+			requester, err := authenticator.AuthenticateToken(t.Context(), sign(claims, key, authnlib.TokenTypeAccess))
+			require.NoError(t, err)
+			require.Equal(t, tc.wantRole, requester.GetOrgRole())
+			if tc.role != "" && tc.typ != types.TypeAccessPolicy {
+				require.Equal(t, map[int64]org.RoleType{12: tc.role}, requester.(*grafanaTokenRequester).OrgRoles)
+				require.True(t, requester.HasRole(tc.role))
+			} else {
+				require.Nil(t, requester.(*grafanaTokenRequester).OrgRoles)
+			}
 		})
 	}
 	for _, tc := range []struct {

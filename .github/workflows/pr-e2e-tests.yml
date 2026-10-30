@@ -127,14 +127,14 @@ jobs:
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
 
-      - name: Install yarn dependencies
+      - name: Install frontend dependencies
         uses: ./.github/actions/yarn-install
 
       - name: Install Playwright browsers
         uses: ./.github/actions/setup-playwright
 
       - name: Run Storybook and E2E tests
-        run: yarn e2e:playwright:storybook
+        run: npm run e2e:playwright:storybook
 
   run-playwright-tests:
     needs:
@@ -159,12 +159,12 @@ jobs:
 
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
-      - name: Install yarn dependencies
+      - name: Install frontend dependencies
         uses: ./.github/actions/yarn-install
 
       # It's quicker to build them in each test shard then prebuild and upload/download them as artifacts
       - name: Build test plugins
-        run: yarn e2e:plugin:build
+        run: npm run e2e:plugin:build
 
       # Download the grafana artifacts and stitch them together into a standalone prod-ish Grafana distribution
       - name: Download backend artifacts
@@ -184,6 +184,18 @@ jobs:
           cp -r conf/ grafana-server
           cp -r tools/ grafana-server
 
+      # conf/defaults.ini loads canvas as an external plugin, so the server needs the bundled build.
+      # Only canvas is bundled to keep the other core plugins under test unchanged.
+      - name: Download bundled catalog plugins
+        run: |
+          bash scripts/download-catalog-plugins.sh \
+            --out grafana-server/data/plugins-bundled \
+            --grafana-version "$(jq -r .version package.json)" \
+            --os linux \
+            --arch amd64 \
+            --no-default-catalog-plugins \
+            --plugins canvas
+
       # Apply E2E test configuration on top of the production-mirrored distribution
       - name: Configure for E2E testing
         run: |
@@ -198,7 +210,7 @@ jobs:
 
       # Start Grafana from the standalone directory
       # The server is immediately backgrounded so it can initialise in parallel while the Playwright browsers are installing 🤓
-      # to turn on scrict CSP, add `cfg:security.content_security_policy_template="require-trusted-types-for 'script'; script-src 'self' 'unsafe-inline' 'strict-dynamic' \$NONCE;object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src * data:;base-uri 'self';connect-src 'self' grafana.com ws://\$ROOT_PATH wss://\$ROOT_PATH;manifest-src 'self';media-src 'none';form-action 'self';" \`
+      # to turn on scrict CSP, add `cfg:security.content_security_policy_template="require-trusted-types-for 'script'; script-src 'self' 'unsafe-inline' 'strict-dynamic' \$NONCE;object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src * data: blob:;base-uri 'self';connect-src 'self' grafana.com ws://\$ROOT_PATH wss://\$ROOT_PATH;manifest-src 'self';media-src 'none';form-action 'self';" \`
 
       - name: Start Grafana server
         run: |
@@ -234,7 +246,7 @@ jobs:
           echo "To view the server logs, wait for this job to complete and downloaded the 'grafana-server-log-${{ matrix.shard }}' artifact."
 
       - name: Run Playwright tests
-        run: yarn e2e:playwright --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --reporter=dot,blob --output=playwright-test-results
+        run: npm run e2e:playwright -- --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --reporter=dot,blob --output=playwright-test-results
         env:
           GRAFANA_URL: http://localhost:3001
           CI: true
@@ -332,7 +344,7 @@ jobs:
             echo ""
             echo "Alternatively, download the test report from $REPORT_URL"
             echo "and view it locally with:"
-            echo "  yarn playwright show-report <path-to-unzipped-report>"
+            echo "  npm exec --no -- playwright show-report <path-to-unzipped-report>"
           fi
 
   report-playwright-bench:
@@ -383,7 +395,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: ubuntu-x64-small
+    runs-on: ubuntu-x64-large
     steps:
       - id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
@@ -396,15 +408,17 @@ jobs:
           persist-credentials: false
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
-        with:
-          cache: 'false' # Don't use setup-node's built in caching, we'll handle it in the yarn-install step
-      - name: Install yarn dependencies
+      - name: Install frontend dependencies
         uses: ./.github/actions/yarn-install
       - name: Download frontend artifacts
         uses: actions/download-artifact@v8
         with:
           name: grafana-frontend
           path: public
+      - name: Generate RSDoctor metrics
+        env:
+          NO_SOURCEMAP: '1'
+        run: npm run build:stats
       - name: Extract and publish metrics
         run: ./scripts/ci-frontend-metrics.sh | node .github/workflows/scripts/publish-frontend-metrics.mts
         env:

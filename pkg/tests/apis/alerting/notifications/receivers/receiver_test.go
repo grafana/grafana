@@ -27,18 +27,14 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	v1store "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -801,7 +797,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	// Prepare environment and create notification policy and rule that use receiver
 	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
 	require.NoError(t, err)
-	var amConfig definitions.PostableUserConfig
+	var amConfig v1store.AMConfigDB
 	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
 
 	// Add more references to the receiver in other routes.
@@ -809,7 +805,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	route1.Routes = nil
 	route2 := route1
 	parentRoute := *amConfig.AlertmanagerConfig.Route.Routes[0]
-	parentRoute.Routes = []*definitions.Route{&route1, &route2}
+	parentRoute.Routes = []*v1store.RouteDB{&route1, &route2}
 	amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, &parentRoute)
 
 	persistInitialConfig(t, amConfig, helper.Org1.Admin)
@@ -1258,9 +1254,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
-	require.NoError(t, err)
+	db := provenance.ProvideProvenanceStore(env.FeatureToggles, env.SQLStore)
 	orgID := helper.Org1.Admin.Identity.GetOrgID()
 
 	cliCfg := helper.Org1.Admin.NewRestConfig()
@@ -1271,7 +1265,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	// Prepare environment and create notification policy and rule that use time receiver
 	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
 	require.NoError(t, err)
-	var amConfig definitions.PostableUserConfig
+	var amConfig v1store.AMConfigDB
 	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
 
 	persistInitialConfig(t, amConfig, helper.Org1.Admin)
@@ -1580,9 +1574,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	require.NoError(t, err)
 
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
-	require.NoError(t, err)
+	db := provenance.ProvideProvenanceStore(env.FeatureToggles, env.SQLStore)
 	require.NoError(t, db.SetProvenance(ctx, &definitions.EmbeddedContactPoint{
 		UID: *recv2.Spec.Integrations[0].Uid,
 	}, helper.Org1.Admin.Identity.GetOrgID(), "API"))
@@ -1595,7 +1587,6 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	require.Len(t, receivers.Items, 3) // Includes default.
 
 	t.Run("should filter by receiver name", func(t *testing.T) {
-		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
 		list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{
 			FieldSelectors: []string{
 				"spec.title=" + recv1.Spec.Title,
@@ -1642,7 +1633,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 
 // persistInitialConfig helps create an initial config with new receivers using legacy json. Config API blocks receiver
 // modifications, so we need to use k8s API to create new receivers before posting the config.
-func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig, user apis.User) {
+func persistInitialConfig(t *testing.T, amConfig v1store.AMConfigDB, user apis.User) {
 	ctx := context.Background()
 
 	receiverClient, err := v1beta1.NewReceiverClientFromGenerator(user.GetClientRegistry())

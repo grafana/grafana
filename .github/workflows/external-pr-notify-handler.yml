@@ -25,7 +25,7 @@ env:
   # community-triage logic version this repo is pinned to.
   # Bump deliberately; re-resolve with:
   #   git ls-remote https://github.com/grafana/community-triage main
-  TRIAGE_REF: 223e8b1d8f7923f34919d09c32aed0644f3ed9ae # trufflehog:ignore
+  TRIAGE_REF: 462c72633b7cf5bdf090f7ffffb1eedc38bc6c2e # trufflehog:ignore
 
 jobs:
   triage:
@@ -45,9 +45,10 @@ jobs:
       agent_review: ${{ steps.check-teams.outputs.agent_review }}
       pr_type: ${{ steps.classify.outputs.type }}
       review_skill: ${{ steps.classify.outputs.review_skill }}
-      slop_status: ${{ steps.detect-slop.outputs.slop_status }}
-      slop_score: ${{ steps.detect-slop.outputs.slop_score }}
-      slop_reason: ${{ steps.detect-slop.outputs.slop_reason }}
+      read_status: ${{ steps.read-change.outputs.read_status }}
+      coherence: ${{ steps.read-change.outputs.coherence }}
+      coherence_reason: ${{ steps.read-change.outputs.coherence_reason }}
+      flags: ${{ steps.read-change.outputs.flags }}
       size: ${{ steps.metadata.outputs.size }}
       additions: ${{ steps.metadata.outputs.additions }}
       deletions: ${{ steps.metadata.outputs.deletions }}
@@ -86,12 +87,11 @@ jobs:
           persist-credentials: false
           sparse-checkout: |
             .github/team-notifications-config.json
+            .github/actions/setup-node
             .github/CODEOWNERS
 
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
-        with:
-          node-version: '24'
+        uses: ./.github/actions/setup-node
 
       - name: Get vault secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@f1614b210386ac420af6807a997ac7f6d96e477a  # v1.3.1
@@ -145,8 +145,8 @@ jobs:
           REPO: ${{ github.repository }}
         run: node ./community-triage/.github/workflows/scripts/pr-notify.mts classify
 
-      - name: Detect AI slop
-        id: detect-slop
+      - name: Read the change
+        id: read-change
         if: steps.metadata.outputs.skip_processing != 'true' && steps.check-teams.outputs.has_enabled_team == 'true'
         continue-on-error: true
         env:
@@ -154,7 +154,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
           REPO: ${{ github.repository }}
-        run: node ./community-triage/.github/workflows/scripts/pr-notify.mts detect-slop
+        run: node ./community-triage/.github/workflows/scripts/pr-notify.mts read-change
 
       - name: Add classification labels
         if: steps.metadata.outputs.skip_processing != 'true' && steps.check-teams.outputs.has_enabled_team == 'true'
@@ -193,9 +193,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
-        with:
-          node-version: '24'
+        uses: ./.github/actions/setup-node
 
       - name: Get vault secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@f1614b210386ac420af6807a997ac7f6d96e477a  # v1.3.1
@@ -436,12 +434,11 @@ jobs:
           persist-credentials: false
           sparse-checkout: |
             .github/team-notifications-config.json
+            .github/actions/setup-node
             .github/CODEOWNERS
 
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
-        with:
-          node-version: '24'
+        uses: ./.github/actions/setup-node
 
       - name: Get vault secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@f1614b210386ac420af6807a997ac7f6d96e477a  # v1.3.1
@@ -486,15 +483,16 @@ jobs:
           IS_CHAMPION: ${{ needs.triage.outputs.is_champion }}
           SLACK_BOT_TOKEN: ${{ env.SLACK_BOT_TOKEN }}
           REVIEW_SUMMARY: ${{ needs.review.outputs.review_line }}
-          SLOP_STATUS: ${{ needs.triage.outputs.slop_status }}
-          SLOP_SCORE: ${{ needs.triage.outputs.slop_score }}
-          SLOP_REASON: ${{ needs.triage.outputs.slop_reason }}
+          READ_STATUS: ${{ needs.triage.outputs.read_status }}
+          COHERENCE: ${{ needs.triage.outputs.coherence }}
+          COHERENCE_REASON: ${{ needs.triage.outputs.coherence_reason }}
+          FLAGS: ${{ needs.triage.outputs.flags }}
         run: node ./community-triage/.github/workflows/scripts/pr-notify.mts notify
 
       # The script skips the greeting when the review already delivered it, and
       # comments nothing when there is nothing outstanding.
       - name: Post welcome comment and contributor checklist
-        if: steps.notify.outputs.notification_sent == 'true'
+        if: steps.notify.outputs.post_welcome == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ needs.triage.outputs.pr_number }}

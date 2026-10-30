@@ -1,11 +1,12 @@
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
+import { dispatch } from 'app/types/store';
 
 /**
  * Client for `POST .../notebooks/search`, the per-kind search endpoint mounted by
  * pkg/services/apiserver/searchroutes.
  *
  * Hand-written rather than generated: the endpoint's schemas cannot go through
- * `yarn generate-apis` today, because the envelope's `SearchResults` collides with the
+ * `pnpm generate-apis` today, because the envelope's `SearchResults` collides with the
  * legacy dashboards-search schema of the same name once the spec processor strips k8s
  * name prefixes. These types therefore mirror pkg/apis/search/v0alpha1/types.go by hand
  * and have to be kept in step with it.
@@ -187,7 +188,46 @@ const notebookSearchAPI = dashboardAPIv2beta1.injectEndpoints({
         },
       }),
     }),
+
+    /**
+     * Title matches for the command palette.
+     *
+     * Provides the `Notebook` tag that the generated notebook mutations invalidate, so a notebook
+     * deleted between two identical searches stops being offered — untagged, the cached entry would
+     * answer the repeat. Sharing that tag is free here because the only caller dispatches with
+     * `subscribe: false`: an invalidated entry with no subscribers is dropped rather than refetched.
+     */
+    searchNotebookTitles: build.query<SearchResults, { query: string; limit: number }>({
+      query: ({ query, limit }) => ({
+        url: '/notebooks/search',
+        method: 'POST',
+        body: {
+          apiVersion: SEARCH_API_VERSION,
+          kind: SEARCH_QUERY_KIND,
+          where: { text: { value: query, fields: ['title'] } },
+          fields: ['title'],
+          limit,
+        },
+      }),
+      providesTags: [notebookListTag],
+    }),
   }),
 });
+
+/**
+ * Imperative rather than a hook: the caller is a debounced module-level function, not a component.
+ */
+export async function searchNotebookTitles(query: string, limit: number): Promise<ResultItem[]> {
+  const { data, error } = await dispatch(
+    notebookSearchAPI.endpoints.searchNotebookTitles.initiate({ query, limit }, { subscribe: false })
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  // An invalidation mid-flight drops the entry, leaving neither data nor error.
+  return data?.items ?? [];
+}
 
 export const { useSearchNotebooksInfiniteQuery, useLazyNotebookFieldFacetQuery } = notebookSearchAPI;

@@ -1,7 +1,6 @@
-import { act, renderHook } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 import { getWrapper } from 'test/test-utils';
 
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import {
@@ -58,6 +57,7 @@ function readyView(repository?: RepositoryView, folderData?: Folder): DashboardR
     lookup: { status: RepoViewStatus.Ready },
     isNewSave: false,
     isProvisioned: Boolean(repository),
+    canChooseTarget: false,
     isInstanceManaged: false,
     isReadOnlyRepo: false,
     isMissingRepo: !repository,
@@ -72,6 +72,7 @@ function pendingView(status: RepoViewStatus, error?: unknown): DashboardReposito
     lookup: { status, error },
     isNewSave: false,
     isProvisioned: false,
+    canChooseTarget: false,
     isInstanceManaged: false,
     isReadOnlyRepo: false,
     isMissingRepo: status !== RepoViewStatus.Loading,
@@ -375,76 +376,31 @@ describe('useProvisionedDashboardData', () => {
     expect(result.current.defaultValues?.path).toBe(path);
   });
 
-  describe('enforced branch name template', () => {
-    // write-first repo: without the enforced-template override the default workflow would be `write`.
-    const enforcedRepo: RepositoryView = {
-      ...folderRepo,
-      workflows: ['write', 'branch'],
-      branchOptions: { enforceTemplate: true, nameTemplate: 'grafana/{{action}}' },
-    };
-
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
-      });
+  describe('loaded from a branch preview', () => {
+    const previewWrapper = getWrapper({
+      renderWithRouter: true,
+      historyOptions: { initialEntries: ['/?ref=feature-branch'] },
     });
 
-    it('switches to the branch workflow when the template is enforced and the flag is on', () => {
-      setTestFlags({ 'provisioning.gitConventions': true });
-
+    it('defaults to writing back to the previewed branch', () => {
       const { result } = renderHook(
-        () => useProvisionedDashboardData(createDashboard(), readyView(enforcedRepo, folder('dashboards'))),
-        { wrapper }
+        () => useProvisionedDashboardData(createDashboard(), readyView(folderRepo, folder('dashboards'))),
+        { wrapper: previewWrapper }
       );
 
-      // The workflow is switched here; useBranchTemplate fills the actual template ref in the form.
-      expect(result.current.defaultValues?.workflow).toBe('branch');
-      // The ref follows the workflow: a branch default must never point at the configured branch.
-      expect(result.current.defaultValues?.ref).toMatch(/^dashboard\//);
+      expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready);
+      expect(result.current.defaultValues?.ref).toBe('feature-branch');
     });
 
-    it('keeps the same defaultValues object across rerenders when the override applies', () => {
-      setTestFlags({ 'provisioning.gitConventions': true });
-
-      const dashboard = createDashboard();
-      const folderData = folder('dashboards');
-      const { result, rerender } = renderHook(
-        () => useProvisionedDashboardData(dashboard, readyView(enforcedRepo, folderData)),
-        { wrapper }
-      );
-
-      const initial = result.current.defaultValues;
-      expect(initial?.workflow).toBe('branch');
-
-      // The form resets to defaultValues whenever its identity changes, so a fresh object per render
-      // would reset the form on every unrelated rerender.
-      rerender();
-      expect(result.current.defaultValues).toBe(initial);
-    });
-
-    it('keeps the default write workflow when the gitConventions flag is off', () => {
-      setTestFlags({ 'provisioning.gitConventions': false });
-
+    it('falls back to the configured branch when the repository is write-only', () => {
+      // Without the branch workflow the previewed ref can't be pushed to; the configured branch is the only target.
+      const writeOnlyRepo: RepositoryView = { ...folderRepo, workflows: ['write'] };
       const { result } = renderHook(
-        () => useProvisionedDashboardData(createDashboard(), readyView(enforcedRepo, folder('dashboards'))),
-        { wrapper }
+        () => useProvisionedDashboardData(createDashboard(), readyView(writeOnlyRepo, folder('dashboards'))),
+        { wrapper: previewWrapper }
       );
 
-      expect(result.current.defaultValues?.workflow).toBe('write');
-    });
-
-    it('keeps the default write workflow when enforcement has no usable template', () => {
-      setTestFlags({ 'provisioning.gitConventions': true });
-      // enforceTemplate set without a nameTemplate: useBranchTemplate stays inactive, so the
-      // workflow must not switch (nothing to enforce).
-      const repo: RepositoryView = { ...enforcedRepo, branchOptions: { enforceTemplate: true } };
-
-      const { result } = renderHook(
-        () => useProvisionedDashboardData(createDashboard(), readyView(repo, folder('dashboards'))),
-        { wrapper }
-      );
-
-      expect(result.current.defaultValues?.workflow).toBe('write');
+      expect(result.current.defaultValues?.ref).toBe('main');
     });
   });
 
@@ -463,7 +419,6 @@ describe('useProvisionedDashboardData', () => {
       );
 
       const initialRef = result.current.defaultValues?.ref;
-      expect(result.current.defaultValues?.workflow).toBe('branch');
       expect(initialRef).toMatch(/^dashboard\//);
 
       rerender();
@@ -486,7 +441,6 @@ describe('useProvisionedDashboardData', () => {
       );
 
       expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready);
-      expect(result.current.defaultValues?.workflow).toBe('branch');
       expect(result.current.defaultValues?.ref).toMatch(/^dashboard\//);
       expect(result.current.defaultValues?.ref).not.toBe('feature-branch');
     });
@@ -505,7 +459,6 @@ describe('useProvisionedDashboardData', () => {
         }
       );
 
-      expect(result.current.defaultValues?.workflow).toBe('write');
       expect(result.current.defaultValues?.ref).toBe('main');
     });
   });

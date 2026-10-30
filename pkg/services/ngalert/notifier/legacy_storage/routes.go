@@ -6,70 +6,12 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/prometheus/alertmanager/dispatch"
-	"github.com/prometheus/alertmanager/pkg/labels"
-	"github.com/prometheus/common/model"
 	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
-
-const NamedRouteMatcher = models.NamedRouteLabel
-
-func GeneratedSubRoute(r *v1.ManagedRoute) *v1.Route {
-	amRoute := ManagedRouteToRoute(r)
-
-	// It's important that the generated sub-route is fully defined so that they will never rely on the values of the root.
-	defaultOpts := dispatch.DefaultRouteOpts
-	if amRoute.GroupWait == nil {
-		gw := model.Duration(defaultOpts.GroupWait)
-		amRoute.GroupWait = &gw
-	}
-	if amRoute.GroupInterval == nil {
-		gi := model.Duration(defaultOpts.GroupInterval)
-		amRoute.GroupInterval = &gi
-	}
-	if amRoute.RepeatInterval == nil {
-		ri := model.Duration(defaultOpts.RepeatInterval)
-		amRoute.RepeatInterval = &ri
-	}
-	if !models.IsDefaultRoutingTreeName(r.GetUID()) {
-		// Set label matcher.
-		amRoute.ObjectMatchers = v1.ObjectMatchers{managedRouteMatcher(r.GetUID())}
-	}
-	return &amRoute
-}
-
-func managedRouteMatcher(name string) *labels.Matcher {
-	return &labels.Matcher{
-		Type:  labels.MatchEqual,
-		Name:  NamedRouteMatcher,
-		Value: name,
-	}
-}
-
-func WithManagedRoutes(root *v1.Route, managedRoutes map[string]*v1.Route) *v1.Route {
-	if len(managedRoutes) == 0 {
-		// If there are no managed routes, we just return the original root.
-		return root
-	}
-	newRoot := *root
-	newManagedRoutes := make([]*v1.Route, 0, len(newRoot.Routes)+len(managedRoutes))
-	for _, k := range slices.Sorted(maps.Keys(managedRoutes)) {
-		// On the off chance that the route is nil or invalid managed route with the restricted name, we skip it.
-		if managedRoutes[k] == nil || models.IsDefaultRoutingTreeName(k) {
-			continue
-		}
-		newManagedRoutes = append(newManagedRoutes, GeneratedSubRoute(v1.NewManagedRoute(k, managedRoutes[k])))
-	}
-
-	// Add the default routing tree at the end.
-	newManagedRoutes = append(newManagedRoutes, newRoot.Routes...)
-	newRoot.Routes = newManagedRoutes
-	return &newRoot
-}
 
 func (rev *ConfigRevision) GetManagedRoute(name string) *v1.ManagedRoute {
 	if models.IsDefaultRoutingTreeName(name) {

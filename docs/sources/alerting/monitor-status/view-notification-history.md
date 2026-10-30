@@ -15,27 +15,6 @@ labels:
     - oss
 title: View notification history
 weight: 445
-refs:
-  view-alert-state-history:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state-history/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-alert-state-history/
-  view-active-notifications:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-active-notifications/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-active-notifications/
-  contact-points:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
 ---
 
 # View notification history
@@ -44,9 +23,9 @@ View notifications that Grafana Alerting sent for your Grafana-managed alert rul
 
 Grafana records a notification event each time it attempts to send a notification to a contact point for a group of alerts. Both firing and resolved notifications are recorded, so you'll see a complete delivery history even when an alert has already recovered.
 
-Notification history is different from [active notifications](ref:view-active-notifications). Active notifications show alerts that are currently grouped and waiting to be sent. Notification history shows notifications that were already sent.
+Notification history is different from [active notifications](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-active-notifications/). Active notifications show alerts that are currently grouped and waiting to be sent. Notification history shows notifications that were already sent.
 
-The **History** page also includes an **Alert events** tab for [alert state history](ref:view-alert-state-history).
+The **History** page also includes an **Alert events** tab for [alert state history](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state-history/).
 
 {{< admonition type="note" >}}
 Grafana OSS and Grafana Enterprise users must store notification history in Loki. Set `enabled = true` in the `[unified_alerting.notification_history]` section and configure the connection to Loki. Refer to [Before you begin](#before-you-begin).
@@ -127,10 +106,10 @@ The tab shows the same notification list as the **History** page, pre-filtered t
 
 ## Explore and query notification history
 
-Because notification history is stored in Loki, you can query it directly in Loki through [Grafana Explore](ref:explore). Use Explore to build custom dashboards or run free-form investigations of your notification delivery.
+Because notification history is stored in Loki, you can query it directly in Loki through [Grafana Explore](/docs/grafana/<GRAFANA_VERSION>/visualizations/explore/). Use Explore to build custom dashboards or run free-form investigations of your notification delivery.
 
 ## Next steps
 
-- Refer to [View alert state history](ref:view-alert-state-history) to review alert state changes on the **Alert events** tab of the **History** page.
-- Refer to [View active notifications](ref:view-active-notifications) to inspect alerts that are currently grouped and waiting to be sent.
-- Refer to [Manage contact points](ref:contact-points) to configure where notifications are delivered.
+- Refer to [View alert state history](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state-history/) to review alert state changes on the **Alert events** tab of the **History** page.
+- Refer to [View active notifications](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-active-notifications/) to inspect alerts that are currently grouped and waiting to be sent.
+- Refer to [Manage contact points](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/) to configure where notifications are delivered.

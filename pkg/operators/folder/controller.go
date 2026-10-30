@@ -2,21 +2,27 @@ package folder
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/tools/cache"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/nats"
+	"github.com/grafana/grafana/pkg/operators/internal/supervision"
 	"github.com/grafana/grafana/pkg/server"
+	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
@@ -37,13 +43,13 @@ var folderGVR = schema.GroupVersionResource{
 // re-list-only if the live subscription can't open, rather than blocking
 // readiness on it — otherwise a plain apiserver watch, matching the pattern
 // in pkg/registry/apis/provisioning/informer's delta sources.
-func RunFolderController(ctx context.Context, deps server.OperatorDependencies) error {
+func RunFolderController(ctx context.Context, deps server.OperatorDependencies) (runErr error) {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})).With("logger", "folder-controller")
 	logger.Info("starting folder controller")
 
-	dynClient, err := buildDynamicClient(deps.Config)
+	restClient, err := buildRESTClient(deps.Config)
 	if err != nil {
 		return err
 	}
@@ -65,13 +71,25 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 
 	var reg cache.ResourceEventHandlerRegistration
 	if nats.Enabled(subscriber) {
+		var stopSubscriber func() error
+		ctx, stopSubscriber = supervision.Watch(ctx, subscriber)
+		defer func() {
+			deps.HealthNotifier.SetNotReady()
+			runErr = errors.Join(runErr, stopSubscriber())
+		}()
+		if err := services.StartAndAwaitRunning(ctx, subscriber); err != nil {
+			if errors.Is(err, context.Canceled) && ctx.Err() != nil {
+				err = context.Cause(ctx)
+			}
+			return fmt.Errorf("failed to start NATS subscriber: %w", err)
+		}
+
 		newObject := func(ns, name string) runtime.Object {
 			return &folderv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
 		}
+		keys := keysapi.NewHTTPLister(restClient, folderGVR)
 		list := func(ctx context.Context) ([]runtime.Object, int64, error) {
-			return listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
-				return dynClient.Resource(folderGVR).Namespace("").List(ctx, opts)
-			})
+			return listFolderKeys(ctx, keys)
 		}
 
 		inf := usinformer.NewInformer(subscriber, folderGVR, "", 10*time.Minute, queueGroup, nil, newObject, list)
@@ -83,7 +101,7 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 		}
 		go inf.Run(ctx.Done())
 	} else {
-		factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynClient, 10*time.Minute, "", nil)
+		factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynamic.New(restClient), 10*time.Minute, "", nil)
 		informer := factory.ForResource(folderGVR).Informer()
 
 		reg, err = informer.AddEventHandler(handler)
@@ -95,7 +113,7 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 
 	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
 		logger.Error("failed to sync folder informer cache")
-		return ctx.Err()
+		return context.Cause(ctx)
 	}
 
 	logger.Info("folder controller is ready")

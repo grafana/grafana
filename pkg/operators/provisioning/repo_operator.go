@@ -2,17 +2,21 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"k8s.io/client-go/tools/cache"
 
+	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/nats"
+	"github.com/grafana/grafana/pkg/operators/internal/supervision"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -20,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/server"
 )
 
-func RunRepoController(ctx context.Context, deps server.OperatorDependencies) error {
+func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (runErr error) {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})).With("logger", "provisioning-repo-controller")
@@ -29,6 +33,18 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 	controllerCfg, err := setupFromConfig(deps.Config, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("failed to setup provisioning controller: %w", err)
+	}
+
+	ctx, stopSubscriber := supervision.Watch(ctx, controllerCfg.natsSubscriber)
+	defer func() {
+		deps.HealthNotifier.SetNotReady()
+		runErr = errors.Join(runErr, stopSubscriber())
+	}()
+	if err := services.StartAndAwaitRunning(ctx, controllerCfg.natsSubscriber); err != nil {
+		if errors.Is(err, context.Canceled) && ctx.Err() != nil {
+			err = context.Cause(ctx)
+		}
+		return fmt.Errorf("failed to start NATS subscriber: %w", err)
 	}
 
 	provisioningClient, err := controllerCfg.ProvisioningClient()
@@ -86,8 +102,14 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 		return fmt.Errorf("failed to get clients: %w", err)
 	}
 
+	// nil unless keys_only_relist is on, which keeps the full-object re-list.
+	repoKeys, err := controllerCfg.ProvisioningKeysLister(logger, apisprovisioning.RepositoryResourceInfo.GroupVersionResource())
+	if err != nil {
+		return err
+	}
+
 	// The repository delta source and the getter it backs.
-	repoSource, repoGetter := informer.NewRepositoryDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
+	repoSource, repoGetter := informer.NewRepositoryDeltaSource(controllerCfg.natsSubscriber, provisioningClient, repoKeys, controllerCfg.ResyncInterval(), controllerCfg.RelistProjectionMetrics(), controllerCfg.FreshnessMetrics())
 	controller := controller.NewRepositoryController(
 		provisioningClient.ProvisioningV0alpha1(),
 		repoGetter,

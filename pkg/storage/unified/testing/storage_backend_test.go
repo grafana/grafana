@@ -4,18 +4,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
+	"uuid"
 
 	badger "github.com/dgraph-io/badger/v4"
-	"github.com/google/uuid"
-	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -25,6 +26,7 @@ import (
 	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -50,7 +52,7 @@ func setupBadgerKV(t *testing.T) resource.StorageBackend {
 		KvStore: resource.NewBadgerKV(db),
 		// keep it low in tests as most of them don't exercise concurrent writes
 		WatchOptions: resource.WatchOptions{SettleDelay: time.Millisecond},
-		Holder:       fmt.Sprintf("badger-holder-%s", uuid.NewString()),
+		Holder:       fmt.Sprintf("badger-holder-%s", uuid.NewV4().String()),
 	}
 	backend, err := resource.NewKVStorageBackend(kvOpts)
 	require.NoError(t, err)
@@ -69,6 +71,97 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 	})
 }
 
+type folderTreeSearchBuilders struct{}
+
+func (folderTreeSearchBuilders) GetDocumentBuilders(registry *resource.SearchFieldsRegistry) ([]resource.DocumentBuilderInfo, error) {
+	return []resource.DocumentBuilderInfo{{Builder: resource.StandardDocumentBuilder(registry)}}, nil
+}
+
+func TestPerResourceFolderTreeSearchAndStorage(t *testing.T) {
+	backend := setupBadgerKV(t)
+	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
+	searchBackend, err := search.NewBleveBackend(search.BleveOptions{Root: t.TempDir(), FileThreshold: 100, Logger: log.NewNopLogger()}, metrics)
+	require.NoError(t, err)
+	t.Cleanup(searchBackend.Stop)
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:      backend,
+		AccessClient: types.FixedAccessClient(true),
+		IndexMetrics: metrics,
+		Search:       resource.SearchOptions{Backend: searchBackend, Resources: folderTreeSearchBuilders{}},
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, server.Stop(context.WithoutCancel(t.Context()))) })
+	ctx := types.WithAuthInfo(t.Context(), &identity.StaticRequester{
+		Type: types.TypeUser, Namespace: "recursive-search", OrgRole: identity.RoleAdmin,
+	})
+	folderKey := resource.NamespacedResource{Namespace: "recursive-search", Group: "folder.grafana.app", Resource: "folders"}
+	dashKey := resource.NamespacedResource{Namespace: "recursive-search", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	write := func(key resource.NamespacedResource, name, parent string, rv int64) int64 {
+		t.Helper()
+		obj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": key.Group + "/v1", "kind": key.Resource,
+			"metadata": map[string]any{"name": name, "namespace": key.Namespace},
+			"spec":     map[string]any{"title": name},
+		}}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetFolder(parent)
+		value, err := obj.MarshalJSON()
+		require.NoError(t, err)
+		resourceKey := &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name}
+		if rv == 0 {
+			rsp, err := server.Create(ctx, &resourcepb.CreateRequest{Key: resourceKey, Value: value})
+			require.NoError(t, err)
+			require.Nil(t, rsp.Error)
+			return rsp.ResourceVersion
+		}
+		rsp, err := server.Update(ctx, &resourcepb.UpdateRequest{Key: resourceKey, Value: value, ResourceVersion: rv})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		return rsp.ResourceVersion
+	}
+	write(folderKey, "top", "", 0)
+	write(folderKey, "other", "", 0)
+	midRV := write(folderKey, "mid", "top", 0)
+	write(folderKey, "leaf", "mid", 0)
+	write(dashKey, "dash-top", "top", 0)
+	write(dashKey, "dash-mid", "mid", 0)
+	write(dashKey, "dash-leaf", "leaf", 0)
+
+	query := func(field, root string) []string {
+		t.Helper()
+		rsp, err := server.Search(ctx, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: dashKey.Namespace, Group: dashKey.Group, Resource: dashKey.Resource},
+				Fields: []*resourcepb.Requirement{{Key: field, Operator: "in", Values: []string{root}}},
+			},
+			Limit:        100,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		names := make([]string, 0, len(rsp.Rows))
+		for _, row := range rsp.Rows {
+			names = append(names, row.Key.Name)
+		}
+		return names
+	}
+	require.Equal(t, []string{"dash-top"}, query(resource.SEARCH_FIELD_FOLDER, "top"))
+	require.Nil(t, searchBackend.GetIndex(folderKey), "a non-recursive query must not build the folder index")
+	require.ElementsMatch(t, []string{"dash-top", "dash-mid", "dash-leaf"}, query(resource.SEARCH_FIELD_FOLDER_TREE, "top"))
+
+	midRV = write(folderKey, "mid", "other", midRV)
+	require.Equal(t, []string{"dash-top"}, query(resource.SEARCH_FIELD_FOLDER_TREE, "top"))
+	require.ElementsMatch(t, []string{"dash-mid", "dash-leaf"}, query(resource.SEARCH_FIELD_FOLDER_TREE, "other"))
+	deleted, err := server.Delete(ctx, &resourcepb.DeleteRequest{
+		Key:             &resourcepb.ResourceKey{Namespace: folderKey.Namespace, Group: folderKey.Group, Resource: folderKey.Resource, Name: "mid"},
+		ResourceVersion: midRV,
+	})
+	require.NoError(t, err)
+	require.Nil(t, deleted.Error)
+	require.Empty(t, query(resource.SEARCH_FIELD_FOLDER_TREE, "other"))
+}
+
 func TestBadgerKVConcurrentCreateNoAlreadyExists(t *testing.T) {
 	runConcurrentCreateNoAlreadyExists(t, setupBadgerKV(t), "badgerkv-no-already-exists")
 }
@@ -76,15 +169,8 @@ func TestBadgerKVConcurrentCreateNoAlreadyExists(t *testing.T) {
 func TestIntegrationSQLKVConcurrentCreateNoAlreadyExists(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	t.Run("Without RvManager", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
-		runConcurrentCreateNoAlreadyExists(t, backend, "sqlkv-no-already-exists")
-	})
-
-	t.Run("With RvManager", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), true)
-		runConcurrentCreateNoAlreadyExists(t, backend, "sqlkv-rvmanager-no-already-exists")
-	})
+	backend, _ := NewTestSqlKvBackend(t, t.Context())
+	runConcurrentCreateNoAlreadyExists(t, backend, "sqlkv-no-already-exists")
 }
 
 func runConcurrentCreateNoAlreadyExists(t *testing.T, backend resource.StorageBackend, ns string) {
@@ -164,32 +250,85 @@ func runConcurrentCreateNoAlreadyExists(t *testing.T, backend resource.StorageBa
 	}
 }
 
-func TestIntegrationSQLKVConcurrentCreateClientRetry(t *testing.T) {
+// Concurrent creates contend for the same resource lease. Lease acquisition does not wait,
+// so a losing caller can receive a conflict before the winner finishes creating the resource.
+// Both local and remote clients must expose that conflict to the caller, rather than relying
+// on gRPC retries to turn every losing request into AlreadyExists.
+func TestIntegrationSQLKVConcurrentCreateClientConflicts(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	t.Run("Without RvManager/Local", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
+	t.Run("Local", func(t *testing.T) {
+		backend, _ := NewTestSqlKvBackend(t, t.Context())
 		client := newLocalClient(t, backend)
-		runConcurrentCreateRetry(t, client, "sqlkv-retry-local")
+		runConcurrentCreateClientConflicts(t, client, "sqlkv-conflicts-local")
 	})
 
-	t.Run("Without RvManager/Remote", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
+	t.Run("Remote", func(t *testing.T) {
+		backend, _ := NewTestSqlKvBackend(t, t.Context())
 		client := newRemoteClient(t, backend)
-		runConcurrentCreateRetry(t, client, "sqlkv-retry-remote")
+		runConcurrentCreateClientConflicts(t, client, "sqlkv-conflicts-remote")
 	})
+}
 
-	t.Run("With RvManager/Local", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), true)
-		client := newLocalClient(t, backend)
-		runConcurrentCreateRetry(t, client, "sqlkv-rvmanager-retry-local")
-	})
+// Control the lease explicitly so the conflict cannot turn into a duplicate
+// merely because the competing writer finished before the RPC reached storage.
+func TestIntegrationSQLKVCreateGRPCConflictAndAlreadyExists(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	for _, convertErrors := range []bool{false, true} {
+		t.Run(fmt.Sprintf("convertErrors=%t", convertErrors), func(t *testing.T) {
+			backend, _ := NewTestSqlKvBackend(t, t.Context())
+			client := newRemoteClientWithErrorConversion(t, backend, convertErrors)
+			ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
+			key := &resourcepb.ResourceKey{Group: "example.grafana.app", Resource: "examples", Namespace: "default", Name: "create-grpc-errors"}
+			req := &resourcepb.CreateRequest{Key: key, Value: []byte(`{"apiVersion":"example.grafana.app/v1","kind":"Example","metadata":{"namespace":"default","name":"create-grpc-errors"}}`)}
 
-	t.Run("With RvManager/Remote", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), true)
-		client := newRemoteClient(t, backend)
-		runConcurrentCreateRetry(t, client, "sqlkv-rvmanager-retry-remote")
-	})
+			// A lease can be held before anything has been persisted. This must
+			// produce a conflict, not a claim that the object already exists.
+			leaseName := key.Group + "/" + key.Resource + "/" + key.Namespace + "/" + key.Name
+			manager := backend.LeaseManager()
+			held, err := manager.Acquire(ctx, leaseName)
+			require.NoError(t, err)
+			released := false
+			defer func() {
+				if !released {
+					require.NoError(t, manager.Release(ctx, held))
+				}
+			}()
+			rsp, err := client.Create(ctx, req)
+			require.Equal(t, codes.Aborted, status.Code(err))
+			require.Nil(t, rsp)
+			require.Empty(t, status.Convert(err).Details(), "lease conflicts currently use a bare Aborted status")
+			require.NotEqual(t, string(metav1.StatusReasonAlreadyExists), resource.AsErrorResult(err).Reason)
+
+			// Model the lease holder failing without creating anything: release
+			// its lease and verify that the very same create can now succeed.
+			require.NoError(t, manager.Release(ctx, held))
+			released = true
+			rsp, err = client.Create(ctx, req)
+			require.NoError(t, resource.ErrorFromResponse(rsp.GetError(), err))
+			require.Positive(t, rsp.GetResourceVersion())
+
+			// Only once creation has succeeded is a subsequent create a confirmed
+			// duplicate. Check the actual wire shape in both rollout modes.
+			rsp, err = client.Create(ctx, req)
+			var result *resourcepb.ErrorResult
+			if convertErrors {
+				require.Equal(t, codes.AlreadyExists, status.Code(err))
+				require.Nil(t, rsp)
+				details := status.Convert(err).Details()
+				require.Len(t, details, 1)
+				var ok bool
+				result, ok = details[0].(*resourcepb.ErrorResult)
+				require.True(t, ok, "expected ErrorResult status detail")
+			} else {
+				require.NoError(t, err)
+				result = rsp.GetError()
+			}
+			require.NotNil(t, result)
+			require.Equal(t, int32(http.StatusConflict), result.Code)
+			require.Equal(t, string(metav1.StatusReasonAlreadyExists), result.Reason)
+		})
+	}
 }
 
 func newLocalClient(t *testing.T, backend resource.KVBackend) resource.ResourceClient {
@@ -201,7 +340,12 @@ func newLocalClient(t *testing.T, backend resource.KVBackend) resource.ResourceC
 }
 
 func newRemoteClient(t *testing.T, backend resource.KVBackend) resource.ResourceClient {
+	return newRemoteClientWithErrorConversion(t, backend, false)
+}
+
+func newRemoteClientWithErrorConversion(t *testing.T, backend resource.KVBackend, convertErrors bool) resource.ResourceClient {
 	cfg := setting.NewCfg()
+	cfg.UnifiedStorageGRPCErrorResultToStatus = convertErrors
 	cfg.GRPCServer.Address = "localhost:0"
 	cfg.GRPCServer.Network = "tcp"
 	features := featuremgmt.WithFeatures()
@@ -217,6 +361,8 @@ func newRemoteClient(t *testing.T, backend resource.KVBackend) resource.Resource
 		}),
 	)
 	require.NoError(t, err)
+
+	grpcService.Health.Register(svc, resourcepb.ResourceStore_ServiceDesc.ServiceName)
 
 	ctx := t.Context()
 	require.NoError(t, services.StartAndAwaitRunning(ctx, grpcService))
@@ -234,9 +380,9 @@ func newRemoteClient(t *testing.T, backend resource.KVBackend) resource.Resource
 	return resource.NewLegacyResourceClient(conn, conn)
 }
 
-func runConcurrentCreateRetry(t *testing.T, client resource.ResourceClient, ns string) {
+func runConcurrentCreateClientConflicts(t *testing.T, client resource.ResourceClient, ns string) {
 	const concurrency = 10
-	name := "concurrent-create-retry-item"
+	name := "concurrent-create-conflicts-item"
 
 	u := &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": "group/v1",
@@ -264,58 +410,37 @@ func runConcurrentCreateRetry(t *testing.T, client resource.ResourceClient, ns s
 		IsGrafanaAdmin: true,
 	})
 
-	type result struct {
-		err           error
-		alreadyExists bool
-		success       bool
-	}
-	results := make([]result, concurrency)
+	results := make([]error, concurrency)
 
-	// The local client (pkg/storage/unified/resource/client.go) and the remote
-	// gRPC connection (pkg/storage/unified/client.go) both wire a retry
-	// interceptor with WithMax(3) and a 1s exponential backoff. With
-	// concurrency=10 that budget is too small: lease.Acquire returns
-	// ErrLeaseAlreadyHeld without waiting, so callers contend in waves and only
-	// ~1 caller can drain per wave. Override the retry budget per call so all 9
-	// losers can observe AlreadyExists. This does not change production behavior.
-	retryOpts := []grpc.CallOption{
-		grpc_retry.WithMax(uint(concurrency * 2)),
-		grpc_retry.WithBackoff(grpc_retry.BackoffLinearWithJitter(500*time.Millisecond, 0.5)),
-	}
-
+	// Use the production retry policy without per-call overrides or application-level retries.
+	// Replaying conflicts until the lease is released would hide the outcome we want to check.
+	// The client retry unit tests separately verify that Aborted invokes the handler only once.
 	var wg sync.WaitGroup
 	for i := range concurrency {
 		wg.Go(func() {
-			rsp, err := client.Create(clientCtx, &resourcepb.CreateRequest{Key: key, Value: value}, retryOpts...)
-			if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
-				results[i] = result{
-					err:           err,
-					alreadyExists: resource.AsErrorResult(err).Reason == string(metav1.StatusReasonAlreadyExists),
-				}
-				return
-			}
-			results[i] = result{success: true}
+			rsp, err := client.Create(clientCtx, &resourcepb.CreateRequest{Key: key, Value: value})
+			results[i] = resource.ErrorFromResponse(rsp.GetError(), err)
 		})
 	}
 	wg.Wait()
 
 	var successes int
-	var alreadyExistsCount int
-	var unexpectedErrors []error
-	for _, r := range results {
-		switch {
-		case r.success:
+	for _, err := range results {
+		if err == nil {
 			successes++
-		case r.alreadyExists:
-			alreadyExistsCount++
-		default:
-			unexpectedErrors = append(unexpectedErrors, r.err)
+			continue
 		}
+		// Scheduling determines which error a losing create sees: contention while the lease
+		// is held produces Conflict, whereas observing the completed create produces AlreadyExists.
+		// Do not require a fixed count of either error. Some lease conflicts arrive as a bare
+		// Aborted status without ErrorResult details, so check the gRPC code as well as the reason.
+		reason := resource.AsErrorResult(err).Reason
+		validError := status.Code(err) == codes.Aborted ||
+			reason == string(metav1.StatusReasonConflict) || reason == string(metav1.StatusReasonAlreadyExists)
+		require.True(t, validError, "losing creates should get Conflict or AlreadyExists: %v", err)
 	}
 
-	require.Empty(t, unexpectedErrors, "unexpected errors from concurrent creates")
 	require.Equal(t, 1, successes, "exactly one create should succeed")
-	require.Equal(t, concurrency-1, alreadyExistsCount, "all other creates should get AlreadyExists")
 }
 
 func TestConcurrentWritesWithLeasesBadger(t *testing.T) {
@@ -329,14 +454,13 @@ func TestIntegrationConcurrentWritesWithLeasesSqlKV(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
 
 		runConcurrentWritesWithLeases(t, func() resource.StorageBackend {
-			backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
+			backend, _ := NewTestSqlKvBackend(t, t.Context())
 			return backend
 		}, "sqlkv-leases")
 	})
 }
 
-// runConcurrentWritesWithLeases verifies that with leases enabled and
-// no RV manager, concurrent writes to the same resource serialize cleanly:
+// runConcurrentWritesWithLeases verifies that concurrent writes to the same resource serialize cleanly:
 // exactly one succeeds and the rest get a recognizable conflict-style error.
 func runConcurrentWritesWithLeases(t *testing.T, newBackend func() resource.StorageBackend, ns string) {
 	t.Run("concurrent creates", func(t *testing.T) {
@@ -459,63 +583,43 @@ func runConcurrentDeletesWithLeases(t *testing.T, backend resource.StorageBacken
 }
 
 func TestIntegrationBenchmarkSQLKVStorageBackend(t *testing.T) {
-	for _, tc := range []struct {
-		name                string
-		backwardsCompatible bool
-	}{
-		{name: "rvmanager", backwardsCompatible: true},
-		{name: "kv"},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			testutil.SkipIntegrationTestInShortMode(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
-			opts := DefaultBenchmarkOptions(t)
-			if db.IsTestDbSQLite() {
-				opts.Concurrency = 1 // to avoid SQLite database is locked error
-			}
-			backend, dbConn := NewTestSqlKvBackend(t, t.Context(), tc.backwardsCompatible)
-			dbConn.SqlDB().SetMaxOpenConns(min(max(10, opts.Concurrency), 100))
-			RunStorageBackendBenchmark(t, backend, opts)
-		})
+	opts := DefaultBenchmarkOptions(t)
+	if db.IsTestDbSQLite() {
+		opts.Concurrency = 1 // to avoid SQLite database is locked error
 	}
+	backend, dbConn := NewTestSqlKvBackend(t, t.Context())
+	dbConn.SqlDB().SetMaxOpenConns(min(max(10, opts.Concurrency), 100))
+	RunStorageBackendBenchmark(t, backend, opts)
 }
 
 func TestIntegrationBenchmarkSQLKVStorageAndSearch(t *testing.T) {
-	for _, tc := range []struct {
-		name                string
-		backwardsCompatible bool
-	}{
-		{name: "rvmanager", backwardsCompatible: true},
-		{name: "kv"},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			testutil.SkipIntegrationTestInShortMode(t)
-			opts := DefaultBenchmarkOptions(t)
-			if db.IsTestDbSQLite() {
-				t.Skip("concurrency benchmark skipped with sqlite")
-			}
-			backend, _ := NewTestSqlKvBackend(t, t.Context(), tc.backwardsCompatible)
-			searchBackend, err := search.NewBleveBackend(search.BleveOptions{
-				Root:                   t.TempDir(),
-				FileThreshold:          0,
-				IndexMinUpdateInterval: opts.IndexMinUpdateInterval,
-			}, nil)
-			require.NoError(t, err)
-			t.Cleanup(searchBackend.Stop)
-			groupsResources := make(map[string]string, opts.NumResourceTypes)
-			for i := 0; i < opts.NumResourceTypes; i++ {
-				groupsResources[fmt.Sprintf("group-%d", i)] = fmt.Sprintf("resource-%d", i)
-			}
-			searchOpts := resource.SearchOptions{
-				Backend: searchBackend,
-				Resources: &resource.TestDocumentBuilderSupplier{
-					GroupsResources: groupsResources,
-				},
-				IndexModificationCacheTTL: 5 * time.Minute,
-			}
-			RunStorageAndSearchBenchmark(t, backend, searchOpts, opts)
-		})
+	testutil.SkipIntegrationTestInShortMode(t)
+	opts := DefaultBenchmarkOptions(t)
+	if db.IsTestDbSQLite() {
+		t.Skip("concurrency benchmark skipped with sqlite")
 	}
+	backend, _ := NewTestSqlKvBackend(t, t.Context())
+	searchBackend, err := search.NewBleveBackend(search.BleveOptions{
+		Root:                   t.TempDir(),
+		FileThreshold:          0,
+		IndexMinUpdateInterval: opts.IndexMinUpdateInterval,
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(searchBackend.Stop)
+	groupsResources := make(map[string]string, opts.NumResourceTypes)
+	for i := 0; i < opts.NumResourceTypes; i++ {
+		groupsResources[fmt.Sprintf("group-%d", i)] = fmt.Sprintf("resource-%d", i)
+	}
+	searchOpts := resource.SearchOptions{
+		Backend: searchBackend,
+		Resources: &resource.TestDocumentBuilderSupplier{
+			GroupsResources: groupsResources,
+		},
+		IndexModificationCacheTTL: 5 * time.Minute,
+	}
+	RunStorageAndSearchBenchmark(t, backend, searchOpts, opts)
 }
 
 func TestIntegrationSQLKVStorageBackend(t *testing.T) {
@@ -525,23 +629,11 @@ func TestIntegrationSQLKVStorageBackend(t *testing.T) {
 		TestBlobSupport: true,
 	}
 
-	t.Run("Without RvManager", func(t *testing.T) {
-		RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-			backend, _ := NewTestSqlKvBackend(t, ctx, false)
-			return backend
-		}, &TestOptions{
-			NSPrefix:  "sqlkvstoragetest",
-			SkipTests: skipTests,
-		})
-	})
-
-	t.Run("With RvManager", func(t *testing.T) {
-		RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-			backend, _ := NewTestSqlKvBackend(t, ctx, true)
-			return backend
-		}, &TestOptions{
-			NSPrefix:  "sqlkvstoragetest-rvmanager",
-			SkipTests: skipTests,
-		})
+	RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
+		backend, _ := NewTestSqlKvBackend(t, ctx)
+		return backend
+	}, &TestOptions{
+		NSPrefix:  "sqlkvstoragetest",
+		SkipTests: skipTests,
 	})
 }

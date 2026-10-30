@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
-	"time"
+	"testing/synctest"
 
 	"github.com/aws/smithy-go"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
@@ -106,28 +106,24 @@ func newBackfiller(t *testing.T, storage *fakeStorage, vec *fakeVector) *VectorB
 // reports a different Version() than the real dashboard extractor.
 func newBackfillerWithBuilders(t *testing.T, storage *fakeStorage, vec *fakeVector, builders ...embed.Builder) *VectorBackfiller {
 	t.Helper()
-	emb := newFakeEmbedder(&fakeText{dim: 4})
-	b, err := NewVectorBackfiller(Options{
-		Storage:       storage,
-		VectorBackend: vec,
-		BatchEmbedder: embedder.NewBatchEmbedder(*emb),
-		Builders:      builders,
-	})
-	require.NoError(t, err)
+	b, _ := newBackfillerWithEmbedder(t, storage, vec, builders...)
 	return b
 }
 
 // newBackfillerWithEmbedder is newBackfiller exposing the fake embedder so
 // tests can assert whether the provider was called.
-func newBackfillerWithEmbedder(t *testing.T, storage *fakeStorage, vec *fakeVector) (*VectorBackfiller, *fakeText) {
+func newBackfillerWithEmbedder(t *testing.T, storage *fakeStorage, vec *fakeVector, builders ...embed.Builder) (*VectorBackfiller, *fakeText) {
 	t.Helper()
+	if len(builders) == 0 {
+		builders = []embed.Builder{dashboard.New()}
+	}
 	text := &fakeText{dim: 4}
 	emb := newFakeEmbedder(text)
 	b, err := NewVectorBackfiller(Options{
 		Storage:       storage,
 		VectorBackend: vec,
 		BatchEmbedder: embedder.NewBatchEmbedder(*emb),
-		Builders:      []embed.Builder{dashboard.New()},
+		Builders:      builders,
 	})
 	require.NoError(t, err)
 	return b, text
@@ -181,23 +177,25 @@ func TestRun_LockUnavailable_SkipsAllWork(t *testing.T) {
 }
 
 func TestRun_LockAcquired_ReleasedOnReturn(t *testing.T) {
-	vec := newFakeVector()
-	o := newBackfiller(t, newFakeStorage(), vec)
+	synctest.Test(t, func(t *testing.T) {
+		vec := newFakeVector()
+		o := newBackfiller(t, newFakeStorage(), vec)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	done := make(chan error, 1)
-	go func() { done <- o.Run(ctx) }()
+		ctx, cancel := context.WithCancel(context.Background())
+		done := make(chan error, 1)
+		go func() { done <- o.Run(ctx) }()
 
-	// Run loops on a ticker; wait for the lock, then stop it.
-	require.Eventually(t, func() bool {
-		vec.mu.Lock()
-		defer vec.mu.Unlock()
-		return vec.lockAttempts == 1
-	}, time.Second, time.Millisecond)
-	cancel()
-	require.ErrorIs(t, <-done, context.Canceled)
+		// Run loops on a ticker; wait for the lock, then stop it.
 
-	assert.Equal(t, 1, vec.lockReleases, "lock must be released when Run returns")
+		// Let Run acquire the lock and finish its first backfill pass before cancelling.
+		synctest.Wait()
+
+		require.Equal(t, 1, vec.lockAttempts)
+		cancel()
+		require.ErrorIs(t, <-done, context.Canceled)
+
+		assert.Equal(t, 1, vec.lockReleases, "lock must be released when Run returns")
+	})
 }
 
 // TestBackfill_ObservesItemDuration verifies the per-item histogram
@@ -227,7 +225,7 @@ func TestBackfill_ObservesItemDuration(t *testing.T) {
 
 	// One successful observation under the (group, resource, status) labels
 	// the production code uses.
-	require.Equal(t, 1, testutil.CollectAndCount(m.BackfillItemDuration, "vector_storage_backfill_item_duration_seconds"))
+	require.Equal(t, 1, testutil.CollectAndCount(m.BackfillItemDuration, "grafana_vector_storage_backfill_item_duration_seconds"))
 }
 
 // TestRunBackfillJob_FolderTitle_PrefixesBreadcrumb covers the wiring: the
@@ -1127,74 +1125,6 @@ func TestRunBackfillJob_DifferentModel_IgnoredCompletely(t *testing.T) {
 	assert.Empty(t, vec.completedJobIDs, "another instance owns this job; do not complete it")
 	assert.Empty(t, vec.checkpoints)
 	assert.Empty(t, vec.errorMarks, "model mismatch must not pollute another instance's last_error")
-}
-
-func TestRunBackfillJob_PaginatedAcrossPages(t *testing.T) {
-	// Build a result set one page + 5 items long so the backfiller must
-	// fetch exactly two pages.
-	const total = backfillPageSize + 5
-
-	storage := newFakeStorage()
-	storage.listItems = make([]listItem, total)
-	for i := range storage.listItems {
-		storage.listItems[i] = makeListItem("ns", uniqName(i), int64(i+1))
-	}
-
-	vec := newFakeVector()
-	vec.jobs = []vector.BackfillJob{{
-		ID: 7, Model: "test-model", StoppingRV: int64(total + 100),
-	}}
-
-	o := newBackfiller(t, storage, vec)
-	o.runBackfill(context.Background())
-
-	assert.Len(t, vec.upserts, total, "every item across all pages is embedded")
-	require.Len(t, vec.completedJobIDs, 1)
-	// assert pagination
-	require.Len(t, storage.listCalls, 2, "backfiller must request two pages")
-	assert.Empty(t, storage.listCalls[0], "first page starts with an empty token")
-	assert.NotEmpty(t, storage.listCalls[1], "second page must resume from a continue token")
-}
-
-// TestRunBackfillJob_ExactPageMultiple exercises the boundary where total
-// item count is exactly N * backfillPageSize. A naive implementation would
-// emit a continue token built from the post-last-item peek (Name="") and
-// re-feed it through ListIterator on the next page call, which the kv
-// backend rejects with "name is required". The fix defers the per-item
-// checkpoint by one Next()==true so the last item of a page is only
-// persisted after a confirming peek.
-func TestRunBackfillJob_ExactPageMultiple(t *testing.T) {
-	const total = backfillPageSize
-
-	storage := newFakeStorage()
-	storage.listItems = make([]listItem, total)
-	for i := range storage.listItems {
-		storage.listItems[i] = makeListItem("ns", uniqName(i), int64(i+1))
-	}
-
-	vec := newFakeVector()
-	vec.jobs = []vector.BackfillJob{{
-		ID: 9, Model: "test-model", StoppingRV: int64(total + 100),
-	}}
-
-	o := newBackfiller(t, storage, vec)
-	o.runBackfill(context.Background())
-
-	assert.Len(t, vec.upserts, total, "every item is embedded")
-	require.Len(t, vec.completedJobIDs, 1, "job completes despite hitting the page boundary")
-	assert.Empty(t, vec.errorMarks, "no error path on a clean exact-page run")
-	// Final item's continue token is never confirmed by a follow-up
-	// Next()==true, so we persist N-1 checkpoints, never the broken one.
-	require.Len(t, vec.checkpoints, total-1)
-}
-
-func uniqName(i int) string {
-	const letters = "abcdefghijklmnopqrstuvwxyz"
-	out := []byte{letters[i%26], letters[(i/26)%26]}
-	if i >= 26*26 {
-		out = append(out, letters[(i/(26*26))%26])
-	}
-	return string(out)
 }
 
 // newBackfillerWithStats mirrors newBackfiller but wires a stats provider.

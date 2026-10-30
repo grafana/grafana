@@ -6,7 +6,6 @@ import { Button, type Column, EmptyState, InteractiveTable, Stack } from '@grafa
 import { type GrafanaRuleDefinition, type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { trackDeletedRuleRestoreFail, trackDeletedRuleRestoreSuccess } from '../../../Analytics';
-import { shouldAllowPermanentlyDeletingRules } from '../../../featureToggles';
 import { UpdatedByUser } from '../../rule-viewer/tabs/version-history/UpdatedBy';
 
 import { ConfirmDeletedPermanentlyModal } from './ConfirmDeletePermanantlyModal';
@@ -59,8 +58,6 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
 
     setGuidToDelete(ruleTorestore.grafana_alert.guid);
   };
-
-  const shouldAllowRemovePermanently = shouldAllowPermanentlyDeletingRules();
 
   const columns: Array<Column<(typeof deletedRules)[0]>> = [
     {
@@ -123,18 +120,16 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
             >
               <Trans i18nKey="alerting.deleted-rules.restore">Restore</Trans>
             </Button>
-            {shouldAllowRemovePermanently && (
-              <Button
-                variant="destructive"
-                size="sm"
-                icon="trash-alt"
-                onClick={() => {
-                  showDeleteConfirmation(getRowId(row.original.grafana_alert));
-                }}
-              >
-                <Trans i18nKey="alerting.deleted-rules.permanently-delete">Permanently delete</Trans>
-              </Button>
-            )}
+            <Button
+              variant="destructive"
+              size="sm"
+              icon="trash-alt"
+              onClick={() => {
+                showDeleteConfirmation(getRowId(row.original.grafana_alert));
+              }}
+            >
+              <Trans i18nKey="alerting.deleted-rules.permanently-delete">Permanently delete</Trans>
+            </Button>
           </Stack>
         );
       },

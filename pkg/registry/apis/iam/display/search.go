@@ -2,7 +2,6 @@ package display
 
 import (
 	"context"
-	"encoding/binary"
 	"fmt"
 	"strconv"
 
@@ -61,7 +60,7 @@ func (r *SearchDisplayProvider) GetDisplayList(ctx context.Context, ns authlib.N
 		for i, j := range jobs {
 			g.Go(func() error {
 				srsp, err := r.client.Search(gctx, j.req)
-				if err != nil {
+				if err := resource.StatusErrorFromResponse(srsp.GetError(), err); err != nil {
 					return err
 				}
 				responses[i] = srsp
@@ -201,82 +200,29 @@ func decodeDisplayRows(rsp *resourcepb.ResourceSearchResponse) ([]displaySearchR
 		return nil, nil
 	}
 
-	switch rsp.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		return decodeDisplayTableRows(rsp.GetResults()), nil
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		rows := make([]displaySearchRow, 0, len(rsp.Rows))
-		for i, row := range rsp.Rows {
-			if row == nil || row.Key == nil {
-				continue
-			}
-			values, err := resource.DecodeSearchValues(rsp.Fields, row)
-			if err != nil {
-				return nil, fmt.Errorf("decode display search row %d: %w", i, err)
-			}
-			title, _ := values[resource.SEARCH_FIELD_TITLE].(string)
-			email, _ := values[builders.USER_EMAIL].(string)
-			login, _ := values[builders.USER_LOGIN].(string)
-			internalID, _ := values[resource.SEARCH_FIELD_LEGACY_ID].(int64)
-			rows = append(rows, displaySearchRow{
-				key:        row.Key,
-				title:      title,
-				email:      email,
-				login:      login,
-				internalID: internalID,
-			})
-		}
-		return rows, nil
-	default:
+	if rsp.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return nil, fmt.Errorf("unsupported search result format %d", rsp.GetResultFormat())
 	}
-}
-
-func decodeDisplayTableRows(table *resourcepb.ResourceTable) []displaySearchRow {
-	if table == nil {
-		return nil
-	}
-
-	titleIDX, emailIDX, loginIDX, legacyIDIDX := -1, -1, -1, -1
-	for i, column := range table.Columns {
-		switch column.Name {
-		case resource.SEARCH_FIELD_TITLE:
-			titleIDX = i
-		case builders.USER_EMAIL:
-			emailIDX = i
-		case builders.USER_LOGIN:
-			loginIDX = i
-		case resource.SEARCH_FIELD_LEGACY_ID:
-			legacyIDIDX = i
-		}
-	}
-
-	rows := make([]displaySearchRow, 0, len(table.Rows))
-	for _, row := range table.Rows {
+	rows := make([]displaySearchRow, 0, len(rsp.Rows))
+	for i, row := range rsp.Rows {
 		if row == nil || row.Key == nil {
 			continue
 		}
-		decoded := displaySearchRow{key: row.Key}
-		if cell, ok := cellAt(row.Cells, titleIDX); ok {
-			decoded.title = string(cell)
+		values, err := resource.DecodeSearchValues(rsp.Fields, row)
+		if err != nil {
+			return nil, fmt.Errorf("decode display search row %d: %w", i, err)
 		}
-		if cell, ok := cellAt(row.Cells, emailIDX); ok {
-			decoded.email = string(cell)
-		}
-		if cell, ok := cellAt(row.Cells, loginIDX); ok {
-			decoded.login = string(cell)
-		}
-		if cell, ok := cellAt(row.Cells, legacyIDIDX); ok && len(cell) == 8 {
-			decoded.internalID = int64(binary.BigEndian.Uint64(cell))
-		}
-		rows = append(rows, decoded)
+		title, _ := values[resource.SEARCH_FIELD_TITLE].(string)
+		email, _ := values[builders.USER_EMAIL].(string)
+		login, _ := values[builders.USER_LOGIN].(string)
+		internalID, _ := values[resource.SEARCH_FIELD_LEGACY_ID].(int64)
+		rows = append(rows, displaySearchRow{
+			key:        row.Key,
+			title:      title,
+			email:      email,
+			login:      login,
+			internalID: internalID,
+		})
 	}
-	return rows
-}
-
-func cellAt(cells [][]byte, idx int) ([]byte, bool) {
-	if idx < 0 || idx >= len(cells) || cells[idx] == nil {
-		return nil, false
-	}
-	return cells[idx], true
+	return rows, nil
 }

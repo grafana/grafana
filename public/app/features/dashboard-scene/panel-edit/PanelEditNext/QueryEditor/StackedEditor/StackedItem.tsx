@@ -10,6 +10,7 @@ import { isExpressionQuery } from 'app/features/expressions/guards';
 
 import { QueryEditorType } from '../../constants';
 import { EditableQueryName } from '../Header/EditableQueryName';
+import { TransformationIdentifier } from '../Header/TransformationIdentifier';
 import {
   useActionsContext,
   useDatasourceContext,
@@ -102,6 +103,7 @@ export function StackedQueryItem({ query, headingId }: StackedQueryItemProps) {
       />
       <div className={styles.itemBody}>
         <QueryEditorPanel
+          panel={panel}
           query={query}
           queryDsData={queryDsData}
           queryDsLoading={queryDsLoading}
@@ -142,7 +144,15 @@ export function StackedTransformationItem({ transformation, headingId }: Stacked
       <StackedItemHeader
         icon={icon}
         label={<Trans i18nKey="query-editor-next.stacked.transformation">Transformation</Trans>}
-        identifier={transformationName}
+        identifier={
+          <TransformationIdentifier
+            transformation={transformation}
+            transformations={transformations}
+            data={data}
+            fallbackName={transformationName}
+            onUpdate={updateTransformation}
+          />
+        }
         headingId={headingId}
         isHidden={Boolean(transformation.transformConfig.disabled)}
       />

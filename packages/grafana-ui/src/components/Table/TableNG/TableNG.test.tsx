@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
@@ -19,7 +19,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellBackgroundDisplayMode } from '@grafana/schema';
-import { mockClientSize } from '@grafana/test-utils';
+import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
 
 import { type PanelContext, PanelContextProvider } from '../../PanelChrome';
 import { TableCellDisplayMode } from '../types';
@@ -30,7 +30,11 @@ import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_LAST_ROW_CLASS, OVERFLOW_
 // react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
 // this the grid renders no rows at all.
 beforeAll(() => {
+  // Keep offsetWidth consistent with clientWidth so delayed scrollbar measurement cannot go negative.
+  mockBoundingClientRect({ width: 800, height: 600 });
   mockClientSize({ width: 800, height: 600 });
+  // Keep bounding and offset dimensions consistent with the client box for viewport measurement.
+  mockBoundingClientRect({ width: 800, height: 600 });
 });
 
 // Shared helpers for test data frame construction
@@ -82,6 +86,73 @@ const createBasicDataFrame = (): DataFrame =>
       ],
     })
   );
+
+it.each([false, true])('adds the entire field from its header after sorting (filtered=%s)', async (filtered) => {
+  const frame = createBasicDataFrame();
+  frame.fields[0].config.custom = { ...frame.fields[0].config.custom, filterable: filtered };
+  const onFieldAddToAssistant = jest.fn();
+  render(
+    <TableNG
+      data={frame}
+      width={800}
+      height={600}
+      tableRefreshEnabled
+      sortBy={[{ displayName: 'Column B', desc: true }]}
+      onFieldAddToAssistant={onFieldAddToAssistant}
+    />
+  );
+  const menu = screen.getByRole('button', { name: 'Column options for Column A' });
+  if (filtered) {
+    await userEvent.click(menu);
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Filter values' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'A2' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+    expect(screen.getByText('A2')).toBeInTheDocument();
+    expect(screen.queryByText('A1')).not.toBeInTheDocument();
+  }
+  act(() => menu.focus());
+  await userEvent.keyboard('{Enter}');
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Add to Assistant' }));
+  expect(onFieldAddToAssistant).toHaveBeenCalledTimes(1);
+  expect(onFieldAddToAssistant).toHaveBeenCalledWith(
+    frame,
+    expect.objectContaining({ name: 'Column A', values: ['A1', 'A2', 'A3'] })
+  );
+});
+
+it.each([false, true])('adds the original cell to Assistant after sorting (filtered=%s)', async (filtered) => {
+  const frame = createBasicDataFrame();
+  frame.fields[0].config.custom.filterable = true;
+  const onCellAddToAssistant = jest.fn();
+  render(
+    <TableNG
+      data={frame}
+      width={800}
+      height={600}
+      tableRefreshEnabled
+      sortBy={[{ displayName: 'Column B', desc: true }]}
+      onCellAddToAssistant={onCellAddToAssistant}
+    />
+  );
+  if (filtered) {
+    await userEvent.click(
+      screen.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.button)
+    );
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Filter values' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'A2' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+  }
+  const firstRow = screen.getAllByRole('row')[1];
+  expect(within(firstRow).getByText(filtered ? 'A2' : 'A3')).toBeInTheDocument();
+  within(firstRow).getAllByRole('button', { name: 'Cell actions' })[0].focus();
+  await userEvent.keyboard('{Enter}');
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Add to Assistant' }));
+  expect(onCellAddToAssistant).toHaveBeenCalledWith(
+    frame,
+    expect.objectContaining({ name: 'Column A', values: ['A1', 'A2', 'A3'] }),
+    filtered ? 1 : 2
+  );
+});
 
 // A `FieldType.other` column, which the Auto cell pretty-prints as JSON.
 const createJsonDataFrame = (wrapText: boolean): DataFrame =>
@@ -239,6 +310,21 @@ const createNestedDataFrame = (meta?: DataFrame['meta']): DataFrame => {
     })
   );
 };
+
+it('attaches the nested field from its own frame', async () => {
+  const frame = createNestedDataFrame();
+  const onFieldAddToAssistant = jest.fn();
+  render(
+    <TableNG data={frame} width={800} height={600} tableRefreshEnabled onFieldAddToAssistant={onFieldAddToAssistant} />
+  );
+  await userEvent.click(screen.getAllByRole('button', { name: 'Expand row' })[0]);
+  await userEvent.click(screen.getByRole('button', { name: 'Column options for Nested B' }));
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Add to Assistant' }));
+  expect(onFieldAddToAssistant).toHaveBeenCalledWith(
+    expect.objectContaining({ name: 'NestedData' }),
+    expect.objectContaining({ name: 'Nested B', values: [10, 20] })
+  );
+});
 
 /**
  * A nested table where the apply-to-row background lives on a field *inside the nested frame*
@@ -1186,6 +1272,8 @@ describe('TableNG', () => {
     });
 
     it("leaves a nested frame's hidden header label out of its content-aware auto widths", async () => {
+      jest.useFakeTimers();
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
       // A nested frame carries its own header visibility in `meta.custom.noHeader`, so the nested
       // columns can't inherit the outer table's `hasHeader`. The outer header stays visible in both
       // renders; only the nested frame's own `noHeader` changes.
@@ -1201,6 +1289,10 @@ describe('TableNG', () => {
         );
 
         await user.click(container.querySelector('[aria-label="Expand row"]')!);
+        const grid = container.querySelector<HTMLElement>('[role="grid"]')!;
+        const initialWidths = grid.style.gridTemplateColumns;
+        act(() => jest.advanceTimersByTime(150));
+        expect(grid.style.gridTemplateColumns).toBe(initialWidths);
 
         // The outer grid is a treegrid; the nested DataGrid is the only plain grid in the tree.
         const widths = container
@@ -1211,11 +1303,15 @@ describe('TableNG', () => {
         return widths;
       };
 
-      const [withNestedHeader] = await renderNestedWidths(false);
-      const [withoutNestedHeader] = await renderNestedWidths(true);
+      try {
+        const [withNestedHeader] = await renderNestedWidths(false);
+        const [withoutNestedHeader] = await renderNestedWidths(true);
 
-      expect(withNestedHeader).toBeGreaterThan(0);
-      expect(withoutNestedHeader).toBeLessThan(withNestedHeader);
+        expect(withNestedHeader).toBeGreaterThan(0);
+        expect(withoutNestedHeader).toBeLessThan(withNestedHeader);
+      } finally {
+        jest.useRealTimers();
+      }
     });
 
     it('shows full column name in title attribute for truncated headers', () => {
@@ -2386,6 +2482,347 @@ describe('TableNG', () => {
   });
 
   describe('Text wrapping', () => {
+    const inspectButton = selectors.components.Panels.Visualization.TableNG.cellActions.inspectButton;
+    it('explains oversized hover suppression only when hover expansion is enabled', async () => {
+      const data = withFieldOverrides(
+        toDataFrame({
+          fields: [
+            {
+              name: 'message',
+              type: FieldType.string,
+              values: ['x'.repeat(10_000), 'x'.repeat(10_001)],
+              config: { custom: { wrapText: false, width: 300 } },
+            },
+          ],
+        })
+      );
+      const { rerender } = render(<TableNG data={data} width={800} height={600} />);
+      const warning = screen.getByRole('button', { name: 'Cell warnings' });
+      expect(warning.closest('[role="gridcell"]')).not.toHaveClass(OVERFLOW_CELL_CLASS);
+      expect(screen.getByText('x'.repeat(10_000)).closest('[role="gridcell"]')).toHaveClass(OVERFLOW_CELL_CLASS);
+      await user.hover(warning);
+      expect(await screen.findByRole('tooltip')).toHaveTextContent(
+        'Content is too long to expand on hover. Use Inspect value to view the full content.'
+      );
+      rerender(<TableNG data={data} width={800} height={600} hoverOverflow={false} />);
+      expect(screen.getByTestId(inspectButton)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Cell warnings' })).not.toBeInTheDocument();
+    });
+
+    it('explains column wrapping fallback in the header and clears it for new data', async () => {
+      const makeData = (value: string) =>
+        withFieldOverrides(
+          toDataFrame({
+            fields: [
+              {
+                name: 'message',
+                type: FieldType.string,
+                values: ['short', value],
+                config: { custom: { wrapText: true, width: 300 } },
+              },
+            ],
+          })
+        );
+      const { rerender } = render(<TableNG data={makeData('x'.repeat(10_001))} width={800} height={600} />);
+      const warning = screen.getByRole('button', { name: 'Field warnings' });
+      expect(warning.closest('[role="columnheader"]')).toHaveTextContent('message');
+      await user.hover(warning);
+      expect(await screen.findByRole('tooltip')).toHaveTextContent(
+        'Text wrapping is disabled for this column because a value is too long. Use Inspect value to view the full content.'
+      );
+      expect(screen.queryByRole('button', { name: 'Cell warnings' })).not.toBeInTheDocument();
+      rerender(<TableNG data={makeData('replacement')} width={800} height={600} />);
+      expect(screen.getByText('replacement')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Field warnings' })).not.toBeInTheDocument();
+    });
+
+    it.each([false, true])(
+      'offers Inspect for oversized non-wrapping cells with hoverOverflow=%s',
+      async (hoverOverflow) => {
+        const value = 'x'.repeat(10_001) + 'END OF MESSAGE';
+        const data = withFieldOverrides(
+          toDataFrame({
+            fields: [
+              {
+                name: 'message',
+                type: FieldType.string,
+                values: ['short', 'x'.repeat(10_000), value],
+                config: { custom: { wrapText: false, inspect: false, width: 300 } },
+              },
+            ],
+          })
+        );
+        render(<TableNG data={data} width={800} height={600} hoverOverflow={hoverOverflow} />);
+        expect(screen.getAllByTestId(inspectButton)).toHaveLength(1);
+        expect(screen.getByTestId(inspectButton).closest('[role="gridcell"]')).not.toHaveClass(OVERFLOW_CELL_CLASS);
+        await user.click(screen.getByTestId(inspectButton));
+        expect(screen.getByRole('dialog').querySelector('pre')?.textContent).toBe(value);
+      }
+    );
+
+    it('offers Inspect only on oversized cells in the refreshed menu', async () => {
+      const value = 'x'.repeat(10_001) + 'END OF MESSAGE';
+      const data = withFieldOverrides(
+        toDataFrame({
+          fields: [
+            {
+              name: 'message',
+              type: FieldType.string,
+              values: ['short', value],
+              config: { custom: { wrapText: false, inspect: false, width: 300 } },
+            },
+          ],
+        })
+      );
+      render(<TableNG data={data} width={800} height={600} tableRefreshEnabled />);
+
+      const shortCell = screen.getByText('short').closest('[role="gridcell"]') as HTMLElement;
+      const oversizedCell = screen.getByText(value).closest('[role="gridcell"]') as HTMLElement;
+      expect(within(shortCell).queryByRole('button', { name: 'Cell actions' })).not.toBeInTheDocument();
+      within(oversizedCell).getByRole('button', { name: 'Cell actions' }).focus();
+      await user.keyboard('{Enter}');
+      await user.click(screen.getByRole('menuitem', { name: 'Inspect value' }));
+      expect(screen.getByRole('dialog').querySelector('pre')?.textContent).toBe(value);
+    });
+
+    it('offers Inspect for oversized formatted JSON with wrapping disabled', async () => {
+      const data = createJsonDataFrame(false);
+      data.fields[1].values = [{ content: 'x'.repeat(10_000) }];
+      render(<TableNG data={data} width={800} height={600} hoverOverflow={false} />);
+      await user.click(screen.getByTestId(inspectButton));
+      await user.click(screen.getByRole('tab', { name: 'Plain text' }));
+      expect(screen.getByRole('dialog')).toHaveTextContent('x'.repeat(10_000));
+    });
+
+    it('combines JSON cell warnings and field content behind one indicator', async () => {
+      const data = createJsonDataFrame(false);
+      data.fields[1].values = [{ content: 'x'.repeat(10_000) }];
+      data.fields[0].values = ['Field context'];
+      data.fields[1].config.custom.tooltip = { field: data.fields[0].name };
+      render(<TableNG data={data} width={800} height={600} />);
+      const warning = screen.getByRole('button', { name: 'Cell warnings' });
+      const cell = within(warning.closest('[role="gridcell"]') as HTMLElement);
+      expect(cell.queryByRole('button', { name: 'Toggle tooltip' })).not.toBeInTheDocument();
+      await user.hover(warning);
+      const tooltip = await screen.findByTestId(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper);
+      expect(tooltip).toHaveTextContent('Content is too long to expand on hover.');
+      expect(within(tooltip).getByRole('separator')).toBeInTheDocument();
+      expect(tooltip).toHaveTextContent('Field context');
+      await user.click(warning);
+      expect(warning).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    it.each([
+      [false, TableCellDisplayMode.Auto],
+      [true, TableCellDisplayMode.Auto],
+      [false, TableCellDisplayMode.JSONView],
+      [true, TableCellDisplayMode.JSONView],
+    ])('gates the ellipsis container with table.refresh=%s for %s cells', (tableRefreshEnabled, type) => {
+      const data = withFieldOverrides(
+        toDataFrame({
+          fields: [
+            {
+              name: 'message',
+              type: FieldType.string,
+              values: ['clipped message'],
+              config: { custom: { wrapText: false, width: 100, cellOptions: { type } } },
+            },
+          ],
+        })
+      );
+      render(<TableNG data={data} width={800} height={600} tableRefreshEnabled={tableRefreshEnabled} />);
+      const text = screen.getByText('clipped message');
+      if (tableRefreshEnabled) {
+        expect(text.parentElement).toHaveAttribute('role', 'gridcell');
+        expect(text).toHaveStyle({ overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 });
+      } else {
+        expect(text).toHaveAttribute('role', 'gridcell');
+        expect(text.firstChild?.nodeType).toBe(Node.TEXT_NODE);
+      }
+    });
+
+    it.each([false, true])('clamps wrapped rows with table.refresh=%s', (tableRefreshEnabled) => {
+      render(
+        <TableNG
+          data={wrappedFrame(['wrapped message'])}
+          width={800}
+          height={600}
+          maxRowHeight={100}
+          tableRefreshEnabled={tableRefreshEnabled}
+        />
+      );
+      const text = screen.getByText('wrapped message');
+      if (tableRefreshEnabled) {
+        expect(text).toHaveStyle({ display: '-webkit-box' });
+      } else {
+        expect(text.parentElement).toHaveAttribute('role', 'gridcell');
+      }
+      // jsdom omits vendor-prefixed properties from computed styles.
+      const clamp = Array.from(document.styleSheets)
+        .flatMap((sheet) => Array.from(sheet.cssRules))
+        .find(
+          (rule): rule is CSSStyleRule =>
+            rule instanceof CSSStyleRule &&
+            rule.style.getPropertyValue('-webkit-line-clamp') === '4' &&
+            text.matches(rule.selectorText)
+        );
+      expect(clamp?.style.getPropertyValue('-webkit-box-orient')).toBe('vertical');
+      expect(clamp?.style.getPropertyValue('display')).toBe('-webkit-box');
+    });
+
+    function wrappedFrame(values: string[]) {
+      return withFieldOverrides(
+        toDataFrame({
+          fields: [
+            {
+              name: 'message',
+              type: FieldType.string,
+              values,
+              config: { custom: { wrapText: true, width: 300 } },
+            },
+          ],
+        })
+      );
+    }
+
+    it.each([0, 1, 2])('repairs grid positions when oversized text occurs at row %i', (index) => {
+      jest.spyOn(uwrap, 'varPreLine').mockReturnValue({
+        count: (text) => text.split('\n').length,
+        each: () => {},
+        split: () => [],
+        test: () => false,
+      });
+      const values = ['one\ntwo\nthree', 'four\nfive', 'six\nseven'];
+      values[index] = 'stack trace\n'.repeat(2_500);
+      const data = wrappedFrame(values);
+      const { container } = render(<TableNG data={data} width={800} height={600} structureRev={1} />);
+
+      expect(getComputedStyle(screen.getByRole('grid')).gridTemplateRows).toBe('repeat(1, 34px) repeat(3, 34px)');
+      expect(screen.getAllByTestId(inspectButton)).toHaveLength(3);
+      for (const cell of screen.getAllByRole('gridcell')) {
+        expect(getComputedStyle(cell).whiteSpace).not.toBe('pre-line');
+      }
+      expect(container.querySelector(`.${OVERFLOW_CELL_CLASS}`)).not.toBeInTheDocument();
+      expect(data.fields[0].config.custom).toEqual({ wrapText: true, width: 300 });
+    });
+
+    it('keeps fallback across resize, but reevaluates every new result with the same structure revision', () => {
+      const data = wrappedFrame(['x'.repeat(10_001)]);
+      const { rerender } = render(<TableNG data={data} width={800} height={600} structureRev={1} />);
+      expect(screen.getByTestId(inspectButton)).toBeInTheDocument();
+
+      rerender(<TableNG data={data} width={500} height={600} structureRev={1} />);
+      expect(screen.getByTestId(inspectButton)).toBeInTheDocument();
+      expect(getComputedStyle(screen.getByRole('gridcell')).whiteSpace).not.toBe('pre-line');
+
+      rerender(<TableNG data={wrappedFrame(['short\nmessage'])} width={500} height={600} structureRev={1} />);
+      expect(getComputedStyle(screen.getByRole('gridcell')).whiteSpace).toBe('pre-line');
+      expect(screen.queryByTestId(inspectButton)).not.toBeInTheDocument();
+
+      rerender(<TableNG data={wrappedFrame(['y'.repeat(10_001)])} width={500} height={600} structureRev={1} />);
+      expect(screen.getByTestId(inspectButton)).toBeInTheDocument();
+      expect(getComputedStyle(screen.getByRole('gridcell')).whiteSpace).not.toBe('pre-line');
+    });
+
+    it('opens the complete oversized value in Inspect without hover expansion under a height cap', async () => {
+      const value = 'stack trace\n'.repeat(2_500) + 'END OF STACK';
+      const { container } = render(
+        <TableNG data={wrappedFrame([value])} width={800} height={600} maxRowHeight={100} />
+      );
+      await user.click(screen.getByTestId(inspectButton));
+
+      expect(screen.getByRole('dialog')).toHaveTextContent('END OF STACK');
+      expect(screen.getByRole('dialog').querySelector('pre')?.textContent).toBe(value);
+      expect(container.querySelector(`.${OVERFLOW_CELL_CLASS}`)).not.toBeInTheDocument();
+    });
+
+    it('detects oversized pretty-printed JSON and leaves a separate table unaffected', () => {
+      const json = createJsonDataFrame(true);
+      json.fields[1].values = [{ content: 'x'.repeat(10_000) }];
+      render(
+        <>
+          <TableNG data={json} width={800} height={600} />
+          <TableNG data={wrappedFrame(['normal text'])} width={800} height={600} />
+        </>
+      );
+
+      const grids = screen.getAllByRole('grid');
+      expect(within(grids[0]).getByTestId(inspectButton)).toBeInTheDocument();
+      expect(getComputedStyle(within(grids[1]).getByRole('gridcell')).whiteSpace).toBe('pre-line');
+      expect(within(grids[1]).queryByTestId(inspectButton)).not.toBeInTheDocument();
+    });
+
+    it('resets fallback on a new frame that reuses the fields and value buffer', () => {
+      const data = wrappedFrame(['x'.repeat(10_001)]);
+      const { rerender } = render(<TableNG data={data} width={800} height={600} />);
+      expect(screen.getByTestId(inspectButton)).toBeInTheDocument();
+
+      data.fields[0].values[0] = 'short text';
+      rerender(<TableNG data={{ ...data }} width={800} height={600} />);
+      expect(getComputedStyle(screen.getByRole('gridcell')).whiteSpace).toBe('pre-line');
+      expect(screen.queryByTestId(inspectButton)).not.toBeInTheDocument();
+    });
+
+    it('discovers oversized text beyond the pagination sample when its page opens', async () => {
+      const values = Array.from({ length: 101 }, (_, index) => `message ${index}`);
+      values[100] = 'x'.repeat(10_001);
+      render(<TableNG data={wrappedFrame(values)} width={800} height={600} enablePagination pageSize={100} />);
+      expect(getComputedStyle(screen.getAllByRole('gridcell')[0]).whiteSpace).toBe('pre-line');
+      expect(screen.queryByTestId(inspectButton)).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /next page/i }));
+      expect(screen.getByTestId(inspectButton)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Field warnings' })).toBeInTheDocument();
+      expect(getComputedStyle(screen.getByRole('grid')).gridTemplateRows).toBe('repeat(1, 34px) repeat(1, 34px)');
+    });
+
+    it('repairs expanded nested heights without disabling a parent column with the same name', async () => {
+      const first = wrappedFrame(['one\ntwo\nthree', 'short']);
+      const second = wrappedFrame(['x'.repeat(10_001), 'short']);
+      const data = withFieldOverrides(
+        toDataFrame({
+          fields: [
+            {
+              name: 'message',
+              type: FieldType.string,
+              values: ['parent one', 'parent two'],
+              config: { custom: { wrapText: true } },
+            },
+            { name: 'nested', type: FieldType.nestedFrames, values: [[first], [second]] },
+          ],
+        })
+      );
+      const { rerender } = render(<TableNG data={data} width={800} height={600} structureRev={1} />);
+      await user.click(screen.getAllByRole('button', { name: 'Expand row' })[0]);
+      expect(getComputedStyle(within(screen.getByRole('grid')).getAllByRole('gridcell')[0]).whiteSpace).toBe(
+        'pre-line'
+      );
+      expect(screen.queryByTestId(inspectButton)).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Expand row' }));
+      expect(screen.getAllByTestId(inspectButton)).toHaveLength(4);
+      expect(getComputedStyle(screen.getByRole('gridcell', { name: 'parent one' })).whiteSpace).toBe('pre-line');
+      for (const grid of screen.getAllByRole('grid')) {
+        // JSDOM preserves repeat() syntax instead of resolving it to individual track heights.
+        const rowHeights = getComputedStyle(grid)
+          .gridTemplateRows.replace(/repeat\((\d+),\s*([\d.]+px)\)/g, (_, count, height) =>
+            `${height} `.repeat(Number(count))
+          )
+          .trim()
+          .split(/\s+/);
+        expect(rowHeights).toEqual(['34px', '34px', '34px']);
+      }
+      expect(first.fields[0].config.custom?.wrapText).toBe(true);
+
+      data.fields[1].values[1] = [wrappedFrame(['short message', 'short'])];
+      rerender(<TableNG data={{ ...data }} width={800} height={600} structureRev={1} />);
+      expect(screen.getByRole('gridcell', { name: 'short message' })).toBeInTheDocument();
+      expect(getComputedStyle(within(screen.getAllByRole('grid')[0]).getAllByRole('gridcell')[0]).whiteSpace).toBe(
+        'pre-line'
+      );
+      expect(screen.queryByTestId(inspectButton)).not.toBeInTheDocument();
+    });
+
     it('defaults to not wrapping text', () => {
       const { container } = render(<TableNG data={createBasicDataFrame()} width={800} height={600} />);
 
@@ -2458,11 +2895,11 @@ describe('TableNG', () => {
 
       // metadata's value ({ region: 'us-east-1', replicas: 3 }) pretty-prints to 4 lines:
       // `{\n "region": "us-east-1",\n "replicas": 3\n}`.
-      const expectedRowHeight = 4 * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
       const grid = container.querySelector('.rdg');
       const gridStyles = window.getComputedStyle(grid!);
-      expect(gridStyles.getPropertyValue('grid-template-rows')).toBe(
-        `repeat(1, ${TABLE.HEADER_HEIGHT}px) ${expectedRowHeight}px`
+      const expectedRowHeight = 4 * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
+      expect(gridStyles.getPropertyValue('grid-template-rows')).toMatch(
+        new RegExp(`^repeat\\(1, ${TABLE.HEADER_HEIGHT}px\\)\\s*${expectedRowHeight}px$`)
       );
     });
 
@@ -2630,6 +3067,103 @@ describe('TableNG', () => {
   });
 
   describe('Cell inspection', () => {
+    it('opens the refreshed cell menu by keyboard and applies a filter from the grid', async () => {
+      const data = createBasicDataFrame();
+      data.fields[0].config.filterable = true;
+      data.fields[0].config.custom = { ...data.fields[0].config.custom, inspect: true };
+      const onCellFilterAdded = jest.fn();
+      render(
+        <TableNG data={data} width={800} height={600} tableRefreshEnabled onCellFilterAdded={onCellFilterAdded} />
+      );
+
+      const cell = screen.getByRole('gridcell', { name: 'A1' });
+      const trigger = within(cell).getByTestId(
+        selectors.components.Panels.Visualization.TableNG.cellActions.triggerButton
+      );
+      trigger.focus();
+      await user.keyboard('{Enter}');
+      expect(screen.getByRole('menu', { name: 'Cell actions' })).toBeVisible();
+      await user.keyboard('{Escape}');
+      expect(trigger).toHaveFocus();
+      await user.keyboard('{Enter}');
+      await user.click(screen.getByRole('menuitem', { name: 'Filter for value' }));
+      expect(onCellFilterAdded).toHaveBeenCalledWith({ key: 'Column A', operator: '=', value: 'A1' });
+      expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    describe('keyboard access to the cell actions trigger', () => {
+      const triggerTestId = selectors.components.Panels.Visualization.TableNG.cellActions.triggerButton;
+
+      const renderWithInspectOnColumnB = () => {
+        const data = createBasicDataFrame();
+        data.fields[1].config.custom = { ...data.fields[1].config.custom, inspect: true };
+        render(<TableNG data={data} width={800} height={600} tableRefreshEnabled />);
+        const cell = screen.getByRole('gridcell', { name: '1' });
+        return { cell, trigger: within(cell).getByTestId(triggerTestId) };
+      };
+
+      it('tabs from a cell into its trigger, back with Shift+Tab, and on to the next row', async () => {
+        const { cell, trigger } = renderWithInspectOnColumnB();
+
+        await user.click(screen.getByRole('gridcell', { name: 'A1' }));
+        await user.keyboard('{ArrowRight}');
+        expect(cell).toHaveFocus();
+
+        await user.keyboard('{Tab}');
+        expect(trigger).toHaveFocus();
+
+        await user.keyboard('{Shift>}{Tab}{/Shift}');
+        expect(cell).toHaveFocus();
+
+        await user.keyboard('{Tab}{Tab}');
+        expect(screen.getByRole('gridcell', { name: 'A2' })).toHaveFocus();
+      });
+
+      it('opens the menu with Enter on a focused cell and returns focus to the trigger on Escape', async () => {
+        const { trigger } = renderWithInspectOnColumnB();
+
+        await user.click(screen.getByRole('gridcell', { name: 'A1' }));
+        await user.keyboard('{ArrowRight}{Enter}');
+        expect(screen.getByRole('menu', { name: 'Cell actions' })).toBeVisible();
+        expect(screen.getByRole('menuitem', { name: 'Inspect value' })).toHaveFocus();
+
+        await user.keyboard('{Escape}');
+        expect(screen.queryByRole('menu', { name: 'Cell actions' })).not.toBeInTheDocument();
+        expect(trigger).toHaveFocus();
+      });
+
+      it('tabs from the tooltip trigger to the cell actions trigger in the same cell', async () => {
+        const data = createBasicDataFrame();
+        data.fields[1].config.custom = {
+          ...data.fields[1].config.custom,
+          inspect: true,
+          tooltip: { field: 'Column A' },
+        };
+        render(<TableNG data={data} width={800} height={600} tableRefreshEnabled />);
+        const cell = screen.getByRole('gridcell', { name: '1' });
+
+        await user.click(screen.getByRole('gridcell', { name: 'A1' }));
+        await user.keyboard('{ArrowRight}');
+        expect(within(cell).getByRole('button', { name: 'Toggle tooltip' })).toHaveFocus();
+
+        await user.keyboard('{Tab}');
+        expect(within(cell).getByTestId(triggerTestId)).toHaveFocus();
+      });
+
+      it('tabs into the trigger of a cell in an expanded nested table', async () => {
+        const data = createNestedDataFrame();
+        const nestedField = data.fields[4].values[0][0].fields[1];
+        nestedField.config.custom = { ...nestedField.config.custom, inspect: true };
+        render(<TableNG data={data} width={800} height={600} tableRefreshEnabled />);
+        await user.click(screen.getAllByRole('button', { name: 'Expand row' })[0]);
+
+        const nestedCell = screen.getByRole('gridcell', { name: 'N1' });
+        await user.click(nestedCell);
+        await user.keyboard('{Tab}');
+        expect(within(nestedCell).getByTestId(triggerTestId)).toHaveFocus();
+      });
+    });
+
     it('shows inspect icon when hovering over a cell with inspection enabled', async () => {
       const inspectDataFrame = {
         ...createBasicDataFrame(),

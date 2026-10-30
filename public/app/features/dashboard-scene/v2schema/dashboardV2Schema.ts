@@ -434,6 +434,7 @@ const transformationKindSchema = z.object({
   kind: z.literal('Transformation'),
   group: z.string(),
   spec: z.object({
+    refId: z.string().optional(),
     disabled: z.boolean().optional(),
     filter: matcherConfigSchema.optional(),
     topic: z.enum(['series', 'annotations', 'alertStates']).optional(),
@@ -443,6 +444,7 @@ const transformationKindSchema = z.object({
 
 const queryOptionsSpecSchema = z.object({
   timeFrom: z.string().optional(),
+  timeTo: z.string().optional(),
   maxDataPoints: z.number().optional(),
   timeShift: z.string().optional(),
   queryCachingTTL: z.number().optional(),

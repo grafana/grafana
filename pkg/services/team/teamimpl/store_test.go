@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -39,7 +40,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 
 	t.Run("Testing Team commands and queries", func(t *testing.T) {
 		sqlStore, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-		teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, tracing.InitializeTracerForTest(), nil)
+		teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, tracing.InitializeTracerForTest(), nil, iamapi.Features{})
 		require.NoError(t, err)
 		testUser := &user.SignedInUser{
 			OrgID: 1,
@@ -580,7 +581,7 @@ func TestIntegrationSQLStore_DeleteRenderers(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
+		teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil, iamapi.Features{})
 		require.NoError(t, err)
 		created, err := teamSvc.CreateTeam(context.Background(), &team.CreateTeamCommand{
 			Name:  "delete-renderer-test",
@@ -686,7 +687,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 	}
 
 	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
+	teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil, iamapi.Features{})
 	require.NoError(t, err)
 
 	// Seed 10 teams
@@ -730,7 +731,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		dbHelper, err := legacysql.NewDatabaseProvider(store)(context.Background())
 		require.NoError(t, err)
 
-		teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
+		teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil, iamapi.Features{})
 		require.NoError(t, err)
 
 		team1Cmd := team.CreateTeamCommand{
@@ -791,7 +792,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 
 	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	setup(store, cfg)
-	teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
+	teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil, iamapi.Features{})
 	require.NoError(t, err)
 
 	type getTeamMembersTestCase struct {

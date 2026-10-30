@@ -5,19 +5,18 @@ import { CustomVariable, SceneGridLayout, SceneVariableSet, type SceneVariable }
 
 import { DashboardScene } from '../DashboardScene';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
-import { type DashboardPlanningState } from '../types/dashboard';
+import { type DashboardPlanPreviewState } from '../types/dashboard';
 
 import { PlanningControls } from './PlanningControls';
 
 const { editDashboard } = selectors.components.NavToolbar;
 
 describe('PlanningControls', () => {
-  it('shows the plan title, panel count and the two actions', () => {
+  it('shows the preview label, plan title and the two actions', () => {
     setup();
 
-    expect(screen.getByText('Plan')).toBeInTheDocument();
+    expect(screen.getByText('Preview')).toBeInTheDocument();
     expect(screen.getByText('Prometheus overview')).toBeInTheDocument();
-    expect(screen.getByText('3 panels')).toBeInTheDocument();
     expect(screen.getByTestId(editDashboard.planningDismissButton)).toBeInTheDocument();
     expect(screen.getByTestId(editDashboard.planningBuildButton)).toBeInTheDocument();
   });
@@ -56,10 +55,10 @@ describe('PlanningControls', () => {
 });
 
 function setup(variables: SceneVariable[] = []) {
-  const planning: DashboardPlanningState = {
+  const planning: DashboardPlanPreviewState = {
+    phase: 'preview',
     planId: 'plan-1',
     planTitle: 'Prometheus overview',
-    panelCount: 3,
     onBuild: jest.fn(),
     onDismiss: jest.fn(),
   };

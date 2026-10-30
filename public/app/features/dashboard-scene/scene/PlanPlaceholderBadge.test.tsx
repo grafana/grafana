@@ -82,13 +82,14 @@ function setup($data?: SceneDataProvider) {
     meta: {},
     body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [] }) }),
     planning: {
+      phase: 'preview',
       planId: 'plan-1',
       planTitle: 'Plan',
-      panelCount: 1,
       onBuild: jest.fn(),
       onDismiss: jest.fn(),
     },
   });
+  dashboard.activateSidebar();
   dashboard.state.body.addPanel(panel);
 
   render(<badge.Component model={badge} />);

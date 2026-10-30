@@ -7,11 +7,14 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -25,6 +28,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	metricutils "github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
 var (
@@ -740,6 +744,55 @@ func TestDeleteExistingItems_ResourcesBeforeFolders(t *testing.T) {
 	assert.Equal(t, []string{"folder-nested", "folder-root"}, order[2:], "folders should be deleted deepest first")
 }
 
+func TestDeleteExistingItems_ReportsFirstNonEmptyFolder(t *testing.T) {
+	items := provisioning.ResourceList{Items: []provisioning.ResourceListItem{
+		{Group: folders.GroupVersion.Group, Resource: "folders", Name: "shared-folder", Title: "Shared folder", Path: "shared"},
+		{Group: folders.GroupVersion.Group, Resource: "folders", Name: "nested-folder", Title: "Nested folder", Path: "shared/nested", Folder: "shared-folder"},
+		{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "managed-dashboard", Path: "shared/nested/dashboard.json", Folder: "nested-folder"},
+	}}
+	resourceLister := resources.NewMockResourceLister(t)
+	resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+
+	clientFactory := resources.NewMockClientFactory(t)
+	clients := resources.NewMockResourceClients(t)
+	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
+
+	var deleted []string
+	client := &mockDynamicClient{
+		deleteFunc: func(_ context.Context, name string, _ metav1.DeleteOptions, _ ...string) error {
+			deleted = append(deleted, name)
+			if name == "managed-dashboard" {
+				return nil
+			}
+			return &apierrors.StatusError{ErrStatus: metav1.Status{
+				Code: http.StatusBadRequest, Details: &metav1.StatusDetails{UID: "folder.not-empty"},
+			}}
+		},
+	}
+	clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
+		Group: folders.GroupVersion.Group, Resource: "folders",
+	}).Return(client, schema.GroupVersionKind{}, nil).Twice()
+	clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
+		Group: "dashboard.grafana.app", Resource: "dashboards",
+	}).Return(client, schema.GroupVersionKind{}, nil).Once()
+
+	f := &finalizer{
+		lister: resourceLister, clientFactory: clientFactory,
+		metrics:    func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
+		maxWorkers: 1,
+	}
+	count, err := f.deleteExistingItems(context.Background(), &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"},
+	})
+
+	require.Error(t, err)
+	assert.Equal(t, 1, count)
+	assert.Equal(t, []string{"managed-dashboard", "nested-folder", "shared-folder"}, deleted)
+	assert.ErrorContains(t, err, `"Nested folder" (UID: nested-folder)`)
+	assert.NotContains(t, err.Error(), "shared-folder")
+	assert.ErrorContains(t, err, "Grafana will retry automatically")
+}
+
 func TestReleaseExistingItems_FoldersBeforeResources(t *testing.T) {
 	var order []string
 	var mu sync.Mutex
@@ -898,57 +951,59 @@ func TestFinalizer_RoutesItemsToVersionlessClient(t *testing.T) {
 }
 
 func TestReleaseExistingItems_ResourcesConcurrent(t *testing.T) {
-	var (
-		concurrentCount atomic.Int64
-		maxConcurrent   int64
-		mu              sync.Mutex
-	)
+	synctest.Test(t, func(t *testing.T) {
+		var (
+			concurrentCount atomic.Int64
+			maxConcurrent   int64
+			mu              sync.Mutex
+		)
 
-	items := provisioning.ResourceList{Items: []provisioning.ResourceListItem{}}
-	for i := range 10 {
-		items.Items = append(items.Items, provisioning.ResourceListItem{
-			Group:    "dashboard.grafana.app",
-			Resource: "dashboards",
-			Name:     fmt.Sprintf("dashboard-%d", i),
-			Path:     fmt.Sprintf("dash-%d.json", i),
-		})
-	}
+		items := provisioning.ResourceList{Items: []provisioning.ResourceListItem{}}
+		for i := range 10 {
+			items.Items = append(items.Items, provisioning.ResourceListItem{
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+				Name:     fmt.Sprintf("dashboard-%d", i),
+				Path:     fmt.Sprintf("dash-%d.json", i),
+			})
+		}
 
-	resourceLister := resources.NewMockResourceLister(t)
-	resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+		resourceLister := resources.NewMockResourceLister(t)
+		resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
 
-	clientFactory := resources.NewMockClientFactory(t)
-	clients := resources.NewMockResourceClients(t)
-	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
+		clientFactory := resources.NewMockClientFactory(t)
+		clients := resources.NewMockResourceClients(t)
+		clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
 
-	client := &mockDynamicClient{
-		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
-			current := concurrentCount.Add(1)
-			defer concurrentCount.Add(-1)
-			mu.Lock()
-			if current > maxConcurrent {
-				maxConcurrent = current
-			}
-			mu.Unlock()
-			time.Sleep(1 * time.Second)
-			return nil, nil
-		},
-	}
-	clients.On("ForResource", mock.Anything, mock.Anything).Return(client, schema.GroupVersionKind{}, nil)
+		client := &mockDynamicClient{
+			patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
+				current := concurrentCount.Add(1)
+				defer concurrentCount.Add(-1)
+				mu.Lock()
+				if current > maxConcurrent {
+					maxConcurrent = current
+				}
+				mu.Unlock()
+				time.Sleep(1 * time.Second)
+				return nil, nil
+			},
+		}
+		clients.On("ForResource", mock.Anything, mock.Anything).Return(client, schema.GroupVersionKind{}, nil)
 
-	f := &finalizer{
-		lister:        resourceLister,
-		clientFactory: clientFactory,
-		metrics:       func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
-		maxWorkers:    5,
-	}
+		f := &finalizer{
+			lister:        resourceLister,
+			clientFactory: clientFactory,
+			metrics:       func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
+			maxWorkers:    5,
+		}
 
-	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
-	count, err := f.releaseExistingItems(context.Background(), repo)
-	assert.NoError(t, err)
-	assert.Equal(t, 10, count)
-	assert.Greater(t, maxConcurrent, int64(1), "resources should be released concurrently")
-	assert.LessOrEqual(t, maxConcurrent, int64(5), "should not exceed maxWorkers")
+		repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
+		count, err := f.releaseExistingItems(t.Context(), repo)
+		assert.NoError(t, err)
+		assert.Equal(t, 10, count)
+		assert.Greater(t, maxConcurrent, int64(1), "resources should be released concurrently")
+		assert.LessOrEqual(t, maxConcurrent, int64(5), "should not exceed maxWorkers")
+	})
 }
 
 func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
@@ -991,101 +1046,103 @@ func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Will be used to track concurrent executions
-			var (
-				concurrentCount atomic.Int64
-				maxConcurrent   int64
-				mu              sync.Mutex
-			)
+			synctest.Test(t, func(t *testing.T) {
+				// Will be used to track concurrent executions
+				var (
+					concurrentCount atomic.Int64
+					maxConcurrent   int64
+					mu              sync.Mutex
+				)
 
-			items := provisioning.ResourceList{Items: []provisioning.ResourceListItem{}}
+				items := provisioning.ResourceList{Items: []provisioning.ResourceListItem{}}
 
-			for i := range tc.dashboardCount {
-				items.Items = append(items.Items, provisioning.ResourceListItem{
-					Group:    "dashboard.grafana.app",
-					Resource: "dashboards",
-					Name:     fmt.Sprintf("dashboard-%d", i),
-				})
-			}
+				for i := range tc.dashboardCount {
+					items.Items = append(items.Items, provisioning.ResourceListItem{
+						Group:    "dashboard.grafana.app",
+						Resource: "dashboards",
+						Name:     fmt.Sprintf("dashboard-%d", i),
+					})
+				}
 
-			for i := range tc.folderCount {
-				items.Items = append(items.Items, provisioning.ResourceListItem{
-					Group:    folders.GroupVersion.Group,
-					Resource: "folders",
-					Name:     fmt.Sprintf("folder-%d", i),
-				})
-			}
+				for i := range tc.folderCount {
+					items.Items = append(items.Items, provisioning.ResourceListItem{
+						Group:    folders.GroupVersion.Group,
+						Resource: "folders",
+						Name:     fmt.Sprintf("folder-%d", i),
+					})
+				}
 
-			resourceLister := resources.NewMockResourceLister(t)
-			resourceLister.
-				On("List", mock.Anything, "default", "my-repo").
-				Return(&items, nil)
+				resourceLister := resources.NewMockResourceLister(t)
+				resourceLister.
+					On("List", mock.Anything, "default", "my-repo").
+					Return(&items, nil)
 
-			clientFactory := resources.NewMockClientFactory(t)
-			clients := resources.NewMockResourceClients(t)
+				clientFactory := resources.NewMockClientFactory(t)
+				clients := resources.NewMockResourceClients(t)
 
-			client := &mockDynamicClient{
-				deleteFunc: func(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
-					// Track concurrent executions
-					current := concurrentCount.Add(1)
-					defer concurrentCount.Add(-1)
+				client := &mockDynamicClient{
+					deleteFunc: func(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
+						// Track concurrent executions
+						current := concurrentCount.Add(1)
+						defer concurrentCount.Add(-1)
 
-					mu.Lock()
-					if current > maxConcurrent {
-						maxConcurrent = current
-					}
-					mu.Unlock()
+						mu.Lock()
+						if current > maxConcurrent {
+							maxConcurrent = current
+						}
+						mu.Unlock()
 
-					// Simulate slow client to allow concurrency to build up
-					time.Sleep(1 * time.Second)
+						// Simulate slow client to allow concurrency to build up
+						time.Sleep(1 * time.Second)
 
-					return nil
-				},
-			}
+						return nil
+					},
+				}
 
-			clientFactory.
-				On("Clients", mock.Anything, "default").
-				Return(clients, nil)
+				clientFactory.
+					On("Clients", mock.Anything, "default").
+					Return(clients, nil)
 
-			clients.
-				On("ForResource", mock.Anything, mock.Anything).
-				Return(client, schema.GroupVersionKind{}, nil).
-				Maybe()
+				clients.
+					On("ForResource", mock.Anything, mock.Anything).
+					Return(client, schema.GroupVersionKind{}, nil).
+					Maybe()
 
-			metrics := registerFinalizerMetrics(prometheus.NewRegistry())
-			f := &finalizer{
-				lister:        resourceLister,
-				clientFactory: clientFactory,
-				metrics:       &metrics,
-				maxWorkers:    tc.maxWorkers,
-			}
+				metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+				f := &finalizer{
+					lister:        resourceLister,
+					clientFactory: clientFactory,
+					metrics:       &metrics,
+					maxWorkers:    tc.maxWorkers,
+				}
 
-			repo := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "my-repo",
-					Namespace: "default",
-				},
-			}
+				repo := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "my-repo",
+						Namespace: "default",
+					},
+				}
 
-			count, err := f.deleteExistingItems(
-				context.Background(),
-				repo,
-			)
+				count, err := f.deleteExistingItems(
+					t.Context(),
+					repo,
+				)
 
-			assert.NoError(t, err)
-			assert.Equal(t, tc.dashboardCount+tc.folderCount, count)
+				assert.NoError(t, err)
+				assert.Equal(t, tc.dashboardCount+tc.folderCount, count)
 
-			if tc.expectedConcurrency {
-				// When concurrent, max concurrent should be > 1
-				assert.Greater(t, maxConcurrent, int64(1),
-					"Expected concurrent execution but maxConcurrent was %d", maxConcurrent)
-				// Should not exceed maxWorkers
-				assert.LessOrEqual(t, maxConcurrent, int64(tc.maxWorkers))
-			} else {
-				// When sequential, max concurrent should be 1
-				assert.Equal(t, int64(1), maxConcurrent,
-					"Expected sequential execution but maxConcurrent was %d", maxConcurrent)
-			}
+				if tc.expectedConcurrency {
+					// When concurrent, max concurrent should be > 1
+					assert.Greater(t, maxConcurrent, int64(1),
+						"Expected concurrent execution but maxConcurrent was %d", maxConcurrent)
+					// Should not exceed maxWorkers
+					assert.LessOrEqual(t, maxConcurrent, int64(tc.maxWorkers))
+				} else {
+					// When sequential, max concurrent should be 1
+					assert.Equal(t, int64(1), maxConcurrent,
+						"Expected sequential execution but maxConcurrent was %d", maxConcurrent)
+				}
+			})
 		})
 	}
 }
@@ -1304,6 +1361,101 @@ func TestProcess_CleanFinalizer_SkipsWebhookWhenNotWebhookCapable(t *testing.T) 
 
 	err := f.process(t.Context(), cfg)
 	assert.NoError(t, err)
+}
+
+// TestProcess_CleanFinalizer_RecordsErrorCause verifies that a webhook-deletion
+// failure is classified into the finalizer metric's cause label the same way
+// as the reconcile-error metric, so SLOs can filter out user-caused failures
+// (e.g. revoked credentials) here too.
+func TestProcess_CleanFinalizer_RecordsErrorCause(t *testing.T) {
+	testCases := []struct {
+		name        string
+		deleteErr   error
+		expectCause string
+	}{
+		{
+			name:        "permission denied classifies as user",
+			deleteErr:   repository.ErrPermissionDenied,
+			expectCause: reconcileCauseUser,
+		},
+		{
+			name:        "generic failure classifies as system",
+			deleteErr:   assert.AnError,
+			expectCause: reconcileCauseSystem,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			repo := mockRepo{
+				name:      "my-repo",
+				namespace: "default",
+				onDeleteFunc: func(ctx context.Context) error {
+					return tc.deleteErr
+				},
+			}
+			factory := repository.NewMockFactory(t)
+			factory.EXPECT().Build(mock.Anything, mock.Anything).Return(repo, nil)
+
+			metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+			f := &finalizer{repoFactory: factory, metrics: &metrics}
+
+			cfg := repo.Config()
+			cfg.Finalizers = []string{repository.CleanFinalizer}
+			err := f.process(context.Background(), cfg)
+			assert.Error(t, err)
+
+			assert.Equal(t, float64(1), testutil.ToFloat64(
+				metrics.finalizerProcessedTotal.WithLabelValues(repository.CleanFinalizer, metricutils.ErrorOutcome, tc.expectCause),
+			))
+		})
+	}
+}
+
+// TestProcess_RemoveOrphanResourcesFinalizer_NonEmptyFolderRecordsUserCause
+// verifies that a deletion blocked by unmanaged resources in a repository folder
+// is counted as user-caused, matching status.deletion, so it does not burn the
+// finalizer SLO while waiting for the user to move or remove those resources.
+func TestProcess_RemoveOrphanResourcesFinalizer_NonEmptyFolderRecordsUserCause(t *testing.T) {
+	items := provisioning.ResourceList{Items: []provisioning.ResourceListItem{
+		{Group: folders.GroupVersion.Group, Resource: "folders", Name: "shared-folder", Title: "Shared folder", Path: "shared"},
+	}}
+	resourceLister := resources.NewMockResourceLister(t)
+	resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+
+	clientFactory := resources.NewMockClientFactory(t)
+	clients := resources.NewMockResourceClients(t)
+	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
+
+	client := &mockDynamicClient{
+		deleteFunc: func(_ context.Context, _ string, _ metav1.DeleteOptions, _ ...string) error {
+			return &apierrors.StatusError{ErrStatus: metav1.Status{
+				Code: http.StatusBadRequest, Details: &metav1.StatusDetails{UID: "folder.not-empty"},
+			}}
+		},
+	}
+	clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
+		Group: folders.GroupVersion.Group, Resource: "folders",
+	}).Return(client, schema.GroupVersionKind{}, nil).Once()
+
+	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+	f := &finalizer{lister: resourceLister, clientFactory: clientFactory, metrics: &metrics, maxWorkers: 1}
+
+	err := f.process(context.Background(), &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "my-repo",
+			Namespace:  "default",
+			Finalizers: []string{repository.RemoveOrphanResourcesFinalizer},
+		},
+	})
+	require.Error(t, err)
+
+	assert.Equal(t, float64(1), testutil.ToFloat64(
+		metrics.finalizerProcessedTotal.WithLabelValues(repository.RemoveOrphanResourcesFinalizer, metricutils.ErrorOutcome, reconcileCauseUser),
+	))
+	assert.Equal(t, float64(0), testutil.ToFloat64(
+		metrics.finalizerProcessedTotal.WithLabelValues(repository.RemoveOrphanResourcesFinalizer, metricutils.ErrorOutcome, reconcileCauseSystem),
+	))
 }
 
 // nonWebhookRepo implements only repository.Repository (not WebhookRepository),

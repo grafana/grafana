@@ -6,11 +6,13 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { clearButtonStyles, ClipboardButton, Icon, Tooltip, useElementSelection, useStyles2 } from '@grafana/ui';
 
+import { toggleRowCollapse } from '../../actions/layout/toggleRowCollapse';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { RowEditActionsWrapper } from '../edit-actions-popover/RowEditActions';
 import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
 import { mapIdToGridLayoutType } from '../layouts-shared/utils';
+import { isFullDashboardEditing } from '../types/dashboard';
 
 import { type RowItem } from './RowItem';
 
@@ -36,7 +38,9 @@ export function RowHeader({
   onHeaderLeave,
 }: Props) {
   const { layout, hideHeader: isHeaderHidden, key } = model.useState();
-  const { isEditing, planning } = useDashboardState(model);
+  const dashboardState = useDashboardState(model);
+  const isEditing = isFullDashboardEditing(dashboardState);
+  const { planning } = dashboardState;
   const { isSelectable, onClear: onClearSelection } = useElementSelection(key);
   const title = useInterpolatedTitle(model);
   const styles = useStyles2(getStyles);
@@ -80,7 +84,11 @@ export function RowHeader({
       >
         <button
           onClick={(evt) => {
-            model.onCollapseToggle();
+            if (isEditing) {
+              toggleRowCollapse(model);
+            } else {
+              model.onCollapseToggle();
+            }
             onClearSelection?.();
           }}
           className={cx(clearStyles, styles.rowTitleButton)}

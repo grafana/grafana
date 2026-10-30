@@ -308,6 +308,57 @@
         }
       }
     },
+    "/apis/folder.grafana.app/v1beta1/namespaces/{namespace}/folders/search/hybrid": {
+      "post": {
+        "tags": [
+          "Search"
+        ],
+        "description": "Hybrid lexical and semantic search for Folder resources in a namespace. Returns top-k results with opaque scores meaningful only for ordering within this response. No pagination, totals, sorting or facets.",
+        "operationId": "listFolderHybridSearchV1beta1",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
+        "requestBody": {
+          "description": "A HybridSearchQuery describing what to match and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.HybridSearchQuery"
+              },
+              "example": {
+                "kind": "HybridSearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "query": "production",
+                "limit": 10,
+                "skipRerank": false
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A HybridSearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.HybridSearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/apis/folder.grafana.app/v1beta1/namespaces/{namespace}/folders/{name}": {
       "get": {
         "tags": [
@@ -855,6 +906,266 @@
           }
         }
       ]
+    },
+    "/apis/folder.grafana.app/v1beta1/namespaces/{namespace}/folders/{name}/status": {
+      "get": {
+        "tags": [
+          "Folder"
+        ],
+        "description": "read status of the specified Folder",
+        "operationId": "getFolderStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "folder.grafana.app",
+          "version": "v1beta1",
+          "kind": "Folder"
+        }
+      },
+      "put": {
+        "tags": [
+          "Folder"
+        ],
+        "description": "replace status of the specified Folder",
+        "operationId": "replaceFolderStatus",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "folder.grafana.app",
+          "version": "v1beta1",
+          "kind": "Folder"
+        }
+      },
+      "patch": {
+        "tags": [
+          "Folder"
+        ],
+        "description": "partially update status of the specified Folder",
+        "operationId": "updateFolderStatus",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch).",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Force is going to \"force\" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/apply-patch+yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/strategic-merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "folder.grafana.app",
+          "version": "v1beta1",
+          "kind": "Folder"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Folder",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
     }
   },
   "components": {
@@ -922,6 +1233,14 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderSpec"
+              }
+            ]
+          },
+          "status": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderStatus"
               }
             ]
           }
@@ -993,6 +1312,46 @@
             "version": "v1beta1"
           }
         ]
+      },
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderCascadeDeleteStatus": {
+        "type": "object",
+        "required": [
+          "state"
+        ],
+        "properties": {
+          "errors": {
+            "description": "Errors encountered while deleting descendants.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "finished": {
+            "description": "When the cascade reached a terminal state, in Unix milliseconds.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "remaining": {
+            "description": "Descendants not yet deleted.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "started": {
+            "description": "When the cascade started, in Unix milliseconds.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "state": {
+            "description": "Current phase of the cascade delete.",
+            "type": "string",
+            "default": ""
+          },
+          "total": {
+            "description": "Descendants discovered when the cascade started; the fixed denominator for remaining.",
+            "type": "integer",
+            "format": "int64"
+          }
+        }
       },
       "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderInfo": {
         "description": "FolderInfo briefly describes a folder -- unlike a folder resource, this is a partial record of the folder metadata used for navigating parents and children",
@@ -1131,6 +1490,19 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderStatus": {
+        "type": "object",
+        "properties": {
+          "cascadeDelete": {
+            "description": "Progress of a finalizer-driven cascade delete. Absent until deletion starts.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderCascadeDeleteStatus"
+              }
+            ]
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.ResourceStats": {
         "type": "object",
         "required": [
@@ -1214,6 +1586,219 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.search.v0alpha1.HybridSearchChunk": {
+        "description": "HybridSearchChunk is matching text from an embedded resource or subresource.",
+        "type": "object",
+        "required": [
+          "subresource",
+          "content"
+        ],
+        "properties": {
+          "content": {
+            "type": "string",
+            "default": ""
+          },
+          "subresource": {
+            "description": "Subresource identifies a chunk, for example panel/5. Empty means the whole resource, or a synthesized chunk for a lexical-only hit.",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.search.v0alpha1.HybridSearchFilter": {
+        "description": "HybridSearchFilter matches any of Values against Field (IN semantics). Unlike lexical search filters, no other operators are supported.",
+        "type": "object",
+        "required": [
+          "field",
+          "values"
+        ],
+        "properties": {
+          "field": {
+            "description": "Field is uid or folder for all resources. A single dashboard resource type additionally supports datasource_uid and language (promql, logql, traceql or sql). Searches across multiple types support only uid and folder.",
+            "type": "string",
+            "default": ""
+          },
+          "values": {
+            "description": "Values must contain at least one value. Values containing '*' are rejected. An empty folder value matches resources in the root folder.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-kubernetes-list-type": "atomic"
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.search.v0alpha1.HybridSearchManagedBy": {
+        "description": "HybridSearchManagedBy identifies the manager of a returned resource.",
+        "type": "object",
+        "required": [
+          "kind",
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "default": ""
+          },
+          "kind": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.search.v0alpha1.HybridSearchQuery": {
+        "description": "HybridSearchQuery is the request body for POST .../{resource}/search/hybrid and POST .../global/search/hybrid. It returns the top matching resources, with no pagination, sorting or facets.",
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "filters": {
+            "description": "Filters are ANDed together. Each field may appear once, with at most 1000 values across all filters. Embedding fields supply text only and do not make additional fields available for filtering.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.HybridSearchFilter"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Limit is the maximum number of results across all requested resource types. Zero uses the default of 50, values above 200 are clamped, and negative values are rejected.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "minRelevance": {
+            "description": "MinRelevance is lowest, low, medium, high or highest. Empty keeps every result. Filtering is best-effort: no results are dropped when reranking is unavailable or fails. It cannot be combined with SkipRerank.",
+            "type": "string"
+          },
+          "query": {
+            "description": "Query supplies the lexical query and, unless SemanticQuery is set, the text embedded for semantic search. Required, with a maximum of 1000 bytes.",
+            "type": "string",
+            "default": ""
+          },
+          "resources": {
+            "description": "Resources selects unique group/resource pairs for global hybrid search. On Grafana's HTTP route, omitted or empty uses configured defaults, if any. Per-resource routes reject it.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.HybridSearchResource"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "semanticQuery": {
+            "description": "SemanticQuery supplies optional richer phrasing for semantic search. When provided, it must not be whitespace and must fit within 1000 bytes.",
+            "type": "string"
+          },
+          "skipRerank": {
+            "description": "SkipRerank skips reranking even when a reranker is configured. Multiple resource types are interleaved in request order, preserving each type's ranking.",
+            "type": "boolean"
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.search.v0alpha1.HybridSearchResource": {
+        "description": "HybridSearchResource identifies a resource type for global hybrid search.",
+        "type": "object",
+        "required": [
+          "group",
+          "resource"
+        ],
+        "properties": {
+          "group": {
+            "type": "string",
+            "default": ""
+          },
+          "resource": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.search.v0alpha1.HybridSearchResultItem": {
+        "description": "HybridSearchResultItem is one matching resource, with its matching chunks.",
+        "type": "object",
+        "required": [
+          "resource",
+          "score",
+          "title",
+          "folder",
+          "chunks"
+        ],
+        "properties": {
+          "chunks": {
+            "description": "Chunks contains matching text, best first. A lexical-only hit has a synthesized chunk containing the resource's title.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.HybridSearchChunk"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "folder": {
+            "description": "Folder is the containing folder's UID. Empty and \"general\" denote the root folder.",
+            "type": "string",
+            "default": ""
+          },
+          "folderTitle": {
+            "description": "FolderTitle is best-effort display data and can be absent.",
+            "type": "string"
+          },
+          "managedBy": {
+            "description": "ManagedBy is absent for unmanaged resources or when lookup fails.",
+            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.HybridSearchManagedBy"
+          },
+          "resource": {
+            "default": {},
+            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.ResourceRef"
+          },
+          "score": {
+            "description": "Score is opaque: higher scores rank first, but scores are meaningful only for ordering within this response. Do not compare scores across queries or treat them as probabilities or distances.",
+            "type": "number",
+            "format": "double",
+            "default": 0
+          },
+          "tags": {
+            "description": "Tags from the lexical index. Omitted when unavailable.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.search.v0alpha1.HybridSearchResults": {
+        "description": "HybridSearchResults is the response body for per-resource and global hybrid search. Items are ordered by relevance. They are a bounded top-k result set, not an exhaustive list, so the response carries no total count or pagination token.",
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.HybridSearchResultItem"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
           }
         }
       },
@@ -1330,20 +1915,20 @@
             "type": "string"
           },
           "totalHits": {
-            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation, which says whether the count is exact.",
+            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation. When the relation is \"unknown\", this is a zero placeholder that must not be interpreted as a count.",
             "type": "integer",
             "format": "int64",
             "default": 0
           },
           "totalHitsRelation": {
-            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound.",
+            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound. \"unknown\" means no count is available and TotalHits must be ignored.",
             "type": "string",
             "default": ""
           }
         }
       },
       "com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchQuery": {
-        "description": "SearchQuery is the request body for POST .../{resource}/search.",
+        "description": "SearchQuery is the request body for POST .../{resource}/search, which searches one kind, and for POST .../namespaces/{namespace}/global/search, which searches several resource types at once.",
         "type": "object",
         "properties": {
           "apiVersion": {
@@ -1391,7 +1976,7 @@
             }
           },
           "where": {
-            "description": "Where is the search predicate tree. Omitting it matches all resources of the kind (subject to labelSelector and per-item authz).",
+            "description": "Where is the search predicate tree. Omitting it matches everything the endpoint searches: all resources of the kind, or of every type the global search covers (subject to labelSelector and per-item authz).",
             "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.WhereNode"
           }
         }

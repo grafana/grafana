@@ -1,6 +1,6 @@
 import { from, lastValueFrom } from 'rxjs';
 
-import { type DataQueryRequest, toDataFrame } from '@grafana/data';
+import { type DataQueryRequest, dateTime, toDataFrame } from '@grafana/data';
 
 import { AzureQueryType } from './dataquery.gen';
 import createMockDatasource from './mocks/datasource';
@@ -504,6 +504,228 @@ describe('VariableSupport', () => {
       } as DataQueryRequest<AzureMonitorQuery>;
       const result = await lastValueFrom(variableSupport.query(mockRequest));
       expect(result.data[0].fields[0].values).toEqual(expectedResults);
+    });
+
+    it('can fetch dimensions for a selected metric', async () => {
+      const datasource = createMockDatasource();
+      datasource.azureMonitorDatasource.getMetricMetadata = jest.fn().mockResolvedValue({
+        primaryAggType: 'Count',
+        supportedAggTypes: ['Count'],
+        supportedTimeGrains: [],
+        dimensions: [
+          { label: 'Cloud role name', value: 'cloud/roleName' },
+          { label: 'Result code', value: 'request/resultCode' },
+        ],
+      });
+      const variableSupport = new VariableSupport(datasource);
+      const mockRequest = {
+        targets: [
+          {
+            refId: 'A',
+            queryType: AzureQueryType.DimensionsQuery,
+            subscription: 'sub',
+            resourceGroup: 'rg',
+            namespace: 'ns',
+            resource: 'resource',
+            customNamespace: 'custom/ns',
+            metricName: 'Requests',
+          } as AzureMonitorQuery,
+        ],
+      } as DataQueryRequest<AzureMonitorQuery>;
+
+      const result = await lastValueFrom(variableSupport.query(mockRequest));
+
+      expect(datasource.azureMonitorDatasource.getMetricMetadata).toHaveBeenCalledWith({
+        subscription: 'sub',
+        resourceGroup: 'rg',
+        metricNamespace: 'ns',
+        resourceName: 'resource',
+        metricName: 'Requests',
+        customNamespace: 'custom/ns',
+      });
+      expect(result.data[0].fields[0].values).toEqual(['Cloud role name', 'Result code']);
+      expect(result.data[0].fields[1].values).toEqual(['cloud/roleName', 'request/resultCode']);
+    });
+
+    it('returns an empty frame when the selected metric has no dimensions', async () => {
+      const datasource = createMockDatasource();
+      datasource.azureMonitorDatasource.getMetricMetadata = jest.fn().mockResolvedValue({
+        primaryAggType: 'Count',
+        supportedAggTypes: ['Count'],
+        supportedTimeGrains: [],
+        dimensions: [],
+      });
+      const variableSupport = new VariableSupport(datasource);
+      const mockRequest = {
+        targets: [
+          {
+            refId: 'A',
+            queryType: AzureQueryType.DimensionsQuery,
+            subscription: 'sub',
+            resourceGroup: 'rg',
+            namespace: 'ns',
+            resource: 'resource',
+            metricName: 'Requests',
+          } as AzureMonitorQuery,
+        ],
+      } as DataQueryRequest<AzureMonitorQuery>;
+
+      const result = await lastValueFrom(variableSupport.query(mockRequest));
+
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].length).toBe(0);
+    });
+
+    it('clears dimension names when a parent variable interpolates empty', async () => {
+      const datasource = createMockDatasource();
+      datasource.azureMonitorDatasource.getMetricMetadata = jest.fn();
+      const variableSupport = new VariableSupport(datasource, {
+        replace: (value: string) => (value === '$metric' ? '' : value),
+      } as never);
+      const mockRequest = {
+        targets: [
+          {
+            refId: 'A',
+            queryType: AzureQueryType.DimensionsQuery,
+            subscription: 'sub',
+            resourceGroup: 'rg',
+            namespace: 'ns',
+            resource: 'resource',
+            metricName: '$metric',
+          } as AzureMonitorQuery,
+        ],
+      } as DataQueryRequest<AzureMonitorQuery>;
+
+      const result = await lastValueFrom(variableSupport.query(mockRequest));
+
+      expect(datasource.azureMonitorDatasource.getMetricMetadata).not.toHaveBeenCalled();
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].length).toBe(0);
+    });
+
+    it('does not clear dimension names when the query is still missing a field', async () => {
+      const datasource = createMockDatasource();
+      datasource.azureMonitorDatasource.getMetricMetadata = jest.fn();
+      const variableSupport = new VariableSupport(datasource);
+      const mockRequest = {
+        targets: [
+          {
+            refId: 'A',
+            queryType: AzureQueryType.DimensionsQuery,
+            subscription: 'sub',
+            resourceGroup: 'rg',
+            namespace: 'ns',
+            resource: 'resource',
+          } as AzureMonitorQuery,
+        ],
+      } as DataQueryRequest<AzureMonitorQuery>;
+
+      const result = await lastValueFrom(variableSupport.query(mockRequest));
+
+      expect(datasource.azureMonitorDatasource.getMetricMetadata).not.toHaveBeenCalled();
+      expect(result.data).toEqual([]);
+    });
+
+    it('fetches dimension values using the dashboard time range', async () => {
+      const getDimensionValues = jest.fn().mockResolvedValue([{ text: 'api', value: 'api' }]);
+      const variableSupport = new VariableSupport(createMockDatasource({ getDimensionValues }));
+      const range = {
+        from: dateTime('2026-08-27T12:00:00.000Z'),
+        to: dateTime('2026-08-27T13:00:00.000Z'),
+        raw: { from: 'now-1h', to: 'now' },
+      };
+      const mockRequest = {
+        range,
+        targets: [
+          {
+            refId: 'A',
+            queryType: AzureQueryType.DimensionValuesQuery,
+            subscription: 'sub',
+            resourceGroup: 'rg',
+            namespace: 'ns',
+            resource: 'resource',
+            customNamespace: 'custom/ns',
+            metricName: 'Requests',
+            dimension: 'CloudRole',
+          } as AzureMonitorQuery,
+        ],
+      } as DataQueryRequest<AzureMonitorQuery>;
+
+      const result = await lastValueFrom(variableSupport.query(mockRequest));
+
+      expect(getDimensionValues).toHaveBeenCalledWith(
+        'sub',
+        'rg',
+        'ns',
+        'resource',
+        'Requests',
+        'CloudRole',
+        range,
+        'custom/ns'
+      );
+      expect(result.data[0].fields[0].values).toEqual(['api']);
+    });
+
+    it('returns an empty frame when a complete dimension values query has no values', async () => {
+      const variableSupport = new VariableSupport(
+        createMockDatasource({ getDimensionValues: jest.fn().mockResolvedValue([]) })
+      );
+      const mockRequest = {
+        range: {
+          from: dateTime('2026-08-27T12:00:00.000Z'),
+          to: dateTime('2026-08-27T13:00:00.000Z'),
+          raw: { from: 'now-1h', to: 'now' },
+        },
+        targets: [
+          {
+            refId: 'A',
+            queryType: AzureQueryType.DimensionValuesQuery,
+            subscription: 'sub',
+            resourceGroup: 'rg',
+            namespace: 'ns',
+            resource: 'resource',
+            metricName: 'Requests',
+            dimension: 'CloudRole',
+          } as AzureMonitorQuery,
+        ],
+      } as DataQueryRequest<AzureMonitorQuery>;
+
+      const result = await lastValueFrom(variableSupport.query(mockRequest));
+
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].length).toBe(0);
+    });
+
+    it('does not call Azure when a required dimension values field resolves empty', async () => {
+      const getDimensionValues = jest.fn();
+      const variableSupport = new VariableSupport(createMockDatasource({ getDimensionValues }), {
+        replace: (value: string) => (value === '$dimension' ? '' : value),
+      } as never);
+      const mockRequest = {
+        range: {
+          from: dateTime('2026-08-27T12:00:00.000Z'),
+          to: dateTime('2026-08-27T13:00:00.000Z'),
+          raw: { from: 'now-1h', to: 'now' },
+        },
+        targets: [
+          {
+            refId: 'A',
+            queryType: AzureQueryType.DimensionValuesQuery,
+            subscription: 'sub',
+            resourceGroup: 'rg',
+            namespace: 'ns',
+            resource: 'resource',
+            metricName: 'Requests',
+            dimension: '$dimension',
+          } as AzureMonitorQuery,
+        ],
+      } as DataQueryRequest<AzureMonitorQuery>;
+
+      const result = await lastValueFrom(variableSupport.query(mockRequest));
+
+      expect(getDimensionValues).not.toHaveBeenCalled();
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].length).toBe(0);
     });
 
     it('returns no data if calling metric names but the subscription is a template variable with no value', async () => {

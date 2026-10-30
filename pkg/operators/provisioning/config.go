@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/flowcontrol"
 
@@ -19,15 +21,18 @@ import (
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/tracingsetting"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/githuboauth"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/gitoauth"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -35,9 +40,11 @@ import (
 	githubrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
+	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 )
 
 var registeredConfigOptions = []ConfigOption{}
@@ -55,13 +62,16 @@ type ControllerConfig struct {
 	resyncInterval        time.Duration
 	drainTimeout          time.Duration
 	provisioningClient    *client.Clientset
-	natsSubscriber        nats.Subscriber
+	provisioningRESTCfg   *rest.Config
+	natsSubscriber        *nats.SubscriberService
 	unified               resources.ResourceStore
 	clients               resources.ClientFactory
 	tokenExchangeClient   *authn.TokenExchangeClient
 	tlsConfig             *rest.TLSClientConfig
 	decryptService        decrypt.DecryptService
 	registry              prometheus.Registerer
+	relistProjection      *informer.RelistProjectionMetrics
+	freshness             *informer.FreshnessMetrics
 	repositoryFactory     repository.Factory
 	repositoryExtras      []repository.Extra
 	RepositoryExtrasFunc  func() ([]repository.Extra, error)
@@ -126,8 +136,8 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*Control
 		registry: registry,
 		Settings: cfg,
 		// Operators run against an external NATS (no embedded server), so a nil
-		// server yields a config that dials the configured client URLs. The
-		// subscriber connects lazily and is a no-op transport when NATS is disabled.
+		// server yields a config that dials the configured client URLs. Each
+		// consuming controller owns the subscriber service lifecycle.
 		natsSubscriber: nats.ProvideSubscriber(nats.ProvideNATSConfig(cfg, nil), registry),
 		resyncInterval: operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
 		workerCount:    operatorSec.Key("worker_count").MustInt(1),
@@ -343,8 +353,25 @@ func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {
 	}
 
 	c.provisioningClient = provisioningClient
+	// Kept for callers that need a route the typed clientset has no method for,
+	// such as the keys-only re-list.
+	c.provisioningRESTCfg = config
 
 	return provisioningClient, nil
+}
+
+// ProvisioningRESTClient returns a REST client for the provisioning apiserver,
+// for endpoints outside the typed clientset. It shares the clientset's config, so
+// building the clientset first is what supplies it.
+func (c *ControllerConfig) ProvisioningRESTClient() (rest.Interface, error) {
+	if _, err := c.ProvisioningClient(); err != nil {
+		return nil, err
+	}
+
+	cfg := rest.CopyConfig(c.provisioningRESTCfg)
+	cfg.GroupVersion = &schema.GroupVersion{Group: provisioning.GROUP, Version: provisioning.VERSION}
+	cfg.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
+	return rest.RESTClientFor(cfg)
 }
 
 // wrapWithTracing wraps the rest config transport with otelhttp so outbound
@@ -422,6 +449,45 @@ func (c *ControllerConfig) Registry() prometheus.Registerer {
 	return c.registry
 }
 
+// RelistProjectionMetrics returns the process's re-list projection metrics.
+// Memoized because the collectors register on first call; building them twice
+// would panic on the duplicate.
+func (c *ControllerConfig) RelistProjectionMetrics() *informer.RelistProjectionMetrics {
+	if c.relistProjection == nil {
+		c.relistProjection = informer.NewRelistProjectionMetrics(c.Registry())
+	}
+
+	return c.relistProjection
+}
+
+// FreshnessMetrics returns the process's reconcile read-freshness metrics.
+// Memoized for the same reason as RelistProjectionMetrics.
+func (c *ControllerConfig) FreshnessMetrics() *informer.FreshnessMetrics {
+	if c.freshness == nil {
+		c.freshness = informer.NewFreshnessMetrics(c.Registry())
+	}
+
+	return c.freshness
+}
+
+// ProvisioningKeysLister returns a keys lister for one kind when [provisioning]
+// keys_only_relist is set, and nil otherwise, which keeps the full-object
+// re-list.
+func (c *ControllerConfig) ProvisioningKeysLister(logger logging.Logger, gvr schema.GroupVersionResource) (keysapi.Lister, error) {
+	if !c.Settings.SectionWithEnvOverrides("provisioning").Key("keys_only_relist").MustBool(false) {
+		return nil, nil
+	}
+
+	restClient, err := c.ProvisioningRESTClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create provisioning REST client: %w", err)
+	}
+
+	logger.Info("provisioning re-list will ask for keys only", "transport", "http", "resource", gvr.Resource)
+
+	return keysapi.NewHTTPLister(restClient, gvr), nil
+}
+
 func (c *ControllerConfig) Tracer() (tracing.Tracer, error) {
 	if c.tracer != nil {
 		return c.tracer, nil
@@ -431,7 +497,7 @@ func (c *ControllerConfig) Tracer() (tracing.Tracer, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to provide config: %w", err)
 	}
-	tracingConfig, err := tracing.ProvideTracingConfig(cfgProvider)
+	tracingConfig, err := tracingsetting.ProvideTracingConfig(cfgProvider)
 	if err != nil {
 		return nil, fmt.Errorf("failed to provide tracing config: %w", err)
 	}
@@ -686,9 +752,14 @@ func (c *ControllerConfig) ConnectionExtras() ([]connection.Extra, error) {
 	}
 	decrypter := connection.ProvideDecrypter(decryptSvc, connection.RegisterDecryptMetrics(c.Registry()))
 
+	// http:// OAuth endpoints are only allowed in development or when explicitly opted in,
+	// since the client secret and tokens would otherwise travel in cleartext.
+	allowInsecure := c.Settings.Env == setting.Dev || c.Settings.SectionWithEnvOverrides("provisioning").Key("allow_insecure").MustBool(false)
+
 	extras := []connection.Extra{
 		githubconnection.Extra(decrypter, githubconnection.ProvideFactory()),
 		githuboauth.Extra(decrypter, githubrepo.ProvideFactory()),
+		gitoauth.Extra(decrypter, allowInsecure),
 	}
 
 	c.connectionExtras = extras
@@ -719,6 +790,7 @@ func setupDecryptService(cfg *setting.Cfg, tracer tracing.Tracer, tokenExchangeC
 		address,
 		secretsTls,
 		secretsSec.Key("grpc_client_load_balancing").MustBool(false),
+		secretsSec.Key("grpc_token_exchanger_namespace_all").MustBool(false),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("create decrypt service: %w", err)
@@ -758,7 +830,7 @@ func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, registry
 	resourceClientCfg.AllowInsecure = unifiedStorageSec.Key("allow_insecure").MustBool(false)
 	resourceClientCfg.Audiences = unifiedStorageSec.Key("audiences").Strings("|")
 
-	client, err := resource.NewRemoteResourceClient(tracer, conn, indexConn, resourceClientCfg)
+	client, err := resource.NewStandaloneRemoteResourceClient(tracer, conn, indexConn, resourceClientCfg)
 	if err != nil {
 		return nil, fmt.Errorf("create unified storage client: %w", err)
 	}

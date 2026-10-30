@@ -10,8 +10,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
+	claims "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -21,10 +22,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 
-	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -39,13 +38,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashboardclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -58,7 +57,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/retryer"
 )
@@ -86,7 +84,7 @@ type DashboardServiceImpl struct {
 	sqlStore               db.DB // solely used to cleanup associated resources after dashboard deletion
 	folderService          folder.Service
 	orgService             org.Service
-	features               featuremgmt.FeatureToggles
+	iamFeatures            iamapi.Features
 	folderPermissions      accesscontrol.FolderPermissionsService
 	dashboardPermissions   accesscontrol.DashboardPermissionsService
 	ac                     accesscontrol.AccessControl
@@ -398,7 +396,7 @@ var _ registry.BackgroundService = (*DashboardServiceImpl)(nil)
 func ProvideDashboardServiceImpl(
 	cfg *setting.Cfg,
 	sqlStore db.DB,
-	features featuremgmt.FeatureToggles,
+	iamFeatures iamapi.Features,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	ac accesscontrol.AccessControl,
 	acService accesscontrol.Service,
@@ -416,7 +414,7 @@ func ProvideDashboardServiceImpl(
 		cfg:                       cfg,
 		log:                       log.New("dashboard-service"),
 		sqlStore:                  sqlStore,
-		features:                  features,
+		iamFeatures:               iamFeatures,
 		folderPermissions:         folderPermissionsService,
 		ac:                        ac,
 		acService:                 acService,
@@ -500,45 +498,19 @@ func (dr *DashboardServiceImpl) Count(ctx context.Context, scopeParams *quota.Sc
 }
 
 func (dr *DashboardServiceImpl) GetDashboardsByLibraryPanelUID(ctx context.Context, libraryPanelUID string, orgID int64) ([]*dashboards.DashboardRef, error) {
-	request := &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{
-			Fields: []*resourcepb.Requirement{
-				{
-					Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
-					Operator: string(selection.Equals),
-					Values:   []string{libraryPanelUID},
-				},
-			},
-		},
-		Limit: listAllDashboardsLimit,
-		Fields: []string{
-			resource.SEARCH_FIELD_FOLDER,
-			resource.SEARCH_FIELD_LEGACY_ID,
-			// Per-label fields are requestable; this one is needed to derive the numeric legacy ID.
-			resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
-		},
-		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-	}
+	request := dashboardsearch.LibraryPanelDashboardsRequest(libraryPanelUID, listAllDashboardsLimit)
 
 	results, err := dashboardsearch.SearchAll(ctx, orgID, request, dr.k8sclient.Search)
 	if err != nil {
 		return nil, err
 	}
 
-	dashes := make([]*dashboards.DashboardRef, 0, len(results.Hits))
-	for _, row := range results.Hits {
-		dashes = append(dashes, &dashboards.DashboardRef{
-			UID:       row.Name,
-			FolderUID: folder.ToLegacyFolderUID(row.Folder),
-			ID:        row.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID), // nolint:staticcheck
-		})
-	}
-	return dashes, nil
+	return dashboardsearch.DashboardRefsFromResults(results), nil
 }
 
 func (dr *DashboardServiceImpl) CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error) {
 	resp, err := dr.k8sclient.GetStats(ctx, orgID)
-	if err != nil {
+	if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
 		return 0, err
 	}
 
@@ -1277,7 +1249,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, dto *
 
 	// With the flag on, dashboard default permissions are set via the App Platform path, so skip the
 	// legacy SQL path here. Folders keep their own handling.
-	if !dash.IsFolder && dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
+	if !dash.IsFolder && dr.iamFeatures.ResourcePermissionsAPI {
 		return
 	}
 
@@ -1531,7 +1503,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 			IsFolder:    false,
 			FolderUID:   folder.ToLegacyFolderUID(hit.Folder),
 			FolderTitle: folderTitle,
-			FolderID:    folderID,
+			FolderID:    folderID, //nolint:staticcheck // Preserve legacy field compatibility.
 			FolderSlug:  slugify.Slugify(folderTitle),
 			ManagedBy:   hit.ManagedBy.Kind,
 			ManagerId:   hit.ManagedBy.ID,
@@ -1667,10 +1639,10 @@ func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *das
 				Limit: 100000,
 			},
 		},
-		Limit:        100000,
+		Limit:        0, // Only tag counts are needed; dashboard rows would be discarded.
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err != nil {
+	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
 		return nil, err
 	}
 	facet, ok := res.Facet["tags"]
@@ -1705,6 +1677,18 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 	ctx, span := tracer.Start(ctx, "dashboards.service.DeleteInFolders")
 	defer span.End()
 
+	concurrency := folder.ParallelDashboardDeleteConcurrency(ctx)
+	parallel := concurrency > 1
+	// An already canceled request must not remove public dashboards for dashboards that will then
+	// never be deleted. Only the parallel path checks, so the sequential path stays unchanged.
+	if err := ctx.Err(); parallel && err != nil {
+		return err
+	}
+
+	// Attach the requester to ctx: a context-dependent LegacyDatabaseProvider (used by
+	// DeleteByDashboardUIDs below) can only resolve the target database from here.
+	ctx = identity.WithRequester(ctx, u)
+
 	// We need a list of dashboard uids inside the folder to delete related public dashboards
 	dashes, err := dr.searchDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
 		SignedInUser: u,
@@ -1726,6 +1710,10 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 	err = dr.publicDashboardService.DeleteByDashboardUIDs(ctx, orgID, dashboardUIDs)
 	if err != nil {
 		return err
+	}
+
+	if parallel {
+		return dr.deleteInFoldersParallel(ctx, orgID, folderUIDs, dashes, concurrency)
 	}
 
 	for _, dash := range dashes {
@@ -1853,7 +1841,7 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 	// API server's permission setter acts on this annotation. Root-only (nested inherit from the
 	// parent), dashboards only (folders have their own setter), and ignored on update, so it's safe
 	// before the create-or-update below.
-	if !cmd.IsFolder && cmd.FolderUID == "" && dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
+	if !cmd.IsFolder && cmd.FolderUID == "" && dr.iamFeatures.ResourcePermissionsAPI {
 		meta, err := utils.MetaAccessor(obj)
 		if err != nil {
 			return nil, err
@@ -1974,13 +1962,15 @@ func (dr *DashboardServiceImpl) listDashboardsThroughK8s(ctx context.Context, or
 	return dashes, nil
 }
 
-func (dr *DashboardServiceImpl) buildDashboardSearchRequest(query *dashboards.FindPersistedDashboardsQuery) (*resourcepb.ResourceSearchRequest, error) {
+func (dr *DashboardServiceImpl) buildDashboardSearchRequest(query *dashboards.FindPersistedDashboardsQuery, fields []string) (*resourcepb.ResourceSearchRequest, error) {
 	request := &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
 			Fields: []*resourcepb.Requirement{},
 			Labels: []*resourcepb.Requirement{},
 		},
-		Limit: 100000}
+		Limit:        100000,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}
 
 	if len(query.DashboardUIDs) > 0 {
 		request.Options.Fields = []*resourcepb.Requirement{{
@@ -2088,11 +2078,7 @@ func (dr *DashboardServiceImpl) buildDashboardSearchRequest(query *dashboards.Fi
 	request.Limit = query.Limit
 	request.Page = query.Page
 	request.Offset = (query.Page - 1) * query.Limit // only relevant when running in modes 3+
-	request.Fields = dashboardsearch.IncludeFields
-	if query.UseFieldValueResults {
-		request.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
-		request.Fields = slices.Clone(dashboardsearch.APISearchIncludeFields)
-	}
+	request.Fields = slices.Clone(fields)
 
 	namespace := dr.k8sclient.GetNamespace(query.OrgId)
 	var err error
@@ -2140,13 +2126,13 @@ func (dr *DashboardServiceImpl) buildDashboardSearchRequest(query *dashboards.Fi
 // respecting the Page/Limit from the query. Used by FindDashboards (the
 // /api/search endpoint) where the caller controls pagination.
 func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (dashboardv0.SearchResults, error) {
-	request, err := dr.buildDashboardSearchRequest(query)
+	request, err := dr.buildDashboardSearchRequest(query, dashboardsearch.APISearchIncludeFields)
 	if err != nil {
 		return dashboardv0.SearchResults{}, err
 	}
 
 	res, err := dr.k8sclient.Search(ctx, query.OrgId, request)
-	if err != nil {
+	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
 		return dashboardv0.SearchResults{}, err
 	}
 
@@ -2157,15 +2143,10 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 // returning every hit. Used by internal callers that need a complete list
 // (e.g. CountInFolders, DeleteInFolders, provisioning).
 func (dr *DashboardServiceImpl) searchAllDashboardsThroughK8sRaw(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (dashboardv0.SearchResults, error) {
-	request, err := dr.buildDashboardSearchRequest(query)
+	request, err := dr.buildDashboardSearchRequest(query, dashboardsearch.FieldValueIncludeFields)
 	if err != nil {
 		return dashboardv0.SearchResults{}, err
 	}
-	request.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
-	// Internal callers do not use these table-only fields, which have no typed definitions.
-	request.Fields = slices.DeleteFunc(slices.Clone(request.Fields), func(field string) bool {
-		return field == resource.SEARCH_FIELD_LABELS || field == resource.SEARCH_FIELD_UPDATED_BY
-	})
 
 	return dashboardsearch.SearchAll(ctx, query.OrgId, request, dr.k8sclient.Search)
 }
@@ -2382,7 +2363,7 @@ func (dr *DashboardServiceImpl) unstructuredToLegacyDashboardWithUsers(item *uns
 func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, namespace string) (*unstructured.Unstructured, error) {
 	uid := cmd.GetDashboardModel().UID
 	if uid == "" {
-		uid = uuid.NewString()
+		uid = uuid.NewV4().String()
 	}
 
 	finalObj := &unstructured.Unstructured{

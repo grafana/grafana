@@ -3,17 +3,21 @@ package dashboard
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -43,30 +47,57 @@ func TestSearch(t *testing.T) {
 		return client
 	}
 
-	t.Run("should hit unified storage search handler", func(t *testing.T) {
+	t.Run("requests field-value results", func(t *testing.T) {
 		mockClient := &MockClient{}
 		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), mockClient, nil)
 
 		doSearch(t, searchHandler, "/search")
 
 		require.NotNil(t, mockClient.LastSearchRequest)
+		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, mockClient.LastSearchRequest.ResultFormat)
 	})
 
-	t.Run("requests field-value results when enabled", func(t *testing.T) {
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), &MockClient{}, featuremgmt.WithFeatures(featuremgmt.FlagDashboardSearchFieldValueResults))
+	t.Run("ignores response fields that field-value results do not support", func(t *testing.T) {
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), &MockClient{}, nil)
 
-		client := doSearch(t, searchHandler, "/search")
+		client := doSearch(t, searchHandler, "/search?field=panel_types&field=labels&field=not_declared&field=labels.custom&field=rv&field=grafana.app/deprecatedInternalID&field=_score&field=source.path&field=source.checksum&field=source.timestampMillis")
 
-		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, client.LastSearchRequest.ResultFormat)
+		assert.Contains(t, client.LastSearchRequest.Fields, "panel_types")
+		assert.Contains(t, client.LastSearchRequest.Fields, "labels.custom")
+		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_RV)
+		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_LEGACY_ID)
+		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_SCORE)
+		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_SOURCE_PATH)
+		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_SOURCE_CHECKSUM)
+		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_SOURCE_TIME)
+		assert.NotContains(t, client.LastSearchRequest.Fields, "labels")
+		assert.NotContains(t, client.LastSearchRequest.Fields, "not_declared")
 	})
+}
 
-	t.Run("ignores explanations when field-value results are enabled", func(t *testing.T) {
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), &MockClient{}, featuremgmt.WithFeatures(featuremgmt.FlagDashboardSearchFieldValueResults))
-
-		client := doSearch(t, searchHandler, "/search?explain=true")
-
-		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, client.LastSearchRequest.ResultFormat)
-	})
+func TestSearchErrorStatus(t *testing.T) {
+	failure := &resourcepb.ErrorResult{
+		Code: http.StatusTooManyRequests, Reason: string(metav1.StatusReasonTooManyRequests), Message: "search is busy",
+		Details: &resourcepb.ErrorDetails{Name: "dashboard", Group: "dashboard.grafana.app", Kind: "dashboards", Uid: "uid", RetryAfterSeconds: 12},
+	}
+	st, err := status.New(codes.ResourceExhausted, "search is busy").WithDetails(failure)
+	require.NoError(t, err)
+	for name, client := range map[string]*MockClient{
+		"embedded":  {MockResponses: []*resourcepb.ResourceSearchResponse{{Error: failure}}},
+		"transport": {MockError: fmt.Errorf("search: %w", st.Err())},
+	} {
+		t.Run(name, func(t *testing.T) {
+			handler := NewSearchHandler(tracing.NewNoopTracerService(), client, nil)
+			req := httptest.NewRequest("GET", "/search", nil)
+			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+			recorder := httptest.NewRecorder()
+			handler.DoSearch(recorder, req)
+			require.Equal(t, http.StatusTooManyRequests, recorder.Code)
+			var got metav1.Status
+			require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &got))
+			require.Equal(t, resource.StatusError(failure).(apierrors.APIStatus).Status(), got)
+		})
+	}
 }
 
 func TestVectorSearch(t *testing.T) {
@@ -219,6 +250,7 @@ func TestHybridSearch(t *testing.T) {
 					{
 						Key:    &resourcepb.ResourceKey{Namespace: "test", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "d2"},
 						Title:  "Memory usage",
+						Tags:   []string{"prod", "team-a"},
 						Folder: "f2",
 						Score:  0.016,
 						Chunks: []*resourcepb.HybridSearchChunk{
@@ -270,6 +302,7 @@ func TestHybridSearch(t *testing.T) {
 
 		// lexical-only hit still carries its synthesized title chunk
 		assert.Equal(t, "Memory usage", p.Hits[1].Field.Object["snippet"])
+		assert.Equal(t, []string{"prod", "team-a"}, p.Hits[1].Tags)
 	})
 
 	t.Run("returns 501 and does not fall back when hybrid search is unimplemented", func(t *testing.T) {
@@ -331,26 +364,19 @@ func TestHybridSearch(t *testing.T) {
 
 func TestSearchHandler(t *testing.T) {
 	t.Run("Sort - default sort by resource", func(t *testing.T) {
-		rows := make([]*resourcepb.ResourceTableRow, len(mockResults))
+		rows := make([]*resourcepb.ResourceSearchRow, len(mockResults))
 		for i, r := range mockResults {
-			rows[i] = &resourcepb.ResourceTableRow{
-				Key: &resourcepb.ResourceKey{
-					Name:     r.Name,
-					Resource: r.Resource,
-				},
-				Cells: [][]byte{
-					[]byte(r.Value),
-				},
-			}
+			rows[i] = &resourcepb.ResourceSearchRow{Key: &resourcepb.ResourceKey{Name: r.Name, Resource: r.Resource}, Values: []*resourcepb.ResourceSearchValue{
+				{FieldIndex: 0, StringValues: []string{r.Value}},
+			}}
 		}
 
 		mockResponse := &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: resource.SEARCH_FIELD_TITLE},
-				},
-				Rows: rows,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
 			},
+			Rows: rows,
 		}
 		// Create a mock client
 		mockClient := &MockClient{
@@ -394,12 +420,11 @@ func TestSearchHandler(t *testing.T) {
 
 	t.Run("filters k6 technical folder from results for non-service accounts", func(t *testing.T) {
 		mockResponse := &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: resource.SEARCH_FIELD_TITLE},
-				},
-				Rows: []*resourcepb.ResourceTableRow{},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
 			},
+			Rows: []*resourcepb.ResourceSearchRow{},
 		}
 
 		mockClient := &MockClient{
@@ -431,6 +456,23 @@ func TestSearchHandler(t *testing.T) {
 }
 
 func TestSearchHandlerSharedDashboards(t *testing.T) {
+	t.Run("rejects responses without the requested parent folder field", func(t *testing.T) {
+		mockClient := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Rows:         []*resourcepb.ResourceSearchRow{{Key: &resourcepb.ResourceKey{Name: "dashboard-private", Resource: "dashboards"}}},
+		}}}
+		handler := SearchHandler{client: mockClient}
+		requester := &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: map[int64]map[string][]string{1: {
+			dashboards.ActionDashboardsRead: {"dashboards:uid:dashboard-private"},
+		}}}
+
+		shared, err := handler.getDashboardsUIDsSharedWithUser(t.Context(), requester, dashboardaccess.PERMISSION_VIEW)
+
+		require.ErrorContains(t, err, "error retrieving folder information")
+		require.Empty(t, shared)
+		require.Len(t, mockClient.MockCalls, 1)
+	})
+
 	t.Run("uses field value results for permission lookups", func(t *testing.T) {
 		folderField := []*resourcepb.ResourceSearchField{{
 			Name: resource.SEARCH_FIELD_FOLDER,
@@ -442,12 +484,16 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 				Fields:       folderField,
 				Rows: []*resourcepb.ResourceSearchRow{
 					{
-						Key:    &resourcepb.ResourceKey{Name: "dashboard-private", Resource: "dashboard"},
-						Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{"private-folder"}}},
+						Key: &resourcepb.ResourceKey{Name: "dashboard-private", Resource: "dashboard"},
+						Values: []*resourcepb.ResourceSearchValue{
+							{FieldIndex: 0, StringValues: []string{"private-folder"}},
+						},
 					},
 					{
-						Key:    &resourcepb.ResourceKey{Name: "dashboard-public", Resource: "dashboard"},
-						Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{"public-folder"}}},
+						Key: &resourcepb.ResourceKey{Name: "dashboard-public", Resource: "dashboard"},
+						Values: []*resourcepb.ResourceSearchValue{
+							{FieldIndex: 0, StringValues: []string{"public-folder"}},
+						},
 					},
 				},
 			},
@@ -455,8 +501,10 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 				Fields:       folderField,
 				Rows: []*resourcepb.ResourceSearchRow{{
-					Key:    &resourcepb.ResourceKey{Name: "public-folder", Resource: "folder"},
-					Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{""}}},
+					Key: &resourcepb.ResourceKey{Name: "public-folder", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{""}},
+					},
 				}},
 			},
 		}}
@@ -518,28 +566,21 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 	t.Run("should return empty result if user has access to folder of all shared dashboards", func(t *testing.T) {
 		// dashboardSearchRequest
 		mockResponse1 := &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "folder",
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "dashboardinroot", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{""}},
 					},
 				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "dashboardinroot",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{[]byte("")}, // root folder doesn't have uid
-					},
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "dashboardinpublicfolder",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("publicfolder"), // folder uid
-						},
+				{
+					Key: &resourcepb.ResourceKey{Name: "dashboardinpublicfolder", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"publicfolder"}},
 					},
 				},
 			},
@@ -547,21 +588,15 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 		// folderSearchRequest
 		mockResponse2 := &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "folder",
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "publicfolder",
-							Resource: "folder",
-						},
-						Cells: [][]byte{
-							[]byte(""), // root folder uid
-						},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "publicfolder", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{""}},
 					},
 				},
 			},
@@ -608,46 +643,33 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 	t.Run("should return the dashboards shared with the user", func(t *testing.T) {
 		// dashboardSearchRequest
 		mockResponse1 := &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "folder",
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "dashboardinroot", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{""}},
 					},
 				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "dashboardinroot",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{[]byte("")}, // root folder doesn't have uid
+				{
+					Key: &resourcepb.ResourceKey{Name: "dashboardinprivatefolder", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"privatefolder"}},
 					},
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "dashboardinprivatefolder",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("privatefolder"), // folder uid
-						},
+				},
+				{
+					Key: &resourcepb.ResourceKey{Name: "dashboardinpublicfolder", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"publicfolder"}},
 					},
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "dashboardinpublicfolder",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("publicfolder"), // folder uid
-						},
-					},
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "sharedfolder",
-							Resource: "folder",
-						},
-						Cells: [][]byte{
-							[]byte("privatefolder"), // folder uid
-						},
+				},
+				{
+					Key: &resourcepb.ResourceKey{Name: "sharedfolder", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"privatefolder"}},
 					},
 				},
 			},
@@ -655,51 +677,36 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 		// folderSearchRequest
 		mockResponse2 := &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "folder",
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "publicfolder",
-							Resource: "folder",
-						},
-						Cells: [][]byte{
-							[]byte(""), // root folder uid
-						},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "publicfolder", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{""}},
 					},
 				},
 			},
 		}
 
 		mockResponse3 := &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "folder",
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "dashboardinprivatefolder", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"privatefolder"}},
 					},
 				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "dashboardinprivatefolder",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("privatefolder"), // folder uid
-						},
-					},
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "sharedfolder",
-							Resource: "folder",
-						},
-						Cells: [][]byte{
-							[]byte("privatefolder"), // folder uid
-						},
+				{
+					Key: &resourcepb.ResourceKey{Name: "sharedfolder", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"privatefolder"}},
 					},
 				},
 			},
@@ -757,36 +764,27 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		p := &v0alpha1.SearchResults{}
 		err := json.NewDecoder(resp.Body).Decode(p)
 		require.NoError(t, err)
-		assert.Equal(t, len(mockResponse3.Results.Rows), len(p.Hits))
+		assert.Equal(t, len(mockResponse3.Rows), len(p.Hits))
 	})
 
 	t.Run("should compute shared dashboards based on requested edit permission", func(t *testing.T) {
 		// dashboardSearchRequest
 		mockResponse1 := &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "folder",
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "dashboardinprivatefolder", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"privatefolder"}},
 					},
 				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "dashboardinprivatefolder",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("privatefolder"), // folder uid
-						},
-					},
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "dashboardinpublicfolder",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("publicfolder"), // folder uid
-						},
+				{
+					Key: &resourcepb.ResourceKey{Name: "dashboardinpublicfolder", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"publicfolder"}},
 					},
 				},
 			},
@@ -794,21 +792,15 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 		// folderSearchRequest: only folders the user can EDIT should be returned here
 		mockResponse2 := &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "folder",
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "publicfolder",
-							Resource: "folder",
-						},
-						Cells: [][]byte{
-							[]byte(""), // root folder uid
-						},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "publicfolder", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{""}},
 					},
 				},
 			},
@@ -816,21 +808,15 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 		// final search should only include items in folders the user cannot edit
 		mockResponse3 := &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "folder",
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "dashboardinprivatefolder",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("privatefolder"), // folder uid
-						},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "dashboardinprivatefolder", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"privatefolder"}},
 					},
 				},
 			},
@@ -885,23 +871,28 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		p := &v0alpha1.SearchResults{}
 		err := json.NewDecoder(resp.Body).Decode(p)
 		require.NoError(t, err)
-		assert.Equal(t, len(mockResponse3.Results.Rows), len(p.Hits))
+		assert.Equal(t, len(mockResponse3.Rows), len(p.Hits))
 	})
 
 	t.Run("should treat the canonical 'general' folder as root", func(t *testing.T) {
 		// dashboardSearchRequest: one dashboard parented to root via the canonical
 		// "general" sentinel, and one parented to a private folder.
 		mockResponse1 := &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key:   &resourcepb.ResourceKey{Name: "dashboardinroot", Resource: "dashboard"},
-						Cells: [][]byte{[]byte(folder.GeneralFolderUID)}, // root reported as "general"
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "dashboardinroot", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{folder.GeneralFolderUID}},
 					},
-					{
-						Key:   &resourcepb.ResourceKey{Name: "dashboardinprivatefolder", Resource: "dashboard"},
-						Cells: [][]byte{[]byte("privatefolder")},
+				},
+				{
+					Key: &resourcepb.ResourceKey{Name: "dashboardinprivatefolder", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"privatefolder"}},
 					},
 				},
 			},
@@ -909,21 +900,25 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 		// folderSearchRequest: user has access to no parent folders.
 		mockResponse2 := &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
-				Rows:    []*resourcepb.ResourceTableRow{},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
 			},
+			Rows: []*resourcepb.ResourceSearchRow{},
 		}
 
 		// final dashboardSearchRequest: only the dashboard whose parent folder the
 		// user cannot access is shared; the root dashboard is excluded.
 		mockResponse3 := &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key:   &resourcepb.ResourceKey{Name: "dashboardinprivatefolder", Resource: "dashboard"},
-						Cells: [][]byte{[]byte("privatefolder")},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "dashboardinprivatefolder", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"privatefolder"}},
 					},
 				},
 			},
@@ -969,7 +964,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		p := &v0alpha1.SearchResults{}
 		err := json.NewDecoder(resp.Body).Decode(p)
 		require.NoError(t, err)
-		assert.Equal(t, len(mockResponse3.Results.Rows), len(p.Hits))
+		assert.Equal(t, len(mockResponse3.Rows), len(p.Hits))
 	})
 }
 
@@ -1073,29 +1068,27 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
-		"query string and explain": {
-			queryString: "query=test-query&explain=true",
+		"query string": {
+			queryString: "query=test-query",
 			expected: &resourcepb.ResourceSearchRequest{
 				Options:   &resourcepb.ListOptions{Key: dashboardKey},
 				Query:     "test-query",
 				Limit:     50,
 				Offset:    0,
 				Page:      1,
-				Explain:   true,
 				Fields:    defaultFields,
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
 		"additional fields": {
-			queryString: "field=custom1&field=custom2",
+			queryString: "field=panel_types&field=labels.custom&field=labels&field=not_declared",
 			expected: &resourcepb.ResourceSearchRequest{
 				Options:   &resourcepb.ListOptions{Key: dashboardKey},
 				Query:     "",
 				Limit:     50,
 				Offset:    0,
 				Page:      1,
-				Explain:   false,
-				Fields:    append(defaultFields, "custom1", "custom2"),
+				Fields:    append(defaultFields, "panel_types", "labels.custom"),
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
@@ -1125,6 +1118,19 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Fields:     defaultFields,
 				Permission: int64(dashboardaccess.PERMISSION_EDIT),
 				Federated:  []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"create permission": {
+			queryString: "permission=create&type=folder",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:    &resourcepb.ListOptions{Key: folderKey},
+				Query:      "",
+				Limit:      50,
+				Offset:     0,
+				Page:       1,
+				Explain:    false,
+				Fields:     defaultFields,
+				Permission: int64(dashboardaccess.PERMISSION_CREATE),
 			},
 		},
 		"admin permission": {
@@ -1535,6 +1541,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
+			setCreateToggle(t, true)
 			queryParams, err := url.ParseQuery(tt.queryString)
 			require.NoError(t, err)
 
@@ -1545,7 +1552,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				return tt.sharedDashboards, nil
 			}
 
-			result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, getDashboardsFunc)
+			result, err := convertHttpSearchRequestToResourceSearchRequest(t.Context(), queryParams, testUser, getDashboardsFunc)
 
 			if tt.expectedError != nil {
 				assert.ErrorIs(t, err, tt.expectedError)
@@ -1554,6 +1561,9 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 
 			require.NoError(t, err)
 			require.NotNil(t, result)
+
+			assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, result.ResultFormat)
+			tt.expected.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
 
 			// Exclude query fields from the expected search
 			if tt.queryString != "" {
@@ -1564,11 +1574,23 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		})
 	}
 
+	t.Run("rejects create permission unless searching only folders", func(t *testing.T) {
+		for _, qs := range []string{"permission=create", "permission=create&type=dashboard", "permission=create&type=dashboard&type=folder"} {
+			queryParams, err := url.ParseQuery(qs)
+			require.NoError(t, err)
+
+			_, err = convertHttpSearchRequestToResourceSearchRequest(t.Context(), queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
+				return nil, nil
+			})
+			assert.True(t, apierrors.IsBadRequest(err), qs)
+		}
+	})
+
 	t.Run("names the logical title field once", func(t *testing.T) {
 		queryParams, err := url.ParseQuery("query=cpu")
 		require.NoError(t, err)
 
-		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
+		result, err := convertHttpSearchRequestToResourceSearchRequest(t.Context(), queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
 			return nil, nil
 		})
 
@@ -1585,7 +1607,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		queryParams, err := url.ParseQuery("query=cpu&panelTitleSearch=true")
 		require.NoError(t, err)
 
-		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
+		result, err := convertHttpSearchRequestToResourceSearchRequest(t.Context(), queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
 			return nil, nil
 		})
 
@@ -1602,7 +1624,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		queryParams, err := url.ParseQuery("facet=folder")
 		require.NoError(t, err)
 
-		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
+		result, err := convertHttpSearchRequestToResourceSearchRequest(t.Context(), queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
 			return nil, nil
 		})
 
@@ -1616,7 +1638,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		queryParams, err := url.ParseQuery("")
 		require.NoError(t, err)
 
-		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, &user.SignedInUser{
+		result, err := convertHttpSearchRequestToResourceSearchRequest(t.Context(), queryParams, &user.SignedInUser{
 			Namespace: "test-namespace",
 			OrgID:     1,
 		}, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
@@ -1635,7 +1657,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		queryParams, err := url.ParseQuery("")
 		require.NoError(t, err)
 
-		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, &user.SignedInUser{
+		result, err := convertHttpSearchRequestToResourceSearchRequest(t.Context(), queryParams, &user.SignedInUser{
 			Namespace:        "test-namespace",
 			OrgID:            1,
 			IsServiceAccount: true,
@@ -1658,6 +1680,7 @@ type MockClient struct {
 	LastSearchRequest *resourcepb.ResourceSearchRequest
 
 	MockResponses []*resourcepb.ResourceSearchResponse
+	MockError     error
 	MockCalls     []*resourcepb.ResourceSearchRequest
 	CallCount     int
 
@@ -1714,6 +1737,9 @@ var mockResults = []MockResult{
 }
 
 func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	if m.MockError != nil {
+		return nil, m.MockError
+	}
 	m.LastSearchRequest = in
 	m.MockCalls = append(m.MockCalls, in)
 
@@ -1781,4 +1807,75 @@ func (m *MockClient) UpdateIndex(ctx context.Context, reason string) error {
 
 func (m *MockClient) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest, opts ...grpc.CallOption) (*resourcepb.QuotaUsageResponse, error) {
 	return nil, nil
+}
+
+func setCreateToggle(t *testing.T, enabled bool) {
+	t.Helper()
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagFolderPickerCreatePermission: {
+			Key:            featuremgmt.FlagFolderPickerCreatePermission,
+			DefaultVariant: "v",
+			Variants:       map[string]any{"v": enabled},
+		},
+	})))
+	t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
+}
+
+func TestSearchHandlerCreatePermissionToggle(t *testing.T) {
+	for name, tc := range map[string]struct {
+		enabled  bool
+		expected dashboardaccess.PermissionType
+	}{
+		"enabled keeps create":        {enabled: true, expected: dashboardaccess.PERMISSION_CREATE},
+		"disabled falls back to edit": {enabled: false, expected: dashboardaccess.PERMISSION_EDIT},
+	} {
+		t.Run(name, func(t *testing.T) {
+			setCreateToggle(t, tc.enabled)
+			mockClient := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}}}
+			handler := NewSearchHandler(tracing.NewNoopTracerService(), mockClient, nil)
+			req := httptest.NewRequest("GET", "/search?type=folder&permission=create", nil)
+			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1}))
+
+			handler.DoSearch(httptest.NewRecorder(), req)
+
+			require.Equal(t, 1, mockClient.CallCount)
+			assert.Equal(t, int64(tc.expected), mockClient.MockCalls[0].Permission)
+		})
+	}
+}
+
+func TestSearchHandlerCreatePermissionSharedWithMe(t *testing.T) {
+	for name, tc := range map[string]struct {
+		enabled  bool
+		perms    map[string][]string
+		expected dashboardaccess.PermissionType
+	}{
+		"toggle off uses edit":              {false, map[string][]string{folder.ActionFoldersWrite: {"folders:uid:privatefolder"}}, dashboardaccess.PERMISSION_EDIT},
+		"toggle on finds create-only grant": {true, map[string][]string{dashboards.ActionDashboardsCreate: {"folders:uid:privatefolder"}}, dashboardaccess.PERMISSION_CREATE},
+	} {
+		t.Run(name, func(t *testing.T) {
+			setCreateToggle(t, tc.enabled)
+			empty := &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}
+			mockClient := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{empty, empty, empty}}
+			handler := NewSearchHandler(tracing.NewNoopTracerService(), mockClient, nil)
+			req := httptest.NewRequest("GET", "/search?type=folder&folder=sharedwithme&permission=create", nil)
+			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: map[int64]map[string][]string{1: tc.perms}}))
+
+			handler.DoSearch(httptest.NewRecorder(), req)
+
+			require.NotEmpty(t, mockClient.MockCalls)
+			for _, call := range mockClient.MockCalls {
+				assert.Equal(t, int64(tc.expected), call.Permission)
+			}
+
+			lookup := mockClient.MockCalls[0]
+			if tc.expected == dashboardaccess.PERMISSION_CREATE {
+				assert.Equal(t, "folders", lookup.Options.Key.Resource)
+				assert.Empty(t, lookup.Federated)
+			} else {
+				assert.Equal(t, "dashboards", lookup.Options.Key.Resource)
+				assert.Len(t, lookup.Federated, 1)
+			}
+		})
+	}
 }

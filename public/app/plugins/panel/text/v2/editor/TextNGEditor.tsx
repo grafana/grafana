@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { useMemo, useRef, useState, type ReactNode, type Ref } from 'react';
-import { useDebounce } from 'react-use';
+import { useDebounce, useMeasure } from 'react-use';
 
 import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -11,15 +11,17 @@ import config from 'app/core/config';
 import { CodeLanguage, defaultCodeLanguage, type RenderMode, TextMode } from '../../panelcfg.gen';
 import { TextNGCodeView } from '../TextNGCodeView';
 import { TextNGHtmlView } from '../TextNGHtmlView';
+import { TextNGTruncationNotice } from '../TextNGTruncationNotice';
+import { type TextSandboxProps } from '../TextSandbox';
 import { catchTemplateError, interpolateTemplate, type RowWindow } from '../renderContent';
-import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
+import { getInterpolateFormat, transformContent, getCodeMirrorLanguage, isTextNewFeaturesEnabled } from '../utils';
 
 import { TextNGEditorFooter } from './TextNGEditorFooter';
+import { TextNGFeedbackButton } from './TextNGFeedbackButton';
 import { TextNGFormatToolbar } from './TextNGFormatToolbar';
 import { getEditorLayoutStyles } from './editorLayout';
-import { variableCompletion } from './variableCompletion';
-
-export type ViewMode = 'write' | 'split' | 'preview';
+import { reducerCompletion, variableCompletion } from './variableCompletion';
+import { type ViewMode } from './viewMode';
 
 export const PREVIEW_TEST_ID = 'TextNGEditor-preview';
 
@@ -50,6 +52,9 @@ export interface TextNGEditorProps {
   onViewChange: (view: ViewMode) => void;
   /** Mirrors the panel's transparent background option. */
   transparent?: boolean;
+  /** Whether the panel has a title set. */
+  hasTitle?: boolean;
+  consent?: TextSandboxProps['consent'];
 }
 
 const getLanguageLabels = (): Record<CodeLanguage, string> => ({
@@ -86,9 +91,13 @@ export function TextNGEditor({
   view,
   onViewChange,
   transparent,
+  hasTitle,
+  consent,
 }: TextNGEditorProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  // Measured on a wrapper the pane sizes, which the frame cannot resize, so the fill cannot feed back.
+  const [previewFillRef, { height: previewFillHeight }] = useMeasure<HTMLDivElement>();
   const editorTheme = useMemo(
     () => (transparent ? createCodeEditorTheme(theme, { transparent: true }) : undefined),
     [theme, transparent]
@@ -148,7 +157,11 @@ export function TextNGEditor({
   const format = getInterpolateFormat(mode, codeLanguage);
   const showPreview = view !== 'write';
 
-  const { content: interpolatedContent, error: previewError } = useMemo(
+  const {
+    content: interpolatedContent,
+    error: previewError,
+    truncated,
+  } = useMemo(
     () =>
       catchTemplateError(() =>
         showPreview
@@ -156,7 +169,7 @@ export function TextNGEditor({
               { content: previewSource, mode, series, renderMode, rowWindow, format },
               replaceVariables
             )
-          : ''
+          : { content: '', truncated: false }
       ),
     [showPreview, previewSource, mode, series, renderMode, rowWindow, format, replaceVariables]
   );
@@ -175,7 +188,10 @@ export function TextNGEditor({
     editorLanguage = getCodeMirrorLanguage(codeLanguage);
   }
 
-  const completionSources = useMemo(() => [variableCompletion(suggestions ?? [])], [suggestions]);
+  const completionSources = useMemo(
+    () => [variableCompletion(suggestions ?? []), ...(isTextNewFeaturesEnabled() ? [reducerCompletion] : [])],
+    [suggestions]
+  );
 
   const basicSetup = useMemo(
     () => ({ lineNumbers: mode === TextMode.Code ? showLineNumbers : false }),
@@ -234,6 +250,7 @@ export function TextNGEditor({
   const showEditor = view !== 'preview';
   const isCode = mode === TextMode.Code;
   const footerPagination = showPreview ? pagination : null;
+  const truncationNotice = truncated ? <TextNGTruncationNotice /> : null;
 
   const renderOutput = (testId: string) => {
     if (previewError) {
@@ -250,37 +267,57 @@ export function TextNGEditor({
         />
       </div>
     ) : (
-      <TextNGHtmlView html={previewHtml} className={cx('markdown-html', styles.fullHeight)} testId={testId} />
+      <div ref={previewFillRef} className={styles.fullHeight}>
+        <TextNGHtmlView
+          html={previewHtml}
+          hasData={Boolean(series?.length)}
+          minHeight={previewFillHeight}
+          consent={consent}
+          className={cx('markdown-html', styles.fullHeight)}
+          testId={testId}
+        />
+      </div>
     );
   };
 
   return (
     <div className={styles.wrapper} data-testid="TextNGEditor">
-      <Stack gap={1} alignItems="center" wrap="wrap" minHeight={theme.components.height.md}>
-        <RadioButtonGroup options={viewOptions} value={view} onChange={onViewChange} size="sm" />
-        {showEditor && <TextNGFormatToolbar mode={mode} editorContainerRef={editorContainerRef} />}
-        <Dropdown placement="bottom-end" overlay={renderModeMenu}>
-          <Button
-            className={styles.modePicker}
-            fill="text"
-            size="sm"
-            variant="secondary"
-            aria-label={t('textng.editor.aria-label-mode', 'Text mode: {{mode}}', { mode: modeValue })}
-          >
-            <Stack direction="row" alignItems="center" gap={0.5}>
-              <span className={styles.pickerLabel}>{t('textng.editor.mode-picker-label', 'Mode')}</span>
-              {modeValue}
-              <Icon name="angle-down" />
-            </Stack>
-          </Button>
-        </Dropdown>
-      </Stack>
+      <div className={cx(!hasTitle && styles.toolbarRowGuard)}>
+        <Stack gap={1} alignItems="center" wrap="wrap" minHeight={theme.components.height.md}>
+          <RadioButtonGroup options={viewOptions} value={view} onChange={onViewChange} size="sm" />
+          {showEditor && <TextNGFormatToolbar mode={mode} editorContainerRef={editorContainerRef} />}
+          <Dropdown placement="bottom-end" overlay={renderModeMenu}>
+            <Button
+              className={styles.modePicker}
+              fill="text"
+              size="sm"
+              variant="secondary"
+              aria-label={t('textng.editor.aria-label-mode', 'Text mode: {{mode}}', { mode: modeValue })}
+            >
+              <Stack direction="row" alignItems="center" gap={0.5}>
+                <span className={styles.pickerLabel}>{t('textng.editor.mode-picker-label', 'Mode')}</span>
+                {modeValue}
+                <Icon name="angle-down" />
+              </Stack>
+            </Button>
+          </Dropdown>
+          <TextNGFeedbackButton />
+        </Stack>
+      </div>
 
       <div className={cx(styles.body, view === 'split' && styles.splitBody)}>
         {showEditor && (
           // Outside interactions (Save, Apply, Back) blur the editor on mousedown,
           // so a pending draft is committed before anything reads the options.
-          <div ref={editorContainerRef} className={cx(styles.pane, styles.editorPane)} onBlur={commitDraft}>
+          // Escape stays here so it arms CodeMirror's Escape-then-Tab focus exit
+          // instead of reaching the global handler that leaves panel edit.
+          // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+          <div
+            ref={editorContainerRef}
+            className={cx(styles.pane, styles.editorPane)}
+            onBlur={commitDraft}
+            onKeyDown={(event) => event.key === 'Escape' && event.stopPropagation()}
+          >
             <CodeMirrorEditor
               value={draft}
               onChange={handleDraftChange}
@@ -309,13 +346,14 @@ export function TextNGEditor({
         )}
       </div>
 
-      {(isCode || frameSelector || footerPagination) && (
+      {(isCode || frameSelector || footerPagination || truncationNotice) && (
         <TextNGEditorFooter
           showLineNumbersSwitch={isCode}
           showLineNumbers={showLineNumbers}
           onShowLineNumbersChange={(next) => changeOption({ showLineNumbers: next })}
           frameSelector={frameSelector}
           pagination={footerPagination}
+          notice={truncationNotice}
         />
       )}
     </div>
@@ -324,6 +362,10 @@ export function TextNGEditor({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   ...getEditorLayoutStyles(theme),
+  // Clears PanelChrome's floating drag/menu widget, shown here when the panel has no title.
+  toolbarRowGuard: css({
+    paddingRight: theme.spacing(12),
+  }),
   modePicker: css({
     marginLeft: 'auto',
   }),

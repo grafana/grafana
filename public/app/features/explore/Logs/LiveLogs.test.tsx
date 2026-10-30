@@ -4,7 +4,7 @@ import { type LogRowModel } from '@grafana/data';
 
 import { makeLogs } from '../mocks/makeLogs';
 
-import { LiveLogsWithTheme } from './LiveLogs';
+import { LiveLogs } from './LiveLogs';
 
 // Avoids errors caused by circular dependencies
 jest.mock('app/features/live/dashboard/dashboardWatcher', () => ({
@@ -13,7 +13,7 @@ jest.mock('app/features/live/dashboard/dashboardWatcher', () => ({
 
 const setup = (rows: LogRowModel[]) =>
   render(
-    <LiveLogsWithTheme
+    <LiveLogs
       logRows={rows}
       timeZone={'utc'}
       stopLive={() => {}}
@@ -42,7 +42,7 @@ describe('LiveLogs', () => {
     const { rerender } = setup(firstLogs);
 
     rerender(
-      <LiveLogsWithTheme
+      <LiveLogs
         logRows={secondLogs}
         timeZone={'utc'}
         stopLive={() => {}}
@@ -62,7 +62,7 @@ describe('LiveLogs', () => {
     expect(screen.queryByRole('cell', { name: 'log message 6' })).not.toBeInTheDocument();
 
     rerender(
-      <LiveLogsWithTheme
+      <LiveLogs
         logRows={secondLogs}
         timeZone={'utc'}
         stopLive={() => {}}
@@ -77,6 +77,26 @@ describe('LiveLogs', () => {
     expect(screen.getByRole('cell', { name: 'log message 4' })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: 'log message 5' })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: 'log message 6' })).toBeInTheDocument();
+  });
+
+  it('clears rendered logs when cleared while paused', () => {
+    const logRows = makeLogs(3);
+    const { rerender } = setup(logRows);
+
+    rerender(
+      <LiveLogs
+        logRows={[]}
+        timeZone={'utc'}
+        stopLive={() => {}}
+        onPause={() => {}}
+        onResume={() => {}}
+        onClear={() => {}}
+        clearedAtIndex={logRows.length - 1}
+        isPaused={true}
+      />
+    );
+
+    expect(screen.queryByRole('cell', { name: /log message/ })).not.toBeInTheDocument();
   });
 
   it('renders ansi logs', () => {

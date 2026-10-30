@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -20,6 +19,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -91,6 +91,12 @@ type APIGroupRouteProvider interface {
 // hosts that discover per-kind routes from manifests.
 type APIGroupResourceProvider interface {
 	GetResourceInfos(gv schema.GroupVersion) []utils.ResourceInfo
+}
+
+// APIGroupManifestProvider lets a builder expose its full app manifest to
+// manifest-driven route builders.
+type APIGroupManifestProvider interface {
+	ManifestData() *app.ManifestData
 }
 
 type APIGroupPostStartHookProvider interface {
@@ -210,9 +216,18 @@ func ServedGroupVersions(
 
 // ManifestsFromBuilders synthesizes manifests for resources that builders
 // advertise directly, so manifest-driven per-kind routes can discover them.
+// Builders can implement APIGroupManifestProvider to supply their full manifest
+// when per-kind settings must be preserved.
 func ManifestsFromBuilders(builders []APIGroupBuilder) []*app.ManifestData {
 	var manifests []*app.ManifestData
 	for _, b := range builders {
+		if provider, ok := b.(APIGroupManifestProvider); ok {
+			if manifest := provider.ManifestData(); manifest != nil {
+				manifests = append(manifests, manifest)
+				continue
+			}
+		}
+
 		provider, ok := b.(APIGroupResourceProvider)
 		if !ok {
 			continue

@@ -7,11 +7,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioningapi "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
+	storagev0 "github.com/grafana/grafana/pkg/apis/storage/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -47,7 +47,7 @@ func TestIntegrationProvisioning_PerKindRoutes(t *testing.T) {
 		Path:   basePath + "list-keys",
 		User:   helper.Org1.Admin,
 		Body:   []byte(`{}`),
-	}, &metav1.PartialObjectMetadataList{})
+	}, &storagev0.ListKeyResponse{})
 	require.Equal(t, http.StatusOK, keys.Response.StatusCode, string(keys.Body))
 	require.NotNil(t, keys.Result)
 	names := make([]string, 0, len(keys.Result.Items))

@@ -81,6 +81,8 @@ export type AzureMonitorDashboardLoadedProps = {
   azure_namespaces_query: number;
   azure_resource_names_query: number;
   azure_metric_names_query: number;
+  azure_dimensions_query: number;
+  azure_dimension_values_query: number;
   azure_workspaces_query: number;
   azure_grafana_template_variable_query: number;
   azure_locations_query: number;

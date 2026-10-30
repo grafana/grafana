@@ -154,6 +154,11 @@ export const versionedComponents = {
       '13.2.0': 'data-testid sidebar add new tab button',
     },
   },
+  EditActionsPopover: {
+    container: {
+      '13.3.0': 'data-testid EditActionsPopover container',
+    },
+  },
   EditPaneHeader: {
     deleteButton: {
       '12.1.0': 'data-testid EditPaneHeader delete panel',
@@ -682,6 +687,9 @@ export const versionedComponents = {
           '12.4.0': 'data-testid tableng row expander',
         },
         cellActions: {
+          triggerButton: {
+            '13.3.0': 'data-testid tableng cell-actions trigger-button',
+          },
           inspectButton: {
             '13.2.0': 'data-testid tableng cell-actions inspect-button',
           },
@@ -702,8 +710,35 @@ export const versionedComponents = {
           activeFilterButton: {
             '13.3.0': 'data-testid tableng header active-filter-button',
           },
+          hideItem: {
+            '13.3.0': 'data-testid tableng header column-menu-hide-item',
+          },
+          manageColumnsItem: {
+            '13.3.0': 'data-testid tableng header column-menu-manage-columns-item',
+          },
+        },
+        columnsSidebar: {
+          container: {
+            '13.3.0': 'data-testid tableng columns-sidebar',
+          },
+          closeButton: {
+            '13.3.0': 'data-testid tableng columns-sidebar close-button',
+          },
+          row: {
+            '13.3.0': (columnName: string) => `data-testid tableng columns-sidebar row ${columnName}`,
+          },
         },
         Filters: {
+          Range: {
+            field: { '13.3.0': (bound: string) => `data-testid tableng range field ${bound}` },
+            minimumInput: { '13.3.0': 'data-testid tableng range minimum-input' },
+            maximumInput: { '13.3.0': 'data-testid tableng range maximum-input' },
+            includeMissingCheckbox: { '13.3.0': 'data-testid tableng range include-missing-checkbox' },
+            applyButton: { '13.3.0': 'data-testid tableng range apply-button' },
+            cancelButton: { '13.3.0': 'data-testid tableng range cancel-button' },
+            clearButton: { '13.3.0': 'data-testid tableng range clear-button' },
+            histogram: { '13.3.0': 'data-testid tableng range histogram' },
+          },
           HeaderButton: {
             '12.1.0': 'data-testid tableng header filter',
           },
@@ -792,6 +827,14 @@ export const versionedComponents = {
       saveAsTitleInput: {
         '13.2.0': 'data-testid Save dashboard title field',
         '11.1.0': 'Save dashboard title field',
+      },
+    },
+    NewLibraryPanelDrawer: {
+      nameInput: {
+        '13.3.0': 'data-testid New library panel name field',
+      },
+      createButton: {
+        '13.3.0': 'data-testid New library panel create button',
       },
     },
   },
@@ -1656,6 +1699,12 @@ export const versionedComponents = {
       row: {
         '13.3.0': (spanId: string) => `data-testid TraceViewer trace-banner row ${spanId}`,
       },
+      stacktraceButton: {
+        '13.3.0': 'data-testid TraceViewer trace-banner stacktrace-button',
+      },
+      toggleButton: {
+        '13.3.0': 'data-testid TraceViewer trace-banner toggle-button',
+      },
     },
     spanException: {
       container: {
@@ -1876,6 +1925,35 @@ export const versionedComponents = {
     },
     variableLinkWrapper: {
       '11.1.1': 'data-testid variable-link-wrapper',
+    },
+  },
+  AdHocFiltersCombobox: {
+    filterInput: {
+      '13.3.0': 'data-testid ad hoc filters combobox filter input',
+    },
+    groupByInput: {
+      '13.3.0': 'data-testid ad hoc filters combobox group by input',
+    },
+    filterPill: {
+      '13.3.0': (key: string) => `data-testid ad hoc filters combobox filter pill ${key}`,
+    },
+    filterPillRemove: {
+      '13.3.0': (key: string) => `data-testid ad hoc filters combobox filter pill remove ${key}`,
+    },
+    groupByPill: {
+      '13.3.0': (key: string) => `data-testid ad hoc filters combobox group by pill ${key}`,
+    },
+    groupByPillRemove: {
+      '13.3.0': (key: string) => `data-testid ad hoc filters combobox group by pill remove ${key}`,
+    },
+    operatorPill: {
+      '13.3.0': 'data-testid ad hoc filters combobox operator pill',
+    },
+    clearAllButton: {
+      '13.3.0': 'data-testid ad hoc filters combobox clear all button',
+    },
+    optionValue: {
+      '13.3.0': (label: string) => `data-testid ad hoc filter option value ${label}`,
     },
   },
   Annotations: {

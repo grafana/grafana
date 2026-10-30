@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"sort"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -538,10 +538,7 @@ func publicDashboardIsEnabledChanged(existingPubdash *models.PublicDashboard, ne
 
 // GenerateAccessToken generates an uuid formatted without dashes to use as access token
 func GenerateAccessToken() (string, error) {
-	token, err := uuid.NewRandom()
-	if err != nil {
-		return "", err
-	}
+	token := uuid.NewV4()
 	return fmt.Sprintf("%x", token[:]), nil
 }
 

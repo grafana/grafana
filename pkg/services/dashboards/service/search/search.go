@@ -2,10 +2,7 @@ package dashboardsearch
 
 import (
 	"context"
-	"encoding/binary"
-	"encoding/json"
 	"fmt"
-	"slices"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -17,7 +14,6 @@ import (
 var (
 	// These fields exist at the top-level of DashboardHit
 	standardFields = map[string]string{
-		resource.SEARCH_FIELD_EXPLAIN:          "",
 		resource.SEARCH_FIELD_SCORE:            "",
 		resource.SEARCH_FIELD_TITLE:            "",
 		resource.SEARCH_FIELD_FOLDER:           "",
@@ -37,16 +33,14 @@ var (
 		resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
 	}
 
-	IncludeFields = []string{
+	FieldValueIncludeFields = []string{
 		resource.SEARCH_FIELD_TITLE,
 		resource.SEARCH_FIELD_TAGS,
-		resource.SEARCH_FIELD_LABELS,
 		resource.SEARCH_FIELD_FOLDER,
 		resource.SEARCH_FIELD_DESCRIPTION,
 		resource.SEARCH_FIELD_CREATED,
 		resource.SEARCH_FIELD_CREATED_BY,
 		resource.SEARCH_FIELD_UPDATED,
-		resource.SEARCH_FIELD_UPDATED_BY,
 		resource.SEARCH_FIELD_MANAGER_KIND,
 		resource.SEARCH_FIELD_MANAGER_ID,
 		resource.SEARCH_FIELD_SOURCE_PATH,
@@ -57,26 +51,15 @@ var (
 		resource.SEARCH_FIELD_LEGACY_ID,
 		resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
 	}
-
-	// tableOnlyFields have no typed field-value definition. The table result format silently
-	// skips unknown response fields, but the FIELD_VALUES format rejects them, so requests
-	// using that format must leave these out.
-	tableOnlyFields = []string{
-		resource.SEARCH_FIELD_LABELS,
-		resource.SEARCH_FIELD_UPDATED_BY,
-	}
-
-	// FieldValueIncludeFields is IncludeFields reduced to what the FIELD_VALUES result format
-	// accepts. Note the per-label "labels.<key>" entries stay: only the bare "labels" is untyped.
-	FieldValueIncludeFields = slices.DeleteFunc(slices.Clone(IncludeFields), func(field string) bool {
-		return slices.Contains(tableOnlyFields, field)
-	})
 )
 
+// SearchFunc is in practice only invoking the unified storage search grpc API due to which we handle errors from it as
+// if they were grpc errors. If other implementation are considered the error handling will need changes.
 type SearchFunc func(ctx context.Context, orgID int64, request *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error)
 
 // SearchAll executes a search request and paginates through all results by incrementing the offset until the offset is greater than total hits
 // or it hits an empty page.
+// Callers that use searchFn directly must check RPC errors with resource.ErrorFromResponse before calling ParseResults.
 func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSearchRequest, searchFn SearchFunc) (v0alpha1.SearchResults, error) {
 	if request.Limit == 0 {
 		request.Limit = 100000
@@ -85,7 +68,7 @@ func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSea
 	request.Offset = int64(0)
 
 	res, err := searchFn(ctx, orgID, request)
-	if err != nil {
+	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
 		return v0alpha1.SearchResults{}, err
 	}
 	results, err := ParseResults(res, 0)
@@ -97,7 +80,7 @@ func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSea
 	request.Page++
 	for request.Offset < res.TotalHits {
 		res, err = searchFn(ctx, orgID, request)
-		if err != nil {
+		if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
 			return v0alpha1.SearchResults{}, err
 		}
 
@@ -118,138 +101,21 @@ func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSea
 	return results, nil
 }
 
+// ParseResults decodes a search response. Callers must still check the RPC outcome
+// with a resource response-error helper before calling it.
 func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0alpha1.SearchResults, error) {
 	if result == nil {
 		return v0alpha1.SearchResults{}, nil
 	} else if result.Error != nil {
-		// Wrap via GetError so the status code/reason survives, letting callers
-		// classify transient search failures (e.g. 429/503) as retryable.
-		return v0alpha1.SearchResults{}, fmt.Errorf("error searching: %w", resource.GetError(result.Error))
+		// Keep this check until the response error field is removed.
+		// After removal, ParseResults will only decode results and report decoding errors.
+		return v0alpha1.SearchResults{}, resource.StatusError(result.Error)
 	}
 
-	switch result.ResultFormat {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		return parseTableResults(result, offset)
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		return parseFieldValueResults(result, offset)
-	default:
+	if result.ResultFormat != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return v0alpha1.SearchResults{}, fmt.Errorf("unsupported search result format %d", result.ResultFormat)
 	}
-}
 
-// nolint:gocyclo
-func parseTableResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0alpha1.SearchResults, error) {
-	table := result.GetResults()
-
-	titleIDX := -1
-	folderIDX := -1
-	tagsIDX := -1
-	descriptionIDX := -1
-	scoreIDX := -1
-	explainIDX := -1
-	managerKindIDX := -1
-	managerIdIDX := -1
-	ownerRefsIDX := -1
-
-	for i, v := range table.GetColumns() {
-		switch v.Name {
-		case resource.SEARCH_FIELD_EXPLAIN:
-			explainIDX = i
-		case resource.SEARCH_FIELD_SCORE:
-			scoreIDX = i
-		case resource.SEARCH_FIELD_TITLE:
-			titleIDX = i
-		case resource.SEARCH_FIELD_FOLDER:
-			folderIDX = i
-		case resource.SEARCH_FIELD_TAGS:
-			tagsIDX = i
-		case resource.SEARCH_FIELD_MANAGER_ID:
-			managerIdIDX = i
-		case resource.SEARCH_FIELD_MANAGER_KIND:
-			managerKindIDX = i
-		case resource.SEARCH_FIELD_DESCRIPTION:
-			descriptionIDX = i
-		case resource.SEARCH_FIELD_OWNER_REFERENCES:
-			ownerRefsIDX = i
-		}
-	}
-
-	sr := v0alpha1.SearchResults{
-		Offset:    offset,
-		TotalHits: result.TotalHits,
-		QueryCost: result.QueryCost,
-		MaxScore:  result.MaxScore,
-		Hits:      make([]v0alpha1.DashboardHit, len(table.GetRows())),
-	}
-
-	for i, row := range table.GetRows() {
-		if len(row.Cells) != len(table.GetColumns()) {
-			// there should never be mismatch len between # Columns and # Cells in a row. This indicates a bug in our
-			// code
-			return v0alpha1.SearchResults{}, fmt.Errorf("error parsing Search Response: mismatch number of columns and cells")
-		}
-
-		// Dynamically defined fields
-		fields := &common.Unstructured{}
-		for colIndex, col := range table.GetColumns() {
-			if _, ok := standardFields[col.Name]; !ok {
-				val, err := resource.DecodeCell(col, colIndex, row.Cells[colIndex])
-				if err != nil {
-					return v0alpha1.SearchResults{}, err
-				}
-				// Some of the dashboard fields come in as int32, but we need to convert them to int64 or else fields.Set() will panic
-				int32Val, ok := val.(int32)
-				if ok {
-					val = int64(int32Val)
-				}
-				fields.Set(col.Name, val)
-			}
-		}
-
-		hit := &v0alpha1.DashboardHit{
-			Resource: row.Key.Resource, // folders | dashboards
-			Name:     row.Key.Name,     // The Grafana UID
-			Field:    fields,
-		}
-		if titleIDX >= 0 && row.Cells[titleIDX] != nil {
-			hit.Title = string(row.Cells[titleIDX])
-		} else {
-			hit.Title = "(no title)"
-		}
-
-		if folderIDX >= 0 && row.Cells[folderIDX] != nil {
-			hit.Folder = string(row.Cells[folderIDX])
-		}
-		if descriptionIDX >= 0 && row.Cells[descriptionIDX] != nil {
-			hit.Description = string(row.Cells[descriptionIDX])
-		}
-		if managerIdIDX >= 0 && row.Cells[managerIdIDX] != nil {
-			hit.ManagedBy.ID = string(row.Cells[managerIdIDX])
-		}
-		if managerKindIDX >= 0 && row.Cells[managerKindIDX] != nil {
-			hit.ManagedBy.Kind = utils.ManagerKind(row.Cells[managerKindIDX])
-		}
-		if tagsIDX >= 0 && row.Cells[tagsIDX] != nil {
-			_ = json.Unmarshal(row.Cells[tagsIDX], &hit.Tags)
-		}
-		if explainIDX >= 0 && row.Cells[explainIDX] != nil {
-			_ = json.Unmarshal(row.Cells[explainIDX], &hit.Explain)
-		}
-		if scoreIDX >= 0 && row.Cells[scoreIDX] != nil {
-			_, _ = binary.Decode(row.Cells[scoreIDX], binary.BigEndian, &hit.Score)
-		}
-		if ownerRefsIDX >= 0 && row.Cells[ownerRefsIDX] != nil {
-			_ = json.Unmarshal(row.Cells[ownerRefsIDX], &hit.OwnerReferences)
-		}
-
-		sr.Hits[i] = *hit
-	}
-
-	sr.Facets = parseFacets(result.Facet)
-	return sr, nil
-}
-
-func parseFieldValueResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0alpha1.SearchResults, error) {
 	sr := v0alpha1.SearchResults{
 		Offset:    offset,
 		TotalHits: result.TotalHits,
@@ -268,6 +134,9 @@ func parseFieldValueResults(result *resourcepb.ResourceSearchResponse, offset in
 		}
 
 		fields := &common.Unstructured{}
+		if row.ResourceVersion != 0 {
+			fields.Set(resource.SEARCH_FIELD_RV, row.ResourceVersion)
+		}
 		for name, value := range values {
 			if _, ok := standardFields[name]; !ok {
 				fields.Set(name, jsonCompatibleValue(value))

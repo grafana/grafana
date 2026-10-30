@@ -279,6 +279,8 @@ export const defaultV2TransformationKind = (): V2TransformationKind => ({
  * Dashboard v2 shape: no `id`, it is carried by the parent's `group`.
  */
 export interface V2TransformationSpec {
+	// Unique identifier of the instance of the transformer
+	refId?: string;
 	// Disabled transformations are skipped
 	disabled?: boolean;
 	// Optional frame matcher. When missing it will be applied to all results

@@ -1,7 +1,6 @@
 package search
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -50,7 +50,7 @@ func TestTrashHandler_RequestsDeletedResources(t *testing.T) {
 	assert.Equal(t, testKind.group, client.got.Options.Key.Group)
 	assert.Equal(t, testKind.resource, client.got.Options.Key.Resource)
 	assert.Equal(t, int64(25), client.got.Limit)
-	assert.Equal(t, resourcepb.ResourceSearchRequest_UNSPECIFIED, client.got.ResultFormat)
+	assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, client.got.ResultFormat)
 
 	// Federating trash is refused by the backend, so the endpoint must not ask.
 	assert.Empty(t, client.got.Federated)
@@ -59,31 +59,6 @@ func TestTrashHandler_RequestsDeletedResources(t *testing.T) {
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &out))
 	assert.Equal(t, searchv0.KindTrashResults, out.Kind)
 	assert.Equal(t, searchv0.APIVERSION, out.APIVersion)
-}
-
-func TestTrashHandler_ResultFormatFollowsSelector(t *testing.T) {
-	for name, enabled := range map[string]bool{
-		"disabled": false,
-		"enabled":  true,
-	} {
-		t.Run(name, func(t *testing.T) {
-			// This table response also verifies that an enabled client remains
-			// compatible with an older server that does not support field values.
-			client := &fakeIndexClient{resp: emptyResponse()}
-			h := NewHandlerWithOptions(client, testProvider(), noop.NewTracerProvider().Tracer(""), HandlerOptions{
-				FieldValueResultsEnabled: func(context.Context) bool { return enabled },
-			})
-
-			w := doTrashRequest(t, h, trashBody(``))
-
-			require.Equal(t, http.StatusOK, w.Code, w.Body.String())
-			want := resourcepb.ResourceSearchRequest_UNSPECIFIED
-			if enabled {
-				want = resourcepb.ResourceSearchRequest_FIELD_VALUES
-			}
-			assert.Equal(t, want, client.got.ResultFormat)
-		})
-	}
 }
 
 // So the default view reads as "most recently deleted first".
@@ -109,6 +84,17 @@ func TestTrashHandler_AlwaysReturnsTheDeletedResourceVersion(t *testing.T) {
 	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
 
 	assert.Contains(t, client.got.Fields, resource.SEARCH_FIELD_DELETED_RV)
+}
+
+func TestTrashHandler_RejectsFolderTreeWhenEnabledForLiveSearch(t *testing.T) {
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagSearchPerResourceFolderTree)
+	client := &fakeIndexClient{resp: emptyResponse()}
+	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+	w := doTrashRequest(t, h, trashBody(`, "where": {"filter": {"field": "folderTree", "operator": "In", "values": ["team-a"]}}`))
+	require.Equal(t, http.StatusUnprocessableEntity, w.Code, w.Body.String())
+	assert.Contains(t, w.Body.String(), "unknown field")
+	assert.Zero(t, client.calls)
+	assert.Nil(t, client.got)
 }
 
 func TestTrashHandler_RejectsBadRequests(t *testing.T) {

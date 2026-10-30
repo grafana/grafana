@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import uPlot, { type AlignedData, type Options } from 'uplot';
 
 import { type PlotProps } from './types';
@@ -18,15 +18,15 @@ export function UPlotChart({ data, width, height, config, children, plotRef }: P
 
   // The two update effects below must stay declared above the initialisation effect.
   // Otherwise they will reapply the plot size and data on mount.
-  useEffect(() => {
+  useLayoutEffect(() => {
     plotInstance.current?.setSize({ width: Math.floor(width), height: Math.floor(height) });
   }, [width, height]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     plotInstance.current?.setData(data as AlignedData);
   }, [data]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (width === 0 && height === 0) {
       return;
     }

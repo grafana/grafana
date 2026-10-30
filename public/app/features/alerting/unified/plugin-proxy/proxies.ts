@@ -5,9 +5,11 @@
  * Fetched on demand by `withRouteProxy.tsx`, so this module is free to import whatever it needs.
  * Only the list of paths it covers is loaded up front, in `proxiedPaths.ts`.
  */
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceSettings } from '@grafana/runtime';
 
 import { SupportedPlugin } from '../types/pluginBridges';
+import { RuleFormType } from '../types/rule-form';
+import { getRulesAccess } from '../utils/access-control';
 import { ALERTMANAGER_NAME_QUERY_KEY, GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 import { parseQueryParamMatchers } from '../utils/matchers';
 import {
@@ -139,6 +141,36 @@ function groupPageHandler(action: 'view' | 'edit'): ProxyHandler {
  * a handler for a path that isn't matched — is a compile error, not a route that quietly stops
  * being proxied.
  */
+/**
+ * Other features open the rule form with a rule already filled in, passed as JSON in `?defaults=`.
+ * Its `type` says which kind of rule it is. Anything we can't read is left to the Grafana form.
+ */
+function getDefaultsRuleType(searchParams: URLSearchParams): RuleFormType | undefined {
+  try {
+    const defaults: unknown = JSON.parse(searchParams.get('defaults') ?? '');
+    if (defaults && typeof defaults === 'object' && 'type' in defaults) {
+      return Object.values(RuleFormType).find((type) => type === defaults.type);
+    }
+  } catch {
+    // Not JSON, so the form falls back to its own defaults.
+  }
+  return undefined;
+}
+
+function isDataSourceManagedRuleType(type: RuleFormType | undefined): boolean {
+  return type === RuleFormType.cloudAlerting || type === RuleFormType.cloudRecording;
+}
+
+/**
+ * Someone who may create data source managed rules but not Grafana managed ones gets the data
+ * source managed form by default (see `getDefaultFormValues`), so for them a plain "new rule" URL
+ * belongs to the plugin as well.
+ */
+function canOnlyCreateDataSourceManagedRules(): boolean {
+  const { canCreateGrafanaRules, canCreateCloudRules } = getRulesAccess();
+  return !canCreateGrafanaRules && canCreateCloudRules;
+}
+
 /** A rules source or Alertmanager is data source managed unless it is the built-in Grafana one. */
 function isDataSourceManaged(name: string | undefined): boolean {
   if (!name) {
@@ -218,12 +250,24 @@ export const routeProxies: RouteProxy[] = [
     },
   },
   {
-    // `recording` is the data source managed recording rule form, and `?copyFrom=` carries a rule
-    // identifier which tells us who owns the rule being cloned. Plain `/alerting/new/alerting` is
-    // left alone: whether that rule ends up Grafana or data source managed is chosen in the form.
+    // `recording` is the data source managed recording rule form, `?copyFrom=` carries a rule
+    // identifier which tells us who owns the rule being cloned, and `?defaults=` can ask for a data
+    // source managed rule outright. Otherwise plain `/alerting/new/alerting` is left alone, because
+    // whether that rule ends up Grafana or data source managed is chosen in the form — unless the
+    // form could only ever be the data source managed one.
     path: '/alerting/new/:type?',
-    matches: ({ params, searchParams }) =>
-      params.type === 'recording' || isDataSourceManagedIdentifier(searchParams.get('copyFrom') ?? undefined),
+    matches: ({ params, searchParams }) => {
+      if (params.type === 'recording' || isDataSourceManagedIdentifier(searchParams.get('copyFrom') ?? undefined)) {
+        return true;
+      }
+
+      const defaultsType = getDefaultsRuleType(searchParams);
+      if (defaultsType) {
+        return isDataSourceManagedRuleType(defaultsType);
+      }
+
+      return params.type !== 'grafana-recording' && canOnlyCreateDataSourceManagedRules();
+    },
     handler: async ({ params, searchParams }) => {
       const copyFrom = searchParams.get('copyFrom');
       const clonedIdentifier = copyFrom ? await toPluginRuleIdentifier(copyFrom) : undefined;
@@ -234,8 +278,9 @@ export const routeProxies: RouteProxy[] = [
 
       const pluginParams = new URLSearchParams(searchParams);
       // The plugin reads the rule type from `?type=` rather than from the path.
-      if (params.type) {
-        pluginParams.set('type', params.type);
+      const type = getDefaultsRuleType(searchParams) === RuleFormType.cloudRecording ? 'recording' : params.type;
+      if (type) {
+        pluginParams.set('type', type);
       }
       if (clonedIdentifier) {
         pluginParams.set('copyFrom', tryDecodeUriComponent(clonedIdentifier));
@@ -359,6 +404,16 @@ export const routeProxies: RouteProxy[] = [
       params.delete('muteName');
       return `${PLUGIN_ROUTES.timeIntervals}/${encodeURIComponent(muteName)}`;
     }),
+  },
+  {
+    // Grafana's `:name` here is a resource name (`metadata.name`), whereas the plugin keys time intervals by
+    // spec name. External Alertmanagers have no metadata.name and are never linked to this route, so this serves
+    // only to keeps the route proxy table complete.
+    path: '/alerting/routes/mute-timing/:name/edit',
+    matches: (context) => matchesExternalAlertmanager(context) && Boolean(context.params.name),
+    handler: alertmanagerPage(
+      (_params, { params }) => `${PLUGIN_ROUTES.timeIntervals}/${reencodePathParam(params.name)}`
+    ),
   },
   {
     path: '/alerting/silences',

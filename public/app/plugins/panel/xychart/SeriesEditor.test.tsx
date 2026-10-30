@@ -375,6 +375,12 @@ describe('SeriesEditor', () => {
   });
 
   describe('field picker settings', () => {
+    it.each(['size', 'color'] as Array<'size' | 'color'>)('allows clearing the %s field picker', (dim) => {
+      renderEditor();
+
+      expect(pickerSettings(dim).isClearable).toBe(true);
+    });
+
     it.each([
       { dim: 'x', accepts: [FieldType.number, FieldType.time], rejects: [FieldType.string] },
       { dim: 'y', accepts: [FieldType.number], rejects: [FieldType.time, FieldType.string] },

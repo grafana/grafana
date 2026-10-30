@@ -1,6 +1,6 @@
 import { get, set } from 'lodash';
 
-import { type ScopedVars } from '@grafana/data';
+import { dateTime, type ScopedVars } from '@grafana/data';
 import { type VariableInterpolation } from '@grafana/runtime';
 
 import AzureMonitorDatasource from '../datasource';
@@ -572,6 +572,29 @@ describe('AzureMonitorDatasource', () => {
         });
     });
 
+    it('does not add storage platform namespaces when custom is specified', async () => {
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue({
+        value: [
+          {
+            classification: 'Platform',
+            properties: { metricNamespaceName: 'microsoft.storage/storageaccounts' },
+          },
+        ],
+      });
+
+      const results = await ctx.ds.azureMonitorDatasource.getMetricNamespaces(
+        {
+          resourceUri:
+            '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.storage/storageaccounts/resource1',
+        },
+        false,
+        undefined,
+        true
+      );
+
+      expect(results).toEqual([]);
+    });
+
     it('when excludeCustom is specified will omit custom namespaces', () => {
       // Use a fresh response so this test doesn't depend on mutations made by earlier tests.
       const freshResponse = {
@@ -699,6 +722,78 @@ describe('AzureMonitorDatasource', () => {
           expect(results[1].text).toEqual('Free capacity');
           expect(results[1].value).toEqual('FreeCapacity');
         });
+    });
+  });
+
+  describe('When performing getDimensionValues', () => {
+    it('matches dimension names case-insensitively and returns trimmed sorted unique values', async () => {
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue({
+        value: [
+          {
+            timeseries: [
+              {
+                metadatavalues: [
+                  { name: { value: ' CloudRole ', localizedValue: 'Cloud role' }, value: ' worker ' },
+                  { name: { value: 'cloudrole', localizedValue: 'Cloud role' }, value: 'api' },
+                  { name: { value: 'CloudRole', localizedValue: 'Cloud role' }, value: '   ' },
+                ],
+              },
+              { metadatavalues: [{ name: { value: 'CloudRole' }, value: 'api' }] },
+            ],
+          },
+        ],
+      });
+
+      const results = await ctx.ds.azureMonitorDatasource.getDimensionValues(
+        {
+          subscription: 'mock-subscription-id',
+          resourceGroup: 'nodeapp',
+          metricNamespace: 'microsoft.insights/components',
+          resourceName: 'resource1',
+          customNamespace: 'custom/namespace',
+          metricName: 'Requests',
+          dimension: ' CLOUDROLE ',
+        },
+        {
+          from: dateTime('2026-08-27T12:00:00.000Z'),
+          to: dateTime('2026-08-27T13:00:00.000Z'),
+          raw: { from: 'now-1h', to: 'now' },
+        }
+      );
+
+      expect(ctx.ds.azureMonitorDatasource.getResource).toHaveBeenCalledWith(
+        'azuremonitor/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1/providers/microsoft.insights/metrics?api-version=2021-05-01&timespan=2026-08-27T12%3A00%3A00.000Z%2F2026-08-27T13%3A00%3A00.000Z&metricnames=Requests&metricnamespace=custom%2Fnamespace&resultType=metadata&%24filter=CLOUDROLE+eq+%27*%27&top=1000'
+      );
+      expect(results).toEqual([
+        { text: 'api', value: 'api' },
+        { text: 'worker', value: 'worker' },
+      ]);
+    });
+
+    it('uses the resource metric namespace when no custom namespace is set', async () => {
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue({ value: [] });
+
+      await ctx.ds.azureMonitorDatasource.getDimensionValues(
+        {
+          subscription: 'mock-subscription-id',
+          resourceGroup: 'nodeapp',
+          metricNamespace: 'microsoft.insights/components',
+          resourceName: 'resource1',
+          metricName: 'Requests',
+          dimension: 'CloudRole',
+        },
+        {
+          from: dateTime('2026-08-27T12:00:00.000Z'),
+          to: dateTime('2026-08-27T13:00:00.000Z'),
+          raw: { from: 'now-1h', to: 'now' },
+        }
+      );
+
+      expect(ctx.ds.azureMonitorDatasource.getResource).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'metricnamespace=microsoft.insights%2Fcomponents&resultType=metadata&%24filter=CloudRole+eq+%27*%27&top=1000'
+        )
+      );
     });
   });
 
