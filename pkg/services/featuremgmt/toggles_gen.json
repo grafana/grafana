@@ -4951,7 +4951,8 @@
       "metadata": {
         "name": "pluginStoreServiceLoading",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-10-17T20:01:43Z"
+        "creationTimestamp": "2025-10-17T20:01:43Z",
+        "deletionTimestamp": "2026-10-30T13:25:11Z"
       },
       "spec": {
         "description": "Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded",

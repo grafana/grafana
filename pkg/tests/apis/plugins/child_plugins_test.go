@@ -13,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	grafanafs "github.com/grafana/grafana/pkg/infra/fs"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -121,9 +120,6 @@ func setupHelperWithChildPlugin(t *testing.T) *apis.K8sTestHelper {
 		AppModeProduction:      true,
 		DisableAnonymous:       true,
 		APIServerRuntimeConfig: "plugins.grafana.app/v0alpha1=true",
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagPluginStoreServiceLoading,
-		},
 	}
 
 	dir, cfgPath := testinfra.CreateGrafDir(t, baseOpts)

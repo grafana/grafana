@@ -2076,14 +2076,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "pluginStoreServiceLoading",
-			Description: "Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaCatalogSquad,
-			Expression:  "false",
-		},
-		{
 			Name:         "onlyStoreActionSets",
 			Description:  "When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission",
 			Stage:        FeatureStageGeneralAvailability,
