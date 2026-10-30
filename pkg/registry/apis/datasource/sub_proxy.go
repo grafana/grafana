@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -156,6 +157,11 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 				return
 			}
 		}
+		if strings.TrimSpace(ds.Spec.URL()) == "" && !routesDefineURL(r.builder.pluginJSON.Routes) {
+			m.SetError()
+			responder.Error(apierrors.NewBadRequest("datasource has no URL configured"))
+			return
+		}
 		validate := r.builder.validateDataSourceRequest
 		if deps.RequestValidator != nil {
 			validate = deps.RequestValidator.Validate
@@ -192,6 +198,17 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		}
 		proxy.HandleRequest()
 	}), nil
+}
+
+// routesDefineURL reports whether any plugin route supplies its own target URL,
+// in which case a datasource without a URL can still be proxied.
+func routesDefineURL(routes []*plugins.Route) bool {
+	for _, route := range routes {
+		if route != nil && route.URL != "" {
+			return true
+		}
+	}
+	return false
 }
 
 // proxyPathFromRequest returns everything after the "<name>/proxy" subresource
