@@ -3634,7 +3634,7 @@ func schema_pkg_apis_provisioning_v0alpha1_SupportedResource(ref common.Referenc
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "SupportedResource describes a resource type declared for provisioning. A resource is identified by its group and kind; the API version and plural resource are resolved at runtime via discovery, so they are not part of this descriptor.",
+				Description: "SupportedResource describes a resource type declared for provisioning. A resource is identified by its group and kind; the API version is resolved at runtime via discovery, so it is not part of this descriptor.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"group": {
@@ -3657,6 +3657,34 @@ func schema_pkg_apis_provisioning_v0alpha1_SupportedResource(ref common.Referenc
 						SchemaProps: spec.SchemaProps{
 							Description: "Disabled reports whether the resource is declared but not acted on by provisioning. Active resources omit this field.",
 							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resource is the plural resource name, when an app manifest declares the kind.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"label": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Label is the singular display name from the app manifest.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"pluralLabel": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PluralLabel is the plural display name from the app manifest.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"icon": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Icon is the name of a Grafana UI icon from the app manifest.",
+							Type:        []string{"string"},
 							Format:      "",
 						},
 					},

@@ -6807,7 +6807,7 @@
         }
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.SupportedResource": {
-        "description": "SupportedResource describes a resource type declared for provisioning. A resource is identified by its group and kind; the API version and plural resource are resolved at runtime via discovery, so they are not part of this descriptor.",
+        "description": "SupportedResource describes a resource type declared for provisioning. A resource is identified by its group and kind; the API version is resolved at runtime via discovery, so it is not part of this descriptor.",
         "type": "object",
         "required": [
           "group",
@@ -6823,10 +6823,26 @@
             "type": "string",
             "default": ""
           },
+          "icon": {
+            "description": "Icon is the name of a Grafana UI icon from the app manifest.",
+            "type": "string"
+          },
           "kind": {
             "description": "Kind is the kind of the resource (e.g. \"Dashboard\").",
             "type": "string",
             "default": ""
+          },
+          "label": {
+            "description": "Label is the singular display name from the app manifest.",
+            "type": "string"
+          },
+          "pluralLabel": {
+            "description": "PluralLabel is the plural display name from the app manifest.",
+            "type": "string"
+          },
+          "resource": {
+            "description": "Resource is the plural resource name, when an app manifest declares the kind.",
+            "type": "string"
           }
         }
       },

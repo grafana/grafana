@@ -33,8 +33,8 @@ type RepositoryViewList struct {
 }
 
 // SupportedResource describes a resource type declared for provisioning. A resource is
-// identified by its group and kind; the API version and plural resource are resolved at
-// runtime via discovery, so they are not part of this descriptor.
+// identified by its group and kind; the API version is resolved at runtime via discovery,
+// so it is not part of this descriptor.
 type SupportedResource struct {
 	// Group is the API group of the resource (e.g. "dashboard.grafana.app").
 	Group string `json:"group"`
@@ -45,6 +45,18 @@ type SupportedResource struct {
 	// Disabled reports whether the resource is declared but not acted on by provisioning.
 	// Active resources omit this field.
 	Disabled bool `json:"disabled,omitempty"`
+
+	// Resource is the plural resource name, when an app manifest declares the kind.
+	Resource string `json:"resource,omitempty"`
+
+	// Label is the singular display name from the app manifest.
+	Label string `json:"label,omitempty"`
+
+	// PluralLabel is the plural display name from the app manifest.
+	PluralLabel string `json:"pluralLabel,omitempty"`
+
+	// Icon is the name of a Grafana UI icon from the app manifest.
+	Icon string `json:"icon,omitempty"`
 }
 
 func (SupportedResource) OpenAPIModelName() string {

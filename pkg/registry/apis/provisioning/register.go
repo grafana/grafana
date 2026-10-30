@@ -108,7 +108,7 @@ type APIBuilder struct {
 	useExclusivelyAccessCheckerForAuthz bool
 
 	allowedTargets      []provisioning.SyncTargetType
-	supportedResources  []resources.SupportedResource
+	supportedResources  resources.SupportedResourcesFunc
 	allowImageRendering bool
 	minSyncInterval     time.Duration
 
@@ -214,7 +214,7 @@ func NewAPIBuilder(
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
-	supportedResources []resources.SupportedResource,
+	supportedResources resources.SupportedResourcesFunc,
 	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
 	minSyncInterval time.Duration,
@@ -230,7 +230,7 @@ func NewAPIBuilder(
 	if newStandaloneClientFactoryFunc != nil {
 		clients = newStandaloneClientFactoryFunc(configProvider)
 	} else {
-		clients = resources.NewClientFactory(configProvider, supportedResources...)
+		clients = resources.NewClientFactoryWithResources(configProvider, supportedResources)
 	}
 	if gv.Version == "" {
 		return nil, fmt.Errorf("invalid provisioning group/version")
@@ -345,6 +345,7 @@ func RegisterAPIService(
 	connectionFactory connection.Factory,
 	quotaGetter quotas.QuotaGetter,
 	natsSubscriber nats.Subscriber,
+	manifests resource.ManifestDiscovery,
 ) (*APIBuilder, error) {
 	if !cfg.ProvisioningEnabled {
 		return nil, nil
@@ -355,10 +356,11 @@ func RegisterAPIService(
 		allowedTargets = append(allowedTargets, provisioning.SyncTargetType(target))
 	}
 
-	supportedResources, err := resources.ParseSupportedResources(cfg.ProvisioningResources)
+	configuredResources, err := resources.ParseSupportedResources(cfg.ProvisioningResources)
 	if err != nil {
 		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
 	}
+	supportedResources := resources.ManifestSupportedResources(manifests, configuredResources)
 
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
@@ -867,13 +869,17 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// Jobs mutator and validator. The mutator attributes each job to the acting
 	// user at creation time and the validator enforces that the recorded author
 	// is immutable.
-	jobSupportedResources := make([]provisioning.SupportedResource, 0, len(b.supportedResources))
-	for _, r := range b.supportedResources {
-		jobSupportedResources = append(jobSupportedResources, provisioning.SupportedResource{
-			Group:    r.Group,
-			Kind:     r.Kind,
-			Disabled: !r.IsActive(),
-		})
+	jobSupportedResources := func(ctx context.Context) []provisioning.SupportedResource {
+		supported := b.supportedResources(ctx)
+		out := make([]provisioning.SupportedResource, 0, len(supported))
+		for _, r := range supported {
+			out = append(out, provisioning.SupportedResource{
+				Group:    r.Group,
+				Kind:     r.Kind,
+				Disabled: !r.IsActive(),
+			})
+		}
+		return out
 	}
 	b.admissionHandler.RegisterMutator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionMutator())
 	b.admissionHandler.RegisterValidator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionValidator(jobSupportedResources, performanceEnabled))
