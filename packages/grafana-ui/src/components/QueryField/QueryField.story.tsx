@@ -39,7 +39,7 @@ const meta: Meta<typeof QueryField> = {
   },
 };
 
-export const Basic: StoryFn<typeof QueryField> = (args: Omit<QueryFieldProps, 'theme'>) => {
+export const Basic: StoryFn<typeof QueryField> = (args: QueryFieldProps) => {
   const id = useId();
   // have to manually set an id on the label
   // can't use htmlFor as QueryField is a contenteditable div, not an input
@@ -75,7 +75,7 @@ const METRICS = [
 // and a non-empty `suggestions` result opens the Typeahead portal anchored to the caret.
 // Use it to manually verify suggestions render, keyboard navigation (Arrow/Enter/Tab/Escape) works,
 // and the portal is created and torn down cleanly when the field mounts/unmounts.
-export const WithSuggestions: StoryFn<typeof QueryField> = (args: Omit<QueryFieldProps, 'theme'>) => {
+export const WithSuggestions: StoryFn<typeof QueryField> = (args: QueryFieldProps) => {
   const id = useId();
 
   return (
