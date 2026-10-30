@@ -355,9 +355,6 @@ build-js: ## Build frontend assets.
 	@echo "building frontend"
 	bash scripts/build-frontend.sh
 
-public/build:
-	$(MAKE) build-js
-
 PLUGIN_ID ?=
 
 .PHONY: build-plugin-go
@@ -414,7 +411,11 @@ build-catalog-plugins-data: data/plugins-bundled ## Download default catalog plu
 .PHONY: build-targz
 build-targz: $(TARGZ_FILE) ## Build a tar.gz package (bin, public, conf, plugins-bundled/, data/plugins-bundled from catalog)
 
-$(TARGZ_FILE): data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana$(if $(filter windows,$(OS)),.exe) public/build
+dist/frontend/build/assets-manifest.json:
+	@echo "error: completed frontend artifact is missing; run 'make build-js' first" >&2
+	@exit 1
+
+$(TARGZ_FILE): dist/frontend/build/assets-manifest.json data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana$(if $(filter windows,$(OS)),.exe)
 	@echo "assembling tar.gz"
 	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
 	BUILD_VERSION="$(BUILD_VERSION)" \
