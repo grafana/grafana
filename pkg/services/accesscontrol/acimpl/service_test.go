@@ -1543,3 +1543,22 @@ func TestIntegrationService_DeclareFixedRoles_AfterInitialization(t *testing.T) 
 	assert.Len(t, actions, before+1, "a role declared after initialization is granted without a restart")
 	assert.Contains(t, actions, "late.ext.grafana.app/things:get")
 }
+
+func TestIntegrationService_DeclareFixedRoles_AfterInitializationIsIdempotent(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ac := setupTestEnv(t, true)
+	before := len(ac.roles[string(identity.RoleEditor)].Permissions)
+
+	reg := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:retry.ext.grafana.app:reader",
+			Permissions: []accesscontrol.Permission{{Action: "retry.ext.grafana.app/things:get"}},
+		},
+		Grants: []string{string(identity.RoleEditor)},
+	}
+	require.NoError(t, ac.DeclareFixedRoles(reg))
+	require.NoError(t, ac.DeclareFixedRoles(reg))
+
+	assert.Len(t, ac.roles[string(identity.RoleEditor)].Permissions, before+1, "declaring a role again does not stack its grants")
+}

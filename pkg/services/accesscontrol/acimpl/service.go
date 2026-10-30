@@ -624,12 +624,17 @@ func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistrat
 			}
 		}
 
-		s.registrations.Append(r)
-
 		s.rolesMu.Lock()
 		if s.isInitialized {
-			s.registerRolesLocked(r)
+			// A caller retries after a failed persist below. Registering the role in RAM again would
+			// stack its grants on the basic roles, so a retry only repeats the persist.
+			if !s.isDeclaredLocked(r.Role.Name) {
+				s.registrations.Append(r)
+				s.registerRolesLocked(r)
+			}
 			late = append(late, r)
+		} else {
+			s.registrations.Append(r)
 		}
 		s.rolesMu.Unlock()
 	}
@@ -638,6 +643,17 @@ func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistrat
 		return nil
 	}
 	return s.applyLateRegistrations(context.Background(), late)
+}
+
+// isDeclaredLocked reports whether a role with this name is already registered.
+// Must be called with s.rolesMu locked.
+func (s *Service) isDeclaredLocked(name string) bool {
+	found := false
+	s.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
+		found = registration.Role.Name == name
+		return !found
+	})
+	return found
 }
 
 // applyLateRegistrations persists roles declared after RegisterFixedRoles. Unlike at startup,
