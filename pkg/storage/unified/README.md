@@ -7,6 +7,14 @@ It provides generic storage for k8s objects, and can store data either within de
 
 By default it runs in-process within Grafana, but it can also be run as a standalone GRPC service (`storage-server`).
 
+## Inline blob contract
+
+The [inline blob contract](proto/inline-blobs.md) defines write-only base64 input
+at `blobs.<name>.data`, reference-only persistence, validation limits, and automatic
+support negotiation through metadata on the existing `BulkProcess` stream. The
+contract alone does not enable inline writes; server negotiation and normalization
+must ship before producer adoption.
+
 ## Remote blob streaming
 
 The additive `BlobStoreStreaming` service in `proto/blob.proto` supports remote
