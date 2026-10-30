@@ -61,6 +61,8 @@ Below 1.0 the bump is shifted down one level, so choose by intent:
 | `minor` | A new feature or export              | 0.6.1                    |
 | `patch` | A bug fix or an internal improvement | 0.6.1                    |
 
+When plans land on `main`, the `Release NPM version PR` workflow opens or updates one pull request titled `Release: Frontend packages` from the `nx-release-branch--main` branch. It applies the plans, writes the new versions and changelog entries, and deletes the plan files. Merging that pull request releases the packages. To preview it, run the workflow from the Actions tab with `dry_run` enabled.
+
 Several plans in one release combine into the highest bump, and every plan text becomes a changelog entry. The `README.md` in `.nx/version-plans/` keeps the folder in git when no plans are pending. Nx reads every file in that folder as a plan and rejects files with no text, so do not replace it with an empty `.gitkeep`.
 
 ### Stable releases
