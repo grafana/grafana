@@ -38,6 +38,7 @@ import { getConfig } from 'app/core/config';
 import { getSessionExpiry, hasRotatableSession } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { LazyInterceptedWriteDrawer } from 'app/features/provisioning/components/Shared/LazyInterceptedWriteDrawer';
 import { type DashboardSearchItem } from 'app/features/search/types';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { type DashboardDTO } from 'app/types/dashboard';
@@ -540,8 +541,89 @@ export class BackendSrv implements BackendService {
             })
           )
         ),
-        catchError((err: FetchError) => throwError(() => this.processRequestError(options, err)))
+        catchError(
+          (err: FetchError) =>
+            this.offerRepositoryWrite<T>(options, err) ?? throwError(() => this.processRequestError(options, err))
+        )
       );
+  }
+
+  private offerRepositoryWrite<T>(
+    options: BackendSrvRequest,
+    err: FetchError
+  ): Observable<FetchResponse<T>> | undefined {
+    const method = options.method?.toUpperCase();
+    const path = options.url.replace(/^\//, '');
+    if (
+      err.status !== 403 ||
+      !path.startsWith('apis/') ||
+      path.startsWith('apis/provisioning.grafana.app/') ||
+      (method !== 'POST' && method !== 'PUT' && method !== 'PATCH' && method !== 'DELETE')
+    ) {
+      return undefined;
+    }
+
+    const resource = options.data && typeof options.data === 'object' ? options.data : undefined;
+    const details = err.data?.details;
+    const folderCause = details?.causes?.find(
+      (c: { reason?: string; message?: string; field?: string }) => c.reason === 'FolderManagedByRepository'
+    );
+    const writeDenied = details?.group === 'provisioning.grafana.app' && details?.kind === 'repositories';
+
+    let props;
+    if (method === 'POST' && resource && folderCause?.message && folderCause.field) {
+      props = { action: 'create', resource, repositoryName: folderCause.message, folderName: folderCause.field };
+    } else if (writeDenied && (method === 'DELETE' || resource)) {
+      props = {
+        action: method === 'POST' ? 'create' : method === 'DELETE' ? 'delete' : 'update',
+        resource: method === 'POST' || method === 'PUT' ? resource : undefined,
+        patch: method === 'PATCH' ? resource : undefined,
+        repositoryName: resource?.metadata?.annotations?.['grafana.app/managerId'],
+      };
+    } else {
+      return undefined;
+    }
+
+    const response = (data: T): FetchResponse<T> => ({
+      data,
+      status: 200,
+      statusText: 'OK',
+      ok: true,
+      headers: new Headers(),
+      redirected: false,
+      type: 'basic',
+      url: options.url,
+      config: options,
+    });
+
+    return new Observable<FetchResponse<T>>((subscriber) => {
+      const resolve = () => {
+        subscriber.next(response(resource ?? {}));
+        subscriber.complete();
+      };
+      this.dependencies.appEvents.publish(
+        new ShowModalReactEvent({
+          component: LazyInterceptedWriteDrawer,
+          props: {
+            ...props,
+            url: options.url,
+            onWritten: resolve,
+            onBranched: resolve,
+            onCancelled: () =>
+              subscriber.error({
+                type: DataQueryErrorType.Cancelled,
+                cancelled: true,
+                isHandled: true,
+                data: null,
+                status: this.HTTP_REQUEST_CANCELED,
+                statusText: 'Request was aborted',
+                config: options,
+              }),
+            onUnsupported: () => subscriber.error(this.processRequestError(options, err)),
+          },
+        })
+      );
+    });
   }
 
   private handleStreamCancellation(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse> {
