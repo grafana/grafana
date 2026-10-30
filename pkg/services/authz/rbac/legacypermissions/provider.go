@@ -9,20 +9,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func ProvideLoader(sql db.DB, catalog *RoleCatalog, actions ac.ActionResolver,
 	cache *localcache.CacheService, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
-	license licensing.Licensing, zanzanaClient zanzana.Client, restConfig restcfg.RestConfigProvider,
+	license licensing.Licensing, zanzanaClient zanzana.Client, restConfig restcfg.RestConfigProvider, users user.Service,
 ) *Loader {
 	var migrated MigratedPermissions
 	// Preserve the independent enumeration-merge gate, not the Check/List engine selection.
 	//nolint:staticcheck // The existing merge toggle is not migrated by this rollout.
 	if features.IsEnabledGlobally(featuremgmt.FlagZanzanaMergeUserPermissions) && zanzanaClient != nil {
-		// Current-user enumeration does not use the user service; only the out-of-scope
-		// search methods need it. The REST client remains lazy to avoid an apiserver cycle.
-		migrated = NewZanzanaPermissionResolver(zanzanaClient, nil, restConfig, cfg.IDUseExternalGroupsForGroupsClaim)
+		// Search uses the user directory for target lookup and pagination.
+		// The REST client remains lazy to avoid an apiserver cycle.
+		migrated = NewZanzanaPermissionResolver(zanzanaClient, users, restConfig, cfg.IDUseExternalGroupsForGroupsClaim)
 	}
 	return NewLoader(sql, catalog, actions, cache, cfg, features, license, migrated)
 }

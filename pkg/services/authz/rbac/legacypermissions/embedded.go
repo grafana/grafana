@@ -54,7 +54,7 @@ func (c *embeddedTransactionCall) wait() {
 	}
 }
 
-type embeddedClient struct{ legacyclient.Service }
+type embeddedClient struct{ EmbeddedClient }
 
 func (c *embeddedClient) LegacyGetUserPermissions(ctx context.Context, caller types.AuthInfo, req legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
 	if sess, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
@@ -62,7 +62,16 @@ func (c *embeddedClient) LegacyGetUserPermissions(ctx context.Context, caller ty
 		ctx = context.WithValue(ctx, embeddedTransactionCallKey{}, call)
 		defer call.wait()
 	}
-	return c.Service.LegacyGetUserPermissions(ctx, caller, req)
+	return c.EmbeddedClient.LegacyGetUserPermissions(ctx, caller, req)
+}
+
+func (c *embeddedClient) LegacySearchUsersPermissions(ctx context.Context, caller types.AuthInfo, req legacyclient.LegacySearchUsersPermissionsRequest) (legacyclient.LegacySearchUsersPermissionsResponse, error) {
+	if sess, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
+		call := &embeddedTransactionCall{done: make(chan struct{})}
+		ctx = context.WithValue(ctx, embeddedTransactionCallKey{}, call)
+		defer call.wait()
+	}
+	return c.EmbeddedClient.LegacySearchUsersPermissions(ctx, caller, req)
 }
 
 type embeddedStream struct {
@@ -79,9 +88,14 @@ type embeddedServer struct {
 	guard  *int
 }
 
+type EmbeddedClient interface {
+	legacyclient.Service
+	legacyclient.SearchService
+}
+
 // NewEmbeddedClient owns a private in-process channel. The legacy handler is
 // deliberately never registered on a network server or the Check/List channel.
-func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.Service {
+func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) EmbeddedClient {
 	guard := new(int)
 	server := &embeddedServer{loader: loader, cfg: cfg, guard: guard}
 	channel := (&inprocgrpc.Channel{}).WithServerStreamInterceptor(func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
@@ -105,11 +119,11 @@ func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.Service {
 			}
 		}
 		ctx = context.WithValue(ctx, embeddedCallKey{}, guard)
-		ctx = types.WithAuthInfo(ctx, LegacyPermissionCaller("*"))
+		ctx = types.WithAuthInfo(ctx, LegacySearchPermissionCaller("*"))
 		return handler(srv, embeddedStream{ServerStream: stream, ctx: ctx})
 	})
 	authzv1.RegisterLegacyAuthzServiceServer(channel, server)
-	return &embeddedClient{Service: legacyclient.NewLegacyClient(channel)}
+	return &embeddedClient{EmbeddedClient: legacyclient.NewLegacyClient(channel)}
 }
 
 func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
@@ -216,4 +230,29 @@ func (r *legacyRequester) GetCacheKey() string {
 		}
 	}
 	return fmt.Sprintf("%d-%s-%s", r.GetOrgID(), r.GetIdentityType(), id)
+}
+
+func (s *embeddedServer) LegacySearchUsersPermissions(req *authzv1.LegacySearchUsersPermissionsRequest, stream authzv1.LegacyAuthzService_LegacySearchUsersPermissionsServer) error {
+	ctx := stream.Context()
+	if s.guard == nil || ctx.Value(embeddedCallKey{}) != s.guard {
+		return status.Error(codes.PermissionDenied, "legacy search is embedded-only")
+	}
+	if req == nil || req.Caller == nil {
+		return status.Error(codes.InvalidArgument, "caller identity is required")
+	}
+	ns, err := types.ParseNamespace(req.Namespace)
+	if err != nil || ns.OrgID < 1 {
+		return status.Error(codes.InvalidArgument, "concrete namespace required")
+	}
+	if s.cfg.StackID != "" {
+		if req.Namespace != "stacks-"+s.cfg.StackID {
+			return status.Error(codes.PermissionDenied, "namespace does not match this instance")
+		}
+	} else if ns.StackID != 0 {
+		return status.Error(codes.PermissionDenied, "stack namespace is not configured")
+	}
+	if original := req.Caller.RequesterNamespace; original != nil && *original != "" && *original != req.Namespace {
+		return status.Error(codes.PermissionDenied, "requester namespace does not match tenant scope")
+	}
+	return s.loader.search.LegacySearchUsersPermissions(req, stream)
 }

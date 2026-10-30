@@ -14,6 +14,7 @@ service LegacyAuthzService {
   rpc LegacyGetUserPermissions(LegacyGetUserPermissionsRequest) returns (stream LegacyGetUserPermissionsResponse) {
     option deprecated = true;
   }
+  rpc LegacySearchUsersPermissions(LegacySearchUsersPermissionsRequest) returns (stream LegacySearchUsersPermissionsResponse);
 }
 
 message LegacyCheckRequest {
@@ -129,4 +130,18 @@ message LegacyGlobalEvaluation {
   // authentication restrictions. Empty permits no actions. Resolver dependency
   // lookups use the same restriction; scopes are still checked by the server.
   repeated string permitted_actions = 2;
+}
+
+message LegacySearchUsersPermissionsRequest {
+  string namespace = 1;
+  LegacyPermissionIdentity caller = 2;
+  string action = 3;
+  string action_prefix = 4;
+  string scope = 5;
+  int64 user_id = 6;
+}
+
+message LegacySearchUsersPermissionsResponse {
+  int64 user_id = 1;
+  repeated LegacyUserPermission permissions = 2;
 }
