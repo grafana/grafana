@@ -153,6 +153,60 @@ func TestDSQueryError(t *testing.T) {
 	require.Equal(t, new(42.0), res.Responses["C"].Frames[0].Fields[0].At(0))
 }
 
+// One query's response error must not drop the other queries to the same
+// data source, with or without sseGroupByDatasource.
+func TestDSQueryErrorKeepsOtherQueries(t *testing.T) {
+	resp := map[string]backend.DataResponse{
+		"A": {Error: fmt.Errorf("womp womp")},
+		"B": {Frames: data.Frames{data.NewFrame("",
+			data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+			data.NewField("value", nil, []float64{2}),
+		)}},
+	}
+	dsQuery := func(refID string) Query {
+		return Query{
+			RefID:      refID,
+			DataSource: &datasources.DataSource{OrgID: 1, UID: "test", Type: "test"},
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			TimeRange:  AbsoluteTimeRange{},
+		}
+	}
+	queries := []Query{
+		dsQuery("A"),
+		dsQuery("B"),
+		{
+			RefID:      "S",
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "sql", "expression": "SELECT * FROM B" }`),
+			TimeRange:  AbsoluteTimeRange{},
+		},
+	}
+
+	tests := []struct {
+		name     string
+		features featuremgmt.FeatureToggles
+	}{
+		{name: "toggle on", features: featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions, featuremgmt.FlagSseGroupByDatasource)},
+		{name: "toggle off", features: featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s, req := newMockQueryService(resp, queries)
+			s.features = tt.features
+			pl, err := s.BuildPipeline(t.Context(), req)
+			require.NoError(t, err)
+			res, err := s.ExecutePipeline(t.Context(), time.Now(), pl)
+			require.NoError(t, err)
+
+			require.ErrorContains(t, res.Responses["A"].Error, "failed to execute query [A]: womp womp")
+			require.NoError(t, res.Responses["B"].Error)
+			require.NoError(t, res.Responses["S"].Error)
+			require.Len(t, res.Responses["S"].Frames, 1)
+			require.Equal(t, 1, res.Responses["S"].Frames[0].Rows())
+		})
+	}
+}
+
 func TestParseError(t *testing.T) {
 	resp := map[string]backend.DataResponse{}
 

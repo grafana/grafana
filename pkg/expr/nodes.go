@@ -357,9 +357,11 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 			for _, dn := range nodeGroup {
 				dataFrames, err := getResponseFrame(logger, resp, dn.refID)
 				if err != nil {
+					// Only this query failed. Keep going so the rest of the
+					// group still gets results, as the ungrouped path does.
 					vars[dn.refID] = mathexp.Results{Error: MakeQueryError(dn.refID, dn.datasource.UID, err)}
 					instrument(err, "")
-					return
+					continue
 				}
 
 				var result mathexp.Results
