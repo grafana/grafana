@@ -33,7 +33,7 @@ type permissionListResult struct {
 	List  *authzv1.ListResponse
 }
 
-type permissionContribution struct {
+type principalGrants struct {
 	grants       []permissionListResult
 	dependencies []string
 	tupleCount   int
@@ -50,7 +50,7 @@ func (s *Server) resolveUserPermissions(ctx context.Context, req *authzv1.GetUse
 	}
 	skip := req.GetOptions().GetSkipcache()
 
-	user, err := s.loadPermissionContribution(ctx, store, req.GetSubject(), skip)
+	user, err := s.loadPrincipalGrants(ctx, store, req.GetSubject(), skip)
 	if err != nil {
 		return nil, err
 	}
@@ -88,13 +88,13 @@ func (s *Server) resolveUserPermissions(ctx context.Context, req *authzv1.GetUse
 	if 1+len(teams) > permissionPrincipalMaxCount {
 		return nil, status.Error(codes.ResourceExhausted, "permission principal limit exceeded")
 	}
-	teamContributions, err := s.loadPermissionContributions(ctx, store, teams, skip)
+	teamGrants, err := s.loadPrincipalGrantBatch(ctx, store, teams, skip)
 	if err != nil {
 		return nil, err
 	}
-	contributions := [][]permissionListResult{user.grants, contextual}
-	for _, team := range teamContributions {
-		contributions = append(contributions, team.grants)
+	grantLists := [][]permissionListResult{user.grants, contextual}
+	for _, team := range teamGrants {
+		grantLists = append(grantLists, team.grants)
 		for _, dependency := range team.dependencies {
 			if permissionDependencyType(dependency) != common.TypeRole {
 				return nil, unsupportedPermissionGrant()
@@ -108,18 +108,18 @@ func (s *Server) resolveUserPermissions(ctx context.Context, req *authzv1.GetUse
 	if 1+len(teams)+len(roles) > permissionPrincipalMaxCount {
 		return nil, status.Error(codes.ResourceExhausted, "permission principal limit exceeded")
 	}
-	roleContributions, err := s.loadPermissionContributions(ctx, store, roles, skip)
+	roleGrants, err := s.loadPrincipalGrantBatch(ctx, store, roles, skip)
 	if err != nil {
 		return nil, err
 	}
-	for _, role := range roleContributions {
+	for _, role := range roleGrants {
 		if len(role.dependencies) != 0 {
 			return nil, unsupportedPermissionGrant()
 		}
-		contributions = append(contributions, role.grants)
+		grantLists = append(grantLists, role.grants)
 	}
 
-	results := composePermissionContributions(contributions)
+	results := mergePrincipalGrants(grantLists)
 	lists := make([]legacyscopes.PermissionList, 0, len(results))
 	for _, result := range results {
 		lists = append(lists, legacyscopes.PermissionList{Resource: result.Entry.Resource, Action: result.Entry.Action, List: result.List})
@@ -127,23 +127,23 @@ func (s *Server) resolveUserPermissions(ctx context.Context, req *authzv1.GetUse
 	return legacyscopes.ResolvePermissions(ctx, "", lists)
 }
 
-func (s *Server) loadPermissionContribution(ctx context.Context, store *zanzana.StoreInfo, principal string, skip bool) (*permissionContribution, error) {
-	return s.cachedPermissionContribution(ctx, permissionPrincipalKey{store.ID, store.ModelID, principal}, skip, func(ctx context.Context) (*permissionContribution, error) {
-		return s.readPermissionContribution(ctx, store.ID, principal)
+func (s *Server) loadPrincipalGrants(ctx context.Context, store *zanzana.StoreInfo, principal string, skip bool) (*principalGrants, error) {
+	return s.cachedPrincipalGrants(ctx, permissionPrincipalKey{store.ID, store.ModelID, principal}, skip, func(ctx context.Context) (*principalGrants, error) {
+		return s.readPrincipalGrants(ctx, store.ID, principal)
 	})
 }
 
-func (s *Server) loadPermissionContributions(ctx context.Context, store *zanzana.StoreInfo, principals []string, skip bool) ([]*permissionContribution, error) {
-	results := make([]*permissionContribution, len(principals))
+func (s *Server) loadPrincipalGrantBatch(ctx context.Context, store *zanzana.StoreInfo, principals []string, skip bool) ([]*principalGrants, error) {
+	results := make([]*principalGrants, len(principals))
 	group, groupCtx := errgroup.WithContext(ctx)
 	group.SetLimit(permissionPrincipalConcurrency)
 	for i, principal := range principals {
 		group.Go(func() error {
-			contribution, err := s.loadPermissionContribution(groupCtx, store, principal, skip)
+			grants, err := s.loadPrincipalGrants(groupCtx, store, principal, skip)
 			if err != nil {
 				return err
 			}
-			results[i] = contribution
+			results[i] = grants
 			return nil
 		})
 	}
@@ -165,7 +165,7 @@ func permissionDependencyType(principal string) string {
 	return ""
 }
 
-func (s *Server) readPermissionContribution(ctx context.Context, store, principal string) (*permissionContribution, error) {
+func (s *Server) readPrincipalGrants(ctx context.Context, store, principal string) (*principalGrants, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	iterator, err := s.store.Read(ctx, store, storage.ReadFilter{User: principal}, storage.ReadOptions{})
@@ -198,7 +198,7 @@ func (s *Server) readPermissionContribution(ctx context.Context, store, principa
 			nonempty = append(nonempty, grant)
 		}
 	}
-	return &permissionContribution{grants: nonempty, dependencies: dependencies, tupleCount: len(tuples)}, nil
+	return &principalGrants{grants: nonempty, dependencies: dependencies, tupleCount: len(tuples)}, nil
 }
 
 func permissionDependency(grant *openfgav1.TupleKey) string {

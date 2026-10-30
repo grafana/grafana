@@ -27,7 +27,7 @@ func TestUserPermissionsRejectsRequestConditionBindings(t *testing.T) {
 	require.Empty(t, stream.permissions)
 }
 
-func TestUserPermissionsReusesSharedPrincipalContributions(t *testing.T) {
+func TestUserPermissionsReusesSharedPrincipalGrants(t *testing.T) {
 	srv, ds, _ := newPermissionTestServer(t, []*openfgav1.TupleKey{
 		common.NewTypedTuple(common.TypeRole, "team:shared#member", common.RelationAssignee, "reader"),
 		common.NewResourceTuple("role:reader#assignee", common.RelationGet, dashboardGroup, dashboardResource, "", "dashboard"),
@@ -45,11 +45,11 @@ func TestUserPermissionsReusesSharedPrincipalContributions(t *testing.T) {
 	ds.reset()
 	request("user:bob")
 	counts, _ = ds.counts()
-	require.Equal(t, 1, counts["read"], "Bob should read only his own contribution; the team and role are shared")
+	require.Equal(t, 1, counts["read"], "Bob should read only his own grants; the team and role are shared")
 	ds.reset()
 	request("user:bob")
 	counts, _ = ds.counts()
-	require.Zero(t, counts["read"], "cache empty user contributions too")
+	require.Zero(t, counts["read"], "cache empty user grants too")
 }
 
 func TestUserPermissionsEvictsSharedRoleAfterWrite(t *testing.T) {

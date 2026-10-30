@@ -100,7 +100,7 @@ func TestUserPermissionsCachesSharedTeamForLegacyTTL(t *testing.T) {
 	require.Equal(t, map[string]int{"read": 1}, counts)
 	clock.Advance(time.Second)
 	ds.reset()
-	require.False(t, permissionPairs(t, srv, "user:alice", []string{"shared"}, false)[key], "external changes are visible when the shared contribution expires")
+	require.False(t, permissionPairs(t, srv, "user:alice", []string{"shared"}, false)[key], "external changes are visible when the cached team grants expire")
 	counts, _ = ds.counts()
 	require.Equal(t, map[string]int{"read": 2}, counts)
 	ds.reset()
@@ -109,7 +109,7 @@ func TestUserPermissionsCachesSharedTeamForLegacyTTL(t *testing.T) {
 	require.Zero(t, total)
 }
 
-func TestUserPermissionsWriteEvictsNegativeContribution(t *testing.T) {
+func TestUserPermissionsWriteEvictsEmptyPrincipalGrants(t *testing.T) {
 	srv, _, _ := newPermissionTestServer(t, nil)
 	enablePrincipalCache(srv)
 	require.Empty(t, permissionPairs(t, srv, "user:alice", nil, false))
@@ -229,7 +229,7 @@ func TestUserPermissionsReusesRoleAcrossDifferentTeams(t *testing.T) {
 	require.True(t, want[key])
 	require.True(t, got[key])
 	counts, _ := ds.counts()
-	require.Equal(t, 2, counts["read"], "a new user and team reuse the existing role contribution")
+	require.Equal(t, 2, counts["read"], "a new user and team reuse the cached role grants")
 }
 
 func TestUserPermissionsComposesStoredAndContextualTeams(t *testing.T) {

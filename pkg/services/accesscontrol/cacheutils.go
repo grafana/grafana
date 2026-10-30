@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-// PermissionCacheTTL keeps legacy permissions and principal contributions on the
+// PermissionCacheTTL keeps legacy permissions and cached principal grants on the
 // same freshness bound.
 const PermissionCacheTTL = 60 * time.Second
 

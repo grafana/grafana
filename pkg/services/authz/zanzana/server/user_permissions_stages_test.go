@@ -83,7 +83,7 @@ func TestUserPermissionsLoadsUserThenTeamsThenRoles(t *testing.T) {
 	}
 	select {
 	case <-store.teamStarted:
-		t.Fatal("team contributions started before the user contribution finished")
+		t.Fatal("team grants started loading before the user's grants finished loading")
 	case <-time.After(50 * time.Millisecond):
 	}
 	close(store.releaseUser)
@@ -94,7 +94,7 @@ func TestUserPermissionsLoadsUserThenTeamsThenRoles(t *testing.T) {
 	}
 	select {
 	case <-store.roleStarted:
-		t.Fatal("role contributions started before the team contributions finished")
+		t.Fatal("role grants started loading before the team grants finished loading")
 	case <-time.After(50 * time.Millisecond):
 	}
 	close(store.releaseTeams)
@@ -142,9 +142,9 @@ func TestUserPermissionsRejectsUnexpectedPrincipalDependencies(t *testing.T) {
 			cache := srv.principalCache()
 			cache.mu.Lock()
 			if tc.principal != "user:alice" {
-				cache.entries.Add(permissionPrincipalKey{store.ID, store.ModelID, "user:alice"}, permissionPrincipalEntry{contribution: &permissionContribution{dependencies: []string{tc.principal}}, expires: cache.clock.Now().Add(time.Minute)})
+				cache.entries.Add(permissionPrincipalKey{store.ID, store.ModelID, "user:alice"}, permissionPrincipalEntry{grants: &principalGrants{dependencies: []string{tc.principal}}, expires: cache.clock.Now().Add(time.Minute)})
 			}
-			cache.entries.Add(permissionPrincipalKey{store.ID, store.ModelID, tc.principal}, permissionPrincipalEntry{contribution: &permissionContribution{dependencies: []string{tc.dependency}}, expires: cache.clock.Now().Add(time.Minute)})
+			cache.entries.Add(permissionPrincipalKey{store.ID, store.ModelID, tc.principal}, permissionPrincipalEntry{grants: &principalGrants{dependencies: []string{tc.dependency}}, expires: cache.clock.Now().Add(time.Minute)})
 			cache.mu.Unlock()
 			stream := &permissionResponseStream{ctx: newContextWithNamespace()}
 			err := srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice"}, stream)
