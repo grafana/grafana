@@ -90,17 +90,14 @@ jobs:
 
       - name: Restore or build frontend
         uses: ./.github/actions/build-frontend
+        with:
+          sourcemaps: 'false'
 
       - name: Upload frontend build artifacts
         uses: actions/upload-artifact@v7
         with:
           name: grafana-frontend
-          path: |
-            public/
-            !**/*.ts
-            !**/*.tsx
-            !public/**/node_modules/
-            !public/locales/
+          path: dist/frontend/
           retention-days: 1
 
   run-storybook-test:
