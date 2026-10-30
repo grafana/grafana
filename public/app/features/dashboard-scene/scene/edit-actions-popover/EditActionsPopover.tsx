@@ -1,4 +1,4 @@
-import { css, cx, keyframes } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import {
   autoUpdate,
   flip,
@@ -176,7 +176,6 @@ export function EditActionsPopover({
     <div
       ref={refs.setFloating}
       style={keyboardAccessible ? { ...floatingStyles, zIndex: zIndex ?? theme.zIndex.portal } : floatingStyles}
-      className={styles.popover}
       data-testid={selectors.components.EditActionsPopover.container}
       {...getFloatingProps({ id: context.floatingId })}
     >
@@ -222,20 +221,6 @@ export function EditActionsPopover({
 }
 
 const getPopoverStyles = (theme: GrafanaTheme2) => ({
-  popover: css({
-    [theme.transitions.handleMotion('no-preference')]: {
-      animationName: keyframes({
-        from: { opacity: 0 },
-        to: { opacity: 1 },
-      }),
-      animationDuration: `${theme.transitions.duration.shortest}ms`,
-      animationTimingFunction: theme.transitions.easing.easeOut,
-      animationFillMode: 'forwards',
-    },
-    [theme.transitions.handleMotion('reduce')]: {
-      opacity: 1, // skip animation for reduced motion
-    },
-  }),
   actions: css({
     display: 'flex',
     justifyContent: 'space-evenly',
