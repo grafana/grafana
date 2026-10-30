@@ -161,6 +161,40 @@ describe('DashboardLayoutOrchestrator', () => {
   });
 });
 
+describe('tab dragging', () => {
+  it('does not drop a tab into a tab bar nested inside it', () => {
+    const inner1 = new TabItem({ key: 'inner-1', title: 'Inner 1' });
+    const inner2 = new TabItem({ key: 'inner-2', title: 'Inner 2' });
+    const nested = new TabsLayoutManager({ key: 'nested', tabs: [inner1, inner2] });
+    const outerA = new TabItem({ key: 'outer-a', title: 'Outer A', layout: nested });
+    const outerB = new TabItem({ key: 'outer-b', title: 'Outer B' });
+    const outer = new TabsLayoutManager({ key: 'outer', tabs: [outerA, outerB] });
+    const dashboard = new DashboardScene({ isEditing: true, body: outer });
+    const deactivate = activateFullSceneTree(dashboard);
+    const orchestrator = dashboard.state.layoutOrchestrator!;
+
+    // @ts-expect-error - accessing private property for testing
+    orchestrator._sourceDropTarget = outer;
+    // @ts-expect-error - accessing private property for testing
+    orchestrator._tabDragState = { tab: outerA, width: 100, height: 30, index: 1 };
+    // @ts-expect-error - accessing private method for testing
+    orchestrator._getDropTargetUnderMouse = jest.fn().mockReturnValue(nested);
+    // @ts-expect-error - accessing private method for testing
+    orchestrator._getTabUnderMouse = jest.fn().mockReturnValue('inner-2');
+
+    // @ts-expect-error - accessing private method for testing
+    orchestrator._onTabDragPointerMove({ clientX: 0, clientY: 0 } as PointerEvent);
+    orchestrator.stopTabDrag(undefined);
+
+    expect(outer.state.tabs).toEqual([outerA, outerB]);
+    expect(nested.state.tabs).toEqual([inner1, inner2]);
+    expect(outerA.parent).toBe(outer);
+    expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
+
+    deactivate();
+  });
+});
+
 describe('AutoGridLayoutManager as DashboardDropTarget', () => {
   describe('draggedGridItemInside', () => {
     it('should add item at the end when no position specified', () => {
