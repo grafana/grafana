@@ -226,6 +226,24 @@ it('rejects invalid team before requesting remote coverage', async () => {
   expect(execFile).toHaveBeenCalledTimes(2);
 });
 
+it('imports without invoking the CLI', () => {
+  const { spawnSync } = jest.requireActual('node:child_process');
+  const { pathToFileURL } = require('node:url');
+  const scriptURL = pathToFileURL(path.resolve(__dirname, '../meticulous-coverage-by-codeowner.mjs')).href;
+  const result = spawnSync(
+    process.execPath,
+    ['--input-type=module', '--eval', `await import(${JSON.stringify(scriptURL)})`],
+    {
+      encoding: 'utf8',
+      env: { PATH: '', METICULOUS_API_TOKEN: '' },
+    }
+  );
+  expect(result.error).toBeUndefined();
+  expect(result.status).toBe(0);
+  expect(result.stdout).toBe('');
+  expect(result.stderr).toBe('');
+});
+
 it('prints help without CLI or authentication', () => {
   const { execFileSync } = jest.requireActual('node:child_process');
   const output = execFileSync(

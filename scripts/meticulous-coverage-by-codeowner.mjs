@@ -3,7 +3,7 @@
 import { execFile } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 
 import constants from './codeowners-manifest/constants.js';
@@ -295,7 +295,7 @@ async function runReport(team, testRunId, shouldOpen = process.env.CI !== 'true'
   }
 }
 
-if (import.meta.main) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {
     console.error(redact(error.message, process.env.METICULOUS_API_TOKEN));
     process.exitCode = 1;
