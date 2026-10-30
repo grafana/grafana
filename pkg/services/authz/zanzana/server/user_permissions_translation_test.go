@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	"time"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -34,10 +33,7 @@ func TestUserPermissionsReusesSharedPrincipalContributions(t *testing.T) {
 		common.NewTypedTuple(common.TypeRole, "team:shared#member", common.RelationAssignee, "reader"),
 		common.NewResourceTuple("role:reader#assignee", common.RelationGet, dashboardGroup, dashboardResource, "", "dashboard"),
 	})
-	srv.cfg.CacheSettings.CheckQueryCacheEnabled = true
-	srv.cfg.CacheSettings.CheckQueryCacheTTL = time.Minute
-	srv.cfg.CacheSettings.CheckCacheLimit = 100
-	srv.permissionScopeResolver = permissionIDs{}
+	enablePrincipalCache(srv)
 	request := func(subject string) {
 		stream := &permissionResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
 		require.NoError(t, srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: subject, Teams: []string{"shared"}}, stream))
@@ -62,10 +58,7 @@ func TestUserPermissionsEvictsSharedRoleAfterWrite(t *testing.T) {
 	srv, ds, store := newPermissionTestServer(t, []*openfgav1.TupleKey{
 		common.NewTypedTuple(common.TypeRole, "team:shared#member", common.RelationAssignee, "reader"), grant,
 	})
-	srv.cfg.CacheSettings.CheckQueryCacheEnabled = true
-	srv.cfg.CacheSettings.CheckQueryCacheTTL = time.Minute
-	srv.cfg.CacheSettings.CheckCacheLimit = 100
-	srv.permissionScopeResolver = permissionIDs{}
+	enablePrincipalCache(srv)
 	request := func(subject string) map[[2]string]bool {
 		stream := &permissionResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
 		require.NoError(t, srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: subject, Teams: []string{"shared"}}, stream))

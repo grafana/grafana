@@ -7,11 +7,15 @@ import (
 	"time"
 
 	lru "github.com/hashicorp/golang-lru/v2"
+	"github.com/jonboulle/clockwork"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"golang.org/x/sync/singleflight"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
+
+const permissionPrincipalCacheLimit = 10000
 
 type permissionPrincipalKey struct{ store, model, principal string }
 type permissionPrincipalEntry struct {
@@ -20,6 +24,7 @@ type permissionPrincipalEntry struct {
 }
 
 type permissionPrincipalCache struct {
+	clock      clockwork.Clock
 	mu         sync.Mutex
 	entries    *lru.Cache[permissionPrincipalKey, permissionPrincipalEntry]
 	flights    singleflight.Group
@@ -27,12 +32,12 @@ type permissionPrincipalCache struct {
 }
 
 func (s *Server) principalCache() *permissionPrincipalCache {
-	if !s.cfg.CacheSettings.CheckQueryCacheEnabled || s.cfg.CacheSettings.CheckQueryCacheTTL <= 0 || s.cfg.CacheSettings.CheckCacheLimit == 0 {
+	if !s.permissionCacheEnabled {
 		return nil
 	}
 	s.permissionCacheOnce.Do(func() {
-		entries, _ := lru.New[permissionPrincipalKey, permissionPrincipalEntry](int(s.cfg.CacheSettings.CheckCacheLimit))
-		s.permissionCache = &permissionPrincipalCache{entries: entries}
+		entries, _ := lru.New[permissionPrincipalKey, permissionPrincipalEntry](permissionPrincipalCacheLimit)
+		s.permissionCache = &permissionPrincipalCache{entries: entries, clock: clockwork.NewRealClock()}
 	})
 	return s.permissionCache
 }
@@ -46,7 +51,7 @@ func (s *Server) cachedPermissionContribution(ctx context.Context, key permissio
 		return load(ctx)
 	}
 	cache.mu.Lock()
-	if entry, ok := cache.entries.Get(key); ok && time.Now().Before(entry.expires) {
+	if entry, ok := cache.entries.Get(key); ok && cache.clock.Now().Before(entry.expires) {
 		cache.mu.Unlock()
 		return entry.contribution, nil
 	}
@@ -55,7 +60,7 @@ func (s *Server) cachedPermissionContribution(ctx context.Context, key permissio
 	flight := fmt.Sprintf("%q/%q/%q/%d", key.store, key.model, key.principal, generation)
 	result := cache.flights.DoChan(flight, func() (any, error) {
 		cache.mu.Lock()
-		if entry, ok := cache.entries.Get(key); ok && time.Now().Before(entry.expires) {
+		if entry, ok := cache.entries.Get(key); ok && cache.clock.Now().Before(entry.expires) {
 			cache.mu.Unlock()
 			return entry.contribution, nil
 		}
@@ -63,13 +68,13 @@ func (s *Server) cachedPermissionContribution(ctx context.Context, key permissio
 		// A canceled waiter must not cancel a load shared by another user's request.
 		shared, cancel := context.WithTimeout(context.WithoutCancel(ctx), permissionPrincipalLoadTimeout)
 		defer cancel()
-		expires := time.Now().Add(s.cfg.CacheSettings.CheckQueryCacheTTL)
+		expires := cache.clock.Now().Add(accesscontrol.PermissionCacheTTL)
 		contribution, err := load(shared)
 		if err != nil {
 			return nil, err
 		}
 		cache.mu.Lock()
-		if cache.generation == generation && time.Now().Before(expires) {
+		if cache.generation == generation && cache.clock.Now().Before(expires) {
 			cache.entries.Add(key, permissionPrincipalEntry{contribution: contribution, expires: expires})
 		}
 		cache.mu.Unlock()

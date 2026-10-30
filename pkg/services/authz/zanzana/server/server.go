@@ -59,6 +59,7 @@ type Server struct {
 	openFGAClient           openfgav1.OpenFGAServiceClient
 	store                   storage.OpenFGADatastore
 	permissionScopeResolver legacyscopes.BulkIDResolver
+	permissionCacheEnabled  bool
 	permissionCacheOnce     sync.Once
 	permissionCache         *permissionPrincipalCache
 
@@ -113,6 +114,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 		openFGAClient:           openFGAClient,
 		store:                   store,
 		permissionScopeResolver: newPermissionScopeResolver(cfg, restConfig),
+		permissionCacheEnabled:  cfg.RBAC.PermissionCache,
 		stores:                  make(map[string]zanzana.StoreInfo),
 		cfg:                     zanzanaCfg,
 		cache:                   localcache.New(zanzanaCfg.CacheSettings.CheckQueryCacheTTL, cacheCleanInterval),

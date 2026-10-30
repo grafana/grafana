@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
@@ -50,7 +49,7 @@ type IAMFeatures interface {
 }
 
 const (
-	cacheTTL = 60 * time.Second
+	cacheTTL = accesscontrol.PermissionCacheTTL
 )
 
 var SharedWithMeFolderPermission = accesscontrol.Permission{
