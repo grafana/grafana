@@ -113,9 +113,9 @@ export class DefaultGridLayoutManager
   }
 
   /**
-   * Only while the new custom grid renders this layout. The new grid drives the drags of its items
-   * itself, so their drops are committed here, and previews drops of panels from elsewhere where they
-   * land. Otherwise the row or tab around this layout is the drop
+   * Only while the new custom grid renders this layout in an edit session. The new grid drives the drags
+   * of its items itself, so their drops are committed here, and previews drops of panels from elsewhere
+   * where they land. Otherwise the row or tab around this layout is the drop
    * target, and with the react-grid-layout grid (always so with the unified drag and drop flag off) the
    * layout orchestrator never sees this layout as one, nor calls the drop target methods below.
    */

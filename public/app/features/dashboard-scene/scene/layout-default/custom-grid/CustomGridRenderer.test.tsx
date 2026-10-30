@@ -3,7 +3,7 @@ import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { LazyLoader, SceneDataNode, SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
 
 import { DashboardEditActionEvent } from '../../../sidebar/events';
 import { DashboardScene } from '../../DashboardScene';
@@ -42,15 +42,44 @@ function gridItem(id: number, x: number, y: number, width: number, height: numbe
   });
 }
 
-async function setup(children: DashboardGridItem[], gridState: Partial<SceneGridLayout['state']> = {}) {
+async function setup(
+  children: DashboardGridItem[],
+  gridState: Partial<SceneGridLayout['state']> = {},
+  { isEditing = true, preload = false } = {}
+) {
   const grid = new SceneGridLayout({ children, ...gridState });
   const manager = new DefaultGridLayoutManager({ grid });
-  new DashboardScene({ title: 'Custom grid', $timeRange: new SceneTimeRange({}), body: manager, isEditing: true });
+  new DashboardScene({ title: 'Custom grid', $timeRange: new SceneTimeRange({}), body: manager, isEditing, preload });
   const controller = manager.getCustomGridController();
-  const { container } = render(<CustomGridRenderer grid={grid} controller={controller} dropTargetKey="grid-manager" />);
+  const renderGrid = (editing: boolean) => (
+    <CustomGridRenderer grid={grid} controller={controller} isEditing={editing} dropTargetKey="grid-manager" />
+  );
+  const { container, rerender } = render(renderGrid(isEditing));
   // Let the panels finish loading their plugin
   await act(async () => {});
-  return { grid, controller, container };
+  return { grid, controller, container, setEditing: (editing: boolean) => rerender(renderGrid(editing)) };
+}
+
+/** Records whether the panel's data was told it is in view, which is when a query runner runs its queries */
+class InViewRecorder extends SceneDataNode {
+  public inView: boolean[] = [];
+
+  public isInViewChanged(isInView: boolean) {
+    this.inView.push(isInView);
+  }
+}
+
+function panelWithData(id: number, y: number) {
+  const data = new InViewRecorder({});
+  const item = new DashboardGridItem({
+    key: `grid-item-${id}`,
+    x: 0,
+    y,
+    width: 24,
+    height: 8,
+    body: new VizPanel({ key: `panel-${id}`, title: `Panel ${id}`, pluginId: 'text', $data: data }),
+  });
+  return { item, data };
 }
 
 function getItemElement(container: HTMLElement, key: string): HTMLElement {
@@ -114,6 +143,20 @@ describe('CustomGridRenderer', () => {
 
     expectAt(getItemElement(container, 'grid-item-2'), { x: 6, y: 8, w: 12, h: 8 });
     expect(grid.state.children[1].state).toMatchObject({ x: 6, y: 8 });
+  });
+
+  it('renders the grid items in the order of their positions, which is the order they are stacked in on small screens', async () => {
+    const { container, grid } = await setup([gridItem(1, 0, 0, 12, 8)]);
+
+    // Added at the end of the children, but positioned before the last one
+    await act(async () =>
+      grid.setState({ children: [gridItem(3, 0, 8, 24, 4), ...grid.state.children, gridItem(2, 12, 0, 12, 8)] })
+    );
+
+    const keys = Array.from(container.querySelectorAll('[data-griditem-key]')).map((element) =>
+      element.getAttribute('data-griditem-key')
+    );
+    expect(keys).toEqual(['grid-item-1', 'grid-item-2', 'grid-item-3']);
   });
 
   it('renders every item at full width in a narrow grid without changing the saved layout', async () => {
@@ -252,6 +295,107 @@ describe('CustomGridRenderer', () => {
     } finally {
       clientWidth.mockRestore();
     }
+  });
+
+  describe('in view mode', () => {
+    let clientWidth: jest.SpyInstance;
+
+    beforeEach(() => {
+      clientWidth = jest.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(GRID_WIDTH);
+    });
+
+    afterEach(() => clientWidth.mockRestore());
+
+    it('lays out the grid items like while editing, without resize handles or a drop target', async () => {
+      const { container, controller } = await setup(
+        [gridItem(1, 0, 0, 12, 8), gridItem(2, 12, 0, 12, 4)],
+        { isDraggable: true, isResizable: true },
+        { isEditing: false }
+      );
+
+      expectAt(getItemElement(container, 'grid-item-1'), { x: 0, y: 0, w: 12, h: 8 });
+      expectAt(getItemElement(container, 'grid-item-2'), { x: 12, y: 0, w: 12, h: 4 });
+      expect(container.querySelector('.scene-resize-handle')).not.toBeInTheDocument();
+      expect(container.querySelector(`[${DASHBOARD_DROP_TARGET_KEY_ATTR}]`)).not.toBeInTheDocument();
+      expect(controller.isRendered()).toBe(false);
+    });
+
+    it('starts no drags', async () => {
+      const { controller, grid } = await setup([gridItem(1, 0, 0, 12, 8)], { isDraggable: true }, { isEditing: false });
+      const handle = document.createElement('div');
+      handle.className = grid.getDragClass();
+
+      expect(
+        controller.canStartDrag({ button: 0, clientX: 10, clientY: 10, target: handle }, grid.state.children[0])
+      ).toBe(false);
+    });
+
+    it('gains resize handles and becomes a drop target when editing starts, without remounting its items', async () => {
+      const { container, controller, setEditing } = await setup(
+        [gridItem(1, 0, 0, 12, 8)],
+        { isResizable: true },
+        { isEditing: false }
+      );
+      const itemElement = getItemElement(container, 'grid-item-1');
+
+      act(() => setEditing(true));
+
+      expect(getItemElement(container, 'grid-item-1')).toBe(itemElement);
+      expect(itemElement.querySelector('.scene-resize-handle')).toBeInTheDocument();
+      expect(itemElement.parentElement).toHaveAttribute(DASHBOARD_DROP_TARGET_KEY_ATTR, 'grid-manager');
+      expect(controller.isRendered()).toBe(true);
+    });
+  });
+
+  describe('lazy loading', () => {
+    let observe: jest.SpyInstance;
+
+    beforeEach(() => {
+      // Nothing comes into view until the test says so
+      observe = jest.spyOn(LazyLoader.observer, 'observe').mockImplementation(() => {});
+    });
+
+    afterEach(() => observe.mockRestore());
+
+    function scrollIntoView(element: HTMLElement) {
+      act(() =>
+        LazyLoader.callbacks[element.id]({
+          target: element,
+          isIntersecting: true,
+        } as unknown as IntersectionObserverEntry)
+      );
+    }
+
+    it('lets the panels of a lazy grid query only once they are in view, like the react-grid-layout grid', async () => {
+      const first = panelWithData(1, 0);
+      const second = panelWithData(2, 8);
+      // With preload on, the grid items do not wrap their panels in a lazy loader of their own
+      const { container } = await setup(
+        [first.item, second.item],
+        { isLazy: true },
+        { isEditing: false, preload: true }
+      );
+      expect(first.data.inView).toEqual([false]);
+      expect(second.data.inView).toEqual([false]);
+
+      scrollIntoView(getItemElement(container, 'grid-item-2'));
+
+      expect(first.data.inView).toEqual([false]);
+      expect(second.data.inView).toEqual([false, true]);
+      // The panel is rendered either way, only its queries wait
+      expect(getItemElement(container, 'grid-item-1')).toHaveTextContent('Panel 1');
+    });
+
+    it('lets every panel query straight away when the grid is not lazy', async () => {
+      const first = panelWithData(1, 0);
+      const second = panelWithData(2, 8);
+
+      await setup([first.item, second.item], { isLazy: false }, { isEditing: false, preload: true });
+
+      expect(first.data.inView).toEqual([true]);
+      expect(second.data.inView).toEqual([true]);
+      expect(observe).not.toHaveBeenCalled();
+    });
   });
 
   it('shows resize handles only when the grid is resizable', async () => {

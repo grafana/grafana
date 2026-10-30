@@ -21,9 +21,16 @@ interface DragAndDropWorkerOptions {
    * `dragAndDropOpenFeature()`. Set by the `dashboard-new-layouts-unified-dnd` project.
    */
   unifiedDragAndDrop: boolean;
+  /**
+   * Also turns on the new grid view flag, so the new custom grid renders view mode too, in specs that
+   * set their flags with `dragAndDropOpenFeature()`. Set by the `dashboard-new-layouts-new-grid-view`
+   * project, together with `unifiedDragAndDrop`, since the view flag only takes effect with it.
+   */
+  newGridView: boolean;
 }
 
 const UNIFIED_DRAG_AND_DROP_FLAG = 'grafana.dashboardUnifiedDragAndDrop';
+const NEW_GRID_VIEW_FLAG = 'grafana.dashboardNewGridView';
 
 type OpenFeatureOption = PluginOptions['openFeature'];
 
@@ -63,13 +70,18 @@ function buildGetByGrafanaSelector(
  */
 export const test = base.extend<PageObjectFixtures, DragAndDropWorkerOptions & { unifiedDragAndDropGuard: void }>({
   unifiedDragAndDrop: [false, { scope: 'worker', option: true }],
-  // A spec that sets `openFeature` directly would silently run with the flag off in the unified
-  // drag and drop project, so fail its tests there instead
+  newGridView: [false, { scope: 'worker', option: true }],
+  // A spec that sets `openFeature` directly would silently run with the flags off in the unified
+  // drag and drop and new grid view projects, so fail its tests there instead
   unifiedDragAndDropGuard: [
-    async ({ unifiedDragAndDrop, openFeature }, use) => {
-      if (unifiedDragAndDrop && openFeature.flags[UNIFIED_DRAG_AND_DROP_FLAG] !== true) {
+    async ({ unifiedDragAndDrop, newGridView, openFeature }, use) => {
+      const missing = [
+        unifiedDragAndDrop && openFeature.flags[UNIFIED_DRAG_AND_DROP_FLAG] !== true && UNIFIED_DRAG_AND_DROP_FLAG,
+        newGridView && openFeature.flags[NEW_GRID_VIEW_FLAG] !== true && NEW_GRID_VIEW_FLAG,
+      ].filter(Boolean);
+      if (missing.length > 0) {
         throw new Error(
-          `${UNIFIED_DRAG_AND_DROP_FLAG} is off: set the spec's flags with test.use({ openFeature: dragAndDropOpenFeature(...) })`
+          `${missing.join(', ')} off: set the spec's flags with test.use({ openFeature: dragAndDropOpenFeature(...) })`
         );
       }
       await use();
@@ -103,10 +115,13 @@ export const test = base.extend<PageObjectFixtures, DragAndDropWorkerOptions & {
 });
 
 /**
- * `openFeature` option for drag and drop specs: `flags` plus the unified drag and drop flag, which
- * is on in the `dashboard-new-layouts-unified-dnd` project and off everywhere else, so one spec
- * covers both drag and drop paths. Tag the drag and drop tests with `@drag-and-drop` so that
- * project picks them up. `openFeature` is worker-scoped, so pass this to a top-level `test.use()`:
+ * `openFeature` option for drag and drop and grid rendering specs: `flags` plus the unified drag and
+ * drop flag, which is on in the `dashboard-new-layouts-unified-dnd` and
+ * `dashboard-new-layouts-new-grid-view` projects, and the new grid view flag, which is on in the
+ * latter only. Both are off everywhere else, so one spec covers every grid path. Tag the drag and drop
+ * tests with `@drag-and-drop`, and tests of how the grid renders (view mode in particular) with
+ * `@new-grid-view`, so those projects pick them up. `openFeature` is worker-scoped, so pass this to a
+ * top-level `test.use()`:
  *
  * ```typescript
  * test.use({ openFeature: dragAndDropOpenFeature({ dashboardUndoRedo: true }) });
@@ -119,8 +134,10 @@ export function dragAndDropOpenFeature(
   { scope: 'worker' },
 ] {
   return [
-    async ({ unifiedDragAndDrop }, use) => {
-      await use({ flags: { ...flags, [UNIFIED_DRAG_AND_DROP_FLAG]: unifiedDragAndDrop } });
+    async ({ unifiedDragAndDrop, newGridView }, use) => {
+      await use({
+        flags: { ...flags, [UNIFIED_DRAG_AND_DROP_FLAG]: unifiedDragAndDrop, [NEW_GRID_VIEW_FLAG]: newGridView },
+      });
     },
     { scope: 'worker' },
   ];

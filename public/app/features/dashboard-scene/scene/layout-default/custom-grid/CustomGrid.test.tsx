@@ -125,7 +125,11 @@ describe('DefaultGridLayoutManager renderer', () => {
       await act(async () => {});
 
       expect(logMeasurement).toHaveBeenCalledTimes(1);
-      expect(logMeasurement).toHaveBeenCalledWith(CUSTOM_GRID_RENDER_MEASUREMENT, { rendered: 1, fallback: 0 });
+      expect(logMeasurement).toHaveBeenCalledWith(CUSTOM_GRID_RENDER_MEASUREMENT, {
+        rendered: 1,
+        fallback: 0,
+        editing: 1,
+      });
     });
 
     it('switches to the new grid when editing starts', async () => {
@@ -161,8 +165,113 @@ describe('DefaultGridLayoutManager renderer', () => {
       expect(logError).toHaveBeenCalledTimes(1);
       // Counted as a render that fell back
       expect(logMeasurement).toHaveBeenCalledTimes(1);
-      expect(logMeasurement).toHaveBeenCalledWith(CUSTOM_GRID_RENDER_MEASUREMENT, { rendered: 1, fallback: 1 });
+      expect(logMeasurement).toHaveBeenCalledWith(CUSTOM_GRID_RENDER_MEASUREMENT, {
+        rendered: 1,
+        fallback: 1,
+        editing: 1,
+      });
       consoleError.mockRestore();
+    });
+  });
+
+  it('keeps the react-grid-layout grid in view mode and while editing with only the new grid view flag on', async () => {
+    setTestFlags({
+      [FlagKeys.GrafanaDashboardUnifiedDragAndDrop]: false,
+      [FlagKeys.GrafanaDashboardNewGridView]: true,
+    });
+    const { container, scene } = await renderManager(createManager(), false);
+    expect(container.querySelector(REACT_GRID_LAYOUT)).toBeInTheDocument();
+
+    await act(async () => scene.setState({ isEditing: true }));
+
+    expect(container.querySelector(REACT_GRID_LAYOUT)).toBeInTheDocument();
+    expect(container.querySelector(CUSTOM_GRID)).not.toBeInTheDocument();
+    expect(logMeasurement).not.toHaveBeenCalled();
+  });
+
+  describe('with the unified drag and drop and new grid view flags on', () => {
+    beforeEach(() =>
+      setTestFlags({
+        [FlagKeys.GrafanaDashboardUnifiedDragAndDrop]: true,
+        [FlagKeys.GrafanaDashboardNewGridView]: true,
+      })
+    );
+
+    it('renders the new grid in view mode, without drags, resizes or drop targets', async () => {
+      const manager = createManager();
+      manager.state.grid.setState({ isDraggable: true, isResizable: true });
+
+      const { container } = await renderManager(manager, false);
+
+      expect(container.querySelector(CUSTOM_GRID)).toBeInTheDocument();
+      expect(container.querySelector(REACT_GRID_LAYOUT)).not.toBeInTheDocument();
+      expect(container.querySelector('[data-griditem-key="grid-item-2"]')).toHaveTextContent('Panel 2');
+      expect(container.querySelector('.scene-resize-handle')).not.toBeInTheDocument();
+      expect(container.querySelector(`[${DASHBOARD_DROP_TARGET_KEY_ATTR}]`)).not.toBeInTheDocument();
+      expect(isDashboardDropTarget(manager)).toBe(false);
+    });
+
+    it('keeps the panels mounted when editing starts and ends, and only takes part in drags while editing', async () => {
+      const manager = createManager();
+      const { container, scene } = await renderManager(manager, false);
+      const panelElement = container.querySelector('[data-griditem-key="grid-item-1"]');
+      const gridElement = container.querySelector(`${CUSTOM_GRID} > div`);
+
+      await act(async () => scene.setState({ isEditing: true }));
+
+      expect(container.querySelector('[data-griditem-key="grid-item-1"]')).toBe(panelElement);
+      expect(gridElement).toHaveAttribute(DASHBOARD_DROP_TARGET_KEY_ATTR, manager.state.key);
+      expect(isDashboardDropTarget(manager)).toBe(true);
+
+      await act(async () => scene.setState({ isEditing: false }));
+
+      expect(container.querySelector('[data-griditem-key="grid-item-1"]')).toBe(panelElement);
+      expect(gridElement).not.toHaveAttribute(DASHBOARD_DROP_TARGET_KEY_ATTR);
+      expect(isDashboardDropTarget(manager)).toBe(false);
+    });
+
+    it('counts a grid once in view mode and once in edit sessions, so both fallback rates can be told', async () => {
+      const { scene } = await renderManager(createManager(), false);
+      await act(async () => scene.setState({ isEditing: true }));
+      await act(async () => scene.setState({ isEditing: false }));
+      await act(async () => scene.setState({ isEditing: true }));
+
+      expect(jest.mocked(logMeasurement).mock.calls).toEqual([
+        [CUSTOM_GRID_RENDER_MEASUREMENT, { rendered: 1, fallback: 0, editing: 0 }],
+        [CUSTOM_GRID_RENDER_MEASUREMENT, { rendered: 1, fallback: 0, editing: 1 }],
+      ]);
+    });
+
+    it('falls back to the react-grid-layout grid in view mode when the new grid throws, and counts it', async () => {
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+      jest.mocked(CustomGridRenderer).mockImplementation(() => {
+        throw new Error('Cannot render');
+      });
+
+      const { container } = await renderManager(createManager(), false);
+
+      expect(container.querySelector(REACT_GRID_LAYOUT)).toBeInTheDocument();
+      expect(container.querySelector('[data-griditem-key="grid-item-1"]')).toHaveTextContent('Panel 1');
+      expect(logError).toHaveBeenCalledTimes(1);
+      expect(logMeasurement).toHaveBeenCalledWith(CUSTOM_GRID_RENDER_MEASUREMENT, {
+        rendered: 1,
+        fallback: 1,
+        editing: 0,
+      });
+      consoleError.mockRestore();
+    });
+
+    it('keeps the react-grid-layout grid for grids with rows', async () => {
+      const manager = new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          children: [new SceneGridRow({ key: 'row', title: 'Row', y: 0, children: [gridItem(1, 0, 1)] })],
+        }),
+      });
+
+      const { container } = await renderManager(manager, false);
+
+      expect(container.querySelector(REACT_GRID_LAYOUT)).toBeInTheDocument();
+      expect(container.querySelector(CUSTOM_GRID)).not.toBeInTheDocument();
     });
   });
 });
@@ -172,6 +281,37 @@ describe('shouldRenderCustomGrid', () => {
     setTestFlags({ [FlagKeys.GrafanaDashboardUnifiedDragAndDrop]: false });
 
     expect(shouldRenderCustomGrid(createManager().state.grid, true)).toBe(false);
+  });
+
+  // The new grid view flag only takes effect together with the unified drag and drop flag
+  it.each`
+    unifiedDragAndDrop | newGridView | whileEditing | inViewMode
+    ${false}           | ${false}    | ${false}     | ${false}
+    ${true}            | ${false}    | ${true}      | ${false}
+    ${false}           | ${true}     | ${false}     | ${false}
+    ${true}            | ${true}     | ${true}      | ${true}
+  `(
+    'is $whileEditing while editing and $inViewMode in view mode with unified drag and drop $unifiedDragAndDrop and new grid view $newGridView',
+    ({ unifiedDragAndDrop, newGridView, whileEditing, inViewMode }) => {
+      setTestFlags({
+        [FlagKeys.GrafanaDashboardUnifiedDragAndDrop]: unifiedDragAndDrop,
+        [FlagKeys.GrafanaDashboardNewGridView]: newGridView,
+      });
+      const grid = createManager().state.grid;
+
+      expect(shouldRenderCustomGrid(grid, true)).toBe(whileEditing);
+      expect(shouldRenderCustomGrid(grid, false)).toBe(inViewMode);
+    }
+  );
+
+  it('is false in view mode for grids that fit their panels to the screen, also with both flags on', () => {
+    setTestFlags({
+      [FlagKeys.GrafanaDashboardUnifiedDragAndDrop]: true,
+      [FlagKeys.GrafanaDashboardNewGridView]: true,
+    });
+    const grid = new SceneGridLayout({ children: [gridItem(1, 0, 0)], UNSAFE_fitPanels: true });
+
+    expect(shouldRenderCustomGrid(grid, false)).toBe(false);
   });
 
   describe('with the unified drag and drop flag on', () => {
