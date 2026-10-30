@@ -7,8 +7,6 @@ import (
 	"github.com/grafana/authlib/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
 )
 
 const userPermissionsChunkSize = 1000
@@ -41,15 +39,7 @@ func (s *Server) GetUserPermissions(req *authzv1.GetUserPermissionsRequest, stre
 	}
 	defer release()
 
-	results, err := s.resolveUserPermissionContributions(ctx, req)
-	if err != nil {
-		return err
-	}
-	lists := make([]legacyscopes.PermissionList, 0, len(results))
-	for _, result := range results {
-		lists = append(lists, legacyscopes.PermissionList{Resource: result.Entry.Resource, Action: result.Entry.Action, List: result.List})
-	}
-	resolved, err := legacyscopes.ResolvePermissions(ctx, "", lists)
+	resolved, err := s.resolveUserPermissions(ctx, req)
 	if err != nil {
 		return err
 	}
