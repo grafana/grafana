@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { type ReactNode, useId } from 'react';
 
 import { type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { Stack, TextLink } from '@grafana/ui';
@@ -21,10 +21,12 @@ interface AlertRuleRowProps {
   folderPath?: string[];
   /** Full rule resource; absent while loading or when the fetch failed. */
   rule?: AlertRule;
+  /** Edit button and More dropdown; absent until wired. */
+  actions?: ReactNode;
 }
 
 /** Presentation-only; missing state/health renders "unavailable", never healthy. */
-export function AlertRuleRow({ searchHit, folderPath, rule }: AlertRuleRowProps) {
+export function AlertRuleRow({ searchHit, folderPath, rule, actions }: AlertRuleRowProps) {
   const titleId = useId();
 
   return (
@@ -44,7 +46,14 @@ export function AlertRuleRow({ searchHit, folderPath, rule }: AlertRuleRowProps)
           <RuleDescription lastError={searchHit.lastError} summary={searchHit.summary} />
         )
       }
-      right={searchHit.interval && <RuleInterval interval={searchHit.interval} />}
+      right={
+        (searchHit.interval || actions) && (
+          <Stack alignItems="center" gap={0.5} wrap={false}>
+            {searchHit.interval && <RuleInterval interval={searchHit.interval} />}
+            {actions}
+          </Stack>
+        )
+      }
       meta={[
         folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />,
         searchHit.datasourceUIDs && searchHit.datasourceUIDs.length > 0 && (
