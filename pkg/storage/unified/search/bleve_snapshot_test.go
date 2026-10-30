@@ -798,6 +798,49 @@ func TestBuildIndex_RebuildFallsBackToBuilder(t *testing.T) {
 	assert.Zero(t, store.downloadCalls.Load(), "older snapshot must not be downloaded on the rebuild path")
 }
 
+func TestBuildIndex_RebuildChecksLastImportTime(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		importOffset time.Duration
+		wantBuild    bool
+	}{
+		{name: "snapshot built before import", importOffset: time.Minute, wantBuild: true},
+		{name: "snapshot built at import", wantBuild: true},
+		{name: "snapshot built after import", importOffset: -time.Minute},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := newHookableStore(t)
+			ns := newTestNsResource()
+			meta := freshSnapshot(5 * time.Minute)
+			seedDownloadableSnapshot(t, t.Context(), store.inner, ns, makeULID(t, time.Now()), meta)
+			be, _ := newTestBleveBackend(t, SnapshotOptions{
+				Store:       store,
+				MinDocCount: 1,
+				MaxIndexAge: 24 * time.Hour,
+			})
+
+			builderCalled := false
+			idx, err := be.BuildIndex(t.Context(), ns, 10, "rebuild",
+				func(resource.ResourceIndex) (int64, error) {
+					builderCalled = true
+					return 1, nil
+				},
+				nil, true, meta.BuildTime.Add(tc.importOffset), time.Hour, resource.BuildIndexOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, idx)
+			require.Equal(t, tc.wantBuild, builderCalled)
+			if tc.wantBuild {
+				require.Zero(t, store.downloadCalls.Load(), "a recent upload must not make a pre-import build reusable")
+				info, err := idx.BuildInfo()
+				require.NoError(t, err)
+				require.True(t, info.BuildTime.After(meta.BuildTime.Add(tc.importOffset)))
+			} else {
+				require.Positive(t, store.downloadCalls.Load())
+			}
+		})
+	}
+}
+
 // TestBuildIndex_RebuildLeaderUploads verifies that a periodic rebuild leader
 // holds the remote build lock through the rebuild and uploads the fresh snapshot
 // immediately so waiting replicas can download it.
