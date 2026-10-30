@@ -225,7 +225,7 @@ jobs:
       - name: Install JS dependencies
         uses: ./.github/actions/yarn-install
       - name: Build frontend
-        run: npm run build
+        run: pnpm run build
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: release-frontend
