@@ -114,6 +114,11 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 	if err != nil {
 		return nil, false, err
 	}
+	// The cascade controller owns deletion of a finalizer folder's subtree, so the delete only has to
+	// mark it terminating; walking the subtree here would bypass the controller's batching and status.
+	if f, ok := obj.(*foldersv1.Folder); ok && hasCascadeDeleteFinalizer(f) {
+		return s.Storage.Delete(ctx, name, deleteValidation, options)
+	}
 	if deleteValidation != nil {
 		if err := deleteValidation(ctx, obj); err != nil {
 			return nil, false, err

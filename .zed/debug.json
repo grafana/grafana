@@ -111,8 +111,8 @@
     "type": "node",
     "request": "launch",
     "cwd": "$ZED_WORKTREE_ROOT",
-    "runtimeExecutable": "yarn",
-    "runtimeArgs": ["run", "jest", "--runInBand", "$ZED_FILE"],
+    "runtimeExecutable": "pnpm",
+    "runtimeArgs": ["exec", "jest", "--runInBand", "$ZED_FILE"],
     "console": "integratedTerminal",
     "env": { "NODE_ENV": "test" }
   },
@@ -122,8 +122,8 @@
     "type": "node",
     "request": "launch",
     "cwd": "$ZED_WORKTREE_ROOT",
-    "runtimeExecutable": "yarn",
-    "runtimeArgs": ["run", "eslint", "$ZED_FILE"],
+    "runtimeExecutable": "pnpm",
+    "runtimeArgs": ["exec", "eslint", "$ZED_FILE"],
     "console": "integratedTerminal"
   },
   {
@@ -132,8 +132,8 @@
     "type": "node",
     "request": "launch",
     "cwd": "$ZED_WORKTREE_ROOT",
-    "runtimeExecutable": "yarn",
-    "runtimeArgs": ["run", "eslint", "$ZED_FILE", "--format", "./scripts/cli/eslint-stats-reporter.mjs"],
+    "runtimeExecutable": "pnpm",
+    "runtimeArgs": ["exec", "eslint", "$ZED_FILE", "--format", "./scripts/cli/eslint-stats-reporter.mjs"],
     "console": "integratedTerminal"
   },
   {

@@ -79,6 +79,12 @@ export function getFieldConfigFromFrame(
     }
   }
 
+  finalizeFieldToConfig(config, context);
+
+  return config;
+}
+
+export function finalizeFieldToConfig(config: FieldConfig<unknown>, context: FieldToConfigContext) {
   if (context.mappingValues) {
     config.mappings = combineValueMappings(context);
   }
@@ -90,8 +96,6 @@ export function getFieldConfigFromFrame(
   if (config.thresholds) {
     config.thresholds.steps = sortThresholds(config.thresholds.steps);
   }
-
-  return config;
 }
 
 interface FieldToConfigContext {

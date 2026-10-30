@@ -3,6 +3,7 @@ import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
+import { setupMswServer } from '../../mockApi';
 import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL, getDefaultFormValues } from '../../rule-editor/formDefaults';
 import { type RuleFormValues } from '../../types/rule-form';
@@ -12,6 +13,8 @@ import {
   GrafanaEvaluationBehaviorStep,
   namespaceToGroupOptions,
 } from './GrafanaEvaluationBehavior';
+
+setupMswServer();
 
 const provisionedRule = {
   ...grafanaRulerRule,
@@ -159,13 +162,15 @@ function EvaluationBehaviorWrapper({
   existing,
   group,
   isUngroupedRuleGroup,
+  folder,
 }: {
   existing: boolean;
   group: string;
   isUngroupedRuleGroup: boolean;
+  folder?: RuleFormValues['folder'];
 }) {
   const formApi = useForm<RuleFormValues>({
-    defaultValues: { ...getDefaultFormValues(), group, isUngroupedRuleGroup },
+    defaultValues: { ...getDefaultFormValues(), group, isUngroupedRuleGroup, folder },
     mode: 'onChange',
   });
   return (
@@ -213,6 +218,45 @@ describe('GrafanaEvaluationBehaviorStep — ungroup warning (rulesAPIV2)', () =>
     await user.click(screen.getByRole('radio', { name: 'Set interval' }));
 
     expect(screen.queryByText(ungroupWarning)).not.toBeInTheDocument();
+  });
+});
+
+describe('GrafanaEvaluationBehaviorStep — no folder selected', () => {
+  it('explains why the group picker and new group button are disabled', async () => {
+    const { user } = render(<EvaluationBehaviorWrapper existing={false} group="" isUngroupedRuleGroup={false} />);
+
+    const groupPicker = screen.getByText('Select an evaluation group...');
+    await user.hover(groupPicker);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Select a folder first');
+
+    await user.unhover(groupPicker);
+    await user.hover(screen.getByRole('button', { name: /new evaluation group/i }));
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Select a folder first');
+  });
+
+  it('does not open the group creation modal when clicking the disabled button', async () => {
+    const { user } = render(<EvaluationBehaviorWrapper existing={false} group="" isUngroupedRuleGroup={false} />);
+
+    await user.click(screen.getByRole('button', { name: /new evaluation group/i }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('does not show the tooltip once a folder is selected', async () => {
+    const { user } = render(
+      <EvaluationBehaviorWrapper
+        existing={false}
+        group=""
+        isUngroupedRuleGroup={false}
+        folder={{ uid: 'folder-uid', title: 'My folder' }}
+      />
+    );
+
+    await user.hover(screen.getByText('Select an evaluation group...'));
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+
+    await user.hover(screen.getByRole('button', { name: /new evaluation group/i }));
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
 });
 

@@ -224,11 +224,13 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 	result.Folders = resourceCounts[kindFolder]
 	result.Dashboards = resourceCounts[kindDashboard]
 
-	provisioned, err := ss.getProvisionedDashboardCount(ctx, orgs)
-	if err != nil {
-		return result, err
+	if query == nil || !query.SkipProvisionedDashboardCount {
+		provisioned, err := ss.getProvisionedDashboardCount(ctx, orgs)
+		if err != nil {
+			return result, err
+		}
+		result.ProvisionedDashboards = provisioned
 	}
-	result.ProvisionedDashboards = provisioned
 
 	return result, err
 }
