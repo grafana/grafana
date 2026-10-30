@@ -18,19 +18,19 @@ func TestMeticulousSettings(t *testing.T) {
 		{name: "defaults", want: MeticulousSettings{Production: true}},
 		{
 			name:   "ini",
-			config: "[meticulous]\nenabled = true\nproduction = false\nrecording_token = test-token\nallowed_hosts = localhost:3000, play.grafana.org, ,\n",
-			want:   MeticulousSettings{Enabled: true, RecordingToken: "test-token", AllowedHosts: []string{"localhost:3000", "play.grafana.org"}},
+			config: "[meticulous]\nenabled = true\nproduction = false\nrecording_token = test-token\n",
+			want:   MeticulousSettings{Enabled: true, RecordingToken: "test-token"},
 		},
 		{
 			name:   "environment overrides ini",
-			config: "[meticulous]\nenabled = false\nproduction = false\nrecording_token = ini-token\nallowed_hosts = old.example.com\n",
-			env:    map[string]string{"GF_METICULOUS_ENABLED": "true", "GF_METICULOUS_PRODUCTION": "true", "GF_METICULOUS_RECORDING_TOKEN": "env-token", "GF_METICULOUS_ALLOWED_HOSTS": "localhost:3000,127.0.0.1:3000"},
-			want:   MeticulousSettings{Enabled: true, Production: true, RecordingToken: "env-token", AllowedHosts: []string{"localhost:3000", "127.0.0.1:3000"}},
+			config: "[meticulous]\nenabled = false\nproduction = false\nrecording_token = ini-token\n",
+			env:    map[string]string{"GF_METICULOUS_ENABLED": "true", "GF_METICULOUS_PRODUCTION": "true", "GF_METICULOUS_RECORDING_TOKEN": "env-token"},
+			want:   MeticulousSettings{Enabled: true, Production: true, RecordingToken: "env-token"},
 		},
 		{
 			name: "environment without custom ini keys",
-			env:  map[string]string{"GF_METICULOUS_ENABLED": "true", "GF_METICULOUS_PRODUCTION": "false", "GF_METICULOUS_RECORDING_TOKEN": "env-token", "GF_METICULOUS_ALLOWED_HOSTS": "localhost:3000"},
-			want: MeticulousSettings{Enabled: true, RecordingToken: "env-token", AllowedHosts: []string{"localhost:3000"}},
+			env:  map[string]string{"GF_METICULOUS_ENABLED": "true", "GF_METICULOUS_PRODUCTION": "false", "GF_METICULOUS_RECORDING_TOKEN": "env-token"},
+			want: MeticulousSettings{Enabled: true, RecordingToken: "env-token"},
 		},
 		{
 			name:   "invalid booleans use defaults",
