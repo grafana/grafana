@@ -227,27 +227,46 @@ func (r *UIDResolver) getObjectUID(ctx context.Context, ns types.NamespaceInfo, 
 		if err != nil {
 			return "", err
 		}
-		page, err := cli.List(identity.WithServiceIdentityContext(fetchCtx, ns.OrgID), metav1.ListOptions{
-			LabelSelector: fmt.Sprintf("%s=%d", utils.LabelKeyDeprecatedInternalID, id), //nolint:staticcheck
-			Limit:         2,
-		})
-		if err != nil {
-			return "", err
+
+		fetchCtx = identity.WithServiceIdentityContext(fetchCtx, ns.OrgID)
+		var uid, continuation string
+		seen := make(map[string]bool)
+		for {
+			page, err := cli.List(fetchCtx, metav1.ListOptions{
+				LabelSelector: fmt.Sprintf("%s=%d", utils.LabelKeyDeprecatedInternalID, id), //nolint:staticcheck
+				Limit:         2, Continue: continuation,
+			})
+			if err != nil {
+				return "", err
+			}
+			for i := range page.Items {
+				item := &page.Items[i]
+				meta, err := utils.MetaAccessor(item)
+				if err != nil {
+					return "", err
+				}
+				if meta.GetDeprecatedInternalID() != id { //nolint:staticcheck // Numeric-scope compatibility.
+					return "", errors.New("identity ID lookup returned a different ID")
+				}
+				name := item.GetName()
+				if name == "" {
+					return "", errors.New("identity ID lookup returned an unnamed object")
+				}
+				if uid != "" && uid != name {
+					return "", errors.New("ambiguous identity ID lookup")
+				}
+				uid = name
+			}
+			continuation = page.GetContinue()
+			if continuation == "" {
+				break
+			}
+			if seen[continuation] {
+				return "", errors.New("identity ID lookup repeated a continuation token")
+			}
+			seen[continuation] = true
 		}
-		if len(page.Items) == 0 {
-			return "", nil
-		}
-		if len(page.Items) != 1 || page.GetContinue() != "" {
-			return "", errors.New("ambiguous or incomplete identity ID lookup")
-		}
-		meta, err := utils.MetaAccessor(&page.Items[0])
-		if err != nil {
-			return "", err
-		}
-		if meta.GetDeprecatedInternalID() != id { //nolint:staticcheck // Numeric-scope compatibility.
-			return "", errors.New("identity ID lookup returned a different ID")
-		}
-		uid := page.Items[0].GetName()
+
 		r.cacheMapping(gvr, ns, uid, id)
 		return uid, nil
 	})
