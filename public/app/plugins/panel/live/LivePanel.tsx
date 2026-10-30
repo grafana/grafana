@@ -38,6 +38,8 @@ export const LivePanel = memo((props: Props) => {
   // options.channel can be a new but equal object, which shouldn't resubscribe
   if (!isEqual(options.channel, channel)) {
     setChannel(options.channel);
+    setStatus(undefined);
+    setMessage(undefined);
   }
 
   const live = getGrafanaLiveSrv();
@@ -103,7 +105,7 @@ export const LivePanel = memo((props: Props) => {
     );
   }
 
-  const renderMessage = (height: number) => {
+  const renderMessage = (messageHeight: number) => {
     if (!message) {
       return (
         <div>
@@ -138,7 +140,7 @@ export const LivePanel = memo((props: Props) => {
           ...props,
           options: { frameIndex: 0, showHeader: true },
         };
-        return <TablePanel {...tableProps} data={data} height={height} />;
+        return <TablePanel {...tableProps} data={data} height={messageHeight} />;
       }
     }
 
