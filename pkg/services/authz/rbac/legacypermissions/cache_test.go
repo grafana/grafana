@@ -27,12 +27,14 @@ type migratedGrants struct {
 	permissions []ac.Permission
 	err         error
 	calls       int
+	skipCache   bool
 }
 
-func (m *migratedGrants) ResolveCurrentUserPermissions(context.Context, identity.Requester) ([]ac.Permission, error) {
+func (m *migratedGrants) ResolveCurrentUserPermissions(_ context.Context, _ identity.Requester, skipCache bool) ([]ac.Permission, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.calls++
+	m.skipCache = skipCache
 	return m.permissions, m.err
 }
 
@@ -53,8 +55,12 @@ func TestIntegrationLoaderCacheOptionsAndFailures(t *testing.T) {
 			requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleViewer}
 			check := func(options ac.Options, want ...ac.Permission) {
 				t.Helper()
+				before := z.calls
 				got, err := loader.GetUserPermissions(context.Background(), requester, options)
 				require.NoError(t, err)
+				if z.calls > before {
+					require.Equal(t, options.ReloadCache, z.skipCache)
+				}
 				require.ElementsMatch(t, append(want, ac.Permission{Action: "folders:read", Scope: "folders:uid:sharedwithme"}), got)
 			}
 			check(ac.Options{}, a, b)

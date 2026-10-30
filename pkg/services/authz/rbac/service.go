@@ -73,7 +73,7 @@ type Service struct {
 }
 
 type UserPermissionsResolver interface {
-	ResolveCurrentUserPermissions(ctx context.Context, user identity.Requester) ([]accesscontrol.Permission, error)
+	ResolveCurrentUserPermissions(ctx context.Context, user identity.Requester, skipCache bool) ([]accesscontrol.Permission, error)
 }
 
 type Settings struct {

@@ -34,7 +34,7 @@ func TestResolveCurrentUserPermissionsSnapshot(t *testing.T) {
 	requester := &identity.StaticRequester{Type: types.TypeUser, UserUID: "alice", OrgID: 1, Namespace: "stacks-42", Groups: []string{"stored"}, ExternalGroups: []string{"external"}}
 	client := &snapshotZanzanaClient{response: types.GetUserPermissionsResponse{Permissions: []types.Permission{{Action: "teams:read", Scope: "teams:id:42"}}}}
 	resolver := NewZanzanaPermissionResolver(client, nil, nil, true)
-	result, err := resolver.ResolveCurrentUserPermissions(t.Context(), requester)
+	result, err := resolver.ResolveCurrentUserPermissions(t.Context(), requester, false)
 	require.NoError(t, err)
 	require.Equal(t, []ac.Permission{{Action: "teams:read", Scope: "teams:id:42"}}, result)
 	require.Empty(t, client.listCalls)
@@ -51,7 +51,7 @@ func TestResolveCurrentUserPermissionsSnapshotDoesNotFallback(t *testing.T) {
 			client.listResp = &authzv1.ListResponse{}
 			resolver := NewZanzanaPermissionResolver(client, nil, nil, false)
 			requester := &identity.StaticRequester{Type: types.TypeUser, UserUID: "alice", OrgID: 1}
-			result, err := resolver.ResolveCurrentUserPermissions(t.Context(), requester)
+			result, err := resolver.ResolveCurrentUserPermissions(t.Context(), requester, false)
 			require.Equal(t, code, status.Code(err))
 			require.Nil(t, result)
 			require.Empty(t, client.listCalls, "current-user enumeration must never retry through List")

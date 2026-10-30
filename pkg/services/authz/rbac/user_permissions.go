@@ -75,11 +75,11 @@ func (s *Service) GetUserPermissions(req *authzv1.GetUserPermissionsRequest, str
 	return nil
 }
 
-func (s *Service) mergeZanzanaUserPermissions(ctx context.Context, requester identity.Requester, permissions []accesscontrol.Permission) []accesscontrol.Permission {
+func (s *Service) mergeZanzanaUserPermissions(ctx context.Context, requester identity.Requester, permissions []accesscontrol.Permission, skipCache bool) []accesscontrol.Permission {
 	if s.userPermissionsResolver == nil {
 		return permissions
 	}
-	zanzanaPermissions, err := s.userPermissionsResolver.ResolveCurrentUserPermissions(ctx, requester)
+	zanzanaPermissions, err := s.userPermissionsResolver.ResolveCurrentUserPermissions(ctx, requester, skipCache)
 	if err != nil {
 		s.logger.Warn("could not get zanzana user permissions, using legacy only", "error", err)
 		return permissions
@@ -149,7 +149,7 @@ func (s *Service) getAllIdentityPermissions(ctx context.Context, ns types.Namesp
 		if err != nil {
 			return nil, false, err
 		}
-		permissions = s.mergeZanzanaUserPermissions(ctx, requester, permissions)
+		permissions = s.mergeZanzanaUserPermissions(ctx, requester, permissions, skipCache)
 		return permissions, false, nil
 	case types.TypeAnonymous:
 		requester := &user.SignedInUser{
@@ -171,7 +171,7 @@ func (s *Service) getAllIdentityPermissions(ctx context.Context, ns types.Namesp
 		if err != nil {
 			return nil, false, err
 		}
-		return s.mergeZanzanaUserPermissions(ctx, requester, permissions), false, nil
+		return s.mergeZanzanaUserPermissions(ctx, requester, permissions, skipCache), false, nil
 	case types.TypeRenderService:
 		return []accesscontrol.Permission{
 			{Action: "dashboards:read", Scope: "*"},

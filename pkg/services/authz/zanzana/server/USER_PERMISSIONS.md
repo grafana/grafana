@@ -66,3 +66,9 @@ expiry. This implementation does not provide distributed invalidation. The RPC's
 `skipcache` option bypasses both model-validation and principal caches, including
 in-flight loads, and neither populates nor replaces shared entries. It does not
 bypass the separate existing IAM UID mapping cache.
+
+Explicit `ReloadCache` options are forwarded to the RPC's `skipcache` flag by the
+OSS and Enterprise merge paths, the legacy loader, and the outer AuthZ permission
+service. `SkipZanzanaCache` remains an instruction to bypass the caller's flattened
+user cache. It does not disable shared principal caching merely because a request
+has contextual teams.

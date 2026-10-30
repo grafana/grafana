@@ -241,12 +241,12 @@ func (s *Service) mergeZanzanaUserPermissions(ctx context.Context, user identity
 		return legacy
 	}
 	if options.SkipZanzanaCache || !s.cfg.RBAC.PermissionCache || !user.HasUniqueId() {
-		return s.zanzanaResolver.MergeCurrentUser(ctx, user, legacy, s.log)
+		return s.zanzanaResolver.MergeCurrentUser(ctx, user, legacy, s.log, options.ReloadCache)
 	}
 
 	zPerms, err := s.getCachedPermissions(ctx, accesscontrol.GetZanzanaUserPermissionCacheKey(user),
 		func(ctx context.Context) ([]accesscontrol.Permission, error) {
-			return s.zanzanaResolver.ResolveCurrentUserPermissions(ctx, user)
+			return s.zanzanaResolver.ResolveCurrentUserPermissions(ctx, user, options.ReloadCache)
 		}, options)
 	if err != nil {
 		s.log.Warn("could not get zanzana user permissions, using legacy only", "error", err)

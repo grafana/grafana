@@ -67,7 +67,7 @@ func TestResolveCurrentUserPermissions_UsesRequesterNamespace(t *testing.T) {
 		Namespace: "stacks-123",
 	}
 
-	_, err := r.ResolveCurrentUserPermissions(context.Background(), usr)
+	_, err := r.ResolveCurrentUserPermissions(context.Background(), usr, false)
 	require.NoError(t, err)
 	require.Equal(t, "stacks-123", client.info.GetNamespace())
 	require.Empty(t, client.listCalls)
@@ -83,7 +83,7 @@ func TestResolveCurrentUserPermissions_DerivesNamespaceFromOrgWhenRequesterNames
 		OrgID:   2,
 	}
 
-	_, err := r.ResolveCurrentUserPermissions(context.Background(), usr)
+	_, err := r.ResolveCurrentUserPermissions(context.Background(), usr, false)
 	require.NoError(t, err)
 	require.Equal(t, claims.OrgNamespaceFormatter(int64(2)), client.info.GetNamespace())
 	require.Empty(t, client.listCalls)
@@ -766,7 +766,7 @@ func TestResolveCurrentUserPermissions_PassesTeamsAsContextualGroups(t *testing.
 			cap := &snapshotZanzanaClient{}
 			r := NewZanzanaPermissionResolver(cap, &usertest.FakeUserService{}, nil, tc.useExternalGroups)
 
-			_, err := r.ResolveCurrentUserPermissions(context.Background(), newReq([]string{"stored-team"}, []string{"team_a", "everyone"}))
+			_, err := r.ResolveCurrentUserPermissions(context.Background(), newReq([]string{"stored-team"}, []string{"team_a", "everyone"}), false)
 			require.NoError(t, err)
 			require.NotNil(t, cap.info)
 			require.Equal(t, tc.wantTeams, cap.info.GetGroups())
