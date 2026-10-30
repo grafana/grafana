@@ -419,7 +419,7 @@ describe('Tab identity and discovery lifecycle', () => {
     deactivate();
   });
 
-  it.failing('ignores stale discovery after provider replacement and preserves unrelated tabs', async () => {
+  it.failing('ignores stale discovery after provider replacement', async () => {
     const first = datasource('first');
     const second = datasource('second');
     let resolveFirst!: (value: DataSourceApi) => void;
@@ -432,7 +432,6 @@ describe('Tab identity and discovery lifecycle', () => {
     const { drawer, data, panel, tabs } = withQueryData();
     const deactivate = activateDrawer(drawer);
     await waitFor(() => expect(getDataSourceInstance).toHaveBeenCalled());
-    const dataTab = drawer.state.tabs?.[0];
     const replacement = new SceneDataNode({
       data: {
         ...data.state.data!,
@@ -450,10 +449,44 @@ describe('Tab identity and discovery lifecycle', () => {
     await pending;
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(drawer.state.tabs).toBe(latest);
-    expect(drawer.state.tabs![0]).toBe(dataTab);
     data.setState({ data: { ...data.state.data!, errors: [] } });
     expect(tabs()).toContain(InspectTab.ErrorsAndNotices);
     deactivate();
+  });
+
+  it.failing('preserves the Data tab when a replacement provider discovers a different datasource', async () => {
+    const first = datasource('first');
+    const second = datasource('second');
+    jest
+      .mocked(getDataSourceInstance)
+      .mockImplementation(async (ref) => (typeof ref === 'object' && ref?.uid === 'second' ? second : first));
+    const { drawer, data, panel, tabs } = withQueryData();
+    activateDrawer(drawer);
+    await waitFor(() =>
+      expect(tabs()).toEqual([
+        InspectTab.Data,
+        InspectTab.Stats,
+        InspectTab.Query,
+        InspectTab.Meta,
+        InspectTab.ErrorsAndNotices,
+        InspectTab.JSON,
+      ])
+    );
+    const dataTab = drawer.state.tabs![0];
+
+    panel.setState({
+      $data: new SceneDataNode({
+        data: {
+          ...data.state.data!,
+          request: { ...data.state.data!.request!, targets: [{ refId: 'A', datasource: { uid: 'second' } }] },
+        },
+      }),
+    });
+    await waitFor(() =>
+      expect(drawer.state.tabs?.find((tab) => tab instanceof InspectErrorsAndNoticesTab)?.state.dataSource).toBe(second)
+    );
+
+    expect(drawer.state.tabs![0]).toBe(dataTab);
   });
 
   it('preserves active tab and tab instances across equivalent data and provider changes', async () => {
