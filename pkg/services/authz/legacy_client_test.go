@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
@@ -69,6 +70,7 @@ func TestIntegrationProvideAuthZLegacyAccessClient(t *testing.T) {
 				cfg, tc.features, nil, tracing.InitializeTracerForTest(), prometheus.NewRegistry(),
 				sql, service, actionSets, &unusedLegacyCheckZanzanaClient{},
 				apiserver.ProvideEventualRestConfigProvider(), nil, loader, ac.NewScopeResolverRegistry(),
+				acimpl.ProvideAccessControlTest(),
 			)
 			require.NoError(t, err)
 			client := ProvideAuthZLegacyAccessClient(clients)
