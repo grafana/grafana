@@ -96,6 +96,12 @@ For information about creating API keys, refer to the [Elasticsearch API keys do
 
 ### Amazon OpenSearch Service and SigV4
 
+{{< admonition type="caution" >}}
+AWS Signature Version 4 (SigV4) authentication will be deprecated in Grafana version 14.
+If you connect to Amazon OpenSearch Service, use the [OpenSearch data source](https://grafana.com/docs/plugins/grafana-opensearch-datasource/latest/) instead.
+For other endpoints, update your authentication method.
+{{< /admonition >}}
+
 Amazon OpenSearch Service is the successor to Amazon Elasticsearch Service. For Amazon OpenSearch Service, use the [OpenSearch data source](https://grafana.com/docs/plugins/grafana-opensearch-datasource/latest/) instead of this Elasticsearch data source.
 
 If you still connect the Grafana Elasticsearch data source to a domain that requires AWS Signature Version 4 (AWS SigV4), for example a legacy Amazon Elasticsearch Service domain or another SigV4-protected OpenSearch-compatible endpoint, you must sign all requests with SigV4.
