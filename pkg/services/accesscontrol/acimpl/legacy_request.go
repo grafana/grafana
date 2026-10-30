@@ -25,6 +25,27 @@ func (a *AccessControl) buildLegacyCheckRequest(
 	}
 
 	namespace := user.GetNamespace()
+	if profile, ok := identity.InternalIdentityProfileFor(user); ok {
+		if namespace == "" || namespace == "*" {
+			if user.GetOrgID() < 1 || namespaceMapper == nil {
+				return legacyclient.LegacyCheckRequest{}, errors.New("internal legacy check requires a concrete target namespace")
+			}
+			namespace = namespaceMapper(user.GetOrgID())
+		}
+
+		parsedNamespace, err := types.ParseNamespace(namespace)
+		if err != nil || parsedNamespace.OrgID < 1 {
+			return legacyclient.LegacyCheckRequest{}, errors.New("internal legacy check requires a concrete target namespace")
+		}
+
+		return legacyclient.LegacyCheckRequest{
+			Namespace:           parsedNamespace.Value,
+			InternalIdentity:    &legacyclient.LegacyInternalIdentity{Profile: legacyclient.LegacyInternalIdentityProfile(profile)},
+			Evaluator:           evaluator,
+			SkipScopeResolution: a.skipScopeResolution,
+		}, nil
+	}
+
 	var global *legacyclient.LegacyGlobalEvaluation
 	if user.GetOrgID() == accesscontrol.NoOrgID || user.GetOrgID() == accesscontrol.GlobalOrgID {
 		permissions := user.GetGlobalPermissions()

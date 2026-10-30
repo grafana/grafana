@@ -199,7 +199,7 @@ func ProvideAuthZClients(
 			return authInterceptor(inProcessContextWithClientSpan(ctx), req, info, handler)
 		})
 		authzv1.RegisterAuthzServiceServer(channel, server)
-		authzextv1.RegisterLegacyAuthzServiceServer(channel, server)
+		rbac.RegisterEmbeddedLegacyCheckServer(channel, server)
 		rbacClient := authzlib.NewClient(
 			channel,
 			authzlib.WithCacheClientOption(&NoopCache{}),

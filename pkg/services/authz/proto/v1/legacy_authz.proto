@@ -31,6 +31,8 @@ message LegacyCheckRequest {
   bool skip_scope_resolution = 8;
   // Present only for embedded instance-global evaluation. Namespace still selects the tenant.
   LegacyGlobalEvaluation global_evaluation = 9;
+  // Trusted embedded assertion. Mutually exclusive with subject and global_evaluation.
+  LegacyInternalIdentity internal_identity = 10;
 }
 
 message LegacyCheckResponse {
@@ -129,4 +131,9 @@ message LegacyGlobalEvaluation {
   // authentication restrictions. Empty permits no actions. Resolver dependency
   // lookups use the same restriction; scopes are still checked by the server.
   repeated string permitted_actions = 2;
+}
+
+message LegacyInternalIdentity {
+  // Selects server-owned grants; the profile name itself is not authentication.
+  string profile = 1;
 }

@@ -28,11 +28,12 @@ func (s *Service) WithLegacyScopeResolvers(
 }
 
 type legacyScopeRequest struct {
-	namespace      types.NamespaceInfo
-	identityType   types.IdentityType
-	userUID        string
-	skipCache      bool
-	globalIdentity *legacyGlobalIdentity
+	namespace         types.NamespaceInfo
+	identityType      types.IdentityType
+	userUID           string
+	skipCache         bool
+	globalIdentity    *legacyGlobalIdentity
+	internalRequester identity.Requester
 }
 
 // Evaluate the original expression first. If it denies access, resolve its
@@ -140,6 +141,12 @@ func (s *Service) loadLegacyResolverPermissions(
 	requester identity.Requester,
 	loadedActions map[string]bool,
 ) error {
+	// Internal profiles already contain their full grants and have no database
+	// subject. Missing actions must remain denied instead of triggering a lookup.
+	if req.internalRequester != nil {
+		return nil
+	}
+
 	dependencies, ok := resolver.(accesscontrol.ScopeResolverPermissionDependencies)
 	if !ok {
 		return nil
@@ -191,6 +198,10 @@ func (s *Service) legacyResolverRequester(
 	req legacyScopeRequest,
 	permissions map[string][]string,
 ) (identity.Requester, error) {
+	if req.internalRequester != nil {
+		return req.internalRequester, nil
+	}
+
 	if req.globalIdentity != nil {
 		return legacyGlobalResolverRequester(req, permissions), nil
 	}

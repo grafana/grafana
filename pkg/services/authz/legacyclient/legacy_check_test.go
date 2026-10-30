@@ -15,6 +15,58 @@ import (
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
+func TestLegacyCheckFailureDenies(t *testing.T) {
+	tests := []struct {
+		name        string
+		response    *authzextv1.LegacyCheckResponse
+		err         error
+		wantAllowed bool
+		wantError   bool
+	}{
+		{
+			name:        "allowed",
+			response:    &authzextv1.LegacyCheckResponse{Allowed: true},
+			wantAllowed: true,
+		},
+		{
+			name:     "denied",
+			response: &authzextv1.LegacyCheckResponse{},
+		},
+		{
+			name:      "response error overrides allowed",
+			response:  &authzextv1.LegacyCheckResponse{Allowed: true, Error: "lookup failed"},
+			wantError: true,
+		},
+		{
+			name:      "transport error",
+			err:       context.Canceled,
+			wantError: true,
+		},
+		{
+			name:      "missing response",
+			wantError: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &LegacyClient{
+				clientV1: legacyCheckResponseClient{response: tc.response, err: tc.err},
+				tracer:   noop.Tracer{},
+			}
+
+			allowed, err := client.LegacyCheck(t.Context(), LegacyCheckRequest{Evaluator: accesscontrol.EvalPermission("annotations:read")})
+			if tc.wantError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			require.Equal(t, tc.wantAllowed, allowed)
+		})
+	}
+}
+
 func TestClient_LegacyCheckErrorCodes(t *testing.T) {
 	for _, tc := range []struct {
 		name     string
@@ -120,6 +172,28 @@ func TestClient_LegacyCheckRequest(t *testing.T) {
 		req  LegacyCheckRequest
 		want *authzextv1.LegacyCheckRequest
 	}{
+		{
+			name: "internal profile with concrete namespace",
+			req: LegacyCheckRequest{
+				Namespace: "org-12", Evaluator: accesscontrol.EvalPermission("dashboards:create"),
+				InternalIdentity: &LegacyInternalIdentity{Profile: LegacyInternalIdentityService}, SkipScopeResolution: true,
+			},
+			want: &authzextv1.LegacyCheckRequest{
+				Namespace: "org-12", Expression: permission("dashboards:create"),
+				InternalIdentity: &authzextv1.LegacyInternalIdentity{Profile: "service"}, SkipScopeResolution: true,
+			},
+		},
+		{
+			name: "empty internal profile remains present for server validation",
+			req: LegacyCheckRequest{
+				Namespace: "org-12", Evaluator: accesscontrol.EvalPermission("dashboards:create"),
+				InternalIdentity: &LegacyInternalIdentity{},
+			},
+			want: &authzextv1.LegacyCheckRequest{
+				Namespace: "org-12", Expression: permission("dashboards:create"),
+				InternalIdentity: &authzextv1.LegacyInternalIdentity{},
+			},
+		},
 		{
 			name: "nested expression and request options",
 			req: LegacyCheckRequest{
