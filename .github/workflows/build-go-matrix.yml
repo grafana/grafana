@@ -37,7 +37,7 @@ jobs:
   build-go:
     # Run on `grafana/grafana` pushes, or on pull requests, to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
-    name: Build Go (OSS, ${{ matrix.group }})
+    name: Build Go (grafana, ${{ matrix.group }})
     runs-on: ubuntu-x64-large
     permissions:
       contents: read
