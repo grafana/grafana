@@ -377,11 +377,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/Cascader/styles.ts": {
-    "@grafana/no-unreduced-motion": {
-      "count": 17
-    }
-  },
   "packages/grafana-ui/src/components/ColorPicker/ColorPicker.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -689,11 +684,6 @@
   "packages/grafana-ui/src/types/react-table-config.d.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
-    }
-  },
-  "packages/grafana-ui/src/utils/useAsyncDependency.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "public/app/app.ts": {

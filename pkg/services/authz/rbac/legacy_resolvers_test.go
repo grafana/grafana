@@ -355,12 +355,6 @@ func TestLegacyCheckSharedWithMeEnablesResolversWithoutStoredGrants(t *testing.T
 			Action:     "dashboards:read",
 			ActionSets: []string{"dashboards:view", "dashboards:edit"},
 		},
-		{
-			UserID:  1,
-			Role:    "Viewer",
-			TeamIDs: []int64{10},
-			Action:  "folders:read",
-		},
 	}, permissions.queries)
 	require.Empty(t, permissions.presenceQueries)
 }
@@ -385,12 +379,14 @@ func TestLegacyCheckResolversOverGRPC(t *testing.T) {
 				Permissions: map[int64]map[string][]string{
 					12: {
 						"dashboards:read": {"folders:uid:parent"},
-						"folders:read":    {acimpl.SharedWithMeFolderPermission.Scope},
 					},
 				},
 			}, requester)
 			if scope == "dashboards:uid:missing" {
 				return nil, errors.New("missing dashboard")
+			}
+			if scope == "dashboards:uid:absent" {
+				return nil, accesscontrol.ErrScopeResourceNotFound.Errorf("dashboard not found")
 			}
 			return []string{"folders:uid:parent"}, nil
 		},
@@ -451,6 +447,15 @@ func TestLegacyCheckResolversOverGRPC(t *testing.T) {
 			want: &authzextv1.LegacyCheckResponse{
 				Allowed: false,
 				Error:   "could not evaluate legacy expression: could not resolve dashboards:uid:missing: missing dashboard",
+			},
+		},
+		{
+			name:  "typed absence survives transport",
+			scope: "dashboards:uid:absent",
+			want: &authzextv1.LegacyCheckResponse{
+				Allowed:   false,
+				Error:     "could not evaluate legacy expression: could not resolve dashboards:uid:absent: [accesscontrol.scopeResourceNotFound] dashboard not found",
+				ErrorCode: authzextv1.LegacyCheckErrorCode_LEGACY_CHECK_ERROR_CODE_SCOPE_RESOURCE_NOT_FOUND,
 			},
 		},
 	} {

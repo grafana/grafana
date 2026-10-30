@@ -2,6 +2,7 @@ import { render, screen } from 'test/test-utils';
 
 import { mockDataSource } from '../../mocks';
 import { setupDataSources } from '../../testSetup/datasources';
+import { mockK8sAlertRule } from '../mocks/handlers';
 
 import { AlertRuleRow } from './AlertRuleRow';
 import { type AlertRuleSearchHit } from './alertRuleSearchHit';
@@ -77,6 +78,22 @@ describe('AlertRuleRow', () => {
     renderRow({ searchHit: baseHit() });
 
     expect(screen.queryByRole('img', { name: /Evaluated every/ })).not.toBeInTheDocument();
+  });
+
+  it('renders a provisioning badge when the full rule has provenance set', () => {
+    const rule = {
+      ...mockK8sAlertRule({ uid: 'rule-1', title: 'CPU high' }),
+      metadata: { name: 'rule-1', annotations: { 'grafana.com/provenance': 'terraform' } },
+    };
+    renderRow({ searchHit: baseHit(), rule });
+
+    expect(screen.getByText('Provisioned')).toBeInTheDocument();
+  });
+
+  it('renders no badge when rule is absent', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText('Provisioned')).not.toBeInTheDocument();
   });
 
   it('shows queried datasources when the hit has them', () => {

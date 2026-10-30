@@ -622,11 +622,6 @@ type Cfg struct {
 	// MaxNestedFolderDepth is the hard ceiling for folder nesting depth.
 	// The SQL query builders use this value to generate JOIN chains.
 	MaxNestedFolderDepth int
-	// FolderParallelDashboardDeleteEnabled deletes the dashboards of a deleted folder concurrently, with
-	// at most FolderParallelDashboardDeleteConcurrency deletes in flight per folder deletion, not per
-	// instance. Experimental and intentionally undocumented.
-	FolderParallelDashboardDeleteEnabled     bool
-	FolderParallelDashboardDeleteConcurrency int
 
 	SecureSocksDSProxy SecureSocksDSProxySettings
 
@@ -748,6 +743,7 @@ type Cfg struct {
 	IndexModificationCacheTTL                  time.Duration // TTL for dedup cache used in ListModifiedSince. 0 disables the cache.
 	GlobalSearchIndexEnabled                   bool          // Build one index per namespace covering several resource types, alongside the per-resource indexes.
 	GlobalSearchIndexStartupBuild              bool          // Temporary: build global indexes before readiness instead of in the background. To be removed once environments restore them from snapshots at startup.
+	GlobalSearchIndexIdleTimeout               time.Duration // Close a global index not searched for this long. 0 keeps it open.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	IndexSnapshotEnabled                       bool          // Enable remote index snapshots
@@ -867,14 +863,7 @@ type Cfg struct {
 	LoggedQuotaResources          []string
 	QuotasErrorMessageSupportInfo string
 
-	EnableSQLKVBackend           bool
-	EnableSQLKVCompatibilityMode bool
-	// LogSQLBackendCalls, when true, logs every call that reaches an exported
-	// method of the legacy SQL backend. Temporary smoke-test instrumentation
-	// used to confirm no production traffic still reaches sql/backend before
-	// removing the sqlkv backwards-compatibility layer.
-	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
-	LogSQLBackendCalls                bool
+	EnableSQLKVBackend                bool
 	KVLeaseTTL                        time.Duration
 	ResourceVersionMaxWait            time.Duration
 	EnableGarbageCollection           bool
@@ -1028,6 +1017,7 @@ func RedactedValue(key, value string) string {
 		"INSTALL_TOKEN$",
 		"PROXY_TOKEN$",
 		"EXCHANGE_TOKEN$",
+		"CLIENT_TOKEN$",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
@@ -1825,9 +1815,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.Storage = readStorageSettings(iniFile)
 	cfg.Search = readSearchSettings(iniFile)
 	cfg.MaxNestedFolderDepth = maxDeptFolderSettings(iniFile)
-	if err := cfg.readFolderParallelDashboardDeleteSettings(iniFile.Section("folder")); err != nil {
-		return err
-	}
 
 	var err error
 	cfg.SecureSocksDSProxy, err = readSecureSocksDSProxySettings(iniFile)

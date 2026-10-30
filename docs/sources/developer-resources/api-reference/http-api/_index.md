@@ -45,7 +45,7 @@ If you're consuming a Grafana HTTP API:
 - Use v2 if your tooling (SDK generators, older Swagger UI, `terraform-provider-grafana`) expects Swagger 2.0.
 - Use v3 if your tooling requires OpenAPI 3.x (for example, newer codegen tools, some API gateways, Postman's newer import features).
 
-You can browse and try out both via the Swagger UI editor, served by the Grafana server, by navigating to `/swagger-ui`.
+You can browse and try out both via the Swagger UI editor, served by the Grafana server, by navigating to `/swagger`.
 
 ## Authentication
 

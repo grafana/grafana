@@ -44,13 +44,21 @@ the plan and changed what some items mean:
 Updated on 2026-10-27 from `main` at af1cc0cd8a5. #136088 landed the restructure (A2, A5–A8), and
 A1 was dropped. Open: A4, T1–T3, the metrics follow-ups, and the performance leftovers.
 
+Updated on 2026-10-30 from `main` at 657adeb4afd. Five router PRs landed outside the plan: group
+visibility (#136246, see `2026-10-28-router-group-visibility-design.md`), the tabbed status page
+with an admin-only status endpoint (#136398), core app requests recorded under their API group
+(#136445), the `bridge_url` source and manifests targets as a list (#136562), and
+`appplugins.registerAPIServer` read through OpenFeature (#136142). A review found build, vet,
+`-race` tests and lint clean, and the plan's R, P, O, C and D items all landed. A4 steps 2 and 3
+need the cloud rollout. T2 and T3 are done, and T1 is partly covered.
+
 The new sections in this plan:
 
 - **D**: dangling features and dead code to remove.
 - **F**: performance.
 
-Metrics follow-ups (M5–M7, M9–M12) stay in `2026-10-08-router-metrics-review.md`; all are still
-open.
+Metrics follow-ups (M5–M7, M9–M12; M9 was not pursued) are in `2026-10-08-router-metrics-review.md`; all were done on
+2026-10-30.
 
 IDs from earlier plans are kept. Tick an item here when it lands, and note the PR number.
 
@@ -127,8 +135,8 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 1. **Done:** every R, P, O and C item, every A item except A4, the dead-code sweep, and most of F.
 2. **Config:** A4, while nothing depends on the old key names.
 3. **Tests:** T1–T3, and F12's watch-flush and plugin-call benchmarks.
-4. **Metrics:** M5–M7 and M9–M12 in `2026-10-08-router-metrics-review.md`, plus metrics for the
-   `baasbridge` calls (#135815).
+4. **Metrics:** done (M5–M7 and M9–M12 in `2026-10-08-router-metrics-review.md`), except metrics
+   for the `baasbridge` calls (#135815).
 5. **Performance leftovers, if profiles call for them:** F1's memo, F2, F9's proxy, F10, F11's sort.
 
 ---
@@ -601,21 +609,22 @@ Not pursued:
 
 ## T: Test gaps
 
-- [ ] **T1. The `dashboard.grafana.app` split.** No tests for:
-  - a watch on `librarypanels` through the split: watch accounting, and the watch ending when the
-    dashboard key changes;
-  - OPTIONS;
-  - a user's cluster-scoped write;
-  - the breaker scope shown in status and metrics.
-
-  Also confirm that a user's write to ST is visible to a later read from MT.
-  `st_resources_test.go` covers path classification, plain dispatch and, since #136088, the breaker
-  scope (`TestSingleTenantResourcesBreakerScope`).
-- [ ] **T2. Plugin gRPC.** No end-to-end test against a real `grpc.Server` for keepalive (P18) or a
-  dropped connection. Retries are covered (`TestPluginGRPCDialOptionsCountRetries`).
-- [ ] **T3. Embedded groups in middleware mode (#135946).** No test for a watch on an embedded
-  group, or for in-process clients (`GetDirectRestConfig`, `DirectlyServeHTTP`). Requests before
-  the router is `Ready` are covered (`TestMiddlewareLeavesRequestsToTheServerUntilReady`).
+- [ ] **T1. The `dashboard.grafana.app` split.** Partly covered. Added a cluster-scoped user
+  write and a no-identity OPTIONS row to `TestSingleTenantResourcesHandlerFor`, and
+  `TestHiddenSingleTenantResourcesReachNeitherBackend` (a hidden group never reaches the split).
+  Still without tests: a watch on `librarypanels` through the split (accounting, and the watch
+  ending when the dashboard key changes), the breaker scope shown in status and metrics, and that
+  a user's write to ST is visible to a later read from MT. An OPTIONS request from a user goes to ST
+  today, as any non-GET from a user does.
+- [x] **T2. Plugin gRPC.** `TestPluginGRPCReconnectsAfterTheServerRestarts` runs a real
+  `grpc.Server` and restarts it. A keepalive test (P18) is not practical: grpc-go raises a client
+  `keepalive.Time` below 10s to 10s, so it would take over 10s of real time. Retries are covered
+  (`TestPluginGRPCDialOptionsCountRetries`).
+- [x] **T3. Embedded groups in middleware mode (#135946).** `TestMiddlewareWatchesEmbeddedGroups`
+  covers a watch on an embedded group: it streams, is canceled upstream when the client leaves, and
+  ends when the service stops. In-process clients are covered by `TestLoopbackRestConfigProvider`.
+  Requests before the router is `Ready` are covered
+  (`TestMiddlewareLeavesRequestsToTheServerUntilReady`).
 
 ---
 

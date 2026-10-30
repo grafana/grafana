@@ -35,6 +35,8 @@ Every label has a bounded set of values, so no request can create new series:
 | `grafana_router_last_reconcile_timestamp_seconds` | gauge | | When the latest route reconcile finished |
 | `grafana_router_reconciles_total` | counter | | Completed reconciles |
 | `grafana_router_reconcile_errors_total` | counter | | Reconciles that completed with errors |
+| `grafana_router_reconcile_duration_seconds` | histogram | | How long reconciles took |
+| `grafana_router_discovery_fetches_overdue` | gauge | | Backend discovery fetches still running past their deadline. A backend that ignores its context keeps one running for good, and its group serves stale discovery |
 
 ## Routes and sources
 
@@ -45,24 +47,28 @@ Every label has a bounded set of values, so no request can create new series:
 | `grafana_router_skipped_backends` | gauge | `source` | Backends a source skipped in its latest successful load or poll |
 | `grafana_router_source_last_success_timestamp_seconds` | gauge | `source` | When each source last loaded successfully |
 | `grafana_router_source_polls_total` | counter | `source`, `result` | Load or poll attempts: `success` or `failure` |
+| `grafana_router_source_poll_duration_seconds` | histogram | `source` | How long each source's load or poll attempts took, failed ones included |
+| `grafana_router_stack_lookup_duration_seconds` | histogram | `result` | How long grafana.com stack lookups took: `resolved`, `not_found`, `error`. Cached and throttled lookups never reach grafana.com. The lookup request is traced |
+| `grafana_router_stack_breaker_transitions_total` | counter | `result` | Transitions of the single-tenant fallback's per-destination breakers, by the state entered. No group label, since those groups can be unregistered |
+| `grafana_router_stack_cache_evictions_total` | counter | `result` | Entries the fallback's caches dropped to make room: `host`, `breaker`. Steady evictions mean a cache is smaller than the active stacks |
 | `grafana_router_stack_lookups_total` | counter | `result` | Single-tenant stack lookups: `cache_hit`, `resolved`, `not_found`, `throttled`, `error` |
 | `grafana_router_stack_discovery_cache_total` | counter | `result` | Single-tenant discovery requests looked up in the cache shared by each stack's callers: `hit`, `miss`. Absent when `st_discovery_cache_bytes = 0` |
 
-Sources are `aggregate:<target>`, `single-tenant`, `core_url`, `plugins_url`, `local-plugin`,
+Sources are `aggregate:<target>`, `single-tenant`, `plugins`, `core`, `bridge`, `local-plugin`,
 `dev` (`[router.dev.<name>]`, #135990) and `embedded`.
 
-Every cloud source (`aggregate:<target>`, `single-tenant`, `core_url`, `plugins_url`) is polled
+Every cloud source (`aggregate:<target>`, `single-tenant`, `plugins`, `core`, `bridge`) is polled
 and records every poll, so a stale last success means the source is failing.
 
 A skipped backend is not served, and its group falls back to a lower-priority source if one offers
 it. Each skip is logged with its error, which says why. Backends are skipped by:
 
-- `plugins_url` and `core_url`: a manifest `newPluginBackend` rejects, such as for a group that
+- `plugins_url`, `core_url` and `bridge_url`: a manifest `newPluginBackend` rejects, such as for a group that
   isn't a plugin group or a routable core group (`routableCoreGroups`), or one with no served
   versions;
-- `plugins_url` and `core_url`: an entry with manifests whose plugin ID isn't an app plugin ID, or,
+- `plugins_url`, `core_url` and `bridge_url`: an entry with manifests whose plugin ID isn't an app plugin ID, or,
   for `plugins_url`, an entry with no ID (`validatePluginID`, #135273);
-- `plugins_url`, `core_url` and `aggregate:<target>`: a backend whose key could not be computed,
+- `plugins_url`, `core_url`, `bridge_url` and `aggregate:<target>`: a backend whose key could not be computed,
   which is not expected to happen.
 
 Groups filtered out by `plugins_group_patterns` or a target's `group_patterns` are not counted as
@@ -80,6 +86,13 @@ retried with backoff.
 | `grafana_router_breaker_transitions_total` | counter | `group`, `state` | Breaker state changes, by the state entered |
 | `grafana_router_backend_failures_total` | counter | `group`, `plugin_id`, `reason` | Requests whose backend failed: `breaker_open`, `timeout`, `transport`, `redirect_rejected`, `stack_origin_mismatch`, `auth` (a plugin token exchange failed) |
 | `grafana_router_discovery_results_total` | counter | `group`, `result` | How aggregated discovery was obtained: `provided`, `cached`, `fetched`, `stale`, `unavailable` |
+
+A failure in a discovery read (`/apis` and each version's resource list, from a group's backend or
+the unregistered-group handler) counts in `grafana_router_backend_failures_total` under the group, or
+the empty group for the unregistered-group handler. When a group is no longer served, its series in
+`backend_failures_total`, `breaker_transitions_total`, `discovery_results_total`,
+and `longrunning_requests` are deleted, so the metrics don't keep every group
+that ever existed. A group served again starts from zero.
 
 Groups on the single-tenant fallback keep one breaker per destination host and group, so they have no
 `grafana_router_breaker_state` series. Embedded groups bypass circuit breaking and also have no series.
@@ -110,7 +123,8 @@ including watches the router rejects (for example with a 401, or a 400 for a Web
 
 `route` says how the router dispatched the request:
 `backend` (the group's backend), `fallback` (the single-tenant fallback), `discovery` (root
-discovery and `/apis/discovery`, which the router builds), `not_found` (no handler for the path), `invalid` (rejected before
+discovery and `/apis/discovery`, which the router builds), `not_found` (no handler for the path), `hidden` (a group the caller
+may not see, which gets the same 404 as `not_found`), `invalid` (rejected before
 routing, such as a non-canonical path or the deprecated `/watch/` or `/proxy/` path), `unauthenticated` (rejected
 because the caller did not authenticate, in the standalone router) or `forbidden` (rejected because
 the path names a namespace the caller may not use).
@@ -122,10 +136,10 @@ use `route="not_found"` for the new behavior, or match both during a rolling upg
 
 | Metric | Type | Labels | Meaning |
 | --- | --- | --- | --- |
-| `grafana_router_plugin_grpc_request_duration_seconds` | histogram (classic and native) | `source`, `plugin_id`, `method`, `status_code` | Latency of gRPC calls to plugin deployments; `source` is `plugins_url`, `core_url` or `dev`, and `plugin_id` is the API group for a `core_url` entry without a plugin ID |
+| `grafana_router_plugin_grpc_request_duration_seconds` | histogram (classic and native) | `source`, `plugin_id`, `method`, `status_code` | Latency of gRPC calls to plugin deployments; `source` is `plugins`, `core`, `bridge` or `dev`, and `plugin_id` is the API group for a `core` or `bridge` entry without a plugin ID |
 | `grafana_router_plugin_grpc_request_retries_total` | counter | `source`, `plugin_id`, `method` | Retries of unary gRPC calls to plugin deployments (`[router.backend_grpc]` `retry_max`) |
 
-Each plugin deployment's connection (`plugins_url` or `core_url`) records its calls with dskit's client interceptors, and propagates
+Each plugin deployment's connection (`plugins_url`, `core_url` or `bridge_url`) records its calls with dskit's client interceptors, and propagates
 the caller's trace with `otelgrpc`. `method` is the full gRPC method, such as
 `/grafana.plugin.v3.RouteService/CallRoute` or `/pluginv2.Resource/CallResource`, and `status_code`
 is the gRPC status code name (`OK`, `Unavailable`, `DeadlineExceeded`, …). A streaming call is
@@ -139,7 +153,7 @@ observed when its stream ends.
 - A call the breaker rejects, or whose token exchange fails, never reaches the connection. Those
   count in `grafana_router_backend_failures_total` as `breaker_open` and `auth`.
 
-Plugin deployment availability (`plugins_url` and `core_url`), counting the calls the router rejected on the plugin's behalf.
+Plugin deployment availability (`plugins_url`, `core_url` and `bridge_url`), counting the calls the router rejected on the plugin's behalf.
 `grafana_router_backend_failures_total` also counts local plugins, so `and on (plugin_id)` keeps
 only the plugins with gRPC series. The series are combined with `or` before summing, because `+`
 would drop a plugin with no series on one side:
@@ -183,5 +197,8 @@ sum by (plugin_id) (
 | Unrecognized methods | `sum by (group) (rate(grafana_router_http_requests_total{verb="other"}[5m]))` |
 | Discovery served stale | `sum by (group) (rate(grafana_router_discovery_results_total{result=~"stale|unavailable"}[5m]))` |
 | Stack lookup cache hit ratio | `rate(grafana_router_stack_lookups_total{result="cache_hit"}[5m]) / sum(rate(grafana_router_stack_lookups_total[5m]))` |
+| p99 stack lookup latency | `histogram_quantile(0.99, sum by (le) (rate(grafana_router_stack_lookup_duration_seconds_bucket[5m])))` |
+| Stack cache churn | `sum by (result) (rate(grafana_router_stack_cache_evictions_total[5m]))` |
+| Stuck discovery fetches | `grafana_router_discovery_fetches_overdue > 0` |
 | Throttled stack lookups | `rate(grafana_router_stack_lookups_total{result="throttled"}[5m])` |
 | Stack discovery cache hit ratio | `rate(grafana_router_stack_discovery_cache_total{result="hit"}[5m]) / sum(rate(grafana_router_stack_discovery_cache_total[5m]))` |

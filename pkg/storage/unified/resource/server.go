@@ -427,6 +427,12 @@ type SearchOptions struct {
 	// Otherwise they build in the background after per-resource initialization.
 	GlobalIndexStartupBuild bool
 
+	// GlobalIndexBuildWait is how long a search waits for a global index to be
+	// built, after which it gets 503 while the build continues, so a large
+	// namespace's first search does not hang. Defaults to
+	// defaultGlobalIndexBuildWait; only tests change it.
+	GlobalIndexBuildWait time.Duration
+
 	// SearchFields holds the per-kind search-field wiring shared with the index
 	// backend. The search server reads the selectable fields and the definition
 	// hash from it and triggers a rebuild when either differs from the values
