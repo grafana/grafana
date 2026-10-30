@@ -84,7 +84,7 @@ export const AlertRuleNameAndMetric = () => {
             {...register('name', {
               required: {
                 value: true,
-                message: t('alerting.alert-rule-name-and-metric.message.must-enter-a-name', 'Must enter a name'),
+                message: t('alerting.alert-rule-name-and-metric.message.name-required', 'Name is required'),
               },
               pattern: isCloudRecordingRule
                 ? recordingRuleNameValidationPattern(RuleFormType.cloudRecording)
@@ -112,8 +112,8 @@ export const AlertRuleNameAndMetric = () => {
                 required: {
                   value: true,
                   message: t(
-                    'alerting.alert-rule-name-and-metric.message.must-enter-a-metric-name',
-                    'Must enter a metric name'
+                    'alerting.alert-rule-name-and-metric.message.metric-name-required',
+                    'Metric name is required'
                   ),
                 },
                 pattern: recordingRuleNameValidationPattern(RuleFormType.grafanaRecording),

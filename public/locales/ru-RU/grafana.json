@@ -1456,11 +1456,24 @@
     },
     "gma-rule-list": {
       "alert-rules": {
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
       "datasources": "",
+      "folder-row": {
+        "collapse": "",
+        "count-description": "",
+        "count-tooltip": "",
+        "count-unavailable": "",
+        "expand": ""
+      },
       "interval": "",
       "recorded-metric": {
         "records": "",
@@ -1471,7 +1484,7 @@
         "rules-error": "",
         "search-issues": ""
       },
-      "result-count": {
+      "rule-count": {
         "alert-rules_one": "",
         "alert-rules_few": "",
         "alert-rules_many": "",
@@ -1483,6 +1496,7 @@
       },
       "search": {
         "default-policy-unavailable": "",
+        "folders-disabled": "",
         "help": {
           "contact-point": "",
           "dashboard": "",
@@ -1531,6 +1545,9 @@
         "renamed-value": "",
         "unavailable-tokens": "",
         "unclosed-quote": "",
+        "view": "",
+        "view-folders": "",
+        "view-list": "",
         "wildcard-in-text": ""
       },
       "shared": {
@@ -7399,11 +7416,15 @@
       "modal": {
         "cancel": "Отмена",
         "discard": "Отменить",
+        "keep-working": "",
         "save": "Сохранить",
+        "stop-and-leave": "",
         "text": {
+          "leave-composer": "",
           "save-changes-question": "Сохранить изменения?"
         },
         "title": {
+          "leave-composer": "",
           "unsaved-changes": "Несохраненные изменения"
         }
       },
@@ -9185,6 +9206,12 @@
         "inspect-value": "Проверить значение",
         "show-details": "Показать сведения",
         "view-log-line": "Просмотр строки журнала"
+      },
+      "error-attribute": {
+        "error-fields-label": "",
+        "error-fields-tooltip": "",
+        "stacktrace-label": "",
+        "stacktrace-tooltip": ""
       },
       "loki-time-sort-tooltip": "Сортировка этого столбца меняет лишь порядок отображения результатов. Чтобы изменить порядок сортировки запроса по времени, используйте элемент управления «Сортировка» справа."
     },
@@ -11263,6 +11290,7 @@
         "add-all": "Добавить все отображаемые значения в фильтр",
         "blanks": "(Пустые ячейки)",
         "button": "Фильтр {{name}}",
+        "include-missing": "",
         "operator": {
           "contains": "Содержит",
           "equals": "Равно",
@@ -11287,6 +11315,7 @@
       "filter-popup-heading": "Фильтр по значениям:",
       "filter-popup-input-placeholder": "Значения фильтра",
       "filter-popup-match-case": "С учетом регистра",
+      "filter-popup-row-count": "",
       "footer": {
         "reducer": {
           "count": "Количество"
@@ -11303,6 +11332,18 @@
       "no-rows": "Нет строк",
       "no-values-label": "Нет значений",
       "pagination-summary": "Строки: {{itemsRangeStart}} - {{displayedEnd}} из {{numRows}}",
+      "range": {
+        "apply": "",
+        "empty": "",
+        "end": "",
+        "histogram": "",
+        "invalid": "",
+        "label": "",
+        "maximum": "",
+        "minimum": "",
+        "start": "",
+        "unbounded": ""
+      },
       "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "Сортировать по столбцу {{column}}",
@@ -12522,6 +12563,7 @@
     },
     "log-details": {
       "error": {
+        "diagnose-with-assistant": "",
         "error-details": ""
       }
     },
@@ -17230,6 +17272,10 @@
     },
     "namespace-unavailable": "Проверьте пространство имен перед отправкой запросов или перезагрузите страницу и повторите попытку.",
     "namespace-unavailable-title": "Не удалось загрузить пространство имен",
+    "router-fixtures": {
+      "clear": "",
+      "title": ""
+    },
     "router-nav": {
       "api-docs": "",
       "manifests": "",
@@ -17246,7 +17292,6 @@
       "failures-description": "",
       "filter-placeholder": "",
       "filtered": "",
-      "groups": "",
       "last-failed": "",
       "load-failures": "",
       "never": "",
@@ -17260,8 +17305,9 @@
       "requests-description": "",
       "shadowed": "",
       "shadowed-description": "",
-      "sources": "",
-      "stack-lookups": "",
+      "tab-groups": "",
+      "tab-lookups": "",
+      "tab-sources": "",
       "title": ""
     }
   },
