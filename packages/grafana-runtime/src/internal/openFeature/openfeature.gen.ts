@@ -116,6 +116,8 @@ export const FlagKeys = {
   DashboardUndoRedo: "dashboardUndoRedo",
   /** Enables dashboard validator app to run compatibility checks between a dashboard and data source */
   DashboardValidatorApp: "dashboardValidatorApp",
+  /** Stops an open dashboard from subscribing to Grafana Live save notices */
+  DashboardsDisableLiveSaveNotices: "dashboards.disableLiveSaveNotices",
   /** Disables public dashboards for the stack */
   DashboardsDisablePublicDashboards: "dashboards.disablePublicDashboards",
   /** Expands a horizontal repeat copied from a library panel definition to the full grid width, matching how horizontal repeats on dashboard panels are laid out */
@@ -963,6 +965,17 @@ export const useFlagDashboardUndoRedo = (options?: ReactFlagEvaluationOptions): 
  */
 export const useFlagDashboardValidatorApp = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboardValidatorApp", false, options).value;
+};
+
+/**
+ * Stops an open dashboard from subscribing to Grafana Live save notices
+ *
+ * **Details:**
+ * - flag key: `dashboards.disableLiveSaveNotices`
+ * - default value: `false`
+ */
+export const useFlagDashboardsDisableLiveSaveNotices = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboards.disableLiveSaveNotices", false, options).value;
 };
 
 /**

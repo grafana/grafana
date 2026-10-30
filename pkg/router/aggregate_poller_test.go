@@ -314,7 +314,7 @@ func TestFirstEmptyPollWakesTheRouter(t *testing.T) {
 		_, _ = w.Write([]byte(`{"key": "k", "plugins": []}`))
 	}))
 	defer emptyManifests.Close()
-	manifests, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, emptyManifests.URL, nil, emptyManifests.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+	manifests, err := newPluginManifestsTarget(sourcePlugins, emptyManifests.URL, nil, emptyManifests.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
 	require.NoError(t, err)
 
 	for name, poll := range map[string]func(context.Context, chan<- struct{}){

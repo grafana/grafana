@@ -1,0 +1,66 @@
+{
+  "body": {
+    "dashboard": {
+      "annotations": null,
+      "cursorSync": "",
+      "elements": null,
+      "id": "<id>",
+      "layout": {
+        "kind": "GridLayout",
+        "spec": {
+          "items": []
+        }
+      },
+      "links": null,
+      "preload": false,
+      "tags": [
+        "golden"
+      ],
+      "timeSettings": {
+        "autoRefresh": "",
+        "autoRefreshIntervals": null,
+        "fiscalYearStartMonth": 0,
+        "from": "",
+        "hideTimepicker": false,
+        "to": ""
+      },
+      "title": "Golden v2",
+      "uid": "golden-v2",
+      "variables": null,
+      "version": 1
+    },
+    "meta": {
+      "annotationsPermissions": {
+        "dashboard": {
+          "canAdd": true,
+          "canDelete": true,
+          "canEdit": true
+        }
+      },
+      "apiVersion": "v2beta1",
+      "canAdmin": true,
+      "canDelete": true,
+      "canEdit": true,
+      "canSave": true,
+      "canStar": true,
+      "created": "<timestamp>",
+      "createdBy": "grafana-admin",
+      "expires": "0001-01-01T00:00:00Z",
+      "folderId": 0,
+      "folderTitle": "General",
+      "folderUid": "",
+      "folderUrl": "",
+      "hasAcl": false,
+      "isFolder": false,
+      "provisioned": false,
+      "provisionedExternalId": "",
+      "slug": "golden-v2",
+      "type": "db",
+      "updated": "<timestamp>",
+      "updatedBy": "grafana-admin",
+      "url": "/d/golden-v2/golden-v2",
+      "version": 1
+    }
+  },
+  "status": 200
+}

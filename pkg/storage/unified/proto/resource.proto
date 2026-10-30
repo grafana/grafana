@@ -362,6 +362,18 @@ message BulkRequest {
 
   // Hint that a new version will be written on-top of this
   string folder = 4;
+
+  // Declares blobs for this resource after same-stream v1 acknowledgement.
+  // Value excludes these named entries and all inline data. Send each upload's
+  // chunks in declaration order before the next resource. The server inserts
+  // authoritative references and publishes only after every upload succeeds.
+  // Invalid for DELETED actions or together with blob_chunk.
+  repeated BulkBlobUpload blob_uploads = 5;
+
+  // Continuation of the pending resource's current blob. A chunk frame sets
+  // only this field; key, action, value, folder, and blob_uploads must be unset.
+  // Never forwarded to resource persistence or counted as a resource write.
+  BulkBlobChunk blob_chunk = 6;
 }
 
 message BulkResponse {
@@ -537,6 +549,30 @@ message DailyStat {
   string day = 1;
   // metric -> count for that day, e.g. {"views": 12, "queries": 40}.
   map<string, uint64> metrics = 2;
+}
+
+message BulkBlobUpload {
+  // Named slot at blobs.<name> in the pending resource.
+  string name = 1;
+
+  string content_type = 2;
+
+  // Expected decoded byte count, > 0 and <= 64 MiB. Must match received bytes;
+  // persisted size and other reference metadata come from the upload result.
+  int64 size = 3;
+}
+
+message BulkBlobChunk {
+  // Must match the current upload declaration. Uploads cannot be interleaved.
+  string name = 1;
+
+  // Raw bytes, not base64. Non-final chunks contain 1..64 KiB.
+  bytes value = 2;
+
+  // Explicit EOF marker: value must be empty. The server waits for successful
+  // upload completion before accepting the next blob or publishing the resource.
+  // Stream EOF or a new resource before this marker is an incomplete upload.
+  bool last = 3;
 }
 
 

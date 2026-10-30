@@ -44,6 +44,7 @@ declare module "@openfeature/core" {
     | "dashboards.libraryPanelRepeatFromServerResolution"
     | "dashboards.publicDashboardBadgeFromApi"
     | "dashboards.libraryPanelHorizontalRepeatFullWidth"
+    | "dashboards.disableLiveSaveNotices"
     | "disableScriptedDashboards"
     | "dashboard.notebooks"
     | "grafana.dashboardComposer"

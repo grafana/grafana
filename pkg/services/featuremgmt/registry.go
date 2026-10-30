@@ -680,6 +680,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "dashboards.disableLiveSaveNotices",
+			Description: "Stops an open dashboard from subscribing to Grafana Live save notices",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaBackendServicesSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "disableScriptedDashboards",
 			Description: "Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.",
 			Stage:       FeatureStageDeprecated,
@@ -1928,15 +1936,6 @@ var (
 			Owner:       grafanaDashboardsSquad,
 			Generate:    Generate{LegacyFrontend: true, React: true},
 			Expression:  "false",
-		},
-		{
-			Name:         "alertmanagerRemoteSecondaryWithRemoteState",
-			Description:  "Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:        "favoriteDatasources",
