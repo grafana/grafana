@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"iter"
 	"strings"
 	"testing"
@@ -31,7 +32,7 @@ func saveWatchEvent(t *testing.T, backend *kvStorageBackend, event Event) {
 }
 
 func TestKVWatchSeedBoundaries(t *testing.T) {
-	for _, count := range []int{0, 3, 700} {
+	for _, count := range []int{0, 1, 3, 500, 700} {
 		t.Run(fmt.Sprint(count), func(t *testing.T) {
 			store := &countingKV{KV: setupBadgerKV(t)}
 			backend := setupTestStorageBackend(t, withKV(store))
@@ -66,6 +67,101 @@ func TestKVWatchSeedBoundaries(t *testing.T) {
 			}}, func(ListIterator) error { return nil })
 			require.NoError(t, err)
 			require.GreaterOrEqual(t, listRV, seed.initialCacheFloor, "fresh idle LIST must not repeatedly expire")
+		})
+	}
+}
+
+type watchSeedReadProbeKV struct {
+	KV
+	readers []*watchSeedReadProbe
+}
+
+func (k *watchSeedReadProbeKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+	values := k.KV.BatchGet(ctx, section, keys)
+	if section != dataSection {
+		return values
+	}
+	return func(yield func(kv.KeyValue, error) bool) {
+		for obj, err := range values {
+			if err == nil {
+				reader := &watchSeedReadProbe{ReadCloser: obj.Value}
+				k.readers = append(k.readers, reader)
+				obj.Value = reader
+			}
+			if !yield(obj, err) {
+				return
+			}
+		}
+	}
+}
+
+type watchSeedReadProbe struct {
+	io.ReadCloser
+	bytesRead int64
+	closed    bool
+}
+
+func (r *watchSeedReadProbe) Read(p []byte) (int, error) {
+	n, err := r.ReadCloser.Read(p)
+	r.bytesRead += int64(n)
+	return n, err
+}
+
+func (r *watchSeedReadProbe) Close() error {
+	r.closed = true
+	return r.ReadCloser.Close()
+}
+
+func TestKVWatchSeedByteLimit(t *testing.T) {
+	payload, err := io.ReadAll(strings.NewReader(strings.Repeat("x", 1024)))
+	require.NoError(t, err)
+	payloadCapacity := int64(cap(payload))
+	for _, tc := range []struct {
+		name         string
+		payloadBytes int
+		budgetBytes  int64
+		wantReaders  int
+		wantEvents   int
+	}{
+		{name: "empty budget", payloadBytes: 1024, budgetBytes: 0},
+		{name: "single payload exceeds budget", payloadBytes: 4096, budgetBytes: 1024, wantReaders: 1},
+		{name: "combined payloads exceed budget", payloadBytes: 1024, budgetBytes: 2000, wantReaders: 2, wantEvents: 1},
+		{name: "exact budget", payloadBytes: 1024, budgetBytes: 2 * payloadCapacity, wantReaders: 2, wantEvents: 2},
+		{name: "fits", payloadBytes: 1024, budgetBytes: 6144, wantReaders: 3, wantEvents: 3},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := &watchSeedReadProbeKV{KV: setupBadgerKV(t)}
+			backend := setupTestStorageBackend(t, withKV(store))
+			base := snowflakeFromTime(time.Now().Add(-time.Hour))
+			for i := range 3 {
+				event := durableWatchEvent(base + int64(i))
+				require.NoError(t, backend.dataStore.Save(t.Context(), eventDataKey(event), strings.NewReader(strings.Repeat("x", tc.payloadBytes))))
+				require.NoError(t, backend.eventStore.Save(t.Context(), event))
+			}
+			maxBytes := tc.budgetBytes
+			seed, err := backend.loadWatchSeedWithLimit(t.Context(), base+2, maxBytes)
+			require.NoError(t, err)
+			require.Len(t, seed.events, tc.wantEvents)
+			require.Equal(t, base+2, seed.highestRV)
+			var sizeBytes int64
+			for i, event := range seed.events {
+				sizeBytes += event.sizeBytes()
+				require.Len(t, event.Value, tc.payloadBytes)
+				require.Equal(t, base+int64(3-tc.wantEvents+i), event.ResourceVersion, "retain the newest events in replay order")
+			}
+			require.LessOrEqual(t, sizeBytes, maxBytes)
+			if tc.wantEvents == 0 {
+				require.Equal(t, base+2, seed.initialCacheFloor)
+			} else {
+				require.Equal(t, seed.events[0].ResourceVersion, seed.initialCacheFloor)
+			}
+			require.Len(t, store.readers, tc.wantReaders)
+			var bytesRead int64
+			for _, reader := range store.readers {
+				require.True(t, reader.closed)
+				bytesRead += reader.bytesRead
+			}
+			require.Equal(t, int64(tc.wantReaders*tc.payloadBytes), bytesRead, "payloads are read in full before checking the cache budget")
 		})
 	}
 }

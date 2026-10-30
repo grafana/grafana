@@ -177,6 +177,9 @@ const (
 	// defaultCacheSize is the ring buffer size for replaying recent events to new subscribers.
 	defaultCacheSize = 500
 
+	// defaultCacheMaxBytes bounds retained event memory independently of event count.
+	defaultCacheMaxBytes = 100 * 1024 * 1024
+
 	// watchChanSize is the per-subscriber event delivery channel buffer.
 	// Must be larger than defaultCacheSize so that readInto never fills the
 	// channel completely, leaving headroom for new events.

@@ -481,6 +481,67 @@ func (b *legacyWatchBackend) WatchWriteEvents(context.Context) (<-chan *WrittenE
 	return b.events, nil
 }
 
+type unseededKVWatchBackend struct {
+	KVBackend
+	events chan *WrittenEvent
+}
+
+func (b *unseededKVWatchBackend) WatchWriteEvents(context.Context) (<-chan *WrittenEvent, error) {
+	return b.events, nil
+}
+
+func (b *unseededKVWatchBackend) Stop(context.Context) error { return nil }
+
+func TestUnseededWatchByteEvictionExpiresResume(t *testing.T) {
+	for _, backendType := range []string{"legacy", "kv"} {
+		t.Run(backendType, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				base := snowflakeFromTime(advanceBookmarkClock().Add(-time.Hour))
+				events := make(chan *WrittenEvent)
+				defer close(events)
+				var backend StorageBackend = &legacyWatchBackend{events: events}
+				if backendType == "kv" {
+					backend = &unseededKVWatchBackend{events: events}
+				}
+				srv := initWatchServerWithSeededWatches(t, backend, false)
+				require.Nil(t, srv.watchStartup)
+				synctest.Wait()
+				b := srv.broadcaster.(*broadcaster[*WrittenEvent])
+				first, second := bookmarkWrittenEvent(base+1), bookmarkWrittenEvent(base+2)
+				b.cache.maxBytes = first.sizeBytes()
+				events <- first
+				events <- second
+				synctest.Wait()
+				require.Equal(t, 1, b.cache.events.len)
+
+				ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
+				defer cancel()
+				req := bookmarkWatchRequest()
+				req.Since = base
+				stream := newMockWatchServer(ctx)
+				done := make(chan error, 1)
+				go func() { done <- srv.Watch(req, stream) }()
+				synctest.Wait()
+				select {
+				case err := <-done:
+					require.True(t, IsResourceVersionExpired(err), "expected expiry, got %v", err)
+				default:
+					t.Fatal("watch did not reject the evicted cursor")
+				}
+				require.Empty(t, stream.events)
+
+				req.Since = first.ResourceVersion
+				go func() { done <- srv.Watch(req, stream) }()
+				synctest.Wait()
+				require.Len(t, stream.events, 1)
+				require.Equal(t, second.ResourceVersion, (<-stream.events).Resource.Version)
+				cancel()
+				require.NoError(t, <-done)
+			})
+		})
+	}
+}
+
 func TestLegacyWatchHasNoStartupFloor(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		backend := &legacyWatchBackend{events: make(chan *WrittenEvent)}
