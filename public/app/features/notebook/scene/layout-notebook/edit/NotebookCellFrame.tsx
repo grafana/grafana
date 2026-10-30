@@ -180,6 +180,8 @@ export function NotebookCellFrame({
             frameRef.current = node;
           }}
           {...dragProvided.draggableProps}
+          // NOTEBOOK_CELL_KEY_ATTRIBUTE: Composer hit-tests and outlines cells by it.
+          data-notebook-cell-key={cell.state.key}
           tabIndex={isEditing && !isEditorCell ? 0 : undefined}
           onKeyDown={!isEditorCell ? onFrameKeyDown : undefined}
           role={!isEditorCell ? 'group' : undefined}

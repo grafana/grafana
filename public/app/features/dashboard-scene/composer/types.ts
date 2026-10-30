@@ -12,11 +12,11 @@ import { type Spec as NotebookSpec } from 'app/features/notebook/types';
 export type ComposerDashboardSpec = DashboardV2Spec;
 
 /** What GET_NOTEBOOK_SPEC / APPLY_NOTEBOOK_SPEC use. */
-type ComposerNotebookSpec = NotebookSpec;
+export type ComposerNotebookSpec = NotebookSpec;
 
 /**
- * The document a session edits: a dashboard, or a notebook on its own route, `/notebooks/:uid`. Notebook
- * targets are refused for now.
+ * The document a session edits: a dashboard, or (behind `grafana.notebookComposer`) a notebook on its own
+ * route, `/notebooks/:uid`.
  */
 export interface ComposerTarget {
   resource: ComposerResource;

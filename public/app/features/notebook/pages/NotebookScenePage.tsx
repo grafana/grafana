@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import { useEffect } from 'react';
 import { useMatch, useParams } from 'react-router-dom-v5-compat';
@@ -6,12 +7,14 @@ import { PageLayoutType } from '@grafana/data';
 import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Box } from '@grafana/ui';
+import { Box, useStyles2 } from '@grafana/ui';
+import { useExtensionSidebarContext } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 
 import { NotebookAnalytics } from '../analytics/main';
+import { setRouteNotebook } from '../composer/notebookComposerAccess';
 import { useTrackNotebookVisitForFeedback } from '../feedback/useTrackNotebookVisitForFeedback';
 import { NotebookPrompt } from '../scene/NotebookPrompt';
 import { type NotebookScene } from '../scene/NotebookScene';
@@ -96,8 +99,15 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
   const { title, uid } = scene.useState();
   // Varies with the mega menu, and this page is what knows there is an app header at all.
   const headerHeight = useChromeHeaderHeight();
+  const styles = useStyles2(getStyles);
+  // Only while the extension sidebar floats over the page (the floating flag, or a Composer session):
+  // docked, it sits beside the page and the controls row keeps ranking above it, as it always has.
+  const { isOpen: sidebarOpen, presentation } = useExtensionSidebarContext();
+  const sidebarFloats = sidebarOpen && presentation === 'floating';
 
   useEffect(() => scene.activate(), [scene]);
+  // Composer starts only on the notebook its route draws: see canEnterNotebookComposer.
+  useEffect(() => setRouteNotebook(scene), [scene]);
   useTrackNotebookVisitForFeedback();
 
   // A blank notebook that has just been created by its first save: point the url at it instead of the
@@ -116,7 +126,12 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
   const pageNav = { text: title };
 
   return (
-    <Page navId="notebooks" pageNav={pageNav} layout={PageLayoutType.Custom}>
+    <Page
+      navId="notebooks"
+      pageNav={pageNav}
+      layout={PageLayoutType.Custom}
+      className={sidebarFloats ? styles.belowFloatingSidebar : undefined}
+    >
       {/* The page scrolls on `body`, so undo and redo make the scrollbar come and go and the content
           would shift by its width. Only this surface: the embedded view and the PDF capture do not
           use this page. */}
@@ -132,3 +147,14 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
 }
 
 export default NotebookScenePage;
+
+const getStyles = () => ({
+  // A stacking context, as the dashboard's container makes one (DashboardSidebarSplitter): above the mega
+  // menu (z-index 2), so the time picker's inline popover opens over it, and below app chrome. The sticky
+  // controls row (z-index sidemenu) and the Composer overlay then rank within the notebook only, under the
+  // app header and the floating extension sidebar (navbarFixed + 1).
+  belowFloatingSidebar: css({
+    position: 'relative',
+    zIndex: 3,
+  }),
+});

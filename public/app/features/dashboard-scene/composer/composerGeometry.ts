@@ -44,7 +44,7 @@ export function findCaptureRoot(rect: Box, container: HTMLElement, selector = PA
 }
 
 /** Whether `bounds` and `rect` (both viewport coordinates) overlap with a positive area. */
-function overlaps(bounds: DOMRect, rect: Box): boolean {
+export function overlaps(bounds: DOMRect, rect: Box): boolean {
   return (
     Math.min(rect.left + rect.width, bounds.right) > Math.max(rect.left, bounds.left) &&
     Math.min(rect.top + rect.height, bounds.bottom) > Math.max(rect.top, bounds.top)

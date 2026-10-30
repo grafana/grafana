@@ -788,6 +788,25 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
       stopPanel();
     });
 
+    it('asks about the change before reading the server for a conflict', async () => {
+      const { scene, client, stopPanel } = await sceneWithPendingChange();
+      // Someone else saved too: the view-only question still comes first, without a server read.
+      scene.autosave.setState({ savedResourceVersion: '5' });
+      jest.mocked(readNotebookResourceVersion).mockResolvedValue('6');
+
+      const result = await client.execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: { spec: notebookSpec({ elements: { only: markdownCell('## After') }, cells: ['only'] }) },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('latency-panel');
+      expect(result.data).toBeUndefined();
+      expect(readNotebookResourceVersion).not.toHaveBeenCalled();
+
+      stopPanel();
+    });
+
     it('saves the reader’s look when told to keep it', async () => {
       const { client, stopPanel } = await sceneWithPendingChange();
 

@@ -13554,6 +13554,14 @@
         "tooltip-default": "Lock panel time range"
       }
     },
+    "composer": {
+      "cell-code": "Code",
+      "cell-text": "Text",
+      "cell-visualization": "Visualization",
+      "hint-cell": "Click to comment on a cell, or drag to draw a region",
+      "toggle": "Composer",
+      "toggle-enter": "Point at cells and regions and ask Assistant to change them"
+    },
     "errors": {
       "entity": "Notebook",
       "failed-to-load": "Failed to load notebook",

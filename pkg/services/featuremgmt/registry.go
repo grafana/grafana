@@ -712,6 +712,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.notebookComposer",
+			Description: "Enables Composer for editing notebooks with Grafana Assistant",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "grafana.savedDashboardViews",
 			Description: "Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state",
 			Stage:       FeatureStageExperimental,

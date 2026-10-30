@@ -13,3 +13,9 @@ export const NOTEBOOK_CELL_FRAME_CLASS = 'notebook-cell-frame';
  * needs this, because the menu renders in a portal and the control is then not `:focus-within`.
  */
 export const NOTEBOOK_CELL_CONTROLS_PINNED_CLASS = 'notebook-cell-controls-pinned';
+
+/**
+ * The cell frame's DOM attribute carrying the cell's scene key, which Composer hit-tests and outlines.
+ * Hand-written like the classes above: Composer reaches it with a selector.
+ */
+export const NOTEBOOK_CELL_KEY_ATTRIBUTE = 'data-notebook-cell-key';

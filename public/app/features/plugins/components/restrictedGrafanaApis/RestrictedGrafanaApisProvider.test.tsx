@@ -38,6 +38,16 @@ describe('RestrictedGrafanaApisProvider composer', () => {
     expect(result.current).not.toHaveProperty('dashboardComposer');
   });
 
+  it('exposes Composer with only the notebook flag on, while dashboards stay unsupported', () => {
+    setTestFlags({ 'grafana.notebookComposer': true, 'dashboard.notebooks': true });
+    const { result } = renderRestrictedApis('grafana-assistant-app');
+    expect(result.current.composer?.version).toBe(1);
+    expect(result.current.composer?.canEnter({ resource: 'notebook', uid: 'nowhere' })).toEqual({
+      ok: false,
+      reason: 'no_document',
+    });
+  });
+
   it('withholds Composer from other plugins', () => {
     setTestFlags({ [COMPOSER_FLAG]: true });
     const { result } = renderRestrictedApis('another-app');
