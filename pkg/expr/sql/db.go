@@ -118,7 +118,7 @@ func (db *DB) QueryFrames(ctx context.Context, tracer tracing.Tracer, name strin
 		if ctx.Err() != nil {
 			return nil, contextErr(ctx.Err())
 		}
-		return nil, err
+		return nil, MakeGMSError(name, err)
 	}
 
 	f.Name = name

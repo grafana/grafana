@@ -117,6 +117,32 @@ func TestSQLService(t *testing.T) {
 		require.ErrorAs(t, rsp.Responses["B"].Error, &sqlErr)
 		require.Equal(t, sql.ErrCategoryGeneralGMSError, sqlErr.Category())
 	})
+
+	t.Run("output conversion error reaches the SQL expression", func(t *testing.T) {
+		// A string field with bytes that are not valid UTF-8, as some data sources
+		// send for binary columns. The engine can't convert it to its utf8mb4 text type.
+		badResp := map[string]backend.DataResponse{
+			"A": {Frames: data.Frames{data.NewFrame("",
+				data.NewField("id", nil, []int64{1}),
+				data.NewField("bin", nil, []string{"\x01\x02\xff"}),
+			)}},
+		}
+		reg := prometheus.NewPedanticRegistry()
+		s, req := newMockQueryServiceWithMetricsRegistry(badResp, newABSQLQueries(`SELECT * FROM A`), reg)
+		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+
+		pl, err := s.BuildPipeline(t.Context(), req)
+		require.NoError(t, err)
+
+		rsp, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+		require.NoError(t, err)
+
+		var sqlErr *sql.ErrorWithCategory
+		require.ErrorAs(t, rsp.Responses["B"].Error, &sqlErr)
+		require.Equal(t, sql.ErrCategoryGeneralGMSError, sqlErr.Category())
+
+		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", sql.ErrCategoryGeneralGMSError))
+	})
 }
 
 func TestSQLServiceErrors(t *testing.T) {
