@@ -974,6 +974,8 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/services/PreferencesService.ts @grafana/grafana-frontend-platform
 /public/app/core/services/ResponseQueue* @grafana/grafana-frontend-platform
 /public/app/core/services/StateManagerBase.ts @grafana/grafana-frontend-platform
+/public/app/core/services/StPodReadyService* @grafana/grafana-frontend-platform
+/public/app/core/services/stPodReadyConstants* @grafana/grafana-frontend-platform
 /public/app/core/services/theme* @grafana/grafana-frontend-platform
 /public/app/core/services/userPermissions* @grafana/grafana-frontend-navigation @grafana/identity-access-team
 /public/app/core/specs/backend_srv.test.ts @grafana/grafana-frontend-platform
@@ -1170,7 +1172,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 scripts/build-msi.sh @grafana/grafana-operator-experience-squad
 scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/ci-* @grafana/grafana-backend-services-squad
-/scripts/pack-npm-packages.mjs @grafana/grafana-backend-services-squad @grafana/grafana-frontend-platform
 /scripts/publish-npm-packages.sh @grafana/grafana-backend-services-squad @grafana/grafana-frontend-platform
 /scripts/validate-npm-packages.sh @grafana/grafana-backend-services-squad @grafana/grafana-frontend-platform
 /scripts/ci-frontend-metrics.sh @grafana/grafana-frontend-platform @grafana/grafana-frontend-platform

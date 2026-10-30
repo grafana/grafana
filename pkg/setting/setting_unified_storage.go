@@ -297,6 +297,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// dashboards and folders already covered by their own indexes.
 	cfg.GlobalSearchIndexEnabled = section.Key("global_search_index_enabled").MustBool(false)
 	cfg.GlobalSearchIndexStartupBuild = section.Key("global_search_index_startup_build").MustBool(false)
+	// Well under the 24h a closed index's files stay on disk
+	// (disk_index_cleanup_unopened_grace_period), so the next search can still reopen them.
+	cfg.GlobalSearchIndexIdleTimeout = section.Key("global_search_index_idle_timeout").MustDuration(6 * time.Hour)
 	cfg.SprinklesApiServer = section.Key("sprinkles_api_server").String()
 	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(10000)
 	cfg.CACertPath = section.Key("ca_cert_path").String()
@@ -355,12 +358,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	// use sqlkv (resource/sqlkv) instead of the sql backend (sql/backend) as the StorageServer
 	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(false)
-	// enable sqlkv backwards compatibility mode with sql/backend
-	cfg.EnableSQLKVCompatibilityMode = section.Key("enable_sqlkv_compatibility_mode").MustBool(true)
-	// log every call reaching an exported method of the legacy sql/backend
-	// (temporary smoke-test instrumentation; default off)
-	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
-	cfg.LogSQLBackendCalls = section.Key("log_sql_backend_calls").MustBool(false)
 	// TTL for per-resource write leases; 0 uses the backend default (10s).
 	cfg.KVLeaseTTL = section.Key("kv_lease_ttl").MustDuration(0)
 	if cfg.KVLeaseTTL > 0 && cfg.KVLeaseTTL < minimumKVLeaseTTL {

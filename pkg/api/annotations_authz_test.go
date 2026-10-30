@@ -124,8 +124,13 @@ func TestAPI_AnnotationScopeResolutionErrors(t *testing.T) {
 				status:      http.StatusForbidden,
 			},
 			{
-				name:   "no permissions denies without resolving",
-				status: http.StatusForbidden,
+				name:   "missing annotation with only shared with me permission",
+				status: http.StatusNotFound,
+			},
+			{
+				name:      "existing annotation with only shared with me permission",
+				dashboard: "dashboard",
+				status:    http.StatusForbidden,
 			},
 		} {
 			mode := "local/"
@@ -137,17 +142,16 @@ func TestAPI_AnnotationScopeResolutionErrors(t *testing.T) {
 					tc.method = http.MethodGet
 				}
 				repo := &annotations.FakeAnnotationsRepo{}
-				if len(tc.permissions) > 0 {
-					var items []*annotations.ItemDTO
-					if tc.dashboard != "" {
-						items = []*annotations.ItemDTO{{ID: 123, DashboardUID: &tc.dashboard}}
-					}
-					repo.On("Find", mock.Anything, mock.MatchedBy(func(query *annotations.ItemQuery) bool {
-						return query.OrgID == 1 && query.AnnotationID == 123
-					})).Return(items, tc.lookupErr).Once()
+				var items []*annotations.ItemDTO
+				if tc.dashboard != "" {
+					items = []*annotations.ItemDTO{{ID: 123, DashboardUID: &tc.dashboard}}
 				}
+				repo.On("Find", mock.Anything, mock.MatchedBy(func(query *annotations.ItemQuery) bool {
+					return query.OrgID == 1 && query.AnnotationID == 123
+				})).Return(items, tc.lookupErr).Once()
 				server, _ := annotationScopeTestServer(t, repo, tc.permissions, legacy)
-				caller := authedUserWithPermissions(1, 1, tc.permissions)
+				effectivePermissions := append([]accesscontrol.Permission{acimpl.SharedWithMeFolderPermission}, tc.permissions...)
+				caller := authedUserWithPermissions(1, 1, effectivePermissions)
 				caller.UserUID = "u-1"
 				res, err := server.SendJSON(webtest.RequestWithSignedInUser(server.NewRequest(tc.method, "/api/annotations/123", nil), caller))
 				require.NoError(t, err)
@@ -211,17 +215,13 @@ func annotationLegacyAccessControl(t *testing.T, ac *acimpl.AccessControl, permi
 
 type annotationLegacyEvaluator struct {
 	accesscontrol.AccessControl
-	client *legacyclient.LegacyClient
+	client legacyclient.LegacyAccessClient
 }
 
 func (a *annotationLegacyEvaluator) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
-	expression, err := accesscontrol.ToLegacyExpression(evaluator)
-	if err != nil {
-		return false, err
-	}
-	return a.client.LegacyCheck(ctx, &authzextv1.LegacyCheckRequest{
-		Namespace:  types.OrgNamespaceFormatter(user.GetOrgID()),
-		Subject:    user.GetUID(),
-		Expression: expression,
+	return a.client.LegacyCheck(ctx, legacyclient.LegacyCheckRequest{
+		Namespace: types.OrgNamespaceFormatter(user.GetOrgID()),
+		Subject:   user.GetUID(),
+		Evaluator: evaluator,
 	})
 }

@@ -302,7 +302,7 @@ The sampled path already exists: when per-item authorization runs after ranking,
 - **400 Bad Request**: the request could not be understood. Malformed JSON, an unknown top-level key, an empty body, more than one JSON object, a missing namespace, or `namespace=*`. Searching across namespaces is not supported.
 - **405 Method Not Allowed**: the kind is served, but has no search endpoint. It opted out, or it is cluster-scoped. No route is mounted, so the router answers before any search code runs.
 - **404 Not Found**: the resource itself is not served by this apiserver.
-- **503 Service Unavailable** (`/trash` only): the index does not keep deleted documents because indexing them is disabled, or because the index still needs to be rebuilt after indexing was enabled.
+- **503 Service Unavailable**: for `/trash`, the index does not keep deleted documents because indexing them is disabled, or because the index still needs to be rebuilt after indexing was enabled. For the global search, the namespace's index is still being built; retry shortly.
 
 ## 7. Authorization
 
@@ -317,6 +317,7 @@ Individual results are then filtered per item using the same access client that 
 
 - **Unified storage only**, and a kind whose data has not migrated returns an empty result rather than an error. This is the most common reason search appears not to work, see the prerequisite at the top.
 - **The first request for a kind may wait for an index build.** Indexes are created on demand.
+- **The global search index of a namespace is closed after some hours without a search**, and opened again by the next one. That search can wait a few seconds or get 503, and it can miss changes made while the index was closed, until the index catches up with storage.
 - **Trash is limited to dashboards today**, so other kinds get `/search` only. A kind has to be accepted by `resource.TrashSearchAllowed` to get `/trash`. That policy grows as the access rule trash uses is checked against more kinds. Once your kind is allowed, `trash: false` opts back out.
 - **Sorting** works on any indexed field that declares `sort`. A field that does not declare it is rejected with 422.
 - **A field without `retrieve` cannot be returned**, even if you can filter on it.

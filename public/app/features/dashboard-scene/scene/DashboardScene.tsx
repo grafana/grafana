@@ -399,6 +399,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (isComposerMode(this.state)) {
       return this._assistantWrites > 0;
     }
+    if (dashboardModesEnabled() && getDashboardMode(this.state) === 'agent' && this._assistantWrites === 0) {
+      return this.setDashboardMode('edit', 'manual_change');
+    }
     return !dashboardModesEnabled() || getDashboardMode(this.state) !== 'view' || this._assistantWrites > 0;
   }
   private _sidebarBeforeViewing?: Pick<DashboardSidebarState, 'openPane' | 'selectionContext'>;
@@ -706,9 +709,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.startEditPeriod(source);
     }
     let mode = this.state.mode ?? 'edit';
-    if (source === 'assistant' && currentMode === 'view') {
+    if (source === 'assistant' && currentMode === 'view' && !dashboardComposerEnabled()) {
+      mode = 'agent';
+    } else if (source === 'assistant' && currentMode === 'view') {
       // Stays in Viewing while Assistant takes the request, so leaving Composer returns to Viewing.
       mode = trigger === 'assistant' && this.requestComposerForAssistantEdit() ? 'view' : 'edit';
+    } else if (source === 'user' && currentMode === 'agent') {
+      mode = 'edit';
     }
     if (!this.state.isEditing) {
       this._editSessionSource = source;
@@ -900,10 +907,39 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   /**
    * Leaves Composer for Viewing or Editing (the mode picker). The session ends as on its own exit, which
-   * also stops a running turn. Editing takes the path manual-edit entry points use; Viewing first asks to
-   * save or discard unsaved changes, and Cancel stays in Composer with the session running.
+   * also stops a running turn, so while one runs it first asks to stop it: Keep working stays in Composer,
+   * and Stop and leave ends the session before any save prompt, so Cancel there stays out of Composer.
+   * Editing takes the path manual-edit entry points use; Viewing first asks to save or discard unsaved
+   * changes, and Cancel stays in Composer with the session running.
    */
   public switchFromComposer(mode: 'view' | 'edit') {
+    // Leaving ends the session, and the Assistant stops the turn it is running then. While one runs (the
+    // Assistant pauses the session for it), ask first rather than stop it by surprise.
+    if (this.getComposerSession()?.getOverlayState().paused) {
+      appEvents.publish(
+        new ShowConfirmModalEvent({
+          title: t('dashboard-scene.dashboard-scene.modal.title.leave-composer', 'Leave Composer?'),
+          text: t(
+            'dashboard-scene.dashboard-scene.modal.text.leave-composer',
+            'Assistant is still making changes to this dashboard. Leaving Composer stops it. Changes it has already made stay.'
+          ),
+          yesText: t('dashboard-scene.dashboard-scene.modal.stop-and-leave', 'Stop and leave'),
+          noText: t('dashboard-scene.dashboard-scene.modal.keep-working', 'Keep working'),
+          onConfirm: () => {
+            // Stop now: the session ends here, so the turn stops whatever the save prompt for Viewing then does.
+            this.exitComposerMode();
+            // The confirm modal hides itself after onConfirm returns, which would also close that save
+            // prompt, so continue once it has closed.
+            queueMicrotask(() => this.leaveComposerFor(mode));
+          },
+        })
+      );
+      return;
+    }
+    this.leaveComposerFor(mode);
+  }
+
+  private leaveComposerFor(mode: 'view' | 'edit') {
     if (mode === 'edit') {
       this.openFullEditor();
       return;

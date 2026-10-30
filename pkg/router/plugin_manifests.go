@@ -27,12 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/baasbridge" //nolint:staticcheck // deprecated shim, used until HTTP operators move to gRPC
 )
 
-// Key prefixes for the backends of each plugin manifests source.
-const (
-	pluginsKeyPrefix = "managed"
-	coreKeyPrefix    = "core"
-)
-
 // pluginManifestsTarget discovers remote plugin deployments and builds their API handlers.
 type pluginManifestsTarget struct {
 	polledSource
@@ -88,7 +82,6 @@ type pluginConnectionKey struct {
 }
 
 func newPluginManifestsTarget(
-	keyPrefix string,
 	source string,
 	rawURL string,
 	patterns []*regexp.Regexp,
@@ -110,7 +103,7 @@ func newPluginManifestsTarget(
 	deps.AccessControl = pluginManifestAccessControl{}
 	t := &pluginManifestsTarget{
 		pluginConnections: newPluginConnections(source, grpcConfig, deps.MetricsRegister),
-		keyPrefix:         keyPrefix,
+		keyPrefix:         source,
 		deps:              deps,
 		url:               rawURL,
 		client:            client,
@@ -127,10 +120,10 @@ func newPluginManifestsTarget(
 // validatePluginID checks an entry's plugin ID before any backend is built for
 // it. Tokens the router sends a plugin name its ID as their audience, so the ID
 // must have the shape of an app plugin ID, as local plugins must. Core APIs may
-// have no ID; their tokens name their API group instead.
+// have no ID, and so may bridge entries; their tokens name their API group instead.
 func (t *pluginManifestsTarget) validatePluginID(id string) error {
 	if id == "" {
-		if t.source == sourceCoreURL {
+		if t.source == sourceCore || t.source == sourceBridge {
 			return nil
 		}
 		return errors.New("missing plugin ID")
@@ -166,7 +159,8 @@ func (t *pluginManifestsTarget) fetch(ctx context.Context) ([]Backend, int, erro
 
 			// A connection records its calls under one plugin_id. A core_url
 			// entry may have no plugin ID, so its connection is labeled by its
-			// API group instead, which keeps core APIs on one host apart.
+			// API group instead, which keeps core APIs on one host apart. The
+			// backend's requests are recorded under the same ID.
 			connectionID := entry.Definition.JSONData.ID
 			if connectionID == "" {
 				connectionID = manifest.Group
@@ -183,6 +177,7 @@ func (t *pluginManifestsTarget) fetch(ctx context.Context) ([]Backend, int, erro
 				continue
 			}
 
+			backend.metricsID = connectionID
 			backend.info = entry.Definition.JSONData.Info
 			// Without a host, the deployment has no backend to call.
 			backend.hasBackend = entry.Host != ""

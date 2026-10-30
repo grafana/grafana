@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useToggle, useScroll } from 'react-use';
 
@@ -10,6 +9,7 @@ import { type DataQuery } from '@grafana/schema';
 import { useStyles2, PanelContainer, ScrollContainer } from '@grafana/ui';
 
 import { SignalExplorer } from '../SignalExplorer/SignalExplorer';
+import { useSignalExplorerFlag } from '../SignalExplorer/experiment';
 import { type ExprTextKind } from '../utils/prometheus';
 
 import { type ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
@@ -67,6 +67,7 @@ export const CONTENT_OUTLINE_LOCAL_STORAGE_KEYS = {
 
 export function ContentOutline({
   scroller,
+  exploreId,
   panelId,
   showSignalExplorer = false,
   queries = [],
@@ -75,6 +76,7 @@ export function ContentOutline({
   onAddToQuery,
 }: {
   scroller: HTMLElement | undefined;
+  exploreId: string;
   panelId: string;
   showSignalExplorer?: boolean;
   queries?: DataQuery[];
@@ -90,10 +92,7 @@ export function ContentOutline({
   const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(
     store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded, true)
   );
-  const metricsSidebarEnabled = useBooleanFlagValue('grafana.exploreMetricsSidebar', false, {
-    suspendUntilReady: false,
-    suspendWhileReconciling: false,
-  });
+  const metricsSidebarEnabled = useSignalExplorerFlag(exploreId, showSignalExplorer);
   const signalExplorerVisible = metricsSidebarEnabled && showSignalExplorer && contentOutlineExpanded;
   const styles = useStyles2(getStyles, contentOutlineExpanded, signalExplorerVisible);
   // Explore only has its scroll container after the first render, and `useScroll` subscribes in an
