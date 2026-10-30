@@ -389,7 +389,7 @@ export class GrafanaApp {
       setMegaMenuOpenHook(useMegaMenuOpenInternal);
       setChromeHeaderHeightHook(useChromeHeaderHeight);
 
-      if (config.featureToggles.crashDetection) {
+      if (getFeatureFlagClient().getBooleanValue(FlagKeys.CrashDetection, false)) {
         initializeCrashDetection();
       }
 
