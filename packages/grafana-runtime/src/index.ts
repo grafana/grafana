@@ -74,6 +74,7 @@ export { usePluginUserStorage } from './utils/userStorage';
 export { useFavoriteDatasources, type FavoriteDatasources } from './utils/useFavoriteDatasources';
 export { FolderPicker, setFolderPicker } from './components/FolderPicker';
 export { ManagedBadge, type ManagedBadgeProps } from './provisioning/ManagedBadge';
+export { PullRequestBanner, type PullRequestBannerProps } from './provisioning/PullRequestBanner';
 export {
   type CorrelationsService,
   type CorrelationData,
