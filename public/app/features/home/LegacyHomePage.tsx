@@ -2,7 +2,7 @@ import { Suspense, useCallback, useEffect, useRef } from 'react';
 
 import { PluginExtensionPoints } from '@grafana/data';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
-import { Stack } from '@grafana/ui';
+import { ErrorBoundaryAlert, Stack } from '@grafana/ui';
 import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { useStoredString } from 'app/core/hooks/useStored';
 
@@ -97,12 +97,28 @@ export function LegacyHomePage() {
                 components: assistantComponents,
                 pluginId: ASSISTANT_PLUGIN_ID,
               })}
-              <DashboardTabs extensionComponents={tabComponents} />
+              <ErrorBoundaryAlert boundaryName="home-dashboard-tabs">
+                <DashboardTabs extensionComponents={tabComponents} />
+              </ErrorBoundaryAlert>
             </HomeSection>
 
             <HomeGrid columns={2} gap={2}>
-              {alertsData.enabled && <FiringAlertsCard data={alertsData} />}
-              {incidentsData.enabled ? <IncidentsCard data={incidentsData} /> : config.newsFeedEnabled && <NewsCard />}
+              {alertsData.enabled && (
+                <ErrorBoundaryAlert boundaryName="home-alerts-incidents">
+                  <FiringAlertsCard data={alertsData} />
+                </ErrorBoundaryAlert>
+              )}
+              {incidentsData.enabled ? (
+                <ErrorBoundaryAlert boundaryName="home-alerts-incidents">
+                  <IncidentsCard data={incidentsData} />
+                </ErrorBoundaryAlert>
+              ) : (
+                config.newsFeedEnabled && (
+                  <ErrorBoundaryAlert boundaryName="home-alerts-incidents">
+                    <NewsCard />
+                  </ErrorBoundaryAlert>
+                )
+              )}
             </HomeGrid>
             {extraContent}
           </Stack>

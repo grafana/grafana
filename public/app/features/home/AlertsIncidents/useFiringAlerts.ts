@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { getBackendSrv } from '@grafana/runtime';
+import { useFlagGrafanaMultiTenantHomepage } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/filters/severity';
@@ -69,9 +70,6 @@ function resolveMatchers(scope: FilterScope, userTeamNames: string[]) {
   }
 }
 
-// Exported so the homepage skeleton reserves the card slot using the same gate.
-export const canViewFiringAlerts = () => contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead);
-
 export type FiringAlertsData = ReturnType<typeof useFiringAlerts>;
 
 /**
@@ -82,16 +80,26 @@ export type FiringAlertsData = ReturnType<typeof useFiringAlerts>;
  * filter of the user's own teams.
  */
 export function useFiringAlerts(selectedFilter: FilterSelection = '') {
-  // The hook gates its own fetching so it's safe to call unconditionally,
-  // e.g. from the tabs component when only incidents are available.
-  const enabled = canViewFiringAlerts();
+  // The hook gates its own fetching so it's safe to call unconditionally, e.g. from the tabs component
+  // when only incidents are available. Alert instances (/api/alertmanager) and user teams (/api/user/teams)
+  // have no /apis equivalent yet, so on a multi-tenant stack the view has nothing to show and is hidden
+  // like a missing plugin.
+  const multiTenant = useFlagGrafanaMultiTenantHomepage();
+  const enabled = !multiTenant && contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead);
 
-  // Fetched once — teams change at login granularity. A failed fetch leaves teams
-  // undefined, so the card intentionally shows all org alerts unfiltered.
+  // Fetched once — teams change at login granularity. The lookup only scopes the default
+  // filter: any failure (endpoint missing on multi-tenant, 5xx, network) or a non-JSON body
+  // falls back to all org alerts, silently.
   const shouldLoadTeams = enabled && contextSrv.isSignedIn;
 
   const { value: teams, loading: teamsLoading } = useAsync(
-    () => (shouldLoadTeams ? getBackendSrv().get<Team[]>('/api/user/teams') : Promise.resolve<Team[]>([])),
+    () =>
+      shouldLoadTeams
+        ? getBackendSrv()
+            .get<Team[]>('/api/user/teams', undefined, undefined, { showErrorAlert: false })
+            .then((result) => (Array.isArray(result) ? result : []))
+            .catch((): Team[] => [])
+        : Promise.resolve<Team[]>([]),
     [shouldLoadTeams]
   );
 

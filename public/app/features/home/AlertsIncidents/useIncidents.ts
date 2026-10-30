@@ -2,6 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
 import { isFetchError } from '@grafana/runtime';
+import { useFlagGrafanaMultiTenantHomepage } from '@grafana/runtime/internal';
 import { incidentsApi } from 'app/features/alerting/unified/api/incidentsApi';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
@@ -20,7 +21,12 @@ export type IncidentsData = ReturnType<typeof useIncidents>;
  * value; the default scope fetches every active incident.
  */
 export function useIncidents(selectedFilter: FilterSelection = '') {
-  const { installed, loading: pluginLoading, settings } = usePluginBridge(SupportedPlugin.Irm);
+  const { installed, loading: probeLoading, settings } = usePluginBridge(SupportedPlugin.Irm);
+  // IRM's incidents API is reached through the legacy /api/plugins resources path only; the gate goes
+  // once the frontend calls the /apis app resources route instead.
+  const unavailable = useFlagGrafanaMultiTenantHomepage();
+  const pluginLoading = !unavailable && probeLoading;
+  const available = !unavailable && !!installed;
   const pluginId = SupportedPlugin.Irm;
 
   // Gate incident links like DeclareIncidentButton/InstanceDetailsDrawerTitle do: a user without
@@ -37,7 +43,7 @@ export function useIncidents(selectedFilter: FilterSelection = '') {
 
   // Skipped until the plugin probe confirms availability, so the hook can run unconditionally
   // in callers that render even when incidents are unavailable.
-  const skip = pluginLoading || !installed;
+  const skip = pluginLoading || !available;
   // currentData is undefined only until the current filter's list arrives, so a filter switch
   // shows the skeleton while a homepage revisit (refetchOnMountOrArgChange) shows the cached list.
   const { currentData, isFetching, error, refetch } = incidentsApi.useGetActiveIncidentsQuery(
@@ -77,7 +83,7 @@ export function useIncidents(selectedFilter: FilterSelection = '') {
     hasIncidents,
     // Echoed back so the card can scope its empty message to the picked value.
     filterScope,
-    enabled: pluginLoading ? undefined : !!installed,
+    enabled: pluginLoading ? undefined : available,
     loading,
     error: loadError,
     refetch,

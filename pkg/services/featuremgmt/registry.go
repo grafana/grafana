@@ -3074,6 +3074,15 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:         "grafana.multiTenantHomepage",
+			Description:  "Hides homepage sections whose only backend is a legacy /api endpoint (firing alerts, IRM incidents and on-call, plugin offers) and skips the legacy datasource health probe, for multi-tenant stacks that do not serve /api",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendNavigation,
+			HideFromDocs: true,
+			Generate:     Generate{React: true},
+			Expression:   "false",
+		},
+		{
 			Name:            "kubernetesReporting",
 			Description:     "Add support for Kubernetes reporting new APIs",
 			Stage:           FeatureStageExperimental,
