@@ -1539,9 +1539,6 @@ importers:
       marked-mangle:
         specifier: ^1.1.12
         version: 1.1.14(marked@16.3.0)
-      moment-timezone:
-        specifier: ^0.6.0
-        version: 0.6.4
       ol:
         specifier: ^10.7.0
         version: 10.7.0
@@ -12112,9 +12109,6 @@ packages:
     resolution: {integrity: sha512-Rs5FVpVcBYRHPLuhHOjgbRhosaQYLtEo3JIeDIbmNo7mSssi1CTzwMh8v36gAzpbzLGXI9wB/yHh+5+3fY1QVw==}
     engines: {node: '>=18'}
     hasBin: true
-
-  moment-timezone@0.6.4:
-    resolution: {integrity: sha512-JHUK8Mgheach4uMQmIV/pIfrv0ubPiDCPPqc7Mi604je1UblP6Gbm+FfV+Oh88KP03rZqGCZG3t0wmpfdlDv+w==}
 
   moment@2.31.0:
     resolution: {integrity: sha512-0acOTfMiWOheYS4eoWb80yYMb/JLvVv9SHbs2PehaDzfUG0Bw855SKyk0IKTnPGa5+U2bmi3W68l1+sGLX/pvw==}
@@ -26138,10 +26132,6 @@ snapshots:
       glob: 7.2.3
       requirejs: 2.3.8
       requirejs-config-file: 4.0.0
-
-  moment-timezone@0.6.4:
-    dependencies:
-      moment: 2.31.0
 
   moment@2.31.0: {}
 
