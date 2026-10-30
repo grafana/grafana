@@ -73,12 +73,14 @@ describe('resourceKinds registry', () => {
   it('carries a list-cache invalidation action only for kinds committed through the shared drawer', () => {
     // Playlists commit via SaveProvisionedResourceDrawer and must refresh their list afterwards;
     // dashboards/folders use their own forms, so they don't carry an invalidation action. Looked up
-    // via getKindInfoByResource so the widened ResourceKindInfo type exposes the optional field (the
+    // via getKindInfoByGroupKind so the widened ResourceKindInfo type exposes the optional field (the
     // `as const` registry entries narrow it away on kinds that omit it).
-    expect(getKindInfoByResource('playlists')?.invalidateListTags?.()).toMatchObject({ type: expect.any(String) });
-    expect(getKindInfoByResource('folders')?.invalidateListTags).toBeUndefined();
-    expect(getKindInfoByResource('dashboards')?.invalidateListTags).toBeUndefined();
-    expect(getKindInfoByResource('librarypanels')?.invalidateListTags).toBeUndefined();
+    expect(getKindInfoByGroupKind(undefined, 'Playlist')?.invalidateListTags?.()).toMatchObject({
+      type: expect.any(String),
+    });
+    expect(getKindInfoByGroupKind(undefined, 'Folder')?.invalidateListTags).toBeUndefined();
+    expect(getKindInfoByGroupKind(undefined, 'Dashboard')?.invalidateListTags).toBeUndefined();
+    expect(getKindInfoByGroupKind(undefined, 'LibraryPanel')?.invalidateListTags).toBeUndefined();
   });
 });
 
