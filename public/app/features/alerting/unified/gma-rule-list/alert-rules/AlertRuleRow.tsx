@@ -47,7 +47,7 @@ export function AlertRuleRow({ searchHit, folderPath, rule }: AlertRuleRowProps)
         )
       }
       right={
-        <Stack alignItems="center" gap={0.5} wrap={false}>
+        <Stack alignItems="center" gap={1.5} wrap={false}>
           {searchHit.interval && <RuleInterval interval={searchHit.interval} />}
           <AlertRuleActions searchHit={searchHit} rule={rule} />
         </Stack>
