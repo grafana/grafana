@@ -58,8 +58,8 @@ export function getRulePermissions(rule: Rule | undefined, isLoading = false): R
   const canWrite = getAnnotation(rule, K8sAnnotations.AccessWrite) === 'true';
   const canDelete = getAnnotation(rule, K8sAnnotations.AccessDelete) === 'true';
   const isProvisioned = isK8sEntityProvisioned(rule);
-  const isPlugin = !!getRulePluginOrigin({ labels: rule.spec?.labels });
-  const isManaged = !!rule.metadata?.annotations?.['grafana.app/managedBy'];
+  const isPlugin = Boolean(getRulePluginOrigin({ labels: rule.spec?.labels }));
+  const isManaged = Boolean(rule.metadata?.annotations?.['grafana.app/managedBy']);
   const restricted = isProvisioned || isPlugin || isManaged;
 
   return {
