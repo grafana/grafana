@@ -404,8 +404,9 @@ func (m *mockSearchBackend) SnapshotCountThreshold() int64 {
 func (m *mockSearchBackend) RemoveExpiredTrash(context.Context) {}
 
 type buildIndexCall struct {
-	key  NamespacedResource
-	size int64
+	key            NamespacedResource
+	size           int64
+	lastImportTime time.Time
 }
 
 func (m *mockSearchBackend) LoadOpenIndexStats(_ time.Time, _ time.Duration) ([]ResourceStats, error) {
@@ -517,8 +518,9 @@ func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResour
 	// Determine if this is an empty index based on size
 	// Empty indexes are characterized by size == 0
 	m.buildIndexCalls = append(m.buildIndexCalls, buildIndexCall{
-		key:  key,
-		size: size,
+		key:            key,
+		size:           size,
+		lastImportTime: lastImportTime,
 	})
 
 	return index, nil
@@ -1779,6 +1781,24 @@ func TestCombineBuildRequests(t *testing.T) {
 			b:     rebuildRequest{minBuildTime: now.Add(-time.Hour)},
 			expOK: true,
 			exp:   rebuildRequest{minBuildTime: now.Add(2 * time.Hour)},
+		},
+		"use max import time": {
+			a:     rebuildRequest{lastImportTime: now},
+			b:     rebuildRequest{lastImportTime: now.Add(time.Hour)},
+			expOK: true,
+			exp:   rebuildRequest{lastImportTime: now.Add(time.Hour)},
+		},
+		"preserve nonzero import time": {
+			a:     rebuildRequest{},
+			b:     rebuildRequest{lastImportTime: now},
+			expOK: true,
+			exp:   rebuildRequest{lastImportTime: now},
+		},
+		"merge build and import times independently": {
+			a:     rebuildRequest{minBuildTime: now.Add(time.Hour), lastImportTime: now},
+			b:     rebuildRequest{minBuildTime: now, lastImportTime: now.Add(time.Hour)},
+			expOK: true,
+			exp:   rebuildRequest{minBuildTime: now.Add(time.Hour), lastImportTime: now.Add(time.Hour)},
 		},
 		"use max version": {
 			a:     rebuildRequest{minBuildVersion: semver.MustParse("12.10.99")},
@@ -3182,6 +3202,7 @@ func TestRebuildIndexConcurrentRebuildsForSameKeyAreDeduplicated(t *testing.T) {
 	firstReq := rebuildRequest{
 		NamespacedResource: key,
 		minBuildTime:       time.Now().Add(-1 * time.Hour),
+		lastImportTime:     time.Now().Add(-time.Hour),
 		completeChannels:   []chan<- struct{}{firstDone},
 	}
 	firstReturned := make(chan struct{})
@@ -3218,6 +3239,7 @@ func TestRebuildIndexConcurrentRebuildsForSameKeyAreDeduplicated(t *testing.T) {
 		req := rebuildRequest{
 			NamespacedResource: key,
 			minBuildTime:       mbt,
+			lastImportTime:     mbt,
 			completeChannels:   []chan<- struct{}{deferredChans[i]},
 		}
 		returned := make(chan struct{})
@@ -3281,9 +3303,25 @@ func TestRebuildIndexConcurrentRebuildsForSameKeyAreDeduplicated(t *testing.T) {
 		"follow-up should carry the strictest minBuildTime; got %v want %v",
 		req.minBuildTime, latestMinBuildTime)
 
+	require.Equal(t, latestMinBuildTime, req.lastImportTime)
+
 	// Still only one BuildIndex call: the deferred follow-up has been
 	// enqueued but no worker is running in this test to pick it up.
 	require.Equal(t, int32(1), search.buildCalls.Load())
+
+	req, err = support.rebuildQueue.Next(t.Context())
+	require.NoError(t, err)
+	support.rebuildIndex(t.Context(), req)
+	require.Len(t, search.buildIndexCalls, 2)
+	require.Equal(t, firstReq.lastImportTime, search.buildIndexCalls[0].lastImportTime)
+	require.Equal(t, latestMinBuildTime, search.buildIndexCalls[1].lastImportTime)
+	for _, ch := range deferredChans {
+		select {
+		case <-ch:
+		default:
+			t.Fatal("completion channel should be closed after the follow-up rebuild")
+		}
+	}
 }
 
 // TestRebuildIndexNoFollowUpWhenNotInFlight verifies the happy path: a single
@@ -3310,9 +3348,11 @@ func TestRebuildIndexNoFollowUpWhenNotInFlight(t *testing.T) {
 	require.NoError(t, err)
 
 	done := make(chan struct{})
+	lastImportTime := time.Now().Add(-30 * time.Minute)
 	support.rebuildIndex(t.Context(), rebuildRequest{
 		NamespacedResource: key,
 		minBuildTime:       time.Now().Add(-1 * time.Hour),
+		lastImportTime:     lastImportTime,
 		completeChannels:   []chan<- struct{}{done},
 	})
 
@@ -3329,6 +3369,7 @@ func TestRebuildIndexNoFollowUpWhenNotInFlight(t *testing.T) {
 	require.Equal(t, 0, support.rebuildQueue.Len(), "no follow-up should be re-enqueued")
 	require.Len(t, search.buildIndexCalls, 1)
 	require.Equal(t, int64(50), search.buildIndexCalls[0].size)
+	require.Equal(t, lastImportTime, search.buildIndexCalls[0].lastImportTime)
 	require.Zero(t, storage.statsCalls.Load(), "rebuild should use the current index doc count instead of GetResourceStats")
 }
 
