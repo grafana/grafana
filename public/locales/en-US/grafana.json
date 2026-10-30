@@ -522,6 +522,7 @@
         "save": "Save"
       },
       "error-title": "Failed to save alert rule",
+      "form-errors": "There are errors in the form. Please correct them and try again!",
       "no-group-success": "Rule added successfully"
     },
     "alert-rule-name-and-metric": {
@@ -530,8 +531,8 @@
       "label-metric": "Metric",
       "label-name": "Name",
       "message": {
-        "must-enter-a-metric-name": "Must enter a metric name",
-        "must-enter-a-name": "Must enter a name",
+        "metric-name-required": "Metric name is required",
+        "name-required": "Name is required",
         "please-select-a-data-source": "Please select a data source"
       },
       "metric-aria-label-metric": "metric",
@@ -1314,7 +1315,7 @@
     "folder-selector": {
       "description-select-folder": "Select a folder to store your rule in.",
       "message": {
-        "select-a-folder": "Select a folder"
+        "folder-required": "Folder is required"
       }
     },
     "folderAndGroup": {
@@ -1568,11 +1569,10 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "Loading groups...",
       "message": {
-        "must-be-a-positive-integer": "Must be a positive integer.",
-        "must-enter-a-group-name": "Must enter a group name"
+        "evaluation-group-required": "Evaluation group is required",
+        "must-be-a-positive-integer": "Must be a positive integer."
       },
       "missing-series-resolve-placeholder": "Default: 2",
-      "or": "or",
       "placeholder-select-an-evaluation-group": "Select an evaluation group...",
       "text-configure-no-data-and-error-handling": "Configure no data and error handling",
       "title-set-evaluation-behavior": "Set evaluation behavior"
@@ -2998,7 +2998,7 @@
           "alerting": "Turn on to pause evaluation for this alert rule.",
           "recording": "Turn on to pause evaluation for this recording rule."
         },
-        "select-folder-before": "Select a folder before setting evaluation group and interval",
+        "select-folder-first-tooltip": "Select a folder first",
         "ungroup-warning": "This action is irreversible. After you save, you will not be able to add it back to a group.",
         "ungroup-warning-title": "This will remove the alert rule from its group"
       },
