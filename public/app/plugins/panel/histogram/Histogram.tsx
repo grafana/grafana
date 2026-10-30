@@ -1,5 +1,5 @@
-import * as React from 'react';
-import uPlot, { type AlignedData } from 'uplot';
+import { type ReactNode, useMemo, useState } from 'react';
+import uPlot from 'uplot';
 
 import {
   type DataFrame,
@@ -20,13 +20,13 @@ import {
   ScaleOrientation,
 } from '@grafana/schema';
 import {
-  type Themeable2,
   UPlotConfigBuilder,
   UPlotChart,
   VizLayout,
   PlotLegend,
   measureText,
   UPLOT_AXIS_FONT_SIZE,
+  useTheme2,
 } from '@grafana/ui';
 import { getStackingGroups, preparePlotData2, shouldShowLegend } from '@grafana/ui/internal';
 
@@ -40,7 +40,7 @@ function incrRoundUp(num: number, incr: number) {
   return Math.ceil(num / incr) * incr;
 }
 
-export interface HistogramProps extends Themeable2 {
+export interface HistogramProps {
   options: Options; // used for diff
   alignedFrame: DataFrame; // This could take HistogramFields
   bucketCount?: number;
@@ -50,7 +50,7 @@ export interface HistogramProps extends Themeable2 {
   structureRev?: number; // a number that will change when the frames[] structure changes
   legend: VizLegendOptions;
   rawSeries?: DataFrame[];
-  children?: (builder: UPlotConfigBuilder, frame: DataFrame, xMinOnlyFrame: DataFrame) => React.ReactNode;
+  children?: (builder: UPlotConfigBuilder, frame: DataFrame, xMinOnlyFrame: DataFrame) => ReactNode;
 }
 
 export function getBucketSize(frame: DataFrame) {
@@ -182,12 +182,6 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
 
           return tickLabels.map((label, i) => (i % keepMod === 0 ? label : null));
         },
-    //incrs: () => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((mult) => mult * bucketSize),
-    //splits: config.xSplits,
-    //values: config.xValues,
-    //grid: false,
-    //ticks: false,
-    //gap: 15,
     theme,
   });
 
@@ -200,11 +194,6 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     isTime: false,
     placement: AxisPlacement.Left,
     formatValue: (v, decimals) => formattedValueToString(dispY!(v, decimals)),
-    //splits: config.xSplits,
-    //values: config.xValues,
-    //grid: false,
-    //ticks: false,
-    //gap: 15,
     theme,
   });
 
@@ -266,12 +255,10 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
       scaleKey,
       lineWidth: customConfig.lineWidth,
       lineColor: seriesColor,
-      //lineStyle: customConfig.lineStyle,
       fillOpacity: customConfig.fillOpacity,
       theme,
       colorMode,
       pathBuilder,
-      //pointsBuilder: config.drawPoints,
       show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: field.config.thresholds,
@@ -312,81 +299,60 @@ const preparePlotData = (builder: UPlotConfigBuilder, xMinOnlyFrame: DataFrame) 
   return preparePlotData2(xMinOnlyFrame, builder.getStackingGroups());
 };
 
-interface State {
-  alignedData: AlignedData;
-  alignedFrame: DataFrame;
-  config?: UPlotConfigBuilder;
-  xMinOnlyFrame: DataFrame;
-}
+export const Histogram = ({
+  options,
+  alignedFrame,
+  bucketCount,
+  bucketSize,
+  structureRev,
+  legend,
+  rawSeries,
+  width,
+  height,
+  children,
+}: HistogramProps) => {
+  const theme = useTheme2();
+  const [config, setConfig] = useState(() => prepConfig(alignedFrame, theme));
+  // the props the current config was built against
+  const [prev, setPrev] = useState({ alignedFrame, options, bucketCount, bucketSize, structureRev });
 
-export class Histogram extends React.Component<HistogramProps, State> {
-  constructor(props: HistogramProps) {
-    super(props);
-    this.state = this.prepState(props);
-  }
+  // adjust state during render (rather than in an effect) so uPlot never sees a stale config/data pair
+  let currentConfig = config;
+  if (alignedFrame !== prev.alignedFrame) {
+    const shouldReconfig =
+      bucketCount !== prev.bucketCount ||
+      bucketSize !== prev.bucketSize ||
+      options !== prev.options ||
+      structureRev !== prev.structureRev ||
+      !structureRev;
 
-  prepState(props: HistogramProps, withConfig = true): State {
-    const { alignedFrame } = props;
-
-    const config = withConfig ? prepConfig(alignedFrame, this.props.theme) : this.state.config!;
-    const xMinOnly = xMinOnlyFrame(alignedFrame);
-    const alignedData = preparePlotData(config, xMinOnly);
-
-    return {
-      alignedFrame,
-      alignedData,
-      config,
-      xMinOnlyFrame: xMinOnly,
-    };
-  }
-
-  renderLegend(config: UPlotConfigBuilder) {
-    const { legend } = this.props;
-
-    if (!config || !shouldShowLegend(legend)) {
-      return null;
-    }
-
-    const frames = this.props.options.combine ? [this.props.alignedFrame] : this.props.rawSeries!;
-
-    return <PlotLegend data={frames} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
-  }
-
-  componentDidUpdate(prevProps: HistogramProps) {
-    const { structureRev, alignedFrame, bucketSize, bucketCount } = this.props;
-
-    if (alignedFrame !== prevProps.alignedFrame) {
-      const shouldReconfig =
-        this.state.config == null ||
-        bucketCount !== prevProps.bucketCount ||
-        bucketSize !== prevProps.bucketSize ||
-        this.props.options !== prevProps.options ||
-        this.state.config === undefined ||
-        structureRev !== prevProps.structureRev ||
-        !structureRev;
-
-      const newState = this.prepState(this.props, shouldReconfig);
-
-      this.setState(newState);
+    setPrev({ alignedFrame, options, bucketCount, bucketSize, structureRev });
+    if (shouldReconfig) {
+      currentConfig = prepConfig(alignedFrame, theme);
+      setConfig(currentConfig);
     }
   }
 
-  render() {
-    const { width, height, children, alignedFrame } = this.props;
-    const { config } = this.state;
+  const xMinOnly = useMemo(() => xMinOnlyFrame(alignedFrame), [alignedFrame]);
+  const alignedData = useMemo(() => preparePlotData(currentConfig, xMinOnly), [currentConfig, xMinOnly]);
 
-    if (!config) {
-      return null;
-    }
+  const legendElement = shouldShowLegend(legend) ? (
+    <PlotLegend
+      data={options.combine ? [alignedFrame] : rawSeries!}
+      config={currentConfig}
+      maxHeight="35%"
+      maxWidth="60%"
+      {...legend}
+    />
+  ) : null;
 
-    return (
-      <VizLayout width={width} height={height} legend={this.renderLegend(config)}>
-        {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart config={this.state.config!} data={this.state.alignedData} width={vizWidth} height={vizHeight}>
-            {children ? children(config, alignedFrame, this.state.xMinOnlyFrame) : null}
-          </UPlotChart>
-        )}
-      </VizLayout>
-    );
-  }
-}
+  return (
+    <VizLayout width={width} height={height} legend={legendElement}>
+      {(vizWidth: number, vizHeight: number) => (
+        <UPlotChart config={currentConfig} data={alignedData} width={vizWidth} height={vizHeight}>
+          {children ? children(currentConfig, alignedFrame, xMinOnly) : null}
+        </UPlotChart>
+      )}
+    </VizLayout>
+  );
+};

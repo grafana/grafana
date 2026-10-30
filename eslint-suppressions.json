@@ -2785,11 +2785,6 @@
       "count": 14
     }
   },
-  "public/app/plugins/panel/histogram/Histogram.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/live/LiveChannelEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
