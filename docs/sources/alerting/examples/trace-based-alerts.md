@@ -278,17 +278,6 @@ A potential drawback of splitting queries is that each query runs separately. Th
 
 You can apply this traffic guardrail pattern to any alert rule.
 
-### Consider sampling {#consider-sampling}
-
-[Sampling](https://grafana.com/docs/tempo/latest/set-up-for-tracing/instrument-send/set-up-collector/tail-sampling/) is a technique used to reduce the amount of collected spans for cost-saving purposes. There are two main strategies which can be combined:
-
-- **Head sampling**: The decision to record or drop a span is made when the trace begins. The condition can be configured probabilistically (a percentage of traces) or by filtering out certain operations.
-- **Tail sampling**: The decision is made after the trace completes. This allows sampling more interesting operations, such as slow or failing requests.
-
-With **head sampling**, alerting on span metrics should be done with caution, since span metrics will represent only a subset of all traces.
-
-With **tail sampling**, it’s important to generate span metrics before a sampling decision is made. [Grafana Cloud Adaptive Traces](https://grafana.com/docs/grafana-cloud/adaptive-telemetry/adaptive-traces/) handle this automatically. With Alloy or the OpenTelemetry Collector, make sure the SpanMetrics connector runs before the filtering or [tail sampling processor](https://grafana.com/docs/alloy/latest/reference/components/otelcol/otelcol.processor.tail_sampling/).
-
 ## Using TraceQL
 
 TraceQL is a query language for searching and filtering traces in Grafana Tempo, which uses a syntax similar to `PromQL` and `LogQL`.
@@ -311,6 +300,8 @@ TraceQL isn't suitable for all scenarios. For example:
 
   {{< /admonition >}}
 
+### Detect slow span operations
+
 The following example demonstrates how to recreate the previous **alert rule that detected slow span operations** using TraceQL.
 
 Follow these steps to create the alert:
@@ -320,7 +311,7 @@ Follow these steps to create the alert:
 
    If you use Grafana Cloud, contact Support to enable TraceQL alerting.
 
-2. Configure the alert query
+1. Configure the alert query
 
    In your alert rule, select the **Tempo** data source, then convert the original PromQL query into the equivalent TraceQL query:
 
@@ -331,7 +322,7 @@ Follow these steps to create the alert:
 
    For a given service, this query calculates the **p95 latency** for all server spans, excluding errors, and groups them by span name.
 
-3. Configure the time range
+1. Configure the time range
 
    Currently, TraceQL alerting supports only range queries.
    To define the time window, set the query time range to **the last 10 minutes.**
@@ -340,19 +331,117 @@ Follow these steps to create the alert:
 
      {{< figure src="/media/docs/alerting/traceql-alert-configure-time-range.png" max-width="750px" alt="Time range configuration for TraceQL alert rule" >}}
 
-4. Add a reducer expression.
+1. Add a reducer expression.
 
    Range queries return time series data, not a single value. The alert rule must then **reduce** time series data to a single numeric value before comparing it against a threshold.
 
    Add a **Reduce** expression to convert the query results into a single value.
 
-5. Set the threshold condition.
+1. Set the threshold condition.
 
    Create a **Threshold** expression to fire when the p95 latency exceeds 2 seconds: **$B > 2**.
 
    {{< figure src="/media/docs/alerting/traceql-alert-configure-threshold.png" max-width="750px" alt="Alert rule configuration showing reducer and threshold expressions for TraceQL query" >}}
 
 This final alert detects when 95% of the server spans for a particular service (excluding errors) take longer than 2 seconds to complete, using raw trace data instead of span metrics.
+
+### Detect high error rate
+
+The following example demonstrates how to recreate the previous **alert rule that detected a high error rate** using TraceQL.
+
+{{< admonition type="note" >}}
+
+Calculating the error rate in a single TraceQL query requires Grafana Tempo v3.1 or higher, which supports arithmetic operations between TraceQL metrics queries.
+
+{{< /admonition >}}
+
+Follow these steps to create the alert:
+
+1. Enable TraceQL alerting
+   To use TraceQL in alerts, you must enable the [**`tempoAlerting`** feature flag in your Grafana configuration](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#feature_toggles).
+
+   If you use Grafana Cloud, contact Support to enable TraceQL alerting.
+
+1. Configure the alert query.
+
+   In your alert rule, select the **Tempo** data source, then enter the following TraceQL query:
+
+   ```traceql
+   ({status = error && kind = server} | rate() by (resource.service.name, name))
+   /
+   ({kind = server} | rate() by (resource.service.name, name))
+   ```
+
+   Here’s the query breakdown:
+   - `{status = error && kind = server} | rate()`
+     Calculates the per-second rate of server spans that ended in error.
+   - `{kind = server} | rate()`
+     Calculates the per-second rate of all server spans. Omitting the `status` filter includes every span, returning the total.
+   - `by (resource.service.name, name)`
+     Groups the results per service and operation, creating one alert instance for each `(service, operation)` combination. This is a [multidimensional alert](https://grafana.com/docs/grafana/latest/alerting/best-practices/multi-dimensional-alerts/) that applies to all services.
+   - `( … ) / ( … )`
+     Divides failed spans by total spans to calculate the error rate per operation. The result is a ratio between `0` and `1`, where `1` means all operations failed.
+
+   Operations without errors don't return a series, so they never trigger the alert.
+
+1. Configure the time range.
+
+   Set the query time range to **the last 10 minutes**, as TraceQL alerting supports only range queries.
+   - From: `now-10m`
+   - To: `now`
+
+1. Add a reducer expression.
+
+   Add a **Reduce** expression to convert the time series returned by the query into a single value per alert instance.
+
+1. Set the threshold condition.
+
+   Create a **Threshold** expression to fire when the error rate exceeds 20%: **$B > 0.2**.
+
+   {{< figure src="/media/docs/alerting/traceql-error-rate-alert-configure-threshold.png" max-width="750px" alt="Alert rule configuration showing reducer and threshold expressions for the TraceQL error rate query" >}}
+
+This final alert detects when more than 20% of the server spans for any service operation end in error, using raw trace data instead of span metrics.
+
+### Enable traffic guardrails
+
+The following addition demonstrates how to recreate the previous **traffic guardrail** condition using TraceQL.
+
+1. Add the traffic query and configure the time range to the last 10 minutes.
+
+   Add a second query, select the **Tempo** data source, and enter the following TraceQL query:
+
+   ```traceql
+   {kind = server} | count_over_time() by (resource.service.name, name)
+   ```
+
+   This query returns the number of server spans for each service and operation over the query time range. Both queries must group by the same labels.
+
+1. Add a **Reduce** expression for each TraceQL query:
+   - `TrafficPerSpan`: reduces the traffic query.
+   - `ErrorRate`: renames the expression for the error rate query.
+
+1. Set the alert condition.
+
+   Replace the **Threshold** expression with a **Math** expression that combines both conditions, and set it as the alert condition:
+
+   ```
+   $ErrorRate > 0.2 && $TrafficPerSpan > 300
+   ```
+
+The alert now fires when the **error rate exceeds 20%** and the operation **handles more than 300 requests** over the last 10 minutes.
+
+## Consider sampling {#consider-sampling}
+
+[Sampling](https://grafana.com/docs/tempo/latest/set-up-for-tracing/instrument-send/set-up-collector/tail-sampling/) is a technique used to reduce the amount of collected spans for cost-saving purposes. There are two main strategies which can be combined:
+
+- **Head sampling**: The decision to record or drop a span is made when the trace begins. The condition can be configured probabilistically (a percentage of traces) or by filtering out certain operations.
+- **Tail sampling**: The decision is made after the trace completes. This allows sampling more interesting operations, such as slow or failing requests.
+
+With **head sampling**, alerting on span metrics or TraceQL should be done with caution, since both represent only a subset of all traces.
+
+With **tail sampling**, it’s important to generate span metrics before a sampling decision is made. [Grafana Cloud Adaptive Traces](https://grafana.com/docs/grafana-cloud/adaptive-telemetry/adaptive-traces/) handle this automatically. With Alloy or the OpenTelemetry Collector, make sure the SpanMetrics connector runs before the filtering or [tail sampling processor](https://grafana.com/docs/alloy/latest/reference/components/otelcol/otelcol.processor.tail_sampling/).
+
+TraceQL queries only the traces stored in Tempo. When tail sampling keeps failing or slow traces, the stored traces over-represent errors and slow requests, so error rates and latency percentiles calculated with TraceQL appear higher than in your real traffic. If an alert must reflect all traffic, use span metrics generated before sampling.
 
 ## Additional resources
 
