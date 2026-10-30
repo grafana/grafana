@@ -12,6 +12,7 @@ import { useResourceStats } from './useResourceStats';
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryFilesQuery: jest.fn(),
   useGetResourceStatsQuery: jest.fn(),
+  useGetFrontendSettingsQuery: jest.fn(() => ({ data: undefined })),
 }));
 
 const mockUseGetResourceStatsQuery = useGetResourceStatsQuery as jest.MockedFunction<typeof useGetResourceStatsQuery>;

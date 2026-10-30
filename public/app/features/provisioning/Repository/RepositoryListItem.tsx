@@ -81,11 +81,11 @@ export function RepositoryListItem({ repository }: Props) {
             <Stack gap={1} direction="row" wrap>
               {status.stats.map((stat, index) => {
                 const info = getKindInfoByStat(stat);
-                const icon = info?.icon ?? 'file-alt';
-                const label = `${stat.count} ${stat.resource}`;
+                const icon = info.icon;
+                const label = `${stat.count} ${info.pluralLabel()}`;
                 // Known kinds link to where the repository's resources live; unknown
                 // kinds have no destination, so render a non-interactive badge.
-                const href = info ? getRepositoryRoute(info, repository) : undefined;
+                const href = info.listRoute ? getRepositoryRoute(info, repository) : undefined;
 
                 return href ? (
                   <LinkButton key={index} fill="outline" size="md" variant="secondary" icon={icon} href={href}>

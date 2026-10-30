@@ -43,12 +43,9 @@ interface ResourceListDeps {
  * the UI reads from instead of scattering per-kind knowledge across switch statements (item types,
  * icons, count labels, resource-ref unions, how to enumerate each kind).
  *
- * `as const` preserves the literal field types so the keys ({@link ResourceKindKey}) and tree labels
- * ({@link ResourceItemType}) are derived from this object: adding a kind is ONE entry here (plus, if
- * needed, enabling it on the backend so it appears in the settings endpoint's `availableResources`) —
- * no parallel unions to keep in sync. Entries are validated against {@link ResourceKindInfo} where
- * `allKindInfos` is built below; `as const` is used instead of `satisfies ResourceKindInfo` because
- * the interface references the derived types, which `satisfies` would make a circular reference.
+ * Adding a kind is ONE entry here (plus, if needed, enabling it on the backend so it appears in the
+ * settings endpoint's `availableResources`). Entries are validated against {@link ResourceKindInfo}
+ * where `allKindInfos` is built below.
  */
 export const resourceKindInfos = {
   folder: {
@@ -135,24 +132,7 @@ export const resourceKindInfos = {
 } as const;
 
 /**
- * Stable per-kind key (`folder`, `dashboard`, `playlist`, ...) used to identify a provisioning
- * resource kind across the UI: the commit-message noun, branch-name prefix, telemetry, the shared
- * edit-form fields, and each registry entry's own `key` all use this. Derived from the registry keys,
- * so a new kind only needs its registry entry.
- */
-export type ResourceKindKey = keyof typeof resourceKindInfos;
-
-/**
- * Tree-view labels for the provisioning *resource* kinds (`Folder`, `Dashboard`, ...), derived from
- * the registry's `itemType`s so the set stays in lockstep with the kinds above. The full tree
- * {@link ItemType} (these labels plus the `File` fallback) is assembled from this in `../types`, so a
- * new kind needs no edit there either.
- */
-export type ResourceItemType = (typeof resourceKindInfos)[ResourceKindKey]['itemType'];
-
-/**
- * Consumer-facing shape of a registry entry. `key`/`itemType` are typed as the derived unions, so a
- * {@link ResourceKindInfo} carries the kind's identity and tree label without a separate lookup.
+ * Consumer-facing shape of a registry entry, for core kinds and for kinds outside the registry.
  *
  * This is the single source of truth the UI reads from instead of scattering per-kind knowledge
  * across switch statements (item types, icons, count labels, resource-ref unions, how to enumerate
@@ -165,7 +145,7 @@ export interface ResourceKindInfo {
    * `dashboard`). The UI-facing resource type for commit messages, branch prefixes, telemetry and the
    * shared edit-form fields. A test asserts each entry's `key` matches its registry key.
    */
-  key: ResourceKindKey;
+  key: string;
   /**
    * Returns the localized singular noun for this kind, interpolated into UI copy such as the drawer
    * title (e.g. "Save provisioned {{resource}}"). It's a function rather than a string because i18n
@@ -186,7 +166,7 @@ export interface ResourceKindInfo {
   /** Plural resource name as reported by the API (`ResourceListItem.resource`), e.g. `dashboards`. */
   resource: string;
   /** Label shown for this kind in the combined files/resources tree. */
-  itemType: ResourceItemType;
+  itemType: string;
   /** Icon shown for this kind in the resource tree. Sourced from the search package's getIconForKind. */
   icon: IconName;
   /** Builds the in-app route to view a single resource of this kind, given its k8s name. */
@@ -224,7 +204,7 @@ export interface ResourceKindInfo {
 
 // Widening the `as const` registry to ResourceKindInfo[] here also validates every entry against the
 // interface — a missing or mis-typed field (e.g. an unknown `icon`) fails at this line rather than at
-// each call site. The literal `key`/`itemType` values stay the source of truth for the unions above.
+// each call site.
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
 /**
@@ -288,12 +268,47 @@ export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceK
  * identifies the kind even when kinds share a group, so we match on it first and
  * fall back to a group-only match for stats that omit the resource.
  */
-export function getKindInfoByStat(stat: { group?: string; resource?: string }): ResourceKindInfo | undefined {
+export function getKindInfoByStat(stat: { group?: string; resource?: string; kind?: string }): ResourceKindInfo {
+  return findKindInfoByStat(stat) ?? getDefaultKindInfo(stat);
+}
+
+function findKindInfoByStat(stat: { group?: string; resource?: string; kind?: string }): ResourceKindInfo | undefined {
   const byResource = allKindInfos.find((info) => info.resource === stat.resource);
+  if (stat.kind) {
+    return getKindInfoByGroupKind(stat.group, stat.kind) ?? byResource;
+  }
   if (byResource) {
     return byResource;
   }
   return getKindInfoByStatGroup(stat.group);
+}
+
+function getDefaultKindInfo(stat: { group?: string; resource?: string; kind?: string }): ResourceKindInfo {
+  const name = stat.kind || stat.resource || '';
+  return {
+    key: stat.resource ?? '',
+    getLabel: () => name,
+    pluralLabel: () => name,
+    group: stat.group ?? '',
+    kind: stat.kind ?? '',
+    resource: stat.resource ?? '',
+    itemType: name || 'File',
+    icon: 'file-alt',
+    listRoute: '',
+    folderScoped: false,
+    list: async () => [],
+    alwaysAvailable: false,
+  };
+}
+
+export function isProvisionableStat(
+  stat: { group?: string; resource?: string; kind?: string },
+  availableResources?: SupportedResource[]
+): boolean {
+  if (!availableResources) {
+    return Boolean(findKindInfoByStat(stat));
+  }
+  return availableResources.some((r) => r.group === stat.group && r.kind === stat.kind && !r.disabled);
 }
 
 /**
