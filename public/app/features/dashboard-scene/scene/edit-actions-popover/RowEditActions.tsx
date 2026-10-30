@@ -17,7 +17,7 @@ import {
 import { useEditActionsLayout } from './EditActionsLayoutContext';
 import { EditActionsPopover, useHoverPopoverSupported } from './EditActionsPopover';
 
-export function RowEditActions({ row }: { row: RowItem }) {
+function RowEditActions({ row }: { row: RowItem }) {
   const styles = useStyles2(getActionStyles);
   const isRepeated = isRepeatCloneOrChildOf(row);
   const onClickEdit = useCallback(() => {

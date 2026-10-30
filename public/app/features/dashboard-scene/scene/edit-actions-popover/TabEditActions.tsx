@@ -17,7 +17,7 @@ import {
 import { useEditActionsLayout } from './EditActionsLayoutContext';
 import { EditActionsPopover, useHoverPopoverSupported } from './EditActionsPopover';
 
-export function TabEditActions({ tab }: { tab: TabItem }) {
+function TabEditActions({ tab }: { tab: TabItem }) {
   const styles = useStyles2(getActionStyles);
   const isRepeated = isRepeatCloneOrChildOf(tab);
   const onClickEdit = useCallback(() => {
