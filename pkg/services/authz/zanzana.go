@@ -94,7 +94,7 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Serv
 		authzv1.RegisterAuthzServiceServer(channel, zanzanaServer)
 		authzextv1.RegisterAuthzExtentionServiceServer(channel, zanzanaServer)
 
-		client, err := zClient.New(channel, reg)
+		client, err := zClient.New(channel, reg, zClient.WithUserPermissionsTimeout(cfg.ZanzanaClient.CallTimeout))
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
 		}
