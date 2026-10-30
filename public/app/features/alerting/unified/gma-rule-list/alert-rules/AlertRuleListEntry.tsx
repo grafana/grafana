@@ -2,6 +2,7 @@ import { useGetAlertRuleQuery } from '@grafana/api-clients/rtkq/rules.alerting/v
 
 import { useFolderPath } from '../folder-browsing/folderLookups';
 
+import { AlertRuleActions } from './AlertRuleActions';
 import { AlertRuleRow } from './AlertRuleRow';
 import { type AlertRuleSearchHit } from './alertRuleSearchHit';
 
@@ -16,5 +17,12 @@ export function AlertRuleListEntry({ searchHit, showFolderPath }: AlertRuleListE
   const folderPath = useFolderPath(showFolderPath ? searchHit.folderUid : undefined);
   const { data: fullRule } = useGetAlertRuleQuery({ name: searchHit.uid });
 
-  return <AlertRuleRow searchHit={searchHit} folderPath={folderPath} rule={fullRule} />;
+  return (
+    <AlertRuleRow
+      searchHit={searchHit}
+      folderPath={folderPath}
+      rule={fullRule}
+      actions={<AlertRuleActions searchHit={searchHit} rule={fullRule} />}
+    />
+  );
 }
