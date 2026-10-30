@@ -910,3 +910,18 @@ func TestQOSMaxConcurrentPerTenant(t *testing.T) {
 		})
 	}
 }
+
+func TestUnifiedStorageConfigResolvesAppPluginSettingsWildcard(t *testing.T) {
+	cfg := &Cfg{UnifiedStorage: map[string]UnifiedStorageConfig{
+		AppPluginSettingsWildcard:          {DualWriterMode: 1},
+		"app.explicit-app":                 {DualWriterMode: 3},
+		"dashboards.dashboard.grafana.app": {DualWriterMode: 5},
+	}}
+
+	require.EqualValues(t, 1, cfg.UnifiedStorageConfig("app.wildcard-app").DualWriterMode, "a plugin without its own entry takes the wildcard")
+	require.EqualValues(t, 3, cfg.UnifiedStorageConfig("app.explicit-app").DualWriterMode, "an explicit entry wins over the wildcard")
+	require.EqualValues(t, 5, cfg.UnifiedStorageConfig("dashboards.dashboard.grafana.app").DualWriterMode)
+	require.Zero(t, cfg.UnifiedStorageConfig("playlists.playlist.grafana.app").DualWriterMode, "the wildcard only applies to app plugin settings")
+	require.Zero(t, cfg.UnifiedStorageConfig("app.not-a-plugin").DualWriterMode, "the wildcard only matches *-app")
+	require.Empty(t, cfg.UnifiedStorage["app.wildcard-app"], "resolving must not write to the shared map")
+}

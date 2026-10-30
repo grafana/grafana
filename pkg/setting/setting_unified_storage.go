@@ -567,12 +567,30 @@ func (cfg *Cfg) UnifiedStorageType() string {
 	return defaultStorageType
 }
 
-// UnifiedStorageConfig returns the UnifiedStorageConfig for a resource.
+// AppPluginSettingsWildcard is a config key that applies to all app plugin settings
+// resources when no plugin-specific override exists. Configure it as:
+//
+//	[unified_storage.app.*-app]
+//	dualWriterMode = 1 // or 5
+const AppPluginSettingsWildcard = "app.*-app"
+
+// UnifiedStorageConfig returns the UnifiedStorageConfig for a resource. An app plugin's
+// settings resource ("app.<plugin-id>") without its own entry takes the dual writer mode
+// of AppPluginSettingsWildcard. Plugins can load after startup, so this resolves the
+// wildcard on read instead of writing an entry for each plugin into the shared map.
 func (cfg *Cfg) UnifiedStorageConfig(resource string) UnifiedStorageConfig {
 	if cfg.UnifiedStorage == nil {
 		return UnifiedStorageConfig{}
 	}
-	return cfg.UnifiedStorage[resource]
+	if config, ok := cfg.UnifiedStorage[resource]; ok {
+		return config
+	}
+	if strings.HasPrefix(resource, "app.") && strings.HasSuffix(resource, "-app") {
+		if fallback, ok := cfg.UnifiedStorage[AppPluginSettingsWildcard]; ok {
+			return UnifiedStorageConfig{DualWriterMode: fallback.DualWriterMode}
+		}
+	}
+	return UnifiedStorageConfig{}
 }
 
 // EnableMode5 enables migration and sets mode 5 for a resource.

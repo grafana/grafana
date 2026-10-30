@@ -602,8 +602,11 @@ func (s *Service) DeleteTeamPermissions(ctx context.Context, orgID int64, teamID
 }
 
 // DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their assignments
-// to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
+// to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin".
+// Roles declared after RegisterFixedRoles has run, such as those of a plugin that loads later,
+// take effect immediately instead of waiting for a restart.
 func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
+	var late []accesscontrol.RoleRegistration
 	for _, r := range registrations {
 		err := accesscontrol.ValidateFixedRole(r.Role)
 		if err != nil {
@@ -621,10 +624,53 @@ func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistrat
 			}
 		}
 
-		s.registrations.Append(r)
+		s.rolesMu.Lock()
+		if s.isInitialized {
+			// A caller retries after a failed persist below. Registering the role in RAM again would
+			// stack its grants on the basic roles, so a retry only repeats the persist.
+			if !s.isDeclaredLocked(r.Role.Name) {
+				s.registrations.Append(r)
+				s.registerRolesLocked(r)
+			}
+			late = append(late, r)
+		} else {
+			s.registrations.Append(r)
+		}
+		s.rolesMu.Unlock()
 	}
 
-	return nil
+	if len(late) == 0 {
+		return nil
+	}
+	return s.applyLateRegistrations(context.Background(), late)
+}
+
+// isDeclaredLocked reports whether a role with this name is already registered.
+// Must be called with s.rolesMu locked.
+func (s *Service) isDeclaredLocked(name string) bool {
+	found := false
+	s.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
+		found = registration.Role.Name == name
+		return !found
+	})
+	return found
+}
+
+// applyLateRegistrations persists roles declared after RegisterFixedRoles. Unlike at startup,
+// it does not remove roles that are absent from the declarations: it only adds to them.
+func (s *Service) applyLateRegistrations(ctx context.Context, registrations []accesscontrol.RoleRegistration) error {
+	s.cache.Flush()
+
+	s.rolesMu.RLock()
+	rolesSnapshot := s.getBasicRolePermissionsLocked()
+	s.rolesMu.RUnlock()
+
+	if s.seeder != nil {
+		if err := s.seeder.SeedRoles(ctx, registrations); err != nil {
+			return err
+		}
+	}
+	return s.refreshBasicRolePermissionsInDB(ctx, rolesSnapshot)
 }
 
 // RegisterFixedRoles registers all declared roles in RAM

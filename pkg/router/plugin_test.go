@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"testing/synctest"
 
 	"github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
@@ -23,11 +24,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
-	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/appsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -55,17 +56,11 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 		{"manifest first", []*plugins.FoundBundle{manifest, legacy}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			discoveries := 0
-			sources := &pluginfakes.FakeSourceRegistry{ListFunc: func(context.Context) []plugins.PluginSource {
-				return []plugins.PluginSource{&pluginfakes.FakePluginSource{DiscoverFunc: func(context.Context) ([]*plugins.FoundBundle, error) {
-					discoveries++
-					return tc.bundles, nil
-				}}}
-			}}
+			store := storeOf(tc.bundles...)
 			roles := &recordingManifestRoleService{}
 			loader, err := ProvideRoutesLoader(setting.NewCfg(), PluginLoaderDependencies{
-				PluginSources: sources,
-				ACService:     roles,
+				PluginStore: store,
+				ACService:   roles,
 				PluginDependencies: PluginDependencies{
 					PluginClient: struct{ plugins.Client }{},
 					ContextProvider: struct {
@@ -77,14 +72,14 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 				},
 			})
 			require.NoError(t, err)
-			require.Equal(t, 1, roles.calls, "roles must be declared before startup registers fixed roles")
-			require.Equal(t, 1, discoveries, "construction needs only one role discovery pass")
+			require.Zero(t, roles.calls, "roles are declared as a plugin is loaded, not at construction")
+			_, err = loader.Load(t.Context())
+			require.NoError(t, err)
+			require.Equal(t, 1, roles.calls)
 			registered := byName(t, roles.roles)
 			require.Len(t, registered, 2)
 			require.Contains(t, registered, "fixed:manifest.ext.grafana.app:reader")
 			require.Contains(t, registered, "fixed:manifest.ext.grafana.app:writer")
-			_, err = loader.Load(t.Context())
-			require.NoError(t, err)
 			router := NewGrafanaRouter(loader, nil)
 			require.NoError(t, router.reconcile(t.Context()))
 			for _, entry := range router.served {
@@ -92,7 +87,6 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 			}
 			require.Len(t, router.served, 1)
 			require.Equal(t, 1, roles.calls, "reconciliation must not redeclare roles")
-			require.Equal(t, 3, discoveries, "each Load must discover backends afresh")
 
 			req := httptest.NewRequest(http.MethodGet, "/openapi/v3", nil)
 			req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{
@@ -336,13 +330,8 @@ func TestPluginLoaderSkipsInvalidManifest(t *testing.T) {
 			}`),
 		}),
 	}}
-	sources := &pluginfakes.FakeSourceRegistry{ListFunc: func(context.Context) []plugins.PluginSource {
-		return []plugins.PluginSource{&pluginfakes.FakePluginSource{DiscoverFunc: func(context.Context) ([]*plugins.FoundBundle, error) {
-			return []*plugins.FoundBundle{invalid, valid}, nil
-		}}}
-	}}
 	loader, err := ProvideRoutesLoader(setting.NewCfg(), PluginLoaderDependencies{
-		PluginSources: sources,
+		PluginStore: storeOf(invalid, valid),
 		PluginDependencies: PluginDependencies{
 			PluginClient: struct{ plugins.Client }{},
 			ContextProvider: struct {
@@ -369,25 +358,16 @@ func (s *recordingManifestRoleService) DeclareFixedRoles(roles ...accesscontrol.
 	return s.err
 }
 
-func TestInitPluginRolesDeclarationFailure(t *testing.T) {
+func TestInitLocalPluginRolesDeclarationFailure(t *testing.T) {
 	failure := errors.New("role registration failed")
+	plugin := mustDefinition(t, "manifest-app", `{"apiVersion":"apps.grafana.app/v1alpha2","spec":{"appName":"manifest","group":"manifest.ext.grafana.app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Thing","plural":"things","scope":"Namespaced"}]}]}}`)
 	for _, missingService := range []bool{false, true} {
 		t.Run(fmt.Sprintf("missingService=%t", missingService), func(t *testing.T) {
-			source := &pluginfakes.FakeSourceRegistry{ListFunc: func(context.Context) []plugins.PluginSource {
-				return []plugins.PluginSource{&pluginfakes.FakePluginSource{DiscoverFunc: func(context.Context) ([]*plugins.FoundBundle, error) {
-					return []*plugins.FoundBundle{{Primary: plugins.FoundPlugin{
-						JSONData: plugins.JSONData{ID: "manifest-app", Type: plugins.TypeApp},
-						FS: plugins.NewInMemoryFS(map[string][]byte{
-							"app-sdk-manifest.json": []byte(`{"apiVersion":"apps.grafana.app/v1alpha2","spec":{"appName":"manifest","group":"manifest.ext.grafana.app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Thing","plural":"things","scope":"Namespaced"}]}]}}`),
-						}),
-					}}}, nil
-				}}}
-			}}
 			var service accesscontrol.Service = &recordingManifestRoleService{err: failure}
 			if missingService {
 				service = nil
 			}
-			err := initLocalPlugins(t.Context(), PluginLoaderDependencies{PluginSources: source, ACService: service})
+			err := initLocalPlugin(t.Context(), PluginLoaderDependencies{ACService: service}, plugin)
 			require.ErrorContains(t, err, "error declaring roles for manifest-app")
 			if !missingService {
 				require.ErrorIs(t, err, failure)
@@ -435,108 +415,143 @@ func TestPluginBackendManifestGroupValidation(t *testing.T) {
 	}
 }
 
-func TestPluginLoaderStartupDiscoveryRequiresMiddleware(t *testing.T) {
+func TestPluginLoaderInitializesPluginsOnlyInMiddleware(t *testing.T) {
 	for _, tc := range []struct {
-		name            string
-		targets         []string
-		features        []any
-		initializeRoles bool
+		name       string
+		targets    []string
+		features   []any
+		initialize bool
 	}{
 		{name: "disabled"},
 		{name: "unrelated target", targets: []string{"all"}},
-		{name: "middleware", features: []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, initializeRoles: true},
+		{name: "middleware", features: []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, initialize: true},
 		{name: "router target without middleware", targets: []string{"router"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			failure := errors.New("plugin discovery failed")
-			calls := 0
-			source := &pluginfakes.FakeSourceRegistry{ListFunc: func(context.Context) []plugins.PluginSource {
-				calls++
-				return []plugins.PluginSource{&pluginfakes.FakePluginSource{DiscoverFunc: func(context.Context) ([]*plugins.FoundBundle, error) {
-					return nil, failure
-				}}}
-			}}
+			roles := &recordingManifestRoleService{}
 			cfg := setting.NewCfg()
 			cfg.Target = tc.targets
 			loader, err := ProvideRoutesLoader(cfg, PluginLoaderDependencies{
-				PluginSources:      source,
+				PluginStore:        storeOf(manifestBundle("manifest-app", `{"apiVersion":"apps.grafana.app/v1alpha2","spec":{"appName":"manifest","group":"manifest.ext.grafana.app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Thing","plural":"things","scope":"Namespaced"}]}]}}`)),
+				ACService:          roles,
 				PluginDependencies: PluginDependencies{Features: featuremgmt.WithFeatures(tc.features...)},
 			})
-			if tc.initializeRoles {
-				require.ErrorIs(t, err, failure)
-				require.Nil(t, loader)
-				require.Equal(t, 1, calls)
+			require.NoError(t, err)
+			require.Zero(t, roles.calls, "construction declares nothing")
+			_, err = loader.Load(t.Context())
+			require.NoError(t, err)
+			if tc.initialize {
+				require.Equal(t, 1, roles.calls)
 			} else {
-				require.NoError(t, err)
-				require.Zero(t, calls, "without middleware, construction must not touch plugin sources")
-				_, err = loader.Load(t.Context())
-				require.ErrorIs(t, err, failure, "discovery remains deferred until Load")
-				require.Equal(t, 1, calls)
+				require.Zero(t, roles.calls, "without middleware, the router declares no roles")
 			}
 		})
 	}
 }
 
-func TestInitPluginRolesSkipsRoutableCoreGroups(t *testing.T) {
-	source := &pluginfakes.FakeSourceRegistry{ListFunc: func(context.Context) []plugins.PluginSource {
-		return []plugins.PluginSource{&pluginfakes.FakePluginSource{DiscoverFunc: func(context.Context) ([]*plugins.FoundBundle, error) {
-			return []*plugins.FoundBundle{{Primary: plugins.FoundPlugin{
-				JSONData: plugins.JSONData{ID: "playlist-app", Type: plugins.TypeApp},
-				FS: plugins.NewInMemoryFS(map[string][]byte{
-					"app-sdk-manifest.json": []byte(`{"apiVersion":"apps.grafana.app/v1alpha2","spec":{"appName":"playlist","group":"playlist.grafana.app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Playlist","plural":"playlists","scope":"Namespaced"}]}]}}`),
-				}),
-			}}}, nil
-		}}}
-	}}
+func TestPluginLoaderInitializesEachPluginOnce(t *testing.T) {
+	roles := &recordingManifestRoleService{}
+	store := pluginstore.NewFakePluginStore()
+	loader := &PluginLoader{
+		deps:  PluginLoaderDependencies{PluginStore: store, ACService: roles},
+		inits: newLocalPluginInits(),
+	}
+	load := func() {
+		t.Helper()
+		_, err := loader.Load(t.Context())
+		require.NoError(t, err)
+	}
+
+	load()
+	require.Zero(t, roles.calls, "no plugins yet")
+
+	store.PluginList = append(store.PluginList, storedPlugin(manifestBundle("manifest-app", `{"apiVersion":"apps.grafana.app/v1alpha2","spec":{"appName":"manifest","group":"manifest.ext.grafana.app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Thing","plural":"things","scope":"Namespaced"}]}]}}`)))
+	load()
+	load()
+	require.Equal(t, 1, roles.calls, "a plugin that appears later is initialized once, however often Load runs")
+
+	changed := manifestBundle("manifest-app", `{"apiVersion":"apps.grafana.app/v1alpha2","spec":{"appName":"manifest","group":"manifest.ext.grafana.app","versions":[{"name":"v2","served":true,"kinds":[{"kind":"Thing","plural":"things","scope":"Namespaced"}]}]}}`)
+	changed.Primary.JSONData.Info.Version = "2.0.0"
+	store.PluginList[0] = storedPlugin(changed)
+	load()
+	require.Equal(t, 1, roles.calls, "an updated plugin keeps its roles: redeclaring them would stack duplicate grants")
+
+	other := `{"apiVersion":"apps.grafana.app/v1alpha2","spec":{"appName":"other","group":"other.ext.grafana.app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Thing","plural":"things","scope":"Namespaced"}]}]}}`
+	store.PluginList = append(store.PluginList, storedPlugin(manifestBundle("other-app", other)))
+	load()
+	require.Equal(t, 2, roles.calls, "only the new plugin is initialized")
+}
+
+func TestPluginLoaderRetriesFailedInit(t *testing.T) {
+	roles := &recordingManifestRoleService{err: errors.New("role registration failed")}
+	loader := &PluginLoader{
+		deps: PluginLoaderDependencies{
+			PluginStore: storeOf(manifestBundle("manifest-app", `{"apiVersion":"apps.grafana.app/v1alpha2","spec":{"appName":"manifest","group":"manifest.ext.grafana.app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Thing","plural":"things","scope":"Namespaced"}]}]}}`)),
+			ACService:   roles,
+		},
+		inits: newLocalPluginInits(),
+	}
+	_, err := loader.Load(t.Context())
+	require.NoError(t, err, "a failed init must not fail the load")
+	_, err = loader.Load(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, 2, roles.calls, "a failed init is retried on the next load")
+
+	roles.err = nil
+	_, err = loader.Load(t.Context())
+	require.NoError(t, err)
+	_, err = loader.Load(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, 3, roles.calls, "a successful init is not repeated")
+}
+
+func TestInitLocalPluginSkipsRoutableCoreGroups(t *testing.T) {
+	plugin := mustDefinition(t, "playlist-app", `{"apiVersion":"apps.grafana.app/v1alpha2","spec":{"appName":"playlist","group":"playlist.grafana.app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Playlist","plural":"playlists","scope":"Namespaced"}]}]}}`)
 	service := &recordingManifestRoleService{}
-	require.NoError(t, initLocalPlugins(t.Context(), PluginLoaderDependencies{PluginSources: source, ACService: service}))
+	require.NoError(t, initLocalPlugin(t.Context(), PluginLoaderDependencies{ACService: service}, plugin))
 	require.Zero(t, service.calls, "a core group keeps the roles its own app declares")
 }
 
-func TestInitPluginRolesDoesNotLoadSchemas(t *testing.T) {
-	ctx := t.Context()
+func TestPluginLoaderDeclaresNoRolesWhenLoadFails(t *testing.T) {
 	roles := &recordingManifestRoleService{}
-	source := &pluginfakes.FakeSourceRegistry{ListFunc: func(got context.Context) []plugins.PluginSource {
-		require.Same(t, ctx, got)
-		return []plugins.PluginSource{&pluginfakes.FakePluginSource{DiscoverFunc: func(context.Context) ([]*plugins.FoundBundle, error) {
-			return []*plugins.FoundBundle{{Primary: plugins.FoundPlugin{
-				JSONData: plugins.JSONData{ID: "manifest-app", Type: plugins.TypeApp},
-				FS: plugins.NewInMemoryFS(map[string][]byte{
-					"schema/v0alpha1.json":  []byte(`{"targetApiVersion":`),
-					"app-sdk-manifest.json": []byte(`{"apiVersion":"apps.grafana.app/v1alpha2","spec":{"appName":"manifest","group":"manifest.ext.grafana.app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Thing","plural":"things","scope":"Namespaced"}]}]}}`),
-				}),
-			}}}, nil
-		}}}
+	bundle := &plugins.FoundBundle{Primary: plugins.FoundPlugin{
+		JSONData: plugins.JSONData{ID: "manifest-app", Type: plugins.TypeApp},
+		FS: plugins.NewInMemoryFS(map[string][]byte{
+			"schema/v0alpha1.json":  []byte(`{"targetApiVersion":`),
+			"app-sdk-manifest.json": []byte(`{"apiVersion":"apps.grafana.app/v1alpha2","spec":{"appName":"manifest","group":"manifest.ext.grafana.app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Thing","plural":"things","scope":"Namespaced"}]}]}}`),
+		}),
 	}}
-	deps := PluginLoaderDependencies{PluginSources: source, ACService: roles}
-	err := initLocalPlugins(ctx, deps)
-	require.NoError(t, err, "schema failures must not prevent role declaration")
-	require.Equal(t, 1, roles.calls)
-	require.Len(t, roles.roles, 2)
-	loader := &PluginLoader{deps: deps}
-	_, err = loader.Load(ctx)
+	loader := &PluginLoader{deps: PluginLoaderDependencies{PluginStore: storeOf(bundle), ACService: roles}, inits: newLocalPluginInits()}
+	_, err := loader.Load(t.Context())
 	require.ErrorContains(t, err, "error loading schema manifest-app")
-	require.Equal(t, 1, roles.calls, "Load must not redeclare roles")
+	require.Zero(t, roles.calls, "a plugin that cannot be served declares no roles")
 }
 
-func TestInitLocalPluginsResolvesSettingsStorageWildcard(t *testing.T) {
-	source := &pluginfakes.FakeSourceRegistry{ListFunc: func(context.Context) []plugins.PluginSource {
-		return []plugins.PluginSource{&pluginfakes.FakePluginSource{DiscoverFunc: func(context.Context) ([]*plugins.FoundBundle, error) {
-			return []*plugins.FoundBundle{
-				{Primary: plugins.FoundPlugin{JSONData: plugins.JSONData{ID: "wildcard-app", Type: plugins.TypeApp}, FS: plugins.NewInMemoryFS(nil)}},
-				{Primary: plugins.FoundPlugin{JSONData: plugins.JSONData{ID: "explicit-app", Type: plugins.TypeApp}, FS: plugins.NewInMemoryFS(nil)}},
-			}, nil
-		}}}
-	}}
-	cfg := setting.NewCfg()
-	cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
-		"app.*-app":        {DualWriterMode: 1},
-		"app.explicit-app": {DualWriterMode: 3},
+// storedPlugin is a bundle's primary plugin as the plugin store lists it.
+func storedPlugin(b *plugins.FoundBundle) pluginstore.Plugin {
+	return pluginstore.Plugin{JSONData: b.Primary.JSONData, FS: b.Primary.FS}
+}
+
+func storeOf(bundles ...*plugins.FoundBundle) *pluginstore.FakePluginStore {
+	store := pluginstore.NewFakePluginStore()
+	for _, b := range bundles {
+		store.PluginList = append(store.PluginList, storedPlugin(b))
 	}
-	err := initLocalPlugins(t.Context(), PluginLoaderDependencies{PluginSources: source, PluginDependencies: PluginDependencies{Cfg: cfg}})
+	return store
+}
+
+func manifestBundle(id, manifest string) *plugins.FoundBundle {
+	return &plugins.FoundBundle{Primary: plugins.FoundPlugin{
+		JSONData: plugins.JSONData{ID: id, Type: plugins.TypeApp},
+		FS:       plugins.NewInMemoryFS(map[string][]byte{"app-sdk-manifest.json": []byte(manifest)}),
+	}}
+}
+
+func mustDefinition(t *testing.T, id, manifest string) definition.PluginDefinition {
+	t.Helper()
+	m, err := definition.ParseManifest([]byte(manifest))
 	require.NoError(t, err)
-	require.EqualValues(t, 1, cfg.UnifiedStorage["app.wildcard-app"].DualWriterMode, "the shared dual-write service must see the wildcard default")
-	require.EqualValues(t, 3, cfg.UnifiedStorage["app.explicit-app"].DualWriterMode, "explicit config wins over the wildcard")
+	return definition.PluginDefinition{JSONData: plugins.JSONData{ID: id, Type: plugins.TypeApp}, Manifests: []*app.ManifestData{m}}
 }
 
 // testPluginBackend retains definition fixtures while exercising the manifest backend.
@@ -730,7 +745,6 @@ func TestPluginSettingsBackendLoad(t *testing.T) {
 // The standalone router has no SQL settings store or dual writer, so its
 // local plugin loader never serves settings, whatever the feature flag says.
 func TestProvideRoutesLoaderServesSettingsOnlyInGrafana(t *testing.T) {
-	sources := &pluginfakes.FakeSourceRegistry{ListFunc: func(context.Context) []plugins.PluginSource { return nil }}
 	for _, tc := range []struct {
 		name     string
 		target   []string
@@ -744,7 +758,7 @@ func TestProvideRoutesLoaderServesSettingsOnlyInGrafana(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.Target = tc.target
 			loader, err := ProvideRoutesLoader(cfg, PluginLoaderDependencies{
-				PluginSources: sources,
+				PluginStore: pluginstore.NewFakePluginStore(),
 				PluginDependencies: PluginDependencies{
 					Features: featuremgmt.WithFeatures(),
 				},
@@ -755,4 +769,88 @@ func TestProvideRoutesLoaderServesSettingsOnlyInGrafana(t *testing.T) {
 			require.Equal(t, tc.settings, pl.settings)
 		})
 	}
+}
+
+type fakePluginNotifier struct{ ch chan struct{} }
+
+func (n fakePluginNotifier) Notify(context.Context) <-chan struct{} { return n.ch }
+
+func TestPluginLoaderNotifyFollowsThePluginStore(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		source := fakePluginNotifier{ch: make(chan struct{}, 1)}
+		wakes, err := PluginLoader{deps: PluginLoaderDependencies{PluginNotifier: source}}.Notify(ctx)
+		require.NoError(t, err)
+
+		synctest.Wait()
+		select {
+		case <-wakes:
+			t.Fatal("woke without a plugin change")
+		default:
+		}
+
+		source.ch <- struct{}{}
+		synctest.Wait()
+		select {
+		case <-wakes:
+		default:
+			t.Fatal("a plugin change must wake the router")
+		}
+	})
+}
+
+func TestPluginLoaderNotifyWithoutNotifierNeverWakes(t *testing.T) {
+	wakes, err := PluginLoader{}.Notify(t.Context())
+	require.NoError(t, err)
+	select {
+	case <-wakes:
+		t.Fatal("woke without a notifier")
+	default:
+	}
+}
+
+func TestMergeWakes(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithCancel(t.Context())
+		first, second := make(chan struct{}, 1), make(chan struct{}, 1)
+		merged := mergeWakes(ctx, first, second)
+
+		for _, in := range []chan struct{}{first, second} {
+			in <- struct{}{}
+			synctest.Wait()
+			select {
+			case <-merged:
+			default:
+				t.Fatal("a wake on any input must wake the merged channel")
+			}
+		}
+
+		first <- struct{}{}
+		second <- struct{}{}
+		synctest.Wait()
+		<-merged
+		select {
+		case <-merged:
+			t.Fatal("wakes must coalesce into one")
+		default:
+		}
+
+		// One input closing must not end the others.
+		close(first)
+		synctest.Wait()
+		second <- struct{}{}
+		synctest.Wait()
+		select {
+		case _, ok := <-merged:
+			require.True(t, ok)
+		default:
+			t.Fatal("the remaining input must still wake")
+		}
+
+		cancel()
+		synctest.Wait()
+		_, ok := <-merged
+		require.False(t, ok, "the merged channel closes with the context")
+	})
 }
