@@ -125,6 +125,18 @@ func TestWatchesEndedByTheRouterAreCounted(t *testing.T) {
 		synctest.Wait()
 		require.Equal(t, 1.0, ended(watchEndedRouteChanged))
 
+		// The group is removed: its series are deleted, and the watch's end does
+		// not create them again.
+		events = openWatchWithClient(t.Context(), t, server.URL+watchPath+"?watch=true", client)
+		requireEvent(t, events, addedEvent)
+		loader.backends = nil
+		require.NoError(t, router.reconcile(t.Context()))
+		requireCleanEnd(t, events)
+		synctest.Wait()
+		require.Zero(t, testutil.CollectAndCount(svc.metrics.watchesEnded))
+		loader.backends = []Backend{&fakeBackend{group: metav1.APIGroup{Name: watchGroup}, key: "3", handler: backend}}
+		require.NoError(t, router.reconcile(t.Context()))
+
 		// The router shuts down.
 		events = openWatchWithClient(t.Context(), t, server.URL+watchPath+"?watch=true", client)
 		requireEvent(t, events, addedEvent)

@@ -47,14 +47,22 @@ func (r *GrafanaRouter) serveWatch(w http.ResponseWriter, req *http.Request, gro
 		defer stopRouter()
 	}
 	// The client may leave at the same moment; only a watch the router ended
-	// while its client was still there counts.
+	// while its client was still there counts. A watch whose group was removed
+	// is not counted: the group's series were just deleted, and counting it
+	// would create them again.
 	defer func() {
 		if r.onWatchEnded == nil || req.Context().Err() != nil {
 			return
 		}
-		if cause := context.Cause(ctx); errors.Is(cause, errWatchRouteChanged) || errors.Is(cause, errWatchShutdown) {
-			r.onWatchEnded(group, cause.Error())
+		cause := context.Cause(ctx)
+		if errors.Is(cause, errWatchRouteChanged) {
+			if _, served := (*r.snapshot.Load())[group]; !served {
+				return
+			}
+		} else if !errors.Is(cause, errWatchShutdown) {
+			return
 		}
+		r.onWatchEnded(group, cause.Error())
 	}()
 
 	defer func() {
