@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
@@ -42,8 +43,11 @@ func TestFolderControllerOwnsNATSSubscriber(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.NATS = setting.NATSSettings{Enabled: true, Mode: setting.NATSModeExternal, ClientURLs: []string{srv.ClientURL()}}
 	cfg.SectionWithEnvOverrides("operator").Key("folders_server_url").SetValue(api.URL)
+	cfg.SectionWithEnvOverrides("operator").Key("dashboards_server_url").SetValue(api.URL)
 	cfg.SectionWithEnvOverrides("grpc_client_authentication").Key("token").SetValue("test-token")
 	cfg.SectionWithEnvOverrides("grpc_client_authentication").Key("token_exchange_url").SetValue(api.URL)
+	// Dialing is lazy, so nothing needs to listen here.
+	cfg.SectionWithEnvOverrides("unified_storage").Key("grpc_address").SetValue("127.0.0.1:1")
 
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
@@ -51,7 +55,7 @@ func TestFolderControllerOwnsNATSSubscriber(t *testing.T) {
 	done := make(chan error, 1)
 	go func() {
 		done <- RunFolderController(ctx, server.OperatorDependencies{
-			Config: cfg, Registerer: prometheus.NewRegistry(), HealthNotifier: health,
+			Config: cfg, Registerer: prometheus.NewRegistry(), HealthNotifier: health, Tracer: tracing.NewNoopTracerService(),
 		})
 	}()
 	require.NoError(t, wait.PollUntilContextTimeout(ctx, 10*time.Millisecond, 5*time.Second, true, func(context.Context) (bool, error) {
@@ -99,8 +103,11 @@ func TestFolderControllerCacheSyncFailureCause(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.NATS = setting.NATSSettings{Enabled: true, Mode: setting.NATSModeExternal, ClientURLs: []string{srv.ClientURL()}}
 	cfg.SectionWithEnvOverrides("operator").Key("folders_server_url").SetValue(api.URL)
+	cfg.SectionWithEnvOverrides("operator").Key("dashboards_server_url").SetValue(api.URL)
 	cfg.SectionWithEnvOverrides("grpc_client_authentication").Key("token").SetValue("test-token")
 	cfg.SectionWithEnvOverrides("grpc_client_authentication").Key("token_exchange_url").SetValue(api.URL)
+	// Dialing is lazy, so nothing needs to listen here.
+	cfg.SectionWithEnvOverrides("unified_storage").Key("grpc_address").SetValue("127.0.0.1:1")
 	health := server.NewHealthNotifier()
 	failure := errors.New("subscriber failed during initial list")
 	cancelOperator := make(chan context.CancelCauseFunc, 1)
@@ -109,7 +116,7 @@ func TestFolderControllerCacheSyncFailureCause(t *testing.T) {
 		defer cancel(nil)
 		cancelOperator <- cancel
 		return RunFolderController(ctx, server.OperatorDependencies{
-			Config: cfg, Registerer: prometheus.NewRegistry(), HealthNotifier: health,
+			Config: cfg, Registerer: prometheus.NewRegistry(), HealthNotifier: health, Tracer: tracing.NewNoopTracerService(),
 		})
 	}, nil)
 	owner := modules.New(log.NewNopLogger(), []string{"operator"}).WithDependencies(map[string][]string{})
