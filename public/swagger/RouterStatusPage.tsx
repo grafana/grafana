@@ -499,9 +499,11 @@ function sourceColor(source: string): BadgeColor {
   switch (source) {
     case 'single-tenant':
       return 'purple';
-    case 'core_url':
+    case 'core':
+      return 'brand';
+    case 'plugins':
       return 'green';
-    case 'plugins_url':
+    case 'bridge':
       return 'orange';
   }
   return 'darkgrey';
