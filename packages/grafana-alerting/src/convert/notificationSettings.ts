@@ -1,0 +1,98 @@
+import { type RulerContactPointRoutingDTO, type RulerNotificationSettingsDTO } from './api/types';
+
+// Send straight to one contact point, optionally overriding the grouping, timings and time intervals.
+interface SimplifiedRoutingSettings {
+  type: 'SimplifiedRouting';
+  receiver: string;
+  groupBy?: string[];
+  groupWait?: string;
+  groupInterval?: string;
+  repeatInterval?: string;
+  muteTimeIntervals?: string[];
+  activeTimeIntervals?: string[];
+}
+
+// Route through a named notification policy tree instead of the default one.
+interface NamedRoutingTreeSettings {
+  type: 'NamedRoutingTree';
+  routingTree: string;
+}
+
+/**
+ * Where an alert rule's notifications go: a contact point or a named notification policy tree. Code that
+ * lets users pick one works with this value, and `null` means the default policy tree.
+ */
+export type NotificationSettings = SimplifiedRoutingSettings | NamedRoutingTreeSettings;
+
+/**
+ * Turns a `NotificationSettings` value into the Ruler shape the convert API's
+ * `X-Grafana-Alerting-Notification-Settings` header takes. `null` (default routing) gives `undefined`,
+ * meaning "leave the header out".
+ */
+export function toRulerNotificationSettings(
+  value: NotificationSettings | null
+): RulerNotificationSettingsDTO | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  if (value.type === 'NamedRoutingTree') {
+    return { policy: value.routingTree };
+  }
+
+  return withoutEmpty({
+    receiver: value.receiver,
+    group_by: value.groupBy,
+    group_wait: value.groupWait,
+    group_interval: value.groupInterval,
+    repeat_interval: value.repeatInterval,
+    mute_time_intervals: value.muteTimeIntervals,
+    active_time_intervals: value.activeTimeIntervals,
+  });
+}
+
+/**
+ * Reads Ruler-shaped notification settings, e.g. a rule's `notification_settings` from Grafana's ruler API,
+ * back into a `NotificationSettings` value. Settings with neither a policy nor a receiver mean
+ * default routing, which is `null`.
+ */
+export function fromRulerNotificationSettings(
+  settings: RulerNotificationSettingsDTO | null | undefined
+): NotificationSettings | null {
+  if (settings?.policy) {
+    return { type: 'NamedRoutingTree', routingTree: settings.policy };
+  }
+
+  if (!settings || !isContactPointRouting(settings)) {
+    return null;
+  }
+
+  return withoutEmpty<SimplifiedRoutingSettings>({
+    type: 'SimplifiedRouting',
+    receiver: settings.receiver,
+    groupBy: settings.group_by,
+    groupWait: settings.group_wait,
+    groupInterval: settings.group_interval,
+    repeatInterval: settings.repeat_interval,
+    muteTimeIntervals: settings.mute_time_intervals,
+    activeTimeIntervals: settings.active_time_intervals,
+  });
+}
+
+// A policy's `receiver` is at most '', so a non-empty one means the settings send to a contact point.
+function isContactPointRouting(settings: RulerNotificationSettingsDTO): settings is RulerContactPointRoutingDTO {
+  return Boolean(settings.receiver);
+}
+
+// A copy without unset, blank or empty-list fields. The API rejects an empty duration, and an empty list
+// means the same as leaving it out.
+function withoutEmpty<T extends object>(value: T): T {
+  const copy = { ...value };
+  for (const key in copy) {
+    const field: unknown = copy[key];
+    if (field === undefined || field === '' || (Array.isArray(field) && field.length === 0)) {
+      delete copy[key];
+    }
+  }
+  return copy;
+}
