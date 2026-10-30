@@ -178,7 +178,6 @@ You can use the [TestData data source](/docs/grafana/<GRAFANA_VERSION>/datasourc
    Open the example to view alert evaluation results, generated alert instances, and alert rule details.
    {{< /admonition >}}
 
-
 ## Dynamic thresholds using a SQL expression
 
 Instead of a Math expression, you can define dynamic thresholds with a [SQL expression](/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/sql-expressions/).
@@ -187,11 +186,11 @@ Instead of a Math expression, you can define dynamic thresholds with a [SQL expr
 SQL expressions can only query data from backend data sources. You can't use them with the output of other expressions, such as Math or Reduce.
 {{< /admonition >}}
 
-With SQL expressions, you don't need a second query for the thresholds. The SQL expression can compare each series against its own threshold and returns the alert condition result. 
+With SQL expressions, you don't need a second query for the thresholds. The SQL expression can compare each series against its own threshold and returns the alert condition result.
 
 The following table illustrates the evaluation:
 
-| $A: p95 latency query         | $B: Threshold | $B: SQL result | State      |
+| $A: p95 latency query        | $B: Threshold | $B: SQL result               | State      |
 | :--------------------------- | :------------ | :--------------------------- | :--------- |
 | `{service="checkout-api"} 3` | `1.5`         | `{service="checkout-api"} 1` | **Firing** |
 | `{service="auth-api"} 1`     | `1.5`         | `{service="auth-api"} 0`     | **Normal** |
@@ -219,16 +218,15 @@ FROM A
 In this example:
 
 - `A` is the data returned by the p95 latency query.
-- The inner `CASE` assigns a threshold to each `service`.  Unlike the Math expression, the `ELSE` clause lets unlisted services use the default threshold of `2.0` instead of being dropped from the result.
+- The inner `CASE` assigns a threshold to each `service`. Unlike the Math expression, the `ELSE` clause lets unlisted services use the default threshold of `2.0` instead of being dropped from the result.
 
-- The outer `CASE` compares the latency `A.__value__` against the threshold and returns  returns `1` when the latency exceeds the threshold, and `0` otherwise.
+- The outer `CASE` compares the latency `A.__value__` against the threshold and returns returns `1` when the latency exceeds the threshold, and `0` otherwise.
 
 - The `service` column becomes the label of each alert instance and the `alert_result` column is the numeric output used as the **alert condition**.
 
-  > The output of the SQL expression must follow the [table data format](/docs/grafana/<GRAFANA_VERSION>/alerting/examples/table-data/): only one numeric column, which Grafana uses to evaluate the alert condition. You can return multiple non-numeric columns, each of which becomes a label of the alert instances. 
+  > The output of the SQL expression must follow the [table data format](/docs/grafana/<GRAFANA_VERSION>/alerting/examples/table-data/): only one numeric column, which Grafana uses to evaluate the alert condition. You can return multiple non-numeric columns, each of which becomes a label of the alert instances.
 
   The SQL expression is the **alert condition**, so it sets the firing state when `alert_result` is `1`.
-
 
 ### Try it with TestData
 
