@@ -3,6 +3,7 @@ import { Card, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
 import { DescriptionTooltip } from 'app/features/search/components/DescriptionTooltip';
 import { type LocationInfo } from 'app/features/search/service/types';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
+import { starResourceForKind } from 'app/features/stars/utils';
 
 import { type Dashboard } from './DashList';
 import { ListRow } from './ListRow';
@@ -30,11 +31,13 @@ export function DashListItem({
 }: Props) {
   const css = useStyles2(getStyles);
 
+  // Rows can be folders too; starring one under the dashboard kind would never show as starred.
+  const star = starResourceForKind(dashboard.kind);
   const starButton = (
     <StarToolbarButton
       title={dashboard.name}
-      group="dashboard.grafana.app"
-      kind="Dashboard"
+      group={star.group}
+      kind={star.kind}
       id={dashboard.uid}
       onStarChange={onStarChange}
     />
