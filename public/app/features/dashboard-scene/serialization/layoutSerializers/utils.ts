@@ -242,9 +242,11 @@ function createPanelDataProvider(
     // Default to an array with an empty data query with a `refId` already assigned
     Array.isArray(panel.data?.spec.queries) && panel.data?.spec.queries.length > 0
       ? panel.data?.spec.queries
-      : [defaultPanelQueryKind()];
+      : panelMetas[panel.vizConfig?.group]?.skipDefaultQuery
+        ? []
+        : [defaultPanelQueryKind()];
   // Skip setting query runner for panels without queries
-  if (!targets?.length) {
+  if (!targets?.length && !panelMetas[panel.vizConfig?.group]?.skipDefaultQuery) {
     return undefined;
   }
 
@@ -262,6 +264,8 @@ function createPanelDataProvider(
   dataProvider = new SceneQueryRunner({
     datasource,
     queries: queriesWithUniqueRefIds.map(panelQueryKindToSceneQuery),
+    // Scenes waits for a first result; an intentionally empty runner has none to fetch.
+    _hasFetchedData: targets.length === 0 || undefined,
     maxDataPoints: panel.data.spec.queryOptions.maxDataPoints ?? undefined,
     maxDataPointsFromWidth: true,
     cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,

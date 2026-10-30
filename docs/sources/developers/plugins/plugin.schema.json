@@ -511,6 +511,10 @@
         }
       }
     },
+    "skipDefaultQuery": {
+      "type": "boolean",
+      "description": "Alpha. For panel plugins, suppress the automatic starter query while allowing users to add queries explicitly."
+    },
     "skipDataQuery": {
       "type": "boolean",
       "description": "For panel plugins. Hides the query editor."

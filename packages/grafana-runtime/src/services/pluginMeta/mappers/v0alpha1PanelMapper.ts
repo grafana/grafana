@@ -39,7 +39,7 @@ function sortMapper(spec: v0alpha1Spec): number {
 }
 
 function specMapper(spec: v0alpha1Spec): PanelPluginMeta {
-  const { id, name, hideFromList = false, skipDataQuery = false, suggestions } = spec.pluginJson;
+  const { id, name, hideFromList = false, skipDataQuery = false, skipDefaultQuery, suggestions } = spec.pluginJson;
   const state = stateMapper(spec, logPluginMetaWarning);
   const info = infoMapper(spec);
   const loadingStrategy = loadingStrategyMapper(spec);
@@ -60,6 +60,7 @@ function specMapper(spec: v0alpha1Spec): PanelPluginMeta {
     hideFromList,
     sort,
     skipDataQuery,
+    skipDefaultQuery,
     suggestions,
     state,
     baseUrl,

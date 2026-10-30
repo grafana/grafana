@@ -265,3 +265,10 @@ describe('coreSpecMapper when called with a core plugin on prem', () => {
     expect(result.info.screenshots).toEqual([]);
   });
 });
+
+it.each([true, false, undefined])('maps skipDefaultQuery=%s', (skipDefaultQuery) => {
+  const response = structuredClone(v0alpha1Response);
+  const panel = response.items.find((item) => item.spec.pluginJson.type === 'panel')!;
+  panel.spec.pluginJson.skipDefaultQuery = skipDefaultQuery;
+  expect(v0alpha1PanelMapper(response)[panel.spec.pluginJson.id].skipDefaultQuery).toBe(skipDefaultQuery);
+});

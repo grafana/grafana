@@ -180,6 +180,7 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 			MultiValueFilterOperators: true,
 			Preload:                   true,
 			SkipDataQuery:             true,
+			SkipDefaultQuery:          true,
 			Streaming:                 true,
 			Tracing:                   true,
 		}
@@ -196,6 +197,7 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 		assert.True(t, *meta.MultiValueFilterOperators)
 		assert.True(t, *meta.Preload)
 		assert.True(t, *meta.SkipDataQuery)
+		assert.True(t, *meta.SkipDefaultQuery)
 		assert.True(t, *meta.Streaming)
 		assert.True(t, *meta.Tracing)
 	})

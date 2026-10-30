@@ -104,6 +104,7 @@ import { DashboardSidebar } from '../sidebar/DashboardSidebar';
 import { DashboardStateChangedEvent } from '../sidebar/events';
 import { type DashboardSidebarState } from '../sidebar/types';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import { clearDefaultQuery } from '../utils/clearDefaultQuery';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import {
   mayInjectAnyPredefinedVariables,
@@ -138,6 +139,7 @@ import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import {
   dashboardComposerEnabled,
   dashboardModesEnabled,
@@ -1723,7 +1725,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     newOptions?: Record<string, unknown>,
     newFieldConfig?: FieldConfigSource
   ) {
-    const { fieldConfig: prevFieldConfig } = panel.state;
+    const { fieldConfig: prevFieldConfig, pluginId: previousPluginId } = panel.state;
 
     let cleanFieldConfig: FieldConfigSource = {
       defaults: { ...prevFieldConfig.defaults, custom: {} },
@@ -1747,6 +1749,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const pluginMeta = await getPanelPluginMeta(newPluginId);
     const skipDataQuery = pluginMeta?.skipDataQuery ?? false;
 
+    if (pluginMeta?.skipDefaultQuery && previousPluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
+      clearDefaultQuery(panel);
+    }
+
     if (skipDataQuery && panel.state.$data) {
       panel.setState({ $data: undefined });
     }
@@ -1758,7 +1764,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           $data: new SceneQueryRunner({
             // The query editor needs the datasource type, which config.defaultDatasource does not provide.
             datasource: defaultDs ? { uid: defaultDs.uid, type: defaultDs.type } : undefined,
-            queries: [{ refId: 'A' }],
+            queries: pluginMeta?.skipDefaultQuery ? [] : [{ refId: 'A' }],
+            _hasFetchedData: pluginMeta?.skipDefaultQuery || undefined,
           }),
           transformations: [],
         }),
