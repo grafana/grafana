@@ -46,7 +46,9 @@ for plugin in public/app/plugins/*/*/; do
     # plugin.json is gpx_<name>) and the SDK build manifest into dist/. Not frontend assets.
     rm -f "$dest"/dist/gpx_* "$dest"/dist/go_plugin_build_manifest
 
-    [ -s "$dest/dist/module.js" ] && [ -s "$dest/dist/plugin.json" ] || fail "$plugin did not build a complete dist/"
+    if [ ! -s "$dest/dist/module.js" ] || [ ! -s "$dest/dist/plugin.json" ]; then
+      fail "$plugin did not build a complete dist/"
+    fi
   else
     for file in plugin.json README.md img dashboards; do
       if [ -e "$plugin/$file" ]; then
