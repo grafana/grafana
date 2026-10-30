@@ -868,7 +868,11 @@ func (rc *RepositoryController) process(key string) error {
 			repo, err = rc.repoFactory.Build(ctx, obj)
 		}
 		if err != nil {
-			return fmt.Errorf("unable to create repository from configuration: %w", err)
+			buildErr := fmt.Errorf("unable to create repository from configuration: %w", err)
+			if patchErr := rc.persistRepositoryFailure(ctx, obj, err); patchErr != nil {
+				return errors.Join(buildErr, patchErr)
+			}
+			return buildErr
 		}
 	}
 
@@ -902,7 +906,13 @@ func (rc *RepositoryController) process(key string) error {
 
 			defaultBranch, err := branchHandler.GetDefaultBranch(ctx)
 			if err != nil {
-				return fmt.Errorf("failed to get default branch: %w", err)
+				branchErr := fmt.Errorf("failed to get default branch: %w", err)
+				if errors.Is(err, repository.ErrServerUnavailable) {
+					if patchErr := rc.persistRepositoryFailure(ctx, obj, err); patchErr != nil {
+						return errors.Join(branchErr, patchErr)
+					}
+				}
+				return branchErr
 			}
 
 			branchHandler.SetBranch(defaultBranch)
@@ -1015,6 +1025,64 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	}
 
 	return hookOps, true, nil
+}
+
+// persistRepositoryFailure marks the repository unhealthy and Ready=False right
+// away, because process only applies its accumulated patch operations once
+// reconciliation succeeds. Only the failure status is written: the accumulated
+// operations may advance observedGeneration, which would stop hooks from being
+// retried.
+func (rc *RepositoryController) persistRepositoryFailure(ctx context.Context, obj *provisioning.Repository, err error) error {
+	ops := rc.repositoryFailurePatchOps(obj, err, classifyBuildFailureReason(err))
+	if len(ops) == 0 {
+		return nil
+	}
+	if patchErr := rc.statusPatcher.Patch(ctx, obj, ops...); patchErr != nil {
+		return fmt.Errorf("status patch operations failed: %w", patchErr)
+	}
+	return nil
+}
+
+// repositoryFailurePatchOps returns patches marking the repository unhealthy
+// and Ready=False with the supplied reason, omitting unchanged status.
+func (rc *RepositoryController) repositoryFailurePatchOps(obj *provisioning.Repository, err error, reason string) []map[string]interface{} {
+	healthStatus := provisioning.HealthStatus{
+		Healthy: false,
+		Error:   provisioning.HealthFailureHealth,
+		Checked: time.Now().UnixMilli(),
+		Message: []string{err.Error()},
+	}
+	ops := rc.healthPatchIfChanged(obj, healthStatus)
+	readyCondition := buildReadyConditionWithReason(healthStatus, reason)
+	return append(ops, BuildConditionPatchOpsFromExisting(
+		obj.Status.Conditions, obj.GetGeneration(), readyCondition,
+	)...)
+}
+
+func (rc *RepositoryController) healthPatchIfChanged(obj *provisioning.Repository, status provisioning.HealthStatus) []map[string]interface{} {
+	if !rc.healthChecker.hasHealthStatusChanged(obj.Status.Health, status) {
+		return nil
+	}
+
+	return []map[string]interface{}{{
+		"op":    "replace",
+		"path":  "/status/health",
+		"value": status,
+	}}
+}
+
+// classifyBuildFailureReason maps a repository Build or default-branch failure
+// to a Ready condition reason, so an outage is reported as retryable instead of
+// as an invalid configuration for the user to fix.
+func classifyBuildFailureReason(err error) string {
+	switch {
+	case errors.Is(err, repository.ErrUnauthorized), errors.Is(err, repository.ErrPermissionDenied):
+		return provisioning.ReasonAuthenticationFailed
+	case errors.Is(err, repository.ErrServerUnavailable), apierrors.IsServiceUnavailable(err):
+		return provisioning.ReasonServiceUnavailable
+	default:
+		return provisioning.ReasonInvalidSpec
+	}
 }
 
 // shouldRotateWebhookSecret returns true when a repository has an active webhook
