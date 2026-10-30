@@ -5,7 +5,7 @@ import { type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e'
 import { type SnapshotCreateResponse } from '../../public/app/features/dashboard/services/SnapshotSrv';
 import testV2DashWithRepeats from '../dashboards/V2DashWithRepeats.json';
 
-import { test, expect } from './fixtures';
+import { dragAndDropOpenFeature, test, expect } from './fixtures';
 import { flows } from './helpers';
 import { type Panels } from './page-objects';
 
@@ -46,13 +46,14 @@ test.use({
   featureToggles: {
     dashboardNewLayouts: true,
   },
+  openFeature: dragAndDropOpenFeature(),
   viewport: { width: 1920, height: 1080 },
 });
 
 test.describe(
   'Snapshots - repeats',
   {
-    tag: ['@dashboards'],
+    tag: ['@dashboards', '@new-grid-view'],
   },
   () => {
     test('dashboard snapshot renders repeated panels (custom grid)', async ({

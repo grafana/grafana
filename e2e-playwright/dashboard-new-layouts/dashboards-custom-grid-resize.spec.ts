@@ -20,7 +20,7 @@ test.use({
 test.describe(
   'Dashboard custom grid resize',
   {
-    tag: ['@dashboards', '@drag-and-drop'],
+    tag: ['@dashboards', '@drag-and-drop', '@new-grid-view'],
   },
   () => {
     test('can resize a panel by dragging its corner', async ({

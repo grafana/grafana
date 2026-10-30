@@ -184,6 +184,19 @@ export default defineConfig<PluginOptions>({
           }),
         ]
       : []),
+    // Re-runs the @new-grid-view tests with grafana.dashboardUnifiedDragAndDrop and
+    // grafana.dashboardNewGridView on, so the new custom grid renders view mode too; opt-in until that
+    // grid is ready to gate CI
+    ...(process.env.E2E_NEW_GRID_VIEW
+      ? [
+          withAuth({
+            name: 'dashboard-new-layouts-new-grid-view',
+            testDir: path.join(testDirRoot, '/dashboard-new-layouts'),
+            grep: /@new-grid-view/,
+            use: { unifiedDragAndDrop: true, newGridView: true },
+          }),
+        ]
+      : []),
     // Setup project for dashboard CUJS tests
     withAuth({
       name: 'dashboard-cujs-setup',

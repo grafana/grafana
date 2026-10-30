@@ -315,7 +315,7 @@ test.describe(
       });
     });
 
-    test.describe('View', () => {
+    test.describe('View', { tag: ['@new-grid-view'] }, () => {
       test('can view repeated panel', async ({ selectors, page, panels }) => {
         await flows.dashboards.importTestDashboard(
           page,

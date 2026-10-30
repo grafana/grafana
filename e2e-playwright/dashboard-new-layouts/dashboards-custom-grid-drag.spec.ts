@@ -53,7 +53,7 @@ async function startResize(page: Page, panels: Panels, panelTitle: string, { del
 test.describe(
   'Dashboard custom grid drag and resize',
   {
-    tag: ['@dashboards', '@drag-and-drop'],
+    tag: ['@dashboards', '@drag-and-drop', '@new-grid-view'],
   },
   () => {
     test('resizes a panel, pushing the panel below down, with undo and redo', async ({

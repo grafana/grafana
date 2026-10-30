@@ -15,12 +15,12 @@ test.use({
   viewport: { width: 1920, height: 1080 },
 });
 
-// Runs in both drag and drop projects, so it compares the react-grid-layout grid (flag off) with the
-// new custom grid (flag on) against the same expected geometry
+// Runs in every grid project, so it compares the react-grid-layout grid (flags off) with the new custom
+// grid (flags on) against the same expected geometry
 test.describe(
   'Dashboard',
   {
-    tag: ['@dashboards', '@drag-and-drop'],
+    tag: ['@dashboards', '@drag-and-drop', '@new-grid-view'],
   },
   () => {
     test('renders custom grid panels at their grid positions in edit mode', async ({
