@@ -24,6 +24,10 @@
           "!@grafana/plugin-compat"
         ],
         "projectsRelationship": "fixed"
+      },
+      "plugin-compat": {
+        "projects": ["@grafana/plugin-compat"],
+        "projectsRelationship": "independent"
       }
     },
     "version": {
