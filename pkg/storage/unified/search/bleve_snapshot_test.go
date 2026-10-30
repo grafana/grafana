@@ -11,6 +11,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/Masterminds/semver/v3"
@@ -1900,27 +1901,17 @@ func TestColdStart_WaitedForLeader(t *testing.T) {
 	ct := newColdStartTest(t, store)
 	withSnapshotBuildPollInterval(t, 10*time.Millisecond)
 
-	// Build the snapshot on the test goroutine — the build uses require.*,
-	// which would violate testing.TB rules if called from the helper
-	// goroutine below. The helper goroutine only writes prepared bytes to
-	// the bucket and reports any error back via errCh.
 	snap := buildDownloadableSnapshot(t, ct.ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
-	ctx := t.Context()
+	// The first probe must miss so this exercises the wait loop.
+	store.onLockBuild = sync.OnceFunc(func() {
+		require.NoError(t, snap.publish(t.Context(), store.inner))
+	})
 
-	// While coordinateColdStartBuild is in its wait loop, simulate the
-	// leader publishing the prepared snapshot. The next probe tick should
-	// pick it up.
-	errCh := make(chan error, 1)
-	go func() {
-		time.Sleep(25 * time.Millisecond)
-		errCh <- snap.publish(ctx, store.inner)
-	}()
-
-	role, lock, err := ct.coordinate(context.Background(), time.Time{})
+	role, lock, err := ct.coordinate(t.Context(), time.Time{})
 	require.NoError(t, err)
-	require.NoError(t, <-errCh)
 	assert.Equal(t, "downloaded", role)
 	assert.Nil(t, lock)
+	assert.Equal(t, int32(1), store.lockAcquireCalls.Load())
 	// The waiter must not have taken the lock, so lockReleaseCalls stays at
 	// zero (no Release was invoked because no Acquire ever succeeded).
 	assert.Zero(t, store.lockReleaseCalls.Load(),
@@ -1934,14 +1925,16 @@ func TestColdStart_WaitsUntilCanceled(t *testing.T) {
 	ct := newColdStartTest(t, store)
 	withSnapshotBuildPollInterval(t, 5*time.Millisecond)
 
-	ctx, cancel := context.WithTimeout(t.Context(), 50*time.Millisecond)
-	defer cancel()
-	role, lock, err := ct.coordinate(ctx, time.Time{})
-	require.ErrorIs(t, err, context.DeadlineExceeded)
-	assert.Equal(t, "error", role)
-	assert.Nil(t, lock)
-	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeContextCanceled))
-	assert.GreaterOrEqual(t, store.lockAcquireCalls.Load(), int32(2))
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(t.Context(), 50*time.Millisecond)
+		defer cancel()
+		role, lock, err := ct.coordinate(ctx, time.Time{})
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+		assert.Equal(t, "error", role)
+		assert.Nil(t, lock)
+		assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeContextCanceled))
+		assert.GreaterOrEqual(t, store.lockAcquireCalls.Load(), int32(2))
+	})
 }
 
 func TestColdStart_DefersWhenLeaderHoldsLock(t *testing.T) {
@@ -1963,19 +1956,15 @@ func TestColdStart_AcquiresLockAfterLeaderRelease(t *testing.T) {
 	ct := newColdStartTest(t, store)
 	withSnapshotBuildPollInterval(t, 10*time.Millisecond)
 
-	// Simulate the leader releasing the lock without uploading a snapshot
-	// (e.g. its build failed). The next tryAcquire in the wait loop should
-	// promote us.
-	go func() {
-		time.Sleep(25 * time.Millisecond)
-		store.setLockBuildErr(nil)
-	}()
+	// Release only after the first acquisition sees the held lock.
+	store.onLockBuild = sync.OnceFunc(func() { store.setLockBuildErr(nil) })
 
-	role, lock, err := ct.coordinate(context.Background(), time.Time{})
+	role, lock, err := ct.coordinate(t.Context(), time.Time{})
 	require.NoError(t, err)
 	assert.Equal(t, "leader", role)
 	require.NotNil(t, lock)
 	t.Cleanup(func() { _ = lock.Release() })
+	assert.Equal(t, int32(2), store.lockAcquireCalls.Load())
 	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeAcquiredLock))
 }
 

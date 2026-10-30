@@ -15,6 +15,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
@@ -1374,12 +1375,6 @@ func withOwnsIndexFn(fn func(key resource.NamespacedResource) (bool, error)) set
 	}
 }
 
-func withIndexMinUpdateInterval(d time.Duration) setupOption {
-	return func(options *BleveOptions) {
-		options.IndexMinUpdateInterval = d
-	}
-}
-
 func withSearchFields(reg *resource.SearchFieldsRegistry) setupOption {
 	return func(options *BleveOptions) {
 		options.SearchFields = reg
@@ -2459,37 +2454,6 @@ func updateTestDocs(ns resource.NamespacedResource, docs int) resource.UpdateFn 
 	}
 }
 
-func updateTestDocsReturningMillisTimestamp(ns resource.NamespacedResource, docs int) (resource.UpdateFn, *atomic.Int64) {
-	cnt := 0
-	var updateCalls atomic.Int64
-
-	return func(context context.Context, index resource.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
-		now := time.Now()
-		updateCalls.Add(1)
-
-		cnt++
-
-		items := make([]*resource.BulkIndexItem, 0, docs)
-		for i := range docs {
-			items = append(items, &resource.BulkIndexItem{
-				Action: resource.ActionIndex,
-				Doc: &resource.IndexableDocument{
-					Key: &resourcepb.ResourceKey{
-						Namespace: ns.Namespace,
-						Group:     ns.Group,
-						Resource:  ns.Resource,
-						Name:      fmt.Sprintf("doc%d", i),
-					},
-					Title: fmt.Sprintf("Document %d (gen_%d)", i, cnt),
-				},
-			})
-		}
-
-		err := index.BulkIndex(&resource.BulkIndexRequest{Items: items})
-		return now.UnixMilli(), docs, err
-	}, &updateCalls
-}
-
 func TestCleanOldIndexes(t *testing.T) {
 	dir := t.TempDir()
 
@@ -2958,42 +2922,58 @@ func TestConcurrentIndexUpdateAndSearch(t *testing.T) {
 
 	be, _ := setupBleveBackend(t)
 
-	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false, time.Time{}, 0, resource.BuildIndexOptions{})
+	updateStarted := make(chan struct{})
+	releaseUpdate := make(chan struct{})
+	release := sync.OnceFunc(func() { close(releaseUpdate) })
+	t.Cleanup(release)
+	var firstUpdate sync.Once
+	updateDocs := updateTestDocs(ns, 5)
+	updaterFn := func(ctx context.Context, index resource.ResourceIndex, sinceRV int64) (int64, int, error) {
+		firstUpdate.Do(func() {
+			close(updateStarted)
+			<-releaseUpdate
+		})
+		return updateDocs(ctx, index, sinceRV)
+	}
+	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, "test", indexTestDocs(ns, 10, 100), updaterFn, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	wg := sync.WaitGroup{}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// We count how many goroutines received given updated RV. We expect at least some RVs to be returned to multiple
-	// goroutines, if batching works.
 	mu := sync.Mutex{}
 	updatedRVs := map[int64]int{}
 
-	const searchConcurrency = 25
-	for range searchConcurrency {
-		wg.Go(func() {
-			prevRV := int64(0)
-			for ctx.Err() == nil {
-				// We use t.Context() here to avoid getting errors from context cancellation.
-				rv, err := idx.UpdateIndex(t.Context())
-				require.NoError(t, err)
-				require.Greater(t, rv, prevRV) // Each update should return new RV (that's how our update function works)
-				require.Equal(t, int64(10), searchTitle(t, idx, "Document", 10, ns).TotalHits)
-				prevRV = rv
+	search := func() {
+		prevRV := int64(0)
+		for range 10 {
+			rv, err := idx.UpdateIndex(t.Context())
+			require.NoError(t, err)
+			require.Greater(t, rv, prevRV)
+			require.Equal(t, int64(10), searchTitle(t, idx, "Document", 10, ns).TotalHits)
+			prevRV = rv
 
-				mu.Lock()
-				updatedRVs[rv]++
-				mu.Unlock()
-			}
-		})
+			mu.Lock()
+			updatedRVs[rv]++
+			mu.Unlock()
+		}
+	}
+	wg.Go(search)
+	<-updateStarted
+
+	const searchConcurrency = 25
+	for range searchConcurrency - 1 {
+		wg.Go(search)
 	}
 
-	time.Sleep(1 * time.Second)
-	cancel()
+	// Queue the remaining callers before releasing the first update so batching does not depend on scheduling.
+	bleveIdx := idx.(*bleveIndex)
+	bleveIdx.updaterMu.Lock()
+	for len(bleveIdx.updaterQueue) < searchConcurrency-1 {
+		bleveIdx.updaterCond.Wait()
+	}
+	bleveIdx.updaterMu.Unlock()
+	release()
 	wg.Wait()
 
-	// Check that some RVs were updated due to requests from multiple goroutines
 	var rvUpdatedByMultipleGoroutines int64
 	for rv, count := range updatedRVs {
 		if count > 1 {
@@ -3004,106 +2984,97 @@ func TestConcurrentIndexUpdateAndSearch(t *testing.T) {
 	require.Greater(t, rvUpdatedByMultipleGoroutines, int64(0))
 }
 
-func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) {
-	ns := resource.NamespacedResource{
-		Namespace: "test",
-		Group:     "group",
-		Resource:  "resource",
-	}
-
-	const minInterval = 100 * time.Millisecond
-	be, _ := setupBleveBackend(t, withIndexMinUpdateInterval(minInterval))
-
-	updateFn, updateCalls := updateTestDocsReturningMillisTimestamp(ns, 5)
-	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, "test", indexTestDocs(ns, 10, 100), updateFn, false, time.Time{}, 0, resource.BuildIndexOptions{})
+func newTestBleveUpdater(t *testing.T, updater resource.UpdateFn) *bleveIndex {
+	t.Helper()
+	index, err := bleve.NewMemOnly(bleve.NewIndexMapping())
 	require.NoError(t, err)
-
-	wg := sync.WaitGroup{}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	var attemptedUpdates atomic.Int64
-
-	// Verify that each returned RV (unix timestamp in millis) is either the same as before, or at least minInterval later.
-	const searchConcurrency = 10
-	for range searchConcurrency {
-		wg.Go(func() {
-			var collectedRVs []int64
-			for ctx.Err() == nil {
-				attemptedUpdates.Add(1)
-
-				// We use t.Context() here to avoid getting errors from context cancellation.
-				rv, err := idx.UpdateIndex(t.Context())
-				require.NoError(t, err)
-
-				if len(collectedRVs) == 0 || collectedRVs[len(collectedRVs)-1] != rv {
-					collectedRVs = append(collectedRVs, rv)
-				}
-
-				require.Equal(t, int64(10), searchTitle(t, idx, "Document", 10, ns).TotalHits)
-			}
-
-			t.Log(collectedRVs)
-			for i := 1; i < len(collectedRVs); i++ {
-				// We allow next RV to be 0.9*minInterval later, to account for possible clock skew between time measurements.
-				// (We get measurements from update function, but check is done on times inside updater)
-				require.GreaterOrEqual(t, collectedRVs[i], collectedRVs[i-1]+(9*int64(minInterval/time.Millisecond)/10))
-			}
-		})
+	idx := &bleveIndex{
+		index:     index,
+		logger:    log.NewNopLogger(),
+		updaterFn: updater,
 	}
+	idx.updaterCond = sync.NewCond(&idx.updaterMu)
+	t.Cleanup(func() { require.NoError(t, idx.stopUpdaterAndCloseIndex()) })
+	return idx
+}
 
-	// Run updates and searches for this time.
-	testTime := 1 * time.Second
+func TestConcurrentIndexUpdateWithIndexMinUpdateInterval(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const minInterval = 100 * time.Millisecond
+		var updateCalls int64
+		idx := newTestBleveUpdater(t, func(_ context.Context, _ resource.ResourceIndex, sinceRV int64) (int64, int, error) {
+			updateCalls++
+			return sinceRV + 1, 0, nil
+		})
+		idx.minUpdateInterval = minInterval
 
-	time.Sleep(testTime)
-	cancel()
-	wg.Wait()
+		updateConcurrently := func(wantRV int64) {
+			t.Helper()
+			const concurrency = 10
+			results := make([]updateResult, concurrency)
+			var wg sync.WaitGroup
+			for i := range concurrency {
+				wg.Go(func() {
+					results[i].rv, results[i].err = idx.UpdateIndex(t.Context())
+				})
+			}
+			wg.Wait()
+			for _, result := range results {
+				require.NoError(t, result.err)
+				require.Equal(t, wantRV, result.rv)
+			}
+			require.Equal(t, wantRV, updateCalls)
+		}
 
-	expectedMaxCalls := int64(testTime / minInterval)
-	require.LessOrEqual(t, updateCalls.Load(), expectedMaxCalls+1)
-	require.Greater(t, attemptedUpdates.Load(), updateCalls.Load())
+		for i := range 3 {
+			rv := int64(i + 1)
+			updateConcurrently(rv)
+			updateConcurrently(rv)
 
-	t.Log("Attempted updates:", attemptedUpdates.Load(), "update calls:", updateCalls.Load())
+			// Requests before the boundary must reuse the last update, even by one nanosecond.
+			synctest.Sleep(minInterval - time.Nanosecond)
+			updateConcurrently(rv)
+			synctest.Sleep(time.Nanosecond)
+		}
+		updateConcurrently(4)
+	})
 }
 
 func TestIndexUpdateWithErrors(t *testing.T) {
-	ns := resource.NamespacedResource{
-		Namespace: "test",
-		Group:     "group",
-		Resource:  "resource",
+	updateErr := errors.New("failed to update index")
+	for _, tc := range []struct {
+		name     string
+		timeout  time.Duration
+		canceled bool
+		wantErr  error
+	}{
+		{name: "update fail", wantErr: updateErr},
+		{name: "update timeout", timeout: time.Millisecond, wantErr: context.DeadlineExceeded},
+		{name: "context canceled", canceled: true, wantErr: context.Canceled},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				idx := newTestBleveUpdater(t, func(context.Context, resource.ResourceIndex, int64) (int64, int, error) {
+					time.Sleep(100 * time.Millisecond)
+					return 0, 0, updateErr
+				})
+				ctx := t.Context()
+				if tc.timeout > 0 {
+					var cancel context.CancelFunc
+					ctx, cancel = context.WithTimeout(ctx, tc.timeout)
+					defer cancel()
+				}
+				if tc.canceled {
+					var cancel context.CancelFunc
+					ctx, cancel = context.WithCancel(ctx)
+					cancel()
+				}
+
+				_, err := idx.UpdateIndex(ctx)
+				require.ErrorIs(t, err, tc.wantErr)
+			})
+		})
 	}
-
-	be, _ := setupBleveBackend(t)
-
-	updateErr := fmt.Errorf("failed to update index")
-	updaterFn := func(context context.Context, index resource.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
-		time.Sleep(100 * time.Millisecond)
-		return 0, 0, updateErr
-	}
-	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, "test", indexTestDocs(ns, 10, 100), updaterFn, false, time.Time{}, 0, resource.BuildIndexOptions{})
-	require.NoError(t, err)
-
-	t.Run("update fail", func(t *testing.T) {
-		_, err = idx.UpdateIndex(t.Context())
-		require.ErrorIs(t, err, updateErr)
-	})
-
-	t.Run("update timeout", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
-		defer cancel()
-
-		_, err = idx.UpdateIndex(ctx)
-		require.ErrorIs(t, err, context.DeadlineExceeded)
-	})
-
-	t.Run("context canceled", func(t *testing.T) {
-		// Canceled context
-		ctx, cancel := context.WithCancel(context.Background())
-		cancel()
-
-		_, err = idx.UpdateIndex(ctx)
-		require.ErrorIs(t, err, context.Canceled)
-	})
 }
 
 func TestIndexBuildInfo(t *testing.T) {
