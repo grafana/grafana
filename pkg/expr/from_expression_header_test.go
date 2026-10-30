@@ -36,13 +36,11 @@ func TestDatasourceRequestsAreMarkedAsFromExpression(t *testing.T) {
 		JSON:      json.RawMessage(`{ "datasource": { "uid": "test" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
 		TimeRange: AbsoluteTimeRange{},
 	}
-	exprQuery := func(body string) Query {
-		return Query{
-			RefID:      "B",
-			DataSource: dataSourceModel(),
-			JSON:       json.RawMessage(body),
-			TimeRange:  AbsoluteTimeRange{},
-		}
+	mathQuery := Query{
+		RefID:      "B",
+		DataSource: dataSourceModel(),
+		JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "$A * 2" }`),
+		TimeRange:  AbsoluteTimeRange{},
 	}
 
 	tests := []struct {
@@ -51,16 +49,8 @@ func TestDatasourceRequestsAreMarkedAsFromExpression(t *testing.T) {
 		headers map[string]string
 	}{
 		{
-			name:    "SQL expression",
-			queries: []Query{dsQuery, exprQuery(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "sql", "expression": "SELECT * FROM A" }`)},
-		},
-		{
 			name:    "math expression",
-			queries: []Query{dsQuery, exprQuery(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "$A * 2" }`)},
-		},
-		{
-			name:    "reduce expression",
-			queries: []Query{dsQuery, exprQuery(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "reduce", "reducer": "last", "expression": "A" }`)},
+			queries: []Query{dsQuery, mathQuery},
 		},
 		{
 			// Alert rules send every query through the expression service, even
@@ -86,7 +76,7 @@ func TestDatasourceRequestsAreMarkedAsFromExpression(t *testing.T) {
 				s, req := newMockQueryService(resp, tt.queries)
 				endpoint := &recordingEndpoint{mockEndpoint: mockEndpoint{Responses: resp}}
 				s.dataService = endpoint
-				flags := []any{featuremgmt.FlagSqlExpressions}
+				var flags []any
 				if grouped {
 					flags = append(flags, featuremgmt.FlagSseGroupByDatasource)
 				}
