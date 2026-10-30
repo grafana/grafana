@@ -4,7 +4,7 @@ import { cloneDeep } from 'lodash';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { ConstantVariable, SceneVariableSet, sceneGraph } from '@grafana/scenes';
+import { ConstantVariable, SceneVariableSet, StateCommittedEvent, sceneGraph } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -16,7 +16,9 @@ import {
 } from 'app/features/plugins/components/restrictedGrafanaApis/dashboardMutation/dashboardMutationApi';
 
 import { applyDashboardSpec } from '../actions/dashboard/applyDashboardSpec';
+import { changeDescription } from '../actions/dashboard/changeDescription';
 import { changeTitle } from '../actions/dashboard/changeTitle';
+import { endBatch, startBatch } from '../actions/utils/batch';
 import { addComposerEnterRequestListener, resetComposerEnterRequestsForTests } from '../composer/composerEntryRequests';
 import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient';
 import { LAZY_DASHBOARD_COMMANDS } from '../mutation-api/commands/lazyRegistry';
@@ -786,6 +788,112 @@ describe('mode instrumentation', () => {
       .map(([, properties]) => properties);
   }
 
+  it('counts repeated actions by actor and snapshots counts independently of later edits', () => {
+    const dashboard = setup();
+    dashboard.setDashboardMode('edit');
+    changeTitle({ source: dashboard, oldValue: 'Original title', newValue: 'Manual title' });
+    changeTitle({ source: dashboard, oldValue: 'Manual title', newValue: 'Another manual title' });
+    const spec = JSON.parse(getDashboardResourceText(dashboard)).spec;
+    spec.title = 'Assistant title';
+    dashboard.withAssistantWrite(() =>
+      applyDashboardSpec({ scene: dashboard, spec, description: 'Assistant edit', scope: 'composer' })
+    );
+    dashboard.withAssistantWrite(() =>
+      changeTitle({ source: dashboard, oldValue: 'Assistant title', newValue: 'Another assistant title' })
+    );
+
+    const snapshot = dashboard.getEditSessionTracking();
+    expect(snapshot).toEqual(
+      expect.objectContaining({
+        manual_edits: [{ action: 'dashboard.changeTitle', count: 2 }],
+        ai_edits: [
+          { action: 'dashboard.changeTitle', count: 1 },
+          { action: 'dashboard.editSchema', count: 1 },
+        ],
+      })
+    );
+
+    changeTitle({ source: dashboard, oldValue: 'Another assistant title', newValue: 'Final title' });
+    expect(dashboard.getEditSessionTracking().manual_edits).toEqual([{ action: 'dashboard.changeTitle', count: 3 }]);
+    expect(snapshot.manual_edits).toEqual([{ action: 'dashboard.changeTitle', count: 2 }]);
+  });
+
+  it('counts batch children by actor without counting the wrapper or undo/redo', () => {
+    const dashboard = setup();
+    dashboard.setDashboardMode('edit');
+    startBatch(dashboard, 'Change settings', { actionId: 'dashboard.batch' });
+    changeTitle({ source: dashboard, oldValue: 'Original title', newValue: 'Manual title' });
+    dashboard.withAssistantWrite(() =>
+      changeDescription({ source: dashboard, oldValue: dashboard.state.description, newValue: 'Assistant description' })
+    );
+    endBatch(dashboard);
+    dashboard.state.sidebar.undoAction();
+    expect(dashboard.state.title).toBe('Original title');
+    dashboard.state.sidebar.redoAction();
+    expect(dashboard.state.title).toBe('Manual title');
+    expect(dashboard.getEditSessionTracking()).toEqual(
+      expect.objectContaining({
+        manual_edits: [{ action: 'dashboard.changeTitle', count: 1 }],
+        ai_edits: [{ action: 'dashboard.changeDescription', count: 1 }],
+      })
+    );
+  });
+
+  it('keeps action counts beyond the undo limit and after history is cleared', () => {
+    const dashboard = setup();
+    dashboard.setDashboardMode('edit');
+    for (let i = 0; i < 105; i++) {
+      changeTitle({ source: dashboard, oldValue: dashboard.state.title, newValue: `Title ${i}` });
+    }
+    expect(dashboard.state.sidebar.state.undoStack).toHaveLength(100);
+    dashboard.state.sidebar.clearHistory();
+    expect(dashboard.getEditSessionTracking().manual_edits).toEqual([{ action: 'dashboard.changeTitle', count: 105 }]);
+  });
+
+  it('counts already committed actions without replaying them', () => {
+    const dashboard = setup();
+    dashboard.setDashboardMode('edit');
+    const replay = jest.fn();
+    dashboard.publishEvent(
+      new StateCommittedEvent({ source: dashboard, description: 'Move panel', replay, revert: jest.fn() }),
+      true
+    );
+    expect(dashboard.getEditSessionTracking().manual_edits).toEqual([{ action: 'panel.moveOrResize', count: 1 }]);
+    expect(replay).not.toHaveBeenCalled();
+  });
+
+  it('retains counts after a failed save, emits them on success and starts fresh after saving', async () => {
+    const dashboard = setup();
+    dashboard.setDashboardMode('edit');
+    changeTitle({ source: dashboard, oldValue: 'Original title', newValue: 'First title' });
+    mockSaveDashboard.mockResolvedValueOnce({ error: { status: 500, data: { message: 'Save failed' } } });
+    const { result } = renderHook(() => useSaveDashboard(), { wrapper: TestProvider });
+    await act(async () => {
+      await result.current.onSaveDashboard(dashboard, {});
+    });
+    expect(dashboard.getEditSessionTracking().manual_edits).toEqual([{ action: 'dashboard.changeTitle', count: 1 }]);
+    expect(events('dashboards_edit_period_ended')).toEqual([]);
+
+    changeTitle({ source: dashboard, oldValue: 'First title', newValue: 'Second title' });
+    mockSaveDashboard.mockResolvedValueOnce({
+      data: { uid: 'modes-test', version: 2, url: '/d/modes-test', slug: 'modes-test' },
+    });
+    await act(async () => {
+      await result.current.onSaveDashboard(dashboard, {});
+    });
+    expect(events('dashboards_edit_period_ended')).toEqual([
+      expect.objectContaining({
+        outcome: 'saved',
+        manual_edits: [{ action: 'dashboard.changeTitle', count: 2 }],
+        ai_edits: [],
+      }),
+    ]);
+    expect(dashboard.getEditSessionTracking()).toEqual({});
+
+    changeTitle({ source: dashboard, oldValue: 'Second title', newValue: 'After save' });
+    expect(dashboard.getEditSessionTracking().manual_edits).toEqual([{ action: 'dashboard.changeTitle', count: 1 }]);
+  });
+
   it('counts one picker exposure across remounts and reports each menu opening', async () => {
     const dashboard = setup();
     const user = userEvent.setup();
@@ -1045,6 +1153,8 @@ describe('mode instrumentation', () => {
           mode: 'agent',
           had_assistant_changes: true,
           had_manual_changes: false,
+          manual_edits: [],
+          ai_edits: [{ action: 'dashboard.editSchema', count: 1 }],
           elapsed_ms: expect.any(Number),
         }),
       ]);
