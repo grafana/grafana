@@ -178,7 +178,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "text",
-            "version": "13.2.0-local",
+            "version": "13.3.0",
             "spec": {
               "options": {
                 "mode": "html",
@@ -235,7 +235,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "text",
-            "version": "13.2.0-local",
+            "version": "13.3.0",
             "spec": {
               "options": {
                 "code": {
@@ -293,7 +293,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "text",
-            "version": "13.2.0-local",
+            "version": "13.3.0",
             "spec": {
               "options": {
                 "mode": "html",
@@ -421,7 +421,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "text",
-            "version": "13.2.0-local",
+            "version": "13.3.0",
             "spec": {
               "options": {
                 "mode": "html",
@@ -694,7 +694,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "text",
-            "version": "13.2.0-local",
+            "version": "13.3.0",
             "spec": {
               "options": {
                 "mode": "html",

@@ -309,6 +309,7 @@ describe('dashboard tracking', () => {
         mermaid_count: 4,
         handlebars_count: 1,
         data_macro_count: 1,
+        data_bound_handlebars_count: 1,
         per_row_count: 1,
       });
     });

@@ -742,3 +742,18 @@ describe('immutability', () => {
     expect(result!.info.links).toHaveLength(0);
   });
 });
+
+describe('Text query capabilities', () => {
+  afterEach(() => {
+    setTestFlags({});
+    setPanelPluginMetas({});
+  });
+
+  it.each([true, false])('only opts Text v2 into empty queries (v2=%s)', (enabled) => {
+    setTestFlags({ 'grafana.newTextPanel': enabled });
+    setPanelPluginMetas({ text: { ...panel, id: 'text', skipDataQuery: true } });
+    const meta = getPanelPluginMetasMapSync().text;
+    expect(meta.skipDataQuery).toBe(!enabled);
+    expect(meta.skipDefaultQuery).toBe(enabled ? true : undefined);
+  });
+});
