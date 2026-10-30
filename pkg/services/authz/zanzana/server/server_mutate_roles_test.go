@@ -147,7 +147,7 @@ type datasourcePermissionClient struct {
 
 func (c datasourcePermissionClient) GetUserPermissions(ctx context.Context, id authlib.AuthInfo, req authlib.GetUserPermissionsRequest) (authlib.GetUserPermissionsResponse, error) {
 	caller, _ := authlib.AuthInfoFrom(newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions))
-	stream := &snapshotResponseStream{ctx: authlib.WithAuthInfo(ctx, caller)}
+	stream := &permissionResponseStream{ctx: authlib.WithAuthInfo(ctx, caller)}
 	if err := c.server.GetUserPermissions(&authzv1.GetUserPermissionsRequest{
 		Namespace: req.Namespace, Subject: id.GetUID(), Teams: id.GetGroups(),
 	}, stream); err != nil {
@@ -176,7 +176,7 @@ func TestIntegrationDatasourceQueryMatchesRBACActionSet(t *testing.T) {
 				require.NoError(t, err)
 				tuples = append(tuples, common.NewTuple("user:datasource-user", "assignee", "role:query-role"))
 				setupOpenFGADatabase(t, srv, tuples)
-				srv.permissionScopeResolver = snapshotIDs{}
+				srv.permissionScopeResolver = permissionIDs{}
 				resolver := acimpl.NewZanzanaPermissionResolver(&datasourcePermissionClient{server: srv}, nil, nil, false)
 				usr := &identity.StaticRequester{Type: "user", UserUID: "datasource-user", OrgID: 1, Namespace: namespace}
 				actions := resourcepermissions.NewInMemoryActionSetStore()

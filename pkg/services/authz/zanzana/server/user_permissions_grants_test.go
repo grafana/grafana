@@ -28,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type snapshotDatastore struct {
+type permissionDatastore struct {
 	storage.OpenFGADatastore
 	mu            sync.Mutex
 	reads         map[string]int
@@ -38,7 +38,7 @@ type snapshotDatastore struct {
 	modelOverride *openfgav1.AuthorizationModel
 }
 
-func (s *snapshotDatastore) before(ctx context.Context, operation string) error {
+func (s *permissionDatastore) before(ctx context.Context, operation string) error {
 	s.mu.Lock()
 	s.reads[operation]++
 	delay, failure := s.delay, s.failRead
@@ -61,13 +61,13 @@ func (s *snapshotDatastore) before(ctx context.Context, operation string) error 
 	return nil
 }
 
-func (s *snapshotDatastore) reset() {
+func (s *permissionDatastore) reset() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.reads = make(map[string]int)
 }
 
-func (s *snapshotDatastore) counts() (map[string]int, int) {
+func (s *permissionDatastore) counts() (map[string]int, int) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	counts := make(map[string]int, len(s.reads))
@@ -79,7 +79,7 @@ func (s *snapshotDatastore) counts() (map[string]int, int) {
 	return counts, total
 }
 
-func (s *snapshotDatastore) Read(ctx context.Context, store string, filter storage.ReadFilter, options storage.ReadOptions) (storage.TupleIterator, error) {
+func (s *permissionDatastore) Read(ctx context.Context, store string, filter storage.ReadFilter, options storage.ReadOptions) (storage.TupleIterator, error) {
 	if err := s.before(ctx, "read"); err != nil {
 		return nil, err
 	}
@@ -91,18 +91,18 @@ func (s *snapshotDatastore) Read(ctx context.Context, store string, filter stora
 	failure := s.failIterator
 	s.mu.Unlock()
 	if failure != nil {
-		return &snapshotFailingIterator{TupleIterator: iterator, failure: failure}, nil
+		return &permissionFailingIterator{TupleIterator: iterator, failure: failure}, nil
 	}
 	return iterator, nil
 }
 
-type snapshotFailingIterator struct {
+type permissionFailingIterator struct {
 	storage.TupleIterator
 	failure  error
 	returned bool
 }
 
-func (i *snapshotFailingIterator) Next(ctx context.Context) (*openfgav1.Tuple, error) {
+func (i *permissionFailingIterator) Next(ctx context.Context) (*openfgav1.Tuple, error) {
 	if i.returned {
 		return nil, i.failure
 	}
@@ -110,35 +110,35 @@ func (i *snapshotFailingIterator) Next(ctx context.Context) (*openfgav1.Tuple, e
 	return i.TupleIterator.Next(ctx)
 }
 
-func (s *snapshotDatastore) ReadPage(ctx context.Context, store string, filter storage.ReadFilter, options storage.ReadPageOptions) ([]*openfgav1.Tuple, string, error) {
+func (s *permissionDatastore) ReadPage(ctx context.Context, store string, filter storage.ReadFilter, options storage.ReadPageOptions) ([]*openfgav1.Tuple, string, error) {
 	if err := s.before(ctx, "page"); err != nil {
 		return nil, "", err
 	}
 	return s.OpenFGADatastore.ReadPage(ctx, store, filter, options)
 }
 
-func (s *snapshotDatastore) ReadUserTuple(ctx context.Context, store string, filter storage.ReadUserTupleFilter, options storage.ReadUserTupleOptions) (*openfgav1.Tuple, error) {
+func (s *permissionDatastore) ReadUserTuple(ctx context.Context, store string, filter storage.ReadUserTupleFilter, options storage.ReadUserTupleOptions) (*openfgav1.Tuple, error) {
 	if err := s.before(ctx, "user_tuple"); err != nil {
 		return nil, err
 	}
 	return s.OpenFGADatastore.ReadUserTuple(ctx, store, filter, options)
 }
 
-func (s *snapshotDatastore) ReadUsersetTuples(ctx context.Context, store string, filter storage.ReadUsersetTuplesFilter, options storage.ReadUsersetTuplesOptions) (storage.TupleIterator, error) {
+func (s *permissionDatastore) ReadUsersetTuples(ctx context.Context, store string, filter storage.ReadUsersetTuplesFilter, options storage.ReadUsersetTuplesOptions) (storage.TupleIterator, error) {
 	if err := s.before(ctx, "usersets"); err != nil {
 		return nil, err
 	}
 	return s.OpenFGADatastore.ReadUsersetTuples(ctx, store, filter, options)
 }
 
-func (s *snapshotDatastore) ReadStartingWithUser(ctx context.Context, store string, filter storage.ReadStartingWithUserFilter, options storage.ReadStartingWithUserOptions) (storage.TupleIterator, error) {
+func (s *permissionDatastore) ReadStartingWithUser(ctx context.Context, store string, filter storage.ReadStartingWithUserFilter, options storage.ReadStartingWithUserOptions) (storage.TupleIterator, error) {
 	if err := s.before(ctx, "reverse"); err != nil {
 		return nil, err
 	}
 	return s.OpenFGADatastore.ReadStartingWithUser(ctx, store, filter, options)
 }
 
-func (s *snapshotDatastore) ReadAuthorizationModel(ctx context.Context, store, modelID string) (*openfgav1.AuthorizationModel, error) {
+func (s *permissionDatastore) ReadAuthorizationModel(ctx context.Context, store, modelID string) (*openfgav1.AuthorizationModel, error) {
 	if err := s.before(ctx, "model"); err != nil {
 		return nil, err
 	}
@@ -151,9 +151,9 @@ func (s *snapshotDatastore) ReadAuthorizationModel(ctx context.Context, store, m
 	return s.OpenFGADatastore.ReadAuthorizationModel(ctx, store, modelID)
 }
 
-func newSnapshotTestServer(t testing.TB, tuples []*openfgav1.TupleKey) (*Server, *snapshotDatastore, *zanzana.StoreInfo) {
+func newPermissionTestServer(t testing.TB, tuples []*openfgav1.TupleKey) (*Server, *permissionDatastore, *zanzana.StoreInfo) {
 	t.Helper()
-	ds := &snapshotDatastore{
+	ds := &permissionDatastore{
 		OpenFGADatastore: memory.New(memory.WithMaxTuplesPerWrite(10000)),
 		reads:            make(map[string]int),
 	}
@@ -178,21 +178,21 @@ func newSnapshotTestServer(t testing.TB, tuples []*openfgav1.TupleKey) (*Server,
 	return srv, ds, storeInfo
 }
 
-type normalizedSnapshotList struct {
+type normalizedPermissionList struct {
 	Entry   common.ActionListEntry
 	All     bool
 	Items   []string
 	Folders []string
 }
 
-func normalizeSnapshotLists(results []permissionListResult) map[string]normalizedSnapshotList {
-	normalized := make(map[string]normalizedSnapshotList, len(results))
+func normalizePermissionLists(results []permissionListResult) map[string]normalizedPermissionList {
+	normalized := make(map[string]normalizedPermissionList, len(results))
 	for _, result := range results {
 		items := append([]string{}, result.List.GetItems()...)
 		folders := append([]string{}, result.List.GetFolders()...)
 		slices.Sort(items)
 		slices.Sort(folders)
-		normalized[result.Entry.Action] = normalizedSnapshotList{
+		normalized[result.Entry.Action] = normalizedPermissionList{
 			Entry: result.Entry, All: result.List.GetAll(),
 			Items: slices.Compact(items), Folders: slices.Compact(folders),
 		}
@@ -200,7 +200,7 @@ func normalizeSnapshotLists(results []permissionListResult) map[string]normalize
 	return normalized
 }
 
-func baselineSnapshotLists(ctx context.Context, srv *Server, req *authzv1.GetUserPermissionsRequest) ([]permissionListResult, error) {
+func baselinePermissionLists(ctx context.Context, srv *Server, req *authzv1.GetUserPermissionsRequest) ([]permissionListResult, error) {
 	results := make([]permissionListResult, 0, len(common.SupportedActions()))
 	for _, entry := range common.SupportedActions() {
 		list, err := srv.list(ctx, &authzv1.ListRequest{
@@ -233,24 +233,24 @@ func baselineGrantLists(t *testing.T, srv *Server, req *authzv1.GetUserPermissio
 		return nil
 	})
 	require.NoError(t, err)
-	baseline, _, _ := newSnapshotTestServer(t, grants)
-	return baselineSnapshotLists(ctx, baseline, req)
+	baseline, _, _ := newPermissionTestServer(t, grants)
+	return baselinePermissionLists(ctx, baseline, req)
 }
 
-func requireSnapshotParity(t *testing.T, srv *Server, req *authzv1.GetUserPermissionsRequest) map[string]normalizedSnapshotList {
+func requirePermissionParity(t *testing.T, srv *Server, req *authzv1.GetUserPermissionsRequest) map[string]normalizedPermissionList {
 	t.Helper()
 	ctx := newContextWithNamespace()
 	want, err := baselineGrantLists(t, srv, req)
 	require.NoError(t, err)
-	got, err := srv.evaluateUserPermissionSnapshot(ctx, req)
+	got, err := srv.resolveUserPermissionContributions(ctx, req)
 	require.NoError(t, err)
 	require.Len(t, got, len(common.SupportedActions()))
-	require.Len(t, normalizeSnapshotLists(got), len(common.SupportedActions()), "every supported action, including aliases, must be returned once")
-	require.Equal(t, normalizeSnapshotLists(want), normalizeSnapshotLists(got))
-	return normalizeSnapshotLists(got)
+	require.Len(t, normalizePermissionLists(got), len(common.SupportedActions()), "every supported action, including aliases, must be returned once")
+	require.Equal(t, normalizePermissionLists(want), normalizePermissionLists(got))
+	return normalizePermissionLists(got)
 }
 
-func snapshotParityTuples() []*openfgav1.TupleKey {
+func permissionParityTuples() []*openfgav1.TupleKey {
 	tuples := []*openfgav1.TupleKey{
 		common.NewResourceTuple("user:direct", common.RelationSetAdmin, dashboardGroup, dashboardResource, "", "direct-dashboard"),
 		common.NewTypedTuple(common.TypeUser, "user:direct", common.RelationGet, "readable-user"),
@@ -300,8 +300,8 @@ func snapshotParityTuples() []*openfgav1.TupleKey {
 	return tuples
 }
 
-func TestUserPermissionsSnapshotParity(t *testing.T) {
-	srv, _, _ := newSnapshotTestServer(t, snapshotParityTuples())
+func TestUserPermissionsGrantsParity(t *testing.T) {
+	srv, _, _ := newPermissionTestServer(t, permissionParityTuples())
 	for _, tc := range []struct {
 		name, subject string
 		teams         []string
@@ -321,29 +321,29 @@ func TestUserPermissionsSnapshotParity(t *testing.T) {
 		{"all supported actions have wildcard grants", "user:all", nil},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			requireSnapshotParity(t, srv, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: tc.subject, Teams: tc.teams})
+			requirePermissionParity(t, srv, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: tc.subject, Teams: tc.teams})
 		})
 	}
 
 	t.Run("alias actions remain distinct", func(t *testing.T) {
-		got := requireSnapshotParity(t, srv, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
+		got := requirePermissionParity(t, srv, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
 		require.Contains(t, got["users:read"].Items, "readable-user")
 		require.Equal(t, got["users:read"].Items, got["org.users:read"].Items)
 	})
 	t.Run("only granted folders are returned", func(t *testing.T) {
-		got := requireSnapshotParity(t, srv, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:deep"})
+		got := requirePermissionParity(t, srv, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:deep"})
 		require.Equal(t, []string{"ancestor"}, got["folders:read"].Items)
 		require.NotContains(t, got["folders:read"].Items, "unrelated-child")
 	})
 	t.Run("wildcard coverage includes every supported action", func(t *testing.T) {
-		got := requireSnapshotParity(t, srv, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:all"})
+		got := requirePermissionParity(t, srv, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:all"})
 		for action, list := range got {
 			require.True(t, list.All, action)
 		}
 	})
 }
 
-func TestUserPermissionsSnapshotLargeContextualTeamSet(t *testing.T) {
+func TestUserPermissionsGrantsLargeContextualTeamSet(t *testing.T) {
 	groups := make([]string, 205)
 	for i := range groups {
 		groups[i] = fmt.Sprintf("large-team-%03d", i)
@@ -353,12 +353,12 @@ func TestUserPermissionsSnapshotLargeContextualTeamSet(t *testing.T) {
 		common.NewResourceTuple("team:"+groups[104]+"#member", common.RelationGet, dashboardGroup, dashboardResource, "", "second-chunk"),
 		common.NewResourceTuple("team:"+groups[204]+"#member", common.RelationGet, dashboardGroup, dashboardResource, "", "last-chunk"),
 	}
-	srv, _, _ := newSnapshotTestServer(t, tuples)
-	got := requireSnapshotParity(t, srv, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:many-teams", Teams: groups})
+	srv, _, _ := newPermissionTestServer(t, tuples)
+	got := requirePermissionParity(t, srv, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:many-teams", Teams: groups})
 	require.Equal(t, []string{"first-chunk", "last-chunk", "second-chunk"}, got["dashboards:read"].Items)
 }
 
-func TestUserPermissionsSnapshotObservesRevocations(t *testing.T) {
+func TestUserPermissionsGrantsObservesRevocations(t *testing.T) {
 	for _, tc := range []struct {
 		name, subject, action, item string
 		tuple                       *openfgav1.TupleKey
@@ -368,19 +368,19 @@ func TestUserPermissionsSnapshotObservesRevocations(t *testing.T) {
 		{"role binding", "user:stored", "folders:read", "ancestor", common.NewTypedTuple(common.TypeRole, "team:stored-team#member", common.RelationAssignee, "stored-role")},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			srv, ds, store := newSnapshotTestServer(t, snapshotParityTuples())
+			srv, ds, store := newPermissionTestServer(t, permissionParityTuples())
 			req := &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: tc.subject}
-			before := requireSnapshotParity(t, srv, req)
+			before := requirePermissionParity(t, srv, req)
 			require.Contains(t, before[tc.action].Items, tc.item)
 			require.NoError(t, ds.Write(t.Context(), store.ID, []*openfgav1.TupleKeyWithoutCondition{{User: tc.tuple.User, Relation: tc.tuple.Relation, Object: tc.tuple.Object}}, nil))
-			after := requireSnapshotParity(t, srv, req)
+			after := requirePermissionParity(t, srv, req)
 			require.NotContains(t, after[tc.action].Items, tc.item)
 		})
 	}
 }
 
-func TestUserPermissionsSnapshotIsolatesConcurrentContextualTeams(t *testing.T) {
-	srv, _, _ := newSnapshotTestServer(t, []*openfgav1.TupleKey{
+func TestUserPermissionsGrantsIsolatesConcurrentContextualTeams(t *testing.T) {
+	srv, _, _ := newPermissionTestServer(t, []*openfgav1.TupleKey{
 		common.NewResourceTuple("team:left#member", common.RelationGet, dashboardGroup, dashboardResource, "", "left-dashboard"),
 		common.NewResourceTuple("team:right#member", common.RelationGet, dashboardGroup, dashboardResource, "", "right-dashboard"),
 	})
@@ -388,50 +388,50 @@ func TestUserPermissionsSnapshotIsolatesConcurrentContextualTeams(t *testing.T) 
 		for _, team := range []string{"left", "right"} {
 			t.Run(fmt.Sprintf("%s-%d", team, i), func(t *testing.T) {
 				t.Parallel()
-				got := requireSnapshotParity(t, srv, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:same", Teams: []string{team}})
+				got := requirePermissionParity(t, srv, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:same", Teams: []string{team}})
 				require.Equal(t, []string{team + "-dashboard"}, got["dashboards:read"].Items)
 			})
 		}
 	}
 }
 
-func TestUserPermissionsSnapshotReturnsNoPartialResults(t *testing.T) {
+func TestUserPermissionsGrantsReturnsNoPartialResults(t *testing.T) {
 	t.Run("canceled request", func(t *testing.T) {
-		srv, _, _ := newSnapshotTestServer(t, snapshotParityTuples())
+		srv, _, _ := newPermissionTestServer(t, permissionParityTuples())
 		ctx, cancel := context.WithCancel(newContextWithNamespace())
 		cancel()
-		results, err := srv.evaluateUserPermissionSnapshot(ctx, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
+		results, err := srv.resolveUserPermissionContributions(ctx, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
 		require.Error(t, err)
 		require.Empty(t, results)
 	})
 	t.Run("datastore failure", func(t *testing.T) {
-		srv, ds, _ := newSnapshotTestServer(t, snapshotParityTuples())
+		srv, ds, _ := newPermissionTestServer(t, permissionParityTuples())
 		ds.failRead = errors.New("grant datastore unavailable")
-		results, err := srv.evaluateUserPermissionSnapshot(newContextWithNamespace(), &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
+		results, err := srv.resolveUserPermissionContributions(newContextWithNamespace(), &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
 		require.ErrorContains(t, err, "grant datastore unavailable")
 		require.Empty(t, results)
 	})
 	t.Run("stream fails after returning a grant", func(t *testing.T) {
-		srv, ds, _ := newSnapshotTestServer(t, snapshotParityTuples())
+		srv, ds, _ := newPermissionTestServer(t, permissionParityTuples())
 		ds.failIterator = errors.New("grant stream interrupted")
-		results, err := srv.evaluateUserPermissionSnapshot(newContextWithNamespace(), &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
+		results, err := srv.resolveUserPermissionContributions(newContextWithNamespace(), &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
 		require.ErrorContains(t, err, "grant stream interrupted")
 		require.Empty(t, results)
 	})
 	t.Run("unknown authorization model", func(t *testing.T) {
-		srv, ds, store := newSnapshotTestServer(t, snapshotParityTuples())
+		srv, ds, store := newPermissionTestServer(t, permissionParityTuples())
 		model, err := ds.OpenFGADatastore.ReadAuthorizationModel(t.Context(), store.ID, store.ModelID)
 		require.NoError(t, err)
 		model = proto.Clone(model).(*openfgav1.AuthorizationModel)
 		model.TypeDefinitions = append(model.TypeDefinitions, &openfgav1.TypeDefinition{Type: "future-type"})
 		ds.modelOverride = model
-		results, err := srv.evaluateUserPermissionSnapshot(newContextWithNamespace(), &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
+		results, err := srv.resolveUserPermissionContributions(newContextWithNamespace(), &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
 		require.Equal(t, codes.FailedPrecondition, status.Code(err))
 		require.Empty(t, results)
 	})
 }
 
-func snapshotPerformanceTuples() []*openfgav1.TupleKey {
+func permissionPerformanceTuples() []*openfgav1.TupleKey {
 	tuples := make([]*openfgav1.TupleKey, 0, 70)
 	entries := common.SupportedActions()
 	for i := range 34 {
@@ -445,41 +445,50 @@ func snapshotPerformanceTuples() []*openfgav1.TupleKey {
 	return tuples
 }
 
-func TestUserPermissionsSnapshotReducesDatastoreOperations(t *testing.T) {
-	srv, ds, _ := newSnapshotTestServer(t, snapshotPerformanceTuples())
+func TestUserPermissionsGrantsReducesDatastoreOperations(t *testing.T) {
+	srv, ds, _ := newPermissionTestServer(t, permissionPerformanceTuples())
 	req := &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice", Teams: []string{"platform-team"}}
 	ctx := newContextWithNamespace()
-	want, err := baselineSnapshotLists(ctx, srv, req)
+	want, err := baselinePermissionLists(ctx, srv, req)
 	require.NoError(t, err)
 	baselineCounts, baselineTotal := ds.counts()
 	ds.reset()
-	got, err := srv.evaluateUserPermissionSnapshot(ctx, req)
+	got, err := srv.resolveUserPermissionContributions(ctx, req)
 	require.NoError(t, err)
-	snapshotCounts, snapshotTotal := ds.counts()
-	require.Equal(t, normalizeSnapshotLists(want), normalizeSnapshotLists(got))
-	require.Less(t, snapshotTotal*3, baselineTotal, "prefetch should eliminate repeated remote graph walks")
-	require.LessOrEqual(t, snapshotCounts["read"], 36, "each subject, request team and assigned role should be fetched at most once")
-	require.Zero(t, snapshotCounts["user_tuple"])
-	require.Zero(t, snapshotCounts["usersets"])
-	t.Logf("datastore operations: baseline=%d %v, snapshot=%d %v", baselineTotal, baselineCounts, snapshotTotal, snapshotCounts)
+	translationCounts, translationTotal := ds.counts()
+	require.Equal(t, normalizePermissionLists(want), normalizePermissionLists(got))
+	require.Less(t, translationTotal*3, baselineTotal, "prefetch should eliminate repeated remote graph walks")
+	require.LessOrEqual(t, translationCounts["read"], 36, "each subject, request team and assigned role should be fetched at most once")
+	require.Zero(t, translationCounts["user_tuple"])
+	require.Zero(t, translationCounts["usersets"])
+	t.Logf("datastore operations: baseline=%d %v, translation=%d %v", baselineTotal, baselineCounts, translationTotal, translationCounts)
 }
 
-func BenchmarkUserPermissionsSnapshotDelayedDatastore(b *testing.B) {
+func BenchmarkUserPermissionsGrantsDelayedDatastore(b *testing.B) {
 	for _, delay := range []time.Duration{0, 5 * time.Millisecond} {
-		for _, path := range []string{"baseline", "snapshot"} {
+		for _, path := range []string{"baseline", "direct_uncached", "shared_team_new_user", "warm_user"} {
 			b.Run(fmt.Sprintf("delay=%s/%s", delay, path), func(b *testing.B) {
-				srv, ds, _ := newSnapshotTestServer(b, snapshotPerformanceTuples())
+				srv, ds, _ := newPermissionTestServer(b, permissionPerformanceTuples())
 				ds.delay = delay
 				req := &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice", Teams: []string{"platform-team"}}
 				ctx := newContextWithNamespace()
+				if path == "shared_team_new_user" || path == "warm_user" {
+					enablePrincipalCache(srv)
+					_, err := srv.resolveUserPermissionContributions(ctx, req)
+					require.NoError(b, err)
+					ds.reset()
+				}
 				b.ReportAllocs()
 				b.ResetTimer()
-				for range b.N {
+				for i := range b.N {
 					var err error
 					if path == "baseline" {
-						_, err = baselineSnapshotLists(ctx, srv, req)
+						_, err = baselinePermissionLists(ctx, srv, req)
 					} else {
-						_, err = srv.evaluateUserPermissionSnapshot(ctx, req)
+						if path == "shared_team_new_user" {
+							req.Subject = fmt.Sprintf("user:other-%d", i)
+						}
+						_, err = srv.resolveUserPermissionContributions(ctx, req)
 					}
 					if err != nil {
 						b.Fatal(err)

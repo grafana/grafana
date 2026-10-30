@@ -145,7 +145,7 @@ func (c *Client) GetUserPermissions(ctx context.Context, id authlib.AuthInfo, re
 	timer := prometheus.NewTimer(c.metrics.requestDurationSeconds.WithLabelValues("GetUserPermissions"))
 	defer timer.ObserveDuration()
 	// Unary interceptors do not cover streaming RPCs. Keep the deadline active
-	// until authlib has received and validated the entire permission snapshot.
+	// until authlib has received and validated the complete permission response.
 	var cancel context.CancelFunc
 	if _, hasDeadline := ctx.Deadline(); !hasDeadline && c.snapshotTimeout > 0 {
 		ctx, cancel = context.WithTimeout(ctx, c.snapshotTimeout)
@@ -166,7 +166,8 @@ func (c *Client) InvalidateUserPermissions(ctx context.Context, id authlib.AuthI
 	return c.snapshotClient.InvalidateUserPermissions(ctx, id, req)
 }
 
-// Permission snapshots must observe revocations and request-time teams on every call.
+// Keep request-time teams and shared-principal caching on the server rather than
+// caching a flattened user result in the client.
 type snapshotNoopCache struct{}
 
 func (snapshotNoopCache) Get(context.Context, string) ([]byte, error)              { return nil, cache.ErrNotFound }

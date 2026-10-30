@@ -16,7 +16,7 @@ const (
 	TypeNamespace      = common.TypeGroupResouce
 )
 
-// TokenPermissionUserPermissions authorizes permission snapshot requests.
+// TokenPermissionUserPermissions authorizes user-permission enumeration requests.
 const TokenPermissionUserPermissions = "authz.grafana.app/userpermissions:get"
 
 // TokenPermissionUpdate is required for callers to perform write operations against Zanzana (Mutate/Write).
