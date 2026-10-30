@@ -902,10 +902,6 @@ const (
 	// Route any calls to legacy correlations endpoints to call through to app platform
 	FlagGrafanaCorrelationsSkipLegacy = "grafana.correlationsSkipLegacy"
 
-	// FlagGrafanaMeticulousAIMode
-	// Controls the Meticulous AI session recorder. One of "off", "on-prod-env" (recorder enabled, production-environment behaviour), or "on-dev-env" (recorder enabled, high-volume/development behaviour).
-	FlagGrafanaMeticulousAIMode = "grafana.meticulousAIMode"
-
 	// FlagDatasourcesUseNewStackInfoToSettingsCache
 	// Use the new cache for datasource.StackInfoToSettings, backend flag
 	FlagDatasourcesUseNewStackInfoToSettingsCache = "datasources.useNewStackInfoToSettingsCache"

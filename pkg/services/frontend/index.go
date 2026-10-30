@@ -160,9 +160,6 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	ofClient := openfeature.NewDefaultClient()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	useLuxon, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagDatetimeUseLuxon, false, openfeature.TransactionContext(ctx))
-	meticulousAIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaMeticulousAIMode, "off", openfeature.TransactionContext(ctx))
-	meticulousAIEnabled := meticulousAIMode == "on-prod-env" || meticulousAIMode == "on-dev-env"
-	meticulousAIProductionEnvironmentFlag := meticulousAIMode == "on-prod-env"
 	reduceBootdataAPI := requestConfig.FullFrontendSettings != nil
 	legacyAPIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyAPIHandling, "off", openfeature.TransactionContext(ctx))
 	legacyFeatureToggleMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyFeatureToggleHandling, "off", openfeature.TransactionContext(ctx))
@@ -181,9 +178,9 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		RenderBindingSupported:                renderBindingSupported,
 		UseLuxon:                              useLuxon,
 		AssetSriChecksEnabled:                 p.config.AssetSriChecksEnabled,
-		MeticulousAIEnabled:                   meticulousAIEnabled,
-		MeticulousAIRecordingToken:            p.config.MeticulousAIRecordingToken,
-		MeticulousAIProductionEnvironmentFlag: meticulousAIProductionEnvironmentFlag,
+		MeticulousAIEnabled:                   p.config.Meticulous.EnabledForHost(request.Host),
+		MeticulousAIRecordingToken:            p.config.Meticulous.RecordingToken,
+		MeticulousAIProductionEnvironmentFlag: p.config.Meticulous.Production,
 		ReduceBootdataAPI:                     reduceBootdataAPI,
 		BootScript:                            p.bootScript,
 		LegacyAPIMode:                         legacyAPIMode,

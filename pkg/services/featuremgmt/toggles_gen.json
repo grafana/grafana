@@ -3130,7 +3130,8 @@
       "metadata": {
         "name": "grafana.meticulousAIMode",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-05-21T18:23:23Z"
+        "creationTimestamp": "2026-05-21T18:23:23Z",
+        "deletionTimestamp": "2026-10-30T14:25:06Z"
       },
       "spec": {
         "description": "Controls the Meticulous AI session recorder. One of \"off\", \"on-prod-env\" (recorder enabled, production-environment behaviour), or \"on-dev-env\" (recorder enabled, high-volume/development behaviour).",

@@ -718,6 +718,41 @@ Set to `false` to remove all feedback links from the UI. Default is `true`.
 
 <hr />
 
+### `[meticulous]`
+
+Configure Meticulous session recording in the frontend service. Recording is disabled by default.
+Apply these settings to the process serving frontend HTML and restart it after changes.
+
+{{< admonition type="warning" >}}
+Use only synthetic, non-sensitive test data when enabling recording. Recordings are uploaded to Meticulous and can include network requests, responses, and credentials. You and your team are responsible for ensuring the instance and connected datasources contain no customer or sensitive data.
+{{< /admonition >}}
+
+#### `enabled`
+
+Set to `true` to enable recording. Default is `false`. A non-empty `recording_token` is also required, and the request host must match `allowed_hosts` when configured.
+Override with `GF_METICULOUS_ENABLED`.
+
+#### `production`
+
+Controls the recorder's production-environment behavior. Default is `true`.
+This setting doesn't control whether recording is enabled or make sensitive data safe to record.
+Override with `GF_METICULOUS_PRODUCTION`.
+
+#### `recording_token`
+
+The Meticulous project's browser-visible recording token, not its secret API token. Default is empty.
+Override with `GF_METICULOUS_RECORDING_TOKEN`.
+This replaces `[analytics] meticulous_ai_recording_token`.
+
+#### `allowed_hosts`
+
+A comma-separated list of exact request `Host` values, including ports when present, such as `localhost:3000,127.0.0.1:3000`.
+Whitespace around entries is ignored. Wildcards and suffix matching aren't supported.
+Default is empty, which permits any host when recording is enabled. Configure an explicit list for a shared frontend service.
+Override with `GF_METICULOUS_ALLOWED_HOSTS`.
+
+<hr />
+
 ### `[security]`
 
 #### `disable_initial_admin_creation`
