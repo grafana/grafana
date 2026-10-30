@@ -14,6 +14,13 @@ import (
 
 const subscriberName = "nats-subscriber"
 
+// Service names of the bus, so the monolith can start it before its users.
+const (
+	ServerServiceName     = serverName
+	PublisherServiceName  = publisherName
+	SubscriberServiceName = subscriberName
+)
+
 // MessageHandler receives a message delivered to a subscribed subject. It
 // mirrors Publish's (subject, data) shape so callers never touch nats.go types.
 type MessageHandler func(subject string, data []byte)
@@ -34,6 +41,22 @@ type Subscriber interface {
 	// running subscriber receives its own copy; pass WithQueueGroup to
 	// load-balance delivery across a group instead.
 	Subscribe(ctx context.Context, subject string, handler MessageHandler, opts ...SubscribeOption) (Subscription, error)
+}
+
+var closedChan = func() chan struct{} {
+	ch := make(chan struct{})
+	close(ch)
+	return ch
+}()
+
+// Started returns a channel closed once s has started and can subscribe.
+// Subscribe fails until then. A subscriber that cannot report it counts as
+// started.
+func Started(s Subscriber) <-chan struct{} {
+	if st, ok := s.(interface{ Started() <-chan struct{} }); ok {
+		return st.Started()
+	}
+	return closedChan
 }
 
 // subscribeConfig holds the resolved options for a Subscribe call.
