@@ -167,7 +167,7 @@ jobs:
               --force-publish \
               --yes
           else
-            npm exec --no -- nx release version "$VERSION"
+            npm exec --no -- nx release version --groups=grafana "$VERSION"
           fi
           # packages:pack runs each package's prepack (scripts/prepare-npm-package.js),
           # which stamps GRAFANA_COMMIT as gitHead into the packed manifest. npm doesn't
