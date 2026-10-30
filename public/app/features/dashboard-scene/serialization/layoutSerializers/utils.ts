@@ -26,6 +26,7 @@ import {
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { shouldClearTextQueries } from 'app/plugins/panel/text/queryMigration';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
@@ -238,13 +239,21 @@ function createPanelDataProvider(
 ): SceneDataProvider | undefined {
   const panel = panelKind.spec;
 
-  const targets =
+  let targets =
     // Default to an array with an empty data query with a `refId` already assigned
     Array.isArray(panel.data?.spec.queries) && panel.data?.spec.queries.length > 0
       ? panel.data?.spec.queries
       : panelMetas[panel.vizConfig?.group]?.skipDefaultQuery
         ? []
         : [defaultPanelQueryKind()];
+  if (
+    panel.vizConfig.group === 'text' &&
+    panelMetas.text?.skipDefaultQuery &&
+    shouldClearTextQueries(panel.vizConfig.version, panel.vizConfig.spec.options ?? {})
+  ) {
+    targets = [];
+  }
+
   // Skip setting query runner for panels without queries
   if (!targets?.length && !panelMetas[panel.vizConfig?.group]?.skipDefaultQuery) {
     return undefined;

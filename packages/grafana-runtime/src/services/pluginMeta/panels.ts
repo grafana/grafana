@@ -44,7 +44,7 @@ function setPanelsAndAliases(input: PanelPluginMetas) {
   // Text v2 supports data queries, but plugin.json is shared with v1 which does not.
   // Remove once v2 is the default and plugin.json can set skipDataQuery: false.
   if (input.text && getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewTextPanel, false)) {
-    input = { ...input, text: { ...input.text, skipDataQuery: false } };
+    input = { ...input, text: { ...input.text, skipDataQuery: false, skipDefaultQuery: true } };
   }
   panels = input;
   panelsByAliasIDs = resolveAliasIDs(panels);
