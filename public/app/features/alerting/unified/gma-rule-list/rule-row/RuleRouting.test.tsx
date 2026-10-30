@@ -38,4 +38,9 @@ describe('RuleRouting', () => {
     expect(screen.getByText('Default policy')).toBeInTheDocument();
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
+
+  it('renders nothing for SimplifiedRouting when receiver is absent', () => {
+    const { container } = render(<RuleRouting searchHit={baseHit({ notificationType: 'SimplifiedRouting' })} />);
+    expect(container).toBeEmptyDOMElement();
+  });
 });

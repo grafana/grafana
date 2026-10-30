@@ -16,6 +16,10 @@ export function RuleRouting({ searchHit }: RuleRoutingProps) {
     return null;
   }
 
+  if (notificationType === 'SimplifiedRouting' && !receiver) {
+    return null;
+  }
+
   return (
     <Stack direction="row" alignItems="center" gap={0.5}>
       <Icon name="at" size="xs" />
