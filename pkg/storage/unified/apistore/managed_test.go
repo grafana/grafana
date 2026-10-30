@@ -825,4 +825,19 @@ func TestEnsureSameRepoManager(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("unmanaged resource in a repo folder names the repository and folder", func(t *testing.T) {
+		folder := makeAccessor(t, &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "repo-1"})
+		folder.SetName("folder-1")
+
+		err := ensureSameRepoManager(folder, makeAccessor(t, nil))
+
+		var status apierrors.APIStatus
+		require.ErrorAs(t, err, &status)
+		require.Equal(t, []v1.StatusCause{{
+			Type:    CauseFolderManagedByRepository,
+			Message: "repo-1",
+			Field:   "folder-1",
+		}}, status.Status().Details.Causes)
+	})
 }
