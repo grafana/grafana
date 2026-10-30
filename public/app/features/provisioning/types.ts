@@ -124,10 +124,11 @@ export interface StatusInfo {
 }
 
 // Tree view types for combined Resources/Files view. The resource labels (`Dashboard`, `Playlist`,
-// ...) are derived from the kind registry via `ResourceItemType`, so a new kind needs no edit here.
+// ...) are derived from the kind registry via `ResourceItemType`, or from the app manifest label
+// for kinds outside the registry, so a new kind needs no edit here.
 // `File` is the fallback for plain files/directories that don't map to a known kind; `getItemType`
 // also infers `Folder` from plain directory paths that have no backing resource.
-export type ItemType = ResourceItemType | 'File';
+export type ItemType = ResourceItemType | 'File' | (string & {});
 export type SyncStatus = 'synced' | 'pending';
 
 export interface TreeItem {

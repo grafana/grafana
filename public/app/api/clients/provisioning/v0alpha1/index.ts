@@ -21,6 +21,7 @@ import {
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/constants';
 import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
+import { setManifestKinds } from '../../../../features/provisioning/utils/manifestKinds';
 import { handleError } from '../../../utils';
 import { applyWatchEvent, createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
 
@@ -122,6 +123,16 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
                 .filter(Boolean),
             ]
           : [{ type: 'Connection', id: 'LIST' }],
+    },
+    getFrontendSettings: {
+      onQueryStarted: async (_, { queryFulfilled }) => {
+        try {
+          const { data } = await queryFulfilled;
+          setManifestKinds(data.availableResources);
+        } catch {
+          return;
+        }
+      },
     },
     deleteRepository: {
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {

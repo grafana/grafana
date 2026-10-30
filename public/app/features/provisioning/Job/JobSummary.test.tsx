@@ -19,12 +19,12 @@ describe('JobSummary', () => {
       { group: 'folder.grafana.app', kind: 'Folder', delete: 1 },
     ]);
 
-    const dashboardRow = await rowFor('Dashboard');
-    expect(within(dashboardRow).getByText('Dashboard')).toBeInTheDocument();
+    const dashboardRow = await rowFor('Dashboards');
+    expect(within(dashboardRow).getByText('Dashboards')).toBeInTheDocument();
     // The kind icon is rendered alongside the name.
     expect(dashboardRow.querySelector('svg')).toBeInTheDocument();
 
-    expect(await rowFor('Folder')).toBeInTheDocument();
+    expect(await rowFor('Folders')).toBeInTheDocument();
   });
 
   it('computes the total from the action counts', async () => {
