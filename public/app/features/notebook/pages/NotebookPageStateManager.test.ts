@@ -7,6 +7,7 @@ import { setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import { type Resource } from 'app/features/apiserver/types';
 
 import { NotebookAnalytics } from '../analytics/main';
@@ -17,7 +18,9 @@ import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from '.
 
 import { NotebookPageStateManager } from './NotebookPageStateManager';
 
-jest.mock('../analytics/main', () => ({ NotebookAnalytics: { loaded: jest.fn() } }));
+jest.mock('../analytics/main', () => ({
+  NotebookAnalytics: { loaded: jest.fn(), editSessionStarted: jest.fn(), editSessionEnded: jest.fn() },
+}));
 
 const mockGetPanelPluginMetasMap = jest.fn();
 jest.mock('@grafana/runtime/internal', () => {
@@ -380,6 +383,49 @@ describe('NotebookPageStateManager', () => {
         await manager.loadNotebook('nb-1');
 
         expect(manager.state.scene?.state.$timeRange.state.from).toBe('now-1h');
+      } finally {
+        release();
+      }
+    });
+  });
+
+  describe('the edit mode of a cached notebook', () => {
+    beforeEach(() => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    });
+
+    // Deactivation leaves isEditing alone, because turning it off there would rewrite the url while the
+    // url sync is still listening. The reset has to happen when the page picks the scene back up.
+    it('takes a scene left mid-edit back to view mode', async () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.loadNotebook('nb-1');
+      const scene = manager.state.scene!;
+      const release = scene.activate();
+      scene.onEnterEditMode();
+      release();
+      manager.clearState();
+
+      await manager.loadNotebook('nb-1');
+
+      expect(manager.state.scene?.state.key).toBe(scene.state.key);
+      expect(manager.state.scene?.state.isEditing).toBeFalsy();
+    });
+
+    it('leaves edit mode alone while the notebook is open somewhere else', async () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.loadNotebook('nb-1');
+      const scene = manager.state.scene!;
+      const release = scene.activate();
+      scene.onEnterEditMode();
+
+      try {
+        await manager.loadNotebook('nb-1');
+
+        expect(manager.state.scene?.state.isEditing).toBe(true);
       } finally {
         release();
       }

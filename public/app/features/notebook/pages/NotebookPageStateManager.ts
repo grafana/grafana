@@ -142,6 +142,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
         // resetting there would throw away a `?from=&to=` somebody was linked to, and its cleanup runs
         // after the scene's, by which point the router has moved on to the next page.
         cached.scene.autosave.discardViewOnlyTimeChanges();
+        cached.scene.resetStaleEditMode();
         NotebookAnalytics.loaded(cached.scene, true, this.embedded, source);
         this.setState({ scene: cached.scene, isLoading: false });
         return;

@@ -123,6 +123,12 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       // scene context; without this, plugin-side interpolation silently degrades.
       claimSceneContext(this);
 
+      // Activated again while still editing, after the cleanup below ended the session: a StrictMode
+      // remount. Starting one keeps every end paired with a start.
+      if (this.state.isEditing && !this.editSession.isActive) {
+        this.beginEditSession(NOTEBOOK_EDIT_SESSION_SOURCE.PAGE_RESTORE);
+      }
+
       // activate() only propagates to $timeRange/$variables/$data/$behaviors — the pickers are
       // Unconditionally, because whether any surface renders the controls row is its own choice, and
       // autoRefresh only starts once the picker is active. Activation is reference counted, so the
@@ -201,13 +207,12 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         stopAutosave?.();
         // A toggle-off already ended the session and turned isEditing back off; this only catches
         // the case where the page itself goes away while a session was still open.
+        // Only the session ends here. `isEditing` is url-synced and the sync is still listening, so
+        // turning it off would rewrite the url and drop `?edit=true` — which is also what React's
+        // StrictMode remount does to a scene that is about to be activated again. A scene that really
+        // is left behind is reset by `resetStaleEditMode` when the page next picks it up.
         if (this.state.isEditing) {
           this.endEditSession(NOTEBOOK_EDIT_SESSION_END_REASON.NAVIGATION);
-          // Edit mode has to come off with the session. The page caches this scene and hands it back
-          // on the next visit, so a scene left mid-session would report a second end when someone
-          // opens the notebook just to read it, and no start when they open it to edit.
-          this.setState({ isEditing: false });
-          this.state.body.editModeChanged?.(false);
         }
         destroyMutationClient();
         timeRangeSub.unsubscribe();
@@ -269,6 +274,21 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       return;
     }
     this.startEditing(source);
+  }
+
+  /**
+   * Takes a cached scene that was left mid-session back to view mode. Done when the page picks the scene
+   * up rather than when it is torn down: the teardown cannot change `isEditing` without the url sync
+   * rewriting the url, and a scene left in edit mode would report a second end when someone opens the
+   * notebook just to read it, and no start when they open it to edit.
+   */
+  public resetStaleEditMode(): void {
+    if (!this.state.isEditing || this.isActive) {
+      return;
+    }
+
+    this.setState({ isEditing: false });
+    this.state.body.editModeChanged?.(false);
   }
 
   private startEditing(source: NotebookEditSessionSource): void {

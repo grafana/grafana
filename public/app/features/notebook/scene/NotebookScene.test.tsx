@@ -411,6 +411,8 @@ describe('NotebookScene', () => {
         scene.onEnterEditMode();
 
         deactivate();
+        // What the page does when it hands the cached scene back.
+        scene.resetStaleEditMode();
         // Reopened by its title, so the url carries no edit param.
         new NotebookSceneUrlSync(scene).updateFromUrl({ edit: null });
 
@@ -426,6 +428,7 @@ describe('NotebookScene', () => {
         const deactivate = scene.activate();
         scene.onEnterEditMode();
         deactivate();
+        scene.resetStaleEditMode();
         started.length = 0;
 
         // The list's Edit action again, on a scene the previous visit left behind.
@@ -433,6 +436,49 @@ describe('NotebookScene', () => {
         unsubscribeStarted();
 
         expect(started).toEqual([{ notebookUid: 'nb1', source: 'navigation', schema_version: 1 }]);
+        expect(scene.state.isEditing).toBe(true);
+      });
+
+      // The url sync is still listening when the scene deactivates, so turning isEditing off there
+      // rewrites the url and drops ?edit=true. StrictMode remounts the page this way in development.
+      it('does not change edit mode on deactivation, so the url keeps its edit param', () => {
+        const scene = buildScene('nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+        const changes: boolean[] = [];
+        scene.subscribeToState((state) => changes.push(Boolean(state.isEditing)));
+
+        deactivate();
+
+        expect(changes).toEqual([]);
+        expect(scene.state.isEditing).toBe(true);
+      });
+
+      it('starts a new session when reactivated still editing, as StrictMode does', () => {
+        const started: Array<Record<string, unknown>> = [];
+        const unsubscribeStarted = onInteraction('grafana_notebook_edit_session_started', (properties) =>
+          started.push(properties)
+        );
+        const scene = buildScene('nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+        deactivate();
+        started.length = 0;
+
+        deactivators.push(scene.activate());
+        unsubscribeStarted();
+
+        expect(ended).toHaveLength(1);
+        expect(started).toEqual([{ notebookUid: 'nb1', source: 'page_restore', schema_version: 1 }]);
+      });
+
+      it('does not reset edit mode on a scene another consumer still has active', () => {
+        const scene = buildScene('nb1');
+        deactivators.push(scene.activate());
+        scene.onEnterEditMode();
+
+        scene.resetStaleEditMode();
+
         expect(scene.state.isEditing).toBe(true);
       });
 
