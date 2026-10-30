@@ -4,11 +4,23 @@ import lodash from 'lodash';
 const { camelCase } = lodash;
 
 /**
- * Rule IDs that are overly verbose and that we want to combine so they report more cleanly
- *
- * i.e. so we can report `reactHooksRulesOfHooks` instead of `reactHookFooIsCalledConditionallyReactHooksMust...`
+ * Keep existing message-based metric names so dashboards continue to work.
+ * All other rules are combined by rule ID to avoid metrics that depend on source code or file paths.
  */
-const rulesToCombine = ['react-hooks/rules-of-hooks', 'react/no-unescaped-entities', 'no-barrel-files/no-barrel-files'];
+const rulesNotToCombine = [
+  '@grafana/no-config-datasources',
+  '@grafana/no-config-feature-toggles',
+  '@grafana/no-config-panels',
+  '@grafana/no-direct-local-storage-access',
+  '@grafana/no-get-data-source-srv',
+  // eslint-disable-next-line @grafana/no-gf-form -- Preserve the legacy metric for this rule.
+  '@grafana/no-gf-form',
+  '@grafana/require-no-margin',
+  '@typescript-eslint/consistent-type-assertions',
+  '@typescript-eslint/no-explicit-any',
+  'react-hooks/exhaustive-deps',
+  'react-prefer-function-component/react-prefer-function-component',
+];
 
 const legacyChecksToTransform = [
   { messageRegex: /gfFormUsage/i, prefix: 'noGfFormUsage' },
@@ -41,7 +53,7 @@ export default function statsReporter(results) {
       }
 
       const key =
-        message.ruleId && rulesToCombine.includes(message.ruleId)
+        message.ruleId && !rulesNotToCombine.includes(message.ruleId)
           ? camelCase(message.ruleId)
           : camelCase(message.message);
       countByMessage[key] = (countByMessage[key] || 0) + 1;
