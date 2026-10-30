@@ -201,8 +201,10 @@ func (l *Loader) assemble(ctx context.Context, user identity.Requester, options 
 		if p.enforcementEnabled {
 			basic, err = l.cached(ac.GetBasicRolePermissionCacheKey(role, user.GetOrgID()), options, load)
 		} else {
-			// Legacy readers share this key and cache static plus SQL grants.
-			// Neither consuming nor replacing it with SQL-only grants is safe.
+			// Local readers cache catalog and SQL grants together under this key.
+			// This path adds fresh catalog grants separately, so it needs SQL-only
+			// grants. The cached value includes catalog grants, and replacing it with
+			// SQL-only grants would make local readers lose their catalog grants.
 			basic, err = load()
 		}
 		if err != nil {
