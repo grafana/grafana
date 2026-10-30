@@ -37,6 +37,7 @@
     "test:by-codeowner:list": "pnpm --silent run codeowners-manifest && node scripts/codeowners-manifest/list-tests.mts",
     "test:coverage": "jest --coverage",
     "test:coverage:by-codeowner": "pnpm run codeowners-manifest && node scripts/test-coverage-by-codeowner.js",
+    "test:coverage:meticulous:by-codeowner": "node scripts/meticulous-coverage-by-codeowner.js",
     "test:coverage:changes": "jest --coverage --changedSince=origin/main",
     "test:storybook": "pnpm --filter @grafana/ui --fail-if-no-match run storybook:test",
     "test:accessibility-report": "./scripts/generate-a11y-report.sh",
