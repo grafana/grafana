@@ -918,23 +918,28 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 			time.Sleep(b.simulatedNetworkLatency)
 		}
 		return event.GUID, nil
-	})
+	}, b.afterCommit(ctx, resourcepb.WatchNotification_ADDED, event, folder))
 
 	if err != nil {
 		return 0, err
 	}
 
-	b.notifier.send(ctx, &resource.WrittenEvent{
-		Type:            event.Type,
-		Key:             event.Key,
-		PreviousRV:      event.PreviousRV,
-		Value:           event.Value,
-		ResourceVersion: rv,
-		Folder:          folder,
-	})
-	b.publishWatchNotification(ctx, resourcepb.WatchNotification_ADDED, event, rv, folder)
-
 	return rv, nil
+}
+
+// afterCommit announces a committed write to local watchers and the bus.
+func (b *backend) afterCommit(ctx context.Context, typ resourcepb.WatchNotification_Type, event resource.WriteEvent, folder string) func(rv int64) {
+	return func(rv int64) {
+		b.notifier.send(ctx, &resource.WrittenEvent{
+			Type:            event.Type,
+			Key:             event.Key,
+			PreviousRV:      event.PreviousRV,
+			Value:           event.Value,
+			ResourceVersion: rv,
+			Folder:          folder,
+		})
+		b.publishWatchNotification(ctx, typ, event, rv, folder)
+	}
 }
 
 // publishWatchNotification leaves previous type and folder empty: they would
@@ -1026,21 +1031,11 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 			Name:      event.Key.Name,
 		})
 		return event.GUID, nil
-	})
+	}, b.afterCommit(ctx, resourcepb.WatchNotification_MODIFIED, event, folder))
 
 	if err != nil {
 		return 0, err
 	}
-
-	b.notifier.send(ctx, &resource.WrittenEvent{
-		Type:            event.Type,
-		Key:             event.Key,
-		PreviousRV:      event.PreviousRV,
-		Value:           event.Value,
-		ResourceVersion: rv,
-		Folder:          folder,
-	})
-	b.publishWatchNotification(ctx, resourcepb.WatchNotification_MODIFIED, event, rv, folder)
 
 	return rv, nil
 }
@@ -1084,21 +1079,11 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 			Name:      event.Key.Name,
 		})
 		return event.GUID, nil
-	})
+	}, b.afterCommit(ctx, resourcepb.WatchNotification_DELETED, event, folder))
 
 	if err != nil {
 		return 0, err
 	}
-
-	b.notifier.send(ctx, &resource.WrittenEvent{
-		Type:            event.Type,
-		Key:             event.Key,
-		PreviousRV:      event.PreviousRV,
-		Value:           event.Value,
-		ResourceVersion: rv,
-		Folder:          folder,
-	})
-	b.publishWatchNotification(ctx, resourcepb.WatchNotification_DELETED, event, rv, folder)
 
 	return rv, nil
 }
