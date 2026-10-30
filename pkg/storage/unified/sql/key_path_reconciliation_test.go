@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	"testing"
+	"testing/synctest"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/prometheus/client_golang/prometheus"
@@ -12,9 +14,17 @@ import (
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
+
+const keyPathReconciliationImportTable = `CREATE TABLE resource_last_import_time (
+	"group" TEXT NOT NULL, resource TEXT NOT NULL, namespace TEXT NOT NULL,
+	last_import_time DATETIME NOT NULL, PRIMARY KEY ("group", resource, namespace)
+)`
 
 func newKeyPathReconciliationDB(t *testing.T) db.DB {
 	t.Helper()
@@ -27,6 +37,8 @@ func newKeyPathReconciliationDB(t *testing.T) db.DB {
 		namespace TEXT NOT NULL, name TEXT NOT NULL, resource_version BIGINT NOT NULL,
 		action INTEGER NOT NULL, folder TEXT NOT NULL, key_path TEXT NOT NULL DEFAULT '', value BLOB
 	)`)
+	require.NoError(t, err)
+	_, err = database.ExecContext(t.Context(), keyPathReconciliationImportTable)
 	require.NoError(t, err)
 	return dbimpl.NewDB(database, "sqlite3")
 }
@@ -92,9 +104,9 @@ type keyPathConcurrentUpdateDB struct {
 	beforeUpdate func()
 }
 
-func (d keyPathConcurrentUpdateDB) ExecContext(ctx context.Context, query string, args ...any) (db.Result, error) {
+func (d keyPathConcurrentUpdateDB) WithTx(ctx context.Context, opts *sql.TxOptions, fn db.TxFunc) error {
 	d.beforeUpdate()
-	return d.DB.ExecContext(ctx, query, args...)
+	return d.DB.WithTx(ctx, opts, fn)
 }
 
 func TestReconcileResourceHistoryKeyPathsDoesNotOverwriteConcurrentRepair(t *testing.T) {
@@ -110,6 +122,122 @@ func TestReconcileResourceHistoryKeyPathsDoesNotOverwriteConcurrentRepair(t *tes
 	var keyPath string
 	require.NoError(t, database.QueryRowContext(t.Context(), "SELECT key_path FROM resource_history").Scan(&keyPath))
 	require.Equal(t, "concurrently-filled", keyPath)
+	var markerCount int
+	require.NoError(t, database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM resource_last_import_time").Scan(&markerCount))
+	require.Zero(t, markerCount, "no index rebuild is needed when this worker repairs no rows")
+}
+
+func TestReconcileResourceHistoryKeyPathsMarksAffectedIndexes(t *testing.T) {
+	database := newKeyPathReconciliationDB(t)
+	oldImportTime := time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)
+	for _, row := range []struct {
+		guid      string
+		namespace string
+		group     string
+		resource  string
+		keyPath   string
+	}{
+		{guid: "first", namespace: "default", group: "group", resource: "resources"},
+		{guid: "second", namespace: "default", group: "group", resource: "resources"},
+		{guid: "other-namespace", namespace: "other", group: "group", resource: "resources"},
+		{guid: "other-group", namespace: "default", group: "other", resource: "resources"},
+		{guid: "other-resource", namespace: "default", group: "group", resource: "other"},
+		{guid: "populated", namespace: "untouched", group: "group", resource: "resources", keyPath: "keep-this-path"},
+	} {
+		insertKeyPathReconciliationRow(t, database, row.guid, row.namespace, 1700000000000123, 1, row.keyPath)
+		_, err := database.ExecContext(t.Context(), `UPDATE resource_history SET "group" = ?, resource = ? WHERE guid = ?`, row.group, row.resource, row.guid)
+		require.NoError(t, err)
+		_, err = database.ExecContext(t.Context(), `INSERT OR IGNORE INTO resource_last_import_time ("group", resource, namespace, last_import_time) VALUES (?, ?, ?, ?)`, row.group, row.resource, row.namespace, oldImportTime)
+		require.NoError(t, err)
+	}
+
+	count, err := reconcileResourceHistoryKeyPaths(t.Context(), database, 100)
+	require.NoError(t, err)
+	require.Equal(t, 5, count)
+	var marked, unchanged int
+	require.NoError(t, database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM resource_last_import_time WHERE last_import_time != ?", oldImportTime).Scan(&marked))
+	require.Equal(t, 4, marked, "only the distinct affected namespace/group/resource indexes are marked")
+	require.NoError(t, database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM resource_last_import_time WHERE last_import_time = ? AND namespace = 'untouched'", oldImportTime).Scan(&unchanged))
+	require.Equal(t, 1, unchanged)
+
+	// A clean pass must not request another index rebuild.
+	_, err = database.ExecContext(t.Context(), "UPDATE resource_last_import_time SET last_import_time = ?", oldImportTime)
+	require.NoError(t, err)
+	count, err = reconcileResourceHistoryKeyPaths(t.Context(), database, 100)
+	require.NoError(t, err)
+	require.Zero(t, count)
+	require.NoError(t, database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM resource_last_import_time WHERE last_import_time != ?", oldImportTime).Scan(&marked))
+	require.Zero(t, marked)
+}
+
+func TestReconcileResourceHistoryKeyPathsMarkerUsesCurrentTime(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		synctest.Sleep(1500 * time.Millisecond)
+		database := newKeyPathReconciliationDB(t)
+		insertKeyPathReconciliationRow(t, database, "repair", "default", 1700000000000123, 1, "")
+		expected := time.Now().UTC().Truncate(time.Second)
+		_, err := reconcileResourceHistoryKeyPaths(t.Context(), database, 100)
+		require.NoError(t, err)
+		var repairedAt time.Time
+		require.NoError(t, database.QueryRowContext(t.Context(), "SELECT last_import_time FROM resource_last_import_time").Scan(&repairedAt))
+		require.Equal(t, expected, repairedAt.UTC(), "repair markers use the current time at KV key precision, not the transaction deadline")
+
+		synctest.Sleep(time.Second)
+		importedAt := time.Now().UTC().Truncate(time.Second)
+		b := &backend{dialect: sqltemplate.SQLite}
+		require.NoError(t, b.updateLastImportTime(t.Context(), database, &resourcepb.ResourceKey{
+			Namespace: "default", Group: "group", Resource: "resources",
+		}, importedAt))
+		var latest time.Time
+		require.NoError(t, database.QueryRowContext(t.Context(), "SELECT last_import_time FROM resource_last_import_time").Scan(&latest))
+		require.Equal(t, importedAt, latest.UTC())
+		require.True(t, latest.After(repairedAt), "a subsequent import must advance the marker even before the repair transaction's deadline")
+	})
+}
+
+func TestReconcileResourceHistoryKeyPathsMarkersCanBeDeleted(t *testing.T) {
+	database := newKeyPathReconciliationDB(t)
+	insertKeyPathReconciliationRow(t, database, "repair", "default", 1700000000000123, 1, "")
+	_, err := reconcileResourceHistoryKeyPaths(t.Context(), database, 100)
+	require.NoError(t, err)
+
+	store, err := kv.NewSQLKV(database.SqlDB(), database.DriverName())
+	require.NoError(t, err)
+	var keys []string
+	for key, err := range store.Keys(t.Context(), kv.LastImportTimeSection, kv.ListOptions{}) {
+		require.NoError(t, err)
+		keys = append(keys, key)
+	}
+	require.Len(t, keys, 1)
+	// Cleanup deletes the timestamp reconstructed from the key, which has only
+	// second precision even when the database can preserve fractional seconds.
+	require.NoError(t, store.Delete(t.Context(), kv.LastImportTimeSection, keys[0]))
+	var markerCount int
+	require.NoError(t, database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM resource_last_import_time").Scan(&markerCount))
+	require.Zero(t, markerCount)
+}
+
+func TestReconcileResourceHistoryKeyPathsRollsBackIfRebuildMarkerFails(t *testing.T) {
+	database := newKeyPathReconciliationDB(t)
+	insertKeyPathReconciliationRow(t, database, "repair", "default", 1700000000000123, 1, "")
+	_, err := database.ExecContext(t.Context(), "DROP TABLE resource_last_import_time")
+	require.NoError(t, err)
+
+	count, err := reconcileResourceHistoryKeyPaths(t.Context(), database, 100)
+	require.ErrorContains(t, err, "mark repaired resource index for rebuild")
+	require.Zero(t, count)
+	var keyPath string
+	require.NoError(t, database.QueryRowContext(t.Context(), "SELECT key_path FROM resource_history").Scan(&keyPath))
+	require.Empty(t, keyPath, "a failed marker write must leave the row eligible for retry")
+
+	_, err = database.ExecContext(t.Context(), keyPathReconciliationImportTable)
+	require.NoError(t, err)
+	count, err = reconcileResourceHistoryKeyPaths(t.Context(), database, 100)
+	require.NoError(t, err)
+	require.Equal(t, 1, count)
+	var markerCount int
+	require.NoError(t, database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM resource_last_import_time").Scan(&markerCount))
+	require.Equal(t, 1, markerCount)
 }
 
 func TestReconcileResourceHistoryKeyPathsRejectsUnknownAction(t *testing.T) {
@@ -137,9 +265,22 @@ func TestReconcileResourceHistoryKeyPathsDialects(t *testing.T) {
 			if driver == "postgres" {
 				updateQuery = "UPDATE resource_history SET key_path = CASE guid WHEN $1 THEN $2 WHEN $3 THEN $4 ELSE key_path END WHERE key_path = '' AND guid IN ($5, $6)"
 			}
+			mock.ExpectBegin()
 			mock.ExpectExec(updateQuery).WithArgs("first", "unified/data/group/resources/ns/one/1724551110456246395~created~",
 				"second", "unified/data/group/resources/ns/two/1724551110456246395~deleted~folder", "first", "second").
 				WillReturnResult(sqlmock.NewResult(0, 2))
+			switch driver {
+			case "mysql":
+				markerQuery := "INSERT INTO `resource_last_import_time` (`group`, `resource`, `namespace`, `last_import_time`) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE `last_import_time` = ?;"
+				mock.ExpectExec(markerQuery).WithArgs("group", "resources", "ns", sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+			case "postgres":
+				markerQuery := `INSERT INTO "resource_last_import_time" ("group", "resource", "namespace", "last_import_time") VALUES ($1, $2, $3, $4) ON CONFLICT ("group", "resource", "namespace") DO UPDATE SET "last_import_time" = $5;`
+				mock.ExpectExec(markerQuery).WithArgs("group", "resources", "ns", sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+			default:
+				markerQuery := `INSERT OR REPLACE INTO "resource_last_import_time" ("group", "resource", "namespace", "last_import_time") VALUES (?, ?, ?, ?);`
+				mock.ExpectExec(markerQuery).WithArgs("group", "resources", "ns", sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+			}
+			mock.ExpectCommit()
 			count, err := reconcileResourceHistoryKeyPaths(t.Context(), dbimpl.NewDB(database, driver), 100)
 			require.NoError(t, err)
 			require.Equal(t, 2, count)

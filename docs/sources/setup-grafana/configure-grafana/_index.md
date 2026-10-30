@@ -515,7 +515,9 @@ Enables a background job that fills missing `key_path` values in `resource_histo
 
 This setting applies only when you enable the SQL KV storage backend with `[unified_storage] enable_sqlkv_backend = true`. It has no effect on file or remote storage backends.
 
-The job starts when the storage backend starts. It processes up to 100 rows per batch, with a one-second pause between batches. After it finds no missing paths, it waits one hour before checking again. If it encounters an error, it retries after one minute.
+The job starts after startup migrations complete, with one instance reconciling at a time. It processes up to 100 rows per batch, with a one-second pause between batches. After it finds no missing paths, it waits one hour before checking again. If it encounters an error or another instance is reconciling, it retries after one minute.
+
+Search checks for affected indexes every five minutes. As with imports, clock skew or concurrent index builds can leave search stale until another rebuild.
 
 You can optionally set this value to `false` after all Grafana instances that write to the database have been upgraded and a subsequent pass logs `Key path reconciliation succeeded; no missing key paths remain`. Keep the job enabled until the upgrade finishes, even if an earlier pass reports success.
 

@@ -113,6 +113,8 @@ type kvStorageBackend struct {
 	lastImportTimeMaxAge    time.Duration
 	metrics                 *kvBackendMetrics
 
+	keyPathReconciliationDone <-chan struct{}
+
 	watchOpts WatchOptions
 
 	// leaseManager serializes writes to the same resource via per-resource leases.
@@ -571,7 +573,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	}
 
 	if opts.ReconcileKeyPaths != nil && !opts.DisableStorageServices {
-		go backend.runKeyPathReconciliation(ctx, opts.ReconcileKeyPaths)
+		backend.startKeyPathReconciliation(ctx, opts.ReconcileKeyPaths)
 	}
 
 	logger.Info("backend initialized", "kv", fmt.Sprintf("%T", kv))
@@ -592,7 +594,7 @@ func (k *kvStorageBackend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCh
 }
 
 // Stop shuts down services owned by the backend.
-func (k *kvStorageBackend) Stop(_ context.Context) error {
+func (k *kvStorageBackend) Stop(ctx context.Context) error {
 	if k.historyPruner != nil {
 		k.historyPruner.Stop()
 	}
@@ -605,6 +607,13 @@ func (k *kvStorageBackend) Stop(_ context.Context) error {
 	k.leaseManager.Stop()
 	// Cancel the background context to stop runCleanups, GC, and other goroutines.
 	k.cancel()
+	if k.keyPathReconciliationDone != nil {
+		select {
+		case <-k.keyPathReconciliationDone:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 	return nil
 }
 

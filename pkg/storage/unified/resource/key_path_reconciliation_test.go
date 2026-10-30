@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,12 +22,21 @@ type keyPathReconciliationLogger struct {
 func (l *keyPathReconciliationLogger) Info(string, ...any)  { l.successes.Add(1) }
 func (l *keyPathReconciliationLogger) Error(string, ...any) { l.failures.Add(1) }
 
+func newKeyPathReconciliationBackend(t *testing.T, logger *keyPathReconciliationLogger, store KV) *kvStorageBackend {
+	t.Helper()
+	if store == nil {
+		store = setupBadgerKV(t)
+	}
+	manager := lease.NewManager(store, newLeaseHolder("test"), "test", nil, lease.WithGarbageCollectionDisabled)
+	return &kvStorageBackend{kv: store, log: logger, leaseManager: manager}
+}
+
 func TestKeyPathReconciliationRepeatsAfterCleanPass(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 		logger := &keyPathReconciliationLogger{}
-		backend := &kvStorageBackend{log: logger}
+		backend := newKeyPathReconciliationBackend(t, logger, nil)
 		var calls, pending atomic.Int32
 		pending.Store(2*keyPathReconciliationBatchSize + 1)
 		go backend.runKeyPathReconciliation(ctx, func(_ context.Context, batchSize int) (int, error) {
@@ -67,7 +77,7 @@ func TestKeyPathReconciliationRetriesFailures(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 		logger := &keyPathReconciliationLogger{}
-		backend := &kvStorageBackend{log: logger}
+		backend := newKeyPathReconciliationBackend(t, logger, nil)
 		var calls atomic.Int32
 		go backend.runKeyPathReconciliation(ctx, func(context.Context, int) (int, error) {
 			if calls.Add(1) == 1 {
@@ -91,8 +101,9 @@ func TestKeyPathReconciliationRetriesFailures(t *testing.T) {
 func TestKeyPathReconciliationCancellation(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
 		logger := &keyPathReconciliationLogger{}
-		backend := &kvStorageBackend{log: logger}
+		backend := newKeyPathReconciliationBackend(t, logger, nil)
 		go backend.runKeyPathReconciliation(ctx, func(ctx context.Context, _ int) (int, error) {
 			<-ctx.Done()
 			return 0, ctx.Err()
@@ -110,7 +121,7 @@ func TestKeyPathReconciliationTimeout(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 		logger := &keyPathReconciliationLogger{}
-		backend := &kvStorageBackend{log: logger}
+		backend := newKeyPathReconciliationBackend(t, logger, nil)
 		go backend.runKeyPathReconciliation(ctx, func(ctx context.Context, _ int) (int, error) {
 			<-ctx.Done()
 			return 0, ctx.Err()

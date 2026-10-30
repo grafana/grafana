@@ -3,12 +3,18 @@ package sql
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
+
+const keyPathReconciliationTransactionTimeout = 30 * time.Second
 
 func reconcileResourceHistoryKeyPaths(ctx context.Context, database db.DB, batchSize int) (int, error) {
 	if batchSize <= 0 {
@@ -37,6 +43,7 @@ func reconcileResourceHistoryKeyPaths(ctx context.Context, database db.DB, batch
 		keyPath string
 	}
 	repairs := make([]repair, 0, batchSize)
+	affectedResources := make(map[resource.NamespacedResource]struct{})
 	for rows.Next() {
 		var guid string
 		var key resource.DataKey
@@ -56,6 +63,10 @@ func reconcileResourceHistoryKeyPaths(ctx context.Context, database db.DB, batch
 		}
 		key.ResourceVersion = resource.ToSnowflakeRV(key.ResourceVersion)
 		repairs = append(repairs, repair{guid: guid, keyPath: kv.DataSection + "/" + key.String()})
+		// Search indexes are namespaced, so cluster-scoped rows need no rebuild marker.
+		if key.Namespace != "" {
+			affectedResources[resource.NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}] = struct{}{}
+		}
 	}
 	if err := rows.Err(); err != nil {
 		return 0, err
@@ -82,7 +93,48 @@ func reconcileResourceHistoryKeyPaths(ctx context.Context, database db.DB, batch
 		args = append(args, repair.guid)
 	}
 	query = fmt.Sprintf("UPDATE resource_history SET key_path = %s WHERE key_path = '' AND guid IN (%s)", cases.String(), strings.Join(guids, ", "))
-	if _, err := database.ExecContext(ctx, query, args...); err != nil {
+	resources := make([]resource.NamespacedResource, 0, len(affectedResources))
+	for key := range affectedResources {
+		resources = append(resources, key)
+	}
+	// Use the same lock order across repair workers sharing a database.
+	slices.SortFunc(resources, func(a, b resource.NamespacedResource) int {
+		return strings.Compare(a.String(), b.String())
+	})
+
+	txCtx, cancelTx := context.WithTimeout(ctx, keyPathReconciliationTransactionTimeout)
+	defer cancelTx()
+	err = database.WithTx(txCtx, nil, func(ctx context.Context, tx db.Tx) error {
+		result, err := tx.ExecContext(ctx, query, args...)
+		if err != nil {
+			return err
+		}
+		affected, err := result.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if affected == 0 {
+			return nil
+		}
+
+		// Repaired revisions can precede search's checkpoint, so mark indexes for
+		// rebuild. Commit the marker with the repair so failures remain retryable.
+		// Use current time at KV key precision; future timestamps can hide later imports.
+		importedAt := time.Now().UTC().Truncate(time.Second)
+		for _, key := range resources {
+			if _, err := dbutil.Exec(ctx, tx, sqlResourceLastImportTimeInsert, sqlResourceLastImportTimeInsertRequest{
+				SQLTemplate:    sqltemplate.New(sqltemplate.DialectForDriver(database.DriverName())),
+				Namespace:      key.Namespace,
+				Group:          key.Group,
+				Resource:       key.Resource,
+				LastImportTime: importedAt,
+			}); err != nil {
+				return fmt.Errorf("mark repaired resource index for rebuild: %w", err)
+			}
+		}
+		return nil
+	})
+	if err != nil {
 		return 0, err
 	}
 	return len(repairs), nil
