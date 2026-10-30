@@ -864,6 +864,7 @@ type Cfg struct {
 	QuotasErrorMessageSupportInfo string
 
 	EnableSQLKVBackend                bool
+	KeyPathReconciliationEnabled      bool
 	KVLeaseTTL                        time.Duration
 	ResourceVersionMaxWait            time.Duration
 	EnableGarbageCollection           bool

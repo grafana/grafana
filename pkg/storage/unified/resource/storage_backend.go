@@ -113,6 +113,8 @@ type kvStorageBackend struct {
 	lastImportTimeMaxAge    time.Duration
 	metrics                 *kvBackendMetrics
 
+	keyPathReconciliationDone <-chan struct{}
+
 	watchOpts WatchOptions
 
 	// leaseManager serializes writes to the same resource via per-resource leases.
@@ -291,6 +293,11 @@ type KVBackendOptions struct {
 	// DisableStorageServices stops the background jobs that write, for a process
 	// that reads through this backend without running the storage server.
 	DisableStorageServices bool
+
+	// ReconcileKeyPaths repairs up to batchSize history rows and returns the number
+	// processed. Zero means no missing paths remain. Nil disables reconciliation
+	// for stores that do not need the SQL rolling-upgrade repair.
+	ReconcileKeyPaths func(ctx context.Context, batchSize int) (int, error)
 
 	// GCGate defers the start of the GC until released (optional).
 	GCGate *GCGate
@@ -538,6 +545,10 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		logger.Info("nats notifier shadow enabled")
 	}
 
+	if opts.ReconcileKeyPaths != nil && !opts.DisableStorageServices {
+		backend.startKeyPathReconciliation(ctx, opts.ReconcileKeyPaths)
+	}
+
 	logger.Info("backend initialized", "kv", fmt.Sprintf("%T", kv))
 
 	return backend, nil
@@ -556,7 +567,7 @@ func (k *kvStorageBackend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCh
 }
 
 // Stop shuts down services owned by the backend.
-func (k *kvStorageBackend) Stop(_ context.Context) error {
+func (k *kvStorageBackend) Stop(ctx context.Context) error {
 	if k.historyPruner != nil {
 		k.historyPruner.Stop()
 	}
@@ -569,6 +580,13 @@ func (k *kvStorageBackend) Stop(_ context.Context) error {
 	k.leaseManager.Stop()
 	// Cancel the background context to stop runCleanups, GC, and other goroutines.
 	k.cancel()
+	if k.keyPathReconciliationDone != nil {
+		select {
+		case <-k.keyPathReconciliationDone:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 	return nil
 }
 
