@@ -140,6 +140,37 @@ it('clears only the changed frame order after switching between frames', () => {
   expect(getConfigs()[1]).toEqual(otherOrder);
 });
 
+it('keeps viewer order when the table is handed a different panel and then its own panel back', () => {
+  const source = [sourceFrame(['A', 'B', 'C'])];
+  const originalConfigs = [orderedConfig];
+  const original: PanelRuntimeTransformations = {
+    get: () => originalConfigs,
+    getSourceSeries: () => source,
+    set: jest.fn(),
+    subscribe: () => () => {},
+  };
+  // A panel with the viewer changes saved into it, so its source already has them applied.
+  const promotedSource = [sourceFrame(['C', 'A'])];
+  const promotedConfigs: DataTransformerConfig[] = [];
+  const promoted: PanelRuntimeTransformations = {
+    get: () => promotedConfigs,
+    getSourceSeries: () => promotedSource,
+    set: jest.fn(),
+    subscribe: () => () => {},
+  };
+  const { result, rerender } = renderHook(
+    ({ api, source }) => useColumnTransformations(0, api, 'table', true, source),
+    { initialProps: { api: original, source } }
+  );
+
+  rerender({ api: promoted, source: promotedSource });
+  rerender({ api: original, source });
+
+  expect(result.current?.columnOrder).toEqual(['C', 'A', 'B']);
+  expect(result.current?.hiddenColumns).toEqual(new Set(['B']));
+  expect(original.set).not.toHaveBeenCalled();
+});
+
 it('reads visibility and order from the registered column transformations', () => {
   const source = [
     createDataFrame({

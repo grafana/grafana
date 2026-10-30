@@ -130,6 +130,7 @@ import {
   getDefaultVizPanel,
   getLayoutForObject,
   hasActualSaveChanges,
+  isLibraryPanel,
 } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
@@ -154,6 +155,8 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
+import { promotePanelAdHocChanges } from './panel-actions/promote/promotePanelAdHocChanges';
+import { PromotePanelAdHocChangesEvent } from './panel-actions/promote/utils';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
 import { takePendingPlanBuild } from './pendingPlanBuild';
 import { DashboardPlanningEvent } from './planningEvents';
@@ -548,6 +551,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.closeComposerSession();
     });
 
+    // Panel actions ask for their ad hoc changes to be saved with an event, so they do not import the dashboard's saving code.
+    const promoteAdHocChangesSubscription = this.subscribeToEvent(
+      PromotePanelAdHocChangesEvent,
+      ({ payload: { panel } }) => promotePanelAdHocChanges(this, panel)
+    );
+
     // Closing the tab or reloading never deactivates the scene, so an open edit period would go unreported.
     const onPageHide = () => this.endEditPeriod('abandoned');
     window.addEventListener('pagehide', onPageHide);
@@ -559,6 +568,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.exitComposerMode();
       this.closeComposerSession();
       composerSubscription.unsubscribe();
+      promoteAdHocChangesSubscription.unsubscribe();
       window.removeEventListener('pagehide', onPageHide);
       this.endEditPeriod('abandoned');
       this.cancelPendingViews();
@@ -1354,12 +1364,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     saveDashboardTemplate,
     saveAsDashboardTemplate,
     onSaveSuccess,
+    onDismiss,
     recoverToNewBranch,
   }: {
     saveAsCopy?: boolean;
     saveDashboardTemplate?: boolean;
     saveAsDashboardTemplate?: boolean;
     onSaveSuccess?: () => void;
+    onDismiss?: () => void;
     recoverToNewBranch?: RecoverToNewBranch;
     showDiff?: boolean;
   }) {
@@ -1390,6 +1402,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           saveAsDashboardTemplate,
           saveDashboardTemplate,
           onSaveSuccess,
+          onDismiss,
           recoverToNewBranch,
         },
         () => this.hasVariableErrors()
@@ -2255,6 +2268,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   isManaged() {
     return Boolean(this.getManagerKind());
+  }
+
+  isLibraryPanel(vizPanel: VizPanel) {
+    return isLibraryPanel(vizPanel);
   }
 
   isManagedRepository() {

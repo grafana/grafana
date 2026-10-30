@@ -27,7 +27,7 @@ import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/Opti
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
-import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 import { dispatch } from 'app/store/store';
 
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';

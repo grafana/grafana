@@ -25,7 +25,7 @@ import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import * as libAPI from 'app/features/library-panels/state/api';
-import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 import { dispatch } from 'app/store/store';
 
 import { DashboardScene } from '../scene/DashboardScene';

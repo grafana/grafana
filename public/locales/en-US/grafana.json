@@ -14013,6 +14013,13 @@
       "could-anything-matching-query": "Could not find anything matching your query"
     }
   },
+  "panel-adhoc-changes": {
+    "button": "Changes to view",
+    "remove-changes": "Remove changes",
+    "save-to-dashboard": "Save to dashboard",
+    "tooltip": "This panel has view changes that are not saved with the dashboard",
+    "undo-title": "Save view changes"
+  },
   "panel-data-pane": {
     "try-new-editor": {
       "label": "Try the new editor",

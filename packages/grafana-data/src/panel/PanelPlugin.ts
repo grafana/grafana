@@ -1,6 +1,9 @@
 import { defaultsDeep, set } from 'lodash';
 import { type ComponentClass, type ComponentType } from 'react';
 
+import { type DataTransformerConfig } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { type StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
 import { type PanelModel } from '../types/dashboard';
@@ -175,6 +178,30 @@ export interface PluginViewOptionsQuickToggles {
   fieldConfigProperties: string[];
 }
 
+type PanelInteractionMutation = 'TRANSFORMATION' | 'PANEL_SETTING' | 'FIELD_OVERRIDE';
+
+export interface PanelInteraction {
+  id: number;
+  name: string;
+  description?: string;
+  /** What parts of the panel the interaction changes when it is promoted. */
+  mutates: PanelInteractionMutation[];
+  schema: unknown[];
+  /** Writes the interaction into the v2 dashboard JSON and returns the updated JSON. */
+  promotionPath: (dashboard: DashboardV2Spec, context: PanelInteractionPromotionContext) => DashboardV2Spec;
+}
+
+export interface PanelInteractionPromotionContext {
+  /** Key of the panel in the dashboard JSON's `elements`. */
+  elementKey: string;
+  /** The panel's ad hoc transformations, in the same shape as saved transformations. */
+  transformations: readonly DataTransformerConfig[];
+}
+
+export interface PanelInteractions {
+  interactions: PanelInteraction[];
+}
+
 export class PanelPlugin<
   TOptions = any,
   TFieldConfigOptions extends object = {},
@@ -186,6 +213,7 @@ export class PanelPlugin<
   };
 
   private _viewPanelOptions?: PanelPluginViewOptions;
+  private _panelInteractions?: PanelInteractions;
   private _fieldConfigRegistry?: FieldConfigOptionsRegistry;
   private _initConfigRegistry = () => {
     return new FieldConfigOptionsRegistry();
@@ -267,6 +295,11 @@ export class PanelPlugin<
 
   get viewPanelOptions() {
     return this._viewPanelOptions;
+  }
+
+  /** @alpha */
+  get panelInteractions(): PanelInteractions | undefined {
+    return this._panelInteractions;
   }
 
   /**
@@ -738,6 +771,12 @@ export class PanelPlugin<
    */
   setViewPanelOptions(options: PanelPluginViewOptions) {
     this._viewPanelOptions = options;
+    return this;
+  }
+
+  /** @alpha */
+  setPanelInteractions(interactions: PanelInteractions) {
+    this._panelInteractions = interactions;
     return this;
   }
 }
