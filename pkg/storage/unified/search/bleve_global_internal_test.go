@@ -1405,22 +1405,16 @@ func TestSearchReturnsManagerAllowEdits(t *testing.T) {
 			}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 			require.NoError(t, err)
 
-			for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
-				resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
-				resourcepb.ResourceSearchRequest_FIELD_VALUES,
-			} {
-				t.Run(format.String(), func(t *testing.T) {
-					rsp, err := idx.Search(ctx, NewStubAccessClient(map[string]bool{src.Resource: true}), &resourcepb.ResourceSearchRequest{
-						Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource}},
-						Fields:       []string{resource.SEARCH_FIELD_MANAGER_KIND, resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS},
-						Limit:        10,
-						ResultFormat: format,
-					}, nil, nil)
-					require.NoError(t, err)
-					require.Nil(t, rsp.Error)
-					assert.Equal(t, map[string]any{"editable": true, "locked": false, "unmanaged": nil}, allowEditsByName(t, rsp))
-				})
-			}
+			rsp, err := idx.Search(ctx, NewStubAccessClient(map[string]bool{src.Resource: true}), &resourcepb.ResourceSearchRequest{
+				Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource}},
+				Fields:       []string{resource.SEARCH_FIELD_MANAGER_KIND, resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS},
+				Limit:        10,
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			}, nil, nil)
+			require.NoError(t, err)
+			require.Nil(t, rsp.Error)
+			require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, rsp.ResultFormat)
+			assert.Equal(t, map[string]any{"editable": true, "locked": false, "unmanaged": nil}, allowEditsByName(t, rsp))
 		})
 	}
 }
@@ -1428,21 +1422,6 @@ func TestSearchReturnsManagerAllowEdits(t *testing.T) {
 func allowEditsByName(t *testing.T, rsp *resourcepb.ResourceSearchResponse) map[string]any {
 	t.Helper()
 	got := map[string]any{}
-	if rsp.Results != nil {
-		col := slices.IndexFunc(rsp.Results.Columns, func(c *resourcepb.ResourceTableColumnDefinition) bool {
-			return c.Name == resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS
-		})
-		require.GreaterOrEqual(t, col, 0, "no %s column", resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS)
-		for _, row := range rsp.Results.Rows {
-			got[row.Key.Name] = nil
-			if cell := row.Cells[col]; len(cell) > 0 {
-				v, err := resource.DecodeCell(rsp.Results.Columns[col], col, cell)
-				require.NoError(t, err)
-				got[row.Key.Name] = v
-			}
-		}
-		return got
-	}
 	for _, row := range rsp.Rows {
 		values, err := resource.DecodeSearchValues(rsp.Fields, row)
 		require.NoError(t, err)

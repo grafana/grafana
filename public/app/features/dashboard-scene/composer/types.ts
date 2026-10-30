@@ -218,6 +218,11 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
   /** Not supported in M1: returns []. */
   listElements(): ComposerElement[];
   highlight(target: ElementRef | null): void;
+  /**
+   * Paused while the Assistant runs a turn that edits the document: picking and pins are disabled. Leaving
+   * Composer from the dashboard mode picker asks for confirmation while the session is paused, because
+   * ending the session stops that turn.
+   */
   setPaused(paused: boolean): void;
 
   /**
