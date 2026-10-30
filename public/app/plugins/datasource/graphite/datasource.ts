@@ -219,6 +219,13 @@ export class GraphiteDatasource
     };
   }
 
+  // Server-side expressions send these queries to the backend without `query()`, which resolves
+  // `#A` references. `applyTemplateVariables` sees one query at a time and can't resolve them, so
+  // keep using `interpolateVariablesInQueries`, which gets all of them at once.
+  prepareBackendQueries(request: DataQueryRequest<GraphiteQuery>): GraphiteQuery[] {
+    return this.interpolateVariablesInQueries(request.targets, request.scopedVars);
+  }
+
   frontendQuery(
     options: DataQueryRequest<GraphiteQuery>,
     originalTargetMap: { [key: string]: string },

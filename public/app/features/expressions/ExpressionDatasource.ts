@@ -89,6 +89,25 @@ function restoreSQLDisplayNames(response: DataQueryResponse, queries: Expression
   };
 }
 
+// Prepares one data source's queries the way a panel's request prepares them before it reaches the
+// backend. This path never calls the data source's `query()`.
+function prepareDataSourceQueries(ds: DataSourceApi, queries: DataQuery[], request: DataQueryRequest): DataQuery[] {
+  // Each data source gets its own copy: some hooks, such as InfluxDB's `applyTemplateVariables`,
+  // change the scopedVars they get, which would leak into the next data source and the caller.
+  request = { ...request, scopedVars: { ...request.scopedVars } };
+  if (ds instanceof DataSourceWithBackend) {
+    if (typeof ds.prepareBackendQueries === 'function') {
+      return ds.prepareBackendQueries({ ...request, targets: queries });
+    }
+    // Panels run `applyTemplateVariables` on each query. Data sources that don't override it keep
+    // `interpolateVariablesInQueries`.
+    if (ds.applyTemplateVariables !== DataSourceWithBackend.prototype.applyTemplateVariables) {
+      return queries.map((query) => ds.applyTemplateVariables(query, request.scopedVars, request.filters));
+    }
+  }
+  return ds.interpolateVariablesInQueries?.(queries, request.scopedVars, request.filters) ?? queries;
+}
+
 // Each data source gets all of its queries in one call, as it does in a panel, so it can resolve
 // references between them (such as Graphite's `#A`). Results are matched back by refId because
 // a data source may return them in a different order.
@@ -106,15 +125,20 @@ async function interpolateQueriesByDataSource(request: DataQueryRequest<Expressi
 
   const result = [...request.targets];
   for (const { ds, indexes } of groups.values()) {
-    if (!ds.interpolateVariablesInQueries) {
-      continue;
-    }
     const queries = indexes.map((i) => request.targets[i]);
-    const byRefId = new Map(
-      ds.interpolateVariablesInQueries(queries, request.scopedVars, request.filters).map((q) => [q.refId, q])
-    );
+    const byRefId = new Map(prepareDataSourceQueries(ds, queries, request).map((q) => [q.refId, q]));
     for (const i of indexes) {
-      result[i] = (byRefId.get(request.targets[i].refId) as ExpressionQuery | undefined) ?? request.targets[i];
+      const query = request.targets[i];
+      const prepared = byRefId.get(query.refId);
+      // The hooks may build a new query object. Keep the data source, so the request routes it, and
+      // `hide`, so the backend still leaves hidden inputs out of the response.
+      result[i] = prepared
+        ? ({
+            ...prepared,
+            datasource: prepared.datasource ?? query.datasource,
+            ...(query.hide !== undefined && { hide: query.hide }),
+          } as ExpressionQuery)
+        : query;
     }
   }
 

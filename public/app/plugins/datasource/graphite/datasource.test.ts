@@ -1855,6 +1855,23 @@ describe('graphiteDatasource', () => {
       expect(updatedDate).toBe('');
     });
   });
+
+  describe('prepareBackendQueries', () => {
+    it('interpolates all of the request targets together', () => {
+      const targets: GraphiteQuery[] = [
+        { refId: 'A', target: 'metric.a' },
+        { refId: 'B', target: 'sumSeries(#A)' },
+      ];
+      const scopedVars: ScopedVars = { input: { text: '10', value: '10' } };
+      const interpolated = [{ refId: 'A' }, { refId: 'B' }];
+      const spy = jest.spyOn(ctx.ds, 'interpolateVariablesInQueries').mockReturnValue(interpolated);
+
+      const result = ctx.ds.prepareBackendQueries({ targets, scopedVars } as DataQueryRequest<GraphiteQuery>);
+
+      expect(spy).toHaveBeenCalledWith(targets, scopedVars);
+      expect(result).toBe(interpolated);
+    });
+  });
 });
 
 describe('access scenarios', () => {
