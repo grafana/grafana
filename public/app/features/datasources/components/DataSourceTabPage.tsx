@@ -1,12 +1,14 @@
 import { Page } from 'app/core/components/Page/Page';
 import { useDataSourceSettingsNav } from 'app/features/connections/hooks/useDataSourceSettingsNav';
 import { useDatasourceFailureByUID } from 'app/features/connections/hooks/useDatasourceAdvisorChecks';
+import { isManaged } from 'app/features/provisioning/utils/managedResource';
 import { useDispatch } from 'app/types/store';
 
 import * as api from '../api';
 import { EditDataSource } from '../components/EditDataSource';
 import { EditDataSourceActions } from '../components/EditDataSourceActions';
 import { useDataSourceInfo } from '../components/useDataSourceInfo';
+import { useDataSourceProvisioning } from '../components/useDataSourceProvisioning';
 import { useDataSource, useDataSourceRights } from '../state/hooks';
 import { setNameAndVersion } from '../state/reducers';
 
@@ -18,6 +20,8 @@ interface Props {
 function DataSourceTabPage({ uid, pageId }: Props) {
   const { navId, pageNav, dataSourceHeader } = useDataSourceSettingsNav(pageId ?? undefined);
   const { datasourceFailureByUID, hasCheck: advisorChecked } = useDatasourceFailureByUID();
+  const provisioning = useDataSourceProvisioning(uid);
+  const managedResource = provisioning.resource;
 
   const info = useDataSourceInfo({
     dataSourcePluginName: pageNav.dataSourcePluginName,
@@ -25,11 +29,14 @@ function DataSourceTabPage({ uid, pageId }: Props) {
     alertingLoading: dataSourceHeader.alertingLoading,
     failure: datasourceFailureByUID.get(uid),
     advisorChecked,
+    managedResource,
   });
 
   const dataSource = useDataSource(uid);
   const rights = useDataSourceRights(uid);
-  const editable = rights.hasWriteRights && !rights.readOnly;
+  // Inline title editing writes straight through the data source API, which would be overwritten by
+  // the next sync, so a managed data source is renamed in its repository instead.
+  const editable = rights.hasWriteRights && !rights.readOnly && !(managedResource && isManaged(managedResource));
 
   const dispatch = useDispatch();
 
@@ -57,7 +64,7 @@ function DataSourceTabPage({ uid, pageId }: Props) {
       actions={<EditDataSourceActions uid={uid} />}
     >
       <Page.Contents>
-        <EditDataSource uid={uid} pageId={pageId} />
+        <EditDataSource uid={uid} pageId={pageId} provisioning={provisioning} />
       </Page.Contents>
     </Page>
   );

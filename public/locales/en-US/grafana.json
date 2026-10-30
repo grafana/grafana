@@ -8506,6 +8506,10 @@
       "load-error-title": "Error loading plugin",
       "not-found": "Data source not found"
     },
+    "data-source-managed-read-only-message": {
+      "body": "This data source is managed externally and cannot be modified using the UI. Update it where it is defined.",
+      "title-managed-data-source": "Managed data source"
+    },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Missing rights"
     },
@@ -8619,6 +8623,7 @@
       "label": {
         "advisor": "Advisor",
         "alerting": "Alerting",
+        "managed-by": "Managed by",
         "type": "Type"
       }
     },
@@ -15356,6 +15361,8 @@
     "resource-kind": {
       "dashboard": "dashboard",
       "dashboards": "Dashboards",
+      "datasource": "data source",
+      "datasources": "Data sources",
       "folder": "folder",
       "folders": "Folders",
       "library-panel": "library panel",

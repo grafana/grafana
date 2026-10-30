@@ -10,6 +10,7 @@ import {
   getKindInfoByStat,
   getKindInfoByStatGroup,
   getMigratableKinds,
+  matchesGroup,
   getRepositoryRoute,
   isResourceKindAvailable,
   readImmediateParent,
@@ -40,6 +41,13 @@ describe('resourceKinds registry', () => {
       kind: 'LibraryPanel',
       resource: 'librarypanels',
       itemType: 'LibraryPanel',
+    });
+    expect(resourceKindInfos.datasource).toMatchObject({
+      group: 'datasource.grafana.app',
+      kind: 'DataSource',
+      resource: 'datasources',
+      itemType: 'DataSource',
+      sharedGroup: true,
     });
   });
 
@@ -231,6 +239,7 @@ describe('getAvailableResourceKinds', () => {
       resourceKindInfos.dashboard,
       resourceKindInfos.playlist,
       resourceKindInfos.librarypanel,
+      resourceKindInfos.datasource,
     ]);
   });
 
@@ -312,5 +321,48 @@ describe('getMigratableKinds', () => {
     expect(getMigratableKinds([{ group: 'playlist.grafana.app', kind: 'Playlist' }]).map((k) => k.kind)).toEqual([
       'Playlist',
     ]);
+  });
+});
+
+// Data sources are the one kind whose registry `group` is a storage collection
+// instead of a served group: each plugin serves its own
+// `{plugin}.datasource.grafana.app`, and that is what the backend reports for an
+// individual resource and in availableResources.
+describe('shared collection groups', () => {
+  const testdata = 'grafana-testdata-datasource.datasource.grafana.app';
+
+  it('matches a served group inside the collection as well as the collection itself', () => {
+    expect(matchesGroup(resourceKindInfos.datasource, testdata)).toBe(true);
+    expect(matchesGroup(resourceKindInfos.datasource, 'datasource.grafana.app')).toBe(true);
+  });
+
+  it('does not match a group that merely looks similar', () => {
+    expect(matchesGroup(resourceKindInfos.datasource, 'notdatasource.grafana.app')).toBe(false);
+    expect(matchesGroup(resourceKindInfos.datasource, 'datasource.grafana.app.evil')).toBe(false);
+  });
+
+  it('leaves kinds that are not shared matching their group exactly', () => {
+    expect(matchesGroup(resourceKindInfos.dashboard, 'dashboard.grafana.app')).toBe(true);
+    expect(matchesGroup(resourceKindInfos.dashboard, 'v2.dashboard.grafana.app')).toBe(false);
+  });
+
+  it('resolves a resource reported under a served group back to the kind', () => {
+    expect(getKindInfoByGroupKind(testdata, 'DataSource')).toBe(resourceKindInfos.datasource);
+    expect(getKindInfoByStat({ group: testdata })).toBe(resourceKindInfos.datasource);
+    expect(getKindInfoByStatGroup(testdata)).toBe(resourceKindInfos.datasource);
+  });
+
+  it('is available and migratable when the backend declares any plugin group', () => {
+    const available: SupportedResource[] = [{ group: testdata, kind: 'DataSource' }];
+
+    expect(isResourceKindAvailable(resourceKindInfos.datasource, available)).toBe(true);
+    expect(getMigratableKinds(available).map((k) => k.kind)).toEqual(['DataSource']);
+  });
+
+  it('is unavailable when the declared plugin group is disabled', () => {
+    const available: SupportedResource[] = [{ group: testdata, kind: 'DataSource', disabled: true }];
+
+    expect(isResourceKindAvailable(resourceKindInfos.datasource, available)).toBe(false);
+    expect(getMigratableKinds(available)).toEqual([]);
   });
 });

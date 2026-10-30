@@ -48,7 +48,23 @@ type ProvisionedResource = ManagedResource & {
   metadata?: { name?: string };
   /** Committed verbatim as the file body. */
   spec?: Record<string, unknown>;
+  /**
+   * Any further top-level fields the kind stores are committed verbatim too — a data source keeps
+   * its secure-value references beside `spec`, not inside it. See {@link toFileBody}.
+   */
+  [field: string]: unknown;
 };
+
+/**
+ * The committed file body: everything the resource carries except `status` and the server-managed
+ * half of `metadata`. This mirrors the backend's own export (`ParsedResource.ToSaveBytes`), so a
+ * resource saved from the UI matches what an export job would have written — kinds with top-level
+ * fields beyond `spec` keep them instead of having them dropped on the next save.
+ */
+function toFileBody(resource: ProvisionedResource, name: string): Record<string, unknown> {
+  const { status, metadata, ...rest } = resource;
+  return { ...rest, metadata: { name } };
+}
 
 // New resources need a stable k8s name in the committed file (the provisioning write validates the
 // resource has one). Generate an RFC 1123-safe UID.
@@ -341,10 +357,8 @@ function ResourceDrawerContent({
       }
     : resource;
 
-  // Delete removes the file, so it commits no body; create/update commit the standard resource shape.
-  const body = isDelete
-    ? undefined
-    : { apiVersion: resource.apiVersion, kind: resource.kind, metadata: { name: resourceName }, spec: resource.spec };
+  // Delete removes the file, so it commits no body.
+  const body = isDelete ? undefined : toFileBody(resource, resourceName);
 
   // Branch names can't contain spaces, so prefix from the stable `key`, not the display noun.
   const prefix = branchPrefix ?? kind.key;
