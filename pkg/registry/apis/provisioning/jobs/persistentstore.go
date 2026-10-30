@@ -76,6 +76,9 @@ type Queue interface {
 	// Jobs already claimed by a worker are left to finish. Returns the number
 	// of jobs deleted.
 	CleanupQueue(ctx context.Context, namespace, repository string) (int, error)
+
+	// CountRunning returns the number of claimed jobs and pending orphan-cleanup jobs for the repository.
+	CountRunning(ctx context.Context, namespace, repository string) (int, error)
 }
 
 var (
@@ -663,6 +666,36 @@ func (s *persistentStore) CleanupQueue(ctx context.Context, namespace, repositor
 
 	logger.Info("cleanup queue complete", "deleted", deleted)
 	return deleted, nil
+}
+
+func (s *persistentStore) CountRunning(ctx context.Context, namespace, repository string) (int, error) {
+	ctx, span := tracing.Start(ctx, "provisioning.jobs.count_running")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("job.namespace", namespace),
+		attribute.String("job.repository", repository),
+	)
+
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
+	if err != nil {
+		span.RecordError(err)
+		return 0, apifmt.Errorf("failed to get provisioning identity for '%s': %w", namespace, err)
+	}
+	list, err := s.client.Jobs(namespace).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		span.RecordError(err)
+		return 0, apifmt.Errorf("failed to list jobs in '%s': %w", namespace, err)
+	}
+	var running int
+	for _, job := range list.Items {
+		if job.Spec.Repository != repository {
+			continue
+		}
+		if _, claimed := job.Labels[LabelJobClaim]; claimed || IsOrphanCleanupAction(job.Spec.Action) {
+			running++
+		}
+	}
+	return running, nil
 }
 
 // cleanupConflictRetries bounds the re-fetch/retry loop in deleteUnclaimedJob so
