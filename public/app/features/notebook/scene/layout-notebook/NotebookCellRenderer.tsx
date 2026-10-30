@@ -3,13 +3,14 @@ import { offset, useDismiss, useFloating, useInteractions } from '@floating-ui/r
 import { type CSSProperties, Suspense, useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { SceneDataTransformer, useSceneObjectState, type VizPanel } from '@grafana/scenes';
 import { Box, floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
+import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { NOTEBOOK_BLOCK_INSERT_VIA } from 'app/features/notebook/analytics/types';
 import { type CellContentKind } from 'app/features/notebook/types';
 
@@ -315,6 +316,7 @@ function SpecialMarkdownCell({
 } & NarrativeCellFocusProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { openDrawer } = useQueryLibraryContext();
 
   const { refs, floatingStyles, context } = useFloating({
     open: menuOpen,
@@ -374,6 +376,20 @@ function SpecialMarkdownCell({
     onFocusRequest?.();
   };
 
+  // Unlike handlePick, nothing converts until a query is picked, so cancelling leaves the cell as is.
+  const handlePickSavedQuery = () => {
+    setMenuOpen(false);
+    openDrawer({
+      onSelectQuery: async (query, title) => {
+        await cell
+          .getParentLayout()
+          .convertCellFromSavedQuery(cell, query, title, NOTEBOOK_BLOCK_INSERT_VIA.SLASH_MENU);
+        onFocusRequest?.();
+      },
+      options: { context: CoreApp.Notebook },
+    });
+  };
+
   return (
     <div ref={containerRef}>
       <MarkdownCell
@@ -394,7 +410,7 @@ function SpecialMarkdownCell({
       {menuOpen && (
         <Portal>
           <div ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
-            <NotebookBlockTypeMenu onPick={handlePick} />
+            <NotebookBlockTypeMenu onPick={handlePick} onPickSavedQuery={handlePickSavedQuery} />
           </div>
         </Portal>
       )}

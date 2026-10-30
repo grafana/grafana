@@ -2,7 +2,7 @@ import { seedDataSources } from 'test/helpers/seedDataSources';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { act, fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
-import { type DataSourceInstanceSettings, EventBusSrv, PluginType } from '@grafana/data';
+import { CoreApp, type DataSourceInstanceSettings, EventBusSrv, PluginType } from '@grafana/data';
 import { getMockPlugin, getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { getPluginImportUtils, setAppEvents, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
@@ -15,8 +15,11 @@ import {
   SceneTimeRange,
   VizPanel,
 } from '@grafana/scenes';
+import { contextSrv } from 'app/core/services/context_srv';
 import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
+import { getVizSuggestionForQuery } from 'app/features/dashboard-scene/utils/getVizSuggestionForQuery';
+import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import * as libraryPanelsApi from 'app/features/library-panels/state/api';
 import { runRequest } from 'app/features/query/state/runRequest';
 
@@ -39,6 +42,48 @@ jest.spyOn(libraryPanelsApi, 'getLibraryPanel').mockResolvedValue({
   name: 'Shared panel',
   model: { type: 'timeseries' },
 } as never);
+
+jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
+  useQueryLibraryContext: jest.fn(),
+}));
+
+// The suggestion pipeline is covered by getVizSuggestionForQuery's own tests.
+jest.mock('app/features/dashboard-scene/utils/getVizSuggestionForQuery', () => ({
+  getVizSuggestionForQuery: jest.fn(),
+}));
+
+/** A picked or converted panel runs its query, which needs a data source to resolve. */
+function seedMockDataSource() {
+  const settings: DataSourceInstanceSettings = {
+    uid: 'mock',
+    name: 'Mock',
+    type: 'mock',
+    meta: { ...getMockPlugin({ id: 'mock', type: PluginType.datasource }), metrics: true },
+    jsonData: {},
+    access: 'proxy',
+    readOnly: false,
+    isDefault: true,
+  };
+  seedDataSources([{ settings, api: new MockDataSourceApi(settings) }], { legacySrv: 'mock' });
+}
+
+const mockUseQueryLibraryContext = useQueryLibraryContext as jest.Mock;
+
+// The real query editor renders the library's own buttons too, so the mock has to supply them.
+function mockQueryLibrary(overrides: { openDrawer?: jest.Mock; queryLibraryEnabled?: boolean } = {}) {
+  mockUseQueryLibraryContext.mockReturnValue({
+    openDrawer: jest.fn(),
+    queryLibraryEnabled: false,
+    renderSavedQueryButtons: () => null,
+    ...overrides,
+  });
+}
+const mockGetVizSuggestionForQuery = getVizSuggestionForQuery as jest.Mock;
+
+beforeEach(() => {
+  mockQueryLibrary();
+  mockGetVizSuggestionForQuery.mockReset().mockResolvedValue(undefined);
+});
 
 // See CodeCell.test.tsx — the real editor does not run in jsdom.
 jest.mock('@grafana/ui/unstable', () => ({
@@ -270,22 +315,61 @@ describe('NotebookCellRenderer', () => {
 
       expect(onFocusRequest).toHaveBeenCalledTimes(1);
     });
+
+    describe('New from Saved Queries', () => {
+      it('is not offered when saved queries are unavailable', async () => {
+        const cell = buildMarkdownCellInLayout();
+        const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
+
+        await user.type(await screen.findByLabelText('Markdown'), '/');
+
+        expect(screen.getByRole('menuitem', { name: 'Visualization' })).not.toHaveAttribute('aria-haspopup');
+      });
+
+      // keyDown rather than user.type: a click here actually converts the cell via onConvert.
+      it('is offered under Visualization once saved queries are available', async () => {
+        mockQueryLibrary({ queryLibraryEnabled: true });
+        jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+        const cell = buildMarkdownCellInLayout();
+        const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
+
+        await user.type(await screen.findByLabelText('Markdown'), '/');
+        fireEvent.keyDown(screen.getByRole('menuitem', { name: 'Visualization' }), { key: 'ArrowRight' });
+
+        const submenu = within(await screen.findByTestId(selectors.components.Menu.SubMenu.container));
+        expect(submenu.getByRole('menuitem', { name: 'New from Saved Queries' })).toBeInTheDocument();
+      });
+
+      it('opens the drawer with the Notebook context and converts the cell once a query is selected', async () => {
+        seedMockDataSource();
+        const openDrawer = jest.fn();
+        mockQueryLibrary({ openDrawer, queryLibraryEnabled: true });
+        jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+        const cell = buildMarkdownCellInLayout();
+        const onFocusRequest = jest.fn();
+        const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} onFocusRequest={onFocusRequest} />);
+
+        await user.type(await screen.findByLabelText('Markdown'), '/');
+        fireEvent.keyDown(screen.getByRole('menuitem', { name: 'Visualization' }), { key: 'ArrowRight' });
+        const submenu = within(await screen.findByTestId(selectors.components.Menu.SubMenu.container));
+        fireEvent.click(submenu.getByRole('menuitem', { name: 'New from Saved Queries' }));
+
+        expect(openDrawer).toHaveBeenCalledWith(expect.objectContaining({ options: { context: CoreApp.Notebook } }));
+
+        const query = { refId: 'A', datasource: { uid: 'mock' } };
+        await act(async () => {
+          await openDrawer.mock.calls[0][0].onSelectQuery(query, 'My query title');
+        });
+
+        expect(cell.state.content).toBeUndefined();
+        expect(cell.state.body?.state.title).toBe('My query title');
+        expect(onFocusRequest).toHaveBeenCalledTimes(1);
+      });
+    });
   });
 
   describe('panel controls', () => {
-    beforeEach(() => {
-      const settings: DataSourceInstanceSettings = {
-        uid: 'mock',
-        name: 'Mock',
-        type: 'mock',
-        meta: { ...getMockPlugin({ id: 'mock', type: PluginType.datasource }), metrics: true },
-        jsonData: {},
-        access: 'proxy',
-        readOnly: false,
-        isDefault: true,
-      };
-      seedDataSources([{ settings, api: new MockDataSourceApi(settings) }], { legacySrv: 'mock' });
-    });
+    beforeEach(seedMockDataSource);
 
     function buildPanelCellInLayout(panel: VizPanel) {
       const cell = new NotebookCellItem({ elementName: 'panel-1', source: 'user', body: panel });

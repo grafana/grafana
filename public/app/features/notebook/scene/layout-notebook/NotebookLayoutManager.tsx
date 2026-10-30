@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   AppEvents,
+  CoreApp,
   filterFieldConfigOverrides,
   type GrafanaTheme2,
   isStandardFieldProp,
@@ -29,8 +30,10 @@ import { type LayoutRegistryItem } from 'app/features/dashboard-scene/scene/type
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { dashboardSceneGraph, type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
+import { getVizSuggestionForQuery } from 'app/features/dashboard-scene/utils/getVizSuggestionForQuery';
 import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
+import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { NotebookAnalytics } from '../../analytics/main';
@@ -782,10 +785,9 @@ export class NotebookLayoutManager
    * content-diffing undo/coalescing machinery, which is built around comparing two CellContentKind
    * values and doesn't apply to a content -> body transition.
    */
-  private convertCellToPanel(cell: NotebookCellItem): void {
+  private convertCellToPanel(cell: NotebookCellItem, panel: VizPanel = this.buildVisualizationPanel()): void {
     const previousContent = cell.state.content;
     const previousElementName = cell.state.elementName;
-    const panel = this.buildVisualizationPanel();
     // A sibling cell may legally still reference previousElementName (see onContentChange); give the
     // converted cell a fresh one only then, so serialize() doesn't collapse both into one entry.
     const hasSharedName = this.state.cells.some(
@@ -839,14 +841,18 @@ export class NotebookLayoutManager
    * `content` — see buildVisualizationPanel and this file's own header comment on why a query-first
    * cell is a Panel element, not a bespoke content kind.
    */
-  private buildCellFor(type: NotebookBlockType, index: number): { cell: NotebookCellItem; index: number } | undefined {
+  private buildCellFor(
+    type: NotebookBlockType,
+    index: number,
+    panel?: VizPanel
+  ): { cell: NotebookCellItem; index: number } | undefined {
     const clampedIndex = Math.max(0, Math.min(index, this.state.cells.length));
 
     if (type === 'visualization') {
       const cell = new NotebookCellItem({
         elementName: this.nextElementName(type),
         source: 'user',
-        body: this.buildVisualizationPanel(),
+        body: panel ?? this.buildVisualizationPanel(),
       });
       return { cell, index: clampedIndex };
     }
@@ -868,11 +874,17 @@ export class NotebookLayoutManager
     return { cell, index: clampedIndex };
   }
 
+  /** Keeps an insert before the trailing empty slot so it isn't stranded when the invariant appends a new one. */
+  private clampBeforeTrailingSlot(index: number): number {
+    const trailing = this.state.cells.at(-1);
+    if (index >= this.state.cells.length && trailing && isEmptyMarkdown(trailing.state.content)) {
+      return this.state.cells.length - 1;
+    }
+    return index;
+  }
+
   /**
    * Inserts a new cell at `index`, the position the add-block button was offering.
-   *
-   * Visualization stays inert rather than inserting a cell with no content kind behind it, which the
-   * renderer would draw as a blank gap — the menu's "Coming soon" submenu is the only thing it offers.
    *
    * Returns the new cell so the caller can hand it the caret; undefined when nothing was inserted.
    */
@@ -881,15 +893,8 @@ export class NotebookLayoutManager
     index: number,
     via?: NotebookBlockInsertVia
   ): NotebookCellItem | undefined => {
-    // An insert past the trailing empty slot offers index === cells.length. Inserting *after*
-    // that slot would leave it stranded mid-document once the invariant appends a replacement after
-    // the new block. Inserting *before* it keeps the empty cell at the tail, and still goes through
-    // executeEdit as "Add block" — convertCell would skip the undo stack for Paragraph (identical
-    // empty markdown, so only appendSystemCell ran) and record Heading/Code as "Edit block".
-    const trailing = this.state.cells.at(-1);
-    if (index >= this.state.cells.length && trailing && isEmptyMarkdown(trailing.state.content)) {
-      index = this.state.cells.length - 1;
-    }
+    // Not convertCell: it skips undo for Paragraph and records Heading/Code as "Edit block".
+    index = this.clampBeforeTrailingSlot(index);
 
     const built = this.buildCellFor(type, index);
     if (!built) {
@@ -909,6 +914,103 @@ export class NotebookLayoutManager
 
     return built.cell;
   };
+
+  /** "+" → "New from Saved Queries". Only called once a query is picked, so cancelling leaves nothing to undo. */
+  public addCellFromSavedQuery = async (
+    index: number,
+    query: DataQuery,
+    title?: string,
+    via?: NotebookBlockInsertVia
+  ): Promise<NotebookCellItem | undefined> => {
+    const panel = await this.buildSavedQueryPanel(query, title);
+
+    // Clamped only now: the cells list may have changed while the suggestion was being looked up.
+    index = this.clampBeforeTrailingSlot(index);
+    const built = this.buildCellFor('visualization', index, panel);
+    if (!built) {
+      return undefined;
+    }
+
+    this.executeEdit({
+      label: t('notebooks.history.add-block', 'Add block'),
+      kind: NOTEBOOK_EDIT_KIND.ADD_CELL,
+      perform: () => this.insertCell(built.cell, built.index),
+      undo: () => this.removeCellInstance(built.cell),
+    });
+
+    if (via) {
+      this.reportBlockInserted('visualization', via);
+    }
+
+    return built.cell;
+  };
+
+  /** "/" menu counterpart of addCellFromSavedQuery: converts `cell` in place. */
+  public convertCellFromSavedQuery = async (
+    cell: NotebookCellItem,
+    query: DataQuery,
+    title?: string,
+    via?: NotebookBlockInsertVia
+  ): Promise<void> => {
+    const panel = await this.buildSavedQueryPanel(query, title);
+    // Deleted (or undone away) while the suggestion was being looked up.
+    if (!this.state.cells.includes(cell)) {
+      return;
+    }
+    this.convertCellToPanel(cell, panel);
+    if (via) {
+      this.reportBlockInserted('visualization', via);
+    }
+  };
+
+  /**
+   * Builds a fully configured detached panel so the pick lands as one undo step. Built only after
+   * the suggestion lookup: the id generator scans the scene, so an id claimed before the await
+   * could be handed out again.
+   */
+  private async buildSavedQueryPanel(query: DataQuery, title?: string): Promise<VizPanel> {
+    // Warning, not error: the query still applies with the default viz, and a retry would add a second cell.
+    const warnNoSuggestion = () =>
+      appEvents.emit(AppEvents.alertWarning, [
+        t('notebook.add-block.saved-query-no-suggestion', 'No visualization found'),
+        t(
+          'notebook.add-block.saved-query-no-suggestion-detail',
+          'The query did not return enough data to suggest a visualization type.'
+        ),
+      ]);
+
+    let suggestion: Awaited<ReturnType<typeof getVizSuggestionForQuery>>;
+    try {
+      const timeRange = sceneGraph.getTimeRange(this).state.value;
+      suggestion = await getVizSuggestionForQuery(query, timeRange);
+    } catch {
+      suggestion = undefined;
+    }
+
+    const panel = this.buildVisualizationPanel();
+    if (suggestion) {
+      // Plain state, not changePluginType: the plugin loads (and fills in defaults) on activation.
+      panel.setState({
+        pluginId: suggestion.pluginId,
+        options: suggestion.options ?? {},
+        fieldConfig: suggestion.fieldConfig ?? { defaults: {}, overrides: [] },
+      });
+    } else {
+      warnNoSuggestion();
+    }
+
+    if (title) {
+      panel.setState({ title, hoverHeader: false });
+    }
+
+    // Straight to the runner: applyQueries would record its own undo step. Runs on activation.
+    const runner = getQueryRunnerFor(panel);
+    if (runner) {
+      setQueryRunnerQueries(runner, [{ ...query, refId: query.refId || 'A' }]);
+    }
+
+    return panel;
+  }
 
   /**
    * The "always one more empty block ready" invariant's own way of appending a cell (see
@@ -1173,6 +1275,7 @@ async function applyVisualizations(panels: VizPanel[], snapshots: Array<ReturnTy
 function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLayoutManager>) {
   const styles = useStyles2(getStyles);
   const { cells, title, tags, isEditing, showTimeRange, key } = model.useState();
+  const { openDrawer } = useQueryLibraryContext();
 
   const sceneTimeRange = sceneGraph.getTimeRange(model);
   const { value: timeRange } = sceneTimeRange.useState();
@@ -1225,6 +1328,20 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
       requestFocus(model.addCell(type, index, via)?.state.key);
     },
     [model, requestFocus]
+  );
+
+  // Nothing is inserted until onSelectQuery fires — cancelling the drawer leaves the notebook untouched.
+  const onAddSavedQuery = useCallback(
+    (index: number) => {
+      openDrawer({
+        onSelectQuery: async (query, title) => {
+          const cell = await model.addCellFromSavedQuery(index, query, title, NOTEBOOK_BLOCK_INSERT_VIA.PLUS_MENU);
+          requestFocus(cell?.state.key);
+        },
+        options: { context: CoreApp.Notebook },
+      });
+    },
+    [model, openDrawer, requestFocus]
   );
 
   // ArrowUp/ArrowDown once the caret (or, for a Panel/Collapsed cell, the frame itself — see
@@ -1303,6 +1420,7 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                     isDragActive={drag !== null}
                     dropIndicator={getCellDropIndicator(drag, index)}
                     onAdd={(type, cellIndex) => onAdd(type, cellIndex, NOTEBOOK_BLOCK_INSERT_VIA.PLUS_MENU)}
+                    onAddSavedQuery={onAddSavedQuery}
                     onDuplicate={() => model.duplicateCell(cell, NOTEBOOK_BLOCK_INSERT_VIA.DUPLICATE)}
                     onDelete={() => confirmRemoveCell(model, cell)}
                     onAdvance={(remainder, marker) => {
