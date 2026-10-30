@@ -1,4 +1,4 @@
-package cascade
+package cascadedelete
 
 import (
 	"context"

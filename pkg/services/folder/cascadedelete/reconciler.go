@@ -1,8 +1,8 @@
-// Package cascade implements the finalizer-driven cascade delete of a folder: each terminating
+// Package cascadedelete implements the finalizer-driven cascade delete of a folder: each terminating
 // folder deletes only its own direct children and releases its finalizer once none remain. A deleted
 // subfolder carries the same finalizer and runs its own cascade, so a folder disappearing proves its
 // whole subtree is gone without this package ever recursing.
-package cascade
+package cascadedelete
 
 import (
 	"context"
