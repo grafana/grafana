@@ -1166,7 +1166,11 @@ type recordingPublisher struct {
 
 func (p *recordingPublisher) Enabled() bool { return true }
 
-func (p *recordingPublisher) Publish(_ context.Context, subject string, data []byte) error {
+func (p *recordingPublisher) Publish(ctx context.Context, subject string, data []byte) error {
+	// Like the NATS publisher, reject a cancelled context.
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	p.subjects = append(p.subjects, subject)
 	p.payloads = append(p.payloads, data)
 	return p.err
@@ -1203,6 +1207,18 @@ func TestBackend_publishesWatchNotifications(t *testing.T) {
 			return b.delete(ctx, e)
 		}, resourcepb.WatchNotification_DELETED},
 	}
+	t.Run("publishes when the request is cancelled after commit", func(t *testing.T) {
+		t.Parallel()
+		pub := &recordingPublisher{}
+		b, _ := setup(t, pub)
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+
+		b.publishWatchNotification(ctx, resourcepb.WatchNotification_ADDED, resource.WriteEvent{Key: resKey, Object: meta}, 200, "folderuid")
+
+		require.Equal(t, []string{"us.watch.v1.gr.ns.rs"}, pub.subjects)
+	})
+
 	for _, tt := range tests {
 		event := resource.WriteEvent{Type: tt.typ, Key: resKey, Object: meta, PreviousRV: 150}
 

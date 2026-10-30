@@ -932,19 +932,20 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 		ResourceVersion: rv,
 		Folder:          folder,
 	})
-	b.publishWatchNotification(ctx, event, rv, folder)
+	b.publishWatchNotification(ctx, resourcepb.WatchNotification_ADDED, event, rv, folder)
 
 	return rv, nil
 }
 
 // publishWatchNotification leaves previous type and folder empty: they would
-// need an extra read and no consumer uses them.
-func (b *backend) publishWatchNotification(ctx context.Context, event resource.WriteEvent, rv int64, folder string) {
+// need an extra read and no consumer uses them. The write is committed, so a
+// cancelled request must not stop the publish.
+func (b *backend) publishWatchNotification(ctx context.Context, typ resourcepb.WatchNotification_Type, event resource.WriteEvent, rv int64, folder string) {
 	if b.watchPublisher == nil {
 		return
 	}
 	n := &resourcepb.WatchNotification{
-		Type:                    watchNotificationType(event.Type),
+		Type:                    typ,
 		Group:                   event.Key.Group,
 		Resource:                event.Key.Resource,
 		Namespace:               event.Key.Namespace,
@@ -956,20 +957,7 @@ func (b *backend) publishWatchNotification(ctx context.Context, event resource.W
 	if b.watchNotificationMetadata {
 		n.Metadata = resource.NewWatchMetadata(schema.GroupResource{Group: event.Key.Group, Resource: event.Key.Resource}, event.Object)
 	}
-	b.watchPublisher.Publish(ctx, n)
-}
-
-func watchNotificationType(t resourcepb.WatchEvent_Type) resourcepb.WatchNotification_Type {
-	switch t {
-	case resourcepb.WatchEvent_ADDED:
-		return resourcepb.WatchNotification_ADDED
-	case resourcepb.WatchEvent_MODIFIED:
-		return resourcepb.WatchNotification_MODIFIED
-	case resourcepb.WatchEvent_DELETED:
-		return resourcepb.WatchNotification_DELETED
-	default:
-		return resourcepb.WatchNotification_UNKNOWN
-	}
+	b.watchPublisher.Publish(context.WithoutCancel(ctx), n)
 }
 
 // IsRowAlreadyExistsError checks if the error is the result of the row inserted already existing.
@@ -1052,7 +1040,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 		ResourceVersion: rv,
 		Folder:          folder,
 	})
-	b.publishWatchNotification(ctx, event, rv, folder)
+	b.publishWatchNotification(ctx, resourcepb.WatchNotification_MODIFIED, event, rv, folder)
 
 	return rv, nil
 }
@@ -1110,7 +1098,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 		ResourceVersion: rv,
 		Folder:          folder,
 	})
-	b.publishWatchNotification(ctx, event, rv, folder)
+	b.publishWatchNotification(ctx, resourcepb.WatchNotification_DELETED, event, rv, folder)
 
 	return rv, nil
 }
