@@ -84,7 +84,7 @@ func ProvideService(
 		legacyClient, roleCatalog,
 	)
 
-	service.scopeResolver = legacyscopes.NewUIDResolver(restConfigProvider)
+	service.scopeResolver = legacypermissions.NewPermissionScopeResolver(features, restConfigProvider)
 	service.legacyShadow = NewLegacyUserPermissionsShadow(reg, cfg.RBAC.LegacyUserPermissionsShadowMaxConcurrent)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, userService).RegisterAPIEndpoints()
