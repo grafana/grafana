@@ -232,9 +232,9 @@ type GlobalSearchResults struct {
 
 // FolderPathItem is one folder of a folder path, which lists a folder and the
 // folders above it, from the top down, ending with the folder itself. Like the
-// folder API's parents, a path stops at the first folder the caller cannot
-// read, or that no longer exists: that one is named but detached, and nothing
-// above it is listed.
+// folder API's parents, a path ends at the nearest folder up the tree that the
+// caller cannot read or that no longer exists: that folder comes first, named
+// only and detached, and nothing above it is listed.
 //
 // +k8s:deepcopy-gen=true
 type FolderPathItem struct {

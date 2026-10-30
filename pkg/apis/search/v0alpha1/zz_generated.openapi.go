@@ -138,7 +138,7 @@ func schema_pkg_apis_search_v0alpha1_FolderPathItem(ref common.ReferenceCallback
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "FolderPathItem is one folder of a folder path, which lists a folder and the folders above it, from the top down, ending with the folder itself. Like the folder API's parents, a path stops at the first folder the caller cannot read, or that no longer exists: that one is named but detached, and nothing above it is listed.",
+				Description: "FolderPathItem is one folder of a folder path, which lists a folder and the folders above it, from the top down, ending with the folder itself. Like the folder API's parents, a path ends at the nearest folder up the tree that the caller cannot read or that no longer exists: that folder comes first, named only and detached, and nothing above it is listed.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"name": {
