@@ -30,14 +30,14 @@ func TestIntegration_BackfillFolderFullpaths(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("no organizations needs no rule store", func(t *testing.T) {
-		ng, _ := newBackfillTestService(t, 0)
+		ng, _, _ := newBackfillTestService(t, 0)
 		ng.ruleStore = nil
 
 		require.NoError(t, ng.BackfillFolderFullpaths(context.Background()))
 	})
 
 	t.Run("only selects folders with NULL fullpaths and deduplicates within each org", func(t *testing.T) {
-		ng, folders := newBackfillTestService(t, 3)
+		ng, folders, _ := newBackfillTestService(t, 3)
 		for _, orgID := range []int64{1, 2} {
 			seedBackfillRule(t, ng, orgID, "shared", fmt.Sprintf("missing-%d-a", orgID), nil)
 			seedBackfillRule(t, ng, orgID, "shared", fmt.Sprintf("missing-%d-b", orgID), nil)
@@ -72,7 +72,7 @@ func TestIntegration_BackfillFolderFullpaths(t *testing.T) {
 	})
 
 	t.Run("provider receives each org identity and a failed org does not stop backfill", func(t *testing.T) {
-		ng, folders := newBackfillTestService(t, 2)
+		ng, folders, sqlRules := newBackfillTestService(t, 2)
 		orgIDs, err := ng.store.FetchOrgIds(context.Background())
 		require.NoError(t, err)
 		for _, orgID := range orgIDs {
@@ -80,7 +80,7 @@ func TestIntegration_BackfillFolderFullpaths(t *testing.T) {
 		}
 		folders.calls = nil
 		var resolvedOrgs []int64
-		ng.ruleStore.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		sqlRules.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
 			requester, err := identity.GetRequester(ctx)
 			require.NoError(t, err)
 			resolvedOrgs = append(resolvedOrgs, requester.GetOrgID())
@@ -107,7 +107,7 @@ func TestIntegration_BackfillFolderFullpaths(t *testing.T) {
 		{name: "fullpath write failure continues with next org", failAt: 2},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			ng, folders := newBackfillTestService(t, 2)
+			ng, folders, sqlRules := newBackfillTestService(t, 2)
 			orgIDs, err := ng.store.FetchOrgIds(context.Background())
 			require.NoError(t, err)
 			require.Len(t, orgIDs, 2)
@@ -122,7 +122,7 @@ func TestIntegration_BackfillFolderFullpaths(t *testing.T) {
 				}
 				return nil
 			}}
-			ng.ruleStore.SQLStore = faultDB
+			sqlRules.SQLStore = faultDB
 
 			require.NoError(t, ng.BackfillFolderFullpaths(context.Background()))
 
@@ -133,7 +133,7 @@ func TestIntegration_BackfillFolderFullpaths(t *testing.T) {
 	}
 
 	t.Run("folder service failure leaves paths missing and continues with next org", func(t *testing.T) {
-		ng, folders := newBackfillTestService(t, 2)
+		ng, folders, _ := newBackfillTestService(t, 2)
 		orgIDs, err := ng.store.FetchOrgIds(context.Background())
 		require.NoError(t, err)
 		for _, orgID := range orgIDs {
@@ -158,7 +158,7 @@ func TestIntegration_BackfillFolderFullpaths(t *testing.T) {
 	})
 
 	t.Run("cancellation between orgs stops further reads", func(t *testing.T) {
-		ng, folders := newBackfillTestService(t, 2)
+		ng, folders, sqlRules := newBackfillTestService(t, 2)
 		orgIDs, err := ng.store.FetchOrgIds(context.Background())
 		require.NoError(t, err)
 		for _, orgID := range orgIDs {
@@ -172,7 +172,7 @@ func TestIntegration_BackfillFolderFullpaths(t *testing.T) {
 				cancel()
 			}
 		}}
-		ng.ruleStore.SQLStore = faultDB
+		sqlRules.SQLStore = faultDB
 
 		require.ErrorIs(t, ng.BackfillFolderFullpaths(ctx), context.Canceled)
 
@@ -222,7 +222,7 @@ func (f *backfillFolderService) GetFolders(_ context.Context, q folder.GetFolder
 	return result, nil
 }
 
-func newBackfillTestService(t *testing.T, orgCount int) (*AlertNG, *backfillFolderService) {
+func newBackfillTestService(t *testing.T, orgCount int) (*AlertNG, *backfillFolderService, *rules.RuleStore) {
 	t.Helper()
 	sqlStore := db.NewTestStore(t, db.WithoutDefaultOrgAndUser())
 	require.NoError(t, sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -235,17 +235,20 @@ func newBackfillTestService(t *testing.T, orgCount int) (*AlertNG, *backfillFold
 	}))
 	folders := &backfillFolderService{Service: foldertest.NewFakeService()}
 	logger := log.NewNopLogger()
+	sqlRules := &rules.RuleStore{
+		SQLStore:      sqlStore,
+		Logger:        logger,
+		FolderService: folders,
+		Cfg:           setting.UnifiedAlertingSettings{BaseInterval: time.Second},
+	}
+	ruleService, err := rules.ProvideService(sqlRules, folders)
+	require.NoError(t, err)
 	return &AlertNG{
-		SQLStore: sqlStore,
-		Log:      logger,
-		store:    &store.DBstore{SQLStore: sqlStore, Logger: logger},
-		ruleStore: &rules.RuleStore{
-			SQLStore:      sqlStore,
-			Logger:        logger,
-			FolderService: folders,
-			Cfg:           setting.UnifiedAlertingSettings{BaseInterval: time.Second},
-		},
-	}, folders
+		SQLStore:  sqlStore,
+		Log:       logger,
+		store:     &store.DBstore{SQLStore: sqlStore, Logger: logger},
+		ruleStore: ruleService,
+	}, folders, sqlRules
 }
 
 func seedBackfillRule(t *testing.T, ng *AlertNG, orgID int64, folderUID, uid string, fullpath any) {
@@ -253,7 +256,7 @@ func seedBackfillRule(t *testing.T, ng *AlertNG, orgID int64, folderUID, uid str
 	rule := models.RuleGen.With(
 		models.RuleGen.WithOrgID(orgID),
 		models.RuleGen.WithNamespaceUID(folderUID),
-		models.RuleGen.WithIntervalMatching(ng.ruleStore.Cfg.BaseInterval),
+		models.RuleGen.WithIntervalMatching(time.Second),
 	).Generate()
 	rule.UID = uid
 	_, err := ng.ruleStore.InsertAlertRules(context.Background(), nil, []models.InsertRule{{AlertRule: rule}})

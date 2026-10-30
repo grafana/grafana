@@ -684,7 +684,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	cleanUpService := cleanup.ProvideService(cfg, featureToggles, serverLockService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, ruleStore, eventualRestConfigProvider, orgService, teamimplService, service13)
+	rulesService, err := rules.ProvideService(ruleStore, folderimplService)
+	if err != nil {
+		return nil, err
+	}
+	cleanUpService := cleanup.ProvideService(cfg, featureToggles, serverLockService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, rulesService, eventualRestConfigProvider, orgService, teamimplService, service13)
 	clientGenerator := apiserver.ProvideClientGenerator(eventualRestConfigProvider)
 	correlationsService, err := correlations.ProvideService(ctx, sqlStore, routeRegisterImpl, service13, accessControl, inProcBus, quotaService, cfg, clientGenerator, eventualRestConfigProvider, userimplService, v5)
 	if err != nil {
@@ -711,7 +715,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	provisioningServiceImpl, err := provisioning.ProvideService(accessControl, ruleMutationValidator, cfg, featureToggles, sqlStore, pluginstoreService, dBstore, ruleStore, provenanceStore, serviceService, notificationService, dashboardProvisioningService, service13, correlationsService, dashboardService, folderimplService, service12, quotaService, secretsService, orgService, userimplService, receiverPermissionsService, tracingService, dualwriteService, promTypeMigrationProviderImpl, serverLockService, routePermissionsService)
+	provisioningServiceImpl, err := provisioning.ProvideService(accessControl, ruleMutationValidator, cfg, featureToggles, sqlStore, pluginstoreService, dBstore, rulesService, provenanceStore, serviceService, notificationService, dashboardProvisioningService, service13, correlationsService, dashboardService, folderimplService, service12, quotaService, secretsService, orgService, userimplService, receiverPermissionsService, tracingService, dualwriteService, promTypeMigrationProviderImpl, serverLockService, routePermissionsService)
 	if err != nil {
 		return nil, err
 	}
@@ -733,8 +737,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	exprService := expr.ProvideService(cfg, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, qsDatasourceClientBuilder)
 	ngAlert := metrics2.ProvideService(registerer)
 	tagimplService := tagimpl.ProvideService(sqlStore)
-	repositoryImpl := annotationsimpl.ProvideService(sqlStore, cfg, featureToggles, tagimplService, tracingService, ruleStore, dashboardService, registerer)
-	alertNG, err := ngalert.ProvideService(cfg, featureToggles, cacheServiceImpl, service13, routeRegisterImpl, sqlStore, kvStore, exprService, dataSourceProxyService, ruleMutationValidator, quotaService, secretsService, notificationService, ngAlert, folderimplService, accessControl, dashboardService, renderingService, inProcBus, acimplService, repositoryImpl, pluginstoreService, tracingService, dBstore, ruleStore, provenanceStore, httpclientProvider, plugincontextProvider, receiverPermissionsService, routePermissionsService, folderPermissionsService, userimplService, orgService, clientGenerator, configProvider)
+	repositoryImpl := annotationsimpl.ProvideService(sqlStore, cfg, featureToggles, tagimplService, tracingService, rulesService, dashboardService, registerer)
+	alertNG, err := ngalert.ProvideService(cfg, featureToggles, cacheServiceImpl, service13, routeRegisterImpl, sqlStore, kvStore, exprService, dataSourceProxyService, ruleMutationValidator, quotaService, secretsService, notificationService, ngAlert, folderimplService, accessControl, dashboardService, renderingService, inProcBus, acimplService, repositoryImpl, pluginstoreService, tracingService, dBstore, rulesService, provenanceStore, httpclientProvider, plugincontextProvider, receiverPermissionsService, routePermissionsService, folderPermissionsService, userimplService, orgService, clientGenerator, configProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -793,7 +797,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	authnService := authnimpl.ProvideAuthnService(authnimplService)
 	navtreeService := navtreeimpl.ProvideService(cfg, accessControl, pluginstoreService, service12, featureToggles, acimplService, kvStore, apikeyService, ossLicensingService, authnService)
-	statsService := statsimpl.ProvideService(cfg, sqlStore, dashboardService, folderimplService, orgService, v5, featureToggles, ruleStore)
+	statsService := statsimpl.ProvideService(cfg, sqlStore, dashboardService, folderimplService, orgService, v5, featureToggles, rulesService)
 	gatherer := metrics.ProvideGatherer()
 	apiAPI := api2.ProvideApi(cfg, featureToggles, starService, k8sClients)
 	anonUserLimitValidatorImpl := validator2.ProvideAnonUserLimitValidator()
@@ -951,7 +955,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	embeddedZanzanaService := authz.ProvideEmbeddedZanzanaService(cfg, zanzanaServer, tracingService)
-	alertRuleFolderConsumer := ngalert.ProvideAlertRuleFolderConsumer(ruleStore)
+	alertRuleFolderConsumer := ngalert.ProvideAlertRuleFolderConsumer(rulesService)
 	folderUIDRepairService := libraryelements.ProvideFolderUIDRepair(sqlStore, folderimplService, orgService, serverLockService, kvStore)
 	folderConsumer := libraryelements.ProvideFolderConsumer(libraryElementService, folderUIDRepairService)
 	reconciler := folderreconcile.ProvideReconciler(cfg, folderimplService, orgService, serverLockService, alertRuleFolderConsumer, folderConsumer)
@@ -976,7 +980,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	contentsCleaner := cleaner.ProvideFolderContentsDeleter(ruleStore, libraryPanelService)
+	contentsCleaner := cleaner.ProvideFolderContentsDeleter(rulesService, libraryPanelService)
 	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, features, apiserverService, folderPermissionsService, accessClient, registerer, v5, zanzanaClient, eventualRestConfigProvider, contentsCleaner)
 	userPermissionsClient := authz.ProvideAuthZUserPermissionsClient(authZClients)
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()
@@ -1468,7 +1472,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	cleanUpService := cleanup.ProvideService(cfg, featureToggles, serverLockService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, ruleStore, eventualRestConfigProvider, orgService, teamimplService, service13)
+	rulesService, err := rules.ProvideService(ruleStore, folderimplService)
+	if err != nil {
+		return nil, err
+	}
+	cleanUpService := cleanup.ProvideService(cfg, featureToggles, serverLockService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, rulesService, eventualRestConfigProvider, orgService, teamimplService, service13)
 	clientGenerator := apiserver.ProvideClientGenerator(eventualRestConfigProvider)
 	correlationsService, err := correlations.ProvideService(ctx, sqlStore, routeRegisterImpl, service13, accessControl, inProcBus, quotaService, cfg, clientGenerator, eventualRestConfigProvider, userimplService, v5)
 	if err != nil {
@@ -1495,7 +1503,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	provisioningServiceImpl, err := provisioning.ProvideService(accessControl, ruleMutationValidator, cfg, featureToggles, sqlStore, pluginstoreService, dBstore, ruleStore, provenanceStore, serviceService, notificationService, dashboardProvisioningService, service13, correlationsService, dashboardService, folderimplService, service12, quotaService, secretsService, orgService, userimplService, receiverPermissionsService, tracingService, dualwriteService, promTypeMigrationProviderImpl, serverLockService, routePermissionsService)
+	provisioningServiceImpl, err := provisioning.ProvideService(accessControl, ruleMutationValidator, cfg, featureToggles, sqlStore, pluginstoreService, dBstore, rulesService, provenanceStore, serviceService, notificationService, dashboardProvisioningService, service13, correlationsService, dashboardService, folderimplService, service12, quotaService, secretsService, orgService, userimplService, receiverPermissionsService, tracingService, dualwriteService, promTypeMigrationProviderImpl, serverLockService, routePermissionsService)
 	if err != nil {
 		return nil, err
 	}
@@ -1527,8 +1535,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	notificationServiceMock := notifications.MockNotificationService()
 	ngAlert := metrics2.ProvideService(registerer)
 	tagimplService := tagimpl.ProvideService(sqlStore)
-	repositoryImpl := annotationsimpl.ProvideService(sqlStore, cfg, featureToggles, tagimplService, tracingService, ruleStore, dashboardService, registerer)
-	alertNG, err := ngalert.ProvideService(cfg, featureToggles, cacheServiceImpl, service13, routeRegisterImpl, sqlStore, kvStore, exprService, dataSourceProxyService, ruleMutationValidator, quotaService, secretsService, notificationServiceMock, ngAlert, folderimplService, accessControl, dashboardService, renderingService, inProcBus, acimplService, repositoryImpl, pluginstoreService, tracingService, dBstore, ruleStore, provenanceStore, httpclientProvider, plugincontextProvider, receiverPermissionsService, routePermissionsService, folderPermissionsService, userimplService, orgService, clientGenerator, configProvider)
+	repositoryImpl := annotationsimpl.ProvideService(sqlStore, cfg, featureToggles, tagimplService, tracingService, rulesService, dashboardService, registerer)
+	alertNG, err := ngalert.ProvideService(cfg, featureToggles, cacheServiceImpl, service13, routeRegisterImpl, sqlStore, kvStore, exprService, dataSourceProxyService, ruleMutationValidator, quotaService, secretsService, notificationServiceMock, ngAlert, folderimplService, accessControl, dashboardService, renderingService, inProcBus, acimplService, repositoryImpl, pluginstoreService, tracingService, dBstore, rulesService, provenanceStore, httpclientProvider, plugincontextProvider, receiverPermissionsService, routePermissionsService, folderPermissionsService, userimplService, orgService, clientGenerator, configProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1587,7 +1595,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	authnService := authnimpl.ProvideAuthnService(authnimplService)
 	navtreeService := navtreeimpl.ProvideService(cfg, accessControl, pluginstoreService, service12, featureToggles, acimplService, kvStore, apikeyService, ossLicensingService, authnService)
-	statsService := statsimpl.ProvideService(cfg, sqlStore, dashboardService, folderimplService, orgService, v5, featureToggles, ruleStore)
+	statsService := statsimpl.ProvideService(cfg, sqlStore, dashboardService, folderimplService, orgService, v5, featureToggles, rulesService)
 	gatherer := metrics.ProvideGathererForTest(registerer)
 	apiAPI := api2.ProvideApi(cfg, featureToggles, starService, k8sClients)
 	anonUserLimitValidatorImpl := validator2.ProvideAnonUserLimitValidator()
@@ -1745,7 +1753,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	embeddedZanzanaService := authz.ProvideEmbeddedZanzanaService(cfg, zanzanaServer, tracingService)
-	alertRuleFolderConsumer := ngalert.ProvideAlertRuleFolderConsumer(ruleStore)
+	alertRuleFolderConsumer := ngalert.ProvideAlertRuleFolderConsumer(rulesService)
 	folderUIDRepairService := libraryelements.ProvideFolderUIDRepair(sqlStore, folderimplService, orgService, serverLockService, kvStore)
 	folderConsumer := libraryelements.ProvideFolderConsumer(libraryElementService, folderUIDRepairService)
 	reconciler := folderreconcile.ProvideReconciler(cfg, folderimplService, orgService, serverLockService, alertRuleFolderConsumer, folderConsumer)
@@ -1770,7 +1778,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	contentsCleaner := cleaner.ProvideFolderContentsDeleter(ruleStore, libraryPanelService)
+	contentsCleaner := cleaner.ProvideFolderContentsDeleter(rulesService, libraryPanelService)
 	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, features, apiserverService, folderPermissionsService, accessClient, registerer, v5, zanzanaClient, eventualRestConfigProvider, contentsCleaner)
 	userPermissionsClient := authz.ProvideAuthZUserPermissionsClient(authZClients)
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()

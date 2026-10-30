@@ -330,7 +330,8 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		publicDashboardService: publicDashboardService,
 	}
 
-	require.NoError(t, folderService.RegisterService(alertingStore))
+	_, err := ngrules.ProvideService(&alertingStore, folderService)
+	require.NoError(t, err)
 	require.NoError(t, folderService.RegisterService(lps))
 
 	t.Run("Folder service tests", func(t *testing.T) {
@@ -1300,7 +1301,8 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 		Logger:        log.New("test-alerting-store"),
 		AccessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
 	}
-	require.NoError(t, service.RegisterService(alertingStore))
+	_, err := ngrules.ProvideService(&alertingStore, &service)
+	require.NoError(t, err)
 
 	mockDashboardService := dashboards.NewFakeDashboardService(t)
 	mockFolderService := foldertest.NewFakeService()

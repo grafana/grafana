@@ -73,7 +73,7 @@ func ProvideService(
 	sqlStore db.DB,
 	pluginStore pluginstore.Store,
 	alertingStore *alertstore.DBstore,
-	ruleStore *rulestore.RuleStore,
+	ruleStore rulestore.Store,
 	provenanceStore *provenance.ProvenanceStore,
 	encryptionService encryption.Internal,
 	notificatonService *notifications.NotificationService,
@@ -319,7 +319,7 @@ type ProvisioningServiceImpl struct {
 	ruleMutationValidator        provisioning.RuleMutationValidator
 	pluginStore                  pluginstore.Store
 	alertingStore                *alertstore.DBstore
-	ruleStore                    *rulestore.RuleStore
+	ruleStore                    rulestore.Store
 	provenanceStore              *provenance.ProvenanceStore
 	EncryptionService            encryption.Internal
 	NotificationService          *notifications.NotificationService
