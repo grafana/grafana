@@ -176,7 +176,6 @@ func TestIntegrationDatasourceQueryMatchesRBACActionSet(t *testing.T) {
 				require.NoError(t, err)
 				tuples = append(tuples, common.NewTuple("user:datasource-user", "assignee", "role:query-role"))
 				setupOpenFGADatabase(t, srv, tuples)
-				srv.permissionScopeResolver = permissionIDs{}
 				resolver := acimpl.NewZanzanaPermissionResolver(&datasourcePermissionClient{server: srv}, nil, nil, false)
 				usr := &identity.StaticRequester{Type: "user", UserUID: "datasource-user", OrgID: 1, Namespace: namespace}
 				actions := resourcepermissions.NewInMemoryActionSetStore()

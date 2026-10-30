@@ -872,12 +872,13 @@ func TestListPermissions_AllScopeKindFollowsResource(t *testing.T) {
 }
 
 // TestListPermissions_TeamActions verifies team actions produce legacy id-based scopes.
-// Without a scope resolver (nil in unit tests), items fall back to teams:uid:<name>.
+// The shared formatter adds both wildcard aliases without IAM lookups.
 func TestListPermissions_TeamActions(t *testing.T) {
 	t.Run("All=true produces teams:id:* wildcard", func(t *testing.T) {
 		perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, "teams:read", "")
 		require.NoError(t, err)
 		require.Equal(t, []ac.Permission{
+			{Action: "teams:read", Scope: "teams:uid:*"},
 			{Action: "teams:read", Scope: "teams:id:*"},
 		}, perms)
 	})
@@ -894,6 +895,7 @@ func TestListPermissions_TeamActions(t *testing.T) {
 		perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, "teams.permissions:read", "")
 		require.NoError(t, err)
 		require.Equal(t, []ac.Permission{
+			{Action: "teams.permissions:read", Scope: "teams:uid:*"},
 			{Action: "teams.permissions:read", Scope: "teams:id:*"},
 		}, perms)
 	})
@@ -901,8 +903,7 @@ func TestListPermissions_TeamActions(t *testing.T) {
 
 // TestListPermissions_UserActions verifies user actions produce legacy id-based scopes.
 // Most user actions are scoped to the global.users kind; users.permissions:read is the org-level
-// exception scoped to the users kind. Without a scope resolver (nil in unit tests), items fall
-// back to the Zanzana resource scope users:uid:<name>.
+// exception scoped to the users kind. UID-only targets keep the same kind.
 func TestListPermissions_UserActions(t *testing.T) {
 	// Server-level actions are scoped to global.users.
 	for _, action := range []string{"users:read", "users:write", "users:delete", "users.permissions:write"} {
@@ -910,6 +911,7 @@ func TestListPermissions_UserActions(t *testing.T) {
 			perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, action, "")
 			require.NoError(t, err)
 			require.Equal(t, []ac.Permission{
+				{Action: action, Scope: "global.users:uid:*"},
 				{Action: action, Scope: "global.users:id:*"},
 			}, perms)
 		})
@@ -919,6 +921,7 @@ func TestListPermissions_UserActions(t *testing.T) {
 		perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, "users.permissions:read", "")
 		require.NoError(t, err)
 		require.Equal(t, []ac.Permission{
+			{Action: "users.permissions:read", Scope: "users:uid:*"},
 			{Action: "users.permissions:read", Scope: "users:id:*"},
 		}, perms)
 	})
@@ -929,6 +932,7 @@ func TestListPermissions_UserActions(t *testing.T) {
 			perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, action, "")
 			require.NoError(t, err)
 			require.Equal(t, []ac.Permission{
+				{Action: action, Scope: "users:uid:*"},
 				{Action: action, Scope: "users:id:*"},
 			}, perms)
 		})
@@ -938,7 +942,7 @@ func TestListPermissions_UserActions(t *testing.T) {
 		perms, err := zanzanaResolve(&authzv1.ListResponse{Items: []string{"user-abc"}}, "users:read", "")
 		require.NoError(t, err)
 		require.Equal(t, []ac.Permission{
-			{Action: "users:read", Scope: "users:uid:user-abc"},
+			{Action: "users:read", Scope: "global.users:uid:user-abc"},
 		}, perms)
 	})
 }

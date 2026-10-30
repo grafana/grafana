@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
@@ -24,7 +25,9 @@ func ProvideLoader(sql db.DB, catalog *RoleCatalog, actions ac.ActionResolver,
 		// search methods need it. The REST client remains lazy to avoid an apiserver cycle.
 		migrated = NewZanzanaPermissionResolver(zanzanaClient, nil, restConfig, cfg.IDUseExternalGroupsForGroupsClaim)
 	}
-	return NewLoader(sql, catalog, actions, cache, cfg, features, license, migrated)
+	loader := NewLoader(sql, catalog, actions, cache, cfg, features, license, migrated)
+	loader.scopeResolver = legacyscopes.NewUIDResolver(restConfig)
+	return loader
 }
 
 func ProvideClient(loader *Loader, cfg *setting.Cfg) legacyclient.Service {

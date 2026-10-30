@@ -22,7 +22,6 @@ func TestUserPermissionsRejectsRequestConditionBindings(t *testing.T) {
 	// Only group_resource is a stored binding in the supported schema contract.
 	grant.Condition.Context.Fields["requested_group"] = structpb.NewStringValue(common.FormatGroupResource(dashboardGroup, dashboardResource, ""))
 	srv, _, _ := newPermissionTestServer(t, []*openfgav1.TupleKey{grant})
-	srv.permissionScopeResolver = permissionIDs{}
 	stream := &permissionResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
 	err := srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice"}, stream)
 	require.Equal(t, codes.FailedPrecondition, status.Code(err))
@@ -135,7 +134,6 @@ func TestUserPermissionsRejectsUnsupportedGrantShapes(t *testing.T) {
 	} {
 		t.Run(grant.Object+"/"+grant.Relation, func(t *testing.T) {
 			srv, _, _ := newPermissionTestServer(t, []*openfgav1.TupleKey{grant})
-			srv.permissionScopeResolver = permissionIDs{}
 			stream := &permissionResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
 			err := srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice"}, stream)
 			require.Equal(t, codes.FailedPrecondition, status.Code(err))

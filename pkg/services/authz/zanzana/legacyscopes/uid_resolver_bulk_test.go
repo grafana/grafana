@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -18,6 +19,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	clientrest "k8s.io/client-go/rest"
+
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 type bulkRESTConfig func(context.Context) (*clientrest.Config, error)
@@ -73,7 +76,7 @@ func TestBulkUIDResolutionPaginationAndMissingObjects(t *testing.T) {
 		{Action: "users:read", Resource: "users", List: &authzv1.ListResponse{Items: []string{"first", "second", "new", "missing", "no-id"}}},
 		{Action: "org.users:read", Resource: "users", List: &authzv1.ListResponse{Items: []string{"missing", "new", "no-id", "first"}}},
 	}
-	permissions, err := ResolvePermissions(t.Context(), ns.Value, "", r, lists)
+	permissions, err := resolveAliasLists(t.Context(), ns.Value, "", r, lists)
 	require.NoError(t, err)
 	scopes := map[string]bool{}
 	for _, p := range permissions {
@@ -84,7 +87,7 @@ func TestBulkUIDResolutionPaginationAndMissingObjects(t *testing.T) {
 	}
 	require.False(t, scopes["global.users:id:0"])
 	// The bulk load also warms mappings not needed by the first permission request.
-	ids, err := r.Prepare(t.Context(), ns, []string{"unrequested", "new", "first"}, nil)
+	ids, err := prepareUIDs(t.Context(), r, ns, []string{"unrequested", "new", "first"}, nil)
 	require.NoError(t, err)
 	id, err := ids.GetUserIDByUID(t.Context(), ns, "unrequested")
 	require.NoError(t, err)
@@ -92,7 +95,7 @@ func TestBulkUIDResolutionPaginationAndMissingObjects(t *testing.T) {
 	mu.Lock()
 	defer mu.Unlock()
 	base := "/apis/iam.grafana.app/v0alpha1/namespaces/default/users"
-	require.Equal(t, map[string]int{base + "?": 1, base + "?next": 1, base + "/new?": 1, base + "/missing?": 1, base + "/no-id?": 1}, calls)
+	require.Equal(t, map[string]int{base + "?": 1, base + "?next": 1, base + "/new?": 1, base + "/missing?": 1}, calls)
 }
 
 func TestBulkUIDResolutionFailureDoesNotPublishPartialCache(t *testing.T) {
@@ -116,11 +119,11 @@ func TestBulkUIDResolutionFailureDoesNotPublishPartialCache(t *testing.T) {
 		}
 		writeUIDList(w, "")
 	})
-	_, err := r.Prepare(t.Context(), ns, []string{"first", "missing"}, nil)
+	_, err := prepareUIDs(t.Context(), r, ns, []string{"first", "missing"}, nil)
 	require.ErrorContains(t, err, "list users scope IDs")
 	require.Zero(t, gets.Load(), "a batch error must not turn into individual Gets")
 	healthy.Store(true)
-	ids, err := r.Prepare(t.Context(), ns, []string{"first"}, nil)
+	ids, err := prepareUIDs(t.Context(), r, ns, []string{"first"}, nil)
 	require.NoError(t, err)
 	id, err := ids.GetUserIDByUID(t.Context(), ns, "first")
 	require.NoError(t, err)
@@ -143,13 +146,13 @@ func TestBulkUIDResolutionCoalescesNamespacesAndPreservesCancellation(t *testing
 	cancelled, cancel := context.WithCancel(t.Context())
 	defer cancel()
 	first := make(chan error, 1)
-	go func() { _, err := r.Prepare(cancelled, ns, []string{"first"}, nil); first <- err }()
+	go func() { _, err := prepareUIDs(cancelled, r, ns, []string{"first"}, nil); first <- err }()
 	<-started
 	const followers = 12
 	var wg sync.WaitGroup
 	for range followers {
 		wg.Go(func() {
-			ids, err := r.Prepare(t.Context(), ns, []string{"first"}, nil)
+			ids, err := prepareUIDs(t.Context(), r, ns, []string{"first"}, nil)
 			require.NoError(t, err)
 			if err == nil {
 				id, err := ids.GetUserIDByUID(t.Context(), ns, "first")
@@ -176,7 +179,7 @@ func TestBulkUIDResolutionSeparatesNamespaces(t *testing.T) {
 		writeUIDList(w, "", userIDObject(ns, "same-uid", id))
 	})
 	for _, ns := range []types.NamespaceInfo{{Value: "default", OrgID: 1}, {Value: "stacks-2", OrgID: 1, StackID: 2}} {
-		ids, err := r.Prepare(t.Context(), ns, []string{"same-uid"}, nil)
+		ids, err := prepareUIDs(t.Context(), r, ns, []string{"same-uid"}, nil)
 		require.NoError(t, err)
 		id, err := ids.GetUserIDByUID(t.Context(), ns, "same-uid")
 		require.NoError(t, err)
@@ -208,7 +211,7 @@ func TestBulkUIDResolutionBoundsMissingGets(t *testing.T) {
 	for i := range 25 {
 		names = append(names, fmt.Sprintf("missing-%d", i))
 	}
-	_, err := r.Prepare(t.Context(), types.NamespaceInfo{Value: "default", OrgID: 1}, names, nil)
+	_, err := prepareUIDs(t.Context(), r, types.NamespaceInfo{Value: "default", OrgID: 1}, names, nil)
 	require.NoError(t, err)
 	require.Equal(t, int64(len(names)), gets.Load())
 	require.Greater(t, peak.Load(), int64(1))
@@ -216,8 +219,10 @@ func TestBulkUIDResolutionBoundsMissingGets(t *testing.T) {
 }
 
 func TestBulkUIDResolutionSkipsNonNumericScopes(t *testing.T) {
-	resolver := bulkHTTPResolver(t, func(http.ResponseWriter, *http.Request) { t.Error("wildcards and UID scopes must not read IAM") })
-	_, err := ResolvePermissions(t.Context(), "default", "", resolver, []PermissionList{
+	resolver := bulkHTTPResolver(t, func(http.ResponseWriter, *http.Request) {
+		t.Error("wildcards and non-identity UID scopes must not read IAM")
+	})
+	_, err := resolveAliasLists(t.Context(), "default", "", resolver, []PermissionList{
 		{Action: "users:read", Resource: "users", List: &authzv1.ListResponse{All: true}},
 		{Action: "teams:read", Resource: "teams", List: &authzv1.ListResponse{All: true}},
 		{Action: "dashboards:read", Resource: "dashboards", List: &authzv1.ListResponse{Items: []string{"dashboard"}}},
@@ -225,7 +230,7 @@ func TestBulkUIDResolutionSkipsNonNumericScopes(t *testing.T) {
 	require.NoError(t, err)
 	cancelled, cancel := context.WithCancel(t.Context())
 	cancel()
-	_, err = resolver.Prepare(cancelled, types.NamespaceInfo{Value: "default", OrgID: 1}, []string{"user"}, nil)
+	_, err = prepareUIDs(cancelled, resolver, types.NamespaceInfo{Value: "default", OrgID: 1}, []string{"user"}, nil)
 	require.True(t, errors.Is(err, context.Canceled))
 }
 
@@ -261,7 +266,7 @@ func TestBulkUIDResolutionLargeNamespace(t *testing.T) {
 	}
 	ns := types.NamespaceInfo{Value: "default", OrgID: 1}
 	for range 2 {
-		ids, err := r.Prepare(t.Context(), ns, names, nil)
+		ids, err := prepareUIDs(t.Context(), r, ns, names, nil)
 		require.NoError(t, err)
 		for i, name := range names {
 			id, err := ids.GetUserIDByUID(t.Context(), ns, name)
@@ -292,14 +297,14 @@ func TestBulkUIDResolutionSingleUncachedUIDLoadsNamespace(t *testing.T) {
 		writeUIDList(w, "", userIDObject("default", "unrequested", 99))
 	})
 	ns := types.NamespaceInfo{Value: "default", OrgID: 1}
-	ids, err := r.Prepare(t.Context(), ns, []string{"requested"}, nil)
+	ids, err := prepareUIDs(t.Context(), r, ns, []string{"requested"}, nil)
 	require.NoError(t, err)
 	id, err := ids.GetUserIDByUID(t.Context(), ns, "requested")
 	require.NoError(t, err)
 	require.Equal(t, int64(1), id)
 	require.Equal(t, int64(2), lists.Load(), "one uncached UID must still load every namespace page, even after finding the requested UID")
 
-	ids, err = r.Prepare(t.Context(), ns, []string{"unrequested"}, nil)
+	ids, err = prepareUIDs(t.Context(), r, ns, []string{"unrequested"}, nil)
 	require.NoError(t, err)
 	id, err = ids.GetUserIDByUID(t.Context(), ns, "unrequested")
 	require.NoError(t, err)
@@ -308,8 +313,8 @@ func TestBulkUIDResolutionSingleUncachedUIDLoadsNamespace(t *testing.T) {
 	require.Zero(t, gets.Load())
 }
 
-func TestBulkUIDResolutionRequiresCollectionListAccess(t *testing.T) {
-	for _, resource := range []string{"users", "teams"} {
+func TestBulkScopePreparationFailureRetainsUIDWithoutFallbackStorm(t *testing.T) {
+	for _, resource := range []string{"users", "teams", "serviceaccounts"} {
 		t.Run(resource, func(t *testing.T) {
 			var lists, gets atomic.Int64
 			r := bulkHTTPResolver(t, func(w http.ResponseWriter, req *http.Request) {
@@ -320,33 +325,106 @@ func TestBulkUIDResolutionRequiresCollectionListAccess(t *testing.T) {
 				}
 				gets.Add(1)
 				kind := "User"
-				if resource == "teams" {
+				switch resource {
+				case "teams":
 					kind = "Team"
+				case "serviceaccounts":
+					kind = "ServiceAccount"
 				}
 				w.Header().Set("Content-Type", "application/json")
 				_ = json.NewEncoder(w).Encode(iamObject(userGVR.GroupVersion().WithKind(kind), "default", "target", 42))
 			})
-			action := "users:read"
-			if resource == "teams" {
-				action = "teams:read"
-			}
-			permissions, err := ResolvePermissions(t.Context(), "default", "", r, []PermissionList{
+			action := resource + ":read"
+			permissions, err := resolveAliasLists(t.Context(), "default", "", r, []PermissionList{
 				{Resource: resource, Action: action, List: &authzv1.ListResponse{Items: []string{"target"}}},
 			})
-			require.Error(t, err)
-			require.Empty(t, permissions, "a failed List must fail preparation rather than silently emit UID scopes")
+			require.NoError(t, err)
+			kind := resource
+			if resource == "users" {
+				kind = "global.users"
+			}
+			require.Equal(t, []ac.Permission{{Action: action, Scope: ac.Scope(kind, "uid", "target")}}, permissions, "a failed metadata List must retain the UID grant")
 			require.Equal(t, int64(1), lists.Load())
 			require.Zero(t, gets.Load(), "a collection access error must not fan out into Gets")
 
 			ns := types.NamespaceInfo{Value: "default", OrgID: 1}
-			get := r.GetUserIDByUID
-			if resource == "teams" {
-				get = r.GetTeamIDByUID
-			}
-			id, err := get(t.Context(), ns, "target")
-			require.NoError(t, err, "the previous individual-Get path works with this IAM access policy")
-			require.Equal(t, int64(42), id)
+			id, err := r.ResolveScope(t.Context(), ns, ScopeReference{Resource: resource, Attribute: "uid", Value: "target"})
+			require.NoError(t, err, "the individual forward Get works with this IAM policy")
+			require.Equal(t, "42", id)
 			require.Equal(t, int64(1), gets.Load())
 		})
 	}
+}
+
+func resolveAliasLists(ctx context.Context, namespace, scope string, resolver ScopeResolver, lists []PermissionList) ([]ac.Permission, error) {
+	permissions, err := ResolvePermissions(ctx, "", lists)
+	if err != nil {
+		return nil, err
+	}
+	return WithAliases(ctx, namespace, scope, resolver, permissions)
+}
+
+type testPreparedIDs struct{ ScopeResolver }
+
+func prepareUIDs(ctx context.Context, r *UIDResolver, ns types.NamespaceInfo, users, teams []string) (testPreparedIDs, error) {
+	refs := make([]ScopeReference, 0, len(users)+len(teams))
+	for _, uid := range users {
+		refs = append(refs, ScopeReference{Resource: "users", Attribute: "uid", Value: uid})
+	}
+	for _, uid := range teams {
+		refs = append(refs, ScopeReference{Resource: "teams", Attribute: "uid", Value: uid})
+	}
+	resolver, err := r.PrepareScopes(ctx, ns, refs)
+	return testPreparedIDs{resolver}, err
+}
+func (p testPreparedIDs) GetUserIDByUID(ctx context.Context, ns types.NamespaceInfo, uid string) (int64, error) {
+	value, err := p.ResolveScope(ctx, ns, ScopeReference{Resource: "users", Attribute: "uid", Value: uid})
+	if err != nil {
+		return 0, err
+	}
+	return strconv.ParseInt(value, 10, 64)
+}
+
+func TestBulkScopeAliasesSingleNumericIDLoadsEveryPageAndWarmsReverseMappings(t *testing.T) {
+	var lists atomic.Int64
+	r := bulkHTTPResolver(t, func(w http.ResponseWriter, req *http.Request) {
+		require.Empty(t, req.URL.Query().Get("labelSelector"))
+		lists.Add(1)
+		if req.URL.Query().Get("continue") == "" {
+			writeUIDList(w, "next", userIDObject("default", "first", 1))
+		} else {
+			writeUIDList(w, "", userIDObject("default", "later", 2))
+		}
+	})
+	for _, tc := range []struct{ id, uid string }{{"1", "first"}, {"2", "later"}} {
+		got, err := WithAliases(t.Context(), "default", "", r, []ac.Permission{{Action: "users:read", Scope: "global.users:id:" + tc.id}})
+		require.NoError(t, err)
+		require.Contains(t, got, ac.Permission{Action: "users:read", Scope: "global.users:uid:" + tc.uid})
+	}
+	require.Equal(t, int64(2), lists.Load(), "one uncached numeric ID loads both pages; the later ID reuses its reverse mapping")
+}
+
+func TestBulkScopeAliasesBoundsMissingReverseLookups(t *testing.T) {
+	var active, peak, lookups atomic.Int64
+	r := bulkHTTPResolver(t, func(w http.ResponseWriter, req *http.Request) {
+		if req.URL.Query().Get("labelSelector") != "" {
+			lookups.Add(1)
+			n := active.Add(1)
+			defer active.Add(-1)
+			for previous := peak.Load(); n > previous && !peak.CompareAndSwap(previous, n); previous = peak.Load() {
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+		writeUIDList(w, "")
+	})
+	input := make([]ac.Permission, 0, 25)
+	for i := range 25 {
+		input = append(input, ac.Permission{Action: "users:read", Scope: fmt.Sprintf("global.users:id:%d", i+1)})
+	}
+	got, err := WithAliases(t.Context(), "default", "", r, input)
+	require.NoError(t, err)
+	require.ElementsMatch(t, input, got)
+	require.Equal(t, int64(25), lookups.Load())
+	require.Greater(t, peak.Load(), int64(1))
+	require.LessOrEqual(t, peak.Load(), int64(uidFallbackConcurrency))
 }

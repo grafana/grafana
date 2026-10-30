@@ -3,6 +3,8 @@ package legacyscopes
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strconv"
 	"sync"
 	"time"
 
@@ -20,24 +22,28 @@ import (
 )
 
 var (
-	teamGVR = iamv0.TeamResourceInfo.GroupVersionResource()
-	userGVR = iamv0.UserResourceInfo.GroupVersionResource()
+	teamGVR           = iamv0.TeamResourceInfo.GroupVersionResource()
+	userGVR           = iamv0.UserResourceInfo.GroupVersionResource()
+	serviceAccountGVR = iamv0.ServiceAccountResourceInfo.GroupVersionResource()
 )
 
 // UID→internal-ID mappings are immutable for an object's lifetime, so a long TTL is safe;
 // the bound just caps memory and tolerates the rare deleted-then-absent UID.
 const uidToIDCacheTTL = 1 * time.Hour
 
-// Bounds shared IAM fetches independently of any one caller, so a hung
-// List or Get cannot block all followers indefinitely.
+// Bounds the detached singleflight fetch. The fetch runs on a context decoupled from any single
+// caller (see getObjectID), so without this a hung apiserver Get would block the flight—and every
+// follower waiting on it—indefinitely.
 const uidToIDFetchTimeout = 10 * time.Second
 
 type UIDResolver struct {
 	mu             sync.RWMutex
 	clients        map[schema.GroupVersionResource]dynamic.NamespaceableResourceInterface
 	configProvider restcfg.RestConfigProvider
-	// The same UIDs recur across actions and requests. Cache successful mappings
-	// and completed namespace loads; share concurrent List and Get fetches with sf.
+	// cache stores resolved UID→internal-ID mappings; sf collapses concurrent resolutions
+	// of the same key into a single apiserver Get. Both teams and users resolve through here,
+	// and the same UIDs recur across every action during a permission merge, so this removes
+	// the bulk of the redundant apiserver lookups.
 	cache *localcache.CacheService
 	sf    singleflight.Group
 }
@@ -81,15 +87,15 @@ func (r *UIDResolver) getDynamicClient(ctx context.Context, nsInfo types.Namespa
 }
 
 func (r *UIDResolver) getObjectID(ctx context.Context, nsInfo types.NamespaceInfo, gvr schema.GroupVersionResource, name string) (int64, error) {
+	if err := ctx.Err(); err != nil {
+		return 0, err
+	}
 	// Key by resource type so team/user UIDs can't collide, and by the namespace value the
 	// fetch actually scopes the Get on (cli.Namespace(nsInfo.Value) in fetchObjectID), so
 	// tenants stay isolated. Don't key on OrgID: multiple namespaces can share an OrgID
 	// (every cloud stacks-N namespace parses to OrgID 1), which would collide their entries
 	// and collapse cross-tenant resolutions into a single singleflight fetch.
-	if err := ctx.Err(); err != nil {
-		return 0, err
-	}
-	key := uidCacheKey(gvr, nsInfo, name)
+	key := fmt.Sprintf("%s/%s/%s", gvr.Resource, nsInfo.Value, name)
 	if v, ok := r.cache.Get(key); ok {
 		return v.(int64), nil
 	}
@@ -113,7 +119,7 @@ func (r *UIDResolver) getObjectID(ctx context.Context, nsInfo types.NamespaceInf
 		// deprecated internal-ID label is missing/unparseable (e.g. a dual-write window), so caching
 		// it would pin a bogus value for the full TTL instead of re-resolving once it's populated.
 		if id != 0 {
-			r.cache.Set(key, id, uidToIDCacheTTL)
+			r.cacheMapping(gvr, nsInfo, name, id)
 		}
 		return id, nil
 	})
@@ -156,4 +162,105 @@ func (r *UIDResolver) GetTeamIDByUID(ctx context.Context, nsInfo types.Namespace
 
 func (r *UIDResolver) GetUserIDByUID(ctx context.Context, nsInfo types.NamespaceInfo, uid string) (int64, error) {
 	return r.getObjectID(ctx, nsInfo, userGVR, uid)
+}
+
+func scopeResource(resource string) (schema.GroupVersionResource, error) {
+	switch resource {
+	case "users":
+		return userGVR, nil
+	case "teams":
+		return teamGVR, nil
+	case "serviceaccounts":
+		return serviceAccountGVR, nil
+	default:
+		return schema.GroupVersionResource{}, errors.New("unsupported identity scope resource")
+	}
+}
+
+func (r *UIDResolver) ResolveScope(ctx context.Context, ns types.NamespaceInfo, ref ScopeReference) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+	gvr, err := scopeResource(ref.Resource)
+	if err != nil {
+		return "", err
+	}
+	switch ref.Attribute {
+	case "uid":
+		id, err := r.getObjectID(ctx, ns, gvr, ref.Value)
+		if err != nil || id <= 0 {
+			return "", err
+		}
+		return strconv.FormatInt(id, 10), nil
+	case "id":
+		id, err := strconv.ParseInt(ref.Value, 10, 64)
+		if err != nil || id <= 0 {
+			return "", errors.New("invalid numeric identity scope")
+		}
+		return r.getObjectUID(ctx, ns, gvr, id)
+	default:
+		return "", errors.New("unsupported identity scope attribute")
+	}
+}
+
+func reverseIDKey(gvr schema.GroupVersionResource, ns types.NamespaceInfo, id int64) string {
+	return fmt.Sprintf("id-to-uid/%s/%s/%d", gvr.Resource, ns.Value, id)
+}
+
+func (r *UIDResolver) cacheMapping(gvr schema.GroupVersionResource, ns types.NamespaceInfo, uid string, id int64) {
+	if uid == "" || id <= 0 {
+		return
+	}
+	r.cache.Set(fmt.Sprintf("%s/%s/%s", gvr.Resource, ns.Value, uid), id, uidToIDCacheTTL)
+	r.cache.Set(reverseIDKey(gvr, ns, id), uid, uidToIDCacheTTL)
+}
+
+func (r *UIDResolver) getObjectUID(ctx context.Context, ns types.NamespaceInfo, gvr schema.GroupVersionResource, id int64) (string, error) {
+	key := reverseIDKey(gvr, ns, id)
+	if v, ok := r.cache.Get(key); ok {
+		return v.(string), nil
+	}
+	ch := r.sf.DoChan(key, func() (any, error) {
+		if v, ok := r.cache.Get(key); ok {
+			return v.(string), nil
+		}
+		fetchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), uidToIDFetchTimeout)
+		defer cancel()
+		cli, err := r.getDynamicClient(fetchCtx, ns, gvr)
+		if err != nil {
+			return "", err
+		}
+		page, err := cli.List(identity.WithServiceIdentityContext(fetchCtx, ns.OrgID), metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("%s=%d", utils.LabelKeyDeprecatedInternalID, id), //nolint:staticcheck
+			Limit:         2,
+		})
+		if err != nil {
+			return "", err
+		}
+		if len(page.Items) == 0 {
+			return "", nil
+		}
+		if len(page.Items) != 1 || page.GetContinue() != "" {
+			return "", errors.New("ambiguous or incomplete identity ID lookup")
+		}
+		meta, err := utils.MetaAccessor(&page.Items[0])
+		if err != nil {
+			return "", err
+		}
+		if meta.GetDeprecatedInternalID() != id { //nolint:staticcheck // Numeric-scope compatibility.
+			return "", errors.New("identity ID lookup returned a different ID")
+		}
+		uid := page.Items[0].GetName()
+		r.cacheMapping(gvr, ns, uid, id)
+		return uid, nil
+	})
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	case res := <-ch:
+		if res.Err != nil {
+			return "", res.Err
+		}
+		return res.Val.(string), nil
+	}
 }

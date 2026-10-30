@@ -1,27 +1,15 @@
 package legacyscopes
 
 import (
-	"context"
-	"errors"
-	"fmt"
 	"strings"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	"github.com/grafana/authlib/types"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-var logger = log.New("accesscontrol.zanzana_scopes")
-
-type IDResolver interface {
-	GetTeamIDByUID(context.Context, types.NamespaceInfo, string) (int64, error)
-	GetUserIDByUID(context.Context, types.NamespaceInfo, string) (int64, error)
-}
-
-// Formatter keeps permission RPC and permission-search results on the same legacy scope contract.
-type Formatter struct{ IDs IDResolver }
+// Formatter expresses grant locations as UID scopes without IAM lookups.
+type Formatter struct{}
 
 // resourceScope scopes an object by the resource type Zanzana listed it under
 // (e.g. "folders:uid:abc"), not by the action prefix, so permission actions like
@@ -51,27 +39,6 @@ func isTeamRBACAction(action string) bool {
 	return strings.HasPrefix(action, "teams:") || strings.HasPrefix(action, "teams.")
 }
 
-// resolveTeamScope translates a team UID to the legacy teams:id:<numericID> scope.
-func (r Formatter) resolveTeamScope(ctx context.Context, namespace, teamUID string) (string, error) {
-	if r.IDs == nil {
-		return "", errors.New("scope resolver not initialized")
-	}
-	nsInfo, err := types.ParseNamespace(namespace)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse namespace: %w", err)
-	}
-	id, err := r.IDs.GetTeamIDByUID(ctx, nsInfo, teamUID)
-	if err != nil {
-		return "", err
-	}
-	return ac.Scope("teams", "id", fmt.Sprintf("%d", id)), nil
-}
-
-// teamWildcardScope returns the legacy wildcard scope for teams (teams:id:*).
-func teamWildcardScope() string {
-	return ac.Scope("teams", "id", "*")
-}
-
 // isUserRBACAction matches user-management actions, including the org.users:* family.
 func isUserRBACAction(action string) bool {
 	return strings.HasPrefix(action, "users:") || strings.HasPrefix(action, "users.") ||
@@ -92,29 +59,8 @@ func userScopeKind(action string) string {
 	return "global.users"
 }
 
-// resolveUserScope translates a user UID to the legacy <kind>:id:<numericID> scope for the action.
-func (r Formatter) resolveUserScope(ctx context.Context, namespace, action, userUID string) (string, error) {
-	if r.IDs == nil {
-		return "", errors.New("scope resolver not initialized")
-	}
-	nsInfo, err := types.ParseNamespace(namespace)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse namespace: %w", err)
-	}
-	id, err := r.IDs.GetUserIDByUID(ctx, nsInfo, userUID)
-	if err != nil {
-		return "", err
-	}
-	return ac.Scope(userScopeKind(action), "id", fmt.Sprintf("%d", id)), nil
-}
-
-// userWildcardScope returns the legacy wildcard scope for a user action (<kind>:id:*).
-func userWildcardScope(action string) string {
-	return ac.Scope(userScopeKind(action), "id", "*")
-}
-
-// Permissions maps a Zanzana list result to legacy scopes, including the historical UID fallback.
-func (r Formatter) Permissions(ctx context.Context, namespace, resource, action, scope string, resp *authzv1.ListResponse) []ac.Permission {
+// Permissions formats grant locations. Numeric aliases are added by the permission loader.
+func (r Formatter) Permissions(resource, action, scope string, resp *authzv1.ListResponse) []ac.Permission {
 	permissions := []ac.Permission{}
 
 	// Build the set of scopes that satisfy the filter: the exact scope plus
@@ -165,12 +111,12 @@ func (r Formatter) Permissions(ctx context.Context, namespace, resource, action,
 		} else if isTeamRBACAction(action) {
 			appendIfMatches(ac.Permission{
 				Action: action,
-				Scope:  teamWildcardScope(),
+				Scope:  ac.Scope("teams", "uid", "*"),
 			})
 		} else if isUserRBACAction(action) {
 			appendIfMatches(ac.Permission{
 				Action: action,
-				Scope:  userWildcardScope(action),
+				Scope:  ac.Scope(userScopeKind(action), "uid", "*"),
 			})
 		} else {
 			appendIfMatches(ac.Permission{
@@ -180,35 +126,12 @@ func (r Formatter) Permissions(ctx context.Context, namespace, resource, action,
 		}
 	}
 
-	// Items are objects of the listed resource type, scoped by that resource.
-	// Team and user actions need UID→ID translation so scopes match legacy RBAC
-	// (teams:id:<n> / users:id:<n>).
 	for _, item := range resp.Items {
-		var itemScope string
-		switch {
-		case isTeamRBACAction(action):
-			resolved, err := r.resolveTeamScope(ctx, namespace, item)
-			if err != nil {
-				logger.Warn("failed to resolve team UID to ID, using uid scope", "uid", item, "error", err)
-				itemScope = resourceScope(resource, item)
-			} else {
-				itemScope = resolved
-			}
-		case isUserRBACAction(action):
-			resolved, err := r.resolveUserScope(ctx, namespace, action, item)
-			if err != nil {
-				logger.Warn("failed to resolve user UID to ID, using uid scope", "uid", item, "error", err)
-				itemScope = resourceScope(resource, item)
-			} else {
-				itemScope = resolved
-			}
-		default:
-			itemScope = resourceScope(resource, item)
+		kind := resource
+		if isUserRBACAction(action) {
+			kind = userScopeKind(action)
 		}
-		appendIfMatches(ac.Permission{
-			Action: action,
-			Scope:  itemScope,
-		})
+		appendIfMatches(ac.Permission{Action: action, Scope: resourceScope(kind, item)})
 	}
 
 	// listGeneric on the Zanzana server returns folder UIDs separately; map them to folders:uid:*

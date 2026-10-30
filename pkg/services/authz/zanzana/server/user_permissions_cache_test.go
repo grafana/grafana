@@ -22,7 +22,6 @@ import (
 
 func enablePrincipalCache(srv *Server) {
 	srv.permissionCacheEnabled = true
-	srv.permissionScopeResolver = permissionIDs{}
 }
 
 func permissionPairs(t *testing.T, srv *Server, subject string, teams []string, skip bool) map[[2]string]bool {
@@ -290,7 +289,6 @@ func TestUserPermissionsUsesLegacyPermissionCacheFlag(t *testing.T) {
 					cfg.ZanzanaServer.CacheSettings.CheckCacheLimit = 0
 				}
 			})
-			srv.permissionScopeResolver = permissionIDs{}
 			require.Empty(t, permissionPairs(t, srv, "user:nobody", nil, false))
 			ds.reset()
 			require.Empty(t, permissionPairs(t, srv, "user:nobody", nil, false))
