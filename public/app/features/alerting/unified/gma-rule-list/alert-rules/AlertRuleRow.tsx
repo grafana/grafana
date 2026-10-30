@@ -13,6 +13,7 @@ import { RuleListItem } from '../rule-row/RuleListItem';
 import { RuleOriginBadge } from '../rule-row/RuleOriginBadge';
 import { RuleStatusIcon } from '../rule-row/RuleStatusIcon';
 
+import { AlertRuleActions } from './AlertRuleActions';
 import { type AlertRuleSearchHit } from './alertRuleSearchHit';
 
 interface AlertRuleRowProps {
@@ -21,10 +22,11 @@ interface AlertRuleRowProps {
   folderPath?: string[];
   /** Full rule resource; absent while loading or when the fetch failed. */
   rule?: AlertRule;
+  /** True while the rule fetch is in flight; false once settled (success or failure). */
+  ruleIsLoading?: boolean;
 }
 
-/** Presentation-only; missing state/health renders "unavailable", never healthy. */
-export function AlertRuleRow({ searchHit, folderPath, rule }: AlertRuleRowProps) {
+export function AlertRuleRow({ searchHit, folderPath, rule, ruleIsLoading = false }: AlertRuleRowProps) {
   const titleId = useId();
 
   return (
@@ -44,7 +46,12 @@ export function AlertRuleRow({ searchHit, folderPath, rule }: AlertRuleRowProps)
           <RuleDescription lastError={searchHit.lastError} summary={searchHit.summary} />
         )
       }
-      right={searchHit.interval && <RuleInterval interval={searchHit.interval} />}
+      right={
+        <Stack alignItems="center" gap={1.5} wrap={false}>
+          {searchHit.interval && <RuleInterval interval={searchHit.interval} />}
+          <AlertRuleActions searchHit={searchHit} rule={rule} ruleIsLoading={ruleIsLoading} />
+        </Stack>
+      }
       meta={[
         folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />,
         searchHit.datasourceUIDs && searchHit.datasourceUIDs.length > 0 && (

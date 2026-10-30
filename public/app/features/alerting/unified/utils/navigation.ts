@@ -160,6 +160,7 @@ export const grafanaRulesNav = {
     const params: Record<string, string> = options?.includeReturnTo ? { returnTo: createReturnTo() } : {};
     return createRelativeUrl(`/alerting/grafana/${encodeURIComponent(uid)}/view`, params);
   },
+  editLink: (uid: string) => createRelativeUrl(`/alerting/${encodeURIComponent(uid)}/edit`),
 };
 
 export const notificationPolicies = {
