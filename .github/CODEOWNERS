@@ -160,6 +160,7 @@
 /pkg/infra/tracing/ @grafana/grafana-backend-services-squad
 /pkg/infra/tracingsetting/ @grafana/grafana-backend-services-squad
 /pkg/infra/usagestats/ @grafana/grafana-backend-services-squad
+/pkg/legacyapi/ @grafana/grafana-backend-services-squad
 /pkg/middleware/ @grafana/grafana-backend-services-squad
 /pkg/mocks/ @grafanabot
 /pkg/models/ @grafana/identity-squad
