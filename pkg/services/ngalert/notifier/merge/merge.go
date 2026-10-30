@@ -220,6 +220,7 @@ func DeduplicateResources(a v1.AMConfigV1, b v1.ExtraAlertmanagerConfig, identif
 // TimeIntervals merges existing and incoming time intervals, ensuring unique names by appending a
 // suffix derived from identifier. It returns a merged list of time intervals, a map of renamed interval names for
 // tracking adjustments made, and the final names of the incoming intervals (post-rename) in their original order.
+// Incoming UIDs are derived from name; a collision with an existing UID falls back to a random one.
 func TimeIntervals(
 	existing map[v1.ResourceUID]v1.TimeInterval,
 	incoming []v1.TimeInterval,
@@ -238,7 +239,14 @@ func TimeIntervals(
 			renames[curName] = newName
 			usedNames[newName] = idx
 			// Rebuild rather than assigning the title so UID and Version are recomputed from the new name.
-			interval = v1.NewTimeInterval(newName, interval.TimeIntervals, interval.Provenance)
+			interval = v1.NewTimeInterval(v1.TimeIntervalUID(newName), newName, interval.TimeIntervals, interval.Provenance)
+		}
+		if _, occupied := result[interval.UID]; occupied {
+			// The name-derived UID collides with something already in the merged result - most
+			// likely a Grafana-managed interval renamed away from this name, leaving its old UID
+			// still occupied (UID no longer moves with a rename). Fall back to a random UID rather
+			// than silently overwriting it.
+			interval.UID = v1.ResourceUID(util.GenerateShortUID())
 		}
 		added = append(added, interval.UID)
 		result[interval.UID] = interval

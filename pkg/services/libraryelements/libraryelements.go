@@ -54,7 +54,7 @@ type Service interface {
 	DeleteLibraryElement(c context.Context, signedInUser identity.Requester, uid string) (int64, error)
 	GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error)
 	DeleteLibraryElementsInFolder(c context.Context, signedInUser identity.Requester, folderUID string) error
-	DeleteLibraryElementsInFolderUnchecked(c context.Context, signedInUser identity.Requester, folderUID string) error
+	DeleteLibraryElementsInFolderUnchecked(c context.Context, orgID int64, signedInUser identity.Requester, folderUID string) error
 	RequireEditPermissionsOnFolder(ctx context.Context, user identity.Requester, folderUID string) error
 	GetAllElements(c context.Context, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) (model.LibraryElementSearchResult, error)
 }
@@ -109,10 +109,15 @@ func (l *LibraryElementService) DeleteLibraryElementsInFolder(c context.Context,
 
 // DeleteLibraryElementsInFolderUnchecked is DeleteLibraryElementsInFolder without the edit-
 // permission check, for callers that have already authorized the requester through a different
-// mechanism (e.g. a standalone folder apiserver's cascade delete).
-func (l *LibraryElementService) DeleteLibraryElementsInFolderUnchecked(c context.Context, signedInUser identity.Requester, folderUID string) error {
+// mechanism (e.g. a standalone folder apiserver's cascade delete) and marked ctx with
+// folder.WithUncheckedDeleteAuthorized to prove it. orgID is explicit since it isn't guaranteed to
+// match signedInUser.GetOrgID() for every caller.
+func (l *LibraryElementService) DeleteLibraryElementsInFolderUnchecked(c context.Context, orgID int64, signedInUser identity.Requester, folderUID string) error {
+	if err := folder.RequireUncheckedDeleteAuthorized(c, orgID, signedInUser, []string{folderUID}); err != nil {
+		return err
+	}
 	// Attach the requester so a routed LegacyDatabaseProvider can resolve the target database.
-	return l.deleteLibraryElementsInFolderUIDUnchecked(identity.WithRequester(c, signedInUser), signedInUser.GetOrgID(), folderUID)
+	return l.deleteLibraryElementsInFolderUIDUnchecked(identity.WithRequester(c, signedInUser), orgID, folderUID)
 }
 
 // GetAll gets all library elements with support to query filters.

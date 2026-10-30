@@ -456,6 +456,44 @@ it('Support fallback multiple names matchers', () => {
   expect(matcher(frame.fields[1], frame, [])).toBeFalsy();
 });
 
+it('Should only match the field named time when the frame has more time fields', () => {
+  const frame: DataFrame = {
+    fields: [
+      { name: 'time', type: FieldType.time, config: {}, values: [1, 2] },
+      { name: 'Shifted Time', type: FieldType.time, config: {}, values: [3, 4] },
+      { name: 'A-series', type: FieldType.number, config: {}, values: [1, 2] },
+    ],
+    length: 2,
+  };
+
+  const nameMatcher = getFieldMatcher({
+    id: FieldMatcherID.byName,
+    options: 'time',
+  });
+  expect(nameMatcher(frame.fields[0], frame, [frame])).toBeTruthy();
+  expect(nameMatcher(frame.fields[1], frame, [frame])).toBeFalsy();
+  expect(nameMatcher(frame.fields[2], frame, [frame])).toBeFalsy();
+
+  const namesMatcher = getFieldMatcher({
+    id: FieldMatcherID.byNames,
+    options: {
+      mode: ByNamesMatcherMode.include,
+      names: ['time', 'A-series'],
+    },
+  });
+  expect(namesMatcher(frame.fields[0], frame, [frame])).toBeTruthy();
+  expect(namesMatcher(frame.fields[1], frame, [frame])).toBeFalsy();
+  expect(namesMatcher(frame.fields[2], frame, [frame])).toBeTruthy();
+
+  const aliasMatcher = getFieldMatcher({
+    id: FieldMatcherID.byName,
+    options: 'Time',
+  });
+  expect(aliasMatcher(frame.fields[0], frame, [frame])).toBeTruthy();
+  expect(aliasMatcher(frame.fields[1], frame, [frame])).toBeFalsy();
+  expect(aliasMatcher(frame.fields[2], frame, [frame])).toBeFalsy();
+});
+
 describe('Fields returned by query with refId', () => {
   it('Match all fields in frame with refId: A', () => {
     const data = [

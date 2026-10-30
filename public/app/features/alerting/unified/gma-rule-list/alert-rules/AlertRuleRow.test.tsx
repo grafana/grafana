@@ -1,5 +1,9 @@
 import { render, screen } from 'test/test-utils';
 
+import { mockDataSource } from '../../mocks';
+import { setupDataSources } from '../../testSetup/datasources';
+import { mockK8sAlertRule } from '../mocks/handlers';
+
 import { AlertRuleRow } from './AlertRuleRow';
 import { type AlertRuleSearchHit } from './alertRuleSearchHit';
 
@@ -43,5 +47,77 @@ describe('AlertRuleRow', () => {
 
     expect(screen.getByRole('link', { name: 'CPU high' })).toBeInTheDocument();
     expect(screen.queryByText('Team Alerts') !== null).toBe(shown);
+  });
+
+  it('shows the last error when the hit has one', () => {
+    renderRow({ searchHit: baseHit({ lastError: 'remote write failed' }) });
+
+    expect(screen.getByText('remote write failed')).toBeInTheDocument();
+  });
+
+  it('shows the summary annotation when there is no error', () => {
+    renderRow({ searchHit: baseHit({ summary: 'CPU usage is high' }) });
+
+    expect(screen.getByText('CPU usage is high')).toBeInTheDocument();
+  });
+
+  it('shows no description when neither error nor summary is present', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText('remote write failed')).not.toBeInTheDocument();
+    expect(screen.queryByText('CPU usage is high')).not.toBeInTheDocument();
+  });
+
+  it('shows the evaluation interval', () => {
+    renderRow({ searchHit: baseHit({ interval: '5m' }) });
+
+    expect(screen.getByRole('img', { name: 'Evaluated every 5m' })).toBeInTheDocument();
+  });
+
+  it('shows no interval indicator when interval is absent', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByRole('img', { name: /Evaluated every/ })).not.toBeInTheDocument();
+  });
+
+  it('renders a provisioning badge when the full rule has provenance set', () => {
+    const rule = {
+      ...mockK8sAlertRule({ uid: 'rule-1', title: 'CPU high' }),
+      metadata: { name: 'rule-1', annotations: { 'grafana.com/provenance': 'terraform' } },
+    };
+    renderRow({ searchHit: baseHit(), rule });
+
+    expect(screen.getByText('Provisioned')).toBeInTheDocument();
+  });
+
+  it('renders no badge when rule is absent', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText('Provisioned')).not.toBeInTheDocument();
+  });
+
+  it('shows queried datasources when the hit has them', () => {
+    setupDataSources(mockDataSource({ uid: 'ds-prom', name: 'Prometheus' }));
+    renderRow({ searchHit: baseHit({ datasourceUIDs: ['ds-prom'] }) });
+
+    expect(screen.getByRole('link', { name: 'Prometheus' })).toBeInTheDocument();
+  });
+
+  it('shows no datasources when the hit has none', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByRole('link', { name: /data source/i })).not.toBeInTheDocument();
+  });
+
+  it('shows labels when the hit has them', () => {
+    renderRow({ searchHit: baseHit({ labels: { team: 'platform', env: 'prod' } }) });
+
+    expect(screen.getByText('2 labels')).toBeInTheDocument();
+  });
+
+  it('shows no labels when the hit has none', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText(/label/)).not.toBeInTheDocument();
   });
 });

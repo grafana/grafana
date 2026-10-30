@@ -44,6 +44,11 @@ import { trackCardAction } from 'app/features/dashboard-scene/panel-edit/PanelEd
 
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 import { type OnSelectQueriesType } from '../../explore/QueryLibrary/types';
+import {
+  type InternalQueryEditorInsertionPropsV1,
+  type QueryEditorInsertionRegistrationV1,
+} from '../../explore/SignalExplorer/internalInsertionContract';
+import { isPrometheusType } from '../../explore/utils/prometheus';
 import { ExpressionDatasourceUID } from '../../expressions/types';
 
 import { type QueryActionComponent, RowActionComponents } from './QueryActionComponent';
@@ -101,6 +106,8 @@ export interface Props<TQuery extends DataQuery> {
   scrollIntoView?: boolean;
   /** Called after the scroll happens so the owner can clear the flag. */
   onScrollIntoView?: () => void;
+  /** Handed only to Prometheus editors, the one datasource that implements it. */
+  queryEditorInsertion?: QueryEditorInsertionRegistrationV1;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -279,7 +286,16 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   renderPluginEditor = () => {
-    const { query, queries, onRunQuery, onAddQuery, range, app = CoreApp.PanelEditor, history } = this.props;
+    const {
+      query,
+      queries,
+      onRunQuery,
+      onAddQuery,
+      range,
+      app = CoreApp.PanelEditor,
+      history,
+      queryEditorInsertion,
+    } = this.props;
     const { datasource, data } = this.state;
 
     if (this.isWaitingForDatasourceToLoad() || !datasource) {
@@ -287,12 +303,16 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
 
     let QueryEditor = this.getQueryEditor(datasource);
+    const internalInsertionProps: InternalQueryEditorInsertionPropsV1 = {
+      unstable_queryEditorInsertionV1: isPrometheusType(datasource.type) ? queryEditorInsertion : undefined,
+    };
 
     if (QueryEditor) {
       return (
         <DataSourcePluginContextProvider instanceSettings={this.props.dataSource}>
           <QueryEditor
             key={datasource?.name}
+            {...internalInsertionProps}
             query={query}
             datasource={datasource}
             onChange={this.onChange}

@@ -1,4 +1,4 @@
-import { Fragment, memo } from 'react';
+import { Fragment, type KeyboardEvent, memo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -11,6 +11,42 @@ import { useOpenLayersContext } from '../../geo';
 import { type CellOption } from '../cellMenuOptions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, type TableCellActionsProps } from '../types';
 import { buildInspectValue } from '../utils';
+
+const TRIGGER_SELECTOR = `[data-testid="${selectors.components.Panels.Visualization.TableNG.cellActions.triggerButton}"]`;
+
+export function handleCellActionsKeyDown(event: KeyboardEvent<HTMLElement>) {
+  const { currentTarget: cell, target } = event;
+  if (
+    (event.key !== 'Tab' && event.key !== 'Enter') ||
+    event.altKey ||
+    event.ctrlKey ||
+    event.metaKey ||
+    !(target instanceof Node) ||
+    !cell.contains(target)
+  ) {
+    return;
+  }
+
+  const trigger = cell.querySelector<HTMLElement>(TRIGGER_SELECTOR);
+  if (!trigger) {
+    return;
+  }
+
+  const onTrigger = trigger.contains(target);
+  if (event.key === 'Tab' && !event.shiftKey && !onTrigger) {
+    trigger.focus();
+  } else if (event.key === 'Tab' && event.shiftKey && onTrigger) {
+    cell.focus();
+  } else if (event.key === 'Enter' && target === cell) {
+    trigger.focus();
+    trigger.click();
+  } else {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+}
 
 export const TableCellActions = memo(
   ({

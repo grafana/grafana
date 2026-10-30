@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
 import { noop } from 'lodash';
-import { useCallback, useMemo } from 'react';
-import { useAsync } from 'react-use';
+import { useCallback } from 'react';
 
 import { CoreApp, DataSourcePluginContextProvider, type GrafanaTheme2, LoadingState } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { type PromQuery } from '@grafana/prometheus';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { useDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 
@@ -19,69 +18,67 @@ import { usePreview } from './PreviewRule';
 export interface ExpressionEditorProps {
   value?: string;
   onChange: (value: string) => void;
-  dataSourceName: string; // will be a prometheus or loki datasource
+  dataSourceUid: string; // will be a prometheus or loki datasource
   showPreviewAlertsButton: boolean;
 }
 
 export const ExpressionEditor = ({
   value,
   onChange,
-  dataSourceName,
+  dataSourceUid,
   showPreviewAlertsButton = true,
 }: ExpressionEditorProps) => {
   const styles = useStyles2(getStyles);
-
-  const { mapToValue, mapToQuery } = useQueryMappers(dataSourceName);
-
-  const dataQuery = mapToQuery({ refId: 'A', hide: false }, value);
-
-  const {
-    error,
-    loading,
-    value: dataSource,
-  } = useAsync(() => {
-    return getDataSourceSrv().get(dataSourceName);
-  }, [dataSourceName]);
+  const { settings, isLoading: isSettingsLoading, error: settingsError } = useDataSourceInstanceSettings(dataSourceUid);
+  const { dataSource, isLoading: isDataSourceLoading, error: dataSourceError } = useDataSourceInstance(dataSourceUid);
+  const [alertPreview, onPreview] = usePreview();
 
   const onChangeQuery = useCallback(
     (query: DataQuery) => {
       onChange(mapToValue(query));
     },
-    [onChange, mapToValue]
+    [onChange]
   );
 
-  const [alertPreview, onPreview] = usePreview();
-
-  const onRunQueriesClick = async () => {
-    onPreview();
-  };
-
-  if (loading || dataSource?.name !== dataSourceName) {
+  if (isSettingsLoading || isDataSourceLoading) {
     return null;
   }
 
-  const dsi = getDataSourceSrv().getInstanceSettings(dataSourceName);
+  if (settingsError) {
+    return <LoadError message={settingsError.message} />;
+  }
 
-  if (error || !dataSource || !dataSource?.components?.QueryEditor || !dsi) {
-    const errorMessage =
-      error?.message ||
-      t(
-        'alerting.expression-editor.error-no-component',
-        'Data source plugin does not export any Query Editor component'
-      );
+  if (!settings) {
+    return <LoadError message={`Datasource ${dataSourceUid} not found`} />;
+  }
+
+  if (!isSupportedExternalRulesSourceType(settings.type)) {
+    return <LoadError message={`${settings.type} is not supported as an expression editor`} />;
+  }
+
+  if (dataSourceError) {
+    return <LoadError message={dataSourceError.message} />;
+  }
+
+  // The hook keeps the previous instance for one render after dataSourceUid changes
+  if (!dataSource || dataSource.uid !== dataSourceUid) {
+    return null;
+  }
+
+  const QueryEditor = dataSource.components?.QueryEditor;
+  if (!QueryEditor) {
     return (
-      <div>
-        <Trans i18nKey="alerting.expression-editor.could-not-load-editor">
-          Could not load query editor due to: {{ errorMessage }}
-        </Trans>
-      </div>
+      <LoadError
+        message={t(
+          'alerting.expression-editor.error-no-component',
+          'Data source plugin does not export any Query Editor component'
+        )}
+      />
     );
   }
 
+  const dataQuery = mapToQuery(value);
   const previewLoaded = alertPreview?.data.state === LoadingState.Done;
-
-  const QueryEditor = dataSource?.components?.QueryEditor;
-
   // The Preview endpoint returns the preview as a single-element array of data frames
   const previewDataFrame = alertPreview?.data?.series?.find((s) => s.name === 'evaluation results');
   // The preview API returns arrays with empty elements when there are no firing alerts
@@ -89,7 +86,7 @@ export const ExpressionEditor = ({
 
   return (
     <>
-      <DataSourcePluginContextProvider instanceSettings={dsi}>
+      <DataSourcePluginContextProvider instanceSettings={settings}>
         <QueryEditor
           query={dataQuery}
           queries={[dataQuery]}
@@ -101,11 +98,7 @@ export const ExpressionEditor = ({
       </DataSourcePluginContextProvider>
       {showPreviewAlertsButton && (
         <div className={styles.preview}>
-          <Button
-            type="button"
-            onClick={onRunQueriesClick}
-            disabled={alertPreview?.data.state === LoadingState.Loading}
-          >
+          <Button type="button" onClick={onPreview} disabled={alertPreview?.data.state === LoadingState.Loading}>
             <Trans i18nKey="alerting.expression-editor.preview-alerts">Preview alerts</Trans>
           </Button>
           {previewLoaded && !previewHasAlerts && (
@@ -126,6 +119,16 @@ export const ExpressionEditor = ({
   );
 };
 
+function LoadError({ message: errorMessage }: { message: string }) {
+  return (
+    <div>
+      <Trans i18nKey="alerting.expression-editor.could-not-load-editor">
+        Could not load query editor due to: {{ errorMessage }}
+      </Trans>
+    </div>
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
   preview: css({
     padding: theme.spacing(2, 0),
@@ -136,25 +139,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-type QueryMappers<T extends DataQuery = DataQuery> = {
-  mapToValue: (query: T) => string;
-  mapToQuery: (existing: T, value: string | undefined) => T;
-};
+function mapToValue(query: DataQuery): string {
+  return (query as PromQuery | LokiQuery).expr;
+}
 
-function useQueryMappers(dataSourceName: string): QueryMappers {
-  return useMemo(() => {
-    const settings = getDataSourceSrv().getInstanceSettings(dataSourceName);
-    if (!settings) {
-      throw new Error(`Datasource ${dataSourceName} not found`);
-    }
-
-    if (!isSupportedExternalRulesSourceType(settings.type)) {
-      throw new Error(`${settings.type} is not supported as an expression editor`);
-    }
-
-    return {
-      mapToValue: (query: DataQuery) => (query as PromQuery | LokiQuery).expr,
-      mapToQuery: (existing: DataQuery, value: string | undefined) => ({ ...existing, expr: value }),
-    };
-  }, [dataSourceName]);
+function mapToQuery(value: string | undefined) {
+  return { refId: 'A', hide: false, expr: value };
 }

@@ -164,6 +164,22 @@ describe('TableSidebar', () => {
     expect(window.getComputedStyle(contents).opacity).toBe('0.5');
   });
 
+  it('does not escape special characters in control names', () => {
+    render(
+      <TableSidebar
+        columns={[{ name: 'Image w/ Link', hideable: true }]}
+        reorderable
+        hiddenColumns={new Set()}
+        onToggleColumn={jest.fn()}
+        onColumnsReorder={jest.fn()}
+        onClose={jest.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Reorder Image w/ Link' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Hide Image w/ Link' })).toBeInTheDocument();
+  });
+
   it('closes from the close button', async () => {
     const onClose = jest.fn();
     render(

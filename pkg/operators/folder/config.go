@@ -14,8 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// buildDynamicClient builds a dynamic client for the folder apiserver from
-// [operator] and [grpc_client_authentication] settings:
+// buildRESTClient keeps keys-only requests and watches on the same authentication settings:
+// [operator] and [grpc_client_authentication].
 //
 // [operator]
 // folders_server_url =
@@ -26,7 +26,7 @@ import (
 // [grpc_client_authentication]
 // token =
 // token_exchange_url =
-func buildDynamicClient(cfg *setting.Cfg) (dynamic.Interface, error) {
+func buildRESTClient(cfg *setting.Cfg) (rest.Interface, error) {
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
 
 	serverURL := operatorSec.Key("folders_server_url").String()
@@ -61,12 +61,12 @@ func buildDynamicClient(cfg *setting.Cfg) (dynamic.Interface, error) {
 		RateLimiter:     flowcontrol.NewFakeAlwaysRateLimiter(),
 	}
 
-	dynClient, err := dynamic.NewForConfig(restConfig)
+	client, err := rest.UnversionedRESTClientFor(dynamic.ConfigFor(restConfig))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create dynamic client: %w", err)
+		return nil, fmt.Errorf("failed to create folder REST client: %w", err)
 	}
 
-	return dynClient, nil
+	return client, nil
 }
 
 func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSClientConfig, error) {
