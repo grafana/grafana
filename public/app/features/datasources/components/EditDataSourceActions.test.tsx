@@ -43,6 +43,17 @@ jest.mock('./BuildDashboardButton', () => {
   };
 });
 
+// Mock the assistant button so it renders regardless of assistant availability and exposes its props.
+jest.mock('@grafana/assistant', () => ({
+  ...jest.requireActual('@grafana/assistant'),
+  createAssistantContextItem: jest.fn((type, params) => ({ type, params })),
+  OpenAssistantButton: ({ title, prompt, origin, context }: Record<string, unknown>) => (
+    <button data-testid="configure-with-assistant" data-prompt={prompt} data-origin={origin}>
+      {String(title)}
+    </button>
+  ),
+}));
+
 // Set default plugin links hook
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
@@ -110,9 +121,11 @@ const mockDataSource = getMockDataSource({
 // Mock useDataSource hook
 jest.mock('../state/hooks', () => ({
   useDataSource: jest.fn((uid: string) => (uid === 'not-found' ? {} : mockDataSource)),
+  useDataSourceRights: jest.fn(),
 }));
 
 const mockUseDataSource = jest.mocked(require('../state/hooks').useDataSource);
+const mockUseDataSourceRights = jest.mocked(require('../state/hooks').useDataSourceRights);
 
 describe('EditDataSourceActions', () => {
   beforeEach(() => {
@@ -135,6 +148,8 @@ describe('EditDataSourceActions', () => {
 
     // Default: feature toggle disabled, so no favorite hook
     mockUseFavoriteDatasources.mockReturnValue({ ...mockFavoriteHook, enabled: false });
+
+    mockUseDataSourceRights.mockReturnValue({ readOnly: false, hasWriteRights: true, hasDeleteRights: true });
 
     // Reset default hook mocks
     mockUseDataSource.mockImplementation((uid: string) => (uid === 'not-found' ? {} : mockDataSource));
@@ -207,6 +222,33 @@ describe('EditDataSourceActions', () => {
 
       const dashboardLink = screen.getByText('Build a dashboard').closest('a');
       expect(dashboardLink).toHaveAttribute('href', '/dashboard/new-with-ds/test-uid');
+    });
+
+    it('should render the configure-with-assistant button when the user has write rights', () => {
+      render(<EditDataSourceActions uid="test-uid" />);
+
+      const assistantButton = screen.getByTestId('configure-with-assistant');
+      expect(assistantButton).toHaveTextContent('Configure with assistant');
+      expect(assistantButton).toHaveAttribute(
+        'data-prompt',
+        'Check the current settings of this data source, run a connection test, and tell me what is missing or misconfigured.'
+      );
+      expect(assistantButton).toHaveAttribute('data-origin', 'grafana/datasources-edit/configure-with-assistant');
+    });
+
+    it('should not render the configure-with-assistant button when the user lacks write rights', () => {
+      mockUseDataSourceRights.mockReturnValue({ readOnly: false, hasWriteRights: false, hasDeleteRights: false });
+
+      render(<EditDataSourceActions uid="test-uid" />);
+
+      expect(screen.queryByTestId('configure-with-assistant')).not.toBeInTheDocument();
+      // Other actions are unaffected
+      expect(screen.getByText('Build a dashboard')).toBeInTheDocument();
+    });
+
+    it('should not render the configure-with-assistant button when the data source is not found', () => {
+      render(<EditDataSourceActions uid="not-found" />);
+      expect(screen.queryByTestId('configure-with-assistant')).not.toBeInTheDocument();
     });
   });
 
