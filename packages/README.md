@@ -31,7 +31,7 @@ Package authors are free to create as many exports as they like but should consi
 
 ## Versioning
 
-We use [Nx Release](https://nx.dev/docs/guides/nx-release) to version packages. The `release` block in `nx.json` defines release groups. The `grafana` group lists the packages that are versioned together with Grafana. `@grafana/plugin-compat` is not in it; it is in its own `plugin-compat` group with an independent version. Commands that version Grafana packages, such as `pnpm packages:prepare`, pass `--groups=grafana` so they never touch the independent group.
+We use [Nx Release](https://nx.dev/docs/guides/nx-release) to version packages. The `release` block in `nx.json` defines release groups. The `grafana` group lists the packages that are versioned together with Grafana. `@grafana/plugin-compat` is not in it; it is in its own `plugin-compat` group with an independent version. Commands that version Grafana packages, such as `pnpm packages:prepare`, pass `--groups=grafana` so they never touch the independent group. Do not run `nx release version` without `--groups`: the specifier would be applied to both groups.
 
 All packages in the `grafana` group are versioned according to the current Grafana version:
 
