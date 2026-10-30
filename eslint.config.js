@@ -244,6 +244,8 @@ module.exports = [
           additionalHooks: 'use(Async)$',
         },
       ],
+      // disabling warnings for now
+      'react-hooks/incompatible-library': 'off',
     },
   },
 
