@@ -281,7 +281,7 @@ func (ng *AlertNG) init() error {
 		}
 
 		ng.Log.Debug("Starting Grafana with remote Alertmanager enabled")
-		m.Info.Set(1)
+		m.Info.WithLabelValues().Set(1)
 		override := remote.NewFactory(cfg, ng.KVStore, crypto, m, ng.tracer, ng.FeatureToggles)
 		skipClustering = true
 

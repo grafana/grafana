@@ -7,7 +7,7 @@ import (
 )
 
 type RemoteAlertmanager struct {
-	Info                  prometheus.Gauge
+	Info                  *prometheus.GaugeVec
 	RequestLatency        *instrument.HistogramCollector
 	LastReadinessCheck    prometheus.Gauge
 	ConfigSyncsTotal      prometheus.Counter
@@ -20,12 +20,12 @@ type RemoteAlertmanager struct {
 
 func NewRemoteAlertmanagerMetrics(r prometheus.Registerer) *RemoteAlertmanager {
 	return &RemoteAlertmanager{
-		Info: promauto.With(r).NewGauge(prometheus.GaugeOpts{
+		Info: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
 			Name:      "remote_alertmanager_info",
 			Help:      "Information about the remote Alertmanager.",
-		}),
+		}, nil),
 		RequestLatency: instrument.NewHistogramCollector(promauto.With(r).NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
