@@ -28,7 +28,7 @@ canonical: https://grafana.com/docs/grafana/latest/ai-tools/grafana-assistant/
 
 Grafana Assistant is an AI-powered observability agent. You ask it questions in plain language, and it works across your metrics, logs, traces, profiles, and databases.
 
-If you run Grafana OSS or Grafana Enterprise, you can install the Assistant app in your self-managed Grafana deployment and connect it to a Grafana Cloud stack. The Assistant UI runs in your deployment, while the backend, usage limits, and billing stay in the Grafana Cloud stack you connect, which provides the backend services.
+If you run Grafana OSS or Grafana Enterprise, you can install the Assistant app in your self-managed Grafana deployment and connect it to a Grafana Cloud stack. The Assistant UI runs in your deployment, while the backend services, usage limits, and billing stay in the Grafana Cloud stack you connect.
 
 For the full Grafana Assistant documentation, refer to [Grafana Assistant](https://grafana.com/docs/grafana-cloud/platform/grafana-assistant/) in the Grafana Cloud documentation.
 
@@ -46,6 +46,6 @@ The following is required:
 
 ## Use Assistant on-prem
 
-- To set up Assistant on-prem refer to [Connect to your deployment](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-assistant/self-managed/#connect-your-deployment) in the main Assistant documentation.
-- For a list of available features, refer to [Review available features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-assistant/self-managed/#review-available-features).
+- To set up Assistant on-prem refer to [Connect to your deployment](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-assistant/self-managed#connect-your-deployment) in the main Assistant documentation.
+- For a list of available features, refer to [Review available features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-assistant/self-managed#review-available-features).
 - For management options and pricing, refer to [Manage access and usage information](https://grafana.com/docs/grafana-cloud/machine-learning/assistant/on-premise/#manage-access-and-usage).
