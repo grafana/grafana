@@ -68,6 +68,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
+	settingservice "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -126,6 +127,7 @@ type DashboardsAPIBuilder struct {
 	QuotaService             quota.Service
 	ProvisioningService      provisioning.ProvisioningService
 	minRefreshInterval       string
+	settingService           settingservice.Service
 	dualWriter               dualwrite.Service
 	folderClientProvider     client.K8sHandlerProvider
 	libraryPanels            libraryelements.Service // for legacy library panels
@@ -248,10 +250,11 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, search *SearchHandler, unified resource.ResourceClient) *DashboardsAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, search *SearchHandler, unified resource.ResourceClient, settingService settingservice.Service) *DashboardsAPIBuilder {
 	migration.Initialize(datasourceProvider, libraryElementProvider, migration.DefaultCacheTTL)
 	return &DashboardsAPIBuilder{
-		minRefreshInterval:     "10s",
+		minRefreshInterval:     defaultMinRefreshInterval,
+		settingService:         settingService,
 		accessClient:           ac,
 		dashboardService:       &dashsvc.DashboardServiceImpl{}, // for validation helpers only
 		folderClientProvider:   folderClientProvider,
@@ -628,7 +631,7 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 	}
 
 	// Validate refresh interval
-	if err := b.dashboardService.ValidateDashboardRefreshInterval(b.minRefreshInterval, refresh); err != nil {
+	if err := b.validateRefreshInterval(ctx, a.GetNamespace(), refresh); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
@@ -738,7 +741,7 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 	}
 
 	// Validate refresh interval
-	if err := b.dashboardService.ValidateDashboardRefreshInterval(b.minRefreshInterval, refresh); err != nil {
+	if err := b.validateRefreshInterval(ctx, a.GetNamespace(), refresh); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
