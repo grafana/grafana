@@ -238,11 +238,11 @@ message ResourceSearchResponse {
   map<string, FolderPath> folder_paths = 15;
 }
 
-// FolderPath lists ancestors before descendants, ending with the folder itself.
-// It follows the folder API's parents logic: walk upward from the folder and
-// stop at the first unreadable or missing folder. That folder is included by
-// name only with detached=true, and its ancestors are omitted. The collected
-// folders are then reversed for the response.
+// FolderPath lists a folder and the folders above it, from the top down,
+// ending with the folder itself. Like the folder API's parents, it ends at
+// the nearest folder up the tree that the caller cannot read or the index
+// does not hold: that folder comes first, named only and detached, and
+// nothing above it is listed.
 message FolderPath {
   message Folder {
     string name = 1;

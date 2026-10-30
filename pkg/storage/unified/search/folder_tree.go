@@ -404,10 +404,9 @@ func responseFolders(response *resourcepb.ResourceSearchResponse) []string {
 	return names
 }
 
-// folderPaths follows the folder API's parents logic: walk upward from each
-// named folder, stopping at the first unreadable or missing folder, which is
-// included by name only with detached=true. Reverse each path for the response
-// so ancestors come first and the named folder comes last.
+// folderPaths returns each named folder's path from the top down, ending with
+// the named folder. Like the folder API's parents, the nearest unreadable or
+// missing folder comes first, named only and detached, with nothing above it.
 func (b *bleveIndex) folderPaths(ctx context.Context, access authlib.AccessClient, names []string) (map[string]*resourcepb.FolderPath, error) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.folderPaths")
 	defer span.End()
