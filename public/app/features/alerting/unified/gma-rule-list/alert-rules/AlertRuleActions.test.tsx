@@ -3,7 +3,7 @@ import { render, screen, userEvent } from 'test/test-utils';
 
 import { API_GROUP, API_VERSION, type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
-import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
+import { useAlertingAbility } from '../../hooks/useAbilities';
 import { setupMswServer } from '../../mockApi';
 import { K8sAnnotations } from '../../utils/k8s/constants';
 import { mockK8sAlertRule } from '../mocks/handlers';
