@@ -381,6 +381,7 @@ test.describe(
 
       // the panel is on the canvas and greyed
       const panel3 = panels.getPanel('Panel 3');
+      await panel3.scrollIntoViewIfNeeded();
       await expect(panel3).toBeVisible();
 
       const panel3HiddenWrapper = page.locator(HIDDEN_WRAPPER_SELECTOR).filter({ has: panel3 });
