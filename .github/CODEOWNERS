@@ -1437,10 +1437,9 @@ embed.go @grafana/grafana-as-code
 /.github/zizmor.yml @grafana/grafana-backend-services-squad
 /.github/license_finder.yaml @bergquist
 /.github/actionlint.yaml @grafana/grafana-backend-services-squad
-/.github/workflows/pr-test-docker.yml @grafana/grafana-backend-services-squad
 /.github/workflows/update-schema-types.yml @grafana/grafana-frontend-platform
 /.github/workflows/defaults-ini-docs-reminder.yml @grafana/docs-tooling @jtvdez
-/.github/workflows/pr-build-grafana.yml @grafana/grafana-operator-experience-squad
+/.github/workflows/pr-build-grafana.yml @grafana/grafana-operator-experience-squad @grafana/grafana-backend-services-squad
 /.github/workflows/build-docker-variants.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/create-release-tag.yml @grafana/grafana-operator-experience-squad
 
