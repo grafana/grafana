@@ -31,9 +31,9 @@ Package authors are free to create as many exports as they like but should consi
 
 ## Versioning
 
-We use [Nx Release](https://nx.dev/docs/guides/nx-release) to version packages. The `release` block in `nx.json` lists the packages that are versioned together. `@grafana/plugin-compat` is not in it because it has its own version.
+We use [Nx Release](https://nx.dev/docs/guides/nx-release) to version packages. The `release` block in `nx.json` defines release groups. The `grafana` group lists the packages that are versioned together with Grafana. `@grafana/plugin-compat` is not in it; it is in its own `plugin-compat` group with an independent version. Commands that version Grafana packages, such as `pnpm packages:prepare`, pass `--groups=grafana` so they never touch the independent group.
 
-All packages are versioned according to the current Grafana version:
+All packages in the `grafana` group are versioned according to the current Grafana version:
 
 - Grafana v6.3.0-alpha1 -> @grafana/\* packages @ 6.3.0-alpha.1
 - Grafana v6.2.5 -> @grafana/\* packages @ 6.2.5
@@ -62,7 +62,7 @@ The `release-npm.yml` workflow publishes packages and is given the version to pu
 > You must be logged in to NPM as part of Grafana NPM org before attempting to publish to the npm registry.
 
 1. Run `pnpm packages:clean` script from the root directory. This will delete any previous builds of the packages.
-2. Run `pnpm packages:prepare <version>` script from the root directory, for example `pnpm packages:prepare 6.3.0-alpha.1`. This writes the version to every package in the release group. The version should be the same as the one being released.
+2. Run `pnpm packages:prepare <version>` script from the root directory, for example `pnpm packages:prepare 6.3.0-alpha.1`. This writes the version to every package in the `grafana` release group. The version should be the same as the one being released.
    - Make sure you use semver convention. So, _place a dot between prerelease id and prerelease number_, i.e. 6.3.0-alpha.1
 3. Run `pnpm packages:build` script that compiles distribution code in `packages/grafana-*/dist`.
 4. Run `pnpm packages:pack` script to compress each package into `npm-artifacts/*.tgz` files. This is required for pnpm to replace properties in the package.json files declared in the `publishConfig` property.
