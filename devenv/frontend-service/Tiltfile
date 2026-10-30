@@ -33,12 +33,12 @@ local_resource(
 )
 
 local_resource(
-  'npm run start',
+  'pnpm start',
   cmd='rm -rf %s' % manifest_path,
   # noHmr: this stack serves assets from a disk-backed CDN mount, so the build has to write
   # files rather than hold them in a dev server.
-  # Keep a literal separator for Nx after npm consumes the first one.
-  serve_cmd='npm run start:noHmr -- -- --env noTsCheck=1 --env noLint=1',
+  # Keep a literal separator for Nx.
+  serve_cmd='pnpm run start:noHmr -- --env noTsCheck=1 --env noLint=1',
   resource_deps=['pnpm install'],
 
   readiness_probe=probe(
@@ -50,12 +50,12 @@ local_resource(
   labels=["local"]
 )
 
-# boot.js has its own rspack config, so the watch that 'npm run start' runs no longer rebuilds
+# boot.js has its own rspack config, so the watch that 'pnpm start' runs no longer rebuilds
 # it. The image copies boot.js and live_update syncs it, so without this an edit to
 # public/boot would never reach the container.
 local_resource(
   'rspack boot',
-  cmd='npm run build:boot -- --env develop',
+  cmd='pnpm run build:boot --env develop',
   deps=['../../public/boot'],
   resource_deps=['pnpm install'],
   allow_parallel=True,
@@ -133,11 +133,11 @@ dc_resource("proxy",
   labels=["services"]
 )
 dc_resource("grafana-api",
-  resource_deps=["npm run start", "backend-build"],
+  resource_deps=["pnpm start", "backend-build"],
   labels=["services"]
 )
 dc_resource("frontend-service",
-  resource_deps=["npm run start", "backend-build"],
+  resource_deps=["pnpm start", "backend-build"],
   labels=["services"],
 )
 dc_resource("alloy", labels=["observability"])

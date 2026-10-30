@@ -159,8 +159,8 @@ func TestPluginGRPCDialOptionsTLS(t *testing.T) {
 		require.NoError(t, err)
 		cfg.Retry.Max = 1
 		labels := prometheus.Labels{"plugin_id": "test-app"}
-		requestDuration := newPluginGRPCRequestDuration(nil, sourcePluginsURL).MustCurryWith(labels).(*prometheus.HistogramVec)
-		requestRetries := newPluginGRPCRequestRetries(nil, sourcePluginsURL).MustCurryWith(labels)
+		requestDuration := newPluginGRPCRequestDuration(nil, sourcePlugins).MustCurryWith(labels).(*prometheus.HistogramVec)
+		requestRetries := newPluginGRPCRequestRetries(nil, sourcePlugins).MustCurryWith(labels)
 		conn, err := grpc.NewClient(listener.Addr().String(), cfg.dialOptions(requestDuration, requestRetries)...)
 		require.NoError(t, err)
 		t.Cleanup(func() { _ = conn.Close() })
@@ -235,8 +235,8 @@ func TestPluginGRPCDialOptionsCountRetries(t *testing.T) {
 	t.Cleanup(server.Stop)
 
 	labels := prometheus.Labels{"plugin_id": "test-app"}
-	requestDuration := newPluginGRPCRequestDuration(nil, sourcePluginsURL).MustCurryWith(labels).(*prometheus.HistogramVec)
-	requestRetries := newPluginGRPCRequestRetries(nil, sourcePluginsURL).MustCurryWith(labels)
+	requestDuration := newPluginGRPCRequestDuration(nil, sourcePlugins).MustCurryWith(labels).(*prometheus.HistogramVec)
+	requestRetries := newPluginGRPCRequestRetries(nil, sourcePlugins).MustCurryWith(labels)
 	cfg := defaultPluginGRPCConfig()
 	cfg.Retry = pluginGRPCRetryConfig{Max: 3, Backoff: time.Millisecond}
 	conn, err := grpc.NewClient(listener.Addr().String(), cfg.dialOptions(requestDuration, requestRetries)...)

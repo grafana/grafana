@@ -187,24 +187,36 @@ func TestController_StaleSearchHitsBackOff(t *testing.T) {
 	})
 }
 
-// lagLister lists stale children for the first passes calls, like a search index that has not
+// lagLister lists stale children for the first passes passes, like a search index that has not
 // caught up with deletes yet.
 type lagLister struct {
 	*memStore
 	mu     sync.Mutex
 	stale  []Child
 	passes int
+	// listing is whether the current pass still sees the stale children.
+	listing bool
 }
 
-func (l *lagLister) DirectChildren(ctx context.Context, ns, folderUID string) ([]Child, error) {
-	children, err := l.memStore.DirectChildren(ctx, ns, folderUID)
+func (l *lagLister) ListChildren(ctx context.Context, ns, folderUID string, kind ChildKind, offset, limit int64) ([]Child, int64, error) {
+	all, _, err := l.memStore.ListChildren(ctx, ns, folderUID, kind, 0, 1<<31)
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	if l.passes > 0 {
+	// Each pass lists folders first, so count a pass on that call.
+	if kind == ChildFolder && l.passes > 0 {
 		l.passes--
-		children = append(children, l.stale...)
+		l.listing = true
+	} else if kind == ChildFolder {
+		l.listing = false
 	}
-	return children, err
+	if l.listing {
+		for _, c := range l.stale {
+			if c.Kind == kind {
+				all = append(all, c)
+			}
+		}
+	}
+	return pageOf(all, offset, limit), int64(len(all)), err
 }
 
 func (l *lagLister) remaining() int {

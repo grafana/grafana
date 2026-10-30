@@ -2013,7 +2013,18 @@ func TestRebuildDoesNotReopenAnIdleClosedGlobalIndex(t *testing.T) {
 	_, err := backend.BuildIndex(t.Context(), global, int64(docs), "test", indexTestDocs(docsKey, docs, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
-	closed := make(chan struct{})
+	listDirs := func() []string {
+		entries, err := os.ReadDir(backend.getResourceDir(global))
+		require.NoError(t, err)
+		names := make([]string, 0, len(entries))
+		for _, e := range entries {
+			names = append(names, e.Name())
+		}
+		return names
+	}
+	before := listDirs()
+
+	var rebuilt resource.ResourceIndex
 	_, err = backend.BuildIndex(t.Context(), global, int64(docs), "rebuild", func(index resource.ResourceIndex) (int64, error) {
 		// The index goes idle and is closed while the rebuild lists documents.
 		backend.cacheMx.Lock()
@@ -2021,13 +2032,17 @@ func TestRebuildDoesNotReopenAnIdleClosedGlobalIndex(t *testing.T) {
 		delete(backend.cache, global)
 		backend.cacheMx.Unlock()
 		backend.closeIndex(idx, global)
-		close(closed)
+		rebuilt = index
 		return indexTestDocs(docsKey, docs, 100)(index)
 	}, nil, true, time.Time{}, 0, resource.BuildIndexOptions{})
-	<-closed
 	require.ErrorIs(t, err, resource.ErrIndexClosedDuringRebuild)
 	require.Nil(t, backend.peekCachedIndex(global))
 	checkOpenIndexes(t, reg, 0, 0)
+
+	require.NotNil(t, rebuilt)
+	_, err = rebuilt.DocCount(t.Context(), "", nil)
+	require.ErrorIs(t, err, bleve.ErrorIndexClosed, "the discarded index is closed")
+	require.Equal(t, before, listDirs(), "the discarded index's directory is removed; the closed one stays for a later search")
 }
 
 func TestNewUnownedIndexIdleTimeout(t *testing.T) {

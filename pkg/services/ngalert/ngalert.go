@@ -265,10 +265,8 @@ func (ng *AlertNG) init() error {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
-	//nolint:staticcheck // not yet migrated to OpenFeature
 	remoteSecondaryWithRemoteState := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondaryWithRemoteState)
-	if remotePrimary || remoteSecondary || remoteSecondaryWithRemoteState {
+	if remotePrimary || remoteSecondaryWithRemoteState {
 		m := ng.Metrics.GetRemoteAlertmanagerMetrics()
 		runtimeConfig := remoteClient.RuntimeConfig{
 			DispatchTimer: notifier.GetDispatchTimer(ng.FeatureToggles).String(),
@@ -574,7 +572,7 @@ func (ng *AlertNG) init() error {
 	// Both provisioning.LimitsProvider and notifier.LimitsProvider interfaces have identical
 	// signatures, so NoopLimitsProvider and RemoteLimitsProvider satisfy both via structural typing.
 	var limitsProvider provisioning.LimitsProvider
-	if remotePrimary || remoteSecondary || remoteSecondaryWithRemoteState {
+	if remotePrimary || remoteSecondaryWithRemoteState {
 		// For remote alertmanager, create a MimirClient to fetch limits
 		remoteURL, err := url.Parse(ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL)
 		if err != nil {
