@@ -11,6 +11,7 @@ import {
 import { Dropdown, Icon, Menu, PanelChrome, ToolbarButton } from '@grafana/ui';
 
 import { getPanelLinks } from './PanelMenuBehavior';
+import { usePanelActionsOverlayOpenChange } from './edit-actions-popover/PanelActionsOverlayContext';
 
 interface VizPanelLinksState extends SceneObjectState {
   rawLinks?: DataLink[];
@@ -33,6 +34,7 @@ export class VizPanelLinks extends SceneObjectBase<VizPanelLinksState> {
 function VizPanelLinksRenderer({ model }: SceneComponentProps<VizPanelLinks>) {
   const { menu, rawLinks } = model.useState();
   sceneGraph.getTimeRange(model).useState();
+  const onLinksMenuOpenChange = usePanelActionsOverlayOpenChange();
 
   if (!(model.parent instanceof VizPanel)) {
     throw new Error('VizPanelLinks must be a child of VizPanel');
@@ -56,6 +58,7 @@ function VizPanelLinksRenderer({ model }: SceneComponentProps<VizPanelLinks>) {
       overlay={() => {
         return <menu.Component model={menu} key={menu.state.key} />;
       }}
+      onVisibleChange={onLinksMenuOpenChange}
     >
       <ToolbarButton
         icon="external-link-alt"

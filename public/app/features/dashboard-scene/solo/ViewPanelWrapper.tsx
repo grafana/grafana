@@ -1,30 +1,55 @@
+import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 
 import { store } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { useFlagGrafanaViewPanelPane } from '@grafana/runtime/internal';
+import { useFlagGrafanaPanelActionsPopover, useFlagGrafanaViewPanelPane } from '@grafana/runtime/internal';
 import { type SceneDataProvider, type VizPanel, useSceneObjectState } from '@grafana/scenes';
 import { SceneContext, SceneContextObject } from '@grafana/scenes-react';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
+import { PanelActionsWrapper } from '../scene/edit-actions-popover/PanelActionsPopover';
 import { getDashboardSceneLike } from '../scene/types/dashboard';
 import { PaneClosedEvent, ToggleViewPanePaneEvent } from '../sidebar/events';
 
 import { FanoutPanel } from './FanoutPanel';
-import { ViewPanelSidePane } from './ViewPanelSidePane';
+import { hasViewPanelPaneContent, ViewPanelSidePane } from './ViewPanelSidePane';
 
 export const VIEW_PANEL_PANE_CLOSED_KEY = 'grafana.dashboard.sidebar.viewPanelPane.closed';
 
 export function ViewPanelWrapper({ panel, showControlsPane }: { panel: VizPanel; showControlsPane?: boolean }) {
   const viewPanelPane = useFlagGrafanaViewPanelPane();
+  const isActionsPopoverEnabled = useFlagGrafanaPanelActionsPopover();
   const { $data } = useSceneObjectState(panel, { shouldActivateOrKeepAlive: true });
+  // With the actions popover, the pane no longer holds a "Back to dashboard" button, so it is only opened when the
+  // panel plugin has controls to show in it.
+  const hasPaneContent = !isActionsPopoverEnabled || hasViewPanelPaneContent(panel);
 
-  if (!viewPanelPane || !$data || !showControlsPane) {
-    return <panel.Component model={panel} />;
+  const content =
+    !viewPanelPane || !$data || !showControlsPane || !hasPaneContent ? (
+      <panel.Component model={panel} />
+    ) : (
+      <ViewPanelWithPane panel={panel} dataProvider={$data} />
+    );
+
+  if (isActionsPopoverEnabled && showControlsPane) {
+    return (
+      <PanelActionsWrapper panel={panel}>
+        <div className={viewPanelContainer}>{content}</div>
+      </PanelActionsWrapper>
+    );
   }
 
-  return <ViewPanelWithPane panel={panel} dataProvider={$data} />;
+  return content;
 }
+
+const viewPanelContainer = css({
+  display: 'flex',
+  flexGrow: 1,
+  position: 'relative',
+  width: '100%',
+  height: '100%',
+});
 
 function ViewPanelWithPane({ panel, dataProvider }: { panel: VizPanel; dataProvider: SceneDataProvider }) {
   const dashboard = getDashboardSceneLike(panel);

@@ -7706,6 +7706,17 @@
       "title-drag-and-drop-to-reorder": "Drag and drop to reorder",
       "tooltip-remove-option": "Remove option"
     },
+    "panel-actions-popover": {
+      "aria-label": "Panel actions",
+      "edit": "Edit (e)",
+      "expand": "Expand (v)",
+      "explore": "Explore (p x)",
+      "more-actions": "More actions",
+      "remove": "Remove (p r)",
+      "remove-confirm": "Remove",
+      "restore-size": "Restore size (v)",
+      "settings": "Settings"
+    },
     "panel-data-alerting-tab": {
       "tab-label": "Alert"
     },
@@ -13931,12 +13942,14 @@
     "header-menu": {
       "add-to-notebook": "Add to notebook",
       "copy": "Copy",
+      "copy-repeated-panel": "Copy repeated panel",
       "copy-styles": "Copy styles",
       "download-diagnostics": "Download diagnostics",
       "duplicate": "Duplicate",
       "edit": "Edit",
       "explore": "Explore",
       "get-help": "Get help",
+      "group-by": "Group by…",
       "hide-legend": "Hide legend",
       "inspect": "Inspect",
       "inspect-data": "Data",

@@ -4,6 +4,7 @@ import { useAsync } from 'react-use';
 import { type PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
+import { useFlagGrafanaPanelActionsPopover } from '@grafana/runtime/internal';
 import {
   type SceneComponentProps,
   SceneObjectBase,
@@ -54,8 +55,17 @@ export class ViewPanelSidePane extends SceneObjectBase<ViewPanelSidePaneState> {
   }
 }
 
+/**
+ * Whether the panel plugin has controls to show in the view panel side pane.
+ */
+export function hasViewPanelPaneContent(panel: VizPanel): boolean {
+  const viewPanelOptions = panel.getPlugin()?.viewPanelOptions;
+  return Boolean(viewPanelOptions?.quickToggles || viewPanelOptions?.fanout?.enabled);
+}
+
 function ViewPanelSidePaneRenderer({ model }: SceneComponentProps<ViewPanelSidePane>) {
   const dashboard = getDashboardSceneLike(model);
+  const isActionsPopoverEnabled = useFlagGrafanaPanelActionsPopover();
   const { viewPanel } = dashboard.useState();
   const { panelRef } = model.useState();
   const panel = panelRef.resolve();
@@ -86,17 +96,20 @@ function ViewPanelSidePaneRenderer({ model }: SceneComponentProps<ViewPanelSideP
       <Sidebar.PaneHeader title={t('dashboard.sidebar.view-panel.pane-header', 'View panel')} />
       <ScrollContainer showScrollIndicators={true}>
         <Box padding={0} gap={0} display="flex" direction="column">
-          <Box display="flex" direction="column" gap={0} padding={2} paddingBottom={2}>
-            <Button
-              variant="secondary"
-              onClick={() => dashboard.setState({ viewPanel: undefined })}
-              size="sm"
-              fullWidth
-              data-testid={selectors.components.ViewPanelSidePane.goBackButton}
-            >
-              <Trans i18nKey="dashboard.view-panel.back-to-dashboard">Back to dashboard</Trans>
-            </Button>
-          </Box>
+          {/* The panel actions popover has a "Restore size" action instead */}
+          {!isActionsPopoverEnabled && (
+            <Box display="flex" direction="column" gap={0} padding={2} paddingBottom={2}>
+              <Button
+                variant="secondary"
+                onClick={() => dashboard.setState({ viewPanel: undefined })}
+                size="sm"
+                fullWidth
+                data-testid={selectors.components.ViewPanelSidePane.goBackButton}
+              >
+                <Trans i18nKey="dashboard.view-panel.back-to-dashboard">Back to dashboard</Trans>
+              </Button>
+            </Box>
+          )}
           {viewPanelOptions?.quickToggles && <ViewPanelQuickToggles panel={panel} plugin={plugin.value} />}
           {viewPanelOptions?.fanout?.enabled && <ViewPanelFanoutOptions panel={panel} pane={model} />}
         </Box>
