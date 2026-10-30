@@ -180,11 +180,18 @@ type GrafanaRouter struct {
 	reconciles      atomic.Uint64
 	reconcileErrors atomic.Uint64
 	lastReconcile   atomic.Int64
+	// reconcileDuration is how long each reconcile took, for metrics.
+	reconcileDuration durationStats
 
 	// onBreakerChange and onDiscovery report events to the metrics; nil when
 	// the router is not instrumented. Set before Run.
 	onBreakerChange func(group string, to gobreaker.State)
 	onDiscovery     func(group, result string)
+	// onBackendFailure reports a backend failure the router saw outside a
+	// client request, such as in a discovery read, and onGroupsRemoved the
+	// groups that are no longer served.
+	onBackendFailure func(group, pluginID, reason string)
+	onGroupsRemoved  func(groups []string)
 
 	watchAuthorizer authorizer.Authorizer
 

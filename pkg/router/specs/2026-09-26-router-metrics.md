@@ -35,6 +35,8 @@ Every label has a bounded set of values, so no request can create new series:
 | `grafana_router_last_reconcile_timestamp_seconds` | gauge | | When the latest route reconcile finished |
 | `grafana_router_reconciles_total` | counter | | Completed reconciles |
 | `grafana_router_reconcile_errors_total` | counter | | Reconciles that completed with errors |
+| `grafana_router_reconcile_duration_seconds` | histogram | | How long reconciles took |
+| `grafana_router_discovery_fetches_overdue` | gauge | | Backend discovery fetches still running past their deadline. A backend that ignores its context keeps one running for good, and its group serves stale discovery |
 
 ## Routes and sources
 
@@ -45,6 +47,10 @@ Every label has a bounded set of values, so no request can create new series:
 | `grafana_router_skipped_backends` | gauge | `source` | Backends a source skipped in its latest successful load or poll |
 | `grafana_router_source_last_success_timestamp_seconds` | gauge | `source` | When each source last loaded successfully |
 | `grafana_router_source_polls_total` | counter | `source`, `result` | Load or poll attempts: `success` or `failure` |
+| `grafana_router_source_poll_duration_seconds` | histogram | `source` | How long each source's load or poll attempts took, failed ones included |
+| `grafana_router_stack_lookup_duration_seconds` | histogram | `result` | How long grafana.com stack lookups took: `resolved`, `not_found`, `error`. Cached and throttled lookups never reach grafana.com. The lookup request is traced |
+| `grafana_router_stack_breaker_transitions_total` | counter | `result` | Transitions of the single-tenant fallback's per-destination breakers, by the state entered. No group label, since those groups can be unregistered |
+| `grafana_router_stack_cache_evictions_total` | counter | `result` | Entries the fallback's caches dropped to make room: `host`, `breaker`. Steady evictions mean a cache is smaller than the active stacks |
 | `grafana_router_stack_lookups_total` | counter | `result` | Single-tenant stack lookups: `cache_hit`, `resolved`, `not_found`, `throttled`, `error` |
 | `grafana_router_stack_discovery_cache_total` | counter | `result` | Single-tenant discovery requests looked up in the cache shared by each stack's callers: `hit`, `miss`. Absent when `st_discovery_cache_bytes = 0` |
 
@@ -80,6 +86,13 @@ retried with backoff.
 | `grafana_router_breaker_transitions_total` | counter | `group`, `state` | Breaker state changes, by the state entered |
 | `grafana_router_backend_failures_total` | counter | `group`, `plugin_id`, `reason` | Requests whose backend failed: `breaker_open`, `timeout`, `transport`, `redirect_rejected`, `stack_origin_mismatch`, `auth` (a plugin token exchange failed) |
 | `grafana_router_discovery_results_total` | counter | `group`, `result` | How aggregated discovery was obtained: `provided`, `cached`, `fetched`, `stale`, `unavailable` |
+
+A failure in a discovery read (`/apis` and each version's resource list, from a group's backend or
+the unregistered-group handler) counts in `grafana_router_backend_failures_total` under the group, or
+the empty group for the unregistered-group handler. When a group is no longer served, its series in
+`backend_failures_total`, `breaker_transitions_total`, `discovery_results_total`,
+and `longrunning_requests` are deleted, so the metrics don't keep every group
+that ever existed. A group served again starts from zero.
 
 Groups on the single-tenant fallback keep one breaker per destination host and group, so they have no
 `grafana_router_breaker_state` series. Embedded groups bypass circuit breaking and also have no series.
@@ -184,5 +197,8 @@ sum by (plugin_id) (
 | Unrecognized methods | `sum by (group) (rate(grafana_router_http_requests_total{verb="other"}[5m]))` |
 | Discovery served stale | `sum by (group) (rate(grafana_router_discovery_results_total{result=~"stale|unavailable"}[5m]))` |
 | Stack lookup cache hit ratio | `rate(grafana_router_stack_lookups_total{result="cache_hit"}[5m]) / sum(rate(grafana_router_stack_lookups_total[5m]))` |
+| p99 stack lookup latency | `histogram_quantile(0.99, sum by (le) (rate(grafana_router_stack_lookup_duration_seconds_bucket[5m])))` |
+| Stack cache churn | `sum by (result) (rate(grafana_router_stack_cache_evictions_total[5m]))` |
+| Stuck discovery fetches | `grafana_router_discovery_fetches_overdue > 0` |
 | Throttled stack lookups | `rate(grafana_router_stack_lookups_total{result="throttled"}[5m])` |
 | Stack discovery cache hit ratio | `rate(grafana_router_stack_discovery_cache_total{result="hit"}[5m]) / sum(rate(grafana_router_stack_discovery_cache_total[5m]))` |
