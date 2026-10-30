@@ -1,9 +1,11 @@
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getIconForKind } from 'app/features/search/service/utils';
 
+import { setManifestKinds } from './manifestKinds';
 import {
   resourceKindInfos,
   getAvailableResourceKinds,
+  getKindDisplayByGroupKind,
   getKindInfoByGroupKind,
   getKindInfoByItemType,
   getKindInfoByResource,
@@ -314,5 +316,56 @@ describe('getMigratableKinds', () => {
     expect(getMigratableKinds([{ group: 'playlist.grafana.app', kind: 'Playlist' }]).map((k) => k.kind)).toEqual([
       'Playlist',
     ]);
+  });
+});
+
+describe('kinds from app manifests', () => {
+  const widget: SupportedResource = {
+    group: 'example.ext.grafana.app',
+    kind: 'Widget',
+    resource: 'widgets',
+    label: 'Widget',
+    pluralLabel: 'Widgets',
+    icon: 'apps',
+  };
+
+  beforeEach(() => setManifestKinds([widget]));
+  afterEach(() => setManifestKinds([]));
+
+  it('resolves a manifest kind by group and resource, with its manifest label and icon', () => {
+    const info = getKindInfoByStat({ group: widget.group, resource: 'widgets' });
+    expect(info?.pluralLabel()).toBe('Widgets');
+    expect(info?.icon).toBe('apps');
+    expect(getKindInfoByResource('widgets')?.kind).toBe('Widget');
+    expect(getKindInfoByItemType('Widget')?.kind).toBe('Widget');
+    expect(getKindDisplayByGroupKind(widget.group, 'Widget')?.getLabel()).toBe('Widget');
+  });
+
+  it('does not match a manifest kind on the resource alone', () => {
+    setManifestKinds([{ ...widget, resource: 'dashboards' }]);
+    expect(getKindInfoByStat({ group: 'dashboard.grafana.app', resource: 'dashboards' })).toBe(
+      resourceKindInfos.dashboard
+    );
+    expect(getKindInfoByStat({ group: widget.group, resource: 'dashboards' })?.kind).toBe('Widget');
+  });
+
+  it('keeps the registry entry when a manifest declares a registry kind', () => {
+    setManifestKinds([{ group: 'playlist.grafana.app', kind: 'Playlist', resource: 'playlists', label: 'Other' }]);
+    expect(getKindInfoByStat({ group: 'playlist.grafana.app', resource: 'playlists' })).toBe(
+      resourceKindInfos.playlist
+    );
+  });
+
+  it('gives a manifest kind no repository route', () => {
+    const info = getKindInfoByStat({ group: widget.group, resource: 'widgets' });
+    const repo: Repository = {
+      spec: { title: 'r', type: 'github', sync: { target: 'folder', enabled: true }, workflows: [] },
+    };
+    expect(info && getRepositoryRoute(info, repo)).toBeUndefined();
+  });
+
+  it('keeps core-only lookups to the registry', () => {
+    expect(getKindInfoByGroupKind(widget.group, 'Widget')).toBeUndefined();
+    expect(getMigratableKinds([widget]).map((k) => k.kind)).not.toContain('Widget');
   });
 });
