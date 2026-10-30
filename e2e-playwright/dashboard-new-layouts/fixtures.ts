@@ -13,6 +13,7 @@ interface PageObjectFixtures {
   rows: Rows;
   tabs: Tabs;
   canvas: Canvas;
+  createNewDashboardPage: (url?: string) => Promise<{ page: Page; rows: Rows; controls: Controls }>;
 }
 
 interface BaseArgs {
@@ -50,6 +51,24 @@ function buildGetByGrafanaSelector(
  * ```
  */
 export const test = base.extend<PageObjectFixtures>({
+  createNewDashboardPage: async ({ context, request, selectors, components, grafanaVersion }, use, testInfo) => {
+    const pages: Page[] = [];
+    await use((url) =>
+      test.step('Create a new dashboard page', async () => {
+        const page = await context.newPage();
+        pages.push(page);
+        if (url) {
+          await page.goto(url);
+        }
+        const getByGrafanaSelector = buildGetByGrafanaSelector({ page, request, selectors, grafanaVersion }, testInfo);
+        const args = { page, selectors, components, getByGrafanaSelector };
+        return { page, rows: new Rows(args), controls: new Controls(args) };
+      })
+    );
+    for (const page of pages) {
+      await page.close();
+    }
+  },
   controls: async ({ page, request, selectors, components, grafanaVersion }, use, testInfo) => {
     const getByGrafanaSelector = buildGetByGrafanaSelector({ page, request, selectors, grafanaVersion }, testInfo);
     await use(new Controls({ page, selectors, components, getByGrafanaSelector }));
