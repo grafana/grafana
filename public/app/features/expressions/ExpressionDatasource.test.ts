@@ -26,7 +26,13 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
   getTemplateSrv: () => ({
-    replace: (val: string) => (val ? val.replace('$input', '10').replace('$window', '10s') : val),
+    replace: (val: string, scopedVars: Record<string, { value: string }> = {}) =>
+      val
+        ? Object.entries(scopedVars).reduce(
+            (text, [name, { value }]) => text.replaceAll(`$${name}`, value),
+            val.replace('$input', '10').replace('$window', '10s')
+          )
+        : val,
   }),
   getDataSourceInstance: (...args: unknown[]) => mockGetDatasource(...args),
 }));
@@ -385,6 +391,107 @@ describe('ExpressionDatasourceApi', () => {
       expect(response.data[1]).toBe(missingValue);
       expect(differentNames.fields[0].config.displayNameFromDS).toBeUndefined();
       expect(missingValue.fields[0].config.displayNameFromDS).toBeUndefined();
+    });
+
+    describe('queries that fail filterQuery', () => {
+      const expr = { uid: '__expr__', type: '__expr__' };
+      const graphite = { uid: 'graphite', type: 'graphite' };
+      const mysql = { uid: 'mysql', type: 'mysql' };
+      // Graphite skips queries without a target. SQL data sources skip hidden queries.
+      const graphiteFilter = (query: { target?: string }) => !!query.target;
+      const mysqlFilter = (query: { hide?: boolean }) => !query.hide;
+
+      const runAndGetRefIds = async (targets: ExpressionQuery[], scopedVars = {}) => {
+        mockGetDatasource.mockImplementation(async (ref: { uid?: string }) => {
+          switch (ref?.uid) {
+            case 'graphite':
+              return { filterQuery: graphiteFilter };
+            case 'mysql':
+              return { filterQuery: mysqlFilter };
+            default:
+              return {};
+          }
+        });
+        const querySpy = jest.spyOn(DataSourceWithBackend.prototype, 'query').mockReturnValue(of({ data: [] }));
+        const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+        await lastValueFrom(ds.query(buildRequest(targets, scopedVars)));
+        expect(querySpy).toHaveBeenCalledTimes(1);
+        return querySpy.mock.calls[0][0].targets.map((t) => t.refId);
+      };
+
+      it('drops a query that fails filterQuery unless an expression uses it', async () => {
+        const targets = [
+          { refId: 'A', datasource: graphite, target: '' },
+          { refId: 'B', datasource: graphite, target: '' },
+          { refId: 'C', datasource: expr, type: ExpressionQueryType.math, expression: '$A * 2' },
+        ] as ExpressionQuery[];
+
+        expect(await runAndGetRefIds(targets)).toEqual(['A', 'C']);
+      });
+
+      it('keeps hidden SQL expression inputs and drops hidden queries nothing uses', async () => {
+        const targets = [
+          { refId: 'A', datasource: mysql, hide: true },
+          { refId: 'cpu', datasource: mysql, hide: true },
+          { refId: 'unused', datasource: mysql, hide: true },
+          {
+            refId: 'S',
+            datasource: expr,
+            type: ExpressionQueryType.sql,
+            expression: 'SELECT a.time, a.value + c.value FROM A a\nJOIN (SELECT * FROM CPU) c ON a.time = c.time',
+          },
+        ] as ExpressionQuery[];
+
+        expect(await runAndGetRefIds(targets)).toEqual(['A', 'cpu', 'S']);
+      });
+
+      it('keeps a query that an expression uses only after template variables are replaced', async () => {
+        const targets = [
+          { refId: 'A', datasource: mysql, hide: true },
+          { refId: 'B', datasource: mysql, hide: true },
+          { refId: 'S', datasource: expr, type: ExpressionQueryType.sql, expression: 'SELECT * FROM $tbl' },
+        ] as ExpressionQuery[];
+
+        expect(await runAndGetRefIds(targets, { tbl: { value: 'A', text: 'A' } })).toEqual(['A', 'S']);
+      });
+
+      it('keeps queries that reduce, resample, threshold and classic conditions use', async () => {
+        const targets = [
+          { refId: 'A', datasource: graphite },
+          { refId: 'B', datasource: graphite },
+          { refId: 'C', datasource: graphite },
+          { refId: 'D', datasource: graphite },
+          { refId: 'E', datasource: graphite },
+          { refId: 'R', datasource: expr, type: ExpressionQueryType.reduce, expression: 'A', reducer: 'mean' },
+          { refId: 'S', datasource: expr, type: ExpressionQueryType.resample, expression: '$B', window: '1m' },
+          { refId: 'T', datasource: expr, type: ExpressionQueryType.threshold, expression: 'C' },
+          {
+            refId: 'K',
+            datasource: expr,
+            type: ExpressionQueryType.classic,
+            conditions: [{ query: { params: ['D'] } }],
+          },
+        ] as unknown as ExpressionQuery[];
+
+        expect(await runAndGetRefIds(targets)).toEqual(['A', 'B', 'C', 'D', 'R', 'S', 'T', 'K']);
+      });
+
+      it('does not call filterQuery on expression queries', async () => {
+        const filterQuery = jest.fn().mockReturnValue(false);
+        mockGetDatasource.mockResolvedValue({ filterQuery });
+        jest.spyOn(DataSourceWithBackend.prototype, 'query').mockReturnValue(of({ data: [] }));
+        const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+        const query: ExpressionQuery = {
+          refId: 'A',
+          datasource: expr,
+          type: ExpressionQueryType.math,
+          expression: '1',
+        };
+
+        await lastValueFrom(ds.query(buildRequest(query, {})));
+
+        expect(filterQuery).not.toHaveBeenCalled();
+      });
     });
   });
 
