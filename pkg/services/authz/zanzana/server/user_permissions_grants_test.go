@@ -16,9 +16,6 @@ import (
 	"github.com/openfga/openfga/pkg/storage/memory"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -30,12 +27,11 @@ import (
 
 type permissionDatastore struct {
 	storage.OpenFGADatastore
-	mu            sync.Mutex
-	reads         map[string]int
-	delay         time.Duration
-	failRead      error
-	failIterator  error
-	modelOverride *openfgav1.AuthorizationModel
+	mu           sync.Mutex
+	reads        map[string]int
+	delay        time.Duration
+	failRead     error
+	failIterator error
 }
 
 func (s *permissionDatastore) before(ctx context.Context, operation string) error {
@@ -141,12 +137,6 @@ func (s *permissionDatastore) ReadStartingWithUser(ctx context.Context, store st
 func (s *permissionDatastore) ReadAuthorizationModel(ctx context.Context, store, modelID string) (*openfgav1.AuthorizationModel, error) {
 	if err := s.before(ctx, "model"); err != nil {
 		return nil, err
-	}
-	s.mu.Lock()
-	override := s.modelOverride
-	s.mu.Unlock()
-	if override != nil {
-		return proto.Clone(override).(*openfgav1.AuthorizationModel), nil
 	}
 	return s.OpenFGADatastore.ReadAuthorizationModel(ctx, store, modelID)
 }
@@ -422,17 +412,6 @@ func TestUserPermissionsGrantsReturnsNoPartialResults(t *testing.T) {
 		require.ErrorContains(t, err, "grant stream interrupted")
 		require.Empty(t, results)
 	})
-	t.Run("unknown authorization model", func(t *testing.T) {
-		srv, ds, store := newPermissionTestServer(t, permissionParityTuples())
-		model, err := ds.OpenFGADatastore.ReadAuthorizationModel(t.Context(), store.ID, store.ModelID)
-		require.NoError(t, err)
-		model = proto.Clone(model).(*openfgav1.AuthorizationModel)
-		model.TypeDefinitions = append(model.TypeDefinitions, &openfgav1.TypeDefinition{Type: "future-type"})
-		ds.modelOverride = model
-		results, err := srv.resolveUserPermissionContributions(newContextWithNamespace(), &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
-		require.Equal(t, codes.FailedPrecondition, status.Code(err))
-		require.Empty(t, results)
-	})
 }
 
 func permissionPerformanceTuples() []*openfgav1.TupleKey {
@@ -463,6 +442,7 @@ func TestUserPermissionsGrantsReducesDatastoreOperations(t *testing.T) {
 	require.Equal(t, normalizePermissionLists(want), normalizePermissionLists(got))
 	require.Less(t, translationTotal*3, baselineTotal, "prefetch should eliminate repeated remote graph walks")
 	require.LessOrEqual(t, translationCounts["read"], 36, "each subject, request team and assigned role should be fetched at most once")
+	require.Zero(t, translationCounts["model"])
 	require.Zero(t, translationCounts["user_tuple"])
 	require.Zero(t, translationCounts["usersets"])
 	t.Logf("datastore operations: baseline=%d %v, translation=%d %v", baselineTotal, baselineCounts, translationTotal, translationCounts)

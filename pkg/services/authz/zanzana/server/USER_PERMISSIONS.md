@@ -20,7 +20,8 @@ which actions receive the grant. Wildcard scopes use group-resource grants.
 Folder scopes identify explicit grant locations, including explicit child grants.
 Folder parent edges are not traversed to enumerate inherited descendants.
 
-The deployed authorization model must match the compiled model. Unsupported tuple
+`getStoreInfo` selects or creates the model matching the bundled schema. Permission
+enumeration does not read or compare the model again. Unsupported tuple
 subjects, relations, object forms or condition bindings fail the whole request
 before any response is sent. In particular, stored conditions may bind only
 `group_resource` or `subresources`, not the corresponding request parameters.
@@ -46,9 +47,8 @@ Request-supplied teams never enter a stored user contribution. Requests for the
 same user with different contextual teams can share the user's stored contribution
 without sharing contextual memberships.
 
-Entries are isolated by store ID, immutable model ID and typed principal. Model
-validation uses a separate key within the same bounded cache. The cache honors
-`[rbac] permission_cache` and uses the shared 60-second permission-cache TTL,
+Entries are isolated by store ID, immutable model ID and typed principal. The cache
+honors `[rbac] permission_cache` and uses the shared 60-second permission-cache TTL,
 matching legacy permission caches. Its LRU holds at most 10,000 entries. OpenFGA
 query-cache settings do not control these contributions. Entries expire from the
 start of the read. Reads are coalesced per key and invalidation generation. A
@@ -64,9 +64,9 @@ Concurrent enumeration and writes are not a transactional snapshot.
 
 Writes through another process or directly to the datastore are observed on cache
 expiry. This implementation does not provide distributed invalidation. The RPC's
-`skipcache` option bypasses both model-validation and principal caches, including
-in-flight loads, and neither populates nor replaces shared entries. It does not
-bypass the separate existing IAM UID mapping cache.
+`skipcache` option bypasses principal caches, including in-flight loads, and
+neither populates nor replaces shared entries. It does not bypass the separate
+existing IAM UID mapping cache.
 
 Explicit `ReloadCache` options are forwarded to the RPC's `skipcache` flag by the
 OSS and Enterprise merge paths, the legacy loader, and the outer AuthZ permission

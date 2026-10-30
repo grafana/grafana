@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 	"strings"
+	"sync"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -14,7 +15,21 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 )
+
+// Keep only the bundled schema metadata needed to reject unsupported tuple forms.
+var permissionGrantMetadata = sync.OnceValues(func() (map[string]*openfgav1.Metadata, error) {
+	model, err := schema.TransformModulesToModel(schema.SchemaModules)
+	if err != nil {
+		return nil, err
+	}
+	metadata := make(map[string]*openfgav1.Metadata, len(model.GetTypeDefinitions()))
+	for _, definition := range model.GetTypeDefinitions() {
+		metadata[definition.GetType()] = definition.GetMetadata()
+	}
+	return metadata, nil
+})
 
 func unsupportedPermissionGrant() error {
 	return status.Error(codes.FailedPrecondition, "unsupported permission relationship or condition")
@@ -76,7 +91,7 @@ func translatePermissionGrants(ctx context.Context, grants []*openfgav1.TupleKey
 				}
 			case info.IsGeneric() && typ == common.TypeResource:
 				prefix := info.GroupResource() + "/"
-				if strings.HasPrefix(name, prefix) && grant.GetCondition().GetContext().GetFields()["group_resource"].GetStringValue() == info.GroupResource() && info.IsValidRelation(relation) && permissionLevelImplies(granted, relation) {
+				if strings.HasPrefix(name, prefix) && matchesGenericPermissionGrant(info, relation, grant) {
 					list.Items = append(list.Items, strings.TrimPrefix(name, prefix))
 				}
 			case info.IsGeneric() && typ == common.TypeFolder:
@@ -92,21 +107,7 @@ func translatePermissionGrants(ctx context.Context, grants []*openfgav1.TupleKey
 					}
 				}
 			case !info.IsGeneric() && typ == info.Type():
-				matches := false
-				if info.HasSubresource() && info.IsValidRelation(common.SubresourceRelation(relation)) {
-					matches = permissionSubresourceImplies(granted, common.SubresourceRelation(relation)) && permissionConditionMatches(grant, info.GroupResource())
-				}
-				if info.IsValidRelation(relation) {
-					switch typ {
-					case common.TypeFolder:
-						matches = matches || slices.Contains(expandedSubresourcePermissionRelations(common.SubresourceRelation(relation)), common.SubresourceRelation(granted))
-					case common.TypeTeam:
-						matches = matches || granted == relation || (granted == common.RelationTeamMember && relation == common.RelationGet) || (granted == common.RelationTeamAdmin && relation != common.RelationCreate)
-					default:
-						matches = matches || granted == relation
-					}
-				}
-				if matches {
+				if matchesTypedPermissionGrant(info, relation, grant) {
 					list.Items = append(list.Items, name)
 				}
 			}
@@ -123,6 +124,29 @@ func translatePermissionGrants(ctx context.Context, grants []*openfgav1.TupleKey
 		results = append(results, permissionListResult{Entry: entry, List: list})
 	}
 	return results, nil
+}
+
+func matchesGenericPermissionGrant(info common.ResourceInfo, relation string, grant *openfgav1.TupleKey) bool {
+	return grant.GetCondition().GetContext().GetFields()["group_resource"].GetStringValue() == info.GroupResource() &&
+		info.IsValidRelation(relation) && permissionLevelImplies(grant.GetRelation(), relation)
+}
+
+func matchesTypedPermissionGrant(info common.ResourceInfo, relation string, grant *openfgav1.TupleKey) bool {
+	matches := false
+	if info.HasSubresource() && info.IsValidRelation(common.SubresourceRelation(relation)) {
+		matches = permissionSubresourceImplies(grant.GetRelation(), common.SubresourceRelation(relation)) && permissionConditionMatches(grant, info.GroupResource())
+	}
+	if info.IsValidRelation(relation) {
+		switch info.Type() {
+		case common.TypeFolder:
+			matches = matches || slices.Contains(expandedSubresourcePermissionRelations(common.SubresourceRelation(relation)), common.SubresourceRelation(grant.GetRelation()))
+		case common.TypeTeam:
+			matches = matches || grant.GetRelation() == relation || (grant.GetRelation() == common.RelationTeamMember && relation == common.RelationGet) || (grant.GetRelation() == common.RelationTeamAdmin && relation != common.RelationCreate)
+		default:
+			matches = matches || grant.GetRelation() == relation
+		}
+	}
+	return matches
 }
 
 func permissionLevelImplies(granted, requested string) bool {
@@ -172,7 +196,7 @@ func validatePermissionGrant(grant *openfgav1.TupleKey) error {
 	if err := validatePermissionCondition(grant); err != nil {
 		return err
 	}
-	model, err := permissionTranslationModel()
+	metadata, err := permissionGrantMetadata()
 	if err != nil {
 		return err
 	}
@@ -191,14 +215,9 @@ func validatePermissionGrant(grant *openfgav1.TupleKey) error {
 			return unsupportedPermissionGrant()
 		}
 	}
-	for _, definition := range model.GetTypeDefinitions() {
-		if definition.GetType() != typ {
-			continue
-		}
-		for _, allowed := range definition.GetMetadata().GetRelations()[grant.GetRelation()].GetDirectlyRelatedUserTypes() {
-			if allowed.GetWildcard() == nil && allowed.GetType() == subjectType && allowed.GetRelation() == subjectRelation && allowed.GetCondition() == grant.GetCondition().GetName() {
-				return nil
-			}
+	for _, allowed := range metadata[typ].GetRelations()[grant.GetRelation()].GetDirectlyRelatedUserTypes() {
+		if allowed.GetWildcard() == nil && allowed.GetType() == subjectType && allowed.GetRelation() == subjectRelation && allowed.GetCondition() == grant.GetCondition().GetName() {
+			return nil
 		}
 	}
 	return unsupportedPermissionGrant()

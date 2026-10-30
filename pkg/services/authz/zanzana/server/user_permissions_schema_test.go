@@ -5,12 +5,13 @@ import (
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 )
 
-// Matching the deployed model to the compiled model is insufficient if a future
-// schema edit changes the graph closure required by permission translation.
+// Schema changes can require additional principal discovery or grant translation.
 func TestUserPermissionsGrantsSchemaAssumptions(t *testing.T) {
-	model, err := permissionTranslationModel()
+	model, err := schema.TransformModulesToModel(schema.SchemaModules)
 	require.NoError(t, err)
 	types := make(map[string]*openfgav1.TypeDefinition)
 	for _, definition := range model.GetTypeDefinitions() {
@@ -28,8 +29,9 @@ func TestUserPermissionsGrantsSchemaAssumptions(t *testing.T) {
 	} {
 		definition := types[expected.typ]
 		require.NotNil(t, definition)
-		var principals []string
-		for _, reference := range definition.GetMetadata().GetRelations()[expected.relation].GetDirectlyRelatedUserTypes() {
+		references := definition.GetMetadata().GetRelations()[expected.relation].GetDirectlyRelatedUserTypes()
+		principals := make([]string, 0, len(references))
+		for _, reference := range references {
 			require.Nil(t, reference.GetWildcard(), "%s#%s cannot use wildcard grants", expected.typ, expected.relation)
 			require.Empty(t, reference.GetCondition(), "%s#%s membership must remain unconditional", expected.typ, expected.relation)
 			principal := reference.GetType()

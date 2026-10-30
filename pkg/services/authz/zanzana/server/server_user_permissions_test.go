@@ -61,7 +61,6 @@ func TestUserPermissionsAuthorization(t *testing.T) {
 			require.Empty(t, stream.permissions)
 		})
 	}
-
 }
 
 func TestUserPermissionsStandaloneScopeConfiguration(t *testing.T) {

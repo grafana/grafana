@@ -16,7 +16,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 )
 
 const (
@@ -24,10 +23,6 @@ const (
 	permissionPrincipalMaxTuples   = 100000
 	permissionPrincipalLoadTimeout = 10 * time.Second
 )
-
-var permissionTranslationModel = sync.OnceValues(func() (*openfgav1.AuthorizationModel, error) {
-	return schema.TransformModulesToModel(schema.SchemaModules)
-})
 
 type permissionListResult struct {
 	Entry common.ActionListEntry
@@ -50,23 +45,6 @@ func (s *Server) resolveUserPermissionContributions(ctx context.Context, req *au
 		return nil, err
 	}
 	skip := req.GetOptions().GetSkipcache()
-	_, err = s.cachedPermissionContribution(ctx, permissionPrincipalKey{store.ID, store.ModelID, ""}, skip, func(ctx context.Context) (*permissionContribution, error) {
-		model, err := s.store.ReadAuthorizationModel(ctx, store.ID, store.ModelID)
-		if err != nil {
-			return nil, fmt.Errorf("read permission translation model: %w", err)
-		}
-		expected, err := permissionTranslationModel()
-		if err != nil {
-			return nil, err
-		}
-		if model == nil || !schema.EqualModels(model, expected) {
-			return nil, status.Error(codes.FailedPrecondition, "authorization model does not support permission translation")
-		}
-		return &permissionContribution{}, nil
-	})
-	if err != nil {
-		return nil, err
-	}
 
 	// Contextual memberships belong only to this request, including their implied
 	// team permissions. They are never added to a cached user contribution.
