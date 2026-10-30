@@ -1,14 +1,24 @@
 package router
 
 import (
+	"context"
 	"testing"
+	"testing/synctest"
+	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	pluginslog "github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -102,4 +112,80 @@ func TestProvideCloudRoutesLoader_StandaloneIgnoresMiddlewareFlag(t *testing.T) 
 	require.NoError(t, err)
 	require.IsType(t, &cloudLoader{}, loader)
 	require.False(t, middlewareEnabled(cfg, features))
+}
+
+// clientV3Backend is a plugin process that serves a v3 client.
+type clientV3Backend struct {
+	backendplugin.Plugin
+	client appclientv3.Client
+}
+
+func (clientV3Backend) IsDecommissioned() bool { return false }
+
+func (b clientV3Backend) ClientV3(context.Context) (appclientv3.Client, bool) { return b.client, true }
+
+// The router module's graph has no background service registry, so its local
+// loader runs the plugin store. Without it, lookups would wait for a store that
+// never starts.
+func TestProvideRoutesLoaderRunsRouterModulePluginStore(t *testing.T) {
+	tracer := tracing.InitializeTracerForTest()
+	synctest.Test(t, func(t *testing.T) {
+		client := &stubPluginClientV3{}
+		plugin := &plugins.Plugin{JSONData: plugins.JSONData{ID: "store-app", Type: plugins.TypeApp}}
+		plugin.RegisterClient(clientV3Backend{client: client})
+		plugin.SetLogger(pluginslog.NewTestLogger())
+		registry := pluginfakes.NewFakePluginRegistry()
+		sources := &pluginfakes.FakeSourceRegistry{ListFunc: func(context.Context) []plugins.PluginSource {
+			return []plugins.PluginSource{&pluginfakes.FakePluginSource{}}
+		}}
+		unloaded := false
+		store := pluginstore.New(registry, &pluginfakes.FakeLoader{
+			LoadFunc: func(ctx context.Context, _ plugins.PluginSource) ([]*plugins.Plugin, error) {
+				return []*plugins.Plugin{plugin}, registry.Add(ctx, plugin)
+			},
+			UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+				unloaded = true
+				return p, nil
+			},
+		}, sources)
+
+		cfg := setting.NewCfg()
+		cfg.Target = []string{"router"}
+		features := featuremgmt.WithFeatures()
+		deps := ProvidePluginLoaderDependenciesWithClients(nil, nil, store, sources, nil, nil, nil, nil,
+			tracer, features, cfg, prometheus.NewRegistry(), nil, RoutesLoaderClients{}, nil)
+		loader, err := ProvideRoutesLoader(cfg, deps)
+		require.NoError(t, err)
+		svc, err := ProvideService(cfg, features, loader, prometheus.NewRegistry(), NewGrafanaRouter(nil, nil))
+		require.NoError(t, err)
+
+		require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
+		require.Equal(t, services.Running, store.State())
+
+		ctx, cancel := context.WithTimeout(t.Context(), time.Minute)
+		defer cancel()
+		_, ok := store.Plugin(ctx, plugin.ID)
+		require.True(t, ok)
+		got, ok := deps.ClientV3Loader.ClientV3(ctx, plugin.ID)
+		require.True(t, ok)
+		require.Same(t, client, got)
+
+		require.NoError(t, services.StopAndAwaitTerminated(t.Context(), svc))
+		require.Equal(t, services.Terminated, store.State())
+		require.True(t, unloaded, "stopping the router stops the store's plugins")
+	})
+}
+
+// Grafana runs its plugin store as a background service, so the loader it
+// builds must not start the store again.
+func TestProvideRoutesLoaderLeavesGrafanaPluginStore(t *testing.T) {
+	store := pluginstore.New(pluginfakes.NewFakePluginRegistry(), &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+	cfg := setting.NewCfg()
+	deps := ProvidePluginLoaderDependencies(nil, nil, store, &pluginfakes.FakeSourceRegistry{}, nil, nil, nil, nil, nil, nil,
+		tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), cfg, nil, nil, prometheus.NewRegistry(), nil, nil, nil)
+	loader, err := ProvideRoutesLoader(cfg, deps)
+	require.NoError(t, err)
+	require.IsType(t, &PluginLoader{}, loader)
+	_, hasLifecycle := loader.(services.Service)
+	require.False(t, hasLifecycle)
 }

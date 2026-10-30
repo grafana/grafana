@@ -390,7 +390,10 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   the module server's HTTP router next to `/metrics`, `/livez` and `/readyz`.
 - **Loader lifecycle:** a loader that also implements `services.Service` (such as `cloudLoader`,
   which runs poll loops) is started, stopped and watched by the `Service`, in every mode, so both
-  start and stop together and a failed loader fails the router.
+  start and stop together and a failed loader fails the router. The local loader that
+  `InitializeRoutesLoader` builds runs its graph's plugin store this way: the store loads plugins
+  only when it starts, and nothing else in that graph starts it. Grafana's own graph runs its store
+  as a background service, so the local loader it builds has no lifecycle.
 - **Middleware:** with the `grafana.useRouterMiddleware` feature flag, the embedded API server calls
   `Service.HandleFunc` after Grafana authentication. The router serves the `/apis` and `/openapi/v3`
   trees, the embedded server's groups through its handler (see "Serving and discovery"), and passes

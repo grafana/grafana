@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/services"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/appsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -76,6 +78,11 @@ type PluginLoaderDependencies struct {
 	ClientV3Loader v3.ClientV3Loader
 	PluginSources  sources.Registry
 	ACService      accesscontrol.Service
+
+	// pluginStore, when set, is the plugin store the loader runs as its
+	// lifecycle. The store loads plugins when it starts, and the router
+	// module's graph has no background service registry to start it.
+	pluginStore services.Service
 }
 
 func ProvidePluginLoaderDependencies(
@@ -137,11 +144,12 @@ func newClientV3TokenExchanger(cfg *setting.Cfg) authn.TokenExchanger {
 }
 
 // The router module supplies these clients so its Wire graph does not construct
-// a second resource client or initialize local storage migrations.
+// a second resource client or initialize local storage migrations. Nothing else
+// in that graph starts pluginStore, so the loader runs it.
 func ProvidePluginLoaderDependenciesWithClients(
 	pluginClient plugins.Client,
 	contextProvider appsettings.PluginContextWrapper,
-	clientV3Loader v3.ClientV3Loader,
+	pluginStore *pluginstore.Service,
 	pluginSources sources.Registry,
 	pluginSettings pluginsettings.Service,
 	acService accesscontrol.Service,
@@ -155,10 +163,10 @@ func ProvidePluginLoaderDependenciesWithClients(
 	clients RoutesLoaderClients,
 	pluginAuth *pluginauth.Config,
 ) PluginLoaderDependencies {
-	return ProvidePluginLoaderDependencies(
+	deps := ProvidePluginLoaderDependencies(
 		pluginClient,
 		contextProvider,
-		clientV3Loader,
+		pluginStore,
 		pluginSources,
 		pluginSettings,
 		acService,
@@ -176,6 +184,8 @@ func ProvidePluginLoaderDependenciesWithClients(
 		clients.RESTConfigProvider,
 		pluginAuth,
 	)
+	deps.pluginStore = pluginStore
+	return deps
 }
 
 func initLocalPlugins(ctx context.Context, deps PluginLoaderDependencies) error {
@@ -231,6 +241,14 @@ type PluginLoader struct {
 
 	// dev serves the [router.dev.<name>] sections; nil when none is set.
 	dev *devTargets
+}
+
+// pluginStoreLoader is a PluginLoader with the plugin store as its lifecycle,
+// so the router service starts the store before its first reconcile and stops
+// it, with the plugins it started, on shutdown.
+type pluginStoreLoader struct {
+	*PluginLoader
+	services.Service
 }
 
 func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry, schemas bool) ([]definition.PluginDefinition, error) {
