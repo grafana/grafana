@@ -798,7 +798,7 @@ func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
 func TestGetQuotaUsage(t *testing.T) {
 	ctx := t.Context()
 
-	t.Run("returns error when overrides service is not configured", func(t *testing.T) {
+	t.Run("returns an unenforced quota when overrides service is not configured", func(t *testing.T) {
 		s := &server{
 			overridesService: nil,
 			log:              log.NewNopLogger(),
@@ -812,9 +812,9 @@ func TestGetQuotaUsage(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.NotNil(t, resp.Error)
-		assert.Equal(t, int32(http.StatusNotImplemented), resp.Error.Code)
-		assert.Equal(t, "overrides service not configured on resource server", resp.Error.Message)
+		require.Nil(t, resp.Error)
+		assert.Equal(t, int64(0), resp.Usage)
+		assert.Equal(t, int64(0), resp.Limit)
 	})
 
 	t.Run("returns usage and limit successfully", func(t *testing.T) {
