@@ -57,7 +57,7 @@ func (s *Server) GetUserPermissions(req *authzv1.GetUserPermissionsRequest, stre
 	}
 	defer release()
 
-	results, err := s.evaluateUserPermissionSnapshot(ctx, req)
+	results, err := s.resolveUserPermissionContributions(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func (s *Server) GetUserPermissions(req *authzv1.GetUserPermissionsRequest, stre
 		permissions = append(permissions, &authzv1.UserPermission{Action: permission.Action, Scope: permission.Scope})
 	}
 	// Resolve all grants and scopes before sending. A failed evaluation must never
-	// publish a partial permission snapshot as a successful stream.
+	// publish a partial permission result as a successful stream.
 	for start := 0; start < len(permissions); start += userPermissionsChunkSize {
 		if err := ctx.Err(); err != nil {
 			return err

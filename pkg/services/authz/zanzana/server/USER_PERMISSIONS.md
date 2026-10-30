@@ -1,0 +1,67 @@
+# User permission enumeration
+
+`GetUserPermissions` returns the existing Grafana action/scope response. It reads
+relationships through `storage.OpenFGADatastore`, translates the supported schema
+into per-action results, applies shared legacy scope formatting, and streams the
+complete result. This path does not run OpenFGA queries or create an evaluator.
+The datastore can be remote over gRPC and does not require SQL.
+
+## Translation
+
+`resolveUserPermissionContributions` follows the subject's stored team memberships
+and role assignments. Team administration implies membership. Request-supplied
+teams add membership only for that request. User, team-member and role-assignee
+principals are each read with a user-only datastore filter.
+
+`translatePermissionGrants` reuses the existing action/resource mappings. It
+expands view/edit/admin grants, team membership and administration, and the
+schema's local subresource relations. Group and subresource conditions restrict
+which actions receive the grant. Wildcard scopes use group-resource grants.
+Folder scopes identify explicit grant locations, including explicit child grants.
+Folder parent edges are not traversed to enumerate inherited descendants.
+
+The deployed authorization model must match the compiled model. Unsupported tuple
+subjects, relations, object forms or condition bindings fail the whole request
+before any response is sent. In particular, stored conditions may bind only
+`group_resource` or `subresources`, not the corresponding request parameters.
+Tests compare supported grant forms with OpenFGA using a graph without folder
+parent edges. Schema changes require updating and reviewing the translator.
+
+The shared `legacyscopes.ResolvePermissions` step preserves legacy scope rules and
+UID-to-numeric-ID conversion. This stage retains individual IAM Gets and their
+existing successful mapping cache and UID-scope fallback on Get errors. Bulk IAM
+loading is a separate follow-up.
+
+## Reusable principal contributions
+
+Each cached contribution contains only that principal's translated grants and
+stored dependency references. A user's entry does not contain resolved team or
+role grants. A team entry does not contain resolved role grants. Composing the
+result follows those dependencies on each request, so Alice and Bob can reuse the
+same team and role entries. Empty contributions are cached. Errors and incomplete
+reads are not cached. The final user response is not cached.
+
+Request-supplied teams never enter a stored user contribution. Requests for the
+same user with different contextual teams can share the user's stored contribution
+without sharing contextual memberships.
+
+Entries are isolated by store ID, immutable model ID and typed principal. Model
+validation uses a separate key within the same bounded cache. The cache uses the
+existing `check_query_cache_enabled`, `check_query_cache_ttl` (default 10 seconds),
+and `check_cache_limit` (default 10,000 entries) settings. Entries expire from the
+start of the read. Reads are coalesced per key and invalidation generation. A
+shared load has a 10-second bound, while each waiter can cancel independently.
+Principal reads run with concurrency 8. A request is limited to 100,000 tuples and
+100,000 distinct principals and returns an error if either limit is exceeded.
+
+`Write`, `Mutate` and reconciliation through `WriteTuples` evict the changed tuple
+subjects before and after the local write. An invalidation generation prevents
+older in-flight reads from repopulating an evicted entry. Dependencies remain
+references, so changing a role evicts that role rather than every referencing user.
+Concurrent enumeration and writes are not a transactional snapshot.
+
+Writes through another process or directly to the datastore are observed on cache
+expiry. This implementation does not provide distributed invalidation. The RPC's
+`skipcache` option bypasses both model-validation and principal caches, including
+in-flight loads, and neither populates nor replaces shared entries. It does not
+bypass the separate existing IAM UID mapping cache.

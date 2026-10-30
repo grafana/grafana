@@ -8,9 +8,9 @@ import (
 )
 
 // Matching the deployed model to the compiled model is insufficient if a future
-// schema edit changes the graph closure required by permission snapshots.
-func TestUserPermissionsSnapshotSchemaAssumptions(t *testing.T) {
-	model, err := permissionSnapshotModel()
+// schema edit changes the graph closure required by permission translation.
+func TestUserPermissionsGrantsSchemaAssumptions(t *testing.T) {
+	model, err := permissionTranslationModel()
 	require.NoError(t, err)
 	types := make(map[string]*openfgav1.TypeDefinition)
 	for _, definition := range model.GetTypeDefinitions() {
@@ -38,7 +38,7 @@ func TestUserPermissionsSnapshotSchemaAssumptions(t *testing.T) {
 			}
 			principals = append(principals, principal)
 		}
-		require.ElementsMatch(t, expected.principals, principals, "%s#%s changed; review permission snapshot discovery", expected.typ, expected.relation)
+		require.ElementsMatch(t, expected.principals, principals, "%s#%s changed; review permission principal discovery", expected.typ, expected.relation)
 		rewrite := definition.GetRelations()[expected.relation]
 		if expected.typ == "team" && expected.relation == "member" {
 			children := rewrite.GetUnion().GetChild()
@@ -94,7 +94,7 @@ func TestUserPermissionsSnapshotSchemaAssumptions(t *testing.T) {
 				require.Empty(t, node.TupleToUserset.GetComputedUserset().GetObject())
 				require.Contains(t, definition.GetRelations(), node.TupleToUserset.GetComputedUserset().GetRelation())
 			default:
-				t.Fatalf("%s introduces an unsupported rewrite %T; review permission snapshot closure", definition.GetType(), node)
+				t.Fatalf("%s introduces an unsupported rewrite %T; review permission translation", definition.GetType(), node)
 			}
 		}
 		for _, rewrite := range definition.GetRelations() {

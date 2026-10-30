@@ -47,7 +47,7 @@ func TestUserPermissionsIndividualScopeIDs(t *testing.T) {
 		_ = json.NewEncoder(w).Encode(body)
 	}))
 	defer iam.Close()
-	srv, _, _ := newSnapshotTestServer(t, []*openfgav1.TupleKey{
+	srv, _, _ := newPermissionTestServer(t, []*openfgav1.TupleKey{
 		common.NewTypedTuple(common.TypeUser, "user:alice", common.RelationGet, "user-one"),
 		common.NewTypedTuple(common.TypeUser, "user:alice", common.RelationGet, "user-two"),
 		common.NewTypedTuple(common.TypeTeam, "user:alice", common.RelationGet, "team-one"),
@@ -55,7 +55,7 @@ func TestUserPermissionsIndividualScopeIDs(t *testing.T) {
 	srv.permissionScopeResolver = legacyscopes.NewUIDResolver(permissionRestConfigProvider(func(context.Context) (*clientrest.Config, error) { return &clientrest.Config{Host: iam.URL}, nil }))
 	req := &authzv1.GetUserPermissionsRequest{Namespace: "default", Subject: "user:alice"}
 	for range 2 {
-		stream := &snapshotResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
+		stream := &permissionResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
 		require.NoError(t, srv.GetUserPermissions(req, stream))
 		scopes := map[string]bool{}
 		for _, p := range stream.permissions {
@@ -79,13 +79,13 @@ func TestUserPermissionsIndividualGetFailurePreservesUIDScope(t *testing.T) {
 		http.NotFound(w, r)
 	}))
 	t.Cleanup(iam.Close)
-	srv, _, _ := newSnapshotTestServer(t, []*openfgav1.TupleKey{
+	srv, _, _ := newPermissionTestServer(t, []*openfgav1.TupleKey{
 		common.NewTypedTuple(common.TypeUser, "user:alice", common.RelationGet, "missing-user"),
 	})
 	srv.permissionScopeResolver = legacyscopes.NewUIDResolver(permissionRestConfigProvider(func(context.Context) (*clientrest.Config, error) {
 		return &clientrest.Config{Host: iam.URL}, nil
 	}))
-	stream := &snapshotResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
+	stream := &permissionResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
 	require.NoError(t, srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: "default", Subject: "user:alice"}, stream))
 	got := map[[2]string]bool{}
 	for _, permission := range stream.permissions {

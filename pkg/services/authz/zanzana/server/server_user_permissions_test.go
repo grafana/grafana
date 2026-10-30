@@ -26,14 +26,14 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type snapshotResponseStream struct {
+type permissionResponseStream struct {
 	grpc.ServerStream
 	ctx         context.Context
 	permissions []*authzv1.UserPermission
 }
 
-func (s *snapshotResponseStream) Context() context.Context { return s.ctx }
-func (s *snapshotResponseStream) Send(response *authzv1.GetUserPermissionsResponse) error {
+func (s *permissionResponseStream) Context() context.Context { return s.ctx }
+func (s *permissionResponseStream) Send(response *authzv1.GetUserPermissionsResponse) error {
 	s.permissions = append(s.permissions, response.Permissions...)
 	return nil
 }
@@ -56,7 +56,7 @@ func TestUserPermissionsAuthorization(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			s := &Server{tracer: tracing.NewNoopTracerService(), metrics: newZanzanaServerMetrics(prometheus.NewRegistry())}
-			stream := &snapshotResponseStream{ctx: tc.ctx}
+			stream := &permissionResponseStream{ctx: tc.ctx}
 			require.Equal(t, tc.code, status.Code(s.GetUserPermissions(tc.req, stream)))
 			require.Empty(t, stream.permissions)
 		})
@@ -82,7 +82,7 @@ func TestUserPermissionsStandaloneScopeConfiguration(t *testing.T) {
 			resolver := newPermissionScopeResolver(cfg, nil)
 			require.Nil(t, resolver)
 			server := &Server{cfg: cfg.ZanzanaServer, permissionScopeResolver: resolver, tracer: tracing.NewNoopTracerService(), metrics: newZanzanaServerMetrics(prometheus.NewRegistry())}
-			stream := &snapshotResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
+			stream := &permissionResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
 			err := server.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice"}, stream)
 			require.Equal(t, codes.FailedPrecondition, status.Code(err), "reject missing scope configuration before accessing the datastore")
 			require.Empty(t, stream.permissions)
@@ -104,36 +104,36 @@ func TestUserPermissionsStandaloneScopeConfiguration(t *testing.T) {
 	})
 }
 
-type snapshotIDs struct{}
+type permissionIDs struct{}
 
-func (snapshotIDs) GetTeamIDByUID(context.Context, types.NamespaceInfo, string) (int64, error) {
+func (permissionIDs) GetTeamIDByUID(context.Context, types.NamespaceInfo, string) (int64, error) {
 	return 42, nil
 }
-func (snapshotIDs) GetUserIDByUID(context.Context, types.NamespaceInfo, string) (int64, error) {
+func (permissionIDs) GetUserIDByUID(context.Context, types.NamespaceInfo, string) (int64, error) {
 	return 7, nil
 }
 
-type snapshotAuthenticatedStream struct {
+type permissionAuthenticatedStream struct {
 	grpc.ServerStream
 	ctx context.Context
 }
 
-func (s snapshotAuthenticatedStream) Context() context.Context { return s.ctx }
+func (s permissionAuthenticatedStream) Context() context.Context { return s.ctx }
 
-func snapshotRPC(t *testing.T, s *Server) authzv1.AuthzServiceClient {
+func permissionRPC(t *testing.T, s *Server) authzv1.AuthzServiceClient {
 	t.Helper()
 	channel := (&inprocgrpc.Channel{}).WithServerStreamInterceptor(func(srv any, stream grpc.ServerStream, _ *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		info, _ := types.AuthInfoFrom(newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions))
-		return handler(srv, snapshotAuthenticatedStream{ServerStream: stream, ctx: types.WithAuthInfo(stream.Context(), info)})
+		return handler(srv, permissionAuthenticatedStream{ServerStream: stream, ctx: types.WithAuthInfo(stream.Context(), info)})
 	})
 	authzv1.RegisterAuthzServiceServer(channel, s)
 	return authzv1.NewAuthzServiceClient(channel)
 }
 
 func TestUserPermissionsRPCParity(t *testing.T) {
-	server, _, _ := newSnapshotTestServer(t, snapshotParityTuples())
-	server.permissionScopeResolver = snapshotIDs{}
-	client := snapshotRPC(t, server)
+	server, _, _ := newPermissionTestServer(t, permissionParityTuples())
+	server.permissionScopeResolver = permissionIDs{}
+	client := permissionRPC(t, server)
 	for _, tc := range []struct {
 		subject string
 		teams   []string
@@ -145,7 +145,7 @@ func TestUserPermissionsRPCParity(t *testing.T) {
 			baseline, err := baselineGrantLists(t, server, req)
 			require.NoError(t, err)
 			want := map[[2]string]bool{}
-			formatter := legacyscopes.Formatter{IDs: snapshotIDs{}}
+			formatter := legacyscopes.Formatter{IDs: permissionIDs{}}
 			for _, result := range baseline {
 				for _, p := range formatter.Permissions(t.Context(), namespace, result.Entry.Resource, result.Entry.Action, "", result.List) {
 					want[[2]string{p.Action, p.Scope}] = true
@@ -183,9 +183,9 @@ func TestUserPermissionsRPCChunksAndFailure(t *testing.T) {
 	for i := range tuples {
 		tuples[i] = common.NewResourceTuple("user:many", common.RelationGet, dashboardGroup, dashboardResource, "", fmt.Sprintf("dashboard-%04d", i))
 	}
-	server, ds, _ := newSnapshotTestServer(t, tuples)
-	server.permissionScopeResolver = snapshotIDs{}
-	client := snapshotRPC(t, server)
+	server, ds, _ := newPermissionTestServer(t, tuples)
+	server.permissionScopeResolver = permissionIDs{}
+	client := permissionRPC(t, server)
 	req := &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:many"}
 	stream, err := client.GetUserPermissions(t.Context(), req)
 	require.NoError(t, err)
@@ -211,9 +211,9 @@ func TestUserPermissionsRPCChunksAndFailure(t *testing.T) {
 }
 
 func TestUserPermissionsRPCWithoutRolloutFlag(t *testing.T) {
-	server, _, _ := newSnapshotTestServer(t, snapshotParityTuples())
-	server.permissionScopeResolver = snapshotIDs{}
-	stream, err := snapshotRPC(t, server).GetUserPermissions(t.Context(), &authzv1.GetUserPermissionsRequest{
+	server, _, _ := newPermissionTestServer(t, permissionParityTuples())
+	server.permissionScopeResolver = permissionIDs{}
+	stream, err := permissionRPC(t, server).GetUserPermissions(t.Context(), &authzv1.GetUserPermissionsRequest{
 		Namespace: namespace,
 		Subject:   "user:direct",
 	})
@@ -232,9 +232,9 @@ func TestUserPermissionsRPCPreservesGrantedFolderScopes(t *testing.T) {
 		common.NewFolderParentTuple("child", "parent"),
 		common.NewFolderParentTuple("grandchild", "child"),
 	}
-	srv, ds, _ := newSnapshotTestServer(t, tuples)
-	srv.permissionScopeResolver = snapshotIDs{}
-	stream := &snapshotResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
+	srv, ds, _ := newPermissionTestServer(t, tuples)
+	srv.permissionScopeResolver = permissionIDs{}
+	stream := &permissionResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
 	err := srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice"}, stream)
 	require.NoError(t, err)
 	got := map[[2]string]bool{}
