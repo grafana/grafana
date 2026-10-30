@@ -21,6 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
@@ -29,6 +30,8 @@ import (
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -1730,8 +1733,12 @@ func TestIntegrationProvisioning_DeleteRepositoryClearsJobQueue(t *testing.T) {
 
 	// Sync disabled so the repository controller does not enqueue its own sync job.
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:       repo,
-		SyncTarget: "folder",
+		Name: repo,
+		// Use instance instead of folder: this test only verifies the job queue is cleared.
+		// With a folder target, a pull job that is already running when the repository is
+		// deleted can re-create the root folder after the orphan-cleanup finalizer has run,
+		// leaving an orphaned folder behind.
+		SyncTarget: "instance",
 		SkipSync:   true,
 	})
 
@@ -1773,6 +1780,115 @@ func TestIntegrationProvisioning_DeleteRepositoryClearsJobQueue(t *testing.T) {
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		assert.Zero(collect, countJobsForRepo(collect), "no jobs should remain queued for the deleted repository")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "queue should be cleared for the deleted repository")
+}
+
+// TestIntegrationProvisioning_DeleteOrphanedManagedResources verifies that
+// resources outliving their repository can be deleted by an admin. The repository
+// root folder carries a manager but no source path, so it used to fail with
+// "managed resource is missing source path annotation" forever.
+func TestIntegrationProvisioning_DeleteOrphanedManagedResources(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "orphaned-resources"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		Template:   common.TestdataPath("github.json.tmpl"),
+		SyncTarget: "folder",
+		Workflows:  []string{},
+	})
+
+	dashboards := helper.RequireRepoDashboardCount(t, repo, 3)
+	helper.RequireRepoFolderCount(t, repo, 6)
+
+	rootFolder, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.NotContains(t, rootFolder.GetAnnotations(), utils.AnnoKeySourcePath,
+		"the repository root folder has no source path")
+
+	forceDelete := metav1.DeleteOptions{GracePeriodSeconds: new(int64)}
+
+	t.Run("resources of a live repository are still routed to the repository", func(t *testing.T) {
+		err := helper.Folders.Resource.Delete(t.Context(), repo, forceDelete)
+		require.Error(t, err, "root folder of a live repository must not be deletable directly")
+
+		_, err = helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
+		require.NoError(t, err, "root folder should still exist")
+	})
+
+	// Skip the orphan cleanup finalizers so the managed resources outlive the repository.
+	_, err = helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, []byte(`[
+		{"op": "replace", "path": "/metadata/finalizers", "value": ["cleanup"]}
+	]`), metav1.PatchOptions{})
+	require.NoError(t, err)
+	require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
+	helper.WaitForRepositoryDeleted(t, repo)
+
+	t.Run("orphaned resource with a source path can be deleted", func(t *testing.T) {
+		dash := dashboards[0]
+		require.Contains(t, dash.GetAnnotations(), utils.AnnoKeySourcePath)
+
+		require.NoError(t, helper.DashboardsV1.Resource.Delete(t.Context(), dash.GetName(), metav1.DeleteOptions{}))
+		_, err := helper.DashboardsV1.Resource.Get(t.Context(), dash.GetName(), metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "dashboard should be deleted, got: %v", err)
+	})
+
+	t.Run("orphaned resource without a source path can be deleted", func(t *testing.T) {
+		require.NoError(t, helper.Folders.Resource.Delete(t.Context(), repo, forceDelete))
+		_, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "root folder should be deleted, got: %v", err)
+	})
+}
+
+// TestIntegrationProvisioning_DeleteOrphanedResourceWithoutRepositoryRead verifies that a
+// caller who may delete a resource, but may not read repositories, can still delete it once
+// its repository is gone.
+func TestIntegrationProvisioning_DeleteOrphanedResourceWithoutRepositoryRead(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "orphaned-no-repo-read"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		Template:   common.TestdataPath("github.json.tmpl"),
+		SyncTarget: "folder",
+		Workflows:  []string{},
+	})
+
+	dashboards := helper.RequireRepoDashboardCount(t, repo, 3)
+	helper.RequireRepoFolderCount(t, repo, 6)
+
+	// The basic role stays at None so the folder grant is the only access this user has.
+	deleter := helper.CreateUser("orphan-deleter", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{{
+		Actions:           []string{"folders:read", "dashboards:read", "dashboards:delete"},
+		Resource:          "folders",
+		ResourceAttribute: "uid",
+		ResourceID:        repo,
+	}})
+	deleterDashboards := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      deleter,
+		Namespace: "default",
+		GVR:       helper.DashboardsV1.Args.GVR,
+	})
+
+	deleterRepositories := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      deleter,
+		Namespace: "default",
+		GVR:       helper.Repositories.Args.GVR,
+	})
+	_, err := deleterRepositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
+	require.True(t, apierrors.IsForbidden(err), "the caller must not be able to read repositories, got: %v", err)
+
+	_, err = helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, []byte(`[
+		{"op": "replace", "path": "/metadata/finalizers", "value": ["cleanup"]}
+	]`), metav1.PatchOptions{})
+	require.NoError(t, err)
+	require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
+	helper.WaitForRepositoryDeleted(t, repo)
+
+	name := dashboards[0].GetName()
+	require.NoError(t, deleterDashboards.Resource.Delete(t.Context(), name, metav1.DeleteOptions{}))
+
+	_, err = helper.DashboardsV1.Resource.Get(t.Context(), name, metav1.GetOptions{})
+	require.True(t, apierrors.IsNotFound(err), "dashboard should be deleted, got: %v", err)
 }
 
 func TestIntegrationProvisioning_JobPermissions(t *testing.T) {

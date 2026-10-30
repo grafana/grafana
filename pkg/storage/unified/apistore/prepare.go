@@ -345,7 +345,10 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		}
 	}
 
-	if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil {
+	// Starting a delete of an orphaned resource writes only metadata, such as the deletion
+	// timestamp or the folder terminating label. That write has no manager to route to, so let
+	// it through instead of stranding the resource.
+	if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil && !s.allowOrphanedUpdate(ctx, err, obj, previous, contentChanged(obj, previous)) {
 		return v, err
 	}
 
@@ -383,6 +386,16 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	deleting := obj.GetDeletionTimestamp() != nil || previous.GetDeletionTimestamp() != nil
 	v.raw, err = s.encode(ctx, updateObject, !deleting)
 	return v, err
+}
+
+// contentChanged reports whether an update changes the spec or moves the object to another folder.
+func contentChanged(obj, previous utils.GrafanaMetaAccessor) bool {
+	if obj.GetFolder() != previous.GetFolder() {
+		return true
+	}
+	spec, e1 := obj.GetSpec()
+	oldSpec, e2 := previous.GetSpec()
+	return e1 == nil && e2 == nil && !apiequality.Semantic.DeepEqual(spec, oldSpec)
 }
 
 func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
