@@ -247,19 +247,19 @@ func TestZanzanaPermissionResolver_MergeCurrentUser(t *testing.T) {
 
 	t.Run("nil resolver returns legacy unchanged", func(t *testing.T) {
 		var r *ZanzanaPermissionResolver
-		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{}, legacy, log.New("test"))
+		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{}, legacy, log.New("test"), false)
 		require.Equal(t, legacy, got)
 	})
 
 	t.Run("zanzana failure returns legacy only", func(t *testing.T) {
 		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listErr: errors.New("zanzana unavailable")}, &usertest.FakeUserService{}, nil, false)
-		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "user_test_uid"}, legacy, log.New("test"))
+		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "user_test_uid"}, legacy, log.New("test"), false)
 		require.Equal(t, legacy, got)
 	})
 
 	t.Run("success unions zanzana permissions", func(t *testing.T) {
 		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}}}, &usertest.FakeUserService{}, nil, false)
-		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "user_test_uid"}, legacy, log.New("test"))
+		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "user_test_uid"}, legacy, log.New("test"), false)
 		require.Contains(t, got, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:legacy"})
 		require.Contains(t, got, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:zanzana-dash"})
 	})
@@ -573,5 +573,26 @@ func TestIntegrationGetUserPermissions_UsesLegacyWhenZanzanaFails(t *testing.T) 
 				}
 			})
 		}
+	}
+}
+
+type principalCacheRequestClient struct {
+	fakeZanzanaClient
+	skipCache bool
+}
+
+func (c *principalCacheRequestClient) GetUserPermissions(_ context.Context, _ authlib.AuthInfo, req authlib.GetUserPermissionsRequest) (authlib.GetUserPermissionsResponse, error) {
+	c.skipCache = req.SkipCache
+	return authlib.GetUserPermissionsResponse{}, nil
+}
+func TestService_GetUserPermissions_ForwardsExplicitReloadToPrincipalCache(t *testing.T) {
+	for _, options := range []accesscontrol.Options{{}, {SkipZanzanaCache: true}, {ReloadCache: true}, {ReloadCache: true, SkipZanzanaCache: true}} {
+		t.Run(fmt.Sprintf("reload=%t/contextual=%t", options.ReloadCache, options.SkipZanzanaCache), func(t *testing.T) {
+			client := &principalCacheRequestClient{}
+			svc := setupServiceWithPermissionCache(t, &actest.FakeStore{}, client, &usertest.FakeUserService{}, true)
+			_, err := svc.GetUserPermissions(t.Context(), testSignedInUser(), options)
+			require.NoError(t, err)
+			require.Equal(t, options.ReloadCache, client.skipCache, "contextual-team isolation must not disable reusable principal caches")
+		})
 	}
 }

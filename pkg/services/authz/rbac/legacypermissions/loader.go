@@ -36,7 +36,7 @@ type loadSettings struct {
 
 // MigratedPermissions resolves only Zanzana grants, never legacy RBAC grants.
 type MigratedPermissions interface {
-	ResolveCurrentUserPermissions(context.Context, identity.Requester) ([]ac.Permission, error)
+	ResolveCurrentUserPermissions(context.Context, identity.Requester, bool) ([]ac.Permission, error)
 }
 
 type Loader struct {
@@ -122,7 +122,9 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 	if l.zanzana == nil || (!settings.enforcementEnabled && l.license.Edition() != licensing.OpenSourceEdition) {
 		return permissions, nil
 	}
-	resolve := func() ([]ac.Permission, error) { return l.zanzana.ResolveCurrentUserPermissions(ctx, user) }
+	resolve := func() ([]ac.Permission, error) {
+		return l.zanzana.ResolveCurrentUserPermissions(ctx, user, options.ReloadCache)
+	}
 	var migrated []ac.Permission
 	if !cached || options.SkipZanzanaCache {
 		migrated, err = resolve()

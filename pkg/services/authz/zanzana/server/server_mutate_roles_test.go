@@ -186,10 +186,10 @@ func TestIntegrationDatasourceQueryMatchesRBACActionSet(t *testing.T) {
 					// A wildcard read grant already includes the explicit ds2 grant.
 					expected = slices.DeleteFunc(expected, func(p accesscontrol.Permission) bool { return p.Scope == "datasources:uid:ds2" })
 				}
-				resolved, err := resolver.ResolveCurrentUserPermissions(newContextWithNamespace(), usr)
+				resolved, err := resolver.ResolveCurrentUserPermissions(newContextWithNamespace(), usr, false)
 				require.NoError(t, err)
 				require.ElementsMatch(t, expected, resolved)
-				perms := resolver.MergeCurrentUser(newContextWithNamespace(), usr, legacy, log.NewNopLogger())
+				perms := resolver.MergeCurrentUser(newContextWithNamespace(), usr, legacy, log.NewNopLogger(), false)
 				for _, action := range []string{"datasources:read", "datasources:query", "datasources:write"} {
 					for _, uid := range []string{"ds1", "ds2", "ds3"} {
 						evaluator := accesscontrol.EvalPermission(action, "datasources:uid:"+uid)

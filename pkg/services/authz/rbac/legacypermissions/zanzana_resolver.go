@@ -63,13 +63,13 @@ func (r *ZanzanaPermissionResolver) teamsForCurrentUser(usr identity.Requester) 
 }
 
 // ResolveCurrentUserPermissions lists Zanzana-supported permissions for the signed-in identity.
-func (r *ZanzanaPermissionResolver) ResolveCurrentUserPermissions(ctx context.Context, usr identity.Requester) ([]ac.Permission, error) {
+func (r *ZanzanaPermissionResolver) ResolveCurrentUserPermissions(ctx context.Context, usr identity.Requester, skipCache bool) ([]ac.Permission, error) {
 	namespace := usr.GetNamespace()
 	if namespace == "" {
 		namespace = types.OrgNamespaceFormatter(usr.GetOrgID())
 	}
 	teams := r.teamsForCurrentUser(usr)
-	result, err := r.client.GetUserPermissions(ctx, snapshotAuthInfo{Requester: usr, namespace: namespace, groups: teams}, types.GetUserPermissionsRequest{Namespace: namespace})
+	result, err := r.client.GetUserPermissions(ctx, snapshotAuthInfo{Requester: usr, namespace: namespace, groups: teams}, types.GetUserPermissionsRequest{Namespace: namespace, SkipCache: skipCache})
 	if err != nil {
 		return nil, err
 	}
@@ -352,11 +352,11 @@ func MergeUserPermissions(legacy, zanzana []ac.Permission) []ac.Permission {
 // resolves for migrated resources. It returns legacy unchanged when the resolver is nil
 // (Zanzana merge disabled) or when the Zanzana lookup fails, so callers don't need to
 // guard the nil case or handle the error themselves.
-func (r *ZanzanaPermissionResolver) MergeCurrentUser(ctx context.Context, usr identity.Requester, legacy []ac.Permission, log log.Logger) []ac.Permission {
+func (r *ZanzanaPermissionResolver) MergeCurrentUser(ctx context.Context, usr identity.Requester, legacy []ac.Permission, log log.Logger, skipCache bool) []ac.Permission {
 	if r == nil {
 		return legacy
 	}
-	zPerms, err := r.ResolveCurrentUserPermissions(ctx, usr)
+	zPerms, err := r.ResolveCurrentUserPermissions(ctx, usr, skipCache)
 	if err != nil {
 		log.Warn("could not get zanzana user permissions, using legacy only", "error", err)
 		return legacy
