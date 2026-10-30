@@ -221,6 +221,8 @@
 /pkg/tests/ @grafana/grafana-backend-services-squad
 /pkg/tests/apis/ @grafana/grafana-app-platform-squad
 /pkg/tests/apis/alerting @grafana/alerting-squad
+/pkg/tests/apis/dashboard/legacy_golden_test.go @grafana/grafana-backend-services-squad
+/pkg/tests/apis/dashboard/testdata/legacy/ @grafana/grafana-backend-services-squad
 /pkg/tests/apis/features @grafana/grafana-backend-services-squad
 /pkg/tests/apis/folder @grafana/grafana-search-and-storage
 /pkg/tests/apis/iam @grafana/identity-access-team
@@ -935,8 +937,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useQueryParams.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useStored.ts @grafana/grafana-frontend-platform @grafana/grafana-frontend-navigation
 /public/app/core/icons/ @grafana/grafana-frontend-platform
-/public/app/core/legacyMomentShim.test.ts @grafana/grafana-frontend-platform
-/public/app/core/legacyMomentShim.ts @grafana/grafana-frontend-platform
 /public/app/core/lifecycle-hooks.ts @grafana/grafana-frontend-platform
 /public/app/core/monacoEnv.ts @grafana/grafana-frontend-platform @grafana/grafana-catalog
 /public/app/core/navigation/ @grafana/grafana-frontend-navigation
@@ -1172,7 +1172,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 scripts/build-msi.sh @grafana/grafana-operator-experience-squad
 scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/ci-* @grafana/grafana-backend-services-squad
-/scripts/pack-npm-packages.mjs @grafana/grafana-backend-services-squad @grafana/grafana-frontend-platform
 /scripts/publish-npm-packages.sh @grafana/grafana-backend-services-squad @grafana/grafana-frontend-platform
 /scripts/validate-npm-packages.sh @grafana/grafana-backend-services-squad @grafana/grafana-frontend-platform
 /scripts/ci-frontend-metrics.sh @grafana/grafana-frontend-platform @grafana/grafana-frontend-platform
@@ -1440,10 +1439,9 @@ embed.go @grafana/grafana-as-code
 /.github/zizmor.yml @grafana/grafana-backend-services-squad
 /.github/license_finder.yaml @bergquist
 /.github/actionlint.yaml @grafana/grafana-backend-services-squad
-/.github/workflows/pr-test-docker.yml @grafana/grafana-backend-services-squad
 /.github/workflows/update-schema-types.yml @grafana/grafana-frontend-platform
 /.github/workflows/defaults-ini-docs-reminder.yml @grafana/docs-tooling @jtvdez
-/.github/workflows/pr-build-grafana.yml @grafana/grafana-operator-experience-squad
+/.github/workflows/pr-build-grafana.yml @grafana/grafana-operator-experience-squad @grafana/grafana-backend-services-squad
 /.github/workflows/build-docker-variants.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/create-release-tag.yml @grafana/grafana-operator-experience-squad
 

@@ -1442,11 +1442,24 @@
     },
     "gma-rule-list": {
       "alert-rules": {
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
       "datasources": "",
+      "folder-row": {
+        "collapse": "",
+        "count-description": "",
+        "count-tooltip": "",
+        "count-unavailable": "",
+        "expand": ""
+      },
       "interval": "",
       "recorded-metric": {
         "records": "",
@@ -1457,7 +1470,7 @@
         "rules-error": "",
         "search-issues": ""
       },
-      "result-count": {
+      "rule-count": {
         "alert-rules_one": "",
         "alert-rules_other": "",
         "recording-rules_one": "",
@@ -1465,6 +1478,7 @@
       },
       "search": {
         "default-policy-unavailable": "",
+        "folders-disabled": "",
         "help": {
           "contact-point": "",
           "dashboard": "",
@@ -1513,6 +1527,9 @@
         "renamed-value": "",
         "unavailable-tokens": "",
         "unclosed-quote": "",
+        "view": "",
+        "view-folders": "",
+        "view-list": "",
         "wildcard-in-text": ""
       },
       "shared": {
@@ -7293,11 +7310,15 @@
       "modal": {
         "cancel": "Mégse",
         "discard": "Elvetés",
+        "keep-working": "",
         "save": "Mentés",
+        "stop-and-leave": "",
         "text": {
+          "leave-composer": "",
           "save-changes-question": "Menti a módosításokat?"
         },
         "title": {
+          "leave-composer": "",
           "unsaved-changes": "Nem mentett módosítások"
         }
       },
@@ -9055,6 +9076,12 @@
         "inspect-value": "Érték ellenőrzése",
         "show-details": "Részletek megjelenítése",
         "view-log-line": "Naplósor megtekintése"
+      },
+      "error-attribute": {
+        "error-fields-label": "",
+        "error-fields-tooltip": "",
+        "stacktrace-label": "",
+        "stacktrace-tooltip": ""
       },
       "loki-time-sort-tooltip": "Ennek az oszlopnak a rendezése csak a megjelenített eredmények sorrendjét módosítja. A lekérdezés időalapú rendezési sorrendjének frissítéséhez használja a jobb oldalon található Rendezés vezérlőt."
     },
@@ -11099,6 +11126,7 @@
         "add-all": "Az összes megjelenített érték hozzáadása a szűrőhöz",
         "blanks": "(Üresek)",
         "button": "{{name}} szűrése",
+        "include-missing": "",
         "operator": {
           "contains": "Tartalmazza",
           "equals": "Egyenlő",
@@ -11123,6 +11151,7 @@
       "filter-popup-heading": "Szűrési mód értékek alapján:",
       "filter-popup-input-placeholder": "Értékek szűrése",
       "filter-popup-match-case": "Nagybetűérzékeny",
+      "filter-popup-row-count": "",
       "footer": {
         "reducer": {
           "count": "Szám"
@@ -11139,6 +11168,18 @@
       "no-rows": "Nincsenek sorok",
       "no-values-label": "Nincsenek értékek",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} / {{numRows}} sor",
+      "range": {
+        "apply": "",
+        "empty": "",
+        "end": "",
+        "histogram": "",
+        "invalid": "",
+        "label": "",
+        "maximum": "",
+        "minimum": "",
+        "start": "",
+        "unbounded": ""
+      },
       "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "Rendezés a(z) {{column}} oszlop szerint",
@@ -12310,6 +12351,7 @@
     },
     "log-details": {
       "error": {
+        "diagnose-with-assistant": "",
         "error-details": ""
       }
     },
@@ -16946,6 +16988,10 @@
     },
     "namespace-unavailable": "A kérések elküldése előtt ellenőrizze a névteret, vagy töltse be újra az oldalt, és próbálkozzon újra.",
     "namespace-unavailable-title": "Nem lehet betölteni a névteret",
+    "router-fixtures": {
+      "clear": "",
+      "title": ""
+    },
     "router-nav": {
       "api-docs": "",
       "manifests": "",
@@ -16962,7 +17008,6 @@
       "failures-description": "",
       "filter-placeholder": "",
       "filtered": "",
-      "groups": "",
       "last-failed": "",
       "load-failures": "",
       "never": "",
@@ -16976,8 +17021,9 @@
       "requests-description": "",
       "shadowed": "",
       "shadowed-description": "",
-      "sources": "",
-      "stack-lookups": "",
+      "tab-groups": "",
+      "tab-lookups": "",
+      "tab-sources": "",
       "title": ""
     }
   },

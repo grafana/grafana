@@ -686,11 +686,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/utils/useAsyncDependency.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/app.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 2
@@ -2691,11 +2686,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/annolist/AnnoListPanel.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/barchart/bars.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -2800,14 +2790,6 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/live/LivePanel.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },

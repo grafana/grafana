@@ -1321,7 +1321,7 @@ function makeDuration(input?: MomentDurationInput, unit?: ArithmeticUnit): Momen
   };
 }
 
-export interface MomentFactory {
+interface MomentFactory {
   (input?: MomentInput, format?: MomentFormat): MomentLike;
   ISO_8601: typeof ISO_8601;
   utc(input?: MomentInput, format?: MomentFormat): MomentLike;

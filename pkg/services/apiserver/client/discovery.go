@@ -22,8 +22,8 @@ var (
 )
 
 type DiscoveryClient interface {
-	discovery.DiscoveryInterface
-	GetResourceForKind(gvk schema.GroupVersionKind) (schema.GroupVersionResource, error)
+	discovery.DiscoveryInterfaces
+	GetResourceForKind(ctx context.Context, gvk schema.GroupVersionKind) (schema.GroupVersionResource, error)
 	GetKindForResource(gvr schema.GroupVersionResource) (schema.GroupVersionKind, error)
 	GetPreferredVersion(ctx context.Context, gr schema.GroupResource) (schema.GroupVersionResource, schema.GroupVersionKind, error)
 	GetPreferredVersionForKind(ctx context.Context, gk schema.GroupKind) (schema.GroupVersionResource, schema.GroupVersionKind, error)
@@ -32,7 +32,7 @@ type DiscoveryClient interface {
 
 type DiscoveryClientImpl struct {
 	restConfig *rest.Config
-	discovery.DiscoveryInterface
+	discovery.DiscoveryInterfaces
 }
 
 func NewDiscoveryClient(restConfig *rest.Config) (*DiscoveryClientImpl, error) {
@@ -41,13 +41,13 @@ func NewDiscoveryClient(restConfig *rest.Config) (*DiscoveryClientImpl, error) {
 		return nil, err
 	}
 	return &DiscoveryClientImpl{
-		restConfig:         restConfig,
-		DiscoveryInterface: discoveryClient,
+		restConfig:          restConfig,
+		DiscoveryInterfaces: discoveryClient,
 	}, nil
 }
 
-func (d *DiscoveryClientImpl) GetResourceForKind(gvk schema.GroupVersionKind) (schema.GroupVersionResource, error) {
-	resourceList, err := d.ServerResourcesForGroupVersion(gvk.GroupVersion().String())
+func (d *DiscoveryClientImpl) GetResourceForKind(ctx context.Context, gvk schema.GroupVersionKind) (schema.GroupVersionResource, error) {
+	resourceList, err := d.ServerResourcesForGroupVersionWithContext(ctx, gvk.GroupVersion().String())
 	if err != nil {
 		return schema.GroupVersionResource{}, err
 	}
@@ -81,7 +81,7 @@ func (d *DiscoveryClientImpl) GetKindForResource(gvr schema.GroupVersionResource
 }
 
 func (d *DiscoveryClientImpl) preferredResources(ctx context.Context, group string) ([]*metav1.APIResourceList, error) {
-	apiList, err := d.ServerPreferredResources()
+	apiList, err := d.ServerPreferredResourcesWithContext(ctx)
 	var failed *discovery.ErrGroupDiscoveryFailed
 	if err == nil || !errors.As(err, &failed) {
 		return apiList, err

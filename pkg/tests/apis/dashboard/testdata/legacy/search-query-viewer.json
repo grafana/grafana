@@ -1,0 +1,90 @@
+{
+  "body": [
+    {
+      "folderId": "<id>",
+      "folderTitle": "Golden parent",
+      "folderUid": "golden-parent",
+      "folderUrl": "/dashboards/f/golden-parent/golden-parent",
+      "id": "<id>",
+      "isDeleted": false,
+      "isStarred": false,
+      "orgId": 1,
+      "slug": "",
+      "sortMeta": 0,
+      "tags": [],
+      "title": "Golden child",
+      "type": "dash-folder",
+      "uid": "golden-child",
+      "uri": "db/golden-child",
+      "url": "/dashboards/f/golden-child/golden-child"
+    },
+    {
+      "id": "<id>",
+      "isDeleted": false,
+      "isStarred": false,
+      "orgId": 1,
+      "slug": "",
+      "sortMeta": 0,
+      "tags": [
+        "golden"
+      ],
+      "title": "Golden general",
+      "type": "dash-db",
+      "uid": "golden-general",
+      "uri": "db/golden-general",
+      "url": "/d/golden-general/golden-general"
+    },
+    {
+      "folderId": "<id>",
+      "folderTitle": "Golden child",
+      "folderUid": "golden-child",
+      "folderUrl": "/dashboards/f/golden-child/golden-child",
+      "id": "<id>",
+      "isDeleted": false,
+      "isStarred": false,
+      "orgId": 1,
+      "slug": "",
+      "sortMeta": 0,
+      "tags": [
+        "golden",
+        "nested"
+      ],
+      "title": "Golden nested",
+      "type": "dash-db",
+      "uid": "golden-nested",
+      "uri": "db/golden-nested",
+      "url": "/d/golden-nested/golden-nested"
+    },
+    {
+      "id": "<id>",
+      "isDeleted": false,
+      "isStarred": false,
+      "orgId": 1,
+      "slug": "",
+      "sortMeta": 0,
+      "tags": [],
+      "title": "Golden parent",
+      "type": "dash-folder",
+      "uid": "golden-parent",
+      "uri": "db/golden-parent",
+      "url": "/dashboards/f/golden-parent/golden-parent"
+    },
+    {
+      "id": "<id>",
+      "isDeleted": false,
+      "isStarred": false,
+      "orgId": 1,
+      "slug": "",
+      "sortMeta": 0,
+      "tags": [
+        "golden"
+      ],
+      "title": "Golden provisioned",
+      "type": "dash-db",
+      "uid": "golden-provisioned",
+      "uri": "db/golden-provisioned",
+      "url": "/d/golden-provisioned/golden-provisioned"
+    }
+  ],
+  "status": 200
+}

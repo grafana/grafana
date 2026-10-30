@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import { isEmpty } from 'lodash';
+import { isEmpty, noop } from 'lodash';
 import { type ComponentProps, useMemo } from 'react';
 import { useAsync, useToggle } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Alert, CodeEditor, Collapse, ConfirmModal, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Collapse, ConfirmModal, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { type RulerRuleDTO, type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
@@ -339,19 +340,13 @@ function RulesPreview({ rules }: { rules: RulerRulesConfigDTO }) {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.content}>
-      <CodeEditor
-        width="100%"
-        height={500}
+      <CodeMirrorEditor
+        height="500px"
         language={'json'}
         value={JSON.stringify(rules, null, 4)}
-        monacoOptions={{
-          minimap: {
-            enabled: false,
-          },
-          scrollBeyondLastLine: false,
-          lineNumbers: 'on',
-          readOnly: true,
-        }}
+        onChange={noop}
+        readOnly
+        aria-label={t('alerting.import-to-gma.rules-preview', 'Alert rules preview')}
       />
     </div>
   );

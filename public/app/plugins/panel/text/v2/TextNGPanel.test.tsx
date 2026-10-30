@@ -759,6 +759,31 @@ describe('TextNGPanel', () => {
     });
   });
 
+  describe('frame fill', () => {
+    const frameProps = () => jest.mocked(SandboxFrame).mock.calls.at(-1)![0];
+
+    it('stretches the frame to the measured panel box so positioned content lays out against the panel', async () => {
+      replaceVariablesMock.mockReturnValue('hello');
+      setup(
+        Object.assign({}, defaultProps, { options: { content: 'hello', mode: TextMode.Markdown } }),
+        CoreApp.Dashboard
+      );
+
+      await waitFor(() => expect(frameProps().minHeight).toBe(500));
+    });
+
+    it('lets a fit-content panel size to its content instead of a panel box', async () => {
+      replaceVariablesMock.mockReturnValue('hello');
+      setup(
+        Object.assign({}, defaultProps, { fitContent: true, options: { content: 'hello', mode: TextMode.Markdown } }),
+        CoreApp.Dashboard
+      );
+
+      await act(async () => {});
+      expect(frameProps().minHeight).toBeUndefined();
+    });
+  });
+
   describe('fit content', () => {
     it('does not apply size containment to markdown content when fitContent is set', () => {
       replaceVariablesMock.mockReturnValueOnce('hello');

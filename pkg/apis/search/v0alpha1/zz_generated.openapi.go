@@ -18,6 +18,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.ExistsPredicate":        schema_pkg_apis_search_v0alpha1_ExistsPredicate(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.FacetTerm":              schema_pkg_apis_search_v0alpha1_FacetTerm(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.FilterPredicate":        schema_pkg_apis_search_v0alpha1_FilterPredicate(ref),
+		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.FolderPathItem":         schema_pkg_apis_search_v0alpha1_FolderPathItem(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.GlobalResultsMetadata":  schema_pkg_apis_search_v0alpha1_GlobalResultsMetadata(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.GlobalSearchResults":    schema_pkg_apis_search_v0alpha1_GlobalSearchResults(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.HybridSearchChunk":      schema_pkg_apis_search_v0alpha1_HybridSearchChunk(ref),
@@ -133,6 +134,39 @@ func schema_pkg_apis_search_v0alpha1_FilterPredicate(ref common.ReferenceCallbac
 	}
 }
 
+func schema_pkg_apis_search_v0alpha1_FolderPathItem(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "FolderPathItem is one folder of a folder path. Folder paths list ancestors before descendants, ending with the containing folder. Like the folder API's parents, the nearest unreadable folder or folder missing from the global index appears first, by name only and marked detached. Its ancestors are omitted.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"detached": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"name"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_search_v0alpha1_GlobalResultsMetadata(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -243,12 +277,33 @@ func schema_pkg_apis_search_v0alpha1_GlobalSearchResults(ref common.ReferenceCal
 							},
 						},
 					},
+					"folderPaths": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FolderPaths holds the path of each folder the items are in, keyed by the folder's name as items return it in the folder field. Only items that return the folder field are covered, and the root folder has no path. Paths are display data: they are left out when they cannot be found.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.FolderPathItem"),
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"metadata", "items"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/search/v0alpha1.FacetTerm", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.GlobalResultsMetadata", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.ResultItem"},
+			"github.com/grafana/grafana/pkg/apis/search/v0alpha1.FacetTerm", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.FolderPathItem", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.GlobalResultsMetadata", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.ResultItem"},
 	}
 }
 

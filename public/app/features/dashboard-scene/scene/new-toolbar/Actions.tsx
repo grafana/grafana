@@ -5,6 +5,7 @@ import { ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
+import { useIsMobileEditDeprecated } from '../../utils/mobileEditDeprecation';
 import { dynamicDashNavActions } from '../../utils/registerDynamicDashNavAction';
 import { type DashboardScene } from '../DashboardScene';
 import { getDashboardMode } from '../dashboardModes';
@@ -21,6 +22,7 @@ export const Actions = ({ dashboard }: { dashboard: DashboardScene }) => {
   const { editPanel, editable, editview, isEditing, meta, mode, viewPanel } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
   const styles = useStyles2(getStyles);
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
 
   const isEditable = Boolean(editable);
   const canSave = Boolean(meta.canSave);
@@ -78,7 +80,8 @@ export const Actions = ({ dashboard }: { dashboard: DashboardScene }) => {
             key: 'make-dashboard-editable-button',
             component: MakeDashboardEditableButton,
             group: 'save-edit',
-            condition: !isEditing && canEditDashboard && !isViewingPanel && !isEditable && !isPlaying,
+            condition:
+              !isEditing && canEditDashboard && !isViewingPanel && !isEditable && !isPlaying && !isMobileEditDeprecated,
           },
         ],
         dashboard

@@ -1184,7 +1184,7 @@
         "required": ["state"],
         "properties": {
           "errors": {
-            "description": "Errors encountered while deleting descendants.",
+            "description": "Errors encountered while deleting direct children.",
             "type": "array",
             "items": {
               "type": "string"
@@ -1196,7 +1196,7 @@
             "format": "int64"
           },
           "remaining": {
-            "description": "Descendants not yet deleted.",
+            "description": "Direct children not yet deleted, recomputed on each reconcile.",
             "type": "integer",
             "format": "int64"
           },
@@ -1211,7 +1211,7 @@
             "default": ""
           },
           "total": {
-            "description": "Descendants discovered when the cascade started; the fixed denominator for remaining.",
+            "description": "Direct children discovered when the cascade started; the fixed denominator for remaining.",
             "type": "integer",
             "format": "int64"
           }

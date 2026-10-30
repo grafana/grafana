@@ -563,7 +563,7 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 	}
 }
 
-func (b *bleveBackend) shouldUpload(key resource.NamespacedResource, idx *bleveIndex, now time.Time) (bool, error) {
+func (b *bleveBackend) shouldUpload(ctx context.Context, key resource.NamespacedResource, idx *bleveIndex, now time.Time) (bool, error) {
 	docCount, err := idx.index.DocCount()
 	if err != nil {
 		return false, fmt.Errorf("reading document count for %v: %w", key, err)
@@ -574,7 +574,12 @@ func (b *bleveBackend) shouldUpload(key resource.NamespacedResource, idx *bleveI
 
 	lastUploadTime, ok := b.getUploadTracking(key)
 	if !ok {
-		return true, nil
+		// An index reopened from disk has no tracking even when the store already
+		// holds a copy of its build.
+		lastUploadTime, ok = b.seedUploadTrackingFromRemote(ctx, key, idx, now)
+		if !ok {
+			return true, nil
+		}
 	}
 	if b.opts.Snapshot.UploadInterval > 0 && now.Sub(lastUploadTime) < b.opts.Snapshot.UploadInterval {
 		return false, nil
@@ -667,7 +672,7 @@ func (b *bleveBackend) runUploadSnapshots(ctx context.Context) {
 			continue
 		}
 
-		shouldUpload, err := b.shouldUpload(key, idx, time.Now())
+		shouldUpload, err := b.shouldUpload(ctx, key, idx, time.Now())
 		if err != nil {
 			b.recordSnapshotUploadStatus(snapshotUploadStatusError)
 			b.log.Warn("failed to evaluate snapshot upload eligibility", "key", key, "err", err)
@@ -2426,13 +2431,6 @@ func (b *bleveIndex) CountManagedObjects(ctx context.Context, stats *resource.Se
 	return vals, nil
 }
 
-func (b *bleveIndex) observeSearchResultFormat(response *resourcepb.ResourceSearchResponse) {
-	if response.GetResultFormat() == resourcepb.ResourceSearchRequest_UNSPECIFIED {
-		return
-	}
-	b.indexMetrics.SearchResultFormats.WithLabelValues(strings.ToLower(response.ResultFormat.String())).Inc()
-}
-
 func (b *bleveIndex) initialSearchResponse(req *resourcepb.ResourceSearchRequest) *resourcepb.ResourceSearchResponse {
 	if req.Options == nil || req.Options.Key == nil {
 		return &resourcepb.ResourceSearchResponse{
@@ -2472,17 +2470,29 @@ func (b *bleveIndex) Search(
 	req *resourcepb.ResourceSearchRequest,
 	indexes *resource.SearchIndexes,
 	stats *resource.SearchStats,
-) (response *resourcepb.ResourceSearchResponse, resultErr error) {
+) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.Search")
 	defer span.End()
 
+	response, err := b.search(ctx, access, req, indexes, stats)
+	// Clients show where each result is, and the global index holds every folder.
+	if err == nil && response.Error == nil && b.key.IsGlobal() && !req.IsDeleted {
+		b.addFolderPaths(ctx, access, response)
+	}
+	return response, err
+}
+
+func (b *bleveIndex) search(
+	ctx context.Context,
+	access authlib.AccessClient,
+	req *resourcepb.ResourceSearchRequest,
+	indexes *resource.SearchIndexes,
+	stats *resource.SearchStats,
+) (response *resourcepb.ResourceSearchResponse, resultErr error) {
 	response = b.initialSearchResponse(req)
 	if response.Error != nil {
 		return response, nil
 	}
-	defer func() {
-		b.observeSearchResultFormat(response)
-	}()
 
 	index, folderIndex, err := b.getIndexes(ctx, req, indexes)
 	if err != nil {

@@ -58,9 +58,25 @@ func globalSearchResults(res *resourcepb.ResourceSearchResponse, kind kindRef, l
 			ResultsMetadata: results.Metadata,
 			SkippedTypes:    res.GetSkippedTypes(),
 		},
-		Items:  results.Items,
-		Facets: results.Facets,
+		Items:       results.Items,
+		Facets:      results.Facets,
+		FolderPaths: folderPaths(res.GetFolderPaths()),
 	}, nil
+}
+
+func folderPaths(in map[string]*resourcepb.FolderPath) map[string][]searchv0.FolderPathItem {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make(map[string][]searchv0.FolderPathItem, len(in))
+	for name, path := range in {
+		items := make([]searchv0.FolderPathItem, 0, len(path.GetFolders()))
+		for _, f := range path.GetFolders() {
+			items = append(items, searchv0.FolderPathItem{Name: f.GetName(), Title: f.GetTitle(), Detached: f.GetDetached()})
+		}
+		out[name] = items
+	}
+	return out
 }
 
 // trashResults maps a backend search response into the trash envelope. No facets:
