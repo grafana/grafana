@@ -45,21 +45,23 @@ const AnnoKeyFolder = "grafana.app/folder"
 const AnnoKeyBlob = "grafana.app/blob"
 const AnnoKeyMessage = "grafana.app/message"
 
-// Identify where values came from
+// Deprecated predecessors of the manager and source annotations, still read as a fallback.
 
 const oldAnnoKeyRepoName = "grafana.app/repoName"
 const oldAnnoKeyRepoPath = "grafana.app/repoPath"
 const oldAnnoKeyRepoHash = "grafana.app/repoHash"
 const oldAnnoKeyRepoTimestamp = "grafana.app/repoTimestamp"
 
-// Annotations used to store manager properties
+// Annotations used to store manager properties. A resource only counts as managed
+// when AnnoKeyManagerIdentity is non-empty, except for the classic shim kinds.
 
 const AnnoKeyManagerKind = "grafana.app/managedBy"
 const AnnoKeyManagerIdentity = "grafana.app/managerId"
 const AnnoKeyManagerAllowsEdits = "grafana.app/managerAllowsEdits"
 const AnnoKeyManagerSuspended = "grafana.app/managerSuspended"
 
-// Annotations used to store source properties
+// Annotations used to store source properties. Only managers that reconcile from a
+// source set these; Terraform and kubectl have no source.
 
 const AnnoKeySourcePath = "grafana.app/sourcePath"
 const AnnoKeySourceChecksum = "grafana.app/sourceChecksum"
