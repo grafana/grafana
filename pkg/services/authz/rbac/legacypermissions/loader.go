@@ -128,7 +128,8 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 		return l.zanzana.ResolveCurrentUserPermissions(ctx, user, options.ReloadCache)
 	}
 	var migrated []ac.Permission
-	if !cached || options.SkipZanzanaCache {
+	// Request-supplied memberships must be composed again; principal grants remain cacheable.
+	if !cached || options.SkipZanzanaCache || l.cfg.IDUseExternalGroupsForGroupsClaim {
 		migrated, err = resolve()
 	} else {
 		migrated, err = l.cached(ctx, ac.GetZanzanaUserPermissionCacheKey(user), options, resolve)

@@ -596,3 +596,45 @@ func TestService_GetUserPermissions_ForwardsExplicitReloadToPrincipalCache(t *te
 		})
 	}
 }
+
+type contextualPermissionClient struct {
+	fakeZanzanaClient
+	calls int
+}
+
+func (c *contextualPermissionClient) GetUserPermissions(_ context.Context, caller authlib.AuthInfo, req authlib.GetUserPermissionsRequest) (authlib.GetUserPermissionsResponse, error) {
+	c.calls++
+	result := authlib.GetUserPermissionsResponse{}
+	for _, team := range caller.GetGroups() {
+		result.Permissions = append(result.Permissions, authlib.Permission{Action: "dashboards:write", Scope: "folders:uid:" + team})
+	}
+	if req.SkipCache {
+		return result, errors.New("ordinary contextual requests must reuse principal caches")
+	}
+	return result, nil
+}
+
+func TestService_GetUserPermissions_ComposesCurrentExternalGroups(t *testing.T) {
+	client := &contextualPermissionClient{}
+	svc := setupServiceWithPermissionCache(t, &actest.FakeStore{}, client, &usertest.FakeUserService{}, true)
+	svc.cfg.IDUseExternalGroupsForGroupsClaim = true
+	svc.zanzanaResolver = NewZanzanaPermissionResolver(client, &usertest.FakeUserService{}, nil, true)
+	requester := testSignedInUser()
+	for i, teams := range [][]string{{"team-a"}, {"team-b"}, nil, {"team-a"}} {
+		requester.ExternalGroups = teams
+		got, err := svc.GetUserPermissions(t.Context(), requester, accesscontrol.Options{})
+		require.NoError(t, err)
+		var writes []string
+		for _, permission := range got {
+			if permission.Action == "dashboards:write" {
+				writes = append(writes, permission.Scope)
+			}
+		}
+		var want []string
+		for _, team := range teams {
+			want = append(want, "folders:uid:"+team)
+		}
+		require.ElementsMatch(t, want, writes)
+		require.Equal(t, i+1, client.calls)
+	}
+}
