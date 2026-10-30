@@ -14,17 +14,17 @@ type PermissionList struct {
 	List     *authzv1.ListResponse
 }
 
-func ResolvePermissions(ctx context.Context, namespace, scope string, resolver IDResolver, lists []PermissionList) ([]ac.Permission, error) {
+func ResolvePermissions(ctx context.Context, scope string, lists []PermissionList) ([]ac.Permission, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	formatter := Formatter{IDs: resolver}
+	formatter := Formatter{}
 	var permissions []ac.Permission
 	for _, result := range lists {
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		permissions = append(permissions, formatter.Permissions(ctx, namespace, result.Resource, result.Action, scope, result.List)...)
+		permissions = append(permissions, formatter.Permissions(result.Resource, result.Action, scope, result.List)...)
 	}
 	if err := ctx.Err(); err != nil {
 		return nil, err

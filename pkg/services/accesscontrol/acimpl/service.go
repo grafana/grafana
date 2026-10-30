@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
@@ -83,6 +84,7 @@ func ProvideService(
 		legacyClient, roleCatalog,
 	)
 
+	service.scopeResolver = legacyscopes.NewUIDResolver(restConfigProvider)
 	service.legacyShadow = NewLegacyUserPermissionsShadow(reg, cfg.RBAC.LegacyUserPermissionsShadowMaxConcurrent)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, userService).RegisterAPIEndpoints()
@@ -165,6 +167,7 @@ type Service struct {
 	legacyClient              legacyclient.Service
 	userPermissionsClient     accesscontrol.UserPermissionsClient
 	zanzanaResolver           *ZanzanaPermissionResolver
+	scopeResolver             legacyscopes.ScopeResolver
 }
 
 func (s *Service) SetUserPermissionsClient(client accesscontrol.UserPermissionsClient) {
@@ -227,7 +230,7 @@ func (s *Service) getLocalUserPermissions(ctx context.Context, user identity.Req
 		return nil, err
 	}
 
-	return s.mergeZanzanaUserPermissions(ctx, user, permissions, options), nil
+	return legacyscopes.ResolveUserScopes(ctx, user, s.scopeResolver, s.mergeZanzanaUserPermissions(ctx, user, permissions, options))
 }
 
 func (s *Service) GetRBACUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
@@ -775,6 +778,12 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.SearchUsersPermissions")
 	defer span.End()
 
+	originalScope := options.Scope
+	scope, err := legacyscopes.LegacySearchScope(ctx, usr, s.scopeResolver, originalScope)
+	if err != nil {
+		return nil, err
+	}
+	options.Scope = scope
 	// Limit roles to available in OSS
 	options.RolePrefixes = OSSRolesPrefixes
 
@@ -879,7 +888,8 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 		}
 	}
 
-	return s.zanzanaResolver.MergeSearch(ctx, usr, usr.GetOrgID(), options, res, s.log), nil
+	options.Scope = originalScope
+	return legacyscopes.ResolveSearchScopes(ctx, usr, originalScope, s.scopeResolver, s.zanzanaResolver.MergeSearch(ctx, usr, usr.GetOrgID(), options, res, s.log))
 }
 
 func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {

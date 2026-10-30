@@ -17,13 +17,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type permissionResponseStream struct {
@@ -63,55 +61,6 @@ func TestUserPermissionsAuthorization(t *testing.T) {
 	}
 }
 
-func TestUserPermissionsStandaloneScopeConfiguration(t *testing.T) {
-	for _, missing := range []string{"IAM URL", "token", "exchange URL"} {
-		t.Run(missing, func(t *testing.T) {
-			cfg := setting.NewCfg()
-			cfg.ZanzanaReconciler.IAMAPIServerURL = "https://iam.example.test"
-			cfg.Raw.Section("grpc_client_authentication").Key("token").SetValue("test-token")
-			cfg.Raw.Section("grpc_client_authentication").Key("token_exchange_url").SetValue("https://exchange.example.test")
-			switch missing {
-			case "IAM URL":
-				cfg.ZanzanaReconciler.IAMAPIServerURL = ""
-			case "token":
-				cfg.Raw.Section("grpc_client_authentication").Key("token").SetValue("")
-			case "exchange URL":
-				cfg.Raw.Section("grpc_client_authentication").Key("token_exchange_url").SetValue("")
-			}
-			resolver := newPermissionScopeResolver(cfg, nil)
-			require.Nil(t, resolver)
-			server := &Server{cfg: cfg.ZanzanaServer, permissionScopeResolver: resolver, tracer: tracing.NewNoopTracerService(), metrics: newZanzanaServerMetrics(prometheus.NewRegistry())}
-			stream := &permissionResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
-			err := server.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice"}, stream)
-			require.Equal(t, codes.FailedPrecondition, status.Code(err), "reject missing scope configuration before accessing the datastore")
-			require.Empty(t, stream.permissions)
-		})
-	}
-	t.Run("embedded provider needs no standalone configuration", func(t *testing.T) {
-		provider := permissionRestConfigProvider(func(context.Context) (*clientrest.Config, error) {
-			t.Fatal("the IAM client must remain lazy")
-			return nil, nil
-		})
-		require.NotNil(t, newPermissionScopeResolver(setting.NewCfg(), provider))
-	})
-	t.Run("complete standalone configuration remains lazy", func(t *testing.T) {
-		cfg := setting.NewCfg()
-		cfg.ZanzanaReconciler.IAMAPIServerURL = "https://iam.example.test"
-		cfg.Raw.Section("grpc_client_authentication").Key("token").SetValue("test-token")
-		cfg.Raw.Section("grpc_client_authentication").Key("token_exchange_url").SetValue("https://exchange.example.test")
-		require.NotNil(t, newPermissionScopeResolver(cfg, nil))
-	})
-}
-
-type permissionIDs struct{}
-
-func (permissionIDs) GetTeamIDByUID(context.Context, types.NamespaceInfo, string) (int64, error) {
-	return 42, nil
-}
-func (permissionIDs) GetUserIDByUID(context.Context, types.NamespaceInfo, string) (int64, error) {
-	return 7, nil
-}
-
 type permissionAuthenticatedStream struct {
 	grpc.ServerStream
 	ctx context.Context
@@ -131,7 +80,6 @@ func permissionRPC(t *testing.T, s *Server) authzv1.AuthzServiceClient {
 
 func TestUserPermissionsRPCParity(t *testing.T) {
 	server, _, _ := newPermissionTestServer(t, permissionParityTuples())
-	server.permissionScopeResolver = permissionIDs{}
 	client := permissionRPC(t, server)
 	for _, tc := range []struct {
 		subject string
@@ -144,9 +92,9 @@ func TestUserPermissionsRPCParity(t *testing.T) {
 			baseline, err := baselineGrantLists(t, server, req)
 			require.NoError(t, err)
 			want := map[[2]string]bool{}
-			formatter := legacyscopes.Formatter{IDs: permissionIDs{}}
+			formatter := legacyscopes.Formatter{}
 			for _, result := range baseline {
-				for _, p := range formatter.Permissions(t.Context(), namespace, result.Entry.Resource, result.Entry.Action, "", result.List) {
+				for _, p := range formatter.Permissions(result.Entry.Resource, result.Entry.Action, "", result.List) {
 					want[[2]string{p.Action, p.Scope}] = true
 				}
 			}
@@ -167,11 +115,11 @@ func TestUserPermissionsRPCParity(t *testing.T) {
 			}
 			require.Equal(t, want, got)
 			if tc.subject == "user:direct" {
-				require.True(t, got[[2]string{"users:read", "global.users:id:7"}])
-				require.True(t, got[[2]string{"org.users:read", "users:id:7"}])
+				require.True(t, got[[2]string{"users:read", "global.users:uid:readable-user"}])
+				require.True(t, got[[2]string{"org.users:read", "users:uid:readable-user"}])
 			}
 			if tc.subject == "user:admin" {
-				require.True(t, got[[2]string{"teams:read", "teams:id:42"}])
+				require.True(t, got[[2]string{"teams:read", "teams:uid:admin-team"}])
 			}
 		})
 	}
@@ -183,7 +131,6 @@ func TestUserPermissionsRPCChunksAndFailure(t *testing.T) {
 		tuples[i] = common.NewResourceTuple("user:many", common.RelationGet, dashboardGroup, dashboardResource, "", fmt.Sprintf("dashboard-%04d", i))
 	}
 	server, ds, _ := newPermissionTestServer(t, tuples)
-	server.permissionScopeResolver = permissionIDs{}
 	client := permissionRPC(t, server)
 	req := &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:many"}
 	stream, err := client.GetUserPermissions(t.Context(), req)
@@ -211,7 +158,6 @@ func TestUserPermissionsRPCChunksAndFailure(t *testing.T) {
 
 func TestUserPermissionsRPCWithoutRolloutFlag(t *testing.T) {
 	server, _, _ := newPermissionTestServer(t, permissionParityTuples())
-	server.permissionScopeResolver = permissionIDs{}
 	stream, err := permissionRPC(t, server).GetUserPermissions(t.Context(), &authzv1.GetUserPermissionsRequest{
 		Namespace: namespace,
 		Subject:   "user:direct",
@@ -232,7 +178,6 @@ func TestUserPermissionsRPCPreservesGrantedFolderScopes(t *testing.T) {
 		common.NewFolderParentTuple("grandchild", "child"),
 	}
 	srv, ds, _ := newPermissionTestServer(t, tuples)
-	srv.permissionScopeResolver = permissionIDs{}
 	stream := &permissionResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
 	err := srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice"}, stream)
 	require.NoError(t, err)

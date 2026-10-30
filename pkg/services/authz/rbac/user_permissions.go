@@ -45,6 +45,9 @@ func (s *Service) GetUserPermissions(req *authzv1.GetUserPermissionsRequest, str
 	if err != nil {
 		return err
 	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	if !evaluated {
 		if s.actionResolver != nil {
 			permissions = s.actionResolver.ExpandActionSets(permissions)
@@ -82,9 +85,15 @@ func (s *Service) mergeZanzanaUserPermissions(ctx context.Context, requester ide
 	zanzanaPermissions, err := s.userPermissionsResolver.ResolveCurrentUserPermissions(ctx, requester, skipCache)
 	if err != nil {
 		s.logger.Warn("could not get zanzana user permissions, using legacy only", "error", err)
+	} else {
+		permissions = append(permissions, zanzanaPermissions...)
+	}
+	resolved, err := s.userPermissionsResolver.ResolvePermissionScopes(ctx, requester, permissions)
+	if err != nil {
+		s.logger.Warn("could not resolve permission scope aliases", "error", err)
 		return permissions
 	}
-	return append(permissions, zanzanaPermissions...)
+	return resolved
 }
 
 func deduplicateUserPermissions(permissions []accesscontrol.Permission) []accesscontrol.Permission {

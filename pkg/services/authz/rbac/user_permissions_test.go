@@ -436,6 +436,7 @@ func (e *recordingUserPermissionsEvaluator) GetLocalUserPermissions(_ context.Co
 }
 
 type recordingUserPermissionsResolver struct {
+	scopes      []accesscontrol.Permission
 	skipCache   bool
 	permissions []accesscontrol.Permission
 	user        identity.Requester
@@ -495,4 +496,9 @@ func TestService_GetUserPermissionsForwardsPrincipalCacheBypass(t *testing.T) {
 			})
 		}
 	}
+}
+
+func (r *recordingUserPermissionsResolver) ResolvePermissionScopes(_ context.Context, _ identity.Requester, permissions []accesscontrol.Permission) ([]accesscontrol.Permission, error) {
+	r.scopes = permissions
+	return permissions, nil
 }

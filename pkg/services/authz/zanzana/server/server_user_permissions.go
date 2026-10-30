@@ -1,21 +1,15 @@
 package server
 
 import (
-	"context"
 	"time"
 
-	authnlib "github.com/grafana/authlib/authn"
 	authzlib "github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	clientrest "k8s.io/client-go/rest"
 
-	"github.com/grafana/grafana/pkg/clientauth"
-	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const userPermissionsChunkSize = 1000
@@ -48,9 +42,6 @@ func (s *Server) GetUserPermissions(req *authzv1.GetUserPermissionsRequest, stre
 	if !types.IsIdentityType(kind, types.TypeUser, types.TypeServiceAccount, types.TypeAnonymous, types.TypeRenderService) {
 		return status.Error(codes.PermissionDenied, "unsupported identity type")
 	}
-	if s.permissionScopeResolver == nil {
-		return status.Error(codes.FailedPrecondition, "legacy scope resolution is not configured")
-	}
 	release, err := s.acquireSlot("GetUserPermissions", req.GetNamespace())
 	if err != nil {
 		return err
@@ -65,7 +56,7 @@ func (s *Server) GetUserPermissions(req *authzv1.GetUserPermissionsRequest, stre
 	for _, result := range results {
 		lists = append(lists, legacyscopes.PermissionList{Resource: result.Entry.Resource, Action: result.Entry.Action, List: result.List})
 	}
-	resolved, err := legacyscopes.ResolvePermissions(ctx, req.GetNamespace(), "", s.permissionScopeResolver, lists)
+	resolved, err := legacyscopes.ResolvePermissions(ctx, "", lists)
 	if err != nil {
 		return err
 	}
@@ -91,40 +82,4 @@ func (s *Server) GetUserPermissions(req *authzv1.GetUserPermissionsRequest, stre
 		}
 	}
 	return ctx.Err()
-}
-
-type permissionRestConfigProvider func(context.Context) (*clientrest.Config, error)
-
-func (p permissionRestConfigProvider) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
-	return p(ctx)
-}
-
-func newPermissionScopeResolver(cfg *setting.Cfg, embedded restcfg.RestConfigProvider) legacyscopes.IDResolver {
-	if embedded != nil {
-		return legacyscopes.NewUIDResolver(embedded)
-	}
-	auth := cfg.SectionWithEnvOverrides("grpc_client_authentication")
-	token := auth.Key("token").MustString("")
-	exchangeURL := auth.Key("token_exchange_url").MustString("")
-	if cfg.ZanzanaReconciler.IAMAPIServerURL == "" || token == "" || exchangeURL == "" {
-		// Legacy numeric scopes require an authenticated IAM client.
-		return nil
-	}
-	// Keep the IAM client lazy, as in the legacy resolver, to avoid a bootstrap
-	// dependency on the API server and to work when Zanzana runs separately.
-	return legacyscopes.NewUIDResolver(permissionRestConfigProvider(func(context.Context) (*clientrest.Config, error) {
-		exchange, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
-			Token:            token,
-			TokenExchangeURL: exchangeURL,
-		})
-		if err != nil {
-			return nil, err
-		}
-		return &clientrest.Config{
-			Host:            cfg.ZanzanaReconciler.IAMAPIServerURL,
-			APIPath:         "/apis",
-			TLSClientConfig: clientrest.TLSClientConfig{Insecure: cfg.ZanzanaReconciler.TLSInsecure},
-			WrapTransport:   clientauth.NewTokenExchangeTransportWrapper(exchange, clientauth.NewStaticAudienceProvider("iam.grafana.app"), clientauth.NewStaticNamespaceProvider(clientauth.WildcardNamespace)),
-		}, nil
-	}))
 }

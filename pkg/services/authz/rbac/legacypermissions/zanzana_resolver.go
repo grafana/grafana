@@ -28,7 +28,7 @@ var zLogger = log.New("accesscontrol.zanzana_resolver")
 type ZanzanaPermissionResolver struct {
 	client        zanzana.Client
 	userSvc       user.Service
-	scopeResolver legacyscopes.IDResolver
+	scopeResolver legacyscopes.ScopeResolver
 	// useExternalGroups mirrors cfg.IDUseExternalGroupsForGroupsClaim: it selects which
 	// team memberships are sent as Zanzana contextual tuples for the current user, so the
 	// merged permissions match what the forward Check path (which uses the groups claim)
@@ -247,7 +247,13 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 		return nil, fmt.Errorf("zanzana list failed: %w", err)
 	}
 
-	return (legacyscopes.Formatter{IDs: r.scopeResolver}).Permissions(ctx, namespace, resource, action, scope, resp), nil
+	formatScope := scope
+	switch resource {
+	case "users", "teams", "serviceaccounts":
+		formatScope = ""
+	}
+	permissions := (legacyscopes.Formatter{}).Permissions(resource, action, formatScope, resp)
+	return legacyscopes.WithAliases(ctx, namespace, scope, r.scopeResolver, permissions)
 }
 
 func (r *ZanzanaPermissionResolver) listAllWithPrefix(ctx context.Context, namespace, subject string, teams []string, prefix, scope string) ([]ac.Permission, error) {
@@ -389,4 +395,8 @@ func (i snapshotAuthInfo) GetNamespace() string { return i.namespace }
 func (i snapshotAuthInfo) GetGroups() []string  { return i.groups }
 func (snapshotAuthInfo) GetTokenDelegatedPermissions() []string {
 	return []string{zanzana.TokenPermissionUserPermissions}
+}
+
+func (r *ZanzanaPermissionResolver) ResolvePermissionScopes(ctx context.Context, usr identity.Requester, permissions []ac.Permission) ([]ac.Permission, error) {
+	return legacyscopes.ResolveUserScopes(ctx, usr, r.scopeResolver, permissions)
 }

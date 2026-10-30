@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -49,6 +50,7 @@ type Loader struct {
 	openFeatureClient *openfeature.Client
 	license           licensing.Licensing
 	zanzana           MigratedPermissions
+	scopeResolver     legacyscopes.ScopeResolver
 	flight            singleflight.Group
 	log               log.Logger
 }
@@ -120,7 +122,7 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 	// Enterprise's unlicensed fallback has no Zanzana resolver. OSS itself
 	// still merges Zanzana grants even though enforcement is always disabled.
 	if l.zanzana == nil || (!settings.enforcementEnabled && l.license.Edition() != licensing.OpenSourceEdition) {
-		return permissions, nil
+		return legacyscopes.ResolveUserScopes(ctx, user, l.scopeResolver, permissions)
 	}
 	resolve := func() ([]ac.Permission, error) {
 		return l.zanzana.ResolveCurrentUserPermissions(ctx, user, options.ReloadCache)
@@ -133,9 +135,9 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 	}
 	if err != nil {
 		l.log.Warn("could not get zanzana user permissions, using legacy only", "error", err)
-		return permissions, nil
+		return legacyscopes.ResolveUserScopes(ctx, user, l.scopeResolver, permissions)
 	}
-	return MergeUserPermissions(permissions, migrated), nil
+	return legacyscopes.ResolveUserScopes(ctx, user, l.scopeResolver, MergeUserPermissions(permissions, migrated))
 }
 
 func queryFor(orgID int64, p loadSettings) ac.GetUserPermissionsQuery {
