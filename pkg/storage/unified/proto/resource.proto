@@ -445,6 +445,13 @@ message ListManagedObjectsResponse {
 
     // The name of the folder in metadata
     string folder = 7;
+
+    // The API group that serves the object, when it is not the group in the key.
+    // Several API groups can share one storage collection: they are persisted
+    // under the collection's group and tell themselves apart with a label, so the
+    // key records a group no API server serves. Empty when the two are the same,
+    // which is every resource outside a shared collection.
+    string served_group = 8;
   }
 
   // Item iterator
