@@ -4,15 +4,15 @@ import { EmptyState, Stack } from '@grafana/ui';
 import { ResultCount } from '../rule-row/ResultCount';
 import { RuleListSkeleton } from '../rule-row/RuleListSkeleton';
 import { RuleRowList } from '../rule-row/RuleRowList';
-import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import { InlineRequestError } from '../shared/InlineRequestError';
 import { LoadMoreFooter } from '../shared/LoadMoreFooter';
 
 import { AlertRuleListEntry } from './AlertRuleListEntry';
+import { type AlertRuleFilter } from './alertRuleFilters';
 import { useAlertRuleSearch } from './alertRuleSearch';
 
 interface ListViewProps {
-  filter: RuleSearchFilter;
+  filter: AlertRuleFilter;
 }
 
 export function AlertRulesListView({ filter }: ListViewProps) {
@@ -52,7 +52,7 @@ export function AlertRulesListView({ filter }: ListViewProps) {
       <ResultCount kind="alert" total={total} />
       <RuleRowList>
         {items.map((searchHit) => (
-          <AlertRuleListEntry key={searchHit.uid} searchHit={searchHit} />
+          <AlertRuleListEntry key={searchHit.uid} searchHit={searchHit} showFolderPath />
         ))}
       </RuleRowList>
       <LoadMoreFooter

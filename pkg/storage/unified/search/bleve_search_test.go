@@ -12,8 +12,6 @@ import (
 
 	"github.com/blevesearch/bleve/v2"
 	authlib "github.com/grafana/authlib/types"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 	apischema "k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
@@ -481,9 +479,9 @@ func TestWildcardQuery(t *testing.T) {
 	t.Run("wildcard searches email and login only with explicit QueryFields", func(t *testing.T) {
 		// Use an index with keyword-analyzed email/login fields (matching
 		// production IAM config) so wildcards match full email addresses.
-		index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
-			{Name: "email", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
-			{Name: "login", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
+		index := newTestIndexWithFields(t, key, []resource.SearchFieldDefinition{
+			{Name: "email", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
+			{Name: "login", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
 		})
 		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
@@ -626,7 +624,6 @@ func TestFieldValueSearchResults(t *testing.T) {
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, res.ResultFormat)
-		require.Nil(t, res.Results)
 		require.Len(t, res.Rows, 1)
 		require.Equal(t, "dashboard-1", res.Rows[0].Key.Name)
 		require.NotNil(t, res.Rows[0].Score)
@@ -699,7 +696,6 @@ func TestFieldValueSearchResults(t *testing.T) {
 		res, err := index.Search(t.Context(), nil, req, nil, nil)
 		require.NoError(t, err)
 		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, res.ResultFormat)
-		require.Nil(t, res.Results)
 		require.NotEmpty(t, res.Fields)
 		require.NotEmpty(t, res.Rows)
 	})
@@ -715,31 +711,6 @@ func TestFieldValueSearchResults(t *testing.T) {
 		require.Equal(t, int32(400), res.Error.Code)
 		require.Contains(t, res.Error.Message, `unknown response field "does_not_exist"`)
 	})
-}
-
-func TestSearchResultFormatMetric(t *testing.T) {
-	reg := prometheus.NewPedanticRegistry()
-	metrics := resource.ProvideIndexMetrics(reg)
-	index := newTestDashboardsIndexWithMetrics(t, threshold, 0, noop, metrics)
-
-	req := newTestQuery("")
-	req.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
-
-	res, err := index.Search(t.Context(), nil, req, nil, nil)
-	require.NoError(t, err)
-	require.Nil(t, res.Error)
-	require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, res.ResultFormat)
-	require.Equal(t, 1.0, testutil.ToFloat64(metrics.SearchResultFormats.WithLabelValues("field_values")))
-
-	invalid := newTestQuery("")
-	invalid.Fields = []string{"does_not_exist"}
-	invalid.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
-	res, err = index.Search(t.Context(), nil, invalid, nil, nil)
-	require.NoError(t, err)
-	require.NotNil(t, res.Error)
-	require.Equal(t, 1.0, testutil.ToFloat64(metrics.SearchResultFormats.WithLabelValues("field_values")), "a response without a result format is not counted")
-
-	require.Equal(t, 2, testutil.CollectAndCount(metrics.SearchResultFormats, "grafana_index_server_search_result_format_total"))
 }
 
 func newQueryByTitle(query string) *resourcepb.ResourceSearchRequest {
@@ -1053,8 +1024,8 @@ func labelFilterQuery(operator, key string, values ...string) *resourcepb.Resour
 // to its physical fields.* location, so callers don't supply the prefix.
 func TestPublicFieldNameFilter(t *testing.T) {
 	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
-	index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
-		{Name: "team", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
+	index := newTestIndexWithFields(t, key, []resource.SearchFieldDefinition{
+		{Name: "team", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
 	})
 	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
 		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d1", Title: "One",
@@ -1270,8 +1241,8 @@ func TestFlattenedLabelRegexConformance(t *testing.T) {
 func newRegexKeywordFieldIndex(t testing.TB) (resource.NamespacedResource, resource.ResourceIndex) {
 	t.Helper()
 	key := resource.NamespacedResource{Namespace: "default", Group: "test.grafana.app", Resource: "items"}
-	index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
-		{Name: "team", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
+	index := newTestIndexWithFields(t, key, []resource.SearchFieldDefinition{
+		{Name: "team", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
 	})
 	items := []*resource.BulkIndexItem{
 		regexTestDocument(key, "d1", map[string]any{"team": "red-team"}),
@@ -1288,8 +1259,8 @@ func newRegexKeywordFieldIndex(t testing.TB) (resource.NamespacedResource, resou
 func newRegexSyntaxIndex(t testing.TB) (resource.NamespacedResource, resource.ResourceIndex) {
 	t.Helper()
 	key := resource.NamespacedResource{Namespace: "default", Group: "test.grafana.app", Resource: "items"}
-	index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
-		{Name: "team", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
+	index := newTestIndexWithFields(t, key, []resource.SearchFieldDefinition{
+		{Name: "team", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
 	})
 	items := []*resource.BulkIndexItem{
 		regexTestDocument(key, "d1", map[string]any{"team": "critical"}),
@@ -1391,8 +1362,8 @@ func alertRegexRule(key resource.NamespacedResource, name string, labels, dataso
 // QueryField name to its physical fields.* location.
 func TestPublicFieldNameTextQuery(t *testing.T) {
 	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
-	index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
-		{Name: "team", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
+	index := newTestIndexWithFields(t, key, []resource.SearchFieldDefinition{
+		{Name: "team", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
 	})
 	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
 		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d1", Title: "One",
@@ -1422,10 +1393,6 @@ func TestPublicFieldNameTextQuery(t *testing.T) {
 }
 
 func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer resource.BuildFn) resource.ResourceIndex {
-	return newTestDashboardsIndexWithMetrics(t, threshold, size, writer, nil)
-}
-
-func newTestDashboardsIndexWithMetrics(t testing.TB, threshold int64, size int64, writer resource.BuildFn, metrics *resource.BleveIndexMetrics) resource.ResourceIndex {
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
@@ -1437,7 +1404,7 @@ func newTestDashboardsIndexWithMetrics(t testing.TB, threshold int64, size int64
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
-	}, metrics)
+	}, nil)
 	require.NoError(t, err)
 
 	t.Cleanup(backend.Stop)
@@ -1454,21 +1421,9 @@ func newTestDashboardsIndexWithMetrics(t testing.TB, threshold int64, size int64
 	return index
 }
 
-// newTestIndexWithFields creates a test index with custom searchable fields
-// (e.g. keyword-analyzed email/login for IAM-like tests). Each column
-// becomes a SearchFieldDefinition declaring [filter, retrieve] when the
-// column carries Properties.Filterable, otherwise [retrieve] only; the
-// provider drives the per-kind bleve mapping.
-func newTestIndexWithFields(t testing.TB, key resource.NamespacedResource, columns []*resourcepb.ResourceTableColumnDefinition) resource.ResourceIndex {
+// newTestIndexWithFields creates an index whose mapping comes from the given definitions.
+func newTestIndexWithFields(t testing.TB, key resource.NamespacedResource, sfds []resource.SearchFieldDefinition) resource.ResourceIndex {
 	gvr := apischema.GroupVersionResource{Group: key.Group, Version: "v0", Resource: key.Resource}
-	sfds := make([]resource.SearchFieldDefinition, 0, len(columns))
-	for _, c := range columns {
-		caps := []resource.SearchCapability{resource.SearchCapabilityRetrieve}
-		if c.Properties != nil && c.Properties.Filterable && c.Type == resourcepb.ResourceTableColumnDefinition_STRING {
-			caps = []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}
-		}
-		sfds = append(sfds, resource.SearchFieldDefinition{Name: c.Name, Type: resource.SearchFieldTypeString, Array: c.IsArray, Capabilities: caps})
-	}
 	provider := resource.NewMapProvider(
 		map[apischema.GroupVersionResource][]resource.SearchFieldDefinition{gvr: sfds},
 		map[apischema.GroupResource]string{gvr.GroupResource(): gvr.Version},
@@ -2449,7 +2404,6 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 		res := searchResponse(t, index, ac, q)
 		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, res.ResultFormat)
-		require.Nil(t, res.Results)
 		require.Len(t, res.Rows, 1)
 		require.Equal(t, "allowed", res.Rows[0].Key.Name)
 		require.Equal(t, []string{"allowed"}, res.Rows[0].Values[0].StringValues)
@@ -4211,7 +4165,7 @@ func TestFilteringOnBooleanAndNumericFields(t *testing.T) {
 		{"boolean value that is not true or false", filter("paused", "=", "yes")},
 		{"boolean compared with a range", filter("paused", "gt", "true")},
 		{"number value that is not a number", filter("panelID", "=", "ten")},
-		{"filter on a field that only declares retrieve", filter(resource.SEARCH_FIELD_CREATED, "gt", "0")},
+		{"filter on a field that only declares retrieve", filter(resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS, "=", "true")},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			res, err := index.Search(context.Background(), nil, tc.query, nil, nil)

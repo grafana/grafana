@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 import { useCallback, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { type FieldPathValues, useFormContext } from 'react-hook-form';
 import { useMountedState } from 'react-use';
 import { takeWhile } from 'rxjs/operators';
 
 import { type GrafanaTheme2, LoadingState, dateTimeFormatISO } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { previewAlertRule } from '../../api/preview';
@@ -18,7 +17,10 @@ import { isDataSourceManagedRuleByType } from '../../utils/rules';
 
 import { PreviewRuleResult } from './PreviewRuleResult';
 
-const fields: Array<keyof RuleFormValues> = ['type', 'dataSourceName', 'condition', 'queries', 'expression'];
+const fields = ['type', 'dataSourceName', 'condition', 'queries', 'expression'] as const satisfies ReadonlyArray<
+  keyof RuleFormValues
+>;
+type PreviewRuleValues = FieldPathValues<RuleFormValues, typeof fields>;
 
 export function PreviewRule(): React.ReactElement | null {
   const styles = useStyles2(getStyles);
@@ -86,22 +88,28 @@ export function usePreview(): [PreviewRuleResponse | undefined, () => void] {
   return [preview, onPreview];
 }
 
-function createPreviewRequest(values: any[]): PreviewRuleRequest {
+function createPreviewRequest(values: PreviewRuleValues): PreviewRuleRequest {
   const [type, dataSourceName, condition, queries, expression] = values;
-  const dsSettings = getDataSourceSrv().getInstanceSettings(dataSourceName);
-  if (!dsSettings) {
-    throw new Error(`Cannot find data source settings for ${dataSourceName}`);
-  }
 
   switch (type) {
-    case RuleFormType.cloudAlerting:
+    case RuleFormType.cloudAlerting: {
+      // The cloud data source picker writes the selected data source uid into the first query.
+      const dataSourceUid = queries[0]?.datasourceUid;
+      if (!dataSourceUid) {
+        throw new Error(`Cannot find data source settings for ${dataSourceName}`);
+      }
+
       return {
-        dataSourceUid: dsSettings.uid,
-        dataSourceName,
+        dataSourceUid,
         expr: expression,
       };
+    }
 
     case RuleFormType.grafana:
+      if (!condition) {
+        throw new Error('Cannot preview a Grafana-managed rule without a condition');
+      }
+
       return {
         grafana_condition: {
           condition,

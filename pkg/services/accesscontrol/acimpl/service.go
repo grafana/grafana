@@ -67,6 +67,7 @@ func ProvideService(
 	restConfigProvider restcfg.RestConfigProvider,
 	iamFeatures IAMFeatures,
 	legacyClient legacyclient.Service, roleCatalog *legacypermissions.RoleCatalog,
+	reg prometheus.Registerer,
 ) (*Service, error) {
 	service := ProvideOSSService(
 		cfg,
@@ -81,6 +82,8 @@ func ProvideService(
 		iamFeatures,
 		legacyClient, roleCatalog,
 	)
+
+	service.legacyShadow = NewLegacyUserPermissionsShadow(reg, cfg.RBAC.LegacyUserPermissionsShadowMaxConcurrent)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, userService).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service); err != nil {
@@ -126,6 +129,7 @@ func ProvideOSSService(
 		permRegistry:              permRegistry,
 		sql:                       db,
 		serverLock:                lock,
+		legacyShadow:              NewLegacyUserPermissionsShadow(nil, cfg.RBAC.LegacyUserPermissionsShadowMaxConcurrent),
 		legacyClient:              legacyClient,
 		roleCatalog:               roleCatalog,
 	}
@@ -157,6 +161,7 @@ type Service struct {
 	sql                       db.DB
 	serverLock                *serverlock.ServerLockService
 	singleFlight              singleflight.Group
+	legacyShadow              *LegacyUserPermissionsShadow
 	legacyClient              legacyclient.Service
 	userPermissionsClient     accesscontrol.UserPermissionsClient
 	zanzanaResolver           *ZanzanaPermissionResolver
@@ -178,7 +183,9 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	defer span.End()
 
 	delegate := s.cfg.RBAC.SingleOrganization && user.GetOrgID() != accesscontrol.GlobalOrgID && s.userPermissionsAPIEnabled
-	legacy := !delegate && LegacyUserPermissionsEnabled(ctx)
+	legacyEnabled := !delegate && LegacyUserPermissionsEnabled(ctx)
+	shadow := legacyEnabled && LegacyUserPermissionsShadowEnabled(ctx)
+	legacy := legacyEnabled && !shadow
 	// The legacy loader owns timing on this route.
 	if !legacy {
 		timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
@@ -194,6 +201,11 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	// The legacy toggle replaces local enumeration, not the delegated authority.
 	if legacy {
 		return GetLegacyUserPermissions(ctx, s.legacyClient, user, options, s.cfg)
+	}
+	if shadow {
+		return s.legacyShadow.GetUserPermissions(ctx, s.legacyClient, user, options, s.cfg, func() ([]accesscontrol.Permission, error) {
+			return s.getLocalUserPermissions(ctx, user, options)
+		})
 	}
 	return s.getLocalUserPermissions(ctx, user, options)
 }

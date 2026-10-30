@@ -122,6 +122,7 @@ func TestIntegrationKVBlobSupportOnResourceBlob(t *testing.T) {
 }
 
 type kvBlobTestEnv struct {
+	dialect  kv.Dialect
 	db       *stdsql.DB
 	ctx      context.Context
 	kv       kv.KV
@@ -139,6 +140,8 @@ func newKVBlobTestEnv(t *testing.T) *kvBlobTestEnv {
 	require.NoError(t, err)
 	sqlKV, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
 	require.NoError(t, err)
+	dialect, err := kv.DialectFromDriver(dbConn.DriverName())
+	require.NoError(t, err)
 
 	sqlBackend, err := sql.NewBackend(sql.BackendOptions{DBProvider: eDB})
 	require.NoError(t, err)
@@ -149,7 +152,7 @@ func newKVBlobTestEnv(t *testing.T) *kvBlobTestEnv {
 	sqlBlobs, ok := sqlBackend.(resource.BlobSupport)
 	require.True(t, ok)
 
-	return &kvBlobTestEnv{db: dbConn.SqlDB(), ctx: ctx, kv: sqlKV, kvBlobs: resource.NewKVBlobSupport(sqlKV), sqlBlobs: sqlBlobs}
+	return &kvBlobTestEnv{dialect: dialect, db: dbConn.SqlDB(), ctx: ctx, kv: sqlKV, kvBlobs: resource.NewKVBlobSupport(sqlKV), sqlBlobs: sqlBlobs}
 }
 
 type namedBlobStore struct {

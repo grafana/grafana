@@ -241,7 +241,9 @@ export interface RulePluginOrigin {
   pluginId: string;
 }
 
-export function getRulePluginOrigin(rule?: Rule | PromRuleDTO | RulerRuleDTO): RulePluginOrigin | undefined {
+export function getRulePluginOrigin(
+  rule?: Rule | PromRuleDTO | RulerRuleDTO | { labels?: Record<string, string> }
+): RulePluginOrigin | undefined {
   if (!rule) {
     return undefined;
   }

@@ -1,13 +1,16 @@
 import { css } from '@emotion/css';
+import { useId } from 'react';
 import { Observable } from 'rxjs';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useObservable } from '@grafana/data/unstable';
 import { Trans, t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Button, LoadingPlaceholder, Text, useStyles2 } from '@grafana/ui';
 
 import { useScopesServices } from '../ScopesContextProvider';
+import { useDebouncedScopesEnabled } from '../useDebouncedScopesEnabled';
 
 import { ScopesDashboardsTree } from './ScopesDashboardsTree';
 import { ScopesDashboardsTreeSearch } from './ScopesDashboardsTreeSearch';
@@ -25,16 +28,20 @@ interface Props {
  * the user deliberately opened.
  */
 export function ScopesDashboardsMegaMenuSection({ onNavigate }: Props) {
-  const styles = useStyles2(getStyles);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, visualRefreshEnabled);
   const scopes = useScopes();
   const scopeServices = useScopesServices();
+  const headingId = useId();
 
   useObservable(
     scopeServices?.scopesDashboardsService.stateObservable ?? new Observable(),
     scopeServices?.scopesDashboardsService.state
   );
 
-  if (!scopeServices || !scopes || !scopes.state.enabled || scopes.state.readOnly) {
+  const showAsEnabled = useDebouncedScopesEnabled(scopes?.state.enabled ?? false);
+
+  if (!scopeServices || !scopes || !showAsEnabled) {
     return null;
   }
 
@@ -49,79 +56,87 @@ export function ScopesDashboardsMegaMenuSection({ onNavigate }: Props) {
 
   return (
     <>
-      <div className={styles.heading}>
-        <Text variant="bodySmall" color="secondary" weight="medium">
-          {t('scopes.dashboards.megaMenuSectionHeading', 'Suggested dashboards')}
-        </Text>
-        <div className={styles.headingLine} />
-      </div>
-      <div className={styles.container} data-testid="scopes-dashboards-container">
-        <ScopesDashboardsTreeSearch
-          disabled={loading}
-          query={searchQuery}
-          onChange={changeSearchQuery}
-          showNavigationToggle={false}
-        />
-
-        {loading ? (
-          <LoadingPlaceholder
-            className={styles.loadingIndicator}
-            text={t('scopes.dashboards.loading', 'Loading dashboards')}
-            data-testid="scopes-dashboards-loading"
+      <div className={styles.box} role="group" aria-labelledby={headingId}>
+        <div className={styles.heading} id={headingId}>
+          <Text variant="bodySmall" color="secondary" weight="medium">
+            {t('scopes.dashboards.megaMenuSectionHeading', 'Suggested dashboards')}
+          </Text>
+          <div className={styles.headingLine} />
+        </div>
+        <div className={styles.container} data-testid="scopes-dashboards-container">
+          <ScopesDashboardsTreeSearch
+            disabled={loading}
+            query={searchQuery}
+            onChange={changeSearchQuery}
+            showNavigationToggle={false}
           />
-        ) : filteredFolders[''] ? (
-          // No ScrollContainer here - this already lives inside MegaMenu's single outer
-          // ScrollContainer, which handles scrolling for the whole nav. Giving the tree its own
-          // nested one (flex:1/maxHeight:100%) would compete for space with the pinned box and nav
-          // list siblings instead of flowing with them.
-          <ScopesDashboardsTree
-            folders={filteredFolders}
-            folderPath={['']}
-            subScopePath={[]}
-            onFolderUpdate={updateFolder}
-            onNavigate={onNavigate}
-          />
-        ) : (
-          <p className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundForFilter">
-            <Trans i18nKey="scopes.dashboards.noResultsForFilter">No results found for your query</Trans>
 
-            <Button
-              variant="secondary"
-              onClick={clearSearchQuery}
-              data-testid="scopes-dashboards-notFoundForFilter-clear"
-            >
-              <Trans i18nKey="scopes.dashboards.noResultsForFilterClear">Clear search</Trans>
-            </Button>
-          </p>
-        )}
+          {loading ? (
+            <LoadingPlaceholder
+              className={styles.loadingIndicator}
+              text={t('scopes.dashboards.loading', 'Loading dashboards')}
+              data-testid="scopes-dashboards-loading"
+            />
+          ) : filteredFolders[''] ? (
+            // No ScrollContainer here - this already lives inside MegaMenu's single outer
+            // ScrollContainer, which handles scrolling for the whole nav. Giving the tree its own
+            // nested one (flex:1/maxHeight:100%) would compete for space with the pinned box and nav
+            // list siblings instead of flowing with them.
+            <ScopesDashboardsTree
+              folders={filteredFolders}
+              folderPath={['']}
+              subScopePath={[]}
+              onFolderUpdate={updateFolder}
+              onNavigate={onNavigate}
+              megaMenuStyle
+            />
+          ) : (
+            <p className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundForFilter">
+              <Trans i18nKey="scopes.dashboards.noResultsForFilter">No results found for your query</Trans>
+
+              <Button
+                variant="secondary"
+                onClick={clearSearchQuery}
+                data-testid="scopes-dashboards-notFoundForFilter-clear"
+              >
+                <Trans i18nKey="scopes.dashboards.noResultsForFilterClear">Clear search</Trans>
+              </Button>
+            </p>
+          )}
+        </div>
       </div>
       <hr className={styles.dividerLine} />
     </>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
   return {
+    // Matches MegaMenu's own pinnedBox margin, so this section insets the same way the pinned box
+    // does rather than carrying its own one-off spacing.
+    box: css({
+      margin: visualRefreshEnabled ? theme.spacing(0, 1, 1, 1) : theme.spacing(1, 1, 0, 1),
+    }),
+    // Matches MegaMenu's pinnedHeading/pinnedHeadingLine exactly, including the paddingLeft that
+    // lines the heading icon column up with the pinned/nav item rows.
     heading: css({
       alignItems: 'center',
       color: theme.colors.text.secondary,
       display: 'flex',
       gap: theme.spacing(1),
       height: theme.spacing(3.5),
-      paddingLeft: theme.spacing(2),
+      paddingLeft: theme.spacing(1),
       marginBottom: theme.spacing(0.5),
     }),
     headingLine: css({
       flexGrow: 1,
       height: '1px',
       background: `linear-gradient(90deg, ${theme.colors.border.weak} 65%, transparent 100%)`,
-      marginRight: theme.spacing(1),
     }),
     container: css({
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
-      padding: theme.spacing(0, 1, 1, 1),
     }),
     noResultsContainer: css({
       alignItems: 'center',
