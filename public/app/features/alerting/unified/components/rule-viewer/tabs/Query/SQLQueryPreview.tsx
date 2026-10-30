@@ -1,5 +1,3 @@
-import { noop } from 'lodash';
-
 import { t } from '@grafana/i18n';
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { type AlertDataQuery } from 'app/types/unified-alerting-dto';
@@ -11,7 +9,7 @@ interface Props {
 export const SQLQueryPreview = ({ expression }: Props) => (
   <CodeMirrorEditor
     value={expression}
-    onChange={noop}
+    onChange={() => {}}
     language="sql"
     height="80px"
     readOnly
