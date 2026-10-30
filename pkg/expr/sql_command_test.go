@@ -2,6 +2,7 @@ package expr
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -398,4 +399,41 @@ func TestSQLCommandTableInputWithRepeatedColumnNames(t *testing.T) {
 		data.Labels{"host": "a", "host_2": "y"}.String(): 2,
 		data.Labels{"host": "b", "host_2": "x"}.String(): 3,
 	}, got)
+}
+
+func TestSQLCommandInvalidJSONInput(t *testing.T) {
+	// The SDK decodes an Arrow Binary column as a JSON field, so raw bytes from
+	// a plugin reach SQL Expressions as json.RawMessage values that are not JSON.
+	frame := data.NewFrame("",
+		data.NewField("id", nil, []int32{1}),
+		data.NewField("vb", nil, []json.RawMessage{json.RawMessage("\x01\x02\x03\x04")}),
+	)
+	converted, _ := handleSqlInput(t.Context(), &testTracer{}, "A", map[string]struct{}{"B": {}}, "fakeDS", data.Frames{frame})
+	require.NoError(t, converted.Error)
+
+	run := func(t *testing.T, format string) mathexp.Results {
+		cmd, err := NewSQLCommand(t.Context(), log.NewNullLogger(), "B", format, "SELECT COUNT(*) AS n FROM A", 0, 0, 0)
+		require.NoError(t, err)
+		res, err := cmd.Execute(t.Context(), time.Now(), mathexp.Vars{"A": converted}, tracing.NewNoopTracerService(), metrics.NewTestMetrics())
+		require.NoError(t, err)
+		require.NoError(t, res.Error)
+		require.Len(t, res.Values, 1)
+		return res
+	}
+
+	t.Run("table format", func(t *testing.T) {
+		frame := run(t, "").Values[0].AsDataFrame()
+		require.Equal(t, 1, frame.Rows())
+		require.NotNil(t, frame.Meta)
+		require.Equal(t, []data.Notice{{
+			Severity: data.NoticeSeverityWarning,
+			Text:     "A: column vb has values that are not valid JSON (1 of 1 rows). They read as NULL.",
+		}}, frame.Meta.Notices)
+	})
+
+	t.Run("alerting format", func(t *testing.T) {
+		n, ok := run(t, "alerting").Values[0].(mathexp.Number)
+		require.True(t, ok)
+		require.Equal(t, 1.0, *n.GetFloat64Value())
+	})
 }
