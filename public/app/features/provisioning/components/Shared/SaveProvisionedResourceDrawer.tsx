@@ -25,7 +25,7 @@ import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getManagerIdentity, getSourcePath, type ManagedResource } from '../../utils/managedResource';
 import { type ResourceBranchAction } from '../../utils/redirect';
-import { getKindInfoByGroupKind, type ResourceKindInfo } from '../../utils/resourceKinds';
+import { getKindInfoByStat, type ResourceKindInfo } from '../../utils/resourceKinds';
 import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { getCanPushToConfiguredBranch, getDefaultRef } from '../defaults';
@@ -80,6 +80,7 @@ interface BaseDrawerProps {
   readOnlyMessage?: string;
   /** Prefix for generated branch names. Defaults to the kind's key. */
   branchPrefix?: string;
+  directory?: string;
   onDismiss?: () => void;
   /** Override the default post-commit (configured-branch) navigation to the kind's list page. */
   onWriteSuccess?: () => void;
@@ -137,8 +138,9 @@ function FormContent({
   onBranchSuccess,
 }: FormProps) {
   const [error, setError] = useState<string | undefined>(undefined);
-  // The kind's stable key is the UI-facing resource type for the commit message, telemetry and fields.
-  const resourceType = kind.key;
+  // The kind name is the UI-facing resource type for the commit message, telemetry and fields: a plugin
+  // kind's registry key is `group/Kind`, which the commit message would escape.
+  const resourceType = kind.kind.toLowerCase();
   const isDelete = action === 'delete';
   // New resources are POSTed (create), existing ones PUT (replace). The wrapper keys off the
   // original path: passing it selects update, omitting it selects create.
@@ -281,24 +283,23 @@ function FormContent({
  * pages with no per-kind wrapper. Pass the resource, its title and the action: the drawer resolves
  * the kind from the resource's `apiVersion`+`kind` and derives the rest — the committed file body, a
  * new resource's name/path/annotations, the commit message and the post-commit navigation. `delete`
- * commits no body. Renders nothing if the resource isn't a registered provisioning kind (pages only
- * open it for known managed resources).
+ * commits no body. Renders nothing if the resource has no apiVersion or kind.
  */
 export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDrawerProps) {
   // The resource carries its own identity: its API group (from apiVersion) + Kubernetes kind resolve
   // the registry descriptor, so callers don't pass the kind separately.
-  const kind = getKindInfoByGroupKind(props.resource.apiVersion?.split('/')[0], props.resource.kind);
-  if (!kind) {
-    // Pages only open this for known managed resources, so an unresolved kind means a bad fixture or a
-    // new kind wired into a page before its registry entry exists. Warn in dev so it's a visible signal
-    // rather than a silent no-op where the user clicks save/delete and nothing happens.
+  const group = props.resource.apiVersion?.split('/')[0];
+  if (!group || !props.resource.kind) {
+    // Warn in dev so it's a visible signal rather than a silent no-op where the user clicks save/delete
+    // and nothing happens.
     if (process.env.NODE_ENV !== 'production') {
       console.warn(
-        `SaveProvisionedResourceDrawer: no registered provisioning kind for "${props.resource.apiVersion}"/"${props.resource.kind}"; the drawer will not render.`
+        `SaveProvisionedResourceDrawer: the resource has no apiVersion or kind ("${props.resource.apiVersion}"/"${props.resource.kind}"); the drawer will not render.`
       );
     }
     return null;
   }
+  const kind = getKindInfoByStat({ group, kind: props.resource.kind });
   return <ResourceDrawerContent {...props} kind={kind} />;
 }
 
@@ -313,6 +314,7 @@ function ResourceDrawerContent({
   successMessage,
   readOnlyMessage,
   branchPrefix,
+  directory = '',
   onDismiss,
   onWriteSuccess,
   onBranchSuccess,
@@ -335,7 +337,7 @@ function ResourceDrawerContent({
           annotations: {
             [AnnoKeyManagerKind]: ManagerKind.Repo,
             [AnnoKeyManagerIdentity]: repositoryName ?? '',
-            [AnnoKeySourcePath]: getNewResourcePath(title, kind.key),
+            [AnnoKeySourcePath]: directory + getNewResourcePath(title, kind.kind.toLowerCase()),
           },
         },
       }
@@ -346,8 +348,8 @@ function ResourceDrawerContent({
     ? undefined
     : { apiVersion: resource.apiVersion, kind: resource.kind, metadata: { name: resourceName }, spec: resource.spec };
 
-  // Branch names can't contain spaces, so prefix from the stable `key`, not the display noun.
-  const prefix = branchPrefix ?? kind.key;
+  // Branch names can't contain spaces or dots, so prefix from the kind name, not the display noun.
+  const prefix = branchPrefix ?? kind.kind.toLowerCase();
   const { repository, isLoading, isReadOnlyRepo, isMissingRepo } = useGetResourceRepositoryView({
     name: getManagerIdentity(managedResource),
   });

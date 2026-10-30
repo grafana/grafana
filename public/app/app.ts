@@ -56,6 +56,7 @@ import {
   setPanelDataErrorView,
   setManagedBadge,
   setPullRequestBanner,
+  setSaveResourceDrawer,
   setPanelRenderer,
   setPluginPage,
 } from '@grafana/runtime/internal';
@@ -127,6 +128,7 @@ import { initSystemJSHooks } from './features/plugins/loader/systemjsHooks';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { LazyManagedBadge } from './features/provisioning/components/LazyManagedBadge';
 import { LazyPullRequestBanner } from './features/provisioning/components/Shared/LazyPullRequestBanner';
+import { LazySaveProvisionedResourceDrawer } from './features/provisioning/components/Shared/LazySaveProvisionedResourceDrawer';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
@@ -236,6 +238,7 @@ export class GrafanaApp {
       setPluginPage(PluginPage);
       setManagedBadge(LazyManagedBadge);
       setPullRequestBanner(LazyPullRequestBanner);
+      setSaveResourceDrawer(LazySaveProvisionedResourceDrawer);
       setFolderPicker(LazyFolderPicker);
       setDataSourcePicker(RuntimeDataSourcePickerShim);
       setPanelDataErrorView(LazyPanelDataErrorView);

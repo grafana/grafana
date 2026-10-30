@@ -76,6 +76,12 @@ export { FolderPicker, setFolderPicker } from './components/FolderPicker';
 export { ManagedBadge, type ManagedBadgeProps } from './provisioning/ManagedBadge';
 export { PullRequestBanner, type PullRequestBannerProps } from './provisioning/PullRequestBanner';
 export {
+  SaveResourceDrawer,
+  type SaveResourceDrawerProps,
+  type SaveResourceDrawerResource,
+  type SaveResourceDrawerBranchCommit,
+} from './provisioning/SaveResourceDrawer';
+export {
   type CorrelationsService,
   type CorrelationData,
   type CorrelationsData,

@@ -53,13 +53,18 @@ export function useProvisionedResourceDrawerHandlers(kind: ResourceKindInfo): Pr
 
   const goToList = () => {
     invalidate();
-    navigate(kind.listRoute);
+    if (kind.listRoute) {
+      navigate(kind.listRoute);
+    }
   };
 
   const makeOnBranchSuccess =
     (action: ResourceBranchAction) =>
     ({ ref, urls, repoType, configuredBranch, repoUrl, prTitle }: BranchSuccessData) => {
       invalidate();
+      if (!kind.listRoute) {
+        return;
+      }
       navigate(
         buildResourceBranchRedirectUrl({
           baseUrl: kind.listRoute,
