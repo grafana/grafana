@@ -24,7 +24,7 @@ import (
 
 const (
 	permissionPrincipalConcurrency = 8
-	permissionPrincipalMaxCount    = 100000
+	permissionPrincipalMaxCount    = 10000
 	permissionPrincipalLoadTimeout = 10 * time.Second
 )
 
