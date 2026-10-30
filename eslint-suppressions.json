@@ -686,11 +686,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/utils/useAsyncDependency.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/app.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 2
