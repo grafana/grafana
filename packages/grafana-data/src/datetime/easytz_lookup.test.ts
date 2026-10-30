@@ -48,6 +48,64 @@ describe('findTimeZoneAt', () => {
     expect(findTimeZoneAt('Foo/Bar', JUL)).toBeUndefined();
     expect(findTimeZoneAt('', JUL)).toBeUndefined();
   });
+
+  // British Columbia stays at UTC−7 after 2026-11-01 02:00 Pacific. The vendored
+  // rules still fall Vancouver back with Los Angeles, which shows 12:00Z as 04:00.
+  describe('America/Vancouver after British Columbia ended daylight saving', () => {
+    const noon = (iso: string) => Date.parse(iso);
+    const beforeFallback = noon('2026-11-01T08:59:59Z');
+    const atFallback = noon('2026-11-01T09:00:00Z');
+    const december = noon('2026-12-01T12:00:00Z');
+
+    it('keeps the old Pacific schedule until the last fall-back instant', () => {
+      expect(findTimeZoneAt('America/Vancouver', noon('2026-01-01T12:00:00Z'))).toMatchObject({
+        abbr: 'PST',
+        offset: -480,
+        offsetDisplay: '-08:00',
+      });
+      expect(findTimeZoneAt('America/Vancouver', noon('2026-07-01T12:00:00Z'))).toMatchObject({
+        abbr: 'PDT',
+        offset: -420,
+        offsetDisplay: '-07:00',
+      });
+      expect(findTimeZoneAt('America/Vancouver', beforeFallback)).toMatchObject({
+        abbr: 'PDT',
+        offset: -420,
+        offsetDisplay: '-07:00',
+      });
+    });
+
+    it('stays at UTC−7 from the old fall-back instant onward', () => {
+      expect(findTimeZoneAt('America/Vancouver', atFallback)).toMatchObject({
+        abbr: 'MST',
+        offset: -420,
+        offsetDisplay: '-07:00',
+      });
+      expect(findTimeZoneAt('America/Vancouver', december)).toMatchObject({
+        abbr: 'MST',
+        offset: -420,
+        offsetDisplay: '-07:00',
+      });
+      expect(findTimeZoneAt('America/Vancouver', noon('2027-01-01T12:00:00Z'))).toMatchObject({
+        abbr: 'MST',
+        offset: -420,
+        offsetDisplay: '-07:00',
+      });
+    });
+
+    it('does not change America/Los_Angeles', () => {
+      expect(findTimeZoneAt('America/Los_Angeles', december)).toMatchObject({
+        abbr: 'PST',
+        offset: -480,
+        offsetDisplay: '-08:00',
+      });
+    });
+
+    it('uses the same entry in the zone list as a direct lookup', () => {
+      const direct = findTimeZoneAt('America/Vancouver', december);
+      expect(getTimeZonesAt(december).find((tz) => tz.name === 'America/Vancouver')).toBe(direct);
+    });
+  });
 });
 
 describe('canonicalZoneName', () => {
