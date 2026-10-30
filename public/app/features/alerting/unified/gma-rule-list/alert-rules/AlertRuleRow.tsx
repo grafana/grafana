@@ -60,12 +60,12 @@ export function AlertRuleRow({ searchHit, folderPath, rule }: AlertRuleRowProps)
       right={searchHit.interval && <RuleInterval interval={searchHit.interval} />}
       meta={[
         folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />,
-        searchHit.datasourceUIDs && searchHit.datasourceUIDs.length > 0 && (
-          <RuleDatasources key="ds" datasourceUIDs={searchHit.datasourceUIDs} />
-        ),
         hasAnyTotals(searchHit) && <RuleInstanceCounts key="counts" searchHit={searchHit} />,
         // parseSearchLabels guarantees labels is non-empty when present; RuleLabels handles the null case.
         searchHit.labels && <RuleLabels key="labels" labels={searchHit.labels} />,
+        searchHit.datasourceUIDs && searchHit.datasourceUIDs.length > 0 && (
+          <RuleDatasources key="ds" datasourceUIDs={searchHit.datasourceUIDs} />
+        ),
         searchHit.notificationType && <RuleRouting key="routing" searchHit={searchHit} />,
       ]}
     />
