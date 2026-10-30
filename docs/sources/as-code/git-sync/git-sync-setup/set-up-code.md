@@ -157,7 +157,7 @@ An OAuth App connection needs a user to approve access in the browser. After you
 1. Select the connection and click **Reauthorize**.
 1. Approve the access in the provider tab that opens.
 
-### Create the repository resource
+## Create the repository resource
 
 A repository resource is a Grafana configuration object that defines the connection between a group of repositories and your Grafana instance via Git Sync. Depending on your Git provider and authentication method, add your Personal Access Token information or the connection name.
 
