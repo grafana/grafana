@@ -233,16 +233,9 @@ func pluginDefinitionKey(plugin definition.PluginDefinition) (string, error) {
 }
 
 // initLocalPlugin does what a plugin run by this Grafana needs before the
-// router serves it: it resolves the settings storage default and declares the
-// roles of its manifests. Roles of a plugin that is later removed stay
+// router serves it: it declares the roles of its manifests. Roles of a plugin that is later removed stay
 // declared until restart, which is harmless once its group is no longer routed.
 func initLocalPlugin(ctx context.Context, deps PluginLoaderDependencies, plugin definition.PluginDefinition) error {
-	// The handler installs settings on a copy of the storage config, so resolve
-	// the wildcard default where the shared dual-write service reads it.
-	if deps.Cfg != nil {
-		appsettings.ApplyDefaultSettingsStorageConfig(deps.Cfg.UnifiedStorage, plugin.JSONData.ID)
-	}
-
 	for _, manifest := range plugin.Manifests {
 		if err := declareLocalManifestRoles(ctx, deps.ACService, plugin.JSONData.ID, plugin.JSONData.Name, manifest); err != nil {
 			return err

@@ -521,20 +521,6 @@ func TestPluginLoaderDeclaresNoRolesWhenLoadFails(t *testing.T) {
 	require.Zero(t, roles.calls, "a plugin that cannot be served declares no roles")
 }
 
-func TestInitLocalPluginResolvesSettingsStorageWildcard(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
-		"app.*-app":        {DualWriterMode: 1},
-		"app.explicit-app": {DualWriterMode: 3},
-	}
-	deps := PluginLoaderDependencies{PluginDependencies: PluginDependencies{Cfg: cfg}}
-	for _, id := range []string{"wildcard-app", "explicit-app"} {
-		require.NoError(t, initLocalPlugin(t.Context(), deps, definition.PluginDefinition{JSONData: plugins.JSONData{ID: id}}))
-	}
-	require.EqualValues(t, 1, cfg.UnifiedStorage["app.wildcard-app"].DualWriterMode, "the shared dual-write service must see the wildcard default")
-	require.EqualValues(t, 3, cfg.UnifiedStorage["app.explicit-app"].DualWriterMode, "explicit config wins over the wildcard")
-}
-
 // storedPlugin is a bundle's primary plugin as the plugin store lists it.
 func storedPlugin(b *plugins.FoundBundle) pluginstore.Plugin {
 	return pluginstore.Plugin{JSONData: b.Primary.JSONData, FS: b.Primary.FS}
