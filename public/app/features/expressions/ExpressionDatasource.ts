@@ -4,6 +4,7 @@ import {
   type DataFrame,
   type DataQueryRequest,
   type DataQueryResponse,
+  type DataSourceApi,
   type DataSourceInstanceSettings,
   type DataSourcePluginMeta,
   FieldType,
@@ -88,6 +89,38 @@ function restoreSQLDisplayNames(response: DataQueryResponse, queries: Expression
   };
 }
 
+// Each data source gets all of its queries in one call, as it does in a panel, so it can resolve
+// references between them (such as Graphite's `#A`). Results are matched back by refId because
+// a data source may return them in a different order.
+async function interpolateQueriesByDataSource(request: DataQueryRequest<ExpressionQuery>): Promise<ExpressionQuery[]> {
+  const instances = await Promise.all(
+    request.targets.map((query) => getDataSourceInstance(query.datasource, request.scopedVars))
+  );
+
+  const groups = new Map<string | undefined, { ds: DataSourceApi; indexes: number[] }>();
+  instances.forEach((ds, i) => {
+    const group = groups.get(ds.uid) ?? { ds, indexes: [] };
+    group.indexes.push(i);
+    groups.set(ds.uid, group);
+  });
+
+  const result = [...request.targets];
+  for (const { ds, indexes } of groups.values()) {
+    if (!ds.interpolateVariablesInQueries) {
+      continue;
+    }
+    const queries = indexes.map((i) => request.targets[i]);
+    const byRefId = new Map(
+      ds.interpolateVariablesInQueries(queries, request.scopedVars, request.filters).map((q) => [q.refId, q])
+    );
+    for (const i of indexes) {
+      result[i] = (byRefId.get(request.targets[i].refId) as ExpressionQuery | undefined) ?? request.targets[i];
+    }
+  }
+
+  return result;
+}
+
 /**
  * This is a singleton instance that just pretends to be a DataSource
  */
@@ -110,18 +143,7 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
   }
 
   query(request: DataQueryRequest<ExpressionQuery>): Observable<DataQueryResponse> {
-    let targets = request.targets.map(async (query: ExpressionQuery): Promise<ExpressionQuery> => {
-      const ds = await getDataSourceInstance(query.datasource, request.scopedVars);
-
-      if (!ds.interpolateVariablesInQueries) {
-        return query;
-      }
-
-      return ds?.interpolateVariablesInQueries([query], request.scopedVars, request.filters)[0] as ExpressionQuery;
-    });
-
-    let sub = from(Promise.all(targets));
-    return sub.pipe(
+    return from(interpolateQueriesByDataSource(request)).pipe(
       mergeMap((queries) =>
         super.query({ ...request, targets: queries }).pipe(map((response) => restoreSQLDisplayNames(response, queries)))
       )

@@ -13,6 +13,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { ExpressionDatasourceApi } from './ExpressionDatasource';
@@ -128,6 +129,97 @@ describe('ExpressionDatasourceApi', () => {
           targets: [expect.objectContaining({ expression: '$A + $B' })],
         })
       );
+    });
+
+    describe('when several queries share a data source', () => {
+      // Mirrors a data source such as Graphite that resolves `#A` references from sibling queries.
+      type GraphiteQuery = DataQuery & { target: string };
+      // The expression path types every query as `ExpressionQuery`, even data source queries.
+      const asExpressionQuery = (query: GraphiteQuery) => query as unknown as ExpressionQuery;
+      const resolveSiblingRefs = (queries: GraphiteQuery[]) => {
+        const targets = new Map(queries.map((q) => [q.refId, q.target]));
+        return queries.map((q) => ({
+          ...q,
+          targetFull: q.target.replace(/#([A-Z])/g, (match, ref) => targets.get(ref) ?? match),
+        }));
+      };
+
+      const mockDataSources = (byUid: Record<string, object>) => {
+        mockGetDatasource.mockImplementation(async (ref: { uid: string }) => byUid[ref.uid]);
+      };
+
+      it('interpolates them in one call so a query can resolve a hidden sibling it references', async () => {
+        const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+        const hiddenSource = asExpressionQuery({
+          refId: 'A',
+          hide: true,
+          target: 'metric.a',
+          datasource: { uid: 'graphite', type: 'graphite' },
+        });
+        const nested = asExpressionQuery({
+          refId: 'B',
+          target: 'sumSeries(#A)',
+          datasource: { uid: 'graphite', type: 'graphite' },
+        });
+        const sql: ExpressionQuery = {
+          type: ExpressionQueryType.sql,
+          refId: 'C',
+          expression: 'SELECT * FROM B',
+          datasource: { uid: '__expr__', type: '__expr__' },
+        };
+        const graphite = { uid: 'graphite', interpolateVariablesInQueries: jest.fn(resolveSiblingRefs) };
+        const expr = { uid: '__expr__', interpolateVariablesInQueries: jest.fn((queries) => queries) };
+        mockDataSources({ graphite, __expr__: expr });
+        const querySpy = jest.spyOn(DataSourceWithBackend.prototype, 'query').mockReturnValue(of({ data: [] }));
+
+        await lastValueFrom(ds.query(buildRequest([hiddenSource, nested, sql], {})));
+
+        expect(graphite.interpolateVariablesInQueries).toHaveBeenCalledTimes(1);
+        expect(graphite.interpolateVariablesInQueries).toHaveBeenCalledWith([hiddenSource, nested], {}, []);
+        expect(expr.interpolateVariablesInQueries).toHaveBeenCalledTimes(1);
+        expect(expr.interpolateVariablesInQueries).toHaveBeenCalledWith([sql], {}, []);
+        expect(querySpy).toHaveBeenCalledTimes(1);
+        expect(querySpy.mock.calls[0][0].targets).toEqual([
+          { ...hiddenSource, targetFull: 'metric.a' },
+          { ...nested, targetFull: 'sumSeries(metric.a)' },
+          sql,
+        ]);
+      });
+
+      it('keeps request order and matches results to queries by refId when data sources are interleaved', async () => {
+        const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+        const a = { refId: 'A', datasource: { uid: 'first', type: 'mysql' } } as ExpressionQuery;
+        const b = { refId: 'B', datasource: { uid: 'second', type: 'mysql' } } as ExpressionQuery;
+        const c = { refId: 'C', datasource: { uid: 'first', type: 'mysql' } } as ExpressionQuery;
+        // Returns its results in reverse order to prove they are matched by refId, not by position.
+        const first = {
+          uid: 'first',
+          interpolateVariablesInQueries: jest.fn((queries: ExpressionQuery[]) =>
+            queries.map((q) => ({ ...q, expression: `first:${q.refId}` })).reverse()
+          ),
+        };
+        const second = {
+          uid: 'second',
+          interpolateVariablesInQueries: jest.fn((queries: ExpressionQuery[]) =>
+            queries.map((q) => ({ ...q, expression: `second:${q.refId}` }))
+          ),
+        };
+        mockDataSources({ first, second });
+        const querySpy = jest.spyOn(DataSourceWithBackend.prototype, 'query').mockReturnValue(of({ data: [] }));
+
+        await lastValueFrom(ds.query(buildRequest([a, b, c], {})));
+
+        expect(first.interpolateVariablesInQueries).toHaveBeenCalledTimes(1);
+        expect(first.interpolateVariablesInQueries).toHaveBeenCalledWith([a, c], {}, []);
+        expect(second.interpolateVariablesInQueries).toHaveBeenCalledTimes(1);
+        expect(second.interpolateVariablesInQueries).toHaveBeenCalledWith([b], {}, []);
+        expect(querySpy).toHaveBeenCalledTimes(1);
+        expect(querySpy.mock.calls[0][0].targets).toEqual([
+          { ...a, expression: 'first:A' },
+          { ...b, expression: 'second:B' },
+          { ...c, expression: 'first:C' },
+        ]);
+      });
     });
 
     it('restores display names for a SQL expression and its converted source frame', async () => {
