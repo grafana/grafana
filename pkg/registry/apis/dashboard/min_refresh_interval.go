@@ -14,10 +14,13 @@ import (
 // Keep in sync with min_refresh_interval in the [dashboards] section of conf/defaults.ini.
 const defaultMinRefreshInterval = "5s"
 
+// source=us selects the overrides stored in unified storage,
+// so the settings service skips loading the defaults and from hgapi.
 var minRefreshIntervalSelector = metav1.LabelSelector{
 	MatchLabels: map[string]string{
 		"section": "dashboards",
 		"key":     "min_refresh_interval",
+		"source":  "us",
 	},
 }
 
@@ -59,6 +62,5 @@ func (b *DashboardsAPIBuilder) minRefreshIntervalFor(ctx context.Context, namesp
 		return value
 	}
 
-	log.Warn("min_refresh_interval missing from the settings service response, using the default")
 	return b.minRefreshInterval
 }

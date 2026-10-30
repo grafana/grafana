@@ -87,7 +87,7 @@ func TestDashboardAPIBuilder_MinRefreshIntervalFor(t *testing.T) {
 			expected: "5s",
 		},
 		{
-			name:     "when the setting is missing, returns the default 5s",
+			name:     "when the stack has no override, returns the default 5s",
 			service:  &fakeSettingService{},
 			expected: "5s",
 		},
@@ -120,7 +120,11 @@ func TestDashboardAPIBuilder_MinRefreshIntervalFor(t *testing.T) {
 			if tt.service != nil {
 				require.Equal(t, 1, tt.service.calls)
 				require.Equal(t, "stacks-1", tt.service.namespace)
-				require.Equal(t, minRefreshIntervalSelector, tt.service.selector)
+				require.Equal(t, metav1.LabelSelector{MatchLabels: map[string]string{
+					"section": "dashboards",
+					"key":     "min_refresh_interval",
+					"source":  "us",
+				}}, tt.service.selector)
 			}
 		})
 	}
