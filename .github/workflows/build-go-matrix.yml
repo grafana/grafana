@@ -77,6 +77,8 @@ jobs:
           persist-credentials: false
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          cache-build: 'false'
       - name: Build Go (${{ matrix.name }})
         env:
           CGO_ENABLED: "0"
@@ -150,6 +152,8 @@ jobs:
           token: ${{ steps.get-github-app-token.outputs.token }}
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          cache-build: 'false'
       - name: Build Go (${{ matrix.name }})
         env:
           CGO_ENABLED: "0"
