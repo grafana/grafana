@@ -33,7 +33,12 @@
         },
         "changelog": {
           "projectChangelogs": {
-            "file": "{projectRoot}/CHANGELOG.md"
+            "file": "{projectRoot}/CHANGELOG.md",
+            "renderOptions": {
+              "authors": false,
+              "commitReferences": false,
+              "versionTitleDate": true
+            }
           },
           "git": {
             "commit": false,
