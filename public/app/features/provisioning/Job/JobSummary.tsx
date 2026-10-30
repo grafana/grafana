@@ -2,7 +2,7 @@ import { t } from '@grafana/i18n';
 import { Icon, InteractiveTable, Stack } from '@grafana/ui';
 import { type JobResourceSummary } from 'app/api/clients/provisioning/v0alpha1';
 
-import { getKindInfoByGroupKind } from '../utils/resourceKinds';
+import { getKindDisplayByGroupKind } from '../utils/resourceKinds';
 
 type SummaryCell = {
   row: {
@@ -15,8 +15,8 @@ const getSummaryColumns = () => [
     id: 'resource',
     header: t('provisioning.job-summary.column-resource', 'Resource'),
     cell: ({ row: { original: item } }: SummaryCell) => {
-      const info = getKindInfoByGroupKind(item.group, item.kind);
-      const kind = item.kind || t('provisioning.job-summary.unknown-kind', 'Unknown');
+      const info = getKindDisplayByGroupKind(item.group, item.kind);
+      const kind = info?.pluralLabel() ?? (item.kind || t('provisioning.job-summary.unknown-kind', 'Unknown'));
       return (
         <Stack direction="row" alignItems="center" gap={1}>
           <Icon name={info?.icon ?? 'question-circle'} />

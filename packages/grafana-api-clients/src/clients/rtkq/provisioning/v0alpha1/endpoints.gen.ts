@@ -2298,8 +2298,16 @@ export type SupportedResource = {
   disabled?: boolean;
   /** Group is the API group of the resource (e.g. "dashboard.grafana.app"). */
   group: string;
+  /** Icon is the name of a Grafana UI icon from the app manifest. */
+  icon?: string;
   /** Kind is the kind of the resource (e.g. "Dashboard"). */
   kind: string;
+  /** Label is the singular display name from the app manifest. */
+  label?: string;
+  /** PluralLabel is the plural display name from the app manifest. */
+  pluralLabel?: string;
+  /** Resource is the plural resource name, when an app manifest declares the kind. */
+  resource?: string;
 };
 export type RepositoryView = {
   /** For git, this is the target branch */
