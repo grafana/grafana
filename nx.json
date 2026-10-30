@@ -32,18 +32,11 @@
           "ignorePatternsForPlanCheck": ["**/*.test.ts", "**/*.test.tsx"]
         },
         "changelog": {
-          "projectChangelogs": {
-            "file": "{projectRoot}/CHANGELOG.md",
-            "renderOptions": {
-              "authors": false,
-              "commitReferences": false,
-              "versionTitleDate": true
-            }
-          },
-          "git": {
-            "commit": false,
-            "tag": false,
-            "stageChanges": false
+          "file": "{projectRoot}/CHANGELOG.md",
+          "renderOptions": {
+            "authors": false,
+            "commitReferences": false,
+            "versionTitleDate": true
           }
         }
       }
