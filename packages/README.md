@@ -60,6 +60,8 @@ Below 1.0 Nx shifts the bump down one level (its [`adjustSemverBumpsForZeroMajor
 
 `perf`, `refactor`, `docs`, `build`, `types`, `examples`, `test`, `style`, `ci` and `revert` do not release either. Use `fix` for an internal improvement that consumers should get. Several pull requests in one release combine into the highest bump, and every releasing title becomes a changelog entry.
 
+When a releasing change lands on `main`, the `Release NPM version PR` workflow opens or updates one pull request titled `Release: Frontend packages` from the `nx-release-branch--main` branch. It writes the new versions and changelog entries. Merging that pull request releases the packages. To preview it, run the workflow from the Actions tab with `dry_run` enabled.
+
 Nx finds the changes since the last release from the `<name>@<version>` git tag of the package, for example `@grafana/plugin-compat@0.10.0`, which the publish workflow creates. Do not delete these tags.
 
 ### Stable releases
