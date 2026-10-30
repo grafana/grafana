@@ -55,6 +55,7 @@ func TestController_LargeFolderCompletesOverSeveralPasses(t *testing.T) {
 		synctest.Wait()
 
 		require.False(t, m.exists("a"))
+		require.Zero(t, m.noIdentity, "every call must run as the service identity")
 		require.Len(t, m.deleteCalls, 300)
 		// 3 batches and the release, plus at most the trailing not-found from the release's own events.
 		require.GreaterOrEqual(t, m.getCount("a"), 4)
@@ -341,4 +342,53 @@ func (f fanout) OnDelete(obj any) {
 	for _, h := range f {
 		h.OnDelete(obj)
 	}
+}
+
+func TestController_InvalidNamespaceIsDroppedWithoutWork(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		m := newMemStore()
+		c, stop := startController(t, m, 100)
+		defer stop()
+
+		// A namespace that cannot be parsed has no org to run as, and retrying cannot fix it.
+		c.Handler().OnAdd(&foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: "not a namespace!", Name: "x"}}, false)
+		synctest.Wait()
+
+		require.Empty(t, m.gets, "nothing is read for a key that cannot be reconciled")
+	})
+}
+
+// A folder is reconciled as the service for its namespace's org, and cloud stacks map to org 1, so
+// none of the namespaces Grafana generates may be mistaken for one with no org to run as.
+func TestController_GeneratedNamespacesAreReconciled(t *testing.T) {
+	for _, namespace := range []string{"default", "org-2", "stacks-11"} {
+		t.Run(namespace, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				m := newMemStore()
+				m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+				m.userDelete("a")
+				// No handler on the store, so the only event is the one for this namespace.
+				c := NewController(m, newTestReconciler(m, 100), nil)
+				stop := run(c)
+				defer stop()
+
+				c.Handler().OnAdd(&foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "a"}}, false)
+				synctest.Wait()
+
+				require.False(t, m.exists("a"), "the folder is released, not skipped")
+				require.Zero(t, m.noIdentity)
+			})
+		})
+	}
+}
+
+func TestController_ShutDownStopsTheQueueWithoutRun(t *testing.T) {
+	m := newMemStore()
+	c := NewController(m, newTestReconciler(m, 100), nil)
+
+	c.ShutDown()
+	c.ShutDown() // a failed start and a later Run may both do it
+
+	_, shutdown := c.queue.Get()
+	require.True(t, shutdown, "workers started after a ShutDown must find the queue closed")
 }

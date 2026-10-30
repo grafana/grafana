@@ -8,12 +8,23 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+// DefaultWorkers is how many folders are reconciled concurrently.
+const DefaultWorkers = 4
+
+// ResyncPeriod is how often the event source re-delivers every folder. It is only a backstop for
+// events the controller missed; progress is driven by requeues, not by it.
+const ResyncPeriod = 10 * time.Minute
 
 // DefaultRateLimiter backs off a folder whose pass failed or only found children the index still
 // lists after they were deleted. Progress never goes through it, so a cascade that is making
@@ -55,6 +66,14 @@ func NewController(folders FolderGetter, r *Reconciler, limiter workqueue.TypedR
 	}
 }
 
+// NewDefaultController assembles the controller every entry point runs, so they cannot drift:
+// children are found through searcher, and deleted and folders written through dyn.
+func NewDefaultController(dyn dynamic.Interface, searcher resourcepb.ResourceIndexClient) *Controller {
+	clients := NewDynamicClients(dyn)
+	r := &Reconciler{Children: NewSearchChildLister(searcher), Deleter: clients, Folders: clients}
+	return NewController(clients, r, nil)
+}
+
 // Handler enqueues the folder behind every add, update and delete event.
 func (c *Controller) Handler() cache.ResourceEventHandler {
 	return cache.ResourceEventHandlerFuncs{
@@ -71,6 +90,12 @@ func (c *Controller) enqueue(obj any) {
 		return
 	}
 	c.queue.Add(key)
+}
+
+// ShutDown stops the queue. Run does it when its context ends; a caller that fails before reaching
+// Run needs it so the queue's goroutines do not outlive the controller.
+func (c *Controller) ShutDown() {
+	c.queue.ShutDown()
 }
 
 // Run processes the queue with the given number of workers until ctx is done.
@@ -106,6 +131,18 @@ func (c *Controller) processNext(ctx context.Context) bool {
 		c.queue.Forget(key)
 		return true
 	}
+
+	// ParseNamespace never fails: a namespace it does not recognize comes back with no org.
+	ns, _ := authlib.ParseNamespace(namespace)
+	if ns.OrgID < 1 {
+		// Forgotten for good, so the folder stays terminating: an error, with the folder named, so it can be found.
+		logger.Error("Folder cascade delete: skipping folder, its namespace has no org to run as", "namespace", namespace, "folder", name)
+		c.queue.Forget(key)
+		return true
+	}
+	// Search is scoped to the requester, and the remote storage client refuses a call with no identity
+	// at all, so a folder is reconciled as the service for its own namespace.
+	ctx = identity.WithServiceIdentityContext(ctx, ns.OrgID)
 
 	f, err := c.folders.Get(ctx, namespace, name)
 	if apierrors.IsNotFound(err) {
