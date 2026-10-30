@@ -573,6 +573,9 @@ importers:
       react-draggable:
         specifier: 4.7.2
         version: 4.7.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react-grid-layout:
+        specifier: 1.4.4
+        version: 1.4.4(patch_hash=f1a020e2f44ff5505a5aef119759a350a83046f2a3bee15680bc355871f9265d)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react-highlight-words:
         specifier: 0.21.0
         version: 0.21.0(react@19.2.8)
