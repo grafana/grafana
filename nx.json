@@ -33,6 +33,10 @@
           "public/app/plugins/*/*"
         ],
         "projectsRelationship": "fixed"
+      },
+      "plugin-compat": {
+        "projects": ["@grafana/plugin-compat"],
+        "projectsRelationship": "independent"
       }
     },
     "version": {
