@@ -64,7 +64,7 @@ func (s *largePermissionStore) Read(context.Context, string, storage.ReadFilter,
 	return storage.NewStaticTupleIterator(s.rows), nil
 }
 
-func TestUserPermissionsReturnsLargeContributionWithoutCaching(t *testing.T) {
+func TestUserPermissionsReturnsLargePermissionsWithoutCaching(t *testing.T) {
 	srv, ds, store := newPermissionTestServer(t, nil)
 	enablePrincipalCache(srv)
 	large := &largePermissionStore{OpenFGADatastore: ds, rows: make([]*openfgav1.Tuple, permissionPrincipalCacheMaxTuples+1)}
@@ -81,7 +81,7 @@ func TestUserPermissionsReturnsLargeContributionWithoutCaching(t *testing.T) {
 		cache.mu.Lock()
 		_, cached := cache.entries.Peek(permissionPrincipalKey{store.ID, store.ModelID, "user:alice"})
 		cache.mu.Unlock()
-		require.False(t, cached, "large contributions must not occupy the principal cache")
+		require.False(t, cached, "oversized principal grants must not occupy the principal cache")
 	}
 	require.Equal(t, 2, large.reads)
 }
@@ -105,8 +105,8 @@ func TestUserPermissionsLimitsDistinctPrincipalsAcrossStages(t *testing.T) {
 			}
 			cache := srv.principalCache()
 			cache.mu.Lock()
-			cache.entries.Add(permissionPrincipalKey{store.ID, store.ModelID, "user:alice"}, permissionPrincipalEntry{contribution: &permissionContribution{dependencies: dependencies, tupleCount: dependencyCount}, expires: cache.clock.Now().Add(time.Minute)})
-			cache.entries.Add(permissionPrincipalKey{store.ID, store.ModelID, "team:one#member"}, permissionPrincipalEntry{contribution: &permissionContribution{}, expires: cache.clock.Now().Add(time.Minute)})
+			cache.entries.Add(permissionPrincipalKey{store.ID, store.ModelID, "user:alice"}, permissionPrincipalEntry{grants: &principalGrants{dependencies: dependencies, tupleCount: dependencyCount}, expires: cache.clock.Now().Add(time.Minute)})
+			cache.entries.Add(permissionPrincipalKey{store.ID, store.ModelID, "team:one#member"}, permissionPrincipalEntry{grants: &principalGrants{}, expires: cache.clock.Now().Add(time.Minute)})
 			cache.mu.Unlock()
 			stream := &permissionResponseStream{ctx: newContextWithNamespace()}
 			err := srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice", Teams: contextualTeams}, stream)

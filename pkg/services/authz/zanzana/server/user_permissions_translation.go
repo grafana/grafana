@@ -236,15 +236,15 @@ func validatePermissionGrant(grant *openfgav1.TupleKey) error {
 	return unsupportedPermissionGrant()
 }
 
-func composePermissionContributions(contributions [][]permissionListResult) []permissionListResult {
+func mergePrincipalGrants(grantLists [][]permissionListResult) []permissionListResult {
 	results := make([]permissionListResult, 0, len(common.SupportedActions()))
 	indexes := make(map[string]int)
 	for _, entry := range common.SupportedActions() {
 		indexes[entry.Action] = len(results)
 		results = append(results, permissionListResult{Entry: entry, List: &authzv1.ListResponse{}})
 	}
-	for _, contribution := range contributions {
-		for _, grant := range contribution {
+	for _, grantList := range grantLists {
+		for _, grant := range grantList {
 			result := results[indexes[grant.Entry.Action]].List
 			result.All = result.All || grant.List.All
 			result.Items = append(result.Items, grant.List.Items...)

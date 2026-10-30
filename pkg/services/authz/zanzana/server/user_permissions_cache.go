@@ -22,8 +22,8 @@ const (
 
 type permissionPrincipalKey struct{ store, model, principal string }
 type permissionPrincipalEntry struct {
-	contribution *permissionContribution
-	expires      time.Time
+	grants  *principalGrants
+	expires time.Time
 }
 
 type permissionPrincipalCache struct {
@@ -45,7 +45,7 @@ func (s *Server) principalCache() *permissionPrincipalCache {
 	return s.permissionCache
 }
 
-func (s *Server) cachedPermissionContribution(ctx context.Context, key permissionPrincipalKey, skip bool, load func(context.Context) (*permissionContribution, error)) (*permissionContribution, error) {
+func (s *Server) cachedPrincipalGrants(ctx context.Context, key permissionPrincipalKey, skip bool, load func(context.Context) (*principalGrants, error)) (*principalGrants, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (s *Server) cachedPermissionContribution(ctx context.Context, key permissio
 	cache.mu.Lock()
 	if entry, ok := cache.entries.Get(key); ok && cache.clock.Now().Before(entry.expires) {
 		cache.mu.Unlock()
-		return entry.contribution, nil
+		return entry.grants, nil
 	}
 	generation := cache.generation
 	cache.mu.Unlock()
@@ -65,24 +65,24 @@ func (s *Server) cachedPermissionContribution(ctx context.Context, key permissio
 		cache.mu.Lock()
 		if entry, ok := cache.entries.Get(key); ok && cache.clock.Now().Before(entry.expires) {
 			cache.mu.Unlock()
-			return entry.contribution, nil
+			return entry.grants, nil
 		}
 		cache.mu.Unlock()
 		// A canceled waiter must not cancel a load shared by another user's request.
 		shared, cancel := context.WithTimeout(context.WithoutCancel(ctx), permissionPrincipalLoadTimeout)
 		defer cancel()
 		expires := cache.clock.Now().Add(accesscontrol.PermissionCacheTTL)
-		contribution, err := load(shared)
+		grants, err := load(shared)
 		if err != nil {
 			return nil, err
 		}
 		cache.mu.Lock()
 		// Large grants still resolve completely; only cache admission is bounded.
-		if contribution.tupleCount <= permissionPrincipalCacheMaxTuples && cache.generation == generation && cache.clock.Now().Before(expires) {
-			cache.entries.Add(key, permissionPrincipalEntry{contribution: contribution, expires: expires})
+		if grants.tupleCount <= permissionPrincipalCacheMaxTuples && cache.generation == generation && cache.clock.Now().Before(expires) {
+			cache.entries.Add(key, permissionPrincipalEntry{grants: grants, expires: expires})
 		}
 		cache.mu.Unlock()
-		return contribution, nil
+		return grants, nil
 	})
 	select {
 	case <-ctx.Done():
@@ -94,7 +94,7 @@ func (s *Server) cachedPermissionContribution(ctx context.Context, key permissio
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		return result.Val.(*permissionContribution), nil
+		return result.Val.(*principalGrants), nil
 	}
 }
 
@@ -109,7 +109,7 @@ func (s *Server) invalidatePermissionPrincipals(store *zanzana.StoreInfo, writes
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 	// In-flight reads from before a write may finish afterward; prevent them from
-	// repopulating an evicted contribution with an older result.
+	// refilling a principal cache entry with stale grants.
 	cache.generation++
 	for _, grant := range writes {
 		cache.entries.Remove(permissionPrincipalKey{store.ID, store.ModelID, grant.GetUser()})
