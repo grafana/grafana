@@ -167,12 +167,24 @@ export function PanelGroupByPicker({
         if (event.key === ' ') {
           event.stopPropagation();
         }
+        if (event.key === 'Escape') {
+          // Closes only the picker, so a popover it was opened from stays open with focus back on its trigger.
+          event.stopPropagation();
+          onCancel();
+          getFocusTarget(referenceElement)?.focus();
+        }
       }}
       placement={placement}
       referenceElement={referenceElement}
       show
     />
   );
+}
+
+/** The reference element itself when it takes focus, otherwise the first control inside it. */
+function getFocusTarget(element: HTMLElement): HTMLElement | null {
+  const focusable = 'button, a[href], [tabindex]';
+  return element.matches(focusable) ? element : element.querySelector<HTMLElement>(focusable);
 }
 
 function metricFindValuesToOptions(values: MetricFindValue[]): VariableValueOption[] {

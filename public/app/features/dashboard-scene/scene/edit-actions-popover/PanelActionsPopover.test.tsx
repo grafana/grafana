@@ -458,6 +458,34 @@ describe('<PanelActionsWrapper />', () => {
       expect(headerActions.state.isGroupByPickerOpen).toBe(false);
     });
 
+    test('Escape in the Group by picker closes only the picker and returns focus to More actions', async () => {
+      jest
+        .spyOn(AdHocFiltersVariable.prototype, '_getGroupByKeys')
+        .mockResolvedValue([{ label: 'host', value: 'host' }]);
+      const headerActions = new VizPanelHeaderActions({ isGroupByActionSupported: true });
+      const panel = createPanel({
+        headerActions,
+        menu: new VizPanelMenu({ items: [{ text: 'Group by…', onClick: () => headerActions.openGroupByPicker() }] }),
+      });
+      createDashboard(panel, {
+        $variables: new SceneVariableSet({
+          variables: [new AdHocFiltersVariable({ name: 'filters', enableGroupBy: true, filters: [] })],
+        }),
+      });
+      const user = userEvent.setup();
+
+      renderWrapper(panel);
+      await hoverAndRest(screen.getByTestId('reference-child'));
+      await user.click(within(getToolbar()).getByRole('button', { name: 'More actions' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Group by…' }));
+      act(() => screen.getByRole('checkbox', { name: 'host' }).focus());
+      await user.keyboard('{Escape}');
+
+      expect(headerActions.state.isGroupByPickerOpen).toBe(false);
+      expect(screen.queryByRole('checkbox', { name: 'host' })).not.toBeInTheDocument();
+      expect(within(getToolbar()).getByRole('button', { name: 'More actions' })).toHaveFocus();
+    });
+
     test('for a panel with a hover header, its header items are rendered first in the popover', async () => {
       const panel = createPanel({ title: '', hoverHeader: true });
       createDashboard(panel);
