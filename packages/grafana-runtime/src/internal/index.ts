@@ -14,6 +14,7 @@ export { setDataSourcePicker } from '../components/DataSourcePicker';
 export { setPanelDataErrorView } from '../components/PanelDataErrorView';
 export { setPanelRenderer } from '../components/PanelRenderer';
 export { type PageInfoItem, setPluginPage } from '../components/PluginPage';
+export { setManagedBadge } from '../provisioning/ManagedBadge';
 
 export { type LegacyFeatureToggleMode } from '../utils/legacyFeatureToggles';
 export { ExpressionDatasourceRef } from '../utils/expressionRef';
