@@ -94,7 +94,10 @@ describe('RuleEditor cloud', () => {
 
     expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toBeInTheDocument();
 
+    // the switch carries over the data source of the query
     const dataSourceSelect = await ui.inputs.dataSource.find();
+    expect(dataSourceSelect).toHaveAttribute('placeholder', MIMIR_DATASOURCE_UID);
+
     await user.click(dataSourceSelect);
     await user.click(screen.getByText(MIMIR_DATASOURCE_UID));
 

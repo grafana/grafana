@@ -1121,11 +1121,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/query-and-alert-condition/QueryAndExpressionsStep.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rule-viewer/AlertRuleMenu.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1

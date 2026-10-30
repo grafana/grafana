@@ -7,7 +7,7 @@ import { useEffectOnce } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config, useDataSourceInstanceListItem } from '@grafana/runtime';
 import {
   Alert,
   Button,
@@ -117,6 +117,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
     return queries.filter((query) => !isExpressionQuery(query.model));
   }, [queries]);
   const dataSourceUid = dataQueries[0]?.datasourceUid;
+  const { item: firstQueryDataSource } = useDataSourceInstanceListItem(queries[0]?.datasourceUid);
 
   // expression queries only
   const expressionQueries = useMemo(() => {
@@ -250,7 +251,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
     [condition, queries, setValue]
   );
 
-  const updateExpressionAndDatasource = useSetExpressionAndDataSource();
+  const setExpressionFromQueries = useSetExpression();
 
   const onChangeQueries = useCallback(
     (updatedQueries: AlertQuery[]) => {
@@ -264,7 +265,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
       const expressionQueries = previousQueries.filter<AlertQuery<ExpressionQuery>>(isExpressionQueryInAlert);
 
       setValue('queries', [...updatedQueries, ...expressionQueries], { shouldValidate: false });
-      updateExpressionAndDatasource(updatedQueries);
+      setExpressionFromQueries(updatedQueries);
 
       // we only remove or add the reducer(optimize reducer) expression when creating a new alert.
       // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
@@ -281,7 +282,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
         dispatch(rewireExpressions({ oldRefId, newRefId }));
       }
     },
-    [queries, updateExpressionAndDatasource, getValues, setValue, editingExistingRule]
+    [queries, setExpressionFromQueries, getValues, setValue, editingExistingRule]
   );
 
   const onChangeRecordingRulesQueries = useCallback(
@@ -295,12 +296,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
       const expression = query.model.expr;
 
       setValue('queries', updatedQueries, { shouldValidate: false });
-      updateExpressionAndDatasource(updatedQueries);
+      setExpressionFromQueries(updatedQueries);
 
       dispatch(setRecordingRulesQueries({ recordingRuleQueries: updatedQueries, expression }));
       runQueriesPreview();
     },
-    [runQueriesPreview, setValue, updateExpressionAndDatasource]
+    [runQueriesPreview, setValue, setExpressionFromQueries]
   );
 
   const onDuplicateQuery = useCallback((query: AlertQuery) => {
@@ -334,11 +335,11 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
       newQueries[0].datasourceUid = datasourceUid;
       setValue('queries', newQueries, { shouldValidate: false });
 
-      updateExpressionAndDatasource(newQueries);
+      setExpressionFromQueries(newQueries);
 
       dispatch(setDataQueries(newQueries));
     },
-    [queries, setValue, updateExpressionAndDatasource, dispatch]
+    [queries, setValue, setExpressionFromQueries, dispatch]
   );
 
   // ExpressionEditor for cloud query needs to update queries in the reducer and in the form
@@ -363,7 +364,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
 
     setValue('queries', newQueries, { shouldValidate: false });
 
-    updateExpressionAndDatasource(newQueries);
+    setExpressionFromQueries(newQueries);
 
     dispatch(setDataQueries(newQueries));
     runQueriesPreview();
@@ -396,12 +397,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
       setValue('type', RuleFormType.cloudAlerting);
       // dataSourceName is used only by Mimir/Loki alerting and recording rules
       // It should be empty for Grafana managed alert rules
-      const newDsName = getDataSourceSrv().getInstanceSettings(queries[0].datasourceUid)?.name;
+      const newDsName = firstQueryDataSource?.name;
       if (newDsName) {
         setValue('dataSourceName', newDsName);
       }
 
-      updateExpressionAndDatasource(queries);
+      setExpressionFromQueries(queries);
 
       const expressions = queries.filter((query) => query.datasourceUid === ExpressionDatasourceUID);
       setPrevExpressions(expressions);
@@ -414,7 +415,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
     prevExpressions.length,
     restoreExpressionsInQueries,
     prevCondition,
-    updateExpressionAndDatasource,
+    firstQueryDataSource,
+    setExpressionFromQueries,
     queries,
     removeExpressionsInQueries,
     condition,
@@ -730,19 +732,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-const useSetExpressionAndDataSource = () => {
+const useSetExpression = () => {
   const { setValue } = useFormContext<RuleFormValues>();
 
   return (updatedQueries: AlertQuery[]) => {
-    // update data source name and expression if it's been changed in the queries from the reducer when prom or loki query
+    // update the expression if it's been changed in the queries from the reducer when prom or loki query
     const query = updatedQueries[0];
     if (!query) {
       return;
-    }
-
-    const dataSourceSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
-    if (!dataSourceSettings) {
-      throw new Error('The Data source has not been defined.');
     }
 
     if (isPromOrLokiQuery(query.model)) {
