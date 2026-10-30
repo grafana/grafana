@@ -230,6 +230,11 @@ Use the following annotations to identify the manager:
 Grafana treats a resource as managed only when `grafana.app/managerId` holds a non-empty value.
 A `grafana.app/managedBy` annotation on its own doesn't mark a resource as managed.
 
+Grafana writes `grafana.app/managerAllowsEdits` only when the value is `true`, so an absent annotation and `false` mean the same thing.
+In API responses that expose manager properties, such as search results, the same value appears as the `allowEdits` field.
+Each tool sets it differently: Grafana derives it from the `allowUiUpdates` option for file provisioning, Terraform and `kubectl` callers set it themselves, and Git Sync doesn't use it, because Grafana sends an edit of a Git Sync resource to the repository instead of rejecting it.
+Refer to [Managed resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/managed-resources/) for what each tool records and allows.
+
 Use the following annotations to identify the source of a provisioned resource.
 Managers that reconcile from a source, such as Git Sync, set them. Managers without a concept of a source, such as Terraform, don't.
 
