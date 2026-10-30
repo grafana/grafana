@@ -323,6 +323,47 @@ describe('ToolbarExtensionPoint', () => {
     });
   });
 
+  describe('with a single non-dashboard extension on mobile', () => {
+    const originalMatchMedia = window.matchMedia;
+
+    beforeAll(() => {
+      contextSrvMock.hasPermission.mockReturnValue(true);
+      usePluginLinksMock.mockReturnValue({
+        links: [
+          {
+            pluginId: 'grafana',
+            id: '1',
+            type: PluginExtensionTypes.link,
+            title: 'Add to notebook',
+            category: 'Dashboards',
+            description: 'Add the query and panel from explore to a notebook',
+            onClick: jest.fn(),
+          },
+        ],
+        isLoading: false,
+      });
+    });
+
+    afterEach(() => {
+      cleanup();
+      setTestFlags({});
+      window.matchMedia = originalMatchMedia;
+    });
+
+    it('should keep the remaining extension reachable from the "Add" menu', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      // no min-width breakpoint matches, i.e. a mobile viewport
+      window.matchMedia = (query) => ({ ...originalMatchMedia(query), matches: false });
+
+      renderWithExploreStore(setupToolbarExtensionPoint());
+
+      await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+
+      expect(screen.getByRole('menuitem', { name: 'Add to notebook' })).toBeVisible();
+      expect(screen.queryByRole('button', { name: /add to dashboard/i })).not.toBeInTheDocument();
+    });
+  });
+
   describe('with insufficient permissions', () => {
     beforeAll(() => {
       contextSrvMock.hasPermission.mockReturnValue(false);
