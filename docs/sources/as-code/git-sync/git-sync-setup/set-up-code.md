@@ -74,7 +74,26 @@ spec:
   github:
     appID: '<GITHUB_APP_ID>'
     installationID: '<GITHUB_INSTALL_ID>'
-    serverUrl: '<GITHUB_ENTERPRISE_SERVER_URL>' # Only required for GitHub Enterprise
+secure:
+  privateKey:
+    create: '<GITHUB_PRIVATE_KEY>'
+```
+
+If your GitHub App is installed on GitHub Enterprise Server, set the type to `githubEnterprise` and use the `githubEnterprise` block instead:
+
+```yaml
+apiVersion: provisioning.grafana.app/v0alpha1
+kind: Connection
+metadata:
+  name: '<GITHUB_CONNECTION_NAME>'
+  namespace: default
+spec:
+  title: '<REPOSITORY_TITLE>'
+  type: githubEnterprise
+  githubEnterprise:
+    appID: '<GITHUB_APP_ID>'
+    installationID: '<GITHUB_INSTALL_ID>'
+    serverUrl: '<GITHUB_ENTERPRISE_SERVER_URL>'
 secure:
   privateKey:
     create: '<GITHUB_PRIVATE_KEY>'
@@ -86,7 +105,8 @@ Replace the placeholders with your values:
 - _`<REPOSITORY_TITLE>`_: Human-readable name displayed in Grafana UI
 - _`<GITHUB_APP_ID>`_: GitHub App unique identifier
 - _`<GITHUB_INSTALL_ID>`_: GitHub App installation id
-- _`<GITHUB_PRIVATE_KEY>`_: GitHub Private Key
+- _`<GITHUB_PRIVATE_KEY>`_: GitHub App private key, base64-encoded
+- _`<GITHUB_ENTERPRISE_SERVER_URL>`_: The URL of your GitHub Enterprise Server instance, for example `https://ghes.example.com`
 
 ### Create an OAuth App connection resource
 
@@ -262,7 +282,7 @@ Values under `secure` are stored encrypted and can't be read back after you crea
 | `spec.gitOAuth.tokenURL`               | OAuth token endpoint of your Git provider, for example `https://gitlab.example.com/oauth/token`. Only for the `gitOAuth` type                                                                                                                   |
 | `spec.gitOAuth.scopes`                 | OAuth scopes to request. The scopes must grant read and write access to your repositories. Only for the `gitOAuth` type                                                                                                                         |
 | `spec.webhook.disabled`                | Disable webhooks for this connection (true/false). When `true`, the GitHub App doesn't need the `webhooks:write` permission, and Grafana doesn't register or receive webhook events. Use it if Grafana isn't reachable from the public internet |
-| `secure.privateKey.create`             | Private key of the GitHub App. Only for the `github` and `githubEnterprise` types                                                                                                                                                               |
+| `secure.privateKey.create`             | Private key of the GitHub App, base64-encoded. Only for the `github` and `githubEnterprise` types                                                                                                                                               |
 | `secure.clientSecret.create`           | Client secret of the OAuth App. Required for all OAuth connection types                                                                                                                                                                         |
 
 #### Repository parameters
