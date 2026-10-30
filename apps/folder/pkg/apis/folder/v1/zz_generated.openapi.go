@@ -205,21 +205,21 @@ func schema_pkg_apis_folder_v1_FolderCascadeDeleteStatus(ref common.ReferenceCal
 					},
 					"total": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Descendants discovered when the cascade started; the fixed denominator for remaining.",
+							Description: "Direct children discovered when the cascade started; the fixed denominator for remaining.",
 							Type:        []string{"integer"},
 							Format:      "int64",
 						},
 					},
 					"remaining": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Descendants not yet deleted.",
+							Description: "Direct children not yet deleted, recomputed on each reconcile.",
 							Type:        []string{"integer"},
 							Format:      "int64",
 						},
 					},
 					"errors": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Errors encountered while deleting descendants.",
+							Description: "Errors encountered while deleting direct children.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{

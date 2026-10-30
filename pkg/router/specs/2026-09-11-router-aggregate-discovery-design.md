@@ -12,8 +12,9 @@ The cloud loader (`cloud_router.go`) merges four polled sources, lowest priority
 
 1. the single-tenant fallback (`st_discovery_url`);
 2. **aggregate targets**: upstream apiservers configured as `[router.aggregate.<name>]` sections;
-3. core APIs (`core_url`);
-4. managed plugins (`plugins_url`).
+3. bridge (`bridge_url`);
+4. core APIs (`core_url`);
+5. managed plugins (`plugins_url`).
 
 This design covers aggregate targets. They have no manifest the router can read, so their groups are
 known only from the target's own `/apis` endpoint, and the router must poll that endpoint to learn
@@ -50,7 +51,7 @@ affect the next poll attempt.
 ## Design: cooldown-paced polling with exponential backoff
 
 Each aggregate target runs its own background poll loop (`polledSource.run`,
-`aggregate_poller.go`). The `core_url`, `plugins_url` and ST fallback loops use the same pattern.
+`aggregate_poller.go`). The `core_url`, `plugins_url`, `bridge_url` and ST fallback loops use the same pattern.
 The cooldown is **not** a circuit breaker — it's a plain backoff mechanism that throttles the
 target's own outbound poll request rate, with no per-caller protection or state machine.
 
