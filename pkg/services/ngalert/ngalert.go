@@ -257,16 +257,13 @@ func (ng *AlertNG) init() error {
 	compat.InitFromFlags(logging.NewSlogLogger(ng.Log), featurecontrol.NoopFlags{})
 
 	// Configure the remote Alertmanager.
-	// If toggles for both modes are enabled, remote primary takes precedence.
 	var opts []notifier.Option
 	var skipClustering bool
 	moaLogger := log.New("ngalert.multiorg.alertmanager")
 	crypto := notifier.NewCrypto(ng.SecretsService, ng.store, moaLogger)
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	remoteSecondaryWithRemoteState := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondaryWithRemoteState)
-	if remotePrimary || remoteSecondaryWithRemoteState {
+	if remotePrimary {
 		m := ng.Metrics.GetRemoteAlertmanagerMetrics()
 		runtimeConfig := remoteClient.RuntimeConfig{
 			DispatchTimer: notifier.GetDispatchTimer(ng.FeatureToggles).String(),
@@ -283,28 +280,10 @@ func (ng *AlertNG) init() error {
 			RuntimeConfig:     runtimeConfig,
 		}
 
-		// This function will be used by the MOA to create new Alertmanagers.
-		var override func(notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory
-
-		if remotePrimary {
-			ng.Log.Debug("Starting Grafana with remote primary mode enabled")
-			m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
-			override = remote.NewRemotePrimaryFactory(cfg, ng.KVStore, crypto, m, ng.tracer, ng.FeatureToggles)
-			skipClustering = true
-		} else {
-			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
-			m.Info.WithLabelValues(metrics.ModeRemoteSecondary).Set(1)
-			override = remote.NewRemoteSecondaryFactory(cfg,
-				ng.KVStore,
-				ng.store,
-				ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
-				crypto,
-				m,
-				ng.tracer,
-				remoteSecondaryWithRemoteState,
-				ng.FeatureToggles,
-			)
-		}
+		ng.Log.Debug("Starting Grafana with remote primary mode enabled")
+		m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
+		override := remote.NewRemotePrimaryFactory(cfg, ng.KVStore, crypto, m, ng.tracer, ng.FeatureToggles)
+		skipClustering = true
 
 		opts = append(opts, notifier.WithAlertmanagerOverride(override))
 	}
@@ -572,7 +551,7 @@ func (ng *AlertNG) init() error {
 	// Both provisioning.LimitsProvider and notifier.LimitsProvider interfaces have identical
 	// signatures, so NoopLimitsProvider and RemoteLimitsProvider satisfy both via structural typing.
 	var limitsProvider provisioning.LimitsProvider
-	if remotePrimary || remoteSecondaryWithRemoteState {
+	if remotePrimary {
 		// For remote alertmanager, create a MimirClient to fetch limits
 		remoteURL, err := url.Parse(ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL)
 		if err != nil {

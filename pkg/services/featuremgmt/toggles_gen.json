@@ -914,7 +914,8 @@
       "metadata": {
         "name": "alertmanagerRemoteSecondaryWithRemoteState",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-25T15:06:59Z"
+        "creationTimestamp": "2025-07-25T15:06:59Z",
+        "deletionTimestamp": "2026-10-29T12:42:24Z"
       },
       "spec": {
         "description": "Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.",

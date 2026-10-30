@@ -224,7 +224,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-16,otelLogsFormatting,GA,@grafana/observability-logs,false,false,true
 2025-07-17,alertingNotificationHistory,GA,@grafana/alerting-squad,false,false,false
 2025-07-31,dashboardLevelTimeMacros,experimental,@grafana/dashboards-squad,false,false,true
-2025-07-25,alertmanagerRemoteSecondaryWithRemoteState,experimental,@grafana/alerting-squad,false,false,false
 2025-07-31,favoriteDatasources,experimental,@grafana/grafana-catalog,false,false,true
 2025-07-31,newClickhouseConfigPageDesign,GA,@grafana/data-sources-plugins,false,false,false
 2026-06-24,grafana.starredFolders,experimental,@grafana/grafana-frontend-navigation,false,false,true

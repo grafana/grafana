@@ -1938,15 +1938,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "alertmanagerRemoteSecondaryWithRemoteState",
-			Description:  "Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "favoriteDatasources",
 			Description: "Enable favorite datasources",
 			Stage:       FeatureStageExperimental,

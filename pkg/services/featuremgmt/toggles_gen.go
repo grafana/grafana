@@ -634,10 +634,6 @@ const (
 	// Enables the notification history feature
 	FlagAlertingNotificationHistory = "alertingNotificationHistory"
 
-	// FlagAlertmanagerRemoteSecondaryWithRemoteState
-	// Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
-	FlagAlertmanagerRemoteSecondaryWithRemoteState = "alertmanagerRemoteSecondaryWithRemoteState"
-
 	// FlagNewClickhouseConfigPageDesign
 	// Enables new design for the Clickhouse data source configuration page
 	FlagNewClickhouseConfigPageDesign = "newClickhouseConfigPageDesign"
