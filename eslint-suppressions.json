@@ -1697,16 +1697,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/dashgrid/DashboardLibrary/DashboardCard.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/dashgrid/DashboardLibrary/SuggestedDashboardsList/SuggestedDashboardsList.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 2

@@ -8,7 +8,7 @@ import Skeleton from 'react-loading-skeleton';
 import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { useFlagDashboardValidatorApp } from '@grafana/runtime/internal';
 import {
   Badge,
   Box,
@@ -108,7 +108,7 @@ function DashboardCardComponent({
   createdByName,
 }: Props) {
   const styles = useStyles2(getStyles);
-  const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
+  const isCompatibilityAppEnabled = useFlagDashboardValidatorApp();
   const isCustomTemplate = kind === 'custom_dashboard_template';
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
