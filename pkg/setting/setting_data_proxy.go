@@ -2,6 +2,7 @@ package setting
 
 import (
 	"fmt"
+	"strings"
 
 	"gopkg.in/ini.v1"
 )
@@ -12,6 +13,8 @@ func readDataProxySettings(iniFile *ini.File, cfg *Cfg) error {
 	dataproxy := iniFile.Section("dataproxy")
 	cfg.SendUserHeader = dataproxy.Key("send_user_header").MustBool(false)
 	cfg.DataProxyLogging = dataproxy.Key("logging").MustBool(false)
+	// Read before MustInt, which writes its default back into an empty key.
+	cfg.DataProxyTimeoutConfigured = strings.TrimSpace(dataproxy.Key("timeout").String()) != ""
 	cfg.DataProxyTimeout = dataproxy.Key("timeout").MustInt(30)
 	cfg.DataProxyDialTimeout = dataproxy.Key("dialTimeout").MustInt(10)
 	cfg.DataProxyKeepAlive = dataproxy.Key("keep_alive_seconds").MustInt(30)
