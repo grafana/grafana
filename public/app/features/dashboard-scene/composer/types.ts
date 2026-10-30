@@ -36,8 +36,9 @@ export interface ComposerEnterRequestOptions {
 
 interface ComposerEnterOptions {
   /**
-   * 'floating' (the default) floats the extension sidebar over the document when the session starts, even
-   * with `grafana.extensionSidebarFloating` off. The user may dock it and stay in Composer. When the session
+   * 'floating' (the default) keeps floating a sidebar the entry request opened floating, even with
+   * `grafana.extensionSidebarFloating` off; a sidebar already open keeps its layout. The user may switch
+   * layouts and stay in Composer. When the session
    * ends, the layout from before it comes back, unless the user chose another one since. Closing the
    * sidebar ends the session. 'none' leaves the sidebar alone and does not tie the session to it.
    */
