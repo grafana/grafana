@@ -5,7 +5,7 @@ import { type RoutingTreeView, toRoutingTreeView } from '../routingTreeView';
 
 import { useRoutingTrees } from './useRoutingTrees';
 
-export interface ResolvedRoutingTree {
+interface ResolvedRoutingTree {
   /** The tree named `name`, or `null` while loading, when none matches, or when the list failed to load. */
   tree: RoutingTreeView | null;
   /** The list hasn't loaded yet, so `tree === null` doesn't mean "missing". */
