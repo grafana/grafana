@@ -1871,6 +1871,7 @@
         "will-import-rules-count_one": "Will import {{count}} rules",
         "will-import-rules-count_other": "Will import {{count}} rules"
       },
+      "rules-preview": "Alert rules preview",
       "source": {
         "datasource": "Existing data source-managed rules",
         "datasource-description": "Import rules from existing data sources",
