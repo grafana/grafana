@@ -114,7 +114,7 @@ func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, o
 	r.log.Debug("Setting default permissions for receiver", "receiver_uid", uid)
 	resourceId := models.ScopeReceiversProvider.GetResourceIDFromUID(uid)
 	permissions := defaultPermissions()
-	refreshCreator := false
+	clearCache := false
 	if user != nil && user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		userID, err := user.GetInternalID()
 		if err != nil {
@@ -123,7 +123,7 @@ func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, o
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 				UserID: userID, Permission: string(models.PermissionAdmin),
 			})
-			refreshCreator = true
+			clearCache = true
 		}
 	}
 
@@ -132,7 +132,7 @@ func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, o
 		return
 	}
 
-	if refreshCreator {
+	if clearCache {
 		event := &receiverDefaultPermissionsSet{requester: user}
 		if sess := sqlstore.SessionFromContext(ctx); sess != nil {
 			sess.PublishAfterCommit(event)

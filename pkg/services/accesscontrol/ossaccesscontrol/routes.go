@@ -129,7 +129,7 @@ func (r RoutePermissionsService) onDefaultPermissionsSet(ctx context.Context, ev
 func (r RoutePermissionsService) SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, name string) error {
 	r.log.Debug("Setting default permissions for route", "route_name", name)
 	permissions := routeDefaultPermissions()
-	refreshCreator := false
+	clearCache := false
 	if user != nil && user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		userID, err := user.GetInternalID()
 		if err != nil {
@@ -138,13 +138,13 @@ func (r RoutePermissionsService) SetDefaultPermissions(ctx context.Context, orgI
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 				UserID: userID, Permission: PermissionAdmin,
 			})
-			refreshCreator = true
+			clearCache = true
 		}
 	}
 	if _, err := r.SetPermissions(ctx, orgID, name, permissions...); err != nil {
 		return err
 	}
-	if refreshCreator {
+	if clearCache {
 		event := &routeDefaultPermissionsSet{requester: user}
 		if sess := sqlstore.SessionFromContext(ctx); sess != nil {
 			sess.PublishAfterCommit(event)
