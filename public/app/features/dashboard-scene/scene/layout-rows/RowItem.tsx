@@ -31,6 +31,7 @@ import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
+import { ListItemMoveActions } from '../layouts-shared/list-dnd/ListItemMoveActions';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { type BulkActionElement } from '../types/BulkActionElement';
@@ -170,6 +171,10 @@ export class RowItem
   }
 
   public useSidebarOptions = useSidebarOptions.bind(this);
+
+  public renderActions() {
+    return <ListItemMoveActions item={this} />;
+  }
 
   public onDelete() {
     this.getParentLayout().removeRow(this);
