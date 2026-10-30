@@ -146,7 +146,7 @@ type datasourcePermissionClient struct {
 }
 
 func (c datasourcePermissionClient) GetUserPermissions(ctx context.Context, id authlib.AuthInfo, req authlib.GetUserPermissionsRequest) (authlib.GetUserPermissionsResponse, error) {
-	caller, _ := authlib.AuthInfoFrom(newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions))
+	caller, _ := authlib.AuthInfoFrom(newContextWithNamespace())
 	stream := &permissionResponseStream{ctx: authlib.WithAuthInfo(ctx, caller)}
 	if err := c.server.GetUserPermissions(&authzv1.GetUserPermissionsRequest{
 		Namespace: req.Namespace, Subject: id.GetUID(), Teams: id.GetGroups(),

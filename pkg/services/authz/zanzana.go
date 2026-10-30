@@ -82,7 +82,6 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Serv
 					Namespace: "*",
 					Permissions: []string{
 						zanzana.TokenPermissionUpdate,
-						zanzana.TokenPermissionUserPermissions,
 					},
 				},
 			}))

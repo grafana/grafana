@@ -7,7 +7,6 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
@@ -17,7 +16,7 @@ func TestUserPermissionsReturnsUIDScopesWithoutIAM(t *testing.T) {
 		common.NewTypedTuple(common.TypeUser, "user:alice", common.RelationGet, "bob"),
 		common.NewTypedTuple(common.TypeServiceAccount, "user:alice", common.RelationGet, "robot"),
 	})
-	stream := &permissionResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
+	stream := &permissionResponseStream{ctx: newContextWithNamespace()}
 	require.NoError(t, srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice"}, stream))
 	require.ElementsMatch(t, []*authzv1.UserPermission{
 		{Action: "teams:read", Scope: "teams:uid:platform"},

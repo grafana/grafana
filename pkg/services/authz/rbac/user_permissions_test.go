@@ -8,6 +8,8 @@ import (
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/grafana/authlib/authn"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -501,4 +503,16 @@ func TestService_GetUserPermissionsForwardsPrincipalCacheBypass(t *testing.T) {
 func (r *recordingUserPermissionsResolver) ResolvePermissionScopes(_ context.Context, _ identity.Requester, permissions []accesscontrol.Permission) ([]accesscontrol.Permission, error) {
 	r.scopes = permissions
 	return permissions, nil
+}
+
+func TestService_GetUserPermissionsRequiresServiceGrant(t *testing.T) {
+	service := setupService()
+	caller := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana")},
+		Rest:   authn.AccessTokenClaims{Namespace: "org-12"},
+	})
+	stream := &collectUserPermissionsStream{ctx: types.WithAuthInfo(t.Context(), caller)}
+	err := service.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: "org-12", Subject: "user:test-uid"}, stream)
+	require.Equal(t, codes.PermissionDenied, status.Code(err))
+	require.Empty(t, stream.responses)
 }
