@@ -180,3 +180,21 @@ func makeUnexpectedNodeTypeError(refID, nodeType string) error {
 
 	return UnexpectedNodeTypeError.Build(data)
 }
+
+var panicErrString = "failed to execute query or expression [{{ .Public.refId }}]: panic: {{ .Public.panic }}"
+
+var PanicError = errutil.Internal("sse.panic").MustTemplate(
+	panicErrString,
+	errutil.WithPublic(panicErrString))
+
+func makePanicError(refID string, p any) error {
+	data := errutil.TemplateData{
+		Public: map[string]any{
+			"refId": refID,
+			"panic": fmt.Sprintf("%v", p),
+		},
+		Error: fmt.Errorf("panic while executing %v: %v", refID, p),
+	}
+
+	return PanicError.Build(data)
+}

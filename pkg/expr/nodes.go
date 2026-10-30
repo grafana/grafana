@@ -282,6 +282,34 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				attribute.String("datasource.uid", firstNode.datasource.UID),
 			)
 
+			instrument := func(e error, rt string) {
+				respStatus := "success"
+				responseType := rt
+				if e != nil {
+					responseType = "error"
+					respStatus = "failure"
+					span.SetStatus(codes.Error, "failed to query data source")
+					span.RecordError(e)
+				}
+				logger.Debug("Data source queried", "responseType", responseType)
+				useDataplane := strings.HasPrefix(responseType, "dataplane-")
+				s.metrics.DSRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), firstNode.datasource.Type).Inc()
+			}
+
+			// A panic gets an error for each node in the group that has no
+			// result yet, so the rest of the request still runs.
+			defer func() {
+				if p := recover(); p != nil {
+					logger.Error("Panic while querying data source", "error", p, "stack", log.Stack(1))
+					for _, dn := range nodeGroup {
+						if _, ok := vars[dn.refID]; !ok {
+							vars[dn.refID] = mathexp.Results{Error: makePanicError(dn.refID, p)}
+						}
+					}
+					instrument(makePanicError(firstNode.refID, p), "")
+				}
+			}()
+
 			req := &backend.QueryDataRequest{
 				Headers: firstNode.request.Headers,
 			}
@@ -296,20 +324,6 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 					TimeRange:     dn.timeRange.AbsoluteTime(now),
 					QueryType:     dn.queryType,
 				})
-			}
-
-			instrument := func(e error, rt string) {
-				respStatus := "success"
-				responseType := rt
-				if e != nil {
-					responseType = "error"
-					respStatus = "failure"
-					span.SetStatus(codes.Error, "failed to query data source")
-					span.RecordError(e)
-				}
-				logger.Debug("Data source queried", "responseType", responseType)
-				useDataplane := strings.HasPrefix(responseType, "dataplane-")
-				s.metrics.DSRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), firstNode.datasource.Type).Inc()
 			}
 
 			var resp *backend.QueryDataResponse
@@ -413,6 +427,15 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		logger.Debug("Data source queried", "responseType", responseType)
 		useDataplane := strings.HasPrefix(responseType, "dataplane-")
 		s.metrics.DSRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), dn.datasource.Type).Inc()
+	}()
+
+	// Runs before the metrics defer above, so a panic counts as a failure.
+	defer func() {
+		if p := recover(); p != nil {
+			logger.Error("Panic while querying data source", "error", p, "stack", log.Stack(1))
+			r = mathexp.Results{}
+			e = makePanicError(dn.refID, p)
+		}
 	}()
 
 	var resp *backend.QueryDataResponse

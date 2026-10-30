@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/ml"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/httpresponsesender"
 )
@@ -87,6 +88,15 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 		logger.Debug("Data source queried", "responseType", responseType)
 		useDataplane := strings.HasPrefix("dataplane-", responseType)
 		s.metrics.DSRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), mlPluginID).Inc()
+	}()
+
+	// Runs before the metrics defer above, so a panic counts as a failure.
+	defer func() {
+		if p := recover(); p != nil {
+			logger.Error("Panic while querying data source", "error", p, "stack", log.Stack(1))
+			r = mathexp.Results{}
+			e = makePanicError(m.refID, p)
+		}
 	}()
 
 	// Execute the command and provide callback function for sending a request via plugin API.

@@ -245,3 +245,152 @@ func TestSQLServiceErrors(t *testing.T) {
 		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", sql.ErrCategoryQueryTooLong))
 	})
 }
+
+func TestSQLServiceNullFromJSONFunction(t *testing.T) {
+	// labels is non-nullable, as from Loki, and one row lacks the key.
+	inputFrame := data.NewFrame("",
+		data.NewField("line", nil, []string{"a", "b"}),
+		data.NewField("labels", nil, []json.RawMessage{
+			json.RawMessage(`{"level":"info"}`),
+			json.RawMessage(`{}`),
+		}),
+	)
+
+	resp := map[string]backend.DataResponse{
+		"A": {Frames: data.Frames{inputFrame}},
+	}
+
+	sqlQuery := func(refID, q string) Query {
+		escaped, err := json.Marshal(q)
+		require.NoError(t, err)
+		return Query{
+			RefID:      refID,
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(fmt.Sprintf(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "sql", "expression": %s }`, escaped)),
+			TimeRange:  AbsoluteTimeRange{},
+		}
+	}
+
+	queries := []Query{
+		{
+			RefID: "A",
+			DataSource: &datasources.DataSource{
+				OrgID: 1,
+				UID:   "test",
+				Type:  "test",
+			},
+			JSON:      json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			TimeRange: AbsoluteTimeRange{},
+		},
+		sqlQuery("B", `SELECT JSON_UNQUOTE(JSON_EXTRACT(labels, '$.level')) AS level FROM A ORDER BY line`),
+		sqlQuery("C", `SELECT COUNT(*) AS n FROM A`),
+	}
+
+	s, req := newMockQueryService(resp, queries)
+	s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+
+	pl, err := s.BuildPipeline(t.Context(), req)
+	require.NoError(t, err)
+
+	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+	require.NoError(t, err)
+
+	require.NoError(t, res.Responses["B"].Error)
+	require.Len(t, res.Responses["B"].Frames, 1)
+	level := res.Responses["B"].Frames[0].Fields[0]
+	require.Equal(t, data.FieldTypeNullableString, level.Type())
+	require.Equal(t, new("info"), level.At(0))
+	require.Nil(t, level.At(1))
+
+	require.NoError(t, res.Responses["C"].Error)
+	require.Equal(t, int64(2), res.Responses["C"].Frames[0].Fields[0].At(0))
+}
+
+type panickingEndpoint struct {
+	mockEndpoint
+	panicRefID string
+}
+
+func (pe *panickingEndpoint) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	for _, q := range req.Queries {
+		if q.RefID == pe.panicRefID {
+			panic("runtime error: invalid memory address or nil pointer dereference")
+		}
+	}
+	return pe.mockEndpoint.QueryData(ctx, req)
+}
+
+func TestSQLServiceDataSourcePanic(t *testing.T) {
+	resp := map[string]backend.DataResponse{
+		"B": {Frames: data.Frames{data.NewFrame("",
+			data.NewField("value", nil, []float64{1}),
+		)}},
+	}
+
+	dsQuery := func(refID, dsUID string) Query {
+		return Query{
+			RefID: refID,
+			DataSource: &datasources.DataSource{
+				OrgID: 1,
+				UID:   dsUID,
+				Type:  "test",
+			},
+			JSON:      json.RawMessage(`{ "datasource": { "uid": "` + dsUID + `" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			TimeRange: AbsoluteTimeRange{},
+		}
+	}
+	sqlQuery := func(refID, q string) Query {
+		escaped, err := json.Marshal(q)
+		require.NoError(t, err)
+		return Query{
+			RefID:      refID,
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(fmt.Sprintf(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "sql", "expression": %s }`, escaped)),
+			TimeRange:  AbsoluteTimeRange{},
+		}
+	}
+
+	queries := []Query{
+		dsQuery("A", "panics"),
+		dsQuery("B", "works"),
+		sqlQuery("S", `SELECT COUNT(*) AS n FROM B`),
+		sqlQuery("T", `SELECT COUNT(*) AS n FROM A`),
+	}
+
+	for _, tc := range []struct {
+		name     string
+		features []any
+	}{
+		{name: "one request per data source node", features: []any{featuremgmt.FlagSqlExpressions}},
+		{name: "grouped by data source", features: []any{featuremgmt.FlagSqlExpressions, featuremgmt.FlagSseGroupByDatasource}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s, req := newMockQueryService(resp, queries)
+			s.dataService = &panickingEndpoint{mockEndpoint: mockEndpoint{Responses: resp}, panicRefID: "A"}
+			s.features = featuremgmt.WithFeatures(tc.features...)
+
+			pl, err := s.BuildPipeline(t.Context(), req)
+			require.NoError(t, err)
+
+			res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+			require.NoError(t, err)
+
+			require.ErrorContains(t, res.Responses["A"].Error, "[A]")
+			require.ErrorContains(t, res.Responses["A"].Error, "panic")
+			require.ErrorContains(t, res.Responses["A"].Error, "nil pointer dereference")
+
+			require.NoError(t, res.Responses["B"].Error)
+			require.Len(t, res.Responses["B"].Frames, 1)
+
+			require.Equal(t, 1.0, counterVal(t, s.metrics.DSRequests, "failure", "false", "test"))
+			require.Equal(t, 1.0, counterVal(t, s.metrics.DSRequests, "success", "false", "test"))
+
+			require.NoError(t, res.Responses["S"].Error)
+			require.Equal(t, int64(1), res.Responses["S"].Frames[0].Fields[0].At(0))
+
+			var sqlErr *sql.ErrorWithCategory
+			require.ErrorAs(t, res.Responses["T"].Error, &sqlErr)
+			require.Equal(t, sql.ErrCategoryDependency, sqlErr.Category())
+		})
+	}
+}

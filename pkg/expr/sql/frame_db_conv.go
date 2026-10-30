@@ -64,6 +64,13 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 		}
 
 		for i, val := range row {
+			// The engine can declare a column non-nullable and still return NULL
+			// (for example JSON_UNQUOTE of a missing key), so switch the field to
+			// its nullable type on the first NULL instead of panicking on Append.
+			if val == nil && !f.Fields[i].Type().Nullable() {
+				f.Fields[i] = toNullableField(f.Fields[i])
+			}
+
 			// Run val through mysql.Type.Convert to normalize underlying value
 			// of the interface
 			nV, _, err := schema[i].Type.Convert(ctx, val)
@@ -84,6 +91,18 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 	}
 
 	return f, nil
+}
+
+// toNullableField returns a copy of field with the nullable version of its type.
+func toNullableField(field *data.Field) *data.Field {
+	nf := data.NewFieldFromFieldType(field.Type().NullableType(), field.Len())
+	nf.Name = field.Name
+	nf.Labels = field.Labels
+	nf.Config = field.Config
+	for i := 0; i < field.Len(); i++ {
+		nf.SetConcrete(i, field.At(i))
+	}
+	return nf
 }
 
 // MySQLColToFieldType converts a MySQL column to a data.FieldType

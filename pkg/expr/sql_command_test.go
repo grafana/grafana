@@ -174,6 +174,23 @@ func TestSQLCommandMetrics(t *testing.T) {
 	require.Equal(t, 1, testutil.CollectAndCount(m.SqlCommandCellCount), "Expected cell count metric to be recorded")
 }
 
+func TestSQLCommandPanicCountsAsError(t *testing.T) {
+	m := metrics.NewTestMetrics()
+
+	cmd, err := NewSQLCommand(t.Context(), log.NewNullLogger(), "B", "", "SELECT * FROM A", 0, 0, 0)
+	require.NoError(t, err)
+
+	// A table value without a frame panics when the command reads its input.
+	vars := mathexp.Vars{"A": mathexp.Results{Values: mathexp.Values{mathexp.TableData{}}}}
+
+	res, err := cmd.Execute(t.Context(), time.Now(), vars, &testTracer{}, m)
+	require.NoError(t, err)
+	require.ErrorContains(t, res.Error, "panic")
+
+	require.Equal(t, 1.0, counterVal(t, m.SqlCommandCount, "error", "unknown"))
+	require.Equal(t, 0.0, counterVal(t, m.SqlCommandCount, "ok", "none"))
+}
+
 func TestHandleSqlInput(t *testing.T) {
 	tests := []struct {
 		name        string
