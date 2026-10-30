@@ -68,6 +68,44 @@ async function ensureTestDataDatasource(dashboardPage: DashboardPage, page: Page
   return testDataScenarioSelect;
 }
 
+test.describe('Query Editor Next: Accessibility', { tag: ['@panels', '@queryEditorNext', '@a11y'] }, () => {
+  test('keeps expression menu semantics and background resize handles accessible', async ({
+    gotoDashboardPage,
+    page,
+    scanForA11yViolations,
+  }) => {
+    await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
+
+    await addQueryOrExpressionButton(page).click();
+    await page.getByRole('menuitem', { name: 'Add expression' }).click();
+    await page.getByRole('button', { name: 'Math', exact: true }).click();
+    await expect(page.locator('[data-query-sidebar-card="B"]')).toBeVisible();
+
+    const handles = page.getByRole('separator', { name: 'Pane resize widget', includeHidden: true });
+    await expect(handles).toHaveCount(3);
+    const optionsHandle = handles.last();
+    await expect(optionsHandle).toHaveAttribute('tabindex', '0');
+
+    const operation = page.getByRole('button', { name: 'Math', exact: true });
+    await operation.click();
+    await expect(page.getByRole('menuitem', { name: 'Math', exact: true })).toHaveCount(1);
+    await expect(page.getByRole('menuitem', { name: 'Reduce', exact: true })).toBeVisible();
+    await expect(optionsHandle).toHaveAttribute('tabindex', '-1');
+
+    const report = await scanForA11yViolations({
+      include: ['[role="menu"]', '[role="separator"][aria-label="Pane resize widget"]'],
+      options: { runOnly: ['aria-required-parent', 'aria-hidden-focus'] },
+    });
+    expect(report).toHaveNoA11yViolations();
+
+    await page.keyboard.press('Escape');
+    await expect(operation).toHaveAttribute('aria-expanded', 'false');
+    await expect(optionsHandle).toHaveAttribute('tabindex', '0');
+    await optionsHandle.focus();
+    await expect(optionsHandle).toBeFocused();
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Layout & Navigation
 // ---------------------------------------------------------------------------
@@ -485,14 +523,15 @@ test.describe('Query Editor Next: Query Options', { tag: ['@panels', '@queryEdit
     await expect(page.getByRole('button', { name: /Edit Relative time/i })).toContainText('1h');
   });
 
-  test('clicking outside closes the query options sidebar', async ({ gotoDashboardPage, page }) => {
-    await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
+  test('clicking outside closes the query options sidebar', async ({ gotoDashboardPage, page, selectors }) => {
+    const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
 
     await page.getByRole('button', { name: /Query Options/i }).click();
     const maxDataPointsInput = page.getByRole('spinbutton', { name: 'Max data points' });
     await expect(maxDataPointsInput).toBeVisible();
 
-    await page.getByTestId('viz-resizer').click({ force: true });
+    // Click the viz panel — a stable target outside the sidebar — to trigger the outside-click close.
+    await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).click({ force: true });
     await expect(maxDataPointsInput).toBeHidden();
   });
 });
