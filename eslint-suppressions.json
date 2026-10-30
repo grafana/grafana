@@ -1081,11 +1081,6 @@
       "count": 2
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/QueryRows.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rule-editor/RecordingRuleEditor.tsx": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
