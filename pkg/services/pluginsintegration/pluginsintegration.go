@@ -80,6 +80,7 @@ var WireSet = wire.NewSet(
 	installsync.ProvideClientGenerator,
 	installsync.ProvideSyncer,
 	wire.Bind(new(pluginstore.Store), new(*pluginstore.Service)),
+	wire.Bind(new(pluginstore.Notifier), new(*pluginstore.Service)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*pluginstore.Service)),
 	wire.Bind(new(v3.ClientV3Loader), new(*pluginstore.Service)),
 	process.ProvideService,
