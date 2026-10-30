@@ -1,9 +1,16 @@
 import { of } from 'rxjs';
 
-import { FieldType, LoadingState, type PanelData, getDefaultTimeRange, toDataFrame } from '@grafana/data';
+import {
+  type PanelPluginMeta,
+  FieldType,
+  LoadingState,
+  type PanelData,
+  getDefaultTimeRange,
+  toDataFrame,
+} from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
-import { FlagKeys } from '@grafana/runtime/internal';
+import { FlagKeys, setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   SceneCanvasText,
   type SceneDataTransformer,
@@ -81,6 +88,25 @@ const runRequestMock = jest.fn().mockReturnValue(
 setRunRequest(runRequestMock);
 
 describe('LibraryPanelBehavior', () => {
+  it('clears dormant Text queries before the library panel can execute them', async () => {
+    setTestFlags({ 'grafana.newTextPanel': true });
+    setPanelPluginMetas({ text: { skipDataQuery: true } as PanelPluginMeta });
+    runRequestMock.mockClear();
+    try {
+      const { gridItem, behavior } = await buildTestSceneWithLibraryPanel({
+        model: { type: 'text', pluginVersion: '13.2.9', options: { content: 'Static library text' } },
+      });
+      expect(behavior.state.isLoaded).toBe(true);
+      const saved = vizPanelToPanel(gridItem.state.body.clone({ $behaviors: undefined }));
+      expect(saved.targets).toEqual([]);
+      expect(saved.options?.content).toBe('Static library text');
+      expect(runRequestMock).not.toHaveBeenCalled();
+    } finally {
+      setTestFlags({});
+      setPanelPluginMetas({});
+    }
+  });
+
   it('should load library panel', async () => {
     const { gridItem, spy, behavior } = await buildTestSceneWithLibraryPanel();
 
@@ -511,6 +537,7 @@ describe('LibraryPanelBehavior', () => {
 });
 
 interface BuildTestSceneOptions {
+  model?: Partial<LibraryPanel['model']>;
   vizPanelTitle?: string;
   libPanelModelTitle?: string;
   timeFrom?: string;
@@ -559,6 +586,7 @@ async function buildTestSceneWithLibraryPanel(options: BuildTestSceneOptions = {
       fieldConfig: { defaults: {}, overrides: [] },
       datasource: { uid: 'abcdef' },
       targets: [{ refId: 'A' }],
+      ...options.model,
       ...(timeFrom ? { timeFrom } : {}),
       ...(repeat ? { repeat, repeatDirection, maxPerRow: 4 } : {}),
     },
