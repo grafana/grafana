@@ -6237,7 +6237,7 @@
       "agent-edit": "Agent editing",
       "change-mode": "Change dashboard mode",
       "composer": "Composer",
-      "composer-description": "Point at anything and ask Assistant to change it.",
+      "composer-description": "Point at anything and ask the Assistant.",
       "composer-no-permission": "You need permission to edit this dashboard.",
       "composer-save-first": "Save the dashboard before using Composer.",
       "composer-unsupported": "Composer is not available for this dashboard right now.",
@@ -7314,11 +7314,14 @@
         "keep-working": "Keep working",
         "save": "Save",
         "stop-and-leave": "Stop and leave",
+        "stop-and-switch": "Stop and switch",
         "text": {
+          "composer-stop-editing": "Assistant is still making changes to this dashboard. Switching to Viewing stops it. Changes it has already made stay.",
           "leave-composer": "Assistant is still making changes to this dashboard. Leaving Composer stops it. Changes it has already made stay.",
           "save-changes-question": "Do you want to save your changes?"
         },
         "title": {
+          "composer-stop-editing": "Switch to Viewing?",
           "leave-composer": "Leave Composer?",
           "unsaved-changes": "Unsaved changes"
         }

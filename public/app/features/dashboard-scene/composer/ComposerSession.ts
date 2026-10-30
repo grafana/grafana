@@ -387,6 +387,23 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
     return this.document.applySpec(spec, opts, () => !this.ended);
   }
 
+  public get canWrite(): boolean {
+    return !this.ended && (this.document.canWrite?.() ?? true);
+  }
+
+  public onCanWriteChange(listener: (canWrite: boolean) => void): () => void {
+    if (this.ended || !this.document.onCanWriteChange) {
+      return () => {};
+    }
+    const stop = this.document.onCanWriteChange((canWrite) => {
+      if (!this.ended) {
+        listener(canWrite);
+      }
+    });
+    this.cleanups.push(stop);
+    return stop;
+  }
+
   public exit(): void | Promise<ComposerExitResult> {
     if (!this.ended) {
       this.document.detach();
