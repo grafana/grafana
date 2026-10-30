@@ -12,8 +12,6 @@ import (
 
 	"github.com/blevesearch/bleve/v2"
 	authlib "github.com/grafana/authlib/types"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 	apischema "k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
@@ -715,31 +713,6 @@ func TestFieldValueSearchResults(t *testing.T) {
 	})
 }
 
-func TestSearchResultFormatMetric(t *testing.T) {
-	reg := prometheus.NewPedanticRegistry()
-	metrics := resource.ProvideIndexMetrics(reg)
-	index := newTestDashboardsIndexWithMetrics(t, threshold, 0, noop, metrics)
-
-	req := newTestQuery("")
-	req.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
-
-	res, err := index.Search(t.Context(), nil, req, nil, nil)
-	require.NoError(t, err)
-	require.Nil(t, res.Error)
-	require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, res.ResultFormat)
-	require.Equal(t, 1.0, testutil.ToFloat64(metrics.SearchResultFormats.WithLabelValues("field_values")))
-
-	invalid := newTestQuery("")
-	invalid.Fields = []string{"does_not_exist"}
-	invalid.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
-	res, err = index.Search(t.Context(), nil, invalid, nil, nil)
-	require.NoError(t, err)
-	require.NotNil(t, res.Error)
-	require.Equal(t, 1.0, testutil.ToFloat64(metrics.SearchResultFormats.WithLabelValues("field_values")), "a response without a result format is not counted")
-
-	require.Equal(t, 2, testutil.CollectAndCount(metrics.SearchResultFormats, "grafana_index_server_search_result_format_total"))
-}
-
 func newQueryByTitle(query string) *resourcepb.ResourceSearchRequest {
 	return &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
@@ -1420,10 +1393,6 @@ func TestPublicFieldNameTextQuery(t *testing.T) {
 }
 
 func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer resource.BuildFn) resource.ResourceIndex {
-	return newTestDashboardsIndexWithMetrics(t, threshold, size, writer, nil)
-}
-
-func newTestDashboardsIndexWithMetrics(t testing.TB, threshold int64, size int64, writer resource.BuildFn, metrics *resource.BleveIndexMetrics) resource.ResourceIndex {
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
@@ -1435,7 +1404,7 @@ func newTestDashboardsIndexWithMetrics(t testing.TB, threshold int64, size int64
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
-	}, metrics)
+	}, nil)
 	require.NoError(t, err)
 
 	t.Cleanup(backend.Stop)

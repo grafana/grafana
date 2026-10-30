@@ -1435,11 +1435,24 @@
     },
     "gma-rule-list": {
       "alert-rules": {
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
       "datasources": "",
+      "folder-row": {
+        "collapse": "",
+        "count-description": "",
+        "count-tooltip": "",
+        "count-unavailable": "",
+        "expand": ""
+      },
       "interval": "",
       "recorded-metric": {
         "records": "",
@@ -1450,12 +1463,13 @@
         "rules-error": "",
         "search-issues": ""
       },
-      "result-count": {
+      "rule-count": {
         "alert-rules_other": "",
         "recording-rules_other": ""
       },
       "search": {
         "default-policy-unavailable": "",
+        "folders-disabled": "",
         "help": {
           "contact-point": "",
           "dashboard": "",
@@ -1504,6 +1518,9 @@
         "renamed-value": "",
         "unavailable-tokens": "",
         "unclosed-quote": "",
+        "view": "",
+        "view-folders": "",
+        "view-list": "",
         "wildcard-in-text": ""
       },
       "shared": {
@@ -7240,11 +7257,15 @@
       "modal": {
         "cancel": "취소",
         "discard": "무시",
+        "keep-working": "",
         "save": "저장",
+        "stop-and-leave": "",
         "text": {
+          "leave-composer": "",
           "save-changes-question": "변경 사항을 저장하시겠어요?"
         },
         "title": {
+          "leave-composer": "",
           "unsaved-changes": "저장되지 않은 변경 사항"
         }
       },
@@ -8990,6 +9011,12 @@
         "inspect-value": "값 검사",
         "show-details": "상세 정보 표시",
         "view-log-line": "로그 라인 보기"
+      },
+      "error-attribute": {
+        "error-fields-label": "",
+        "error-fields-tooltip": "",
+        "stacktrace-label": "",
+        "stacktrace-tooltip": ""
       },
       "loki-time-sort-tooltip": "이 열을 정렬하면 표시되는 결과의 순서만 변경됩니다. 쿼리의 시간 기반 정렬 순서를 업데이트하려면 오른쪽에 있는 정렬 컨트롤을 사용하세요."
     },
@@ -11017,6 +11044,7 @@
         "add-all": "표시된 모든 값을 필터에 추가",
         "blanks": "(공백)",
         "button": "필터 {{name}}",
+        "include-missing": "",
         "operator": {
           "contains": "포함",
           "equals": "동일함",
@@ -11041,6 +11069,7 @@
       "filter-popup-heading": "값으로 필터링:",
       "filter-popup-input-placeholder": "값 필터링",
       "filter-popup-match-case": "대소문자 일치",
+      "filter-popup-row-count": "",
       "footer": {
         "reducer": {
           "count": "개수"
@@ -11057,6 +11086,18 @@
       "no-rows": "행 없음",
       "no-values-label": "값 없음",
       "pagination-summary": "{{numRows}}개의 행 중에서 {{itemsRangeStart}}~{{displayedEnd}}",
+      "range": {
+        "apply": "",
+        "empty": "",
+        "end": "",
+        "histogram": "",
+        "invalid": "",
+        "label": "",
+        "maximum": "",
+        "minimum": "",
+        "start": "",
+        "unbounded": ""
+      },
       "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "{{column}} 열 기준으로 정렬",
@@ -12204,6 +12245,7 @@
     },
     "log-details": {
       "error": {
+        "diagnose-with-assistant": "",
         "error-details": ""
       }
     },
@@ -16804,6 +16846,10 @@
     },
     "namespace-unavailable": "요청을 보내기 전에 네임스페이스를 확인하거나 페이지를 새로고친 후 다시 시도하세요.",
     "namespace-unavailable-title": "네임스페이스 로딩 불가",
+    "router-fixtures": {
+      "clear": "",
+      "title": ""
+    },
     "router-nav": {
       "api-docs": "",
       "manifests": "",
@@ -16820,7 +16866,6 @@
       "failures-description": "",
       "filter-placeholder": "",
       "filtered": "",
-      "groups": "",
       "last-failed": "",
       "load-failures": "",
       "never": "",
@@ -16834,8 +16879,9 @@
       "requests-description": "",
       "shadowed": "",
       "shadowed-description": "",
-      "sources": "",
-      "stack-lookups": "",
+      "tab-groups": "",
+      "tab-lookups": "",
+      "tab-sources": "",
       "title": ""
     }
   },
