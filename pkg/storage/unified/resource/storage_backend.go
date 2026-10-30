@@ -90,7 +90,7 @@ type kvStorageBackend struct {
 	dataStore              *dataStore
 	eventStore             *eventStore
 	notifier               notifier
-	eventPublisher         EventPublisher
+	watchPublisher         *WatchNotificationPublisher
 	// watchNotificationMetadata adds object metadata to published notifications.
 	watchNotificationMetadata bool
 	// keysSubscriber lets search watch written keys straight from the bus. Set only
@@ -143,9 +143,6 @@ type kvBackendMetrics struct {
 	WriteConflicts                    *prometheus.CounterVec
 	EventEmitFailures                 *prometheus.CounterVec
 	NatsNotifierDropped               *prometheus.CounterVec
-	WatchNotificationsPublished       *prometheus.CounterVec
-	WatchNotificationPublishFailures  *prometheus.CounterVec
-	WatchNotificationMetadataDropped  *prometheus.CounterVec
 	GCGroupResourceDuration           *prometheus.HistogramVec
 	GCCycleDuration                   *prometheus.HistogramVec
 	GCCycleBatches                    *prometheus.HistogramVec
@@ -202,18 +199,6 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 			Name: "grafana_storage_server_nats_notifier_dropped_events_total",
 			Help: "Notifications dropped by the NATS notifier before delivery, by reason (unmarshal_error, unknown_type, buffer_full).",
 		}, []string{"reason"}),
-		WatchNotificationsPublished: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_storage_server_watch_notifications_published_total",
-			Help: "Watch notifications successfully published to NATS, by group, resource, and action. The denominator for consumer delivery completeness: compare against the consumers' live-received totals to measure events missed in flight.",
-		}, []string{"group", "resource", "action"}),
-		WatchNotificationPublishFailures: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_storage_server_watch_notifications_publish_failures_total",
-			Help: "Watch notifications that failed to marshal or publish to NATS, by group, resource, and action. Each one is an event live consumers never receive; they recover it on their next re-list.",
-		}, []string{"group", "resource", "action"}),
-		WatchNotificationMetadataDropped: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_storage_server_watch_notification_metadata_dropped_total",
-			Help: "Watch notifications published without their metadata because it pushed the message over the size limit, by group, resource, and action.",
-		}, []string{"group", "resource", "action"}),
 		GCCycleDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "grafana_storage_server_gc_cycle_duration_seconds",
 			Help:    "Elapsed duration of a garbage-collection cycle, including batch waits, by outcome.",
@@ -272,18 +257,6 @@ func (m *kvBackendMetrics) recordConflict(event WriteEvent) {
 
 func (m *kvBackendMetrics) recordEventEmitFailure(event WriteEvent) {
 	m.EventEmitFailures.WithLabelValues(event.Key.Resource, event.Type.String()).Inc()
-}
-
-func (m *kvBackendMetrics) recordWatchNotificationPublished(event Event) {
-	m.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
-}
-
-func (m *kvBackendMetrics) recordWatchNotificationMetadataDropped(event Event) {
-	m.WatchNotificationMetadataDropped.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
-}
-
-func (m *kvBackendMetrics) recordWatchNotificationPublishFailure(event Event) {
-	m.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
 }
 
 var (
@@ -493,7 +466,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 			natsDropped:        metrics.NatsNotifierDropped,
 			invalidator:        opts.WatchInvalidator,
 		}),
-		eventPublisher:            opts.EventPublisher,
+		watchPublisher:            NewWatchNotificationPublisher(opts.EventPublisher, opts.Reg, logger),
 		watchNotificationMetadata: opts.WatchNotificationMetadata,
 		keysSubscriber:            keysSubscriber(opts),
 		watchOpts:                 opts.WatchOptions.normalize(),
@@ -1269,7 +1242,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 		PreviousFolder:  previousKey.Folder,
 	}
 	if k.watchNotificationMetadata {
-		eventData.Metadata = newWatchMetadata(schema.GroupResource{Group: event.Key.Group, Resource: event.Key.Resource}, obj)
+		eventData.Metadata = NewWatchMetadata(schema.GroupResource{Group: event.Key.Group, Resource: event.Key.Resource}, obj)
 	}
 	if err := k.eventStore.Save(ctx, eventData); err != nil {
 		k.metrics.recordEventEmitFailure(event)

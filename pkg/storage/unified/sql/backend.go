@@ -91,17 +91,19 @@ func tmpDir(dataPath string) string {
 	return filepath.Join(dataPath, "tmp")
 }
 
-// StorageBackendOption configures optional behavior of the KV storage backend.
+// StorageBackendOption configures optional behavior of the storage backend.
+// KV backend only unless noted. Options must only set fields: the legacy SQL
+// path also applies them, to read the ones it supports.
 type StorageBackendOption func(*resource.KVBackendOptions)
 
 // WithEventPublisher makes the backend announce committed writes on an external
-// message bus (NATS) via the given publisher. Applies only to the KV backend.
+// message bus (NATS) via the given publisher. KV and legacy SQL.
 func WithEventPublisher(p resource.EventPublisher) StorageBackendOption {
 	return func(o *resource.KVBackendOptions) { o.EventPublisher = p }
 }
 
 // WithWatchNotificationMetadata adds allowlisted object metadata to the
-// notifications the event publisher announces. KV backend only.
+// notifications the event publisher announces. KV and legacy SQL.
 func WithWatchNotificationMetadata() StorageBackendOption {
 	return func(o *resource.KVBackendOptions) { o.WatchNotificationMetadata = true }
 }
@@ -169,6 +171,11 @@ func NewStorageBackend(
 		cfg.SectionWithEnvOverrides("resource_api"))
 
 	if !cfg.EnableSQLKVBackend {
+		// Collect the KV options to pick out the ones SQL supports.
+		var kvOpts resource.KVBackendOptions
+		for _, opt := range opts {
+			opt(&kvOpts)
+		}
 		blobURL, err := resolvedBlobURL(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("blob_url").MustString(""), cfg.DataPath)
 		if err != nil {
 			return nil, err
@@ -191,6 +198,9 @@ func NewStorageBackend(
 			DisablePruner:           cfg.DisablePruner,
 			DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 			BatchTransactionTimeout: cfg.ResourceVersionBatchTransactionTimeout,
+
+			EventPublisher:            kvOpts.EventPublisher,
+			WatchNotificationMetadata: kvOpts.WatchNotificationMetadata,
 		})
 	}
 
@@ -296,6 +306,12 @@ type BackendOptions struct {
 
 	// BlobURL selects the same external blob backend as the resource server.
 	BlobURL string
+
+	// EventPublisher announces committed writes on NATS.
+	EventPublisher resource.EventPublisher
+
+	// WatchNotificationMetadata adds allowlisted object metadata to notifications.
+	WatchNotificationMetadata bool
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -340,6 +356,9 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		blobGCMetrics:           resource.NewBlobGCMetricsIfEnabled(opts.Reg, "sql", garbageCollection.Enabled && garbageCollection.BlobEnabled),
 		blobURL:                 opts.BlobURL,
 		gcGate:                  opts.GCGate,
+
+		watchPublisher:            resource.NewWatchNotificationPublisher(opts.EventPublisher, opts.Reg, logging.DefaultLogger.With("logger", "sql-resource-server")),
+		watchNotificationMetadata: opts.WatchNotificationMetadata,
 	}
 	if err := backend.Init(ctx); err != nil {
 		return nil, err
@@ -399,6 +418,9 @@ type backend struct {
 	dashboardVersionsToKeep int
 	batchTxnTimeout         time.Duration
 	historyPruner           resource.Pruner
+
+	watchPublisher            *resource.WatchNotificationPublisher
+	watchNotificationMetadata bool
 
 	garbageCollection GarbageCollectionConfig
 	gcGate            *resource.GCGate
@@ -910,8 +932,32 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 		ResourceVersion: rv,
 		Folder:          folder,
 	})
+	b.publishWatchNotification(ctx, resourcepb.WatchNotification_ADDED, event, rv, folder)
 
 	return rv, nil
+}
+
+// publishWatchNotification leaves previous type and folder empty: they would
+// need an extra read and no consumer uses them. The write is committed, so a
+// cancelled request must not stop the publish.
+func (b *backend) publishWatchNotification(ctx context.Context, typ resourcepb.WatchNotification_Type, event resource.WriteEvent, rv int64, folder string) {
+	if b.watchPublisher == nil {
+		return
+	}
+	n := &resourcepb.WatchNotification{
+		Type:                    typ,
+		Group:                   event.Key.Group,
+		Resource:                event.Key.Resource,
+		Namespace:               event.Key.Namespace,
+		Name:                    event.Key.Name,
+		ResourceVersion:         rv,
+		Folder:                  folder,
+		PreviousResourceVersion: event.PreviousRV,
+	}
+	if b.watchNotificationMetadata {
+		n.Metadata = resource.NewWatchMetadata(schema.GroupResource{Group: event.Key.Group, Resource: event.Key.Resource}, event.Object)
+	}
+	b.watchPublisher.Publish(context.WithoutCancel(ctx), n)
 }
 
 // IsRowAlreadyExistsError checks if the error is the result of the row inserted already existing.
@@ -994,6 +1040,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 		ResourceVersion: rv,
 		Folder:          folder,
 	})
+	b.publishWatchNotification(ctx, resourcepb.WatchNotification_MODIFIED, event, rv, folder)
 
 	return rv, nil
 }
@@ -1051,6 +1098,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 		ResourceVersion: rv,
 		Folder:          folder,
 	})
+	b.publishWatchNotification(ctx, resourcepb.WatchNotification_DELETED, event, rv, folder)
 
 	return rv, nil
 }

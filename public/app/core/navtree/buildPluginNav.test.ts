@@ -282,6 +282,33 @@ describe('applyPluginNav', () => {
       expect(moreApps(merged)).toBeUndefined();
     });
 
+    // The Observability section is created on demand by the first app targeting
+    // it, and this page's own app may well be that app — so the page has to be
+    // placed after the app, not before it
+    it('lifts a configured page into the section its own app creates', () => {
+      const merged = merge(
+        app('grafana-agento11y-app', 'Agent', [
+          page('Agent', '/a/grafana-agento11y-app'),
+          page('Fleet', '/a/grafana-agento11y-app/fleet'),
+          page('Coding agents', '/a/grafana-agento11y-app/coding-agents'),
+        ])
+      );
+
+      const observability = findById(merged, NavID.observability);
+      expect(ids(observability?.children ?? [])).toEqual([
+        'plugin-page-grafana-agento11y-app',
+        'standalone-plugin-page-/a/grafana-agento11y-app/coding-agents',
+      ]);
+
+      const codingAgents = findById(merged, 'standalone-plugin-page-/a/grafana-agento11y-app/coding-agents');
+      expect(codingAgents?.text).toBe('Coding agent');
+      expect(codingAgents?.url).toBe('/a/grafana-agento11y-app/coding-agents');
+      expect(codingAgents?.isNew).toBe(true);
+
+      // and it is no longer one of the app's own children
+      expect(childTexts(merged, 'grafana-agento11y-app')).toEqual(['Fleet']);
+    });
+
     it('lifts a configured page to the top level when it names root', () => {
       // the assistant's own include filter hides /pages on OSS deployments
       const namespace = config.namespace;
@@ -401,7 +428,7 @@ describe('applyPluginNav', () => {
         'standalone-plugin-page-a-grafana-asserts-app-services',
       ]);
       // The services page takes the App Observability slot
-      expect(findById(merged, 'standalone-plugin-page-a-grafana-asserts-app-services')?.sortWeight).toBe(4);
+      expect(findById(merged, 'standalone-plugin-page-a-grafana-asserts-app-services')?.sortWeight).toBe(5);
     });
 
     // Mirrors the Go builder's TestAddAppLinksObservabilityAssertsOrdering: the
