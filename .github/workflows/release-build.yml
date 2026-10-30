@@ -225,13 +225,12 @@ jobs:
       - name: Install JS dependencies
         uses: ./.github/actions/yarn-install
       - name: Build frontend
-        run: pnpm run build
+        run: make build-js
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: release-frontend
-          path: |
-            public/
-            !public/**/node_modules/
+          path: dist/frontend/
+          if-no-files-found: error
           retention-days: 1
 
   build-backend:

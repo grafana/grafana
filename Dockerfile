@@ -127,7 +127,8 @@ COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 # add -v to make tar print every file it extracts
 RUN tar x -z -f /tmp/grafana.tar.gz --strip-components=1
 
-RUN mkdir -p data/plugins-bundled
+RUN test -s public/build/assets-manifest.json && \
+  mkdir -p dist data/plugins-bundled && mv public dist/frontend
 
 # helpers for COPY --from
 FROM ${GO_SRC} AS go-src
@@ -142,7 +143,7 @@ ENV GF_PATHS_HOME="/usr/share/grafana"
 WORKDIR $GF_PATHS_HOME
 
 COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
-COPY --from=js-src /tmp/grafana/public ./public
+COPY --from=js-src /tmp/grafana/dist/frontend ./public
 COPY --from=js-src /tmp/grafana/LICENSE ./
 
 # Bundled plugins — shared by the 3 full (non-slim) variants, and by the 3 slim variants
