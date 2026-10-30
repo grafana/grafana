@@ -193,6 +193,11 @@ export interface CodeMirrorEditorProps {
    */
   lineWrapping?: boolean;
   /**
+   * Shows errors from installed lint extensions in a strip beside the scrollbar.
+   * Defaults to `false`. Does not enable validation by itself.
+   */
+  overviewRuler?: boolean;
+  /**
    * Rendered while the editor bundle is being lazily loaded. Defaults to a
    * loading placeholder; pass a styled preview of the content to avoid a
    * visual flash when the editor appears.

@@ -228,6 +228,7 @@ export function DashboardSchemaEditor({
               value={displayValue}
               language={format}
               extensions={extensions}
+              overviewRuler={format === 'json'}
               readOnly={readOnly || Boolean(schemaLoadError)}
               aria-label={t('dashboard-schema-editor.editor-label', 'Dashboard schema')}
               onChange={handleChange}
@@ -253,6 +254,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
+    minWidth: 0,
     minHeight: 0,
     gap: theme.spacing(1),
   }),
@@ -267,6 +269,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   editorContainer: css({
     flex: '1 1 0',
+    minWidth: 0,
     minHeight: 0,
     display: 'flex',
     flexDirection: 'column',
@@ -274,6 +277,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   codeEditorContainer: css({
     height: '100%',
     flex: '1 1 0',
+    minWidth: 0,
     minHeight: 0,
     overflow: 'visible',
     '.cm-theme': {
