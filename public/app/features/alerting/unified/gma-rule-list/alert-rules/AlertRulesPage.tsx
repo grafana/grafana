@@ -70,7 +70,7 @@ function AlertRulesPageHeader() {
   return (
     <Stack direction="row" gap={1} alignItems="center">
       {canCreate && (
-        <LinkButton href="/alerting/new/grafana" icon="plus" variant="primary">
+        <LinkButton href="/alerting/new/alerting" icon="plus" variant="primary">
           <Trans i18nKey="alerting.gma-rule-list.header.new-alert-rule">New alert rule</Trans>
         </LinkButton>
       )}
