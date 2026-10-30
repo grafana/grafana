@@ -1,4 +1,4 @@
-import { act, render, renderHook, screen, userEvent, waitFor } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
@@ -11,7 +11,6 @@ import { dashboardSceneGraph } from '../../../utils/dashboardSceneGraph';
 import { DashboardScene } from '../../DashboardScene';
 import { DefaultGridLayoutManager } from '../../layout-default/DefaultGridLayoutManager';
 
-import { usePromotePanelAdHocChanges } from './usePromotePanelAdHocChanges';
 import { PromotePanelAdHocChangesEvent } from './utils';
 
 // The rebuilt dashboard runs its built-in annotation query, which is not under test.
@@ -51,18 +50,24 @@ async function buildScene({ startEditing = false } = {}) {
   // Loaded dashboards keep the JSON they were built from.
   dashboard.serializer.initialSaveModel = dashboard.getSaveModel();
 
-  // Only the panel needs to be active, to load its plugin and the interactions it declares. Activating the whole tree
-  // would also run the annotation layers of the rebuilt dashboard.
-  deactivate.push(dashboard.activate(), panel.activate());
+  // The dashboard listens for promotion requests while active, and only the panel needs to be active besides it, to
+  // load its plugin and the interactions it declares. Activating the whole tree would also run the annotation layers of
+  // the rebuilt dashboard.
+  let deactivateDashboard = dashboard.activate();
+  deactivate.push(() => deactivateDashboard(), panel.activate());
   await act(() => new Promise((r) => setTimeout(r, 1)));
   panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, [adHocChange]);
   if (startEditing) {
     act(() => dashboard.onEnterEditMode());
   }
 
-  renderHook(() => usePromotePanelAdHocChanges(dashboard));
+  // Remounting the dashboard component, as StrictMode does on mount, deactivates the dashboard and activates it again.
+  const remountDashboard = () => {
+    deactivateDashboard();
+    deactivateDashboard = dashboard.activate();
+  };
 
-  return { panel, dashboard };
+  return { panel, dashboard, remountDashboard };
 }
 
 async function requestPromotion(panel: VizPanel) {
@@ -99,7 +104,7 @@ function getAdHocTransformations(dashboard: DashboardScene) {
 
 let deactivate: Array<() => void> = [];
 
-describe('usePromotePanelAdHocChanges', () => {
+describe('promotePanelAdHocChanges', () => {
   afterEach(() => {
     deactivate.reverse().forEach((fn) => fn());
     deactivate = [];
@@ -132,6 +137,26 @@ describe('usePromotePanelAdHocChanges', () => {
     expect(dashboard.state.isEditing).toBe(true);
     expect(dashboard.state.sidebar.state.undoStack).toHaveLength(1);
     await waitFor(() => expect(dashboard.state.overlay).toBeInstanceOf(SaveDashboardDrawer));
+  });
+
+  it('opens the save drawer after the dashboard component remounts', async () => {
+    const { panel, dashboard, remountDashboard } = await buildScene();
+
+    act(() => remountDashboard());
+    await requestPromotion(panel);
+
+    expect(dashboard.state.title).toBe('Promoted');
+    await waitFor(() => expect(dashboard.state.overlay).toBeInstanceOf(SaveDashboardDrawer));
+  });
+
+  it('promotes the changes once, however many times the dashboard remounts', async () => {
+    const { panel, remountDashboard } = await buildScene();
+
+    act(() => remountDashboard());
+    act(() => remountDashboard());
+    await requestPromotion(panel);
+
+    expect(promotionPath).toHaveBeenCalledTimes(1);
   });
 
   it('rebuilds the panel without ad hoc transformations, so the changes are not applied twice', async () => {

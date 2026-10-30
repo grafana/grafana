@@ -26,7 +26,7 @@ export function PanelAdHocChangesAction({ panel }: Props) {
   const hasChanges = useHasAdHocTransformations(panel, hasInteractions);
   const canPromote = Boolean(meta.canSave) && canPromoteAdHocChanges(panel);
 
-  // The dashboard saves the changes, see usePromotePanelAdHocChanges.
+  // The dashboard saves the changes, see promotePanelAdHocChanges.
   const onSaveToDashboard = useCallback(
     () => panel.publishEvent(new PromotePanelAdHocChangesEvent({ panel }), true),
     [panel]

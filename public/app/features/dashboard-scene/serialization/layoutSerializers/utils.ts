@@ -124,7 +124,7 @@ export function buildVizPanelState(
     $data: buildOptions.withoutQueries ? undefined : createPanelDataProvider(panel),
     titleItems,
     $behaviors: [],
-    _UNSAFE_clearPreviousFieldValues: false, // TEMP: testing cancel bug, revert
+    _UNSAFE_clearPreviousFieldValues: true,
     // The spec's own options/fieldConfig are the assistant's planned visualization settings
     // and must win, not be clobbered by the sample's. RENDER_PLAN supplies synthetic $data
     // for query-less previews; keeping samples there also avoids loading them for real dashboards.
@@ -218,7 +218,7 @@ export function buildLibraryPanelState(panel: LibraryPanelKind, id?: number): Vi
       defaults: {},
       overrides: [],
     },
-    _UNSAFE_clearPreviousFieldValues: false, // TEMP: testing cancel bug, revert
+    _UNSAFE_clearPreviousFieldValues: true,
   };
 
   return vizPanelState;

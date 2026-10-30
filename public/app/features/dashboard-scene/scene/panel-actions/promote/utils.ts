@@ -5,7 +5,7 @@ import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getDashboardSceneLike } from '../../types/dashboard';
 
 /**
- * Action to ask the dashboard to save the panel's ad hoc changes. The save is handled on the dashboard side, see usePromotePanelAdHocChanges.
+ * Action to ask the dashboard to save the panel's ad hoc changes. The save is handled on the dashboard side, see promotePanelAdHocChanges.
  */
 export class PromotePanelAdHocChangesEvent extends BusEventWithPayload<{ panel: VizPanel }> {
   static type = 'promote-panel-adhoc-changes';

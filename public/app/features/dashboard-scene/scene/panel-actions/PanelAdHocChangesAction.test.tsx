@@ -15,7 +15,10 @@ import { VizPanelHeaderActions } from '../VizPanelHeaderActions';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
 import { PanelAdHocChangesAction } from './PanelAdHocChangesAction';
-import { PromotePanelAdHocChangesEvent } from './promote/utils';
+import { promotePanelAdHocChanges } from './promote/promotePanelAdHocChanges';
+
+// Promoting the changes is covered by its own tests.
+jest.mock('./promote/promotePanelAdHocChanges', () => ({ promotePanelAdHocChanges: jest.fn() }));
 
 const OWNER = TABLE_TRANSFORMATIONS_OWNER;
 const buttonTestId = selectors.components.Panels.Panel.PanelAdHocChangesHeaderAction;
@@ -127,16 +130,15 @@ describe('PanelAdHocChangesAction', () => {
   });
 
   it('asks the dashboard to save the changes when "Save to dashboard" is clicked', async () => {
+    jest.mocked(promotePanelAdHocChanges).mockClear();
     const { panel, dashboard } = await buildScene({ canSave: true });
-    const onPromote = jest.fn();
-    dashboard.subscribeToEvent(PromotePanelAdHocChangesEvent, onPromote);
     addAdHocChange(panel);
 
     await userEvent.click(screen.getByTestId(buttonTestId));
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Save to dashboard' }));
 
-    expect(onPromote).toHaveBeenCalledTimes(1);
-    expect(onPromote.mock.calls[0][0].payload).toEqual({ panel });
+    expect(promotePanelAdHocChanges).toHaveBeenCalledTimes(1);
+    expect(promotePanelAdHocChanges).toHaveBeenCalledWith(dashboard, panel);
   });
 
   it.each([
