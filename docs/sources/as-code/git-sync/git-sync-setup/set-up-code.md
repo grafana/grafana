@@ -42,7 +42,7 @@ To set up Git Sync as code with `gcx`, follow these steps:
 1. Read [Before you begin](#before-you-begin).
 1. [Create the connection resource](#create-the-connection-resource)
 1. [Create the repository resource](#create-the-repository-resource)
-1. [Push the CRDs to Grafana](#push-the-resources-to-grafana)
+1. [Push the resources to Grafana](#push-the-resources-to-grafana)
 1. [Manage repository resources](#manage-repository-resources)
 1. [Verify setup](#verify-setup)
 
@@ -51,7 +51,7 @@ To set up Git Sync as code with `gcx`, follow these steps:
 Understand the following:
 
 - Git Sync [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/usage-limits).
-- The [required resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/key-concepts) to use Git Sync.
+- The [required resources (connection and repository)](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/key-concepts) to use Git Sync.
 
 ## Create the connection resource
 
@@ -255,13 +255,13 @@ Git Sync supports two sync targets: `target: folder` (the default) creates a fol
 
 {{< /admonition >}}
 
-### Configuration parameters
+## Configuration parameters
 
 The following configuration parameters are available for the connection and repository resources.
 
 Values under `secure` are stored encrypted and can't be read back after you create them.
 
-#### Connection parameters
+### Connection parameters
 
 | Field                                  | Description                                                                                                                                                                                                                                     |
 | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -285,7 +285,7 @@ Values under `secure` are stored encrypted and can't be read back after you crea
 | `secure.privateKey.create`             | Private key of the GitHub App, base64-encoded. Only for the `github` and `githubEnterprise` types                                                                                                                                               |
 | `secure.clientSecret.create`           | Client secret of the OAuth App. Required for all OAuth connection types                                                                                                                                                                         |
 
-#### Repository parameters
+### Repository parameters
 
 In the following table, replace `<TYPE>` with the repository type set in `spec.type`. For example, use `spec.gitlab.url` for a GitLab repository.
 
