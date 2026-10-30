@@ -1,6 +1,5 @@
 import { type PanelData } from '@grafana/data';
 
-import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
 import { type QueryEditorCoauthoringContextV1 } from './internalCoauthoringContract';
 import {
   reduceQueryCoauthoringGroup,
@@ -46,7 +45,6 @@ type PromptSnapshot = Extract<SessionSnapshot, { kind: 'prompt' }>;
 interface SessionData extends QueryCoauthoringGroupState {
   engaged: boolean;
   prompt: PromptSnapshot;
-  feedback?: QueryCoauthoringFeedbackState;
   submittedIntents: string[];
   iterationNudgeDismissed: boolean;
   requestId: number;
@@ -72,7 +70,6 @@ export type QueryCoauthoringSessionEvent =
   | { type: 'mention-moved'; direction: 1 | -1 }
   | { type: 'mention-selected'; index?: number }
   | { type: 'mention-closed' }
-  | { type: 'feedback-changed'; feedback?: QueryCoauthoringFeedbackState }
   | { type: 'option-selected'; index: number; previewData?: PanelData }
   | { type: 'preview-data-changed'; previewData?: PanelData }
   | { type: 'peek-started'; index: number }
@@ -223,8 +220,6 @@ export function queryCoauthoringSessionReducer(
         updateSession(current, (view) => (view.kind === 'prompt' ? prompt : view))
       );
     }
-    case 'feedback-changed':
-      return { ...state, data: { ...state.data, feedback: event.feedback } };
     case 'mention-closed':
       return {
         ...state,
