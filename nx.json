@@ -33,6 +33,7 @@
     "version": {
       "versionActions": "scripts/release/version-actions.ts",
       "versionPrefix": "",
+      "updateDependents": "auto",
       "versionActionsOptions": {
         "skipLockFileUpdate": true
       },
