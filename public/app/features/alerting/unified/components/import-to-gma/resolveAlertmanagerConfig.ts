@@ -1,15 +1,11 @@
 import { load } from 'js-yaml';
 
+import { type AlertmanagerUserConfig } from '@grafana/alerting/convert';
 import { t } from '@grafana/i18n';
 
 import { fetchAlertManagerConfig } from '../../api/alertmanager';
 
 import { findDuplicateTemplateFileName } from './steps/utils';
-
-export interface ParsedAlertmanagerYaml {
-  alertmanagerConfig: string;
-  templateFiles: Record<string, string>;
-}
 
 export interface NotificationsSourceParams {
   source: 'datasource' | 'yaml';
@@ -66,20 +62,21 @@ function loadYaml(content: string, { embedded = false } = {}): unknown {
  * The backend API expects them as two separate fields in the request body:
  *   { alertmanager_config: "<config string>", template_files: { ... } }
  *
- * This function extracts `template_files` and re-serializes the config as JSON.
+ * This function extracts `template_files` and re-serializes the config as JSON, returning the body the
+ * convert API takes.
  */
-export function parseAlertmanagerYaml(yamlContent: string): ParsedAlertmanagerYaml {
+export function parseAlertmanagerYaml(yamlContent: string): AlertmanagerUserConfig {
   const parsed = loadYaml(yamlContent);
 
   if (!isRecord(parsed)) {
-    return { alertmanagerConfig: yamlContent, templateFiles: {} };
+    return { alertmanager_config: yamlContent, template_files: {} };
   }
 
   const { template_files, ...rest } = parsed;
   const templateFiles = isStringRecord(template_files) ? template_files : {};
 
   if (!('alertmanager_config' in rest)) {
-    return { alertmanagerConfig: JSON.stringify(rest), templateFiles };
+    return { alertmanager_config: JSON.stringify(rest), template_files: templateFiles };
   }
 
   const wrapped =
@@ -95,7 +92,7 @@ export function parseAlertmanagerYaml(yamlContent: string): ParsedAlertmanagerYa
     );
   }
 
-  return { alertmanagerConfig: JSON.stringify(wrapped), templateFiles };
+  return { alertmanager_config: JSON.stringify(wrapped), template_files: templateFiles };
 }
 
 /**
@@ -140,10 +137,10 @@ export function mergeTemplateFiles(
 }
 
 /**
- * Resolve the alertmanager config and template files from a YAML file or datasource.
- * Shared between import, dry-run, and interactive validation flows.
+ * Resolve the alertmanager config and template files from a YAML file or datasource, as the body the
+ * convert API takes. Shared between import, dry-run, and interactive validation flows.
  */
-export async function resolveAlertmanagerConfig(params: NotificationsSourceParams): Promise<ParsedAlertmanagerYaml> {
+export async function resolveAlertmanagerConfig(params: NotificationsSourceParams): Promise<AlertmanagerUserConfig> {
   const { source, datasourceName, yamlFile, templateFiles } = params;
 
   if (source === 'yaml' && yamlFile) {
@@ -152,16 +149,16 @@ export async function resolveAlertmanagerConfig(params: NotificationsSourceParam
     const uploadedTemplates = await readTemplateFiles(templateFiles);
 
     return {
-      alertmanagerConfig: parsed.alertmanagerConfig,
-      templateFiles: mergeTemplateFiles(parsed.templateFiles, uploadedTemplates),
+      alertmanager_config: parsed.alertmanager_config,
+      template_files: mergeTemplateFiles(parsed.template_files, uploadedTemplates),
     };
   }
 
   if (source === 'datasource' && datasourceName) {
     const config = await fetchAlertManagerConfig(datasourceName);
     return {
-      alertmanagerConfig: JSON.stringify(config.alertmanager_config),
-      templateFiles: config.template_files ?? {},
+      alertmanager_config: JSON.stringify(config.alertmanager_config),
+      template_files: config.template_files ?? {},
     };
   }
 

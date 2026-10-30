@@ -1,6 +1,7 @@
 import { type ReducersMapObject } from '@reduxjs/toolkit';
 import { type AnyAction, combineReducers } from 'redux';
 
+import { convertAPI } from '@grafana/alerting/convert';
 import { generatedAPI as legacyAPI } from '@grafana/api-clients/internal/rtkq/legacy';
 import { generatedAPI as migrateToCloudAPI } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
 import { generatedAPI as preferencesUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
@@ -53,6 +54,7 @@ const rootReducers = {
   [preferencesUserAPI.reducerPath]: preferencesUserAPI.reducer,
   plugins: pluginsReducer,
   [alertingApi.reducerPath]: alertingApi.reducer,
+  [convertAPI.reducerPath]: convertAPI.reducer,
   [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,
   [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
   [scopeAPIv0alpha1.reducerPath]: scopeAPIv0alpha1.reducer,
