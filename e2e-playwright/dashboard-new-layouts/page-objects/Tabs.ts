@@ -18,6 +18,16 @@ export class Tabs extends PageObject {
   }
 
   /**
+   * Returns the title elements of every rendered tab, in display order
+   * @param scope container to search within (e.g. `rows.getContent(rowTitle)`), defaults to the whole page
+   */
+  getTitles(scope?: Locator): Locator {
+    // Tab.title() only builds exact ids, so match every id sharing its prefix
+    const prefix = this.selectors.components.Tab.title('');
+    return (scope ?? this.page).getByTestId(new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+  }
+
+  /**
    * Returns the layout container holding the tab's content
    * @param scope container to search within, defaults to the whole page
    */

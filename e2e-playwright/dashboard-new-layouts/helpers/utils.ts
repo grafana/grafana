@@ -49,10 +49,42 @@ export async function getPanelBox(
   return boundingBox!;
 }
 
-export async function movePanel(panels: Panels, sourcePanel: string | RegExp, targetPanel: string | RegExp) {
+/** Box of every given panel, keyed by title, to compare a whole layout before and after a change */
+export async function getPanelBoxes(
+  panels: Panels,
+  panelTitles: string[]
+): Promise<Record<string, { x: number; y: number; width: number; height: number }>> {
+  const boxes: Record<string, { x: number; y: number; width: number; height: number }> = {};
+  for (const title of panelTitles) {
+    boxes[title] = await getPanelBox(panels, title);
+  }
+
+  return boxes;
+}
+
+/**
+ * A point in the left or right half of a panel, a quarter of its width in from that edge and
+ * vertically centered: hovering it while dragging aims the drop before or after that panel
+ */
+export async function getPanelHalfPoint(panels: Panels, panelTitle: string, half: 'left' | 'right'): Promise<Point> {
+  const box = await getPanelBox(panels, panelTitle);
+
+  return {
+    x: box.x + box.width * (half === 'left' ? 0.25 : 0.75),
+    y: box.y + box.height / 2,
+  };
+}
+
+export async function movePanel(
+  page: Page,
+  panels: Panels,
+  sourcePanel: string | RegExp,
+  targetPanel: string | RegExp
+) {
   await test.step(`Move panel "${sourcePanel}" onto "${targetPanel}"`, async () => {
-    // Perform drag and drop; pixel-sensitive mechanics stay out of page objects
-    await panels.getHeader(sourcePanel).dragTo(panels.getHeader(targetPanel));
+    const drag = await startPointerDrag(page, `panel "${sourcePanel}"`, panels.getHeader(sourcePanel));
+    await drag.moveTo(panels.getHeader(targetPanel));
+    await drag.drop();
   });
 }
 
@@ -109,6 +141,81 @@ export async function moveRow(
     targetBox.x,
     targetBox.y + targetBox.height
   );
+}
+
+type Point = { x: number; y: number };
+
+/** A drag in progress, started by `startPointerDrag`: the pointer button stays pressed until `drop()` */
+export interface PointerDrag {
+  /**
+   * Moves the held pointer over the target, at its center by default
+   * @param position offset from the target's top-left corner, like Playwright's `position` option
+   */
+  moveTo(target: Locator, options?: { position?: Point; steps?: number }): Promise<void>;
+  /** Moves the held pointer to viewport coordinates, which may lie outside the viewport */
+  moveToPoint(point: Point, options?: { steps?: number }): Promise<void>;
+  /** Presses Escape while the pointer is still held */
+  pressEscape(): Promise<void>;
+  /** Releases the pointer where it currently is */
+  drop(): Promise<void>;
+}
+
+async function getCenter(target: Locator, position?: Point): Promise<Point> {
+  const box = await target.boundingBox();
+  expect(box, 'Drag target should have a bounding box').not.toBeNull();
+
+  return position
+    ? { x: box!.x + position.x, y: box!.y + position.y }
+    : { x: box!.x + box!.width / 2, y: box!.y + box!.height / 2 };
+}
+
+/**
+ * Presses the pointer on `source` and nudges it far enough to pass every drag engine's start
+ * threshold, then hands back a `PointerDrag` to move and release it in separate steps.
+ * Only real pointer events are used (no `locator.dragTo()`, no keyboard dragging), so the
+ * gesture stays valid whichever drag-and-drop library the dashboard uses.
+ * Pointer moves are interpolated in several steps because drag engines ignore a single jump.
+ */
+export async function startPointerDrag(
+  page: Page,
+  sourceName: string,
+  source: Locator,
+  options?: { position?: Point }
+): Promise<PointerDrag> {
+  const DEFAULT_STEPS = 10;
+  let current: Point = { x: 0, y: 0 };
+
+  const moveToPoint = async (point: Point, { steps = DEFAULT_STEPS }: { steps?: number } = {}) => {
+    await page.mouse.move(point.x, point.y, { steps });
+    current = point;
+  };
+
+  await test.step(`Start dragging ${sourceName}`, async () => {
+    await source.scrollIntoViewIfNeeded();
+    current = await getCenter(source, options?.position);
+    await page.mouse.move(current.x, current.y);
+    await page.mouse.down();
+    await moveToPoint({ x: current.x, y: current.y + 10 }, { steps: 5 });
+  });
+
+  return {
+    moveTo: (target, moveOptions) =>
+      test.step(`Drag ${sourceName} over target`, async () => {
+        await moveToPoint(await getCenter(target, moveOptions?.position), moveOptions);
+      }),
+    moveToPoint: (point, moveOptions) =>
+      test.step(`Drag ${sourceName} to (${point.x}, ${point.y})`, async () => {
+        await moveToPoint(point, moveOptions);
+      }),
+    pressEscape: () =>
+      test.step(`Press Escape while dragging ${sourceName}`, async () => {
+        await page.keyboard.press('Escape');
+      }),
+    drop: () =>
+      test.step(`Drop ${sourceName} at (${current.x}, ${current.y})`, async () => {
+        await page.mouse.up();
+      }),
+  };
 }
 
 export async function undockMegaMenu(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
