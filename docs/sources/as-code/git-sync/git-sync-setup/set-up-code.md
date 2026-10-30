@@ -331,7 +331,7 @@ In the following table, replace `<TYPE>` with the repository type set in `spec.t
 
 Before pushing any resources, configure `gcx` with your Grafana instance details. Refer to the [Grafana CLI documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/) for setup instructions.
 
-Push the repository configuration. If you're using GitHub App to connect Git Sync, push the connection resource configuration file as well.
+Next, push the connection (if required) and repository configuration files:
 
 ```sh
 gcx resources push --path <DIRECTORY>
@@ -341,10 +341,10 @@ The `--path` parameter has to point to the directory containing your `repository
 
 After pushing, Grafana will:
 
-1. Create the required resources (repository and, for GitHub App, connection)
-1. Connect to your GitHub repository
-1. Pull dashboards from the specified path
-1. Begin syncing at the configured interval
+1. Create the required resources (repository and, for GitHub App or OAuth, connection).
+1. Connect to your GitHub repository.
+1. Pull dashboards from the specified path.
+1. Begin syncing at the configured interval.
 
 ## Manage repository resources
 
