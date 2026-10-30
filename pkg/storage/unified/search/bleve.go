@@ -2566,9 +2566,9 @@ func (b *bleveIndex) search(
 	// the collector indexes into the shorter cursor. Guard it here: if the
 	// cursor doesn't match the post-rank sort order, fall back to the in-searcher
 	// path; if it still doesn't match, reject the request.
-	cursorLen := len(req.SearchAfter)
+	cursorLen := len(searchrequest.SearchAfter)
 	if cursorLen == 0 {
-		cursorLen = len(req.SearchBefore)
+		cursorLen = len(searchrequest.SearchBefore)
 	}
 	if postRank && cursorLen > 0 && cursorLen != len(searchrequest.Sort) {
 		postRank = false
@@ -3291,6 +3291,17 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		// The folder and facet stored fields (needed to authorize / aggregate
 		// app-side) are added to the bleve load list in Search, separate from
 		// the response column list.
+	}
+	if postRankAuthz && req.IsDeleted && len(req.SortBy) == 1 &&
+		req.SortBy[0].GetField() == resource.SEARCH_FIELD_DELETED_RV && !req.SortBy[0].GetDesc() &&
+		len(searchrequest.SearchAfter) == 2 && searchrequest.SearchAfter[1] == "" &&
+		len(searchrequest.SearchBefore) == 0 && len(searchrequest.Sort) == 3 {
+		// Trash NotOlderThan listing starts at [resource version, empty name],
+		// an inclusive lower bound rather than a cursor identifying a result.
+		// Its empty name sorts before every resource, so adding the PostRank
+		// doc-ID tie-breaker preserves the bound. Real PreRank continuations
+		// must retain their shape so they still use the compatibility fallback.
+		searchrequest.SearchAfter = []string{searchrequest.SearchAfter[0], "", ""}
 	}
 
 	return searchrequest, nil
