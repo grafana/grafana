@@ -245,3 +245,111 @@ func TestSQLServiceErrors(t *testing.T) {
 		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", sql.ErrCategoryQueryTooLong))
 	})
 }
+
+func TestSQLServiceInputNotices(t *testing.T) {
+	truncated := data.Notice{Severity: data.NoticeSeverityWarning, Text: "Results truncated to 1 row"}
+	mixed := data.Notice{Severity: data.NoticeSeverityInfo, Text: "Column x has mixed types"}
+	maxPoints := data.Notice{Severity: data.NoticeSeverityWarning, Text: "Max data points reached"}
+
+	newTable := func(notices ...data.Notice) *data.Frame {
+		return data.NewFrame("",
+			data.NewField("host", nil, []string{"a"}),
+			data.NewField("value", nil, []*float64{new(2.0)}),
+		).SetMeta(&data.FrameMeta{Notices: notices})
+	}
+	newSeries := func(host string, notices ...data.Notice) *data.Frame {
+		return data.NewFrame("",
+			data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+			data.NewField("value", data.Labels{"host": host}, []*float64{new(2.0)}),
+		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti, Notices: notices})
+	}
+
+	dsQuery := func(refID string) Query {
+		return Query{
+			RefID:      refID,
+			DataSource: &datasources.DataSource{OrgID: 1, UID: "test", Type: "test"},
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			TimeRange:  AbsoluteTimeRange{},
+		}
+	}
+	sqlQuery := func(q string) Query {
+		return Query{
+			RefID:      "S",
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "sql", "expression": "` + q + `" }`),
+			TimeRange:  AbsoluteTimeRange{},
+		}
+	}
+
+	run := func(t *testing.T, resp map[string]backend.DataResponse, queries ...Query) *backend.QueryDataResponse {
+		t.Helper()
+		s, req := newMockQueryService(resp, queries)
+		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+		pl, err := s.BuildPipeline(t.Context(), req)
+		require.NoError(t, err)
+		rsp, err := s.ExecutePipeline(t.Context(), time.Now(), pl)
+		require.NoError(t, err)
+		require.NoError(t, rsp.Responses["S"].Error)
+		return rsp
+	}
+
+	notices := func(f *data.Frame) []data.Notice {
+		if f.Meta == nil {
+			return nil
+		}
+		return f.Meta.Notices
+	}
+
+	t.Run("table input notices reach the SQL output", func(t *testing.T) {
+		resp := map[string]backend.DataResponse{
+			"A": {Frames: data.Frames{newTable(truncated, mixed)}},
+		}
+		rsp := run(t, resp, dsQuery("A"), sqlQuery("SELECT * FROM A"))
+
+		require.Len(t, rsp.Responses["S"].Frames, 1)
+		require.Equal(t, []data.Notice{
+			{Severity: data.NoticeSeverityWarning, Text: "A: Results truncated to 1 row"},
+			{Severity: data.NoticeSeverityInfo, Text: "A: Column x has mixed types"},
+		}, notices(rsp.Responses["S"].Frames[0]))
+	})
+
+	t.Run("notices from many inputs are deduplicated and keep their RefID", func(t *testing.T) {
+		resp := map[string]backend.DataResponse{
+			"A": {Frames: data.Frames{newTable(truncated, truncated)}},
+			"B": {Frames: data.Frames{newSeries("a", maxPoints), newSeries("b", maxPoints, truncated)}},
+		}
+		rsp := run(t, resp, dsQuery("A"), dsQuery("B"), sqlQuery("SELECT COUNT(*) AS n FROM A, B"))
+
+		require.Equal(t, []data.Notice{
+			{Severity: data.NoticeSeverityWarning, Text: "A: Results truncated to 1 row"},
+			{Severity: data.NoticeSeverityWarning, Text: "B: Max data points reached"},
+			{Severity: data.NoticeSeverityWarning, Text: "B: Results truncated to 1 row"},
+		}, notices(rsp.Responses["S"].Frames[0]))
+
+		// The table input frame is not changed.
+		require.Equal(t, []data.Notice{truncated, truncated}, notices(rsp.Responses["A"].Frames[0]))
+	})
+
+	t.Run("converted input keeps its own notices", func(t *testing.T) {
+		resp := map[string]backend.DataResponse{
+			"B": {Frames: data.Frames{newSeries("a", maxPoints), newSeries("b", maxPoints, truncated)}},
+		}
+		rsp := run(t, resp, dsQuery("B"), sqlQuery("SELECT * FROM B"))
+
+		require.Equal(t, []data.Notice{maxPoints, truncated}, notices(rsp.Responses["B"].Frames[0]))
+	})
+
+	t.Run("notices reach a SQL output with no rows", func(t *testing.T) {
+		resp := map[string]backend.DataResponse{
+			"A": {Frames: data.Frames{newTable(truncated)}},
+		}
+		rsp := run(t, resp, dsQuery("A"), sqlQuery("SELECT * FROM A WHERE 1 = 0"))
+
+		frame := rsp.Responses["S"].Frames[0]
+		require.Equal(t, 0, frame.Rows())
+		require.Len(t, frame.Fields, 2)
+		require.Equal(t, []data.Notice{
+			{Severity: data.NoticeSeverityWarning, Text: "A: Results truncated to 1 row"},
+		}, notices(frame))
+	})
+}
