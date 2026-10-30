@@ -487,13 +487,49 @@ describe('TableNG utils', () => {
       // Call getAlignmentFactor with the first row
       const result = getAlignmentFactor(field, displayValue, 0);
 
-      // Verify the result has the text property
-      expect(result).toEqual(expect.objectContaining({ text: '1' }));
+      // The factor is the longest value of the rows that follow, not the first row's own text
+      expect(result).toEqual(expect.objectContaining({ text: '4444' }));
 
       // Verify that field.state was created and contains the alignment factor
       expect(field.state).toBeDefined();
       expect(field.state?.alignmentFactors).toBeDefined();
-      expect(field.state?.alignmentFactors).toEqual(expect.objectContaining({ text: '1' }));
+      expect(field.state?.alignmentFactors).toEqual(expect.objectContaining({ text: '4444' }));
+    });
+
+    it('should keep the longest formatted value, with its prefix and suffix, of the next rows', () => {
+      // Values of the same magnitude in a mixed order, as in a sorted gauge column: the widest
+      // formatted text, not the first one, decides how much room every cell reserves
+      const field: Field = {
+        name: 'test',
+        type: FieldType.number,
+        config: {},
+        values: [1, 8.88, 9, 9.22],
+        display: (value: unknown) => ({ text: String(value), numeric: Number(value), suffix: ' ms' }),
+      };
+
+      const result = getAlignmentFactor(field, { text: '1', numeric: 1, suffix: ' ms' }, 0);
+
+      expect(result).toEqual({ text: '8.88', numeric: 8.88, suffix: ' ms' });
+      // Shorter rows after the longest one do not shrink it
+      expect(field.state?.alignmentFactors).toEqual({ text: '8.88', numeric: 8.88, suffix: ' ms' });
+    });
+
+    it('should store a copy of the longest value, displaying each row once', () => {
+      const shown: DisplayValue[] = [];
+      const display = jest.fn((value: unknown) => {
+        const dv: DisplayValue = { text: String(value), numeric: Number(value) };
+        shown.push(dv);
+        return dv;
+      });
+      const field: Field = { name: 'test', type: FieldType.number, config: {}, values: [1, 22, 4444, 333], display };
+
+      const result = getAlignmentFactor(field, { text: '1', numeric: 1 }, 0);
+
+      expect(display).toHaveBeenCalledTimes(3);
+      expect(result).toEqual({ text: '4444', numeric: 4444 });
+      // The factor kept in the field state is its own object, not the row's display value
+      expect(result).not.toBe(shown[1]);
+      expect(field.state?.alignmentFactors).toBe(result);
     });
 
     it('should update alignment factor when a longer value is found', () => {
@@ -568,18 +604,16 @@ describe('TableNG utils', () => {
       // Call getAlignmentFactor with the first row
       const result = getAlignmentFactor(field, displayValue, 0);
 
-      // Verify the result has the text property
-      expect(result).toEqual(expect.objectContaining({ text: '1' }));
+      // Verify the result is the longest of the following rows
+      expect(result).toEqual(expect.objectContaining({ text: '4444' }));
 
       // Verify that field.state was preserved and alignment factor was added
       expect(field.state).toBeDefined();
       // Check for the valid property we used
       expect(field.state?.calcs).toBeDefined();
       expect(field.state?.alignmentFactors).toBeDefined();
-      expect(field.state?.alignmentFactors).toEqual(expect.objectContaining({ text: '1' }));
+      expect(field.state?.alignmentFactors).toEqual(expect.objectContaining({ text: '4444' }));
     });
-
-    it.todo('alignmentFactor.text = displayValue.text;');
   });
 
   describe('getColumnTypes', () => {
