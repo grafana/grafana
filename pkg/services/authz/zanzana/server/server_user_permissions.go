@@ -44,13 +44,7 @@ func (s *Server) GetUserPermissions(req *authzv1.GetUserPermissionsRequest, stre
 		return err
 	}
 	permissions := make([]*authzv1.UserPermission, 0, len(resolved))
-	seen := make(map[[2]string]struct{})
 	for _, permission := range resolved {
-		key := [2]string{permission.Action, permission.Scope}
-		if _, exists := seen[key]; exists {
-			continue
-		}
-		seen[key] = struct{}{}
 		permissions = append(permissions, &authzv1.UserPermission{Action: permission.Action, Scope: permission.Scope})
 	}
 	// Resolve all grants and scopes before sending. A failed evaluation must never
