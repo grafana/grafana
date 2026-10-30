@@ -232,7 +232,7 @@ A `grafana.app/managedBy` annotation on its own doesn't mark a resource as manag
 
 Grafana writes `grafana.app/managerAllowsEdits` only when the value is `true`, so an absent annotation and `false` mean the same thing.
 In API responses that expose manager properties, such as search results, the same value appears as the `allowEdits` field.
-Each tool sets it differently: Grafana derives it from the `allowUiUpdates` option for file provisioning, Terraform and `kubectl` callers set it themselves, and Git Sync doesn't use it, because Grafana sends an edit of a Git Sync resource to the repository instead of rejecting it.
+Each tool sets it differently: Grafana derives it from the `allowUiUpdates` option for classic file provisioning, Terraform and `kubectl` callers set it themselves, and repository-backed resources don't use it, because Grafana sends an edit of one to its repository instead of rejecting it.
 Refer to [Managed resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/managed-resources/) for what each tool records and allows.
 
 Use the following annotations to identify the source of a provisioned resource.
@@ -248,15 +248,15 @@ Managers that reconcile from a source, such as Git Sync, set them. Managers with
 
 The `grafana.app/managedBy` annotation accepts the following values:
 
-| Value       | Description                                                                           |
-| ----------- | ------------------------------------------------------------------------------------- |
-| `repo`      | Git Sync manages the resource, and `grafana.app/managerId` holds the repository name. |
-| `terraform` | A Terraform provider manages the resource.                                            |
-| `kubectl`   | A Kubernetes manifest applied with `kubectl` manages the resource.                    |
-| `plugin`    | A plugin manages the resource.                                                        |
-| `grafana`   | Grafana manages the resource itself.                                                  |
+| Value       | Description                                                                                                                             |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `repo`      | A repository manages the resource, either Git Sync or on-prem file provisioning, and `grafana.app/managerId` holds the repository name. |
+| `terraform` | A Terraform provider manages the resource.                                                                                              |
+| `kubectl`   | A Kubernetes manifest applied with `kubectl` manages the resource.                                                                      |
+| `plugin`    | A plugin manages the resource.                                                                                                          |
+| `grafana`   | Grafana manages the resource itself.                                                                                                    |
 
-Grafana also sets `classic-file-provisioning`, `classic-api-provisioning`, and `classic-converted-prometheus` on resources that come from legacy provisioning: file-based provisioning, the legacy Alerting provisioning HTTP API, and the Alerting Convert Prometheus API.
+Grafana also sets `classic-file-provisioning`, `classic-api-provisioning`, and `classic-converted-prometheus` on resources that come from legacy provisioning: classic file provisioning, the legacy Alerting provisioning HTTP API, and the Alerting Convert Prometheus API.
 These values are deprecated and exist for migration only. New resources use one of the values in the preceding table.
 
 ##### Change the manager of a resource
