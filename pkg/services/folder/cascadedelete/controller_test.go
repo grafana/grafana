@@ -358,6 +358,30 @@ func TestController_InvalidNamespaceIsDroppedWithoutWork(t *testing.T) {
 	})
 }
 
+// A folder is reconciled as the service for its namespace's org, and cloud stacks map to org 1, so
+// none of the namespaces Grafana generates may be mistaken for one with no org to run as.
+func TestController_GeneratedNamespacesAreReconciled(t *testing.T) {
+	for _, namespace := range []string{"default", "org-2", "stacks-11"} {
+		t.Run(namespace, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				m := newMemStore()
+				m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+				m.userDelete("a")
+				// No handler on the store, so the only event is the one for this namespace.
+				c := NewController(m, newTestReconciler(m, 100), nil)
+				stop := run(c)
+				defer stop()
+
+				c.Handler().OnAdd(&foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "a"}}, false)
+				synctest.Wait()
+
+				require.False(t, m.exists("a"), "the folder is released, not skipped")
+				require.Zero(t, m.noIdentity)
+			})
+		})
+	}
+}
+
 func TestController_ShutDownStopsTheQueueWithoutRun(t *testing.T) {
 	m := newMemStore()
 	c := NewController(m, newTestReconciler(m, 100), nil)
