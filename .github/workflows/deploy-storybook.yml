@@ -68,11 +68,11 @@ jobs:
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
 
-      - name: Install yarn dependencies
+      - name: Install frontend dependencies
         uses: ./.github/actions/yarn-install
 
       - name: Build storybook
-        run: npm run storybook:build
+        run: pnpm run storybook:build
 
       # Create the GCS folder name
       # "latest" when triggered from the latest release

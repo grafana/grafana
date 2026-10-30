@@ -4,6 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { onInteraction, reportInteraction } from '@grafana/runtime';
 import { Modal, ToolbarButton } from '@grafana/ui';
+import { useIsMobileEditDeprecated } from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
 import { useSelector } from 'app/types/store';
 
 import { getExploreItemSelector } from '../../state/selectors';
@@ -20,6 +21,7 @@ export const AddToDashboard = ({ exploreId }: Props) => {
   const didSubmitRef = useRef(false);
   const selectExploreItem = getExploreItemSelector(exploreId);
   const explorePaneHasQueries = !!useSelector(selectExploreItem)?.queries?.length;
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
 
   // Track whether the form was submitted so we can distinguish
   // close-after-submit from close-without-submit (discard).
@@ -39,6 +41,10 @@ export const AddToDashboard = ({ exploreId }: Props) => {
     }
     setIsOpen(false);
   }, []);
+
+  if (isMobileEditDeprecated) {
+    return null;
+  }
 
   const addToDashboardLabel = t('explore.add-to-dashboard', 'Add to dashboard');
 

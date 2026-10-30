@@ -522,6 +522,7 @@
         "save": "Save"
       },
       "error-title": "Failed to save alert rule",
+      "form-errors": "There are errors in the form. Please correct them and try again!",
       "no-group-success": "Rule added successfully"
     },
     "alert-rule-name-and-metric": {
@@ -530,8 +531,8 @@
       "label-metric": "Metric",
       "label-name": "Name",
       "message": {
-        "must-enter-a-metric-name": "Must enter a metric name",
-        "must-enter-a-name": "Must enter a name",
+        "metric-name-required": "Metric name is required",
+        "name-required": "Name is required",
         "please-select-a-data-source": "Please select a data source"
       },
       "metric-aria-label-metric": "metric",
@@ -586,6 +587,7 @@
     },
     "alertmanager-config": {
       "confirmText-yes-reset-configuration": "Yes, reset configuration",
+      "editor-label": "Alertmanager configuration",
       "gma-manual-configuration-description": "The internal Grafana Alertmanager configuration cannot be manually changed. To change this configuration, edit the individual resources through the UI.",
       "gma-manual-configuration-is-not-supported": "Manual configuration changes not supported",
       "message": {
@@ -1097,6 +1099,7 @@
         "body": "Are you sure you want to restore this deleted alert rule definition?",
         "confirm": "Yes, restore deleted rule",
         "error": "Could not restore deleted alert rule",
+        "preview-aria-label": "Deleted alert rule JSON",
         "title": "Restore deleted alert rule"
       },
       "table": {
@@ -1314,7 +1317,7 @@
     "folder-selector": {
       "description-select-folder": "Select a folder to store your rule in.",
       "message": {
-        "select-a-folder": "Select a folder"
+        "folder-required": "Folder is required"
       }
     },
     "folderAndGroup": {
@@ -1568,11 +1571,10 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "Loading groups...",
       "message": {
-        "must-be-a-positive-integer": "Must be a positive integer.",
-        "must-enter-a-group-name": "Must enter a group name"
+        "evaluation-group-required": "Evaluation group is required",
+        "must-be-a-positive-integer": "Must be a positive integer."
       },
       "missing-series-resolve-placeholder": "Default: 2",
-      "or": "or",
       "placeholder-select-an-evaluation-group": "Select an evaluation group...",
       "text-configure-no-data-and-error-handling": "Configure no data and error handling",
       "title-set-evaluation-behavior": "Set evaluation behavior"
@@ -1870,6 +1872,7 @@
         "will-import-rules-count_one": "Will import {{count}} rules",
         "will-import-rules-count_other": "Will import {{count}} rules"
       },
+      "rules-preview": "Alert rules preview",
       "source": {
         "datasource": "Existing data source-managed rules",
         "datasource-description": "Import rules from existing data sources",
@@ -2998,7 +3001,7 @@
           "alerting": "Turn on to pause evaluation for this alert rule.",
           "recording": "Turn on to pause evaluation for this recording rule."
         },
-        "select-folder-before": "Select a folder before setting evaluation group and interval",
+        "select-folder-first-tooltip": "Select a folder first",
         "ungroup-warning": "This action is irreversible. After you save, you will not be able to add it back to a group.",
         "ungroup-warning-title": "This will remove the alert rule from its group"
       },
@@ -3672,6 +3675,9 @@
       "switch-to-data-source-managed": "The data source selected in your query supports alert rule management. Switch to data source-managed if you want the alert rule to be managed by the data source instead of Grafana.",
       "switch-to-grafana-managed": "Switch to Grafana-managed to use expressions, multiple queries, images in notifications and various other features.",
       "title-alert-rule-types": "Alert rule types"
+    },
+    "sql-query-preview": {
+      "aria-label": "SQL query preview"
     },
     "state-history": {
       "columns": {
@@ -9077,6 +9083,12 @@
         "show-details": "Show details",
         "view-log-line": "View log line"
       },
+      "error-attribute": {
+        "error-fields-label": "Has error fields",
+        "error-fields-tooltip": "This log line contains error-related fields.",
+        "stacktrace-label": "Has a stack trace",
+        "stacktrace-tooltip": "This log line contains a stack trace."
+      },
       "loki-time-sort-tooltip": "Sorting this column only changes the order of the displayed results. To update the query's time-based sort order, use the Sort control on the right."
     },
     "logs-table-empty-fields": {
@@ -11503,20 +11515,15 @@
     },
     "firing-alerts-card": {
       "create": "Create an alert rule",
-      "critical-count_one": "{{count}} critical",
-      "critical-count_other": "{{count}} critical",
       "empty": "All clear! No alerts are firing.",
       "empty-selected-label": "All clear! No alerts are firing with {{label}}.",
       "empty-teams": "All clear! No alerts are firing for your teams.",
       "error-title": "Could not load firing alerts",
-      "high-count_one": "{{count}} high",
-      "high-count_other": "{{count}} high",
       "severity-critical": "Critical",
       "severity-high": "High",
       "severity-low": "Low",
       "severity-minor": "Minor",
       "severity-unknown": "Unknown",
-      "title": "Firing alerts",
       "view-all": "View all firing alerts",
       "view-rules": "View all alert rules"
     },
@@ -11544,21 +11551,13 @@
       "empty": "All quiet! No active incidents.",
       "empty-selected-team": "All quiet! No active incidents for {{team}}.",
       "error-title": "Could not load active incidents",
-      "title": "Active incidents",
       "view-all": "View all incidents"
     },
     "learn-more": "Learn more",
     "most-used-dashboards-tab": {
       "empty": "Most used dashboards will appear here.",
-      "empty-description": "Once your organization has dashboards and usage data has been collected, dashboards with the most views over the last 30 days will be displayed here.",
       "error-title": "Could not load most used dashboards",
       "loading": "Loading most used dashboards..."
-    },
-    "news-card": {
-      "empty": "No recent blog posts.",
-      "error-title": "Could not load recent blog posts",
-      "read-more": "Read more from the Grafana Labs blog",
-      "title": "Latest from the blog"
     },
     "on-call-card": {
       "current-shift": "You're on call until {{end}}",
@@ -11913,7 +11912,6 @@
     },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
-      "empty-description": "You can star your favorite dashboards by clicking the <1></1> from the dashboard page.",
       "error-title": "Could not load starred dashboards",
       "loading": "Loading starred dashboards..."
     },
@@ -12347,6 +12345,7 @@
     },
     "log-details": {
       "error": {
+        "diagnose-with-assistant": "Diagnose with assistant",
         "error-details": "Error details"
       }
     },
@@ -13725,6 +13724,7 @@
       "add-title": "Add title",
       "change-visualization": "Change visualization",
       "edit-query": "Edit query",
+      "edit-with-assistant": "Edit with Assistant",
       "hide-query": "Hide query editor",
       "open-explore": "Open in Explore",
       "rename": "Edit panel title",
@@ -17003,6 +17003,8 @@
       "failures-description": "Of those, the ones counted against the backend: 502, 503 and 504 responses, and failures to proxy, such as connection errors and timeouts. Other errors, and callers that disconnect, are not counted. Consecutive failures open the breaker.",
       "filter-placeholder": "Filter by group, key or plugin",
       "filtered": "{{shown}} of {{total}}",
+      "internal": "internal",
+      "internal-description": "Only access policies see this group. Every other caller gets a 404 for it, and it is not listed in their discovery.",
       "last-failed": "Last reconcile failed",
       "load-failures": "Load failures",
       "never": "never",

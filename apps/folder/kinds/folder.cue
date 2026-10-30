@@ -24,11 +24,11 @@ foldersV1: {
 		#CascadeDeleteStatus: {
 			// Current phase of the cascade delete.
 			state: "" | "Pending" | "InProgress" | "Completed" | "Failed"
-			// Descendants discovered when the cascade started; the fixed denominator for remaining.
+			// Direct children discovered when the cascade started; the fixed denominator for remaining.
 			total?: int64
-			// Descendants not yet deleted.
+			// Direct children not yet deleted, recomputed on each reconcile.
 			remaining?: int64
-			// Errors encountered while deleting descendants.
+			// Errors encountered while deleting direct children.
 			errors?: [...string]
 			// When the cascade started, in Unix milliseconds.
 			started?: int64

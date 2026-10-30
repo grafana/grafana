@@ -5,7 +5,7 @@ import { Box, Divider, FilterInput, Grid, Icon, Label, Stack, Text } from '@graf
 
 import { PopupCard } from '../../components/HoverCard';
 
-import { type FilterDefinition } from './filterDefinitions';
+import { type FilterHelp } from './filterDefinitions';
 import { type FilterIssue } from './parser';
 
 export interface RuleSearchInputProps {
@@ -13,7 +13,7 @@ export interface RuleSearchInputProps {
   query: string;
   /** Also called with the applied query itself, for example on blur after Enter. */
   onApply: (query: string) => void;
-  filters: FilterDefinition[];
+  filterHelp: FilterHelp[];
   issues?: FilterIssue[];
   /** Rendered beside the input box, so it stays aligned with the box however many issue messages show below. */
   trailing?: ReactNode;
@@ -23,7 +23,7 @@ const INPUT_ID = 'rule-search-input';
 const ISSUES_DESCRIPTION_ID = 'rule-search-input-issues';
 
 /** The typed text is a draft until it is applied. A change to the applied query, such as Back/Forward, replaces it. */
-export function RuleSearchInput({ query, onApply, filters, issues = [], trailing }: RuleSearchInputProps) {
+export function RuleSearchInput({ query, onApply, filterHelp, issues = [], trailing }: RuleSearchInputProps) {
   const [draft, setDraft] = useState(query);
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export function RuleSearchInput({ query, onApply, filters, issues = [], trailing
 
   const handleBlur = () => onApply(draft);
 
-  const issueMessages = describeIssues(issues, filters);
+  const issueMessages = describeIssues(issues, filterHelp);
   const hasIssues = issueMessages.length > 0;
 
   return (
@@ -57,7 +57,7 @@ export function RuleSearchInput({ query, onApply, filters, issues = [], trailing
           <span>
             <Trans i18nKey="alerting.gma-rule-list.search.label">Search</Trans>
           </span>
-          <PopupCard content={<SearchHelp filters={filters} />}>
+          <PopupCard content={<SearchHelp filterHelp={filterHelp} />}>
             <Icon
               name="info-circle"
               size="sm"
@@ -96,12 +96,12 @@ export function RuleSearchInput({ query, onApply, filters, issues = [], trailing
   );
 }
 
-function describeIssues(issues: FilterIssue[], filters: FilterDefinition[]): string[] {
+function describeIssues(issues: FilterIssue[], filterHelp: FilterHelp[]): string[] {
   const keysWith = (reason: 'invalid' | 'unavailable') => [
     ...new Set(issues.flatMap((issue) => (issue.key !== null && issue.reason === reason ? [issue.key] : []))),
   ];
   const has = (reason: FilterIssue['reason']) => issues.some((issue) => issue.reason === reason);
-  const valuesByKey = new Map<string, string[] | undefined>(filters.map(({ key, values }) => [key, values]));
+  const valuesByKey = new Map<string, string[] | undefined>(filterHelp.map(({ key, values }) => [key, values]));
   const messages: string[] = [];
 
   const invalidKeys = keysWith('invalid');
@@ -168,7 +168,7 @@ function describeIssues(issues: FilterIssue[], filters: FilterDefinition[]): str
   return messages;
 }
 
-function SearchHelp({ filters }: { filters: FilterDefinition[] }) {
+function SearchHelp({ filterHelp }: { filterHelp: FilterHelp[] }) {
   return (
     <Stack direction="column" gap={1}>
       <Text element="p">
@@ -187,7 +187,7 @@ function SearchHelp({ filters }: { filters: FilterDefinition[] }) {
         <Text weight="bold">
           <Trans i18nKey="alerting.gma-rule-list.search.help-availability">Availability</Trans>
         </Text>
-        {filters.map((definition) => (
+        {filterHelp.map((definition) => (
           <HelpRow key={definition.key} definition={definition} />
         ))}
       </Grid>
@@ -195,7 +195,7 @@ function SearchHelp({ filters }: { filters: FilterDefinition[] }) {
   );
 }
 
-function HelpRow({ definition }: { definition: FilterDefinition }) {
+function HelpRow({ definition }: { definition: FilterHelp }) {
   return (
     <>
       <Stack direction="column" gap={0.25}>
@@ -210,7 +210,7 @@ function HelpRow({ definition }: { definition: FilterDefinition }) {
   );
 }
 
-function HelpAvailability({ definition }: { definition: FilterDefinition }) {
+function HelpAvailability({ definition }: { definition: FilterHelp }) {
   const { unavailableValues = [] } = definition;
 
   return (

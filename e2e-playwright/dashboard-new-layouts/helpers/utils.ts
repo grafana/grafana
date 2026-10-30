@@ -1,7 +1,8 @@
-import { type Locator, type Page } from '@playwright/test';
+import { type APIRequestContext, type Locator, type Page } from '@playwright/test';
 
 import { type DashboardPage, type E2ESelectorGroups, expect, test } from '@grafana/plugin-e2e';
 
+import { type Spec as DashboardV2Spec } from '../../../packages/grafana-schema/src/schema/dashboard/v2';
 import type { Panels, Rows, Tabs } from '../page-objects';
 
 /**
@@ -117,5 +118,51 @@ export async function undockMegaMenu(dashboardPage: DashboardPage, selectors: E2
       .getByGrafanaSelector(selectors.components.NavMenu.Menu)
       .getByRole('button', { name: 'Undock menu' })
       .click();
+  });
+}
+
+export async function getGrafanaBuildVersion(page: Page): Promise<string> {
+  const version = await page.evaluate(() => window.grafanaBootData.settings.buildInfo.version);
+  expect(version, `Grafana build version: ${version}`).toEqual(expect.stringMatching(/\S/));
+  return version;
+}
+
+/**
+ * Creates a fresh dashboard and returns its UID and URL.
+ * Pass a spec built with the running Grafana version.
+ * This way of creating dashboards is not only helpful to speed up test execution but also because
+ * stale panel versions in saved JSON fixtures can update when hidden panels first load in edit mode,
+ * triggering an unexpected unsaved-changes prompt on exit.
+ */
+export async function createDashboardViaAPI(
+  request: APIRequestContext,
+  selectors: E2ESelectorGroups,
+  spec: DashboardV2Spec
+): Promise<{ uid: string; url: string }> {
+  return test.step('Create dashboard via API', async () => {
+    const response = await request.post('/apis/dashboard.grafana.app/v2beta1/namespaces/stacks-12345/dashboards', {
+      data: {
+        metadata: {
+          generateName: 'conditional-rendering-',
+          annotations: {
+            'grafana.app/folder': '',
+            'grafana.app/grant-permissions': 'default',
+          },
+        },
+        spec,
+      },
+    });
+
+    if (!response.ok()) {
+      throw new Error(`Failed to create dashboard: HTTP ${response.status()}: ${response.statusText()}`);
+    }
+
+    const dashboard = await response.json();
+    const uid = dashboard?.metadata?.name;
+    if (typeof uid !== 'string' || uid.trim() === '') {
+      throw new Error('Failed to create dashboard: the response did not contain a dashboard UID');
+    }
+
+    return { uid, url: selectors.pages.Dashboard.url(uid) };
   });
 }

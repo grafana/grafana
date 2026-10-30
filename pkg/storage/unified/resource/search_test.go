@@ -2197,8 +2197,12 @@ func TestScanForIndexesToRebuildContinuesAfterImportTimeReadError(t *testing.T) 
 			require.Zero(t, storage.singleCalls, "a failed batch must not cause per-type reads")
 			queued := server.rebuildQueue.Elements()
 			if failBeforeRead {
-				require.Len(t, queued, 1, "age-based rebuilds still run without import times")
-				require.Equal(t, folderType("namespace"), queued[0].NamespacedResource)
+				keys := make([]NamespacedResource, 0, len(queued))
+				for _, req := range queued {
+					keys = append(keys, req.NamespacedResource)
+				}
+				require.ElementsMatch(t, []NamespacedResource{GlobalSearchKey("namespace"), folderType("namespace")}, keys,
+					"age-based rebuilds still run without import times")
 			} else {
 				require.Len(t, queued, 3, "available import times still trigger both kinds of index rebuild")
 			}
@@ -2251,6 +2255,8 @@ func TestFindIndexesForRebuild(t *testing.T) {
 			{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
 			{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
 			{Namespace: "resource-newer-version", Group: "group", Resource: "folder"},
+			GlobalSearchKey("global-2h"),
+			GlobalSearchKey("global-10h"),
 
 			// We report this index as open, but it's really not. This can happen if index expires between the call
 			// to GetOpenIndexes and the call to PeekIndex.
@@ -2307,6 +2313,16 @@ func TestFindIndexesForRebuild(t *testing.T) {
 			{Namespace: "resource-newer-version", Group: "group", Resource: "folder"}: &MockResourceIndex{
 				buildInfo: IndexBuildInfo{BuildTime: now, BuildVersion: semver.MustParse("7.0.0")},
 			},
+
+			// Not rebuilt: a global index follows the default max age (5h), not the dashboard one.
+			GlobalSearchKey("global-2h"): &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour), BuildVersion: semver.MustParse("6.0.0"), SearchFieldsHash: GlobalSearchFieldsHash()},
+			},
+
+			// To be rebuilt because of minTime
+			GlobalSearchKey("global-10h"): &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now.Add(-10 * time.Hour), BuildVersion: semver.MustParse("6.0.0"), SearchFieldsHash: GlobalSearchFieldsHash()},
+			},
 		},
 	}
 
@@ -2339,7 +2355,7 @@ func TestFindIndexesForRebuild(t *testing.T) {
 	}
 
 	support.findIndexesToRebuild(importTimes, nil, now, false)
-	require.Equal(t, 8, support.rebuildQueue.Len())
+	require.Equal(t, 9, support.rebuildQueue.Len())
 
 	now5m := now.Add(5 * time.Minute)
 
@@ -2347,7 +2363,7 @@ func TestFindIndexesForRebuild(t *testing.T) {
 	// ones should be "combined" with new ones (this will "bump" minBuildTime)
 	support.findIndexesToRebuild(importTimes, nil, now5m, false)
 	require.Zero(t, search.getIndexCalls, "rebuild inspection must not refresh index idle timestamps")
-	require.Equal(t, 8, support.rebuildQueue.Len())
+	require.Equal(t, 9, support.rebuildQueue.Len())
 
 	// Values that we expect to find in rebuild requests.
 	minBuildVersion := semver.MustParse("5.5.5")
@@ -2368,10 +2384,15 @@ func TestFindIndexesForRebuild(t *testing.T) {
 
 		// Index built by newer version than running (7.0.0 > 6.5.0)
 		{NamespacedResource: NamespacedResource{Namespace: "resource-newer-version", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
+
+		{NamespacedResource: GlobalSearchKey("global-10h"), minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
 	}
 	// None of these kinds declares fields, so the standard fields' hash is expected.
 	for i := range expected {
 		expected[i].expectedSearchFieldsHash = StandardSearchFieldsHash()
+		if expected[i].IsGlobal() {
+			expected[i].expectedSearchFieldsHash = GlobalSearchFieldsHash()
+		}
 	}
 	if diff := cmp.Diff(expected, vals, cmpopts.IgnoreFields(rebuildRequest{}, "completeChannels"), cmp.AllowUnexported(rebuildRequest{})); diff != "" {
 		t.Errorf("rebuildQueue mismatch (-want +got):\n%s", diff)

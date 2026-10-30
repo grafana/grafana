@@ -1,8 +1,9 @@
 import { type ListRecordingRuleSearchRulesV0Alpha1RequestBody } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
 import { parse } from '../rule-search/parser';
-import { createEmptyFilter } from '../rule-search/ruleSearchFilter';
+import { createEmptyFilter } from '../rule-search/sharedRuleFilter';
 
+import { recordingRuleSearchSchema } from './recordingRuleFilters';
 import { buildRecordingRuleSearchQuery } from './recordingRuleSearchQuery';
 
 describe('buildRecordingRuleSearchQuery', () => {
@@ -38,13 +39,13 @@ describe('buildRecordingRuleSearchQuery', () => {
     ['health:ok', { filter: { field: 'health', operator: 'In', values: ['Recording'] } }],
     ['folder:f1 folder:f2', { filter: { field: 'folder', operator: 'In', values: ['f1', 'f2'] } }],
   ])('builds the where clause for %j', (query, where) => {
-    expect(buildRecordingRuleSearchQuery(parse(query, 'recording').filter).where).toEqual(where);
+    expect(buildRecordingRuleSearchQuery(parse(query, recordingRuleSearchSchema).filter).where).toEqual(where);
   });
 
   it('combines several filters in one flat and', () => {
     expect(
       buildRecordingRuleSearchQuery(
-        parse('cpu health:error targetDatasource:prom-1 metric:cpu_usage', 'recording').filter
+        parse('cpu health:error targetDatasource:prom-1 metric:cpu_usage', recordingRuleSearchSchema).filter
       ).where
     ).toEqual({
       and: [

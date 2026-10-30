@@ -7,16 +7,17 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -67,7 +68,7 @@ func RoutePermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 }
 
 func ProvideRoutePermissionsService(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl,
 	iamFeatures iamapi.Features,
 	license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
@@ -101,7 +102,9 @@ func ProvideRoutePermissionsService(
 	if err != nil {
 		return nil, err
 	}
-	return &RoutePermissionsService{Service: srv, ac: service, log: log.New("resourcepermissions." + accesscontrol.AlertingRoutesResource)}, nil
+	routes := &RoutePermissionsService{Service: srv, ac: service, log: log.New("resourcepermissions." + accesscontrol.AlertingRoutesResource)}
+	sql.Bus().AddEventListener(routes.onDefaultPermissionsSet)
+	return routes, nil
 }
 
 var _ accesscontrol.RoutePermissionsService = (*RoutePermissionsService)(nil)
@@ -110,6 +113,15 @@ type RoutePermissionsService struct {
 	*resourcepermissions.Service
 	ac  accesscontrol.Service
 	log log.Logger
+}
+
+type routeDefaultPermissionsSet struct {
+	requester identity.Requester
+}
+
+func (r RoutePermissionsService) onDefaultPermissionsSet(ctx context.Context, event *routeDefaultPermissionsSet) error {
+	permissioncache.RefreshCreator(ctx, r.ac, event.requester)
+	return nil
 }
 
 // SetDefaultPermissions sets the default permissions for a newly created route.
@@ -133,7 +145,12 @@ func (r RoutePermissionsService) SetDefaultPermissions(ctx context.Context, orgI
 		return err
 	}
 	if clearCache {
-		r.ac.ClearUserPermissionCache(user)
+		event := &routeDefaultPermissionsSet{requester: user}
+		if sess := sqlstore.SessionFromContext(ctx); sess != nil {
+			sess.PublishAfterCommit(event)
+		} else {
+			_ = r.onDefaultPermissionsSet(ctx, event)
+		}
 	}
 	return nil
 }

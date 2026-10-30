@@ -55,9 +55,6 @@ export function applyPluginNav(tree: NavModelItem[], apps: AppPluginConfig[]): N
       // Built up locally and committed in one go, so a throw part-way through
       // leaves none of this app behind — not even its standalone pages
       let withApp = next;
-      for (const page of standalonePages) {
-        withApp = placeStandalonePage(withApp, page);
-      }
       // An app with no accessible nav children is not part of the tree, though
       // its lifted pages still are. That is decided on navChildren, before the
       // default nav is folded out: an app whose only page IS its default nav
@@ -65,6 +62,12 @@ export function applyPluginNav(tree: NavModelItem[], apps: AppPluginConfig[]): N
       // Go builder orders these two the same way.
       if (navChildren.length > 0) {
         withApp = placeAppInSection(withApp, app, withAppNavConfig(app, appLink));
+      }
+      // After the app, because a page lifted into the same section as its own
+      // app needs that section to exist — sections are created on demand by the
+      // first app targeting them, which may well be this one
+      for (const page of standalonePages) {
+        withApp = placeStandalonePage(withApp, page);
       }
       next = withApp;
     } catch (error) {

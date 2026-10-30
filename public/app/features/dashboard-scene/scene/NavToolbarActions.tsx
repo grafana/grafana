@@ -25,6 +25,7 @@ import { openPanelEditor } from '../panel-edit/openPanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
 import { DashboardInteractions } from '../utils/interactions';
+import { useIsMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 import { type DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 import { isLibraryPanel } from '../utils/utils';
 
@@ -104,6 +105,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({
     folderName: folderUid,
   });
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
 
   if (!isEditingPanel) {
     // This adds the presence indicators in enterprise
@@ -327,7 +329,13 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && editable,
+    condition:
+      !isEditing &&
+      dashboard.canEditDashboard() &&
+      !isViewingPanel &&
+      !isPlaying &&
+      editable &&
+      !isMobileEditDeprecated,
     render: () => (
       <Button
         onClick={() => {
@@ -353,7 +361,13 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && !editable,
+    condition:
+      !isEditing &&
+      dashboard.canEditDashboard() &&
+      !isViewingPanel &&
+      !isPlaying &&
+      !editable &&
+      !isMobileEditDeprecated,
     render: () => (
       <Button
         onClick={() => {

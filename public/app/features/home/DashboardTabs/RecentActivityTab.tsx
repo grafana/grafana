@@ -13,6 +13,7 @@ import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
 
+import { HomeList } from '../HomeList';
 import { TimeAgoCell } from '../TimeAgoCell';
 import { ctaClicked, recentActivityShown } from '../analytics/main';
 
@@ -26,7 +27,6 @@ interface Props {
   foldersByUid: Record<string, LocationInfo>;
   /** Starring a dashboard here changes what the Starred tab shows. */
   onStarChange: () => void;
-  density?: 'default' | 'compact';
 }
 
 /** An empty history means a new user or a fresh clear: point them at dashboards, as the Recent tab always did. */
@@ -54,9 +54,9 @@ function EmptyStateCta() {
   );
 }
 
-export function RecentActivityTab({ recent, foldersByUid, onStarChange, density }: Props) {
+export function RecentActivityTab({ recent, foldersByUid, onStarChange }: Props) {
   const { items, counts, total, filter, loading, error, retry } = recent;
-  const styles = useStyles2(getStyles, density === 'compact');
+  const styles = useStyles2(getStyles);
   const navTree = useSelector((state) => state.navBarTree);
 
   // Once per display: the tab mounts when it becomes active and unmounts when the user leaves it.
@@ -94,9 +94,7 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange, density 
     return (
       <DashboardTabEmptyState
         message={t('home.recent-activity-tab.empty', 'No recent activity yet. Pages you visit will show up here.')}
-        variant="call-to-action"
         button={<EmptyStateCta />}
-        density={density}
       />
     );
   }
@@ -106,7 +104,7 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange, density 
   const showTime = items.some((item) => item.lastVisited !== undefined);
 
   return (
-    <ul className={styles.list}>
+    <HomeList>
       {items.map((item, position) => {
         const href = item.pathname + item.search;
         const { title, subtitle } = toRow(item, navTree, foldersByUid);
@@ -114,7 +112,6 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange, density 
         return (
           <li key={href}>
             <ListRow
-              isCompact={density === 'compact'}
               title={title}
               subtitle={subtitle}
               href={href}
@@ -152,16 +149,11 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange, density 
           </li>
         );
       })}
-    </ul>
+    </HomeList>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, compact: boolean) => ({
-  list: css({
-    listStyle: 'none',
-    padding: theme.spacing(0, compact ? 0 : 0.5),
-    margin: 0,
-  }),
+const getStyles = (theme: GrafanaTheme2) => ({
   // A badge, not a bare icon, so the kind reads as a label and not as another action next to the star. One
   // colour for every kind: the icon says which, the tooltip spells it out.
   kind: css({
