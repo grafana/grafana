@@ -1,9 +1,10 @@
-package cascade
+package cascadedelete
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -29,7 +30,7 @@ func TestReconcile_IgnoresFoldersOutsideTheCascade(t *testing.T) {
 
 		res, err := reconcileOnce(t, newTestReconciler(m, 10), m, "a")
 		require.NoError(t, err)
-		require.False(t, res.Requeue)
+		require.Equal(t, Result{}, res)
 		require.Empty(t, m.deleteCalls)
 		require.Zero(t, m.statusWrites)
 	})
@@ -41,7 +42,7 @@ func TestReconcile_IgnoresFoldersOutsideTheCascade(t *testing.T) {
 
 		res, err := reconcileOnce(t, newTestReconciler(m, 10), m, "a")
 		require.NoError(t, err)
-		require.False(t, res.Requeue)
+		require.Equal(t, Result{}, res)
 		require.Empty(t, m.deleteCalls)
 		require.Zero(t, m.statusWrites)
 		require.Contains(t, m.folders, "a")
@@ -74,7 +75,7 @@ func testLeafFolderDeletesDashboardsThenItself(t *testing.T) {
 
 	res, err = reconcileOnce(t, r, m, "a")
 	require.NoError(t, err)
-	require.False(t, res.Requeue)
+	require.Equal(t, Result{Released: true}, res)
 	require.NotContains(t, m.folders, "a")
 	require.Equal(t, map[string]string{"keep": "other"}, m.dashboards)
 }
@@ -94,7 +95,7 @@ func testEmptyFolderCompletesOnFirstPass(t *testing.T) {
 
 	res, err := reconcileOnce(t, r, m, "a")
 	require.NoError(t, err)
-	require.False(t, res.Requeue)
+	require.Equal(t, Result{Released: true}, res)
 	require.NotContains(t, m.folders, "a")
 	require.Equal(t, foldersv1.FolderCascadeDeleteStatusStateCompleted, written.State)
 	require.Equal(t, int64(0), *written.Remaining)
@@ -278,8 +279,9 @@ func TestReconcile_FinishedIsKeptWhenReleaseIsRetried(t *testing.T) {
 		failing := &failingRelease{memStore: m}
 		r.Folders = failing
 
-		_, err := reconcileOnce(t, r, m, "a")
+		res, err := reconcileOnce(t, r, m, "a")
 		require.ErrorContains(t, err, "conflict")
+		require.Equal(t, Result{}, res)
 		require.Equal(t, start, *m.folders["a"].status.Finished)
 		writes := m.statusWrites
 
@@ -323,6 +325,7 @@ func TestReconcile_BatchLimitsDeletesPerPass(t *testing.T) {
 		passes++
 		require.LessOrEqual(t, len(m.deleteCalls)-before, 100)
 		if !res.Requeue {
+			require.True(t, res.Released)
 			break
 		}
 	}
@@ -396,6 +399,13 @@ func TestReconcile_TerminatingSubfoldersDoNotConsumeTheBatch(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []string{"f1", "f2", "f3", "z1", "z2"}, m.deleteCalls)
 	require.Equal(t, int64(3), *m.folders["a"].status.Remaining)
+
+	// Only terminating subfolders are left: nothing to issue, so the pass waits for a wake-up.
+	writes := m.statusWrites
+	res, err := reconcileOnce(t, r, m, "a")
+	require.NoError(t, err)
+	require.Equal(t, Result{}, res)
+	require.Equal(t, writes, m.statusWrites)
 }
 
 func TestReconcile_FailedChildDoesNotStopTheBatch(t *testing.T) {
@@ -457,7 +467,7 @@ func TestReconcile_ListErrorIsReported(t *testing.T) {
 
 	res, err := reconcileOnce(t, r, m, "a")
 	require.ErrorContains(t, err, "search unavailable")
-	require.True(t, res.Requeue)
+	require.Equal(t, Result{}, res)
 	st := m.folders["a"].status
 	require.Equal(t, foldersv1.FolderCascadeDeleteStatusStateFailed, st.State)
 	require.Equal(t, []string{"list folders: search unavailable"}, st.Errors)
@@ -482,9 +492,11 @@ func TestReconcile_UnchangedStatusIsNotRewritten(t *testing.T) {
 	require.NoError(t, err)
 	writes := m.statusWrites
 
-	// a is only waiting on terminating b: nothing changed, so no write (and no watch event).
-	_, err = reconcileOnce(t, r, m, "a")
+	// a is only waiting on terminating b: nothing changed, so no write (and no watch event), and
+	// no requeue: b's release wakes a instead.
+	res, err := reconcileOnce(t, r, m, "a")
 	require.NoError(t, err)
+	require.Equal(t, Result{}, res)
 	require.Equal(t, writes, m.statusWrites)
 }
 
@@ -498,4 +510,133 @@ func TestReconcile_KeepsOtherFinalizers(t *testing.T) {
 	require.Contains(t, m.folders, "a", "another finalizer still holds the folder")
 	require.Equal(t, []string{otherFinalizer}, m.folders["a"].finalizers)
 	require.Empty(t, m.dashboards)
+}
+
+func TestReconcile_GoneOnlyPassReportsChildrenStillListed(t *testing.T) {
+	m := newMemStore()
+	m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+	m.userDelete("a")
+	r := newTestReconciler(m, 10)
+	// The index still lists dashboards that are already deleted.
+	r.Children = staleLister{memStore: m, extra: map[string][]Child{"a": {{ChildDashboard, "d1"}, {ChildDashboard, "d2"}}}}
+
+	res, err := reconcileOnce(t, r, m, "a")
+	require.ErrorIs(t, err, ErrChildrenStillListed)
+	require.Equal(t, Result{}, res)
+	st := m.folders["a"].status
+	require.Equal(t, foldersv1.FolderCascadeDeleteStatusStateInProgress, st.State)
+	require.Empty(t, st.Errors)
+	require.Equal(t, int64(0), *st.Remaining)
+
+	// Once the index catches up, the folder is released.
+	r.Children = m
+	res, err = reconcileOnce(t, r, m, "a")
+	require.NoError(t, err)
+	require.Equal(t, Result{Released: true}, res)
+}
+
+func TestReconcile_GoneAndDeletedRequeues(t *testing.T) {
+	m := newMemStore()
+	m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+	m.addDashboards("a", "real")
+	m.userDelete("a")
+	r := newTestReconciler(m, 10)
+	r.Children = staleLister{memStore: m, extra: map[string][]Child{"a": {{ChildDashboard, "ghost"}}}}
+
+	res, err := reconcileOnce(t, r, m, "a")
+	require.NoError(t, err)
+	require.Equal(t, Result{Requeue: true}, res)
+}
+
+func TestReconcile_FailureWinsOverGoneOnly(t *testing.T) {
+	m := newMemStore()
+	m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+	m.addDashboards("a", "stuck")
+	m.failDelete["stuck"] = errors.New("boom")
+	m.userDelete("a")
+	r := newTestReconciler(m, 10)
+	r.Children = staleLister{memStore: m, extra: map[string][]Child{"a": {{ChildDashboard, "ghost"}}}}
+
+	_, err := reconcileOnce(t, r, m, "a")
+	require.ErrorContains(t, err, "boom")
+	require.NotErrorIs(t, err, ErrChildrenStillListed)
+	require.Equal(t, foldersv1.FolderCascadeDeleteStatusStateFailed, m.folders["a"].status.State)
+}
+
+func TestReconcile_LaterPageListFailureWinsOverGoneOnly(t *testing.T) {
+	m := newMemStore()
+	m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+	m.userDelete("a")
+	r := newTestReconciler(m, 1)
+	// The first page holds a stale hit, so the batch still has room and the next page is read.
+	r.Children = &pageFailLister{stale: staleLister{memStore: m, extra: map[string][]Child{"a": {{ChildDashboard, "ghost1"}, {ChildDashboard, "ghost2"}}}}}
+
+	res, err := reconcileOnce(t, r, m, "a")
+	require.ErrorContains(t, err, "page down")
+	require.NotErrorIs(t, err, ErrChildrenStillListed)
+	require.Equal(t, Result{}, res)
+	require.Equal(t, foldersv1.FolderCascadeDeleteStatusStateFailed, m.folders["a"].status.State)
+}
+
+// pageFailLister fails every page after the first.
+type pageFailLister struct{ stale staleLister }
+
+func (l *pageFailLister) ListChildren(ctx context.Context, ns, folderUID string, kind ChildKind, offset, limit int64) ([]Child, int64, error) {
+	if offset > 0 {
+		return nil, 0, errors.New("page down")
+	}
+	return l.stale.ListChildren(ctx, ns, folderUID, kind, offset, limit)
+}
+
+func TestReconcile_StatusErrorsDoNotDependOnListOrder(t *testing.T) {
+	// Every status write is an event that requeues the folder past its backoff, so the same failures
+	// must produce the same status whatever order search returns the children in.
+	m := newMemStore()
+	m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+	names := dashNames("d", maxStatusErrors+5)
+	for _, n := range names {
+		m.addDashboards("a", n)
+		m.failDelete[n] = errors.New("boom")
+	}
+	m.userDelete("a")
+	r := newTestReconciler(m, 100)
+
+	_, err := reconcileOnce(t, r, m, "a")
+	require.Error(t, err)
+	writes := m.statusWrites
+	first := slices.Clone(m.folders["a"].status.Errors)
+
+	r.Children = reversedLister{m}
+	_, err = reconcileOnce(t, r, m, "a")
+	require.Error(t, err)
+	require.Equal(t, first, m.folders["a"].status.Errors)
+	require.Equal(t, writes, m.statusWrites)
+}
+
+// reversedLister returns a folder's children in reverse order, as search may.
+type reversedLister struct{ *memStore }
+
+func (l reversedLister) ListChildren(_ context.Context, _, folderUID string, kind ChildKind, offset, limit int64) ([]Child, int64, error) {
+	all := slices.Clone(l.childrenOf(folderUID, kind))
+	slices.Reverse(all)
+	return pageOf(all, offset, limit), int64(len(all)), nil
+}
+
+func TestReconcile_GoneOnlyPassReportsStatusWriteFailure(t *testing.T) {
+	m := newMemStore()
+	m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+	m.userDelete("a")
+	r := newTestReconciler(m, 10)
+	r.Children = staleLister{memStore: m, extra: map[string][]Child{"a": {{ChildDashboard, "ghost"}}}}
+	r.Folders = failingStatus{m}
+
+	_, err := reconcileOnce(t, r, m, "a")
+	require.ErrorContains(t, err, "status down")
+	require.NotErrorIs(t, err, ErrChildrenStillListed, "a real write failure must not be hidden as index lag")
+}
+
+type failingStatus struct{ *memStore }
+
+func (failingStatus) UpdateCascadeStatus(context.Context, string, string, foldersv1.FolderCascadeDeleteStatus) error {
+	return errors.New("status down")
 }

@@ -1,4 +1,4 @@
-package cascade
+package cascadedelete
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 
@@ -24,10 +25,23 @@ type DynamicClients struct {
 var (
 	_ ChildDeleter = (*DynamicClients)(nil)
 	_ FolderWriter = (*DynamicClients)(nil)
+	_ FolderGetter = (*DynamicClients)(nil)
 )
 
 func NewDynamicClients(client dynamic.Interface) *DynamicClients {
 	return &DynamicClients{client: client}
+}
+
+func (d *DynamicClients) Get(ctx context.Context, namespace, name string) (*foldersv1.Folder, error) {
+	u, err := d.client.Resource(folderGVR).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	f := &foldersv1.Folder{}
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, f); err != nil {
+		return nil, fmt.Errorf("convert folder %s/%s: %w", namespace, name, err)
+	}
+	return f, nil
 }
 
 func (d *DynamicClients) Delete(ctx context.Context, namespace, parentUID string, child Child) (DeleteOutcome, error) {

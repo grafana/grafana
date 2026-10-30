@@ -2,6 +2,7 @@ package folder
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -17,8 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/registry/apis/folders/cascade"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/cascadedelete"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -28,9 +29,9 @@ type cascadeEnv struct {
 	ctx     context.Context
 	folders dynamic.ResourceInterface
 	dashes  dynamic.ResourceInterface
-	lister  cascade.ChildLister
+	lister  cascadedelete.ChildLister
 	ns      string
-	r       *cascade.Reconciler
+	r       *cascadedelete.Reconciler
 }
 
 func (e *cascadeEnv) createFolder(name, parent string) {
@@ -103,7 +104,7 @@ func (e *cascadeEnv) waitIndexed(folderUID string, want int) {
 	e.t.Helper()
 	require.Eventually(e.t, func() bool {
 		var total int64
-		for _, kind := range []cascade.ChildKind{cascade.ChildFolder, cascade.ChildDashboard} {
+		for _, kind := range []cascadedelete.ChildKind{cascadedelete.ChildFolder, cascadedelete.ChildDashboard} {
 			_, n, err := e.lister.ListChildren(e.ctx, e.ns, folderUID, kind, 0, 1)
 			if err != nil {
 				return false
@@ -134,8 +135,11 @@ func (e *cascadeEnv) reconcile(name string) bool {
 	if f.DeletionTimestamp == nil {
 		return true
 	}
+	// A pass that only finds already-deleted children is the index lagging, which drain retries.
 	_, err := e.r.Reconcile(e.ctx, f)
-	require.NoError(e.t, err)
+	if !errors.Is(err, cascadedelete.ErrChildrenStillListed) {
+		require.NoError(e.t, err)
+	}
 
 	after := e.getFolder(name)
 	if after == nil {
@@ -192,10 +196,10 @@ func TestFolderCascadeReconcile(t *testing.T) {
 	require.NoError(t, err)
 	orgID := helper.Org1.Admin.Identity.GetOrgID()
 	ns := helper.Namespacer(orgID)
-	clients := cascade.NewDynamicClients(dyn)
+	clients := cascadedelete.NewDynamicClients(dyn)
 
 	newEnv := func(t *testing.T, batchSize int) *cascadeEnv {
-		lister := cascade.NewSearchChildLister(helper.GetEnv().ResourceClient)
+		lister := cascadedelete.NewSearchChildLister(helper.GetEnv().ResourceClient)
 		return &cascadeEnv{
 			t: t,
 			// Search is scoped to the caller; the controller enumerates as the service identity.
@@ -204,7 +208,7 @@ func TestFolderCascadeReconcile(t *testing.T) {
 			dashes:  dyn.Resource(dashv1.DashboardResourceInfo.GroupVersionResource()).Namespace(ns),
 			lister:  lister,
 			ns:      ns,
-			r:       &cascade.Reconciler{Children: lister, Deleter: clients, Folders: clients, BatchSize: batchSize},
+			r:       &cascadedelete.Reconciler{Children: lister, Deleter: clients, Folders: clients, BatchSize: batchSize},
 		}
 	}
 

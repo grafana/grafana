@@ -1,4 +1,4 @@
-package cascade
+package cascadedelete
 
 import (
 	"context"
@@ -298,4 +298,20 @@ func TestSearchChildLister_RejectsUnexpectedResultFormat(t *testing.T) {
 		_, _, err := NewSearchChildLister(s).ListChildren(context.Background(), testNamespace, "parent", ChildDashboard, 0, 10)
 		require.ErrorContains(t, err, "unexpected search result format")
 	}
+}
+
+func TestDynamicClients_Get(t *testing.T) {
+	dyn := newFake(unstructuredFolder("c", true, foldersv1.CascadeDeleteFinalizer))
+	clients := NewDynamicClients(dyn)
+
+	f, err := clients.Get(context.Background(), testNamespace, "c")
+	require.NoError(t, err)
+	require.Equal(t, "c", f.Name)
+	require.Equal(t, testNamespace, f.Namespace)
+	require.NotNil(t, f.DeletionTimestamp)
+	require.Equal(t, []string{foldersv1.CascadeDeleteFinalizer}, f.Finalizers)
+	require.Equal(t, testParent, f.Annotations[utils.AnnoKeyFolder])
+
+	_, err = clients.Get(context.Background(), testNamespace, "missing")
+	require.True(t, apierrors.IsNotFound(err), "got %v", err)
 }
