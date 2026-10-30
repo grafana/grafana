@@ -254,7 +254,8 @@ func (s *Service) mergeZanzanaUserPermissions(ctx context.Context, user identity
 	if s.zanzanaResolver == nil {
 		return legacy
 	}
-	if options.SkipZanzanaCache || !s.cfg.RBAC.PermissionCache || !user.HasUniqueId() {
+	// Request-supplied memberships must be composed again; principal grants remain cacheable.
+	if options.SkipZanzanaCache || s.cfg.IDUseExternalGroupsForGroupsClaim || !s.cfg.RBAC.PermissionCache || !user.HasUniqueId() {
 		return s.zanzanaResolver.MergeCurrentUser(ctx, user, legacy, s.log, options.ReloadCache)
 	}
 
