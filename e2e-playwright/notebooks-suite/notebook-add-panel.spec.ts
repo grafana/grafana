@@ -64,7 +64,7 @@ test.describe('Add panel to notebook from Explore', () => {
     // With notebooks enabled there's more than one "Add to X" extension, so this is a dropdown
     // rather than a single standalone button.
     await page.getByTestId(selectors.pages.Explore.toolbar.addTo).click();
-    await page.getByTestId(selectors.pages.Explore.toolbar.add('Add to notebook')).click();
+    await page.getByTestId(selectors.pages.Explore.toolbar.add('Add to notebook…')).click();
 
     // "New notebook" is the modal's default tab.
     await page.getByRole('textbox', { name: /Notebook name/ }).fill(notebookTitle);
@@ -108,7 +108,7 @@ test.describe('Add panel to notebook from a dashboard panel', () => {
     const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(panelTitle));
     await panel.hover();
     await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.menu(panelTitle)).click();
-    await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.menuItems('Add to notebook')).click();
+    await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.menuItems('Add to notebook…')).click();
 
     await page.getByRole('textbox', { name: /Notebook name/ }).fill(notebookTitle);
     await page.getByRole('button', { name: 'Add to notebook', exact: true }).click();

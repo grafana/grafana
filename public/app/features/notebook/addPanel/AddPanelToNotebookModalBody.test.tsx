@@ -14,6 +14,7 @@ import { defaultPanelKind, type PanelKind } from '../types';
 import { type AddNotebookCell, AddPanelToNotebookModalBody } from './AddPanelToNotebookModalBody';
 import { addToExistingNotebook, createNotebookWithContent } from './addPanelToNotebook';
 import { type CapturedTimeRange } from './capturedTimeRange';
+import { setRecentNotebook } from './recentNotebook';
 import { useNotebookPicker } from './useNotebookPicker';
 
 jest.mock('./useNotebookPicker', () => ({
@@ -26,6 +27,8 @@ jest.mock('./addPanelToNotebook', () => ({
   addToExistingNotebook: jest.fn(),
   createNotebookWithContent: jest.fn(),
 }));
+
+jest.mock('./recentNotebook', () => ({ setRecentNotebook: jest.fn() }));
 
 jest.mock('app/core/services/context_srv');
 
@@ -311,11 +314,14 @@ describe('AddPanelToNotebookModalBody', () => {
     });
 
     it('adds the panel to the chosen notebook and closes', async () => {
+      addToExisting.mockResolvedValue({ uid: 'nb2', title: 'Checkout error spike' });
       const { user, buildPanel, onDismiss } = renderModal();
       await chooseExisting(user);
 
       await user.click(selectNotebook('Checkout error spike'));
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() => expect(setRecentNotebook).toHaveBeenCalledWith('nb2', 'Checkout error spike'));
 
       await waitFor(() =>
         expect(addToExisting).toHaveBeenCalledWith(
