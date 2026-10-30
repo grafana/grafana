@@ -9,6 +9,7 @@ import {
   getDefaultTimeRange,
   LoadingState,
   type Scope,
+  toDataFrame,
   type VariableModel,
 } from '@grafana/data';
 import { getPanelDataStatusItems, type PanelStatusStore } from '@grafana/data/internal';
@@ -215,6 +216,37 @@ describe('setDashboardPanelContext', () => {
 
       expect(context.adHocTransformations).toBe(controller);
       expect(context.adHocTransformations?.get('grafana:table-view')).toEqual([{ id: 'organize', options: {} }]);
+    });
+  });
+
+  describe('isSeriesLimitShown', () => {
+    function setSeriesCount(vizPanel: VizPanel, count: number) {
+      const series = Array.from({ length: count }, () => toDataFrame({ fields: [] }));
+      sceneGraph.getData(vizPanel).setState({
+        data: { state: LoadingState.Done, series, timeRange: getDefaultTimeRange() },
+      });
+    }
+
+    it('is not provided while the panel actions popover flag is off', () => {
+      const { context } = buildTestScene({});
+
+      expect(context.isSeriesLimitShown).toBeUndefined();
+    });
+
+    it.each([
+      { desc: 'more series than the limit', seriesLimit: 2, seriesCount: 3, expected: true },
+      { desc: 'as many series as the limit', seriesLimit: 2, seriesCount: 2, expected: true },
+      { desc: 'fewer series than the limit', seriesLimit: 2, seriesCount: 1, expected: false },
+      { desc: 'no series limit', seriesLimit: undefined, seriesCount: 3, expected: false },
+    ])('is $expected for a panel with $desc', ({ seriesLimit, seriesCount, expected }) => {
+      getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
+        key === FlagKeys.GrafanaPanelActionsPopover ? true : defaultValue
+      );
+      const { vizPanel, context } = buildTestScene({});
+      vizPanel.setState({ seriesLimit });
+      setSeriesCount(vizPanel, seriesCount);
+
+      expect(context.isSeriesLimitShown?.()).toBe(expected);
     });
   });
 

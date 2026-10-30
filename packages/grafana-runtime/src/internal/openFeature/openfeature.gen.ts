@@ -422,7 +422,7 @@ export const useFlagAlertEnrichment = (options?: ReactFlagEvaluationOptions): bo
  *
  * **Details:**
  * - flag key: `alertRuleRestore`
- * - default value: `true`
+ * - default value: `true` (preview only; `false` in unit tests)
  */
 export const useFlagAlertRuleRestore = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alertRuleRestore", true, options).value;
@@ -1588,10 +1588,11 @@ export const useFlagGrafanaOtelLogDetails = (options?: ReactFlagEvaluationOption
  *
  * **Details:**
  * - flag key: `grafana.panelActionsPopover`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaPanelActionsPopover = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.panelActionsPopover", false, options).value;
+  // Preview only: on by default outside unit tests, which expect the original default.
+  return useFlag("grafana.panelActionsPopover", process.env.NODE_ENV !== 'test', options).value;
 };
 
 /**

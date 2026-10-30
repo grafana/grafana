@@ -13,7 +13,7 @@ import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useI
 import { useSoloPanelContext, renderMatchingSoloPanels } from '../../solo/SoloPanelContext';
 import { useDashboardState } from '../../utils/utils';
 import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
-import { PanelEditActionsWrapper } from '../edit-actions-popover/PanelEditActions';
+import { PanelActionsWrapper } from '../edit-actions-popover/PanelActionsPopover';
 import { getIsLazy } from '../layouts-shared/utils';
 import { AUTO_GRID_ITEM_DROP_TARGET_ATTR } from '../types/DashboardDropTarget';
 
@@ -147,7 +147,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
               style={extraStyle}
             >
               {isDragged && <div className={styles.draggedPlaceholder} />}
-              <PanelEditActionsWrapper panel={item}>
+              <PanelActionsWrapper panel={item}>
                 {
                   // The lazy loader causes issues when used with conditional rendering
                   isLazy && (!isConditionallyHidden || !renderHidden) ? (
@@ -158,7 +158,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
                     <div className={wrapperClass}>{wrapperContent}</div>
                   )
                 }
-              </PanelEditActionsWrapper>
+              </PanelActionsWrapper>
             </div>
           );
         }

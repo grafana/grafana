@@ -1,15 +1,16 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect } from 'react';
+import { type ReactElement, useCallback, useEffect, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import {
   useFlagDashboardUndoRedo,
+  useFlagGrafanaPanelActionsPopover,
   useFlagGrafanaViewPanelPane,
   useFlagFeedbackButton,
 } from '@grafana/runtime/internal';
-import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/scenes';
+import { sceneGraph, type SceneVariable, useSceneObjectState, type VizPanel } from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -20,7 +21,9 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
 import { type ToolbarActionProps } from '../scene/new-toolbar/types';
+import { hasViewPanelPaneContent } from '../solo/ViewPanelSidePane';
 import { DashboardInteractions } from '../utils/interactions';
+import { findVizPanelByPathId } from '../utils/pathId';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { ShareExportDashboardButton } from './DashboardExportButton';
@@ -175,12 +178,11 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
           {renderEnterpriseItems()}
           <DashboardSidebarExtensionPoint />
           {viewPanel && viewPanelPane && (
-            <Sidebar.Button
-              icon="layer-group"
-              onClick={() => sidebar.publishEvent(new ToggleViewPanePaneEvent())}
-              title={t('dashboard.sidebar.view-panel.title', 'View panel controls')}
-              data-testid={selectors.pages.Dashboard.Sidebar.viewPanelControls}
+            <ViewPanelControlsButton
+              dashboard={dashboard}
+              viewPanel={viewPanel}
               active={openPane?.getId() === 'view-panel-pane'}
+              onClick={() => sidebar.publishEvent(new ToggleViewPanePaneEvent())}
             />
           )}
           {Boolean(meta.isSnapshot) && (
@@ -239,6 +241,41 @@ function FiltersOverviewButton({
       active={openPane?.getId() === 'filters'}
     />
   );
+}
+
+interface ViewPanelControlsButtonProps {
+  dashboard: DashboardScene;
+  viewPanel: string;
+  active: boolean;
+  onClick: () => void;
+}
+
+function ViewPanelControlsButton({ dashboard, viewPanel, active, onClick }: ViewPanelControlsButtonProps) {
+  const isActionsPopoverEnabled = useFlagGrafanaPanelActionsPopover();
+  const panel = useMemo(() => findVizPanelByPathId(dashboard, viewPanel), [dashboard, viewPanel]);
+
+  const button = (
+    <Sidebar.Button
+      icon="layer-group"
+      onClick={onClick}
+      title={t('dashboard.sidebar.view-panel.title', 'View panel controls')}
+      data-testid={selectors.pages.Dashboard.Sidebar.viewPanelControls}
+      active={active}
+    />
+  );
+
+  if (!isActionsPopoverEnabled) {
+    return button;
+  }
+
+  return panel ? <ViewPanelControlsButtonForPanel panel={panel}>{button}</ViewPanelControlsButtonForPanel> : null;
+}
+
+function ViewPanelControlsButtonForPanel({ panel, children }: { panel: VizPanel; children: ReactElement }) {
+  // Re-renders once the panel plugin, and with it its view panel options, has loaded.
+  panel.useState();
+
+  return hasViewPanelPaneContent(panel) ? children : null;
 }
 
 function renderEnterpriseItems() {

@@ -9,7 +9,7 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { renderMatchingSoloPanels, useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { useDashboardState } from '../../utils/utils';
 import { PanelSearchResult, SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
-import { PanelEditActionsWrapper } from '../edit-actions-popover/PanelEditActions';
+import { PanelActionsWrapper } from '../edit-actions-popover/PanelActionsPopover';
 import { getIsLazy } from '../layouts-shared/utils';
 
 import { type DashboardGridItem, type RepeatDirection } from './DashboardGridItem';
@@ -24,7 +24,7 @@ interface PanelWrapperProps {
 function PanelWrapper({ panel, isLazy, containerRef, isSelected }: PanelWrapperProps) {
   if (isLazy) {
     return (
-      <PanelEditActionsWrapper panel={panel}>
+      <PanelActionsWrapper panel={panel}>
         <LazyLoader
           key={panel.state.key!}
           ref={containerRef}
@@ -33,16 +33,16 @@ function PanelWrapper({ panel, isLazy, containerRef, isSelected }: PanelWrapperP
         >
           <panel.Component model={panel} />
         </LazyLoader>
-      </PanelEditActionsWrapper>
+      </PanelActionsWrapper>
     );
   }
 
   return (
-    <PanelEditActionsWrapper panel={panel}>
+    <PanelActionsWrapper panel={panel}>
       <div className={cx(panelWrapper, isSelected && 'dashboard-selected-element')} ref={containerRef}>
         <panel.Component model={panel} />
       </div>
-    </PanelEditActionsWrapper>
+    </PanelActionsWrapper>
   );
 }
 
