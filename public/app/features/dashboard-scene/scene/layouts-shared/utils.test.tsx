@@ -4,7 +4,7 @@ import { render } from 'test/test-utils';
 import { EventBusSrv, type PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, setAppEvents, setPluginImportUtils } from '@grafana/runtime';
+import { config, setAppEvents, setPluginImportUtils, setPluginLinksHook } from '@grafana/runtime';
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -139,6 +139,8 @@ describe('focusVizPanel', () => {
     });
     // PanelChrome publishes a SetPanelAttentionEvent on focus; needs an app event bus to exist.
     setAppEvents(new EventBusSrv());
+    // DashboardScene renders the sidebar extension point, which reads plugin links.
+    setPluginLinksHook(() => ({ links: [], isLoading: false }));
   });
 
   async function renderPanels(panels: VizPanel[]) {
