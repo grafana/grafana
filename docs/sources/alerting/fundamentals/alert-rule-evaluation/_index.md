@@ -45,7 +45,15 @@ An alert instance can be in any of the following states, depending on the outcom
 
 {{< figure src="/media/docs/alerting/alert-rule-evaluation-full-statediagram_v3.svg" caption="The lifecycle diagram of alert instances" alt="A diagram of the distinct alert instance states and transitions." max-width="750px" >}}
 
-If an alert rule changes (except for updates to annotations, the evaluation interval, or other internal fields), its alert instances reset to the **Normal** state, and update accordingly during the next evaluation.
+If an alert rule changes, its alert instances reset to the **Normal** state, and update accordingly during the next evaluation. Changing the following doesn't reset the state of existing alert instances:
+
+- **Annotations**: for example, the summary or description shown with the alert.
+- **Evaluation interval**: how often the evaluation group the rule belongs to is evaluated.
+- **Evaluation group**: the name of the evaluation group a rule belongs to, and its position among the other rules in that group. Moving a rule to a different folder still resets its instances.
+- **Pending period**: how long the condition must be met before the alert starts firing.
+- **Keep firing for**: how long the alert keeps firing after the condition is no longer met.
+- **Missing series evaluations to resolve**: how many consecutive evaluations a series can be missing before its alert instance resolves.
+- **Threshold value, comparison function, or recovery threshold**: this applies only when a [Threshold](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#threshold) expression is the alert condition. For example, changing **Is above** to **Is below** doesn't reset the state either. Refer to that section for details.
 
 {{< admonition type="note" >}}
 
