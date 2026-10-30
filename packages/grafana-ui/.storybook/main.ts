@@ -18,6 +18,7 @@ const coreComponentsGlobs: StorybookConfig['stories'] = [
 
   // All the other stories
   '../src/**/*.story.tsx',
+  '../../grafana-sql/src/**/*.story.tsx',
 ];
 
 const alertingComponentsGlobs: StorybookConfig['stories'] = [

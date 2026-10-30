@@ -7,7 +7,7 @@ import { EditorField } from '@grafana/plugin-ui';
 import { InlineLabel, Input, Select, Stack, useStyles2 } from '@grafana/ui';
 
 import { QueryEditorExpressionType } from '../../expressions';
-import { type DB, type SQLExpression, type SQLQuery } from '../../types';
+import { type SQLQueryBuilderDB, type SQLExpression, type SQLQuery } from '../../types';
 import { getColumnValue } from '../../utils/sql.utils';
 
 import { SelectColumn } from './SelectColumn';
@@ -17,7 +17,7 @@ interface Props {
   query: SQLQuery;
   onSqlChange: (sql: SQLExpression) => void;
   currentColumnIndex: number;
-  db: DB;
+  db: SQLQueryBuilderDB;
   columns: Array<SelectableValue<string>>;
 }
 
@@ -94,26 +94,25 @@ export function SelectFunctionParameters({ query, onSqlChange, currentColumnInde
       return (
         <Stack key={index} alignItems="flex-end" gap={2}>
           <EditorField label={funcParam.name} width={25} optional={!funcParam.required}>
-            <>
-              {funcParam.options ? (
-                <Select
-                  value={getColumnValue(macroOrFunction?.parameters![index])}
-                  options={fieldsFromFunction?.[index]}
-                  data-testid={selectors.components.SQLQueryEditor.selectFunctionParameter(funcParam.name)}
-                  inputId={selectInputId}
-                  menuShouldPortal
-                  allowCustomValue
-                  isClearable
-                  onChange={(s) => onParameterChange(index, true)(s?.value)}
-                />
-              ) : (
-                <Input
-                  onChange={(e) => onParameterChange(index, true)(e.currentTarget.value)}
-                  value={macroOrFunction?.parameters![index]?.name}
-                  data-testid={selectors.components.SQLQueryEditor.selectInputParameter}
-                />
-              )}
-            </>
+            {funcParam.options ? (
+              <Select
+                value={getColumnValue(macroOrFunction?.parameters![index])}
+                options={fieldsFromFunction?.[index]}
+                data-testid={selectors.components.SQLQueryEditor.selectFunctionParameter(funcParam.name)}
+                inputId={`${selectInputId}-${index}`}
+                menuShouldPortal
+                allowCustomValue
+                isClearable
+                onChange={(s) => onParameterChange(index, true)(s?.value)}
+              />
+            ) : (
+              <Input
+                id={`${selectInputId}-${index}`}
+                onChange={(e) => onParameterChange(index, true)(e.currentTarget.value)}
+                value={macroOrFunction?.parameters![index]?.name}
+                data-testid={selectors.components.SQLQueryEditor.selectInputParameter}
+              />
+            )}
           </EditorField>
           {func.parameters!.length !== index + 1 && <InlineLabel className={styles.label}>,</InlineLabel>}
         </Stack>
