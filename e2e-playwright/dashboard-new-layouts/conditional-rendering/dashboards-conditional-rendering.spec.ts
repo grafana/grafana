@@ -61,7 +61,6 @@ test.describe(
       await controls.exitEditMode();
 
       // assert that the behavior works when the query returns data or no data
-      await panels.getPanel('Panel 1').scrollIntoViewIfNeeded();
       await expect(panels.getPanel('Panel 1')).toBeVisible();
 
       // make sure the panel query returns no data
