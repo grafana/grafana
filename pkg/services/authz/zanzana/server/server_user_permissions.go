@@ -99,7 +99,7 @@ func (p permissionRestConfigProvider) GetRestConfig(ctx context.Context) (*clien
 	return p(ctx)
 }
 
-func newPermissionScopeResolver(cfg *setting.Cfg, embedded restcfg.RestConfigProvider) legacyscopes.IDResolver {
+func newPermissionScopeResolver(cfg *setting.Cfg, embedded restcfg.RestConfigProvider) legacyscopes.BulkIDResolver {
 	if embedded != nil {
 		return legacyscopes.NewUIDResolver(embedded)
 	}

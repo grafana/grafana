@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
 )
 
-func TestUserPermissionsIndividualScopeIDs(t *testing.T) {
+func TestUserPermissionsBulkScopeIDs(t *testing.T) {
 	var mu sync.Mutex
 	counts := map[string]int{}
 	object := func(kind, name, id string) map[string]any {
@@ -34,6 +34,10 @@ func TestUserPermissionsIndividualScopeIDs(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		var body any
 		switch {
+		case strings.HasSuffix(path, "/users"):
+			body = map[string]any{"apiVersion": "iam.grafana.app/v0alpha1", "kind": "UserList", "metadata": map[string]any{}, "items": []any{object("User", "user-one", "7"), object("User", "user-two", "8")}}
+		case strings.HasSuffix(path, "/teams"):
+			body = map[string]any{"apiVersion": "iam.grafana.app/v0alpha1", "kind": "TeamList", "metadata": map[string]any{}, "items": []any{object("Team", "team-one", "42")}}
 		case strings.HasSuffix(path, "/users/user-one"):
 			body = object("User", "user-one", "7")
 		case strings.HasSuffix(path, "/users/user-two"):
@@ -67,15 +71,16 @@ func TestUserPermissionsIndividualScopeIDs(t *testing.T) {
 	}
 	mu.Lock()
 	defer mu.Unlock()
-	require.Equal(t, map[string]int{
-		"/apis/iam.grafana.app/v0alpha1/namespaces/default/users/user-one": 1,
-		"/apis/iam.grafana.app/v0alpha1/namespaces/default/users/user-two": 1,
-		"/apis/iam.grafana.app/v0alpha1/namespaces/default/teams/team-one": 1,
-	}, counts, "individual Gets should resolve each UID once and warm requests should reuse the mappings")
+	require.Equal(t, map[string]int{"/apis/iam.grafana.app/v0alpha1/namespaces/default/users": 1, "/apis/iam.grafana.app/v0alpha1/namespaces/default/teams": 1}, counts, "cold requests should bulk-load IDs and warm requests should reuse the mappings")
 }
 
 func TestUserPermissionsIndividualGetFailurePreservesUIDScope(t *testing.T) {
 	iam := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/users") {
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{"apiVersion": "iam.grafana.app/v0alpha1", "kind": "UserList", "metadata": map[string]any{}, "items": []any{}})
+			return
+		}
 		http.NotFound(w, r)
 	}))
 	t.Cleanup(iam.Close)

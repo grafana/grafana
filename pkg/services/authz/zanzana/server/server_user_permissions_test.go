@@ -106,6 +106,10 @@ func TestUserPermissionsStandaloneScopeConfiguration(t *testing.T) {
 
 type snapshotIDs struct{}
 
+func (s snapshotIDs) Prepare(context.Context, types.NamespaceInfo, []string, []string) (legacyscopes.IDResolver, error) {
+	return s, nil
+}
+
 func (snapshotIDs) GetTeamIDByUID(context.Context, types.NamespaceInfo, string) (int64, error) {
 	return 42, nil
 }
