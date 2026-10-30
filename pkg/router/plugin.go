@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http"
 	"slices"
 	"strings"
@@ -185,51 +186,35 @@ func ProvidePluginLoaderDependenciesWithClients(
 }
 
 // localPluginInits runs initLocalPlugin once for each plugin this Grafana
-// runs, and again when its definition changes. Reconcile reads every plugin on
-// each wake, and declaring the same roles repeatedly would append them again.
+// runs. Reconcile reads every plugin on each wake, and declaring the same roles
+// again would stack duplicate grants on the basic roles, so a plugin whose
+// definition changes later keeps the roles it first declared until restart.
 type localPluginInits struct {
 	mu   sync.Mutex
-	done map[string]string // plugin ID -> fingerprint of the definition last initialized
+	done map[string]struct{} // plugin IDs already initialized
 }
 
 func newLocalPluginInits() *localPluginInits {
-	return &localPluginInits{done: map[string]string{}}
+	return &localPluginInits{done: map[string]struct{}{}}
 }
 
-// run initializes the plugins that are new or changed since the last call. A
-// plugin that fails is logged, left to retry on the next wake, and does not
-// keep the others, or its own backends, from loading.
+// run initializes the plugins that are new since the last call. A plugin that
+// fails is logged, left to retry on the next wake, and does not keep the
+// others, or its own backends, from loading.
 func (l *localPluginInits) run(ctx context.Context, deps PluginLoaderDependencies, defs []definition.PluginDefinition) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	for _, plugin := range defs {
-		key, err := pluginDefinitionKey(plugin)
-		if err != nil {
-			logging.FromContext(ctx).Warn("router: skipping init of unfingerprintable plugin", "pluginId", plugin.JSONData.ID, "err", err)
-			continue
-		}
-		if l.done[plugin.JSONData.ID] == key {
+		id := plugin.JSONData.ID
+		if _, ok := l.done[id]; ok {
 			continue
 		}
 		if err := initLocalPlugin(ctx, deps, plugin); err != nil {
-			logging.FromContext(ctx).Warn("router: init of local plugin failed", "pluginId", plugin.JSONData.ID, "err", err)
+			logging.FromContext(ctx).Warn("router: init of local plugin failed", "pluginId", id, "err", err)
 			continue
 		}
-		l.done[plugin.JSONData.ID] = key
+		l.done[id] = struct{}{}
 	}
-}
-
-// pluginDefinitionKey fingerprints what initLocalPlugin reads: the plugin's
-// metadata and all of its manifests, but not the schemas.
-func pluginDefinitionKey(plugin definition.PluginDefinition) (string, error) {
-	plugin.Schemas = nil
-	plugin.Manifest = nil //nolint:staticcheck
-	raw, err := json.Marshal(plugin)
-	if err != nil {
-		return "", err
-	}
-	sum := sha256.Sum256(raw)
-	return hex.EncodeToString(sum[:]), nil
 }
 
 // initLocalPlugin does what a plugin run by this Grafana needs before the
@@ -651,7 +636,9 @@ func (b *PluginBackend) loadSettings(ctx context.Context, cfg *setting.Cfg, opts
 		opts.Settings.LegacyStore = appsettings.NewLegacySettingsStore(b.pluginID, b.pluginID, b.deps.PluginSettings)
 	}
 	opts.DualWrite = b.deps.DualWrite
-	opts.StorageOpts = &options.StorageOptions{UnifiedStorageConfig: cfg.UnifiedStorage}
+	// The settings builder writes a default into the config it is given, and plugins
+	// load while others read the shared map, so hand it a copy.
+	opts.StorageOpts = &options.StorageOptions{UnifiedStorageConfig: maps.Clone(cfg.UnifiedStorage)}
 	opts.BuilderMetrics = b.deps.BuilderMetrics
 	return pluginroute.NewAppSettingsHandler(*b.settings, opts)
 }
