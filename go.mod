@@ -114,7 +114,7 @@ require (
 	github.com/go-openapi/runtime v0.33.3 // @grafana/alerting-backend
 	github.com/go-openapi/strfmt v0.27.3 // @grafana/alerting-backend
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // @grafana/grafana-backend-group
-	github.com/go-sql-driver/mysql v1.10.0 // @grafana/grafana-search-and-storage
+	github.com/go-sql-driver/mysql v1.10.1 // @grafana/grafana-search-and-storage
 	github.com/gobwas/glob v0.2.3 // @grafana/grafana-backend-group
 	github.com/gogo/protobuf v1.3.2 // @grafana/alerting-backend
 	github.com/golang-jwt/jwt/v4 v4.5.2 // @grafana/grafana-backend-group
