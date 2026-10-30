@@ -39,19 +39,25 @@ To provision resources from a local file system as code instead of a Git reposit
 
 To set up Git Sync as code with `gcx`, follow these steps:
 
-1. Understand [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/usage-limits)
-1. [Create the connection and repository CRDs](#create-the-resources-crds)
+1. Read [Before you begin](#before-you-begin).
+1. [Create the connection resource](#create-the-connection-resource)
+1. [Create the repository resource](#create-the-repository-resource)
 1. [Push the CRDs to Grafana](#push-the-resources-to-grafana)
 1. [Manage repository resources](#manage-repository-resources)
 1. [Verify setup](#verify-setup)
 
-## Create the resources CRDs
+## Before you begin
 
-If you're connecting with any of the [supported Git providers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/usage-limits#compatible-git-providers) using a Personal Access Token, you need to create a repository resource to define the connection between your repositories and your Grafana instance.
+Understand the following:
 
-If you're connecting to Git Sync with GitHub App or an OAuth App, in addition to the repository resource you need to create a connection resource as well.
+- Git Sync [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/usage-limits).
+- The [required resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/key-concepts) to use Git Sync.
 
-### Create the connection resource
+## Create the connection resource
+
+A connection is the authentication setup between Grafana and an external Git provider, required when you're not using a Personal Access Token or a static token to authenticate.
+
+### Create a GitHub App connection resource
 
 If you're connecting Git Sync with GitHub App, create a `connection.yaml` file defining your Git Sync connection configuration:
 
@@ -133,7 +139,9 @@ An OAuth App connection needs a user to approve access in the browser. After you
 
 ### Create the repository resource
 
-Next, create a `repository.yaml` file defining your Git Sync configuration. Depending on your Git provider and authentication method, add your Personal Access Token information or the connection name.
+A repository resource is a Grafana configuration object that defines the connection between a group of repositories and your Grafana instance via Git Sync. Depending on your Git provider and authentication method, add your Personal Access Token information or the connection name.
+
+Create a `repository.yaml` file defining your Git Sync configuration: 
 
 ```yaml
 apiVersion: provisioning.grafana.app/v0alpha1

@@ -28,16 +28,14 @@ Git Sync functionalities are constantly evolving. [Contact Grafana](https://graf
 
 {{< /admonition >}}
 
-## Key Git Sync components
-
 Before you start using Git Sync, understand how the key Git Sync components relate:
 
 - [Grafana instance](#grafana-instance)
 - [Git repository](#git-repository)
-- [Git Sync repository resource](#git-sync-repository-resource)
 - [Git Sync connection resource](#git-sync-connection-resource)
+- [Git Sync repository resource](#git-sync-repository-resource)
 
-### Grafana instance
+## Grafana instance
 
 A Grafana instance is a running Grafana server. Multiple instances can:
 
@@ -46,7 +44,7 @@ A Grafana instance is a running Grafana server. Multiple instances can:
 - Sync from different paths within the same repository.
 - Sync from different repositories.
 
-### Git repository
+## Git repository
 
 A Git repository is the external storage you want to sync your Grafana instance with. You can organize your Git repository in several ways:
 
@@ -54,7 +52,7 @@ A Git repository is the external storage you want to sync your Grafana instance 
 - Multiple branches: Use different branches for different environments or teams. For example, `main`, `develop`, or `team-a`.
 - Multiple repositories: Use separate repositories for different teams or environments.
 
-#### Flexible configuration for your Git Sync repositories
+### Flexible configuration for your Git Sync repositories
 
 Git Sync repositories support different combinations of repository URL, branch, and path:
 
@@ -69,18 +67,7 @@ Git Sync repositories support different combinations of repository URL, branch, 
   - Instance B: `repository: your-org/grafana-manifests, branch: main, path: development/`.
 - Any combination: Mix and match based on your workflow requirements.
 
-### Git Sync repository resource
-
-A repository resource is a Grafana configuration object that defines the connection between a group of repositories and your Grafana instance via Git Sync.
-
-- Which Git repository to sync with your Grafana instance.
-- Which branch to use.
-- Which directory path to synchronize.
-- Sync behavior and workflows.
-
-Each repository resource creates bidirectional synchronization between a Grafana instance and a specific location in Git.
-
-### Git Sync connection resource
+## Git Sync connection resource
 
 A connection is the authentication setup between Grafana and an external Git provider, required when you're not using a Personal Access Token or a static token to authenticate. Use it to authorize access to your external repositories, and to generate or refresh the credentials for Git Sync. A single connection can be reused across multiple repositories.
 
@@ -91,6 +78,17 @@ The connection resource includes:
 - The external provider configuration: The authentication mechanism Grafana uses to communicate with the Git provider (for example, a GitHub App).
 - The provider authorization or installation: The authorized entity that allows Grafana to request tokens from the provider.
 - Repository access scope: The set of repositories that the connection (and therefore, Grafana) is authorized to access in the Git provider.
+
+## Git Sync repository resource
+
+A repository resource is a Grafana configuration object that defines the connection between a group of repositories and your Grafana instance via Git Sync.
+
+- Which Git repository to sync with your Grafana instance.
+- Which branch to use.
+- Which directory path to synchronize.
+- Sync behavior and workflows.
+
+Each repository resource creates bidirectional synchronization between a Grafana instance and a specific location in Git.
 
 ## How does Git Sync behave?
 
@@ -160,7 +158,7 @@ Dashboards
 
 Folderless sync only manages the resources it provisions. The unprovisioned **Ops** folder and **Ad-hoc dashboard** are left untouched.
 
-#### Multiple folderless repositories
+### Multiple folderless repositories
 
 Because folderless sync doesn't create a wrapper folder, several folderless repositories can sync to the top level at the same time. Each repository manages only the resources it provisions:
 
@@ -175,7 +173,7 @@ Dashboards
 └── Ad-hoc dashboard           ← not managed by Git Sync
 ```
 
-### Git Sync states
+## Git Sync states
 
 Your Grafana instance can be in one of the following Git Sync states:
 
