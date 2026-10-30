@@ -121,8 +121,8 @@ describe('AlertRuleRow', () => {
     expect(screen.queryByText(/label/)).not.toBeInTheDocument();
   });
 
-  it('renders the actions slot in the right column', () => {
-    renderRow({ searchHit: baseHit(), actions: <button>Custom action</button> });
-    expect(screen.getByRole('button', { name: 'Custom action' })).toBeInTheDocument();
+  it('renders the More button from AlertRuleActions in the right column', () => {
+    renderRow({ searchHit: baseHit() });
+    expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument();
   });
 });
