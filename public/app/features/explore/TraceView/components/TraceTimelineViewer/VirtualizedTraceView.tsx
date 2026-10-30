@@ -379,7 +379,7 @@ class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewP
     // Compute the list of currently visible span IDs to pass to the row renderers.
     const start = Math.max((this.listView?.getTopVisibleIndex() || 0) - BUFFER_SIZE, 0);
     const end = (this.listView?.getBottomVisibleIndex() || 0) + BUFFER_SIZE;
-    const visibleSpanIds = this.getVisibleSpanIds(start, end);
+    const visibleSpanIds = this.getVisibleSpanIds(this.getRowStates(), start, end);
 
     return isDetail
       ? this.renderSpanDetailRow(span, key, style, attrs, visibleSpanIds)
@@ -621,10 +621,12 @@ class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewP
     });
   };
 
-  getVisibleSpanIds = memoizeOne((start: number, end: number) => {
+  // Keyed on the row states as well as the window: new trace data, collapsing or filtering changes the rows
+  // without moving the window, and the rows' indent guides depend on which ancestors are in this list.
+  getVisibleSpanIds = memoizeOne((rowStates: RowState[], start: number, end: number) => {
     const spanIds = [];
     for (let i = start; i < end; i++) {
-      const rowState = this.getRowStates()[i];
+      const rowState = rowStates[i];
       if (rowState?.span) {
         spanIds.push(rowState.span.spanID);
       }
