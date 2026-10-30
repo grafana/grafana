@@ -277,7 +277,7 @@ You can use the [TestData data source](/docs/grafana/<GRAFANA_VERSION>/datasourc
    {{< figure src="/media/docs/alerting/example-dynamic-thresholds-with-sql-expression-preview.png" max-width="750px" caption="Alert preview evaluating multiple series with distinct threshold values using an SQL expression" >}}
 
    {{< admonition type="tip" >}}
-   You can explore this **[alerting example in Grafana Play](https://play.grafana.org/alerting/grafana/dynamic-thresholds/view?tech=docs&pg=alerting-examples&plcmt=callout-tip&cta=alert-dynamic-thresholds)**.
+   You can explore this **[alerting example in Grafana Play](https://play.grafana.org/alerting/grafana/dynamic-thresholds-sql-expression/view?tech=docs&pg=alerting-examples&plcmt=callout-tip&cta=alert-dynamic-thresholds-sql-expression)**.
 
    Open the example to view alert evaluation results, generated alert instances, and alert rule details.
    {{< /admonition >}}
