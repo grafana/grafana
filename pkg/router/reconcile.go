@@ -375,11 +375,6 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 	r.discoveryCache.retain(snap)
 	r.retainOpenAPIDocs(snap)
 
-	groupList := buildAPIGroupList(ctx, backends)
-	r.apiGroupList.Store(&groupList)
-
-	index := buildOpenAPIV3Index(ctx, backends)
-	r.openapiIndex.Store(&index)
-
+	r.publishRootDocs(ctx, backends)
 	r.publishManifestDocs(ctx, backends)
 }

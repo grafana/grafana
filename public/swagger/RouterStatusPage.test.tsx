@@ -26,6 +26,7 @@ const status: RouterStatus = {
       plugin: { id: 'my-plugin', version: '1.2.3', hasBackend: true },
       loadedAt: '2026-10-26T09:00:00Z',
       manifest: true,
+      visibility: 'public',
       discovery: 'cached',
       openapiCached: ['v1', 'v2'],
       watches: 7,
@@ -305,6 +306,25 @@ it('explains the discovery source, a missing breaker and the counted columns', a
   expect(await screen.findByText(/let through to the backend/)).toBeInTheDocument();
   await userEvent.hover(screen.getByText('Failures'));
   expect(await screen.findByText(/502, 503 and 504 responses/)).toBeInTheDocument();
+});
+
+it('marks the groups only access policies see', async () => {
+  const internal: RouterStatus = {
+    ...status,
+    groups: [
+      { ...status.groups[0], group: 'mobile.ext.grafana.app', visibility: 'internal' },
+      { ...status.groups[0], group: 'widgets.ext.grafana.app', visibility: 'public' },
+    ],
+  };
+  jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(internal)));
+  render(<RouterStatusPage />);
+
+  const internalRow = (await screen.findByText('mobile.ext.grafana.app')).closest('tr')!;
+  const publicRow = screen.getByText('widgets.ext.grafana.app').closest('tr')!;
+  expect(within(publicRow).queryByText('internal')).not.toBeInTheDocument();
+
+  await userEvent.hover(within(internalRow).getByText('internal'));
+  expect(await screen.findByText(/Only access policies see this group/)).toBeInTheDocument();
 });
 
 it.each<[string, BadgeColor]>([
