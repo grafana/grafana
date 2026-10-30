@@ -41,62 +41,44 @@ func SetDefaultCoreURL(cfg *setting.Cfg, url string) bool {
 	return true
 }
 
-// readManifestsTargets builds the targets for plugins_url and core_url,
-// each nil when its URL is unset. core_url serves core APIs (like playlists)
-// in the plugin manifests format, and both share the [router.backend_grpc]
-// connection settings. Each has its own TLS settings for its poll, from
-// plugins_ca_file/plugins_insecure and core_ca_file/core_insecure.
+// readManifestsTargets builds the targets for plugins_url, core_url and
+// bridge_url, in priority order, skipping each whose URL is unset. core_url
+// serves core APIs (like playlists) in the plugin manifests format, and all
+// share the [router.backend_grpc] connection settings, which are only read
+// when one of the URLs is set. Each has its own TLS settings for its poll, from
+// <name>_ca_file and <name>_insecure.
 func readManifestsTargets(cfg *setting.Cfg, section *setting.DynamicSection, deps PluginDependencies) (targets []*pluginManifestsTarget, err error) {
+	// Each source's name is also its config key prefix, its metric label and its backend key prefix. core is not filtered by group patterns.
+	sources := []string{sourcePlugins, sourceCore, sourceBridge}
+	urls := make([]string, len(sources))
+	configured := false
+	for i, s := range sources {
+		urls[i] = section.Key(s + "_url").MustString("")
+		configured = configured || urls[i] != ""
+	}
+	if !configured {
+		return nil, nil
+	}
+
 	grpcConfig, err := parsePluginGRPCConfig(cfg)
 	if err != nil {
 		return nil, err
 	}
-	// Used to identify groups backed by a a plugin (v3+v2)
-	if url := section.Key("plugins_url").MustString(""); url != "" {
-		patterns := readGroupPatterns(section, cloudRouterSection, "plugins_group_patterns", "plugins_group_regex")
-		client, err := newPluginManifestsClient(section, "plugins")
+	for i, source := range sources {
+		if urls[i] == "" {
+			continue
+		}
+		patterns := compileGroupPatterns(readGroupPatterns(section, cloudRouterSection,
+			source+"_group_patterns", source+"_group_regex"))
+		client, err := newPluginManifestsClient(section, source)
 		if err != nil {
 			return nil, err
 		}
-		target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, url,
-			compileGroupPatterns(patterns), client, grpcConfig, deps)
+		target, err := newPluginManifestsTarget(source, urls[i], patterns, client, grpcConfig, deps)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
-		if target.cooldown, err = pluginManifestsCooldown(section, "plugins"); err != nil {
-			return nil, err
-		}
-		targets = append(targets, target)
-	}
-	// Core groups (playlists, shorturls etc)
-	if url := section.Key("core_url").MustString(""); url != "" {
-		client, err := newPluginManifestsClient(section, "core")
-		if err != nil {
-			return nil, err
-		}
-		target, err := newPluginManifestsTarget(coreKeyPrefix, sourceCoreURL, url,
-			nil, client, grpcConfig, deps)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
-		}
-		if target.cooldown, err = pluginManifestsCooldown(section, "core"); err != nil {
-			return nil, err
-		}
-		targets = append(targets, target)
-	}
-	// Groups still using non-plugin based http webhooks.  This should become increasingly rare
-	if url := section.Key("bridge_url").MustString(""); url != "" {
-		client, err := newPluginManifestsClient(section, "bridge")
-		if err != nil {
-			return nil, err
-		}
-		patterns := readGroupPatterns(section, cloudRouterSection, "bridge_group_patterns")
-		target, err := newPluginManifestsTarget(bridgeKeyPrefix, sourceBridgeURL, url,
-			compileGroupPatterns(patterns), client, grpcConfig, deps)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
-		}
-		if target.cooldown, err = pluginManifestsCooldown(section, "bridge"); err != nil {
+		if target.cooldown, err = pluginManifestsCooldown(section, source); err != nil {
 			return nil, err
 		}
 		targets = append(targets, target)

@@ -202,7 +202,7 @@ must, since the tokens the router sends them name that ID as their audience. Ent
 `core_url` and `bridge_url` may have no ID; their tokens name their API group instead.
 
 Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
-`managed:<pluginId>:<hash>`, `core:<pluginId>:<hash>`, `dev:<pluginId>:<hash>`, `p:<hash>` or
+`plugins:<pluginId>:<hash>`, `core:<pluginId>:<hash>`, `dev:<pluginId>:<hash>`, `p:<hash>` or
 `st:<hash>`.
 
 ## Serving and discovery

@@ -228,9 +228,9 @@ func newStatusService(t *testing.T) (*Service, *statusLoader, *prometheus.Regist
 		backends: []Backend{first, second, &dummyBackend{group: "dummy.ext.grafana.app"}},
 		shadowed: []shadowedGroup{{Group: "first.ext.grafana.app", Source: aggregateSource("second"), By: aggregateSource("test")}},
 		sources: []sourceStatus{
-			{Source: sourceCoreURL, LastSuccess: time.Unix(1700000000, 0).UTC(), Successes: 4},
+			{Source: sourceCore, LastSuccess: time.Unix(1700000000, 0).UTC(), Successes: 4},
 			{Source: sourceSingleTenant, Failures: 2},
-			{Source: sourcePluginsURL, Skipped: 2},
+			{Source: sourcePlugins, Skipped: 2},
 		},
 	}
 	reg := prometheus.NewRegistry()
@@ -395,12 +395,12 @@ func TestPluginManifestsSkips(t *testing.T) {
 		]}`))
 	}))
 	t.Cleanup(srv.Close)
-	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(sourcePlugins, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
 	require.NoError(t, err)
 
 	target.poll(t.Context(), make(chan struct{}, 1))
 	require.Empty(t, target.Backends())
-	require.Equal(t, 2, target.status.status(sourcePluginsURL).Skipped)
+	require.Equal(t, 2, target.status.status(sourcePlugins).Skipped)
 }
 
 // Building the router twice on one registry, as tests and some module
@@ -417,10 +417,10 @@ func TestServicesShareOneRegistry(t *testing.T) {
 	require.NotPanics(t, func() { newService(NewGrafanaRouter(&mutableLoader{}, nil), reg) })
 
 	require.NotPanics(t, func() {
-		newPluginGRPCRequestDuration(reg, sourcePluginsURL)
-		newPluginGRPCRequestDuration(reg, sourcePluginsURL)
-		newPluginGRPCRequestRetries(reg, sourcePluginsURL)
-		newPluginGRPCRequestRetries(reg, sourcePluginsURL)
+		newPluginGRPCRequestDuration(reg, sourcePlugins)
+		newPluginGRPCRequestDuration(reg, sourcePlugins)
+		newPluginGRPCRequestRetries(reg, sourcePlugins)
+		newPluginGRPCRequestRetries(reg, sourcePlugins)
 	})
 }
 

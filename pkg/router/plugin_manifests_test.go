@@ -90,7 +90,7 @@ func TestPluginManifestsTarget_PollsFiltersAndSkipsEntriesWithoutManifest(t *tes
 		_ = srv.Client()
 		defer srv.Close()
 
-		target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+		target, err := newPluginManifestsTarget(sourcePlugins, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
 		require.NoError(t, err)
 
 		ctx, cancel := context.WithCancel(t.Context())
@@ -105,7 +105,7 @@ func TestPluginManifestsTarget_PollsFiltersAndSkipsEntriesWithoutManifest(t *tes
 
 		backends := target.Backends()
 		require.Equal(t, "appsdktest.ext.grafana.app", backends[0].Group().Name)
-		require.Contains(t, backends[0].Key(), "managed:grafana-appsdktest-app:")
+		require.Contains(t, backends[0].Key(), "plugins:grafana-appsdktest-app:")
 	})
 }
 
@@ -117,7 +117,7 @@ func TestPluginManifestsTarget_GroupRegexNarrowsToMatchingGroups(t *testing.T) {
 
 	patterns := compileGroupPatterns([]string{"*.internal"})
 
-	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, patterns, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(sourcePlugins, srv.URL, patterns, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
 	require.NoError(t, err)
 
 	target.poll(t.Context(), make(chan struct{}, 1))
@@ -130,7 +130,7 @@ func TestPluginManifestsTarget_SignalsDirtyOnlyOnKeySetChange(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(sourcePlugins, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
 	require.NoError(t, err)
 
 	ctx := t.Context()
@@ -159,7 +159,7 @@ func TestPluginManifestsTarget_FailedPollLeavesLastKnownGoodSnapshot(t *testing.
 	}))
 	defer srv.Close()
 
-	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(sourcePlugins, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
 	require.NoError(t, err)
 
 	// Seed a snapshot as if a previous poll had succeeded, then confirm a
@@ -175,7 +175,7 @@ func TestPluginManifestsTarget_FailedPollLeavesLastKnownGoodSnapshot(t *testing.
 func TestNewPluginManifestsTarget_RejectsNonAbsoluteURL(t *testing.T) {
 	for _, badURL := range []string{"", "/just/a/path", "plugins.example.invalid"} {
 		t.Run(badURL, func(t *testing.T) {
-			_, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, badURL, nil, http.DefaultClient, defaultPluginGRPCConfig(), PluginDependencies{})
+			_, err := newPluginManifestsTarget(sourcePlugins, badURL, nil, http.DefaultClient, defaultPluginGRPCConfig(), PluginDependencies{})
 			require.ErrorContains(t, err, "must be absolute")
 		})
 	}
@@ -187,7 +187,7 @@ func TestPluginManifestsTargetReloadsOnHostChange(t *testing.T) {
 		_, _ = w.Write([]byte(body))
 	}))
 	defer srv.Close()
-	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(sourcePlugins, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
 	require.NoError(t, err)
 	dirty := make(chan struct{}, 1)
 	target.poll(t.Context(), dirty)
@@ -209,7 +209,7 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 	}))
 	t.Cleanup(srv.Close)
 	reg := prometheus.NewRegistry()
-	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{MetricsRegister: reg})
+	target, err := newPluginManifestsTarget(sourcePlugins, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{MetricsRegister: reg})
 	require.NoError(t, err)
 	t.Cleanup(target.closeConnections)
 
@@ -397,7 +397,7 @@ func TestPluginManifestsTargetServesKindsWithoutBackendClient(t *testing.T) {
 	}))
 	defer srv.Close()
 	storage := &manifestKindResourceClient{}
-	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{Unified: storage})
+	target, err := newPluginManifestsTarget(sourcePlugins, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{Unified: storage})
 	require.NoError(t, err)
 	target.poll(t.Context(), make(chan struct{}, 1))
 	require.Len(t, target.Backends(), 1)
@@ -477,7 +477,7 @@ func TestPluginManifestsTargetMultipleManifests(t *testing.T) {
 		require.NoError(t, json.NewEncoder(w).Encode(deployment))
 	}))
 	defer srv.Close()
-	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(sourcePlugins, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
 	require.NoError(t, err)
 	dirty := make(chan struct{}, 1)
 	target.poll(t.Context(), dirty)
@@ -544,7 +544,7 @@ func TestFetchPluginManifestsMigratesSingularManifest(t *testing.T) {
 	require.Equal(t, "appsdktest.ext.grafana.app", deployment.Plugins[0].Definition.Manifests[0].Group)
 	require.Nil(t, deployment.Plugins[0].Definition.Manifest) //nolint:staticcheck
 
-	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(sourcePlugins, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
 	require.NoError(t, err)
 	target.poll(t.Context(), make(chan struct{}, 1))
 	require.Len(t, target.Backends(), 1)
@@ -565,7 +565,7 @@ func TestFetchPluginManifestsPrefersPluralEntry(t *testing.T) {
 		require.NoError(t, json.NewEncoder(w).Encode(payload))
 	}))
 	defer srv.Close()
-	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(sourcePlugins, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
 	require.NoError(t, err)
 	target.poll(t.Context(), make(chan struct{}, 1))
 	backends := target.Backends()
@@ -587,14 +587,14 @@ func TestPluginManifestsTargetValidatesPluginIDs(t *testing.T) {
 		loaded  bool
 		skipped int
 	}{
-		{name: "plugin", source: sourcePluginsURL, id: "example-app", group: "example.ext.grafana.app", loaded: true},
-		{name: "plugin without an ID", source: sourcePluginsURL, id: "", group: "example.ext.grafana.app", skipped: 1},
-		{name: "plugin ID with a dot", source: sourcePluginsURL, id: "folder.grafana.app", group: "example.ext.grafana.app", skipped: 1},
-		{name: "plugin ID without a hyphen", source: sourcePluginsURL, id: "example", group: "example.ext.grafana.app", skipped: 1},
-		{name: "core API without an ID", source: sourceCoreURL, id: "", group: "playlist.grafana.app", loaded: true},
-		{name: "bridge without an ID", source: sourceBridgeURL, id: "", group: "example.ext.grafana.app", loaded: true},
-		{name: "bridge with an invalid ID", source: sourceBridgeURL, id: "bridge.grafana.app", group: "example.ext.grafana.app", skipped: 1},
-		{name: "core API with an invalid ID", source: sourceCoreURL, id: "playlist.grafana.app", group: "playlist.grafana.app", skipped: 1},
+		{name: "plugin", source: sourcePlugins, id: "example-app", group: "example.ext.grafana.app", loaded: true},
+		{name: "plugin without an ID", source: sourcePlugins, id: "", group: "example.ext.grafana.app", skipped: 1},
+		{name: "plugin ID with a dot", source: sourcePlugins, id: "folder.grafana.app", group: "example.ext.grafana.app", skipped: 1},
+		{name: "plugin ID without a hyphen", source: sourcePlugins, id: "example", group: "example.ext.grafana.app", skipped: 1},
+		{name: "core API without an ID", source: sourceCore, id: "", group: "playlist.grafana.app", loaded: true},
+		{name: "bridge without an ID", source: sourceBridge, id: "", group: "example.ext.grafana.app", loaded: true},
+		{name: "bridge with an invalid ID", source: sourceBridge, id: "bridge.grafana.app", group: "example.ext.grafana.app", skipped: 1},
+		{name: "core API with an invalid ID", source: sourceCore, id: "playlist.grafana.app", group: "playlist.grafana.app", skipped: 1},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -602,14 +602,7 @@ func TestPluginManifestsTargetValidatesPluginIDs(t *testing.T) {
 			}))
 			defer srv.Close()
 
-			prefix := pluginsKeyPrefix
-			switch tc.source {
-			case sourceCoreURL:
-				prefix = coreKeyPrefix
-			case sourceBridgeURL:
-				prefix = bridgeKeyPrefix
-			}
-			target, err := newPluginManifestsTarget(prefix, tc.source, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+			target, err := newPluginManifestsTarget(tc.source, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
 			require.NoError(t, err)
 			target.poll(t.Context(), make(chan struct{}, 1))
 
@@ -657,7 +650,7 @@ func TestForwardRouteCredentials(t *testing.T) {
 // A connection lives as long as a loaded handler uses it: superseded
 // handlers keep it until they are destroyed, and the last release closes it.
 func TestPluginConnectionClosesWithItsLastHandler(t *testing.T) {
-	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, "https://plugins.invalid/plugins", nil, http.DefaultClient, defaultPluginGRPCConfig(), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	target, err := newPluginManifestsTarget(sourcePlugins, "https://plugins.invalid/plugins", nil, http.DefaultClient, defaultPluginGRPCConfig(), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
 	require.NoError(t, err)
 	key := pluginConnectionKey{host: "localhost:50051", pluginID: "grafana-appsdktest-app"}
 
@@ -730,7 +723,7 @@ func TestPluginManifestsTargetAcquiresConnectionsOnlyForGRPCHosts(t *testing.T) 
 					"versions": [{"name": "v1", "served": true}], "preferredVersion": "v1"}]}}]}`))
 			}))
 			defer srv.Close()
-			target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+			target, err := newPluginManifestsTarget(sourcePlugins, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
 			require.NoError(t, err)
 			target.poll(t.Context(), make(chan struct{}, 1))
 			require.Len(t, target.Backends(), 1)
@@ -750,7 +743,7 @@ func TestCoreEntryWithoutPluginID(t *testing.T) {
 			"versions": [{"name": "v1", "served": true}], "preferredVersion": "v1"}]}}]}`))
 	}))
 	defer srv.Close()
-	target, err := newPluginManifestsTarget(coreKeyPrefix, sourceCoreURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(sourceCore, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
 	require.NoError(t, err)
 	target.poll(t.Context(), make(chan struct{}, 1))
 	require.Len(t, target.Backends(), 1)

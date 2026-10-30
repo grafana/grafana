@@ -75,9 +75,9 @@ func TestCloudLoaderSourcePriority(t *testing.T) {
 	})
 	first := priorityAggregate(priorityBackend("shared", "first-aggregate"), priorityBackend("a-aggregate-only", "aggregate"))
 	second := priorityAggregate(priorityBackend("shared", "second-aggregate"))
-	plugins := testPluginManifestsTarget(sourcePluginsURL, priorityBackend("shared", "plugin"), priorityBackend("p-plugin-only", "plugin"))
-	core := testPluginManifestsTarget(sourceCoreURL, priorityBackend("shared", "core"), priorityBackend("c-core-only", "core"))
-	bridge := testPluginManifestsTarget(sourceBridgeURL, priorityBackend("shared", "bridge"), priorityBackend("b-bridge-only", "bridge"))
+	plugins := testPluginManifestsTarget(sourcePlugins, priorityBackend("shared", "plugin"), priorityBackend("p-plugin-only", "plugin"))
+	core := testPluginManifestsTarget(sourceCore, priorityBackend("shared", "core"), priorityBackend("c-core-only", "core"))
+	bridge := testPluginManifestsTarget(sourceBridge, priorityBackend("shared", "bridge"), priorityBackend("b-bridge-only", "bridge"))
 	pollDiscovery(t, st)
 
 	loadShared := func(aggregates []*aggregateTarget, targets ...*pluginManifestsTarget) Backend {
