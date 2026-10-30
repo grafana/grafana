@@ -22,6 +22,9 @@ export type ContactPointSelectorProps = CustomComboBoxProps<ContactPoint> & {
  * Contact Point Combobox which lists all available contact points.
  * By default, only shows contact points that can be used (have `grafana.com/canUse: true`).
  * Set `includeUnusable` to `true` to show all contact points including imported ones.
+ *
+ * `isClearable` changes the type of `onChange` (it receives `null` when cleared). When it depends on a condition, annotate
+ * the `onChange` parameter, since it can't be inferred from a spread. See the component docs for an example.
  */
 function ContactPointSelector(props: ContactPointSelectorProps) {
   const { includeUnusable = false, ...comboboxProps } = props;
