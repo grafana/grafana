@@ -116,6 +116,7 @@ Grafana marks every resource that Git Sync creates with annotations that record 
 Grafana uses these annotations to show a resource as provisioned in the UI and to send a change you make in the UI back to the repository as a commit.
 If you remove them, Grafana stops treating the resource as provisioned and Git Sync no longer updates it.
 
+For how other as-code tools record the same thing, refer to [Managed resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/managed-resources/).
 For the full list of annotations and the rules that apply to them, refer to [Manager and source annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#manager-and-source-annotations).
 
 ### Sync targets
