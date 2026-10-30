@@ -678,7 +678,7 @@ func TestCloudLoaderAggregateSectionPriority(t *testing.T) {
 	t.Cleanup(exchange.Close)
 	cfg := setting.NewCfg()
 	var err error
-	cfg.Raw, err = ini.Load([]byte(fmt.Sprintf(`
+	cfg.Raw, err = ini.Load(fmt.Appendf(nil, `
 [cloud_router]
 cap_token = token
 token_exchange_url = %s
@@ -688,7 +688,7 @@ audience = first
 [router.aggregate.a_second]
 url = %s
 audience = second
-`, exchange.URL, first.URL, second.URL)))
+`, exchange.URL, first.URL, second.URL))
 	require.NoError(t, err)
 	result, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 	require.NoError(t, err)
