@@ -718,6 +718,36 @@ Set to `false` to remove all feedback links from the UI. Default is `true`.
 
 <hr />
 
+### `[meticulous]`
+
+Configure Meticulous session recording in the frontend service. Recording is disabled by default.
+Apply these settings to the process serving frontend HTML and restart it after changes.
+
+{{< admonition type="warning" >}}
+Use only synthetic, non-sensitive test data when enabling recording. Recordings are uploaded to Meticulous and can include network requests, responses, and credentials. You and your team are responsible for ensuring the instance and connected datasources contain no customer or sensitive data.
+{{< /admonition >}}
+
+#### `enabled`
+
+Set to `true` to enable recording. Default is `false`. A non-empty `recording_token` is also required.
+Override with `GF_METICULOUS_ENABLED`.
+
+#### `production`
+
+Controls the recorder's production-environment behavior. Default is `true`.
+This setting doesn't control whether recording is enabled or make sensitive data safe to record.
+Override with `GF_METICULOUS_PRODUCTION`.
+
+#### `recording_token`
+
+The Meticulous project's browser-visible recording token, not its secret API token. Default is empty.
+Override with `GF_METICULOUS_RECORDING_TOKEN`.
+This replaces `[analytics] meticulous_ai_recording_token`.
+
+When a settings service is configured, the frontend service applies the stack's `[meticulous]` settings to each request. Keep `enabled = false` in shared process configuration and enable recording only in the intended stack's configuration. If the stack settings can't be fetched, the process configuration is used. Without a settings service, local INI or environment settings apply to all requests served by that process.
+
+<hr />
+
 ### `[security]`
 
 #### `disable_initial_admin_creation`

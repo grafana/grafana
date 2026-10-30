@@ -2765,15 +2765,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "grafana.meticulousAIMode",
-			Description:  `Controls the Meticulous AI session recorder. One of "off", "on-prod-env" (recorder enabled, production-environment behaviour), or "on-dev-env" (recorder enabled, high-volume/development behaviour).`,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDatavizSquad,
-			Expression:   "off",
-			HideFromDocs: true,
-			Generate:     Generate{Go: true},
-		},
-		{
 			Name:        "datasources.useNewStackInfoToSettingsCache",
 			Description: "Use the new cache for datasource.StackInfoToSettings, backend flag",
 			Stage:       FeatureStageGeneralAvailability,
