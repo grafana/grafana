@@ -275,6 +275,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       if (!skipPerform) {
         this.performAction(action);
       }
+      getDashboardSceneFor(this).recordEditAction(action.meta.actionId);
       return;
     }
     // Clear redo stack when user performs a new action
@@ -286,6 +287,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     if (!skipPerform) {
       this.performAction(action);
     }
+    getDashboardSceneFor(this).recordEditAction(action.meta.actionId);
 
     this.setState({ undoStack: this.pushToUndoStack(action) });
   }
