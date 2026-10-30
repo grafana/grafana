@@ -120,8 +120,8 @@ describe('RepositoryListItem', () => {
       });
       render(<RepositoryListItem repository={repo} />);
 
-      expect(screen.getByRole('link', { name: '2 dashboards' })).toHaveAttribute('href', '/dashboards/f/test-repo');
-      expect(screen.getByRole('link', { name: '1 folders' })).toHaveAttribute('href', '/dashboards/f/test-repo');
+      expect(screen.getByRole('link', { name: '2 Dashboards' })).toHaveAttribute('href', '/dashboards/f/test-repo');
+      expect(screen.getByRole('link', { name: '1 Folders' })).toHaveAttribute('href', '/dashboards/f/test-repo');
     });
 
     it('links non-foldered kinds to their own collection', () => {
@@ -136,7 +136,7 @@ describe('RepositoryListItem', () => {
       });
       render(<RepositoryListItem repository={repo} />);
 
-      expect(screen.getByRole('link', { name: '3 playlists' })).toHaveAttribute('href', '/playlists');
+      expect(screen.getByRole('link', { name: '3 Playlists' })).toHaveAttribute('href', '/playlists');
     });
 
     it('links registered kinds to the top level for non-folder targets', () => {
@@ -157,7 +157,7 @@ describe('RepositoryListItem', () => {
       });
       render(<RepositoryListItem repository={repo} />);
 
-      expect(screen.getByRole('link', { name: '2 dashboards' })).toHaveAttribute('href', '/dashboards');
+      expect(screen.getByRole('link', { name: '2 Dashboards' })).toHaveAttribute('href', '/dashboards');
     });
 
     it('renders a non-interactive badge with the raw name for unknown kinds', () => {
