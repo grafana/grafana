@@ -340,7 +340,7 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 			// Make sure the collection RV is above our last written event
 			_, err := b.rvManager.ExecWithRV(ctx, key, func(_ context.Context, _ db.Tx) (string, error) {
 				return "", nil
-			})
+			}, nil)
 			if err != nil {
 				b.log.Warn("error increasing RV", "error", err)
 			}
@@ -581,7 +581,7 @@ func (b *backend) writeBulkChunked(ctx context.Context, setting resource.BulkSet
 		// transaction, so a failure is warn-only as in processBulkWithTx.
 		if _, err := b.rvManager.ExecWithRV(ctx, key, func(_ context.Context, _ db.Tx) (string, error) {
 			return "", nil
-		}); err != nil {
+		}, nil); err != nil {
 			b.log.Warn("error increasing RV", "error", err)
 		}
 
