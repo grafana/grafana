@@ -616,11 +616,11 @@ func (x *ResourceSearchResponse) GetFolderPaths() map[string]*FolderPath {
 	return nil
 }
 
-// FolderPath lists a folder and the folders above it, from the top down, ending
-// with the folder itself, as the caller may see them. Like the folder API's
-// parents, it stops at the first folder the caller cannot read, or that the
-// index does not hold: that one is named but detached, and nothing above it is
-// listed.
+// FolderPath lists ancestors before descendants, ending with the folder itself.
+// It follows the folder API's parents logic: walk upward from the folder and
+// stop at the first unreadable or missing folder. That folder is included by
+// name only with detached=true, and its ancestors are omitted. The collected
+// folders are then reversed for the response.
 type FolderPath struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Folders       []*FolderPath_Folder   `protobuf:"bytes,1,rep,name=folders,proto3" json:"folders,omitempty"`

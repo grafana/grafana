@@ -2471,7 +2471,7 @@ func (b *bleveIndex) Search(
 
 	response, err := b.search(ctx, access, req, indexes, stats)
 	// Clients show where each result is, and the global index holds every folder.
-	if err == nil && response != nil && response.Error == nil && b.key.IsGlobal() && !req.IsDeleted {
+	if err == nil && response.Error == nil && b.key.IsGlobal() && !req.IsDeleted {
 		b.addFolderPaths(ctx, access, response)
 	}
 	return response, err
