@@ -62,6 +62,10 @@ export { getModalStyles } from '../components/Modal/getModalStyles';
 export { MultiValueRemove, type MultiValueRemoveProps } from '../components/Select/MultiValue';
 export { getSvgSize } from '../components/Icon/utils';
 export { LoadingIndicator } from '../components/PanelChrome/LoadingIndicator';
+export {
+  PanelChromeHeaderControlsContext,
+  type PanelChromeHeaderControls,
+} from '../components/PanelChrome/PanelChromeHeaderControlsContext';
 export { type ButtonLinkProps, getButtonStyles } from '../components/Button/Button';
 export {
   type TableSortByFieldState,

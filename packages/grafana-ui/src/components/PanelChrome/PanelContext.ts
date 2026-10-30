@@ -144,6 +144,13 @@ export interface PanelContext {
 
   /** Present when the panel host supports ad-hoc transformations. @alpha */
   adHocTransformations?: PanelRuntimeTransformations;
+
+  /**
+   * Whether the panel host currently shows its series limit control among the title items. The panel then shows its
+   * header even without a title, so the control stays visible.
+   * @alpha
+   */
+  isSeriesLimitShown?: () => boolean;
 }
 
 export const PanelContextRoot = createContext<PanelContext>({
