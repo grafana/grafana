@@ -116,10 +116,11 @@ function getItemStyle(
 
   if (interaction?.kind === 'drag') {
     const { startSize } = interaction;
+    // In viewport coordinates, see `dragged`
     return {
       width: startSize.width,
       height: startSize.height,
-      transform: `translate(var(${DRAG_LEFT_VAR}, ${rect?.left ?? 0}px), var(${DRAG_TOP_VAR}, ${rect?.top ?? 0}px))`,
+      transform: `translate(var(${DRAG_LEFT_VAR}, 0px), var(${DRAG_TOP_VAR}, 0px))`,
     };
   }
 
@@ -243,7 +244,9 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     // Same as the react-grid-layout grid's dragged item. It must not hide the drop targets under the pointer.
+    // Fixed, so it stays under the pointer while the dashboard scrolls and is not clipped by its scroll container.
     dragged: css({
+      position: 'fixed',
       zIndex: theme.zIndex.dropdown,
       opacity: 0.8,
       pointerEvents: 'none',

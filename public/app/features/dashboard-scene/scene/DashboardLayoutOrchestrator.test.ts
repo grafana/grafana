@@ -1,5 +1,6 @@
 import { type PointerEvent as ReactPointerEvent } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -343,6 +344,19 @@ describe('grid item drags and the optional drop target hooks', () => {
     }
   });
 
+  it('does not scroll while dragging with the unified drag and drop flag off', () => {
+    const requestAnimationFrame = jest.spyOn(window, 'requestAnimationFrame');
+    const { orchestrator } = setupGridItemDrag();
+    pointerOver('tab2-manager');
+    movePointer(140, 760);
+    drop();
+    orchestrator.startDraggingNewPanel('newPanel');
+    movePointer(140, 760);
+
+    expect(requestAnimationFrame).not.toHaveBeenCalled();
+    requestAnimationFrame.mockRestore();
+  });
+
   describe('with the unified drag and drop flag on', () => {
     beforeEach(() => setTestFlags({ [FlagKeys.GrafanaDashboardUnifiedDragAndDrop]: true }));
     afterEach(() => setTestFlags({}));
@@ -393,6 +407,82 @@ describe('grid item drags and the optional drop target hooks', () => {
       orchestrator.startDraggingSync({ clientX: 130, clientY: 70 } as ReactPointerEvent, scene.gridItem);
 
       expect(orchestrator.getGridItemDragInfo()?.autoGrid).toEqual({ width: 1208, columnGap: 8 });
+    });
+
+    describe('auto-scroll', () => {
+      let frames: FrameRequestCallback[] = [];
+
+      beforeEach(() => {
+        frames = [];
+        jest
+          .spyOn(window, 'requestAnimationFrame')
+          .mockImplementation((callback: FrameRequestCallback) => frames.push(callback));
+        jest.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+      });
+
+      afterEach(() => {
+        jest.restoreAllMocks();
+        document.body.innerHTML = '';
+      });
+
+      function runFrame() {
+        const pending = frames;
+        frames = [];
+        pending.forEach((callback) => callback(0));
+      }
+
+      /** The dashboard body: 600px high, with 3000px of content */
+      function renderDashboardBody() {
+        const body = document.createElement('div');
+        body.setAttribute('data-testid', selectors.components.DashboardSidebarSplitter.bodyContainer);
+        let scrollTop = 0;
+        Object.defineProperties(body, {
+          clientHeight: { value: 600 },
+          scrollHeight: { value: 3000 },
+          scrollTop: { get: () => scrollTop, set: (value: number) => (scrollTop = Math.min(Math.max(value, 0), 2400)) },
+        });
+        body.getBoundingClientRect = () =>
+          ({ top: 0, bottom: 600, left: 0, right: 1000, width: 1000, height: 600 }) as DOMRect;
+        document.body.appendChild(body);
+        return body;
+      }
+
+      it('scrolls near the bottom edge and re-runs the drag at the resting pointer after each scroll step', () => {
+        const body = renderDashboardBody();
+        const scene = setupWithTwoTabs();
+        const orchestrator = scene.dashboard.state.layoutOrchestrator!;
+        const onDrag = jest.fn();
+        const onExternalDragOver = jest.fn();
+        const onExternalDragLeave = jest.fn();
+        Object.assign(scene.tab2Manager, { onExternalDragOver, onExternalDragLeave });
+        orchestrator.startDraggingSync({ clientX: 130, clientY: 300 } as ReactPointerEvent, scene.gridItem, {
+          onDrag,
+          onDragEnd: jest.fn(),
+        });
+        pointerOver('tab2-manager');
+        movePointer(140, 595);
+        expect(onDrag).toHaveBeenCalledTimes(1);
+        expect(onExternalDragOver).toHaveBeenCalledTimes(1);
+
+        runFrame();
+        expect(body.scrollTop).toBeGreaterThan(0);
+        // The source layout and the hovered target follow without a pointer move
+        expect(onDrag.mock.calls.map(([evt]) => [evt.clientX, evt.clientY])).toEqual([
+          [140, 595],
+          [140, 595],
+        ]);
+        expect(onExternalDragOver).toHaveBeenCalledTimes(2);
+
+        // The content scrolled the source layout under the pointer
+        pointerOver('tab1-manager');
+        runFrame();
+        expect(onExternalDragLeave).toHaveBeenCalledTimes(1);
+
+        drop();
+        const scrolled = body.scrollTop;
+        runFrame();
+        expect(body.scrollTop).toBe(scrolled);
+      });
     });
 
     describe('new panels from the Add pane', () => {

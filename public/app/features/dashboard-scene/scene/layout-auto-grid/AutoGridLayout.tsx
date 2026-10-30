@@ -18,6 +18,9 @@ import { AutoGridItem } from './AutoGridItem';
 import { AutoGridLayoutRenderer } from './AutoGridLayoutRenderer';
 import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './const';
 
+/** How far the pointer moves before the floating panel lets the pointer through, so a click on its header stays a click */
+const LIFT_THRESHOLD_PX = 4;
+
 export interface AutoGridLayoutState extends SceneObjectState, AutoGridLayoutOptions {
   children: AutoGridItem[];
 
@@ -85,7 +88,11 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   /** Set for drags on the unified drag and drop engine */
   private _dragSession: AutoGridDragSession | null = null;
   private _draggedItemSize: { width: number; height: number } | null = null;
-  private _lastPointer: { pageX: number; pageY: number } | null = null;
+  /** For drags on the unified engine, where the floating panel is positioned in the viewport */
+  private _lastPointer: { clientX: number; clientY: number } | null = null;
+  private _grabOffset: { x: number; y: number } | null = null;
+  private _pressPoint: { x: number; y: number } | null = null;
+  private _isLifted = false;
   protected _renderBeforeActivation = true;
 
   public constructor(state: Partial<AutoGridLayoutState>) {
@@ -199,15 +206,23 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   private _startDragSession(evt: ReactPointerEvent, width: number, height: number) {
     this._dragSession?.stop();
     this._draggedItemSize = { width, height };
-    this._lastPointer = { pageX: evt.pageX, pageY: evt.pageY };
+    this._lastPointer = { clientX: evt.clientX, clientY: evt.clientY };
+    this._pressPoint = { x: evt.clientX, y: evt.clientY };
+    this._isLifted = false;
+    const rect = this._draggedGridItem?.containerRef.current?.getBoundingClientRect();
+    this._grabOffset = rect ? { x: evt.clientX - rect.left, y: evt.clientY - rect.top } : { x: 0, y: 0 };
+    this._moveFloatingPanel(evt.clientX, evt.clientY);
     this._dragSession = new AutoGridDragSession({
       getContainer: () => this.containerRef.current,
       followPointer: (isNewContainer) => {
         if (isNewContainer && this._draggedItemSize) {
           this._updatePanelSize(this._draggedItemSize.width, this._draggedItemSize.height);
         }
+        if (isNewContainer && this._isLifted) {
+          this._setFloatingPanelPointerEvents('none');
+        }
         if (this._lastPointer) {
-          this._moveDraggedPanel(this._lastPointer.pageX, this._lastPointer.pageY);
+          this._moveFloatingPanel(this._lastPointer.clientX, this._lastPointer.clientY);
         }
       },
       cancel: () => this._cancelDrag(),
@@ -228,6 +243,11 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   private _onDragEnd() {
     window.getSelection()?.removeAllRanges();
 
+    if (this._isLifted) {
+      this._setFloatingPanelPointerEvents(null);
+    }
+    this._isLifted = false;
+    this._pressPoint = null;
     this._draggedGridItem = null;
     this._initialGridItemPosition = null;
     this._initialContainerRect = null;
@@ -236,6 +256,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     this._dragSession = null;
     this._draggedItemSize = null;
     this._lastPointer = null;
+    this._grabOffset = null;
 
     this._resetPanelPositionAndSize();
     this.setState({ draggingKey: undefined, isDraggedItemOutside: undefined });
@@ -260,10 +281,12 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
         this._cancelDrag();
         return;
       }
-      this._lastPointer = { pageX: evt.pageX, pageY: evt.pageY };
+      this._lastPointer = { clientX: evt.clientX, clientY: evt.clientY };
+      this._moveFloatingPanel(evt.clientX, evt.clientY);
+      this._liftFloatingPanel(evt.clientX, evt.clientY);
+    } else {
+      this._moveDraggedPanel(evt.pageX, evt.pageY);
     }
-
-    this._moveDraggedPanel(evt.pageX, evt.pageY);
 
     if (this._dragSession) {
       const isOutside = this._dragSession.isOutside(evt.clientX, evt.clientY);
@@ -307,6 +330,39 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
       this._initialGridItemPosition.top + (pageY - this._initialGridItemPosition.pageY) - containerShiftY,
       this._initialGridItemPosition.left + (pageX - this._initialGridItemPosition.pageX) - containerShiftX
     );
+  }
+
+  /**
+   * On the unified engine the floating panel is fixed in the viewport, so it stays under the pointer while the
+   * dashboard scrolls and is not clipped by the dashboard's scroll container
+   */
+  private _moveFloatingPanel(clientX: number, clientY: number) {
+    if (this._grabOffset) {
+      this._updatePanelPosition(clientY - this._grabOffset.y, clientX - this._grabOffset.x);
+    }
+  }
+
+  /**
+   * Once the press became a drag, the floating panel lets the pointer through, so the mouse wheel scrolls the
+   * dashboard under it: it would not from a fixed element. Until then a press on its header stays a click.
+   */
+  private _liftFloatingPanel(clientX: number, clientY: number) {
+    const press = this._pressPoint;
+    if (this._isLifted || !press || Math.hypot(clientX - press.x, clientY - press.y) < LIFT_THRESHOLD_PX) {
+      return;
+    }
+    this._isLifted = true;
+    this._setFloatingPanelPointerEvents('none');
+  }
+
+  /** On the dragged item's cell, from which the floating panel inherits it */
+  private _setFloatingPanelPointerEvents(value: 'none' | null) {
+    const element = this._draggedGridItem?.containerRef.current;
+    if (value) {
+      element?.style.setProperty('pointer-events', value);
+    } else {
+      element?.style.removeProperty('pointer-events');
+    }
   }
 
   private _setDraggedItemOutside(isOutside: boolean) {

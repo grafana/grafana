@@ -32,6 +32,7 @@ import { type RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
+import { DragAutoScroller } from './layouts-shared/dragAutoScroll';
 import { ListDragSession, type ListDragState } from './layouts-shared/list-dnd/ListDragSession';
 import { createListDropTargetFinder, type ListItem } from './layouts-shared/list-dnd/listDnd';
 import { isUnifiedDragAndDropEnabled } from './layouts-shared/unifiedDragAndDrop';
@@ -129,6 +130,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   /** Row or tab drag on the unified drag and drop engine */
   private _listDrag: ListDragSession | null = null;
   private _listDragListeners = new Set<() => void>();
+  /** Scrolls the dashboard while a grid item or a new panel is dragged near its edge, on the unified engine */
+  private _autoScroller: DragAutoScroller | null = null;
+  /** Last pointer move of that drag, replayed when the dashboard scrolls under the resting pointer */
+  private _lastPointerEvent: PointerEvent | null = null;
 
   public constructor() {
     super({});
@@ -157,6 +162,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       this._endExternalDragOver();
       this._dragInfo = null;
       this._listDrag?.cancel();
+      this._stopAutoScroll();
     };
   }
 
@@ -185,10 +191,20 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     }
 
     const findDropTarget = createListDropTargetFinder(item);
+    const isTab = item instanceof TabItem;
     this._listDrag = ListDragSession.start(evt, item, {
       getDropTarget: findDropTarget,
-      // A tab is moved by hovering other tabs, which must not open them
-      onDragMove: item instanceof TabItem ? () => {} : (x, y) => this._checkTabHover(x, y),
+      onDragMove: (x, y) => {
+        // A tab is moved by hovering other tabs, which must not open them
+        if (!isTab) {
+          this._checkTabHover(x, y);
+        }
+      },
+      onScroll: (x, y) => {
+        if (!isTab) {
+          this._checkTabHover(x, y);
+        }
+      },
       showPreview: ({ type, label, x, y, width, height, offsetX, offsetY }) => {
         this._previewLabel = label;
         this._previewType = type;
@@ -251,12 +267,19 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     // (e.g., tab headers call stopPropagation on pointerup)
     document.body.addEventListener('pointerup', this._stopDraggingSync, true);
 
+    if (isUnifiedDragAndDropEnabled()) {
+      this._startAutoScroll((last) => this._onGridItemDragMove(last), { x: evt.clientX, y: evt.clientY });
+    }
+
     const sourceTabKey = this._findParentTabKey(gridItem);
     this.setState({ draggingGridItem: gridItem.getRef(), sourceTabKey });
   }
 
   public startDraggingNewPanel(action: 'newPanel' | 'paste'): void {
     this._isNewPanelDrag = action === 'newPanel';
+    if (isUnifiedDragAndDropEnabled()) {
+      this._startAutoScroll((last) => this._onNewPanelDragMove(last));
+    }
     this._dropNewItemPointerUpHandler = (evt: PointerEvent) => this._dropNew(evt, action);
     document.body.addEventListener('pointermove', this._onNewPanelPointerMove, true);
     document.body.addEventListener('pointerup', this._dropNewItemPointerUpHandler, true);
@@ -348,6 +371,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     dragCallbacks?.onDragEnd?.();
     this._endExternalDragOver();
     this._dragInfo = null;
+    this._stopAutoScroll();
 
     document.body.removeEventListener('pointermove', this._onPointerMove);
     document.body.removeEventListener('pointerup', this._stopDraggingSync, true);
@@ -579,6 +603,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   };
 
   private _cleanupDragState() {
+    this._stopAutoScroll();
     document.body.removeEventListener('pointermove', this._onNewPanelPointerMove, true);
     if (this._dropNewItemPointerUpHandler) {
       document.body.removeEventListener('pointerup', this._dropNewItemPointerUpHandler, true);
@@ -591,6 +616,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
   private _dropNew = (evt: PointerEvent, action: 'newPanel' | 'paste'): void => {
     const lastDropTarget = this._lastDropTarget;
+    this._stopAutoScroll();
     const elementsUnderPoint = document.elementsFromPoint(evt.clientX, evt.clientY);
 
     // if the cursor is in the sidebar, don't add panel
@@ -922,6 +948,11 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   }
 
   private _onNewPanelPointerMove = (evt: PointerEvent): void => {
+    this._trackPointerMove(evt);
+    this._onNewPanelDragMove(evt);
+  };
+
+  private _onNewPanelDragMove(evt: PointerEvent): void {
     const dropTarget = this._getDropTargetUnderMouse(evt) ?? this._sourceDropTarget;
 
     this._updateNewPanelDragOver(dropTarget, evt);
@@ -938,9 +969,14 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
         dropTarget.setIsDropTarget?.(true);
       }
     }
-  };
+  }
 
   private _onPointerMove(evt: PointerEvent) {
+    this._trackPointerMove(evt);
+    this._onGridItemDragMove(evt);
+  }
+
+  private _onGridItemDragMove(evt: PointerEvent) {
     // Let the source layout react to the raw pointer position first (e.g. AutoGridLayout moves
     // its own drag preview and updates same-grid reorder hover state).
     this._dragCallbacks?.onDrag?.(evt);
@@ -977,6 +1013,38 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
     // Update drop position for AutoGrid targets
     this._updateDropPosition(evt.clientX, evt.clientY, dropTarget);
+  }
+
+  /**
+   * `onMove` re-runs the drag's pointer logic at the last pointer position whenever the dashboard scrolls
+   * under it: hit-testing, the drop previews and the source layout's own drag logic
+   */
+  private _startAutoScroll(onMove: (evt: PointerEvent) => void, origin?: { x: number; y: number }) {
+    this._stopAutoScroll();
+    this._autoScroller = new DragAutoScroller({
+      onScroll: () => {
+        if (this._lastPointerEvent) {
+          onMove(this._lastPointerEvent);
+        }
+      },
+    });
+    if (origin) {
+      this._autoScroller.start(origin.x, origin.y);
+    }
+  }
+
+  private _stopAutoScroll() {
+    this._autoScroller?.stop();
+    this._autoScroller = null;
+    this._lastPointerEvent = null;
+  }
+
+  /** Feeds a real pointer move to the auto-scroll of a drag on the unified engine */
+  private _trackPointerMove(evt: PointerEvent) {
+    if (this._autoScroller) {
+      this._lastPointerEvent = evt;
+      this._autoScroller.update(evt.clientX, evt.clientY);
+    }
   }
 
   /** Lets drop targets that preview external drags themselves follow the pointer. No-op for the other targets. */
