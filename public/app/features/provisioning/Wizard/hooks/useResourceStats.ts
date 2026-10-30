@@ -1,5 +1,4 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
 import {
@@ -8,6 +7,7 @@ import {
   type ManagerStats,
   type RepositoryView,
   type ResourceCount,
+  useGetFrontendSettingsQuery,
   useGetRepositoryFilesQuery,
   useGetResourceStatsQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
@@ -94,26 +94,24 @@ export function useResourceStats(
   const { isHealthy, healthStatusNotReady } = options || {};
 
   const resourceStatsQuery = useGetResourceStatsQuery(repoName ? undefined : skipToken);
+  const settingsQuery = useGetFrontendSettingsQuery(repoName ? undefined : skipToken);
   // isHealthy already includes reconciliation check - safe to fetch files
   const filesQuery = useGetRepositoryFilesQuery(repoName && isHealthy ? { name: repoName } : skipToken, {
     refetchOnMountOrArgChange: true,
   });
 
-  const isLoading = resourceStatsQuery.isFetching || filesQuery.isFetching || Boolean(healthStatusNotReady);
+  const isLoading =
+    resourceStatsQuery.isFetching ||
+    filesQuery.isFetching ||
+    settingsQuery.isFetching ||
+    Boolean(healthStatusNotReady);
 
-  const { resourceCount, fileCount } = useMemo(
-    () => getResourceStats(filesQuery.data, resourceStatsQuery.data),
-    [filesQuery.data, resourceStatsQuery.data]
-  );
+  const { resourceCount, fileCount } = getResourceStats(filesQuery.data, resourceStatsQuery.data);
 
-  const { managedCount, unmanagedCount } = useMemo(() => {
-    return {
-      // managed does not exist in response when first time connecting to a repo
-      managedCount: getManagedCount(resourceStatsQuery.data?.managed),
-      // "unmanaged" means unmanaged by git sync. it may still be managed by other means, like terraform, plugins, file provisioning, etc.
-      unmanagedCount: getResourceCount(resourceStatsQuery.data?.unmanaged, resourceStatsQuery.data?.managed),
-    };
-  }, [resourceStatsQuery.data]);
+  // managed does not exist in response when first time connecting to a repo
+  const managedCount = getManagedCount(resourceStatsQuery.data?.managed);
+  // "unmanaged" means unmanaged by git sync. it may still be managed by other means, like terraform, plugins, file provisioning, etc.
+  const unmanagedCount = getResourceCount(resourceStatsQuery.data?.unmanaged, resourceStatsQuery.data?.managed);
 
   // Calculate requiresMigration based on sync target and user selection
   // For instance sync: migrate if there are resources (checkbox is disabled and always true)
