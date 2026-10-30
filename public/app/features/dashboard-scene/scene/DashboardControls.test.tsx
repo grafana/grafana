@@ -639,6 +639,19 @@ describe('DashboardControls', () => {
 
       expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
     });
+
+    it.each([
+      [false, 'not show'],
+      [true, 'show'],
+    ])('should %2$s save button when Composer is over %1$s Editing', (composerEditing) => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      const controls = buildTestSceneWithEditable({ canSave: true, canEdit: true, isEditing: true });
+      getDashboard(controls).setState({ mode: 'composer', composerEditing, isDirty: true });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      const save = screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton);
+      expect(Boolean(save)).toBe(composerEditing);
+    });
   });
 
   describe('Panel edit buttons', () => {
