@@ -147,7 +147,7 @@ export function TableDataGrid({
   }, [scrollToIndex, sortedRows, gridRef]);
 
   const showPagination = enablePagination && numRows > 0;
-  const hasGridFrame = tableRefreshEnabled && !noPanelPadding;
+  const hasGridFrame = tableRefreshEnabled && (!noPanelPadding || transparent);
   const bodyHeight =
     height -
     headerHeight -
@@ -218,7 +218,7 @@ export function TableDataGrid({
   return (
     <>
       <div className={styles.gridFrame}>
-        <div className={clsx(styles.gridWrapper, scrollShadows.className)}>
+        <div className={clsx(styles.gridWrapper, scrollShadows.className)} style={scrollShadows.style}>
           <DataGrid<TableRow, TableSummaryRow, string>
             {...dataGridOverrides}
             {...commonDataGridProps}

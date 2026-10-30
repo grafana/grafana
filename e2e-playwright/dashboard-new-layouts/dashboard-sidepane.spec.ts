@@ -4,7 +4,6 @@ test.use({
   featureToggles: {
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
-    groupByVariable: true,
   },
 });
 

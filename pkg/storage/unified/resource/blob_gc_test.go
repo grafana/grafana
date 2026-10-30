@@ -127,7 +127,7 @@ func TestBlobGCPagedKeys(t *testing.T) {
 func TestKVBlobGCOptInAndDryRun(t *testing.T) {
 	b := setupTestStorageBackend(t)
 	b.kv = setupSqlKV(t)
-	b.dataStore = newDataStore(b.kv, nil)
+	b.dataStore = newDataStore(b.kv)
 	key := kv.BlobKey{Group: "group", Resource: "resource", Namespace: "default", Name: "snap", UID: "unreferenced"}
 	writer, err := b.kv.Save(t.Context(), kv.BlobDataSection, key.String())
 	require.NoError(t, err)
@@ -288,7 +288,7 @@ func TestKVBlobGCPartialProgress(t *testing.T) {
 				blobGC:        NewBlobGarbageCollector(store, 100, 0),
 				blobGCMetrics: metrics,
 				log:           logger,
-				dataStore:     newDataStore(store, nil),
+				dataStore:     newDataStore(store),
 			}
 			b.garbageCollection.MaxAge = time.Hour
 			b.collectBlobs(ctx)
@@ -341,7 +341,7 @@ func TestKVBlobGCErrorBeforeCancellation(t *testing.T) {
 			metrics := NewBlobGCMetricsIfEnabled(prometheus.NewRegistry(), "kv", true)
 			b := &kvStorageBackend{
 				blobGC: gc, blobGCMetrics: metrics, log: logger,
-				dataStore: newDataStore(store, nil),
+				dataStore: newDataStore(store),
 			}
 			b.garbageCollection.MaxAge = time.Hour
 			b.collectBlobs(ctx)

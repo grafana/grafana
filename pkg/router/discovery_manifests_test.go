@@ -2,7 +2,9 @@ package router
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"io"
 	"maps"
 	"net/http"
 	"net/http/httptest"
@@ -117,7 +119,7 @@ func TestBuildManifestDocs(t *testing.T) {
 	require.Nil(t, manifest.Spec.Operator, "deployment details are not published")
 	require.Nil(t, manifest.Spec.ExtraPermissions, "the backend's own permissions are not published")
 
-	indexDoc, _ := docs.indexDocs()
+	indexDoc, _ := docs.indexDocs(false)
 	index := string(indexDoc.body)
 	require.Equal(t, "text/markdown; charset=utf-8", indexDoc.contentType)
 	require.Contains(t, index, "| `"+manifestTestGroup+"` | Widgets | v1 | v1 |")
@@ -140,10 +142,9 @@ func TestServeManifestDiscovery(t *testing.T) {
 		r.served[b.Group().Name] = &handlerEntry{backend: b, handler: http.NotFoundHandler(), lastKey: b.Key(), breaker: newGroupBreaker(b.Group().Name)}
 	}
 	r.publish(t.Context())
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
 	serve := func(req *http.Request) *httptest.ResponseRecorder {
 		rec := httptest.NewRecorder()
-		r.HandleFunc(rec, req, next)
+		r.HandleFunc(rec, req)
 		return rec
 	}
 
@@ -224,11 +225,9 @@ func TestServeManifestDiscovery(t *testing.T) {
 	})
 
 	t.Run("not a group", func(t *testing.T) {
-		require.True(t, r.ownsRequest(httptest.NewRequest(http.MethodGet, "/apis/discovery/v1alpha2/AGENTS.md", nil)))
-		require.False(t, r.ownsRequest(httptest.NewRequest(http.MethodGet, "/apis/discoveryx", nil)))
 		require.Empty(t, requestGroupOf(httptest.NewRequest(http.MethodGet, "/apis/discovery/v1alpha2", nil)), "no group metric label")
 		rec := serve(newAuthenticatedRequest(http.MethodGet, "/apis/discoveryx/v1", nil))
-		require.Equal(t, http.StatusTeapot, rec.Code, "only the exact segment is the discovery tree")
+		require.Equal(t, http.StatusNotFound, rec.Code, "only the exact segment is the discovery tree")
 	})
 
 	t.Run("html page cannot run anything", func(t *testing.T) {
@@ -248,7 +247,7 @@ func TestDiscoveryGroupWithKubernetesClients(t *testing.T) {
 	}
 	r.publish(t.Context())
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		r.HandleFunc(w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
+		r.HandleFunc(w, req.WithContext(authenticatedTestContext(req.Context())))
 	}))
 	t.Cleanup(srv.Close)
 	cfg := &rest.Config{Host: srv.URL}
@@ -326,7 +325,7 @@ func TestDiscoveryOpenAPI(t *testing.T) {
 	r := NewGrafanaRouter(stubLoader{}, nil)
 	serve := func(method, path string) *httptest.ResponseRecorder {
 		rec := httptest.NewRecorder()
-		r.HandleFunc(rec, newAuthenticatedRequest(method, path, nil), http.NotFoundHandler())
+		r.HandleFunc(rec, newAuthenticatedRequest(method, path, nil))
 		return rec
 	}
 	rec := serve(http.MethodGet, "/openapi/v3/apis/discovery/v1alpha2?hash=anything")
@@ -334,7 +333,6 @@ func TestDiscoveryOpenAPI(t *testing.T) {
 	require.Equal(t, discoveryOpenAPIDoc.etag, rec.Header().Get("ETag"))
 	require.Equal(t, http.StatusNotFound, serve(http.MethodGet, "/openapi/v3/apis/discovery/v9").Code)
 	require.Equal(t, http.StatusMethodNotAllowed, serve(http.MethodPost, "/openapi/v3/apis/discovery/v1alpha2").Code)
-	require.True(t, r.ownsRequest(httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/discovery/v1alpha2", nil)))
 	require.Empty(t, requestGroupOf(httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/discovery/v1alpha2", nil)), "no group metric label")
 
 	var index handler3.OpenAPIV3Discovery
@@ -400,7 +398,7 @@ func TestReconcileSkipsTheReservedDiscoveryGroup(t *testing.T) {
 }
 
 func TestRenderIndexHTML(t *testing.T) {
-	_, pageDoc := buildManifestDocs(t.Context(), testManifestBackends()).indexDocs()
+	_, pageDoc := buildManifestDocs(t.Context(), testManifestBackends()).indexDocs(false)
 	page := string(pageDoc.body)
 	require.True(t, strings.HasPrefix(page, "<!doctype html>"))
 	require.Contains(t, page, "<h1>Grafana API index</h1>")
@@ -423,7 +421,7 @@ func TestManifestTextCannotBreakTheIndex(t *testing.T) {
 	m.AppDisplayName = hostile
 	m.Versions[0].Kinds[0].Kind = hostile
 	m.Versions[0].OpenAPI.Paths["/namespaces/{namespace}/stats"].Get.Summary = hostile
-	_, pageDoc := buildManifestDocs(t.Context(), backends).indexDocs()
+	_, pageDoc := buildManifestDocs(t.Context(), backends).indexDocs(false)
 	page := string(pageDoc.body)
 
 	for _, unwanted := range []string{"<a href=\"https://evil", "<img", "<em>", "<strong>", "<b>"} {
@@ -454,8 +452,8 @@ func TestIndexLinksCannotBeTakenOverByNames(t *testing.T) {
 	manifest.group.Name = "m](https://evil.example/d)"
 	manifest.manifest.Group = manifest.group.Name
 	backends = append(backends, manifest)
-	docs, _ := buildManifestDocsFrom(t.Context(), sortedManifestBackends(backends), nil)
-	_, page := docs.indexDocs()
+	docs, _ := buildManifestDocsFrom(t.Context(), sortedManifestBackends(backends), nil, nil)
+	_, page := docs.indexDocs(false)
 
 	hrefs := regexp.MustCompile(`href="([^"]*)"`).FindAllStringSubmatch(string(page.body), -1)
 	require.NotEmpty(t, hrefs)
@@ -504,9 +502,9 @@ func TestIsRelativePath(t *testing.T) {
 
 func TestIndexLinksEscapeNamesAndKeys(t *testing.T) {
 	odd := &fakeBackend{key: "k) [x](https://evil.example)", group: testAPIGroup("a(b) c", "v1")}
-	index := renderManifestIndex([]Backend{odd}, nil)
+	index := renderManifestIndex([]Backend{odd}, publishedManifests([]Backend{odd}, nil), nil)
 	require.Contains(t, index, "OpenAPI: [`/openapi/v3/apis/a(b) c/v1`](/openapi/v3/apis/a%28b%29%20c/v1?hash=k%29+%5Bx%5D%28https%3A%2F%2Fevil.example%29)")
-	_, page := (&manifestDocs{backends: []Backend{odd}}).indexDocs()
+	_, page := (&manifestDocs{backends: []Backend{odd}}).indexDocs(false)
 	require.NotContains(t, string(page.body), `href="https://evil`)
 }
 
@@ -517,6 +515,7 @@ func TestMDText(t *testing.T) {
 	require.Equal(t, "`GET /a\\|b`", mdCode("GET /a|`b"))
 	require.Equal(t, "`a\\|`", mdCode("a\\|"), "a backslash cannot escape the pipe's escape")
 	require.Empty(t, mdCode(""))
+	require.Equal(t, "`"+strings.Repeat(`\|`, maxIndexTextLen)+"…`", mdCode(strings.Repeat("|", maxIndexTextLen+5)), "truncated before escaping")
 }
 
 // countingManifestBackend counts how often its manifest is read, which is
@@ -572,7 +571,7 @@ func TestServeManifestListStreamsTheGroupDocuments(t *testing.T) {
 	r.publishManifestDocs(t.Context(), testManifestBackends())
 	serve := func(method string) *httptest.ResponseRecorder {
 		rec := httptest.NewRecorder()
-		r.HandleFunc(rec, newAuthenticatedRequest(method, "/apis/discovery/v1alpha2/manifests", nil), http.NotFoundHandler())
+		r.HandleFunc(rec, newAuthenticatedRequest(method, "/apis/discovery/v1alpha2/manifests", nil))
 		return rec
 	}
 	rec := serve(http.MethodGet)
@@ -586,7 +585,7 @@ func TestServeManifestListStreamsTheGroupDocuments(t *testing.T) {
 	require.Zero(t, head.Body.Len())
 
 	empty := httptest.NewRecorder()
-	NewGrafanaRouter(stubLoader{}, nil).HandleFunc(empty, newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/manifests", nil), http.NotFoundHandler())
+	NewGrafanaRouter(stubLoader{}, nil).HandleFunc(empty, newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/manifests", nil))
 	var list appmanifestv1alpha2.AppManifestList
 	require.NoError(t, json.Unmarshal(empty.Body.Bytes(), &list))
 	require.Empty(t, list.Items)
@@ -601,7 +600,7 @@ func TestServeManifestListAppliesSelectors(t *testing.T) {
 	r.publishManifestDocs(t.Context(), append(testManifestBackends(), second))
 	list := func(query string) (*httptest.ResponseRecorder, []string) {
 		rec := httptest.NewRecorder()
-		r.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/manifests?"+query, nil), http.NotFoundHandler())
+		r.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/manifests?"+query, nil))
 		var l appmanifestv1alpha2.AppManifestList
 		if rec.Code == http.StatusOK {
 			require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &l))
@@ -645,8 +644,8 @@ func TestServeManifestListAppliesSelectors(t *testing.T) {
 
 func TestManifestIndexIsRenderedOnce(t *testing.T) {
 	docs := buildManifestDocs(t.Context(), testManifestBackends())
-	index, page := docs.indexDocs()
-	again, pageAgain := docs.indexDocs()
+	index, page := docs.indexDocs(false)
+	again, pageAgain := docs.indexDocs(false)
 	require.Same(t, index, again)
 	require.Same(t, page, pageAgain)
 }
@@ -692,4 +691,120 @@ func TestManifestDiscoveryBeforeFirstReconcile(t *testing.T) {
 
 	_, err = r.GetManifest(t.Context(), manifestTestGroup)
 	require.True(t, apierrors.IsNotFound(err))
+}
+
+// buildManifestDocs builds the documents for backends without a cache.
+func buildManifestDocs(ctx context.Context, backends []Backend) *manifestDocs {
+	docs, _ := buildManifestDocsFrom(ctx, sortedManifestBackends(backends), nil, nil)
+	return docs
+}
+
+func (d *manifestDocs) writeList(w io.Writer) error {
+	return writeManifestList(w, d.items)
+}
+
+func versionNames(versions []appmanifestv1alpha2.AppManifestManifestVersion) []string {
+	names := make([]string, 0, len(versions))
+	for _, v := range versions {
+		names = append(names, v.Name)
+	}
+	return names
+}
+
+// A backend need not advertise its manifest: the router publishes the one
+// compiled in for its group instead, with only the versions the backend serves.
+func TestBuiltinManifestsFillInForBackendsWithout(t *testing.T) {
+	builtinVersion := func(name string) app.ManifestVersion {
+		return app.ManifestVersion{Name: name, Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Gadget", Plural: "gadgets", Scope: "Cluster"}}}
+	}
+	r := NewGrafanaRouter(dummyRoutesLoader{}, nil)
+	r.builtinManifests = manifestsByGroup([]*app.ManifestData{
+		{
+			AppName: "gadgets", Group: "gadgets.example.com", PreferredVersion: "v3",
+			Versions: []app.ManifestVersion{builtinVersion("v1"), builtinVersion("v2"), builtinVersion("v3")},
+		},
+		// The backend's own manifest wins over a compiled-in one.
+		{AppName: "builtin-widgets", Group: manifestTestGroup, Versions: []app.ManifestVersion{{Name: "v1", Served: true}}},
+		// Neither a group no backend serves, nor one whose versions it serves none of, is published.
+		{AppName: "unserved", Group: "unserved.example.com", Versions: []app.ManifestVersion{builtinVersion("v1")}},
+		{AppName: "old", Group: "old.example.com", Versions: []app.ManifestVersion{builtinVersion("v1")}},
+	})
+	backends := append(testManifestBackends(), &fakeBackend{key: "old-key", group: testAPIGroup("old.example.com", "v2")})
+	r.publishManifestDocs(t.Context(), backends)
+
+	list, err := r.ListManifests(t.Context())
+	require.NoError(t, err)
+	names := make([]string, 0, len(list.Items))
+	for _, m := range list.Items {
+		names = append(names, m.Name)
+	}
+	require.Equal(t, []string{"gadgets.example.com", manifestTestGroup}, names)
+
+	gadgets, err := r.GetManifest(t.Context(), "gadgets.example.com")
+	require.NoError(t, err)
+	require.Equal(t, "gadgets", gadgets.Spec.AppName)
+	require.Equal(t, []string{"v2"}, versionNames(gadgets.Spec.Versions), "only the served versions")
+	require.Equal(t, "v2", *gadgets.Spec.PreferredVersion, "the backend's preferred version replaces one it does not serve")
+
+	widgets, err := r.GetManifest(t.Context(), manifestTestGroup)
+	require.NoError(t, err)
+	require.Equal(t, "widgets", widgets.Spec.AppName)
+
+	index, _ := r.manifestDocs.Load().indexDocs(false)
+	require.Contains(t, string(index.body), "Manifest: [`/apis/discovery/v1alpha2/manifests/gadgets.example.com`]")
+	require.Contains(t, string(index.body), "No app manifest is published for this group", "old.example.com still has none")
+}
+
+func TestServedManifestVersions(t *testing.T) {
+	manifest := &app.ManifestData{
+		Group: "g.example.com", PreferredVersion: "v2",
+		Versions: []app.ManifestVersion{{Name: "v1", Served: true}, {Name: "v2", Served: true}, {Name: "v3", Served: true}},
+	}
+	tests := []struct {
+		name      string
+		group     metav1.APIGroup
+		versions  []string
+		preferred string
+	}{
+		{name: "all served", group: testAPIGroup("g.example.com", "v3", "v2", "v1"), versions: []string{"v1", "v2", "v3"}, preferred: "v2"},
+		{name: "preferred kept", group: testAPIGroup("g.example.com", "v3", "v2"), versions: []string{"v2", "v3"}, preferred: "v2"},
+		{name: "preferred dropped", group: testAPIGroup("g.example.com", "v3", "v1"), versions: []string{"v1", "v3"}, preferred: "v3"},
+		{name: "neither preferred kept", group: testAPIGroup("g.example.com", "v4", "v1"), versions: []string{"v1"}, preferred: ""},
+		{name: "none served", group: testAPIGroup("g.example.com", "v4")},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := servedManifestVersions(manifest, tt.group)
+			if tt.versions == nil {
+				require.False(t, ok)
+				return
+			}
+			require.True(t, ok)
+			var names []string
+			for _, v := range got.Versions {
+				names = append(names, v.Name)
+			}
+			require.Equal(t, tt.versions, names)
+			require.Equal(t, tt.preferred, got.PreferredVersion)
+		})
+	}
+	require.Len(t, manifest.Versions, 3, "the compiled-in manifest is never changed")
+
+	got, _ := servedManifestVersions(manifest, testAPIGroup("g.example.com", "v1", "v2", "v3"))
+	require.Same(t, manifest, got, "not copied when every version is served")
+}
+
+// The backend may run another release, and still serve a version this binary
+// no longer serves: the backend's group decides what is served.
+func TestServedManifestVersionsMarksTheBackendsVersionsServed(t *testing.T) {
+	manifest := &app.ManifestData{
+		Group: "g.example.com", PreferredVersion: "v2",
+		Versions: []app.ManifestVersion{{Name: "v1", Served: false}, {Name: "v2", Served: true}},
+	}
+	got, ok := servedManifestVersions(manifest, testAPIGroup("g.example.com", "v2", "v1"))
+	require.True(t, ok)
+	require.NotSame(t, manifest, got)
+	require.Equal(t, []app.ManifestVersion{{Name: "v1", Served: true}, {Name: "v2", Served: true}}, got.Versions)
+	require.Equal(t, "v2", got.PreferredVersion)
+	require.False(t, manifest.Versions[0].Served, "the compiled-in manifest is never changed")
 }

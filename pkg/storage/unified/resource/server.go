@@ -427,6 +427,12 @@ type SearchOptions struct {
 	// Otherwise they build in the background after per-resource initialization.
 	GlobalIndexStartupBuild bool
 
+	// GlobalIndexBuildWait is how long a search waits for a global index to be
+	// built, after which it gets 503 while the build continues, so a large
+	// namespace's first search does not hang. Defaults to
+	// defaultGlobalIndexBuildWait; only tests change it.
+	GlobalIndexBuildWait time.Duration
+
 	// SearchFields holds the per-kind search-field wiring shared with the index
 	// backend. The search server reads the selectable fields and the definition
 	// hash from it and triggers a rebuild when either differs from the values
@@ -481,6 +487,7 @@ type SearchOptions struct {
 	// Vector API collection allowlists: "group/resource" entries; empty allows nothing.
 	AllowedInternalCollections []string
 	AllowedExternalCollections []string
+	AllowedReadServices        map[string][]string
 }
 
 type ResourceServerOptions struct {
@@ -3071,7 +3078,7 @@ func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.Resource
 
 func (s *server) runInQueue(ctx context.Context, tenantID, operation string, runnable func(ctx context.Context)) error {
 	// Enforce a timeout for the entire operation, including queueing and execution.
-	queueCtx, cancel := context.WithTimeout(ctx, s.queueConfig.Timeout)
+	queueCtx, cancel := context.WithTimeoutCause(ctx, s.queueConfig.Timeout, errQueueTimeout)
 	defer cancel()
 
 	// Allow cluster-scoped resources to be enqueued with an empty tenantID.
@@ -3120,6 +3127,11 @@ func (s *server) runInQueue(ctx context.Context, tenantID, operation string, run
 		s.log.Warn("failed to enqueue runnable, retrying", "tenantID", tenantID, "error", err)
 		if !boff.Ongoing() {
 			// Backoff finished (retries exhausted or context canceled).
+			if errors.Is(context.Cause(queueCtx), errQueueTimeout) {
+				err = errQueueTimeout
+			} else if queueCtx.Err() != nil {
+				err = queueCtx.Err()
+			}
 			err = fmt.Errorf("failed to enqueue for tenant %s: %w", tenantID, err)
 			finishWait(err)
 			return err
@@ -3127,15 +3139,17 @@ func (s *server) runInQueue(ctx context.Context, tenantID, operation string, run
 		boff.Wait()
 	}
 
-	// Wait for the runnable to complete or for the context to be done.
+	// Inline work can finish after the timeout, so check the cause after either case.
 	select {
 	case <-done:
-		return nil // Completed successfully.
 	case <-queueCtx.Done():
-		err := queueCtx.Err()
-		finishWait(err)
-		return err
 	}
+	err := queueCtx.Err()
+	if errors.Is(context.Cause(queueCtx), errQueueTimeout) {
+		err = fmt.Errorf("tenant %s: %w", tenantID, errQueueTimeout)
+	}
+	finishWait(err)
+	return err
 }
 
 // RebuildIndexes implements ResourceIndexServer.

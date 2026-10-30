@@ -32,7 +32,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 
-	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
 	"github.com/grafana/alerting/definition"
 	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/notify"
@@ -151,112 +150,6 @@ func TestNewAlertmanager(t *testing.T) {
 	}
 }
 
-func TestGetRemoteState(t *testing.T) {
-	const tenantID = "test"
-	ctx := context.Background()
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-
-	// getOkHandler allows us to specify a full state the test server is going to respond with.
-	getOkHandler := func(state string) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
-
-			res := map[string]any{
-				"status": "success",
-				"data": map[string]any{
-					"state": state,
-				},
-			}
-			w.Header().Add("content-type", "application/json")
-			require.NoError(t, json.NewEncoder(w).Encode(res))
-		}
-	}
-
-	// errorHandler makes the test server return a 500 status code and a non-JSON response.
-	errorHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("content-type", "text/html; charset=utf-8")
-		w.WriteHeader(http.StatusInternalServerError)
-	})
-
-	// Test full states:
-	// - One with unknown part keys
-	// - One with the expected part keys
-	badState := alertingClusterPB.FullState{
-		Parts: []alertingClusterPB.Part{
-			{Key: "unknown", Data: []byte("data")},
-		},
-	}
-	rawBadState, err := badState.Marshal()
-	require.NoError(t, err)
-
-	state := alertingClusterPB.FullState{
-		Parts: []alertingClusterPB.Part{
-			{Key: "nfl:otherID", Data: []byte("test-nflog")},
-			{Key: "sil:otherID", Data: []byte("test-silences")},
-		},
-	}
-	rawState, err := state.Marshal()
-	require.NoError(t, err)
-
-	tests := []struct {
-		name        string
-		handler     http.Handler
-		expNflog    []byte
-		expSilences []byte
-		expErr      string
-	}{
-		{
-			name:    "non base64-encoded state",
-			handler: getOkHandler("invalid state"),
-			expErr:  "failed to base64-decode remote state: illegal base64 data at input byte 7",
-		},
-		{
-			name:    "error from the Alertmanager",
-			handler: errorHandler,
-			expErr:  "failed to pull remote state: received status code 500 from the remote Alertmanager",
-		},
-		{
-			name:    "invalid state, base64-encoded",
-			handler: getOkHandler(base64.StdEncoding.EncodeToString([]byte("invalid state"))),
-			expErr:  "failed to unmarshal remote state: proto: FullState: wiretype end group for non-group",
-		},
-		{
-			name:    "unknown part key",
-			handler: getOkHandler(base64.StdEncoding.EncodeToString(rawBadState)),
-			expErr:  "unknown part key \"unknown\"",
-		},
-		{
-			name:        "success",
-			handler:     getOkHandler(base64.StdEncoding.EncodeToString(rawState)),
-			expNflog:    []byte("test-nflog"),
-			expSilences: []byte("test-silences"),
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			server := httptest.NewServer(test.handler)
-			cfg := AlertmanagerConfig{
-				OrgID:         1,
-				TenantID:      tenantID,
-				URL:           server.URL,
-				DefaultConfig: defaultGrafanaConfig,
-			}
-			_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
-
-			s, err := am.GetRemoteState(ctx)
-			if test.expErr != "" {
-				require.Error(t, err)
-				require.Equal(t, test.expErr, err.Error())
-				return
-			}
-
-			require.NoError(t, err)
-			require.Equal(t, test.expNflog, s.Nflog)
-			require.Equal(t, test.expSilences, s.Silences)
-		})
-	}
-}
-
 func TestIntegrationApplyConfig(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -329,7 +222,6 @@ func TestIntegrationApplyConfig(t *testing.T) {
 		URL:           server.URL,
 		DefaultConfig: defaultGrafanaConfig,
 		PromoteConfig: true,
-		SyncInterval:  1 * time.Hour,
 		ExternalURL:   "https://test.grafana.com",
 		SmtpConfig:    func(context.Context) (client.SmtpConfig, error) { return smtp, smtpErr },
 	}
@@ -377,7 +269,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	require.Equal(t, smtp.FromAddress, configSent.SmtpConfig.FromAddress)
 	require.Equal(t, smtp.StaticHeaders, configSent.SmtpConfig.StaticHeaders)
 
-	// If we already got a 200 status code response and the sync interval hasn't elapsed,
+	// If we already got a 200 status code response and the configuration hasn't changed,
 	// we shouldn't send the state/configuration again.
 	applied, err = moa.ApplyConfig(ctx, 1, &ngmodels.AlertConfiguration{AlertmanagerConfiguration: string(encryptedConfig)})
 	require.NoError(t, err)
@@ -385,9 +277,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	require.Equal(t, 1, stateSyncs)
 	require.Equal(t, 1, configSyncs)
 
-	// Changing the sync interval and calling ApplyConfig again with a new config
-	// should result in us sending the configuration but not the state.
-	am.syncInterval = 0
+	// Calling ApplyConfig again with a new config should result in us sending the configuration but not the state.
 	applied, err = moa.ApplyConfig(ctx, 1, &ngmodels.AlertConfiguration{AlertmanagerConfiguration: testGrafanaConfig})
 	require.NoError(t, err)
 	require.True(t, applied)
@@ -395,8 +285,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	require.Equal(t, 1, stateSyncs)
 
 	// After a restart, the Alertmanager shouldn't send the configuration if it has not changed.
-	moa, am = newAm(cfg)
-	am.syncInterval = 0
+	moa, _ = newAm(cfg)
 	applied, err = moa.ApplyConfig(ctx, 1, &ngmodels.AlertConfiguration{AlertmanagerConfiguration: testGrafanaConfig})
 	require.NoError(t, err)
 	require.False(t, applied) // Not applied.

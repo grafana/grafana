@@ -23,7 +23,7 @@ import (
 )
 
 // backendGRPCSection configures the router's gRPC connections to the plugin
-// deployments listed by plugins_url and core_url.
+// deployments listed by plugins_url, core_url and bridge_url.
 const backendGRPCSection = "router.backend_grpc"
 
 // pluginGRPCConfig configures the router's gRPC connections to plugin
@@ -57,10 +57,11 @@ type pluginGRPCConnectConfig struct {
 	MaxDelay  time.Duration
 }
 
-// pluginGRPCKeepaliveConfig configures keepalive pings on idle connections to
-// plugin deployments.
+// pluginGRPCKeepaliveConfig configures keepalive pings on connections to
+// plugin deployments that have active calls.
 type pluginGRPCKeepaliveConfig struct {
-	// Time is the idle time after which the client pings; 0 disables pings.
+	// Time is the time without activity after which the client pings; 0
+	// disables pings.
 	Time    time.Duration
 	Timeout time.Duration
 }
@@ -85,7 +86,7 @@ func defaultPluginGRPCConfig() pluginGRPCConfig {
 			MaxDelay:  10 * time.Second,
 		},
 		Keepalive: pluginGRPCKeepaliveConfig{
-			Time:    20 * time.Second,
+			Time:    5 * time.Minute,
 			Timeout: 10 * time.Second,
 		},
 		Message: pluginGRPCMessageConfig{
@@ -211,13 +212,15 @@ func (c pluginGRPCConfig) dialOptions(requestDuration *prometheus.HistogramVec, 
 		grpc.MaxCallSendMsgSize(c.Message.MaxSendSize),
 	))
 	if c.Keepalive.Time > 0 {
-		// The plugin deployment's server must allow pings this often, and on
-		// connections without active calls: by default, gRPC servers allow one
-		// ping every 5 minutes and close connections that ping more often.
+		// A gRPC server's default policy allows one ping every 5 minutes on a
+		// connection with active calls, and one every 2 hours without any, and
+		// closes connections that ping more often (too_many_pings). So ping
+		// only during calls, and no more often than the server allows; a dead
+		// idle connection is found when the next call fails and is retried.
 		opts = append(opts, grpc.WithKeepaliveParams(keepalive.ClientParameters{
 			Time:                c.Keepalive.Time,
 			Timeout:             c.Keepalive.Timeout,
-			PermitWithoutStream: true,
+			PermitWithoutStream: false,
 		}))
 	}
 	return opts

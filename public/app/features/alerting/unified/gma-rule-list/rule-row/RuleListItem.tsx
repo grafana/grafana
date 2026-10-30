@@ -7,11 +7,15 @@ import { Stack, useStyles2 } from '@grafana/ui';
 interface RuleListItemProps extends AriaAttributes {
   icon?: ReactNode;
   title: ReactNode;
+  /** Renders between the title and the meta row. Absent means nothing is shown. */
+  description?: ReactNode;
+  /** Right column; never wraps. Used for interval and actions. */
+  right?: ReactNode;
   /** Falsy entries are dropped. */
   meta?: ReactNode[];
 }
 
-export function RuleListItem({ icon, title, meta = [], ...ariaAttributes }: RuleListItemProps) {
+export function RuleListItem({ icon, title, description, right, meta = [], ...ariaAttributes }: RuleListItemProps) {
   const styles = useStyles2(getStyles);
   const metaItems = meta.filter(Boolean);
 
@@ -22,6 +26,8 @@ export function RuleListItem({ icon, title, meta = [], ...ariaAttributes }: Rule
 
         <Stack direction="column" gap={0.5} flex="1" minWidth={0}>
           <div className={styles.overflow}>{title}</div>
+
+          {description}
 
           {metaItems.length > 0 && (
             // Whole items wrap; each line's leading separator falls into the clipped margin.
@@ -36,6 +42,12 @@ export function RuleListItem({ icon, title, meta = [], ...ariaAttributes }: Rule
             </div>
           )}
         </Stack>
+
+        {right && (
+          <Stack alignItems="center" gap={1} wrap={false}>
+            {right}
+          </Stack>
+        )}
       </Stack>
     </li>
   );

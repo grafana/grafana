@@ -239,11 +239,6 @@ export interface FeatureToggles {
   */
   cloudWatchBatchQueries?: boolean;
   /**
-  * Enable Grafana to sync configuration and state with a remote Alertmanager.
-  * @default false
-  */
-  alertmanagerRemoteSecondary?: boolean;
-  /**
   * Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL
   * @default false
   */
@@ -400,11 +395,6 @@ export interface FeatureToggles {
   */
   kubernetesAggregatorCapTokenAuth?: boolean;
   /**
-  * Enable groupBy variable support in scenes dashboards
-  * @default false
-  */
-  groupByVariable?: boolean;
-  /**
   * Enables the use of scope filters in Grafana
   * @default false
   */
@@ -439,11 +429,6 @@ export interface FeatureToggles {
   * @default false
   */
   grafanaManagedRecordingRules?: boolean;
-  /**
-  * Enables Saved queries (query library) feature
-  * @default true
-  */
-  queryLibrary?: boolean;
   /**
   * Enables RBAC for playlists
   * @default false
@@ -681,16 +666,6 @@ export interface FeatureToggles {
   */
   teamHttpHeadersFromAppPlatform?: boolean;
   /**
-  * Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
-  * @default false
-  */
-  teamLBACApiReadFromAppPlatform?: boolean;
-  /**
-  * Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server
-  * @default false
-  */
-  teamLBACApiWriteFromAppPlatform?: boolean;
-  /**
   * Enables less memory intensive Elasticsearch result parsing
   * @default false
   */
@@ -915,11 +890,6 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardLevelTimeMacros?: boolean;
-  /**
-  * Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
-  * @default false
-  */
-  alertmanagerRemoteSecondaryWithRemoteState?: boolean;
   /**
   * Enable favorite datasources
   * @default false
@@ -1194,7 +1164,7 @@ export interface FeatureToggles {
   lokiAlignedQuerySplitting?: boolean;
   /**
   * Enables heatmap visualization support for Pyroscope profiles
-  * @default false
+  * @default true
   */
   profilesHeatmap?: boolean;
   /**

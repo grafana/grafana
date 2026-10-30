@@ -5,6 +5,7 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, screen, waitFor, within } from 'test/test-utils';
 
 import EditContactPoint from 'app/features/alerting/unified/components/contact-points/EditContactPoint';
+import { receiverUidFor } from 'app/features/alerting/unified/mocks/server/handlers/k8s/receivers.k8s';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
@@ -55,7 +56,7 @@ const templatesSelectorTestId = 'existing-templates-selector';
 describe('Edit contact point', () => {
   jest.retryTimes(2);
   it('can edit a contact point with existing template field values', async () => {
-    const { user } = renderEditContactPoint('lotsa-emails');
+    const { user } = renderEditContactPoint(receiverUidFor('lotsa-emails'));
 
     // Expand settings and open "edit message template" drawer
     await user.click(await screen.findByText(/optional email settings/i));

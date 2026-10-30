@@ -26,21 +26,6 @@ func TestGetWebAssets_WithoutCDNConfigured(t *testing.T) {
 	assert.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)
 }
 
-func TestGetWebAssets_ReadsGivenBuildDir(t *testing.T) {
-	cfg := &setting.Cfg{
-		StaticRootPath: "../../../api/webassets/testdata",
-	}
-	license := licensingtest.NewFakeLicensing()
-	license.On("ContentDeliveryPrefix").Return("grafana")
-	ctx := context.Background()
-
-	assets, err := fswebassets.GetWebAssets(ctx, cfg, license, "build/rspack")
-	assert.NoError(t, err)
-
-	assert.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)
-	assert.Equal(t, "public/build/grafana.dark.dddd3333eeee4444ffff.css", assets.Dark)
-}
-
 func TestGetWebAssets_PrefixFromLicense(t *testing.T) {
 	cdnConfigUrl, _ := url.Parse("http://example.com")
 	cfg := &setting.Cfg{

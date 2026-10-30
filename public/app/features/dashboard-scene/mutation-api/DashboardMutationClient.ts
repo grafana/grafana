@@ -11,7 +11,7 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { PENDING_CHANGES_COMMANDS, isPendingChangesEnabled } from '../lifecycle/pendingChangesFlag';
 import type { DashboardScene } from '../scene/DashboardScene';
-import { dashboardModesEnabled, isViewingDashboard } from '../scene/dashboardModes';
+import { dashboardModesEnabled, isComposerMode, isViewingDashboard } from '../scene/dashboardModes';
 import type { DashboardSceneState } from '../scene/types/dashboard';
 
 import { SceneMutationClient } from './SceneMutationClient';
@@ -53,6 +53,10 @@ export class DashboardMutationClient extends SceneMutationClient<DashboardScene>
     super(scene, [...dashboardCommands, ...notebookCommands]);
   }
 
+  public getScene(): DashboardScene {
+    return this.scene;
+  }
+
   /**
    * A plan preview is not a mutation target: refuses every mutating command except RENDER_PLAN
    * and END_PLANNING. The single point every dashboard command passes through, so a future
@@ -83,7 +87,7 @@ export class DashboardMutationClient extends SceneMutationClient<DashboardScene>
 
     const checkWrite = () =>
       dashboardModesEnabled() &&
-      isViewingDashboard(this.scene.state) &&
+      (isViewingDashboard(this.scene.state) || isComposerMode(this.scene.state)) &&
       callerPluginId !== 'grafana-assistant-app' &&
       !PLANNING_ALLOWED_COMMANDS.has(type)
         ? 'Only Grafana Assistant can edit a dashboard in View mode. Select Editing to edit manually.'
@@ -95,7 +99,6 @@ export class DashboardMutationClient extends SceneMutationClient<DashboardScene>
     );
     // Some commands update child scenes directly rather than publishing undoable actions.
     if (
-      dashboardModesEnabled() &&
       result.success &&
       !this.isReadOnly(type) &&
       !PLANNING_ALLOWED_COMMANDS.has(type) &&

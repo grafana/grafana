@@ -15,22 +15,6 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('Explore time range with Luxon', () => {
-  const flagName = '__grafanaUseLuxon';
-  let originalDescriptor: PropertyDescriptor | undefined;
-
-  beforeEach(() => {
-    originalDescriptor = Object.getOwnPropertyDescriptor(window, flagName);
-    Object.defineProperty(window, flagName, { configurable: true, value: true });
-  });
-
-  afterEach(() => {
-    if (originalDescriptor) {
-      Object.defineProperty(window, flagName, originalDescriptor);
-    } else {
-      Reflect.deleteProperty(window, flagName);
-    }
-  });
-
   it('normalizes fractional millisecond timestamps', async () => {
     await jest.isolateModulesAsync(async () => {
       const [{ configureStore }, { initialExploreState }, { updateTime }, { makeExplorePaneState }] = await Promise.all(
