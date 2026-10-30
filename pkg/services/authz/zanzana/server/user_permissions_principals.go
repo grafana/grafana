@@ -15,7 +15,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
 )
 
 const (
@@ -37,7 +39,7 @@ type permissionContribution struct {
 
 // Dependencies remain separate from grants so changing a shared team or role
 // never requires finding and evicting all users who previously referenced it.
-func (s *Server) resolveUserPermissionContributions(ctx context.Context, req *authzv1.GetUserPermissionsRequest) ([]permissionListResult, error) {
+func (s *Server) resolveUserPermissions(ctx context.Context, req *authzv1.GetUserPermissionsRequest) ([]accesscontrol.Permission, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	store, err := s.getStoreInfo(ctx, req.GetNamespace())
@@ -101,7 +103,12 @@ func (s *Server) resolveUserPermissionContributions(ctx context.Context, req *au
 		}
 		pending = next
 	}
-	return composePermissionContributions(contributions), nil
+	results := composePermissionContributions(contributions)
+	lists := make([]legacyscopes.PermissionList, 0, len(results))
+	for _, result := range results {
+		lists = append(lists, legacyscopes.PermissionList{Resource: result.Entry.Resource, Action: result.Entry.Action, List: result.List})
+	}
+	return legacyscopes.ResolvePermissions(ctx, "", lists)
 }
 
 func (s *Server) readPermissionContribution(ctx context.Context, store, principal string) (*permissionContribution, error) {
