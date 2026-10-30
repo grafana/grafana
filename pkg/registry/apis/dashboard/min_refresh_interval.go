@@ -22,7 +22,7 @@ var minRefreshIntervalSelector = metav1.LabelSelector{
 }
 
 func (b *DashboardsAPIBuilder) validateRefreshInterval(ctx context.Context, namespace, refresh string) error {
-	// skip settings lookup if the new refresh rate is empty or auto
+	// An empty or auto refresh sets no fixed interval, so the floor does not apply and the settings lookup is skipped.
 	if refresh == "" || refresh == "auto" {
 		return nil
 	}
