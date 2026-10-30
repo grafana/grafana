@@ -222,6 +222,25 @@ type GlobalSearchResults struct {
 	// Facets holds term counts per requested facet field. Counts are computed
 	// over a bounded sample window, so they are best-effort/approximate.
 	Facets map[string][]FacetTerm `json:"facets,omitempty"`
+
+	// FolderPaths holds the path of each folder the items are in, keyed by the
+	// folder's name as items return it in the folder field. Only items that
+	// return the folder field are covered, and the root folder has no path.
+	// Paths are display data: they are left out when they cannot be found.
+	FolderPaths map[string][]FolderPathItem `json:"folderPaths,omitempty"`
+}
+
+// FolderPathItem is one folder of a folder path, which lists a folder and the
+// folders above it, from the top down, ending with the folder itself. Like the
+// folder API's parents, a path stops at the first folder the caller cannot
+// read, or that no longer exists: that one is named but detached, and nothing
+// above it is listed.
+//
+// +k8s:deepcopy-gen=true
+type FolderPathItem struct {
+	Name     string `json:"name"`
+	Title    string `json:"title,omitempty"`
+	Detached bool   `json:"detached,omitempty"`
 }
 
 // GlobalResultsMetadata carries the pagination token, the total hit count, and
