@@ -154,7 +154,6 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
       // Give the dashboard name priority when the row runs out of space.
       flex: '0 10 auto',
       minWidth: 0,
-      maxWidth: '25%',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
