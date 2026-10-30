@@ -7,6 +7,7 @@ import {
   type DataFrameType,
   type DataQueryRequest,
   type DataSourceInstanceSettings,
+  type ScopedVars,
   dataFrameToJSON,
   FieldType,
   getFieldDisplayName,
@@ -244,6 +245,169 @@ describe('ExpressionDatasourceApi', () => {
           { ...b, expression: 'second:B' },
           { ...c, expression: 'first:C' },
         ]);
+      });
+    });
+
+    describe('prepares data source queries as a panel does', () => {
+      type PromLikeQuery = DataQuery & { expr: string; legendFormat?: string };
+      const asExpressionQuery = (query: PromLikeQuery) => query as unknown as ExpressionQuery;
+      const replace = (text: string | undefined, scopedVars: ScopedVars) =>
+        text?.replace(/\$(\w+)/g, (match: string, name: string) => String(scopedVars[name]?.value ?? match));
+      const settings = (uid: string) => ({ uid, type: uid, jsonData: {} }) as DataSourceInstanceSettings;
+
+      // Mirrors how Prometheus and Loki prepare queries. `applyTemplateVariables` runs after `query()`
+      // in a panel: it keeps `$__interval` for the backend and fills in `legendFormat`.
+      // `interpolateVariablesInQueries` exists for Explore and does neither.
+      class PromLikeDatasource extends DataSourceWithBackend<PromLikeQuery> {
+        applyTemplateVariables(query: PromLikeQuery, scopedVars: ScopedVars) {
+          const variables = { ...scopedVars, __interval: { value: '$__interval' } };
+          return {
+            ...query,
+            expr: replace(query.expr, variables) ?? '',
+            legendFormat: replace(query.legendFormat, variables),
+          };
+        }
+
+        interpolateVariablesInQueries(queries: PromLikeQuery[], scopedVars: ScopedVars) {
+          return queries.map((query) => ({
+            ...query,
+            datasource: this.getRef(),
+            expr: replace(query.expr, scopedVars) ?? '',
+          }));
+        }
+      }
+
+      const scopedVars = {
+        __interval: { text: '2s', value: '2s' },
+        env: { text: 'prod', value: 'prod' },
+      };
+      const sql: ExpressionQuery = {
+        type: ExpressionQueryType.sql,
+        refId: 'B',
+        expression: 'SELECT * FROM A',
+        datasource: { uid: '__expr__', type: '__expr__' },
+      };
+
+      it('uses `applyTemplateVariables`, so `$__interval` reaches the backend and `legendFormat` is filled in', async () => {
+        const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+        const prom = new PromLikeDatasource(settings('prom'));
+        const query = asExpressionQuery({
+          refId: 'A',
+          expr: 'rate(x[$__interval])',
+          legendFormat: '{{job}} $env',
+          datasource: { uid: 'prom', type: 'prom' },
+        });
+        mockGetDatasource.mockImplementation(async (ref: { uid: string }) => (ref.uid === 'prom' ? prom : ds));
+        const querySpy = jest.spyOn(DataSourceWithBackend.prototype, 'query').mockReturnValue(of({ data: [] }));
+
+        await lastValueFrom(ds.query(buildRequest([query, sql], scopedVars)));
+
+        expect(querySpy.mock.calls[0][0].targets[0]).toEqual(
+          expect.objectContaining({ refId: 'A', expr: 'rate(x[$__interval])', legendFormat: '{{job}} prod' })
+        );
+      });
+
+      it('prefers `prepareBackendQueries` and passes it all of the data source queries and the request', async () => {
+        class PreparingDatasource extends PromLikeDatasource {
+          prepareBackendQueries = jest.fn((request: DataQueryRequest<PromLikeQuery>) =>
+            request.targets.map((query) => ({ ...query, expr: `${query.expr} @ ${request.timezone}` }))
+          );
+        }
+        const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+        const prom = new PreparingDatasource(settings('prom'));
+        const datasource = { uid: 'prom', type: 'prom' };
+        const a = asExpressionQuery({ refId: 'A', expr: 'a', datasource });
+        const c = asExpressionQuery({ refId: 'C', expr: 'c', datasource });
+        mockGetDatasource.mockImplementation(async (ref: { uid: string }) => (ref.uid === 'prom' ? prom : ds));
+        const querySpy = jest.spyOn(DataSourceWithBackend.prototype, 'query').mockReturnValue(of({ data: [] }));
+
+        await lastValueFrom(ds.query(buildRequest([a, sql, c], scopedVars)));
+
+        expect(prom.prepareBackendQueries).toHaveBeenCalledTimes(1);
+        expect(prom.prepareBackendQueries).toHaveBeenCalledWith(
+          expect.objectContaining({ targets: [a, c], timezone: 'browser', scopedVars })
+        );
+        expect(querySpy.mock.calls[0][0].targets).toEqual([
+          { ...a, expr: 'a @ browser' },
+          sql,
+          { ...c, expr: 'c @ browser' },
+        ]);
+      });
+
+      it('keeps `interpolateVariablesInQueries` when the data source does not override `applyTemplateVariables`', async () => {
+        // Such as Azure Monitor, whose `query()` hands queries to inner data sources.
+        class ExploreOnlyDatasource extends DataSourceWithBackend<PromLikeQuery> {
+          interpolateVariablesInQueries(queries: PromLikeQuery[], scopedVars: ScopedVars) {
+            return queries.map((query) => ({ ...query, expr: replace(query.expr, scopedVars) ?? '' }));
+          }
+        }
+        const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+        const azure = new ExploreOnlyDatasource(settings('azure'));
+        const query = asExpressionQuery({ refId: 'A', expr: 'x $env', datasource: { uid: 'azure', type: 'azure' } });
+        mockGetDatasource.mockImplementation(async (ref: { uid: string }) => (ref.uid === 'azure' ? azure : ds));
+        const querySpy = jest.spyOn(DataSourceWithBackend.prototype, 'query').mockReturnValue(of({ data: [] }));
+
+        await lastValueFrom(ds.query(buildRequest([query, sql], scopedVars)));
+
+        expect(querySpy.mock.calls[0][0].targets[0]).toEqual({ ...query, expr: 'x prod' });
+      });
+
+      it('keeps the data source and `hide` when `applyTemplateVariables` builds a new query', async () => {
+        // Such as `@grafana/sql`, which sends only the fields its backend reads.
+        class SqlLikeDatasource extends DataSourceWithBackend<PromLikeQuery> {
+          applyTemplateVariables(query: PromLikeQuery, scopedVars: ScopedVars) {
+            return { refId: query.refId, expr: replace(query.expr, scopedVars) ?? '' };
+          }
+        }
+        const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+        const mysql = new SqlLikeDatasource(settings('mysql'));
+        const datasource = { uid: 'mysql', type: 'mysql' };
+        const query = asExpressionQuery({ refId: 'A', hide: true, expr: 'SELECT $env', datasource });
+        mockGetDatasource.mockImplementation(async (ref: { uid: string }) => (ref.uid === 'mysql' ? mysql : ds));
+        const querySpy = jest.spyOn(DataSourceWithBackend.prototype, 'query').mockReturnValue(of({ data: [] }));
+
+        await lastValueFrom(ds.query(buildRequest([query, sql], scopedVars)));
+
+        expect(querySpy.mock.calls[0][0].targets[0]).toEqual({
+          refId: 'A',
+          hide: true,
+          expr: 'SELECT prod',
+          datasource,
+        });
+      });
+
+      it('gives each data source its own scopedVars, so one that changes them does not affect the next', async () => {
+        // Such as InfluxDB, whose `applyTemplateVariables` sets `__interval` on the scopedVars it gets.
+        class MutatingDatasource extends DataSourceWithBackend<PromLikeQuery> {
+          applyTemplateVariables(query: PromLikeQuery, scopedVars: ScopedVars) {
+            const expr = replace(query.expr, scopedVars) ?? '';
+            scopedVars.__interval = { value: '$__interval' };
+            return { ...query, expr };
+          }
+        }
+        const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+        const byUid: Record<string, MutatingDatasource> = {
+          influx1: new MutatingDatasource(settings('influx1')),
+          influx2: new MutatingDatasource(settings('influx2')),
+        };
+        const a = asExpressionQuery({
+          refId: 'A',
+          expr: 'a $__interval',
+          datasource: { uid: 'influx1', type: 'influx' },
+        });
+        const c = asExpressionQuery({
+          refId: 'C',
+          expr: 'c $__interval',
+          datasource: { uid: 'influx2', type: 'influx' },
+        });
+        mockGetDatasource.mockImplementation(async (ref: { uid: string }) => byUid[ref.uid] ?? ds);
+        const querySpy = jest.spyOn(DataSourceWithBackend.prototype, 'query').mockReturnValue(of({ data: [] }));
+        const callerScopedVars = { __interval: { text: '2s', value: '2s' } };
+
+        await lastValueFrom(ds.query(buildRequest([a, sql, c], callerScopedVars)));
+
+        expect(querySpy.mock.calls[0][0].targets[2]).toEqual(expect.objectContaining({ expr: 'c 2s' }));
+        expect(callerScopedVars).toEqual({ __interval: { text: '2s', value: '2s' } });
       });
     });
 
