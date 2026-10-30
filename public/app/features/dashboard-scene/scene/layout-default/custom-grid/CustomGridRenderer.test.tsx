@@ -112,6 +112,30 @@ describe('CustomGridRenderer', () => {
     expect(getItemElement(container, 'grid-item-1')).toHaveTextContent('Panel content');
   });
 
+  it('renders no grid items before the grid width is measured, so none is painted at zero width', async () => {
+    mockGridWidth = 0;
+    // The second item floats below the top, where compaction pulls it up once the grid is laid out
+    const { container, setEditing, grid } = await setup(
+      [gridItem(1, 0, 0, 12, 8), gridItem(2, 12, 6, 12, 4)],
+      {},
+      {
+        isEditing: false,
+      }
+    );
+
+    expect(container.querySelectorAll('[data-griditem-key]')).toHaveLength(0);
+    expect(grid.state.children[1].state).toMatchObject({ x: 12, y: 6 });
+
+    mockGridWidth = GRID_WIDTH;
+    // Let the panels finish loading their plugin
+    await act(async () => setEditing(false));
+
+    // At their cells from the first render with a width
+    expectAt(getItemElement(container, 'grid-item-1'), { x: 0, y: 0, w: 12, h: 8 });
+    expectAt(getItemElement(container, 'grid-item-2'), { x: 12, y: 0, w: 12, h: 4 });
+    expect(grid.state.children[1].state).toMatchObject({ x: 12, y: 0 });
+  });
+
   it('sizes the grid to its lowest item', async () => {
     const { container } = await setup([gridItem(1, 0, 0, 12, 8), gridItem(2, 0, 8, 24, 6)]);
 
