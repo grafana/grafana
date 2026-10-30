@@ -9,6 +9,7 @@ import { AssistantSparkleGradient } from 'app/core/components/AppChrome/Fullscre
 import { canEnterComposer } from '../composer/composerAccess';
 import { useAssistantComposerEntry } from '../composer/useAssistantComposerEntry';
 import { isNewDashboard } from '../saving/shared';
+import { useIsMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 
 import { type DashboardScene } from './DashboardScene';
 import {
@@ -37,9 +38,10 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
     }
   }, [mode, composerSeen]);
   const composer = useComposerOption(dashboard);
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
+  const editBlockedOnMobile = isMobileEditDeprecated && mode === 'view';
   const nextMode = mode === 'view' ? 'edit' : 'view';
   const saveRequired = isNewDashboard(state);
-  const disabled = dashboard.managedResourceCannotBeEdited();
   const hidden =
     !dashboardModesEnabled() ||
     !dashboard.canEditDashboard() ||
@@ -49,10 +51,10 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
     state.viewPanel ||
     state.planning;
   useEffect(() => {
-    if (!hidden && !disabled) {
+    if (!hidden) {
       dashboard.trackModePickerShown();
     }
-  }, [dashboard, hidden, disabled]);
+  }, [dashboard, hidden]);
   if (hidden) {
     return null;
   }
@@ -78,7 +80,9 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
   const current =
     mode === 'composer'
       ? { label: t('dashboard.modes.composer', 'Composer'), icon: 'ai-sparkle' as const }
-      : options.find((option) => option.value === mode)!;
+      : mode === 'agent'
+        ? { label: t('dashboard.modes.agent-edit', 'Agent editing'), icon: 'pen' as const }
+        : options.find((option) => option.value === mode)!;
   // From Composer, Viewing and Editing first end the session, as its own exit does.
   const choose = (value: 'view' | 'edit') =>
     mode === 'composer' ? dashboard.switchFromComposer(value) : dashboard.setDashboardMode(value, 'picker');
@@ -145,7 +149,7 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
                 ? t('dashboard.modes.switch-to-viewing', 'Switch to Viewing')
                 : t('dashboard.modes.switch-to-editing', 'Switch to Editing')
           }
-          disabled={disabled || (!state.editable && nextMode === 'edit')}
+          disabled={(!state.editable && nextMode === 'edit') || editBlockedOnMobile}
           onClick={() => choose(nextMode)}
         >
           {current.label}
@@ -166,7 +170,7 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
             icon={isCaretMenuOpen ? 'angle-up' : 'angle-down'}
             aria-label={t('dashboard.modes.change-mode', 'Change dashboard mode')}
             aria-haspopup="menu"
-            disabled={disabled}
+            disabled={editBlockedOnMobile}
           />
         </Dropdown>
       </ButtonGroup>

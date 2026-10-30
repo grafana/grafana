@@ -9,8 +9,8 @@ import {
   type ListRecordingRuleSearchRulesV0Alpha1SearchWhereNode,
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
-import { type FilterKey } from './filterDefinitions';
-import { HEALTH_API_VALUES, type RuleSearchFilter, type SearchLabelMatcher } from './ruleSearchFilter';
+import { type SharedFilterKey } from './sharedFilters';
+import { HEALTH_API_VALUES, type SearchLabelMatcher, type SharedRuleFilter } from './sharedRuleFilter';
 
 /**
  * The part of the generated where tree that the per-kind rule search accepts:
@@ -58,16 +58,16 @@ type SearchQueryRegex = AcceptedByBothKinds<
 >;
 
 /** A leaf and the filter it came from, so a rejected leaf can name its filter; `key` is null for the search text. */
-export interface SourcedLeaf {
-  key: FilterKey | null;
+export interface SourcedLeaf<Key extends string = string> {
+  key: Key | null;
   leaf: SearchQueryLeaf;
 }
 
 /** `T` itself, as long as it is assignable to both kinds' generated type; otherwise a type error. */
 type AcceptedByBothKinds<T extends AlertType & RecordingType, AlertType, RecordingType> = T;
 
-export function buildSharedLeaves(filter: RuleSearchFilter): SourcedLeaf[] {
-  const leaves: SourcedLeaf[] = [];
+export function buildSharedLeaves(filter: SharedRuleFilter): Array<SourcedLeaf<SharedFilterKey>> {
+  const leaves: Array<SourcedLeaf<SharedFilterKey>> = [];
 
   const text = filter.text.join(' ').trim();
   if (text.length > 0) {
@@ -102,7 +102,10 @@ export function buildSharedLeaves(filter: RuleSearchFilter): SourcedLeaf[] {
 }
 
 /** `In` never matches a rule with no stored status, so a health filter hides those rules. */
-export function buildHealthLeaves(filter: RuleSearchFilter, okValue: 'OK' | 'Recording'): SourcedLeaf[] {
+export function buildHealthLeaves(
+  filter: SharedRuleFilter,
+  okValue: 'OK' | 'Recording'
+): Array<SourcedLeaf<SharedFilterKey>> {
   if (!filter.health) {
     return [];
   }

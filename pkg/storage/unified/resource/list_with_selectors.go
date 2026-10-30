@@ -212,48 +212,30 @@ func decodeSearchListPage(response *resourcepb.ResourceSearchResponse, listRV in
 		page.resourceVersion = response.GetResourceVersion()
 	}
 
-	var rows []listSearchRow
-	switch response.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		table := response.GetResults()
-		if table == nil {
-			return page, nil
-		}
-		rows = make([]listSearchRow, 0, len(table.GetRows()))
-		for i, row := range table.GetRows() {
-			if row == nil || row.GetKey() == nil {
-				return nil, fmt.Errorf("resource table row %d has no key", i)
-			}
-			rows = append(rows, listSearchRow{
-				key:             row.GetKey(),
-				resourceVersion: row.GetResourceVersion(),
-				sortFields:      row.GetSortFields(),
-			})
-		}
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		folderField := slices.IndexFunc(response.GetFields(), func(f *resourcepb.ResourceSearchField) bool {
-			return f.GetName() == SEARCH_FIELD_FOLDER
-		})
-		page.folderIndexed = folderField >= 0
-		rows = make([]listSearchRow, 0, len(response.GetRows()))
-		for i, row := range response.GetRows() {
-			if row == nil || row.GetKey() == nil {
-				return nil, fmt.Errorf("field-value row %d has no key", i)
-			}
-			listRow := listSearchRow{
-				key:             row.GetKey(),
-				resourceVersion: row.GetResourceVersion(),
-				sortFields:      row.GetSortFields(),
-			}
-			for _, value := range row.GetValues() {
-				if folderField >= 0 && value.GetFieldIndex() == uint32(folderField) && len(value.GetStringValues()) > 0 {
-					listRow.folder = value.GetStringValues()[0]
-				}
-			}
-			rows = append(rows, listRow)
-		}
-	default:
+	if response.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return nil, fmt.Errorf("unsupported search result format %d", response.GetResultFormat())
+	}
+
+	folderField := slices.IndexFunc(response.GetFields(), func(f *resourcepb.ResourceSearchField) bool {
+		return f.GetName() == SEARCH_FIELD_FOLDER
+	})
+	page.folderIndexed = folderField >= 0
+	rows := make([]listSearchRow, 0, len(response.GetRows()))
+	for i, row := range response.GetRows() {
+		if row == nil || row.GetKey() == nil {
+			return nil, fmt.Errorf("field-value row %d has no key", i)
+		}
+		listRow := listSearchRow{
+			key:             row.GetKey(),
+			resourceVersion: row.GetResourceVersion(),
+			sortFields:      row.GetSortFields(),
+		}
+		for _, value := range row.GetValues() {
+			if folderField >= 0 && value.GetFieldIndex() == uint32(folderField) && len(value.GetStringValues()) > 0 {
+				listRow.folder = value.GetStringValues()[0]
+			}
+		}
+		rows = append(rows, listRow)
 	}
 	page.rows = rows
 	return page, nil

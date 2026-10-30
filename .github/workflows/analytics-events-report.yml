@@ -19,8 +19,8 @@ jobs:
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
 
-      - name: Install yarn dependencies
+      - name: Install frontend dependencies
         uses: ./.github/actions/yarn-install
 
       - name: Generate analytics report
-        run: npm run analytics-report
+        run: pnpm run analytics-report

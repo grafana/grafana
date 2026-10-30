@@ -49,6 +49,7 @@ export function ScopesDashboardsTreeSearch({
       <FilterInput
         disabled={disabled}
         placeholder={t('scopes.dashboards.filter', 'Filter...')}
+        aria-label={t('scopes.dashboards.filterAriaLabel', 'Filter dashboards')}
         variant="filter"
         value={inputState.value}
         data-testid="scopes-dashboards-search"

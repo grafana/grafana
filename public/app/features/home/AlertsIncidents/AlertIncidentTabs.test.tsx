@@ -1,8 +1,12 @@
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { PluginIncludeType } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ACTIVE_INCIDENTS_QUERY_LIMIT, type IncidentPreview } from 'app/features/alerting/unified/api/incidentsApi';
+
+import { ctaClicked } from '../analytics/main';
 
 import { ALERTS_TAB_ID, INCIDENTS_TAB_ID, type AlertIncidentSwitchHandle } from './AlertIncidentTabs';
 import {
@@ -48,12 +52,9 @@ describe('AlertIncidentTabs', () => {
 
     // Wait for the alert to load so the card content is rendered.
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
-    // In the redesign the inner card header is hidden, so only the section heading remains.
     // The Incident plugin is absent here, so the heading drops the "& incidents" half.
     expect(screen.getByRole('heading', { name: 'Alerts' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /firing alerts/i })).toBeInTheDocument();
-    // The severity breakdown badge lives in the card header, which the redesign hides.
-    expect(screen.queryByText(/1 critical/i)).not.toBeInTheDocument();
   });
 
   it('shows a tab counter reflecting the number of firing alerts', async () => {
@@ -134,39 +135,7 @@ describe('AlertIncidentTabs', () => {
     expect(screen.queryByText('CPU Critical')).not.toBeInTheDocument();
   });
 
-  it('switchRef handle switches tabs imperatively', async () => {
-    mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
-    mockIrmPlugin();
-    mockIncidents([activeIncident]);
-    let handle: AlertIncidentSwitchHandle | null = null;
-
-    render(
-      <AlertIncidentTabsWithData
-        switchRef={(instance) => {
-          handle = instance;
-        }}
-      />
-    );
-
-    expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
-    expect(handle).not.toBeNull();
-
-    await act(async () => {
-      handle?.switch(INCIDENTS_TAB_ID, false);
-    });
-
-    expect(await screen.findByText('Database outage')).toBeInTheDocument();
-    expect(screen.queryByText('CPU Critical')).not.toBeInTheDocument();
-
-    await act(async () => {
-      handle?.switch(ALERTS_TAB_ID, false);
-    });
-
-    expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
-    expect(screen.queryByText('Database outage')).not.toBeInTheDocument();
-  });
-
-  it('switchRef handle scrolls by default and skips scrolling when requested', async () => {
+  it('switchRef handle switches tabs, scrolling into view unless told not to', async () => {
     mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
     mockIrmPlugin();
     mockIncidents([activeIncident]);
@@ -209,20 +178,6 @@ describe('AlertIncidentTabs', () => {
     }
   });
 
-  it('offers only the view-all action in the footer, even when the user could declare an incident', async () => {
-    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-    // No page includes to gate on, so canDeclare/canAccess both resolve to true.
-    mockIrmPlugin({ includes: [] });
-    mockIncidents([activeIncident]);
-
-    render(<AlertIncidentTabsWithData />);
-
-    expect(await screen.findByText('Database outage')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /view all incidents/i })).toBeInTheDocument();
-    // Declaring lives in the empty state; a populated list keeps the footer to filter + view all.
-    expect(screen.queryByRole('link', { name: /declare an incident/i })).not.toBeInTheDocument();
-  });
-
   it('hides the incidents footer actions when the user lacks the plugin page permissions', async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
     mockIrmPlugin({
@@ -248,5 +203,66 @@ describe('AlertIncidentTabs', () => {
     expect(await screen.findByText('Database outage')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /declare an incident/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /view all incidents/i })).not.toBeInTheDocument();
+  });
+
+  describe('footer links', () => {
+    // A footer action renders a plain <a href>; clicking it would trigger a real jsdom navigation
+    // (console.error -> jest-fail-on-console). Route anchor clicks through the SPA history the
+    // way the app does so the onClick fires without navigating.
+    beforeEach(() => {
+      document.addEventListener('click', interceptLinkClicks);
+      config.appSubUrl = '/grafana';
+    });
+
+    afterEach(() => {
+      document.removeEventListener('click', interceptLinkClicks);
+      config.appSubUrl = '';
+    });
+
+    it('links the alerts footer to the firing alerts while any fire', async () => {
+      mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+
+      const { user } = render(<AlertIncidentTabsWithData />);
+
+      const viewAll = await screen.findByRole('link', { name: /view all firing alerts/i });
+      expect(viewAll).toHaveAttribute('href', '/grafana/alerting/groups?alertmanager=grafana');
+      await user.click(viewAll);
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'alerts_card',
+        action: 'view_all_alerts',
+        placement: 'footer',
+      });
+    });
+
+    it('links the alerts footer to the alert rules when none fire', async () => {
+      mockAlerts([]);
+
+      const { user } = render(<AlertIncidentTabsWithData />);
+
+      const viewRules = await screen.findByRole('link', { name: /view all alert rules/i });
+      // colon is percent-encoded by URLSearchParams; decodes back to source:grafana on read
+      expect(viewRules).toHaveAttribute('href', '/grafana/alerting/list?search=source%3Agrafana');
+      await user.click(viewRules);
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'alerts_card',
+        action: 'view_all_rules',
+        placement: 'footer',
+      });
+    });
+
+    it('tracks the incidents view-all link', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      mockIrmPlugin({ includes: [] });
+      mockIncidents([activeIncident]);
+
+      const { user } = render(<AlertIncidentTabsWithData />);
+
+      await user.click(await screen.findByRole('link', { name: /view all incidents/i }));
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'incidents_card',
+        action: 'view_all_incidents',
+        placement: 'footer',
+      });
+    });
   });
 });

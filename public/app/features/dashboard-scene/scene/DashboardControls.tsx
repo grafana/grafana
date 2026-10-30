@@ -33,6 +33,7 @@ import { KioskMode } from 'app/types/dashboard';
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { usePanelEditDirty } from '../panel-edit/usePanelEditDirty';
+import { useIsMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 import { findVizPanelByPathId } from '../utils/pathId';
 import { getDashboardSceneFor, isLibraryPanel } from '../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
@@ -46,7 +47,7 @@ import { VariableControls } from './VariableControls';
 import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
 import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
 import { DashboardFiltersOverviewPaneToggle } from './dashboard-filters-overview/DashboardFiltersOverviewPaneToggle';
-import { dashboardModesEnabled, isViewingDashboard } from './dashboardModes';
+import { dashboardModesEnabled, getDashboardMode } from './dashboardModes';
 import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
 import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
@@ -307,6 +308,7 @@ function DashboardControlActions({
   const { isPlaying } = playlistSrv.useState();
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
 
   if (kioskMode === KioskMode.Full) {
     return null;
@@ -325,11 +327,12 @@ function DashboardControlActions({
   const showShareButton = hasUid && !isSnapshot && !isEmbedded && !isPlaying && !editPanel;
   const modesEnabled = dashboardModesEnabled();
   const showSaveButton =
-    isEditing && (canSave || canSaveAs) && !isEditingLibraryPanel && !isViewingDashboard(dashboard.state);
+    isEditing && (canSave || canSaveAs) && !isEditingLibraryPanel && getDashboardMode(dashboard.state) !== 'view';
   // A draft (a new dashboard proposed as pending changes) has no uid until it's saved.
   const isDraft = Boolean(meta.newDashboardUid);
-  const showEditButton = (hasUid || isDraft || isEditing) && !isPlaying && canEditDashboard && isEditable && !editPanel;
-  const showMakeEditableButton = !isPlaying && canEditDashboard && !isEditable && !isEditing;
+  const showEditButton =
+    (hasUid || isDraft) && !isPlaying && canEditDashboard && isEditable && !editPanel && !isMobileEditDeprecated;
+  const showMakeEditableButton = !isPlaying && canEditDashboard && !isEditable && !isEditing && !isMobileEditDeprecated;
   const showPanelEditButtons = Boolean(editPanel);
 
   return (

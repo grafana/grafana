@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subscription } from 'rxjs';
 
 import {
   type AnnotationEvent,
@@ -123,9 +123,7 @@ async function setupTestContext({
     data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: [] },
     eventBus: {
       subscribe: jest.fn(),
-      getStream: jest.fn().mockImplementation(() => ({
-        subscribe: jest.fn(),
-      })),
+      getStream: jest.fn().mockImplementation(() => ({ subscribe: jest.fn(() => new Subscription()) })),
       publish: jest.fn(),
       removeAllListeners: jest.fn(),
       newScopedBus: jest.fn(),
@@ -452,7 +450,7 @@ describe('AnnoListPanel', () => {
         data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: [] },
         eventBus: {
           subscribe: jest.fn(),
-          getStream: jest.fn().mockImplementation(() => ({ subscribe: jest.fn() })),
+          getStream: jest.fn().mockImplementation(() => ({ subscribe: jest.fn(() => new Subscription()) })),
           publish: jest.fn(),
           removeAllListeners: jest.fn(),
           newScopedBus: jest.fn(),
@@ -478,12 +476,11 @@ describe('AnnoListPanel', () => {
           metadata: { name },
           spec: { title: name, filters: [] },
         }));
-        const state = { drawerOpened: false, enabled: true, loading: false, readOnly: false, value: scopes };
+        const state = { drawerOpened: false, enabled: true, loading: false, value: scopes };
         const ctx: ScopesContextValue = {
           state,
           stateObservable: new BehaviorSubject(state),
           changeScopes: jest.fn(),
-          setReadOnly: jest.fn(),
           setEnabled: jest.fn(),
         };
         render(<ScopesContext.Provider value={ctx}>{panel}</ScopesContext.Provider>);

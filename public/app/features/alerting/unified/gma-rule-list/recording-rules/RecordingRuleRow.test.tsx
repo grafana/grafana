@@ -1,5 +1,8 @@
 import { render, screen } from 'test/test-utils';
 
+import { mockDataSource } from '../../mocks';
+import { setupDataSources } from '../../testSetup/datasources';
+
 import { RecordingRuleRow } from './RecordingRuleRow';
 import { type RecordingRuleSearchHit } from './recordingRuleSearchHit';
 
@@ -71,5 +74,70 @@ describe('RecordingRuleRow', () => {
     renderRow({ searchHit: baseHit() });
 
     expect(screen.queryByRole('img', { name: /Evaluated every/ })).not.toBeInTheDocument();
+  });
+
+  it('shows the recorded metric and target datasource when the hit has them', () => {
+    setupDataSources(mockDataSource({ uid: 'ds-mimir', name: 'Mimir' }));
+    renderRow({
+      searchHit: baseHit({ metric: 'memory:usage:bytes', targetDatasourceUID: 'ds-mimir' }),
+    });
+
+    expect(screen.getByText('memory:usage:bytes')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Mimir' })).toBeInTheDocument();
+  });
+
+  it('shows no recorded metric when metric or targetDatasourceUID is absent', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText(/Records/)).not.toBeInTheDocument();
+  });
+
+  it('shows queried datasources when the hit has them', () => {
+    setupDataSources(mockDataSource({ uid: 'ds-prom', name: 'Prometheus' }));
+    renderRow({ searchHit: baseHit({ datasourceUIDs: ['ds-prom'] }) });
+
+    expect(screen.getByRole('link', { name: 'Prometheus' })).toBeInTheDocument();
+  });
+
+  it('shows labels when the hit has them', () => {
+    renderRow({ searchHit: baseHit({ labels: { team: 'infra' } }) });
+
+    expect(screen.getByText('1 label')).toBeInTheDocument();
+  });
+
+  it('shows no datasources when the hit has none', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText(/data source/i)).not.toBeInTheDocument();
+  });
+
+  it('shows no labels when the hit has none', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText(/label/)).not.toBeInTheDocument();
+  });
+
+  it('renders a provisioning badge when the full rule has provenance set', () => {
+    const rule = {
+      apiVersion: 'rules.alerting.grafana.app/v0alpha1',
+      kind: 'RecordingRule' as const,
+      metadata: { name: 'rule-1', annotations: { 'grafana.com/provenance': 'terraform' } },
+      spec: {
+        title: 'cpu:usage:rate5m',
+        metric: 'cpu:usage:rate5m',
+        targetDatasourceUID: 'ds',
+        trigger: { interval: '1m' },
+        expressions: {},
+      },
+    };
+    renderRow({ searchHit: baseHit(), rule });
+
+    expect(screen.getByText('Provisioned')).toBeInTheDocument();
+  });
+
+  it('renders no badge when rule is absent', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText('Provisioned')).not.toBeInTheDocument();
   });
 });
