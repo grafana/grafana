@@ -1435,6 +1435,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-diagnostics-e2e.yml @grafana/data-sources-plugins
 /.github/workflows/frontend-perf-tests.yaml @grafana/grafana-frontend-platform
 /.github/workflows/release-npm.yml @grafana/grafana-frontend-platform
+/.github/workflows/release-npm-version-pr.yml @grafana/grafana-frontend-platform
 /.github/workflows/scripts/determine-npm-tag.sh @grafana/grafana-frontend-platform
 /.github/workflows/scripts/validate-commit-in-head.sh @grafana/grafana-frontend-platform
 /.github/workflows/scripts/test-endpoint-migration-check.sh @grafana/alerting-squad
