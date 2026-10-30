@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -66,6 +67,8 @@ func TestSingleTenantResourcesHandlerFor(t *testing.T) {
 		{name: "no identity write", method: http.MethodPut, path: dashboards},
 		{name: "user snapshot read", method: http.MethodGet, path: snapshots, identity: types.TypeUser, wantST: true},
 		{name: "access policy snapshot read", method: http.MethodGet, path: snapshots, identity: types.TypeAccessPolicy, wantST: true},
+		{name: "user cluster-scoped write", method: http.MethodPost, path: "/apis/dashboard.grafana.app/v1/dashboards", identity: types.TypeUser, wantST: true},
+		{name: "no identity options", method: http.MethodOptions, path: dashboards},
 		{name: "access policy library panel write", method: http.MethodPost, path: "/apis/dashboard.grafana.app/v1/librarypanels", identity: types.TypeAccessPolicy, wantST: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -201,4 +204,27 @@ func TestSingleTenantResourcesBreakerScope(t *testing.T) {
 	} {
 		require.Equal(t, tc.want, groupBreakerScope(&singleTenantResourcesHandler{next: tc.next, st: st}))
 	}
+}
+
+// A group hidden from the caller never reaches the split: neither the
+// multi-tenant backend nor the stack sees the request.
+func TestHiddenSingleTenantResourcesReachNeitherBackend(t *testing.T) {
+	var reached atomic.Int32
+	count := http.HandlerFunc(func(http.ResponseWriter, *http.Request) { reached.Add(1) })
+	mt, stack := httptest.NewServer(count), httptest.NewServer(count)
+	t.Cleanup(mt.Close)
+	t.Cleanup(stack.Close)
+	backends, err := newSingleTenantResourcesLoader(t, mt.URL, stack.URL).Load(t.Context())
+	require.NoError(t, err)
+	r := NewGrafanaRouter(staticLoader{backends: backends}, nil)
+	require.NoError(t, r.SetGroupVisibility([]string{singleTenantResourcesGroup}, nil))
+	require.NoError(t, r.reconcile(t.Context()))
+
+	const path = "/apis/dashboard.grafana.app/v0alpha1/namespaces/stacks-1/snapshots/abc"
+	for _, method := range []string{http.MethodGet, http.MethodPut} {
+		rec := httptest.NewRecorder()
+		r.HandleFunc(rec, newAuthenticatedRequest(method, path, nil))
+		require.Equal(t, http.StatusNotFound, rec.Code, method)
+	}
+	require.Zero(t, reached.Load())
 }

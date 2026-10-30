@@ -263,3 +263,44 @@ func (s *flakyHealthServer) CheckHealth(context.Context, *pluginv2.CheckHealthRe
 	}
 	return &pluginv2.CheckHealthResponse{Status: pluginv2.CheckHealthResponse_OK}, nil
 }
+
+func newTestHealthClient(t *testing.T, addr string, cfg pluginGRPCConfig) (*grpc.ClientConn, pluginv2.DiagnosticsClient) {
+	t.Helper()
+	labels := prometheus.Labels{"plugin_id": "test-app"}
+	requestDuration := newPluginGRPCRequestDuration(nil, sourcePlugins).MustCurryWith(labels).(*prometheus.HistogramVec)
+	requestRetries := newPluginGRPCRequestRetries(nil, sourcePlugins).MustCurryWith(labels)
+	conn, err := grpc.NewClient(addr, cfg.dialOptions(requestDuration, requestRetries)...)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close() })
+	return conn, pluginv2.NewDiagnosticsClient(conn)
+}
+
+// A call after the plugin restarts, which dropped the connection, succeeds on a
+// new one, with the router's dial options.
+func TestPluginGRPCReconnectsAfterTheServerRestarts(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	addr := listener.Addr().String()
+	server := grpc.NewServer()
+	pluginv2.RegisterDiagnosticsServer(server, &healthyServer{})
+	go func() { _ = server.Serve(listener) }()
+	t.Cleanup(server.Stop)
+
+	cfg := defaultPluginGRPCConfig()
+	cfg.Retry = pluginGRPCRetryConfig{Max: 5, Backoff: 50 * time.Millisecond}
+	cfg.Connect.BaseDelay, cfg.Connect.MaxDelay = 10*time.Millisecond, 50*time.Millisecond
+	_, client := newTestHealthClient(t, addr, cfg)
+	_, err = client.CheckHealth(t.Context(), &pluginv2.CheckHealthRequest{})
+	require.NoError(t, err)
+
+	server.Stop()
+	listener, err = net.Listen("tcp", addr)
+	require.NoError(t, err)
+	restarted := grpc.NewServer()
+	pluginv2.RegisterDiagnosticsServer(restarted, &healthyServer{})
+	go func() { _ = restarted.Serve(listener) }()
+	t.Cleanup(restarted.Stop)
+
+	_, err = client.CheckHealth(t.Context(), &pluginv2.CheckHealthRequest{})
+	require.NoError(t, err)
+}
