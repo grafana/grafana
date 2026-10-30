@@ -50,7 +50,7 @@ export function PanelAdHocChangesAction({ panel }: Props) {
       tooltip={t('panel-adhoc-changes.tooltip', 'This panel has view changes that are not saved with the dashboard')}
       data-testid={selectors.components.Panels.Panel.PanelAdHocChangesHeaderAction}
     >
-      <Trans i18nKey="panel-adhoc-changes.button">View changes</Trans>
+      <Trans i18nKey="panel-adhoc-changes.button">Changes to view</Trans>
       <Icon name="angle-down" />
     </Button>
   );
