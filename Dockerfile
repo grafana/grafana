@@ -31,9 +31,11 @@ ENV NODE_OPTIONS=--max_old_space_size=8000
 
 WORKDIR /tmp/grafana
 
-RUN apk add --no-cache make build-base python3
+RUN apk add --no-cache bash make build-base python3
 
 COPY package.json project.json nx.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY Makefile ./
+COPY .citools/Variables.mk .citools/Variables.mk
 COPY patches patches
 COPY packages packages
 COPY e2e-playwright e2e-playwright
@@ -54,7 +56,7 @@ COPY scripts scripts
 COPY emails emails
 
 # Set the build argument according to default or argument passed
-RUN pnpm run ${JS_PNPM_BUILD_FLAG}
+RUN FRONTEND_BUILD_SCRIPT="${JS_PNPM_BUILD_FLAG}" make build-js
 
 # Golang build stage
 FROM ${GO_IMAGE} AS go-builder
@@ -125,7 +127,8 @@ COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 # add -v to make tar print every file it extracts
 RUN tar x -z -f /tmp/grafana.tar.gz --strip-components=1
 
-RUN mkdir -p data/plugins-bundled
+RUN test -s public/build/assets-manifest.json && \
+  mkdir -p dist data/plugins-bundled && mv public dist/frontend
 
 # helpers for COPY --from
 FROM ${GO_SRC} AS go-src
@@ -140,7 +143,7 @@ ENV GF_PATHS_HOME="/usr/share/grafana"
 WORKDIR $GF_PATHS_HOME
 
 COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
-COPY --from=js-src /tmp/grafana/public ./public
+COPY --from=js-src /tmp/grafana/dist/frontend ./public
 COPY --from=js-src /tmp/grafana/LICENSE ./
 
 # Bundled plugins — shared by the 3 full (non-slim) variants, and by the 3 slim variants

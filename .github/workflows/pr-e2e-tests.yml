@@ -90,17 +90,14 @@ jobs:
 
       - name: Restore or build frontend
         uses: ./.github/actions/build-frontend
+        with:
+          sourcemaps: 'false'
 
       - name: Upload frontend build artifacts
         uses: actions/upload-artifact@v7
         with:
           name: grafana-frontend
-          path: |
-            public/
-            !**/*.ts
-            !**/*.tsx
-            !public/**/node_modules/
-            !public/locales/
+          path: dist/frontend/
           retention-days: 1
 
   run-storybook-test:
@@ -162,88 +159,14 @@ jobs:
       - name: Install frontend dependencies
         uses: ./.github/actions/yarn-install
 
-      # It's quicker to build them in each test shard then prebuild and upload/download them as artifacts
-      - name: Build test plugins
-        run: pnpm run e2e:plugin:build
-
-      # Download the grafana artifacts and stitch them together into a standalone prod-ish Grafana distribution
-      - name: Download backend artifacts
-        uses: actions/download-artifact@v8
+      - name: Setup Grafana for E2E tests
+        uses: ./.github/actions/setup-grafana-e2e
         with:
-          name: grafana-backend
-          path: grafana-server/bin
-      - name: Fix binary permissions
-        run: chmod +x grafana-server/bin/grafana*
-      - name: Download frontend artifacts
-        uses: actions/download-artifact@v8
-        with:
-          name: grafana-frontend
-          path: grafana-server/public
-      - name: Copy misc server files
-        run: |
-          cp -r conf/ grafana-server
-          cp -r tools/ grafana-server
-
-      # conf/defaults.ini loads canvas as an external plugin, so the server needs the bundled build.
-      # Only canvas is bundled to keep the other core plugins under test unchanged.
-      - name: Download bundled catalog plugins
-        run: |
-          bash scripts/download-catalog-plugins.sh \
-            --out grafana-server/data/plugins-bundled \
-            --grafana-version "$(jq -r .version package.json)" \
-            --os linux \
-            --arch amd64 \
-            --no-default-catalog-plugins \
-            --plugins canvas
-
-      # Apply E2E test configuration on top of the production-mirrored distribution
-      - name: Configure for E2E testing
-        run: |
-          mkdir -p grafana-server/conf/provisioning/{datasources,dashboards,alerting,plugins}
-          cp scripts/grafana-server/custom.ini grafana-server/conf/custom.ini
-          cp devenv/datasources.yaml grafana-server/conf/provisioning/datasources/
-          cp devenv/dashboards.yaml grafana-server/conf/provisioning/dashboards/
-          cp devenv/alert_rules.yaml grafana-server/conf/provisioning/alerting/
-          cp devenv/plugins.yaml grafana-server/conf/provisioning/plugins/
-          mkdir -p grafana-server/data/plugins
-          cp -r e2e-playwright/test-plugins/. grafana-server/data/plugins/
-
-      # Start Grafana from the standalone directory
-      # The server is immediately backgrounded so it can initialise in parallel while the Playwright browsers are installing 🤓
-      # to turn on scrict CSP, add `cfg:security.content_security_policy_template="require-trusted-types-for 'script'; script-src 'self' 'unsafe-inline' 'strict-dynamic' \$NONCE;object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src * data: blob:;base-uri 'self';connect-src 'self' grafana.com ws://\$ROOT_PATH wss://\$ROOT_PATH;manifest-src 'self';media-src 'none';form-action 'self';" \`
-
-      - name: Start Grafana server
-        run: |
-          grafana-server/bin/grafana server \
-            --homepath="$PWD/grafana-server" \
-            cfg:server.http_port=3001 \
-            > grafana-server/grafana.log 2>&1 &
-
-          printf "\nThe Grafana server is starting in the background.\n"
-          echo "To view the server logs, wait for this job to complete and downloaded the 'grafana-server-log-${{ matrix.shard }}' artifact."
+          backend-artifact-name: grafana-backend
+          frontend-artifact-name: grafana-frontend
 
       - name: Install Playwright browsers
         uses: ./.github/actions/setup-playwright
-
-      - name: Wait for Grafana server to start
-        run: |
-          timeout=60
-          elapsed=0
-          printf "Waiting for Grafana to start"
-          while ! curl -s -f http://localhost:3001/health > /dev/null 2>&1; do
-            if [ $elapsed -ge $timeout ]; then
-              printf "\n\n--- Grafana server logs ---\n"
-              cat grafana-server/grafana.log
-              printf "\n--- End of Grafana server logs ---\n\n"
-              printf "Timeout after %d seconds waiting for Grafana\n" "$timeout"
-              exit 1
-            fi
-            printf "."
-            sleep 1
-            elapsed=$((elapsed + 1))
-          done
-          printf "\nThe Grafana server is ready\n"
-          echo "To view the server logs, wait for this job to complete and downloaded the 'grafana-server-log-${{ matrix.shard }}' artifact."
 
       - name: Run Playwright tests
         run: pnpm run e2e:playwright --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --reporter=dot,blob --output=playwright-test-results

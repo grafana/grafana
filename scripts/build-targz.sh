@@ -31,6 +31,9 @@ STAGING="${REPO_ROOT}/dist/.tar-staging"
 ROOT="grafana-${BUILD_VERSION}"
 DIR="${STAGING}/${ROOT}"
 
+# The frontend is built once, independently of the target OS/architecture.
+# Never package source public/ or silently rebuild a missing frontend.
+FRONTEND="${REPO_ROOT}/dist/frontend"
 echo "build tar.gz: ${FILENAME}"
 
 if [[ ! -d "${REPO_ROOT}/conf" ]]; then
@@ -70,8 +73,7 @@ cp "bin/${OS}/${ARCH}/"* "${DIR}/bin/"
 # Bundled plugins are in 'data/plugins-bundled' now.
 mkdir -p "${DIR}/plugins-bundled"
 
-cp -r public "${DIR}/public"
-find "${DIR}/public" -type d -name node_modules -print0 | xargs -0 rm -rf 2>/dev/null || true
+cp -a "${FRONTEND}" "${DIR}/public"
 
 mkdir -p dist
 (cd "${STAGING}" && tar -czf "${REPO_ROOT}/dist/${FILENAME}" "${ROOT}")

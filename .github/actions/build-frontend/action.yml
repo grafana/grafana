@@ -1,28 +1,54 @@
 name: Build frontend
 
-description: Restores or builds the Grafana frontend production assets. Requires Node.js to be set up.
+description: Builds the Grafana frontend into dist/frontend, or restores it from the cache. Requires Node.js to be set up.
+
+inputs:
+  sourcemaps:
+    description: Emit source maps. Turn off for test builds that never ship.
+    required: false
+    default: 'true'
+  cache:
+    description: Restore and save dist/frontend keyed on the frontend sources. Turn off for release builds.
+    required: false
+    default: 'true'
 
 runs:
   using: composite
   steps:
-    - name: Hash build action
-      id: action
-      shell: bash
-      env:
-        ACTION_PATH: ${{ github.action_path }}
-      run: |
-        action_hash="$(sha256sum "$ACTION_PATH/action.yml")"
-        echo "hash=${action_hash%% *}" >> "$GITHUB_OUTPUT"
-
     - name: Restore frontend build
+      if: inputs.cache == 'true'
       id: cache
       uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4 zizmor: ignore[cache-poisoning]
       with:
-        key: "frontend-build-v1-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'pnpm-workspace.yaml', '.npmrc', 'patches/**', 'package.json', '.github/actions/setup-node/**', '.github/actions/yarn-install/**', 'packages/**', 'public/**', 'scripts/rspack/**', 'scripts/cli/env-util.ts', 'scripts/cli/package.json', 'scripts/tsconfig.base.json', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', 'project.json', '.nvmrc', 'Makefile') }}-${{ steps.action.outputs.hash }}"
-        path: |
-          public/build
-          public/build-swagger
-          public/app/plugins/*/*/dist
+        key: >-
+          frontend-build-v2-${{ runner.os }}-
+          sourcemaps-${{ inputs.sourcemaps }}-
+          ${{ hashFiles(
+            'pnpm-lock.yaml',
+            'pnpm-workspace.yaml',
+            '.npmrc',
+            'patches/**',
+            'package.json',
+            'project.json',
+            'nx.json',
+            'tsconfig.json',
+            '.browserslistrc',
+            '.nvmrc',
+            'Makefile',
+            'scripts/build-frontend.sh',
+            'scripts/rspack/**',
+            'scripts/cli/env-util.ts',
+            'scripts/cli/package.json',
+            'scripts/tsconfig.base.json',
+            'packages/**',
+            'public/**',
+            '!**/*.test.ts',
+            '!**/*.test.tsx',
+            '.github/actions/build-frontend/**',
+            '.github/actions/setup-node/**',
+            '.github/actions/yarn-install/**'
+          ) }}
+        path: dist/frontend
 
     - name: Install frontend dependencies
       if: steps.cache.outputs.cache-hit != 'true'
@@ -32,15 +58,12 @@ runs:
       if: steps.cache.outputs.cache-hit != 'true'
       shell: bash
       env:
-        NO_SOURCEMAP: '1'
+        NO_SOURCEMAP: ${{ inputs.sourcemaps == 'false' && '1' || '' }}
       run: make build-js
 
     - name: Save frontend build
-      if: steps.cache.outputs.cache-hit != 'true'
+      if: inputs.cache == 'true' && steps.cache.outputs.cache-hit != 'true'
       uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4 zizmor: ignore[cache-poisoning]
       with:
         key: ${{ steps.cache.outputs.cache-primary-key }}
-        path: |
-          public/build
-          public/build-swagger
-          public/app/plugins/*/*/dist
+        path: dist/frontend
