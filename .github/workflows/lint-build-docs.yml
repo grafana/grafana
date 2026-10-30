@@ -41,11 +41,11 @@ jobs:
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
 
-      - name: Install yarn dependencies
+      - name: Install frontend dependencies
         uses: ./.github/actions/yarn-install
 
       - name: Lint docs
-        run: npm run prettier:checkDocs
+        run: pnpm run prettier:checkDocs
         env:
           # Increase memory for prettier due to large number of files
           NODE_OPTIONS: --max_old_space_size=8192

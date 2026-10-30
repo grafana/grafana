@@ -38,6 +38,8 @@ type StaticRequester struct {
 	Groups            []string
 	ExternalGroups    []string
 	CacheKey          string
+
+	internalIdentityProfile InternalIdentityProfile
 }
 
 // GetID returns typed id for the entity

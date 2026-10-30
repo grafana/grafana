@@ -15,7 +15,7 @@ provision-tools:
 		GOBIN="$(TOOLS_DIR)" go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.6.2; \
 	fi
 
-check-tools:
+check-tools: provision-tools
 	@test "$$($(BUF) --version)" = 1.73.0
 	@test "$$($(TOOLS_DIR)/protoc-gen-go --version)" = 'protoc-gen-go v1.36.11'
 	@test "$$($(TOOLS_DIR)/protoc-gen-go-grpc --version)" = 'protoc-gen-go-grpc 1.6.2'

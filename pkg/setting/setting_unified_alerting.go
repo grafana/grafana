@@ -215,11 +215,10 @@ type RecordingRuleSettings struct {
 // RemoteAlertmanagerSettings contains the configuration needed
 // to disable the internal Alertmanager and use an external one instead.
 type RemoteAlertmanagerSettings struct {
-	URL          string
-	TenantID     string
-	Password     string
-	SyncInterval time.Duration
-	Timeout      time.Duration
+	URL      string
+	TenantID string
+	Password string
+	Timeout  time.Duration
 }
 
 type UnifiedAlertingScreenshotSettings struct {
@@ -543,10 +542,6 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		URL:      remoteAlertmanager.Key("url").MustString(""),
 		TenantID: remoteAlertmanager.Key("tenant").MustString(""),
 		Password: remoteAlertmanager.Key("password").MustString(""),
-	}
-	uaCfgRemoteAM.SyncInterval, err = gtime.ParseDuration(valueAsString(remoteAlertmanager, "sync_interval", (schedulerDefaultAdminConfigPollInterval).String()))
-	if err != nil {
-		return err
 	}
 	uaCfgRemoteAM.Timeout, err = gtime.ParseDuration(valueAsString(remoteAlertmanager, "timeout", (remoteAlertmanagerDefaultTimeout).String()))
 	if err != nil {

@@ -1,3 +1,4 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, render } from '@testing-library/react';
 import { Suspense, type ComponentType } from 'react';
 
@@ -68,9 +69,11 @@ describe('getStandardTransformers', () => {
         const Editor = item.editor;
         await act(async () => {
           render(
-            <Suspense fallback={null}>
-              <Editor options={options} input={[]} onChange={() => {}} />
-            </Suspense>
+            <OpenFeatureProvider>
+              <Suspense fallback={null}>
+                <Editor options={options} input={[]} onChange={() => {}} />
+              </Suspense>
+            </OpenFeatureProvider>
           );
         });
       });

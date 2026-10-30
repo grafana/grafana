@@ -4,6 +4,8 @@ name: Protobuf checks
 
 on:
   pull_request:
+    # Recheck when the exception label is added or removed.
+    types: [opened, synchronize, reopened, labeled, unlabeled]
     paths:
       - 'pkg/registry/apps/annotation/proto/**'
       - 'pkg/storage/unified/proto/**'
@@ -66,7 +68,11 @@ jobs:
         with:
           version: 1.65.0
           input: ${{ matrix.module }}
-          breaking: true # The action bundles several other buf commands, but we only need breaking for this workflow.
+          # The "buf skip breaking" label allows approved API removals in unified storage.
+          # Other modules must still pass their compatibility checks.
+          breaking: >-
+            ${{ matrix.module != 'pkg/storage/unified/proto' ||
+                !contains(github.event.pull_request.labels.*.name, 'buf skip breaking') }}
           breaking_against: ${{ steps.base.outputs.dir }}/${{ matrix.module }}
           lint: false
           format: false

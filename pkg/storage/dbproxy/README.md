@@ -6,6 +6,7 @@ It contains the [gRPC API](grpc-contract.md), an optional authenticated [connect
 ## Start with the API
 
 Import `github.com/grafana/grafana/pkg/storage/dbproxy/api/dbproxy/v1` for `QueryRequest`, `QueryResponse`, and `NewDatabaseProxyServiceClient`.
+The generated package also provides `DatabaseProxyServiceServer` for server implementations.
 The server exposes `dbproxy.v1.DatabaseProxyService/Query`.
 The current server authenticates requests but returns `UNIMPLEMENTED` for authorized queries.
 

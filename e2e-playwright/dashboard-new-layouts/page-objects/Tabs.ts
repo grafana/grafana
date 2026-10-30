@@ -8,6 +8,14 @@ import { PageObject } from './PageObject';
  */
 export class Tabs extends PageObject {
   /**
+   * Returns all rendered tab title elements in DOM order, including nested tabs
+   * @param scope container to search within, defaults to the whole page
+   */
+  getTitles(scope?: Locator): Locator {
+    return (scope ?? this.page).locator(`[data-testid^="${this.selectors.components.Tab.title('')}"]`);
+  }
+
+  /**
    * Returns the tab's title element in the tab bar
    * @param scope container to search within, defaults to the whole page
    */

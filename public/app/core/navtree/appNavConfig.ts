@@ -48,7 +48,7 @@ const ASSISTANT_OSS_NAV_PATHS = new Set([
 // The asserts services page takes the same Observability slot as the App
 // Observability entry — only one of the two is ever shown. The value mirrors
 // the weight in the Go builder's table (applinks.go), as every weight here does.
-const APP_OBSERVABILITY_SORT_WEIGHT = 4;
+const APP_OBSERVABILITY_SORT_WEIGHT = 5;
 
 /**
  * Where known app plugins go in the nav. An app with no entry here is listed
@@ -82,13 +82,6 @@ const APP_NAV_CONFIG: Record<string, AppNavConfig> = {
   ///////////////////
   // Observability //
   ///////////////////
-  // Kept alongside grafana-agento11y-app until the sigil→agento11y rename completes
-  'grafana-sigil-app': {
-    sectionId: NavID.observability,
-    sortWeight: 1,
-    text: 'AI',
-    isNew: true,
-  },
   'grafana-agento11y-app': {
     sectionId: NavID.observability,
     sortWeight: 1,
@@ -97,13 +90,13 @@ const APP_NAV_CONFIG: Record<string, AppNavConfig> = {
   },
   [ASSERTS_APP_ID]: {
     sectionId: NavID.observability,
-    sortWeight: 2,
+    sortWeight: 3,
     icon: 'asserts',
     hoistPages: { slotWeightByPath: { [ASSERTS_SERVICES_PATH]: APP_OBSERVABILITY_SORT_WEIGHT } },
   },
   'grafana-kowalski-app': {
     sectionId: NavID.observability,
-    sortWeight: 3,
+    sortWeight: 4,
     text: 'Frontend',
   },
   [APP_OBSERVABILITY_APP_ID]: {
@@ -113,17 +106,17 @@ const APP_NAV_CONFIG: Record<string, AppNavConfig> = {
   },
   'grafana-dbo11y-app': {
     sectionId: NavID.observability,
-    sortWeight: 5,
+    sortWeight: 6,
     text: 'Database',
   },
   'grafana-k8s-app': {
     sectionId: NavID.observability,
-    sortWeight: 6,
+    sortWeight: 7,
     text: 'Kubernetes',
   },
   'grafana-csp-app': {
     sectionId: NavID.observability,
-    sortWeight: 7,
+    sortWeight: 8,
     icon: 'cloud-provider',
   },
 
@@ -303,6 +296,12 @@ const APP_NAV_CONFIG: Record<string, AppNavConfig> = {
  * Users and access. Mirrors navigationAppPathConfig in the Go builder.
  */
 const APP_NAV_PATH_CONFIG: Record<string, AppNavConfig> = {
+  '/a/grafana-agento11y-app/coding-agents': {
+    sectionId: NavID.observability,
+    sortWeight: 2,
+    text: 'Coding agent',
+    isNew: true,
+  },
   [`/a/${ASSISTANT_APP_ID}/pages`]: {
     sectionId: NavID.root,
     sortWeight: NavWeight.dashboards + 1,

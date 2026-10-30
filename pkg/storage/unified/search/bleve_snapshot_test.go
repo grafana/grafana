@@ -1012,7 +1012,7 @@ func TestShouldUpload(t *testing.T) {
 		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, UploadInterval: time.Hour, MinDocChanges: 1000})
 		idx := newUploadTestIndex(t, be, key, 42)
 
-		should, err := be.shouldUpload(key, idx, time.Now())
+		should, err := be.shouldUpload(t.Context(), key, idx, time.Now())
 		require.NoError(t, err)
 		assert.True(t, should)
 	})
@@ -1021,7 +1021,7 @@ func TestShouldUpload(t *testing.T) {
 		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 2, UploadInterval: time.Hour, MinDocChanges: 1000})
 		idx := newUploadTestIndex(t, be, key, 42)
 
-		should, err := be.shouldUpload(key, idx, time.Now())
+		should, err := be.shouldUpload(t.Context(), key, idx, time.Now())
 		require.NoError(t, err)
 		assert.False(t, should)
 	})
@@ -1032,7 +1032,7 @@ func TestShouldUpload(t *testing.T) {
 		require.NoError(t, writeSnapshotMutationCount(idx.index, 5))
 		be.setUploadTracking(key, time.Now().Add(-30*time.Minute))
 
-		should, err := be.shouldUpload(key, idx, time.Now())
+		should, err := be.shouldUpload(t.Context(), key, idx, time.Now())
 		require.NoError(t, err)
 		assert.False(t, should)
 	})
@@ -1043,7 +1043,7 @@ func TestShouldUpload(t *testing.T) {
 		require.NoError(t, writeSnapshotMutationCount(idx.index, 50))
 		be.setUploadTracking(key, time.Now().Add(-2*time.Minute))
 
-		should, err := be.shouldUpload(key, idx, time.Now())
+		should, err := be.shouldUpload(t.Context(), key, idx, time.Now())
 		require.NoError(t, err)
 		assert.False(t, should)
 	})
@@ -1055,7 +1055,7 @@ func TestShouldUpload(t *testing.T) {
 		now := time.Now()
 		be.setUploadTracking(key, now.Add(-2*time.Hour))
 
-		should, err := be.shouldUpload(key, idx, now)
+		should, err := be.shouldUpload(t.Context(), key, idx, now)
 		require.NoError(t, err)
 		assert.False(t, should)
 	})
@@ -1067,7 +1067,7 @@ func TestShouldUpload(t *testing.T) {
 		now := time.Now()
 		be.setUploadTracking(key, now.Add(-5*time.Hour))
 
-		should, err := be.shouldUpload(key, idx, now)
+		should, err := be.shouldUpload(t.Context(), key, idx, now)
 		require.NoError(t, err)
 		assert.True(t, should)
 	})
@@ -1079,7 +1079,7 @@ func TestShouldUpload(t *testing.T) {
 		now := time.Now()
 		be.setUploadTracking(key, now.Add(-2*time.Hour))
 
-		should, err := be.shouldUpload(key, idx, now)
+		should, err := be.shouldUpload(t.Context(), key, idx, now)
 		require.NoError(t, err)
 		assert.False(t, should)
 	})
@@ -1090,7 +1090,37 @@ func TestShouldUpload(t *testing.T) {
 		require.NoError(t, writeSnapshotMutationCount(idx.index, 30))
 		be.setUploadTracking(key, time.Now().Add(-2*time.Minute))
 
-		should, err := be.shouldUpload(key, idx, time.Now())
+		should, err := be.shouldUpload(t.Context(), key, idx, time.Now())
+		require.NoError(t, err)
+		assert.True(t, should)
+	})
+
+	seededBackend := func(t *testing.T, mutations int64) (*bleveBackend, *bleveIndex, time.Time) {
+		t.Helper()
+		store := newHookableStore(t)
+		be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store, MinDocCount: 1, UploadInterval: time.Hour, MinDocChanges: 1000, MaxIndexAge: 240 * time.Hour})
+		idx := newUploadTestIndex(t, be, key, 42)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, mutations))
+		bi, err := getBuildInfo(idx.index)
+		require.NoError(t, err)
+		uploadedAt := time.Now().Add(-2 * time.Hour).UTC()
+		seedBuildSnapshot(t, store, key, bi.BuildVersion, time.Unix(bi.BuildTime, 0), uploadedAt)
+		return be, idx, uploadedAt
+	}
+
+	t.Run("skips untracked index when the store holds a copy of its build", func(t *testing.T) {
+		be, idx, uploadedAt := seededBackend(t, 0)
+
+		should, err := be.shouldUpload(t.Context(), key, idx, time.Now())
+		require.NoError(t, err)
+		assert.False(t, should)
+		requireTrackedAt(t, be, key, uploadedAt)
+	})
+
+	t.Run("uploads untracked index seeded from the store when mutation count is large enough", func(t *testing.T) {
+		be, idx, _ := seededBackend(t, 1000)
+
+		should, err := be.shouldUpload(t.Context(), key, idx, time.Now())
 		require.NoError(t, err)
 		assert.True(t, should)
 	})
@@ -1658,8 +1688,9 @@ func TestBackgroundGlobalIndexBuildAndSnapshotRestore(t *testing.T) {
 				Resources: &resource.TestDocumentBuilderSupplier{GroupsResources: map[string]string{
 					"dashboard.grafana.app": "dashboards", "folder.grafana.app": "folders",
 				}},
-				GlobalIndexEnabled: true,
-				InitMinCount:       4,
+				GlobalIndexEnabled:   true,
+				GlobalIndexBuildWait: 20 * time.Millisecond,
+				InitMinCount:         4,
 			},
 			AccessClient: types.FixedAccessClient(true),
 		})
@@ -1673,19 +1704,21 @@ func TestBackgroundGlobalIndexBuildAndSnapshotRestore(t *testing.T) {
 	paused := &pausedInitialListing{StorageBackend: storage, started: make(chan struct{}), release: release}
 	server := newServer(backend, paused)
 	require.NoError(t, server.Init(ctx))
-	select {
-	case <-paused.started:
-	case <-ctx.Done():
-		t.Fatal("background build did not start")
-	}
 	req := &resourcepb.ResourceSearchRequest{
 		Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
 		Limit:        10,
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
+	// Startup does not build the global index; the first search does, and gets
+	// 503 while it is being built.
 	rsp, err := server.Search(ctx, req)
 	require.NoError(t, err)
 	require.Equal(t, resource.NewServiceUnavailableError("the global search index for this namespace is still being built"), rsp.Error)
+	select {
+	case <-paused.started:
+	case <-ctx.Done():
+		t.Fatal("the first search did not start the build")
+	}
 	close(release)
 	assertSearch := func(server resource.SearchServer) {
 		t.Helper()
@@ -1695,16 +1728,36 @@ func TestBackgroundGlobalIndexBuildAndSnapshotRestore(t *testing.T) {
 		}, 5*time.Second, 10*time.Millisecond)
 	}
 	assertSearch(server)
-	require.Eventually(t, func() bool {
-		snapshots, err := ListIndexSnapshots(ctx, store, key, testLogger)
-		return err == nil && len(snapshots) == 1
-	}, 5*time.Second, 10*time.Millisecond)
+	// A build for a search does not upload; the periodic uploader does.
+	backend.runUploadSnapshots(ctx)
+	snapshots, err := ListIndexSnapshots(ctx, store, key, testLogger)
+	require.NoError(t, err)
+	require.Len(t, snapshots, 1)
 
 	followerStore := newTestKVRemoteIndexStoreOn(t, kvStore, "restorer")
 	followerBackend, metrics := newTestBleveBackend(t, SnapshotOptions{Store: followerStore, MinDocCount: 5, MaxIndexAge: time.Hour})
 	follower := newServer(followerBackend, storage)
 	require.NoError(t, follower.Init(ctx))
 	assertSearch(follower)
+	require.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDownloadAttempts.WithLabelValues(snapshotPolicyTiered, snapshotStatusSuccess)))
+}
+
+// A global index built for a search has no size, but it may be large, so it
+// is restored from a snapshot when one exists.
+func TestGlobalIndexOfUnknownSizeDownloadsASnapshot(t *testing.T) {
+	kvStore := newTestBadgerKV(t)
+	key := resource.GlobalSearchKey("default")
+	docsKey := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	builder, _ := newTestBleveBackend(t, SnapshotOptions{Store: newTestKVRemoteIndexStoreOn(t, kvStore, "builder"), MinDocCount: 5, MaxIndexAge: time.Hour})
+	_, err := builder.BuildIndex(t.Context(), key, 6, "init", indexTestDocs(docsKey, 6, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+
+	restorer, metrics := newTestBleveBackend(t, SnapshotOptions{Store: newTestKVRemoteIndexStoreOn(t, kvStore, "restorer"), MinDocCount: 5, MaxIndexAge: time.Hour})
+	idx, err := restorer.BuildIndex(t.Context(), key, -1, "search", indexTestDocs(docsKey, 6, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+	count, err := idx.DocCount(t.Context(), "", nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(6), count)
 	require.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDownloadAttempts.WithLabelValues(snapshotPolicyTiered, snapshotStatusSuccess)))
 }
 
@@ -1786,7 +1839,7 @@ func TestColdStartReplicasShareOneBuild(t *testing.T) {
 	}
 }
 
-func TestOnDemandGlobalReplicasSkipSnapshotsForUnknownSize(t *testing.T) {
+func TestOnDemandGlobalReplicasDoNotCoordinateForUnknownSize(t *testing.T) {
 	kvStore := newTestBadgerKV(t)
 	firstStore := &hookableStore{inner: newTestKVRemoteIndexStoreOn(t, kvStore, "first")}
 	secondStore := &hookableStore{inner: newTestKVRemoteIndexStoreOn(t, kvStore, "second")}
@@ -1847,8 +1900,10 @@ func TestOnDemandGlobalReplicasSkipSnapshotsForUnknownSize(t *testing.T) {
 	close(release)
 	require.NoError(t, <-firstDone)
 	for _, store := range []*hookableStore{firstStore, secondStore} {
+		// It looks for a snapshot to download, but does not coordinate a build
+		// or upload one, so it never waits for another replica.
 		require.Zero(t, store.lockAcquireCalls.Load())
-		require.Zero(t, store.listKeyCalls.Load())
+		require.NotZero(t, store.listKeyCalls.Load())
 		require.Zero(t, store.uploadCalls.Load())
 	}
 }
