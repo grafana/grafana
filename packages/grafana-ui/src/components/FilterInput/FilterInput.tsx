@@ -1,7 +1,7 @@
 import { forwardRef, useRef, type HTMLProps } from 'react';
 
 import { escapeStringForRegex, unEscapeStringFromRegex } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 
 import { useCombinedRefs } from '../../utils/useCombinedRefs';
 import { Button } from '../Button/Button';
@@ -14,12 +14,26 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'onChange'> {
   onChange: (value: string) => void;
   escapeRegex?: boolean;
   suffix?: InputProps['suffix'];
+  /** Hide the clear button text while retaining its accessible label. */
+  hideClearText?: boolean;
   /** Controls the prefix icon: `search` for querying a wider dataset, `filter` for narrowing an already-visible list. */
   variant?: 'search' | 'filter';
 }
 
 export const FilterInput = forwardRef<HTMLInputElement, Props>(
-  ({ value, width, onChange, escapeRegex = true, suffix: _suffix, variant = 'search', ...restProps }, ref) => {
+  (
+    {
+      value,
+      width,
+      onChange,
+      escapeRegex = true,
+      suffix: _suffix,
+      variant = 'search',
+      hideClearText = false,
+      ...restProps
+    },
+    ref
+  ) => {
     const innerRef = useRef<HTMLInputElement | null>(null);
     const combinedRef = useCombinedRefs<HTMLInputElement>(ref, innerRef);
 
@@ -28,6 +42,7 @@ export const FilterInput = forwardRef<HTMLInputElement, Props>(
         {value !== '' && (
           <Button
             icon="times"
+            aria-label={hideClearText ? t('grafana-ui.filter-input.clear', 'Clear') : undefined}
             fill="text"
             size="sm"
             onClick={(e) => {
@@ -36,7 +51,7 @@ export const FilterInput = forwardRef<HTMLInputElement, Props>(
               e.stopPropagation();
             }}
           >
-            <Trans i18nKey="grafana-ui.filter-input.clear">Clear</Trans>
+            {!hideClearText && <Trans i18nKey="grafana-ui.filter-input.clear">Clear</Trans>}
           </Button>
         )}
         {_suffix}

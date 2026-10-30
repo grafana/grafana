@@ -300,7 +300,7 @@ func TestResetPolicyTree(t *testing.T) {
 		v1.TemplateUID(v1.TemplateKindGrafana, "test"): v1.NewTemplateGroup("", "test", "test", v1.TemplateKindGrafana, models.ProvenanceNone),
 	}
 	currentRevision.Config.TimeIntervals = map[v1.ResourceUID]v1.TimeInterval{
-		v1.TimeIntervalUID("test"): v1.NewTimeInterval("test", nil, models.ProvenanceNone),
+		v1.TimeIntervalUID("test"): v1.NewTimeInterval(v1.TimeIntervalUID("test"), "test", nil, models.ProvenanceNone),
 	}
 	currentRevision.Config.Receivers = v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 		{
@@ -561,7 +561,7 @@ func getDefaultConfigRevision() legacy_storage.ConfigRevision {
 				},
 			}),
 			TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
-				v1.TimeIntervalUID("test-mute-interval"): v1.NewTimeInterval("test-mute-interval", nil, models.ProvenanceNone),
+				v1.TimeIntervalUID("test-mute-interval"): v1.NewTimeInterval(v1.TimeIntervalUID("test-mute-interval"), "test-mute-interval", nil, models.ProvenanceNone),
 			},
 		},
 		ConcurrencyToken: util.GenerateShortUID(),

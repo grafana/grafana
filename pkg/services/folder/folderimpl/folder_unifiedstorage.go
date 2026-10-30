@@ -536,6 +536,7 @@ func (s *Service) deleteVariablesInFolders(ctx context.Context, orgID int64, fol
 				},
 			},
 		},
+		Fields:       []string{resource.SEARCH_FIELD_NAME},
 		Limit:        folderSearchLimit,
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
@@ -629,6 +630,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 					},
 				},
 			},
+			Fields:       []string{resource.SEARCH_FIELD_NAME},
 			Limit:        folderSearchLimit,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
@@ -641,10 +643,9 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 		dashboardUIDs := make([]string, len(hits.Hits))
 		for i, dashboard := range hits.Hits {
 			dashboardUIDs[i] = dashboard.Name
-			err = s.dashboardK8sClient.Delete(ctx, dashboard.Name, cmd.OrgID, metav1.DeleteOptions{})
-			if err != nil {
-				return folder.ErrInternal.Errorf("failed to delete child dashboard: %w", err)
-			}
+		}
+		if err := s.deleteDashboards(ctx, cmd.OrgID, dashboardUIDs); err != nil {
+			return folder.ErrInternal.Errorf("failed to delete child dashboard: %w", err)
 		}
 		// Delete all public dashboards in the folders. The requester is attached to ctx here since
 		// a context-dependent LegacyDatabaseProvider can only resolve the target database from it.

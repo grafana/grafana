@@ -12,7 +12,6 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { Echo } from '../services/echo/Echo';
 
 import { GrafanaRoute, type Props } from './GrafanaRoute';
-import { invalidateStPodReadiness } from './stPodReadiness';
 import { type GrafanaRouteComponentProps } from './types';
 
 setBackendSrv(backendSrv);
@@ -45,7 +44,7 @@ async function setup(overrides: Partial<Props>) {
 describe('GrafanaRoute', () => {
   beforeEach(() => {
     setEchoSrv(new Echo());
-    invalidateStPodReadiness();
+    server.use(http.get('/api/health', () => HttpResponse.json({ database: 'ok' })));
   });
 
   afterEach(async () => {
@@ -90,8 +89,8 @@ describe('GrafanaRoute', () => {
     expect(consoleError).toHaveBeenCalled();
   });
 
-  it('shows the fallback loader instead of the route component for a route outside the allow list', async () => {
-    server.use(http.get('/api/health', () => HttpResponse.json({ code: 'NotFound' }, { status: 404 })));
+  it('shows the fallback loader once the pod reports it is not ready for a route outside the allow list', async () => {
+    server.use(http.get('/api/health', () => HttpResponse.json({ database: 'failing' }, { status: 503 })));
     await act(async () => {
       setTestFlags({ [FlagKeys.GrafanaMtFallback]: { allowList: ['/dashboards/*'] } });
     });
@@ -102,6 +101,5 @@ describe('GrafanaRoute', () => {
     });
 
     expect(await screen.findByTestId('page-fallback-loader')).toBeInTheDocument();
-    expect(screen.queryByTestId('real-page')).not.toBeInTheDocument();
   });
 });

@@ -147,6 +147,10 @@ const (
 	// Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned
 	FlagKubernetesFolderCascadeDelete = "kubernetesFolderCascadeDelete"
 
+	// FlagFolderAsyncCascadeDeleteThroughController
+	// Enable finalizer-driven asynchronous cascade deletion of folder.grafana.app folders: deleting a folder marks it terminating and a controller removes its descendants, reporting progress in status.cascadeDelete
+	FlagFolderAsyncCascadeDeleteThroughController = "folder.asyncCascadeDeleteThroughController"
+
 	// FlagKubernetesFolderCountsLegacyStorage
 	// Enable folder.grafana.app /counts joining a stack's legacy database that lives outside unified storage. Requires --database.servers to be configured for the standalone folder apiserver; only enable once that connection is verified reachable, since the apiserver fails to start otherwise
 	FlagKubernetesFolderCountsLegacyStorage = "kubernetesFolderCountsLegacyStorage"
@@ -211,10 +215,6 @@ const (
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
 
-	// FlagAlertmanagerRemoteSecondary
-	// Enable Grafana to sync configuration and state with a remote Alertmanager.
-	FlagAlertmanagerRemoteSecondary = "alertmanagerRemoteSecondary"
-
 	// FlagAlertingProvenanceLockWrites
 	// Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL
 	FlagAlertingProvenanceLockWrites = "alertingProvenanceLockWrites"
@@ -238,6 +238,10 @@ const (
 	// FlagDashboardNotebooks
 	// Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
 	FlagDashboardNotebooks = "dashboard.notebooks"
+
+	// FlagGrafanaSavedDashboardViews
+	// Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state
+	FlagGrafanaSavedDashboardViews = "grafana.savedDashboardViews"
 
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
@@ -295,10 +299,6 @@ const (
 	// Enable CAP token based authentication in grafana's embedded kube-aggregator
 	FlagKubernetesAggregatorCapTokenAuth = "kubernetesAggregatorCapTokenAuth"
 
-	// FlagGroupByVariable
-	// Enable groupBy variable support in scenes dashboards
-	FlagGroupByVariable = "groupByVariable"
-
 	// FlagScopeFilters
 	// Enables the use of scope filters in Grafana
 	FlagScopeFilters = "scopeFilters"
@@ -326,10 +326,6 @@ const (
 	// FlagGrafanaManagedRecordingRules
 	// Enables Grafana-managed recording rules.
 	FlagGrafanaManagedRecordingRules = "grafanaManagedRecordingRules"
-
-	// FlagQueryLibrary
-	// Enables Saved queries (query library) feature
-	FlagQueryLibrary = "queryLibrary"
 
 	// FlagGrafanaSavedQueriesSearch
 	// Enables unified search for saved queries
@@ -390,6 +386,10 @@ const (
 	// FlagAuthZGRPCServer
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
+
+	// FlagAuthzLegacyUserPermissionsShadow
+	// Compare local permissions with embedded AuthZ in the background when authz.legacyUserPermissions is enabled.
+	FlagAuthzLegacyUserPermissionsShadow = "authz.legacyUserPermissionsShadow"
 
 	// FlagAuthzLegacyUserPermissions
 	// Load legacy Access Control permissions through embedded AuthZ.
@@ -507,17 +507,9 @@ const (
 	// Guard embedded Team LBAC rules against external datasource Kubernetes API writes
 	FlagDatasourcesTeamHttpHeadersWriteGuard = "datasources.teamHttpHeadersWriteGuard"
 
-	// FlagTeamLBACApiReadFromAppPlatform
-	// Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
-	FlagTeamLBACApiReadFromAppPlatform = "teamLBACApiReadFromAppPlatform"
-
 	// FlagTeamlbacUsageFromAppPlatform
 	// Collect Team LBAC usage through the IAM API instead of legacy datasource JSON
 	FlagTeamlbacUsageFromAppPlatform = "teamlbac.usageFromAppPlatform"
-
-	// FlagTeamLBACApiWriteFromAppPlatform
-	// Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server
-	FlagTeamLBACApiWriteFromAppPlatform = "teamLBACApiWriteFromAppPlatform"
 
 	// FlagElasticsearchImprovedParsing
 	// Enables less memory intensive Elasticsearch result parsing
@@ -642,10 +634,6 @@ const (
 	// Enables the notification history feature
 	FlagAlertingNotificationHistory = "alertingNotificationHistory"
 
-	// FlagAlertmanagerRemoteSecondaryWithRemoteState
-	// Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
-	FlagAlertmanagerRemoteSecondaryWithRemoteState = "alertmanagerRemoteSecondaryWithRemoteState"
-
 	// FlagNewClickhouseConfigPageDesign
 	// Enables new design for the Clickhouse data source configuration page
 	FlagNewClickhouseConfigPageDesign = "newClickhouseConfigPageDesign"
@@ -714,6 +702,10 @@ const (
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
 
+	// FlagGrafanaRestrictWatchToServiceIdentities
+	// Restrict API watches to service accounts, service identities, and privileged loopback clients
+	FlagGrafanaRestrictWatchToServiceIdentities = "grafana.restrictWatchToServiceIdentities"
+
 	// FlagGrafanaPublishLegacySQLEvents
 	// Publish watch events when values are saved to legacy SQL tables
 	FlagGrafanaPublishLegacySQLEvents = "grafana.publishLegacySQLEvents"
@@ -733,6 +725,10 @@ const (
 	// FlagGrafanaDashboardVariablesMigration
 	// Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables
 	FlagGrafanaDashboardVariablesMigration = "grafana.dashboardVariablesMigration"
+
+	// FlagGrafanaDashboardPreferences
+	// Enables org, folder and user preferences for new dashboards and panels (DashboardPreferences in dashboard.grafana.app)
+	FlagGrafanaDashboardPreferences = "grafana.dashboardPreferences"
 
 	// FlagSecretsManagementAppPlatformAwsKeeper
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
@@ -930,6 +926,10 @@ const (
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"
 
+	// FlagSearchPerResourceFolderTree
+	// Allow recursive folder filters in per-resource search APIs
+	FlagSearchPerResourceFolderTree = "search.perResourceFolderTree"
+
 	// FlagAlertingHybridSearch
 	// Enables hybrid (lexical and semantic) search for alert rules in unified storage
 	FlagAlertingHybridSearch = "alerting.hybridSearch"
@@ -1002,10 +1002,6 @@ const (
 	// Nest app plugin navigation items in the mega menu based on their URL path hierarchy
 	FlagGrafanaPluginPathNesting = "grafana.pluginPathNesting"
 
-	// FlagGrafanaRspackBuild
-	// Switches the backend to load frontend assets built with rspack instead of webpack
-	FlagGrafanaRspackBuild = "grafana.rspackBuild"
-
 	// FlagPluginsForceTls13
 	// Forces the plugin HTTP client to use TLS 1.3 - if the plugin is using the SDK client
 	FlagPluginsForceTls13 = "pluginsForceTls13"
@@ -1037,4 +1033,12 @@ const (
 	// FlagDatasourcesGatewayAuditPolicy
 	// Enable support for the query gateway audit policies
 	FlagDatasourcesGatewayAuditPolicy = "datasources.gatewayAuditPolicy"
+
+	// FlagDashboardsDisablePublicDashboards
+	// Disables public dashboards for the stack
+	FlagDashboardsDisablePublicDashboards = "dashboards.disablePublicDashboards"
+
+	// FlagFoldersParallelDashboardDeleteConcurrency
+	// Maximum number of dashboard deletes in flight per folder deletion. 1 or less deletes the dashboards sequentially
+	FlagFoldersParallelDashboardDeleteConcurrency = "folders.parallelDashboardDeleteConcurrency"
 )

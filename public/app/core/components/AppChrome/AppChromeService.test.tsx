@@ -69,6 +69,12 @@ describe('AppChromeService', () => {
       pageNav: { text: 'test', url: 'A', children: [{ text: 'child', active: true }] },
     });
     expect(stateChanges).toBe(4);
+    // A breadcrumb badge (highlightText) appearing or going away should update state
+    chromeService.update({
+      sectionNav: { node: { text: 'hello' }, main: { text: '' } },
+      pageNav: { text: 'test', url: 'A', highlightText: 'Draft', children: [{ text: 'child', active: true }] },
+    });
+    expect(stateChanges).toBe(5);
   });
 
   describe('getPageTitle', () => {

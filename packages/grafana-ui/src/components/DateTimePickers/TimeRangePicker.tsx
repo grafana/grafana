@@ -101,7 +101,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     quickRanges,
     hideQuickRanges,
     widthOverride,
-    isOnCanvas,
+    isOnCanvas = true,
     onToolbarTimePickerClick,
     weekStart,
     initialIsSynced,
@@ -147,11 +147,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     strategy: 'fixed',
     // a transform would misplace fixed children, like the time zone Select menu.
     transform: false,
-    middleware: [
-      // gap of 16% of the reference height
-      offset(({ rects }) => ({ mainAxis: rects.reference.height * 0.16 })),
-      ...getPositioningMiddleware(placement),
-    ],
+    middleware: [offset(4), ...getPositioningMiddleware(placement)],
     whileElementsMounted: autoUpdate,
   });
   const setOverlayRef = useCallback(
