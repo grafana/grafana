@@ -26,8 +26,12 @@ export function getRulePermissions(rule: Rule | undefined): RulePermissions {
     return { canEdit: false, canPause: false, canDelete: false, canDuplicate: false, isLoading: true };
   }
 
-  const canWrite = getAnnotation(rule, K8sAnnotations.AccessWrite) === 'true';
-  const canDelete = getAnnotation(rule, K8sAnnotations.AccessDelete) === 'true';
+  // Default to true when the annotation is absent — the backend has not yet implemented
+  // these annotations universally. Once it does, explicit 'false' will correctly deny.
+  const writeAnnotation = getAnnotation(rule, K8sAnnotations.AccessWrite);
+  const deleteAnnotation = getAnnotation(rule, K8sAnnotations.AccessDelete);
+  const canWrite = writeAnnotation === undefined || writeAnnotation === 'true';
+  const canDelete = deleteAnnotation === undefined || deleteAnnotation === 'true';
   const isProvisioned = isK8sEntityProvisioned(rule);
   const isPlugin = !!getRulePluginOrigin({ labels: rule.spec?.labels });
   const isManaged = !!rule.metadata?.annotations?.['grafana.app/managedBy'];
