@@ -51,7 +51,10 @@ import { getDashboardSceneProfiler } from 'app/features/dashboard/services/Dashb
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
-import { scrollToRow } from 'app/features/dashboard-scene/scene/layout-rows/scrollToRow';
+import {
+  keepRowInViewWhileLayoutSettles,
+  scrollToRow,
+} from 'app/features/dashboard-scene/scene/layout-rows/scrollToRow';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
 import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
@@ -416,6 +419,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   /** Row slug path from the url that did not match any row yet (e.g. a repeated row not created yet) */
   private _pendingRowScroll?: string;
   private _pendingRowScrollSub?: Unsubscribable;
+  /**
+   * Not tied to activation: url sync runs before the scene activates, and StrictMode deactivates and
+   * re-activates it in development. Following stops by itself once the row leaves the page.
+   */
+  private _stopFollowingRow?: () => void;
 
   /**
    * What initiated the current edit session, e.g. the assistant building a dashboard for the user
@@ -2168,8 +2176,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public scrollToRow(drow: string) {
     locationService.partial({ drow: null }, true);
+    this._stopFollowingRow?.();
 
-    if (scrollToRow(drow, this.state.body)) {
+    if (this._scrollToRowAndFollow(drow)) {
       this._pendingRowScroll = undefined;
       return;
     }
@@ -2180,10 +2189,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // NewSceneObjectAddedEvent when done, so keep the slug pending and retry on that event.
     this._pendingRowScroll = drow;
     this._pendingRowScrollSub ??= this.subscribeToEvent(NewSceneObjectAddedEvent, () => {
-      if (this._pendingRowScroll && scrollToRow(this._pendingRowScroll, this.state.body)) {
+      if (this._pendingRowScroll && this._scrollToRowAndFollow(this._pendingRowScroll)) {
         this._pendingRowScroll = undefined;
       }
     });
+  }
+
+  private _scrollToRowAndFollow(drow: string): boolean {
+    const row = scrollToRow(drow, this.state.body);
+    if (!row) {
+      return false;
+    }
+
+    this._stopFollowingRow = keepRowInViewWhileLayoutSettles(row);
+    return true;
   }
 
   getSaveModel(): Dashboard | DashboardV2Spec {

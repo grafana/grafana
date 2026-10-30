@@ -318,6 +318,176 @@ describe('DashboardSceneUrlSync', () => {
       expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
       expect(scrollIntoViewSpy.mock.instances[0]).toBe(cloneC.containerRef.current);
     });
+
+    describe('while the layout settles after load', () => {
+      const originalResizeObserver = global.ResizeObserver;
+      let resizeObservers: ControlledResizeObserver[];
+
+      // Lets tests decide when layouts resize, unlike the global mock that reports once per observe()
+      class ControlledResizeObserver {
+        public observed: Element[] = [];
+
+        public constructor(public callback: ResizeObserverCallback) {
+          resizeObservers.push(this);
+        }
+
+        public observe(target: Element) {
+          this.observed.push(target);
+        }
+
+        public unobserve() {}
+
+        public disconnect() {
+          this.observed = [];
+        }
+      }
+
+      function resizeLayout() {
+        for (const observer of resizeObservers) {
+          if (observer.observed.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            observer.callback([], observer as unknown as ResizeObserver);
+          }
+        }
+      }
+
+      beforeEach(() => {
+        jest.useFakeTimers();
+        resizeObservers = [];
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        global.ResizeObserver = ControlledResizeObserver as unknown as typeof ResizeObserver;
+      });
+
+      afterEach(() => {
+        global.ResizeObserver = originalResizeObserver;
+        jest.useRealTimers();
+      });
+
+      it('scrolls the row back into view when the layout above it renders', () => {
+        const { scene, element } = buildTestSceneWithRow('Metrics');
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+
+        resizeLayout();
+
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
+        expect(scrollIntoViewSpy.mock.instances[1]).toBe(element);
+      });
+
+      it('watches the ancestors of the row, since content above it grows those', () => {
+        const { scene, element } = buildTestSceneWithRow('Metrics');
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+
+        expect(resizeObservers[0].observed).toEqual([element, document.body, document.documentElement]);
+      });
+
+      it('waits for the row to render before following it', () => {
+        const row = new RowItem({ title: 'Metrics' });
+        const scene = new DashboardScene({
+          title: 'hello',
+          uid: 'dash-1',
+          body: new RowsLayoutManager({ rows: [row] }),
+        });
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+        expect(resizeObservers).toHaveLength(0);
+
+        const element = document.createElement('div');
+        document.body.appendChild(element);
+        row.containerRef.current = element;
+        jest.advanceTimersByTime(16);
+        expect(resizeObservers[0].observed[0]).toBe(element);
+
+        scrollIntoViewSpy.mockClear();
+        resizeLayout();
+
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+        expect(scrollIntoViewSpy.mock.instances[0]).toBe(element);
+      });
+
+      it('stops following the row once the layout has settled', () => {
+        const { scene } = buildTestSceneWithRow('Metrics');
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+        resizeLayout();
+        jest.advanceTimersByTime(1000);
+        resizeLayout();
+
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
+      });
+
+      it('keeps following the row while the layout is still resizing', () => {
+        const { scene } = buildTestSceneWithRow('Metrics');
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+        for (let i = 0; i < 3; i++) {
+          resizeLayout();
+          jest.advanceTimersByTime(900);
+        }
+        resizeLayout();
+
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(5);
+      });
+
+      it('keeps following the row when the dashboard is deactivated and activated again', () => {
+        // StrictMode does this in development right after url sync handled the row link
+        const { scene } = buildTestSceneWithRow('Metrics');
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+        const deactivate = scene.activate();
+        deactivate();
+        scene.activate();
+        resizeLayout();
+
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
+      });
+
+      it('stops following the row once it is removed from the page', () => {
+        const { scene, element } = buildTestSceneWithRow('Metrics');
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+        element.remove();
+        resizeLayout();
+
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+        expect(resizeObservers[0].observed).toEqual([]);
+      });
+
+      it('stops following the row once the user scrolls', () => {
+        const { scene } = buildTestSceneWithRow('Metrics');
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+        window.dispatchEvent(new WheelEvent('wheel'));
+        resizeLayout();
+
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+      });
+
+      it('stops following the previous row when a new row link arrives', () => {
+        const first = new RowItem({ title: 'First' });
+        const second = new RowItem({ title: 'Second' });
+        const scene = new DashboardScene({
+          title: 'hello',
+          uid: 'dash-1',
+          body: new RowsLayoutManager({ rows: [first, second] }),
+        });
+        for (const row of [first, second]) {
+          const element = document.createElement('div');
+          document.body.appendChild(element);
+          row.containerRef.current = element;
+        }
+
+        scene.urlSync?.updateFromUrl({ drow: 'First' });
+        scene.urlSync?.updateFromUrl({ drow: 'Second' });
+        scrollIntoViewSpy.mockClear();
+        resizeLayout();
+
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+        expect(scrollIntoViewSpy.mock.instances[0]).toBe(second.containerRef.current);
+      });
+    });
   });
 
   describe('entering edit mode', () => {
