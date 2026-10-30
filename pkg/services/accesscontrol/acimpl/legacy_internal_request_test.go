@@ -84,18 +84,18 @@ func TestBuildLegacyCheckInternalIdentity(t *testing.T) {
 			req, err := ac.buildLegacyCheckRequest(tc.requester, evaluator, false, tc.mapper)
 			if tc.wantError {
 				require.Error(t, err)
-				require.Empty(t, req)
+				require.Equal(t, legacyclient.LegacyCheckRequest{}, req)
 
 				return
 			}
 
 			require.NoError(t, err)
-			require.Equal(t, tc.namespace, req.Namespace)
-			require.Equal(t, tc.profile, req.InternalIdentity.Profile)
-			require.Empty(t, req.Subject)
-			require.Nil(t, req.GlobalEvaluation)
-			require.True(t, req.SkipScopeResolution)
-			require.Equal(t, accesscontrol.EvalPermission("dashboards:create", "folders:uid:target"), req.Evaluator)
+			require.Equal(t, legacyclient.LegacyCheckRequest{
+				Namespace:           tc.namespace,
+				InternalIdentity:    &legacyclient.LegacyInternalIdentity{Profile: tc.profile},
+				Evaluator:           accesscontrol.EvalPermission("dashboards:create", "folders:uid:target"),
+				SkipScopeResolution: true,
+			}, req)
 		})
 	}
 }
@@ -110,6 +110,10 @@ func TestBuildLegacyCheckDoesNotInferInternalIdentity(t *testing.T) {
 
 	req, err := ProvideAccessControlTest().buildLegacyCheckRequest(requester, accesscontrol.EvalPermission("dashboards:create"), false, types.OrgNamespaceFormatter)
 	require.NoError(t, err)
-	require.Nil(t, req.InternalIdentity)
-	require.Equal(t, types.NewTypeID(types.TypeAccessPolicy, identity.InternalIdentityService.String()), req.Subject)
+	require.Equal(t, legacyclient.LegacyCheckRequest{
+		Namespace: types.OrgNamespaceFormatter(legacyInternalRequestTestOrgID),
+		Subject:   types.NewTypeID(types.TypeAccessPolicy, identity.InternalIdentityService.String()),
+		Evaluator: accesscontrol.EvalPermission("dashboards:create"),
+		Teams:     []string{},
+	}, req)
 }
