@@ -34,10 +34,10 @@ type permissionListResult struct {
 	List  *authzv1.ListResponse
 }
 
-// listUserPermissions resolves each principal once over the datastore interface,
-// then evaluates the grant graph with OpenFGA. Keeping evaluation local
-// avoids repeating remote membership and grant reads for every legacy action.
-func (s *Server) listUserPermissions(ctx context.Context, req *authzv1.GetUserPermissionsRequest) ([]permissionListResult, error) {
+// evaluateUserPermissionSnapshot fetches each principal once to avoid repeated
+// remote grant reads, then evaluates a request-local snapshot with OpenFGA.
+// The per-action list results are formatted into legacy scopes by the caller.
+func (s *Server) evaluateUserPermissionSnapshot(ctx context.Context, req *authzv1.GetUserPermissionsRequest) ([]permissionListResult, error) {
 	// Cancel remote streams even when the tuple limit ends iteration early.
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()

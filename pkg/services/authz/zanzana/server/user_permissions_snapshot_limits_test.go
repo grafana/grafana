@@ -53,7 +53,7 @@ func TestPermissionSnapshotEarlyExitCancelsPrincipalStream(t *testing.T) {
 			store := &permissionPrincipalTestStore{OpenFGADatastore: ds, malformed: malformed}
 			srv.store = store
 			ctx := newContextWithNamespace()
-			results, err := srv.listUserPermissions(ctx, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice"})
+			results, err := srv.evaluateUserPermissionSnapshot(ctx, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice"})
 			require.Error(t, err)
 			require.Empty(t, results)
 			if !malformed {

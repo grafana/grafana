@@ -57,7 +57,7 @@ func (s *Server) GetUserPermissions(req *authzv1.GetUserPermissionsRequest, stre
 	}
 	defer release()
 
-	results, err := s.listUserPermissions(ctx, req)
+	results, err := s.evaluateUserPermissionSnapshot(ctx, req)
 	if err != nil {
 		return err
 	}

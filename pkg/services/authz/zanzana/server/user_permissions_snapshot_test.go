@@ -242,7 +242,7 @@ func requireSnapshotParity(t *testing.T, srv *Server, req *authzv1.GetUserPermis
 	ctx := newContextWithNamespace()
 	want, err := baselineGrantLists(t, srv, req)
 	require.NoError(t, err)
-	got, err := srv.listUserPermissions(ctx, req)
+	got, err := srv.evaluateUserPermissionSnapshot(ctx, req)
 	require.NoError(t, err)
 	require.Len(t, got, len(common.SupportedActions()))
 	require.Len(t, normalizeSnapshotLists(got), len(common.SupportedActions()), "every supported action, including aliases, must be returned once")
@@ -400,21 +400,21 @@ func TestUserPermissionsSnapshotReturnsNoPartialResults(t *testing.T) {
 		srv, _, _ := newSnapshotTestServer(t, snapshotParityTuples())
 		ctx, cancel := context.WithCancel(newContextWithNamespace())
 		cancel()
-		results, err := srv.listUserPermissions(ctx, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
+		results, err := srv.evaluateUserPermissionSnapshot(ctx, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
 		require.Error(t, err)
 		require.Empty(t, results)
 	})
 	t.Run("datastore failure", func(t *testing.T) {
 		srv, ds, _ := newSnapshotTestServer(t, snapshotParityTuples())
 		ds.failRead = errors.New("grant datastore unavailable")
-		results, err := srv.listUserPermissions(newContextWithNamespace(), &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
+		results, err := srv.evaluateUserPermissionSnapshot(newContextWithNamespace(), &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
 		require.ErrorContains(t, err, "grant datastore unavailable")
 		require.Empty(t, results)
 	})
 	t.Run("stream fails after returning a grant", func(t *testing.T) {
 		srv, ds, _ := newSnapshotTestServer(t, snapshotParityTuples())
 		ds.failIterator = errors.New("grant stream interrupted")
-		results, err := srv.listUserPermissions(newContextWithNamespace(), &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
+		results, err := srv.evaluateUserPermissionSnapshot(newContextWithNamespace(), &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
 		require.ErrorContains(t, err, "grant stream interrupted")
 		require.Empty(t, results)
 	})
@@ -425,7 +425,7 @@ func TestUserPermissionsSnapshotReturnsNoPartialResults(t *testing.T) {
 		model = proto.Clone(model).(*openfgav1.AuthorizationModel)
 		model.TypeDefinitions = append(model.TypeDefinitions, &openfgav1.TypeDefinition{Type: "future-type"})
 		ds.modelOverride = model
-		results, err := srv.listUserPermissions(newContextWithNamespace(), &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
+		results, err := srv.evaluateUserPermissionSnapshot(newContextWithNamespace(), &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
 		require.Equal(t, codes.FailedPrecondition, status.Code(err))
 		require.Empty(t, results)
 	})
@@ -453,7 +453,7 @@ func TestUserPermissionsSnapshotReducesDatastoreOperations(t *testing.T) {
 	require.NoError(t, err)
 	baselineCounts, baselineTotal := ds.counts()
 	ds.reset()
-	got, err := srv.listUserPermissions(ctx, req)
+	got, err := srv.evaluateUserPermissionSnapshot(ctx, req)
 	require.NoError(t, err)
 	snapshotCounts, snapshotTotal := ds.counts()
 	require.Equal(t, normalizeSnapshotLists(want), normalizeSnapshotLists(got))
@@ -479,7 +479,7 @@ func BenchmarkUserPermissionsSnapshotDelayedDatastore(b *testing.B) {
 					if path == "baseline" {
 						_, err = baselineSnapshotLists(ctx, srv, req)
 					} else {
-						_, err = srv.listUserPermissions(ctx, req)
+						_, err = srv.evaluateUserPermissionSnapshot(ctx, req)
 					}
 					if err != nil {
 						b.Fatal(err)
