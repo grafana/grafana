@@ -25,6 +25,8 @@ type watchCache[T any] struct {
 	initialFloor   int64
 	evictedThrough map[GroupResource]int64
 	identity       eventIdentity[T]
+	maxBytes       int64
+	sizeBytes      int64
 }
 
 func newWatchCache[T any](size int, identity eventIdentity[T]) watchCache[T] {
@@ -32,6 +34,7 @@ func newWatchCache[T any](size int, identity eventIdentity[T]) watchCache[T] {
 		events:         newRingBuffer[T](size),
 		evictedThrough: make(map[GroupResource]int64),
 		identity:       identity,
+		maxBytes:       defaultCacheMaxBytes,
 	}
 }
 
@@ -41,17 +44,39 @@ func (c *watchCache[T]) seed(seed cacheSeed[T]) error {
 	}
 	c.initialFloor = seed.initialCacheFloor
 	for _, item := range seed.items {
-		c.events.add(item)
+		c.add(item)
 	}
 	return nil
 }
 
-func (c *watchCache[T]) add(item T) {
-	evicted, ok := c.events.add(item)
-	if ok && c.identity != nil {
-		gr, rv := c.identity(evicted)
-		c.evictedThrough[gr] = rv
+func cacheItemSize[T any](item T) int64 {
+	if sized, ok := any(item).(interface{ sizeBytes() int64 }); ok {
+		return sized.sizeBytes()
 	}
+	return 0
+}
+
+func (c *watchCache[T]) recordEviction(item T) {
+	if c.identity != nil {
+		gr, rv := c.identity(item)
+		c.evictedThrough[gr] = max(c.evictedThrough[gr], rv)
+	}
+}
+
+func (c *watchCache[T]) add(item T) {
+	size := cacheItemSize(item)
+	for c.events.len > 0 && (c.events.len == len(c.events.buf) || size > c.maxBytes-c.sizeBytes) {
+		evicted := c.events.removeOldest()
+		c.sizeBytes -= cacheItemSize(evicted)
+		c.recordEviction(evicted)
+	}
+	if size > c.maxBytes {
+		// An uncached event still advances the resume floor to prevent gaps.
+		c.recordEviction(item)
+		return
+	}
+	c.events.add(item)
+	c.sizeBytes += size
 }
 
 func (c *watchCache[T]) validateResume(resume watchResume) error {
@@ -104,6 +129,15 @@ func (r *ringBuffer[T]) add(item T) (evicted T, ok bool) {
 		r.zero = (r.zero + 1) % len(r.buf)
 	}
 	return evicted, ok
+}
+
+func (r *ringBuffer[T]) removeOldest() T {
+	item := r.buf[r.zero]
+	var zero T
+	r.buf[r.zero] = zero
+	r.zero = (r.zero + 1) % len(r.buf)
+	r.len--
+	return item
 }
 
 // readInto sends all cached items to dst without blocking. Returns true if all
