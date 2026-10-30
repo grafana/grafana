@@ -285,7 +285,7 @@ func TestSubProxyREST_RouteAuthorization(t *testing.T) {
 			checks := 0
 			b.accessClient = proxyAccessClient{check: func(ctx context.Context, who authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
 				checks++
-				require.Equal(t, authlib.CheckRequest{Namespace: "stacks-11", Group: "test.datasource.grafana.app", Resource: "datasources", Name: "ds-1", Verb: "datasources:query"}, req)
+				require.Equal(t, authlib.CheckRequest{Namespace: "stacks-11", Group: "test.datasource.grafana.app", Resource: "datasources", Name: "ds-1", Subresource: "query", Verb: "create"}, req)
 				return authlib.CheckResponse{Allowed: tc.allowed}, tc.err
 			}}
 			resolved := 0

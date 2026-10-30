@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -45,29 +44,33 @@ func TestReconcileRecoversFromBackendPanic(t *testing.T) {
 	require.True(t, router.KnownGroup("grafana-example-app"))
 }
 
-// The router gradually takes over groups from the embedded API server, so in
-// middleware mode a group it serves replaces the embedded server's, core
-// groups included.
+// In middleware mode the router serves the whole /apis tree, the embedded API
+// server's groups included, and a group it serves itself replaces the
+// embedded server's.
 func TestMiddlewareReplacesEmbeddedGroups(t *testing.T) {
 	served := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) })
 	loader := &mutableLoader{backends: []Backend{
 		&fakeBackend{group: metav1.APIGroup{Name: "playlist.grafana.app"}, key: "1", handler: served},
 	}}
-	svc, err := ProvideService(setting.NewCfg(), featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader, prometheus.NewRegistry())
+	svc, err := provideTestService(setting.NewCfg(), featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader)
 	require.NoError(t, err)
 	require.True(t, svc.middleware)
+	embedded := &fakeEmbeddedAPIServer{groups: []string{"dashboard.grafana.app", "playlist.grafana.app"}, status: http.StatusTeapot}
+	svc.SetUpstream(embedded)
 	require.NoError(t, svc.router.reconcile(t.Context()))
 
-	embedded := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusInternalServerError) })
 	serve := func(target string) int {
 		recorder := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, target, nil)
-		req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{}))
-		svc.HandleFunc(recorder, req, embedded)
+		req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{Namespace: "*"}))
+		svc.HandleFunc(recorder, req, next)
 		return recorder.Code
 	}
 	require.Equal(t, http.StatusNoContent, serve("/apis/playlist.grafana.app/v0alpha1/namespaces/default/playlists"))
 	require.Equal(t, http.StatusTeapot, serve("/apis/dashboard.grafana.app/v1/namespaces/default/dashboards"))
+	require.Equal(t, http.StatusNotFound, serve("/apis/unknown.grafana.app/v1/namespaces/default/things"))
+	require.Equal(t, int32(1), embedded.served.Load(), "only the embedded server's own group reaches it")
 }
 
 func TestNewPluginBackendRejectsInvalidManifestGroups(t *testing.T) {

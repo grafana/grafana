@@ -12,6 +12,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -1153,6 +1154,129 @@ func TestSqlPruneHistoryRequest_Validate(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+type recordingPublisher struct {
+	err      error
+	subjects []string
+	payloads [][]byte
+}
+
+func (p *recordingPublisher) Enabled() bool { return true }
+
+func (p *recordingPublisher) Publish(ctx context.Context, subject string, data []byte) error {
+	// Like the NATS publisher, reject a cancelled context.
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	p.subjects = append(p.subjects, subject)
+	p.payloads = append(p.payloads, data)
+	return p.err
+}
+
+func TestBackend_publishesWatchNotifications(t *testing.T) {
+	t.Parallel()
+	meta, err := utils.MetaAccessor(&unstructured.Unstructured{
+		Object: map[string]any{},
+	})
+	require.NoError(t, err)
+	meta.SetFolder("folderuid")
+
+	setup := func(t *testing.T, pub *recordingPublisher) (testBackend, context.Context) {
+		b, ctx := setupBackendTest(t)
+		b.watchPublisher = resource.NewWatchNotificationPublisher(pub, nil, b.log)
+		return b, ctx
+	}
+
+	tests := []struct {
+		name     string
+		typ      resourcepb.WatchEvent_Type
+		stmt     string
+		write    func(b testBackend, ctx context.Context, e resource.WriteEvent) (int64, error)
+		wantType resourcepb.WatchNotification_Type
+	}{
+		{"create", resourcepb.WatchEvent_ADDED, "insert resource", func(b testBackend, ctx context.Context, e resource.WriteEvent) (int64, error) {
+			return b.create(ctx, e)
+		}, resourcepb.WatchNotification_ADDED},
+		{"update", resourcepb.WatchEvent_MODIFIED, "update resource", func(b testBackend, ctx context.Context, e resource.WriteEvent) (int64, error) {
+			return b.update(ctx, e)
+		}, resourcepb.WatchNotification_MODIFIED},
+		{"delete", resourcepb.WatchEvent_DELETED, "delete resource", func(b testBackend, ctx context.Context, e resource.WriteEvent) (int64, error) {
+			return b.delete(ctx, e)
+		}, resourcepb.WatchNotification_DELETED},
+	}
+	t.Run("publishes when the request is cancelled after commit", func(t *testing.T) {
+		t.Parallel()
+		pub := &recordingPublisher{}
+		b, _ := setup(t, pub)
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+
+		b.publishWatchNotification(ctx, resourcepb.WatchNotification_ADDED, resource.WriteEvent{Key: resKey, Object: meta}, 200, "folderuid")
+
+		require.Equal(t, []string{"us.watch.v1.gr.ns.rs"}, pub.subjects)
+	})
+
+	for _, tt := range tests {
+		event := resource.WriteEvent{Type: tt.typ, Key: resKey, Object: meta, PreviousRV: 150}
+
+		t.Run(tt.name+" publishes after commit", func(t *testing.T) {
+			t.Parallel()
+			pub := &recordingPublisher{}
+			b, ctx := setup(t, pub)
+			b.SQLMock.ExpectBegin()
+			expectSuccessfulResourceVersionExec(t, b.TestDBProvider,
+				func() { b.ExecWithResult(tt.stmt, 0, 1) },
+				func() { b.ExecWithResult("insert resource_history", 0, 1) },
+			)
+			b.SQLMock.ExpectCommit()
+
+			rv, err := tt.write(b, ctx, event)
+			require.NoError(t, err)
+
+			require.Equal(t, []string{"us.watch.v1.gr.ns.rs"}, pub.subjects)
+			var got resourcepb.WatchNotification
+			require.NoError(t, proto.Unmarshal(pub.payloads[0], &got))
+			require.Equal(t, tt.wantType, got.GetType())
+			require.Equal(t, "gr", got.GetGroup())
+			require.Equal(t, "rs", got.GetResource())
+			require.Equal(t, "ns", got.GetNamespace())
+			require.Equal(t, "nm", got.GetName())
+			require.Equal(t, rv, got.GetResourceVersion())
+			require.Equal(t, "folderuid", got.GetFolder())
+			require.Equal(t, int64(150), got.GetPreviousResourceVersion())
+			require.Nil(t, got.GetMetadata())
+		})
+
+		t.Run(tt.name+" does not fail when publishing fails", func(t *testing.T) {
+			t.Parallel()
+			pub := &recordingPublisher{err: errTest}
+			b, ctx := setup(t, pub)
+			b.SQLMock.ExpectBegin()
+			expectSuccessfulResourceVersionExec(t, b.TestDBProvider,
+				func() { b.ExecWithResult(tt.stmt, 0, 1) },
+				func() { b.ExecWithResult("insert resource_history", 0, 1) },
+			)
+			b.SQLMock.ExpectCommit()
+
+			_, err := tt.write(b, ctx, event)
+			require.NoError(t, err)
+			require.Len(t, pub.subjects, 1)
+		})
+
+		t.Run(tt.name+" publishes nothing when the write fails", func(t *testing.T) {
+			t.Parallel()
+			pub := &recordingPublisher{}
+			b, ctx := setup(t, pub)
+			b.SQLMock.ExpectBegin()
+			b.ExecWithErr(tt.stmt, errTest)
+			b.SQLMock.ExpectRollback()
+
+			_, err := tt.write(b, ctx, event)
+			require.Error(t, err)
+			require.Empty(t, pub.subjects)
 		})
 	}
 }

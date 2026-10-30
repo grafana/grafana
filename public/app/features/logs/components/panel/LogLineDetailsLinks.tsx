@@ -10,6 +10,7 @@ import { type FieldDef } from '../logParser';
 
 import { useLogDetailsContext } from './LogDetailsContext';
 import { filterFields, MultipleValue, SingleValue } from './LogLineDetailsFields';
+import { LogLinksResolver } from './LogLinksResolver';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { type LogListModel } from './processing';
@@ -92,51 +93,55 @@ const LogLineDetailsField = ({ field, log }: LogLineDetailsFieldProps) => {
   }, [app, field.keys, log.datasourceType, noInteractions]);
 
   return (
-    <>
-      <div className={styles.label}>
-        {singleKey ? field.keys[0] : <MultipleValue values={field.keys} />}
-        <Toggletip fitContent content={tooltip}>
-          <Icon
-            aria-label={t('logs.log-line-details.link-value-tooltip', 'Link value')}
-            className={styles.labelIcon}
-            name="info-circle"
-          />
-        </Toggletip>
-      </div>
-      <div className={styles.links}>
-        {field.links?.map((link, i) => {
-          if (link.onClick && onPinLine) {
-            const originalOnClick = link.onClick;
-            link.onClick = (e, origin) => {
-              // Pin the line
-              onPinLine(log);
-
-              // Execute the link onClick function
-              originalOnClick(e, origin);
-
-              closeDetails();
-            };
-          }
-          return (
-            <span key={`${link.title}-${i}`} className={styles.link}>
-              <DataLinkButton
-                buttonProps={{
-                  // Show tooltip message if max number of pinned lines has been reached
-                  tooltip:
-                    typeof pinLineButtonTooltipTitle === 'object' && link.onClick
-                      ? pinLineButtonTooltipTitle
-                      : undefined,
-                  variant: 'secondary',
-                  fill: 'outline',
-                  onClick: () => reportLinkClick(),
-                }}
-                link={link}
+    <LogLinksResolver links={field.links}>
+      {(links) => (
+        <>
+          <div className={styles.label}>
+            {singleKey ? field.keys[0] : <MultipleValue values={field.keys} />}
+            <Toggletip fitContent content={tooltip}>
+              <Icon
+                aria-label={t('logs.log-line-details.link-value-tooltip', 'Link value')}
+                className={styles.labelIcon}
+                name="info-circle"
               />
-            </span>
-          );
-        })}
-      </div>
-    </>
+            </Toggletip>
+          </div>
+          <div className={styles.links}>
+            {links?.map((link, i) => {
+              if (link.onClick && onPinLine) {
+                const originalOnClick = link.onClick;
+                link.onClick = (e, origin) => {
+                  // Pin the line
+                  onPinLine(log);
+
+                  // Execute the link onClick function
+                  originalOnClick(e, origin);
+
+                  closeDetails();
+                };
+              }
+              return (
+                <span key={`${link.title}-${i}`} className={styles.link}>
+                  <DataLinkButton
+                    buttonProps={{
+                      // Show tooltip message if max number of pinned lines has been reached
+                      tooltip:
+                        typeof pinLineButtonTooltipTitle === 'object' && link.onClick
+                          ? pinLineButtonTooltipTitle
+                          : undefined,
+                      variant: 'secondary',
+                      fill: 'outline',
+                      onClick: () => reportLinkClick(),
+                    }}
+                    link={link}
+                  />
+                </span>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </LogLinksResolver>
   );
 };
 

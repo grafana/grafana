@@ -552,7 +552,7 @@ export function getLogsButtonTooltip(
   }
 
   if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDynamicTraceToLogs, false)) {
-    if (presence === 'present') {
+    if (presence !== 'absent') {
       return t('explore.span-detail-link-buttons.logs-for-this-trace.logs-found-tooltip', 'See related logs');
     }
     return type === 'trace'

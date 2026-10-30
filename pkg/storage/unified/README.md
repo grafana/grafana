@@ -7,6 +7,113 @@ It provides generic storage for k8s objects, and can store data either within de
 
 By default it runs in-process within Grafana, but it can also be run as a standalone GRPC service (`storage-server`).
 
+## Inline blob contract (v1)
+
+This contract is not enabled yet. Server negotiation, normalization, and lifecycle
+safety must ship before producers adopt inline input. No new RPC or service is needed.
+
+Top-level `blobs.<name>` accepts either inline bytes or an existing reference:
+
+```json
+{
+  "blobs": {
+    "inline": {"contentType":"application/json","data":"e30="},
+    "stored": {"uid":"uploaded-uid","contentType":"application/json","size":2,"hash":"server-hash"}
+  }
+}
+```
+
+`resourcepb.BlobEntry` is write-input-only; `BlobReference` is the persisted/read
+shape and has no `data` field. **GET/LIST responses (including paginated items),
+history, watch events, and write responses must omit `data` entirely**, not return
+it null or empty. Schemas must mark `data` as `writeOnly: true` and preserve that
+distinction in generated types, but annotations alone do not strip response data:
+normalization must replace inline bytes with authoritative references before storage.
+
+### Validation and storage
+
+`resourcepb.DecodeBlobEntries` validates the input contract, not authorization:
+
+- `blobs` and entries must be objects; exactly one of the keys `data` or `uid`
+  must be present. Null entries, duplicate keys, and empty entries are rejected.
+  An empty `blobs` object is valid; an absent field must remain absent.
+- Inline entries allow only nonempty canonical padded standard base64 `data` and
+  a required concrete `contentType` (parameters allowed). Empty content is unsupported.
+- References require a nonblank `uid`; metadata is optional and not authoritative.
+  Preserve unknown reference fields and unrelated resource fields during normalization.
+- Inline-bearing objects require nonblank names and allow at most **16 entries**
+  and **64 MiB decoded per blob**, matching the streaming backend. There is no
+  separate aggregate decoded-size cap. HTTP request limits still apply; base64 adds
+  about 33%. Resource gRPC messages keep their existing transport limits.
+
+The HTTP resource API splits only `blobs.<name>.data`, never resource-specific
+`spec` fields: it uploads bytes through blob streaming and sends reference-only
+resources to resource gRPC. Bulk producers instead split input into the frames below;
+`BulkProcess` handles their uploads without a separate producer-side blob RPC.
+Plain resource gRPC bodies must not contain inline `data` or placeholder references.
+
+Both paths authorize and validate identity before uploading under that identity,
+then publish authoritative references. `SkipValidation` must not bypass blob checks.
+Deletes and ordinary dry-runs must not upload. Upload errors (transport or embedded
+`Error`) prevent publication; resource failure afterward may leave an orphan, never
+a dangling published reference. Support requires GC protection until references are
+visible, safe orphan cleanup, and tested cancellation/partial commits—not bulk-wide
+rollback. Existing direct uploads, snapshot `/dashboard` and legacy reads,
+provisioning previews, and GC exemptions stay unchanged; there is no GET/LIST rehydration.
+
+### Automatic BulkProcess negotiation
+
+The bulk client negotiates on each import stream before sending **any** bodies:
+
+1. Request exactly one `x-gf-batch-inline-blobs: 1` metadata value, preserving existing
+   collection/settings metadata. The key is `resourcepb.InlineBlobMetadataKey`.
+2. An eligible server explicitly flushes the matching response header with `SendHeader`
+   **before** waiting for resource messages, only when full normalization/lifecycle
+   safety is enabled for the backend/scope. Per-resource authorization still follows.
+3. Wait for headers with a bounded handshake timer. Check transport errors, then call
+   `ValidateInlineBlobAcknowledgement`; missing, duplicate, or non-v1 values fail closed.
+   On failure/timeout, cancel the stream without sending bodies or falling back to inline
+   persistence. Stop the timer after negotiation; do not shorten the entire import deadline.
+4. Send framed resources; the endpoint handles uploads and reference insertion. Require
+   successful final `CloseAndRecv`, a nonnil response, and no embedded `Error` before
+   considering the import complete. An acknowledgement alone is not import success.
+
+Older servers may wait for bodies before sending headers; timeout/cancellation must
+unblock the header wait without goroutine leaks. Never cache acknowledgement across
+streams/replicas; retries negotiate again and proxies must honor downstream support.
+Existing non-inline clients need no handshake. Bulk support does not imply ordinary
+Create/Update support.
+
+### Chunk framing in the existing BulkRequest
+
+Fields 1–4 remain unchanged. Additive fields `blob_uploads` (5) and `blob_chunk` (6)
+carry a sequential resource/blob group after the v1 handshake:
+
+```text
+resource { key, action, value, folder, blob_uploads: [{name, content_type, size}, ...] }
+chunk    { blob_chunk: {name, value: <raw bytes>} }  // repeat, 1..64 KiB each
+end      { blob_chunk: {name, last: true} }          // empty value, explicit EOF
+...next declared blob, then next resource...
+```
+
+The resource body omits the declared blob slots entirely, preserving other references
+and unrelated fields; declarations must not collide with existing entries. The server
+fills these slots with authoritative references only after all declared uploads succeed.
+Chunk frames set no resource fields and inherit the pending resource identity. Uploads
+follow declaration order without interleaving resources/blobs; names must match and the
+received total must equal the declared size (1..64 MiB). EOF/new resource before a blob's
+end marker, extra bytes, duplicate end markers, or chunks without a declaration fail the
+stream. Earlier resources may already have committed; the incomplete resource must not.
+
+The endpoint streams one blob at a time with bounded buffers/backpressure, not a full
+resource-sized blob buffer. Chunk frames never reach either resource backend or count
+as resource writes; the final response accounts for completed resource operations only.
+`ValidateBulkBlobFrame` checks individual frame shapes; sequence, byte totals, identity,
+resource JSON, and lifecycle checks belong to the server implementation. No server or
+producer uses these fields yet. Older servers ignore new fields, so acknowledgement
+before sending is mandatory. Future server tests must cover ordering/size failures,
+remote/in-process negotiation, reference-only GET/LIST, stored/history bodies, and watches.
+
 ## Remote blob streaming
 
 The additive `BlobStoreStreaming` service in `proto/blob.proto` supports remote
@@ -25,6 +132,12 @@ packet (such as MySQL's `max_allowed_packet`).
 ## Storage Overview
 
 There are 2 main tables, the `resource` table stores a "current" view of the objects, and the `resource_history` table stores a record of each revision of a given object.
+
+## Quota checks
+
+In `[unified_storage]`, `enforce_quotas_resources` selects resource kinds whose quotas block creates, while `log_quotas_resources` selects additional kinds whose exceeded quotas are logged without blocking. Both settings accept comma-separated `group/resource` names.
+
+Kinds in neither list skip the quota lookup and usage count. The log-only list is empty by default; add any unenforced kinds whose advisory quota logging you want to retain. A kind in both lists is counted once and its quota is enforced. Explicit quota-usage requests are unaffected by these lists.
 
 ## Running Unified Storage
 
@@ -322,6 +435,47 @@ enable_search = true
 
 The dashboard search page has been set up to search unified storage. Additionally, all legacy search calls (e.g. `/api/search`) will go to
 unified storage when the dual writer mode is set to 3 or greater. When <= 2, the legacy search api calls will go to legacy storage.
+
+### Restrict collection searches to service identities
+
+Externally supplied records may have no corresponding unified-storage resources or user-level authorization rules. When the owning service must apply its own authorization checks before returning results to a user, restrict reads to that service so callers cannot bypass those checks.
+
+In `custom.ini`, set `vector_allowed_read_services` to a JSON map of `group/resource` collections and allowed service identities:
+
+```ini
+[unified_storage]
+vector_allowed_read_services = {"example.ext.grafana.app/records":["example-service"]}
+```
+
+For a configured collection, `HybridSearch` and `VectorSearch` accept only authenticated access-policy tokens with exactly one matching service identity.
+User and on-behalf-of tokens are denied.
+The check covers every target before vector or lexical search; one denied target rejects the whole request.
+Existing tenant and resource `get` checks still apply.
+
+An unset value or `{}` leaves both search methods unchanged; invalid values prevent server startup.
+Deploy support to every serving storage and search server before setting the restriction because older versions ignore it.
+Before rolling back server support, disable the collection on every serving route.
+
+### Publish a shared external collection
+
+In `custom.ini` on every serving storage server, map each shared `group/resource` collection to its allowed publisher service identities.
+Use a collection identity that is absent from registered API resources and both existing collection enrollment lists.
+Each collection must list at least one publisher.
+
+```ini
+[unified_storage]
+vector_shared_external_collections = {"docs.example.com/articles":["docs-publisher"]}
+```
+
+Each cluster's publishing client sends documents through the existing `VectorStore` methods using its authenticated namespace.
+Publish the collection in each cluster where you need it; shared content does not replicate between clusters.
+Shared documents cannot have a folder.
+
+Shared content is stored in `__SHARED__`; tenant deletion preserves it.
+
+A publisher can change only the collections that list its service identity, so verify publisher identities and collection names before enabling enrollment.
+
+Removing enrollment disables access but retains stored content.
 
 ## Running load tests
 Load tests and instructions can be found [here](https://github.com/grafana/grafana-api-tests/tree/main/simulation/src/unified_storage).
@@ -1280,8 +1434,12 @@ message ResourceSearchRequest {
 ```
 
 **Example gRPC/Protocol Buffer Usage:**
+
+Search requests must set `ResultFormat` to `FIELD_VALUES`; other formats are rejected. Responses contain typed `Rows` described by the shared `Fields` schema.
+
 ```go
 searchRequest := &resourcepb.ResourceSearchRequest{
+    ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
     Options: &resourcepb.ListOptions{
         Key: dashboardKey, // Primary: search dashboards
     },

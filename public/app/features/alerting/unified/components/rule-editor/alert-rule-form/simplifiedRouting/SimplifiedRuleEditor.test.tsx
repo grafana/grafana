@@ -152,6 +152,18 @@ describe('Can create a new grafana managed alert using simplified routing', () =
     expect(screen.getByDisplayValue('lotsa-emails')).toBeInTheDocument();
   });
 
+  it('checks the selected contact point still exists by its title', async () => {
+    const capture = captureRequests((r) => r.method === 'GET' && r.url.includes('/receivers'));
+    renderRuleEditor();
+
+    await selectContactPoint('lotsa-emails');
+
+    await waitFor(async () => {
+      const selectors = (await capture).map((r) => new URL(r.url).searchParams.get('fieldSelector'));
+      expect(selectors).toContain('spec.title=lotsa-emails');
+    });
+  });
+
   it('does not show contact points with canUse=false (imported) in the dropdown', async () => {
     // Override the receivers handler to include a contact point that cannot be used (e.g., imported)
     server.use(

@@ -509,7 +509,8 @@ function parseWithFormat(value: string, format: MomentFormat, options?: MomentOp
 
   // ISO_8601 is the only non-string MomentFormat member and it is handled above, so this
   // fallback never changes behavior; it only narrows the type for the format conversions below.
-  const fmt = convertMomentToLuxonForParsing(typeof format === 'string' ? format : 'ISO_8601', options?.locale);
+  const momentFormat = typeof format === 'string' ? format : 'ISO_8601';
+  const fmt = convertMomentToLuxonForParsing(momentFormat, options?.locale);
 
   const parsed = parseFromCachedFormat(value, fmt, options);
   if (parsed.isValid || parsed.invalidReason !== 'unparsable') {
@@ -547,7 +548,11 @@ function parseWithFormat(value: string, format: MomentFormat, options?: MomentOp
   // try to handle partial parse 'yyyy' from '2017-07-19 00:00:00.000'
   const fallbackParsed = parseWithFallbacks(value, options);
   if (fallbackParsed.isValid) {
-    const formatted = fallbackParsed.toFormat(fmt, options);
+    // padded output keeps compact formats like YYYYMMDD readable by the one-or-two digit parse tokens
+    const formatted = fallbackParsed.toFormat(
+      convertMomentToLuxonForParsing(momentFormat, options?.locale, true),
+      options
+    );
     // re-parse with only the requested tokens; if that truncation loses validity, keep the full
     // fallback parse (the same result normalizeInput would otherwise recompute via its own
     // parseWithFallbacks pass)
@@ -1032,7 +1037,15 @@ class MomentCompat implements MomentLike {
       return this._dt.zoneName ?? undefined;
     }
 
-    return this._setDt(this._dt.setZone(normalizeZone(zone), { keepLocalTime }));
+    const normalized = normalizeZone(zone);
+    if (!normalized.isValid) {
+      // Moment clears an unknown named zone but retains its current offset, including across DST.
+      return this._dt.zone.type === 'iana'
+        ? this._setDt(this._dt.setZone(FixedOffsetZone.instance(this._dt.offset)))
+        : this;
+    }
+
+    return this._setDt(this._dt.setZone(normalized, { keepLocalTime }));
   }
 
   clone(): MomentLike {
@@ -1252,12 +1265,15 @@ proto.seconds = proto.second;
 proto.milliseconds = proto.millisecond;
 
 function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?: ParseOptions): MomentLike {
+  const zone = options?.zone != null ? normalizeZone(options.zone) : undefined;
+  // The static Moment timezone factory starts in UTC when the requested zone is unknown.
+  const resolvedZone = zone && !zone.isValid ? FixedOffsetZone.instance(0) : zone;
   // Custom valueOf implementations retain the generic Moment-like conversion behavior.
   if (input instanceof MomentCompat && input.valueOf === MomentCompat.prototype.valueOf) {
     const copy = input.clone();
-    return options?.zone ? copy.tz(typeof options.zone === 'string' ? options.zone : options.zone.name) : copy;
+    return resolvedZone ? copy.tz(resolvedZone.name) : copy;
   }
-  const normalizedOptions = options?.zone ? { ...options, zone: normalizeZone(options.zone) } : options;
+  const normalizedOptions = resolvedZone ? { ...options, zone: resolvedZone } : options;
   const dt = normalizeInput(input, normalizedOptions, parseOptions);
   const locale = DateTime.isDateTime(input)
     ? (input.locale ?? DEFAULT_LOCALE)
@@ -1305,7 +1321,7 @@ function makeDuration(input?: MomentDurationInput, unit?: ArithmeticUnit): Momen
   };
 }
 
-export interface MomentFactory {
+interface MomentFactory {
   (input?: MomentInput, format?: MomentFormat): MomentLike;
   ISO_8601: typeof ISO_8601;
   utc(input?: MomentInput, format?: MomentFormat): MomentLike;

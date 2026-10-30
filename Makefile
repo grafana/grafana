@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.27.2
+GO_VERSION = 1.27.3
 GO_HOST_OS := $(shell $(GO) env GOHOSTOS)
 GO_HOST_ARCH := $(shell $(GO) env GOHOSTARCH)
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
@@ -87,9 +87,9 @@ deps-js: node_modules ## Install frontend dependencies.
 deps: deps-js ## Install all dependencies.
 
 .PHONY: node_modules
-node_modules: package.json yarn.lock ## Install node modules.
+node_modules: package.json pnpm-lock.yaml ## Install node modules.
 	@echo "install frontend dependencies"
-	YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
+	pnpm install --frozen-lockfile
 
 ##@ Swagger
 SPEC_TARGET = public/api-spec.json
@@ -170,7 +170,7 @@ openapi3-gen: swagger-gen ## Generates OpenApi 3 specs from the Swagger 2 alread
 .PHONY: generate-openapi
 generate-openapi: openapi3-gen
 	$(GO) test ./pkg/tests/apis || true
-	yarn workspace @grafana/openapi process-specs
+	pnpm --filter @grafana/openapi --fail-if-no-match run process-specs
 
 ##@ Internationalisation
 .PHONY: i18n-extract-enterprise
@@ -181,17 +181,17 @@ i18n-extract-enterprise:
 else
 i18n-extract-enterprise:
 	@echo "Extracting i18n strings for Enterprise"
-	cd public/locales/enterprise && LANG=en_US.UTF-8 yarn run i18next-cli extract --sync-primary
+	cd public/locales/enterprise && LANG=en_US.UTF-8 pnpm exec i18next-cli extract --sync-primary
 endif
 
 .PHONY: i18n-extract
 i18n-extract: i18n-extract-enterprise
 	@echo "Extracting i18n strings for OSS"
-	LANG=en_US.UTF-8 yarn run i18next-cli extract --sync-primary
+	LANG=en_US.UTF-8 pnpm exec i18next-cli extract --sync-primary
 	@echo "Extracting i18n strings for packages"
-	LANG=en_US.UTF-8 yarn run packages:i18n-extract
+	LANG=en_US.UTF-8 pnpm run packages:i18n-extract
 	@echo "Extracting i18n strings for plugins"
-	LANG=en_US.UTF-8 yarn run plugin:i18n-extract
+	LANG=en_US.UTF-8 pnpm run plugin:i18n-extract
 
 ##@ Building
 .PHONY: gen-cue
@@ -353,7 +353,7 @@ build-air: build-go
 .PHONY: build-js
 build-js: ## Build frontend assets.
 	@echo "building frontend"
-	yarn run build
+	pnpm run build
 
 public/build:
 	$(MAKE) build-js
@@ -516,21 +516,18 @@ $(MSI_FILE): $(TARGZ_FILE)
 	ENTERPRISE="$(if $(filter grafana-enterprise,$(TARGZ_PACKAGE_NAME)),true,false)" \
 	bash scripts/build-msi.sh
 
-# The toggle name has a dot, so it needs `env`, not a bare VAR=value prefix.
-RSPACK_ON := $(filter 1 true,$(RSPACK))
-
 .PHONY: run
-run: ## Build and run backend, and watch for changes. See .air.toml for configuration. Set RSPACK=1 to serve the rspack build.
-	$(if $(RSPACK_ON),env GF_FEATURE_TOGGLES_grafana.rspackBuild=true) $(air) -c .air.toml
+run: ## Build and run backend, and watch for changes. See .air.toml for configuration.
+	$(air) -c .air.toml
 
 .PHONY: run-go
-run-go: ## Build and run web server immediately. Set RSPACK=1 to serve the rspack build.
-	$(if $(RSPACK_ON),env GF_FEATURE_TOGGLES_grafana.rspackBuild=true) $(GO) run -race $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS)) \
+run-go: ## Build and run web server immediately.
+	$(GO) run -race $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS)) \
 		./pkg/cmd/grafana -- server -profile -profile-addr=127.0.0.1 -profile-port=6000 -packaging=dev cfg:app_mode=development
 
 .PHONY: run-frontend
-run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild. Set RSPACK=1 to build with rspack.
-	yarn start$(if $(RSPACK_ON),:rspack)
+run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild.
+	pnpm run start
 
 .PHONY: frontend-service-check
 frontend-service-check:
@@ -612,7 +609,7 @@ test-go-integration-memcached: ## Run integration tests for memcached cache.
 .PHONY: test-js
 test-js: ## Run tests for frontend.
 	@echo "test frontend"
-	yarn test
+	pnpm run test
 
 .PHONY: test
 test: test-go test-js ## Run all tests.
@@ -656,20 +653,20 @@ PLATFORM=linux/amd64
 # default to a production build for frontend
 #
 DOCKER_JS_NODE_ENV_FLAG = production
-DOCKER_JS_YARN_BUILD_FLAG = build
-DOCKER_JS_YARN_INSTALL_FLAG = --immutable
+DOCKER_JS_PNPM_BUILD_FLAG = build
+DOCKER_JS_PNPM_INSTALL_FLAG = --frozen-lockfile
 #
 # if go is in dev mode, also build node in dev mode
 ifneq ($(filter 1 dev,$(GO_BUILD_DEV)),)
   DOCKER_JS_NODE_ENV_FLAG = dev
-  DOCKER_JS_YARN_BUILD_FLAG = dev
-	DOCKER_JS_YARN_INSTALL_FLAG =
+  DOCKER_JS_PNPM_BUILD_FLAG = dev
+	DOCKER_JS_PNPM_INSTALL_FLAG = --no-frozen-lockfile
 endif
 # if NODE_ENV is set in the environment to dev, build frontend in dev mode, and allow go builds to use their default
 ifeq (${NODE_ENV}, dev)
   DOCKER_JS_NODE_ENV_FLAG = dev
-  DOCKER_JS_YARN_BUILD_FLAG = dev
-	DOCKER_JS_YARN_INSTALL_FLAG =
+  DOCKER_JS_PNPM_BUILD_FLAG = dev
+	DOCKER_JS_PNPM_INSTALL_FLAG = --no-frozen-lockfile
 endif
 
 .PHONY: build-docker-full
@@ -679,8 +676,8 @@ build-docker-full: ## Build Docker image for development.
 	--platform $(PLATFORM) \
 	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
 	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
-	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
-	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
+	--build-arg JS_PNPM_INSTALL_FLAG=$(DOCKER_JS_PNPM_INSTALL_FLAG) \
+	--build-arg JS_PNPM_BUILD_FLAG=$(DOCKER_JS_PNPM_BUILD_FLAG) \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
@@ -699,8 +696,8 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--platform $(PLATFORM) \
 	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
 	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
-	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
-	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
+	--build-arg JS_PNPM_INSTALL_FLAG=$(DOCKER_JS_PNPM_INSTALL_FLAG) \
+	--build-arg JS_PNPM_BUILD_FLAG=$(DOCKER_JS_PNPM_BUILD_FLAG) \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
@@ -720,8 +717,8 @@ build-docker-full-distroless: ## Build Docker image based on distroless for deve
 	--platform $(PLATFORM) \
 	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
 	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
-	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
-	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
+	--build-arg JS_PNPM_INSTALL_FLAG=$(DOCKER_JS_PNPM_INSTALL_FLAG) \
+	--build-arg JS_PNPM_BUILD_FLAG=$(DOCKER_JS_PNPM_BUILD_FLAG) \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
@@ -807,7 +804,7 @@ clean: ## Clean up intermediate build artifacts.
 gen-ts:
 	@echo "generating TypeScript definitions"
 	go get github.com/tkrajina/typescriptify-golang-structs/typescriptify@v0.1.7
-	tscriptify -interface -package=github.com/grafana/grafana/pkg/services/live/pipeline -import="import { FieldConfig } from '@grafana/data'" -target=public/app/features/live/pipeline/models.gen.ts pkg/services/live/pipeline/config.go
+	tscriptify -interface -package=github.com/grafana/grafana/apps/live/pkg/pipeline -import="import { FieldConfig } from '@grafana/data'" -target=public/app/features/live/pipeline/models.gen.ts apps/live/pkg/pipeline/config.go
 	go mod tidy
 
 .PHONY: go-race-is-enabled
@@ -837,7 +834,7 @@ help: ## Display this help.
 check-licenses:
 	license_finder --decisions-file .github/license_finder.yaml
 
-GENERATE_POLICY_BOT_CONFIG_SHA := sha256:d05ff5c7d4247da155c85f8c6f1f9f7c6d013d1f3fd9fd9d68eb06f1e7b0393d # v0.2.0
+GENERATE_POLICY_BOT_CONFIG_SHA := sha256:ebd798a15f5d05af418da11366eb7cc01d1c4741f18d0c982fccda032ff405f5 # v0.2.1
 .PHONY: .policy.yml
 .policy.yml:
 	docker run -u "$(shell id -u):$(shell id -g)" \

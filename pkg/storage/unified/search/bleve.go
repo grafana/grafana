@@ -38,6 +38,7 @@ import (
 
 	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -45,9 +46,13 @@ import (
 )
 
 const (
-	indexStorageMemory = "memory"
-	indexStorageFile   = "file"
-	boltTimeout        = "1s"
+	indexStorageMemory      = "memory"
+	indexStorageFile        = "file"
+	boltTimeout             = "1s"
+	unownedIndexIdleTimeout = 10 * time.Minute
+
+	// How often an index persists the RV of updates that changed no documents.
+	rvPersistInterval = 5 * time.Minute
 )
 
 // Keys used to store internal data in index.
@@ -84,6 +89,11 @@ type BleveOptions struct {
 	// Index cache TTL for bleve indices. 0 disables expiration for in-memory indexes.
 	// Also used for file-based indexes, if they are not owned by this instance, and they are not fetched from the cache recently.
 	IndexCacheTTL time.Duration
+
+	// GlobalIndexIdleTimeout closes a global index this instance owns once it has
+	// not been searched for this long, so a namespace nobody searches stops paying
+	// for reconciles, watch writes and snapshots. 0 keeps it open.
+	GlobalIndexIdleTimeout time.Duration
 
 	BuildVersion string
 
@@ -135,11 +145,6 @@ type BleveOptions struct {
 	// rebuild. Older siblings under the same resource still use
 	// DiskCleanupGracePeriod. Only consulted when DiskCleanupInterval > 0.
 	DiskCleanupUnopenedGracePeriod time.Duration
-
-	// EnforceSortCapability rejects a sort on a field that does not declare the
-	// sort capability. When false the violation is only counted, so an operator
-	// can see what real traffic would break before turning this on.
-	EnforceSortCapability bool
 
 	// PostRankAuthzEnabled enables the post-filter (post-rank) authorization
 	// path. Set from the search_post_rank_authz config option at backend init.
@@ -402,7 +407,32 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 
 // GetIndex will return nil if the key does not exist
 func (b *bleveBackend) GetIndex(key resource.NamespacedResource) resource.ResourceIndex {
-	idx := b.getCachedIndex(key, time.Now())
+	idx := b.getIndexForSearch(key, time.Now())
+	// Avoid returning typed nils.
+	if idx == nil {
+		return nil
+	}
+	return idx
+}
+
+// getIndexForSearch records the search while holding the cache lock, so idle
+// eviction or a rebuild replacing the index cannot slip in between the lookup
+// and the record and act on the previous search time.
+func (b *bleveBackend) getIndexForSearch(key resource.NamespacedResource, now time.Time) *bleveIndex {
+	b.cacheMx.RLock()
+	defer b.cacheMx.RUnlock()
+
+	idx := b.cache[key]
+	if idx == nil {
+		return nil
+	}
+	idx.lastFetchedFromCache.Store(now.UnixMilli())
+	idx.lastSearchedAt.Store(now.UnixMilli())
+	return idx
+}
+
+func (b *bleveBackend) PeekIndex(key resource.NamespacedResource) resource.ResourceIndex {
+	idx := b.peekCachedIndex(key)
 	// Avoid returning typed nils.
 	if idx == nil {
 		return nil
@@ -422,7 +452,10 @@ func (b *bleveBackend) GetOpenIndexes() []resource.NamespacedResource {
 }
 
 func (b *bleveBackend) getCachedIndex(key resource.NamespacedResource, now time.Time) *bleveIndex {
-	idx := b.peekCachedIndex(key)
+	b.cacheMx.RLock()
+	defer b.cacheMx.RUnlock()
+
+	idx := b.cache[key]
 	if idx == nil {
 		return nil
 	}
@@ -466,30 +499,43 @@ func (b *bleveBackend) evictExpiredOrUnownedIndexesPeriodically(ctx context.Cont
 
 func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 	cacheTTLMillis := b.opts.IndexCacheTTL.Milliseconds()
+	unownedIdleTimeoutMillis := min(b.opts.IndexCacheTTL, unownedIndexIdleTimeout).Milliseconds()
+
+	globalIdleTimeoutMillis := b.opts.GlobalIndexIdleTimeout.Milliseconds()
 
 	// Collect all expired or unowned into this map, and perform the actual closing without holding the lock.
 	expired := map[resource.NamespacedResource]*bleveIndex{}
 	unowned := map[resource.NamespacedResource]*bleveIndex{}
+	idle := map[resource.NamespacedResource]*bleveIndex{}
 	ownCheckErrors := map[resource.NamespacedResource]error{}
 
 	b.cacheMx.Lock()
 	for key, idx := range b.cache {
-		// Check if index has expired.
+		// Memory indexes do not merge segments, so active indexes must also expire.
 		if !idx.expiration.IsZero() && now.After(idx.expiration) {
 			delete(b.cache, key)
 			expired[key] = idx
 			continue
 		}
 
+		checkIdleGlobal := key.IsGlobal() && globalIdleTimeoutMillis > 0
+		if cacheTTLMillis <= 0 && !checkIdleGlobal {
+			continue
+		}
+
 		// Check if index is owned by this instance.
-		if cacheTTLMillis > 0 {
-			owned, err := b.ownsIndexFn(key)
-			if err != nil {
-				ownCheckErrors[key] = err
-			} else if !owned && now.UnixMilli()-idx.lastFetchedFromCache.Load() > cacheTTLMillis {
-				delete(b.cache, key)
-				unowned[key] = idx
-			}
+		owned, err := b.ownsIndexFn(key)
+		if err != nil {
+			ownCheckErrors[key] = err
+			continue
+		}
+		switch {
+		case !owned && cacheTTLMillis > 0 && now.UnixMilli()-idx.lastFetchedFromCache.Load() > unownedIdleTimeoutMillis:
+			delete(b.cache, key)
+			unowned[key] = idx
+		case owned && checkIdleGlobal && now.UnixMilli()-idx.lastSearchedAt.Load() > globalIdleTimeoutMillis:
+			delete(b.cache, key)
+			idle[key] = idx
 		}
 	}
 	b.cacheMx.Unlock()
@@ -507,6 +553,12 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 	for key, idx := range expired {
 		b.clearUploadTracking(key)
 		b.log.Info("index evicted from cache", "reason", "expired", "key", key, "storage", idx.indexStorage)
+		b.closeIndex(idx, key)
+	}
+
+	for key, idx := range idle {
+		b.clearUploadTracking(key)
+		b.log.Info("index evicted from cache", "reason", "idle", "key", key, "storage", idx.indexStorage)
 		b.closeIndex(idx, key)
 	}
 }
@@ -916,6 +968,7 @@ func (b *bleveBackend) BuildIndex(
 	rebuild bool,
 	lastImportTime time.Time,
 	maxFreshSnapshotAge time.Duration,
+	options resource.BuildIndexOptions,
 ) (resource.ResourceIndex, error) {
 	_, span := tracer.Start(ctx, "search.bleveBackend.BuildIndex")
 	defer span.End()
@@ -943,16 +996,19 @@ func (b *bleveBackend) BuildIndex(
 
 	// Prepare fields before opening/creating indexes, so that we don't need to deal with closing them in case of errors.
 	standardSearchFields := resource.StandardSearchFields()
-	allFields, err := getAllFields(standardSearchFields, fields)
-	if err != nil {
-		return nil, err
-	}
 
 	logWithDetails := b.log.FromContext(ctx).New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "reason", indexBuildReason)
 	resourceDir := b.getResourceDir(key)
-	snapshotEnabled := b.opts.Snapshot.Store != nil && docCount >= b.opts.Snapshot.MinDocCount
+	// Large enough to coordinate with other replicas: download a snapshot, or build
+	// and upload one while they wait.
+	snapshotBuildEnabled := b.opts.Snapshot.Store != nil && docCount >= b.opts.Snapshot.MinDocCount
+	// A global index is built when it is first searched, without a size, so it
+	// may be large. Downloading its snapshot is much cheaper than building it, but
+	// it must not wait for another replica's build, as a small index would.
+	downloadOnly := b.opts.Snapshot.Store != nil && docCount < 0 && key.IsGlobal()
+	skipIfBuilding := options.SkipIfBuilding
 
-	prepared, err := b.prepareIndex(ctx, key, snapshotEnabled, mapper, selectableFields, searchFieldsHash, rebuild, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails)
+	prepared, err := b.prepareIndex(ctx, key, snapshotBuildEnabled, downloadOnly, mapper, selectableFields, searchFieldsHash, rebuild, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails, skipIfBuilding)
 	if err != nil {
 		return nil, err
 	}
@@ -1004,7 +1060,7 @@ func (b *bleveBackend) BuildIndex(
 		logWithDetails.Debug("Existing index found on filesystem", "indexRV", prepared.indexRV, "directory", filepath.Join(resourceDir, prepared.fileIndexName))
 	}
 
-	idx := b.newBleveIndex(key, prepared.index, prepared.indexStorage, fields, allFields, standardSearchFields, updater, b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
+	idx := b.newBleveIndex(key, prepared.index, prepared.indexStorage, fields, standardSearchFields, updater, b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
 	idx.searchFields = newKindSearchFields(searchFieldsProvider, key.Group, key.Resource, selectableFields)
 
 	if prepared.source.needsBuild() {
@@ -1013,7 +1069,7 @@ func (b *bleveBackend) BuildIndex(
 		var adaptive *adaptiveBuildIndex
 		if prepared.indexStorage == indexStorageMemory && b.opts.FileThreshold > 0 {
 			adaptive = newAdaptiveBuildIndex(idx, b.opts.FileThreshold, func(delegate *bleveIndex) (*bleveIndex, string, string, error) {
-				return b.promoteBuildIndexToFile(delegate, key, resourceDir, fields, allFields, standardSearchFields, updater, logWithDetails)
+				return b.promoteBuildIndexToFile(delegate, key, resourceDir, fields, standardSearchFields, updater, logWithDetails)
 			})
 			buildTarget = adaptive
 		}
@@ -1056,11 +1112,26 @@ func (b *bleveBackend) BuildIndex(
 		logWithDetails.Info("Storing index in cache", "key", key, "expiration", idx.expiration)
 	}
 
-	// We're storing index in the cache, so we can't close it.
-	closeIndex = false
-
 	b.cacheMx.Lock()
 	prev := b.cache[key]
+	if rebuild && prev == nil && key.IsGlobal() {
+		// Closed for being idle while it was being rebuilt. Publishing the rebuilt
+		// index would open it again and restart its idle clock, so it is closed
+		// instead.
+		b.cacheMx.Unlock()
+		return nil, resource.ErrIndexClosedDuringRebuild
+	}
+	// We're storing index in the cache, so we can't close it.
+	closeIndex = false
+	// A request can use a newly built index without fetching it from the cache.
+	now := time.Now().UnixMilli()
+	idx.lastFetchedFromCache.Store(now)
+	// A rebuild is not a search, so it keeps the replaced index's last search.
+	if prev != nil {
+		idx.lastSearchedAt.Store(prev.lastSearchedAt.Load())
+	} else {
+		idx.lastSearchedAt.Store(now)
+	}
 	b.cache[key] = idx
 	b.cacheMx.Unlock()
 
@@ -1090,7 +1161,8 @@ func (b *bleveBackend) BuildIndex(
 func (b *bleveBackend) prepareIndex(
 	ctx context.Context,
 	key resource.NamespacedResource,
-	snapshotEnabled bool,
+	snapshotBuildEnabled bool,
+	downloadOnly bool,
 	mapper mapping.IndexMapping,
 	selectableFields []string,
 	searchFieldsHash string,
@@ -1099,6 +1171,7 @@ func (b *bleveBackend) prepareIndex(
 	maxFreshSnapshotAge time.Duration,
 	resourceDir string,
 	logger log.Logger,
+	skipIfBuilding bool,
 ) (preparedBuildIndex, error) {
 	cachedIndex := b.getCachedIndex(key, time.Now())
 
@@ -1107,10 +1180,10 @@ func (b *bleveBackend) prepareIndex(
 	// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
 	// If we do have an unexpired cached index already, or if rebuild is true, we always build a new index from scratch.
 	if cachedIndex == nil && !rebuild {
-		return b.prepareUncachedFileIndex(ctx, key, resourceDir, mapper, selectableFields, searchFieldsHash, lastImportTime, snapshotEnabled, logger)
+		return b.prepareUncachedFileIndex(ctx, key, resourceDir, mapper, selectableFields, searchFieldsHash, lastImportTime, snapshotBuildEnabled, downloadOnly, logger, skipIfBuilding)
 	}
 
-	if rebuild && snapshotEnabled && maxFreshSnapshotAge > 0 {
+	if rebuild && snapshotBuildEnabled && maxFreshSnapshotAge > 0 {
 		// Rebuild path: before paying the cost of a from-scratch rebuild, coordinate
 		// with same-version replicas and accept only a snapshot fresh enough to serve
 		// as a drop-in replacement. There is no tiered fallback here because we
@@ -1153,8 +1226,10 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 	selectableFields []string,
 	searchFieldsHash string,
 	lastImportTime time.Time,
-	snapshotEnabled bool,
+	snapshotBuildEnabled bool,
+	downloadOnly bool,
 	logger log.Logger,
+	skipIfBuilding bool,
 ) (preparedBuildIndex, error) {
 	idx, name, rv, err := b.tryReuseFileIndex(resourceDir, lastImportTime, logger)
 	if err != nil {
@@ -1170,7 +1245,7 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 		}, nil
 	}
 
-	if !snapshotEnabled {
+	if !snapshotBuildEnabled && !downloadOnly {
 		return b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, searchFieldsHash, logger)
 	}
 
@@ -1189,9 +1264,11 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 			source:        buildIndexSourceDownloadedSnapshot,
 		}, nil
 	}
+	if !snapshotBuildEnabled {
+		return b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, searchFieldsHash, logger)
+	}
 
-	// coordinateColdStartBuild only returns err on ctx cancellation; propagate it directly.
-	idx, name, rv, lock, err := b.coordinateColdStartBuild(ctx, key, resourceDir, lastImportTime, logger)
+	idx, name, rv, lock, err := b.coordinateColdStartBuild(ctx, key, resourceDir, lastImportTime, logger, skipIfBuilding)
 	if err != nil {
 		return preparedBuildIndex{}, err
 	}
@@ -1398,7 +1475,6 @@ func (b *bleveBackend) promoteBuildIndexToFile(
 	key resource.NamespacedResource,
 	resourceDir string,
 	fields resource.SearchableDocumentFields,
-	allFields []*resourcepb.ResourceTableColumnDefinition,
 	standardSearchFields resource.SearchableDocumentFields,
 	updater resource.UpdateFn,
 	logger log.Logger,
@@ -1431,7 +1507,7 @@ func (b *bleveBackend) promoteBuildIndexToFile(
 		return nil, "", "", fmt.Errorf("opening promoted filesystem index: %w", err)
 	}
 
-	promoted := b.newBleveIndex(key, fileIndex, indexStorageFile, fields, allFields, standardSearchFields, updater, delegate.logger)
+	promoted := b.newBleveIndex(key, fileIndex, indexStorageFile, fields, standardSearchFields, updater, delegate.logger)
 	promoted.searchFields = delegate.searchFields
 	promoted.resourceVersion.Store(delegate.resourceVersion.Load())
 	cleanup = false
@@ -1684,12 +1760,9 @@ func (b *bleveBackend) SnapshotCountThreshold() int64 {
 
 func (b *bleveBackend) TotalDocs() int64 {
 	var totalDocs int64
-	// We iterate over keys and call getCachedIndex for each index individually.
-	// We do this to avoid keeping a lock for the entire TotalDocs function, since DocCount may be slow (due to disk access).
-
-	now := time.Now()
+	// DocCount may access disk, so don't hold the cache lock while counting.
 	for _, key := range b.GetOpenIndexes() {
-		idx := b.getCachedIndex(key, now)
+		idx := b.peekCachedIndex(key)
 		if idx == nil {
 			continue
 		}
@@ -1807,8 +1880,7 @@ type bleveIndex struct {
 	// them from the index each time.
 	documentTypes map[schema.GroupResource]struct{}
 
-	// The folder tree of a global index, for searches of a folder and everything
-	// below it.
+	// Kept on the index so a rebuild also replaces its cached hierarchy.
 	folders folderTree
 
 	// RV returned by last List/ListModifiedSince operation. Updated when updating index.
@@ -1830,12 +1902,14 @@ type bleveIndex struct {
 	// We only expire in-memory indexes.
 	expiration time.Time
 
-	// The values returned with all
-	allFields []*resourcepb.ResourceTableColumnDefinition
-	logger    log.Logger
+	logger log.Logger
 
 	updaterFn         resource.UpdateFn
 	minUpdateInterval time.Duration
+
+	// Owned by the updater goroutine.
+	rvPersistInterval time.Duration
+	rvPersistedAt     time.Time
 
 	updaterMu       sync.Mutex
 	updaterCond     *sync.Cond         // Used to signal the updater goroutine that there is work to do, or updater is no longer enabled and should stop. Also used by updater itself to stop early if there's no work to be done.
@@ -1850,12 +1924,14 @@ type bleveIndex struct {
 
 	// Used to detect if the index can be safely closed, if it no longer belongs to this instance. UnixMilli.
 	lastFetchedFromCache atomic.Int64
+	// When the index was last handed to a search, UnixMilli. Unlike
+	// lastFetchedFromCache, building or rebuilding the index does not count, so
+	// an index nobody searches goes idle even when it is rebuilt periodically.
+	lastSearchedAt atomic.Int64
 
 	// Guards read-modify-write updates of the persisted snapshot mutation count
 	// stored in Bleve internal data, so concurrent BulkIndex calls don't lose increments.
 	snapshotMutationMu sync.Mutex
-
-	enforceSortCapability bool
 
 	// postRankAuthzEnabled enables the post-ranking authz path. When false,
 	// the in-searcher permissionScopedQuery path is used.
@@ -1870,7 +1946,6 @@ func (b *bleveBackend) newBleveIndex(
 	index bleve.Index,
 	newIndexType string,
 	fields resource.SearchableDocumentFields,
-	allFields []*resourcepb.ResourceTableColumnDefinition,
 	standardSearchFields resource.SearchableDocumentFields,
 	updaterFn resource.UpdateFn,
 	logger log.Logger,
@@ -1894,13 +1969,13 @@ func (b *bleveBackend) newBleveIndex(
 		keepsDeletedDocuments:  slices.Contains(features, resource.IndexFeatureHoldsDeletedDocuments),
 		indexStorage:           newIndexType,
 		fields:                 fields,
-		allFields:              allFields,
 		standard:               standardSearchFields,
 		logger:                 logger,
 		updaterFn:              updaterFn,
 		minUpdateInterval:      b.opts.IndexMinUpdateInterval,
+		rvPersistInterval:      rvPersistInterval,
+		rvPersistedAt:          time.Now(),
 		indexMetrics:           b.indexMetrics,
-		enforceSortCapability:  b.opts.EnforceSortCapability,
 		postRankAuthzEnabled:   b.opts.PostRankAuthzEnabled,
 		postRankAuthz:          b.opts.PostRankAuthz.effective(),
 		trashRetention:         b.opts.TrashRetention,
@@ -2072,8 +2147,21 @@ func (b *bleveIndex) updateResourceVersion(rv int64) error {
 	}
 
 	b.resourceVersion.Store(rv)
+	b.rvPersistedAt = time.Now()
 
 	return nil
+}
+
+// advanceResourceVersion moves the index to rv after an incremental update that changed docs documents.
+// Persisting the RV of an update that changed nothing only shortens replay after a reopen, but each write
+// costs a scorch epoch and two bolt fsyncs. So such RVs are persisted at most once per rvPersistInterval.
+// The persisted RV can lag behind the index contents this way, but never get ahead of them.
+func (b *bleveIndex) advanceResourceVersion(rv int64, docs int) error {
+	if docs == 0 && b.rvPersistInterval > 0 && time.Since(b.rvPersistedAt) < b.rvPersistInterval {
+		b.resourceVersion.Store(rv)
+		return nil
+	}
+	return b.updateResourceVersion(rv)
 }
 
 func setRV(index bleve.Index, rv int64) error {
@@ -2338,32 +2426,21 @@ func (b *bleveIndex) CountManagedObjects(ctx context.Context, stats *resource.Se
 	return vals, nil
 }
 
-func (b *bleveIndex) observeSearchResultFormat(response *resourcepb.ResourceSearchResponse) {
-	if response.GetResultFormat() == resourcepb.ResourceSearchRequest_UNSPECIFIED {
-		return
-	}
-	b.indexMetrics.SearchResultFormats.WithLabelValues(strings.ToLower(response.ResultFormat.String())).Inc()
-}
-
 func (b *bleveIndex) initialSearchResponse(req *resourcepb.ResourceSearchRequest) *resourcepb.ResourceSearchResponse {
-	resultFormat, err := selectedResultFormat(req.ResultFormat)
-	if err != nil {
-		return &resourcepb.ResourceSearchResponse{
-			Error: resource.NewBadRequestError(err.Error()),
-		}
-	}
 	if req.Options == nil || req.Options.Key == nil {
 		return &resourcepb.ResourceSearchResponse{
 			Error: resource.NewBadRequestError("missing query key"),
 		}
 	}
-	return &resourcepb.ResourceSearchResponse{
-		Error: b.verifyKey(req.Options.Key),
-		// For a global index this is the version it was built at: it replays no
-		// events, so its resource version does not move after the build.
-		ResourceVersion: b.resourceVersion.Load(),
-		ResultFormat:    resultFormat,
+	response := &resourcepb.ResourceSearchResponse{
+		Error:        b.verifyKey(req.Options.Key),
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
+	// A global index combines independent listings and writes, not one revision.
+	if !b.key.IsGlobal() {
+		response.ResourceVersion = b.resourceVersion.Load()
+	}
+	return response
 }
 
 func (b *bleveIndex) SearchFieldDefinitions() []resource.SearchFieldDefinition {
@@ -2386,22 +2463,33 @@ func (b *bleveIndex) Search(
 	ctx context.Context,
 	access authlib.AccessClient,
 	req *resourcepb.ResourceSearchRequest,
-	federate []resource.ResourceIndex, // For federated queries, these will match the values in req.federate
+	indexes *resource.SearchIndexes,
 	stats *resource.SearchStats,
-) (response *resourcepb.ResourceSearchResponse, resultErr error) {
+) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.Search")
 	defer span.End()
 
+	response, err := b.search(ctx, access, req, indexes, stats)
+	// Clients show where each result is, and the global index holds every folder.
+	if err == nil && response.Error == nil && b.key.IsGlobal() && !req.IsDeleted {
+		b.addFolderPaths(ctx, access, response)
+	}
+	return response, err
+}
+
+func (b *bleveIndex) search(
+	ctx context.Context,
+	access authlib.AccessClient,
+	req *resourcepb.ResourceSearchRequest,
+	indexes *resource.SearchIndexes,
+	stats *resource.SearchStats,
+) (response *resourcepb.ResourceSearchResponse, resultErr error) {
 	response = b.initialSearchResponse(req)
 	if response.Error != nil {
 		return response, nil
 	}
-	defer func() {
-		b.observeSearchResultFormat(response)
-	}()
 
-	// Verifies the index federation
-	index, err := b.getIndex(ctx, req, federate)
+	index, folderIndex, err := b.getIndexes(ctx, req, indexes)
 	if err != nil {
 		return nil, err
 	}
@@ -2441,8 +2529,13 @@ func (b *bleveIndex) Search(
 	}
 
 	conversionStarts := time.Now()
-	// convert protobuf request to bleve request
-	searchrequest, e := b.toBleveSearchRequest(ctx, req, access, postRank, trashAuthz)
+	// Cursor fallback converts the request again; keep the same folder set.
+	filters, e := b.filterQueries(ctx, req, folderIndex)
+	if e != nil {
+		response.Error = e
+		return response, nil
+	}
+	searchrequest, e := b.toBleveSearchRequest(ctx, req, access, postRank, trashAuthz, filters)
 	if e != nil {
 		response.Error = e
 		return response, nil
@@ -2475,7 +2568,7 @@ func (b *bleveIndex) Search(
 	if postRank && cursorLen > 0 && cursorLen != len(searchrequest.Sort) {
 		postRank = false
 		cursorFallback = true
-		searchrequest, e = b.toBleveSearchRequest(ctx, req, access, postRank, trashAuthz)
+		searchrequest, e = b.toBleveSearchRequest(ctx, req, access, postRank, trashAuthz, filters)
 		if e != nil {
 			response.Error = e
 			return response, nil
@@ -2525,7 +2618,7 @@ func (b *bleveIndex) Search(
 	stats.AddReturnedDocuments(len(res.Hits))
 
 	resultsConversionStart := time.Now()
-	if err := b.setSearchResults(ctx, response, selectFields, fieldValueSchema, res.Hits, searchrequest.Sort, req.Explain); err != nil {
+	if err := b.setSearchResults(response, fieldValueSchema, res.Hits, searchrequest.Sort); err != nil {
 		return nil, err
 	}
 
@@ -2779,7 +2872,11 @@ func (b *bleveIndex) writeDocumentTypesLocked(types map[schema.GroupResource]str
 
 // ReconciledAt implements resource.ResourceIndex.
 func (b *bleveIndex) ReconciledAt() (time.Time, error) {
-	raw, err := b.index.GetInternal([]byte(internalReconciledAtKey))
+	return getReconciledAt(b.index)
+}
+
+func getReconciledAt(index bleve.Index) (time.Time, error) {
+	raw, err := index.GetInternal([]byte(internalReconciledAtKey))
 	if err != nil || len(raw) < 8 {
 		return time.Time{}, err
 	}
@@ -2975,16 +3072,31 @@ func (b *bleveIndex) verifyKey(key *resourcepb.ResourceKey) *resourcepb.ErrorRes
 	return nil
 }
 
-func (b *bleveIndex) getIndex(
+func (b *bleveIndex) getIndexes(
 	ctx context.Context,
 	req *resourcepb.ResourceSearchRequest,
-	federate []resource.ResourceIndex,
-) (bleve.Index, error) {
-	_, span := tracer.Start(ctx, "search.bleveIndex.getIndex")
+	indexes *resource.SearchIndexes,
+) (bleve.Index, *bleveIndex, error) {
+	_, span := tracer.Start(ctx, "search.bleveIndex.getIndexes")
 	defer span.End()
 
+	var federate []resource.ResourceIndex
+	folderIndex := b
+	if !b.key.IsGlobal() && (b.key.Group != folderv1.GROUP || b.key.Resource != folderv1.RESOURCE) {
+		folderIndex = nil
+	}
+	if indexes != nil {
+		federate = indexes.Federated
+		if indexes.Folders != nil && !b.key.IsGlobal() {
+			typed, ok := indexes.Folders.(*bleveIndex)
+			if !ok || typed == nil || typed.key.Namespace != b.key.Namespace || typed.key.Group != folderv1.GROUP || typed.key.Resource != folderv1.RESOURCE {
+				return nil, nil, fmt.Errorf("folder index must hold folders of the searched namespace")
+			}
+			folderIndex = typed
+		}
+	}
 	if len(req.Federated) != len(federate) {
-		return nil, fmt.Errorf("federation is misconfigured")
+		return nil, nil, fmt.Errorf("federation is misconfigured")
 	}
 
 	// Search across resources using
@@ -2994,32 +3106,34 @@ func (b *bleveIndex) getIndex(
 		for i, extra := range federate {
 			typedindex, ok := extra.(*bleveIndex)
 			if !ok {
-				return nil, fmt.Errorf("federated indexes must be the same type")
+				return nil, nil, fmt.Errorf("federated indexes must be the same type")
 			}
 			if typedindex.verifyKey(req.Federated[i]) != nil {
-				return nil, fmt.Errorf("federated index keys do not match (%v != %v)", typedindex, req.Federated[i])
+				return nil, nil, fmt.Errorf("federated index keys do not match (%v != %v)", typedindex, req.Federated[i])
 			}
 			all = append(all, typedindex.index)
 		}
-		return bleve.NewIndexAlias(all...), nil
+		return bleve.NewIndexAlias(all...), folderIndex, nil
 	}
-	return b.index, nil
+	return b.index, folderIndex, nil
 }
 
-func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.ResourceSearchRequest, access authlib.AccessClient, postRankAuthz bool, trashAuthz *resource.TrashAuthorizer) (*bleve.SearchRequest, *resourcepb.ErrorResult) {
+func (b *bleveIndex) validateSearchRequest(req *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
+	if err := rejectInternalFields(req); err != nil {
+		return err
+	}
+	if err := validateTrashRequest(req); err != nil {
+		return err
+	}
+	return b.rejectUnmappedSelectableFields(req)
+}
+
+func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.ResourceSearchRequest, access authlib.AccessClient, postRankAuthz bool, trashAuthz *resource.TrashAuthorizer, filters []query.Query) (*bleve.SearchRequest, *resourcepb.ErrorResult) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.toBleveSearchRequest") //nolint:staticcheck,ineffassign // SA4006: ctx intentionally kept so future code added to this function inherits the traced span
 	defer span.End()
 
-	if errResult := rejectInternalFields(req); errResult != nil {
-		return nil, errResult
-	}
-
-	if errResult := validateTrashRequest(req); errResult != nil {
-		return nil, errResult
-	}
-
-	if errResult := b.rejectUnmappedSelectableFields(req); errResult != nil {
-		return nil, errResult
+	if err := b.validateSearchRequest(req); err != nil {
+		return nil, err
 	}
 
 	facets := bleve.FacetsRequest{}
@@ -3092,10 +3206,6 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	// Label/field filters are constraints, not relevance signals, so they go into
 	// the boolean Filter clause (scored "none" by bleve) while the free-text query
 	// scores in Must. This keeps ranking driven by text relevance alone.
-	filters, errResult := b.filterQueries(ctx, req)
-	if errResult != nil {
-		return nil, errResult
-	}
 	textQuery := b.buildTextQuery(searchrequest, req)
 	expirationThreshold := int64(0)
 	if req.IsDeleted {
@@ -3393,6 +3503,11 @@ func validateTrashRequest(req *resourcepb.ResourceSearchRequest) *resourcepb.Err
 	if len(req.Federated) > 0 {
 		return resource.NewBadRequestError("searching deleted resources does not support federated queries")
 	}
+	if req.Options != nil && slices.ContainsFunc(req.Options.Fields, func(field *resourcepb.Requirement) bool {
+		return field.Key == resource.SEARCH_FIELD_FOLDER_TREE
+	}) {
+		return resource.NewBadRequestError("searching deleted resources does not support " + resource.SEARCH_FIELD_FOLDER_TREE)
+	}
 	return nil
 }
 
@@ -3549,7 +3664,10 @@ var declaredTopLevelNames = func() map[string]bool {
 
 // filterQueries builds the label and field filter clauses (the AND terms that
 // are not the free-text query) for a search request.
-func (b *bleveIndex) filterQueries(ctx context.Context, req *resourcepb.ResourceSearchRequest) ([]query.Query, *resourcepb.ErrorResult) {
+func (b *bleveIndex) filterQueries(ctx context.Context, req *resourcepb.ResourceSearchRequest, folderIndex *bleveIndex) ([]query.Query, *resourcepb.ErrorResult) {
+	if err := b.validateSearchRequest(req); err != nil {
+		return nil, err
+	}
 	queries := []query.Query{}
 	if len(req.Options.Labels) > 0 {
 		for _, v := range req.Options.Labels {
@@ -3571,7 +3689,7 @@ func (b *bleveIndex) filterQueries(ctx context.Context, req *resourcepb.Resource
 	if len(req.Options.Fields) > 0 {
 		for _, v := range req.Options.Fields {
 			if v.Key == resource.SEARCH_FIELD_FOLDER_TREE {
-				q, err := b.folderTreeQuery(ctx, v)
+				q, err := b.folderTreeQuery(ctx, v, folderIndex)
 				if err != nil {
 					return nil, err
 				}
@@ -3933,7 +4051,7 @@ func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context, req
 	startTime := time.Now()
 	listRV, docs, err := b.updaterFn(ctx, b, sinceRV)
 	if err == nil && listRV > 0 && listRV != sinceRV {
-		err = b.updateResourceVersion(listRV) // updates b.resourceVersion
+		err = b.advanceResourceVersion(listRV, docs) // updates b.resourceVersion
 	}
 
 	elapsed := time.Since(startTime)
@@ -4001,17 +4119,13 @@ const (
 	whitespaceCharacters = " \t\r\n"
 )
 
-// checkSortCapability holds a sort to what the field declares. A field that is
-// not indexed at all (a retrieve-only number, or a name no version declares)
-// silently comes back in an arbitrary order.
+// checkSortCapability rejects a sort on a field that does not declare the sort
+// capability. Such a field is not indexed for sorting (a retrieve-only number,
+// or a name no version declares), so the results would come back in an
+// arbitrary order.
 func (b *bleveIndex) checkSortCapability(req *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
 	for _, sort := range req.SortBy {
 		if b.sortableField(sort.Field) {
-			continue
-		}
-		b.indexMetrics.SearchCapabilityViolations.WithLabelValues(b.key.Resource, string(resource.SearchCapabilitySort)).Inc()
-		if !b.enforceSortCapability {
-			b.logger.Warn("search sorts on a field that does not declare the sort capability", "field", sort.Field)
 			continue
 		}
 		return resource.NewBadRequestError(fmt.Sprintf("field %q does not support sorting", sort.Field))
@@ -4519,113 +4633,6 @@ func hitSortFields(hit *search.DocumentMatch, sort search.SortOrder) []string {
 	return fields
 }
 
-func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hits search.DocumentMatchCollection, sort search.SortOrder, explain bool) (*resourcepb.ResourceTable, error) {
-	_, span := tracer.Start(ctx, "search.bleveIndex.hitsToTable")
-	defer span.End()
-
-	fields := []*resourcepb.ResourceTableColumnDefinition{}
-	for _, name := range selectFields {
-		if name == resource.SEARCH_FIELD_ALL_FIELDS {
-			fields = b.allFields
-			break
-		}
-
-		f := b.standard.Field(name)
-		if f == nil && b.fields != nil {
-			f = b.fields.Field(name)
-		}
-		if f == nil {
-			// Labels as a string
-			if strings.HasPrefix(name, "labels.") {
-				f = &resourcepb.ResourceTableColumnDefinition{
-					Name: name,
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				}
-			}
-
-			// return nil, fmt.Errorf("unknown response field: " + name)
-			if f == nil {
-				continue // OK for now
-			}
-		}
-		fields = append(fields, f)
-	}
-	if explain {
-		fields = append(fields, b.standard.Field(resource.SEARCH_FIELD_EXPLAIN))
-	}
-
-	builder, err := resource.NewTableBuilder(fields)
-	if err != nil {
-		return nil, err
-	}
-	encoders := builder.Encoders()
-
-	table := &resourcepb.ResourceTable{
-		Columns: fields,
-		Rows:    make([]*resourcepb.ResourceTableRow, hits.Len()),
-	}
-	for rowID, match := range hits {
-		row := &resourcepb.ResourceTableRow{
-			Key:             &resourcepb.ResourceKey{},
-			ResourceVersion: b.hitResourceVersion(match),
-			Cells:           make([][]byte, len(fields)),
-			SortFields:      hitSortFields(match, sort),
-		}
-		table.Rows[rowID] = row
-
-		err := resource.ReadSearchID(row.Key, match.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		for i, f := range fields {
-			var v any
-			switch f.Name {
-			case resource.SEARCH_FIELD_ID:
-				row.Cells[i] = []byte(match.ID)
-
-			case resource.SEARCH_FIELD_SCORE:
-				row.Cells[i], err = encoders[i](match.Score)
-
-			case resource.SEARCH_FIELD_EXPLAIN:
-				if match.Expl != nil {
-					row.Cells[i], err = json.Marshal(match.Expl)
-				}
-			case resource.SEARCH_FIELD_LEGACY_ID:
-				v, ok, _ := searchHitLegacyID(match)
-				if ok {
-					row.Cells[i], err = encoders[i](v)
-				}
-
-			// Served from the row rather than the stored field, which holds a string
-			// the INT64 column encoder would reject.
-			case resource.SEARCH_FIELD_RV:
-				if row.ResourceVersion > 0 {
-					row.Cells[i], err = encoders[i](row.ResourceVersion)
-				}
-			default:
-				fieldName := f.Name
-				// since the bleve index fields mix common and resource-specific fields, it is possible a conflict can happen
-				// if a specific field is named the same as a common field
-				v := match.Fields[fieldName]
-				// fields that are specific to the resource get stored as fields.<fieldName>, so we need to check for that
-				if v == nil {
-					v = match.Fields[resource.SEARCH_FIELD_PREFIX+fieldName]
-				}
-				if v != nil {
-					// Encode the value to protobuf
-					row.Cells[i], err = encoders[i](v)
-				}
-			}
-			if err != nil {
-				return nil, fmt.Errorf("error encoding (row:%d/col:%d) %v %w", rowID, i, v, err)
-			}
-		}
-	}
-
-	return table, nil
-}
-
 func defaultSearchResultFieldNames() []string {
 	return []string{
 		resource.SEARCH_FIELD_ID,
@@ -4637,26 +4644,6 @@ func defaultSearchResultFieldNames() []string {
 		resource.SEARCH_FIELD_LEGACY_ID,
 		resource.SEARCH_FIELD_MANAGER_KIND,
 	}
-}
-
-func getAllFields(standard resource.SearchableDocumentFields, custom resource.SearchableDocumentFields) ([]*resourcepb.ResourceTableColumnDefinition, error) {
-	defaultFields := defaultSearchResultFieldNames()
-	fields := make([]*resourcepb.ResourceTableColumnDefinition, len(defaultFields))
-	for i, name := range defaultFields {
-		fields[i] = standard.Field(name)
-	}
-
-	if custom != nil {
-		for _, name := range custom.Fields() {
-			fields = append(fields, custom.Field(name))
-		}
-	}
-	for _, field := range fields {
-		if field == nil {
-			return nil, fmt.Errorf("invalid all field")
-		}
-	}
-	return fields, nil
 }
 
 func newResponseFacet(v *search.FacetResult) *resourcepb.ResourceSearchResponse_Facet {
@@ -4681,7 +4668,7 @@ type permissionScopedQuery struct {
 	access    authlib.AccessClient
 	namespace string
 	group     string
-	resources map[string]string // resource -> verb mapping
+	resources map[string]string // {group}/{resource} -> verb, see authzResources
 	trash     *resource.TrashAuthorizer
 	log       log.Logger
 }
@@ -4690,7 +4677,7 @@ type permissionScopedQueryConfig struct {
 	access    authlib.AccessClient
 	namespace string
 	group     string
-	resources map[string]string // resource -> verb mapping
+	resources map[string]string // {group}/{resource} -> verb, see authzResources
 	// Set for a trash search, nil for a live one.
 	trash *resource.TrashAuthorizer
 }
@@ -4914,7 +4901,7 @@ func (s *batchAuthzSearcher) parseDocInfo(doc *search.DocumentMatch) (docInfo, b
 	}
 
 	// Check if we have a verb for this resource type
-	verb, ok := s.resources[resourceType]
+	verb, ok := authzVerb(s.resources, group, resourceType)
 	if !ok {
 		s.log.Debug("No verb found for resource", "resource", resourceType)
 		return docInfo{}, false

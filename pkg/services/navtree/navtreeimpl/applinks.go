@@ -35,6 +35,7 @@ var assistantOSSNavigationPaths = map[string]struct{}{
 var assistantTrialNavigationPaths = map[string]struct{}{
 	assistantAppHomePath:                 {},
 	"/a/grafana-assistant-app/workspace": {},
+	"/a/grafana-assistant-app/pages":     {},
 }
 
 func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) error {
@@ -164,6 +165,13 @@ type pendingInclude struct {
 	isPage bool
 }
 
+// A page that navigationAppPathConfig relocates out of its app, with the section
+// it belongs in
+type standalonePage struct {
+	link      *navtree.NavLink
+	sectionID string
+}
+
 func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
 	hasAccessToInclude := s.hasAccessToInclude(c, plugin.ID)
 	assistantTrialMode := s.isAssistantTrialMode(plugin, c)
@@ -188,6 +196,18 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 
 	var pending []pendingInclude
 	var pageLinks []*navtree.NavLink
+
+	// Pages that navigationAppPathConfig relocates out of this app, by the section
+	// they belong in. Deferred, because a page relocated into the same section as
+	// its own app needs that section, and addPluginToSection only creates it below
+	// — on every return path, since an app placed by its relocated page alone
+	// leaves the tree before reaching that point.
+	var standalonePages []standalonePage
+	defer func() {
+		for _, page := range standalonePages {
+			s.addStandalonePage(treeRoot, page.link, page.sectionID)
+		}
+	}()
 
 	for _, include := range plugin.Includes {
 		if !hasAccessToInclude(include) {
@@ -236,32 +256,14 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 				if pathConfig.Icon != "" {
 					link.Icon = pathConfig.Icon
 				}
-
-				if pathConfig.SectionID == navtree.NavIDRoot {
-					treeRoot.AddSection(link)
-				} else if sectionForPage := treeRoot.FindById(pathConfig.SectionID); sectionForPage != nil {
-					// Check if the section already has a page with the same URL, and in that case override it
-					// (This only happens if it is explicitly set by `navigation.app_standalone_pages` in the INI config)
-					isOverridingCorePage := false
-					for _, child := range sectionForPage.Children {
-						if child.Url == link.Url {
-							child.Id = link.Id
-							child.SortWeight = link.SortWeight
-							child.PluginID = link.PluginID
-							child.Children = []*navtree.NavLink{}
-							isOverridingCorePage = true
-							break
-						}
-					}
-
-					// Append the page to the section
-					if !isOverridingCorePage {
-						sectionForPage.Children = append(sectionForPage.Children, link)
-					}
+				if pathConfig.Text != "" {
+					link.Text = pathConfig.Text
 				}
 
-				// Register the page under the app (attached in the second pass below).
-				// Standalone pages are relocated out of the app, so they don't participate.
+				// Placed by the deferred call above, not here. Standalone pages are
+				// relocated out of the app, so they don't take part in the second
+				// pass that attaches the app's own pages below.
+				standalonePages = append(standalonePages, standalonePage{link: link, sectionID: pathConfig.SectionID})
 			} else if include.AddToNav {
 				pending = append(pending, pendingInclude{link: link, isPage: true})
 				// A page whose URL is the app root itself (e.g. a DefaultNav page) is not a
@@ -324,6 +326,34 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 	}
 
 	return nil
+}
+
+// addStandalonePage places a page relocated out of its app by
+// navigationAppPathConfig, at the top level or into the section it names.
+func (s *ServiceImpl) addStandalonePage(treeRoot *navtree.NavTreeRoot, link *navtree.NavLink, sectionID string) {
+	if sectionID == navtree.NavIDRoot {
+		treeRoot.AddSection(link)
+		return
+	}
+
+	sectionForPage := treeRoot.FindById(sectionID)
+	if sectionForPage == nil {
+		return
+	}
+
+	// Check if the section already has a page with the same URL, and in that case override it
+	// (This only happens if it is explicitly set by `navigation.app_standalone_pages` in the INI config)
+	for _, child := range sectionForPage.Children {
+		if child.Url == link.Url {
+			child.Id = link.Id
+			child.SortWeight = link.SortWeight
+			child.PluginID = link.PluginID
+			child.Children = []*navtree.NavLink{}
+			return
+		}
+	}
+
+	sectionForPage.Children = append(sectionForPage.Children, link)
 }
 
 func (s *ServiceImpl) canCreateAssistantPage(plugin pluginstore.Plugin, include *plugins.Includes, c *contextmodel.ReqContext) bool {
@@ -579,12 +609,12 @@ func (s *ServiceImpl) readNavigationSettings() {
 	s.navigationAppConfig = map[string]NavigationAppConfig{
 		"grafana-sigil-app":                {SectionID: navtree.NavIDObservability, SortWeight: 1, Text: "AI", IsNew: true}, // TODO: remove this after sigil is renamed to grafana-agento11y-app, but we need to keep it for now to avoid breaking changes
 		"grafana-agento11y-app":            {SectionID: navtree.NavIDObservability, SortWeight: 1, Text: "Agent", IsNew: true},
-		"grafana-asserts-app":              {SectionID: navtree.NavIDObservability, SortWeight: 2, Icon: "asserts"},
-		"grafana-kowalski-app":             {SectionID: navtree.NavIDObservability, SortWeight: 3, Text: "Frontend"},
-		appObservabilityAppID:              {SectionID: navtree.NavIDObservability, SortWeight: 4, Text: "Application"},
-		"grafana-dbo11y-app":               {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Database"},
-		"grafana-k8s-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 6, Text: "Kubernetes"},
-		"grafana-csp-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 7, Icon: "cloud-provider"},
+		"grafana-asserts-app":              {SectionID: navtree.NavIDObservability, SortWeight: 3, Icon: "asserts"},
+		"grafana-kowalski-app":             {SectionID: navtree.NavIDObservability, SortWeight: 4, Text: "Frontend"},
+		appObservabilityAppID:              {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Application"},
+		"grafana-dbo11y-app":               {SectionID: navtree.NavIDObservability, SortWeight: 6, Text: "Database"},
+		"grafana-k8s-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 7, Text: "Kubernetes"},
+		"grafana-csp-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 8, Icon: "cloud-provider"},
 		"grafana-metricsdrilldown-app":     {SectionID: navtree.NavIDDrilldown, SortWeight: 1, Text: "Metrics"},
 		"grafana-lokiexplore-app":          {SectionID: navtree.NavIDDrilldown, SortWeight: 2, Text: "Logs"},
 		"grafana-exploretraces-app":        {SectionID: navtree.NavIDDrilldown, SortWeight: 3, Text: "Traces"},
@@ -614,6 +644,12 @@ func (s *ServiceImpl) readNavigationSettings() {
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{
+		"/a/grafana-agento11y-app/coding-agents": {
+			SectionID:  navtree.NavIDObservability,
+			SortWeight: 2,
+			Text:       "Coding agent",
+			IsNew:      true,
+		},
 		"/a/grafana-assistant-app/pages": {
 			SectionID:  navtree.NavIDRoot,
 			SortWeight: navtree.WeightDashboard + 1,

@@ -6,6 +6,8 @@ import (
 	"net/http"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
@@ -71,21 +73,20 @@ func (r *DisplayHandler) selfRouteSpec() *spec3.PathProps {
 func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	authInfo, ok := authlib.AuthInfoFrom(ctx)
-	if !ok {
+	if !ok || authInfo == nil {
 		errhttp.Write(ctx, apierrors.NewUnauthorized("missing auth info"), w)
 		return
 	}
 
 	rsp := iam.CurrentUserInfo{
-		Display: iam.Display{
-			Identity: iam.IdentityRef{
-				Type: authInfo.GetIdentityType(),
-				Name: authInfo.GetIdentifier(),
-			},
-			DisplayName: authInfo.GetName(),
+		Identity: iam.IdentityRef{
+			Type: authInfo.GetIdentityType(),
+			Name: authInfo.GetIdentifier(),
 		},
+		DisplayName:     authInfo.GetName(),
 		Namespace:       authInfo.GetNamespace(),
 		Email:           authInfo.GetEmail(),
+		Teams:           authInfo.GetGroups(),
 		AuthenticatedBy: authInfo.GetAuthenticatedBy(),
 	}
 
@@ -113,6 +114,17 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 		// (e.g. "user:u000000001"), so the caller identifies itself purely from context.
 		key := authInfo.GetUID()
 
+		// The cluster-scoped whoami route has no namespace in the request context,
+		// but downstream clients (e.g. search) require one. When the route already
+		// carries one, it must agree with the caller's namespace.
+		if existing := request.NamespaceValue(ctx); existing == "" {
+			ctx = request.WithNamespace(ctx, ns.Value)
+		} else if existing != ns.Value {
+			errhttp.Write(ctx, apierrors.NewForbidden(schema.GroupResource{Group: iam.GROUP, Resource: "users"}, CurrentUserName,
+				fmt.Errorf("request namespace does not match the caller's namespace")), w)
+			return
+		}
+
 		for _, p := range r.resolvers {
 			partial, err := p.GetDisplayList(ctx, ns, []string{key})
 			if err != nil {
@@ -134,7 +146,10 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	// Preserve identity details for namespace discovery even when display resolution fails.
-	w.WriteHeader(http.StatusUnauthorized)
+	// If a user fails to resolve, it should be a 401 response
+	if authInfo.GetIdentityType() == authlib.TypeUser {
+		w.WriteHeader(http.StatusUnauthorized)
+	}
+
 	_ = json.NewEncoder(w).Encode(rsp)
 }

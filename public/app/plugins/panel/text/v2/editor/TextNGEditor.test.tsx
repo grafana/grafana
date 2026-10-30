@@ -8,6 +8,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import config from 'app/core/config';
 
 import { CodeLanguage, RenderMode, TextMode } from '../../panelcfg.gen';
+import { SandboxFrame } from '../SandboxFrame';
 import { FOOTER_TEST_ID } from '../TextNGFooter';
 
 import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange } from './TextNGEditor';
@@ -27,8 +28,7 @@ afterAll(() => {
 
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
 // stub it with a plain textarea so these tests stay fast and deterministic.
-jest.mock('@grafana/ui', () => ({
-  ...jest.requireActual('@grafana/ui'),
+jest.mock('@grafana/ui/unstable', () => ({
   __esModule: true,
   // The stubbed editor never runs completions; the source itself is covered by
   // variableCompletion.test.ts.
@@ -145,6 +145,12 @@ describe('TextNGEditor', () => {
 
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
       expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h1');
+    });
+
+    it('stretches the preview frame to the measured pane so positioned content lays out against it', async () => {
+      setup('# Hello', TextMode.Markdown);
+
+      await waitFor(() => expect(jest.mocked(SandboxFrame).mock.calls.at(-1)![0].minHeight).toBe(500));
     });
 
     it('shows only the editor in Write view', async () => {

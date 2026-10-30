@@ -70,8 +70,8 @@ func interleaveHybridCandidates(candidates []hybridCandidates) []*resourcepb.Hyb
 	return results
 }
 
-// enrichHybridResults looks up folder titles and manager details only for retained results.
-// External resources have no Bleve index, so they skip manager lookups.
+// enrichHybridResults looks up folder titles and semantic metadata only for retained results.
+// External resources have no Bleve index, so they skip metadata lookups.
 func (s *searchServer) enrichHybridResults(ctx context.Context, namespace string, candidates []hybridCandidates, results []*resourcepb.HybridSearchResult) {
 	byResource := make(map[GroupResource][]*resourcepb.HybridSearchResult)
 	for _, result := range results {
@@ -90,7 +90,7 @@ func (s *searchServer) enrichHybridResults(ctx context.Context, namespace string
 			continue
 		}
 		g.Go(func() error {
-			s.resolveManagedBy(gctx, candidate.key, candidate.lexUIDs, matching)
+			s.resolveSemanticMetadata(gctx, candidate.key, candidate.lexUIDs, matching)
 			return nil
 		})
 	}

@@ -31,7 +31,7 @@ func newAuthMetricsIndex(t *testing.T, postRank bool, cfg search.PostRankAuthzCo
 	}, metrics)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
-	index, err := backend.BuildIndex(context.Background(), postRankKey, 100, "test", noop, nil, false, time.Time{}, 0)
+	index, err := backend.BuildIndex(context.Background(), postRankKey, 100, "test", noop, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	for i := range 100 {
 		indexDocs(t, index, []*resource.BulkIndexItem{newDocWithTags(fmt.Sprintf("doc-%03d", i), "allowed", []string{"tag"})})
@@ -137,7 +137,7 @@ func TestSearchAuthMetricsFieldValues(t *testing.T) {
 			response, err := index.Search(ctx, &countingAccessClient{allowAll: true}, query, nil, nil)
 			require.NoError(t, err)
 			require.Nil(t, response.Error)
-			require.Nil(t, response.Results)
+			require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, response.ResultFormat)
 			require.Len(t, response.Rows, 10)
 			require.EqualValues(t, 10, authHistogram(t, metrics.SearchAuthReturned, mode, "page").GetSampleSum())
 			require.EqualValues(t, 1, authHistogram(t, metrics.SearchAuthDuration, mode, "page", "success").GetSampleCount())

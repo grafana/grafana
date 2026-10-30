@@ -148,7 +148,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	}
 
 	progress.SetMessage(ctx, "listing pull request files")
-	base, err := prRepo.MergeBase(ctx, opts.Ref)
+	base, err := prRepo.PullRequestClient().MergeBase(ctx, prRepo.Config().Branch(), opts.Ref)
 	if err != nil {
 		base = prRepo.Config().Branch()
 		logger.Warn("failed to resolve pull request base, falling back to the configured branch", "error", err, "branch", base)

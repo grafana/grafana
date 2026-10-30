@@ -76,13 +76,15 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-node
       - name: Install JS dependencies
-        run: yarn install --immutable
+        uses: ./.github/actions/yarn-install
       - name: Build frontend
-        run: yarn build
+        run: npm run build
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: pr-frontend
-          path: public
+          path: |
+            public/
+            !public/**/node_modules/
           retention-days: 1
 
   build-backend:
@@ -150,7 +152,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Check whether Meticulous should run
-        if: github.repository == 'grafana/grafana' && needs.detect-changes.outputs.frontend-src == 'true'
+        if: github.repository == 'grafana/grafana' && github.event.pull_request.base.ref == 'main' && needs.detect-changes.outputs.frontend-src == 'true'
         id: meticulous-eligibility
         continue-on-error: true
         uses: actions/github-script@v8

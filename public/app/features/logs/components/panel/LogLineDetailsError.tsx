@@ -1,12 +1,15 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
+import { createAssistantContextItem, OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { ClipboardButton, Icon, useStyles2 } from '@grafana/ui';
 
 import { type FieldDef } from '../logParser';
 import { classifyErrorAttributes } from '../otel/details';
+import { OTEL_LANGUAGE_UNKNOWN } from '../otel/formats';
 
 import { type LabelWithLinks } from './LogLineDetailsFields';
 import { type LogListFontSize } from './LogList';
@@ -14,8 +17,10 @@ import { useLogListContext } from './LogListContext';
 import { getNormalizedFieldName } from './processing';
 
 interface LogLineDetailsErrorProps {
+  className?: string;
   fields: FieldDef[];
   labels: LabelWithLinks[];
+  otelLanguage?: string;
 }
 
 interface ErrorDisplayItem {
@@ -23,8 +28,9 @@ interface ErrorDisplayItem {
   value: string;
 }
 
-export const LogLineDetailsError = ({ fields, labels }: LogLineDetailsErrorProps) => {
-  const { fontSize } = useLogListContext();
+export const LogLineDetailsError = ({ className, fields, labels, otelLanguage }: LogLineDetailsErrorProps) => {
+  const { fontSize, noInteractions } = useLogListContext();
+  const { isAvailable } = useAssistant();
   const styles = useStyles2(getStyles, fontSize);
 
   const classifiedFields = useMemo(() => classifyErrorAttributes(fields, (field) => field.keys[0] ?? ''), [fields]);
@@ -42,16 +48,46 @@ export const LogLineDetailsError = ({ fields, labels }: LogLineDetailsErrorProps
     () => [...toLabelItems(classifiedLabels.stacktraces), ...toFieldItems(classifiedFields.stacktraces)],
     [classifiedFields.stacktraces, classifiedLabels.stacktraces]
   );
+  const errorDetails = useMemo(() => [...other, ...messages, ...stacktraces], [messages, other, stacktraces]);
+  const diagnosePrompt = useMemo(
+    () => buildDiagnoseErrorPrompt(errorDetails, otelLanguage),
+    [errorDetails, otelLanguage]
+  );
+  const diagnoseContext = useMemo(
+    () => (isAvailable ? buildDiagnoseErrorContext(errorDetails, otelLanguage) : []),
+    [errorDetails, isAvailable, otelLanguage]
+  );
 
-  if (!messages.length && !other.length && !stacktraces.length) {
+  if (!errorDetails.length) {
     return null;
   }
 
+  const reportDiagnose = () => {
+    if (!noInteractions) {
+      reportInteraction('logs_log_line_details_error_diagnose_clicked');
+    }
+  };
+
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} ${className ? className : ''}`}>
       <div className={styles.header}>
-        <Icon name="exclamation-circle" className={styles.icon} />
-        <span>{t('logs.log-details.error.error-details', 'Error details')}</span>
+        <div className={styles.headerTitle}>
+          <Icon name="exclamation-circle" className={styles.icon} />
+          <span>{t('logs.log-details.error.error-details', 'Error details')}</span>
+        </div>
+        {isAvailable && (
+          <div className={styles.assistantAction}>
+            <OpenAssistantButton
+              origin="grafana/logs/diagnose-log-error"
+              prompt={diagnosePrompt}
+              context={diagnoseContext}
+              autoSend
+              title={t('logs.log-details.error.diagnose-with-assistant', 'Diagnose with assistant')}
+              size="sm"
+              onClick={reportDiagnose}
+            />
+          </div>
+        )}
       </div>
       <div className={styles.content}>
         {other.map((item) => (
@@ -68,6 +104,34 @@ export const LogLineDetailsError = ({ fields, labels }: LogLineDetailsErrorProps
   );
 };
 
+function knownOtelLanguage(otelLanguage?: string): string | undefined {
+  const language = otelLanguage?.trim();
+  if (!language || language === OTEL_LANGUAGE_UNKNOWN) {
+    return undefined;
+  }
+  return language;
+}
+
+function buildDiagnoseErrorPrompt(items: ErrorDisplayItem[], otelLanguage?: string): string {
+  const details = items.map((item) => `${item.key}: ${item.value.replaceAll('`', '\\`')}`).join('\n');
+  const language = knownOtelLanguage(otelLanguage)?.replaceAll('`', '\\`');
+  const source = language ? `an OpenTelemetry ${language} log line` : 'a log line';
+  return `Diagnose this error from ${source}. Explain the likely cause and what to check next.\n\n\`\`\`\n${details}\n\`\`\``;
+}
+
+function buildDiagnoseErrorContext(items: ErrorDisplayItem[], otelLanguage?: string) {
+  const language = knownOtelLanguage(otelLanguage);
+  return [
+    createAssistantContextItem('structured', {
+      title: t('logs.log-details.error.error-details', 'Error details'),
+      data: {
+        ...(language ? { language } : {}),
+        attributes: items.map((item) => ({ key: item.key, value: item.value })),
+      },
+    }),
+  ];
+}
+
 function toFieldItems(fields: FieldDef[]): ErrorDisplayItem[] {
   return fields.map((field) => ({
     key: field.keys[0] ?? '',
@@ -83,14 +147,28 @@ function toLabelItems(labels: LabelWithLinks[]): ErrorDisplayItem[] {
 }
 
 function StacktraceValue({ item }: { item: ErrorDisplayItem }) {
-  const { fontSize } = useLogListContext();
+  const { fontSize, noInteractions } = useLogListContext();
   const styles = useStyles2(getValueStyles, fontSize, 'stacktrace');
   const [isOpen, setIsOpen] = useState(false);
   const label = getNormalizedFieldName(item.key);
 
+  const toggleStacktrace = () => {
+    const state = isOpen ? 'closed' : 'open';
+    setIsOpen(!isOpen);
+    if (!noInteractions) {
+      reportInteraction('logs_log_line_details_error_stacktrace_toggled', { state });
+    }
+  };
+
+  const copyStacktrace = () => {
+    if (!noInteractions) {
+      reportInteraction('logs_log_line_details_error_stacktrace_copied');
+    }
+  };
+
   return (
     <div className={styles.row}>
-      <button type="button" className={styles.toggle} aria-expanded={isOpen} onClick={() => setIsOpen((open) => !open)}>
+      <button type="button" className={styles.toggle} aria-expanded={isOpen} onClick={toggleStacktrace}>
         <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
         <span>{label}</span>
       </button>
@@ -100,6 +178,7 @@ function StacktraceValue({ item }: { item: ErrorDisplayItem }) {
           <div className={styles.actions}>
             <ClipboardButton
               getText={() => item.value}
+              onClipboardCopy={copyStacktrace}
               aria-label={t('logs.log-line-details.fields.copy-value-to-clipboard', 'Copy value to clipboard')}
               fill="text"
               variant="secondary"
@@ -147,19 +226,28 @@ type ErrorAttributeVariant = 'message' | 'stacktrace' | 'other';
 
 const getStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
   container: css({
-    background: theme.colors.background.secondary,
-    borderLeft: `2px solid ${theme.colors.error.border}`,
+    background: `linear-gradient(${theme.colors.error.main}, ${theme.colors.error.main}) left 0 top 0 / 6px 100% no-repeat, ${theme.colors.background.secondary}`,
     borderRadius: theme.shape.radius.default,
     padding: theme.spacing(1),
+    paddingLeft: `calc(6px + ${theme.spacing(1)})`,
   }),
   header: css({
+    alignItems: 'center',
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+    marginBottom: theme.spacing(1),
+  }),
+  headerTitle: css({
     alignItems: 'center',
     color: theme.colors.error.text,
     display: 'flex',
     fontSize: fontSize === 'small' ? theme.typography.bodySmall.fontSize : undefined,
     fontWeight: theme.typography.fontWeightMedium,
     gap: theme.spacing(0.5),
-    marginBottom: theme.spacing(1),
+  }),
+  assistantAction: css({
+    marginLeft: 'auto',
   }),
   icon: css({
     flexShrink: 0,

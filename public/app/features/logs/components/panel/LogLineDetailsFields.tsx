@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { parse, stringify } from 'lossless-json';
 import { memo, type ReactNode, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -15,7 +15,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ClipboardButton, Dropdown, Icon, IconButton, Menu, useStyles2 } from '@grafana/ui';
+import { Box, ClipboardButton, Dropdown, Icon, IconButton, Menu, Pagination, Stack, useStyles2 } from '@grafana/ui';
 
 import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
@@ -24,9 +24,34 @@ import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields'
 import { type FieldDef } from '../logParser';
 
 import { AsyncIconButton } from './AsyncIconButton';
+import { LogLinksResolver } from './LogLinksResolver';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
+import { getIconButtonStyles } from './activeIconButtonStyles';
 import { type LogListModel, getNormalizedFieldName } from './processing';
+
+// Paginate fields above this number. A suggested/maximum page size, not a fixed one.
+const FIELDS_PAGE_SIZE = 50;
+
+export function usePagedItems<T>(items: T[]) {
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    setPage(1);
+  }, [items]);
+
+  const numberOfPages = Math.max(1, Math.ceil(items.length / FIELDS_PAGE_SIZE));
+  // Spread items evenly across that many pages instead of filling each to FIELDS_PAGE_SIZE and leaving a
+  // short, oddly-sized last page.
+  const pageSize = Math.ceil(items.length / numberOfPages);
+  const currentPage = Math.min(page, numberOfPages);
+  const pagedItems = useMemo(
+    () => items.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [items, currentPage, pageSize]
+  );
+
+  return { pagedItems, currentPage, numberOfPages, onNavigate: setPage };
+}
 
 interface LogLineDetailsFieldsProps {
   disableActions?: boolean;
@@ -41,6 +66,7 @@ export const LogLineDetailsFields = memo(({ disableActions, fields, log, logs, s
   const styles = useStyles2(getFieldsStyles, fontSize, onClickShowField);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterFields(fields, search) : fields), [fields, search]);
+  const { pagedItems, currentPage, numberOfPages, onNavigate } = usePagedItems(filteredFields);
 
   if (!fields.length) {
     return null;
@@ -49,20 +75,42 @@ export const LogLineDetailsFields = memo(({ disableActions, fields, log, logs, s
   }
 
   return (
-    <div className={disableActions ? styles.fieldsTableNoActions : styles.fieldsTable}>
-      {filteredFields.map((field, i) => (
-        <LogLineDetailsField
-          key={`${field.keys[0]}=${field.values[0]}-${i}`}
-          disableActions={disableActions}
-          getLogs={getLogs}
-          fieldIndex={field.fieldIndex}
-          keys={field.keys}
-          links={field.links}
-          log={log}
-          values={field.values}
-        />
-      ))}
-    </div>
+    <>
+      <Stack justifyContent="center">
+        <Box marginBottom={1}>
+          <Pagination
+            currentPage={currentPage}
+            numberOfPages={numberOfPages}
+            onNavigate={onNavigate}
+            hideWhenSinglePage
+          />
+        </Box>
+      </Stack>
+      <div className={disableActions ? styles.fieldsTableNoActions : styles.fieldsTable}>
+        {pagedItems.map((field, i) => (
+          <LogLineDetailsField
+            key={`${field.keys[0]}=${field.values[0]}-${i}`}
+            disableActions={disableActions}
+            getLogs={getLogs}
+            fieldIndex={field.fieldIndex}
+            keys={field.keys}
+            links={field.links}
+            log={log}
+            values={field.values}
+          />
+        ))}
+      </div>
+      <Stack justifyContent="center">
+        <Box marginTop={1}>
+          <Pagination
+            currentPage={currentPage}
+            numberOfPages={numberOfPages}
+            onNavigate={onNavigate}
+            hideWhenSinglePage
+          />
+        </Box>
+      </Stack>
+    </>
   );
 });
 LogLineDetailsFields.displayName = 'LogLineDetailsFields';
@@ -89,6 +137,7 @@ export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLine
   const styles = useStyles2(getFieldsStyles, fontSize, onClickShowField);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterLabels(fields, search) : fields), [fields, search]);
+  const { pagedItems, currentPage, numberOfPages, onNavigate } = usePagedItems(filteredFields);
 
   if (!fields.length) {
     return null;
@@ -97,19 +146,41 @@ export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLine
   }
 
   return (
-    <div className={styles.fieldsTable}>
-      {filteredFields.map((field, i) => (
-        <LogLineDetailsField
-          key={`${field.key}=${field.value}-${i}`}
-          getLogs={getLogs}
-          isLabel
-          keys={[field.key]}
-          links={field.links}
-          log={log}
-          values={[field.value]}
-        />
-      ))}
-    </div>
+    <>
+      <Stack justifyContent="center">
+        <Box marginBottom={1}>
+          <Pagination
+            currentPage={currentPage}
+            numberOfPages={numberOfPages}
+            onNavigate={onNavigate}
+            hideWhenSinglePage
+          />
+        </Box>
+      </Stack>
+      <div className={styles.fieldsTable}>
+        {pagedItems.map((field, i) => (
+          <LogLineDetailsField
+            key={`${field.key}=${field.value}-${i}`}
+            getLogs={getLogs}
+            isLabel
+            keys={[field.key]}
+            links={field.links}
+            log={log}
+            values={[field.value]}
+          />
+        ))}
+      </div>
+      <Stack justifyContent="center">
+        <Box marginTop={1}>
+          <Pagination
+            currentPage={currentPage}
+            numberOfPages={numberOfPages}
+            onNavigate={onNavigate}
+            hideWhenSinglePage
+          />
+        </Box>
+      </Stack>
+    </>
   );
 };
 
@@ -121,7 +192,8 @@ const getFieldsStyles = (
   fieldsTable: css({
     display: 'grid',
     gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
-    gridTemplateColumns: `${fontSize === 'small' ? (onClickShowField ? theme.spacing(10) : theme.spacing(7)) : onClickShowField ? theme.spacing(11.5) : theme.spacing(7.5)} fit-content(30%) 1fr`,
+    // Icon buttons are 24px (sm) or 26px (md). Fit 3, or 4 when the show-field toggle is available.
+    gridTemplateColumns: `${fontSize === 'small' ? (onClickShowField ? theme.spacing(12) : theme.spacing(9)) : onClickShowField ? theme.spacing(13) : theme.spacing(9.75)} fit-content(30%) 1fr`,
   }),
   fieldsTableNoActions: css({
     display: 'grid',
@@ -137,7 +209,7 @@ interface LogLineDetailsFieldProps {
   fieldIndex?: number;
   getLogs(): LogListModel[];
   isLabel?: boolean;
-  links?: LinkModelWithIcon[];
+  links?: readonly LinkModelWithIcon[];
   log: LogListModel;
 }
 
@@ -252,7 +324,7 @@ const LogLineDetailsField = ({
     (value: string) => {
       onClickFilterLabel?.(keys[0], value, logRowToSingleRowDataFrame(log) || undefined);
 
-      reportInteractionWrapper('logs_log_line_details_filter_clicked', {
+      reportInteractionWrapper('logs_log_line_details_ad_hoc_filter_clicked', {
         datasourceType: log.datasourceType,
         filterType: 'include',
         logRowUid: log.uid,
@@ -265,7 +337,7 @@ const LogLineDetailsField = ({
     (value: string) => {
       onClickFilterOutLabel?.(keys[0], value, logRowToSingleRowDataFrame(log) || undefined);
 
-      reportInteractionWrapper('logs_log_line_details_filter_clicked', {
+      reportInteractionWrapper('logs_log_line_details_ad_hoc_filter_clicked', {
         datasourceType: log.datasourceType,
         filterType: 'exclude',
         logRowUid: log.uid,
@@ -337,6 +409,7 @@ const LogLineDetailsField = ({
               )}
               {onClickFilterOutLabel && fieldSupportsFilters && (
                 <IconButton
+                  className={styles.iconButton}
                   name="filter-minus"
                   size={fontSize === 'small' ? 'sm' : undefined}
                   tooltip={
@@ -351,7 +424,7 @@ const LogLineDetailsField = ({
               )}
               {onClickHideField && singleKey && displayedFields.includes(keys[0]) && (
                 <IconButton
-                  variant="primary"
+                  className={cx(styles.iconButton, styles.activeIconButton)}
                   size={fontSize === 'small' ? 'sm' : undefined}
                   tooltip={t('logs.log-line-details.fields.toggle-field-button.hide-this-field', 'Hide this field')}
                   name="eye"
@@ -360,6 +433,7 @@ const LogLineDetailsField = ({
               )}
               {onClickShowField && singleKey && !displayedFields.includes(keys[0]) && (
                 <IconButton
+                  className={styles.iconButton}
                   tooltip={t(
                     'logs.log-line-details.fields.toggle-field-button.field-instead-message',
                     'Show this field instead of the message'
@@ -370,11 +444,10 @@ const LogLineDetailsField = ({
                 />
               )}
               <IconButton
-                variant={showFieldsStats ? 'primary' : 'secondary'}
                 name="signal"
                 size={fontSize === 'small' ? 'sm' : undefined}
                 tooltip={t('logs.log-line-details.fields.adhoc-statistics', 'Ad-hoc statistics')}
-                className={styles.statsIcon}
+                className={cx(styles.iconButton, styles.statsIcon, showFieldsStats && styles.activeIconButton)}
                 disabled={!singleKey}
                 onClick={showStats}
               />
@@ -386,11 +459,20 @@ const LogLineDetailsField = ({
         </div>
         <div className={styles.value}>
           <div className={styles.valueContainer}>
-            {singleValue ? (
-              <SingleValue value={values[0]} links={links} prettifyJSON={prettifyJSON} onLinkClick={reportLinkClick} />
-            ) : (
-              <MultipleValue showCopy={true} values={values} links={links} onLinkClick={reportLinkClick} />
-            )}
+            <LogLinksResolver links={links}>
+              {(resolvedLinks) =>
+                singleValue ? (
+                  <SingleValue
+                    value={values[0]}
+                    links={resolvedLinks}
+                    prettifyJSON={prettifyJSON}
+                    onLinkClick={reportLinkClick}
+                  />
+                ) : (
+                  <MultipleValue showCopy={true} values={values} links={resolvedLinks} onLinkClick={reportLinkClick} />
+                )
+              }
+            </LogLinksResolver>
           </div>
         </div>
       </div>
@@ -430,13 +512,12 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
   actionIcons: css({
     display: 'flex',
     justifyContent: 'space-between',
-    paddingRight: 2,
-    marginTop: 2,
   }),
   statsIcon: css({
     margin: 0,
     paddingRight: 4,
   }),
+  ...getIconButtonStyles(theme),
   label: css({
     paddingRight: theme.spacing(1),
     overflowWrap: 'break-word',
@@ -519,7 +600,7 @@ export const MultipleValue = ({
   showCopy,
   values = [],
 }: {
-  links?: LinkModelWithIcon[];
+  links?: readonly LinkModelWithIcon[];
   onLinkClick?: (link: LinkModelWithIcon) => void;
   showCopy?: boolean;
   values: string[];
@@ -553,7 +634,7 @@ export const SingleValue = ({
   prettifyJSON,
   onLinkClick,
 }: {
-  links?: LinkModelWithIcon[];
+  links?: readonly LinkModelWithIcon[];
   value: string;
   prettifyJSON?: boolean;
   onLinkClick?: (link: LinkModelWithIcon) => void;
@@ -587,7 +668,7 @@ function LinkedValue({
   onLinkClick,
 }: {
   children: ReactNode;
-  links?: LinkModelWithIcon[];
+  links?: readonly LinkModelWithIcon[];
   onLinkClick?: (link: LinkModelWithIcon) => void;
 }) {
   if (links && links.length > 1) {
@@ -649,7 +730,7 @@ const LinkValuesMenu = ({
   onLinkClick,
 }: {
   children: ReactNode;
-  links: LinkModelWithIcon[];
+  links: readonly LinkModelWithIcon[];
   onLinkClick?: (link: LinkModelWithIcon) => void;
 }) => {
   const styles = useStyles2(getValueLinkStyles);

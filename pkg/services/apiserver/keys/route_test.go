@@ -1,7 +1,10 @@
 package keys
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -46,6 +49,21 @@ func TestListKeysRoute_Shape(t *testing.T) {
 	assert.Contains(t, ok.Content, "application/json")
 }
 
+// Swagger UI sends the example as is, so it must be a body the handler accepts.
+func TestListKeysRoute_RequestExampleIsAccepted(t *testing.T) {
+	media := testRoute(t).Spec.Post.RequestBody.Content["application/json"]
+	require.NotNil(t, media.Example)
+
+	body, err := json.Marshal(media.Example)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"apiVersion":"storage.grafana.app/v0alpha1","kind":"ListKeyRequest","limit":100}`, string(body))
+
+	r := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
+	opts, err := decodeListKeyRequest(r)
+	require.NoError(t, err)
+	assert.Equal(t, int64(100), opts.Limit)
+}
+
 // Each group version's document is self-contained, so referenced components have
 // to travel with the route. A missing one renders as an empty model with no error.
 func TestListKeysRoute_PublishesReferencedSchemas(t *testing.T) {
@@ -54,16 +72,17 @@ func TestListKeysRoute_PublishesReferencedSchemas(t *testing.T) {
 
 	for _, want := range []string{
 		"com.github.grafana.grafana.pkg.apis.storage.v0alpha1.ListKeyRequest",
-		"io.k8s.apimachinery.pkg.apis.meta.v1.PartialObjectMetadataList",
+		"com.github.grafana.grafana.pkg.apis.storage.v0alpha1.ListKeyResponse",
 		// Reached transitively.
-		"io.k8s.apimachinery.pkg.apis.meta.v1.PartialObjectMetadata",
-		"io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta",
-		"io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta",
+		"com.github.grafana.grafana.pkg.apis.storage.v0alpha1.ListKeyItem",
 	} {
 		assert.Contains(t, r.Schemas, want)
 	}
 
-	assert.NotContains(t, r.Schemas, "io.k8s.apimachinery.pkg.apis.meta.v1.ListOptions")
+	// The envelope is self-contained: no Kubernetes meta types to resolve.
+	for name := range r.Schemas {
+		assert.NotContains(t, name, "io.k8s.")
+	}
 
 	// Every $ref the spec emits must be one of the published components.
 	bodyRef := r.Spec.Post.RequestBody.Content["application/json"].Schema.Ref.String()

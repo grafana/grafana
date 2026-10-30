@@ -8,10 +8,9 @@ export declare global {
     __grafana_public_path__: string;
 
     /**
-     * URL prefix the active bundler compiled its asset references against, including the
-     * build directory: 'public/build/' under webpack, 'public/build/rspack/' under rspack,
-     * prefixed with the CDN origin when one is configured. Use it for assets the bundler
-     * emits or copies into that directory (icons, maps, gazetteers).
+     * URL prefix of the build directory, 'public/build/', prefixed with the CDN origin when one
+     * is configured. Use it for assets the bundler emits or copies into that directory (icons,
+     * maps, gazetteers).
      */
     __grafana_build_path__: string;
     __grafana_load_failed: (err: unknown) => void;
@@ -57,16 +56,6 @@ export declare global {
      * The image renderer can check this to decide whether to use this mechanism or a fallback.
      */
     __grafanaRenderBindingSupported?: boolean;
-
-    /**
-     * Controls whether the frontend OFREP client uses the root `/ofrep/v1` route
-     * instead of the namespaced route. Evaluated server-side since OpenFeature
-     * isn't set up yet when the OFREP provider's baseUrl is constructed.
-     */
-    __grafanaOFREPRootUrlEnabled?: boolean;
-
-    /** Selects the Luxon-backed implementation before the application bundle loads. */
-    __grafanaUseLuxon?: boolean;
 
     /**
      * Set by the frontend service to the preview folder name when this page is

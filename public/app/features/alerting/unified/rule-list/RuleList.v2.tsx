@@ -12,7 +12,6 @@ import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { WatchersBanner } from '../components/WatchersBanner';
 import { GrafanaRulesExporter } from '../components/export/GrafanaRulesExporter';
 import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
-import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useImportEntrypointState } from '../hooks/useImportEntrypointState';
@@ -86,9 +85,9 @@ export function RuleListActions() {
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
-  const canImportRulesToGMA = hasImportToGMAPermissions;
-
   const canAccessMigrationWizardUI = config.featureToggles.alertingMigrationWizardUI && hasImportToGMAPermissions;
+  // The migration wizard replaces the rules-only import tool, so only offer the old one without it.
+  const canImportRulesToGMA = hasImportToGMAPermissions && !canAccessMigrationWizardUI;
 
   const { disabled: importDisabled, reason: importDisabledReason } = useImportEntrypointState();
 
@@ -171,7 +170,6 @@ export function RuleListActions() {
           <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>
         </LinkButton>
       )}
-      {canCreateGrafanaRules && <AIAlertRuleButtonComponent />}
       <Dropdown overlay={moreActionsMenu}>
         <Button variant="secondary" data-testid={selectors.pages.Alerting.RuleList.moreMenu.triggerButton}>
           <Trans i18nKey="alerting.rule-list.more">More</Trans> <Icon name="angle-down" />

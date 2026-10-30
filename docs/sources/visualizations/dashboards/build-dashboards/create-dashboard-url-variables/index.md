@@ -105,7 +105,7 @@ When sharing URLs with filters, remember to encode the URL. In the preceding exa
 
 ### Example
 
-[This dashboard in Grafana Play](https://play.grafana.org/d/p-k6QtkGz/template-redux?var-interval=$__auto&orgId=1&from=now-5m&to=now&timezone=utc&var-query=$__all&var-query2=$__all&var-query3=$__all&var-Filters=job%7C%3D%7Cmetrictank%2Ftsdb-gw&var-textbox=foo&var-custom=lisa&var-datasource=grafanacloud-demoinfra-prom) passes the filter variable `Filters` with the filter value `job = metrictank/tsdb-gw`.
+[This dashboard in Grafana Play](https://play.grafana.org/d/canvvlh/filter-variables?orgId=1&from=now-1h&to=now&var-filter=job%7C%3D%7Cecommerce-prod%2Fcartservice) passes the filter variable `filter` with the filter value `job = ecommerce-prod/cartservice`.
 
 ## Time range control using the URL
 

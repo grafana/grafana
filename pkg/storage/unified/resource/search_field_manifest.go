@@ -12,19 +12,40 @@ import (
 
 var manifestMergeLogger = log.New("search-manifest-merge")
 
-// ReloadManifests updates declarations independently of index validation, so an
-// invalid search field cannot prevent a hybrid opt-out from taking effect.
-func (o SearchOptions) ReloadManifests(builtin, live []*app.ManifestData) error {
+// ReloadManifests applies sources in increasing priority and updates declarations
+// independently of index validation, so an invalid search field cannot prevent
+// a hybrid opt-out from taking effect.
+func (o SearchOptions) ReloadManifests(sources ...[]*app.ManifestData) error {
 	if o.HybridSearchConfig != nil {
-		o.HybridSearchConfig.Reload(builtin, live)
+		o.HybridSearchConfig.Reload(sources...)
 	}
 	if o.EmbeddingConfig != nil {
-		o.EmbeddingConfig.Reload(builtin, live)
+		o.EmbeddingConfig.Reload(sources...)
+	}
+	if o.GlobalSearchCoverage != nil {
+		added, dropped := o.GlobalSearchCoverage.Reload(sources...)
+		if len(added) > 0 || len(dropped) > 0 {
+			manifestMergeLogger.Info("global search coverage changed", "added", added, "dropped", dropped)
+		}
 	}
 	if o.SearchFields != nil {
-		return ApplyManifests(o.SearchFields, builtin, live)
+		return ApplyManifests(o.SearchFields, sources...)
 	}
 	return nil
+}
+
+// ManifestReloader returns a ManifestWatcher onChange callback that reloads the
+// live manifests on top of the built-in ones and any additional sources in
+// increasing priority, keeping the current search fields when a reload fails.
+func (o SearchOptions) ManifestReloader(logger log.Logger, sources ...[]*app.ManifestData) func([]*app.ManifestData) {
+	base := slices.Clip(append([][]*app.ManifestData{AppManifests()}, sources...))
+	return func(live []*app.ManifestData) {
+		if err := o.ReloadManifests(append(base, live)...); err != nil {
+			logger.Error("manifest reload failed, keeping current search fields", "error", err)
+			return
+		}
+		logger.Info("manifest reload applied", "live_manifests", len(live))
+	}
 }
 
 // NewManifestBackedProvider is ManifestBackedProvider for compiled-in
@@ -76,6 +97,34 @@ func ManifestBackedProvider(manifests ...*app.ManifestData) (SearchFieldsProvide
 		}
 	}
 	return newMapProvider(fields, preferred)
+}
+
+// ManifestKinds names the kind of each resource a manifest declares, with the
+// version it is taken from: the manifest's preferred version, or else the last
+// version that declares the resource, as the app SDK does and as
+// ManifestBackedProvider does for search fields. A kind renamed between
+// versions then has one name in every place that uses this. include, when set,
+// limits the versions and kinds considered.
+func ManifestKinds(m *app.ManifestData, include func(app.ManifestVersion, app.ManifestVersionKind) bool) map[schema.GroupResource]schema.GroupVersionKind {
+	kinds := map[schema.GroupResource]schema.GroupVersionKind{}
+	if m == nil {
+		return kinds
+	}
+	preferred := map[schema.GroupResource]bool{}
+	for _, version := range m.Versions {
+		for _, kind := range version.Kinds {
+			if include != nil && !include(version, kind) {
+				continue
+			}
+			gr := schema.GroupResource{Group: m.Group, Resource: ManifestResourceName(kind)}
+			if preferred[gr] {
+				continue
+			}
+			kinds[gr] = schema.GroupVersionKind{Group: m.Group, Version: version.Name, Kind: kind.Kind}
+			preferred[gr] = version.Name == m.PreferredVersion
+		}
+	}
+	return kinds
 }
 
 // ManifestResourceName returns the lower-cased resource (plural) name for a
@@ -168,11 +217,11 @@ func SearchFieldsHashesForProviders(providers map[LowerGroupResource]SearchField
 	return out
 }
 
-// ApplyManifests rebuilds the registry from the built-in and live manifest sets
-// and swaps them in. On error the registry is left unchanged, so a bad reload
-// keeps the current search fields.
-func ApplyManifests(registry *SearchFieldsRegistry, builtin, live []*app.ManifestData) error {
-	merged := MergeManifestsByKind(builtin, live)
+// ApplyManifests rebuilds the registry from manifest sources in increasing
+// priority and swaps them in. On error the registry is left unchanged, so a bad
+// reload keeps the current search fields.
+func ApplyManifests(registry *SearchFieldsRegistry, sources ...[]*app.ManifestData) error {
+	merged := MergeManifestsByKind(sources...)
 	selectable, hashes, providers, err := SearchFieldsForManifests(merged...)
 	if err != nil {
 		return err

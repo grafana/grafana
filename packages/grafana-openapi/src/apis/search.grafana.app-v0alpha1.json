@@ -7,7 +7,7 @@
     "/global/search": {
       "post": {
         "tags": ["Search"],
-        "description": "Search resources of several types in a namespace: `dashboard.grafana.app/dashboards`, `folder.grafana.app/folders`. Each result names its own group, resource and kind, and is authorized on its own.\n\nOnly the fields every resource has can be used, plus:\n\n- `groupResource` (`{group}/{resource}`): filter and facet, to narrow the search to some types or count results per type.\n- `created` and `updated`: also filter (including range) and sort, so results of several types can be ordered by time.\n- `folderTree`: filter with `In` only. Matches what is in the named folders or in any folder below them, not the named folders themselves. `general` names the root folder and matches everything; an empty value is rejected.\n\nResults are eventually consistent: just after a change, a search can still return what was there before, and just after a folder moves, a `folderTree` search can still find what was below it in its old place.",
+        "description": "Search resources of several types in a namespace: `dashboard.grafana.app/dashboards`, `folder.grafana.app/folders`, `dashboard.grafana.app/notebooks`, `playlist.grafana.app/playlists`. Each result names its own group, resource and kind, and is authorized on its own.\n\nOnly the fields every resource has can be used, plus:\n\n- `groupResource` (`{group}/{resource}`): filter and facet, to narrow the search to some types or count results per type.\n- `folderTree`: filter with `In` only. Matches what is in the named folders or in any folder below them, not the named folders themselves. `general` names the root folder and matches everything; an empty value is rejected.\n\nResults are eventually consistent: just after a change, a search can still return what was there before, and just after a folder moves, a `folderTree` search can still find what was below it in its old place.\n\nA namespace's index is opened when it is first searched, and closed again after some hours without a search. The first search after that can wait a few seconds, or get 503 while the index is still being built; retry it shortly. It can also miss changes made while the index was closed, until the index catches up with storage.",
         "operationId": "listGlobalSearchV0alpha1",
         "parameters": [],
         "requestBody": {
@@ -53,11 +53,11 @@
         },
         "responses": {
           "200": {
-            "description": "A SearchResults envelope.",
+            "description": "A GlobalSearchResults envelope.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SearchResults"
+                  "$ref": "#/components/schemas/GlobalSearchResults"
                 }
               }
             }
@@ -170,6 +170,69 @@
           }
         }
       },
+      "GlobalResultsMetadata": {
+        "description": "GlobalResultsMetadata carries the pagination token, the total hit count, and the types the search left out.",
+        "type": "object",
+        "required": ["totalHits", "totalHitsRelation"],
+        "properties": {
+          "continue": {
+            "type": "string"
+          },
+          "skippedTypes": {
+            "description": "SkippedTypes lists the types, as {group}/{resource}, that the search left out, so the results are incomplete. A type is left out when the calling service may not search it on the user's behalf, or when this deployment does not check its results against the user. Both are deployment problems.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "totalHits": {
+            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation. When the relation is \"unknown\", this is a zero placeholder that must not be interpreted as a count.",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "totalHitsRelation": {
+            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound. \"unknown\" means no count is available and TotalHits must be ignored.",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "GlobalSearchResults": {
+        "description": "GlobalSearchResults is the response body for POST .../namespaces/{namespace}/global/search. Each item names its own resource type.",
+        "type": "object",
+        "required": ["metadata", "items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "facets": {
+            "description": "Facets holds term counts per requested facet field. Counts are computed over a bounded sample window, so they are best-effort/approximate.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/FacetTerm"
+              }
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResultItem"
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "$ref": "#/components/schemas/GlobalResultsMetadata"
+          }
+        }
+      },
       "HybridSearchChunk": {
         "description": "HybridSearchChunk is matching text from an embedded resource or subresource.",
         "type": "object",
@@ -257,7 +320,7 @@
             "default": ""
           },
           "resources": {
-            "description": "Resources is required for global hybrid search and rejected by per-resource routes. It must be nonempty and contain unique group/resource pairs.",
+            "description": "Resources selects unique group/resource pairs for global hybrid search. On Grafana's HTTP route, omitted or empty uses configured defaults, if any. Per-resource routes reject it.",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HybridSearchResource"
@@ -324,6 +387,14 @@
             "type": "number",
             "format": "double",
             "default": 0
+          },
+          "tags": {
+            "description": "Tags from the lexical index. Omitted when unavailable.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-kubernetes-list-type": "atomic"
           },
           "title": {
             "type": "string",
@@ -442,27 +513,6 @@
           }
         }
       },
-      "ResultsMetadata": {
-        "description": "ResultsMetadata carries the pagination token and the total hit count.",
-        "type": "object",
-        "required": ["totalHits", "totalHitsRelation"],
-        "properties": {
-          "continue": {
-            "type": "string"
-          },
-          "totalHits": {
-            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation. When the relation is \"unknown\", this is a zero placeholder that must not be interpreted as a count.",
-            "type": "integer",
-            "format": "int64",
-            "default": 0
-          },
-          "totalHitsRelation": {
-            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound. \"unknown\" means no count is available and TotalHits must be ignored.",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
       "SearchQuery": {
         "description": "SearchQuery is the request body for POST .../{resource}/search, which searches one kind, and for POST .../namespaces/{namespace}/global/search, which searches several resource types at once.",
         "type": "object",
@@ -514,41 +564,6 @@
           "where": {
             "description": "Where is the search predicate tree. Omitting it matches everything the endpoint searches: all resources of the kind, or of every type the global search covers (subject to labelSelector and per-item authz).",
             "$ref": "#/components/schemas/WhereNode"
-          }
-        }
-      },
-      "SearchResults": {
-        "description": "SearchResults is the response body for POST .../{resource}/search and POST .../namespaces/{namespace}/global/search. On the global search, each item names its own resource type.",
-        "type": "object",
-        "required": ["metadata", "items"],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "facets": {
-            "description": "Facets holds term counts per requested facet field. Counts are computed over a bounded sample window, so they are best-effort/approximate.",
-            "type": "object",
-            "additionalProperties": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/FacetTerm"
-              }
-            }
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ResultItem"
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "$ref": "#/components/schemas/ResultsMetadata"
           }
         }
       },

@@ -116,6 +116,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   const dataQueries = useMemo(() => {
     return queries.filter((query) => !isExpressionQuery(query.model));
   }, [queries]);
+  const dataSourceUid = dataQueries[0]?.datasourceUid;
 
   // expression queries only
   const expressionQueries = useMemo(() => {
@@ -483,7 +484,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
         )}
 
         {/* This is the PromQL Editor for Cloud rules */}
-        {isCloudAlertRuleType && dataSourceName && (
+        {isCloudAlertRuleType && dataSourceUid && (
           <Stack direction="column">
             <Field error={errors.expression?.message} invalid={!!errors.expression?.message} noMargin>
               <Controller
@@ -492,7 +493,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
                   return (
                     <ExpressionEditor
                       {...field}
-                      dataSourceName={dataSourceName}
+                      dataSourceUid={dataSourceUid}
                       showPreviewAlertsButton={!isRecordingRuleType}
                       onChange={onChangeExpression}
                     />

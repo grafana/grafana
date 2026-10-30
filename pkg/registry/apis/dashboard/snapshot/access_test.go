@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/kube-openapi/pkg/common"
 
@@ -251,6 +252,104 @@ func TestLegacySnapshotConversionsPreserveCreator(t *testing.T) {
 	}
 }
 
+func TestSnapshotWrapperPreservesLocalSnapshotOnExternalFailure(t *testing.T) {
+	setExternalSnapshotsK8SAPIPushToggle(t, false)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer server.Close()
+	snap := &dashv0.Snapshot{
+		ObjectMeta: metav1.ObjectMeta{Name: "snapshot", Namespace: "default"},
+		Spec:       dashv0.SnapshotSpec{External: new(true), DeleteKey: new("secret")},
+	}
+	storage := grafanarest.NewMockStorage(t)
+	storage.On("Get", mock.Anything, snap.Name, mock.Anything).Return(snap, nil)
+	access := acmock.New().WithPermissions([]ac.Permission{{Action: dashboards.ActionSnapshotsDelete}})
+	wrapper := NewStorageWrapper(storage, dashv0.SnapshotSharingOptions{ExternalSnapshotURL: server.URL}, access, nil).(*storageWrapper)
+	ctx := identity.WithRequester(ctxForOrg(1), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "alice"})
+	_, deleted, err := wrapper.Delete(ctx, snap.Name, nil, &metav1.DeleteOptions{})
+	require.Error(t, err)
+	require.False(t, deleted)
+	storage.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestSnapshotWrapperUsesOriginalExternalHost(t *testing.T) {
+	setExternalSnapshotsK8SAPIPushToggle(t, false)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer server.Close()
+	snap := &dashv0.Snapshot{
+		ObjectMeta: metav1.ObjectMeta{Name: "snapshot", Namespace: "default"},
+		Spec:       dashv0.SnapshotSpec{External: new(true), DeleteKey: new("secret")},
+	}
+	snap.Spec.ExternalUrl = new(server.URL + "/dashboard/snapshot/public-key")
+	storage := grafanarest.NewMockStorage(t)
+	storage.On("Get", mock.Anything, snap.Name, mock.Anything).Return(snap, nil)
+	access := acmock.New().WithPermissions([]ac.Permission{{Action: dashboards.ActionSnapshotsDelete}})
+	wrapper := NewStorageWrapper(storage, dashv0.SnapshotSharingOptions{}, access, nil).(*storageWrapper)
+	ctx := identity.WithRequester(ctxForOrg(1), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "alice"})
+	_, deleted, err := wrapper.Delete(ctx, snap.Name, nil, &metav1.DeleteOptions{})
+	require.Error(t, err)
+	require.False(t, deleted)
+	storage.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestSnapshotWrapperRejectedDeleteDoesNotContactExternal(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		options    *metav1.DeleteOptions
+		validation rest.ValidateObjectFunc
+	}{
+		{name: "UID", options: &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: new(types.UID("wrong"))}}},
+		{name: "resourceVersion", options: &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{ResourceVersion: new("old")}}},
+		{name: "validation", options: &metav1.DeleteOptions{}, validation: func(context.Context, runtime.Object) error { return errors.New("rejected") }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+				t.Error("rejected delete contacted external host")
+			}))
+			defer server.Close()
+			snap := &dashv0.Snapshot{
+				ObjectMeta: metav1.ObjectMeta{Name: "snapshot", Namespace: "default", UID: "correct", ResourceVersion: "new"},
+				Spec:       dashv0.SnapshotSpec{External: new(true), DeleteKey: new("secret")},
+			}
+			storage := grafanarest.NewMockStorage(t)
+			storage.On("Get", mock.Anything, snap.Name, mock.Anything).Return(snap, nil)
+			access := acmock.New().WithPermissions([]ac.Permission{{Action: dashboards.ActionSnapshotsDelete}})
+			wrapper := NewStorageWrapper(storage, dashv0.SnapshotSharingOptions{ExternalSnapshotURL: server.URL}, access, nil).(*storageWrapper)
+			ctx := identity.WithRequester(ctxForOrg(1), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "alice"})
+			_, deleted, err := wrapper.Delete(ctx, snap.Name, tc.validation, tc.options)
+			require.Error(t, err)
+			require.False(t, deleted)
+			storage.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		})
+	}
+}
+
+func TestSnapshotWrapperDryRunDoesNotDeleteExternal(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		t.Error("dry-run contacted the external snapshot host")
+	}))
+	defer server.Close()
+	snap := &dashv0.Snapshot{
+		ObjectMeta: metav1.ObjectMeta{Name: "snapshot", Namespace: "default"},
+		Spec:       dashv0.SnapshotSpec{External: new(true), DeleteKey: new("secret")},
+	}
+	storage := grafanarest.NewMockStorage(t)
+	storage.On("Get", mock.Anything, snap.Name, mock.Anything).Return(snap, nil)
+	storage.On("Delete", mock.Anything, snap.Name, mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			require.NoError(t, args.Get(2).(rest.ValidateObjectFunc)(args.Get(0).(context.Context), snap))
+			require.Nil(t, args.Get(0).(context.Context).Value(externalSnapshotDeleteURLKey{}))
+		}).Return(snap, false, nil).Once()
+	access := acmock.New().WithPermissions([]ac.Permission{{Action: dashboards.ActionSnapshotsDelete}})
+	wrapper := NewStorageWrapper(storage, dashv0.SnapshotSharingOptions{ExternalSnapshotURL: server.URL}, access, nil).(*storageWrapper)
+	ctx := identity.WithRequester(ctxForOrg(1), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "alice"})
+	_, _, err := wrapper.Delete(ctx, snap.Name, nil, &metav1.DeleteOptions{DryRun: []string{metav1.DryRunAll}})
+	require.NoError(t, err)
+}
+
 func TestSnapshotDeleteRevalidatesAsCaller(t *testing.T) {
 	snap := &dashv0.Snapshot{ObjectMeta: metav1.ObjectMeta{Name: "snapshot", Namespace: authlib.OrgNamespaceFormatter(1)}, Spec: dashv0.SnapshotSpec{Dashboard: map[string]any{"uid": "source"}}}
 	snap.SetCreatedBy("user:alice")
@@ -262,11 +361,11 @@ func TestSnapshotDeleteRevalidatesAsCaller(t *testing.T) {
 			deleteCtx := args.Get(0).(context.Context)
 			validate := args.Get(2).(rest.ValidateObjectFunc)
 			require.NoError(t, validate(deleteCtx, snap))
-			require.Equal(t, 1, validationCalls)
+			require.Equal(t, 2, validationCalls)
 			changed := snap.DeepCopy()
 			changed.SetCreatedBy("user:bob")
 			require.True(t, apierrors.IsForbidden(validate(deleteCtx, changed)))
-			require.Equal(t, 1, validationCalls)
+			require.Equal(t, 2, validationCalls)
 		}).Return(snap, true, nil)
 	access := acmock.New().WithPermissions([]ac.Permission{{Action: dashboards.ActionSnapshotsDelete}})
 	wrapper := NewStorageWrapper(storage, dashv0.SnapshotSharingOptions{}, access, nil).(rest.GracefulDeleter)

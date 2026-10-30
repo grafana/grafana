@@ -165,9 +165,32 @@ func (lps LibraryPanelService) CountInFolders(ctx context.Context, orgID int64, 
 }
 
 // DeleteInFolder deletes the library panels contained in a given folder.
+//
+// All folders are permission-checked before any deletion starts, so a permission denial partway
+// through the list leaves every folder's library panels intact rather than only the ones checked
+// first. This does not cover ErrFolderHasConnectedLibraryElements: that's only discovered while
+// actually deleting a folder's elements, so a later folder failing that check still leaves earlier
+// folders in the batch already deleted.
 func (lps LibraryPanelService) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
 	for _, folderUID := range folderUIDs {
-		if err := lps.LibraryElementService.DeleteLibraryElementsInFolder(ctx, user, folderUID); err != nil {
+		if err := lps.LibraryElementService.RequireEditPermissionsOnFolder(ctx, user, folderUID); err != nil {
+			return err
+		}
+	}
+	// Reaching here means every folder's edit-permission check above passed.
+	return lps.DeleteInFoldersUnchecked(folder.WithUncheckedDeleteAuthorized(ctx, orgID, user, folderUIDs, true), orgID, folderUIDs, user)
+}
+
+// DeleteInFoldersUnchecked is DeleteInFolders without requiring edit permissions on each folder, for
+// callers that have already authorized the requester through a different mechanism (e.g. a
+// standalone folder apiserver's cascade delete) and marked ctx with folder.WithUncheckedDeleteAuthorized to prove it.
+func (lps LibraryPanelService) DeleteInFoldersUnchecked(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
+	if err := folder.RequireUncheckedDeleteAuthorized(ctx, orgID, user, folderUIDs); err != nil {
+		return err
+	}
+
+	for _, folderUID := range folderUIDs {
+		if err := lps.LibraryElementService.DeleteLibraryElementsInFolderUnchecked(ctx, orgID, user, folderUID); err != nil {
 			return err
 		}
 	}
