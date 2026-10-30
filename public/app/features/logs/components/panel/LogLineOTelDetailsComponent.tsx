@@ -3,6 +3,7 @@ import { type JSX, useEffect, useMemo } from 'react';
 
 import { DataFrameType, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Box, Icon, InlineField, InlineSwitch, Stack, useStyles2 } from '@grafana/ui';
 
 import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
@@ -46,7 +47,18 @@ export const LogLineDetailsOTelComponent = ({
   timeRange,
   timeZone,
 }: LogLineDetailsOTelComponentProps) => {
+  const { app, noInteractions } = useLogListContext();
   const extensionLinks = useAttributesExtensionLinks(log, timeRange);
+
+  useEffect(() => {
+    if (noInteractions) {
+      return;
+    }
+    reportInteraction('logs_log_line_details_otel_displayed', {
+      app,
+      language: log.otelLanguage,
+    });
+  }, [app, log.otelLanguage, log.uid, noInteractions]);
 
   const fieldsWithoutLinks = useMemo(
     () =>
@@ -179,7 +191,12 @@ const LogLineDetailsOTelComponentBody = ({
         </div>
         {hasAttributes ? (
           <>
-            <LogLineDetailsError className={styles.errorContainer} fields={fields} labels={labels} />
+            <LogLineDetailsError
+              className={styles.errorContainer}
+              fields={fields}
+              labels={labels}
+              otelLanguage={log.otelLanguage}
+            />
             <div className={styles.categories}>
               {groupedFields.length > 0 &&
                 groupedFields.map(({ category, items }) => (

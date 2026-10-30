@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
-	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -120,72 +119,6 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 	})
 }
 
-func TestIntegrationSQLStorageAndSQLKVCompatibilityTests(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-	t.Cleanup(db.CleanupTestDB)
-
-	newKvBackend := func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
-		return unitest.NewTestSqlKvBackend(t, ctx, true)
-	}
-
-	opts := &unitest.TestOptions{
-		SearchServerFactory: newTestResourceServerWithSearch,
-	}
-
-	t.Run("IsHA (polling notifier)", func(t *testing.T) {
-		if db.IsTestDbSQLite() {
-			t.Skip("sqlite not compatible with HA")
-		}
-
-		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) resource.StorageBackend {
-			return newTestBackend(t, true, 0, 0)
-		}, newKvBackend, opts)
-	})
-
-	t.Run("NotHA (in process notifier)", func(t *testing.T) {
-		if !db.IsTestDbSQLite() {
-			t.Skip("in-process notifier only used with sqlite")
-		}
-
-		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) resource.StorageBackend {
-			return newTestBackend(t, false, 0, 0)
-		}, newKvBackend, opts)
-	})
-}
-
-// newTestResourceServerWithSearch creates a ResourceServer with search enabled for testing
-func newTestResourceServerWithSearch(t *testing.T, backend resource.StorageBackend) resource.ResourceServer {
-	t.Helper()
-
-	// Create test config
-	cfg := setting.NewCfg()
-	cfg.EnableSearch = true
-	cfg.IndexFileThreshold = 1000 // Ensures memory indexing
-	cfg.IndexPath = t.TempDir()   // Temporary directory for indexes
-
-	// Initialize document builders for playlists
-	docBuilders := &resource.TestDocumentBuilderSupplier{
-		GroupsResources: map[string]string{
-			"playlist.grafana.app": "playlists",
-		},
-	}
-
-	// Create search options
-	searchOpts, err := search.NewSearchOptions(cfg, docBuilders, nil, nil, nil)
-	require.NoError(t, err)
-
-	// Create ResourceServer with search enabled
-	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Backend:      backend,
-		AccessClient: types.FixedAccessClient(true), // Allow all operations for testing
-		Search:       searchOpts,
-		Reg:          nil,
-	})
-	require.NoError(t, err)
-
-	return server
-}
-
 func TestIntegrationSearchAndStorage(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -226,14 +159,14 @@ func TestIntegrationSearchBackedList(t *testing.T) {
 	t.Run("kv backend (batched reads)", func(t *testing.T) {
 		ctx := context.Background()
 		scans := &unitest.DataKeyScanCounter{}
-		backend, _ := unitest.NewTestSqlKvBackendWithKV(t, ctx, true, scans.Wrap)
+		backend, _ := unitest.NewTestSqlKvBackendWithKV(t, ctx, scans.Wrap)
 		unitest.RunTestSearchBackedList(t, ctx, backend, newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: true, DataKeyScans: scans.Scans})
 	})
 
 	t.Run("kv backend (batched reads, authorize before fetch)", func(t *testing.T) {
 		ctx := context.Background()
 		scans := &unitest.DataKeyScanCounter{}
-		backend, _ := unitest.NewTestSqlKvBackendWithKV(t, ctx, true, scans.Wrap)
+		backend, _ := unitest.NewTestSqlKvBackendWithKV(t, ctx, scans.Wrap)
 		unitest.RunTestSearchBackedList(t, ctx, backend, newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: true, AuthorizeBeforeFetch: true, DataKeyScans: scans.Scans})
 	})
 
@@ -248,9 +181,8 @@ func TestIntegrationSearchBackedTrashList(t *testing.T) {
 
 	newBleve := func(t *testing.T) resource.SearchBackend {
 		sb, err := search.NewBleveBackend(search.BleveOptions{
-			FileThreshold:         0,
-			Root:                  t.TempDir(),
-			EnforceSortCapability: true,
+			FileThreshold: 0,
+			Root:          t.TempDir(),
 		}, nil)
 		require.NoError(t, err)
 		t.Cleanup(sb.Stop)
@@ -260,7 +192,7 @@ func TestIntegrationSearchBackedTrashList(t *testing.T) {
 	t.Run("kv backend (batched reads)", func(t *testing.T) {
 		ctx := context.Background()
 		scans := &unitest.DataKeyScanCounter{}
-		backend, _ := unitest.NewTestSqlKvBackendWithKV(t, ctx, true, scans.Wrap)
+		backend, _ := unitest.NewTestSqlKvBackendWithKV(t, ctx, scans.Wrap)
 		unitest.RunTestSearchBackedTrashList(t, ctx, backend, newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: true, DataKeyScans: scans.Scans})
 	})
 
@@ -460,6 +392,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 					Resource:  "playlists",
 				},
 			},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, resp)

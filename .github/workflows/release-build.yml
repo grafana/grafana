@@ -20,8 +20,10 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref == 'refs/heads/main' }}
+  group: ${{ github.workflow }}
+  # Let builds finish even when main receives commits faster than we can build them.
+  # The default queue keeps only the newest pending run, so builds can catch up.
+  cancel-in-progress: false
 
 # Builds the following artifacts:
 #
@@ -221,13 +223,15 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-node
       - name: Install JS dependencies
-        run: yarn install --immutable
+        uses: ./.github/actions/yarn-install
       - name: Build frontend
-        run: yarn build
+        run: npm run build
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: release-frontend
-          path: public
+          path: |
+            public/
+            !public/**/node_modules/
           retention-days: 1
 
   build-backend:

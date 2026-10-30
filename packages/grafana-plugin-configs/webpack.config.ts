@@ -265,10 +265,8 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
           { from: 'plugin.json', to: '.' },
           { from: hasLicense(pluginDir) ? 'LICENSE' : '../../../../../LICENSE', to: '.' }, // Point to Grafana License by default
           { from: 'CHANGELOG.md', to: '.', force: true },
-          { from: '**/*.json', to: '.', filter: skipFiles }, // TODO<Add an error for checking the basic structure of the repo>
-          { from: '**/*.svg', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
-          { from: '**/*.png', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
-          { from: '**/*.html', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
+          { from: 'dashboards/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
+          { from: 'locales/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
           { from: 'img/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
           { from: 'libs/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
           { from: 'schema/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
@@ -339,7 +337,7 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
     stats: 'minimal',
 
     watchOptions: {
-      ignored: ['**/node_modules', '**/dist', '**/.yarn'],
+      ignored: ['**/node_modules', '**/dist'],
     },
   };
 

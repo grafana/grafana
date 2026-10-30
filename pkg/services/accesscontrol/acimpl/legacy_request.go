@@ -2,40 +2,44 @@ package acimpl
 
 import (
 	"errors"
-	"fmt"
+	"maps"
 	"slices"
 
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 )
+
+const legacyGlobalNamespaceAnchorOrgID int64 = 1
 
 func (a *AccessControl) buildLegacyCheckRequest(
 	user identity.Requester,
 	evaluator accesscontrol.Evaluator,
 	useExternalGroups bool,
-) (*authzextv1.LegacyCheckRequest, error) {
+	namespaceMapper types.NamespaceFormatter,
+) (legacyclient.LegacyCheckRequest, error) {
 	if user == nil || user.IsNil() {
-		return nil, errors.New("legacy check requester is required")
-	}
-
-	// TODO: will be implemented in the follow up PR related to the issue https://github.com/grafana/identity-access-team/issues/2436
-	// The current request contract cannot distinguish global evaluation from
-	// evaluation in the requester's namespace.
-	if user.GetOrgID() == accesscontrol.NoOrgID {
-		return nil, errors.New("legacy check does not yet support global evaluation")
-	}
-
-	expression, err := accesscontrol.ToLegacyExpression(evaluator)
-	if err != nil {
-		return nil, fmt.Errorf("converting evaluator to legacy expression: %w", err)
+		return legacyclient.LegacyCheckRequest{}, errors.New("legacy check requester is required")
 	}
 
 	namespace := user.GetNamespace()
+	var global *legacyclient.LegacyGlobalEvaluation
+	if user.GetOrgID() == accesscontrol.NoOrgID || user.GetOrgID() == accesscontrol.GlobalOrgID {
+		permissions := user.GetGlobalPermissions()
+		global = &legacyclient.LegacyGlobalEvaluation{
+			RequesterOrgID:   user.GetOrgID(),
+			PermittedActions: slices.Sorted(maps.Keys(permissions)),
+		}
+		// Global org IDs describe requester state. Use the configured instance
+		// namespace for transport; evaluation still uses global grants.
+		if namespace == "" || namespace == types.OrgNamespaceFormatter(user.GetOrgID()) {
+			namespace = namespaceMapper(legacyGlobalNamespaceAnchorOrgID)
+		}
+	}
 	if namespace == "" {
-		namespace = types.OrgNamespaceFormatter(user.GetOrgID())
+		namespace = namespaceMapper(user.GetOrgID())
 	}
 
 	groups := user.GetGroups()
@@ -43,11 +47,12 @@ func (a *AccessControl) buildLegacyCheckRequest(
 		groups = user.GetExternalGroups()
 	}
 
-	return &authzextv1.LegacyCheckRequest{
+	return legacyclient.LegacyCheckRequest{
 		Namespace:           namespace,
 		Subject:             user.GetUID(),
-		Expression:          expression,
+		Evaluator:           evaluator,
 		Teams:               slices.Clone(groups),
 		SkipScopeResolution: a.skipScopeResolution,
+		GlobalEvaluation:    global,
 	}, nil
 }

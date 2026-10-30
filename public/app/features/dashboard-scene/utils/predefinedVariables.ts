@@ -6,6 +6,8 @@ import { type Variable, type VariableList } from 'app/api/clients/dashboard/v2be
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { getVariableKind, getVariableSpecName } from 'app/features/variables-management/utils';
 
+import { predefinedVariablesCache } from './cache';
+
 /**
  * Predefined variables are org-wide (global) and folder-scoped Variable resources
  * (`dashboard.grafana.app/v2beta1`) that are injected into every V2 dashboard at load
@@ -65,12 +67,6 @@ const LIST_PAGE_SIZE = 500;
  */
 const PREDEFINED_VARIABLES_CACHE_TTL = 30_000;
 
-const cache = new Map<string, { ts: number; variables: VariableKind[] }>();
-
-export function clearPredefinedVariablesCache() {
-  cache.clear();
-}
-
 /**
  * Fetches the predefined (global + folder-scoped) variables applicable to a dashboard,
  * tagged with their origin and with folder-over-global name precedence applied.
@@ -84,7 +80,7 @@ export async function fetchPredefinedVariables(folderUid?: string): Promise<Vari
   }
 
   const cacheKey = folderUid ?? '';
-  const cached = cache.get(cacheKey);
+  const cached = predefinedVariablesCache.get(cacheKey);
   if (cached && Date.now() - cached.ts < PREDEFINED_VARIABLES_CACHE_TTL) {
     return cached.variables;
   }
@@ -96,7 +92,7 @@ export async function fetchPredefinedVariables(folderUid?: string): Promise<Vari
     ]);
 
     const variables = mergePredefinedVariables(globalVariables, folderVariables, folderUid);
-    cache.set(cacheKey, { ts: Date.now(), variables });
+    predefinedVariablesCache.set(cacheKey, { ts: Date.now(), variables });
     return variables;
   } catch (err) {
     console.warn('Failed to load predefined dashboard variables', err);
