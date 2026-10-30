@@ -24,6 +24,9 @@ const MERMAID_PANEL = '7';
 const REDUCER_MACROS_DASHBOARD_UID = 'text-reducer-macros';
 const LAST_VALUES_PANEL = '2';
 
+const SUGGESTIONS_DASHBOARD_UID = 'text-suggestions';
+const VALUE_PER_CATEGORY_PANEL = '8';
+
 test.use({ openFeature: { flags: { 'grafana.newTextPanel': true, 'text.newFeatures': true } } });
 
 test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
@@ -354,6 +357,31 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       ]);
       await expect(page.getByTestId('TextNGEditor').locator('.cm-content')).toContainText(
         '${__data.fields.CPU:reduce:lastNotNull}'
+      );
+    });
+
+    test('applies a list with one item per row', async ({ gotoDashboardPage, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: SUGGESTIONS_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: VALUE_PER_CATEGORY_PANEL }),
+      });
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Suggestions')).click();
+
+      const list = dashboardPage.getByGrafanaSelector(selectors.components.VisualizationPreview.card('Text - list'));
+
+      await expect(renderedContent(list).locator('li')).toHaveText(['API: 99.9', 'Worker: 97.5', 'Web: 100']);
+
+      await list.click();
+
+      await expect(renderedContent(page.getByTestId('TextNGEditor-preview')).locator('li')).toHaveText([
+        'API: 99.9',
+        'Worker: 97.5',
+        'Web: 100',
+      ]);
+      await expect(page.getByTestId('TextNGEditor').locator('.cm-content')).toContainText(
+        '<strong>${__data.fields.Service}</strong>: ${__data.fields.Availability}'
       );
     });
   });

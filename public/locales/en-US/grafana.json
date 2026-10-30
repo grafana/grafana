@@ -17332,6 +17332,7 @@
       "title": "Text panel content"
     },
     "suggestions": {
+      "list": "Text - list",
       "no-data": "No data",
       "statistic-field": "Field",
       "statistic-last": "Last",
