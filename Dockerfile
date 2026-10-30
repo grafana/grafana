@@ -31,9 +31,11 @@ ENV NODE_OPTIONS=--max_old_space_size=8000
 
 WORKDIR /tmp/grafana
 
-RUN apk add --no-cache make build-base python3
+RUN apk add --no-cache bash make build-base python3
 
 COPY package.json project.json nx.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY Makefile ./
+COPY .citools/Variables.mk .citools/Variables.mk
 COPY patches patches
 COPY packages packages
 COPY e2e-playwright e2e-playwright
@@ -54,7 +56,7 @@ COPY scripts scripts
 COPY emails emails
 
 # Set the build argument according to default or argument passed
-RUN pnpm run ${JS_PNPM_BUILD_FLAG}
+RUN FRONTEND_BUILD_SCRIPT="${JS_PNPM_BUILD_FLAG}" make build-js
 
 # Golang build stage
 FROM ${GO_IMAGE} AS go-builder

@@ -353,7 +353,7 @@ build-air: build-go
 .PHONY: build-js
 build-js: ## Build frontend assets.
 	@echo "building frontend"
-	pnpm run build
+	bash scripts/build-frontend.sh
 
 public/build:
 	$(MAKE) build-js
