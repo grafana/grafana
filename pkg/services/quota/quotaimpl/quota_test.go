@@ -181,7 +181,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 		},
 	}
 
-	b := sqlStore.Bus()
+	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
 	quotaService := ProvideService(context.Background(), legacysql.NewDatabaseProvider(sqlStore), cfgProvider)
@@ -568,7 +568,7 @@ func getQuotaBySrvTargetScope(t *testing.T, quotaService quota.Service, srv quot
 	return quota.QuotaDTO{}, err
 }
 
-func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaService quota.Service) {
+func setupEnv(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg, b bus.Bus, quotaService quota.Service) {
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
 	tracer := tracing.InitializeTracerForTest()
@@ -616,7 +616,6 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 			nil,
 			featuremgmt.WithFeatures(),
 		),
-		b,
 	)
 	require.NoError(t, err)
 	dashService.RegisterDashboardPermissions(acmock.NewMockedPermissionsService())

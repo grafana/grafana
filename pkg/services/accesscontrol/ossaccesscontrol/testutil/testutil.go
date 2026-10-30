@@ -99,6 +99,5 @@ func ProvideFolderPermissions(
 		&serviceaccountstest.FakeServiceAccountService{},
 		actionSets,
 		apiserver.ProvideDirectRestConfigProvider(),
-		sqlStore.Bus(),
 	)
 }

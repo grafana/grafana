@@ -16,9 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -79,8 +77,7 @@ const (
 )
 
 type benchScenario struct {
-	db     db.DB
-	events bus.Bus
+	db *sqlstore.SQLStore
 	// signedInUser is the user that is signed in to the server
 	cfg          *setting.Cfg
 	signedInUser *user.SignedInUser
@@ -391,7 +388,6 @@ func setupDB(b testing.TB) benchScenario {
 	require.NoError(b, err)
 	return benchScenario{
 		db:           db,
-		events:       db.Bus(),
 		cfg:          cfg,
 		signedInUser: &signedInUser,
 		teamSvc:      teamSvc,
@@ -433,7 +429,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	)
 	serviceAccountRetriever := &serviceaccountstest.FakeServiceAccountService{}
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, iam.Features{}, license, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, serviceAccountRetriever, actionSets, &mockDirectRestConfigProvider{host: "http://localhost"}, sc.events)
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, iam.Features{}, license, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, serviceAccountRetriever, actionSets, &mockDirectRestConfigProvider{host: "http://localhost"})
 	require.NoError(b, err)
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
 		sc.cfg,
@@ -460,12 +456,11 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 			nil,
 			features,
 		),
-		sc.events,
 	)
 	require.NoError(b, err)
 
 	_, err = ossaccesscontrol.ProvideDashboardPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, iam.Features{}, license, dashboardSvc, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, serviceAccountRetriever, actionSets, dashboardSvc, &mockDirectRestConfigProvider{host: "http://localhost"}, sc.events)
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, iam.Features{}, license, dashboardSvc, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, serviceAccountRetriever, actionSets, dashboardSvc, &mockDirectRestConfigProvider{host: "http://localhost"})
 	require.NoError(b, err)
 
 	starClient := starapi.NewMockK8sClients(b)

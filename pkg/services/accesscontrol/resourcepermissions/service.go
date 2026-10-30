@@ -14,7 +14,6 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -84,14 +83,12 @@ type Store interface {
 	GetPermissionIDsByRoleNames(ctx context.Context, orgID int64, scope string, roleNames []string) (map[string]int64, error)
 }
 
-// New requires the same event bus that the SQL transaction owner uses for delivery.
 func New(cfg *setting.Cfg,
 	options Options, features featuremgmt.FeatureToggles, router routing.RouteRegister, license licensing.Licensing,
-	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
+	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore *sqlstore.SQLStore,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
 	actionSetService ActionSetService,
 	iamFeatures iamapi.Features,
-	events bus.Bus,
 ) (*Service, error) {
 	// Fail fast at startup if a Kubernetes-native flow needs an APIGroup but none
 	// is configured.
@@ -145,7 +142,7 @@ func New(cfg *setting.Cfg,
 	}
 
 	s.api.registerEndpoints()
-	events.AddEventListener(s.onPermissionCachesInvalidated)
+	sqlStore.Bus().AddEventListener(s.onPermissionCachesInvalidated)
 
 	return s, nil
 }

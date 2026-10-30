@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
@@ -58,8 +57,6 @@ func TestIntegrationDefaultPermissionsRefreshAfterCommit(t *testing.T) {
 						t.Run(resource+"/"+identityType+"/"+outcome, func(t *testing.T) {
 							ctx := openfeature.WithTransactionContext(t.Context(), openfeature.NewEvaluationContext("", map[string]any{"legacy-route": legacy}))
 							sql := sqlstore.NewTestStore(t)
-							// Hide the concrete store to verify that the separate bus is sufficient.
-							permissionDB := struct{ db.DB }{sql}
 							ctx = context.WithValue(ctx, creatorContextKey{}, "owner")
 							followingEvent := false
 							sql.Bus().AddEventListener(func(context.Context, *creatorRefreshFollowingEvent) error {
@@ -93,13 +90,13 @@ func TestIntegrationDefaultPermissionsRefreshAfterCommit(t *testing.T) {
 							var setDefaults func(context.Context)
 							grant := accesscontrol.Permission{Action: accesscontrol.ActionAlertingReceiversReadSecrets, Scope: "receivers:uid:new"}
 							if resource == "receiver" {
-								svc, err := ProvideReceiverPermissionsService(cfg, features, routing.NewRouteRegister(), permissionDB,
-									actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, license, recorder, nil, users, nil, actions, sql.Bus())
+								svc, err := ProvideReceiverPermissionsService(cfg, features, routing.NewRouteRegister(), sql,
+									actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, license, recorder, nil, users, nil, actions)
 								require.NoError(t, err)
 								setDefaults = func(ctx context.Context) { svc.SetDefaultPermissions(ctx, 1, requester, "new") }
 							} else {
-								svc, err := ProvideRoutePermissionsService(cfg, features, routing.NewRouteRegister(), permissionDB,
-									actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, license, recorder, nil, users, nil, actions, sql.Bus())
+								svc, err := ProvideRoutePermissionsService(cfg, features, routing.NewRouteRegister(), sql,
+									actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, license, recorder, nil, users, nil, actions)
 								require.NoError(t, err)
 								setDefaults = func(ctx context.Context) {
 									err := svc.SetDefaultPermissions(ctx, 1, requester, "new")
