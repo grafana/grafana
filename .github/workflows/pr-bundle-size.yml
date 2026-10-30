@@ -81,17 +81,18 @@ jobs:
 
       - name: Set up Node.js
         uses: ./.github/actions/setup-node
-      - name: Install frontend dependencies
-        uses: ./.github/actions/yarn-install
+
       - name: Build frontend
         uses: ./.github/actions/build-frontend
+        with:
+          sourcemaps: 'false'
 
       - name: Record bundle sizes
         id: stats
         env:
           OUTPUT_NAME: ${{ matrix.target }}
         run: |
-          stats="$(pnpm --silent run bundle-size:stats)"
+          stats="$(node scripts/cli/reportBundleMetrics.mts --sizes-only dist/frontend/build)"
           {
             echo "${OUTPUT_NAME}<<EOF"
             printf '%s\n' "$stats"
