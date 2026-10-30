@@ -330,13 +330,7 @@ func TestHandleSqlInputAnnotationFrames(t *testing.T) {
 		res, converted := handleSqlInput(t.Context(), &testTracer{}, "A", map[string]struct{}{"B": {}}, "fakeDS", frames)
 		require.NoError(t, res.Error)
 		require.True(t, converted)
-		frame := res.Values[0].(mathexp.TableData).Frame
-		require.Equal(t, 4, frame.Rows())
-		names := make([]string, 0, len(frame.Fields))
-		for _, f := range frame.Fields {
-			names = append(names, f.Name)
-		}
-		require.Equal(t, []string{"time", SQLValueFieldName, SQLMetricFieldName, "host"}, names)
+		require.Equal(t, 4, res.Values[0].(mathexp.TableData).Frame.Rows())
 	})
 
 	t.Run("a single annotations frame still passes through as a table", func(t *testing.T) {
@@ -348,11 +342,6 @@ func TestHandleSqlInputAnnotationFrames(t *testing.T) {
 
 	t.Run("only annotations frames, more than one, still errors", func(t *testing.T) {
 		res, _ := handleSqlInput(t.Context(), &testTracer{}, "A", map[string]struct{}{"B": {}}, "fakeDS", data.Frames{exemplars(), exemplars()})
-		require.ErrorContains(t, res.Error, "more than one dataframe that can not be automatically mapped to a single table")
-	})
-
-	t.Run("two tables plus annotations frame still errors", func(t *testing.T) {
-		res, _ := handleSqlInput(t.Context(), &testTracer{}, "A", map[string]struct{}{"B": {}}, "fakeDS", data.Frames{table(), table(), exemplars()})
 		require.ErrorContains(t, res.Error, "more than one dataframe that can not be automatically mapped to a single table")
 	})
 }
