@@ -124,7 +124,21 @@ func (s *Server) resolveUserPermissions(ctx context.Context, req *authzv1.GetUse
 	for _, result := range results {
 		lists = append(lists, legacyscopes.PermissionList{Resource: result.Entry.Resource, Action: result.Entry.Action, List: result.List})
 	}
-	return legacyscopes.ResolvePermissions(ctx, "", lists)
+	permissions, err := legacyscopes.ResolvePermissions(ctx, "", lists)
+	if err != nil {
+		return nil, err
+	}
+	seen := make(map[[2]string]struct{})
+	unique := permissions[:0]
+	for _, permission := range permissions {
+		key := [2]string{permission.Action, permission.Scope}
+		if _, exists := seen[key]; exists {
+			continue
+		}
+		seen[key] = struct{}{}
+		unique = append(unique, permission)
+	}
+	return unique, nil
 }
 
 func (s *Server) loadPrincipalGrants(ctx context.Context, store *zanzana.StoreInfo, principal string, skip bool) (*principalGrants, error) {

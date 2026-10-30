@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"testing"
+	"time"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	authnlib "github.com/grafana/authlib/authn"
@@ -19,6 +20,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
 )
@@ -205,4 +207,34 @@ func TestUserPermissionsRPCPreservesGrantedFolderScopes(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.ElementsMatch(t, []string{"parent", "child", "grandchild"}, list.Items, "resource List still expands inherited access")
+}
+
+func TestResolveUserPermissionsDeduplicatesFormattedActionScopes(t *testing.T) {
+	srv, _, store := newPermissionTestServer(t, nil)
+	enablePrincipalCache(srv)
+	grants := []permissionListResult{
+		{Entry: common.ActionListEntry{Action: "folders:read"}, List: &authzv1.ListResponse{Items: []string{"alpha", "zeta"}, Folders: []string{"alpha", "middle"}}},
+		{Entry: common.ActionListEntry{Action: "folders:write"}, List: &authzv1.ListResponse{Items: []string{"alpha"}}},
+		{Entry: common.ActionListEntry{Action: "dashboards:read"}, List: &authzv1.ListResponse{All: true}},
+	}
+	cache := srv.principalCache()
+	cache.mu.Lock()
+	// Item and folder entries can format to the same legacy scope.
+	cache.entries.Add(permissionPrincipalKey{store.ID, store.ModelID, "user:alice"}, permissionPrincipalEntry{grants: &principalGrants{grants: grants}, expires: cache.clock.Now().Add(time.Minute)})
+	cache.mu.Unlock()
+
+	got, err := srv.resolveUserPermissions(newContextWithNamespace(), &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice"})
+	require.NoError(t, err)
+	scopes := map[string][]string{
+		"folders:read":    {"folders:uid:alpha", "folders:uid:zeta", "folders:uid:middle"},
+		"folders:write":   {"folders:uid:alpha"},
+		"dashboards:read": {"*", "dashboards:*", "folders:*"},
+	}
+	want := make([]accesscontrol.Permission, 0, 7)
+	for _, entry := range common.SupportedActions() {
+		for _, scope := range scopes[entry.Action] {
+			want = append(want, accesscontrol.Permission{Action: entry.Action, Scope: scope})
+		}
+	}
+	require.Equal(t, want, got, "keep first occurrence order, different actions and overlapping wildcard scopes")
 }
