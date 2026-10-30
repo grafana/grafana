@@ -58,7 +58,12 @@
     },
     "changelog": {
       "workspaceChangelog": false,
-      "projectChangelogs": false
+      "projectChangelogs": false,
+      "git": {
+        "commit": false,
+        "tag": false,
+        "stageChanges": false
+      }
     }
   }
 }
