@@ -3,7 +3,6 @@
   "license": "Apache-2.0",
   "name": "@grafana/plugin-compat",
   "version": "0.6.0",
-  "private": true,
   "description": "Compatibility shims that let Grafana plugins adopt new Grafana host APIs across a range of host versions",
   "keywords": [
     "grafana",
@@ -11,7 +10,6 @@
     "plugins"
   ],
   "sideEffects": false,
-  "type": "module",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git",
