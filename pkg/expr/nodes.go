@@ -455,7 +455,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 
 	if dn.isInputToSQLExpr {
 		var converted bool
-		dataType := categorizeFrameInputType(dataFrames)
+		dataType := categorizeFrameInputType(withoutAnnotationFrames(dataFrames))
 
 		result, converted = handleSqlInput(ctx, s.tracer, dn.RefID(), dn.IsInputTo(), dn.datasource.Type, dataFrames)
 		status := "ok"

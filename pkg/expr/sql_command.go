@@ -358,6 +358,9 @@ func extractNumberSetFromSQLForAlerting(frame *data.Frame) ([]mathexp.Number, er
 //  2. If the input is a single frame (no labels, no declared type), it passes through as-is.
 //  3. If the input has multiple frames or label metadata but lacks a supported type, it returns an error.
 //
+// Frames with the annotations data topic, such as exemplars, are side data and are dropped first,
+// unless they are the only frames in the response.
+//
 // The returned bool indicates if the input was (attempted to be) converted or passed through as-is.
 func handleSqlInput(ctx context.Context, tracer trace.Tracer, refID string, forRefIDs map[string]struct{}, dsType string, dataFrames data.Frames) (mathexp.Results, bool) {
 	_, span := tracer.Start(ctx, "SSE.HandleConvertSQLInput")
@@ -401,6 +404,7 @@ func handleSqlInput(ctx context.Context, tracer trace.Tracer, refID string, forR
 		return mathexp.Results{Values: mathexp.Values{mathexp.NewNoData()}}, false
 	}
 
+	dataFrames = withoutAnnotationFrames(dataFrames)
 	first := dataFrames[0]
 
 	// Single Frame no data case
@@ -464,6 +468,22 @@ func handleSqlInput(ctx context.Context, tracer trace.Tracer, refID string, forR
 		mathexp.TableData{Frame: first},
 	}
 	return result, false
+}
+
+// withoutAnnotationFrames returns the frames whose data topic is not annotations.
+// If every frame is an annotations frame, it returns the frames unchanged.
+func withoutAnnotationFrames(frames data.Frames) data.Frames {
+	kept := make(data.Frames, 0, len(frames))
+	for _, frame := range frames {
+		if frame.Meta != nil && frame.Meta.DataTopic == data.DataTopicAnnotations {
+			continue
+		}
+		kept = append(kept, frame)
+	}
+	if len(kept) == 0 {
+		return frames
+	}
+	return kept
 }
 
 func categorizeFrameInputType(dataFrames data.Frames) string {

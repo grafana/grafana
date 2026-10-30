@@ -269,6 +269,83 @@ func TestHandleSqlInput(t *testing.T) {
 	}
 }
 
+func TestHandleSqlInputAnnotationFrames(t *testing.T) {
+	times := []time.Time{time.Unix(10, 0), time.Unix(20, 0)}
+	exemplars := func() *data.Frame {
+		return data.NewFrame("exemplar",
+			data.NewField("Time", nil, []time.Time{time.Unix(15, 0)}),
+			data.NewField("Value", nil, []float64{9}),
+			data.NewField("Id", nil, []string{"profile-1"}),
+			data.NewField("service_name", nil, []string{"checkout"}),
+		).SetMeta(&data.FrameMeta{DataTopic: data.DataTopicAnnotations})
+	}
+	table := func() *data.Frame {
+		return data.NewFrame("series",
+			data.NewField("time", nil, times),
+			data.NewField("value", nil, []float64{1, 2}),
+		)
+	}
+
+	t.Run("untyped table plus annotations frame passes the table through", func(t *testing.T) {
+		res, converted := handleSqlInput(t.Context(), &testTracer{}, "A", map[string]struct{}{"B": {}}, "fakeDS", data.Frames{table(), exemplars()})
+		require.NoError(t, res.Error)
+		require.False(t, converted)
+		require.Len(t, res.Values, 1)
+		frame := res.Values[0].(mathexp.TableData).Frame
+		require.Equal(t, "series", frame.Name)
+		require.Equal(t, 2, frame.Rows())
+	})
+
+	t.Run("annotations frame before the table is skipped", func(t *testing.T) {
+		res, _ := handleSqlInput(t.Context(), &testTracer{}, "A", map[string]struct{}{"B": {}}, "fakeDS", data.Frames{exemplars(), table()})
+		require.NoError(t, res.Error)
+		require.Equal(t, "series", res.Values[0].(mathexp.TableData).Frame.Name)
+	})
+
+	t.Run("table with a non-converter type plus annotations frame passes the table through", func(t *testing.T) {
+		heatmap := data.NewFrame("heatmap",
+			data.NewField("xMax", nil, times),
+			data.NewField("yMin", nil, []float64{0, 0}),
+			data.NewField("count", nil, []float64{3, 4}),
+		).SetMeta(&data.FrameMeta{Type: data.FrameType("heatmap-cells")})
+		res, converted := handleSqlInput(t.Context(), &testTracer{}, "A", map[string]struct{}{"B": {}}, "fakeDS", data.Frames{heatmap, exemplars()})
+		require.NoError(t, res.Error)
+		require.False(t, converted)
+		require.Equal(t, "heatmap", res.Values[0].(mathexp.TableData).Frame.Name)
+	})
+
+	t.Run("timeseries-multi plus annotations frames converts only the series", func(t *testing.T) {
+		frames := data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, times),
+				data.NewField("cpu", data.Labels{"host": "a"}, []float64{1, 2}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
+			exemplars(),
+			data.NewFrame("",
+				data.NewField("time", nil, times),
+				data.NewField("cpu", data.Labels{"host": "b"}, []float64{3, 4}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
+			exemplars(),
+		}
+		res, converted := handleSqlInput(t.Context(), &testTracer{}, "A", map[string]struct{}{"B": {}}, "fakeDS", frames)
+		require.NoError(t, res.Error)
+		require.True(t, converted)
+		require.Equal(t, 4, res.Values[0].(mathexp.TableData).Frame.Rows())
+	})
+
+	t.Run("a single annotations frame still passes through as a table", func(t *testing.T) {
+		res, converted := handleSqlInput(t.Context(), &testTracer{}, "A", map[string]struct{}{"B": {}}, "fakeDS", data.Frames{exemplars()})
+		require.NoError(t, res.Error)
+		require.False(t, converted)
+		require.Equal(t, "exemplar", res.Values[0].(mathexp.TableData).Frame.Name)
+	})
+
+	t.Run("only annotations frames, more than one, still errors", func(t *testing.T) {
+		res, _ := handleSqlInput(t.Context(), &testTracer{}, "A", map[string]struct{}{"B": {}}, "fakeDS", data.Frames{exemplars(), exemplars()})
+		require.ErrorContains(t, res.Error, "more than one dataframe that can not be automatically mapped to a single table")
+	})
+}
+
 type testTracer struct {
 	trace.Tracer
 }
