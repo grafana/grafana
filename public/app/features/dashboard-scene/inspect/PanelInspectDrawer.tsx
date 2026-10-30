@@ -1,3 +1,4 @@
+import { type DataSourceApi, LoadingState, type PanelData } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   type SceneComponentProps,
@@ -37,6 +38,10 @@ interface PanelInspectDrawerState extends SceneObjectState {
 
 export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState> {
   static Component = PanelInspectRenderer;
+  private queryTabs?: SceneInspectTab[];
+  private jsonTab?: InspectJsonTab;
+  private metadataTab?: InspectMetaDataTab;
+  private noticesTab?: InspectErrorsAndNoticesTab;
 
   constructor(state: PanelInspectDrawerState) {
     super(state);
@@ -44,58 +49,157 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
   }
 
   private _activationHandler() {
-    const deactivateNotices = this.state.panelRef.resolve().getPanelContext().activateNotices?.();
-    this.buildTabs(0);
-    return deactivateNotices;
+    const panel = this.state.panelRef.resolve();
+    const context = panel.getPanelContext();
+    const deactivateNotices = context.activateNotices?.();
+    let discoveryVersion = 0;
+    let provider = sceneGraph.getData(panel);
+    const reconcile = () => this.reconcileTabs();
+    const discoverInspectors = async () => {
+      const version = ++discoveryVersion;
+      const data = provider.state.data;
+      const [metadataDataSource, noticesDataSource] = await Promise.all([
+        getDataSourceWithInspector(data).catch(() => undefined),
+        getDataSourceWithErrorsAndNoticesInspector(data).catch(() => undefined),
+      ]);
+      // A newer result, provider replacement, or drawer close invalidates this discovery.
+      if (version !== discoveryVersion) {
+        return;
+      }
+      this.updateMetadataTab(metadataDataSource, data);
+      if (!this.noticesTab || this.noticesTab.state.dataSource !== noticesDataSource) {
+        this.noticesTab = new InspectErrorsAndNoticesTab({
+          panelRef: this.state.panelRef,
+          dataSource: noticesDataSource,
+        });
+      }
+      reconcile();
+    };
+    const updateData = () => {
+      reconcile();
+      void discoverInspectors();
+    };
+    const subscribeToData = () =>
+      provider.subscribeToState((state, previous) => {
+        if (state.data !== previous.data) {
+          updateData();
+        }
+      });
+    let dataSubscription = subscribeToData();
+    const unsubscribeNotices = context.notices?.subscribe(reconcile);
+    const pluginPolling = this.createPluginPolling(panel);
+    const panelSubscription = panel.subscribeToState((state, previous) => {
+      if (state.$data !== previous.$data) {
+        dataSubscription.unsubscribe();
+        provider = sceneGraph.getData(panel);
+        dataSubscription = subscribeToData();
+        updateData();
+      }
+      if (state.pluginId !== previous.pluginId) {
+        pluginPolling.check();
+      } else if (state._pluginLoadError !== previous._pluginLoadError) {
+        reconcile();
+      }
+    });
+    pluginPolling.check();
+    void discoverInspectors();
+    return () => {
+      discoveryVersion++;
+      pluginPolling.stop();
+      unsubscribeNotices?.();
+      dataSubscription.unsubscribe();
+      panelSubscription.unsubscribe();
+      deactivateNotices?.();
+    };
   }
 
-  /**
-   * We currently have no async await to get the panel plugin from the VizPanel.
-   * That is why there is a retry argument here and a setTimeout, to try again a bit later.
-   */
-  async buildTabs(retry: number) {
-    const panelRef = this.state.panelRef;
-    const plugin = panelRef.resolve()?.getPlugin();
+  private createPluginPolling(panel: VizPanel) {
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+
+    // Plugin availability has no awaitable API; notice updates must not restart this timeout.
+    const check = (elapsed = 0) => {
+      clearTimeout(retryTimer);
+      this.setState({ pluginNotLoaded: !panel.getPlugin() && elapsed >= 2000 });
+      this.reconcileTabs();
+      if (!panel.getPlugin() && elapsed < 2000) {
+        retryTimer = setTimeout(() => check(elapsed + 100), 100);
+      }
+    };
+
+    return { check, stop: () => clearTimeout(retryTimer) };
+  }
+
+  private updateMetadataTab(dataSource: DataSourceApi | undefined, data: PanelData | undefined) {
+    if (this.metadataTab?.state.dataSource === dataSource) {
+      return;
+    }
+
+    if (dataSource) {
+      this.metadataTab = new InspectMetaDataTab({ panelRef: this.state.panelRef, dataSource });
+      return;
+    }
+
+    // A refresh can temporarily clear results. Keep the existing tab until results settle.
+    if (data?.state !== LoadingState.Loading) {
+      this.metadataTab = undefined;
+    }
+  }
+
+  private hasNotices(panel: VizPanel, panelData: PanelData | undefined) {
+    const snapshot = panel.getPanelContext().notices?.getSnapshot();
+    // An initialized host snapshot is authoritative, including an empty result.
+    if (snapshot?.hostInitialized) {
+      return snapshot.items.length > 0;
+    }
+
+    return hasErrorsOrNotices(panelData) || Boolean(panel.state._pluginLoadError) || Boolean(snapshot?.items.length);
+  }
+
+  private reconcileTabs() {
+    const { panelRef } = this.state;
+    const panel = panelRef.resolve();
     const tabs: SceneInspectTab[] = [];
-
-    if (!plugin) {
-      if (retry < 2000) {
-        setTimeout(() => this.buildTabs(retry + 100), 100);
-      } else {
-        this.setState({ pluginNotLoaded: true });
+    if (supportsDataQuery(panel.getPlugin())) {
+      this.queryTabs ??= [
+        new InspectDataTab({ panelRef }),
+        new InspectStatsTab({ panelRef }),
+        new InspectQueryTab({ panelRef }),
+      ];
+      tabs.push(...this.queryTabs);
+      if (this.metadataTab) {
+        tabs.push(this.metadataTab);
       }
     }
+    const panelData = sceneGraph.getData(panel).state.data;
+    // Avoid removing the visible notices tab while a refresh temporarily clears errors.
+    const retainNoticesWhileLoading =
+      panelData?.state === LoadingState.Loading &&
+      Boolean(this.noticesTab && this.state.tabs?.includes(this.noticesTab));
+    if (this.hasNotices(panel, panelData) || retainNoticesWhileLoading) {
+      this.noticesTab ??= new InspectErrorsAndNoticesTab({ panelRef });
+      tabs.push(this.noticesTab);
+    }
+    this.jsonTab ??= new InspectJsonTab({ panelRef, onClose: this.onClose });
+    tabs.push(this.jsonTab);
+    this.publishTabs(tabs);
+  }
 
-    if (panelRef) {
-      const panel = panelRef.resolve();
-      const data = sceneGraph.getData(panel);
-      if (supportsDataQuery(plugin)) {
-        tabs.push(new InspectDataTab({ panelRef }));
-        tabs.push(new InspectStatsTab({ panelRef }));
-        tabs.push(new InspectQueryTab({ panelRef }));
-
-        const dsWithInspector = await getDataSourceWithInspector(data.state.data);
-        if (dsWithInspector) {
-          tabs.push(new InspectMetaDataTab({ panelRef, dataSource: dsWithInspector }));
-        }
-      }
-
-      const snapshot = panel.getPanelContext().notices?.getSnapshot();
-      const hasNotices = snapshot?.hostInitialized
-        ? snapshot.items.length > 0
-        : hasErrorsOrNotices(data.state.data) ||
-          Boolean(panel.state._pluginLoadError) ||
-          Boolean(snapshot?.items.length);
-      if (hasNotices) {
-        const dsWithErrorsAndNotices = hasErrorsOrNotices(data.state.data)
-          ? await getDataSourceWithErrorsAndNoticesInspector(data.state.data)
-          : undefined;
-        tabs.push(new InspectErrorsAndNoticesTab({ panelRef, dataSource: dsWithErrorsAndNotices }));
-      }
-
-      tabs.push(new InspectJsonTab({ panelRef, onClose: this.onClose }));
+  private publishTabs(tabs: SceneInspectTab[]) {
+    const { tabs: previousTabs, currentTab } = this.state;
+    const tabsUnchanged =
+      tabs.length === previousTabs?.length && tabs.every((tab, index) => tab === previousTabs[index]);
+    if (tabsUnchanged) {
+      return;
     }
 
+    const selectedTabWasVisible = previousTabs?.some((tab) => tab.getTabValue() === currentTab);
+    const selectedTabIsVisible = tabs.some((tab) => tab.getTabValue() === currentTab);
+    if (selectedTabWasVisible && !selectedTabIsVisible) {
+      this.setState({ tabs, currentTab: tabs[0].getTabValue() });
+      return;
+    }
+
+    // Preserve an initial requested tab while datasource discovery may still make it available.
     this.setState({ tabs });
   }
 
