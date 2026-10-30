@@ -35,7 +35,9 @@ use (
 	./pkg/infra/features
 	./pkg/infra/log
 	./pkg/infra/metrics
+	./pkg/infra/slugify
 	./pkg/infra/tracing
+	./pkg/legacyapi
 	./pkg/plugins
 	./pkg/plugins/codegen
 	./pkg/storage/unified/apistore
