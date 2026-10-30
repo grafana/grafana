@@ -229,11 +229,14 @@ func TestIntegrationLegacyCheckGlobalParity(t *testing.T) {
 									expression, err := accesscontrol.ToLegacyExpression(tc.evaluator)
 									require.NoError(t, err)
 
+									restriction := &authzextv1.LegacyActionRestriction{
+										Actions: slices.Sorted(maps.Keys(checkedRequester.GetGlobalPermissions())),
+									}
 									got, err := s.LegacyCheck(legacyCheckContext(t), &authzextv1.LegacyCheckRequest{
-										Namespace: "org-12", Subject: requester.GetUID(), Expression: expression,
+										Restriction: restriction,
+										Namespace:   "org-12", Subject: requester.GetUID(), Expression: expression,
 										GlobalEvaluation: &authzextv1.LegacyGlobalEvaluation{
-											RequesterOrgId:   requesterOrgID,
-											PermittedActions: slices.Sorted(maps.Keys(checkedRequester.GetGlobalPermissions())),
+											RequesterOrgId: requesterOrgID,
 										},
 									})
 

@@ -32,6 +32,7 @@ type legacyScopeRequest struct {
 	identityType      types.IdentityType
 	userUID           string
 	skipCache         bool
+	restrictedActions []string
 	globalIdentity    *legacyGlobalIdentity
 	internalRequester identity.Requester
 }
@@ -158,33 +159,19 @@ func (s *Service) loadLegacyResolverPermissions(
 	}
 
 	for _, action := range dependencies.RequiredActions() {
+		if !req.permitsAction(action) {
+			continue
+		}
 		if _, ok := grants[action]; ok || loadedActions[action] {
 			continue
 		}
 
-		if req.globalIdentity != nil {
-			additional, err := s.getLegacyGlobalPermissions(ctx, req.globalIdentity, []string{action})
-			if err != nil {
-				return err
-			}
-			if scopes, ok := additional[action]; ok {
-				grants[action] = scopes
-			}
-		} else {
-			scopes, err := s.getLegacyIdentityScopes(
-				ctx,
-				req.namespace,
-				req.identityType,
-				req.userUID,
-				action,
-				req.skipCache,
-			)
-			if err != nil {
-				return fmt.Errorf("could not get legacy identity scopes: %w", err)
-			}
-			if len(scopes) > 0 {
-				grants[action] = scopes
-			}
+		additional, err := s.getLegacyPermissions(ctx, req, []string{action})
+		if err != nil {
+			return fmt.Errorf("could not get legacy resolver permissions: %w", err)
+		}
+		if scopes, ok := additional[action]; ok {
+			grants[action] = scopes
 		}
 		// Remember empty lookups separately: adding even a nil scope slice to
 		// grants would allow action-only checks for an action the subject lacks.

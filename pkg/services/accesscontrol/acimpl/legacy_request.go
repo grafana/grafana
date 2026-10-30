@@ -46,12 +46,12 @@ func (a *AccessControl) buildLegacyCheckRequest(
 		}, nil
 	}
 
+	permissions := user.GetPermissions()
 	var global *legacyclient.LegacyGlobalEvaluation
 	if user.GetOrgID() == accesscontrol.NoOrgID || user.GetOrgID() == accesscontrol.GlobalOrgID {
-		permissions := user.GetGlobalPermissions()
+		permissions = user.GetGlobalPermissions()
 		global = &legacyclient.LegacyGlobalEvaluation{
-			RequesterOrgID:   user.GetOrgID(),
-			PermittedActions: slices.Sorted(maps.Keys(permissions)),
+			RequesterOrgID: user.GetOrgID(),
 		}
 		// Global org IDs describe requester state. Use the configured instance
 		// namespace for transport; evaluation still uses global grants.
@@ -75,5 +75,7 @@ func (a *AccessControl) buildLegacyCheckRequest(
 		Teams:               slices.Clone(groups),
 		SkipScopeResolution: a.skipScopeResolution,
 		GlobalEvaluation:    global,
+		// Preserve authentication filtering when AuthZ reloads grants and resolver dependencies.
+		Restriction: &legacyclient.LegacyActionRestriction{Actions: slices.Sorted(maps.Keys(permissions))},
 	}, nil
 }

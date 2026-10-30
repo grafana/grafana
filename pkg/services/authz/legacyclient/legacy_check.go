@@ -36,9 +36,13 @@ func (c *LegacyClient) LegacyCheck(ctx context.Context, req LegacyCheckRequest) 
 	var global *authzextv1.LegacyGlobalEvaluation
 	if req.GlobalEvaluation != nil {
 		global = &authzextv1.LegacyGlobalEvaluation{
-			RequesterOrgId:   req.GlobalEvaluation.RequesterOrgID,
-			PermittedActions: slices.Clone(req.GlobalEvaluation.PermittedActions),
+			RequesterOrgId: req.GlobalEvaluation.RequesterOrgID,
 		}
+	}
+
+	var restriction *authzextv1.LegacyActionRestriction
+	if req.Restriction != nil {
+		restriction = &authzextv1.LegacyActionRestriction{Actions: slices.Clone(req.Restriction.Actions)}
 	}
 
 	var internal *authzextv1.LegacyInternalIdentity
@@ -56,6 +60,7 @@ func (c *LegacyClient) LegacyCheck(ctx context.Context, req LegacyCheckRequest) 
 		SkipScopeResolution: req.SkipScopeResolution,
 		GlobalEvaluation:    global,
 		InternalIdentity:    internal,
+		Restriction:         restriction,
 	})
 	if err != nil {
 		return false, err

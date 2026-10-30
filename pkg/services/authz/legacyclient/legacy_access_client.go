@@ -28,8 +28,15 @@ type LegacyCheckRequest struct {
 	// A nil value selects organization evaluation unless InternalIdentity is set.
 	GlobalEvaluation *LegacyGlobalEvaluation
 	// InternalIdentity asserts a predefined profile on the trusted embedded channel.
-	// It cannot be combined with Subject or GlobalEvaluation.
+	// It cannot be combined with Subject, GlobalEvaluation or Restriction.
 	InternalIdentity *LegacyInternalIdentity
+	// Restriction limits reloaded grants to actions in the caller's effective permission map.
+	// Nil is unrestricted; a non-nil value with no actions denies all.
+	Restriction *LegacyActionRestriction
+}
+
+type LegacyActionRestriction struct {
+	Actions []string
 }
 
 type LegacyInternalIdentity struct {
@@ -49,7 +56,4 @@ func (p LegacyInternalIdentityProfile) String() string {
 
 type LegacyGlobalEvaluation struct {
 	RequesterOrgID int64
-	// PermittedActions comes from the authenticated requester's effective global
-	// permissions. It restricts reloaded grants; an empty list permits no actions.
-	PermittedActions []string
 }
