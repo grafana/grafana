@@ -33,7 +33,7 @@ import { type ThunkDispatch, type ThunkResult } from 'app/types/store';
 
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';
-import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
+import { getDataSourceAuthType, trackDataSourceCreated, trackDataSourceTested } from '../tracking';
 
 import { buildCategories } from './buildCategories';
 import { buildNavModel } from './navModel';
@@ -66,7 +66,7 @@ export interface InitDataSourceSettingDependencies {
 }
 
 export interface TestDataSourceDependencies {
-  getDatasourceSrv: () => Pick<DataSourceSrv, 'get'>;
+  getDatasourceSrv: () => Pick<DataSourceSrv, 'get'> & Partial<Pick<DataSourceSrv, 'getInstanceSettings'>>;
   getBackendSrv: typeof getBackendSrv;
 }
 
@@ -159,6 +159,11 @@ export const testDataSource = (
 
     dispatch(testDataSourceStarting());
 
+    const authentication_type = getDataSourceAuthType(
+      dsApi.meta.id,
+      dependencies.getDatasourceSrv().getInstanceSettings?.(dsApi.uid)?.jsonData
+    );
+
     dependencies.getBackendSrv().withNoBackendCache(async () => {
       try {
         const result = await dsApi.testDatasource();
@@ -173,6 +178,7 @@ export const testDataSource = (
           datasource_uid: dsApi.uid,
           success: true,
           path: editLink,
+          authentication_type,
         });
         appEvents.publish(new DataSourceTestSucceeded());
       } catch (err) {
@@ -186,6 +192,7 @@ export const testDataSource = (
           datasource_uid: dsApi.uid,
           success: false,
           path: editLink,
+          authentication_type,
         });
         appEvents.publish(new DataSourceTestFailed());
       }
