@@ -1442,11 +1442,24 @@
     },
     "gma-rule-list": {
       "alert-rules": {
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
       "datasources": "",
+      "folder-row": {
+        "collapse": "",
+        "count-description": "",
+        "count-tooltip": "",
+        "count-unavailable": "",
+        "expand": ""
+      },
       "interval": "",
       "recorded-metric": {
         "records": "",
@@ -1457,7 +1470,7 @@
         "rules-error": "",
         "search-issues": ""
       },
-      "result-count": {
+      "rule-count": {
         "alert-rules_one": "",
         "alert-rules_other": "",
         "recording-rules_one": "",
@@ -1465,6 +1478,7 @@
       },
       "search": {
         "default-policy-unavailable": "",
+        "folders-disabled": "",
         "help": {
           "contact-point": "",
           "dashboard": "",
@@ -1513,6 +1527,9 @@
         "renamed-value": "",
         "unavailable-tokens": "",
         "unclosed-quote": "",
+        "view": "",
+        "view-folders": "",
+        "view-list": "",
         "wildcard-in-text": ""
       },
       "shared": {
@@ -7293,11 +7310,15 @@
       "modal": {
         "cancel": "Annulla",
         "discard": "Annulla",
+        "keep-working": "",
         "save": "Salva",
+        "stop-and-leave": "",
         "text": {
+          "leave-composer": "",
           "save-changes-question": "Desideri salvare le modifiche?"
         },
         "title": {
+          "leave-composer": "",
           "unsaved-changes": "Modifiche non salvate"
         }
       },
@@ -9055,6 +9076,12 @@
         "inspect-value": "Ispeziona valore",
         "show-details": "Mostra dettagli",
         "view-log-line": "Visualizza riga di registro"
+      },
+      "error-attribute": {
+        "error-fields-label": "",
+        "error-fields-tooltip": "",
+        "stacktrace-label": "",
+        "stacktrace-tooltip": ""
       },
       "loki-time-sort-tooltip": "L'ordinamento di questa colonna modifica solo l'ordine dei risultati visualizzati. Per aggiornare l'ordinamento basato sul tempo della query, utilizza il comando Ordinamento a destra."
     },
@@ -11099,6 +11126,7 @@
         "add-all": "Aggiungi tutti i valori visualizzati al filtro",
         "blanks": "(Vuoti)",
         "button": "Filtro {{name}}",
+        "include-missing": "",
         "operator": {
           "contains": "Contiene",
           "equals": "Uguale",
@@ -11123,6 +11151,7 @@
       "filter-popup-heading": "Filtra per valori:",
       "filter-popup-input-placeholder": "Valori filtro",
       "filter-popup-match-case": "Corrispondenza",
+      "filter-popup-row-count": "",
       "footer": {
         "reducer": {
           "count": "Conta"
@@ -11139,6 +11168,18 @@
       "no-rows": "Nessuna riga",
       "no-values-label": "Nessun valore",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} di {{numRows}} righe",
+      "range": {
+        "apply": "",
+        "empty": "",
+        "end": "",
+        "histogram": "",
+        "invalid": "",
+        "label": "",
+        "maximum": "",
+        "minimum": "",
+        "start": "",
+        "unbounded": ""
+      },
       "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "Ordina per colonna {{column}}",
@@ -12310,6 +12351,7 @@
     },
     "log-details": {
       "error": {
+        "diagnose-with-assistant": "",
         "error-details": ""
       }
     },
@@ -16946,6 +16988,10 @@
     },
     "namespace-unavailable": "Controlla lo spazio dei nomi prima di inviare le richieste o ricarica la pagina per riprovare.",
     "namespace-unavailable-title": "Impossibile caricare lo spazio dei nomi",
+    "router-fixtures": {
+      "clear": "",
+      "title": ""
+    },
     "router-nav": {
       "api-docs": "",
       "manifests": "",
@@ -16962,7 +17008,6 @@
       "failures-description": "",
       "filter-placeholder": "",
       "filtered": "",
-      "groups": "",
       "last-failed": "",
       "load-failures": "",
       "never": "",
@@ -16976,8 +17021,9 @@
       "requests-description": "",
       "shadowed": "",
       "shadowed-description": "",
-      "sources": "",
-      "stack-lookups": "",
+      "tab-groups": "",
+      "tab-lookups": "",
+      "tab-sources": "",
       "title": ""
     }
   },
