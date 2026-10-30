@@ -10,6 +10,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 )
 
+// PermissionsDeleter removes a deleted datasource's permissions in place of the SQL permission cleanup.
+// It is an extension point that is nil by default. It is called after the deletion committed and must not fail it.
+type PermissionsDeleter interface {
+	DeleteDatasourcePermissions(ctx context.Context, namespace, uid string)
+}
+
 // DataSourceService interface for interacting with datasources.
 type DataSourceService interface {
 	queryV0.DataSourceConnectionProvider
