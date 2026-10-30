@@ -1519,3 +1519,26 @@ func countDBRows(t testing.TB, ctx context.Context, store db.DB, table, where st
 	}))
 	return count
 }
+
+func TestIntegrationService_DeclareFixedRoles_AfterInitialization(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ac := setupTestEnv(t, true)
+	before := len(ac.roles[string(identity.RoleEditor)].Permissions)
+
+	err := ac.DeclareFixedRoles(accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:late.ext.grafana.app:reader",
+			Permissions: []accesscontrol.Permission{{Action: "late.ext.grafana.app/things:get"}},
+		},
+		Grants: []string{string(identity.RoleEditor)},
+	})
+	require.NoError(t, err)
+
+	actions := make([]string, 0)
+	for _, p := range ac.roles[string(identity.RoleEditor)].Permissions {
+		actions = append(actions, p.Action)
+	}
+	assert.Len(t, actions, before+1, "a role declared after initialization is granted without a restart")
+	assert.Contains(t, actions, "late.ext.grafana.app/things:get")
+}
