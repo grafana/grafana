@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 	"strings"
+	"sync"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -14,7 +15,21 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 )
+
+// Keep only the bundled schema metadata needed to reject unsupported tuple forms.
+var permissionGrantMetadata = sync.OnceValues(func() (map[string]*openfgav1.Metadata, error) {
+	model, err := schema.TransformModulesToModel(schema.SchemaModules)
+	if err != nil {
+		return nil, err
+	}
+	metadata := make(map[string]*openfgav1.Metadata, len(model.GetTypeDefinitions()))
+	for _, definition := range model.GetTypeDefinitions() {
+		metadata[definition.GetType()] = definition.GetMetadata()
+	}
+	return metadata, nil
+})
 
 func unsupportedPermissionGrant() error {
 	return status.Error(codes.FailedPrecondition, "unsupported permission relationship or condition")
@@ -172,7 +187,7 @@ func validatePermissionGrant(grant *openfgav1.TupleKey) error {
 	if err := validatePermissionCondition(grant); err != nil {
 		return err
 	}
-	model, err := permissionTranslationModel()
+	metadata, err := permissionGrantMetadata()
 	if err != nil {
 		return err
 	}
@@ -191,14 +206,9 @@ func validatePermissionGrant(grant *openfgav1.TupleKey) error {
 			return unsupportedPermissionGrant()
 		}
 	}
-	for _, definition := range model.GetTypeDefinitions() {
-		if definition.GetType() != typ {
-			continue
-		}
-		for _, allowed := range definition.GetMetadata().GetRelations()[grant.GetRelation()].GetDirectlyRelatedUserTypes() {
-			if allowed.GetWildcard() == nil && allowed.GetType() == subjectType && allowed.GetRelation() == subjectRelation && allowed.GetCondition() == grant.GetCondition().GetName() {
-				return nil
-			}
+	for _, allowed := range metadata[typ].GetRelations()[grant.GetRelation()].GetDirectlyRelatedUserTypes() {
+		if allowed.GetWildcard() == nil && allowed.GetType() == subjectType && allowed.GetRelation() == subjectRelation && allowed.GetCondition() == grant.GetCondition().GetName() {
+			return nil
 		}
 	}
 	return unsupportedPermissionGrant()

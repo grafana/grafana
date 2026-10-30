@@ -43,8 +43,8 @@ func TestUserPermissionsCachesEmptyPrincipal(t *testing.T) {
 	enablePrincipalCache(srv)
 	require.Empty(t, permissionPairs(t, srv, "user:nobody", nil, false))
 	counts, total := ds.counts()
-	require.Equal(t, map[string]int{"model": 1, "read": 1}, counts)
-	require.Equal(t, 2, total)
+	require.Equal(t, map[string]int{"read": 1}, counts)
+	require.Equal(t, 1, total)
 	ds.reset()
 	require.Empty(t, permissionPairs(t, srv, "user:nobody", nil, false))
 	_, total = ds.counts()
@@ -77,7 +77,7 @@ func TestUserPermissionsBypassesPrincipalCache(t *testing.T) {
 	ds.reset()
 	require.Empty(t, permissionPairs(t, srv, "user:alice", nil, true))
 	counts, _ := ds.counts()
-	require.Equal(t, map[string]int{"model": 1, "read": 1}, counts)
+	require.Equal(t, map[string]int{"read": 1}, counts)
 	require.NotEmpty(t, permissionPairs(t, srv, "user:alice", nil, false), "bypass must not populate or replace shared entries")
 }
 
@@ -103,7 +103,7 @@ func TestUserPermissionsCachesSharedTeamForLegacyTTL(t *testing.T) {
 	ds.reset()
 	require.False(t, permissionPairs(t, srv, "user:alice", []string{"shared"}, false)[key], "external changes are visible when the shared contribution expires")
 	counts, _ = ds.counts()
-	require.Equal(t, map[string]int{"model": 1, "read": 2}, counts)
+	require.Equal(t, map[string]int{"read": 2}, counts)
 	ds.reset()
 	require.False(t, permissionPairs(t, srv, "user:bob", []string{"shared"}, false)[key], "Bob reuses the refreshed empty team, not a flattened user result")
 	_, total = ds.counts()
@@ -173,7 +173,7 @@ func (s *gatedPermissionStore) Read(ctx context.Context, store string, filter st
 func TestUserPermissionsCoalescesSharedLoadsAcrossCanceledWaiter(t *testing.T) {
 	srv, ds, _ := newPermissionTestServer(t, []*openfgav1.TupleKey{common.NewResourceTuple("team:shared#member", common.RelationGet, dashboardGroup, dashboardResource, "", "dashboard")})
 	enablePrincipalCache(srv)
-	// Warm only the model and individual empty users.
+	// Warm only the individual empty users.
 	permissionPairs(t, srv, "user:alice", nil, false)
 	permissionPairs(t, srv, "user:bob", nil, false)
 	gate := &gatedPermissionStore{OpenFGADatastore: ds, entered: make(chan struct{}), release: make(chan struct{}), block: true}
@@ -298,7 +298,7 @@ func TestUserPermissionsUsesLegacyPermissionCacheFlag(t *testing.T) {
 			if enabled {
 				require.Zero(t, total)
 			} else {
-				require.Equal(t, 2, total)
+				require.Equal(t, 1, total)
 			}
 		})
 	}

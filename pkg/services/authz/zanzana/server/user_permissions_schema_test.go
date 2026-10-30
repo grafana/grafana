@@ -5,12 +5,13 @@ import (
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 )
 
-// Matching the deployed model to the compiled model is insufficient if a future
-// schema edit changes the graph closure required by permission translation.
+// Schema changes can require additional principal discovery or grant translation.
 func TestUserPermissionsGrantsSchemaAssumptions(t *testing.T) {
-	model, err := permissionTranslationModel()
+	model, err := schema.TransformModulesToModel(schema.SchemaModules)
 	require.NoError(t, err)
 	types := make(map[string]*openfgav1.TypeDefinition)
 	for _, definition := range model.GetTypeDefinitions() {

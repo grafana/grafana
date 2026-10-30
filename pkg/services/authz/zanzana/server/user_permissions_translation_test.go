@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 )
 
 func TestUserPermissionsRejectsRequestConditionBindings(t *testing.T) {
@@ -41,8 +42,8 @@ func TestUserPermissionsReusesSharedPrincipalContributions(t *testing.T) {
 	}
 	request("user:alice")
 	counts, total := ds.counts()
-	require.Equal(t, map[string]int{"model": 1, "read": 3}, counts)
-	require.Equal(t, 4, total)
+	require.Equal(t, map[string]int{"read": 3}, counts)
+	require.Equal(t, 3, total)
 	ds.reset()
 	request("user:bob")
 	counts, _ = ds.counts()
@@ -80,7 +81,7 @@ func TestUserPermissionsEvictsSharedRoleAfterWrite(t *testing.T) {
 }
 
 func TestUserPermissionsTranslatesEverySupportedRelation(t *testing.T) {
-	model, err := permissionTranslationModel()
+	model, err := schema.TransformModulesToModel(schema.SchemaModules)
 	require.NoError(t, err)
 	var grants []*openfgav1.TupleKey
 	seen := map[string]bool{}
