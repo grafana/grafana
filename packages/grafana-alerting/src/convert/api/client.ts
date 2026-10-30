@@ -1,7 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { createBaseQuery } from '@grafana/api-clients/rtkq';
-import { config } from '@grafana/runtime';
 
 import {
   type ConvertAlertmanagerOptions,
@@ -41,7 +40,7 @@ const ruleGroupPath = (namespace: string, group: string) => `${namespacePath(nam
  */
 export const convertAPI = createApi({
   reducerPath: 'alertingConvertAPI',
-  baseQuery: createBaseQuery({ getBaseURL: async () => `${config.appSubUrl || ''}/api/convert` }),
+  baseQuery: createBaseQuery({ baseURL: '/api/convert' }),
   tagTypes: [RULES_TAG, ALERTMANAGER_TAG],
   endpoints: (build) => ({
     /** All imported rule groups, keyed by namespace. */

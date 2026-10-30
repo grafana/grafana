@@ -2,7 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { HttpResponse, http } from 'msw';
 
 import { MockBackendSrv } from '@grafana/api-clients';
-import { config, setBackendSrv } from '@grafana/runtime';
+import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 
 import { convertAPI } from './client';
@@ -60,21 +60,6 @@ async function settle(store: TestStore) {
 }
 
 describe('convertAPI', () => {
-  const originalAppSubUrl = config.appSubUrl;
-
-  afterEach(() => {
-    config.appSubUrl = originalAppSubUrl;
-  });
-
-  it('uses the sub path even when it is set after the module loads', async () => {
-    config.appSubUrl = '/grafana';
-    const requests = captureRequests('get', `/grafana${RULES_URL}`, {});
-
-    await createStore().dispatch(convertAPI.endpoints.getRules.initiate()).unwrap();
-
-    expect(new URL(requests[0].url).pathname).toBe(`/grafana${RULES_URL}`);
-  });
-
   it('asks for JSON when reading rules, since Grafana answers in YAML otherwise', async () => {
     const requests = captureRequests('get', `${RULES_URL}/:namespace`, {
       'my folder': [],

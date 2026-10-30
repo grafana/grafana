@@ -1,10 +1,4 @@
-/**
- * Request and response bodies of Grafana's Prometheus convert API (`/api/convert/...`), which turns
- * Prometheus-compatible rule groups and Alertmanager configs (as mimirtool and cortextool send them)
- * into Grafana-managed resources.
- *
- * The rule types are the Ruler API shapes, as Prometheus, Mimir and Cortex use them.
- */
+/** Request and response bodies of Grafana's Prometheus convert API (`/api/convert/...`). */
 
 export interface RulerRecordingRuleDTO {
   record: string;
@@ -24,35 +18,21 @@ export interface RulerAlertingRuleDTO {
 /** Ruler rules have no `type` field; an alerting rule has `alert` and a recording rule has `record`. */
 export type RulerRuleDTO = RulerAlertingRuleDTO | RulerRecordingRuleDTO;
 
-/**
- * A rule group as the Ruler API returns it.
- *
- * The convert API reads `name`, `interval`, `limit`, `query_offset`, `labels` and `rules`. It drops the
- * Mimir-only fields (`evaluation_delay`, `source_tenants`, `align_evaluation_time_on_interval`) without an
- * error, so a federated Mimir group is imported as a plain one.
- */
+/** The convert API silently drops the Mimir-only fields, so a federated group is imported as a plain one. */
 export interface RulerRuleGroupDTO {
   name: string;
   interval?: string;
-  /** Maximum number of alerts or series a single rule in this group may produce. */
   limit?: number;
-  /** How far back to shift the evaluation query, e.g. to wait for late samples. */
   query_offset?: string;
-  /** Labels added to every rule in the group. */
   labels?: Record<string, string>;
-  /** Mimir's older name for `query_offset`. */
   evaluation_delay?: string;
-  /** Mimir: tenants whose data this group's rules read. */
   source_tenants?: string[];
-  /** Mimir: evaluate on interval boundaries rather than at an arbitrary offset. */
   align_evaluation_time_on_interval?: boolean;
   rules: RulerRuleDTO[];
 }
 
-/** Rule groups keyed by namespace. A namespace is a folder title on the Grafana side. */
 export type RulerRulesConfigDTO = Record<string, RulerRuleGroupDTO[]>;
 
-// Overrides for how alerts sent straight to a contact point are grouped and timed.
 interface RoutingOverridesDTO {
   group_by?: string[];
   group_wait?: string;
@@ -101,7 +81,6 @@ export interface RenameResources {
 
 /** What an Alertmanager import added to the config. Names are after any rename. */
 export interface MergeStats {
-  /** The routing tree the import added. */
   added_route?: string;
   added_receivers?: string[];
   added_time_intervals?: string[];
