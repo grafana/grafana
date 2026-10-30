@@ -28,7 +28,7 @@ var zLogger = log.New("accesscontrol.zanzana_resolver")
 type ZanzanaPermissionResolver struct {
 	client        zanzana.Client
 	userSvc       user.Service
-	scopeResolver legacyscopes.BulkIDResolver
+	scopeResolver legacyscopes.IDResolver
 	// useExternalGroups mirrors cfg.IDUseExternalGroupsForGroupsClaim: it selects which
 	// team memberships are sent as Zanzana contextual tuples for the current user, so the
 	// merged permissions match what the forward Check path (which uses the groups claim)
@@ -230,7 +230,7 @@ func (r *ZanzanaPermissionResolver) searchAllUsers(ctx context.Context, signedIn
 
 func isDashboardRBACAction(action string) bool { return strings.HasPrefix(action, "dashboards:") }
 
-// listPermissions serves exact-action permission searches; current-user enumeration uses GetUserPermissions.
+// listPermissions lists permissions for a subject on a given group/resource
 func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespace, subject string, teams []string, group, resource, subresource, verb, action, scope string) ([]ac.Permission, error) {
 	req := &authzv1.ListRequest{
 		Namespace:   namespace,
@@ -247,29 +247,25 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 		return nil, fmt.Errorf("zanzana list failed: %w", err)
 	}
 
-	return legacyscopes.ResolvePermissions(ctx, namespace, scope, r.scopeResolver, []legacyscopes.PermissionList{{Resource: resource, Action: action, List: resp}})
+	return (legacyscopes.Formatter{IDs: r.scopeResolver}).Permissions(ctx, namespace, resource, action, scope, resp), nil
 }
 
 func (r *ZanzanaPermissionResolver) listAllWithPrefix(ctx context.Context, namespace, subject string, teams []string, prefix, scope string) ([]ac.Permission, error) {
-	var lists []legacyscopes.PermissionList
+	var permissions []ac.Permission
 	for _, entry := range common.SupportedActions() {
-		if !strings.HasPrefix(entry.Action, prefix) {
-			continue
-		}
-		resp, err := r.client.List(ctx, &authzv1.ListRequest{
-			Namespace: namespace, Subject: subject, Teams: teams,
-			Group: entry.Group, Resource: entry.Resource, Subresource: entry.Subresource, Verb: entry.Verb,
-		})
-		if err != nil {
-			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-				return nil, err
+		if strings.HasPrefix(entry.Action, prefix) {
+			perms, err := r.listPermissions(ctx, namespace, subject, teams, entry.Group, entry.Resource, entry.Subresource, entry.Verb, entry.Action, scope)
+			if err != nil {
+				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+					return nil, err
+				}
+				zLogger.Warn("failed to list zanzana permissions for action, skipping", "action", entry.Action, "error", err)
+				continue
 			}
-			zLogger.Warn("failed to list zanzana permissions for action, skipping", "action", entry.Action, "error", err)
-			continue
+			permissions = append(permissions, perms...)
 		}
-		lists = append(lists, legacyscopes.PermissionList{Resource: entry.Resource, Action: entry.Action, List: resp})
 	}
-	return legacyscopes.ResolvePermissions(ctx, namespace, scope, r.scopeResolver, lists)
+	return permissions, nil
 }
 
 // permKey is the dedup key for action+scope pairs. Using a struct avoids the

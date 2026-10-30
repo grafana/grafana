@@ -3,6 +3,7 @@ package legacyscopes
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -28,16 +29,19 @@ var (
 // the bound just caps memory and tolerates the rare deleted-then-absent UID.
 const uidToIDCacheTTL = 1 * time.Hour
 
-// Bounds shared IAM fetches independently of any one caller, so a hung
-// List or Get cannot block all followers indefinitely.
+// Bounds the detached singleflight fetch. The fetch runs on a context decoupled from any single
+// caller (see getObjectID), so without this a hung apiserver Get would block the flight—and every
+// follower waiting on it—indefinitely.
 const uidToIDFetchTimeout = 10 * time.Second
 
 type UIDResolver struct {
 	mu             sync.RWMutex
 	clients        map[schema.GroupVersionResource]dynamic.NamespaceableResourceInterface
 	configProvider restcfg.RestConfigProvider
-	// The same UIDs recur across actions and requests. Cache successful mappings
-	// and completed namespace loads; share concurrent List and Get fetches with sf.
+	// cache stores resolved UID→internal-ID mappings; sf collapses concurrent resolutions
+	// of the same key into a single apiserver Get. Both teams and users resolve through here,
+	// and the same UIDs recur across every action during a permission merge, so this removes
+	// the bulk of the redundant apiserver lookups.
 	cache *localcache.CacheService
 	sf    singleflight.Group
 }
@@ -86,10 +90,7 @@ func (r *UIDResolver) getObjectID(ctx context.Context, nsInfo types.NamespaceInf
 	// tenants stay isolated. Don't key on OrgID: multiple namespaces can share an OrgID
 	// (every cloud stacks-N namespace parses to OrgID 1), which would collide their entries
 	// and collapse cross-tenant resolutions into a single singleflight fetch.
-	if err := ctx.Err(); err != nil {
-		return 0, err
-	}
-	key := uidCacheKey(gvr, nsInfo, name)
+	key := fmt.Sprintf("%s/%s/%s", gvr.Resource, nsInfo.Value, name)
 	if v, ok := r.cache.Get(key); ok {
 		return v.(int64), nil
 	}

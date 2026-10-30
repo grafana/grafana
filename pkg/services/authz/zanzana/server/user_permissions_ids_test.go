@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
 )
 
-func TestUserPermissionsBulkScopeIDs(t *testing.T) {
+func TestUserPermissionsIndividualScopeIDs(t *testing.T) {
 	var mu sync.Mutex
 	counts := map[string]int{}
 	object := func(kind, name, id string) map[string]any {
@@ -34,10 +34,6 @@ func TestUserPermissionsBulkScopeIDs(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		var body any
 		switch {
-		case strings.HasSuffix(path, "/users"):
-			body = map[string]any{"apiVersion": "iam.grafana.app/v0alpha1", "kind": "UserList", "metadata": map[string]any{}, "items": []any{object("User", "user-one", "7"), object("User", "user-two", "8")}}
-		case strings.HasSuffix(path, "/teams"):
-			body = map[string]any{"apiVersion": "iam.grafana.app/v0alpha1", "kind": "TeamList", "metadata": map[string]any{}, "items": []any{object("Team", "team-one", "42")}}
 		case strings.HasSuffix(path, "/users/user-one"):
 			body = object("User", "user-one", "7")
 		case strings.HasSuffix(path, "/users/user-two"):
@@ -71,5 +67,32 @@ func TestUserPermissionsBulkScopeIDs(t *testing.T) {
 	}
 	mu.Lock()
 	defer mu.Unlock()
-	require.Equal(t, map[string]int{"/apis/iam.grafana.app/v0alpha1/namespaces/default/users": 1, "/apis/iam.grafana.app/v0alpha1/namespaces/default/teams": 1}, counts, "cold requests should bulk-load IDs and warm requests should reuse the mappings")
+	require.Equal(t, map[string]int{
+		"/apis/iam.grafana.app/v0alpha1/namespaces/default/users/user-one": 1,
+		"/apis/iam.grafana.app/v0alpha1/namespaces/default/users/user-two": 1,
+		"/apis/iam.grafana.app/v0alpha1/namespaces/default/teams/team-one": 1,
+	}, counts, "individual Gets should resolve each UID once and warm requests should reuse the mappings")
+}
+
+func TestUserPermissionsIndividualGetFailurePreservesUIDScope(t *testing.T) {
+	iam := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.NotFound(w, r)
+	}))
+	t.Cleanup(iam.Close)
+	srv, _, _ := newSnapshotTestServer(t, []*openfgav1.TupleKey{
+		common.NewTypedTuple(common.TypeUser, "user:alice", common.RelationGet, "missing-user"),
+	})
+	srv.permissionScopeResolver = legacyscopes.NewUIDResolver(permissionRestConfigProvider(func(context.Context) (*clientrest.Config, error) {
+		return &clientrest.Config{Host: iam.URL}, nil
+	}))
+	stream := &snapshotResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
+	require.NoError(t, srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: "default", Subject: "user:alice"}, stream))
+	got := map[[2]string]bool{}
+	for _, permission := range stream.permissions {
+		got[[2]string{permission.Action, permission.Scope}] = true
+	}
+	require.Equal(t, map[[2]string]bool{
+		{"users:read", "users:uid:missing-user"}:     true,
+		{"org.users:read", "users:uid:missing-user"}: true,
+	}, got)
 }
