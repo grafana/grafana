@@ -393,8 +393,11 @@ type snapshotAuthInfo struct {
 
 func (i snapshotAuthInfo) GetNamespace() string { return i.namespace }
 func (i snapshotAuthInfo) GetGroups() []string  { return i.groups }
+
+// Authlib requires the existing AuthZ capability for its local client preflight.
+// This adapter does not set the credentials used to authenticate with Zanzana.
 func (snapshotAuthInfo) GetTokenDelegatedPermissions() []string {
-	return []string{zanzana.TokenPermissionUserPermissions}
+	return []string{"authz.grafana.app/userpermissions:get"}
 }
 
 func (r *ZanzanaPermissionResolver) ResolvePermissionScopes(ctx context.Context, usr identity.Requester, permissions []ac.Permission) ([]ac.Permission, error) {

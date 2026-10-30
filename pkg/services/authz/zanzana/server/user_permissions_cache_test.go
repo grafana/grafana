@@ -26,7 +26,7 @@ func enablePrincipalCache(srv *Server) {
 
 func permissionPairs(t *testing.T, srv *Server, subject string, teams []string, skip bool) map[[2]string]bool {
 	t.Helper()
-	stream := &permissionResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
+	stream := &permissionResponseStream{ctx: newContextWithNamespace()}
 	require.NoError(t, srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: subject, Teams: teams, Options: &authzv1.GetUserPermissionsOptions{Skipcache: skip}}, stream))
 	result := map[[2]string]bool{}
 	for _, permission := range stream.permissions {
@@ -177,7 +177,7 @@ func TestUserPermissionsCoalescesSharedLoadsAcrossCanceledWaiter(t *testing.T) {
 	permissionPairs(t, srv, "user:bob", nil, false)
 	gate := &gatedPermissionStore{OpenFGADatastore: ds, entered: make(chan struct{}), release: make(chan struct{}), block: true}
 	srv.store = gate
-	ctx, cancel := context.WithCancel(newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions))
+	ctx, cancel := context.WithCancel(newContextWithNamespace())
 	first := make(chan error, 1)
 	go func() {
 		first <- srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice", Teams: []string{"shared"}}, &permissionResponseStream{ctx: ctx})
@@ -185,7 +185,7 @@ func TestUserPermissionsCoalescesSharedLoadsAcrossCanceledWaiter(t *testing.T) {
 	<-gate.entered
 	second := make(chan error, 1)
 	go func() {
-		second <- srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:bob", Teams: []string{"shared"}}, &permissionResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)})
+		second <- srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:bob", Teams: []string{"shared"}}, &permissionResponseStream{ctx: newContextWithNamespace()})
 	}()
 	cancel()
 	require.ErrorIs(t, <-first, context.Canceled)
@@ -205,7 +205,7 @@ func TestUserPermissionsDoesNotRepopulateCacheFromReadBeforeWrite(t *testing.T) 
 	srv.store = gate
 	done := make(chan error, 1)
 	go func() {
-		done <- srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice", Teams: []string{"shared"}}, &permissionResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)})
+		done <- srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice", Teams: []string{"shared"}}, &permissionResponseStream{ctx: newContextWithNamespace()})
 	}()
 	<-gate.entered
 	require.NoError(t, srv.WriteTuples(t.Context(), store, nil, []*openfgav1.TupleKeyWithoutCondition{{User: grant.User, Relation: grant.Relation, Object: grant.Object}}))
@@ -269,7 +269,7 @@ func TestUserPermissionsDoesNotCacheFailedRead(t *testing.T) {
 	srv, ds, _ := newPermissionTestServer(t, []*openfgav1.TupleKey{common.NewResourceTuple("user:alice", common.RelationGet, dashboardGroup, dashboardResource, "", "dashboard")})
 	enablePrincipalCache(srv)
 	ds.failIterator = errors.New("read interrupted")
-	stream := &permissionResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
+	stream := &permissionResponseStream{ctx: newContextWithNamespace()}
 	require.Error(t, srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice"}, stream))
 	require.Empty(t, stream.permissions)
 	ds.failIterator = nil

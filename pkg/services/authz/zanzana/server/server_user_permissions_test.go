@@ -19,7 +19,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
 )
@@ -37,8 +36,8 @@ func (s *permissionResponseStream) Send(response *authzv1.GetUserPermissionsResp
 }
 
 func TestUserPermissionsAuthorization(t *testing.T) {
-	authorized := newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)
-	otherNamespace := types.WithAuthInfo(context.Background(), authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{Namespace: "stacks-99", Permissions: []string{zanzana.TokenPermissionUserPermissions}}}))
+	authorized := newContextWithNamespace()
+	otherNamespace := types.WithAuthInfo(context.Background(), authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{Namespace: "stacks-99"}}))
 	for _, tc := range []struct {
 		name string
 		ctx  context.Context
@@ -46,7 +45,6 @@ func TestUserPermissionsAuthorization(t *testing.T) {
 		code codes.Code
 	}{
 		{"unauthenticated", context.Background(), &authzv1.GetUserPermissionsRequest{Namespace: "default", Subject: "user:alice"}, codes.Unauthenticated},
-		{"missing service grant", newContextWithNamespace(), &authzv1.GetUserPermissionsRequest{Namespace: "default", Subject: "user:alice"}, codes.PermissionDenied},
 		{"namespace boundary", otherNamespace, &authzv1.GetUserPermissionsRequest{Namespace: "default", Subject: "user:alice"}, codes.PermissionDenied},
 		{"missing namespace", authorized, &authzv1.GetUserPermissionsRequest{Subject: "user:alice"}, codes.InvalidArgument},
 		{"missing subject", authorized, &authzv1.GetUserPermissionsRequest{Namespace: "default"}, codes.InvalidArgument},
@@ -61,6 +59,14 @@ func TestUserPermissionsAuthorization(t *testing.T) {
 	}
 }
 
+func TestUserPermissionsAcceptsNamespaceCallerWithoutServiceGrant(t *testing.T) {
+	server, _, _ := newPermissionTestServer(t, permissionParityTuples())
+	ctx := types.WithAuthInfo(t.Context(), authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{Namespace: namespace}}))
+	stream := &permissionResponseStream{ctx: ctx}
+	require.NoError(t, server.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"}, stream))
+	require.NotEmpty(t, stream.permissions)
+}
+
 type permissionAuthenticatedStream struct {
 	grpc.ServerStream
 	ctx context.Context
@@ -71,7 +77,7 @@ func (s permissionAuthenticatedStream) Context() context.Context { return s.ctx 
 func permissionRPC(t *testing.T, s *Server) authzv1.AuthzServiceClient {
 	t.Helper()
 	channel := (&inprocgrpc.Channel{}).WithServerStreamInterceptor(func(srv any, stream grpc.ServerStream, _ *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-		info, _ := types.AuthInfoFrom(newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions))
+		info, _ := types.AuthInfoFrom(newContextWithNamespace())
 		return handler(srv, permissionAuthenticatedStream{ServerStream: stream, ctx: types.WithAuthInfo(stream.Context(), info)})
 	})
 	authzv1.RegisterAuthzServiceServer(channel, s)
@@ -178,7 +184,7 @@ func TestUserPermissionsRPCPreservesGrantedFolderScopes(t *testing.T) {
 		common.NewFolderParentTuple("grandchild", "child"),
 	}
 	srv, ds, _ := newPermissionTestServer(t, tuples)
-	stream := &permissionResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
+	stream := &permissionResponseStream{ctx: newContextWithNamespace()}
 	err := srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice"}, stream)
 	require.NoError(t, err)
 	got := map[[2]string]bool{}

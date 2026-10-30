@@ -58,7 +58,7 @@ func TestEmbeddedZanzanaSnapshotAuthenticationAndTrace(t *testing.T) {
 	require.Len(t, result.Permissions, 1)
 	require.NotNil(t, server.caller)
 	require.Equal(t, "*", server.caller.GetNamespace())
-	require.Contains(t, server.caller.GetTokenPermissions(), zanzana.TokenPermissionUserPermissions)
+	require.Equal(t, []string{zanzana.TokenPermissionUpdate}, server.caller.GetTokenPermissions())
 	require.Equal(t, parent.SpanContext().TraceID(), server.span.TraceID())
 	require.True(t, server.span.IsRemote())
 }

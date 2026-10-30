@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	zserver "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -97,7 +96,7 @@ func TestIntegrationZanzanaMatchesLegacyFolderGrantScopes(t *testing.T) {
 		common.NewFolderParentTuple("grandchild", "child"),
 	}
 	require.NoError(t, datastore.Write(t.Context(), store.ID, nil, tuples))
-	ctx := types.WithAuthInfo(t.Context(), authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{Namespace: "default", Permissions: []string{zanzana.TokenPermissionUserPermissions}}}))
+	ctx := types.WithAuthInfo(t.Context(), authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{Namespace: "default"}}))
 	stream := &folderContractStream{ctx: ctx, pairs: map[[2]string]bool{}}
 	require.NoError(t, srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: "default", Subject: "user:alice"}, stream))
 	require.Equal(t, want, stream.pairs)

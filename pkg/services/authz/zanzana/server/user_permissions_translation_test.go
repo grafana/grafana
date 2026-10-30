@@ -12,7 +12,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 )
@@ -22,7 +21,7 @@ func TestUserPermissionsRejectsRequestConditionBindings(t *testing.T) {
 	// Only group_resource is a stored binding in the supported schema contract.
 	grant.Condition.Context.Fields["requested_group"] = structpb.NewStringValue(common.FormatGroupResource(dashboardGroup, dashboardResource, ""))
 	srv, _, _ := newPermissionTestServer(t, []*openfgav1.TupleKey{grant})
-	stream := &permissionResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
+	stream := &permissionResponseStream{ctx: newContextWithNamespace()}
 	err := srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice"}, stream)
 	require.Equal(t, codes.FailedPrecondition, status.Code(err))
 	require.Empty(t, stream.permissions)
@@ -35,7 +34,7 @@ func TestUserPermissionsReusesSharedPrincipalContributions(t *testing.T) {
 	})
 	enablePrincipalCache(srv)
 	request := func(subject string) {
-		stream := &permissionResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
+		stream := &permissionResponseStream{ctx: newContextWithNamespace()}
 		require.NoError(t, srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: subject, Teams: []string{"shared"}}, stream))
 		require.Contains(t, stream.permissions, &authzv1.UserPermission{Action: "dashboards:read", Scope: "dashboards:uid:dashboard"})
 	}
@@ -60,7 +59,7 @@ func TestUserPermissionsEvictsSharedRoleAfterWrite(t *testing.T) {
 	})
 	enablePrincipalCache(srv)
 	request := func(subject string) map[[2]string]bool {
-		stream := &permissionResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
+		stream := &permissionResponseStream{ctx: newContextWithNamespace()}
 		require.NoError(t, srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: subject, Teams: []string{"shared"}}, stream))
 		got := map[[2]string]bool{}
 		for _, p := range stream.permissions {
@@ -134,7 +133,7 @@ func TestUserPermissionsRejectsUnsupportedGrantShapes(t *testing.T) {
 	} {
 		t.Run(grant.Object+"/"+grant.Relation, func(t *testing.T) {
 			srv, _, _ := newPermissionTestServer(t, []*openfgav1.TupleKey{grant})
-			stream := &permissionResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
+			stream := &permissionResponseStream{ctx: newContextWithNamespace()}
 			err := srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice"}, stream)
 			require.Equal(t, codes.FailedPrecondition, status.Code(err))
 			require.Empty(t, stream.permissions)

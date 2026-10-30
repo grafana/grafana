@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
 type snapshotZanzanaClient struct {
@@ -41,7 +40,7 @@ func TestResolveCurrentUserPermissionsSnapshot(t *testing.T) {
 	require.Equal(t, "stacks-42", client.info.GetNamespace())
 	require.Equal(t, "user:alice", client.info.GetUID())
 	require.Equal(t, []string{"external"}, client.info.GetGroups())
-	require.Equal(t, []string{zanzana.TokenPermissionUserPermissions}, client.info.GetTokenDelegatedPermissions())
+	require.Equal(t, []string{"authz.grafana.app/userpermissions:get"}, client.info.GetTokenDelegatedPermissions())
 }
 
 func TestResolveCurrentUserPermissionsSnapshotDoesNotFallback(t *testing.T) {

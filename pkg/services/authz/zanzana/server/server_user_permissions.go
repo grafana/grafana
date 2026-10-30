@@ -3,7 +3,6 @@ package server
 import (
 	"time"
 
-	authzlib "github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/types"
 	"google.golang.org/grpc/codes"
@@ -25,12 +24,6 @@ func (s *Server) GetUserPermissions(req *authzv1.GetUserPermissionsRequest, stre
 	}
 	if err := authorize(ctx, req.GetNamespace(), s.cfg); err != nil {
 		return err
-	}
-	if !s.cfg.AllowInsecure {
-		caller, ok := types.AuthInfoFrom(ctx)
-		if !ok || !authzlib.CheckServicePermissions(caller, "authz.grafana.app", "userpermissions", "get").Allowed {
-			return status.Error(codes.PermissionDenied, "user permissions request denied")
-		}
 	}
 	if _, err := types.ParseNamespace(req.GetNamespace()); err != nil {
 		return status.Error(codes.InvalidArgument, "invalid namespace")
