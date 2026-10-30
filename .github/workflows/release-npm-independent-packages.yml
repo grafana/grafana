@@ -1,0 +1,96 @@
+name: Release NPM independent packages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/*/package.json'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build, pack and validate without publishing to npm
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  publish:
+    name: Publish independent packages
+    # A push only publishes when it is the merged release pull request, which the job confirms below.
+    # Any other change to a package.json (for example a dependency update) skips the job.
+    if: "github.repository == 'grafana/grafana' && (github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'Release: Frontend packages'))"
+    # MUST use GitHub-hosted runners, as Trusted Publishing currently doesn't support self-hosted runners
+    runs-on: github-hosted-ubuntu-x64-small
+    environment: npm-publish
+    permissions:
+      contents: read
+      pull-requests: read
+      id-token: write
+    env:
+      DRY_RUN: ${{ inputs.dry_run || 'false' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Verify the push is the merged release pull request
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          heads=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${COMMIT_SHA}/pulls" --jq '.[].head.ref')
+          if ! grep -qx 'nx-release-branch--main' <<<"$heads"; then
+            echo "::error::Commit ${COMMIT_SHA} does not come from a pull request on nx-release-branch--main, refusing to publish."
+            exit 1
+          fi
+
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
+
+      # Trusted Publishing is only available in npm v11.5.1 and later
+      - name: Update npm
+        run: npm install -g npm@^11.5.1
+
+      - name: Install dependencies
+        uses: ./.github/actions/yarn-install
+        with:
+          hardened-mode: 'true'
+
+      - name: Build packages
+        run: npm run packages:build
+
+      - name: Pack independent packages
+        run: |
+          rm -rf ./npm-artifacts
+          npm run packages:pack:independent
+
+      - name: Select packages that are not published yet
+        id: select
+        run: |
+          ./.github/workflows/scripts/select-unpublished-npm-packages.sh ./npm-artifacts
+          count=$(find ./npm-artifacts -maxdepth 1 -name '*.tgz' | wc -l | tr -d ' ')
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          if [ "$count" = '0' ]; then
+            echo "Every independent package is already published, nothing to do."
+          fi
+          tree -a ./npm-artifacts
+
+      - name: Validate packages
+        if: steps.select.outputs.count != '0'
+        run: ./scripts/validate-npm-packages.sh
+
+      - name: Publish packages
+        if: steps.select.outputs.count != '0' && env.DRY_RUN != 'true'
+        run: ./scripts/publish-npm-packages.sh --dist-tag 'latest' --registry 'https://registry.npmjs.org/'
+
+      - name: Report dry run
+        if: steps.select.outputs.count != '0' && env.DRY_RUN == 'true'
+        run: echo "Dry run, the tarballs listed above would have been published to the latest dist-tag."
