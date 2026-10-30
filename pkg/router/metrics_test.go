@@ -280,19 +280,19 @@ grafana_router_reconciles_total 2
 grafana_router_shadowed_groups{source="aggregate:second"} 1
 # HELP grafana_router_skipped_backends Number of backends a route source skipped in its latest successful load or poll. Each skip is logged with its error.
 # TYPE grafana_router_skipped_backends gauge
-grafana_router_skipped_backends{source="core_url"} 0
-grafana_router_skipped_backends{source="plugins_url"} 2
+grafana_router_skipped_backends{source="core"} 0
+grafana_router_skipped_backends{source="plugins"} 2
 grafana_router_skipped_backends{source="single-tenant"} 0
 # HELP grafana_router_source_last_success_timestamp_seconds When each route source last loaded successfully, in seconds since the Unix epoch.
 # TYPE grafana_router_source_last_success_timestamp_seconds gauge
-grafana_router_source_last_success_timestamp_seconds{source="core_url"} 1.7e+09
+grafana_router_source_last_success_timestamp_seconds{source="core"} 1.7e+09
 # HELP grafana_router_source_polls_total Load or poll attempts of each route source, by result: success or failure.
 # TYPE grafana_router_source_polls_total counter
-grafana_router_source_polls_total{result="failure",source="core_url"} 0
-grafana_router_source_polls_total{result="failure",source="plugins_url"} 0
+grafana_router_source_polls_total{result="failure",source="core"} 0
+grafana_router_source_polls_total{result="failure",source="plugins"} 0
 grafana_router_source_polls_total{result="failure",source="single-tenant"} 2
-grafana_router_source_polls_total{result="success",source="core_url"} 4
-grafana_router_source_polls_total{result="success",source="plugins_url"} 0
+grafana_router_source_polls_total{result="success",source="core"} 4
+grafana_router_source_polls_total{result="success",source="plugins"} 0
 grafana_router_source_polls_total{result="success",source="single-tenant"} 0
 # HELP grafana_router_stack_discovery_cache_total Single-tenant discovery requests looked up in the cache shared by each stack's callers, by result: hit or miss.
 # TYPE grafana_router_stack_discovery_cache_total counter

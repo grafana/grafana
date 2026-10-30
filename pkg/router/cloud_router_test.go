@@ -58,15 +58,18 @@ func TestNewCloudRoutesLoader_NoTargetsConfigured(t *testing.T) {
 	require.Nil(t, loader) // falls back to dummyRoutesLoader upstream
 }
 
-func TestNewCloudRoutesLoader_PluginsGroupPatternsAndRegexConflict(t *testing.T) {
+func TestNewCloudRoutesLoader_PluginsGroupPatternsWinOverRegex(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
 		"plugins_url":            "http://plugins.invalid/plugins",
 		"plugins_group_patterns": "*.a",
 		"plugins_group_regex":    "*.b",
 	})
 
-	_, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
-	require.EqualError(t, err, "cloud_router: set plugins_group_patterns or plugins_group_regex, not both")
+	loader, err := NewCloudRoutesLoader(cfg, PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.NoError(t, err)
+	target := pluginManifestsTargetOf(loader.(*cloudLoader), sourcePluginsURL)
+	require.NotNil(t, target)
+	require.Len(t, target.patterns, 1)
 }
 
 // A deployment still configured only for the removed appmanifest apiserver
@@ -699,16 +702,26 @@ func TestPluginManifestsPollInterval(t *testing.T) {
 	section := func(t *testing.T, kv map[string]string) *setting.DynamicSection {
 		return cfgWithCloudRouterSection(t, kv).SectionWithEnvOverrides(cloudRouterSection)
 	}
-	plugins, core, err := newPluginManifestsTargets(setting.NewCfg(), section(t, map[string]string{
+	targets, err := readManifestsTargets(setting.NewCfg(), section(t, map[string]string{
 		"plugins_url":           "https://plugins.invalid/plugins",
 		"core_url":              "https://core.invalid/plugins",
 		"plugins_poll_interval": "5m",
 	}), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
 	require.NoError(t, err)
-	require.Equal(t, 5*time.Minute, plugins.cooldown.steady)
-	require.Equal(t, defaultAggregatePollInterval, core.cooldown.steady)
+	require.Len(t, targets, 2)
+	require.Equal(t, 5*time.Minute, targets[0].cooldown.steady)
+	require.Equal(t, defaultAggregatePollInterval, targets[1].cooldown.steady)
 
-	_, _, err = newPluginManifestsTargets(setting.NewCfg(), section(t, map[string]string{
+	targets, err = readManifestsTargets(setting.NewCfg(), section(t, map[string]string{
+		"bridge_url":           "https://bridge.invalid/plugins",
+		"bridge_poll_interval": "2m",
+	}), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.NoError(t, err)
+	require.Len(t, targets, 1)
+	require.Equal(t, sourceBridgeURL, targets[0].source)
+	require.Equal(t, 2*time.Minute, targets[0].cooldown.steady)
+
+	_, err = readManifestsTargets(setting.NewCfg(), section(t, map[string]string{
 		"core_url":           "https://core.invalid/plugins",
 		"core_poll_interval": "0s",
 	}), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
@@ -724,7 +737,7 @@ func TestCloudLoaderStopClosesPluginConnections(t *testing.T) {
 	release, err := target.acquireConnection("localhost:50051", "grafana-appsdktest-app")
 	require.NoError(t, err)
 	defer release()
-	loader, err := newCloudLoader(nil, target, nil, nil)
+	loader, err := newCloudLoader(nil, []*pluginManifestsTarget{target}, nil)
 	require.NoError(t, err)
 
 	require.NoError(t, services.StartAndAwaitRunning(t.Context(), loader))

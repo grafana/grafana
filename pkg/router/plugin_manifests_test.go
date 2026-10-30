@@ -592,6 +592,8 @@ func TestPluginManifestsTargetValidatesPluginIDs(t *testing.T) {
 		{name: "plugin ID with a dot", source: sourcePluginsURL, id: "folder.grafana.app", group: "example.ext.grafana.app", skipped: 1},
 		{name: "plugin ID without a hyphen", source: sourcePluginsURL, id: "example", group: "example.ext.grafana.app", skipped: 1},
 		{name: "core API without an ID", source: sourceCoreURL, id: "", group: "playlist.grafana.app", loaded: true},
+		{name: "bridge without an ID", source: sourceBridgeURL, id: "", group: "example.ext.grafana.app", loaded: true},
+		{name: "bridge with an invalid ID", source: sourceBridgeURL, id: "bridge.grafana.app", group: "example.ext.grafana.app", skipped: 1},
 		{name: "core API with an invalid ID", source: sourceCoreURL, id: "playlist.grafana.app", group: "playlist.grafana.app", skipped: 1},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -601,8 +603,11 @@ func TestPluginManifestsTargetValidatesPluginIDs(t *testing.T) {
 			defer srv.Close()
 
 			prefix := pluginsKeyPrefix
-			if tc.source == sourceCoreURL {
+			switch tc.source {
+			case sourceCoreURL:
 				prefix = coreKeyPrefix
+			case sourceBridgeURL:
+				prefix = bridgeKeyPrefix
 			}
 			target, err := newPluginManifestsTarget(prefix, tc.source, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
 			require.NoError(t, err)

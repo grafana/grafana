@@ -15,8 +15,9 @@ import (
 // Route sources, as reported by Backend.Source.
 const (
 	sourceSingleTenant  = "single-tenant"
-	sourcePluginsURL    = "plugins_url"
-	sourceCoreURL       = "core_url"
+	sourcePluginsURL    = "plugins"
+	sourceCoreURL       = "core"
+	sourceBridgeURL     = "bridge"
 	sourceLocalPlugin   = "local-plugin"
 	sourceDev           = "dev"
 	aggregateSourceName = "aggregate:"

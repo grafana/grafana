@@ -48,10 +48,10 @@ Every label has a bounded set of values, so no request can create new series:
 | `grafana_router_stack_lookups_total` | counter | `result` | Single-tenant stack lookups: `cache_hit`, `resolved`, `not_found`, `throttled`, `error` |
 | `grafana_router_stack_discovery_cache_total` | counter | `result` | Single-tenant discovery requests looked up in the cache shared by each stack's callers: `hit`, `miss`. Absent when `st_discovery_cache_bytes = 0` |
 
-Sources are `aggregate:<target>`, `single-tenant`, `core_url`, `plugins_url`, `local-plugin`,
+Sources are `aggregate:<target>`, `single-tenant`, `plugins`, `core`, `bridge`, `local-plugin`,
 `dev` (`[router.dev.<name>]`, #135990) and `embedded`.
 
-Every cloud source (`aggregate:<target>`, `single-tenant`, `core_url`, `plugins_url`) is polled
+Every cloud source (`aggregate:<target>`, `single-tenant`, `plugins`, `core`, `bridge`) is polled
 and records every poll, so a stale last success means the source is failing.
 
 A skipped backend is not served, and its group falls back to a lower-priority source if one offers
