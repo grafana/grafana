@@ -1,7 +1,9 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { RouterStatusPage, routerStatusURL, type RouterStatus } from './RouterStatusPage';
+import { Badge, type BadgeColor } from '@grafana/ui';
+
+import { RouterStatusPage, SourceBadge, routerStatusURL, type RouterStatus } from './RouterStatusPage';
 
 const status: RouterStatus = {
   ready: false,
@@ -45,7 +47,7 @@ const cloudStatus: RouterStatus = {
   ...status,
   ready: true,
   groups: [
-    { ...status.groups[0], source: 'core_url', health: 'ok' },
+    { ...status.groups[0], source: 'core', health: 'ok' },
     {
       ...status.groups[0],
       group: 'iam.grafana.app',
@@ -59,9 +61,9 @@ const cloudStatus: RouterStatus = {
   loadFailures: undefined,
   sources: [
     { source: 'single-tenant', lastSuccess: '0001-01-01T00:00:00Z', successes: 0, failures: 2, skipped: 1 },
-    { source: 'core_url', lastSuccess: '2026-10-26T09:00:00Z', successes: 8, failures: 0, skipped: 0 },
+    { source: 'core', lastSuccess: '2026-10-26T09:00:00Z', successes: 8, failures: 0, skipped: 0 },
   ],
-  shadowed: [{ group: 'dashboard.grafana.app', source: 'single-tenant', servedBy: 'core_url' }],
+  shadowed: [{ group: 'dashboard.grafana.app', source: 'single-tenant', servedBy: 'core' }],
   stackLookups: { error: 1, resolved: 40, cache_hit: 300 },
 };
 
@@ -113,7 +115,7 @@ it('shows the cloud sources, shadowed groups and stack lookups', async () => {
   ]);
   await userEvent.click(screen.getByRole('tab', { name: /Groups/ }));
   const shadowed = within(screen.getByRole('heading', { name: 'Shadowed groups' }).parentElement!);
-  expect(within(shadowed.getAllByRole('row')[1]).getAllByText(/single-tenant|core_url/)).toHaveLength(2);
+  expect(within(shadowed.getAllByRole('row')[1]).getAllByText(/single-tenant|core/)).toHaveLength(2);
   expect(screen.getByText('ok')).toBeInTheDocument();
   // A group without a group breaker has no health badge in its row.
   expect(screen.queryByText(/unknown/)).not.toBeInTheDocument();
@@ -153,10 +155,10 @@ it('counts the groups of each source and opens them filtered from the source row
 it('clears the source filter from the dropdown', async () => {
   const twoSources = {
     ...cloudStatus,
-    groups: [...cloudStatus.groups, { ...cloudStatus.groups[1], group: 'other.grafana.app', source: 'plugins_url' }],
+    groups: [...cloudStatus.groups, { ...cloudStatus.groups[1], group: 'other.grafana.app', source: 'plugins' }],
   };
   jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(twoSources)));
-  window.history.replaceState(null, '', '/?tab=groups&source=plugins_url');
+  window.history.replaceState(null, '', '/?tab=groups&source=plugins');
   render(<RouterStatusPage />);
 
   const groups = within((await screen.findAllByRole('table'))[0]);
@@ -183,12 +185,12 @@ it('sorts sources by group count by default and sorts a table by its column head
       .slice(1)
       .map((r) => within(r).getAllByRole('cell')[0].textContent);
   await userEvent.click(await screen.findByRole('tab', { name: /Sources/ }));
-  expect(sourceNames()).toEqual(['single-tenant', 'core_url']);
+  expect(sourceNames()).toEqual(['single-tenant', 'core']);
 
   await userEvent.click(screen.getByRole('button', { name: 'Source' }));
-  expect(sourceNames()).toEqual(['core_url', 'single-tenant']);
+  expect(sourceNames()).toEqual(['core', 'single-tenant']);
   await userEvent.click(screen.getByRole('button', { name: 'Source' }));
-  expect(sourceNames()).toEqual(['single-tenant', 'core_url']);
+  expect(sourceNames()).toEqual(['single-tenant', 'core']);
   expect(screen.getByRole('columnheader', { name: 'Source' })).toHaveAttribute('aria-sort', 'descending');
 });
 
@@ -303,4 +305,36 @@ it('explains the discovery source, a missing breaker and the counted columns', a
   expect(await screen.findByText(/let through to the backend/)).toBeInTheDocument();
   await userEvent.hover(screen.getByText('Failures'));
   expect(await screen.findByText(/502, 503 and 504 responses/)).toBeInTheDocument();
+});
+
+it.each<[string, BadgeColor]>([
+  ['aggregate:custom', 'blue'],
+  ['single-tenant', 'purple'],
+  ['core', 'brand'],
+  ['plugins', 'green'],
+  ['bridge', 'orange'],
+  ['dev', 'darkgrey'],
+])('colors the %s source badge %s', (source, color) => {
+  render(
+    <>
+      <SourceBadge source={source} />
+      <Badge color={color} text="reference" />
+    </>
+  );
+
+  // Emotion derives the class from the styles, so the same color gives the same class
+  expect(screen.getByText(source).className).toBe(screen.getByText('reference').className);
+});
+
+it('gives the manifests sources distinct badge colors', () => {
+  render(
+    <>
+      {['core', 'plugins', 'bridge'].map((source) => (
+        <SourceBadge key={source} source={source} />
+      ))}
+    </>
+  );
+
+  const classes = ['core', 'plugins', 'bridge'].map((source) => screen.getByText(source).className);
+  expect(new Set(classes).size).toBe(3);
 });
