@@ -6609,6 +6609,8 @@
         "row": "Row",
         "rows": "Rows",
         "section-filters-set": "Filters",
+        "selected-panels_one": "{{count}} panel",
+        "selected-panels_other": "{{count}} panels",
         "tab": "Tab",
         "tabs": "Tabs",
         "variable": "{{type}} variable",

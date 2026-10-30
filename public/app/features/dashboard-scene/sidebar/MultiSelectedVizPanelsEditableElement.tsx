@@ -14,6 +14,7 @@ import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../scene/types/EditableDashboardElement';
+import { getRenderedInstanceCount } from '../utils/clone';
 
 export class MultiSelectedVizPanelsEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
@@ -27,7 +28,17 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
-    return { typeName: t('dashboard.sidebar.elements.panels', 'Panels'), icon: 'folder', instanceName: '' };
+    const count = this.getPanels().reduce((total, panel) => total + getRenderedInstanceCount(panel), 0);
+
+    return {
+      typeName: t('dashboard.sidebar.elements.selected-panels', '', {
+        count,
+        defaultValue_one: '{{count}} panel',
+        defaultValue_other: '{{count}} panels',
+      }),
+      icon: 'folder',
+      instanceName: '',
+    };
   }
 
   public useSidebarOptions(): OptionsPaneCategoryDescriptor[] {

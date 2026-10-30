@@ -187,7 +187,7 @@ export const getActionStyles = (theme: GrafanaTheme2) => ({
         duration: theme.transitions.duration.short,
       }),
     },
-    '&:hover, &:focus': {
+    '&:not(:disabled):not([aria-disabled="true"]):hover, &:not(:disabled):not([aria-disabled="true"]):focus': {
       color: theme.colors.text.maxContrast,
       background: 'transparent',
     },
@@ -201,7 +201,7 @@ export const getActionStyles = (theme: GrafanaTheme2) => ({
     fontWeight: theme.typography.fontWeightRegular,
   }),
   deleteAction: css({
-    '&:hover': {
+    '&:not(:disabled):not([aria-disabled="true"]):hover': {
       color: theme.colors.error.text,
     },
   }),
