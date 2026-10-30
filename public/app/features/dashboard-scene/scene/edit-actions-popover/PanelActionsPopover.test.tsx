@@ -247,6 +247,16 @@ describe('<PanelActionsWrapper />', () => {
       expect(within(getToolbar()).queryByRole('button', { name: 'Edit (e)' })).not.toBeInTheDocument();
     });
 
+    test('in composer mode, Edit is not shown, like in the panel menu', async () => {
+      const panel = createPanel();
+      createDashboard(panel, { mode: 'composer', isEditing: true });
+
+      renderWrapper(panel);
+      await hoverAndRest(screen.getByTestId('reference-child'));
+
+      expect(within(getToolbar()).queryByRole('button', { name: 'Edit (e)' })).not.toBeInTheDocument();
+    });
+
     test('in edit mode, repeated panels do not offer Edit, Copy, Duplicate or Remove', async () => {
       const sourcePanel = createPanel({ key: 'panel-1' });
       const clonedPanel = createPanel({ key: getCloneKey('panel-1', 1), repeatSourceKey: 'panel-1' });

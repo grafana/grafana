@@ -17,7 +17,7 @@ import { tryGetExploreUrlForPanel } from '../../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 import { DashboardScene } from '../DashboardScene';
 import { VizPanelHeaderActions } from '../VizPanelHeaderActions';
-import { dashboardModesEnabled, isViewingDashboard } from '../dashboardModes';
+import { canManuallyEditDashboard, dashboardModesEnabled, isViewingDashboard } from '../dashboardModes';
 import { PanelGroupByPicker } from '../panel-actions/PanelGroupByAction/PanelGroupByAction';
 import { isFullDashboardEditing } from '../types/dashboard';
 
@@ -162,7 +162,12 @@ function PanelActions({
 
   const isExpanded = Boolean(viewPanel);
   const isRepeat = isRepeatCloneOrChildOf(panel);
-  const canEdit = dashboard.canEditDashboard() && Boolean(editable) && !isRepeat;
+  // Like the panel menu: no Edit in composer mode, where only the Composer session writes.
+  const canEdit =
+    (canManuallyEditDashboard(dashboardState) || isViewingDashboard(dashboardState)) &&
+    dashboard.canEditDashboard() &&
+    Boolean(editable) &&
+    !isRepeat;
   const canChangeLayout = Boolean(isEditing) && !isRepeat;
   const panelId = getPanelIdForVizPanel(panel);
   const titleText = panel.interpolate(title, undefined, 'text');
