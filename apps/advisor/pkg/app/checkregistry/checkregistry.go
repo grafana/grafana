@@ -1,6 +1,8 @@
 package checkregistry
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/authchecks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/configchecks"
@@ -26,6 +28,12 @@ type CheckService interface {
 	Checks() []checks.Check
 	// Check returns a new instance of the check with the given ID, or false if there is none.
 	Check(id string) (checks.Check, bool)
+}
+
+// NamespaceSkipper is implemented by check registries that can tell when the MT scheduler
+// should not create checks in a namespace. SkipReason returns an empty reason to schedule it.
+type NamespaceSkipper interface {
+	SkipReason(ctx context.Context, namespace string) (string, error)
 }
 
 type Service struct {

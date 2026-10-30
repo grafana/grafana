@@ -228,9 +228,9 @@ func newStatusService(t *testing.T) (*Service, *statusLoader, *prometheus.Regist
 		backends: []Backend{first, second, &dummyBackend{group: "dummy.ext.grafana.app"}},
 		shadowed: []shadowedGroup{{Group: "first.ext.grafana.app", Source: aggregateSource("second"), By: aggregateSource("test")}},
 		sources: []sourceStatus{
-			{Source: sourceCoreURL, LastSuccess: time.Unix(1700000000, 0).UTC(), Successes: 4},
+			{Source: sourceCore, LastSuccess: time.Unix(1700000000, 0).UTC(), Successes: 4},
 			{Source: sourceSingleTenant, Failures: 2},
-			{Source: sourcePluginsURL, Skipped: 2},
+			{Source: sourcePlugins, Skipped: 2},
 		},
 	}
 	reg := prometheus.NewRegistry()
@@ -280,19 +280,19 @@ grafana_router_reconciles_total 2
 grafana_router_shadowed_groups{source="aggregate:second"} 1
 # HELP grafana_router_skipped_backends Number of backends a route source skipped in its latest successful load or poll. Each skip is logged with its error.
 # TYPE grafana_router_skipped_backends gauge
-grafana_router_skipped_backends{source="core_url"} 0
-grafana_router_skipped_backends{source="plugins_url"} 2
+grafana_router_skipped_backends{source="core"} 0
+grafana_router_skipped_backends{source="plugins"} 2
 grafana_router_skipped_backends{source="single-tenant"} 0
 # HELP grafana_router_source_last_success_timestamp_seconds When each route source last loaded successfully, in seconds since the Unix epoch.
 # TYPE grafana_router_source_last_success_timestamp_seconds gauge
-grafana_router_source_last_success_timestamp_seconds{source="core_url"} 1.7e+09
+grafana_router_source_last_success_timestamp_seconds{source="core"} 1.7e+09
 # HELP grafana_router_source_polls_total Load or poll attempts of each route source, by result: success or failure.
 # TYPE grafana_router_source_polls_total counter
-grafana_router_source_polls_total{result="failure",source="core_url"} 0
-grafana_router_source_polls_total{result="failure",source="plugins_url"} 0
+grafana_router_source_polls_total{result="failure",source="core"} 0
+grafana_router_source_polls_total{result="failure",source="plugins"} 0
 grafana_router_source_polls_total{result="failure",source="single-tenant"} 2
-grafana_router_source_polls_total{result="success",source="core_url"} 4
-grafana_router_source_polls_total{result="success",source="plugins_url"} 0
+grafana_router_source_polls_total{result="success",source="core"} 4
+grafana_router_source_polls_total{result="success",source="plugins"} 0
 grafana_router_source_polls_total{result="success",source="single-tenant"} 0
 # HELP grafana_router_stack_discovery_cache_total Single-tenant discovery requests looked up in the cache shared by each stack's callers, by result: hit or miss.
 # TYPE grafana_router_stack_discovery_cache_total counter
@@ -395,12 +395,12 @@ func TestPluginManifestsSkips(t *testing.T) {
 		]}`))
 	}))
 	t.Cleanup(srv.Close)
-	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(sourcePlugins, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
 	require.NoError(t, err)
 
 	target.poll(t.Context(), make(chan struct{}, 1))
 	require.Empty(t, target.Backends())
-	require.Equal(t, 2, target.status.status(sourcePluginsURL).Skipped)
+	require.Equal(t, 2, target.status.status(sourcePlugins).Skipped)
 }
 
 // Building the router twice on one registry, as tests and some module
@@ -417,10 +417,10 @@ func TestServicesShareOneRegistry(t *testing.T) {
 	require.NotPanics(t, func() { newService(NewGrafanaRouter(&mutableLoader{}, nil), reg) })
 
 	require.NotPanics(t, func() {
-		newPluginGRPCRequestDuration(reg, sourcePluginsURL)
-		newPluginGRPCRequestDuration(reg, sourcePluginsURL)
-		newPluginGRPCRequestRetries(reg, sourcePluginsURL)
-		newPluginGRPCRequestRetries(reg, sourcePluginsURL)
+		newPluginGRPCRequestDuration(reg, sourcePlugins)
+		newPluginGRPCRequestDuration(reg, sourcePlugins)
+		newPluginGRPCRequestRetries(reg, sourcePlugins)
+		newPluginGRPCRequestRetries(reg, sourcePlugins)
 	})
 }
 

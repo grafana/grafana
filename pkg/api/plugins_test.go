@@ -1051,7 +1051,7 @@ func Test_UpdatePluginSetting(t *testing.T) {
 	t.Run("should return a bad request when the jsonData is too large to store", func(t *testing.T) {
 		tooLarge := &pluginsettings.FakePluginSettings{
 			Plugins:   pluginSettings.Plugins,
-			UpdateErr: pluginsettings.ErrPluginSettingJSONDataTooLarge.Errorf("too large"),
+			UpdateErr: pluginsettings.ErrPluginSettingDataTooLarge.Errorf("too large"),
 		}
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
 			store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})

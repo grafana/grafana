@@ -52,7 +52,7 @@ function getDevServerOrigin(): { hostname: string; port: number } {
     // Throw rather than build without a dev server: Grafana ignores a blank value and would
     // still point the browser here.
     throw new Error(
-      'Cannot start the dev server: `[frontend_dev] server_url` is not set. Restore it in conf/defaults.ini, or set it in conf/custom.ini. To build without a dev server, run `yarn start:noHmr`.'
+      'Cannot start the dev server: `[frontend_dev] server_url` is not set. Restore it in conf/defaults.ini, or set it in conf/custom.ini. To build without a dev server, run `pnpm start:noHmr`.'
     );
   }
 

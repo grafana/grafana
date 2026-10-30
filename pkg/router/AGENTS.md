@@ -101,6 +101,20 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   unless its requester may use that namespace (`authorizeNamespace`), so no backend, stack or
   fallback ever sees it. Allowed: the requester's own namespace, any namespace for `*`, and any for
   Grafana admins. Anonymous users get only their own. Backends still authorize everything else.
+- **A group a caller may not see does not exist for them** (`visibility.go`). Internal groups
+  (`[router] internal_groups`) are seen only by access policies, and with a `NamespaceGroups` filter,
+  a caller with a namespace sees only the groups installed there. That namespace is the one the path
+  names, or else the requester's own; `*` or none means no filter. A hidden group is left out of
+  `/apis` (both formats, after any ST merge), the `/openapi/v3` index, the manifests list and the
+  index, and every request for it gets a 404 right after the namespace check, before the watch
+  restriction or dispatch, so no other answer (such as a 403) confirms it exists, and no backend
+  or fallback sees it. That 404 is the same as `serveNotFound`'s; only the metrics' route label
+  (`hidden`, from `serveHidden`) tells them apart.
+  The `discovery` group is never hidden, and naming it internal fails startup. The router keeps no
+  per-namespace state: it asks `NamespaceGroups` on every request, which caches and keeps its own
+  last-known-good, and a group whose filter errors is hidden. With nothing configured
+  (`visibilityScoped` false), every path keeps the precomputed documents and headers. Otherwise
+  view-dependent responses get `Cache-Control: private`.
 - **Outbound credentials (`rewriteOutbound`):** every proxy uses it. When the request carries a
   requester (middleware mode), Grafana has already consumed the caller's credentials: `Cookie`,
   `Authorization`, `X-Access-Token` and `X-Grafana-Id` are replaced by the requester's own tokens.
@@ -137,6 +151,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Engine: dispatch, `Ready`/`Alive` | `router.go`, `types.go` |
 | Engine: reconcile loop (`Run`, `reconcile`, `publish`) | `reconcile.go` |
 | Authentication and the namespace check | `auth.go` |
+| Per-caller group visibility | `visibility.go` |
 | Root discovery (`/apis`, `/openapi/v3`) and the per-backend discovery cache | `discovery.go`, `discovery_handler.go`, `discovery_cache.go` |
 | OpenAPI serving and the per-group-version OpenAPI cache | `openapi_cache.go` |
 | App manifest discovery (`/apis/discovery`), its markdown and HTML index | `discovery_manifests.go`, `discovery_index.go`, `discovery_openapi.go`, `discovery_status.go` |
@@ -152,7 +167,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Cloud loader: settings, source priority | `cloud_router.go` |
 | Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
 | Dev targets (`router.dev.<name>`), served by the local plugin loader | `dev_targets.go` |
-| Managed plugins (`plugins_url`) and core APIs (`core_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
+| Managed plugins (`plugins_url`), core APIs (`core_url`) and bridge (`bridge_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
 | Local plugin loader, `PluginBackend` and plugin roles | `plugin.go`, `plugin_roles.go` |
 | Single-tenant (ST) fallback: serving (`st_fallback.go`), stack resolution (`st_stacks.go`), its discovery poll and backends (`st_poll.go`), its per-stack discovery cache, and the `dashboard.grafana.app` split | `st_*.go` |
 | Storage and loopback clients for plugin backends | `storage.go`, `restconfig.go` |
@@ -190,17 +205,19 @@ earlier ones:
    requester's namespace is not a stack (for example `*`).
 2. **Aggregate targets**, discovered by polling each target's `/apis`. The first target in INI section
    order wins when multiple targets discover the same group.
-3. **Core APIs**, from `core_url` (for example playlists). Same format and backends as managed
+3. **Bridge**, from `bridge_url`. Same format and backends as managed plugins, filtered by
+   `bridge_group_patterns`.
+4. **Core APIs**, from `core_url` (for example playlists). Same format and backends as managed
    plugins, without `plugins_group_patterns` filtering.
-4. **Managed plugins**, from `plugins_url`. These are `PluginBackend`s reached over gRPC, wrapped to
+5. **Managed plugins**, from `plugins_url`. These are `PluginBackend`s reached over gRPC, wrapped to
    authenticate `X-Access-Token`.
 
 Entries from `plugins_url` must have an app plugin ID (with a hyphen and no dots), as local plugins
 must, since the tokens the router sends them name that ID as their audience. Entries from
-`core_url` may have no ID; their tokens name their API group instead.
+`core_url` and `bridge_url` may have no ID; their tokens name their API group instead.
 
 Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
-`managed:<pluginId>:<hash>`, `core:<pluginId>:<hash>`, `dev:<pluginId>:<hash>`, `p:<hash>` or
+`plugins:<pluginId>:<hash>`, `core:<pluginId>:<hash>`, `dev:<pluginId>:<hash>`, `p:<hash>` or
 `st:<hash>`.
 
 ## Serving and discovery
@@ -215,7 +232,7 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 | `/apis/discovery/v1alpha2` | Synthesized `APIResourceList`: the cluster-scoped `manifests` resource, kind `apps.grafana.app/v1alpha2` `AppManifest`, verbs `get` and `list`. |
 | `/apis/discovery/v1alpha2/manifests` | Synthesized `AppManifestList` (`apps.grafana.app/v1alpha2`) of every served group with a manifest: the backend's own (`ManifestProvider`), or, as a fallback when it advertises none, the one compiled in for the group. |
 | `/apis/discovery/v1alpha2/manifests/{group}` | One group's `AppManifest`; 404 for a group without a manifest. |
-| `/apis/discovery/v1alpha2/status` | Live status for debugging, built per request (`no-store`): readiness, the reconcile loop (`reconciler`: phase, last run, counts), each served group's source, key, breaker (state, counts, failures until it opens), plugin (when it serves one), caches and watches, plus source status, shadowed groups, the loader's own counters (`loaderCounter`, such as the ST fallback's stack lookup counts by result, `stackLookups`), and the groups whose backend keeps failing to load (`loadFailures`: key, failure count, since, next retry, and whether a last-known-good backend still serves). |
+| `/apis/discovery/v1alpha2/status` | Never filtered by visibility: it lists every group to whoever can read it. Live status for debugging, Grafana admins only (403 for anyone else), plus users with the Admin role where `[router] status_open_to_admin = true`, the default in a development environment, built per request (`no-store`): readiness, the reconcile loop (`reconciler`: phase, last run, counts), each served group's source, key, visibility (`internal` or `public`), breaker (state, counts, failures until it opens), plugin (when it serves one), caches and watches, plus source status, shadowed groups, the loader's own counters (`loaderCounter`, such as the ST fallback's stack lookup counts by result, `stackLookups`), and the groups whose backend keeps failing to load (`loadFailures`: key, failure count, since, next retry, and whether a last-known-good backend still serves). |
 | `/apis/discovery/v1alpha2/AGENTS.md` | Synthesized markdown index of every served group, for agents. |
 | `/openapi/v3/apis/discovery/v1alpha2` | Synthesized OpenAPI v3 document for the discovery group. |
 | `/apis/discovery/v1alpha2/AGENTS` | The same index rendered as a static HTML page for browsers, with a CSP that allows no scripts. Not in the OpenAPI document. |
@@ -302,8 +319,9 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   - The list applies `labelSelector` (manifests have no labels) and `fieldSelector` (only
     `metadata.name`), and rejects others with a 400. It ignores `limit` and returns the whole list
     without a `continue` token, which clients accept.
-  - The status page (`discovery_status.go`) is readable by any authenticated caller, so it holds
-    only names, states and counts: never credentials, addresses, URLs or error text, which carry
+  - The status page (`discovery_status.go`) is readable by any authenticated caller, and lists every
+    group, hidden ones too, so it holds only names, states and counts: never credentials, addresses,
+    URLs or error text, which carry
     internal hosts. A backend that serves a plugin's APIs reports the plugin through the optional
     `PluginStatusProvider` interface, under the same rule. Breaker thresholds are the constants
     `breakerOpenAfter` and `breakerOpenFor`, which the page reports, so change them there.
@@ -402,6 +420,16 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 - **Wire:** keep `wire.go` and each edition's `wireExts*.go` in sync with the generated files, so
   that `make gen-go` reproduces them.
 
+## Settings (`[router]`)
+
+Read by `ProvideGrafanaRouter` with `cfg.SectionWithEnvOverrides("router")`, whatever loader
+supplies the routes, in both standalone and middleware mode. Like `[cloud_router]`, there is no
+`pkg/setting` field, and the keys aren't documented in `conf/defaults.ini`.
+
+| Key | Meaning |
+| --- | --- |
+| `internal_groups` | Exact group names, separated by commas or spaces, that only access policies see. Unset hides nothing. `discovery` fails startup. Likely to come from app manifests later. |
+
 ## Settings (`[cloud_router]`)
 
 These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`. There is no
@@ -411,14 +439,21 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | --- | --- |
 | `cap_token`, `token_exchange_url` | Required when any aggregate target without `discovery_auth = none` is set. The CAP token is exchanged per request. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
-| `plugins_group_patterns` | Globs that narrow the plugin groups, with the same semantics as `group_patterns`. The deprecated name `plugins_group_regex` is still read, with a warning; setting both is an error. |
+| `plugins_group_patterns` | Globs that narrow the plugin groups, with the same semantics as `group_patterns`. The deprecated name `plugins_group_regex` is still read, with a warning; if both are set, the new name wins. |
 | `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_patterns`. Like any plugin source, it may serve the core groups in `routableCoreGroups`. |
-| `plugins_ca_file`, `plugins_insecure`, `core_ca_file`, `core_insecure` | TLS settings for polling an `https` `plugins_url` or `core_url`, with the same semantics as an aggregate target's `ca_file` and `insecure`. Unset trusts the system CAs. They don't apply to the gRPC connections to the plugin backends; see `[router.backend_grpc]`. |
-| `plugins_poll_interval`, `core_poll_interval` | Positive polling duration for `plugins_url` and `core_url`, default `30s`, with the same backoff after a failure as an aggregate target's `poll_interval`. |
+| `bridge_url` | Same format as `plugins_url`, for bridge deployments. Needs no CAP token. Backend keys are prefixed `bridge:`. |
+| `bridge_group_patterns` | Globs that narrow the bridge groups, with the same semantics as `group_patterns`. |
+| `plugins_ca_file`, `plugins_insecure`, `core_ca_file`, `core_insecure`, `bridge_ca_file`, `bridge_insecure` | TLS settings for polling an `https` `plugins_url`, `core_url` or `bridge_url`, with the same semantics as an aggregate target's `ca_file` and `insecure`. Unset trusts the system CAs. They don't apply to the gRPC connections to the plugin backends; see `[router.backend_grpc]`. |
+| `plugins_poll_interval`, `core_poll_interval`, `bridge_poll_interval` | Positive polling duration for `plugins_url`, `core_url` and `bridge_url`, default `30s`, with the same backoff after a failure as an aggregate target's `poll_interval`. |
 | `st_discovery_url` | A single-tenant instance whose discovery is the default for callers without a stack. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
 | `st_cache_size`, `st_breaker_cache_size` | Sizes of the ST fallback's stack lookup cache and per-destination breaker cache. Default `10000` each. |
 | `st_lookup_rate`, `st_lookup_burst` | Rate limit on grafana.com stack lookups, per second and burst. Default `20` and `40`; a rate of `0` disables the limit. |
 | `st_discovery_cache_bytes` | Total size of the discovery documents the ST fallback caches per stack. Default 64 MiB; `0` disables the cache. |
+
+`[router]` has one key of its own: `status_open_to_admin` lets a requester with the Admin role
+read `/apis/discovery/v1alpha2/status`, which otherwise needs a Grafana (server) admin. It
+defaults to `true` in a development environment (`app_mode = development`) and `false` elsewhere.
+It is read once, at startup.
 
 Aggregate targets are configured in uniquely named `[router.aggregate.<name>]` sections, in
 priority order. Repeating a section name merges its keys; it does not create another target.
@@ -436,7 +471,7 @@ longer read. A deployment that still sets them gets no aggregate target, so conf
 | `audience` | Required when `url` is set, unless `discovery_auth = none`, where setting it is an error. |
 | `discovery_auth` | How the router authenticates its own `/apis` discovery polls. `cap_token` (default) sends an exchanged CAP token in `X-Access-Token`, and `bearer` sends it in `Authorization`. `none` polls anonymously, only for targets that serve discovery without auth. Proxied resource requests are unaffected and still carry the caller's credentials. |
 | `poll_interval` | Positive discovery polling duration, default `30s`. |
-| `group_patterns` | Comma-separated globs that narrow discovered groups. Unset matches all. The deprecated name `group_regex` is still read, with a warning; setting both is an error. |
+| `group_patterns` | Comma-separated globs that narrow discovered groups. Unset matches all. The deprecated name `group_regex` is still read, with a warning; if both are set, the new name wins. |
 | `ca_file`, `insecure` | Per-target TLS settings. |
 
 ```ini
@@ -475,7 +510,7 @@ served. Like managed plugins, dev targets get no legacy app-access check.
 
 ## Settings (`[router.backend_grpc]`)
 
-These keys configure the gRPC connections to backends from `plugins_url`, `core_url` and dev
+These keys configure the gRPC connections to backends from `plugins_url`, `core_url`, `bridge_url` and dev
 targets, and are read only when one of them is set. Like `[cloud_router]`, they are read with
 `cfg.SectionWithEnvOverrides`, so environment overrides such as `GF_ROUTER_BACKEND_GRPC_RETRY_MAX`
 work without the section in the INI configuration.
@@ -488,7 +523,7 @@ work without the section in the INI configuration.
 | `connect_base_delay`, `connect_max_delay` | Backoff between connection attempts, growing from the base delay up to the max delay. Default `1s` and `10s`. |
 | `keepalive_time`, `keepalive_timeout` | Time without activity on a connection with active calls before the client pings, and how long it waits for a reply before closing the connection. Default `5m` and `10s`; a `keepalive_time` of `0` disables pings. Connections without active calls are never pinged. By default, gRPC servers allow one ping every 5 minutes during calls, and close connections that ping more often (`too_many_pings`), so a shorter `keepalive_time` needs a matching server enforcement policy. |
 | `max_recv_msg_size`, `max_send_msg_size` | Largest message the router accepts from and sends to a plugin, in bytes. Default 100 MiB each. The plugin server's own limits still apply. |
-| `tls_enabled` | Connect to every plugin backend over TLS. Default `false` (plaintext). Applies to both `plugins_url` and `core_url` backends, since a manifest's `host` has no scheme to choose per plugin. |
+| `tls_enabled` | Connect to every plugin backend over TLS. Default `false` (plaintext). Applies to `plugins_url`, `core_url` and `bridge_url` backends, since a manifest's `host` has no scheme to choose per plugin. |
 | `tls_ca_file`, `tls_insecure` | Same semantics as an aggregate target's `ca_file` and `insecure`. Unset trusts the system CAs. |
 | `tls_server_name` | Name to verify the backend's certificate against, instead of the manifest's `host`. |
 

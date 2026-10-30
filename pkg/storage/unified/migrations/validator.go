@@ -56,11 +56,12 @@ func filterResponse(response *resourcepb.BulkResponse, resources []schema.GroupR
 }
 
 type CountValidator struct {
-	name       string
-	client     resourcepb.ResourceIndexClient
-	resource   schema.GroupResource
-	opts       CountValidationOptions
-	driverName string
+	name               string
+	client             resourcepb.ResourceIndexClient
+	resource           schema.GroupResource
+	opts               CountValidationOptions
+	driverName         string
+	enableSQLKVBackend bool
 }
 
 func newCountValidator(
@@ -68,7 +69,7 @@ func newCountValidator(
 	resource schema.GroupResource,
 	opts CountValidationOptions,
 	driverName string,
-) Validator {
+) *CountValidator {
 	return &CountValidator{
 		name:       "CountValidator",
 		client:     client,
@@ -133,12 +134,13 @@ func (v *CountValidator) Validate(ctx context.Context, sess *xorm.Session, respo
 
 	var unifiedCount int64
 	if v.driverName == migrator.SQLite {
-		unifiedCount, err = sess.Table("resource").
-			Where("namespace = ? AND `group` = ? AND resource = ?",
-				summary.Namespace, summary.Group, summary.Resource).
-			Count()
+		unifiedCount, err = CountUnifiedResourcesSQLite(ctx, sess, resource.ListRequestKey{
+			Namespace: summary.Namespace,
+			Group:     summary.Group,
+			Resource:  summary.Resource,
+		}, v.enableSQLKVBackend)
 		if err != nil {
-			return fmt.Errorf("failed to count resource table for %s/%s in namespace %s: %w",
+			return fmt.Errorf("failed to count unified resources for %s/%s in namespace %s: %w",
 				summary.Group, summary.Resource, summary.Namespace, err)
 		}
 	} else {
@@ -183,17 +185,18 @@ func (v *CountValidator) Validate(ctx context.Context, sess *xorm.Session, respo
 }
 
 type FolderTreeValidator struct {
-	name       string
-	client     resourcepb.ResourceIndexClient
-	resource   schema.GroupResource
-	driverName string
+	name               string
+	client             resourcepb.ResourceIndexClient
+	resource           schema.GroupResource
+	driverName         string
+	enableSQLKVBackend bool
 }
 
 func newFolderTreeValidator(
 	client resourcepb.ResourceIndexClient,
 	resource schema.GroupResource,
 	driverName string,
-) Validator {
+) *FolderTreeValidator {
 	return &FolderTreeValidator{
 		name:       "FolderTreeValidator",
 		client:     client,
@@ -250,7 +253,7 @@ func (v *FolderTreeValidator) Validate(ctx context.Context, sess *xorm.Session, 
 	// Build unified storage folder parent map
 	var unifiedParentMap map[string]string
 	if v.driverName == migrator.SQLite {
-		unifiedParentMap, err = v.buildUnifiedFolderParentMapSQLite(sess, summary.Namespace, log)
+		unifiedParentMap, err = v.buildUnifiedFolderParentMapSQLite(ctx, sess, summary.Namespace, log)
 	} else {
 		unifiedParentMap, err = v.buildUnifiedFolderParentMap(ctx, summary.Namespace, log)
 	}
@@ -411,80 +414,61 @@ func decodeFolderRows(response *resourcepb.ResourceSearchResponse) ([]unifiedFol
 		return nil, nil
 	}
 
-	switch response.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		table := response.GetResults()
-		if table == nil {
-			return nil, nil
-		}
-		folderColumn := -1
-		for i, column := range table.GetColumns() {
-			if column.GetName() == resource.SEARCH_FIELD_FOLDER {
-				folderColumn = i
-				break
-			}
-		}
-		rows := make([]unifiedFolderRow, 0, len(table.GetRows()))
-		for i, row := range table.GetRows() {
-			if row == nil || row.GetKey() == nil {
-				return nil, fmt.Errorf("row %d has no key", i)
-			}
-			parentUID := ""
-			if folderColumn >= 0 && folderColumn < len(row.GetCells()) {
-				parentUID = string(row.GetCells()[folderColumn])
-			}
-			rows = append(rows, unifiedFolderRow{
-				name:   row.GetKey().GetName(),
-				parent: parentUID,
-				cursor: row.GetSortFields(),
-			})
-		}
-		return rows, nil
-
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		rows := make([]unifiedFolderRow, 0, len(response.GetRows()))
-		for i, row := range response.GetRows() {
-			if row == nil || row.GetKey() == nil {
-				return nil, fmt.Errorf("row %d has no key", i)
-			}
-			values, err := resource.DecodeSearchValues(response.GetFields(), row)
-			if err != nil {
-				return nil, fmt.Errorf("row %d: %w", i, err)
-			}
-			parentUID := ""
-			if value, ok := values[resource.SEARCH_FIELD_FOLDER]; ok {
-				var valid bool
-				parentUID, valid = value.(string)
-				if !valid {
-					return nil, fmt.Errorf("row %d field %q is not a string", i, resource.SEARCH_FIELD_FOLDER)
-				}
-			}
-			rows = append(rows, unifiedFolderRow{
-				name:   row.GetKey().GetName(),
-				parent: parentUID,
-				cursor: row.GetSortFields(),
-			})
-		}
-		return rows, nil
-
-	default:
+	if response.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return nil, fmt.Errorf("unsupported search result format %d", response.GetResultFormat())
 	}
+
+	rows := make([]unifiedFolderRow, 0, len(response.GetRows()))
+	for i, row := range response.GetRows() {
+		if row == nil || row.GetKey() == nil {
+			return nil, fmt.Errorf("row %d has no key", i)
+		}
+		values, err := resource.DecodeSearchValues(response.GetFields(), row)
+		if err != nil {
+			return nil, fmt.Errorf("row %d: %w", i, err)
+		}
+		parentUID := ""
+		if value, ok := values[resource.SEARCH_FIELD_FOLDER]; ok {
+			var valid bool
+			parentUID, valid = value.(string)
+			if !valid {
+				return nil, fmt.Errorf("row %d field %q is not a string", i, resource.SEARCH_FIELD_FOLDER)
+			}
+		}
+		rows = append(rows, unifiedFolderRow{
+			name:   row.GetKey().GetName(),
+			parent: parentUID,
+			cursor: row.GetSortFields(),
+		})
+	}
+	return rows, nil
 }
 
-func (v *FolderTreeValidator) buildUnifiedFolderParentMapSQLite(sess *xorm.Session, namespace string, log log.Logger) (map[string]string, error) {
-	var folders []unifiedFolder
-	err := sess.Table("resource").
-		Cols("guid", "name", "folder").
-		Where("namespace = ? AND resource = ?", namespace, "folder").
-		Find(&folders)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query unified folders: %w", err)
-	}
-
+func (v *FolderTreeValidator) buildUnifiedFolderParentMapSQLite(ctx context.Context, sess *xorm.Session, namespace string, log log.Logger) (map[string]string, error) {
 	parentMap := make(map[string]string)
-	for _, folder := range folders {
-		parentMap[folder.Name] = folder.Folder
+	if v.enableSQLKVBackend {
+		for key, err := range listUnifiedResourceKeysSQLite(ctx, sess, resource.ListRequestKey{
+			Namespace: namespace,
+			Group:     v.resource.Group,
+			Resource:  v.resource.Resource,
+		}) {
+			if err != nil {
+				return nil, fmt.Errorf("failed to query unified folders: %w", err)
+			}
+			parentMap[key.Name] = key.Folder
+		}
+	} else {
+		var folders []unifiedFolder
+		err := sess.Table("resource").
+			Cols("guid", "name", "folder").
+			Where("namespace = ? AND `group` = ? AND resource = ?", namespace, v.resource.Group, v.resource.Resource).
+			Find(&folders)
+		if err != nil {
+			return nil, fmt.Errorf("failed to query unified folders: %w", err)
+		}
+		for _, folder := range folders {
+			parentMap[folder.Name] = folder.Folder
+		}
 	}
 
 	if len(parentMap) == 0 {
@@ -519,15 +503,19 @@ type CountValidationOptions struct {
 // CountValidation creates a ValidatorFactory for count-based validation.
 // It compares the count of resources in the legacy table with unified storage.
 func CountValidation(resource schema.GroupResource, opts CountValidationOptions) ValidatorFactory {
-	return func(client resourcepb.ResourceIndexClient, driverName string) Validator {
-		return newCountValidator(client, resource, opts, driverName)
+	return func(client resourcepb.ResourceIndexClient, validationOpts ValidatorOptions) Validator {
+		v := newCountValidator(client, resource, opts, validationOpts.DriverName)
+		v.enableSQLKVBackend = validationOpts.EnableSQLKVBackend
+		return v
 	}
 }
 
 // FolderTreeValidation creates a ValidatorFactory for folder tree structure validation.
 // It validates that folder parent relationships are preserved after migration.
 func FolderTreeValidation(resource schema.GroupResource) ValidatorFactory {
-	return func(client resourcepb.ResourceIndexClient, driverName string) Validator {
-		return newFolderTreeValidator(client, resource, driverName)
+	return func(client resourcepb.ResourceIndexClient, opts ValidatorOptions) Validator {
+		v := newFolderTreeValidator(client, resource, opts.DriverName)
+		v.enableSQLKVBackend = opts.EnableSQLKVBackend
+		return v
 	}
 }
