@@ -131,8 +131,9 @@ type contextualGrants struct{ calls int }
 
 func (m *contextualGrants) ResolveCurrentUserPermissions(_ context.Context, user identity.Requester, skip bool) ([]ac.Permission, error) {
 	m.calls++
-	var result []ac.Permission
-	for _, team := range user.GetExternalGroups() {
+	teams := user.GetExternalGroups()
+	result := make([]ac.Permission, 0, len(teams))
+	for _, team := range teams {
 		result = append(result, ac.Permission{Action: "dashboards:write", Scope: "folders:uid:" + team})
 	}
 	return result, nil
@@ -151,7 +152,8 @@ func TestIntegrationLoaderComposesCurrentExternalGroups(t *testing.T) {
 		requester.ExternalGroups = teams
 		got, err := loader.GetUserPermissions(t.Context(), requester, ac.Options{})
 		require.NoError(t, err)
-		want := []ac.Permission{{Action: "folders:read", Scope: "folders:uid:sharedwithme"}}
+		want := make([]ac.Permission, 0, 1+len(teams))
+		want = append(want, ac.Permission{Action: "folders:read", Scope: "folders:uid:sharedwithme"})
 		for _, team := range teams {
 			want = append(want, ac.Permission{Action: "dashboards:write", Scope: "folders:uid:" + team})
 		}
