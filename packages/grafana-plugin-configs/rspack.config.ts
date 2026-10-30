@@ -269,6 +269,7 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
           { from: 'plugin.json', to: '.' },
           ...(hasLicense(pluginDir) ? [{ from: 'LICENSE', to: '.' }] : []),
           { from: 'CHANGELOG.md', to: '.', force: true },
+          { from: 'query_help.md', to: '.', noErrorOnMissing: true },
           { from: 'dashboards/**/*', to: '.', noErrorOnMissing: true, globOptions: { ignore: copyIgnore } }, // Optional
           { from: 'locales/**/*', to: '.', noErrorOnMissing: true, globOptions: { ignore: copyIgnore } }, // Optional
           { from: 'img/**/*', to: '.', noErrorOnMissing: true, globOptions: { ignore: copyIgnore } }, // Optional

@@ -265,6 +265,7 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
           { from: 'plugin.json', to: '.' },
           { from: hasLicense(pluginDir) ? 'LICENSE' : '../../../../../LICENSE', to: '.' }, // Point to Grafana License by default
           { from: 'CHANGELOG.md', to: '.', force: true },
+          { from: 'query_help.md', to: '.', noErrorOnMissing: true },
           { from: 'dashboards/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
           { from: 'locales/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
           { from: 'img/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
