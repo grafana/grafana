@@ -55,8 +55,12 @@ func TestSharedLoaderAddsAliasesAfterMergingBothSources(t *testing.T) {
 		var result any
 		switch {
 		case strings.HasSuffix(r.URL.Path, "/teams"):
-			require.Equal(t, utils.LabelKeyDeprecatedInternalID+"=42", r.URL.Query().Get("labelSelector"))
+			require.Empty(t, r.URL.Query().Get("labelSelector"))
 			result = map[string]any{"apiVersion": "iam.grafana.app/v0alpha1", "kind": "TeamList", "items": []any{object("Team", "platform", "42")}}
+		case strings.HasSuffix(r.URL.Path, "/users"):
+			result = map[string]any{"apiVersion": "iam.grafana.app/v0alpha1", "kind": "UserList", "items": []any{object("User", "bob", "8")}}
+		case strings.HasSuffix(r.URL.Path, "/serviceaccounts"):
+			result = map[string]any{"apiVersion": "iam.grafana.app/v0alpha1", "kind": "ServiceAccountList", "items": []any{object("ServiceAccount", "robot", "9")}}
 		case strings.HasSuffix(r.URL.Path, "/users/bob"):
 			result = object("User", "bob", "8")
 		case strings.HasSuffix(r.URL.Path, "/serviceaccounts/robot"):
@@ -102,7 +106,7 @@ func TestSharedLoaderAddsAliasesAfterMergingBothSources(t *testing.T) {
 	mu.Lock()
 	defer mu.Unlock()
 	base := "/apis/iam.grafana.app/v0alpha1/namespaces/default"
-	require.Equal(t, map[string]int{base + "/teams": 1, base + "/users/bob": 1, base + "/serviceaccounts/robot": 1}, calls)
+	require.Equal(t, map[string]int{base + "/teams": 1, base + "/users": 1, base + "/serviceaccounts": 1}, calls)
 }
 
 func TestPermissionScopeResolverFollowsMergeFlag(t *testing.T) {

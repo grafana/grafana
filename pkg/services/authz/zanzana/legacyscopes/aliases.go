@@ -31,6 +31,10 @@ func WithAliases(ctx context.Context, namespace, scope string, resolver ScopeRes
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
+	resolver, err := prepareScopeAliases(ctx, namespace, resolver, permissions)
+	if err != nil {
+		return nil, err
+	}
 	seen := make(map[[2]string]bool)
 	var result []ac.Permission
 	appendPermission := func(p ac.Permission) {
@@ -185,4 +189,33 @@ func permissionNamespace(ctx context.Context, user identity.Requester) string {
 		orgID = 1
 	}
 	return types.OrgNamespaceFormatter(orgID)
+}
+
+func prepareScopeAliases(ctx context.Context, namespace string, resolver ScopeResolver, permissions []ac.Permission) (ScopeResolver, error) {
+	if preparer, ok := resolver.(ScopeAliasPreparer); ok {
+		var refs []ScopeReference
+		for _, p := range permissions {
+			_, ref, identity := identityReference(p.Scope)
+			if identity && ref.Value != "" && !strings.ContainsAny(ref.Value, "*?") && (ref.Attribute != "id" || validNumericID(ref.Value)) {
+				refs = append(refs, ref)
+			}
+		}
+		if len(refs) > 0 {
+			ns, err := types.ParseNamespace(namespace)
+			if err != nil {
+				return nil, err
+			}
+			prepared, err := preparer.PrepareScopes(ctx, ns, refs)
+			if err != nil {
+				if ctx.Err() != nil {
+					return nil, ctx.Err()
+				}
+				aliasLogger.Warn("could not prepare permission scope aliases; retaining source scopes", "error", err)
+				return nil, nil
+			} else {
+				return prepared, nil
+			}
+		}
+	}
+	return resolver, nil
 }
