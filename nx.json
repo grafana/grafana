@@ -27,7 +27,20 @@
       },
       "plugin-compat": {
         "projects": ["@grafana/plugin-compat"],
-        "projectsRelationship": "independent"
+        "projectsRelationship": "independent",
+        "versionPlans": {
+          "ignorePatternsForPlanCheck": ["**/*.test.ts", "**/*.test.tsx"]
+        },
+        "changelog": {
+          "projectChangelogs": {
+            "file": "{projectRoot}/CHANGELOG.md"
+          },
+          "git": {
+            "commit": false,
+            "tag": false,
+            "stageChanges": false
+          }
+        }
       }
     },
     "version": {
