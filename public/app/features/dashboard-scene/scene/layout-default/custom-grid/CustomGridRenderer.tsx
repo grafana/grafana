@@ -33,6 +33,8 @@ export const CUSTOM_GRID_ATTR = 'data-custom-grid';
 interface Props {
   grid: SceneGridLayout;
   controller: CustomGridController;
+  /** Only while editing the grid takes part in drags and resizes; in view mode it just lays out its items */
+  isEditing: boolean;
   /** Key the grid is found by as a drop target, for its own items and items dragged in from elsewhere */
   dropTargetKey?: string;
 }
@@ -42,7 +44,7 @@ interface Props {
  * the controller's layout gives it. The grid items render themselves, so panels look the same as in the
  * react-grid-layout grid.
  */
-export function CustomGridRenderer({ grid, controller, dropTargetKey }: Props) {
+export function CustomGridRenderer({ grid, controller, isEditing, dropTargetKey }: Props) {
   const { children, isLazy, isResizable } = grid.useState();
   const layout = useSyncExternalStore(controller.subscribe, controller.getLayout);
   const interaction = useSyncExternalStore(controller.subscribe, controller.getInteraction);
@@ -62,6 +64,7 @@ export function CustomGridRenderer({ grid, controller, dropTargetKey }: Props) {
 
   const positions = new Map(rendered.map((item) => [item.i, item]));
   const placeholder = interaction?.isActive && !interaction.isOutside ? positions.get(interaction.key) : undefined;
+  const orderedChildren = sortByLayout(children, layout);
 
   return (
     <div
@@ -71,13 +74,14 @@ export function CustomGridRenderer({ grid, controller, dropTargetKey }: Props) {
     >
       {width > 0 && (
         <div
-          ref={controller.setContainer}
+          // Without the container the controller starts no drags, resizes or drop previews
+          ref={isEditing ? controller.setContainer : undefined}
           className={styles.container}
           style={{ width, height: containerHeightPx(rendered) }}
-          {...(dropTargetKey ? { [DASHBOARD_DROP_TARGET_KEY_ATTR]: dropTargetKey } : {})}
+          {...(isEditing && dropTargetKey ? { [DASHBOARD_DROP_TARGET_KEY_ATTR]: dropTargetKey } : {})}
         >
           {placeholder && <div className={styles.placeholder} style={toStyle(pixelRectFor(width, placeholder))} />}
-          {children.map((child) => {
+          {orderedChildren.map((child) => {
             const layoutKey = getLayoutKey(child);
             const item = positions.get(layoutKey);
             const state = interaction?.isActive && interaction.key === layoutKey ? interaction : undefined;
@@ -94,7 +98,11 @@ export function CustomGridRenderer({ grid, controller, dropTargetKey }: Props) {
                 isLazy={!!isLazy}
                 interaction={state?.kind}
                 onResizeStart={
-                  !isNarrow && isResizable && child.state.isResizable !== false && !isRepeatCloneOrChildOf(child)
+                  isEditing &&
+                  !isNarrow &&
+                  isResizable &&
+                  child.state.isResizable !== false &&
+                  !isRepeatCloneOrChildOf(child)
                     ? (evt) => controller.startResize(evt, child)
                     : undefined
                 }
@@ -105,6 +113,17 @@ export function CustomGridRenderer({ grid, controller, dropTargetKey }: Props) {
       )}
     </div>
   );
+}
+
+/**
+ * The grid items in the order of the layout, by position, like react-grid-layout renders them. Stacked on
+ * small screens, they show in this order; the grid's children are not always sorted, e.g. after a panel was
+ * added.
+ */
+function sortByLayout(children: SceneGridItemLike[], layout: GridLayoutItem[]): SceneGridItemLike[] {
+  const order = new Map(layout.map((item, index) => [item.i, index]));
+  const indexOf = (child: SceneGridItemLike) => order.get(getLayoutKey(child)) ?? layout.length;
+  return [...children].sort((a, b) => indexOf(a) - indexOf(b));
 }
 
 function getItemStyle(
