@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { StrictMode } from 'react';
 
-import { renderMarkdown, textUtil } from '@grafana/data';
+import { renderMarkdown } from '@grafana/data';
 
 import { MarkdownHTML } from './MarkdownHTML';
 
@@ -60,12 +60,44 @@ it('underlines links in Alert text so they remain distinguishable from surroundi
   });
 });
 
-it('does not turn sanitized user HTML into executable content, even with forged markers', () => {
-  const html = textUtil.sanitizeTextPanelContent(
-    '<blockquote class="grafana-markdown-alert-note"><p>Note</p><div class="grafana-markdown-alert-body"><img src="x" onerror="alert(1)"><a href="javascript:alert(1)">Unsafe</a><script>alert(1)</script></div></blockquote>'
-  );
+it.each([false, true])('sanitizes raw HTML before rendering (admonition: %s)', (admonition) => {
+  const body =
+    '<p>Readable content</p><img src="x" onerror="alert(1)"><a href="javascript:alert(1)">Unsafe</a><script>alert(1)</script>';
+  const html = admonition
+    ? `<blockquote class="grafana-markdown-alert-note"><p>Note</p><div class="grafana-markdown-alert-body">${body}</div></blockquote>`
+    : body;
   const { container } = render(<MarkdownHTML html={html} />);
+  expect(screen.getByText('Readable content')).toBeInTheDocument();
+  if (admonition) {
+    expect(screen.getByRole('status', { name: 'Note' })).toHaveTextContent('Readable content');
+  }
   expect(container.querySelector('script')).toBeNull();
   expect(container.querySelector('[onerror]')).toBeNull();
   expect(screen.getByText('Unsafe')).not.toHaveAttribute('href', 'javascript:alert(1)');
+});
+
+it('preserves Markdown task checkboxes and restricts embedded iframes', () => {
+  const { container } = render(
+    <MarkdownHTML
+      html={renderMarkdown('- [x] Done\n\n<iframe src="https://grafana.com" sandbox="allow-scripts"></iframe>', {
+        noSanitize: true,
+      })}
+    />
+  );
+  expect(screen.getByRole('checkbox')).toBeChecked();
+  expect(screen.getByRole('checkbox')).toBeDisabled();
+  expect(container.querySelector('iframe')).toHaveAttribute('src', 'https://grafana.com');
+  expect(container.querySelector('iframe')).toHaveAttribute('sandbox', '');
+});
+
+it('preserves relative links and data attributes with the HTML policy while stripping executable markup', () => {
+  const { container } = render(
+    <MarkdownHTML
+      sanitization="html"
+      html='<a href="dashboard.json" data-path="dashboard.json" onclick="alert(1)">Dashboard</a><iframe src="https://grafana.com"></iframe><input type="checkbox"><script>alert(1)</script>'
+    />
+  );
+  expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', 'dashboard.json');
+  expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('data-path', 'dashboard.json');
+  expect(container.querySelector('[onclick], iframe, input, script')).toBeNull();
 });

@@ -13,6 +13,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 
+import { textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { Alert, type AlertVariant } from '../Alert/Alert';
@@ -48,19 +49,25 @@ interface Admonition {
 
 export interface MarkdownHTMLProps
   extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'dangerouslySetInnerHTML'> {
-  /** HTML must already be sanitized by the caller, just like dangerouslySetInnerHTML. */
+  /** Rendered HTML is sanitized before insertion. */
   html: string;
+  /** Use the HTML policy for content that needs relative links and data attributes. */
+  sanitization?: 'markdown' | 'html';
   ref?: Ref<HTMLDivElement>;
 }
 
 /** Displays rendered Markdown, upgrading admonitions to themed Grafana Alerts. */
-export function MarkdownHTML({ html, ...props }: MarkdownHTMLProps) {
-  const innerHtml = useMemo(() => ({ __html: html }), [html]);
-  if (!html.includes('grafana-markdown-alert-')) {
+export function MarkdownHTML({ html, sanitization = 'markdown', ...props }: MarkdownHTMLProps) {
+  const safeHtml = useMemo(
+    () => (sanitization === 'html' ? textUtil.sanitize(html) : textUtil.sanitizeTextPanelContent(html)),
+    [html, sanitization]
+  );
+  const innerHtml = useMemo(() => ({ __html: safeHtml }), [safeHtml]);
+  if (!safeHtml.includes('grafana-markdown-alert-')) {
     return <div {...props} dangerouslySetInnerHTML={innerHtml} />;
   }
   // Changing HTML remounts its portals together with their targets, avoiding stale DOM ownership.
-  return <MarkdownDocument key={html} html={html} {...props} />;
+  return <MarkdownDocument key={safeHtml} html={safeHtml} {...props} />;
 }
 
 function MarkdownDocument({ html, ref, ...props }: MarkdownHTMLProps) {

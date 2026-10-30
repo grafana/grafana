@@ -358,7 +358,12 @@ function RenderedMarkdown({
   return (
     <>
       {frontmatter && <MarkdownFrontmatterTable data={frontmatter} />}
-      <MarkdownHTML ref={containerRef} className={cx('markdown-html', styles.markdownBody)} html={safe} />
+      <MarkdownHTML
+        sanitization="html"
+        ref={containerRef}
+        className={cx('markdown-html', styles.markdownBody)}
+        html={safe}
+      />
     </>
   );
 }

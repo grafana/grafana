@@ -9,7 +9,7 @@ import { MarkdownHTML } from '@grafana/ui';
 <MarkdownHTML className="markdown-html" html={renderMarkdown('> [!NOTE]\n> Read this first.')} />;
 ```
 
-`html` must already be sanitized. The component preserves the caller's HTML policy; it is not a sanitizer. Keep using the existing sanitization and URL-rewriting pipeline before passing content to it.
+`MarkdownHTML` sanitizes `html` before inserting it, using Grafana's Markdown sanitizer by default. This preserves task checkboxes and restricts embedded iframes. Use `sanitization="html"` for the HTML sanitizer, which preserves relative links and data attributes but removes inputs and iframes. Keep existing upstream sanitization and URL rewriting. Neither policy allows disabling sanitization; administrator-controlled legacy opt-outs use separate renderers.
 
 The parser recognizes `NOTE`, `TIP`, `IMPORTANT`, `WARNING`, and `CAUTION` on the first line of a blockquote. The marker must occupy its own line. Unknown markers, custom titles, escaped markers, and code blocks retain their ordinary Markdown rendering.
 
