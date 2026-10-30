@@ -30,7 +30,8 @@ export function TabEditActions({ tab }: { tab: TabItem }) {
       <div className={styles.actionsDivider} />
       <CopyActionButton
         onClick={() => tab.onCopy()}
-        disabledReason={
+        disabled={isRepeated}
+        tooltip={
           isRepeated
             ? t('dashboard-scene.tab-edit-actions.copy-disabled', "Repeated tabs can't be copied individually")
             : undefined
@@ -38,7 +39,8 @@ export function TabEditActions({ tab }: { tab: TabItem }) {
       />
       <DuplicateActionButton
         onClick={() => tab.onDuplicate()}
-        disabledReason={
+        disabled={isRepeated}
+        tooltip={
           isRepeated
             ? t('dashboard-scene.tab-edit-actions.duplicate-disabled', "Repeated tabs can't be duplicated individually")
             : undefined
@@ -53,7 +55,8 @@ export function TabEditActions({ tab }: { tab: TabItem }) {
         yesText={t('dashboard.tabs-layout.delete-tab-yes', 'Delete')}
         confirm={tab.getLayout().getVizPanels().length > 0}
         onConfirm={() => tab.onDelete()}
-        disabledReason={
+        disabled={isRepeated}
+        tooltip={
           isRepeated
             ? t('dashboard-scene.tab-edit-actions.delete-disabled', "Repeated tabs can't be deleted individually")
             : undefined

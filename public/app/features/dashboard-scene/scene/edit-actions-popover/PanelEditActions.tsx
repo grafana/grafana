@@ -56,7 +56,8 @@ export function PanelEditActions({
       <div className={styles.actionsDivider} />
       <CopyActionButton
         onClick={onClickCopy}
-        disabledReason={
+        disabled={isRepeated}
+        tooltip={
           isRepeated
             ? t(
                 'dashboard-scene.control-edit-actions.copied-tooltip-disabled',
@@ -67,7 +68,8 @@ export function PanelEditActions({
       />
       <DuplicateActionButton
         onClick={onClickDuplicate}
-        disabledReason={
+        disabled={isRepeated}
+        tooltip={
           isRepeated
             ? t(
                 'dashboard-scene.control-edit-actions.duplicate-tooltip-disabled',
@@ -84,7 +86,8 @@ export function PanelEditActions({
         )}
         yesText={t('dashboard.sidebar.viz-panel.delete-panel-yes', 'Delete')}
         onConfirm={onClickDelete}
-        disabledReason={
+        disabled={isRepeated}
+        tooltip={
           isRepeated
             ? t(
                 'dashboard-scene.control-edit-actions.delete-tooltip-disabled',

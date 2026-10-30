@@ -26,11 +26,19 @@ export function SettingsActionButton({ onClick }: { onClick: () => void }) {
 
 export const SHOW_COPIED_DURATION_MS = 2000;
 
-export function CopyActionButton({ onClick, disabledReason }: { onClick: () => void; disabledReason?: string }) {
+export function CopyActionButton({
+  onClick,
+  disabled,
+  tooltip: tooltipOverride,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  tooltip?: string;
+}) {
   const styles = useStyles2(getActionStyles);
   const [copied, setCopied] = useState(false);
   const tooltip =
-    disabledReason ?? t('dashboard-scene.control-edit-actions.copy-clipboard-tooltip', 'Copy to clipboard');
+    tooltipOverride ?? t('dashboard-scene.control-edit-actions.copy-clipboard-tooltip', 'Copy to clipboard');
 
   useEffect(() => {
     if (!copied) {
@@ -56,16 +64,24 @@ export function CopyActionButton({ onClick, disabledReason }: { onClick: () => v
           onClick();
           setCopied(true);
         }}
-        disabled={disabledReason !== undefined}
+        disabled={disabled}
       />
     </Tooltip>
   );
 }
 
-export function DuplicateActionButton({ onClick, disabledReason }: { onClick: () => void; disabledReason?: string }) {
+export function DuplicateActionButton({
+  onClick,
+  disabled,
+  tooltip: tooltipOverride,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  tooltip?: string;
+}) {
   const styles = useStyles2(getActionStyles);
 
-  const tooltip = disabledReason ?? t('dashboard-scene.control-edit-actions.duplicate-tooltip', 'Duplicate');
+  const tooltip = tooltipOverride ?? t('dashboard-scene.control-edit-actions.duplicate-tooltip', 'Duplicate');
 
   return (
     <IconButton
@@ -76,7 +92,7 @@ export function DuplicateActionButton({ onClick, disabledReason }: { onClick: ()
       onClick={onClick}
       tooltip={tooltip}
       tooltipPlacement="top"
-      disabled={disabledReason !== undefined}
+      disabled={disabled}
     />
   );
 }
@@ -86,7 +102,7 @@ export function DeleteActionButton({
   text,
   yesText,
   onConfirm,
-  disabledReason,
+  disabled,
   confirm = true,
   tooltip: tooltipOverride,
 }: {
@@ -95,7 +111,7 @@ export function DeleteActionButton({
   yesText: string;
   onConfirm: () => void;
   confirm?: boolean;
-  disabledReason?: string;
+  disabled?: boolean;
   tooltip?: string;
 }) {
   const styles = useStyles2(getActionStyles);
@@ -117,8 +133,7 @@ export function DeleteActionButton({
     );
   }, [closePopover, title, text, yesText, onConfirm, confirm]);
 
-  const tooltip =
-    disabledReason ?? tooltipOverride ?? t('dashboard-scene.control-edit-actions.delete-tooltip', 'Delete');
+  const tooltip = tooltipOverride ?? t('dashboard-scene.control-edit-actions.delete-tooltip', 'Delete');
 
   return (
     <IconButton
@@ -129,7 +144,7 @@ export function DeleteActionButton({
       onClick={onClickInternal}
       tooltip={tooltip}
       tooltipPlacement="top"
-      disabled={disabledReason !== undefined}
+      disabled={disabled}
     />
   );
 }

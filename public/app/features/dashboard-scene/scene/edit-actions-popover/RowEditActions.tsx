@@ -30,7 +30,8 @@ export function RowEditActions({ row }: { row: RowItem }) {
       <div className={styles.actionsDivider} />
       <CopyActionButton
         onClick={() => row.onCopy()}
-        disabledReason={
+        disabled={isRepeated}
+        tooltip={
           isRepeated
             ? t('dashboard-scene.row-edit-actions.copy-disabled', "Repeated rows can't be copied individually")
             : undefined
@@ -38,7 +39,8 @@ export function RowEditActions({ row }: { row: RowItem }) {
       />
       <DuplicateActionButton
         onClick={() => row.onDuplicate()}
-        disabledReason={
+        disabled={isRepeated}
+        tooltip={
           isRepeated
             ? t('dashboard-scene.row-edit-actions.duplicate-disabled', "Repeated rows can't be duplicated individually")
             : undefined
@@ -53,7 +55,8 @@ export function RowEditActions({ row }: { row: RowItem }) {
         yesText={t('dashboard.rows-layout.delete-row-yes', 'Delete')}
         confirm={row.getLayout().getVizPanels().length > 0}
         onConfirm={() => row.onDelete()}
-        disabledReason={
+        disabled={isRepeated}
+        tooltip={
           isRepeated
             ? t('dashboard-scene.row-edit-actions.delete-disabled', "Repeated rows can't be deleted individually")
             : undefined
