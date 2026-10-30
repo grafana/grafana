@@ -1,0 +1,53 @@
+name: Check version plans
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+    paths:
+      - 'packages/**'
+      - 'nx.json'
+      - '.nx/version-plans/**'
+      - '.github/workflows/pr-check-version-plans.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  plan-check:
+    name: Check version plans
+    # The release PR deletes plan files and bumps versions, so it never carries a plan of its own.
+    if: github.event.pull_request.draft == false && github.head_ref != 'nx-release-branch--main'
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+          # plan:check diffs the PR base against its head, so the history of both must be present.
+          fetch-depth: 0
+          filter: tree:0
+
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
+
+      - name: Install dependencies
+        uses: ./.github/actions/yarn-install
+        with:
+          hardened-mode: 'true'
+
+      - name: Check version plans
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          merge_base="$(git merge-base "$HEAD_SHA" "$BASE_SHA")"
+          pnpm exec nx release plan:check --base="$merge_base" --head="$HEAD_SHA"
