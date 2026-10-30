@@ -79,7 +79,7 @@ Replace the following field values:
 
 {{< admonition type="caution" >}}
 
-**Don't use your Grafana Cloud provider settings in this configuration**. 
+**Don't use your Grafana Cloud provider settings in this configuration**.
 
 The Git Sync resources are App Platform resources and talk directly to the Grafana stack's API. Configure the Terraform provider with `url` and `auth`, not `cloud_api_url` nor `cloud_access_policy_token`. If you're using Grafana Cloud, set `stack_id` to your stack ID.
 
