@@ -22,7 +22,7 @@ export interface DataSourceListSnapshot {
  * hooks only see this interface, so a source can be swapped or removed without touching them.
  */
 export interface DataSourceCacheSource {
-  readonly kind: 'bootData' | 'mt';
+  readonly kind: 'bootData' | 'mt' | 'noSession';
   /** A snapshot that is available without waiting, or `undefined` when the list must be fetched. */
   getInitialSnapshot(): DataSourceListSnapshot | undefined;
   /** First fill, and the retry after a failed fill. */

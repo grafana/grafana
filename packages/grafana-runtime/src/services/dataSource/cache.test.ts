@@ -1,5 +1,8 @@
 import { type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
 
+import { setLogger } from '../logging/registry';
+import { NoUserSessionError } from '../user';
+
 import {
   _resetForTests,
   applySnapshot,
@@ -94,6 +97,23 @@ describe('fill', () => {
 
     expect(loadList).toHaveBeenCalledTimes(2);
     expect(getListItemByUid('uid-bravo')?.name).toBe('Bravo');
+  });
+
+  it('rejects with the NoUserSessionError itself, and logs no fill failure', async () => {
+    const logError = jest.fn();
+    setLogger('grafana/runtime.plugins.datasource', {
+      logDebug: jest.fn(),
+      logError,
+      logInfo: jest.fn(),
+      logMeasurement: jest.fn(),
+      logWarning: jest.fn(),
+    });
+    const loadList = jest.fn().mockRejectedValue(new NoUserSessionError());
+    setDataSourceCacheSource(fetchingSource({ kind: 'noSession', loadList }));
+
+    await expect(awaitFill()).rejects.toBeInstanceOf(NoUserSessionError);
+
+    expect(logError).not.toHaveBeenCalled();
   });
 
   it('does not bump the cache generation when the list load fails', async () => {
