@@ -23,11 +23,30 @@ import {
 import { ASSISTANT_PLUGIN_ID } from 'app/core/constants';
 
 import { dashboardComposerEnabled } from '../scene/dashboardModes';
+import { DashboardInteractions } from '../utils/interactions';
 
 import { type ComposerEnterRequestOptions, type ComposerResource, type ComposerTarget } from './types';
 
 /** Returns `false` to decline the request: it then ends at once, and goes to no other listener. */
 type EnterRequestListener = (target: ComposerTarget) => boolean | void;
+
+/** What asked for Composer: the user in Grafana's own UI, or an Assistant edit made from Viewing. */
+export type ComposerEntryRequestSource = 'mode_picker' | 'assistant_edit';
+
+/**
+ * How a request ended. `delivered`: an entry attempt on it ended, whatever its result. `disposed`: the scene
+ * that made it went away. `no_listener`: no listener supports its document type.
+ */
+export type ComposerEntryRequestOutcome =
+  | 'delivered'
+  | 'declined'
+  | 'expired'
+  | 'superseded'
+  | 'disposed'
+  | 'no_listener';
+
+/** Why a request still outstanding is cleared. */
+type ComposerEntryRequestClearReason = Exclude<ComposerEntryRequestOutcome, 'delivered'>;
 
 const COMPOSER_RESOURCES: readonly ComposerResource[] = ['dashboard', 'notebook'];
 /** What a listener registered without options supports: the plugin then only knows dashboards. */
@@ -55,7 +74,14 @@ let held: { target: ComposerTarget; at: number } | undefined;
  * The request Composer has not settled yet: from the moment it is made until an entry attempt on it ends,
  * it is cleared, or `PENDING_REQUEST_TTL_MS` passes. What the UI that made it shows as pending.
  */
-let outstanding: { target: ComposerTarget; timer: ReturnType<typeof setTimeout> } | undefined;
+let outstanding:
+  | {
+      target: ComposerTarget;
+      timer: ReturnType<typeof setTimeout>;
+      source: ComposerEntryRequestSource;
+      requestedAt: number;
+    }
+  | undefined;
 /**
  * A request that floats the extension sidebar until Composer takes over, so a sidebar the picker opens never
  * paints docked first. A session that starts floating keeps the override on; a failure, expiry or teardown
@@ -107,14 +133,23 @@ export function getSupportedComposerResources(): readonly ComposerResource[] {
  * request stands (false when nobody supports it, or the listener declined it at once). With `float`, the
  * extension sidebar floats from now until the session takes over or the request ends.
  */
-export function requestComposerEnter(target: ComposerTarget, { float = false } = {}): boolean {
+export function requestComposerEnter(
+  target: ComposerTarget,
+  { float = false, source = 'mode_picker' }: { float?: boolean; source?: ComposerEntryRequestSource } = {}
+): boolean {
   const listener = [...listeners].find(([, resources]) => resources.has(target.resource))?.[0];
   const hold = !listener && !registered && getSupportedComposerResources().includes(target.resource);
   if (!listener && !hold) {
+    reportRequest(target, source, 'no_listener', 0);
     return false;
   }
-  clearPendingComposerEnterRequest();
-  outstanding = { target, timer: setTimeout(clearPendingComposerEnterRequest, PENDING_REQUEST_TTL_MS) };
+  clearPendingComposerEnterRequest('superseded');
+  outstanding = {
+    target,
+    timer: setTimeout(() => clearPendingComposerEnterRequest('expired'), PENDING_REQUEST_TTL_MS),
+    source,
+    requestedAt: performance.now(),
+  };
   if (float) {
     floated = { target };
     setExtensionSidebarFloatingOverride(true);
@@ -129,13 +164,13 @@ export function requestComposerEnter(target: ComposerTarget, { float = false } =
 
 /**
  * Ends the request still outstanding, so it never fires late, and stops floating the sidebar for it
- * (navigation, scene teardown, a newer request, expiry).
+ * (navigation, scene teardown, a newer request, expiry). `reason` is what its telemetry reports.
  */
-export function clearPendingComposerEnterRequest(): void {
+export function clearPendingComposerEnterRequest(reason: ComposerEntryRequestClearReason): void {
   const hadRequest = outstanding !== undefined;
   held = undefined;
   releaseFloatedSidebar();
-  dropOutstanding();
+  dropOutstanding(reason);
   if (hadRequest) {
     notifyChange();
   }
@@ -171,7 +206,7 @@ export function settleComposerEnterRequest(uid: string, { keepFloating = false }
     }
   }
   if (outstanding?.target.uid === uid) {
-    dropOutstanding();
+    dropOutstanding('delivered');
     notifyChange();
   }
 }
@@ -188,11 +223,27 @@ function releaseFloatedSidebar(): void {
   }
 }
 
-function dropOutstanding(): void {
+function dropOutstanding(outcome: ComposerEntryRequestOutcome): void {
   if (outstanding) {
-    clearTimeout(outstanding.timer);
+    const { target, timer, source, requestedAt } = outstanding;
+    clearTimeout(timer);
     outstanding = undefined;
+    reportRequest(target, source, outcome, performance.now() - requestedAt);
   }
+}
+
+function reportRequest(
+  target: ComposerTarget,
+  source: ComposerEntryRequestSource,
+  outcome: ComposerEntryRequestOutcome,
+  elapsedMs: number
+): void {
+  DashboardInteractions.composerEntryRequest({
+    dashboard_uid: target.uid || undefined,
+    source,
+    outcome,
+    elapsed_ms: Math.round(elapsedMs),
+  });
 }
 
 function notifyChange(): void {
@@ -222,8 +273,12 @@ function deliverHeldRequest(listener: EnterRequestListener, resources: ReadonlyS
   if (!request) {
     return;
   }
-  if (!resources.has(request.target.resource) || Date.now() - request.at > PENDING_REQUEST_TTL_MS) {
-    clearPendingComposerEnterRequest();
+  if (!resources.has(request.target.resource)) {
+    clearPendingComposerEnterRequest('no_listener');
+    return;
+  }
+  if (Date.now() - request.at > PENDING_REQUEST_TTL_MS) {
+    clearPendingComposerEnterRequest('expired');
     return;
   }
   offer(listener, request.target);
@@ -240,7 +295,7 @@ function offer(listener: EnterRequestListener, target: ComposerTarget): boolean 
     return true;
   }
   if (outstanding?.target === target) {
-    clearPendingComposerEnterRequest();
+    clearPendingComposerEnterRequest('declined');
   }
   return false;
 }
@@ -262,7 +317,7 @@ function canAssistantHaveComposerApi(): boolean {
 
 /** @internal Forgets listeners and the first registration between tests. */
 export function resetComposerEnterRequestsForTests(): void {
-  clearPendingComposerEnterRequest();
+  clearPendingComposerEnterRequest('disposed');
   listeners.clear();
   supported = NONE;
   registered = false;

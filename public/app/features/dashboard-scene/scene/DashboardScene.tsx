@@ -111,6 +111,8 @@ import {
   type UseCrossDashboardVariables,
 } from '../utils/crossDashboardVariablesSelection';
 import {
+  COMPOSER_EXIT_TRIGGERS,
+  type ComposerExitReason,
   type DashboardEditPeriodOutcome,
   type DashboardEditSessionTracking,
   type DashboardModeTrigger,
@@ -229,8 +231,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   private _sidebarActivation?: CancelActivationHandler;
   private _assistantWrites = 0;
-  /** The open Composer session and the mode to return to when it ends. Set only while mode is `composer`. */
-  private _composer?: { session: ComposerSession; modeBefore: DashboardMode };
+  /**
+   * The open Composer session, the mode to return to when it ends and why it is ending. Set only while mode
+   * is `composer`.
+   */
+  private _composer?: { session: ComposerSession; modeBefore: DashboardMode; exitReason?: ComposerExitReason };
   private _modePickerShown = false;
   private _modePickerOpened = false;
   private _editSession?: {
@@ -239,6 +244,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     startedAt: number;
     manualChanges: boolean;
     assistantChanges: boolean;
+    composerSessions: number;
   };
 
   public trackModePickerShown() {
@@ -269,6 +275,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       startedAt: performance.now(),
       manualChanges: false,
       assistantChanges: false,
+      // A period that starts during a session (after a save from Composer) runs in it too.
+      composerSessions: this._composer ? 1 : 0,
     };
     DashboardInteractions.editPeriodStarted({
       dashboard_uid: this.state.uid,
@@ -299,6 +307,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       had_assistant_changes: hadAssistantChanges,
       had_unattributed_changes: hadUnattributedChanges,
       edit_actors: getEditActors(hadManualChanges || hadUnattributedChanges, hadAssistantChanges),
+      composer_used: this._editSession.composerSessions > 0,
+      composer_sessions: this._editSession.composerSessions,
       elapsed_ms: Math.round(performance.now() - this._editSession.startedAt),
     };
   }
@@ -310,6 +320,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     } catch {
       return false;
     }
+  }
+
+  public getEditSessionId(): string | undefined {
+    return this._editSession?.id;
   }
 
   public recordEditMutation(source: 'user' | 'assistant' = this._assistantWrites > 0 ? 'assistant' : 'user') {
@@ -555,9 +569,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return () => {
       // Leaving the dashboard ends Composer, and drops a request to enter it that Assistant has not taken
       // yet; the cached scene must not come back in it.
-      clearPendingComposerEnterRequest();
-      this.exitComposerMode();
-      this.closeComposerSession();
+      clearPendingComposerEnterRequest('disposed');
+      this.exitComposerMode('navigation');
+      this.closeComposerSession('navigation');
       composerSubscription.unsubscribe();
       window.removeEventListener('pagehide', onPageHide);
       this.endEditPeriod('abandoned');
@@ -756,7 +770,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (getPendingComposerEnterTarget()?.uid === uid) {
       return true;
     }
-    return requestComposerEnter({ resource: 'dashboard', uid });
+    return requestComposerEnter({ resource: 'dashboard', uid }, { source: 'assistant_edit' });
   }
 
   public setDashboardMode(mode: DashboardMode, trigger: DashboardModeTrigger = 'navigation'): boolean {
@@ -765,7 +779,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return false;
     }
     if (mode !== 'composer' && isComposerMode(this.state)) {
-      this.exitComposerMode();
+      this.exitComposerMode(trigger === 'picker' ? 'mode_picker' : 'manual_edit');
       if (getDashboardMode(this.state) === mode) {
         return true;
       }
@@ -853,9 +867,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     sidebar.openPane(saved.openPane.clone());
   }
 
-  public openFullEditor() {
+  public openFullEditor(composerExitReason: ComposerExitReason = 'manual_edit') {
     // A manual-edit entry point (edit panel URL, settings) leaves Composer first.
-    this.exitComposerMode();
+    this.exitComposerMode(composerExitReason);
     if (!this.state.isEditing) {
       this.onEnterEditMode();
     }
@@ -879,13 +893,19 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return false;
     }
     this._composer = { session, modeBefore };
+    if (this._editSession) {
+      this._editSession.composerSessions++;
+    }
     return true;
   }
 
-  /** Returns to the mode Composer was entered from. Never saves or discards. */
-  public exitComposerMode() {
+  /** Returns to the mode Composer was entered from, for `reason`. Never saves or discards. */
+  public exitComposerMode(reason: ComposerExitReason) {
     if (!isComposerMode(this.state)) {
       return;
+    }
+    if (this._composer) {
+      this._composer.exitReason = reason;
     }
     const mode = this._composer?.modeBefore ?? 'edit';
     // An Assistant edit and its undo leave the dashboard dirty though it matches the saved version.
@@ -895,7 +915,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (mode === 'edit') {
       this.restoreSidebarAfterViewing();
     }
-    this.reportModeChange('composer', 'composer');
+    this.reportModeChange('composer', COMPOSER_EXIT_TRIGGERS[reason]);
   }
 
   /** Drops the dirty flag when the dashboard has no changes to save, by the comparison Save uses. */
@@ -927,7 +947,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           noText: t('dashboard-scene.dashboard-scene.modal.keep-working', 'Keep working'),
           onConfirm: () => {
             // Stop now: the session ends here, so the turn stops whatever the save prompt for Viewing then does.
-            this.exitComposerMode();
+            this.exitComposerMode('mode_picker');
             // The confirm modal hides itself after onConfirm returns, which would also close that save
             // prompt, so continue once it has closed.
             queueMicrotask(() => this.leaveComposerFor(mode));
@@ -941,7 +961,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   private leaveComposerFor(mode: 'view' | 'edit') {
     if (mode === 'edit') {
-      this.openFullEditor();
+      this.openFullEditor('mode_picker');
       return;
     }
     this.clearDirtyIfUnchanged();
@@ -959,7 +979,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   private leaveComposerForViewing() {
-    this.exitComposerMode();
+    this.exitComposerMode('mode_picker');
     if (getDashboardMode(this.state) === 'edit') {
       this.setDashboardMode('view', 'composer');
     }
@@ -969,10 +989,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return isComposerMode(this.state) ? this._composer?.session : undefined;
   }
 
-  private closeComposerSession() {
+  /**
+   * `reason` defaults to the one `exitComposerMode` recorded. With neither, the mode was left another way,
+   * such as discarding the edit session, which counts as a manual edit.
+   */
+  private closeComposerSession(reason?: ComposerExitReason) {
     const composer = this._composer;
     this._composer = undefined;
-    composer?.session.close();
+    composer?.session.close(reason ?? composer.exitReason ?? 'manual_edit');
   }
 
   public applyDashboardMode() {
