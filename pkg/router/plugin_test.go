@@ -470,6 +470,12 @@ func TestPluginLoaderInitializesEachPluginOnce(t *testing.T) {
 	load()
 	require.Equal(t, 1, roles.calls, "a plugin that appears later is initialized once, however often Load runs")
 
+	changed := manifestBundle("manifest-app", `{"apiVersion":"apps.grafana.app/v1alpha2","spec":{"appName":"manifest","group":"manifest.ext.grafana.app","versions":[{"name":"v2","served":true,"kinds":[{"kind":"Thing","plural":"things","scope":"Namespaced"}]}]}}`)
+	changed.Primary.JSONData.Info.Version = "2.0.0"
+	store.PluginList[0] = storedPlugin(changed)
+	load()
+	require.Equal(t, 1, roles.calls, "an updated plugin keeps its roles: redeclaring them would stack duplicate grants")
+
 	other := `{"apiVersion":"apps.grafana.app/v1alpha2","spec":{"appName":"other","group":"other.ext.grafana.app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Thing","plural":"things","scope":"Namespaced"}]}]}}`
 	store.PluginList = append(store.PluginList, storedPlugin(manifestBundle("other-app", other)))
 	load()

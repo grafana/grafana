@@ -1535,8 +1535,9 @@ func TestIntegrationService_DeclareFixedRoles_AfterInitialization(t *testing.T) 
 	})
 	require.NoError(t, err)
 
-	actions := make([]string, 0)
-	for _, p := range ac.roles[string(identity.RoleEditor)].Permissions {
+	permissions := ac.roles[string(identity.RoleEditor)].Permissions
+	actions := make([]string, 0, len(permissions))
+	for _, p := range permissions {
 		actions = append(actions, p.Action)
 	}
 	assert.Len(t, actions, before+1, "a role declared after initialization is granted without a restart")
