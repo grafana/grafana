@@ -587,6 +587,7 @@
     },
     "alertmanager-config": {
       "confirmText-yes-reset-configuration": "Yes, reset configuration",
+      "editor-label": "Alertmanager configuration",
       "gma-manual-configuration-description": "The internal Grafana Alertmanager configuration cannot be manually changed. To change this configuration, edit the individual resources through the UI.",
       "gma-manual-configuration-is-not-supported": "Manual configuration changes not supported",
       "message": {
