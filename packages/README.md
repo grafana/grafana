@@ -41,6 +41,28 @@ All packages in the `grafana` group are versioned according to the current Grafa
 
 > Please note that the @grafana/api-clients package is considered ALPHA even though it is not released as an alpha version.
 
+### Independent packages
+
+`@grafana/plugin-compat` has its own version. Its version bump and its `CHANGELOG.md` entry are written as a version plan in the same pull request that changes the package. Do not edit the `version` field or `CHANGELOG.md` by hand.
+
+Add a plan with:
+
+```shell
+pnpm exec nx release plan <major|minor|patch> --groups=plugin-compat --only-touched=false -m "Describe the change for consumers"
+```
+
+This creates a file in `.nx/version-plans/`, which you commit with your change. The `Check version plans` workflow runs `nx release plan:check` and fails a pull request that changes the package without a plan. Changes to test files do not need one.
+
+Below 1.0 the bump is shifted down one level, so choose by intent:
+
+| Plan    | Use for                              | Released as (from 0.6.0) |
+| ------- | ------------------------------------ | ------------------------ |
+| `major` | A breaking change for consumers      | 0.7.0                    |
+| `minor` | A new feature or export              | 0.6.1                    |
+| `patch` | A bug fix or an internal improvement | 0.6.1                    |
+
+Several plans in one release combine into the highest bump, and every plan text becomes a changelog entry. The `README.md` in `.nx/version-plans/` keeps the folder in git when no plans are pending. Nx reads every file in that folder as a plan and rejects files with no text, so do not replace it with an empty `.gitkeep`.
+
 ### Stable releases
 
 > **Even though packages are released under a stable version, they are considered ALPHA until further notice!**

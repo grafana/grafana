@@ -829,6 +829,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /nx.json @grafana/grafana-frontend-platform
 /project.json @grafana/grafana-frontend-platform
 /.nxignore @grafana/grafana-frontend-platform
+/.nx/version-plans/ @grafana/grafana-frontend-platform
 /tsconfig.json @grafana/grafana-frontend-platform
 /scripts/tsconfig.base.json @grafana/grafana-frontend-platform
 /.editorconfig @grafana/grafana-frontend-platform
@@ -1378,6 +1379,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support
 /.github/workflows/lint-build-docs.yml @grafana/docs-tooling
 /.github/workflows/pr-bundle-size.yml @grafana/grafana-frontend-platform
+/.github/workflows/pr-check-version-plans.yml @grafana/grafana-frontend-platform
 /.github/workflows/pr-checks.yml @tolzhabayev
 /.github/workflows/pr-endpoint-feature-toggle.yml @grafana/alerting-squad
 /.github/workflows/pr-mt-service-compatibility.yml @evictorero
