@@ -123,6 +123,9 @@ func (db *DB) QueryFrames(ctx context.Context, tracer tracing.Tracer, name strin
 
 	f.Name = name
 	f.RefID = name
+	if notices := invalidJSONNotices(frames); len(notices) > 0 {
+		f.AppendNotices(notices...)
+	}
 
 	return f, nil
 }

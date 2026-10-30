@@ -3,6 +3,7 @@
 package sql
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -141,7 +142,11 @@ func (ri *rowIter) Next(ctx *mysql.Context) (mysql.Row, error) {
 
 		// If the field is JSON, convert json.RawMessage to types.JSONDocument
 		if raw, ok := val.(json.RawMessage); ok {
-			doc, inRange, err := types.JSON.Convert(ctx, raw)
+			// Invalid values read as NULL so queries like COUNT(*) keep working; QueryFrames warns about them.
+			if !json.Valid(raw) {
+				continue
+			}
+			doc, inRange, err := types.JSON.Convert(ctx, []byte(raw))
 			if err != nil {
 				return nil, fmt.Errorf("failed to convert json.RawMessage to JSONDocument: %w", err)
 			}
@@ -156,6 +161,43 @@ func (ri *rowIter) Next(ctx *mysql.Context) (mysql.Row, error) {
 
 	ri.row++
 	return row, nil
+}
+
+// invalidJSONNotices returns one warning for each JSON column that has
+// values that are not valid JSON, since rowIter reads those values as NULL.
+// Empty and whitespace-only values also read as NULL, but get no warning.
+func invalidJSONNotices(frames []*data.Frame) []data.Notice {
+	var notices []data.Notice
+	for _, frame := range frames {
+		var names []string
+		for colIndex, field := range frame.Fields {
+			if t := field.Type(); t != data.FieldTypeJSON && t != data.FieldTypeNullableJSON { //nolint:staticcheck
+				continue
+			}
+			count := 0
+			for i := range field.Len() {
+				if field.NilAt(i) {
+					continue
+				}
+				val, _ := field.ConcreteAt(i)
+				raw, ok := val.(json.RawMessage)
+				if ok && len(bytes.TrimSpace(raw)) > 0 && !json.Valid(raw) {
+					count++
+				}
+			}
+			if count == 0 {
+				continue
+			}
+			if names == nil {
+				names = uniqueColumnNames(frame.Fields)
+			}
+			notices = append(notices, data.Notice{
+				Severity: data.NoticeSeverityWarning,
+				Text:     fmt.Sprintf("%s: column %s has values that are not valid JSON (%d of %d rows). They read as NULL.", frame.RefID, names[colIndex], count, field.Len()),
+			})
+		}
+	}
+	return notices
 }
 
 // enumText returns the display text for an enum index, or the index as text
