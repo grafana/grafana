@@ -354,3 +354,29 @@ func TestLoadPluginDefinition(t *testing.T) {
 		require.ErrorContains(t, err, "error loading schema child-one")
 	})
 }
+
+func TestLoadPluginDefinitionFromPlugins(t *testing.T) {
+	manifest := manifestFS(`{
+		"apiVersion": "apps.grafana.app/v1alpha2",
+		"spec": {"appName": "test", "group": "test.ext.grafana.app", "versions": []}
+	}`)
+	app := func(id string) plugins.JSONData { return plugins.JSONData{ID: id, Type: plugins.TypeApp} }
+
+	loaded := []LoadedPlugin{
+		{FS: manifest, JSONData: app("first-app")},
+		{FS: manifest, JSONData: app("first-app")},
+		{FS: manifest, JSONData: plugins.JSONData{ID: "a-panel", Type: plugins.TypePanel}},
+		{FS: nil, JSONData: app("no-files-app")},
+		{FS: fstest.MapFS{}, JSONData: app("bare-app")},
+	}
+	defs, err := LoadPluginDefinitionFromPlugins(loaded, Options{
+		Filter:      func(j plugins.JSONData) bool { return j.Type == plugins.TypeApp },
+		AppManifest: true,
+	})
+	require.NoError(t, err)
+	require.Len(t, defs, 2, "duplicates, filtered types and plugins without files are skipped")
+	require.Equal(t, "first-app", defs[0].JSONData.ID)
+	require.Len(t, defs[0].Manifests, 1, "the manifest is read from the plugin's own files")
+	require.Equal(t, "bare-app", defs[1].JSONData.ID)
+	require.Empty(t, defs[1].Manifests)
+}
