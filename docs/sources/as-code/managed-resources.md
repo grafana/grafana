@@ -41,14 +41,15 @@ For the full list of annotations, including the source annotations and the rules
 
 The following tools manage resources in Grafana.
 
-| Tool                 | `grafana.app/managedBy`     | `grafana.app/managerId`                     | Records a source |
-| -------------------- | --------------------------- | ------------------------------------------- | ---------------- |
-| Git Sync             | `repo`                      | The name of the repository resource         | Yes              |
-| Terraform            | `terraform`                 | The provider identifier                     | No               |
-| Kubernetes manifests | `kubectl`                   | The identifier you set                      | No               |
-| Plugins              | `plugin`                    | The plugin identifier                       | No               |
-| Grafana              | `grafana`                   | The name of the resource                    | No               |
-| File provisioning    | `classic-file-provisioning` | The provisioner name from the configuration | Yes              |
+| Tool                      | `grafana.app/managedBy`     | `grafana.app/managerId`                     | Records a source |
+| ------------------------- | --------------------------- | ------------------------------------------- | ---------------- |
+| Git Sync                  | `repo`                      | The name of the repository resource         | Yes              |
+| On-prem file provisioning | `repo`                      | The name of the repository resource         | Yes              |
+| Terraform                 | `terraform`                 | The provider identifier                     | No               |
+| Kubernetes manifests      | `kubectl`                   | The identifier you set                      | No               |
+| Plugins                   | `plugin`                    | The plugin identifier                       | No               |
+| Grafana                   | `grafana`                   | The name of the resource                    | No               |
+| Classic file provisioning | `classic-file-provisioning` | The provisioner name from the configuration | Yes              |
 
 ### Git Sync
 
@@ -56,6 +57,14 @@ Grafana sets the annotations on every resource that Git Sync creates, and record
 
 You can edit a Git Sync resource in the UI. Grafana doesn't save the change to its database directly: it sends the change to the repository as a commit, so the repository stays the source of truth.
 Refer to [Work with provisioned resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/provisioned-dashboards/).
+
+### On-prem file provisioning
+
+On-prem file provisioning uses the same `Repository` resource as Git Sync, with the repository type set to `local`, so its resources carry the same `repo` value and the name of the repository as the manager identity.
+Grafana records the path of the file in the configured directory as the source, and writes a change you make in the UI back to that file.
+
+Don't confuse it with classic file provisioning, which is a separate mechanism with its own manager kind.
+Refer to [Provision resources on-prem](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/provision-resources/).
 
 ### Terraform
 
@@ -86,6 +95,8 @@ spec:
 
 Replace _`my-cluster`_ with an identifier for the tool or cluster that owns the resource. Keep it stable, because you can't change it later.
 
+The Grafana CLI, `gcx`, also pushes resources as `kubectl`, and allows edits on what it pushes. It has no manager kind of its own yet.
+
 ### Plugins
 
 Grafana marks dashboards that ship with a plugin as managed by that plugin, using the plugin identifier as the manager identity.
@@ -96,9 +107,10 @@ Update these dashboards by updating the plugin.
 Grafana marks the resources it owns itself, such as fixed roles, as managed by `grafana`.
 You can't change or release these resources.
 
-### File provisioning
+### Classic file provisioning
 
-Grafana marks resources that come from file provisioning with the deprecated `classic-file-provisioning` value, using the provisioner name from the provisioning configuration as the manager identity.
+Classic file provisioning is the configuration-file mechanism that predates the `Repository` resource.
+Grafana marks the resources it creates with the deprecated `classic-file-provisioning` value, using the provisioner name from the provisioning configuration as the manager identity.
 It records the file path, checksum, and modification time as the source.
 
 Refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning).
@@ -119,16 +131,17 @@ Grafana only writes the annotation when it's `true`, so an absent annotation and
 
 The following table shows how each manager treats edits:
 
-| Manager              | Edits in the UI                                                                                |
-| -------------------- | ---------------------------------------------------------------------------------------------- |
-| Git Sync             | Allowed. Grafana sends the change to the repository as a commit instead of saving it directly. |
-| Terraform            | Allowed when the provider sets `grafana.app/managerAllowsEdits` to `true`.                     |
-| Kubernetes manifests | Allowed when the manifest sets `grafana.app/managerAllowsEdits` to `true`.                     |
-| File provisioning    | Allowed when the provisioning configuration sets `allowUiUpdates` to `true`.                   |
-| Plugins              | Not allowed.                                                                                   |
-| Grafana              | Not allowed.                                                                                   |
+| Manager                   | Edits in the UI                                                                                |
+| ------------------------- | ---------------------------------------------------------------------------------------------- |
+| Git Sync                  | Allowed. Grafana sends the change to the repository as a commit instead of saving it directly. |
+| On-prem file provisioning | Allowed. Grafana writes the change back to the file.                                           |
+| Terraform                 | Allowed when the provider sets `grafana.app/managerAllowsEdits` to `true`.                     |
+| Kubernetes manifests      | Allowed when the manifest sets `grafana.app/managerAllowsEdits` to `true`.                     |
+| Classic file provisioning | Allowed when the provisioning configuration sets `allowUiUpdates` to `true`.                   |
+| Plugins                   | Not allowed.                                                                                   |
+| Grafana                   | Not allowed.                                                                                   |
 
-For file provisioning, Grafana derives the annotation from the `allowUiUpdates` option, so you don't set the annotation yourself.
+For classic file provisioning, Grafana derives the annotation from the `allowUiUpdates` option, so you don't set the annotation yourself.
 Grafana saves the change to its database, and overwrites it the next time the provisioning source changes.
 Refer to [Make changes to a provisioned dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#make-changes-to-a-provisioned-dashboard).
 
@@ -149,18 +162,18 @@ Keep the following in mind:
 - **You can't hand a resource from one tool to another in place.** Grafana rejects a write that changes `grafana.app/managedBy` or `grafana.app/managerId` on an existing resource. Remove the manager first, then let the new tool claim the resource.
 
 Alerting resources are more restrictive: you can only release rules that came from Terraform, `kubectl`, or the legacy provisioning API.
-Rules that come from file provisioning or Git Sync are owned by an external source of truth, so Grafana doesn't let an in-Grafana write reset them to unmanaged.
+Rules that come from classic file provisioning or a repository are owned by an external source of truth, so Grafana doesn't let an in-Grafana write reset them to unmanaged.
 
 ## Alerting provenance
 
 Alerting resources record a manager the same way, and also keep the older `grafana.com/provenance` annotation populated for tools that don't read manager properties yet.
 Provenance is a coarser view of the same information, so several managers collapse onto one provenance value:
 
-| Manager                                       | `grafana.com/provenance` |
-| --------------------------------------------- | ------------------------ |
-| Terraform, `kubectl`, legacy provisioning API | `api`                    |
-| Git Sync, file provisioning                   | `file`                   |
-| Convert Prometheus API                        | `converted_prometheus`   |
+| Manager                                         | `grafana.com/provenance` |
+| ----------------------------------------------- | ------------------------ |
+| Terraform, `kubectl`, legacy provisioning API   | `api`                    |
+| Git Sync, on-prem and classic file provisioning | `file`                   |
+| Convert Prometheus API                          | `converted_prometheus`   |
 
 ## Related resources
 
@@ -168,5 +181,6 @@ Use the following resources to keep working with managed resources:
 
 - **Annotation reference:** Refer to [Manager and source annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#manager-and-source-annotations).
 - **Git Sync:** Refer to [Git Sync key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/key-concepts/).
-- **File provisioning:** Refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning).
+- **On-prem file provisioning:** Refer to [Provision resources on-prem](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/provision-resources/).
+- **Classic file provisioning:** Refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning).
 - **Terraform:** Refer to [Use Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/terraform/).
