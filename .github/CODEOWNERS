@@ -1436,8 +1436,10 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/frontend-perf-tests.yaml @grafana/grafana-frontend-platform
 /.github/workflows/release-npm.yml @grafana/grafana-frontend-platform
 /.github/workflows/release-npm-version-pr.yml @grafana/grafana-frontend-platform
+/.github/workflows/release-npm-independent-packages.yml @grafana/grafana-frontend-platform
 /.github/workflows/scripts/apply-version-plans.sh @grafana/grafana-frontend-platform
 /.github/workflows/scripts/determine-npm-tag.sh @grafana/grafana-frontend-platform
+/.github/workflows/scripts/select-unpublished-npm-packages.sh @grafana/grafana-frontend-platform
 /.github/workflows/scripts/validate-commit-in-head.sh @grafana/grafana-frontend-platform
 /.github/workflows/scripts/test-endpoint-migration-check.sh @grafana/alerting-squad
 /.github/zizmor.yml @grafana/grafana-backend-services-squad
