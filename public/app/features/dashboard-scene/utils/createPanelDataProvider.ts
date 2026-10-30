@@ -2,6 +2,7 @@ import { getPanelPluginMetasMapSync, type PanelPluginMetas } from '@grafana/runt
 import { type SceneDataProvider, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { shouldClearTextQueries } from 'app/plugins/panel/text/queryMigration';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 
@@ -13,6 +14,14 @@ export function createPanelDataProvider(
   panelMetas: PanelPluginMetas = getPanelPluginMetasMapSync()
 ): SceneDataProvider | undefined {
   const pluginMeta = findPanelPluginMeta(panelMetas, panel.type);
+
+  if (
+    panel.type === 'text' &&
+    pluginMeta?.skipDefaultQuery &&
+    shouldClearTextQueries(panel.pluginVersion, panel.options ?? {})
+  ) {
+    panel.targets = [];
+  }
 
   // Skip setting query runner for panels without queries
   if (!panel.targets?.length && !pluginMeta?.skipDefaultQuery) {
