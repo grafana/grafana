@@ -3,7 +3,7 @@ import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { NavID, type NavId } from './constants';
+import { HOISTED_PAGE_WEIGHT_OFFSET, NavID, type NavId } from './constants';
 
 /** Whether to build the nav tree client-side, covering the static sections only. */
 export function isClientNavTreeEnabled(): boolean {
@@ -212,6 +212,74 @@ export function pruneEmptyNavSections(tree: NavModelItem[]): NavModelItem[] {
       };
     })
     .filter((node) => !isPrunable(PRUNABLE_SECTIONS, node));
+}
+
+/** Moves an item by id into a section, optionally resetting its weight, then re-sorts the section. */
+export function moveNavItemToSection(
+  tree: NavModelItem[],
+  id: string,
+  sectionId: string,
+  sortWeight?: number
+): NavModelItem[] {
+  const item = findNavById(tree, id);
+  if (!item || !findNavById(tree, sectionId)) {
+    return tree;
+  }
+
+  const moved = { ...item, ...(sortWeight !== undefined && { sortWeight }) };
+  const placed = appendIntoSection(removeNavById(tree, id), sectionId, [moved]);
+  if (!placed) {
+    return tree;
+  }
+
+  return updateNavById(placed, sectionId, (section) => ({
+    ...section,
+    children: sortNavTree(section.children ?? []),
+  }));
+}
+
+/**
+ * Returns an app's pages as standalone entries with section weights. Only app URLs get standalone
+ * ids, so dashboard includes keep their own routes.
+ */
+export function hoistAppPages(
+  appLink: NavModelItem,
+  { slotWeightByPath = {} }: { slotWeightByPath?: Record<string, number> } = {}
+): NavModelItem[] {
+  const appPrefix = `/a/${appLink.pluginId}`;
+
+  return (appLink.children ?? []).map((child) => {
+    // This runs during store creation, before locationUtil is initialized.
+    const appSubUrl = config.appSubUrl.replace(/\/+$/, '');
+    const url = appSubUrl && child.url?.startsWith(`${appSubUrl}/`) ? child.url.slice(appSubUrl.length) : child.url;
+    const slotWeight = url ? slotWeightByPath[url] : undefined;
+    return {
+      ...child,
+      sortWeight: slotWeight ?? HOISTED_PAGE_WEIGHT_OFFSET + (child.sortWeight ?? 0),
+      ...(url?.startsWith(appPrefix) && { id: hoistedPluginPageId(url) }),
+    };
+  });
+}
+
+/**
+ * Replaces an app's node inside a section with its hoisted pages, for callers
+ * working on a finished tree — where the plugin pass that would have hoisted them
+ * has already run. Returns the tree untouched if the app, the section, or the
+ * app's pages are missing.
+ */
+export function hoistNavItemPages(tree: NavModelItem[], sectionId: string, id: string): NavModelItem[] {
+  const section = findNavById(tree, sectionId);
+  const item = section?.children?.find((child) => child.id === id);
+  if (!section || !item?.children?.length) {
+    return tree;
+  }
+
+  const hoisted = hoistAppPages(item);
+
+  return updateNavById(tree, sectionId, (node) => ({
+    ...node,
+    children: sortNavTree([...(node.children ?? []).filter((child) => child !== item), ...hoisted]),
+  }));
 }
 
 /** Nav id of an app plugin's own entry/section (matches the Go builder's ids) */

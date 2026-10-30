@@ -17,6 +17,8 @@ import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboards';
 import { useVisualRefreshNudge } from 'app/features/visual-refresh/useVisualRefreshNudge';
 
+import { AdministrationSectionNav, SECTION_NAV_WIDTH } from './AdministrationSectionNav/AdministrationSectionNav';
+import { useAdministrationSectionNav } from './AdministrationSectionNav/useAdministrationSectionNav';
 import { AppChromeMenu } from './AppChromeMenu';
 import { type AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
 import { ExtensionSidebar } from './ExtensionSidebar/ExtensionSidebar';
@@ -90,6 +92,10 @@ export function AppChrome({ children }: Props) {
   );
 
   const headerLevels = useChromeHeaderLevels();
+  const administrationSectionNav = useAdministrationSectionNav(state.pageNav ?? state.sectionNav.node);
+  const showAdministrationSectionNav = Boolean(
+    administrationSectionNav && !state.chromeless && !isScopesDashboardsOpen
+  );
   const styles = useStyles2(getStyles, headerLevels, getChromeHeaderLevelHeight(), visualRefreshEnabled);
   const contentSizeStyles = useStyles2(getContentSizeStyles, extensionSidebarWidth, floatingExtensionSidebarWidth);
   const dragStyles = useStyles2(getDragStyles);
@@ -197,10 +203,21 @@ export function AppChrome({ children }: Props) {
               </ErrorBoundaryAlert>
             </div>
           )}
+          {administrationSectionNav && showAdministrationSectionNav && (
+            <div
+              className={cx(styles.sectionNavContainer, {
+                [styles.sectionNavContainerDocked]: menuDockedAndOpen,
+              })}
+            >
+              <AdministrationSectionNav model={administrationSectionNav} />
+            </div>
+          )}
           <main
             className={cx(styles.pageContainer, {
               [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
               [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
+              [styles.pageContainerSectionNav]: showAdministrationSectionNav && !menuDockedAndOpen,
+              [styles.pageContainerSectionNavDocked]: showAdministrationSectionNav && menuDockedAndOpen,
               [styles.pageContainerWithSidebar]: !state.chromeless && isExtensionSidebarOpen,
               // Floating takes no width from the page, so the docked width is 0.
               [contentSizeStyles.contentWidth]:
@@ -306,6 +323,35 @@ function useResponsiveDockedMegaMenu(chrome: AppChromeService) {
 }
 
 const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: number, visualRefreshEnabled: boolean) => {
+  // The chrome draws the right half of the card, so it is there while a lazy page is still loading.
+  // The page's own card is flattened to sit inside it.
+  const pageCardJoinedToNav = {
+    background: 'transparent',
+    border: 'none',
+    borderRadius: 'unset',
+    margin: `0 calc(${theme.spacing(0.5)} + 1px) calc(${theme.spacing(0.5)} + 1px) 0`,
+  } as const;
+
+  const pageCardFrame = (left: string) => ({
+    isolation: 'isolate' as const,
+    position: 'relative' as const,
+    '&::before': {
+      content: '""',
+      position: 'absolute' as const,
+      zIndex: -1,
+      top: 0,
+      bottom: theme.spacing(0.5),
+      left,
+      right: theme.spacing(0.5),
+      background: theme.colors.background.page,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderLeft: 'none',
+      borderRadius: theme.shape.radius.lg,
+      borderBottomLeftRadius: 'unset',
+      borderTopLeftRadius: 'unset',
+    },
+  });
+
   return {
     content: css({
       label: 'page-content',
@@ -373,6 +419,56 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       overflow: 'hidden',
       position: 'relative',
     }),
+    sectionNavContainer: css(
+      {
+        position: 'fixed',
+        top: headerLevels * headerHeight,
+        bottom: 0,
+        left: 0,
+        width: SECTION_NAV_WIDTH,
+        overflowY: 'auto',
+        zIndex: 1,
+        borderRight: `1px solid ${theme.colors.border.weak}`,
+      },
+      // Forms the left edge of the page card, so the card's own left border and corners are dropped (see pageContainerSectionNav)
+      visualRefreshEnabled && {
+        bottom: theme.spacing(0.5),
+        left: theme.spacing(0.5),
+        background: theme.colors.background.page,
+        border: `1px solid ${theme.colors.border.weak}`,
+        borderRadius: theme.shape.radius.lg,
+        borderBottomRightRadius: 'unset',
+        borderTopRightRadius: 'unset',
+      }
+    ),
+    sectionNavContainerDocked: css(
+      {
+        left: MENU_WIDTH,
+      },
+      visualRefreshEnabled && {
+        left: `calc(${MENU_WIDTH} + ${theme.spacing(0.5)})`,
+      }
+    ),
+    pageContainerSectionNav: css(
+      {
+        paddingLeft: SECTION_NAV_WIDTH,
+      },
+      visualRefreshEnabled && {
+        paddingLeft: `calc(${SECTION_NAV_WIDTH} + ${theme.spacing(0.5)})`,
+        ...pageCardFrame(`calc(${SECTION_NAV_WIDTH} + ${theme.spacing(0.5)})`),
+        '& [data-page-card]': pageCardJoinedToNav,
+      }
+    ),
+    pageContainerSectionNavDocked: css(
+      {
+        paddingLeft: `calc(${MENU_WIDTH} + ${SECTION_NAV_WIDTH})`,
+      },
+      visualRefreshEnabled && {
+        paddingLeft: `calc(${MENU_WIDTH} + ${SECTION_NAV_WIDTH} + ${theme.spacing(0.5)})`,
+        ...pageCardFrame(`calc(${MENU_WIDTH} + ${SECTION_NAV_WIDTH} + ${theme.spacing(0.5)})`),
+        '& [data-page-card]': pageCardJoinedToNav,
+      }
+    ),
     pageContainerMenuDocked: css({
       paddingLeft: MENU_WIDTH,
     }),

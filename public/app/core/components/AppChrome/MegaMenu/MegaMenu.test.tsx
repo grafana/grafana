@@ -208,6 +208,64 @@ describe('MegaMenu', () => {
     );
   });
 
+  describe('administration section nav', () => {
+    const administrationTree: NavModelItem[] = [
+      { id: 'dashboards', text: 'Dashboards', url: '/dashboards' },
+      {
+        id: 'cfg',
+        text: 'Administration',
+        url: '/admin',
+        icon: 'cog',
+        children: [
+          {
+            id: 'cfg/general',
+            text: 'General',
+            url: '/admin/general',
+            children: [{ id: 'org-settings', text: 'Default preferences', url: '/org' }],
+          },
+          {
+            id: 'cfg/access',
+            text: 'Users and access',
+            url: '/admin/access',
+            children: [{ id: 'global-users', text: 'Users', url: '/admin/users' }],
+          },
+        ],
+      },
+    ];
+
+    it.each([false, true])(
+      'shows Administration as a single row without destinations when the flag is on, regardless of the refresh flag: refresh %s',
+      async (refresh) => {
+        setTestFlags({ 'grafana.navigationAdminSubNav': true, 'grafana.navigationInfoArchRefresh': refresh });
+        renderMegaMenu({ navBarTree: administrationTree });
+
+        expect(await screen.findByRole('link', { name: 'Administration' })).toHaveAttribute('href', '/admin');
+        expect(screen.queryByRole('button', { name: 'Expand section: Administration' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'General' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Users and access' })).not.toBeInTheDocument();
+      }
+    );
+
+    it('lists its destinations as before when the flag is off', async () => {
+      setTestFlags({ 'grafana.navigationAdminSubNav': false });
+      const { user } = renderMegaMenu({ navBarTree: administrationTree });
+
+      await user.click(await screen.findByRole('button', { name: 'Expand section: Administration' }));
+
+      expect(screen.getByRole('link', { name: 'General' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Users and access' })).toBeInTheDocument();
+    });
+
+    it('leaves other sections with destinations alone when the flag is on', async () => {
+      setTestFlags({ 'grafana.navigationAdminSubNav': true });
+      const { user } = renderMegaMenu({ navBarTree: nestedNavTree });
+
+      await user.click(await screen.findByRole('button', { name: 'Expand section: Section name' }));
+
+      expect(await screen.findByRole('link', { name: 'Child1' })).toBeInTheDocument();
+    });
+  });
+
   describe('customisation', () => {
     beforeEach(() => {
       setTestFlags({ [CUSTOMISE_FLAG]: true });
@@ -351,6 +409,28 @@ describe('MegaMenu', () => {
 
     describe('pinning', () => {
       const pinnedRegion = () => within(screen.getByRole('list', { name: 'Pinned items' }));
+
+      it('keeps a pinned administration page in the pinned box while Administration is a single row', async () => {
+        setTestFlags({ [CUSTOMISE_FLAG]: true, 'grafana.navigationAdminSubNav': true });
+        renderMegaMenu({ bookmarkUrls: ['/admin/settings'] });
+
+        await screen.findByRole('list', { name: 'Pinned items' });
+        expect(pinnedRegion().getByRole('link', { name: /Settings/ })).toBeInTheDocument();
+        expect(pinnedRegion().getByText('Administration')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Expand section: Administration' })).not.toBeInTheDocument();
+      });
+
+      it('lets Administration be hidden while it is a single row', async () => {
+        setTestFlags({ [CUSTOMISE_FLAG]: true, 'grafana.navigationAdminSubNav': true });
+        const { user } = renderMegaMenu();
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        await user.click(await screen.findByRole('button', { name: 'Hide Administration' }));
+        await user.click(await screen.findByRole('button', { name: 'Done' }));
+
+        expect(getStoredHiddenItems()).toEqual(['cfg']);
+        expect(screen.queryByRole('link', { name: 'Administration' })).not.toBeInTheDocument();
+      });
 
       it('shows a pinned child as a breadcrumb in the grey box, and keeps it in the nav', async () => {
         const { user } = renderMegaMenu({ bookmarkUrls: ['/playlists'] });

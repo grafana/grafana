@@ -13311,6 +13311,9 @@
     }
   },
   "navigation": {
+    "administration-section-nav": {
+      "label": "Administration"
+    },
     "breadcrumbs": {
       "aria-label": "Breadcrumbs"
     },

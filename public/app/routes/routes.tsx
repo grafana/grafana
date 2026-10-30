@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect } from 'react';
 import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
-import { isTruthy } from '@grafana/data';
+import { isTruthy, locationUtil } from '@grafana/data';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
@@ -20,6 +20,7 @@ import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
 import { AccessControlAction } from 'app/types/accessControl';
 import { DashboardRoutes } from 'app/types/dashboard';
+import { useSelector } from 'app/types/store';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { type RouteDescriptor } from '../core/navigation/types';
@@ -314,7 +315,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/general',
-      component: () => <NavLandingPage navId="cfg/general" />,
+      component: () => <AdministrationLanding navId="cfg/general" />,
     },
     {
       path: '/admin/plugins',
@@ -406,7 +407,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     // ADMIN
     {
       path: '/admin',
-      component: () => <NavLandingPage navId="cfg" header={<ConnectionsRedirectNotice />} />,
+      component: () => <AdministrationLanding navId="cfg" header={<ConnectionsRedirectNotice />} />,
     },
     {
       path: '/admin/authentication',
@@ -711,6 +712,19 @@ function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
   ];
+}
+
+// Administration's section nav lists Default preferences first, and the nav tree
+// then points Administration and General there instead of at a landing page
+function AdministrationLanding({ navId, header }: { navId: string; header?: React.ReactNode }) {
+  const { pathname } = useLocation();
+  const url = useSelector((state) => state.navIndex[navId]?.url);
+  const target = url ? locationUtil.stripBaseFromUrl(url) : undefined;
+
+  if (target && target !== pathname) {
+    return <Navigate replace to={target} />;
+  }
+  return <NavLandingPage navId={navId} header={header} />;
 }
 
 function DataSourceDashboardRoute() {

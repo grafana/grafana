@@ -3170,6 +3170,14 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
+			Name:        "grafana.navigationAdminSubNav",
+			Description: "Shows Administration as a single row in the mega menu, with its destinations in the section nav",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{Go: true, React: true},
+		},
+		{
 			Name:        "grafana.exploreMetricsSidebar",
 			Description: "Enables the sidebar in Explore metrics (Metrics Drilldown)",
 			Stage:       FeatureStageExperimental,

@@ -64,6 +64,7 @@ export const Page: PageType = ({
         resolvedBg === 'gradient' && styles.wrapperGradient,
         className
       )}
+      data-page-card=""
       {...otherProps}
     >
       {(layout === PageLayoutType.Standard || layout === PageLayoutType.Home) && (
