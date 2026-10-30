@@ -98,3 +98,18 @@ and use the [add-e2e-tests skill](../../../../.agents/skills/add-e2e-tests/SKILL
 <!-- Maintainers: Add recurring mistakes observed in this area, why they cause problems,
 and a link to a local example of the correct approach. Keep general rules and testing
 conventions in their existing guides and skills. -->
+
+### A remounted component deactivates its scene object
+
+`activate()` on a scene object is ref-counted. When a scene object's component
+unmounts and nothing else keeps it active, Scenes deactivates the object and clears
+its subscriptions. A component remounts when the same element renders under a
+different parent, for example `isFull ? <A>{viz}</A> : <B>{viz}</B>`. In panel edit,
+the options pane outlives the preview, so a preview remount can stop panel options
+from responding without any error.
+
+If a layout change can move a scene object's component to a new parent, keep the
+object active from its owner for the owner's lifetime. Check the owner even when your
+change does not touch it. See the activation handler in
+[PanelEditor.tsx](panel-edit/PanelEditor.tsx) and its remount test in
+[PanelEditor.test.ts](panel-edit/PanelEditor.test.ts).
