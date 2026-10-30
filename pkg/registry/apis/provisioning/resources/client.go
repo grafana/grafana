@@ -15,6 +15,8 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
+	"github.com/grafana/grafana-app-sdk/app"
+
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
@@ -71,6 +73,10 @@ type SupportedResource struct {
 	schema.GroupKind
 	// Capabilities is the set of declared capabilities (see Capability* constants).
 	Capabilities sets.Set[string]
+	// Resource is the plural resource name from the app manifest, when one declares the kind.
+	Resource string
+	// UI is the display information from the app manifest, when one declares it.
+	UI *app.ManifestVersionKindUI
 }
 
 // IsActive reports whether the resource is acted on by the pipeline (the default).
@@ -165,9 +171,8 @@ type ClientFactory interface {
 }
 
 type clientFactory struct {
-	clientsProvider clientsProvider
-	// supportedResources is the merged base + registered set, computed once.
-	supportedResources []SupportedResource
+	clientsProvider    clientsProvider
+	supportedResources SupportedResourcesFunc
 }
 
 // TODO: Rename to NamespacedClients
@@ -263,9 +268,15 @@ func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.G
 // the enabled subset via SupportedResources(). When none is provided it falls back to the
 // static SupportedProvisioningResources base set.
 func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...SupportedResource) ClientFactory {
+	return NewClientFactoryWithResources(configProvider, StaticSupportedResources(supported...))
+}
+
+// NewClientFactoryWithResources creates a ClientFactory that reads the supported set each
+// time it creates clients.
+func NewClientFactoryWithResources(configProvider apiserver.RestConfigProvider, supported SupportedResourcesFunc) ClientFactory {
 	return &clientFactory{
 		clientsProvider:    newSingleAPIClients(configProvider),
-		supportedResources: activeResources(defaultSupportedResources(supported)),
+		supportedResources: supported,
 	}
 }
 
@@ -333,7 +344,7 @@ func (f *clientFactory) Clients(ctx context.Context, namespace string) (Resource
 	return &resourceClients{
 		namespace:          namespace,
 		clientsProvider:    f.clientsProvider,
-		supportedResources: f.supportedResources,
+		supportedResources: activeResources(defaultSupportedResources(f.supportedResources(ctx))),
 		byKind:             make(map[schema.GroupVersionKind]*clientInfo),
 		byResource:         make(map[schema.GroupVersionResource]*clientInfo),
 	}, nil

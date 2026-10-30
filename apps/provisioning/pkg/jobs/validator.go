@@ -360,18 +360,21 @@ func validateMoveJobOptions(opts *provisioning.MoveJobOptions) field.ErrorList {
 // feature flag implementation, which lives in the main Grafana module.
 type PerfTestingEnabledFunc func(ctx context.Context) bool
 
+// SupportedResourcesFunc returns the resource types provisioning can manage at the time of the call.
+type SupportedResourcesFunc func(ctx context.Context) []provisioning.SupportedResource
+
 // AdmissionValidator handles validation for Job resources during admission
 type AdmissionValidator struct {
-	// supportedResources is the configured set of resource types provisioning can manage,
+	// supportedResources is the set of resource types provisioning can manage,
 	// used to validate export-style (push and migrate) job options.
-	supportedResources []provisioning.SupportedResource
+	supportedResources SupportedResourcesFunc
 	perfTestingEnabled PerfTestingEnabledFunc
 }
 
 // NewAdmissionValidator creates a new job admission validator. supportedResources is the
 // configured set of resource types provisioning can manage. perfTestingEnabled gates
 // whether synthetic "test" jobs are allowed.
-func NewAdmissionValidator(supportedResources []provisioning.SupportedResource, perfTestingEnabled PerfTestingEnabledFunc) *AdmissionValidator {
+func NewAdmissionValidator(supportedResources SupportedResourcesFunc, perfTestingEnabled PerfTestingEnabledFunc) *AdmissionValidator {
 	return &AdmissionValidator{supportedResources: supportedResources, perfTestingEnabled: perfTestingEnabled}
 }
 
@@ -405,7 +408,11 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		)
 	}
 
-	return ValidateJob(job, v.supportedResources)
+	var supported []provisioning.SupportedResource
+	if v.supportedResources != nil {
+		supported = v.supportedResources(ctx)
+	}
+	return ValidateJob(job, supported)
 }
 
 func validateAuthor(ctx context.Context, a admission.Attributes, job *provisioning.Job) error {

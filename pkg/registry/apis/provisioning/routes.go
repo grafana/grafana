@@ -171,13 +171,21 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	availableResources := make([]provisioning.SupportedResource, 0, len(b.supportedResources))
-	for _, r := range b.supportedResources {
-		availableResources = append(availableResources, provisioning.SupportedResource{
+	supportedResources := b.supportedResources(ctx)
+	availableResources := make([]provisioning.SupportedResource, 0, len(supportedResources))
+	for _, r := range supportedResources {
+		available := provisioning.SupportedResource{
 			Group:    r.Group,
 			Kind:     r.Kind,
 			Disabled: !r.IsActive(),
-		})
+			Resource: r.Resource,
+		}
+		if r.UI != nil {
+			available.Label = r.UI.Label
+			available.PluralLabel = r.UI.PluralLabel
+			available.Icon = r.UI.Icon
+		}
+		availableResources = append(availableResources, available)
 	}
 
 	settings := provisioning.RepositoryViewList{
