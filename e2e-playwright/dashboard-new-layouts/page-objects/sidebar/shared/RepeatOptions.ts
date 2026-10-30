@@ -14,7 +14,8 @@ export class RepeatOptions extends PageObject {
     // 'repeat-options' in layout-default/DashboardGridItemEditor.tsx,
     // layout-auto-grid/AutoGridItemEditor.tsx and layout-tabs/TabItemEditor.tsx;
     // 'dash-row-repeat' in layout-rows/RowItemEditor.tsx
-    private readonly groupId: 'repeat-options' | 'dash-row-repeat'
+    private readonly groupId: 'repeat-options' | 'dash-row-repeat',
+    private readonly container = args.getByGrafanaSelector(args.selectors.components.Sidebar.container)
   ) {
     super(args);
   }
@@ -31,6 +32,12 @@ export class RepeatOptions extends PageObject {
     await test.step('Disable repeat by variable', async () => {
       await this.selectRepeatByVariableOption('Disable repeating');
     });
+  }
+
+  getRepeatByVariableSelect(): Locator {
+    return this.container
+      .getByTestId(this.selectors.components.PanelEditor.OptionsPane.fieldLabel(`${this.groupId} Repeat by variable`))
+      .getByRole('combobox');
   }
 
   /**
@@ -74,7 +81,7 @@ export class RepeatOptions extends PageObject {
   /** Expands the Repeat options group when it is collapsed */
   private async ensureExpanded() {
     const toggle = this.getByGrafanaSelector(this.selectors.components.OptionsGroup.toggle(this.groupId), {
-      root: this.getByGrafanaSelector(this.selectors.components.Sidebar.container),
+      root: this.container,
     });
 
     // the toggle collapses an already-open group (expanded state persists in local storage), so only click when collapsed
@@ -89,11 +96,7 @@ export class RepeatOptions extends PageObject {
   private async selectRepeatByVariableOption(optionLabel: string) {
     await this.ensureExpanded();
 
-    await this.getByGrafanaSelector(
-      this.selectors.components.PanelEditor.OptionsPane.fieldLabel(`${this.groupId} Repeat by variable`)
-    )
-      .getByRole('combobox')
-      .click();
+    await this.getRepeatByVariableSelect().click();
 
     await this.page.getByRole('listbox').getByRole('option', { name: optionLabel, exact: true }).click();
   }
