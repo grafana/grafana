@@ -1,6 +1,7 @@
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useSyncExternalStore } from 'react';
 
 import { locationUtil, type NavModelItem } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaNavigationAdminSubNav } from '@grafana/runtime/internal';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { NavID } from 'app/core/navtree/constants';
@@ -36,6 +37,15 @@ function findByPath(items: NavModelItem[], pathname: string): NavModelItem | und
   return best;
 }
 
+function subscribeToPathname(onChange: () => void) {
+  const subscription = locationService.getLocationObservable().subscribe(onChange);
+  return () => subscription.unsubscribe();
+}
+
+function getPathname() {
+  return locationService.getLocation().pathname;
+}
+
 /**
  * The model for the section nav shown beside Administration pages, or undefined
  * when it should not show: flag off, a page outside Administration, or a screen
@@ -49,7 +59,8 @@ export function useAdministrationSectionNav(
   const enabled = useFlagGrafanaNavigationAdminSubNav();
   const fitsSidePanel = useMediaQueryMinWidth('md');
   const navTree = useSelector((state) => state.navBarTree);
-  const { pathname } = useLocation();
+
+  const pathname = useSyncExternalStore(subscribeToPathname, getPathname);
 
   const administration = navTree.find((item) => item.id === NavID.cfg);
   if (!enabled || !fitsSidePanel || !administration) {
