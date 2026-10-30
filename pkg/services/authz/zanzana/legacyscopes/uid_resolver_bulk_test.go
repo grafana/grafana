@@ -204,7 +204,7 @@ func TestBulkUIDResolutionBoundsMissingGets(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 		http.NotFound(w, req)
 	})
-	var names []string
+	names := make([]string, 0, 25)
 	for i := range 25 {
 		names = append(names, fmt.Sprintf("missing-%d", i))
 	}
