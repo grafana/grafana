@@ -729,7 +729,7 @@ Use only synthetic, non-sensitive test data when enabling recording. Recordings 
 
 #### `enabled`
 
-Set to `true` to enable recording. Default is `false`. A non-empty `recording_token` is also required, and the request host must match `allowed_hosts` when configured.
+Set to `true` to enable recording. Default is `false`. A non-empty `recording_token` is also required.
 Override with `GF_METICULOUS_ENABLED`.
 
 #### `production`
@@ -744,12 +744,7 @@ The Meticulous project's browser-visible recording token, not its secret API tok
 Override with `GF_METICULOUS_RECORDING_TOKEN`.
 This replaces `[analytics] meticulous_ai_recording_token`.
 
-#### `allowed_hosts`
-
-A comma-separated list of exact request `Host` values, including ports when present, such as `localhost:3000,127.0.0.1:3000`.
-Whitespace around entries is ignored. Wildcards and suffix matching aren't supported.
-Default is empty, which permits any host when recording is enabled. Configure an explicit list for a shared frontend service.
-Override with `GF_METICULOUS_ALLOWED_HOSTS`.
+When a settings service is configured, the frontend service applies the stack's `[meticulous]` settings to each request. Keep `enabled = false` in shared process configuration and enable recording only in the intended stack's configuration. If the stack settings can't be fetched, the process configuration is used. Without a settings service, local INI or environment settings apply to all requests served by that process.
 
 <hr />
 

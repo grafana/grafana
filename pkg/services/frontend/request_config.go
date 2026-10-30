@@ -22,6 +22,7 @@ type FSRequestConfig struct {
 
 	// full settings object behind feature flag
 	FullFrontendSettings *dtos.FrontendSettingsDTO
+	Meticulous           setting.MeticulousSettings
 
 	CSPEnabled            bool
 	CSPTemplate           string
@@ -80,6 +81,7 @@ func NewFSRequestConfig(ctx context.Context, cfg *setting.Cfg, license licensing
 
 	requestConfig := FSRequestConfig{
 		FSFrontendSettings:        frontendSettings,
+		Meticulous:                cfg.Meticulous,
 		CSPEnabled:                cfg.CSPEnabled,
 		CSPTemplate:               cfg.CSPTemplate,
 		CSPReportOnlyEnabled:      cfg.CSPReportOnlyEnabled,
@@ -164,6 +166,7 @@ func (c *FSRequestConfig) ApplyOverrides(settings *ini.File, logger log.Logger, 
 	// TODO: We should apply all overrides for values in FSRequestConfig
 	applyStringSlice(settings, "security", "allow_embedding_hosts", &c.AllowEmbeddingHosts, logger)
 	applyStringSlice(settings, "security", "form_action_additional_hosts", &c.FormActionAdditionalHosts, logger)
+	c.applyMeticulousOverrides(settings, logger)
 
 	if fullFrontendSettingsEnabled && c.FullFrontendSettings == nil {
 		// Guard against a misconfigured call: when the flag is enabled the caller is
@@ -223,6 +226,12 @@ func applyString(settings *ini.File, sectionName, keyName string, target *string
 			"key", keyName,
 			"value", *target)
 	}
+}
+
+func (c *FSRequestConfig) applyMeticulousOverrides(settings *ini.File, logger log.Logger) {
+	applyBool(settings, "meticulous", "enabled", &c.Meticulous.Enabled, logger)
+	applyBool(settings, "meticulous", "production", &c.Meticulous.Production, logger)
+	applyString(settings, "meticulous", "recording_token", &c.Meticulous.RecordingToken, logger)
 }
 
 func applyBool(settings *ini.File, sectionName, keyName string, target *bool, logger log.Logger) {

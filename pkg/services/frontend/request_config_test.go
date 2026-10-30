@@ -3,6 +3,7 @@ package frontend
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http/httptest"
 	"testing"
 
@@ -400,4 +401,27 @@ func TestNewFSRequestConfig(t *testing.T) {
 		assert.Equal(t, "https://cdn.example.com", config.FullFrontendSettings.PluginsCDNBaseURL)
 		assert.Equal(t, []string{"react-router-dom", "react-router"}, config.FullFrontendSettings.PluginImportTelemetryPackages)
 	})
+}
+
+func TestFSRequestConfig_MeticulousOverrides(t *testing.T) {
+	for _, reducedBootData := range []bool{false, true} {
+		for _, tc := range []struct {
+			name, ini string
+			want      setting.MeticulousSettings
+		}{
+			{"missing", "", setting.MeticulousSettings{Enabled: true, Production: true, RecordingToken: "base-token"}},
+			{"explicit disable", "[meticulous]\nenabled = false\n", setting.MeticulousSettings{Production: true, RecordingToken: "base-token"}},
+			{"explicit empty token", "[meticulous]\nrecording_token =\n", setting.MeticulousSettings{Enabled: true, Production: true}},
+			{"production override", "[meticulous]\nproduction = false\nrecording_token = tenant-token\n", setting.MeticulousSettings{Enabled: true, RecordingToken: "tenant-token"}},
+			{"invalid bool preserves base", "[meticulous]\nproduction = invalid\n", setting.MeticulousSettings{Enabled: true, Production: true, RecordingToken: "base-token"}},
+		} {
+			t.Run(tc.name+fmt.Sprint(reducedBootData), func(t *testing.T) {
+				config := FSRequestConfig{Meticulous: setting.MeticulousSettings{Enabled: true, Production: true, RecordingToken: "base-token"}}
+				settings, err := ini.Load([]byte(tc.ini))
+				require.NoError(t, err)
+				config.ApplyOverrides(settings, log.NewNopLogger(), reducedBootData)
+				assert.Equal(t, tc.want, config.Meticulous)
+			})
+		}
+	}
 }
