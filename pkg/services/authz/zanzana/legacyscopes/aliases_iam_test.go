@@ -13,8 +13,6 @@ import (
 
 	"github.com/grafana/authlib/types"
 
-	"github.com/grafana/authlib/types"
-
 	"github.com/stretchr/testify/require"
 	clientrest "k8s.io/client-go/rest"
 
