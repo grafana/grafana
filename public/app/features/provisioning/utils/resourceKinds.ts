@@ -16,6 +16,7 @@ import { getIconForKind, queryResultToViewItem } from 'app/features/search/servi
 import { type AppDispatch } from 'app/store/configureStore';
 
 import { isManaged } from './managedResource';
+import { getManifestKinds } from './manifestKinds';
 
 /**
  * A resource of some kind enumerated from the instance, in the minimal shape the
@@ -228,13 +229,45 @@ export interface ResourceKindInfo {
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
 /**
+ * The part of a kind the UI needs to show it. Registry kinds and the kinds that app manifests
+ * declare in the settings endpoint's `availableResources` both have it; only registry kinds have routes.
+ */
+export interface ResourceKindDisplay {
+  getLabel: () => string;
+  pluralLabel: () => string;
+  group: string;
+  kind: string;
+  resource: string;
+  itemType: string;
+  icon: IconName;
+  getRoute?: (name: string) => string;
+  listRoute?: string;
+  folderScoped?: boolean;
+}
+
+function allDisplayKinds(): ResourceKindDisplay[] {
+  const manifestKinds = getManifestKinds()
+    .filter((m) => !allKindInfos.some((info) => info.group === m.group && info.kind === m.kind))
+    .map((m) => ({
+      getLabel: () => m.label,
+      pluralLabel: () => m.pluralLabel,
+      group: m.group,
+      kind: m.kind,
+      resource: m.resource,
+      itemType: m.label,
+      icon: m.icon,
+    }));
+  return [...allKindInfos, ...manifestKinds];
+}
+
+/**
  * Builds the in-app route to view a repository's resources of the given kind.
  * Folder-scoped kinds resolve to the repository's own folder (named after the
  * repository) for folder-target repos; everything else — non-folder targets, a
  * repo missing its name, or non-folder-scoped kinds — resolves to the kind's
  * collection page.
  */
-export function getRepositoryRoute(info: ResourceKindInfo, repo: Repository): string {
+export function getRepositoryRoute(info: ResourceKindDisplay, repo: Repository): string | undefined {
   const repoName = repo.metadata?.name;
   if (info.folderScoped && repo.spec?.sync.target === 'folder' && repoName) {
     // The repository's folder is named after the repo, so reuse the folder kind's
@@ -245,8 +278,8 @@ export function getRepositoryRoute(info: ResourceKindInfo, repo: Repository): st
 }
 
 /** Look up a kind by its plural resource name (`ResourceListItem.resource`). */
-export function getKindInfoByResource(resource?: string): ResourceKindInfo | undefined {
-  return allKindInfos.find((info) => info.resource === resource);
+export function getKindInfoByResource(resource?: string): ResourceKindDisplay | undefined {
+  return allDisplayKinds().find((info) => info.resource === resource);
 }
 
 /**
@@ -254,8 +287,8 @@ export function getKindInfoByResource(resource?: string): ResourceKindInfo | und
  * which has no backing kind and resolves to `undefined`) so callers don't depend on the `ItemType`
  * union and create an import cycle with `../types`.
  */
-export function getKindInfoByItemType(itemType: string): ResourceKindInfo | undefined {
-  return allKindInfos.find((info) => info.itemType === itemType);
+export function getKindInfoByItemType(itemType: string): ResourceKindDisplay | undefined {
+  return allDisplayKinds().find((info) => info.itemType === itemType);
 }
 
 /**
@@ -282,13 +315,22 @@ export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceK
   return allKindInfos.find((info) => (!group || info.group === group) && (!kind || info.kind === kind));
 }
 
+/** Look up how to show a kind from its API group and Kind, including kinds outside the registry. */
+export function getKindDisplayByGroupKind(group?: string, kind?: string): ResourceKindDisplay | undefined {
+  return allDisplayKinds().find((info) => info.group === group && info.kind === kind);
+}
+
 /**
  * Look up a kind from a resource-stat entry (`ResourceCount`), which carries both
  * an API `group` and a plural `resource` name. The plural resource uniquely
  * identifies the kind even when kinds share a group, so we match on it first and
  * fall back to a group-only match for stats that omit the resource.
  */
-export function getKindInfoByStat(stat: { group?: string; resource?: string }): ResourceKindInfo | undefined {
+export function getKindInfoByStat(stat: { group?: string; resource?: string }): ResourceKindDisplay | undefined {
+  const exact = allDisplayKinds().find((info) => info.group === stat.group && info.resource === stat.resource);
+  if (exact) {
+    return exact;
+  }
   const byResource = allKindInfos.find((info) => info.resource === stat.resource);
   if (byResource) {
     return byResource;
