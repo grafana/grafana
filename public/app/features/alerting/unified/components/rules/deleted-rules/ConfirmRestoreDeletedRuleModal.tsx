@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { noop } from 'lodash';
 import { type ComponentProps } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
@@ -111,7 +110,7 @@ function RulePreview({ rule }: { rule: RulerRuleDTO }) {
         height="600px"
         language="json"
         value={JSON.stringify(rule, null, 4)}
-        onChange={noop}
+        onChange={() => {}}
         readOnly
         aria-label={t('alerting.deleted-rules.restore-modal.preview-aria-label', 'Deleted alert rule JSON')}
       />
