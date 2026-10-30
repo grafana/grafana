@@ -1,6 +1,6 @@
 import { act } from '@testing-library/react';
 
-import { locationService } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
@@ -528,4 +528,207 @@ it('applyDashboardSpec preserves Composer mode across the swap and its undo', ()
   );
   expect(getDashboardMode(scene.state)).toBe('composer');
   expect(session.signal.aborted).toBe(false);
+});
+
+describe('telemetry', () => {
+  let ended: jest.SpyInstance;
+  let applied: jest.SpyInstance;
+  let periodEnded: jest.SpyInstance;
+
+  beforeEach(() => {
+    jest.mocked(reportInteraction).mockClear();
+    ended = jest.spyOn(DashboardInteractions, 'composerSessionEnded');
+    applied = jest.spyOn(DashboardInteractions, 'composerSpecApplied');
+    periodEnded = jest.spyOn(DashboardInteractions, 'editPeriodEnded');
+  });
+
+  afterEach(() => {
+    [ended, applied, periodEnded].forEach((spy) => spy.mockRestore());
+  });
+
+  const exitTriggers = () =>
+    jest
+      .mocked(reportInteraction)
+      .mock.calls.filter(
+        ([name, properties]) => name === 'dashboards_mode_changed' && properties?.previous_mode === 'composer'
+      )
+      .map(([, properties]) => properties?.trigger);
+
+  it.each([
+    ['the plugin exits', (session: ComposerSession) => session.exit(), 'plugin_exit', 'composer_plugin_exit'],
+    [
+      'the mode picker leaves for Viewing',
+      (_: ComposerSession, scene: DashboardScene) => scene.switchFromComposer('view'),
+      'mode_picker',
+      'picker',
+    ],
+    [
+      'the mode picker leaves for Editing',
+      (_: ComposerSession, scene: DashboardScene) => scene.switchFromComposer('edit'),
+      'mode_picker',
+      'picker',
+    ],
+    [
+      'a mode is picked',
+      (_: ComposerSession, scene: DashboardScene) => scene.setDashboardMode('edit', 'picker'),
+      'mode_picker',
+      'picker',
+    ],
+    [
+      'the full editor opens',
+      (_: ComposerSession, scene: DashboardScene) => scene.openFullEditor(),
+      'manual_edit',
+      'manual_change',
+    ],
+    [
+      'an edit panel URL opens',
+      (_: ComposerSession, scene: DashboardScene) => scene.urlSync?.updateFromUrl({ editPanel: '1' }),
+      'manual_edit',
+      'manual_change',
+    ],
+    [
+      'the panel menu edits',
+      (_: ComposerSession, scene: DashboardScene) => scene.setDashboardMode('edit', 'panel_menu'),
+      'manual_edit',
+      'manual_change',
+    ],
+    [
+      'the scene deactivates',
+      () => {
+        deactivate();
+        deactivate = () => {};
+      },
+      'navigation',
+      'navigation',
+    ],
+  ])('reports why the session ended when %s, once, and the mode change it caused', (_, leave, reason, trigger) => {
+    const scene = setup();
+    const session = enter(scene);
+    const editSessionId = scene.getEditSessionId();
+
+    leave(session, scene);
+    session.exit();
+
+    expect(ended).toHaveBeenCalledTimes(1);
+    expect(ended).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dashboard_uid: 'composer-test',
+        edit_session_id: editSessionId,
+        composer_session_id: session.sessionId,
+        reason,
+      })
+    );
+    expect(exitTriggers()).toEqual([trigger]);
+  });
+
+  it('reports the flag turning off', async () => {
+    const scene = setup();
+    const session = enter(scene);
+
+    await act(async () => setTestFlags({ ...COMPOSER_FLAGS, 'grafana.dashboardComposer': false }));
+
+    expect(session.isClosed).toBe(true);
+    expect(ended).toHaveBeenCalledWith(expect.objectContaining({ reason: 'flag_off' }));
+    expect(exitTriggers()).toEqual(['composer_flag_off']);
+  });
+
+  it('reports a session a discard ends as a manual edit', () => {
+    const scene = setup();
+    enter(scene);
+    scene.exitEditMode({ skipConfirm: true });
+    expect(ended).toHaveBeenCalledWith(expect.objectContaining({ reason: 'manual_edit' }));
+  });
+
+  it('keeps the enter trigger', () => {
+    const scene = setup();
+    enter(scene);
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'dashboards_mode_changed',
+      expect.objectContaining({ previous_mode: 'view', mode: 'composer', trigger: 'composer' })
+    );
+  });
+
+  it('counts the applies the session made and refused, and reports what is left unsaved', async () => {
+    const scene = setup();
+    const session = enter(scene);
+    const { spec, revision } = await retitled(session, 'Counted');
+    expect((await session.applySpec(spec, { signal: live(), baseRevision: revision })).status).toBe('applied');
+    expect((await session.applySpec(spec, { signal: live(), baseRevision: revision })).status).toBe('stale');
+
+    session.exit();
+
+    expect(ended).toHaveBeenCalledWith({
+      dashboard_uid: 'composer-test',
+      edit_session_id: expect.any(String),
+      composer_session_id: session.sessionId,
+      reason: 'plugin_exit',
+      duration_s: expect.any(Number),
+      applies_applied: 1,
+      applies_refused: 1,
+      region_captures: 0,
+      has_unsaved_changes: true,
+    });
+  });
+
+  it('reports every apply with its outcome, after the outcome is decided', async () => {
+    const scene = setup();
+    const session = enter(scene);
+    const { spec, revision } = await retitled(session, 'Reported');
+    await session.applySpec(spec, { signal: live(), baseRevision: revision });
+    await session.applySpec(spec, { signal: live(), baseRevision: revision });
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- an invalid spec on purpose
+    await session.applySpec({ title: 42 } as unknown as typeof spec, { signal: live(), baseRevision: revision });
+    const aborted = new AbortController();
+    aborted.abort();
+    await session.applySpec(spec, { signal: aborted.signal, baseRevision: revision + 1 });
+    session.exit();
+    await session.applySpec(spec, { signal: live(), baseRevision: revision + 1 });
+
+    expect(applied.mock.calls.map(([properties]) => properties.status)).toEqual([
+      'applied',
+      'stale',
+      'invalid',
+      'aborted',
+      'closed',
+    ]);
+    expect(applied).toHaveBeenCalledWith({
+      dashboard_uid: 'composer-test',
+      composer_session_id: session.sessionId,
+      status: 'applied',
+      duration_ms: expect.any(Number),
+    });
+  });
+
+  it('attributes the edit period a session ran in to Composer, counting its sessions', () => {
+    const scene = setup();
+    enter(scene).exit();
+    scene.setDashboardMode('edit');
+    enter(scene).exit();
+
+    expect(scene.getEditSessionTracking()).toMatchObject({ composer_used: true, composer_sessions: 2 });
+    scene.exitEditMode({ skipConfirm: true });
+
+    expect(periodEnded).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: 'exited', composer_used: true, composer_sessions: 2 })
+    );
+  });
+
+  it('does not attribute an edit period without a session to Composer', () => {
+    const scene = setup();
+    scene.setDashboardMode('edit');
+    expect(scene.getEditSessionTracking()).toMatchObject({ composer_used: false, composer_sessions: 0 });
+  });
+
+  it('counts a session still open when a new edit period starts in it', async () => {
+    const scene = setup();
+    const session = enter(scene);
+    const first = scene.getEditSessionId();
+    // Ends the period, as a save does.
+    scene.exitEditMode({ skipConfirm: true, restoreInitialState: false });
+    expect(session.isClosed).toBe(true);
+    const next = enter(scene);
+    expect(scene.getEditSessionId()).not.toBe(first);
+    expect(scene.getEditSessionTracking()).toMatchObject({ composer_used: true, composer_sessions: 1 });
+    next.exit();
+  });
 });
