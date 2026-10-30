@@ -67,7 +67,7 @@ func TestIntegrationAlertRuleFolderConsumers_RoutedSQL(t *testing.T) {
 			if consumer == "folder reconciler" {
 				require.NoError(t, c.DeleteInFolder(context.Background(), 2, "target-folder"))
 			} else {
-				require.NoError(t, cleaner.NewContentsCleaner(service).DeleteInFolder(ctx, "org-2", "target-folder"))
+				require.NoError(t, cleaner.NewContentsCleaner(service).DeleteInFolder(ctx, "org-2", "target-folder", requester))
 			}
 			require.NotEmpty(t, requesters)
 			for _, got := range requesters {
@@ -111,8 +111,8 @@ func TestIntegrationAlertRuleFolderConsumers_ProviderFailure(t *testing.T) {
 			case "reconciler read", "reconciler delete":
 				err = c.DeleteInFolder(context.Background(), 2, "target-folder")
 			default:
-				ctx := identity.WithServiceIdentityContext(context.Background(), 2)
-				err = cleaner.NewContentsCleaner(service).DeleteInFolder(ctx, "org-2", "target-folder")
+				ctx, requester := identity.WithServiceIdentity(context.Background(), 2)
+				err = cleaner.NewContentsCleaner(service).DeleteInFolder(ctx, "org-2", "target-folder", requester)
 			}
 			require.ErrorIs(t, err, failure)
 			assertFolderConsumerRows(t, raw.SQLStore, "alert_rule", 2, []string{"target-folder", "other-folder"})
@@ -154,8 +154,8 @@ func TestIntegrationAlertRuleFolderConsumers_DefaultSQLJoinsTransaction(t *testi
 						return err
 					}
 				} else {
-					ctx = identity.WithServiceIdentityContext(ctx, 2)
-					if err := cleaner.NewContentsCleaner(service).DeleteInFolder(ctx, "org-2", "target-folder"); err != nil {
+					ctx, requester := identity.WithServiceIdentity(ctx, 2)
+					if err := cleaner.NewContentsCleaner(service).DeleteInFolder(ctx, "org-2", "target-folder", requester); err != nil {
 						return err
 					}
 				}
