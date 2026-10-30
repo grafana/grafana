@@ -2,6 +2,18 @@ package nats
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
+	"math/big"
+	"net"
+	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -10,6 +22,7 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
 	natsserver "github.com/nats-io/nats-server/v2/server"
+	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/require"
@@ -165,4 +178,198 @@ func (e *blockingTokenExchanger) Exchange(ctx context.Context, _ authnlib.TokenE
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}
+}
+
+type testCA struct {
+	cert *x509.Certificate
+	key  *ecdsa.PrivateKey
+}
+
+func newTestCA(t *testing.T, name string) *testCA {
+	t.Helper()
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+	tmpl := &x509.Certificate{
+		SerialNumber:          randomSerial(t),
+		Subject:               pkix.Name{CommonName: name},
+		NotBefore:             time.Now().Add(-time.Hour),
+		NotAfter:              time.Now().Add(time.Hour),
+		IsCA:                  true,
+		BasicConstraintsValid: true,
+		KeyUsage:              x509.KeyUsageCertSign,
+	}
+	der, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &key.PublicKey, key)
+	require.NoError(t, err)
+	cert, err := x509.ParseCertificate(der)
+	require.NoError(t, err)
+	return &testCA{cert: cert, key: key}
+}
+
+func (ca *testCA) pem() []byte {
+	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: ca.cert.Raw})
+}
+
+func (ca *testCA) pool() *x509.CertPool {
+	pool := x509.NewCertPool()
+	pool.AddCert(ca.cert)
+	return pool
+}
+
+// issue signs a leaf for 127.0.0.1 usable as both route server and client.
+func (ca *testCA) issue(t *testing.T, name string) tls.Certificate {
+	t.Helper()
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+	tmpl := &x509.Certificate{
+		SerialNumber: randomSerial(t),
+		Subject:      pkix.Name{CommonName: name},
+		NotBefore:    time.Now().Add(-time.Hour),
+		NotAfter:     time.Now().Add(time.Hour),
+		KeyUsage:     x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
+		IPAddresses:  []net.IP{net.ParseIP("127.0.0.1")},
+	}
+	der, err := x509.CreateCertificate(rand.Reader, tmpl, ca.cert, &key.PublicKey, ca.key)
+	require.NoError(t, err)
+	leaf, err := x509.ParseCertificate(der)
+	require.NoError(t, err)
+	return tls.Certificate{Certificate: [][]byte{der}, PrivateKey: key, Leaf: leaf}
+}
+
+func randomSerial(t *testing.T) *big.Int {
+	t.Helper()
+	n, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 62))
+	require.NoError(t, err)
+	return n
+}
+
+// writeTestClusterTLS writes a leaf signed by issuer plus a CA bundle of trusted.
+func writeTestClusterTLS(t *testing.T, issuer *testCA, trusted ...*testCA) setting.NATSClusterTLSSettings {
+	t.Helper()
+	dir := t.TempDir()
+	cfg := setting.NATSClusterTLSSettings{
+		CertPath: filepath.Join(dir, "tls.crt"),
+		KeyPath:  filepath.Join(dir, "tls.key"),
+		CAPath:   filepath.Join(dir, "ca.crt"),
+	}
+	writeTestKeyPair(t, cfg, issuer.issue(t, "grafana-nats"))
+	var bundle []byte
+	for _, ca := range trusted {
+		bundle = append(bundle, ca.pem()...)
+	}
+	writeFileAtomic(t, cfg.CAPath, bundle)
+	return cfg
+}
+
+func writeTestKeyPair(t *testing.T, cfg setting.NATSClusterTLSSettings, cert tls.Certificate) {
+	t.Helper()
+	writeFileAtomic(t, cfg.CertPath, certPEM(cert))
+	writeFileAtomic(t, cfg.KeyPath, keyPEM(t, cert))
+}
+
+func certPEM(cert tls.Certificate) []byte {
+	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Certificate[0]})
+}
+
+func keyPEM(t *testing.T, cert tls.Certificate) []byte {
+	t.Helper()
+	der, err := x509.MarshalPKCS8PrivateKey(cert.PrivateKey)
+	require.NoError(t, err)
+	return pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: der})
+}
+
+func writeFileAtomic(t *testing.T, path string, data []byte) {
+	t.Helper()
+	require.NoError(t, replaceFile(path, data))
+}
+
+// replaceFile swaps path in one step so the watcher never reads a partial file.
+func replaceFile(path string, data []byte) error {
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, data, 0o600); err != nil { //nolint:gosec // paths are under t.TempDir()
+		return err
+	}
+	return os.Rename(tmp, path)
+}
+
+// hangGuard bounds event waits so a regression fails instead of hanging.
+const hangGuard = 15 * time.Second
+
+// logHook is a logger that hands warnings and errors to the test.
+type logHook struct {
+	log.Logger
+	msgs chan string
+}
+
+func newLogHook() *logHook {
+	return &logHook{Logger: log.NewNopLogger(), msgs: make(chan string, 1024)}
+}
+
+func (h *logHook) Warn(msg string, _ ...any)  { h.send(msg) }
+func (h *logHook) Error(msg string, _ ...any) { h.send(msg) }
+
+func (h *logHook) send(msg string) {
+	select {
+	case h.msgs <- msg:
+	default:
+	}
+}
+
+// waitForLog blocks until a warning or error containing substr is logged.
+func (h *logHook) waitForLog(t *testing.T, substr string) {
+	t.Helper()
+	guard := time.After(hangGuard)
+	for {
+		select {
+		case msg := <-h.msgs:
+			if strings.Contains(msg, substr) {
+				return
+			}
+		case <-guard:
+			t.Fatalf("no log containing %q", substr)
+		}
+	}
+}
+
+// requireRoute blocks until a message published on from reaches a subscriber
+// on to, which needs an established route with propagated interest.
+func requireRoute(t *testing.T, from, to *Server) {
+	t.Helper()
+	pub := connectInProcess(t, from)
+	sub := connectInProcess(t, to)
+
+	subject := "grafana.test.route." + randomSuffix()
+	received := make(chan struct{}, 1)
+	_, err := sub.Subscribe(subject, func(*natsclient.Msg) {
+		select {
+		case received <- struct{}{}:
+		default:
+		}
+	})
+	require.NoError(t, err)
+	require.NoError(t, sub.Flush())
+
+	deadline := time.Now().Add(hangGuard)
+	for {
+		require.NoError(t, pub.Publish(subject, nil))
+		// Each try is paced by round trips to both servers.
+		require.NoError(t, pub.Flush())
+		require.NoError(t, sub.Flush())
+		select {
+		case <-received:
+			return
+		default:
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("no route: probe never reached the peer")
+		}
+	}
+}
+
+func connectInProcess(t *testing.T, s *Server) *natsclient.Conn {
+	t.Helper()
+	nc, err := natsclient.Connect(s.clientURL(), s.dialOptions()...)
+	require.NoError(t, err)
+	t.Cleanup(nc.Close)
+	return nc
 }
