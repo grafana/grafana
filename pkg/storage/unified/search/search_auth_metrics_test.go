@@ -137,7 +137,7 @@ func TestSearchAuthMetricsFieldValues(t *testing.T) {
 			response, err := index.Search(ctx, &countingAccessClient{allowAll: true}, query, nil, nil)
 			require.NoError(t, err)
 			require.Nil(t, response.Error)
-			require.Nil(t, response.Results)
+			require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, response.ResultFormat)
 			require.Len(t, response.Rows, 10)
 			require.EqualValues(t, 10, authHistogram(t, metrics.SearchAuthReturned, mode, "page").GetSampleSum())
 			require.EqualValues(t, 1, authHistogram(t, metrics.SearchAuthDuration, mode, "page", "success").GetSampleCount())

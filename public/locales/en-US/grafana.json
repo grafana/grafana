@@ -522,6 +522,7 @@
         "save": "Save"
       },
       "error-title": "Failed to save alert rule",
+      "form-errors": "There are errors in the form. Please correct them and try again!",
       "no-group-success": "Rule added successfully"
     },
     "alert-rule-name-and-metric": {
@@ -530,8 +531,8 @@
       "label-metric": "Metric",
       "label-name": "Name",
       "message": {
-        "must-enter-a-metric-name": "Must enter a metric name",
-        "must-enter-a-name": "Must enter a name",
+        "metric-name-required": "Metric name is required",
+        "name-required": "Name is required",
         "please-select-a-data-source": "Please select a data source"
       },
       "metric-aria-label-metric": "metric",
@@ -1314,7 +1315,7 @@
     "folder-selector": {
       "description-select-folder": "Select a folder to store your rule in.",
       "message": {
-        "select-a-folder": "Select a folder"
+        "folder-required": "Folder is required"
       }
     },
     "folderAndGroup": {
@@ -1442,11 +1443,24 @@
     },
     "gma-rule-list": {
       "alert-rules": {
+        "folders-error": "Failed to load folders",
+        "load-more-rules-in-folder": "Load more rules in {{title}}",
+        "loading-folders": "Loading folders...",
         "no-rules": "No alert rules found",
+        "no-rules-in-folder": "No alert rules in this folder",
+        "no-rules-match-folder": "No alert rules match this folder",
+        "retry-rules-in-folder": "Retry loading rules in {{title}}",
         "rules-error": "Failed to load rules",
         "search-issues": "Change the search to see results"
       },
       "datasources": "{{numSources}} data sources",
+      "folder-row": {
+        "collapse": "Collapse {{title}}",
+        "count-description": "{{label}}. {{explanation}}",
+        "count-tooltip": "Rules directly in this folder. Subfolders are listed separately.",
+        "count-unavailable": "Count unavailable",
+        "expand": "Expand {{title}}"
+      },
       "interval": "Evaluated every {{interval}}",
       "labels_one": "{{formatted}} label",
       "labels_other": "{{formatted}} labels",
@@ -1459,7 +1473,7 @@
         "rules-error": "Failed to load recording rules",
         "search-issues": "Change the search to see results"
       },
-      "result-count": {
+      "rule-count": {
         "alert-rules_one": "{{formatted}} alert rule",
         "alert-rules_other": "{{formatted}} alert rules",
         "recording-rules_one": "{{formatted}} recording rule",
@@ -1467,6 +1481,7 @@
       },
       "search": {
         "default-policy-unavailable": "Filtering by the default policy isn't available yet.",
+        "folders-disabled": "Clear filters to browse by folder",
         "help": {
           "contact-point": "Direct contact point (mutually exclusive with policy:).",
           "dashboard": "Dashboard the rule is linked to (canonical value is the dashboard UID).",
@@ -1515,6 +1530,9 @@
         "renamed-value": "Use {{to}} instead of {{from}}.",
         "unavailable-tokens": "Some filters are not available yet: {{tokens}}",
         "unclosed-quote": "A quote in the search is not closed.",
+        "view": "View",
+        "view-folders": "Folders",
+        "view-list": "List",
         "wildcard-in-text": "Search text cannot contain * or %."
       },
       "shared": {
@@ -1551,11 +1569,10 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "Loading groups...",
       "message": {
-        "must-be-a-positive-integer": "Must be a positive integer.",
-        "must-enter-a-group-name": "Must enter a group name"
+        "evaluation-group-required": "Evaluation group is required",
+        "must-be-a-positive-integer": "Must be a positive integer."
       },
       "missing-series-resolve-placeholder": "Default: 2",
-      "or": "or",
       "placeholder-select-an-evaluation-group": "Select an evaluation group...",
       "text-configure-no-data-and-error-handling": "Configure no data and error handling",
       "title-set-evaluation-behavior": "Set evaluation behavior"
@@ -2981,7 +2998,7 @@
           "alerting": "Turn on to pause evaluation for this alert rule.",
           "recording": "Turn on to pause evaluation for this recording rule."
         },
-        "select-folder-before": "Select a folder before setting evaluation group and interval",
+        "select-folder-first-tooltip": "Select a folder first",
         "ungroup-warning": "This action is irreversible. After you save, you will not be able to add it back to a group.",
         "ungroup-warning-title": "This will remove the alert rule from its group"
       },
@@ -9060,6 +9077,12 @@
         "show-details": "Show details",
         "view-log-line": "View log line"
       },
+      "error-attribute": {
+        "error-fields-label": "Has error fields",
+        "error-fields-tooltip": "This log line contains error-related fields.",
+        "stacktrace-label": "Has a stack trace",
+        "stacktrace-tooltip": "This log line contains a stack trace."
+      },
       "loki-time-sort-tooltip": "Sorting this column only changes the order of the displayed results. To update the query's time-based sort order, use the Sort control on the right."
     },
     "logs-table-empty-fields": {
@@ -11105,6 +11128,7 @@
         "add-all": "Add all displayed values to the filter",
         "blanks": "(Blanks)",
         "button": "Filter {{name}}",
+        "include-missing": "Include missing values",
         "operator": {
           "contains": "Contains",
           "equals": "Equals",
@@ -11129,6 +11153,7 @@
       "filter-popup-heading": "Filter by values:",
       "filter-popup-input-placeholder": "Filter values",
       "filter-popup-match-case": "Match case",
+      "filter-popup-row-count": "{{selected}} of {{total}} rows",
       "footer": {
         "reducer": {
           "count": "Count"
@@ -11145,6 +11170,18 @@
       "no-rows": "No rows",
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
+      "range": {
+        "apply": "Apply",
+        "empty": "No finite values match the other filters.",
+        "end": "End",
+        "histogram": "Value distribution, {{amount}} finite values",
+        "invalid": "Enter valid bounds with minimum no greater than maximum.",
+        "label": "Filter {{field}}",
+        "maximum": "Maximum",
+        "minimum": "Minimum",
+        "start": "Start",
+        "unbounded": "No limit"
+      },
       "reorder-column-label": "Reorder {{columnName}}",
       "show-column-label": "Show {{columnName}}",
       "sort-by-column": "Sort by column {{column}}",
@@ -12316,6 +12353,7 @@
     },
     "log-details": {
       "error": {
+        "diagnose-with-assistant": "Diagnose with assistant",
         "error-details": "Error details"
       }
     },
@@ -16972,6 +17010,8 @@
       "failures-description": "Of those, the ones counted against the backend: 502, 503 and 504 responses, and failures to proxy, such as connection errors and timeouts. Other errors, and callers that disconnect, are not counted. Consecutive failures open the breaker.",
       "filter-placeholder": "Filter by group, key or plugin",
       "filtered": "{{shown}} of {{total}}",
+      "internal": "internal",
+      "internal-description": "Only access policies see this group. Every other caller gets a 404 for it, and it is not listed in their discovery.",
       "last-failed": "Last reconcile failed",
       "load-failures": "Load failures",
       "never": "never",

@@ -74,7 +74,7 @@ message ResourceSearchRequest {
   enum ResultFormat {
     UNSPECIFIED = 0;
 
-    // ResourceSearchResponse.results contains a ResourceTable.
+    // Obsolete. Servers reject requests for this format.
     RESOURCE_TABLE = 1;
 
     // ResourceSearchResponse.fields and rows contain field-value results.
@@ -158,9 +158,7 @@ message ResourceSearchRequest {
   // Sort values for SearchBefore pagination.
   repeated string search_before = 15;
 
-  // Selects the desired response representation.
-  // UNSPECIFIED preserves compatibility and requests RESOURCE_TABLE.
-  // Servers that do not know this field ignore it and return RESOURCE_TABLE.
+  // Must be FIELD_VALUES. Retained for compatibility with supported peers.
   ResultFormat result_format = 16;
 }
 
@@ -188,8 +186,9 @@ message ResourceSearchResponse {
   // All results exist within this key
   ResourceKey key = 2;
 
-  // Legacy query results. Populated when result_format is RESOURCE_TABLE.
-  ResourceTable results = 3;
+  // The retired table result field must never be reused.
+  reserved 3;
+  reserved "results";
 
   // The total hit count
   int64 total_hits = 4;
@@ -214,9 +213,7 @@ message ResourceSearchResponse {
   // Resource version of the index used for this search.
   int64 resource_version = 8;
 
-  // Reports the representation actually returned.
-  // New servers always set this to RESOURCE_TABLE or FIELD_VALUES.
-  // Clients treat UNSPECIFIED as RESOURCE_TABLE for compatibility with old servers.
+  // Reports FIELD_VALUES for successful responses.
   ResourceSearchRequest.ResultFormat result_format = 10;
 
   // Populated only when result_format is FIELD_VALUES.
@@ -234,6 +231,26 @@ message ResourceSearchResponse {
   // {group}/{resource}, for the results to report. The API layer may not know
   // the kinds this server takes from manifests read at runtime.
   map<string, string> kinds = 14;
+
+  // The path of each folder the rows of a global search are in, keyed by the
+  // folder's name. Only rows that return the folder field are covered, and the
+  // root folder has no path.
+  map<string, FolderPath> folder_paths = 15;
+}
+
+// FolderPath lists a folder and the folders above it, from the top down, ending
+// with the folder itself, as the caller may see them. Like the folder API's
+// parents, it stops at the first folder the caller cannot read, or that the
+// index does not hold: that one is named but detached, and nothing above it is
+// listed.
+message FolderPath {
+  message Folder {
+    string name = 1;
+    string title = 2;
+    bool detached = 3;
+  }
+
+  repeated Folder folders = 1;
 }
 
 message ResourceSearchField {
@@ -487,7 +504,7 @@ message HybridSearchResult {
   // Field names and text share a 4 KiB budget per result, prioritizing title,
   // then fields in name order. Values may be truncated and later fields
   // or array elements omitted. Empty values are omitted.
-  // Absent for semantic-only hits, external collections, and legacy table responses.
+  // Absent for semantic-only hits and external collections.
   map<string, google.protobuf.Value> lexical = 9;
 
   // Tags from the lexical index. Omitted when unavailable.
