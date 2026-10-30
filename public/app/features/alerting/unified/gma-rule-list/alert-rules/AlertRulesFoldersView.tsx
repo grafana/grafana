@@ -10,7 +10,7 @@ import { useFolderPath } from '../folder-browsing/folderLookups';
 import { useSearchRuleFoldersInfiniteQuery } from '../folder-browsing/folderSearch';
 import { RuleListSkeleton } from '../rule-row/RuleListSkeleton';
 import { RuleRowList } from '../rule-row/RuleRowList';
-import { createEmptyFilter } from '../rule-search/ruleSearchFilter';
+import { createEmptyFilter } from '../rule-search/sharedRuleFilter';
 import { InlineRequestError } from '../shared/InlineRequestError';
 import { LoadMoreFooter } from '../shared/LoadMoreFooter';
 import { PagedFailureAlert } from '../shared/PagedFailureAlert';

@@ -1,8 +1,9 @@
 import { type ListAlertRuleSearchRulesV0Alpha1RequestBody } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
 import { parse } from '../rule-search/parser';
-import { createEmptyFilter } from '../rule-search/ruleSearchFilter';
+import { createEmptyFilter } from '../rule-search/sharedRuleFilter';
 
+import { alertRuleSearchSchema } from './alertRuleFilters';
 import { buildAlertRuleSearchQuery } from './alertRuleSearchQuery';
 
 describe('buildAlertRuleSearchQuery', () => {
@@ -64,11 +65,11 @@ describe('buildAlertRuleSearchQuery', () => {
     ['health:ok', { filter: { field: 'health', operator: 'In', values: ['OK'] } }],
     ['health:nodata', { filter: { field: 'health', operator: 'In', values: ['NoData'] } }],
   ])('builds the where clause for %j', (query, where) => {
-    expect(buildAlertRuleSearchQuery(parse(query, 'alert').filter).where).toEqual(where);
+    expect(buildAlertRuleSearchQuery(parse(query, alertRuleSearchSchema).filter).where).toEqual(where);
   });
 
   it('combines several filters in one flat and', () => {
-    expect(buildAlertRuleSearchQuery(parse('cpu folder:f1 label:team', 'alert').filter).where).toEqual({
+    expect(buildAlertRuleSearchQuery(parse('cpu folder:f1 label:team', alertRuleSearchSchema).filter).where).toEqual({
       and: [
         { text: { value: 'cpu' } },
         { filter: { field: 'folder', operator: 'In', values: ['f1'] } },
