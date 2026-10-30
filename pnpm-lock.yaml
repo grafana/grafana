@@ -327,6 +327,9 @@ importers:
       '@lezer/common':
         specifier: 1.5.3
         version: 1.5.3
+      '@lezer/highlight':
+        specifier: 1.2.5
+        version: 1.2.5
       '@lezer/lr':
         specifier: 1.4.10
         version: 1.4.10

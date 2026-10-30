@@ -1,5 +1,4 @@
 import { t } from '@grafana/i18n';
-import type { Monaco } from '@grafana/ui';
 
 import {
   alertDetailsSnippet,
@@ -14,8 +13,8 @@ import {
 import { type SuggestionDefinition } from './suggestionDefinition';
 
 // Suggestions available at the top level of a template
-export function getGlobalSuggestions(monaco: Monaco): SuggestionDefinition[] {
-  const kind = monaco.languages.CompletionItemKind.Field;
+export function getGlobalSuggestions(): SuggestionDefinition[] {
+  const kind = 'field' as const;
 
   /* eslint-disable @grafana/i18n/no-untranslated-strings */
   return [
@@ -43,8 +42,8 @@ export function getGlobalSuggestions(monaco: Monaco): SuggestionDefinition[] {
 }
 
 // Suggestions that are valid only in the scope of an alert (e.g. in the .Alerts loop)
-export function getAlertSuggestions(monaco: Monaco): SuggestionDefinition[] {
-  const kind = monaco.languages.CompletionItemKind.Field;
+export function getAlertSuggestions(): SuggestionDefinition[] {
+  const kind = 'field' as const;
 
   /* eslint-disable @grafana/i18n/no-untranslated-strings */
   return [
@@ -152,8 +151,8 @@ export function getAlertSuggestions(monaco: Monaco): SuggestionDefinition[] {
 }
 
 // Suggestions for .Alerts
-export function getAlertsSuggestions(monaco: Monaco): SuggestionDefinition[] {
-  const kind = monaco.languages.CompletionItemKind.Field;
+export function getAlertsSuggestions(): SuggestionDefinition[] {
+  const kind = 'field' as const;
 
   /* eslint-disable @grafana/i18n/no-untranslated-strings */
   return [
@@ -164,8 +163,8 @@ export function getAlertsSuggestions(monaco: Monaco): SuggestionDefinition[] {
 }
 
 // Suggestions for the KeyValue types
-export function getKeyValueSuggestions(monaco: Monaco): SuggestionDefinition[] {
-  const kind = monaco.languages.CompletionItemKind.Field;
+export function getKeyValueSuggestions(): SuggestionDefinition[] {
+  const kind = 'field' as const;
 
   /* eslint-disable @grafana/i18n/no-untranslated-strings */
   return [
@@ -175,7 +174,7 @@ export function getKeyValueSuggestions(monaco: Monaco): SuggestionDefinition[] {
     {
       label: 'Remove',
       detail: 'KeyValue[] function(keys []string)',
-      kind: monaco.languages.CompletionItemKind.Method,
+      kind: 'method',
     },
   ];
   /* eslint-enable @grafana/i18n/no-untranslated-strings */
@@ -225,9 +224,8 @@ export const snippets = {
 };
 
 // Snippets
-export function getSnippetsSuggestions(monaco: Monaco): SuggestionDefinition[] {
-  const snippetKind = monaco.languages.CompletionItemKind.Snippet;
-  const snippetInsertRule = monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet;
+export function getSnippetsSuggestions(): SuggestionDefinition[] {
+  const snippetKind = 'snippet' as const;
 
   const { alerts, alertDetails, groupLabels, commonLabels, commonAnnotations, labels, annotations, json } = snippets;
 
@@ -237,7 +235,7 @@ export function getSnippetsSuggestions(monaco: Monaco): SuggestionDefinition[] {
       documentation: alerts.description,
       kind: snippetKind,
       insertText: alerts.snippet,
-      insertTextRules: snippetInsertRule,
+      insertAsSnippet: true,
     },
     {
       label: {
@@ -247,49 +245,48 @@ export function getSnippetsSuggestions(monaco: Monaco): SuggestionDefinition[] {
       documentation: alertDetails.description,
       kind: snippetKind,
       insertText: alertDetails.snippet,
-      insertTextRules: snippetInsertRule,
+      insertAsSnippet: true,
     },
     {
       label: groupLabels.label,
       documentation: groupLabels.description,
       kind: snippetKind,
       insertText: groupLabels.snippet,
-      insertTextRules: snippetInsertRule,
+      insertAsSnippet: true,
     },
     {
       label: commonLabels.label,
       documentation: commonLabels.description,
       kind: snippetKind,
       insertText: commonLabels.snippet,
-      insertTextRules: snippetInsertRule,
+      insertAsSnippet: true,
     },
     {
       label: commonAnnotations.label,
       documentation: commonAnnotations.description,
       kind: snippetKind,
       insertText: commonAnnotations.snippet,
-      insertTextRules: snippetInsertRule,
+      insertAsSnippet: true,
     },
     {
       label: { label: labels.label, detail: '(Alert)' },
       documentation: labels.description,
       kind: snippetKind,
       insertText: labels.snippet,
-      insertTextRules: snippetInsertRule,
+      insertAsSnippet: true,
     },
     {
       label: { label: annotations.label, detail: '(Alert)' },
       documentation: annotations.description,
       kind: snippetKind,
       insertText: annotations.snippet,
-      insertTextRules: snippetInsertRule,
+      insertAsSnippet: true,
     },
     {
       label: json.label,
       documentation: json.description,
       kind: snippetKind,
       insertText: json.snippet,
-      insertTextRules: monaco.languages.CompletionItemInsertTextRule.KeepWhitespace,
     },
   ];
 }
