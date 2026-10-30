@@ -21,6 +21,9 @@ const EVERY_ROW_PANEL = '6';
 const HANDLEBARS_PANEL = '5';
 const MERMAID_PANEL = '7';
 
+const REDUCER_MACROS_DASHBOARD_UID = 'text-reducer-macros';
+const LAST_VALUES_PANEL = '2';
+
 test.use({ openFeature: { flags: { 'grafana.newTextPanel': true, 'text.newFeatures': true } } });
 
 test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
@@ -314,6 +317,44 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
 
       const preview = page.getByTestId('TextNGEditor-preview');
       await expect(renderedContent(preview).locator('.mermaid-diagram svg')).toHaveCount(2);
+    });
+  });
+
+  test.describe('visualization suggestions', () => {
+    test('applies a summary that stays bound to the query', async ({ gotoDashboardPage, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: REDUCER_MACROS_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: LAST_VALUES_PANEL }),
+      });
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Suggestions')).click();
+
+      const summary = dashboardPage.getByGrafanaSelector(
+        selectors.components.VisualizationPreview.card('Text - summary')
+      );
+      const statistics = dashboardPage.getByGrafanaSelector(
+        selectors.components.VisualizationPreview.card('Text - statistics')
+      );
+
+      await expect(renderedContent(summary).locator('li')).toHaveText(['CPU: 75', 'Memory usage: 120']);
+      await expect(renderedContent(statistics).locator('tbody tr').first().locator('td')).toHaveText([
+        'CPU',
+        '75',
+        '40',
+        '57.5',
+        '75',
+      ]);
+
+      await summary.click();
+
+      await expect(renderedContent(page.getByTestId('TextNGEditor-preview')).locator('li')).toHaveText([
+        'CPU: 75.0%',
+        'Memory usage: 120 B',
+      ]);
+      await expect(page.getByTestId('TextNGEditor').locator('.cm-content')).toContainText(
+        '${__data.fields.CPU:reduce:lastNotNull}'
+      );
     });
   });
 });

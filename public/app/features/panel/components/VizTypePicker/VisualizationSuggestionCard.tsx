@@ -2,12 +2,20 @@ import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
 
-import { type GrafanaTheme2, type PanelData, type PanelPluginVisualizationSuggestion } from '@grafana/data';
+import {
+  type GrafanaTheme2,
+  type InterpolateFunction,
+  type PanelData,
+  type PanelPluginVisualizationSuggestion,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { config, getTemplateSrv } from '@grafana/runtime';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
 import { PanelRenderer } from '../PanelRenderer';
+
+const replaceVariables: InterpolateFunction = (value, scopedVars, format) =>
+  getTemplateSrv().replace(value, scopedVars, format);
 
 export interface Props extends HTMLAttributes<HTMLDivElement> {
   data: PanelData;
@@ -75,6 +83,7 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
             height={renderHeight}
             options={preview.options}
             fieldConfig={preview.fieldConfig}
+            replaceVariables={replaceVariables}
           />
         </div>
       </div>
