@@ -104,6 +104,8 @@ module.exports = {
   watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],
   testPathIgnorePatterns: [
     '/node_modules/',
+    // This suite requires native ESM and runs with the isolated Node configuration documented in scripts.
+    '<rootDir>/scripts/tests/meticulous-coverage-by-codeowner.test.js$',
     // Decoupled plugins run their own tests so ignoring them here.
     '<rootDir>/public/app/plugins/datasource/azuremonitor',
     '<rootDir>/public/app/plugins/datasource/grafana-testdata-datasource',
