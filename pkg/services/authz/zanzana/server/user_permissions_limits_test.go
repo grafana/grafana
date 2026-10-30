@@ -2,8 +2,10 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -26,11 +28,7 @@ func (s *permissionPrincipalTestStore) Read(ctx context.Context, _ string, _ sto
 	if s.malformed {
 		return storage.NewStaticTupleIterator([]*openfgav1.Tuple{{}}), nil
 	}
-	tuples := make([]*openfgav1.Tuple, permissionPrincipalMaxTuples+1)
-	for i := range tuples {
-		tuples[i] = &openfgav1.Tuple{Key: common.NewFolderTuple("user:alice", common.RelationGet, fmt.Sprintf("folder-%d", i))}
-	}
-	return storage.NewStaticTupleIterator(tuples), nil
+	return &permissionFailingIterator{TupleIterator: storage.NewStaticTupleIterator([]*openfgav1.Tuple{{Key: common.NewFolderTuple("user:alice", common.RelationGet, "root")}}), failure: errors.New("principal stream interrupted")}, nil
 }
 
 func TestPermissionPrincipalEarlyExitCancelsPrincipalStream(t *testing.T) {
@@ -46,11 +44,76 @@ func TestPermissionPrincipalEarlyExitCancelsPrincipalStream(t *testing.T) {
 			require.Error(t, err)
 			require.Empty(t, results)
 			if !malformed {
-				require.Equal(t, codes.ResourceExhausted, status.Code(err))
+				require.ErrorContains(t, err, "principal stream interrupted")
 			}
 			require.NotNil(t, store.ctx)
 			require.ErrorIs(t, store.ctx.Err(), context.Canceled)
 			require.NoError(t, ctx.Err())
+		})
+	}
+}
+
+type largePermissionStore struct {
+	storage.OpenFGADatastore
+	rows  []*openfgav1.Tuple
+	reads int
+}
+
+func (s *largePermissionStore) Read(context.Context, string, storage.ReadFilter, storage.ReadOptions) (storage.TupleIterator, error) {
+	s.reads++
+	return storage.NewStaticTupleIterator(s.rows), nil
+}
+
+func TestUserPermissionsReturnsLargeContributionWithoutCaching(t *testing.T) {
+	srv, ds, store := newPermissionTestServer(t, nil)
+	enablePrincipalCache(srv)
+	large := &largePermissionStore{OpenFGADatastore: ds, rows: make([]*openfgav1.Tuple, permissionPrincipalCacheMaxTuples+1)}
+	for i := range large.rows {
+		large.rows[i] = &openfgav1.Tuple{Key: common.NewFolderTuple("user:alice", common.RelationGet, fmt.Sprintf("folder-%d", i))}
+	}
+	srv.store = large
+	for range 2 {
+		stream := &permissionResponseStream{ctx: newContextWithNamespace()}
+		require.NoError(t, srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice"}, stream))
+		require.Len(t, stream.permissions, len(large.rows))
+		require.Contains(t, stream.permissions, &authzv1.UserPermission{Action: "folders:read", Scope: fmt.Sprintf("folders:uid:folder-%d", permissionPrincipalCacheMaxTuples)})
+		cache := srv.principalCache()
+		cache.mu.Lock()
+		_, cached := cache.entries.Peek(permissionPrincipalKey{store.ID, store.ModelID, "user:alice"})
+		cache.mu.Unlock()
+		require.False(t, cached, "large contributions must not occupy the principal cache")
+	}
+	require.Equal(t, 2, large.reads)
+}
+
+func TestUserPermissionsLimitsDistinctPrincipalsAcrossStages(t *testing.T) {
+	for _, resource := range []string{common.TypeTeam, common.TypeRole} {
+		t.Run(resource, func(t *testing.T) {
+			srv, ds, store := newPermissionTestServer(t, nil)
+			enablePrincipalCache(srv)
+			dependencyCount := permissionPrincipalMaxCount
+			var contextualTeams []string
+			relation := common.RelationTeamMember
+			if resource == common.TypeRole {
+				relation = common.RelationAssignee
+				dependencyCount--
+				contextualTeams = []string{"one"}
+			}
+			dependencies := make([]string, dependencyCount)
+			for i := range dependencies {
+				dependencies[i] = fmt.Sprintf("%s:%d#%s", resource, i, relation)
+			}
+			cache := srv.principalCache()
+			cache.mu.Lock()
+			cache.entries.Add(permissionPrincipalKey{store.ID, store.ModelID, "user:alice"}, permissionPrincipalEntry{contribution: &permissionContribution{dependencies: dependencies, tupleCount: dependencyCount}, expires: cache.clock.Now().Add(time.Minute)})
+			cache.entries.Add(permissionPrincipalKey{store.ID, store.ModelID, "team:one#member"}, permissionPrincipalEntry{contribution: &permissionContribution{}, expires: cache.clock.Now().Add(time.Minute)})
+			cache.mu.Unlock()
+			stream := &permissionResponseStream{ctx: newContextWithNamespace()}
+			err := srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice", Teams: contextualTeams}, stream)
+			require.Equal(t, codes.ResourceExhausted, status.Code(err))
+			require.Empty(t, stream.permissions)
+			_, reads := ds.counts()
+			require.Zero(t, reads, "reject an oversized principal stage before issuing its reads")
 		})
 	}
 }

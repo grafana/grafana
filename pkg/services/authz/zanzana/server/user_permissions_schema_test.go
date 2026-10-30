@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 )
 
+// Discovery has three stages because teams are flat and roles cannot nest.
 // Schema changes can require additional principal discovery or grant translation.
 func TestUserPermissionsGrantsSchemaAssumptions(t *testing.T) {
 	model, err := schema.TransformModulesToModel(schema.SchemaModules)
