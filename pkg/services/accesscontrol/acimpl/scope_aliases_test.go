@@ -9,7 +9,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -19,7 +21,7 @@ func (f localScopeResolver) ResolveScope(ctx context.Context, ns types.Namespace
 	return f(ctx, ns, ref)
 }
 
-func TestLocalPermissionLoaderAddsAliasesWithoutZanzanaMerge(t *testing.T) {
+func TestLocalPermissionLoaderAddsAliasesWithFlagAndNoZanzanaClient(t *testing.T) {
 	store := &actest.FakeStore{ExpectedUserPermissions: []accesscontrol.Permission{{Action: "teams:read", Scope: "teams:id:42"}}}
 	service := setupServiceWithFakeStore(t, store, nil, nil)
 	service.scopeResolver = localScopeResolver(func(context.Context, types.NamespaceInfo, legacyscopes.ScopeReference) (string, error) {
@@ -54,4 +56,17 @@ func TestPermissionSearchResolvesUIDFilterBeforeLegacyStorage(t *testing.T) {
 	got, err := service.SearchUsersPermissions(t.Context(), &user.SignedInUser{OrgID: 1, Namespace: "default"}, accesscontrol.SearchOptions{UserID: 2, Action: "teams:read", Scope: "teams:uid:platform"})
 	require.NoError(t, err)
 	require.Equal(t, map[int64][]accesscontrol.Permission{2: {{Action: "teams:read", Scope: "teams:uid:platform"}}}, got)
+}
+
+func TestLocalPermissionLoaderPreservesScopesWithFlagOff(t *testing.T) {
+	original := []accesscontrol.Permission{{Action: "teams:read", Scope: "teams:id:42"}}
+	store := &actest.FakeStore{ExpectedUserPermissions: original}
+	service := setupServiceWithFakeStore(t, store, nil, nil)
+	service.features = featuremgmt.WithFeatures()
+	service.scopeResolver = legacypermissions.NewPermissionScopeResolver(service.features, nil)
+	got, err := service.GetUserPermissions(t.Context(), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "alice"}, accesscontrol.Options{})
+	require.NoError(t, err)
+	require.Nil(t, service.scopeResolver)
+	require.Contains(t, got, original[0])
+	require.NotContains(t, got, accesscontrol.Permission{Action: "teams:read", Scope: "teams:uid:platform"})
 }

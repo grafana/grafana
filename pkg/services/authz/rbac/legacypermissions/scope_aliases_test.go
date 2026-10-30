@@ -70,6 +70,15 @@ func TestSharedLoaderAddsAliasesAfterMergingBothSources(t *testing.T) {
 	t.Cleanup(iam.Close)
 	sql := db.NewTestStore(t)
 	seedGrant(t, sql, "managed:team-reader", 1, 7, ac.Permission{Action: "teams:read", Scope: "teams:id:42"})
+
+	offLoader := legacypermissions.ProvideLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), loaderConfig(true), featuremgmt.WithFeatures(), &enforcementLicense{enabled: true}, &aliasGrantClient{}, aliasIAMConfig(iam.URL))
+	off, err := offLoader.GetUserPermissions(t.Context(), &user.SignedInUser{UserID: 7, UserUID: "alice", OrgID: 1, Namespace: "default"}, ac.Options{})
+	require.NoError(t, err)
+	require.Contains(t, off, ac.Permission{Action: "teams:read", Scope: "teams:id:42"})
+	require.NotContains(t, off, ac.Permission{Action: "teams:read", Scope: "teams:uid:platform"}, "flag-off must preserve the existing numeric response")
+	mu.Lock()
+	require.Empty(t, calls, "flag-off must not read IAM metadata")
+	mu.Unlock()
 	loader := legacypermissions.ProvideLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), loaderConfig(true), featuremgmt.WithFeatures(featuremgmt.FlagZanzanaMergeUserPermissions), &enforcementLicense{enabled: true}, &aliasGrantClient{}, aliasIAMConfig(iam.URL))
 	requester := &user.SignedInUser{UserID: 7, UserUID: "alice", OrgID: 1, Namespace: "default"}
 	for range 2 {
@@ -94,4 +103,10 @@ func TestSharedLoaderAddsAliasesAfterMergingBothSources(t *testing.T) {
 	defer mu.Unlock()
 	base := "/apis/iam.grafana.app/v0alpha1/namespaces/default"
 	require.Equal(t, map[string]int{base + "/teams": 1, base + "/users/bob": 1, base + "/serviceaccounts/robot": 1}, calls)
+}
+
+func TestPermissionScopeResolverFollowsMergeFlag(t *testing.T) {
+	require.Nil(t, legacypermissions.NewPermissionScopeResolver(nil, nil))
+	require.Nil(t, legacypermissions.NewPermissionScopeResolver(featuremgmt.WithFeatures(), nil))
+	require.NotNil(t, legacypermissions.NewPermissionScopeResolver(featuremgmt.WithFeatures(featuremgmt.FlagZanzanaMergeUserPermissions), nil))
 }

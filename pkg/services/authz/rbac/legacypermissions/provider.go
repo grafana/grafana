@@ -26,10 +26,18 @@ func ProvideLoader(sql db.DB, catalog *RoleCatalog, actions ac.ActionResolver,
 		migrated = NewZanzanaPermissionResolver(zanzanaClient, nil, restConfig, cfg.IDUseExternalGroupsForGroupsClaim)
 	}
 	loader := NewLoader(sql, catalog, actions, cache, cfg, features, license, migrated)
-	loader.scopeResolver = legacyscopes.NewUIDResolver(restConfig)
+	loader.scopeResolver = NewPermissionScopeResolver(features, restConfig)
 	return loader
 }
 
 func ProvideClient(loader *Loader, cfg *setting.Cfg) legacyclient.Service {
 	return NewEmbeddedClient(loader, cfg)
+}
+
+func NewPermissionScopeResolver(features featuremgmt.FeatureToggles, restConfig restcfg.RestConfigProvider) legacyscopes.ScopeResolver {
+	//nolint:staticcheck // Scope aliases follow the existing enumeration merge rollout.
+	if features == nil || !features.IsEnabledGlobally(featuremgmt.FlagZanzanaMergeUserPermissions) {
+		return nil
+	}
+	return legacyscopes.NewUIDResolver(restConfig)
 }

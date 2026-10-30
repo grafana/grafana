@@ -31,8 +31,11 @@ of the translator.
 
 ## Compatibility scopes belong to the permission loader
 
-The shared AuthZ permission loader merges legacy numeric scopes and Zanzana UID
-scopes, then adds equivalent ID/UID aliases for users, teams and service accounts.
+With `zanzanaMergeUserPermissions` enabled, the shared AuthZ permission loader
+merges legacy numeric scopes and Zanzana UID scopes, then adds equivalent ID/UID
+aliases for users, teams and service accounts. The same flag gates aliases in
+local OSS and Enterprise loaders and permission search. When disabled, these
+paths preserve their existing scope responses and make no alias metadata lookups.
 The local OSS/Enterprise paths and permission search use the same normalizer.
 Standalone AuthZ uses it when merging Zanzana permissions. Zanzana itself has no
 IAM client or numeric-scope configuration requirement for this RPC.
