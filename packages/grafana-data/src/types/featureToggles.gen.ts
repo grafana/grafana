@@ -239,11 +239,6 @@ export interface FeatureToggles {
   */
   cloudWatchBatchQueries?: boolean;
   /**
-  * Enable Grafana to sync configuration and state with a remote Alertmanager.
-  * @default false
-  */
-  alertmanagerRemoteSecondary?: boolean;
-  /**
   * Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL
   * @default false
   */

@@ -9077,6 +9077,12 @@
         "show-details": "Show details",
         "view-log-line": "View log line"
       },
+      "error-attribute": {
+        "error-fields-label": "Has error fields",
+        "error-fields-tooltip": "This log line contains error-related fields.",
+        "stacktrace-label": "Has a stack trace",
+        "stacktrace-tooltip": "This log line contains a stack trace."
+      },
       "loki-time-sort-tooltip": "Sorting this column only changes the order of the displayed results. To update the query's time-based sort order, use the Sort control on the right."
     },
     "logs-table-empty-fields": {
@@ -12333,6 +12339,7 @@
     },
     "log-details": {
       "error": {
+        "diagnose-with-assistant": "Diagnose with assistant",
         "error-details": "Error details"
       }
     },
@@ -16989,6 +16996,8 @@
       "failures-description": "Of those, the ones counted against the backend: 502, 503 and 504 responses, and failures to proxy, such as connection errors and timeouts. Other errors, and callers that disconnect, are not counted. Consecutive failures open the breaker.",
       "filter-placeholder": "Filter by group, key or plugin",
       "filtered": "{{shown}} of {{total}}",
+      "internal": "internal",
+      "internal-description": "Only access policies see this group. Every other caller gets a 404 for it, and it is not listed in their discovery.",
       "last-failed": "Last reconcile failed",
       "load-failures": "Load failures",
       "never": "never",

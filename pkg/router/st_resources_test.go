@@ -99,7 +99,7 @@ func newSingleTenantResourcesLoader(t *testing.T, mt, stack string) *cloudLoader
 	}})
 	require.NoError(t, err)
 	st.status.recordSuccess(time.Now())
-	loader, err := newCloudLoader([]*aggregateTarget{target}, nil, nil, st)
+	loader, err := newCloudLoader([]*aggregateTarget{target}, nil, st)
 	require.NoError(t, err)
 	return loader
 }
@@ -122,7 +122,7 @@ func TestCloudLoaderWrapsSingleTenantResources(t *testing.T) {
 	_, wrapped := backends[1].(*wrappedBackend)
 	require.False(t, wrapped, "only dashboard.grafana.app is wrapped")
 
-	loader, err = newCloudLoader(aggregateTargetsOf(loader), nil, nil, nil)
+	loader, err = newCloudLoader(aggregateTargetsOf(loader), nil, nil)
 	require.NoError(t, err)
 	backends, err = loader.Load(t.Context())
 	require.NoError(t, err)

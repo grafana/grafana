@@ -2426,13 +2426,6 @@ func (b *bleveIndex) CountManagedObjects(ctx context.Context, stats *resource.Se
 	return vals, nil
 }
 
-func (b *bleveIndex) observeSearchResultFormat(response *resourcepb.ResourceSearchResponse) {
-	if response.GetResultFormat() == resourcepb.ResourceSearchRequest_UNSPECIFIED {
-		return
-	}
-	b.indexMetrics.SearchResultFormats.WithLabelValues(strings.ToLower(response.ResultFormat.String())).Inc()
-}
-
 func (b *bleveIndex) initialSearchResponse(req *resourcepb.ResourceSearchRequest) *resourcepb.ResourceSearchResponse {
 	if req.Options == nil || req.Options.Key == nil {
 		return &resourcepb.ResourceSearchResponse{
@@ -2480,9 +2473,6 @@ func (b *bleveIndex) Search(
 	if response.Error != nil {
 		return response, nil
 	}
-	defer func() {
-		b.observeSearchResultFormat(response)
-	}()
 
 	index, folderIndex, err := b.getIndexes(ctx, req, indexes)
 	if err != nil {

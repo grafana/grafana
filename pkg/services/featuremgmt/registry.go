@@ -588,14 +588,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "alertmanagerRemoteSecondary",
-			Description: "Enable Grafana to sync configuration and state with a remote Alertmanager.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "alertingProvenanceLockWrites",
 			Description:  "Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL",
 			Stage:        FeatureStageExperimental,
@@ -685,6 +677,14 @@ var (
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{React: true},
 			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "dashboards.disableLiveSaveNotices",
+			Description: "Stops an open dashboard from subscribing to Grafana Live save notices",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaBackendServicesSquad,
 			Expression:  "false",
 		},
 		{
@@ -2229,6 +2229,14 @@ var (
 		{
 			Name:        "grafana.dashboardVariablesMigration",
 			Description: "Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "grafana.dashboardPreferences",
+			Description: "Enables org, folder and user preferences for new dashboards and panels (DashboardPreferences in dashboard.grafana.app)",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{Go: true, React: true},
 			Owner:       grafanaDashboardsSquad,
