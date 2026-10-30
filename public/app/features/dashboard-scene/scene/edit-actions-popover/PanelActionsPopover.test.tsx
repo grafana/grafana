@@ -100,6 +100,14 @@ function HoverHeaderItem({ isEmpty = false }: { isEmpty?: boolean }) {
   return headerControls?.hoverSlot ? createPortal(item, headerControls.hoverSlot) : null;
 }
 
+/** Stands in for PanelChrome rendering the drag handle into its own slot. */
+function DragHandleItem() {
+  const headerControls = useContext(PanelChromeHeaderControlsContext);
+  return headerControls?.dragHandleSlot
+    ? createPortal(<button aria-label="Drag handle" />, headerControls.dragHandleSlot)
+    : null;
+}
+
 /** Stands in for a hover header item with its own portalled menu, like the panel links dropdown. */
 function HoverHeaderLinksMenu({ onLinkClick }: { onLinkClick: () => void }) {
   const headerControls = useContext(PanelChromeHeaderControlsContext);
@@ -130,7 +138,8 @@ function renderWrapper(
     isEditing = false,
     onLinkClick,
     hasEmptyHeaderItem = false,
-  }: { isEditing?: boolean; onLinkClick?: () => void; hasEmptyHeaderItem?: boolean } = {}
+    hasDragHandle = false,
+  }: { isEditing?: boolean; onLinkClick?: () => void; hasEmptyHeaderItem?: boolean; hasDragHandle?: boolean } = {}
 ) {
   return render(
     <ElementSelectionContext.Provider
@@ -144,6 +153,7 @@ function renderWrapper(
           ) : (
             <HoverHeaderItem isEmpty={hasEmptyHeaderItem} />
           )}
+          {hasDragHandle && <DragHandleItem />}
         </div>
       </PanelActionsWrapper>
     </ElementSelectionContext.Provider>
@@ -185,7 +195,7 @@ describe('<PanelActionsWrapper />', () => {
       await setPanelActionsPopoverFlag(true);
     });
 
-    test('in view mode, Expand, Edit, Explore and More actions are shown, with Edit and Explore grouped', async () => {
+    test('in view mode, Edit, Explore, Expand and More actions are shown, with Edit and Explore grouped', async () => {
       const panel = createPanel();
       createDashboard(panel);
 
@@ -193,10 +203,10 @@ describe('<PanelActionsWrapper />', () => {
       await hoverAndRest(screen.getByTestId('reference-child'));
 
       expect(await within(getToolbar()).findByRole('button', { name: 'Explore (p x)' })).toBeInTheDocument();
-      expect(getToolbarLayout()).toEqual(['Expand (v)', '|', 'Edit (e)', 'Explore (p x)', '|', 'More actions']);
+      expect(getToolbarLayout()).toEqual(['Edit (e)', 'Explore (p x)', '|', 'Expand (v)', 'More actions']);
     });
 
-    test('in edit mode, Expand, Edit, Settings, Copy, Duplicate, Remove and More actions are shown in groups', async () => {
+    test('in edit mode, Edit, Settings, Copy, Duplicate, Remove, Expand and More actions are shown in groups', async () => {
       const panel = createPanel();
       createDashboard(panel, { isEditing: true });
 
@@ -204,8 +214,6 @@ describe('<PanelActionsWrapper />', () => {
       await hoverAndRest(screen.getByTestId('reference-child'));
 
       expect(getToolbarLayout()).toEqual([
-        'Expand (v)',
-        '|',
         'Edit (e)',
         'Settings',
         '|',
@@ -213,11 +221,12 @@ describe('<PanelActionsWrapper />', () => {
         'Duplicate',
         'Remove (p r)',
         '|',
+        'Expand (v)',
         'More actions',
       ]);
     });
 
-    test('in view mode, without Edit or Explore, a single separator sits between Expand and More actions', async () => {
+    test('in view mode, without Edit or Explore, only Expand and More actions are shown, without separators', async () => {
       jest.mocked(tryGetExploreUrlForPanel).mockResolvedValueOnce(undefined);
       const panel = createPanel();
       createDashboard(panel, { editable: false });
@@ -225,7 +234,7 @@ describe('<PanelActionsWrapper />', () => {
       renderWrapper(panel);
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(getToolbarLayout()).toEqual(['Expand (v)', '|', 'More actions']);
+      expect(getToolbarLayout()).toEqual(['Expand (v)', 'More actions']);
     });
 
     test('when the dashboard cannot be edited, Edit is not shown', async () => {
@@ -253,7 +262,7 @@ describe('<PanelActionsWrapper />', () => {
       renderWrapper(clonedPanel, { isEditing: true });
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(getToolbarLayout()).toEqual(['Expand (v)', '|', 'Settings', '|', 'More actions']);
+      expect(getToolbarLayout()).toEqual(['Settings', '|', 'Expand (v)', 'More actions']);
     });
 
     test('clicking Expand views the panel and reports the click', async () => {
@@ -451,24 +460,34 @@ describe('<PanelActionsWrapper />', () => {
       expect(toolbar.firstElementChild).toContainElement(within(toolbar).getByText('Panel links'));
     });
 
-    test('for a panel with a hover header, a separator sits between its header items and Expand', async () => {
+    test('for a panel with a hover header, a separator sits between its header items and the panel actions', async () => {
       const panel = createPanel({ title: '', hoverHeader: true });
       createDashboard(panel);
 
       renderWrapper(panel);
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(getToolbarLayout().slice(0, 2)).toEqual(['|', 'Expand (v)']);
+      expect(getToolbarLayout().slice(0, 2)).toEqual(['|', 'Edit (e)']);
     });
 
-    test('for a panel with a hover header whose items render nothing, no separator comes before Expand', async () => {
+    test('for a panel with a hover header whose items render nothing, no separator comes before the panel actions', async () => {
       const panel = createPanel({ title: '', hoverHeader: true });
       createDashboard(panel);
 
       renderWrapper(panel, { hasEmptyHeaderItem: true });
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(getToolbarLayout()[0]).toBe('Expand (v)');
+      expect(getToolbarLayout()[0]).toBe('Edit (e)');
+    });
+
+    test('for a panel with a hover header, its drag handle sits right before Expand, after the separator', async () => {
+      const panel = createPanel({ title: '', hoverHeader: true });
+      createDashboard(panel, { isEditing: true });
+
+      renderWrapper(panel, { isEditing: true, hasDragHandle: true });
+      await hoverAndRest(screen.getByTestId('reference-child'));
+
+      expect(getToolbarLayout().slice(-4)).toEqual(['|', 'Drag handle', 'Expand (v)', 'More actions']);
     });
 
     test('for a panel without a menu, e.g. on a public dashboard, no popover is shown', async () => {

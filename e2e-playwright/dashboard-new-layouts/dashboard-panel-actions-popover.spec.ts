@@ -16,15 +16,15 @@ test.use({
 });
 
 test.describe('Panel actions popover', { tag: ['@dashboards'] }, () => {
-  test('in view mode, offers Expand, Edit, Explore and More actions', async ({ gotoDashboardPage, panels }) => {
+  test('in view mode, offers Edit, Explore, Expand and More actions', async ({ gotoDashboardPage, panels }) => {
     await gotoDashboardPage({ uid: DASHBOARD_UID });
 
     await panels.openActionsPopover(PANEL_TITLE);
 
     const popover = panels.getActionsPopover();
-    await expect(popover.getByRole('button', { name: 'Expand (v)' })).toBeVisible();
     await expect(popover.getByRole('button', { name: 'Edit (e)' })).toBeVisible();
     await expect(popover.getByRole('button', { name: 'Explore (p x)' })).toBeVisible();
+    await expect(popover.getByRole('button', { name: 'Expand (v)' })).toBeVisible();
     await expect(popover.getByRole('button', { name: 'More actions' })).toBeVisible();
     await expect(popover.getByRole('button', { name: 'Settings' })).toHaveCount(0);
   });

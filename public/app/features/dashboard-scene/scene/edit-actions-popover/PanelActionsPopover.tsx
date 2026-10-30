@@ -78,14 +78,15 @@ function PanelActionsPopoverWrapper({
   const { viewPanel, meta } = dashboard.useState();
   const { menu } = panel.useState();
   const [hoverSlot, setHoverSlot] = useState<HTMLElement | null>(null);
+  const [dragHandleSlot, setDragHandleSlot] = useState<HTMLElement | null>(null);
   const { hasOpenOverlay, setOverlayOpen } = usePanelActionsOverlays();
   // Read in the same render as the menu closing, so opening the picker from the menu never lets the popover close.
   const isGroupByPickerOpen = useIsGroupByPickerOpen(panel);
 
   const isExpanded = Boolean(viewPanel);
   const headerControls = useMemo(
-    () => ({ external: true, hoverSlot, hideDragHandle: isExpanded }),
-    [hoverSlot, isExpanded]
+    () => ({ external: true, hoverSlot, dragHandleSlot, hideDragHandle: isExpanded }),
+    [hoverSlot, dragHandleSlot, isExpanded]
   );
 
   // Public dashboards have no panel menu and embedded dashboards only offer Explore, so they keep the panel header.
@@ -104,6 +105,7 @@ function PanelActionsPopoverWrapper({
               menu={menu}
               hoverSlot={hoverSlot}
               onHoverSlotChange={setHoverSlot}
+              onDragHandleSlotChange={setDragHandleSlot}
             />
           }
           showOutsideEditMode
@@ -131,9 +133,17 @@ interface PanelActionsProps {
   menu: VizPanelMenu;
   hoverSlot: HTMLElement | null;
   onHoverSlotChange: (element: HTMLElement | null) => void;
+  onDragHandleSlotChange: (element: HTMLElement | null) => void;
 }
 
-function PanelActions({ panel, dashboard, menu, hoverSlot, onHoverSlotChange }: PanelActionsProps) {
+function PanelActions({
+  panel,
+  dashboard,
+  menu,
+  hoverSlot,
+  onHoverSlotChange,
+  onDragHandleSlotChange,
+}: PanelActionsProps) {
   const onMenuOpenChange = usePanelActionsOverlayOpenChange();
   const [moreActionsAnchor, setMoreActionsAnchor] = useState<HTMLElement | null>(null);
   const isGroupByPickerOpen = useIsGroupByPickerOpen(panel);
@@ -164,6 +174,8 @@ function PanelActions({ panel, dashboard, menu, hoverSlot, onHoverSlotChange }: 
 
   const canExplore = !isEditing && Boolean(exploreUrl);
   const canOpenSettings = Boolean(isEditing) && isSelectionEnabled;
+  const showsHoverSlotItems = Boolean(hoverHeader) && hasHoverSlotItems;
+  const showsPanelActions = canEdit || canExplore || canOpenSettings;
 
   const report = useCallback(
     (item: PanelActionItem) => DashboardInteractions.panelActionClicked(item, panelId, 'actions_popover'),
@@ -217,23 +229,9 @@ function PanelActions({ panel, dashboard, menu, hoverSlot, onHoverSlotChange }: 
 
   return (
     <>
-      {hoverHeader && <div ref={onHoverSlotChange} className={styles.hoverSlot} />}
-      {hoverHeader && hasHoverSlotItems && <ActionsSeparator />}
+      {hoverHeader && <div ref={onHoverSlotChange} className={styles.headerSlot} />}
 
-      <IconButton
-        name={isExpanded ? 'compress-alt' : 'expand-alt'}
-        size="md"
-        className={actionStyles.action}
-        tooltip={
-          isExpanded
-            ? t('dashboard-scene.panel-actions-popover.restore-size', 'Restore size (v)')
-            : t('dashboard-scene.panel-actions-popover.expand', 'Expand (v)')
-        }
-        tooltipPlacement="top"
-        onClick={onToggleExpand}
-      />
-
-      {(canEdit || canExplore || canOpenSettings) && <ActionsSeparator />}
+      {showsHoverSlotItems && showsPanelActions && <ActionsSeparator />}
 
       {canEdit && (
         <IconButton
@@ -270,7 +268,7 @@ function PanelActions({ panel, dashboard, menu, hoverSlot, onHoverSlotChange }: 
 
       {canChangeLayout && (
         <>
-          <ActionsSeparator />
+          {(showsHoverSlotItems || showsPanelActions) && <ActionsSeparator />}
           <CopyActionButton
             onClick={() => {
               report('copy');
@@ -293,7 +291,22 @@ function PanelActions({ panel, dashboard, menu, hoverSlot, onHoverSlotChange }: 
         </>
       )}
 
-      <ActionsSeparator />
+      {(showsHoverSlotItems || showsPanelActions || canChangeLayout) && <ActionsSeparator />}
+
+      {hoverHeader && <div ref={onDragHandleSlotChange} className={styles.headerSlot} />}
+
+      <IconButton
+        name={isExpanded ? 'compress-alt' : 'expand-alt'}
+        size="md"
+        className={actionStyles.action}
+        tooltip={
+          isExpanded
+            ? t('dashboard-scene.panel-actions-popover.restore-size', 'Restore size (v)')
+            : t('dashboard-scene.panel-actions-popover.expand', 'Expand (v)')
+        }
+        tooltipPlacement="top"
+        onClick={onToggleExpand}
+      />
 
       <span ref={setMoreActionsAnchor} className={styles.moreActions}>
         <Dropdown
@@ -390,7 +403,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   separator: css({
     backgroundColor: theme.colors.border.strong,
   }),
-  hoverSlot: css({
+  headerSlot: css({
     // Header items join the toolbar's flex layout and 8px gap; items that render nothing leave no gap.
     display: 'contents',
   }),
