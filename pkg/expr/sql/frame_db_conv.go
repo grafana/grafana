@@ -3,6 +3,7 @@
 package sql
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -33,7 +34,7 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 	cellCount := int64(0)
 
 	// Iterate through the rows and append data to fields
-	for {
+	for rowIdx := 0; ; rowIdx++ {
 		// Check for context cancellation or timeout
 		select {
 		case <-ctx.Done():
@@ -68,7 +69,7 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 			// of the interface
 			nV, _, err := schema[i].Type.Convert(ctx, val)
 			if err != nil {
-				return nil, err
+				return nil, outputConvertError(ctx, schema[i], val, rowIdx, err)
 			}
 
 			// Run the normalized value through fieldValFromRowVal to normalize
@@ -84,6 +85,18 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 	}
 
 	return f, nil
+}
+
+// outputConvertError adds the column and row to an error from col.Type.Convert.
+// The engine names the column '<unknown>' in charset errors unless the context
+// carries the column and row, so on failure it converts val once more with them.
+func outputConvertError(ctx *mysql.Context, col *mysql.Column, val interface{}, rowIdx int, err error) error {
+	colCtx := context.WithValue(ctx.Context, types.ColumnNameKey, col.Name)
+	colCtx = context.WithValue(colCtx, types.RowNumberKey, int64(rowIdx))
+	if _, _, retryErr := col.Type.Convert(ctx.WithContext(colCtx), val); retryErr != nil {
+		err = retryErr
+	}
+	return fmt.Errorf("row %d, column %s: %w", rowIdx, col.Name, err)
 }
 
 // MySQLColToFieldType converts a MySQL column to a data.FieldType
