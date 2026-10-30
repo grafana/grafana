@@ -116,14 +116,14 @@ func TestSQLAdapter_QueriesExcludeAlertAnnotations(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, repo.lastQuery)
 		assert.Equal(t, "annotation", repo.lastQuery.Type)
-		assert.Zero(t, repo.lastQuery.AlertID)
+		assert.Empty(t, repo.lastQuery.AlertUID)
 	})
 
 	t.Run("Get sets Type to annotation", func(t *testing.T) {
 		_, _ = adapter.Get(ctx, "default", "a-1")
 		require.NotNil(t, repo.lastQuery)
 		assert.Equal(t, "annotation", repo.lastQuery.Type)
-		assert.Zero(t, repo.lastQuery.AlertID)
+		assert.Empty(t, repo.lastQuery.AlertUID)
 	})
 }
 
