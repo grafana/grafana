@@ -197,9 +197,18 @@ const getSecretName = async (datasourceUid: string, fieldName: string): Promise<
   return `${LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX}${hexString}`;
 };
 
-const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string) => {
-  // TODO: read this from backend.
-  let k8sVersion = 'v0alpha1';
+// TODO: read this from backend.
+export const DATASOURCE_K8S_VERSION = 'v0alpha1';
+
+/**
+ * Reads the stored Kubernetes DataSource. Callers that only need the settings should use
+ * {@link getDataSourceByUid}; this is for the parts of the object the legacy settings model drops,
+ * above all `metadata.annotations`, which is where the provisioning manager lives.
+ */
+export const getDataSourceK8sResourceByUid = async (
+  k8sName: string,
+  namespace: string
+): Promise<DataSourceSettingsK8s> => {
   let k8sGroup = await getDataSourceK8sGroup(k8sName);
   if (k8sGroup === '') {
     throw Error(`Could not find data source group with uid: "${k8sName}"`);
@@ -208,25 +217,38 @@ const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string) => {
   const response = await lastValueFrom(
     getBackendSrv().fetch<DataSourceSettingsK8s>({
       method: 'GET',
-      url: `/apis/${k8sGroup}/${k8sVersion}/namespaces/${namespace}/datasources/${k8sName}`,
+      url: `/apis/${k8sGroup}/${DATASOURCE_K8S_VERSION}/namespaces/${namespace}/datasources/${k8sName}`,
       showErrorAlert: false,
     })
   );
   if (!response.ok) {
-    throw Error(`Could not find data source by group-version-name: "${k8sGroup}" "${k8sVersion}" "${k8sName}"`);
+    throw Error(
+      `Could not find data source by group-version-name: "${k8sGroup}" "${DATASOURCE_K8S_VERSION}" "${k8sName}"`
+    );
+  }
+  return response.data;
+};
+
+const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string) => {
+  // Resolved again here because the access subresource lives under the same group.
+  let k8sGroup = await getDataSourceK8sGroup(k8sName);
+  if (k8sGroup === '') {
+    throw Error(`Could not find data source group with uid: "${k8sName}"`);
   }
 
-  let dsSettings = convertK8sDatasourceSettingsToLegacyDatasourceSettings(response.data);
+  let dsSettings = convertK8sDatasourceSettingsToLegacyDatasourceSettings(
+    await getDataSourceK8sResourceByUid(k8sName, namespace)
+  );
   const accessResponse = await lastValueFrom(
     getBackendSrv().fetch<DatasourceAccessK8s>({
       method: 'GET',
-      url: `/apis/${k8sGroup}/${k8sVersion}/namespaces/${namespace}/datasources/${k8sName}/access`,
+      url: `/apis/${k8sGroup}/${DATASOURCE_K8S_VERSION}/namespaces/${namespace}/datasources/${k8sName}/access`,
       showErrorAlert: false,
     })
   );
   if (!accessResponse.ok) {
     throw Error(
-      `Could not find data source access information by group-version-name: "${k8sGroup}" "${k8sVersion}" "${k8sName}"`
+      `Could not find data source access information by group-version-name: "${k8sGroup}" "${DATASOURCE_K8S_VERSION}" "${k8sName}"`
     );
   }
   dsSettings.accessControl = accessResponse.data.Permissions;

@@ -164,6 +164,46 @@ describe('SaveProvisionedResourceDrawer', () => {
       await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/playlists'));
     });
 
+    // A data source keeps its secure-value references beside `spec`; dropping them on save would
+    // strip the secrets from the committed file on every UI edit.
+    it('commits top-level fields beyond spec and drops status and server-managed metadata', async () => {
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          capturedRequest = { url: new URL(request.url), body: await request.json() };
+          return HttpResponse.json({ path: 'datasources/prom.json', resource: { upsert: {} } });
+        })
+      );
+
+      const { user } = setup({
+        resource: {
+          apiVersion: 'prometheus.datasource.grafana.app/v0alpha1',
+          kind: 'DataSource',
+          metadata: {
+            name: 'prom-uid',
+            annotations: {
+              'grafana.app/managedBy': 'repo',
+              'grafana.app/managerId': 'test-repo',
+              'grafana.app/sourcePath': 'datasources/prom.json',
+            },
+          },
+          spec: { title: 'Prometheus', url: 'http://prom:9090' },
+          secure: { basicAuthPassword: { name: 'sv-basic-auth' } },
+          status: { anything: true },
+        },
+        title: 'Prometheus',
+      });
+      await user.click(await screen.findByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => expect(capturedRequest).not.toBeNull());
+      expect(requireCapturedRequest(capturedRequest).body).toEqual({
+        apiVersion: 'prometheus.datasource.grafana.app/v0alpha1',
+        kind: 'DataSource',
+        metadata: { name: 'prom-uid' },
+        spec: { title: 'Prometheus', url: 'http://prom:9090' },
+        secure: { basicAuthPassword: { name: 'sv-basic-auth' } },
+      });
+    });
+
     it('runs a caller-supplied onWriteSuccess instead of the default navigation', async () => {
       const onWriteSuccess = jest.fn();
       server.use(
