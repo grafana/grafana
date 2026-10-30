@@ -15,13 +15,13 @@ import { CodeMirrorEditor } from '@grafana/ui/unstable';
 <CodeMirrorEditor value="SELECT 1" onChange={() => {}} />;
 ```
 
+## Props
+
+<ArgTypes of={CodeEditor} />
+
 ### Overview ruler
 
 Set `overviewRuler` to show errors from installed lint extensions in a strip beside the
 scrollbar. Clicking a marker selects and scrolls to the error. The strip is off by default;
 it does not enable validation. Supply a linter through `extensions`, as shown in the
 `WithOverviewRuler` story.
-
-## Props
-
-<ArgTypes of={CodeEditor} />
