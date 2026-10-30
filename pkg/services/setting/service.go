@@ -171,6 +171,8 @@ type remoteSettingService struct {
 	cache        *expirable.LRU[string, []*Setting]  // nil when caching disabled
 	fetchMutexes *expirable.LRU[string, *sync.Mutex] // per-cache-key fetch locks
 	fetchMu      sync.Mutex                          // guards fetchMutexes get-or-create
+	// cacheMu makes the generation check + Add in List atomic with invalidation.
+	cacheMu sync.Mutex
 	// invalidations counts change events; a fetch that overlapped one must not populate the cache.
 	invalidations atomic.Uint64
 }
@@ -322,6 +324,8 @@ func (s *remoteSettingService) handleEvent(subject string, data []byte) {
 		s.invalidateAll(invalidationReasonInvalidEvent)
 		return
 	}
+	s.cacheMu.Lock()
+	defer s.cacheMu.Unlock()
 	s.invalidations.Add(1)
 	s.metrics.cacheInvalidationTotal.WithLabelValues(invalidationReasonEvent).Inc()
 	prefix := n.Namespace + "|"
@@ -338,6 +342,8 @@ func (s *remoteSettingService) handleReconnect() {
 }
 
 func (s *remoteSettingService) invalidateAll(reason string) {
+	s.cacheMu.Lock()
+	defer s.cacheMu.Unlock()
 	s.invalidations.Add(1)
 	s.metrics.cacheInvalidationTotal.WithLabelValues(reason).Inc()
 	s.cache.Purge()
@@ -446,10 +452,14 @@ func (s *remoteSettingService) ListWithFieldSelector(ctx context.Context, labelS
 		return nil, oErr
 	}
 
-	if s.cache != nil && s.invalidations.Load() == invalidationsBefore {
-		if evicted := s.cache.Add(cacheKey, allSettings); evicted {
-			s.metrics.cacheEvictionTotal.Inc()
+	if s.cache != nil {
+		s.cacheMu.Lock()
+		if s.invalidations.Load() == invalidationsBefore {
+			if evicted := s.cache.Add(cacheKey, allSettings); evicted {
+				s.metrics.cacheEvictionTotal.Inc()
+			}
 		}
+		s.cacheMu.Unlock()
 	}
 
 	return allSettings, nil
