@@ -6400,6 +6400,7 @@
         "required": [
           "group",
           "resource",
+          "kind",
           "count"
         ],
         "properties": {
@@ -6409,6 +6410,10 @@
             "default": 0
           },
           "group": {
+            "type": "string",
+            "default": ""
+          },
+          "kind": {
             "type": "string",
             "default": ""
           },
@@ -6463,6 +6468,7 @@
           "path",
           "group",
           "resource",
+          "kind",
           "name",
           "hash"
         ],
@@ -6476,6 +6482,10 @@
           },
           "hash": {
             "description": "the k8s identifier",
+            "type": "string",
+            "default": ""
+          },
+          "kind": {
             "type": "string",
             "default": ""
           },

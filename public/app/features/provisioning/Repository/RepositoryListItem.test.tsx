@@ -113,8 +113,8 @@ describe('RepositoryListItem', () => {
           observedGeneration: 1,
           webhook: {},
           stats: [
-            { group: 'dashboard.grafana.app', resource: 'dashboards', count: 2 },
-            { group: 'folder.grafana.app', resource: 'folders', count: 1 },
+            { group: 'dashboard.grafana.app', resource: 'dashboards', kind: 'Dashboard', count: 2 },
+            { group: 'folder.grafana.app', resource: 'folders', kind: 'Folder', count: 1 },
           ],
         },
       });
@@ -131,7 +131,7 @@ describe('RepositoryListItem', () => {
           sync: { state: 'success', message: [] },
           observedGeneration: 1,
           webhook: {},
-          stats: [{ group: 'playlist.grafana.app', resource: 'playlists', count: 3 }],
+          stats: [{ group: 'playlist.grafana.app', resource: 'playlists', kind: 'Playlist', count: 3 }],
         },
       });
       render(<RepositoryListItem repository={repo} />);
@@ -152,7 +152,7 @@ describe('RepositoryListItem', () => {
           sync: { state: 'success', message: [] },
           observedGeneration: 1,
           webhook: {},
-          stats: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 2 }],
+          stats: [{ group: 'dashboard.grafana.app', resource: 'dashboards', kind: 'Dashboard', count: 2 }],
         },
       });
       render(<RepositoryListItem repository={repo} />);
@@ -167,7 +167,7 @@ describe('RepositoryListItem', () => {
           sync: { state: 'success', message: [] },
           observedGeneration: 1,
           webhook: {},
-          stats: [{ group: 'example.grafana.app', resource: 'widgets', count: 3 }],
+          stats: [{ group: 'example.grafana.app', resource: 'widgets', kind: 'Widget', count: 3 }],
         },
       });
       render(<RepositoryListItem repository={repo} />);

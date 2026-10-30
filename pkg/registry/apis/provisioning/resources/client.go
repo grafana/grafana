@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
@@ -185,6 +186,7 @@ type ResourceClients interface {
 	// the static base set plus any extra resources registered with the client factory.
 	// Each entry carries whether the resource supports the folder header annotation.
 	SupportedResources() []SupportedResource
+	Kinds(ctx context.Context) (map[schema.GroupResource]string, error)
 }
 
 type clientsProvider interface {
@@ -477,6 +479,28 @@ func (c *resourceClients) SupportedResources() []SupportedResource {
 	return c.supportedResources
 }
 
+func (c *resourceClients) Kinds(ctx context.Context) (map[schema.GroupResource]string, error) {
+	_, disco, err := c.clientsProvider.GetClientsForResource(ctx, schema.GroupVersionResource{})
+	if err != nil {
+		return nil, fmt.Errorf("get discovery client: %w", err)
+	}
+	lists, err := disco.ServerPreferredResourcesWithContext(ctx)
+	if err != nil && !discovery.IsGroupDiscoveryFailedError(err) {
+		return nil, fmt.Errorf("get preferred resources: %w", err)
+	}
+	kinds := make(map[schema.GroupResource]string)
+	for _, list := range lists {
+		gv, err := schema.ParseGroupVersion(list.GroupVersion)
+		if err != nil {
+			continue
+		}
+		for _, r := range list.APIResources {
+			kinds[schema.GroupResource{Group: gv.Group, Resource: r.Name}] = r.Kind
+		}
+	}
+	return kinds, nil
+}
+
 type multiResourceClients struct {
 	namespace                 string
 	mutex                     sync.Mutex
@@ -525,6 +549,25 @@ func (c *multiResourceClients) User(ctx context.Context) (dynamic.ResourceInterf
 
 func (c *multiResourceClients) SupportedResources() []SupportedResource {
 	return c.supportedResources
+}
+
+func (c *multiResourceClients) Kinds(ctx context.Context) (map[schema.GroupResource]string, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	kinds := make(map[schema.GroupResource]string)
+	for group, clients := range c.resourceClientsByAPIGroup {
+		groupKinds, err := clients.Kinds(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for gr, kind := range groupKinds {
+			if gr.Group == group {
+				kinds[gr] = kind
+			}
+		}
+	}
+	return kinds, nil
 }
 
 // ForEach applies the function to each resource returned from the list operation

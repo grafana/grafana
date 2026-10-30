@@ -3,7 +3,9 @@ package resources
 import (
 	"context"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -25,16 +27,34 @@ type ResourceStore interface {
 }
 
 type ResourceListerFromSearch struct {
-	store ResourceStore
+	store   ResourceStore
+	clients ClientFactory
 }
 
-func NewResourceLister(store ResourceStore) ResourceLister {
-	return &ResourceListerFromSearch{store: store}
+func NewResourceLister(store ResourceStore, clients ClientFactory) ResourceLister {
+	return &ResourceListerFromSearch{store: store, clients: clients}
 }
 
-func NewResourceListerForMigrations(store ResourceStore) ResourceLister {
+func NewResourceListerForMigrations(store ResourceStore, clients ClientFactory) ResourceLister {
 	return &ResourceListerFromSearch{
-		store: store,
+		store:   store,
+		clients: clients,
+	}
+}
+
+func (o *ResourceListerFromSearch) kinds(ctx context.Context, namespace string) func(group, resource string) string {
+	var kinds map[schema.GroupResource]string
+	if o.clients != nil {
+		clients, err := o.clients.Clients(ctx, namespace)
+		if err == nil {
+			kinds, err = clients.Kinds(ctx)
+		}
+		if err != nil {
+			logging.FromContext(ctx).Warn("failed to resolve resource kinds", "error", err)
+		}
+	}
+	return func(group, resource string) string {
+		return kinds[schema.GroupResource{Group: group, Resource: resource}]
 	}
 }
 
@@ -49,12 +69,14 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 		return nil, err
 	}
 
+	kindOf := o.kinds(ctx, namespace)
 	items := make([]provisioning.ResourceListItem, 0, len(objects.Items))
 	for _, v := range objects.Items {
 		items = append(items, provisioning.ResourceListItem{
 			Path:     v.Path,
 			Group:    v.Object.Group,
 			Resource: v.Object.Resource,
+			Kind:     kindOf(v.Object.Group, v.Object.Resource),
 			Name:     v.Object.Name,
 			Hash:     v.Hash,
 			Time:     v.Time,
@@ -80,6 +102,7 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 		return nil, err
 	}
 
+	kindOf := o.kinds(ctx, namespace)
 	lookup := make(map[string]*provisioning.ManagerStats)
 	for _, v := range counts.Items {
 		key := v.Kind + ":" + v.Id
@@ -94,6 +117,7 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 		m.Stats = append(m.Stats, provisioning.ResourceCount{
 			Group:    v.Group,
 			Resource: v.Resource,
+			Kind:     kindOf(v.Group, v.Resource),
 			Count:    v.Count,
 		})
 	}
@@ -130,9 +154,11 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 	}
 
 	for _, v := range info.Stats {
+		kind := kindOf(v.Group, v.Resource)
 		stats.Instance = append(stats.Instance, provisioning.ResourceCount{
 			Group:    v.Group,
 			Resource: v.Resource,
+			Kind:     kind,
 			Count:    v.Count,
 		})
 
@@ -145,6 +171,7 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 			stats.Unmanaged = append(stats.Unmanaged, provisioning.ResourceCount{
 				Group:    v.Group,
 				Resource: v.Resource,
+				Kind:     kind,
 				Count:    unmanagedCount,
 			})
 		}

@@ -108,7 +108,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get unified storage client: %w", err)
 	}
-	resourceLister := resources.NewResourceLister(unified)
+	resourceLister := resources.NewResourceLister(unified, clients)
 
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
