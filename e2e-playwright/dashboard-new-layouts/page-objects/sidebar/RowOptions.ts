@@ -33,6 +33,20 @@ export class RowOptions extends PageObject {
     });
   }
 
+  /** Returns the edit pane button that moves the selected row one place up or down */
+  getMoveButton(direction: 'up' | 'down'): Locator {
+    return this.getByGrafanaSelector(this.selectors.components.Sidebar.container).getByRole('button', {
+      name: direction === 'up' ? 'Move up' : 'Move down',
+    });
+  }
+
+  /** Moves the selected row one place up or down with the edit pane button */
+  async move(direction: 'up' | 'down') {
+    await test.step(`Move row ${direction}`, async () => {
+      await this.getMoveButton(direction).click();
+    });
+  }
+
   /** Opens the variable type picker to add a variable scoped to the selected row */
   async addVariable() {
     await test.step('Add new row variable', async () => {

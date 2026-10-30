@@ -3,7 +3,7 @@ import { type PointerEvent as ReactPointerEvent } from 'react';
 import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
-import { logError, setPluginImportUtils } from '@grafana/runtime';
+import { logError, logMeasurement, setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import {
   SceneGridLayout,
@@ -26,12 +26,13 @@ import { type DashboardLayoutManager } from '../../types/DashboardLayoutManager'
 import { DashboardGridItem } from '../DashboardGridItem';
 import { DefaultGridLayoutManager } from '../DefaultGridLayoutManager';
 
-import { shouldRenderCustomGrid } from './CustomGrid';
+import { CUSTOM_GRID_RENDER_MEASUREMENT, shouldRenderCustomGrid } from './CustomGrid';
 import { CustomGridRenderer } from './CustomGridRenderer';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   logError: jest.fn(),
+  logMeasurement: jest.fn(),
   // New panels get the default data source, these tests have none
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue(undefined),
 }));
@@ -81,6 +82,7 @@ async function renderManager(manager: DefaultGridLayoutManager, isEditing = true
 afterEach(() => {
   setTestFlags({});
   jest.mocked(logError).mockClear();
+  jest.mocked(logMeasurement).mockClear();
   jest.mocked(CustomGridRenderer).mockImplementation(jest.requireActual('./CustomGridRenderer').CustomGridRenderer);
 });
 
@@ -93,6 +95,7 @@ describe('DefaultGridLayoutManager renderer', () => {
     expect(container.querySelector(REACT_GRID_LAYOUT)).toBeInTheDocument();
     expect(container.querySelector(CUSTOM_GRID)).not.toBeInTheDocument();
     expect(container.querySelector('[data-griditem-key="grid-item-2"]')).toHaveTextContent('Panel 2');
+    expect(logMeasurement).not.toHaveBeenCalled();
   });
 
   describe('with the unified drag and drop flag on', () => {
@@ -111,6 +114,18 @@ describe('DefaultGridLayoutManager renderer', () => {
 
       expect(container.querySelector(REACT_GRID_LAYOUT)).toBeInTheDocument();
       expect(container.querySelector(CUSTOM_GRID)).not.toBeInTheDocument();
+      expect(logMeasurement).not.toHaveBeenCalled();
+    });
+
+    it('counts each grid rendered in an edit session once, so the rollout can tell the fallback rate', async () => {
+      const manager = createManager();
+      const { unmount } = await renderManager(manager);
+      unmount();
+      render(<manager.Component model={manager} />);
+      await act(async () => {});
+
+      expect(logMeasurement).toHaveBeenCalledTimes(1);
+      expect(logMeasurement).toHaveBeenCalledWith(CUSTOM_GRID_RENDER_MEASUREMENT, { rendered: 1, fallback: 0 });
     });
 
     it('switches to the new grid when editing starts', async () => {
@@ -144,6 +159,9 @@ describe('DefaultGridLayoutManager renderer', () => {
       expect(remounted.container.querySelector(REACT_GRID_LAYOUT)).toBeInTheDocument();
       expect(remounted.container.querySelector(CUSTOM_GRID)).not.toBeInTheDocument();
       expect(logError).toHaveBeenCalledTimes(1);
+      // Counted as a render that fell back
+      expect(logMeasurement).toHaveBeenCalledTimes(1);
+      expect(logMeasurement).toHaveBeenCalledWith(CUSTOM_GRID_RENDER_MEASUREMENT, { rendered: 1, fallback: 1 });
       consoleError.mockRestore();
     });
   });

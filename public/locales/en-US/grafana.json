@@ -5997,6 +5997,14 @@
       "variable-type": "Change variable type",
       "view-panel-option": "{{category}}: {{name}}"
     },
+    "edit-pane": {
+      "list-item": {
+        "move-down": "Move down",
+        "move-left": "Move left",
+        "move-right": "Move right",
+        "move-up": "Move up"
+      }
+    },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
       "add-library-panel-button": "Add library panel",

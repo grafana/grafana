@@ -1,4 +1,5 @@
 import { getPanelPlugin } from '@grafana/data/test';
+import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 
@@ -65,6 +66,10 @@ describe('ListDragSession', () => {
       expect(titles(source)).toEqual(['Row B', 'Row C', 'Row A']);
       expect(session.getState()).toBeNull();
       expect(host.onEnd).toHaveBeenCalledTimes(1);
+      expect(host.onEnd).toHaveBeenCalledWith({
+        isCancelled: false,
+        target: expect.objectContaining({ kind: 'list', list: source, index: 2 }),
+      });
       expect(sidebar.state.undoStack).toHaveLength(1);
 
       sidebar.undoAction();
@@ -308,6 +313,7 @@ describe('ListDragSession', () => {
       expect(escape.defaultPrevented).toBe(true);
       expect(session.getState()).toBeNull();
       expect(host.onEnd).toHaveBeenCalledTimes(1);
+      expect(host.onEnd).toHaveBeenCalledWith({ isCancelled: true, target: null });
 
       release(10, 30);
       expect(titles(source)).toEqual(['Row A', 'Row B', 'Row C']);
@@ -366,6 +372,70 @@ describe('ListDragSession', () => {
       expect(ListDragSession.start({ button: 2, clientX: 0, clientY: 0, target: null }, rowA, makeHost(rowA))).toBe(
         null
       );
+    });
+  });
+
+  describe('auto-scroll', () => {
+    let frames: FrameRequestCallback[] = [];
+
+    beforeEach(() => {
+      frames = [];
+      jest
+        .spyOn(window, 'requestAnimationFrame')
+        .mockImplementation((callback: FrameRequestCallback) => frames.push(callback));
+      jest.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+    });
+
+    afterEach(() => jest.restoreAllMocks());
+
+    function runFrames(count: number) {
+      for (let i = 0; i < count; i++) {
+        const pending = frames;
+        frames = [];
+        pending.forEach((callback) => callback(0));
+      }
+    }
+
+    /** The dashboard body, 600px high, with the rows from 500px down in its content */
+    function renderScrollingList(list: RowsLayoutManager) {
+      const body = document.createElement('div');
+      body.setAttribute('data-testid', selectors.components.DashboardSidebarSplitter.bodyContainer);
+      let scrollTop = 0;
+      Object.defineProperties(body, {
+        clientHeight: { value: 600 },
+        scrollHeight: { value: 3000 },
+        scrollTop: { get: () => scrollTop, set: (value: number) => (scrollTop = Math.min(Math.max(value, 0), 2400)) },
+      });
+      body.getBoundingClientRect = () => rect(0, 600);
+      document.body.appendChild(body);
+      const listEl = renderList(list);
+      [...listEl.children].forEach((rowEl, index) => {
+        (rowEl as HTMLElement).getBoundingClientRect = () => rect(500 + index * ROW_HEIGHT - scrollTop, ROW_HEIGHT);
+      });
+      return { body, listEl };
+    }
+
+    it('scrolls near the bottom of the dashboard and moves the drop position as the rows scroll under the pointer', () => {
+      const { source, rowA } = setup();
+      const { body, listEl } = renderScrollingList(source);
+      elementsUnderPointer = [listEl];
+      const { session, host } = startDrag(rowA);
+
+      // Above the middle of Row B, which spans 600-700 before scrolling
+      moveTo(10, 595);
+      expect(describeTarget(session)).toEqual({ kind: 'list', key: source.state.key, index: 0 });
+
+      runFrames(3);
+      expect(body.scrollTop).toBeGreaterThan(50);
+      expect(describeTarget(session)).toEqual({ kind: 'list', key: source.state.key, index: 1 });
+      // The preview stays where it is in the viewport, under the pointer
+      expect(host.movePreview).toHaveBeenCalledTimes(1);
+
+      release(10, 595);
+      expect(titles(source)).toEqual(['Row B', 'Row A', 'Row C']);
+      const scrolled = body.scrollTop;
+      runFrames(1);
+      expect(body.scrollTop).toBe(scrolled);
     });
   });
 

@@ -1,5 +1,6 @@
 import { RowsLayoutManager } from '../../layout-rows/RowsLayoutManager';
 import { TabItem } from '../../layout-tabs/TabItem';
+import { DragAutoScroller } from '../dragAutoScroll';
 
 import { commitListDrop } from './commitListDrop';
 import { getListOf, isSameListDropTarget, type ListDropTarget, type ListItem, type ListLayout } from './listDnd';
@@ -33,18 +34,27 @@ export interface ListDragPreview {
   offsetY: number;
 }
 
+/** How a session ended. A cancelled one changed nothing. */
+export interface ListDragResult {
+  isCancelled: boolean;
+  /** Where the item was released, if it was released over a place that takes it */
+  target: ListDropTarget | null;
+}
+
 /** What the session needs from the layout orchestrator that starts it */
 export interface ListDragHost {
   /** Where the item would land if it were dropped at this point */
   getDropTarget(x: number, y: number): ListDropTarget | null;
   /** Each pointer move of the drag, for hovering tabs open */
   onDragMove(x: number, y: number): void;
+  /** The dashboard scrolled under the resting pointer, so different things may be under it now */
+  onScroll?(x: number, y: number): void;
   showPreview(preview: ListDragPreview): void;
   movePreview(x: number, y: number): void;
   /** The state returned by `getState` changed */
   onChange(): void;
   /** The session is over, after a drop or a cancel. Called once. */
-  onEnd(): void;
+  onEnd(result: ListDragResult): void;
 }
 
 interface PointerPress {
@@ -59,18 +69,29 @@ interface PointerPress {
  * renderers show it moving through `getState`: the source list renders the item where it would be
  * dropped, other lists render a placeholder. Every drop is one undoable action.
  *
- * Escape, a release outside the window and a cancelled pointer end the drag without changing anything.
+ * Escape, a release outside the window and a cancelled pointer end the drag without changing anything. Near the
+ * top or bottom of the dashboard, and for tabs near the ends of a tab bar that doesn't fit its tabs, the drag
+ * scrolls.
  */
 export class ListDragSession {
   private _state: ListDragState | null = null;
   private _isOver = false;
+  private _pointer: { x: number; y: number };
+  private readonly _autoScroller: DragAutoScroller;
 
   private constructor(
     private readonly _item: ListItem,
     private readonly _sourceList: ListLayout,
     private readonly _start: { x: number; y: number },
     private readonly _host: ListDragHost
-  ) {}
+  ) {
+    this._pointer = _start;
+    this._autoScroller = new DragAutoScroller({
+      horizontal: _item instanceof TabItem,
+      onScroll: () => this._onScroll(),
+    });
+    this._autoScroller.start(_start.x, _start.y);
+  }
 
   /** Starts a session for a press on the item's drag handle, or returns null if the press doesn't start one */
   public static start(evt: PointerPress, item: ListItem, host: ListDragHost): ListDragSession | null {
@@ -116,10 +137,22 @@ export class ListDragSession {
       this._activate();
     }
 
+    this._pointer = { x: evt.clientX, y: evt.clientY };
+    this._autoScroller.update(evt.clientX, evt.clientY);
     this._host.movePreview(evt.clientX, evt.clientY);
     this._host.onDragMove(evt.clientX, evt.clientY);
     this._setTarget(this._host.getDropTarget(evt.clientX, evt.clientY));
   };
+
+  /** The preview stays under the resting pointer, but the lists moved under it */
+  private _onScroll() {
+    if (!this._state) {
+      return;
+    }
+    const { x, y } = this._pointer;
+    this._host.onScroll?.(x, y);
+    this._setTarget(this._host.getDropTarget(x, y));
+  }
 
   private _onPointerUp = (evt: PointerEvent) => {
     if (!this._state || isOutsideWindow(evt)) {
@@ -129,7 +162,7 @@ export class ListDragSession {
 
     // Pointer moves can be coalesced, so the release point decides
     const target = this._host.getDropTarget(evt.clientX, evt.clientY);
-    this._end();
+    this._end({ isCancelled: false, target });
     if (this._item instanceof TabItem) {
       suppressNextClick();
     }
@@ -206,11 +239,12 @@ export class ListDragSession {
     this._host.onChange();
   }
 
-  private _end() {
+  private _end(result: ListDragResult = { isCancelled: true, target: null }) {
     if (this._isOver) {
       return;
     }
     this._isOver = true;
+    this._autoScroller.stop();
     window.removeEventListener('pointermove', this._onPointerMove, true);
     window.removeEventListener('pointerup', this._onPointerUp, true);
     window.removeEventListener('pointercancel', this._onPointerCancel, true);
@@ -222,7 +256,7 @@ export class ListDragSession {
     if (wasActive) {
       this._host.onChange();
     }
-    this._host.onEnd();
+    this._host.onEnd(result);
   }
 }
 

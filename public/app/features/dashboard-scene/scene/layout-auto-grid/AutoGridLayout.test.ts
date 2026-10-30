@@ -161,7 +161,24 @@ describe('AutoGridLayout drag', () => {
       expect(titles(gridB.state.layout.state.children)).toEqual(moved.b);
     });
 
-    it('keeps the floating item under a resting pointer when the grid moves on the page', () => {
+    it('lets the pointer through the floating item once the press became a drag, so the wheel scrolls the dashboard', () => {
+      const { gridA, items } = setup();
+      const cell = items.A1.containerRef.current!;
+      startDrag(gridA, items.A1, { clientX: 100, clientY: 10 });
+      pointerOverGridItem(gridA, 'A1');
+
+      // A press that barely moves is still a click on the header, which selects the panel
+      movePointer({ clientX: 101, clientY: 11 });
+      expect(cell.style.pointerEvents).toBe('');
+
+      movePointer({ clientX: 100, clientY: 30 });
+      expect(cell.style.pointerEvents).toBe('none');
+
+      release({ clientX: 100, clientY: 30 });
+      expect(cell.style.pointerEvents).toBe('');
+    });
+
+    it('keeps the floating item under a resting pointer in the viewport when the grid moves on the page', () => {
       jest.useFakeTimers();
       try {
         const { gridA, items, containerA } = setup();
@@ -174,7 +191,7 @@ describe('AutoGridLayout drag', () => {
         containerA.getBoundingClientRect = () => ({ ...GRID_A_RECT, top: 100, bottom: 500 }) as DOMRect;
         jest.advanceTimersByTime(20);
 
-        expect(containerA.style.getPropertyValue(DRAGGED_ITEM_TOP)).toBe('490px');
+        expect(containerA.style.getPropertyValue(DRAGGED_ITEM_TOP)).toBe('590px');
       } finally {
         jest.useRealTimers();
       }

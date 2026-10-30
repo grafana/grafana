@@ -14,6 +14,7 @@ import { useSoloPanelContext, renderMatchingSoloPanels } from '../../solo/SoloPa
 import { useDashboardState } from '../../utils/utils';
 import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
 import { PanelEditActionsWrapper } from '../edit-actions-popover/PanelEditActions';
+import { isUnifiedDragAndDropEnabled } from '../layouts-shared/unifiedDragAndDrop';
 import { getIsLazy } from '../layouts-shared/utils';
 import { AUTO_GRID_ITEM_DROP_TARGET_ATTR } from '../types/DashboardDropTarget';
 
@@ -119,6 +120,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
             conditionalRenderingClass,
             styles.wrapper,
             isDragged && !isRepeat && styles.draggedWrapper,
+            isDragged && !isRepeat && isUnifiedDragAndDropEnabled() && styles.draggedWrapperFixed,
             isDragged && isRepeat && styles.draggedRepeatWrapper,
             isSelected && 'dashboard-selected-element'
           );
@@ -239,6 +241,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     '&.dashboard-visible-hidden-element': {
       position: 'absolute',
+    },
+  }),
+  // On the unified drag and drop engine, the position is in the viewport
+  draggedWrapperFixed: css({
+    position: 'fixed',
+
+    '&.dashboard-visible-hidden-element': {
+      position: 'fixed',
     },
   }),
   draggedRepeatWrapper: css({

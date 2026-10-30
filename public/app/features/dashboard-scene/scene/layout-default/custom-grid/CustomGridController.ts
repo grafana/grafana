@@ -7,6 +7,7 @@ import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { moveElement } from '../../../actions/element/moveElement';
 import { edit } from '../../../actions/utils/edit';
 import { isRepeatCloneOrChildOf } from '../../../utils/clone';
+import { DragAutoScroller } from '../../layouts-shared/dragAutoScroll';
 import {
   DASHBOARD_DROP_TARGET_KEY_ATTR,
   type GridItemDragInfo,
@@ -45,6 +46,9 @@ const NEW_PANEL_GRAB_TOP_PX = 16;
  * Position of the dragged item and size of the resized item. They are set on that item's element on
  * every pointer move instead of being rendered, so only the item is restyled. Set on the item rather
  * than the grid, because custom properties inherit: on the grid they would restyle every panel.
+ *
+ * The dragged item is positioned in the viewport, so it stays under the pointer while the dashboard
+ * scrolls and is not clipped by the dashboard's scroll container.
  */
 export const DRAG_LEFT_VAR = '--custom-grid-drag-left';
 export const DRAG_TOP_VAR = '--custom-grid-drag-top';
@@ -81,9 +85,15 @@ interface Session extends CustomGridInteraction {
   /** For drags: offset from the pointer to the item's top-left corner */
   offsetX: number;
   offsetY: number;
-  /** Pixel position of the item in the grid. For drags it follows the pointer, so the item can be placed again when the grid mounts again mid-drag. */
+  /** Pixel position of the item in the grid when the interaction started */
   left: number;
   top: number;
+  /** For drags: the last pointer position, so the item can be placed again when the grid mounts again mid-drag */
+  pointerX: number;
+  pointerY: number;
+  /** For resizes: where the grid was on the page, so scrolling while resizing keeps the corner under the pointer */
+  containerLeft: number;
+  containerTop: number;
   /** For drags: ends the drag in the layout orchestrator when the grid cancels it */
   onCancel?: () => void;
 }
@@ -124,6 +134,9 @@ export class CustomGridController {
   private _session: Session | null = null;
   private _externalDrop: ExternalDrop | null = null;
   private _interaction: CustomGridInteraction | null = null;
+  /** Scrolls the dashboard while a resized item's corner is near its edge. Drags are scrolled by the layout orchestrator. */
+  private _autoScroller: DragAutoScroller | null = null;
+  private _lastResizeMove: PointerPosition | null = null;
 
   public constructor(public readonly grid: SceneGridLayout) {}
 
@@ -223,7 +236,8 @@ export class CustomGridController {
     }
     // The grid can be mounted again mid-drag, e.g. when the drag switches back to the grid's tab
     if (element && this._session?.kind === 'drag' && this._session.isActive) {
-      this._setDragPosition(this._session.left, this._session.top);
+      const { pointerX, pointerY, offsetX, offsetY } = this._session;
+      this._setDragPosition(pointerX - offsetX, pointerY - offsetY);
     }
     if (!element) {
       this.endExternalDrop();
@@ -289,6 +303,10 @@ export class CustomGridController {
       offsetY: info.offsetY,
       left: rect.left,
       top: rect.top,
+      pointerX: evt.clientX,
+      pointerY: evt.clientY,
+      containerLeft: 0,
+      containerTop: 0,
       onCancel,
     });
   }
@@ -321,9 +339,9 @@ export class CustomGridController {
     const rect = container.getBoundingClientRect();
     const left = evt.clientX - rect.left - session.offsetX;
     const top = evt.clientY - rect.top - session.offsetY;
-    session.left = left;
-    session.top = top;
-    this._setDragPosition(left, top);
+    session.pointerX = evt.clientX;
+    session.pointerY = evt.clientY;
+    this._setDragPosition(evt.clientX - session.offsetX, evt.clientY - session.offsetY);
 
     const item = session.before.find((candidate) => candidate.i === session.key)!;
     const isOutside = this._isOverOtherDropTarget(evt.clientX, evt.clientY);
@@ -514,6 +532,7 @@ export class CustomGridController {
     evt.stopPropagation();
 
     const rect = pixelRectFor(container.clientWidth, item);
+    const containerRect = container.getBoundingClientRect();
     this._startSession({
       kind: 'resize',
       key,
@@ -529,12 +548,30 @@ export class CustomGridController {
       offsetY: 0,
       left: rect.left,
       top: rect.top,
+      pointerX: evt.clientX,
+      pointerY: evt.clientY,
+      containerLeft: containerRect.left,
+      containerTop: containerRect.top,
     });
     window.addEventListener('pointermove', this._onResizeMove);
+    this._autoScroller = new DragAutoScroller({
+      onScroll: () => {
+        if (this._lastResizeMove) {
+          this._resizeTo(this._lastResizeMove);
+        }
+      },
+    });
+    this._autoScroller.start(evt.clientX, evt.clientY);
     this._setResizeSize(rect.width, rect.height);
   };
 
   private _onResizeMove = (evt: PointerPosition) => {
+    this._lastResizeMove = evt;
+    this._autoScroller?.update(evt.clientX, evt.clientY);
+    this._resizeTo(evt);
+  };
+
+  private _resizeTo(evt: PointerPosition) {
     const session = this._session;
     const container = this._container;
     if (session?.kind !== 'resize' || !container) {
@@ -546,13 +583,17 @@ export class CustomGridController {
     }
 
     const containerWidth = container.clientWidth;
+    // The grid moves up the page as the dashboard scrolls down, and the item's top edge with it
+    const containerRect = container.getBoundingClientRect();
+    const scrolledX = session.containerLeft - containerRect.left;
+    const scrolledY = session.containerTop - containerRect.top;
     // Like react-grid-layout, the item follows the pointer but is never smaller than one cell or wider than the grid
     const minSize = pixelRectFor(containerWidth, { x: 0, y: 0, w: 1, h: 1 });
     const width = Math.min(
-      Math.max(session.startSize.width + evt.clientX - session.startX, minSize.width),
+      Math.max(session.startSize.width + evt.clientX - session.startX + scrolledX, minSize.width),
       containerWidth - session.left
     );
-    const height = Math.max(session.startSize.height + evt.clientY - session.startY, minSize.height);
+    const height = Math.max(session.startSize.height + evt.clientY - session.startY + scrolledY, minSize.height);
     this._setResizeSize(width, height);
 
     const item = session.preview.find((candidate) => candidate.i === session.key);
@@ -564,7 +605,7 @@ export class CustomGridController {
     if (!isSameLayout(preview, session.preview)) {
       this._updateSession({ preview });
     }
-  };
+  }
 
   private _onResizeEnd() {
     const session = this._session;
@@ -638,6 +679,9 @@ export class CustomGridController {
       return;
     }
     this._session = null;
+    this._autoScroller?.stop();
+    this._autoScroller = null;
+    this._lastResizeMove = null;
     window.removeEventListener('pointermove', this._onResizeMove);
     window.removeEventListener('pointerup', this._onPointerUp, true);
     window.removeEventListener('pointercancel', this._onPointerCancel, true);

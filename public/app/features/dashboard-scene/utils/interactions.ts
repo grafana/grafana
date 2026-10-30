@@ -394,6 +394,19 @@ export const DashboardInteractions = {
     reportDashboardInteraction('move_item', properties);
   },
 
+  // A drag on the unified drag and drop engine ended. Numbers and layout types only.
+  dragEnded: (properties: {
+    kind: string;
+    sourceLayout: string;
+    targetLayout: string;
+    outcome: string;
+    durationMs: number;
+    moves: number;
+    undone: boolean;
+  }) => {
+    reportDashboardInteraction('drag_ended', properties);
+  },
+
   // fired when the dashboard scene enters edit mode; source = how it was opened (Edit button vs assistant)
   editSessionStarted: (properties: { dashboard_uid?: string; source: 'assistant' | 'user' }) => {
     reportDashboardInteraction('edit_session_started', properties);

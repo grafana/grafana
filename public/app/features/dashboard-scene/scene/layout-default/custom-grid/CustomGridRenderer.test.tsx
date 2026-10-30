@@ -168,10 +168,10 @@ describe('CustomGridRenderer', () => {
       act(() => controller.onDrag({ clientX: 30, clientY: 10 + 8 * 38, buttons: 1 }));
 
       const dragged = getItemElement(container, 'grid-item-2');
-      expect(dragged.style.transform).toBe(
-        `translate(var(${DRAG_LEFT_VAR}, ${pixelRectFor(GRID_WIDTH, { x: 0, y: 8, w: 12, h: 8 }).left}px), var(${DRAG_TOP_VAR}, 304px))`
-      );
+      // In the viewport: the pointer minus where the panel was grabbed
+      expect(dragged.style.transform).toBe(`translate(var(${DRAG_LEFT_VAR}, 0px), var(${DRAG_TOP_VAR}, 0px))`);
       expect(dragged.style.getPropertyValue(DRAG_LEFT_VAR)).toBe('20px');
+      expect(dragged.style.getPropertyValue(DRAG_TOP_VAR)).toBe(`${8 * 38}px`);
       const placeholder = gridElement.firstElementChild as HTMLElement;
       expect(placeholder).not.toHaveAttribute('data-griditem-key');
       expectAt(placeholder, { x: 0, y: 8, w: 12, h: 8 });

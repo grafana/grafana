@@ -1,3 +1,4 @@
+import { selectors } from '@grafana/e2e-selectors';
 import { logWarning } from '@grafana/runtime';
 import { type SceneGridItemLike, SceneGridLayout, VizPanel } from '@grafana/scenes';
 
@@ -13,6 +14,7 @@ import {
   DRAG_LEFT_VAR,
   DRAG_TOP_VAR,
   NEW_PANEL_DROP_KEY,
+  RESIZE_HEIGHT_VAR,
   RESIZE_WIDTH_VAR,
 } from './CustomGridController';
 import { type GridLayoutItem } from './gridMath';
@@ -400,6 +402,20 @@ describe('CustomGridController drag', () => {
     // The dragged item follows the pointer, wherever the cell it snaps to is
     expect(itemElement('grid-item-3').style.getPropertyValue(DRAG_LEFT_VAR)).toBe('0px');
     expect(itemElement('grid-item-3').style.getPropertyValue(DRAG_TOP_VAR)).toBe('0px');
+  });
+
+  it('positions the dragged panel in the viewport, so it stays under the pointer while the dashboard scrolls', () => {
+    const { grid, controller, container, pressOnHandle, itemElement } = setupRenderedGrid(threePanels());
+    pressOnHandle(grid.state.children[2]);
+    // The dashboard is scrolled down by two rows
+    container.getBoundingClientRect = () => rect(0, -2 * ROW_PX, GRID_WIDTH, 2000);
+
+    // Over cell (12, 8) of the grid, which starts two rows above the viewport
+    controller.onDrag({ clientX: 12 * COLUMN_PX + GRAB.offsetX, clientY: 6 * ROW_PX + GRAB.offsetY, buttons: 1 });
+
+    expect(itemElement('grid-item-3').style.getPropertyValue(DRAG_LEFT_VAR)).toBe(`${12 * COLUMN_PX}px`);
+    expect(itemElement('grid-item-3').style.getPropertyValue(DRAG_TOP_VAR)).toBe(`${6 * ROW_PX}px`);
+    expect(controller.getInteraction()!.preview.find(({ i }) => i === 'panel-3')).toMatchObject({ x: 12, y: 8 });
   });
 
   it('does not lift the panel before the pointer moved a few pixels, so a click stays a click', () => {
@@ -818,6 +834,45 @@ describe('CustomGridController resize', () => {
 
     setup.edits[0].perform();
     expect(layoutOf(setup.grid)).toEqual(preview);
+  });
+
+  it('scrolls near the bottom of the dashboard and keeps the corner under the resting pointer as the grid scrolls', () => {
+    const frames: FrameRequestCallback[] = [];
+    jest
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback: FrameRequestCallback) => frames.push(callback));
+    const body = document.createElement('div');
+    body.setAttribute('data-testid', selectors.components.DashboardSidebarSplitter.bodyContainer);
+    let scrollTop = 0;
+    Object.defineProperties(body, {
+      clientHeight: { value: 600 },
+      scrollHeight: { value: 3000 },
+      scrollTop: { get: () => scrollTop, set: (value: number) => (scrollTop = value) },
+    });
+    body.getBoundingClientRect = () => rect(0, 0, GRID_WIDTH, 600);
+    document.body.appendChild(body);
+    const setup = setupRenderedGrid(threePanels());
+    setup.container.getBoundingClientRect = () => rect(0, -scrollTop, GRID_WIDTH, 2000);
+    const press = startResize(setup, 'grid-item-1', 500, 300);
+    const startHeight = 8 * ROW_PX - 8;
+
+    try {
+      dispatchPointer('pointermove', { clientX: 500, clientY: 595, buttons: 1 });
+      expect(setup.itemElement('grid-item-1').style.getPropertyValue(RESIZE_HEIGHT_VAR)).toBe(`${startHeight + 295}px`);
+
+      frames.shift()!(0);
+      expect(scrollTop).toBeGreaterThan(0);
+      expect(setup.itemElement('grid-item-1').style.getPropertyValue(RESIZE_HEIGHT_VAR)).toBe(
+        `${startHeight + 295 + scrollTop}px`
+      );
+
+      dispatchPointer('pointerup', { clientX: 500, clientY: 595 });
+      expect(setup.controller.getInteraction()).toBeNull();
+      expect(press.preventDefault).toHaveBeenCalled();
+    } finally {
+      jest.restoreAllMocks();
+      body.remove();
+    }
   });
 
   it('keeps items at least one cell big and no wider than the grid', () => {
