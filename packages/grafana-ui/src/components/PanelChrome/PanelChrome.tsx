@@ -17,7 +17,7 @@ import { LoadingBar } from '../LoadingBar/LoadingBar';
 import { Text } from '../Text/Text';
 import { Tooltip } from '../Tooltip/Tooltip';
 
-import { HoverWidget } from './HoverWidget';
+import { HoverWidget, HoverWidgetDragHandle } from './HoverWidget';
 import { usePanelChromeHeaderControls } from './PanelChromeHeaderControlsContext';
 import { usePanelContext } from './PanelContext';
 import { PanelDescription } from './PanelDescription';
@@ -431,7 +431,9 @@ export function PanelChrome({
   // Without the menu keeping it mounted, the hover slot has to render for the streaming and cancel-query icons alone.
   const hasStatusIcon =
     loadingState === LoadingState.Streaming || (loadingState === LoadingState.Loading && Boolean(onCancelQuery));
-  const hasHoverSlotContent = title || description || titleItems || hoverSlotDragClass || actions || hasStatusIcon;
+  const dragHandleSlot = headerControls?.dragHandleSlot;
+  const hoverWidgetDragClass = dragHandleSlot === undefined ? hoverSlotDragClass : undefined;
+  const hasHoverSlotContent = title || description || titleItems || hoverWidgetDragClass || actions || hasStatusIcon;
 
   return (
     <div className={styles.container}>
@@ -470,12 +472,20 @@ export function PanelChrome({
                 <HoverWidget
                   inline
                   title={typeof title === 'string' ? title : undefined}
-                  dragClass={hoverSlotDragClass}
+                  dragClass={hoverWidgetDragClass}
                   onDragStart={onDragStart}
                 >
                   {headerContent}
                 </HoverWidget>,
                 headerControls.hoverSlot
+              )}
+
+            {hasExternalControls &&
+              dragHandleSlot &&
+              hoverSlotDragClass &&
+              createPortal(
+                <HoverWidgetDragHandle inline dragClass={hoverSlotDragClass} onDragStart={onDragStart} />,
+                dragHandleSlot
               )}
 
             {!hasExternalControls && hasHeaderContent && (

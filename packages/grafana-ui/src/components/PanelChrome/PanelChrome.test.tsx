@@ -209,6 +209,47 @@ describe('when the header controls are provided from outside the panel', () => {
     hoverSlot.remove();
   });
 
+  it('renders the drag handle into the drag handle slot, apart from the other hover header items', () => {
+    const hoverSlot = document.createElement('div');
+    const dragHandleSlot = document.createElement('div');
+    document.body.append(hoverSlot, dragHandleSlot);
+
+    renderWithHeaderControls(
+      { external: true, hoverSlot, dragHandleSlot },
+      { hoverHeader: true, dragClass: 'drag-handle', titleItems: <span>Panel links</span> }
+    );
+
+    expect(within(hoverSlot).getByText('Panel links')).toBeInTheDocument();
+    expect(
+      within(hoverSlot).queryByTestId(selectors.components.Panels.Panel.HoverWidget.dragIcon)
+    ).not.toBeInTheDocument();
+    expect(within(dragHandleSlot).getByTestId(selectors.components.Panels.Panel.HoverWidget.dragIcon)).toHaveClass(
+      'drag-handle'
+    );
+
+    hoverSlot.remove();
+    dragHandleSlot.remove();
+  });
+
+  it('renders nothing into the hover slot when the drag handle is its only item and has a slot of its own', () => {
+    const hoverSlot = document.createElement('div');
+    const dragHandleSlot = document.createElement('div');
+    document.body.append(hoverSlot, dragHandleSlot);
+
+    renderWithHeaderControls(
+      { external: true, hoverSlot, dragHandleSlot },
+      { hoverHeader: true, dragClass: 'drag-handle' }
+    );
+
+    expect(hoverSlot).toBeEmptyDOMElement();
+    expect(
+      within(dragHandleSlot).getByTestId(selectors.components.Panels.Panel.HoverWidget.dragIcon)
+    ).toBeInTheDocument();
+
+    hoverSlot.remove();
+    dragHandleSlot.remove();
+  });
+
   it('leaves out the drag handle when hideDragHandle is set', () => {
     const hoverSlot = document.createElement('div');
     document.body.appendChild(hoverSlot);

@@ -34,8 +34,47 @@ export function HoverWidget({
   inline = false,
 }: Props) {
   const styles = useStyles2(getStyles);
-  const draggableRef = useRef<HTMLDivElement>(null);
   const selectors = e2eSelectors.components.Panels.Panel.HoverWidget;
+
+  if (children === undefined || React.Children.count(children) === 0) {
+    return null;
+  }
+
+  return (
+    <div
+      className={inline ? styles.inlineContainer : cx(styles.container, 'show-on-hover')}
+      style={inline ? undefined : { top: offset === 0 ? -1 : offset }}
+      data-testid={selectors.container}
+    >
+      {dragClass && <HoverWidgetDragHandle dragClass={dragClass} onDragStart={onDragStart} inline={inline} />}
+      {inline ? <HoverSlotItemsContext.Provider value={true}>{children}</HoverSlotItemsContext.Provider> : children}
+      {menu && (
+        <PanelMenu
+          menu={menu}
+          title={title}
+          placement="bottom"
+          menuButtonClass={styles.menuButton}
+          onOpenMenu={onOpenMenu}
+        />
+      )}
+    </div>
+  );
+}
+
+interface DragHandleProps {
+  dragClass: string;
+  onDragStart?: (event: React.PointerEvent<HTMLDivElement>) => void;
+  inline?: boolean;
+}
+
+/**
+ * The handle that drags the panel, also rendered on its own when an external host places it apart from the other
+ * hover widget contents.
+ */
+export function HoverWidgetDragHandle({ dragClass, onDragStart, inline = false }: DragHandleProps) {
+  const styles = useStyles2(getStyles);
+  const draggableRef = useRef<HTMLDivElement>(null);
+
   // Capture the pointer to keep the widget visible while dragging
   const onPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -49,37 +88,15 @@ export function HoverWidget({
     draggableRef.current?.releasePointerCapture(e.pointerId);
   }, []);
 
-  if (children === undefined || React.Children.count(children) === 0) {
-    return null;
-  }
-
   return (
     <div
-      className={inline ? styles.inlineContainer : cx(styles.container, 'show-on-hover')}
-      style={inline ? undefined : { top: offset === 0 ? -1 : offset }}
-      data-testid={selectors.container}
+      className={cx(inline ? styles.inlineSquare : styles.square, styles.draggable, dragClass)}
+      onPointerDown={onPointerDown}
+      onPointerUp={onPointerUp}
+      ref={draggableRef}
+      data-testid={e2eSelectors.components.Panels.Panel.HoverWidget.dragIcon}
     >
-      {dragClass && (
-        <div
-          className={cx(inline ? styles.inlineSquare : styles.square, styles.draggable, dragClass)}
-          onPointerDown={onPointerDown}
-          onPointerUp={onPointerUp}
-          ref={draggableRef}
-          data-testid={selectors.dragIcon}
-        >
-          <Icon name="expand-arrows" className={inline ? styles.inlineDraggableIcon : styles.draggableIcon} />
-        </div>
-      )}
-      {inline ? <HoverSlotItemsContext.Provider value={true}>{children}</HoverSlotItemsContext.Provider> : children}
-      {menu && (
-        <PanelMenu
-          menu={menu}
-          title={title}
-          placement="bottom"
-          menuButtonClass={styles.menuButton}
-          onOpenMenu={onOpenMenu}
-        />
-      )}
+      <Icon name="expand-arrows" className={inline ? styles.inlineDraggableIcon : styles.draggableIcon} />
     </div>
   );
 }
