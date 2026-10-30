@@ -308,6 +308,22 @@ describe('failed fill', () => {
     expect(logError.mock.calls.map(([error]) => error.message)).toContain(MT_FILL_FAILED);
   });
 
+  it('logs whether the failed fill was the boot fill or a later lookup', async () => {
+    routes[CONNECTIONS_URL] = { status: 500 };
+    initDataSourceInstanceSettings({}, '');
+
+    // Joins the boot fill, so the failure is logged once, as the boot fill's.
+    await expect(getDataSourceInstanceList()).rejects.toBeInstanceOf(DataSourceListFetchError);
+    // Starts a new fill.
+    await expect(getDataSourceInstanceList()).rejects.toBeInstanceOf(DataSourceListFetchError);
+
+    const fillFailures = logError.mock.calls.filter(([error]) => error.message === MT_FILL_FAILED);
+    expect(fillFailures.map(([, context]) => context)).toEqual([
+      { reason: 'fill', source: 'mt', trigger: 'boot' },
+      { reason: 'fill', source: 'mt', trigger: 'lookup' },
+    ]);
+  });
+
   it('does not fall back to the legacy DataSourceSrv from getDataSourceInstance', async () => {
     const get = jest.fn().mockResolvedValue({ uid: 'uid-prom' });
     setDataSourceSrv({ get } as unknown as DataSourceSrv);

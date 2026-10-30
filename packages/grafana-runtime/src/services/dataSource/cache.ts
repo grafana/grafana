@@ -55,7 +55,7 @@ export function setDataSourceCacheSource(selected: DataSourceCacheSource): void 
     applySnapshot(initial);
     return;
   }
-  awaitFill().catch(() => {
+  awaitFill('boot').catch(() => {
     // The rejection reaches every caller through awaitFill; nothing to do for the boot call.
   });
 }
@@ -64,8 +64,11 @@ export function setDataSourceCacheSource(selected: DataSourceCacheSource): void 
  * Wait until the cache can be read. Resolves at once when it is filled (or when no source was
  * selected, as in tests that seed nothing). Concurrent callers share one in-flight fill, and
  * because a rejected promise is not cached, a call after a failed fill starts a new one.
+ *
+ * `trigger` tells a failed boot fill apart from a later lookup that retries it. A caller that
+ * joins an in-flight fill does not change the trigger of that fill.
  */
-export function awaitFill(): Promise<void> {
+export function awaitFill(trigger: 'boot' | 'lookup' = 'lookup'): Promise<void> {
   if (filled || !source) {
     return Promise.resolve();
   }
@@ -85,7 +88,7 @@ export function awaitFill(): Promise<void> {
         if (error instanceof NoUserSessionError) {
           throw error;
         }
-        logDataSourceInstanceError(MT_FILL_FAILED, error, { reason: 'fill', source: from.kind });
+        logDataSourceInstanceError(MT_FILL_FAILED, error, { reason: 'fill', source: from.kind, trigger });
         throw new DataSourceListFetchError(error);
       }
     } finally {
