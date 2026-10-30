@@ -66,6 +66,10 @@ describe('ListDragSession', () => {
       expect(titles(source)).toEqual(['Row B', 'Row C', 'Row A']);
       expect(session.getState()).toBeNull();
       expect(host.onEnd).toHaveBeenCalledTimes(1);
+      expect(host.onEnd).toHaveBeenCalledWith({
+        isCancelled: false,
+        target: expect.objectContaining({ kind: 'list', list: source, index: 2 }),
+      });
       expect(sidebar.state.undoStack).toHaveLength(1);
 
       sidebar.undoAction();
@@ -309,6 +313,7 @@ describe('ListDragSession', () => {
       expect(escape.defaultPrevented).toBe(true);
       expect(session.getState()).toBeNull();
       expect(host.onEnd).toHaveBeenCalledTimes(1);
+      expect(host.onEnd).toHaveBeenCalledWith({ isCancelled: true, target: null });
 
       release(10, 30);
       expect(titles(source)).toEqual(['Row A', 'Row B', 'Row C']);

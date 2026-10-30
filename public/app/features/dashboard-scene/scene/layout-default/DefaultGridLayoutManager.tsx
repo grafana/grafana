@@ -744,6 +744,7 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
         <CustomGrid
           grid={model.state.grid}
           controller={model.getCustomGridController()}
+          isEditing={!!dashboardState.isEditing}
           fallback={reactGridLayoutGrid}
           dropTargetKey={model.state.key}
         />

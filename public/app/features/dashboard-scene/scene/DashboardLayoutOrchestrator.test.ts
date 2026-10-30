@@ -7,6 +7,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { moveGridItem } from '../actions/layout/moveGridItem';
 import { reorderAutoGridItems } from '../actions/layout/reorderAutoGridItems';
+import { DashboardInteractions } from '../utils/interactions';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
@@ -19,6 +20,7 @@ import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
+import { flushDragTelemetry } from './layouts-shared/dragTelemetry';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR, type LayoutSnapshot } from './types/DashboardDropTarget';
 
 jest.mock('../actions/layout/moveGridItem', () => ({
@@ -344,7 +346,8 @@ describe('grid item drags and the optional drop target hooks', () => {
     }
   });
 
-  it('does not scroll while dragging with the unified drag and drop flag off', () => {
+  it('neither scrolls nor reports drags with the unified drag and drop flag off', () => {
+    const dragEnded = jest.spyOn(DashboardInteractions, 'dragEnded');
     const requestAnimationFrame = jest.spyOn(window, 'requestAnimationFrame');
     const { orchestrator } = setupGridItemDrag();
     pointerOver('tab2-manager');
@@ -352,8 +355,11 @@ describe('grid item drags and the optional drop target hooks', () => {
     drop();
     orchestrator.startDraggingNewPanel('newPanel');
     movePointer(140, 760);
+    flushDragTelemetry();
 
     expect(requestAnimationFrame).not.toHaveBeenCalled();
+    expect(dragEnded).not.toHaveBeenCalled();
+    dragEnded.mockRestore();
     requestAnimationFrame.mockRestore();
   });
 
@@ -409,7 +415,7 @@ describe('grid item drags and the optional drop target hooks', () => {
       expect(orchestrator.getGridItemDragInfo()?.autoGrid).toEqual({ width: 1208, columnGap: 8 });
     });
 
-    describe('auto-scroll', () => {
+    describe('auto-scroll and telemetry', () => {
       let frames: FrameRequestCallback[] = [];
 
       beforeEach(() => {
@@ -482,6 +488,42 @@ describe('grid item drags and the optional drop target hooks', () => {
         const scrolled = body.scrollTop;
         runFrame();
         expect(body.scrollTop).toBe(scrolled);
+      });
+
+      it('reports a cancelled panel drag with layout types and counts only', () => {
+        const dragEnded = jest.spyOn(DashboardInteractions, 'dragEnded');
+        const { orchestrator } = setupGridItemDrag();
+        pointerOver('tab2-manager');
+        movePointer(140, 80);
+        movePointer(160, 90);
+
+        orchestrator.cancelDraggingSync();
+
+        expect(dragEnded).toHaveBeenCalledWith({
+          kind: 'panel',
+          sourceLayout: 'auto_grid',
+          targetLayout: 'none',
+          outcome: 'cancel',
+          durationMs: expect.any(Number),
+          moves: 2,
+          undone: false,
+        });
+      });
+
+      it('reports a dropped panel drag once it is clear whether the drop is undone', () => {
+        const dragEnded = jest.spyOn(DashboardInteractions, 'dragEnded');
+        setupGridItemDrag();
+        pointerOver('tab2-manager');
+        movePointer(140, 80);
+
+        drop();
+        expect(dragEnded).not.toHaveBeenCalled();
+        flushDragTelemetry();
+
+        // The move itself is mocked here, so it adds no edit to the undo history
+        expect(dragEnded).toHaveBeenCalledWith(
+          expect.objectContaining({ kind: 'panel', sourceLayout: 'auto_grid', targetLayout: 'auto_grid', moves: 1 })
+        );
       });
     });
 

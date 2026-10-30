@@ -34,6 +34,13 @@ export interface ListDragPreview {
   offsetY: number;
 }
 
+/** How a session ended. A cancelled one changed nothing. */
+export interface ListDragResult {
+  isCancelled: boolean;
+  /** Where the item was released, if it was released over a place that takes it */
+  target: ListDropTarget | null;
+}
+
 /** What the session needs from the layout orchestrator that starts it */
 export interface ListDragHost {
   /** Where the item would land if it were dropped at this point */
@@ -47,7 +54,7 @@ export interface ListDragHost {
   /** The state returned by `getState` changed */
   onChange(): void;
   /** The session is over, after a drop or a cancel. Called once. */
-  onEnd(): void;
+  onEnd(result: ListDragResult): void;
 }
 
 interface PointerPress {
@@ -155,7 +162,7 @@ export class ListDragSession {
 
     // Pointer moves can be coalesced, so the release point decides
     const target = this._host.getDropTarget(evt.clientX, evt.clientY);
-    this._end();
+    this._end({ isCancelled: false, target });
     if (this._item instanceof TabItem) {
       suppressNextClick();
     }
@@ -232,7 +239,7 @@ export class ListDragSession {
     this._host.onChange();
   }
 
-  private _end() {
+  private _end(result: ListDragResult = { isCancelled: true, target: null }) {
     if (this._isOver) {
       return;
     }
@@ -249,7 +256,7 @@ export class ListDragSession {
     if (wasActive) {
       this._host.onChange();
     }
-    this._host.onEnd();
+    this._host.onEnd(result);
   }
 }
 

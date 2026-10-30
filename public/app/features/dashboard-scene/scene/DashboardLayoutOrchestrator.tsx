@@ -33,8 +33,9 @@ import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 import { DragAutoScroller } from './layouts-shared/dragAutoScroll';
+import { DragTelemetry, flushDragTelemetry, type EditHistory } from './layouts-shared/dragTelemetry';
 import { ListDragSession, type ListDragState } from './layouts-shared/list-dnd/ListDragSession';
-import { createListDropTargetFinder, type ListItem } from './layouts-shared/list-dnd/listDnd';
+import { createListDropTargetFinder, getListOf, type ListItem } from './layouts-shared/list-dnd/listDnd';
 import { isUnifiedDragAndDropEnabled } from './layouts-shared/unifiedDragAndDrop';
 import {
   AUTO_GRID_ITEM_DROP_TARGET_ATTR,
@@ -134,6 +135,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _autoScroller: DragAutoScroller | null = null;
   /** Last pointer move of that drag, replayed when the dashboard scrolls under the resting pointer */
   private _lastPointerEvent: PointerEvent | null = null;
+  /** Counts the drag in progress on the unified engine */
+  private _dragTelemetry: DragTelemetry | null = null;
 
   public constructor() {
     super({});
@@ -163,6 +166,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       this._dragInfo = null;
       this._listDrag?.cancel();
       this._stopAutoScroll();
+      this._dragTelemetry = null;
+      flushDragTelemetry();
     };
   }
 
@@ -192,9 +197,11 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
     const findDropTarget = createListDropTargetFinder(item);
     const isTab = item instanceof TabItem;
+    let telemetry: DragTelemetry | null = null;
     this._listDrag = ListDragSession.start(evt, item, {
       getDropTarget: findDropTarget,
       onDragMove: (x, y) => {
+        telemetry?.move(x, y);
         // A tab is moved by hovering other tabs, which must not open them
         if (!isTab) {
           this._checkTabHover(x, y);
@@ -206,6 +213,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
         }
       },
       showPreview: ({ type, label, x, y, width, height, offsetX, offsetY }) => {
+        // The session only shows the preview once the press became a drag
+        telemetry = DragTelemetry.start(type, getListOf(item) ?? null, this._getEditHistory());
         this._previewLabel = label;
         this._previewType = type;
         this._previewWidth = width;
@@ -218,7 +227,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       },
       movePreview: (x, y) => this._updateDragPreview(x, y),
       onChange: () => this._listDragListeners.forEach((listener) => listener()),
-      onEnd: () => {
+      onEnd: ({ target, isCancelled }) => {
+        telemetry?.end(target?.kind === 'tab' ? target.tab : (target?.list ?? null), { isCancelled });
         this._listDrag = null;
         this._clearTabActivationTimer();
         this._lastHoveredTabKey = null;
@@ -268,7 +278,9 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     document.body.addEventListener('pointerup', this._stopDraggingSync, true);
 
     if (isUnifiedDragAndDropEnabled()) {
-      this._startAutoScroll((last) => this._onGridItemDragMove(last), { x: evt.clientX, y: evt.clientY });
+      const origin = { x: evt.clientX, y: evt.clientY };
+      this._startAutoScroll((last) => this._onGridItemDragMove(last), origin);
+      this._dragTelemetry = DragTelemetry.start('panel', dropTarget, this._getEditHistory(), origin);
     }
 
     const sourceTabKey = this._findParentTabKey(gridItem);
@@ -279,6 +291,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     this._isNewPanelDrag = action === 'newPanel';
     if (isUnifiedDragAndDropEnabled()) {
       this._startAutoScroll((last) => this._onNewPanelDragMove(last));
+      const kind = action === 'newPanel' ? 'new_panel' : 'pasted_panel';
+      this._dragTelemetry = DragTelemetry.start(kind, null, this._getEditHistory());
     }
     this._dropNewItemPointerUpHandler = (evt: PointerEvent) => this._dropNew(evt, action);
     document.body.addEventListener('pointermove', this._onNewPanelPointerMove, true);
@@ -347,6 +361,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       this._commitSameLayoutReorder(sourceDropTarget, gridItem);
     }
 
+    this._dragTelemetry?.end(effectiveDropTarget ?? sourceDropTarget);
+
     // Let the source layout reset its own local drag state now that the drop decision above
     // has been made (and, for a same-layout drop, already committed via `_commitSameLayoutReorder`).
     this._endGridItemDrag();
@@ -362,6 +378,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     }
     this._clearDropPosition();
     this._lastDropTarget?.setIsDropTarget?.(false);
+    this._dragTelemetry?.end(null, { isCancelled: true });
     this._endGridItemDrag();
   }
 
@@ -372,6 +389,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     this._endExternalDragOver();
     this._dragInfo = null;
     this._stopAutoScroll();
+    this._dragTelemetry = null;
 
     document.body.removeEventListener('pointermove', this._onPointerMove);
     document.body.removeEventListener('pointerup', this._stopDraggingSync, true);
@@ -604,6 +622,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
   private _cleanupDragState() {
     this._stopAutoScroll();
+    this._dragTelemetry = null;
     document.body.removeEventListener('pointermove', this._onNewPanelPointerMove, true);
     if (this._dropNewItemPointerUpHandler) {
       document.body.removeEventListener('pointerup', this._dropNewItemPointerUpHandler, true);
@@ -623,9 +642,11 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     const isInSidebar = elementsUnderPoint.some((el) => el.getAttribute('id') === 'sidebar-container');
 
     if (isInSidebar) {
+      this._dragTelemetry?.end(null, { isCancelled: true });
       this._cleanupDragState();
       return;
     }
+    this._dragTelemetry?.end(lastDropTarget);
     // defer so the droppable doesn't rerender during dnd drag-end, resulting in a console warning
     requestAnimationFrame(() => {
       // A target that previews the drop keeps the preview until the panel is added in its place
@@ -1039,12 +1060,17 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     this._lastPointerEvent = null;
   }
 
-  /** Feeds a real pointer move to the auto-scroll of a drag on the unified engine */
+  /** Feeds a real pointer move to the auto-scroll and the telemetry of a drag on the unified engine */
   private _trackPointerMove(evt: PointerEvent) {
     if (this._autoScroller) {
       this._lastPointerEvent = evt;
       this._autoScroller.update(evt.clientX, evt.clientY);
     }
+    this._dragTelemetry?.move(evt.clientX, evt.clientY);
+  }
+
+  private _getEditHistory(): EditHistory | undefined {
+    return this.parent instanceof DashboardScene ? this.parent.state.sidebar : undefined;
   }
 
   /** Lets drop targets that preview external drags themselves follow the pointer. No-op for the other targets. */

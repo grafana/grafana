@@ -1,6 +1,6 @@
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 
-import { logError } from '@grafana/runtime';
+import { logError, logMeasurement } from '@grafana/runtime';
 import { type SceneGridLayout } from '@grafana/scenes';
 import { ErrorBoundary } from '@grafana/ui';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
@@ -28,17 +28,34 @@ export function shouldRenderCustomGrid(grid: SceneGridLayout, isEditing: boolean
   );
 }
 
+/**
+ * Counts renders of the new grid in edit sessions and how many fell back to the old grid, so the rollout can tell
+ * the fallback rate: the sum of `fallback` over the sum of `rendered`. Each grid counts once per page load.
+ */
+export const CUSTOM_GRID_RENDER_MEASUREMENT = 'dashboard_custom_grid_render';
+const countedRenders = new WeakSet<CustomGridController>();
+
 interface Props {
   grid: SceneGridLayout;
   controller: CustomGridController;
+  /** Renders are only counted in edit sessions */
+  isEditing: boolean;
   /** Today's grid, rendered instead if the new grid fails */
   fallback: ReactNode;
   /** Key the grid is found by as a drop target, for its own items and items dragged in from elsewhere */
   dropTargetKey?: string;
 }
 
-export function CustomGrid({ grid, controller, fallback, dropTargetKey }: Props) {
+export function CustomGrid({ grid, controller, isEditing, fallback, dropTargetKey }: Props) {
   const [hasFailed, setHasFailed] = useState(() => controller.hasRenderFailed());
+
+  // Runs after the error boundary caught an error in the first render, so that one counts as a fallback
+  useEffect(() => {
+    if (isEditing && !countedRenders.has(controller)) {
+      countedRenders.add(controller);
+      logMeasurement(CUSTOM_GRID_RENDER_MEASUREMENT, { rendered: 1, fallback: controller.hasRenderFailed() ? 1 : 0 });
+    }
+  }, [controller, isEditing]);
 
   if (hasFailed) {
     return fallback;
@@ -52,6 +69,10 @@ export function CustomGrid({ grid, controller, fallback, dropTargetKey }: Props)
       onError={(error) => {
         if (controller.markRenderFailed()) {
           reportRenderFailure(error);
+          // A grid that already counted its render, failing later on
+          if (countedRenders.has(controller)) {
+            logMeasurement(CUSTOM_GRID_RENDER_MEASUREMENT, { rendered: 0, fallback: 1 });
+          }
         }
         setHasFailed(true);
       }}
