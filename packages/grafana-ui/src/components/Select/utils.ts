@@ -58,3 +58,20 @@ export const getLabelFromValue = (value: unknown): string | undefined => {
   const label = value !== null && typeof value === 'object' && 'label' in value ? value.label : value;
   return label != null ? String(label) : undefined;
 };
+
+/**
+ * Visual query builder label-filter selects (Loki, Prometheus, etc.) use fixed
+ * data-testid values: "Select label", "Select match operator", "Select value"
+ * (optionally prefixed with "data-testid "). Returns the role when matched.
+ */
+export function getQueryBuilderSelectRole(testid: unknown): 'label' | 'match operator' | 'value' | undefined {
+  const match = String(testid ?? '').match(/^(?:data-testid )?Select (label|match operator|value)$/);
+  switch (match?.[1]) {
+    case 'label':
+    case 'match operator':
+    case 'value':
+      return match[1];
+    default:
+      return undefined;
+  }
+}
