@@ -1075,7 +1075,7 @@ jobs:
           body-includes: GitHub Actions Build
           token: ${{ github.token }}
       - name: Create or update comment # zizmor: ignore[superfluous-actions]
-        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v4
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4
         if: ${{ steps.find-pr.outcome == 'success' }}
         with:
           token: ${{ github.token }}
