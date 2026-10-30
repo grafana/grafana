@@ -176,6 +176,8 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
       dashboardWatcher.ignoreNextSave();
       const result = await pending.apply({ force: false });
       if (!result.applied) {
+        // Nothing was saved: a save someone else makes now must still reload the page.
+        dashboardWatcher.clearIgnoreSave();
         setCurrentGeneration(result.currentGeneration);
         return;
       }
@@ -185,6 +187,7 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
       ]);
       await reload();
     } catch {
+      dashboardWatcher.clearIgnoreSave();
       appEvents.emit(AppEvents.alertError, [
         t('dashboard-scene.lifecycle.apply-failed', "Couldn't apply the changes. Try again, or compare them first."),
       ]);

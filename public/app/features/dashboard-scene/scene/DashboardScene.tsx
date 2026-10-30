@@ -85,7 +85,11 @@ import {
   previewedDashboardUid,
   proposesNewDashboard,
 } from '../lifecycle/pendingChangePreview';
-import { startRecordingPendingChanges } from '../lifecycle/pendingChangesHistory';
+import {
+  hasUnrecordedPendingChange,
+  recordPendingChange,
+  startRecordingPendingChanges,
+} from '../lifecycle/pendingChangesHistory';
 import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type DashboardChangeInfo, isNewDashboard } from '../saving/shared';
@@ -1120,13 +1124,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    // Edits that skipped the edit actions, which record each change, are recorded as one here.
+    // Edits that skipped the edit actions, which record each change, are recorded as one here, and
+    // an edit the plugin failed to record is retried. Before exiting: that discards an open panel editor.
     const history = getPendingChangesHistory(this.state);
     if (history && !restoreInitialState) {
-      if (this.state.isDirty && hasActualSaveChanges(this)) {
-        import('../lifecycle/pendingChangesHistory').then(({ recordPendingChange }) =>
-          recordPendingChange(this, history, t('dashboard-scene.lifecycle.edited-dashboard', 'Edit dashboard'))
-        );
+      if ((this.state.isDirty && hasActualSaveChanges(this)) || hasUnrecordedPendingChange(this)) {
+        void recordPendingChange(this, history, t('dashboard-scene.lifecycle.edited-dashboard', 'Edit dashboard'));
       }
       this.exitEditModeConfirmed(false);
       return;

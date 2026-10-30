@@ -1,5 +1,5 @@
 import { isEqual, isPlainObject } from 'lodash';
-import { useCallback, useSyncExternalStore } from 'react';
+import { useCallback, useRef, useSyncExternalStore } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -29,6 +29,14 @@ interface RecordingBaseline {
 }
 
 const baselines = new WeakMap<DashboardScene, RecordingBaseline>();
+
+/** Scenes with an edit the plugin failed to record: the next recording retries it. */
+const unrecorded = new WeakSet<DashboardScene>();
+
+/** Whether an edit on `scene` hasn't reached the plugin's history, so leaving the page would lose it. */
+export function hasUnrecordedPendingChange(scene: DashboardScene): boolean {
+  return unrecorded.has(scene);
+}
 
 /** Starts recording edits to `scene`, which shows the pending changes `stored`, as edit mode starts. */
 export function startRecordingPendingChanges(scene: DashboardScene, stored: DashboardV2Spec) {
@@ -86,20 +94,23 @@ export async function recordPendingChange(
   baselines.set(scene, { serialized, stored: proposed });
   // Before the request: an edit made while it runs still marks the scene changed.
   scene.markPendingChangesRecorded(serialized);
-  // Only defaults the scene filled in changed: nothing to record.
-  if (baseline && isEqual(proposed, baseline.stored)) {
+  // Only defaults the scene filled in changed: nothing to record, unless an earlier edit failed to.
+  if (baseline && isEqual(proposed, baseline.stored) && !unrecorded.has(scene)) {
     return;
   }
   let recorded: boolean;
   try {
     recorded = (await history.record({ proposed, description })).recorded;
   } catch (error) {
+    // `proposed` stays the baseline, so the next recording, or leaving edit mode, carries this edit.
+    unrecorded.add(scene);
     appEvents.emit(AppEvents.alertError, [
       t('dashboard-scene.lifecycle.record-pending-change-failed', 'Your change could not be saved'),
       error instanceof Error ? error.message : String(error),
     ]);
     return;
   }
+  unrecorded.delete(scene);
   if (!recorded) {
     appEvents.emit(AppEvents.alertWarning, [
       t('dashboard-scene.lifecycle.pending-changes-changed', 'These pending changes changed'),
@@ -132,8 +143,20 @@ export async function reloadKeepingEditMode(uid: string, editing: boolean | unde
 const noop = () => {};
 const noState: PendingChangesHistoryState = {};
 
-/** The pending changes history's state, kept current; empty without a history. */
+/**
+ * The pending changes history's state, kept current; empty without a history. The same object while
+ * its fields stay the same, as useSyncExternalStore needs, whether or not `getState` returns a new one.
+ */
 export function usePendingChangesHistoryState(history: PendingChangesHistory | undefined): PendingChangesHistoryState {
+  const snapshot = useRef(noState);
   const subscribe = useCallback((listener: () => void) => history?.subscribe(listener) ?? noop, [history]);
-  return useSyncExternalStore(subscribe, () => history?.getState() ?? noState);
+  const getSnapshot = useCallback(() => {
+    const next = history?.getState() ?? noState;
+    const last = snapshot.current;
+    if (next.undo !== last.undo || next.redo !== last.redo || next.proposed !== last.proposed) {
+      snapshot.current = next;
+    }
+    return snapshot.current;
+  }, [history]);
+  return useSyncExternalStore(subscribe, getSnapshot);
 }

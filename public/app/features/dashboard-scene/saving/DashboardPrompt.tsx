@@ -15,6 +15,7 @@ import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types'
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import { getPendingChangesHistory } from '../lifecycle/pendingChangePreview';
+import { hasUnrecordedPendingChange } from '../lifecycle/pendingChangesHistory';
 import { SaveLibraryVizPanelModal } from '../panel-edit/SaveLibraryVizPanelModal';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { getLibraryPanelBehavior, hasActualSaveChanges, isLibraryPanel } from '../utils/utils';
@@ -189,9 +190,10 @@ export function ignoreChanges(scene: DashboardScene | null) {
     return true;
   }
 
-  // Edits to pending changes whose plugin keeps their history are recorded as they're made.
+  // Edits to pending changes whose plugin keeps their history are recorded as they're made, unless
+  // the plugin failed to record one.
   if (getPendingChangesHistory(scene.state)) {
-    return true;
+    return !hasUnrecordedPendingChange(scene);
   }
 
   const dashboard = scene.getSaveModel();

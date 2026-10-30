@@ -1,3 +1,5 @@
+import { renderHook } from '@testing-library/react';
+
 import { AppEvents } from '@grafana/data';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
@@ -6,7 +8,13 @@ import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageSt
 import { type DashboardScene } from '../scene/DashboardScene';
 
 import { type PendingChangesHistory } from './pendingChangePreview';
-import { recordPendingChange, reloadKeepingEditMode, startRecordingPendingChanges } from './pendingChangesHistory';
+import {
+  hasUnrecordedPendingChange,
+  recordPendingChange,
+  reloadKeepingEditMode,
+  startRecordingPendingChanges,
+  usePendingChangesHistoryState,
+} from './pendingChangesHistory';
 
 jest.mock('app/core/app_events', () => ({ appEvents: { emit: jest.fn() } }));
 jest.mock('../pages/DashboardScenePageStateManager', () => ({ getDashboardScenePageStateManager: jest.fn() }));
@@ -89,6 +97,24 @@ describe('recording edits to pending changes', () => {
     expect(history.record).not.toHaveBeenCalled();
   });
 
+  // Leaving the page would otherwise drop the edit: the scene counts as recorded once the request starts.
+  it('retries an edit the plugin failed to record, even when nothing changed since', async () => {
+    let model = specWith({ hello: { title: 'Hello' } });
+    const scene = fakeScene(() => model);
+    startRecordingPendingChanges(scene, model);
+    const history = fakeHistory();
+    history.record.mockRejectedValueOnce(new Error('offline'));
+
+    model = specWith({ hello: { title: 'Renamed' } });
+    await recordPendingChange(scene, history, 'panel title change');
+    expect(appEvents.emit).toHaveBeenCalledWith(AppEvents.alertError, expect.any(Array));
+    expect(hasUnrecordedPendingChange(scene)).toBe(true);
+
+    await recordPendingChange(scene, history, 'Edit dashboard');
+    expect(history.record).toHaveBeenLastCalledWith({ proposed: model, description: 'Edit dashboard' });
+    expect(hasUnrecordedPendingChange(scene)).toBe(false);
+  });
+
   it('shows the latest pending changes, still editing, when they changed meanwhile', async () => {
     const reloaded = { state: { isEditing: false }, onEnterEditMode: jest.fn() };
     const reloadDashboardFresh = jest.fn().mockResolvedValue(undefined);
@@ -116,5 +142,22 @@ describe('reloading pending changes', () => {
     await reloadKeepingEditMode('abc', false);
 
     expect(reloaded.onEnterEditMode).not.toHaveBeenCalled();
+  });
+});
+
+describe('usePendingChangesHistoryState', () => {
+  // useSyncExternalStore re-renders forever on a snapshot that is new on every read.
+  it('keeps one state object while its fields stay the same, whatever getState returns', () => {
+    let state = { undo: 'Add Panel' };
+    const history = { ...fakeHistory(), getState: () => ({ ...state }) };
+
+    const { result, rerender } = renderHook(() => usePendingChangesHistoryState(history));
+    const first = result.current;
+    rerender();
+    expect(result.current).toBe(first);
+
+    state = { undo: 'panel title change' };
+    rerender();
+    expect(result.current).toEqual({ undo: 'panel title change' });
   });
 });
