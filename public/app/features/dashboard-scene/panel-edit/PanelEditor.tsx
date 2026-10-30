@@ -135,6 +135,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this._subs.add(this._layoutItem.activate());
     this._subs.add(panel.activate());
 
+    // An already-active provider may be owned by panel notices rather than the panel.
+    let deactivateData = panel.state.$data?.activate();
+    this._subs.add(() => deactivateData?.());
+
     this._subs.add(
       this._layoutItem.subscribeToEvent(DashboardEditActionEvent, ({ payload }) => {
         // TODO add support for undo/redo within panel edit
@@ -145,6 +149,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     // Listen for panel plugin changes
     this._subs.add(
       panel.subscribeToState((n, p) => {
+        if (n.$data !== p.$data) {
+          deactivateData?.();
+          deactivateData = n.$data?.activate();
+        }
         if (n.pluginId !== p.pluginId) {
           this.waitForPlugin();
         }
