@@ -9,6 +9,7 @@ import (
 
 	jose "github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -562,23 +563,22 @@ func getExpiryWithSkew(expiry time.Time) (adjustedExpiry time.Time, hasTokenExpi
 
 // getExternalSession fetches the external session based on the user and session token.
 // When using the render module, it fetches the most recent external session for the user
-// since the session token ID is not available.
+// since the session token ID is not available. With auth.oauthTokenForDelegatedUsers enabled,
+// the same applies to a service calling Grafana on the user's behalf with an extended JWT.
 // For regular users, it uses the session token ID to fetch the external session.
 func (o *Service) getExternalSession(ctx context.Context, usr identity.Requester, userID int64, sessionToken *auth.UserToken) (*auth.ExternalSession, error) {
 	if usr.GetAuthenticatedBy() == login.RenderModule {
 		// When using render module, we don't have the session token ID, so we need to fetch the most recent session
 		// entry for the user (as it is done with the old flow).
 		// In the future, we might want to consider passing the session token ID to the render module to make this more robust.
-		externalSessions, err := o.sessionService.FindExternalSessions(ctx, &auth.ListExternalSessionQuery{UserID: userID})
-		if err != nil {
-			return nil, err
-		}
+		return o.getLatestExternalSession(ctx, userID)
+	}
 
-		if len(externalSessions) == 0 || externalSessions[0] == nil {
-			return nil, auth.ErrExternalSessionNotFound
-		}
-
-		return externalSessions[0], nil
+	if usr.GetAuthenticatedBy() == login.ExtendedJWTModule &&
+		openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagAuthOauthTokenForDelegatedUsers, false, openfeature.TransactionContext(ctx)) {
+		// A service acting for the user has no session token either, so data sources with OAuth pass-through
+		// receive the identity from the user's most recent login instead.
+		return o.getLatestExternalSession(ctx, userID)
 	}
 
 	if sessionToken == nil {
@@ -587,4 +587,17 @@ func (o *Service) getExternalSession(ctx context.Context, usr identity.Requester
 
 	// For regular users, we use the session token ID to fetch the external session
 	return o.sessionService.GetExternalSession(ctx, sessionToken.ExternalSessionId)
+}
+
+func (o *Service) getLatestExternalSession(ctx context.Context, userID int64) (*auth.ExternalSession, error) {
+	externalSessions, err := o.sessionService.FindExternalSessions(ctx, &auth.ListExternalSessionQuery{UserID: userID})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(externalSessions) == 0 || externalSessions[0] == nil {
+		return nil, auth.ErrExternalSessionNotFound
+	}
+
+	return externalSessions[0], nil
 }

@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -846,4 +848,106 @@ func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetExternalSession_DelegatedUser(t *testing.T) {
+	latest := &auth.ExternalSession{ID: 2, UserID: 1, AuthModule: login.GenericOAuthModule}
+	older := &auth.ExternalSession{ID: 1, UserID: 1, AuthModule: login.GenericOAuthModule}
+
+	tests := []struct {
+		desc            string
+		authenticatedBy string
+		flagEnabled     bool
+		sessions        []*auth.ExternalSession
+		expected        *auth.ExternalSession
+		expectedErr     error
+	}{
+		{
+			desc:            "should use the most recent external session for an extended JWT user",
+			authenticatedBy: login.ExtendedJWTModule,
+			flagEnabled:     true,
+			sessions:        []*auth.ExternalSession{latest, older},
+			expected:        latest,
+		},
+		{
+			desc:            "should return not found when an extended JWT user has no external session",
+			authenticatedBy: login.ExtendedJWTModule,
+			flagEnabled:     true,
+			sessions:        []*auth.ExternalSession{},
+			expectedErr:     auth.ErrExternalSessionNotFound,
+		},
+		{
+			desc:            "should require a session token for an extended JWT user when the flag is disabled",
+			authenticatedBy: login.ExtendedJWTModule,
+			expectedErr:     auth.ErrExternalSessionTokenNotFound,
+		},
+		{
+			desc:            "should still require a session token for other users when the flag is enabled",
+			authenticatedBy: login.GenericOAuthModule,
+			flagEnabled:     true,
+			expectedErr:     auth.ErrExternalSessionTokenNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			setOAuthTokenForDelegatedUsers(t, tt.flagEnabled)
+
+			sessionService := authtest.NewMockUserAuthTokenService(t)
+			if tt.sessions != nil {
+				sessionService.On("FindExternalSessions", mock.Anything, &auth.ListExternalSessionQuery{UserID: 1}).Return(tt.sessions, nil).Once()
+			}
+			service := &Service{sessionService: sessionService}
+
+			usr := &authn.Identity{ID: "1", Type: claims.TypeUser, AuthenticatedBy: tt.authenticatedBy}
+			session, err := service.getExternalSession(context.Background(), usr, 1, nil)
+
+			if tt.expectedErr != nil {
+				require.ErrorIs(t, err, tt.expectedErr)
+				assert.Nil(t, session)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.expected, session)
+		})
+	}
+}
+
+func TestGetCurrentOAuthToken_DelegatedUser(t *testing.T) {
+	setOAuthTokenForDelegatedUsers(t, true)
+
+	sessionService := authtest.NewMockUserAuthTokenService(t)
+	sessionService.On("FindExternalSessions", mock.Anything, &auth.ListExternalSessionQuery{UserID: 1}).Return([]*auth.ExternalSession{{
+		ID:          2,
+		UserID:      1,
+		AuthModule:  login.GenericOAuthModule,
+		AccessToken: unexpiredTokenWithoutRefreshWithIDToken.AccessToken,
+		ExpiresAt:   unexpiredTokenWithoutRefreshWithIDToken.Expiry,
+		IDToken:     UNEXPIRED_ID_TOKEN,
+	}}, nil).Once()
+	authInfoService := authinfotest.NewMockAuthInfoService(t)
+	authInfoService.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{UserId: 1}).Return(&login.UserAuth{
+		AuthModule: login.GenericOAuthModule,
+	}, nil).Once()
+
+	service := &Service{
+		AuthInfoService: authInfoService,
+		sessionService:  sessionService,
+		tracer:          tracing.InitializeTracerForTest(),
+	}
+
+	usr := &authn.Identity{ID: "1", Type: claims.TypeUser, AuthenticatedBy: login.ExtendedJWTModule}
+	token := service.GetCurrentOAuthToken(context.Background(), usr, nil)
+
+	require.NotNil(t, token)
+	assert.Equal(t, unexpiredTokenWithoutRefreshWithIDToken.AccessToken, token.AccessToken)
+	assert.Equal(t, UNEXPIRED_ID_TOKEN, token.Extra("id_token"))
+}
+
+func setOAuthTokenForDelegatedUsers(t *testing.T, enabled bool) {
+	t.Helper()
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagAuthOauthTokenForDelegatedUsers: {State: memprovider.Enabled, Variants: map[string]any{"value": enabled}, DefaultVariant: "value"},
+	})))
+	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 }

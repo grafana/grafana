@@ -311,6 +311,10 @@ const (
 	// Require that refresh tokens are present in oauth tokens.
 	FlagRefreshTokenRequired = "refreshTokenRequired"
 
+	// FlagAuthOauthTokenForDelegatedUsers
+	// Forward the user's OAuth identity to data sources with OAuth pass-through when a service calls Grafana on the user's behalf with an extended JWT.
+	FlagAuthOauthTokenForDelegatedUsers = "auth.oauthTokenForDelegatedUsers"
+
 	// FlagNewDashboardWithFiltersAndGroupBy
 	// Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
 	FlagNewDashboardWithFiltersAndGroupBy = "newDashboardWithFiltersAndGroupBy"
