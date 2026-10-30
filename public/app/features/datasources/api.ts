@@ -8,9 +8,61 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 
 import { DeprecatedInternalId } from '../apiserver/types';
+import { type ManagedResource } from '../provisioning/utils/managedResource';
 
-export const getDataSources = async (): Promise<DataSourceSettings[]> => {
+/**
+ * A data source as the list surfaces reduce it, plus the manager annotations from the stored
+ * Kubernetes object. The legacy settings model has no place for them, so the provisioned badge
+ * needs this shape.
+ */
+export type DataSourceListItem = DataSourceSettings & ManagedResource;
+
+const newCRUDAPIsEnabled = () =>
+  getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs, false);
+
+export const getDataSources = async (): Promise<DataSourceListItem[]> => {
+  if (newCRUDAPIsEnabled()) {
+    return getDataSourcesFromK8sAPI(config.namespace);
+  }
   return await getBackendSrv().get('/api/datasources');
+};
+
+/**
+ * Lists data sources across the API groups the installed plugins serve. There is no group to list
+ * them all: each plugin serves its own, so the plugin list supplies the groups and each is listed in
+ * turn. A group that is not served answers 404 and is skipped, which must not fail the whole list.
+ *
+ * Unlike /api/datasources this keeps `metadata.annotations`, so the list can tell which data sources
+ * are provisioned.
+ */
+const getDataSourcesFromK8sAPI = async (namespace: string): Promise<DataSourceListItem[]> => {
+  let plugins: Array<{ id?: string }> = [];
+  try {
+    plugins = await getDataSourcePlugins();
+  } catch {
+    // Without the plugin list there are no groups to query; callers fall back to no data sources.
+    return [];
+  }
+  const perPlugin = await Promise.all(
+    plugins
+      .map((plugin) => plugin.id)
+      .filter((id): id is string => Boolean(id))
+      .map(async (id) => {
+        const url = `/apis/${id}.datasource.grafana.app/${DATASOURCE_K8S_VERSION}/namespaces/${namespace}/datasources`;
+        const response = await lastValueFrom(
+          getBackendSrv().fetch<{ items?: DataSourceSettingsK8s[] }>({
+            method: 'GET',
+            url,
+            showErrorAlert: false,
+          })
+        ).catch(() => undefined);
+        return (response?.data?.items ?? []).map((item) => ({
+          ...convertK8sDatasourceSettingsToLegacyDatasourceSettings(item),
+          metadata: { annotations: item.metadata.annotations },
+        }));
+      })
+  );
+  return perPlugin.flat();
 };
 
 // From pkg/storage/unified/apistore/secure.go
@@ -57,6 +109,8 @@ export interface DataSourceSettingsK8s {
   secure?: Record<string, Record<string, string>>;
 }
 
+const groupForType = (type: string) => `${type}.datasource.grafana.app`;
+
 const getDataSourceK8sGroup = async (uid: string): Promise<string> => {
   const instances = await getDataSourceInstanceList({ all: true });
   for (const ds of instances) {
@@ -65,7 +119,17 @@ const getDataSourceK8sGroup = async (uid: string): Promise<string> => {
       continue;
     }
     if (ds.uid === uid) {
-      return ds.type + '.datasource.grafana.app';
+      return groupForType(ds.type);
+    }
+  }
+
+  // The instance list comes from boot data, which the backend fills from the legacy table, so it
+  // cannot resolve a data source that lives only in unified storage. Fall back to the API groups,
+  // which is the normal path once the collection runs at dual-writer mode 5.
+  if (newCRUDAPIsEnabled()) {
+    const found = (await getDataSourcesFromK8sAPI(config.namespace)).find((ds) => ds.uid === uid);
+    if (found) {
+      return groupForType(found.type);
     }
   }
   return '';

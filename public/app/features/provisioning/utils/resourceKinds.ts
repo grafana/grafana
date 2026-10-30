@@ -271,6 +271,23 @@ export function matchesGroup(info: ResourceKindInfo, group: string): boolean {
 }
 
 /**
+ * The member of a shared collection that a served group identifies — a data source's plugin ID,
+ * e.g. `prometheus` for `prometheus.datasource.grafana.app`. Undefined for kinds whose group is
+ * served directly, and for a group that is the collection itself.
+ *
+ * Several groups can serve one kind, so the kind alone does not tell such resources apart; this is
+ * what distinguishes them to the user. The plugin ID rather than the whole group because the
+ * collection suffix is identical on every row.
+ */
+export function getSharedGroupMember(info: ResourceKindInfo, group?: string): string | undefined {
+  if (!info.sharedGroup || !group) {
+    return undefined;
+  }
+  const suffix = `.${info.group}`;
+  return group.endsWith(suffix) ? group.slice(0, -suffix.length) : undefined;
+}
+
+/**
  * Builds the in-app route to view a repository's resources of the given kind.
  * Folder-scoped kinds resolve to the repository's own folder (named after the
  * repository) for folder-target repos; everything else — non-folder targets, a

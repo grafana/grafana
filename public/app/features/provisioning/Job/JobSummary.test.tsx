@@ -27,6 +27,27 @@ describe('JobSummary', () => {
     expect(await rowFor('Folder')).toBeInTheDocument();
   });
 
+  // Every data source plugin serves its own API group, so the backend emits one row per plugin
+  // with the same kind. Without the plugin ID every one of those rows just reads "DataSource".
+  it('names the plugin on rows whose kind is served by several groups', async () => {
+    setup([
+      { group: 'prometheus.datasource.grafana.app', kind: 'DataSource', create: 3 },
+      { group: 'loki.datasource.grafana.app', kind: 'DataSource', create: 1 },
+      { group: 'dashboard.grafana.app', kind: 'Dashboard', create: 2 },
+    ]);
+
+    const prometheusRow = await rowFor('prometheus');
+    expect(within(prometheusRow).getByText('DataSource')).toBeInTheDocument();
+    expect(within(prometheusRow).getByText('prometheus')).toBeInTheDocument();
+
+    expect(within(await rowFor('loki')).getByText('loki')).toBeInTheDocument();
+
+    // A kind served by a single group gains nothing from a member label.
+    const dashboardRow = await rowFor('Dashboard');
+    expect(within(dashboardRow).getByText('Dashboard')).toBeInTheDocument();
+    expect(within(dashboardRow).queryByText('dashboard.grafana.app')).not.toBeInTheDocument();
+  });
+
   it('computes the total from the action counts', async () => {
     setup([{ group: 'dashboard.grafana.app', kind: 'Dashboard', create: 2, update: 3, noop: 1, error: 1 }]);
 

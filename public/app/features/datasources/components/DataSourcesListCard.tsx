@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
-import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -9,13 +9,16 @@ import { Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
 
 import { ROUTES } from '../../connections/constants';
 import { type DatasourceFailureDetails } from '../../connections/hooks/useDatasourceAdvisorChecks';
+import { ManagedBadge } from '../../provisioning/components/ManagedBadge';
+import { getManagerIdentity, getManagerKind, getSourcePath, isManaged } from '../../provisioning/utils/managedResource';
+import { type DataSourceListItem } from '../api';
 import { constructDataSourceExploreUrl } from '../utils';
 
 import { BuildDashboardButton } from './BuildDashboardButton';
 import { DataSourceFailureBadge } from './DataSourceFailureBadge';
 
 export interface Props {
-  dataSource: DataSourceSettings;
+  dataSource: DataSourceListItem;
   hasWriteRights: boolean;
   hasExploreRights: boolean;
   failure?: DatasourceFailureDetails;
@@ -46,6 +49,17 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
         ]}
       </Card.Meta>
       <Card.Tags>
+        {/* Provisioned badge. In Card.Tags rather than Card.Meta because the card is itself a link,
+            and the badge's dropdown has to receive the click instead. */}
+        {isManaged(dataSource) && (
+          <ManagedBadge
+            managerKind={getManagerKind(dataSource)}
+            name={getManagerIdentity(dataSource)}
+            repositoryName={getManagerIdentity(dataSource)}
+            sourcePath={getSourcePath(dataSource)}
+          />
+        )}
+
         {/* Build Dashboard */}
         <BuildDashboardButton dataSource={dataSource} size="md" fill="outline" context="datasource_list" />
 

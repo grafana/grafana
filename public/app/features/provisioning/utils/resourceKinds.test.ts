@@ -11,6 +11,7 @@ import {
   getKindInfoByStatGroup,
   getMigratableKinds,
   matchesGroup,
+  getSharedGroupMember,
   getRepositoryRoute,
   isResourceKindAvailable,
   readImmediateParent,
@@ -344,6 +345,18 @@ describe('shared collection groups', () => {
   it('leaves kinds that are not shared matching their group exactly', () => {
     expect(matchesGroup(resourceKindInfos.dashboard, 'dashboard.grafana.app')).toBe(true);
     expect(matchesGroup(resourceKindInfos.dashboard, 'v2.dashboard.grafana.app')).toBe(false);
+  });
+
+  it('recovers the plugin ID that distinguishes a served group', () => {
+    expect(getSharedGroupMember(resourceKindInfos.datasource, testdata)).toBe('grafana-testdata-datasource');
+    // The collection itself names no member, and neither does an unrelated group.
+    expect(getSharedGroupMember(resourceKindInfos.datasource, 'datasource.grafana.app')).toBeUndefined();
+    expect(getSharedGroupMember(resourceKindInfos.datasource, 'playlist.grafana.app')).toBeUndefined();
+    expect(getSharedGroupMember(resourceKindInfos.datasource, undefined)).toBeUndefined();
+  });
+
+  it('reports no member for a kind whose group is served directly', () => {
+    expect(getSharedGroupMember(resourceKindInfos.dashboard, 'dashboard.grafana.app')).toBeUndefined();
   });
 
   it('resolves a resource reported under a served group back to the kind', () => {
