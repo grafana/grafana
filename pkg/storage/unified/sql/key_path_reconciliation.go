@@ -119,15 +119,15 @@ func reconcileResourceHistoryKeyPaths(ctx context.Context, database db.DB, batch
 
 		// Repaired revisions can precede search's checkpoint, so mark indexes for
 		// rebuild. Commit the marker with the repair so failures remain retryable.
-		// Use current time at KV key precision; future timestamps can hide later imports.
-		importedAt := time.Now().UTC().Truncate(time.Second)
+		// Evaluate database time in each marker statement to narrow the pre-commit
+		// visibility window, retaining second precision for KV marker cleanup.
 		for _, key := range resources {
 			if _, err := dbutil.Exec(ctx, tx, sqlResourceLastImportTimeInsert, sqlResourceLastImportTimeInsertRequest{
-				SQLTemplate:    sqltemplate.New(sqltemplate.DialectForDriver(database.DriverName())),
-				Namespace:      key.Namespace,
-				Group:          key.Group,
-				Resource:       key.Resource,
-				LastImportTime: importedAt,
+				SQLTemplate:     sqltemplate.New(sqltemplate.DialectForDriver(database.DriverName())),
+				Namespace:       key.Namespace,
+				Group:           key.Group,
+				Resource:        key.Resource,
+				UseDatabaseTime: true,
 			}); err != nil {
 				return fmt.Errorf("mark repaired resource index for rebuild: %w", err)
 			}

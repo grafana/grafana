@@ -649,10 +649,11 @@ func (r sqlResourceListModifiedSinceRequest) Validate() error {
 
 type sqlResourceLastImportTimeInsertRequest struct {
 	sqltemplate.SQLTemplate
-	Namespace      string
-	Group          string
-	Resource       string
-	LastImportTime time.Time
+	Namespace       string
+	Group           string
+	Resource        string
+	LastImportTime  time.Time
+	UseDatabaseTime bool
 }
 
 func (r sqlResourceLastImportTimeInsertRequest) Validate() error {
@@ -665,7 +666,7 @@ func (r sqlResourceLastImportTimeInsertRequest) Validate() error {
 	if r.Resource == "" {
 		return fmt.Errorf("missing resource")
 	}
-	if r.LastImportTime.IsZero() {
+	if !r.UseDatabaseTime && r.LastImportTime.IsZero() {
 		return fmt.Errorf("last import time cannot be zero")
 	}
 	return nil

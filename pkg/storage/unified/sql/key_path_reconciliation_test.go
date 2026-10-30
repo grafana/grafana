@@ -170,20 +170,23 @@ func TestReconcileResourceHistoryKeyPathsMarksAffectedIndexes(t *testing.T) {
 	require.Zero(t, marked)
 }
 
-func TestReconcileResourceHistoryKeyPathsMarkerUsesCurrentTime(t *testing.T) {
+func TestReconcileResourceHistoryKeyPathsMarkerUsesDatabaseTime(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		synctest.Sleep(1500 * time.Millisecond)
 		database := newKeyPathReconciliationDB(t)
 		insertKeyPathReconciliationRow(t, database, "repair", "default", 1700000000000123, 1, "")
-		expected := time.Now().UTC().Truncate(time.Second)
+		var before, after int64
+		require.NoError(t, database.QueryRowContext(t.Context(), "SELECT unixepoch('now')").Scan(&before))
 		_, err := reconcileResourceHistoryKeyPaths(t.Context(), database, 100)
 		require.NoError(t, err)
 		var repairedAt time.Time
 		require.NoError(t, database.QueryRowContext(t.Context(), "SELECT last_import_time FROM resource_last_import_time").Scan(&repairedAt))
-		require.Equal(t, expected, repairedAt.UTC(), "repair markers use the current time at KV key precision, not the transaction deadline")
+		require.NoError(t, database.QueryRowContext(t.Context(), "SELECT unixepoch('now')").Scan(&after))
+		require.GreaterOrEqual(t, repairedAt.Unix(), before)
+		require.LessOrEqual(t, repairedAt.Unix(), after)
+		require.Zero(t, repairedAt.Nanosecond(), "KV marker cleanup requires second precision")
+		require.NotEqual(t, time.Now().Unix(), repairedAt.Unix(), "the database clock must be used instead of synctest's application clock")
 
-		synctest.Sleep(time.Second)
-		importedAt := time.Now().UTC().Truncate(time.Second)
+		importedAt := repairedAt.UTC().Add(time.Second)
 		b := &backend{dialect: sqltemplate.SQLite}
 		require.NoError(t, b.updateLastImportTime(t.Context(), database, &resourcepb.ResourceKey{
 			Namespace: "default", Group: "group", Resource: "resources",
@@ -271,14 +274,14 @@ func TestReconcileResourceHistoryKeyPathsDialects(t *testing.T) {
 				WillReturnResult(sqlmock.NewResult(0, 2))
 			switch driver {
 			case "mysql":
-				markerQuery := "INSERT INTO `resource_last_import_time` (`group`, `resource`, `namespace`, `last_import_time`) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE `last_import_time` = ?;"
-				mock.ExpectExec(markerQuery).WithArgs("group", "resources", "ns", sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+				markerQuery := "INSERT INTO `resource_last_import_time` (`group`, `resource`, `namespace`, `last_import_time`) VALUES (?, ?, ?, UTC_TIMESTAMP()) ON DUPLICATE KEY UPDATE `last_import_time` = UTC_TIMESTAMP();"
+				mock.ExpectExec(markerQuery).WithArgs("group", "resources", "ns").WillReturnResult(sqlmock.NewResult(0, 1))
 			case "postgres":
-				markerQuery := `INSERT INTO "resource_last_import_time" ("group", "resource", "namespace", "last_import_time") VALUES ($1, $2, $3, $4) ON CONFLICT ("group", "resource", "namespace") DO UPDATE SET "last_import_time" = $5;`
-				mock.ExpectExec(markerQuery).WithArgs("group", "resources", "ns", sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+				markerQuery := `INSERT INTO "resource_last_import_time" ("group", "resource", "namespace", "last_import_time") VALUES ($1, $2, $3, date_trunc('second', clock_timestamp() AT TIME ZONE 'UTC')) ON CONFLICT ("group", "resource", "namespace") DO UPDATE SET "last_import_time" = date_trunc('second', clock_timestamp() AT TIME ZONE 'UTC');`
+				mock.ExpectExec(markerQuery).WithArgs("group", "resources", "ns").WillReturnResult(sqlmock.NewResult(0, 1))
 			default:
-				markerQuery := `INSERT OR REPLACE INTO "resource_last_import_time" ("group", "resource", "namespace", "last_import_time") VALUES (?, ?, ?, ?);`
-				mock.ExpectExec(markerQuery).WithArgs("group", "resources", "ns", sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+				markerQuery := `INSERT OR REPLACE INTO "resource_last_import_time" ("group", "resource", "namespace", "last_import_time") VALUES (?, ?, ?, strftime(?, 'now'));`
+				mock.ExpectExec(markerQuery).WithArgs("group", "resources", "ns", "%Y-%m-%d %H:%M:%S+00:00").WillReturnResult(sqlmock.NewResult(0, 1))
 			}
 			mock.ExpectCommit()
 			count, err := reconcileResourceHistoryKeyPaths(t.Context(), dbimpl.NewDB(database, driver), 100)
