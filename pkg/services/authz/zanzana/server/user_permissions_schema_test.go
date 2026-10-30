@@ -29,8 +29,9 @@ func TestUserPermissionsGrantsSchemaAssumptions(t *testing.T) {
 	} {
 		definition := types[expected.typ]
 		require.NotNil(t, definition)
-		var principals []string
-		for _, reference := range definition.GetMetadata().GetRelations()[expected.relation].GetDirectlyRelatedUserTypes() {
+		references := definition.GetMetadata().GetRelations()[expected.relation].GetDirectlyRelatedUserTypes()
+		principals := make([]string, 0, len(references))
+		for _, reference := range references {
 			require.Nil(t, reference.GetWildcard(), "%s#%s cannot use wildcard grants", expected.typ, expected.relation)
 			require.Empty(t, reference.GetCondition(), "%s#%s membership must remain unconditional", expected.typ, expected.relation)
 			principal := reference.GetType()
