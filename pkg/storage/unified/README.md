@@ -7,13 +7,79 @@ It provides generic storage for k8s objects, and can store data either within de
 
 By default it runs in-process within Grafana, but it can also be run as a standalone GRPC service (`storage-server`).
 
-## Inline blob contract
+## Inline blob contract (v1)
 
-The [inline blob contract](proto/inline-blobs.md) defines write-only base64 input
-at `blobs.<name>.data`, reference-only persistence, validation limits, and automatic
-support negotiation through metadata on the existing `BulkProcess` stream. The
-contract alone does not enable inline writes; server negotiation and normalization
-must ship before producer adoption.
+This contract is not enabled yet. Server negotiation, normalization, and lifecycle
+safety must ship before producers adopt inline input. No new RPC or service is needed.
+
+Top-level `blobs.<name>` accepts either inline bytes or an existing reference:
+
+```json
+{
+  "blobs": {
+    "inline": {"contentType":"application/json","data":"e30="},
+    "stored": {"uid":"uploaded-uid","contentType":"application/json","size":2,"hash":"server-hash"}
+  }
+}
+```
+
+`resourcepb.BlobEntry` is write-input-only; `BlobReference` is the persisted/read
+shape and has no `data` field. **GET/LIST responses (including paginated items),
+history, watch events, and write responses must omit `data` entirely**, not return
+it null or empty. Schemas must mark `data` as `writeOnly: true` and preserve that
+distinction in generated types, but annotations alone do not strip response data:
+normalization must replace inline bytes with authoritative references before storage.
+
+### Validation and storage
+
+`resourcepb.DecodeBlobEntries` validates the input contract, not authorization:
+
+- `blobs` and entries must be objects; exactly one of the keys `data` or `uid`
+  must be present. Null entries, duplicate keys, and empty entries are rejected.
+  An empty `blobs` object is valid; an absent field must remain absent.
+- Inline entries allow only nonempty canonical padded standard base64 `data` and
+  a required concrete `contentType` (parameters allowed). Empty content is unsupported.
+- References require a nonblank `uid`; metadata is optional and not authoritative.
+  Preserve unknown reference fields and unrelated resource fields during normalization.
+- Inline-bearing objects require nonblank names and allow at most **16 entries**,
+  **1 MiB decoded per blob**, and **2 MiB decoded aggregate**. Reference-only objects
+  are exempt from these new limits. Base64 adds about 33%; the complete message must
+  still fit transport limits (normally 4 MiB for gRPC).
+
+The bulk endpoint discovers only `blobs.<name>.data`, never resource-specific `spec`
+fields. After authorization and key/body validation, it uploads under the validated
+resource identity and forwards references to either backend. `SkipValidation` and
+absence of handshake metadata must not bypass normalization. Deletes and ordinary
+dry-runs must not upload. Upload errors (transport or embedded `Error`) prevent
+publication; resource failure afterward may leave an orphan, never a dangling
+published reference. Support requires GC protection until references become visible,
+safe orphan cleanup, and tested cancellation/partial commits—not bulk-wide rollback.
+There is no generic GET/LIST rehydration. Existing direct/streaming uploads, snapshot
+`/dashboard` and legacy reads, provisioning previews, and GC exemptions stay unchanged.
+
+### Automatic BulkProcess negotiation
+
+The bulk client negotiates on each import stream before sending **any** bodies:
+
+1. Request exactly one `x-gf-batch-inline-blobs: 1` metadata value, preserving existing
+   collection/settings metadata. The key is `resourcepb.InlineBlobMetadataKey`.
+2. An eligible server explicitly flushes the matching response header with `SendHeader`
+   **before** waiting for resource messages, only when full normalization/lifecycle
+   safety is enabled for the backend/scope. Per-resource authorization still follows.
+3. Wait for headers with a bounded handshake timer. Check transport errors, then call
+   `ValidateInlineBlobAcknowledgement`; missing, duplicate, or non-v1 values fail closed.
+   On failure/timeout, cancel the stream without sending bodies or falling back to inline
+   persistence. Stop the timer after negotiation; do not shorten the entire import deadline.
+4. Send resources; the endpoint handles blob uploads and reference replacement. Require
+   successful final `CloseAndRecv`, a nonnil response, and no embedded `Error` before
+   considering the import complete. An acknowledgement alone is not import success.
+
+Older servers may wait for bodies before sending headers; timeout/cancellation must
+unblock the header wait without goroutine leaks. Never cache acknowledgement across
+streams/replicas; retries negotiate again and proxies must honor downstream support.
+Existing non-inline clients need no handshake. Bulk support does not imply ordinary
+Create/Update support. Future server tests must cover remote/in-process negotiation,
+reference-only GET/LIST, persisted/history bodies, and watch events.
 
 ## Remote blob streaming
 
