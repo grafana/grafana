@@ -7,7 +7,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -107,19 +106,19 @@ func TestIntegrationProvideAuthZLegacyAccessClient(t *testing.T) {
 				{
 					name:             "service profile uses embedded handler",
 					evaluator:        ac.EvalPermission("dashboards:create"),
-					internalIdentity: &LegacyInternalIdentity{Profile: identity.InternalIdentityService.String()},
+					internalIdentity: &LegacyInternalIdentity{Profile: LegacyInternalIdentityService},
 					allowed:          true,
 				},
 				{
 					name:             "provisioning profile uses embedded handler",
 					evaluator:        ac.EvalPermission("dashboards:create"),
-					internalIdentity: &LegacyInternalIdentity{Profile: identity.InternalIdentityProvisioning.String()},
+					internalIdentity: &LegacyInternalIdentity{Profile: LegacyInternalIdentityProvisioning},
 					allowed:          true,
 				},
 				{
 					name:             "internal profile denies ungranted action",
 					evaluator:        ac.EvalPermission("users:delete"),
-					internalIdentity: &LegacyInternalIdentity{Profile: identity.InternalIdentityService.String()},
+					internalIdentity: &LegacyInternalIdentity{Profile: LegacyInternalIdentityService},
 				},
 			} {
 				t.Run(check.name, func(t *testing.T) {

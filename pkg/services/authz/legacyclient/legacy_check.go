@@ -43,7 +43,7 @@ func (c *LegacyClient) LegacyCheck(ctx context.Context, req LegacyCheckRequest) 
 
 	var internal *authzextv1.LegacyInternalIdentity
 	if req.InternalIdentity != nil {
-		internal = &authzextv1.LegacyInternalIdentity{Profile: req.InternalIdentity.Profile}
+		internal = &authzextv1.LegacyInternalIdentity{Profile: req.InternalIdentity.Profile.String()}
 	}
 
 	//nolint:staticcheck // We intentionally call the deprecated compatibility API.

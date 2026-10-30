@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 )
 
 const (
@@ -29,7 +30,7 @@ func TestBuildLegacyCheckInternalIdentity(t *testing.T) {
 		requester identity.Requester
 		mapper    types.NamespaceFormatter
 		namespace string
-		profile   identity.InternalIdentityProfile
+		profile   legacyclient.LegacyInternalIdentityProfile
 		wantError bool
 	}{
 		{
@@ -37,7 +38,7 @@ func TestBuildLegacyCheckInternalIdentity(t *testing.T) {
 			requester: service,
 			mapper:    types.OrgNamespaceFormatter,
 			namespace: namespace,
-			profile:   identity.InternalIdentityService,
+			profile:   legacyclient.LegacyInternalIdentityService,
 		},
 		{
 			name:      "stack namespace from wildcard",
@@ -46,21 +47,21 @@ func TestBuildLegacyCheckInternalIdentity(t *testing.T) {
 				return legacyInternalRequestTestStackNamespace
 			},
 			namespace: legacyInternalRequestTestStackNamespace,
-			profile:   identity.InternalIdentityService,
+			profile:   legacyclient.LegacyInternalIdentityService,
 		},
 		{
 			name:      "explicit namespace wins over placeholder org",
 			requester: namespaced,
 			mapper:    types.OrgNamespaceFormatter,
 			namespace: namespace,
-			profile:   identity.InternalIdentityService,
+			profile:   legacyclient.LegacyInternalIdentityService,
 		},
 		{
 			name:      "provisioning identity",
 			requester: provisioning,
 			mapper:    types.OrgNamespaceFormatter,
 			namespace: namespace,
-			profile:   identity.InternalIdentityProvisioning,
+			profile:   legacyclient.LegacyInternalIdentityProvisioning,
 		},
 		{
 			name:      "missing target for instance identity",
@@ -90,7 +91,7 @@ func TestBuildLegacyCheckInternalIdentity(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Equal(t, tc.namespace, req.Namespace)
-			require.Equal(t, tc.profile.String(), req.InternalIdentity.Profile)
+			require.Equal(t, tc.profile, req.InternalIdentity.Profile)
 			require.Empty(t, req.Subject)
 			require.Nil(t, req.GlobalEvaluation)
 			require.True(t, req.SkipScopeResolution)

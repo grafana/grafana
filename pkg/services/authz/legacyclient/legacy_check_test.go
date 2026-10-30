@@ -176,7 +176,7 @@ func TestClient_LegacyCheckRequest(t *testing.T) {
 			name: "internal profile with concrete namespace",
 			req: LegacyCheckRequest{
 				Namespace: "org-12", Evaluator: accesscontrol.EvalPermission("dashboards:create"),
-				InternalIdentity: &LegacyInternalIdentity{Profile: "service"}, SkipScopeResolution: true,
+				InternalIdentity: &LegacyInternalIdentity{Profile: LegacyInternalIdentityService}, SkipScopeResolution: true,
 			},
 			want: &authzextv1.LegacyCheckRequest{
 				Namespace: "org-12", Expression: permission("dashboards:create"),

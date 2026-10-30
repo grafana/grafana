@@ -40,7 +40,7 @@ func (a *AccessControl) buildLegacyCheckRequest(
 
 		return legacyclient.LegacyCheckRequest{
 			Namespace:           parsedNamespace.Value,
-			InternalIdentity:    &legacyclient.LegacyInternalIdentity{Profile: profile.String()},
+			InternalIdentity:    &legacyclient.LegacyInternalIdentity{Profile: legacyclient.LegacyInternalIdentityProfile(profile)},
 			Evaluator:           evaluator,
 			SkipScopeResolution: a.skipScopeResolution,
 		}, nil

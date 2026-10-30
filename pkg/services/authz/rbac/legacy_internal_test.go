@@ -74,7 +74,7 @@ func TestLegacyCheckInternalProfiles(t *testing.T) {
 		},
 	}
 
-	for _, profile := range []identity.InternalIdentityProfile{identity.InternalIdentityService, identity.InternalIdentityProvisioning} {
+	for _, profile := range []legacyclient.LegacyInternalIdentityProfile{legacyclient.LegacyInternalIdentityService, legacyclient.LegacyInternalIdentityProvisioning} {
 		t.Run(profile.String(), func(t *testing.T) {
 			ac := acimpl.ProvideAccessControlTest()
 			registry := acimpl.ProvideScopeResolverRegistry(ac)
@@ -88,7 +88,7 @@ func TestLegacyCheckInternalProfiles(t *testing.T) {
 				t.Run(tc.name, func(t *testing.T) {
 					for _, skipScopeResolution := range []bool{false, true} {
 						t.Run(fmt.Sprintf("skip_scope_resolution=%t", skipScopeResolution), func(t *testing.T) {
-							req := internalLegacyRequest(profile.String(), tc.evaluator)
+							req := internalLegacyRequest(profile, tc.evaluator)
 							req.SkipScopeResolution = skipScopeResolution
 
 							allowed, err := client.LegacyCheck(t.Context(), req)
@@ -163,7 +163,7 @@ func TestLegacyCheckInternalIdentityValidation(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			req := internalLegacyRequest(identity.InternalIdentityService.String(), accesscontrol.EvalPermission("dashboards:create"))
+			req := internalLegacyRequest(legacyclient.LegacyInternalIdentityService, accesscontrol.EvalPermission("dashboards:create"))
 			tc.modify(&req)
 
 			allowed, err := client.LegacyCheck(t.Context(), req)
@@ -197,7 +197,7 @@ func TestLegacyCheckInternalIdentityRequiresEmbeddedServer(t *testing.T) {
 			}
 
 			client := legacyclient.NewLegacyClient(channel)
-			req := internalLegacyRequest(identity.InternalIdentityService.String(), accesscontrol.EvalPermission("dashboards:create"))
+			req := internalLegacyRequest(legacyclient.LegacyInternalIdentityService, accesscontrol.EvalPermission("dashboards:create"))
 
 			allowed, err := client.LegacyCheck(t.Context(), req)
 			if tc.embedded {
@@ -285,7 +285,7 @@ func TestLegacyCheckInternalResolverRequester(t *testing.T) {
 			service.store, service.permissionStore = nil, nil
 			client := newEmbeddedLegacyCheckTestClient(service)
 			evaluator := accesscontrol.EvalPermission(tc.action, fmt.Sprintf("users:id:%d", targetUserID))
-			req := internalLegacyRequest(identity.InternalIdentityService.String(), evaluator)
+			req := internalLegacyRequest(legacyclient.LegacyInternalIdentityService, evaluator)
 
 			allowed, err := client.LegacyCheck(t.Context(), req)
 			require.NoError(t, err)
@@ -308,7 +308,7 @@ func newEmbeddedLegacyCheckTestClient(service *Service) *legacyclient.LegacyClie
 	return legacyclient.NewLegacyClient(channel, legacyclient.WithLegacyTracerClientOption(service.tracer))
 }
 
-func internalLegacyRequest(profile string, evaluator accesscontrol.Evaluator) legacyclient.LegacyCheckRequest {
+func internalLegacyRequest(profile legacyclient.LegacyInternalIdentityProfile, evaluator accesscontrol.Evaluator) legacyclient.LegacyCheckRequest {
 	return legacyclient.LegacyCheckRequest{
 		Namespace:        types.OrgNamespaceFormatter(legacyInternalTestOrgID),
 		InternalIdentity: &legacyclient.LegacyInternalIdentity{Profile: profile},

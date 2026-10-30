@@ -33,7 +33,18 @@ type LegacyCheckRequest struct {
 }
 
 type LegacyInternalIdentity struct {
-	Profile string
+	Profile LegacyInternalIdentityProfile
+}
+
+type LegacyInternalIdentityProfile string
+
+const (
+	LegacyInternalIdentityService      LegacyInternalIdentityProfile = "service"
+	LegacyInternalIdentityProvisioning LegacyInternalIdentityProfile = "provisioning"
+)
+
+func (p LegacyInternalIdentityProfile) String() string {
+	return string(p)
 }
 
 type LegacyGlobalEvaluation struct {
