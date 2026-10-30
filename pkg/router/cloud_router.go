@@ -132,7 +132,7 @@ func newPluginManifestsClient(section *setting.DynamicSection, prefix string) (*
 
 // NewCloudRoutesLoader builds the cloud RoutesLoader from the
 // [cloud_router], [router.aggregate.<name>] and [router.backend_grpc] sections. It returns (nil, nil) when no source is configured
-// (an aggregate target url, plugins_url, core_url or st_discovery_url), and
+// (an aggregate target url, plugins_url, core_url, bridge_url or st_discovery_url), and
 // the caller falls back to another loader.
 //
 // Aggregate targets are polled with a CAP token exchanged for a signed access

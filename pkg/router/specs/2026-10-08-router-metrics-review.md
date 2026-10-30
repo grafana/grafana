@@ -35,7 +35,7 @@ only the middleware mode serves, are out of scope.
 
 - [x] **M3. Count backends dropped during a load.** Done in #134532. Added the gauge
   `grafana_router_skipped_backends{source}`, rebuilt on each load like `shadowed_groups`, counting
-  the skips in the `plugins_url`, `core_url` and aggregate polls. It has no `reason` label:
+  the skips in the `plugins_url`, `core_url`, `bridge_url` and aggregate polls. It has no `reason` label:
   each skip is already logged with its error. Add one, from a fixed set, if alerting needs to tell
   skips apart.
   - Not counted: per-group `Backend.Load` failures in `reconcile`. They happen in the router, not a

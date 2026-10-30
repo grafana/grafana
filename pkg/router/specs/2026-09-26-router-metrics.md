@@ -57,12 +57,12 @@ and records every poll, so a stale last success means the source is failing.
 A skipped backend is not served, and its group falls back to a lower-priority source if one offers
 it. Each skip is logged with its error, which says why. Backends are skipped by:
 
-- `plugins_url` and `core_url`: a manifest `newPluginBackend` rejects, such as for a group that
+- `plugins_url`, `core_url` and `bridge_url`: a manifest `newPluginBackend` rejects, such as for a group that
   isn't a plugin group or a routable core group (`routableCoreGroups`), or one with no served
   versions;
-- `plugins_url` and `core_url`: an entry with manifests whose plugin ID isn't an app plugin ID, or,
+- `plugins_url`, `core_url` and `bridge_url`: an entry with manifests whose plugin ID isn't an app plugin ID, or,
   for `plugins_url`, an entry with no ID (`validatePluginID`, #135273);
-- `plugins_url`, `core_url` and `aggregate:<target>`: a backend whose key could not be computed,
+- `plugins_url`, `core_url`, `bridge_url` and `aggregate:<target>`: a backend whose key could not be computed,
   which is not expected to happen.
 
 Groups filtered out by `plugins_group_patterns` or a target's `group_patterns` are not counted as
@@ -122,10 +122,10 @@ use `route="not_found"` for the new behavior, or match both during a rolling upg
 
 | Metric | Type | Labels | Meaning |
 | --- | --- | --- | --- |
-| `grafana_router_plugin_grpc_request_duration_seconds` | histogram (classic and native) | `source`, `plugin_id`, `method`, `status_code` | Latency of gRPC calls to plugin deployments; `source` is `plugins_url`, `core_url` or `dev`, and `plugin_id` is the API group for a `core_url` entry without a plugin ID |
+| `grafana_router_plugin_grpc_request_duration_seconds` | histogram (classic and native) | `source`, `plugin_id`, `method`, `status_code` | Latency of gRPC calls to plugin deployments; `source` is `plugins`, `core`, `bridge` or `dev`, and `plugin_id` is the API group for a `core` or `bridge` entry without a plugin ID |
 | `grafana_router_plugin_grpc_request_retries_total` | counter | `source`, `plugin_id`, `method` | Retries of unary gRPC calls to plugin deployments (`[router.backend_grpc]` `retry_max`) |
 
-Each plugin deployment's connection (`plugins_url` or `core_url`) records its calls with dskit's client interceptors, and propagates
+Each plugin deployment's connection (`plugins_url`, `core_url` or `bridge_url`) records its calls with dskit's client interceptors, and propagates
 the caller's trace with `otelgrpc`. `method` is the full gRPC method, such as
 `/grafana.plugin.v3.RouteService/CallRoute` or `/pluginv2.Resource/CallResource`, and `status_code`
 is the gRPC status code name (`OK`, `Unavailable`, `DeadlineExceeded`, …). A streaming call is
@@ -139,7 +139,7 @@ observed when its stream ends.
 - A call the breaker rejects, or whose token exchange fails, never reaches the connection. Those
   count in `grafana_router_backend_failures_total` as `breaker_open` and `auth`.
 
-Plugin deployment availability (`plugins_url` and `core_url`), counting the calls the router rejected on the plugin's behalf.
+Plugin deployment availability (`plugins_url`, `core_url` and `bridge_url`), counting the calls the router rejected on the plugin's behalf.
 `grafana_router_backend_failures_total` also counts local plugins, so `and on (plugin_id)` keeps
 only the plugins with gRPC series. The series are combined with `or` before summing, because `+`
 would drop a plugin with no series on one side:
