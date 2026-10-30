@@ -4,11 +4,13 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
@@ -108,13 +110,18 @@ func TestEmbeddingEnrollmentDisabledWithoutSearchOrIndexing(t *testing.T) {
 
 func TestSearchEnrolsExactlySharedPublisherMapKeys(t *testing.T) {
 	cfg := setting.NewCfg()
+	cfg.EnableSearch = true
+	cfg.IndexPath = t.TempDir()
 	cfg.VectorSharedExternalCollections = map[string][]string{"support.example.com/articles": {"support"}, "docs.example.com/articles": {"docs"}}
 	cfg.VectorAllowedReadServices = map[string][]string{"docs.example.com/articles": {"reader"}}
-	opts := &ServerOptions{Cfg: cfg}
+	searchOpts, err := search.NewSearchOptions(cfg, nil, resource.ProvideIndexMetrics(prometheus.NewRegistry()), nil, nil)
+	require.NoError(t, err)
+	t.Cleanup(searchOpts.Backend.Stop)
+	opts := &ServerOptions{Cfg: cfg, SearchOptions: searchOpts}
 	serverOpts := resource.ResourceServerOptions{VectorMetrics: resource.ProvideVectorMetrics(nil)}
 	require.NoError(t, withSearch(opts, &serverOpts))
 	require.Equal(t, []string{"docs.example.com/articles", "support.example.com/articles"}, serverOpts.Search.SharedExternalCollections)
-	require.Equal(t, map[string][]string{"docs.example.com/articles": {"reader"}}, cfg.VectorAllowedReadServices)
+	require.Equal(t, map[string][]string{"docs.example.com/articles": {"reader"}}, serverOpts.Search.AllowedReadServices)
 }
 
 func TestServerRejectsSharedEnrollmentWithoutPublishers(t *testing.T) {

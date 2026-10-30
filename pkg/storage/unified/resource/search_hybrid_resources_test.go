@@ -21,6 +21,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
@@ -355,6 +356,45 @@ func TestHybridSearch_RejectsUnauthenticatedAndCrossNamespaceRequests(t *testing
 	}
 }
 
+func TestHybridSearch_SharedCollectionRejectsUnauthenticatedAndMismatchedNamespacesBeforeLookup(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		ctx       context.Context
+		namespace string
+		code      codes.Code
+	}{
+		{name: "missing identity", ctx: context.Background(), namespace: "tenant-a", code: codes.Unauthenticated},
+		{name: "other tenant", ctx: authedCtx(), namespace: "tenant-a", code: codes.PermissionDenied},
+		{name: "shared storage marker", ctx: authedCtx(), namespace: vector.SharedNamespace, code: codes.PermissionDenied},
+	} {
+		for _, selector := range []string{"key", "resources"} {
+			t.Run(tc.name+"/"+selector, func(t *testing.T) {
+				backend := &fakeVectorBackend{collection: &vector.Collection{Group: "docs.example.com", Resource: "manuals", PartitionKey: "manuals_external", IsExternal: true, Scope: vector.ScopeShared}}
+				s, index, embed := newHybridTestServer(lexFieldValueResponse(), backend)
+				lexical := &fakeLexicalSearcher{}
+				s.externalLexical = lexical
+				s.sharedCollectionAllowlist = vector.NewCollectionAllowlist(nil, []string{"docs.example.com/manuals"})
+				limiter := &fakeRateLimiter{allow: true}
+				s.rateLimiter, s.rateLimitPerTenant = limiter, 10
+				req := &resourcepb.HybridSearchRequest{Namespace: tc.namespace, Resources: []*resourcepb.HybridSearchRequest_Resource{{Group: "docs.example.com", Resource: "manuals"}}, Query: "guide"}
+				if selector == "key" {
+					req.Key = &resourcepb.ResourceKey{Namespace: tc.namespace, Group: "docs.example.com", Resource: "manuals"}
+					req.Namespace, req.Resources = "", nil
+				}
+				response, err := s.HybridSearch(tc.ctx, req)
+				require.Nil(t, response)
+				require.Equal(t, tc.code, status.Code(err))
+				require.Zero(t, backend.resolveCalls)
+				require.Empty(t, embed.gotIn.Texts)
+				require.Empty(t, backend.gotNamespace)
+				require.False(t, lexical.called)
+				require.Nil(t, index.gotReq)
+				require.Zero(t, limiter.calls)
+			})
+		}
+	}
+}
+
 type hybridResourcesTestEmbedder struct {
 	mu sync.Mutex
 	fakeTextEmbedder
@@ -379,20 +419,30 @@ type hybridResourcesTestVectorBackend struct {
 	mu         sync.Mutex
 	results    map[string][]vector.VectorSearchResult
 	embeddings map[string][]float32
+	namespaces map[string][]string
 	missing    string
 	external   string
+	shared     string
 }
 
 func (b *hybridResourcesTestVectorBackend) ResolveCollection(_ context.Context, group, resource string) (vector.Collection, bool, error) {
-	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource, IsExternal: resource == b.external, Scope: vector.ScopeTenant}, resource != b.missing, nil
+	scope := vector.ScopeTenant
+	if resource == b.shared {
+		scope = vector.ScopeShared
+	}
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource, IsExternal: resource == b.external || resource == b.shared, Scope: scope}, resource != b.missing, nil
 }
 
-func (b *hybridResourcesTestVectorBackend) Search(_ context.Context, _, _, resource string, dense []float32, _ int, _ ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {
+func (b *hybridResourcesTestVectorBackend) Search(_ context.Context, namespace, _, resource string, dense []float32, _ int, _ ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if b.embeddings == nil {
 		b.embeddings = make(map[string][]float32)
 	}
+	if b.namespaces == nil {
+		b.namespaces = make(map[string][]string)
+	}
+	b.namespaces[resource] = append(b.namespaces[resource], namespace)
 	b.embeddings[resource] = dense
 	if b.results != nil {
 		return slices.Clone(b.results[resource]), nil
@@ -606,6 +656,86 @@ func TestHybridSearch_MultipleResources_SharesEmbeddingWhileLexicalRuns(t *testi
 			assert.Equal(t, 1, cache.getCalls)
 		})
 	}
+}
+
+type hybridResourcesTestLexicalSearcher struct {
+	mu      sync.Mutex
+	queries map[string][]string
+}
+
+func (l *hybridResourcesTestLexicalSearcher) LexicalSearch(_ context.Context, query vector.LexicalQuery) ([]vector.LexicalHit, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if l.queries == nil {
+		l.queries = make(map[string][]string)
+	}
+	l.queries[query.Resource] = append(l.queries[query.Resource], query.Namespace)
+	return nil, nil
+}
+
+func TestHybridSearch_MixedTenantAndSharedQueryPolicyUsesCallerNamespace(t *testing.T) {
+	s, index := newHybridResourcesTestServer(nil)
+	backend := &hybridResourcesTestVectorBackend{
+		external: "documents", shared: "manuals",
+		results: map[string][]vector.VectorSearchResult{
+			"documents": {{UID: "private-guide", Title: "Private guide", Content: "private"}},
+			"manuals":   {{UID: "public-guide", Title: "Public guide", Content: "public"}},
+		},
+	}
+	client, limiter := enableHybridResourcesSemantic(s, backend)
+	limiter.counts = map[string]int64{}
+	s.rateLimitPerTenant = 2
+	cache := newFakeQueryCache()
+	s.queryCache, s.queryCacheMaxPerTenant = cache, 100
+	lexical := &hybridResourcesTestLexicalSearcher{}
+	s.externalLexical = lexical
+	s.sharedCollectionAllowlist = vector.NewCollectionAllowlist(nil, []string{"docs.example.com/manuals"})
+	request := func(namespace string) (*resourcepb.HybridSearchResponse, error) {
+		ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{UserID: 1, UserUID: "reader", Namespace: namespace, Type: authlib.TypeUser})
+		return s.HybridSearch(ctx, &resourcepb.HybridSearchRequest{
+			Namespace: namespace,
+			Resources: []*resourcepb.HybridSearchRequest_Resource{
+				{Group: "external.grafana.app", Resource: "documents"},
+				{Group: "docs.example.com", Resource: "manuals"},
+			},
+			Query: "guide", SkipRerank: true,
+		})
+	}
+	for _, tc := range []struct {
+		namespace string
+		embeds    int
+		quota     int64
+	}{
+		{namespace: "tenant-a", embeds: 1, quota: 1},
+		{namespace: "tenant-a", embeds: 1, quota: 2},
+		{namespace: "tenant-b", embeds: 2, quota: 1},
+		{namespace: "tenant-b", embeds: 2, quota: 2},
+	} {
+		if tc.namespace == "tenant-b" && tc.quota == 1 {
+			response, err := request("tenant-a")
+			require.Nil(t, response)
+			require.Equal(t, codes.ResourceExhausted, status.Code(err))
+			require.Equal(t, 1, client.calls)
+		}
+		response, err := request(tc.namespace)
+		require.NoError(t, err)
+		require.Len(t, response.GetResults(), 2)
+		for _, result := range response.GetResults() {
+			assert.Equal(t, tc.namespace, result.GetKey().GetNamespace())
+		}
+		assert.Equal(t, tc.namespace, client.gotIn.Tenant)
+		require.Equal(t, tc.embeds, client.calls)
+		require.Equal(t, tc.quota, limiter.counts[tc.namespace])
+	}
+	require.Equal(t, 2, client.calls, "one query embedding per tenant cache miss across both targets")
+	require.Equal(t, 2, cache.putCalls)
+	require.Len(t, cache.entries, 2)
+	require.Equal(t, map[string]int64{"tenant-a": 3, "tenant-b": 2}, limiter.counts)
+	require.Equal(t, []string{"tenant-a", "tenant-a", "tenant-b", "tenant-b"}, backend.namespaces["documents"])
+	require.Equal(t, []string{vector.SharedNamespace, vector.SharedNamespace, vector.SharedNamespace, vector.SharedNamespace}, backend.namespaces["manuals"])
+	require.Equal(t, backend.namespaces["documents"], lexical.queries["documents"])
+	require.Equal(t, backend.namespaces["manuals"], lexical.queries["manuals"])
+	require.Empty(t, index.requests, "external targets must not use the internal index")
 }
 
 func TestHybridSearch_MultipleResources_ValidatesLaterCollectionBeforeProviderWork(t *testing.T) {

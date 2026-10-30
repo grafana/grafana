@@ -828,6 +828,33 @@ func TestVectorSearchSharedCollectionReadableByTwoTenants(t *testing.T) {
 	}
 }
 
+func TestVectorSearchSharedCollectionRejectsUnauthenticatedAndMismatchedNamespacesBeforeLookup(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		ctx       context.Context
+		namespace string
+		code      int32
+	}{
+		{name: "missing identity", ctx: context.Background(), namespace: "tenant-a", code: http.StatusUnauthorized},
+		{name: "other tenant", ctx: authedCtx(), namespace: "tenant-a", code: http.StatusForbidden},
+		{name: "shared storage marker", ctx: authedCtx(), namespace: vector.SharedNamespace, code: http.StatusForbidden},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := &fakeVectorBackend{collection: &vector.Collection{Group: "docs.example.com", Resource: "manuals", PartitionKey: "manuals_external", IsExternal: true, Scope: vector.ScopeShared}}
+			embed := &fakeTextEmbedder{dim: 4}
+			s := newTestSearchServer(newTestEmbedder(embed), backend)
+			s.sharedCollectionAllowlist = vector.NewCollectionAllowlist(nil, []string{"docs.example.com/manuals"})
+			response, err := s.VectorSearch(tc.ctx, &resourcepb.VectorSearchRequest{Key: &resourcepb.ResourceKey{Namespace: tc.namespace, Group: "docs.example.com", Resource: "manuals"}, Query: "guide"})
+			require.NoError(t, err)
+			require.Equal(t, tc.code, response.GetError().GetCode())
+			require.Empty(t, response.GetResults())
+			require.Zero(t, backend.resolveCalls)
+			require.Empty(t, embed.gotIn.Texts)
+			require.Empty(t, backend.gotNamespace)
+		})
+	}
+}
+
 func TestVectorSearchSharedCatalogAndEnrollmentMustAgree(t *testing.T) {
 	shared := vector.Collection{Group: "docs.example.com", Resource: "manuals", PartitionKey: "manuals_external", IsExternal: true, Scope: vector.ScopeShared}
 	for _, tc := range []struct {
