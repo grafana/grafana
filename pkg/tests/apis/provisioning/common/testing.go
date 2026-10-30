@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -16,6 +17,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -34,8 +36,10 @@ import (
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/restmapper"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -49,6 +53,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -74,6 +79,8 @@ const (
 	// is a safety margin for the delete/list round-trips under SQLite write
 	// contention when many folders are left over.
 	waitTimeoutFolderCleanup = 4 * WaitTimeoutDefault
+
+	orphanCleanupTimeout = 30 * time.Second
 )
 
 //nolint:gosec // Test RSA private key (generated for testing purposes only, never used in production)
@@ -123,6 +130,9 @@ type ProvisioningTestHelper struct {
 	AdminREST          *rest.RESTClient
 	EditorREST         *rest.RESTClient
 	ViewerREST         *rest.RESTClient
+
+	// waitForJobsBeforeCleanup makes the cleanup wait for active jobs to finish before it deletes anything.
+	waitForJobsBeforeCleanup bool
 }
 
 // WithNamespace returns a new ProvisioningTestHelper scoped to the specified namespace and user.
@@ -1817,12 +1827,50 @@ func runGrafanaShared(t *testing.T, options ...GrafanaOption) (*ProvisioningTest
 	return buildProvisioningHelper(t, k8sHelper, provisioningPath), shutdownFunc
 }
 
-// deleteAndWait deletes all resources from a dynamic client and polls until
-// none remain. It retries deletes on each iteration to handle transient
-// resource-version conflicts from concurrent controller updates. deleteOpts is
-// applied to every delete (e.g. gracePeriodSeconds=0 to force-delete folders
-// past the empty-folder admission check).
+func isTransientDeleteError(err error) bool {
+	return apierrors.IsConflict(err) ||
+		apierrors.IsServerTimeout(err) ||
+		apierrors.IsTimeout(err) ||
+		apierrors.IsTooManyRequests(err) ||
+		apierrors.IsServiceUnavailable(err)
+}
+
+// isManagerRepositoryNotFound reports whether a NotFound names the repository that manages item.
+// A managed resource is deleted through its repository, so the NotFound can be about the
+// repository, not the resource. The resource is then orphaned and still there.
+func isManagerRepositoryNotFound(err error, item unstructured.Unstructured) bool {
+	statusErr, ok := errors.AsType[*apierrors.StatusError](err)
+	if !ok || statusErr.ErrStatus.Reason != metav1.StatusReasonNotFound {
+		return false
+	}
+	details := statusErr.ErrStatus.Details
+	repo := provisioning.RepositoryResourceInfo.GroupResource()
+	return details != nil &&
+		details.Group == repo.Group &&
+		details.Kind == repo.Resource &&
+		details.Name == item.GetAnnotations()[utils.AnnoKeyManagerIdentity]
+}
+
+// deleteAndWait deletes all resources from a dynamic client and polls until none remain.
+// A NotFound counts as deleted, unless it names the repository that manages the resource.
 func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeout time.Duration, deleteOpts metav1.DeleteOptions) error {
+	var lastTransient error
+	deleteAll := func(items []unstructured.Unstructured) error {
+		for _, item := range items {
+			err := client.Delete(ctx, item.GetName(), deleteOpts)
+			switch {
+			case err != nil && isManagerRepositoryNotFound(err, item):
+				return fmt.Errorf("deleteAndWait: delete %q: the resource is orphaned, its repository no longer exists: %w", item.GetName(), err)
+			case err == nil, apierrors.IsNotFound(err):
+			case isTransientDeleteError(err):
+				lastTransient = fmt.Errorf("delete %q: %w", item.GetName(), err)
+			default:
+				return fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
+			}
+		}
+		return nil
+	}
+
 	list, err := client.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return fmt.Errorf("deleteAndWait: initial list: %w", err)
@@ -1830,12 +1878,8 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 	if len(list.Items) == 0 {
 		return nil
 	}
-
-	var lastErr error
-	for _, item := range list.Items {
-		if err := client.Delete(ctx, item.GetName(), deleteOpts); err != nil && !apierrors.IsNotFound(err) {
-			lastErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
-		}
+	if err := deleteAll(list.Items); err != nil {
+		return err
 	}
 
 	timer := time.NewTimer(timeout)
@@ -1851,22 +1895,145 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 		if len(remaining.Items) == 0 {
 			return nil
 		}
-		for _, item := range remaining.Items {
-			if err := client.Delete(ctx, item.GetName(), deleteOpts); err != nil && !apierrors.IsNotFound(err) {
-				lastErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
-			}
+		if err := deleteAll(remaining.Items); err != nil {
+			return err
 		}
 		select {
 		case <-ctx.Done():
-			if lastErr != nil {
-				return fmt.Errorf("deleteAndWait: context cancelled (last delete error: %v): %w", lastErr, ctx.Err())
-			}
-			return fmt.Errorf("deleteAndWait: context cancelled: %w", ctx.Err())
+			return fmt.Errorf("deleteAndWait: context cancelled with %d items remaining (last transient error: %v): %w", len(remaining.Items), lastTransient, ctx.Err())
 		case <-timer.C:
-			if lastErr != nil {
-				return fmt.Errorf("deleteAndWait: timed out with %d items remaining (last delete error: %v)", len(remaining.Items), lastErr)
+			return fmt.Errorf("deleteAndWait: timed out with %d items remaining (last transient error: %v)", len(remaining.Items), lastTransient)
+		case <-ticker.C:
+		}
+	}
+}
+
+// supportedResourceClients returns a client for every resource that provisioning can manage
+func (h *ProvisioningTestHelper) supportedResourceClients() (map[string]dynamic.ResourceInterface, error) {
+	cfg := h.Org1.Admin.NewRestConfig()
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("create discovery client: %w", err)
+	}
+	groupResources, err := restmapper.GetAPIGroupResources(discoveryClient)
+	if err != nil {
+		return nil, fmt.Errorf("discover API resources: %w", err)
+	}
+	mapper := restmapper.NewDiscoveryRESTMapper(groupResources)
+	dyn, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("create dynamic client: %w", err)
+	}
+
+	clients := make(map[string]dynamic.ResourceInterface, len(resources.SupportedProvisioningResources))
+	for _, supported := range resources.SupportedProvisioningResources {
+		mapping, err := mapper.RESTMapping(supported.GroupKind)
+		if err != nil {
+			return nil, fmt.Errorf("resolve supported resource %s: %w", supported.GroupKind, err)
+		}
+		clients[supported.String()] = dyn.Resource(mapping.Resource).Namespace(h.Namespace)
+	}
+	return clients, nil
+}
+
+// orphanedResources returns, per repository that no longer exists, the supported resources it still
+// manages, as "kind/name".
+func (h *ProvisioningTestHelper) orphanedResources(ctx context.Context, clients map[string]dynamic.ResourceInterface) (orphanedByRepo map[string][]string, err error) {
+	repos, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("list repositories: %w", err)
+	}
+	existing := make(map[string]struct{}, len(repos.Items))
+	for _, repo := range repos.Items {
+		existing[repo.GetName()] = struct{}{}
+	}
+
+	orphanedByRepo = map[string][]string{}
+	for kind, client := range clients {
+		list, err := client.List(ctx, metav1.ListOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("list %s: %w", kind, err)
+		}
+		for _, item := range list.Items {
+			annotations := item.GetAnnotations()
+			if annotations[utils.AnnoKeyManagerKind] != string(utils.ManagerKindRepo) {
+				continue
 			}
-			return fmt.Errorf("deleteAndWait: timed out with %d items remaining", len(remaining.Items))
+			manager := annotations[utils.AnnoKeyManagerIdentity]
+			if _, ok := existing[manager]; manager != "" && !ok {
+				orphanedByRepo[manager] = append(orphanedByRepo[manager], kind+"/"+item.GetName())
+			}
+		}
+	}
+	for _, resources := range orphanedByRepo {
+		slices.Sort(resources)
+	}
+	return orphanedByRepo, nil
+}
+
+// describeOrphans formats orphanedResources for an error message.
+func describeOrphans(orphaned map[string][]string) string {
+	repos := make([]string, 0, len(orphaned))
+	for repo := range orphaned {
+		repos = append(repos, repo)
+	}
+	slices.Sort(repos)
+	parts := make([]string, 0, len(repos))
+	for _, repo := range repos {
+		parts = append(parts, fmt.Sprintf("repository %q: %s", repo, strings.Join(orphaned[repo], ", ")))
+	}
+	return strings.Join(parts, "; ")
+}
+
+// cleanupOrphanedResources deletes resources where their
+// repository has been deleted but the resource themselves were left behind.
+func (h *ProvisioningTestHelper) cleanupOrphanedResources(ctx context.Context, timeout time.Duration) error {
+	clients, err := h.supportedResourceClients()
+	if err != nil {
+		return err
+	}
+	orphaned, err := h.orphanedResources(ctx, clients)
+	if err != nil {
+		return err
+	}
+	if len(orphaned) == 0 {
+		return nil
+	}
+
+	for name := range orphaned {
+		var status int
+		result := h.AdminREST.Post().
+			Namespace(h.Namespace).
+			Resource("repositories").
+			Name(name).
+			SubResource("jobs").
+			Body(AsJSON(provisioning.JobSpec{Action: provisioning.JobActionDeleteResources})).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx).StatusCode(&status)
+		// The job name is fixed per repository. AlreadyExists means a cleanup job is still in flight, and
+		// the wait below ends when its work is done.
+		if err := result.Error(); err != nil && !apierrors.IsAlreadyExists(err) {
+			return fmt.Errorf("create the orphan cleanup job for repository %q: %w", name, err)
+		}
+	}
+
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	ticker := time.NewTicker(200 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		remaining, err := h.orphanedResources(ctx, clients)
+		if err != nil {
+			return err
+		}
+		if len(remaining) == 0 {
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("context cancelled while the orphan cleanup job ran; still managed by a missing repository: %s: %w", describeOrphans(remaining), ctx.Err())
+		case <-timer.C:
+			return fmt.Errorf("the orphan cleanup job did not remove everything within %s; still managed by a missing repository: %s", timeout, describeOrphans(remaining))
 		case <-ticker.C:
 		}
 	}
@@ -1891,23 +2058,121 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 // deterministic instead of racing the index.
 func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T) {
 	t.Helper()
-	forceDelete := metav1.DeleteOptions{GracePeriodSeconds: new(int64)} // gracePeriodSeconds=0
-	for _, c := range []struct {
+	// t.Context() is cancelled just before cleanups run, and this also runs from one (see
+	// registerCleanupAfterTest), so use a context that outlives the test. Every wait inside has its own
+	// timeout, so nothing here can run forever.
+	if err := h.cleanupAllResources(context.WithoutCancel(t.Context())); err != nil {
+		t.Fatal(err)
+	}
+	h.CleanProvisioningDir(t)
+}
+
+// registerCleanupAfterTest schedules CleanupAllResources for when the test has finished; it does not clean
+// now. Neither the test's resources nor any orphan it left are then still there for the next test.
+func (h *ProvisioningTestHelper) registerCleanupAfterTest(t *testing.T) {
+	t.Helper()
+	t.Cleanup(func() { h.CleanupAllResources(t) })
+}
+
+// activeJobs describes the jobs that have not finished, as "name (action, state)".
+func (h *ProvisioningTestHelper) activeJobs(ctx context.Context) ([]string, error) {
+	list, err := h.Jobs.Resource.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("list jobs: %w", err)
+	}
+	active := make([]string, 0, len(list.Items))
+	for _, job := range list.Items {
+		action, _, _ := unstructured.NestedString(job.Object, "spec", "action")
+		state, _, _ := unstructured.NestedString(job.Object, "status", "state")
+		active = append(active, fmt.Sprintf("%s (%s, state %q)", job.GetName(), action, state))
+	}
+	return active, nil
+}
+
+// waitForJobsToFinish waits until no job is active and returns the jobs that still were when the time ran
+// out. It never fails the test, so a cleanup can report the stuck jobs and carry on. A failed list is
+// retried until the time runs out, and is returned only if the last list also failed.
+func (h *ProvisioningTestHelper) waitForJobsToFinish(ctx context.Context, timeout time.Duration) ([]string, error) {
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	ticker := time.NewTicker(WaitIntervalDefault)
+	defer ticker.Stop()
+	var active []string
+	var listErr error
+	for {
+		active, listErr = h.activeJobs(ctx)
+		if listErr == nil && len(active) == 0 {
+			return nil, nil
+		}
+		select {
+		case <-ctx.Done():
+			return active, ctx.Err()
+		case <-timer.C:
+			return active, listErr
+		case <-ticker.C:
+		}
+	}
+}
+
+// cleanupAllResources removes everything a test can leave behind. When waitForJobsBeforeCleanup is set it
+// first waits for the active jobs to finish, because a job still running would write resources while they
+// are being deleted. A job that does not finish is reported, but the resources are still deleted.
+func (h *ProvisioningTestHelper) cleanupAllResources(ctx context.Context) error {
+	var jobsErr error
+	if h.waitForJobsBeforeCleanup {
+		stuck, err := h.waitForJobsToFinish(ctx, WaitTimeoutDefault)
+		switch {
+		case err != nil:
+			jobsErr = fmt.Errorf("wait for the jobs to finish: %w", err)
+		case len(stuck) > 0:
+			jobsErr = fmt.Errorf("jobs still active: %s", strings.Join(stuck, ", "))
+		}
+	}
+	return errors.Join(jobsErr, h.deleteAllResources(ctx))
+}
+
+// deleteAllResources removes everything a test can leave behind, in dependency order:
+//  1. repositories, which also run their finalizers, and the connections they reference;
+//  2. anything still managed by a repository that is gone. Every repository is deleted by now, anything left is an orphaned. We get orphaned resources if a sync
+//
+// job that creates a folder is running at the same time as the finalizer.
+//  3. the remaining non-repo managed dashboards and folders.
+func (h *ProvisioningTestHelper) deleteAllResources(ctx context.Context) error {
+	type step struct {
 		name       string
 		client     dynamic.ResourceInterface
 		timeout    time.Duration
 		deleteOpts metav1.DeleteOptions
-	}{
-		{"repositories", h.Repositories.Resource, waitTimeoutCleanup, metav1.DeleteOptions{}},
-		{"connections", h.Connections.Resource, waitTimeoutCleanup, metav1.DeleteOptions{}},
-		{"dashboards", h.DashboardsV1.Resource, waitTimeoutCleanup, metav1.DeleteOptions{}},
-		{"folders", h.Folders.Resource, waitTimeoutFolderCleanup, forceDelete},
-	} {
-		if err := deleteAndWait(t.Context(), c.client, c.timeout, c.deleteOpts); err != nil {
-			t.Fatalf("CleanupAllResources(%s): %v", c.name, err)
-		}
 	}
-	h.CleanProvisioningDir(t)
+	deleteSteps := func(steps ...step) error {
+		for _, c := range steps {
+			if err := deleteAndWait(ctx, c.client, c.timeout, c.deleteOpts); err != nil {
+				return fmt.Errorf("CleanupAllResources(%s): %w", c.name, err)
+			}
+		}
+		return nil
+	}
+
+	if err := deleteSteps(
+		step{"repositories", h.Repositories.Resource, waitTimeoutCleanup, metav1.DeleteOptions{}},
+		step{"connections", h.Connections.Resource, waitTimeoutCleanup, metav1.DeleteOptions{}},
+	); err != nil {
+		return err
+	}
+
+	if err := h.cleanupOrphanedResources(ctx, orphanCleanupTimeout); err != nil {
+		return fmt.Errorf("CleanupAllResources(orphaned resources): %w", err)
+	}
+
+	forceDelete := metav1.DeleteOptions{GracePeriodSeconds: new(int64)}
+	return deleteSteps(
+		step{"dashboards", h.DashboardsV1.Resource, waitTimeoutCleanup, metav1.DeleteOptions{}},
+		// Folders normally have to be empty before being deleted
+		// However since we already deleted the contents (dashboards),
+		// there may be a delay in the search index seeing these as deleted
+		// Therefore we forceDelete folders
+		step{"folders", h.Folders.Resource, waitTimeoutFolderCleanup, forceDelete},
+	)
 }
 
 // SharedEnv manages a single shared Grafana server for a test package.
@@ -1957,11 +2222,13 @@ func (e *SharedEnv) GetHelper(t *testing.T) *ProvisioningTestHelper {
 }
 
 // GetCleanHelper returns the shared helper after cleaning up all resources
-// from the previous test. This is the standard per-test entry point.
+// from the previous test, and cleans up again once this test has finished.
+// This is the standard per-test entry point.
 func (e *SharedEnv) GetCleanHelper(t *testing.T) *ProvisioningTestHelper {
 	t.Helper()
 	h := e.GetHelper(t)
-	h.CleanupAllResources(t)
+	h.CleanupAllResources(t)      // start from a clean state in case anything is leftover
+	h.registerCleanupAfterTest(t) // and clean up again when the test is done
 	return h
 }
 
@@ -3213,7 +3480,7 @@ func (h *GitTestHelper) GitServer() *gittest.Server {
 	return h.gitServer
 }
 
-func (h *GitTestHelper) githubTransportUser(t *testing.T) *gittest.User {
+func (h *GitTestHelper) GithubTransportUser(t *testing.T) *gittest.User {
 	t.Helper()
 
 	h.githubUserOnce.Do(func() {
@@ -3248,6 +3515,7 @@ func RunGrafanaWithGitServer(t *testing.T, options ...GrafanaOption) *GitTestHel
 	gitServer := startGitServer(t)
 	allOpts := append([]GrafanaOption{WithRepositoryTypes([]string{"git"})}, options...)
 	helper := RunGrafana(t, allOpts...)
+	helper.waitForJobsBeforeCleanup = true
 
 	return &GitTestHelper{
 		ProvisioningTestHelper: helper,
@@ -3275,6 +3543,7 @@ func runGrafanaWithGitServerShared(t *testing.T, options ...GrafanaOption) (*Git
 
 	allOpts := append([]GrafanaOption{WithRepositoryTypes([]string{"git"})}, options...)
 	helper, serverShutdown := runGrafanaShared(t, allOpts...)
+	helper.waitForJobsBeforeCleanup = true
 
 	shutdown := func() {
 		if err := gitServer.Cleanup(); err != nil {
@@ -3326,12 +3595,12 @@ func (e *SharedGitEnv) GetHelper(t *testing.T) *GitTestHelper {
 	return e.Helper
 }
 
-// GetCleanHelper returns the shared helper after removing resources left by a
-// previous test from Grafana. Git server state is intentionally not reset.
+// GetCleanHelper
 func (e *SharedGitEnv) GetCleanHelper(t *testing.T) *GitTestHelper {
 	t.Helper()
 	h := e.GetHelper(t)
-	h.CleanupAllResources(t)
+	h.CleanupAllResources(t)      // start from a clean state
+	h.registerCleanupAfterTest(t) // and clean up again when the test is done
 	return h
 }
 
@@ -3351,15 +3620,6 @@ func (e *SharedGitEnv) RunTestMain(m *testing.M) {
 	e.Shutdown()
 	db.CleanupTestDB()
 	os.Exit(code)
-}
-
-// CleanupAllResources removes Grafana-managed resources left by a previous
-// test. It first waits for active jobs to finish, then delegates to
-// ProvisioningTestHelper.CleanupAllResources.
-func (h *GitTestHelper) CleanupAllResources(t *testing.T) {
-	t.Helper()
-	h.waitForNoActiveJobs(t)
-	h.ProvisioningTestHelper.CleanupAllResources(t)
 }
 
 // CreateGitRepo creates a git repository with sync target "instance" and registers
@@ -3417,7 +3677,7 @@ func (h *GitTestHelper) CreateGithubRepo(t *testing.T, repoName string, initialF
 		waitForReady:      true,
 		initialFiles:      initialFiles,
 		templateVariables: extraValues,
-		user:              h.githubTransportUser(t),
+		user:              h.GithubTransportUser(t),
 		workflows:         workflows,
 	})
 }
@@ -3436,7 +3696,7 @@ func (h *GitTestHelper) CreateGithubRepoWithoutWaitingForReady(t *testing.T, rep
 		waitForReady:      false,
 		initialFiles:      initialFiles,
 		templateVariables: extraValues,
-		user:              h.githubTransportUser(t),
+		user:              h.GithubTransportUser(t),
 		workflows:         workflows,
 	})
 }
@@ -3448,7 +3708,7 @@ func (h *GitTestHelper) CreateGithubRepoWithWebhookDisabled(t *testing.T, repoNa
 		templateVariables: map[string]any{
 			"WebhookDisabled": true,
 		},
-		user:      h.githubTransportUser(t),
+		user:      h.GithubTransportUser(t),
 		workflows: workflows,
 	})
 }
@@ -3661,18 +3921,6 @@ func (h *GitTestHelper) waitForJobsComplete(t *testing.T, repoName string) {
 
 		assert.False(collect, hasActiveJobs, "jobs still active for repository %s", repoName)
 	}, WaitTimeoutDefault, WaitIntervalDefault, "jobs should complete for repository %s", repoName)
-}
-
-func (h *GitTestHelper) waitForNoActiveJobs(t *testing.T) {
-	t.Helper()
-
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		jobs, err := h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
-		if !assert.NoError(collect, err, "failed to list jobs") {
-			return
-		}
-		assert.Empty(collect, jobs.Items, "jobs still active from previous test")
-	}, WaitTimeoutDefault, WaitIntervalDefault, "jobs should complete before cleanup")
 }
 
 // RequireJobWarningContains asserts that at least one warning in the job status

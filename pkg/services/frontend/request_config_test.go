@@ -91,6 +91,139 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 		assert.Equal(t, 5000, *config.RudderstackBatchInterval)
 	})
 
+	t.Run("should override Google Analytics fields from settings service", func(t *testing.T) {
+		config := FSRequestConfig{
+			FSFrontendSettings: FSFrontendSettings{
+				GoogleAnalyticsId:  "UA-base",
+				GoogleAnalytics4Id: "G-base",
+			},
+		}
+
+		iniFile := ini.Empty()
+		analyticsSection, _ := iniFile.NewSection("analytics")
+		_, _ = analyticsSection.NewKey("google_analytics_ua_id", "UA-tenant")
+		_, _ = analyticsSection.NewKey("google_analytics_4_id", "G-tenant")
+		_, _ = analyticsSection.NewKey("google_analytics_4_send_manual_page_views", "true")
+
+		config.ApplyOverrides(iniFile, log.New("test"), false)
+
+		assert.Equal(t, "UA-tenant", config.GoogleAnalyticsId)
+		assert.Equal(t, "G-tenant", config.GoogleAnalytics4Id)
+		assert.True(t, config.GoogleAnalytics4SendManualPageViews)
+	})
+
+	t.Run("should preserve Google Analytics fields when not overridden", func(t *testing.T) {
+		config := FSRequestConfig{
+			FSFrontendSettings: FSFrontendSettings{
+				GoogleAnalyticsId:                   "UA-base",
+				GoogleAnalytics4Id:                  "G-base",
+				GoogleAnalytics4SendManualPageViews: true,
+			},
+		}
+
+		config.ApplyOverrides(ini.Empty(), log.New("test"), false)
+
+		assert.Equal(t, "UA-base", config.GoogleAnalyticsId)
+		assert.Equal(t, "G-base", config.GoogleAnalytics4Id)
+		assert.True(t, config.GoogleAnalytics4SendManualPageViews)
+	})
+
+	t.Run("should allow a tenant to disable Google Analytics manual page views", func(t *testing.T) {
+		config := FSRequestConfig{
+			FSFrontendSettings: FSFrontendSettings{GoogleAnalytics4SendManualPageViews: true},
+		}
+
+		iniFile := ini.Empty()
+		analyticsSection, _ := iniFile.NewSection("analytics")
+		_, _ = analyticsSection.NewKey("google_analytics_4_send_manual_page_views", "false")
+
+		config.ApplyOverrides(iniFile, log.New("test"), false)
+
+		assert.False(t, config.GoogleAnalytics4SendManualPageViews)
+	})
+
+	t.Run("should keep the base value when a boolean override is invalid", func(t *testing.T) {
+		config := FSRequestConfig{
+			FSFrontendSettings: FSFrontendSettings{GoogleAnalytics4SendManualPageViews: true},
+		}
+
+		iniFile := ini.Empty()
+		analyticsSection, _ := iniFile.NewSection("analytics")
+		_, _ = analyticsSection.NewKey("google_analytics_4_send_manual_page_views", "not-a-bool")
+
+		config.ApplyOverrides(iniFile, log.New("test"), false)
+
+		assert.True(t, config.GoogleAnalytics4SendManualPageViews)
+	})
+
+	t.Run("with full frontend settings enabled, applies Google Analytics overrides to FullFrontendSettings", func(t *testing.T) {
+		config := FSRequestConfig{
+			FSFrontendSettings: FSFrontendSettings{
+				GoogleAnalytics4Id: "G-legacy",
+			},
+			FullFrontendSettings: &dtos.FrontendSettingsDTO{
+				GoogleAnalyticsId:  "UA-base",
+				GoogleAnalytics4Id: "G-base",
+			},
+		}
+
+		iniFile := ini.Empty()
+		analyticsSection, _ := iniFile.NewSection("analytics")
+		_, _ = analyticsSection.NewKey("google_analytics_ua_id", "UA-tenant")
+		_, _ = analyticsSection.NewKey("google_analytics_4_id", "G-tenant")
+		_, _ = analyticsSection.NewKey("google_analytics_4_send_manual_page_views", "true")
+
+		config.ApplyOverrides(iniFile, log.New("test"), true)
+
+		assert.Equal(t, "UA-tenant", config.FullFrontendSettings.GoogleAnalyticsId)
+		assert.Equal(t, "G-tenant", config.FullFrontendSettings.GoogleAnalytics4Id)
+		assert.True(t, config.FullFrontendSettings.GoogleAnalytics4SendManualPageViews)
+
+		assert.Equal(t, "G-legacy", config.GoogleAnalytics4Id)
+	})
+
+	t.Run("should only override the Google Analytics keys present in settings", func(t *testing.T) {
+		for _, tc := range []struct {
+			name        string
+			fullEnabled bool
+		}{
+			{name: "legacy settings", fullEnabled: false},
+			{name: "full frontend settings", fullEnabled: true},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				config := FSRequestConfig{
+					FSFrontendSettings: FSFrontendSettings{
+						GoogleAnalyticsId:                   "UA-base",
+						GoogleAnalytics4Id:                  "G-base",
+						GoogleAnalytics4SendManualPageViews: true,
+					},
+					FullFrontendSettings: &dtos.FrontendSettingsDTO{
+						GoogleAnalyticsId:                   "UA-base",
+						GoogleAnalytics4Id:                  "G-base",
+						GoogleAnalytics4SendManualPageViews: true,
+					},
+				}
+
+				iniFile := ini.Empty()
+				analyticsSection, _ := iniFile.NewSection("analytics")
+				_, _ = analyticsSection.NewKey("google_analytics_4_id", "G-tenant")
+
+				config.ApplyOverrides(iniFile, log.New("test"), tc.fullEnabled)
+
+				uaID, ga4ID, manualPageViews := config.GoogleAnalyticsId, config.GoogleAnalytics4Id, config.GoogleAnalytics4SendManualPageViews
+				if tc.fullEnabled {
+					uaID = config.FullFrontendSettings.GoogleAnalyticsId
+					ga4ID = config.FullFrontendSettings.GoogleAnalytics4Id
+					manualPageViews = config.FullFrontendSettings.GoogleAnalytics4SendManualPageViews
+				}
+
+				assert.Equal(t, "UA-base", uaID)
+				assert.Equal(t, "G-tenant", ga4ID)
+				assert.True(t, manualPageViews)
+			})
+		}
+	})
+
 	t.Run("should include a zero Rudderstack batch interval override in frontend settings", func(t *testing.T) {
 		config := FSRequestConfig{}
 		iniFile := ini.Empty()

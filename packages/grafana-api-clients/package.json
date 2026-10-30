@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/api-clients",
-  "version": "13.3.0-pre",
+  "version": "13.4.0-pre",
   "description": "Grafana API client utilities",
   "keywords": [
     "grafana",
@@ -201,7 +201,7 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json",
-    "generate-apis": "npm run --prefix ../grafana-openapi process-specs && NODE_OPTIONS='--disable-warning=ExperimentalWarning' rtk-query-codegen-openapi ./src/scripts/generate-rtk-apis.ts",
+    "generate-apis": "pnpm --filter @grafana/openapi --fail-if-no-match run process-specs && NODE_OPTIONS='--disable-warning=ExperimentalWarning' rtk-query-codegen-openapi ./src/scripts/generate-rtk-apis.ts",
     "generate:api-client": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/generator/generate.ts"
   },
   "devDependencies": {

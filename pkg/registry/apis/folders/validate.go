@@ -582,9 +582,7 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 		children = append(children, row.key.Name)
 	}
 
-	// The bleve Search path populates TotalHits but not Results.NextPageToken, so
-	// pagination must be driven off TotalHits + offset rather than the token.
-	hasMore := resp.GetResults().GetNextPageToken() != "" || offset+int64(len(rows)) < resp.TotalHits
+	hasMore := offset+int64(len(rows)) < resp.TotalHits
 	return children, hasMore, nil
 }
 
@@ -596,13 +594,18 @@ func validateOnDelete(ctx context.Context,
 ) error {
 	// Non-empty folder delete is opt-in via gracePeriodSeconds=0 when kubernetesFolderCascadeDelete
 	// is enabled (same pattern as dashboard delete validation). This only bypasses the empty-folder
-	// check; the cascade in Delete then removes the subtree.
-	if cascadeDeleteEnabled && forceDeleteFromDeleteOptions(deleteOptions) {
-		logging.FromContext(ctx).Warn(
-			"folder force-delete bypassing empty check; its subtree (child folders and dashboards) will be cascade-deleted, along with alert rules and library elements when running in-process (monolith)",
-			"folder", f.Name,
-			"namespace", f.Namespace,
-		)
+	// check; the cascade in Delete then removes the subtree. A folder carrying the cascade finalizer
+	// takes the same opt-in regardless of that flag, since the cascade controller removes its
+	// subtree; keying on the finalizer rather than a flag keeps folders without it from being deleted
+	// around their contents.
+	if (cascadeDeleteEnabled || hasCascadeDeleteFinalizer(f)) && forceDeleteFromDeleteOptions(deleteOptions) {
+		msg := "folder force-delete bypassing empty check; its subtree (child folders and dashboards) will be cascade-deleted, along with alert rules and library elements when running in-process (monolith)"
+		if hasCascadeDeleteFinalizer(f) {
+			// Delete hands these folders to the cascade controller, which removes only child folders and
+			// dashboards.
+			msg = "folder force-delete bypassing empty check; its child folders and dashboards will be deleted by the cascade controller"
+		}
+		logging.FromContext(ctx).Warn(msg, "folder", f.Name, "namespace", f.Namespace)
 		return nil
 	}
 
