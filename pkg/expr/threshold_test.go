@@ -477,6 +477,95 @@ func TestIsHysteresisExpression(t *testing.T) {
 	}
 }
 
+func TestIsThresholdExpression(t *testing.T) {
+	cases := []struct {
+		name     string
+		input    json.RawMessage
+		expected bool
+	}{
+		{
+			name:     "false if it's empty",
+			input:    json.RawMessage(`{}`),
+			expected: false,
+		},
+		{
+			name:     "false if it is not threshold type",
+			input:    json.RawMessage(`{ "type": "reduce" }`),
+			expected: false,
+		},
+		{
+			name:     "false if type is missing",
+			input:    json.RawMessage(`{ "conditions": [] }`),
+			expected: false,
+		},
+		{
+			name:     "false if type is not a string",
+			input:    json.RawMessage(`{ "type": 1 }`),
+			expected: false,
+		},
+		{
+			name:     "true if type is threshold",
+			input:    json.RawMessage(`{ "type": "threshold" }`),
+			expected: true,
+		},
+		{
+			name:     "true regardless of conditions or other fields",
+			input:    json.RawMessage(`{ "type": "threshold", "conditions": [{"evaluator":{"type":"gt","params":[10]}}], "expression": "B" }`),
+			expected: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			query := map[string]any{}
+			require.NoError(t, json.Unmarshal(tc.input, &query))
+			require.Equal(t, tc.expected, IsThresholdExpression(query))
+		})
+	}
+}
+
+func TestThresholdReferenceVar(t *testing.T) {
+	cases := []struct {
+		name          string
+		input         json.RawMessage
+		expectedValue string
+		expectedOK    bool
+	}{
+		{
+			name:  "false if it's empty",
+			input: json.RawMessage(`{}`),
+		},
+		{
+			name:  "false if it is not threshold type",
+			input: json.RawMessage(`{ "type": "reduce", "expression": "B" }`),
+		},
+		{
+			name:  "false if threshold but expression is missing",
+			input: json.RawMessage(`{ "type": "threshold" }`),
+		},
+		{
+			name:  "false if threshold but expression is not a string",
+			input: json.RawMessage(`{ "type": "threshold", "expression": 1 }`),
+		},
+		{
+			name:          "returns the expression field if threshold",
+			input:         json.RawMessage(`{ "type": "threshold", "expression": "B" }`),
+			expectedValue: "B",
+			expectedOK:    true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			query := map[string]any{}
+			require.NoError(t, json.Unmarshal(tc.input, &query))
+			value, ok := ThresholdReferenceVar(query)
+			require.Equal(t, tc.expectedOK, ok)
+			require.Equal(t, tc.expectedValue, value)
+		})
+	}
+}
+
 func TestSetLoadedDimensionsToHysteresisCommand(t *testing.T) {
 	cases := []struct {
 		name  string
