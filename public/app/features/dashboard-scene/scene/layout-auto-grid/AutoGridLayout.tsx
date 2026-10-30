@@ -10,8 +10,10 @@ import {
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutOrchestratorFor } from '../../utils/utils';
+import { isUnifiedDragAndDropEnabled } from '../layouts-shared/unifiedDragAndDrop';
 import { AUTO_GRID_ITEM_DROP_TARGET_ATTR } from '../types/DashboardDropTarget';
 
+import { AutoGridDragSession } from './AutoGridDragSession';
 import { AutoGridItem } from './AutoGridItem';
 import { AutoGridLayoutRenderer } from './AutoGridLayoutRenderer';
 import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './const';
@@ -37,6 +39,9 @@ export interface AutoGridLayoutState extends SceneObjectState, AutoGridLayoutOpt
 
   /** The key of the item being dragged */
   draggingKey?: string;
+
+  /** True while the item being dragged is outside of this grid, which then closes the gap it left */
+  isDraggedItemOutside?: boolean;
 }
 
 interface AutoGridLayoutOptions {
@@ -77,6 +82,10 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   /** Container's initial page position, used to compensate for layout shifts during drag */
   private _initialContainerRect: { top: number; left: number } | null = null;
   private _lastDropTargetGridItemKey: string | null = null;
+  /** Set for drags on the unified drag and drop engine */
+  private _dragSession: AutoGridDragSession | null = null;
+  private _draggedItemSize: { width: number; height: number } | null = null;
+  private _lastPointer: { pageX: number; pageY: number } | null = null;
   protected _renderBeforeActivation = true;
 
   public constructor(state: Partial<AutoGridLayoutState>) {
@@ -181,6 +190,38 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
       onDrag: this._onDrag,
       onDragEnd: this._onDragEnd,
     });
+
+    if (isUnifiedDragAndDropEnabled()) {
+      this._startDragSession(evt, width, height);
+    }
+  }
+
+  private _startDragSession(evt: ReactPointerEvent, width: number, height: number) {
+    this._dragSession?.stop();
+    this._draggedItemSize = { width, height };
+    this._lastPointer = { pageX: evt.pageX, pageY: evt.pageY };
+    this._dragSession = new AutoGridDragSession({
+      getContainer: () => this.containerRef.current,
+      followPointer: (isNewContainer) => {
+        if (isNewContainer && this._draggedItemSize) {
+          this._updatePanelSize(this._draggedItemSize.width, this._draggedItemSize.height);
+        }
+        if (this._lastPointer) {
+          this._moveDraggedPanel(this._lastPointer.pageX, this._lastPointer.pageY);
+        }
+      },
+      cancel: () => this._cancelDrag(),
+    });
+    this._dragSession.start();
+  }
+
+  /** Ends the drag without dropping the panel anywhere, so it goes back to where it was */
+  private _cancelDrag() {
+    // Ends the orchestrator's drag as well, which calls `_onDragEnd`
+    getLayoutOrchestratorFor(this)?.cancelDraggingSync();
+    if (this._draggedGridItem) {
+      this._onDragEnd();
+    }
   }
 
   // Stop inside dragging
@@ -191,9 +232,13 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     this._initialGridItemPosition = null;
     this._initialContainerRect = null;
     this._lastDropTargetGridItemKey = null;
+    this._dragSession?.stop();
+    this._dragSession = null;
+    this._draggedItemSize = null;
+    this._lastPointer = null;
 
     this._resetPanelPositionAndSize();
-    this.setState({ draggingKey: undefined });
+    this.setState({ draggingKey: undefined, isDraggedItemOutside: undefined });
 
     document.body.classList.remove('dashboard-draggable-transparent-selection');
 
@@ -209,21 +254,24 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
       return;
     }
 
-    // Calculate how much the container has shifted since drag started
-    // This can happen when a grid above expands (e.g., placeholder causes row wrap)
-    let containerShiftY = 0;
-    let containerShiftX = 0;
-    if (this._initialContainerRect && this.containerRef.current) {
-      const currentRect = this.containerRef.current.getBoundingClientRect();
-      containerShiftY = currentRect.top - this._initialContainerRect.top;
-      containerShiftX = currentRect.left - this._initialContainerRect.left;
+    if (this._dragSession) {
+      // The release happened where the page could not see it, e.g. in another window
+      if (evt.buttons === 0) {
+        this._cancelDrag();
+        return;
+      }
+      this._lastPointer = { pageX: evt.pageX, pageY: evt.pageY };
     }
 
-    // Adjust position to compensate for container movement
-    this._updatePanelPosition(
-      this._initialGridItemPosition.top + (evt.pageY - this._initialGridItemPosition.pageY) - containerShiftY,
-      this._initialGridItemPosition.left + (evt.pageX - this._initialGridItemPosition.pageX) - containerShiftX
-    );
+    this._moveDraggedPanel(evt.pageX, evt.pageY);
+
+    if (this._dragSession) {
+      const isOutside = this._dragSession.isOutside(evt.clientX, evt.clientY);
+      this._setDraggedItemOutside(isOutside);
+      if (isOutside) {
+        return;
+      }
+    }
 
     const dropTargetGridItemKey = document
       .elementsFromPoint(evt.clientX, evt.clientY)
@@ -237,6 +285,39 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     if (dropTargetGridItemKey && dropTargetGridItemKey !== this._lastDropTargetGridItemKey) {
       this._onDragOverItem(dropTargetGridItemKey);
     }
+  }
+
+  private _moveDraggedPanel(pageX: number, pageY: number) {
+    if (!this._initialGridItemPosition) {
+      return;
+    }
+
+    // Calculate how much the container has shifted since drag started
+    // This can happen when a grid above expands (e.g., placeholder causes row wrap)
+    let containerShiftY = 0;
+    let containerShiftX = 0;
+    if (this._initialContainerRect && this.containerRef.current) {
+      const currentRect = this.containerRef.current.getBoundingClientRect();
+      containerShiftY = currentRect.top - this._initialContainerRect.top;
+      containerShiftX = currentRect.left - this._initialContainerRect.left;
+    }
+
+    // Adjust position to compensate for container movement
+    this._updatePanelPosition(
+      this._initialGridItemPosition.top + (pageY - this._initialGridItemPosition.pageY) - containerShiftY,
+      this._initialGridItemPosition.left + (pageX - this._initialGridItemPosition.pageX) - containerShiftX
+    );
+  }
+
+  private _setDraggedItemOutside(isOutside: boolean) {
+    if (isOutside === !!this.state.isDraggedItemOutside) {
+      return;
+    }
+    if (!isOutside && this._draggedGridItem) {
+      // Coming back reopens the slot at the item under the pointer, so every item counts as newly hovered
+      this._lastDropTargetGridItemKey = this._draggedGridItem.state.key!;
+    }
+    this.setState({ isDraggedItemOutside: isOutside });
   }
 
   // Handle dragging an item from the same grid over another item from the same grid
