@@ -10,7 +10,6 @@
     "plugins"
   ],
   "sideEffects": false,
-  "type": "module",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git",
