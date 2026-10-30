@@ -162,6 +162,9 @@ describe('DashboardLayoutOrchestrator', () => {
 });
 
 describe('tab dragging', () => {
+  let deactivate: () => void;
+  afterEach(() => deactivate?.());
+
   it('does not drop a tab into a tab bar nested inside it', () => {
     const inner1 = new TabItem({ key: 'inner-1', title: 'Inner 1' });
     const inner2 = new TabItem({ key: 'inner-2', title: 'Inner 2' });
@@ -170,7 +173,7 @@ describe('tab dragging', () => {
     const outerB = new TabItem({ key: 'outer-b', title: 'Outer B' });
     const outer = new TabsLayoutManager({ key: 'outer', tabs: [outerA, outerB] });
     const dashboard = new DashboardScene({ isEditing: true, body: outer });
-    const deactivate = activateFullSceneTree(dashboard);
+    deactivate = activateFullSceneTree(dashboard);
     const orchestrator = dashboard.state.layoutOrchestrator!;
 
     // @ts-expect-error - accessing private property for testing
@@ -190,8 +193,6 @@ describe('tab dragging', () => {
     expect(nested.state.tabs).toEqual([inner1, inner2]);
     expect(outerA.parent).toBe(outer);
     expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
-
-    deactivate();
   });
 });
 
