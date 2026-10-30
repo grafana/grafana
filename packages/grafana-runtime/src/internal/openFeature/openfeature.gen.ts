@@ -202,8 +202,6 @@ export const FlagKeys = {
   GrafanaFilterablePanels: "grafana.filterablePanels",
   /** Adds an experimental Protomaps vector basemap to the geomap panel */
   GrafanaGeomapProtomapsBasemap: "grafana.geomapProtomapsBasemap",
-  /** Enables PLG-focused growth redesign of the unified homepage */
-  GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Deprecated: Toggle displayed fields from Log Details */
@@ -1438,17 +1436,6 @@ export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagGrafanaGeomapProtomapsBasemap = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.geomapProtomapsBasemap", false, options).value;
-};
-
-/**
- * Enables PLG-focused growth redesign of the unified homepage
- *
- * **Details:**
- * - flag key: `grafana.growthHomepage`
- * - default value: `false`
- */
-export const useFlagGrafanaGrowthHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.growthHomepage", false, options).value;
 };
 
 /**
