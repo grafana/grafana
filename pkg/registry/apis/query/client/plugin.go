@@ -148,6 +148,8 @@ func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest)
 
 	qdr := &backend.QueryDataRequest{
 		Queries: queries,
+		// Incoming HTTP headers, copied by the plugin middlewares, win over these.
+		Headers: clientapi.RequestHeaders(ctx),
 	}
 	qdr.PluginContext, err = d.pCtxProvider.PluginContextForDataSource(ctx, settings)
 	if err != nil {
