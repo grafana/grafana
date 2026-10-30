@@ -4,6 +4,8 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 import { type ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 import { type ObjectMeta } from 'app/features/apiserver/types';
 
+import { getPendingChangesHistory, type PendingChangesHistory } from '../lifecycle/pendingChangePreview';
+import { hasUnrecordedPendingChange, recordPendingChange } from '../lifecycle/pendingChangesHistory';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -11,6 +13,17 @@ import { type DashboardSceneState } from '../scene/types/dashboard';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 
 import { ignoreChanges, isEmptyDashboard } from './DashboardPrompt';
+
+jest.mock('../lifecycle/pendingChangePreview', () => ({
+  ...jest.requireActual('../lifecycle/pendingChangePreview'),
+  getPendingChangesHistory: jest.fn(),
+}));
+
+jest.mock('../lifecycle/pendingChangesHistory', () => ({
+  ...jest.requireActual('../lifecycle/pendingChangesHistory'),
+  hasUnrecordedPendingChange: jest.fn(() => false),
+  recordPendingChange: jest.fn(),
+}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -163,6 +176,42 @@ describe('DashboardPrompt', () => {
         scene.setInitialSaveModel(initialSaveModel);
 
         expect(ignoreChanges(scene)).toBe(undefined);
+      });
+    });
+
+    describe('when the dashboard shows pending changes whose plugin keeps their history', () => {
+      afterEach(() => jest.mocked(getPendingChangesHistory).mockReturnValue(undefined));
+
+      it('then it should return true, as every edit was recorded when it was made', () => {
+        const scene = buildTestScene({ meta: { canSave: true } });
+        scene.setInitialSaveModel(transformSceneToSaveModel(scene));
+        jest.mocked(getPendingChangesHistory).mockReturnValue({} as PendingChangesHistory);
+
+        expect(ignoreChanges(scene)).toBe(true);
+      });
+
+      // Leaving would lose it: the plugin never got it.
+      it('then it should return false while an edit failed to reach the plugin', () => {
+        const scene = buildTestScene({ meta: { canSave: true } });
+        scene.setInitialSaveModel(transformSceneToSaveModel(scene));
+        jest.mocked(getPendingChangesHistory).mockReturnValue({} as PendingChangesHistory);
+        jest.mocked(hasUnrecordedPendingChange).mockReturnValueOnce(true);
+
+        expect(ignoreChanges(scene)).toBe(false);
+      });
+
+      // Exiting discards an open panel editor, so the edit is read before that, and a failed one is retried.
+      it('records an edit that failed to reach the plugin as edit mode ends, before leaving it', () => {
+        const scene = buildTestScene({ meta: { canSave: true } });
+        scene.onEnterEditMode();
+        jest.mocked(getPendingChangesHistory).mockReturnValue({} as PendingChangesHistory);
+        jest.mocked(hasUnrecordedPendingChange).mockReturnValue(true);
+
+        scene.exitEditMode({ skipConfirm: false });
+
+        expect(recordPendingChange).toHaveBeenCalledWith(scene, expect.anything(), 'Edit dashboard');
+        expect(scene.state.isEditing).toBe(false);
+        jest.mocked(hasUnrecordedPendingChange).mockReturnValue(false);
       });
     });
   });
