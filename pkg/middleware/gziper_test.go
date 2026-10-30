@@ -71,6 +71,23 @@ func TestGziper(t *testing.T) {
 		require.Zero(t, rec.Body.Len(), "a HEAD response has no body")
 	})
 
+	t.Run("does not write a body for bodiless status codes", func(t *testing.T) {
+		for _, status := range []int{http.StatusNoContent, http.StatusNotModified} {
+			rec := httptest.NewRecorder()
+			req, err := http.NewRequest(http.MethodGet, "/public/fonts/inter/Inter-Regular.woff2", nil)
+			require.NoError(t, err)
+			req.Header.Set("Accept-Encoding", "gzip")
+
+			handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(status)
+			})
+			Gziper()(handler).ServeHTTP(web.NewResponseWriter(http.MethodGet, rec), req)
+
+			require.Equal(t, status, rec.Code)
+			require.Zero(t, rec.Body.Len(), "net/http rejects a body for status %d", status)
+		}
+	})
+
 	t.Run("does not compress when the client does not accept gzip", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req, err := http.NewRequest(http.MethodGet, "/d/abc/dash", nil)

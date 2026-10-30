@@ -170,7 +170,10 @@ func globalSearchDescription() string {
 		types = append(types, "`"+gr.Group+"/"+gr.Resource+"`")
 	}
 	return "Search resources of several types in a namespace: " + strings.Join(types, ", ") + ". " +
-		"Each result names its own group, resource and kind, and is authorized on its own.\n\n" +
+		"Each result names its own group, resource and kind, and is authorized on its own. " +
+		"`folderPaths` gives the path of each folder the results are in, listing ancestors before descendants and ending with the containing folder. " +
+		"Like the folder API's parents, the nearest unreadable folder or folder missing from the global index appears first, by name only and marked `detached`. " +
+		"Its ancestors are omitted.\n\n" +
 		"Only the fields every resource has can be used, plus:\n\n" +
 		"- `" + resource.SEARCH_FIELD_GROUP_RESOURCE + "` (`{group}/{resource}`): filter and facet, to narrow the search to some types or count results per type.\n" +
 		"- `" + resource.SEARCH_FIELD_FOLDER_TREE + "`: filter with `In` only. Matches what is in the named folders or in any folder below them, not the named folders themselves. " +

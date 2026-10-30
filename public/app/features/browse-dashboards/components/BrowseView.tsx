@@ -7,6 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { CallToActionCard, EmptyState, LinkButton, TextLink, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { useIsMobileEditDeprecated } from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
 import { FolderReadmePanel } from 'app/features/provisioning/components/Folders/FolderReadmePanel';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
@@ -58,6 +59,7 @@ export function BrowseView({
   const childrenByParentUID = useChildrenByParentUIDState();
   const canSelect = canSelectItems(permissions);
   const provisioningEnabled = config.provisioningEnabled;
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
   const { data: settingsData } = useGetFrontendSettingsQuery(!provisioningEnabled ? skipToken : undefined);
   const isProvisionedInstance = useIsProvisionedInstance({ settings: settingsData });
   const rootItems = useSelector(rootItemsSelector);
@@ -184,14 +186,16 @@ export function BrowseView({
           <EmptyState
             variant="call-to-action"
             button={
-              <LinkButton
-                href={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
-                icon="plus"
-                size="lg"
-                disabled={isReadOnlyRepo}
-              >
-                <Trans i18nKey="browse-dashboards.empty-state.button-title">Create dashboard</Trans>
-              </LinkButton>
+              isMobileEditDeprecated ? undefined : (
+                <LinkButton
+                  href={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
+                  icon="plus"
+                  size="lg"
+                  disabled={isReadOnlyRepo}
+                >
+                  <Trans i18nKey="browse-dashboards.empty-state.button-title">Create dashboard</Trans>
+                </LinkButton>
+              )
             }
             message={
               folderUID
