@@ -67,10 +67,29 @@ describe('AlertRuleActions', () => {
   });
 
   it('disables Edit and More while rule is loading', () => {
-    renderActions(baseHit(), undefined);
+    render(
+      <ul>
+        <li>
+          <AlertRuleActions searchHit={baseHit()} rule={undefined} ruleIsLoading={true} />
+        </li>
+      </ul>
+    );
 
     expect(screen.getByRole('link', { name: 'Edit' })).toHaveAttribute('aria-disabled', 'true');
     expect(screen.getByRole('button', { name: 'More' })).toBeDisabled();
+  });
+
+  it('enables More but hides Edit after a failed rule fetch', async () => {
+    renderActions(baseHit(), undefined);
+
+    expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'More' })).toBeEnabled();
+    await userEvent.click(screen.getByRole('button', { name: 'More' }));
+    expect(await screen.findByRole('menuitem', { name: /View/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /Duplicate/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /Copy link/i })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /Pause/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /Delete/i })).not.toBeInTheDocument();
   });
 
   it('hides Edit when canEdit is false after loading', () => {

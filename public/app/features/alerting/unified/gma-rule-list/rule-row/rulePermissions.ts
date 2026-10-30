@@ -17,13 +17,19 @@ type Rule = Pick<AlertRule | RecordingRule, 'metadata' | 'spec'>;
 
 /**
  * Derives action permissions from the full rule's access-control annotations.
- * While loading (rule === undefined), all mutation actions are disabled.
- * After loading, provisioned, plugin-managed, and externally managed rules
- * have edit/pause/delete disabled regardless of annotations.
+ * While loading, mutation actions (Edit, Pause, Delete) are disabled.
+ * After a failed fetch (rule undefined, isLoading false), mutation actions remain
+ * hidden but the More menu stays open so View, Duplicate, Copy link, and Silence
+ * remain reachable.
  */
-export function getRulePermissions(rule: Rule | undefined): RulePermissions {
-  if (rule === undefined) {
+export function getRulePermissions(rule: Rule | undefined, isLoading = false): RulePermissions {
+  if (isLoading) {
     return { canEdit: false, canPause: false, canDelete: false, canDuplicate: false, isLoading: true };
+  }
+
+  if (rule === undefined) {
+    // Fetch failed — allow actions that only need the UID (View, Duplicate, Copy link, Silence).
+    return { canEdit: false, canPause: false, canDelete: false, canDuplicate: true, isLoading: false };
   }
 
   const canWrite = getAnnotation(rule, K8sAnnotations.AccessWrite) === 'true';

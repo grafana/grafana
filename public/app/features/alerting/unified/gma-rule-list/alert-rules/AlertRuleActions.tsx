@@ -31,11 +31,12 @@ import { type AlertRuleSearchHit } from './alertRuleSearchHit';
 interface AlertRuleActionsProps {
   searchHit: AlertRuleSearchHit;
   rule: AlertRule | undefined;
+  ruleIsLoading?: boolean;
 }
 
-export function AlertRuleActions({ searchHit, rule }: AlertRuleActionsProps) {
+export function AlertRuleActions({ searchHit, rule, ruleIsLoading = false }: AlertRuleActionsProps) {
   const { uid, title } = searchHit;
-  const perms = getRulePermissions(rule);
+  const perms = getRulePermissions(rule, ruleIsLoading);
 
   const [showSilenceDrawer, setShowSilenceDrawer] = useState(false);
   const [showEnrichmentDrawer, setShowEnrichmentDrawer] = useState(false);
