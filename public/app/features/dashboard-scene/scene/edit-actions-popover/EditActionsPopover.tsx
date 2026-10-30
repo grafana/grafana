@@ -30,6 +30,7 @@ import React, {
 import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { ElementSelectionContext, Portal, useStyles2, useTheme2 } from '@grafana/ui';
 
 export const WAIT_FOR_MOUSE_REST_DURATION_MS = 225;
@@ -176,7 +177,8 @@ export function EditActionsPopover({
       ref={refs.setFloating}
       style={keyboardAccessible ? { ...floatingStyles, zIndex: zIndex ?? theme.zIndex.portal } : floatingStyles}
       className={styles.popover}
-      {...getFloatingProps()}
+      data-testid={selectors.components.EditActionsPopover.container}
+      {...getFloatingProps({ id: context.floatingId })}
     >
       <EditActionsPopoverContext.Provider value={popoverContextValue}>
         {/* Stops pointerdown from all actions reaching ancestors, e.g. to prevent an element selection.
@@ -197,7 +199,10 @@ export function EditActionsPopover({
 
   return (
     <>
-      {cloneElement(children, getReferenceProps({ ref: mergedRef }))}
+      {cloneElement(children, {
+        ...getReferenceProps({ ref: mergedRef }),
+        'data-edit-actions-id': context.floatingId,
+      })}
       {showPopover && keyboardAccessible && (
         // FloatingPortal keeps the portalled content in the tab order right after the reference.
         <FloatingPortal root={portalRoot?.()}>

@@ -12,7 +12,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys, setGetObservablePluginLinks } from '@grafana/runtime/internal';
 import {
   LocalValueVariable,
@@ -177,6 +177,22 @@ describe('panelMenuBehavior', () => {
 
       const moreSubMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
       expect(moreSubMenu?.find((i) => /legend/.test(i.text))?.text).toBe(expected);
+    });
+
+    it.each(['view', 'composer'] as const)('offers the legend toggle and Time settings in %s mode', async (mode) => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true, panelTimeSettings: true });
+      const { scene, menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+      panel.setState({ options: { legend: legend({}) } });
+      scene.setState({ mode, isEditing: true });
+
+      const deactivate = menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+      deactivate();
+
+      const moreSubMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu ?? [];
+      const itemTexts = [...(menu.state.items ?? []), ...moreSubMenu].map((i) => i.text);
+      expect(itemTexts).toEqual(expect.arrayContaining(['Hide legend', 'Time settings']));
     });
 
     it.each([
@@ -1145,6 +1161,14 @@ describe('panelMenuBehavior', () => {
   });
 
   describe('Panel styles menu', () => {
+    let deactivatePanel: (() => void) | undefined;
+    let deactivateSidebar: (() => void) | undefined;
+    afterEach(() => {
+      deactivateSidebar?.();
+      deactivateSidebar = undefined;
+      deactivatePanel?.();
+      deactivatePanel = undefined;
+    });
     async function buildTimeseriesTestScene(isEditing = true) {
       const menu = new VizPanelMenu({ $behaviors: [panelMenuBehavior] });
       const panel = new VizPanel({
@@ -1156,7 +1180,7 @@ describe('panelMenuBehavior', () => {
 
       panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
 
-      new DashboardScene({
+      const dashboard = new DashboardScene({
         title: 'My dashboard',
         uid: 'dash-1',
         meta: { canEdit: true },
@@ -1167,7 +1191,7 @@ describe('panelMenuBehavior', () => {
       menu.activate();
       await new Promise((r) => setTimeout(r, 1));
 
-      return { menu, panel };
+      return { menu, panel, dashboard };
     }
 
     afterEach(() => {
@@ -1189,10 +1213,35 @@ describe('panelMenuBehavior', () => {
       const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
       const { menu } = await buildTimeseriesTestScene();
 
-      const pasteItem = menu.state.items?.find((i) => i.text === 'Styles')?.subMenu?.[1];
+      const pasteItem = menu.state.items
+        ?.find((i) => i.text === 'Styles')
+        ?.subMenu?.find((i) => i.text === 'Paste styles');
       pasteItem?.onClick?.({} as never);
 
       expect(spy).toHaveBeenCalledWith('paste', 'timeseries', expect.any(Number));
+    });
+
+    it('should record pasting styles in the undo history', async () => {
+      setPluginImportUtils({
+        getPanelPluginFromCache: () => getPanelPlugin({ id: 'timeseries' }),
+        importPanelPlugin: async () => getPanelPlugin({ id: 'timeseries' }),
+      });
+      store.set(
+        LS_STYLES_COPY_KEY,
+        JSON.stringify({ panelType: 'timeseries', styles: { options: { legend: { showLegend: false } } } })
+      );
+      const { menu, dashboard, panel } = await buildTimeseriesTestScene();
+      deactivatePanel = panel.activate();
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      deactivateSidebar = dashboard.state.sidebar.activate();
+
+      const pasteItem = menu.state.items
+        ?.find((i) => i.text === 'Styles')
+        ?.subMenu?.find((i) => i.text === 'Paste styles');
+      pasteItem?.onClick?.({} as never);
+
+      expect(panel.state.options).toMatchObject({ legend: { showLegend: false } });
+      expect(dashboard.state.sidebar.state.undoStack).toHaveLength(1);
     });
 
     it('should not show styles menu for unsupported panel types', async () => {

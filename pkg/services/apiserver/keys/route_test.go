@@ -1,7 +1,10 @@
 package keys
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -44,6 +47,21 @@ func TestListKeysRoute_Shape(t *testing.T) {
 	ok := op.Responses.StatusCodeResponses[200]
 	require.NotNil(t, ok)
 	assert.Contains(t, ok.Content, "application/json")
+}
+
+// Swagger UI sends the example as is, so it must be a body the handler accepts.
+func TestListKeysRoute_RequestExampleIsAccepted(t *testing.T) {
+	media := testRoute(t).Spec.Post.RequestBody.Content["application/json"]
+	require.NotNil(t, media.Example)
+
+	body, err := json.Marshal(media.Example)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"apiVersion":"storage.grafana.app/v0alpha1","kind":"ListKeyRequest","limit":100}`, string(body))
+
+	r := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
+	opts, err := decodeListKeyRequest(r)
+	require.NoError(t, err)
+	assert.Equal(t, int64(100), opts.Limit)
 }
 
 // Each group version's document is self-contained, so referenced components have

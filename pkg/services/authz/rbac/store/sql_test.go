@@ -75,6 +75,28 @@ func TestIdentityQueries(t *testing.T) {
 					}),
 				},
 			},
+			sqlUserHasPerms: {
+				{
+					Name: "permission_presence",
+					Data: getPermissions(&PermissionsQuery{
+						UserID: 1,
+						OrgID:  1,
+						Role:   "Viewer",
+					}, false),
+				},
+				{
+					Name: "with_action_sets",
+					Data: getPermissions(&PermissionsQuery{
+						UserID:        1,
+						OrgID:         1,
+						Role:          "Admin",
+						IsServerAdmin: true,
+						TeamIDs:       []int64{1, 2},
+						Action:        "folders:create",
+						ActionSets:    []string{"folders:edit", "folders:admin"},
+					}, true),
+				},
+			},
 			sqlUserPerms: {
 				{
 					Name: "viewer_user",
@@ -190,6 +212,66 @@ func TestIntegrationSQLPermissionStoreIndexOption(t *testing.T) {
 			all, err := permissionStore.GetUserPermissions(ctx, types.NamespaceInfo{OrgID: 1}, PermissionsQuery{Role: "Viewer"})
 			require.NoError(t, err)
 			require.ElementsMatch(t, []string{"folders:uid:one", "folders:uid:two", "folders:uid:three", "dashboards:uid:four"}, permissionScopes(all))
+
+			for _, tc := range []struct {
+				name  string
+				orgID int64
+				query PermissionsQuery
+				want  bool
+			}{
+				{
+					name:  "has permissions",
+					orgID: 1,
+					query: PermissionsQuery{Role: "Viewer"},
+					want:  true,
+				},
+				{
+					name:  "different organization",
+					orgID: 2,
+					query: PermissionsQuery{Role: "Viewer"},
+					want:  false,
+				},
+				{
+					name:  "unassigned role",
+					orgID: 1,
+					query: PermissionsQuery{Role: "Editor"},
+					want:  false,
+				},
+				{
+					name:  "matching action",
+					orgID: 1,
+					query: PermissionsQuery{
+						Role:   "Viewer",
+						Action: "folders:read",
+					},
+					want: true,
+				},
+				{
+					name:  "missing action",
+					orgID: 1,
+					query: PermissionsQuery{
+						Role:   "Viewer",
+						Action: "folders:write",
+					},
+					want: false,
+				},
+				{
+					name:  "action set grants the action",
+					orgID: 1,
+					query: PermissionsQuery{
+						Role:       "Viewer",
+						Action:     "folders:write",
+						ActionSets: []string{"folders:edit"},
+					},
+					want: true,
+				},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					got, err := permissionStore.HasUserPermissions(ctx, types.NamespaceInfo{OrgID: tc.orgID}, tc.query)
+					require.NoError(t, err)
+					require.Equal(t, tc.want, got)
+				})
+			}
 
 			actionSet, err := permissionStore.GetUserPermissions(ctx, types.NamespaceInfo{OrgID: 1}, PermissionsQuery{
 				Role: "Viewer", Action: "folders:create", ActionSets: []string{"folders:edit"},

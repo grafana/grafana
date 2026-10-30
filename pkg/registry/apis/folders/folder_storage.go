@@ -3,6 +3,7 @@ package folders
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -85,6 +86,16 @@ func (s *folderStorage) Create(ctx context.Context,
 	if err != nil {
 		logging.FromContext(ctx).Warn("Failed to create folder", "error", err)
 		statusErr := apierrors.ToFolderStatusError(err)
+		// Client errors can carry intentional validation details. Backend calls
+		// with untrusted 4xx diagnostics must sanitize them at their source.
+		if statusErr.ErrStatus.Code >= 500 || statusErr.ErrStatus.Code == 499 {
+			message := statusErr.ErrStatus.Message
+			statusErr = backendStatusError(err)
+			// Keep established generic wording, but never copy arbitrary backend text.
+			if message == "Folder API error" || (message != "" && message == http.StatusText(int(statusErr.ErrStatus.Code))) {
+				statusErr.ErrStatus.Message = message
+			}
+		}
 		return nil, &statusErr
 	}
 

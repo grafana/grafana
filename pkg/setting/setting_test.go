@@ -883,7 +883,7 @@ func TestReadFrontendDevSettings(t *testing.T) {
 		return []byte("app_mode = development\n[frontend_dev]\nserver_url = " + url)
 	}
 
-	// The default matters as much as the parsing: `yarn start:rspack` is meant to work without
+	// The default matters as much as the parsing: `pnpm start` is meant to work without
 	// anyone editing an ini file. `make run` passes cfg:app_mode=development, same as here.
 	t.Run("conf/defaults.ini ships a dev server url", func(t *testing.T) {
 		cfg := NewCfg()
@@ -978,8 +978,6 @@ func TestReadFrontendDevSettings(t *testing.T) {
 	// cannot blank it. Its enforced CSP is what keeps it on the built assets instead of a dev
 	// server a contributor happens to have running. Guard that, because the CSP is the whole
 	// mechanism: turning it off here would silently hand the suite a contributor's bundles.
-	// (The harness also never enables grafana.rspackBuild, so the dev server branch is
-	// unreachable either way - but that is a second line of defence, not this one.)
 	t.Run("the e2e harness never uses the dev server", func(t *testing.T) {
 		cfg := NewCfg()
 		require.NoError(t, cfg.Load(CommandLineArgs{

@@ -300,8 +300,9 @@ func (legacyActionResolver) ResolveAction(action string) []string {
 
 type legacyPermissionStore struct {
 	store.PermissionStore
-	queries []store.PermissionsQuery
-	err     error
+	queries         []store.PermissionsQuery
+	presenceQueries []store.PermissionsQuery
+	err             error
 }
 
 func (s *legacyPermissionStore) GetUserPermissions(ctx context.Context, ns types.NamespaceInfo, query store.PermissionsQuery) ([]accesscontrol.Permission, error) {
@@ -310,4 +311,16 @@ func (s *legacyPermissionStore) GetUserPermissions(ctx context.Context, ns types
 		return nil, s.err
 	}
 	return s.PermissionStore.GetUserPermissions(ctx, ns, query)
+}
+
+func (s *legacyPermissionStore) HasUserPermissions(
+	ctx context.Context,
+	ns types.NamespaceInfo,
+	query store.PermissionsQuery,
+) (bool, error) {
+	s.presenceQueries = append(s.presenceQueries, query)
+	if s.err != nil {
+		return false, s.err
+	}
+	return s.PermissionStore.HasUserPermissions(ctx, ns, query)
 }

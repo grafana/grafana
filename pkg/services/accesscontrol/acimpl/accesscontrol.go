@@ -32,6 +32,10 @@ func ProvideAccessControlTest() *AccessControl {
 	return ProvideAccessControl(featuremgmt.WithFeatures())
 }
 
+func ProvideScopeResolverRegistry(ac *AccessControl) *accesscontrol.ScopeResolverRegistry {
+	return ac.resolvers.ScopeResolverRegistry()
+}
+
 type AccessControl struct {
 	features            featuremgmt.FeatureToggles
 	log                 log.Logger

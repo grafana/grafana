@@ -45,11 +45,6 @@ var _ admission.MutationInterface = (*appAdmission)(nil)
 var _ admission.ValidationInterface = (*appAdmission)(nil)
 
 func (ad *appAdmission) Admit(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
-	adApp := ad.appGetter()
-	if adApp == nil {
-		return admission.NewForbidden(a, errors.New("app is not initialized"))
-	}
-
 	adInfo := ad.getAdmissionInfo(a.GetKind())
 	if adInfo == nil || !adInfo.SupportsAnyMutation() {
 		return nil
@@ -71,6 +66,13 @@ func (ad *appAdmission) Admit(ctx context.Context, a admission.Attributes, _ adm
 		return nil
 	}
 
+	// Checked only after the kind and operation filters: every app's admission runs in one chain
+	// against all requests, so an app that is still initializing must not reject other apps' writes.
+	adApp := ad.appGetter()
+	if adApp == nil {
+		return admission.NewForbidden(a, errors.New("app is not initialized"))
+	}
+
 	res, err := adApp.Mutate(ctx, req)
 	if err != nil {
 		if errors.Is(err, app.ErrNotImplemented) {
@@ -87,11 +89,6 @@ func (ad *appAdmission) Admit(ctx context.Context, a admission.Attributes, _ adm
 }
 
 func (ad *appAdmission) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
-	adApp := ad.appGetter()
-	if adApp == nil {
-		return admission.NewForbidden(a, errors.New("app is not initialized"))
-	}
-
 	adInfo := ad.getAdmissionInfo(a.GetKind())
 	if adInfo == nil || !adInfo.SupportsAnyValidation() {
 		return nil
@@ -111,6 +108,11 @@ func (ad *appAdmission) Validate(ctx context.Context, a admission.Attributes, _ 
 	}
 	if !supported {
 		return nil
+	}
+
+	adApp := ad.appGetter()
+	if adApp == nil {
+		return admission.NewForbidden(a, errors.New("app is not initialized"))
 	}
 
 	err = adApp.Validate(ctx, req)

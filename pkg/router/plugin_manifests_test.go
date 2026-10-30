@@ -3,12 +3,14 @@ package router
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -23,10 +25,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	sdkbackend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/baasbridge" //nolint:staticcheck
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -77,26 +83,30 @@ func TestFetchPluginManifests_DecodesDeploymentsEnvelope(t *testing.T) {
 }
 
 func TestPluginManifestsTarget_PollsFiltersAndSkipsEntriesWithoutManifest(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte(pluginManifestsFixture))
-	}))
-	defer srv.Close()
+	synctest.Test(t, func(t *testing.T) {
+		srv := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_, _ = w.Write([]byte(pluginManifestsFixture))
+		}))
+		_ = srv.Client()
+		defer srv.Close()
 
-	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
-	require.NoError(t, err)
+		target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+		require.NoError(t, err)
 
-	ctx, cancel := context.WithCancel(t.Context())
-	dirty := make(chan struct{}, 1)
-	go target.run(ctx, dirty)
-	defer cancel()
+		ctx, cancel := context.WithCancel(t.Context())
+		dirty := make(chan struct{}, 1)
+		go target.run(ctx, dirty)
+		defer cancel()
 
-	require.Eventually(t, func() bool {
-		return len(target.Backends()) == 1
-	}, 2*time.Second, 10*time.Millisecond)
+		// Finish discovery and reconciliation before inspecting the served groups.
+		synctest.Wait()
 
-	backends := target.Backends()
-	require.Equal(t, "appsdktest.ext.grafana.app", backends[0].Group().Name)
-	require.Contains(t, backends[0].Key(), "managed:grafana-appsdktest-app:")
+		require.True(t, len(target.Backends()) == 1)
+
+		backends := target.Backends()
+		require.Equal(t, "appsdktest.ext.grafana.app", backends[0].Group().Name)
+		require.Contains(t, backends[0].Key(), "managed:grafana-appsdktest-app:")
+	})
 }
 
 func TestPluginManifestsTarget_GroupRegexNarrowsToMatchingGroups(t *testing.T) {
@@ -105,8 +115,7 @@ func TestPluginManifestsTarget_GroupRegexNarrowsToMatchingGroups(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	patterns, err := compileGroupPatterns([]string{"*.internal"})
-	require.NoError(t, err)
+	patterns := compileGroupPatterns([]string{"*.internal"})
 
 	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, patterns, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
 	require.NoError(t, err)
@@ -156,8 +165,8 @@ func TestPluginManifestsTarget_FailedPollLeavesLastKnownGoodSnapshot(t *testing.
 	// Seed a snapshot as if a previous poll had succeeded, then confirm a
 	// failed poll doesn't clear it -- same last-known-good invariant as
 	// aggregateTarget.
-	seeded := []Backend{&pluginDeploymentBackend{key: "seeded"}}
-	target.snapshot.Store(&seeded)
+	seeded := []Backend{&PluginBackend{key: "seeded"}}
+	storeBackends(&target.polledSource, seeded...)
 
 	target.poll(t.Context(), make(chan struct{}, 1))
 	require.Equal(t, seeded, target.Backends())
@@ -247,7 +256,7 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 		body = strings.ReplaceAll(pluginManifestsFixture, "grafana-appsdktest-app-operator.grafana-router-plugins.svc.cluster.local.:50051", host)
 		target.poll(t.Context(), make(chan struct{}, 1))
 		require.Len(t, target.Backends(), 1)
-		plugin := target.Backends()[0].(*pluginDeploymentBackend).Backend.(*PluginBackend)
+		plugin := target.Backends()[0].(*PluginBackend)
 		legacy, client, err := plugin.client(t.Context(), plugin.pluginID)
 		require.NoError(t, err)
 		require.NotNil(t, legacy)
@@ -308,7 +317,7 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 		conn := target.connections[key]
 		require.NotNil(t, conn)
 		target.poll(t.Context(), make(chan struct{}, 1))
-		plugin = target.Backends()[0].(*pluginDeploymentBackend).Backend.(*PluginBackend)
+		plugin = target.Backends()[0].(*PluginBackend)
 		_, _, err = plugin.client(t.Context(), plugin.pluginID)
 		require.NoError(t, err)
 		require.Same(t, conn, target.connections[key])
@@ -318,15 +327,15 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 	connections := target.connections
 	target.closeConnections()
 	for _, conn := range connections {
-		require.Equal(t, connectivity.Shutdown, conn.GetState())
+		require.Equal(t, connectivity.Shutdown, conn.conn.GetState())
 	}
-	_, _, err = target.pluginClients("localhost:50051", "grafana-appsdktest-app")
+	_, _, err = target.pluginClients("localhost:50051", "grafana-appsdktest-app", nil)
 	require.ErrorContains(t, err, "closed")
 }
 
 func TestPluginManifestsTargetWithoutBackendClient(t *testing.T) {
-	target := &pluginManifestsTarget{}
-	clientV2, clientV3, err := target.pluginClients("", "grafana-appsdktest-app")
+	target := &pluginConnections{}
+	clientV2, clientV3, err := target.pluginClients("", "grafana-appsdktest-app", nil)
 	require.NoError(t, err)
 	require.Nil(t, clientV2)
 	require.Nil(t, clientV3)
@@ -491,7 +500,7 @@ func TestPluginManifestsTargetMultipleManifests(t *testing.T) {
 	target.poll(t.Context(), dirty)
 	for i, backend := range target.Backends() {
 		require.NotEqual(t, updated[i].Key(), backend.Key(), "shared metadata changes affect every group")
-		require.Equal(t, "2", backend.(*pluginDeploymentBackend).Backend.(*PluginBackend).info.Version)
+		require.Equal(t, "2", backend.(*PluginBackend).info.Version)
 	}
 }
 
@@ -608,4 +617,148 @@ func TestPluginManifestsTargetValidatesPluginIDs(t *testing.T) {
 			require.Equal(t, tc.skipped, target.status.status(tc.source).Skipped)
 		})
 	}
+}
+
+// An HTTP operator gets only a v3 client, from baasbridge, and no connection.
+func TestPluginManifestsTargetHTTPClient(t *testing.T) {
+	target := &pluginConnections{}
+	clientV2, clientV3, err := target.pluginClients("http://127.0.0.1:8080", "grafana-appsdktest-app", &app.ManifestData{})
+	require.NoError(t, err)
+	require.Nil(t, clientV2)
+	require.True(t, baasbridge.IsClient(clientV3)) //nolint:staticcheck
+	require.Empty(t, target.connections)
+
+	_, _, err = target.pluginClients("http://", "grafana-appsdktest-app", nil)
+	require.ErrorContains(t, err, "absolute http or https URL")
+}
+
+func TestForwardRouteCredentials(t *testing.T) {
+	requester := &identity.StaticRequester{AccessToken: "access", IDToken: "id"}
+
+	header := http.Header{}
+	require.NoError(t, forwardRouteCredentials(identity.WithRequester(t.Context(), requester), header))
+	require.Equal(t, http.Header{"X-Access-Token": {"access"}, "X-Grafana-Id": {"id"}}, header,
+		"without a declared check the operator authorizes the route, so it gets the access token")
+
+	header = http.Header{}
+	require.NoError(t, forwardRouteCredentials(baasbridge.WithDeclaredAccessChecked(identity.WithRequester(t.Context(), requester)), header)) //nolint:staticcheck
+	require.Equal(t, http.Header{"X-Grafana-Id": {"id"}}, header, "a declared check already authorized the route")
+
+	header = http.Header{}
+	require.NoError(t, forwardRouteCredentials(t.Context(), header))
+	require.Empty(t, header, "a request without a requester carries no credentials")
+}
+
+// A connection lives as long as a loaded handler uses it: superseded
+// handlers keep it until they are destroyed, and the last release closes it.
+func TestPluginConnectionClosesWithItsLastHandler(t *testing.T) {
+	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, "https://plugins.invalid/plugins", nil, http.DefaultClient, defaultPluginGRPCConfig(), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.NoError(t, err)
+	key := pluginConnectionKey{host: "localhost:50051", pluginID: "grafana-appsdktest-app"}
+
+	releaseOld, err := target.acquireConnection(key.host, key.pluginID)
+	require.NoError(t, err)
+	releaseNew, err := target.acquireConnection(key.host, key.pluginID)
+	require.NoError(t, err)
+	c := target.connections[key]
+	require.Equal(t, 2, c.refs)
+
+	releaseOld()
+	releaseOld() // releasing twice drops one reference
+	require.Same(t, c, target.connections[key])
+	require.NotEqual(t, connectivity.Shutdown, c.conn.GetState())
+
+	releaseNew()
+	require.NotContains(t, target.connections, key)
+	require.Equal(t, connectivity.Shutdown, c.conn.GetState())
+
+	// A new handler gets a new connection; one released after shutdown is a no-op.
+	release, err := target.acquireConnection(key.host, key.pluginID)
+	require.NoError(t, err)
+	require.NotSame(t, c, target.connections[key])
+	target.closeConnections()
+	release()
+	_, err = target.acquireConnection(key.host, key.pluginID)
+	require.ErrorContains(t, err, "closed")
+}
+
+// A handler that fails to load releases what Load acquired for it, also
+// when the load panics and the router recovers it.
+func TestPluginBackendLoadFailureReleases(t *testing.T) {
+	for name, client := range map[string]PluginClientProvider{
+		"error": func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
+			return nil, nil, errors.New("unreachable")
+		},
+		"panic": func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
+			panic("unreachable")
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			acquired, released := 0, 0
+			backend := &PluginBackend{
+				pluginID: "grafana-appsdktest-app",
+				client:   client,
+				acquire: func() (func(), error) {
+					acquired++
+					return func() { released++ }, nil
+				},
+			}
+			_, err := loadBackend(t.Context(), backend)
+			require.ErrorContains(t, err, "unreachable")
+			require.Equal(t, 1, acquired)
+			require.Equal(t, 1, released)
+		})
+	}
+}
+
+// Only a gRPC deployment holds a connection; an HTTP operator, reached
+// through baasbridge, takes no connection reference when it loads.
+func TestPluginManifestsTargetAcquiresConnectionsOnlyForGRPCHosts(t *testing.T) {
+	for host, acquires := range map[string]bool{
+		"localhost:50051":       true,
+		"http://127.0.0.1:8080": false,
+	} {
+		t.Run(host, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_, _ = w.Write([]byte(`{"key": "k", "plugins": [{"host": "` + host + `", "definition": {"jsonData": {"id": "example-app", "type": "app"}, "manifests": [{
+					"appName": "example", "group": "example.ext.grafana.app",
+					"versions": [{"name": "v1", "served": true}], "preferredVersion": "v1"}]}}]}`))
+			}))
+			defer srv.Close()
+			target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+			require.NoError(t, err)
+			target.poll(t.Context(), make(chan struct{}, 1))
+			require.Len(t, target.Backends(), 1)
+			backend := target.Backends()[0].(*PluginBackend)
+			require.Equal(t, acquires, backend.acquire != nil)
+		})
+	}
+}
+
+// A core_url entry without a plugin ID reports no plugin, and its connection
+// and requests are recorded under its API group, so core APIs on one host stay
+// apart.
+func TestCoreEntryWithoutPluginID(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"key": "k", "plugins": [{"host": "localhost:50051", "definition": {"jsonData": {"type": "app"}, "manifests": [{
+			"appName": "playlist", "group": "playlist.grafana.app",
+			"versions": [{"name": "v1", "served": true}], "preferredVersion": "v1"}]}}]}`))
+	}))
+	defer srv.Close()
+	target, err := newPluginManifestsTarget(coreKeyPrefix, sourceCoreURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+	require.NoError(t, err)
+	target.poll(t.Context(), make(chan struct{}, 1))
+	require.Len(t, target.Backends(), 1)
+	backend := target.Backends()[0].(*PluginBackend)
+
+	_, ok := backend.PluginStatus()
+	require.False(t, ok)
+	require.Empty(t, backend.pluginID)
+	require.Equal(t, "playlist.grafana.app", backend.metricsPluginID())
+
+	release, err := backend.acquire()
+	require.NoError(t, err)
+	defer release()
+	require.Contains(t, target.connections, pluginConnectionKey{host: "localhost:50051", pluginID: "playlist.grafana.app"})
+	target.closeConnections()
 }

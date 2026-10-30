@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -20,6 +21,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	_ "google.golang.org/grpc/health" // Register client-side health checking.
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -65,9 +67,6 @@ type Options struct {
 	DashboardStats builders.DashboardStats
 	KV             kv.KV
 	EDB            sqldb.DBProvider
-	// ExperimentalKV, when set, routes flagged use-cases in the in-process KV
-	// storage backend to an alternative KV. Nil disables the routing.
-	ExperimentalKV *resource.ExperimentalKVOptions
 	// Publisher announces committed writes on the NATS bus. It is wired into the
 	// in-process storage backend so a monolith run (storage_type=unified) emits
 	// the same resource-change notifications as the storage-server module. Nil-safe
@@ -101,6 +100,9 @@ func NatsStorageBackendOptions(cfg *setting.Cfg, publisher nats.Publisher, subsc
 	var opts []sql.StorageBackendOption
 	if publisher != nil {
 		opts = append(opts, sql.WithEventPublisher(publisher))
+		if cfg.NATS.NotificationMetadata {
+			opts = append(opts, sql.WithWatchNotificationMetadata())
+		}
 	}
 	if subscriber == nil {
 		return opts
@@ -135,7 +137,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(options.DefaultGrpcClientKeepaliveTime),
-	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.Reranker, opts.DashboardStats, opts.KV, opts.EDB, gcGate, opts.Publisher, opts.Subscriber, opts.ExperimentalKV, opts.WatchExpiry)
+	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.Reranker, opts.DashboardStats, opts.KV, opts.EDB, gcGate, opts.Publisher, opts.Subscriber, opts.WatchExpiry, opts.ManifestDiscovery)
 	if err == nil {
 		// Used to get the folder stats
 		// Pass cfg directly so the federated client reads the current dual-writer mode
@@ -171,8 +173,8 @@ func newClient(opts options.StorageOptions,
 	gcGate *resource.GCGate,
 	eventPublisher nats.Publisher,
 	eventSubscriber nats.Subscriber,
-	experimentalKV *resource.ExperimentalKVOptions,
 	watchExpiry resource.WatchExpiry,
+	manifestDiscovery resource.ManifestDiscovery,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 
@@ -229,9 +231,6 @@ func newClient(opts options.StorageOptions,
 	default:
 		storageOpts := append([]sql.StorageBackendOption{sql.WithVectorBackend(vectorBackend)},
 			NatsStorageBackendOptions(cfg, eventPublisher, eventSubscriber, watchExpiry)...)
-		if experimentalKV != nil {
-			storageOpts = append(storageOpts, sql.WithExperimentalKV(experimentalKV))
-		}
 		backend, err := sql.NewStorageBackend(cfg, eDB, reg, storageMetrics, false, kvStore, gcGate, storageOpts...)
 		if err != nil {
 			return nil, err
@@ -250,17 +249,8 @@ func newClient(opts options.StorageOptions,
 		if err != nil {
 			return nil, err
 		}
-		if cfg.EnableEmbeddedAPIExtensions {
-			if cfg.ManifestApiServerAddress != "" {
-				cfg.Logger.Warn("manifest_api_server_address is ignored by in-process storage; embedded search reads startup-provisioned AppManifest files")
-			}
-			manifests, err := loadEmbeddedAppManifests(cfg.ProvisioningPath)
-			if err != nil {
-				cfg.Logger.Error("failed to load embedded app manifests for search", "error", err)
-			}
-			if err := searchOptions.ReloadManifests(resource.AppManifests(), manifests); err != nil {
-				cfg.Logger.Error("failed to load embedded search fields", "error", err)
-			}
+		if err := configureInProcessManifests(ctx, cfg, searchOptions, manifestDiscovery, reg); err != nil {
+			return nil, err
 		}
 
 		if backendService, ok := backend.(services.Service); ok {
@@ -340,6 +330,33 @@ func newClient(opts options.StorageOptions,
 
 		return resource.NewLocalResourceClient(server), nil
 	}
+}
+
+func configureInProcessManifests(ctx context.Context, cfg *setting.Cfg, searchOptions resource.SearchOptions, discovery resource.ManifestDiscovery, reg prometheus.Registerer) error {
+	if cfg.ManifestApiServerAddress != "" || cfg.ManifestDiscoveryAddress != "" {
+		cfg.Logger.Warn("manifest_api_server_address and manifest_discovery_url are ignored by in-process storage; search reads the router's discovery manifests in-process")
+	}
+	// The router discovers plugin manifests, but not provisioned custom-resource
+	// manifests, so keep provisioning as a lower-priority source on every reload.
+	var manifests []*app.ManifestData
+	if cfg.EnableEmbeddedAPIExtensions {
+		var err error
+		manifests, err = loadEmbeddedAppManifests(cfg.ProvisioningPath)
+		if err != nil {
+			cfg.Logger.Error("failed to load embedded app manifests for search", "error", err)
+		}
+		if err := searchOptions.ReloadManifests(resource.AppManifests(), manifests); err != nil {
+			cfg.Logger.Error("failed to load embedded search fields", "error", err)
+		}
+	}
+	if discovery != nil && (searchOptions.SearchFields != nil || searchOptions.EmbeddingConfig != nil) {
+		watcherLog := log.New("search-manifest-watcher")
+		watcher := resource.NewLocalManifestWatcher(discovery, reg, searchOptions.ManifestReloader(watcherLog, manifests), watcherLog)
+		if err := watcher.StartAsync(ctx); err != nil {
+			return fmt.Errorf("failed to start manifest watcher: %w", err)
+		}
+	}
+	return nil
 }
 
 func NewStorageApiSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {
@@ -510,7 +527,7 @@ func grpcConn(address string, metrics *clientMetrics, clientKeepaliveTime time.D
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	// Use round_robin to balance requests more evenly over the available Storage server.
-	opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`))
+	opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin","healthCheckConfig":{"serviceName":""}}`))
 
 	// Disable looking up service config from TXT DNS records.
 	// This reduces the number of requests made to the DNS servers.

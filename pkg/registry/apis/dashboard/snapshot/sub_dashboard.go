@@ -67,11 +67,7 @@ func (r *dashboardREST) Connect(ctx context.Context, name string, opts runtime.O
 		return nil, err
 	}
 
-	lookupCtx, err := publicSnapshotGetContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-	obj, err := r.getter.Get(lookupCtx, name, &metav1.GetOptions{})
+	obj, err := getPublicSnapshot(ctx, r.getter, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}

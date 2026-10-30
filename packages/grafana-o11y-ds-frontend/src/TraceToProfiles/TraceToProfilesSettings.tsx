@@ -9,9 +9,9 @@ import {
   type DataSourcePluginOptionsEditorProps,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
+import { useDataSourceInstance } from '@grafana/plugin-compat/datasources';
 import { ConfigDescriptionLink, ConfigSection } from '@grafana/plugin-ui';
 import { DataSourcePicker, DataSourceWithBackend } from '@grafana/runtime';
-import { useDataSourceInstance } from '@grafana/runtime/unstable';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
 
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';

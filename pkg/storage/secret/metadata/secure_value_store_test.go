@@ -2,7 +2,10 @@ package metadata_test
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"slices"
+	"sync"
 	"testing"
 	"time"
 
@@ -78,7 +81,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.Equal(t, "test description", createdSecureValue.Spec.Description)
 		require.Equal(t, keeperName, createdSecureValue.Status.Keeper)
 
-		require.NoError(t, secureValueStorage.SetVersionToActive(ctx, xkube.Namespace(createdSecureValue.Namespace), createdSecureValue.Name, createdSecureValue.Status.Version))
+		require.NoError(t, secureValueStorage.SetVersionToActive(ctx, xkube.Namespace(createdSecureValue.Namespace), createdSecureValue.Name, createdSecureValue.Status.Version, 0))
 
 		// Read the secure value back
 		readSecureValue, err := secureValueStorage.Read(ctx, xkube.Namespace("default"), "sv-test", contracts.ReadOpts{})
@@ -128,7 +131,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, createdSecureValue)
 
-		require.NoError(t, secureValueStorage.SetVersionToActive(ctx, xkube.Namespace(createdSecureValue.Namespace), createdSecureValue.Name, createdSecureValue.Status.Version))
+		require.NoError(t, secureValueStorage.SetVersionToActive(ctx, xkube.Namespace(createdSecureValue.Namespace), createdSecureValue.Name, createdSecureValue.Status.Version, 0))
 
 		// Read the secure value to verify it exists
 		readSecureValue, err := secureValueStorage.Read(ctx, xkube.Namespace("default"), "sv-test-2", contracts.ReadOpts{})
@@ -145,6 +148,52 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.Error(t, err)
 		require.Equal(t, contracts.ErrSecureValueNotFound, err)
 	})
+}
+
+func Test_KVSecureValueMetadataStorage_CreateVersionOrdering(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name string
+		opts []func(*testutils.SetupConfig)
+	}{
+		{name: "sql", opts: nil},
+		{name: "kv", opts: []func(*testutils.SetupConfig){testutils.WithKVStorage()}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			sut := testutils.Setup(t, tc.opts...)
+
+			const namespace = "default"
+			const name = "sv-versions"
+
+			const numVersions = 11
+			gotVersions := make([]int64, 0, numVersions)
+			seen := make(map[int64]struct{}, numVersions)
+
+			for range numVersions {
+				sv := &secretv1beta1.SecureValue{
+					Spec: secretv1beta1.SecureValueSpec{Description: "test description"},
+				}
+				sv.Name = name
+				sv.Namespace = namespace
+
+				created, err := sut.SecureValueMetadataStorage.Create(t.Context(), contracts.SystemKeeperName, sv, "actor-uid")
+				require.NoError(t, err)
+
+				v := created.Status.Version
+				if _, dup := seen[v]; dup {
+					t.Fatalf("Create returned version %d twice: an existing version was overwritten (data loss). versions so far: %v", v, gotVersions)
+				}
+				seen[v] = struct{}{}
+				gotVersions = append(gotVersions, v)
+			}
+
+			// Versions are unique (checked above) so sorted means strictly increasing
+			require.True(t, slices.IsSorted(gotVersions), "expected monotonically increasing versions: %v", gotVersions)
+		})
+	}
 }
 
 func TestLeaseInactiveSecureValues(t *testing.T) {
@@ -219,7 +268,8 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 			require.Len(t, values, 1)
 
 			// Pretend something went wrong and increment attempt count
-			_, err = sut.SecureValueMetadataStorage.AddGCAttemptCount(t.Context(), []string{string(values[0].UID)})
+			_, err = sut.SecureValueMetadataStorage.IncGCAttemptCount(t.Context(), []contracts.SecureValueIdentifier{
+				{Namespace: xkube.Namespace(values[0].Namespace), Name: values[0].Name, Version: values[0].Status.Version}})
 			require.NoError(t, err)
 
 			rows, err := sut.Database.QueryContext(t.Context(), "SELECT lease_duration FROM secret_secure_value WHERE guid = ?", values[0].UID)
@@ -231,6 +281,143 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 			require.NoError(t, rows.Close())
 		}
 	})
+
+	t.Run("concurrent lease acquisitions never lease the same secure value twice", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+
+		// Give all workers the same pool of inactive values past the GC grace period.
+		uids := leasedUIDs(createInactiveSecureValues(t, sut, 10))
+
+		// Run competing requests against the same storage. Each request can claim the
+		// entire pool, so their claims may overlap and must respect existing leases.
+		const workers = 4
+		results := make([][]secretv1beta1.SecureValue, workers)
+		errs := make([]error, workers)
+		var wg sync.WaitGroup
+		for i := range workers {
+			wg.Go(func() {
+				results[i], errs[i] = sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), 10)
+			})
+		}
+		wg.Wait()
+
+		// A request may return an empty batch if another worker wins, so check the overall result,
+		// the invariant is that it does not repeat the same UID.
+		leased := make([]string, 0, len(uids))
+		for i := range workers {
+			require.NoError(t, errs[i])
+			leased = append(leased, leasedUIDs(results[i])...)
+		}
+
+		// Make sure UIDs are only appearing once.
+		require.Len(t, leased, len(uids))
+		require.ElementsMatch(t, uids, leased)
+	})
+
+	t.Run("does not steal a lease acquired after candidate selection", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+
+		// Start with an eligible candidate, so an empty result cannot be explained
+		// by the value being active or still within the GC grace period.
+		uids := leasedUIDs(createInactiveSecureValues(t, sut, 1))
+
+		// After SELECT has chosen the candidate, let another request lease it before
+		// this request's UPDATE. This makes the selected candidate stale deterministically.
+		var leasedSv []secretv1beta1.SecureValue
+		db := &beforeExecDatabase{Database: sut.Database, beforeExec: func(ctx context.Context) {
+			var err error
+			leasedSv, err = sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(ctx, 1)
+			require.NoError(t, err)
+		}}
+		storage, err := metadata.ProvideSecureValueMetadataStorage(sut.Clock, db, noop.NewTracerProvider().Tracer("test"), nil)
+		require.NoError(t, err)
+
+		// The UPDATE must recheck the lease and leave the other request's claim intact.
+		values, err := storage.LeaseInactiveSecureValues(t.Context(), 1)
+		require.NoError(t, err)
+		require.Empty(t, values)
+
+		// Confirm that the competing request actually acquired the expected candidate.
+		require.Equal(t, uids, leasedUIDs(leasedSv))
+	})
+
+	t.Run("does not lease a value activated after candidate selection", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+
+		// Deletion marks this version inactive; advancing past the grace period makes
+		// it eligible for SELECT before the hook changes its state.
+		sv := createInactiveSecureValues(t, sut, 1)[0]
+
+		// Reactivate the selected candidate before UPDATE. The claim must use the
+		// current active flag rather than trust the state observed by SELECT.
+		db := &beforeExecDatabase{Database: sut.Database, beforeExec: func(ctx context.Context) {
+			require.NoError(t, sut.SecureValueMetadataStorage.SetVersionToActive(ctx, xkube.Namespace(sv.Namespace), sv.Name, sv.Status.Version, 0))
+		}}
+		storage, err := metadata.ProvideSecureValueMetadataStorage(sut.Clock, db, noop.NewTracerProvider().Tracer("test"), nil)
+		require.NoError(t, err)
+
+		// The UPDATE must reject the now-active candidate, keeping it out of GC.
+		values, err := storage.LeaseInactiveSecureValues(t.Context(), 1)
+		require.NoError(t, err)
+		require.Empty(t, values)
+
+		// Read returns only active versions. Finding this UID confirms the rejected
+		// candidate still exists as an active secret.
+		activeValue, err := sut.SecureValueMetadataStorage.Read(t.Context(), xkube.Namespace(sv.Namespace), sv.Name, contracts.ReadOpts{})
+		require.NoError(t, err)
+		require.Equal(t, sv.UID, activeValue.UID)
+	})
+}
+
+// Lease acquisition calls QueryContext to select candidates, then ExecContext to claim them.
+// Running the callback before ExecContext changes the selected row before the claim,
+// reproducing a stale candidate list without relying on goroutine scheduling.
+type beforeExecDatabase struct {
+	contracts.Database
+	beforeExec func(ctx context.Context)
+}
+
+func (db *beforeExecDatabase) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	if db.beforeExec != nil {
+		beforeExec := db.beforeExec
+		// Consume the hook first so a nested ExecContext cannot invoke it again.
+		db.beforeExec = nil
+		beforeExec(ctx)
+	}
+	return db.Database.ExecContext(ctx, query, args...)
+}
+
+func createInactiveSecureValues(t *testing.T, sut testutils.Sut, n int) []secretv1beta1.SecureValue {
+	t.Helper()
+
+	values := make([]secretv1beta1.SecureValue, 0, n)
+	for i := range n {
+		sv, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = fmt.Sprintf("sv-%d", i)
+		})
+		require.NoError(t, err)
+		_, err = sut.DeleteSv(t.Context(), sv.Namespace, sv.Name)
+		require.NoError(t, err)
+		values = append(values, *sv)
+		sut.Clock.AdvanceBy(time.Second)
+	}
+	sut.Clock.AdvanceBy(15 * time.Minute)
+
+	return values
+}
+
+func leasedUIDs(svs []secretv1beta1.SecureValue) []string {
+	uids := make([]string, 0, len(svs))
+	for _, sv := range svs {
+		uids = append(uids, string(sv.UID))
+	}
+	return uids
 }
 
 func TestPropertySecureValueMetadataStorage(t *testing.T) {
@@ -318,13 +505,21 @@ func TestPropertyDelete(t *testing.T) {
 				"create": func(t *rapid.T) {
 					sv := testutils.AnySecureValueGen.Draw(t, "sv")
 					createdSv, err := sut.SecureValueMetadataStorage.Create(t.Context(), contracts.SystemKeeperName, sv.DeepCopy(), "actor-uid")
-					require.NoError(t, err)
+					if err != nil {
+						require.ErrorIs(t, err, contracts.ErrTooManyOwnerReferences)
+						return
+					}
 					i := slices.IndexFunc(secureValues, func(v *secretv1beta1.SecureValue) bool {
 						return v.Namespace == createdSv.Namespace && v.Name == createdSv.Name
 					})
 
+					var observedVersion int64
+					if i != -1 {
+						observedVersion = secureValues[i].Status.Version
+					}
+
 					// Set new version to active since it'll be read later on
-					require.NoError(t, sut.SecureValueMetadataStorage.SetVersionToActive(t.Context(), xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version))
+					require.NoError(t, sut.SecureValueMetadataStorage.SetVersionToActive(t.Context(), xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version, observedVersion))
 
 					// Secure value is not in the slice, add it
 					if i == -1 {
@@ -346,9 +541,9 @@ func TestPropertyDelete(t *testing.T) {
 					delete := secureValues[i:]
 
 					// Delete some of the secure values
-					deleteInput := make([]contracts.DeleteInput, 0, len(delete))
+					deleteInput := make([]contracts.SecureValueIdentifier, 0, len(delete))
 					for _, sv := range delete {
-						deleteInput = append(deleteInput, contracts.DeleteInput{
+						deleteInput = append(deleteInput, contracts.SecureValueIdentifier{
 							Namespace: xkube.Namespace(sv.Namespace),
 							Name:      sv.Name,
 							Version:   sv.Status.Version,

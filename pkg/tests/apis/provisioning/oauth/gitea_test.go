@@ -1,0 +1,206 @@
+package oauth
+
+import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/cookiejar"
+	"net/url"
+	"strings"
+	"testing"
+
+	"github.com/grafana/nanogit/gittest"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common/oauthsuite"
+)
+
+func TestIntegrationProvisioning_GiteaOAuthConnection(t *testing.T) {
+	gitea := &giteaProvider{apps: map[string]giteaApp{}}
+	endpoints := func(spec map[string]any) map[string]any { return spec["gitOAuth"].(map[string]any) }
+	oauthsuite.Run(t, giteaHelper, oauthsuite.Provider{
+		Name:              "gitea",
+		NewConnection:     gitea.NewConnection,
+		AuthorizationCode: gitea.AuthorizationCode,
+		CreateRepository:  gitea.CreateRepository,
+		InvalidSpecs: []oauthsuite.SpecCase{
+			{Name: "no-git-oauth", Mutate: func(spec map[string]any) { delete(spec, "gitOAuth") }, Err: "gitOAuth info must be specified for git OAuth connections"},
+			{Name: "no-token-url", Mutate: func(spec map[string]any) { delete(endpoints(spec), "tokenURL") }, Err: "an OAuth endpoint URL is required"},
+			{Name: "bad-scheme", Mutate: func(spec map[string]any) { endpoints(spec)["authURL"] = "ftp://gitea.example.com/authorize" }, Err: "URL must start with https:// or http://"},
+			{Name: "no-host", Mutate: func(spec map[string]any) { endpoints(spec)["tokenURL"] = "https://" }, Err: "must be an absolute URL with a host"},
+		},
+		TokenBoundChanges: []oauthsuite.SpecCase{
+			{Name: "token-url", Mutate: func(spec map[string]any) {
+				endpoints(spec)["tokenURL"] = endpoints(spec)["tokenURL"].(string) + "?changed=true"
+			}},
+			{Name: "scopes", Mutate: func(spec map[string]any) { endpoints(spec)["scopes"] = []any{"read:repository"} }},
+		},
+	})
+}
+
+func giteaHelper(t *testing.T) *common.ProvisioningTestHelper {
+	t.Helper()
+	return env.GetCleanHelper(t).ProvisioningTestHelper
+}
+
+type giteaApp struct {
+	user     *gittest.User
+	clientID string
+}
+
+type giteaProvider struct {
+	apps map[string]giteaApp
+}
+
+func (p *giteaProvider) NewConnection(t *testing.T, name string) *unstructured.Unstructured {
+	t.Helper()
+	server := env.GetHelper(t).GitServer()
+	user, err := server.CreateUser(t.Context())
+	require.NoError(t, err, "failed to create user")
+
+	var app struct {
+		ClientID     string `json:"client_id"`
+		ClientSecret string `json:"client_secret"`
+	}
+	giteaAPI(t, user, http.MethodPost, server.URL()+"/api/v1/user/applications/oauth2", map[string]any{
+		"name":                "grafana",
+		"redirect_uris":       []string{oauthsuite.RedirectURI},
+		"confidential_client": true,
+	}, &app)
+	p.apps[name] = giteaApp{user: user, clientID: app.ClientID}
+
+	return &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": provisioning.APIVERSION,
+		"kind":       "Connection",
+		"metadata":   map[string]any{"name": name, "namespace": "default"},
+		"spec": map[string]any{
+			"title": name,
+			"type":  string(provisioning.GitOAuthConnectionType),
+			"gitOAuth": map[string]any{
+				"authURL":  server.URL() + "/login/oauth/authorize",
+				"tokenURL": server.URL() + "/login/oauth/access_token",
+			},
+			"oauth": map[string]any{"clientID": app.ClientID},
+		},
+		"secure": map[string]any{
+			"clientSecret": map[string]any{"create": app.ClientSecret},
+		},
+	}}
+}
+
+func (p *giteaProvider) AuthorizationCode(t *testing.T, name string) string {
+	t.Helper()
+	app := p.apps[name]
+	return giteaAuthorizationCode(t, env.GetHelper(t).GitServer(), app.user, app.clientID, oauthsuite.RedirectURI)
+}
+
+func (p *giteaProvider) CreateRepository(t *testing.T, helper *common.ProvisioningTestHelper, connection string) (string, string, string) {
+	t.Helper()
+	const dashboardUID, path = "git-oauth-dashboard", "dashboard.json"
+	gitHelper := env.GetHelper(t)
+	server := gitHelper.GitServer()
+	user := p.apps[connection].user
+	repoName := connection
+
+	remote, _ := gitHelper.CreateRemoteGitRepo(t, repoName, user, map[string][]byte{
+		path: common.DashboardJSON(dashboardUID, "Git OAuth Dashboard", 1),
+	})
+	giteaAPI(t, user, http.MethodPatch, server.URL()+"/api/v1/repos/"+remote.Owner+"/"+remote.Name, map[string]any{"private": true}, nil)
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, remote.URL+"/info/refs?service=git-upload-pack", nil)
+	require.NoError(t, err)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	require.NoError(t, resp.Body.Close())
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode, "private repository should require credentials")
+
+	repoObj := helper.RenderObject(t, common.TestdataPath("git.json.tmpl"), map[string]any{
+		"Name":           repoName,
+		"URL":            remote.URL,
+		"Branch":         "main",
+		"TokenUser":      user.Username,
+		"ConnectionName": connection,
+		"WorkflowsJSON":  `["write"]`,
+	})
+	_, err = helper.Repositories.Resource.Create(t.Context(), repoObj, metav1.CreateOptions{})
+	require.NoError(t, err, "failed to create repository")
+	return repoName, dashboardUID, path
+}
+
+func giteaAPI(t *testing.T, user *gittest.User, method, endpoint string, payload, into any) {
+	t.Helper()
+
+	body, err := json.Marshal(payload)
+	require.NoError(t, err)
+	req, err := http.NewRequestWithContext(t.Context(), method, endpoint, bytes.NewReader(body))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	req.SetBasicAuth(user.Username, user.Password)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer func() { _ = resp.Body.Close() }()
+	require.Less(t, resp.StatusCode, http.StatusMultipleChoices, "%s %s returned %d", method, endpoint, resp.StatusCode)
+	if into != nil {
+		require.NoError(t, json.NewDecoder(resp.Body).Decode(into))
+	}
+}
+
+func giteaAuthorizationCode(t *testing.T, server *gittest.Server, user *gittest.User, clientID, redirectURI string) string {
+	t.Helper()
+
+	jar, err := cookiejar.New(nil)
+	require.NoError(t, err)
+	client := &http.Client{
+		Jar: jar,
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	send := func(method, endpoint string, form url.Values) (int, string) {
+		t.Helper()
+		req, err := http.NewRequestWithContext(t.Context(), method, endpoint, strings.NewReader(form.Encode()))
+		require.NoError(t, err)
+		if form != nil {
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		}
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer func() { _ = resp.Body.Close() }()
+		return resp.StatusCode, resp.Header.Get("Location")
+	}
+
+	status, _ := send(http.MethodPost, server.URL()+"/user/login", url.Values{
+		"user_name": {user.Username},
+		"password":  {user.Password},
+	})
+	require.Equal(t, http.StatusSeeOther, status, "gitea login should redirect")
+
+	params := url.Values{
+		"client_id":     {clientID},
+		"redirect_uri":  {redirectURI},
+		"response_type": {"code"},
+		"state":         {"state"},
+	}
+	status, _ = send(http.MethodGet, server.URL()+"/login/oauth/authorize?"+params.Encode(), nil)
+	require.Equal(t, http.StatusOK, status, "gitea should show the consent page")
+
+	status, location := send(http.MethodPost, server.URL()+"/login/oauth/grant", url.Values{
+		"client_id":    {clientID},
+		"redirect_uri": {redirectURI},
+		"state":        {"state"},
+		"scope":        {""},
+		"nonce":        {""},
+		"granted":      {"true"},
+	})
+	require.Equal(t, http.StatusSeeOther, status, "gitea should redirect back with a code")
+
+	redirect, err := url.Parse(location)
+	require.NoError(t, err)
+	code := redirect.Query().Get("code")
+	require.NotEmpty(t, code, "redirect should carry an authorization code: %s", location)
+	return code
+}

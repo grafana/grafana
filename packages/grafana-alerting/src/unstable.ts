@@ -5,6 +5,10 @@
 // Contact Points
 export { type ContactPoint, type Integration } from './grafana/api/notifications/v1beta1/types';
 export { useListContactPoints } from './grafana/contactPoints/hooks/v1beta1/useContactPoints';
+export {
+  useResolvedContactPoint,
+  type ResolvedContactPoint,
+} from './grafana/contactPoints/hooks/v1beta1/useResolvedContactPoint';
 export { ContactPointSelector } from './grafana/contactPoints/components/ContactPointSelector/ContactPointSelector';
 export {
   getContactPointDescription,
@@ -16,6 +20,16 @@ export {
 // Notification Policies / Routing Trees
 export { useRoutingTrees } from './grafana/notificationPolicies/hooks/useRoutingTrees';
 export { useMatchInstancesToSpecificRouteTree } from './grafana/notificationPolicies/hooks/useMatchPolicies';
+export {
+  useResolvedRoutingTree,
+  type ResolvedRoutingTree,
+} from './grafana/notificationPolicies/hooks/useResolvedRoutingTree';
+export {
+  useRoutingTreePreview,
+  type RoutingTreePreviewResult,
+  type RoutingTreePreviewRoute,
+} from './grafana/notificationPolicies/hooks/useRoutingTreePreview';
+export { type RoutingTreeView } from './grafana/notificationPolicies/routingTreeView';
 export { RoutingTreeSelector } from './grafana/notificationPolicies/components/RoutingTreeSelector/RoutingTreeSelector';
 export {
   buildRoutingTreeOptions,
@@ -32,6 +46,7 @@ export { AlertLabel } from './grafana/rules/components/labels/AlertLabel';
 export { AlertLabels } from './grafana/rules/components/labels/AlertLabels';
 
 // Matchers
+export { MatcherBadge } from './grafana/matchers/components/MatcherBadge';
 export { matchLabelsSet, matchLabels, isLabelMatch, type LabelMatchDetails } from './grafana/matchers/utils';
 
 // Data sources
@@ -42,4 +57,5 @@ export { useDataSourcesWithValidRecordingTarget } from './grafana/dataSources/ho
 // API endpoints
 export { generatedAPI as notificationsAPIv1beta1 } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 export { generatedAPI as rulesAPIv0alpha1 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+export { generatedAPI as rulesAPIv1beta1 } from '@grafana/api-clients/rtkq/rules.alerting/v1beta1';
 export { generatedAPI as historianAPIv0alpha1 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';

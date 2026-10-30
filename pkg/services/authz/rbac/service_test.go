@@ -4648,6 +4648,14 @@ func (t *trackingPermissionStore) GetUserPermissions(ctx context.Context, ns typ
 	return t.inner.GetUserPermissions(ctx, ns, query)
 }
 
+func (t *trackingPermissionStore) HasUserPermissions(
+	ctx context.Context,
+	ns types.NamespaceInfo,
+	query store.PermissionsQuery,
+) (bool, error) {
+	return t.inner.HasUserPermissions(ctx, ns, query)
+}
+
 // Checking a folder that is missing from the tree rebuilds the tree, and a batch can
 // be mostly missing folders: a trash listing names the folders things were deleted
 // from. Rebuilding per item lists every folder in the namespace once per item.

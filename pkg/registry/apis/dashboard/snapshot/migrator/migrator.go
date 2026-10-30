@@ -95,6 +95,7 @@ func (m *snapshotMigrator) MigrateSnapshots(ctx context.Context, orgId int64, op
 				&row.userID,
 				&row.external,
 				&row.externalURL,
+				&row.externalDeleteURL,
 				&row.dashboardEncrypted,
 				&row.expires,
 				&row.created,
@@ -148,6 +149,9 @@ func (m *snapshotMigrator) MigrateSnapshots(ctx context.Context, orgId int64, op
 
 			if row.external {
 				snap.Spec.External = &row.external
+				if row.externalDeleteURL.Valid && row.externalDeleteURL.String != "" {
+					snap.Spec.ExternalDeleteUrl = &row.externalDeleteURL.String
+				}
 				if row.externalURL.Valid && row.externalURL.String != "" {
 					snap.Spec.ExternalUrl = &row.externalURL.String
 				}
@@ -226,6 +230,7 @@ type snapshotRow struct {
 	userID             int64
 	external           bool
 	externalURL        sql.NullString
+	externalDeleteURL  sql.NullString
 	dashboardEncrypted []byte
 	expires            sql.NullTime
 	created            time.Time

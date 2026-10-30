@@ -195,52 +195,24 @@ func decodeSearchRows(response *resourcepb.ResourceSearchResponse) ([]decodedSea
 		return nil, nil
 	}
 
-	switch response.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		table := response.GetResults()
-		if table == nil {
-			return nil, nil
-		}
-		titleIndex := -1
-		for i, column := range table.Columns {
-			if column.GetName() == resource.SEARCH_FIELD_TITLE {
-				titleIndex = i
-				break
-			}
-		}
-		rows := make([]decodedSearchRow, 0, len(table.Rows))
-		for _, row := range table.Rows {
-			if row == nil || row.Key == nil {
-				continue
-			}
-			decoded := decodedSearchRow{key: row.Key, resourceVersion: row.ResourceVersion}
-			if titleIndex >= 0 && titleIndex < len(row.Cells) {
-				decoded.title = string(row.Cells[titleIndex])
-			}
-			rows = append(rows, decoded)
-		}
-		return rows, nil
-
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		rows := make([]decodedSearchRow, 0, len(response.Rows))
-		for i, row := range response.Rows {
-			if row == nil || row.Key == nil {
-				continue
-			}
-			values, err := resource.DecodeSearchValues(response.Fields, row)
-			if err != nil {
-				return nil, fmt.Errorf("decoding search result row %d: %w", i, err)
-			}
-			title, _ := values[resource.SEARCH_FIELD_TITLE].(string)
-			rows = append(rows, decodedSearchRow{
-				key:             row.Key,
-				resourceVersion: row.ResourceVersion,
-				title:           title,
-			})
-		}
-		return rows, nil
-
-	default:
+	if response.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return nil, fmt.Errorf("unsupported search result format %d", response.GetResultFormat())
 	}
+	rows := make([]decodedSearchRow, 0, len(response.Rows))
+	for i, row := range response.Rows {
+		if row == nil || row.Key == nil {
+			continue
+		}
+		values, err := resource.DecodeSearchValues(response.Fields, row)
+		if err != nil {
+			return nil, fmt.Errorf("decoding search result row %d: %w", i, err)
+		}
+		title, _ := values[resource.SEARCH_FIELD_TITLE].(string)
+		rows = append(rows, decodedSearchRow{
+			key:             row.Key,
+			resourceVersion: row.ResourceVersion,
+			title:           title,
+		})
+	}
+	return rows, nil
 }

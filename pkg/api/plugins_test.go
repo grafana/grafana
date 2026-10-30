@@ -1047,4 +1047,30 @@ func Test_UpdatePluginSetting(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, res.StatusCode)
 		require.NoError(t, res.Body.Close())
 	})
+
+	t.Run("should return a bad request when the jsonData is too large to store", func(t *testing.T) {
+		tooLarge := &pluginsettings.FakePluginSettings{
+			Plugins:   pluginSettings.Plugins,
+			UpdateErr: pluginsettings.ErrPluginSettingDataTooLarge.Errorf("too large"),
+		}
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+			require.NoError(t, err)
+
+			hs.Cfg = setting.NewCfg()
+			hs.PluginSettings = tooLarge
+			hs.pluginStore = store
+			hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
+			hs.managedPluginsService = managedplugins.NewNoop()
+			hs.log = log.NewNopLogger()
+		})
+
+		input := strings.NewReader(`{"enabled": true, "jsonData": {"key": "value"}}`)
+		endpoint := fmt.Sprintf("/api/plugins/%s/settings", pID)
+		req := webtest.RequestWithSignedInUser(server.NewPostRequest(endpoint, input), userWithPermissions(1, []ac.Permission{{Action: pluginaccesscontrol.ActionWrite, Scope: "plugins:id:test-app"}}))
+		res, err := server.SendJSON(req)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusBadRequest, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
 }

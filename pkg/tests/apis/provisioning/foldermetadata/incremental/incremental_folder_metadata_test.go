@@ -2055,3 +2055,53 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataRenamedOntoUnsupp
 		"meta-renamed-unsup-001": {Title: "Alpha Dashboard", SourcePath: "alpha/dash.json", Folder: newFolderUID},
 	})
 }
+
+// A _folder.json at the repository root never changes the root folder: its UID
+// is pinned by the repository name, so incremental sync must neither replace
+// nor delete it.
+func TestIntegrationProvisioning_IncrementalSync_RootFolderMetadataIgnored(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	helper := sharedGitHelper(t)
+
+	const repoName = "incr-meta-root-ignored"
+	const alphaUID = "root-ignored-alpha-uid"
+
+	_, local := helper.CreateFolderTargetGitRepo(t, repoName, map[string][]byte{
+		"alpha/_folder.json": folderMetadataJSON(alphaUID, "Alpha"),
+		"alpha/dash.json":    common.DashboardJSON("root-ignored-alpha-001", "Alpha Dashboard", 1),
+		"dash.json":          common.DashboardJSON("root-ignored-root-001", "Root Dashboard", 1),
+	})
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+
+	requireRootFolderUntouched := func(t *testing.T) {
+		t.Helper()
+		common.RequireRepoFolderUID(t, helper.Folders, repoName, repoName)
+		requireGitFolderState(t, helper, alphaUID, "Alpha", "alpha", repoName)
+		common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
+			"root-ignored-alpha-001": {Title: "Alpha Dashboard", SourcePath: "alpha/dash.json", Folder: alphaUID},
+			"root-ignored-root-001":  {Title: "Root Dashboard", SourcePath: "dash.json", Folder: repoName},
+		})
+	}
+
+	require.NoError(t, local.CreateFile("_folder.json", string(folderMetadataJSON("root-ignored-foreign-uid", "Foreign Root"))))
+	_, err := local.Git("add", ".")
+	require.NoError(t, err)
+	_, err = local.Git("commit", "-m", "add root folder metadata")
+	require.NoError(t, err)
+	_, err = local.Git("push")
+	require.NoError(t, err)
+
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
+	requireRootFolderUntouched(t)
+	helper.RequireFoldersNotFound(t, "root-ignored-foreign-uid")
+
+	_, err = local.Git("rm", "_folder.json")
+	require.NoError(t, err)
+	_, err = local.Git("commit", "-m", "remove root folder metadata")
+	require.NoError(t, err)
+	_, err = local.Git("push")
+	require.NoError(t, err)
+
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
+	requireRootFolderUntouched(t)
+}
