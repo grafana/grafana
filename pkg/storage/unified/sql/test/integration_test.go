@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/kv"
@@ -42,7 +43,7 @@ var initMutex = &sync.Mutex{}
 // newTestBackend creates a fresh database and backend for a test.
 // It uses a mutex to ensure the entire initialization and migration
 // process is atomic and does not race with other parallel tests.
-func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Duration, maxOpenConn int) resource.StorageBackend {
+func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Duration, maxOpenConn int, opts ...sql.StorageBackendOption) resource.StorageBackend {
 	// Lock to ensure the entire init block is atomic.
 	initMutex.Lock()
 	// Unlock once the function returns the initialized backend.
@@ -70,7 +71,7 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	}
 	eDB, err := sql.ProvideResourceDB(cfg, dbstore)
 	require.NoError(t, err)
-	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil, nil)
+	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil, nil, opts...)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 	backendService, ok := backend.(services.Service)
@@ -117,6 +118,65 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 			return newTestBackend(t, false, 0, 0)
 		}, nil)
 	})
+}
+
+type recordingPublisher struct {
+	mu            sync.Mutex
+	notifications []*resourcepb.WatchNotification
+	subjects      []string
+}
+
+func (p *recordingPublisher) Enabled() bool { return true }
+
+func (p *recordingPublisher) Publish(_ context.Context, subject string, data []byte) error {
+	n := &resourcepb.WatchNotification{}
+	if err := proto.Unmarshal(data, n); err != nil {
+		return err
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.subjects = append(p.subjects, subject)
+	p.notifications = append(p.notifications, n)
+	return nil
+}
+
+func TestIntegrationSQLBackendPublishesWatchNotifications(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	t.Cleanup(db.CleanupTestDB)
+
+	pub := &recordingPublisher{}
+	backend := newTestBackend(t, !db.IsTestDbSQLite(), 0, 0, sql.WithEventPublisher(pub))
+	ctx := testutil.NewDefaultTestContext(t)
+
+	created, err := unitest.WriteEvent(ctx, backend, "item", resourcepb.WatchEvent_ADDED)
+	require.NoError(t, err)
+	updated, err := unitest.WriteEvent(ctx, backend, "item", resourcepb.WatchEvent_MODIFIED, unitest.WithNamespaceAndRV("namespace", created))
+	require.NoError(t, err)
+	deleted, err := unitest.WriteEvent(ctx, backend, "item", resourcepb.WatchEvent_DELETED, unitest.WithNamespaceAndRV("namespace", updated))
+	require.NoError(t, err)
+
+	subject := "us.watch.v1.group.namespace.resource"
+	require.Equal(t, []string{subject, subject, subject}, pub.subjects)
+	want := []struct {
+		typ    resourcepb.WatchNotification_Type
+		rv     int64
+		prevRV int64
+	}{
+		{resourcepb.WatchNotification_ADDED, created, 0},
+		{resourcepb.WatchNotification_MODIFIED, updated, created},
+		{resourcepb.WatchNotification_DELETED, deleted, updated},
+	}
+	for i, w := range want {
+		got := pub.notifications[i]
+		require.Equal(t, w.typ, got.GetType())
+		require.Equal(t, "group", got.GetGroup())
+		require.Equal(t, "resource", got.GetResource())
+		require.Equal(t, "namespace", got.GetNamespace())
+		require.Equal(t, "item", got.GetName())
+		require.Equal(t, "folderuid", got.GetFolder())
+		require.Equal(t, w.rv, got.GetResourceVersion())
+		require.Equal(t, w.prevRV, got.GetPreviousResourceVersion())
+	}
 }
 
 func TestIntegrationSearchAndStorage(t *testing.T) {
