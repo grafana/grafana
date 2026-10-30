@@ -14,11 +14,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
+	"github.com/grafana/grafana/pkg/plugins"
 	dsconverter "github.com/grafana/grafana/pkg/registry/apis/datasource/converter"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -322,4 +325,128 @@ func (hs *HTTPServer) handleK8sError(err error) response.Response {
 		}
 	}
 	return response.Error(http.StatusInternalServerError, "Failed to query datasource", err)
+}
+
+// getK8sDataSourcesHandler returns a handler that serves GET /api/datasources from the per-plugin
+// API groups when the feature toggle is enabled.
+//
+// The legacy list reads the data_source table, so it cannot see a data source that lives only in
+// unified storage — which is every data source written through the new APIs once the collection
+// runs at dual-writer mode 5, everything Git Sync provisions included. Nothing lists across the
+// plugin groups (each plugin serves its own, and the collection group itself is not served), so
+// this fans out over the installed data source plugins and merges the results.
+func (hs *HTTPServer) getK8sDataSourcesHandler() web.Handler {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !hs.Features.IsEnabledGlobally(featuremgmt.FlagDatasourcesRerouteLegacyCRUDAPIs) {
+		return routing.Wrap(hs.GetDataSources)
+	}
+
+	// Unlike the by-UID reroute this resolves no connection, so the API groups being served is the
+	// only prerequisite.
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !hs.Features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs) {
+		return routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+			return response.Error(http.StatusInternalServerError,
+				"datasourcesRerouteLegacyCRUDAPIs requires the datasource.useNewCRUDAPIs feature flag",
+				nil)
+		})
+	}
+
+	return routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+		start := time.Now()
+		defer func() {
+			metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("getK8sDataSourcesHandler"), time.Since(start).Seconds())
+		}()
+
+		dataSources, err := hs.listK8sDataSources(c)
+		if err != nil {
+			return hs.handleK8sError(err)
+		}
+
+		filtered, err := hs.dsGuardian.New(c.SignedInUser.OrgID, c.SignedInUser).FilterDatasourcesByReadPermissions(dataSources)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to query datasources", err)
+		}
+
+		return response.JSON(http.StatusOK, hs.dataSourceListDTOs(c.Req.Context(), filtered))
+	})
+}
+
+// listDataSourceGroupConcurrency bounds the fan-out so an instance with many data source plugins
+// does not open one request per plugin at once.
+const listDataSourceGroupConcurrency = 8
+
+// listK8sDataSources lists data sources across every API group the installed data source plugins
+// serve. A group that answers NotFound is skipped: the plugin is installed but its group is not
+// served, which must not fail the whole list.
+func (hs *HTTPServer) listK8sDataSources(c *contextmodel.ReqContext) ([]*datasources.DataSource, error) {
+	ctx := c.Req.Context()
+
+	client, err := dynamic.NewForConfig(hs.clientConfigProvider.GetDirectRestConfig(c))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create k8s client: %w", err)
+	}
+	namespace := hs.namespacer(c.GetOrgID())
+
+	dsPlugins := hs.pluginStore.Plugins(ctx, plugins.TypeDataSource)
+	results := make([][]*datasources.DataSource, len(dsPlugins))
+
+	group, groupCtx := errgroup.WithContext(ctx)
+	group.SetLimit(listDataSourceGroupConcurrency)
+	for i, plugin := range dsPlugins {
+		// The built-in data sources (-- Grafana --, -- Mixed --, -- Dashboard --) have no instances.
+		if plugin.BuiltIn {
+			continue
+		}
+		group.Go(func() error {
+			found, err := hs.listK8sDataSourcesForPlugin(groupCtx, client, namespace, plugin.ID)
+			if err != nil {
+				return err
+			}
+			results[i] = found
+			return nil
+		})
+	}
+	if err := group.Wait(); err != nil {
+		return nil, err
+	}
+
+	var all []*datasources.DataSource
+	for _, found := range results {
+		all = append(all, found...)
+	}
+	return all, nil
+}
+
+// listK8sDataSourcesForPlugin lists one plugin's group and converts the results to the legacy model.
+func (hs *HTTPServer) listK8sDataSourcesForPlugin(ctx context.Context, client dynamic.Interface, namespace, pluginID string) ([]*datasources.DataSource, error) {
+	apiGroup := pluginID + "." + datasourceV0.GROUP
+	gvr := schema.GroupVersionResource{Group: apiGroup, Version: datasourceV0.VERSION, Resource: "datasources"}
+
+	list, err := client.Resource(gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to list datasources in %s: %w", apiGroup, err)
+	}
+
+	converter := dsconverter.NewConverter(hs.namespacer, apiGroup, pluginID, nil)
+	found := make([]*datasources.DataSource, 0, len(list.Items))
+	for i := range list.Items {
+		data, err := list.Items[i].MarshalJSON()
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal datasource: %w", err)
+		}
+		var ds datasourceV0.DataSource
+		if err := json.Unmarshal(data, &ds); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal datasource: %w", err)
+		}
+		legacy, err := converter.AsLegacyDatasource(&ds)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert datasource %s: %w", ds.Name, err)
+		}
+		found = append(found, legacy)
+	}
+	return found, nil
 }

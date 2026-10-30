@@ -42,12 +42,14 @@ import (
 	repogithub "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
+	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	informer "github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -67,6 +69,7 @@ import (
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -345,6 +348,7 @@ func RegisterAPIService(
 	connectionFactory connection.Factory,
 	quotaGetter quotas.QuotaGetter,
 	natsSubscriber nats.Subscriber,
+	pluginStore pluginstore.Store,
 ) (*APIBuilder, error) {
 	if !cfg.ProvisioningEnabled {
 		return nil, nil
@@ -359,6 +363,16 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
 	}
+
+	resourceGroups, err := resources.ParseSupportedResources(cfg.ProvisioningResourceGroups)
+	if err != nil {
+		return nil, fmt.Errorf("invalid [provisioning] resource_groups configuration: %w", err)
+	}
+	expanded, err := resources.ExpandResourceGroups(resourceGroups, collectionMembers(context.Background(), pluginStore))
+	if err != nil {
+		return nil, fmt.Errorf("invalid [provisioning] resource_groups configuration: %w", err)
+	}
+	supportedResources = append(supportedResources, expanded...)
 
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
@@ -1927,4 +1941,20 @@ func getJSONResponse(ref string) *spec3.Responses {
 			},
 		},
 	}
+}
+
+// collectionMembers reports the member names of each storage collection whose groups can be
+// provisioned, for expanding [provisioning] resource_groups. Data sources are the only collection
+// today: every installed plugin serves its own group inside datasource.grafana.app.
+func collectionMembers(ctx context.Context, pluginStore pluginstore.Store) map[string][]string {
+	dsPlugins := pluginStore.Plugins(ctx, plugins.TypeDataSource)
+	names := make([]string, 0, len(dsPlugins))
+	for _, plugin := range dsPlugins {
+		// The built-in data sources (-- Grafana --, -- Mixed --, -- Dashboard --) hold no instances.
+		if plugin.BuiltIn {
+			continue
+		}
+		names = append(names, plugin.ID)
+	}
+	return map[string][]string{datasourceV0.GROUP: names}
 }

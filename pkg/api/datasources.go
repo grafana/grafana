@@ -54,8 +54,14 @@ func (hs *HTTPServer) GetDataSources(c *contextmodel.ReqContext) response.Respon
 		return response.Error(http.StatusInternalServerError, "Failed to query datasources", err)
 	}
 
-	result := make(dtos.DataSourceList, 0)
-	for _, ds := range filtered {
+	return response.JSON(http.StatusOK, hs.dataSourceListDTOs(c.Req.Context(), filtered))
+}
+
+// dataSourceListDTOs maps data sources to the sorted list DTO the HTTP API returns. Shared with
+// the rerouted list handler so both sources of data produce an identical response.
+func (hs *HTTPServer) dataSourceListDTOs(ctx context.Context, dataSources []*datasources.DataSource) *dtos.DataSourceList {
+	result := make(dtos.DataSourceList, 0, len(dataSources))
+	for _, ds := range dataSources {
 		dsItem := dtos.DataSourceListItemDTO{
 			OrgId:     ds.OrgID,
 			Id:        ds.ID,
@@ -73,7 +79,7 @@ func (hs *HTTPServer) GetDataSources(c *contextmodel.ReqContext) response.Respon
 			ReadOnly:  ds.ReadOnly,
 		}
 
-		if plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type); exists {
+		if plugin, exists := hs.pluginStore.Plugin(ctx, ds.Type); exists {
 			dsItem.TypeLogoUrl = plugin.Info.Logos.Small
 			dsItem.TypeName = plugin.Name
 			dsItem.Type = plugin.ID // may be from an alias
@@ -86,7 +92,7 @@ func (hs *HTTPServer) GetDataSources(c *contextmodel.ReqContext) response.Respon
 
 	sort.Sort(result)
 
-	return response.JSON(http.StatusOK, &result)
+	return &result
 }
 
 // Get a single data source by Id.
