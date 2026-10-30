@@ -355,6 +355,109 @@ func TestQueryFrames_JSONFilter(t *testing.T) {
 	}
 }
 
+func TestQueryFrames_InvalidJSON(t *testing.T) {
+	db := DB{}
+	query := `SELECT id, payload IS NULL AS is_null, JSON_TYPE(payload) AS kind FROM A ORDER BY id`
+
+	noticeTexts := func(f *data.Frame) []string {
+		if f.Meta == nil {
+			return nil
+		}
+		texts := make([]string, 0, len(f.Meta.Notices))
+		for _, n := range f.Meta.Notices {
+			require.Equal(t, data.NoticeSeverityWarning, n.Severity)
+			texts = append(texts, n.Text)
+		}
+		return texts
+	}
+
+	t.Run("invalid JSON reads as NULL with one notice for the column", func(t *testing.T) {
+		for name, field := range map[string]*data.Field{
+			"non-nullable": data.NewField("payload", nil, []json.RawMessage{
+				json.RawMessage(`{"ok":true}`),
+				json.RawMessage("\x01\x02\x03\x04"),
+				json.RawMessage(`{not json`),
+			}),
+			"nullable": data.NewField("payload", nil, []*json.RawMessage{
+				rawJSONPtr(`{"ok":true}`),
+				rawJSONPtr("\x01\x02\x03\x04"),
+				rawJSONPtr(`{not json`),
+			}),
+		} {
+			t.Run(name, func(t *testing.T) {
+				input := data.NewFrame("A", data.NewField("id", nil, []int64{1, 2, 3}), field).SetRefID("A")
+				got, err := db.QueryFrames(context.Background(), &testTracer{}, "B", query, data.Frames{input})
+				require.NoError(t, err)
+
+				isNull, _ := got.FieldByName("is_null")
+				require.NotNil(t, isNull)
+				for i, want := range []bool{false, true, true} {
+					v, _ := isNull.ConcreteAt(i)
+					require.Equal(t, want, v, "row %d", i)
+				}
+				require.Equal(t, []string{
+					"A: column payload has values that are not valid JSON (2 of 3 rows). They read as NULL.",
+				}, noticeTexts(got))
+			})
+		}
+	})
+
+	t.Run("one notice per column, named as SQL names it", func(t *testing.T) {
+		input := data.NewFrame("A",
+			data.NewField("id", nil, []int64{1, 2}),
+			data.NewField("payload", nil, []json.RawMessage{json.RawMessage(`{"ok":true}`), json.RawMessage(`{"ok":true}`)}),
+			data.NewField("payload", nil, []json.RawMessage{json.RawMessage(`{not json`), json.RawMessage(`{"ok":true}`)}),
+			data.NewField("bin", nil, []json.RawMessage{json.RawMessage("\x01"), json.RawMessage("\x02")}),
+		).SetRefID("A")
+		got, err := db.QueryFrames(context.Background(), &testTracer{}, "B", `SELECT COUNT(*) AS n FROM A`, data.Frames{input})
+		require.NoError(t, err)
+
+		n, _ := got.Fields[0].ConcreteAt(0)
+		require.EqualValues(t, 2, n)
+		require.Equal(t, []string{
+			"A: column payload_2 has values that are not valid JSON (1 of 2 rows). They read as NULL.",
+			"A: column bin has values that are not valid JSON (2 of 2 rows). They read as NULL.",
+		}, noticeTexts(got))
+	})
+
+	t.Run("empty values read as NULL and valid JSON reads as JSON, with no notice", func(t *testing.T) {
+		input := data.NewFrame("A",
+			data.NewField("id", nil, []int64{1, 2, 3, 4, 5, 6}),
+			data.NewField("payload", nil, []*json.RawMessage{
+				rawJSONPtr(""),
+				rawJSONPtr(" \t\n "),
+				nil,
+				rawJSONPtr("null"),
+				rawJSONPtr(` {"a": [1, 2]} `),
+				rawJSONPtr(`"text"`),
+			}),
+		).SetRefID("A")
+
+		got, err := db.QueryFrames(context.Background(), &testTracer{}, "B", query, data.Frames{input})
+		require.NoError(t, err)
+
+		isNull, idx := got.FieldByName("is_null")
+		require.NotEqual(t, -1, idx)
+		kind, idx := got.FieldByName("kind")
+		require.NotEqual(t, -1, idx)
+		gotIsNull := make([]any, got.Rows())
+		gotKind := make([]any, got.Rows())
+		for i := range got.Rows() {
+			gotIsNull[i], _ = isNull.ConcreteAt(i)
+			gotKind[i], _ = kind.ConcreteAt(i)
+		}
+		require.Equal(t, []any{true, true, true, false, false, false}, gotIsNull)
+		// go-mysql-server returns the text "NULL" from JSON_TYPE for SQL NULL too.
+		require.Equal(t, []any{"NULL", "NULL", "NULL", "NULL", "OBJECT", "STRING"}, gotKind)
+		require.Empty(t, noticeTexts(got))
+	})
+}
+
+func rawJSONPtr(s string) *json.RawMessage {
+	r := json.RawMessage(s)
+	return &r
+}
+
 func TestQueryFrames_Limits(t *testing.T) {
 	tests := []struct {
 		name        string
