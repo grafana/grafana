@@ -1,9 +1,11 @@
 package router
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/authlib/authn"
@@ -33,12 +35,22 @@ const (
 	preferencesPluginID = "grafana-preferences-app"
 )
 
+// routeCollectionsAndPreferences reports whether the router serves
+// collections.grafana.app and preferences.grafana.app, in place of the embedded
+// API server. Like settingsEnabled, it is evaluated through OpenFeature, so a
+// remote provider can turn it on without a [feature_toggles] entry, and it is
+// read once, at startup.
+func routeCollectionsAndPreferences() bool {
+	ctx := context.Background()
+	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaRoutePreferencesAndCollections, false, openfeature.TransactionContext(ctx))
+}
+
 // builtinCoreApps builds the apps behind grafana.routePreferencesAndCollections.
 // They call Grafana's API like an external app plugin does: through the local
 // token exchange, as the caller. They fail startup rather than leave their
 // groups unserved when that is not possible.
 func builtinCoreApps(cfg *setting.Cfg, pluginAuth *pluginauth.Config) ([]CoreApp, error) {
-	if !featuremgmt.RoutePreferencesAndCollections() {
+	if !routeCollectionsAndPreferences() {
 		return nil, nil
 	}
 	if !pluginAuth.LocalTokens() || pluginAuth.LocalAPIURL() == "" {

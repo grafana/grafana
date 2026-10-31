@@ -1,6 +1,9 @@
 package preferences
 
 import (
+	"context"
+
+	"github.com/open-feature/go-sdk/openfeature"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -71,7 +74,8 @@ func RegisterAPIService(
 		builder.legacyPrefs = legacy.NewPreferencesStorage(prefs, namespacer, sql)
 	}
 	// The router serves the group instead (see grafana.routePreferencesAndCollections).
-	if !featuremgmt.RoutePreferencesAndCollections() {
+	ctx := context.Background()
+	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaRoutePreferencesAndCollections, false, openfeature.TransactionContext(ctx)) {
 		apiregistration.RegisterAPI(builder)
 	}
 	return builder, nil
