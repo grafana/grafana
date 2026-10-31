@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -69,7 +70,10 @@ func RegisterAPIService(
 	if prefs != nil {
 		builder.legacyPrefs = legacy.NewPreferencesStorage(prefs, namespacer, sql)
 	}
-	apiregistration.RegisterAPI(builder)
+	// The router serves the group instead (see grafana.routePreferencesAndCollections).
+	if !featuremgmt.RoutePreferencesAndCollections() {
+		apiregistration.RegisterAPI(builder)
+	}
 	return builder, nil
 }
 

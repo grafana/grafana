@@ -76,6 +76,10 @@ type PluginLoaderDependencies struct {
 	ClientV3Loader v3.ClientV3Loader
 	PluginSources  sources.Registry
 	ACService      accesscontrol.Service
+
+	// CoreApps are served in middleware mode, from this process, next to the
+	// local plugins.
+	CoreApps []CoreApp
 }
 
 func ProvidePluginLoaderDependencies(
@@ -354,7 +358,16 @@ func (pl PluginLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
 // which is why the router may route them before their authorization moves too.
 // Before adding a group, confirm the same holds for it: never add a group
 // whose data or permissions matter, such as dashboards, folders or IAM.
-var routableCoreGroups = []string{"playlist.grafana.app", "example.grafana.app"}
+//
+// collections and preferences hold per-user data, but access to it is decided
+// by the object's name in the router's own authorizer (pluginroute
+// ownerFromName), not by the plugin serving it.
+var routableCoreGroups = []string{
+	"playlist.grafana.app",
+	"example.grafana.app",
+	"collections.grafana.app",
+	"preferences.grafana.app",
+}
 
 // newPluginBackend builds the backend for one plugin manifest. Its group must be
 // a plugin group (*.ext.grafana.app) or one of routableCoreGroups.
@@ -521,6 +534,7 @@ func (b *PluginBackend) load(ctx context.Context) (*pluginroute.Handler, error) 
 		Decrypter:       b.deps.Decrypter,
 		Tracer:          b.deps.Tracer,
 		BuildVersion:    cfg.BuildVersion,
+		Cfg:             cfg,
 		MetricsRegister: b.deps.MetricsRegister,
 	}
 	if b.deps.AccessControl != nil {

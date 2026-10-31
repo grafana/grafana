@@ -47,6 +47,13 @@ type Options struct {
 	// cannot be completed without its options: they used to be declared through a
 	// separate by-GroupResource registration that every version of a kind shared.
 	StorageOptsGetter func(apistore.StorageOptions) generic.RESTOptionsGetter
+
+	// AllowCreateOnUpdate lets an update of an object that does not exist create it.
+	AllowCreateOnUpdate bool
+
+	// AllowUnconditionalUpdate lets an update leave out the resource version, and
+	// replace whatever is stored.
+	AllowUnconditionalUpdate bool
 }
 
 func IsFolderScoped(kind app.ManifestVersionKind) bool {
@@ -64,6 +71,9 @@ type Store struct {
 
 	gvk           schema.GroupVersionKind
 	clusterScoped bool
+
+	allowCreateOnUpdate      bool
+	allowUnconditionalUpdate bool
 
 	// userReadable marks a cluster-scoped kind users may read. Storage rejects
 	// users on cluster-scoped objects, since their identity is bound to a
@@ -136,6 +146,9 @@ func New(
 		clusterScoped: clusterScoped,
 		userReadable:  clusterScoped && kind.UserReadable,
 		admission:     admission,
+
+		allowCreateOnUpdate:      opts.AllowCreateOnUpdate,
+		allowUnconditionalUpdate: opts.AllowUnconditionalUpdate,
 	}
 
 	if kind.Admission != nil {
@@ -303,12 +316,12 @@ func (s *Store) GetResetFields() map[fieldpath.APIVersion]*fieldpath.Set {
 
 // AllowCreateOnUpdate implements [rest.RESTUpdateStrategy].
 func (s *Store) AllowCreateOnUpdate(ctx context.Context) bool {
-	return false
+	return s.allowCreateOnUpdate
 }
 
 // AllowUnconditionalUpdate implements [rest.RESTUpdateStrategy].
 func (s *Store) AllowUnconditionalUpdate(ctx context.Context) bool {
-	return false
+	return s.allowUnconditionalUpdate
 }
 
 // Canonicalize implements [rest.RESTUpdateStrategy].

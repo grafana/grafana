@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	authlib "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -142,8 +143,14 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 					if kind.Conversion {
 						conversion = b.clientV3
 					}
+					// A kind authorized by name is written by the owner of the name, who
+					// replaces the object without reading it first, and creates it on
+					// the first write.
+					byName := b.kindPolicies[strings.ToLower(kind.Plural)].ownerFromName != nil
 					store, err := kindstore.New(gv.WithKind(kind.Kind), kind, admission, conversion, kindstore.Options{
-						StorageOptsGetter: opts.StorageOptsGetter,
+						StorageOptsGetter:        opts.StorageOptsGetter,
+						AllowCreateOnUpdate:      byName,
+						AllowUnconditionalUpdate: byName,
 					}, defs)
 					if err != nil {
 						return err
@@ -155,7 +162,7 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 						return fmt.Errorf("kind %s in %s claims the already registered resource %q",
 							kind.Kind, gv.String(), resource)
 					}
-					storage[resource] = store
+					storage[resource] = b.withListScope(resource, store)
 					kinds[gv.WithResource(resource)] = store
 
 					if store.HasStatus() {
@@ -186,4 +193,14 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 
 func (b *manifestBuilder) AllowedV0Alpha1Resources() []string {
 	return []string{builder.AllResourcesAllowed}
+}
+
+// withListScope applies the kind's list scope to its served storage. Direct
+// reads (the getter) keep using the unwrapped store.
+func (b *manifestBuilder) withListScope(resource string, store *kindstore.Store) rest.Storage {
+	policy := b.kindPolicies[resource]
+	if policy.listScope == listOwned && policy.ownerFromName != nil {
+		return newOwnedListStore(store, policy.ownerFromName, hardcodedVirtualGetter(b.group, resource, b.opts.Cfg))
+	}
+	return store
 }

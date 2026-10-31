@@ -76,6 +76,10 @@ type Options struct {
 	BuildVersion     string
 	MetricsRegister  prometheus.Registerer
 
+	// Cfg is Grafana's configuration, for what a kind authorized by name needs
+	// from it (see hardcodedVirtualGetter).
+	Cfg *setting.Cfg
+
 	// Legacy settings use the same migration policy as the embedded API server.
 	DualWrite      dualwrite.Service
 	StorageOpts    *options.StorageOptions

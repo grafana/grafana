@@ -170,6 +170,12 @@ func TestStoreStrategyDefaults(t *testing.T) {
 	require.Nil(t, s.WarningsOnCreate(context.Background(), nil))
 	require.Nil(t, s.WarningsOnUpdate(context.Background(), nil, nil))
 
+	// A kind that opts in allows both.
+	s.allowCreateOnUpdate, s.allowUnconditionalUpdate = true, true
+	require.True(t, s.AllowCreateOnUpdate(context.Background()))
+	require.True(t, s.AllowUnconditionalUpdate(context.Background()))
+	s.allowCreateOnUpdate, s.allowUnconditionalUpdate = false, false
+
 	obj := &unstructured.Unstructured{Object: map[string]any{"spec": map[string]any{}}}
 	s.Canonicalize(obj)
 	require.Equal(t, map[string]any{"spec": map[string]any{}}, obj.Object)

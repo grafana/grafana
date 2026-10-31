@@ -28,12 +28,35 @@ var clusterReadVerbs = map[string]bool{
 // kindPolicy is what authorizing a manifest kind needs to know about it.
 type kindPolicy struct {
 	clusterScoped bool
-	userReadable  bool
+
+	// user readable cluster scoped resource
+	userReadable bool
+
+	// The name defines the access control
+	ownerFromName *ownerFromName
+
 	// customRoutes are the subresources the manifest mounts for this kind,
 	// unioned across its served versions -- the authorizer runs before the
 	// request is dispatched to one.
 	customRoutes map[string]bool
+
+	// listScope narrows what a user lists; see ownerFromName.ownedNames.
+	listScope listScope
+
+	// processMissing sends a custom route to the plugin even when the parent
+	// object does not exist, so the plugin can answer for the name alone.
+	processMissing bool
 }
+
+type listScope int
+
+const (
+	// listAll leaves list and watch to storage.
+	listAll listScope = iota
+	// listOwned gives a user only the objects named for them, since the names
+	// carry the access control and storage would otherwise return every one.
+	listOwned
+)
 
 // kindPolicies indexes a manifest's kinds by the resource name they are served
 // under. Scope and readability must match across a kind's versions, so the
@@ -60,6 +83,11 @@ func kindPolicies(manifest *app.ManifestData) map[string]kindPolicy {
 					customRoutes:  map[string]bool{},
 				}
 			}
+
+			if !seen {
+				policy.ownerFromName, policy.processMissing, policy.listScope = hardcodedKindAuth(manifest.Group, resource)
+			}
+
 			policies[resource] = policy
 		}
 
@@ -100,7 +128,7 @@ func (b *manifestBuilder) GetAuthorizer() authorizer.Authorizer {
 					return decision, reason, err
 				}
 			}
-			return b.authorizeKind(requester, attr)
+			return b.authorizeKind(ctx, requester, attr)
 		},
 	)
 }
@@ -123,13 +151,20 @@ func serviceTokenGrants(requester identity.Requester, attr authorizer.Attributes
 // the folder-aware RBAC check. A cluster-scoped kind has no folder to decide
 // by, so users only reach the ones the manifest marks user readable, and only
 // to read them. An access policy is held to its token's permissions for both.
-func (b *manifestBuilder) authorizeKind(requester identity.Requester, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+func (b *manifestBuilder) authorizeKind(ctx context.Context, requester identity.Requester, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 	// Not a kind: discovery, OpenAPI or a version route. None of them read the
 	// kinds' storage, and a version route runs its own declared check. Any other
 	// resource is not served.
 	policy, ok := b.kindPolicies[attr.GetResource()]
 	if !ok {
 		return authorizer.DecisionAllow, "", nil
+	}
+
+	// Check the naming strategy. An access policy is held to its token's
+	// permissions below, as storage cannot decide for it.
+	isAccessPolicy := authlib.IsIdentityType(requester.GetIdentityType(), authlib.TypeAccessPolicy)
+	if policy.ownerFromName != nil && !isAccessPolicy {
+		return policy.ownerFromName.authorize(ctx, requester, attr, b.accessClient)
 	}
 
 	// A custom route never reaches unified storage, so the plugin's app access
@@ -142,7 +177,7 @@ func (b *manifestBuilder) authorizeKind(requester identity.Requester, attr autho
 
 	// Storage cannot decide for an access policy,
 	// so we make the decision here.
-	if authlib.IsIdentityType(requester.GetIdentityType(), authlib.TypeAccessPolicy) {
+	if isAccessPolicy {
 		return authorizeTokenPermissions(requester, attr)
 	}
 

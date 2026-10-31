@@ -61,7 +61,10 @@ func RegisterAPIService(
 		builder.legacyStars = legacy.NewDashboardStarsStorage(stars, users, namespacer, sql)
 	}
 
-	apiregistration.RegisterAPI(builder)
+	// The router serves the group instead (see grafana.routePreferencesAndCollections).
+	if !featuremgmt.RoutePreferencesAndCollections() {
+		apiregistration.RegisterAPI(builder)
+	}
 	return builder
 }
 

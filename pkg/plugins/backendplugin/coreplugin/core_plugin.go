@@ -7,6 +7,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/config"
+
+	clientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
@@ -24,6 +26,34 @@ type corePlugin struct {
 	backend.StreamHandler
 	backend.AdmissionHandler
 	backend.ConversionHandler
+
+	// clientV3 serves the plugin's v3 route, admission and conversion calls
+	// in process; nil for plugins that have none. stopV3 releases it.
+	clientV3 clientv3.Client
+	stopV3   func()
+}
+
+var _ backendplugin.PluginV3 = (*corePlugin)(nil)
+
+// WithClientV3 returns a factory for a core plugin that also serves plugin
+// protocol v3 in process (see v3.NewInProcessClient). stop is called when the
+// plugin stops.
+func WithClientV3(opts backend.ServeOpts, client clientv3.Client, stop func()) backendplugin.PluginFactoryFunc {
+	factory := New(opts)
+	return func(pluginID string, logger log.Logger, tracer trace.Tracer, fn func() []string) (backendplugin.Plugin, error) {
+		p, err := factory(pluginID, logger, tracer, fn)
+		if err != nil {
+			return nil, err
+		}
+		cp := p.(*corePlugin)
+		cp.clientV3, cp.stopV3 = client, stop
+		return p, nil
+	}
+}
+
+// ClientV3 implements [backendplugin.PluginV3].
+func (cp *corePlugin) ClientV3(context.Context) (clientv3.Client, bool) {
+	return cp.clientV3, cp.clientV3 != nil
 }
 
 // New returns a new backendplugin.PluginFactoryFunc for creating a core (built-in) backendplugin.Plugin.
@@ -55,6 +85,9 @@ func (cp *corePlugin) Start(ctx context.Context) error {
 }
 
 func (cp *corePlugin) Stop(ctx context.Context) error {
+	if cp.stopV3 != nil {
+		cp.stopV3()
+	}
 	return nil
 }
 
