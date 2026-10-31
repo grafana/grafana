@@ -135,6 +135,7 @@ declare module "@openfeature/core" {
     | "queryEditorNext"
     | "queryeditor.coauthoringUi"
     | "kubernetesTeamsApi"
+    | "kubernetesUsersApi"
     | "managedPluginsV2"
     | "analyticsFramework"
     | "grafana.scenesFlickeringFix"
