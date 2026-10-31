@@ -362,6 +362,19 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 					return
 				}
 
+				if dn.isInputToSQLExpr {
+					dataType := categorizeFrameInputType(dataFrames)
+					result, converted := handleSqlInput(ctx, s.tracer, dn.RefID(), dn.IsInputTo(), dn.datasource.Type, dataFrames)
+					status := "ok"
+					if result.Error != nil {
+						status = "error"
+					}
+					s.metrics.SqlCommandInputCount.WithLabelValues(status, fmt.Sprintf("%t", converted), dn.datasource.Type, dataType).Inc()
+					instrument(nil, "unknown")
+					vars[dn.refID] = result
+					continue
+				}
+
 				var result mathexp.Results
 				responseType, result, err := s.converter.Convert(ctx, dn.datasource.Type, dataFrames)
 				if err != nil {
