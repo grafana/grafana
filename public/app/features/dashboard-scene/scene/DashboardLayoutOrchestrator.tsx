@@ -344,8 +344,11 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       return;
     }
 
-    // Tabs can be dropped only to TabsLayoutManager
-    if (dropTarget instanceof TabsLayoutManager) {
+    // Tabs can be dropped only to TabsLayoutManager, and not into one nested inside the dragged tab
+    if (
+      dropTarget instanceof TabsLayoutManager &&
+      !sceneGraph.findDescendents(this._tabDragState.tab, TabsLayoutManager).includes(dropTarget)
+    ) {
       this._lastDropTarget = dropTarget;
     } else {
       this.cleanUpTabDropTarget();
