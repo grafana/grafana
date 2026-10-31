@@ -788,7 +788,8 @@ lineage: schemas: [{
 			// True if data source can write a value to the path. Auth/authz are supported separately
 			writeable?: bool @grafanamaturity(NeedsExpertReview)
 
-			// True if data source field supports ad-hoc filters
+			// Enables viewers to update dashboard filters by interacting with this field in supported visualizations.
+			// Corresponds to the "Filter from values" option in the panel editor. Requires data source support for dashboard filters.
 			filterable?: bool @grafanamaturity(NeedsExpertReview)
 
 			// Unit a field should use. The unit you select is applied to all fields except time.

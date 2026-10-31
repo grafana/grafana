@@ -335,7 +335,8 @@ export interface FieldConfig {
 	path?: string;
 	// True if data source can write a value to the path. Auth/authz are supported separately
 	writeable?: boolean;
-	// True if data source field supports ad-hoc filters
+	// Enables viewers to update dashboard filters by interacting with this field in supported visualizations.
+	// Corresponds to the "Filter from values" option in the panel editor. Requires data source support for dashboard filters.
 	filterable?: boolean;
 	// Unit a field should use. The unit you select is applied to all fields except time.
 	// You can use the units ID available in Grafana or a custom unit.
