@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
@@ -543,4 +544,159 @@ func TestCreateCleansUpSecretsWhenPermissionCreationFails(t *testing.T) {
 	err := s.Create(ctx, "/default/customkinds/test", obj, &unstructured.Unstructured{}, 0)
 	require.ErrorContains(t, err, "invalid permissions value")
 	secureStore.AssertExpectations(t) // secret created during preparation, then deleted
+}
+
+func TestDynamicSecureValues(t *testing.T) {
+	const dynamicName = secret.DYNAMIC_SECURE_VALUE_NAME_PREFIX + "prometheus:grafanacloud-prom:p1"
+	const promURL = "https://prometheus-prod-01.grafana.net/api/prom"
+	// A new map each time: prepareSecureValues modifies the map it is given
+	dynamicRef := func() common.InlineSecureValues {
+		return common.InlineSecureValues{"basicAuthPassword": {Name: dynamicName}}
+	}
+
+	cloudManager := &utils.ManagerProperties{Kind: utils.ManagerKindGrafana, Identity: "cloud"}
+
+	datasourceWithManager := func(url string, sv common.InlineSecureValues, manager *utils.ManagerProperties) utils.GrafanaMetaAccessor {
+		tmp := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "prometheus.datasource.grafana.app/v0alpha1",
+			"kind":       "DataSource",
+			"metadata":   map[string]any{"namespace": "stacks-123", "name": "grafanacloud-prom"},
+			"spec":       map[string]any{"title": "grafanacloud-prom", "url": url},
+		}}
+		obj, err := utils.MetaAccessor(tmp)
+		require.NoError(t, err)
+		if sv != nil {
+			require.NoError(t, obj.SetSecureValues(sv))
+		}
+		if manager != nil {
+			obj.SetManagerProperties(*manager)
+		}
+		return obj
+	}
+	datasource := func(url string, sv common.InlineSecureValues) utils.GrafanaMetaAccessor {
+		return datasourceWithManager(url, sv, cloudManager)
+	}
+
+	userCtx := claims.WithAuthInfo(context.Background(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, Namespace: "stacks-123"})
+	cloudCtx := claims.WithAuthInfo(context.Background(), &identity.StaticRequester{Type: claims.TypeAccessPolicy, Namespace: "stacks-123"})
+
+	// Datasources use shared storage, so the owner group differs from the served group
+	owner := common.ObjectReference{APIGroup: "datasource.grafana.app", APIVersion: "v0alpha1", Kind: "DataSource", Namespace: "stacks-123", Name: "grafanacloud-prom"}
+
+	// The store must only be asked whether the owner can reference the dynamic value
+	allowingStore := func(t *testing.T) *secret.MockInlineSecureValueSupport {
+		store := secret.NewMockInlineSecureValueSupport(t)
+		store.On("CanReference", mock.Anything, owner, dynamicName).Return(nil)
+		return store
+	}
+
+	prepareWith := func(ctx context.Context, store secret.InlineSecureValueSupport, obj, previous utils.GrafanaMetaAccessor) (*objectForStorage, error) {
+		info := &objectForStorage{}
+		return info, prepareSecureValues(ctx, store, obj, previous, owner, info)
+	}
+
+	// A mock with no expectations: users never reach the store for dynamic values
+	prepare := func(t *testing.T, ctx context.Context, obj, previous utils.GrafanaMetaAccessor) (*objectForStorage, error) {
+		return prepareWith(ctx, secret.NewMockInlineSecureValueSupport(t), obj, previous)
+	}
+
+	stored := func() utils.GrafanaMetaAccessor {
+		return datasource(promURL, dynamicRef())
+	}
+
+	causeField := func(t *testing.T, err error) string {
+		t.Helper()
+		var statusErr *apierrors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		return statusErr.ErrStatus.Details.Causes[0].Field
+	}
+
+	t.Run("grafana cloud can create, update and remove", func(t *testing.T) {
+		store := allowingStore(t)
+		_, err := prepareWith(cloudCtx, store, stored(), nil)
+		require.NoError(t, err)
+
+		_, err = prepareWith(cloudCtx, store, datasource("https://prometheus-internal.grafana.net/api/prom", nil), stored())
+		require.NoError(t, err)
+		store.AssertNumberOfCalls(t, "CanReference", 2)
+
+		removed := common.InlineSecureValues{"basicAuthPassword": {Remove: true}}
+		info, err := prepare(t, cloudCtx, datasource(promURL, removed), stored())
+		require.NoError(t, err)
+		require.Empty(t, info.deleteSecureValues, "nothing is stored for a dynamic value")
+	})
+
+	t.Run("a secrets service without dynamic support rejects the reference", func(t *testing.T) {
+		store := secret.NewMockInlineSecureValueSupport(t)
+		store.On("CanReference", mock.Anything, owner, dynamicName).Return(errors.New("secure value cannot be referenced by the owner"))
+
+		_, err := prepareWith(cloudCtx, store, stored(), nil)
+		require.ErrorContains(t, err, "cannot be referenced")
+	})
+
+	t.Run("a kept reference without secure value support is an error", func(t *testing.T) {
+		_, err := prepareWith(cloudCtx, nil, datasource(promURL, nil), stored())
+		require.ErrorContains(t, err, "not configured")
+	})
+
+	for name, manager := range map[string]*utils.ManagerProperties{
+		"unmanaged":              nil,
+		"managed by terraform":   {Kind: utils.ManagerKindTerraform, Identity: "cloud"},
+		"managed by another app": {Kind: utils.ManagerKindGrafana, Identity: "other"},
+		"allowing edits":         {Kind: utils.ManagerKindGrafana, Identity: "cloud", AllowsEdits: true},
+	} {
+		t.Run("an object "+name+" cannot hold a dynamic value", func(t *testing.T) {
+			_, err := prepare(t, cloudCtx, datasourceWithManager(promURL, dynamicRef(), manager), nil)
+			require.ErrorContains(t, err, "require a grafana cloud manager that does not allow edits")
+		})
+	}
+
+	// Edits are not allowed, so anyone else is rejected however little they change
+	for name, update := range map[string]utils.GrafanaMetaAccessor{
+		"secure omitted":           datasource(promURL, nil),
+		"reference resent":         datasource(promURL, dynamicRef()),
+		"url changed":              datasource("https://evil.example", nil),
+		"another field changed":    datasource(promURL, common.InlineSecureValues{"httpHeaderValue1": {Name: "inline-abc"}}),
+		"dynamic value removed":    datasource(promURL, common.InlineSecureValues{"basicAuthPassword": {Remove: true}}),
+		"dynamic value replaced":   datasource(promURL, common.InlineSecureValues{"basicAuthPassword": {Name: "shared-secret"}}),
+		"manager removed":          datasourceWithManager(promURL, nil, nil),
+		"manager allows edits now": datasourceWithManager(promURL, nil, &utils.ManagerProperties{Kind: utils.ManagerKindGrafana, Identity: "cloud", AllowsEdits: true}),
+	} {
+		t.Run("a user cannot write the datasource when "+name, func(t *testing.T) {
+			_, err := prepare(t, userCtx, update, stored())
+			require.ErrorContains(t, err, "may only be changed by grafana cloud")
+			require.Equal(t, "secure.basicAuthPassword", causeField(t, err))
+		})
+	}
+
+	t.Run("a user cannot add a dynamic reference", func(t *testing.T) {
+		_, err := prepare(t, userCtx, stored(), nil)
+		require.ErrorContains(t, err, "only be configured by grafana cloud")
+
+		plain := datasource(promURL, common.InlineSecureValues{"basicAuthPassword": {Name: "inline-abc"}})
+		added := common.InlineSecureValues{"httpHeaderValue1": {Name: dynamicName}}
+		_, err = prepare(t, userCtx, datasource(promURL, added), plain)
+		require.ErrorContains(t, err, "only be configured by grafana cloud")
+		require.Equal(t, "secure.httpHeaderValue1", causeField(t, err))
+	})
+
+	t.Run("datasources without a dynamic value are not restricted", func(t *testing.T) {
+		plain := func(url string) utils.GrafanaMetaAccessor {
+			return datasourceWithManager(url, common.InlineSecureValues{"basicAuthPassword": {Name: "inline-abc"}}, nil)
+		}
+		_, err := prepare(t, userCtx, plain("https://other.example"), plain(promURL))
+		require.NoError(t, err)
+	})
+
+	t.Run("deleting the object skips dynamic values", func(t *testing.T) {
+		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore.On("DeleteWhenOwnedByResource", mock.Anything, mock.Anything, "inline-abc").Return(nil).Once()
+
+		obj := datasource(promURL, common.InlineSecureValues{
+			"basicAuthPassword": {Name: dynamicName},
+			"httpHeaderValue1":  {Name: "inline-abc"},
+		})
+		require.NoError(t, handleSecureValuesDelete(context.Background(), secureStore, obj, utils.ToObjectReference(obj)))
+		secureStore.AssertExpectations(t)
+	})
 }
