@@ -1001,3 +1001,14 @@ func TestReadFrontendDevSettings(t *testing.T) {
 		require.Empty(t, cfg.FrontendDevServerURL)
 	})
 }
+
+func TestApplicationInsightsAutoRouteTracking(t *testing.T) {
+	cfg, err := NewCfgFromBytes([]byte(`
+[analytics]
+application_insights_connection_string = InstrumentationKey=abc
+application_insights_auto_route_tracking = false
+`))
+	require.NoError(t, err)
+	require.Equal(t, "InstrumentationKey=abc", cfg.ApplicationInsightsConnectionString)
+	require.False(t, cfg.ApplicationInsightsAutoRouteTracking)
+}
