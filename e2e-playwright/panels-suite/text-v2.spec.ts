@@ -26,6 +26,7 @@ const LAST_VALUES_PANEL = '2';
 
 const SUGGESTIONS_DASHBOARD_UID = 'text-suggestions';
 const VALUE_PER_CATEGORY_PANEL = '8';
+const TWO_QUERIES_PANEL = '11';
 
 test.use({ openFeature: { flags: { 'grafana.newTextPanel': true, 'text.newFeatures': true } } });
 
@@ -383,6 +384,32 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       await expect(page.getByTestId('TextNGEditor').locator('.cm-content')).toContainText(
         '<strong>${__data.fields.Service}</strong>: ${__data.fields.Availability}'
       );
+    });
+
+    test('applies a summary with an entry for each query', async ({ gotoDashboardPage, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: SUGGESTIONS_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: TWO_QUERIES_PANEL }),
+      });
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Suggestions')).click();
+
+      const summary = dashboardPage.getByGrafanaSelector(
+        selectors.components.VisualizationPreview.card('Text - summary')
+      );
+
+      await expect(renderedContent(summary).locator('li')).toHaveText(['CPU: 75', 'Memory: 65']);
+
+      await summary.click();
+
+      const editor = page.getByTestId('TextNGEditor');
+      await expect(renderedContent(page.getByTestId('TextNGEditor-preview')).locator('li')).toHaveText([
+        'CPU: 75',
+        'Memory: 65',
+      ]);
+      await expect(editor.locator('.cm-content')).toContainText('${__data.series["CPU"]:reduce:lastNotNull}');
+      await expect(editor.getByRole('combobox', { name: 'Query' })).toHaveCount(0);
     });
   });
 });

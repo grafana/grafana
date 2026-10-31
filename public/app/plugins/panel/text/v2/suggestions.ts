@@ -5,6 +5,7 @@ import {
   getFieldDisplayName,
   type PreferredVisualisationType,
   ReducerID,
+  TIME_SERIES_VALUE_FIELD_NAME,
   type VisualizationSuggestion,
   VisualizationSuggestionScore,
   type VisualizationSuggestionsSupplier,
@@ -23,63 +24,88 @@ const DEDICATED_VISUALIZATIONS: PreferredVisualisationType[] = ['logs', 'trace',
 const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const QUOTABLE_IN_REDUCER = /^[^"\\{}<\p{Cc}]+$/u;
 const QUOTABLE_IN_ROW = /^[^"\\{}<:^\p{Cc}]+$/u;
+const SERIES_NAME = /^(?!.*\{\{)[^\\<\p{Cc}]+$/u;
 
 interface TemplateField {
   label: string;
   path: string;
 }
 
+interface FrameField {
+  frame: DataFrame;
+  field: Field;
+}
+
 type TextSuggestion = VisualizationSuggestion<Options>;
 
 export const textSuggestionsSupplier: VisualizationSuggestionsSupplier<Options> = (dataSummary) => {
   const frames = dataSummary.rawFrames ?? [];
-  const [frame] = frames;
 
   if (
     !isTextNewFeaturesEnabled() ||
     !dataSummary.hasData ||
-    dataSummary.frameCount !== 1 ||
-    !frame ||
+    frames.length === 0 ||
     DEDICATED_VISUALIZATIONS.some((type) => dataSummary.hasPreferredVisualisationType(type))
   ) {
     return;
   }
 
-  return getSuggestions(frame, frames, dataSummary.isInstant === true)?.map((suggestion) => ({
-    ...suggestion,
-    score: VisualizationSuggestionScore.OK,
-  }));
+  const isInstant = dataSummary.isInstant === true;
+  const suggestions =
+    frames.length === 1 ? getFrameSuggestions(frames[0], frames, isInstant) : getSeriesSuggestions(frames, isInstant);
+
+  return suggestions?.map((suggestion) => ({ ...suggestion, score: VisualizationSuggestionScore.OK }));
 };
 
-function getSuggestions(frame: DataFrame, frames: DataFrame[], isInstant: boolean): TextSuggestion[] | undefined {
+function getFrameSuggestions(frame: DataFrame, frames: DataFrame[], isInstant: boolean): TextSuggestion[] | undefined {
   const numberFields = frame.fields.filter((field) => field.type === FieldType.number);
   const valueFields = frame.fields.filter(
     (field) => field.type === FieldType.number || field.type === FieldType.string
   );
 
   if (frame.length === 1) {
-    return getSummarySuggestions(frame, frames, valueFields, []);
+    return getSummarySuggestions(getFieldTemplate(frame, frames, valueFields, QUOTABLE_IN_REDUCER), undefined);
   }
 
-  if (hasFieldOfType(frame, FieldType.time) && !isInstant) {
-    return numberFields.length > 0 ? getSummarySuggestions(frame, frames, valueFields, numberFields) : undefined;
+  if (isTimeSeries(frame, isInstant)) {
+    return numberFields.length > 0
+      ? getSummarySuggestions(
+          getFieldTemplate(frame, frames, valueFields, QUOTABLE_IN_REDUCER),
+          withValues(numberFields) ? getFieldTemplate(frame, frames, numberFields, QUOTABLE_IN_REDUCER) : undefined
+        )
+      : undefined;
   }
 
   if (hasFieldOfType(frame, FieldType.string)) {
     return frame.length <= MAX_LIST_ROWS ? getListSuggestions(frame, frames, valueFields) : undefined;
   }
 
-  return getSummarySuggestions(frame, frames, numberFields, numberFields);
+  const samples = getFieldTemplate(frame, frames, numberFields, QUOTABLE_IN_REDUCER);
+
+  return getSummarySuggestions(samples, withValues(numberFields) ? samples : undefined);
+}
+
+function getSeriesSuggestions(frames: DataFrame[], isInstant: boolean): TextSuggestion[] | undefined {
+  if (frames.some((frame) => isTable(frame, isInstant))) {
+    return;
+  }
+
+  const numberFields = frames.flatMap((frame) =>
+    frame.fields.filter((field) => field.type === FieldType.number).map((field) => ({ frame, field }))
+  );
+  const summary = getSeriesTemplate(frames, numberFields);
+  const isMultiRow = frames.some((frame) => frame.length > 1);
+
+  return getSummarySuggestions(
+    summary,
+    isMultiRow && withValues(numberFields.map(({ field }) => field)) ? summary : undefined
+  );
 }
 
 function getSummarySuggestions(
-  frame: DataFrame,
-  frames: DataFrame[],
-  summaryFields: Field[],
-  statisticFields: Field[]
+  summary: TemplateField[] | undefined,
+  statistics: TemplateField[] | undefined
 ): TextSuggestion[] | undefined {
-  const summary = getTemplateFields(frame, frames, summaryFields, QUOTABLE_IN_REDUCER);
-
   if (!summary?.length) {
     return;
   }
@@ -90,10 +116,6 @@ function getSummarySuggestions(
       options: getOptions(getSummaryContent(summary)),
     },
   ];
-
-  const statistics = statisticFields.some((field) => field.values.some(hasValue))
-    ? getTemplateFields(frame, frames, statisticFields, QUOTABLE_IN_REDUCER)
-    : undefined;
 
   if (statistics?.length) {
     suggestions.push({
@@ -112,7 +134,7 @@ function getListSuggestions(frame: DataFrame, frames: DataFrame[], valueFields: 
     return;
   }
 
-  const fields = getTemplateFields(
+  const fields = getFieldTemplate(
     frame,
     frames,
     [labelField, ...valueFields.filter((field) => field !== labelField)],
@@ -133,13 +155,13 @@ function getListSuggestions(frame: DataFrame, frames: DataFrame[], valueFields: 
   ];
 }
 
-function getTemplateFields(
+function getFieldTemplate(
   frame: DataFrame,
   frames: DataFrame[],
   fields: Field[],
   quotable: RegExp
 ): TemplateField[] | undefined {
-  const templateFields: TemplateField[] = [];
+  const template: TemplateField[] = [];
 
   for (const field of fields.slice(0, MAX_TEMPLATE_FIELDS)) {
     const path = getFieldPath(frame, field, quotable);
@@ -148,14 +170,44 @@ function getTemplateFields(
       return;
     }
 
-    templateFields.push({ label: escapeMarkdown(getFieldDisplayName(field, frame, frames)), path });
+    template.push({ label: getLabel(getFieldDisplayName(field, frame, frames)), path });
   }
 
-  return templateFields;
+  return template;
+}
+
+function getSeriesTemplate(frames: DataFrame[], fields: FrameField[]): TemplateField[] | undefined {
+  const names = frames.flatMap((frame) => frame.fields.map((field) => getFieldDisplayName(field, frame, frames)));
+  const template: TemplateField[] = [];
+
+  for (const { frame, field } of fields.slice(0, MAX_TEMPLATE_FIELDS)) {
+    const name = getFieldDisplayName(field, frame, frames);
+    const path = getSeriesPath(name);
+
+    if (path === undefined || names.indexOf(name) !== names.lastIndexOf(name)) {
+      return;
+    }
+
+    template.push({ label: getLabel(name), path });
+  }
+
+  return template;
+}
+
+function isTimeSeries(frame: DataFrame, isInstant: boolean): boolean {
+  return hasFieldOfType(frame, FieldType.time) && !isInstant;
+}
+
+function isTable(frame: DataFrame, isInstant: boolean): boolean {
+  return frame.length > 1 && !isTimeSeries(frame, isInstant) && hasFieldOfType(frame, FieldType.string);
 }
 
 function hasFieldOfType(frame: DataFrame, type: FieldType): boolean {
   return frame.fields.some((field) => field.type === type);
+}
+
+function withValues(fields: Field[]): boolean {
+  return fields.some((field) => field.values.some(hasValue));
 }
 
 function hasValue(value: unknown): boolean {
@@ -167,16 +219,32 @@ function getFieldPath(frame: DataFrame, field: Field, quotable: RegExp): string 
   const isUnique = names.filter((name) => name === field.name).length === 1;
 
   if (isUnique && IDENTIFIER.test(field.name)) {
-    return `.${field.name}`;
+    return `.fields.${field.name}`;
   }
 
   if (isUnique && quotable.test(field.name)) {
-    return `["${field.name}"]`;
+    return `.fields["${field.name}"]`;
   }
 
   const index = frame.fields.indexOf(field);
 
-  return names.includes(String(index)) ? undefined : `[${index}]`;
+  return names.includes(String(index)) ? undefined : `.fields[${index}]`;
+}
+
+function getSeriesPath(name: string): string | undefined {
+  if (!SERIES_NAME.test(name)) {
+    return;
+  }
+
+  if (!name.includes('"')) {
+    return `.series["${name}"]`;
+  }
+
+  return name.includes("'") ? undefined : `.series['${name}']`;
+}
+
+function getLabel(name: string): string {
+  return escapeMarkdown(name) || TIME_SERIES_VALUE_FIELD_NAME;
 }
 
 function escapeMarkdown(text: string): string {
@@ -193,11 +261,11 @@ function escapeMarkdown(text: string): string {
 }
 
 function getReducerMacro(path: string, reducer: ReducerID): string {
-  return `\${__data.fields${path}:reduce:${reducer}}`;
+  return `\${__data${path}:reduce:${reducer}}`;
 }
 
 function getRowMacro(path: string): string {
-  return `\${__data.fields${path}}`;
+  return `\${__data${path}}`;
 }
 
 function getSummaryContent(fields: TemplateField[]): string {

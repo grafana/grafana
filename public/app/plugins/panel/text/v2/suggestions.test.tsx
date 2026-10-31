@@ -100,6 +100,17 @@ function affectedServices(): DataFrame {
   });
 }
 
+function timeSeries(name: string, values: Array<number | null> = [1, 2, 3], config = {}): DataFrame {
+  return toDataFrame({ fields: [time, { name, type: FieldType.number, values, config }] });
+}
+
+function queries(): DataFrame[] {
+  return [
+    timeSeries('CPU', [40, 75, null], { unit: 'percent', decimals: 1 }),
+    timeSeries('Memory', [35, 45, 65], { unit: 'bytes' }),
+  ];
+}
+
 function numberFields(count: number) {
   return Array.from({ length: count }, (_, index) => ({
     name: `cpu${index}`,
@@ -210,7 +221,12 @@ describe('textSuggestionsSupplier', () => {
           }),
         ],
       },
-      { name: 'several frames', frames: [usage(), usage()] },
+      { name: 'several frames whose series share a display name', frames: [usage(), usage()] },
+      { name: 'several frames with a table among them', frames: [timeSeries('CPU'), services()] },
+      {
+        name: 'several frames with a series name that no quotes can hold',
+        frames: [timeSeries(`it's "cpu"`), timeSeries('Memory')],
+      },
       {
         name: 'a time series without numeric fields',
         frames: [toDataFrame({ fields: [time, { name: 'host', type: FieldType.string, values: ['a', 'b', 'c'] }] })],
@@ -266,6 +282,24 @@ describe('textSuggestionsSupplier', () => {
         expected: [LIST],
       },
       { name: 'a list of strings', frames: [affectedServices()], expected: [LIST] },
+      { name: 'two queries', frames: queries(), expected: [SUMMARY, STATISTICS] },
+      {
+        name: 'several series from one query',
+        frames: ['A-series', 'A-series1', 'A-series2'].map((name) => timeSeries(name)),
+        expected: [SUMMARY, STATISTICS],
+      },
+      {
+        name: 'an instant query with a frame per series',
+        frames: ['web-1', 'web-2'].map((name) =>
+          toDataFrame({
+            fields: [
+              { ...time, values: [3000] },
+              { name, type: FieldType.number, values: [1] },
+            ],
+          })
+        ),
+        expected: [SUMMARY],
+      },
       {
         name: `a table of exactly ${MAX_LIST_ROWS} rows`,
         frames: [
@@ -473,6 +507,57 @@ describe('textSuggestionsSupplier', () => {
       expect(listItems(renderSuggestion(SUMMARY, withDisplay(frames)))).toEqual(['a: 3', 'b: 6']);
     });
 
+    it('binds each series of several frames by its display name', () => {
+      expect(getOptions(SUMMARY, queries()).content).toBe(
+        [
+          '{{#if (eq frames.length 0)}}',
+          'No data',
+          '{{else}}',
+          '- **CPU**: ${__data.series["CPU"]:reduce:lastNotNull}',
+          '- **Memory**: ${__data.series["Memory"]:reduce:lastNotNull}',
+          '{{/if}}',
+        ].join('\n')
+      );
+      expect(getOptions(STATISTICS, queries()).content?.split('\n').at(-2)).toBe(
+        '| Memory | ${__data.series["Memory"]:reduce:lastNotNull} | ${__data.series["Memory"]:reduce:min} | ${__data.series["Memory"]:reduce:mean} | ${__data.series["Memory"]:reduce:max} |'
+      );
+    });
+
+    it('quotes a series name that holds double quotes in single quotes', () => {
+      const frames = ['web-1', 'web-2'].map((instance) =>
+        toDataFrame({
+          fields: [
+            time,
+            { name: 'Value', type: FieldType.number, values: [1, 2, 3], labels: { instance, job: 'api' } },
+          ],
+        })
+      );
+
+      expect(itemLines(SUMMARY, frames)).toEqual([
+        `- **{instance="web-1", job="api"}**: \${__data.series['{instance="web-1", job="api"}']:reduce:lastNotNull}`,
+        `- **{instance="web-2", job="api"}**: \${__data.series['{instance="web-2", job="api"}']:reduce:lastNotNull}`,
+      ]);
+      expect(listItems(renderSuggestion(SUMMARY, withDisplay(frames)))).toEqual([
+        '{instance="web-1", job="api"}: 3',
+        '{instance="web-2", job="api"}: 3',
+      ]);
+    });
+
+    it(`lists the first ${MAX_TEMPLATE_FIELDS} series of more frames, rather than offering nothing`, () => {
+      const frames = Array.from({ length: MAX_TEMPLATE_FIELDS + 1 }, (_, index) => timeSeries(`cpu${index}`));
+      const summary = itemLines(SUMMARY, frames);
+
+      expect(summary).toHaveLength(MAX_TEMPLATE_FIELDS);
+      expect(summary.at(-1)).toBe('- **cpu49**: ${__data.series["cpu49"]:reduce:lastNotNull}');
+    });
+
+    it('labels a field whose name is only whitespace as Value', () => {
+      const frames = [toDataFrame({ fields: [time, { name: '   ', type: FieldType.number, values: [1, 2, 3] }] })];
+
+      expect(itemLines(SUMMARY, frames)).toEqual(['- **Value**: ${__data.fields["   "]:reduce:lastNotNull}']);
+      expect(listItems(renderSuggestion(SUMMARY, withDisplay(frames)))).toEqual(['Value: 3']);
+    });
+
     it('offers nothing when a field index is also the name of another field', () => {
       const frame = toDataFrame({
         fields: [
@@ -540,6 +625,21 @@ describe('generated templates', () => {
 
   it('render the summary of a time series with the last value of its string dimension', () => {
     expect(listItems(renderSuggestion(SUMMARY, withDisplay([hostUsage()])))).toEqual(['Host: web-02', 'CPU: 75.0%']);
+  });
+
+  it('render an entry for each series of several frames, formatted by its own config', () => {
+    expect(listItems(renderSuggestion(SUMMARY, withDisplay(queries())))).toEqual(['CPU: 75.0%', 'Memory: 65 B']);
+    expect(tableRows(renderSuggestion(STATISTICS, withDisplay(queries())))).toEqual([
+      ['Field', 'Last', 'Min', 'Mean', 'Max'],
+      ['CPU', '75.0%', '40.0%', '57.5%', '75.0%'],
+      ['Memory', '65 B', '35 B', '48.3 B', '65 B'],
+    ]);
+  });
+
+  it('render a series that a later query no longer returns as empty, not as another series', () => {
+    const container = renderSuggestion(SUMMARY, queries(), withDisplay([queries()[1]]));
+
+    expect(listItems(container)).toEqual(['CPU:', 'Memory: 65 B']);
   });
 
   it('render the statistics of numeric samples that have no time field', () => {
@@ -804,6 +904,28 @@ describe('among the other visualization suggestions', () => {
       'CPU: 75.0%',
       'Memory usage: 120 B',
     ]);
+  });
+
+  it('previews the summary of several queries with every series, not only the first frame', async () => {
+    const { suggestions } = await getAllSuggestions(queries());
+    const summary = suggestions.find(({ pluginId, name }) => pluginId === 'text' && name === SUMMARY);
+    if (!summary) {
+      throw new Error('no summary suggestion');
+    }
+
+    render(
+      <VisualizationSuggestionCard
+        data={{ series: queries(), state: LoadingState.Done, timeRange: getDefaultTimeRange() }}
+        suggestion={summary}
+        width={200}
+      />
+    );
+
+    expect(listItems(await screen.findByTestId('TextNGPanel-converted-content'))).toEqual([
+      'CPU: 75.0%',
+      'Memory: 65 B',
+    ]);
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   });
 
   it('previews the list with every row', async () => {

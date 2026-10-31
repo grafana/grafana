@@ -455,6 +455,54 @@ describe('interpolateTemplate', () => {
       );
     });
 
+    describe('reading a series by name', () => {
+      const queries = withFieldConfig(
+        [
+          toDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [1000, 2000] },
+              { name: 'CPU', type: FieldType.number, values: [40, 75], config: { unit: 'percent' } },
+            ],
+          }),
+          toDataFrame({
+            refId: 'B',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [1000, 2000] },
+              { name: 'Value', type: FieldType.number, values: [100, 120], labels: { host: 'db-1' } },
+            ],
+          }),
+        ],
+        {}
+      );
+
+      it('reduces a field of any frame, found by its display name, with its own display config', () => {
+        expect(
+          interpolate(
+            '${__data.series["CPU"]:reduce:lastNotNull} ${__data.series[\'db-1\']:reduce:max}',
+            queries,
+            RenderMode.Once
+          )
+        ).toBe('75% 120');
+      });
+
+      it('leaves a series no frame has empty', () => {
+        expect(interpolate('[${__data.series["Memory"]:reduce:max}]', queries, RenderMode.Once)).toBe('[]');
+      });
+
+      it('reads the same series on every row', () => {
+        expect(interpolate('${__data.series["CPU"]:reduce:max}', queries, RenderMode.PerRow).split('\n\n')).toEqual([
+          '75%',
+          '75%',
+          '75%',
+          '75%',
+        ]);
+        expect(
+          interpolate('[${__data.series["db-1"]:reduce:max}]', [queries[0]], RenderMode.PerRow).split('\n\n')
+        ).toEqual(['[]', '[]']);
+      });
+    });
+
     describe('with a string field', () => {
       function interpolateHtml(content: string, value: string) {
         const frame = toDataFrame({

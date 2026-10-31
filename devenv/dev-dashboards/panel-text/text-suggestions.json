@@ -667,8 +667,8 @@
         "kind": "Panel",
         "spec": {
           "id": 11,
-          "title": "Several frames",
-          "description": "Two queries return two frames. Text renders one frame at a time, so it offers no suggestion.",
+          "title": "Two queries",
+          "description": "Each query returns its own frame. Offers Text - summary and Text - statistics with an entry for each query's series: CPU and Memory.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -709,6 +709,69 @@
                       }
                     },
                     "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.4.0-local",
+            "spec": {
+              "options": {
+                "colorMode": "none",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": ["lastNotNull"],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-12": {
+        "kind": "Panel",
+        "spec": {
+          "id": 12,
+          "title": "Several series from one query",
+          "description": "Random walk returns five frames. Offers Text - summary and Text - statistics with an entry for each series.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "seriesCount": 5
+                      }
+                    },
+                    "refId": "A",
                     "hidden": false
                   }
                 }
@@ -890,6 +953,19 @@
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-11"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 16,
+              "y": 21,
+              "width": 8,
+              "height": 7,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-12"
               }
             }
           }
