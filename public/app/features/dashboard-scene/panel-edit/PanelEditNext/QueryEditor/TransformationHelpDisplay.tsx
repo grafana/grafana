@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 import { renderMarkdown } from '@grafana/data';
-import { Drawer } from '@grafana/ui';
+import { Drawer, MarkdownHTML } from '@grafana/ui';
 import { FALLBACK_DOCS_LINK } from 'app/features/transformers/docs/constants';
 import { getTransformationContent } from 'app/features/transformers/docs/getTransformationContent';
 
@@ -48,7 +48,7 @@ export function TransformationHelpDisplay() {
       subtitle="Transformation help"
       onClose={transformToggles.toggleHelp}
     >
-      <div className="markdown-html" dangerouslySetInnerHTML={{ __html: helpHtml }} />
+      <MarkdownHTML className="markdown-html" html={helpHtml} />
     </Drawer>
   );
 }

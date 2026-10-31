@@ -109,6 +109,33 @@ To embed Grafana pages in an iframe, also set [`allow_embedding`](https://grafan
 This setting controls whether browsers can show Grafana in a frame. Other websites control this with their own settings.
 {{< /admonition >}}
 
+## Add Markdown alerts
+
+In Markdown mode, use an alert to highlight guidance or a warning.
+Put the alert type on the first line of a blockquote, followed by the content:
+
+```markdown
+> [!NOTE]
+> This dashboard refreshes every five minutes.
+
+> [!TIP]
+> Use the time picker to compare a different period.
+
+> [!IMPORTANT]
+> Check the selected environment before interpreting the results.
+
+> [!WARNING]
+> Missing data can affect these totals.
+
+> [!CAUTION]
+> Restarting the service interrupts active requests.
+```
+
+Alerts support Markdown formatting, including links and lists.
+The alert marker must occupy its own line.
+`NOTE` and `IMPORTANT` use information styling, `TIP` uses success styling, `WARNING` uses warning styling, and `CAUTION` uses error styling.
+Alerts follow your Grafana theme and work in both the preview and the rendered panel.
+
 ## Render query results as text with Handlebars templates
 
 Use `${__value}`, `${__field}`, `${__series}`, and `${__data}` macros to reference query results in the visualization content, and [Handlebars templating](https://handlebarsjs.com/guide/) for more control.

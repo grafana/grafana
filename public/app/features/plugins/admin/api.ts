@@ -1,4 +1,4 @@
-import { type PluginError, renderMarkdown } from '@grafana/data';
+import { type PluginError, renderMarkdown, textUtil } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { installPluginMeta, logPluginMetaError, uninstallPluginMeta } from '@grafana/runtime/internal';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
@@ -29,6 +29,8 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
 
   const local = localPlugins.find((p) => p.id === id);
   const dependencies = local?.dependencies || remote?.json?.dependencies;
+  const remoteReadme = remote?.readme && textUtil.sanitizeTextPanelContent(remote.readme);
+  const remoteChangelog = remote?.changelog && textUtil.sanitizeTextPanelContent(remote.changelog);
 
   // Add installed version to the list if it's missing (could be deprecated/deleted)
   const installedVersion = local?.info.version;
@@ -48,11 +50,11 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     grafanaDependency: dependencies?.grafanaDependency ?? dependencies?.grafanaVersion ?? '',
     pluginDependencies: dependencies?.plugins || [],
     links: local?.info.links || remote?.json?.info.links || [],
-    readme: localReadme || remote?.readme,
+    readme: localReadme || remoteReadme,
     versions,
     statusContext: remote?.statusContext ?? '',
     iam: remote?.json?.iam,
-    changelog: remote?.changelog || localChangelog,
+    changelog: remoteChangelog || localChangelog,
     licenseUrl: remote?.licenseUrl,
     documentationUrl: remote?.documentationUrl,
     sponsorshipUrl: remote?.sponsorshipUrl,

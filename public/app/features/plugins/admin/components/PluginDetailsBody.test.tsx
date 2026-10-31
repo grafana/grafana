@@ -3,7 +3,7 @@ import { act, render, screen } from '@testing-library/react';
 import type { JSX } from 'react';
 import { Provider } from 'react-redux';
 
-import { AppPlugin, PluginType } from '@grafana/data';
+import { AppPlugin, PluginType, renderMarkdown } from '@grafana/data';
 import { getMockPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
@@ -34,6 +34,21 @@ function renderWithStore(component: JSX.Element) {
 }
 
 describe('PluginDetailsBody', () => {
+  it('renders plugin-owned README admonitions as Alerts', () => {
+    usePluginConfigMock.mockReturnValue({ value: null, loading: false });
+    const plugin = getCatalogPluginMock();
+    plugin.details = { links: [], ...plugin.details, readme: renderMarkdown('> [!NOTE]\n> Plugin update guidance') };
+    renderWithStore(
+      <PluginDetailsBody
+        plugin={plugin}
+        queryParams={{}}
+        pageId={PluginTabIds.OVERVIEW}
+        info={[]}
+        showDetails={false}
+      />
+    );
+    expect(screen.getByRole('status', { name: 'Note' })).toHaveTextContent('Plugin update guidance');
+  });
   beforeEach(() => {
     usePluginConfigMock.mockReturnValue({ value: null, loading: false });
   });

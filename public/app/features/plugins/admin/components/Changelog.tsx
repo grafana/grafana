@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { MarkdownHTML, useStyles2 } from '@grafana/ui';
 
 interface Props {
   sanitizedHTML: string;
@@ -10,12 +10,7 @@ interface Props {
 export const Changelog = ({ sanitizedHTML }: Props) => {
   const styles = useStyles2(getStyles);
 
-  return (
-    <div
-      dangerouslySetInnerHTML={{ __html: sanitizedHTML ?? 'No changelog was found' }}
-      className={cx(styles.changelog)}
-    ></div>
-  );
+  return <MarkdownHTML html={sanitizedHTML ?? 'No changelog was found'} className={cx(styles.changelog)} />;
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({

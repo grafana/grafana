@@ -2,13 +2,14 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { StrictMode } from 'react';
 
 import { SandboxFrame, type SandboxFrameProps, WATCHDOG_TIMEOUT_MS } from './SandboxFrame';
-import { loadSandboxMermaid, loadSandboxRuntime } from './loadSandboxRuntime';
+import { loadSandboxAdmonitions, loadSandboxMermaid, loadSandboxRuntime } from './loadSandboxRuntime';
 import { MAX_BLOCKED_URL_CHARS, textSandboxPolicy } from './sandboxPolicy';
 import { TEXT_FRAME_PROTOCOL } from './sandboxProtocol';
 
 jest.mock('./loadSandboxRuntime', () => ({
   loadSandboxRuntime: jest.fn(() => Promise.resolve('/* trusted runtime */')),
   loadSandboxMermaid: jest.fn(() => Promise.resolve('/* trusted Mermaid */')),
+  loadSandboxAdmonitions: jest.fn(() => Promise.resolve('/* trusted Alerts */')),
 }));
 
 function props(overrides: Partial<SandboxFrameProps> = {}): SandboxFrameProps {
@@ -45,8 +46,37 @@ function notify(frame: HTMLIFrameElement, type: string, extra = {}, envelope = {
 beforeEach(() => {
   jest.useFakeTimers();
   jest.mocked(loadSandboxMermaid).mockClear();
+  jest.mocked(loadSandboxAdmonitions).mockClear();
 });
 afterEach(() => jest.useRealTimers());
+
+it('loads Alerts only for an authenticated request from a ready, configured document', async () => {
+  render(
+    <SandboxFrame
+      {...props({
+        admonitions: {
+          theme: '{}',
+          titles: { note: 'Note', tip: 'Tip', important: 'Important', warning: 'Warning', caution: 'Caution' },
+        },
+      })}
+    />
+  );
+  const element = await frame();
+  const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
+  notify(element, 'admonitions-needed');
+  expect(loadSandboxAdmonitions).not.toHaveBeenCalled();
+  notify(element, 'ready');
+  notify(element, 'admonitions-needed', {}, { origin: 'https://foreign.test' });
+  expect(loadSandboxAdmonitions).not.toHaveBeenCalled();
+  notify(element, 'admonitions-needed');
+  await act(async () => {});
+  expect(postMessage).toHaveBeenCalledWith(
+    expect.objectContaining({ type: 'admonitions-source', source: '/* trusted Alerts */' }),
+    '*'
+  );
+  notify(element, 'admonitions-needed');
+  expect(loadSandboxAdmonitions).toHaveBeenCalledTimes(1);
+});
 
 it.each([
   { name: 'protected', policy: textSandboxPolicy([], '/public/fonts/') },

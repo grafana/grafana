@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useState, useRef, memo, forwardRef } from 'react';
+import { createContext, useContext, useCallback, useState, useRef, memo, forwardRef } from 'react';
 import SVG from 'react-inlinesvg';
 
 import { type GrafanaTheme2, isIconName } from '@grafana/data';
@@ -9,6 +9,9 @@ import { type IconName, type IconType, type IconSize } from '../../types/icon';
 import { spin } from '../../utils/keyframes';
 
 import { getIconPath, getSvgSize } from './utils';
+
+/** Trusted, bundled SVG sources for environments that cannot fetch icon assets. */
+export const IconSourceContext = createContext<Partial<Record<IconName, string>>>({});
 
 export interface IconProps extends Omit<React.SVGProps<SVGElement>, 'onLoad' | 'onError' | 'ref'> {
   name: IconName;
@@ -93,6 +96,7 @@ export const Icon = memo(
   forwardRef<SVGElement, IconProps>(
     ({ size = 'md', type = 'default', name: nameProp, className, style, title = '', ...rest }, ref) => {
       const styles = useStyles2(getIconStyles);
+      const sources = useContext(IconSourceContext);
       const { nameToUse: name, handleLoad } = useIconWorkaround(nameProp);
 
       if (!isIconName(name)) {
@@ -105,7 +109,7 @@ export const Icon = memo(
       const svgSize = getSvgSize(size);
       const svgHgt = svgSize;
       const svgWid = name.startsWith('gf-bar-align') ? 16 : name.startsWith('gf-interp') ? 30 : svgSize;
-      const svgPath = getIconPath(iconName, type);
+      const svgPath = sources[iconName] ?? getIconPath(iconName, type);
 
       const composedClassName = cx(
         styles.icon,

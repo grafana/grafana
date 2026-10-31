@@ -10950,6 +10950,13 @@
       "tooltip-collapse-all": "Collapse all rows",
       "tooltip-expand-all": "Expand all rows"
     },
+    "markdown": {
+      "caution": "Caution",
+      "important": "Important",
+      "note": "Note",
+      "tip": "Tip",
+      "warning": "Warning"
+    },
     "matchers": {
       "groups": {
         "annotation": "Annotations",

@@ -1,10 +1,9 @@
 import { css, cx } from '@emotion/css';
-import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 import { lazy, Suspense } from 'react';
 
 import { type GrafanaTheme2, renderTextPanelMarkdown } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { LoadingPlaceholder, MarkdownHTML, useStyles2 } from '@grafana/ui';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { useFocusExtension } from './focusExtension';
@@ -61,7 +60,7 @@ export function MarkdownCell({
     if (!html) {
       return null;
     }
-    return <DangerouslySetHtmlContent html={html} className={cx('markdown-html', styles.markdown)} />;
+    return <MarkdownHTML html={html} className={cx('markdown-html', styles.markdown)} />;
   }
 
   return (
