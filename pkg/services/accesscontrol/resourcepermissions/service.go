@@ -833,9 +833,19 @@ type ActionSetSvc struct {
 
 // NewActionSetService returns a new instance of InMemoryActionSetService.
 func NewActionSetService() ActionSetService {
-	return &ActionSetSvc{
+	service := &ActionSetSvc{
 		store: NewInMemoryActionSetStore(),
 	}
+	// Secure values have no legacy resource-permission service to register these sets.
+	service.StoreActionSet("secret.securevalues:view", []string{"secret.securevalues:read"})
+	service.StoreActionSet("secret.securevalues:edit", []string{
+		"secret.securevalues:read", "secret.securevalues:write", "secret.securevalues:delete",
+	})
+	service.StoreActionSet("secret.securevalues:admin", []string{
+		"secret.securevalues:read", "secret.securevalues:write", "secret.securevalues:delete",
+		"secret.securevalues.permissions:read", "secret.securevalues.permissions:write",
+	})
+	return service
 }
 
 // ResolveAction returns all the action sets that the action belongs to.
@@ -918,7 +928,8 @@ func (a *ActionSetSvc) RegisterActionSets(ctx context.Context, pluginID string, 
 }
 
 func isActionSetEnabledResource(action string) bool {
-	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) ||
+	return strings.HasPrefix(action, "secret.securevalues:") ||
+		strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) ||
 		strings.HasPrefix(action, notebooks.ScopeNotebooksRoot) ||
 		strings.HasPrefix(action, folder.ScopeFoldersRoot) ||
 		strings.HasPrefix(action, accesscontrol.AlertingRoutesKind) ||
