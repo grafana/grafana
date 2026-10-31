@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -4455,4 +4456,63 @@ func TestRootFolderPermissionMapping(t *testing.T) {
 			})
 		}
 	}
+}
+
+// Numeric report grants are persisted by the legacy role API and must survive the API migration.
+func TestReportingLegacyIDPermissions(t *testing.T) {
+	for _, tc := range []struct {
+		name, scope, verb, report string
+		allowed                   bool
+	}{
+		{"numeric read", "reports:id:17", "get", "weekly", true},
+		{"numeric update", "reports:id:17", "update", "weekly", true},
+		{"numeric delete", "reports:id:17", "delete", "weekly", true},
+		{"another report", "reports:id:17", "get", "other", false},
+		{"deleted report grant", "reports:id:99", "get", "weekly", false},
+		{"wildcard grant", "reports:id:*", "get", "weekly", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			action := map[string]string{"get": "reports:read", "update": "reports:write", "delete": "reports:delete"}[tc.verb]
+			s := NewTestService("reader", []accesscontrol.Permission{{Action: action, Scope: tc.scope}}, nil)
+			s.store = &reportUIDTestStore{Store: s.store, reports: map[int64]string{17: "weekly"}}
+			got, err := s.Check(identity.WithRequester(t.Context(), &identity.StaticRequester{Type: types.TypeUser, UserUID: "reader", OrgID: 1, Namespace: "default"}), &authzv1.CheckRequest{Subject: "user:reader", Namespace: "default", Group: "reporting.grafana.app", Resource: "reports", Verb: tc.verb, Name: tc.report})
+			require.NoError(t, err)
+			require.Equal(t, tc.allowed, got.Allowed)
+		})
+	}
+	for range 20 {
+		s := NewTestService("reader", []accesscontrol.Permission{{Action: "reports:read", Scope: "reports:uid:other"}, {Action: "reports:read", Scope: "reports:id:17"}}, nil)
+		s.store = &reportUIDTestStore{Store: s.store, reports: map[int64]string{17: "weekly"}}
+		got, err := s.Check(identity.WithRequester(t.Context(), &identity.StaticRequester{Type: types.TypeUser, UserUID: "reader", OrgID: 1, Namespace: "default"}), &authzv1.CheckRequest{Subject: "user:reader", Namespace: "default", Group: "reporting.grafana.app", Resource: "reports", Verb: "get", Name: "weekly"})
+		require.NoError(t, err)
+		require.True(t, got.Allowed, "mixed ID and UID grants must not depend on map iteration order")
+	}
+}
+
+type reportUIDTestStore struct {
+	store.Store
+	reports map[int64]string
+}
+
+func (s *reportUIDTestStore) GetReportUIDByID(_ context.Context, _ types.NamespaceInfo, id int64) (string, bool, error) {
+	uid, found := s.reports[id]
+	return uid, found, nil
+}
+
+func TestReportingReportLookupError(t *testing.T) {
+	lookupErr := errors.New("report database unavailable")
+	backendErr := lookupErr
+	s := NewTestService("reader", []accesscontrol.Permission{{Action: "reports:read", Scope: "reports:id:17"}}, nil)
+	s.store = &reportLookupStore{Store: s.store, lookup: func(context.Context, types.NamespaceInfo, int64) (string, bool, error) {
+		return "weekly", true, backendErr
+	}}
+	ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Type: types.TypeUser, UserUID: "reader", OrgID: 1, Namespace: "default"})
+	req := &authzv1.CheckRequest{Subject: "user:reader", Namespace: "default", Group: "reporting.grafana.app", Resource: "reports", Verb: "get", Name: "weekly"}
+	got, err := s.Check(ctx, req)
+	require.ErrorIs(t, err, lookupErr)
+	require.False(t, got.Allowed)
+	backendErr = nil
+	got, err = s.Check(ctx, req)
+	require.NoError(t, err)
+	require.True(t, got.Allowed, "lookup failures must not be cached as permission denials")
 }

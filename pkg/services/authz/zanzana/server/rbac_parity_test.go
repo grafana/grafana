@@ -358,6 +358,188 @@ func TestIntegrationRBACParityCheck(t *testing.T) {
 			req:         parityCheckReq(dashboardGroup, dashboardResource, "", utils.VerbList, "", ""),
 			expected:    false,
 		},
+
+		// -- reporting settings (legacy and native actions) ------------------
+		{
+			name:        "reportsettings/reports.settings:read/get",
+			permissions: []accesscontrol.Permission{{Action: "reports.settings:read"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbGet, "settings", ""),
+			expected:    true,
+		},
+		{
+			name:        "reportsettings/reports.settings:read/create",
+			permissions: []accesscontrol.Permission{{Action: "reports.settings:read"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbCreate, "settings", ""),
+			expected:    false,
+		},
+		{
+			name:        "reportsettings/reports.settings:read/update",
+			permissions: []accesscontrol.Permission{{Action: "reports.settings:read"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbUpdate, "settings", ""),
+			expected:    false,
+		},
+		{
+			name:        "reportsettings/reports.settings:read/patch",
+			permissions: []accesscontrol.Permission{{Action: "reports.settings:read"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbPatch, "settings", ""),
+			expected:    false,
+		},
+		{
+			name:        "reportsettings/reports.settings:read/delete",
+			permissions: []accesscontrol.Permission{{Action: "reports.settings:read"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbDelete, "settings", ""),
+			expected:    false,
+		},
+		{
+			name:        "reportsettings/reports.settings:write/get",
+			permissions: []accesscontrol.Permission{{Action: "reports.settings:write"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbGet, "settings", ""),
+			expected:    false,
+		},
+		{
+			name:        "reportsettings/reports.settings:write/create",
+			permissions: []accesscontrol.Permission{{Action: "reports.settings:write"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbCreate, "settings", ""),
+			expected:    true,
+		},
+		{
+			name:        "reportsettings/reports.settings:write/update",
+			permissions: []accesscontrol.Permission{{Action: "reports.settings:write"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbUpdate, "settings", ""),
+			expected:    true,
+		},
+		{
+			name:        "reportsettings/reports.settings:write/patch",
+			permissions: []accesscontrol.Permission{{Action: "reports.settings:write"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbPatch, "settings", ""),
+			expected:    true,
+		},
+		{
+			name:        "reportsettings/reports.settings:write/delete",
+			permissions: []accesscontrol.Permission{{Action: "reports.settings:write"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbDelete, "settings", ""),
+			expected:    true,
+		},
+		{
+			name:        "reportsettings/reporting.grafana.app/reportsettings:get/get",
+			permissions: []accesscontrol.Permission{{Action: "reporting.grafana.app/reportsettings:get"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbGet, "settings", ""),
+			expected:    true,
+		},
+		{
+			name:        "reportsettings/reporting.grafana.app/reportsettings:get/create",
+			permissions: []accesscontrol.Permission{{Action: "reporting.grafana.app/reportsettings:get"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbCreate, "settings", ""),
+			expected:    false,
+		},
+		{
+			name:        "reportsettings/reporting.grafana.app/reportsettings:get/update",
+			permissions: []accesscontrol.Permission{{Action: "reporting.grafana.app/reportsettings:get"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbUpdate, "settings", ""),
+			expected:    false,
+		},
+		{
+			name:        "reportsettings/reporting.grafana.app/reportsettings:get/patch",
+			permissions: []accesscontrol.Permission{{Action: "reporting.grafana.app/reportsettings:get"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbPatch, "settings", ""),
+			expected:    false,
+		},
+		{
+			name:        "reportsettings/reporting.grafana.app/reportsettings:get/delete",
+			permissions: []accesscontrol.Permission{{Action: "reporting.grafana.app/reportsettings:get"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbDelete, "settings", ""),
+			expected:    false,
+		},
+		{
+			name:        "reportsettings/reporting.grafana.app/reportsettings:create/get",
+			permissions: []accesscontrol.Permission{{Action: "reporting.grafana.app/reportsettings:create"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbGet, "settings", ""),
+			expected:    false,
+		},
+		{
+			name:        "reportsettings/reporting.grafana.app/reportsettings:create/create",
+			permissions: []accesscontrol.Permission{{Action: "reporting.grafana.app/reportsettings:create"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbCreate, "settings", ""),
+			expected:    true,
+		},
+		{
+			name:        "reportsettings/reporting.grafana.app/reportsettings:create/update",
+			permissions: []accesscontrol.Permission{{Action: "reporting.grafana.app/reportsettings:create"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbUpdate, "settings", ""),
+			expected:    false,
+		},
+		{
+			name:        "reportsettings/reporting.grafana.app/reportsettings:create/patch",
+			permissions: []accesscontrol.Permission{{Action: "reporting.grafana.app/reportsettings:create"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbPatch, "settings", ""),
+			expected:    false,
+		},
+		{
+			name:        "reportsettings/reporting.grafana.app/reportsettings:create/delete",
+			permissions: []accesscontrol.Permission{{Action: "reporting.grafana.app/reportsettings:create"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbDelete, "settings", ""),
+			expected:    false,
+		},
+		{
+			name:        "reportsettings/reporting.grafana.app/reportsettings:update/get",
+			permissions: []accesscontrol.Permission{{Action: "reporting.grafana.app/reportsettings:update"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbGet, "settings", ""),
+			expected:    false,
+		},
+		{
+			name:        "reportsettings/reporting.grafana.app/reportsettings:update/create",
+			permissions: []accesscontrol.Permission{{Action: "reporting.grafana.app/reportsettings:update"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbCreate, "settings", ""),
+			expected:    false,
+		},
+		{
+			name:        "reportsettings/reporting.grafana.app/reportsettings:update/update",
+			permissions: []accesscontrol.Permission{{Action: "reporting.grafana.app/reportsettings:update"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbUpdate, "settings", ""),
+			expected:    true,
+		},
+		{
+			name:        "reportsettings/reporting.grafana.app/reportsettings:update/patch",
+			permissions: []accesscontrol.Permission{{Action: "reporting.grafana.app/reportsettings:update"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbPatch, "settings", ""),
+			expected:    true,
+		},
+		{
+			name:        "reportsettings/reporting.grafana.app/reportsettings:update/delete",
+			permissions: []accesscontrol.Permission{{Action: "reporting.grafana.app/reportsettings:update"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbDelete, "settings", ""),
+			expected:    false,
+		},
+		{
+			name:        "reportsettings/reporting.grafana.app/reportsettings:delete/get",
+			permissions: []accesscontrol.Permission{{Action: "reporting.grafana.app/reportsettings:delete"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbGet, "settings", ""),
+			expected:    false,
+		},
+		{
+			name:        "reportsettings/reporting.grafana.app/reportsettings:delete/create",
+			permissions: []accesscontrol.Permission{{Action: "reporting.grafana.app/reportsettings:delete"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbCreate, "settings", ""),
+			expected:    false,
+		},
+		{
+			name:        "reportsettings/reporting.grafana.app/reportsettings:delete/update",
+			permissions: []accesscontrol.Permission{{Action: "reporting.grafana.app/reportsettings:delete"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbUpdate, "settings", ""),
+			expected:    false,
+		},
+		{
+			name:        "reportsettings/reporting.grafana.app/reportsettings:delete/patch",
+			permissions: []accesscontrol.Permission{{Action: "reporting.grafana.app/reportsettings:delete"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbPatch, "settings", ""),
+			expected:    false,
+		},
+		{
+			name:        "reportsettings/reporting.grafana.app/reportsettings:delete/delete",
+			permissions: []accesscontrol.Permission{{Action: "reporting.grafana.app/reportsettings:delete"}},
+			req:         parityCheckReq("reporting.grafana.app", "reportsettings", "", utils.VerbDelete, "settings", ""),
+			expected:    true,
+		},
 	}
 
 	srv := setupOpenFGAServer(t)
@@ -1450,6 +1632,8 @@ func permissionToTuples(subject string, perm accesscontrol.Permission) ([]*openf
 	// table is the right one.
 	if kind == "" || kind == "*" {
 		for _, candidate := range []string{
+			"reportsettings",
+			"reporting.grafana.app/reportsettings",
 			common.KindDashboards,
 			common.KindNotebooks,
 			common.KindSnapshots,

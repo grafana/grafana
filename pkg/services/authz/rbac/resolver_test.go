@@ -4,9 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"golang.org/x/sync/singleflight"
+
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
@@ -245,4 +248,55 @@ func TestService_fetchPagination(t *testing.T) {
 		require.Len(t, got, 5)
 		require.Equal(t, 3, store.calls)
 	})
+}
+
+func TestReportNameResolver(t *testing.T) {
+	namespace := types.NamespaceInfo{Value: "default", OrgID: 1}
+	s := &Service{
+		sf: new(singleflight.Group),
+		store: &reportLookupStore{lookup: func(_ context.Context, ns types.NamespaceInfo, id int64) (string, bool, error) {
+			require.Equal(t, namespace, ns)
+			require.Equal(t, int64(17), id)
+			return "weekly", true, nil
+		}},
+	}
+
+	resolver, err := s.newReportNameResolver(t.Context(), namespace)
+	require.NoError(t, err)
+	uid, err := resolver("reports:id:17")
+	require.NoError(t, err)
+	require.Equal(t, "reports:uid:weekly", uid)
+}
+
+func TestReportNameResolverMissingAndInvalid(t *testing.T) {
+	calls := 0
+	found := false
+	s := &Service{sf: new(singleflight.Group), store: &reportLookupStore{lookup: func(context.Context, types.NamespaceInfo, int64) (string, bool, error) {
+		calls++
+		return "weekly", found, nil
+	}}}
+	resolver, err := s.newReportNameResolver(t.Context(), types.NamespaceInfo{Value: "default", OrgID: 1})
+	require.NoError(t, err)
+	require.Zero(t, calls, "constructing a resolver must not query reports")
+	for _, scope := range []string{"reports:id:", "reports:id:NaN", "reports:id:0", "reports:id:-1"} {
+		_, err := resolver(scope)
+		require.Error(t, err)
+	}
+	require.Zero(t, calls, "invalid IDs must not reach the database")
+	_, err = resolver("reports:id:17")
+	require.Error(t, err)
+	found = true
+	uid, err := resolver("reports:id:17")
+	require.NoError(t, err)
+	require.Equal(t, "reports:uid:weekly", uid)
+	require.Equal(t, 2, calls, "missing results must not be cached")
+}
+
+type reportLookupStore struct {
+	store.Store
+	lookup func(context.Context, types.NamespaceInfo, int64) (string, bool, error)
+}
+
+func (s *reportLookupStore) GetReportUIDByID(ctx context.Context, ns types.NamespaceInfo, id int64) (string, bool, error) {
+	return s.lookup(ctx, ns, id)
 }
