@@ -1,4 +1,5 @@
 import { sql as sqlLanguage } from '@codemirror/lang-sql';
+import { ensureSyntaxTree } from '@codemirror/language';
 import { EditorState } from '@codemirror/state';
 
 import { getSqlSignatureHelpProvider, type SqlFunctionSignature } from './signatureHelp';
@@ -25,7 +26,10 @@ const SIGNATURES: SqlFunctionSignature[] = [
 const getHelp = (doc: string, pos: number = doc.length) => {
   const provider = getSqlSignatureHelpProvider(SIGNATURES);
   const state = EditorState.create({ doc, extensions: [sqlLanguage()] });
-  return provider(state, pos);
+
+  // Initial parsing has a time budget. Finish it and publish the completed tree in a new state.
+  expect(ensureSyntaxTree(state, state.doc.length, 5000)).not.toBeNull();
+  return provider(state.update({}).state, pos);
 };
 
 describe('getSqlSignatureHelpProvider', () => {
