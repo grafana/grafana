@@ -280,7 +280,7 @@ func newServerHandler(b builder.APIGroupBuilder, opts Options, reg prometheus.Re
 	}); err != nil {
 		return nil, fmt.Errorf("%s: build group: %w", group, err)
 	}
-	info.NegotiatedSerializer = grafanarest.DefaultNoProtobufNegotiatedSerializer(codecs)
+	info.NegotiatedSerializer = kindPreservingSerializer{grafanarest.DefaultNoProtobufNegotiatedSerializer(codecs)}
 	if err := server.InstallAPIGroup(&info); err != nil {
 		return nil, fmt.Errorf("%s: install group: %w", group, err)
 	}

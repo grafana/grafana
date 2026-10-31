@@ -451,6 +451,46 @@ func TestHandlerResourceStorage(t *testing.T) {
 	require.Contains(t, res.Body.String(), errStubRoute.Error())
 }
 
+// Every kind is served as the same unstructured Go type, so encoding must keep
+// the kind each object carries rather than the first one registered for it.
+func TestHandlerEncodesEachKindUnderItsOwnName(t *testing.T) {
+	opts := allowAll(testOptions())
+	opts.Storage = UnifiedStorage(&resourceClient{}, nil, nil)
+	plugin := testPlugin()
+	folderScoped := false
+	kinds := []app.ManifestVersionKind{
+		{Kind: "TestKind", Plural: "TestKinds", Scope: "Namespaced", FolderScoped: &folderScoped},
+		{Kind: "Widget", Plural: "Widgets", Scope: "Namespaced", FolderScoped: &folderScoped},
+	}
+	plugin.Manifests[0].Versions = []app.ManifestVersion{
+		{Name: "v0alpha1", Served: true, Kinds: kinds},
+		{Name: "v1alpha1", Served: true, Kinds: kinds},
+	}
+	handler := withRequester(loadHandler(t, plugin, opts))
+	root := "/apis/example.ext.grafana.app/%s/namespaces/default/%s"
+
+	for _, tc := range []struct{ resource, kind string }{
+		{"testkinds", "TestKindList"},
+		{"widgets", "WidgetList"},
+	} {
+		var list metav1.TypeMeta
+		getJSON(t, handler, fmt.Sprintf(root, "v1alpha1", tc.resource), &list)
+		require.Equal(t, tc.kind, list.Kind)
+	}
+
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf(root, "v0alpha1", "widgets"), strings.NewReader(
+		`{"apiVersion":"example.ext.grafana.app/v0alpha1","kind":"Widget","metadata":{"name":"widget"},"spec":{}}`))
+	req.Header.Set("Content-Type", "application/json")
+	handler.ServeHTTP(res, req)
+	require.Equal(t, http.StatusCreated, res.Code, res.Body.String())
+
+	// Read through the other version, which converts the stored object.
+	var widget metav1.TypeMeta
+	getJSON(t, handler, fmt.Sprintf(root, "v1alpha1", "widgets")+"/widget", &widget)
+	require.Equal(t, metav1.TypeMeta{APIVersion: "example.ext.grafana.app/v1alpha1", Kind: "Widget"}, widget)
+}
+
 type resourceClient struct {
 	resource.ResourceClient
 	created *resourcepb.CreateRequest
@@ -460,6 +500,10 @@ type resourceClient struct {
 func (c *resourceClient) Create(_ context.Context, req *resourcepb.CreateRequest, _ ...grpc.CallOption) (*resourcepb.CreateResponse, error) {
 	c.created = req
 	return &resourcepb.CreateResponse{ResourceVersion: 1}, nil
+}
+
+func (c *resourceClient) List(context.Context, *resourcepb.ListRequest, ...grpc.CallOption) (*resourcepb.ListResponse, error) {
+	return &resourcepb.ListResponse{ResourceVersion: 1}, nil
 }
 
 func (c *resourceClient) Read(_ context.Context, req *resourcepb.ReadRequest, _ ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
