@@ -7,7 +7,7 @@ import { byTestId, byText } from 'testing-library-selector';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, type FetchError } from '@grafana/runtime';
 import { ConstantVariable, sceneGraph, SceneRefreshPicker, VizPanel } from '@grafana/scenes';
-import { defaultSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { defaultSpec, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { type CorsWorker } from 'app/core/utils/CorsWorker';
 import {
@@ -24,6 +24,7 @@ import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRe
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { DashboardOverlay } from '../scene/DashboardOverlay';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
@@ -1214,6 +1215,139 @@ describe('SaveDashboardDrawer', () => {
 
       const dataSent = saveDashboardMutationMock.mock.calls[0][0];
       expect(dataSent.dashboard.tags).toEqual(['my-tag']);
+    });
+  });
+
+  describe('Collapse all rows', () => {
+    const rowsDashboard = (collapse: boolean[]): DashboardV2Spec => ({
+      ...defaultSpec(),
+      title: 'hello',
+      layout: {
+        kind: 'RowsLayout',
+        spec: {
+          rows: collapse.map((rowCollapse, i) => ({
+            kind: 'RowsLayoutRow',
+            spec: { title: `Row ${i}`, collapse: rowCollapse, layout: { kind: 'GridLayout', spec: { items: [] } } },
+          })),
+        },
+      },
+    });
+
+    const setupV2 = (spec: DashboardV2Spec) => {
+      const metadata = {
+        name: 'my-uid',
+        generation: 10,
+        resourceVersion: '10',
+        creationTimestamp: '2026-10-21T00:00:00Z',
+      };
+      const dashboard = transformSaveModelSchemaV2ToScene({
+        apiVersion: 'dashboard.grafana.app/v2',
+        kind: 'DashboardWithAccessInfo',
+        spec,
+        metadata,
+        access: { canSave: true },
+      });
+      dashboard.setState({ $data: undefined });
+      dashboard.setInitialSaveModel(transformSceneToSaveModelSchemaV2(dashboard), metadata);
+      cleanUp();
+      cleanUp = dashboard.activate();
+      dashboard.onEnterEditMode();
+      // An unrelated change, so Save is enabled
+      dashboard.setState({ title: 'New title' });
+      return dashboard;
+    };
+
+    const openAndRenderV2 = async (spec: DashboardV2Spec) => {
+      const dashboard = setupV2(spec);
+      await dashboard.openSaveDrawer({});
+      render(
+        <TestProvider>
+          <DashboardOverlay dashboard={dashboard} />
+        </TestProvider>
+      );
+      return dashboard;
+    };
+
+    const liveRowsCollapse = (dashboard: DashboardScene) => {
+      const live = transformSceneToSaveModelSchemaV2(dashboard);
+      return live.layout.kind === 'RowsLayout' ? live.layout.spec.rows.map((row) => row.spec.collapse) : undefined;
+    };
+
+    const savedRowsCollapse = () => {
+      const saved: DashboardV2Spec = saveDashboardMutationMock.mock.calls[0][0].dashboard;
+      return saved.layout.kind === 'RowsLayout' ? saved.layout.spec.rows.map((row) => row.spec.collapse) : undefined;
+    };
+
+    it('saves every row collapsed when Collapse all rows is ticked', async () => {
+      await openAndRenderV2(rowsDashboard([false, true]));
+      mockSaveDashboard();
+
+      await userEvent.click(await screen.findByRole('checkbox', { name: /Collapse all rows/ }));
+      await userEvent.click(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      expect(savedRowsCollapse()).toEqual([true, true]);
+    });
+
+    it('collapses the live rows after saving and keeps them collapsed on discard', async () => {
+      const dashboard = await openAndRenderV2(rowsDashboard([false, true]));
+      mockSaveDashboard();
+
+      await userEvent.click(await screen.findByRole('checkbox', { name: /Collapse all rows/ }));
+      await userEvent.click(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      await waitFor(() => expect(liveRowsCollapse(dashboard)).toEqual([true, true]));
+      expect(dashboard.state.isDirty).toBe(false);
+
+      act(() => dashboard.exitEditMode({ skipConfirm: true, restoreInitialState: true }));
+      expect(liveRowsCollapse(dashboard)).toEqual([true, true]);
+    });
+
+    it('saves rows as they are when Collapse all rows is left unticked', async () => {
+      const dashboard = await openAndRenderV2(rowsDashboard([false, true]));
+      mockSaveDashboard();
+
+      expect(await screen.findByRole('checkbox', { name: /Collapse all rows/ })).not.toBeChecked();
+      await userEvent.click(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      expect(savedRowsCollapse()).toEqual([false, true]);
+      expect(liveRowsCollapse(dashboard)).toEqual([false, true]);
+    });
+
+    it('does not offer Collapse all rows when every row is already collapsed', async () => {
+      await openAndRenderV2(rowsDashboard([true, true]));
+
+      expect(await ui.saveDashbordText.find()).toBeInTheDocument();
+      expect(screen.queryByRole('checkbox', { name: /Collapse all rows/ })).not.toBeInTheDocument();
+    });
+
+    it('does not offer Collapse all rows for a classic dashboard with an expanded row', async () => {
+      const dashboard = transformSaveModelToScene({
+        dashboard: {
+          title: 'hello',
+          uid: 'my-uid',
+          schemaVersion: 30,
+          version: 10,
+          panels: [
+            { id: 1, type: 'row', title: 'Row', collapsed: false, gridPos: { x: 0, y: 0, w: 24, h: 1 }, panels: [] },
+          ],
+        },
+        meta: {},
+      });
+      dashboard.setState({ $data: undefined });
+      dashboard.setInitialSaveModel(transformSceneToSaveModel(dashboard));
+      cleanUp();
+      cleanUp = dashboard.activate();
+      dashboard.onEnterEditMode();
+      dashboard.setState({ title: 'New title' });
+      await dashboard.openSaveDrawer({});
+      render(
+        <TestProvider>
+          <DashboardOverlay dashboard={dashboard} />
+        </TestProvider>
+      );
+
+      expect(await ui.saveDashbordText.find()).toBeInTheDocument();
+      expect(screen.queryByRole('checkbox', { name: /Collapse all rows/ })).not.toBeInTheDocument();
     });
   });
 

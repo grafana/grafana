@@ -20,6 +20,8 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { DashboardInteractions } from '../utils/interactions';
 import { trackDashboardSceneCreatedOrSaved } from '../utils/tracking';
 
+import { collapseRowsAfterSave } from './collapseRowsAfterSave';
+
 export function useSaveDashboard(isCopy = false) {
   const notifyApp = useAppNotification();
   const [saveDashboardRtkQuery] = useSaveDashboardMutation();
@@ -31,6 +33,7 @@ export function useSaveDashboard(isCopy = false) {
         SaveDashboardAsOptions & {
           // When provided, will take precedence over the scene's save model
           rawDashboardJSON?: Dashboard | DashboardV2Spec;
+          collapseRows?: boolean;
         }
     ) => {
       {
@@ -79,6 +82,10 @@ export function useSaveDashboard(isCopy = false) {
 
         // Capture before saveCompleted re-snapshots the baseline (which would make this report ~0).
         const diffCount = scene.getDashboardChanges().diffCount;
+
+        if (options.collapseRows) {
+          collapseRowsAfterSave(scene);
+        }
 
         await scene.saveCompleted(saveModel, resultData, options.folderUid, saveAsSource);
 

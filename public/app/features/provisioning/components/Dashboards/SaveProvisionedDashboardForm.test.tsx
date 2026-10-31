@@ -2,6 +2,10 @@ import { HttpResponse, http } from 'msw';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { type Dashboard } from '@grafana/schema';
+import {
+  defaultSpec as defaultDashboardV2Spec,
+  type Spec as DashboardV2Spec,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import {
@@ -12,6 +16,7 @@ import {
   ManagerKind,
 } from 'app/features/apiserver/types';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
+import { collapseRowsAfterSave } from 'app/features/dashboard-scene/saving/collapseRowsAfterSave';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
@@ -107,6 +112,11 @@ jest.mock('../../hooks/useGetRepositoryFolders', () => ({
   useGetRepositoryFolders: jest.fn().mockReturnValue({ options: [], loading: false, error: null }),
 }));
 
+// The real helper walks a live scene; these tests render the form with dashboard stubs
+jest.mock('app/features/dashboard-scene/saving/collapseRowsAfterSave', () => ({
+  collapseRowsAfterSave: jest.fn(),
+}));
+
 jest.mock('app/features/dashboard-scene/saving/SaveDashboardForm', () => {
   const actual = jest.requireActual('app/features/dashboard-scene/saving/SaveDashboardForm');
   return {
@@ -142,6 +152,7 @@ function setup(props: Partial<Props> = {}) {
     } as unknown as DashboardScene,
     drawer: {
       onClose: jest.fn(),
+      state: {},
     } as unknown as SaveDashboardDrawer,
     changeInfo: {
       changedSaveModel: mockDashboard,
@@ -1592,6 +1603,147 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(request.url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
     expect(request.url.searchParams.get('message')).toBe('Save with raw JSON');
     expect(request.body).toEqual(dashboardFromRawJson);
+  });
+
+  describe('Collapse all rows', () => {
+    const saveExisting = async (collapseRows: boolean | undefined) => {
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          capturedRequest = { url: new URL(request.url), body: await request.json() };
+          return saveSuccessResponse(request, 'test-dashboard', 'Test Dashboard');
+        })
+      );
+      const state = { meta: { folderUid: 'folder-uid', slug: 'test-dashboard', uid: 'test-dashboard' }, isDirty: true };
+      const saveCompleted = jest.fn();
+      const dashboard = {
+        state,
+        useState: () => state,
+        setState: jest.fn(),
+        saveCompleted,
+        getSaveModel: jest.fn().mockReturnValue({}),
+        getSaveResource: jest.fn(),
+        getSaveResourceFromSpec: jest.fn().mockReturnValue({
+          apiVersion: 'dashboard.grafana.app/v2beta1',
+          kind: 'Dashboard',
+          metadata: { name: 'test-dashboard' },
+          spec: { title: 'Test Dashboard' },
+        }),
+        setManager: jest.fn(),
+        getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      } as unknown as DashboardScene;
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const drawer = { onClose: jest.fn(), state: { collapseRows } } as unknown as SaveDashboardDrawer;
+
+      const { user } = setup({ isNew: false, dashboard, drawer });
+      await user.click(screen.getByRole('button', { name: /save/i }));
+      await waitFor(() => expect(saveCompleted).toHaveBeenCalled());
+      return { dashboard, saveCompleted };
+    };
+
+    it('collapses the live rows before saveCompleted when ticked', async () => {
+      const { dashboard, saveCompleted } = await saveExisting(true);
+
+      expect(collapseRowsAfterSave).toHaveBeenCalledTimes(1);
+      expect(collapseRowsAfterSave).toHaveBeenCalledWith(dashboard);
+      expect(jest.mocked(collapseRowsAfterSave).mock.invocationCallOrder[0]).toBeLessThan(
+        saveCompleted.mock.invocationCallOrder[0]
+      );
+    });
+
+    it('leaves the live rows alone when not ticked', async () => {
+      const { saveCompleted } = await saveExisting(undefined);
+
+      expect(saveCompleted).toHaveBeenCalledTimes(1);
+      expect(collapseRowsAfterSave).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('existing dashboard with the JSON editor open', () => {
+    const rowsSpec = (collapse: boolean): DashboardV2Spec => ({
+      ...defaultDashboardV2Spec(),
+      title: 'Test Dashboard',
+      layout: {
+        kind: 'RowsLayout',
+        spec: {
+          rows: [
+            {
+              kind: 'RowsLayoutRow',
+              spec: { title: 'Row', collapse, layout: { kind: 'GridLayout', spec: { items: [] } } },
+            },
+          ],
+        },
+      },
+    });
+
+    const saveWithEditorJson = async (rawJson: Dashboard | DashboardV2Spec, changedSaveModel: DashboardV2Spec) => {
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          capturedRequest = { url: new URL(request.url), body: await request.json() };
+          return saveSuccessResponse(request, 'test-dashboard', 'Test Dashboard');
+        })
+      );
+      const state = { meta: { folderUid: 'folder-uid', slug: 'test-dashboard', uid: 'test-dashboard' }, isDirty: true };
+
+      const { user } = setup({
+        isNew: false,
+        changeInfo: {
+          changedSaveModel,
+          initialSaveModel: rowsSpec(false),
+          diffCount: 1,
+          hasChanges: true,
+          hasTimeChanges: false,
+          hasVariableValueChanges: false,
+          hasRefreshChange: false,
+          diffs: {},
+        },
+        dashboard: {
+          state,
+          useState: () => state,
+          setState: jest.fn(),
+          saveCompleted: jest.fn(),
+          getSaveModel: jest.fn().mockReturnValue({}),
+          getSaveResource: jest.fn(),
+          getSaveResourceFromSpec: (spec: Dashboard | DashboardV2Spec) => ({
+            apiVersion: 'dashboard.grafana.app/v2beta1',
+            kind: 'Dashboard',
+            metadata: { name: 'test-dashboard' },
+            spec,
+          }),
+          setManager: jest.fn(),
+          getRawJsonFromEditor: jest.fn().mockReturnValue(rawJson),
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        } as unknown as DashboardScene,
+      });
+
+      await user.click(screen.getByRole('button', { name: /save/i }));
+      await waitFor(() => expect(capturedRequest).not.toBeNull());
+      return requireCapturedRequest(capturedRequest).body;
+    };
+
+    it('commits the editor JSON with the save options applied', async () => {
+      const body = await saveWithEditorJson(rowsSpec(false), rowsSpec(true));
+
+      expect(body).toEqual({
+        apiVersion: 'dashboard.grafana.app/v2beta1',
+        kind: 'Dashboard',
+        metadata: { name: 'test-dashboard' },
+        spec: rowsSpec(true),
+      });
+    });
+
+    it('commits the editor JSON as typed when its schema version does not match the dashboard', async () => {
+      const classicJson: Dashboard = { title: 'Classic JSON', panels: [], schemaVersion: 36 };
+
+      const body = await saveWithEditorJson(classicJson, rowsSpec(true));
+
+      expect(body).toEqual({
+        apiVersion: 'dashboard.grafana.app/v2beta1',
+        kind: 'Dashboard',
+        metadata: { name: 'test-dashboard' },
+        spec: classicJson,
+      });
+    });
   });
 
   it('shows New folder button for folderless repos in write mode', async () => {
