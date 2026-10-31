@@ -11,6 +11,27 @@ export interface EasyTzInfo {
 const displayListCache = new WeakMap<ReturnType<typeof getEasyTzTimeZonesAt>, EasyTzInfo[]>();
 const displayInfoCache = new WeakMap<NonNullable<ReturnType<typeof getTimeZoneAt>>, EasyTzInfo>();
 
+// British Columbia stays at UTC−7 after its last clock change. tzdb 2026b models
+// that change at 2026-11-01 02:00 Pacific (09:00 UTC): March through October was
+// already UTC−7 as PDT, and the old November fall-back must not happen. The
+// vendored easy-tz rules still share Vancouver's schedule with Los Angeles, so
+// they switch to PST (UTC−8) at that instant. tzdb's abbreviation for the new
+// permanent offset is MST.
+const VANCOUVER_PERMANENT_UTC7_FROM_MS = Date.UTC(2026, 10, 1, 9, 0, 0);
+const VANCOUVER_PERMANENT_UTC7: EasyTzInfo = Object.freeze({
+  name: 'America/Vancouver',
+  abbr: 'MST',
+  offset: -420,
+  offsetDisplay: formatOffset(-420),
+});
+
+const withVancouverPermanentOffset = (info: EasyTzInfo, timestamp: number): EasyTzInfo => {
+  if (info.name !== VANCOUVER_PERMANENT_UTC7.name || timestamp < VANCOUVER_PERMANENT_UTC7_FROM_MS) {
+    return info;
+  }
+  return VANCOUVER_PERMANENT_UTC7;
+};
+
 const withOffsetDisplay = (tz: NonNullable<ReturnType<typeof getTimeZoneAt>>): EasyTzInfo => {
   let info = displayInfoCache.get(tz);
 
@@ -30,7 +51,7 @@ export const getTimeZonesAt = (timestamp: number, withAliases?: boolean): EasyTz
   let list = displayListCache.get(source);
 
   if (!list) {
-    list = source.map(withOffsetDisplay);
+    list = source.map((tz) => withVancouverPermanentOffset(withOffsetDisplay(tz), timestamp));
     displayListCache.set(source, list);
   }
 
@@ -45,7 +66,7 @@ export const getTimeZonesAt = (timestamp: number, withAliases?: boolean): EasyTz
  */
 export const findTimeZoneAt = (zone: string, timestamp: number): EasyTzInfo | undefined => {
   const tz = getTimeZoneAt(zone, timestamp, false);
-  return tz ? withOffsetDisplay(tz) : undefined;
+  return tz ? withVancouverPermanentOffset(withOffsetDisplay(tz), timestamp) : undefined;
 };
 
 /**

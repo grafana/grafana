@@ -72,6 +72,33 @@ describe('dateTimeFormat', () => {
     });
   });
 
+  describe('when America/Vancouver is past British Columbia’s last clock change', () => {
+    const flagName = '__grafanaUseLuxon';
+    const decemberNoonUtc = Date.parse('2026-12-01T12:00:00Z');
+    const originalDescriptor = Object.getOwnPropertyDescriptor(window, flagName);
+
+    afterEach(() => {
+      if (originalDescriptor) {
+        Object.defineProperty(window, flagName, originalDescriptor);
+      } else {
+        Reflect.deleteProperty(window, flagName);
+      }
+    });
+
+    it('formats 12:00Z as 05:00 at UTC−7 on the Luxon path the UI uses', async () => {
+      Object.defineProperty(window, flagName, { configurable: true, value: true });
+
+      await jest.isolateModulesAsync(async () => {
+        const { dateTimeFormat, timeZoneAbbrevation } = await import('./formatter');
+
+        expect(dateTimeFormat(decemberNoonUtc, { timeZone: 'America/Vancouver' })).toBe('2026-12-01 05:00:00');
+        expect(timeZoneAbbrevation(decemberNoonUtc, { timeZone: 'America/Vancouver' })).toBe('MST');
+        expect(dateTimeFormat(decemberNoonUtc, { timeZone: 'America/Los_Angeles' })).toBe('2026-12-01 04:00:00');
+        expect(timeZoneAbbrevation(decemberNoonUtc, { timeZone: 'America/Los_Angeles' })).toBe('PST');
+      });
+    });
+  });
+
   describe('when time zone have been set', () => {
     it.each([
       ['Africa/Djibouti', '2020-04-17 15:36:15'],
