@@ -160,7 +160,8 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 	}
 	err := json.Unmarshal(query.JSON, &queryJSONModel)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode the Azure Monitor query object from JSON: %w", err)
+		// The stored query has the wrong shape (e.g. resources as an object), which the caller must fix.
+		return nil, backend.DownstreamErrorf("failed to decode the Azure Monitor query object from JSON: %w", err)
 	}
 
 	azJSONModel := queryJSONModel.AzureMonitor
