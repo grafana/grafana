@@ -3446,9 +3446,9 @@
     },
     {
       "metadata": {
-        "name": "grafana.routePreferencesAndCollections",
-        "resourceVersion": "1793426422487",
-        "creationTimestamp": "2026-10-31T06:00:22Z"
+        "name": "grafana.routeCoreApps",
+        "resourceVersion": "1793455505778",
+        "creationTimestamp": "2026-10-31T14:05:05Z"
       },
       "spec": {
         "description": "implement preferences and collections as app plugins",
