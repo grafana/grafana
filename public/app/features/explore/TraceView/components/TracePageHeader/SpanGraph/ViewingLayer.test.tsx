@@ -14,6 +14,7 @@
 
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { StrictMode } from 'react';
 
 import { polyfill as polyfillAnimationFrame } from '../../utils/test/requestAnimationFrame';
 
@@ -82,6 +83,17 @@ describe('<UnthemedViewingLayer>', () => {
     render(<ViewingLayer {...props} />);
     expect(screen.getByTestId('right-ViewingLayerInactive')).toHaveAttribute('width', '20%');
     expect(screen.getByTestId('right-ViewingLayerInactive')).toHaveAttribute('x', '80%');
+  });
+
+  it('starts dragging the start scrubber under StrictMode', async () => {
+    render(
+      <StrictMode>
+        <ViewingLayer {...props} />
+      </StrictMode>
+    );
+    await userEvent.pointer({ keys: '[MouseLeft>]', target: screen.getAllByTestId('scrubber-component-g')[0] });
+    expect(props.updateNextViewRangeTime).toHaveBeenCalledWith({ shiftStart: expect.any(Number) });
+    await userEvent.pointer({ keys: '[/MouseLeft]' });
   });
 
   describe('reset selection button', () => {

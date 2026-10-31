@@ -13,7 +13,9 @@
 // limitations under the License.
 
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import cx from 'clsx';
+import { StrictMode } from 'react';
 
 import { createTheme } from '@grafana/data';
 
@@ -54,5 +56,21 @@ describe('<TimelineColumnResizer>', () => {
     expect(screen.getByTestId('TimelineColumnResizer--dragger')).toHaveClass(
       cx(styles.dragger, styles.draggerDragging, styles.draggerDraggingLeft)
     );
+  });
+});
+
+describe('<TimelineColumnResizer> under StrictMode', () => {
+  it('calls onChange when a drag ends', async () => {
+    const onChange = jest.fn();
+    render(
+      <StrictMode>
+        <TimelineColumnResizer min={0.1} max={0.9} onChange={onChange} position={0.5} columnResizeHandleHeight={10} />
+      </StrictMode>
+    );
+    await userEvent.pointer([
+      { keys: '[MouseLeft>]', target: screen.getByTestId('TimelineColumnResizer--dragger') },
+      { keys: '[/MouseLeft]' },
+    ]);
+    expect(onChange).toHaveBeenCalledTimes(1);
   });
 });
