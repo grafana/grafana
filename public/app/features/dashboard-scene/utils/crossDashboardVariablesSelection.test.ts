@@ -1,9 +1,15 @@
-import { defaultCustomVariableSpec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import {
+  defaultCustomVariableSpec,
+  defaultDatasourceVariableSpec,
+  defaultQueryVariableSpec,
+  type VariableKind,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 
 import {
   applyUseCrossDashboardVariables,
   countPredefinedVariableOrigins,
+  getRequiredPredefinedVariables,
   getGlobalVariablesMode,
   isPredefinedNameSelected,
   isScopeNameSelected,
@@ -27,6 +33,29 @@ function makeVar(name: string, origin: 'global' | 'folder'): VariableKind {
       name,
       query: 'a,b',
       origin: toControlSourceRef(origin === 'global' ? { type: 'global' } : { type: 'folder', folderUid: 'folder-1' }),
+    },
+  };
+}
+
+function makeOrigin(origin: 'global' | 'folder') {
+  return toControlSourceRef(origin === 'global' ? { type: 'global' } : { type: 'folder', folderUid: 'folder-1' });
+}
+
+function makeDatasourceVar(name: string, origin: 'global' | 'folder'): VariableKind {
+  return {
+    kind: 'DatasourceVariable',
+    spec: { ...defaultDatasourceVariableSpec(), name, pluginId: 'prometheus', origin: makeOrigin(origin) },
+  };
+}
+
+function makeQueryVar(name: string, datasourceName: string, origin: 'global' | 'folder'): VariableKind {
+  return {
+    kind: 'QueryVariable',
+    spec: {
+      ...defaultQueryVariableSpec(),
+      name,
+      query: { kind: 'DataQuery', group: 'prometheus', version: 'v0', datasource: { name: datasourceName }, spec: {} },
+      origin: makeOrigin(origin),
     },
   };
 }
@@ -230,6 +259,62 @@ describe('resolvePredefinedVariablesForDashboard', () => {
         },
       }).map((v) => v.spec.name)
     ).toEqual(['region']);
+  });
+
+  describe('datasource variable references', () => {
+    const select = (variables: VariableKind[], selection: string) =>
+      resolvePredefinedVariablesForDashboard(variables, {
+        annotations: { [AnnoKeyUseCrossDashboardVariables]: selection },
+      }).map((v) => v.spec.name);
+
+    it.each(['${ds}', '$ds', '[[ds]]'])('pulls in the global datasource variable referenced as %s', (ref) => {
+      const variables = [makeDatasourceVar('ds', 'global'), makeQueryVar('labels', ref, 'global')];
+
+      expect(select(variables, '{"global":["labels"],"folder":"none"}')).toEqual(['ds', 'labels']);
+    });
+
+    it('pulls in a global datasource variable for a selected folder query variable', () => {
+      const variables = [makeDatasourceVar('ds', 'global'), makeQueryVar('labels', '${ds}', 'folder')];
+
+      expect(select(variables, '{"global":"none","folder":["labels"]}')).toEqual(['ds', 'labels']);
+    });
+
+    it('ignores a concrete datasource uid and references to unknown variables', () => {
+      const variables = [
+        makeDatasourceVar('ds', 'global'),
+        makeQueryVar('byUid', 'prom-uid', 'global'),
+        makeQueryVar('byMissing', '${missing}', 'global'),
+      ];
+
+      expect(select(variables, '{"global":["byUid","byMissing"],"folder":"none"}')).toEqual(['byUid', 'byMissing']);
+    });
+
+    it('terminates on a self-reference', () => {
+      const variables = [makeQueryVar('loop', '${loop}', 'global')];
+
+      expect(select(variables, '{"global":["loop"],"folder":"none"}')).toEqual(['loop']);
+    });
+  });
+});
+
+describe('getRequiredPredefinedVariables', () => {
+  const ds = makeDatasourceVar('ds', 'global');
+  const labels = makeQueryVar('labels', '${ds}', 'folder');
+  const pods = makeQueryVar('pods', '${ds}', 'folder');
+  const variables = [ds, labels, pods];
+
+  it('maps an implicitly injected variable to every selected variable that requires it', () => {
+    const required = getRequiredPredefinedVariables(variables, { global: 'none', folder: ['pods', 'labels'] });
+
+    expect([...required]).toEqual([[ds, ['labels', 'pods']]]);
+  });
+
+  it('does not report a variable that is also selected explicitly', () => {
+    expect(getRequiredPredefinedVariables(variables, { global: ['ds'], folder: ['labels'] }).size).toBe(0);
+  });
+
+  it('reports nothing when the dashboard has not opted in', () => {
+    expect(getRequiredPredefinedVariables(variables, undefined).size).toBe(0);
   });
 });
 

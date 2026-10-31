@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
+import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -24,6 +25,7 @@ import {
 } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
 import { VariableEditorForm } from 'app/features/dashboard-scene/settings/variables/VariableEditorForm';
 import { type EditableVariableType, getVariableScene } from 'app/features/dashboard-scene/settings/variables/utils';
+import { fetchPredefinedVariables } from 'app/features/dashboard-scene/utils/predefinedVariables';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -164,6 +166,12 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
     hasNameError
   );
 
+  const datasourceVariables = useReferenceableDatasourceVariables(
+    folderUid,
+    source ? getVariableSpecName(source) : undefined
+  );
+  const isSceneReady = datasourceVariables !== undefined;
+
   const sourceFolderUid = source ? getVariableFolderUid(source) : undefined;
   // Folder CanEdit gates mutations the same way admission does. Skip the root/global
   // uid ('' / undefined) — those use allowGlobalScope instead.
@@ -197,6 +205,7 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
   // so it needs delete rights or it leaves the original behind.
   const isRecreate = isRecreateVariableSave(source, logicalName, folderUid);
   const canSave =
+    isSceneReady &&
     !isBusy &&
     !hasNameError &&
     !collisionError &&
@@ -223,9 +232,36 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
   );
 
   useEffect(() => {
+    if (!datasourceVariables) {
+      return;
+    }
+    const variableSet = scene.state.$variables;
+    if (variableSet instanceof SceneVariableSet) {
+      variableSet.setState({
+        variables: [
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          ...datasourceVariables.map((v) => createSceneVariableFromVariableModel(v as TypedVariableModelV2)),
+          sceneVariable,
+        ],
+      });
+    }
+  }, [scene, sceneVariable, datasourceVariables]);
+
+  // Activate only once the datasource variables are in the set, so a `${ds}` reference
+  // resolves on the edited variable's first update instead of failing and never retrying.
+  useEffect(() => {
+    if (!isSceneReady) {
+      return;
+    }
     const deactivate = scene.activate();
-    return deactivate;
-  }, [scene]);
+    // Datasource pickers and query editors resolve `${ds}` through the global scene context.
+    const prevSceneContext = window.__grafanaSceneContext;
+    window.__grafanaSceneContext = scene;
+    return () => {
+      window.__grafanaSceneContext = prevSceneContext;
+      deactivate();
+    };
+  }, [scene, isSceneReady]);
 
   const onTypeChange = async (type: EditableVariableType) => {
     const { name, label } = sceneVariable.state;
@@ -240,6 +276,7 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
       return;
     }
 
+    // The referenceable datasource variables in the set carry an origin, so serialization skips them.
     const [kind] = sceneVariablesSetToSchemaV2Variables(variableSet, true);
     if (!kind || !kind.spec.name) {
       return;
@@ -339,18 +376,22 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
         />
       </Field>
 
-      <VariableEditorForm
-        // Remount on type change (new scene key) so the form's name-error state and
-        // uncontrolled inputs reset with the committed name — same as dashboard settings.
-        key={sceneVariable.state.key}
-        variable={sceneVariable}
-        onTypeChange={onTypeChange}
-        onGoBack={onBack}
-        onDelete={onDelete}
-        onNameErrorChange={setHasNameError}
-        externalNameError={collisionError}
-        standalone
-      />
+      {isSceneReady ? (
+        <VariableEditorForm
+          // Remount on type change (new scene key) so the form's name-error state and
+          // uncontrolled inputs reset with the committed name — same as dashboard settings.
+          key={sceneVariable.state.key}
+          variable={sceneVariable}
+          onTypeChange={onTypeChange}
+          onGoBack={onBack}
+          onDelete={onDelete}
+          onNameErrorChange={setHasNameError}
+          externalNameError={collisionError}
+          standalone
+        />
+      ) : (
+        <Spinner />
+      )}
 
       <Stack gap={2}>
         <Button variant="primary" onClick={onSave} disabled={!canSave}>
@@ -385,6 +426,21 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
       )}
     </div>
   );
+}
+
+/**
+ * Datasource variables the edited variable may reference as `${ds}`: global ones, plus those
+ * in its own folder when folder-scoped. Never other folders' — those are absent from dashboards
+ * outside that folder. Undefined until the first fetch settles; later scope changes keep the
+ * previous list until the new one arrives.
+ */
+function useReferenceableDatasourceVariables(folderUid: string | undefined, excludeName: string | undefined) {
+  const { value } = useAsync(async () => {
+    const variables = (await fetchPredefinedVariables(folderUid || undefined)) ?? [];
+    return variables.filter((v) => v.kind === 'DatasourceVariable' && v.spec.name !== excludeName);
+  }, [folderUid, excludeName]);
+
+  return value;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
