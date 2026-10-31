@@ -200,7 +200,7 @@ func RegisterAPIService(
 		accessControl:            accessControl,
 		accessClient:             accessClient,
 		unified:                  unified,
-		search:                   NewSearchHandler(tracing, unified, features),
+		search:                   NewSearchHandler(tracing, unified, features, WithAccessClient(accessClient)),
 		QuotaService:             quotaService,
 		ProvisioningService:      provisioning,
 		minRefreshInterval:       cfg.MinRefreshInterval,

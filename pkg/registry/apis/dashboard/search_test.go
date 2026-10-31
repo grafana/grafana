@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -20,6 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -1878,4 +1880,119 @@ func TestSearchHandlerCreatePermissionSharedWithMe(t *testing.T) {
 			}
 		})
 	}
+}
+
+type canCreateAccessClient struct {
+	claims.AccessClient
+	allowed map[string]bool
+	err     error
+	reqs    []claims.BatchCheckRequest
+}
+
+func (c *canCreateAccessClient) BatchCheck(_ context.Context, _ claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
+	c.reqs = append(c.reqs, req)
+	res := claims.BatchCheckResponse{Results: map[string]claims.BatchCheckResult{}}
+	for _, item := range req.Checks {
+		res.Results[item.CorrelationID] = claims.BatchCheckResult{Allowed: c.allowed[item.CorrelationID]}
+	}
+	return res, c.err
+}
+
+func TestSearchHandlerIncludeCanCreate(t *testing.T) {
+	folderHits := func(names ...string) []*resourcepb.ResourceSearchResponse {
+		rows := make([]*resourcepb.ResourceTableRow, len(names))
+		for i, name := range names {
+			rows[i] = &resourcepb.ResourceTableRow{Key: &resourcepb.ResourceKey{Name: name, Resource: "folders"}, Cells: [][]byte{[]byte(name)}}
+		}
+		return []*resourcepb.ResourceSearchResponse{{Results: &resourcepb.ResourceTable{
+			Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: resource.SEARCH_FIELD_TITLE}},
+			Rows:    rows,
+		}}}
+	}
+	do := func(t *testing.T, access claims.AccessClient, query string) (*httptest.ResponseRecorder, *MockClient) {
+		t.Helper()
+		mockClient := &MockClient{MockResponses: folderHits("a", "b")}
+		handler := NewSearchHandler(tracing.NewNoopTracerService(), mockClient, nil, WithAccessClient(access))
+		req := httptest.NewRequest("GET", "/search?"+query, nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1}))
+		rec := httptest.NewRecorder()
+		handler.DoSearch(rec, req)
+		return rec, mockClient
+	}
+
+	t.Run("annotates each folder with the create check", func(t *testing.T) {
+		setCreateToggle(t, true)
+		access := &canCreateAccessClient{allowed: map[string]bool{"a": true}}
+
+		rec, _ := do(t, access, "type=folder&include=canCreate")
+
+		require.Equal(t, http.StatusOK, rec.Code)
+		var res v0alpha1.SearchResults
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &res))
+		assert.True(t, res.CanCreateChecked)
+		require.Len(t, res.Hits, 2)
+		got := map[string]bool{}
+		for _, hit := range res.Hits {
+			require.NotNil(t, hit.CanCreate)
+			got[hit.Name] = *hit.CanCreate
+		}
+		assert.Equal(t, map[string]bool{"a": true, "b": false}, got)
+
+		require.Len(t, access.reqs, 1)
+		assert.Equal(t, "test", access.reqs[0].Namespace)
+		for _, check := range access.reqs[0].Checks {
+			assert.Equal(t, utils.VerbCreate, check.Verb)
+			assert.Equal(t, "dashboards", check.Resource)
+			assert.Equal(t, check.CorrelationID, check.Folder)
+		}
+	})
+
+	t.Run("checks folder edit while the toggle is off", func(t *testing.T) {
+		setCreateToggle(t, false)
+		access := &canCreateAccessClient{}
+
+		do(t, access, "type=folder&include=canCreate")
+
+		require.Len(t, access.reqs, 1)
+		for _, check := range access.reqs[0].Checks {
+			assert.Equal(t, utils.VerbUpdate, check.Verb)
+			assert.Equal(t, "folders", check.Resource)
+			assert.Equal(t, check.CorrelationID, check.Name)
+		}
+	})
+
+	t.Run("does not annotate without include", func(t *testing.T) {
+		access := &canCreateAccessClient{}
+
+		rec, _ := do(t, access, "type=folder")
+
+		require.Equal(t, http.StatusOK, rec.Code)
+		assert.Empty(t, access.reqs)
+		var res v0alpha1.SearchResults
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &res))
+		assert.False(t, res.CanCreateChecked)
+		for _, hit := range res.Hits {
+			assert.Nil(t, hit.CanCreate)
+		}
+	})
+
+	t.Run("rejects anything but type=folder", func(t *testing.T) {
+		for _, query := range []string{"include=canCreate", "type=dashboard&include=canCreate", "type=folder&type=dashboard&include=canCreate"} {
+			access := &canCreateAccessClient{}
+			rec, mockClient := do(t, access, query)
+			assert.Equal(t, http.StatusBadRequest, rec.Code, query)
+			assert.Zero(t, mockClient.CallCount, query)
+		}
+	})
+
+	t.Run("rejects when the server has no access client", func(t *testing.T) {
+		rec, _ := do(t, nil, "type=folder&include=canCreate")
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("fails the request when the check fails", func(t *testing.T) {
+		access := &canCreateAccessClient{err: errors.New("boom")}
+		rec, _ := do(t, access, "type=folder&include=canCreate")
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	})
 }

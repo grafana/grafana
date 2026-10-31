@@ -32,6 +32,9 @@ type SearchResults struct {
 
 	// Facet results
 	Facets map[string]FacetResult `json:"facets,omitempty"`
+
+	// Set when the request asked for include=canCreate and every hit was checked
+	CanCreateChecked bool `json:"canCreateChecked,omitempty"`
 }
 
 func (SearchResults) OpenAPIModelName() string {
@@ -94,6 +97,9 @@ type DashboardHit struct {
 	Field *common.Unstructured `json:"field,omitzero,omitempty"`
 	// When using "real" search, this is the score
 	Score float64 `json:"score,omitempty"`
+
+	// Whether the user can create dashboards in this folder. Only set when requested with include=canCreate
+	CanCreate *bool `json:"canCreate,omitempty"`
 }
 
 func (DashboardHit) OpenAPIModelName() string {

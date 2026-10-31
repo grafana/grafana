@@ -85,6 +85,11 @@ func (in *DashboardHit) DeepCopyInto(out *DashboardHit) {
 		in, out := &in.Field, &out.Field
 		*out = (*in).DeepCopy()
 	}
+	if in.CanCreate != nil {
+		in, out := &in.CanCreate, &out.CanCreate
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 
