@@ -32,12 +32,15 @@ type ruleStatusWriter interface {
 // the parent dual-writer only writes spec to unified — status updates route here, so
 // this mirror is the only way the unified copy's status stays in sync (needed once
 // the resource advances past Mode0 for parity metrics and the eventual read-from-
-// unified cutover). In Mode0 unified is disabled and the mirror is a silent no-op.
+// unified cutover). The mirror is skipped in Mode0, see writesUnified.
 type statusDualWriter struct {
 	gv           schema.GroupVersion
 	status       *appsdkapiserver.StatusREST
 	legacy       *legacyStorage
 	statusWriter ruleStatusWriter
+	// writesUnified reports whether the resource writes to unified storage (modes 1-5).
+	// It is evaluated per request because the storage mode can change at runtime.
+	writesUnified func(ctx context.Context) bool
 }
 
 var (
@@ -52,11 +55,13 @@ func NewStatusStorage(
 	namespacer request.NamespaceMapper,
 	statusWriter ruleStatusWriter,
 	unified *appsdkapiserver.StatusREST,
+	writesUnified func(ctx context.Context) bool,
 ) rest.Storage {
 	return &statusDualWriter{
-		gv:           ResourceInfo.GroupVersionResource().GroupVersion(),
-		status:       unified,
-		statusWriter: statusWriter,
+		gv:            ResourceInfo.GroupVersionResource().GroupVersion(),
+		status:        unified,
+		statusWriter:  statusWriter,
+		writesUnified: writesUnified,
 		legacy: &legacyStorage{
 			service:        legacySvc,
 			namespacer:     namespacer,
@@ -106,7 +111,9 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 		return nil, false, err
 	}
 
-	s.mirrorToUnified(ctx, name, newRule.Status, createValidation, updateValidation, options)
+	if s.writesUnified(ctx) {
+		s.mirrorToUnified(ctx, name, newRule.Status, createValidation, updateValidation, options)
+	}
 
 	// Re-read so the response reflects the stored rule (full spec/metadata + the
 	// persisted status), not the request object — a partial status update (e.g. the
@@ -119,9 +126,9 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 }
 
 // mirrorToUnified copies the persisted status onto the unified object, best-effort.
-// Legacy is the source of truth. When the object is not in unified storage — Mode0
-// (unified disabled) or a best-effort write lag in Mode1 — this is an expected skip,
-// so NotFound is swallowed silently; only unexpected errors are logged.
+// Legacy is the source of truth. When the object is not in unified storage yet — a
+// best-effort write lag in Mode1 — this is an expected skip, so NotFound is swallowed
+// silently; other errors are logged as warnings.
 func (s *statusDualWriter) mirrorToUnified(ctx context.Context, name string, status v1beta1.RecordingRuleStatus, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, options *metav1.UpdateOptions) {
 	unified, err := s.status.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
