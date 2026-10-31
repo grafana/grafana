@@ -3,11 +3,10 @@ import { type JSX, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
-import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { type CombinedRule, type RulesSource } from 'app/types/unified-alerting';
 
+import { useAlertQueryDataSources } from '../../hooks/alertQueriesStatus';
 import { isCloudRulesSource } from '../../utils/datasource';
 import { rulerRuleType } from '../../utils/rules';
 import { DetailsField } from '../DetailsField';
@@ -21,29 +20,30 @@ export function RuleDetailsDataSources(props: Props): JSX.Element | null {
   const { rulesSource, rule } = props;
   const styles = useStyles2(getStyles);
 
-  const dataSources: Array<{ name: string; icon?: string }> = useMemo(() => {
+  const queries = rulerRuleType.grafana.rule(rule.rulerRule) ? rule.rulerRule.grafana_alert.data : [];
+  const { dataSourcesByUid } = useAlertQueryDataSources(queries);
+
+  const dataSources: Array<{ uid: string; name: string; icon?: string }> = useMemo(() => {
     if (isCloudRulesSource(rulesSource)) {
-      return [{ name: rulesSource.name, icon: rulesSource.meta.info.logos.small }];
+      return [{ uid: rulesSource.uid, name: rulesSource.name, icon: rulesSource.meta.info.logos.small }];
     }
 
     if (rulerRuleType.grafana.rule(rule.rulerRule)) {
       const { data } = rule.rulerRule.grafana_alert;
-      const unique = data.reduce<Record<string, { name: string; icon?: string }>>((dataSources, query) => {
-        const ds = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
+      const unique = new Map<string, { uid: string; name: string; icon?: string }>();
 
-        if (!ds || ds.uid === ExpressionDatasourceUID) {
-          return dataSources;
+      for (const query of data) {
+        const ds = dataSourcesByUid.get(query.datasourceUid);
+        if (ds && !unique.has(ds.uid)) {
+          unique.set(ds.uid, { uid: ds.uid, name: ds.name, icon: ds.meta.info.logos.small });
         }
+      }
 
-        dataSources[ds.name] = { name: ds.name, icon: ds.meta.info.logos.small };
-        return dataSources;
-      }, {});
-
-      return Object.values(unique);
+      return Array.from(unique.values());
     }
 
     return [];
-  }, [rule, rulesSource]);
+  }, [rule, rulesSource, dataSourcesByUid]);
 
   if (dataSources.length === 0) {
     return null;
@@ -51,8 +51,8 @@ export function RuleDetailsDataSources(props: Props): JSX.Element | null {
 
   return (
     <DetailsField label={t('alerting.rule-details-data-sources.label-data-source', 'Data source')}>
-      {dataSources.map(({ name, icon }, index) => (
-        <div key={name}>
+      {dataSources.map(({ uid, name, icon }) => (
+        <div key={uid}>
           {icon && (
             <>
               <img alt={`${name} datasource logo`} className={styles.dataSourceIcon} src={icon} />{' '}
