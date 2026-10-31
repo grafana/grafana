@@ -1,12 +1,7 @@
 package app
 
 import (
-	"context"
-
-	"k8s.io/klog/v2"
-
 	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/simple"
 	v1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
@@ -27,13 +22,6 @@ func New(cfg app.Config) (app.App, error) {
 	a, err := simple.NewApp(simple.AppConfig{
 		Name:       "preferences",
 		KubeConfig: cfg.KubeConfig,
-		InformerConfig: simple.AppInformerConfig{
-			InformerOptions: operator.InformerOptions{
-				ErrorHandler: func(ctx context.Context, err error) {
-					klog.ErrorS(err, "Informer processing error")
-				},
-			},
-		},
 		ManagedKinds: []simple.AppManagedKind{
 			{Kind: v1.PreferencesKind(), Validator: validator},
 			{Kind: v1alpha1.PreferencesKind(), Validator: validator},
