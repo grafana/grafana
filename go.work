@@ -5,6 +5,7 @@ go 1.27.3
 
 use (
 	. // skip:golangci-lint
+	../grafana-app-sdk
 	./apps/advisor
 	./apps/alerting/alertenrichment
 	./apps/alerting/alertrulequality
