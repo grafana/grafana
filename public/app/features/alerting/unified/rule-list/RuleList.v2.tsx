@@ -77,7 +77,11 @@ export function RuleListActions() {
 
   const canCreateGrafanaRules = createGrafanaRuleSupported && createGrafanaRuleAllowed;
   const canCreateCloudRules =
-    createCloudRuleSupported && createCloudRuleAllowed && hasAlertEnabledDataSources && !routeProxyActive;
+    createCloudRuleSupported &&
+    createCloudRuleAllowed &&
+    hasAlertEnabledDataSources &&
+    !routeProxyActive &&
+    !config.featureToggles.alertingDisableDMAlerts;
   const canExportRules = exportRulesSupported && exportRulesAllowed;
 
   const canCreateRules = canCreateGrafanaRules || canCreateCloudRules;

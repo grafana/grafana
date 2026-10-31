@@ -271,6 +271,21 @@ describe('RuleListActions', () => {
     expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).toBeInTheDocument();
   });
 
+  describe('with data source-managed alerts disabled', () => {
+    testWithFeatureToggles({ enable: ['alertingDisableDMAlerts'] });
+
+    it('hides the data source recording rule action while keeping Grafana recording rules', async () => {
+      grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite]);
+
+      const { user } = render(<RuleListActions />);
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      expect(ui.menuOptions.newGrafanaRecordingRule.query(menu)).toBeInTheDocument();
+      expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).not.toBeInTheDocument();
+    });
+  });
+
   it('should show both recording rule options when user has all permissions', async () => {
     grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite]);
 
