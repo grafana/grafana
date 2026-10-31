@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
@@ -23,6 +23,7 @@ import { notifyApp } from 'app/core/reducers/appNotification';
 import { dispatch } from 'app/store/store';
 
 import { NotebookTagsField } from '../NotebookTagsField';
+import { readNotebookSourceApp } from '../analytics/captureSource';
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_ADD_TARGET, type NotebookEntryPoint } from '../analytics/types';
 import { canCreateNotebooks, canEditNotebooks } from '../permissions';
@@ -118,6 +119,14 @@ async function buildCells(cells: AddNotebookCell[], lockTimeRange: boolean): Pro
 
 export function AddPanelToNotebookModalBody(props: Props) {
   const { onDismiss, entryPoint, defaultTitle, onAdded } = props;
+  const [sourceApp] = useState(() => readNotebookSourceApp(entryPoint));
+  const didReportOpen = useRef(false);
+  useEffect(() => {
+    if (!didReportOpen.current) {
+      didReportOpen.current = true;
+      NotebookAnalytics.addToNotebookOpened(entryPoint, sourceApp);
+    }
+  }, [entryPoint, sourceApp]);
   // With several cells the checkbox offers only what it can lock; a single panel can be locked either way.
   const capturedTimeRanges = props.cells
     ? props.cells.flatMap((cell) =>
@@ -199,8 +208,22 @@ export function AddPanelToNotebookModalBody(props: Props) {
           : await buildSinglePanelCell(props, values.lockTimeRange);
         panelWasBuilt = true;
         added = existingUid
-          ? await addToExistingNotebook(existingUid, cells, entryPoint, source, values.lockTimeRange)
-          : await createNotebookWithContent({ title }, cells, entryPoint, source, values.lockTimeRange);
+          ? await addToExistingNotebook(
+              existingUid,
+              cells,
+              entryPoint,
+              source,
+              values.lockTimeRange,
+              ...(sourceApp ? ([sourceApp] as const) : [])
+            )
+          : await createNotebookWithContent(
+              { title },
+              cells,
+              entryPoint,
+              source,
+              values.lockTimeRange,
+              ...(sourceApp ? ([sourceApp] as const) : [])
+            );
 
         dispatch(
           notifyApp(
@@ -231,7 +254,8 @@ export function AddPanelToNotebookModalBody(props: Props) {
           entryPoint,
           existingUid ? NOTEBOOK_ADD_TARGET.EXISTING : NOTEBOOK_ADD_TARGET.NEW,
           addPanelFailureReason(error, panelWasBuilt),
-          values.lockTimeRange
+          values.lockTimeRange,
+          ...(sourceApp ? ([sourceApp] as const) : [])
         );
 
         dispatch(notifyApp(createErrorNotification(addPanelErrorMessage(error))));
