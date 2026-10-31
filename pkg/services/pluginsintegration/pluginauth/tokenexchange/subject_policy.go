@@ -3,6 +3,7 @@ package tokenexchange
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -10,8 +11,8 @@ import (
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 )
 
-// configureSubjectSigning replaces the manifest's delegated grant only for
-// asserted-subject requests. The manifest cannot authorize subject signing.
+// configureSubjectSigning authorizes asserted-subject requests within the
+// manifest's delegated grant. Only server configuration can authorize signing.
 func configureSubjectSigning(policy *v3.LocalAccessPolicy, settings map[string]string) error {
 	value := settings["allow_subject_signing"]
 	if value == "" {
@@ -24,14 +25,11 @@ func configureSubjectSigning(policy *v3.LocalAccessPolicy, settings map[string]s
 	if !enabled {
 		return nil
 	}
-	permissions := strings.Fields(settings["subject_signing_permissions"])
-	if len(permissions) == 0 {
-		return errors.New("subject signing requires delegated permissions")
-	}
-	for _, permission := range permissions {
+	restrictions := strings.Fields(settings["subject_signing_permissions"])
+	for _, permission := range restrictions {
 		action, verb, ok := strings.Cut(permission, ":")
-		if !ok || action == "" || verb == "" || strings.ContainsAny(permission, "*,") {
-			return errors.New("subject_signing_permissions requires space-separated concrete actions")
+		if !ok || action == "" || verb == "" || strings.Contains(permission, ",") {
+			return errors.New("subject_signing_permissions requires space-separated actions")
 		}
 	}
 	var maximum time.Duration
@@ -42,7 +40,13 @@ func configureSubjectSigning(policy *v3.LocalAccessPolicy, settings map[string]s
 		}
 	}
 	policy.AllowSubjectSigning = true
-	policy.DelegatedPermissions = permissions
+	if len(restrictions) > 0 {
+		// Match the local exchange's RestrictedDelegatedPermissions semantics:
+		// select existing grant entries without expanding or adding permissions.
+		policy.DelegatedPermissions = slices.DeleteFunc(slices.Clone(policy.DelegatedPermissions), func(permission string) bool {
+			return !slices.Contains(restrictions, permission)
+		})
+	}
 	policy.MaxSubjectTokenLifetime = maximum
 	return nil
 }

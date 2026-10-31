@@ -29,7 +29,7 @@ func TestSubjectSigningHTTPClient(t *testing.T) {
 			ExtJWTAuth: setting.ExtJWTSettings{Audiences: []string{"grafana"}},
 			PluginSettings: config.PluginSettings{"allowed-app": {
 				"allow_subject_signing":              "true",
-				"subject_signing_permissions":        "datasources:read datasources:write",
+				"subject_signing_permissions":        "dashboard.grafana.app/dashboards:get folder.grafana.app/folders:get",
 				"subject_signing_max_token_lifetime": "15m",
 			}},
 		},
@@ -61,7 +61,7 @@ func TestSubjectSigningHTTPClient(t *testing.T) {
 			result, err := exchange.Exchange(context.Background(), authnlib.TokenExchangeRequest{
 				Namespace: tc.namespace, Audiences: []string{"grafana"}, ExpiresIn: tc.expiresIn,
 				Subject:                        &authnlib.TokenExchangeSubject{Sub: tc.sub, Identifier: tc.uid, Type: tc.typ, Namespace: tc.namespace},
-				RestrictedDelegatedPermissions: []string{"datasources:read"},
+				RestrictedDelegatedPermissions: []string{"dashboard.grafana.app/dashboards:get"},
 			})
 			require.NoError(t, err)
 			claims, err := verifier.Verify(context.Background(), result.Token)
@@ -73,8 +73,69 @@ func TestSubjectSigningHTTPClient(t *testing.T) {
 			require.Equal(t, tc.typ, string(claims.Rest.Actor.Type))
 			require.Equal(t, tc.namespace, claims.Rest.Actor.Namespace)
 			require.Empty(t, claims.Rest.Permissions)
-			require.Equal(t, []string{"datasources:read"}, claims.Rest.DelegatedPermissions)
+			require.Equal(t, []string{"dashboard.grafana.app/dashboards:get"}, claims.Rest.DelegatedPermissions)
 			require.Equal(t, tc.lifetime, claims.Expiry.Time().Sub(claims.IssuedAt.Time()))
+		})
+	}
+}
+
+func TestSubjectSigningPreservesManifestGrant(t *testing.T) {
+	credential, err := v3.IssueLocalAccessPolicyToken("example-app", testManifest)
+	require.NoError(t, err)
+	t.Cleanup(func() { v3.RevokeLocalAccessPolicyToken(credential) })
+	keys, err := v3.LocalKeyRetriever()
+	require.NoError(t, err)
+	verifier := authnlib.NewAccessTokenVerifier(authnlib.VerifierConfig{AllowedAudiences: []string{"grafana"}}, keys)
+	for _, tc := range []struct {
+		name, configured string
+		requested, want  []string
+	}{
+		{name: "omitted restriction", want: []string{
+			"plugins.app:access", "example.ext.grafana.app:*",
+			"dashboard.grafana.app/dashboards:get", "dashboard.grafana.app/dashboards:list", "folder.grafana.app/folders:get",
+		}},
+		{name: "existing wildcard grant", configured: "example.ext.grafana.app:*", want: []string{"example.ext.grafana.app:*"}},
+		{name: "request narrows manifest grant", requested: []string{"dashboard.grafana.app/dashboards:get"}, want: []string{"dashboard.grafana.app/dashboards:get"}},
+		{name: "configuration cannot add permissions", configured: "users:write"},
+		{name: "request cannot bypass configuration", configured: "folder.grafana.app/folders:get", requested: []string{"dashboard.grafana.app/dashboards:get"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			settings := map[string]string{"allow_subject_signing": "true"}
+			if tc.configured != "" {
+				settings["subject_signing_permissions"] = tc.configured
+			}
+			s := &Service{
+				cfg: &setting.Cfg{
+					ExtJWTAuth:     setting.ExtJWTSettings{Audiences: []string{"grafana"}},
+					PluginSettings: config.PluginSettings{"example-app": settings},
+				},
+				log: log.NewNopLogger(),
+			}
+			body, err := json.Marshal(authnlib.TokenExchangeRequest{
+				Namespace: "default", Audiences: []string{"grafana"},
+				Subject:                        &authnlib.TokenExchangeSubject{Sub: "user:42", Identifier: "uid-42", Type: "user", Namespace: "default"},
+				RestrictedDelegatedPermissions: tc.requested,
+			})
+			require.NoError(t, err)
+			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(string(body)))
+			req.Header.Set("Authorization", "Bearer "+credential)
+			rec := httptest.NewRecorder()
+			c := &contextmodel.ReqContext{Context: &web.Context{Req: req, Resp: web.NewResponseWriter(req.Method, rec)}}
+			s.signAccessToken(c).WriteTo(c)
+			var result exchangeResponse
+			require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &result))
+			if tc.want == nil {
+				require.Equal(t, http.StatusForbidden, rec.Code)
+				require.Nil(t, result.Data)
+				return
+			}
+			require.Equal(t, http.StatusOK, rec.Code, result.Error)
+			require.NotNil(t, result.Data)
+			claims, err := verifier.Verify(context.Background(), result.Data.Token)
+			require.NoError(t, err)
+			require.True(t, claims.Rest.IsOnBehalfOfUser())
+			require.Equal(t, tc.want, claims.Rest.DelegatedPermissions)
+			require.Empty(t, claims.Rest.Permissions)
 		})
 	}
 }
@@ -160,7 +221,7 @@ func TestSubjectSettingsApplyOnlyToSubjectRequests(t *testing.T) {
 					ExtJWTAuth: setting.ExtJWTSettings{Audiences: []string{"grafana"}},
 					PluginSettings: config.PluginSettings{"example-app": {
 						"allow_subject_signing":              enabled,
-						"subject_signing_permissions":        "datasources:read",
+						"subject_signing_permissions":        "dashboard.grafana.app/dashboards:get",
 						"subject_signing_max_token_lifetime": "1h",
 					}},
 				},
@@ -198,7 +259,7 @@ func TestSubjectSettingsApplyOnlyToSubjectRequests(t *testing.T) {
 					case "subject":
 						lifetime = 10 * time.Minute
 						require.Empty(t, claims.Rest.Permissions)
-						require.Equal(t, []string{"datasources:read"}, claims.Rest.DelegatedPermissions)
+						require.Equal(t, []string{"dashboard.grafana.app/dashboards:get"}, claims.Rest.DelegatedPermissions)
 					case "service":
 						require.Equal(t, manifestGrant, claims.Rest.Permissions)
 						require.Empty(t, claims.Rest.DelegatedPermissions)
