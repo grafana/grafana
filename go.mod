@@ -286,14 +286,14 @@ require (
 	gopkg.in/ini.v1 v1.67.2 // @grafana/alerting-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
 	gopkg.in/yaml.v2 v2.4.0 // @grafana/identity-access-team
-	k8s.io/api v0.37.1 // @grafana/grafana-app-platform-squad
-	k8s.io/apiextensions-apiserver v0.37.1 // @grafana/grafana-app-platform-squad
-	k8s.io/apimachinery v0.37.1 // @grafana/grafana-app-platform-squad
-	k8s.io/apiserver v0.37.1 // @grafana/grafana-app-platform-squad
-	k8s.io/client-go v0.37.1 // @grafana/grafana-app-platform-squad
-	k8s.io/component-base v0.37.1 // @grafana/grafana-app-platform-squad
+	k8s.io/api v0.37.2 // @grafana/grafana-app-platform-squad
+	k8s.io/apiextensions-apiserver v0.37.2 // @grafana/grafana-app-platform-squad
+	k8s.io/apimachinery v0.37.2 // @grafana/grafana-app-platform-squad
+	k8s.io/apiserver v0.37.2 // @grafana/grafana-app-platform-squad
+	k8s.io/client-go v0.37.2 // @grafana/grafana-app-platform-squad
+	k8s.io/component-base v0.37.2 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.140.0 // @grafana/grafana-app-platform-squad
-	k8s.io/kube-aggregator v0.37.0 // @grafana/grafana-app-platform-squad
+	k8s.io/kube-aggregator v0.37.2 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20260821135717-be32def86098 // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20261023123148-ca04ba58ecab // @grafana/data-sources-plugins
 	pgregory.net/rapid v1.3.0 // @grafana/grafana-operator-experience-squad
@@ -700,8 +700,8 @@ require (
 	gopkg.in/src-d/go-errors.v1 v1.0.0 // indirect
 	gopkg.in/telebot.v3 v3.3.8 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/kms v0.37.1 // indirect
-	k8s.io/streaming v0.37.1 // indirect
+	k8s.io/kms v0.37.2 // indirect
+	k8s.io/streaming v0.37.2 // indirect
 	modernc.org/libc v1.75.6 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.1 // indirect
