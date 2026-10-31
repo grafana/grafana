@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -17,10 +18,11 @@ import (
 type listConnector struct {
 	getter RepoGetter
 	lister resources.ResourceLister
+	lookup resources.ResourcePathLookup
 }
 
-func NewListConnector(getter RepoGetter, lister resources.ResourceLister) *listConnector {
-	return &listConnector{getter: getter, lister: lister}
+func NewListConnector(getter RepoGetter, lister resources.ResourceLister, lookup resources.ResourcePathLookup) *listConnector {
+	return &listConnector{getter: getter, lister: lister, lookup: lookup}
 }
 
 func (*listConnector) New() runtime.Object {
@@ -38,7 +40,7 @@ func (*listConnector) ProducesObject(verb string) any {
 }
 
 func (*listConnector) ConnectMethods() []string {
-	return []string{http.MethodGet}
+	return []string{http.MethodGet, http.MethodPost}
 }
 
 func (*listConnector) NewConnectOptions() (runtime.Object, bool, string) {
@@ -48,6 +50,26 @@ func (*listConnector) NewConnectOptions() (runtime.Object, bool, string) {
 func (s *listConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ns := request.NamespaceValue(ctx)
+		if r.Method == http.MethodPost {
+			var body struct {
+				Paths []string `json:"paths"`
+			}
+			if err := unmarshalJSON(r, defaultMaxBodySize, &body); err != nil {
+				responder.Error(apierrors.NewBadRequest(err.Error()))
+				return
+			}
+			if _, err := s.getter.GetRepository(ctx, name); err != nil {
+				responder.Error(err)
+				return
+			}
+			rsp, err := s.lookup.Lookup(ctx, ns, name, body.Paths)
+			if err := resource.StatusErrorFromResponse(nil, err); err != nil {
+				responder.Error(err)
+			} else {
+				responder.Object(http.StatusOK, rsp)
+			}
+			return
+		}
 		// TODO: Add pagination to resource lister
 		rsp, err := s.lister.List(ctx, ns, name)
 		if err := resource.StatusErrorFromResponse(nil, err); err != nil {

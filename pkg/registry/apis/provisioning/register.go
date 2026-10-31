@@ -25,6 +25,7 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
+	"k8s.io/utils/ptr"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -132,6 +133,7 @@ type APIBuilder struct {
 	jobHistoryConfig  *JobHistoryConfig
 	jobHistoryLoki    *jobs.LokiJobHistory
 	resourceLister    resources.ResourceLister
+	resourceLookup    resources.ResourcePathLookup
 	unified           resource.ResourceClient
 	repoFactory       repository.Factory
 	connectionFactory connection.Factory
@@ -208,7 +210,7 @@ func NewAPIBuilder(
 	configProvider apiserver.RestConfigProvider,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
-	access authlib.AccessChecker,
+	access authlib.AccessClient,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
 	extraWorkers []jobs.Worker,
@@ -262,6 +264,7 @@ func NewAPIBuilder(
 		parsers:                             parsers,
 		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata)), //nolint:staticcheck
 		resourceLister:                      resourceLister,
+		resourceLookup:                      resources.NewResourcePathLookup(resourceLister, access),
 		unified:                             unified,
 		access:                              accessChecker,
 		accessWithAdmin:                     accessChecker.WithFallbackRole(identity.RoleAdmin),
@@ -504,7 +507,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 //
 // Repositories:
 //   - CRUD: repositories:create/read/write/delete
-//   - Subresources: files (any auth), refs (editor), resources/history/status (admin)
+//   - Subresources: files/resource lookup (any auth), refs (editor), resource listing/history/status (admin)
 //   - Test: repositories:write
 //   - Jobs subresource: jobs:create/read
 //
@@ -633,7 +636,18 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 			Namespace: a.GetNamespace(),
 		}, ""))
 
-	// Read-only subresources: resources, history, status (admin only).
+	case "resources":
+		// POST is a read-only path lookup; the connector checks each returned resource.
+		// GET remains the repository management listing and requires admin access.
+		if a.GetVerb() == apiutils.VerbCreate {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb: apiutils.VerbUpdate, Group: provisioning.GROUP,
+			Resource: provisioning.RepositoryResourceInfo.GetName(), Name: a.GetName(), Namespace: a.GetNamespace(),
+		}, ""))
+
+	// Read-only management subresources (admin only).
 	//
 	// These expose repository management/inspection views and must be admin-only. We gate
 	// on repositories:write (VerbUpdate) - an admin-only action - rather than
@@ -643,7 +657,7 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 	// can manage it"). We keep the repositories resource with the repository Name rather
 	// than proxying through an unrelated resource (e.g. stats), so this remains correct if
 	// access is later scoped to individual repositories.
-	case "resources", "history", "status":
+	case "history", "status":
 		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
 			Verb:      apiutils.VerbUpdate,
 			Group:     provisioning.GROUP,
@@ -949,7 +963,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = WithTimeout(NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.maxFileSize), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = WithTimeout(NewRefsConnector(b), 30*time.Second)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b, b.resourceLister), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b, b.resourceLister, b.resourceLookup), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = WithTimeout(NewHistorySubresource(b), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled, performanceEnabled), 30*time.Second)
 
@@ -1336,6 +1350,22 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	// For v1beta1, update the component base to use the correct version
 	if b.gv.Version == "v1beta1" {
 		compBase = strings.Replace(compBase, ".v0alpha1.", ".v1beta1.", 1)
+	}
+
+	if sub := oas.Paths.Paths[repoprefix+"/resources"]; sub != nil && sub.Post != nil {
+		sub.Post.Description = "Resolve up to 50 exact paths relative to the configured repository root. Returns only synced resources readable by the caller. Directory paths select the folder itself; / selects the repository root folder. This operation does not modify resources."
+		sub.Post.OperationId = "lookupRepositoryResources"
+		paths := spec.ArrayProperty(spec.StringProperty())
+		paths.MinItems = ptr.To[int64](1)
+		paths.MaxItems = ptr.To[int64](resources.MaxResourceLookupPaths)
+		sub.Post.RequestBody = &spec3.RequestBody{RequestBodyProps: spec3.RequestBodyProps{
+			Required: true,
+			Content: map[string]*spec3.MediaType{"application/json": {MediaTypeProps: spec3.MediaTypeProps{
+				Schema: &spec.Schema{SchemaProps: spec.SchemaProps{
+					Type: []string{"object"}, Required: []string{"paths"}, Properties: map[string]spec.Schema{"paths": *paths},
+				}},
+			}}},
+		}}
 	}
 
 	// TODO: Remove this endpoint when we deprecate the test endpoint

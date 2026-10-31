@@ -499,6 +499,10 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/resources` }),
         providesTags: ['Repository'],
       }),
+      lookupRepositoryResources: build.mutation<LookupRepositoryResourcesApiResponse, LookupRepositoryResourcesApiArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/resources`, method: 'POST', body: queryArg.body }),
+        invalidatesTags: ['Repository'],
+      }),
       getRepositoryStatus: build.query<GetRepositoryStatusApiResponse, GetRepositoryStatusApiArg>({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/status`,
@@ -1257,6 +1261,14 @@ export type GetRepositoryResourcesApiResponse = /** status 200 OK */ ResourceLis
 export type GetRepositoryResourcesApiArg = {
   /** name of the ResourceList */
   name: string;
+};
+export type LookupRepositoryResourcesApiResponse = /** status 200 OK */ ResourceList;
+export type LookupRepositoryResourcesApiArg = {
+  /** name of the ResourceList */
+  name: string;
+  body: {
+    paths: string[];
+  };
 };
 export type GetRepositoryStatusApiResponse = /** status 200 OK */ Repository;
 export type GetRepositoryStatusApiArg = {
@@ -2445,6 +2457,7 @@ export const {
   useLazyGetRepositoryRenderWithPathQuery,
   useGetRepositoryResourcesQuery,
   useLazyGetRepositoryResourcesQuery,
+  useLookupRepositoryResourcesMutation,
   useGetRepositoryStatusQuery,
   useLazyGetRepositoryStatusQuery,
   useReplaceRepositoryStatusMutation,
