@@ -239,7 +239,7 @@ func TestProvideServiceLocalAPIURL(t *testing.T) {
 				require.False(t, tc.registered)
 				return
 			}
-			s := ProvideService(cfg, pluginAuth, routes)
+			s := ProvideService(cfg, pluginAuth, routes, nil, nil, nil)
 			require.Equal(t, tc.registered, routes.registered)
 			if !tc.registered {
 				return

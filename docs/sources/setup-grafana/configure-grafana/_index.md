@@ -3096,6 +3096,42 @@ If `true`, load the standalone (external) version of a core plugin instead of th
 For most plugins this requires the standalone plugin to be installed. Some plugins, such as
 [canvas](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/canvas/), default to `true` and are bundled with Grafana.
 
+#### `allow_subject_signing`
+
+If `true`, allow this backend app plugin to request an on-behalf-of access token for a user or service account by supplying its identity. The default is `false`.
+
+This requires local plugin authentication, the `appplugins.loadAppManifest` feature toggle, and an app SDK manifest for the plugin. Configure `subject_signing_permissions` to specify the delegated actions. Incomplete or incompatible enabled configuration prevents Grafana from starting. This setting doesn't apply when an external plugin token signer is configured.
+
+Enable this only for plugins you trust to act for any eligible account in organizations where the app is enabled. Grafana checks the app's settings for the requested organization on each exchange. If no settings exist, only an auto-enabled app is eligible. A stored disabled setting denies new tokens, including for auto-enabled apps. Existing tokens retain their normal lifetime.
+
+The account doesn't need an active session or a previous request to the plugin. The plugin manifest and plugin UI settings cannot enable subject signing without this server-side setting.
+
+For example, grant a plugin data source read access on behalf of accounts in organizations where the app is enabled:
+
+```ini
+[plugin.<PLUGIN_ID>]
+allow_subject_signing = true
+subject_signing_permissions = datasources:read
+```
+
+Replace `<PLUGIN_ID>` with the plugin ID. Restart Grafana to apply changes.
+
+The backend uses its existing `GF_API_ACCESS_CAP_TOKEN` credential and `GF_API_ACCESS_TOKEN_EXCHANGE_URL` with the authlib token exchange client. The local endpoint is `POST /api/internal/plugin-token-exchange`. Supply a `subject` containing the typed numeric `sub`, account UID in `identifier`, matching `type` (`user` or `service-account`), and organization `namespace`. The request namespace must match the subject namespace. Organization 1 uses `default`; other organizations use `org-<ID>`. Do not supply `subjectToken` together with `subject`.
+
+Grafana checks that the numeric ID, UID, type, organization membership, and enabled state match the account. It ignores caller-supplied profile fields, roles, and groups. Tokens expire after five minutes by default. A positive `expiresIn` requests a lifetime in seconds, up to `subject_signing_max_token_lifetime`. Nonpositive or over-limit requests are rejected with HTTP 403. Account and permission changes follow Grafana's existing cache behavior. Credentials and signing keys belong to the Grafana process, so requests must reach that process; restarting it invalidates previously issued local tokens.
+
+#### `subject_signing_permissions`
+
+Space-separated concrete delegated actions, such as `datasources:read datasources:write`. Required when `allow_subject_signing` is enabled. Wildcards and permission sets aren't supported. These actions restrict the account's existing permissions on APIs that enforce Grafana RBAC. Legacy APIs that check roles directly don't uniformly enforce delegated action restrictions.
+
+The request's optional `restrictedDelegatedPermissions` list narrows this grant by exact intersection. Omission or `null` uses the configured grant. An explicit empty JSON array, or a list with no matching actions, is rejected with HTTP 403. The current authlib client omits empty Go slices when serializing this field; callers requiring a narrower grant must supply a nonempty list. These rules apply to the asserted-subject path; existing exchanges using a subject token keep their existing behavior.
+
+#### `subject_signing_max_token_lifetime`
+
+Maximum lifetime for an access token requested with an asserted `subject`. Defaults to `5m`. Set a duration such as `1h` to allow the plugin to request longer lifetimes with `expiresIn`. The duration must be at least `5m` and use whole seconds. Omitting `expiresIn` still gives a five-minute token, regardless of this maximum.
+
+This setting applies only when `allow_subject_signing` is enabled. Existing service-token and `subjectToken` exchanges retain their lifetime behavior.
+
 <hr>
 
 ### `[plugin.grafana-image-renderer]`

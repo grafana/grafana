@@ -40,7 +40,8 @@ type Config struct {
 	APIURL string
 	// LoopbackOnly is set when APIURL is a loopback address, so the token
 	// exchange refuses callers that are not on loopback.
-	LoopbackOnly bool
+	LoopbackOnly    bool
+	SubjectPolicies map[string]*v3.LocalSubjectPolicy
 }
 
 // LocalTokens reports whether Grafana signs plugin access tokens itself. A nil
@@ -64,12 +65,23 @@ func (c *Config) LocalAPIURL() string {
 // own requests to them.
 func ProvideConfig(cfg *setting.Cfg) (*Config, error) {
 	c := &Config{Enabled: localPluginAuthEnabled(cfg)}
+	var err error
+	c.SubjectPolicies, err = subjectPolicies(cfg)
+	if err != nil {
+		return nil, err
+	}
+	if len(c.SubjectPolicies) > 0 && !c.Enabled {
+		return nil, errors.New("plugin subject signing requires local plugin authentication")
+	}
 	if !c.Enabled {
 		return c, nil
 	}
 	apiURL, err := localAPIURL(cfg)
 	switch {
 	case errors.Is(err, errNoLocalAPIURL):
+		if len(c.SubjectPolicies) > 0 {
+			return nil, fmt.Errorf("plugin subject signing requires a reachable local exchange: %w", err)
+		}
 		log.New("plugins.auth").Warn("App plugins get no credentials for Grafana's API", "error", err)
 		return c, nil
 	case err != nil:
