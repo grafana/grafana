@@ -11,8 +11,21 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { type AppNavConfig, appNavConfigFor, appNavPathConfigFor } from './appNavConfig';
 import { NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
-import { PLUGIN_NAV_OVERRIDES } from './pluginNavOverrides';
+import { getAppAccessScopes, hasScopedAppAccess } from './pluginAccess';
+import { PLUGIN_NAV_OVERRIDES, type PluginSets } from './pluginNavOverrides';
 import { appendIntoSection, hoistedPluginPageId, pluginPageId, standalonePluginPageId, withAppSubUrl } from './utils';
+
+/**
+ * Whether the user may see the given app's nav items. With scopes this gates each
+ * app on plugins:id:<id>, the way the server does. Without them the unscoped
+ * action check stands in, and grants every app at once. The fallback lives here
+ * rather than in pluginAccess, which must not import context_srv back.
+ */
+function hasAppAccess(scopes: ReadonlySet<string> | null, pluginId: string): boolean {
+  return scopes == null
+    ? contextSrv.hasPermission(AccessControlAction.PluginsAppAccess)
+    : hasScopedAppAccess(scopes, pluginId);
+}
 
 // Whether the user may see one of an app's pages. An include declaring an RBAC
 // action is gated on that action; otherwise the user's org role must rank at or
@@ -42,14 +55,18 @@ const collator = new Intl.Collator();
  * anything the Go builder gates on those is out of reach here.
  */
 export function applyPluginNav(tree: NavModelItem[], apps: AppPluginConfig[]): NavModelItem[] {
-  if (!contextSrv.hasPermission(AccessControlAction.PluginsAppAccess)) {
-    return tree;
-  }
-
-  const installedPluginIds: ReadonlySet<string> = new Set(apps.map((app) => app.id));
+  // Per app, because the server scopes plugins.app:access to plugins:id:<id>.
+  // Where no scopes were recorded this is the unscoped check, which answers the
+  // same for every app, so a user with no app access gets none of them.
+  const appAccessScopes = getAppAccessScopes();
+  const accessibleApps = byTitle(apps).filter((app) => hasAppAccess(appAccessScopes, app.id));
+  const pluginSets: PluginSets = {
+    installed: new Set(apps.map((app) => app.id)),
+    accessible: new Set(accessibleApps.map((app) => app.id)),
+  };
   let next = tree;
 
-  for (const app of byTitle(apps)) {
+  for (const app of accessibleApps) {
     try {
       const { appLink, navChildren, standalonePages } = buildAppLink(app);
       // Built up locally and committed in one go, so a throw part-way through
@@ -79,8 +96,8 @@ export function applyPluginNav(tree: NavModelItem[], apps: AppPluginConfig[]): N
 
   // Last, because each override reads nodes other apps placed
   for (const override of PLUGIN_NAV_OVERRIDES) {
-    if (override.when(next, installedPluginIds)) {
-      next = override.apply(next, installedPluginIds);
+    if (override.when(next, pluginSets)) {
+      next = override.apply(next, pluginSets);
     }
   }
 

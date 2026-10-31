@@ -9,6 +9,7 @@ import * as appNavConfig from './appNavConfig';
 import { buildNavTree } from './buildNavTree';
 import { applyPluginNav } from './buildPluginNav';
 import { NavID, NavWeight } from './constants';
+import { setAppAccessScopes } from './pluginAccess';
 import {
   appPage as page,
   appPluginConfig as app,
@@ -552,6 +553,81 @@ describe('applyPluginNav', () => {
 
       const assistant = findById(merged, 'plugin-page-grafana-assistant-app');
       expect(assistant?.children?.length).toBe(1);
+    });
+  });
+
+  describe('scoped app access', () => {
+    afterEach(() => {
+      setAppAccessScopes(null);
+    });
+
+    it('keeps only the apps the user holds a scope for', () => {
+      setAppAccessScopes(new Set(['plugins:id:kept-app']));
+
+      const merged = merge(
+        app('kept-app', 'Kept app', [page('Page', '/a/kept-app/page')]),
+        app('denied-app', 'Denied app', [page('Page', '/a/denied-app/page')])
+      );
+
+      expect(ids(moreApps(merged)?.children ?? [])).toEqual(['plugin-page-kept-app']);
+    });
+
+    // The function-level guard went with the per-app check, so this is what now
+    // keeps every app away from a user with no app access at all
+    it('keeps no app when the scopes are unavailable and the action is not held', () => {
+      setupNavTestState({
+        orgRole: 'Admin',
+        openFeatureFlags: { 'grafana.multiTenantNavTree': true, 'plugins.useMTPlugins': true },
+      });
+
+      const merged = merge(app('some-app', 'Some app', [page('Page', '/a/some-app/page')]));
+
+      expect(moreApps(merged)).toBeUndefined();
+    });
+
+    // The overrides ask two different questions of the app set, and the Go
+    // builder's answers differ: it reads the accessible map for the Adaptive
+    // Telemetry header and the plugin store for the assistant flags
+    it('leaves the Adaptive Telemetry header alone when its app is out of scope', () => {
+      setAppAccessScopes(new Set(['plugins:id:grafana-adaptive-metrics-app']));
+
+      const merged = merge(
+        app('grafana-adaptive-metrics-app', 'Adaptive Metrics', [page('Page', '/a/grafana-adaptive-metrics-app/page')]),
+        app('grafana-adaptivetelemetry-app', 'Adaptive Telemetry', [
+          page('Home', '/a/grafana-adaptivetelemetry-app/home'),
+        ])
+      );
+
+      // the section still exists, built by the app the user can see
+      const section = findById(merged, NavID.adaptiveTelemetry);
+      expect(section).toBeDefined();
+      // but it does not link to an app that would 403
+      expect(section?.url).toBe('adaptive-telemetry');
+      expect(section?.pluginId).toBeUndefined();
+    });
+
+    it('still stubs the Assistant when the onboarding app is out of scope', () => {
+      setAppAccessScopes(new Set(['plugins:id:some-app']));
+
+      const merged = merge(
+        app('some-app', 'Some app', [page('Page', '/a/some-app/page')]),
+        app('grafana-assistant-onboarding-app', 'Assistant onboarding', [
+          page('Home', '/a/grafana-assistant-onboarding-app/home'),
+        ])
+      );
+
+      expect(findById(merged, 'plugin-page-grafana-assistant-app')).toBeDefined();
+    });
+
+    // Without scopes the unscoped permission stands in, which is the behaviour
+    // before this feature: every app the user can reach at all
+    it('keeps every app while the scopes are unavailable', () => {
+      const merged = merge(
+        app('kept-app', 'Kept app', [page('Page', '/a/kept-app/page')]),
+        app('denied-app', 'Denied app', [page('Page', '/a/denied-app/page')])
+      );
+
+      expect(ids(moreApps(merged)?.children ?? [])).toEqual(['plugin-page-denied-app', 'plugin-page-kept-app']);
     });
   });
 
