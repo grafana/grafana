@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"golang.org/x/sync/errgroup"
 
@@ -46,8 +47,8 @@ func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Respo
 	}
 
 	cmd := user.CreateUserCommand{
-		Login:    form.Login,
-		Email:    form.Email,
+		Login:    strings.TrimSpace(form.Login),
+		Email:    strings.TrimSpace(form.Email),
 		Password: form.Password,
 		Name:     form.Name,
 		OrgID:    form.OrgId,

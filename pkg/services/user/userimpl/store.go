@@ -243,8 +243,8 @@ func getUserByEmail(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, 
 }
 
 func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
-	// enforcement of lowercase due to forcement of caseinsensitive login
-	query.LoginOrEmail = strings.ToLower(query.LoginOrEmail)
+	// Trim then lowercase so accidental whitespace around typed credentials does not fail login.
+	query.LoginOrEmail = strings.ToLower(strings.TrimSpace(query.LoginOrEmail))
 
 	usr := &user.User{}
 	dbHelper, err := ss.sql(ctx)
@@ -263,7 +263,7 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 		// Since username can be an email address, attempt login with email address
 		// first if the login field has the "@" symbol.
 		if strings.Contains(query.LoginOrEmail, "@") {
-			has, err = getUserByEmail(dbHelper, sess, query.LoginOrEmail, usr)
+			has, err = getByExactOrTrimmed(dbHelper, sess, "email", query.LoginOrEmail, usr)
 			if err != nil {
 				return err
 			}
@@ -271,7 +271,7 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 
 		// Look for the login field instead of email
 		if !has {
-			has, err = getUserByLogin(dbHelper, sess, query.LoginOrEmail, usr)
+			has, err = getByExactOrTrimmed(dbHelper, sess, "login", query.LoginOrEmail, usr)
 		}
 
 		if err != nil {
@@ -290,8 +290,8 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 }
 
 func (ss *sqlStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
-	// enforcement of lowercase due to forcement of caseinsensitive login
-	query.Email = strings.ToLower(query.Email)
+	// Trim then lowercase so accidental whitespace around typed credentials does not fail lookup.
+	query.Email = strings.ToLower(strings.TrimSpace(query.Email))
 
 	usr := &user.User{}
 	dbHelper, err := ss.sql(ctx)
@@ -304,7 +304,7 @@ func (ss *sqlStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQu
 			return user.ErrUserNotFound
 		}
 
-		has, err := getUserByEmail(dbHelper, sess, query.Email, usr)
+		has, err := getByExactOrTrimmed(dbHelper, sess, "email", query.Email, usr)
 
 		if err != nil {
 			return err
@@ -319,32 +319,75 @@ func (ss *sqlStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQu
 	return usr, nil
 }
 
+// getByExactOrTrimmed finds a user by exact column match, then by TRIM(column)
+// so legacy rows that still contain leading/trailing whitespace remain reachable after lookup keys are trimmed.
+func getByExactOrTrimmed(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, column, value string, usr *user.User) (bool, error) {
+	var has bool
+	var err error
+	switch column {
+	case "login":
+		has, err = getUserByLogin(dbHelper, sess, value, usr)
+	case "email":
+		has, err = getUserByEmail(dbHelper, sess, value, usr)
+	default:
+		return false, fmt.Errorf("unsupported user lookup column: %s", column)
+	}
+	if err != nil || has {
+		return has, err
+	}
+
+	*usr = user.User{}
+	return sess.Table(dbHelper.Table("user")).Where("TRIM("+column+")=?", value).Get(usr)
+}
+
 // LoginConflict returns an error if the provided email or login are already
 // associated with a user.
 func (ss *sqlStore) LoginConflict(ctx context.Context, login, email string) error {
-	// enforcement of lowercase due to forcement of caseinsensitive login
-	login = strings.ToLower(login)
-	email = strings.ToLower(email)
-
 	dbHelper, err := ss.sql(ctx)
 	if err != nil {
 		return fmt.Errorf("get legacy DB: %w", err)
 	}
 
-	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
-		where := "email=? OR login=?"
-
-		exists, err := sess.Table(dbHelper.Table("user")).Where(where, email, login).Get(&user.User{})
-		if err != nil {
-			return err
-		}
-		if exists {
-			return user.ErrUserAlreadyExists
-		}
-
-		return nil
+	return dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		return loginConflict(dbHelper, sess, login, email, 0)
 	})
-	return err
+}
+
+// loginConflict returns ErrUserAlreadyExists if login/email collide with another user,
+// including legacy rows that still have leading/trailing whitespace. excludeUserID, when
+// non-zero, is excluded so a user can normalize their own spaced login/email on update.
+func loginConflict(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, login, email string, excludeUserID int64) error {
+	login = strings.ToLower(strings.TrimSpace(login))
+	email = strings.ToLower(strings.TrimSpace(email))
+
+	var parts []string
+	var args []any
+	if login != "" {
+		parts = append(parts, "login=? OR TRIM(login)=?")
+		args = append(args, login, login)
+	}
+	if email != "" {
+		parts = append(parts, "email=? OR TRIM(email)=?")
+		args = append(args, email, email)
+	}
+	if len(parts) == 0 {
+		return nil
+	}
+
+	where := "(" + strings.Join(parts, " OR ") + ")"
+	if excludeUserID > 0 {
+		where += " AND id<>?"
+		args = append(args, excludeUserID)
+	}
+
+	exists, err := sess.Table(dbHelper.Table("user")).Where(where, args...).Get(&user.User{})
+	if err != nil {
+		return err
+	}
+	if exists {
+		return user.ErrUserAlreadyExists
+	}
+	return nil
 }
 
 type updateUserQuery struct {
@@ -397,9 +440,9 @@ func (q updateUserQuery) OrgIDValue() int64 {
 func (q updateUserQuery) Validate() error { return nil }
 
 func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
-	// enforcement of lowercase due to forcement of caseinsensitive login
-	cmd.Login = strings.ToLower(cmd.Login)
-	cmd.Email = strings.ToLower(cmd.Email)
+	// Trim then lowercase so leading/trailing whitespace cannot leave logins that the UI hides.
+	cmd.Login = strings.ToLower(strings.TrimSpace(cmd.Login))
+	cmd.Email = strings.ToLower(strings.TrimSpace(cmd.Email))
 
 	dbHelper, err := ss.sql(ctx)
 	if err != nil {
@@ -407,6 +450,35 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 	}
 
 	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		// Only conflict-check login/email when they are actually changing. Otherwise a clean
+		// user who already shares a trimmed identity with a legacy spaced peer would be
+		// unable to save an ordinary profile update (name/theme/etc.).
+		if cmd.Login != "" || cmd.Email != "" {
+			var existing user.User
+			has, err := sess.Table(dbHelper.Table("user")).Where("id=?", cmd.UserID).Get(&existing)
+			if err != nil {
+				return err
+			}
+			if !has {
+				return user.ErrUserNotFound
+			}
+
+			loginToCheck := ""
+			emailToCheck := ""
+			// Detect a real column change against the stored value (lowercased only). Comparing after
+			// TrimSpace would treat whitespace normalization as "unchanged", skip conflict checks,
+			// then still write the trimmed value and collide with peers that differ only by spacing.
+			if cmd.Login != "" && cmd.Login != strings.ToLower(existing.Login) {
+				loginToCheck = cmd.Login
+			}
+			if cmd.Email != "" && cmd.Email != strings.ToLower(existing.Email) {
+				emailToCheck = cmd.Email
+			}
+			if err := loginConflict(dbHelper, sess, loginToCheck, emailToCheck, cmd.UserID); err != nil {
+				return err
+			}
+		}
+
 		now := time.Now().In(dbHelper.DB.GetEngine().DatabaseTZ).Truncate(time.Second)
 		query := updateUserQuery{
 			SQLTemplate:    sqltemplate.New(dbHelper.DialectForDriver()),
