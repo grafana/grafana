@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"regexp"
 
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -23,8 +24,18 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+const (
+	provisioningGroup    = "provisioning.grafana.app"
+	provisioningVersion  = "v0alpha1"
+	repositoriesResource = "repositories"
+)
+
 var (
 	errResourceIsManagedInRepository = fmt.Errorf("this resource is managed by a repository")
+
+	// errManagerGone reports that a write could not be routed because the repository managing the
+	// resource no longer exists. Nothing was written, and there is nothing left in git to write to.
+	errManagerGone = errors.New("the repository managing this resource no longer exists")
 
 	// terraformUserAgentPattern matches the User-Agent based manager ID format used by Terraform providers.
 	// Format: "Terraform/{version} (+https://www.terraform.io) terraform-provider-{name}/{version}"
@@ -236,6 +247,130 @@ func managedResourceCommitMessage(obj utils.GrafanaMetaAccessor, action resource
 	}
 }
 
+func (s *Storage) provisioningClient(ctx context.Context) (rest.Interface, error) {
+	cfg, err := s.configProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	cfg.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
+	cfg.GroupVersion = &schema.GroupVersion{Group: provisioningGroup, Version: provisioningVersion}
+	return rest.RESTClientFor(cfg)
+}
+
+// repositoryExists reports whether the named repository is still there. The lookup runs as the
+// provisioning identity because a caller may be allowed to write a resource without being allowed
+// to read repositories, and this is only an existence probe.
+func (s *Storage) repositoryExists(ctx context.Context, namespace, name string) (bool, error) {
+	if s.configProvider == nil || name == "" {
+		return true, nil
+	}
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
+	if err != nil {
+		return false, err
+	}
+	client, err := s.provisioningClient(ctx)
+	if err != nil {
+		return false, err
+	}
+	err = client.Get().
+		Namespace(namespace).
+		Resource(repositoriesResource).
+		Name(name).
+		Do(ctx).
+		Error()
+	switch {
+	case err == nil:
+		return true, nil
+	case apierrors.IsNotFound(err):
+		return false, nil
+	default:
+		return false, err
+	}
+}
+
+// isRepositoryNotFound reports whether err is the provisioning API saying the repository named in
+// the request path is gone. The files endpoint also returns not-found for a missing file or ref,
+// but only the repository's own not-found names the repositories resource in its details.
+func isRepositoryNotFound(err error) bool {
+	statusErr, ok := errors.AsType[*apierrors.StatusError](err)
+	if !ok || statusErr.ErrStatus.Reason != metav1.StatusReasonNotFound {
+		return false
+	}
+	details := statusErr.ErrStatus.Details
+	return details != nil && details.Group == provisioningGroup && details.Kind == repositoriesResource
+}
+
+// managerRepositoryGone reports whether obj is managed by a repository that no longer exists.
+func (s *Storage) managerRepositoryGone(ctx context.Context, obj utils.GrafanaMetaAccessor) bool {
+	manager, ok := obj.GetManagerProperties()
+	if !ok || manager.Kind != utils.ManagerKindRepo {
+		return false
+	}
+	exists, err := s.repositoryExists(ctx, obj.GetNamespace(), manager.Identity)
+	return err == nil && !exists
+}
+
+// isOrphanedRepositoryRootFolder reports whether obj is a repository root folder left behind by a
+// repository that no longer exists. The root folder stands for the repository itself rather than a
+// file, which is why it is the one repo-managed resource with no source path: there is nothing to
+// route a write to, and with the repository gone nothing will re-create it either.
+func (s *Storage) isOrphanedRepositoryRootFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) bool {
+	if src, ok := obj.GetSourceProperties(); ok && src.Path != "" {
+		return false
+	}
+	return s.managerRepositoryGone(ctx, obj)
+}
+
+// allowOrphanedUpdate reports whether an update the managed-resource check rejected may proceed
+// anyway because the repository managing the resource is gone. Two shapes qualify, and both leave
+// the spec and the folder untouched: releasing the resource by dropping its manager annotations,
+// and the metadata-only write that starts a delete, such as a folder's terminating label.
+//
+// Release is otherwise admin-only. Once the repository is gone that bar protects nothing — there is
+// no repository left to own the resource — and it would be incoherent to let an authorized caller
+// delete the resource outright while refusing them the lesser step of detaching it. The caller is
+// still authorized to write the resource by the API layer either way.
+func (s *Storage) allowOrphanedUpdate(ctx context.Context, obj, previous utils.GrafanaMetaAccessor) bool {
+	if !isManagerRelease(obj, previous) && !isMetadataOnlyUpdate(obj, previous) {
+		return false
+	}
+	return s.managerRepositoryGone(ctx, previous)
+}
+
+// isManagerRelease reports whether an update only detaches the resource from its manager. The
+// source annotations go with it, so they are not compared.
+func isManagerRelease(obj, previous utils.GrafanaMetaAccessor) bool {
+	if _, managed := obj.GetManagerProperties(); managed {
+		return false
+	}
+	if _, wasManaged := previous.GetManagerProperties(); !wasManaged {
+		return false
+	}
+	return specAndFolderUnchanged(obj, previous)
+}
+
+// isMetadataOnlyUpdate reports whether an update leaves everything that belongs in git untouched.
+func isMetadataOnlyUpdate(obj, previous utils.GrafanaMetaAccessor) bool {
+	newManager, _ := obj.GetManagerProperties()
+	oldManager, _ := previous.GetManagerProperties()
+	if newManager != oldManager {
+		return false
+	}
+	return specAndFolderUnchanged(obj, previous)
+}
+
+func specAndFolderUnchanged(obj, previous utils.GrafanaMetaAccessor) bool {
+	if obj.GetFolder() != previous.GetFolder() {
+		return false
+	}
+	spec, specErr := obj.GetSpec()
+	oldSpec, oldSpecErr := previous.GetSpec()
+	if specErr != nil || oldSpecErr != nil {
+		return false
+	}
+	return apiequality.Semantic.DeepEqual(spec, oldSpec)
+}
+
 // handleManagedResourceRouting re-routes a write for a repo-managed resource to the provisioning
 // files endpoint. cleanupSafe reports whether the write definitely did not persist (so a caller may
 // safely delete secrets it created for it): true only when the provisioning request was never sent,
@@ -268,16 +403,7 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 		return true, fmt.Errorf("managed resource is missing source path annotation")
 	}
 
-	cfg, err := s.configProvider.GetRestConfig(ctx)
-	if err != nil {
-		return true, err
-	}
-	cfg.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
-	cfg.GroupVersion = &schema.GroupVersion{
-		Group:   "provisioning.grafana.app",
-		Version: "v0alpha1",
-	}
-	client, err := rest.RESTClientFor(cfg)
+	client, err := s.provisioningClient(ctx)
 	if err != nil {
 		return true, err
 	}
@@ -294,7 +420,14 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 			Suffix("files", src.Path).
 			Param("message", managedResourceCommitMessage(obj, action)).
 			Do(ctx)
-		return false, result.Error()
+		if err := result.Error(); err != nil {
+			// The repository was deleted between reading the resource and this call.
+			if isRepositoryNotFound(err) {
+				return true, errManagerGone
+			}
+			return false, err
+		}
+		return false, nil
 	}
 
 	var req *rest.Request
