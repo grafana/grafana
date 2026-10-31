@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { type FC } from 'react';
-import { Controller, type DeepMap, type FieldError, useFormContext } from 'react-hook-form';
+import { Controller, type DeepMap, type FieldError, type FieldValues, useFormContext } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -26,18 +26,20 @@ import {
 } from 'app/features/alerting/unified/types/alerting';
 
 import { KeyValueMapInput } from './KeyValueMapInput';
+import { KeyValueObjectMapInput } from './KeyValueObjectMapInput';
 import { StringArrayInput } from './StringArrayInput';
 import { SubformArrayField } from './SubformArrayField';
 import { SubformField } from './SubformField';
 import { WrapWithTemplateSelection } from './TemplateSelector';
 
 interface Props {
-  defaultValue: any;
+  defaultValue: unknown;
   option: NotificationChannelOption;
   getOptionMeta?: (option: NotificationChannelOption) => OptionMeta;
   invalid?: boolean;
   pathPrefix: string;
-  error?: FieldError | DeepMap<any, FieldError>;
+  secureFieldPathPrefix?: string;
+  error?: FieldError | DeepMap<FieldValues, FieldError> | Array<DeepMap<FieldValues, FieldError>>;
   readOnly?: boolean;
   customValidator?: (value: string) => boolean | string | Promise<boolean | string>;
   onResetSecureField?: (propertyName: string) => void;
@@ -49,6 +51,7 @@ export const OptionField: FC<Props> = ({
   option,
   invalid,
   pathPrefix,
+  secureFieldPathPrefix = '',
   error,
   defaultValue,
   readOnly = false,
@@ -68,6 +71,7 @@ export const OptionField: FC<Props> = ({
         option={option}
         errors={error}
         pathPrefix={pathPrefix}
+        secureFieldPathPrefix={secureFieldPathPrefix}
         onDelete={onDeleteSubform}
         getOptionMeta={getOptionMeta}
       />
@@ -78,10 +82,11 @@ export const OptionField: FC<Props> = ({
       <SubformArrayField
         secureFields={secureFields}
         readOnly={readOnly}
-        defaultValues={defaultValue}
+        defaultValues={Array.isArray(defaultValue) ? defaultValue : undefined}
         option={option}
         pathPrefix={pathPrefix}
-        errors={error as Array<DeepMap<any, FieldError>> | undefined}
+        secureFieldPathPrefix={secureFieldPathPrefix}
+        errors={isErrorArray(error) ? error : undefined}
         getOptionMeta={getOptionMeta}
       />
     );
@@ -112,18 +117,21 @@ export const OptionField: FC<Props> = ({
       label={label}
       description={option.description || undefined}
       invalid={!!error}
-      error={error?.message}
+      error={getErrorMessage(error)}
       data-testid={selectors.pages.Alerting.ContactPointForm.settingsField(`${pathPrefix}${option.propertyName}`)}
     >
       <OptionInput
         id={`${pathPrefix}${option.propertyName}`}
         defaultValue={defaultValue}
+        error={error}
         option={option}
         invalid={invalid}
         pathPrefix={pathPrefix}
+        secureFieldPathPrefix={secureFieldPathPrefix}
         readOnly={readOnly}
         customValidator={customValidator}
         onResetSecureField={onResetSecureField}
+        onDeleteSubform={onDeleteSubform}
         secureFields={secureFields}
         getOptionMeta={getOptionMeta}
       />
@@ -155,10 +163,14 @@ const OptionInput: FC<Props & { id: string }> = ({
   option,
   invalid,
   id,
+  defaultValue,
+  error,
   pathPrefix = '',
+  secureFieldPathPrefix = '',
   readOnly = false,
   customValidator,
   onResetSecureField,
+  onDeleteSubform,
   secureFields = {},
   getOptionMeta,
 }) => {
@@ -169,7 +181,9 @@ const OptionInput: FC<Props & { id: string }> = ({
 
   const name = `${pathPrefix}${option.propertyName}`;
 
-  const secureFieldKey = option.secure && option.secureFieldKey ? option.secureFieldKey : '';
+  const secureFieldKey = option.secure
+    ? (option.secureFieldKey ?? `${secureFieldPathPrefix}${option.propertyName}`)
+    : '';
   const isSecureFieldConfigured = secureFieldKey && secureFields?.[secureFieldKey];
 
   const useTemplates = option.placeholder.includes('{{ template');
@@ -298,13 +312,30 @@ const OptionInput: FC<Props & { id: string }> = ({
         </WrapWithTemplateSelection>
       );
     case 'string_array':
-      return (
+      return isSecureFieldConfigured ? (
+        <ConfiguredSecretInput
+          id={id}
+          readOnly={readOnly}
+          onReset={() => {
+            onResetSecureField?.(secureFieldKey);
+            if (option.secure) {
+              setValue(name, []);
+            }
+          }}
+        />
+      ) : (
         <Controller
           render={({ field: { value, onChange } }) => (
-            <StringArrayInput readOnly={readOnly} value={value} onChange={onChange} />
+            <StringArrayInput
+              readOnly={readOnly}
+              inputType={option.secure ? option.inputType || 'password' : option.inputType}
+              value={value}
+              onChange={onChange}
+            />
           )}
           control={control}
           name={name}
+          defaultValue={defaultValue ?? []}
         />
       );
     case 'key_value_map':
@@ -318,11 +349,53 @@ const OptionInput: FC<Props & { id: string }> = ({
         />
       );
 
+    case 'key_value_object_map':
+      return (
+        <Controller
+          render={({ field: { value, onChange } }) => (
+            <KeyValueObjectMapInput
+              option={option}
+              secureFieldPathPrefix={secureFieldPathPrefix}
+              secureFields={secureFields}
+              errors={isNestedErrors(error) ? error : undefined}
+              readOnly={readOnly}
+              value={value}
+              onChange={onChange}
+              onResetSecureField={onResetSecureField}
+              getOptionMeta={getOptionMeta}
+              onDeleteSubform={onDeleteSubform}
+            />
+          )}
+          control={control}
+          name={name}
+          defaultValue={defaultValue ?? {}}
+        />
+      );
+
     default:
       console.error('Element not supported', option.element);
       return null;
   }
 };
+
+function isErrorArray(error: Props['error']): error is Array<DeepMap<FieldValues, FieldError>> {
+  return Array.isArray(error);
+}
+
+function isNestedErrors(error: Props['error']): error is DeepMap<FieldValues, FieldError> {
+  return !!error && !Array.isArray(error) && !isFieldError(error);
+}
+
+function isFieldError(error: FieldError | DeepMap<FieldValues, FieldError>): error is FieldError {
+  return typeof error.type === 'string';
+}
+
+function getErrorMessage(error: Props['error']): string | undefined {
+  if (error && !Array.isArray(error) && isFieldError(error)) {
+    return error.message;
+  }
+  return undefined;
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   checkbox: css({

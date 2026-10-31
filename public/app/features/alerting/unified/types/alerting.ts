@@ -152,6 +152,7 @@ export interface NotificationChannelOption {
     | 'subform'
     | 'subform_array'
     | 'key_value_map'
+    | 'key_value_object_map'
     | 'string_array';
   inputType: string;
   label: string;

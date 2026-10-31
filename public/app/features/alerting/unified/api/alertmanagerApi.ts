@@ -171,12 +171,18 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       transformResponse: (response: NotifierDTO[]) => {
         const populateSecureFieldKey = (
           option: NotificationChannelOption,
-          prefix: string
+          prefix: string,
+          insideObjectMap = false
         ): NotificationChannelOption => ({
           ...option,
-          secureFieldKey: option.secure && !option.secureFieldKey ? `${prefix}${option.propertyName}` : undefined,
+          secureFieldKey:
+            option.secure && !insideObjectMap && !option.secureFieldKey ? `${prefix}${option.propertyName}` : undefined,
           subformOptions: option.subformOptions?.map((suboption) =>
-            populateSecureFieldKey(suboption, `${prefix}${option.propertyName}.`)
+            populateSecureFieldKey(
+              suboption,
+              `${prefix}${option.propertyName}.`,
+              insideObjectMap || option.element === 'key_value_object_map'
+            )
           ),
         });
 
