@@ -51,6 +51,13 @@ func SkipOrgRoleSyncAllowAssignGrafanaAdminValidator(info *social.OAuthInfo, req
 	return nil
 }
 
+func SkipOrgRoleSyncRoleAttributeStrictValidator(info *social.OAuthInfo, requester identity.Requester) error {
+	if info.RoleAttributeStrict && info.SkipOrgRoleSync {
+		return ssosettings.ErrInvalidOAuthConfig("Role attribute strict and Skip org role sync are both set thus role mapping will not be evaluated and users will not be denied access. Consider setting one or the other.")
+	}
+	return nil
+}
+
 func LoginPromptValidator(info *social.OAuthInfo, requester identity.Requester) error {
 	prompt := info.LoginPrompt
 
