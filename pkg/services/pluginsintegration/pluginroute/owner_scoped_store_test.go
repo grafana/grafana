@@ -18,8 +18,8 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	prefsv1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
+	prefsapp "github.com/grafana/grafana/apps/preferences/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func objectNamed(name string) *unstructured.Unstructured {
@@ -183,8 +183,7 @@ func TestOwnedListStoreVirtualGet(t *testing.T) {
 }
 
 func TestHardcodedVirtualGetter(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.DefaultTheme = "light"
+	cfg := &prefsapp.Config{Defaults: prefsv1.PreferencesSpec{Theme: new("light")}}
 
 	require.Nil(t, hardcodedVirtualGetter("collections.grafana.app", "stars", cfg), "stars have no virtual names")
 	require.Nil(t, hardcodedVirtualGetter("preferences.grafana.app", "preferences", nil), "without configuration there are no defaults to merge")

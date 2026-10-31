@@ -29,6 +29,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
+	prefsapp "github.com/grafana/grafana/apps/preferences/pkg/app"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
@@ -76,9 +77,10 @@ type Options struct {
 	BuildVersion     string
 	MetricsRegister  prometheus.Registerer
 
-	// Cfg is Grafana's configuration, for what a kind authorized by name needs
-	// from it (see hardcodedVirtualGetter).
-	Cfg *setting.Cfg
+	// TEMPORARY: what hardcodedVirtualGetter answers preferences/merged with. It
+	// goes away, with the hardcoded getter, once the app manifest can declare a
+	// name the app answers itself. Nil for every other plugin.
+	PreferencesConfig *prefsapp.Config
 
 	// Legacy settings use the same migration policy as the embedded API server.
 	DualWrite      dualwrite.Service

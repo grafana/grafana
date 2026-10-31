@@ -3,10 +3,6 @@ package pluginroute
 import (
 	prefsapp "github.com/grafana/grafana/apps/preferences/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
-	prefsapi "github.com/grafana/grafana/pkg/registry/apis/preferences"
-	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Everything the router knows about the kinds it authorizes by name lives in
@@ -39,14 +35,13 @@ func hardcodedKindAuth(group, resource string) (o *ownerFromName, allowMissingPa
 
 // hardcodedVirtualGetter answers the fixed names of a kind authorized by name,
 // where the app owns what they mean. Stars have none.
-// TODO: this moves to the app manifest, with hardcodedKindAuth.
-func hardcodedVirtualGetter(group, resource string, cfg *setting.Cfg) VirtualGetter {
-	if group != "preferences.grafana.app" || resource != "preferences" || cfg == nil {
+//
+// TEMPORARY: this, Options.PreferencesConfig and the router's CoreApp field
+// that feeds it exist only because the getter is hardcoded here. They go away
+// when the app manifest declares the name and the router asks the app for it.
+func hardcodedVirtualGetter(group, resource string, preferences *prefsapp.Config) VirtualGetter {
+	if group != "preferences.grafana.app" || resource != "preferences" || preferences == nil {
 		return nil
 	}
-	return (&prefsapp.Config{
-		Defaults:          prefsapi.DefaultSpec(cfg),
-		HomeDashboardName: home.DASHBOARD_NAME,
-		IsValidTheme:      pref.IsValidThemeID,
-	}).MergedGetter()
+	return preferences.MergedGetter()
 }

@@ -64,16 +64,17 @@ func builtinCoreApps(cfg *setting.Cfg, pluginAuth *pluginauth.Config) ([]CoreApp
 	if err != nil {
 		return nil, err
 	}
+	preferencesConfig := &preferencesapp.Config{
+		Defaults:          prefsapi.DefaultSpec(cfg),
+		HomeDashboardName: home.DASHBOARD_NAME,
+		IsValidTheme:      pref.IsValidThemeID,
+	}
 	preferences, err := newCoreApp(preferencesPluginID, preferencesmanifest.LocalManifest().ManifestData, pluginAuth, false,
-		func(c app.Config) (app.App, error) { return preferencesapp.New(c) },
-		&preferencesapp.Config{
-			Defaults:          prefsapi.DefaultSpec(cfg),
-			HomeDashboardName: home.DASHBOARD_NAME,
-			IsValidTheme:      pref.IsValidThemeID,
-		})
+		func(c app.Config) (app.App, error) { return preferencesapp.New(c) }, preferencesConfig)
 	if err != nil {
 		return nil, err
 	}
+	preferences.PreferencesConfig = preferencesConfig // TEMPORARY, see CoreApp.PreferencesConfig
 	return []CoreApp{collections, preferences}, nil
 }
 
