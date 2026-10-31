@@ -50,7 +50,16 @@ interface HeaderCellProps {
 
 const TABBABLE_SELECTOR = 'button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+const MENU_BUTTON_TEST_ID = selectors.components.Panels.Visualization.TableNG.headerColumnMenu.button;
+
 const HEADER_LINE_BOX = `${TABLE.HEADER_LINE_HEIGHT}px`;
+
+// Once the focused node is removed, document.activeElement can read as the body, the document element,
+// null or that detached node, depending on the browser.
+function isFocusLost() {
+  const active = document.activeElement;
+  return !active || active === document.body || active === document.documentElement || !active.isConnected;
+}
 
 export const HeaderCell: React.FC<HeaderCellProps> = ({
   column,
@@ -123,6 +132,14 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     },
     [setPopoverVisible]
   );
+
+  useEffect(() => {
+    const anchorRemoved = filterAnchor !== null && !filterAnchor.isConnected;
+    if (isPopoverVisible || !anchorRemoved || !isFocusLost()) {
+      return;
+    }
+    ref.current?.querySelector<HTMLButtonElement>(`[data-testid="${MENU_BUTTON_TEST_ID}"]`)?.focus();
+  }, [isPopoverVisible, filterAnchor]);
 
   useEffect(() => {
     if (!filteringDisabled && !filterable && filterEnabled && !unsupportedReason) {

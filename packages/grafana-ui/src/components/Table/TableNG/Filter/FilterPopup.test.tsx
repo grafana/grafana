@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type Field, FieldType } from '@grafana/data';
@@ -221,6 +221,33 @@ describe('FilterPopup', () => {
     expect(screen.getByRole('button', { name: 'Ok' })).toBeInTheDocument();
     expect(screen.queryByRole('checkbox', { name: 'Include missing values' })).not.toBeInTheDocument();
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  describe('focus', () => {
+    it.each([
+      { name: 'Ok', rangeFiltersEnabled: false },
+      { name: 'Cancel', rangeFiltersEnabled: false },
+      { name: 'Clear filter', rangeFiltersEnabled: false },
+      { name: 'Apply', rangeFiltersEnabled: true },
+      { name: 'Cancel', rangeFiltersEnabled: true },
+      { name: 'Clear filter', rangeFiltersEnabled: true },
+    ])(
+      'returns focus to the trigger button when $name is pressed (rangeFiltersEnabled=$rangeFiltersEnabled)',
+      async ({ name, rangeFiltersEnabled }) => {
+        const user = userEvent.setup();
+        const { buttonElement, onClose } = renderPopup({
+          filterValue: [{ value: 'active', label: 'active' }],
+          rangeFiltersEnabled,
+        });
+        await waitFor(() => expect(screen.getByPlaceholderText('Filter values')).toHaveFocus());
+
+        act(() => screen.getByRole('button', { name }).focus());
+        await user.keyboard('{Enter}');
+
+        expect(buttonElement).toHaveFocus();
+        expect(onClose).toHaveBeenCalledTimes(1);
+      }
+    );
   });
 
   describe('Escape key', () => {
