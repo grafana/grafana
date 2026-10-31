@@ -324,7 +324,9 @@ function YamlTargetDataSourceField({
             inputId="yaml-target-data-source"
             alerting
             disabled={recordingTargets.isLoading}
-            filter={(ds) => isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type)}
+            filter={(ds) =>
+              isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type) || supportedImportTypes.includes(ds.type)
+            }
             onChange={(ds) => {
               setValue('yamlImportTargetDatasourceUID', ds.uid);
               const recordingRulesTargetDs = getValues('targetDatasourceUID');
