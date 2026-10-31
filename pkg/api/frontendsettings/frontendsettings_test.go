@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -152,5 +153,49 @@ func TestGetBaseFrontendSettings(t *testing.T) {
 		settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license, pluginsCDN)
 		require.NoError(t, err)
 		assert.Empty(t, settings.PluginsCDNBaseURL)
+	})
+
+	t.Run("carries the operator nav overrides from both INI sections", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		sections, err := cfg.Raw.NewSection("navigation.app_sections")
+		require.NoError(t, err)
+		_, err = sections.NewKey("grafana-collector-app", "connections 1")
+		require.NoError(t, err)
+		_, err = sections.NewKey("grafana-asserts-app", "observability")
+		require.NoError(t, err)
+
+		pages, err := cfg.Raw.NewSection("navigation.app_standalone_pages")
+		require.NoError(t, err)
+		_, err = pages.NewKey("/a/grafana-pdc-app", "nonexistent")
+		require.NoError(t, err)
+		_, err = pages.NewKey("/connections/infrastructure", "connections notanumber")
+		require.NoError(t, err)
+
+		license := &licensing.OSSLicensingService{Cfg: cfg}
+		settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license, nil)
+		require.NoError(t, err)
+
+		assert.Equal(t, map[string]dtos.FrontendSettingsNavigationPlacementDTO{
+			"grafana-collector-app": {SectionID: "connections", SortWeight: 1},
+			// no weight given, so it keeps whatever the frontend's built-in config has
+			"grafana-asserts-app": {SectionID: "observability"},
+		}, settings.Navigation.AppSections)
+
+		assert.Equal(t, map[string]dtos.FrontendSettingsNavigationPlacementDTO{
+			// a section that does not exist is how an operator hides a page
+			"/a/grafana-pdc-app": {SectionID: "nonexistent"},
+			// an unparseable weight is ignored rather than failing the whole setting
+			"/connections/infrastructure": {SectionID: "connections"},
+		}, settings.Navigation.AppStandalonePages)
+	})
+
+	t.Run("leaves the nav overrides empty when no sections are configured", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		license := &licensing.OSSLicensingService{Cfg: cfg}
+
+		settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license, nil)
+		require.NoError(t, err)
+		assert.Empty(t, settings.Navigation.AppSections)
+		assert.Empty(t, settings.Navigation.AppStandalonePages)
 	})
 }

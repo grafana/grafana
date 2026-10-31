@@ -3,7 +3,6 @@ package navtreeimpl
 import (
 	"path"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -16,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // The Knowledge Graph's version of the "Application" page.
@@ -662,46 +660,21 @@ func (s *ServiceImpl) readNavigationSettings() {
 		},
 	}
 
-	appSections := s.cfg.Raw.Section("navigation.app_sections")
-	appStandalonePages := s.cfg.Raw.Section("navigation.app_standalone_pages")
-
-	for _, key := range appSections.Keys() {
-		pluginId := key.Name()
-		// Support <id> <weight> value
-		values := util.SplitString(appSections.Key(key.Name()).MustString(""))
-
-		appCfg := &NavigationAppConfig{SectionID: values[0]}
-		if len(values) > 1 {
-			if weight, err := strconv.ParseInt(values[1], 10, 64); err == nil {
-				appCfg.SortWeight = weight
-			}
-		}
-
+	for pluginID, placement := range navtree.ParseNavigationPlacements(s.cfg.Raw.Section("navigation.app_sections").KeysHash()) {
 		// Only apply the new values, don't completely overwrite the entry if it exists
-		if entry, ok := s.navigationAppConfig[pluginId]; ok {
-			entry.SectionID = appCfg.SectionID
-			if appCfg.SortWeight != 0 {
-				entry.SortWeight = appCfg.SortWeight
+		if entry, ok := s.navigationAppConfig[pluginID]; ok {
+			entry.SectionID = placement.SectionID
+			if placement.SortWeight != 0 {
+				entry.SortWeight = placement.SortWeight
 			}
-			s.navigationAppConfig[pluginId] = entry
+			s.navigationAppConfig[pluginID] = entry
 		} else {
-			s.navigationAppConfig[pluginId] = *appCfg
+			s.navigationAppConfig[pluginID] = NavigationAppConfig{SectionID: placement.SectionID, SortWeight: placement.SortWeight}
 		}
 	}
 
-	for _, key := range appStandalonePages.Keys() {
-		url := key.Name()
-		// Support <id> <weight> value
-		values := util.SplitString(appStandalonePages.Key(key.Name()).MustString(""))
-
-		appCfg := &NavigationAppConfig{SectionID: values[0]}
-		if len(values) > 1 {
-			if weight, err := strconv.ParseInt(values[1], 10, 64); err == nil {
-				appCfg.SortWeight = weight
-			}
-		}
-
-		s.navigationAppPathConfig[url] = *appCfg
+	for url, placement := range navtree.ParseNavigationPlacements(s.cfg.Raw.Section("navigation.app_standalone_pages").KeysHash()) {
+		s.navigationAppPathConfig[url] = NavigationAppConfig{SectionID: placement.SectionID, SortWeight: placement.SortWeight}
 	}
 }
 

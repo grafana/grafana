@@ -3,6 +3,7 @@ package dtos
 import (
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -145,6 +146,20 @@ type FrontendSettingsSqlConnectionLimitsDTO struct {
 	ConnMaxLifetime int `json:"connMaxLifetime"`
 }
 
+// FrontendSettingsNavigationDTO carries the operator nav placement overrides,
+// [navigation.app_sections] and [navigation.app_standalone_pages], for the
+// client-built nav tree. Only the overrides travel: the built-in placements are
+// declared in the frontend, mirroring the server builder's hardcoded maps.
+type FrontendSettingsNavigationDTO struct {
+	AppSections        map[string]FrontendSettingsNavigationPlacementDTO `json:"appSections,omitempty"`
+	AppStandalonePages map[string]FrontendSettingsNavigationPlacementDTO `json:"appStandalonePages,omitempty"`
+}
+
+// FrontendSettingsNavigationPlacementDTO is one `<sectionId> <sortWeight>` value,
+// keyed by plugin id in AppSections and by page path in AppStandalonePages. The
+// nav builder's own type, so both sides of the wire parse it identically.
+type FrontendSettingsNavigationPlacementDTO = navtree.NavigationPlacement
+
 type FrontendSettingsDTO struct {
 	DefaultDatasource    string                           `json:"defaultDatasource"`
 	Datasources          map[string]plugins.DataSourceDTO `json:"datasources"`
@@ -264,6 +279,7 @@ type FrontendSettingsDTO struct {
 	Analytics               FrontendSettingsAnalyticsDTO       `json:"analytics"`
 	UnifiedAlertingEnabled  bool                               `json:"unifiedAlertingEnabled"`
 	UnifiedAlerting         FrontendSettingsUnifiedAlertingDTO `json:"unifiedAlerting"`
+	Navigation              FrontendSettingsNavigationDTO      `json:"navigation"`
 	Oauth                   map[string]any                     `json:"oauth"`
 	SamlEnabled             bool                               `json:"samlEnabled"`
 	SamlName                string                             `json:"samlName"`
