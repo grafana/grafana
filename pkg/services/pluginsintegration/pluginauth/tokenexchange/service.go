@@ -100,9 +100,9 @@ func (s *Service) signAccessToken(c *contextmodel.ReqContext) response.Response 
 
 	policy := policyFor(pluginID, s.cfg.ExtJWTAuth.Audiences, manifest)
 	if req.Subject != nil {
-		if err := configureSubjectSigning(&policy, s.cfg.PluginSettings[pluginID]); err != nil {
-			s.log.Error("Invalid plugin subject signing configuration", "pluginId", pluginID, "error", err)
-			return errorResponse(http.StatusInternalServerError, "invalid subject signing configuration")
+		if err := configureUnattendedDelegation(&policy, s.cfg.PluginSettings[pluginID]); err != nil {
+			s.log.Error("Invalid plugin unattended delegation configuration", "pluginId", pluginID, "error", err)
+			return errorResponse(http.StatusInternalServerError, "invalid unattended delegation configuration")
 		}
 	}
 	token, err := v3.SignLocalAccessToken(c.Req.Context(), policy, req)

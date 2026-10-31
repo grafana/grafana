@@ -11,35 +11,35 @@ import (
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 )
 
-// configureSubjectSigning authorizes asserted-subject requests within the
-// manifest's delegated grant. Only server configuration can authorize signing.
-func configureSubjectSigning(policy *v3.LocalAccessPolicy, settings map[string]string) error {
-	value := settings["allow_subject_signing"]
+// configureUnattendedDelegation authorizes asserted-subject requests within the
+// manifest's delegated grant. Only server configuration can enable it.
+func configureUnattendedDelegation(policy *v3.LocalAccessPolicy, settings map[string]string) error {
+	value := settings["allow_unattended_delegation"]
 	if value == "" {
 		return nil
 	}
 	enabled, err := strconv.ParseBool(value)
 	if err != nil {
-		return fmt.Errorf("invalid allow_subject_signing: %w", err)
+		return fmt.Errorf("invalid allow_unattended_delegation: %w", err)
 	}
 	if !enabled {
 		return nil
 	}
-	restrictions := strings.Fields(settings["subject_signing_permissions"])
+	restrictions := strings.Fields(settings["unattended_delegation_permissions"])
 	for _, permission := range restrictions {
 		action, verb, ok := strings.Cut(permission, ":")
 		if !ok || action == "" || verb == "" || strings.Contains(permission, ",") {
-			return errors.New("subject_signing_permissions requires space-separated actions")
+			return errors.New("unattended_delegation_permissions requires space-separated actions")
 		}
 	}
 	var maximum time.Duration
-	if value := settings["subject_signing_max_token_lifetime"]; value != "" {
+	if value := settings["unattended_delegation_max_token_lifetime"]; value != "" {
 		maximum, err = time.ParseDuration(value)
-		if err != nil || maximum < v3.DefaultLocalSubjectTokenLifetime || maximum%time.Second != 0 {
-			return fmt.Errorf("subject_signing_max_token_lifetime must be a duration of at least %s in whole seconds", v3.DefaultLocalSubjectTokenLifetime)
+		if err != nil || maximum < v3.DefaultLocalUnattendedDelegationTokenLifetime || maximum%time.Second != 0 {
+			return fmt.Errorf("unattended_delegation_max_token_lifetime must be a duration of at least %s in whole seconds", v3.DefaultLocalUnattendedDelegationTokenLifetime)
 		}
 	}
-	policy.AllowSubjectSigning = true
+	policy.AllowUnattendedDelegation = true
 	if len(restrictions) > 0 {
 		// Match the local exchange's RestrictedDelegatedPermissions semantics:
 		// select existing grant entries without expanding or adding permissions.
@@ -47,6 +47,6 @@ func configureSubjectSigning(policy *v3.LocalAccessPolicy, settings map[string]s
 			return !slices.Contains(restrictions, permission)
 		})
 	}
-	policy.MaxSubjectTokenLifetime = maximum
+	policy.MaxUnattendedDelegationTokenLifetime = maximum
 	return nil
 }

@@ -23,12 +23,12 @@ func auditSubjectRequest() authnlib.TokenExchangeRequest {
 
 func auditSubjectPolicy() LocalAccessPolicy {
 	return LocalAccessPolicy{PluginID: "audit-app", Audiences: []string{"grafana"}, Permissions: []string{"users:create"},
-		AllowSubjectSigning:  true,
-		DelegatedPermissions: []string{"datasources:read", "datasources:write"},
+		AllowUnattendedDelegation: true,
+		DelegatedPermissions:      []string{"datasources:read", "datasources:write"},
 	}
 }
 
-func TestLocalSubjectTokenLifetime(t *testing.T) {
+func TestLocalUnattendedDelegationTokenLifetime(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
 		maximum   time.Duration
@@ -53,7 +53,7 @@ func TestLocalSubjectTokenLifetime(t *testing.T) {
 				e, err := newLocalExchanger()
 				require.NoError(t, err)
 				policy := auditSubjectPolicy()
-				policy.MaxSubjectTokenLifetime = tc.maximum
+				policy.MaxUnattendedDelegationTokenLifetime = tc.maximum
 				req := auditSubjectRequest()
 				req.ExpiresIn = tc.requested
 				token, err := e.signForPolicy(context.Background(), policy, req)

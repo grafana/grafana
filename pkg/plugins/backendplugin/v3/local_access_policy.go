@@ -34,14 +34,16 @@ type LocalAccessPolicy struct {
 	// DelegatedPermissions are delegated to its tokens on behalf of a caller,
 	// where they only narrow what the caller may do.
 	DelegatedPermissions []string
-	// AllowSubjectSigning comes from Grafana configuration, never the plugin manifest.
-	AllowSubjectSigning bool
-	// MaxSubjectTokenLifetime limits asserted-subject requests. Zero uses the default lifetime.
-	MaxSubjectTokenLifetime time.Duration
+	// AllowUnattendedDelegation comes from Grafana configuration, never the plugin manifest.
+	AllowUnattendedDelegation bool
+	// MaxUnattendedDelegationTokenLifetime limits asserted-subject requests.
+	// Zero uses the default lifetime.
+	MaxUnattendedDelegationTokenLifetime time.Duration
 }
 
-// DefaultLocalSubjectTokenLifetime applies when a subject request omits ExpiresIn.
-const DefaultLocalSubjectTokenLifetime = localTokenTTL
+// DefaultLocalUnattendedDelegationTokenLifetime applies when an asserted-subject
+// request omits ExpiresIn.
+const DefaultLocalUnattendedDelegationTokenLifetime = localTokenTTL
 
 // ErrLocalAccessDenied is returned by SignLocalAccessToken for a request that
 // the policy does not allow.
@@ -120,8 +122,8 @@ func LookupLocalAccessPolicyToken(token string) (pluginID string, manifest *app.
 //
 // Without a subject or subject token, the token acts as the plugin. A subject
 // token must be a local access token issued to that plugin, limiting this path
-// to callers that called it. AllowSubjectSigning authorizes the plugin to assert
-// an identity directly. Both OBO forms use the policy's DelegatedPermissions.
+// to callers that called it. AllowUnattendedDelegation authorizes the plugin to
+// assert an identity directly. Both OBO forms use the policy's DelegatedPermissions.
 func SignLocalAccessToken(ctx context.Context, policy LocalAccessPolicy, req authnlib.TokenExchangeRequest) (string, error) {
 	e, err := sharedLocalExchanger()
 	if err != nil {
@@ -137,7 +139,7 @@ func (e *localExchanger) signForPolicy(ctx context.Context, policy LocalAccessPo
 	if err := validateExchangeRequest(req); err != nil {
 		return "", err
 	}
-	if req.Subject != nil && !policy.AllowSubjectSigning {
+	if req.Subject != nil && !policy.AllowUnattendedDelegation {
 		return "", fmt.Errorf("%w: signing for an asserted subject is not supported", ErrLocalAccessDenied)
 	}
 	if req.Subject != nil && req.SubjectToken != "" {
@@ -174,7 +176,7 @@ func (e *localExchanger) signForPolicy(ctx context.Context, policy LocalAccessPo
 			return "", err
 		}
 		claims.Actor = actor
-		lifetime, err = subjectTokenLifetime(policy.MaxSubjectTokenLifetime, req.ExpiresIn)
+		lifetime, err = unattendedDelegationTokenLifetime(policy.MaxUnattendedDelegationTokenLifetime, req.ExpiresIn)
 		if err != nil {
 			return "", err
 		}
@@ -221,12 +223,12 @@ func actorFromSubject(subject *authnlib.TokenExchangeSubject, namespace string) 
 	}}, nil
 }
 
-func subjectTokenLifetime(maximum time.Duration, requested *int) (time.Duration, error) {
+func unattendedDelegationTokenLifetime(maximum time.Duration, requested *int) (time.Duration, error) {
 	if maximum == 0 {
-		maximum = DefaultLocalSubjectTokenLifetime
+		maximum = DefaultLocalUnattendedDelegationTokenLifetime
 	}
 	if requested == nil {
-		return DefaultLocalSubjectTokenLifetime, nil
+		return DefaultLocalUnattendedDelegationTokenLifetime, nil
 	}
 	// Compare seconds before conversion so an oversized integer cannot overflow.
 	if *requested <= 0 || int64(*requested) > int64(maximum/time.Second) {

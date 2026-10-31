@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func TestSubjectSigningHTTPClient(t *testing.T) {
+func TestUnattendedDelegationHTTPClient(t *testing.T) {
 	credential, err := v3.IssueLocalAccessPolicyToken("allowed-app", testManifest)
 	require.NoError(t, err)
 	t.Cleanup(func() { v3.RevokeLocalAccessPolicyToken(credential) })
@@ -28,9 +28,9 @@ func TestSubjectSigningHTTPClient(t *testing.T) {
 		cfg: &setting.Cfg{
 			ExtJWTAuth: setting.ExtJWTSettings{Audiences: []string{"grafana"}},
 			PluginSettings: config.PluginSettings{"allowed-app": {
-				"allow_subject_signing":              "true",
-				"subject_signing_permissions":        "dashboard.grafana.app/dashboards:get folder.grafana.app/folders:get",
-				"subject_signing_max_token_lifetime": "15m",
+				"allow_unattended_delegation":              "true",
+				"unattended_delegation_permissions":        "dashboard.grafana.app/dashboards:get folder.grafana.app/folders:get",
+				"unattended_delegation_max_token_lifetime": "15m",
 			}},
 		},
 		log: log.NewNopLogger(),
@@ -79,7 +79,7 @@ func TestSubjectSigningHTTPClient(t *testing.T) {
 	}
 }
 
-func TestSubjectSigningPreservesManifestGrant(t *testing.T) {
+func TestUnattendedDelegationPreservesManifestGrant(t *testing.T) {
 	credential, err := v3.IssueLocalAccessPolicyToken("example-app", testManifest)
 	require.NoError(t, err)
 	t.Cleanup(func() { v3.RevokeLocalAccessPolicyToken(credential) })
@@ -100,9 +100,9 @@ func TestSubjectSigningPreservesManifestGrant(t *testing.T) {
 		{name: "request cannot bypass configuration", configured: "folder.grafana.app/folders:get", requested: []string{"dashboard.grafana.app/dashboards:get"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			settings := map[string]string{"allow_subject_signing": "true"}
+			settings := map[string]string{"allow_unattended_delegation": "true"}
 			if tc.configured != "" {
-				settings["subject_signing_permissions"] = tc.configured
+				settings["unattended_delegation_permissions"] = tc.configured
 			}
 			s := &Service{
 				cfg: &setting.Cfg{
@@ -140,7 +140,7 @@ func TestSubjectSigningPreservesManifestGrant(t *testing.T) {
 	}
 }
 
-func TestUnconfiguredSubjectSigningPreservesRejections(t *testing.T) {
+func TestUnconfiguredUnattendedDelegationPreservesRejections(t *testing.T) {
 	credential, err := v3.IssueLocalAccessPolicyToken("unconfigured-app", testManifest)
 	require.NoError(t, err)
 	t.Cleanup(func() { v3.RevokeLocalAccessPolicyToken(credential) })
@@ -167,7 +167,7 @@ func TestUnconfiguredSubjectSigningPreservesRejections(t *testing.T) {
 	}{
 		{name: "no plugin configured"},
 		{name: "another plugin configured", settings: config.PluginSettings{
-			"other-app": {"allow_subject_signing": "true", "subject_signing_permissions": "datasources:read"},
+			"other-app": {"allow_unattended_delegation": "true", "unattended_delegation_permissions": "datasources:read"},
 		}},
 	} {
 		t.Run(configuration.name, func(t *testing.T) {
@@ -195,7 +195,7 @@ func TestUnconfiguredSubjectSigningPreservesRejections(t *testing.T) {
 	}
 }
 
-func TestSubjectSettingsApplyOnlyToSubjectRequests(t *testing.T) {
+func TestUnattendedDelegationSettingsApplyOnlyToSubjectRequests(t *testing.T) {
 	credential, err := v3.IssueLocalAccessPolicyToken("example-app", testManifest)
 	require.NoError(t, err)
 	t.Cleanup(func() { v3.RevokeLocalAccessPolicyToken(credential) })
@@ -220,9 +220,9 @@ func TestSubjectSettingsApplyOnlyToSubjectRequests(t *testing.T) {
 				cfg: &setting.Cfg{
 					ExtJWTAuth: setting.ExtJWTSettings{Audiences: []string{"grafana"}},
 					PluginSettings: config.PluginSettings{"example-app": {
-						"allow_subject_signing":              enabled,
-						"subject_signing_permissions":        "dashboard.grafana.app/dashboards:get",
-						"subject_signing_max_token_lifetime": "1h",
+						"allow_unattended_delegation":              enabled,
+						"unattended_delegation_permissions":        "dashboard.grafana.app/dashboards:get",
+						"unattended_delegation_max_token_lifetime": "1h",
 					}},
 				},
 				log: log.NewNopLogger(),
@@ -248,7 +248,7 @@ func TestSubjectSettingsApplyOnlyToSubjectRequests(t *testing.T) {
 					if mode == "subject" && enabled == "invalid" {
 						require.Equal(t, http.StatusInternalServerError, rec.Code)
 						require.Nil(t, result.Data)
-						require.Equal(t, "invalid subject signing configuration", result.Error)
+						require.Equal(t, "invalid unattended delegation configuration", result.Error)
 						return
 					}
 					require.Equal(t, http.StatusOK, rec.Code, result.Error)

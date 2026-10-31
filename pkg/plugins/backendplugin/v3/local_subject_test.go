@@ -10,14 +10,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestLocalSubjectSigning(t *testing.T) {
+func TestLocalUnattendedDelegation(t *testing.T) {
 	e, err := newLocalExchanger()
 	require.NoError(t, err)
 	policy := LocalAccessPolicy{
 		PluginID: "obo-poc-app", Audiences: []string{"grafana"},
-		Permissions:          []string{"users:write"},
-		AllowSubjectSigning:  true,
-		DelegatedPermissions: []string{"datasources:read", "datasources:write"},
+		Permissions:               []string{"users:write"},
+		AllowUnattendedDelegation: true,
+		DelegatedPermissions:      []string{"datasources:read", "datasources:write"},
 	}
 	request := func() authnlib.TokenExchangeRequest {
 		return authnlib.TokenExchangeRequest{Namespace: "default", Audiences: []string{"grafana"}, Subject: &authnlib.TokenExchangeSubject{
@@ -81,7 +81,7 @@ func TestLocalSubjectSigning(t *testing.T) {
 	}
 	t.Run("disabled by default", func(t *testing.T) {
 		denied := policy
-		denied.AllowSubjectSigning = false
+		denied.AllowUnattendedDelegation = false
 		_, err := e.signForPolicy(context.Background(), denied, request())
 		require.ErrorIs(t, err, ErrLocalAccessDenied)
 	})
@@ -92,8 +92,8 @@ func TestLocalSubjectRestrictionContract(t *testing.T) {
 	require.NoError(t, err)
 	policy := LocalAccessPolicy{
 		PluginID: "allowed-app", Audiences: []string{"grafana"},
-		AllowSubjectSigning:  true,
-		DelegatedPermissions: []string{"datasources:read", "datasources:write"},
+		AllowUnattendedDelegation: true,
+		DelegatedPermissions:      []string{"datasources:read", "datasources:write"},
 	}
 	for _, tt := range []struct {
 		name string
