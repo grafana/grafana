@@ -1305,7 +1305,9 @@ export type CreateRepositoryTestApiArg = {
     /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
     kind?: string;
     metadata?: any;
+    /** Secure holds secret operations or references for Repository. */
     secure?: any;
+    /** Spec is the spec of the Repository */
     spec?: any;
     status?: any;
   };
@@ -1612,7 +1614,9 @@ export type Connection = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ObjectMeta;
+  /** Secure holds secret operations or references for Connection. */
   secure?: ConnectionSecure;
+  /** Spec is the spec of the Connection */
   spec?: ConnectionSpec;
   status?: ConnectionStatus;
 };
@@ -1707,7 +1711,7 @@ export type ProvisioningResourceRef = {
   name?: string;
 };
 export type DeleteJobOptions = {
-  /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
+  /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) */
   paths?: string[];
   /** Ref to the branch or commit hash to delete from */
   ref?: string;
@@ -1731,7 +1735,7 @@ export type MigrateJobOptions = {
   skipResourceDeletion?: boolean;
 };
 export type MoveJobOptions = {
-  /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
+  /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) */
   paths?: string[];
   /** Ref to the branch or commit hash that should move */
   ref?: string;
@@ -1759,7 +1763,7 @@ export type SyncJobOptions = {
   incremental: boolean;
 };
 export type ExportJobOptions = {
-  /** FIXME: we should validate this in admission hooks Target branch for export (only git) */
+  /** Target branch for export (only git) */
   branch?: string;
   /** The source folder (or empty) to export */
   folder?: string;
@@ -1767,7 +1771,7 @@ export type ExportJobOptions = {
   generateNewFolderIDs?: boolean;
   /** Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty. */
   message?: string;
-  /** FIXME: we should validate this in admission hooks Prefix in target file system */
+  /** Prefix in target file system */
   path?: string;
   /** Resources to export. When empty, every unmanaged resource in the namespace is exported (legacy behavior). When non-empty, only the listed resources are exported — the folder hierarchy is still emitted so parent paths resolve. Currently only unmanaged Dashboards are supported. */
   resources?: ProvisioningResourceRef[];
@@ -1826,7 +1830,6 @@ export type JobSpec = {
 export type JobResourceSummary = {
   create?: number;
   delete?: number;
-  /** Create or update (export) */
   error?: number;
   /** Report errors/warnings for this resource type This may not be an exhaustive list and recommend looking at the logs for more info */
   errors?: string[];
@@ -1838,7 +1841,6 @@ export type JobResourceSummary = {
   /** TotalChanges is the action-aware count of resources changed for this group/kind, set by the progress recorder as results are recorded. Used for the job-duration histogram's resources_changed bucket. */
   totalChanges?: number;
   update?: number;
-  /** The error count */
   warning?: number;
   warnings?: string[];
   write?: number;
@@ -1881,6 +1883,7 @@ export type Job = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ObjectMeta;
+  /** Spec is the spec of the Job */
   spec?: JobSpec;
   status?: JobStatus;
 };
@@ -1905,9 +1908,7 @@ export type BitbucketRepositoryConfig = {
   branch: string;
   /** Email is the Atlassian account email used to authenticate the Bitbucket REST API. Required to enable webhooks. */
   email?: string;
-  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
-    
-    When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
+  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash. When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
   path?: string;
   /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
   tokenUser?: string;
@@ -1951,9 +1952,7 @@ export type ConnectionInfo = {
 export type GitRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
-  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
-    
-    When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
+  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash. When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
   path?: string;
   /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
   tokenUser?: string;
@@ -1965,9 +1964,7 @@ export type GitHubRepositoryConfig = {
   branch: string;
   /** Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews). */
   generateDashboardPreviews?: boolean;
-  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
-    
-    When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
+  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash. When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
   path?: string;
   /** The repository URL (e.g. `https://github.com/example/test`). */
   url?: string;
@@ -1985,9 +1982,7 @@ export type GitHubEnterpriseRepositoryConfig = {
 export type GitLabRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
-  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
-    
-    When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
+  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash. When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
   path?: string;
   /** RepoID is the GitLab project's immutable numeric ID. Resolved and set automatically whenever URL is set or changed; it survives a project transfer/move even if the project's path changes. Read-only: it is always system-derived and never taken from client-supplied input. */
   repoID?: string;
@@ -2161,7 +2156,9 @@ export type Repository = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ObjectMeta;
+  /** Secure holds secret operations or references for Repository. */
   secure?: SecureValues;
+  /** Spec is the spec of the Repository */
   spec?: RepositorySpec;
   status?: RepositoryStatus;
 };

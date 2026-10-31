@@ -311,6 +311,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	_ "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
 	_ "github.com/grafana/grafana/pkg/registry/apps/plugins"
+	_ "github.com/grafana/grafana/pkg/registry/apps/provisioning"
 	_ "github.com/grafana/grafana/pkg/registry/apps/querycaching/migrator"
 	_ "github.com/grafana/grafana/pkg/registry/apps/quotas"
 	_ "github.com/grafana/grafana/pkg/registry/apps/shorturl"

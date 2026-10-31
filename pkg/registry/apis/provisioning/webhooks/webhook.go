@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	provisioningapp "github.com/grafana/grafana/apps/provisioning/pkg/app"
+
 	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -103,6 +105,12 @@ func (s *webhookConnector) Authorize(ctx context.Context, a authorizer.Attribute
 	}
 
 	return authorizer.DecisionNoOpinion, "", nil
+}
+
+func (*webhookConnector) SubresourceRoutes() []provisioningapp.Route {
+	return []provisioningapp.Route{{
+		Kind: provisioningapp.KindRepository, Path: "webhook", Methods: []string{http.MethodPost}, Response: &provisioning.WebhookResponse{},
+	}}
 }
 
 func (s *webhookConnector) UpdateStorage(storage map[string]rest.Storage) error {

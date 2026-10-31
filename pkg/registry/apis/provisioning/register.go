@@ -326,11 +326,17 @@ func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
 
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
 // This function happily uses services core to Grafana, and does not need to be multi-tenancy-compatible.
-func RegisterAPIService(
+// APIBuilders holds the builders for each served version of the provisioning API.
+type APIBuilders struct {
+	V0Alpha1 *APIBuilder
+	V1Beta1  *APIBuilder
+}
+
+// ProvideAPIBuilders constructs the builders without registering them, so the app installer can depend on them.
+func ProvideAPIBuilders(
 	// It is OK to use setting.Cfg here -- this is only used when running single tenant with a full setup
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
@@ -345,7 +351,7 @@ func RegisterAPIService(
 	connectionFactory connection.Factory,
 	quotaGetter quotas.QuotaGetter,
 	natsSubscriber nats.Subscriber,
-) (*APIBuilder, error) {
+) (*APIBuilders, error) {
 	if !cfg.ProvisioningEnabled {
 		return nil, nil
 	}
@@ -422,7 +428,6 @@ func RegisterAPIService(
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	builder.natsSubscriber = natsSubscriber
 	builder.keysOnlyReList = keysOnlyReList
-	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
 	v1beta1Builder, err := NewAPIBuilder(
@@ -469,10 +474,8 @@ func RegisterAPIService(
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	v1beta1Builder.natsSubscriber = natsSubscriber
 	v1beta1Builder.keysOnlyReList = keysOnlyReList
-	apiregistration.RegisterAPI(v1beta1Builder)
 
-	// Return the preferred (v0alpha1) builder since it runs controllers/workers
-	return builder, nil
+	return &APIBuilders{V0Alpha1: builder, V1Beta1: v1beta1Builder}, nil
 }
 
 // TODO: Move specific endpoint authorization together with the rest of the logic.
@@ -764,10 +767,15 @@ func (b *APIBuilder) GetResourceInfos(schema.GroupVersion) []apiutils.ResourceIn
 		provisioning.ConnectionResourceInfo,
 		provisioning.JobResourceInfo,
 	}
-	if b.jobHistoryConfig == nil || b.jobHistoryConfig.Loki == nil {
+	if b.StoresHistoricJobs() {
 		infos = append(infos, provisioning.HistoricJobResourceInfo)
 	}
 	return infos
+}
+
+// StoresHistoricJobs reports whether HistoricJobs are served from storage; they live in Loki otherwise.
+func (b *APIBuilder) StoresHistoricJobs() bool {
+	return b.jobHistoryConfig == nil || b.jobHistoryConfig.Loki == nil
 }
 
 func (b *APIBuilder) GetClient() client.ProvisioningV0alpha1Interface {

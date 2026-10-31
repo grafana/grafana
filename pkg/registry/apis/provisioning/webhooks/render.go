@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	provisioningapp "github.com/grafana/grafana/apps/provisioning/pkg/app"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -102,6 +104,12 @@ func (c *renderConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 	}
 
 	return nil
+}
+
+func (*renderConnector) SubresourceRoutes() []provisioningapp.Route {
+	return []provisioningapp.Route{{
+		Kind: provisioningapp.KindRepository, Path: "render", Methods: []string{http.MethodGet}, Subpath: true, Response: &provisioning.Repository{},
+	}}
 }
 
 func (c *renderConnector) UpdateStorage(storage map[string]rest.Storage) error {

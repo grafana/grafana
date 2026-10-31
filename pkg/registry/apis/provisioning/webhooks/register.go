@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"strings"
 
+	provisioningapp "github.com/grafana/grafana/apps/provisioning/pkg/app"
+
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -242,6 +244,16 @@ func (e *WebhookExtraWithImages) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 
 type WebhookExtra struct {
 	webhook *webhookConnector
+}
+
+// SubresourceRoutes returns the routes of the webhook and render connectors
+func (e *WebhookExtraWithImages) SubresourceRoutes() []provisioningapp.Route {
+	return append(e.render.SubresourceRoutes(), e.webhook.SubresourceRoutes()...)
+}
+
+// SubresourceRoutes returns the route of the webhook connector
+func (e *WebhookExtra) SubresourceRoutes() []provisioningapp.Route {
+	return e.webhook.SubresourceRoutes()
 }
 
 func NewWebhookExtra(webhook *webhookConnector) *WebhookExtra {

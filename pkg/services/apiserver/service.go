@@ -471,6 +471,12 @@ func (s *service) start(ctx context.Context) error {
 	searchAndStorageRoutes = append(searchAndStorageRoutes,
 		keysroutes.Build(keysAPIEnabled, s.tracing, s.unified, builders, s.appInstallers)...)
 
+	for _, installer := range s.appInstallers {
+		if provider, ok := installer.(builder.GroupVersionRoutesProvider); ok {
+			searchAndStorageRoutes = append(searchAndStorageRoutes, provider.GroupVersionRoutes()...)
+		}
+	}
+
 	// Add OpenAPI specs for each group+version (existing builders)
 	err = builder.SetupConfig(
 		s.scheme,

@@ -173,10 +173,11 @@ var (
 var _ AppInstaller = (*defaultInstaller)(nil)
 
 type defaultInstaller struct {
-	appProvider    app.Provider
-	appConfig      app.Config
-	resolver       GoTypeResolver
-	resourceConfig *serverstorage.ResourceConfig
+	appProvider     app.Provider
+	appConfig       app.Config
+	resolver        GoTypeResolver
+	resourceConfig  *serverstorage.ResourceConfig
+	strategyOptions StrategyOptions
 
 	app    app.App
 	appMux sync.Mutex
@@ -204,6 +205,11 @@ func NewDefaultAppInstaller(appProvider app.Provider, appConfig app.Config, reso
 		installer.appConfig.SpecificConfig = appProvider.SpecificConfig()
 	}
 	return installer, nil
+}
+
+// SetStrategyOptions tunes the storage strategies of the installer's kinds. It must be called before InstallAPIs.
+func (r *defaultInstaller) SetStrategyOptions(opts StrategyOptions) {
+	r.strategyOptions = opts
 }
 
 // SetResourceConfig sets a ResourceConfig for the installer, which will be used to check each kind and route
@@ -449,7 +455,7 @@ func (r *defaultInstaller) InstallAPIs(server GenericAPIServer, optsGetter gener
 			}
 			// The subresource and custom route storages below wrap s, so they
 			// inherit whatever options it resolved for this group+version+resource.
-			s, err := newGenericStoreForKind(r.scheme, kind.Kind, restOptionsGetterForResource(optsGetter, gvr))
+			s, err := newGenericStoreForKind(r.scheme, kind.Kind, restOptionsGetterForResource(optsGetter, gvr), r.strategyOptions)
 			if err != nil {
 				return fmt.Errorf("failed to create store for kind %s: %w", kind.Kind.Kind(), err)
 			}
@@ -458,7 +464,7 @@ func (r *defaultInstaller) InstallAPIs(server GenericAPIServer, optsGetter gener
 			for sr := range kind.Kind.ZeroValue().GetSubresources() {
 				// Use *StatusREST for the status subresource for backwards compatibility with grafana
 				if sr == string(resource.SubresourceStatus) {
-					storage[fmt.Sprintf("%s/%s", kind.Kind.Plural(), resource.SubresourceStatus)] = newRegistryStatusStoreForKind(r.scheme, kind.Kind, s)
+					storage[fmt.Sprintf("%s/%s", kind.Kind.Plural(), resource.SubresourceStatus)] = newRegistryStatusStoreForKind(r.scheme, kind.Kind, s, r.strategyOptions)
 					continue
 				}
 				storage[fmt.Sprintf("%s/%s", kind.Kind.Plural(), sr)] = newSubresourceREST(s, r.scheme, kind.Kind, sr)

@@ -112,11 +112,17 @@ func addBuilderRoutes(
 ) (*spec3.OpenAPI, error) {
 	// Before the builders, because a builder that post-processes the spec returns
 	// from the loop below without visiting the rest.
+	var postProcess func(*spec3.OpenAPI) (*spec3.OpenAPI, error)
 	for _, e := range extra {
-		if e.Routes == nil || e.GroupVersion != targetGroupVersion {
+		if e.GroupVersion != targetGroupVersion {
 			continue
 		}
-		addRoutePaths(openAPISpec, e.GroupVersion, e.Routes)
+		if e.Routes != nil {
+			addRoutePaths(openAPISpec, e.GroupVersion, e.Routes)
+		}
+		if e.PostProcess != nil {
+			postProcess = e.PostProcess
+		}
 	}
 
 	for _, apiGroupBuilder := range apiGroupBuilders {
@@ -138,6 +144,10 @@ func addBuilderRoutes(
 				return processor.PostProcessOpenAPI(openAPISpec)
 			}
 		}
+	}
+
+	if postProcess != nil {
+		return postProcess(openAPISpec)
 	}
 
 	// filter out api groups that are disabled in APIEnablementOptions
