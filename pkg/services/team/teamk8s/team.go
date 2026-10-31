@@ -616,6 +616,9 @@ func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeam
 	if query.WithAccessControl {
 		req = req.Param("accesscontrol", "true")
 	}
+	if query.MemberUID != "" {
+		req = req.Param("member", query.MemberUID)
+	}
 	for _, uid := range query.UIDs {
 		req = req.Param("uid", uid)
 	}

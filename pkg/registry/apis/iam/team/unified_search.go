@@ -36,6 +36,11 @@ func (c *unifiedSearchClient) Search(ctx context.Context, query SearchQuery) (*i
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Fields:       []string{resource.SEARCH_FIELD_TITLE, builders.TEAM_SEARCH_EMAIL, builders.TEAM_SEARCH_PROVISIONED, builders.TEAM_SEARCH_EXTERNAL_UID, teamsearch.LegacyIDField},
 	}
+	if query.Member != "" {
+		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
+			Key: builders.TEAM_SEARCH_MEMBERS, Operator: string(selection.Equals), Values: []string{query.Member},
+		})
+	}
 	if query.Title != "" {
 		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
 			Key: resource.SEARCH_FIELD_TITLE, Operator: string(selection.DoubleEquals), Values: []string{query.Title},
@@ -65,5 +70,28 @@ func (c *unifiedSearchClient) Search(ctx context.Context, query SearchQuery) (*i
 	if err != nil {
 		return nil, err
 	}
+	// An inexact total is the pre-authorization match count, which would reveal how many
+	// teams the member belongs to, including teams the caller cannot read.
+	if query.Member != "" && resp != nil && !resp.TotalHitsExact {
+		total, err := c.authorizedTotal(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		result.TotalHits = max(total, result.Offset+int64(len(result.Hits)))
+	}
 	return &result, nil
+}
+
+// authorizedTotal counts only matches the caller can read. If the count is still inexact,
+// it returns zero so the caller falls back to the hits it has seen.
+func (c *unifiedSearchClient) authorizedTotal(ctx context.Context, req *resourcepb.ResourceSearchRequest) (int64, error) {
+	countReq := &resourcepb.ResourceSearchRequest{Options: req.Options, Query: req.Query, ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}
+	resp, err := c.client.Search(ctx, countReq)
+	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+		return 0, err
+	}
+	if !resp.GetTotalHitsExact() {
+		return 0, nil
+	}
+	return resp.GetTotalHits(), nil
 }

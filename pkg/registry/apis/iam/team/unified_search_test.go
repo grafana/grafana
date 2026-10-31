@@ -26,6 +26,7 @@ func TestUnifiedTeamSearchRequest(t *testing.T) {
 		fields []*resourcepb.Requirement
 		labels []*resourcepb.Requirement
 	}{
+		{name: "member", query: SearchQuery{Member: "user-1"}, fields: []*resourcepb.Requirement{{Key: builders.TEAM_SEARCH_MEMBERS, Operator: string(selection.Equals), Values: []string{"user-1"}}}},
 		{name: "query", query: SearchQuery{Query: "a*b"}},
 		{name: "title and UIDs", query: SearchQuery{Title: "Engineering", UIDs: []string{"one", "two"}}, fields: []*resourcepb.Requirement{
 			{Key: resource.SEARCH_FIELD_TITLE, Operator: string(selection.DoubleEquals), Values: []string{"Engineering"}},
@@ -94,6 +95,51 @@ func TestUnifiedTeamSearchFieldValueResponse(t *testing.T) {
 	obj := &iamv0.Team{ObjectMeta: metav1.ObjectMeta{Name: "new-team"}, Spec: iamv0.TeamSpec{Title: "Engineering"}}
 	err = ValidateOnCreate(ctx, selectorForBackend(backend), obj, legacy.NoopExternalGroupReconciler{})
 	require.True(t, apierrors.IsConflict(err), "expected conflict, got %v", err)
+}
+
+func TestUnifiedTeamSearchMemberTotal(t *testing.T) {
+	page := func(total int64, exact bool) *resourcepb.ResourceSearchResponse {
+		return &resourcepb.ResourceSearchResponse{
+			ResultFormat:   resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			TotalHits:      total,
+			TotalHitsExact: exact,
+			Rows:           []*resourcepb.ResourceSearchRow{{Key: &resourcepb.ResourceKey{Name: "team-1"}}},
+		}
+	}
+	for _, tt := range []struct {
+		name      string
+		query     SearchQuery
+		responses []*resourcepb.ResourceSearchResponse
+		wantCalls int
+		wantTotal int64
+	}{
+		{name: "exact total is kept", query: SearchQuery{Member: "user-1"}, responses: []*resourcepb.ResourceSearchResponse{page(7, true)}, wantCalls: 1, wantTotal: 7},
+		{name: "inexact total without member is kept", query: SearchQuery{Query: "eng"}, responses: []*resourcepb.ResourceSearchResponse{page(7, false)}, wantCalls: 1, wantTotal: 7},
+		{name: "inexact member total is recounted", query: SearchQuery{Member: "user-1"}, responses: []*resourcepb.ResourceSearchResponse{page(7, false), {TotalHits: 3, TotalHitsExact: true}}, wantCalls: 2, wantTotal: 3},
+		{name: "inexact recount falls back to seen hits", query: SearchQuery{Member: "user-1", Offset: 4}, responses: []*resourcepb.ResourceSearchResponse{page(7, false), {TotalHits: 7}}, wantCalls: 2, wantTotal: 5},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &MockClient{MockResponses: tt.responses}
+			query := tt.query
+			query.Namespace, query.Limit = "stacks-1", 1
+			result, err := NewUnifiedSearchClient(client).Search(t.Context(), query)
+			require.NoError(t, err)
+			require.Equal(t, tt.wantTotal, result.TotalHits)
+			require.Len(t, client.MockCalls, tt.wantCalls)
+			if tt.wantCalls == 2 {
+				count := client.MockCalls[1]
+				require.Zero(t, count.Limit)
+				require.Zero(t, count.Offset)
+				require.Same(t, client.MockCalls[0].Options, count.Options)
+			}
+		})
+	}
+
+	t.Run("recount error", func(t *testing.T) {
+		client := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{page(7, false), {Error: &resourcepb.ErrorResult{Code: 500, Message: "count failed"}}}}
+		_, err := NewUnifiedSearchClient(client).Search(t.Context(), SearchQuery{Namespace: "stacks-1", Member: "user-1", Limit: 1})
+		require.ErrorContains(t, err, "count failed")
+	})
 }
 
 func TestUnifiedTeamSearchErrors(t *testing.T) {

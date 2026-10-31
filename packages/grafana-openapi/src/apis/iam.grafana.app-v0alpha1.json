@@ -390,6 +390,14 @@
             }
           },
           {
+            "name": "member",
+            "in": "query",
+            "description": "filter by member user UID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "membercount",
             "in": "query",
             "description": "when true, includes member count for each team in the response",

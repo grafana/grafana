@@ -164,6 +164,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]k8scommon.OpenAPIDefinition
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "member",
+										In:          "query",
+										Description: "filter by member user UID",
+										Required:    false,
+										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "membercount",
 										In:          "query",
 										Description: "when true, includes member count for each team in the response",
@@ -339,6 +348,12 @@ func (s *SearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if len(queryParams["member"]) > 1 {
+		http.Error(w, "member parameter accepts a single value", http.StatusBadRequest)
+		return
+	}
+
+	searchRequest.Member = queryParams.Get("member")
 	searchRequest.UIDs = uids
 	searchRequest.TeamIDs = teamIds
 
