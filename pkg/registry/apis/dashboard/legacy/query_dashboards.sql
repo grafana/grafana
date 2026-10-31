@@ -28,7 +28,12 @@ SELECT
   COALESCE(dashboard_version.created_by, dashboard.updated_by) as updated_by_id,
   COALESCE(dashboard_version.version, dashboard.version) as version,
   COALESCE(dashboard_version.message, '') as message,
+  {{ if .Query.SelectRawDataColumns }}
+  dashboard_version.data as version_data,
+  dashboard.data as dashboard_data,
+  {{ else }}
   COALESCE(dashboard_version.data, dashboard.data) as data,
+  {{ end }}
   COALESCE(dashboard_version.api_version, dashboard.api_version) as api_version
   {{ end }}
   {{ else }}
