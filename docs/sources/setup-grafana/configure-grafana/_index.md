@@ -523,6 +523,192 @@ You can optionally set this value to `false` after all Grafana instances that wr
 
 <hr />
 
+### `[nats]`
+
+Configures the NATS message bus that Grafana instances use to notify each other of unified storage changes, so that watches don't poll the database.
+The bus is available in Grafana 13.4 and later, and it's off by default.
+It's planned to be on by default in Grafana 14.
+In a high availability cluster on MySQL or PostgreSQL, `enabled = true` and an open `cluster_port` between the instances are enough to cluster.
+For a guide to setting it up in a high availability cluster, refer to [Set up NATS for high availability](../set-up-nats-for-high-availability/).
+
+#### `enabled`
+
+Set to `true` to turn on the NATS message bus.
+Grafana then publishes a notification for each unified storage write and, unless you set `notifier = false`, serves unified storage watches from the bus.
+The default value is `false`.
+
+#### `mode`
+
+Either `embedded` or `external`.
+In `embedded` mode, each Grafana instance runs a NATS server inside the Grafana process, and the instances of a cluster connect to each other.
+In `external` mode, Grafana connects to the NATS servers in `client_urls`.
+The default value is `embedded`.
+
+Embedded mode isn't supported when you run Grafana with the `grafana server target` command.
+
+#### `client_urls`
+
+Comma-separated list of NATS server URLs to connect to, for example `tls://nats-1.example.internal:4222,tls://nats-2.example.internal:4222`.
+Required in `external` mode.
+
+#### `listen_address`
+
+The address that the embedded server binds `cluster_port` to.
+If empty, Grafana binds `0.0.0.0` when the database is MySQL or PostgreSQL and `discovery_enabled` is `true`, so that instances on other hosts can connect, and `127.0.0.1` otherwise.
+Routes between instances then authenticate with a random credential that Grafana stores in the database.
+Without cluster TLS, this credential crosses the network in clear text, and Grafana logs a warning at startup.
+Turn on cluster TLS, or restrict `cluster_port` to the Grafana instances, for example with firewall rules or a Kubernetes network policy.
+The default value is empty.
+
+#### `client_listen`
+
+Set to `true` to open `client_port` on `client_listen_address` for NATS clients outside Grafana, for example the `nats` command-line tool.
+Grafana connects to its embedded server inside the process, so it doesn't need the port.
+The port has no TLS and no authentication, so only open it on a trusted network.
+The default value is `false`.
+
+#### `client_listen_address`
+
+The address that `client_port` listens on when `client_listen` is `true`.
+It's separate from `listen_address`, so binding the cluster port to all interfaces doesn't expose the client port.
+The default value is `127.0.0.1`.
+
+#### `client_port`
+
+The client port of the embedded server.
+Grafana only opens it when `client_listen` is `true`.
+The default value is `4222`.
+
+#### `cluster_port`
+
+The port that embedded servers use to connect to each other.
+Allow inbound TCP traffic on this port from the other Grafana instances.
+The default value is `6222`.
+
+#### `advertise_address`
+
+The host name or IP address that other instances dial to reach this instance's `cluster_port`, without a port.
+If empty and `listen_address` is a specific address, Grafana advertises `listen_address`.
+If empty and the cluster port listens on a wildcard address such as `0.0.0.0`, Grafana advertises the first IPv4 address of a network interface that's up and isn't a loopback interface, and logs it at startup.
+Set it when that picks the wrong network, for example on hosts with several network interfaces, behind network address translation, or for IPv6.
+
+#### `cluster_tls_cert_path`
+
+Path to the PEM-encoded certificate that this instance presents to its peers on `cluster_port`.
+Setting `cluster_tls_cert_path`, `cluster_tls_key_path`, and `cluster_tls_ca_path` turns on mutual TLS between embedded servers.
+Set all three together, on every instance.
+
+The certificate must allow both server and client authentication, and its subject alternative names must match the host that the instance advertises.
+Grafana checks the files every 15 seconds and loads changed certificates without a restart.
+
+#### `cluster_tls_key_path`
+
+Path to the PEM-encoded private key for `cluster_tls_cert_path`.
+The key must not be protected by a passphrase.
+
+#### `cluster_tls_ca_path`
+
+Path to the PEM-encoded CA certificates that verify the certificates of peers.
+The file can contain several CA certificates, for example while you rotate the CA.
+
+#### `discovery_enabled`
+
+Set to `false` to run the embedded server as a single node that doesn't connect to other instances.
+When `true`, each instance registers in the `nats_discovery_peers` table of the Grafana database and connects to the other registered instances.
+The same table holds the route credential that every instance on the database shares.
+To rotate the credential, delete the row with the `key_path` `nats/peers/grafana.route-credential` and restart all instances.
+The default value is `true`.
+
+#### `discovery_interval`
+
+How often each instance refreshes its registration and updates its connections to peers.
+The default value is `5s`.
+
+#### `discovery_ttl`
+
+How long a peer stays registered after its last refresh.
+An instance that's stopped without shutting down cleanly stays connected to its peers for up to `discovery_ttl` plus `discovery_interval`.
+Keep it a comfortable multiple of `discovery_interval`.
+The default value is `15s`.
+
+#### `notifier`
+
+Set to `false` to publish notifications on the bus but keep polling the database for unified storage watches.
+When `true`, Grafana serves the watches from the bus.
+NATS delivers each notification at most once, so Grafana ends the open watches with an `Expired` error when it detects a gap, and their clients list again.
+A watch that resumes from before a write the instance lost also gets an `Expired` error, and on the SQL storage backend so does a watch that resumes from before the instance started.
+Setting `notifier = false` is useful while you turn on the bus with a rolling restart.
+If empty, it follows `enabled`.
+If you set it to `true` and the running storage backend ignores it, Grafana logs `Watch setting has no effect` at startup.
+
+#### `notifier_watch_max_age`
+
+The maximum duration of a watch served from the bus.
+After this duration, Grafana ends the watch with an `Expired` error so that its client lists again, which bounds how long a lost notification can go unnoticed.
+Grafana spreads the expiry of different watches over time.
+Only applies when `enabled` and `notifier` are both `true`.
+A value of `0` turns off expiry.
+If empty, it's `1h` while `notifier` is on, and `0` otherwise.
+If you set it and the running storage backend ignores it, Grafana logs `Watch setting has no effect` at startup.
+
+#### `tls_enabled`
+
+Set to `true` to use TLS for the connection to the NATS servers in `external` mode.
+The `tls_*` settings don't apply in `embedded` mode, where Grafana connects inside the process.
+To encrypt traffic between embedded servers, use the `cluster_tls_*` settings.
+The default value is `false`.
+
+#### `tls_ca_cert_path`
+
+Path to the CA certificate that verifies the external NATS servers.
+
+#### `tls_cert_path`
+
+Path to the client certificate, if the external NATS servers require client certificates.
+
+#### `tls_key_path`
+
+Path to the private key for `tls_cert_path`.
+
+#### `tls_server_name`
+
+The server name to verify in the certificates of the external NATS servers, if it differs from the host in `client_urls`.
+
+#### `tls_insecure_skip_verify`
+
+Set to `true` to skip the verification of the external NATS servers' certificates.
+Only use it for testing.
+The default value is `false`.
+
+#### `auth_mode`
+
+How Grafana authenticates to external NATS servers.
+One of `none`, `token`, `credentials`, or `token_exchange`.
+With `token`, Grafana presents `token`.
+With `credentials`, Grafana presents a NATS credentials file.
+The `token_exchange` mode requires Grafana Cloud services and isn't available for self-managed Grafana.
+The default value is `none`.
+
+#### `token`
+
+The token that Grafana presents when `auth_mode = token`.
+
+#### `credentials_file`
+
+Path to the NATS credentials file (`.creds`) that Grafana presents when `auth_mode = credentials`.
+
+#### `publisher_credentials_file`
+
+Path to a credentials file for publishing only, if publishing and subscribing use different identities.
+If empty, Grafana uses `credentials_file`.
+
+#### `subscriber_credentials_file`
+
+Path to a credentials file for subscribing only, if publishing and subscribing use different identities.
+If empty, Grafana uses `credentials_file`.
+
+<hr />
+
 ### `[remote_cache]`
 
 Caches authentication tokens and other temporary authentication-related data in the configured database, Redis, or Memcached. This setting doesn't configure [Query Caching in Grafana Enterprise](../../administration/data-source-management/#query-and-resource-caching).
