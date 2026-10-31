@@ -4812,6 +4812,7 @@
         "name": "panelTimeSettings",
         "resourceVersion": "1791345985856",
         "creationTimestamp": "2025-10-29T08:06:23Z",
+        "deletionTimestamp": "2026-10-28T18:03:43Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-10-07 04:06:25.856468 +0000 UTC"
         }
@@ -6293,6 +6294,7 @@
         "name": "timeComparison",
         "resourceVersion": "1791345985856",
         "creationTimestamp": "2025-07-24T20:07:28Z",
+        "deletionTimestamp": "2026-10-28T18:03:43Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-10-07 04:06:25.856468 +0000 UTC"
         }
