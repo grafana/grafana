@@ -18,6 +18,7 @@ import (
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -416,6 +417,33 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			require.NoError(t, err)
 
 			err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+			require.NoError(t, err)
+		})
+
+		v2RootDashboard := func() *unstructured.Unstructured {
+			return &unstructured.Unstructured{Object: map[string]interface{}{
+				"apiVersion": dashboardV2.DashboardResourceInfo.TypeMeta().APIVersion,
+				"kind":       "Dashboard",
+				"metadata":   map[string]interface{}{"generateName": "root-"},
+				"spec":       map[string]interface{}{"title": "Dashboard in the root folder"},
+			}}
+		}
+		v2GVR := dashboardV2.DashboardResourceInfo.GroupVersionResource()
+
+		// Storage alone rejects this with a 403 that carries no reason or message.
+		t.Run("reject a v2 dashboard in the root folder when the user may not create there", func(t *testing.T) {
+			viewerClient := getResourceClient(t, ctx.Helper, ctx.ViewerUser, v2GVR)
+			_, err := viewerClient.Resource.Create(context.Background(), v2RootDashboard(), v1.CreateOptions{})
+			ctx.Helper.RequireApiErrorStatus(err, v1.StatusReasonForbidden, http.StatusForbidden)
+			ctx.Helper.EnsureStatusError(err, http.StatusForbidden, "folders.folder.grafana.app is forbidden: access denied to folder")
+		})
+
+		t.Run("allow a v2 dashboard in the root folder when the user may create there", func(t *testing.T) {
+			v2EditorClient := getResourceClient(t, ctx.Helper, ctx.EditorUser, v2GVR)
+			created, err := v2EditorClient.Resource.Create(context.Background(), v2RootDashboard(), v1.CreateOptions{})
+			require.NoError(t, err)
+
+			err = adminClient.Resource.Delete(context.Background(), created.GetName(), v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 	})
