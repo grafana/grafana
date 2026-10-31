@@ -23,7 +23,8 @@ func auditSubjectRequest() authnlib.TokenExchangeRequest {
 
 func auditSubjectPolicy() LocalAccessPolicy {
 	return LocalAccessPolicy{PluginID: "audit-app", Audiences: []string{"grafana"}, Permissions: []string{"users:create"},
-		SubjectSigning: &LocalSubjectPolicy{DelegatedPermissions: []string{"datasources:read", "datasources:write"}},
+		AllowSubjectSigning:  true,
+		DelegatedPermissions: []string{"datasources:read", "datasources:write"},
 	}
 }
 
@@ -52,7 +53,7 @@ func TestLocalSubjectTokenLifetime(t *testing.T) {
 				e, err := newLocalExchanger()
 				require.NoError(t, err)
 				policy := auditSubjectPolicy()
-				policy.SubjectSigning.MaxTokenLifetime = tc.maximum
+				policy.MaxSubjectTokenLifetime = tc.maximum
 				req := auditSubjectRequest()
 				req.ExpiresIn = tc.requested
 				token, err := e.signForPolicy(context.Background(), policy, req)
@@ -104,7 +105,7 @@ func TestLocalSubjectMetadataAndPolicyIsolation(t *testing.T) {
 	require.Equal(t, &authnlib.ActorClaims{Subject: "user:42", IDTokenClaims: authnlib.IDTokenClaims{
 		Identifier: "uid-42", Type: "user", Namespace: "default",
 	}}, claims.Rest.Actor)
-	require.Equal(t, []string{"datasources:read", "datasources:write"}, policy.SubjectSigning.DelegatedPermissions)
+	require.Equal(t, []string{"datasources:read", "datasources:write"}, policy.DelegatedPermissions)
 }
 
 func TestLocalSubjectConcurrentNarrowing(t *testing.T) {
@@ -137,7 +138,7 @@ func TestLocalSubjectConcurrentNarrowing(t *testing.T) {
 		})
 	}
 	wg.Wait()
-	require.Equal(t, []string{"datasources:read", "datasources:write"}, policy.SubjectSigning.DelegatedPermissions)
+	require.Equal(t, []string{"datasources:read", "datasources:write"}, policy.DelegatedPermissions)
 }
 
 func TestLocalSubjectRejectsNoncanonicalIdentity(t *testing.T) {
@@ -145,14 +146,14 @@ func TestLocalSubjectRejectsNoncanonicalIdentity(t *testing.T) {
 		t.Run(sub, func(t *testing.T) {
 			req := auditSubjectRequest()
 			req.Subject.Sub = sub
-			_, _, err := assertedSubject(auditSubjectPolicy().SubjectSigning, req)
+			_, err := actorFromSubject(req.Subject, req.Namespace)
 			require.ErrorIs(t, err, ErrLocalAccessDenied)
 		})
 	}
 	for _, uid := range []string{"", " ", "\t\n"} {
 		req := auditSubjectRequest()
 		req.Subject.Identifier = uid
-		_, _, err := assertedSubject(auditSubjectPolicy().SubjectSigning, req)
+		_, err := actorFromSubject(req.Subject, req.Namespace)
 		require.ErrorIs(t, err, ErrLocalAccessDenied)
 	}
 }

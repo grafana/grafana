@@ -34,14 +34,10 @@ type LocalAccessPolicy struct {
 	// DelegatedPermissions are delegated to its tokens on behalf of a caller,
 	// where they only narrow what the caller may do.
 	DelegatedPermissions []string
-	// SubjectSigning comes from Grafana configuration, never the plugin manifest.
-	SubjectSigning *LocalSubjectPolicy
-}
-
-type LocalSubjectPolicy struct {
-	DelegatedPermissions []string
-	// MaxTokenLifetime limits requested lifetimes. Zero uses the default lifetime.
-	MaxTokenLifetime time.Duration
+	// AllowSubjectSigning comes from Grafana configuration, never the plugin manifest.
+	AllowSubjectSigning bool
+	// MaxSubjectTokenLifetime limits asserted-subject requests. Zero uses the default lifetime.
+	MaxSubjectTokenLifetime time.Duration
 }
 
 // DefaultLocalSubjectTokenLifetime applies when a subject request omits ExpiresIn.
@@ -124,11 +120,8 @@ func LookupLocalAccessPolicyToken(token string) (pluginID string, manifest *app.
 //
 // Without a subject or subject token, the token acts as the plugin. A subject
 // token must be a local access token issued to that plugin, limiting this path
-// to callers that called it. An asserted subject instead requires an explicit
-// SubjectSigning policy. The caller must check app enablement in the requested
-// organization and validate the asserted identity against the local account
-// service before signing; this function enforces its shape, namespace, audiences
-// and delegated actions.
+// to callers that called it. AllowSubjectSigning authorizes the plugin to assert
+// an identity directly. Both OBO forms use the policy's DelegatedPermissions.
 func SignLocalAccessToken(ctx context.Context, policy LocalAccessPolicy, req authnlib.TokenExchangeRequest) (string, error) {
 	e, err := sharedLocalExchanger()
 	if err != nil {
@@ -144,7 +137,7 @@ func (e *localExchanger) signForPolicy(ctx context.Context, policy LocalAccessPo
 	if err := validateExchangeRequest(req); err != nil {
 		return "", err
 	}
-	if req.Subject != nil && policy.SubjectSigning == nil {
+	if req.Subject != nil && !policy.AllowSubjectSigning {
 		return "", fmt.Errorf("%w: signing for an asserted subject is not supported", ErrLocalAccessDenied)
 	}
 	if req.Subject != nil && req.SubjectToken != "" {
@@ -157,18 +150,7 @@ func (e *localExchanger) signForPolicy(ctx context.Context, policy LocalAccessPo
 	}
 	claims := authnlib.AccessTokenClaims{Namespace: req.Namespace}
 	lifetime := localTokenTTL
-	if req.Subject != nil {
-		actor, permissions, err := assertedSubject(policy.SubjectSigning, req)
-		if err != nil {
-			return "", err
-		}
-		claims.Actor = actor
-		claims.DelegatedPermissions = permissions
-		lifetime, err = subjectTokenLifetime(policy.SubjectSigning, req.ExpiresIn)
-		if err != nil {
-			return "", err
-		}
-	} else if req.SubjectToken == "" {
+	if req.Subject == nil && req.SubjectToken == "" {
 		claims.Permissions = policy.Permissions
 	} else {
 		// Like a token exchange, the restriction narrows only what is delegated.
@@ -184,6 +166,19 @@ func (e *localExchanger) signForPolicy(ctx context.Context, policy LocalAccessPo
 		if len(permissions) == 0 {
 			return "", fmt.Errorf("%w: no permissions to delegate", ErrLocalAccessDenied)
 		}
+		claims.DelegatedPermissions = permissions
+	}
+	if req.Subject != nil {
+		actor, err := actorFromSubject(req.Subject, req.Namespace)
+		if err != nil {
+			return "", err
+		}
+		claims.Actor = actor
+		lifetime, err = subjectTokenLifetime(policy.MaxSubjectTokenLifetime, req.ExpiresIn)
+		if err != nil {
+			return "", err
+		}
+	} else if req.SubjectToken != "" {
 		verifier := authnlib.NewAccessTokenVerifier(authnlib.VerifierConfig{AllowedAudiences: []string{policy.PluginID}}, e.keys)
 		subject, err := verifier.Verify(ctx, req.SubjectToken)
 		if err != nil {
@@ -197,21 +192,16 @@ func (e *localExchanger) signForPolicy(ctx context.Context, policy LocalAccessPo
 			ServiceIdentity: subject.Rest.ServiceIdentity,
 			Actor:           subject.Rest.Actor,
 		}
-		claims.DelegatedPermissions = permissions
 	}
 	return e.sign(types.NewTypeID(types.TypeAccessPolicy, policy.PluginID), req.Audiences, claims, lifetime)
 }
 
-func assertedSubject(policy *LocalSubjectPolicy, req authnlib.TokenExchangeRequest) (*authnlib.ActorClaims, []string, error) {
-	deny := func(reason string) (*authnlib.ActorClaims, []string, error) {
-		return nil, nil, fmt.Errorf("%w: %s", ErrLocalAccessDenied, reason)
+func actorFromSubject(subject *authnlib.TokenExchangeSubject, namespace string) (*authnlib.ActorClaims, error) {
+	deny := func(reason string) (*authnlib.ActorClaims, error) {
+		return nil, fmt.Errorf("%w: %s", ErrLocalAccessDenied, reason)
 	}
-	if policy == nil {
-		return deny("signing for an asserted subject is not configured")
-	}
-	subject := req.Subject
-	ns, err := types.ParseNamespace(req.Namespace)
-	if err != nil || ns.OrgID < 1 || types.OrgNamespaceFormatter(ns.OrgID) != req.Namespace || subject.Namespace != req.Namespace {
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil || ns.OrgID < 1 || types.OrgNamespaceFormatter(ns.OrgID) != namespace || subject.Namespace != namespace {
 		return deny("subject and request must name the same concrete organization namespace")
 	}
 	typ, id, err := types.ParseTypeID(subject.Sub)
@@ -222,27 +212,16 @@ func assertedSubject(policy *LocalSubjectPolicy, req authnlib.TokenExchangeReque
 	if err != nil || numericID < 1 || strconv.FormatInt(numericID, 10) != id || strings.TrimSpace(subject.Identifier) == "" {
 		return deny("subject requires a positive numeric ID and a UID identifier")
 	}
-	permissions := slices.Clone(policy.DelegatedPermissions)
-	// A supplied empty list must not widen into the configured grant.
-	if req.RestrictedDelegatedPermissions != nil {
-		permissions = slices.DeleteFunc(permissions, func(p string) bool {
-			return !slices.Contains(req.RestrictedDelegatedPermissions, p)
-		})
-	}
-	if len(permissions) == 0 {
-		return deny("no permissions to delegate")
-	}
 	// Grafana resolves the account's current profile, role and permissions when
 	// the token is used; caller-supplied copies must not become authority.
 	return &authnlib.ActorClaims{Subject: subject.Sub, IDTokenClaims: authnlib.IDTokenClaims{
 		Identifier: subject.Identifier,
 		Type:       typ,
-		Namespace:  req.Namespace,
-	}}, permissions, nil
+		Namespace:  namespace,
+	}}, nil
 }
 
-func subjectTokenLifetime(policy *LocalSubjectPolicy, requested *int) (time.Duration, error) {
-	maximum := policy.MaxTokenLifetime
+func subjectTokenLifetime(maximum time.Duration, requested *int) (time.Duration, error) {
 	if maximum == 0 {
 		maximum = DefaultLocalSubjectTokenLifetime
 	}

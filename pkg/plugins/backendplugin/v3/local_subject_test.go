@@ -15,8 +15,9 @@ func TestLocalSubjectSigning(t *testing.T) {
 	require.NoError(t, err)
 	policy := LocalAccessPolicy{
 		PluginID: "obo-poc-app", Audiences: []string{"grafana"},
-		Permissions:    []string{"users:write"},
-		SubjectSigning: &LocalSubjectPolicy{DelegatedPermissions: []string{"datasources:read", "datasources:write"}},
+		Permissions:          []string{"users:write"},
+		AllowSubjectSigning:  true,
+		DelegatedPermissions: []string{"datasources:read", "datasources:write"},
 	}
 	request := func() authnlib.TokenExchangeRequest {
 		return authnlib.TokenExchangeRequest{Namespace: "default", Audiences: []string{"grafana"}, Subject: &authnlib.TokenExchangeSubject{
@@ -36,7 +37,7 @@ func TestLocalSubjectSigning(t *testing.T) {
 			require.Equal(t, "access-policy:obo-poc-app", claims.Subject)
 			require.Equal(t, "default", claims.Rest.Namespace)
 			require.Empty(t, claims.Rest.Permissions)
-			require.Equal(t, policy.SubjectSigning.DelegatedPermissions, claims.Rest.DelegatedPermissions)
+			require.Equal(t, policy.DelegatedPermissions, claims.Rest.DelegatedPermissions)
 			require.True(t, claims.Rest.IsOnBehalfOfUser())
 			require.Equal(t, req.Subject.Sub, authnlib.NewAccessTokenAuthInfo(*claims).GetSubject())
 			require.Equal(t, req.Subject.Identifier, authnlib.NewAccessTokenAuthInfo(*claims).GetIdentifier())
@@ -80,7 +81,7 @@ func TestLocalSubjectSigning(t *testing.T) {
 	}
 	t.Run("disabled by default", func(t *testing.T) {
 		denied := policy
-		denied.SubjectSigning = nil
+		denied.AllowSubjectSigning = false
 		_, err := e.signForPolicy(context.Background(), denied, request())
 		require.ErrorIs(t, err, ErrLocalAccessDenied)
 	})
@@ -91,7 +92,8 @@ func TestLocalSubjectRestrictionContract(t *testing.T) {
 	require.NoError(t, err)
 	policy := LocalAccessPolicy{
 		PluginID: "allowed-app", Audiences: []string{"grafana"},
-		SubjectSigning: &LocalSubjectPolicy{DelegatedPermissions: []string{"datasources:read", "datasources:write"}},
+		AllowSubjectSigning:  true,
+		DelegatedPermissions: []string{"datasources:read", "datasources:write"},
 	}
 	for _, tt := range []struct {
 		name string
@@ -100,7 +102,7 @@ func TestLocalSubjectRestrictionContract(t *testing.T) {
 	}{
 		{name: "omitted", body: `{}`, want: []string{"datasources:read", "datasources:write"}},
 		{name: "null", body: `{"restrictedDelegatedPermissions":null}`, want: []string{"datasources:read", "datasources:write"}},
-		{name: "empty", body: `{"restrictedDelegatedPermissions":[]}`},
+		{name: "empty", body: `{"restrictedDelegatedPermissions":[]}`, want: []string{"datasources:read", "datasources:write"}},
 		{name: "subset", body: `{"restrictedDelegatedPermissions":["datasources:read"]}`, want: []string{"datasources:read"}},
 		{name: "mixed", body: `{"restrictedDelegatedPermissions":["datasources:read","users:create"]}`, want: []string{"datasources:read"}},
 		{name: "no overlap", body: `{"restrictedDelegatedPermissions":["users:create"]}`},
