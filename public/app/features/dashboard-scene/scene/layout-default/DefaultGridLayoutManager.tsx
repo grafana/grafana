@@ -245,8 +245,21 @@ export class DefaultGridLayoutManager
     }
 
     const layout = this.state.grid;
-    const getPanelFromGridChild = (child: SceneGridItemLike) =>
-      child instanceof DashboardGridItem ? child.state.body : undefined;
+    // A row owns every panel below it, so the next panel after the last top-level one sits
+    // inside the first expanded row. Collapsed rows don't render their panels.
+    const getPanelFromGridChild = (child: SceneGridItemLike): VizPanel | undefined => {
+      if (child instanceof DashboardGridItem) {
+        return child.state.body;
+      }
+      if (child instanceof SceneGridRow && !child.state.isCollapsed) {
+        for (const rowChild of child.state.children) {
+          if (rowChild instanceof DashboardGridItem) {
+            return rowChild.state.body;
+          }
+        }
+      }
+      return undefined;
+    };
 
     let row: SceneGridRow | undefined;
 
