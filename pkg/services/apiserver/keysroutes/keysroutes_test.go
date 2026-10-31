@@ -251,6 +251,7 @@ func TestBuild_ListFilteredResourceManifestsDisableListKeys(t *testing.T) {
 		{Group: "collections.grafana.app", Version: "v1alpha1"},
 		{Group: "iam.grafana.app", Version: "v0alpha1"},
 		{Group: "dashboard.grafana.app", Version: "v1"},
+		{Group: "dashboard.grafana.app", Version: "v2beta1"},
 	}}
 
 	routes := Build(true, nil, fakeStore{}, []builder.APIGroupBuilder{b}, nil)
@@ -264,6 +265,9 @@ func TestBuild_ListFilteredResourceManifestsDisableListKeys(t *testing.T) {
 		assert.NotContains(t, got["iam.grafana.app/v0alpha1"], "resourcepermissions/list-keys")
 		assert.Contains(t, got["iam.grafana.app/v0alpha1"], "users/list-keys")
 		assert.Contains(t, got["dashboard.grafana.app/v1"], "dashboards/list-keys")
+		// A kind in the same version mounts list-keys, so the absence below is the manifest's doing.
+		assert.Contains(t, got["dashboard.grafana.app/v2beta1"], "variables/list-keys")
+		assert.NotContains(t, got["dashboard.grafana.app/v2beta1"], "dashboardpreferences/list-keys")
 	}
 }
 
