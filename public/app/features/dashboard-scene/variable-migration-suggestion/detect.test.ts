@@ -1,0 +1,735 @@
+import {
+  type AnnotationQuery,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
+  type FiltersMigrationUsage,
+} from '@grafana/data';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import {
+  QueryVariable,
+  SceneDataTransformer,
+  SceneGridLayout,
+  SceneGridRow,
+  SceneQueryRunner,
+  SceneVariableSet,
+  VizPanel,
+  type SceneDataQuery,
+} from '@grafana/scenes';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
+
+import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { DashboardScene } from '../scene/DashboardScene';
+import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+
+import { detectFiltersMigrationCandidates } from './detect';
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
+  getDataSourceInstanceSettings: jest.fn(),
+}));
+
+const mockGetDataSourceInstance = jest.mocked(getDataSourceInstance);
+const mockGetDataSourceInstanceSettings = jest.mocked(getDataSourceInstanceSettings);
+
+// Mirrors the real lookup: a missing ref resolves to the default datasource.
+const DEFAULT_DS_UID = 'default-ds';
+
+const dsSettingsByUid: Record<string, DataSourceInstanceSettings> = {};
+const dsInstanceByUid: Record<string, DataSourceApi> = {};
+
+function getRefUid(ref?: DataSourceRef | string | null): string | undefined {
+  if (!ref) {
+    return DEFAULT_DS_UID;
+  }
+  return typeof ref === 'string' ? ref : ref.uid;
+}
+
+function registerDatasource(uid: string, type: string, ds: Partial<DataSourceApi>) {
+  const settings = {
+    uid,
+    type,
+    name: uid,
+    meta: {} as DataSourcePluginMeta,
+    readOnly: false,
+    jsonData: {},
+    access: 'proxy',
+  } as DataSourceInstanceSettings;
+
+  dsSettingsByUid[uid] = settings;
+  dsInstanceByUid[uid] = ds as unknown as DataSourceApi;
+}
+
+function buildVariable(name: string, datasourceUid: string | undefined): QueryVariable {
+  return new QueryVariable({
+    name,
+    datasource: datasourceUid ? { uid: datasourceUid } : undefined,
+    query: `label_values(${name})`,
+  });
+}
+
+function buildPanel(
+  key: string,
+  datasourceUid: string | undefined,
+  queries: SceneDataQuery[],
+  overrides: Partial<{ title: string }> = {}
+): VizPanel {
+  return new VizPanel({
+    key,
+    title: overrides.title ?? `Panel ${key}`,
+    pluginId: 'timeseries',
+    $data: new SceneQueryRunner({ datasource: datasourceUid ? { uid: datasourceUid } : undefined, queries }),
+    options: {},
+    fieldConfig: { defaults: {}, overrides: [] },
+  });
+}
+
+function buildScene(variables: QueryVariable[], panels: VizPanel[]): DashboardScene {
+  return new DashboardScene({
+    title: 'test dashboard',
+    uid: 'dash-1',
+    $variables: new SceneVariableSet({ variables }),
+    body: DefaultGridLayoutManager.fromVizPanels(panels),
+  });
+}
+
+beforeEach(() => {
+  for (const key of Object.keys(dsSettingsByUid)) {
+    delete dsSettingsByUid[key];
+  }
+  for (const key of Object.keys(dsInstanceByUid)) {
+    delete dsInstanceByUid[key];
+  }
+
+  mockGetDataSourceInstanceSettings.mockImplementation(async (ref) => {
+    const uid = getRefUid(ref);
+    return uid ? dsSettingsByUid[uid] : undefined;
+  });
+
+  mockGetDataSourceInstance.mockImplementation(async (ref) => {
+    const uid = getRefUid(ref);
+    const ds = uid ? dsInstanceByUid[uid] : undefined;
+    if (!ds) {
+      throw new Error(`no datasource registered for ${JSON.stringify(ref)}`);
+    }
+    return ds;
+  });
+});
+
+afterEach(() => {
+  jest.clearAllMocks();
+});
+
+describe('detectFiltersMigrationCandidates', () => {
+  it('does not produce a candidate when the datasource has no filter/groupBy capability', async () => {
+    registerDatasource('prom-a', 'prometheus', {});
+
+    const variable = buildVariable('instance', 'prom-a');
+    const panel = buildPanel('panel-1', 'prom-a', [{ refId: 'A', expr: 'up{instance=~"$instance"}' }]);
+    const scene = buildScene([variable], [panel]);
+
+    const candidates = await detectFiltersMigrationCandidates(scene);
+
+    expect(candidates).toEqual([]);
+  });
+
+  it('aggregates a filter candidate when usages agree on one key', async () => {
+    const getUsage = jest.fn(({ query }: { query: SceneDataQuery }): FiltersMigrationUsage | undefined =>
+      query.refId === 'A' || query.refId === 'B' ? { kind: 'filter', key: 'instance', operator: '=~' } : undefined
+    );
+    registerDatasource('prom-a', 'prometheus', {
+      getTagKeys: jest.fn(),
+      getTagValues: jest.fn(),
+      getFiltersMigrationUsage: getUsage,
+    });
+
+    const variable = buildVariable('instance', 'prom-a');
+    const panel1 = buildPanel('panel-1', 'prom-a', [{ refId: 'A', expr: 'up{instance=~"$instance"}' }]);
+    const panel2 = buildPanel('panel-2', 'prom-a', [{ refId: 'B', expr: 'up{instance=~"$instance"}' }]);
+    const scene = buildScene([variable], [panel1, panel2]);
+
+    const candidates = await detectFiltersMigrationCandidates(scene);
+
+    expect(candidates).toEqual([
+      {
+        variableName: 'instance',
+        datasourceUid: 'prom-a',
+        usages: [
+          { kind: 'filter', key: 'instance', operator: '=~' },
+          { kind: 'filter', key: 'instance', operator: '=~' },
+        ],
+      },
+    ]);
+  });
+
+  it('produces a groupBy candidate', async () => {
+    const getUsage = jest.fn(({ query }: { query: SceneDataQuery }): FiltersMigrationUsage | undefined =>
+      query.refId === 'A' ? { kind: 'groupBy' } : undefined
+    );
+    registerDatasource('prom-a', 'prometheus', {
+      getTagKeys: jest.fn(),
+      getTagValues: jest.fn(),
+      getFiltersMigrationUsage: getUsage,
+    });
+
+    const variable = buildVariable('group_by', 'prom-a');
+    const panel = buildPanel('panel-1', 'prom-a', [{ refId: 'A', expr: 'sum by($group_by) (up)' }]);
+    const scene = buildScene([variable], [panel]);
+
+    const candidates = await detectFiltersMigrationCandidates(scene);
+
+    expect(candidates).toEqual([
+      {
+        variableName: 'group_by',
+        datasourceUid: 'prom-a',
+        usages: [{ kind: 'groupBy' }],
+      },
+    ]);
+  });
+
+  it('disqualifies when the variable is a filter in one query and a groupBy label in another', async () => {
+    const getUsage = jest.fn(({ query }: { query: SceneDataQuery }): FiltersMigrationUsage | undefined =>
+      query.refId === 'A' ? { kind: 'filter', key: 'instance', operator: '=' } : { kind: 'groupBy' }
+    );
+    registerDatasource('prom-a', 'prometheus', {
+      getTagKeys: jest.fn(),
+      getTagValues: jest.fn(),
+      getGroupByKeys: jest.fn(),
+      getFiltersMigrationUsage: getUsage,
+    });
+
+    const variable = buildVariable('instance', 'prom-a');
+    const panel1 = buildPanel('panel-1', 'prom-a', [{ refId: 'A', expr: 'up{instance="$instance"}' }]);
+    const panel2 = buildPanel('panel-2', 'prom-a', [{ refId: 'B', expr: 'sum by ($instance) (up)' }]);
+    const scene = buildScene([variable], [panel1, panel2]);
+
+    expect(await detectFiltersMigrationCandidates(scene)).toEqual([]);
+  });
+
+  it('disqualifies when filter keys disagree across usages', async () => {
+    const getUsage = jest.fn(({ query }: { query: SceneDataQuery }): FiltersMigrationUsage | undefined => {
+      if (query.refId === 'A') {
+        return { kind: 'filter', key: 'instance', operator: '=~' };
+      }
+      if (query.refId === 'B') {
+        return { kind: 'filter', key: 'host', operator: '=~' };
+      }
+      return undefined;
+    });
+    registerDatasource('prom-a', 'prometheus', {
+      getTagKeys: jest.fn(),
+      getTagValues: jest.fn(),
+      getFiltersMigrationUsage: getUsage,
+    });
+
+    const variable = buildVariable('instance', 'prom-a');
+    const panel1 = buildPanel('panel-1', 'prom-a', [{ refId: 'A', expr: 'up{instance=~"$instance"}' }]);
+    const panel2 = buildPanel('panel-2', 'prom-a', [{ refId: 'B', expr: 'up{host=~"$instance"}' }]);
+    const scene = buildScene([variable], [panel1, panel2]);
+
+    const candidates = await detectFiltersMigrationCandidates(scene);
+
+    expect(candidates).toEqual([]);
+  });
+
+  it('disqualifies when filter operators disagree across usages', async () => {
+    const getUsage = jest.fn(({ query }: { query: SceneDataQuery }): FiltersMigrationUsage | undefined => {
+      if (query.refId === 'A') {
+        return { kind: 'filter', key: 'job', operator: '=' };
+      }
+      if (query.refId === 'B') {
+        return { kind: 'filter', key: 'job', operator: '!=' };
+      }
+      return undefined;
+    });
+    registerDatasource('prom-a', 'prometheus', {
+      getTagKeys: jest.fn(),
+      getTagValues: jest.fn(),
+      getFiltersMigrationUsage: getUsage,
+    });
+
+    const variable = buildVariable('job', 'prom-a');
+    const panel1 = buildPanel('panel-1', 'prom-a', [{ refId: 'A', expr: 'up{job="$job"}' }]);
+    const panel2 = buildPanel('panel-2', 'prom-a', [{ refId: 'B', expr: 'errors{job!="$job"}' }]);
+    const scene = buildScene([variable], [panel1, panel2]);
+
+    const candidates = await detectFiltersMigrationCandidates(scene);
+
+    expect(candidates).toEqual([]);
+  });
+
+  it('disqualifies when the datasource reports a usage as unsafe', async () => {
+    const getUsage = jest.fn((): FiltersMigrationUsage | undefined => ({
+      kind: 'unsafe',
+      reason: 'used as a metric name',
+    }));
+    registerDatasource('prom-a', 'prometheus', {
+      getTagKeys: jest.fn(),
+      getTagValues: jest.fn(),
+      getFiltersMigrationUsage: getUsage,
+    });
+
+    const variable = buildVariable('metric', 'prom-a');
+    const panel = buildPanel('panel-1', 'prom-a', [{ refId: 'A', expr: '$metric{}' }]);
+    const scene = buildScene([variable], [panel]);
+
+    const candidates = await detectFiltersMigrationCandidates(scene);
+
+    expect(candidates).toEqual([]);
+  });
+
+  it('disqualifies when the variable is also referenced in a query on a different datasource', async () => {
+    const getUsage = jest.fn(({ query }: { query: SceneDataQuery }): FiltersMigrationUsage | undefined =>
+      query.refId === 'A' ? { kind: 'filter', key: 'instance', operator: '=~' } : undefined
+    );
+    registerDatasource('prom-a', 'prometheus', {
+      getTagKeys: jest.fn(),
+      getTagValues: jest.fn(),
+      getFiltersMigrationUsage: getUsage,
+    });
+    registerDatasource('graphite-a', 'graphite', {});
+
+    const variable = buildVariable('instance', 'prom-a');
+    const panel1 = buildPanel('panel-1', 'prom-a', [{ refId: 'A', expr: 'up{instance=~"$instance"}' }]);
+    const panel2 = buildPanel('panel-2', 'graphite-a', [{ refId: 'B', target: 'aliasByNode($instance, 1)' }]);
+    const scene = buildScene([variable], [panel1, panel2]);
+
+    const candidates = await detectFiltersMigrationCandidates(scene);
+
+    expect(candidates).toEqual([]);
+  });
+
+  it('does not produce a candidate when the datasource lacks getFiltersMigrationUsage', async () => {
+    registerDatasource('prom-a', 'prometheus', {
+      getTagKeys: jest.fn(),
+      getTagValues: jest.fn(),
+    });
+
+    const variable = buildVariable('instance', 'prom-a');
+    const panel = buildPanel('panel-1', 'prom-a', [{ refId: 'A', expr: 'up{instance=~"$instance"}' }]);
+    const scene = buildScene([variable], [panel]);
+
+    expect(await detectFiltersMigrationCandidates(scene)).toEqual([]);
+  });
+
+  it('keeps a filter candidate also referenced in a panel title, flagged for rewriting', async () => {
+    registerDatasource('prom-a', 'prometheus', {
+      getTagKeys: jest.fn(),
+      getTagValues: jest.fn(),
+      getFiltersMigrationUsage: () => ({ kind: 'filter', key: 'instance', operator: '=~' }),
+    });
+
+    const variable = buildVariable('instance', 'prom-a');
+    const panel1 = buildPanel('panel-1', 'prom-a', [{ refId: 'A', expr: 'up{instance=~"$instance"}' }]);
+    const panel2 = buildPanel('panel-2', 'prom-a', [{ refId: 'B', expr: 'down{instance=~"$instance"}' }], {
+      title: 'Instance: $instance',
+    });
+    const scene = buildScene([variable], [panel1, panel2]);
+
+    const candidates = await detectFiltersMigrationCandidates(scene);
+
+    expect(candidates).toEqual([expect.objectContaining({ variableName: 'instance', referencedOutsideQueries: true })]);
+  });
+
+  it('rejects a candidate when another query on the datasource does not use the variable', async () => {
+    // The migrated filter would apply to that query too, changing what it returns.
+    const getUsage = jest.fn(({ query }: { query: SceneDataQuery }): FiltersMigrationUsage | undefined =>
+      query.refId === 'A' ? { kind: 'filter', key: 'instance', operator: '=~' } : undefined
+    );
+    registerDatasource('prom-a', 'prometheus', {
+      getTagKeys: jest.fn(),
+      getTagValues: jest.fn(),
+      getFiltersMigrationUsage: getUsage,
+    });
+
+    const variable = buildVariable('instance', 'prom-a');
+    const panel1 = buildPanel('panel-1', 'prom-a', [{ refId: 'A', expr: 'up{instance=~"$instance"}' }]);
+    const panel2 = buildPanel('panel-2', 'prom-a', [{ refId: 'B', expr: 'up' }]);
+    const scene = buildScene([variable], [panel1, panel2]);
+
+    expect(await detectFiltersMigrationCandidates(scene)).toEqual([]);
+  });
+
+  it('resolves a missing datasource ref on the variable and panel to the default datasource', async () => {
+    registerDatasource(DEFAULT_DS_UID, 'prometheus', {
+      getTagKeys: jest.fn(),
+      getTagValues: jest.fn(),
+      getFiltersMigrationUsage: () => ({ kind: 'filter', key: 'instance', operator: '=~' }),
+    });
+
+    const variable = buildVariable('instance', undefined);
+    const panel = buildPanel('panel-1', undefined, [{ refId: 'A', expr: 'up{instance=~"$instance"}' }]);
+    const scene = buildScene([variable], [panel]);
+
+    const candidates = await detectFiltersMigrationCandidates(scene);
+
+    expect(candidates).toEqual([
+      {
+        variableName: 'instance',
+        datasourceUid: DEFAULT_DS_UID,
+        usages: [{ kind: 'filter', key: 'instance', operator: '=~' }],
+      },
+    ]);
+  });
+
+  describe('references outside queries', () => {
+    const safeQuery = { refId: 'A', expr: 'up{instance=~"$instance"}' };
+
+    function buildSafePanel(overrides: Partial<VizPanel['state']> = {}): VizPanel {
+      const panel = buildPanel('panel-1', 'prom-a', [safeQuery]);
+      panel.setState(overrides);
+      return panel;
+    }
+
+    beforeEach(() => {
+      registerDatasource('prom-a', 'prometheus', {
+        getTagKeys: jest.fn(),
+        getTagValues: jest.fn(),
+        getFiltersMigrationUsage: () => ({ kind: 'filter', key: 'instance', operator: '=~' }),
+      });
+    });
+
+    it('keeps the candidate when nothing outside queries references the variable', async () => {
+      const scene = buildScene([buildVariable('instance', 'prom-a')], [buildSafePanel()]);
+
+      expect(await detectFiltersMigrationCandidates(scene)).toHaveLength(1);
+    });
+
+    const displayReferenceScenes: Array<[string, () => DashboardScene]> = [
+      [
+        'a field config data link',
+        () =>
+          buildScene(
+            [buildVariable('instance', 'prom-a')],
+            [
+              buildSafePanel({
+                fieldConfig: {
+                  defaults: { links: [{ title: 'x', url: '/d/abc?var-instance=${instance}' }] },
+                  overrides: [],
+                },
+              }),
+            ]
+          ),
+      ],
+      [
+        'a field override',
+        () =>
+          buildScene(
+            [buildVariable('instance', 'prom-a')],
+            [
+              buildSafePanel({
+                fieldConfig: {
+                  defaults: {},
+                  overrides: [
+                    {
+                      matcher: { id: 'byName', options: 'up' },
+                      properties: [{ id: 'displayName', value: '$instance' }],
+                    },
+                  ],
+                },
+              }),
+            ]
+          ),
+      ],
+      [
+        'panel options',
+        () =>
+          buildScene(
+            [buildVariable('instance', 'prom-a')],
+            [buildSafePanel({ options: { content: 'Host $instance' } })]
+          ),
+      ],
+      [
+        'a panel link',
+        () =>
+          buildScene(
+            [buildVariable('instance', 'prom-a')],
+            [
+              buildSafePanel({
+                titleItems: [
+                  new VizPanelLinks({
+                    rawLinks: [{ title: 'x', url: '/explore?instance=$instance' }],
+                    menu: new VizPanelLinksMenu({}),
+                  }),
+                ],
+              }),
+            ]
+          ),
+      ],
+      [
+        'a transformation',
+        () => {
+          const panel = buildSafePanel();
+          panel.setState({
+            $data: new SceneDataTransformer({
+              $data: new SceneQueryRunner({ datasource: { uid: 'prom-a' }, queries: [safeQuery] }),
+              transformations: [{ id: 'filterByValue', options: { value: '$instance' } }],
+            }),
+          });
+          return buildScene([buildVariable('instance', 'prom-a')], [panel]);
+        },
+      ],
+      [
+        'a row title',
+        () =>
+          new DashboardScene({
+            title: 'test dashboard',
+            uid: 'dash-1',
+            $variables: new SceneVariableSet({ variables: [buildVariable('instance', 'prom-a')] }),
+            body: new DefaultGridLayoutManager({
+              grid: new SceneGridLayout({
+                children: [
+                  new SceneGridRow({
+                    title: 'Row $instance',
+                    y: 0,
+                    children: [new DashboardGridItem({ x: 0, y: 1, width: 12, height: 8, body: buildSafePanel() })],
+                  }),
+                ],
+              }),
+            }),
+          }),
+      ],
+      [
+        'a dashboard link',
+        () => {
+          const scene = buildScene([buildVariable('instance', 'prom-a')], [buildSafePanel()]);
+          scene.setState({
+            links: [
+              {
+                title: 'x',
+                url: '/d/abc?var-instance=$instance',
+                type: 'link',
+                icon: '',
+                tooltip: '',
+                tags: [],
+                asDropdown: false,
+                targetBlank: false,
+                includeVars: false,
+                keepTime: false,
+              },
+            ],
+          });
+          return scene;
+        },
+      ],
+    ];
+
+    it.each(displayReferenceScenes)(
+      'keeps a filter candidate referenced in %s, flagged for rewriting',
+      async (_, buildTestScene) => {
+        expect(await detectFiltersMigrationCandidates(buildTestScene())).toEqual([
+          expect.objectContaining({ variableName: 'instance', referencedOutsideQueries: true }),
+        ]);
+      }
+    );
+
+    it.each(displayReferenceScenes)('disqualifies a group-by candidate referenced in %s', async (_, buildTestScene) => {
+      registerDatasource('prom-a', 'prometheus', {
+        getGroupByKeys: jest.fn(),
+        getFiltersMigrationUsage: () => ({ kind: 'groupBy' }),
+      });
+
+      expect(await detectFiltersMigrationCandidates(buildTestScene())).toEqual([]);
+    });
+
+    const annotationTarget = (expr: string): DataQuery & { expr: string } => ({ refId: 'Anno', expr });
+
+    function sceneWithAnnotation(query: AnnotationQuery) {
+      const scene = buildScene([buildVariable('instance', 'prom-a')], [buildSafePanel()]);
+      scene.setState({
+        $data: new DashboardDataLayerSet({
+          annotationLayers: [
+            new DashboardAnnotationsDataLayer({ name: 'Deploys', isEnabled: true, isHidden: false, query }),
+          ],
+        }),
+      });
+      return scene;
+    }
+
+    it.each<[string, AnnotationQuery]>([
+      [
+        'at the annotation root',
+        {
+          name: 'Deploys',
+          enable: true,
+          iconColor: 'red',
+          datasource: { uid: 'prom-a' },
+          expr: 'deploys{instance="$instance"}',
+        },
+      ],
+      [
+        'under target',
+        {
+          name: 'Deploys',
+          enable: true,
+          iconColor: 'red',
+          datasource: { uid: 'prom-a' },
+          target: annotationTarget('deploys{instance="$instance"}'),
+        },
+      ],
+    ])('classifies a same-datasource annotation query %s like a panel query', async (_, query) => {
+      const candidates = await detectFiltersMigrationCandidates(sceneWithAnnotation(query));
+
+      expect(candidates).toEqual([
+        expect.objectContaining({
+          variableName: 'instance',
+          usages: [
+            { kind: 'filter', key: 'instance', operator: '=~' },
+            { kind: 'filter', key: 'instance', operator: '=~' },
+          ],
+        }),
+      ]);
+      expect(candidates[0].referencedOutsideQueries).toBeUndefined();
+    });
+
+    it('disqualifies a variable used by an annotation on another datasource', async () => {
+      registerDatasource('loki-a', 'loki', {});
+
+      const scene = sceneWithAnnotation({
+        name: 'Deploys',
+        enable: true,
+        iconColor: 'red',
+        datasource: { uid: 'loki-a' },
+        target: annotationTarget('{instance="$instance"}'),
+      });
+
+      expect(await detectFiltersMigrationCandidates(scene)).toEqual([]);
+    });
+
+    it('treats a reference in the annotation text as a display reference', async () => {
+      const scene = sceneWithAnnotation({
+        name: 'Deploys',
+        enable: true,
+        iconColor: 'red',
+        datasource: { uid: 'prom-a' },
+        target: annotationTarget('deploys'),
+        titleFormat: 'Deploy to $instance',
+      });
+
+      expect(await detectFiltersMigrationCandidates(scene)).toEqual([
+        expect.objectContaining({ variableName: 'instance', referencedOutsideQueries: true }),
+      ]);
+    });
+  });
+
+  it('rules out only the variable whose datasource capability throws', async () => {
+    registerDatasource('prom-a', 'prometheus', {
+      getTagKeys: jest.fn(),
+      getTagValues: jest.fn(),
+      getFiltersMigrationUsage: () => {
+        throw new Error('boom');
+      },
+    });
+    registerDatasource('prom-b', 'prometheus', {
+      getTagKeys: jest.fn(),
+      getTagValues: jest.fn(),
+      getFiltersMigrationUsage: () => ({ kind: 'filter', key: 'job', operator: '=' }),
+    });
+
+    const scene = buildScene(
+      [buildVariable('instance', 'prom-a'), buildVariable('job', 'prom-b')],
+      [
+        buildPanel('panel-1', 'prom-a', [{ refId: 'A', expr: 'up{instance=~"$instance"}' }]),
+        buildPanel('panel-2', 'prom-b', [{ refId: 'B', expr: 'up{job="$job"}' }]),
+      ]
+    );
+
+    const candidates = await detectFiltersMigrationCandidates(scene);
+
+    expect(candidates.map((c) => c.variableName)).toEqual(['job']);
+  });
+
+  it('keeps detecting other variables when a datasource lookup rejects', async () => {
+    registerDatasource('prom-b', 'prometheus', {
+      getTagKeys: jest.fn(),
+      getTagValues: jest.fn(),
+      getFiltersMigrationUsage: () => ({ kind: 'filter', key: 'job', operator: '=' }),
+    });
+    mockGetDataSourceInstanceSettings.mockImplementation(async (ref) => {
+      const uid = getRefUid(ref);
+      if (uid === 'broken') {
+        throw new Error('lookup failed');
+      }
+      return uid ? dsSettingsByUid[uid] : undefined;
+    });
+
+    const scene = buildScene(
+      [buildVariable('instance', 'broken'), buildVariable('job', 'prom-b')],
+      [buildPanel('panel-1', 'prom-b', [{ refId: 'A', expr: 'up{job="$job"}' }])]
+    );
+
+    const candidates = await detectFiltersMigrationCandidates(scene);
+
+    expect(candidates.map((c) => c.variableName)).toEqual(['job']);
+  });
+
+  describe('references from other variables', () => {
+    beforeEach(() => {
+      registerDatasource('prom-a', 'prometheus', {
+        getTagKeys: jest.fn(),
+        getTagValues: jest.fn(),
+        getFiltersMigrationUsage: ({ variableName }) =>
+          variableName === 'instance' ? { kind: 'filter', key: 'instance', operator: '=~' } : undefined,
+      });
+    });
+
+    const panel = () => buildPanel('panel-1', 'prom-a', [{ refId: 'A', expr: 'up{instance=~"$instance"}' }]);
+
+    it('disqualifies a variable that another variable query depends on', async () => {
+      const dependent = new QueryVariable({
+        name: 'pod',
+        datasource: { uid: 'prom-a' },
+        query: 'label_values(up{instance=~"$instance"}, pod)',
+      });
+
+      const scene = buildScene([buildVariable('instance', 'prom-a'), dependent], [panel()]);
+
+      expect(await detectFiltersMigrationCandidates(scene)).toEqual([]);
+    });
+
+    it('ignores option values that merely contain the variable syntax', async () => {
+      const other = new QueryVariable({
+        name: 'note',
+        datasource: { uid: 'prom-a' },
+        query: 'label_values(up, note)',
+        options: [{ label: 'costs $instance', value: 'costs $instance' }],
+        value: 'costs $instance',
+        text: 'costs $instance',
+      });
+
+      const scene = buildScene([buildVariable('instance', 'prom-a'), other], [panel()]);
+
+      expect((await detectFiltersMigrationCandidates(scene)).map((c) => c.variableName)).toEqual(['instance']);
+    });
+  });
+
+  it('resolves a datasource-variable ref and passes it on for the filters variable', async () => {
+    registerDatasource('prom-a', 'prometheus', {
+      getTagKeys: jest.fn(),
+      getTagValues: jest.fn(),
+      getFiltersMigrationUsage: () => ({ kind: 'filter', key: 'instance', operator: '=~' }),
+    });
+    // The real lookups resolve `${ds}` to the datasource variable's current value.
+    const resolve = (ref?: DataSourceRef | string | null) => (getRefUid(ref) === '${ds}' ? 'prom-a' : getRefUid(ref));
+    mockGetDataSourceInstanceSettings.mockImplementation(async (ref) => dsSettingsByUid[resolve(ref) ?? '']);
+    mockGetDataSourceInstance.mockImplementation(async (ref) => dsInstanceByUid[resolve(ref) ?? '']);
+
+    const variable = new QueryVariable({
+      name: 'instance',
+      datasource: { uid: '${ds}' },
+      query: 'label_values(instance)',
+    });
+    const panel = buildPanel('panel-1', '${ds}', [{ refId: 'A', expr: 'up{instance=~"$instance"}' }]);
+    const scene = buildScene([variable], [panel]);
+
+    const candidates = await detectFiltersMigrationCandidates(scene);
+
+    expect(candidates).toEqual([
+      expect.objectContaining({ variableName: 'instance', datasourceUid: 'prom-a', datasourceRef: { uid: '${ds}' } }),
+    ]);
+  });
+});

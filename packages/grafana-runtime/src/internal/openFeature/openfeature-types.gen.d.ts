@@ -64,6 +64,7 @@ declare module "@openfeature/core" {
     | "scopeFilters"
     | "newDashboardWithFiltersAndGroupBy"
     | "grafana.filterablePanels"
+    | "grafana.filtersMigrationAssistantSuggestion"
     | "grafana.savedQueriesPage"
     | "playlistsRBAC"
     | "savedQueriesRBAC"

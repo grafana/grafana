@@ -3003,6 +3003,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.filtersMigrationAssistantSuggestion",
+        "resourceVersion": "1790243012749",
+        "creationTimestamp": "2026-09-24T09:43:32Z"
+      },
+      "spec": {
+        "description": "Shows a dashboard banner suggesting that query variables be migrated to filters/group by via the Grafana Assistant",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.frontendLegacyAPIHandling",
         "resourceVersion": "1789557808090",
         "creationTimestamp": "2026-07-08T09:41:08Z",
