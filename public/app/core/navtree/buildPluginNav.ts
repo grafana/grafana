@@ -12,7 +12,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { type AppNavConfig, appNavConfigFor, appNavPathConfigFor } from './appNavConfig';
 import { NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
 import { PLUGIN_NAV_OVERRIDES } from './pluginNavOverrides';
-import { appendIntoSection, hoistedPluginPageId, pluginPageId, standalonePluginPageId, withAppSubUrl } from './utils';
+import { appendIntoSection, hoistAppPages, pluginPageId, standalonePluginPageId, withAppSubUrl } from './utils';
 
 // Whether the user may see one of an app's pages. An include declaring an RBAC
 // action is gated on that action; otherwise the user's org role must rank at or
@@ -111,7 +111,7 @@ function buildAppLink(app: AppPluginConfig): {
   const children: NavModelItem[] = [];
   const standalonePages: StandalonePage[] = [];
   const navConfig = appNavConfigFor(app.id);
-  const { filterInclude, hoistPages } = navConfig ?? {};
+  const { filterInclude } = navConfig ?? {};
 
   for (const include of app.includes ?? []) {
     if (!hasAccessToInclude(include) || (filterInclude && !filterInclude(include))) {
@@ -143,10 +143,6 @@ function buildAppLink(app: AppPluginConfig): {
       icon: toIconName(include.icon),
       pluginId: app.id,
       url: include.path,
-      // A hoisted app has no node of its own, so its pages carry the standalone
-      // id. Only pages: a dashboard include left with a `/d/<uid>` standalone id
-      // would register that url as an app route and shadow the dashboard itself
-      ...(hoistPages && { id: hoistedPluginPageId(include.path) }),
     };
 
     // A page with its own placement leaves the app entirely, so it is not one of
@@ -266,29 +262,6 @@ function placeAppInSection(tree: NavModelItem[], app: AppPluginConfig, appLink: 
       ...(imgFromAppLogo && app.info?.logos && { img: withAppSubUrl(app.info.logos.large) }),
     },
   ];
-}
-
-// Hoisted pages without a pinned slot sort above the section's app entries
-// (which sit at small positive weights) while keeping their own relative order
-const HOISTED_PAGE_WEIGHT_OFFSET = -100;
-
-/**
- * Expands an app's pages into its target section as standalone entries instead
- * of nesting them under an app node (`hoistPages` in the app's nav config).
- * Pages pinned by `slotWeightByPath` take that section slot; the rest sort
- * above the section's app entries in their own order.
- */
-function hoistAppPages(
-  appLink: NavModelItem,
-  { slotWeightByPath = {} }: NonNullable<AppNavConfig['hoistPages']>
-): NavModelItem[] {
-  return (appLink.children ?? []).map((child) => {
-    const slotWeight = child.url ? slotWeightByPath[child.url] : undefined;
-    return {
-      ...child,
-      sortWeight: slotWeight ?? HOISTED_PAGE_WEIGHT_OFFSET + (child.sortWeight ?? 0),
-    };
-  });
 }
 
 function hasAccessToInclude(include: PluginInclude): boolean {
