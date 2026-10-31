@@ -41,6 +41,18 @@ describe('resourceKinds registry', () => {
       resource: 'librarypanels',
       itemType: 'LibraryPanel',
     });
+    expect(resourceKindInfos.bundle).toMatchObject({
+      group: 'provisioning.grafana.app',
+      kind: 'Bundle',
+      resource: 'bundles',
+      itemType: 'Bundle',
+    });
+  });
+
+  it('enumerates no bundles to migrate', async () => {
+    // Bundles are produced by Git Sync from a repository, so there is never an unmanaged
+    // bundle on the instance to migrate into it — the registry still needs a `list`.
+    await expect(resourceKindInfos.bundle.list()).resolves.toEqual([]);
   });
 
   it('sources icons from the search package', () => {
@@ -231,6 +243,7 @@ describe('getAvailableResourceKinds', () => {
       resourceKindInfos.dashboard,
       resourceKindInfos.playlist,
       resourceKindInfos.librarypanel,
+      resourceKindInfos.bundle,
     ]);
   });
 

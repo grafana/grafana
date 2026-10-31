@@ -1,5 +1,12 @@
 export const PROVISIONING_URL = '/admin/provisioning';
 export const PROVISIONING_PREVIEW_URL = '/dashboard/provisioning';
+/**
+ * A bundle's own page. Deliberately outside PROVISIONING_URL: the admin pages are gated on
+ * `provisioning.repositories:write`, and a bundle is reached from wherever the resource that
+ * uses it is — not only from the admin resource tree. Access is enforced by the bundles API,
+ * which the page surfaces when it refuses.
+ */
+export const BUNDLE_URL = '/bundles';
 export const CONNECTIONS_URL = `${PROVISIONING_URL}/connections`;
 export const CONNECTIONS_TAB_URL = `${PROVISIONING_URL}?tab=connections`;
 export const CONNECT_URL = `${PROVISIONING_URL}/connect`;

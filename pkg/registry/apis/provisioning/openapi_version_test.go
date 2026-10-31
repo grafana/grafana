@@ -29,7 +29,7 @@ func TestAPIBuilderAdvertisesItsResources(t *testing.T) {
 		for i := range infos {
 			names = append(names, infos[i].GetName())
 		}
-		assert.ElementsMatch(t, []string{"repositories", "connections", "jobs", "historicjobs"}, names)
+		assert.ElementsMatch(t, []string{"repositories", "connections", "jobs", "bundles", "bundlefiles", "historicjobs"}, names)
 	})
 
 	t.Run("Loki-backed history", func(t *testing.T) {
@@ -39,7 +39,7 @@ func TestAPIBuilderAdvertisesItsResources(t *testing.T) {
 		for i := range infos {
 			names = append(names, infos[i].GetName())
 		}
-		assert.ElementsMatch(t, []string{"repositories", "connections", "jobs"}, names)
+		assert.ElementsMatch(t, []string{"repositories", "connections", "jobs", "bundles", "bundlefiles"}, names)
 	})
 }
 

@@ -147,6 +147,21 @@ type ParsedResource struct {
 	// and must never have a folder annotation stamped onto them.
 	FolderScoped bool
 
+	// IsBundle reports whether this file is a Bundle, in which case BundleEntries are the
+	// paths it declares.
+	IsBundle bool
+
+	// BundleEntries are the validated paths this bundle declares. What a folder entry
+	// expands to needs a listing of the repository at a ref, which a single-file parse
+	// does not have; see ResolveBundleFiles. Always empty unless IsBundle.
+	BundleEntries []BundleEntry
+
+	// BundleRef is the name of the Bundle this resource references, read from the
+	// provisioning bundle label. Only populated for a kind declared with the bundle
+	// capability, so a stray label on another kind is ignored rather than silently
+	// claiming files.
+	BundleRef string
+
 	// The Existing object (same name)
 	// ?? do we need/want the whole thing??
 	Existing *unstructured.Unstructured
@@ -275,7 +290,24 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	// are contained in folders. Org-scoped resources (those not folder-scoped in the
 	// configured supported set) must not have a folder annotation stamped onto them:
 	// it would be meaningless and possibly dangling.
-	parsed.FolderScoped = supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVK)
+	supported := r.clients.SupportedResources()
+	parsed.FolderScoped = supportsFolderAnnotation(supported, parsed.GVK)
+
+	// A bundle's paths are part of its definition, so an unusable spec.paths makes the
+	// manifest itself invalid rather than yielding a bundle whose files the pipeline
+	// would silently ignore.
+	if parsed.GVK.Group == provisioning.GROUP && parsed.GVK.Kind == BundleKind {
+		parsed.IsBundle = true
+		parsed.BundleEntries, err = ParseBundleEntries(parsed.Obj)
+		if err != nil {
+			return nil, NewResourceValidationError(err)
+		}
+	} else if isBundleLinkable(supported, parsed.GVK) {
+		parsed.BundleRef, err = ParseBundleRef(parsed.Obj)
+		if err != nil {
+			return nil, NewResourceValidationError(err)
+		}
+	}
 	if info.Path != "" && parsed.FolderScoped {
 		parsed.Meta.SetFolder(r.resolveFolderID(ctx, info))
 	}

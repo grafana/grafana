@@ -1604,6 +1604,16 @@ func WithProvisioningMaxFileSize(n int64) GrafanaOption {
 	}
 }
 
+// WithProvisioningResources sets [provisioning] resources, the set of kinds provisioning
+// may manage. Each entry is "<group>/<Kind>[:cap...]"; see
+// resources.ParseSupportedResources. Replaces the default set outright, so a caller has
+// to list everything it needs, folders included.
+func WithProvisioningResources(entries ...string) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningResources = entries
+	}
+}
+
 // WithNATS enables the embedded Core NATS bus and the SQL KV storage backend so
 // the provisioning controllers reconcile off NATS-delivered resource-change
 // notifications instead of the apiserver watch. The KV backend is what publishes

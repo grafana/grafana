@@ -14584,6 +14584,22 @@
     "bulk-action": {
       "success-title-branch": "Requested changes were pushed to a branch"
     },
+    "bundle-view": {
+      "back-to-repositories": "Back to repositories",
+      "column-path": "Path",
+      "column-size": "Size",
+      "declared-paths": "Declared paths",
+      "declared-paths-description": "A path ending in a slash is a folder, and everything beneath it belongs to the bundle.",
+      "error": "Failed to load bundle",
+      "files": "Files",
+      "no-files": "This bundle has not resolved to any files yet.",
+      "not-found": "Bundle not found",
+      "not-found-description": "The bundle may have been removed from the repository, or has not synced yet.",
+      "resolved-at": "resolved at {{ref}}",
+      "subtitle": "Files grouped with the resource that uses them",
+      "unresolved-description": "These paths resolved to nothing at the synced commit — a folder may have been renamed or removed, so the bundle holds fewer files than it declares.",
+      "unresolved-title": "Some declared paths matched no files"
+    },
     "cloud-info-box": {
       "body": "Skip the setup and get Git Sync fully managed and hosted on Grafana Cloud with the <2>free-forever Grafana Cloud plan</2>.",
       "title": "You can also use Git Sync on Grafana Cloud"
@@ -15345,6 +15361,8 @@
       "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
     },
     "resource-kind": {
+      "bundle": "bundle",
+      "bundles": "Bundles",
       "dashboard": "dashboard",
       "dashboards": "Dashboards",
       "folder": "folder",

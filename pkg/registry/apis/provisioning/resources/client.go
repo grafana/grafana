@@ -34,10 +34,14 @@ const (
 	// CapabilityDisabled marks a resource as declared but not acted on (surfaced, inert).
 	// Absent means active.
 	CapabilityDisabled = "disabled"
+	// CapabilityBundle marks a resource allowed to reference a Bundle, through a bundle
+	// name in its spec, and so to be defined by more than its own file. Absent means the
+	// resource is defined entirely by its own file and any bundle reference is ignored.
+	CapabilityBundle = "bundle"
 )
 
 // KnownCapabilities is the set of recognised capability tokens; unknown tokens are rejected.
-var KnownCapabilities = sets.New(CapabilityFolder, CapabilitySkipValidation, CapabilityDisabled)
+var KnownCapabilities = sets.New(CapabilityFolder, CapabilitySkipValidation, CapabilityDisabled, CapabilityBundle)
 
 // Dashboard GVR/GVK values are re-exported from apps/provisioning/pkg/resources
 // so there is a single source of truth. Folder and User live here because
@@ -81,6 +85,9 @@ func (r SupportedResource) IsValidated() bool { return !r.Capabilities.Has(Capab
 
 // IsFolderScoped reports whether the resource carries the folder annotation on write.
 func (r SupportedResource) IsFolderScoped() bool { return r.Capabilities.Has(CapabilityFolder) }
+
+// IsBundle reports whether the resource may reference a Bundle.
+func (r SupportedResource) IsBundle() bool { return r.Capabilities.Has(CapabilityBundle) }
 
 // ParseSupportedResources parses the shared resource grammar — one entry per resource:
 //
@@ -140,6 +147,18 @@ func supportsFolderAnnotation(supported []SupportedResource, gvk schema.GroupVer
 	gk := gvk.GroupKind()
 	for _, r := range supported {
 		if r.IsFolderScoped() && r.GroupKind == gk {
+			return true
+		}
+	}
+	return false
+}
+
+// isBundleLinkable reports whether gvk is a supported resource declared with the bundle
+// capability, and so may reference a Bundle.
+func isBundleLinkable(supported []SupportedResource, gvk schema.GroupVersionKind) bool {
+	gk := gvk.GroupKind()
+	for _, r := range supported {
+		if r.IsBundle() && r.GroupKind == gk {
 			return true
 		}
 	}

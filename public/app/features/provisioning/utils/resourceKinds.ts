@@ -3,6 +3,7 @@ import { type UnknownAction } from '@reduxjs/toolkit';
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
+import { API_GROUP as PROVISIONING_API_GROUP } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { type IconName } from '@grafana/ui';
@@ -14,6 +15,8 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
 import { getIconForKind, queryResultToViewItem } from 'app/features/search/service/utils';
 import { type AppDispatch } from 'app/store/configureStore';
+
+import { BUNDLE_URL, PROVISIONING_URL } from '../constants';
 
 import { isManaged } from './managedResource';
 
@@ -130,6 +133,29 @@ export const resourceKindInfos = {
     // default — they ship disabled and aren't in the static base — so this only
     // runs once the backend reports the kind as available.
     list: () => listViaApiserver(DASHBOARD_API_GROUP, 'v0alpha1', 'librarypanels'),
+    alwaysAvailable: false,
+  },
+  bundle: {
+    key: 'bundle',
+    getLabel: () => t('provisioning.resource-kind.bundle', 'bundle'),
+    pluralLabel: () => t('provisioning.resource-kind.bundles', 'Bundles'),
+    group: PROVISIONING_API_GROUP,
+    kind: 'Bundle',
+    resource: 'bundles',
+    itemType: 'Bundle',
+    // getIconForKind doesn't know bundles. layer-group reads as "a set of things
+    // grouped together", which is what a bundle is.
+    icon: 'layer-group',
+    getRoute: (name: string) => `${BUNDLE_URL}/${name}`,
+    // Bundles have no collection page of their own; they are reached from the resource
+    // that uses one, or from a repository's resource tree.
+    listRoute: PROVISIONING_URL,
+    // The Bundle itself is not folder-contained — its *files* are, under a folder
+    // named after the bundle.
+    folderScoped: false,
+    // Nothing to enumerate: bundles are produced by Git Sync from a repository, so
+    // there is never an unmanaged bundle on the instance to migrate into it.
+    list: () => Promise.resolve([]),
     alwaysAvailable: false,
   },
 } as const;

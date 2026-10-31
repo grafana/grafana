@@ -129,6 +129,16 @@ type Authorizer interface {
 	// This ensures operations on the configured branch are properly authorized.
 	AuthorizeWrite(ctx context.Context, ref string) error
 
+	// AuthorizeWriteBundleFile checks if the user may create, update or delete a
+	// supporting file belonging to the bundle whose manifest is at bundlePath.
+	//
+	// A bundle and its files are one atomic unit, so every file-level write is an
+	// update to the bundle — never a create, whatever the file itself is. The check
+	// therefore runs against the folder containing the bundle manifest, mirroring how
+	// AuthorizeReadRawFile derives a folder for files that have no per-resource verb
+	// of their own.
+	AuthorizeWriteBundleFile(ctx context.Context, bundlePath string) error
+
 	// AuthorizeReadRawFile checks if the user has permission to read a raw
 	// (non-resource) file at the given path.
 	//
@@ -656,18 +666,39 @@ func (a *ProvisioningAuthorizer) AuthorizeWrite(ctx context.Context, ref string)
 // Folder IDs are resolved from the configured branch (ref="") for the same
 // reasons documented on the Authorizer interface — caller-supplied refs can
 // be used to spoof folder UIDs.
-func (a *ProvisioningAuthorizer) AuthorizeReadRawFile(ctx context.Context, path string) error {
-	parentPath := safepath.Dir(path)
+func (a *ProvisioningAuthorizer) AuthorizeWriteBundleFile(ctx context.Context, bundlePath string) error {
+	folderID, err := a.folderIDForPath(ctx, bundlePath)
+	if err != nil {
+		return err
+	}
 
-	var folderID string
+	return a.access.Check(ctx, authlib.CheckRequest{
+		Group:    FolderResource.Group,
+		Resource: FolderResource.Resource,
+		Name:     folderID,
+		Verb:     utils.VerbUpdate,
+	}, folderID)
+}
+
+// folderIDForPath resolves the folder a repository path lives in, falling back to the
+// repository root folder for paths at the root.
+func (a *ProvisioningAuthorizer) folderIDForPath(ctx context.Context, path string) (string, error) {
+	parentPath := safepath.Dir(path)
 	if parentPath == "" {
-		folderID = RootFolder(a.repo)
-	} else {
-		id, err := a.getFolderID(ctx, parentPath)
-		if err != nil {
-			return fmt.Errorf("get parent folder ID for %q: %w", path, err)
-		}
-		folderID = id
+		return RootFolder(a.repo), nil
+	}
+
+	id, err := a.getFolderID(ctx, parentPath)
+	if err != nil {
+		return "", fmt.Errorf("get parent folder ID for %q: %w", path, err)
+	}
+	return id, nil
+}
+
+func (a *ProvisioningAuthorizer) AuthorizeReadRawFile(ctx context.Context, path string) error {
+	folderID, err := a.folderIDForPath(ctx, path)
+	if err != nil {
+		return err
 	}
 
 	return a.access.Check(ctx, authlib.CheckRequest{

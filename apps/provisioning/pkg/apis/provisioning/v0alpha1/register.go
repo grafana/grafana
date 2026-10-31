@@ -119,6 +119,64 @@ var HistoricJobResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 		},
 	})
 
+var BundleResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
+	"bundles", "bundle", "Bundle",
+	func() runtime.Object { return &Bundle{} },     // newObj
+	func() runtime.Object { return &BundleList{} }, // newList
+	utils.TableColumns{ // Returned by `kubectl get`. Doesn't affect disk storage.
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Created At", Type: "date"},
+			{Name: "Paths", Type: "integer"},
+			{Name: "Files", Type: "integer"},
+			{Name: "Ref", Type: "string"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			m, ok := obj.(*Bundle)
+			if !ok {
+				return nil, errors.New("expected Bundle")
+			}
+
+			return []interface{}{
+				m.Name,
+				m.CreationTimestamp.UTC().Format(time.RFC3339),
+				len(m.Spec.Paths),
+				len(m.Status.Files),
+				m.Status.Ref,
+			}, nil
+		},
+	},
+)
+
+var BundleFileResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
+	"bundlefiles", "bundlefile", "BundleFile",
+	func() runtime.Object { return &BundleFile{} },     // newObj
+	func() runtime.Object { return &BundleFileList{} }, // newList
+	utils.TableColumns{ // Returned by `kubectl get`. Doesn't affect disk storage.
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Created At", Type: "date"},
+			{Name: "Bundle", Type: "string"},
+			{Name: "Path", Type: "string"},
+			{Name: "Size", Type: "integer"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			m, ok := obj.(*BundleFile)
+			if !ok {
+				return nil, errors.New("expected BundleFile")
+			}
+
+			return []interface{}{
+				m.Name,
+				m.CreationTimestamp.UTC().Format(time.RFC3339),
+				m.Spec.Bundle,
+				m.Spec.Path,
+				m.Spec.Size,
+			}, nil
+		},
+	},
+)
+
 var ConnectionResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"connections", "connection", "Connection",
 	func() runtime.Object { return &Connection{} },     // newObj
@@ -208,6 +266,10 @@ func AddKnownTypes(gv schema.GroupVersion, scheme *runtime.Scheme) error {
 		&Connection{},
 		&ConnectionList{},
 		&ExternalRepositoryList{},
+		&Bundle{},
+		&BundleList{},
+		&BundleFile{},
+		&BundleFileList{},
 	)
 	return nil
 }
