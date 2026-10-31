@@ -541,7 +541,19 @@ func (st *Manager) setNextStateForAll(alertRule *ngModels.AlertRule, result eval
 	updated := ruleStates{
 		states: make(map[data.Fingerprint]*State, len(currentStates)),
 	}
+	// Floored at 2 because the tick right after a state's last refresh is always 1 interval
+	// away, and a NoData/Error tick is a legitimate refresh, not a miss.
+	missingEvalsToResolve := alertRule.GetMissingSeriesEvalsToResolve()
+	if missingEvalsToResolve < 2 {
+		missingEvalsToResolve = 2
+	}
 	for _, currentState := range currentStates {
+		// Refreshing a state past its grace period would hide it from processMissingSeriesStates,
+		// which is what resolves and evicts it.
+		if stateIsStale(result.EvaluatedAt, currentState.LastEvaluationTime, alertRule.IntervalSeconds, missingEvalsToResolve) {
+			updated.states[currentState.CacheID] = currentState
+			continue
+		}
 		start := st.clock.Now()
 		newState := currentState.Copy()
 		t := newState.transition(alertRule, result, extraAnnotations, logger, takeImageFn, st.ignorePendingForNoDataAndError)
