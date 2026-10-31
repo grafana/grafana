@@ -1,0 +1,34 @@
+---
+description: Require tests for behavior changes, especially UI
+alwaysApply: true
+---
+
+# Testing coverage
+
+Every behavior change needs automated coverage before the PR is opened.
+
+## Required
+
+- Add or update unit/integration tests that assert the new or fixed behavior (not only that something rendered).
+- Prefer co-located tests next to the changed module (e.g. `Foo.test.ts(x)` beside `Foo.tsx`).
+- Run the targeted suite and report the command + result in the PR **Test plan**.
+- Match neighboring test style (Jest / React Testing Library / Playwright as already used in that area).
+
+## UI-related changes
+
+When the change touches user-visible UI (components, editors, panels, Explore, query preview, copy/feedback affordances):
+
+- Unit/component tests are required for the logic and interaction you changed.
+- Visual verification is also required — see `.cursor/rules/visual-verification.mdc`.
+- Prefer Playwright e2e when the bug is about layout, remounting, clipboard feedback, or other behavior hard to assert in unit tests alone.
+
+## Logic-only / non-UI
+
+- Unit tests alone are enough. Mark the PR Test plan visual line as **N/A — logic-only** and name the tests that cover it.
+- Do not skip tests because the change is "small".
+
+## Do not
+
+- Open a PR with untested behavior changes.
+- Disable, skip, or weaken existing tests to make a change pass.
+- Claim coverage from tests that do not exercise the changed path.
