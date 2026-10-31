@@ -33,9 +33,10 @@ var assistantOSSNavigationPaths = map[string]struct{}{
 }
 
 var assistantTrialNavigationPaths = map[string]struct{}{
-	assistantAppHomePath:                 {},
-	"/a/grafana-assistant-app/workspace": {},
-	"/a/grafana-assistant-app/pages":     {},
+	assistantAppHomePath:                       {},
+	"/a/grafana-assistant-app/workspace":       {},
+	"/a/grafana-assistant-app/pages":           {},
+	"/a/grafana-assistant-app/pages/templates": {},
 }
 
 func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) error {
@@ -260,10 +261,12 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 					link.Text = pathConfig.Text
 				}
 
-				// Placed by the deferred call above, not here. Standalone pages are
-				// relocated out of the app, so they don't take part in the second
-				// pass that attaches the app's own pages below.
+				// Keep relocation deferred, but allow descendants to nest under reachable
+				// standalone parents. Missing destinations must not swallow app pages.
 				standalonePages = append(standalonePages, standalonePage{link: link, sectionID: pathConfig.SectionID})
+				if pathConfig.SectionID == navtree.NavIDRoot || treeRoot.FindById(pathConfig.SectionID) != nil {
+					pageLinks = append(pageLinks, link)
+				}
 			} else if include.AddToNav {
 				pending = append(pending, pendingInclude{link: link, isPage: true})
 				// A page whose URL is the app root itself (e.g. a DefaultNav page) is not a
@@ -348,7 +351,7 @@ func (s *ServiceImpl) addStandalonePage(treeRoot *navtree.NavTreeRoot, link *nav
 			child.Id = link.Id
 			child.SortWeight = link.SortWeight
 			child.PluginID = link.PluginID
-			child.Children = []*navtree.NavLink{}
+			child.Children = link.Children
 			return
 		}
 	}
