@@ -762,11 +762,6 @@
       "count": 6
     }
   },
-  "public/app/core/components/Signup/VerifyEmail.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
   "public/app/core/components/TagFilter/TagFilter.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
