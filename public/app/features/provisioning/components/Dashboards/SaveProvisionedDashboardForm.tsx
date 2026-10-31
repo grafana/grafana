@@ -17,7 +17,9 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import kbn from 'app/core/utils/kbn';
 import { type Resource } from 'app/features/apiserver/types';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
+import { collapseRowsAfterSave } from 'app/features/dashboard-scene/saving/collapseRowsAfterSave';
 import { nextMetaAfterFolderPick } from 'app/features/dashboard-scene/saving/shared';
 import { useParkSaveFormDraft } from 'app/features/dashboard-scene/saving/useParkSaveFormDraft';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
@@ -245,10 +247,13 @@ export function SaveProvisionedDashboardForm({
       const model = savedSpecRef.current ?? dashboard.getSaveModel();
       const resourceData = wrapper.resource.upsert || wrapper.resource.dryRun;
       const saveResponse = createSaveResponseFromResource(resourceData);
+      if (drawer.state.collapseRows) {
+        collapseRowsAfterSave(dashboard);
+      }
       await dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
       dashboardWatcher.clearIgnoreSave();
     },
-    [dashboard, defaultValues.folder?.uid]
+    [dashboard, drawer, defaultValues.folder?.uid]
   );
 
   const onWriteSuccess = useCallback(
@@ -401,7 +406,12 @@ export function SaveProvisionedDashboardForm({
       return;
     }
 
-    const body = rawDashboardJSON
+    // changeInfo only carries the editor JSON when its schema version matches the dashboard's
+    const commitRawJson =
+      rawDashboardJSON &&
+      (isNew || isDashboardV2Spec(rawDashboardJSON) !== isDashboardV2Spec(changeInfo.changedSaveModel));
+
+    const body = commitRawJson
       ? dashboard.getSaveResourceFromSpec(rawDashboardJSON)
       : isNew
         ? dashboard.getSaveResource({

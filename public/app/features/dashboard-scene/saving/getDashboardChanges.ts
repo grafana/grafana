@@ -31,7 +31,8 @@ export function getRawDashboardV2Changes(
   changed: DashboardV2Spec,
   saveTimeRange?: boolean,
   saveVariables?: boolean,
-  saveRefresh?: boolean
+  saveRefresh?: boolean,
+  collapseRows?: boolean
 ) {
   // Transform initial dashboard values to v2 spec format to ensure consistent comparison of time settings,
   // variables and refresh values. This handles cases where the initial dashboard is in v1 format
@@ -57,6 +58,8 @@ export function getRawDashboardV2Changes(
     changedSaveModel.timeSettings.autoRefresh = initialSaveModel.timeSettings.autoRefresh;
   }
 
+  const hasExpandedRows = applyRowCollapseV2(changedSaveModel.layout, collapseRows);
+
   // Calculate differences using the non-transformed to v2 spec values to be able to compare the initial and changed dashboard values
   const diff = jsonDiff(initial, changedSaveModel);
   const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
@@ -70,8 +73,35 @@ export function getRawDashboardV2Changes(
     hasTimeChanges: hasTimeChanged,
     hasVariableValueChanges,
     hasRefreshChange: hasRefreshChanged,
+    hasExpandedRows,
     hasMigratedToV2: !isDashboardV2Spec(initial),
   };
+}
+
+/** Reports whether any row is expanded, and collapses them when collapseRows is set */
+function applyRowCollapseV2(layout: DashboardV2Spec['layout'], collapseRows?: boolean): boolean {
+  let hasExpandedRows = false;
+
+  if (layout.kind === 'RowsLayout') {
+    for (const row of layout.spec.rows) {
+      // The UI never collapses a row without a header
+      if (!row.spec.hideHeader && !row.spec.collapse) {
+        hasExpandedRows = true;
+        if (collapseRows) {
+          row.spec.collapse = true;
+        }
+      }
+      hasExpandedRows = applyRowCollapseV2(row.spec.layout, collapseRows) || hasExpandedRows;
+    }
+  }
+
+  if (layout.kind === 'TabsLayout') {
+    for (const tab of layout.spec.tabs) {
+      hasExpandedRows = applyRowCollapseV2(tab.spec.layout, collapseRows) || hasExpandedRows;
+    }
+  }
+
+  return hasExpandedRows;
 }
 
 function convertToV2SpecIfNeeded(initial: DashboardV2Spec | Dashboard): DashboardV2Spec {

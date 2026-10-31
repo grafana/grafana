@@ -7967,6 +7967,8 @@
       "title-dashboard-drastically-changed": "Dashboard irreversibly changed"
     },
     "save-dashboard-form-common-options": {
+      "save-collapse-rows-description-save-rows-collapsed": "Will save every row collapsed",
+      "save-collapse-rows-label-collapse-all-rows": "Collapse all rows",
       "save-refresh-description-current-refresh-default": "Will make the current refresh the new default",
       "save-refresh-label-update-default-refresh-value": "Update default refresh value",
       "save-timerange-description-current-range-default": "Will make current time range the new default",
