@@ -124,6 +124,25 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     [setPopoverVisible]
   );
 
+  // Opening "Filter values" from the column menu closes that menu, and the menu's
+  // Dropdown returns focus to its own trigger on close. That restore lands after
+  // FilterPopup's mount effect has already focused the search input, so the input
+  // loses focus and Tab then skips the portalled popup entirely. Re-assert focus
+  // on the next frame, once the menu's focus restore has run.
+  useEffect(() => {
+    if (!isPopoverVisible) {
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      const container = document.querySelector<HTMLElement>(
+        `[data-testid="${selectors.components.Panels.Visualization.TableNG.Filters.Container}"]`
+      );
+      container?.querySelector<HTMLInputElement>('input')?.focus();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isPopoverVisible]);
+
+  // we have to remove/reset the filter if the column is not filterable
   useEffect(() => {
     if (!filteringDisabled && !filterable && filterEnabled && !unsupportedReason) {
       tableFilters?.clearFilter(field, parentIndex);
