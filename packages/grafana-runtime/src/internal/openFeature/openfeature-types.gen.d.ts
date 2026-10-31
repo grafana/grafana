@@ -146,6 +146,7 @@ declare module "@openfeature/core" {
     | "splashScreen"
     | "enableColorblindSafePanelOptions"
     | "datasources.config.ui.useNewDatasourceCRUDAPIs"
+    | "datasources.listFromApiGroups"
     | "reporting.anyPageReporting"
     | "alerting.gmaOnlyListView"
     | "assistant.frontend.tools.dashboardTemplates"

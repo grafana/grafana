@@ -1950,6 +1950,20 @@
     },
     {
       "metadata": {
+        "name": "datasources.listFromApiGroups",
+        "resourceVersion": "1793437188429",
+        "creationTimestamp": "2026-10-31T08:59:48Z"
+      },
+      "spec": {
+        "description": "Fill the frontend data source cache from the per-plugin API groups instead of the connections endpoint, which is backed by the legacy datasource service",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.loadOpenAPI",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-04-13T18:34:04Z"

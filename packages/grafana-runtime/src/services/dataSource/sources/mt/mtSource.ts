@@ -18,9 +18,14 @@ import { DataSourceListFetchError, DataSourceSettingsFetchError } from '../../er
 import { logDataSourceInstanceError, logDataSourceWarning } from '../../logging';
 import { type DataSourceCacheSource, type DataSourceListSnapshot } from '../types';
 
-import { fetchConnections, fetchDataSourceResource } from './api';
+import {
+  fetchConnections as fetchViaConnections,
+  type FetchConnectionsOptions,
+  fetchConnectionsFromGroups,
+  fetchDataSourceResource,
+} from './api';
 import { toInstanceSettings, toListSnapshot } from './mappers';
-import { type DataSourceConnection } from './types';
+import { type DataSourceConnection, type DataSourceConnectionList } from './types';
 
 const MAX_LOGGED_TYPES = 20;
 
@@ -37,6 +42,17 @@ type ListFetchResult =
  * Fills the cache from the MT APIs: the list from `connections` joined with the plugin metas, and
  * the settings on demand, one request per uid.
  */
+/**
+ * How a source lists every data source. `connections` is one request but is backed by the legacy
+ * data source service; the per-group fetcher reads what each plugin serves. See
+ * {@link fetchConnectionsFromGroups}.
+ */
+export type ConnectionsFetcher = (options: FetchConnectionsOptions) => Promise<DataSourceConnectionList | undefined>;
+
+/** Reads the API group each installed plugin serves. See {@link fetchConnectionsFromGroups}. */
+export const fetchConnectionsViaApiGroups: ConnectionsFetcher = async (options) =>
+  fetchConnectionsFromGroups(await getDatasourcePluginMetas(), options);
+
 export class MTDataSource implements DataSourceCacheSource {
   readonly kind = 'mt';
   // The list of the latest list fetch, kept to find the API group and version of a uid. Only the
@@ -48,6 +64,13 @@ export class MTDataSource implements DataSourceCacheSource {
   private readonly listKey = `grafana-runtime:ds-cache-mt-list:${++instanceCount}`;
   private listGeneration = 0;
   private latestList?: Promise<ListFetchResult>;
+
+  /**
+   * @param fetchConnections how to list the data sources. Defaults to the connections endpoint; pass
+   * {@link fetchConnectionsViaApiGroups} to read the API groups instead, which is the only way to
+   * see a data source that lives only in unified storage.
+   */
+  constructor(private readonly fetchConnections: ConnectionsFetcher = fetchViaConnections) {}
 
   getInitialSnapshot(): undefined {
     return undefined;
@@ -127,7 +150,7 @@ export class MTDataSource implements DataSourceCacheSource {
   private async fetchList(generation: number): Promise<ListFetchResult> {
     const isCurrent = () => generation === this.listGeneration;
     try {
-      const list = await fetchConnections({ requestId: this.listKey, isCurrent });
+      const list = await this.fetchConnections({ requestId: this.listKey, isCurrent });
       if (!list) {
         return { status: 'superseded' };
       }

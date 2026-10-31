@@ -38,3 +38,10 @@ export interface DataSourceResource {
     jsonData?: Record<string, unknown>;
   };
 }
+
+/** A page of `GET apis/{group}/{version}/namespaces/{ns}/datasources`. */
+export interface DataSourceResourceList {
+  items?: DataSourceResource[];
+  /** `continue` is set when more pages follow. */
+  metadata?: { continue?: string };
+}

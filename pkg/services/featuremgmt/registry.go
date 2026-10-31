@@ -2715,6 +2715,15 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name: "datasources.listFromApiGroups",
+			Description: "Fill the frontend data source cache from the per-plugin API groups instead of the " +
+				"connections endpoint, which is backed by the legacy datasource service",
+			Stage:      FeatureStageExperimental,
+			Generate:   Generate{React: true},
+			Owner:      grafanaDatasourcesCoreServicesSquad,
+			Expression: "false",
+		},
+		{
 			Name:        "reporting.anyPageReporting",
 			Description: "Enables reporting for any page in Grafana",
 			Stage:       FeatureStageExperimental,

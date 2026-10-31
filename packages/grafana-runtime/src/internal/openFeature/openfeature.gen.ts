@@ -136,6 +136,8 @@ export const FlagKeys = {
   DatasourcesGatewayAuditPolicy: "datasources.gatewayAuditPolicy",
   /** Data source query gateway guardrails */
   DatasourcesGatewayGuardrails: "datasources.gatewayGuardrails",
+  /** Fill the frontend data source cache from the per-plugin API groups instead of the connections endpoint, which is backed by the legacy datasource service */
+  DatasourcesListFromApiGroups: "datasources.listFromApiGroups",
   /** Data source query service, use the new name */
   DatasourcesQuerierNewName: "datasources.querier.newName",
   /** Data source query gateway */
@@ -1075,6 +1077,17 @@ export const useFlagDatasourcesGatewayAuditPolicy = (options?: ReactFlagEvaluati
  */
 export const useFlagDatasourcesGatewayGuardrails = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("datasources.gatewayGuardrails", false, options).value;
+};
+
+/**
+ * Fill the frontend data source cache from the per-plugin API groups instead of the connections endpoint, which is backed by the legacy datasource service
+ *
+ * **Details:**
+ * - flag key: `datasources.listFromApiGroups`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesListFromApiGroups = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.listFromApiGroups", false, options).value;
 };
 
 /**
