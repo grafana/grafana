@@ -550,10 +550,6 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 	}
 	var dash *unstructured.Unstructured
 	if isCreate {
-		// Seed default RBAC permissions for the creator. The apistore strips
-		// this annotation before persisting and invokes its
-		// DefaultPermissionSetter hook after the resource is created.
-		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
 		dash, err = client.Create(ctx, obj, metav1.CreateOptions{FieldValidation: validation})
 	} else {
 		dash, err = client.Update(ctx, obj, metav1.UpdateOptions{FieldValidation: validation})
