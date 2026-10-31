@@ -12,7 +12,6 @@ import (
 	_ "github.com/google/go-github/v82/github"
 	_ "github.com/grafana/authlib/authz/proto/v1"
 	_ "github.com/grafana/dataplane/examples"
-	_ "github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	_ "github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
 	_ "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	_ "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
