@@ -90,6 +90,7 @@ export const CodeEditor = memo(function CodeEditor({
   value,
   language,
   sqlDialect,
+  htmlAutocompleteEventHandlers,
   height = '200px',
   onChange,
   onBlur,
@@ -107,7 +108,10 @@ export const CodeEditor = memo(function CodeEditor({
   lineWrapping = false,
 }: CodeMirrorEditorProps) {
   const theme = useTheme2();
-  const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language, sqlDialect);
+  const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language, {
+    sqlDialect,
+    htmlAutocompleteEventHandlers,
+  });
   const editorTheme = useMemo(() => createCodeEditorTheme(theme), [theme]);
 
   // A new identity on any of these reconfigures the whole editor — see useStableProps.
