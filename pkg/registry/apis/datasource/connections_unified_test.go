@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -167,3 +168,69 @@ func TestUnifiedConnections_ListConnections(t *testing.T) {
 }
 
 var _ accesscontrol.AccessControl = actest.FakeAccessControl{}
+
+func TestListStoredDataSources(t *testing.T) {
+	namespacer := func(int64) string { return "default" }
+
+	t.Run("converts the collection to the legacy model in one request", func(t *testing.T) {
+		client := resource.NewMockResourceClient(t)
+		raw, err := json.Marshal(map[string]any{
+			"metadata": map[string]any{
+				"name":      "prom-uid",
+				"namespace": "default",
+				"labels": map[string]string{
+					datasourceV0.LabelKeyGroup:         "prometheus",
+					"default":                          "true",
+					utils.LabelKeyDeprecatedInternalID: "12",
+				},
+			},
+			"spec": map[string]any{"title": "Prom", "url": "http://prom:9090", "access": "proxy"},
+		})
+		require.NoError(t, err)
+		client.EXPECT().List(mock.Anything, mock.Anything).
+			Return(listResponse(&resourcepb.ResourceWrapper{Value: raw}), nil).Once()
+
+		found, err := ListStoredDataSources(context.Background(), client, namespacer, "default")
+		require.NoError(t, err)
+		require.Len(t, found, 1)
+		require.Equal(t, "prom-uid", found[0].UID)
+		require.Equal(t, "Prom", found[0].Name)
+		require.Equal(t, "prometheus", found[0].Type)
+		require.Equal(t, "http://prom:9090", found[0].URL)
+		require.True(t, found[0].IsDefault)
+		require.Equal(t, int64(12), found[0].ID)
+	})
+
+	// A listing driven by the installed plugins cannot see this; the collection can.
+	t.Run("includes a data source whose plugin is no longer installed", func(t *testing.T) {
+		client := resource.NewMockResourceClient(t)
+		client.EXPECT().List(mock.Anything, mock.Anything).Return(listResponse(
+			&resourcepb.ResourceWrapper{Value: storedValueIn(t, "default", "gone-uid", "Gone", "uninstalled-plugin")},
+		), nil).Once()
+
+		found, err := ListStoredDataSources(context.Background(), client, namespacer, "default")
+		require.NoError(t, err)
+		require.Len(t, found, 1)
+		require.Equal(t, "uninstalled-plugin", found[0].Type)
+	})
+
+	t.Run("requires a namespace", func(t *testing.T) {
+		client := resource.NewMockResourceClient(t)
+		_, err := ListStoredDataSources(context.Background(), client, namespacer, "")
+		require.ErrorContains(t, err, "namespace")
+	})
+}
+
+func storedValueIn(t *testing.T, namespace, name, title, pluginLabel string) []byte {
+	t.Helper()
+	raw, err := json.Marshal(map[string]any{
+		"metadata": map[string]any{
+			"name":      name,
+			"namespace": namespace,
+			"labels":    map[string]string{datasourceV0.LabelKeyGroup: pluginLabel},
+		},
+		"spec": map[string]any{"title": title},
+	})
+	require.NoError(t, err)
+	return raw
+}
