@@ -16,7 +16,7 @@ import (
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	utilsOrig "github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -74,7 +74,7 @@ func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav
 	if err != nil {
 		return nil, err
 	}
-	owner, ok := utilsOrig.ParseOwnerFromName(name)
+	owner, ok := utils.ParseOwnerFromName(name)
 	if !ok {
 		return nil, preferences.PreferencesResourceInfo.NewNotFound(name)
 	}
@@ -82,13 +82,13 @@ func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav
 	// NOTE: the authorizer already checked if this request is allowed
 	found, _, err := s.sql.listPreferences(ctx, ns.Value, ns.OrgID, func(req *preferencesQuery) (bool, error) {
 		switch owner.Owner {
-		case utilsOrig.UserResourceOwner:
+		case utils.UserResourceOwner:
 			req.UserUID = owner.Identifier
 			return false, nil
-		case utilsOrig.TeamResourceOwner:
+		case utils.TeamResourceOwner:
 			req.TeamUID = owner.Identifier
 			return false, nil
-		case utilsOrig.NamespaceResourceOwner:
+		case utils.NamespaceResourceOwner:
 			req.Namespace = true
 			return false, nil
 		default:
@@ -116,7 +116,7 @@ func (s *preferenceStorage) save(ctx context.Context, obj runtime.Object) (runti
 		return nil, fmt.Errorf("expected preferences")
 	}
 
-	owner, ok := utilsOrig.ParseOwnerFromName(p.Name)
+	owner, ok := utils.ParseOwnerFromName(p.Name)
 	if !ok {
 		return nil, fmt.Errorf("invalid name")
 	}
@@ -149,10 +149,10 @@ func (s *preferenceStorage) save(ctx context.Context, obj runtime.Object) (runti
 	}
 
 	switch owner.Owner {
-	case utilsOrig.NamespaceResourceOwner:
+	case utils.NamespaceResourceOwner:
 		// the org ID is already set
 
-	case utilsOrig.UserResourceOwner:
+	case utils.UserResourceOwner:
 		if user.GetIdentifier() != owner.Identifier {
 			return nil, fmt.Errorf("only the user can save preferences")
 		}
@@ -160,7 +160,7 @@ func (s *preferenceStorage) save(ctx context.Context, obj runtime.Object) (runti
 		if err != nil {
 			return nil, err
 		}
-	case utilsOrig.TeamResourceOwner:
+	case utils.TeamResourceOwner:
 		cmd.TeamID, err = s.sql.getLegacyTeamID(ctx, user.GetOrgID(), owner.Identifier)
 		if err != nil {
 			return nil, err
@@ -231,7 +231,7 @@ func (s *preferenceStorage) Delete(ctx context.Context, name string, deleteValid
 		return nil, false, err
 	}
 
-	owner, ok := utilsOrig.ParseOwnerFromName(name)
+	owner, ok := utils.ParseOwnerFromName(name)
 	if !ok {
 		return nil, false, fmt.Errorf("invalid name")
 	}
@@ -239,19 +239,19 @@ func (s *preferenceStorage) Delete(ctx context.Context, name string, deleteValid
 	cmd := &pref.DeleteCommand{}
 
 	switch owner.Owner {
-	case utilsOrig.TeamResourceOwner:
+	case utils.TeamResourceOwner:
 		cmd.TeamID, err = user.GetInternalID()
 		if err != nil {
 			return nil, false, err
 		}
 
-	case utilsOrig.UserResourceOwner:
+	case utils.UserResourceOwner:
 		cmd.UserID, err = user.GetInternalID()
 		if err != nil {
 			return nil, false, err
 		}
 
-	case utilsOrig.NamespaceResourceOwner:
+	case utils.NamespaceResourceOwner:
 		cmd.OrgID = user.GetOrgID()
 
 	default:
@@ -263,15 +263,15 @@ func (s *preferenceStorage) Delete(ctx context.Context, name string, deleteValid
 }
 
 func asPreferencesResource(ns string, p *preferenceModel) preferences.Preferences {
-	owner := utilsOrig.OwnerReference{}
+	owner := utils.OwnerReference{}
 	if p.TeamUID.Valid {
-		owner.Owner = utilsOrig.TeamResourceOwner
+		owner.Owner = utils.TeamResourceOwner
 		owner.Identifier = p.TeamUID.String
 	} else if p.UserUID.Valid {
-		owner.Owner = utilsOrig.UserResourceOwner
+		owner.Owner = utils.UserResourceOwner
 		owner.Identifier = p.UserUID.String
 	} else {
-		owner.Owner = utilsOrig.NamespaceResourceOwner
+		owner.Owner = utils.NamespaceResourceOwner
 		owner.Identifier = ""
 	}
 	obj := preferences.Preferences{
@@ -291,7 +291,7 @@ func asPreferencesResource(ns string, p *preferenceModel) preferences.Preference
 
 	if !p.Created.Equal(p.Updated) {
 		obj.Annotations = map[string]string{
-			utilsOrig.AnnoKeyUpdatedTimestamp: p.Updated.UTC().Format(time.RFC3339),
+			utils.AnnoKeyUpdatedTimestamp: p.Updated.UTC().Format(time.RFC3339),
 		}
 	}
 
