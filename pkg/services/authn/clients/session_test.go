@@ -68,6 +68,16 @@ func TestSession_Authenticate(t *testing.T) {
 		RotatedAt:     time.Now().Unix(),
 	}
 
+	externalSessionToken := &usertoken.UserToken{
+		Id:                2,
+		UserId:            1,
+		AuthToken:         "hashyToken",
+		PrevAuthToken:     "prevHashyToken",
+		AuthTokenSeen:     true,
+		RotatedAt:         time.Now().Unix(),
+		ExternalSessionId: 42,
+	}
+
 	type fields struct {
 		authInfoService login.AuthInfoService
 		sessionService  auth.UserTokenService
@@ -162,6 +172,60 @@ func TestSession_Authenticate(t *testing.T) {
 				AuthID:          "1",
 				AuthenticatedBy: "oauth_azuread",
 				SessionToken:    validToken,
+
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchSyncedUser: true,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should use the auth info of the external session when the latest auth info is jwt",
+			fields: fields{
+				sessionService: &authtest.FakeUserAuthTokenService{
+					LookupTokenProvider: func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+						return externalSessionToken, nil
+					},
+					GetExternalSessionProvider: func(ctx context.Context, externalSessionID int64) (*auth.ExternalSession, error) {
+						return &auth.ExternalSession{ID: externalSessionID, AuthModule: login.GenericOAuthModule}, nil
+					},
+				},
+				authInfoService: &authinfotest.FakeService{GetAuthInfoFn: func(ctx context.Context, query *login.GetAuthInfoQuery) (*login.UserAuth, error) {
+					if query.AuthModule == login.GenericOAuthModule {
+						return &login.UserAuth{AuthId: "oauth-sub", AuthModule: login.GenericOAuthModule}, nil
+					}
+					return &login.UserAuth{AuthId: "jwt-sub", AuthModule: login.JWTModule}, nil
+				}},
+			},
+			args: args{r: &authn.Request{HTTPRequest: validHTTPReq}},
+			wantID: &authn.Identity{
+				ID:              "1",
+				Type:            claims.TypeUser,
+				AuthID:          "oauth-sub",
+				AuthenticatedBy: login.GenericOAuthModule,
+				SessionToken:    externalSessionToken,
+
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchSyncedUser: true,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should not set authID and authenticated by when the latest auth info is jwt and the session is not external",
+			fields: fields{
+				sessionService: &authtest.FakeUserAuthTokenService{LookupTokenProvider: func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+					return validToken, nil
+				}},
+				authInfoService: &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{AuthId: "jwt-sub", AuthModule: login.JWTModule}},
+			},
+			args: args{r: &authn.Request{HTTPRequest: validHTTPReq}},
+			wantID: &authn.Identity{
+				ID:           "1",
+				Type:         claims.TypeUser,
+				SessionToken: validToken,
 
 				ClientParams: authn.ClientParams{
 					SyncPermissions: true,
