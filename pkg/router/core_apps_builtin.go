@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"k8s.io/client-go/rest"
+
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
@@ -43,12 +45,14 @@ func builtinCoreApps(cfg *setting.Cfg, pluginAuth *pluginauth.Config) ([]CoreApp
 		return nil, fmt.Errorf("%s needs Grafana to sign plugin tokens itself, and a local API URL to reach", featuremgmt.FlagGrafanaRoutePreferencesAndCollections)
 	}
 
-	collections, err := newCoreApp(collectionsPluginID, collectionsmanifest.LocalManifest().ManifestData, pluginAuth,
+	// Stars write through Grafana's API as the caller. Preferences only validate
+	// what is written to them, and are asked for no other object.
+	collections, err := newCoreApp(collectionsPluginID, collectionsmanifest.LocalManifest().ManifestData, pluginAuth, true,
 		func(c app.Config) (app.App, error) { return collectionsapp.New(c) }, nil)
 	if err != nil {
 		return nil, err
 	}
-	preferences, err := newCoreApp(preferencesPluginID, preferencesmanifest.LocalManifest().ManifestData, pluginAuth,
+	preferences, err := newCoreApp(preferencesPluginID, preferencesmanifest.LocalManifest().ManifestData, pluginAuth, false,
 		func(c app.Config) (app.App, error) { return preferencesapp.New(c) },
 		&preferencesapp.Config{
 			Defaults:          prefsapi.DefaultSpec(cfg),
@@ -77,24 +81,30 @@ func routerManifest(generated *app.ManifestData) (*app.ManifestData, error) {
 	return manifest, nil
 }
 
-func newCoreApp(pluginID string, generated *app.ManifestData, pluginAuth *pluginauth.Config, newApp func(app.Config) (app.App, error), specific any) (CoreApp, error) {
+// newCoreApp builds an app and the in-process client that serves it. An app
+// that callsAPI gets credentials to call Grafana's API as the caller.
+func newCoreApp(pluginID string, generated *app.ManifestData, pluginAuth *pluginauth.Config, callsAPI bool, newApp func(app.Config) (app.App, error), specific any) (CoreApp, error) {
 	manifest, err := routerManifest(generated)
 	if err != nil {
 		return CoreApp{}, fmt.Errorf("%s: %w", pluginID, err)
 	}
-	token, err := v3.IssueLocalAccessPolicyToken(pluginID, manifest)
-	if err != nil {
-		return CoreApp{}, err
+	var kubeConfig rest.Config
+	if callsAPI {
+		token, err := v3.IssueLocalAccessPolicyToken(pluginID, manifest)
+		if err != nil {
+			return CoreApp{}, err
+		}
+		apiURL := pluginAuth.LocalAPIURL()
+		config, err := k8s.NewTokenExchangeRestConfig(
+			k8s.TokenExchangeCredentials{Token: token, TokenExchangeURL: apiURL + pluginauth.TokenExchangePath},
+			k8s.RemoteServiceTarget{Host: apiURL, Audiences: plugin.TokenExchangeAudiences(*manifest)},
+		)
+		if err != nil {
+			return CoreApp{}, fmt.Errorf("%s: %w", pluginID, err)
+		}
+		kubeConfig = *config
 	}
-	apiURL := pluginAuth.LocalAPIURL()
-	kubeConfig, err := k8s.NewTokenExchangeRestConfig(
-		k8s.TokenExchangeCredentials{Token: token, TokenExchangeURL: apiURL + pluginauth.TokenExchangePath},
-		k8s.RemoteServiceTarget{Host: apiURL, Audiences: plugin.TokenExchangeAudiences(*manifest)},
-	)
-	if err != nil {
-		return CoreApp{}, fmt.Errorf("%s: %w", pluginID, err)
-	}
-	a, err := newApp(app.Config{KubeConfig: *kubeConfig, ManifestData: *manifest, SpecificConfig: specific})
+	a, err := newApp(app.Config{KubeConfig: kubeConfig, ManifestData: *manifest, SpecificConfig: specific})
 	if err != nil {
 		return CoreApp{}, fmt.Errorf("%s: %w", pluginID, err)
 	}

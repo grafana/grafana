@@ -199,7 +199,7 @@ func (b *manifestBuilder) AllowedV0Alpha1Resources() []string {
 // reads (the getter) keep using the unwrapped store.
 func (b *manifestBuilder) withListScope(resource string, store *kindstore.Store) rest.Storage {
 	policy := b.kindPolicies[resource]
-	if policy.listScope == listOwned && policy.ownerFromName != nil {
+	if policy.ownerFromName != nil {
 		return newOwnedStore(store, policy.ownerFromName, hardcodedVirtualGetter(b.group, resource, b.opts.Cfg))
 	}
 	return store

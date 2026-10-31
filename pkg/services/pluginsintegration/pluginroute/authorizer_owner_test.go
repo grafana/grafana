@@ -77,23 +77,22 @@ func TestOwnerFromNameOwnedNames(t *testing.T) {
 	user := &identity.StaticRequester{UserUID: "abc", Groups: []string{"t2", "t1"}}
 
 	t.Run("stars are only the user's own", func(t *testing.T) {
-		o, _, scope := hardcodedKindAuth("collections.grafana.app", "stars")
-		require.Equal(t, listOwned, scope)
+		o, _ := hardcodedKindAuth("collections.grafana.app", "stars")
 		require.Equal(t, []string{"user-abc"}, o.ownedNames(user))
 	})
 
 	t.Run("preferences are user, sorted teams, then namespace", func(t *testing.T) {
-		o, _, _ := hardcodedKindAuth("preferences.grafana.app", "preferences")
+		o, _ := hardcodedKindAuth("preferences.grafana.app", "preferences")
 		require.Equal(t, []string{"user-abc", "team-t1", "team-t2", "namespace"}, o.ownedNames(user))
 	})
 
 	t.Run("only preferences limit other identities to the namespace", func(t *testing.T) {
-		o, _, _ := hardcodedKindAuth("preferences.grafana.app", "preferences")
+		o, _ := hardcodedKindAuth("preferences.grafana.app", "preferences")
 		names, scoped := o.nonUserNames()
 		require.True(t, scoped)
 		require.Equal(t, []string{"namespace"}, names)
 
-		o, _, _ = hardcodedKindAuth("collections.grafana.app", "stars")
+		o, _ = hardcodedKindAuth("collections.grafana.app", "stars")
 		_, scoped = o.nonUserNames()
 		require.False(t, scoped)
 	})
@@ -103,21 +102,20 @@ func TestOwnerFromNameOwnedNames(t *testing.T) {
 		for i := range maxOwnedTeams + 10 {
 			many.Groups = append(many.Groups, fmt.Sprintf("t%03d", i))
 		}
-		o, _, _ := hardcodedKindAuth("preferences.grafana.app", "preferences")
+		o, _ := hardcodedKindAuth("preferences.grafana.app", "preferences")
 		require.Len(t, o.ownedNames(many), maxOwnedTeams+2)
 	})
 
 	t.Run("other kinds are not scoped", func(t *testing.T) {
-		o, _, scope := hardcodedKindAuth("other.ext.grafana.app", "things")
+		o, _ := hardcodedKindAuth("other.ext.grafana.app", "things")
 		require.Nil(t, o)
-		require.Equal(t, listAll, scope)
 	})
 }
 
 // A kind authorized by name is decided by the caller's name, except for an
 // access policy, which is held to the permissions in its token.
 func TestGetAuthorizerOwnerFromName(t *testing.T) {
-	owner, _, _ := hardcodedKindAuth("collections.grafana.app", "stars")
+	owner, _ := hardcodedKindAuth("collections.grafana.app", "stars")
 	b := &manifestBuilder{
 		pluginID:      "test-app",
 		kindPolicies:  map[string]kindPolicy{"stars": {ownerFromName: owner}},

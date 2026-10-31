@@ -10,9 +10,6 @@ import (
 	"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 )
 
-// StarsConfig is the app's own configuration; it has none.
-type StarsConfig struct{}
-
 // New builds the collections app. Its kube client is made the way an external
 // app's is, so the update route acts as the caller through the request context.
 func New(cfg app.Config) (app.App, error) {

@@ -43,7 +43,7 @@ func newTestOwnedStore(t *testing.T, kind string, stored ...string) (*ownedStore
 	if kind == "stars" {
 		group, resource = "collections.grafana.app", "stars"
 	}
-	owned, _, _ := hardcodedKindAuth(group, resource)
+	owned, _ := hardcodedKindAuth(group, resource)
 	require.NotNil(t, owned)
 
 	has := map[string]bool{}

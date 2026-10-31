@@ -16,13 +16,13 @@ import (
 // hardcodedKindAuth is where a kind declares that its name decides access.
 // TODO: this declaration moves to the app manifest, and only ownerFromName
 // and the policy fields stay here.
-func hardcodedKindAuth(group, resource string) (o *ownerFromName, processMissing bool, scope listScope) {
+func hardcodedKindAuth(group, resource string) (o *ownerFromName, processMissing bool) {
 	switch {
 	case group == "collections.grafana.app" && resource == "stars":
 		return &ownerFromName{
 			allowOrgAdmin: true,
 			owners:        []utils.ResourceOwner{utils.UserResourceOwner},
-		}, true, listOwned
+		}, true
 	case group == "preferences.grafana.app" && resource == "preferences":
 		return &ownerFromName{
 			names: []string{"merged"},
@@ -32,9 +32,9 @@ func hardcodedKindAuth(group, resource string) (o *ownerFromName, processMissing
 				utils.TeamResourceOwner,
 			},
 			nonUserNamespaceOnly: true,
-		}, true, listOwned
+		}, true
 	}
-	return nil, false, listAll
+	return nil, false
 }
 
 // hardcodedVirtualGetter answers the fixed names of a kind authorized by name,

@@ -40,23 +40,10 @@ type kindPolicy struct {
 	// request is dispatched to one.
 	customRoutes map[string]bool
 
-	// listScope narrows what a user lists; see ownerFromName.ownedNames.
-	listScope listScope
-
 	// processMissing sends a custom route to the plugin even when the parent
 	// object does not exist, so the plugin can answer for the name alone.
 	processMissing bool
 }
-
-type listScope int
-
-const (
-	// listAll leaves list and watch to storage.
-	listAll listScope = iota
-	// listOwned gives a user only the objects named for them, since the names
-	// carry the access control and storage would otherwise return every one.
-	listOwned
-)
 
 // kindPolicies indexes a manifest's kinds by the resource name they are served
 // under. Scope and readability must match across a kind's versions, so the
@@ -85,7 +72,7 @@ func kindPolicies(manifest *app.ManifestData) map[string]kindPolicy {
 			}
 
 			if !seen {
-				policy.ownerFromName, policy.processMissing, policy.listScope = hardcodedKindAuth(manifest.Group, resource)
+				policy.ownerFromName, policy.processMissing = hardcodedKindAuth(manifest.Group, resource)
 			}
 
 			policies[resource] = policy
