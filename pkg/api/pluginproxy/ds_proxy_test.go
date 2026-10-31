@@ -1128,6 +1128,11 @@ func TestDataSourceProxy_LokiRouteAccessControl(t *testing.T) {
 			wantErr:     errPluginProxyRouteAccessDenied,
 		},
 		{
+			name:   "allows POST to Loki read-only query endpoint",
+			method: http.MethodPost,
+			path:   "api/v1/query",
+		},
+		{
 			name:        "denies non allow-listed Loki writes",
 			method:      http.MethodPost,
 			path:        "api/v1/unmatched",
