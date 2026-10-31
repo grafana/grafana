@@ -5,14 +5,16 @@ import { appEvents } from 'app/core/app_events';
 import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { endBatch, startBatch } from '../actions/utils/batch';
+import { removePanels } from '../actions/layout/removePanels';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { getGroupSelectedCategory } from '../scene/layouts-shared/GroupSelectedActions';
 import { type BulkActionElement } from '../scene/types/BulkActionElement';
 import {
+  type EditActionSource,
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../scene/types/EditableDashboardElement';
+import { getRenderedInstanceCount } from '../utils/clone';
 
 export class MultiSelectedVizPanelsEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
@@ -26,7 +28,17 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
-    return { typeName: t('dashboard.sidebar.elements.panels', 'Panels'), icon: 'folder', instanceName: '' };
+    const count = this.getPanels().reduce((total, panel) => total + getRenderedInstanceCount(panel), 0);
+
+    return {
+      typeName: t('dashboard.sidebar.elements.selected-panels', '', {
+        count,
+        defaultValue_one: '{{count}} panel',
+        defaultValue_other: '{{count}} panels',
+      }),
+      icon: 'folder',
+      instanceName: '',
+    };
   }
 
   public useSidebarOptions(): OptionsPaneCategoryDescriptor[] {
@@ -52,24 +64,7 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
     );
   }
 
-  public onDelete() {
-    const panels = this.getPanels();
-
-    startBatch(
-      this._dashboard,
-      t('dashboard.edit-actions.remove-multiple', 'Remove {{typeName}} ({{num}})', {
-        num: panels.length,
-        typeName: this.getEditableElementInfo().typeName.toLowerCase(),
-      }),
-      { actionId: 'panel.remove', scope: 'multiple' }
-    );
-
-    try {
-      this._panels.forEach((panel) => {
-        panel.onDelete();
-      });
-    } finally {
-      endBatch(this._dashboard);
-    }
+  public onDelete(source: EditActionSource = 'edit_pane') {
+    removePanels(this._dashboard, this.getPanels(), source);
   }
 }

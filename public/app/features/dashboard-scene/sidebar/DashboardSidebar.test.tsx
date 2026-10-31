@@ -43,6 +43,7 @@ import { MAX_UNDO_ACTIONS } from './DashboardSidebar';
 import { ElementEditPane } from './ElementEditPane';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
+import { VizPanelEditableElement } from './VizPanelEditableElement';
 import { AddNewPane } from './add-new/AddNewPane';
 import { DashboardCrossDashboardVariablesPane } from './dashboard/DashboardCrossDashboardVariablesPane';
 import { DashboardStateChangedEvent } from './events';
@@ -886,20 +887,56 @@ describe('DashboardSidebar', () => {
       ]);
     });
 
-    it.each([
-      {
-        selection: 'mixed objects',
-        actionId: 'selection.remove',
-        create: (elements: BulkActionElement[], dashboard: DashboardScene) =>
-          new MultiSelectedObjectsEditableElement(elements, dashboard),
-      },
-      {
-        selection: 'panels',
-        actionId: 'panel.remove',
-        create: (elements: BulkActionElement[], dashboard: DashboardScene) =>
-          new MultiSelectedVizPanelsEditableElement(elements, dashboard),
-      },
-    ])('ends a multi-$selection delete batch when an element deletion throws', ({ actionId, create }) => {
+    it('ends a multi-panel delete batch when a panel deletion throws', () => {
+      const panels = [1, 2].map((id) => new VizPanel({ key: `panel-${id}`, pluginId: 'text' }));
+      const layout = new AutoGridLayoutManager({
+        layout: new AutoGridLayout({ children: panels.map((panel) => new AutoGridItem({ body: panel })) }),
+      });
+      const dashboard = new DashboardScene({ body: layout, isEditing: true });
+      setTestFlags({ dashboardNewLayouts: true });
+      const deactivate = activateFullSceneTree(dashboard);
+      const sidebar = dashboard.state.sidebar;
+      const selection = new MultiSelectedVizPanelsEditableElement(
+        panels.map((panel) => new VizPanelEditableElement(panel)),
+        dashboard
+      );
+      const removePanel = layout.removePanel.bind(layout);
+      const removePanelSpy = jest.spyOn(layout, 'removePanel').mockImplementation((panel) => {
+        if (panel === panels[1]) {
+          throw new Error('delete failed');
+        }
+        removePanel(panel);
+      });
+
+      try {
+        expect(() => selection.onDelete()).toThrow('delete failed');
+        expect(sidebar.state.undoStack.map((action) => action.meta.actionId)).toEqual(['panel.remove']);
+        expect(layout.getVizPanels()).toEqual([panels[1]]);
+
+        sidebar.undoAction();
+        expect(layout.getVizPanels()).toEqual(panels);
+
+        sidebar.redoAction();
+        expect(layout.getVizPanels()).toEqual([panels[1]]);
+
+        edit({
+          source: dashboard,
+          meta: { actionId: 'test.after-failure' },
+          perform: jest.fn(),
+          undo: jest.fn(),
+        });
+        expect(sidebar.state.undoStack.map((action) => action.meta.actionId)).toEqual([
+          'panel.remove',
+          'test.after-failure',
+        ]);
+      } finally {
+        removePanelSpy.mockRestore();
+        deactivate();
+      }
+    });
+
+    it('ends a mixed-object delete batch when an element deletion throws', () => {
+      const actionId = 'selection.remove';
       const dashboard = buildTestScene();
       const sidebar = dashboard.state.sidebar;
       let deleted = false;
@@ -919,7 +956,9 @@ describe('DashboardSidebar', () => {
         throw new Error('delete failed');
       });
 
-      expect(() => create([successfulElement, failingElement], dashboard).onDelete()).toThrow('delete failed');
+      expect(() =>
+        new MultiSelectedObjectsEditableElement([successfulElement, failingElement], dashboard).onDelete()
+      ).toThrow('delete failed');
       expect(sidebar.state.undoStack.map((action) => action.meta.actionId)).toEqual([actionId]);
       expect(deleted).toBe(true);
 

@@ -238,8 +238,9 @@ To edit a dashboard, follow these steps:
    | Edit dashboard settings | Click the **Dashboard options** icon to access dashboard settings in the sidebar. |
    | Add more panels        | <p>Click the **Add new element** icon and select **Panel**.</p><p>You can also hover your cursor on the dashboard to display the **Add panel** button. This is helpful if you want to ensure that you add a new panel within a grouping.</p>   |
    | Add dashboard controls | Click **Add new element** and select one of the following: <ul><li>[Filter and Group by](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-filters-and-group-by-controls)</li><li>[Variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables)</li><li>[Annotation query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-annotation-queries)</li><li>[Link](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-links)</li></ul> |
-   | Group panels           | <p>Click the **Add new element** icon and select **Add row/Group into rows** or **Add tab/Group into tabs**.</p><p>Alternatively hover your cursor on the dashboard to display the **Group panels** button and select a grouping option or select a specific set of panels and group them into rows or tabs.</p><p>For more information on groupings, refer to [Panel groupings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/).</p>   |
-   | Edit panels | <p>Hover your cursor over any part of a panel to display the actions tooltip, which has the following options: **Settings**, **Edit visualization**, **Copy**, **Duplicate**, **Delete**.</p><p>Click **Settings** to access high-level panel options in the sidebar, or **Edit visualization** to open the panel editor.</p>  |
+   | Group panels           | <p>Click the **Add new element** icon and select **Add row/Group into rows** or **Add tab/Group into tabs**.</p><p>Alternatively hover your cursor on the dashboard to display the **Group panels** button and select a grouping option, or select a specific set of panels and group them into rows or tabs from the sidebar or the actions tooltip.</p><p>For more information on groupings, refer to [Panel groupings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/).</p>   |
+   | Edit panels | <p>Hover your cursor over any part of a panel to display the actions tooltip, which has the following options: **Settings**, **Edit visualization**, **Copy**, **Duplicate**, **Delete**.</p><p>Click **Settings** to access high-level panel options in the sidebar, or **Edit visualization** to open the panel editor.</p><p>If you've selected multiple panels, refer to [Edit multiple panels](#edit-multiple-panels).</p>  |
+   | Edit multiple panels | Hold `Shift` and click the panels you want to update, then hover your cursor over one of them to display the bulk actions tooltip. For more information, refer to [Edit multiple panels](#edit-multiple-panels). |
    | Edit dashboard controls | <p>Hover your cursor over any part of a dashboard control to display the actions tooltip, which has the following options: **Settings**, **Duplicate**, and **Delete**. Click **Settings** to access options in the sidebar. For some controls, the tooltip also includes an **Edit query** or **Edit values** option. |
    | Edit rows and tabs | Click a row or tab to access grouping settings in the sidebar. |
    | Change layouts         | Click a row, tab, or the **Dashboard options** icon to open the sidebar and access layout options. For more information, refer to [panel layout options](#panel-layouts).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
@@ -251,6 +252,34 @@ To edit a dashboard, follow these steps:
 1. Click **Exit edit**
 
 <!-- prettier-ignore-end -->
+
+### Edit multiple panels
+
+When you select more than one panel, you can group or delete them all at once, directly on the dashboard, without opening the sidebar.
+
+To edit multiple panels, follow these steps:
+
+1. Navigate to the dashboard you want to update.
+1. Click **Edit**.
+1. Hold `Shift` and click each panel you want to select.
+   A dotted blue line surrounds the selected panels.
+1. Hover your cursor over any of the selected panels to display the actions tooltip.
+   The tooltip shows how many panels are selected, for example **3 panels selected**, followed by these options:
+   - **Group into row**: Moves the selected panels into a new row.
+   - **Group into tab**: Moves the selected panels into a new tab.
+   - **Delete**: Deletes all the selected panels, after you confirm.
+
+1. Click **Group into row**, **Group into tab**, or **Delete**. If you choose **Delete**, confirm the deletion.
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
+
+If you hover over a panel that isn't part of your selection, the tooltip shows the usual single-panel options instead.
+
+When multiple panels are selected, the count includes their [repeated instances](#configure-repeat-options).
+Selecting only one panel that repeats still shows the single-panel actions.
+If a grouping option isn't available for your selection, for example because the selected panels are in different rows, the option is disabled; hover your cursor over it to see why.
 
 ## Panel layouts
 
@@ -491,7 +520,7 @@ To resize a panel, follow these steps:
 
 ## Copy, duplicate, or delete dashboard elements
 
-You can copy and paste, duplicate, or delete any dashboard elements using the sidebar:
+You can copy and paste, duplicate, or delete any dashboard elements using the sidebar. To delete several panels at once, you can also use the actions tooltip; refer to [Edit multiple panels](#edit-multiple-panels).
 
 To manage dashboard elements, follow these steps:
 
