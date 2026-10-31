@@ -25,6 +25,7 @@ jest.mock('@grafana/data', () => {
     get: jest.fn(),
     set: jest.fn(),
     delete: jest.fn(),
+    all: jest.fn().mockReturnValue({}),
   };
   return {
     ...jest.requireActual('@grafana/data'),
@@ -50,12 +51,208 @@ describe('userStorage', () => {
     store.get.mockReset();
     store.set.mockReset();
     store.delete.mockReset();
+    store.all.mockReset().mockReturnValue({});
     _clearStorageCache();
   });
 
   afterEach(() => {
     config.featureToggles = originalConfig.featureToggles;
     config.bootData = originalConfig.bootData;
+  });
+
+  describe('scoped plugin storage', () => {
+    const resource = (data: Record<string, string>, resourceVersion: string) =>
+      Promise.resolve({ status: 200, data: { metadata: { resourceVersion }, spec: { data } } } as FetchResponse);
+    const missing = () => Promise.reject({ status: 404 });
+    const options = { migrateKeyPrefixes: ['pages:'], removeEmptyKeyPrefixes: ['preview-', 'export-'] };
+
+    it('uses a separate service record and stable instance for a fixed scope', async () => {
+      const plugin = renderHook(() => usePluginUserStorage()).result.current;
+      const scoped = plugin.getScopedStorage('pages');
+      expect(plugin.getScopedStorage('pages')).toBe(scoped);
+      request.mockReturnValue(resource({ notes: 'scoped value' }, '1'));
+      await expect(scoped.getItem('notes')).resolves.toBe('scoped value');
+      expect(request).toHaveBeenCalledWith(
+        expect.objectContaining({ method: 'GET', url: expect.stringContaining('/user-storage/plugin-id.pages:abc') })
+      );
+    });
+
+    it('rejects changed migration options rather than silently skipping them', () => {
+      const plugin = new UserStorage('plugin-id');
+      plugin.getScopedStorage('pages');
+      expect(() => plugin.getScopedStorage('pages', options)).toThrow('options must stay the same');
+    });
+
+    it.each(['', 'pages:other-user', '../pages', 'Page', 'a'.repeat(65)])('rejects invalid scope %s', (scope) => {
+      expect(() => new UserStorage('plugin-id').getScopedStorage(scope)).toThrow('scope');
+      expect(request).not.toHaveBeenCalled();
+    });
+
+    it('rejects empty migration prefixes that would select unrelated preferences', () => {
+      expect(() => new UserStorage('plugin-id').getScopedStorage('pages', { migrateKeyPrefixes: [''] })).toThrow(
+        'prefixes'
+      );
+    });
+
+    it('copies Page keys before removing them and only prunes empty temporary keys in one patch', async () => {
+      const scoped = new UserStorage('plugin-id').getScopedStorage('pages', options);
+      const copied = { 'pages:notes': 'draft', 'pages:empty': '' };
+      request.mockImplementationOnce(() =>
+        resource(
+          { ...copied, preference: 'keep', 'preview-old': '', 'export-old': '', 'preview-active': 'dashboard JSON' },
+          '7'
+        )
+      );
+      request.mockImplementationOnce(missing);
+      request.mockImplementationOnce(() => resource(copied, '1'));
+      request.mockImplementationOnce(() => resource({ preference: 'keep', 'preview-active': 'dashboard JSON' }, '8'));
+      request.mockImplementationOnce(() => resource(copied, '1'));
+      await expect(scoped.getItem('pages:notes')).resolves.toBe('draft');
+      expect(request).toHaveBeenNthCalledWith(
+        3,
+        expect.objectContaining({
+          method: 'POST',
+          data: {
+            metadata: { name: 'plugin-id.pages:abc', labels: { user: 'abc', service: 'plugin-id.pages' } },
+            spec: { data: copied },
+          },
+        })
+      );
+      expect(request).toHaveBeenNthCalledWith(
+        4,
+        expect.objectContaining({
+          method: 'PATCH',
+          url: expect.stringContaining('/user-storage/plugin-id:abc'),
+          data: {
+            metadata: { resourceVersion: '7' },
+            spec: {
+              data: {
+                'pages:notes': null,
+                'pages:empty': null,
+                'preview-old': null,
+                'export-old': null,
+              },
+            },
+          },
+        })
+      );
+      expect(request).toHaveBeenCalledTimes(5);
+    });
+
+    it('does not delete the source or fall back locally when the destination write fails', async () => {
+      const scoped = new UserStorage('plugin-id').getScopedStorage('pages', options);
+      request.mockImplementationOnce(() => resource({ 'pages:notes': 'draft' }, '7'));
+      request.mockImplementationOnce(missing);
+      request.mockRejectedValueOnce({ status: 503 });
+      await expect(scoped.setItem('pages:notes', 'new draft')).rejects.toEqual({ status: 503 });
+      expect(request).toHaveBeenCalledTimes(3);
+      expect(getStoreMocks().set).not.toHaveBeenCalled();
+    });
+
+    it('retains differing legacy edits and never overwrites a newer scoped value', async () => {
+      const scoped = new UserStorage('plugin-id').getScopedStorage('pages', options);
+      request.mockImplementationOnce(() => resource({ 'pages:notes': 'legacy edit' }, '7'));
+      request.mockImplementationOnce(() => resource({ 'pages:notes': 'newer scoped edit' }, '2'));
+      await expect(scoped.getItem('pages:notes')).resolves.toBe('newer scoped edit');
+      expect(request).toHaveBeenCalledTimes(2);
+      expect(request.mock.calls.map(([call]) => call.method)).toEqual(['GET', 'GET']);
+    });
+
+    it('preserves a concurrent legacy edit when source cleanup conflicts', async () => {
+      const scoped = new UserStorage('plugin-id').getScopedStorage('pages', options);
+      request.mockImplementationOnce(() => resource({ 'pages:notes': 'original' }, '7'));
+      request.mockImplementationOnce(missing);
+      request.mockImplementationOnce(() => resource({ 'pages:notes': 'original' }, '1'));
+      request.mockRejectedValueOnce({ status: 409 });
+      request.mockImplementationOnce(() => resource({ 'pages:notes': 'concurrent edit' }, '8'));
+      request.mockImplementationOnce(() => resource({ 'pages:notes': 'original' }, '1'));
+      await expect(scoped.getItem('pages:notes')).resolves.toBe('original');
+      expect(request).toHaveBeenCalledTimes(6);
+      expect(request.mock.calls.filter(([call]) => call.method === 'PATCH')).toHaveLength(1);
+      expect(request).toHaveBeenNthCalledWith(
+        4,
+        expect.objectContaining({
+          data: {
+            metadata: { resourceVersion: '7' },
+            spec: { data: { 'pages:notes': null } },
+          },
+        })
+      );
+    });
+
+    it('merges missing keys into an existing destination with a resource-version precondition', async () => {
+      const scoped = new UserStorage('plugin-id').getScopedStorage('pages', options);
+      request.mockImplementationOnce(() => resource({ 'pages:notes': 'draft' }, '7'));
+      request.mockImplementationOnce(() => resource({ 'pages:other': 'keep' }, '2'));
+      request.mockImplementationOnce(() => resource({ 'pages:other': 'keep', 'pages:notes': 'draft' }, '3'));
+      request.mockImplementationOnce(() => resource({}, '8'));
+      request.mockImplementationOnce(() => resource({ 'pages:other': 'keep', 'pages:notes': 'draft' }, '3'));
+      await expect(scoped.getItem('pages:notes')).resolves.toBe('draft');
+      expect(request).toHaveBeenNthCalledWith(
+        3,
+        expect.objectContaining({
+          method: 'PATCH',
+          data: {
+            metadata: { resourceVersion: '2' },
+            spec: { data: { 'pages:notes': 'draft' } },
+          },
+        })
+      );
+    });
+
+    it('can resume after cleanup fails without copying a value twice', async () => {
+      const scoped = new UserStorage('plugin-id').getScopedStorage('pages', options);
+      request.mockImplementationOnce(() => resource({ 'pages:notes': 'draft' }, '7'));
+      request.mockImplementationOnce(missing);
+      request.mockImplementationOnce(() => resource({ 'pages:notes': 'draft' }, '1'));
+      request.mockRejectedValueOnce({ status: 503 });
+      await expect(scoped.getItem('pages:notes')).rejects.toEqual({ status: 503 });
+      request.mockImplementationOnce(() => resource({ 'pages:notes': 'draft' }, '7'));
+      request.mockImplementationOnce(() => resource({ 'pages:notes': 'draft' }, '1'));
+      request.mockImplementationOnce(() => resource({}, '8'));
+      await expect(scoped.getItem('pages:notes')).resolves.toBe('draft');
+      expect(request).toHaveBeenCalledTimes(7);
+      expect(request.mock.calls.filter(([call]) => call.method === 'POST')).toHaveLength(1);
+    });
+
+    it('moves signed-out browser values without deleting unrelated or conflicting data', async () => {
+      config.bootData.user.isSignedIn = false;
+      const local = getStoreMocks();
+      local.all.mockReturnValue({
+        'pages:notes': 'draft',
+        'pages:conflict': 'old draft',
+        preference: 'keep',
+        'preview-old': '',
+      });
+      local.get.mockImplementation((key: string) => (key.endsWith(':pages:conflict') ? 'new draft' : undefined));
+      const scoped = new UserStorage('plugin-id').getScopedStorage('pages', options);
+      await scoped.getItem('pages:notes');
+      expect(local.set).toHaveBeenCalledWith('plugin-id.pages:abc:pages:notes', 'draft');
+      expect(local.delete.mock.calls).toEqual([['plugin-id:abc:pages:notes'], ['plugin-id:abc:preview-old']]);
+      expect(request).not.toHaveBeenCalled();
+    });
+
+    it('preserves signed-in browser fallback values when there is no legacy server record', async () => {
+      const local = getStoreMocks();
+      local.all.mockReturnValue({ 'pages:notes': 'offline draft' });
+      request.mockImplementation(missing);
+      const scoped = new UserStorage('plugin-id').getScopedStorage('pages', options);
+      await scoped.getItem('pages:notes');
+      expect(local.set).toHaveBeenCalledWith('plugin-id.pages:abc:pages:notes', 'offline draft');
+      expect(local.delete).toHaveBeenCalledWith('plugin-id:abc:pages:notes');
+    });
+
+    it('retries a target create race without overwriting the other writer', async () => {
+      const scoped = new UserStorage('plugin-id').getScopedStorage('pages', options);
+      request.mockImplementationOnce(() => resource({ 'pages:notes': 'old' }, '7'));
+      request.mockImplementationOnce(missing);
+      request.mockRejectedValueOnce({ status: 409 });
+      request.mockImplementationOnce(() => resource({ 'pages:notes': 'old' }, '7'));
+      request.mockImplementationOnce(() => resource({ 'pages:notes': 'other tab' }, '1'));
+      await expect(scoped.getItem('pages:notes')).resolves.toBe('other tab');
+      expect(request).toHaveBeenCalledTimes(5);
+      expect(request.mock.calls.filter(([call]) => call.method === 'PATCH')).toHaveLength(0);
+    });
   });
 
   describe('UserStorageAPI.getItem', () => {

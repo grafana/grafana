@@ -61,6 +61,13 @@ async function apiRequest<T>(requestOptions: RequestOptions) {
   }
 }
 
+export interface ScopedUserStorageOptions {
+  /** Move matching keys from the plugin's default record, keeping existing scoped values. */
+  migrateKeyPrefixes?: readonly string[];
+  /** Remove only empty legacy keys matching these prefixes, in the same conditional write. */
+  removeEmptyKeyPrefixes?: readonly string[];
+}
+
 /**
  * A class for interacting with the backend user storage.
  * Exposed internally only to avoid misuse (wrong service name).
@@ -69,11 +76,164 @@ async function apiRequest<T>(requestOptions: RequestOptions) {
  * localStorage when a request fails, so a plugin keeps working. `updateItem` rejects instead: its callers
  * merge against the stored copy, and a merge over a copy the server never saw is worse than no write.
  */
+
 export class UserStorage implements UserStorageType {
   private service: string;
   private resourceName: string;
   private userUID: string;
   private canUseUserStorage: boolean;
+  private scopes = new Map<string, { storage: UserStorage; options: string }>();
+  private migration?: { source: UserStorage; options: ScopedUserStorageOptions };
+
+  /**
+   * Use a fixed feature name, never a page, user or other unbounded identifier:
+   * the service name is also a storage metric label. Identity remains the current user.
+   * Migration rejects on failure rather than treating browser fallback as a confirmed copy.
+   */
+  getScopedStorage(scope: string, options: ScopedUserStorageOptions = {}): UserStorageType {
+    if (!/^[a-z][a-z0-9-]{0,63}$/.test(scope)) {
+      throw new Error('User storage scope must be 1–64 lowercase letters, digits or hyphens, starting with a letter');
+    }
+    if ([...(options.migrateKeyPrefixes ?? []), ...(options.removeEmptyKeyPrefixes ?? [])].some((prefix) => !prefix)) {
+      throw new Error('User storage migration prefixes must not be empty');
+    }
+    const optionKey = JSON.stringify({
+      migrateKeyPrefixes: options.migrateKeyPrefixes ?? [],
+      removeEmptyKeyPrefixes: options.removeEmptyKeyPrefixes ?? [],
+    });
+    const previous = this.scopes.get(scope);
+    if (previous) {
+      if (previous.options !== optionKey) {
+        throw new Error('User storage migration options must stay the same for a scope');
+      }
+      return previous.storage;
+    }
+    const scoped = new UserStorage(`${this.service}.${scope}`);
+    if (options.migrateKeyPrefixes?.length || options.removeEmptyKeyPrefixes?.length) {
+      scoped.migration = {
+        source: this,
+        options: {
+          migrateKeyPrefixes: [...(options.migrateKeyPrefixes ?? [])],
+          removeEmptyKeyPrefixes: [...(options.removeEmptyKeyPrefixes ?? [])],
+        },
+      };
+    }
+    this.scopes.set(scope, { storage: scoped, options: optionKey });
+    return scoped;
+  }
+
+  private finishMigration(): void {
+    const migration = this.migration;
+    if (!migration) {
+      return;
+    }
+    // Preserve browser fallback data as well, including signed-in saves made
+    // while the server was unavailable. Never upload it over server values.
+    const { source, options } = migration;
+    for (const [key, value] of Object.entries(store.all(`${source.resourceName}:`))) {
+      if (options.migrateKeyPrefixes?.some((prefix) => key.startsWith(prefix))) {
+        const current = store.get(this.localKey(key));
+        if (current == null) {
+          store.set(this.localKey(key), value);
+          store.delete(source.localKey(key));
+        } else if (current === value) {
+          store.delete(source.localKey(key));
+        }
+      } else if (value === '' && options.removeEmptyKeyPrefixes?.some((prefix) => key.startsWith(prefix))) {
+        store.delete(source.localKey(key));
+      }
+    }
+    this.migration = undefined;
+  }
+
+  private async migrateLegacyStorage(): Promise<void> {
+    const migration = this.migration;
+    if (!migration) {
+      return;
+    }
+    const { source, options } = migration;
+    const shouldMove = (key: string) => options.migrateKeyPrefixes?.some((prefix) => key.startsWith(prefix));
+    const shouldRemove = (key: string, value: string) =>
+      value === '' && options.removeEmptyKeyPrefixes?.some((prefix) => key.startsWith(prefix));
+    if (!this.canUseUserStorage) {
+      this.finishMigration();
+      return;
+    }
+
+    for (let attempt = 0; attempt < WRITE_ATTEMPTS; attempt++) {
+      const legacy = await source.fetchResource();
+      if (!legacy) {
+        this.finishMigration();
+        return;
+      }
+      const candidates = Object.entries(legacy.spec.data).filter(
+        ([key, value]) => shouldMove(key) || shouldRemove(key, value)
+      );
+      if (candidates.length === 0) {
+        this.finishMigration();
+        return;
+      }
+      if (!legacy.metadata.resourceVersion) {
+        throw new Error('User storage migration requires a source resource version');
+      }
+      const target = await this.fetchResource();
+      storageCache.set(this.resourceName, target?.spec ?? null);
+      const copied = Object.fromEntries(
+        Object.entries(legacy.spec.data).filter(
+          ([key]) => shouldMove(key) && !Object.hasOwn(target?.spec.data ?? {}, key)
+        )
+      );
+      if (Object.keys(copied).length > 0) {
+        if (target && !target.metadata.resourceVersion) {
+          throw new Error('User storage migration requires a target resource version');
+        }
+        const write = target
+          ? await this.patchResource({
+              metadata: { resourceVersion: target.metadata.resourceVersion },
+              spec: { data: copied },
+            })
+          : await this.createResource(copied);
+        if ('error' in write) {
+          if (get(write.error, 'status') === 409) {
+            continue;
+          }
+          throw write.error;
+        }
+        storageCache.delete(this.resourceName);
+      }
+      const removed = Object.fromEntries(
+        candidates
+          .filter(([key, value]) =>
+            shouldMove(key)
+              ? (Object.hasOwn(copied, key) ? copied[key] : target?.spec.data[key]) === value
+              : shouldRemove(key, value)
+          )
+          .map(([key]) => [key, null])
+      );
+      if (Object.keys(removed).length === 0) {
+        // A newer scoped value wins, but retain a differing legacy value rather
+        // than erasing a concurrent old client's edit that was never copied.
+        this.finishMigration();
+        return;
+      }
+      // Never erase a source that changed while copying, or use local fallback
+      // as evidence of a durable target. A retry keeps newer target values.
+      const cleanup = await source.patchResource({
+        metadata: { resourceVersion: legacy.metadata.resourceVersion },
+        spec: { data: removed },
+      });
+      if ('error' in cleanup) {
+        if (get(cleanup.error, 'status') === 409) {
+          continue;
+        }
+        throw cleanup.error;
+      }
+      storageCache.delete(source.resourceName);
+      this.finishMigration();
+      return;
+    }
+    throw new Error('User storage migration conflicted with another writer; try again');
+  }
 
   constructor(service: string) {
     this.service = service;
@@ -89,7 +249,10 @@ export class UserStorage implements UserStorageType {
   /** Runs `operation` once every earlier operation on this resourceName has settled, whether it succeeded or threw. */
   private runExclusive<T>(operation: () => Promise<T>): Promise<T> {
     const previous = operationLocks.get(this.resourceName) ?? Promise.resolve();
-    const result = previous.then(operation);
+    const result = previous.then(async () => {
+      await this.migrateLegacyStorage();
+      return operation();
+    });
     const tail = result.then(noop, noop);
     operationLocks.set(this.resourceName, tail);
     tail.then(() => {
@@ -151,6 +314,7 @@ export class UserStorage implements UserStorageType {
 
   async getItem(key: string): Promise<string | null> {
     if (!this.canUseUserStorage) {
+      await this.migrateLegacyStorage();
       return store.get(this.localKey(key)) ?? null;
     }
     return this.runExclusive(async () => {
@@ -166,6 +330,7 @@ export class UserStorage implements UserStorageType {
 
   async setItem(key: string, value: string): Promise<void> {
     if (!this.canUseUserStorage) {
+      await this.migrateLegacyStorage();
       store.set(this.localKey(key), value);
       return;
     }
@@ -199,6 +364,7 @@ export class UserStorage implements UserStorageType {
    */
   async updateItem(key: string, update: (current: string | null) => string | undefined): Promise<void> {
     if (!this.canUseUserStorage) {
+      await this.migrateLegacyStorage();
       const next = update(store.get(this.localKey(key)) ?? null);
       if (next !== undefined) {
         store.set(this.localKey(key), next);
@@ -235,6 +401,7 @@ export class UserStorage implements UserStorageType {
 
   async deleteItem(key: string): Promise<void> {
     if (!this.canUseUserStorage) {
+      await this.migrateLegacyStorage();
       store.delete(this.localKey(key));
       return;
     }
@@ -258,6 +425,7 @@ export class UserStorage implements UserStorageType {
 
   async allItems(): Promise<Record<string, string>> {
     if (!this.canUseUserStorage) {
+      await this.migrateLegacyStorage();
       return store.all(`${this.resourceName}:`);
     }
     return this.runExclusive(async () => {
@@ -269,7 +437,10 @@ export class UserStorage implements UserStorageType {
 }
 
 // This is a type alias to avoid breaking changes
-export interface PluginUserStorage extends UserStorageType {}
+export interface PluginUserStorage extends UserStorageType {
+  /** Separate fixed feature storage from the default plugin record, optionally migrating legacy keys. */
+  getScopedStorage(scope: string, options?: ScopedUserStorageOptions): UserStorageType;
+}
 
 /**
  * A hook for interacting with the backend user storage (or local storage if not enabled).
