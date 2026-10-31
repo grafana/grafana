@@ -834,6 +834,7 @@ import (
 	_ "k8s.io/kube-aggregator/pkg/generated/openapi"
 	_ "k8s.io/kube-aggregator/pkg/registry/apiservice/rest"
 	_ "k8s.io/kube-openapi/pkg/common"
+	_ "k8s.io/kube-openapi/pkg/handler3"
 	_ "k8s.io/kube-openapi/pkg/spec3"
 	_ "k8s.io/kube-openapi/pkg/validation/spec"
 	_ "k8s.io/utils/net"
