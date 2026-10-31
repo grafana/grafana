@@ -532,6 +532,7 @@
         "save": "Сохранить"
       },
       "error-title": "Не удалось сохранить правило оповещения",
+      "form-errors": "",
       "no-group-success": "Правило добавлено"
     },
     "alert-rule-name-and-metric": {
@@ -540,8 +541,8 @@
       "label-metric": "Метрика",
       "label-name": "Имя",
       "message": {
-        "must-enter-a-metric-name": "Необходимо ввести название метрики",
-        "must-enter-a-name": "Необходимо ввести название",
+        "metric-name-required": "",
+        "name-required": "",
         "please-select-a-data-source": "Выберите источник данных"
       },
       "metric-aria-label-metric": "метрика",
@@ -596,6 +597,7 @@
     },
     "alertmanager-config": {
       "confirmText-yes-reset-configuration": "Да, сбросить конфигурацию",
+      "editor-label": "",
       "gma-manual-configuration-description": "Внутреннюю конфигурацию обработчика оповещений Grafana Alertmanager невозможно изменить вручную. Чтобы изменить конфигурацию, измените отдельные ресурсы через пользовательский интерфейс.",
       "gma-manual-configuration-is-not-supported": "Изменения конфигурации вручную не поддерживаются",
       "message": {
@@ -1111,6 +1113,7 @@
         "body": "Действительно восстановить удаленное определение правила оповещения?",
         "confirm": "Да, восстановить удаленное правило",
         "error": "Не удалось восстановить удаленное правило оповещения",
+        "preview-aria-label": "",
         "title": "Восстановление удаленного правила оповещения"
       },
       "table": {
@@ -1328,7 +1331,7 @@
     "folder-selector": {
       "description-select-folder": "Выберите папку для хранения правила.",
       "message": {
-        "select-a-folder": "Выберите папку"
+        "folder-required": ""
       }
     },
     "folderAndGroup": {
@@ -1588,11 +1591,10 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "Загрузка групп...",
       "message": {
-        "must-be-a-positive-integer": "Должно быть положительным целым числом.",
-        "must-enter-a-group-name": "Необходимо ввести название группы"
+        "evaluation-group-required": "",
+        "must-be-a-positive-integer": "Должно быть положительным целым числом."
       },
       "missing-series-resolve-placeholder": "По умолчанию: 2",
-      "or": "или",
       "placeholder-select-an-evaluation-group": "Выберите группу оценки...",
       "text-configure-no-data-and-error-handling": "Настройка действий в случае отсутствия данных или ошибки",
       "title-set-evaluation-behavior": "Установка режима оценки"
@@ -1888,6 +1890,7 @@
         "will-import-rules-count_many": "Будет импортировано {{count}} правил",
         "will-import-rules-count_other": "Будет импортировано {{count}} правила"
       },
+      "rules-preview": "",
       "source": {
         "datasource": "Существующие правила, управляемые источником данных",
         "datasource-description": "Импорт правил из существующих источников данных",
@@ -3046,7 +3049,7 @@
           "alerting": "Включите, чтобы приостановить оценку для этого правила оповещения.",
           "recording": "Включите, чтобы приостановить оценку для этого правила записи."
         },
-        "select-folder-before": "Выберите папку перед настройкой группы оценки и интервала.",
+        "select-folder-first-tooltip": "",
         "ungroup-warning": "Действие необратимо. После сохранения не получится снова добавить правило в группу.",
         "ungroup-warning-title": "Действие приведет к удалению правила оповещения из группы"
       },
@@ -3744,6 +3747,9 @@
       "switch-to-data-source-managed": "Источник данных, выбранный в вашем запросе, поддерживает управление правилами оповещения. Переключитесь на управление источником данных, если хотите, чтобы правилом оповещения управлял источник данных, а не Grafana.",
       "switch-to-grafana-managed": "Переключитесь на управление Grafana, чтобы использовать выражения, несколько запросов одновременно, изображения в уведомлениях и другие возможности.",
       "title-alert-rule-types": "Типы правил оповещения"
+    },
+    "sql-query-preview": {
+      "aria-label": ""
     },
     "state-history": {
       "columns": {
@@ -11680,17 +11686,8 @@
       "severity-low": "Низкоприоритетные",
       "severity-minor": "Незначительные",
       "severity-unknown": "Неизвестно",
-      "title": "Активные оповещения",
       "view-all": "Посмотреть все активные оповещения",
-      "view-rules": "Посмотреть все правила оповещения",
-      "critical-count_one": "{{count}} критическое",
-      "critical-count_few": "{{count}} критических",
-      "critical-count_many": "{{count}} критических",
-      "critical-count_other": "{{count}} критических",
-      "high-count_one": "{{count}} высокоприоритетное",
-      "high-count_few": "{{count}} высокоприоритетных",
-      "high-count_many": "{{count}} высокоприоритетных",
-      "high-count_other": "{{count}} высокоприоритетных"
+      "view-rules": "Посмотреть все правила оповещения"
     },
     "header-actions": {
       "active-incidents": "Активные инциденты",
@@ -11716,21 +11713,13 @@
       "empty": "",
       "empty-selected-team": "",
       "error-title": "Не удалось загрузить активные инциденты",
-      "title": "Активные инциденты",
       "view-all": "Посмотреть все инциденты"
     },
     "learn-more": "Подробнее",
     "most-used-dashboards-tab": {
       "empty": "Наиболее используемые дашборды будут показаны здесь.",
-      "empty-description": "После того как в вашей организации появятся дашборды и накопятся данные об их использовании, здесь будут показаны дашборды, которые чаще всего просматривались за последние 30 дней.",
       "error-title": "Не удалось загрузить наиболее используемые дашборды",
       "loading": "Загрузка наиболее используемых дашбордов…"
-    },
-    "news-card": {
-      "empty": "Нет новых постов в блоге.",
-      "error-title": "Не удалось загрузить новые посты в блоге",
-      "read-more": "Подробнее в блоге Grafana Labs",
-      "title": "Последние записи в блоге"
     },
     "on-call-card": {
       "current-shift": "",
@@ -12115,7 +12104,6 @@
     },
     "starred-dashboards-tab": {
       "empty": "Здесь будут отображаться избранные дашборды.",
-      "empty-description": "Нажмите <1></1> на странице дашборда, чтобы добавить его в избранное.",
       "error-title": "Не удалось загрузить избранные дашборды",
       "loading": "Загрузка избранных дашбордов…"
     },
@@ -13954,6 +13942,7 @@
       "add-title": "",
       "change-visualization": "",
       "edit-query": "",
+      "edit-with-assistant": "",
       "hide-query": "",
       "open-explore": "",
       "rename": "",
@@ -16050,20 +16039,8 @@
     "explain-or-modify": "Объяснить или изменить",
     "explain-query": "",
     "explaining": "",
-    "feedback-cancel": "Отменить",
-    "feedback-description": "Ваш отзыв поможет улучшить работу с запросами в Grafana.",
-    "feedback-error": "Не удалось отправить отзыв. Повторите попытку.",
     "feedback-helpful": "Полезно",
-    "feedback-label": "Оставить отзыв",
-    "feedback-negative-placeholder": "Опишите, что пошло не так и какой результат вы ожидали.",
-    "feedback-negative-title": "Что пошло не так?",
     "feedback-not-helpful": "Бесполезно",
-    "feedback-positive-placeholder": "Что вам понравилось? Что можно дополнительно улучшить?",
-    "feedback-positive-title": "Что прошло хорошо?",
-    "feedback-privacy": "",
-    "feedback-recipient": "Предоставленная вами информация будет передана командам, занимающимся функцией создания запросов.",
-    "feedback-send": "Отправить",
-    "feedback-sending": "Отправка...",
     "focus": "",
     "follow-up-label": "",
     "follow-up-placeholder": "",
@@ -17292,6 +17269,8 @@
       "failures-description": "",
       "filter-placeholder": "",
       "filtered": "",
+      "internal": "",
+      "internal-description": "",
       "last-failed": "",
       "load-failures": "",
       "never": "",

@@ -522,6 +522,7 @@
         "save": "Mentés"
       },
       "error-title": "A riasztási szabály mentése nem sikerült",
+      "form-errors": "",
       "no-group-success": "Szabály sikeresen hozzáadva"
     },
     "alert-rule-name-and-metric": {
@@ -530,8 +531,8 @@
       "label-metric": "Metrika",
       "label-name": "Név",
       "message": {
-        "must-enter-a-metric-name": "Meg kell adnia egy metrikanevet",
-        "must-enter-a-name": "A név megadása kötelező",
+        "metric-name-required": "",
+        "name-required": "",
         "please-select-a-data-source": "Válasszon adatforrást"
       },
       "metric-aria-label-metric": "metrika",
@@ -586,6 +587,7 @@
     },
     "alertmanager-config": {
       "confirmText-yes-reset-configuration": "Igen, konfiguráció visszaállítása",
+      "editor-label": "",
       "gma-manual-configuration-description": "A belső Grafana riasztáskezelő-konfiguráció manuálisan nem módosítható. A konfiguráció módosításához szerkessze az egyes erőforrásokat a felhasználói felületen keresztül.",
       "gma-manual-configuration-is-not-supported": "A manuális konfigurációs módosítások nem támogatottak",
       "message": {
@@ -1097,6 +1099,7 @@
         "body": "Biztosan visszaállítja ezt a törölt riasztásiszabály-definíciót?",
         "confirm": "Igen, törölt szabály visszaállítása",
         "error": "Nem sikerült visszaállítani a törölt riasztásszabályt",
+        "preview-aria-label": "",
         "title": "Törölt riasztási szabály visszaállítása"
       },
       "table": {
@@ -1314,7 +1317,7 @@
     "folder-selector": {
       "description-select-folder": "Válasszon egy mappát a szabály tárolásához.",
       "message": {
-        "select-a-folder": "Mappa kiválasztása"
+        "folder-required": ""
       }
     },
     "folderAndGroup": {
@@ -1568,11 +1571,10 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "Csoportok betöltése…",
       "message": {
-        "must-be-a-positive-integer": "Pozitív egész számnak kell lennie.",
-        "must-enter-a-group-name": "A csoportnév megadása kötelező"
+        "evaluation-group-required": "",
+        "must-be-a-positive-integer": "Pozitív egész számnak kell lennie."
       },
       "missing-series-resolve-placeholder": "Alapértelmezett: 2",
-      "or": "vagy",
       "placeholder-select-an-evaluation-group": "Értékelési csoport kijelölése…",
       "text-configure-no-data-and-error-handling": "Adathiány- és hibakezelés konfigurálása",
       "title-set-evaluation-behavior": "Értékelési viselkedés beállítása"
@@ -1866,6 +1868,7 @@
         "will-import-rules-count_one": "{{count}} szabályt fog importálni",
         "will-import-rules-count_other": "{{count}} szabályt fog importálni"
       },
+      "rules-preview": "",
       "source": {
         "datasource": "Meglévő, adatforrás által felügyelt szabályok",
         "datasource-description": "Szabályok importálása meglévő adatforrásokból",
@@ -2998,7 +3001,7 @@
           "alerting": "Kapcsolja be az ehhez a riasztási szabályhoz tartozó értékelés szüneteltetéséhez.",
           "recording": "Kapcsolja be az ehhez a felvételi szabályhoz tartozó értékelés szüneteltetéséhez."
         },
-        "select-folder-before": "Válasszon egy mappát az értékelési csoport és intervallum beállítása előtt",
+        "select-folder-first-tooltip": "",
         "ungroup-warning": "Ezt a műveletet nem lehet visszavonni. A mentés után nem tudja újra hozzáadni egy csoporthoz.",
         "ungroup-warning-title": "Ez eltávolítja a riasztási szabályt a csoportjából"
       },
@@ -3672,6 +3675,9 @@
       "switch-to-data-source-managed": "A lekérdezésben kijelölt adatforrás támogatja a riasztási szabályok felügyeletét. Váltson adatforrás által felügyeltre, ha azt szeretné, hogy a riasztási szabályt az adatforrás felügyelje a Grafana helyett.",
       "switch-to-grafana-managed": "Váltson a Grafana által felügyeltre a kifejezések, a több lekérdezés, az értesítésekben szereplő képek és számos egyéb funkció használatához.",
       "title-alert-rule-types": "Riasztási szabálytípusok"
+    },
+    "sql-query-preview": {
+      "aria-label": ""
     },
     "state-history": {
       "columns": {
@@ -11516,13 +11522,8 @@
       "severity-low": "Alacsony",
       "severity-minor": "Kisebb",
       "severity-unknown": "Ismeretlen",
-      "title": "Aktív riasztások",
       "view-all": "Az összes aktív riasztás megtekintése",
-      "view-rules": "Az összes riasztási szabály megtekintése",
-      "critical-count_one": "{{count}} kritikus",
-      "critical-count_other": "{{count}} kritikus",
-      "high-count_one": "{{count}} magas",
-      "high-count_other": "{{count}} magas"
+      "view-rules": "Az összes riasztási szabály megtekintése"
     },
     "header-actions": {
       "active-incidents": "Aktív incidensek",
@@ -11548,21 +11549,13 @@
       "empty": "",
       "empty-selected-team": "",
       "error-title": "Nem sikerült betölteni az aktív incidenseket",
-      "title": "Aktív incidensek",
       "view-all": "Az összes incidens megtekintése"
     },
     "learn-more": "További információk",
     "most-used-dashboards-tab": {
       "empty": "Itt jelennek meg a leggyakrabban használt irányítópultok.",
-      "empty-description": "Amint a szervezete rendelkezik irányítópultokkal, és a használati adatok összegyűjtése megtörtént, itt jelennek meg az elmúlt 30 napban legtöbbször megtekintett irányítópultok.",
       "error-title": "Nem sikerült betölteni a leggyakrabban használt irányítópultokat",
       "loading": "A leggyakrabban használt irányítópultok betöltése…"
-    },
-    "news-card": {
-      "empty": "Nincsnek friss blogbejegyzések.",
-      "error-title": "Nem sikerült betölteni a friss blogbejegyzéseket",
-      "read-more": "További információ a Grafana Labs blogjáról",
-      "title": "Újdonságok a blogról"
     },
     "on-call-card": {
       "current-shift": "",
@@ -11917,7 +11910,6 @@
     },
     "starred-dashboards-tab": {
       "empty": "Itt jelennek meg a csillaggal megjelölt irányítópultjai.",
-      "empty-description": "Kedvenc irányítópultjait csillaggal jelölheti meg, ha az irányítópult oldalán a(z) <1></1> elemre kattint.",
       "error-title": "Nem sikerült betölteni a csillaggal megjelölt irányítópultokat",
       "loading": "A csillaggal megjelölt irányítópultok betöltése…"
     },
@@ -13730,6 +13722,7 @@
       "add-title": "",
       "change-visualization": "",
       "edit-query": "",
+      "edit-with-assistant": "",
       "hide-query": "",
       "open-explore": "",
       "rename": "",
@@ -15788,20 +15781,8 @@
     "explain-or-modify": "Magyarázat vagy módosítás",
     "explain-query": "",
     "explaining": "",
-    "feedback-cancel": "Mégse",
-    "feedback-description": "Visszajelzése segít javítani a Grafana lekérdezési élményét.",
-    "feedback-error": "A visszajelzést nem sikerült elküldeni. Próbálja újra.",
     "feedback-helpful": "Hasznos",
-    "feedback-label": "Visszajelzés megosztása",
-    "feedback-negative-placeholder": "Írja le, hogy mi nem ment jól, és mit várt helyette.",
-    "feedback-negative-title": "Milyen probléma lépett fel?",
     "feedback-not-helpful": "Nem volt hasznos",
-    "feedback-positive-placeholder": "Mi tetszett? Hogyan lehetett volna még jobb?",
-    "feedback-positive-title": "Mi ment jól?",
-    "feedback-privacy": "",
-    "feedback-recipient": "Visszajelzését elküldjük a lekérdezéseken dolgozó csapatoknak.",
-    "feedback-send": "Küldés",
-    "feedback-sending": "Küldés…",
     "focus": "",
     "follow-up-label": "",
     "follow-up-placeholder": "",
@@ -17008,6 +16989,8 @@
       "failures-description": "",
       "filter-placeholder": "",
       "filtered": "",
+      "internal": "",
+      "internal-description": "",
       "last-failed": "",
       "load-failures": "",
       "never": "",

@@ -517,6 +517,7 @@
         "save": "저장"
       },
       "error-title": "경보 규칙 저장 실패",
+      "form-errors": "",
       "no-group-success": "규칙이 성공적으로 추가되었습니다"
     },
     "alert-rule-name-and-metric": {
@@ -525,8 +526,8 @@
       "label-metric": "메트릭",
       "label-name": "이름",
       "message": {
-        "must-enter-a-metric-name": "메트릭 이름을 입력해야 합니다.",
-        "must-enter-a-name": "이름을 입력해야 합니다.",
+        "metric-name-required": "",
+        "name-required": "",
         "please-select-a-data-source": "데이터 소스를 선택하세요"
       },
       "metric-aria-label-metric": "메트릭",
@@ -581,6 +582,7 @@
     },
     "alertmanager-config": {
       "confirmText-yes-reset-configuration": "네, 구성을 초기화해 주세요",
+      "editor-label": "",
       "gma-manual-configuration-description": "내부 Grafana Alertmanager 구성은 수동으로 변경할 수 없습니다. 이 구성을 변경하려면 UI를 통해 개별 리소스를 편집하세요.",
       "gma-manual-configuration-is-not-supported": "수동 구성 변경은 지원되지 않음",
       "message": {
@@ -1090,6 +1092,7 @@
         "body": "정말 삭제된 이 경고 규칙 정의를 복원하시겠어요?",
         "confirm": "네, 삭제된 규칙을 복원해 주세요",
         "error": "삭제된 경고 규칙을 복원할 수 없습니다",
+        "preview-aria-label": "",
         "title": "삭제된 경고 규칙 복원"
       },
       "table": {
@@ -1307,7 +1310,7 @@
     "folder-selector": {
       "description-select-folder": "규칙을 저장할 폴더를 선택하세요.",
       "message": {
-        "select-a-folder": "폴더 선택"
+        "folder-required": ""
       }
     },
     "folderAndGroup": {
@@ -1558,11 +1561,10 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "그룹 로딩 중...",
       "message": {
-        "must-be-a-positive-integer": "양의 정수여야 합니다.",
-        "must-enter-a-group-name": "그룹 이름을 입력해야 합니다."
+        "evaluation-group-required": "",
+        "must-be-a-positive-integer": "양의 정수여야 합니다."
       },
       "missing-series-resolve-placeholder": "기본값: 2",
-      "or": "또는",
       "placeholder-select-an-evaluation-group": "평가 그룹을 선택하세요...",
       "text-configure-no-data-and-error-handling": "데이터 없음 또는 오류 발생 시 처리 방식 설정",
       "title-set-evaluation-behavior": "평가 동작 설정"
@@ -1855,6 +1857,7 @@
         "will-import-rules": "규칙 가져올 예정",
         "will-import-rules-count_other": "규칙 {{count}}개 가져올 예정"
       },
+      "rules-preview": "",
       "source": {
         "datasource": "기존 데이터 소스 관리 규칙",
         "datasource-description": "기존 데이터 소스에서 규칙 가져오기",
@@ -2974,7 +2977,7 @@
           "alerting": "이 경고 규칙에 대한 평가를 일시 중지하려면 켜세요.",
           "recording": "이 기록 규칙에 대한 평가를 일시 중지하려면 켜세요."
         },
-        "select-folder-before": "폴더를 선택한 후에 평가 그룹과 간격을 설정하세요.",
+        "select-folder-first-tooltip": "",
         "ungroup-warning": "이 작업은 되돌릴 수 없습니다. 저장한 후에는 그룹에 다시 추가할 수 없습니다.",
         "ungroup-warning-title": "이렇게 하면 해당 그룹에서 경보 규칙이 제거됩니다"
       },
@@ -3636,6 +3639,9 @@
       "switch-to-data-source-managed": "쿼리에서 선택한 데이터 소스는 경고 규칙 관리를 지원합니다. Grafana 대신 데이터 소스에서 경고 규칙을 관리하려면 데이터 소스 관리로 전환하세요.",
       "switch-to-grafana-managed": "표현식, 다중 쿼리, 알림 내 이미지 사용 및 기타 다양한 기능을 사용하려면 Grafana 관리로 전환하세요.",
       "title-alert-rule-types": "경고 규칙 유형"
+    },
+    "sql-query-preview": {
+      "aria-label": ""
     },
     "state-history": {
       "columns": {
@@ -11434,11 +11440,8 @@
       "severity-low": "낮음",
       "severity-minor": "경미",
       "severity-unknown": "알 수 없음",
-      "title": "발생 중인 경보",
       "view-all": "발생 중인 모든 알림 보기",
-      "view-rules": "모든 경보 규칙 보기",
-      "critical-count_other": "심각 {{count}}개",
-      "high-count_other": "높음 {{count}}개"
+      "view-rules": "모든 경보 규칙 보기"
     },
     "header-actions": {
       "active-incidents": "활성 인시던트",
@@ -11464,21 +11467,13 @@
       "empty": "",
       "empty-selected-team": "",
       "error-title": "활성 인시던트를 불러올 수 없습니다",
-      "title": "활성 인시던트",
       "view-all": "모든 인시던트 보기"
     },
     "learn-more": "자세히 알아보기",
     "most-used-dashboards-tab": {
       "empty": "가장 많이 사용한 대시보드가 여기에 표시됩니다.",
-      "empty-description": "조직에 대시보드가 있고 사용 데이터가 수집되면 최근 30일 동안 조회수가 가장 많은 대시보드가 여기에 표시됩니다.",
       "error-title": "가장 많이 사용한 대시보드를 불러올 수 없습니다",
       "loading": "가장 많이 사용한 대시보드 로딩 중..."
-    },
-    "news-card": {
-      "empty": "최근 블로그 게시물이 없습니다.",
-      "error-title": "최근 블로그 게시물을 불러올 수 없습니다",
-      "read-more": "Grafana Labs 블로그에서 더 읽어보기",
-      "title": "블로그 최근 글"
     },
     "on-call-card": {
       "current-shift": "",
@@ -11818,7 +11813,6 @@
     },
     "starred-dashboards-tab": {
       "empty": "여기에 별표 표시된 대시보드가 표시됩니다.",
-      "empty-description": "대시보드 페이지에서 <1></1>을 클릭하여 즐겨찾는 대시보드에 별표를 표시할 수 있습니다.",
       "error-title": "별표 표시된 대시보드를 불러올 수 없습니다",
       "loading": "별표 표시된 대시보드 로딩 중..."
     },
@@ -13618,6 +13612,7 @@
       "add-title": "",
       "change-visualization": "",
       "edit-query": "",
+      "edit-with-assistant": "",
       "hide-query": "",
       "open-explore": "",
       "rename": "",
@@ -15657,20 +15652,8 @@
     "explain-or-modify": "설명 또는 수정",
     "explain-query": "",
     "explaining": "",
-    "feedback-cancel": "취소",
-    "feedback-description": "피드백은 Grafana에서 쿼리 경험을 개선하는 데 도움이 됩니다.",
-    "feedback-error": "피드백을 전송할 수 없습니다. 다시 시도하세요.",
     "feedback-helpful": "유용함",
-    "feedback-label": "피드백 공유하기",
-    "feedback-negative-placeholder": "잘되지 않은 부분과 대신 기대했던 부분을 설명해 주세요.",
-    "feedback-negative-title": "어떤 문제가 있었나요?",
     "feedback-not-helpful": "유용하지 않음",
-    "feedback-positive-placeholder": "마음에 드신 점은 무엇인가요? 어떻게 하면 더 좋았을까요?",
-    "feedback-positive-title": "잘된 점은 무엇인가요?",
-    "feedback-privacy": "",
-    "feedback-recipient": "피드백은 쿼리를 담당하는 팀으로 전송됩니다.",
-    "feedback-send": "전송",
-    "feedback-sending": "전송 중…",
     "focus": "",
     "follow-up-label": "",
     "follow-up-placeholder": "",
@@ -16866,6 +16849,8 @@
       "failures-description": "",
       "filter-placeholder": "",
       "filtered": "",
+      "internal": "",
+      "internal-description": "",
       "last-failed": "",
       "load-failures": "",
       "never": "",
