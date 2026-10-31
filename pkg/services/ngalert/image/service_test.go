@@ -2,7 +2,9 @@ package image
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
+	"net/url"
 	"testing"
 	"time"
 
@@ -68,7 +70,7 @@ func TestScreenshotImageService(t *testing.T) {
 			OrgID:        1,
 			UID:          "foo",
 			DashboardUID: new("foo"),
-			PanelID:      new(int64(1))})
+			PanelID:      new(int64(1))}, nil)
 		require.NoError(t, err)
 		assert.Equal(t, expected, *image)
 	})
@@ -105,7 +107,7 @@ func TestScreenshotImageService(t *testing.T) {
 			OrgID:        1,
 			UID:          "bar",
 			DashboardUID: new("bar"),
-			PanelID:      new(int64(1))})
+			PanelID:      new(int64(1))}, nil)
 		require.NoError(t, err)
 		assert.Equal(t, expected, *image)
 	})
@@ -120,7 +122,7 @@ func TestScreenshotImageService(t *testing.T) {
 			OrgID:        1,
 			UID:          "baz",
 			DashboardUID: new("baz"),
-			PanelID:      new(int64(1))})
+			PanelID:      new(int64(1))}, nil)
 		require.NoError(t, err)
 		assert.Equal(t, expected, *image)
 	})
@@ -141,8 +143,32 @@ func TestScreenshotImageService(t *testing.T) {
 			OrgID:        1,
 			UID:          "qux",
 			DashboardUID: new("qux"),
-			PanelID:      new(int64(1))})
+			PanelID:      new(int64(1))}, nil)
 		assert.EqualError(t, err, "context deadline exceeded")
 		assert.Nil(t, image)
+	})
+
+	t.Run("image is taken with dashboard variables", func(t *testing.T) {
+		variables := url.Values{"var-cluster": {"prod"}}
+		opts := screenshot.ScreenshotOptions{
+			OrgID:        1,
+			DashboardUID: "foo",
+			PanelID:      1,
+			Timeout:      5 * time.Second,
+			Variables:    variables,
+		}
+		// the variables are part of the cache key
+		cache.EXPECT().Get(gomock.Any(), base64.StdEncoding.EncodeToString(opts.Hash())).Return(models.Image{}, false)
+		screenshots.EXPECT().Take(gomock.Any(), opts).Return(&screenshot.Screenshot{Path: "bar.png"}, nil)
+		uploads.EXPECT().Upload(gomock.Any(), "bar.png").Return("https://example.com/bar.png", nil)
+		cache.EXPECT().Set(gomock.Any(), base64.StdEncoding.EncodeToString(opts.Hash()), gomock.Any()).Return(nil)
+
+		image, err := s.NewImage(ctx, &models.AlertRule{
+			OrgID:        1,
+			UID:          "foo",
+			DashboardUID: new("foo"),
+			PanelID:      new(int64(1))}, variables)
+		require.NoError(t, err)
+		assert.Equal(t, "https://example.com/bar.png", image.URL)
 	})
 }

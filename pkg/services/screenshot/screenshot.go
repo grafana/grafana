@@ -108,6 +108,11 @@ func (s *HeadlessScreenshotService) Take(ctx context.Context, opts ScreenshotOpt
 		p.Add("from", opts.From)
 		p.Add("to", opts.To)
 	}
+	for name, values := range opts.Variables {
+		for _, v := range values {
+			p.Add(name, v)
+		}
+	}
 	u.RawQuery = p.Encode()
 
 	renderOpts := rendering.Opts{

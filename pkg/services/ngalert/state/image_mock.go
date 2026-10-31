@@ -6,6 +6,7 @@ package state
 
 import (
 	context "context"
+	"net/url"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -37,16 +38,16 @@ func (m *MockImageCapturer) EXPECT() *MockImageCapturerMockRecorder {
 }
 
 // NewImage mocks base method.
-func (m *MockImageCapturer) NewImage(arg0 context.Context, arg1 *models.AlertRule) (*models.Image, error) {
+func (m *MockImageCapturer) NewImage(arg0 context.Context, arg1 *models.AlertRule, arg2 url.Values) (*models.Image, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewImage", arg0, arg1)
+	ret := m.ctrl.Call(m, "NewImage", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*models.Image)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // NewImage indicates an expected call of NewImage.
-func (mr *MockImageCapturerMockRecorder) NewImage(arg0, arg1 any) *gomock.Call {
+func (mr *MockImageCapturerMockRecorder) NewImage(arg0, arg1, arg2 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewImage", reflect.TypeOf((*MockImageCapturer)(nil).NewImage), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewImage", reflect.TypeOf((*MockImageCapturer)(nil).NewImage), arg0, arg1, arg2)
 }
