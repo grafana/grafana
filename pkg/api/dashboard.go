@@ -548,12 +548,13 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 	if strings.HasPrefix(gv.Version, "v0") {
 		validation = metav1.FieldValidationIgnore // v0 accepts anything
 	}
+	// Seed default RBAC permissions for the creator. The apistore strips
+	// this annotation before persisting and invokes its
+	// DefaultPermissionSetter hook after the resource is created, or after
+	// an update that moves the dashboard into the root folder.
+	meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
 	var dash *unstructured.Unstructured
 	if isCreate {
-		// Seed default RBAC permissions for the creator. The apistore strips
-		// this annotation before persisting and invokes its
-		// DefaultPermissionSetter hook after the resource is created.
-		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
 		dash, err = client.Create(ctx, obj, metav1.CreateOptions{FieldValidation: validation})
 	} else {
 		dash, err = client.Update(ctx, obj, metav1.UpdateOptions{FieldValidation: validation})
