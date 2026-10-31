@@ -5,24 +5,26 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/apiserver/pkg/endpoints/request"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 const (
 	DefaultCacheTTL = 5 * time.Second
 )
 
-func ProvideCacheService(cacheService *localcache.CacheService, sqlStore db.DB, dsGuardian guardian.DatasourceGuardianProvider) *CacheServiceImpl {
+func ProvideCacheService(cacheService *localcache.CacheService, dbProvider legacysql.LegacyDatabaseProvider, dsGuardian guardian.DatasourceGuardianProvider) *CacheServiceImpl {
 	return &CacheServiceImpl{
 		logger:       log.New("datasources"),
 		cacheTTL:     DefaultCacheTTL,
 		CacheService: cacheService,
-		SQLStore:     sqlStore,
+		dbProvider:   dbProvider,
 		dsGuardian:   dsGuardian,
 	}
 }
@@ -31,7 +33,7 @@ type CacheServiceImpl struct {
 	logger       log.Logger
 	cacheTTL     time.Duration
 	CacheService *localcache.CacheService
-	SQLStore     db.DB
+	dbProvider   legacysql.LegacyDatabaseProvider
 	dsGuardian   guardian.DatasourceGuardianProvider
 }
 
@@ -41,7 +43,7 @@ func (dc *CacheServiceImpl) GetDatasource(
 	user identity.Requester,
 	skipCache bool,
 ) (*datasources.DataSource, error) {
-	cacheKey := idKey(datasourceID)
+	cacheKey := idKey(ctx, datasourceID)
 
 	if !skipCache {
 		if cached, found := dc.CacheService.Get(cacheKey); found {
@@ -58,14 +60,14 @@ func (dc *CacheServiceImpl) GetDatasource(
 	dc.logger.FromContext(ctx).Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.GetOrgID())
 
 	query := &datasources.GetDataSourceQuery{ID: datasourceID, OrgID: user.GetOrgID()} //nolint:staticcheck // Preserve legacy field compatibility.
-	ss := SqlStore{db: dc.SQLStore, logger: dc.logger}
+	ss := SqlStore{logger: dc.logger, dbProvider: dc.dbProvider}
 	ds, err := ss.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 
 	if ds.UID != "" {
-		dc.CacheService.Set(uidKey(ds.OrgID, ds.UID), ds, time.Second*5)
+		dc.CacheService.Set(uidKey(ctx, ds.OrgID, ds.UID), ds, time.Second*5)
 	}
 	dc.CacheService.Set(cacheKey, ds, dc.cacheTTL)
 
@@ -88,7 +90,7 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 	if user.GetOrgID() == 0 {
 		return nil, fmt.Errorf("can not get data source by uid, orgId is missing")
 	}
-	uidCacheKey := uidKey(user.GetOrgID(), datasourceUID)
+	uidCacheKey := uidKey(ctx, user.GetOrgID(), datasourceUID)
 
 	if !skipCache {
 		if cached, found := dc.CacheService.Get(uidCacheKey); found {
@@ -104,14 +106,14 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 
 	dc.logger.FromContext(ctx).Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.GetOrgID())
 	query := &datasources.GetDataSourceQuery{UID: datasourceUID, OrgID: user.GetOrgID()}
-	ss := SqlStore{db: dc.SQLStore, logger: dc.logger}
+	ss := SqlStore{logger: dc.logger, dbProvider: dc.dbProvider}
 	ds, err := ss.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 
 	dc.CacheService.Set(uidCacheKey, ds, dc.cacheTTL)
-	dc.CacheService.Set(idKey(ds.ID), ds, dc.cacheTTL)
+	dc.CacheService.Set(idKey(ctx, ds.ID), ds, dc.cacheTTL)
 
 	if err = dc.canQuery(user, ds); err != nil {
 		return nil, err
@@ -120,12 +122,14 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 	return ds, nil
 }
 
-func idKey(id int64) string {
-	return fmt.Sprintf("ds-%d", id)
+// Cache keys are scoped by the tenant namespace because the dbProvider can resolve each
+// tenant to its own tables, where IDs and UIDs are not unique across tenants.
+func idKey(ctx context.Context, id int64) string {
+	return fmt.Sprintf("ds-%s/%d", request.NamespaceValue(ctx), id)
 }
 
-func uidKey(orgID int64, uid string) string {
-	return fmt.Sprintf("ds-orgid-uid-%d-%s", orgID, uid)
+func uidKey(ctx context.Context, orgID int64, uid string) string {
+	return fmt.Sprintf("ds-orgid-uid-%s/%d-%s", request.NamespaceValue(ctx), orgID, uid)
 }
 
 func (dc *CacheServiceImpl) canQuery(user identity.Requester, ds *datasources.DataSource) error {
