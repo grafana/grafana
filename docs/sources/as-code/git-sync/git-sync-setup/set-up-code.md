@@ -39,19 +39,25 @@ To provision resources from a local file system as code instead of a Git reposit
 
 To set up Git Sync as code with `gcx`, follow these steps:
 
-1. Understand [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/usage-limits)
-1. [Create the connection and repository CRDs](#create-the-resources-crds)
-1. [Push the CRDs to Grafana](#push-the-resources-to-grafana)
+1. Read [Before you begin](#before-you-begin).
+1. [Create the connection resource](#create-the-connection-resource)
+1. [Create the repository resource](#create-the-repository-resource)
+1. [Push the resources to Grafana](#push-the-resources-to-grafana)
 1. [Manage repository resources](#manage-repository-resources)
 1. [Verify setup](#verify-setup)
 
-## Create the resources CRDs
+## Before you begin
 
-If you're connecting with any of the [supported Git providers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/usage-limits#compatible-git-providers) using a Personal Access Token, you need to create a repository resource to define the connection between your repositories and your Grafana instance.
+Understand the following:
 
-If you're connecting to Git Sync with GitHub App or an OAuth App, in addition to the repository resource you need to create a connection resource as well.
+- Git Sync [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/usage-limits).
+- The [required resources (connection and repository)](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/key-concepts) to use Git Sync.
 
-### Create the connection resource
+## Create the connection resource
+
+A connection is the authentication setup between Grafana and an external Git provider, required when you're not using a Personal Access Token or a static token to authenticate.
+
+### Create a GitHub App connection resource
 
 If you're connecting Git Sync with GitHub App, create a `connection.yaml` file defining your Git Sync connection configuration:
 
@@ -68,7 +74,26 @@ spec:
   github:
     appID: '<GITHUB_APP_ID>'
     installationID: '<GITHUB_INSTALL_ID>'
-    serverUrl: '<GITHUB_ENTERPRISE_SERVER_URL>' # Only required for GitHub Enterprise
+secure:
+  privateKey:
+    create: '<GITHUB_PRIVATE_KEY>'
+```
+
+If your GitHub App is installed on GitHub Enterprise Server, set the type to `githubEnterprise` and use the `githubEnterprise` block instead:
+
+```yaml
+apiVersion: provisioning.grafana.app/v0alpha1
+kind: Connection
+metadata:
+  name: '<GITHUB_CONNECTION_NAME>'
+  namespace: default
+spec:
+  title: '<REPOSITORY_TITLE>'
+  type: githubEnterprise
+  githubEnterprise:
+    appID: '<GITHUB_APP_ID>'
+    installationID: '<GITHUB_INSTALL_ID>'
+    serverUrl: '<GITHUB_ENTERPRISE_SERVER_URL>'
 secure:
   privateKey:
     create: '<GITHUB_PRIVATE_KEY>'
@@ -80,7 +105,8 @@ Replace the placeholders with your values:
 - _`<REPOSITORY_TITLE>`_: Human-readable name displayed in Grafana UI
 - _`<GITHUB_APP_ID>`_: GitHub App unique identifier
 - _`<GITHUB_INSTALL_ID>`_: GitHub App installation id
-- _`<GITHUB_PRIVATE_KEY>`_: GitHub Private Key
+- _`<GITHUB_PRIVATE_KEY>`_: GitHub App private key, base64-encoded
+- _`<GITHUB_ENTERPRISE_SERVER_URL>`_: The URL of your GitHub Enterprise Server instance, for example `https://ghes.example.com`
 
 ### Create an OAuth App connection resource
 
@@ -131,9 +157,11 @@ An OAuth App connection needs a user to approve access in the browser. After you
 1. Select the connection and click **Reauthorize**.
 1. Approve the access in the provider tab that opens.
 
-### Create the repository resource
+## Create the repository resource
 
-Next, create a `repository.yaml` file defining your Git Sync configuration. Depending on your Git provider and authentication method, add your Personal Access Token information or the connection name.
+A repository resource is a Grafana configuration object that defines the connection between a group of repositories and your Grafana instance via Git Sync. Depending on your Git provider and authentication method, add your Personal Access Token information or the connection name.
+
+Create a `repository.yaml` file defining your Git Sync configuration:
 
 ```yaml
 apiVersion: provisioning.grafana.app/v0alpha1
@@ -227,30 +255,83 @@ Git Sync supports two sync targets: `target: folder` (the default) creates a fol
 
 {{< /admonition >}}
 
-### Configuration parameters
+## Configuration parameters
 
-The following configuration parameters are available:
+The following configuration parameters are available for the connection and repository resources.
 
-| Field                                   | Description                                                     |
-| --------------------------------------- | --------------------------------------------------------------- |
-| `metadata.name`                         | Unique identifier for this repository resource                  |
-| `spec.title`                            | Human-readable name displayed in Grafana UI                     |
-| `spec.type`                             | Repository type (`github`, `githubEnterprise`)                  |
-| `spec.github.url`                       | GitHub repository URL                                           |
-| `spec.github.branch`                    | Branch to sync                                                  |
-| `spec.github.path`                      | Directory path containing dashboards                            |
-| `spec.github.generateDashboardPreviews` | Generate preview images (true/false) (Only available in GitHub) |
-| `spec.sync.enabled`                     | Enable synchronization (true/false)                             |
-| `spec.sync.intervalSeconds`             | Sync interval in seconds                                        |
-| `spec.sync.target`                      | Where to place synced dashboards (`folder` or `folderless`)     |
-| `spec.workflows`                        | Enabled workflows: `write` (direct commits), `branch` (PRs)     |
-| `secure.token.create`                   | GitHub Personal Access Token                                    |
+Values under `secure` are stored encrypted and can't be read back after you create them.
+
+### Connection parameters
+
+| Field                                  | Description                                                                                                                                                                                                                                     |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `metadata.name`                        | Unique identifier for this connection resource. Repositories reference the connection by this name                                                                                                                                              |
+| `spec.title`                           | Human-readable name displayed in Grafana UI                                                                                                                                                                                                     |
+| `spec.description`                     | Description of the connection                                                                                                                                                                                                                   |
+| `spec.type`                            | Connection type: `github`, `githubEnterprise`, `githubOAuth`, `githubEnterpriseOAuth`, `gitlabOAuth`, `bitbucketOAuth`, or `gitOAuth`                                                                                                           |
+| `spec.url`                             | URL of the Git provider, for example `https://github.com`                                                                                                                                                                                       |
+| `spec.github.appID`                    | GitHub App ID. Only for the `github` type                                                                                                                                                                                                       |
+| `spec.github.installationID`           | GitHub App installation ID. Only for the `github` type                                                                                                                                                                                          |
+| `spec.githubEnterprise.appID`          | GitHub App ID. Only for the `githubEnterprise` type                                                                                                                                                                                             |
+| `spec.githubEnterprise.installationID` | GitHub App installation ID. Only for the `githubEnterprise` type                                                                                                                                                                                |
+| `spec.githubEnterprise.serverUrl`      | URL of your GitHub Enterprise Server instance, for example `https://ghes.example.com`. Only for the `githubEnterprise` type                                                                                                                     |
+| `spec.oauth.clientID`                  | Client ID of the OAuth App. Required for all OAuth connection types                                                                                                                                                                             |
+| `spec.githubEnterpriseOAuth.serverUrl` | URL of your GitHub Enterprise Server instance. Only for the `githubEnterpriseOAuth` type                                                                                                                                                        |
+| `spec.bitbucket.workspace`             | Workspace that the OAuth consumer belongs to. Only for the `bitbucketOAuth` type                                                                                                                                                                |
+| `spec.gitOAuth.authURL`                | OAuth authorization endpoint of your Git provider, for example `https://gitlab.example.com/oauth/authorize`. Only for the `gitOAuth` type                                                                                                       |
+| `spec.gitOAuth.tokenURL`               | OAuth token endpoint of your Git provider, for example `https://gitlab.example.com/oauth/token`. Only for the `gitOAuth` type                                                                                                                   |
+| `spec.gitOAuth.scopes`                 | OAuth scopes to request. The scopes must grant read and write access to your repositories. Only for the `gitOAuth` type                                                                                                                         |
+| `spec.webhook.disabled`                | Disable webhooks for this connection (true/false). When `true`, the GitHub App doesn't need the `webhooks:write` permission, and Grafana doesn't register or receive webhook events. Use it if Grafana isn't reachable from the public internet |
+| `secure.privateKey.create`             | Private key of the GitHub App, base64-encoded. Only for the `github` and `githubEnterprise` types                                                                                                                                               |
+| `secure.clientSecret.create`           | Client secret of the OAuth App. Required for all OAuth connection types                                                                                                                                                                         |
+
+### Repository parameters
+
+In the following table, replace `<TYPE>` with the repository type set in `spec.type`. For example, use `spec.gitlab.url` for a GitLab repository.
+
+| Field                                        | Description                                                                                                                                                                                                                                                                                                                                        |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `metadata.name`                              | Unique identifier for this repository resource                                                                                                                                                                                                                                                                                                     |
+| `spec.title`                                 | Human-readable name displayed in Grafana UI                                                                                                                                                                                                                                                                                                        |
+| `spec.description`                           | Description of the repository                                                                                                                                                                                                                                                                                                                      |
+| `spec.type`                                  | Repository type: `github`, `githubEnterprise`, `gitlab`, `bitbucket`, or `git`                                                                                                                                                                                                                                                                     |
+| `spec.<TYPE>.url`                            | Repository URL, for example `https://github.com/example/test`                                                                                                                                                                                                                                                                                      |
+| `spec.<TYPE>.branch`                         | Branch to sync                                                                                                                                                                                                                                                                                                                                     |
+| `spec.<TYPE>.path`                           | Directory path in the repository that contains your Grafana resources, for example `grafana/`. Grafana ignores anything outside this path                                                                                                                                                                                                          |
+| `spec.githubEnterprise.serverUrl`            | URL of your GitHub Enterprise Server instance, for example `https://ghes.example.com`                                                                                                                                                                                                                                                              |
+| `spec.bitbucket.tokenUser`                   | User that owns the Personal Access Token                                                                                                                                                                                                                                                                                                           |
+| `spec.bitbucket.email`                       | Atlassian account email used to authenticate with the Bitbucket REST API. Required to enable webhooks                                                                                                                                                                                                                                              |
+| `spec.git.tokenUser`                         | User that owns the Personal Access Token                                                                                                                                                                                                                                                                                                           |
+| `spec.github.generateDashboardPreviews`      | Generate dashboard preview images in pull requests (true/false). Only for the `github` type. For other types, use `spec.pullRequest.generateDashboardPreviews`                                                                                                                                                                                     |
+| `spec.connection.name`                       | Name of the connection resource used to authenticate. Use it instead of `secure.token` when you connect with a GitHub App or an OAuth App                                                                                                                                                                                                          |
+| `spec.sync.enabled`                          | Enable synchronization (true/false)                                                                                                                                                                                                                                                                                                                |
+| `spec.sync.intervalSeconds`                  | Sync interval in seconds. If the value is lower than the system minimum, Grafana uses the system minimum instead                                                                                                                                                                                                                                   |
+| `spec.sync.target`                           | Where to place synced resources (`folder` or `folderless`)                                                                                                                                                                                                                                                                                         |
+| `spec.workflows`                             | Enabled workflows: `write` (direct commits), `branch` (PRs). The order defines which workflow takes precedence. If empty, the repository is read-only                                                                                                                                                                                              |
+| `spec.commit.singleResourceMessageTemplate`  | Template for the commit messages of single-resource operations in the Grafana UI, such as saving, moving, or deleting a dashboard. Supports `{{action}}`, `{{resourceKind}}`, `{{resourceID}}`, `{{title}}`, `{{userName}}`, `{{userLogin}}`, and `{{userEmail}}`. If empty, Grafana uses a default message, for example `Save dashboard: <TITLE>` |
+| `spec.commit.enforceTemplate`                | Pre-fill the comment field in the save drawer from the commit message template and make it read-only (true/false)                                                                                                                                                                                                                                  |
+| `spec.commit.authorName`                     | Name used as the commit author instead of the user who made the change. Only valid if `spec.commit.signingMethod` isn't set                                                                                                                                                                                                                        |
+| `spec.commit.authorEmail`                    | Email used as the commit author instead of the user who made the change. Only valid if `spec.commit.signingMethod` isn't set                                                                                                                                                                                                                       |
+| `spec.commit.signingMethod`                  | Method used to sign commits with the key in `secure.commitSigningKey`: `gpg`, `ssh`, or `smime`. If empty, commits aren't signed                                                                                                                                                                                                                   |
+| `spec.commit.signerName`                     | Name of the commit signer. Must match the identity of the signing key for your Git provider to mark commits as verified. Defaults to `Grafana`                                                                                                                                                                                                     |
+| `spec.commit.signerEmail`                    | Email of the commit signer. Must match the identity of the signing key, and a verified email on the account where the matching public key is registered. Defaults to `noreply@grafana.com`                                                                                                                                                         |
+| `spec.commit.signerIsAuthor`                 | Use the signer identity (`signerName` and `signerEmail`) as the commit author (true/false)                                                                                                                                                                                                                                                         |
+| `spec.commit.smimeCertificate`               | PEM-encoded X.509 certificate paired with the signing key. Only used if `spec.commit.signingMethod` is `smime`                                                                                                                                                                                                                                     |
+| `spec.branch.nameTemplate`                   | Template for the names of branches created by the `branch` workflow. Supports `{{action}}`, `{{resourceKind}}`, `{{title}}`, `{{userLogin}}`, and `{{random}}`, a random 6-character string. Grafana converts the result to a valid branch name of up to 100 characters                                                                            |
+| `spec.branch.enforceTemplate`                | Make the branch name field in the save drawer read-only (true/false)                                                                                                                                                                                                                                                                               |
+| `spec.pullRequest.titleTemplate`             | Template for pull request titles. Supports the same variables as `spec.branch.nameTemplate`. If empty, Grafana uses the first line of the commit message                                                                                                                                                                                           |
+| `spec.pullRequest.enforceTemplate`           | Make the pull request title field in the save drawer read-only (true/false)                                                                                                                                                                                                                                                                        |
+| `spec.pullRequest.generateDashboardPreviews` | Generate dashboard preview images in pull requests (true/false). For all types except `github`                                                                                                                                                                                                                                                     |
+| `spec.webhook.baseUrl`                       | Base URL of your Grafana instance used to register webhooks with your Git provider, for example `https://grafana.example.com`. Overrides the auto-detected public URL of Grafana                                                                                                                                                                   |
+| `spec.webhook.disabled`                      | Disable webhooks for this repository (true/false). When `true`, Grafana polls the repository at the sync interval instead. Use it if Grafana isn't reachable from the public internet                                                                                                                                                              |
+| `secure.token.create`                        | Personal Access Token of your Git provider. Not needed if you use `spec.connection.name`                                                                                                                                                                                                                                                           |
+| `secure.commitSigningKey.create`             | Private key used to sign the commits Grafana writes to the repository. The format depends on `spec.commit.signingMethod`                                                                                                                                                                                                                           |
 
 ## Push the resources to Grafana
 
 Before pushing any resources, configure `gcx` with your Grafana instance details. Refer to the [Grafana CLI documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/) for setup instructions.
 
-Push the repository configuration. If you're using GitHub App to connect Git Sync, push the connection resource configuration file as well.
+Next, push the connection (if required) and repository configuration files:
 
 ```sh
 gcx resources push --path <DIRECTORY>
@@ -260,10 +341,10 @@ The `--path` parameter has to point to the directory containing your `repository
 
 After pushing, Grafana will:
 
-1. Create the required resources (repository and, for GitHub App, connection)
-1. Connect to your GitHub repository
-1. Pull dashboards from the specified path
-1. Begin syncing at the configured interval
+1. Create the required resources (repository and, for GitHub App or OAuth, connection).
+1. Connect to your GitHub repository.
+1. Pull dashboards from the specified path.
+1. Begin syncing at the configured interval.
 
 ## Manage repository resources
 
