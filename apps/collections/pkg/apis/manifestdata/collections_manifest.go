@@ -13,12 +13,13 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	v1alpha1 "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 )
 
 var (
-	rawSchemaStarsv1alpha1     = []byte(`{"Resource":{"additionalProperties":false,"properties":{"group":{"type":"string"},"kind":{"type":"string"},"names":{"description":"The set of resources\n+listType=set","items":{"type":"string"},"type":"array"}},"required":["group","kind","names"],"type":"object"},"Stars":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"resource":{"items":{"$ref":"#/components/schemas/Resource"},"type":"array"}},"required":["resource"],"type":"object"}}`)
+	rawSchemaStarsv1alpha1     = []byte(`{"Resource":{"additionalProperties":false,"properties":{"group":{"type":"string"},"kind":{"type":"string"},"names":{"description":"The set of resources\n+listType=set","items":{"type":"string"},"type":"array"}},"required":["group","kind","names"],"type":"object"},"Stars":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars":{"description":"Stars is the stored object returned by the update routes.","type":"object","required":["spec"],"properties":{"apiVersion":{"type":"string"},"kind":{"type":"string"},"metadata":{"type":"object"},"spec":{"type":"object","required":["resource"],"properties":{"resource":{"type":"array","items":{"type":"object","required":["group","kind","names"],"properties":{"group":{"type":"string"},"kind":{"type":"string"},"names":{"type":"array","items":{"type":"string"}}}}}}}}},"spec":{"additionalProperties":false,"properties":{"resource":{"items":{"$ref":"#/components/schemas/Resource"},"type":"array"}},"required":["resource"],"type":"object"}}`)
 	versionSchemaStarsv1alpha1 app.VersionSchema
 	_                          = json.Unmarshal(rawSchemaStarsv1alpha1, &versionSchemaStarsv1alpha1)
 )
@@ -34,10 +35,11 @@ var appManifestData = app.ManifestData{
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
-					Kind:       "Stars",
-					Plural:     "Stars",
-					Scope:      "Namespaced",
-					Conversion: false,
+					Kind:         "Stars",
+					Plural:       "Stars",
+					Scope:        "Namespaced",
+					Conversion:   false,
+					FolderScoped: func(b bool) *bool { return &b }(false),
 					Storage: &app.ManifestVersionKindStorage{
 						ListKeys: func(b bool) *bool { return &b }(false),
 					},
@@ -51,10 +53,38 @@ var appManifestData = app.ManifestData{
 								app.AdmissionOperationUpdate,
 							},
 						},
+						Mutation: &app.MutationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
 					},
 					Schema: &versionSchemaStarsv1alpha1,
+					Routes: func() map[string]spec3.PathProps {
+						var routes map[string]spec3.PathProps
+						if err := json.Unmarshal([]byte("{\"/update/{group}/{kind}/{id}\":{\"put\":{\"tags\":[\"Stars\"],\"description\":\"Add a starred item\",\"operationId\":\"addStar\",\"parameters\":[{\"name\":\"name\",\"in\":\"path\",\"description\":\"name of the Stars\",\"required\":true,\"schema\":{\"type\":\"string\",\"uniqueItems\":true}},{\"name\":\"namespace\",\"in\":\"path\",\"description\":\"object name and auth scope, such as for teams and projects\",\"required\":true,\"schema\":{\"type\":\"string\",\"uniqueItems\":true}},{\"name\":\"group\",\"in\":\"path\",\"description\":\"API group for stared item\",\"required\":true,\"schema\":{\"type\":\"string\"},\"example\":\"dashboard.grafana.app\"},{\"name\":\"kind\",\"in\":\"path\",\"description\":\"Kind for stared item\",\"required\":true,\"schema\":{\"type\":\"string\"},\"example\":\"Dashboard\"},{\"name\":\"id\",\"in\":\"path\",\"description\":\"The k8s name for the selected item\",\"required\":true,\"schema\":{\"type\":\"string\"}}],\"responses\":{\"200\":{\"description\":\"OK\",\"content\":{\"*/*\":{\"schema\":{\"$ref\":\"#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars\"}}}}}},\"delete\":{\"tags\":[\"Stars\"],\"description\":\"Remove a starred item\",\"operationId\":\"removeStar\",\"parameters\":[{\"name\":\"name\",\"in\":\"path\",\"description\":\"name of the Stars\",\"required\":true,\"schema\":{\"type\":\"string\",\"uniqueItems\":true}},{\"name\":\"namespace\",\"in\":\"path\",\"description\":\"object name and auth scope, such as for teams and projects\",\"required\":true,\"schema\":{\"type\":\"string\",\"uniqueItems\":true}},{\"name\":\"group\",\"in\":\"path\",\"description\":\"API group for stared item\",\"required\":true,\"schema\":{\"type\":\"string\"},\"example\":\"dashboard.grafana.app\"},{\"name\":\"kind\",\"in\":\"path\",\"description\":\"Kind for stared item\",\"required\":true,\"schema\":{\"type\":\"string\"},\"example\":\"Dashboard\"},{\"name\":\"id\",\"in\":\"path\",\"description\":\"The k8s name for the selected item\",\"required\":true,\"schema\":{\"type\":\"string\"}}],\"responses\":{\"200\":{\"description\":\"OK\",\"content\":{\"*/*\":{\"schema\":{\"$ref\":\"#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars\"}}}}}}}}"), &routes); err != nil {
+							panic(err)
+						}
+						return routes
+					}(),
 				},
 			},
+			// nolint:staticcheck
+			Routes: func() app.ManifestVersionRoutes {
+				var routes app.ManifestVersionRoutes
+				if err := json.Unmarshal([]byte("{\"schemas\":{\"com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars\":{\"description\":\"Stars is the stored object returned by the update routes.\",\"type\":\"object\",\"required\":[\"spec\"],\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"kind\":{\"type\":\"string\"},\"metadata\":{\"type\":\"object\"},\"spec\":{\"type\":\"object\",\"required\":[\"resource\"],\"properties\":{\"resource\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"group\",\"kind\",\"names\"],\"properties\":{\"group\":{\"type\":\"string\"},\"kind\":{\"type\":\"string\"},\"names\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}}}}}}}}}"), &routes); err != nil {
+					panic(err)
+				}
+				return routes
+			}(),
+			OpenAPI: func() app.ManifestVersionOpenAPI {
+				var openAPI app.ManifestVersionOpenAPI
+				if err := json.Unmarshal([]byte("{\"paths\":{\"/namespaces/{namespace}/stars/{name}/update/{group}/{kind}/{id}\":{\"put\":{\"tags\":[\"Stars\"],\"description\":\"Add a starred item\",\"operationId\":\"addStar\",\"parameters\":[{\"name\":\"name\",\"in\":\"path\",\"description\":\"name of the Stars\",\"required\":true,\"schema\":{\"type\":\"string\",\"uniqueItems\":true}},{\"name\":\"namespace\",\"in\":\"path\",\"description\":\"object name and auth scope, such as for teams and projects\",\"required\":true,\"schema\":{\"type\":\"string\",\"uniqueItems\":true}},{\"name\":\"group\",\"in\":\"path\",\"description\":\"API group for stared item\",\"required\":true,\"schema\":{\"type\":\"string\"},\"example\":\"dashboard.grafana.app\"},{\"name\":\"kind\",\"in\":\"path\",\"description\":\"Kind for stared item\",\"required\":true,\"schema\":{\"type\":\"string\"},\"example\":\"Dashboard\"},{\"name\":\"id\",\"in\":\"path\",\"description\":\"The k8s name for the selected item\",\"required\":true,\"schema\":{\"type\":\"string\"}}],\"responses\":{\"200\":{\"description\":\"OK\",\"content\":{\"*/*\":{\"schema\":{\"$ref\":\"#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars\"}}}}}},\"delete\":{\"tags\":[\"Stars\"],\"description\":\"Remove a starred item\",\"operationId\":\"removeStar\",\"parameters\":[{\"name\":\"name\",\"in\":\"path\",\"description\":\"name of the Stars\",\"required\":true,\"schema\":{\"type\":\"string\",\"uniqueItems\":true}},{\"name\":\"namespace\",\"in\":\"path\",\"description\":\"object name and auth scope, such as for teams and projects\",\"required\":true,\"schema\":{\"type\":\"string\",\"uniqueItems\":true}},{\"name\":\"group\",\"in\":\"path\",\"description\":\"API group for stared item\",\"required\":true,\"schema\":{\"type\":\"string\"},\"example\":\"dashboard.grafana.app\"},{\"name\":\"kind\",\"in\":\"path\",\"description\":\"Kind for stared item\",\"required\":true,\"schema\":{\"type\":\"string\"},\"example\":\"Dashboard\"},{\"name\":\"id\",\"in\":\"path\",\"description\":\"The k8s name for the selected item\",\"required\":true,\"schema\":{\"type\":\"string\"}}],\"responses\":{\"200\":{\"description\":\"OK\",\"content\":{\"*/*\":{\"schema\":{\"$ref\":\"#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars\"}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}},{\"name\":\"name\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]}},\"components\":{\"schemas\":{\"com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars\":{\"description\":\"Stars is the stored object returned by the update routes.\",\"type\":\"object\",\"required\":[\"spec\"],\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"kind\":{\"type\":\"string\"},\"metadata\":{\"type\":\"object\"},\"spec\":{\"type\":\"object\",\"required\":[\"resource\"],\"properties\":{\"resource\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"group\",\"kind\",\"names\"],\"properties\":{\"group\":{\"type\":\"string\"},\"kind\":{\"type\":\"string\"},\"names\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}}}}}}}}}}"), &openAPI); err != nil {
+					panic(err)
+				}
+				return openAPI
+			}(),
 		},
 	},
 }

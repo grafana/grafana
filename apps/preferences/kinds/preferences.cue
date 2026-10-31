@@ -43,6 +43,9 @@ preferencesV1alpha1: {
 	pluralName: "Preferences"
 	scope:      "Namespaced"
 
+	// Access is decided by the owner in the name, not by a folder.
+	folderScoped: false
+
 	// Generic read routes cannot apply the owner filtering used by normal list reads.
 	listKeys: false
 	search: {
@@ -64,6 +67,9 @@ preferencesV1: {
 	kind:       "Preferences"
 	pluralName: "Preferences"
 	scope:      "Namespaced"
+
+	// Access is decided by the owner in the name, not by a folder.
+	folderScoped: false
 
 	// Generic read routes cannot apply the owner filtering used by normal list reads.
 	listKeys: false
