@@ -1420,6 +1420,75 @@ describe('graphiteDatasource', () => {
     });
   });
 
+  describe('interpolateVariablesInQueries', () => {
+    const createDatasource = () =>
+      new GraphiteDatasource(instanceSettings, {
+        replace: (target?: string) => target?.replaceAll('$input', '10') ?? '',
+      } as TemplateSrv);
+
+    it('resolves references to other queries into targetFull, including hidden ones', () => {
+      const queries = createDatasource().interpolateVariablesInQueries(
+        [
+          { refId: 'A', target: 'metric.$input', hide: true },
+          { refId: 'B', target: 'sumSeries(#A)' },
+          { refId: 'C', target: 'asPercent(#A,#B)' },
+        ],
+        {}
+      );
+
+      expect(queries.map((q) => ({ target: q.target, targetFull: q.targetFull }))).toEqual([
+        { target: 'metric.10', targetFull: undefined },
+        { target: 'sumSeries(#A)', targetFull: 'sumSeries(metric.10)' },
+        { target: 'asPercent(#A,#B)', targetFull: 'asPercent(metric.10,sumSeries(metric.10))' },
+      ]);
+    });
+
+    it('keeps the saved targetFull when the referenced query is not passed in', () => {
+      const [query] = createDatasource().interpolateVariablesInQueries(
+        [{ refId: 'B', target: 'sumSeries(#A)', targetFull: 'sumSeries(metric.$input)' }],
+        {}
+      );
+
+      expect(query.targetFull).toBe('sumSeries(metric.10)');
+    });
+
+    it('keeps the saved targetFull when only some references resolve', () => {
+      const queries = createDatasource().interpolateVariablesInQueries(
+        [
+          { refId: 'A', target: 'metric.$input' },
+          { refId: 'C', target: 'asPercent(#A,#B)', targetFull: 'asPercent(metric.$input,sumSeries(metric.$input))' },
+        ],
+        {}
+      );
+
+      expect(queries[1].targetFull).toBe('asPercent(metric.10,sumSeries(metric.10))');
+    });
+
+    it('leaves a reference to an empty query unresolved', () => {
+      const [, query] = createDatasource().interpolateVariablesInQueries(
+        [
+          { refId: 'A', target: '' },
+          { refId: 'B', target: 'sumSeries(#A)' },
+        ],
+        {}
+      );
+
+      expect(query.targetFull).toBeUndefined();
+    });
+
+    it('does not set targetFull for circular references and does not loop', () => {
+      const queries = createDatasource().interpolateVariablesInQueries(
+        [
+          { refId: 'A', target: 'sumSeries(#B)' },
+          { refId: 'B', target: 'sumSeries(#A)' },
+        ],
+        {}
+      );
+
+      expect(queries.map((q) => q.targetFull)).toEqual([undefined, undefined]);
+    });
+  });
+
   describe('querying for template variables', () => {
     let results: MetricFindValue[];
     let requestOptions: BackendSrvRequest;

@@ -74,6 +74,24 @@ function convertGlobToRegEx(text: string): string {
   }
 }
 
+/**
+ * Replaces `#A` style references with the referenced query's target, recursively.
+ * Unknown references are left as they are. Expansion stops when a reference cycle is found.
+ */
+function expandSeriesReferences(
+  target: string,
+  targetsByRefId: Map<string, string>,
+  seen: ReadonlySet<string> = new Set()
+): string {
+  return target.replace(/#([A-Z])/g, (match: string, refId: string) => {
+    const referenced = targetsByRefId.get(refId);
+    if (referenced === undefined || seen.has(refId)) {
+      return match;
+    }
+    return expandSeriesReferences(referenced, targetsByRefId, new Set([...seen, refId]));
+  });
+}
+
 export class GraphiteDatasource
   extends DataSourceWithBackend<GraphiteQuery, GraphiteOptions>
   implements DataSourceWithQueryExportSupport<GraphiteQuery>
@@ -514,14 +532,27 @@ export class GraphiteDatasource
     return tags;
   }
 
+  // Callers such as SQL expressions send these queries straight to the backend, skipping `query()`.
+  // So `#A` references are resolved here too, from the other queries in the same call, into
+  // `targetFull`, which the backend prefers over `target`.
   interpolateVariablesInQueries(queries: GraphiteQuery[], scopedVars: ScopedVars): GraphiteQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
+      const targetsByRefId = new Map(
+        queries.flatMap((query) => (query.target ? [[query.refId, query.target] as const] : []))
+      );
       expandedQueries = queries.map((query) => {
+        const target = query.target ?? '';
+        const targetWithReferences = expandSeriesReferences(target, targetsByRefId);
+        // Keep the saved `targetFull` unless every reference resolved, so a partial expansion
+        // never replaces a complete one.
+        const isFullyResolved = targetWithReferences !== target && !/#[A-Z]/.test(targetWithReferences);
+        const targetFull = isFullyResolved ? targetWithReferences : query.targetFull;
         const expandedQuery = {
           ...query,
           datasource: this.getRef(),
-          target: this.templateSrv.replace(query.target ?? '', scopedVars),
+          target: this.templateSrv.replace(target, scopedVars),
+          ...(targetFull !== undefined && { targetFull: this.templateSrv.replace(targetFull, scopedVars) }),
         };
         return expandedQuery;
       });
