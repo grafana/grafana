@@ -10,7 +10,6 @@ import {
   type ActionModel,
   type FieldType,
   type DataFrameWithValue,
-  type FieldState,
 } from '@grafana/data';
 import { type CellRendererProps, type Column } from '@grafana/react-data-grid';
 import { type MatcherScope, type TableCellHeight } from '@grafana/schema';
@@ -402,8 +401,4 @@ export type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRo
 export interface FromFieldsResult {
   columns: TableColumn[];
   cellRootRenderers: Record<string, CellRootRenderer>;
-}
-
-export interface FooterFieldState extends FieldState {
-  lastProcessedRowCount: number;
 }
