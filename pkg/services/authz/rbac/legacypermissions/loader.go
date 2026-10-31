@@ -17,13 +17,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const cacheTTL = 60 * time.Second
+const cacheTTL = ac.PermissionCacheTTL
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions")
 
@@ -36,7 +37,7 @@ type loadSettings struct {
 
 // MigratedPermissions resolves only Zanzana grants, never legacy RBAC grants.
 type MigratedPermissions interface {
-	ResolveCurrentUserPermissions(context.Context, identity.Requester) ([]ac.Permission, error)
+	ResolveCurrentUserPermissions(context.Context, identity.Requester, bool) ([]ac.Permission, error)
 }
 
 type Loader struct {
@@ -49,6 +50,7 @@ type Loader struct {
 	openFeatureClient *openfeature.Client
 	license           licensing.Licensing
 	zanzana           MigratedPermissions
+	scopeResolver     legacyscopes.ScopeResolver
 	flight            singleflight.Group
 	log               log.Logger
 }
@@ -120,20 +122,23 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 	// Enterprise's unlicensed fallback has no Zanzana resolver. OSS itself
 	// still merges Zanzana grants even though enforcement is always disabled.
 	if l.zanzana == nil || (!settings.enforcementEnabled && l.license.Edition() != licensing.OpenSourceEdition) {
-		return permissions, nil
+		return legacyscopes.ResolveUserScopes(ctx, user, l.scopeResolver, permissions)
 	}
-	resolve := func() ([]ac.Permission, error) { return l.zanzana.ResolveCurrentUserPermissions(ctx, user) }
+	resolve := func() ([]ac.Permission, error) {
+		return l.zanzana.ResolveCurrentUserPermissions(ctx, user, options.ReloadCache)
+	}
 	var migrated []ac.Permission
-	if !cached || options.SkipZanzanaCache {
+	// Request-supplied memberships must be composed again; principal grants remain cacheable.
+	if !cached || options.SkipZanzanaCache || l.cfg.IDUseExternalGroupsForGroupsClaim {
 		migrated, err = resolve()
 	} else {
 		migrated, err = l.cached(ctx, ac.GetZanzanaUserPermissionCacheKey(user), options, resolve)
 	}
 	if err != nil {
 		l.log.Warn("could not get zanzana user permissions, using legacy only", "error", err)
-		return permissions, nil
+		return legacyscopes.ResolveUserScopes(ctx, user, l.scopeResolver, permissions)
 	}
-	return MergeUserPermissions(permissions, migrated), nil
+	return legacyscopes.ResolveUserScopes(ctx, user, l.scopeResolver, MergeUserPermissions(permissions, migrated))
 }
 
 func queryFor(orgID int64, p loadSettings) ac.GetUserPermissionsQuery {

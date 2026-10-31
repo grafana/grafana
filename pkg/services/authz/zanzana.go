@@ -76,7 +76,7 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Serv
 	case setting.ZanzanaModeEmbedded:
 		channel := &inprocgrpc.Channel{}
 		// Put * as a namespace so we can properly authorize request with in-proc mode
-		channel.WithServerUnaryInterceptor(grpcAuth.UnaryServerInterceptor(func(ctx context.Context) (context.Context, error) {
+		authenticate := func(ctx context.Context) (context.Context, error) {
 			ctx = types.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
 				Rest: authnlib.AccessTokenClaims{
 					Namespace: "*",
@@ -86,12 +86,14 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Serv
 				},
 			}))
 			return ctx, nil
-		}))
+		}
+		channel.WithServerUnaryInterceptor(grpcAuth.UnaryServerInterceptor(authenticate))
+		channel.WithServerStreamInterceptor(inProcessStreamInterceptor(grpcAuth.StreamServerInterceptor(authenticate)))
 
 		authzv1.RegisterAuthzServiceServer(channel, zanzanaServer)
 		authzextv1.RegisterAuthzExtentionServiceServer(channel, zanzanaServer)
 
-		client, err := zClient.New(channel, reg)
+		client, err := zClient.New(channel, reg, zClient.WithUserPermissionsTimeout(cfg.ZanzanaClient.CallTimeout))
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
 		}
@@ -399,7 +401,7 @@ func NewRemoteZanzanaClient(cfg ZanzanaClientConfig, reg prometheus.Registerer) 
 		return nil, fmt.Errorf("failed to create zanzana client to remote server: %w", err)
 	}
 
-	client, err := zClient.New(conn, reg)
+	client, err := zClient.New(conn, reg, zClient.WithUserPermissionsTimeout(cfg.CallTimeout))
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
 	}

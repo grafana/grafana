@@ -373,6 +373,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	_ "github.com/grafana/grafana/pkg/services/authz/zanzana"
 	_ "github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	_ "github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
 	_ "github.com/grafana/grafana/pkg/services/authz/zanzana/logger"
 	_ "github.com/grafana/grafana/pkg/services/authz/zanzana/server/reconciler"
 	_ "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
