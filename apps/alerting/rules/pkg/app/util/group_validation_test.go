@@ -74,11 +74,11 @@ func TestValidateGroupLabels(t *testing.T) {
 			wantErr:   true,
 		},
 		{
-			name:      "update cannot add group when previously ungrouped",
+			name:      "update can add group when previously ungrouped",
 			labels:    map[string]string{group: "g1", groupIdx: "0"},
 			oldLabels: map[string]string{},
 			action:    resource.AdmissionActionUpdate,
-			wantErr:   true,
+			wantErr:   false,
 		},
 		{
 			name:      "update allowed when previously grouped",
