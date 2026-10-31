@@ -20,7 +20,11 @@ import {
 import { appEvents } from 'app/core/app_events';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { SaveProvisionedResourceDrawer } from 'app/features/provisioning/components/Shared/SaveProvisionedResourceDrawer';
-import { isManagedByRepository, isManagedResourceReadOnly } from 'app/features/provisioning/utils/managedResource';
+import {
+  isManagedByRepository,
+  isManagedResourceReadOnly,
+  type ManagedResource,
+} from 'app/features/provisioning/utils/managedResource';
 import { type DataSourceSettingsState } from 'app/types/datasources';
 import { useDispatch } from 'app/types/store';
 
@@ -28,7 +32,7 @@ import { useRetryDatasourceAdvisorCheck } from '../../connections/hooks/useDatas
 import {
   convertLegacyDatasourceSettingsToK8sDatasourceSettings,
   DATASOURCE_K8S_VERSION,
-  type DataSourceSettingsK8s,
+  getDataSourceK8sResourceByUid,
 } from '../api';
 import {
   useDataSource,
@@ -221,7 +225,7 @@ export function EditDataSourceView({
       }
 
       if (isRepositoryManaged && managedResource) {
-        setProvisionedDataSource(toProvisionedDataSource(dataSource, managedResource));
+        setProvisionedDataSource(await toProvisionedDataSource(dataSource, managedResource));
         return;
       }
 
@@ -353,21 +357,24 @@ export function EditDataSourceView({
  * DataSource, keeping the stored object's annotations (which resolve the repository and the file
  * path) and its secure-value references, since the form only ever holds newly entered secrets.
  */
-function toProvisionedDataSource(
+async function toProvisionedDataSource(
   dataSource: DataSourceSettingsType,
-  managedResource: DataSourceSettingsK8s
-): ProvisionedDataSource {
+  managedResource: ManagedResource
+): Promise<ProvisionedDataSource> {
   const converted = convertLegacyDatasourceSettingsToK8sDatasourceSettings(
     dataSource,
     config.namespace,
     DATASOURCE_K8S_VERSION
   );
+  // The secure-value references are not on the connection, so read the stored object for them. Only
+  // on the way into the drawer, which is the only thing that needs them.
+  const stored = await getDataSourceK8sResourceByUid(dataSource.uid, config.namespace).catch(() => undefined);
   return {
     apiVersion: converted.apiVersion,
     kind: converted.kind,
-    metadata: { name: dataSource.uid, annotations: managedResource.metadata.annotations },
+    metadata: { name: dataSource.uid, annotations: managedResource.metadata?.annotations },
     spec: { ...converted.spec },
-    ...(managedResource.secure ? { secure: managedResource.secure } : {}),
+    ...(stored?.secure ? { secure: stored.secure } : {}),
   };
 }
 

@@ -54,6 +54,31 @@ const allDatasources = "datasources:*"
 func TestUnifiedConnections_ListConnections(t *testing.T) {
 	readAll := map[string][]string{datasources.ActionRead: {allDatasources}}
 
+	// The manager annotations ride along so a caller can tell a provisioned data source apart without
+	// a per-type read, which below dual-writer mode 4 returns the legacy row and loses them.
+	t.Run("carries the stored annotations", func(t *testing.T) {
+		client := resource.NewMockResourceClient(t)
+		raw, err := json.Marshal(map[string]any{
+			"metadata": map[string]any{
+				"name":        "prom-uid",
+				"labels":      map[string]string{datasourceV0.LabelKeyGroup: "prometheus"},
+				"annotations": map[string]string{"grafana.app/managedBy": "repo", "grafana.app/managerId": "my-repo"},
+			},
+			"spec": map[string]any{"title": "Prom"},
+		})
+		require.NoError(t, err)
+		client.EXPECT().List(mock.Anything, mock.Anything).
+			Return(listResponse(&resourcepb.ResourceWrapper{Value: raw}), nil).Once()
+
+		list, err := ProvideUnifiedConnections(client, actest.FakeAccessControl{ExpectedEvaluate: true}).
+			ListConnections(withUser(t, readAll), datasourceV0.DataSourceConnectionQuery{Namespace: "default"})
+		require.NoError(t, err)
+		require.Equal(t, map[string]string{
+			"grafana.app/managedBy": "repo",
+			"grafana.app/managerId": "my-repo",
+		}, list.Items[0].Annotations)
+	})
+
 	t.Run("reports the group each plugin serves, read from the shared label", func(t *testing.T) {
 		client := resource.NewMockResourceClient(t)
 		client.EXPECT().List(mock.Anything, mock.Anything).Return(listResponse(

@@ -131,12 +131,13 @@ func (c *unifiedConnections) ListConnections(ctx context.Context, query datasour
 			return nil
 		}
 		result.Items = append(result.Items, datasourceV0.DataSourceConnection{
-			Title:      ds.Spec.Title(),
-			Name:       ds.Name,
-			APIGroup:   group,
-			APIVersion: datasourceV0.VERSION,
-			Plugin:     plugin,
-			Labels:     reportableLabels(ds.Labels),
+			Title:       ds.Spec.Title(),
+			Name:        ds.Name,
+			APIGroup:    group,
+			APIVersion:  datasourceV0.VERSION,
+			Plugin:      plugin,
+			Labels:      reportableLabels(ds.Labels),
+			Annotations: ds.Annotations,
 		})
 		return nil
 	})
