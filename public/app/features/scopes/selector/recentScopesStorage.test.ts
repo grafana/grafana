@@ -1,9 +1,10 @@
-import { type Scope, type Store } from '@grafana/data';
+import { type Scope, Store } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import {
   RECENT_SCOPES_CHANGED_EVENT,
   RECENT_SCOPES_MAX,
+  getRecentScopesKey,
   readStoredRecentScopes,
   writeRecentScope,
   type StoredRecentScopeSet,
@@ -106,6 +107,12 @@ describe('readStoredRecentScopes', () => {
 });
 
 describe('writeRecentScope', () => {
+  afterEach(() => {
+    config.bootData.user.id = 1;
+    config.bootData.user.orgId = 1;
+    window.localStorage.clear();
+  });
+
   const dispatchEventSpy = jest.spyOn(window, 'dispatchEvent').mockImplementation(() => true);
 
   beforeEach(() => {
@@ -172,13 +179,7 @@ describe('writeRecentScope', () => {
   });
 
   it('does not return recent scopes stored by another user', () => {
-    const values: Record<string, string> = {};
-    const store = {
-      get: (key: string) => values[key],
-      set: (key: string, value: string) => {
-        values[key] = value;
-      },
-    } as unknown as Store;
+    const store = new Store();
 
     writeRecentScope(store, [makeScope('scope-a')]);
     config.bootData.user.id = 2;
@@ -186,6 +187,13 @@ describe('writeRecentScope', () => {
 
     config.bootData.user.id = 1;
     expect(readStoredRecentScopes(store)).toHaveLength(1);
+  });
+
+  it('builds the key from the org id and user id', () => {
+    expect(getRecentScopesKey()).toBe('grafana.scopes.recent.1.1');
+
+    config.bootData.user.orgId = 2;
+    expect(getRecentScopesKey()).toBe('grafana.scopes.recent.2.1');
   });
 
   it('silently does nothing when store.set throws (e.g. sandboxed iframe)', () => {
@@ -225,6 +233,7 @@ describe('writeRecentScope', () => {
       writeRecentScope(mockStore, [makeScope('scope-new')]);
 
       expect(mockStore.set).toHaveBeenCalledTimes(2);
+      expect((mockStore.set as jest.Mock).mock.calls[1][0]).toBe(getRecentScopesKey());
       // Second call should have one fewer entry (oldest dropped)
       const retryStored = JSON.parse((mockStore.set as jest.Mock).mock.calls[1][1]);
       expect(retryStored).toHaveLength(2); // new + scope-0 (scope-1 dropped as oldest)

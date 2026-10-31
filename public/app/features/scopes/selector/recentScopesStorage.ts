@@ -1,7 +1,7 @@
 import { type Scope, type Store } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-export const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
+const RECENT_SCOPES_KEY_PREFIX = 'grafana.scopes.recent';
 export const RECENT_SCOPES_CHANGED_EVENT = 'grafana.scopes.recent-changed';
 export const RECENT_SCOPES_MAX = 4;
 
@@ -13,7 +13,7 @@ export interface StoredRecentScopeSet {
 
 // Storage survives logout and org switches, so each user and org gets its own key.
 export function getRecentScopesKey(): string {
-  return `${RECENT_SCOPES_KEY}.${config.bootData.user.orgId}.${config.bootData.user.id}`;
+  return `${RECENT_SCOPES_KEY_PREFIX}.${config.bootData.user.orgId}.${config.bootData.user.id}`;
 }
 
 export function readStoredRecentScopes(store: Store): StoredRecentScopeSet[] {
