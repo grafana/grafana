@@ -36,6 +36,7 @@ replace (
 	github.com/grafana/grafana/pkg/infra/metrics => ./pkg/infra/metrics
 	github.com/grafana/grafana/pkg/infra/tracing => ./pkg/infra/tracing
 	github.com/grafana/grafana/pkg/plugins => ./pkg/plugins
+	github.com/grafana/grafana/pkg/storage/dbproxy => ./pkg/storage/dbproxy
 	github.com/grafana/grafana/pkg/storage/unified/apistore => ./pkg/storage/unified/apistore
 	github.com/grafana/grafana/pkg/storage/unified/resource/kv => ./pkg/storage/unified/resource/kv
 	github.com/grafana/grafana/pkg/storage/unified/resourceclient => ./pkg/storage/unified/resourceclient
@@ -176,6 +177,7 @@ require (
 	github.com/grafana/grafana/pkg/infra/metrics v0.0.0 // @grafana/grafana-backend-services-squad
 	github.com/grafana/grafana/pkg/infra/tracing v0.0.0 // @grafana/grafana-backend-services-squad
 	github.com/grafana/grafana/pkg/plugins v0.0.0 // @grafana/grafana-catalog
+	github.com/grafana/grafana/pkg/storage/dbproxy v0.0.0 // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0 // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/pkg/storage/unified/resource/kv v0.0.0 // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/pkg/storage/unified/resourceclient v0.0.0 // @grafana/grafana-search-and-storage

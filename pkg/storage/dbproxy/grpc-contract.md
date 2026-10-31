@@ -220,7 +220,7 @@ Callers must use only the supported operations.
 
 ## Packages and releases
 
-The V1 API is published in the module `github.com/grafana/grafana/pkg/storage/dbproxy`.
+The API, client, and SQL driver share the module `github.com/grafana/grafana/pkg/storage/dbproxy`.
 Consumers pin a public module version independently of the proxy server image.
 
 ## Compatible upgrades and rollback
@@ -263,4 +263,4 @@ make proto-breaking PROTO_BASE=/path/to/baseline/proto
 Skip that comparison until a baseline exists for this module.
 Commit changes to the schema and generated API together.
 
-Next, import the [generated Go API](api/dbproxy/v1) to build a client or server for this contract.
+Next, use the [Go SQL driver guide](sql-driver.md) to open a pool and check complete results.
