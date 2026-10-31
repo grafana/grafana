@@ -3365,6 +3365,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.preserveDashboardLoginTabTitle",
+        "resourceVersion": "1792406798478",
+        "creationTimestamp": "2026-10-19T10:46:38Z"
+      },
+      "spec": {
+        "description": "Preserves dashboard names in login tab titles when grafana.preserveLoginTabTitle is enabled",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.preserveLoginTabTitle",
         "resourceVersion": "1791187415500",
         "creationTimestamp": "2026-10-05T08:03:35Z"

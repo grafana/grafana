@@ -236,6 +236,8 @@ export const FlagKeys = {
   GrafanaPluginExtensionReactElementProps: "grafana.pluginExtensionReactElementProps",
   /** Nest app plugin navigation items in the mega menu based on their URL path hierarchy */
   GrafanaPluginPathNesting: "grafana.pluginPathNesting",
+  /** Preserves dashboard names in login tab titles when grafana.preserveLoginTabTitle is enabled */
+  GrafanaPreserveDashboardLoginTabTitle: "grafana.preserveDashboardLoginTabTitle",
   /** Preserves the navigation section label in the browser tab title after session expiry */
   GrafanaPreserveLoginTabTitle: "grafana.preserveLoginTabTitle",
   /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
@@ -1623,6 +1625,17 @@ export const useFlagGrafanaPluginExtensionReactElementProps = (options?: ReactFl
  */
 export const useFlagGrafanaPluginPathNesting = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.pluginPathNesting", false, options).value;
+};
+
+/**
+ * Preserves dashboard names in login tab titles when grafana.preserveLoginTabTitle is enabled
+ *
+ * **Details:**
+ * - flag key: `grafana.preserveDashboardLoginTabTitle`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPreserveDashboardLoginTabTitle = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.preserveDashboardLoginTabTitle", false, options).value;
 };
 
 /**

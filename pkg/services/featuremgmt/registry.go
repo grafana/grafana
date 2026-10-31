@@ -3025,6 +3025,14 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:        "grafana.preserveDashboardLoginTabTitle",
+			Description: "Preserves dashboard names in login tab titles when grafana.preserveLoginTabTitle is enabled",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "grafana.preserveLoginTabTitle",
 			Description: "Preserves the navigation section label in the browser tab title after session expiry",
 			Stage:       FeatureStageExperimental,
