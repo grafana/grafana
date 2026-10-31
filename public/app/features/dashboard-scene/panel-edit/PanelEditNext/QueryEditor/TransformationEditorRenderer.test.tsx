@@ -1,8 +1,15 @@
 import { render, screen } from '@testing-library/react';
 
-import { type DataTransformerInfo, type TransformerRegistryItem } from '@grafana/data';
+import {
+  type DataTransformerInfo,
+  getDefaultTimeRange,
+  LoadingState,
+  type TransformerRegistryItem,
+} from '@grafana/data';
+import { DataTopic } from '@grafana/schema';
 
 import { TransformationEditorPanel, TransformationEditorRenderer } from './TransformationEditorRenderer';
+import { useTransformationInputData } from './hooks/useTransformationInputData';
 import { renderWithQueryEditorProvider } from './testUtils';
 import { type Transformation } from './types';
 
@@ -89,6 +96,29 @@ function panel(transformation: Transformation) {
 describe('TransformationEditorRenderer', () => {
   afterEach(() => {
     debugDisplayThrows = false;
+  });
+
+  it.each([
+    [undefined, 'series'],
+    [DataTopic.Series, 'series'],
+    [DataTopic.Annotations, 'annotations'],
+  ])('feeds the editor the right frames for topic %s (%s)', (topic, frames) => {
+    const series = [{ name: 'series', fields: [], length: 0 }];
+    const annotations = [{ name: 'annotations', fields: [], length: 0 }];
+    const transformation = makeTransformation(mockRegistryItem);
+
+    render(
+      <TransformationEditorPanel
+        transformation={{ ...transformation, transformConfig: { ...transformation.transformConfig, topic } }}
+        transformations={[transformation]}
+        data={{ state: LoadingState.Done, series, annotations, timeRange: getDefaultTimeRange() }}
+        updateTransformation={jest.fn()}
+      />
+    );
+
+    expect(jest.mocked(useTransformationInputData)).toHaveBeenLastCalledWith(
+      expect.objectContaining({ rawData: frames === 'annotations' ? annotations : series })
+    );
   });
 
   it('lets a supplemental display recover when another transformation is selected', () => {
