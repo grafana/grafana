@@ -1,0 +1,88 @@
+{
+  "name": "Catppuccin Macchiato",
+  "id": "catppuccin_macchiato",
+  "colors": {
+    "mode": "dark",
+    "text": {
+      "primary": "#cad3f5",
+      "secondary": "#b8c0e0",
+      "disabled": "#8087a2",
+      "link": "#c6a0f6",
+      "maxContrast": "#cad3f5"
+    },
+    "border": {
+      "weak": "#363a4f",
+      "medium": "#494d64",
+      "strong": "#5b6078"
+    },
+    "primary": {
+      "main": "#c6a0f6",
+      "text": "#c6a0f6",
+      "contrastText": "#181926"
+    },
+    "accent": {
+      "main": "#c6a0f6",
+      "text": "#c6a0f6",
+      "contrastText": "#181926"
+    },
+    "secondary": {
+      "main": "#363a4f",
+      "text": "#cad3f5",
+      "contrastText": "#cad3f5",
+      "border": "#494d64"
+    },
+    "tertiary": {
+      "main": "#b7bdf8",
+      "text": "#b7bdf8",
+      "contrastText": "#181926"
+    },
+    "info": {
+      "main": "#8aadf4",
+      "text": "#8aadf4",
+      "contrastText": "#181926"
+    },
+    "error": {
+      "main": "#ed8796",
+      "text": "#ed8796",
+      "contrastText": "#181926"
+    },
+    "success": {
+      "main": "#a6da95",
+      "text": "#a6da95",
+      "contrastText": "#181926"
+    },
+    "warning": {
+      "main": "#eed49f",
+      "text": "#eed49f",
+      "contrastText": "#181926"
+    },
+    "background": {
+      "canvas": "#181926",
+      "page": "#1e2030",
+      "primary": "#24273a",
+      "secondary": "#363a4f",
+      "elevated": "#363a4f"
+    },
+    "action": {
+      "hover": "rgba(202, 211, 245, 0.1)",
+      "selected": "#494d64",
+      "selectedBorder": "#c6a0f6",
+      "focus": "#494d64",
+      "disabledBackground": "#363a4f",
+      "disabledText": "#8087a2"
+    },
+    "scrollbar": "#6e738d",
+    "gradients": {
+      "brandHorizontal": "linear-gradient(90deg, #c6a0f6 0%, #c6a0f6 100%)",
+      "brandVertical": "linear-gradient(0deg, #c6a0f6 0%, #c6a0f6 100%)"
+    }
+  },
+  "visualization": {
+    "hues": [
+      {
+        "name": "green",
+        "shades": [{ "name": "semi-dark-green", "color": "#8bd5ca" }]
+      }
+    ]
+  }
+}
