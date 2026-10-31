@@ -520,6 +520,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/advisor.spec.ts @grafana/grafana-catalog
 /e2e-playwright/various-suite/bar-gauge.spec.ts @grafana/dataviz-squad
 /e2e-playwright/various-suite/bookmarks.spec.ts @grafana/grafana-frontend-navigation
+/e2e-playwright/various-suite/explore-query-inspector-tableng.spec.ts @grafana/dataviz-squad
 /e2e-playwright/various-suite/explore.spec.ts @grafana/datapro
 /e2e-playwright/various-suite/filter-annotations.spec.ts @grafana/dashboards-squad
 /e2e-playwright/various-suite/frontend-sandbox-app.spec.ts @grafana/grafana-frontend-platform
