@@ -44,6 +44,12 @@ type DataSourceConnection struct {
 	Plugin string `json:"plugin,omitempty"`
 
 	Labels map[string]string `json:"labels,omitempty"`
+
+	// Annotations carries the stored object's annotations, so a caller can tell which system
+	// manages the data source without a second read. This is the only place that survives every
+	// dual-writer mode: the per-type read goes through the dual writer, which returns the legacy
+	// row below mode 4, and the legacy table has no column for them.
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 func (DataSourceConnection) OpenAPIModelName() string {

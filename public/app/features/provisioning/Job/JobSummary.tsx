@@ -1,8 +1,8 @@
 import { t } from '@grafana/i18n';
-import { Icon, InteractiveTable, Stack } from '@grafana/ui';
+import { Icon, InteractiveTable, Stack, Text } from '@grafana/ui';
 import { type JobResourceSummary } from 'app/api/clients/provisioning/v0alpha1';
 
-import { getKindInfoByGroupKind } from '../utils/resourceKinds';
+import { getKindInfoByGroupKind, getSharedGroupMember } from '../utils/resourceKinds';
 
 type SummaryCell = {
   row: {
@@ -17,10 +17,18 @@ const getSummaryColumns = () => [
     cell: ({ row: { original: item } }: SummaryCell) => {
       const info = getKindInfoByGroupKind(item.group, item.kind);
       const kind = item.kind || t('provisioning.job-summary.unknown-kind', 'Unknown');
+      // One row per group, and several groups can serve one kind: every data source plugin serves
+      // its own. Name the plugin so those rows are not all just "DataSource".
+      const member = info && getSharedGroupMember(info, item.group);
       return (
         <Stack direction="row" alignItems="center" gap={1}>
           <Icon name={info?.icon ?? 'question-circle'} />
           <span>{kind}</span>
+          {member && (
+            <Text variant="bodySmall" color="secondary">
+              {member}
+            </Text>
+          )}
         </Stack>
       );
     },

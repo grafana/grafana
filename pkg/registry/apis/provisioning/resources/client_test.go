@@ -178,3 +178,59 @@ func TestSingleAPIClients_PropagatesTraceContext(t *testing.T) {
 	assert.Contains(t, gotTraceparent, span.SpanContext().TraceID().String(),
 		"traceparent should carry the active span's trace id")
 }
+
+func TestExpandResourceGroups(t *testing.T) {
+	members := map[string][]string{
+		"datasource.grafana.app": {"prometheus", "loki"},
+	}
+
+	t.Run("expands a collection into one entry per member", func(t *testing.T) {
+		collections, err := ParseSupportedResources([]string{"datasource.grafana.app/DataSource"})
+		require.NoError(t, err)
+
+		expanded, err := ExpandResourceGroups(collections, members)
+		require.NoError(t, err)
+		require.Equal(t, []schema.GroupKind{
+			{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
+			{Group: "loki.datasource.grafana.app", Kind: "DataSource"},
+		}, groupKinds(expanded))
+	})
+
+	t.Run("carries the collection's capabilities onto every member", func(t *testing.T) {
+		collections, err := ParseSupportedResources([]string{"datasource.grafana.app/DataSource:disabled"})
+		require.NoError(t, err)
+
+		expanded, err := ExpandResourceGroups(collections, members)
+		require.NoError(t, err)
+		require.Len(t, expanded, 2)
+		for _, r := range expanded {
+			require.False(t, r.IsActive(), "member of a disabled collection stays disabled")
+		}
+	})
+
+	// A typo would otherwise expand to nothing and silently provision no resources of that kind.
+	t.Run("rejects a group that is not a known collection", func(t *testing.T) {
+		collections, err := ParseSupportedResources([]string{"playlist.grafana.app/Playlist"})
+		require.NoError(t, err)
+
+		_, err = ExpandResourceGroups(collections, members)
+		require.ErrorContains(t, err, "not a known storage collection")
+	})
+
+	t.Run("a collection with no installed members expands to nothing", func(t *testing.T) {
+		collections, err := ParseSupportedResources([]string{"datasource.grafana.app/DataSource"})
+		require.NoError(t, err)
+
+		expanded, err := ExpandResourceGroups(collections, map[string][]string{"datasource.grafana.app": nil})
+		require.NoError(t, err)
+		require.Empty(t, expanded)
+	})
+}
+
+func groupKinds(rs []SupportedResource) []schema.GroupKind {
+	out := make([]schema.GroupKind, 0, len(rs))
+	for _, r := range rs {
+		out = append(out, r.GroupKind)
+	}
+	return out
+}

@@ -99,3 +99,48 @@ func (tc resourceErrorCase) assertError(t *testing.T, err error) {
 	require.True(t, ok)
 	require.Equal(t, tc.want, apiStatus.Status())
 }
+
+func TestResourceListerFromSearch_ListGroup(t *testing.T) {
+	tests := []struct {
+		name        string
+		keyGroup    string
+		servedGroup string
+		want        string
+	}{
+		{
+			name:     "key group is served",
+			keyGroup: "dashboard.grafana.app",
+			want:     "dashboard.grafana.app",
+		},
+		{
+			name:        "shared collection reports the served group",
+			keyGroup:    "datasource.grafana.app",
+			servedGroup: "grafana-testdata-datasource.datasource.grafana.app",
+			want:        "grafana-testdata-datasource.datasource.grafana.app",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := resource.NewMockResourceClient(t)
+			store.EXPECT().ListManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.ListManagedObjectsResponse{
+				Items: []*resourcepb.ListManagedObjectsResponse_Item{{
+					Object: &resourcepb.ResourceKey{
+						Namespace: "default",
+						Group:     tt.keyGroup,
+						Resource:  "things",
+						Name:      "thing-0",
+					},
+					Path:        "thing-0.json",
+					ServedGroup: tt.servedGroup,
+				}},
+			}, nil).Once()
+
+			got, err := NewResourceLister(store).List(context.Background(), "default", "repo")
+			require.NoError(t, err)
+			require.Len(t, got.Items, 1)
+			require.Equal(t, tt.want, got.Items[0].Group)
+			require.Equal(t, "things", got.Items[0].Resource)
+			require.Equal(t, "thing-0", got.Items[0].Name)
+		})
+	}
+}

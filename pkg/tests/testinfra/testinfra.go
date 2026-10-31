@@ -860,6 +860,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("resources", strings.Join(opts.ProvisioningResources, ", "))
 		require.NoError(t, err)
 	}
+	if len(opts.ProvisioningResourceGroups) > 0 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("resource_groups", strings.Join(opts.ProvisioningResourceGroups, ", "))
+		require.NoError(t, err)
+	}
 	if opts.ProvisioningAllowInsecure {
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
@@ -1170,6 +1176,7 @@ type GrafanaOpts struct {
 	ProvisioningRepositoryTypes           []string
 	ProvisioningConnectionTypes           []string
 	ProvisioningResources                 []string
+	ProvisioningResourceGroups            []string
 	ProvisioningMaxResourcesPerRepository int64
 	ProvisioningMaxRepositories           int64
 	ProvisioningMaxIncrementalChanges     *int

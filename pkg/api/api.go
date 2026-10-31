@@ -395,7 +395,7 @@ func (hs *HTTPServer) registerRoutes() {
 			idScope := datasources.ScopeProvider.GetResourceScope(ac.Parameter(":id"))
 			uidScope := datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":uid"))
 			nameScope := datasources.ScopeProvider.GetResourceScopeName(ac.Parameter(":name"))
-			datasourceRoute.Get("/", authorize(ac.EvalPermission(datasources.ActionRead)), routing.Wrap(hs.GetDataSources))
+			datasourceRoute.Get("/", authorize(ac.EvalPermission(datasources.ActionRead)), hs.getK8sDataSourcesHandler())
 			datasourceRoute.Post("/", authorize(ac.EvalPermission(datasources.ActionCreate)), quota(string(datasources.QuotaTargetSrv)), routing.Wrap(hs.AddDataSource))
 			datasourceRoute.Put("/uid/:uid", authorize(ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(hs.UpdateDataSourceByUID))
 			datasourceRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(datasources.ActionDelete, uidScope)), routing.Wrap(hs.DeleteDataSourceByUID))

@@ -195,7 +195,11 @@ type Cfg struct {
 	ProvisioningAllowedTargets []string
 	// ProvisioningResources is the configured set of provisionable resources, each as a
 	// "<group>/<Kind>[:cap...]" token (parsed by resources.ParseSupportedResources at startup).
-	ProvisioningResources                     []string
+	ProvisioningResources []string
+	// ProvisioningResourceGroups names storage collections whose members are provisionable,
+	// in the same token grammar. Each is expanded at startup into one entry per API group served
+	// inside the collection, so an operator does not enumerate every plugin by hand.
+	ProvisioningResourceGroups                []string
 	ProvisioningAllowImageRendering           bool
 	ProvisioningAllowInsecure                 bool // allow http:// repository URLs together with a token (cleartext credentials); local/dev only
 	ProvisioningMinSyncInterval               time.Duration
@@ -2661,6 +2665,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	if len(cfg.ProvisioningResources) == 0 {
 		cfg.ProvisioningResources = defaultProvisioningResources()
 	}
+	cfg.ProvisioningResourceGroups = iniFile.Section("provisioning").Key("resource_groups").Strings(",")
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
 	cfg.ProvisioningAllowInsecure = iniFile.Section("provisioning").Key("allow_insecure").MustBool(false)
 	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)

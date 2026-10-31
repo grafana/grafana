@@ -1,5 +1,5 @@
 import { type AnyAction } from '@reduxjs/toolkit';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 
 import {
@@ -11,13 +11,29 @@ import {
   type PluginExtensionDataSourceConfigContext,
   DataSourceUpdatedSuccessfully,
 } from '@grafana/data';
-import { usePluginComponents, type UsePluginComponentsResult, useDataSourceInstanceSettings } from '@grafana/runtime';
+import {
+  config,
+  usePluginComponents,
+  type UsePluginComponentsResult,
+  useDataSourceInstanceSettings,
+} from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { SaveProvisionedResourceDrawer } from 'app/features/provisioning/components/Shared/SaveProvisionedResourceDrawer';
+import {
+  isManagedByRepository,
+  isManagedResourceReadOnly,
+  type ManagedResource,
+} from 'app/features/provisioning/utils/managedResource';
 import { type DataSourceSettingsState } from 'app/types/datasources';
 import { useDispatch } from 'app/types/store';
 
 import { useRetryDatasourceAdvisorCheck } from '../../connections/hooks/useDatasourceAdvisorChecks';
+import {
+  convertLegacyDatasourceSettingsToK8sDatasourceSettings,
+  DATASOURCE_K8S_VERSION,
+  getDataSourceK8sResourceByUid,
+} from '../api';
 import {
   useDataSource,
   useDataSourceExploreUrl,
@@ -41,17 +57,29 @@ import { DataSourceMissingRightsMessage } from './DataSourceMissingRightsMessage
 import { DataSourcePluginConfigPage } from './DataSourcePluginConfigPage';
 import { DataSourcePluginSettings } from './DataSourcePluginSettings';
 import { DataSourcePluginState } from './DataSourcePluginState';
-import { DataSourceReadOnlyMessage } from './DataSourceReadOnlyMessage';
+import { DataSourceManagedReadOnlyMessage, DataSourceReadOnlyMessage } from './DataSourceReadOnlyMessage';
 import { DataSourceTestingStatus } from './DataSourceTestingStatus';
+import { type DataSourceProvisioning } from './useDataSourceProvisioning';
+
+/** Shape the provisioning save drawer commits. Built by {@link toProvisionedDataSource}. */
+type ProvisionedDataSource = {
+  apiVersion: string;
+  kind: string;
+  metadata: { name: string; annotations?: Record<string, string> };
+  spec: Record<string, unknown>;
+  secure?: Record<string, Record<string, string>>;
+};
 
 export type Props = {
   // The ID of the data source
   uid: string;
   // The ID of the custom datasource setting page
   pageId?: string | null;
+  // Provisioning state of this data source, read once by the page that owns the header badge
+  provisioning?: DataSourceProvisioning;
 };
 
-export function EditDataSource({ uid, pageId }: Props) {
+export function EditDataSource({ uid, pageId, provisioning }: Props) {
   useInitDataSourceSettings(uid);
 
   const dispatch = useDispatch();
@@ -69,6 +97,7 @@ export function EditDataSource({ uid, pageId }: Props) {
     <EditDataSourceView
       pageId={pageId}
       dataSource={dataSource}
+      provisioning={provisioning}
       dataSourceMeta={dataSourceMeta}
       dataSourceSettings={dataSourceSettings}
       dataSourceRights={dataSourceRights}
@@ -84,6 +113,8 @@ export function EditDataSource({ uid, pageId }: Props) {
 export type ViewProps = {
   pageId?: string | null;
   dataSource: DataSourceSettingsType;
+  /** Provisioning state of this data source; omit it to render the page with no provisioning surfaces. */
+  provisioning?: DataSourceProvisioning;
   dataSourceMeta: DataSourcePluginMeta;
   dataSourceSettings: DataSourceSettingsState;
   dataSourceRights: DataSourceRights;
@@ -97,6 +128,7 @@ export type ViewProps = {
 export function EditDataSourceView({
   pageId,
   dataSource,
+  provisioning,
   dataSourceMeta,
   dataSourceSettings,
   dataSourceRights,
@@ -107,8 +139,14 @@ export function EditDataSourceView({
   onUpdate,
 }: ViewProps) {
   const dispatch = useDispatch();
+  const [provisionedDataSource, setProvisionedDataSource] = useState<ProvisionedDataSource | undefined>();
   const { plugin, loadError, testingStatus, loading } = dataSourceSettings;
   const { readOnly, hasWriteRights, hasDeleteRights } = dataSourceRights;
+  const managedResource = provisioning?.resource;
+  // Repository-managed data sources are committed to git through the save drawer; every other
+  // manager that does not allow edits makes the page read-only, as it does for dashboards.
+  const isRepositoryManaged = Boolean(managedResource && isManagedByRepository(managedResource));
+  const isManagerReadOnly = Boolean(managedResource && isManagedResourceReadOnly(managedResource));
   const hasDataSource = dataSource.id > 0 && dataSource.uid;
   const { components, isLoading } = useDataSourceConfigPluginExtensions();
   const { settings: instanceSettings, isLoading: isLoadingInstanceSettings } = useDataSourceInstanceSettings(
@@ -186,6 +224,11 @@ export function EditDataSourceView({
         return;
       }
 
+      if (isRepositoryManaged && managedResource) {
+        setProvisionedDataSource(await toProvisionedDataSource(dataSource, managedResource));
+        return;
+      }
+
       try {
         await onUpdate({ ...dataSource });
         trackDsConfigUpdated({ item: 'success' });
@@ -199,10 +242,10 @@ export function EditDataSourceView({
       });
       onTest();
     },
-    [validation, onUpdate, dataSource, onTest, dispatch, retryAdvisorCheck]
+    [validation, onUpdate, dataSource, onTest, dispatch, retryAdvisorCheck, isRepositoryManaged, managedResource]
   );
 
-  if (loading || isLoading || isLoadingInstanceSettings) {
+  if (loading || isLoading || isLoadingInstanceSettings || provisioning?.isLoading) {
     return <PageLoader />;
   }
 
@@ -232,6 +275,7 @@ export function EditDataSourceView({
     <form onSubmit={onSubmit}>
       {!hasWriteRights && <DataSourceMissingRightsMessage />}
       {readOnly && <DataSourceReadOnlyMessage />}
+      {isManagerReadOnly && <DataSourceManagedReadOnlyMessage />}
       {dataSourceMeta.state && <DataSourcePluginState state={dataSourceMeta.state} />}
 
       <CloudInfoBox dataSource={dataSource} />
@@ -291,13 +335,47 @@ export function EditDataSourceView({
           trackDsConfigClicked('test');
           onTest();
         }}
-        canDelete={!readOnly && hasDeleteRights}
-        canSave={!readOnly && hasWriteRights}
+        canDelete={!readOnly && !isManagerReadOnly && hasDeleteRights}
+        canSave={!readOnly && !isManagerReadOnly && hasWriteRights}
       >
         <DataSourceDefaultButton uid={dataSource.uid} />
       </ButtonRow>
+      {provisionedDataSource && (
+        <SaveProvisionedResourceDrawer
+          resource={provisionedDataSource}
+          title={dataSource.name}
+          action="update"
+          onDismiss={() => setProvisionedDataSource(undefined)}
+        />
+      )}
     </form>
   );
+}
+
+/**
+ * The data source as the provisioning drawer commits it: the edited settings as a Kubernetes
+ * DataSource, keeping the stored object's annotations (which resolve the repository and the file
+ * path) and its secure-value references, since the form only ever holds newly entered secrets.
+ */
+async function toProvisionedDataSource(
+  dataSource: DataSourceSettingsType,
+  managedResource: ManagedResource
+): Promise<ProvisionedDataSource> {
+  const converted = convertLegacyDatasourceSettingsToK8sDatasourceSettings(
+    dataSource,
+    config.namespace,
+    DATASOURCE_K8S_VERSION
+  );
+  // The secure-value references are not on the connection, so read the stored object for them. Only
+  // on the way into the drawer, which is the only thing that needs them.
+  const stored = await getDataSourceK8sResourceByUid(dataSource.uid, config.namespace).catch(() => undefined);
+  return {
+    apiVersion: converted.apiVersion,
+    kind: converted.kind,
+    metadata: { name: dataSource.uid, annotations: managedResource.metadata?.annotations },
+    spec: { ...converted.spec },
+    ...(stored?.secure ? { secure: stored.secure } : {}),
+  };
 }
 
 type DataSourceConfigPluginExtensionProps = {

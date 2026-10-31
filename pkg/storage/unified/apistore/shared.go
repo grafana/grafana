@@ -27,11 +27,14 @@ type SharedStorage struct {
 	Group string
 
 	// LabelKey is reserved: writes always overwrite it and reads remove it.
-	// Required unless Name is set.
+	// Required unless Name is set. Use [utils.SharedGroupLabelKey] so that readers
+	// of stored data — the search index above all — can recover the served group
+	// without knowing the collection.
 	LabelKey string
 
 	// LabelValue identifies the served group within the shared collection.
 	// It must be a valid label value, so it is usually shorter than the group itself.
+	// Use [utils.SharedGroupLabelValue], for the same reason.
 	LabelValue string
 
 	// Name limits the served resource to a single object that is stored under

@@ -4,7 +4,7 @@ import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dash
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
 import { t } from '@grafana/i18n';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, getDataSourceInstanceList } from '@grafana/runtime';
 import { type IconName } from '@grafana/ui';
 import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
@@ -16,6 +16,12 @@ import { getIconForKind, queryResultToViewItem } from 'app/features/search/servi
 import { type AppDispatch } from 'app/store/configureStore';
 
 import { isManaged } from './managedResource';
+
+/**
+ * The storage collection every datasource plugin's API group is persisted into.
+ * No API server serves it: each plugin serves `{plugin}.datasource.grafana.app`.
+ */
+const DATASOURCE_COLLECTION_GROUP = 'datasource.grafana.app';
 
 /**
  * A resource of some kind enumerated from the instance, in the minimal shape the
@@ -132,6 +138,26 @@ export const resourceKindInfos = {
     list: () => listViaApiserver(DASHBOARD_API_GROUP, 'v0alpha1', 'librarypanels'),
     alwaysAvailable: false,
   },
+  datasource: {
+    key: 'datasource',
+    getLabel: () => t('provisioning.resource-kind.datasource', 'data source'),
+    pluralLabel: () => t('provisioning.resource-kind.datasources', 'Data sources'),
+    // Every datasource plugin serves its own API group; this is the collection they
+    // all persist into, matched as a suffix. See `sharedGroup`.
+    group: DATASOURCE_COLLECTION_GROUP,
+    sharedGroup: true,
+    kind: 'DataSource',
+    resource: 'datasources',
+    itemType: 'DataSource',
+    // getIconForKind doesn't know data sources, so use the connections nav icon.
+    icon: 'database',
+    getRoute: (name: string) => `/connections/datasources/edit/${name}`,
+    listRoute: '/connections/datasources',
+    // Data sources are org-scoped, not folder-contained.
+    folderScoped: false,
+    list: () => listDataSources(),
+    alwaysAvailable: false,
+  },
 } as const;
 
 /**
@@ -181,6 +207,14 @@ export interface ResourceKindInfo {
   pluralLabel: () => string;
   /** API group, e.g. `dashboard.grafana.app`. */
   group: string;
+  /**
+   * Whether `group` names a storage collection shared by several served API groups
+   * rather than a served group itself. Data sources are the case: each plugin
+   * serves `{plugin}.datasource.grafana.app`, and the backend reports one
+   * `availableResources` entry per plugin, so a kind marked shared matches any
+   * group ending in `.{group}` as well as the group itself.
+   */
+  sharedGroup?: boolean;
   /** Kubernetes Kind, e.g. `Dashboard`. */
   kind: string;
   /** Plural resource name as reported by the API (`ResourceListItem.resource`), e.g. `dashboards`. */
@@ -228,6 +262,32 @@ export interface ResourceKindInfo {
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
 /**
+ * Whether `group` identifies this kind. Kinds whose `group` is a shared storage
+ * collection also match the groups served inside it, since that is what the
+ * backend reports for an individual resource.
+ */
+export function matchesGroup(info: ResourceKindInfo, group: string): boolean {
+  return info.group === group || (Boolean(info.sharedGroup) && group.endsWith(`.${info.group}`));
+}
+
+/**
+ * The member of a shared collection that a served group identifies — a data source's plugin ID,
+ * e.g. `prometheus` for `prometheus.datasource.grafana.app`. Undefined for kinds whose group is
+ * served directly, and for a group that is the collection itself.
+ *
+ * Several groups can serve one kind, so the kind alone does not tell such resources apart; this is
+ * what distinguishes them to the user. The plugin ID rather than the whole group because the
+ * collection suffix is identical on every row.
+ */
+export function getSharedGroupMember(info: ResourceKindInfo, group?: string): string | undefined {
+  if (!info.sharedGroup || !group) {
+    return undefined;
+  }
+  const suffix = `.${info.group}`;
+  return group.endsWith(suffix) ? group.slice(0, -suffix.length) : undefined;
+}
+
+/**
  * Builds the in-app route to view a repository's resources of the given kind.
  * Folder-scoped kinds resolve to the repository's own folder (named after the
  * repository) for folder-target repos; everything else — non-folder targets, a
@@ -267,7 +327,7 @@ export function getKindInfoByItemType(itemType: string): ResourceKindInfo | unde
  * share an API group, so the group alone does not always identify the kind.
  */
 export function getKindInfoByStatGroup(group?: string): ResourceKindInfo | undefined {
-  return allKindInfos.find((info) => info.group === group || info.resource === group);
+  return allKindInfos.find((info) => (group !== undefined && matchesGroup(info, group)) || info.resource === group);
 }
 
 /**
@@ -279,7 +339,7 @@ export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceK
   if (!group && !kind) {
     return undefined;
   }
-  return allKindInfos.find((info) => (!group || info.group === group) && (!kind || info.kind === kind));
+  return allKindInfos.find((info) => (!group || matchesGroup(info, group)) && (!kind || info.kind === kind));
 }
 
 /**
@@ -311,7 +371,9 @@ export function getAvailableResourceKinds(availableResources?: SupportedResource
     return allKindInfos;
   }
   return allKindInfos.filter((info) =>
-    availableResources.some((r) => r.group === info.group && r.kind === info.kind && !r.disabled)
+    availableResources.some(
+      (r) => r.group !== undefined && matchesGroup(info, r.group) && r.kind === info.kind && !r.disabled
+    )
   );
 }
 
@@ -452,6 +514,23 @@ async function listViaApiserver(group: string, version: string, resource: string
   const url = `${getAPIBaseURL(group, version)}/${resource}`;
   const response = await getBackendSrv().get<{ items?: ApiserverListItem[] }>(url);
   return toListedResources(response.items);
+}
+
+/**
+ * Lists data sources across the API groups their plugins serve. There is no single
+ * group to list: the instance list supplies the plugin types present on this
+ * instance, and each plugin's group is listed in turn. The apiserver objects are
+ * what carry the manager annotations that decide whether a data source is still a
+ * migration target, which is why this does not read `/api/datasources`.
+ */
+async function listDataSources(): Promise<ListedResource[]> {
+  const instances = await getDataSourceInstanceList({ all: true });
+  // Built-in data sources (-- Grafana --, -- Mixed --, -- Dashboard --) have no group.
+  const types = new Set(instances.filter((item) => item.type && !item.name.startsWith('--')).map((item) => item.type));
+  const perType = await Promise.all(
+    Array.from(types, (type) => listViaApiserver(`${type}.${DATASOURCE_COLLECTION_GROUP}`, 'v0alpha1', 'datasources'))
+  );
+  return perType.flat();
 }
 
 /**
