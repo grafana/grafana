@@ -27,8 +27,8 @@ import (
 func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
 	// The embedded API server stops serving these groups with the toggle, so a
 	// router that cannot serve them leaves them unserved.
-	if routeCollectionsAndPreferences() && !standaloneRouter(cfg) && !middlewareEnabled(cfg, deps.Features) {
-		return nil, fmt.Errorf("%s requires %s", featuremgmt.FlagGrafanaRoutePreferencesAndCollections, featuremgmt.FlagGrafanaUseRouterMiddleware)
+	if routeCoreApps() && !standaloneRouter(cfg) && !middlewareEnabled(cfg, deps.Features) {
+		return nil, fmt.Errorf("%s requires %s", featuremgmt.FlagGrafanaRouteCoreApps, featuremgmt.FlagGrafanaUseRouterMiddleware)
 	}
 	loader, err := provideBaseRoutesLoader(cfg, deps)
 	if err != nil {

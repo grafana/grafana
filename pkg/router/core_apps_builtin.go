@@ -28,26 +28,26 @@ const (
 	collectionsPluginID = "grafana-collections-app"
 )
 
-// routeCollectionsAndPreferences reports whether the router serves
+// routeCoreApps reports whether the router serves
 // collections.grafana.app, in place of the embedded API server. Like
 // settingsEnabled, it is evaluated through OpenFeature, so a remote provider
 // can turn it on without a [feature_toggles] entry, and it is read once, at
 // startup.
-func routeCollectionsAndPreferences() bool {
+func routeCoreApps() bool {
 	ctx := context.Background()
-	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaRoutePreferencesAndCollections, false, openfeature.TransactionContext(ctx))
+	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaRouteCoreApps, false, openfeature.TransactionContext(ctx))
 }
 
-// builtinCoreApps builds the apps behind grafana.routePreferencesAndCollections.
+// builtinCoreApps builds the apps behind grafana.routeCoreApps.
 // They call Grafana's API like an external app plugin does: through the local
 // token exchange, as the caller. They fail startup rather than leave their
 // groups unserved when that is not possible.
 func builtinCoreApps(pluginAuth *pluginauth.Config) ([]CoreApp, error) {
-	if !routeCollectionsAndPreferences() {
+	if !routeCoreApps() {
 		return nil, nil
 	}
 	if !pluginAuth.LocalTokens() || pluginAuth.LocalAPIURL() == "" {
-		return nil, fmt.Errorf("%s needs Grafana to sign plugin tokens itself, and a local API URL to reach", featuremgmt.FlagGrafanaRoutePreferencesAndCollections)
+		return nil, fmt.Errorf("%s needs Grafana to sign plugin tokens itself, and a local API URL to reach", featuremgmt.FlagGrafanaRouteCoreApps)
 	}
 
 	collections, err := newCoreApp(collectionsPluginID, collectionsmanifest.LocalManifest().ManifestData, pluginAuth, true,
