@@ -40,9 +40,9 @@ type kindPolicy struct {
 	// request is dispatched to one.
 	customRoutes map[string]bool
 
-	// processMissing sends a custom route to the plugin even when the parent
+	// allowMissingParent sends a custom route to the plugin even when the parent
 	// object does not exist, so the plugin can answer for the name alone.
-	processMissing bool
+	allowMissingParent bool
 }
 
 // kindPolicies indexes a manifest's kinds by the resource name they are served
@@ -72,7 +72,7 @@ func kindPolicies(manifest *app.ManifestData) map[string]kindPolicy {
 			}
 
 			if !seen {
-				policy.ownerFromName, policy.processMissing = hardcodedKindAuth(manifest.Group, resource)
+				policy.ownerFromName, policy.allowMissingParent = hardcodedKindAuth(manifest.Group, resource)
 			}
 
 			policies[resource] = policy

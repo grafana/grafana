@@ -262,7 +262,7 @@ app manifest will declare:
 - A fixed name, `merged`, has no stored object: the kind's `VirtualGetter`
   answers it from the objects the caller owns.
 - A custom route for a name with no stored object is still sent to the app
-  (`processMissing`), with the name alone.
+  (`allowMissingParent`), with the name alone.
 
 `grafana.routePreferencesAndCollections` (with `grafana.useRouterMiddleware`)
 serves `collections.grafana.app` and `preferences.grafana.app` from the

@@ -16,7 +16,7 @@ import (
 // hardcodedKindAuth is where a kind declares that its name decides access.
 // TODO: this declaration moves to the app manifest, and only ownerFromName
 // and the policy fields stay here.
-func hardcodedKindAuth(group, resource string) (o *ownerFromName, processMissing bool) {
+func hardcodedKindAuth(group, resource string) (o *ownerFromName, allowMissingParent bool) {
 	switch {
 	case group == "collections.grafana.app" && resource == "stars":
 		return &ownerFromName{

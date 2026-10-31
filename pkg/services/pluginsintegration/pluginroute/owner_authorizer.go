@@ -19,7 +19,7 @@ const maxOwnedTeams = 25
 // (user-<id>, team-<uid>, namespace). It only depends on plain values and an
 // AccessChecker so the declaration can move into the app manifest.
 type ownerFromName struct {
-	// A fixed set of names that are OK (typically used with processMissing)
+	// A fixed set of names that are OK (typically used with allowMissingParent)
 	names []string
 
 	// The names can match these owner patterns

@@ -354,7 +354,7 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 					return
 				}
 				parentObj, parentMeta = obj, m
-			case apierrors.IsNotFound(err) && b.kindPolicies[resource].processMissing:
+			case apierrors.IsNotFound(err) && b.kindPolicies[resource].allowMissingParent:
 				// The plugin is called with the name alone.
 			default:
 				_ = errhttp.Write(ctx, err, w)

@@ -30,14 +30,14 @@ func TestRouteHandlerMissingParent(t *testing.T) {
 		Operations: spec3.PathProps{Post: &spec3.Operation{}},
 	}
 
-	serve := func(t *testing.T, processMissing bool, getErr error) (*httptest.ResponseRecorder, *fakeRouteClient) {
+	serve := func(t *testing.T, allowMissingParent bool, getErr error) (*httptest.ResponseRecorder, *fakeRouteClient) {
 		t.Helper()
 		client := &fakeRouteClient{}
 		b := &manifestBuilder{
 			group:        gv.Group,
 			clientV3:     client,
 			getter:       (&recordingGetter{err: getErr}).get,
-			kindPolicies: map[string]kindPolicy{"testkinds": {processMissing: processMissing}},
+			kindPolicies: map[string]kindPolicy{"testkinds": {allowMissingParent: allowMissingParent}},
 		}
 		req := httptest.NewRequest(http.MethodPost, "/x", nil)
 		ctx := identity.WithRequester(req.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, OrgID: 2, Namespace: "org-2"})
