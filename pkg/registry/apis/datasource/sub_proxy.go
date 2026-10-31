@@ -36,9 +36,10 @@ type ProxyDependencies struct {
 	GrafanaConfig      *config.GrafanaCfg
 	// TransportConfigKey changes when provider configuration changes between requests.
 	TransportConfigKey string
-	OAuthTokenService  *oauthtoken.Service
-	Tracer             tracing.Tracer
-	Features           featuremgmt.FeatureToggles
+	// OAuthTokenService supplies Forward OAuth Identity tokens; nil rejects those data sources.
+	OAuthTokenService oauthtoken.OAuthTokenService
+	Tracer            tracing.Tracer
+	Features          featuremgmt.FeatureToggles
 	// IDTokenDeriver mints X-Grafana-Id from a requester's OBO access token when the requester
 	// carries no id token of its own. Nil disables that fallback (see
 	// proxyutil.ApplyForwardIDHeader).
