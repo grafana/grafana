@@ -82,7 +82,21 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		}()
 	}
 
-	return s.datasources.GetDataSource(ctx, name)
+	ds, err := s.datasources.GetDataSource(ctx, name)
+	if err != nil {
+		return nil, s.asAPIError(err, name)
+	}
+	return ds, nil
+}
+
+// asAPIError translates the store's not-found into the Kubernetes one. The provider returns a plain
+// error, which every apiserver caller branching on apierrors.IsNotFound reads as a real failure --
+// provisioning, for one, abandons the sync instead of falling through to create.
+func (s *legacyStorage) asAPIError(err error, name string) error {
+	if errors.Is(err, datasources.ErrDataSourceNotFound) {
+		return apierrors.NewNotFound(s.resourceInfo.GroupResource(), name)
+	}
+	return err
 }
 
 // Create implements rest.Creater.
@@ -220,8 +234,10 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 		}()
 	}
 
-	err := s.datasources.DeleteDataSource(ctx, name)
-	return nil, false, err
+	if err := s.datasources.DeleteDataSource(ctx, name); err != nil {
+		return nil, false, s.asAPIError(err, name)
+	}
+	return nil, false, nil
 }
 
 // DeleteCollection implements rest.CollectionDeleter.
