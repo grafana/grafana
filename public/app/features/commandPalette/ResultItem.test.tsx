@@ -1,7 +1,8 @@
 import { ActionImpl } from 'kbar';
-import { render, screen } from 'test/test-utils';
+import { act, render, screen, within } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { ManagerKind } from 'app/features/apiserver/types';
 
 import { ResultItem } from './ResultItem';
@@ -19,17 +20,34 @@ describe('ResultItem', () => {
   let originalProvisioning: boolean;
 
   beforeEach(() => {
+    setTestFlags({ 'grafana.cmdkDashboardTags': true });
     originalProvisioning = config.provisioningEnabled;
+    const rect = document.createElement('div').getBoundingClientRect();
+    jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return { ...rect, width: Array.from(this.children).some((child) => child.tagName === 'UL') ? 400 : 40 };
+    });
   });
 
   afterEach(() => {
+    act(() => setTestFlags({}));
     config.provisioningEnabled = originalProvisioning;
+    jest.restoreAllMocks();
   });
 
   it('renders the action name', () => {
     const action = createActionImpl();
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
     expect(screen.getByText('Test Dashboard')).toBeInTheDocument();
+  });
+
+  it('leaves the subtitle width uncapped while allowing it to shrink before the title', () => {
+    const action = createActionImpl({ subtitle: 'A long folder name that can use the available space' });
+    render(<ResultItem action={action} active={false} currentRootActionId="" />);
+
+    const subtitle = screen.getByText('A long folder name that can use the available space');
+    expect(getComputedStyle(subtitle).maxWidth).toBe('');
+    expect(subtitle).toHaveStyle({ flex: '0 10 auto', minWidth: '0' });
+    expect(screen.getByText('Test Dashboard').parentElement).toHaveStyle({ flex: '0 1 auto' });
   });
 
   it('renders the managed badge when managedBy is Repo and provisioning toggle is on', () => {
@@ -65,6 +83,48 @@ describe('ResultItem', () => {
     const action = createActionImpl({ managedBy: ManagerKind.Repo });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
     expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
+  });
+
+  it('renders the dashboard tags of the action', () => {
+    const action = createActionImpl({ tags: ['prod', 'team-a'] });
+    render(<ResultItem action={action} active={false} currentRootActionId="" />);
+    const tagList = screen.getByRole('list', { name: 'Tags' });
+    expect(within(tagList).getByText('prod')).toBeInTheDocument();
+    expect(within(tagList).getByText('team-a')).toBeInTheDocument();
+  });
+
+  it.each([
+    { desc: 'disabled', enabled: false },
+    { desc: 'not configured', enabled: undefined },
+  ])('hides tags but keeps the title, subtitle, and managed badge when the tag flag is $desc', ({ enabled }) => {
+    setTestFlags(enabled === undefined ? {} : { 'grafana.cmdkDashboardTags': enabled });
+    config.provisioningEnabled = true;
+    const action = createActionImpl({ subtitle: 'My folder', managedBy: ManagerKind.Repo, tags: ['prod', 'team-a'] });
+    render(<ResultItem action={action} active={false} currentRootActionId="" />);
+
+    expect(screen.getByText('Test Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('My folder')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Tags' })).not.toBeInTheDocument();
+  });
+
+  it('shows more than three tags when they fit in the row', () => {
+    const action = createActionImpl({ tags: ['a', 'b', 'c', 'd', 'e'] });
+    render(<ResultItem action={action} active={false} currentRootActionId="" />);
+    const tagList = screen.getByRole('list', { name: 'Tags' });
+    expect(within(tagList).getAllByRole('listitem')).toHaveLength(5);
+    expect(within(tagList).getByText('e')).toBeInTheDocument();
+    expect(within(tagList).queryByText(/\+/)).not.toBeInTheDocument();
+  });
+
+  it.each([
+    { desc: 'an empty tag array', tags: [] },
+    { desc: 'no tags property', tags: undefined },
+  ])('does not render a tag list for an action with $desc', ({ tags }) => {
+    const action = createActionImpl({ tags });
+    render(<ResultItem action={action} active={false} currentRootActionId="" />);
+    expect(screen.getByText('Test Dashboard')).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Tags' })).not.toBeInTheDocument();
   });
 
   it('appends an ellipsis to a parent action that has children but no command or link', () => {

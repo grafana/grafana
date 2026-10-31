@@ -1,4 +1,4 @@
-import { KBarPortal, KBarProvider } from 'kbar';
+import { KBarPortal, KBarProvider, useKBar } from 'kbar';
 import { HttpResponse, http } from 'msw';
 import { act, render, screen, userEvent } from 'test/test-utils';
 
@@ -14,6 +14,7 @@ import {
 import { getVectorSearchHandler } from '@grafana/test-utils/handlers';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { PortalContainer } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -103,6 +104,33 @@ describe('CommandPalette', () => {
     (useFlagGrafanaCmdkHybridSearch as jest.Mock).mockReturnValue(false);
     (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
     (reportInteraction as jest.Mock).mockClear();
+  });
+
+  it('mounts the palette in the shared overlay container when opened', async () => {
+    jest
+      .mocked(KBarPortal)
+      .mockImplementation(jest.requireActual<{ KBarPortal: typeof KBarPortal }>('kbar').KBarPortal);
+
+    function OpenPalette() {
+      const { query } = useKBar();
+      return <button onClick={() => query.toggle()}>Open command palette</button>;
+    }
+
+    const { user } = render(
+      <>
+        <PortalContainer />
+        <KBarProvider>
+          <OpenPalette />
+          <CommandPalette />
+        </KBarProvider>
+      </>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Open command palette' }));
+
+    const input = await screen.findByRole('combobox');
+    const overlayContainer = document.getElementById('grafana-portal-container');
+    expect(overlayContainer).toContainElement(input);
   });
 
   it('reevaluates extension links each time the palette opens', async () => {

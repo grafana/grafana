@@ -2921,6 +2921,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "grafana.cmdkDashboardTags",
+			Description: "Shows dashboard tags in the command palette",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "assistant.fullscreenWorkspace",
 			Description: "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
 			Stage:       FeatureStageExperimental,

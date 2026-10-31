@@ -161,6 +161,7 @@ declare module "@openfeature/core" {
     | "dashboard.vectorSearch"
     | "grafana.vectorSearchCmdk"
     | "grafana.cmdkHybridSearch"
+    | "grafana.cmdkDashboardTags"
     | "assistant.fullscreenWorkspace"
     | "assistant.dashboard.artifacts"
     | "grafana.queryVarEditorRedesign"
