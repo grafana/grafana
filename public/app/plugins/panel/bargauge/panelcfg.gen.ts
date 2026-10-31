@@ -18,6 +18,7 @@ export interface Options extends common.OptionsWithLegend, common.SingleStatBase
   minVizHeight: number;
   minVizWidth: number;
   namePlacement: common.BarGaugeNamePlacement;
+  showThresholdLabels?: boolean;
   showUnfilled: boolean;
   sizing: common.BarGaugeSizing;
   textMode: common.BigValueTextMode;
@@ -30,8 +31,13 @@ export const defaultOptions: Partial<Options> = {
   minVizHeight: 16,
   minVizWidth: 8,
   namePlacement: common.BarGaugeNamePlacement.Auto,
+  showThresholdLabels: false,
   showUnfilled: true,
   sizing: common.BarGaugeSizing.Auto,
   textMode: common.BigValueTextMode.Auto,
   valueMode: common.BarGaugeValueMode.Color,
 };
+
+export interface FieldConfig {
+  scaleDistribution?: common.ScaleDistributionConfig;
+}

@@ -46,6 +46,20 @@ describe('bargauge module', () => {
     expect(paths).toMatchSnapshot();
   });
 
+  it('registers a Scale field option in the bar gauge category that applies to number fields only', () => {
+    const scale = plugin.fieldConfigRegistry.get('custom.scaleDistribution');
+    const [numberField, stringField] = createDataFrame({
+      fields: [
+        { name: 'value', type: FieldType.number, values: [1] },
+        { name: 'name', type: FieldType.string, values: ['a'] },
+      ],
+    }).fields;
+
+    expect(scale.category).toEqual(['Bar gauge']);
+    expect(scale.shouldApply(numberField)).toBe(true);
+    expect(scale.shouldApply(stringField)).toBe(false);
+  });
+
   it('uses defaults from panelcfg for the display mode option', () => {
     const displayMode = buildItems().find((item) => item.path === 'displayMode');
     expect(displayMode?.defaultValue).toBe(BarGaugeDisplayMode.Gradient);

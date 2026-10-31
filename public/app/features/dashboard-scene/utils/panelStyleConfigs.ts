@@ -123,11 +123,13 @@ const statPanelStyleConfig: PanelStyleConfig = {
 };
 
 /**
- * Style config for the gauge panel. No custom field config — styling
- * comes from standard fieldConfig properties and panel-level options.
+ * Style config for the gauge panel.
  *
  * fieldConfig.defaults:
  *   color – color scheme
+ *
+ * fieldConfig.defaults.custom:
+ *   scaleDistribution – bar scale (linear or log)
  *
  * options:
  *   orientation         – panel orientation
@@ -151,7 +153,7 @@ const statPanelStyleConfig: PanelStyleConfig = {
 const gaugePanelStyleConfig: PanelStyleConfig = {
   fieldConfig: {
     defaultsProps: ['color'],
-    customProps: [],
+    customProps: ['scaleDistribution'],
   },
   options: {
     props: [
@@ -177,11 +179,13 @@ const gaugePanelStyleConfig: PanelStyleConfig = {
 };
 
 /**
- * Style config for the bar gauge panel. No custom field config — styling
- * comes from standard fieldConfig properties and panel-level options.
+ * Style config for the bar gauge panel.
  *
  * fieldConfig.defaults:
  *   color – color scheme
+ *
+ * fieldConfig.defaults.custom:
+ *   scaleDistribution – bar scale (linear or log)
  *
  * options:
  *   orientation  – panel orientation (auto, horizontal, vertical)
@@ -191,6 +195,7 @@ const gaugePanelStyleConfig: PanelStyleConfig = {
  *   valueMode    – value color, text color, or hidden
  *   namePlacement – auto, top, left, or hidden
  *   showUnfilled – render the unfilled region as gray
+ *   showThresholdLabels – labels for min, max, thresholds and log decades
  *   sizing       – auto vs manual bar size
  *   minVizWidth  – minimum bar width for manual sizing
  *   minVizHeight – minimum bar height for manual sizing
@@ -199,7 +204,7 @@ const gaugePanelStyleConfig: PanelStyleConfig = {
 const barGaugePanelStyleConfig: PanelStyleConfig = {
   fieldConfig: {
     defaultsProps: ['color'],
-    customProps: [],
+    customProps: ['scaleDistribution'],
   },
   options: {
     props: [
@@ -210,6 +215,7 @@ const barGaugePanelStyleConfig: PanelStyleConfig = {
       'valueMode',
       'namePlacement',
       'showUnfilled',
+      'showThresholdLabels',
       'sizing',
       'minVizWidth',
       'minVizHeight',
