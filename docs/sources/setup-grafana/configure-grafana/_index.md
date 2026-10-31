@@ -2719,6 +2719,8 @@ Optional extra path inside bucket.
 If set to true, Grafana creates a [signed URL](https://cloud.google.com/storage/docs/access-control/signed-urls) for
 the image uploaded to Google Cloud Storage.
 
+With a `key_file`, Grafana signs the URL with that key. Without one, Grafana uses the application default credentials: a service account key if they include one, otherwise the [IAM Credentials API](https://cloud.google.com/iam/docs/reference/credentials/rest/v1/projects.serviceAccounts/signBlob), which supports credentials without a private key, such as GKE Workload Identity. In that case, the service account needs the `iam.serviceAccounts.signBlob` permission on itself, for example through the "Service Account Token Creator" role.
+
 #### `signed_url_expiration`
 
 Sets the signed URL expiration, which defaults to seven days.

@@ -8,7 +8,6 @@ import (
 	"io"
 
 	"cloud.google.com/go/storage"
-	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/jwt"
 )
 
@@ -16,8 +15,6 @@ import (
 type StorageClient interface {
 	// Bucket gets a StorageBucket.
 	Bucket(name string) StorageBucket
-	// FindDefaultCredentials finds default Google credentials.
-	FindDefaultCredentials(ctx context.Context, scope string) (*google.Credentials, error)
 	// JWTConfigFromJSON gets JWT config from a JSON document.
 	JWTConfigFromJSON(keyJSON []byte) (*jwt.Config, error)
 	// SignedURL returns a signed URL for the specified object.
@@ -28,6 +25,9 @@ type StorageClient interface {
 type StorageBucket interface {
 	// Object returns a StorageObject for a key.
 	Object(key string) StorageObject
+	// SignedURL returns a signed URL for an object, deriving the signer from the
+	// client's credentials when opts sets neither a private key nor SignBytes.
+	SignedURL(object string, opts *storage.SignedURLOptions) (string, error)
 }
 
 // StorageObject represents a GCS object.

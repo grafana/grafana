@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/mocks/mock_gcsifaces"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/jwt"
 	"google.golang.org/api/option"
 )
@@ -26,7 +25,9 @@ type testConfig struct {
 	signedURL string
 }
 
-func mockSDK(ctx context.Context, t *testing.T, content []byte, bucket string, signed bool) testConfig {
+// mockSDK mocks the GCS SDK. keyData is the key file's content, or nil for
+// default credentials.
+func mockSDK(ctx context.Context, t *testing.T, content []byte, bucket string, signed bool, keyData []byte) testConfig {
 	t.Helper()
 
 	var cfg testConfig
@@ -65,38 +66,45 @@ func mockSDK(ctx context.Context, t *testing.T, content []byte, bucket string, s
 	cm.
 		EXPECT().
 		Bucket(gomock.Eq(bucket)).
-		Return(bm)
+		Return(bm).
+		AnyTimes()
 
 	if signed {
-		const scope = storage.ScopeReadWrite
 		cfg.signedURL = "https://google.com/signed"
 
-		creds := &google.Credentials{
-			JSON: []byte(`{}`),
+		if keyData == nil {
+			// Default credentials: the bucket handle derives the signer, so
+			// neither GoogleAccessID nor PrivateKey is set.
+			suOpts := &storage.SignedURLOptions{
+				Scheme:  storage.SigningSchemeV4,
+				Method:  "GET",
+				Expires: time.Now().Add(dfltExpiration),
+			}
+			bm.
+				EXPECT().
+				SignedURL(gomock.Any(), signedURLOptsMatcher{suOpts}).
+				Return(cfg.signedURL, nil)
+		} else {
+			conf := &jwt.Config{
+				Email:      "test@grafana.com",
+				PrivateKey: []byte("private"),
+			}
+			suOpts := &storage.SignedURLOptions{
+				Scheme:         storage.SigningSchemeV4,
+				Method:         "GET",
+				GoogleAccessID: conf.Email,
+				PrivateKey:     conf.PrivateKey,
+				Expires:        time.Now().Add(dfltExpiration),
+			}
+			cm.
+				EXPECT().
+				JWTConfigFromJSON(gomock.Eq(keyData)).
+				Return(conf, nil)
+			cm.
+				EXPECT().
+				SignedURL(gomock.Eq(bucket), gomock.Any(), signedURLOptsMatcher{suOpts}).
+				Return(cfg.signedURL, nil)
 		}
-		conf := &jwt.Config{
-			Email:      "test@grafana.com",
-			PrivateKey: []byte("private"),
-		}
-		suOpts := &storage.SignedURLOptions{
-			Scheme:         storage.SigningSchemeV4,
-			Method:         "GET",
-			GoogleAccessID: conf.Email,
-			PrivateKey:     conf.PrivateKey,
-			Expires:        time.Now().Add(dfltExpiration),
-		}
-		cm.
-			EXPECT().
-			FindDefaultCredentials(gomock.Eq(ctx), gomock.Eq(scope)).
-			Return(creds, nil)
-		cm.
-			EXPECT().
-			JWTConfigFromJSON(gomock.Eq(creds.JSON)).
-			Return(conf, nil)
-		cm.
-			EXPECT().
-			SignedURL(gomock.Eq(bucket), gomock.Any(), signedURLOptsMatcher{suOpts}).
-			Return(cfg.signedURL, nil)
 	}
 
 	origNewClient := newClient
@@ -120,7 +128,7 @@ func TestUploadToGCS_DefaultCredentials(t *testing.T) {
 
 	t.Run("Without signed URL", func(t *testing.T) {
 		ctx := context.Background()
-		mockSDK(ctx, t, content, bucket, false)
+		mockSDK(ctx, t, content, bucket, false, nil)
 
 		uploader, err := NewUploader("", bucket, "", false, dfltExpiration)
 		require.NoError(t, err)
@@ -133,9 +141,36 @@ func TestUploadToGCS_DefaultCredentials(t *testing.T) {
 
 	t.Run("With signed URL", func(t *testing.T) {
 		ctx := context.Background()
-		cfg := mockSDK(ctx, t, content, bucket, true)
+		cfg := mockSDK(ctx, t, content, bucket, true, nil)
 
 		uploader, err := NewUploader("", bucket, "", true, dfltExpiration)
+		require.NoError(t, err)
+
+		path, err := uploader.Upload(ctx, fpath)
+		require.NoError(t, err)
+
+		assert.Equal(t, cfg.signedURL, path)
+	})
+}
+
+func TestUploadToGCS_KeyFile(t *testing.T) {
+	const bucket = "test"
+	content := []byte("test\n")
+	tmpDir := t.TempDir()
+	fpath := filepath.Join(tmpDir, "test.png")
+	err := os.WriteFile(fpath, content, 0600)
+	require.NoError(t, err)
+
+	keyData := []byte(`{"type": "service_account", "client_email": "test@grafana.com", "private_key": "private"}`)
+	keyPath := filepath.Join(tmpDir, "key.json")
+	err = os.WriteFile(keyPath, keyData, 0600)
+	require.NoError(t, err)
+
+	t.Run("With signed URL", func(t *testing.T) {
+		ctx := context.Background()
+		cfg := mockSDK(ctx, t, content, bucket, true, keyData)
+
+		uploader, err := NewUploader(keyPath, bucket, "", true, dfltExpiration)
 		require.NoError(t, err)
 
 		path, err := uploader.Upload(ctx, fpath)
