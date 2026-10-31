@@ -6,7 +6,7 @@ import { type ScopesDashboardsService } from '../dashboards/ScopesDashboardsServ
 import { type ScopeNavigation } from '../dashboards/types';
 
 import { ScopesSelectorService } from './ScopesSelectorService';
-import { RECENT_SCOPES_KEY } from './recentScopesStorage';
+import { getRecentScopesKey } from './recentScopesStorage';
 
 // Mock locationService
 jest.mock('@grafana/runtime', () => ({
@@ -143,7 +143,7 @@ describe('ScopesSelectorService', () => {
 
     it('should not write recent scopes on selectScope (only on applyScopes)', async () => {
       await service.selectScope('test-scope-node');
-      expect(storeValue[RECENT_SCOPES_KEY]).toBeUndefined();
+      expect(storeValue[getRecentScopesKey()]).toBeUndefined();
     });
   });
 
@@ -177,7 +177,7 @@ describe('ScopesSelectorService', () => {
 
     it('should store minimal scope format in localStorage', async () => {
       await service.changeScopes(['test-scope']);
-      expect(JSON.parse(storeValue[RECENT_SCOPES_KEY] as string)).toEqual([
+      expect(JSON.parse(storeValue[getRecentScopesKey()] as string)).toEqual([
         { scopeIds: ['test-scope'], version: 'test-version' },
       ]);
     });
@@ -191,7 +191,7 @@ describe('ScopesSelectorService', () => {
 
       await service.changeScopes(['default-path-scope'], undefined, 'leaf');
 
-      const stored = JSON.parse(storeValue[RECENT_SCOPES_KEY] as string);
+      const stored = JSON.parse(storeValue[getRecentScopesKey()] as string);
       expect(stored[0].scopeNodeId).toBeUndefined();
       expect(stored[0].scopeIds).toEqual(['default-path-scope']);
     });
@@ -199,7 +199,7 @@ describe('ScopesSelectorService', () => {
     it('should store scopeNodeId when scope lacks defaultPath', async () => {
       await service.changeScopes(['test-scope'], undefined, 'scope-node-1');
 
-      const stored = JSON.parse(storeValue[RECENT_SCOPES_KEY] as string);
+      const stored = JSON.parse(storeValue[getRecentScopesKey()] as string);
       expect(stored[0].scopeNodeId).toBe('scope-node-1');
     });
 
