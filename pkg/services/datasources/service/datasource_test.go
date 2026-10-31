@@ -1730,7 +1730,6 @@ func TestIntegrationService_getConnections(t *testing.T) {
 					"title": "AAA",
 					"name": "aaa",
 					"group": "graphite.datasource.grafana.app",
-					"version": "v0alpha1",
 					"plugin": "graphite",
 					"labels": {"default": "true"}
 				},
@@ -1738,14 +1737,12 @@ func TestIntegrationService_getConnections(t *testing.T) {
 					"title": "BBB",
 					"name": "bbb",
 					"group": "another-datasource.datasource.grafana.app",
-					"version": "v0alpha1",
 					"plugin": "another-datasource"
 				},
 				{
 					"title": "CCC",
 					"name": "ccc",
 					"group": "test.datasource.grafana.app",
-					"version": "v0alpha1",
 					"plugin": "test"
 				}
 			]
@@ -1768,7 +1765,6 @@ func TestIntegrationService_getConnections(t *testing.T) {
 					"title": "BBB",
 					"name": "bbb",
 					"group": "another-datasource.datasource.grafana.app",
-					"version": "v0alpha1",
 					"plugin": "another-datasource"
 				}
 			]
