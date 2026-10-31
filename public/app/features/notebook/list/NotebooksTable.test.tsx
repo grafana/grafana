@@ -1,8 +1,11 @@
 import { render, screen, waitFor, within } from 'test/test-utils';
 
+import { locationService } from '@grafana/runtime';
 import { useDeleteNotebookMutation } from 'app/api/clients/dashboard/v2beta1';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { contextSrv } from 'app/core/services/context_srv';
+
+import { duplicateNotebook } from '../api/notebookResource';
 
 import { NotebooksTable } from './NotebooksTable';
 import { type NotebookRow } from './useNotebooksList';
@@ -11,6 +14,10 @@ jest.mock('app/api/clients/dashboard/v2beta1', () => ({
   useDeleteNotebookMutation: jest.fn(),
   // The row menu mounts the lazy get for its export submenu; nothing here exercises the fetch.
   useLazyGetNotebookQuery: () => [jest.fn()],
+}));
+jest.mock('../api/notebookResource', () => ({
+  ...jest.requireActual('../api/notebookResource'),
+  duplicateNotebook: jest.fn(),
 }));
 
 // The row menu pulls in the notebook header's tag facet, which calls injectEndpoints on the real
@@ -57,6 +64,7 @@ describe('NotebooksTable delete', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    jest.mocked(duplicateNotebook).mockResolvedValue({ uid: 'nb-copy', url: '/notebooks/nb-copy' });
   });
 
   afterEach(() => {
@@ -119,6 +127,39 @@ describe('NotebooksTable delete', () => {
     await user.click(await screen.findByRole('button', { name: 'Delete' }));
 
     expect(await screen.findByText('Failed to delete notebook')).toBeInTheDocument();
+  });
+});
+
+describe('NotebooksTable duplicate', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    jest.mocked(duplicateNotebook).mockResolvedValue({ uid: 'nb-copy', url: '/notebooks/nb-copy' });
+    setupDelete();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('duplicates the selected row and opens the new notebook in edit mode', async () => {
+    const { user } = renderTable([row(), row({ uid: 'nb2', title: 'Checkout errors' })]);
+    const secondRow = await screen.findByRole('row', { name: /Checkout errors/ });
+
+    await user.click(within(secondRow).getByRole('button', { name: 'More actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Duplicate notebook' }));
+
+    await waitFor(() => expect(duplicateNotebook).toHaveBeenCalledWith('nb2'));
+    await waitFor(() => expect(locationService.getLocation().pathname).toBe('/notebooks/nb-copy'));
+    expect(locationService.getLocation().search).toBe('?edit=true');
+  });
+
+  it('hides duplication without create permission', async () => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+    const { user } = renderTable([row()]);
+
+    await user.click(await screen.findByRole('button', { name: 'More actions' }));
+    expect(screen.queryByRole('menuitem', { name: 'Duplicate notebook' })).not.toBeInTheDocument();
   });
 });
 
