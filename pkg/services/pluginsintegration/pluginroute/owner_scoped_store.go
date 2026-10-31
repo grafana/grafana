@@ -116,11 +116,14 @@ func (s *ownerScopedStore) ownedObjects(ctx context.Context) (items []runtime.Ob
 	return items, false, nil
 }
 
-// Update creates the object when it does not exist, for a patch as well as a
-// put: the owner of the name writes it without having to create it first. The
-// update is attempted first, and only a not-found takes the create path.
+// Update replaces the object without the caller reading it first: an update that
+// leaves out the resource version is made against the one stored. It creates
+// the object when it does not exist, for a patch as well as a put, so the
+// owner of the name writes it without having to create it first. The update is
+// attempted first, and only a not-found takes the create path.
 func (s *ownerScopedStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	updated, created, err := s.Store.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	unconditional := withStoredResourceVersion{objInfo}
+	updated, created, err := s.Store.Update(ctx, name, unconditional, createValidation, updateValidation, forceAllowCreate, options)
 	if err == nil || !apierrors.IsNotFound(err) {
 		return updated, created, err
 	}
@@ -151,7 +154,34 @@ func (s *ownerScopedStore) Update(ctx context.Context, name string, objInfo rest
 		return nil, false, err
 	}
 	// Lost a race with a concurrent create: apply as a regular update.
-	return s.Store.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	return s.Store.Update(ctx, name, unconditional, createValidation, updateValidation, forceAllowCreate, options)
+}
+
+// withStoredResourceVersion gives an updated object that names no resource
+// version the one of the object it replaces. The storage layer then finds it
+// current, as it would for a store that allows unconditional updates.
+type withStoredResourceVersion struct {
+	rest.UpdatedObjectInfo
+}
+
+func (i withStoredResourceVersion) UpdatedObject(ctx context.Context, current runtime.Object) (runtime.Object, error) {
+	updated, err := i.UpdatedObjectInfo.UpdatedObject(ctx, current)
+	if err != nil {
+		return nil, err
+	}
+	target, err := meta.Accessor(updated)
+	if err != nil {
+		return nil, err
+	}
+	if rv := target.GetResourceVersion(); rv != "" && rv != "0" {
+		return updated, nil
+	}
+	stored, err := meta.Accessor(current)
+	if err != nil {
+		return nil, err
+	}
+	target.SetResourceVersion(stored.GetResourceVersion())
+	return updated, nil
 }
 
 // Watch is not scoped to the owned names, so a user may not watch.

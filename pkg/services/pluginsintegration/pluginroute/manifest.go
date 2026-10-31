@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	authlib "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -143,12 +142,8 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 					if kind.Conversion {
 						conversion = b.clientV3
 					}
-					// A kind authorized by name is written by the owner of the name, who
-					// replaces the object without reading it first.
-					byName := b.kindPolicies[strings.ToLower(kind.Plural)].ownerFromName != nil
 					store, err := kindstore.New(gv.WithKind(kind.Kind), kind, admission, conversion, kindstore.Options{
-						StorageOptsGetter:        opts.StorageOptsGetter,
-						AllowUnconditionalUpdate: byName,
+						StorageOptsGetter: opts.StorageOptsGetter,
 					}, defs)
 					if err != nil {
 						return err

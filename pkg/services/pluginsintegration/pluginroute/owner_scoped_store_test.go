@@ -2,6 +2,7 @@ package pluginroute
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -13,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	authlib "github.com/grafana/authlib/types"
 	prefsv1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
@@ -196,4 +198,41 @@ func TestHardcodedVirtualGetter(t *testing.T) {
 	var prefs prefsv1.Preferences
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, &prefs))
 	require.Equal(t, "light", *prefs.Spec.Theme, "the configured defaults fill an empty merge")
+}
+
+func TestWithStoredResourceVersion(t *testing.T) {
+	withRV := func(rv string) *unstructured.Unstructured {
+		u := objectNamed("user-abc")
+		u.SetResourceVersion(rv)
+		return u
+	}
+	update := func(t *testing.T, requested *unstructured.Unstructured, current *unstructured.Unstructured) string {
+		t.Helper()
+		got, err := withStoredResourceVersion{rest.DefaultUpdatedObjectInfo(requested)}.UpdatedObject(context.Background(), current)
+		require.NoError(t, err)
+		return got.(*unstructured.Unstructured).GetResourceVersion()
+	}
+
+	t.Run("an update without a resource version is made against the stored one", func(t *testing.T) {
+		require.Equal(t, "7", update(t, withRV(""), withRV("7")))
+		require.Equal(t, "7", update(t, withRV("0"), withRV("7")))
+	})
+
+	t.Run("an update that names one keeps it", func(t *testing.T) {
+		require.Equal(t, "5", update(t, withRV("5"), withRV("7")), "a stale version still conflicts")
+	})
+
+	t.Run("the update's own failure is returned", func(t *testing.T) {
+		boom := errors.New("boom")
+		_, err := withStoredResourceVersion{failingUpdate{boom}}.UpdatedObject(context.Background(), withRV("7"))
+		require.ErrorIs(t, err, boom)
+	})
+}
+
+type failingUpdate struct{ err error }
+
+func (failingUpdate) Preconditions() *metav1.Preconditions { return nil }
+
+func (f failingUpdate) UpdatedObject(context.Context, runtime.Object) (runtime.Object, error) {
+	return nil, f.err
 }
