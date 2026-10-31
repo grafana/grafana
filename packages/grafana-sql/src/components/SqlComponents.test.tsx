@@ -18,12 +18,12 @@ describe('DatasetSelector', () => {
     });
   });
 
-  it('should not query the database if Postgres instance, and no preconfigured database', async () => {
-    const mockProps = buildMockDatasetSelectorProps({ dialect: 'postgres' });
+  it('should query datasets for Postgres instance when no preconfigured database', async () => {
+    const mockProps = buildMockDatasetSelectorProps();
     render(<DatasetSelector {...mockProps} />);
 
     await waitFor(() => {
-      expect(mockProps.db.datasets).not.toHaveBeenCalled();
+      expect(mockProps.db.datasets).toHaveBeenCalled();
     });
   });
 
