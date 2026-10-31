@@ -6,7 +6,8 @@ export default defineConfig({
     ignore: [
       'public/lib/monaco/**/*',
       'public/app/extensions/**/*',
-      'public/app/plugins/datasource/**/*',
+      // Core datasources bundled with Grafana use the main namespace, the rest extract their own
+      'public/app/plugins/datasource/!(grafana|dashboard)/**/*',
       'packages/*/dist/**/*',
       '**/node_modules/**/*',
     ],
