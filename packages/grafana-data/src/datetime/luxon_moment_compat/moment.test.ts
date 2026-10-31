@@ -131,6 +131,17 @@ describe('startOf and endOf', () => {
 });
 
 describe('format', () => {
+  it.each([
+    ['0024-05-01', '24 24 0024'],
+    ['2024-05-01', '2024 24 2024'],
+  ])('formats an unpadded year without changing YY or YYYY for %s', (input, expected) => {
+    expect(moment.utc(input).format('Y YY YYYY')).toBe(expected);
+  });
+
+  it('preserves escaped single-year tokens', () => {
+    expect(moment.utc('2024-05-01').format('[Y] \\Y Y')).toBe('Y Y 2024');
+  });
+
   it('uses Z for UTC in the default format', () => {
     expect(moment.utc('2024-05-08T10:30:45Z').format()).toBe('2024-05-08T10:30:45Z');
   });
@@ -190,6 +201,13 @@ describe('format', () => {
 });
 
 describe('formatted string parsing', () => {
+  it.each([
+    ['24-05-01', '0024-05-01T00:00:00.000Z'],
+    ['2024-05-01', '2024-05-01T00:00:00.000Z'],
+  ])('parses an unpadded calendar year in %s', (input, expected) => {
+    expect(moment.utc(input, 'Y-MM-DD').toISOString()).toBe(expected);
+  });
+
   it('treats single quotes as literal characters in the format', () => {
     expect(moment.utc("May'24", "MMM'YY").toISOString()).toBe('2024-05-01T00:00:00.000Z');
   });
