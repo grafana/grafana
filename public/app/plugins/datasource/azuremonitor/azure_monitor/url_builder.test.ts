@@ -242,6 +242,35 @@ describe('AzureMonitorUrlBuilder', () => {
   });
 
   describe('Legacy query object', () => {
+    describe('when metric definition is microsoft.azurestackhci/edgemachines', () => {
+      const resource = {
+        subscription: 'sub',
+        resourceGroup: 'edge-resources',
+        metricNamespace: 'microsoft.azurestackhci/edgemachines',
+        resourceName: 'edge-machine',
+      };
+
+      it('builds the resource-scoped metric namespaces URL', () => {
+        expect(
+          UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
+            'azuremonitor',
+            '2017-12-01-preview',
+            resource,
+            false,
+            templateSrv
+          )
+        ).toBe(
+          'azuremonitor/subscriptions/sub/resourceGroups/edge-resources/providers/microsoft.azurestackhci/edgemachines/edge-machine/providers/microsoft.insights/metricNamespaces?api-version=2017-12-01-preview'
+        );
+      });
+
+      it('builds the resource-scoped metric definitions URL', () => {
+        expect(UrlBuilder.buildAzureMonitorGetMetricNamesUrl('azuremonitor', '2018-01-01', resource, templateSrv)).toBe(
+          'azuremonitor/subscriptions/sub/resourceGroups/edge-resources/providers/microsoft.azurestackhci/edgemachines/edge-machine/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01'
+        );
+      });
+    });
+
     describe('when metric definition is Microsoft.NetApp/netAppAccounts/capacityPools/volumes', () => {
       it('should build the getMetricNamespaces url in the even longer format', () => {
         const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(

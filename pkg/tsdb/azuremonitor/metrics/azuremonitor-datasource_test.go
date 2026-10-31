@@ -661,6 +661,58 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 	}
 }
 
+func TestAzureMonitorParseResponseEmptyAndSparseEdgeMachineMetrics(t *testing.T) {
+	query := &types.AzureMonitorQuery{
+		URL:          "/subscriptions/sub/resourceGroups/rg/providers/Microsoft.AzureStackHCI/edgeMachines/machine/providers/microsoft.insights/metrics",
+		Subscription: "sub",
+		Params:       url.Values{"aggregation": {"Average"}},
+	}
+	datasource := &AzureMonitorDatasource{}
+
+	t.Run("empty metric values return no frames", func(t *testing.T) {
+		var response types.AzureMonitorResponse
+		require.NoError(t, json.Unmarshal([]byte(`{"value":[]}`), &response))
+
+		frames, err := datasource.parseResponse(response, query, "https://portal.azure.com", "")
+
+		require.NoError(t, err)
+		require.Empty(t, frames)
+	})
+
+	t.Run("average preserves zero and leaves null or missing samples empty", func(t *testing.T) {
+		var response types.AzureMonitorResponse
+		require.NoError(t, json.Unmarshal([]byte(`{
+			"value": [{
+				"name": {"value": "system.disk.operation_time", "localizedValue": "Disk Operation Time"},
+				"unit": "Seconds",
+				"timeseries": [{
+					"metadatavalues": [],
+					"data": [
+						{"timeStamp": "2026-10-20T12:00:00Z", "average": 0},
+						{"timeStamp": "2026-10-20T12:01:00Z", "average": null},
+						{"timeStamp": "2026-10-20T12:02:00Z", "average": 1.25},
+						{"timeStamp": "2026-10-20T12:03:00Z", "count": 9}
+					]
+				}]
+			}]
+		}`), &response))
+
+		frames, err := datasource.parseResponse(response, query, "https://portal.azure.com", "")
+
+		require.NoError(t, err)
+		require.Len(t, frames, 1)
+		require.Len(t, frames[0].Fields, 2)
+		assert.Equal(t, "Disk Operation Time", frames[0].Fields[1].Name)
+		assert.Equal(t, "machine", frames[0].Fields[1].Labels["resourceName"])
+		require.Equal(t, 4, frames[0].Rows())
+
+		for i, expected := range []*float64{new(0.0), nil, new(1.25), nil} {
+			assert.Equal(t, expected, frames[0].Fields[1].At(i), "sample %d", i)
+			assert.Equal(t, time.Date(2026, 10, 20, 12, i, 0, 0, time.UTC), frames[0].Fields[0].At(i))
+		}
+	})
+}
+
 func TestAzureMonitorParseResponseGrafanaSqlRenamesFields(t *testing.T) {
 	resources := map[string]dataquery.AzureMonitorResource{}
 	resources[strings.ToLower("/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana")] =

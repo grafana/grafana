@@ -244,6 +244,48 @@ describe('AzureMonitor ResourcePicker utils', () => {
       });
     });
 
+    it.each([
+      {
+        selection: 'resource picker',
+        resource: parseResourceDetails(
+          '/subscriptions/sub/resourceGroups/edge-resources/providers/Microsoft.AzureStackHCI/edgeMachines/edge-machine',
+          'northeurope'
+        ),
+      },
+      {
+        selection: 'advanced entry',
+        resource: {
+          subscription: 'sub',
+          resourceGroup: 'edge-resources',
+          metricNamespace: 'Microsoft.AzureStackHCI/edgeMachines',
+          resourceName: 'edge-machine',
+          region: 'northeurope',
+        },
+      },
+    ])('preserves metrics resource identity after $selection', ({ resource }) => {
+      const query = setResources(createMockQuery(), 'metrics', [resource]);
+
+      expect(query).toMatchObject({
+        subscription: 'sub',
+        azureMonitor: {
+          metricNamespace: 'microsoft.azurestackhci/edgemachines',
+          region: 'northeurope',
+          resources: [
+            {
+              subscription: 'sub',
+              resourceGroup: 'edge-resources',
+              metricNamespace: 'Microsoft.AzureStackHCI/edgeMachines',
+              resourceName: 'edge-machine',
+              region: 'northeurope',
+            },
+          ],
+        },
+      });
+      expect(resourcesToStrings(query.azureMonitor?.resources ?? [])).toEqual([
+        '/subscriptions/sub/resourceGroups/edge-resources/providers/Microsoft.AzureStackHCI/edgeMachines/edge-machine',
+      ]);
+    });
+
     it('ignores a partially empty metrics resource', () => {
       expect(
         setResources(createMockQuery(), 'metrics', [
