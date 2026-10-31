@@ -17,12 +17,12 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	authlib "github.com/grafana/authlib/types"
+
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	gutils "github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -298,7 +298,7 @@ func asStarsResource(ns string, v *dashboardStars) collections.Stars {
 			ResourceVersion:   strconv.FormatInt(v.Last, 10),
 			CreationTimestamp: metav1.NewTime(time.UnixMilli(v.First)),
 			Annotations: map[string]string{
-				gutils.AnnoKeyCreatedBy: fmt.Sprintf("user:%s", v.UserUID),
+				utils.AnnoKeyCreatedBy: fmt.Sprintf("user:%s", v.UserUID),
 			},
 		},
 		Spec: collections.StarsSpec{
@@ -311,7 +311,7 @@ func asStarsResource(ns string, v *dashboardStars) collections.Stars {
 	}
 	stars.Spec.Normalize()
 	if v.Last > v.First {
-		m, _ := gutils.MetaAccessor(&stars)
+		m, _ := utils.MetaAccessor(&stars)
 		m.SetUpdatedTimestampMillis(v.Last)
 	}
 	return stars

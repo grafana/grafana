@@ -55,11 +55,11 @@ func RegisterAPIService(
 		authorizer: &utils.AuthorizeFromName{
 			OKNames:      []string{"merged"},
 			AccessClient: accessClient, // can i edit a team
-			Resource: map[string][]utils.ResourceOwner{
+			Resource: map[string][]apimachineryutils.ResourceOwner{
 				"preferences": {
-					utils.NamespaceResourceOwner,
-					utils.TeamResourceOwner,
-					utils.UserResourceOwner,
+					apimachineryutils.NamespaceResourceOwner,
+					apimachineryutils.TeamResourceOwner,
+					apimachineryutils.UserResourceOwner,
 				},
 			},
 		},

@@ -9,8 +9,8 @@ import (
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	prefsregistry "github.com/grafana/grafana/pkg/registry/apis/preferences"
-	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -45,7 +45,7 @@ func NewK8sHandler(client K8sClient, ds dashboards.DashboardService, defaults pr
 
 // GetPreferences fetches the preferences for the given owner and returns
 // them as the legacy PreferencesSpec response.
-func (h *K8sHandler) GetPreferences(c *contextmodel.ReqContext, owner prefutils.OwnerReference) response.Response {
+func (h *K8sHandler) GetPreferences(c *contextmodel.ReqContext, owner apiutils.OwnerReference) response.Response {
 	spec, err := h.client.Get(c.Req.Context(), owner)
 	if err != nil {
 		return responseFromError(err)
@@ -105,7 +105,7 @@ func specToPreference(spec *preferences.PreferencesSpec) *pref.Preference {
 // UpdatePreferences performs a full replace of the preferences for the
 // given owner, matching the legacy PUT semantics. Field validation is
 // enforced by the apiserver admission webhook
-func (h *K8sHandler) UpdatePreferences(c *contextmodel.ReqContext, owner prefutils.OwnerReference, dto *dtos.UpdatePrefsCmd) response.Response {
+func (h *K8sHandler) UpdatePreferences(c *contextmodel.ReqContext, owner apiutils.OwnerReference, dto *dtos.UpdatePrefsCmd) response.Response {
 	homeDashboardUID, errResp := h.resolveHomeDashboardUID(c, dto.HomeDashboardUID, dto.HomeDashboardID)
 	if errResp != nil {
 		return errResp
@@ -120,7 +120,7 @@ func (h *K8sHandler) UpdatePreferences(c *contextmodel.ReqContext, owner prefuti
 // PatchPreferences performs a partial update of the preferences for the
 // given owner, matching the legacy PATCH semantics (fields not present in
 // the request are left unchanged).
-func (h *K8sHandler) PatchPreferences(c *contextmodel.ReqContext, owner prefutils.OwnerReference, dto *dtos.PatchPrefsCmd) response.Response {
+func (h *K8sHandler) PatchPreferences(c *contextmodel.ReqContext, owner apiutils.OwnerReference, dto *dtos.PatchPrefsCmd) response.Response {
 	var legacyID int64
 	if dto.HomeDashboardID != nil {
 		legacyID = *dto.HomeDashboardID

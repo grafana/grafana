@@ -15,7 +15,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
-	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -28,10 +28,10 @@ import (
 // the legacy /api preferences bridge. It is intentionally narrow so it can
 // be mocked in tests of the legacy handlers.
 type K8sClient interface {
-	Get(ctx context.Context, owner prefutils.OwnerReference) (*preferences.PreferencesSpec, error)
+	Get(ctx context.Context, owner apiutils.OwnerReference) (*preferences.PreferencesSpec, error)
 	GetMerged(ctx context.Context) (*preferences.PreferencesSpec, error)
-	Update(ctx context.Context, owner prefutils.OwnerReference, spec *preferences.PreferencesSpec) error
-	Patch(ctx context.Context, owner prefutils.OwnerReference, spec *preferences.PreferencesSpec) error
+	Update(ctx context.Context, owner apiutils.OwnerReference, spec *preferences.PreferencesSpec) error
+	Patch(ctx context.Context, owner apiutils.OwnerReference, spec *preferences.PreferencesSpec) error
 }
 
 type k8sClient struct {
@@ -52,7 +52,7 @@ func NewK8sClient(cfg *setting.Cfg, configProvider grafanaapiserver.DirectRestCo
 	}
 }
 
-func (k *k8sClient) Get(ctx context.Context, owner prefutils.OwnerReference) (*preferences.PreferencesSpec, error) {
+func (k *k8sClient) Get(ctx context.Context, owner apiutils.OwnerReference) (*preferences.PreferencesSpec, error) {
 	client, err := k.getClient(ctx)
 	if err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ func (k *k8sClient) GetMerged(ctx context.Context) (*preferences.PreferencesSpec
 // (pkg/registry/apis/preferences/legacy.preferenceStorage.Update) handles
 // the missing-resource case by creating an empty placeholder, so we don't
 // need a preflight Get.
-func (k *k8sClient) Update(ctx context.Context, owner prefutils.OwnerReference, spec *preferences.PreferencesSpec) error {
+func (k *k8sClient) Update(ctx context.Context, owner apiutils.OwnerReference, spec *preferences.PreferencesSpec) error {
 	client, err := k.getClient(ctx)
 	if err != nil {
 		return err
@@ -102,7 +102,7 @@ func (k *k8sClient) Update(ctx context.Context, owner prefutils.OwnerReference, 
 // Patch applies a JSON merge-patch to the preferences for the given owner.
 // The underlying storage upserts on missing resources by returning a UID-bearing
 // placeholder from its Update method, so this also works as upsert.
-func (k *k8sClient) Patch(ctx context.Context, owner prefutils.OwnerReference, spec *preferences.PreferencesSpec) error {
+func (k *k8sClient) Patch(ctx context.Context, owner apiutils.OwnerReference, spec *preferences.PreferencesSpec) error {
 	body, err := json.Marshal(struct {
 		Spec *preferences.PreferencesSpec `json:"spec"`
 	}{Spec: spec})

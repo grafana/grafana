@@ -3,13 +3,14 @@ package api
 import (
 	"net/http"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
+	prefutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/open-feature/go-sdk/openfeature"
 )
 
 var ofClient = openfeature.NewDefaultClient()

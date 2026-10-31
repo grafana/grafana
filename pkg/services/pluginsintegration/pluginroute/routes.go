@@ -346,16 +346,20 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 				return
 			}
 			obj, err := b.getter(ctx, gv.WithResource(resource), name)
-			if err != nil {
+			switch {
+			case err == nil:
+				m, err := utils.MetaAccessor(obj)
+				if err != nil {
+					_ = errhttp.Write(ctx, err, w)
+					return
+				}
+				parentObj, parentMeta = obj, m
+			case apierrors.IsNotFound(err) && b.kindPolicies[resource].allowMissingParent:
+				// The plugin is called with the name alone.
+			default:
 				_ = errhttp.Write(ctx, err, w)
 				return
 			}
-			m, err := utils.MetaAccessor(obj)
-			if err != nil {
-				_ = errhttp.Write(ctx, err, w)
-				return
-			}
-			parentObj, parentMeta = obj, m
 		}
 
 		// Before the parent's secure values are decrypted, so a request the
@@ -373,6 +377,7 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 		if resource != "" {
 			parent := &pluginv3.RouteResource{}
 			parent.SetResource(resource)
+			parent.SetName(name)
 			if parentObj != nil {
 				raw, err := json.Marshal(parentObj)
 				if err != nil {
@@ -384,7 +389,6 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 					_ = errhttp.Write(ctx, err, w)
 					return
 				}
-				parent.SetName(name)
 				parent.SetRv(parentMeta.GetResourceVersion())
 				parent.SetRaw(raw)
 				parent.SetDecryptedSecureValues(sv)

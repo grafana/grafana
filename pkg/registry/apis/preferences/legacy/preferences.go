@@ -16,9 +16,8 @@ import (
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	utilsOrig "github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -292,7 +291,7 @@ func asPreferencesResource(ns string, p *preferenceModel) preferences.Preference
 
 	if !p.Created.Equal(p.Updated) {
 		obj.Annotations = map[string]string{
-			utilsOrig.AnnoKeyUpdatedTimestamp: p.Updated.UTC().Format(time.RFC3339),
+			utils.AnnoKeyUpdatedTimestamp: p.Updated.UTC().Format(time.RFC3339),
 		}
 	}
 

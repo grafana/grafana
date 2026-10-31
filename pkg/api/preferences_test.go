@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
-	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
+	prefutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"

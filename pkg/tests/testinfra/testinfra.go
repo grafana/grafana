@@ -110,6 +110,10 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 	signingKeysUrl := grpcServerAuthSection.Key("signing_keys_url")
 	signingKeysUrl.SetValue(strings.Replace(signingKeysUrl.String(), "<placeholder>", listener.Addr().String(), 1))
 
+	// Plugins, and apps served from this process, call this server's API on its listener.
+	localAPIURL := cfg.Raw.Section("plugins").Key("local_api_url")
+	localAPIURL.SetValue(strings.Replace(localAPIURL.String(), "<placeholder>", listener.Addr().String(), 1))
+
 	// Potentially allocate a real gRPC port for unified storage
 	runstore := false
 	var grpcListener net.Listener
@@ -610,6 +614,13 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		anonSect, err := cfg.GetSection("auth.anonymous")
 		require.NoError(t, err)
 		_, err = anonSect.NewKey("enabled", "false")
+		require.NoError(t, err)
+	}
+	if opts.LocalPluginAPI {
+		// The listener is only known when the server starts, which fills in the address.
+		pluginsSect, err := getOrCreateSection("plugins")
+		require.NoError(t, err)
+		_, err = pluginsSect.NewKey("local_api_url", "http://<placeholder>")
 		require.NoError(t, err)
 	}
 	if opts.PluginAdminEnabled {
@@ -1136,24 +1147,27 @@ type GrafanaOpts struct {
 	DisableAnonymous                      bool
 	CatalogAppEnabled                     bool
 	ViewersCanEdit                        bool
-	PluginAdminEnabled                    bool
-	PluginAdminExternalManageEnabled      bool
-	AppModeProduction                     bool
-	DisableLegacyAlerting                 bool
-	EnableUnifiedAlerting                 bool
-	UnifiedAlertingDisabledOrgs           []int64
-	UnifiedAlertingAllowedIntegrations    []string
-	UnifiedAlertingEmailsToOrgOnly        bool
-	UnifiedAlertingDisableExecuteAlerts   bool
-	EnableLog                             bool
-	GRPCServerAddress                     string
-	QueryRetries                          int
-	TransactionRetries                    int
-	GrafanaComAPIURL                      string
-	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
-	UnifiedStorageDisableSearch           bool
-	SearchInjectFailuresPercent           int
-	UnifiedStorageMaxPageSizeBytes        int
+	// LocalPluginAPI sets [plugins] local_api_url to the test server's listener,
+	// for plugins and apps that call Grafana's API from this process.
+	LocalPluginAPI                      bool
+	PluginAdminEnabled                  bool
+	PluginAdminExternalManageEnabled    bool
+	AppModeProduction                   bool
+	DisableLegacyAlerting               bool
+	EnableUnifiedAlerting               bool
+	UnifiedAlertingDisabledOrgs         []int64
+	UnifiedAlertingAllowedIntegrations  []string
+	UnifiedAlertingEmailsToOrgOnly      bool
+	UnifiedAlertingDisableExecuteAlerts bool
+	EnableLog                           bool
+	GRPCServerAddress                   string
+	QueryRetries                        int
+	TransactionRetries                  int
+	GrafanaComAPIURL                    string
+	UnifiedStorageConfig                map[string]setting.UnifiedStorageConfig
+	UnifiedStorageDisableSearch         bool
+	SearchInjectFailuresPercent         int
+	UnifiedStorageMaxPageSizeBytes      int
 	// UnifiedStorageResourceVersionBatchTransactionTimeout, if > 0, sets
 	// [unified_storage] resource_version_batch_transaction_timeout in the test
 	// server's ini. Bounds one batched RV WithTx; used by provisioning
