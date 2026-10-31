@@ -23,7 +23,7 @@ labels:
 menuTitle: Template variables
 title: Azure Monitor template variables
 weight: 400
-review_date: 2026-08-11
+review_date: 2026-10-21
 ---
 
 # Azure Monitor template variables
@@ -73,6 +73,8 @@ The Azure Monitor data source provides the following query types for template va
 | **Regions**             | Returns Azure regions available for the specified subscription.                                                                        |
 | **Resource Names**      | Returns resource names for a specified subscription, resource group, and namespace. Supports multi-value selection.                    |
 | **Metric Names**        | Returns available metric names for a specified resource.                                                                               |
+| **Dimensions**          | Returns the dimension names for a specified metric.                                                                                    |
+| **Dimension Values**    | Returns the values of a specified dimension. Values are queried for the dashboard time range.                                          |
 | **Workspaces**          | Returns Log Analytics workspaces for the specified subscription.                                                                       |
 | **Logs**                | Executes a KQL query and returns the results as variable values. Refer to [Create a Logs variable](#create-a-logs-variable).           |
 | **Custom Namespaces**   | Returns custom metric namespaces for a specified resource.                                                                             |
@@ -108,6 +110,8 @@ Cascading variables (also called dependent or chained variables) allow you to cr
 1. Select the appropriate **Namespace** for your resources (for example, `Microsoft.Compute/virtualMachines`).
 
 Now when you change the subscription, the resource group dropdown updates automatically, and when you change the resource group, the resource name dropdown updates.
+
+**Dimensions** and **Dimension Values** cascade the same way. Both require a subscription, resource group, namespace, resource, and metric name. **Custom Namespace** is optional. **Dimension Values** also requires a dimension name. For a dimension values variable, set **Refresh** to **On time range change**, because the values are queried for the dashboard time range.
 
 ## Create a Logs variable
 
