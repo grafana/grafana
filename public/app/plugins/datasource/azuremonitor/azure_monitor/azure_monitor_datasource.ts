@@ -265,10 +265,6 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
           }
         }
         return result;
-      })
-      .catch((reason) => {
-        console.error(`Failed to get metric namespaces: ${reason}`);
-        return [];
       });
   }
 

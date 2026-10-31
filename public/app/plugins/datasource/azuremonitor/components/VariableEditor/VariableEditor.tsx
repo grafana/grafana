@@ -213,20 +213,37 @@ const VariableEditor = (props: Props) => {
   }, [datasource, subscription, resourceGroup, namespace]);
 
   const resource = (typeof query === 'object' && query.resource) || '';
+  const usesCustomNamespaces =
+    hasCustomNamespace || requireCustomNamespace || queryType === AzureQueryType.CustomNamespacesQuery;
   // When subscription, resource group, namespace, and resource name are all set, retrieve custom metric namespaces
   useEffect(() => {
-    if (subscription && resourceGroup && namespace && resource) {
+    let cancelled = false;
+    setCustomNamespaces([]);
+    setError('customMetricNamespaces', undefined);
+    if (usesCustomNamespaces && subscription && resourceGroup && namespace && resource) {
       const resourceUri = UrlBuilder.buildResourceUri(getTemplateSrv(), {
         subscription,
         resourceGroup,
         metricNamespace: namespace,
         resourceName: resource,
       });
-      datasource.getMetricNamespaces(subscription, resourceGroup, resourceUri, true).then((rgs) => {
-        setCustomNamespaces(rgs.map((s) => ({ label: s.text, value: s.value })));
-      });
+      datasource
+        .getMetricNamespaces(subscription, resourceGroup, resourceUri, true)
+        .then((rgs) => {
+          if (!cancelled) {
+            setCustomNamespaces(rgs.map((s) => ({ label: s.text, value: s.value })));
+          }
+        })
+        .catch((error) => {
+          if (!cancelled) {
+            setError('customMetricNamespaces', error);
+          }
+        });
     }
-  }, [datasource, subscription, resourceGroup, namespace, resource]);
+    return () => {
+      cancelled = true;
+    };
+  }, [datasource, subscription, resourceGroup, namespace, resource, usesCustomNamespaces, setError]);
 
   const customNamespace = (typeof query === 'object' && query.customNamespace) || '';
   const metricName = (typeof query === 'object' && query.metricName) || '';
@@ -409,20 +426,6 @@ const VariableEditor = (props: Props) => {
             basicLogsEnabled={datasource.azureMonitorDatasource.basicLogsEnabled ?? false}
             auxiliaryLogsEnabled={datasource.azureMonitorDatasource.auxiliaryLogsEnabled ?? false}
           />
-          {errorMessage && (
-            <>
-              <Space v={2} />
-              <Alert
-                severity="error"
-                title={t(
-                  'components.variable-editor.title-error-occurred',
-                  'An error occurred while requesting metadata from Azure Monitor'
-                )}
-              >
-                {errorMessage instanceof Error ? errorMessage.message : errorMessage}
-              </Alert>
-            </>
-          )}
         </div>
       )}
       {query.queryType === AzureQueryType.GrafanaTemplateVariableFn && (
@@ -586,21 +589,21 @@ const VariableEditor = (props: Props) => {
             variableOptionGroup={variableOptionGroup}
             setError={setError}
           />
-          {errorMessage && (
-            <>
-              <Space v={2} />
-              <Alert
-                severity="error"
-                title={t(
-                  'components.variable-editor.title-error-occurred',
-                  'An error occurred while requesting metadata from Azure Monitor'
-                )}
-              >
-                {errorMessage instanceof Error ? errorMessage.message : errorMessage}
-              </Alert>
-            </>
-          )}
         </div>
+      )}
+      {errorMessage && (
+        <>
+          <Space v={2} />
+          <Alert
+            severity="error"
+            title={t(
+              'components.variable-editor.title-error-occurred',
+              'An error occurred while requesting metadata from Azure Monitor'
+            )}
+          >
+            {errorMessage instanceof Error ? errorMessage.message : errorMessage}
+          </Alert>
+        </>
       )}
     </Stack>
   );

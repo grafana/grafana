@@ -534,24 +534,61 @@ describe('AzureMonitorDatasource', () => {
         });
     });
 
-    it('should return list of Metric Namespaces even if there is a failure', () => {
-      const consoleError = jest.spyOn(console, 'error').mockImplementation();
-      return ctx.ds.azureMonitorDatasource
-        .getMetricNamespaces(
+    it.each([403, 504])('propagates a %s namespace failure instead of reporting no namespaces', async (status) => {
+      const error = { status, data: { message: 'Metric namespace request failed' } };
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockRejectedValue(error);
+
+      await expect(
+        ctx.ds.azureMonitorDatasource.getMetricNamespaces(
           {
             resourceUri:
               '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1',
           },
-          true,
-          'westeurope'
+          false
         )
-        .then((results: Array<{ text: string; value: string }>) => {
-          expect(results.length).toEqual(0);
-          expect(consoleError).toHaveBeenCalled();
-          expect(consoleError.mock.calls[0][0]).toContain(
-            'Failed to get metric namespaces: failed to retrieve due to timeout'
-          );
+      ).rejects.toBe(error);
+    });
+
+    it('returns an empty list when Azure successfully reports no namespaces', async () => {
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue({ value: [] });
+
+      await expect(
+        ctx.ds.azureMonitorDatasource.getMetricNamespaces(
+          {
+            resourceUri:
+              '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1',
+          },
+          false
+        )
+      ).resolves.toEqual([]);
+    });
+
+    it('loads namespaces and metric definitions for the selected unlisted resource', async () => {
+      const getResource = jest
+        .fn()
+        .mockResolvedValueOnce({
+          value: [{ properties: { metricNamespaceName: 'contoso.monitor/widgets' } }],
+        })
+        .mockResolvedValueOnce({
+          value: [{ name: { value: 'Requests', localizedValue: 'Requests' } }],
         });
+      ctx.ds.azureMonitorDatasource.getResource = getResource;
+      const resource = {
+        subscription: 'sub2',
+        resourceGroup: 'test-rg',
+        metricNamespace: 'contoso.monitor/widgets',
+        resourceName: 'widget',
+      };
+
+      const namespaces = await ctx.ds.azureMonitorDatasource.getMetricNamespaces(resource, false);
+      const metrics = await ctx.ds.azureMonitorDatasource.getMetricNames(resource);
+
+      expect(namespaces).toEqual([{ text: 'contoso.monitor/widgets', value: 'contoso.monitor/widgets' }]);
+      expect(metrics).toEqual([{ text: 'Requests', value: 'Requests' }]);
+      expect(getResource.mock.calls.map(([path]) => path)).toEqual([
+        'azuremonitor/subscriptions/sub2/resourceGroups/test-rg/providers/contoso.monitor/widgets/widget/providers/microsoft.insights/metricNamespaces?api-version=2017-12-01-preview',
+        'azuremonitor/subscriptions/sub2/resourceGroups/test-rg/providers/contoso.monitor/widgets/widget/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01',
+      ]);
     });
 
     it('when custom is specified will only return custom namespaces', () => {

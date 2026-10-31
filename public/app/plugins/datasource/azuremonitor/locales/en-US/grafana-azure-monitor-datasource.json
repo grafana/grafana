@@ -296,6 +296,7 @@
       "heading-selection": "Selection",
       "locations-filter": "Locations",
       "locations-filter-placeholder": "Select a location",
+      "metrics-availability-notice": "Some resources do not have metrics. Select a resource to load its available metrics.",
       "recent-tab": "Recent",
       "result-limit": "Showing first {{numResults}} results",
       "subscriptions-filter": "Subscriptions",
