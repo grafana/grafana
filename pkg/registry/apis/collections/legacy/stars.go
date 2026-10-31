@@ -17,10 +17,11 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	authlib "github.com/grafana/authlib/types"
+
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	gutils "github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/star"
@@ -111,17 +112,17 @@ func (s *DashboardStarsStorage) List(ctx context.Context, options *internalversi
 	return list, nil
 }
 
-func getNamespaceAndOwner(ctx context.Context, name string) (authlib.NamespaceInfo, gutils.OwnerReference, error) {
+func getNamespaceAndOwner(ctx context.Context, name string) (authlib.NamespaceInfo, utils.OwnerReference, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
-		return info, gutils.OwnerReference{}, err
+		return info, utils.OwnerReference{}, err
 	}
-	owner, ok := gutils.ParseOwnerFromName(name)
+	owner, ok := utils.ParseOwnerFromName(name)
 	if !ok {
 		return info, owner, fmt.Errorf("invalid name %w", err)
 	}
-	if owner.Owner != gutils.UserResourceOwner {
-		return info, owner, fmt.Errorf("expecting name with prefix: %s-", gutils.UserResourceOwner)
+	if owner.Owner != utils.UserResourceOwner {
+		return info, owner, fmt.Errorf("expecting name with prefix: %s-", utils.UserResourceOwner)
 	}
 	return info, owner, nil
 }
@@ -297,7 +298,7 @@ func asStarsResource(ns string, v *dashboardStars) collections.Stars {
 			ResourceVersion:   strconv.FormatInt(v.Last, 10),
 			CreationTimestamp: metav1.NewTime(time.UnixMilli(v.First)),
 			Annotations: map[string]string{
-				gutils.AnnoKeyCreatedBy: fmt.Sprintf("user:%s", v.UserUID),
+				utils.AnnoKeyCreatedBy: fmt.Sprintf("user:%s", v.UserUID),
 			},
 		},
 		Spec: collections.StarsSpec{
@@ -310,7 +311,7 @@ func asStarsResource(ns string, v *dashboardStars) collections.Stars {
 	}
 	stars.Spec.Normalize()
 	if v.Last > v.First {
-		m, _ := gutils.MetaAccessor(&stars)
+		m, _ := utils.MetaAccessor(&stars)
 		m.SetUpdatedTimestampMillis(v.Last)
 	}
 	return stars
