@@ -112,7 +112,7 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
-			Name:            "grafana.routePreferencesAndCollections",
+			Name:            "grafana.routeCoreApps",
 			Description:     "implement preferences and collections as app plugins",
 			Stage:           FeatureStageExperimental,
 			HideFromDocs:    true,

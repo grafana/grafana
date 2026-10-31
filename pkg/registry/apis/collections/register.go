@@ -66,7 +66,7 @@ func RegisterAPIService(
 
 	// The router serves the group instead (see grafana.routePreferencesAndCollections).
 	ctx := context.Background()
-	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaRoutePreferencesAndCollections, false, openfeature.TransactionContext(ctx)) {
+	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaRouteCoreApps, false, openfeature.TransactionContext(ctx)) {
 		apiregistration.RegisterAPI(builder)
 	}
 	return builder
