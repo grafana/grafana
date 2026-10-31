@@ -5220,6 +5220,23 @@
     },
     {
       "metadata": {
+        "name": "provisioningConvergePlanner",
+        "resourceVersion": "1792656896842",
+        "creationTimestamp": "2026-10-22T08:14:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-22 08:14:56.842525 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Compute Git Sync changes with the converge reconciliation planner",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "provisioningExport",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-02-23T12:09:08Z"

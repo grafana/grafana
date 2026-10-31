@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/plan"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -160,6 +161,33 @@ func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, prog
 			continue
 		}
 
+		// The target path is constructed from a job-supplied directory and is
+		// otherwise unchecked, so a move can land a resource where Grafana
+		// cannot address it — the write succeeds in the repository and the
+		// next sync deletes it. The same classifier the sync and the files API
+		// use decides it here.
+		//
+		// For a directory the whole subtree has to be classified, not just the
+		// destination folder: a tree move takes everything inside it along, so
+		// a resource can pass the depth limit where it is and fail where it
+		// lands.
+		refused, err := w.refuseMove(ctx, rw, path, targetPath, opts.Ref)
+		if err != nil {
+			return err // transient: not a refusal
+		}
+		if len(refused) > 0 {
+			progress.Record(ctx, resultBuilder.
+				WithError(&resources.UnsupportedPathError{
+					Path: refused[0].Path,
+					Err:  resources.IsPathSupported(refused[0].Path),
+				}).
+				Build())
+			if err := progress.TooManyErrors(); err != nil {
+				return err
+			}
+			continue
+		}
+
 		progress.SetMessage(ctx, "Moving "+path+" to "+targetPath)
 		if err := rw.Move(ctx, path, targetPath, opts.Ref, "Move "+path+" to "+targetPath); err != nil {
 			resultBuilder.WithError(fmt.Errorf("moving file %s to %s: %w", path, targetPath, err))
@@ -172,6 +200,35 @@ func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, prog
 	}
 
 	return nil
+}
+
+// refuseMove classifies a move's destination, and for a directory every
+// destination its contents would land at.
+func (w *Worker) refuseMove(ctx context.Context, rw repository.ReaderWriter, sourcePath, targetPath, ref string) ([]plan.PathRefusal, error) {
+	if !safepath.IsDir(sourcePath) {
+		return plan.RefuseUnsupportedPaths(targetPath), nil
+	}
+
+	tree, err := rw.ReadTree(ctx, ref)
+	if err != nil {
+		return nil, fmt.Errorf("read tree to classify a directory move: %w", err)
+	}
+	// Directories count as contents. A folder holding nothing a resource
+	// classifier looks at — a .keep, a README — still becomes a Grafana folder,
+	// so a move that pushes it past the depth limit leaves the repository
+	// holding a folder the next sync excludes.
+	var contents []string
+	for _, entry := range tree {
+		if !safepath.InDir(entry.Path, sourcePath) {
+			continue
+		}
+		if entry.Blob {
+			contents = append(contents, entry.Path)
+			continue
+		}
+		contents = append(contents, safepath.EnsureTrailingSlash(entry.Path))
+	}
+	return plan.RefuseUnsupportedMove(sourcePath, targetPath, contents), nil
 }
 
 // constructTargetPath combines the job's target path with the file/folder name from the source path.

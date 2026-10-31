@@ -255,6 +255,15 @@ var (
 			Generate:        Generate{LegacyGo: true, React: true},
 		},
 		{
+			Name:            "provisioningConvergePlanner",
+			Description:     "Compute Git Sync changes with the converge reconciliation planner",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true},
+		},
+		{
 			Name:            "provisioningExport",
 			Description:     "Enable export functionality for provisioned resources",
 			Stage:           FeatureStageExperimental,

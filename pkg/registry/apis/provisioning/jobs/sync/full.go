@@ -40,6 +40,32 @@ func FullSync(
 	folderMetadataEnabled bool,
 	resourceTimeout time.Duration,
 ) error {
+	return fullSync(ctx, repo, compare, clients, currentRef, repositoryResources, progress,
+		tracer, maxSyncWorkers, metrics, quotaTracker, folderMetadataEnabled, resourceTimeout,
+		applyChanges)
+}
+
+// applyFn is how a diff is executed. Injecting it is what lets the planner-driven
+// scheduler stand in for the phase buckets without the surrounding job logic
+// being duplicated.
+type applyFn func(ctx context.Context, changes []ResourceFileChange, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool, resourceTimeout time.Duration) error
+
+func fullSync(
+	ctx context.Context,
+	repo repository.Reader,
+	compare CompareFn,
+	clients resources.ResourceClients,
+	currentRef string,
+	repositoryResources resources.RepositoryResources,
+	progress jobs.JobProgressRecorder,
+	tracer tracing.Tracer,
+	maxSyncWorkers int,
+	metrics jobs.JobMetrics,
+	quotaTracker quotas.QuotaTracker,
+	folderMetadataEnabled bool,
+	resourceTimeout time.Duration,
+	apply applyFn,
+) error {
 	syncStart := time.Now()
 	cfg := repo.Config()
 
@@ -148,7 +174,31 @@ func FullSync(
 	}
 	span.SetAttributes(attribute.Bool("pre_check_quota", true))
 
-	return applyChanges(ctx, changes, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, metrics, quotaTracker, folderMetadataEnabled, resourceTimeout)
+	return apply(ctx, changes, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, metrics, quotaTracker, folderMetadataEnabled, resourceTimeout)
+}
+
+// FullSyncViaConverge is [FullSync] with the plan-driven apply. The compare
+// half is chosen separately, by installing [CompareViaConverge]: the two are
+// independent, so either can be run against the other's half when a divergence
+// has to be narrowed down.
+func FullSyncViaConverge(
+	ctx context.Context,
+	repo repository.Reader,
+	compare CompareFn,
+	clients resources.ResourceClients,
+	currentRef string,
+	repositoryResources resources.RepositoryResources,
+	progress jobs.JobProgressRecorder,
+	tracer tracing.Tracer,
+	maxSyncWorkers int,
+	metrics jobs.JobMetrics,
+	quotaTracker quotas.QuotaTracker,
+	folderMetadataEnabled bool,
+	resourceTimeout time.Duration,
+) error {
+	return fullSync(ctx, repo, compare, clients, currentRef, repositoryResources, progress,
+		tracer, maxSyncWorkers, metrics, quotaTracker, folderMetadataEnabled, resourceTimeout,
+		applyChangesViaConverge)
 }
 
 // shouldSkipChange checks if a change should be skipped based on previous failures on parent/child folders.
@@ -200,6 +250,7 @@ func applyChange(
 	quotaTracker quotas.QuotaTracker,
 	folderMetadataEnabled bool,
 	folderMoves []folderMove,
+	extraEnsureOpts ...resources.EnsurePathOption,
 ) bool {
 	if ctx.Err() != nil {
 		return false
@@ -293,6 +344,9 @@ func applyChange(
 		for _, m := range relocatingFoldersForPath(change.Path, folderMoves) {
 			ensureOpts = append(ensureOpts, resources.WithRelocatingUIDs(m.Path, m.UID))
 		}
+		// Decisions the caller already made about folder identity, applied
+		// rather than re-derived.
+		ensureOpts = append(ensureOpts, extraEnsureOpts...)
 
 		folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, change.Path, currentRef, ensureOpts...)
 		if err != nil {

@@ -141,6 +141,9 @@ func TestMoveWorker_CommitMessageFromJobSpec(t *testing.T) {
 
 	mockRepo := repository.NewMockRepository(t)
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	// Classifying a directory move reads the tree, so the destinations its
+	// contents would land at can be checked too.
+	mockRepo.On("ReadTree", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	mockWrapFn := repository.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
@@ -170,6 +173,9 @@ func TestMoveWorker_ProcessNotReaderWriter(t *testing.T) {
 
 	mockRepo := repository.NewMockRepository(t)
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	// Classifying a directory move reads the tree, so the destinations its
+	// contents would land at can be checked too.
+	mockRepo.On("ReadTree", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	mockWrapFn := repository.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
@@ -199,6 +205,9 @@ func TestMoveWorker_ProcessWrapFnError(t *testing.T) {
 
 	mockRepo := repository.NewMockRepository(t)
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	// Classifying a directory move reads the tree, so the destinations its
+	// contents would land at can be checked too.
+	mockRepo.On("ReadTree", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	mockWrapFn := repository.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(errors.New("stage failed"))
@@ -226,6 +235,9 @@ func TestMoveWorker_ProcessMoveFilesSuccess(t *testing.T) {
 		MockRepository: repository.NewMockRepository(t),
 	}
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	// Classifying a directory move reads the tree, so the destinations its
+	// contents would land at can be checked too.
+	mockRepo.On("ReadTree", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	mockWrapFn := repository.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
@@ -274,6 +286,9 @@ func TestMoveWorker_ProcessMoveFilesSkipsSameSourceAndTarget(t *testing.T) {
 		MockRepository: repository.NewMockRepository(t),
 	}
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	// Classifying a directory move reads the tree, so the destinations its
+	// contents would land at can be checked too.
+	mockRepo.On("ReadTree", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	mockWrapFn := repository.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
@@ -312,6 +327,9 @@ func TestMoveWorker_ProcessMoveFilesWithError(t *testing.T) {
 		MockRepository: repository.NewMockRepository(t),
 	}
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	// Classifying a directory move reads the tree, so the destinations its
+	// contents would land at can be checked too.
+	mockRepo.On("ReadTree", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	mockWrapFn := repository.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
@@ -350,6 +368,9 @@ func TestMoveWorker_ProcessWithSyncWorker(t *testing.T) {
 		MockRepository: repository.NewMockRepository(t),
 	}
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	// Classifying a directory move reads the tree, so the destinations its
+	// contents would land at can be checked too.
+	mockRepo.On("ReadTree", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	mockSyncWorker := jobs.NewMockWorker(t)
 	mockWrapFn := repository.NewMockWrapWithStageFn(t)
 
@@ -396,6 +417,9 @@ func TestMoveWorker_ProcessSyncWorkerError(t *testing.T) {
 		MockRepository: repository.NewMockRepository(t),
 	}
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	// Classifying a directory move reads the tree, so the destinations its
+	// contents would land at can be checked too.
+	mockRepo.On("ReadTree", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	mockSyncWorker := jobs.NewMockWorker(t)
 	mockWrapFn := repository.NewMockWrapWithStageFn(t)
 
@@ -471,6 +495,9 @@ func TestMoveWorker_moveFiles(t *testing.T) {
 				MockRepository: repository.NewMockRepository(t),
 			}
 			mockProgress := jobs.NewMockJobProgressRecorder(t)
+			// Classifying a directory move reads the tree, so the destinations its
+			// contents would land at can be checked too.
+			mockRepo.On("ReadTree", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 
 			opts := provisioning.MoveJobOptions{
 				TargetPath: "new/location/",
@@ -517,6 +544,9 @@ func TestMoveWorker_moveFilesToRoot(t *testing.T) {
 		MockRepository: repository.NewMockRepository(t),
 	}
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	// Classifying a directory move reads the tree, so the destinations its
+	// contents would land at can be checked too.
+	mockRepo.On("ReadTree", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 
 	opts := provisioning.MoveJobOptions{
 		TargetPath: "/",
@@ -626,6 +656,9 @@ func TestMoveWorker_ProcessWithResourceReferences(t *testing.T) {
 		MockRepository: repository.NewMockRepository(t),
 	}
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	// Classifying a directory move reads the tree, so the destinations its
+	// contents would land at can be checked too.
+	mockRepo.On("ReadTree", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	mockWrapFn := repository.NewMockWrapWithStageFn(t)
 	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
 	mockRepoResources := resources.NewMockRepositoryResources(t)
@@ -692,6 +725,9 @@ func TestMoveWorker_ProcessResourceReferencesError(t *testing.T) {
 		MockRepository: repository.NewMockRepository(t),
 	}
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	// Classifying a directory move reads the tree, so the destinations its
+	// contents would land at can be checked too.
+	mockRepo.On("ReadTree", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	mockWrapFn := repository.NewMockWrapWithStageFn(t)
 	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
 	mockRepoResources := resources.NewMockRepositoryResources(t)
@@ -754,6 +790,9 @@ func TestMoveWorker_ProcessResourcesFactoryError(t *testing.T) {
 		MockRepository: repository.NewMockRepository(t),
 	}
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	// Classifying a directory move reads the tree, so the destinations its
+	// contents would land at can be checked too.
+	mockRepo.On("ReadTree", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	mockWrapFn := repository.NewMockWrapWithStageFn(t)
 	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
 
@@ -854,6 +893,9 @@ func TestMoveWorker_resolveResourcesToPaths(t *testing.T) {
 				MockRepository: repository.NewMockRepository(t),
 			}
 			mockProgress := jobs.NewMockJobProgressRecorder(t)
+			// Classifying a directory move reads the tree, so the destinations its
+			// contents would land at can be checked too.
+			mockRepo.On("ReadTree", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 			mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
 			mockRepoResources := resources.NewMockRepositoryResources(t)
 
@@ -1078,6 +1120,9 @@ func TestMoveWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	mockRepo.On("Config").Return(config).Maybe() // Config may be called multiple times
 
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	// Classifying a directory move reads the tree, so the destinations its
+	// contents would land at can be checked too.
+	mockRepo.On("ReadTree", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	mockProgress.On("SetTotal", mock.Anything, 1).Once()
 	mockProgress.On("StrictMaxErrors", 1).Once()
 	mockProgress.On("SetMessage", mock.Anything, "Moving test.json to target/test.json").Once()
@@ -1114,4 +1159,58 @@ func TestMoveWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 
 	// Verify that SetRefURLs was NOT called since repo doesn't support URLs
 	mockProgress.AssertExpectations(t)
+}
+
+// A tree move takes descendant folders along, and a folder holding only a
+// .keep is still a Grafana folder. Classifying blobs alone let a move push one
+// past the depth limit, leaving the repository holding a folder the next sync
+// excludes.
+func TestMoveWorker_RefusesDirectoryMoveWhenADescendantFolderBecomesTooDeep(t *testing.T) {
+	job := provisioning.Job{
+		Spec: provisioning.JobSpec{
+			Action: provisioning.JobActionMove,
+			Move: &provisioning.MoveJobOptions{
+				Paths:      []string{"a/"},
+				TargetPath: "new/",
+				Ref:        "main",
+			},
+		},
+	}
+
+	mockRepo := &mockReaderWriter{MockRepository: repository.NewMockRepository(t)}
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockRepo.On("ReadTree", mock.Anything, "main").Return([]repository.FileTreeEntry{
+		{Path: "a/", Blob: false},
+		{Path: "a/b/c/d/e/f/g/h/", Blob: false},
+		{Path: "a/b/c/d/e/f/g/h/.keep", Blob: true},
+	}, nil)
+
+	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
+		return fn(mockRepo, false)
+	})
+
+	mockProgress.On("SetTotal", mock.Anything, 1).Return()
+	mockProgress.On("StrictMaxErrors", 1).Return()
+	mockProgress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
+	mockProgress.On("TooManyErrors").Return(nil)
+	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{})
+
+	// An unaddressable path is a warning, not a failure: the same classification
+	// sync gives it.
+	var refusal error
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		if result.Path() != "a/" {
+			return false
+		}
+		refusal = result.Warning()
+		return true
+	})).Return()
+
+	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	require.NoError(t, worker.Process(context.Background(), mockRepo, job, mockProgress))
+
+	require.ErrorIs(t, refusal, resources.ErrUnsupportedPath)
+	require.Contains(t, refusal.Error(), "new/a/b/c/d/e/f/g/h/")
+	mockRepo.AssertNotCalled(t, "Move", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }

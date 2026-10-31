@@ -1685,6 +1685,11 @@ func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
 	return testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioningExport,
+			// The integration suites exercise the planner, not the diff it
+			// replaces: these are the black-box tests, so they assert what
+			// Grafana ends up holding, which is the only thing the two
+			// implementations are required to agree on.
+			featuremgmt.FlagProvisioningConvergePlanner,
 			// Lets CleanupAllResources force-delete folders (gracePeriodSeconds=0),
 			// bypassing the eventually-consistent "folder is empty" admission check.
 			// Normal (non-force) deletes still enforce the check, so test behavior

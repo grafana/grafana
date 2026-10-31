@@ -27,6 +27,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-11,alerting.ruleStatusSync,experimental,@grafana/alerting-squad,false,false,false
 2023-10-06,grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,true,true,false
 2026-02-23,provisioningFolderMetadata,GA,@grafana/grafana-app-platform-squad,false,true,false
+2026-10-22,provisioningConvergePlanner,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-02-23,provisioningExport,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-09-16,grafana.frontendLegacyFeatureToggleHandling,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-07-16,provisioning.performance,experimental,@grafana/grafana-app-platform-squad,false,false,false

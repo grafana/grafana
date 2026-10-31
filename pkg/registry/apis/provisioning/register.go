@@ -151,6 +151,7 @@ type APIBuilder struct {
 	registry                      prometheus.Registerer
 	quotaGetter                   quotas.QuotaGetter
 	folderMetadataEnabled         bool
+	convergePlanner               bool
 	maxFileSize                   int64
 	syncResourceTimeout           time.Duration
 	incrementalPolicy             repository.IncrementalSyncPolicy
@@ -223,6 +224,7 @@ func NewAPIBuilder(
 	useExclusivelyAccessCheckerForAuthz bool,
 	quotaGetter quotas.QuotaGetter,
 	folderMetadataEnabled bool,
+	convergePlanner bool,
 	incrementalPolicy repository.IncrementalSyncPolicy,
 	maxFileSize int64,
 ) (*APIBuilder, error) {
@@ -237,6 +239,7 @@ func NewAPIBuilder(
 	}
 
 	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
+	resources.SetConvergePreflight(convergePlanner)
 	resourceLister := resources.NewResourceListerForMigrations(unified)
 
 	// Create access checker based on mode
@@ -276,6 +279,7 @@ func NewAPIBuilder(
 		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
 		quotaGetter:                         quotaGetter,
 		folderMetadataEnabled:               folderMetadataEnabled,
+		convergePlanner:                     convergePlanner,
 		incrementalPolicy:                   incrementalPolicy,
 		// Per-file cap for the files API. Non-positive (<=0) disables the cap.
 		maxFileSize: maxFileSize,
@@ -362,6 +366,10 @@ func RegisterAPIService(
 
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
+	// Which diff and which scheduler the sync uses. The two halves are chosen
+	// independently so either can be paired with the other's counterpart when a
+	// divergence has to be narrowed down.
+	convergePlanner := features.IsEnabledGlobally(featuremgmt.FlagProvisioningConvergePlanner) //nolint:staticcheck
 	maxFileSize := cfg.ProvisioningMaxFileSize
 	incrementalPolicy := repository.NewIncrementalSyncPolicy(folderMetadataEnabled, cfg.ProvisioningMaxIncrementalChanges)
 	provisioningSec := cfg.SectionWithEnvOverrides("provisioning")
@@ -407,6 +415,7 @@ func RegisterAPIService(
 		false, // useExclusivelyAccessCheckerForAuthz - TODO: first, test this on the MT side before we enable it by default in ST as well
 		quotaGetter,
 		folderMetadataEnabled,
+		convergePlanner,
 		incrementalPolicy,
 		maxFileSize,
 	)
@@ -454,6 +463,7 @@ func RegisterAPIService(
 		false, // useExclusivelyAccessCheckerForAuthz
 		quotaGetter,
 		folderMetadataEnabled,
+		convergePlanner,
 		incrementalPolicy,
 		maxFileSize,
 	)
@@ -1056,7 +1066,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				metrics,
 			)
 
-			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled, b.syncResourceTimeout) //nolint:staticcheck
+			compareFn, fullSyncFn := sync.Compare, sync.FullSync
+			if b.convergePlanner {
+				compareFn, fullSyncFn = sync.CompareViaConverge, sync.FullSyncViaConverge
+			}
+			syncer := sync.NewSyncer(compareFn, fullSyncFn, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled, b.syncResourceTimeout, b.convergePlanner) //nolint:staticcheck
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,
