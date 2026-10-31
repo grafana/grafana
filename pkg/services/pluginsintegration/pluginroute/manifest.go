@@ -144,12 +144,10 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 						conversion = b.clientV3
 					}
 					// A kind authorized by name is written by the owner of the name, who
-					// replaces the object without reading it first, and creates it on
-					// the first write.
+					// replaces the object without reading it first.
 					byName := b.kindPolicies[strings.ToLower(kind.Plural)].ownerFromName != nil
 					store, err := kindstore.New(gv.WithKind(kind.Kind), kind, admission, conversion, kindstore.Options{
 						StorageOptsGetter:        opts.StorageOptsGetter,
-						AllowCreateOnUpdate:      byName,
 						AllowUnconditionalUpdate: byName,
 					}, defs)
 					if err != nil {
