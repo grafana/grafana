@@ -6,7 +6,7 @@ import (
 	"context"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
-	utils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	mock "github.com/stretchr/testify/mock"
 )
 

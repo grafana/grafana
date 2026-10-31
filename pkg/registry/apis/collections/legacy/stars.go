@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	gutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -112,17 +111,17 @@ func (s *DashboardStarsStorage) List(ctx context.Context, options *internalversi
 	return list, nil
 }
 
-func getNamespaceAndOwner(ctx context.Context, name string) (authlib.NamespaceInfo, utils.OwnerReference, error) {
+func getNamespaceAndOwner(ctx context.Context, name string) (authlib.NamespaceInfo, gutils.OwnerReference, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
-		return info, utils.OwnerReference{}, err
+		return info, gutils.OwnerReference{}, err
 	}
-	owner, ok := utils.ParseOwnerFromName(name)
+	owner, ok := gutils.ParseOwnerFromName(name)
 	if !ok {
 		return info, owner, fmt.Errorf("invalid name %w", err)
 	}
-	if owner.Owner != utils.UserResourceOwner {
-		return info, owner, fmt.Errorf("expecting name with prefix: %s-", utils.UserResourceOwner)
+	if owner.Owner != gutils.UserResourceOwner {
+		return info, owner, fmt.Errorf("expecting name with prefix: %s-", gutils.UserResourceOwner)
 	}
 	return info, owner, nil
 }
