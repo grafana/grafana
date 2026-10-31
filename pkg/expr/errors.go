@@ -10,12 +10,12 @@ import (
 
 var ErrSeriesMustBeWide = errors.New("input data must be a wide series")
 
-// ErrQueryLimit marks a datasource query rejected by a Mimir query-time resource
-// limit. These fail identically on every in-cycle retry, so callers can treat
-// them as non-retryable via errors.Is(err, ErrQueryLimit).
+// ErrQueryLimit marks a datasource query rejected by a query-time resource limit, such as
+// a Mimir series cap or a plugin response over the gRPC message limit. These fail identically
+// on every in-cycle retry, so callers can treat them as non-retryable via errors.Is(err, ErrQueryLimit).
 var ErrQueryLimit = errors.New("query exceeded a resource limit")
 
-// queryLimitErrorIDs are the Mimir global error IDs that ErrQueryLimit covers.
+// queryLimitErrorIDs are the Mimir, Prometheus data source and plugin error IDs that ErrQueryLimit covers.
 // They survive only as substrings of the datasource error, so they are matched
 // here — the single place query errors are built — and surfaced as the sentinel.
 var queryLimitErrorIDs = []string{
@@ -24,6 +24,8 @@ var queryLimitErrorIDs = []string{
 	"err-mimir-max-chunks-bytes-per-query",
 	"err-mimir-max-estimated-chunks-per-query",
 	"err-mimir-max-estimated-memory-consumption-per-query",
+	"err-prometheus-max-series-per-query",
+	"plugin.resourceExhausted",
 }
 
 func isQueryLimitError(err error) bool {
@@ -48,7 +50,7 @@ func (queryLimitError) Is(target error) bool { return target == ErrQueryLimit }
 func (e queryLimitError) Unwrap() error      { return e.error }
 
 // WrapQueryLimitError tags err with ErrQueryLimit when its message contains a known
-// Mimir query-limit error ID, preserving the original message and chain. Use it at
+// query-limit error ID, preserving the original message and chain. Use it at
 // boundaries where a query error is reconstructed from its string and the original
 // error chain is lost — e.g. an error deserialized from a remote query service — so
 // errors.Is(err, ErrQueryLimit) classification keeps working there too.
