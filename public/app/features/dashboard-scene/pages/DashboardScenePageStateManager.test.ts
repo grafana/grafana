@@ -2132,6 +2132,7 @@ describe('DashboardScenePageStateManager v2', () => {
     afterEach(async () => {
       jest.restoreAllMocks();
       setTestFlags({});
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
     });
 
     it('edit-template flow: sets isDashboardTemplate + dashboardTemplateUid, scene is clean', async () => {
@@ -2187,6 +2188,25 @@ describe('DashboardScenePageStateManager v2', () => {
       ).rejects.toThrow(DashboardVersionError);
 
       expect(loadTemplateSpy).not.toHaveBeenCalled();
+    });
+
+    it('redirects to /dashboards instead of auto-entering edit mode when the viewport is mobile-sized', async () => {
+      setTestFlags({ 'grafana.customDashboardTemplates': true, 'grafana.mobileEditDeprecation': true });
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      const replaceSpy = jest.spyOn(locationService, 'replace');
+
+      const loader = new DashboardScenePageStateManagerV2({});
+      await loader.loadDashboard({
+        uid: '',
+        route: DashboardRoutes.Template,
+        dashboardTemplateUid: 'tpl-1',
+        editTemplate: true,
+      });
+
+      const scene = loader.state.dashboard!;
+      expect(replaceSpy).toHaveBeenCalledWith('/dashboards');
+      expect(scene.state.isEditing).toBeFalsy();
+      expect(scene.state.meta.isDashboardTemplate).toBeFalsy();
     });
   });
 });
@@ -3076,6 +3096,45 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
       // Should switch to V1 manager for Grafana dashboard templates
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+    });
+
+    it('redirects to /dashboards instead of auto-entering edit mode when the viewport is mobile-sized', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      config.featureToggles.suggestedDashboards = true;
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+
+      locationService.getLocation = jest.fn().mockReturnValue({
+        pathname: '/dashboard/template',
+        search: '?gnetId=969&datasource=xpyRJd9Mz&mappings=%5B%5D',
+      });
+
+      setBackendSrv({
+        get: jest.fn((url: string) => {
+          if (url.includes('/api/gnet/dashboards/')) {
+            return Promise.resolve({
+              json: {
+                title: 'AWS ElastiCache Redis',
+                uid: '',
+                panels: [],
+                schemaVersion: 40,
+              },
+            });
+          }
+          return Promise.reject(new Error('Not found'));
+        }),
+      } as unknown as BackendSrv);
+
+      const replaceSpy = jest.spyOn(locationService, 'replace');
+      const manager = new UnifiedDashboardScenePageStateManager({});
+
+      await manager.loadDashboard({ uid: '', route: DashboardRoutes.Template });
+
+      expect(replaceSpy).toHaveBeenCalledWith('/dashboards');
+      expect(manager.state.dashboard?.state.isEditing).toBeFalsy();
+      expect(manager.state.dashboard?.state.isDirty).toBeFalsy();
+
+      setTestFlags({});
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
     });
 
     it('should reset to V2 manager when loading a new dashboard after template', async () => {

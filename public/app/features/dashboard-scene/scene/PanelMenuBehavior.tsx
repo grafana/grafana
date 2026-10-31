@@ -41,6 +41,7 @@ import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { DashboardInteractions } from '../utils/interactions';
+import { isMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 import { getPanelStyleConfig } from '../utils/panelStyleConfigs';
 import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, isLibraryPanel } from '../utils/utils';
@@ -98,7 +99,8 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       dashboard.canEditDashboard() &&
       dashboard.state.editable &&
       !isReadOnlyRepeat &&
-      !isEditingPanel
+      !isEditingPanel &&
+      !isMobileEditDeprecated()
     ) {
       // We could check isEditing here but I kind of think this should always be in the menu,
       // and going into panel edit should make the dashboard go into edit mode is it's not already
@@ -194,7 +196,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (!isEditingPanel) {
+    if (!isEditingPanel && !isMobileEditDeprecated()) {
       moreSubMenu.push({
         text: t('panel.header-menu.copy', `Copy`),
         iconClassName: 'copy',
