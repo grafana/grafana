@@ -46,6 +46,9 @@ preferencesV1alpha1: {
 	// Access is decided by the owner in the name, not by a folder.
 	folderScoped: false
 
+	// The caller's preferences, merged, which the app answers and nothing stores.
+	fixedNames: ["merged"]
+
 	// Generic read routes cannot apply the owner filtering used by normal list reads.
 	listKeys: false
 	search: {
@@ -70,6 +73,9 @@ preferencesV1: {
 
 	// Access is decided by the owner in the name, not by a folder.
 	folderScoped: false
+
+	// The caller's preferences, merged, which the app answers and nothing stores.
+	fixedNames: ["merged"]
 
 	// Generic read routes cannot apply the owner filtering used by normal list reads.
 	listKeys: false

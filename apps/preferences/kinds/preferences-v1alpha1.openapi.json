@@ -1,0 +1,112 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Preferences API",
+    "version": "v1alpha1"
+  },
+  "paths": {
+    "/apis/preferences.grafana.app/v1alpha1/namespaces/{namespace}/preferences/merged": {
+      "get": {
+        "tags": ["Preferences"],
+        "operationId": "mergedPreferences",
+        "description": "Get preferences for requester.  This combines the user preferences with the team and global defaults",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "description": "workspace",
+            "example": "default",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1.Preferences"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1.Preferences": {
+        "type": "object",
+        "description": "Preferences, here the requester's preferences merged with the team and global defaults.",
+        "properties": {
+          "apiVersion": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "spec": {
+            "type": "object",
+            "properties": {
+              "homeURL": {
+                "type": "string",
+                "description": "Explicit home URL (NOTE: this can only be modified in the system settings)"
+              },
+              "homeDashboardUID": {
+                "type": "string",
+                "description": "UID for the home dashboard. The reserved value \"global-home\" is not a dashboard UID: it selects the instance default home (home_page, the configured home dashboard file, or the built-in home page) instead of falling through to lower-precedence preferences."
+              },
+              "timezone": {
+                "type": "string",
+                "description": "The timezone selection"
+              },
+              "weekStart": {
+                "type": "string",
+                "description": "day of the week (sunday, monday, etc)"
+              },
+              "theme": {
+                "type": "string",
+                "description": "user interface theme"
+              },
+              "language": {
+                "type": "string",
+                "description": "Selected language"
+              },
+              "queryHistory": {
+                "type": "object",
+                "description": "Explore query history preferences",
+                "properties": {
+                  "homeTab": {
+                    "type": "string",
+                    "description": "one of: '' | 'query' | 'starred';"
+                  }
+                }
+              },
+              "navbar": {
+                "type": "object",
+                "description": "Navigation preferences",
+                "required": ["bookmarkUrls"],
+                "properties": {
+                  "bookmarkUrls": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "required": ["spec"]
+      }
+    }
+  }
+}

@@ -57,8 +57,6 @@ func builtinCoreApps(cfg *setting.Cfg, pluginAuth *pluginauth.Config) ([]CoreApp
 		return nil, fmt.Errorf("%s needs Grafana to sign plugin tokens itself, and a local API URL to reach", featuremgmt.FlagGrafanaRoutePreferencesAndCollections)
 	}
 
-	// Stars write through Grafana's API as the caller. Preferences only validate
-	// what is written to them, and are asked for no other object.
 	collections, err := newCoreApp(collectionsPluginID, collectionsmanifest.LocalManifest().ManifestData, pluginAuth, true,
 		func(c app.Config) (app.App, error) { return collectionsapp.New(c) }, nil)
 	if err != nil {
@@ -69,12 +67,11 @@ func builtinCoreApps(cfg *setting.Cfg, pluginAuth *pluginauth.Config) ([]CoreApp
 		HomeDashboardName: home.DASHBOARD_NAME,
 		IsValidTheme:      pref.IsValidThemeID,
 	}
-	preferences, err := newCoreApp(preferencesPluginID, preferencesmanifest.LocalManifest().ManifestData, pluginAuth, false,
+	preferences, err := newCoreApp(preferencesPluginID, preferencesmanifest.LocalManifest().ManifestData, pluginAuth, true,
 		func(c app.Config) (app.App, error) { return preferencesapp.New(c) }, preferencesConfig)
 	if err != nil {
 		return nil, err
 	}
-	preferences.PreferencesConfig = preferencesConfig // TEMPORARY, see CoreApp.PreferencesConfig
 	return []CoreApp{collections, preferences}, nil
 }
 

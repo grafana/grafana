@@ -58,8 +58,26 @@ var appManifestData = app.ManifestData{
 						},
 					},
 					Schema: &versionSchemaPreferencesv1,
+					FixedNames: []string{
+						"merged",
+					},
 				},
 			},
+			// nolint:staticcheck
+			Routes: func() app.ManifestVersionRoutes {
+				var routes app.ManifestVersionRoutes
+				if err := json.Unmarshal([]byte("{\"namespaced\":{\"/preferences/merged\":{\"get\":{\"tags\":[\"Preferences\"],\"description\":\"Get preferences for requester.  This combines the user preferences with the team and global defaults\",\"operationId\":\"mergedPreferences\",\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"description\":\"workspace\",\"required\":true,\"schema\":{\"type\":\"string\"},\"example\":\"default\"}],\"responses\":{\"200\":{\"description\":\"OK\",\"content\":{\"application/json\":{\"schema\":{\"$ref\":\"#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1.Preferences\"}}}}}}}},\"schemas\":{\"com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1.Preferences\":{\"description\":\"Preferences, here the requester's preferences merged with the team and global defaults.\",\"type\":\"object\",\"required\":[\"spec\"],\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"kind\":{\"type\":\"string\"},\"metadata\":{\"type\":\"object\"},\"spec\":{\"type\":\"object\",\"properties\":{\"homeDashboardUID\":{\"description\":\"UID for the home dashboard. The reserved value \\\"global-home\\\" is not a dashboard UID: it selects the instance default home (home_page, the configured home dashboard file, or the built-in home page) instead of falling through to lower-precedence preferences.\",\"type\":\"string\"},\"homeURL\":{\"description\":\"Explicit home URL (NOTE: this can only be modified in the system settings)\",\"type\":\"string\"},\"language\":{\"description\":\"Selected language\",\"type\":\"string\"},\"navbar\":{\"description\":\"Navigation preferences\",\"type\":\"object\",\"required\":[\"bookmarkUrls\"],\"properties\":{\"bookmarkUrls\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}},\"queryHistory\":{\"description\":\"Explore query history preferences\",\"type\":\"object\",\"properties\":{\"homeTab\":{\"description\":\"one of: '' | 'query' | 'starred';\",\"type\":\"string\"}}},\"theme\":{\"description\":\"user interface theme\",\"type\":\"string\"},\"timezone\":{\"description\":\"The timezone selection\",\"type\":\"string\"},\"weekStart\":{\"description\":\"day of the week (sunday, monday, etc)\",\"type\":\"string\"}}}}}}}"), &routes); err != nil {
+					panic(err)
+				}
+				return routes
+			}(),
+			OpenAPI: func() app.ManifestVersionOpenAPI {
+				var openAPI app.ManifestVersionOpenAPI
+				if err := json.Unmarshal([]byte("{\"paths\":{\"/namespaces/{namespace}/preferences/merged\":{\"get\":{\"tags\":[\"Preferences\"],\"description\":\"Get preferences for requester.  This combines the user preferences with the team and global defaults\",\"operationId\":\"mergedPreferences\",\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"description\":\"workspace\",\"required\":true,\"schema\":{\"type\":\"string\"},\"example\":\"default\"}],\"responses\":{\"200\":{\"description\":\"OK\",\"content\":{\"application/json\":{\"schema\":{\"$ref\":\"#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1.Preferences\"}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]}},\"components\":{\"schemas\":{\"com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1.Preferences\":{\"description\":\"Preferences, here the requester's preferences merged with the team and global defaults.\",\"type\":\"object\",\"required\":[\"spec\"],\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"kind\":{\"type\":\"string\"},\"metadata\":{\"type\":\"object\"},\"spec\":{\"type\":\"object\",\"properties\":{\"homeDashboardUID\":{\"description\":\"UID for the home dashboard. The reserved value \\\"global-home\\\" is not a dashboard UID: it selects the instance default home (home_page, the configured home dashboard file, or the built-in home page) instead of falling through to lower-precedence preferences.\",\"type\":\"string\"},\"homeURL\":{\"description\":\"Explicit home URL (NOTE: this can only be modified in the system settings)\",\"type\":\"string\"},\"language\":{\"description\":\"Selected language\",\"type\":\"string\"},\"navbar\":{\"description\":\"Navigation preferences\",\"type\":\"object\",\"required\":[\"bookmarkUrls\"],\"properties\":{\"bookmarkUrls\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}},\"queryHistory\":{\"description\":\"Explore query history preferences\",\"type\":\"object\",\"properties\":{\"homeTab\":{\"description\":\"one of: '' | 'query' | 'starred';\",\"type\":\"string\"}}},\"theme\":{\"description\":\"user interface theme\",\"type\":\"string\"},\"timezone\":{\"description\":\"The timezone selection\",\"type\":\"string\"},\"weekStart\":{\"description\":\"day of the week (sunday, monday, etc)\",\"type\":\"string\"}}}}}}}}"), &openAPI); err != nil {
+					panic(err)
+				}
+				return openAPI
+			}(),
 		},
 
 		{
@@ -87,6 +105,35 @@ var appManifestData = app.ManifestData{
 						},
 					},
 					Schema: &versionSchemaPreferencesv1alpha1,
+					FixedNames: []string{
+						"merged",
+					},
+				},
+			},
+			// nolint:staticcheck
+			Routes: func() app.ManifestVersionRoutes {
+				var routes app.ManifestVersionRoutes
+				if err := json.Unmarshal([]byte("{\"namespaced\":{\"/preferences/merged\":{\"get\":{\"tags\":[\"Preferences\"],\"description\":\"Get preferences for requester.  This combines the user preferences with the team and global defaults\",\"operationId\":\"mergedPreferences\",\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"description\":\"workspace\",\"required\":true,\"schema\":{\"type\":\"string\"},\"example\":\"default\"}],\"responses\":{\"200\":{\"description\":\"OK\",\"content\":{\"application/json\":{\"schema\":{\"$ref\":\"#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1.Preferences\"}}}}}}}},\"schemas\":{\"com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1.Preferences\":{\"description\":\"Preferences, here the requester's preferences merged with the team and global defaults.\",\"type\":\"object\",\"required\":[\"spec\"],\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"kind\":{\"type\":\"string\"},\"metadata\":{\"type\":\"object\"},\"spec\":{\"type\":\"object\",\"properties\":{\"homeDashboardUID\":{\"description\":\"UID for the home dashboard. The reserved value \\\"global-home\\\" is not a dashboard UID: it selects the instance default home (home_page, the configured home dashboard file, or the built-in home page) instead of falling through to lower-precedence preferences.\",\"type\":\"string\"},\"homeURL\":{\"description\":\"Explicit home URL (NOTE: this can only be modified in the system settings)\",\"type\":\"string\"},\"language\":{\"description\":\"Selected language\",\"type\":\"string\"},\"navbar\":{\"description\":\"Navigation preferences\",\"type\":\"object\",\"required\":[\"bookmarkUrls\"],\"properties\":{\"bookmarkUrls\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}},\"queryHistory\":{\"description\":\"Explore query history preferences\",\"type\":\"object\",\"properties\":{\"homeTab\":{\"description\":\"one of: '' | 'query' | 'starred';\",\"type\":\"string\"}}},\"theme\":{\"description\":\"user interface theme\",\"type\":\"string\"},\"timezone\":{\"description\":\"The timezone selection\",\"type\":\"string\"},\"weekStart\":{\"description\":\"day of the week (sunday, monday, etc)\",\"type\":\"string\"}}}}}}}"), &routes); err != nil {
+					panic(err)
+				}
+				return routes
+			}(),
+			OpenAPI: func() app.ManifestVersionOpenAPI {
+				var openAPI app.ManifestVersionOpenAPI
+				if err := json.Unmarshal([]byte("{\"paths\":{\"/namespaces/{namespace}/preferences/merged\":{\"get\":{\"tags\":[\"Preferences\"],\"description\":\"Get preferences for requester.  This combines the user preferences with the team and global defaults\",\"operationId\":\"mergedPreferences\",\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"description\":\"workspace\",\"required\":true,\"schema\":{\"type\":\"string\"},\"example\":\"default\"}],\"responses\":{\"200\":{\"description\":\"OK\",\"content\":{\"application/json\":{\"schema\":{\"$ref\":\"#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1.Preferences\"}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]}},\"components\":{\"schemas\":{\"com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1.Preferences\":{\"description\":\"Preferences, here the requester's preferences merged with the team and global defaults.\",\"type\":\"object\",\"required\":[\"spec\"],\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"kind\":{\"type\":\"string\"},\"metadata\":{\"type\":\"object\"},\"spec\":{\"type\":\"object\",\"properties\":{\"homeDashboardUID\":{\"description\":\"UID for the home dashboard. The reserved value \\\"global-home\\\" is not a dashboard UID: it selects the instance default home (home_page, the configured home dashboard file, or the built-in home page) instead of falling through to lower-precedence preferences.\",\"type\":\"string\"},\"homeURL\":{\"description\":\"Explicit home URL (NOTE: this can only be modified in the system settings)\",\"type\":\"string\"},\"language\":{\"description\":\"Selected language\",\"type\":\"string\"},\"navbar\":{\"description\":\"Navigation preferences\",\"type\":\"object\",\"required\":[\"bookmarkUrls\"],\"properties\":{\"bookmarkUrls\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}},\"queryHistory\":{\"description\":\"Explore query history preferences\",\"type\":\"object\",\"properties\":{\"homeTab\":{\"description\":\"one of: '' | 'query' | 'starred';\",\"type\":\"string\"}}},\"theme\":{\"description\":\"user interface theme\",\"type\":\"string\"},\"timezone\":{\"description\":\"The timezone selection\",\"type\":\"string\"},\"weekStart\":{\"description\":\"day of the week (sunday, monday, etc)\",\"type\":\"string\"}}}}}}}}"), &openAPI); err != nil {
+					panic(err)
+				}
+				return openAPI
+			}(),
+		},
+	},
+	ExtraPermissions: &app.Permissions{
+		AccessKinds: []app.KindPermission{
+			{
+				Group:    "preferences.grafana.app",
+				Resource: "preferences",
+				Actions: []app.KindPermissionAction{
+					"get",
 				},
 			},
 		},

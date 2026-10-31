@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 
-	preferencesapp "github.com/grafana/grafana/apps/preferences/pkg/app"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
@@ -24,11 +23,6 @@ type CoreApp struct {
 	PluginID string
 	Manifest *app.ManifestData
 	Client   appclientv3.Client
-
-	// TEMPORARY: what pluginroute answers preferences/merged with. It goes away,
-	// with pluginroute's hardcoded getter, once the app manifest can declare a
-	// name the app answers itself.
-	PreferencesConfig *preferencesapp.Config
 }
 
 // coreAppsLoader serves core apps next to the groups of the loader it wraps. A
@@ -88,7 +82,6 @@ func (l *coreAppsLoader) backend(a CoreApp) (*PluginBackend, error) {
 		return nil, err
 	}
 	backend.source = sourceCore
-	backend.preferencesConfig = a.PreferencesConfig
 	return backend, nil
 }
 

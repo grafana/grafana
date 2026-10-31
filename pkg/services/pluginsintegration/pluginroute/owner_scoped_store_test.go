@@ -3,7 +3,6 @@ package pluginroute
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -17,8 +16,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	authlib "github.com/grafana/authlib/types"
-	prefsv1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
-	prefsapp "github.com/grafana/grafana/apps/preferences/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -71,7 +68,7 @@ func ctxFor(r *identity.StaticRequester) context.Context {
 	return identity.WithRequester(context.Background(), r)
 }
 
-func TestOwnedListStoreList(t *testing.T) {
+func TestOwnerScopedStoreList(t *testing.T) {
 	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", Groups: []string{"t1"}}
 
 	list := func(t *testing.T, store *ownerScopedStore, ctx context.Context) []string {
@@ -130,73 +127,11 @@ func TestOwnedListStoreList(t *testing.T) {
 	})
 }
 
-func TestOwnedListStoreVirtualGet(t *testing.T) {
+func TestOwnerScopedStoreWatch(t *testing.T) {
 	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", Groups: []string{"t1"}}
-
-	t.Run("a virtual name is answered from the owned objects", func(t *testing.T) {
-		store, _ := newTestOwnerScopedStore(t, "preferences", "user-abc", "team-t1", "namespace", "user-other")
-		var got []string
-		store.virtual = func(_ context.Context, name string, owned []runtime.Object) (runtime.Object, error) {
-			got = namesOf(t, owned)
-			return objectNamed(fmt.Sprintf("answer-%s", name)), nil
-		}
-		obj, err := store.Get(ctxFor(user), "merged", &metav1.GetOptions{})
-		require.NoError(t, err)
-		require.Equal(t, "answer-merged", obj.(*unstructured.Unstructured).GetName())
-		require.Equal(t, []string{"user-abc", "team-t1", "namespace"}, got)
-	})
-
-	t.Run("anonymous is answered from the namespace's object", func(t *testing.T) {
-		store, _ := newTestOwnerScopedStore(t, "preferences", "user-abc", "namespace")
-		var got []string
-		store.virtual = func(_ context.Context, _ string, owned []runtime.Object) (runtime.Object, error) {
-			got = namesOf(t, owned)
-			return objectNamed("merged"), nil
-		}
-		_, err := store.Get(ctxFor(&identity.StaticRequester{Type: authlib.TypeAnonymous}), "merged", &metav1.GetOptions{})
-		require.NoError(t, err)
-		require.Equal(t, []string{"namespace"}, got)
-	})
-
-	t.Run("any other name is a stored object", func(t *testing.T) {
-		store, read := newTestOwnerScopedStore(t, "preferences", "user-abc")
-		store.virtual = func(context.Context, string, []runtime.Object) (runtime.Object, error) {
-			t.Fatal("not a virtual name")
-			return nil, nil
-		}
-		_, err := store.Get(ctxFor(user), "user-abc", &metav1.GetOptions{})
-		require.NoError(t, err)
-		require.Equal(t, []string{"user-abc"}, *read)
-	})
-
-	t.Run("without a getter a fixed name is stored", func(t *testing.T) {
-		store, _ := newTestOwnerScopedStore(t, "preferences")
-		_, err := store.Get(ctxFor(user), "merged", &metav1.GetOptions{})
-		require.True(t, apierrors.IsNotFound(err))
-	})
-
-	t.Run("a user may not watch", func(t *testing.T) {
-		store, _ := newTestOwnerScopedStore(t, "preferences")
-		_, err := store.Watch(ctxFor(user), &metainternalversion.ListOptions{})
-		require.True(t, apierrors.IsForbidden(err))
-	})
-}
-
-func TestHardcodedVirtualGetter(t *testing.T) {
-	cfg := &prefsapp.Config{Defaults: prefsv1.PreferencesSpec{Theme: new("light")}}
-
-	require.Nil(t, hardcodedVirtualGetter("collections.grafana.app", "stars", cfg), "stars have no virtual names")
-	require.Nil(t, hardcodedVirtualGetter("preferences.grafana.app", "preferences", nil), "without configuration there are no defaults to merge")
-
-	get := hardcodedVirtualGetter("preferences.grafana.app", "preferences", cfg)
-	require.NotNil(t, get)
-	obj, err := get(t.Context(), "merged", nil)
-	require.NoError(t, err)
-	u, ok := obj.(*unstructured.Unstructured)
-	require.True(t, ok)
-	var prefs prefsv1.Preferences
-	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, &prefs))
-	require.Equal(t, "light", *prefs.Spec.Theme, "the configured defaults fill an empty merge")
+	store, _ := newTestOwnerScopedStore(t, "preferences")
+	_, err := store.Watch(ctxFor(user), &metainternalversion.ListOptions{})
+	require.True(t, apierrors.IsForbidden(err), "a user may not watch")
 }
 
 func TestWithStoredResourceVersion(t *testing.T) {

@@ -1,7 +1,6 @@
 package pluginroute
 
 import (
-	prefsapp "github.com/grafana/grafana/apps/preferences/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -31,17 +30,4 @@ func hardcodedKindAuth(group, resource string) (o *ownerFromName, allowMissingPa
 		}, true
 	}
 	return nil, false
-}
-
-// hardcodedVirtualGetter answers the fixed names of a kind authorized by name,
-// where the app owns what they mean. Stars have none.
-//
-// TEMPORARY: this, Options.PreferencesConfig and the router's CoreApp field
-// that feeds it exist only because the getter is hardcoded here. They go away
-// when the app manifest declares the name and the router asks the app for it.
-func hardcodedVirtualGetter(group, resource string, preferences *prefsapp.Config) VirtualGetter {
-	if group != "preferences.grafana.app" || resource != "preferences" || preferences == nil {
-		return nil
-	}
-	return preferences.MergedGetter()
 }
