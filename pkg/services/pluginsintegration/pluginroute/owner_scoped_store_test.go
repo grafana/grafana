@@ -37,7 +37,7 @@ func namesOf(t *testing.T, objs []runtime.Object) []string {
 	return names
 }
 
-func newTestOwnedStore(t *testing.T, kind string, stored ...string) (*ownedStore, *[]string) {
+func newTestOwnerScopedStore(t *testing.T, kind string, stored ...string) (*ownerScopedStore, *[]string) {
 	t.Helper()
 	group, resource := "preferences.grafana.app", "preferences"
 	if kind == "stars" {
@@ -51,7 +51,7 @@ func newTestOwnedStore(t *testing.T, kind string, stored ...string) (*ownedStore
 		has[name] = true
 	}
 	var read []string
-	store := &ownedStore{
+	store := &ownerScopedStore{
 		owned: owned,
 		stored: func(_ context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
 			read = append(read, name)
@@ -72,7 +72,7 @@ func ctxFor(r *identity.StaticRequester) context.Context {
 func TestOwnedListStoreList(t *testing.T) {
 	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", Groups: []string{"t1"}}
 
-	list := func(t *testing.T, store *ownedStore, ctx context.Context) []string {
+	list := func(t *testing.T, store *ownerScopedStore, ctx context.Context) []string {
 		t.Helper()
 		got, err := store.List(ctx, &metainternalversion.ListOptions{})
 		require.NoError(t, err)
@@ -82,47 +82,47 @@ func TestOwnedListStoreList(t *testing.T) {
 	}
 
 	t.Run("a user lists only what they own, most specific first", func(t *testing.T) {
-		store, read := newTestOwnedStore(t, "preferences", "user-abc", "user-other", "team-t1", "namespace")
+		store, read := newTestOwnerScopedStore(t, "preferences", "user-abc", "user-other", "team-t1", "namespace")
 		require.Equal(t, []string{"user-abc", "team-t1", "namespace"}, list(t, store, ctxFor(user)))
 		require.NotContains(t, *read, "user-other")
 	})
 
 	t.Run("an owner without an object is left out", func(t *testing.T) {
-		store, _ := newTestOwnedStore(t, "preferences", "namespace")
+		store, _ := newTestOwnerScopedStore(t, "preferences", "namespace")
 		require.Equal(t, []string{"namespace"}, list(t, store, ctxFor(user)))
 	})
 
 	t.Run("a user's stars are only theirs", func(t *testing.T) {
-		store, _ := newTestOwnedStore(t, "stars", "user-abc", "user-other")
+		store, _ := newTestOwnerScopedStore(t, "stars", "user-abc", "user-other")
 		require.Equal(t, []string{"user-abc"}, list(t, store, ctxFor(user)))
 	})
 
 	t.Run("anonymous lists only what every other identity does", func(t *testing.T) {
 		anon := &identity.StaticRequester{Type: authlib.TypeAnonymous}
 
-		store, read := newTestOwnedStore(t, "preferences", "user-abc", "namespace")
+		store, read := newTestOwnerScopedStore(t, "preferences", "user-abc", "namespace")
 		require.Equal(t, []string{"namespace"}, list(t, store, ctxFor(anon)))
 		require.Equal(t, []string{"namespace"}, *read)
 
-		store, read = newTestOwnedStore(t, "stars", "user-abc")
+		store, read = newTestOwnerScopedStore(t, "stars", "user-abc")
 		require.Empty(t, list(t, store, ctxFor(anon)), "stars have nothing for everyone")
 		require.Empty(t, *read)
 	})
 
 	t.Run("another identity lists only the namespace's preferences", func(t *testing.T) {
-		store, _ := newTestOwnedStore(t, "preferences", "user-abc", "namespace")
+		store, _ := newTestOwnerScopedStore(t, "preferences", "user-abc", "namespace")
 		policy := &identity.StaticRequester{Type: authlib.TypeAccessPolicy, UserUID: "svc"}
 		require.Equal(t, []string{"namespace"}, list(t, store, ctxFor(policy)))
 	})
 
 	t.Run("a user's list takes no continue token or label selector", func(t *testing.T) {
-		store, _ := newTestOwnedStore(t, "preferences")
+		store, _ := newTestOwnerScopedStore(t, "preferences")
 		_, err := store.List(ctxFor(user), &metainternalversion.ListOptions{Continue: "x"})
 		require.True(t, apierrors.IsBadRequest(err))
 	})
 
 	t.Run("a list without a requester fails", func(t *testing.T) {
-		store, _ := newTestOwnedStore(t, "preferences")
+		store, _ := newTestOwnerScopedStore(t, "preferences")
 		_, err := store.List(context.Background(), nil)
 		require.Error(t, err)
 	})
@@ -132,7 +132,7 @@ func TestOwnedListStoreVirtualGet(t *testing.T) {
 	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", Groups: []string{"t1"}}
 
 	t.Run("a virtual name is answered from the owned objects", func(t *testing.T) {
-		store, _ := newTestOwnedStore(t, "preferences", "user-abc", "team-t1", "namespace", "user-other")
+		store, _ := newTestOwnerScopedStore(t, "preferences", "user-abc", "team-t1", "namespace", "user-other")
 		var got []string
 		store.virtual = func(_ context.Context, name string, owned []runtime.Object) (runtime.Object, error) {
 			got = namesOf(t, owned)
@@ -145,7 +145,7 @@ func TestOwnedListStoreVirtualGet(t *testing.T) {
 	})
 
 	t.Run("anonymous is answered from the namespace's object", func(t *testing.T) {
-		store, _ := newTestOwnedStore(t, "preferences", "user-abc", "namespace")
+		store, _ := newTestOwnerScopedStore(t, "preferences", "user-abc", "namespace")
 		var got []string
 		store.virtual = func(_ context.Context, _ string, owned []runtime.Object) (runtime.Object, error) {
 			got = namesOf(t, owned)
@@ -157,7 +157,7 @@ func TestOwnedListStoreVirtualGet(t *testing.T) {
 	})
 
 	t.Run("any other name is a stored object", func(t *testing.T) {
-		store, read := newTestOwnedStore(t, "preferences", "user-abc")
+		store, read := newTestOwnerScopedStore(t, "preferences", "user-abc")
 		store.virtual = func(context.Context, string, []runtime.Object) (runtime.Object, error) {
 			t.Fatal("not a virtual name")
 			return nil, nil
@@ -168,13 +168,13 @@ func TestOwnedListStoreVirtualGet(t *testing.T) {
 	})
 
 	t.Run("without a getter a fixed name is stored", func(t *testing.T) {
-		store, _ := newTestOwnedStore(t, "preferences")
+		store, _ := newTestOwnerScopedStore(t, "preferences")
 		_, err := store.Get(ctxFor(user), "merged", &metav1.GetOptions{})
 		require.True(t, apierrors.IsNotFound(err))
 	})
 
 	t.Run("a user may not watch", func(t *testing.T) {
-		store, _ := newTestOwnedStore(t, "preferences")
+		store, _ := newTestOwnerScopedStore(t, "preferences")
 		_, err := store.Watch(ctxFor(user), &metainternalversion.ListOptions{})
 		require.True(t, apierrors.IsForbidden(err))
 	})
