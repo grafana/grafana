@@ -58,8 +58,8 @@ import { Annotation } from './constants';
 import {
   GRAFANA_RULES_SOURCE_NAME,
   getDefaultOrFirstCompatibleDataSource,
+  hasPromOrLokiQueryModel,
   isGrafanaRulesSource,
-  isSupportedExternalRulesSourceType,
 } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import {
@@ -611,7 +611,7 @@ export const getDefaultQueries = (isRecordingRule = false): AlertQuery[] => {
   const relativeTimeRange = getDefaultRelativeTimeRange();
 
   const expressions = isRecordingRule ? getDefaultExpressionsForRecording('B') : getDefaultExpressions('B', 'C');
-  const isLokiOrPrometheus = dataSource ? isSupportedExternalRulesSourceType(dataSource.type) : false;
+  const isLokiOrPrometheus = dataSource ? hasPromOrLokiQueryModel(dataSource.type) : false;
   return [
     {
       refId: 'A',
@@ -942,7 +942,7 @@ export function getInstantFromDataQuery(query: AlertQuery<AlertDataQuery>): bool
   }
 
   // if the datasource is not a supported prometheus flavor or loki, return "undefined"
-  if (!isSupportedExternalRulesSourceType(type)) {
+  if (!hasPromOrLokiQueryModel(type)) {
     return undefined;
   }
 

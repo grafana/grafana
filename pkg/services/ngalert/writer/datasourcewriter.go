@@ -55,10 +55,11 @@ const (
 
 // supportedRemoteWriteTypes is the set of data source types that recording rules
 // can write to. In addition to core Prometheus, the purpose-built Amazon Managed
-// Prometheus data source plugin is supported.
+// Prometheus and VictoriaMetrics data source plugins are supported.
 var supportedRemoteWriteTypes = map[string]bool{
 	datasources.DS_PROMETHEUS:        true,
 	datasources.DS_AMAZON_PROMETHEUS: true,
+	datasources.DS_VICTORIA_METRICS:  true,
 }
 
 type DatasourceWriterConfig struct {
@@ -156,7 +157,10 @@ func getRemoteWriteURL(ds *datasources.DataSource) (*url.URL, error) {
 		return u.JoinPath(amazonPrometheusRemoteWritePath), nil
 	}
 
-	if getPrometheusType(ds) == "Prometheus" {
+	// VictoriaMetrics data sources do not set prometheusType, so they would otherwise
+	// fall through to the Mimir/Cortex handling below. VictoriaMetrics accepts remote
+	// write at /api/v1/write relative to both its root and its /prometheus prefix.
+	if ds.Type == datasources.DS_VICTORIA_METRICS || getPrometheusType(ds) == "Prometheus" {
 		return u.JoinPath("/api/v1/write"), nil
 	}
 
@@ -212,8 +216,8 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 	}
 
 	if !supportedRemoteWriteTypes[ds.Type] {
-		return nil, fmt.Errorf("can only write to data sources of type prometheus "+
-			"or amazon managed prometheus, but got %q", ds.Type)
+		return nil, fmt.Errorf("can only write to data sources of type prometheus, "+
+			"amazon managed prometheus or victoriametrics, but got %q", ds.Type)
 	}
 
 	is, err := adapters.ModelToInstanceSettings(ds, w.decrypt)

@@ -13,6 +13,7 @@ import {
   GRAFANA_RULES_SOURCE_NAME,
   SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES,
   type SupportedExternalRulesSourceType,
+  VICTORIA_LOGS_RULES_SOURCE_TYPE,
   getDataSourceByName,
   getRulesDataSourceByUID,
   isSupportedExternalRulesSourceType,
@@ -64,6 +65,22 @@ export async function discoverDataSourceFeatures(dsSettings: {
   type: SupportedExternalRulesSourceType;
 }): Promise<PromApiFeatures> {
   const { url, name, type } = dsSettings;
+
+  // VictoriaLogs serves vmalert rules read-only: vmalert loads rules from files and has no ruler API.
+  // Its buildinfo lives at a non-Prometheus path, so requesting it would fail with a 400.
+  if (type === VICTORIA_LOGS_RULES_SOURCE_TYPE) {
+    const promRulesSupported = await hasPromRulesSupport(name);
+    if (!promRulesSupported) {
+      throw new Error(`Unable to fetch alert rules. Is the ${name} data source properly configured?`);
+    }
+
+    return {
+      application: PromApplication.Prometheus,
+      features: {
+        rulerApiEnabled: false,
+      },
+    };
+  }
 
   // The current implementation of Loki's build info endpoint is useless
   // because it doesn't provide information about Loki's available features (e.g. Ruler API)

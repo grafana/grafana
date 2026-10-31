@@ -8,7 +8,7 @@ import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting
 
 import { type KVObject, type RuleFormValues, type SimpleCondition } from '../types/rule-form';
 import { defaultAnnotations } from '../utils/constants';
-import { isSupportedExternalRulesSourceType } from '../utils/datasource';
+import { hasPromOrLokiQueryModel } from '../utils/datasource';
 import { getInstantFromDataQuery } from '../utils/rule-form';
 
 export function setQueryEditorSettings(values: RuleFormValues): RuleFormValues {
@@ -80,7 +80,7 @@ export function setInstantOrRange(values: RuleFormValues): RuleFormValues {
       }
       // data query
       const defaultToInstant = query.model.datasource?.type
-        ? isSupportedExternalRulesSourceType(query.model.datasource.type)
+        ? hasPromOrLokiQueryModel(query.model.datasource.type)
         : false;
       const isInstant =
         'instant' in query.model && query.model.instant !== undefined ? query.model.instant : defaultToInstant;
