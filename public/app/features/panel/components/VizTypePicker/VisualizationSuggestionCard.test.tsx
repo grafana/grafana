@@ -1,14 +1,16 @@
 import { render, screen } from '@testing-library/react';
+import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
 import {
   FieldType,
+  type InterpolateFunction,
   LoadingState,
   type PanelData,
   type PanelPluginVisualizationSuggestion,
   getDefaultTimeRange,
   toDataFrame,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, setTemplateSrv } from '@grafana/runtime';
 
 import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
 
@@ -64,6 +66,21 @@ describe('VisualizationSuggestionCard', () => {
 
     expect(screen.getByRole('img', { name: 'Time series' })).toBeInTheDocument();
     expect(screen.queryByTestId('panel-renderer')).not.toBeInTheDocument();
+  });
+
+  it('previews with an interpolator that resolves scoped variables and data macros', () => {
+    setTemplateSrv(initTemplateSrv('suggestion-card', []));
+    const [frame] = mockData.series;
+
+    render(<VisualizationSuggestionCard data={mockData} suggestion={baseSuggestion} width={100} />);
+    const { replaceVariables } = mockPanelRendererProps.mock.calls[0][0] as { replaceVariables: InterpolateFunction };
+
+    expect(
+      replaceVariables('${reduced} of ${__field.name}', {
+        reduced: { text: '75.0%', value: '75.0%' },
+        __dataContext: { value: { data: mockData.series, frame, field: frame.fields[1], frameIndex: 0 } },
+      })
+    ).toBe('75.0% of value');
   });
 
   it('should call previewModifier when provided in cardOptions', () => {

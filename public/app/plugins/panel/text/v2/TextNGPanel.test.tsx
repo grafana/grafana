@@ -688,6 +688,18 @@ describe('TextNGPanel', () => {
       expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     });
 
+    it('renders every frame without a picker when the content reads a series by name', () => {
+      const props = createProps(reportFrameCount, {
+        data: createData([frameA, frameB]),
+        options: { content: '${__data.series["host"]:reduce:lastNotNull}', mode: TextMode.Markdown, frameIndex: 1 },
+      });
+
+      setup(props, CoreApp.Dashboard);
+
+      expect(screen.getByTestId('TextNGPanel-converted-content')).toHaveTextContent('2 frames');
+      expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    });
+
     it('holds the frame selector in the editor footer while editing, not in a row of its own', async () => {
       replaceVariablesMock.mockImplementation((str: string) => str);
       const props = createProps(replaceVariablesMock, {

@@ -1,5 +1,8 @@
 import {
+  type DataFrame,
+  type DisplayValue,
   fieldReducers,
+  getFieldDisplayName,
   getFieldDisplayValuesProxy,
   type InterpolateFunction,
   ReducerID,
@@ -19,6 +22,10 @@ export function getMacroReducers() {
   return fieldReducers.list().filter((reducer) => !LIST_REDUCERS.has(reducer.id));
 }
 
+export function readsSeriesByName(content: string): boolean {
+  return Array.from(content.matchAll(REDUCER_MACRO)).some(([, path]) => path.startsWith('.series['));
+}
+
 /**
  * Adds `${__data.fields.x:reduce:<id>}` to `replaceVariables`. Each field is reduced on its own,
  * across the frame in the data context.
@@ -33,6 +40,7 @@ export function withReducerMacros(replaceVariables: InterpolateFunction): Interp
       return replaceVariables(text, scopedVars, format);
     }
 
+    const frames: DataFrame[] = scopedVars?.__dataContext?.value.data ?? [frame];
     const resolved: ScopedVars = { ...scopedVars };
     let count = 0;
 
@@ -48,7 +56,8 @@ export function withReducerMacros(replaceVariables: InterpolateFunction): Interp
 
       const path = rawPath.startsWith('.') ? rawPath.slice(1) : rawPath;
       const fields = getFieldDisplayValuesProxy({ frame, reducer: reducer.id });
-      const value = String(getFieldAccessor(path)({ name: frame.name, refId: frame.refId, fields }) ?? '');
+      const series = getSeriesDisplayValues(frames, reducer.id);
+      const value = String(getFieldAccessor(path)({ name: frame.name, refId: frame.refId, fields, series }) ?? '');
 
       resolved[name] = { text: value, value };
 
@@ -57,4 +66,27 @@ export function withReducerMacros(replaceVariables: InterpolateFunction): Interp
 
     return replaceVariables(replaced, resolved, format);
   };
+}
+
+function getSeriesDisplayValues(frames: DataFrame[], reducer: string): Record<string, DisplayValue | undefined> {
+  return new Proxy(
+    {},
+    {
+      get: (_target, key) => {
+        if (key === Symbol.toPrimitive) {
+          return () => '';
+        }
+
+        for (const frame of frames) {
+          const field = frame.fields.find((candidate) => getFieldDisplayName(candidate, frame, frames) === key);
+
+          if (field) {
+            return getFieldDisplayValuesProxy({ frame: { ...frame, fields: [field] }, reducer })[0];
+          }
+        }
+
+        return undefined;
+      },
+    }
+  );
 }
