@@ -596,12 +596,24 @@ const getStyles = (theme: GrafanaTheme2) => {
         opacity: '0',
         visibility: 'hidden',
       },
+      'div.show-on-hover': {
+        display: 'none',
+      },
+
+      'div.show-on-hover:has([aria-expanded="true"])': {
+        display: 'flex',
+        opacity: '1',
+        visibility: 'visible',
+      },
 
       '&:focus-visible, &:hover': {
         // only show menu icon on hover or focused panel
         '.show-on-hover': {
           opacity: '1',
           visibility: 'visible',
+        },
+        'div.show-on-hover': {
+          display: 'flex',
         },
       },
 
@@ -612,6 +624,9 @@ const getStyles = (theme: GrafanaTheme2) => {
         '.show-on-hover': {
           visibility: 'visible',
           opacity: '1',
+        },
+        'div.show-on-hover': {
+          display: 'flex',
         },
       },
     }),
