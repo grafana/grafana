@@ -1,6 +1,10 @@
 import { type AdHocVariableFilter, type AdHocVariableModel } from '@grafana/data';
 import { type Dashboard, type VariableModel } from '@grafana/schema';
-import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import {
+  type Spec as DashboardV2Spec,
+  type RowsLayoutRowKind,
+  type VariableKind,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { adHocVariableFiltersEqual, getRawDashboardChanges, getRawDashboardV2Changes } from './getDashboardChanges';
 
@@ -815,5 +819,156 @@ describe('getRawDashboardV2Changes - custom variable query persistence', () => {
       expect(variable.spec.current?.value).toBe('$__all');
       expect(variable.spec.query).toBe('foo,bar');
     }
+  });
+});
+
+describe('getRawDashboardV2Changes - collapse rows', () => {
+  type Layout = DashboardV2Spec['layout'];
+
+  const makeRow = (
+    title: string,
+    spec: Partial<RowsLayoutRowKind['spec']> = {},
+    layout: Layout = { kind: 'GridLayout', spec: { items: [] } }
+  ): RowsLayoutRowKind => ({
+    kind: 'RowsLayoutRow',
+    spec: { title, collapse: false, layout, ...spec },
+  });
+
+  const rowsLayout = (rows: RowsLayoutRowKind[]): Layout => ({ kind: 'RowsLayout', spec: { rows } });
+
+  const tabsLayout = (layout: Layout): Layout => ({
+    kind: 'TabsLayout',
+    spec: { tabs: [{ kind: 'TabsLayoutTab', spec: { title: 'tab', layout } }] },
+  });
+
+  const makeDashboard = (layout: Layout): DashboardV2Spec => ({
+    title: 'Dashboard V2',
+    description: '',
+    cursorSync: 'Off',
+    editable: true,
+    links: [],
+    tags: [],
+    preload: false,
+    liveNow: false,
+    timeSettings: {
+      from: 'now-6h',
+      to: 'now',
+      autoRefresh: '',
+      autoRefreshIntervals: [],
+      hideTimepicker: false,
+      fiscalYearStartMonth: 0,
+    },
+    variables: [],
+    elements: {},
+    annotations: [],
+    layout,
+  });
+
+  // Same layout on both sides, so any diff comes from collapsing
+  const getChanges = (layout: () => Layout, collapseRows?: boolean) =>
+    getRawDashboardV2Changes(makeDashboard(layout()), makeDashboard(layout()), false, false, false, collapseRows);
+
+  const getCollapseByTitle = (layout: Layout, result: Record<string, boolean | undefined> = {}) => {
+    if (layout.kind === 'RowsLayout') {
+      for (const row of layout.spec.rows) {
+        result[row.spec.title ?? ''] = row.spec.collapse;
+        getCollapseByTitle(row.spec.layout, result);
+      }
+    }
+    if (layout.kind === 'TabsLayout') {
+      for (const tab of layout.spec.tabs) {
+        getCollapseByTitle(tab.spec.layout, result);
+      }
+    }
+    return result;
+  };
+
+  it('collapses every expanded row and reports the change when collapseRows is true', () => {
+    const result = getChanges(() => rowsLayout([makeRow('A'), makeRow('B', { collapse: true })]), true);
+
+    expect(getCollapseByTitle(result.changedSaveModel.layout)).toEqual({ A: true, B: true });
+    expect(result.diffCount).toBe(1);
+    expect(result.hasChanges).toBe(true);
+  });
+
+  it('still reports expanded rows after collapsing them', () => {
+    const result = getChanges(() => rowsLayout([makeRow('A')]), true);
+
+    expect(getCollapseByTitle(result.changedSaveModel.layout)).toEqual({ A: true });
+    expect(result.hasExpandedRows).toBe(true);
+  });
+
+  it.each([
+    { name: 'false', collapseRows: false },
+    { name: 'undefined', collapseRows: undefined },
+  ])('leaves rows untouched and reports no change when collapseRows is $name', ({ collapseRows }) => {
+    const result = getChanges(() => rowsLayout([makeRow('A'), makeRow('B', { collapse: true })]), collapseRows);
+
+    expect(getCollapseByTitle(result.changedSaveModel.layout)).toEqual({ A: false, B: true });
+    expect(result.hasExpandedRows).toBe(true);
+    expect(result.hasChanges).toBe(false);
+  });
+
+  it('collapses rows nested inside rows and inside tabs', () => {
+    const result = getChanges(
+      () =>
+        rowsLayout([
+          makeRow('outer', {}, rowsLayout([makeRow('row in row')])),
+          makeRow('tabs holder', {}, tabsLayout(rowsLayout([makeRow('row in tab')]))),
+        ]),
+      true
+    );
+
+    expect(getCollapseByTitle(result.changedSaveModel.layout)).toEqual({
+      outer: true,
+      'row in row': true,
+      'tabs holder': true,
+      'row in tab': true,
+    });
+  });
+
+  it('collapses rows inside a top-level tabs layout', () => {
+    const result = getChanges(() => tabsLayout(rowsLayout([makeRow('row in tab')])), true);
+
+    expect(getCollapseByTitle(result.changedSaveModel.layout)).toEqual({ 'row in tab': true });
+    expect(result.hasExpandedRows).toBe(true);
+  });
+
+  it('does not collapse or count a row with a hidden header', () => {
+    const result = getChanges(() => rowsLayout([makeRow('hidden', { hideHeader: true })]), true);
+
+    expect(getCollapseByTitle(result.changedSaveModel.layout)).toEqual({ hidden: false });
+    expect(result.hasExpandedRows).toBe(false);
+    expect(result.hasChanges).toBe(false);
+  });
+
+  it('still collapses rows nested inside a row with a hidden header', () => {
+    const result = getChanges(
+      () => rowsLayout([makeRow('hidden', { hideHeader: true }, rowsLayout([makeRow('inner')]))]),
+      true
+    );
+
+    expect(getCollapseByTitle(result.changedSaveModel.layout)).toEqual({ hidden: false, inner: true });
+    expect(result.hasExpandedRows).toBe(true);
+  });
+
+  it('reports no expanded rows when every row is already collapsed', () => {
+    const result = getChanges(() => rowsLayout([makeRow('A', { collapse: true }), makeRow('B', { collapse: true })]));
+
+    expect(result.hasExpandedRows).toBe(false);
+  });
+
+  it('reports no expanded rows for a dashboard without rows', () => {
+    const result = getChanges(() => ({ kind: 'GridLayout', spec: { items: [] } }), true);
+
+    expect(result.hasExpandedRows).toBe(false);
+    expect(result.hasChanges).toBe(false);
+  });
+
+  it('treats a row without a collapse flag as expanded', () => {
+    const result = getChanges(() => rowsLayout([makeRow('A', { collapse: undefined })]), true);
+
+    expect(getCollapseByTitle(result.changedSaveModel.layout)).toEqual({ A: true });
+    expect(result.hasExpandedRows).toBe(true);
   });
 });

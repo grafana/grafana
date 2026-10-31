@@ -23,6 +23,7 @@ export interface DashboardChangeInfo {
   hasTimeChanges: boolean;
   hasVariableValueChanges: boolean;
   hasRefreshChange: boolean;
+  hasExpandedRows?: boolean;
   isNew?: boolean;
   hasFolderChanges?: boolean;
   hasPredefinedVariablesChanges?: boolean;
