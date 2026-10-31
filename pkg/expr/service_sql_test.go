@@ -245,3 +245,47 @@ func TestSQLServiceErrors(t *testing.T) {
 		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", sql.ErrCategoryQueryTooLong))
 	})
 }
+
+func TestSQLServiceNumericMultiRowFrameErrors(t *testing.T) {
+	resp := map[string]backend.DataResponse{
+		"A": {Frames: data.Frames{
+			data.NewFrame("",
+				data.NewField("up", data.Labels{"job": "a"}, []float64{1.0}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeNumericMulti}),
+			data.NewFrame("",
+				data.NewField("up", data.Labels{"job": "b"}, []float64{2.0, 3.0}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeNumericMulti}),
+		}},
+	}
+	queries := []Query{
+		{
+			RefID:      "A",
+			DataSource: &datasources.DataSource{OrgID: 1, UID: "test", Type: "test"},
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			TimeRange:  AbsoluteTimeRange{},
+		},
+		{
+			RefID:      "B",
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "sql", "expression": "SELECT * FROM A" }`),
+			TimeRange:  AbsoluteTimeRange{},
+		},
+	}
+
+	s, req := newMockQueryService(resp, queries)
+	s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+	pl, err := s.BuildPipeline(t.Context(), req)
+	require.NoError(t, err)
+
+	rsp, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+	require.NoError(t, err)
+
+	require.ErrorContains(t, rsp.Responses["A"].Error, `field "up" has 2 rows`)
+	var sqlErr *sql.ErrorWithCategory
+	require.ErrorAs(t, rsp.Responses["A"].Error, &sqlErr)
+	require.Equal(t, sql.ErrCategoryInputConversion, sqlErr.Category())
+
+	require.ErrorAs(t, rsp.Responses["B"].Error, &sqlErr)
+	require.Equal(t, sql.ErrCategoryDependency, sqlErr.Category())
+	require.Empty(t, rsp.Responses["B"].Frames)
+}

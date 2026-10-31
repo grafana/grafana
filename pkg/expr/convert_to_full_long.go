@@ -32,6 +32,12 @@ func ConvertToFullLong(frames data.Frames) (data.Frames, error) {
 		return nil, fmt.Errorf("input frame missing FrameMeta.Type")
 	}
 
+	// Prometheus "Both" queries mix instant (numeric-multi) and range (timeseries-multi)
+	// frames in any order. Only the time-series converter keeps the rows of both.
+	if inputType == data.FrameTypeNumericMulti && hasFrameType(frames, data.FrameTypeTimeSeriesMulti) {
+		inputType = data.FrameTypeTimeSeriesMulti
+	}
+
 	switch inputType {
 	case data.FrameTypeNumericMulti:
 		return convertNumericMultiToFullLong(frames)
@@ -57,8 +63,12 @@ func convertNumericWideToFullLong(frames data.Frames) (data.Frames, error) {
 		return nil, fmt.Errorf("expected exactly one frame for wide format, but got %d", len(frames))
 	}
 	inputFrame := frames[0]
-	if inputFrame.Rows() > 1 {
-		return nil, fmt.Errorf("expected no more than one row in the frame, but got %d", inputFrame.Rows())
+	// Check every field: Rows() reads only the first one, and fields merged from
+	// numeric-multi frames can have different lengths.
+	for _, field := range inputFrame.Fields {
+		if field.Len() > 1 {
+			return nil, fmt.Errorf("expected no more than one row in the frame, but field %q has %d rows", field.Name, field.Len())
+		}
 	}
 
 	var (
@@ -150,6 +160,12 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 	hasDisplayCol := false
 
 	for _, frame := range frames {
+		// Like the dataplane reader, skip frames of other types, such as untyped
+		// exemplar frames, so they do not become metric rows. Keep numeric-multi
+		// frames, which mix in from Prometheus "Both" queries.
+		if frame.Meta == nil || (frame.Meta.Type != data.FrameTypeTimeSeriesMulti && frame.Meta.Type != data.FrameTypeNumericMulti) {
+			continue
+		}
 		var timeField *data.Field
 		for _, f := range frame.Fields {
 			if f.Type() == data.FieldTypeTime {
@@ -406,6 +422,15 @@ func labelColumnNames(labelKeys []string, generated []*data.Field) map[string]st
 		names[k] = name
 	}
 	return names
+}
+
+func hasFrameType(frames data.Frames, t data.FrameType) bool {
+	for _, f := range frames {
+		if f.Meta != nil && f.Meta.Type == t {
+			return true
+		}
+	}
+	return false
 }
 
 func supportedToLongConversion(inputType data.FrameType) bool {
