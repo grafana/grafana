@@ -25,13 +25,29 @@ import (
 func TestIntegrationPreferences_Anonymous(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
+	// routed serves preferences from the preferences app through the router.
+	for _, routed := range []bool{false, true} {
+		t.Run(fmt.Sprintf("routed:%t", routed), func(t *testing.T) {
+			testIntegrationPreferences_Anonymous(t, routed)
+		})
+	}
+}
+
+func testIntegrationPreferences_Anonymous(t *testing.T, routed bool) {
+	flags := []string{featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs}
+	if routed {
+		flags = append(flags,
+			featuremgmt.FlagGrafanaUseRouterMiddleware,
+			featuremgmt.FlagGrafanaRoutePreferencesAndCollections,
+			featuremgmt.FlagApppluginsLoadAppManifest,
+		)
+	}
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: false,
-		DisableAnonymous:  false,          // keep [auth.anonymous] enabled = true (the harness default)
-		AnonymousUserRole: org.RoleViewer, // anonymous lands in org 1 "Main Org."
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-		},
+		AppModeProduction:    false,
+		DisableAnonymous:     false,          // keep [auth.anonymous] enabled = true (the harness default)
+		AnonymousUserRole:    org.RoleViewer, // anonymous lands in org 1 "Main Org."
+		LocalPluginAPI:       routed,
+		EnableFeatureToggles: flags,
 	})
 
 	// Seed org preferences as admin. The default theme is dark, so a light org

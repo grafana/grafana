@@ -26,12 +26,28 @@ func TestMain(m *testing.M) {
 func TestIntegrationPreferences_LegacyBridge(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
+	// routed serves preferences from the preferences app through the router.
+	for _, routed := range []bool{false, true} {
+		t.Run(fmt.Sprintf("routed:%t", routed), func(t *testing.T) {
+			testIntegrationPreferences_LegacyBridge(t, routed)
+		})
+	}
+}
+
+func testIntegrationPreferences_LegacyBridge(t *testing.T, routed bool) {
+	flags := []string{featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs}
+	if routed {
+		flags = append(flags,
+			featuremgmt.FlagGrafanaUseRouterMiddleware,
+			featuremgmt.FlagGrafanaRoutePreferencesAndCollections,
+			featuremgmt.FlagApppluginsLoadAppManifest,
+		)
+	}
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: false,
-		DisableAnonymous:  true,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-		},
+		AppModeProduction:    false,
+		DisableAnonymous:     true,
+		LocalPluginAPI:       routed,
+		EnableFeatureToggles: flags,
 	})
 
 	t.Run("user preferences round-trip", func(t *testing.T) {
