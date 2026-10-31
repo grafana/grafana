@@ -817,6 +817,67 @@ func TestIntegrationStore_DeleteResourcePermissions(t *testing.T) {
 	}
 }
 
+func TestIntegrationStore_DeleteResourcePermissions_OnlyManagedRoles(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	tests := []struct {
+		name          string
+		roleName      string
+		orgID         int64
+		scope         string
+		expectedCount int
+	}{
+		{"managed role", accesscontrol.ManagedRolePrefix + "users:1:permissions", 1, "folders:uid:root", 0},
+		{"custom role", "custom:team-editor", 1, "folders:uid:root", 1},
+		{"case-variant custom role", "MANAGED:team-editor", 1, "folders:uid:root", 1},
+		{"fixed role", accesscontrol.FixedRolePrefix + "folder-reader", 1, "folders:uid:root", 1},
+		{"different org", accesscontrol.ManagedRolePrefix + "users:1:permissions", 2, "folders:uid:root", 1},
+		{"different resource", accesscontrol.ManagedRolePrefix + "users:1:permissions", 1, "folders:uid:other", 1},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store, sql, _ := setupTestEnv(t)
+			role := &accesscontrol.Role{
+				Name:    tt.roleName,
+				UID:     "delete-permissions-role",
+				OrgID:   tt.orgID,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+			permission := &accesscontrol.Permission{
+				Action:  "folders:write",
+				Scope:   tt.scope,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+			err := sql.WithDbSession(context.Background(), func(sess *db.Session) error {
+				if _, err := sess.Insert(role); err != nil {
+					return err
+				}
+				permission.RoleID = role.ID
+				_, err := sess.Insert(permission)
+				return err
+			})
+			require.NoError(t, err)
+
+			err = store.DeleteResourcePermissions(context.Background(), 1, &DeleteResourcePermissionsCmd{
+				Resource:          "folders",
+				ResourceAttribute: "uid",
+				ResourceID:        "root",
+			})
+			require.NoError(t, err)
+
+			var remaining []accesscontrol.Permission
+			err = sql.WithDbSession(context.Background(), func(sess *db.Session) error {
+				return sess.Where("role_id = ?", role.ID).Find(&remaining)
+			})
+			require.NoError(t, err)
+			assert.Len(t, remaining, tt.expectedCount)
+		})
+	}
+}
+
 func TestIntegrationStore_setResourcePermission(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
