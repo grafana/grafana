@@ -43,6 +43,12 @@ interface AlertMessageProps extends HTMLAttributes<HTMLDivElement> {
   onSuggestedDashboardsClick?: () => void;
   onDashboardLinkClicked: () => void;
   extensionLinks?: PluginExtensionLink[];
+  /**
+   * Optional custom follow-up from the plugin health check (`details.followUpMessage`).
+   * When a string is set, replaces the default "Next, you can start to visualize data..." text.
+   * An empty string suppresses the default follow-up entirely.
+   */
+  followUpMessage?: string;
 }
 
 const getStyles = (theme: GrafanaTheme2, hasTitle: boolean) => {
@@ -72,12 +78,20 @@ const AlertSuccessMessage = ({
   hasDashboards,
   onSuggestedDashboardsClick,
   onDashboardLinkClicked,
+  followUpMessage,
 }: AlertMessageProps) => {
   const theme = useTheme2();
 
   const hasTitle = Boolean(title);
   const styles = getStyles(theme, hasTitle);
   const canExploreDataSources = contextSrv.hasAccessToExplore();
+
+  if (followUpMessage !== undefined) {
+    if (!followUpMessage) {
+      return null;
+    }
+    return <div className={styles.content}>{followUpMessage}</div>;
+  }
 
   return (
     <div className={styles.content}>
@@ -209,6 +223,10 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
   const detailsMessage = testingStatus?.details?.message;
   const detailsVerboseMessage = testingStatus?.details?.verboseMessage;
   const errorDetailsLink = testingStatus?.details?.errorDetailsLink;
+  const followUpMessage =
+    typeof testingStatus?.details?.followUpMessage === 'string'
+      ? testingStatus.details.followUpMessage
+      : undefined;
   const onDashboardLinkClicked = () => {
     trackCreateDashboardClicked({
       grafana_version: config.buildInfo.version,
@@ -270,7 +288,15 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
             <>
               {detailsMessage ? <>{String(detailsMessage)}</> : null}
               {severity === 'success' ? (
-                config.featureToggles.suggestedDashboards ? (
+                followUpMessage !== undefined ? (
+                  <AlertSuccessMessage
+                    title={message ?? ''}
+                    exploreUrl={exploreUrl}
+                    dataSourceId={dataSource.uid}
+                    onDashboardLinkClicked={onDashboardLinkClicked}
+                    followUpMessage={followUpMessage}
+                  />
+                ) : config.featureToggles.suggestedDashboards ? (
                   <SuggestedDashboardsLoader
                     datasourceUid={dataSource.uid}
                     sourceEntryPoint={SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_SUCCESS_BANNER}
