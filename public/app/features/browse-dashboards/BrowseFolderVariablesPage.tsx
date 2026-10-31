@@ -16,6 +16,8 @@ import { getVariableFolderUid } from '../variables-management/utils';
 import { FolderDetailsActions } from './components/FolderDetailsActions/FolderDetailsActions';
 import { useNavModel } from './hooks/useNavModel';
 
+const VARIABLE_EDIT_URL = '/dashboards/variables/edit/';
+
 export function BrowseFolderVariablesPage() {
   const { uid: folderUID = '' } = useParams();
   const navigate = useNavigate();
@@ -102,7 +104,11 @@ export function BrowseFolderVariablesPage() {
                       ? (variable) => {
                           const name = variable.metadata.name;
                           if (name) {
-                            navigate(locationUtil.assureBaseUrl(`/dashboards/variables/edit/${name}`));
+                            navigate(
+                              locationUtil.assureBaseUrl(
+                                `${VARIABLE_EDIT_URL}${encodeURIComponent(name)}?folderUid=${folderUID}`
+                              )
+                            );
                           }
                         }
                       : undefined
