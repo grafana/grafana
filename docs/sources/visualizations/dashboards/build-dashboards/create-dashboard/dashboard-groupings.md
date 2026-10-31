@@ -133,7 +133,7 @@ You can group all the panels on a dashboard or select specific ones.
 To group all the panels on a dashboard, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Do one of the following:
    - Click the **Add new element** icon (blue plus sign) and select **Group into rows** or **Group into tabs**.
    - Under a panel or group of panels, hover your mouse to reveal the **Group panels** button, click it and select **Group into row** or **Group into tab**.
@@ -153,14 +153,14 @@ To group all the panels on a dashboard, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ### Group select panels
 
 To group select panels on a dashboard:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Press the `Shift` key and select all the panels you want to group.
    A dotted blue line surrounds the selected panels.
    You can select panels that are already in other groupings.
@@ -176,7 +176,7 @@ To group select panels on a dashboard:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ### Add more groupings at the same level
 
@@ -188,7 +188,7 @@ To add more groupings at the same level, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ### Add nested groupings
 
@@ -206,7 +206,7 @@ To add a nested grouping, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 You can add more one more level of grouping if needed.
 
@@ -238,7 +238,7 @@ If you delete a grouping, rather than ungrouping it, its panels are deleted as w
 To remove groupings, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. (Optional) Click the **Content outline** icon to quickly navigate to the grouping you want to remove.
 1. Hover your mouse over the relevant area to show the **Ungroup rows** or **Ungroup tabs** button, then click it.
 1. If you've ungrouped panels that were previously in different panel layouts, you'll be prompted to select a common layout type for all the panels; click **Convert to Auto** or **Convert to Custom**.
@@ -246,7 +246,7 @@ To remove groupings, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## Drag tabs between rows
 

@@ -93,7 +93,7 @@ Technically, there is no limit to how many variables you can chain together, but
 
 <!-- If you update or replace the Play dashboards linked in this section, you must also update the text examples to match them -->
 
-The following Grafana Play dashboards contain chained variables. To view the variables and their settings, click **Edit** in the top-right corner of the dashboard, click the **Dashboard options** icon in the toolbar, and expand the **Variables** section. Both examples are expanded in the following section.
+The following Grafana Play dashboards contain chained variables. To view the variables and their settings, select **Editing** in the dashboard mode drop-down list, click the **Dashboard options** icon in the toolbar, and expand the **Variables** section. Both examples are expanded in the following section.
 
 - [Templating - Nested Variables Drilldown](https://play.grafana.org/d/testdata-nested-variables-drilldown/templating-nested-variables-drilldown?orgId=1)
 - [InfluxDB Templated](https://play.grafana.org/d/dbg1erw7kech6oe/placeholder-dashboard)

@@ -221,4 +221,5 @@ ERROR[\s\S]*
 After you've added a mapping, the **Edit value mappings** button replaces the **Add value mappings** button. Click the edit button to add or update mappings.
 
 1. Click **Save dashboard**.
-1. Click **Back** and then **Exit edit**.
+1. Click **Back**.
+1. Select **Viewing** in the dashboard mode drop-down list.

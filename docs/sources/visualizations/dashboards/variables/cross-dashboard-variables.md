@@ -76,7 +76,7 @@ Only variables that share the same scope as your dashboard are available for you
 To add cross-dashboard variables to a dashboard, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon in the sidebar and select **Variable**.
 
    You can also click the **Add** (plus sign) icon at the top of the dashboard and select **Variable**.
@@ -91,7 +91,7 @@ To add cross-dashboard variables to a dashboard, follow these steps:
 1. Update variable values as needed.
 1. Click **Save**.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 After you've added cross-dashboard variables to a dashboard, you can view its settings or remove it by way of the dashboard sidebar.
 To edit the variable, go to **Dashboards > Variables**.
