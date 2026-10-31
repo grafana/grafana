@@ -1,10 +1,9 @@
 import { type DataSourcePluginMeta, type DataSourceSettings, type LayoutMode } from '@grafana/data';
 import { type TestingStatus } from '@grafana/runtime';
-import { type DataSourceListItem } from 'app/features/datasources/api';
 import { type GenericDataSourcePlugin } from 'app/features/datasources/types';
 
 export interface DataSourcesState {
-  dataSources: DataSourceListItem[];
+  dataSources: DataSourceSettings[];
   searchQuery: string;
   dataSourceTypeSearchQuery: string;
   layoutMode: LayoutMode;
