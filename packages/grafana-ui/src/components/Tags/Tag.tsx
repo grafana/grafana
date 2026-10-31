@@ -23,34 +23,38 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   /** Use constant color from TAG_COLORS. Using index instead of color directly so we can match other styling.
    * The index wraps around, so a value beyond the number of colors is fine. */
   colorIndex?: number;
+  /** Base CSS color for a tonal background and foreground pair. Takes precedence over colorIndex. */
+  baseColor?: string;
   onClick?: OnTagClick;
 }
 
-const TagComponent = forwardRef<HTMLElement, Props>(({ name, onClick, icon, className, colorIndex, ...rest }, ref) => {
-  const theme = useTheme2();
-  const styles = getTagStyles(theme, name, colorIndex);
+const TagComponent = forwardRef<HTMLElement, Props>(
+  ({ name, onClick, icon, className, colorIndex, baseColor, ...rest }, ref) => {
+    const theme = useTheme2();
+    const styles = getTagStyles(theme, name, colorIndex, baseColor);
 
-  const onTagClick = (event: React.MouseEvent<HTMLElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
+    const onTagClick = (event: React.MouseEvent<HTMLElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
 
-    onClick?.(name, event);
-  };
+      onClick?.(name, event);
+    };
 
-  const classes = cx(styles.wrapper, className, { [styles.hover]: onClick !== undefined });
+    const classes = cx(styles.wrapper, className, { [styles.hover]: onClick !== undefined });
 
-  return onClick ? (
-    <button {...rest} className={classes} onClick={onTagClick} ref={ref as React.ForwardedRef<HTMLButtonElement>}>
-      {icon && <Icon name={icon} />}
-      {name}
-    </button>
-  ) : (
-    <span {...rest} className={classes} ref={ref}>
-      {icon && <Icon name={icon} />}
-      {name}
-    </span>
-  );
-});
+    return onClick ? (
+      <button {...rest} className={classes} onClick={onTagClick} ref={ref as React.ForwardedRef<HTMLButtonElement>}>
+        {icon && <Icon name={icon} />}
+        {name}
+      </button>
+    ) : (
+      <span {...rest} className={classes} ref={ref}>
+        {icon && <Icon name={icon} />}
+        {name}
+      </span>
+    );
+  }
+);
 TagComponent.displayName = 'Tag';
 
 const TagSkeleton: SkeletonComponent = ({ rootProps }) => {
@@ -71,10 +75,10 @@ const getSkeletonStyles = () => ({
   }),
 });
 
-const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) => {
+const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number, baseColor?: string) => {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-  const { background, text } =
-    colorIndex === undefined ? getTagColorsFromName(name, theme) : getTagColor(colorIndex, theme);
+  const color = baseColor ?? colorIndex;
+  const { background, text } = color === undefined ? getTagColorsFromName(name, theme) : getTagColor(color, theme);
   return {
     wrapper: css(
       {
