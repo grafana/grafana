@@ -13,7 +13,7 @@ import { type LogListModel } from '../panel/processing';
 
 import { FieldSelector, FIELD_SELECTOR_MIN_WIDTH, getDefaultFieldSelectorWidth } from './FieldSelector';
 import { getFieldSelectorWidth } from './fieldSelectorUtils';
-import { getFieldsWithStats } from './getFieldsWithStats';
+import { getFieldDisplayNames, getFieldsWithStats, withDisplayNames } from './getFieldsWithStats';
 import { logsFieldSelectorWrapperStyles } from './styles';
 import { getSuggestedFieldsFromLogList } from './suggestedFields';
 
@@ -110,8 +110,12 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
   }, [setShowLevel, showLevel]);
 
   const suggestedFields = useMemo(
-    () => getSuggestedFieldsFromLogList(logs, displayedFields, [], otelLogsFormattingEnabled),
-    [displayedFields, logs, otelLogsFormattingEnabled]
+    () =>
+      withDisplayNames(
+        getSuggestedFieldsFromLogList(logs, displayedFields, [], otelLogsFormattingEnabled),
+        getFieldDisplayNames(dataFrames)
+      ),
+    [dataFrames, displayedFields, logs, otelLogsFormattingEnabled]
   );
   const fields = useMemo(() => getFieldsWithStats(dataFrames), [dataFrames]);
 
