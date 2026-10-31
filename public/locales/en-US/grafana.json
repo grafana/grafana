@@ -7161,7 +7161,8 @@
         "change-annotation-panel-filter": "Change annotation panel filter",
         "change-annotation-query": "Change annotation query"
       },
-      "edit-query": "Edit query"
+      "tooltip-edit-annotation-query": "Edit query",
+      "tooltip-edit-annotation-settings": "Annotation settings"
     },
     "annotation-editable-element": {
       "delete-confirm": "Delete annotation query",
@@ -7244,7 +7245,6 @@
       "duplicate-tooltip": "Duplicate",
       "duplicate-tooltip-disabled": "Repeated panels can't be duplicated individually",
       "remove-tooltip": "Remove",
-      "settings": "Settings",
       "view": "View"
     },
     "conversion-warning-banner": {
@@ -7659,6 +7659,7 @@
     "link-edit-actions": {
       "add-link": "Add link",
       "remove-link": "Remove link",
+      "tooltip-links-settings": "Links settings",
       "update-link": "Update link"
     },
     "link-editable-element": {
@@ -7743,7 +7744,8 @@
       "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Edit visualization"
+      "tooltip-edit-panel-visualization": "Edit visualization",
+      "tooltip-panel-settings": "Panel settings"
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Toggle table view",
@@ -8176,7 +8178,8 @@
     },
     "variable-edit-actions": {
       "edit-custom-values": "Edit values",
-      "edit-query": "Edit query"
+      "edit-query": "Edit query",
+      "tooltip-variable-settings": "Variable settings"
     },
     "variable-editable-element": {
       "delete-confirm": "Delete variable",

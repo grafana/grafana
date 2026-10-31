@@ -96,21 +96,21 @@ describe('<PanelEditActions />', () => {
     jest.useRealTimers();
   });
 
-  test('renders Settings, Edit visualization, Copy, Duplicate, and Delete controls', () => {
+  test('renders Panel settings, Edit visualization, Copy, Duplicate, and Delete controls', () => {
     renderPanelEditActions();
 
-    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Panel settings' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Edit visualization' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy to clipboard' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Duplicate' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
   });
 
-  describe('when the user clicks on Settings', () => {
+  describe('when the user clicks on Panel settings', () => {
     test('calls onClickEdit', () => {
       const { onClickEdit } = renderPanelEditActions();
 
-      fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Panel settings' }));
 
       expect(onClickEdit).toHaveBeenCalledTimes(1);
     });
@@ -213,10 +213,10 @@ describe('<PanelEditActions />', () => {
   });
 
   describe('when isRepeated is true', () => {
-    test('disables Copy, Duplicate, and Delete controls ; keeps Settings and Edit visualization enabled', () => {
+    test('disables Copy, Duplicate, and Delete controls ; keeps Panel settings and Edit visualization enabled', () => {
       renderPanelEditActions({ isRepeated: true });
 
-      expect(screen.getByRole('button', { name: 'Settings' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Panel settings' })).toBeEnabled();
       expect(screen.getByRole('button', { name: 'Edit visualization' })).toBeEnabled();
       expect(screen.getByRole('button', { name: "Repeated panels can't be copied individually" })).toBeDisabled();
       expect(screen.getByRole('button', { name: "Repeated panels can't be duplicated individually" })).toBeDisabled();
@@ -242,7 +242,7 @@ describe('<PanelEditActionsWrapper />', () => {
     );
   }
 
-  test('when the user clicks Settings, the edit popover source is reported', async () => {
+  test('when the user clicks Panel settings, the edit popover source is reported', async () => {
     const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
     new DashboardScene({ isEditing: true, body: DefaultGridLayoutManager.fromVizPanels([panel]) });
     jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
@@ -250,12 +250,12 @@ describe('<PanelEditActionsWrapper />', () => {
     const user = userEvent.setup();
 
     await hoverAndRest(screen.getByTestId('reference-child'));
-    await user.click(screen.getByRole('button', { name: 'Settings' }));
+    await user.click(screen.getByRole('button', { name: 'Panel settings' }));
 
     expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('settings', 1, 'edit_popover');
   });
 
-  describe('when the user clicks Settings ', () => {
+  describe('when the user clicks Panel settings ', () => {
     test('the panel is selected via the sidebar', async () => {
       const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'test-panel' });
       const scene = new DashboardScene({
@@ -266,7 +266,7 @@ describe('<PanelEditActionsWrapper />', () => {
       renderPanelEditActionsWrapper(panel);
 
       await hoverAndRest(screen.getByTestId('reference-child'));
-      fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Panel settings' }));
 
       expect(scene.state.sidebar.getSelectedObject()).toBe(panel);
     });
@@ -289,7 +289,7 @@ describe('<PanelEditActionsWrapper />', () => {
       renderPanelEditActionsWrapper(clonedPanel);
 
       await hoverAndRest(screen.getByTestId('reference-child'));
-      fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Panel settings' }));
 
       expect(scene.state.sidebar.getSelectedObject()).toBe(sourcePanel);
     });
@@ -422,7 +422,7 @@ describe('<PanelEditActionsWrapper />', () => {
 
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(portalRoot).toContainElement(screen.getByRole('button', { name: 'Settings' }));
+      expect(portalRoot).toContainElement(screen.getByRole('button', { name: 'Panel settings' }));
 
       portalRoot.remove();
     });
@@ -444,7 +444,7 @@ describe('<PanelEditActionsWrapper />', () => {
 
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(screen.queryByRole('button', { name: 'Settings' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Panel settings' })).not.toBeInTheDocument();
     });
   });
 
@@ -487,7 +487,7 @@ describe('<PanelEditActionsWrapper />', () => {
       rerender(tree(true));
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Panel settings' })).toBeInTheDocument();
     });
   });
 
@@ -506,7 +506,7 @@ describe('<PanelEditActionsWrapper />', () => {
 
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(screen.queryByRole('button', { name: 'Settings' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Panel settings' })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Edit visualization' })).not.toBeInTheDocument();
     });
   });

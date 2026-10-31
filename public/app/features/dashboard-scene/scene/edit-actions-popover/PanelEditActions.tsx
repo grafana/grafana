@@ -1,10 +1,9 @@
-import { cx } from '@emotion/css';
 import { useCallback, useMemo, type JSX } from 'react';
 
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
-import { Button, useStyles2, useTheme2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { duplicatePanel } from '../../actions/layout/duplicatePanel';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
@@ -17,6 +16,7 @@ import {
   CopyActionButton,
   DeleteActionButton,
   DuplicateActionButton,
+  EditActionButton,
   getActionStyles,
   SettingsActionButton,
 } from './EditActions';
@@ -42,17 +42,14 @@ export function PanelEditActions({
 
   return (
     <>
-      <SettingsActionButton onClick={onClickEdit} />
-      <div className={styles.actionsDivider} />
-      <Button
-        fill="text"
-        variant="secondary"
-        size="sm"
-        className={cx(styles.action, styles.textAction)}
+      <SettingsActionButton
+        onClick={onClickEdit}
+        tooltip={t('dashboard-scene.panel-edit-actions.tooltip-panel-settings', 'Panel settings')}
+      />
+      <EditActionButton
         onClick={onClickEditVisualization}
-      >
-        {t('dashboard-scene.panel-edit-actions.edit-visualization', 'Edit visualization')}
-      </Button>
+        tooltip={t('dashboard-scene.panel-edit-actions.tooltip-edit-panel-visualization', 'Edit visualization')}
+      />
       <div className={styles.actionsDivider} />
       <CopyActionButton onClick={onClickCopy} isRepeated={isRepeated} />
       <DuplicateActionButton onClick={onClickDuplicate} isRepeated={isRepeated} />
