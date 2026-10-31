@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
-	preferencesapp "github.com/grafana/grafana/apps/preferences/pkg/app"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -444,13 +443,11 @@ type PluginBackend struct {
 	// entry without a plugin ID uses its API group, as its connection does.
 	metricsID string
 
-	// TEMPORARY: see CoreApp.PreferencesConfig.
-	preferencesConfig *preferencesapp.Config
-	info              plugins.Info
-	group             metav1.APIGroup
-	manifest          *app.ManifestData
-	client            PluginClientProvider
-	deps              PluginDependencies
+	info     plugins.Info
+	group    metav1.APIGroup
+	manifest *app.ManifestData
+	client   PluginClientProvider
+	deps     PluginDependencies
 
 	// settings is set instead of manifest for the backend that serves the
 	// plugin's settings API under its plugin ID.
@@ -529,13 +526,12 @@ func (b *PluginBackend) load(ctx context.Context) (*pluginroute.Handler, error) 
 		cfg = setting.NewCfg()
 	}
 	opts := pluginroute.Options{
-		PluginInfo:        b.info,
-		Storage:           pluginroute.UnifiedStorage(b.deps.Unified, b.deps.SecureValues, b.deps.RESTConfigProvider),
-		Decrypter:         b.deps.Decrypter,
-		Tracer:            b.deps.Tracer,
-		BuildVersion:      cfg.BuildVersion,
-		PreferencesConfig: b.preferencesConfig,
-		MetricsRegister:   b.deps.MetricsRegister,
+		PluginInfo:      b.info,
+		Storage:         pluginroute.UnifiedStorage(b.deps.Unified, b.deps.SecureValues, b.deps.RESTConfigProvider),
+		Decrypter:       b.deps.Decrypter,
+		Tracer:          b.deps.Tracer,
+		BuildVersion:    cfg.BuildVersion,
+		MetricsRegister: b.deps.MetricsRegister,
 	}
 	if b.deps.AccessControl != nil {
 		opts.AccessChecker = pluginaccesscontrol.NewAppAccessChecker(b.deps.AccessControl)

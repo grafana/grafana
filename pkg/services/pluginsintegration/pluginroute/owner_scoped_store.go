@@ -3,7 +3,6 @@ package pluginroute
 import (
 	"context"
 	"fmt"
-	"slices"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -30,9 +29,6 @@ type ownerScopedStore struct {
 	*kindstore.Store
 	owned *ownerFromName
 
-	// virtual answers a Get for one of owned.names; nil when the kind has none.
-	virtual VirtualGetter
-
 	// stored reads one stored object, and newList makes an empty list. They are
 	// the Store's own, held apart so the scoping can be tested without one.
 	stored   func(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error)
@@ -40,13 +36,9 @@ type ownerScopedStore struct {
 	resource schema.GroupResource
 }
 
-func newOwnerScopedStore(store *kindstore.Store, owned *ownerFromName, virtual VirtualGetter) *ownerScopedStore {
-	return &ownerScopedStore{Store: store, owned: owned, virtual: virtual, stored: store.Get, newList: store.NewList, resource: store.DefaultQualifiedResource}
+func newOwnerScopedStore(store *kindstore.Store, owned *ownerFromName) *ownerScopedStore {
+	return &ownerScopedStore{Store: store, owned: owned, stored: store.Get, newList: store.NewList, resource: store.DefaultQualifiedResource}
 }
-
-// VirtualGetter answers a Get for a name that no object is stored under, from
-// the objects the caller owns, most specific first.
-type VirtualGetter func(ctx context.Context, name string, owned []runtime.Object) (runtime.Object, error)
 
 func (s *ownerScopedStore) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	items, all, err := s.ownedObjects(ctx)
@@ -67,19 +59,6 @@ func (s *ownerScopedStore) List(ctx context.Context, options *metainternalversio
 		return nil, fmt.Errorf("building owned list: %w", err)
 	}
 	return list, nil
-}
-
-// Get answers the kind's virtual names, which no object is stored under, from
-// the objects the caller owns. Any other name is a stored object.
-func (s *ownerScopedStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	if s.virtual == nil || !slices.Contains(s.owned.names, name) {
-		return s.stored(ctx, name, options)
-	}
-	items, _, err := s.ownedObjects(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return s.virtual(ctx, name, items)
 }
 
 // ownedObjects are the stored objects the caller owns, most specific first. all

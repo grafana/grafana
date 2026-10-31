@@ -1,14 +1,16 @@
 package app
 
 import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -82,60 +84,62 @@ func TestValidate(t *testing.T) {
 	})
 }
 
-func fromUnstructured(t *testing.T, obj runtime.Object) *v1.Preferences {
-	t.Helper()
-	u, ok := obj.(*unstructured.Unstructured)
-	require.True(t, ok, "%T", obj)
-	require.Equal(t, v1.APIGroup+"/"+v1.APIVersion, u.GetAPIVersion())
-	require.Equal(t, "Preferences", u.GetKind())
-	var p v1.Preferences
-	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, &p))
-	return &p
+type fakeLister struct {
+	items []v1.Preferences
+	err   error
+	ns    string
 }
 
-func TestMergedGetter(t *testing.T) {
-	config := &Config{Defaults: v1.PreferencesSpec{Theme: new("settings.ini"), Language: new("settings.ini")}}
-	get := config.MergedGetter()
+func (f *fakeLister) ListAll(_ context.Context, namespace string, _ resource.ListOptions) (*v1.PreferencesList, error) {
+	f.ns = namespace
+	return &v1.PreferencesList{Items: f.items}, f.err
+}
 
-	stored := func(name string, spec v1.PreferencesSpec) runtime.Object {
-		obj := &v1.Preferences{ObjectMeta: metav1.ObjectMeta{Name: name}, Spec: spec}
-		raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
-		require.NoError(t, err)
-		return &unstructured.Unstructured{Object: raw}
-	}
+func callMerged(t *testing.T, route *mergedRoute) (int, []byte) {
+	t.Helper()
+	req := &app.CustomRouteRequest{Method: http.MethodGet}
+	req.ResourceIdentifier.Namespace = "default"
+	w := httptest.NewRecorder()
+	require.NoError(t, route.get(t.Context(), w, req))
+	return w.Code, w.Body.Bytes()
+}
+
+func TestMergedRoute(t *testing.T) {
+	config := &Config{Defaults: v1.PreferencesSpec{Theme: new("settings.ini"), Language: new("settings.ini")}}
 
 	t.Run("merges what the caller owns over the defaults", func(t *testing.T) {
-		obj, err := get(t.Context(), "merged", []runtime.Object{
-			stored("user-1", v1.PreferencesSpec{Theme: new("dark")}),
-			stored("namespace", v1.PreferencesSpec{Theme: new("light"), Language: new("fr")}),
-		})
-		require.NoError(t, err)
-		merged := fromUnstructured(t, obj)
-		require.Equal(t, "dark", *merged.Spec.Theme)
-		require.Equal(t, "fr", *merged.Spec.Language)
-		require.Equal(t, "user-1,namespace", merged.Annotations[v1.APIGroup+"/source"])
-	})
+		lister := &fakeLister{items: []v1.Preferences{
+			{ObjectMeta: metav1.ObjectMeta{Name: "user-1"}, Spec: v1.PreferencesSpec{Theme: new("dark")}},
+			{ObjectMeta: metav1.ObjectMeta{Name: "namespace"}, Spec: v1.PreferencesSpec{Theme: new("light"), Language: new("fr")}},
+		}}
+		code, body := callMerged(t, &mergedRoute{config: config, lister: lister})
+		require.Equal(t, http.StatusOK, code)
+		require.Equal(t, "default", lister.ns)
 
-	t.Run("typed objects merge too", func(t *testing.T) {
-		obj, err := get(t.Context(), "merged", []runtime.Object{&v1.Preferences{Spec: v1.PreferencesSpec{Theme: new("dark")}}})
-		require.NoError(t, err)
-		require.Equal(t, "dark", *fromUnstructured(t, obj).Spec.Theme)
+		var got v1.Preferences
+		require.NoError(t, json.Unmarshal(body, &got))
+		require.Equal(t, "dark", *got.Spec.Theme)
+		require.Equal(t, "fr", *got.Spec.Language)
+		require.Equal(t, "user-1,namespace", got.Annotations[v1.APIGroup+"/source"])
 	})
 
 	t.Run("nothing owned is the defaults", func(t *testing.T) {
-		obj, err := get(t.Context(), "merged", nil)
-		require.NoError(t, err)
-		require.Equal(t, config.Defaults, fromUnstructured(t, obj).Spec)
+		code, body := callMerged(t, &mergedRoute{config: config, lister: &fakeLister{}})
+		require.Equal(t, http.StatusOK, code)
+		var got v1.Preferences
+		require.NoError(t, json.Unmarshal(body, &got))
+		require.Equal(t, config.Defaults, got.Spec)
 	})
 
-	t.Run("only merged is answered", func(t *testing.T) {
-		_, err := get(t.Context(), "other", nil)
-		require.True(t, apierrors.IsNotFound(err))
+	t.Run("a list error keeps its status", func(t *testing.T) {
+		lister := &fakeLister{err: apierrors.NewForbidden(v1.PreferencesResourceInfo.GroupResource(), "", nil)}
+		code, _ := callMerged(t, &mergedRoute{config: config, lister: lister})
+		require.Equal(t, http.StatusForbidden, code)
 	})
 
-	t.Run("an object that is not preferences is an error", func(t *testing.T) {
-		_, err := get(t.Context(), "merged", []runtime.Object{&metav1.Status{}})
-		require.Error(t, err)
+	t.Run("without an API connection the route is unavailable", func(t *testing.T) {
+		code, _ := callMerged(t, &mergedRoute{config: config})
+		require.Equal(t, http.StatusServiceUnavailable, code)
 	})
 }
 

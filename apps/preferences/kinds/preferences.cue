@@ -52,6 +52,9 @@ preferencesV1alpha1: {
 	// The merged preferences of the caller are never stored.
 	fixedNames: ["merged"]
 
+	// The caller's preferences, merged, which the app answers and nothing stores.
+	fixedNames: ["merged"]
+
 	// Generic read routes cannot apply the owner filtering used by normal list reads.
 	listKeys: false
 	search: {
@@ -81,6 +84,9 @@ preferencesV1: {
 		owner: owners: ["namespace", "user", "team"]
 	}
 	// The merged preferences of the caller are never stored.
+	fixedNames: ["merged"]
+
+	// The caller's preferences, merged, which the app answers and nothing stores.
 	fixedNames: ["merged"]
 
 	// Generic read routes cannot apply the owner filtering used by normal list reads.
