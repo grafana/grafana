@@ -157,7 +157,7 @@ Add a row to the layout. If the target is not a RowsLayout, the existing content
 }
 ```
 
-Row `spec` may include optional **`variables`**: an array of v2 `VariableKind` objects for section-scoped template variables on that row. Behavior matches dashboard deserialization.
+Row `spec` may include optional **`variables`**: an array of v2 `VariableKind` objects for section-scoped template variables on that row. Behavior matches dashboard deserialization, except that the deprecated `GroupByVariable` kind is rejected (see Variables).
 
 **Response:**
 
@@ -788,6 +788,8 @@ Same `{ element, layoutItem }` shape as ADD_PANEL and UPDATE_PANEL. When moving 
 ## Variables
 
 Variable commands accept optional **`parentPath`** (layout path from `GET_LAYOUT`). Default **`"/"`** targets **dashboard-level** variables. Paths ending at a **row** or **tab** (for example `"/rows/0"` or `"/tabs/1/rows/0"`) target that section’s variable set. **`UPDATE_VARIABLE`** and **`REMOVE_VARIABLE`** require an explicit **`parentPath`** when the name does not exist on the dashboard but exists on a section.
+
+The deprecated **`GroupByVariable`** kind is rejected by every command that accepts variables (`ADD_VARIABLE`, `UPDATE_VARIABLE`, and row or tab `variables`), with an error that names the replacement. `APPLY_SPEC` still applies a spec that has one, the way loading the dashboard would: each is merged as group by into the `AdhocVariable` on the same datasource, or dropped if there is none, and the response has a `warnings` entry naming it. To let users pick group-by keys, use an `AdhocVariable` with `spec.enableGroupBy: true`; to apply a grouping, add a `{ "key": "<key>", "operator": "groupBy", "value": "" }` filter to it.
 
 ### `ADD_VARIABLE`
 

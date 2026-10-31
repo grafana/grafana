@@ -25,17 +25,26 @@ import * as z from 'zod';
 
 import { FieldMatcherID } from '@grafana/data';
 import type { GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { isRecord } from 'app/core/utils/isRecord';
 
-import { annotationQueryKindSchema, variableKindSchema } from '../../v2schema/dashboardV2Schema';
+import { annotationQueryKindSchema, supportedVariableKindSchemas } from '../../v2schema/dashboardV2Schema';
+
+import { GROUP_BY_VARIABLE_UNSUPPORTED } from './deprecatedGroupByVariable';
 
 // The canonical schema lets `spec.name` default to '' (the v2 CUE has
 // `name: string | *""`, valid for a full spec). A create/update command must
 // name the variable, so payloads require a non-empty name on top of the shared
-// structural schema.
-const namedVariableKindSchema = variableKindSchema.refine(
-  (variable) => typeof variable.spec.name === 'string' && variable.spec.name.trim().length > 0,
-  { message: 'Variable spec.name is required and must be non-empty', path: ['spec', 'name'] }
-);
+// structural schema. Commands must not author the deprecated GroupByVariable, so it is left out of the
+// union (and the JSON schema) and gets an error naming its replacement, even when the payload is incomplete.
+const namedVariableKindSchema = z
+  .discriminatedUnion('kind', supportedVariableKindSchemas, {
+    error: (issue) =>
+      isRecord(issue.input) && issue.input.kind === 'GroupByVariable' ? GROUP_BY_VARIABLE_UNSUPPORTED : undefined,
+  })
+  .refine((variable) => typeof variable.spec.name === 'string' && variable.spec.name.trim().length > 0, {
+    message: 'Variable spec.name is required and must be non-empty',
+    path: ['spec', 'name'],
+  });
 
 const dataQueryKindSchema = z.object({
   kind: z.literal('DataQuery').optional().default('DataQuery'),
