@@ -17,7 +17,9 @@
       },
       "references": [
         {
-          "family": "ds"
+          "family": "ds",
+          "type": "grafana-testdata-datasource",
+          "identifier": "PD8C576611E62080A"
         },
         {
           "family": "plugin",
@@ -35,7 +37,9 @@
       },
       "references": [
         {
-          "family": "ds"
+          "family": "ds",
+          "type": "grafana-testdata-datasource",
+          "identifier": "PD8C576611E62080A"
         },
         {
           "family": "plugin",
@@ -53,7 +57,9 @@
       },
       "references": [
         {
-          "family": "ds"
+          "family": "ds",
+          "type": "grafana-testdata-datasource",
+          "identifier": "PD8C576611E62080A"
         },
         {
           "family": "plugin",
@@ -71,7 +77,9 @@
       },
       "references": [
         {
-          "family": "ds"
+          "family": "ds",
+          "type": "grafana-testdata-datasource",
+          "identifier": "PD8C576611E62080A"
         },
         {
           "family": "plugin",
@@ -89,7 +97,9 @@
       },
       "references": [
         {
-          "family": "ds"
+          "family": "ds",
+          "type": "grafana-testdata-datasource",
+          "identifier": "PD8C576611E62080A"
         },
         {
           "family": "plugin",
@@ -107,7 +117,9 @@
       },
       "references": [
         {
-          "family": "ds"
+          "family": "ds",
+          "type": "grafana-testdata-datasource",
+          "identifier": "PD8C576611E62080A"
         },
         {
           "family": "plugin",
@@ -125,7 +137,9 @@
       },
       "references": [
         {
-          "family": "ds"
+          "family": "ds",
+          "type": "grafana-testdata-datasource",
+          "identifier": "PD8C576611E62080A"
         },
         {
           "family": "plugin",
@@ -143,7 +157,9 @@
       },
       "references": [
         {
-          "family": "ds"
+          "family": "ds",
+          "type": "grafana-testdata-datasource",
+          "identifier": "PD8C576611E62080A"
         },
         {
           "family": "plugin",
@@ -161,7 +177,9 @@
       },
       "references": [
         {
-          "family": "ds"
+          "family": "ds",
+          "type": "grafana-testdata-datasource",
+          "identifier": "PD8C576611E62080A"
         },
         {
           "family": "plugin",
@@ -173,7 +191,14 @@
   ],
   "references": [
     {
-      "family": "ds"
+      "family": "ds",
+      "type": "grafana-testdata-datasource",
+      "identifier": "PD8C576611E62080A"
+    },
+    {
+      "family": "plugin",
+      "type": "datasource",
+      "identifier": "grafana-testdata-datasource"
     },
     {
       "family": "plugin",

@@ -1,0 +1,136 @@
+{
+  "title": "V2beta1 dashboard with tabs",
+  "tags": ["v2beta1", "tabs"],
+  "elements": {
+    "panel-1": {
+      "kind": "Panel",
+      "spec": {
+        "id": 1,
+        "title": "Named datasource",
+        "vizConfig": {"kind": "VizConfig", "group": "timeseries", "version": "1.0.0", "spec": {}},
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "transformations": [],
+            "queries": [
+            {"kind": "PanelQuery", "spec": {"query": {"kind": "DataQuery", "group": "sqlite-datasource", "version": "v0", "spec": {}, "datasource": {"name": "sqlite-1"}}, "refId": "A"}}
+            ]
+          }
+        }
+      }
+    },
+    "panel-2": {
+      "kind": "Panel",
+      "spec": {
+        "id": 2,
+        "title": "Default datasource",
+        "vizConfig": {"kind": "VizConfig", "group": "timeseries", "version": "1.0.0", "spec": {}},
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "transformations": [],
+            "queries": [
+            {"kind": "PanelQuery", "spec": {"query": {"kind": "DataQuery", "group": "sqlite-datasource", "version": "v0", "spec": {}}, "refId": "A"}}
+            ]
+          }
+        }
+      }
+    },
+    "panel-3": {
+      "kind": "Panel",
+      "spec": {
+        "id": 3,
+        "title": "Unresolved datasource variable falls back to default",
+        "vizConfig": {"kind": "VizConfig", "group": "timeseries", "version": "1.0.0", "spec": {}},
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "transformations": [],
+            "queries": [
+            {"kind": "PanelQuery", "spec": {"query": {"kind": "DataQuery", "group": "sqlite-datasource", "version": "v0", "spec": {}, "datasource": {"name": "${ds}"}}, "refId": "A"}}
+            ]
+          }
+        }
+      }
+    },
+    "panel-4": {
+      "kind": "Panel",
+      "spec": {
+        "id": 4,
+        "title": "Special datasource",
+        "vizConfig": {"kind": "VizConfig", "group": "timeseries", "version": "1.0.0", "spec": {}},
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "transformations": [],
+            "queries": [
+            {"kind": "PanelQuery", "spec": {"query": {"kind": "DataQuery", "group": "grafana", "version": "v0", "spec": {}, "datasource": {"name": "-- Grafana --"}}, "refId": "A"}}
+            ]
+          }
+        }
+      }
+    },
+    "panel-5": {
+      "kind": "Panel",
+      "spec": {
+        "id": 5,
+        "title": "Legacy v2alpha1 ref",
+        "vizConfig": {"kind": "VizConfig", "group": "timeseries", "version": "1.0.0", "spec": {}},
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "transformations": [],
+            "queries": [
+            {"kind": "PanelQuery", "spec": {"query": {"kind": "DataQuery", "group": "sqlite-datasource", "version": "v0", "spec": {}}, "refId": "A", "datasource": {"uid": "sqlite-2", "type": "sqlite-datasource"}}}
+            ]
+          }
+        }
+      }
+    },
+    "panel-6": {
+      "kind": "Panel",
+      "spec": {
+        "id": 6,
+        "title": "Two queries same datasource",
+        "vizConfig": {"kind": "VizConfig", "group": "timeseries", "version": "1.0.0", "spec": {}},
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "transformations": [],
+            "queries": [
+            {"kind": "PanelQuery", "spec": {"query": {"kind": "DataQuery", "group": "sqlite-datasource", "version": "v0", "spec": {}, "datasource": {"name": "sqlite-1"}}, "refId": "A"}},
+            {"kind": "PanelQuery", "spec": {"query": {"kind": "DataQuery", "group": "sqlite-datasource", "version": "v0", "spec": {}, "datasource": {"name": "sqlite-1"}}, "refId": "B"}}
+            ]
+          }
+        }
+      }
+    }
+  },
+  "layout": {
+    "kind": "TabsLayout",
+    "spec": {"tabs": [
+      {
+        "kind": "TabsLayoutTab",
+        "spec": {
+          "title": "Tab A",
+          "layout": {"kind": "GridLayout", "spec": {"items": [
+            {"kind": "GridLayoutItem", "spec": {"x": 0, "y": 0, "width": 24, "height": 8, "element": {"kind": "ElementReference", "name": "panel-1"}}},
+            {"kind": "GridLayoutItem", "spec": {"x": 0, "y": 0, "width": 24, "height": 8, "element": {"kind": "ElementReference", "name": "panel-2"}}},
+            {"kind": "GridLayoutItem", "spec": {"x": 0, "y": 0, "width": 24, "height": 8, "element": {"kind": "ElementReference", "name": "panel-3"}}}
+          ]}}
+        }
+      },
+      {
+        "kind": "TabsLayoutTab",
+        "spec": {
+          "title": "Tab B",
+          "layout": {"kind": "GridLayout", "spec": {"items": [
+            {"kind": "GridLayoutItem", "spec": {"x": 0, "y": 0, "width": 24, "height": 8, "element": {"kind": "ElementReference", "name": "panel-4"}}},
+            {"kind": "GridLayoutItem", "spec": {"x": 0, "y": 0, "width": 24, "height": 8, "element": {"kind": "ElementReference", "name": "panel-5"}}},
+            {"kind": "GridLayoutItem", "spec": {"x": 0, "y": 0, "width": 24, "height": 8, "element": {"kind": "ElementReference", "name": "panel-6"}}}
+          ]}}
+        }
+      }
+    ]}
+  }
+}
