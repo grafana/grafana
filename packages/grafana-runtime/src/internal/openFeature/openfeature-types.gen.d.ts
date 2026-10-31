@@ -121,6 +121,7 @@ declare module "@openfeature/core" {
     | "alertingTriage"
     | "graphiteBackendMode"
     | "azureResourcePickerUpdates"
+    | "heatmapNegativeLogBuckets"
     | "pieChartGradientColorScheme"
     | "pluginInsights"
     | "panelTimeSettings"
