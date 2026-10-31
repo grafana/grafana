@@ -21,12 +21,12 @@ import (
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
-// ownedListStore serves a user only the objects named for them. The name is the
+// ownedStore serves a user only the objects named for them. The name is the
 // access control, and storage would otherwise list every user's objects.
 // Identities that are not a user (access policies, the renderer) keep the full
 // list unless the kind limits them to the namespace's object, and the
 // authorizer decides their access.
-type ownedListStore struct {
+type ownedStore struct {
 	*kindstore.Store
 	owned *ownerFromName
 
@@ -40,15 +40,15 @@ type ownedListStore struct {
 	resource schema.GroupResource
 }
 
-func newOwnedListStore(store *kindstore.Store, owned *ownerFromName, virtual VirtualGetter) *ownedListStore {
-	return &ownedListStore{Store: store, owned: owned, virtual: virtual, stored: store.Get, newList: store.NewList, resource: store.DefaultQualifiedResource}
+func newOwnedStore(store *kindstore.Store, owned *ownerFromName, virtual VirtualGetter) *ownedStore {
+	return &ownedStore{Store: store, owned: owned, virtual: virtual, stored: store.Get, newList: store.NewList, resource: store.DefaultQualifiedResource}
 }
 
 // VirtualGetter answers a Get for a name that no object is stored under, from
 // the objects the caller owns, most specific first.
 type VirtualGetter func(ctx context.Context, name string, owned []runtime.Object) (runtime.Object, error)
 
-func (s *ownedListStore) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+func (s *ownedStore) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	items, all, err := s.ownedObjects(ctx)
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func (s *ownedListStore) List(ctx context.Context, options *metainternalversion.
 
 // Get answers the kind's virtual names, which no object is stored under, from
 // the objects the caller owns. Any other name is a stored object.
-func (s *ownedListStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (s *ownedStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	if s.virtual == nil || !slices.Contains(s.owned.names, name) {
 		return s.stored(ctx, name, options)
 	}
@@ -84,7 +84,7 @@ func (s *ownedListStore) Get(ctx context.Context, name string, options *metav1.G
 
 // ownedObjects are the stored objects the caller owns, most specific first. all
 // is set when the caller may list every object instead.
-func (s *ownedListStore) ownedObjects(ctx context.Context) (items []runtime.Object, all bool, err error) {
+func (s *ownedStore) ownedObjects(ctx context.Context) (items []runtime.Object, all bool, err error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, false, err
@@ -119,7 +119,7 @@ func (s *ownedListStore) ownedObjects(ctx context.Context) (items []runtime.Obje
 // Update creates the object when it does not exist, for a patch as well as a
 // put: the owner of the name writes it without having to create it first. The
 // update is attempted first, and only a not-found takes the create path.
-func (s *ownedListStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+func (s *ownedStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	updated, created, err := s.Store.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if err == nil || !apierrors.IsNotFound(err) {
 		return updated, created, err
@@ -155,7 +155,7 @@ func (s *ownedListStore) Update(ctx context.Context, name string, objInfo rest.U
 }
 
 // Watch is not scoped to the owned names, so a user may not watch.
-func (s *ownedListStore) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
+func (s *ownedStore) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err

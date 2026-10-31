@@ -37,7 +37,7 @@ func namesOf(t *testing.T, objs []runtime.Object) []string {
 	return names
 }
 
-func newTestOwnedStore(t *testing.T, kind string, stored ...string) (*ownedListStore, *[]string) {
+func newTestOwnedStore(t *testing.T, kind string, stored ...string) (*ownedStore, *[]string) {
 	t.Helper()
 	group, resource := "preferences.grafana.app", "preferences"
 	if kind == "stars" {
@@ -51,7 +51,7 @@ func newTestOwnedStore(t *testing.T, kind string, stored ...string) (*ownedListS
 		has[name] = true
 	}
 	var read []string
-	store := &ownedListStore{
+	store := &ownedStore{
 		owned: owned,
 		stored: func(_ context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
 			read = append(read, name)
@@ -72,7 +72,7 @@ func ctxFor(r *identity.StaticRequester) context.Context {
 func TestOwnedListStoreList(t *testing.T) {
 	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", Groups: []string{"t1"}}
 
-	list := func(t *testing.T, store *ownedListStore, ctx context.Context) []string {
+	list := func(t *testing.T, store *ownedStore, ctx context.Context) []string {
 		t.Helper()
 		got, err := store.List(ctx, &metainternalversion.ListOptions{})
 		require.NoError(t, err)

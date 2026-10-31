@@ -76,10 +76,6 @@ type PluginLoaderDependencies struct {
 	ClientV3Loader v3.ClientV3Loader
 	PluginSources  sources.Registry
 	ACService      accesscontrol.Service
-
-	// CoreApps are served in middleware mode, from this process, next to the
-	// local plugins.
-	CoreApps []CoreApp
 }
 
 func ProvidePluginLoaderDependencies(

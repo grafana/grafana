@@ -7,10 +7,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
 
-	clientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
-
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 )
@@ -71,26 +68,3 @@ func TestCorePlugin(t *testing.T) {
 		require.True(t, callResourceCalled)
 	})
 }
-
-func TestCorePluginClientV3(t *testing.T) {
-	t.Run("without a client there is no v3", func(t *testing.T) {
-		p, err := New(backend.ServeOpts{})("plugin", log.New("test"), pluginfakes.InitializeNoopTracerForTest(), nil)
-		require.NoError(t, err)
-		_, ok := p.(backendplugin.PluginV3).ClientV3(context.Background())
-		require.False(t, ok)
-	})
-
-	t.Run("WithClientV3 serves the client", func(t *testing.T) {
-		client := &fakeClientV3{}
-		stopped := false
-		p, err := WithClientV3(backend.ServeOpts{}, client, func() { stopped = true })("plugin", log.New("test"), pluginfakes.InitializeNoopTracerForTest(), nil)
-		require.NoError(t, err)
-		got, ok := p.(backendplugin.PluginV3).ClientV3(context.Background())
-		require.True(t, ok)
-		require.Same(t, client, got)
-		require.NoError(t, p.Stop(context.Background()))
-		require.True(t, stopped)
-	})
-}
-
-type fakeClientV3 struct{ clientv3.Client }

@@ -13,12 +13,17 @@ import (
 
 	clientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	appgrpcplugin "github.com/grafana/grafana-app-sdk/plugin/grpcplugin"
+
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 const inProcessBufferSize = 1 << 20
 
+var inProcessLogger = log.New("plugins.v3.inprocess")
+
 // NewInProcessClient serves the v3 services in opts from this process, and
-// returns the client for them with the function that stops the server.
+// returns the client for them with the function that stops the server. A
+// server held for the life of the process need not be stopped.
 //
 // Requests go through a gRPC connection held in memory, and the services are
 // the SDK's own, so they authenticate each request as a plugin process does:
@@ -39,9 +44,9 @@ func NewInProcessClient(opts appgrpcplugin.ServeOpts) (clientv3.Client, func(), 
 
 	lis := bufconn.Listen(inProcessBufferSize)
 	go func() {
+		// Serve only fails on a listener error, and a bufconn has none.
 		if err := server.Serve(lis); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-			// Serve only fails on a listener error, and a bufconn has none.
-			panic(fmt.Sprintf("in-process v3 server: %v", err))
+			inProcessLogger.Error("The in-process v3 server stopped", "error", err)
 		}
 	}()
 
