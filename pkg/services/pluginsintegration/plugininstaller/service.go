@@ -98,8 +98,15 @@ func (s *Service) shouldUpdate(ctx context.Context, pluginID, currentVersion str
 
 func (s *Service) installPlugins(ctx context.Context, pluginsToInstall []setting.InstallPlugin, failOnErr bool) error {
 	for _, installPlugin := range pluginsToInstall {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
 		// Check if the plugin is already installed
 		p, exists := s.pluginStore.Plugin(ctx, installPlugin.ID)
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		if exists {
 			// If it's installed, check if we are looking for a specific version
 			if p.Info.Version == installPlugin.Version {
@@ -148,7 +155,13 @@ func (s *Service) installPlugins(ctx context.Context, pluginsToInstall []setting
 func (s *Service) starting(ctx context.Context) error {
 	if len(s.cfg.PreinstallPluginsSync) > 0 {
 		s.log.Info("Installing plugins", "plugins", s.cfg.PreinstallPluginsSync)
-		if err := s.installPlugins(ctx, s.cfg.PreinstallPluginsSync, true); err != nil {
+		installCtx := ctx
+		cancel := func() {}
+		if timeout := setting.PreinstallPluginsSyncTimeout(s.cfg); timeout > 0 {
+			installCtx, cancel = context.WithTimeout(ctx, timeout)
+		}
+		defer cancel()
+		if err := s.installPlugins(installCtx, s.cfg.PreinstallPluginsSync, true); err != nil {
 			s.log.Error("Failed to install plugins", "error", err)
 			return err
 		}
