@@ -39,6 +39,10 @@ const (
 	// keep the prefix (just in case)
 	FlagLiveKeepHAPrefixInCloud = "live.keepHAPrefixInCloud"
 
+	// FlagGrafanaRoutePreferencesAndCollections
+	// implement preferences and collections as app plugins
+	FlagGrafanaRoutePreferencesAndCollections = "grafana.routePreferencesAndCollections"
+
 	// FlagGrafanaUseRouterMiddleware
 	// intercept /apis/... and /openapi/v3/... requests in middleware.
 	FlagGrafanaUseRouterMiddleware = "grafana.useRouterMiddleware"

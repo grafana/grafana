@@ -4,19 +4,20 @@ import (
 	"context"
 	"slices"
 
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-
 	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 type AuthorizeFromName struct {
 	AccessClient  authlib.AccessClient
 	AllowOrgAdmin bool
 	OKNames       []string
-	Resource      map[string][]ResourceOwner // may include unknown
+	Resource      map[string][]utils.ResourceOwner // may include unknown
 }
 
 func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -67,13 +68,13 @@ func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 		return authorizer.DecisionAllow, "", nil
 	}
 
-	info, _ := ParseOwnerFromName(attr.GetName())
+	info, _ := utils.ParseOwnerFromName(attr.GetName())
 	if !slices.Contains(owners, info.Owner) {
 		return authorizer.DecisionDeny, "unsupported owner type", nil
 	}
 
 	switch info.Owner {
-	case NamespaceResourceOwner:
+	case utils.NamespaceResourceOwner:
 		if attr.IsReadOnly() {
 			// Everyone can see the namespace
 			return authorizer.DecisionAllow, "", nil
@@ -83,13 +84,13 @@ func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 		}
 		return authorizer.DecisionDeny, "must be an org admin to edit", nil
 
-	case UserResourceOwner:
+	case utils.UserResourceOwner:
 		if user.GetIdentifier() == info.Identifier {
 			return authorizer.DecisionAllow, "", nil
 		}
 		return authorizer.DecisionDeny, "your are not the owner of the resource", nil
 
-	case TeamResourceOwner:
+	case utils.TeamResourceOwner:
 		// Being able to view a team is not sufficient to view Permission resources - you must
 		// be a member of the team instead.
 		if attr.IsReadOnly() && slices.Contains(user.GetGroups(), info.Identifier) {
@@ -110,7 +111,7 @@ func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 		}
 		return authorizer.DecisionDeny, "no edit permissions for the team", nil
 
-	case UnknownResourceOwner:
+	case utils.UnknownResourceOwner:
 		return authorizer.DecisionAllow, "", nil
 	}
 

@@ -3446,6 +3446,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.routePreferencesAndCollections",
+        "resourceVersion": "1793426422487",
+        "creationTimestamp": "2026-10-31T06:00:22Z"
+      },
+      "spec": {
+        "description": "implement preferences and collections as app plugins",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.rspackBuild",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-10T08:36:48Z",

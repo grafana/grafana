@@ -8,7 +8,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	apirequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -320,7 +320,7 @@ func (tapi *TeamAPI) getTeamPreferences(c *contextmodel.ReqContext) response.Res
 	if errResp != nil {
 		return errResp
 	}
-	return tapi.preferenceK8sHandler.GetPreferences(c, prefutils.TeamOwner(uid))
+	return tapi.preferenceK8sHandler.GetPreferences(c, apiutils.TeamOwner(uid))
 }
 
 // swagger:route PUT /teams/{team_id}/preferences teams preferences updateTeamPreferences
@@ -347,7 +347,7 @@ func (tapi *TeamAPI) updateTeamPreferences(c *contextmodel.ReqContext) response.
 	if errResp != nil {
 		return errResp
 	}
-	return tapi.preferenceK8sHandler.UpdatePreferences(c, prefutils.TeamOwner(uid), &dtoCmd)
+	return tapi.preferenceK8sHandler.UpdatePreferences(c, apiutils.TeamOwner(uid), &dtoCmd)
 }
 
 // resolveTeamUID returns the team UID. When the request used a UID in the

@@ -245,3 +245,24 @@ diff <(python3 -m json.tool --indent 2 cli.json) server.json
 
 Expect differences only where the server's configuration disables the generic
 routes the rendered spec always includes.
+
+## Kinds authorized by name
+
+Stars are authorized by the owner in an object's name (`user-<id>`) instead of
+by folder. Everything the router knows about them is in `hardcoded_kinds.go`,
+which stands in for what the app manifest will declare:
+
+- `ownerFromName` allows a request by its name: the owners a kind accepts, fixed
+  names, and whether org admins may do anything. An access policy is held to its
+  token's permissions instead.
+- A user's list returns only the objects they own, and they may not watch. Other
+  identities list everything.
+- A custom route for a name with no stored object is still sent to the app
+  (`allowMissingParent`), with the name alone.
+
+`grafana.routePreferencesAndCollections` (with `grafana.useRouterMiddleware`)
+serves `collections.grafana.app` from the `apps/collections` app, run in this
+process, and stops the embedded API server registering it. The app authenticates
+through the same local token exchange as a plugin process (see above), so its
+calls to Grafana act as the caller. Grafana must sign plugin tokens itself for
+this.

@@ -30,12 +30,27 @@ func TestMain(m *testing.M) {
 func TestIntegrationStars(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	for _, mode := range []grafanarest.DualWriterMode{
-		grafanarest.Mode0,
-		grafanarest.Mode1,
-		grafanarest.Mode5,
+	// routed runs the same checks with the router serving stars from the
+	// collections app, which has no dual write: it behaves like Mode5.
+	type variant struct {
+		mode   grafanarest.DualWriterMode
+		routed bool
+	}
+	for _, v := range []variant{
+		{mode: grafanarest.Mode0},
+		{mode: grafanarest.Mode1},
+		{mode: grafanarest.Mode5},
+		{mode: grafanarest.Mode5, routed: true},
 	} {
+		mode, routed := v.mode, v.routed
 		flags := []string{featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs}
+		if routed {
+			flags = append(flags,
+				featuremgmt.FlagGrafanaUseRouterMiddleware,
+				featuremgmt.FlagGrafanaRoutePreferencesAndCollections,
+				featuremgmt.FlagApppluginsLoadAppManifest,
+			)
+		}
 
 		// Provisioning requires dashboards/folders in unified storage (Mode4+).
 		// Disable it for legacy modes to avoid startup failures.
@@ -47,6 +62,7 @@ func TestIntegrationStars(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    false, // required for experimental APIs
 			DisableAnonymous:     true,
+			LocalPluginAPI:       routed,
 			EnableFeatureToggles: flags,
 			Provisioning:         provisioning,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -65,7 +81,7 @@ func TestIntegrationStars(t *testing.T) {
 			},
 		})
 
-		t.Run(fmt.Sprintf("test stars (mode:%d)", mode), func(t *testing.T) {
+		t.Run(fmt.Sprintf("test stars (mode:%d routed:%t)", mode, routed), func(t *testing.T) {
 			ctx := context.Background()
 			starsClient := helper.GetResourceClient(apis.ResourceClientArgs{
 				User: helper.Org1.Admin,
@@ -79,6 +95,36 @@ func TestIntegrationStars(t *testing.T) {
 				User: helper.Org1.Admin,
 				GVR:  dashboardV1.DashboardResourceInfo.GroupVersionResource(),
 			})
+
+			adminStarName := "user-" + starsClient.Args.User.Identity.GetIdentifier()
+			client := helper.Org1.Admin.RESTClient(t, &collections.GroupVersion)
+
+			// Without dual write the legacy API no longer reaches this storage.
+			setStar := func(uid string, remove bool) {
+				t.Helper()
+				if routed {
+					req := client.Put()
+					if remove {
+						req = client.Delete()
+					}
+					res := req.AbsPath("apis", "collections.grafana.app", "v1alpha1",
+						"namespaces", "default", "stars", adminStarName,
+						"update", "dashboard.grafana.app", "Dashboard", uid).Do(ctx)
+					require.NoError(t, res.Error(), "star %s (remove:%t)", uid, remove)
+					return
+				}
+				method := http.MethodPost
+				if remove {
+					method = http.MethodDelete
+				}
+				raw := make(map[string]any)
+				legacyResponse := apis.DoRequest(helper, apis.RequestParams{
+					User:   starsClient.Args.User,
+					Method: method,
+					Path:   "/api/user/stars/dashboard/uid/" + uid,
+				}, &raw)
+				require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "star %s (remove:%t)", uid, remove)
+			}
 
 			// Create 5 dashboards
 			for i := range 5 {
@@ -107,19 +153,8 @@ func TestIntegrationStars(t *testing.T) {
 			require.NoError(t, err)
 			require.Empty(t, rsp.Items, "no stars saved yet")
 
-			raw := make(map[string]any)
-			legacyResponse := apis.DoRequest(helper, apis.RequestParams{
-				User:   starsClient.Args.User,
-				Method: http.MethodPost,
-				Path:   "/api/user/stars/dashboard/uid/test-2",
-			}, &raw)
-			require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "add dashboard star")
-			legacyResponse = apis.DoRequest(helper, apis.RequestParams{
-				User:   starsClient.Args.User,
-				Method: http.MethodPost,
-				Path:   "/api/user/stars/dashboard/uid/test-3",
-			}, &raw)
-			require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "add dashboard star")
+			setStar("test-2", false)
+			setStar("test-3", false)
 
 			// List values and compare results
 			rsp, err = starsClient.Resource.List(ctx, metav1.ListOptions{})
@@ -136,14 +171,8 @@ func TestIntegrationStars(t *testing.T) {
 			require.ElementsMatch(t, []string{"test-2", "test-3"}, resources[0].Names)
 
 			// Remove one star
-			legacyResponse = apis.DoRequest(helper, apis.RequestParams{
-				User:   starsClient.Args.User,
-				Method: http.MethodDelete,
-				Path:   "/api/user/stars/dashboard/uid/test-3",
-			}, &raw)
-			require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "removed dashboard star")
+			setStar("test-3", true)
 
-			adminStarName := "user-" + starsClient.Args.User.Identity.GetIdentifier()
 			rspObj, err := starsClient.Resource.Get(ctx, adminStarName, metav1.GetOptions{})
 			require.NoError(t, err)
 
@@ -157,6 +186,8 @@ func TestIntegrationStars(t *testing.T) {
 			// Change stars via k8s update
 			rspObj, err = starsClient.Resource.Update(ctx, &unstructured.Unstructured{
 				Object: map[string]any{
+					"apiVersion": collections.GroupVersion.String(),
+					"kind":       "Stars",
 					"metadata": map[string]any{
 						"name":      adminStarName,
 						"namespace": "default",
@@ -184,7 +215,6 @@ func TestIntegrationStars(t *testing.T) {
 				resources[0].Names)
 
 			// Now add a star with the sub-resource route used by the UI
-			client := helper.Org1.Admin.RESTClient(t, &collections.GroupVersion)
 			res := client.Put().AbsPath("apis", "collections.grafana.app", "v1alpha1",
 				"namespaces", "default",
 				"stars", adminStarName,

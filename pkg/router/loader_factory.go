@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"fmt"
 	"slices"
 
 	"github.com/grafana/authlib/types"
@@ -24,6 +25,26 @@ import (
 // standalone router tries ProvideCloudRoutesLoader first, and calls this only
 // when [cloud_router] configures none, and Grafana itself never polls them.
 func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
+	// The embedded API server stops serving these groups with the toggle, so a
+	// router that cannot serve them leaves them unserved.
+	if routeCollectionsAndPreferences() && !standaloneRouter(cfg) && !middlewareEnabled(cfg, deps.Features) {
+		return nil, fmt.Errorf("%s requires %s", featuremgmt.FlagGrafanaRoutePreferencesAndCollections, featuremgmt.FlagGrafanaUseRouterMiddleware)
+	}
+	loader, err := provideBaseRoutesLoader(cfg, deps)
+	if err != nil {
+		return nil, err
+	}
+	if middlewareEnabled(cfg, deps.Features) {
+		apps, err := builtinCoreApps(deps.PluginAuth)
+		if err != nil {
+			return nil, err
+		}
+		loader = newCoreAppsLoader(loader, deps.PluginDependencies, apps)
+	}
+	return loader, nil
+}
+
+func provideBaseRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
 	dev, err := newDevTargets(cfg, deps.PluginDependencies)
 	if err != nil {
 		return nil, err
