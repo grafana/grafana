@@ -2,6 +2,7 @@ package legacy
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"text/template"
 	"time"
@@ -108,4 +109,40 @@ func TestQueryUsers_EmailVerifiedTrue(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, res.Items, 1)
 	require.True(t, res.Items[0].EmailVerified)
+}
+
+func TestQueryUsers_RowError(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		rowIndex int
+	}{
+		{name: "before first row", rowIndex: 0},
+		{name: "after partial results", rowIndex: 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			db, mock, err := sqlmock.New()
+			require.NoError(t, err)
+			defer db.Close() //nolint:errcheck
+
+			sess := session.GetSession(sqlx.NewDb(db, "sqlmock"))
+			helper := newTestHelper(&testDB{sess: sess})
+			now := time.Now()
+			rows := sqlmock.NewRows(usersColumns)
+			for i := 0; i <= tc.rowIndex; i++ {
+				rows.AddRow(1, 100+i, "uid", "login", "email@example.com", "Name",
+					now, now, false, false, false, true, false, now, "Viewer")
+			}
+			rowErr := errors.New("row iteration failed")
+			rows.RowError(tc.rowIndex, rowErr)
+			mock.ExpectQuery("SELECT 1").WillReturnRows(rows)
+
+			store := &legacySQLStore{}
+			args := trivialArgs{SQLTemplate: mocks.NewTestingSQLTemplate()}
+			res, err := store.queryUsers(context.Background(), helper, trivialTemplate, &args, 100)
+			require.NotNil(t, res)
+			require.Len(t, res.Items, tc.rowIndex)
+			require.ErrorIs(t, err, rowErr)
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
 }
