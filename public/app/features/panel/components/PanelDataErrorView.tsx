@@ -156,6 +156,13 @@ function getMessageFor(
   }
 
   if (noData) {
+    // A failed query can return an empty frame together with the error; surface the error
+    // instead of reporting the failure as an empty result.
+    const queryError = data.errors?.[0]?.message ?? data.error?.message;
+    if (queryError) {
+      return queryError;
+    }
+
     return fieldConfig?.defaults.noValue ?? t('panel.panel-data-error-view.no-value.default', 'No data');
   }
 
