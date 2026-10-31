@@ -5,7 +5,7 @@ import { MT_FILL_PREREQUISITES_MISSING_WARNING } from '../constants';
 import { logDataSourceDebug, logDataSourceWarning } from '../logging';
 
 import { BootDataSource } from './bootDataSource';
-import { fetchConnectionsViaApiGroups, MTDataSource } from './mt/mtSource';
+import { MTDataSource } from './mt/mtSource';
 import { type BootDataSourceSettings, type DataSourceCacheSource } from './types';
 
 interface MTFillGate {
@@ -62,18 +62,9 @@ export function isMTDataSourceFillEnabled(): boolean {
  */
 export function createDataSourceCacheSource(boot: BootDataSourceSettings): DataSourceCacheSource {
   const gate = evaluateMTFillGate();
-  const flags = getFeatureFlagClient();
 
   if (gate.requested && gate.missing.length === 0) {
     logDataSourceDebug('DataSource: filling the data source cache from the MT APIs', {});
-    // The connections endpoint is backed by the legacy data source service, so it cannot see a data
-    // source that lives only in unified storage -- which is every data source written through the
-    // new APIs, Git Sync's included. Reading the per-plugin API groups instead can, at the cost of
-    // one request per installed plugin, so it is opt-in.
-    if (flags.getBooleanValue(FlagKeys.DatasourcesListFromApiGroups, false)) {
-      logDataSourceDebug('DataSource: listing data sources from the per-plugin API groups', {});
-      return new MTDataSource(fetchConnectionsViaApiGroups);
-    }
     return new MTDataSource();
   }
 

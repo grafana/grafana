@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/query/client"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
@@ -36,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var (
@@ -122,6 +124,7 @@ func RegisterAPIService(
 	tracer tracing.Tracer,
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
 	exprService *expr.Service,
+	unified resource.ResourceClient,
 ) (*QueryAPIBuilder, error) {
 	if !featuremgmt.AnyEnabled(features,
 		featuremgmt.FlagQueryService,
@@ -155,6 +158,14 @@ func RegisterAPIService(
 		}).Inc()
 	}
 
+	// The legacy provider reads the data_source table, so it has no row for a data source written
+	// only through the API groups. Read the shared collection instead once those groups are served.
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	var connections datasourceV0.DataSourceConnectionProvider = dataSourcesService
+	if features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs) {
+		connections = datasource.ProvideUnifiedConnections(unified, accessControl)
+	}
+
 	builder, err := NewQueryAPIBuilder(
 		features,
 		client.NewSingleTenantInstanceProvider(cfg, features, pluginClient, pCtxProvider, accessControl),
@@ -163,7 +174,7 @@ func RegisterAPIService(
 		registerer,
 		tracer,
 		legacyDatasourceLookup,
-		dataSourcesService, // datasourceV0.DataSourceConnectionProvider
+		connections,
 		cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
 		reportStatus,
 	)
