@@ -54,8 +54,30 @@ export function PanelEditActions({
         {t('dashboard-scene.panel-edit-actions.edit-visualization', 'Edit visualization')}
       </Button>
       <div className={styles.actionsDivider} />
-      <CopyActionButton onClick={onClickCopy} isRepeated={isRepeated} />
-      <DuplicateActionButton onClick={onClickDuplicate} isRepeated={isRepeated} />
+      <CopyActionButton
+        onClick={onClickCopy}
+        disabled={isRepeated}
+        tooltip={
+          isRepeated
+            ? t(
+                'dashboard-scene.control-edit-actions.copied-tooltip-disabled',
+                "Repeated panels can't be copied individually"
+              )
+            : undefined
+        }
+      />
+      <DuplicateActionButton
+        onClick={onClickDuplicate}
+        disabled={isRepeated}
+        tooltip={
+          isRepeated
+            ? t(
+                'dashboard-scene.control-edit-actions.duplicate-tooltip-disabled',
+                "Repeated panels can't be duplicated individually"
+              )
+            : undefined
+        }
+      />
       <DeleteActionButton
         title={t('dashboard.sidebar.viz-panel.delete-panel-title', 'Delete panel?')}
         text={t(
@@ -64,7 +86,15 @@ export function PanelEditActions({
         )}
         yesText={t('dashboard.sidebar.viz-panel.delete-panel-yes', 'Delete')}
         onConfirm={onClickDelete}
-        isRepeated={isRepeated}
+        disabled={isRepeated}
+        tooltip={
+          isRepeated
+            ? t(
+                'dashboard-scene.control-edit-actions.delete-tooltip-disabled',
+                "Repeated panels can't be deleted individually"
+              )
+            : undefined
+        }
       />
     </>
   );
@@ -77,8 +107,7 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
 
   const onClickEdit = useCallback(() => {
     DashboardInteractions.panelActionClicked('settings', getPanelIdForVizPanel(panel), 'edit_popover');
-    const { selectionContext } = getDashboardSceneLike(panel).state.sidebar.state;
-    selectionContext.onSelect({ id: panel.state.key! }, { force: true });
+    getDashboardSceneLike(panel).state.sidebar.openElementSettings(panel);
   }, [panel]);
 
   const onClickEditVisualization = useCallback(() => {

@@ -7889,6 +7889,11 @@
       "confirmText-restore-version": "Yes, restore to version {{version}}",
       "title-restore-version": "Restore version"
     },
+    "row-edit-actions": {
+      "copy-disabled": "Repeated rows can't be copied individually",
+      "delete-disabled": "Repeated rows can't be deleted individually",
+      "duplicate-disabled": "Repeated rows can't be duplicated individually"
+    },
     "sandbox-consent": {
       "allow": "Allow",
       "allow-tooltip": "Load content from the selected sources in the panels listed, until you close this tab.",
@@ -8084,6 +8089,11 @@
       "switch-options": "Switch options",
       "value-pair-type": "Value pair type",
       "value-pair-type-description": "Choose the type of values for the switch states"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "Repeated tabs can't be copied individually",
+      "delete-disabled": "Repeated tabs can't be deleted individually",
+      "duplicate-disabled": "Repeated tabs can't be duplicated individually"
     },
     "text-box-variable": {
       "name-default-value": "Default value"
