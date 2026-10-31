@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
+	preferencesapp "github.com/grafana/grafana/apps/preferences/pkg/app"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -355,13 +356,14 @@ func (pl PluginLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
 // Before adding a group, confirm the same holds for it: never add a group
 // whose data or permissions matter, such as dashboards, folders or IAM.
 //
-// collections holds per-user data, but access to it is decided
+// collections and preferences hold per-user data, but access to it is decided
 // by the object's name in the router's own authorizer (pluginroute
 // ownerFromName), not by the plugin serving it.
 var routableCoreGroups = []string{
 	"playlist.grafana.app",
 	"example.grafana.app",
 	"collections.grafana.app",
+	"preferences.grafana.app",
 }
 
 // newPluginBackend builds the backend for one plugin manifest. Its group must be
@@ -442,11 +444,13 @@ type PluginBackend struct {
 	// entry without a plugin ID uses its API group, as its connection does.
 	metricsID string
 
-	info     plugins.Info
-	group    metav1.APIGroup
-	manifest *app.ManifestData
-	client   PluginClientProvider
-	deps     PluginDependencies
+	// TEMPORARY: see CoreApp.PreferencesConfig.
+	preferencesConfig *preferencesapp.Config
+	info              plugins.Info
+	group             metav1.APIGroup
+	manifest          *app.ManifestData
+	client            PluginClientProvider
+	deps              PluginDependencies
 
 	// settings is set instead of manifest for the backend that serves the
 	// plugin's settings API under its plugin ID.
@@ -525,12 +529,13 @@ func (b *PluginBackend) load(ctx context.Context) (*pluginroute.Handler, error) 
 		cfg = setting.NewCfg()
 	}
 	opts := pluginroute.Options{
-		PluginInfo:      b.info,
-		Storage:         pluginroute.UnifiedStorage(b.deps.Unified, b.deps.SecureValues, b.deps.RESTConfigProvider),
-		Decrypter:       b.deps.Decrypter,
-		Tracer:          b.deps.Tracer,
-		BuildVersion:    cfg.BuildVersion,
-		MetricsRegister: b.deps.MetricsRegister,
+		PluginInfo:        b.info,
+		Storage:           pluginroute.UnifiedStorage(b.deps.Unified, b.deps.SecureValues, b.deps.RESTConfigProvider),
+		Decrypter:         b.deps.Decrypter,
+		Tracer:            b.deps.Tracer,
+		BuildVersion:      cfg.BuildVersion,
+		PreferencesConfig: b.preferencesConfig,
+		MetricsRegister:   b.deps.MetricsRegister,
 	}
 	if b.deps.AccessControl != nil {
 		opts.AccessChecker = pluginaccesscontrol.NewAppAccessChecker(b.deps.AccessControl)

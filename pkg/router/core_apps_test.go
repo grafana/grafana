@@ -55,13 +55,13 @@ func TestCoreAppsLoader(t *testing.T) {
 	t.Run("a bad app does not keep the others from loading", func(t *testing.T) {
 		loader := newCoreAppsLoader(base, PluginDependencies{}, []CoreApp{
 			coreAppFor("dashboard.grafana.app", stubClientV3{}), // not a routable group
-			coreAppFor("collections.grafana.app", nil),          // no client
-			coreAppFor("collections.grafana.app", stubClientV3{}),
+			coreAppFor("preferences.grafana.app", nil),          // no client
+			coreAppFor("preferences.grafana.app", stubClientV3{}),
 		})
 		backends, err := loader.Load(t.Context())
 		require.NoError(t, err)
 		require.Len(t, backends, 2)
-		require.Equal(t, "collections.grafana.app", backends[1].Group().Name)
+		require.Equal(t, "preferences.grafana.app", backends[1].Group().Name)
 	})
 
 	t.Run("the base loader's error is returned", func(t *testing.T) {

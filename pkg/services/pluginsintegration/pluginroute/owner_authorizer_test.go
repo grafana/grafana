@@ -81,13 +81,13 @@ func TestOwnerFromNameOwnedNames(t *testing.T) {
 		require.Equal(t, []string{"user-abc"}, o.ownedNames(user))
 	})
 
-	t.Run("a namespace owner is user, sorted teams, then namespace", func(t *testing.T) {
-		o := namespaceUserTeamOwner()
+	t.Run("preferences are user, sorted teams, then namespace", func(t *testing.T) {
+		o, _ := hardcodedKindAuth("preferences.grafana.app", "preferences")
 		require.Equal(t, []string{"user-abc", "team-t1", "team-t2", "namespace"}, o.ownedNames(user))
 	})
 
-	t.Run("only nonUserNamespaceOnly limits other identities to the namespace", func(t *testing.T) {
-		o := namespaceUserTeamOwner()
+	t.Run("only preferences limit other identities to the namespace", func(t *testing.T) {
+		o, _ := hardcodedKindAuth("preferences.grafana.app", "preferences")
 		names, scoped := o.nonUserNames()
 		require.True(t, scoped)
 		require.Equal(t, []string{"namespace"}, names)
@@ -102,7 +102,7 @@ func TestOwnerFromNameOwnedNames(t *testing.T) {
 		for i := range maxOwnedTeams + 10 {
 			many.Groups = append(many.Groups, fmt.Sprintf("t%03d", i))
 		}
-		o := namespaceUserTeamOwner()
+		o, _ := hardcodedKindAuth("preferences.grafana.app", "preferences")
 		require.Len(t, o.ownedNames(many), maxOwnedTeams+2)
 	})
 
@@ -146,20 +146,5 @@ func TestGetAuthorizerOwnerFromName(t *testing.T) {
 			decision, reason := authorize(t, b, tc.caller, attr(tc.verb, tc.object))
 			require.Equal(t, tc.want, decision, reason)
 		})
-	}
-}
-
-// namespaceUserTeamOwner is a policy for a kind whose objects are owned by a
-// user, a team or the namespace. Only the generic owner mechanics are tested
-// with it; no kind served here uses it.
-func namespaceUserTeamOwner() *ownerFromName {
-	return &ownerFromName{
-		names: []string{"merged"},
-		owners: []apiutils.ResourceOwner{
-			apiutils.NamespaceResourceOwner,
-			apiutils.UserResourceOwner,
-			apiutils.TeamResourceOwner,
-		},
-		nonUserNamespaceOnly: true,
 	}
 }
