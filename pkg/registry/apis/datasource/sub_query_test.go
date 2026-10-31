@@ -4,13 +4,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
@@ -125,4 +132,80 @@ type mockContextProvider struct {
 
 func (m mockContextProvider) PluginContextForDataSource(ctx context.Context, datasourceSettings *backend.DataSourceInstanceSettings) (backend.PluginContext, error) {
 	return backend.PluginContext{}, nil
+}
+
+func TestSubQueryResponseFormats(t *testing.T) {
+	for _, accept := range []string{"application/json", v0alpha1.PROTOBUF_CONTENT_TYPE} {
+		t.Run(accept, func(t *testing.T) {
+			for _, tc := range []struct {
+				name   string
+				err    error
+				status int
+			}{
+				{name: "success", status: http.StatusOK},
+				{name: "downstream error", err: errutil.Error{LogMessage: "downstream failed", Source: errutil.SourceDownstream}, status: http.StatusBadRequest},
+				{name: "plugin error", err: errors.New("plugin failed")},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					response := &backend.QueryDataResponse{Responses: backend.Responses{
+						"A": {Frames: data.Frames{data.NewFrame("result", data.NewField("value", nil, []float64{42}))}},
+					}}
+					r := subQueryREST{builder: &DataSourceAPIBuilder{
+						client:          queryResponseClient{response: response, err: tc.err},
+						datasources:     mockDatasources{},
+						contextProvider: mockContextProvider{},
+					}}
+					responder := &mockHealthResponder{}
+					handler, err := r.Connect(context.Background(), "dsname", nil, responder)
+					require.NoError(t, err)
+					req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"queries":[]}`))
+					req.Header.Set("Content-Type", "application/json")
+					req.Header.Set("Accept", accept)
+					w := httptest.NewRecorder()
+					handler.ServeHTTP(w, req)
+
+					if tc.status == 0 {
+						require.ErrorIs(t, responder.err, tc.err)
+						require.Nil(t, responder.obj)
+						require.Empty(t, w.Body.Bytes())
+						return
+					}
+					require.NoError(t, responder.err)
+					var result *backend.QueryDataResponse
+					if accept == v0alpha1.PROTOBUF_CONTENT_TYPE {
+						require.Equal(t, tc.status, w.Code)
+						require.Equal(t, accept, w.Header().Get("Content-Type"))
+						require.Nil(t, responder.obj)
+						var wire pluginv2.QueryDataResponse
+						require.NoError(t, proto.Unmarshal(w.Body.Bytes(), &wire))
+						result, err = backend.FromProto().QueryDataResponse(&wire)
+						require.NoError(t, err)
+					} else {
+						require.Equal(t, tc.status, responder.statusCode)
+						require.IsType(t, &v0alpha1.QueryDataResponse{}, responder.obj)
+						result = &responder.obj.(*v0alpha1.QueryDataResponse).QueryDataResponse
+					}
+					require.Contains(t, result.Responses, "A")
+					if tc.err != nil {
+						require.EqualError(t, result.Responses["A"].Error, "downstream failed")
+						require.Equal(t, backend.ErrorSourceDownstream, result.Responses["A"].ErrorSource)
+					} else {
+						require.Len(t, result.Responses["A"].Frames, 1)
+						require.Len(t, result.Responses["A"].Frames[0].Fields, 1)
+						require.Equal(t, float64(42), result.Responses["A"].Frames[0].Fields[0].At(0))
+					}
+				})
+			}
+		})
+	}
+}
+
+type queryResponseClient struct {
+	mockClient
+	response *backend.QueryDataResponse
+	err      error
+}
+
+func (m queryResponseClient) QueryData(context.Context, *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return m.response, m.err
 }

@@ -7,10 +7,12 @@ import (
 	"net/http"
 
 	"go.opentelemetry.io/otel/attribute"
+	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/config"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
@@ -161,18 +163,15 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		if errors.As(err, &e) && e.Source == errutil.SourceDownstream {
 			_ = tracing.Error(reqSpan, err)
 			m.SetError()
-			responder.Object(int(backend.StatusBadRequest),
-				&dsV0.QueryDataResponse{QueryDataResponse: backend.QueryDataResponse{Responses: map[string]backend.DataResponse{
-					"A": {
-						Error:       errors.New(e.LogMessage),
-						ErrorSource: backend.ErrorSourceDownstream,
-						Status:      backend.StatusBadRequest,
-					},
-				}}},
-			)
-			return
+			err = nil
+			rsp = &backend.QueryDataResponse{Responses: map[string]backend.DataResponse{
+				"A": {
+					Error:       errors.New(e.LogMessage),
+					ErrorSource: backend.ErrorSourceDownstream,
+					Status:      backend.StatusBadRequest,
+				},
+			}}
 		}
-
 		if err != nil {
 			_ = tracing.Error(reqSpan, err)
 			m.SetError()
@@ -180,7 +179,31 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 
-		responder.Object(dsV0.GetResponseCode(rsp),
+		code := dsV0.GetResponseCode(rsp)
+
+		for _, accept := range req.Header.Values("Accept") {
+			if accept == dsV0.PROTOBUF_CONTENT_TYPE {
+				p, err := backend.ToProto().QueryDataResponse(backend.DataFrameFormat_ARROW, rsp)
+				if err != nil {
+					responder.Error(err)
+					return
+				}
+				data, err := proto.Marshal(p)
+				if err != nil {
+					responder.Error(err)
+					return
+				}
+				w.Header().Add("Content-Type", dsV0.PROTOBUF_CONTENT_TYPE)
+				w.WriteHeader(code)
+				_, err = w.Write(data)
+				if err != nil {
+					logging.FromContext(reqCtx).Warn("unable to write protobuf result", "err", err)
+				}
+				return
+			}
+		}
+
+		responder.Object(code,
 			&dsV0.QueryDataResponse{QueryDataResponse: *rsp},
 		)
 	}), nil
