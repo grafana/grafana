@@ -3102,7 +3102,8 @@
       "metadata": {
         "name": "grafana.logDetailsDisplayedFieldControls",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T08:46:56Z"
+        "creationTimestamp": "2026-09-16T08:46:56Z",
+        "deletionTimestamp": "2026-10-28T16:06:05Z"
       },
       "spec": {
         "description": "Deprecated: Toggle displayed fields from Log Details",

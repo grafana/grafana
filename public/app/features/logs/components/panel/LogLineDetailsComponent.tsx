@@ -12,17 +12,13 @@ import {
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction, getDataSourceInstance } from '@grafana/runtime';
-import {
-  useFlagGrafanaLogDetailsDisplayedFieldControls,
-  useFlagGrafanaOtelLogDetails,
-} from '@grafana/runtime/internal';
+import { useFlagGrafanaOtelLogDetails } from '@grafana/runtime/internal';
 import { Box, ControlledCollapse, InlineField, InlineSwitch, Stack, useStyles2 } from '@grafana/ui';
 
 import { getLabelTypeFromRow } from '../../utils';
 import { createLogLineLinks } from '../logParser';
 import { useAttributesExtensionLinks } from '../useAttributesExtensionLinks';
 
-import { LogLineDetailsDisplayedFields } from './LogLineDetailsDisplayedFields';
 import { LogLineDetailsError } from './LogLineDetailsError';
 import { type LabelWithLinks, LogLineDetailsFields, LogLineDetailsLabelFields } from './LogLineDetailsFields';
 import { LogLineDetailsLinks } from './LogLineDetailsLinks';
@@ -88,14 +84,8 @@ const LogLineDetailsLegacyComponent = memo(
     timeRange,
     timeZone,
   }: LogLineDetailsComponentProps) => {
-    const {
-      displayedFields,
-      noInteractions,
-      logOptionsStorageKey,
-      setDisplayedFields,
-      syntaxHighlighting,
-      syntaxHighlightingUnavailable,
-    } = useLogListContext();
+    const { noInteractions, logOptionsStorageKey, syntaxHighlighting, syntaxHighlightingUnavailable } =
+      useLogListContext();
 
     const [ds, setDs] = useState<DataSourceApi | null | undefined>(undefined);
     // Collapse the log line by default if heavy logs are present
@@ -174,9 +164,6 @@ const LogLineDetailsLegacyComponent = memo(
     const fieldsOpen = logOptionsStorageKey
       ? store.getBool(`${logOptionsStorageKey}.log-details.fieldsOpen`, true)
       : true;
-    const displayedFieldsOpen = logOptionsStorageKey
-      ? store.getBool(`${logOptionsStorageKey}.log-details.displayedFieldsOpen`, false)
-      : false;
     const traceOpen = logOptionsStorageKey
       ? store.getBool(`${logOptionsStorageKey}.log-details.traceOpen`, false)
       : false;
@@ -229,8 +216,6 @@ const LogLineDetailsLegacyComponent = memo(
         .catch(() => setDs(null));
     }, [log.datasourceUid]);
 
-    const displayedFieldsControlEnabled = useFlagGrafanaLogDetailsDisplayedFieldControls();
-
     // Wait for ds to be resolved to DataSourceApi or null on error
     if (ds === undefined) {
       return null;
@@ -273,15 +258,6 @@ const LogLineDetailsLegacyComponent = memo(
           otelLanguage={log.otelLanguage}
         />
 
-        {displayedFieldsControlEnabled && displayedFields.length > 0 && setDisplayedFields && (
-          <ControlledCollapse
-            label={t('logs.log-line-details.displayed-fields-section', 'Organize displayed fields')}
-            isOpen={displayedFieldsOpen}
-            onToggle={(isOpen: boolean) => handleToggle('displayedFieldsOpen', isOpen)}
-          >
-            <LogLineDetailsDisplayedFields />
-          </ControlledCollapse>
-        )}
         {allLinks.length > 0 && (
           <ControlledCollapse
             className={styles.collapsable}
