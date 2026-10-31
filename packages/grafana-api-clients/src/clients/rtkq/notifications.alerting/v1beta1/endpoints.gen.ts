@@ -1925,6 +1925,12 @@ export type ConfigStatus = {
     /** datasourceUid is the UID actually used on the last sync attempt; may lag
         spec until the next tick. When origin=ini, this is the ini override value. */
     datasourceUid?: string;
+    /** identifier is the name the synced configuration is imported under, and so
+        the name of the policy tree it becomes. Chosen once from the datasource
+        name on the first sync for datasourceUid and kept from then on, so
+        renaming the datasource does not rename the tree. Empty for syncs that
+        started before this field existed; those use datasourceUid instead. */
+    identifier?: string;
     /** origin records which source supplied datasourceUid on the last run. "ini"
         (grafana.ini's unified_alerting.external_alertmanager_uid) wins over "api"
         (spec.externalAlertmanagerSync.datasourceUid). */

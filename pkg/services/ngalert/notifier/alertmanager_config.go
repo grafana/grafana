@@ -355,21 +355,23 @@ func (moa *MultiOrgAlertmanager) setExtraConfigOrigin(ctx context.Context, orgID
 		return
 	}
 
-	var syncUID string
-	// Same flag gate as FetchExtraConfig: a stale UID match must not read as auto-sync once sync is off.
+	var syncIdentifier string
+	// Same flag gate as FetchExtraConfig: a stale identifier match must not read as auto-sync once sync is off.
 	client := openfeature.NewDefaultClient()
 	syncEnabled := client.Boolean(ctx, featuremgmt.FlagAlertingSyncExternalAlertmanager, false, openfeature.TransactionContext(ctx))
 	if syncEnabled && moa.externalAMSyncer != nil { // nil in tests that bypass NewMultiOrgAlertmanager
-		uid, _, err := moa.externalAMSyncer.resolveExternalAMUIDForOrg(ctx, orgID)
+		target, err := moa.externalAMSyncer.resolveSyncTarget(ctx, orgID)
 		if err != nil {
 			// Degrade to "manual" rather than fail a config read that worked before this field existed.
-			moa.logger.Warn("Failed to resolve external AM sync UID while computing staged config origin", "err", err, "org_id", orgID)
+			moa.logger.Warn("Failed to resolve external AM sync identifier while computing staged config origin", "err", err, "org_id", orgID)
 		}
-		syncUID = uid
+		if target.uid != "" {
+			syncIdentifier = target.identifierOrUID()
+		}
 	}
 
 	for i := range extraConfigs {
-		if syncUID != "" && extraConfigs[i].Identifier == syncUID {
+		if syncIdentifier != "" && extraConfigs[i].Identifier == syncIdentifier {
 			extraConfigs[i].ManagedBy = "auto-sync"
 		} else {
 			extraConfigs[i].ManagedBy = "manual"
