@@ -522,6 +522,7 @@
         "save": "Guardar"
       },
       "error-title": "Falha ao guardar a regra de alerta",
+      "form-errors": "",
       "no-group-success": "Regra adicionada com sucesso"
     },
     "alert-rule-name-and-metric": {
@@ -530,8 +531,8 @@
       "label-metric": "Métrica",
       "label-name": "Nome",
       "message": {
-        "must-enter-a-metric-name": "Tem de introduzir um nome de métrica",
-        "must-enter-a-name": "Tem de introduzir um nome",
+        "metric-name-required": "",
+        "name-required": "",
         "please-select-a-data-source": "Selecione uma origem de dados"
       },
       "metric-aria-label-metric": "métrica",
@@ -586,6 +587,7 @@
     },
     "alertmanager-config": {
       "confirmText-yes-reset-configuration": "Sim, redefinir configuração",
+      "editor-label": "",
       "gma-manual-configuration-description": "A configuração interna do Grafana Alertmanager não pode ser alterada manualmente. Para alterar esta configuração, edite os recursos individuais através da interface do utilizador.",
       "gma-manual-configuration-is-not-supported": "Alterações da configuração manual não suportadas",
       "message": {
@@ -1097,6 +1099,7 @@
         "body": "Tem a certeza de que pretende restaurar esta definição de regra de alerta eliminada?",
         "confirm": "Sim, restaurar regra eliminada",
         "error": "Não foi possível restaurar a regra de alerta eliminada",
+        "preview-aria-label": "",
         "title": "Restaurar regra de alerta eliminada"
       },
       "table": {
@@ -1314,7 +1317,7 @@
     "folder-selector": {
       "description-select-folder": "Selecione uma pasta para armazenar a sua regra.",
       "message": {
-        "select-a-folder": "Selecionar uma pasta"
+        "folder-required": ""
       }
     },
     "folderAndGroup": {
@@ -1568,11 +1571,10 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "A carregar grupos...",
       "message": {
-        "must-be-a-positive-integer": "Deve ser um número inteiro positivo.",
-        "must-enter-a-group-name": "Deve inserir um nome de grupo"
+        "evaluation-group-required": "",
+        "must-be-a-positive-integer": "Deve ser um número inteiro positivo."
       },
       "missing-series-resolve-placeholder": "Predefinição: 2",
-      "or": "ou",
       "placeholder-select-an-evaluation-group": "Selecione um grupo de avaliação...",
       "text-configure-no-data-and-error-handling": "Configurar tratamento de erros e ausência de dados",
       "title-set-evaluation-behavior": "Definir comportamento de avaliação"
@@ -1866,6 +1868,7 @@
         "will-import-rules-count_one": "Importará {{count}} regras",
         "will-import-rules-count_other": "Importará {{count}} regras"
       },
+      "rules-preview": "",
       "source": {
         "datasource": "Regras geridas por origem de dados existentes",
         "datasource-description": "Importar regras de origens de dados existentes",
@@ -2998,7 +3001,7 @@
           "alerting": "Ativar para colocar em pausa a avaliação desta regra de alerta.",
           "recording": "Ativar para colocar em pausa a avaliação desta regra de gravação."
         },
-        "select-folder-before": "Selecionar uma pasta antes de definir o grupo de avaliação e o intervalo",
+        "select-folder-first-tooltip": "",
         "ungroup-warning": "Esta ação é irreversível. Depois de guardar, não poderá adicioná-lo novamente a um grupo.",
         "ungroup-warning-title": "Isto removerá a regra de alerta do seu grupo"
       },
@@ -3672,6 +3675,9 @@
       "switch-to-data-source-managed": "A origem de dados selecionada na sua consulta suporta a gestão de regras de alerta. Mude para gerido pela origem de dados se pretender que a regra de alerta seja gerida pela origem de dados em vez de ser gerida pela Grafana.",
       "switch-to-grafana-managed": "Mude para gerido pela Grafana para utilizar expressões, várias consultas, imagens em notificações e vários outros recursos.",
       "title-alert-rule-types": "Tipos de regras de alerta"
+    },
+    "sql-query-preview": {
+      "aria-label": ""
     },
     "state-history": {
       "columns": {
@@ -11516,13 +11522,8 @@
       "severity-low": "Baixo",
       "severity-minor": "Menor",
       "severity-unknown": "Desconhecido",
-      "title": "Alertas de ativação",
       "view-all": "Ver todos os alertas de ativação",
-      "view-rules": "Ver todas as regras de alerta",
-      "critical-count_one": "{{count}} crítico",
-      "critical-count_other": "{{count}} críticos",
-      "high-count_one": "{{count}} elevado",
-      "high-count_other": "{{count}} elevados"
+      "view-rules": "Ver todas as regras de alerta"
     },
     "header-actions": {
       "active-incidents": "Incidentes ativos",
@@ -11548,21 +11549,13 @@
       "empty": "",
       "empty-selected-team": "",
       "error-title": "Não foi possível carregar os incidentes ativos",
-      "title": "Incidentes ativos",
       "view-all": "Ver todos os incidentes"
     },
     "learn-more": "Saiba mais",
     "most-used-dashboards-tab": {
       "empty": "Os painéis de controlo mais utilizados aparecerão aqui.",
-      "empty-description": "Assim que a sua organização tiver painéis de controlo e os dados de utilização tiverem sido recolhidos, os painéis de controlo com mais visualizações nos últimos 30 dias serão apresentados aqui.",
       "error-title": "Não foi possível carregar os painéis de controlo mais utilizados",
       "loading": "A carregar os painéis de controlo mais utilizados..."
-    },
-    "news-card": {
-      "empty": "Não há publicações recentes no blogue.",
-      "error-title": "Não foi possível carregar as publicações recentes no blogue",
-      "read-more": "Leia mais no blogue da Grafana Labs",
-      "title": "Novidades do blogue"
     },
     "on-call-card": {
       "current-shift": "",
@@ -11917,7 +11910,6 @@
     },
     "starred-dashboards-tab": {
       "empty": "Os seus painéis de controlo favoritos aparecerão aqui.",
-      "empty-description": "Pode marcar com uma estrela os seus painéis de controlo favoritos clicando em <1></1> na página do painel de controlo.",
       "error-title": "Não foi possível carregar os painéis de controlo com estrela",
       "loading": "A carregar os painéis de controlo com estrela..."
     },
@@ -13730,6 +13722,7 @@
       "add-title": "",
       "change-visualization": "",
       "edit-query": "",
+      "edit-with-assistant": "",
       "hide-query": "",
       "open-explore": "",
       "rename": "",
@@ -15788,20 +15781,8 @@
     "explain-or-modify": "Explicar ou modificar",
     "explain-query": "",
     "explaining": "",
-    "feedback-cancel": "Cancelar",
-    "feedback-description": "O seu feedback ajuda a melhorar a experiência de consulta na Grafana.",
-    "feedback-error": "Não foi possível enviar o feedback. Tente novamente.",
     "feedback-helpful": "Útil",
-    "feedback-label": "Partilhar feedback",
-    "feedback-negative-placeholder": "Descreva o que não correu bem e o que esperava em vez disso.",
-    "feedback-negative-title": "O que correu mal?",
     "feedback-not-helpful": "Não foi útil",
-    "feedback-positive-placeholder": "Do que gostou? Como poderia ter sido ainda melhor?",
-    "feedback-positive-title": "O que correu bem?",
-    "feedback-privacy": "",
-    "feedback-recipient": "O seu feedback será enviado para as equipas que trabalham na consulta.",
-    "feedback-send": "Enviar",
-    "feedback-sending": "A enviar…",
     "focus": "",
     "follow-up-label": "",
     "follow-up-placeholder": "",
@@ -17008,6 +16989,8 @@
       "failures-description": "",
       "filter-placeholder": "",
       "filtered": "",
+      "internal": "",
+      "internal-description": "",
       "last-failed": "",
       "load-failures": "",
       "never": "",

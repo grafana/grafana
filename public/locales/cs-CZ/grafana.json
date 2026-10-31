@@ -532,6 +532,7 @@
         "save": "Uložit"
       },
       "error-title": "Pravidlo výstrahy se nepodařilo uložit",
+      "form-errors": "",
       "no-group-success": "Pravidlo bylo úspěšně přidáno"
     },
     "alert-rule-name-and-metric": {
@@ -540,8 +541,8 @@
       "label-metric": "Metrika",
       "label-name": "Název",
       "message": {
-        "must-enter-a-metric-name": "Musíte zadat název metriky",
-        "must-enter-a-name": "Musíte zadat název",
+        "metric-name-required": "",
+        "name-required": "",
         "please-select-a-data-source": "Vyberte zdroj dat"
       },
       "metric-aria-label-metric": "metrika",
@@ -596,6 +597,7 @@
     },
     "alertmanager-config": {
       "confirmText-yes-reset-configuration": "Ano, obnovit konfiguraci",
+      "editor-label": "",
       "gma-manual-configuration-description": "Interní konfiguraci správce výstrah Grafana nelze ručně změnit. Chcete-li změnit tuto konfiguraci, upravte jednotlivé zdroje přes uživatelské rozhraní.",
       "gma-manual-configuration-is-not-supported": "Ruční změny konfigurace nejsou podporovány",
       "message": {
@@ -1111,6 +1113,7 @@
         "body": "Opravdu chcete obnovit tuto definici odstraněného pravidla výstrahy?",
         "confirm": "Ano, obnovit odstraněné pravidlo",
         "error": "Odstraněné pravidlo výstrahy nelze obnovit",
+        "preview-aria-label": "",
         "title": "Obnovit odstraněné pravidlo výstrahy"
       },
       "table": {
@@ -1328,7 +1331,7 @@
     "folder-selector": {
       "description-select-folder": "Vyberte složku, do které chcete uložit pravidlo.",
       "message": {
-        "select-a-folder": "Vyberte složku"
+        "folder-required": ""
       }
     },
     "folderAndGroup": {
@@ -1588,11 +1591,10 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "Načítání skupin…",
       "message": {
-        "must-be-a-positive-integer": "Musí být kladné celé číslo.",
-        "must-enter-a-group-name": "Musíte zadat název skupiny"
+        "evaluation-group-required": "",
+        "must-be-a-positive-integer": "Musí být kladné celé číslo."
       },
       "missing-series-resolve-placeholder": "Výchozí: 2",
-      "or": "nebo",
       "placeholder-select-an-evaluation-group": "Vyberte hodnotící skupinu…",
       "text-configure-no-data-and-error-handling": "Konfigurovat žádná data a zpracování chyb",
       "title-set-evaluation-behavior": "Nastavit chování hodnocení"
@@ -1888,6 +1890,7 @@
         "will-import-rules-count_many": "Importuje {{count}} pravidel",
         "will-import-rules-count_other": "Importuje {{count}} pravidel"
       },
+      "rules-preview": "",
       "source": {
         "datasource": "Stávající pravidla spravovaná zdrojem dat",
         "datasource-description": "Importovat pravidla ze stávajících zdrojů dat",
@@ -3046,7 +3049,7 @@
           "alerting": "Zapnutím pozastavíte hodnocení tohoto pravidla výstrahy.",
           "recording": "Zapnutím pozastavíte hodnocení tohoto pravidla záznamu."
         },
-        "select-folder-before": "Před nastavením hodnotící skupiny a intervalu vyberte složku",
+        "select-folder-first-tooltip": "",
         "ungroup-warning": "Tento krok je nevratný. Po uložení ji nebudete moci přidat zpět do skupiny.",
         "ungroup-warning-title": "Tímto odeberete pravidlo výstrahy z její skupiny"
       },
@@ -3744,6 +3747,9 @@
       "switch-to-data-source-managed": "Zdroj dat vybraný ve vašem dotazu podporuje správu pravidel výstrah. Přepněte na spravovaný zdroj dat, pokud chcete, aby pravidlo výstrahy bylo spravováno zdrojem dat místo Grafany.",
       "switch-to-grafana-managed": "Chcete-li používat výrazy, více dotazů, obrázky v oznámeních a různé další funkce, přepněte na Grafanu.",
       "title-alert-rule-types": "Typy pravidel výstrahy"
+    },
+    "sql-query-preview": {
+      "aria-label": ""
     },
     "state-history": {
       "columns": {
@@ -11680,17 +11686,8 @@
       "severity-low": "Nízká",
       "severity-minor": "Malá",
       "severity-unknown": "Neznámé",
-      "title": "Aktivní výstrahy",
       "view-all": "Zobrazit všechny spuštěné výstrahy",
-      "view-rules": "Zobrazit všechna pravidla výstrah",
-      "critical-count_one": "{{count}} kritické",
-      "critical-count_few": "{{count}} kritické",
-      "critical-count_many": "{{count}} kritické",
-      "critical-count_other": "{{count}} kritické",
-      "high-count_one": "{{count}} vysoká",
-      "high-count_few": "{{count}} vysoká",
-      "high-count_many": "{{count}} vysoká",
-      "high-count_other": "{{count}} vysoká"
+      "view-rules": "Zobrazit všechna pravidla výstrah"
     },
     "header-actions": {
       "active-incidents": "Aktivní incidenty",
@@ -11716,21 +11713,13 @@
       "empty": "",
       "empty-selected-team": "",
       "error-title": "Nelze načíst aktivní incidenty",
-      "title": "Aktivní incidenty",
       "view-all": "Zobrazit všechny incidenty"
     },
     "learn-more": "Další informace",
     "most-used-dashboards-tab": {
       "empty": "Nejpoužívanější nástěnky se zobrazí tady.",
-      "empty-description": "Jakmile bude mít vaše organizace nástěnky a budou shromážděna data o používání, zobrazí se tady nástěnky s největším počtem zobrazení za posledních 30 dní.",
       "error-title": "Nelze načíst nejpoužívanější nástěnky",
       "loading": "Načítání nejpoužívanějších nástěnek…"
-    },
-    "news-card": {
-      "empty": "Žádné nedávné příspěvky na blogu.",
-      "error-title": "Nelze načíst nedávné příspěvky na blogu",
-      "read-more": "Zjistěte víc z blogu Grafana Labs",
-      "title": "Novinky z blogu"
     },
     "on-call-card": {
       "current-shift": "",
@@ -12115,7 +12104,6 @@
     },
     "starred-dashboards-tab": {
       "empty": "Vaše nástěnky označené hvězdičkou se zobrazí tady.",
-      "empty-description": "Oblíbené nástěnky můžete označit hvězdičkou kliknutím na <1></1> na stránce nástěnky.",
       "error-title": "Nelze načíst nástěnky označené hvězdičkou",
       "loading": "Načítání nástěnek označených hvězdičkou…"
     },
@@ -13954,6 +13942,7 @@
       "add-title": "",
       "change-visualization": "",
       "edit-query": "",
+      "edit-with-assistant": "",
       "hide-query": "",
       "open-explore": "",
       "rename": "",
@@ -16050,20 +16039,8 @@
     "explain-or-modify": "Vysvětlit nebo upravit",
     "explain-query": "",
     "explaining": "",
-    "feedback-cancel": "Zrušit",
-    "feedback-description": "Vaše zpětná vazba pomáhá zlepšit zážitek z dotazů v Grafaně.",
-    "feedback-error": "Zpětnou vazbu se nepodařilo odeslat. Zkuste to znovu.",
     "feedback-helpful": "Užitečné",
-    "feedback-label": "Sdílet zpětnou vazbu",
-    "feedback-negative-placeholder": "Popište, co se nepovedlo a co jste místo toho očekávali.",
-    "feedback-negative-title": "Co bylo špatně?",
     "feedback-not-helpful": "Neužitečné",
-    "feedback-positive-placeholder": "Co se vám líbilo? Jak to mohlo být ještě lepší?",
-    "feedback-positive-title": "Co bylo dobře?",
-    "feedback-privacy": "",
-    "feedback-recipient": "Vaše zpětná vazba bude odeslána týmům, které pracují na dotazech.",
-    "feedback-send": "Odeslat",
-    "feedback-sending": "Odesílání…",
     "focus": "",
     "follow-up-label": "",
     "follow-up-placeholder": "",
@@ -17292,6 +17269,8 @@
       "failures-description": "",
       "filter-placeholder": "",
       "filtered": "",
+      "internal": "",
+      "internal-description": "",
       "last-failed": "",
       "load-failures": "",
       "never": "",
