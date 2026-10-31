@@ -117,7 +117,7 @@ type kvStorageBackend struct {
 
 	watchOpts WatchOptions
 
-	// leaseManager serializes writes to the same resource via per-resource leases.
+	// leaseManager serializes writes per resource and bulk imports per collection.
 	leaseManager *lease.Manager
 
 	// leaseTTL is the TTL applied when acquiring a write lease. Zero uses the
@@ -1034,25 +1034,60 @@ func conflictError(event WriteEvent, message string) error {
 	)
 }
 
-// acquireWriteLease acquires the per-resource lease that serializes WriteEvent
-// for this resource. It returns:
-//
-//   - a context derived from ctx that is cancelled if the lease is lost
-//     (e.g. its TTL expires while the write is in flight);
-//   - a release closure to be deferred — it stops the watcher goroutine and
-//     releases the lease.
-func (k *kvStorageBackend) acquireWriteLease(ctx context.Context, event WriteEvent) (context.Context, func(), error) {
-	name := event.Key.Group + "/" + event.Key.Resource + "/" +
-		event.Key.Namespace + "/" + event.Key.Name
-	if event.Key.Namespace == "" {
-		name = event.Key.Group + "/" + event.Key.Resource + "/" + event.Key.Name
+// acquireStorageLeases cancels the returned context if any lease is lost.
+// Partial acquisitions are released on failure; callers must defer release on success.
+func (k *kvStorageBackend) acquireStorageLeases(ctx context.Context, names []string, opts ...lease.AcquireOption) (context.Context, func(), error) {
+	leaseCtx, cancel := context.WithCancel(ctx)
+	leases := make([]*lease.Lease, 0, len(names))
+	var watchers sync.WaitGroup
+	release := func() {
+		cancel()
+		watchers.Wait()
+		// Cancellation must not prevent cleanup, especially for auto-renewed leases.
+		releaseCtx, releaseCancel := context.WithTimeout(context.WithoutCancel(ctx), persistDeadline)
+		defer releaseCancel()
+		for i := len(leases) - 1; i >= 0; i-- {
+			if err := k.leaseManager.Release(releaseCtx, leases[i]); err != nil {
+				k.log.Warn("failed to release storage lease", "name", names[i], "error", err)
+			}
+		}
 	}
 
-	var acquireOpts []lease.AcquireOption
-	if k.leaseTTL > 0 {
-		acquireOpts = append(acquireOpts, lease.WithTTL(k.leaseTTL))
+	for _, name := range names {
+		l, err := k.leaseManager.Acquire(leaseCtx, name, opts...)
+		if err != nil {
+			release()
+			return nil, nil, fmt.Errorf("acquiring lease %q: %w", name, err)
+		}
+		leases = append(leases, l)
+		watchers.Add(1)
+		go func() {
+			defer watchers.Done()
+			select {
+			case <-l.Lost():
+				cancel()
+			case <-leaseCtx.Done():
+			}
+		}()
 	}
-	l, err := k.leaseManager.Acquire(ctx, name, acquireOpts...)
+
+	return leaseCtx, release, nil
+}
+
+func (k *kvStorageBackend) acquireWriteLease(ctx context.Context, event WriteEvent) (context.Context, func(), error) {
+	key := event.Key
+	name := key.Group + "/" + key.Resource + "/" + key.Namespace + "/" + key.Name
+	legacyName := name
+	if key.Namespace == "" {
+		legacyName = key.Group + "/" + key.Resource + "/" + key.Name
+	}
+
+	var opts []lease.AcquireOption
+	if k.leaseTTL > 0 {
+		opts = append(opts, lease.WithTTL(k.leaseTTL))
+	}
+	// Keep the legacy lease until all deployed writers acquire the prefixed lease.
+	leaseCtx, release, err := k.acquireStorageLeases(ctx, []string{legacyName, "write/" + name}, opts...)
 	if err != nil {
 		if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
 			k.metrics.recordConflict(event)
@@ -1060,28 +1095,24 @@ func (k *kvStorageBackend) acquireWriteLease(ctx context.Context, event WriteEve
 		}
 		return nil, nil, fmt.Errorf("acquiring write lease: %w", err)
 	}
-
-	leaseCtx, cancel := context.WithCancel(ctx)
-	watcherDone := make(chan struct{})
-	go func() {
-		defer close(watcherDone)
-		select {
-		case <-l.Lost():
-			cancel()
-		case <-leaseCtx.Done():
-		}
-	}()
-
-	release := func() {
-		cancel()
-		<-watcherDone
-		if rerr := k.leaseManager.Release(ctx, l); rerr != nil {
-			k.log.Warn("failed to release write lease",
-				"name", name, "error", rerr)
-		}
-	}
-
 	return leaseCtx, release, nil
+}
+
+func (k *kvStorageBackend) acquireBulkLeases(ctx context.Context, collection []*resourcepb.ResourceKey) (context.Context, func(), error) {
+	names := make([]string, 0, len(collection))
+	for _, key := range collection {
+		names = append(names, "bulk/"+key.Group+"/"+key.Resource+"/"+key.Namespace)
+	}
+	slices.Sort(names)
+	names = slices.Compact(names)
+	leaseCtx, release, err := k.acquireStorageLeases(ctx, names, lease.WithAutoRenew())
+	if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
+		return nil, nil, &apierrors.StatusError{ErrStatus: metav1.Status{
+			Code:    http.StatusPreconditionFailed,
+			Message: "bulk import is already running",
+		}}
+	}
+	return leaseCtx, release, err
 }
 
 func recordSpanError(span trace.Span, err error) {
@@ -2908,8 +2939,8 @@ type singleBulkRequestBatchIterator struct {
 	batch []*resourcepb.BulkRequest
 }
 
-func (s *singleBulkRequestBatchIterator) NextBatch() bool {
-	if !s.iter.Next() {
+func (s *singleBulkRequestBatchIterator) NextBatch(ctx context.Context) bool {
+	if ctx.Err() != nil || !s.iter.Next() {
 		return false
 	}
 
@@ -2936,13 +2967,14 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ProcessBulk")
 	defer span.End()
 
+	usingExternalTx := false
 	if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
 		if externalTx := TransactionFromContext(clientCtx); externalTx != nil {
 			ctx = kv.ContextWithDBTX(ctx, externalTx)
+			usingExternalTx = true
 		}
 	}
 
-	// TODO cross-node lock
 	err := b.bulkLock.Start(setting.Collection)
 	if err != nil {
 		return &resourcepb.BulkResponse{
@@ -2950,6 +2982,17 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		}
 	}
 	defer b.bulkLock.Finish(setting.Collection)
+
+	// SQLite migrations already serialize writers with their external transaction.
+	// A separate lease transaction would contend with that write lock and cannot renew.
+	if !usingExternalTx {
+		leaseCtx, releaseLeases, err := b.acquireBulkLeases(ctx, setting.Collection)
+		if err != nil {
+			return &resourcepb.BulkResponse{Error: AsErrorResult(err)}
+		}
+		defer releaseLeases()
+		ctx = leaseCtx
+	}
 
 	bulkRvGenerator := newBulkRV()
 	summaries := make(map[string]*resourcepb.BulkResponse_Summary, len(setting.Collection))
@@ -3053,7 +3096,12 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		batchIter = &singleBulkRequestBatchIterator{iter: iter}
 	}
 
-	for batchIter.NextBatch() {
+	for batchIter.NextBatch(ctx) {
+		if err := ctx.Err(); err != nil {
+			rollback()
+			rsp.Error = AsErrorResult(err)
+			return rsp
+		}
 		if batchIter.RollbackRequested() {
 			rollback()
 			break
@@ -3175,6 +3223,12 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		for _, item := range batchItems {
 			recordSavedItem(item)
 		}
+	}
+
+	if err := ctx.Err(); err != nil {
+		rollback()
+		rsp.Error = AsErrorResult(err)
+		return rsp
 	}
 
 	if rsp.Error == nil {

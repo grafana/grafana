@@ -1,6 +1,7 @@
 package sql
 
 import (
+	"context"
 	"math/rand"
 	"testing"
 	"time"
@@ -261,7 +262,10 @@ type fakeBatchIterator struct {
 	idx      int
 }
 
-func (f *fakeBatchIterator) NextBatch() bool {
+func (f *fakeBatchIterator) NextBatch(ctx context.Context) bool {
+	if ctx.Err() != nil {
+		return false
+	}
 	f.idx++
 	return f.idx <= len(f.batches)
 }
@@ -279,8 +283,21 @@ func (f *fakeBatchIterator) RollbackRequested() bool {
 
 // Next and Request satisfy BulkRequestIterator so the value can be passed to
 // processBulkChunked, which type-asserts it back to BulkRequestBatchIterator.
-func (f *fakeBatchIterator) Next() bool                       { return f.NextBatch() }
+func (f *fakeBatchIterator) Next() bool {
+	return f.NextBatch(context.Background())
+}
 func (f *fakeBatchIterator) Request() *resourcepb.BulkRequest { return nil }
+
+func TestSingleRequestBatchIteratorCancellation(t *testing.T) {
+	req := newSQLBulkRequest("item-1", resourcepb.BulkRequest_ADDED, nil)
+	batchIter := &singleRequestBatchIterator{iter: unitest.ToBulkIterator([]*resourcepb.BulkRequest{req})}
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	require.False(t, batchIter.NextBatch(ctx))
+	require.True(t, batchIter.NextBatch(t.Context()))
+	require.Equal(t, []*resourcepb.BulkRequest{req}, batchIter.Batch())
+}
 
 func TestProcessBulkChunkedRollbackRequested(t *testing.T) {
 	b, ctx := setupBackendTest(t)

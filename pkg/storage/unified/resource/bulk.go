@@ -55,13 +55,14 @@ type BulkRequestIterator interface {
 }
 
 type BulkRequestBatchIterator interface {
-	// NextBatch advances the iterator to the next batch if one exists.
-	NextBatch() bool
+	// NextBatch advances to the next batch, returning false at EOF or on
+	// cancellation. Callers must check ctx.Err() after iteration stops.
+	NextBatch(ctx context.Context) bool
 
-	// Batch returns the current batch. Only valid after NextBatch() returns true.
+	// Batch returns the current batch. Only valid after NextBatch returns true.
 	Batch() []*resourcepb.BulkRequest
 
-	// RollbackRequested returns true if there was an error advancing the iterator. Checked after NextBatch() returns true.
+	// RollbackRequested returns true if there was an error advancing the iterator. Checked after NextBatch returns true.
 	RollbackRequested() bool
 }
 
@@ -312,7 +313,7 @@ func (b *batchRunner) Next() bool {
 		return true
 	}
 
-	if !b.NextBatch() {
+	if !b.NextBatch(b.stream.Context()) {
 		return false
 	}
 	if b.rollback {
@@ -330,7 +331,10 @@ func (b *batchRunner) Next() bool {
 	return true
 }
 
-func (b *batchRunner) NextBatch() bool {
+func (b *batchRunner) NextBatch(ctx context.Context) bool {
+	if ctx.Err() != nil {
+		return false
+	}
 	if b.rollback {
 		return true
 	}
@@ -353,7 +357,7 @@ func (b *batchRunner) NextBatch() bool {
 		return false
 	}
 
-	result := b.readNextResult()
+	result := b.readNextResult(ctx)
 	switch {
 	case result.eof:
 		return false
@@ -407,6 +411,8 @@ func (b *batchRunner) NextBatch() bool {
 			}
 		case <-timerC:
 			return true
+		case <-ctx.Done():
+			return false
 		}
 	}
 }
@@ -443,18 +449,22 @@ func (b *batchRunner) recvChannel() <-chan batchStreamResult {
 	return b.recvCh
 }
 
-func (b *batchRunner) readNextResult() batchStreamResult {
+func (b *batchRunner) readNextResult(ctx context.Context) batchStreamResult {
 	if b.pending != nil {
 		result := *b.pending
 		b.pending = nil
 		return result
 	}
 
-	result, ok := <-b.recvChannel()
-	if !ok {
-		return batchStreamResult{eof: true}
+	select {
+	case result, ok := <-b.recvChannel():
+		if !ok {
+			return batchStreamResult{eof: true}
+		}
+		return result
+	case <-ctx.Done():
+		return batchStreamResult{err: ctx.Err(), rollback: true}
 	}
-	return result
 }
 
 func (b *batchRunner) recvLoop() {
