@@ -2570,6 +2570,119 @@ func TestRepositoryController_process_ServerUnavailableBuildFailure(t *testing.T
 	}
 }
 
+func TestRepositoryController_RetriesAfterPersistedFailure(t *testing.T) {
+	for _, tt := range []struct {
+		name          string
+		failureErr    error
+		failures      int
+		wantAttempts  int
+		wantHealthy   bool
+		defaultBranch bool
+	}{
+		{name: "build outage persists", failureErr: repository.ErrServerUnavailable, failures: maxAttempts, wantAttempts: maxAttempts},
+		{name: "secret decryption fails", failureErr: repository.ErrSecretDecryptFailed, failures: maxAttempts, wantAttempts: maxAttempts},
+		{name: "default branch outage persists", failureErr: repository.ErrServerUnavailable, wantAttempts: maxAttempts, defaultBranch: true},
+		{name: "recovery", failureErr: repository.ErrServerUnavailable, failures: 1, wantAttempts: 2, wantHealthy: true},
+		{name: "non-retryable failure", failureErr: errors.New("invalid configuration"), failures: 1, wantAttempts: 1},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			obj := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default", Generation: 1},
+				Spec:       provisioning.RepositorySpec{Type: provisioning.GitLabRepositoryType},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Health: provisioning.HealthStatus{
+						Healthy: true,
+						Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
+					},
+				},
+			}
+			indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
+			require.NoError(t, indexer.Add(obj))
+			getter := informer.NewCachedRepositoryGetter(listers.NewRepositoryLister(indexer))
+			patcher := &capturePatcher{}
+			healthMetrics := NewMockHealthMetricsRecorder(t)
+			built := repository.NewMockRepository(t)
+			if tt.wantHealthy {
+				built.On("Config").Return(func() *provisioning.Repository { return obj })
+				built.On("Test", mock.Anything).Return(&provisioning.TestResults{Success: true}, nil).Once()
+				healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Once()
+			}
+			var branchRepo *git.MockGitRepository
+			if tt.defaultBranch {
+				branchRepo = git.NewMockGitRepository(t)
+				branchRepo.EXPECT().GetCurrentBranch().Return("").Times(tt.wantAttempts)
+				branchRepo.EXPECT().GetDefaultBranch(mock.Anything).Return("", tt.failureErr).Times(tt.wantAttempts)
+			}
+			attempts := 0
+			factory := repository.NewMockFactory(t)
+			factory.EXPECT().Build(mock.Anything, mock.Anything).RunAndReturn(func(context.Context, *provisioning.Repository) (repository.Repository, error) {
+				attempts++
+				if tt.defaultBranch {
+					return branchRepo, nil
+				}
+				if attempts <= tt.failures {
+					return nil, tt.failureErr
+				}
+				return built, nil
+			}).Times(tt.wantAttempts)
+			queue := workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[string]())
+			defer queue.ShutDown()
+			rc := &RepositoryController{
+				repos:         getter,
+				quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+				quotaChecker:  NewRepositoryQuotaChecker(getter),
+				healthChecker: NewRepositoryHealthChecker(patcher, repository.NewTester(), healthMetrics),
+				repoFactory:   factory,
+				statusPatcher: patcher,
+				queue:         queue,
+				logger:        logging.DefaultLogger,
+				tracer:        tracing.InitializeTracerForTest(),
+			}
+			rc.processFn = rc.process
+			key := "default/test-repo"
+			require.True(t, rc.healthChecker.ShouldCheckHealth(obj))
+			queue.Add(key)
+			require.True(t, rc.processNextWorkItem(t.Context()))
+			require.Equal(t, 1, attempts)
+
+			// Make the persisted failure visible before the retry, as an informer update would.
+			healthOp, found := patcher.findPatchOp("/status/health")
+			require.True(t, found)
+			conditionOp, found := patcher.findPatchOp("/status/conditions")
+			require.True(t, found)
+			obj = obj.DeepCopy()
+			obj.Status.Health = healthOp["value"].(provisioning.HealthStatus)
+			obj.Status.Conditions = conditionOp["value"].([]metav1.Condition)
+			require.NoError(t, indexer.Update(obj))
+			require.False(t, obj.Status.Health.Healthy)
+			require.Equal(t, obj.Generation, obj.Status.ObservedGeneration)
+			require.False(t, rc.healthChecker.ShouldCheckHealth(obj))
+
+			patcher.ops = nil
+			for attempt := 2; attempt <= tt.wantAttempts; attempt++ {
+				require.Equal(t, attempt-1, queue.NumRequeues(key))
+				require.True(t, rc.processNextWorkItem(t.Context()))
+				require.Equal(t, attempt, attempts, "a pending retry must reach Build despite the fresh failure timestamp")
+			}
+			assert.Zero(t, queue.NumRequeues(key), "success, exhaustion, and non-retryable failures must forget the key")
+			assert.Zero(t, queue.Len())
+			if tt.wantHealthy {
+				healthOp, found := patcher.findPatchOp("/status/health")
+				require.True(t, found)
+				assert.True(t, healthOp["value"].(provisioning.HealthStatus).Healthy)
+				conditionOp, found := patcher.findPatchOp("/status/conditions/0")
+				require.True(t, found)
+				assert.Equal(t, metav1.ConditionTrue, conditionOp["value"].(metav1.Condition).Status)
+			}
+
+			queue.Add(key)
+			require.True(t, rc.processNextWorkItem(t.Context()))
+			assert.Equal(t, tt.wantAttempts, attempts, "ordinary events must still respect the trigger gate")
+		})
+	}
+}
+
 func TestRepositoryController_process_DefaultBranchFailure(t *testing.T) {
 	wrappedErr := fmt.Errorf("get repository metadata: %w: %w", repository.ErrServerUnavailable, context.DeadlineExceeded)
 	serviceErr := apierrors.NewServiceUnavailable("service unavailable")

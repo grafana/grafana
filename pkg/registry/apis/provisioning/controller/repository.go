@@ -1167,6 +1167,10 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	case shouldRotateWebhookSecret:
 		reason = "webhook_secret_rotation"
 		logger.Info("webhook secret rotation due")
+	case rc.queue != nil && rc.queue.NumRequeues(key) > 0:
+		// Persisted failure status can make health fresh while a retry is still pending.
+		reason = "retry"
+		logger.Info("retrying after a transient failure")
 	default:
 		span.SetAttributes(attribute.String("reconcile.reason", "skipped"))
 		logger.Info("skipping as conditions are not met", "status", obj.Status, "generation", obj.Generation, "sync_spec", obj.Spec.Sync)
