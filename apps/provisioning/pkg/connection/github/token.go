@@ -35,11 +35,11 @@ func GenerateJWTToken(appID string, privateKey common.RawSecureValue) (common.Ra
 		return "", time.Time{}, fmt.Errorf("failed to parse private key: %w", err)
 	}
 
-	// Create the JWT token
-	now := time.Now()
+	// Create the JWT token, with iat set 60 seconds in the past to allow for clock drift as GitHub recommends
+	issuedAt := time.Now().Add(-time.Minute)
 	claims := jwt.RegisteredClaims{
-		IssuedAt:  jwt.NewNumericDate(now),
-		ExpiresAt: jwt.NewNumericDate(now.Add(time.Duration(JWTExpirationMinutes) * time.Minute)),
+		IssuedAt:  jwt.NewNumericDate(issuedAt),
+		ExpiresAt: jwt.NewNumericDate(issuedAt.Add(time.Duration(JWTExpirationMinutes) * time.Minute)),
 		Issuer:    appID,
 	}
 
