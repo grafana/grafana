@@ -148,10 +148,16 @@ describe('getEffectiveBackground', () => {
     outer.appendChild(middle);
     middle.appendChild(inner);
 
-    // Black is a colour, not transparency.
-    expect(getEffectiveBackground(inner)).toBe('rgb(0, 0, 0)');
-    middle.style.backgroundColor = 'rgb(9, 11, 15)';
-    expect(getEffectiveBackground(inner)).toBe('rgb(9, 11, 15)');
+    // Computed styles require a connected tree in Happy DOM, as in the captured page.
+    document.body.appendChild(outer);
+    try {
+      // Black is a colour, not transparency.
+      expect(getEffectiveBackground(inner)).toBe('rgb(0, 0, 0)');
+      middle.style.backgroundColor = 'rgb(9, 11, 15)';
+      expect(getEffectiveBackground(inner)).toBe('rgb(9, 11, 15)');
+    } finally {
+      outer.remove();
+    }
   });
 
   it('is undefined when nothing paints one', () => {

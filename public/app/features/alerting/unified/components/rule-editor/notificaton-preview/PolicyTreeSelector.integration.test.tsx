@@ -3,10 +3,13 @@ import { HttpResponse, http } from 'msw';
 import { type ReactNode } from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
+import { DataSourcePlugin } from '@grafana/data';
 import { config, setPluginLinksHook } from '@grafana/runtime';
+import { setDataSourcePluginImporter } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -95,12 +98,14 @@ const selectFolderAndGroup = async (user: UserEvent) => {
 const server = setupMswServer();
 
 beforeEach(() => {
+  setupDataSources(dataSources.default, dataSources.am);
+  // The rule editor loads query data sources, but these policy tests do not load plugin bundles.
+  setDataSourcePluginImporter(async () => new DataSourcePlugin(MockDataSourceApi));
   mockComboboxRect();
 
   mockPreviewApiResponse(server, []);
 });
 
-setupDataSources(dataSources.default, dataSources.am);
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 afterEach(() => {
