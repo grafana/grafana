@@ -208,7 +208,7 @@ describe('GrafanaReceiverForm', () => {
       );
 
       // Enter a value in the recipient field (required)
-      await user.type(ui.slack.recipient.get(), 'my-channel');
+      await pasteInto(user, ui.slack.recipient.get(), 'my-channel');
 
       // Webhook URL field should be initially enabled
       const webhookUrlField = ui.slack.webhookUrl.get();
@@ -216,7 +216,7 @@ describe('GrafanaReceiverForm', () => {
 
       // Enter a token value
       const tokenField = ui.slack.token.get();
-      await user.type(tokenField, 'xoxb-my-token');
+      await user.type(tokenField, 'xoxb-a');
 
       // Now the webhook URL field should be readonly
       expect(webhookUrlField).toHaveAttribute('readonly');
@@ -239,7 +239,7 @@ describe('GrafanaReceiverForm', () => {
 
       // Enter a webhook URL value
       const webhookUrlField = ui.slack.webhookUrl.get();
-      await user.type(webhookUrlField, 'https://hooks.slack.com/services/T123456/B123456/abcdef123456');
+      await user.type(webhookUrlField, 'https://a.co');
 
       // Now the token field should be readonly
       expect(tokenField).toHaveAttribute('readonly');
@@ -301,17 +301,19 @@ describe('GrafanaReceiverForm', () => {
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
       // Initially, the token field should be readonly
-      expect(ui.slack.token.get()).toHaveAttribute('readonly');
+      const tokenField = ui.slack.token.get();
+      expect(tokenField).toHaveAttribute('readonly');
 
       // Find and click the Reset button
       const resetButton = screen.getByRole('button', { name: 'Reset' });
       await user.click(resetButton);
 
       // After resetting the webhook URL, the token field should be editable
-      expect(ui.slack.token.get()).not.toHaveAttribute('readonly');
+      expect(tokenField).not.toHaveAttribute('readonly');
 
       // And we should be able to enter a token value
-      await user.type(ui.slack.token.get(), 'xoxb-new-token');
+      await user.type(tokenField, 'xoxb-a');
+      expect(tokenField).toHaveValue('xoxb-a');
     });
   });
 
@@ -546,9 +548,10 @@ describe('GrafanaReceiverForm', () => {
       // Deeply nested secure fields.
       const oauth2Container = await ui.webhook.httpConfig.oauth2.container.find();
       const clientSecretField = ui.webhook.httpConfig.oauth2.clientSecret.get(oauth2Container);
-      const oauthCaCertField = ui.webhook.httpConfig.oauth2.tls_config.caCertificate.get(oauth2Container);
-      const oauthClientCertField = ui.webhook.httpConfig.oauth2.tls_config.clientCert.get(oauth2Container);
-      const oauthClientKeyField = ui.webhook.httpConfig.oauth2.tls_config.clientKey.get(oauth2Container);
+      const oauthTlsContainer = ui.webhook.httpConfig.oauth2.tls_config.container.get(oauth2Container);
+      const oauthCaCertField = ui.webhook.httpConfig.oauth2.tls_config.caCertificate.get(oauthTlsContainer);
+      const oauthClientCertField = ui.webhook.httpConfig.oauth2.tls_config.clientCert.get(oauthTlsContainer);
+      const oauthClientKeyField = ui.webhook.httpConfig.oauth2.tls_config.clientKey.get(oauthTlsContainer);
       expect(clientSecretField).toHaveValue('configured');
       expect(oauthCaCertField).toHaveValue('configured');
       expect(oauthClientCertField).toHaveValue('configured');
@@ -717,8 +720,9 @@ describe('GrafanaReceiverForm', () => {
       await user.click(ui.testButton.get());
 
       // Wait for the modal and send the test notification
-      await waitFor(() => expect(ui.testModal.query()).toBeInTheDocument());
-      await user.click(ui.sendTestNotificationButton.get());
+      const modal = await ui.testModal.find();
+      expect(modal).toBeInTheDocument();
+      await user.click(ui.sendTestNotificationButton.get(modal));
 
       const [request] = await capturedRequests;
 
@@ -758,8 +762,9 @@ describe('GrafanaReceiverForm', () => {
       await user.click(ui.testButton.get());
 
       // Wait for the modal and send the test notification
-      await waitFor(() => expect(ui.testModal.query()).toBeInTheDocument());
-      await user.click(ui.sendTestNotificationButton.get());
+      const modal = await ui.testModal.find();
+      expect(modal).toBeInTheDocument();
+      await user.click(ui.sendTestNotificationButton.get(modal));
 
       const [request] = await capturedRequests;
 
@@ -788,10 +793,11 @@ describe('GrafanaReceiverForm', () => {
       await user.click(testButton);
 
       // Modal should open
-      expect(await screen.findByText(/test contact point/i)).toBeInTheDocument();
+      const modal = await ui.testModal.find();
+      expect(within(modal).getByText(/test contact point/i)).toBeInTheDocument();
 
       // Submit the test
-      const sendButton = screen.getByRole('button', { name: /send test notification/i });
+      const sendButton = ui.sendTestNotificationButton.get(modal);
       await user.click(sendButton);
 
       // Should show success
@@ -851,10 +857,11 @@ describe('GrafanaReceiverForm', () => {
       await user.click(ui.testButton.get());
 
       // Wait for the modal to open
-      await waitFor(() => expect(ui.testModal.query()).toBeInTheDocument());
+      const modal = await ui.testModal.find();
+      expect(modal).toBeInTheDocument();
 
       // Send the test notification
-      await user.click(ui.sendTestNotificationButton.get());
+      await user.click(ui.sendTestNotificationButton.get(modal));
 
       expect(await screen.findByText(/test notification sent successfully/i)).toBeInTheDocument();
       const [request] = await capturedRequests;
@@ -953,10 +960,11 @@ describe('GrafanaReceiverForm', () => {
 
         // Open the test modal
         await user.click(ui.testButton.get());
-        await waitFor(() => expect(ui.testModal.query()).toBeInTheDocument());
+        const modal = await ui.testModal.find();
+        expect(modal).toBeInTheDocument();
 
         // Button should be enabled before clicking
-        const sendButton = ui.sendTestNotificationButton.get();
+        const sendButton = ui.sendTestNotificationButton.get(modal);
         expect(sendButton).toBeEnabled();
 
         // Click to send test notification
@@ -1003,10 +1011,11 @@ describe('GrafanaReceiverForm', () => {
 
       // Open the test modal
       await user.click(ui.testButton.get());
-      await waitFor(() => expect(ui.testModal.query()).toBeInTheDocument());
+      const modal = await ui.testModal.find();
+      expect(modal).toBeInTheDocument();
 
       // Send the test notification
-      await user.click(ui.sendTestNotificationButton.get());
+      await user.click(ui.sendTestNotificationButton.get(modal));
 
       await waitFor(() => {
         expect(screen.getByText(/test notification failed/i)).toBeInTheDocument();
@@ -1036,10 +1045,11 @@ describe('GrafanaReceiverForm', () => {
 
       // Open the test modal
       await user.click(ui.testButton.get());
-      await waitFor(() => expect(ui.testModal.query()).toBeInTheDocument());
+      const modal = await ui.testModal.find();
+      expect(modal).toBeInTheDocument();
 
       // Send the test notification
-      await user.click(ui.sendTestNotificationButton.get());
+      await user.click(ui.sendTestNotificationButton.get(modal));
 
       // Should show the error alert
       await waitFor(() => {

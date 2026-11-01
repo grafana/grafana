@@ -1,6 +1,6 @@
 import { type AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
-import { type TemplateFormValues } from '../../components/receivers/TemplateForm';
+import { type TemplateFormValues } from '../../components/receivers/templateFormDefaults';
 
 import {
   addNotificationTemplateAction,

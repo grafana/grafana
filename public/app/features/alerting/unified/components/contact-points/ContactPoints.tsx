@@ -40,15 +40,12 @@ import { ContactPoint } from './ContactPoint';
 import { NotificationTemplates } from './NotificationTemplates';
 import { ContactPointsFilter } from './components/ContactPointsFilter';
 import { GlobalConfigAlert } from './components/GlobalConfigAlert';
+import { ActiveTab } from './constants';
 import { useContactPointsWithStatus } from './useContactPoints';
 import { useContactPointsSearch } from './useContactPointsSearch';
 import { ALL_CONTACT_POINTS, useExportContactPoint } from './useExportContactPoint';
 import { type ContactPointWithMetadata } from './utils';
 
-export enum ActiveTab {
-  ContactPoints = 'contact_points',
-  NotificationTemplates = 'templates',
-}
 
 const DEFAULT_PAGE_SIZE = 10;
 
