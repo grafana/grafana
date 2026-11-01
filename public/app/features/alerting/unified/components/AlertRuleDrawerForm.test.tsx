@@ -256,6 +256,7 @@ describe('AlertRuleDrawerForm', () => {
   // The createAlertRuleFromPanel toggle gates whether the drawer is shown at all,
   // which happens upstream in NewRuleFromPanelButton — not asserted here.
   describe('Submit routing by alerting.rulesAPIV2 toggle', () => {
+    // Prefill with required fields (folder and group are required for form submission)
     // Group is required by the legacy path's form validation, so include it.
     const submittablePrefill: Partial<RuleFormValues> = {
       name: 'Test Alert Rule',
@@ -284,13 +285,18 @@ describe('AlertRuleDrawerForm', () => {
         mockExecute.mockResolvedValue(mockResponse);
 
         const { user } = renderDrawer({ onClose, prefill: submittablePrefill });
+
+        // Click Create
         await user.click(screen.getByRole('button', { name: /Create/i }));
 
+        // Wait for the execute function to be called
         await waitFor(() => {
           expect(mockExecute).toHaveBeenCalled();
           expect(mockExecute).toHaveBeenCalledTimes(1);
         });
         expect(mockUpsertUngroupedGrafanaRule).not.toHaveBeenCalled();
+
+        // Drawer should close on success
         await waitFor(() => {
           expect(onClose).toHaveBeenCalled();
         });

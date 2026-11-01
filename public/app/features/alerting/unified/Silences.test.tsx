@@ -384,6 +384,9 @@ describe('Silence create/edit', () => {
     'populates the existing silence and includes its id when saving',
     async () => {
       const { user } = renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_EXISTING}/edit`);
+
+      // Await the first value to be populated, after which we can expect that all of the other
+      // existing fields have been filled out as well
       await waitFor(() => expect(ui.editor.matcherName.get()).toHaveValue('foo'));
       expect(ui.editor.matcherValue.get()).toHaveValue('bar');
       expect(ui.editor.comment.get()).toHaveValue('Happy path silence');

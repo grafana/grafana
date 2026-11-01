@@ -143,7 +143,8 @@ describe('Selector', () => {
       await applyScopes();
 
       await openSelector();
-      // The selected scope expands the tree; recent scopes only show at the root level.
+      // Tree expands to show selected scope, so recent scopes are not visible
+      // (recent scopes only show at root level with tree collapsed)
       expectRecentScopeNotPresentInDocument();
       expectRecentScopeNotPresent('Grafana Applications');
       await selectResultApplicationsMimir();

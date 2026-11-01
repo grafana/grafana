@@ -274,7 +274,7 @@ describe('RuleViewer', () => {
 
         const historyTable = within(await screen.findByRole('table'));
         const rows = await historyTable.findAllByRole('row');
-        expect(rows).toHaveLength(7);
+        expect(rows).toHaveLength(7); // 1 header + 6 data rows
         expect(rows[1]).toHaveTextContent(/6Provisioning2025-01-18 04:35:17/i);
         expect(rows[1]).toHaveTextContent('Updated by provisioning service');
         expect(rows[1]).toHaveTextContent('+4-3Latest');
@@ -295,6 +295,7 @@ describe('RuleViewer', () => {
 
         expect(rows[6]).toHaveTextContent(/1Unknown 2025-01-13 04:35:17/i);
 
+        // Check for special updated_by values - use getAllByRole since some text appears in multiple columns
         expect(within(rows[1]).getAllByRole('cell', { name: /provisioning/i }).length).toBeGreaterThan(0);
         expect(within(rows[2]).getByRole('cell', { name: /^alerting$/i })).toBeInTheDocument();
         expect(within(rows[6]).getByRole('cell', { name: /^Unknown$/i })).toBeInTheDocument();
@@ -417,6 +418,11 @@ describe('RuleViewer', () => {
       ]);
     });
 
+    /**
+     * The badge only appears once the Alertmanager query resolves, so checking for its absence
+     * straight after render could pass before the response is even delivered. Wait for the query
+     * to fulfill and render its result before checking that the badge is absent.
+     */
     const expectNoInhibitedBadge = async () => {
       const store = configureStore();
       const { rerender } = await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Query, store);

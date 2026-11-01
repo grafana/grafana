@@ -169,10 +169,15 @@ describe('PolicyTreeSelector', () => {
       await user.type(await ui.inputs.name.find(), 'my great new rule');
       await selectFolderAndGroup(user);
 
+      // Wait for the collapsed policy section
       expect(await policyTreeUi.defaultBadge.find()).toBeInTheDocument();
+
+      // Collapsed state: badge + change button, NO dropdown
       expect(policyTreeUi.changeButton.get()).toBeInTheDocument();
       expect(policyTreeUi.viewPoliciesLink.get()).toBeInTheDocument();
       expect(policyTreeUi.viewPoliciesLink.get()).toHaveAttribute('href', '/alerting/routes');
+
+      // Dropdown should NOT be visible in collapsed state
       expect(policyTreeUi.policySelector.query()).not.toBeInTheDocument();
 
       // Save without changing policy
@@ -197,18 +202,23 @@ describe('PolicyTreeSelector', () => {
       await user.type(await ui.inputs.name.find(), 'my great new rule');
       await selectFolderAndGroup(user);
 
-      // Wait for collapsed state and click "Change"
+      // Wait for collapsed state
       await waitFor(() => {
         expect(policyTreeUi.changeButton.get()).toBeEnabled();
       });
+
+      // Click "Change" to expand
       await user.click(policyTreeUi.changeButton.get());
 
-      // Wait for dropdown to appear
+      // Now the dropdown should be visible
       await waitFor(() => {
         expect(policyTreeUi.policySelector.get()).toBeInTheDocument();
       });
 
+      // Change button should be gone
       expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
+
+      // The dropdown should show "Default policy" as selected, not blank
       expect(screen.getByDisplayValue(/default policy/i)).toBeInTheDocument();
 
       // Open the policy dropdown
@@ -248,6 +258,7 @@ describe('PolicyTreeSelector', () => {
     it('collapses back to the default view when Default policy is selected again', async () => {
       const { user } = renderRuleEditor();
 
+      // Expand the dropdown
       // The button is present but disabled while the policy list loads.
       await waitFor(() => {
         expect(policyTreeUi.changeButton.get()).toBeEnabled();
@@ -394,6 +405,7 @@ describe('PolicyTreeSelector', () => {
         expect(policyTreeUi.defaultBadge.get()).toBeInTheDocument();
       });
 
+      // Should show collapsed default view
       expect(policyTreeUi.changeButton.get()).toBeInTheDocument();
 
       // Dropdown should NOT be visible
@@ -408,11 +420,14 @@ describe('PolicyTreeSelector', () => {
 
       const { user } = renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
 
-      // Loads expanded with the migrated policy selected.
+      // Wait for the form to load - dropdown should be directly visible (expanded) for custom policy
       await waitFor(() => {
         expect(policyTreeUi.policySelector.get()).toBeEnabled();
       });
+
+      // Should show the custom policy name as selected
       expect(screen.getByDisplayValue(CUSTOM_POLICY_NAME)).toBeInTheDocument();
+      // Change button should NOT be visible (we're in expanded state)
       expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
 
       // Go back to the default policy, then re-open the selector.

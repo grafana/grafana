@@ -157,6 +157,7 @@ describe('DataSourcePicker', () => {
     });
 
     it.each([mockDS1, mockDS2])('should display the current ds $name on top', async (current) => {
+      // Each mock data source is set as current, so it appears on top.
       getInstanceSettingsMock.mockReturnValue(current);
       await setupOpenDropdown(userEvent.setup(), { onChange: jest.fn(), current: current.name });
       const cards = await screen.findAllByTestId(/^data-testid data source card/);

@@ -838,10 +838,11 @@ describe('GrafanaReceiverForm', () => {
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
-      // Fill in the required fields
+      // Fill in the required name field
       const nameField = screen.getByRole('textbox', { name: /^name/i });
       await pasteInto(user, nameField, 'my-new-contact-point');
 
+      // Fill in the required email field
       const emailField = screen.getByRole('textbox', { name: /^Addresses/ });
       await user.clear(emailField);
       await pasteInto(user, emailField, 'test@example.com');
@@ -857,6 +858,9 @@ describe('GrafanaReceiverForm', () => {
 
       expect(await screen.findByText(/test notification sent successfully/i)).toBeInTheDocument();
       const [request] = await capturedRequests;
+
+      // For new receivers, the K8s API uses "-" as a placeholder UID in the URL
+      // This signals to the backend that permissions are checked against receivers:type:new scope
       expect(request.url).toContain('/receivers/-/test');
     });
 

@@ -646,6 +646,8 @@ describe('ImportToGMA wizard — preview redaction with schema-derived secrets',
 describe('ImportToGMA wizard — reveal/hide secrets toggle', () => {
   async function navigateToReview(user: ReturnType<typeof render>['user']) {
     await screen.findByRole('group', { name: /import notification resources/i });
+    // Notifications -> Rules (wait for the seeded dry-run to pass; re-query — the button node is
+    // replaced when its disabled-state tooltip wrapper is removed on enable).
     await waitFor(
       () =>
         expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
@@ -656,6 +658,7 @@ describe('ImportToGMA wizard — reveal/hide secrets toggle', () => {
     );
     await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
     await screen.findByRole('group', { name: /import alert rules/i });
+    // Skip Rules -> Review
     await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.skipButton));
     await screen.findByText(/review import/i);
   }
@@ -683,6 +686,7 @@ describe('ImportToGMA wizard — reveal/hide secrets toggle', () => {
     const { user } = render(<ImportWizardGate />);
 
     await navigateToReview(user);
+    // The review notifications card lists the uploaded template files by name.
     expect(await screen.findByText('email.tmpl, slack.tmpl')).toBeInTheDocument();
     await user.click(await screen.findByRole('button', { name: /preview configuration/i }));
 
