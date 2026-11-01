@@ -1,4 +1,5 @@
-import { render } from 'test/test-utils';
+import { render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { byRole } from 'testing-library-selector';
 
 import { config, reportInteraction } from '@grafana/runtime';
@@ -54,7 +55,8 @@ describe('WatchersBanner', () => {
   });
 
   it('persists dismissal and hides the banner when dismissed', async () => {
-    const { user } = render(<WatchersBanner />);
+    const user = userEvent.setup();
+    render(<WatchersBanner />);
 
     await user.click(ui.closeButton.get());
 
@@ -80,7 +82,8 @@ describe('WatchersBanner', () => {
 
   describe('analytics', () => {
     it('reports a click on the CTA', async () => {
-      const { user } = render(<WatchersBanner />);
+      const user = userEvent.setup();
+      render(<WatchersBanner />);
       // jsdom does not implement navigation, so stop the link from following its href
       ui.openButton.get().addEventListener('click', (event) => event.preventDefault());
 
@@ -90,7 +93,8 @@ describe('WatchersBanner', () => {
     });
 
     it('reports a dismissal', async () => {
-      const { user } = render(<WatchersBanner />);
+      const user = userEvent.setup();
+      render(<WatchersBanner />);
 
       await user.click(ui.closeButton.get());
 

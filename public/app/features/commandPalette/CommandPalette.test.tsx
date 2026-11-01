@@ -1,6 +1,6 @@
 import { KBarPortal, KBarProvider } from 'kbar';
 import { HttpResponse, http } from 'msw';
-import { act, render, screen, userEvent } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { PluginExtensionTypes } from '@grafana/data';
@@ -701,7 +701,7 @@ describe('CommandPalette', () => {
       await screen.findAllByRole('option', {}, { timeout: 3000 });
 
       // Legacy behavior: an item is preselected, so the input points at it
-      expect(input).toHaveAttribute('aria-activedescendant');
+      await waitFor(() => expect(input).toHaveAttribute('aria-activedescendant'));
     });
 
     it('uses the new model (nothing preselected) when deep search is enabled', async () => {
@@ -713,7 +713,7 @@ describe('CommandPalette', () => {
       await screen.findAllByRole('option', {}, { timeout: 3000 });
 
       // New behavior: focus starts in the input, nothing is highlighted
-      expect(input).not.toHaveAttribute('aria-activedescendant');
+      await waitFor(() => expect(input).not.toHaveAttribute('aria-activedescendant'));
     });
   });
 });
