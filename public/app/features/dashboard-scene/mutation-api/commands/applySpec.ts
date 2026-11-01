@@ -20,6 +20,7 @@ import { applyDashboardSpec } from '../../actions/dashboard/applyDashboardSpec';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
 
+import { findGroupByVariablePaths, GROUP_BY_VARIABLE_CONVERTED } from './deprecatedGroupByVariable';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
@@ -39,6 +40,10 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
   handler: async (payload, context) => {
     const { scene } = context;
     try {
+      // The loader merges each GroupByVariable into an adhoc variable or drops it, so tell the caller which
+      // ones it sent rather than leaving them to vanish from the applied spec.
+      const groupByPaths = findGroupByVariablePaths(payload.spec);
+
       // Opt-in structural validation (default off to avoid breaking existing
       // callers). When enabled, reject an invalid spec before mutating anything.
       // On success we apply the *parsed* spec: the schema normalizes Go's
@@ -80,7 +85,14 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
         appliedSpec = undefined;
       }
 
-      return { success: true, data: { applied: true, spec: appliedSpec }, changes: [] };
+      return {
+        success: true,
+        data: { applied: true, spec: appliedSpec },
+        changes: [],
+        ...(groupByPaths.length > 0 && {
+          warnings: groupByPaths.map((path) => `${path}: ${GROUP_BY_VARIABLE_CONVERTED}`),
+        }),
+      };
     } catch (error) {
       return {
         success: false,
