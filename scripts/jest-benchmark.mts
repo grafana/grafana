@@ -10,6 +10,7 @@ import { parseArgs } from 'node:util';
 interface BenchmarkOptions {
   rootDir: string;
   environment?: 'jsdom' | 'happy-dom';
+  shard?: string;
   listTests?: boolean;
   timeoutMs?: number;
 }
@@ -41,12 +42,25 @@ function parseEnvironment(environment: string): 'jsdom' | 'happy-dom' {
   return environment;
 }
 
+function validateShard(shard: string): void {
+  const match = /^([1-9]\d*)\/([1-9]\d*)$/.exec(shard);
+  const index = Number(match?.[1]);
+  const count = Number(match?.[2]);
+  if (match?.[0] !== shard || !Number.isSafeInteger(index) || !Number.isSafeInteger(count) || index > count) {
+    throw new Error(
+      `Invalid shard ${JSON.stringify(shard)}. Expected N/M with positive safe integers, no leading zeros, and N <= M.`
+    );
+  }
+}
+
 export async function runBenchmark({
   rootDir,
   environment = 'jsdom',
+  shard = '5/8',
   listTests = false,
   timeoutMs = 30 * 60 * 1000,
 }: BenchmarkOptions): Promise<number> {
+  validateShard(shard);
   const jestEnvironment =
     parseEnvironment(environment) === 'jsdom' ? 'jsdom' : path.resolve(rootDir, 'public/test/happy-dom-environment.js');
   const require = createRequire(path.join(rootDir, 'package.json'));
@@ -63,7 +77,7 @@ export async function runBenchmark({
     '--maxWorkers=4',
   ];
   const started = performance.now();
-  console.log(`${environment} | shard 5/8 + split companions | 4 workers | cold Jest cache | Node ${process.version}`);
+  console.log(`${environment} | shard ${shard} + split companions | 4 workers | cold Jest cache | Node ${process.version}`);
 
   let child: ChildProcess | undefined;
   let stoppedCode: number | undefined;
@@ -136,7 +150,7 @@ export async function runBenchmark({
     const executionCache = path.join(cacheDirectory, 'execution');
     await mkdir(discoveryCache);
     const discovery = await runJest(
-      ['--cacheDirectory', discoveryCache, '--shard=5/8', '--listTests', '--json'],
+      ['--cacheDirectory', discoveryCache, `--shard=${shard}`, '--listTests', '--json'],
       true
     );
     if (discovery.code !== 0) {
@@ -188,11 +202,13 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
       options: {
         listTests: { type: 'boolean', default: false },
         environment: { type: 'string', default: 'jsdom' },
+        shard: { type: 'string', default: '5/8' },
       },
     });
     process.exitCode = await runBenchmark({
       rootDir: fileURLToPath(new URL('../', import.meta.url)),
       environment: parseEnvironment(values.environment),
+      shard: values.shard,
       listTests: values.listTests,
     });
   } catch (error) {

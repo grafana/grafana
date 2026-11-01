@@ -121,9 +121,92 @@ for (const environment of [undefined, 'jsdom', 'happy-dom']) {
     for (const phase of ['discovery', 'invocation']) {
       assert.deepEqual(invocation(rootDir, phase).args.filter((arg) => arg.startsWith('--env=')), [`--env=${expected}`]);
     }
-    assert.ok(result.stdout.startsWith(`${environment ?? 'jsdom'} |`));
+    assert.ok(result.stdout.startsWith(`${environment ?? 'jsdom'} | shard 5/8 + split companions |`));
+    assert.ok(invocation(rootDir, 'discovery').args.includes('--shard=5/8'));
   });
 }
+
+for (const shard of ['1/1', '1/8', '8/8', '2/3']) {
+  test(`shard ${shard} applies only to discovery`, async (t) => {
+    const rootDir = project(t);
+    assert.equal(await runBenchmark({ rootDir, shard }), 0);
+    assert.deepEqual(invocation(rootDir, 'discovery').args.filter((arg) => arg.startsWith('--shard')), [`--shard=${shard}`]);
+    assert.equal(invocation(rootDir).args.some((arg) => arg.startsWith('--shard')), false);
+    assert.equal(existsSync(invocation(rootDir, 'discovery').cache), false);
+    assert.equal(existsSync(invocation(rootDir).cache), false);
+  });
+}
+
+for (const environment of ['jsdom', 'happy-dom']) {
+  for (const listTests of [false, true]) {
+    test(`CLI shard selection preserves split companions for ${environment}, listTests=${listTests}`, (t) => {
+      const original = 'public/swagger/schemaAnnotations.test.ts';
+      const companion = 'public/swagger/schemaAnnotations.jsdom.test.ts';
+      const rootDir = project(t, '', [original]);
+      writeFileSync(path.join(rootDir, companion), '');
+      const result = runCli(rootDir, [`--environment=${environment}`, '--shard=2/3', ...(listTests ? ['--listTests'] : [])]);
+      assert.equal(result.error, undefined);
+      assert.equal(result.status, 0, result.stderr);
+      assert.ok(result.stdout.startsWith(`${environment} | shard 2/3 + split companions |`));
+      const discovery = invocation(rootDir, 'discovery');
+      assert.deepEqual(discovery.args.filter((arg) => arg.startsWith('--shard')), ['--shard=2/3']);
+      assert.ok(
+        discovery.args.includes(
+          environment === 'jsdom' ? '--env=jsdom' : `--env=${path.resolve(rootDir, 'public/test/happy-dom-environment.js')}`
+        )
+      );
+      assert.match(result.stdout, /Selected 1 shard suites \+ 1 split companions\./);
+      if (listTests) {
+        assert.equal(existsSync(path.join(rootDir, 'invocation.json')), false);
+        assert.ok(result.stdout.endsWith(`${companion}\n${original}\n`));
+      } else {
+        const args = invocation(rootDir).args;
+        assert.equal(args.some((arg) => arg.startsWith('--shard')), false);
+        assert.deepEqual(args.slice(args.indexOf('--runTestsByPath') + 1), [
+          path.join(rootDir, companion),
+          path.join(rootDir, original),
+        ]);
+      }
+    });
+  }
+}
+
+test('invalid shards are rejected before Jest resolution or startup', async (t) => {
+  const rootDir = project(t);
+  rmSync(path.join(rootDir, 'node_modules'), { recursive: true });
+  const log = t.mock.method(console, 'log', () => {});
+  for (const shard of [
+    '',
+    '1',
+    '0/8',
+    '1/0',
+    '9/8',
+    '-1/8',
+    '1/-8',
+    '1.5/8',
+    '1/2.5',
+    '1e0/8',
+    '1/8/9',
+    'one/8',
+    ' 1/8',
+    '1/8 ',
+    '1/8\n',
+    '01/8',
+    '1/08',
+    '1/9007199254740992',
+    '9007199254740992/9007199254740992',
+  ]) {
+    await assert.rejects(runBenchmark({ rootDir, shard }), /Invalid shard.*Expected N\/M/);
+    const result = runCli(rootDir, [`--shard=${shard}`]);
+    assert.equal(result.error, undefined);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /Invalid shard.*Expected N\/M/);
+    assert.equal(result.stdout, '');
+  }
+  assert.equal(log.mock.callCount(), 0);
+  assert.equal(existsSync(path.join(rootDir, 'discovery.json')), false);
+  assert.equal(existsSync(path.join(rootDir, 'invocation.json')), false);
+});
 
 test('invalid environments are rejected before Jest resolution or startup', async (t) => {
   const rootDir = project(t);
