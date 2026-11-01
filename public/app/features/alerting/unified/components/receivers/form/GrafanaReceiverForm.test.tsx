@@ -1,7 +1,7 @@
 import 'core-js/stable/structured-clone';
 import { type UserEvent } from '@testing-library/user-event';
 import { type MemoryHistoryBuildOptions } from 'history';
-import { HttpResponse, delay, http } from 'msw';
+import { HttpResponse, http } from 'msw';
 import { type ComponentProps, type ReactNode } from 'react';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, screen, waitFor, within } from 'test/test-utils';
@@ -922,12 +922,16 @@ describe('GrafanaReceiverForm', () => {
     });
 
     it('should disable send button while test notification is in progress', async () => {
-      // Use a delayed handler to observe the loading state
+      // Hold the response until the loading state has been checked.
+      let resolveNotification!: () => void;
+      const notificationReady = new Promise<void>((resolve) => {
+        resolveNotification = resolve;
+      });
       server.use(
         http.post<{ namespace: string; name: string }>(
           '/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace/receivers/:name/test',
           async () => {
-            await delay(100);
+            await notificationReady;
             return HttpResponse.json({
               apiVersion: 'notifications.alerting.grafana.app/v1beta1',
               kind: 'CreateReceiverIntegrationTest',
@@ -942,29 +946,34 @@ describe('GrafanaReceiverForm', () => {
         .withIntegrations((integrationFactory) => [integrationFactory.webhook().build()])
         .build();
 
-      const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode />);
+      try {
+        const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode />);
 
-      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+        await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
-      // Open the test modal
-      await user.click(ui.testButton.get());
-      await waitFor(() => expect(ui.testModal.query()).toBeInTheDocument());
+        // Open the test modal
+        await user.click(ui.testButton.get());
+        await waitFor(() => expect(ui.testModal.query()).toBeInTheDocument());
 
-      // Button should be enabled before clicking
-      const sendButton = ui.sendTestNotificationButton.get();
-      expect(sendButton).toBeEnabled();
+        // Button should be enabled before clicking
+        const sendButton = ui.sendTestNotificationButton.get();
+        expect(sendButton).toBeEnabled();
 
-      // Click to send test notification
-      await user.click(sendButton);
+        // Click to send test notification
+        await user.click(sendButton);
 
-      // Button should be disabled while loading
-      expect(sendButton).toBeDisabled();
+        // Button should be disabled while loading
+        expect(sendButton).toBeDisabled();
+        resolveNotification();
 
-      // Wait for success and verify button is enabled again
-      await waitFor(() => {
-        expect(screen.getByText(/test notification sent successfully/i)).toBeInTheDocument();
-      });
-      expect(sendButton).toBeEnabled();
+        // Wait for success and verify button is enabled again
+        await waitFor(() => {
+          expect(screen.getByText(/test notification sent successfully/i)).toBeInTheDocument();
+        });
+        expect(sendButton).toBeEnabled();
+      } finally {
+        resolveNotification();
+      }
     });
 
     it('should display error message when K8s API returns an error', async () => {
