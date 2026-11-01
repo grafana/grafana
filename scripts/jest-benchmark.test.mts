@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { test, type TestContext } from 'node:test';
@@ -92,6 +92,57 @@ test('uses the root Jest configuration, jsdom, shard 5/8, and four workers', asy
   assert.equal(existsSync(recorded.cache), false);
 });
 
+for (const environment of ['jsdom', 'happy-dom'] as const) {
+  test(`${environment} is passed to both discovery and execution`, async (t) => {
+    const rootDir = project(t);
+    assert.equal(await runBenchmark({ rootDir, environment }), 0);
+    const expected = environment === 'jsdom' ? 'jsdom' : path.resolve(rootDir, 'public/test/happy-dom-environment.js');
+    for (const phase of ['discovery', 'invocation']) {
+      assert.deepEqual(invocation(rootDir, phase).args.filter((arg) => arg.startsWith('--env=')), [`--env=${expected}`]);
+    }
+  });
+}
+
+function runCli(rootDir: string, args: string[]) {
+  const scriptsDir = path.join(rootDir, 'scripts');
+  mkdirSync(scriptsDir, { recursive: true });
+  const runner = path.join(scriptsDir, 'jest-benchmark.mts');
+  copyFileSync(fileURLToPath(new URL('./jest-benchmark.mts', import.meta.url)), runner);
+  return spawnSync(process.execPath, [runner, ...args], { encoding: 'utf8', timeout: 10000 });
+}
+
+for (const environment of [undefined, 'jsdom', 'happy-dom']) {
+  test(`CLI selects ${environment ?? 'jsdom by default'} for discovery and execution`, (t) => {
+    const rootDir = project(t);
+    const result = runCli(rootDir, environment === undefined ? [] : [`--environment=${environment}`]);
+    assert.equal(result.error, undefined);
+    assert.equal(result.status, 0, result.stderr);
+    const expected = environment === 'happy-dom' ? path.resolve(rootDir, 'public/test/happy-dom-environment.js') : 'jsdom';
+    for (const phase of ['discovery', 'invocation']) {
+      assert.deepEqual(invocation(rootDir, phase).args.filter((arg) => arg.startsWith('--env=')), [`--env=${expected}`]);
+    }
+    assert.ok(result.stdout.startsWith(`${environment ?? 'jsdom'} |`));
+  });
+}
+
+test('invalid environments are rejected before Jest resolution or startup', async (t) => {
+  const rootDir = project(t);
+  rmSync(path.join(rootDir, 'node_modules'), { recursive: true });
+  const log = t.mock.method(console, 'log', () => {});
+  for (const environment of ['', 'node', 'Happy-dom']) {
+    // @ts-expect-error Invalid environments must also be rejected at runtime.
+    await assert.rejects(runBenchmark({ rootDir, environment }), /Invalid environment.*Expected jsdom or happy-dom/);
+    const result = runCli(rootDir, [`--environment=${environment}`]);
+    assert.equal(result.error, undefined);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /Invalid environment.*Expected jsdom or happy-dom/);
+    assert.equal(result.stdout, '');
+  }
+  assert.equal(log.mock.callCount(), 0);
+  assert.equal(existsSync(path.join(rootDir, 'discovery.json')), false);
+  assert.equal(existsSync(path.join(rootDir, 'invocation.json')), false);
+});
+
 test('each invocation gets an empty cache without clearing other cache directories', async (t) => {
   const rootDir = project(t);
   const existingCache = path.join(rootDir, 'node_modules/.cache');
@@ -153,6 +204,46 @@ for (const pair of splitPairs) {
     assert.deepEqual(includeSplitSuites(rootDir, [...pair, pair[0]]), expected);
   });
 }
+
+test('environments produce identical expanded paths, list output, and selection hashes', async (t) => {
+  const selected = ['other.test.ts', ...splitPairs.map((pair) => pair[0])];
+  const rootDir = project(t, '', selected);
+  for (const pair of splitPairs) {
+    writeFileSync(path.join(rootDir, pair[1]), '/** @jest-environment jsdom */\n');
+  }
+  const expected = includeSplitSuites(rootDir, selected);
+  const log = t.mock.method(console, 'log', () => {});
+  const hashes: string[] = [];
+  for (const environment of ['jsdom', 'happy-dom'] as const) {
+    for (const listTests of [false, true]) {
+      log.mock.resetCalls();
+      if (listTests) {
+        rmSync(path.join(rootDir, 'invocation.json'));
+      }
+      assert.equal(await runBenchmark({ rootDir, environment, listTests }), 0);
+      if (!listTests) {
+        const args = invocation(rootDir).args;
+        assert.deepEqual(args.slice(args.indexOf('--runTestsByPath') + 1), expected);
+        assert.equal(args.some((arg) => arg.startsWith('--shard')), false);
+      }
+      const output = log.mock.calls.map((call) => call.arguments[0]);
+      const hash = output.find((line) => line.startsWith('Selection SHA-256:'));
+      assert.match(hash ?? '', /^Selection SHA-256: [a-f0-9]{64}$/);
+      hashes.push(hash!);
+      if (listTests) {
+        assert.equal(existsSync(path.join(rootDir, 'invocation.json')), false);
+        assert.equal(
+          output.at(-1),
+          expected.map((file) => path.relative(rootDir, file).split(path.sep).join('/')).join('\n')
+        );
+      }
+    }
+  }
+  assert.equal(new Set(hashes).size, 1);
+  for (const pair of splitPairs) {
+    assert.equal(readFileSync(path.join(rootDir, pair[1]), 'utf8'), '/** @jest-environment jsdom */\n');
+  }
+});
 
 test('selection leaves unrelated suites alone', () => {
   const rootDir = path.resolve('fixture');

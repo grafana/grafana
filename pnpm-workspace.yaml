@@ -4,6 +4,7 @@ packages:
   - 'e2e-playwright/test-plugins/*'
 
 overrides:
+  "@happy-dom/jest-environment@21.0.4>happy-dom": "21.0.4"
   "@types/slate": "0.47.16"
   "@react-aria/dialog": "3.6.1"
   "@react-aria/focus": "3.22.1"
@@ -49,6 +50,8 @@ packageExtensions:
       assert: 2.0.0
 
 patchedDependencies:
+  "@floating-ui/react@0.27.20": patches/floating-ui-react-npm-0.27.20.patch
+  "happy-dom@21.0.4": patches/happy-dom-21.0.4.patch
   "history@4.10.1": patches/history-npm-4.10.1-ee217563ae.patch
   "react-split-pane@0.1.92": patches/react-split-pane-npm-0.1.92-93dbf51dff.patch
   "slate-dev-environment@0.2.5": patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch

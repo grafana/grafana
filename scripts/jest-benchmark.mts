@@ -9,6 +9,7 @@ import { parseArgs } from 'node:util';
 
 interface BenchmarkOptions {
   rootDir: string;
+  environment?: 'jsdom' | 'happy-dom';
   listTests?: boolean;
   timeoutMs?: number;
 }
@@ -33,11 +34,21 @@ export function includeSplitSuites(rootDir: string, files: string[]): string[] {
   return [...selected].sort();
 }
 
+function parseEnvironment(environment: string): 'jsdom' | 'happy-dom' {
+  if (environment !== 'jsdom' && environment !== 'happy-dom') {
+    throw new Error(`Invalid environment ${JSON.stringify(environment)}. Expected jsdom or happy-dom.`);
+  }
+  return environment;
+}
+
 export async function runBenchmark({
   rootDir,
+  environment = 'jsdom',
   listTests = false,
   timeoutMs = 30 * 60 * 1000,
 }: BenchmarkOptions): Promise<number> {
+  const jestEnvironment =
+    parseEnvironment(environment) === 'jsdom' ? 'jsdom' : path.resolve(rootDir, 'public/test/happy-dom-environment.js');
   const require = createRequire(path.join(rootDir, 'package.json'));
   const jest = require.resolve('jest/bin/jest');
   const cacheDirectory = await mkdtemp(path.join(tmpdir(), 'grafana-jest-benchmark-'));
@@ -45,14 +56,14 @@ export async function runBenchmark({
     jest,
     '--config',
     path.join(rootDir, 'jest.config.js'),
-    '--env=jsdom',
+    `--env=${jestEnvironment}`,
     '--ci',
     '--watch=false',
     '--watchAll=false',
     '--maxWorkers=4',
   ];
   const started = performance.now();
-  console.log(`jsdom | shard 5/8 + split companions | 4 workers | cold Jest cache | Node ${process.version}`);
+  console.log(`${environment} | shard 5/8 + split companions | 4 workers | cold Jest cache | Node ${process.version}`);
 
   let child: ChildProcess | undefined;
   let stoppedCode: number | undefined;
@@ -173,9 +184,15 @@ export async function runBenchmark({
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   try {
-    const { values } = parseArgs({ options: { listTests: { type: 'boolean', default: false } } });
+    const { values } = parseArgs({
+      options: {
+        listTests: { type: 'boolean', default: false },
+        environment: { type: 'string', default: 'jsdom' },
+      },
+    });
     process.exitCode = await runBenchmark({
       rootDir: fileURLToPath(new URL('../', import.meta.url)),
+      environment: parseEnvironment(values.environment),
       listTests: values.listTests,
     });
   } catch (error) {
