@@ -1,4 +1,4 @@
-import { render, screen, waitForElementToBeRemoved } from 'test/test-utils';
+import { render, screen, waitForElementToBeRemoved, within } from 'test/test-utils';
 
 import { setPluginComponentsHook, setPluginLinksHook, setReturnToPreviousHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -27,23 +27,13 @@ grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 
 setupMswServer();
 
-const mimirGroups = alertingFactory.prometheus.group.buildList(5000, {
-  file: 'test-mimir-namespace',
-  rules: alertingFactory.prometheus.rule.buildList(3, undefined, { transient: { namePrefix: 'mimir' } }),
-});
-alertingFactory.prometheus.group.rewindSequence();
-const prometheusGroups = alertingFactory.prometheus.group.buildList(200, {
-  file: 'test-prometheus-namespace',
-  rules: alertingFactory.prometheus.rule.buildList(3, undefined, { transient: { namePrefix: 'prometheus' } }),
-});
-
 const mimirDs = alertingFactory.dataSource.build({ name: 'Mimir', uid: 'mimir' });
 const prometheusDs = alertingFactory.dataSource.build({ name: 'Prometheus', uid: 'prometheus' });
 
 beforeEach(() => {
   returnToPrevious.mockClear();
-  setPrometheusRules(mimirDs, mimirGroups);
-  setPrometheusRules(prometheusDs, prometheusGroups);
+  setPrometheusRules(mimirDs, createGroups('mimir', [1]));
+  setPrometheusRules(prometheusDs, createGroups('prometheus', [1]));
 });
 
 // The global IntersectionObserver mock in public/test/jest-setup.ts auto-fires
@@ -53,6 +43,19 @@ const io = installControllableIntersectionObserver();
 
 describe('RuleList - FilterView', () => {
   it('should render multiple pages of results', async () => {
+    setPrometheusRules(
+      mimirDs,
+      [99, 102].map((ruleCount, groupIndex) =>
+        alertingFactory.prometheus.group.build({
+          file: 'test-mimir-namespace',
+          name: `test-group-${groupIndex + 1}`,
+          rules: Array.from({ length: ruleCount }, (_, ruleIndex) =>
+            alertingFactory.prometheus.rule.build({ name: `mimir-test-rule-${groupIndex + 1}-${ruleIndex + 1}` })
+          ),
+        })
+      )
+    );
+
     render(<FilterView filterState={getFilter({ dataSourceNames: ['Mimir'] })} />);
 
     await loadMoreResults();
@@ -66,7 +69,13 @@ describe('RuleList - FilterView', () => {
     expect(twoPageResults.length).toBeGreaterThan(onePageResults.length);
   });
 
-  it('should filter results by group and rule name ', async () => {
+  it('should filter results beyond the first API page by group and rule name and link to the group', async () => {
+    // Keep the matching group beyond the first API page of 2,000 groups.
+    setPrometheusRules(mimirDs, [
+      ...createGroups('mimir', Array.from({ length: 2000 }, (_, index) => index + 1), [1]),
+      ...createGroups('mimir', [4501]),
+    ]);
+
     render(
       <FilterView
         filterState={getFilter({
@@ -86,10 +95,22 @@ describe('RuleList - FilterView', () => {
     expect(matchingRule).toHaveTextContent('mimir-test-rule-1');
     expect(matchingRule).toHaveTextContent('test-mimir-namespace');
     expect(matchingRule).toHaveTextContent('test-group-4501');
+    const groupLink = within(matchingRule).getByRole('link', { name: 'test-group-4501' });
+    expect(groupLink).toBeInTheDocument();
+    expect(groupLink).toHaveAttribute(
+      'href',
+      '/alerting/mimir/namespaces/test-mimir-namespace/groups/test-group-4501/view'
+    );
     expect(await screen.findByText(/No more results/)).toBeInTheDocument();
   });
 
   it('should display rules from multiple datasources', async () => {
+    setPrometheusRules(
+      mimirDs,
+      createGroups('mimir', [1, 123, 1123, 1230, 1231, 1232, 1233, 1234, 1235, 1236, 1237, 1238, 1239, 2123, 3123, 4123])
+    );
+    setPrometheusRules(prometheusDs, createGroups('prometheus', [1, 123]));
+
     render(<FilterView filterState={getFilter({ groupName: 'test-group-123', ruleName: 'test-rule-3' })} />);
 
     await loadMoreResults();
@@ -119,31 +140,16 @@ describe('RuleList - FilterView', () => {
 
     expect(await screen.findByText(/No matching rules found/)).toBeInTheDocument();
   });
-
-  it('should render group names as clickable links', async () => {
-    render(
-      <FilterView
-        filterState={getFilter({
-          dataSourceNames: ['Mimir'],
-          groupName: 'test-group-4501',
-          ruleName: 'mimir-test-rule-1',
-        })}
-      />
-    );
-
-    await loadMoreResults();
-
-    const groupLink = await screen.findByRole('link', {
-      name: 'test-group-4501',
-    });
-
-    expect(groupLink).toBeInTheDocument();
-    expect(groupLink).toHaveAttribute(
-      'href',
-      '/alerting/mimir/namespaces/test-mimir-namespace/groups/test-group-4501/view'
-    );
-  });
 });
+
+function createGroups(source: 'mimir' | 'prometheus', groupNumbers: number[], ruleNumbers = [1, 2, 3]) {
+  const group = alertingFactory.prometheus.group.build({
+    file: `test-${source}-namespace`,
+    rules: ruleNumbers.map((number) => alertingFactory.prometheus.rule.build({ name: `${source}-test-rule-${number}` })),
+  });
+
+  return groupNumbers.map((number) => ({ ...group, name: `test-group-${number}` }));
+}
 
 async function loadMoreResults() {
   io.enterNode(screen.getByTestId('load-more-helper'));

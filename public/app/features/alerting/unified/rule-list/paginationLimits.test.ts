@@ -17,6 +17,15 @@ describe('paginationLimits', () => {
     describe('when backend filters are disabled', () => {
       testWithFeatureToggles({ disable: ['alertingUIUseBackendFilters', 'alertingUIUseFullyCompatBackendFilters'] });
 
+      it('should return large grafana limit + small datasource limit for source selection alone', () => {
+        const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(
+          getFilter({ dataSourceNames: ['prometheus'] })
+        );
+
+        expect(grafanaManagedLimit).toEqual({ groupLimit: 2000 });
+        expect(datasourceManagedLimit).toEqual({ groupLimit: 100 });
+      });
+
       it('should return small limits when no filters are applied', () => {
         const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(getFilter({}));
 
@@ -39,7 +48,8 @@ describe('paginationLimits', () => {
         { freeFormWords: ['cpu'] },
         { ruleName: 'alert' },
         { ruleType: PromRuleType.Alerting },
-        { dataSourceNames: ['prometheus'] },
+        { dataSourceNames: ['prometheus'], ruleName: 'alert' },
+        { dataSourceNames: ['prometheus'], groupName: 'test-group' },
         { labels: ['severity=critical'] },
         { dashboardUid: 'test-dashboard' },
         { plugins: 'hide' as const },
@@ -57,6 +67,15 @@ describe('paginationLimits', () => {
     describe('when alertingUIUseBackendFilters is enabled', () => {
       testWithFeatureToggles({ enable: ['alertingUIUseBackendFilters'] });
 
+      it('should return rule limit for grafana + small datasource limit for source selection alone', () => {
+        const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(
+          getFilter({ dataSourceNames: ['prometheus'] })
+        );
+
+        expect(grafanaManagedLimit).toEqual({ ruleLimit: 100 });
+        expect(datasourceManagedLimit).toEqual({ groupLimit: 100 });
+      });
+
       it('should return rule limit for grafana + default limit for datasource when no filters are applied', () => {
         const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(getFilter({}));
 
@@ -73,7 +92,8 @@ describe('paginationLimits', () => {
         { ruleState: PromAlertingRuleState.Firing },
         { ruleHealth: RuleHealth.Ok },
         { contactPoint: 'slack' },
-        { dataSourceNames: ['prometheus'] },
+        { dataSourceNames: ['prometheus'], ruleName: 'alert' },
+        { dataSourceNames: ['prometheus'], groupName: 'test-group' },
         { labels: ['severity=critical'] },
         { namespace: 'production' },
       ])(
@@ -90,6 +110,15 @@ describe('paginationLimits', () => {
     describe('when alertingUIUseFullyCompatBackendFilters is enabled', () => {
       testWithFeatureToggles({ enable: ['alertingUIUseFullyCompatBackendFilters'] });
 
+      it('should return rule limit for grafana + small datasource limit for source selection alone', () => {
+        const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(
+          getFilter({ dataSourceNames: ['prometheus'] })
+        );
+
+        expect(grafanaManagedLimit).toEqual({ ruleLimit: 100 });
+        expect(datasourceManagedLimit).toEqual({ groupLimit: 100 });
+      });
+
       it('should return rule limit for grafana + default limit for datasource when no filters are applied', () => {
         const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(getFilter({}));
 
@@ -103,7 +132,6 @@ describe('paginationLimits', () => {
         { ruleState: PromAlertingRuleState.Firing },
         { ruleHealth: RuleHealth.Ok },
         { contactPoint: 'slack' },
-        { dataSourceNames: ['prometheus'] },
       ])(
         'should return rule limit for grafana + large limit for datasource when only backend filters are used: %p',
         (filterState) => {
@@ -118,6 +146,8 @@ describe('paginationLimits', () => {
         { freeFormWords: ['cpu'] },
         { ruleName: 'alert' },
         { groupName: 'test-group' },
+        { dataSourceNames: ['prometheus'], ruleName: 'alert' },
+        { dataSourceNames: ['prometheus'], groupName: 'test-group' },
         { namespace: 'production' },
         { labels: ['severity=critical'] },
       ])('should return large limits for both when frontend filters are used: %p', (filterState) => {
@@ -130,6 +160,15 @@ describe('paginationLimits', () => {
 
     describe('when both backend filter toggles are enabled', () => {
       testWithFeatureToggles({ enable: ['alertingUIUseBackendFilters', 'alertingUIUseFullyCompatBackendFilters'] });
+
+      it('should return rule limit for grafana + small datasource limit for source selection alone', () => {
+        const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(
+          getFilter({ dataSourceNames: ['prometheus'] })
+        );
+
+        expect(grafanaManagedLimit).toEqual({ ruleLimit: 100 });
+        expect(datasourceManagedLimit).toEqual({ groupLimit: 100 });
+      });
 
       it('should return rule limit for grafana + default limit for datasource when no filters are applied', () => {
         const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(getFilter({}));
@@ -147,7 +186,8 @@ describe('paginationLimits', () => {
         { ruleState: PromAlertingRuleState.Firing },
         { ruleHealth: RuleHealth.Ok },
         { contactPoint: 'slack' },
-        { dataSourceNames: ['prometheus'] },
+        { dataSourceNames: ['prometheus'], ruleName: 'alert' },
+        { dataSourceNames: ['prometheus'], groupName: 'test-group' },
         { labels: ['severity=critical'] },
         { namespace: 'production' },
       ])(

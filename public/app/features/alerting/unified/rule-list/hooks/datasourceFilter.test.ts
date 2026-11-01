@@ -1,12 +1,12 @@
 import { PromAlertingRuleState, type PromRuleGroupDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { mockGrafanaPromAlertingRule, mockPromAlertingRule, mockPromRecordingRule } from '../../mocks';
-import { RuleHealth } from '../../search/rulesSearchParser';
+import { RuleHealth, type RulesFilter } from '../../search/rulesSearchParser';
 import { Annotation } from '../../utils/constants';
 import { getDatasourceAPIUid } from '../../utils/datasource';
 import { getFilter } from '../../utils/search';
 
-import { getDatasourceFilter } from './datasourceFilter';
+import { getDatasourceFilter, hasDatasourceClientSideFilters } from './datasourceFilter';
 
 jest.mock('../../utils/datasource');
 
@@ -20,6 +20,34 @@ getDatasourceAPIUidMock.mockImplementation((ruleSourceName) => {
     return 'datasource-uid-3';
   }
   throw new Error(`Unknown datasource name: ${ruleSourceName}`);
+});
+
+describe('hasDatasourceClientSideFilters', () => {
+  it.each<Partial<RulesFilter>>([
+    {},
+    { dataSourceNames: [] },
+    { dataSourceNames: ['prometheus'] },
+    { dataSourceNames: ['prometheus', 'loki'] },
+  ])('does not require client-side filtering for source selection alone: %p', (filterState) => {
+    expect(hasDatasourceClientSideFilters(filterState)).toBe(false);
+  });
+
+  it.each<Partial<RulesFilter>>([
+    { freeFormWords: ['cpu'] },
+    { ruleName: 'alert' },
+    { ruleState: PromAlertingRuleState.Firing },
+    { ruleType: PromRuleType.Alerting },
+    { labels: ['severity=critical'] },
+    { ruleHealth: RuleHealth.Ok },
+    { dashboardUid: 'test-dashboard' },
+    { plugins: 'hide' },
+    { contactPoint: 'slack' },
+    { namespace: 'production' },
+    { groupName: 'test-group' },
+  ])('requires client-side filtering with or without source selection: %p', (filterState) => {
+    expect(hasDatasourceClientSideFilters(filterState)).toBe(true);
+    expect(hasDatasourceClientSideFilters({ ...filterState, dataSourceNames: ['prometheus'] })).toBe(true);
+  });
 });
 
 describe('datasource-managed rules', () => {

@@ -9,7 +9,7 @@ import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { contextSrv } from 'app/core/services/context_srv';
-import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
+import { mockLocalStorage } from 'app/features/alerting/unified/testSetup/mockLocalStorage';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { buildShareUrl } from '../sharing/ShareButton/utils';
