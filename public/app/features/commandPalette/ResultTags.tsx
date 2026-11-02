@@ -5,10 +5,12 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Tag, Tooltip, useStyles2 } from '@grafana/ui';
 
+import { fitVisibleCount } from './fitVisibleCount';
+
 /**
- * Fits tags into the space of the container. Shows at least one truncated tag or more if space allows with +N marker
- * for all the hidden tags that didn't fit.
- *
+ * Fits dashboard tags into the palette's remaining row space by measuring full tags and overflow labels.
+ * Shows the longest prefix that fits with its remaining-tag count, reserving room for one truncated tag and a count.
+ * At least one tag stays visible and may truncate; the count's tooltip shows all hidden tags as colored pills.
  */
 export function ResultTags({ tags }: { tags: string[] }) {
   const styles = useStyles2(getStyles);
@@ -18,11 +20,6 @@ export function ResultTags({ tags }: { tags: string[] }) {
   const countMeasurementsRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(1);
 
-  // Measuring how many tags we can show. The algorithm selects the longest leading
-  // sequence of tags whose full widths, gaps, and remaining-tag count fit in the available space.
-  // When all tags fit, no count is needed. Otherwise, at least the first tag remains visible and
-  // may truncate to leave room for the count; hovering the count reveals all hidden tags as pills.
-  // ResizeObserver recalculates the fit when the available space or measured content sizes change.
   useLayoutEffect(() => {
     const list = listRef.current;
     const container = containerRef.current;
@@ -37,19 +34,7 @@ export function ResultTags({ tags }: { tags: string[] }) {
       const availableWidth = container.getBoundingClientRect().width;
       const widths = Array.from(tagMeasurements.children, (tag) => tag.getBoundingClientRect().width);
       const countWidths = Array.from(countMeasurements.children, (count) => count.getBoundingClientRect().width);
-      let width = 0;
-      let count = 1;
-
-      for (let i = 0; i < widths.length; i++) {
-        width += widths[i] + (i > 0 ? gap : 0);
-        const hiddenCount = tags.length - i - 1;
-        const requiredWidth = width + (hiddenCount > 0 ? gap + countWidths[hiddenCount - 1] : 0);
-        if (requiredWidth <= availableWidth) {
-          count = i + 1;
-        }
-      }
-
-      setVisibleCount(count);
+      setVisibleCount(fitVisibleCount(widths, countWidths, gap, availableWidth));
     };
 
     measure();
@@ -112,8 +97,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'relative',
     display: 'flex',
     alignItems: 'center',
+    alignSelf: 'center',
     justifyContent: 'flex-end',
-    // Use space left by the name and subtitle, reserving one truncated tag and its count.
     flex: '1 0 0',
     minWidth: 'min(96px, 25%)',
     overflow: 'hidden',
