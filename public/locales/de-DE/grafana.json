@@ -522,6 +522,7 @@
         "save": "Speichern"
       },
       "error-title": "Speichern der Warnregel fehlgeschlagen",
+      "form-errors": "",
       "no-group-success": "Regel erfolgreich hinzugefügt"
     },
     "alert-rule-name-and-metric": {
@@ -530,8 +531,8 @@
       "label-metric": "Metrik",
       "label-name": "Name",
       "message": {
-        "must-enter-a-metric-name": "Ein Metrikname muss eingegeben werden",
-        "must-enter-a-name": "Ein Name muss eingegeben werden",
+        "metric-name-required": "",
+        "name-required": "",
         "please-select-a-data-source": "Bitte wählen Sie eine Datenquelle aus"
       },
       "metric-aria-label-metric": "metrisch",
@@ -586,6 +587,7 @@
     },
     "alertmanager-config": {
       "confirmText-yes-reset-configuration": "Ja, Konfiguration zurücksetzen",
+      "editor-label": "",
       "gma-manual-configuration-description": "Die interne Grafana-Alertmanager-Konfiguration kann nicht manuell geändert werden. Bearbeiten Sie die individuellen Ressourcen über die Benutzeroberfläche, um diese Konfiguration zu ändern.",
       "gma-manual-configuration-is-not-supported": "Manuelle Konfigurationsänderungen werden nicht unterstützt",
       "message": {
@@ -1097,6 +1099,7 @@
         "body": "Sind Sie sicher, dass Sie diese gelöschte Warnregeldefinition wiederherstellen möchten?",
         "confirm": "Ja, gelöschte Regel wiederherstellen",
         "error": "Die gelöschte Warnregel konnte nicht wiederhergestellt werden",
+        "preview-aria-label": "",
         "title": "Gelöschte Warnregel wiederherstellen"
       },
       "table": {
@@ -1314,7 +1317,7 @@
     "folder-selector": {
       "description-select-folder": "Wählen Sie einen Ordner, in dem Sie Ihre Regel speichern.",
       "message": {
-        "select-a-folder": "Einen Ordner auswählen"
+        "folder-required": ""
       }
     },
     "folderAndGroup": {
@@ -1568,11 +1571,10 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "Gruppen werden geladen …",
       "message": {
-        "must-be-a-positive-integer": "Muss eine positive ganze Zahl sein.",
-        "must-enter-a-group-name": "Es muss ein Gruppenname eingegeben werden"
+        "evaluation-group-required": "",
+        "must-be-a-positive-integer": "Muss eine positive ganze Zahl sein."
       },
       "missing-series-resolve-placeholder": "Standard: 2",
-      "or": "oder",
       "placeholder-select-an-evaluation-group": "Wählen Sie eine Bewertungsgruppe aus …",
       "text-configure-no-data-and-error-handling": "Umgang mit „Keine Daten“ und Fehlern konfigurieren",
       "title-set-evaluation-behavior": "Bewertungsverhalten festlegen"
@@ -1866,6 +1868,7 @@
         "will-import-rules-count_one": " Importiert {{count}} Regeln",
         "will-import-rules-count_other": " Importiert {{count}} Regeln"
       },
+      "rules-preview": "",
       "source": {
         "datasource": "Bestehende von der Datenquelle verwaltete Regeln",
         "datasource-description": "Regeln aus vorhandenen Datenquellen importieren",
@@ -2998,7 +3001,7 @@
           "alerting": "Aktivieren, um die Evaluierung für diese Warnregel zu pausieren.",
           "recording": "Aktivieren, um die Evaluierung für diese Aufnahmeregel zu pausieren."
         },
-        "select-folder-before": "Wählen Sie einen Ordner aus, bevor Sie die Evaluierungsgruppe und das Intervall festlegen",
+        "select-folder-first-tooltip": "",
         "ungroup-warning": "Diese Aktion kann nicht rückgängig gemacht werden. Nach dem Speichern können Sie sie nicht wieder einer Gruppe hinzufügen.",
         "ungroup-warning-title": "Dadurch wird die Warnregel aus ihrer Gruppe entfernt"
       },
@@ -3672,6 +3675,9 @@
       "switch-to-data-source-managed": "Die ausgewählte Datenquelle in Ihrer Abfrage unterstützt die Verwaltung von Warnregeln. Wechseln Sie zur Verwaltung durch die Datenquelle, wenn die Warnregel von der Datenquelle und nicht von Grafana verwaltet werden soll.",
       "switch-to-grafana-managed": "Wechseln Sie zur Verwaltung durch Grafana, um Ausdrücke, mehrere Abfragen, Bilder in Benachrichtigungen und diverse andere Funktionen zu nutzen.",
       "title-alert-rule-types": "Warnregeltypen"
+    },
+    "sql-query-preview": {
+      "aria-label": ""
     },
     "state-history": {
       "columns": {
@@ -11516,13 +11522,8 @@
       "severity-low": "Niedrig",
       "severity-minor": "Gering",
       "severity-unknown": "Unbekannt",
-      "title": "Auslösen von Warnungen",
       "view-all": "Alle ausgelösten Warnungen anzeigen",
-      "view-rules": "Alle Warnregeln anzeigen",
-      "critical-count_one": "{{count}} kritisch",
-      "critical-count_other": "{{count}} kritisch",
-      "high-count_one": "{{count}} hoch",
-      "high-count_other": "{{count}} hoch"
+      "view-rules": "Alle Warnregeln anzeigen"
     },
     "header-actions": {
       "active-incidents": "Aktive Vorfälle",
@@ -11548,21 +11549,13 @@
       "empty": "",
       "empty-selected-team": "",
       "error-title": "Es konnten keine aktiven Vorfälle geladen werden",
-      "title": "Aktive Vorfälle",
       "view-all": "Alle Vorfälle anzeigen"
     },
     "learn-more": "Mehr erfahren",
     "most-used-dashboards-tab": {
       "empty": "Die am häufigsten genutzten Dashboards erscheinen hier.",
-      "empty-description": "Sobald Ihr Unternehmen über Dashboards verfügt und Nutzungsdaten gesammelt wurden, werden hier die Dashboards mit den meisten Aufrufen in den letzten 30 Tagen angezeigt.",
       "error-title": "Die am häufigsten genutzten Dashboards konnten nicht geladen werden",
       "loading": "Die am häufigsten genutzten Dashboards werden geladen …"
-    },
-    "news-card": {
-      "empty": "Keine neuen Blogbeiträge.",
-      "error-title": "Neue Blogbeiträge konnten nicht geladen werden",
-      "read-more": "Lesen Sie mehr vom Grafana-Labs-Blog",
-      "title": "Das Neueste aus dem Blog"
     },
     "on-call-card": {
       "current-shift": "",
@@ -11917,7 +11910,6 @@
     },
     "starred-dashboards-tab": {
       "empty": "Ihre mit Sternen markierten Dashboards werden hier angezeigt.",
-      "empty-description": "Sie können Ihre bevorzugten Dashboards mit einem Stern markieren, indem Sie auf der Dashboard-Seite auf <1></1> klicken.",
       "error-title": "Mit Stern markierte Dashboards konnten nicht geladen werden",
       "loading": "Mit Stern markierte Dashboards werden geladen …"
     },
@@ -13730,6 +13722,7 @@
       "add-title": "",
       "change-visualization": "",
       "edit-query": "",
+      "edit-with-assistant": "",
       "hide-query": "",
       "open-explore": "",
       "rename": "",
@@ -15788,20 +15781,8 @@
     "explain-or-modify": "Erklären oder ändern",
     "explain-query": "",
     "explaining": "",
-    "feedback-cancel": "Abbrechen",
-    "feedback-description": "Ihr Feedback hilft, die Abfrageerfahrung in Grafana zu verbessern.",
-    "feedback-error": "Feedback konnte nicht gesendet werden. Versuchen Sie es erneut.",
     "feedback-helpful": "Hilfreich",
-    "feedback-label": "Feedback geben",
-    "feedback-negative-placeholder": "Beschreiben Sie, was nicht gut gelaufen ist und was Sie stattdessen erwartet haben.",
-    "feedback-negative-title": "Was ist schiefgelaufen?",
     "feedback-not-helpful": "Nicht hilfreich",
-    "feedback-positive-placeholder": "Was hat Ihnen gefallen? Wie hätte es noch besser sein können?",
-    "feedback-positive-title": "Was hat gut funktioniert?",
-    "feedback-privacy": "",
-    "feedback-recipient": "Ihr Feedback wird an die Teams gesendet, die an der Abfrage arbeiten.",
-    "feedback-send": "Senden",
-    "feedback-sending": "Senden …",
     "focus": "",
     "follow-up-label": "",
     "follow-up-placeholder": "",
@@ -17008,6 +16989,8 @@
       "failures-description": "",
       "filter-placeholder": "",
       "filtered": "",
+      "internal": "",
+      "internal-description": "",
       "last-failed": "",
       "load-failures": "",
       "never": "",

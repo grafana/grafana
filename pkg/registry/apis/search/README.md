@@ -202,6 +202,21 @@ Several values are ORed. Only `In` is supported. The named folders themselves ar
 
 The global search answers with `GlobalSearchResults`. When it cannot search a type, because the calling service may not search it on the user's behalf or because the deployment does not check its results against the user, it leaves that type out instead of failing, and names it in `metadata.skippedTypes`. The results are then incomplete. It fails only when no type is left.
 
+It also returns `folderPaths`: the path of each folder the items are in, keyed by the folder's name as items return it in `fields.folder`, so a client can show where each item is without loading every folder. Folder paths list ancestors before descendants, ending with the containing folder. Like the folder API's `/parents`, the nearest unreadable folder or folder missing from the global index appears first, with only `name` and `detached: true`. Its ancestors are omitted. The global index is eventually consistent, so a folder can also be missing because it has not been indexed yet: a detached folder is not necessarily deleted. Only items that return the `folder` field are covered, and the root folder has no path. Paths are display data, so they are left out when they cannot be found, and the results are returned anyway.
+
+```json
+"folderPaths": {
+  "team-a-dashboards": [
+    { "name": "team-a", "title": "Team A" },
+    { "name": "team-a-dashboards", "title": "Dashboards" }
+  ],
+  "shared-reports": [
+    { "name": "finance", "detached": true },
+    { "name": "shared-reports", "title": "Shared reports" }
+  ]
+}
+```
+
 ##### Experimental recursive searches of one kind
 
 The same `folderTree` filter is available on per-resource `/search` endpoints only when `search.perResourceFolderTree` is enabled. This experimental flag defaults to off and is evaluated for each request, so it can be enabled for selected stacks during load and latency testing. With the flag off, the API rejects the field with 422 before calling the search server. Existing global search is unaffected.

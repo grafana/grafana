@@ -390,6 +390,32 @@ func TestGlobalHandler_ReportsSkippedTypes(t *testing.T) {
 	assert.Equal(t, []string{"folder.grafana.app/folders"}, got.Metadata.SkippedTypes)
 }
 
+// Folder paths reach the caller as JSON, and a response without any leaves the
+// field out.
+func TestGlobalHandler_ReturnsFolderPaths(t *testing.T) {
+	rsp := emptyResponse()
+	rsp.FolderPaths = map[string]*resourcepb.FolderPath{
+		"leaf": {Folders: []*resourcepb.FolderPath_Folder{
+			{Name: "top", Detached: true},
+			{Name: "leaf", Title: "Leaf"},
+		}},
+	}
+	h := NewHandler(&fakeIndexClient{resp: rsp}, testProvider(), noop.NewTracerProvider().Tracer(""))
+
+	w := doGlobalRequest(t, h, globalQuery(""))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	var got struct {
+		FolderPaths json.RawMessage `json:"folderPaths"`
+	}
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
+	assert.JSONEq(t, `{"leaf": [{"name": "top", "detached": true}, {"name": "leaf", "title": "Leaf"}]}`, string(got.FolderPaths))
+
+	h = NewHandler(&fakeIndexClient{resp: emptyResponse()}, testProvider(), noop.NewTracerProvider().Tracer(""))
+	w = doGlobalRequest(t, h, globalQuery(""))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	assert.NotContains(t, w.Body.String(), "folderPaths")
+}
+
 func TestGlobalHandler_FiltersByResourceType(t *testing.T) {
 	client := &fakeIndexClient{resp: emptyResponse()}
 	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))

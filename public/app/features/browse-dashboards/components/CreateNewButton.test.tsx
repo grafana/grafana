@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { cleanup, screen, within } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { render } from 'test/test-utils';
 
@@ -116,6 +116,21 @@ describe('NewActionsButton', () => {
     expect(screen.queryByRole('menuitem', { name: 'New dashboard' })).not.toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: 'Import dashboard' })).not.toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'New folder' })).toBeInTheDocument();
+  });
+
+  it('should only render the New folder item on mobile when mobileEditDeprecation is enabled', async () => {
+    setTestFlags({ 'grafana.mobileEditDeprecation': true });
+    const { user } = render(
+      <CreateNewButton canCreateDashboard canCreateFolder parentFolder={mockParentFolder} isReadOnlyRepo={false} />
+    );
+    const newButton = screen.getByText('New');
+    await user.click(newButton);
+
+    expect(screen.queryByRole('menuitem', { name: 'New dashboard' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Import dashboard' })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'New folder' })).toBeInTheDocument();
+    cleanup();
+    setTestFlags({});
   });
 
   it('should show Import dashboard button when folder is provisioned', async () => {

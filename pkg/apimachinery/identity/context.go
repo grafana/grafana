@@ -112,9 +112,11 @@ func newInternalIdentity(name string, namespace string, orgID int64, opts ...Ide
 		IsGrafanaAdmin: true,
 		OrgID:          orgID,
 		Permissions: map[int64]map[string][]string{
-			orgID: serviceIdentityPermissions,
+			orgID: cloneServiceIdentityPermissions(),
 		},
 		AccessTokenClaims: &claimsCopy,
+
+		internalIdentityProfile: InternalIdentityProfile(name),
 	}
 
 	for _, opt := range opts {
@@ -233,6 +235,9 @@ var serviceIdentityTokenPermissions = []string{
 	"historian.alerting.grafana.app:*",
 	"notifications.alerting.grafana.app:*",
 	"rules.alerting.grafana.app:*",
+	"alertingassistant.grafana.app/alert-rule-reviews:get",
+	"alertingassistant.grafana.app/alert-rule-reviews:create",
+	"alertingassistant.grafana.app/alert-rule-reviews:update",
 	"advisor.grafana.app:*",
 	"annotation.grafana.app:*",
 	"setting.grafana.app:*",

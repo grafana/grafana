@@ -84,9 +84,8 @@ runs:
           golangci_config:
             - '.golangci.yml'
           docker_build:
-            # Mirrors the on.paths trigger of pr-test-docker.yml: files that can
-            # affect the built Docker image. Test-only changes are excluded below
-            # because they never end up in the image.
+            # Files that can affect the built Docker image. Test-only changes
+            # are excluded below because they never end up in the image.
             - 'Makefile'
             - 'Dockerfile'
             - 'public/**'
