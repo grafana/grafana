@@ -24,7 +24,7 @@ runs:
         PACKAGE_MANAGER: ${{ steps.install.outputs.package-manager }}
       run: |
         npm version "$VERSION" --no-git-tag-version
-        npm exec --no -- nx release version "$VERSION"
+        npm exec --no -- nx release version --groups=grafana "$VERSION"
         if [ "$PACKAGE_MANAGER" = 'yarn' ]; then
           yarn install --no-immutable
         else

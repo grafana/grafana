@@ -74,9 +74,10 @@ func TestIntegrationProvideAuthZLegacyAccessClient(t *testing.T) {
 			client := ProvideAuthZLegacyAccessClient(clients)
 
 			for _, check := range []struct {
-				name      string
-				evaluator ac.Evaluator
-				allowed   bool
+				name             string
+				evaluator        ac.Evaluator
+				internalIdentity *LegacyInternalIdentity
+				allowed          bool
 			}{
 				{
 					name:      "matching grant",
@@ -102,13 +103,36 @@ func TestIntegrationProvideAuthZLegacyAccessClient(t *testing.T) {
 						ac.EvalPermission("contract:write", grant.Scope),
 					),
 				},
+				{
+					name:             "service profile uses embedded handler",
+					evaluator:        ac.EvalPermission("dashboards:create"),
+					internalIdentity: &LegacyInternalIdentity{Profile: LegacyInternalIdentityService},
+					allowed:          true,
+				},
+				{
+					name:             "provisioning profile uses embedded handler",
+					evaluator:        ac.EvalPermission("dashboards:create"),
+					internalIdentity: &LegacyInternalIdentity{Profile: LegacyInternalIdentityProvisioning},
+					allowed:          true,
+				},
+				{
+					name:             "internal profile denies ungranted action",
+					evaluator:        ac.EvalPermission("users:delete"),
+					internalIdentity: &LegacyInternalIdentity{Profile: LegacyInternalIdentityService},
+				},
 			} {
 				t.Run(check.name, func(t *testing.T) {
-					allowed, err := client.LegacyCheck(t.Context(), LegacyCheckRequest{
-						Namespace: "default",
-						Subject:   "anonymous:0",
-						Evaluator: check.evaluator,
-					})
+					req := LegacyCheckRequest{
+						Namespace:        "default",
+						Subject:          "anonymous:0",
+						Evaluator:        check.evaluator,
+						InternalIdentity: check.internalIdentity,
+					}
+					if check.internalIdentity != nil {
+						req.Subject = ""
+					}
+
+					allowed, err := client.LegacyCheck(t.Context(), req)
 					require.NoError(t, err)
 					require.Equal(t, check.allowed, allowed)
 				})

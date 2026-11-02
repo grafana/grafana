@@ -704,6 +704,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "dashboard.notebookComments",
+			Description: "Enables commenting on Notebook cells",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "grafana.dashboardComposer",
 			Description: "Enables Composer mode for editing dashboards with Grafana Assistant",
 			Stage:       FeatureStageExperimental,
@@ -2055,7 +2063,7 @@ var (
 			Name:        "heatmapNegativeLogBuckets",
 			Description: "Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDatavizSquad,
 			Expression:  "false",
 		},
@@ -3064,14 +3072,6 @@ var (
 			Generate:    Generate{React: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
-		},
-		{
-			Name:        "grafana.growthHomepage",
-			Description: "Enables PLG-focused growth redesign of the unified homepage",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendNavigation,
-			Generate:    Generate{React: true},
-			Expression:  "false",
 		},
 		{
 			Name:            "kubernetesReporting",

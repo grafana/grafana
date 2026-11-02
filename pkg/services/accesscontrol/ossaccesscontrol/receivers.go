@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -90,6 +91,7 @@ func ProvideReceiverPermissionsService(
 	}
 	receivers := &ReceiverPermissionsService{Service: srv, sql: sql, ac: service, log: log.New("resourcepermissions.receivers")}
 	sql.Bus().AddEventListener(receivers.onPermissionsCopied)
+	sql.Bus().AddEventListener(receivers.onDefaultPermissionsSet)
 	return receivers, nil
 }
 
@@ -127,13 +129,26 @@ func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, o
 
 	if _, err := r.SetPermissions(ctx, orgID, resourceId, permissions...); err != nil {
 		r.log.Error("Could not set default permissions", "receiver_uid", uid, "resource_id", resourceId, "id", "error", err)
+		return
 	}
 
 	if clearCache {
-		// Clear permission cache for the user who created the receiver, so that new permissions are fetched for their next call
-		// Required for cases when caller wants to immediately interact with the newly created object
-		r.ac.ClearUserPermissionCache(user)
+		event := &receiverDefaultPermissionsSet{requester: user}
+		if sess := sqlstore.SessionFromContext(ctx); sess != nil {
+			sess.PublishAfterCommit(event)
+		} else {
+			_ = r.onDefaultPermissionsSet(ctx, event)
+		}
 	}
+}
+
+type receiverDefaultPermissionsSet struct {
+	requester identity.Requester
+}
+
+func (r ReceiverPermissionsService) onDefaultPermissionsSet(ctx context.Context, event *receiverDefaultPermissionsSet) error {
+	permissioncache.RefreshCreator(ctx, r.ac, event.requester)
+	return nil
 }
 
 // copyPermissionUser returns a user with permissions to copy permissions from one receiver to another. This must include

@@ -79,6 +79,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-10-29,dashboards.disableLiveSaveNotices,experimental,@grafana/grafana-backend-services-squad,false,false,true
 2026-08-05,disableScriptedDashboards,deprecated,@grafana/dashboards-squad,false,false,true
 2026-07-09,dashboard.notebooks,preview,@grafana/sharing-squad,false,false,false
+2026-11-02,dashboard.notebookComments,experimental,@grafana/sharing-squad,false,false,false
 2026-10-19,grafana.dashboardComposer,experimental,@grafana/dashboards-squad,false,false,true
 2026-10-22,grafana.savedDashboardViews,experimental,@grafana/sharing-squad,false,false,false
 2026-09-23,grafana.dashboardPreviewMode,experimental,@grafana/dashboards-squad,false,false,true
@@ -355,7 +356,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-01,cujTracking,experimental,@grafana/dashboards-squad,false,false,true
 2026-06-30,auth.tokenRotationGracePeriod,experimental,@grafana/identity-access-team,false,false,false
 2026-07-03,grafana.dashboardSettingsRedesign,GA,@grafana/dashboards-squad,false,false,true
-2026-07-02,grafana.growthHomepage,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-07-02,kubernetesReporting,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-09-17,reporting.legacyServiceUsesK8SClient,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-10-02,reporting.legacySettingServiceUsesK8SClient,experimental,@grafana/grafana-operator-experience-squad,false,true,false

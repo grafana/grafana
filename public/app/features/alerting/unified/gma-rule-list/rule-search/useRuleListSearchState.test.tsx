@@ -4,13 +4,13 @@ import { locationService } from '@grafana/runtime';
 
 import { type RuleSearchSchema } from './filterDefinitions';
 import { sharedFilters } from './sharedFilters';
-import { type SharedRuleFilter, createEmptyFilter } from './sharedRuleFilter';
+import { type SharedRuleFilter, createRulesApiFilter } from './sharedRuleFilter';
 import { useRuleListSearchState } from './useRuleListSearchState';
 
 // A page with only some of the shared filters, so the hook is tested without either page's own.
 const schema: RuleSearchSchema<SharedRuleFilter> = {
   filters: [sharedFilters.folder, sharedFilters.label],
-  createEmptyFilter,
+  createEmptyFilter: createRulesApiFilter,
 };
 
 function renderAt(search: string) {
@@ -24,7 +24,7 @@ describe('useRuleListSearchState', () => {
     const { result } = renderAt(`?${new URLSearchParams({ search: 'plugins:hide label:  folder:f1' })}`);
 
     expect(result.current.query).toBe('plugins:hide label:  folder:f1');
-    expect(result.current.filter).toEqual({ ...createEmptyFilter(), folders: ['f1'], text: ['plugins:hide'] });
+    expect(result.current.filter).toEqual(createRulesApiFilter({ folders: ['f1'], text: ['plugins:hide'] }));
     expect(result.current.parseIssues).toEqual([{ key: 'label', reason: 'invalid' }]);
     expect(result.current.filterHelp).toBe(schema.filters);
   });
