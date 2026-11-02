@@ -9,7 +9,7 @@ interface SearchStarredArgs {
   folders: string[];
 }
 
-export const starsAPI = collectionsAPIv1alpha1.injectEndpoints({
+const starsAPI = collectionsAPIv1alpha1.injectEndpoints({
   endpoints: (build) => ({
     /**
      * Starred items as search rows. The star set is the argument, so a changed set is a new cache entry: the
