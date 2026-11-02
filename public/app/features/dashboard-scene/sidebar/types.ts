@@ -1,6 +1,8 @@
 import { type SceneObjectState, type SceneObject } from '@grafana/scenes';
 import { type ElementSelectionContextState, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 
+import { type PendingChangesHistory } from '../lifecycle/pendingChangePreview';
+
 import { type DashboardEditActionEvent, type DashboardEditActionEventPayload, type PaneCloseReason } from './events';
 import { type DashboardOutline } from './outline/DashboardOutline';
 
@@ -42,6 +44,7 @@ export interface DashboardSidebarLike extends SceneObject<DashboardSidebarState>
   undoLastAction(trigger?: string): void;
   redoAction(): void;
   redoLastAction(trigger?: string): void;
+  pendingChangesHistory(): PendingChangesHistory | undefined;
   recordCompletedEdit(action: DashboardEditActionEventPayload): void;
   clearHistory(): void;
   goBackToPrevious(): void;

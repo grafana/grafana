@@ -1,7 +1,6 @@
 package search
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -2381,13 +2380,77 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 	}
 }
 
+func TestOpenIndexesByKind(t *testing.T) {
+	backend, reg := setupBleveBackend(t)
+	dashboard := resource.NamespacedResource{Namespace: "test", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	otherNamespace := dashboard
+	otherNamespace.Namespace = "other"
+	fileDashboard := dashboard
+	fileDashboard.Namespace = "file"
+	folder := resource.NamespacedResource{Namespace: "test", Group: "folder.grafana.app", Resource: "folders"}
+	global := resource.GlobalSearchKey("test")
+
+	build := func(key resource.NamespacedResource, docs int, rebuild bool) {
+		t.Helper()
+		docsKey := key
+		if key.IsGlobal() {
+			docsKey = dashboard
+		}
+		_, err := backend.BuildIndex(t.Context(), key, int64(docs), "test", indexTestDocs(docsKey, docs, 100), nil, rebuild, time.Time{}, 0, resource.BuildIndexOptions{})
+		require.NoError(t, err)
+	}
+	check := func(memoryDashboards, fileDashboards, memoryFolders, fileGlobal int) {
+		t.Helper()
+		require.NoError(t, testutil.GatherAndCompare(reg, strings.NewReader(fmt.Sprintf(`
+			# HELP grafana_index_server_open_indexes Number of open indexes by storage type and kind. Global indexes use kind="global".
+			# TYPE grafana_index_server_open_indexes gauge
+			grafana_index_server_open_indexes{index_storage="memory",kind="dashboards"} %d
+			grafana_index_server_open_indexes{index_storage="file",kind="dashboards"} %d
+			grafana_index_server_open_indexes{index_storage="memory",kind="folders"} %d
+			grafana_index_server_open_indexes{index_storage="file",kind="global"} %d
+		`, memoryDashboards, fileDashboards, memoryFolders, fileGlobal)), "grafana_index_server_open_indexes"))
+	}
+
+	build(dashboard, 1, false)
+	build(otherNamespace, 1, false)
+	build(fileDashboard, defaultFileThreshold, false)
+	build(folder, 1, false)
+	build(global, defaultFileThreshold, false)
+	check(2, 1, 1, 1)
+
+	build(dashboard, 1, true)
+	check(2, 1, 1, 1)
+
+	build(dashboard, defaultFileThreshold, true)
+	check(1, 2, 1, 1)
+
+	backend.runEvictExpiredOrUnownedIndexes(time.Now().Add(2 * defaultIndexCacheTTL))
+	check(0, 2, 0, 1)
+
+	backend.closeAllIndexes()
+	check(0, 0, 0, 0)
+}
+
 func checkOpenIndexes(t *testing.T, reg prometheus.Gatherer, memory, file int) {
-	require.NoError(t, testutil.GatherAndCompare(reg, bytes.NewBufferString(fmt.Sprintf(`
-		# HELP grafana_index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
-		# TYPE grafana_index_server_open_indexes gauge
-		grafana_index_server_open_indexes{index_storage="memory"} %d
-		grafana_index_server_open_indexes{index_storage="file"} %d
-	`, memory, file)), "grafana_index_server_open_indexes"))
+	t.Helper()
+
+	families, err := reg.Gather()
+	require.NoError(t, err)
+	counts := map[string]float64{}
+	for _, family := range families {
+		if family.GetName() != "grafana_index_server_open_indexes" {
+			continue
+		}
+		for _, metric := range family.GetMetric() {
+			for _, label := range metric.GetLabel() {
+				if label.GetName() == "index_storage" {
+					counts[label.GetValue()] += metric.GetGauge().GetValue()
+				}
+			}
+		}
+	}
+	require.Equal(t, float64(memory), counts["memory"])
+	require.Equal(t, float64(file), counts["file"])
 }
 
 func verifyDirEntriesCount(t *testing.T, dir string, count int) {
