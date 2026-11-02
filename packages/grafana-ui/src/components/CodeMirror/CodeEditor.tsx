@@ -117,11 +117,8 @@ export const CodeEditor = memo(function CodeEditor({
   const sources = useShallowStable(completionSources);
   const basicSetup = useShallowStable(basicSetupProp);
   const editorRef = useRef<ReactCodeMirrorRef>(null);
+  // A fresh wrapper makes React redraw the ruler when CodeMirror's mutable view changes.
   const [overviewRulerState, setOverviewRulerState] = useState<OverviewRulerState | null>(null);
-  const overviewRulerExtension = useMemo(
-    () => (overviewRuler ? createOverviewRulerExtension(setOverviewRulerState) : []),
-    [overviewRuler]
-  );
   const handleChange = useStableCallback(onChange);
   const handleBlur = useStableCallback(() => {
     const editorView = editorRef.current?.view;
@@ -143,7 +140,7 @@ export const CodeEditor = memo(function CodeEditor({
       ...(languageExtension ? [languageExtension] : []),
       ...getCompletionExtensions(sources, completionMode, completeOnSpace),
       ...(lineWrapping ? [EditorView.lineWrapping] : []),
-      ...overviewRulerExtension,
+      ...(overviewRuler ? createOverviewRulerExtension(setOverviewRulerState) : []),
       ...(additionalExtensions ?? []),
     ],
     [
@@ -156,7 +153,7 @@ export const CodeEditor = memo(function CodeEditor({
       completionMode,
       completeOnSpace,
       lineWrapping,
-      overviewRulerExtension,
+      overviewRuler,
       additionalExtensions,
     ]
   );

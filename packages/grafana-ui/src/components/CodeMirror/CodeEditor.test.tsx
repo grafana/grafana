@@ -309,7 +309,7 @@ describe('CodeMirror CodeEditor', () => {
       createCodeEditorThemeMock.mockImplementation(originalCreateCodeEditorTheme);
     });
 
-    it('defaults off and can be toggled without replacing the editor or clearing diagnostics', async () => {
+    it('defaults off and can be toggled and reconfigured without replacing the editor or clearing diagnostics', async () => {
       const extensions = [linter(null)];
       const { rerender } = render(<CodeEditor value={'one\ntwo'} onChange={jest.fn()} extensions={extensions} />);
       const editor = await screen.findByRole('textbox');
@@ -323,6 +323,19 @@ describe('CodeMirror CodeEditor', () => {
       rerender(<CodeEditor value={'one\ntwo'} onChange={jest.fn()} extensions={extensions} overviewRuler />);
       expect(await screen.findByRole('button', { name: 'Line 2: Invalid value' })).toBeVisible();
       expect(screen.getByRole('textbox')).toBe(editor);
+
+      rerender(
+        <CodeEditor
+          value={'one\ntwo'}
+          onChange={jest.fn()}
+          extensions={extensions}
+          overviewRuler
+          aria-label="Updated editor"
+        />
+      );
+      expect(await screen.findByRole('button', { name: 'Line 2: Invalid value' })).toBeVisible();
+      expect(screen.getByRole('textbox', { name: 'Updated editor' })).toBe(editor);
+      expect(diagnosticCount(view.state)).toBe(1);
 
       rerender(<CodeEditor value={'one\ntwo'} onChange={jest.fn()} extensions={extensions} overviewRuler={false} />);
       expect(screen.getByRole('textbox')).toBe(editor);
