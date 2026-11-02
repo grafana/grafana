@@ -69,7 +69,8 @@ import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { type DSReferencesMapping } from './DashboardSceneSerializer';
 import { transformV1ToV2AnnotationQuery } from './annotations';
-import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
+import { normalizeDataSourceRef } from './normalizeDataSourceRef';
+import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToSchemaV2Variables';
 import { buildTimeSettingsSpec } from './shared/timeSettings';
 import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
@@ -357,7 +358,7 @@ export function vizPanelToSchemaV2(
   const subtitle =
     bakeRepeatValues && vizPanel.state.subtitle
       ? sceneGraph.interpolate(vizPanel, vizPanel.state.subtitle, undefined, 'text')
-      : undefined;
+      : vizPanel.state.subtitle;
 
   const elementSpec: PanelKind = {
     kind: 'Panel',
@@ -1041,20 +1042,6 @@ export function getAutoAssignedDSRef(
 
   // if type is not panels, annotations, or variables, throw error
   throw new Error(`Invalid type ${type} for getAutoAssignedDSRef`);
-}
-
-export function normalizeDataSourceRef(ds: DataSourceRef | string | null | undefined): DataSourceRef | undefined {
-  if (!ds) {
-    return undefined;
-  }
-
-  // Known datasource names are resolved to refs when a v1 dashboard is loaded (see resolveLegacyDatasourceNames),
-  // so a string that is left is a template variable or an unknown datasource.
-  if (typeof ds === 'string') {
-    return { uid: ds };
-  }
-
-  return Object.keys(ds).length === 0 ? undefined : ds;
 }
 
 /**

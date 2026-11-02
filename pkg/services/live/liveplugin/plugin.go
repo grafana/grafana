@@ -2,16 +2,19 @@ package liveplugin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/centrifugal/centrifuge"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/grafana/grafana/apps/live/pkg/orgchannel"
+	"github.com/grafana/grafana/apps/live/pkg/pipeline"
+	"github.com/grafana/grafana/apps/live/pkg/runstream"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/live/orgchannel"
-	"github.com/grafana/grafana/pkg/services/live/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 )
 
@@ -74,6 +77,14 @@ func NewContextGetter(pluginContextProvider *plugincontext.Provider, dataSourceC
 }
 
 func (g *ContextGetter) GetPluginContext(ctx context.Context, user identity.Requester, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, error) {
+	pCtx, err := g.getPluginContext(ctx, user, pluginID, datasourceUID, skipCache)
+	if errors.Is(err, plugins.ErrPluginNotRegistered) {
+		err = fmt.Errorf("%w: %w", runstream.ErrPluginNotRegistered, err)
+	}
+	return pCtx, err
+}
+
+func (g *ContextGetter) getPluginContext(ctx context.Context, user identity.Requester, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, error) {
 	if datasourceUID == "" {
 		return g.pluginContextProvider.Get(ctx, pluginID, user, user.GetOrgID())
 	}

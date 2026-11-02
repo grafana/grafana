@@ -248,7 +248,8 @@ func TestIntegrationDatasourceProxy(t *testing.T) {
 			require.Equal(t, http.StatusForbidden, status)
 			require.Nil(t, upstreamGot(), "RBAC-denied request must not reach the upstream")
 
-			// Explicit route actions remain supported by the legacy proxy only.
+			// The datasource query action is mapped for both proxy transports. Alerting
+			// route actions remain unsupported by the apiserver proxy until their mappings are added.
 			for _, request := range []struct {
 				user   apis.User
 				method string
@@ -260,12 +261,15 @@ func TestIntegrationDatasourceProxy(t *testing.T) {
 				{helper.Org1.Admin, http.MethodDelete, "rules"},
 			} {
 				status, body := doProxy(request.user, request.method, transport.path(uid, request.path), nil)
-				if transport.name == "apiserver" {
-					require.Equal(t, http.StatusForbidden, status, "body: %s", body)
-					require.Nil(t, upstreamGot(), "unsupported route action must not reach the upstream")
-				} else {
-					require.Equal(t, http.StatusOK, status, "body: %s", body)
+				wantStatus := http.StatusOK
+				if transport.name == "apiserver" && request.path != "query" {
+					wantStatus = http.StatusForbidden
+				}
+				require.Equal(t, wantStatus, status, "body: %s", body)
+				if wantStatus == http.StatusOK {
 					require.NotNil(t, upstreamGot())
+				} else {
+					require.Nil(t, upstreamGot(), "unsupported route action must not reach the upstream")
 				}
 			}
 		})

@@ -122,13 +122,11 @@ func (c PostRankAuthzConfig) growWindow(base, nextWindow int) int {
 }
 
 // ensureSearchFields makes bleve load every stored field when the caller did not
-// request an explicit field set. The SEARCH_FIELD_ALL_FIELDS sentinel tells
-// hitsToTable to use the curated allFields column list.
+// request an explicit field set. The SEARCH_FIELD_ALL_FIELDS sentinel selects the
+// curated response field list.
 //
-// It also adds the resource version, which every result carries regardless of the
-// requested fields. Both happen here rather than in toBleveSearchRequest because
-// Search snapshots the response field list before calling this, so what is added
-// is loaded without becoming a response column.
+// Load the stored resource version after Search snapshots the response fields,
+// so its internal field name does not become a response field.
 func (b *bleveIndex) ensureSearchFields(searchrequest *bleve.SearchRequest, req *resourcepb.ResourceSearchRequest) error {
 	if len(req.Fields) < 1 && req.Limit > 0 {
 		f, err := b.index.Fields()
@@ -583,7 +581,7 @@ windows:
 			}
 		}
 
-		for info, err := range authorizeHits(ctx, access, candidateSeq, extractFn, trashAuthz) {
+		for info, err := range authorizeHits(ctx, access, candidateSeq, len(res.Hits), extractFn, trashAuthz) {
 			if err != nil {
 				return nil, err
 			}
@@ -665,18 +663,20 @@ windows:
 
 // authorizeHits filters ranked hits by the trash rule when trashAuthz is set,
 // otherwise by the read check. Same shape either way, so the scan loops do not
-// need to know which is running.
+// need to know which is running. sizeHint is how many hits candidates yields
+// at most.
 func authorizeHits(
 	ctx context.Context,
 	access authlib.AccessClient,
 	candidates iter.Seq[docInfo],
+	sizeHint int,
 	extractFn func(docInfo) authz.BatchCheckItem,
 	trashAuthz *resource.TrashAuthorizer,
 ) iter.Seq2[docInfo, error] {
 	if trashAuthz != nil {
 		return trashAuthorized(ctx, candidates, trashAuthz)
 	}
-	return authz.FilterAuthorized(ctx, access, candidates, extractFn, authz.WithTracer(tracer))
+	return authz.FilterAuthorized(ctx, access, candidates, extractFn, authz.WithTracer(tracer), authz.WithSizeHint(sizeHint))
 }
 
 func (b *bleveIndex) prepareFacetAggregation(
@@ -767,7 +767,7 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 				}
 			}
 		}
-		for info, err := range authorizeHits(ctx, access, candidateSeq, extractFn, trashAuthz) {
+		for info, err := range authorizeHits(ctx, access, candidateSeq, len(windowHits), extractFn, trashAuthz) {
 			if err != nil {
 				return nil, 0, false, err
 			}
@@ -869,7 +869,7 @@ func (b *bleveIndex) finalizePostFilter(
 	}
 
 	resultsConversionStart := time.Now()
-	if err := b.setSearchResults(ctx, response, selectFields, fieldValueSchema, page, sort, req.Explain); err != nil {
+	if err := b.setSearchResults(response, fieldValueSchema, page, sort); err != nil {
 		return err
 	}
 	if wantFacets {

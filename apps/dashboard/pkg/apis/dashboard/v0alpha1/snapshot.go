@@ -1,11 +1,38 @@
 package v0alpha1
 
 import (
+	"net/url"
+	"strings"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
+
+// GetExternalDeleteURL prefers the server-provided endpoint; older snapshots may only have a public URL.
+func (s *Snapshot) GetExternalDeleteURL() string {
+	if s.Spec.ExternalDeleteUrl != nil && *s.Spec.ExternalDeleteUrl != "" {
+		return *s.Spec.ExternalDeleteUrl
+	}
+	if s.Spec.ExternalUrl == nil || s.Spec.DeleteKey == nil || *s.Spec.DeleteKey == "" {
+		return ""
+	}
+	parsed, err := url.Parse(*s.Spec.ExternalUrl)
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return ""
+	}
+	index := strings.LastIndex(parsed.Path, "/dashboard/snapshot/")
+	if index < 0 {
+		return ""
+	}
+	parsed.Path = parsed.Path[:index] + "/api/snapshots-delete/" + *s.Spec.DeleteKey
+	parsed.RawPath = ""
+	parsed.RawQuery = ""
+	parsed.ForceQuery = false
+	parsed.Fragment = ""
+	return parsed.String()
+}
 
 // This is returned from the POST command
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

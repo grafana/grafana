@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"maps"
 	"slices"
@@ -40,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -361,6 +363,104 @@ func TestIntegrationContactPointService(t *testing.T) {
 		assert.Equal(t, oldName, svc.Calls[0].Args[3])
 		assert.Equal(t, newName, svc.Calls[0].Args[4])
 		assert.Equal(t, models.ProvenanceAPI, svc.Calls[0].Args[5])
+	})
+
+	t.Run("update copies permissions with the requester during a rename", func(t *testing.T) {
+		failure := errors.New("save failed")
+		for _, tc := range []struct {
+			name    string
+			rename  bool
+			saveErr error
+			want    []string
+		}{
+			{name: "rename", rename: true, want: []string{"copy", "save"}},
+			{name: "unchanged name", want: []string{"save"}},
+			{name: "save failure", rename: true, saveErr: failure, want: []string{"copy", "save"}},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				cfg := createEncryptedConfig(t, secretsService)
+				store := fakes.NewFakeAlertmanagerConfigStore(cfg)
+				sut := createContactPointServiceSutWithConfigStore(t, secretsService, store)
+				sut.receiverService = &fakeReceiverService{}
+
+				cp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestContactPoint(), models.ProvenanceAPI)
+				require.NoError(t, err)
+				if tc.rename {
+					cp.Name = "new-name"
+				}
+
+				var calls []string
+				store.UpdateFn = func(ctx context.Context, _ *models.SaveAlertmanagerConfigurationCmd) error {
+					assertInTransaction(t, ctx)
+					calls = append(calls, "save")
+					return tc.saveErr
+				}
+				sut.resourcePermissions = contactPointPermissionSpy{
+					FakeReceiverPermissionsService: fakes.NewFakeReceiverPermissionsService(),
+					copy: func(ctx context.Context, actor identity.Requester) {
+						assertInTransaction(t, ctx)
+						require.Same(t, adminUser, actor)
+						calls = append(calls, "copy")
+					},
+				}
+
+				err = sut.UpdateContactPoint(t.Context(), 1, adminUser, cp, models.ProvenanceAPI)
+				if tc.saveErr != nil {
+					require.ErrorIs(t, err, failure)
+				} else {
+					require.NoError(t, err)
+				}
+				require.Equal(t, tc.want, calls)
+			})
+		}
+	})
+
+	t.Run("update in an existing SQL transaction", func(t *testing.T) {
+		for _, tc := range []struct {
+			name   string
+			rename bool
+		}{
+			{name: "rename is allowed", rename: true},
+			{name: "unchanged name is allowed"},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				cfg := createEncryptedConfig(t, secretsService)
+				store := fakes.NewFakeAlertmanagerConfigStore(cfg)
+				sut := createContactPointServiceSutWithConfigStore(t, secretsService, store)
+				sut.receiverService = &fakeReceiverService{}
+
+				cp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestContactPoint(), models.ProvenanceAPI)
+				require.NoError(t, err)
+				if tc.rename {
+					cp.Name = "new-name"
+				}
+
+				saved := false
+				store.UpdateFn = func(context.Context, *models.SaveAlertmanagerConfigurationCmd) error {
+					saved = true
+					return nil
+				}
+				copied := false
+				sut.resourcePermissions = contactPointPermissionSpy{
+					FakeReceiverPermissionsService: fakes.NewFakeReceiverPermissionsService(),
+					copy: func(ctx context.Context, actor identity.Requester) {
+						require.True(t, sqlstore.IsInTransaction(ctx))
+						require.Same(t, adminUser, actor)
+						copied = true
+					},
+				}
+
+				// A fresh secrets service forces data-key reads instead of hiding invalid sessions through cache hits.
+				sut.encryptionService = manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+				sut.xact = sqlStore
+				err = sqlStore.InTransaction(t.Context(), func(ctx context.Context) error {
+					return sut.UpdateContactPoint(ctx, 1, adminUser, cp, models.ProvenanceAPI)
+				})
+				require.NoError(t, err)
+				require.True(t, saved)
+				require.Equal(t, tc.rename, copied)
+			})
+		}
 	})
 
 	t.Run("default provenance of contact points is none", func(t *testing.T) {
@@ -742,6 +842,39 @@ func TestIntegrationContactPointServiceProtectedFields(t *testing.T) {
 	})
 }
 
+func TestCheckProtectedFields_HasUpdateProtectedError(t *testing.T) {
+	settings, err := simplejson.NewJson([]byte(`{"url":"https://example.com/webhook"}`))
+	require.NoError(t, err)
+	cp := definitions.EmbeddedContactPoint{UID: "uid", Name: "test-webhook", Type: "webhook", Settings: settings}
+	typeSchema, ok := notify.GetSchemaVersionForIntegration(schema.WebhookType, schema.V1)
+	require.True(t, ok)
+	usr := &user.SignedInUser{OrgID: 1}
+
+	for _, tc := range []struct {
+		name        string
+		hasErr      error
+		expectedErr string
+	}{
+		{name: "backend error is returned", hasErr: errors.New("boom"), expectedErr: "failed to check protected fields permission"},
+		{name: "authorization error is treated as no permission", hasErr: ac.NewAuthorizationErrorGeneric("update protected")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			svc := &ContactPointService{authz: &acfakes.FakeReceiverAccessService[*models.Receiver]{
+				HasUpdateProtectedFunc: func(context.Context, identity.Requester, *models.Receiver) (bool, error) {
+					return false, tc.hasErr
+				},
+			}}
+			err := svc.checkProtectedFields(context.Background(), usr, typeSchema, cp, cp)
+			if tc.expectedErr != "" {
+				require.ErrorIs(t, err, tc.hasErr)
+				require.ErrorContains(t, err, tc.expectedErr)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestRemoveSecretsForContactPoint(t *testing.T) {
 	overrides := map[schema.IntegrationType]func(settings map[string]any){
 		"webhook": func(settings map[string]any) { // add additional field to the settings because valid config does not allow it to be specified along with password
@@ -1023,6 +1156,16 @@ func TestIntegrationAuthorization(t *testing.T) {
 			assert.ElementsMatch(t, []string{"AuthorizeDeleteByUID"}, authz.Calls.Methods())
 		})
 	})
+}
+
+type contactPointPermissionSpy struct {
+	*fakes.FakeReceiverPermissionsService
+	copy func(context.Context, identity.Requester)
+}
+
+func (s contactPointPermissionSpy) CopyPermissions(ctx context.Context, _ int64, user identity.Requester, _, _ string) (int, error) {
+	s.copy(ctx, user)
+	return 0, nil
 }
 
 func createContactPointServiceSut(t *testing.T,

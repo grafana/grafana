@@ -29,7 +29,7 @@ Never import from `JourneyTrackerImpl` or `JourneyRegistryImpl` directly - those
 
 ## Adding a New Journey: Recipe
 
-> **Fast path:** `yarn cuj:new <type> [--with-smoke]` scaffolds the wiring file, test file, optional smoke driver, registry entry, and bootstrap import in one shot. Run `yarn cuj:new --help` for flags (`--owner`, `--description`, `--timeout-ms`, `--parent`, `--dry-run`). After scaffolding, fill in the TODOs marked in the generated files. The steps below describe what the script generates and why.
+> **Fast path:** `pnpm cuj:new <type> [--with-smoke]` scaffolds the wiring file, test file, optional smoke driver, registry entry, and bootstrap import in one shot. Run `pnpm cuj:new --help` for flags (`--owner`, `--description`, `--timeout-ms`, `--parent`, `--dry-run`). After scaffolding, fill in the TODOs marked in the generated files. The steps below describe what the script generates and why.
 
 This is the short version of `journey-tracking.md` Steps 0-7. Read the full version if anything's unclear.
 
@@ -127,7 +127,7 @@ Path: `public/app/core/journeys/<camelCase>.test.ts`. Copy the shape of `searchT
 - doesn't double-start when journey is active
 - ignores irrelevant interactions
 
-Run: `yarn jest --no-watch <camelCase>.test.ts`.
+Run: `pnpm exec jest --no-watch <camelCase>.test.ts`.
 
 ### 7. Verify locally
 
@@ -158,4 +158,4 @@ For automated load: see `./searchToResource.smoke.ts` for the optional smoke dri
 
 Each journey can ship a Playwright smoke driver that exercises it against local Grafana. Pattern: a `<camelCase>.smoke.ts` file alongside the wiring that exports a `JourneyDriver`. Shared helpers (typing patterns, activation styles, palette open) live in `./__smoke__/`. The orchestrator in `scripts/cuj-smoke.ts` imports and registers each driver. See `searchToResource.smoke.ts` for the canonical example.
 
-Smoke files import each other with explicit `.ts` extensions (Node ESM requirement) and live under their own `tsconfig.smoke.json`. Validate with `yarn typecheck:smoke` (also runs in CI + lefthook on relevant file changes).
+Smoke files import each other with explicit `.ts` extensions (Node ESM requirement) and live under their own `tsconfig.smoke.json`. Validate with `pnpm typecheck:smoke` (also runs in CI + lefthook on relevant file changes).

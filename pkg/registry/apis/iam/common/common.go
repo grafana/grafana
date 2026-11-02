@@ -133,6 +133,7 @@ outer:
 
 			res.Items = append(res.Items, item)
 		}
+		res.Continue = r.Continue
 	}
 
 	return res, nil

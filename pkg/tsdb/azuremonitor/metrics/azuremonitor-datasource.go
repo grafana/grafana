@@ -123,11 +123,13 @@ func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, ori
 			e.Logger.Error("Azure Monitor datasource has batchAPIEnabled=true but no batch metrics service is configured")
 			return nil, backend.DownstreamError(errors.New("the Azure Monitor metrics batch service is not configured; please validate your Azure cloud configuration includes the metrics data plane route"))
 		}
+		e.Logger.Debug("routing metrics queries to the Batch data-plane API", "api", "batch", "endpoint", svc.URL, "numQueries", len(originalQueries))
 		return e.executeBatchTimeSeriesQuery(ctx, originalQueries, dsInfo, client, svc.HTTPClient, svc.URL)
 	}
 	if dsInfo.Settings.BatchAPIEnabled {
 		e.Logger.Warn("Azure Monitor datasource has batchAPIEnabled=true but the datasources.azureMonitorBatchAPI feature flag is off; falling back to the legacy ARM metrics endpoint")
 	}
+	e.Logger.Debug("routing metrics queries to the ARM control-plane API", "api", "arm", "endpoint", url, "numQueries", len(originalQueries))
 
 	result := backend.NewQueryDataResponse()
 	for _, query := range originalQueries {

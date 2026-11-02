@@ -6,6 +6,7 @@ import { type CreateNotificationsqueryalertsNotificationEntryAlert } from '@graf
 import { type GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { LoadingPlaceholder, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { isHttpUrl } from 'app/core/utils/url';
 
 import { AlertEnrichments } from '../components/AlertEnrichments';
 import { StateTag } from '../components/StateTag';
@@ -254,17 +255,8 @@ function AlertCard({ alert, groupLabels }: AlertCardProps) {
   );
 }
 
-function isUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
-
 function AnnotationValue({ value }: { value: string }) {
-  if (isUrl(value)) {
+  if (isHttpUrl(value)) {
     return (
       <TextLink href={value} external inline={false}>
         {value}

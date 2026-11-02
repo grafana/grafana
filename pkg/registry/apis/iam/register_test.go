@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"testing"
 
@@ -31,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/userpermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -263,7 +266,17 @@ func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {
 		teamLBACApiInstaller: ProvideNoopTeamLBACApiInstaller(),
 		tracing:              tracing.InitializeTracerForTest(),
 	}
-	require.Nil(t, b.teamLBACApiInstaller.GetTeamLBACUsageRoutes(nil))
+	defs := iamv0.GetOpenAPIDefinitions(func(string) spec.Ref { return spec.Ref{} })
+	routes := b.teamLBACApiInstaller.GetTeamLBACUsageRoutes(defs)
+	require.Len(t, routes.Namespace, 1)
+	route := routes.Namespace[0]
+	require.Equal(t, "teamlbacusage", route.Path)
+	responseSchema := route.Spec.Get.Responses.StatusCodeResponses[200].Content["application/json"].Schema
+	require.Contains(t, responseSchema.Properties, "counts")
+	response := httptest.NewRecorder()
+	route.Handler(response, httptest.NewRequest(http.MethodGet, "/apis/iam.grafana.app/v0alpha1/namespaces/org-1/teamlbacusage", nil))
+	require.Equal(t, http.StatusForbidden, response.Code)
+	require.NotContains(t, response.Body.String(), "counts")
 	decision, _, err := b.teamLBACApiInstaller.GetTeamLBACUsageAuthorizer().Authorize(context.Background(), authorizer.AttributesRecord{
 		ResourceRequest: true, Resource: "teamlbacusage", Verb: "list", Namespace: "org-1",
 	})
@@ -276,6 +289,20 @@ func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {
 	err = b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage)
 	require.NoError(t, err)
 	require.NotNil(t, storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")])
+}
+
+func TestUpdateTeamLBACRulesAPIGroupWithoutTeamAPI(t *testing.T) {
+	tracer := tracing.InitializeTracerForTest()
+	b := &IdentityAccessManagementAPIBuilder{
+		teamLBACApiInstaller: ProvideNoopTeamLBACApiInstaller(),
+		legacyTeamStore:      team.NewLegacyStore(nil, nil, tracer, nil),
+		tracing:              tracer,
+	}
+	storage := map[string]rest.Storage{}
+	err := b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage)
+	require.NoError(t, err)
+	require.NotNil(t, storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")])
+	require.NotContains(t, storage, iamv0.TeamResourceInfo.StoragePath())
 }
 
 func TestUpdateUsersAPIGroup_TeamsSubresourceRequiresTeamsAPI(t *testing.T) {

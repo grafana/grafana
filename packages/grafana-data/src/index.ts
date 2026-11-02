@@ -446,6 +446,19 @@ export {
   type RangeValueMatcherOptions,
 } from './transformations/matchers/valueMatchers/types';
 export { LayoutModes, type LayoutMode } from './types/layout';
+export type {
+  PanelStatusAction,
+  PanelStatusActions,
+  PanelNotice,
+  PanelStatusItem,
+  PanelStatusActionContext,
+  PanelStatusActionResolver,
+  PanelNoticeSource,
+  PanelStatusActionState,
+  PanelStatusSnapshot,
+  PanelNotices,
+} from './panel/PanelNotices';
+
 export {
   PanelPlugin,
   type PanelOptionsSupplier,

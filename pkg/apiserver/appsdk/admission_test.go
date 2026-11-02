@@ -13,6 +13,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/user"
@@ -65,8 +66,25 @@ func TestAppAdmission_Admit(t *testing.T) {
 		appGetter: func() app.App {
 			return nil
 		},
+		manifestData:  manifestWithMutation([]app.AdmissionOperation{app.AdmissionOperationUpdate}),
 		req:           defaultReq(),
 		expectedError: admission.NewForbidden(defaultReq(), errors.New("app is not initialized")),
+	}, {
+		name: "uninitialized app ignores kinds from other groups",
+		appGetter: func() app.App {
+			return nil
+		},
+		manifestData:  manifestWithMutation([]app.AdmissionOperation{app.AdmissionOperationAny}),
+		req:           otherGroupReq(),
+		expectedError: nil,
+	}, {
+		name: "uninitialized app ignores unhandled operations",
+		appGetter: func() app.App {
+			return nil
+		},
+		manifestData:  manifestWithMutation([]app.AdmissionOperation{app.AdmissionOperationCreate}),
+		req:           defaultReq(),
+		expectedError: nil,
 	}, {
 		name: "no admission info",
 		appGetter: func() app.App {
@@ -211,8 +229,25 @@ func TestAppAdmission_Validate(t *testing.T) {
 		appGetter: func() app.App {
 			return nil
 		},
+		manifestData:  manifestWithValidation([]app.AdmissionOperation{app.AdmissionOperationUpdate}),
 		req:           defaultReq(),
 		expectedError: admission.NewForbidden(defaultReq(), errors.New("app is not initialized")),
+	}, {
+		name: "uninitialized app ignores kinds from other groups",
+		appGetter: func() app.App {
+			return nil
+		},
+		manifestData:  manifestWithValidation([]app.AdmissionOperation{app.AdmissionOperationAny}),
+		req:           otherGroupReq(),
+		expectedError: nil,
+	}, {
+		name: "uninitialized app ignores unhandled operations",
+		appGetter: func() app.App {
+			return nil
+		},
+		manifestData:  manifestWithValidation([]app.AdmissionOperation{app.AdmissionOperationCreate}),
+		req:           defaultReq(),
+		expectedError: nil,
 	}, {
 		name: "no admission info",
 		appGetter: func() app.App {
@@ -639,6 +674,12 @@ func TestTranslateAdmissionOperation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func otherGroupReq() admission.Attributes {
+	gvk := schema.GroupVersionKind{Group: "service.grafana.app", Version: "v0alpha1", Kind: "ExternalName"}
+	gvr := schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: "externalnames"}
+	return admission.NewAttributesRecord(&resource.UntypedObject{}, nil, gvk, "default", "foo", gvr, "", admission.Create, &metav1.CreateOptions{}, false, nil)
 }
 
 func testInvalidError() error {

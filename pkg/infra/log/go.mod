@@ -1,11 +1,11 @@
 module github.com/grafana/grafana/pkg/infra/log
 
-go 1.27.2
+go 1.27.3
 
 require (
 	github.com/go-kit/log v0.2.1
 	github.com/go-stack/stack v1.8.1
-	github.com/grafana/grafana-app-sdk/logging v0.60.15
+	github.com/grafana/grafana-app-sdk/logging v0.61.1
 	github.com/mattn/go-isatty v0.0.24
 	github.com/stretchr/testify v1.12.1
 	github.com/tjhop/slog-gokit v0.2.0

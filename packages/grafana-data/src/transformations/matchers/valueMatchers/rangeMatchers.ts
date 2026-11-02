@@ -14,6 +14,14 @@ const isBetweenValueMatcher: ValueMatcherInfo<RangeValueMatcherOptions> = {
       if (options.includeMissing !== undefined && (typeof value !== 'number' || !Number.isFinite(value))) {
         return options.includeMissing;
       }
+      if (
+        options.allowOpenBounds &&
+        options.from === undefined &&
+        options.to === undefined &&
+        options.includeMissing === true
+      ) {
+        return false;
+      }
       if (isNaN(value)) {
         return false;
       }
@@ -31,6 +39,14 @@ const isBetweenValueMatcher: ValueMatcherInfo<RangeValueMatcherOptions> = {
     };
   },
   getOptionsDisplayText: (options) => {
+    if (
+      options.allowOpenBounds &&
+      options.from === undefined &&
+      options.to === undefined &&
+      options.includeMissing === true
+    ) {
+      return 'Matches missing, non-numeric and non-finite values.';
+    }
     const from = options.allowOpenBounds && options.from === undefined ? '-∞' : options.from;
     const to = options.allowOpenBounds && options.to === undefined ? '∞' : options.to;
     const inclusive = options.inclusive ? ' (inclusive)' : '';

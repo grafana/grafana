@@ -11,8 +11,6 @@ import {
 } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { clearFolders } from 'app/features/browse-dashboards/state/slice';
-import { getState } from 'app/store/store';
 import { type ThunkDispatch } from 'app/types/store';
 
 import {
@@ -26,7 +24,7 @@ import { refetchChildren } from '../../../../features/browse-dashboards/state/ac
 import { handleError } from '../../../utils';
 import { applyWatchEvent, createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
 
-const handleProvisioningFormError = (e: unknown, dispatch: ThunkDispatch, title: string) => {
+export const handleProvisioningFormError = (e: unknown, dispatch: ThunkDispatch, title: string) => {
   if (typeof e === 'object' && e && 'error' in e && isFetchError(e.error)) {
     if (e.error.data.kind === 'Status' && e.error.data.status === 'Failure') {
       const statusError: Status = e.error.data;
@@ -181,13 +179,6 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
       // Testing a submitted spec touches nothing on the server, so the generated
       // invalidation would only refetch every Repository-tagged query for nothing.
       invalidatesTags: [],
-      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
-        try {
-          await queryFulfilled;
-        } catch (e) {
-          handleProvisioningFormError(e, dispatch, 'Error validating repository');
-        }
-      },
     },
     createRepositoryJobs: {
       onQueryStarted: async ({ jobSpec }, { queryFulfilled, dispatch }) => {
@@ -258,33 +249,6 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
         }
         // Refetch dashboards and folders after creating/updating a provisioned repository
         dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
-      },
-    },
-    getRepositoryJobsWithPath: {
-      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
-        try {
-          const result = await queryFulfilled;
-          const job = result.data;
-
-          // Clear folder cache after successful move/delete jobs
-          // We use clearFolders here to clear cached data and closes folders (immediate visual feedback)
-          // Force a refetch of subfolders if user has opened them, so user see latest data
-          if (job.status?.state === 'success' && (job.spec?.action === 'delete' || job.spec?.action === 'move')) {
-            const state = getState().browseDashboards;
-            const action = job.spec?.action;
-            let childrenKeys = Object.keys(state.childrenByParentUID);
-
-            if (action === 'delete') {
-              // Do not clear deleted resources to avoid 404s when refetching them
-              const deletedResourceNames =
-                job.spec?.[action]?.resources?.map((resource) => resource.name).filter(Boolean) || [];
-              childrenKeys = childrenKeys.filter((key) => !deletedResourceNames.includes(key));
-            }
-            dispatch(clearFolders(childrenKeys));
-          }
-        } catch (e) {
-          console.error('Error in getRepositoryJobsWithPath:', e);
-        }
       },
     },
     createConnection: {

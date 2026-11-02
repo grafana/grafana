@@ -65,7 +65,7 @@ function row(uid: string, title: string): NotebookRow {
 
 async function addToCheckoutErrorSpike(user: ReturnType<typeof render>['user']) {
   await user.click(await screen.findByRole('radio', { name: 'Existing notebook' }));
-  await user.click(screen.getByRole('button', { name: 'Checkout error spike' }));
+  await user.click(screen.getByRole('radio', { name: 'Checkout error spike' }));
   await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 }
 

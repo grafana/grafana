@@ -10,6 +10,8 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { type Resource } from 'app/features/apiserver/types';
 
 import { NotebookAnalytics } from '../analytics/main';
+import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
+import { NotebookAutosave } from '../scene/NotebookAutosave';
 import { NotebookScene } from '../scene/NotebookScene';
 import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from '../types';
 
@@ -392,7 +394,7 @@ describe('NotebookPageStateManager', () => {
       await manager.loadNotebook('nb-1');
 
       expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenCalledWith(expect.anything(), false);
+      expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenCalledWith(expect.anything(), false, false, 'direct');
     });
 
     it('fires again on a second navigation to a cached scene, reporting it was cached', async () => {
@@ -403,7 +405,13 @@ describe('NotebookPageStateManager', () => {
       await manager.loadNotebook('nb-1');
 
       expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenCalledTimes(2);
-      expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenNthCalledWith(2, expect.anything(), true);
+      expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenNthCalledWith(
+        2,
+        expect.anything(),
+        true,
+        false,
+        'direct'
+      );
     });
 
     it('does not fire when a blank notebook adopts its own uid instead of being fetched', async () => {
@@ -435,6 +443,21 @@ describe('NotebookPageStateManager', () => {
   describe('newNotebook', () => {
     /** Nobody is asked for a name, so the notebook arrives named after the moment it was made. */
     const TITLE_PATTERN = /^Notebook \d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
+
+    it.each([NOTEBOOK_ENTRY_POINT.QUICK_ADD, NOTEBOOK_ENTRY_POINT.COMMAND_PALETTE])(
+      'preserves the %s entry point when the blank scene finishes loading',
+      async (source) => {
+        const setEntryPoint = jest.spyOn(NotebookAutosave.prototype, 'setEntryPoint');
+        const manager = new NotebookPageStateManager({ isLoading: false });
+
+        await manager.newNotebook(source);
+
+        expect(manager.state.isLoading).toBe(false);
+        expect(setEntryPoint).toHaveBeenCalledTimes(1);
+        expect(setEntryPoint).toHaveBeenCalledWith(source);
+        setEntryPoint.mockRestore();
+      }
+    );
 
     it('builds an empty notebook with no resource behind it and nothing fetched', async () => {
       serveNotebooks();

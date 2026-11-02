@@ -6935,52 +6935,6 @@
         },
         "type": "object"
       },
-      "InhibitionRule": {
-        "description": "It embeds the upstream Alertmanager InhibitRule and adds Grafana-specific fields.",
-        "properties": {
-          "equal": {
-            "description": "A set of labels that must be equal between the source and target alert\nfor them to be a match.",
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "name": {
-            "type": "string"
-          },
-          "provenance": {
-            "$ref": "#/components/schemas/Provenance"
-          },
-          "source_match": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "SourceMatch defines a set of labels that have to equal the given\nvalue for source alerts. Deprecated. Remove before v1.0 release.",
-            "type": "object"
-          },
-          "source_match_re": {
-            "$ref": "#/components/schemas/MatchRegexps"
-          },
-          "source_matchers": {
-            "$ref": "#/components/schemas/Matchers"
-          },
-          "target_match": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "TargetMatch defines a set of labels that have to equal the given\nvalue for target alerts. Deprecated. Remove before v1.0 release.",
-            "type": "object"
-          },
-          "target_match_re": {
-            "$ref": "#/components/schemas/MatchRegexps"
-          },
-          "target_matchers": {
-            "$ref": "#/components/schemas/Matchers"
-          }
-        },
-        "title": "InhibitionRule is the domain model for inhibition rules with metadata.",
-        "type": "object"
-      },
       "InspectType": {
         "format": "int64",
         "title": "InspectType is a type for the Inspect property of a Notice.",
@@ -7407,19 +7361,6 @@
             "type": "string"
           }
         },
-        "type": "object"
-      },
-      "ManagedInhibitionRules": {
-        "additionalProperties": {
-          "$ref": "#/components/schemas/InhibitionRule"
-        },
-        "type": "object"
-      },
-      "ManagedRoutes": {
-        "additionalProperties": {
-          "$ref": "#/components/schemas/Route"
-        },
-        "description": "ManagedRoutes this type exists purely to ensure unmarshalling upstream Routes will call Validate and populate\nGroupBy and GroupByAll. Eventually, we will want this to be a separate type and make the conversion to\ndefinitions.Route explicit.",
         "type": "object"
       },
       "ManagerKind": {
@@ -8713,21 +8654,6 @@
         },
         "type": "object"
       },
-      "PostableApiTemplate": {
-        "description": "nolint:revive",
-        "properties": {
-          "content": {
-            "type": "string"
-          },
-          "kind": {
-            "$ref": "#/components/schemas/TemplateKind"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "PostableExtendedRuleNode": {
         "properties": {
           "alert": {
@@ -8941,38 +8867,6 @@
               "type": "string"
             },
             "type": "array"
-          }
-        },
-        "type": "object"
-      },
-      "PostableUserConfig": {
-        "properties": {
-          "alertmanager_config": {
-            "$ref": "#/components/schemas/PostableApiAlertingConfig"
-          },
-          "extra_config": {
-            "items": {
-              "$ref": "#/components/schemas/ExtraConfiguration"
-            },
-            "type": "array"
-          },
-          "managed_inhibition_rules": {
-            "$ref": "#/components/schemas/ManagedInhibitionRules"
-          },
-          "managed_routes": {
-            "$ref": "#/components/schemas/ManagedRoutes"
-          },
-          "managed_templates": {
-            "additionalProperties": {
-              "$ref": "#/components/schemas/PostableApiTemplate"
-            },
-            "type": "object"
-          },
-          "template_files": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
           }
         },
         "type": "object"
@@ -10127,8 +10021,12 @@
             "type": "string"
           },
           "id": {
-            "description": "Send the report to the emails specified in the report. Required if emails is not present.",
+            "description": "Numeric ID of the report. Can send either ID or UID. If both are present, UID takes precedence.",
             "format": "int64",
+            "type": "string"
+          },
+          "uid": {
+            "description": "UID of the report. Can send either ID or UID. If both are present, UID takes precedence.",
             "type": "string"
           },
           "useEmailsFromReport": {
@@ -15930,6 +15828,7 @@
           },
           {
             "description": "Use this to filter organization annotations. Organization annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags.",
+            "explode": true,
             "in": "query",
             "name": "tags",
             "schema": {
@@ -15937,7 +15836,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "Return alerts or user created annotations\nDescription:\n- `alert`\n- `annotation`",
@@ -18387,6 +18287,7 @@
           },
           {
             "description": "Source datasource UID filter to be applied to correlations",
+            "explode": true,
             "in": "query",
             "name": "sourceUID",
             "schema": {
@@ -18394,7 +18295,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           }
         ],
         "responses": {
@@ -21989,6 +21891,7 @@
         "parameters": [
           {
             "description": "List of data source UIDs to search for",
+            "explode": true,
             "in": "query",
             "name": "datasourceUid",
             "schema": {
@@ -21996,7 +21899,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "Text inside query or comments that is searched for",
@@ -23164,6 +23068,7 @@
           },
           {
             "description": "List of tags to search for",
+            "explode": true,
             "in": "query",
             "name": "tag",
             "schema": {
@@ -23171,7 +23076,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "Type to search for, dash-folder or dash-db\nDescription:\n- `dash-folder` - Search for folder\n- `dash-db` - Seatch for dashboard",
@@ -27647,6 +27553,9 @@
     }
   ],
   "servers": [
+    {
+      "url": "/api"
+    },
     {
       "url": "/api"
     }

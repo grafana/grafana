@@ -33,6 +33,8 @@ func TestParsePluginGRPCConfig(t *testing.T) {
 		cfg, err := parsePluginGRPCConfig(setting.NewCfg())
 		require.NoError(t, err)
 		require.Equal(t, defaultPluginGRPCConfig(), cfg)
+		// gRPC servers' default enforcement policy closes connections that ping more often.
+		require.Equal(t, 5*time.Minute, cfg.Keepalive.Time)
 	})
 
 	t.Run("configured", func(t *testing.T) {
@@ -72,7 +74,7 @@ func TestParsePluginGRPCConfig(t *testing.T) {
 		t.Run("invalid "+key, func(t *testing.T) {
 			cfg := cfgWithBackendGRPCSection(t, map[string]string{key: value})
 			cfg.Raw.Section(cloudRouterSection).Key("plugins_url").SetValue("http://plugins.invalid/plugins")
-			_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+			_, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 			require.ErrorContains(t, err, backendGRPCSection+": "+key+" must be")
 		})
 	}
@@ -157,8 +159,8 @@ func TestPluginGRPCDialOptionsTLS(t *testing.T) {
 		require.NoError(t, err)
 		cfg.Retry.Max = 1
 		labels := prometheus.Labels{"plugin_id": "test-app"}
-		requestDuration := newPluginGRPCRequestDuration(nil, sourcePluginsURL).MustCurryWith(labels).(*prometheus.HistogramVec)
-		requestRetries := newPluginGRPCRequestRetries(nil, sourcePluginsURL).MustCurryWith(labels)
+		requestDuration := newPluginGRPCRequestDuration(nil, sourcePlugins).MustCurryWith(labels).(*prometheus.HistogramVec)
+		requestRetries := newPluginGRPCRequestRetries(nil, sourcePlugins).MustCurryWith(labels)
 		conn, err := grpc.NewClient(listener.Addr().String(), cfg.dialOptions(requestDuration, requestRetries)...)
 		require.NoError(t, err)
 		t.Cleanup(func() { _ = conn.Close() })
@@ -233,8 +235,8 @@ func TestPluginGRPCDialOptionsCountRetries(t *testing.T) {
 	t.Cleanup(server.Stop)
 
 	labels := prometheus.Labels{"plugin_id": "test-app"}
-	requestDuration := newPluginGRPCRequestDuration(nil, sourcePluginsURL).MustCurryWith(labels).(*prometheus.HistogramVec)
-	requestRetries := newPluginGRPCRequestRetries(nil, sourcePluginsURL).MustCurryWith(labels)
+	requestDuration := newPluginGRPCRequestDuration(nil, sourcePlugins).MustCurryWith(labels).(*prometheus.HistogramVec)
+	requestRetries := newPluginGRPCRequestRetries(nil, sourcePlugins).MustCurryWith(labels)
 	cfg := defaultPluginGRPCConfig()
 	cfg.Retry = pluginGRPCRetryConfig{Max: 3, Backoff: time.Millisecond}
 	conn, err := grpc.NewClient(listener.Addr().String(), cfg.dialOptions(requestDuration, requestRetries)...)
@@ -260,4 +262,45 @@ func (s *flakyHealthServer) CheckHealth(context.Context, *pluginv2.CheckHealthRe
 		return nil, status.Error(codes.Unavailable, "not yet")
 	}
 	return &pluginv2.CheckHealthResponse{Status: pluginv2.CheckHealthResponse_OK}, nil
+}
+
+func newTestHealthClient(t *testing.T, addr string, cfg pluginGRPCConfig) (*grpc.ClientConn, pluginv2.DiagnosticsClient) {
+	t.Helper()
+	labels := prometheus.Labels{"plugin_id": "test-app"}
+	requestDuration := newPluginGRPCRequestDuration(nil, sourcePlugins).MustCurryWith(labels).(*prometheus.HistogramVec)
+	requestRetries := newPluginGRPCRequestRetries(nil, sourcePlugins).MustCurryWith(labels)
+	conn, err := grpc.NewClient(addr, cfg.dialOptions(requestDuration, requestRetries)...)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close() })
+	return conn, pluginv2.NewDiagnosticsClient(conn)
+}
+
+// A call after the plugin restarts, which dropped the connection, succeeds on a
+// new one, with the router's dial options.
+func TestPluginGRPCReconnectsAfterTheServerRestarts(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	addr := listener.Addr().String()
+	server := grpc.NewServer()
+	pluginv2.RegisterDiagnosticsServer(server, &healthyServer{})
+	go func() { _ = server.Serve(listener) }()
+	t.Cleanup(server.Stop)
+
+	cfg := defaultPluginGRPCConfig()
+	cfg.Retry = pluginGRPCRetryConfig{Max: 5, Backoff: 50 * time.Millisecond}
+	cfg.Connect.BaseDelay, cfg.Connect.MaxDelay = 10*time.Millisecond, 50*time.Millisecond
+	_, client := newTestHealthClient(t, addr, cfg)
+	_, err = client.CheckHealth(t.Context(), &pluginv2.CheckHealthRequest{})
+	require.NoError(t, err)
+
+	server.Stop()
+	listener, err = net.Listen("tcp", addr)
+	require.NoError(t, err)
+	restarted := grpc.NewServer()
+	pluginv2.RegisterDiagnosticsServer(restarted, &healthyServer{})
+	go func() { _ = restarted.Serve(listener) }()
+	t.Cleanup(restarted.Stop)
+
+	_, err = client.CheckHealth(t.Context(), &pluginv2.CheckHealthRequest{})
+	require.NoError(t, err)
 }

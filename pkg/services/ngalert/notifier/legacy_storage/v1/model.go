@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
+	"io"
 	"slices"
 	"strings"
 	"time"
@@ -16,13 +17,11 @@ import (
 	"github.com/prometheus/common/model"
 	"go.yaml.in/yaml/v3"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-type AMConfigDB = definitions.PostableUserConfig // TODO: Define type explicitly and move elsewhere.
-
-// AMConfigV1 is an exact structural copy of PostableUserConfig without json tags.
+// AMConfigV1 is the domain model derived from AMConfigDB (see ToModel/ToDBModel), restructuring
+// templates, receivers, inhibition rules, and time intervals into UID-keyed maps.
 type AMConfigV1 struct {
 	Templates       map[ResourceUID]TemplateGroup
 	InhibitionRules map[ResourceUID]InhibitionRule
@@ -142,17 +141,19 @@ func (c *ExtraAlertmanagerConfig) ToGrafanaReceivers() ([]*PostableApiReceiver, 
 
 // ToGrafanaRoute converts the imported route to Grafana's Route type.
 func (c *ExtraAlertmanagerConfig) ToGrafanaRoute() *Route {
-	return RouteToModel(definition.AsGrafanaRoute(c.Route))
+	return AMRouteToModel(c.Route)
 }
 
-// ToGrafanaTimeIntervals converts the imported time intervals to Grafana's type.
+// ToGrafanaTimeIntervals converts the imported time intervals to Grafana's type. Imported
+// intervals have no Grafana-persisted identity, so their UID is derived from name - same as a
+// legacy Grafana-owned row with none persisted yet.
 func (c *ExtraAlertmanagerConfig) ToGrafanaTimeIntervals() []TimeInterval {
 	out := make([]TimeInterval, 0, len(c.MuteTimeIntervals)+len(c.TimeIntervals))
 	for _, interval := range c.MuteTimeIntervals {
-		out = append(out, NewTimeInterval(interval.Name, interval.TimeIntervals, models.ProvenanceNone))
+		out = append(out, NewTimeInterval(TimeIntervalUID(interval.Name), interval.Name, interval.TimeIntervals, models.ProvenanceNone))
 	}
 	for _, interval := range c.TimeIntervals {
-		out = append(out, NewTimeInterval(interval.Name, interval.TimeIntervals, models.ProvenanceNone))
+		out = append(out, NewTimeInterval(TimeIntervalUID(interval.Name), interval.Name, interval.TimeIntervals, models.ProvenanceNone))
 	}
 	return out
 }
@@ -209,7 +210,7 @@ type ExtraConfiguration struct {
 // ExtraAlertmanagerConfig, preserving the upstream config types. Callers convert to Grafana's
 // wire format where needed via the ToGrafana* helpers.
 func (c *ExtraConfiguration) GetAlertmanagerConfig() (ExtraAlertmanagerConfig, error) {
-	prometheusConfig, err := c.parsePrometheusConfig()
+	prometheusConfig, err := c.parsePrometheusConfig(false)
 	if err != nil {
 		return ExtraAlertmanagerConfig{}, err
 	}
@@ -230,13 +231,17 @@ func alertmanagerConfigFromPrometheus(prometheusConfig config.Config) ExtraAlert
 	}
 }
 
-func (c *ExtraConfiguration) parsePrometheusConfig() (config.Config, error) {
+// parsePrometheusConfig decodes the stored YAML. With strict set, fields the upstream
+// config types do not define are rejected instead of silently dropped.
+func (c *ExtraConfiguration) parsePrometheusConfig(strict bool) (config.Config, error) {
 	if c.AlertmanagerConfig == "" {
 		return config.Config{}, fmt.Errorf("no alertmanager configuration available")
 	}
 
 	var prometheusConfig config.Config
-	if err := yaml.Unmarshal([]byte(c.AlertmanagerConfig), &prometheusConfig); err != nil {
+	decoder := yaml.NewDecoder(strings.NewReader(c.AlertmanagerConfig))
+	decoder.KnownFields(strict)
+	if err := decoder.Decode(&prometheusConfig); err != nil && !errors.Is(err, io.EOF) {
 		return config.Config{}, fmt.Errorf("failed to parse alertmanager config: %w", err)
 	}
 
@@ -246,7 +251,7 @@ func (c *ExtraConfiguration) parsePrometheusConfig() (config.Config, error) {
 // GetSanitizedAlertmanagerConfigYAML returns the alertmanager configuration as a YAML string
 // with secrets masked and global settings removed for mimirtool compatibility.
 func (c *ExtraConfiguration) GetSanitizedAlertmanagerConfigYAML() (string, error) {
-	prometheusConfig, err := c.parsePrometheusConfig()
+	prometheusConfig, err := c.parsePrometheusConfig(false)
 	if err != nil {
 		return "", err
 	}
@@ -259,12 +264,25 @@ func (c *ExtraConfiguration) GetSanitizedAlertmanagerConfigYAML() (string, error
 	return string(configYAML), nil
 }
 
+// Validate checks that the configuration can be converted to Grafana's format. It requires an
+// identifier and rejects fields Grafana cannot represent, such as *_file and *_ref. Unknown fields
+// are ignored, as for stored configurations. Use ValidateStrict for new submissions.
 func (c ExtraConfiguration) Validate() error {
+	return c.validate(false)
+}
+
+// ValidateStrict validates a new submission. Unlike Validate, it rejects unknown fields and
+// integrations. Stored configurations keep using the lenient Validate.
+func (c ExtraConfiguration) ValidateStrict() error {
+	return c.validate(true)
+}
+
+func (c ExtraConfiguration) validate(strict bool) error {
 	if c.Identifier == "" {
 		return errors.New("identifier is required")
 	}
 
-	prometheusConfig, err := c.parsePrometheusConfig()
+	prometheusConfig, err := c.parsePrometheusConfig(strict)
 	if err != nil {
 		return errInvalidExtraConfiguration(fmt.Errorf("failed to parse alertmanager config: %w", err))
 	}
@@ -343,10 +361,8 @@ func allReceivers(route *config.Route) (res []string) {
 }
 
 type Config struct {
-	Global       *config.GlobalConfig
 	Route        *Route
 	InhibitRules []common.InhibitRule
-	Templates    []string
 }
 
 type ObjectMatchers labels.Matchers

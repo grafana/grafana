@@ -2,6 +2,7 @@ import { render, screen, testWithFeatureToggles, userEvent } from 'test/test-uti
 
 import { type AlertRule, type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { useAssistant } from '@grafana/assistant';
+import { config } from '@grafana/runtime';
 import { Menu } from '@grafana/ui';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -142,11 +143,28 @@ describe('AnalyzeRuleButton', () => {
   describe('with alertingTriage enabled', () => {
     testWithFeatureToggles({ enable: ['alertingTriage'] });
 
-    it('adds the alerts page navigation hint to the prompt', async () => {
+    const originalUnifiedAlerting = config.unifiedAlerting;
+
+    afterEach(() => {
+      config.unifiedAlerting = originalUnifiedAlerting;
+    });
+
+    it('adds the alerts page navigation hint to the prompt when state history writes to Prometheus', async () => {
+      config.unifiedAlerting = {
+        ...originalUnifiedAlerting,
+        stateHistory: { backend: 'prometheus', prometheusTargetDatasourceUID: 'prom-uid' },
+      };
       renderButton({ promRule: mockGrafanaPromAlertingRule() });
       const call = await clickAnalyze();
 
       expect(call.prompt).toContain('- Include navigation to the alerts page ONLY if the alert is firing or pending');
+    });
+
+    it('leaves out the alerts page navigation hint when state history does not write to Prometheus', async () => {
+      renderButton({ promRule: mockGrafanaPromAlertingRule() });
+      const call = await clickAnalyze();
+
+      expect(call.prompt).not.toContain('Include navigation to the alerts page');
     });
   });
 

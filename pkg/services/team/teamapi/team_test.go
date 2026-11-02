@@ -205,7 +205,7 @@ func TestTeamAPIEndpoint_UpdateTeam(t *testing.T) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsDelete with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
-	searcher := &teamFolderSearchClient{response: &resourcepb.ResourceSearchResponse{}}
+	searcher := &teamFolderSearchClient{response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}}
 	server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}, func(tapi *TeamAPI) {
 		tapi.folderSearcher = searcher
 	})
@@ -248,7 +248,7 @@ func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
 
 	t.Run("Prevents deleting a team that owns folders", func(t *testing.T) {
 		server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}, func(tapi *TeamAPI) {
-			tapi.folderSearcher = &teamFolderSearchClient{response: &resourcepb.ResourceSearchResponse{TotalHits: 1}}
+			tapi.folderSearcher = &teamFolderSearchClient{response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, TotalHits: 1}}
 		})
 		req := server.NewRequest(http.MethodDelete, fmt.Sprintf(detailTeamURL, 1), http.NoBody)
 		req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
@@ -265,7 +265,7 @@ func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
 	t.Run("Prevents deleting a team that owns folders when only the teams redirect is enabled", func(t *testing.T) {
 		setTeamRedirectFlag(t, true)
 		server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}, func(tapi *TeamAPI) {
-			tapi.folderSearcher = &teamFolderSearchClient{response: &resourcepb.ResourceSearchResponse{TotalHits: 1}}
+			tapi.folderSearcher = &teamFolderSearchClient{response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, TotalHits: 1}}
 		})
 		req := server.NewRequest(http.MethodDelete, fmt.Sprintf(detailTeamURL, 1), http.NoBody)
 		req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
@@ -281,7 +281,7 @@ func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
 
 	t.Run("Returns conflict when the Kubernetes admission check prevents deletion", func(t *testing.T) {
 		setTeamRedirectFlag(t, true)
-		searcher := &teamFolderSearchClient{response: &resourcepb.ResourceSearchResponse{}}
+		searcher := &teamFolderSearchClient{response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}}
 		server := SetupAPITestServer(t, &deleteTeamService{
 			FakeService: &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}},
 			err: apierrors.NewConflict(

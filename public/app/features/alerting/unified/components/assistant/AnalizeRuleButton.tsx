@@ -2,10 +2,10 @@ import { type AlertRule, type RecordingRule } from '@grafana/api-clients/rtkq/ru
 import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { formatLabels } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Menu } from '@grafana/ui';
 import { type GrafanaRule } from 'app/types/unified-alerting';
 
+import { alertActivityEnabled } from '../../utils/pageAccess';
 import { prometheusRuleType } from '../../utils/rules';
 
 type AnalyzeRuleButtonProps =
@@ -162,7 +162,7 @@ function buildAnalyzeAlertingRulePrompt(rule: AlertingRuleToAnalyze): string {
   // Only mention a state when the source provides one, instead of assuming the rule is firing
   const state = rule.state ? ` ${rule.state.toLowerCase()}` : '';
   const timeInfo = rule.activeAt ? ` starting at ${new Date(rule.activeAt).toISOString()}` : '';
-  const alertsNavigationPrompt = config.featureToggles.alertingTriage
+  const alertsNavigationPrompt = alertActivityEnabled()
     ? '\n- Include navigation to the alerts page ONLY if the alert is firing or pending'
     : '';
 

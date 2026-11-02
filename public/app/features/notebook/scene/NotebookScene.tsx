@@ -32,6 +32,8 @@ import { NotebookAnalytics } from '../analytics/main';
 import {
   NOTEBOOK_EDIT_SESSION_END_REASON,
   NOTEBOOK_EDIT_SESSION_SOURCE,
+  NOTEBOOK_VIEW_ONLY_CHANGES_RESOLUTION,
+  type NotebookEditSessionEndReason,
   type NotebookEditSessionSource,
 } from '../analytics/types';
 import { canEditNotebooks } from '../permissions';
@@ -54,7 +56,6 @@ export interface NotebookSceneState extends SceneObjectState {
   body: NotebookLayoutManager;
   timePicker: SceneTimePicker;
   refreshPicker: SceneRefreshPicker;
-  hideTimeControls?: boolean;
   overlay?: SceneObject;
   $timeRange: SceneTimeRange;
   /**
@@ -182,19 +183,32 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       // mounted. Its host decides that before handing it over.
       const stopAutosave = this.state.isDraft ? undefined : this.autosave.start();
 
+      const onPageHide = () => this.endEditSession(NOTEBOOK_EDIT_SESSION_END_REASON.PAGE_HIDE);
+      // A page the browser kept for Back comes back still in edit mode, with the session `pagehide`
+      // ended. Starting one again keeps every end paired with a start.
+      const onPageShow = (event: PageTransitionEvent) => {
+        if (event.persisted && this.state.isEditing && !this.editSession.isActive) {
+          this.beginEditSession(NOTEBOOK_EDIT_SESSION_SOURCE.PAGE_RESTORE);
+        }
+      };
+      window.addEventListener('pagehide', onPageHide);
+      window.addEventListener('pageshow', onPageShow);
+
       return () => {
+        window.removeEventListener('pagehide', onPageHide);
+        window.removeEventListener('pageshow', onPageShow);
+        this.commitTitleEdit();
+        stopAutosave?.();
         // A toggle-off already ended the session and turned isEditing back off; this only catches
         // the case where the page itself goes away while a session was still open.
         if (this.state.isEditing) {
-          NotebookAnalytics.editSessionEnded(this, NOTEBOOK_EDIT_SESSION_END_REASON.NAVIGATION);
+          this.endEditSession(NOTEBOOK_EDIT_SESSION_END_REASON.NAVIGATION);
           // Edit mode has to come off with the session. The page caches this scene and hands it back
           // on the next visit, so a scene left mid-session would report a second end when someone
           // opens the notebook just to read it, and no start when they open it to edit.
           this.setState({ isEditing: false });
           this.state.body.editModeChanged?.(false);
         }
-        this.commitTitleEdit();
-        stopAutosave?.();
         destroyMutationClient();
         timeRangeSub.unsubscribe();
         stateSub.unsubscribe();
@@ -202,6 +216,12 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         releaseSceneContext(this);
       };
     });
+  }
+
+  // The assistant finds panels through this method on window.__grafanaSceneContext, as it does
+  // on DashboardScene. It uses them to check that a notebook write still renders.
+  public getDashboardPanels() {
+    return this.state.body.getVizPanels();
   }
 
   public enrichDataRequest(source: SceneObject): Partial<DataQueryRequest> {
@@ -264,10 +284,24 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     // Only when a session is actually starting. A second event would read as two sessions. And
     // start() zeroes the counters, so it would throw away the edits counted so far.
     if (!wasEditing) {
-      this.editSession.start();
-      // No uid means the notebook does not exist yet. That matters more than which control the person clicked.
-      const uid = this.state.uid;
-      NotebookAnalytics.editSessionStarted(uid ?? '', uid ? source : NOTEBOOK_EDIT_SESSION_SOURCE.NEW);
+      this.beginEditSession(source);
+    }
+  }
+
+  private beginEditSession(source: NotebookEditSessionSource): void {
+    this.editSession.start();
+    // No uid means the notebook does not exist yet. That matters more than which control the person clicked.
+    const uid = this.state.uid;
+    NotebookAnalytics.editSessionStarted(uid ?? '', uid ? source : NOTEBOOK_EDIT_SESSION_SOURCE.NEW);
+  }
+
+  /**
+   * A session ends once, whichever of the toggle, the page being torn down and `pagehide` gets there
+   * first. `pagehide` leaves edit mode on, so what follows it must not report a second end.
+   */
+  private endEditSession(reason: NotebookEditSessionEndReason): void {
+    if (this.editSession.isActive) {
+      NotebookAnalytics.editSessionEnded(this, reason);
     }
   }
 
@@ -296,15 +330,33 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         yesText: t('notebook.panel-changes.confirm-discard', 'Discard'),
         yesButtonVariant: 'destructive',
         onConfirm: () => {
+          NotebookAnalytics.viewOnlyChangesResolved(
+            this.state.uid ?? '',
+            NOTEBOOK_VIEW_ONLY_CHANGES_RESOLUTION.DISCARD,
+            changed.length
+          );
           this.startEditing(source);
           this.autosave.discardVizChanges();
         },
         altActionText: t('notebook.panel-changes.confirm-keep', 'Keep'),
         onAltAction: () => {
+          NotebookAnalytics.viewOnlyChangesResolved(
+            this.state.uid ?? '',
+            NOTEBOOK_VIEW_ONLY_CHANGES_RESOLUTION.KEEP,
+            changed.length
+          );
           this.startEditing(source);
           this.autosave.keepVizChanges(changed);
         },
         noText: t('notebook.panel-changes.confirm-cancel', 'Cancel'),
+        // The Cancel button, the close button and Escape all land here: none says more than "not this".
+        onDismiss: () => {
+          NotebookAnalytics.viewOnlyChangesResolved(
+            this.state.uid ?? '',
+            NOTEBOOK_VIEW_ONLY_CHANGES_RESOLUTION.CANCEL,
+            changed.length
+          );
+        },
       })
     );
   }
@@ -324,7 +376,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     // Only when a session was actually open. Otherwise a call that turns out to be a no-op (already
     // in view mode) would still end a session that never started.
     if (wasEditing) {
-      NotebookAnalytics.editSessionEnded(this, NOTEBOOK_EDIT_SESSION_END_REASON.TOGGLE);
+      this.endEditSession(NOTEBOOK_EDIT_SESSION_END_REASON.TOGGLE);
     }
   };
 

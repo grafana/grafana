@@ -26,7 +26,8 @@ Before a second datasource adapter is added, promote a reviewed, generalized int
 
 `QueryCoauthoring` remains the transaction owner and render shell. Its internal implementation is split by responsibility:
 
-- `useQueryCoauthoringInvocation` owns atomic invocation loading, baseline synchronization, semantic identification, and cancellation.
+- `useQueryCoauthoringInvocation` owns atomic invocation loading, baseline synchronization, and cancellation.
+- `useQueryCoauthoringSession` routes Modify and on-demand Explain through the session reducer. Explain has no query-edit tools or preview side effects.
 - `createQueryCoauthoringRequest` owns Assistant tools and converts completion callbacks into typed clarification, fallback, proposal, ignored, or error outcomes.
 - `useQueryCoauthoringViewport` owns portal measurement and viewport/scroll observation.
 - `QueryCoauthoringViews` owns the presentational states.

@@ -394,7 +394,8 @@ func TestDistributorSearchFailover(t *testing.T) {
 			ds := newFailoverTestDistributor(t, tt.replicationFactor, state)
 
 			resp, err := ds.Search(t.Context(), &resourcepb.ResourceSearchRequest{
-				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "stacks-1"}},
+				Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "stacks-1"}},
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			})
 			code, _ := callFailure(resp, err)
 			require.Equal(t, tt.wantCode, code)
@@ -423,7 +424,8 @@ func TestDistributorSearchReportsCancellation(t *testing.T) {
 	ds := newFailoverTestDistributor(t, 2, state)
 
 	_, err := ds.Search(ctx, &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "stacks-1"}},
+		Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "stacks-1"}},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
 	require.Equal(t, codes.Canceled, status.Code(err))
 	require.Len(t, state.calls, 1)
