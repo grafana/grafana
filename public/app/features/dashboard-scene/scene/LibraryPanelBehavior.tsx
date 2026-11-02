@@ -17,8 +17,9 @@ import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
+import { migrateThresholdValueExprs } from '../serialization/thresholdsValueExprMigration';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
-import { getDashboardSceneFor } from '../utils/utils';
+import { getDashboardSceneFor, isInV2Dashboard } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
@@ -97,7 +98,10 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
       title,
       hoverHeader: getUpdatedHoverHeader(title ?? '', timeRange?.state),
       options: libPanelModel.options ?? {},
-      fieldConfig: libPanelModel.fieldConfig,
+      // Only v2 dashboards edit expressions, so only they get the migrated shape
+      fieldConfig: isInV2Dashboard(vizPanel)
+        ? migrateThresholdValueExprs(libPanelModel.fieldConfig)
+        : libPanelModel.fieldConfig,
       pluginId: libPanelModel.type,
       pluginVersion: libPanelModel.pluginVersion,
       displayMode: libPanelModel.transparent ? 'transparent' : undefined,

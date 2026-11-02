@@ -13,7 +13,9 @@ import {
   type DataFrame,
   type StandardEditorContext,
   FieldType,
+  FieldConfigProperty,
 } from '@grafana/data';
+import { isVarMappingExpressionInput, isVarMappingProp, wrapVarMappingPropId } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { type MatcherScope } from '@grafana/schema';
 import {
@@ -32,6 +34,13 @@ import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OverrideCategoryTitle } from './OverrideCategoryTitle';
+import {
+  getVarMappingEditingKind,
+  hasThresholdSteps,
+  isThresholdStepVarMappingProp,
+  updateOverrideThresholds,
+  withThresholdStepExpressions,
+} from './utils';
 
 const ALLOWED_SCOPES: MatcherScope[] = ['series', 'nested'];
 
@@ -56,7 +65,8 @@ export function getFieldOverrideCategories(
   searchQuery: string,
   onFieldConfigsChange: (config: FieldConfigSource) => void,
   // Panel options, so an override editor can render against them
-  options?: Record<string, unknown>
+  options?: Record<string, unknown>,
+  varMappingsEnabled = false
 ): OptionsPaneCategoryDescriptor[] {
   const categories: OptionsPaneCategoryDescriptor[] = [];
   const currentFieldConfig = fieldConfig;
@@ -284,27 +294,67 @@ export function getFieldOverrideCategories(
      */
     for (let propIdx = 0; propIdx < override.properties.length; propIdx++) {
       const property = override.properties[propIdx];
+
+      // varMappings.<id> entries are edited through the row of the property they map.
+      if (isVarMappingProp(property)) {
+        continue;
+      }
+
       const registryItemForProperty = registry.getIfExists(property.id);
 
       if (!registryItemForProperty) {
         continue;
       }
 
-      const onPropertyChange = (value: DynamicConfigValue) => {
-        onOverrideChange(idx, {
-          ...override,
-          properties: override.properties.map((prop, i) => {
-            if (i === propIdx) {
-              return { ...prop, value: value };
-            }
+      const varMappingId = wrapVarMappingPropId(property.id);
+      const varMappingKind = varMappingsEnabled ? getVarMappingEditingKind(registryItemForProperty) : undefined;
+      const varMappingExpr = varMappingKind ? override.properties.find((p) => p.id === varMappingId)?.value : undefined;
+      const isThresholds = property.id === FieldConfigProperty.Thresholds;
+      const thresholdsWithExpressions = varMappingsEnabled && isThresholds;
+      // The stored value stays as the fallback while an expression is shown.
+      const displayValue = thresholdsWithExpressions
+        ? withThresholdStepExpressions(
+            property.value,
+            (key) => override.properties.find((p) => p.id === wrapVarMappingPropId(key))?.value
+          )
+        : typeof varMappingExpr === 'string'
+          ? varMappingExpr
+          : property.value;
 
-            return prop;
-          }),
-        });
+      const onPropertyChange = (value: unknown) => {
+        if (thresholdsWithExpressions && hasThresholdSteps(value)) {
+          onOverrideChange(idx, {
+            ...override,
+            properties: updateOverrideThresholds(override.properties, propIdx, value),
+          });
+          return;
+        }
+
+        if (varMappingKind && isVarMappingExpressionInput(varMappingKind, value)) {
+          const varMappingEntry: DynamicConfigValue = { id: varMappingId, value };
+          const properties = override.properties.some((p) => p.id === varMappingId)
+            ? override.properties.map((p) => (p.id === varMappingId ? varMappingEntry : p))
+            : [...override.properties, varMappingEntry];
+          onOverrideChange(idx, { ...override, properties });
+          return;
+        }
+
+        // Writing a plain value also drops the expression, so the plain value takes effect. With the
+        // flag off this is the only way to get rid of an expression saved with the flag on.
+        const properties = override.properties
+          .map((prop, i) => (i === propIdx ? { ...prop, value } : prop))
+          .filter((p) => p.id !== varMappingId && !(isThresholds && isThresholdStepVarMappingProp(p)));
+
+        onOverrideChange(idx, { ...override, properties });
       };
 
       const onPropertyRemove = () => {
-        onOverrideChange(idx, { ...override, properties: override.properties.filter((_, i) => i !== propIdx) });
+        onOverrideChange(idx, {
+          ...override,
+          properties: override.properties.filter(
+            (p, i) => i !== propIdx && p.id !== varMappingId && !(isThresholds && isThresholdStepVarMappingProp(p))
+          ),
+        });
       };
 
       const htmlId = `${overrideId}-property-${property.id}`;
@@ -323,10 +373,11 @@ export function getFieldOverrideCategories(
                 isSystemOverride={isSystemOverride}
                 onChange={onPropertyChange}
                 onRemove={onPropertyRemove}
-                property={property}
+                property={{ ...property, value: displayValue }}
                 registry={registry}
                 context={context}
                 searchQuery={searchQuery}
+                varMappingKind={varMappingKind}
               />
             );
           },

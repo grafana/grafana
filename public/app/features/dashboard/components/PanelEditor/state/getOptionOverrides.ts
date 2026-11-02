@@ -1,6 +1,13 @@
 import { get as lodashGet } from 'lodash';
 
-import { type DataFrame, type FieldConfigPropertyItem, type FieldConfigSource } from '@grafana/data';
+import {
+  type DataFrame,
+  FieldConfigProperty,
+  type FieldConfigPropertyItem,
+  type FieldConfigSource,
+} from '@grafana/data';
+import { isThresholdStepVarMappingKey, isVarMappingProp, unwrapVarMappingPropId } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 
 import { type OptionPaneItemOverrideInfo } from '../types';
 
@@ -48,4 +55,32 @@ export function getOptionOverrides(
   }
 
   return infoDots;
+}
+
+/** Marks an option that takes a dashboard variable, in the defaults or in an override rule */
+export function getVarMappingOptionOverrides(
+  fieldOption: FieldConfigPropertyItem,
+  fieldConfig: FieldConfigSource
+): OptionPaneItemOverrideInfo[] {
+  const isMappedKey = (key: string) =>
+    fieldOption.id === FieldConfigProperty.Thresholds ? isThresholdStepVarMappingKey(key) : key === fieldOption.id;
+
+  let description: string | undefined;
+  if (Object.keys(fieldConfig.defaults.varMappings ?? {}).some(isMappedKey)) {
+    description = t(
+      'dashboard.get-var-mapping-option-overrides.defaults',
+      'This option takes its value from a dashboard variable'
+    );
+  } else if (
+    fieldConfig.overrides.some((rule) =>
+      rule.properties.some((prop) => isVarMappingProp(prop) && isMappedKey(unwrapVarMappingPropId(prop.id)))
+    )
+  ) {
+    description = t(
+      'dashboard.get-var-mapping-option-overrides.rule',
+      'An override rule sets this option from a dashboard variable'
+    );
+  }
+
+  return description ? [{ type: 'variable', description, tooltip: description }] : [];
 }

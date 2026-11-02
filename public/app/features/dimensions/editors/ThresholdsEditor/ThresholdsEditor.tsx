@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { isNumber } from 'lodash';
-import { type ChangeEvent, memo, useEffect, useRef, useState } from 'react';
+import { type ChangeEvent, memo, useContext, useEffect, useRef, useState } from 'react';
 
 import {
   type GrafanaTheme2,
@@ -13,6 +13,7 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { useFlagGrafanaThresholdsInterpolation } from '@grafana/runtime/internal';
 import { Button, ColorPicker, colors, IconButton, Input, Label, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { FieldConfigExpressionsContext } from 'app/core/components/OptionsUI/fieldConfigExpressions';
 
 export interface Props {
   thresholds: ThresholdsConfig;
@@ -29,7 +30,10 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
   const isMounted = useRef(false);
   const userAddedThreshold = useRef(false);
   const styles = useStyles2(getStyles);
-  const interpolationEnabled = useFlagGrafanaThresholdsInterpolation();
+  const thresholdsInterpolation = useFlagGrafanaThresholdsInterpolation();
+  // The panel editor moves these valueExprs into varMappings when it stores expressions there
+  const fieldConfigExpressions = useContext(FieldConfigExpressionsContext);
+  const interpolationEnabled = thresholdsInterpolation || fieldConfigExpressions;
 
   const stepsRef = useRef(steps);
   stepsRef.current = steps;
