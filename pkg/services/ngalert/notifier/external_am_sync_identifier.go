@@ -3,6 +3,7 @@ package notifier
 import (
 	"context"
 	"fmt"
+	"maps"
 	"regexp"
 	"slices"
 	"strings"
@@ -139,12 +140,15 @@ func (s *ExternalAMSyncer) ensureSyncIdentifier(ctx context.Context, orgID int64
 	for name := range amCfg.ManagedRoutes {
 		taken[name] = struct{}{}
 	}
+	staged := make(map[string]struct{}, len(amCfg.ExtraConfigs))
 	for _, ec := range amCfg.ExtraConfigs {
-		taken[ec.Identifier] = struct{}{}
+		staged[ec.Identifier] = struct{}{}
 	}
 
 	var candidate string
-	if _, ok := taken[target.uid]; ok {
+	_, usedByRoute := taken[target.uid]
+	_, usedByStaged := staged[target.uid]
+	if usedByRoute || usedByStaged {
 		// Imported under the UID before identifiers were recorded. Keep that name so the syncer still
 		// recognises its own import.
 		candidate = target.uid
@@ -156,7 +160,14 @@ func (s *ExternalAMSyncer) ensureSyncIdentifier(ctx context.Context, orgID int64
 		// Merging rejects the default routing tree's names, so a new import can't use them.
 		taken[models.DefaultRoutingTreeName] = struct{}{}
 		taken[models.DefaultRoutingTreeNameAlias] = struct{}{}
-		candidate = uniqueSyncIdentifier(syncIdentifierFromName(ds.Name), taken)
+		base := syncIdentifierFromName(ds.Name)
+		candidate = uniqueSyncIdentifier(base, taken)
+		// Only one import can be staged and a save under another name is refused, so one staged under
+		// this datasource's name is its own, with the identifier lost from the status: reuse it.
+		if _, ours := staged[candidate]; !ours {
+			maps.Copy(taken, staged)
+			candidate = uniqueSyncIdentifier(base, taken)
+		}
 	}
 
 	chosen := candidate

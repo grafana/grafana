@@ -187,6 +187,37 @@ func TestEnsureSyncIdentifier(t *testing.T) {
 		}
 	})
 
+	t.Run("keeps a name-based import it can no longer see in the status", func(t *testing.T) {
+		adminCfg := newFakeConfigClient()
+		adminCfg.setUID(1, "ds-1")
+		s := newIdentifierTestSyncer(t, adminCfg, fakeAMConfigReader{raw: configWithExtraConfig("mimir-prod")}, namedMimirDS("ds-1", "Mimir Prod", 1))
+
+		got, err := s.ensureSyncIdentifier(ctx, 1, syncTarget{uid: "ds-1", origin: originAPI})
+		require.NoError(t, err)
+		assert.Equal(t, "mimir-prod", got)
+	})
+
+	t.Run("keeps a suffixed name-based import it can no longer see in the status", func(t *testing.T) {
+		adminCfg := newFakeConfigClient()
+		adminCfg.setUID(1, "ds-1")
+		raw := configWithManagedRouteAndExtraConfig("mimir-prod", "mimir-prod-2")
+		s := newIdentifierTestSyncer(t, adminCfg, fakeAMConfigReader{raw: raw}, namedMimirDS("ds-1", "Mimir Prod", 1))
+
+		got, err := s.ensureSyncIdentifier(ctx, 1, syncTarget{uid: "ds-1", origin: originAPI})
+		require.NoError(t, err)
+		assert.Equal(t, "mimir-prod-2", got)
+	})
+
+	t.Run("does not take over a staged import under an unrelated name", func(t *testing.T) {
+		adminCfg := newFakeConfigClient()
+		adminCfg.setUID(1, "ds-1")
+		s := newIdentifierTestSyncer(t, adminCfg, fakeAMConfigReader{raw: configWithExtraConfig("someone-elses")}, namedMimirDS("ds-1", "Mimir Prod", 1))
+
+		got, err := s.ensureSyncIdentifier(ctx, 1, syncTarget{uid: "ds-1", origin: originAPI})
+		require.NoError(t, err)
+		assert.Equal(t, "mimir-prod", got)
+	})
+
 	t.Run("uses a name another instance recorded first", func(t *testing.T) {
 		adminCfg := newFakeConfigClient()
 		adminCfg.setUID(1, "ds-1")
@@ -246,4 +277,17 @@ func TestSyncExternalAMs_ImportUnderRecordedNameIsMarkedAutoSync(t *testing.T) {
 	require.Len(t, gettable.ExtraConfigs, 1)
 	assert.Equal(t, "mimir-prod", gettable.ExtraConfigs[0].Identifier)
 	assert.Equal(t, "auto-sync", gettable.ExtraConfigs[0].ManagedBy)
+}
+
+const extraConfigYAML = `route:\n  receiver: a\nreceivers:\n  - name: a`
+
+// configWithExtraConfig returns an AM config with an imported configuration staged under identifier.
+func configWithExtraConfig(identifier string) string {
+	return validAMConfigBase[:len(validAMConfigBase)-1] + fmt.Sprintf(`,"extra_config":[{"identifier":%q,"alertmanager_config":%q}]}`, identifier, extraConfigYAML)
+}
+
+// configWithManagedRouteAndExtraConfig is configWithExtraConfig plus a managed route named managedRoute.
+func configWithManagedRouteAndExtraConfig(managedRoute, identifier string) string {
+	return validAMConfigBase[:len(validAMConfigBase)-1] +
+		fmt.Sprintf(`,"managed_routes":{%q:{"receiver":"grafana-default-email"}},"extra_config":[{"identifier":%q,"alertmanager_config":%q}]}`, managedRoute, identifier, extraConfigYAML)
 }
