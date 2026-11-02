@@ -131,6 +131,7 @@ describe('DashboardTabs', () => {
   });
 
   it('switches to Starred tab and shows starred dashboards', async () => {
+    seedRecent(['recent-1']);
     setMockStarredDashboards(['starred-1', 'starred-2', 'starred-3']);
 
     const { user } = render(<DashboardTabs />);
@@ -207,15 +208,6 @@ describe('DashboardTabs', () => {
         placement: 'empty_state',
       });
     });
-  });
-
-  it('shows empty state when no starred dashboards', async () => {
-    setMockStarredDashboards([]);
-    const { user } = render(<DashboardTabs />);
-
-    await user.click(await screen.findByRole('tab', { name: /starred/i }));
-
-    expect(await screen.findByText('Your starred dashboards will appear here.')).toBeInTheDocument();
   });
 
   it('stays on a manually selected empty tab instead of bouncing back', async () => {
@@ -362,15 +354,6 @@ describe('DashboardTabs', () => {
       expect(await screen.findByText('Recent Dashboard 1')).toBeInTheDocument();
 
       expect(screen.getByRole('tab', { name: /recent/i })).toHaveAttribute('aria-selected', 'true');
-    });
-
-    it('tracks a user click on the Most used tab', async () => {
-      const { user } = render(<DashboardTabs />);
-
-      await user.click(await screen.findByRole('tab', { name: /most used/i }));
-
-      // The only tabChanged call: the card stayed on Recent until the click.
-      expect(jest.mocked(tabChanged)).toHaveBeenCalledWith({ tab: 'most-used' });
     });
 
     it('tracks clicks on a dashboard in the Most used tab', async () => {

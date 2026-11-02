@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -57,7 +56,7 @@ type WrittenEvent struct {
 	Type           resourcepb.WatchEvent_Type
 	Key            *resourcepb.ResourceKey
 	PreviousRV     int64
-	PreviousAction kv.DataAction
+	PreviousAction DataAction
 	PreviousFolder string
 
 	// The json payload (without resourceVersion)

@@ -2,7 +2,6 @@ package acimpl
 
 import (
 	"errors"
-	"fmt"
 	"maps"
 	"slices"
 
@@ -10,7 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 )
 
 const legacyGlobalNamespaceAnchorOrgID int64 = 1
@@ -20,22 +19,38 @@ func (a *AccessControl) buildLegacyCheckRequest(
 	evaluator accesscontrol.Evaluator,
 	useExternalGroups bool,
 	namespaceMapper types.NamespaceFormatter,
-) (*authzextv1.LegacyCheckRequest, error) {
+) (legacyclient.LegacyCheckRequest, error) {
 	if user == nil || user.IsNil() {
-		return nil, errors.New("legacy check requester is required")
-	}
-
-	expression, err := accesscontrol.ToLegacyExpression(evaluator)
-	if err != nil {
-		return nil, fmt.Errorf("converting evaluator to legacy expression: %w", err)
+		return legacyclient.LegacyCheckRequest{}, errors.New("legacy check requester is required")
 	}
 
 	namespace := user.GetNamespace()
-	var global *authzextv1.LegacyGlobalEvaluation
+	if profile, ok := identity.InternalIdentityProfileFor(user); ok {
+		if namespace == "" || namespace == "*" {
+			if user.GetOrgID() < 1 || namespaceMapper == nil {
+				return legacyclient.LegacyCheckRequest{}, errors.New("internal legacy check requires a concrete target namespace")
+			}
+			namespace = namespaceMapper(user.GetOrgID())
+		}
+
+		parsedNamespace, err := types.ParseNamespace(namespace)
+		if err != nil || parsedNamespace.OrgID < 1 {
+			return legacyclient.LegacyCheckRequest{}, errors.New("internal legacy check requires a concrete target namespace")
+		}
+
+		return legacyclient.LegacyCheckRequest{
+			Namespace:           parsedNamespace.Value,
+			InternalIdentity:    &legacyclient.LegacyInternalIdentity{Profile: legacyclient.LegacyInternalIdentityProfile(profile)},
+			Evaluator:           evaluator,
+			SkipScopeResolution: a.skipScopeResolution,
+		}, nil
+	}
+
+	var global *legacyclient.LegacyGlobalEvaluation
 	if user.GetOrgID() == accesscontrol.NoOrgID || user.GetOrgID() == accesscontrol.GlobalOrgID {
 		permissions := user.GetGlobalPermissions()
-		global = &authzextv1.LegacyGlobalEvaluation{
-			RequesterOrgId:   user.GetOrgID(),
+		global = &legacyclient.LegacyGlobalEvaluation{
+			RequesterOrgID:   user.GetOrgID(),
 			PermittedActions: slices.Sorted(maps.Keys(permissions)),
 		}
 		// Global org IDs describe requester state. Use the configured instance
@@ -53,10 +68,10 @@ func (a *AccessControl) buildLegacyCheckRequest(
 		groups = user.GetExternalGroups()
 	}
 
-	return &authzextv1.LegacyCheckRequest{
+	return legacyclient.LegacyCheckRequest{
 		Namespace:           namespace,
 		Subject:             user.GetUID(),
-		Expression:          expression,
+		Evaluator:           evaluator,
 		Teams:               slices.Clone(groups),
 		SkipScopeResolution: a.skipScopeResolution,
 		GlobalEvaluation:    global,

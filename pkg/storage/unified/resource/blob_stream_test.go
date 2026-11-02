@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net"
 	"strings"
@@ -295,11 +296,18 @@ func TestBlobStreamRemoteTransportAndAuthorization(t *testing.T) {
 			return nil, err
 		}
 		if err := stream.Send(&resourcepb.PutBlobRequest{Resource: key, ContentType: "application/octet-stream"}); err != nil {
+			if errors.Is(err, io.EOF) {
+				return stream.CloseAndRecv()
+			}
 			return nil, err
 		}
 		for remaining := size; remaining > 0; {
 			n := min(remaining, blobStreamChunkSize)
 			if err := stream.Send(&resourcepb.PutBlobRequest{Value: make([]byte, n)}); err != nil {
+				// An early rejection closes the send side before we read the response.
+				if errors.Is(err, io.EOF) {
+					return stream.CloseAndRecv()
+				}
 				return nil, err
 			}
 			remaining -= n

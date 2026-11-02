@@ -47,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashboardclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -2654,17 +2655,20 @@ func (c *folderDeleteClient) Delete(ctx context.Context, uid string, orgID int64
 	return nil
 }
 
-func newFolderDeleteService(t *testing.T, enabled bool, workers, count int, cleanupErr error) (*DashboardServiceImpl, *folderDeleteClient, *user.SignedInUser) {
+// withParallelDashboardDelete serves the parallel delete flag for the duration of the test. Call it outside a
+// synctest bubble: the OpenFeature provider is process-global.
+func withParallelDashboardDelete(t *testing.T, concurrency int) {
+	featuremgmt.WithFlagValues(t, map[string]any{featuremgmt.FlagFoldersParallelDashboardDeleteConcurrency: concurrency})
+}
+
+func newFolderDeleteService(t *testing.T, count int, cleanupErr error) (*DashboardServiceImpl, *folderDeleteClient, *user.SignedInUser) {
 	public := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 	public.On("DeleteByDashboardUIDs", mock.Anything, int64(1), mock.Anything).Return(cleanupErr).Maybe()
 	client := &folderDeleteClient{}
 	for i := range count {
 		client.uids = append(client.uids, fmt.Sprintf("dashboard-%d", i))
 	}
-	cfg := setting.NewCfg()
-	cfg.FolderParallelDashboardDeleteEnabled = enabled
-	cfg.FolderParallelDashboardDeleteConcurrency = workers
-	return &DashboardServiceImpl{cfg: cfg, log: log.New("test.folder-delete"), k8sclient: client, publicDashboardService: public}, client, &user.SignedInUser{UserID: 42, OrgID: 1}
+	return &DashboardServiceImpl{cfg: setting.NewCfg(), log: log.New("test.folder-delete"), k8sclient: client, publicDashboardService: public}, client, &user.SignedInUser{UserID: 42, OrgID: 1}
 }
 
 // deleteGate holds every delete until open is called, so a test can see how many run at once.
@@ -2715,18 +2719,18 @@ func waitForResult(t *testing.T, done <-chan error) error {
 func TestDeleteInFoldersConcurrency(t *testing.T) {
 	for _, tc := range []struct {
 		name                 string
-		enabled              bool
 		workers, count, want int
 	}{
-		{"disabled deletes one at a time", false, 8, 12, 1},
-		{"enabled is bounded by the worker count", true, 4, 12, 4},
-		{"enabled with more workers than dashboards", true, 8, 2, 2},
-		{"non-positive worker count uses one worker", true, 0, 12, 1},
-		{"empty folder", true, 4, 0, 0},
+		{"one worker deletes in order", 1, 12, 1},
+		{"bounded by the worker count", 4, 12, 4},
+		{"more workers than dashboards", 8, 2, 2},
+		{"non-positive worker count deletes in order", 0, 12, 1},
+		{"empty folder", 4, 0, 0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			withParallelDashboardDelete(t, tc.workers)
 			synctest.Test(t, func(t *testing.T) {
-				svc, client, requester := newFolderDeleteService(t, tc.enabled, tc.workers, tc.count, nil)
+				svc, client, requester := newFolderDeleteService(t, tc.count, nil)
 				gate := newDeleteGate(t)
 				client.deleteFn = gate.hold
 				done := runInBackground(func() error { return svc.DeleteInFolders(t.Context(), 1, []string{"folder"}, requester) })
@@ -2744,7 +2748,7 @@ func TestDeleteInFoldersConcurrency(t *testing.T) {
 					require.NotNil(t, call.options.GracePeriodSeconds)
 					require.Zero(t, *call.options.GracePeriodSeconds)
 				}
-				if tc.enabled {
+				if tc.workers > 1 {
 					require.ElementsMatch(t, client.uids, deleted)
 				} else {
 					require.Equal(t, client.uids, deleted)
@@ -2755,8 +2759,9 @@ func TestDeleteInFoldersConcurrency(t *testing.T) {
 }
 
 func TestDeleteInFoldersCancellationWaitsForInFlightDeletes(t *testing.T) {
+	withParallelDashboardDelete(t, 4)
 	synctest.Test(t, func(t *testing.T) {
-		svc, client, requester := newFolderDeleteService(t, true, 4, 20, nil)
+		svc, client, requester := newFolderDeleteService(t, 20, nil)
 		ctx, cancel := context.WithCancel(t.Context())
 		gate := newDeleteGate(t)
 		client.deleteFn = gate.hold
@@ -2778,24 +2783,26 @@ func TestDeleteInFoldersCancellationWaitsForInFlightDeletes(t *testing.T) {
 }
 
 func TestDeleteInFoldersErrors(t *testing.T) {
-	for _, enabled := range []bool{false, true} {
-		t.Run(fmt.Sprintf("enabled=%v", enabled), func(t *testing.T) {
+	for _, workers := range []int{1, 4} {
+		t.Run(fmt.Sprintf("workers=%d", workers), func(t *testing.T) {
+			withParallelDashboardDelete(t, workers)
 			t.Run("a failed delete does not skip the others", func(t *testing.T) {
-				svc, client, requester := newFolderDeleteService(t, enabled, 4, 10, nil)
+				svc, client, requester := newFolderDeleteService(t, 10, nil)
 				client.deleteFn = func(context.Context, string) error { return errors.New("delete failure") }
 				require.NoError(t, svc.DeleteInFolders(t.Context(), 1, []string{"folder"}, requester))
 				require.Len(t, client.calls, 10)
 			})
 			t.Run("a failed public dashboard cleanup prevents deletes", func(t *testing.T) {
 				cleanupErr := errors.New("public cleanup failed")
-				svc, client, requester := newFolderDeleteService(t, enabled, 4, 10, cleanupErr)
+				svc, client, requester := newFolderDeleteService(t, 10, cleanupErr)
 				require.ErrorIs(t, svc.DeleteInFolders(t.Context(), 1, []string{"folder"}, requester), cleanupErr)
 				require.Empty(t, client.calls)
 			})
 		})
 	}
 	t.Run("an already canceled request deletes nothing", func(t *testing.T) {
-		svc, client, requester := newFolderDeleteService(t, true, 4, 10, nil)
+		withParallelDashboardDelete(t, 4)
+		svc, client, requester := newFolderDeleteService(t, 10, nil)
 		ctx, cancel := context.WithCancel(t.Context())
 		cancel()
 		require.ErrorIs(t, svc.DeleteInFolders(ctx, 1, []string{"folder"}, requester), context.Canceled)

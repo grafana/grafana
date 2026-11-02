@@ -5,54 +5,14 @@ import { setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { makeAlert, mockAlerts, mockTeams } from './alertIncidentTabsTestUtils';
 import { HOME_CARD_MAX_ITEMS } from './constants';
 import { canViewFiringAlerts, useFiringAlerts } from './useFiringAlerts';
 
 setBackendSrv(backendSrv);
 setupMockServer();
-
-function makeAlert(overrides: Partial<AlertmanagerAlert> & { labels: AlertmanagerAlert['labels'] }): AlertmanagerAlert {
-  return {
-    startsAt: new Date(Date.now() - 60_000).toISOString(),
-    updatedAt: new Date().toISOString(),
-    endsAt: '0001-01-01T00:00:00Z',
-    fingerprint: Math.random().toString(36).slice(2),
-    receivers: [{ name: 'default' }],
-    status: { state: AlertState.Active, silencedBy: [], inhibitedBy: [] },
-    annotations: {},
-    ...overrides,
-    labels: { alertname: 'test', ...overrides.labels },
-  };
-}
-
-function mockTeams(teams: Array<{ name: string }>) {
-  server.use(
-    http.get('/api/user/teams', () =>
-      HttpResponse.json(
-        teams.map((t, i) => ({ ...t, id: i + 1, uid: `team-${i}`, orgId: 1, memberCount: 1, isProvisioned: false }))
-      )
-    )
-  );
-}
-
-function mockAlerts(alerts: AlertmanagerAlert[]) {
-  server.use(http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () => HttpResponse.json(alerts)));
-}
-
-/** Mocks the alerts endpoint and returns the `filter` query params of each request received. */
-function captureAlertFilters() {
-  const requests: string[][] = [];
-  server.use(
-    http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
-      requests.push(new URL(request.url).searchParams.getAll('filter'));
-      return HttpResponse.json([]);
-    })
-  );
-  return requests;
-}
 
 // Wire form of the tolerant pattern's separator gap: quoteWithEscape doubles
 // the backslashes when the matcher value is serialized into the filter param.
@@ -161,7 +121,7 @@ describe('useFiringAlerts', () => {
   describe('team matchers', () => {
     it('matches own teams tolerantly: case-insensitive, punctuation as separator gaps', async () => {
       mockTeams([{ name: 'Platform Monitoring' }, { name: 'Team (US)' }]);
-      const requests = captureAlertFilters();
+      const requests = mockAlerts([]);
 
       const { result } = renderHook(() => useFiringAlerts(), { wrapper: getWrapper({}) });
       await waitFor(() => expect(result.current.loading).toBe(false));
@@ -174,7 +134,7 @@ describe('useFiringAlerts', () => {
 
     it('skips teams without letters or digits, sending no matcher when none remain', async () => {
       mockTeams([{ name: '@#$' }]);
-      const requests = captureAlertFilters();
+      const requests = mockAlerts([]);
 
       const { result } = renderHook(() => useFiringAlerts(), { wrapper: getWrapper({}) });
       await waitFor(() => expect(result.current.loading).toBe(false));
@@ -184,7 +144,7 @@ describe('useFiringAlerts', () => {
 
     it('matches a picked label exactly, in place of the own-teams default', async () => {
       mockTeams([{ name: 'Platform Monitoring' }]);
-      const requests = captureAlertFilters();
+      const requests = mockAlerts([]);
 
       // Picks are values set on real rules, so '.' is a plain character, not a wildcard.
       const { result } = renderHook(() => useFiringAlerts('team:team.one'), { wrapper: getWrapper({}) });

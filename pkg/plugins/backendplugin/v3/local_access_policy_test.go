@@ -7,8 +7,10 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/plugin"
 )
 
 func TestLocalAccessPolicyToken(t *testing.T) {
@@ -32,7 +34,7 @@ func TestLocalAccessPolicyToken(t *testing.T) {
 	require.True(t, ok)
 	RevokeLocalAccessPolicyToken("")
 
-	require.Equal(t, second, LocalAccessPolicyTokenFromEnv([]string{"GF_VERSION=1", EnvVarAccessPolicyToken + "=" + second}))
+	require.Equal(t, second, LocalAccessPolicyTokenFromEnv([]string{"GF_VERSION=1", plugin.EnvVarAPIAccessCAPToken + "=" + second}))
 	require.Empty(t, LocalAccessPolicyTokenFromEnv([]string{"GF_VERSION=1"}))
 
 	manifest := &app.ManifestData{Group: "first.ext.grafana.app"}

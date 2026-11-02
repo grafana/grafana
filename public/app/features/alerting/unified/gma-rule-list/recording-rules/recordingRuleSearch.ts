@@ -4,10 +4,13 @@ import * as z from 'zod';
 import { generatedAPI } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
 import { type ResultTotal } from '../rule-row/ResultCount';
+import { type FilterIssue } from '../rule-search/parser';
+import { getRejectionIssues } from '../rule-search/searchRejection';
 import { type PagedFailure } from '../shared/PagedFailureAlert';
 
+import { type RecordingRuleFilter } from './recordingRuleFilters';
 import { type RecordingRuleSearchHit, recordingRuleSearchHitSchema } from './recordingRuleSearchHit';
-import { buildRecordingRuleSearchQuery } from './recordingRuleSearchQuery';
+import { buildRecordingRuleLeaves, buildRecordingRuleSearchQuery } from './recordingRuleSearchQuery';
 
 interface RecordingRuleSearchPage {
   hits: RecordingRuleSearchHit[];
@@ -27,20 +30,23 @@ const recordingRuleSearchResponseSchema = z.object({
 
 type RecordingRuleSearchResponse = z.infer<typeof recordingRuleSearchResponseSchema>;
 
-/** Infinite query; the generated search is a POST mutation with no tags or page state. */
+/**
+ * Infinite query keyed by filter, so a new filter starts again from the first page. The generated
+ * search is a POST mutation with no tags or page state.
+ */
 const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
   endpoints: (build) => ({
-    searchRecordingRules: build.infiniteQuery<RecordingRuleSearchPage, void, string | undefined>({
+    searchRecordingRules: build.infiniteQuery<RecordingRuleSearchPage, RecordingRuleFilter, string | undefined>({
       infiniteQueryOptions: {
         initialPageParam: undefined,
         getNextPageParam: (lastPage) => lastPage.continueToken || undefined,
       },
       // Results are a view of the current page only: leaving it drops them, and coming back searches again.
       keepUnusedDataFor: 0,
-      query: ({ pageParam }) => ({
+      query: ({ queryArg, pageParam }) => ({
         url: '/searchRecordingRules',
         method: 'POST',
-        body: buildRecordingRuleSearchQuery(pageParam),
+        body: buildRecordingRuleSearchQuery(queryArg, pageParam),
       }),
       rawResponseSchema: recordingRuleSearchResponseSchema,
       // A response that fails the schema becomes a query error, so the page shows it with Retry.
@@ -57,8 +63,8 @@ const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
 
 const { useSearchRecordingRulesInfiniteQuery } = recordingRuleSearchAPI;
 
-export function useRecordingRuleSearch() {
-  const query = useSearchRecordingRulesInfiniteQuery();
+export function useRecordingRuleSearch(filter: RecordingRuleFilter) {
+  const query = useSearchRecordingRulesInfiniteQuery(filter);
   const { currentData, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } = query;
   // Missing from the result type of a query that has not started.
   const isFetchNextPageError = 'isFetchNextPageError' in query && query.isFetchNextPageError;
@@ -88,6 +94,21 @@ export function useRecordingRuleSearch() {
     // Only the first page's total counts; later pages repeat it and the count never drives paging.
     total: pages?.[0]?.total,
   };
+}
+
+/**
+ * The issues of a search the rule search refused as invalid, for the search input. It reads the same cached
+ * search as the list, so it sends no request of its own.
+ */
+export function useRecordingRuleSearchRejection(
+  filter: RecordingRuleFilter,
+  { skip }: { skip: boolean }
+): FilterIssue[] {
+  const { error } = useSearchRecordingRulesInfiniteQuery(filter, { skip });
+  return useMemo(
+    () => (skip ? [] : (getRejectionIssues(error, buildRecordingRuleLeaves(filter)) ?? [])),
+    [skip, error, filter]
+  );
 }
 
 function toResultTotal({

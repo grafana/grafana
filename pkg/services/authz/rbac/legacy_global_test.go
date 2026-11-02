@@ -213,7 +213,9 @@ func TestLegacyCheckGlobalResolverContext(t *testing.T) {
 	for _, orgID := range []int64{accesscontrol.NoOrgID, accesscontrol.GlobalOrgID} {
 		t.Run(fmt.Sprintf("org=%d", orgID), func(t *testing.T) {
 			grants := []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:7"}}
-			s, _ := newLegacyGlobalTestService(grants)
+			s, permissions := newLegacyGlobalTestService(grants)
+			folders := &failingLegacyFolderPermissions{PermissionStore: permissions.PermissionStore}
+			permissions.PermissionStore = folders
 			ac := acimpl.ProvideAccessControlTest()
 			calls := 0
 			ac.RegisterScopeAttributeResolver("users:login:", accesscontrol.ScopeAttributeResolverFunc(
@@ -235,7 +237,7 @@ func TestLegacyCheckGlobalResolverContext(t *testing.T) {
 			req := legacyPermissionRequest("user:checked-user", "users:read", "users:login:alice")
 			req.GlobalEvaluation = &authzextv1.LegacyGlobalEvaluation{
 				RequesterOrgId:   orgID,
-				PermittedActions: []string{"users:read"},
+				PermittedActions: []string{"users:read", folder.ActionFoldersRead},
 			}
 
 			got, err := s.LegacyCheck(legacyCheckContext(t), req)
@@ -243,6 +245,7 @@ func TestLegacyCheckGlobalResolverContext(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, proto.Equal(&authzextv1.LegacyCheckResponse{Allowed: true}, got), "got %v", got)
 			require.Equal(t, 1, calls)
+			require.Zero(t, folders.folderQueries)
 		})
 	}
 }
@@ -320,7 +323,7 @@ func TestLegacyCheckGlobalResolverRestrictedPermissions(t *testing.T) {
 			})
 			ac := acimpl.ProvideAccessControlTest()
 			calls := 0
-			ac.RegisterScopeAttributeResolver("users:login:", accesscontrol.ScopeAttributeResolverFunc(
+			ac.RegisterScopeAttributeResolver("users:login:", accesscontrol.WithRequiredActions(accesscontrol.ScopeAttributeResolverFunc(
 				func(ctx context.Context, _ int64, _ string) ([]string, error) {
 					calls++
 					requester, err := identity.GetRequester(ctx)
@@ -338,7 +341,7 @@ func TestLegacyCheckGlobalResolverRestrictedPermissions(t *testing.T) {
 
 					return []string{"users:id:7"}, nil
 				},
-			))
+			), folder.ActionFoldersRead))
 			s = s.WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), types.OrgNamespaceFormatter)
 			req := legacyPermissionRequest("user:checked-user", "users:read", "users:login:alice")
 			req.GlobalEvaluation = &authzextv1.LegacyGlobalEvaluation{

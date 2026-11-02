@@ -7,7 +7,7 @@ See [package source](https://github.com/grafana/grafana/tree/main/packages/grafa
 ## Installation
 
 ```bash
-yarn add @grafana/sql
+pnpm add @grafana/sql
 ```
 
 ```bash

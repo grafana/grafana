@@ -21,7 +21,7 @@ type RemotePrimaryForkedAlertmanager struct {
 	log log.Logger
 
 	internal notifier.Alertmanager
-	remote   remoteAlertmanager
+	remote   notifier.Alertmanager
 }
 
 // NewRemotePrimaryFactory returns a function to override the default AM factory in the multi-org Alertmanager.
@@ -57,7 +57,7 @@ func NewRemotePrimaryFactory(
 	}
 }
 
-func newRemotePrimaryForkedAlertmanager(log log.Logger, internal notifier.Alertmanager, remote remoteAlertmanager) *RemotePrimaryForkedAlertmanager {
+func newRemotePrimaryForkedAlertmanager(log log.Logger, internal notifier.Alertmanager, remote notifier.Alertmanager) *RemotePrimaryForkedAlertmanager {
 	return &RemotePrimaryForkedAlertmanager{
 		log:      log,
 		internal: internal,

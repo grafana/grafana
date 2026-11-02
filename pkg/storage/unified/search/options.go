@@ -100,6 +100,7 @@ func NewSearchOptions(
 			Root:                           root,
 			FileThreshold:                  int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
 			IndexCacheTTL:                  cfg.IndexCacheTTL,             // How long to keep the index cache in memory
+			GlobalIndexIdleTimeout:         cfg.GlobalSearchIndexIdleTimeout,
 			BuildVersion:                   cfg.BuildVersion,
 			OwnsIndex:                      ownsIndexFn,
 			IndexMinUpdateInterval:         cfg.IndexMinUpdateInterval,

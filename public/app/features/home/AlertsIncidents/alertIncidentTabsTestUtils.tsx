@@ -93,7 +93,7 @@ export function mockAlerts(alerts: AlertmanagerAlert[]) {
 }
 
 /** Report the IRM plugin as absent so the component only shows the alerts tab. */
-function mockNoIrmPlugin() {
+export function mockNoIrmPlugin() {
   uninstallAppPluginMeta(SupportedPlugin.Irm);
   server.use(http.get('/api/plugins/:pluginId/settings', () => HttpResponse.json({ enabled: false })));
 }
