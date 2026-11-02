@@ -130,6 +130,7 @@ describe('useSyncStarredItemsInNav', () => {
       expect(mockSearcher.search).toHaveBeenCalledWith({
         name: starredDashboards.map((d) => d.uid).sort(),
         kind: ['dashboard'],
+        limit: starredDashboards.length,
       });
     });
 
@@ -226,6 +227,7 @@ describe('useSyncStarredItemsInNav', () => {
         expect(mockSearcher.search).toHaveBeenCalledWith({
           name: [dashUid, folderUid].sort(),
           kind: ['dashboard', 'folder'],
+          limit: 2,
         });
       });
 
@@ -318,6 +320,7 @@ describe('useSyncStarredItemsInNav', () => {
         expect(mockSearcher.search).toHaveBeenCalledWith({
           name: [uid],
           kind: ['dashboard', 'folder'],
+          limit: 1,
         });
       });
 

@@ -26,12 +26,9 @@ export function DashboardTabs() {
   const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   const recent = useRecentActivity();
-  const {
-    rows: starredDashboards,
-    loading: starredLoading,
-    error: starredError,
-    retry: starredRetry,
-  } = useStarredSearch(MAX_STARRED);
+  const { rows: starredRows, loading: starredLoading, error: starredError, retry: starredRetry } = useStarredSearch();
+  // One starred search is cached app-wide; the card shows a slice of it.
+  const starredDashboards = starredRows?.slice(0, MAX_STARRED);
 
   const {
     value: mostUsedDashboards,
