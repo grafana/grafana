@@ -7,6 +7,8 @@ keywords:
   - github
   - github enterprise
   - as code
+  - provisioning
+  - configuration
 labels:
   products:
     - enterprise

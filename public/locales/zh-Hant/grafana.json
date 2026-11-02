@@ -517,6 +517,7 @@
         "save": "儲存"
       },
       "error-title": "無法儲存警報規則",
+      "form-errors": "",
       "no-group-success": "已成功新增規則"
     },
     "alert-rule-name-and-metric": {
@@ -525,8 +526,8 @@
       "label-metric": "指標",
       "label-name": "名稱（名字）",
       "message": {
-        "must-enter-a-metric-name": "必須輸入指標名稱",
-        "must-enter-a-name": "必須輸入名稱",
+        "metric-name-required": "",
+        "name-required": "",
         "please-select-a-data-source": "請選擇一個資料來源"
       },
       "metric-aria-label-metric": "指標",
@@ -581,6 +582,7 @@
     },
     "alertmanager-config": {
       "confirmText-yes-reset-configuration": "是，清空並重新選擇",
+      "editor-label": "",
       "gma-manual-configuration-description": "無法手動變更內部 Grafana Alertmanager 設定。若要變更此設定，請透過使用者介面編輯個別資源。",
       "gma-manual-configuration-is-not-supported": "不支援手動設定變更",
       "message": {
@@ -1090,6 +1092,7 @@
         "body": "確定要還原這項已刪除的警報規則定義嗎？",
         "confirm": "是的，還原已刪除的規則",
         "error": "無法還原已刪除的警報規則",
+        "preview-aria-label": "",
         "title": "還原已刪除的警報規則"
       },
       "table": {
@@ -1307,7 +1310,7 @@
     "folder-selector": {
       "description-select-folder": "選擇資料夾以儲存您的規則。",
       "message": {
-        "select-a-folder": "選擇一個資料夾"
+        "folder-required": ""
       }
     },
     "folderAndGroup": {
@@ -1558,11 +1561,10 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "正在載入群組…",
       "message": {
-        "must-be-a-positive-integer": "必須為正整數。",
-        "must-enter-a-group-name": "必須輸入群組名稱"
+        "evaluation-group-required": "",
+        "must-be-a-positive-integer": "必須為正整數。"
       },
       "missing-series-resolve-placeholder": "預設值：2",
-      "or": "或",
       "placeholder-select-an-evaluation-group": "選取評估群組…",
       "text-configure-no-data-and-error-handling": "設定無資料和錯誤處理",
       "title-set-evaluation-behavior": "設定評估行為"
@@ -1855,6 +1857,7 @@
         "will-import-rules": "將匯入規則",
         "will-import-rules-count_other": "將匯入 {{count}} 個規則"
       },
+      "rules-preview": "",
       "source": {
         "datasource": "現有的資料來源管理規則",
         "datasource-description": "從現有資料來源匯入規則",
@@ -2974,7 +2977,7 @@
           "alerting": "開啟以暫停評估此警報規則。",
           "recording": "開啟以暫停評估此錄製規則。"
         },
-        "select-folder-before": "在設定評估群組和間隔之前，請選擇一個資料夾",
+        "select-folder-first-tooltip": "",
         "ungroup-warning": "此動作是不可回復的。儲存後，您將無法將其重新新增至群組。",
         "ungroup-warning-title": "這將從其群組中移除警報規則"
       },
@@ -3636,6 +3639,9 @@
       "switch-to-data-source-managed": "您在查詢中選取的資料來源支援警報規則管理。如果您希望警報規則由資料來源而非 Grafana 管理，請切換至資料來源管理。",
       "switch-to-grafana-managed": "切換至 Grafana 管理，以使用表達式、多個查詢、通知中的圖像及其他各種功能。",
       "title-alert-rule-types": "警報規則類型"
+    },
+    "sql-query-preview": {
+      "aria-label": ""
     },
     "state-history": {
       "columns": {
@@ -11434,11 +11440,8 @@
       "severity-low": "低",
       "severity-minor": "次要",
       "severity-unknown": "未知",
-      "title": "觸發警報",
       "view-all": "檢視所有觸發警報",
-      "view-rules": "檢視所有警報規則",
-      "critical-count_other": "{{count}} 個關鍵",
-      "high-count_other": "{{count}} 個高"
+      "view-rules": "檢視所有警報規則"
     },
     "header-actions": {
       "active-incidents": "啟用的事件",
@@ -11464,21 +11467,13 @@
       "empty": "",
       "empty-selected-team": "",
       "error-title": "無法載入進行中的事件",
-      "title": "啟用的事件",
       "view-all": "檢視所有事件"
     },
     "learn-more": "了解詳情",
     "most-used-dashboards-tab": {
       "empty": "最常使用的儀表板將顯示在此處。",
-      "empty-description": "一旦您的組織擁有控制面板並收集了使用情況資料，最近 30 天內檢視次數最多的控制面板將顯示在此處。",
       "error-title": "無法載入最常使用的儀表板",
       "loading": "正在載入最常使用的儀表板…"
-    },
-    "news-card": {
-      "empty": "沒有最近的部落格文章。",
-      "error-title": "無法載入最近的部落格文章",
-      "read-more": "閱讀更多 Grafana Labs 部落格的內容",
-      "title": "部落格的最新消息"
     },
     "on-call-card": {
       "current-shift": "",
@@ -11818,7 +11813,6 @@
     },
     "starred-dashboards-tab": {
       "empty": "您加星號的儀表板將顯示在此處",
-      "empty-description": "您可以在儀表板頁面上按一下<1></1>，為您最喜歡的儀表板加上星號。",
       "error-title": "無法載入加星號的儀表板",
       "loading": "正在載入加星號的儀表板…"
     },
@@ -13618,6 +13612,7 @@
       "add-title": "",
       "change-visualization": "",
       "edit-query": "",
+      "edit-with-assistant": "",
       "hide-query": "",
       "open-explore": "",
       "rename": "",
@@ -15657,20 +15652,8 @@
     "explain-or-modify": "說明或修改",
     "explain-query": "",
     "explaining": "",
-    "feedback-cancel": "取消",
-    "feedback-description": "您的意見回饋有助於改善 Grafana 的查詢體驗。",
-    "feedback-error": "無法傳送意見回饋。再試一次。",
     "feedback-helpful": "有幫助",
-    "feedback-label": "分享意見回饋",
-    "feedback-negative-placeholder": "描述哪些地方不理想，以及您原本預期的結果。",
-    "feedback-negative-title": "哪裡出了問題？",
     "feedback-not-helpful": "沒有幫助",
-    "feedback-positive-placeholder": "您喜歡哪些部分？還有哪些地方可以做得更好？",
-    "feedback-positive-title": "哪些地方做得不錯？",
-    "feedback-privacy": "",
-    "feedback-recipient": "您的意見回饋將傳送給負責查詢功能的團隊。",
-    "feedback-send": "傳送",
-    "feedback-sending": "正在傳送…",
     "focus": "",
     "follow-up-label": "",
     "follow-up-placeholder": "",
@@ -16866,6 +16849,8 @@
       "failures-description": "",
       "filter-placeholder": "",
       "filtered": "",
+      "internal": "",
+      "internal-description": "",
       "last-failed": "",
       "load-failures": "",
       "never": "",

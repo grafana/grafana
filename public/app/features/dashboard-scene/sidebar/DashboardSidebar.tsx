@@ -43,6 +43,14 @@ import { type DashboardSidebarPane, type DashboardSidebarLike, type DashboardSid
 
 export const MAX_UNDO_ACTIONS = 100;
 
+/** Edit actions being collected into one undo entry, see startBatchAction/endBatchAction. */
+interface ActiveBatch {
+  meta: DashboardActionMeta;
+  source: SceneObject;
+  description?: string;
+  actions: DashboardEditActionEventPayload[];
+}
+
 export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> implements DashboardSidebarLike {
   public constructor(state?: Partial<DashboardSidebarState>) {
     super({
@@ -100,12 +108,13 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   /** Set while a batch of edit actions is being collected, see startBatchAction/endBatchAction. */
-  private _activeBatch?: {
-    meta: DashboardActionMeta;
-    source: SceneObject;
-    description?: string;
-    actions: DashboardEditActionEventPayload[];
-  };
+  private _activeBatch?: ActiveBatch;
+
+  /**
+   * Batches a newer one started inside, innermost last: a batch started while another collects, such as
+   * a multi-panel delete during an Assistant batch, joins it as one of its edits instead of replacing it.
+   */
+  private _outerBatches: ActiveBatch[] = [];
 
   private _batchSizes = new WeakMap<DashboardEditActionEventPayload, number>();
 
@@ -232,12 +241,15 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       this.setState({ redoStack: [] });
     }
 
+    if (this._activeBatch) {
+      this._outerBatches.push(this._activeBatch);
+    }
     this._activeBatch = { source, description, meta, actions: [] };
   }
 
   private endBatchAction() {
     const batch = this._activeBatch;
-    this._activeBatch = undefined;
+    this._activeBatch = this._outerBatches.pop();
 
     if (!batch || batch.actions.length === 0) {
       return;
@@ -254,6 +266,11 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
         [...batch.actions].reverse().forEach((childAction) => this.undoSingleAction(childAction));
       },
     };
+
+    if (this._activeBatch) {
+      this._activeBatch.actions.push(action);
+      return;
+    }
 
     this._batchSizes.set(action, batch.actions.length);
     this.setState({ undoStack: this.pushToUndoStack(action) });
@@ -338,6 +355,15 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     if (dashboardModesEnabled() && getDashboardMode(getDashboardSceneFor(this).state) !== 'edit') {
       return;
     }
+    this.undoLastAction();
+  }
+
+  /**
+   * Undoes the newest entry in any dashboard mode. For callers that have already established the entry is
+   * theirs to undo, such as Assistant edits made while the dashboard is in the agent presentation.
+   * `trigger` names a caller other than the dashboard's own controls in the reported interaction.
+   */
+  public undoLastAction(trigger?: string) {
     // How far back the user has already stepped through history before this undo
     const redoDepth = this.state.redoStack.length;
     const undoStack = this.state.undoStack.slice();
@@ -353,6 +379,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       actionId: action.meta.actionId,
       scope: action.meta.scope,
       redoDepth,
+      ...(trigger ? { trigger } : {}),
     });
   }
 
@@ -404,6 +431,11 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     if (dashboardModesEnabled() && getDashboardMode(getDashboardSceneFor(this).state) !== 'edit') {
       return;
     }
+    this.redoLastAction();
+  }
+
+  /** The redo counterpart of `undoLastAction`: redoes the newest undone entry in any dashboard mode. */
+  public redoLastAction(trigger?: string) {
     const redoDepth = this.state.redoStack.length;
     const redoStack = this.state.redoStack.slice();
     const action = redoStack.pop();
@@ -418,6 +450,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       actionId: action.meta.actionId,
       scope: action.meta.scope,
       redoDepth,
+      ...(trigger ? { trigger } : {}),
     });
   }
 

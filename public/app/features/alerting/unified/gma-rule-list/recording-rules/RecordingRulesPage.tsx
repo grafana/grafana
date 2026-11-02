@@ -8,10 +8,11 @@ import { useRuleListSearchState } from '../rule-search/useRuleListSearchState';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
 import { RecordingRulesListView } from './RecordingRulesListView';
+import { recordingRuleSearchSchema } from './recordingRuleFilters';
 import { useRecordingRuleSearchRejection } from './recordingRuleSearch';
 
 function RecordingRulesPage() {
-  const { query, filter, parseIssues, filters, applyQuery } = useRuleListSearchState('recording');
+  const { query, filter, parseIssues, filterHelp, applyQuery } = useRuleListSearchState(recordingRuleSearchSchema);
   const rejectionIssues = useRecordingRuleSearchRejection(filter, { skip: parseIssues.length > 0 });
   const issues = parseIssues.length > 0 ? parseIssues : rejectionIssues;
 
@@ -22,7 +23,7 @@ function RecordingRulesPage() {
     <AlertingPageWrapper navId="recording-rules">
       <Box paddingTop={2}>
         <Stack direction="column" gap={2}>
-          <RuleSearchInput query={query} onApply={applyQuery} filters={filters} issues={issues} />
+          <RuleSearchInput query={query} onApply={applyQuery} filterHelp={filterHelp} issues={issues} />
           {issues.length > 0 ? (
             <EmptyState
               variant="not-found"

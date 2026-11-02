@@ -9,7 +9,7 @@
         "tags": [
           "Search"
         ],
-        "description": "Search resources of several types in a namespace: `dashboard.grafana.app/dashboards`, `folder.grafana.app/folders`, `dashboard.grafana.app/notebooks`, `playlist.grafana.app/playlists`. Each result names its own group, resource and kind, and is authorized on its own.\n\nOnly the fields every resource has can be used, plus:\n\n- `groupResource` (`{group}/{resource}`): filter and facet, to narrow the search to some types or count results per type.\n- `folderTree`: filter with `In` only. Matches what is in the named folders or in any folder below them, not the named folders themselves. `general` names the root folder and matches everything; an empty value is rejected.\n\nResults are eventually consistent: just after a change, a search can still return what was there before, and just after a folder moves, a `folderTree` search can still find what was below it in its old place.\n\nA namespace's index is opened when it is first searched, and closed again after some hours without a search. The first search after that can wait a few seconds, or get 503 while the index is still being built; retry it shortly. It can also miss changes made while the index was closed, until the index catches up with storage.",
+        "description": "Search resources of several types in a namespace: `dashboard.grafana.app/dashboards`, `folder.grafana.app/folders`, `dashboard.grafana.app/notebooks`, `playlist.grafana.app/playlists`. Each result names its own group, resource and kind, and is authorized on its own. `folderPaths` gives the path of each folder the results are in, listing ancestors before descendants and ending with the containing folder. Like the folder API's parents, the nearest unreadable folder or folder missing from the global index appears first, by name only and marked `detached`. Its ancestors are omitted.\n\nOnly the fields every resource has can be used, plus:\n\n- `groupResource` (`{group}/{resource}`): filter and facet, to narrow the search to some types or count results per type.\n- `folderTree`: filter with `In` only. Matches what is in the named folders or in any folder below them, not the named folders themselves. `general` names the root folder and matches everything; an empty value is rejected.\n\nResults are eventually consistent: just after a change, a search can still return what was there before, and just after a folder moves, a `folderTree` search can still find what was below it in its old place.\n\nA namespace's index is opened when it is first searched, and closed again after some hours without a search. The first search after that can wait a few seconds, or get 503 while the index is still being built; retry it shortly. It can also miss changes made while the index was closed, until the index catches up with storage.",
         "operationId": "listGlobalSearchV0alpha1",
         "parameters": [
           {
@@ -209,6 +209,25 @@
           }
         }
       },
+      "com.github.grafana.grafana.pkg.apis.search.v0alpha1.FolderPathItem": {
+        "description": "FolderPathItem is one folder of a folder path. Folder paths list ancestors before descendants, ending with the containing folder. Like the folder API's parents, the nearest unreadable folder or folder missing from the global index appears first, by name only and marked detached. Its ancestors are omitted.",
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "detached": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string",
+            "default": ""
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.search.v0alpha1.GlobalResultsMetadata": {
         "description": "GlobalResultsMetadata carries the pagination token, the total hit count, and the types the search left out.",
         "type": "object",
@@ -259,6 +278,16 @@
               "type": "array",
               "items": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.FacetTerm"
+              }
+            }
+          },
+          "folderPaths": {
+            "description": "FolderPaths holds the path of each folder the items are in, keyed by the folder's name as items return it in the folder field. Only items that return the folder field are covered, and the root folder has no path. Paths are display data: they are left out when they cannot be found.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.FolderPathItem"
               }
             }
           },

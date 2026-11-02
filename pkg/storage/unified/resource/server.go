@@ -3030,12 +3030,7 @@ func (s *server) resolveBlobGet(ctx context.Context, req *resourcepb.GetBlobRequ
 
 const BlobsField = "blobs"
 
-type BlobReference struct {
-	UID         string `json:"uid"`
-	Size        int64  `json:"size,omitempty"`
-	Hash        string `json:"hash,omitempty"`
-	ContentType string `json:"contentType,omitempty"`
-}
+type BlobReference = resourcepb.BlobReference
 
 func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.ResourceKey, rv int64) (map[string]*utils.BlobInfo, bool, *resourcepb.ErrorResult) {
 	if r := verifyRequestKey(key); r != nil {
