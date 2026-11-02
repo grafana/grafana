@@ -6,10 +6,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-const (
-	ModeRemoteSecondary = "remote_secondary"
-	ModeRemotePrimary   = "remote_primary"
-)
+const ModeRemotePrimary = "remote_primary"
 
 type RemoteAlertmanager struct {
 	Info                  *prometheus.GaugeVec

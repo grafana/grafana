@@ -338,6 +338,15 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     if (dashboardModesEnabled() && getDashboardMode(getDashboardSceneFor(this).state) !== 'edit') {
       return;
     }
+    this.undoLastAction();
+  }
+
+  /**
+   * Undoes the newest entry in any dashboard mode. For callers that have already established the entry is
+   * theirs to undo, such as Assistant edits made while the dashboard is in the agent presentation.
+   * `trigger` names a caller other than the dashboard's own controls in the reported interaction.
+   */
+  public undoLastAction(trigger?: string) {
     // How far back the user has already stepped through history before this undo
     const redoDepth = this.state.redoStack.length;
     const undoStack = this.state.undoStack.slice();
@@ -353,6 +362,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       actionId: action.meta.actionId,
       scope: action.meta.scope,
       redoDepth,
+      ...(trigger ? { trigger } : {}),
     });
   }
 
@@ -404,6 +414,11 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     if (dashboardModesEnabled() && getDashboardMode(getDashboardSceneFor(this).state) !== 'edit') {
       return;
     }
+    this.redoLastAction();
+  }
+
+  /** The redo counterpart of `undoLastAction`: redoes the newest undone entry in any dashboard mode. */
+  public redoLastAction(trigger?: string) {
     const redoDepth = this.state.redoStack.length;
     const redoStack = this.state.redoStack.slice();
     const action = redoStack.pop();
@@ -418,6 +433,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       actionId: action.meta.actionId,
       scope: action.meta.scope,
       redoDepth,
+      ...(trigger ? { trigger } : {}),
     });
   }
 

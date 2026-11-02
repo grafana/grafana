@@ -5,10 +5,10 @@ import { generatedAPI } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1'
 
 import { type ResultTotal } from '../rule-row/ResultCount';
 import { type FilterIssue } from '../rule-search/parser';
-import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import { getRejectionIssues } from '../rule-search/searchRejection';
 import { type PagedFailure } from '../shared/PagedFailureAlert';
 
+import { type RecordingRuleFilter } from './recordingRuleFilters';
 import { type RecordingRuleSearchHit, recordingRuleSearchHitSchema } from './recordingRuleSearchHit';
 import { buildRecordingRuleLeaves, buildRecordingRuleSearchQuery } from './recordingRuleSearchQuery';
 
@@ -36,7 +36,7 @@ type RecordingRuleSearchResponse = z.infer<typeof recordingRuleSearchResponseSch
  */
 const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
   endpoints: (build) => ({
-    searchRecordingRules: build.infiniteQuery<RecordingRuleSearchPage, RuleSearchFilter, string | undefined>({
+    searchRecordingRules: build.infiniteQuery<RecordingRuleSearchPage, RecordingRuleFilter, string | undefined>({
       infiniteQueryOptions: {
         initialPageParam: undefined,
         getNextPageParam: (lastPage) => lastPage.continueToken || undefined,
@@ -63,7 +63,7 @@ const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
 
 const { useSearchRecordingRulesInfiniteQuery } = recordingRuleSearchAPI;
 
-export function useRecordingRuleSearch(filter: RuleSearchFilter) {
+export function useRecordingRuleSearch(filter: RecordingRuleFilter) {
   const query = useSearchRecordingRulesInfiniteQuery(filter);
   const { currentData, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } = query;
   // Missing from the result type of a query that has not started.
@@ -100,7 +100,10 @@ export function useRecordingRuleSearch(filter: RuleSearchFilter) {
  * The issues of a search the rule search refused as invalid, for the search input. It reads the same cached
  * search as the list, so it sends no request of its own.
  */
-export function useRecordingRuleSearchRejection(filter: RuleSearchFilter, { skip }: { skip: boolean }): FilterIssue[] {
+export function useRecordingRuleSearchRejection(
+  filter: RecordingRuleFilter,
+  { skip }: { skip: boolean }
+): FilterIssue[] {
   const { error } = useSearchRecordingRulesInfiniteQuery(filter, { skip });
   return useMemo(
     () => (skip ? [] : (getRejectionIssues(error, buildRecordingRuleLeaves(filter)) ?? [])),

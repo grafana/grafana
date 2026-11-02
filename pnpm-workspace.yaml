@@ -86,3 +86,5 @@ minimumReleaseAgeExclude:
   - "@grafana/plugin-ui"
   - "@grafana/llm"
   - "@grafana/lezer-logql"
+  # Renovate security update: node-forge@1.4.1
+  - node-forge@1.4.1

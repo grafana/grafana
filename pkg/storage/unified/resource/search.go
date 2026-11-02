@@ -594,10 +594,11 @@ type searchServer struct {
 // resource: dashboards use IndexRebuildInterval (cfg.IndexRebuildInterval),
 // other resources use MaxFileIndexAge. Zero means "no age-based rebuild".
 //
-// A namespace-wide index holds dashboards too, and it is the more expensive one
-// to rebuild, so it follows the dashboard interval rather than the default.
+// Dashboards are rebuilt more often to pick up usage insights. A global index
+// holds none, and its hourly reconcile already repairs what changed, so it
+// follows the default.
 func (s *searchServer) getIndexMaxAge(key NamespacedResource) time.Duration {
-	if key.Resource == dashboardv1.DASHBOARD_RESOURCE || key.IsGlobal() {
+	if key.Resource == dashboardv1.DASHBOARD_RESOURCE {
 		return s.dashboardIndexMaxAge
 	}
 	return s.maxIndexAge
@@ -2201,7 +2202,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	}
 
 	// Pass rebuild=true to force rebuild of any existing file-based index.
-	_, err = s.build(ctx, req.NamespacedResource, size, "rebuild", true, time.Time{})
+	_, err = s.build(ctx, req.NamespacedResource, size, "rebuild", true, req.lastImportTime)
 	if errors.Is(err, ErrIndexClosedDuringRebuild) {
 		l.Info("index was closed while it was being rebuilt, discarding the rebuilt index")
 	} else if err != nil {
