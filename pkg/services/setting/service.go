@@ -7,7 +7,9 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/hashicorp/golang-lru/v2/expirable"
@@ -16,6 +18,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/protobuf/proto"
 	"gopkg.in/ini.v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -34,6 +37,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	logging "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
 )
 
 // settingTracer wraps an otel tracer and implements the tracing.Tracer interface.
@@ -50,11 +55,27 @@ var tracer tracing.Tracer = &settingTracer{otel.Tracer("github.com/grafana/grafa
 
 const LogPrefix = "setting.service"
 
+const (
+	subscriptionReadyTimeout = 5 * time.Second
+	reconnectReadyAttempts   = 5
+)
+
 const DefaultPageSize = int64(500)
 const DefaultQPS = float32(200)
 const DefaultBurst = 300
 const DefaultCacheTTL = 5 * time.Second
 const DefaultCacheMaxEntries = 1000
+
+// DefaultSubscribedCacheTTL applies instead of DefaultCacheTTL when change events keep the cache fresh;
+// the TTL is then only a backstop for missed events.
+const DefaultSubscribedCacheTTL = time.Minute
+
+// Values of the reason label on the cache invalidation counter.
+const (
+	invalidationReasonEvent        = "event"         // a change event for one namespace
+	invalidationReasonReconnect    = "reconnect"     // events may have been missed; whole cache flushed
+	invalidationReasonInvalidEvent = "invalid_event" // event without a usable namespace; whole cache flushed
+)
 
 // DefaultIdleConnTimeout caps how long idle keep-alive connections are pooled.
 const DefaultIdleConnTimeout = 30 * time.Second
@@ -88,6 +109,8 @@ type clientMetrics struct {
 	cacheEvictionTotal       prometheus.Counter
 	cacheSize                prometheus.Gauge
 	cacheMaxSize             prometheus.Gauge
+	cacheInvalidationTotal   *prometheus.CounterVec
+	cacheSubscribed          prometheus.Gauge
 }
 
 // Service retrieves configuration settings from a remote settings service.
@@ -153,6 +176,28 @@ type remoteSettingService struct {
 	cache        *expirable.LRU[string, []*Setting]  // nil when caching disabled
 	fetchMutexes *expirable.LRU[string, *sync.Mutex] // per-cache-key fetch locks
 	fetchMu      sync.Mutex                          // guards fetchMutexes get-or-create
+	// cacheMu makes the generation check + Add in List atomic with invalidation.
+	cacheMu sync.Mutex
+	// invalidations counts change events; a fetch that overlapped one must not populate the cache.
+	invalidations atomic.Uint64
+	// sub is set once subscribed, guarded by cacheMu.
+	sub Subscription
+}
+
+// Subscription is a handle on a bus subscription.
+type Subscription interface {
+	// WaitReady returns once the server has confirmed the subscription, so events
+	// published afterwards are delivered. The context must have a deadline.
+	WaitReady(ctx context.Context) error
+	Unsubscribe() error
+}
+
+// EventSubscriber delivers settings change notifications from the message bus.
+type EventSubscriber interface {
+	Enabled() bool
+	// Subscribe must deliver every event to every subscriber (no queue group).
+	// onReconnect is called after a reconnection, never on the initial connection.
+	Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte), onReconnect func()) (Subscription, error)
 }
 
 var _ FieldSelectorService = (*remoteSettingService)(nil)
@@ -180,9 +225,12 @@ type Config struct {
 	// The UserAgent format is "settings-client <version> (<service_name>)".
 	// Falls back to the OTEL_SERVICE_NAME environment variable, then to "grafana".
 	ServiceName string
-	// CacheTTL sets the TTL for cached List results. Defaults to DefaultCacheTTL (1s).
+	// CacheTTL sets the TTL for cached List results. Defaults to DefaultCacheTTL.
 	// Set to -1 to disable caching.
 	CacheTTL time.Duration
+	// EventSubscriber, when set and enabled, invalidates cached entries on settings changes.
+	// CacheTTL then defaults to DefaultSubscribedCacheTTL and acts as a backstop.
+	EventSubscriber EventSubscriber
 	// CacheMaxEntries sets the max LRU cache entries. Defaults to DefaultCacheMaxEntries (1000).
 	CacheMaxEntries int
 	// IdleConnTimeout caps how long idle keep-alive connections are pooled before
@@ -234,7 +282,21 @@ func New(config Config) (FieldSelectorService, error) {
 		pageSize = config.PageSize
 	}
 
+	svc := &remoteSettingService{
+		restClient: restClient,
+		log:        log,
+		pageSize:   pageSize,
+		metrics:    metrics,
+	}
+
+	subscribed := false
+	if config.CacheTTL >= 0 && config.EventSubscriber != nil && config.EventSubscriber.Enabled() {
+		subscribed = svc.subscribe(config.EventSubscriber)
+	}
 	cacheTTL := DefaultCacheTTL
+	if subscribed {
+		cacheTTL = DefaultSubscribedCacheTTL
+	}
 	if config.CacheTTL > 0 {
 		cacheTTL = config.CacheTTL
 	}
@@ -243,22 +305,102 @@ func New(config Config) (FieldSelectorService, error) {
 		cacheMaxEntries = config.CacheMaxEntries
 	}
 
-	var cache *expirable.LRU[string, []*Setting]
-	var fetchMutexes *expirable.LRU[string, *sync.Mutex]
 	if config.CacheTTL >= 0 {
-		cache = expirable.NewLRU[string, []*Setting](cacheMaxEntries, nil, cacheTTL)
-		fetchMutexes = expirable.NewLRU[string, *sync.Mutex](cacheMaxEntries, nil, 2*cacheTTL)
+		// events can arrive as soon as we subscribe, so publish the caches under the lock
+		svc.cacheMu.Lock()
+		svc.cache = expirable.NewLRU[string, []*Setting](cacheMaxEntries, nil, cacheTTL)
+		svc.fetchMutexes = expirable.NewLRU[string, *sync.Mutex](cacheMaxEntries, nil, 2*cacheTTL)
+		svc.cacheMu.Unlock()
 		metrics.cacheMaxSize.Set(float64(cacheMaxEntries))
 	}
+	return svc, nil
+}
 
-	return &remoteSettingService{
-		restClient:   restClient,
-		log:          log,
-		pageSize:     pageSize,
-		metrics:      metrics,
-		cache:        cache,
-		fetchMutexes: fetchMutexes,
-	}, nil
+// subscribe wires cache invalidation to settings change events and reports success.
+func (s *remoteSettingService) subscribe(sub EventSubscriber) bool {
+	gvr := schema.GroupVersionResource{Group: ApiGroup, Version: apiVersion, Resource: resource}
+	subject := resourcewatch.Subject(gvr, "")
+	subscription, err := sub.Subscribe(context.Background(), subject, s.handleEvent, s.handleReconnect)
+	if err != nil {
+		s.log.Warn("failed to subscribe to settings change events, relying on cache TTL", "subject", subject, "error", err)
+		return false
+	}
+	// Events published before the server confirms the subscription are missed.
+	ctx, cancel := context.WithTimeout(context.Background(), subscriptionReadyTimeout)
+	defer cancel()
+	if err := subscription.WaitReady(ctx); err != nil {
+		s.log.Warn("settings change subscription not ready, relying on cache TTL", "subject", subject, "error", err)
+		_ = subscription.Unsubscribe()
+		return false
+	}
+	s.cacheMu.Lock()
+	s.sub = subscription
+	s.cacheMu.Unlock()
+	s.metrics.cacheSubscribed.Set(1)
+	return true
+}
+
+func (s *remoteSettingService) handleEvent(subject string, data []byte) {
+	var n resourcepb.WatchNotification
+	if err := proto.Unmarshal(data, &n); err != nil {
+		s.log.Warn("undecodable settings change event, flushing cache", "subject", subject, "error", err)
+		s.invalidateAll(invalidationReasonInvalidEvent)
+		return
+	}
+	if n.Namespace == "" {
+		s.log.Warn("settings change event without a namespace, flushing cache", "subject", subject)
+		s.invalidateAll(invalidationReasonInvalidEvent)
+		return
+	}
+	s.cacheMu.Lock()
+	defer s.cacheMu.Unlock()
+	s.invalidations.Add(1)
+	s.metrics.cacheInvalidationTotal.WithLabelValues(invalidationReasonEvent).Inc()
+	if s.cache == nil {
+		return
+	}
+	prefix := n.Namespace + "|"
+	for _, key := range s.cache.Keys() {
+		if strings.HasPrefix(key, prefix) {
+			s.cache.Remove(key)
+		}
+	}
+}
+
+// handleReconnect flushes the cache once the restored subscription is confirmed.
+// Flushing earlier would let a List re-warm the cache before delivery resumes.
+func (s *remoteSettingService) handleReconnect() {
+	go func() {
+		s.cacheMu.Lock()
+		sub := s.sub
+		s.cacheMu.Unlock()
+
+		ready := false
+		for attempt := 0; sub != nil && attempt < reconnectReadyAttempts && !ready; attempt++ {
+			ctx, cancel := context.WithTimeout(context.Background(), subscriptionReadyTimeout)
+			ready = sub.WaitReady(ctx) == nil
+			cancel()
+		}
+		if !ready {
+			s.log.Warn("settings event subscription not confirmed after reconnect, flushing cache anyway")
+		}
+		flushed := s.invalidateAll(invalidationReasonReconnect)
+		s.log.Info("settings event subscription reconnected, flushed cache", "entries", flushed)
+	}()
+}
+
+// invalidateAll purges the cache and returns the number of entries removed.
+func (s *remoteSettingService) invalidateAll(reason string) int {
+	s.cacheMu.Lock()
+	defer s.cacheMu.Unlock()
+	s.invalidations.Add(1)
+	s.metrics.cacheInvalidationTotal.WithLabelValues(reason).Inc()
+	if s.cache == nil {
+		return 0
+	}
+	n := s.cache.Len()
+	s.cache.Purge()
+	return n
 }
 
 func (s *remoteSettingService) ListAsIni(ctx context.Context, labelSelector metav1.LabelSelector) (*ini.File, error) {
@@ -357,6 +499,7 @@ func (s *remoteSettingService) ListWithFieldSelector(ctx context.Context, labelS
 	}
 
 	s.metrics.cacheMissTotal.Inc()
+	invalidationsBefore := s.invalidations.Load()
 	allSettings, err := s.fetch(ctx, namespace, lSelector, fSelector, span)
 	if err != nil {
 		oErr = err
@@ -364,9 +507,13 @@ func (s *remoteSettingService) ListWithFieldSelector(ctx context.Context, labelS
 	}
 
 	if s.cache != nil {
-		if evicted := s.cache.Add(cacheKey, allSettings); evicted {
-			s.metrics.cacheEvictionTotal.Inc()
+		s.cacheMu.Lock()
+		if s.invalidations.Load() == invalidationsBefore {
+			if evicted := s.cache.Add(cacheKey, allSettings); evicted {
+				s.metrics.cacheEvictionTotal.Inc()
+			}
 		}
+		s.cacheMu.Unlock()
 	}
 
 	return allSettings, nil
@@ -734,6 +881,20 @@ func initMetrics(serviceName string) clientMetrics {
 			Help:        "Configured maximum number of entries in the List cache (CacheMaxEntries); compare against cache_size to tune cache size",
 			ConstLabels: constLabels,
 		}),
+		cacheInvalidationTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace:   "settings",
+			Subsystem:   "service",
+			Name:        "list_settings_cache_invalidation_total",
+			Help:        "Total number of List cache invalidations by reason: event (one namespace), reconnect or invalid_event (whole cache)",
+			ConstLabels: constLabels,
+		}, []string{"reason"}),
+		cacheSubscribed: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace:   "settings",
+			Subsystem:   "service",
+			Name:        "list_settings_cache_subscribed",
+			Help:        "1 when the List cache is invalidated by settings change events, 0 when it relies on TTL only",
+			ConstLabels: constLabels,
+		}),
 	}
 	return metrics
 }
@@ -747,6 +908,8 @@ func (s *remoteSettingService) Describe(descs chan<- *prometheus.Desc) {
 	s.metrics.cacheEvictionTotal.Describe(descs)
 	s.metrics.cacheSize.Describe(descs)
 	s.metrics.cacheMaxSize.Describe(descs)
+	s.metrics.cacheInvalidationTotal.Describe(descs)
+	s.metrics.cacheSubscribed.Describe(descs)
 }
 
 func (s *remoteSettingService) Collect(metrics chan<- prometheus.Metric) {
@@ -761,4 +924,6 @@ func (s *remoteSettingService) Collect(metrics chan<- prometheus.Metric) {
 	}
 	s.metrics.cacheSize.Collect(metrics)
 	s.metrics.cacheMaxSize.Collect(metrics)
+	s.metrics.cacheInvalidationTotal.Collect(metrics)
+	s.metrics.cacheSubscribed.Collect(metrics)
 }
