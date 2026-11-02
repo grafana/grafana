@@ -3,7 +3,7 @@ import { screen } from '@testing-library/react';
 import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../constants';
-import { renderWithQueryEditorProvider } from '../testUtils';
+import { makeQueryActionTarget, renderWithQueryEditorProvider } from '../testUtils';
 
 import { SaveButton } from './SaveButton';
 
@@ -38,7 +38,7 @@ describe('SaveButton', () => {
   });
 
   it('renders the saved-query buttons and exposes a multi-query select callback', () => {
-    renderWithQueryEditorProvider(<SaveButton />, {
+    renderWithQueryEditorProvider(<SaveButton target={makeQueryActionTarget(selectedQuery)} />, {
       selectedQuery,
       uiStateOverrides: { cardType: QueryEditorType.Query },
     });
@@ -53,7 +53,7 @@ describe('SaveButton', () => {
     const runQueries = jest.fn();
     const addQuery = jest.fn().mockReturnValueOnce('B').mockReturnValueOnce('C');
 
-    renderWithQueryEditorProvider(<SaveButton />, {
+    renderWithQueryEditorProvider(<SaveButton target={makeQueryActionTarget(selectedQuery)} />, {
       selectedQuery,
       uiStateOverrides: { cardType: QueryEditorType.Query, setSelectedQuery },
       actionsOverrides: { updateSelectedQuery, addQuery, runQueries },
@@ -81,7 +81,7 @@ describe('SaveButton', () => {
     const addQuery = jest.fn();
     const runQueries = jest.fn();
 
-    renderWithQueryEditorProvider(<SaveButton />, {
+    renderWithQueryEditorProvider(<SaveButton target={makeQueryActionTarget(selectedQuery)} />, {
       selectedQuery,
       uiStateOverrides: { cardType: QueryEditorType.Query },
       actionsOverrides: { updateSelectedQuery, addQuery, runQueries },
@@ -100,7 +100,7 @@ describe('SaveButton', () => {
     const runQueries = jest.fn();
     const addQuery = jest.fn();
 
-    renderWithQueryEditorProvider(<SaveButton />, {
+    renderWithQueryEditorProvider(<SaveButton target={makeQueryActionTarget(selectedQuery)} />, {
       selectedQuery,
       uiStateOverrides: { cardType: QueryEditorType.Query, setSelectedQuery },
       actionsOverrides: { updateSelectedQuery, addQuery, runQueries },

@@ -1,21 +1,25 @@
 import { css } from '@emotion/css';
-import { type ReactNode } from 'react';
+import { type ReactNode, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 
 import { QueryEditorType } from '../../constants';
+import { DatasourceHelpPanel } from '../Header/DatasourceHelpPanel';
 import { EditableQueryName } from '../Header/EditableQueryName';
+import { HeaderActions } from '../Header/HeaderActions';
 import { TransformationIdentifier } from '../Header/TransformationIdentifier';
+import { type HeaderActionTarget } from '../Header/headerActionTarget';
 import {
   useActionsContext,
   useDatasourceContext,
   usePanelContext,
   useQueryEditorTypeConfig,
+  useQueryEditorUIContext,
   useQueryRunnerContext,
 } from '../QueryEditorContext';
 import { QueryEditorPanel } from '../QueryEditorRenderer';
@@ -35,31 +39,28 @@ interface StackedItemHeaderProps {
   identifier: ReactNode;
   /** ID used by the section's aria-labelledby so screen readers announce this header. */
   headingId: string;
-  /** When true, the identifier is struck through and a trailing eye-slash icon is shown. */
-  isHidden?: boolean;
+  /** The card this header's actions act on. */
+  target: HeaderActionTarget;
 }
 
-function StackedItemHeader({ icon, label, identifier, headingId, isHidden = false }: StackedItemHeaderProps) {
+function StackedItemHeader({ icon, label, identifier, headingId, target }: StackedItemHeaderProps) {
   const styles = useStyles2(getStyles);
+  const headerRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div id={headingId} className={styles.itemHeader}>
-      <span className={styles.headerIcon}>{icon}</span>
-      {label !== undefined && (
-        <>
-          <span className={styles.headerLabel}>{label}</span>
-          <span className={styles.headerSeparator} />
-        </>
-      )}
-      <span className={styles.headerRefId}>{identifier}</span>
-      {isHidden && (
-        <Icon
-          name="eye-slash"
-          size="sm"
-          className={styles.headerHiddenIcon}
-          aria-label={t('query-editor-next.stacked.hidden-aria-label', 'Hidden')}
-        />
-      )}
+    <div ref={headerRef} className={styles.itemHeader}>
+      {/* Actions stay outside the heading so their labels don't leak into the section's accessible name. */}
+      <div id={headingId} className={styles.headerTitle}>
+        <span className={styles.headerIcon}>{icon}</span>
+        {label !== undefined && (
+          <>
+            <span className={styles.headerLabel}>{label}</span>
+            <span className={styles.headerSeparator} />
+          </>
+        )}
+        <span className={styles.headerRefId}>{identifier}</span>
+      </div>
+      <HeaderActions containerRef={headerRef} target={target} source="stacked_header" showFeedbackButton={false} />
     </div>
   );
 }
@@ -67,15 +68,17 @@ function StackedItemHeader({ icon, label, identifier, headingId, isHidden = fals
 interface StackedQueryItemProps {
   query: DataQuery;
   headingId: string;
+  isCurrent: boolean;
 }
 
-export function StackedQueryItem({ query, headingId }: StackedQueryItemProps) {
+export function StackedQueryItem({ query, headingId, isCurrent }: StackedQueryItemProps) {
   const styles = useStyles2(getStyles);
 
   const typeConfig = useQueryEditorTypeConfig();
   const { dsSettings } = useDatasourceContext();
   const { panel } = usePanelContext();
   const { queries, data } = useQueryRunnerContext();
+  const { showingDatasourceHelp } = useQueryEditorUIContext();
   const { updateSelectedQuery, addQuery, runQueries, startQueryPreview } = useActionsContext();
   const { queryDsData, queryDsLoading } = useQueryDatasource(query, dsSettings, panel);
 
@@ -99,8 +102,9 @@ export function StackedQueryItem({ query, headingId }: StackedQueryItemProps) {
           <EditableQueryName key={query.refId} query={query} queries={queries} onQueryUpdate={updateSelectedQuery} />
         }
         headingId={headingId}
-        isHidden={Boolean(query.hide)}
+        target={{ cardType: editorType, query, dsData: queryDsData, dsLoading: queryDsLoading }}
       />
+      {isCurrent && showingDatasourceHelp && <DatasourceHelpPanel />}
       <div className={styles.itemBody}>
         <QueryEditorPanel
           panel={panel}
@@ -122,9 +126,10 @@ export function StackedQueryItem({ query, headingId }: StackedQueryItemProps) {
 interface StackedTransformationItemProps {
   transformation: Transformation;
   headingId: string;
+  isCurrent: boolean;
 }
 
-export function StackedTransformationItem({ transformation, headingId }: StackedTransformationItemProps) {
+export function StackedTransformationItem({ transformation, headingId, isCurrent }: StackedTransformationItemProps) {
   const styles = useStyles2(getStyles);
   const typeConfig = useQueryEditorTypeConfig();
   const { transformations } = usePanelContext();
@@ -154,7 +159,7 @@ export function StackedTransformationItem({ transformation, headingId }: Stacked
           />
         }
         headingId={headingId}
-        isHidden={Boolean(transformation.transformConfig.disabled)}
+        target={{ cardType: QueryEditorType.Transformation, transformation }}
       />
       <div className={styles.itemBody}>
         <TransformationEditorPanel
@@ -162,6 +167,7 @@ export function StackedTransformationItem({ transformation, headingId }: Stacked
           transformations={transformations}
           data={data}
           updateTransformation={updateTransformation}
+          showSupplementalDisplays={isCurrent}
         />
       </div>
     </>
@@ -173,10 +179,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     minHeight: theme.spacing(5),
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(1.25),
-    padding: theme.spacing(0.5, 2),
+    justifyContent: 'space-between',
+    gap: theme.spacing(1),
+    padding: theme.spacing(0.5, 1, 0.5, 2),
     background: theme.colors.background.secondary,
     borderBottom: `1px solid ${theme.colors.border.weak}`,
+  }),
+  headerTitle: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1.25),
+    minWidth: 0,
   }),
   headerIcon: css({
     alignItems: 'center',
@@ -195,9 +208,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   headerRefId: css({
     ...theme.typography.body,
-  }),
-  headerHiddenIcon: css({
-    marginLeft: 'auto',
   }),
   itemBody: css({
     padding: theme.spacing(2),
