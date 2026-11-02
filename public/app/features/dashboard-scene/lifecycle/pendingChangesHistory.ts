@@ -68,6 +68,11 @@ const ignore = () => {};
 
 /** Starts recording edits to `scene`, which shows the pending changes `stored`, as edit mode starts. */
 export function startRecordingPendingChanges(scene: DashboardScene, stored: DashboardV2Spec) {
+  // An edit not kept yet, failed or on its way, is in the scene but not in `stored`: a baseline from
+  // the two would count it unchanged, and the next recording would leave it out. Keep the one it has.
+  if (baselines.has(scene) && hasUnrecordedPendingChange(scene)) {
+    return;
+  }
   const serialized = scene.getSaveModel();
   if (isDashboardV2Spec(serialized)) {
     baselines.set(scene, { serialized, stored });

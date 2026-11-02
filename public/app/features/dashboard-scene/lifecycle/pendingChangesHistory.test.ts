@@ -116,6 +116,28 @@ describe('recording edits to pending changes', () => {
     expect(hasUnrecordedPendingChange(scene)).toBe(false);
   });
 
+  // Leaving edit mode and coming back mustn't make the failed edit look unchanged.
+  it('keeps a failed edit in the next recording after edit mode starts again', async () => {
+    const stored = specWith({ hello: { title: 'Hello' } });
+    let model = stored;
+    const scene = fakeScene(() => model);
+    startRecordingPendingChanges(scene, stored);
+    const history = fakeHistory();
+    history.record.mockRejectedValue(new Error('offline'));
+
+    model = specWith({ hello: { title: 'Renamed' } });
+    await recordPendingChange(scene, history, 'panel title change');
+    // Exit edit retries, and fails too; then edit mode starts again over the older stored proposal.
+    await recordPendingChange(scene, history, 'Edit dashboard');
+    startRecordingPendingChanges(scene, stored);
+
+    history.record.mockResolvedValue({ recorded: true });
+    await recordPendingChange(scene, history, 'Edit dashboard');
+
+    expect(history.record).toHaveBeenLastCalledWith({ proposed: model, description: 'Edit dashboard' });
+    expect(hasUnrecordedPendingChange(scene)).toBe(false);
+  });
+
   it('shows the latest pending changes, still editing, when they changed meanwhile', async () => {
     const pageReload = jest.fn().mockResolvedValue(undefined);
     setPendingChangesPageReload(pageReload);
