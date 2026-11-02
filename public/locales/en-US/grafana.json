@@ -5946,6 +5946,9 @@
         "tooltip-remove-property": "Remove property"
       }
     },
+    "edit": {
+      "mobile-not-available": "Dashboard editing is not available on small screens. Switch to a larger screen to continue."
+    },
     "edit-actions": {
       "add": "Add {{typeName}}",
       "add-conditional-rule": "Add {{ruleDescription}} rule",
