@@ -6,9 +6,12 @@ import {
   ASSERTS_APP_ID,
   ASSISTANT_APP_ID,
   AUTH_APP_ID,
+  COLLECTOR_APP_ID,
+  DBCFG_APP_ID,
   HOSTED_TRACES_APP_ID,
   LOGS_DRILLDOWN_APP_ID,
   METRICS_DRILLDOWN_APP_ID,
+  PDC_APP_ID,
   SERVICECENTER_APP_ID,
   SLO_APP_ID,
   SYNTHETIC_MONITORING_APP_ID,
@@ -40,6 +43,8 @@ export interface AppNavConfig {
    * express this by naming a section that does not exist; here it is explicit.
    */
   hidden?: boolean;
+  /** The entry applies only while this returns true; otherwise there is no config at all */
+  when?: () => boolean;
 }
 
 export const ASSERTS_SERVICES_PATH = `/a/${ASSERTS_APP_ID}/services`;
@@ -255,6 +260,13 @@ const APP_NAV_CONFIG: Record<string, AppNavConfig> = {
     sortWeight: NavWeight.cmab,
     icon: 'cmab-logo',
   },
+  [COLLECTOR_APP_ID]: {
+    // The app is not listed; three of its pages are, below
+    hidden: true,
+  },
+  [DBCFG_APP_ID]: {
+    sectionId: NavID.cfg,
+  },
   'grafana-easystart-app': {
     sectionId: NavID.root,
     sortWeight: NavWeight.apps + 1,
@@ -321,6 +333,33 @@ const APP_NAV_PATH_CONFIG: Record<string, AppNavConfig> = {
     sortWeight: 2,
     subTitle: 'Use policies to control automated access to metrics, logs, traces, and other Grafana Cloud services',
   },
+  [`/a/${COLLECTOR_APP_ID}/alloy`]: {
+    sectionId: NavID.connections,
+    sortWeight: 1,
+  },
+  [`/a/${COLLECTOR_APP_ID}/instrumentation-hub`]: {
+    sectionId: NavID.connections,
+    sortWeight: 2,
+  },
+  [`/a/${COLLECTOR_APP_ID}/fleet-management`]: {
+    sectionId: NavID.connections,
+    sortWeight: 3,
+  },
+  // Both of these replace the core Connections page of the same url
+  '/connections/add-new-connection': {
+    sectionId: NavID.connections,
+    sortWeight: 4,
+  },
+  '/connections/infrastructure': {
+    sectionId: NavID.connections,
+  },
+  [`/a/${PDC_APP_ID}`]: {
+    hidden: true,
+  },
+  '/connections/private-data-source-connections': {
+    sectionId: NavID.connections,
+    when: () => config.secureSocksDSProxyEnabled,
+  },
 };
 
 /**
@@ -331,7 +370,7 @@ const APP_NAV_PATH_CONFIG: Record<string, AppNavConfig> = {
  * stay built-in.
  */
 export function appNavConfigFor(appId: string): AppNavConfig | undefined {
-  const builtIn = APP_NAV_CONFIG[appId];
+  const builtIn = whenApplies(APP_NAV_CONFIG[appId]);
   const override = config.navigation.appSections?.[appId];
   if (!override) {
     return builtIn;
@@ -355,7 +394,13 @@ export function appNavPathConfigFor(includePath: string): AppNavConfig | undefin
   const override = config.navigation.appStandalonePages?.[includePath];
   return override
     ? { sortWeight: 0, ...override, sectionId: toSectionId(override.sectionId) }
-    : APP_NAV_PATH_CONFIG[includePath];
+    : whenApplies(APP_NAV_PATH_CONFIG[includePath]);
+}
+
+// Read lazily rather than when the table is built: config is filled from bootdata
+// after this module is imported
+function whenApplies(navConfig: AppNavConfig | undefined): AppNavConfig | undefined {
+  return navConfig?.when && !navConfig.when() ? undefined : navConfig;
 }
 
 /** Whether a section id came from an operator override rather than our own tables */

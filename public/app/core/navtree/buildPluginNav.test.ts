@@ -363,6 +363,96 @@ describe('applyPluginNav', () => {
       const cfg = findById(merged, NavID.cfg);
       expect(findById(cfg?.children ?? [], 'plugin-page-grafana-advisor-app')?.text).toBe('Advisor');
     });
+
+    it('lists the Collector pages in Connections', () => {
+      setup({ permissions: ['datasources:read', 'datasources:create'] });
+
+      const merged = merge(
+        app('grafana-collector-app', 'Collector', [
+          page('Alloy', '/a/grafana-collector-app/alloy'),
+          page('Instrumentation hub', '/a/grafana-collector-app/instrumentation-hub'),
+          page('Fleet Management', '/a/grafana-collector-app/fleet-management'),
+        ])
+      );
+
+      // The core children carry no weight, so they fall to their index (1, 2) and
+      // tie with the Collector pages
+      expect(ids(findById(merged, NavID.connections)?.children ?? [])).toEqual([
+        'connections-add-new-connection',
+        'standalone-plugin-page-/a/grafana-collector-app/alloy',
+        'connections-datasources',
+        'standalone-plugin-page-/a/grafana-collector-app/instrumentation-hub',
+        'standalone-plugin-page-/a/grafana-collector-app/fleet-management',
+      ]);
+    });
+
+    // The pages above all leave the app, so they say nothing about the app entry
+    // itself. A page the tables do not place would otherwise bring the app node
+    // back, which is what being hidden has to prevent.
+    it('keeps the Collector app itself out of the nav', () => {
+      setup({ permissions: ['datasources:read', 'datasources:create'] });
+
+      const merged = merge(
+        app('grafana-collector-app', 'Collector', [
+          page('Alloy', '/a/grafana-collector-app/alloy'),
+          page('Something else', '/a/grafana-collector-app/something-else'),
+        ])
+      );
+
+      expect(findById(merged, 'plugin-page-grafana-collector-app')).toBeUndefined();
+      expect(moreApps(merged)).toBeUndefined();
+    });
+
+    it('places the database config app under Administration', () => {
+      const merged = merge(app('grafana-dbcfg-app', 'Database config', [page('Databases', '/a/grafana-dbcfg-app')]));
+
+      expect(ids(findById(merged, NavID.cfg)?.children ?? [])).toContain('plugin-page-grafana-dbcfg-app');
+      expect(moreApps(merged)).toBeUndefined();
+    });
+
+    // The second page keeps the app in the tree, so the hidden one has somewhere
+    // it could have been placed — without the hide it lands in More apps
+    it('drops a hidden page while the rest of its app stays', () => {
+      const merged = merge(
+        app('grafana-pdc-app', 'Private data source connect', [
+          page('PDC', '/a/grafana-pdc-app'),
+          page('Settings', '/a/grafana-pdc-app/settings'),
+        ])
+      );
+
+      expect(findById(merged, 'standalone-plugin-page-/a/grafana-pdc-app')).toBeUndefined();
+      expect(childTexts(merged, 'grafana-pdc-app')).toEqual(['Settings']);
+    });
+
+    describe('a page placed only while the secure socks proxy is on', () => {
+      const pdcApp = () =>
+        app('grafana-pdc-app', 'Private data source connect', [
+          page('Private data source connect', '/connections/private-data-source-connections'),
+        ]);
+
+      it('lists it in Connections when the proxy is on', () => {
+        setup({ permissions: ['datasources:read'], config: { secureSocksDSProxyEnabled: true } });
+
+        const merged = merge(pdcApp());
+
+        expect(ids(findById(merged, NavID.connections)?.children ?? [])).toContain(
+          'standalone-plugin-page-/connections/private-data-source-connections'
+        );
+      });
+
+      // Without the placement the include is an ordinary page of its app, which is
+      // what an instance that has the plugin but not the proxy should see
+      it('leaves it under its app when the proxy is off', () => {
+        setup({ permissions: ['datasources:read'], config: { secureSocksDSProxyEnabled: false } });
+
+        const merged = merge(pdcApp());
+
+        expect(ids(findById(merged, NavID.connections)?.children ?? [])).not.toContain(
+          'standalone-plugin-page-/connections/private-data-source-connections'
+        );
+        expect(childTexts(merged, 'grafana-pdc-app')).toEqual(['Private data source connect']);
+      });
+    });
   });
 
   describe('assistant deployment-mode filtering', () => {
