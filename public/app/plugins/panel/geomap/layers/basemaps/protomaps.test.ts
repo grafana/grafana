@@ -413,6 +413,14 @@ describe('Protomaps basemap', () => {
       ['==', ['get', 'kind'], 'locality'],
     ],
     [
+      ['==', '$type', 'Polygon'],
+      ['==', ['geometry-type'], 'Polygon'],
+    ],
+    [
+      ['in', '$id', 1, 2],
+      ['in', ['id'], ['literal', [1, 2]]],
+    ],
+    [
       ['!=', 'kind_detail', 'service'],
       ['!=', ['get', 'kind_detail'], 'service'],
     ],

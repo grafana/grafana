@@ -718,22 +718,24 @@ export function toExpressionFilter(filter: GlValue): GlValue {
   if (typeof key !== 'string') {
     return filter;
   }
+  // `$type` and `$id` are not feature properties, so `['get', key]` would always be null for them
+  const input = key === '$type' ? ['geometry-type'] : key === '$id' ? ['id'] : ['get', key];
   switch (op) {
     case 'has':
       return ['has', key];
     case '!has':
       return ['!', ['has', key]];
     case 'in':
-      return ['in', ['get', key], ['literal', values]];
+      return ['in', input, ['literal', values]];
     case '!in':
-      return ['!', ['in', ['get', key], ['literal', values]]];
+      return ['!', ['in', input, ['literal', values]]];
     case '==':
     case '!=':
     case '<':
     case '<=':
     case '>':
     case '>=':
-      return values.length === 1 && !Array.isArray(values[0]) ? [op, ['get', key], values[0]] : filter;
+      return values.length === 1 && !Array.isArray(values[0]) ? [op, input, values[0]] : filter;
   }
   return filter;
 }
