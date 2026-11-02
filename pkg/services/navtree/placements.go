@@ -3,6 +3,8 @@ package navtree
 import (
 	"strconv"
 
+	"gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -14,22 +16,25 @@ type NavigationPlacement struct {
 	SortWeight int64  `json:"sortWeight,omitempty"`
 }
 
-// ParseNavigationPlacements parses one of those sections, given its keys as a
-// name/value map (ini's KeysHash). Shared by the server-built tree and by the
-// frontend settings the client-built tree reads, so the two cannot come to
-// disagree about the format.
+// ParseNavigationPlacements parses one of those sections. Shared by the
+// server-built tree and by the frontend settings the client-built tree reads, so
+// the two cannot come to disagree about the format.
+//
+// Values are read key by key rather than through KeysHash, which returns them
+// raw: only Key.String expands the %(name)s macros the ini format allows.
 //
 // A value with no weight, or an unparseable one, yields a zero weight, which
 // both trees sort as "wherever it was appended".
-func ParseNavigationPlacements(values map[string]string) map[string]NavigationPlacement {
-	if len(values) == 0 {
+func ParseNavigationPlacements(section *ini.Section) map[string]NavigationPlacement {
+	keys := section.Keys()
+	if len(keys) == 0 {
 		return nil
 	}
 
-	placements := make(map[string]NavigationPlacement, len(values))
-	for key, value := range values {
+	placements := make(map[string]NavigationPlacement, len(keys))
+	for _, key := range keys {
 		// util.SplitString, as the server-built tree has always parsed these
-		fields := util.SplitString(value)
+		fields := util.SplitString(key.MustString(""))
 		if len(fields) == 0 {
 			continue
 		}
@@ -40,7 +45,7 @@ func ParseNavigationPlacements(values map[string]string) map[string]NavigationPl
 				placement.SortWeight = weight
 			}
 		}
-		placements[key] = placement
+		placements[key.Name()] = placement
 	}
 
 	return placements

@@ -626,7 +626,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		},
 	}
 
-	for pluginID, placement := range navtree.ParseNavigationPlacements(s.cfg.Raw.Section("navigation.app_sections").KeysHash()) {
+	for pluginID, placement := range navtree.ParseNavigationPlacements(s.cfg.Raw.Section("navigation.app_sections")) {
 		// Only apply the new values, don't completely overwrite the entry if it exists
 		if entry, ok := s.navigationAppConfig[pluginID]; ok {
 			entry.SectionID = placement.SectionID
@@ -639,7 +639,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		}
 	}
 
-	for url, placement := range navtree.ParseNavigationPlacements(s.cfg.Raw.Section("navigation.app_standalone_pages").KeysHash()) {
+	for url, placement := range navtree.ParseNavigationPlacements(s.cfg.Raw.Section("navigation.app_standalone_pages")) {
 		s.navigationAppPathConfig[url] = NavigationAppConfig{SectionID: placement.SectionID, SortWeight: placement.SortWeight}
 	}
 }

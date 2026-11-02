@@ -265,7 +265,7 @@ func getShortCommitHash(commitHash string, maxLength int) string {
 // boot.
 func ReadNavigationSettings(cfg *setting.Cfg) dtos.FrontendSettingsNavigationDTO {
 	return dtos.FrontendSettingsNavigationDTO{
-		AppSections:        navtree.ParseNavigationPlacements(cfg.Raw.Section("navigation.app_sections").KeysHash()),
-		AppStandalonePages: navtree.ParseNavigationPlacements(cfg.Raw.Section("navigation.app_standalone_pages").KeysHash()),
+		AppSections:        navtree.ParseNavigationPlacements(cfg.Raw.Section("navigation.app_sections")),
+		AppStandalonePages: navtree.ParseNavigationPlacements(cfg.Raw.Section("navigation.app_standalone_pages")),
 	}
 }
