@@ -87,6 +87,19 @@ describe('Range Utils', () => {
       expect(deserialized.raw.to).not.toBe(deserialized.to);
       expect(deserialized.raw.to).toBe(timeRange.to);
     });
+
+    it('evaluates relative from and to against the same now while the clock advances', () => {
+      let now = Date.parse('2024-07-05T12:00:00.000Z');
+      const clock = jest.spyOn(Date, 'now').mockImplementation(() => now++);
+
+      try {
+        const range = convertRawToRange({ from: 'now-6h', to: 'now' }, 'utc');
+
+        expect(range.to.valueOf() - range.from.valueOf()).toBe(21_600_000);
+      } finally {
+        clock.mockRestore();
+      }
+    });
   });
 
   describe('relative time', () => {
