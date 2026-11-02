@@ -26,13 +26,18 @@ export function getNotebookBlockTypeOptions(): NotebookBlockTypeOption[] {
 
 interface Props {
   onPick?: (type: NotebookBlockType) => void;
-  /** Visualization sub-option, only offered when saved queries are available. */
+  /** Visualization submenu entry, only offered when saved queries are available. */
   onPickSavedQuery?: () => void;
 }
 
-export function NotebookBlockTypeMenu({ onPick, onPickSavedQuery }: Props) {
+/** Shared by the block menu and the footer's split button so both hide saved-query entries together. */
+export function useSavedQueriesAvailable(): boolean {
   const { queryLibraryEnabled } = useQueryLibraryContext();
-  const savedQueriesAvailable = queryLibraryEnabled && hasSavedQueryReadPermissions();
+  return queryLibraryEnabled && hasSavedQueryReadPermissions();
+}
+
+export function NotebookBlockTypeMenu({ onPick, onPickSavedQuery }: Props) {
+  const savedQueriesAvailable = useSavedQueriesAvailable();
 
   const menuRef = useRef<HTMLDivElement>(null);
   // Focus has to move through Menu's own callback: focusing an item directly would leave Menu's
@@ -107,12 +112,6 @@ export function NotebookBlockTypeMenu({ onPick, onPickSavedQuery }: Props) {
         // A plain array: Menu.Item opens a submenu on childItems.length, so a null child would still count.
         // Child clicks must bubble for a host Dropdown to close, so the parent's onClick filters them out.
         const childItems = [
-          <Menu.Item
-            key="new-visualization"
-            icon="plus"
-            label={t('notebook.add-block.new-visualization', 'New Visualization')}
-            onClick={() => onPick?.(option.type)}
-          />,
           <Menu.Item
             key="new-from-saved-queries"
             icon="book-open"

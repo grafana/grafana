@@ -1332,10 +1332,10 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
 
   // Nothing is inserted until onSelectQuery fires — cancelling the drawer leaves the notebook untouched.
   const onAddSavedQuery = useCallback(
-    (index: number) => {
+    (index: number, via: NotebookBlockInsertVia = NOTEBOOK_BLOCK_INSERT_VIA.PLUS_MENU) => {
       openDrawer({
         onSelectQuery: async (query, title) => {
-          const cell = await model.addCellFromSavedQuery(index, query, title, NOTEBOOK_BLOCK_INSERT_VIA.PLUS_MENU);
+          const cell = await model.addCellFromSavedQuery(index, query, title, via);
           requestFocus(cell?.state.key);
         },
         options: { context: CoreApp.Notebook },
@@ -1449,7 +1449,10 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
         </DragDropContext>
 
         {isEditing && (
-          <NotebookFooterAddCell onAdd={(type) => onAdd(type, cells.length, NOTEBOOK_BLOCK_INSERT_VIA.FOOTER)} />
+          <NotebookFooterAddCell
+            onAdd={(type) => onAdd(type, cells.length, NOTEBOOK_BLOCK_INSERT_VIA.FOOTER)}
+            onAddSavedQuery={() => onAddSavedQuery(cells.length, NOTEBOOK_BLOCK_INSERT_VIA.FOOTER)}
+          />
         )}
       </div>
     </div>

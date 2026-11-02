@@ -45,15 +45,12 @@ describe('NotebookBlockTypeMenu', () => {
   });
 
   describe('when saved queries are available and onPickSavedQuery is provided', () => {
-    it('offers "New Visualization" and "New from Saved Queries" as Visualization sub-options', async () => {
+    it('offers only "New from Saved Queries" as a Visualization sub-option', async () => {
       const { user } = render(<NotebookBlockTypeMenu onPick={jest.fn()} onPickSavedQuery={jest.fn()} />);
 
       const submenu = await openVisualizationSubmenu(user);
 
-      expect(submenu.getAllByRole('menuitem').map((item) => item.textContent)).toEqual([
-        'New Visualization',
-        'New from Saved Queries',
-      ]);
+      expect(submenu.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['New from Saved Queries']);
     });
   });
 
