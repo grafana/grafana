@@ -6,12 +6,14 @@ import {
   resetExtensionSidebarPresentationForTests,
   setExtensionSidebarPresentation,
 } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
+import { ComposerSession } from 'app/features/dashboard-scene/composer/ComposerSession';
 import {
   clearPendingComposerEnterRequest,
   requestComposerEnter,
 } from 'app/features/dashboard-scene/composer/composerEntryRequests';
 import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
 import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { setDashboardMutationClientForTests } from '../dashboardMutation/dashboardMutationApi';
 
@@ -127,7 +129,7 @@ describe('presentation', () => {
 
   afterEach(() => {
     stopListening();
-    clearPendingComposerEnterRequest();
+    clearPendingComposerEnterRequest('disposed');
     resetExtensionSidebarPresentationForTests();
   });
 
@@ -212,13 +214,16 @@ describe('presentation', () => {
     mountDashboard();
     const first = await composerApi.enter(DASHBOARD);
     first.exit();
-    const exitFirst = jest.spyOn(first, 'exit');
+    if (!(first instanceof ComposerSession)) {
+      throw new Error('Expected a ComposerSession');
+    }
+    const endFirst = jest.spyOn(first, 'end');
     const second = await composerApi.enter(DASHBOARD);
 
     notifyExtensionSidebarClosed();
 
     expect(second.signal.aborted).toBe(true);
-    expect(exitFirst).not.toHaveBeenCalled();
+    expect(endFirst).not.toHaveBeenCalled();
   });
 
   it('enters docked when the user docked the sidebar while the picker request waited', async () => {
@@ -247,7 +252,7 @@ describe('presentation', () => {
     requestComposerEnter(DASHBOARD, { float: true });
     const session = await composerApi.enter(DASHBOARD);
     // The request is over; the session holds the sidebar now.
-    clearPendingComposerEnterRequest();
+    clearPendingComposerEnterRequest('disposed');
     expect(sidebarPresentation()).toBe('floating');
 
     session.exit();
@@ -290,5 +295,106 @@ it('passes notebook requests only to listeners that ask for them', () => {
   expect(both).toHaveBeenCalledWith(notebook);
   stopDashboards();
   stopBoth();
-  clearPendingComposerEnterRequest();
+  clearPendingComposerEnterRequest('disposed');
+});
+
+describe('telemetry', () => {
+  let started: jest.SpyInstance;
+  let refused: jest.SpyInstance;
+  let ended: jest.SpyInstance;
+
+  beforeEach(() => {
+    started = jest.spyOn(DashboardInteractions, 'composerSessionStarted');
+    refused = jest.spyOn(DashboardInteractions, 'composerEnterRefused');
+    ended = jest.spyOn(DashboardInteractions, 'composerSessionEnded');
+  });
+
+  afterEach(() => {
+    [started, refused, ended].forEach((spy) => spy.mockRestore());
+    resetExtensionSidebarPresentationForTests();
+  });
+
+  it('reports a started session under the id it hands the plugin, in the edit period it runs in', async () => {
+    const scene = mountDashboard();
+    const session = await composerApi.enter(DASHBOARD);
+
+    expect(session.sessionId).toEqual(expect.any(String));
+    expect(started).toHaveBeenCalledTimes(1);
+    expect(started).toHaveBeenCalledWith({
+      dashboard_uid: DASHBOARD.uid,
+      edit_session_id: scene.getEditSessionId(),
+      composer_session_id: session.sessionId,
+      presentation: 'floating',
+      sidebar_was_docked: true,
+    });
+    expect(scene.getEditSessionId()).toEqual(expect.any(String));
+    session.exit();
+  });
+
+  it('issues a new session id for every session', async () => {
+    mountDashboard();
+    const first = await composerApi.enter(DASHBOARD);
+    first.exit();
+    const second = await composerApi.enter(DASHBOARD, { presentation: 'none' });
+
+    expect(second.sessionId).not.toBe(first.sessionId);
+    expect(started).toHaveBeenLastCalledWith(expect.objectContaining({ presentation: 'none' }));
+    second.exit();
+  });
+
+  it('reports the session the sidebar closing ends', async () => {
+    mountDashboard();
+    const session = await composerApi.enter(DASHBOARD);
+
+    notifyExtensionSidebarClosed();
+
+    expect(ended).toHaveBeenCalledTimes(1);
+    expect(ended).toHaveBeenCalledWith(
+      expect.objectContaining({ composer_session_id: session.sessionId, reason: 'sidebar_closed' })
+    );
+  });
+
+  it('reports the plugin leaving as plugin_exit', async () => {
+    mountDashboard();
+    const session = await composerApi.enter(DASHBOARD);
+    session.exit();
+    expect(ended).toHaveBeenCalledWith(expect.objectContaining({ reason: 'plugin_exit' }));
+  });
+
+  it.each([
+    ['no dashboard is mounted', () => {}, DASHBOARD, { reason: 'no_document', detail: 'not_mounted' }],
+    [
+      'the target is another dashboard',
+      mountDashboard,
+      { resource: 'dashboard', uid: 'another-dashboard' } as const,
+      { reason: 'no_document', detail: 'other_document' },
+    ],
+    [
+      'the target is a notebook',
+      mountDashboard,
+      { resource: 'notebook', uid: 'composer-api-test' } as const,
+      { reason: 'unsupported', detail: 'notebook' },
+    ],
+  ])('reports a refused entry when %s', async (_, arrange, target, refusal) => {
+    arrange();
+    await expect(composerApi.enter(target)).rejects.toThrow(refusal.reason);
+    expect(refused).toHaveBeenCalledWith({ dashboard_uid: target.uid, ...refusal });
+    expect(started).not.toHaveBeenCalled();
+  });
+
+  it('reports a second entry while a session is open as already active, and never canEnter probes', async () => {
+    mountDashboard();
+    const session = await composerApi.enter(DASHBOARD);
+    composerApi.canEnter(DASHBOARD);
+    expect(refused).not.toHaveBeenCalled();
+
+    await expect(composerApi.enter(DASHBOARD)).rejects.toThrow('unsupported');
+
+    expect(refused).toHaveBeenCalledWith({
+      dashboard_uid: DASHBOARD.uid,
+      reason: 'unsupported',
+      detail: 'already_active',
+    });
+    session.exit();
+  });
 });

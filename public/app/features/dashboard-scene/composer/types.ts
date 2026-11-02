@@ -3,6 +3,8 @@
  *
  * The plugin declares these types locally and checks the handle at runtime; only the outer
  * `ComposerAPI` shape is mirrored in `@grafana/data` so the restricted APIs context can carry it.
+ * Fields added within `version: 1` are additive: the plugin treats them as optional, since older
+ * Grafana versions lack them.
  */
 
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -192,6 +194,12 @@ export interface ComposerExitResult {
 }
 
 export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
+  /**
+   * A random id core issues for the session, the `composer_session_id` of core's Composer telemetry, so the
+   * plugin can report against the same session. Older Grafana versions do not set it: the plugin treats it as
+   * optional.
+   */
+  readonly sessionId: string;
   readonly target: ComposerTarget;
   /** Aborted on exit, navigation away, scene deactivation or flag-off. */
   readonly signal: AbortSignal;

@@ -10,6 +10,7 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { DashboardInteractions } from '../utils/interactions';
 
 import { ComposerOverlay } from './ComposerOverlay';
 import { ComposerSession } from './ComposerSession';
@@ -1187,6 +1188,36 @@ describe('region capture', () => {
       session.exit();
     });
     await expect(session.captureRegion(regionId, live())).resolves.toEqual({ status: 'failed', reason: 'failed' });
+  });
+
+  it('reports each capture, and counts the images captured on the session', async () => {
+    const captured = jest.spyOn(DashboardInteractions, 'composerRegionCaptured');
+    const ended = jest.spyOn(DashboardInteractions, 'composerSessionEnded');
+    try {
+      const { session } = setup();
+      const regionId = await drawRegion(session);
+
+      await capture(session, regionId);
+      await capture(session, 'region-unknown');
+      act(() => {
+        session.exit();
+      });
+
+      expect(captured.mock.calls.map(([properties]) => properties)).toEqual([
+        {
+          dashboard_uid: 'overlay-test',
+          composer_session_id: session.sessionId,
+          status: 'ready',
+          reason: 'none',
+          duration_ms: expect.any(Number),
+        },
+        expect.objectContaining({ status: 'failed', reason: 'failed' }),
+      ]);
+      expect(ended).toHaveBeenCalledWith(expect.objectContaining({ region_captures: 1 }));
+    } finally {
+      captured.mockRestore();
+      ended.mockRestore();
+    }
   });
 });
 

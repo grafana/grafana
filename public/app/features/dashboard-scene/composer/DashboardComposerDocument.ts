@@ -17,6 +17,8 @@ import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { DashboardStateChangedEvent } from '../sidebar/events';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
+import { type ComposerExitReason } from '../utils/dashboardModeTracking';
+import { DashboardInteractions } from '../utils/interactions';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 import { dashboardV2SpecSchema } from '../v2schema/dashboardV2Schema';
 
@@ -103,12 +105,16 @@ export class DashboardComposerDocument implements ComposerDocument<ComposerDashb
     return dashboardComposerEnabled();
   }
 
-  public detach(): void {
-    this.scene.exitComposerMode();
+  public detach(reason: ComposerExitReason): void {
+    this.scene.exitComposerMode(reason);
   }
 
   public async finish(): Promise<ComposerExitResult> {
     return {};
+  }
+
+  public getTrackingContext(): { editSessionId?: string; hasUnsavedChanges: boolean } {
+    return { editSessionId: this.scene.getEditSessionId(), hasUnsavedChanges: Boolean(this.scene.state.isDirty) };
   }
 
   public readSpec(): { spec: ComposerDashboardSpec; revision: number } {
@@ -117,9 +123,26 @@ export class DashboardComposerDocument implements ComposerDocument<ComposerDashb
 
   public async applySpec(
     spec: ComposerDashboardSpec,
-    { signal, baseRevision }: ComposerApplyOptions,
+    opts: ComposerApplyOptions,
     isOpen: () => boolean
   ): Promise<ApplyOutcome> {
+    const startedAt = performance.now();
+    const outcome = this.apply(spec, opts, isOpen);
+    DashboardInteractions.composerSpecApplied({
+      dashboard_uid: this.target.uid || undefined,
+      composer_session_id: this.session?.sessionId,
+      status: outcome.status,
+      duration_ms: Math.round(performance.now() - startedAt),
+    });
+    return outcome;
+  }
+
+  /** Synchronous from the gate to the swap, so nothing can run between the checks and the write. */
+  private apply(
+    spec: ComposerDashboardSpec,
+    { signal, baseRevision }: ComposerApplyOptions,
+    isOpen: () => boolean
+  ): ApplyOutcome {
     // 1. Prepare. Everything awaited or fallible-without-writing happens here.
     const parsed = dashboardV2SpecSchema.safeParse(spec);
     if (!parsed.success) {

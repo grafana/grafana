@@ -1,3 +1,5 @@
+import { type ComposerExitReason } from '../utils/dashboardModeTracking';
+
 import { type Box } from './composerGeometry';
 import {
   type ApplyOutcome,
@@ -40,10 +42,12 @@ export interface ComposerDocument<Spec, Session = unknown> {
   start(events: ComposerDocumentEvents): () => void;
   /** The flag gating this resource; turning it off ends the session. */
   isEnabled(): boolean;
-  /** Takes the scene out of its Composer state. The scene then closes the session. */
-  detach(): void;
+  /** Takes the scene out of its Composer state for `reason`. The scene then closes the session. */
+  detach(reason: ComposerExitReason): void;
   /** Runs once the session has closed, whoever closed it. */
   finish(): Promise<ComposerExitResult>;
+  /** The edit period the session runs in and whether the document has unsaved changes, for telemetry. */
+  getTrackingContext(): { editSessionId?: string; hasUnsavedChanges: boolean };
   retrySave?(): Promise<ComposerExitResult>;
 
   readSpec(): { spec: Spec; revision: number };

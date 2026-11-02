@@ -8,35 +8,59 @@
  */
 
 import {
+  canFloatExtensionSidebar,
+  getRequestedExtensionSidebarPresentation,
   onExtensionSidebarClosed,
+  resolveExtensionSidebarPresentation,
   setExtensionSidebarFloatingOverride,
 } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
-import { canEnterComposer } from 'app/features/dashboard-scene/composer/composerAccess';
+import { ASSISTANT_PLUGIN_ID } from 'app/core/constants';
+import type { ComposerSession } from 'app/features/dashboard-scene/composer/ComposerSession';
+import {
+  canEnterComposer,
+  getComposerEnterRefusal,
+  type ComposerEnterRefusal,
+} from 'app/features/dashboard-scene/composer/composerAccess';
 import {
   addComposerEnterRequestListener,
   settleComposerEnterRequest,
   wasComposerEnterRequestDocked,
 } from 'app/features/dashboard-scene/composer/composerEntryRequests';
-import {
-  type ComposerAPI,
-  type ComposerEnterCheck,
-  type ComposerSessionAPI,
-  type ComposerTarget,
-} from 'app/features/dashboard-scene/composer/types';
+import { type ComposerAPI, type ComposerTarget } from 'app/features/dashboard-scene/composer/types';
 import type { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { getMountedDashboardScene } from '../dashboardMutation/dashboardMutationApi';
 
 /** The mounted dashboard `target` names (or the mounted dashboard when omitted), or why there is none. */
-function resolveTarget(target?: ComposerTarget): { scene: DashboardScene } | { refusal: ComposerEnterCheck } {
+function resolveTarget(target?: ComposerTarget): { scene: DashboardScene } | { refusal: ComposerEnterRefusal } {
   if (target?.resource === 'notebook') {
-    return { refusal: { ok: false, reason: 'unsupported' } };
+    return { refusal: { reason: 'unsupported', detail: 'notebook' } };
   }
   const scene = getMountedDashboardScene();
-  if (!scene || (target && scene.state.uid !== target.uid)) {
-    return { refusal: { ok: false, reason: 'no_document' } };
+  if (!scene) {
+    return { refusal: { reason: 'no_document', detail: 'not_mounted' } };
+  }
+  if (target && scene.state.uid !== target.uid) {
+    return { refusal: { reason: 'no_document', detail: 'other_document' } };
   }
   return { scene };
+}
+
+function refuseEnter(uid: string, { reason, detail }: ComposerEnterRefusal): void {
+  settleComposerEnterRequest(uid);
+  DashboardInteractions.composerEnterRefused({ dashboard_uid: uid || undefined, reason, detail });
+}
+
+/** Whether the user's own sidebar layout, before Composer floats it, is docked. */
+function isSidebarDockedByUser(): boolean {
+  return (
+    resolveExtensionSidebarPresentation(
+      getRequestedExtensionSidebarPresentation(),
+      canFloatExtensionSidebar(),
+      ASSISTANT_PLUGIN_ID
+    ) === 'docked'
+  );
 }
 
 export const composerApi: ComposerAPI = {
@@ -44,16 +68,16 @@ export const composerApi: ComposerAPI = {
   onEnterRequested: addComposerEnterRequestListener,
   canEnter: (target) => {
     const resolved = resolveTarget(target);
-    return 'refusal' in resolved ? resolved.refusal : canEnterComposer(resolved.scene);
+    return 'refusal' in resolved ? { ok: false, reason: resolved.refusal.reason } : canEnterComposer(resolved.scene);
   },
   enter: async (target, { presentation = 'floating' } = {}) => {
     const resolved = resolveTarget(target);
     const uid = target?.uid ?? getMountedDashboardScene()?.state.uid ?? '';
     if ('refusal' in resolved) {
-      settleComposerEnterRequest(uid);
-      throw new Error(`Composer is not available: ${resolved.refusal.ok ? 'no_document' : resolved.refusal.reason}`);
+      refuseEnter(uid, resolved.refusal);
+      throw new Error(`Composer is not available: ${resolved.refusal.reason}`);
     }
-    let session: ComposerSessionAPI;
+    let session: ComposerSession;
     try {
       // The session pulls in the scene serializers, so it loads on first use rather than with every plugin.
       const { ComposerSession } = await import(
@@ -61,7 +85,8 @@ export const composerApi: ComposerAPI = {
       );
       session = ComposerSession.enter(resolved.scene);
     } catch (error) {
-      settleComposerEnterRequest(uid);
+      // A scene that refuses after the check passed, or a session module that fails to load.
+      refuseEnter(uid, getComposerEnterRefusal(resolved.scene) ?? { reason: 'unsupported', detail: 'enter_failed' });
       throw error;
     }
     // The sidebar is the host's concern, not the session's. Composer is a mode of the Assistant, not a
@@ -69,12 +94,19 @@ export const composerApi: ComposerAPI = {
     // brings back the layout from before it, or the user's last choice since. Closing the sidebar ends it.
     // Docked while the picker's request waited: the entry proceeds docked.
     const floating = presentation === 'floating' && !wasComposerEnterRequestDocked(uid);
+    DashboardInteractions.composerSessionStarted({
+      dashboard_uid: uid || undefined,
+      edit_session_id: resolved.scene.getEditSessionId(),
+      composer_session_id: session.sessionId,
+      presentation,
+      sidebar_was_docked: isSidebarDockedByUser(),
+    });
     if (presentation === 'floating') {
       const enteredSession = session;
       if (floating) {
         setExtensionSidebarFloatingOverride(true);
       }
-      const stopOnClose = onExtensionSidebarClosed(() => enteredSession.exit());
+      const stopOnClose = onExtensionSidebarClosed(() => enteredSession.end('sidebar_closed'));
       session.signal.addEventListener(
         'abort',
         () => {

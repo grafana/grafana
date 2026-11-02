@@ -6,6 +6,8 @@ import { t } from '@grafana/i18n';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import type { DashboardScene } from '../scene/DashboardScene';
+import { type ComposerExitReason } from '../utils/dashboardModeTracking';
+import { DashboardInteractions } from '../utils/interactions';
 
 import { type ComposerDocument } from './ComposerDocument';
 import { DashboardComposerDocument } from './DashboardComposerDocument';
@@ -80,6 +82,7 @@ const ORIGIN: ElementPoint = { x: 0, y: 0 };
  * writing, saving) is the `ComposerDocument` strategy's.
  */
 export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSessionAPI<Spec> {
+  public readonly sessionId = generateUUID();
   public readonly target: ComposerTarget;
   public readonly closed: Promise<ComposerExitResult>;
   /** Notebooks only: see `ComposerSessionAPI.retrySave`. Before the session ends it waits for the end. */
@@ -99,6 +102,8 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
   private anchorHost: HTMLElement | null = null;
   private requestMeasure?: () => void;
   private readonly cleanups: Array<() => void> = [];
+  private readonly startedAt = performance.now();
+  private readonly counts = { appliesApplied: 0, appliesRefused: 0, regionCaptures: 0 };
 
   /** Enters Composer on `scene`. Throws when it cannot, with the reason `canEnterComposer` gives. */
   public static enter(scene: DashboardScene | null): ComposerSession {
@@ -160,7 +165,7 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
     const client = getFeatureFlagClient();
     const onFlagsChanged = () => {
       if (!this.document.isEnabled()) {
-        this.exit();
+        this.end('flag_off');
       }
     };
     client.addHandler(ClientProviderEvents.ConfigurationChanged, onFlagsChanged);
@@ -192,6 +197,22 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
   }
 
   public async captureRegion(regionId: string, signal: AbortSignal): Promise<RegionCapture> {
+    const startedAt = performance.now();
+    const result = await this.capture(regionId, signal);
+    if (result.status === 'ready') {
+      this.counts.regionCaptures++;
+    }
+    DashboardInteractions.composerRegionCaptured({
+      dashboard_uid: this.target.uid || undefined,
+      composer_session_id: this.sessionId,
+      status: result.status,
+      reason: result.status === 'failed' ? result.reason : 'none',
+      duration_ms: Math.round(performance.now() - startedAt),
+    });
+    return result;
+  }
+
+  private async capture(regionId: string, signal: AbortSignal): Promise<RegionCapture> {
     const region = this.regions.get(regionId);
     const overlay = this.getOverlayRoot();
     // The dashboard's own container (controls and body), which the overlay covers exactly.
@@ -383,21 +404,32 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
     return this.document.readSpec();
   }
 
-  public applySpec(spec: Spec, opts: ComposerApplyOptions): Promise<ApplyOutcome<Spec>> {
-    return this.document.applySpec(spec, opts, () => !this.ended);
+  public async applySpec(spec: Spec, opts: ComposerApplyOptions): Promise<ApplyOutcome<Spec>> {
+    const outcome = await this.document.applySpec(spec, opts, () => !this.ended);
+    if (outcome.status === 'applied') {
+      this.counts.appliesApplied++;
+    } else {
+      this.counts.appliesRefused++;
+    }
+    return outcome;
   }
 
   public exit(): void | Promise<ComposerExitResult> {
+    return this.end('plugin_exit');
+  }
+
+  /** @internal Leaves Composer as `exit` does, for `reason`: core's own ways out (sidebar closed, flag off). */
+  public end(reason: ComposerExitReason): void | Promise<ComposerExitResult> {
     if (!this.ended) {
-      this.document.detach();
+      this.document.detach(reason);
       // The scene closes the session when it leaves Composer; this covers a scene already out of it.
-      this.close();
+      this.close(reason);
     }
     return this.document.reportsSave ? this.closed : undefined;
   }
 
-  /** @internal Called by the scene when it leaves Composer, and by `exit`. */
-  public close(): void {
+  /** @internal Called by the scene when it leaves Composer, and by `end`. */
+  public close(reason: ComposerExitReason): void {
     if (this.ended) {
       return;
     }
@@ -414,10 +446,26 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
     this.overlayState = INITIAL_OVERLAY_STATE;
     this.notify();
     this.document.finish().then(this.resolveClosed, () => this.resolveClosed({}));
+    this.reportEnded(reason);
   }
 
   public get isClosed(): boolean {
     return this.ended;
+  }
+
+  private reportEnded(reason: ComposerExitReason) {
+    const { editSessionId, hasUnsavedChanges } = this.document.getTrackingContext();
+    DashboardInteractions.composerSessionEnded({
+      dashboard_uid: this.target.uid || undefined,
+      edit_session_id: editSessionId,
+      composer_session_id: this.sessionId,
+      reason,
+      duration_s: Math.round((performance.now() - this.startedAt) / 1000),
+      applies_applied: this.counts.appliesApplied,
+      applies_refused: this.counts.appliesRefused,
+      region_captures: this.counts.regionCaptures,
+      has_unsaved_changes: hasUnsavedChanges,
+    });
   }
 
   /** @internal The overlay's view of the session. */

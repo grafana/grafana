@@ -6,6 +6,8 @@ import {
   setExtensionSidebarPresentation,
 } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
 
+import { DashboardInteractions } from '../utils/interactions';
+
 import {
   addComposerEnterRequestListener,
   clearPendingComposerEnterRequest,
@@ -153,7 +155,7 @@ describe('a request that floats the sidebar', () => {
 
   it('docks the sidebar again when the dashboard goes away first', () => {
     requestComposerEnter(TARGET, { float: true });
-    clearPendingComposerEnterRequest();
+    clearPendingComposerEnterRequest('disposed');
     expect(sidebarPresentation()).toBe('docked');
   });
 
@@ -180,7 +182,7 @@ describe('a request that floats the sidebar', () => {
     requestComposerEnter(TARGET);
     expect(sidebarPresentation()).toBe('docked');
     settleComposerEnterRequest(TARGET.uid);
-    clearPendingComposerEnterRequest();
+    clearPendingComposerEnterRequest('disposed');
     expect(sidebarPresentation()).toBe('docked');
   });
 });
@@ -212,7 +214,7 @@ describe('the outstanding request', () => {
     expect(getPendingComposerEnterTarget()).toBeUndefined();
 
     requestComposerEnter(TARGET);
-    clearPendingComposerEnterRequest();
+    clearPendingComposerEnterRequest('disposed');
     expect(getPendingComposerEnterTarget()).toBeUndefined();
   });
 });
@@ -387,5 +389,90 @@ describe('before Assistant first registers', () => {
     listen({ resources: ['notebook'] });
     expect(changed).toHaveBeenCalledTimes(1);
     expect(getSupportedComposerResources()).toEqual(['notebook']);
+  });
+});
+
+describe('telemetry', () => {
+  let reported: jest.SpyInstance;
+
+  beforeEach(() => {
+    reported = jest.spyOn(DashboardInteractions, 'composerEntryRequest').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    reported.mockRestore();
+  });
+
+  const outcomes = () => reported.mock.calls.map(([properties]) => properties.outcome);
+
+  it('reports a request once, when its entry attempt settles, with its source and how long it waited', () => {
+    listen();
+    requestComposerEnter(TARGET, { source: 'assistant_edit' });
+    expect(reported).not.toHaveBeenCalled();
+
+    settleComposerEnterRequest(TARGET.uid);
+    settleComposerEnterRequest(TARGET.uid);
+
+    expect(reported).toHaveBeenCalledTimes(1);
+    expect(reported).toHaveBeenCalledWith({
+      dashboard_uid: TARGET.uid,
+      source: 'assistant_edit',
+      outcome: 'delivered',
+      elapsed_ms: expect.any(Number),
+    });
+  });
+
+  it('reports the mode picker as the default source', () => {
+    listen();
+    requestComposerEnter(TARGET);
+    settleComposerEnterRequest(TARGET.uid);
+    expect(reported).toHaveBeenCalledWith(expect.objectContaining({ source: 'mode_picker' }));
+  });
+
+  it('reports a request a listener declines', () => {
+    listen(
+      undefined,
+      jest.fn(() => false)
+    );
+    requestComposerEnter(TARGET);
+    expect(outcomes()).toEqual(['declined']);
+  });
+
+  it('reports a request that expires', () => {
+    jest.useFakeTimers();
+    listen();
+    requestComposerEnter(TARGET);
+    jest.advanceTimersByTime(PENDING_REQUEST_TTL_MS);
+    expect(outcomes()).toEqual(['expired']);
+  });
+
+  it('reports a request a newer one replaces, then the newer one', () => {
+    listen();
+    requestComposerEnter(TARGET);
+    requestComposerEnter(TARGET);
+    settleComposerEnterRequest(TARGET.uid);
+    expect(outcomes()).toEqual(['superseded', 'delivered']);
+  });
+
+  it('reports a request its scene drops, and nothing when none is outstanding', () => {
+    listen();
+    clearPendingComposerEnterRequest('disposed');
+    expect(reported).not.toHaveBeenCalled();
+
+    requestComposerEnter(TARGET);
+    clearPendingComposerEnterRequest('disposed');
+    expect(outcomes()).toEqual(['disposed']);
+  });
+
+  it('reports a request no listener supports', () => {
+    listen({ resources: ['notebook'] });
+    expect(requestComposerEnter(TARGET)).toBe(false);
+    expect(reported).toHaveBeenCalledWith(expect.objectContaining({ outcome: 'no_listener', elapsed_ms: 0 }));
+  });
+
+  it('reports nothing for an entry attempt no request was made for', () => {
+    listen();
+    settleComposerEnterRequest(TARGET.uid);
+    expect(reported).not.toHaveBeenCalled();
   });
 });

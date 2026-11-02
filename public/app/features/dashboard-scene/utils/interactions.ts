@@ -2,6 +2,9 @@ import { type VariableType } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
+import { type ComposerEnterRefusal, type ComposerEnterRefusalDetail } from '../composer/composerAccess';
+import { type ComposerEntryRequestOutcome, type ComposerEntryRequestSource } from '../composer/composerEntryRequests';
+import { type ApplyOutcome, type RegionCapture } from '../composer/types';
 import { type GroupConditionConditionType } from '../conditional-rendering/group/types';
 import { type DashboardMode } from '../scene/dashboardModes';
 import {
@@ -11,6 +14,7 @@ import {
 
 import { type GlobalVariablesMode, type PredefinedVariableScope } from './crossDashboardVariablesSelection';
 import {
+  type ComposerExitReason,
   type DashboardEditPeriodOutcome,
   type DashboardEditSessionTracking,
   type DashboardModeTrigger,
@@ -445,6 +449,68 @@ export const DashboardInteractions = {
     reportDashboardInteraction('mode_changed', properties);
   },
 
+  // Composer: dashboards_composer_*. Closed enums, counts, durations and opaque ids only, never comment text.
+  // These run inside the session and its write gate, so a failing report never reaches the feature.
+  composerSessionStarted: (properties: {
+    dashboard_uid?: string;
+    edit_session_id?: string;
+    composer_session_id: string;
+    presentation: 'floating' | 'none';
+    sidebar_was_docked: boolean;
+  }) => {
+    reportComposerInteraction('session_started', properties);
+  },
+
+  composerEnterRefused: (properties: {
+    dashboard_uid?: string;
+    reason: ComposerEnterRefusal['reason'];
+    detail: ComposerEnterRefusalDetail;
+  }) => {
+    reportComposerInteraction('enter_refused', properties);
+  },
+
+  composerSessionEnded: (properties: {
+    dashboard_uid?: string;
+    edit_session_id?: string;
+    composer_session_id: string;
+    reason: ComposerExitReason;
+    duration_s: number;
+    applies_applied: number;
+    applies_refused: number;
+    region_captures: number;
+    has_unsaved_changes: boolean;
+  }) => {
+    reportComposerInteraction('session_ended', properties);
+  },
+
+  composerEntryRequest: (properties: {
+    dashboard_uid?: string;
+    source: ComposerEntryRequestSource;
+    outcome: ComposerEntryRequestOutcome;
+    elapsed_ms: number;
+  }) => {
+    reportComposerInteraction('entry_request', properties);
+  },
+
+  composerSpecApplied: (properties: {
+    dashboard_uid?: string;
+    composer_session_id?: string;
+    status: ApplyOutcome['status'];
+    duration_ms: number;
+  }) => {
+    reportComposerInteraction('spec_applied', properties);
+  },
+
+  composerRegionCaptured: (properties: {
+    dashboard_uid?: string;
+    composer_session_id: string;
+    status: RegionCapture['status'];
+    reason: Extract<RegionCapture, { status: 'failed' }>['reason'] | 'none';
+    duration_ms: number;
+  }) => {
+    reportComposerInteraction('region_captured', properties);
+  },
+
   // click "Take me there" button from the dashboard settings for annotations, variables or the JSON model
   takeMeToSidebarClicked: (properties: { item: 'annotations' | 'variables' | 'json-model' }) => {
     reportDashboardInteraction('take_me_to_sidebar_clicked', properties);
@@ -502,6 +568,14 @@ const reportDashboardInteraction = (
     reportInteraction(`${interactionPrefix}_${name}`, { ...properties, ...meta, isDynamicDashboard });
   } else {
     reportInteraction(`${interactionPrefix}_${name}`, { isDynamicDashboard });
+  }
+};
+
+const reportComposerInteraction = (name: string, properties: Record<string, unknown>) => {
+  try {
+    reportDashboardInteraction(`composer_${name}`, properties);
+  } catch {
+    // Telemetry is best effort.
   }
 };
 
