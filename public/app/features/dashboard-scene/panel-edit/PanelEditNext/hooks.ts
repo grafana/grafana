@@ -17,6 +17,9 @@ import { QUERY_EDITOR_BANNER_DISMISSED_KEY, QUERY_EDITOR_SIDEBAR_SIZE_KEY, Sideb
 const MIN_SIDEBAR_RATIO = 0.1;
 const MAX_SIDEBAR_RATIO = 0.5;
 const MIN_SIDEBAR_PIXELS = 200;
+const DEFAULT_VIZ_RATIO = 0.45;
+const MIN_VIZ_RATIO = 0.1;
+const MAX_VIZ_RATIO = 0.9;
 const vizResizerClassName = css({ height: 2, width: '100%' });
 // Pre-mount placeholder — useLayoutEffect replaces this with the responsive default before the first paint.
 const FALLBACK_SIDEBAR_RATIO = 0.25;
@@ -207,10 +210,10 @@ export function useVizAndDataPaneLayout(
 
   const vizResize = useRatioResize({
     direction: 'vertical',
-    initialRatio: 0.55,
+    initialRatio: DEFAULT_VIZ_RATIO,
     containerRef,
-    minRatio: 0.1,
-    maxRatio: 0.9,
+    minRatio: MIN_VIZ_RATIO,
+    maxRatio: MAX_VIZ_RATIO,
     className: vizResizerClassName,
   });
 
