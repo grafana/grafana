@@ -2535,11 +2535,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/scene/DashboardModePicker.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/scene/DashboardScene.tsx": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
