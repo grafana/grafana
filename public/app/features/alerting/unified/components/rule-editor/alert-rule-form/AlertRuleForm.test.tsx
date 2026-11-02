@@ -29,6 +29,7 @@ import {
   setGrafanaRulerRuleGroupResolver,
   setGrafanaRulerRuleResolver,
   setReplaceGrafanaRuleResolver,
+  setRulesAPIGroupVersions,
   setUpdateGrafanaRulerRuleNamespaceResolver,
 } from '../../../mocks/server/configure';
 import { setupDataSources } from '../../../testSetup/datasources';
@@ -78,8 +79,9 @@ const grantAlertingPermissions = () => {
   grantUserPermissions(ALERTING_PERMISSIONS);
 };
 
-const APP_PLATFORM_ALERTRULES_BASE = '/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/alertrules';
-const APP_PLATFORM_RECORDINGRULES_BASE = '/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/recordingrules';
+const APP_PLATFORM_ALERTRULES_BASE = '/apis/rules.alerting.grafana.app/v1beta1/namespaces/default/alertrules';
+const APP_PLATFORM_RECORDINGRULES_BASE = '/apis/rules.alerting.grafana.app/v1beta1/namespaces/default/recordingrules';
+const APP_PLATFORM_V0ALPHA1_ALERTRULES_BASE = '/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/alertrules';
 const LEGACY_RULER_BASE = '/api/ruler/grafana/api/v1/rules/';
 
 type EvaluationMode = 'new' | 'legacy';
@@ -334,6 +336,57 @@ describe('AlertRuleForm — submit routing by group presence', () => {
       expect(replaceSpy).not.toHaveBeenCalled();
     });
   });
+
+  // The frontend can be deployed ahead of a backend that doesn't serve rules v1beta1 yet.
+  describe('when the server only serves rules v0alpha1', () => {
+    beforeEach(() => {
+      setRulesAPIGroupVersions(['v0alpha1']);
+    });
+
+    it('without group, POSTs a v0alpha1 alert rule to the v0alpha1 alertrules endpoint', async () => {
+      setCreateGrafanaRuleResolver(echoBodyResolver, 'alertrules', 'v0alpha1');
+      const v0alpha1Requests = captureRequests(
+        (req) => req.method === 'POST' && req.url.includes(APP_PLATFORM_V0ALPHA1_ALERTRULES_BASE)
+      );
+      const v1beta1Requests = captureRequests(
+        (req) => req.method === 'POST' && req.url.includes(APP_PLATFORM_ALERTRULES_BASE)
+      );
+
+      const { user } = renderRuleEditor();
+      await fillRuleBasics(user);
+      await user.click(ui.buttons.save.get());
+
+      expect(await screen.findByText(/Rule added successfully/i)).toBeInTheDocument();
+      const requests = await v0alpha1Requests;
+      expect(requests).toHaveLength(1);
+      expect((await requests[0].json()).apiVersion).toBe('rules.alerting.grafana.app/v0alpha1');
+      expect(await v1beta1Requests).toHaveLength(0);
+    });
+
+    it('ungrouped → ungrouped, PUTs a v0alpha1 alert rule to the v0alpha1 alertrules endpoint', async () => {
+      setGrafanaRulerRuleResolver(() => HttpResponse.json(ungroupedGrafanaRulerRule));
+      setGrafanaRulerRuleGroupResolver(() => HttpResponse.json(ungroupedGrafanaRulerGroup));
+      setReplaceGrafanaRuleResolver(echoBodyResolver, 'alertrules', 'v0alpha1');
+      const v0alpha1Requests = captureRequests(
+        (req) =>
+          req.method === 'PUT' &&
+          req.url.includes(`${APP_PLATFORM_V0ALPHA1_ALERTRULES_BASE}/${ungroupedGrafanaRulerRule.grafana_alert.uid}`)
+      );
+      const v1beta1Requests = captureRequests(
+        (req) => req.method === 'PUT' && req.url.includes(APP_PLATFORM_ALERTRULES_BASE)
+      );
+
+      const { user } = renderRuleEditor(ungroupedGrafanaRulerRule.grafana_alert.uid);
+      expect(await ui.inputs.name.find()).toHaveValue(ungroupedGrafanaRulerRule.grafana_alert.title);
+      await user.click(ui.buttons.save.get());
+
+      expect(await screen.findByText(/Rule updated successfully/i)).toBeInTheDocument();
+      const requests = await v0alpha1Requests;
+      expect(requests).toHaveLength(1);
+      expect((await requests[0].json()).apiVersion).toBe('rules.alerting.grafana.app/v0alpha1');
+      expect(await v1beta1Requests).toHaveLength(0);
+    });
+  });
 });
 
 // Verifies the alerting.rulesAPIV2 gate: with the flag off the form must match
@@ -367,6 +420,28 @@ describe('AlertRuleForm — alerting.rulesAPIV2 gate (flag off)', () => {
     expect(screen.queryByRole('radio', { name: /use groups \(legacy\)/i })).not.toBeInTheDocument();
   });
 
+  it('shows the folder validation message when saving without a folder', async () => {
+    const { user } = renderRuleEditor();
+
+    await user.type(await ui.inputs.name.find(), 'my new rule');
+    await user.click(ui.buttons.save.get());
+
+    expect(await screen.findByText('Folder is required')).toBeInTheDocument();
+  });
+
+  it('clears the folder validation message once a folder is selected', async () => {
+    const { user } = renderRuleEditor();
+
+    await user.type(await ui.inputs.name.find(), 'my new rule');
+    await user.click(ui.buttons.save.get());
+    expect(await screen.findByText('Folder is required')).toBeInTheDocument();
+
+    await user.click(await screen.findByRole('button', { name: /select folder/i }));
+    await user.click(await screen.findByLabelText('Folder A'));
+
+    await waitFor(() => expect(screen.queryByText('Folder is required')).not.toBeInTheDocument());
+  });
+
   it('requires a group and POSTs to the legacy ruler API only', async () => {
     const legacyRequests = captureRequests((req) => req.method === 'POST' && req.url.includes(LEGACY_RULER_BASE));
     const appPlatformRequests = captureRequests(
@@ -378,7 +453,7 @@ describe('AlertRuleForm — alerting.rulesAPIV2 gate (flag off)', () => {
     await fillRuleBasics(user);
     // Save without picking a group surfaces the required-group validation message.
     await user.click(ui.buttons.save.get());
-    expect(await screen.findByText(/Must enter a group name/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Evaluation group is required/i)).toBeInTheDocument();
 
     // With the flag off the radio is not rendered, so go straight to the group select.
     const groupInput = await ui.inputs.group.find();

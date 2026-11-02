@@ -63,11 +63,12 @@ func (c *legacySearchClient) Search(ctx context.Context, req SearchQuery) (*iamv
 	}
 
 	query := &org.SearchOrgUsersQuery{
-		OrgID:    signedInUser.GetOrgID(),
-		Limit:    int(req.Limit),
-		Page:     int(req.Page),
-		SortOpts: legacyUserSortOptions(req.Sort),
-		User:     signedInUser,
+		OrgID:              signedInUser.GetOrgID(),
+		Limit:              int(req.Limit),
+		Page:               int(req.Page),
+		SortOpts:           legacyUserSortOptions(req.Sort),
+		User:               signedInUser,
+		ExcludeHiddenUsers: true,
 	}
 	if req.Email != nil {
 		query.Query = *req.Email
@@ -91,9 +92,6 @@ func (c *legacySearchClient) Search(ctx context.Context, req SearchQuery) (*iamv
 	result.TotalHits = res.TotalCount
 	result.Hits = make([]iamv0.GetSearchUsersUserHit, 0, len(res.OrgUsers))
 	for _, u := range res.OrgUsers {
-		if c.isHiddenUser(u.Login, signedInUser) {
-			continue
-		}
 		result.Hits = append(result.Hits, iamv0.GetSearchUsersUserHit{
 			Name:          u.UID,
 			Title:         u.Name,
@@ -108,14 +106,6 @@ func (c *legacySearchClient) Search(ctx context.Context, req SearchQuery) (*iamv
 		})
 	}
 	return result, nil
-}
-
-func (c *legacySearchClient) isHiddenUser(login string, signedInUser identity.Requester) bool {
-	if login == "" || signedInUser.GetIsGrafanaAdmin() || login == signedInUser.GetUsername() {
-		return false
-	}
-	_, hidden := c.cfg.HiddenUsers[login]
-	return hidden
 }
 
 // UserSortFieldMapping maps user-search sort fields to legacy SQL sort keys.

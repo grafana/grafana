@@ -13,6 +13,8 @@ export interface DashboardActionMeta {
    * (e.g. `panel.remove` from `auto-grid` vs `custom-grid`).
    */
   scope?: string;
+  /** Who made the edit when it isn't the user in the dashboard UI (e.g. `mutation-api`). */
+  actor?: string;
 }
 
 export interface DashboardEditActionEventPayload {

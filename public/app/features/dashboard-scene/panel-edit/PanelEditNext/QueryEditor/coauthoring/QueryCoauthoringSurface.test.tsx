@@ -1,8 +1,9 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState as mockUseState } from 'react';
+import { StrictMode, useState as mockUseState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 
 import { QueryCoauthoringSurface } from './QueryCoauthoringSurface';
 import {
@@ -12,6 +13,11 @@ import {
 
 let mockThrowSessionRender = false;
 let mockSessionInstanceId = 0;
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 
 jest.mock('./QueryCoauthoring', () => ({
   QueryCoauthoring: ({ invocationId }: { invocationId: string }) => {
@@ -59,7 +65,7 @@ function createEditorTarget() {
   return { queryText, portalTarget };
 }
 
-function renderSurface(adapter: QueryEditorCoauthoringAdapterV1) {
+function renderSurface(adapter: QueryEditorCoauthoringAdapterV1, strictMode = false) {
   const revert = jest.fn();
   const view = render(
     <QueryCoauthoringSurface
@@ -72,7 +78,8 @@ function renderSurface(adapter: QueryEditorCoauthoringAdapterV1) {
         revert,
       }}
       onBaseline={jest.fn(() => true)}
-    />
+    />,
+    { wrapper: strictMode ? StrictMode : undefined }
   );
   return { revert, ...view };
 }
@@ -81,6 +88,44 @@ describe('QueryCoauthoringSurface', () => {
   afterEach(() => {
     mockThrowSessionRender = false;
     mockSessionInstanceId = 0;
+    jest.mocked(reportInteraction).mockClear();
+  });
+
+  it('reports the selection prompt once per appearance, including under Strict Mode', () => {
+    const portalTarget = document.createElement('div');
+    document.body.append(portalTarget);
+    const { adapter, publish } = createAdapter({ mode: 'selection', portalTarget });
+
+    renderSurface(adapter, true);
+
+    expect(reportInteraction).toHaveBeenCalledTimes(1);
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_shown_selection_prompt', {
+      datasource_type: 'prometheus',
+    });
+
+    act(() => publish({ mode: 'selection', portalTarget }));
+    expect(reportInteraction).toHaveBeenCalledTimes(1);
+
+    act(() => publish({ mode: 'hidden' }));
+    act(() => publish({ mode: 'selection', portalTarget }));
+    expect(reportInteraction).toHaveBeenCalledTimes(2);
+  });
+
+  it.each(['hidden', 'invoked'] as const)('waits for the selection prompt to appear from %s mode', (mode) => {
+    const portalTarget = document.createElement('div');
+    document.body.append(portalTarget);
+    const { adapter, publish } = createAdapter({ mode, invocationId: 'invocation-1', portalTarget });
+
+    renderSurface(adapter);
+    expect(reportInteraction).not.toHaveBeenCalled();
+
+    act(() => publish({ mode: 'selection', portalTarget }));
+
+    expect(screen.getByRole('button', { name: /Explain or modify/ })).toBeInTheDocument();
+    expect(reportInteraction).toHaveBeenCalledTimes(1);
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_shown_selection_prompt', {
+      datasource_type: 'prometheus',
+    });
   });
 
   it('renders the Core toolbar in the editor-provided target and invokes the adapter', async () => {

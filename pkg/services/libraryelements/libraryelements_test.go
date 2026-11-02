@@ -72,26 +72,6 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 			require.EqualError(t, err, model.ErrConnectedDashboardsFinderNotConfigured.Error())
 		})
 
-	scenarioWithPanel(t, "DeleteLibraryElementsInFolderUnchecked should delete elements without consulting AccessControl",
-		func(t *testing.T, sc scenarioContext) {
-			// A user with no permissions at all: sc.reqContext.SignedInUser carries a baked-in
-			// folder.ActionFoldersWrite wildcard that would let a reintroduced permission check
-			// pass regardless of AccessControl, masking a regression.
-			sc.service.AccessControl = acmock.New()
-			noPermsUser := &user.SignedInUser{OrgID: sc.user.OrgID}
-
-			err := sc.service.DeleteLibraryElementsInFolderUnchecked(sc.reqContext.Req.Context(), noPermsUser.OrgID, noPermsUser, sc.folder.UID)
-			require.NoError(t, err)
-
-			var count int64
-			err = sc.sqlStore.WithDbSession(sc.reqContext.Req.Context(), func(session *db.Session) error {
-				_, err := session.SQL("SELECT COUNT(*) FROM library_element WHERE folder_uid=?", sc.folder.UID).Get(&count)
-				return err
-			})
-			require.NoError(t, err)
-			require.Equal(t, int64(0), count)
-		})
-
 	scenarioWithPanel(t, "When an admin tries to delete a folder uid that doesn't exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			sc.service.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
@@ -223,6 +203,47 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 			require.NotNil(t, ambientSess)
 			require.NotNil(t, spy.lastSession, "the target call itself must have used a session")
 			require.Same(t, ambientSess, spy.lastSession, "default delete should join the caller's ambient transaction")
+		})
+}
+
+func TestIntegration_DeleteLibraryElementsInFolderUnchecked(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	scenarioWithPanel(t, "refuses to run without the unchecked-delete marker, and runs once it's set",
+		func(t *testing.T, sc scenarioContext) {
+			orgID := sc.reqContext.GetOrgID()
+
+			err := sc.service.DeleteLibraryElementsInFolderUnchecked(context.Background(), orgID, sc.reqContext.SignedInUser, sc.folder.UID)
+			require.ErrorIs(t, err, folder.ErrUncheckedDeleteNotAuthorized)
+
+			ctx := folder.WithUncheckedDeleteAuthorized(context.Background(), orgID, sc.reqContext.SignedInUser, []string{sc.folder.UID}, true)
+			err = sc.service.DeleteLibraryElementsInFolderUnchecked(ctx, orgID, sc.reqContext.SignedInUser, sc.folder.UID)
+			require.NoError(t, err)
+
+			resp := sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+			var result libraryElementsSearch
+			require.NoError(t, json.Unmarshal(resp.Body(), &result))
+			require.Equal(t, 0, len(result.Result.Elements))
+		})
+
+	scenarioWithPanel(t, "once marked, deletes elements without consulting AccessControl",
+		func(t *testing.T, sc scenarioContext) {
+			// noPermsUser, not sc.reqContext.SignedInUser, since the latter carries a wildcard that would mask a reintroduced permission check.
+			sc.service.AccessControl = acmock.New()
+			noPermsUser := &user.SignedInUser{OrgID: sc.user.OrgID}
+
+			ctx := folder.WithUncheckedDeleteAuthorized(sc.reqContext.Req.Context(), noPermsUser.OrgID, noPermsUser, []string{sc.folder.UID}, true)
+			err := sc.service.DeleteLibraryElementsInFolderUnchecked(ctx, noPermsUser.OrgID, noPermsUser, sc.folder.UID)
+			require.NoError(t, err)
+
+			var count int64
+			err = sc.sqlStore.WithDbSession(sc.reqContext.Req.Context(), func(session *db.Session) error {
+				_, err := session.SQL("SELECT COUNT(*) FROM library_element WHERE folder_uid=?", sc.folder.UID).Get(&count)
+				return err
+			})
+			require.NoError(t, err)
+			require.Equal(t, int64(0), count)
 		})
 }
 

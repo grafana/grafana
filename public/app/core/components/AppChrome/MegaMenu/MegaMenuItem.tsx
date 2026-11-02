@@ -12,11 +12,14 @@ import { t } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge, Box } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useIsStPodLoading } from 'app/core/navigation/useIsStPodLoading';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 
 import { Indent } from '../../Indent/Indent';
 
 import { MegaMenuItemText } from './MegaMenuItemText';
+import { StPodPendingEllipsis } from './StPodPendingEllipsis';
+import { StPodPendingTooltip } from './StPodPendingTooltip';
 import { getDragHandleStyles } from './styles';
 import { hasChildMatch, hiddenKey } from './utils';
 
@@ -90,6 +93,7 @@ export function MegaMenuItem({
   const effectivelyHidden = Boolean(ancestorHidden) || Boolean(isHidden?.(link));
   const location = useLocation();
   const hasActiveChild = hasChildMatch(link, activeItem);
+  const isStPodLoading = useIsStPodLoading(link.url ?? '');
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
   // Starred leaf rows (id `starred/<uid>`) carry a per-kind icon (folder vs dashboard) that must
   // render alongside the label the same way section-header icons do, so the two kinds are distinguishable.
@@ -181,7 +185,7 @@ export function MegaMenuItem({
       data-nav-id={hiddenKey(link)}
       {...draggableProvided?.draggableProps}
     >
-      <div className={styles.menuItem}>
+      <StPodPendingTooltip className={styles.menuItem} itemName={link.text} show={isStPodLoading && !isActive}>
         {/* Reserve the drag column on every row while editing (only top-level rows are draggable) so
             the content columns line up between top-level sections and their children. */}
         {editMode && (
@@ -237,6 +241,7 @@ export function MegaMenuItem({
               <Text truncate element="p">
                 {link.text}
               </Text>
+              <StPodPendingEllipsis url={link.url} itemName={link.text} />
               {/* Hide the "New!" badge while customising — it competes with the edit controls. */}
               {link.isNew && !editMode && <FeatureBadge featureState={FeatureState.new} />}
             </div>
@@ -264,7 +269,7 @@ export function MegaMenuItem({
             />
           )}
         </div>
-      </div>
+      </StPodPendingTooltip>
       {childrenVisible && (
         <ul className={styles.children}>
           {linkHasChildren(link) ? (

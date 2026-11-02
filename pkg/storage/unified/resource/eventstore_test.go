@@ -20,6 +20,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -240,19 +241,29 @@ func testEventStoreSaveGet(t *testing.T, ctx context.Context, store *eventStore)
 	for _, tc := range []struct {
 		name           string
 		previousRV     int64
-		previousAction kv.DataAction
+		previousAction DataAction
 		previousFolder string
+		metadata       *resourcepb.NotificationMetadata
 	}{
 		{name: "no previous revision"},
 		{name: "legacy event", previousRV: 999},
 		{name: "bulk exclusion", previousRV: -1},
 		{name: "empty previous folder", previousRV: 999, previousAction: DataActionCreated},
 		{name: "previous folder", previousRV: 999, previousAction: DataActionUpdated, previousFolder: "old-folder"},
+		{name: "metadata", previousRV: 999, previousAction: DataActionCreated, metadata: &resourcepb.NotificationMetadata{
+			Labels:                  map[string]string{"a": "1"},
+			Annotations:             map[string]string{"b": "2"},
+			Finalizers:              []string{"f"},
+			Generation:              3,
+			CreationTimestampMillis: 1000,
+			DeletionTimestampMillis: 2000,
+		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			event.PreviousRV = tc.previousRV
 			event.PreviousAction = tc.previousAction
 			event.PreviousFolder = tc.previousFolder
+			event.Metadata = tc.metadata
 			require.NoError(t, store.Save(ctx, event))
 
 			eventKey := EventKey{
@@ -821,7 +832,7 @@ func eventStoreFailureBatch(t *testing.T, mode string, events []Event, cancel co
 
 func eventStoreTestEvents(count int) []Event {
 	events := make([]Event, count)
-	actions := []kv.DataAction{DataActionCreated, DataActionUpdated, DataActionDeleted}
+	actions := []DataAction{DataActionCreated, DataActionUpdated, DataActionDeleted}
 	for i := range events {
 		events[i] = Event{
 			Namespace: "default", Group: "apps", Resource: "resource", Name: fmt.Sprintf("test-%03d", i),
@@ -945,7 +956,7 @@ func TestEvent_JSONSerialization(t *testing.T) {
 	for _, tc := range []struct {
 		name           string
 		previous       string
-		previousAction kv.DataAction
+		previousAction DataAction
 		previousFolder string
 	}{
 		{name: "legacy record"},

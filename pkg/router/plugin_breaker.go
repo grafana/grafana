@@ -46,11 +46,11 @@ func pluginClientOutcome(ctx context.Context, err error) error {
 }
 
 func allowPluginCall(ctx context.Context) (func(error), error) {
-	cb, ok := ctx.Value(clientBreakerKey{}).(*groupBreaker)
-	if !ok {
+	call := backendCallFrom(ctx)
+	if call == nil || call.breaker == nil {
 		return func(error) {}, nil
 	}
-	done, err := cb.Allow()
+	done, err := call.breaker.Allow()
 	if err != nil {
 		setContextFailure(ctx, failureBreakerOpen)
 		return nil, apierrors.NewServiceUnavailable("plugin backend unavailable")

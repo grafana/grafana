@@ -32,13 +32,13 @@ import {
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
-import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
-import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
+import { useCommitTarget } from '../../hooks/useCommitTarget';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type CommitTemplateVars, getResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
+import { getRequestRef } from '../../utils/workflow';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -127,7 +127,7 @@ export function SaveProvisionedDashboardForm({
     Boolean(recoverToNewBranch) ||
     isDirty ||
     Boolean(rawDashboardJSON);
-  const [workflow, ref] = watch(['workflow', 'ref']);
+  const ref = watch('ref') ?? '';
   const isFolderless = repository?.target === 'folderless';
   const title = watch('title');
   const description = watch('description');
@@ -171,15 +171,13 @@ export function SaveProvisionedDashboardForm({
     setComment: (value) => setValue('comment', value, { shouldDirty: false }),
   });
 
-  const { locked: lockBranch } = useBranchTemplate({
+  const { workflow, isNewBranch, isResolving, lockBranch, prTitle } = useCommitTarget({
     repository,
     vars: templateVars,
-    workflow,
-    value: ref ?? '',
-    setBranch: (value) => setValue('ref', value, { shouldDirty: false }),
+    ref,
+    isRefDirty: Boolean(dirtyFields.ref),
+    setRef: (value) => setValue('ref', value, { shouldDirty: false }),
   });
-
-  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
 
   // Sync filename from title for new dashboards.
   // dirtyFields.path is false when only setValue() has updated the path (shouldDirty defaults to false),
@@ -260,12 +258,6 @@ export function SaveProvisionedDashboardForm({
         handleNewDashboard(upsert);
       }
 
-      // if pushed to an existing but non-configured branch, navigate to preview page
-      if (ref !== repository?.branch && ref) {
-        navigateToPreview(ref, path, repository?.type);
-        return;
-      }
-
       // Staying on the preview URL would keep showing the deleted branch (and its recovery banner)
       // for a draft that was just saved, so go to the saved dashboard instead.
       if (recoverToNewBranch && upsert?.metadata?.name) {
@@ -278,18 +270,7 @@ export function SaveProvisionedDashboardForm({
         editPanel: null,
       });
     },
-    [
-      isNew,
-      path,
-      ref,
-      repository?.branch,
-      repository?.type,
-      recoverToNewBranch,
-      navigate,
-      handleDismiss,
-      handleNewDashboard,
-      navigateToPreview,
-    ]
+    [isNew, recoverToNewBranch, navigate, handleDismiss, handleNewDashboard]
   );
 
   const onBranchSuccess = useCallback(
@@ -336,7 +317,7 @@ export function SaveProvisionedDashboardForm({
     const { directory, filename } = splitPath(getValues('path'));
     const folderPath = ensureFolderPathTrailingSlash(joinPath(directory, folderName));
     reportInteraction('grafana_provisioning_folder_create_submitted', {
-      workflow,
+      workflow: 'write',
       repositoryName: repository.name,
       repositoryType: repository.type ?? 'unknown',
       source: 'save-dashboard',
@@ -396,12 +377,13 @@ export function SaveProvisionedDashboardForm({
     }
     isCreatingFolderRef.current = false;
     setIsCreatingFolder(false);
-  }, [newFolderName, repository, workflow, createFolder, setValue, getValues, selectFolder, isHeld]);
+  }, [newFolderName, repository, createFolder, setValue, getValues, selectFolder, isHeld]);
 
   const { handleSuccess } = useProvisionedRequestHandler<Dashboard>({
     folderUID: defaultValues.folder?.uid,
     resourceType: 'dashboard',
     repository,
+    isNewBranch,
     handlers: {
       onBranchSuccess: ({ ref, path }, info, resource, wrapper) => onBranchSuccess(ref, path, info, resource, wrapper),
       onWriteSuccess,
@@ -409,7 +391,7 @@ export function SaveProvisionedDashboardForm({
   });
 
   // Submit handler for saving the form data
-  const handleFormSubmit = async ({ title, description, repo, path, ref, copyTags }: ProvisionedDashboardFormData) => {
+  const handleFormSubmit = async ({ title, description, repo, path, copyTags }: ProvisionedDashboardFormData) => {
     setError(undefined);
     // Validate required fields
     if (!repo || !path) {
@@ -454,15 +436,14 @@ export function SaveProvisionedDashboardForm({
 
     try {
       const data = await createOrUpdateFile({
-        // Skip adding ref to the default branch request
-        ref: ref === repository?.branch ? undefined : ref,
+        ref: getRequestRef(repository, ref),
         name: repo,
         path,
         message,
         body,
         originalPath: isRename ? originalPath : undefined,
       }).unwrap();
-      handleSuccess(data, { workflow, selectedBranch: ref });
+      handleSuccess(data);
     } catch (err) {
       // Release suppression so later live save/conflict events from other sessions
       // aren't hidden while the user retries or abandons the save.
@@ -470,6 +451,9 @@ export function SaveProvisionedDashboardForm({
       showError(err);
     }
   };
+
+  // Creating a folder from here writes it to the configured branch, which the repository must allow.
+  const isDirectWrite = canPushToConfiguredBranch && workflow === 'write';
 
   return (
     <FormProvider {...methods}>
@@ -531,7 +515,7 @@ export function SaveProvisionedDashboardForm({
                   }}
                 />
               </Field>
-              {isFolderless && workflow === 'write' && (
+              {isFolderless && isDirectWrite && (
                 <>
                   {!showNewFolderForm && (
                     <div>
@@ -635,6 +619,7 @@ export function SaveProvisionedDashboardForm({
                 !isDirtyState ||
                 isSubmitting ||
                 isValidating ||
+                isResolving ||
                 isCreatingFolder ||
                 isHeld
               }

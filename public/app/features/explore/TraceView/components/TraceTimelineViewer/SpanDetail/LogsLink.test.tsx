@@ -1073,6 +1073,18 @@ describe('getLogsButtonTooltip', () => {
       type: 'trace',
       expected: 'No matching logs found for this trace',
     },
+    {
+      name: 'span, logs loading',
+      presence: 'loading',
+      type: 'span',
+      expected: 'See related logs',
+    },
+    {
+      name: 'trace, logs loading',
+      presence: 'loading',
+      type: 'trace',
+      expected: 'See related logs',
+    },
   ])('dynamic flag: $name', ({ presence, type, expected }) => {
     setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: true });
     const settings = { jsonData: {} } as DataSourceInstanceSettings;

@@ -30,9 +30,7 @@ type Client interface {
 	Commits(ctx context.Context, path, branch string) ([]Commit, error)
 
 	// Pull requests
-	ListPullRequestFiles(ctx context.Context, number int) ([]CommitFile, error)
-	CreatePullRequestComment(ctx context.Context, number int, body string) error
-	MergeBase(ctx context.Context, base, head string) (string, error)
+	repository.PullRequestClient
 }
 
 type Repository struct {
@@ -53,14 +51,6 @@ type Commit struct {
 	Author    *CommitAuthor
 	Committer *CommitAuthor
 	CreatedAt time.Time
-}
-
-//go:generate mockery --name CommitFile --structname MockCommitFile --inpackage --filename mock_commit_file.go --with-expecter
-type CommitFile interface {
-	GetSHA() string
-	GetFilename() string
-	GetPreviousFilename() string
-	GetStatus() string
 }
 
 type webhookConfig struct {

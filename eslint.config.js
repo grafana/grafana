@@ -117,7 +117,6 @@ module.exports = [
     name: 'grafana/ignores',
     ignores: [
       '.github',
-      '.yarn',
       '**/.*', // dotfiles aren't ignored by default in FlatConfig
       ...generatedFiles,
       '**/build/',
@@ -174,7 +173,7 @@ module.exports = [
 
     settings: {
       'import/internal-regex': '^(app/)|(@grafana)',
-      'import/external-module-folders': ['node_modules', '.yarn'],
+      'import/external-module-folders': ['node_modules'],
       // Silences a warning when linting enterprise code
       react: {
         version: 'detect',

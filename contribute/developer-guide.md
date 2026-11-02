@@ -2,52 +2,42 @@
 
 This guide helps you get started developing Grafana.
 
+## Download Grafana
+
+Clone the repository and open its directory:
+
+```sh
+git clone https://github.com/grafana/grafana.git
+cd grafana
+```
+
+Run the remaining commands from this directory.
+
 ## Dependencies
 
-Make sure you have the following dependencies installed before setting up your developer environment:
+We recommend [mise](https://mise.jdx.dev/getting-started.html) to manage Go, Node.js, and other development tool versions in one place. Once set up, install Go, Node.js, and pnpm with:
 
-- [Git](https://git-scm.com/) (The Grafana organization requires signed commits. See the [Github docs](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits) on how to set this up, if it is not already.)
+```sh
+mise install
+```
+
+Alternatively, make sure you have the following dependencies installed before setting up your developer environment:
+
 - [Go](https://golang.org/dl/) (see [go.mod](../go.mod#L3) for minimum required version)
-- [Node.js (Long Term Support)](https://nodejs.org), with [corepack enabled](https://nodejs.org/api/corepack.html#enabling-the-feature). See [.nvmrc](../.nvmrc) for supported version. We recommend that you use a version manager such as [nvm](https://github.com/nvm-sh/nvm), [fnm](https://github.com/Schniz/fnm), or similar.
+- [Node.js (Long Term Support)](https://nodejs.org). See [.nvmrc](../.nvmrc) for supported version.
 - [GCC](https://gcc.gnu.org/) (optional, not recommended; enables CGO for smaller, dynamically linked binaries)
 
-### macOS
-
-We recommend using [Homebrew](https://brew.sh/) for installing any missing dependencies:
-
-```
-brew install git
-brew install go
-brew install node@24
-```
+When it comes time to commit, the Grafana organization requires signed commits. See the [Github docs](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits) on how to set this up, if it is not already.
 
 ### Windows
 
-If you are running Grafana on Windows 10, we recommend installing the Windows Subsystem for Linux (WSL). For installation instructions, refer to our [Grafana setup guide for Windows environment](https://grafana.com/blog/2021/03/03/how-to-set-up-a-grafana-development-environment-on-a-windows-pc-using-wsl/).
+If you are running Grafana on Windows 10+, we recommend installing the Windows Subsystem for Linux (WSL). For installation instructions, refer to our [Grafana setup guide for Windows environment](https://grafana.com/blog/2021/03/03/how-to-set-up-a-grafana-development-environment-on-a-windows-pc-using-wsl/).
 
-## Download Grafana
-
-We recommend using the Git command-line interface to download the source code for the Grafana project:
-
-1. Open a terminal and run `git clone https://github.com/grafana/grafana.git`. This command downloads Grafana to a new `grafana` directory in your current directory.
-1. Open the `grafana` directory in your favorite code editor.
-
-For alternative ways of cloning the Grafana repository, refer to [GitHub's documentation](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository).
-
-> **Caution:** Do not use `go get` to download Grafana. Recent versions of Go have added behavior which isn't compatible with the way the Grafana repository is structured.
-
-### Set up yarn
-
-In the repository enable and install yarn via corepack
-
-```
-corepack enable
-corepack install
-```
+## Development setup
 
 ### Configure precommit hooks
 
-We use pre-commit hooks (via [lefthook](https://github.com/evilmartians/lefthook)) to lint, fix, and format code as you commit your changes. Previously, the Grafana repository automatically installed these hook when you ran `yarn install`, but they are now opt-in for all contributors.
+We use pre-commit hooks (via [lefthook](https://github.com/evilmartians/lefthook)) to lint, fix, and format code as you commit your changes.
 
 To install the precommit hooks:
 
@@ -68,13 +58,13 @@ make lefthook-uninstall
 We use [Knip](https://knip.dev/) in our CI to find unused code or dependencies in our frontend stack. If your PR leaves any orphaned file or dependencies, the CI check will fail. Check the errors in the CI logs or use the following command to run locally:
 
 ```sh
-yarn knip
+pnpm knip
 ```
 
 In some cases, fixes can be automatically applied:
 
 ```sh
-yarn knip:fix
+pnpm knip:fix
 ```
 
 ## Build Grafana
@@ -89,15 +79,13 @@ When building Grafana, be aware that it consists of two components:
 Before you can build the frontend assets, you need to install the related dependencies:
 
 ```
-yarn install --immutable
+pnpm install --frozen-lockfile
 ```
-
-> If you get the error `The remote archive doesn't match the expected checksum` for a dependency pulled from a link (for example, `"tether-drop": "https://github.com/torkelo/drop"`): this is a temporary mismatch. To work around the error (while someone corrects the issue), you can prefix your `yarn install --immutable` command with [`YARN_CHECKSUM_BEHAVIOR=update`](https://yarnpkg.com/advanced/error-codes#yn0018---cache_checksum_mismatch).
 
 After the command has finished, you can start building the source code:
 
 ```
-yarn start
+pnpm start
 ```
 
 This command generates SASS theme files, builds all external plugins, and then starts the rspack dev server. The dev server supports hot module replacement and React Fast Refresh: when you edit a component, the running page updates without a reload and keeps its app state. When rspack cannot hot-apply a module, it reloads the page.
@@ -108,10 +96,10 @@ Keep using `http://localhost:3000`. The dev server holds the bundles in memory a
 
 #### How the dev server affects the build on disk
 
-- Almost nothing is written to `public/build`. The one exception is `boot.js`, which every start command builds to disk first, because the backend reads it from there at startup. To serve the rest of the build from a static file server, as `make frontend-service` does, run `yarn start:noHmr` instead.
+- Almost nothing is written to `public/build`. The one exception is `boot.js`, which every start command builds to disk first, because the backend reads it from there at startup. To serve the rest of the build from a static file server, as `make frontend-service` does, run `pnpm start:noHmr` instead.
 - If the dev server is not running, Grafana falls back to whatever the last build left on disk. A stale page usually means the dev server stopped.
 - Turning on `[security] content_security_policy` disables the dev server. A `'self'` policy will not let the page load assets from another origin, so Grafana logs a line and serves the build on disk. That is what keeps the e2e suite off the dev server, since the suite also runs in development mode.
-- Blanking `server_url` in a config file does not turn the dev server off, and leaves the two halves disagreeing: `yarn start` refuses to start, while Grafana ignores empty values in `custom.ini` and still points the browser at the dev server. To build without one, run `yarn start:noHmr`. To stop Grafana looking for one, pass `cfg:frontend_dev.server_url=` on the command line.
+- Blanking `server_url` in a config file does not turn the dev server off, and leaves the two halves disagreeing: `pnpm start` refuses to start, while Grafana ignores empty values in `custom.ini` and still points the browser at the dev server. To build without one, run `pnpm start:noHmr`. To stop Grafana looking for one, pass `cfg:frontend_dev.server_url=` on the command line.
 
 #### Plugins
 
@@ -123,25 +111,25 @@ If you want to contribute to any of the plugins listed below (that are found wit
 To build and watch all these plugins you can run the following command. Note this can be quite resource intensive as it will start separate build processes for each plugin.
 
 ```
-yarn plugin:build:dev
+pnpm plugin:build:dev
 ```
 
 If, instead, you would like to build and watch a specific plugin you can run the following command. Make sure to substitute `<name_of_plugin>`
 with the plugins name field found in its package.json. e.g. `@grafana-plugins/awesome_plugin`.
 
 ```
-yarn workspace <name_of_plugin> dev
+pnpm --filter <name_of_plugin> dev
 ```
 
 If you want to run multiple specific plugins, you can use the following command.
 
 ```
-yarn nx run-many -t dev --projects="@grafana-plugins/<name_of_plugin>,@grafana-plugins/<name_of_plugin>"
+pnpm nx run-many -t dev --projects="@grafana-plugins/<name_of_plugin>,@grafana-plugins/<name_of_plugin>"
 ```
 
 If you're unsure of the name of the plugins you'd like to run you can query nx with the following command to get a list of all plugins:
 
-`yarn nx show projects --projects="@grafana-plugins/*"`
+`pnpm nx show projects --projects="@grafana-plugins/*"`
 
 Next, we'll explain how to build and run the web server that serves these frontend assets.
 
@@ -214,10 +202,10 @@ The test suite consists of three types of tests: _Frontend tests_, _backend test
 
 ### Run frontend tests
 
-We use [Jest](https://jestjs.io/) for our frontend tests. Run them using Yarn:
+We use [Jest](https://jestjs.io/) for our frontend tests. Run them using pnpm:
 
 ```
-yarn test
+pnpm test
 ```
 
 ### Run backend tests
@@ -258,17 +246,17 @@ make test-go-integration-postgres
 
 - Grafana uses [Playwright](https://playwright.dev/) to run automated end-to-end tests. You can find more information [in our end-to-end testing style guide](./style-guides/e2e-playwright.md#playwright-for-plugins)
 
-- Each version of Playwright needs specific versions of browser binaries to operate. You need to use the Playwright CLI to install these browsers: `yarn playwright install chromium`.
-- Run tests with `yarn e2e:playwright [optional path to test file]`.
+- Each version of Playwright needs specific versions of browser binaries to operate. You need to use the Playwright CLI to install these browsers: `pnpm exec playwright install chromium`.
+- Run tests with `pnpm e2e:playwright [optional path to test file]`.
 
-- To open the last HTML report, you can run `yarn playwright show-report`. You can also open an arbitrary report with `yarn playwright show-report <reportLocation>`. The reports are also downloadable from CI by:
+- To open the last HTML report, you can run `pnpm exec playwright show-report`. You can also open an arbitrary report with `pnpm exec playwright show-report <reportLocation>`. The reports are also downloadable from CI by:
   - Clicking through to _End-to-end tests_/_All Playwright tests complete_.
   - Clicking _Summary_.
   - Download the _playwright-html-<number>_ artifact.
   - Unzip.
-  - Run `yarn playwright show-report <reportLocation>`
+  - Run `pnpm exec playwright show-report <reportLocation>`
 
-- There are also a set of acceptance tests that can be run with `yarn e2e:acceptance`. These tests should run against a Grafana instance with the default configuration (e.g. no provisioned dashboards/datasources), and are used to verify our cloud/on-prem images are working as expected.
+- There are also a set of acceptance tests that can be run with `pnpm e2e:acceptance`. These tests should run against a Grafana instance with the default configuration (e.g. no provisioned dashboards/datasources), and are used to verify our cloud/on-prem images are working as expected.
 
 If you are curious about other commands, you can see the full list in [the Playwright documentation](https://playwright.dev/docs/test-cli#all-options).
 
@@ -330,8 +318,6 @@ Are you having issues with setting up your environment? Here are some tips that 
 
 Configure your IDE to use the TypeScript version from the Grafana repository. The version should match the TypeScript version in the `package.json` file, and is typically located at `node_modules/.bin/tsc`.
 
-Previously, Grafana used Yarn PnP to install frontend dependencies, which required additional special IDE configuration. This is no longer the case. If you have custom paths in your IDE for ESLint, Prettier, or TypeScript, you can now remove them and use the defaults from `node_modules`.
-
 ### Too many open files when running `make run`
 
 Depending on your environment, you may need to increase the maximum number of open files allowed. For the rest of this section, we will assume you are on a UNIX-like OS (for example, Linux or macOS), where you can control the maximum number of open files through the [ulimit](https://ss64.com/bash/ulimit.html) shell command.
@@ -377,7 +363,7 @@ ulimit: open files: cannot modify limit: Operation not permitted
 
 If that happens to you, chances are you've already set a lower limit and your shell won't let you set a higher one. Try looking in your shell initialization files (`~/.bashrc`, typically), to see if there's already an `ulimit` command that you can tweak.
 
-### System limit for number of file watchers reached while running `yarn start`
+### System limit for number of file watchers reached while running `pnpm start`
 
 Depending on your environment, you may need to increase the number of file watchers allowed by `inotify` package to monitor filesystem changes. You may encounter an error `Error: ENOSPC: System limit for number of file watchers reached` otherwise.
 
@@ -409,9 +395,9 @@ On macOS:
 sysctl kern.maxfiles
 ```
 
-### JavaScript heap out of memory while running `yarn start`
+### JavaScript heap out of memory while running `pnpm start`
 
-Running `yarn start` requires a substantial amount of memory space. You may check the currently allocated heap space to `node` by running the command:
+Running `pnpm start` requires a substantial amount of memory space. You may check the currently allocated heap space to `node` by running the command:
 
 ```bash
 node -e 'console.log(v8.getHeapStatistics().heap_size_limit/(1024*1024))'

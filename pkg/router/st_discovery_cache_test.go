@@ -421,7 +421,7 @@ func TestRouterRootDiscoveryIsSharedByTheStacksCallers(t *testing.T) {
 		req := requestAs(user, "stacks-123", apisPrefix)
 		req.Header.Set("Accept", "application/json")
 		res := httptest.NewRecorder()
-		router.HandleFunc(res, req, http.NotFoundHandler())
+		router.HandleFunc(res, req)
 		require.Equal(t, http.StatusOK, res.Code)
 		require.Contains(t, res.Body.String(), "stack.grafana.app")
 		require.NotContains(t, res.Body.String(), "default.grafana.app")
@@ -451,7 +451,7 @@ func TestRouterRevalidatesCallerScopedOpenAPI(t *testing.T) {
 			req.Header.Set("If-None-Match", etag)
 		}
 		res := httptest.NewRecorder()
-		router.HandleFunc(res, req, http.NotFoundHandler())
+		router.HandleFunc(res, req)
 		return res
 	}
 	first := serve("alice", "")

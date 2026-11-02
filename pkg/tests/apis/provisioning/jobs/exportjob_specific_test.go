@@ -175,9 +175,11 @@ func TestIntegrationProvisioning_SelectiveMigrateDashboardInNestedFolders(t *tes
 			},
 		},
 	})
-	common.HasNoErrors()(t, migrateJob)
-	common.HasState(provisioning.JobStateWarning)(t, migrateJob)
-	require.Contains(t, strings.Join(common.MustNestedStringSlice(migrateJob.Object, "status", "warnings"), "\n"), "missing folder metadata")
+	common.HasOnlyMissingFolderMetadataWarnings(
+		"Selective Migrate Grandparent",
+		"Selective Migrate Grandparent/Selective Migrate Parent",
+		"Selective Migrate Grandparent/Selective Migrate Parent/Selective Migrate Child",
+	)(t, migrateJob)
 
 	// The dashboard is now managed by the repo, and every folder in its ancestry
 	// (child > parent > grandparent) is managed by the repo too.

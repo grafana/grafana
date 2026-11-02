@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -898,9 +899,8 @@ func TestChooseTarget(t *testing.T) {
 	}
 }
 
-// newRunnable builds a Reconciler with sub-millisecond tickers so the
-// Run tests don't sit waiting on real intervals. Caller is expected to
-// cancel the returned context to make Run exit.
+// newRunnable builds a Reconciler with short intervals for the Run tests.
+// The caller must cancel the context to make Run exit.
 func newRunnable(t *testing.T, st *fakeStorage, vec *fakeVector) (*Reconciler, *fakeText) {
 	t.Helper()
 	text := &fakeText{dim: 4}
@@ -920,31 +920,31 @@ func newRunnable(t *testing.T, st *fakeStorage, vec *fakeVector) (*Reconciler, *
 // shutdown: Run holds the lock for the pod's lifetime and only
 // returns when ctx is cancelled, propagating ctx.Err().
 func TestReconciler_Run_ExitsOnContextCancel(t *testing.T) {
-	vec := newFakeVector()
-	s, _ := newRunnable(t, &fakeStorage{}, vec)
+	synctest.Test(t, func(t *testing.T) {
+		vec := newFakeVector()
+		s, _ := newRunnable(t, &fakeStorage{}, vec)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	done := make(chan error, 1)
-	go func() { done <- s.Run(ctx) }()
+		ctx, cancel := context.WithCancel(context.Background())
+		done := make(chan error, 1)
+		go func() { done <- s.Run(ctx) }()
 
-	// Let Run get past acquireLockBlocking and into the active state.
-	require.Eventually(t, func() bool {
+		// Finish the startup sweep and seed-watch registration before inspecting reconciler state.
+		synctest.Wait()
+
+		require.GreaterOrEqual(t, vec.lockAttempts, 1)
+
+		cancel()
+		select {
+		case err := <-done:
+			require.ErrorIs(t, err, context.Canceled)
+		case <-time.After(time.Second):
+			t.Fatal("Run did not exit after ctx cancel")
+		}
+
 		vec.mu.Lock()
 		defer vec.mu.Unlock()
-		return vec.lockAttempts >= 1
-	}, time.Second, time.Millisecond, "lock should be acquired")
-
-	cancel()
-	select {
-	case err := <-done:
-		require.ErrorIs(t, err, context.Canceled)
-	case <-time.After(time.Second):
-		t.Fatal("Run did not exit after ctx cancel")
-	}
-
-	vec.mu.Lock()
-	defer vec.mu.Unlock()
-	assert.Equal(t, 1, vec.lockReleases, "lock released exactly once on shutdown")
+		assert.Equal(t, 1, vec.lockReleases, "lock released exactly once on shutdown")
+	})
 }
 
 // TestReconciler_Run_BlocksUntilLockAvailable pins the
@@ -952,46 +952,46 @@ func TestReconciler_Run_ExitsOnContextCancel(t *testing.T) {
 // lockRetryInterval and only proceeds once it succeeds. Flipping
 // lockUnavailable to false mid-flight unblocks it.
 func TestReconciler_Run_BlocksUntilLockAvailable(t *testing.T) {
-	vec := newFakeVector()
-	vec.lockUnavailable = true
-	s, _ := newRunnable(t, &fakeStorage{}, vec)
+	synctest.Test(t, func(t *testing.T) {
+		vec := newFakeVector()
+		vec.lockUnavailable = true
+		s, _ := newRunnable(t, &fakeStorage{}, vec)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
-	done := make(chan error, 1)
-	go func() { done <- s.Run(ctx) }()
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+		done := make(chan error, 1)
+		go func() { done <- s.Run(ctx) }()
 
-	// Wait for at least a couple of failed acquires before releasing.
-	require.Eventually(t, func() bool {
+		// Finish the first failed lock acquisition before advancing through its retry delay.
+		synctest.Wait()
+
+		// Trigger the next lock attempt while the competing holder still owns it.
+		synctest.Sleep(s.lockRetryInterval)
+
+		require.GreaterOrEqual(t, vec.lockAttempts, 2)
+
+		vec.mu.Lock()
+		attemptsBefore := vec.lockAttempts
+		vec.lockUnavailable = false
+		vec.mu.Unlock()
+
+		// Trigger the next lock retry after the competing holder releases it.
+		synctest.Sleep(s.lockRetryInterval)
+
+		require.Greater(t, vec.lockAttempts, attemptsBefore)
+
+		cancel()
+		select {
+		case err := <-done:
+			require.ErrorIs(t, err, context.Canceled)
+		case <-time.After(time.Second):
+			t.Fatal("Run did not exit after ctx cancel")
+		}
+
 		vec.mu.Lock()
 		defer vec.mu.Unlock()
-		return vec.lockAttempts >= 2
-	}, time.Second, time.Millisecond, "Run should retry the lock")
-
-	vec.mu.Lock()
-	attemptsBefore := vec.lockAttempts
-	vec.lockUnavailable = false
-	vec.mu.Unlock()
-
-	// Once the lock becomes available Run acquires it and enters
-	// active state. Cancel and assert clean shutdown.
-	require.Eventually(t, func() bool {
-		vec.mu.Lock()
-		defer vec.mu.Unlock()
-		return vec.lockAttempts > attemptsBefore
-	}, time.Second, time.Millisecond, "Run should re-attempt after we flip the lock")
-
-	cancel()
-	select {
-	case err := <-done:
-		require.ErrorIs(t, err, context.Canceled)
-	case <-time.After(time.Second):
-		t.Fatal("Run did not exit after ctx cancel")
-	}
-
-	vec.mu.Lock()
-	defer vec.mu.Unlock()
-	assert.Equal(t, 1, vec.lockReleases, "lock released after a successful acquire")
+		assert.Equal(t, 1, vec.lockReleases, "lock released after a successful acquire")
+	})
 }
 
 // TestReconciler_Run_ContextCancelDuringLockWait exits cleanly even
@@ -999,69 +999,73 @@ func TestReconciler_Run_BlocksUntilLockAvailable(t *testing.T) {
 // acquireLockBlocking and Run must NOT call the release function
 // (it never acquired).
 func TestReconciler_Run_ContextCancelDuringLockWait(t *testing.T) {
-	vec := newFakeVector()
-	vec.lockUnavailable = true
-	s, _ := newRunnable(t, &fakeStorage{}, vec)
+	synctest.Test(t, func(t *testing.T) {
+		vec := newFakeVector()
+		vec.lockUnavailable = true
+		s, _ := newRunnable(t, &fakeStorage{}, vec)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	done := make(chan error, 1)
-	go func() { done <- s.Run(ctx) }()
+		ctx, cancel := context.WithCancel(context.Background())
+		done := make(chan error, 1)
+		go func() { done <- s.Run(ctx) }()
 
-	require.Eventually(t, func() bool {
+		// Finish the startup sweep and seed-watch registration before inspecting reconciler state.
+		synctest.Wait()
+
+		require.GreaterOrEqual(t, vec.lockAttempts, 1)
+
+		cancel()
+		select {
+		case err := <-done:
+			require.ErrorIs(t, err, context.Canceled)
+		case <-time.After(time.Second):
+			t.Fatal("Run did not exit after ctx cancel")
+		}
+
 		vec.mu.Lock()
 		defer vec.mu.Unlock()
-		return vec.lockAttempts >= 1
-	}, time.Second, time.Millisecond)
-
-	cancel()
-	select {
-	case err := <-done:
-		require.ErrorIs(t, err, context.Canceled)
-	case <-time.After(time.Second):
-		t.Fatal("Run did not exit after ctx cancel")
-	}
-
-	vec.mu.Lock()
-	defer vec.mu.Unlock()
-	assert.Equal(t, 0, vec.lockReleases, "no lock to release when ctx is cancelled mid-wait")
+		assert.Equal(t, 0, vec.lockReleases, "no lock to release when ctx is cancelled mid-wait")
+	})
 }
 
 func TestReconciler_Run_RunsStartupAndCycles(t *testing.T) {
-	st := &fakeStorage{}
-	st.changes = []*resource.ModifiedResource{
-		dashChange(resourcepb.WatchEvent_ADDED, "ns", "startup-1", snowflakeRV(100), minimalDashboard("startup-1", "Startup 1")),
-	}
-	vec := newFakeVector()
-	vec.latestRV = snowflakeRV(50) // > 0 so the sweep actually runs
-	s, _ := newRunnable(t, st, vec)
+	synctest.Test(t, func(t *testing.T) {
+		st := &fakeStorage{}
+		st.changes = []*resource.ModifiedResource{
+			dashChange(resourcepb.WatchEvent_ADDED, "ns", "startup-1", snowflakeRV(100), minimalDashboard("startup-1", "Startup 1")),
+		}
+		vec := newFakeVector()
+		vec.latestRV = snowflakeRV(50) // > 0 so the sweep actually runs
+		s, _ := newRunnable(t, st, vec)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
-	done := make(chan error, 1)
-	go func() { done <- s.Run(ctx) }()
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+		done := make(chan error, 1)
+		go func() { done <- s.Run(ctx) }()
 
-	// Startup event must reach the vector backend.
-	require.Eventually(t, func() bool {
-		vec.mu.Lock()
-		defer vec.mu.Unlock()
-		return len(vec.upserts) >= 1
-	}, time.Second, time.Millisecond, "the first sweep should run before the first tick")
+		// Finish the startup sweep and seed-watch registration before inspecting reconciler state.
+		synctest.Wait()
 
-	// The next sweep discovers the new stored resource.
-	addStoredEvent(t, s, dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "live-1", snowflakeRV(200), minimalDashboard("live-1", "Live 1")))
-	require.Eventually(t, func() bool {
-		vec.mu.Lock()
-		defer vec.mu.Unlock()
-		return len(vec.upserts) >= 2
-	}, time.Second, time.Millisecond, "ticker should sweep the new write")
+		require.True(t, len(vec.upserts) >= 1)
 
-	cancel()
-	select {
-	case err := <-done:
-		require.ErrorIs(t, err, context.Canceled)
-	case <-time.After(time.Second):
-		t.Fatal("Run did not exit after ctx cancel")
-	}
+		// The next sweep discovers the new stored resource.
+		addStoredEvent(t, s, dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "live-1", snowflakeRV(200), minimalDashboard("live-1", "Live 1")))
+
+		// Consume the new write before advancing to the sweep that embeds it.
+		synctest.Wait()
+
+		// Complete the scheduled sweep and checkpoint update for the new write.
+		synctest.Sleep(s.interval)
+
+		require.True(t, len(vec.upserts) >= 2)
+
+		cancel()
+		select {
+		case err := <-done:
+			require.ErrorIs(t, err, context.Canceled)
+		case <-time.After(time.Second):
+			t.Fatal("Run did not exit after ctx cancel")
+		}
+	})
 }
 
 func labeledDashboard(uid, title string) []byte {
@@ -1117,100 +1121,116 @@ func TestReconciler_PendingDeleteLabel_RestoreReembeds(t *testing.T) {
 // written keys of the enrolled types, the first one seeds the checkpoint, the
 // sweep embeds it, and the watch is closed once the checkpoint is persisted.
 func TestReconciler_Run_WrittenKeySeedsSweep(t *testing.T) {
-	vec := newFakeVector()
-	st := &fakeStorage{changes: []*resource.ModifiedResource{
-		dashChange(resourcepb.WatchEvent_MODIFIED, "ns", "watched", snowflakeRV(500), minimalDashboard("watched", "Watched")),
-	}}
-	s, _ := newRunnable(t, st, vec)
-	done := runReconciler(t, s)
+	synctest.Test(t, func(t *testing.T) {
+		vec := newFakeVector()
+		st := &fakeStorage{changes: []*resource.ModifiedResource{
+			dashChange(resourcepb.WatchEvent_MODIFIED, "ns", "watched", snowflakeRV(500), minimalDashboard("watched", "Watched")),
+		}}
+		s, _ := newRunnable(t, st, vec)
+		done := runReconciler(t, s)
 
-	require.Eventually(t, func() bool {
+		// Finish the startup sweep and seed-watch registration before inspecting reconciler state.
+		synctest.Wait()
+
 		_, _, calls := st.keysWatch()
-		return calls == 1
-	}, time.Second, time.Millisecond)
-	assert.Equal(t, []schema.GroupResource{{Group: dashGroup, Resource: dashRes}}, st.keysTypes)
+		require.Equal(t, 1, calls)
+		assert.Equal(t, []schema.GroupResource{{Group: dashGroup, Resource: dashRes}}, st.keysTypes)
 
-	keys, watchCtx, _ := st.keysWatch()
-	keys <- &resource.WrittenEvent{
-		Key:             &resourcepb.ResourceKey{Group: dashGroup, Resource: dashRes, Namespace: "ns", Name: "watched"},
-		ResourceVersion: snowflakeRV(500),
-	}
+		keys, watchCtx, _ := st.keysWatch()
+		keys <- &resource.WrittenEvent{
+			Key:             &resourcepb.ResourceKey{Group: dashGroup, Resource: dashRes, Namespace: "ns", Name: "watched"},
+			ResourceVersion: snowflakeRV(500),
+		}
 
-	require.Eventually(t, func() bool {
-		return vec.hasUpsertFor("ns", dashRes, "watched")
-	}, time.Second, time.Millisecond, "the seeded sweep should embed the written resource")
-	require.Eventually(t, func() bool {
-		return watchCtx.Err() != nil
-	}, time.Second, time.Millisecond, "the watch must close once the checkpoint is persisted")
+		// Consume the new write before advancing to the sweep that embeds it.
+		synctest.Wait()
 
-	done()
-	_, _, calls := st.keysWatch()
-	assert.Equal(t, 1, calls, "a seeded reconciler must not watch again")
+		// Complete the scheduled sweep and checkpoint update for the new write.
+		synctest.Sleep(s.interval)
+
+		require.True(t, vec.hasUpsertFor("ns", dashRes, "watched"))
+
+		require.Error(t, watchCtx.Err())
+
+		done()
+		_, _, calls = st.keysWatch()
+		assert.Equal(t, 1, calls, "a seeded reconciler must not watch again")
+	})
 }
 
 // Without the NATS notifier the seed comes from the watch stream instead.
 func TestReconciler_Run_SeedFallsBackToWatchStream(t *testing.T) {
-	vec := newFakeVector()
-	st := &fakeStorage{
-		changes: []*resource.ModifiedResource{
-			dashChange(resourcepb.WatchEvent_MODIFIED, "ns", "watched", snowflakeRV(500), minimalDashboard("watched", "Watched")),
-		},
-		keysErr: resource.ErrWrittenKeysUnsupported,
-		watchCh: make(chan *resource.WrittenEvent, 1),
-	}
-	s, _ := newRunnable(t, st, vec)
-	done := runReconciler(t, s)
+	synctest.Test(t, func(t *testing.T) {
+		vec := newFakeVector()
+		st := &fakeStorage{
+			changes: []*resource.ModifiedResource{
+				dashChange(resourcepb.WatchEvent_MODIFIED, "ns", "watched", snowflakeRV(500), minimalDashboard("watched", "Watched")),
+			},
+			keysErr: resource.ErrWrittenKeysUnsupported,
+			watchCh: make(chan *resource.WrittenEvent, 1),
+		}
+		s, _ := newRunnable(t, st, vec)
+		done := runReconciler(t, s)
 
-	st.watchCh <- &resource.WrittenEvent{
-		Type:            resourcepb.WatchEvent_MODIFIED,
-		Key:             &resourcepb.ResourceKey{Group: dashGroup, Resource: dashRes, Namespace: "ns", Name: "watched"},
-		Value:           minimalDashboard("watched", "Watched"),
-		ResourceVersion: snowflakeRV(500),
-	}
+		st.watchCh <- &resource.WrittenEvent{
+			Type:            resourcepb.WatchEvent_MODIFIED,
+			Key:             &resourcepb.ResourceKey{Group: dashGroup, Resource: dashRes, Namespace: "ns", Name: "watched"},
+			Value:           minimalDashboard("watched", "Watched"),
+			ResourceVersion: snowflakeRV(500),
+		}
 
-	require.Eventually(t, func() bool {
-		return vec.hasUpsertFor("ns", dashRes, "watched")
-	}, time.Second, time.Millisecond, "a write from the watch stream should seed the sweep")
-	done()
+		// Consume the new write before advancing to the sweep that embeds it.
+		synctest.Wait()
+
+		// Complete the scheduled sweep and checkpoint update for the new write.
+		synctest.Sleep(s.interval)
+
+		require.True(t, vec.hasUpsertFor("ns", dashRes, "watched"))
+		done()
+	})
 }
 
 // A watch that cannot be opened, as while the bus is unreachable, must not
 // stop the reconciler from holding the lock and sweeping.
 func TestReconciler_Run_SeedWatchErrorContinues(t *testing.T) {
-	vec := newFakeVector()
-	st := &fakeStorage{keysErr: errBoom}
-	s, _ := newRunnable(t, st, vec)
-	done := runReconciler(t, s)
+	synctest.Test(t, func(t *testing.T) {
+		vec := newFakeVector()
+		st := &fakeStorage{keysErr: errBoom}
+		s, _ := newRunnable(t, st, vec)
+		done := runReconciler(t, s)
 
-	require.Eventually(t, func() bool {
+		// Finish the startup sweep and seed-watch registration before inspecting reconciler state.
+		synctest.Wait()
+
 		_, _, calls := st.keysWatch()
-		return calls == 1
-	}, time.Second, time.Millisecond)
-	require.Eventually(t, func() bool {
-		vec.mu.Lock()
-		defer vec.mu.Unlock()
-		return vec.lockReleases == 0 && vec.lockAttempts >= 1
-	}, time.Second, time.Millisecond, "lock acquired despite the watch error")
-	done()
+		require.Equal(t, 1, calls)
+
+		// Finish the startup sweep and seed-watch registration before inspecting reconciler state.
+		synctest.Wait()
+
+		require.True(t, vec.lockReleases == 0 && vec.lockAttempts >= 1)
+		done()
+	})
 }
 
 // Writes only seed the first checkpoint, so a reconciler that starts with one
 // opens no watch.
 func TestReconciler_Run_NoSeedWatchWithCheckpoint(t *testing.T) {
-	vec := newFakeVector()
-	vec.latestRV = snowflakeRV(50)
-	st := &fakeStorage{}
-	s, _ := newRunnable(t, st, vec)
-	done := runReconciler(t, s)
+	synctest.Test(t, func(t *testing.T) {
+		vec := newFakeVector()
+		vec.latestRV = snowflakeRV(50)
+		st := &fakeStorage{}
+		s, _ := newRunnable(t, st, vec)
+		done := runReconciler(t, s)
 
-	require.Eventually(t, func() bool {
-		st.mu.Lock()
-		defer st.mu.Unlock()
-		return len(st.lastCalledWith) > 0
-	}, time.Second, time.Millisecond, "the sweep should run")
-	done()
-	_, _, calls := st.keysWatch()
-	assert.Zero(t, calls)
+		// Finish the startup sweep and seed-watch registration before inspecting reconciler state.
+		synctest.Wait()
+
+		require.True(t, len(st.lastCalledWith) > 0)
+		done()
+		_, _, calls := st.keysWatch()
+		assert.Zero(t, calls)
+	})
 }
 
 // runReconciler runs s until the returned function is called, which cancels
@@ -1234,36 +1254,39 @@ func runReconciler(t *testing.T, s *Reconciler) func() {
 }
 
 func TestReconciler_Run_LaunchesBackfiller(t *testing.T) {
-	// Run drives the backfiller and waits for it on shutdown.
-	vec := newFakeVector()
-	bf := &fakeBackfiller{blocked: true}
-	text := &fakeText{dim: 4}
-	s, err := New(Options{
-		Storage:           &fakeStorage{},
-		VectorBackend:     vec,
-		BatchEmbedder:     embedder.NewBatchEmbedder(*newFakeEmbedder(text)),
-		Builders:          []embed.Builder{dashboard.New()},
-		Backfiller:        bf,
-		Interval:          5 * time.Millisecond,
-		LockRetryInterval: 1 * time.Millisecond,
+	synctest.Test(t, func(t *testing.T) {
+		// Run drives the backfiller and waits for it on shutdown.
+		vec := newFakeVector()
+		bf := &fakeBackfiller{blocked: true}
+		text := &fakeText{dim: 4}
+		s, err := New(Options{
+			Storage:           &fakeStorage{},
+			VectorBackend:     vec,
+			BatchEmbedder:     embedder.NewBatchEmbedder(*newFakeEmbedder(text)),
+			Builders:          []embed.Builder{dashboard.New()},
+			Backfiller:        bf,
+			Interval:          5 * time.Millisecond,
+			LockRetryInterval: 1 * time.Millisecond,
+		})
+		require.NoError(t, err)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		done := make(chan error, 1)
+		go func() { done <- s.Run(ctx) }()
+
+		// Finish the startup sweep and seed-watch registration before inspecting reconciler state.
+		synctest.Wait()
+
+		require.True(t, bf.runCount() == 1)
+
+		cancel()
+		select {
+		case err := <-done:
+			require.ErrorIs(t, err, context.Canceled)
+		case <-time.After(time.Second):
+			t.Fatal("Run did not exit after ctx cancel")
+		}
 	})
-	require.NoError(t, err)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	done := make(chan error, 1)
-	go func() { done <- s.Run(ctx) }()
-
-	require.Eventually(t, func() bool {
-		return bf.runCount() == 1
-	}, time.Second, time.Millisecond, "Run should launch the backfiller")
-
-	cancel()
-	select {
-	case err := <-done:
-		require.ErrorIs(t, err, context.Canceled)
-	case <-time.After(time.Second):
-		t.Fatal("Run did not exit after ctx cancel")
-	}
 }
 
 func TestReconciler_EnsureResourceInitialized_UsesEventRV(t *testing.T) {
@@ -1897,45 +1920,52 @@ func setupRuntimeReconciler(t *testing.T, customBuilders ...embed.Builder) *runt
 // The seed watch covers every type that may be enrolled, so the first write to
 // a type enrolled while it is open seeds the checkpoint without another write.
 func TestReconciler_Run_SeedsFromFirstWriteAfterEnrollment(t *testing.T) {
-	env := setupRuntimeReconciler(t)
-	s, st, vec, configs := env.reconciler, env.storage, env.vectors, env.configs
-	s.interval = 5 * time.Millisecond
-	s.lockRetryInterval = time.Millisecond
-	const partition = "folder_documents"
-	vec.collections = map[schema.GroupResource]vector.Collection{
-		folderGR: {Group: folderGR.Group, Resource: folderGR.Resource, PartitionKey: partition},
-	}
-	done := runReconciler(t, s)
+	synctest.Test(t, func(t *testing.T) {
+		env := setupRuntimeReconciler(t)
+		s, st, vec, configs := env.reconciler, env.storage, env.vectors, env.configs
+		s.interval = 5 * time.Millisecond
+		s.lockRetryInterval = time.Millisecond
+		const partition = "folder_documents"
+		vec.collections = map[schema.GroupResource]vector.Collection{
+			folderGR: {Group: folderGR.Group, Resource: folderGR.Resource, PartitionKey: partition},
+		}
+		done := runReconciler(t, s)
 
-	// Folders are allowed but not yet enrolled: no manifest declares them.
-	require.Eventually(t, func() bool {
+		// Establish the seed watch before enrolling folders through the manifest reload.
+		synctest.Wait()
+
 		_, _, calls := st.keysWatch()
-		return calls == 1
-	}, time.Second, time.Millisecond)
-	configs.Reload([]*app.ManifestData{foldermanifest.LocalManifest().ManifestData})
-	ev := folderEvent(t, "folder", "v1", "Operations", "", "", 200)
-	st.mu.Lock()
-	st.changes = append(st.changes, &resource.ModifiedResource{
-		Key:    resourcepb.ResourceKey{Group: ev.group, Resource: ev.resource, Namespace: ev.namespace, Name: ev.name},
-		Action: ev.action, ResourceVersion: ev.rv, Value: ev.value,
-	})
-	st.mu.Unlock()
-	st.publishKey(&resource.WrittenEvent{
-		Key:             &resourcepb.ResourceKey{Group: ev.group, Resource: ev.resource, Namespace: ev.namespace, Name: ev.name},
-		ResourceVersion: ev.rv,
-	})
+		require.Equal(t, 1, calls)
 
-	require.Eventually(t, func() bool {
-		return vec.hasUpsertFor("ns", partition, "folder")
-	}, time.Second, time.Millisecond, "the first write after enrollment should seed and be embedded")
-	vec.mu.Lock()
-	assert.Positive(t, vec.latestRV, "the checkpoint is persisted")
-	require.Len(t, vec.backfillJobs, 1)
-	assert.Equal(t, snowflakeRV(200), vec.backfillJobs[0].StoppingRV)
-	vec.mu.Unlock()
-	done()
-	_, _, calls := st.keysWatch()
-	assert.Equal(t, 1, calls, "the watch is never reopened")
+		configs.Reload([]*app.ManifestData{foldermanifest.LocalManifest().ManifestData})
+		ev := folderEvent(t, "folder", "v1", "Operations", "", "", 200)
+		st.mu.Lock()
+		st.changes = append(st.changes, &resource.ModifiedResource{
+			Key:    resourcepb.ResourceKey{Group: ev.group, Resource: ev.resource, Namespace: ev.namespace, Name: ev.name},
+			Action: ev.action, ResourceVersion: ev.rv, Value: ev.value,
+		})
+		st.mu.Unlock()
+		st.publishKey(&resource.WrittenEvent{
+			Key:             &resourcepb.ResourceKey{Group: ev.group, Resource: ev.resource, Namespace: ev.namespace, Name: ev.name},
+			ResourceVersion: ev.rv,
+		})
+
+		// Consume the new write before advancing to the sweep that embeds it.
+		synctest.Wait()
+
+		// Complete the scheduled sweep and checkpoint update for the new write.
+		synctest.Sleep(s.interval)
+
+		require.True(t, vec.hasUpsertFor("ns", partition, "folder"))
+		vec.mu.Lock()
+		assert.Positive(t, vec.latestRV, "the checkpoint is persisted")
+		require.Len(t, vec.backfillJobs, 1)
+		assert.Equal(t, snowflakeRV(200), vec.backfillJobs[0].StoppingRV)
+		vec.mu.Unlock()
+		done()
+		_, _, calls = st.keysWatch()
+		assert.Equal(t, 1, calls, "the watch is never reopened")
+	})
 }
 
 func TestReconciler_RuntimeFolderEnrollment(t *testing.T) {

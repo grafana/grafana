@@ -62,7 +62,7 @@ func aggregatedDiscovery(t *testing.T, router *GrafanaRouter) map[string]apidisc
 	req := newAuthenticatedRequest(http.MethodGet, "/apis", nil)
 	req.Header.Set("Accept", aggregatedDiscoveryJSON)
 	recorder := httptest.NewRecorder()
-	router.HandleFunc(recorder, req, http.NotFoundHandler())
+	router.HandleFunc(recorder, req)
 	require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
 	var list apidiscoveryv2.APIGroupDiscoveryList
 	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &list))

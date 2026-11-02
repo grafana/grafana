@@ -1,6 +1,9 @@
 import * as z from 'zod';
 
 import { type RecordingRuleRecordingRuleHealth } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { type Labels } from 'app/types/unified-alerting-dto';
+
+import { parseSearchLabels } from '../alert-rules/alertRuleSearchHit';
 
 export interface RecordingRuleSearchHit {
   uid: string;
@@ -9,6 +12,18 @@ export interface RecordingRuleSearchHit {
   paused?: boolean;
   /** Absent until `alerting.ruleStatusSync` populates it; absence reads as Unavailable. */
   health?: RecordingRuleRecordingRuleHealth;
+  /** Absent until `alerting.ruleStatusSync` populates it. */
+  lastError?: string;
+  /** Evaluation interval, e.g. "1m". */
+  interval?: string;
+  /** Rule labels with private keys excluded; absent when none remain. */
+  labels?: Labels;
+  /** UIDs of data sources queried by the rule's expressions. */
+  datasourceUIDs?: string[];
+  /** The name of the recorded metric. */
+  metric?: string;
+  /** UID of the datasource the metric is written to. */
+  targetDatasourceUID?: string;
 }
 
 // Keyed by the generated union, so a value the API adds or drops fails the type check here.
@@ -27,6 +42,12 @@ const recordingRuleSearchFieldsSchema = z.object({
   folder: z.string().optional().catch(undefined),
   paused: z.boolean().optional().catch(undefined),
   health: z.enum(RECORDING_RULE_HEALTHS).optional().catch(undefined),
+  lastError: z.string().optional().catch(undefined),
+  interval: z.string().optional().catch(undefined),
+  labels: z.array(z.string()).optional().catch(undefined),
+  datasourceUIDs: z.array(z.string()).optional().catch(undefined),
+  metric: z.string().optional().catch(undefined),
+  targetDatasourceUID: z.string().optional().catch(undefined),
 });
 
 /** Parses one search item straight into the row's shape. */
@@ -42,5 +63,11 @@ export const recordingRuleSearchHitSchema = z
       folderUid: fields.folder,
       paused: fields.paused,
       health: fields.health,
+      lastError: fields.lastError,
+      interval: fields.interval,
+      labels: parseSearchLabels(fields.labels),
+      datasourceUIDs: fields.datasourceUIDs,
+      metric: fields.metric,
+      targetDatasourceUID: fields.targetDatasourceUID,
     })
   );

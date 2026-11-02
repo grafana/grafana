@@ -4,6 +4,9 @@ import {
   type AlertRuleAlertRuleHealth,
   type AlertRuleAlertRuleState,
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { type Labels } from 'app/types/unified-alerting-dto';
+
+import { isPrivateLabelKey } from '../../utils/labels';
 
 export interface AlertRuleSearchHit {
   uid: string;
@@ -13,6 +16,16 @@ export interface AlertRuleSearchHit {
   /** Absent until `alerting.ruleStatusSync` populates it; absence reads as Unavailable. */
   state?: AlertRuleAlertRuleState;
   health?: AlertRuleAlertRuleHealth;
+  /** Absent until `alerting.ruleStatusSync` populates it. */
+  lastError?: string;
+  /** From the rule's `summary` annotation; absent when the annotation is missing. */
+  summary?: string;
+  /** Evaluation interval, e.g. "1m". */
+  interval?: string;
+  /** Rule labels with private keys excluded; absent when none remain. */
+  labels?: Labels;
+  /** UIDs of data sources queried by the rule's expressions. */
+  datasourceUIDs?: string[];
 }
 
 // Keyed by the generated unions, so a value the API adds or drops fails the type check here.
@@ -32,6 +45,39 @@ const ALERT_RULE_HEALTHS = {
   NoData: 'NoData',
 } satisfies Record<AlertRuleAlertRuleHealth, AlertRuleAlertRuleHealth>;
 
+// annotations comes back as a JSON-encoded string; parse it safely via Zod.
+const annotationsSchema = z.record(z.string(), z.string());
+
+function tryParseAnnotations(s: string): Record<string, string> | undefined {
+  try {
+    return annotationsSchema.parse(JSON.parse(s));
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Converts the search API's flat label strings ("key" and "key=value") into a Labels object.
+ * Ignores key-only entries (used for filter matching) and private label keys.
+ * Exported for reuse in recordingRuleSearchHit.ts.
+ */
+export function parseSearchLabels(entries?: string[]): Labels | undefined {
+  if (entries === undefined || entries.length === 0) {
+    return undefined;
+  }
+  const result: Labels = {};
+  for (const entry of entries) {
+    const indexPosition = entry.indexOf('=');
+    if (indexPosition > 0) {
+      const key = entry.slice(0, indexPosition);
+      if (!isPrivateLabelKey(key)) {
+        result[key] = entry.slice(indexPosition + 1);
+      }
+    }
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
 // Search fields are untyped in the API. A field that is missing or fails its check reads as absent
 // instead of failing the whole hit.
 const alertRuleSearchFieldsSchema = z.object({
@@ -40,6 +86,11 @@ const alertRuleSearchFieldsSchema = z.object({
   paused: z.boolean().optional().catch(undefined),
   state: z.enum(ALERT_RULE_STATES).optional().catch(undefined),
   health: z.enum(ALERT_RULE_HEALTHS).optional().catch(undefined),
+  lastError: z.string().optional().catch(undefined),
+  annotations: z.string().transform(tryParseAnnotations).optional().catch(undefined),
+  interval: z.string().optional().catch(undefined),
+  labels: z.array(z.string()).optional().catch(undefined),
+  datasourceUIDs: z.array(z.string()).optional().catch(undefined),
 });
 
 /** Parses one search item straight into the row's shape. */
@@ -56,5 +107,10 @@ export const alertRuleSearchHitSchema = z
       paused: fields.paused,
       state: fields.state,
       health: fields.health,
+      lastError: fields.lastError,
+      summary: fields.annotations?.summary,
+      interval: fields.interval,
+      labels: parseSearchLabels(fields.labels),
+      datasourceUIDs: fields.datasourceUIDs,
     })
   );

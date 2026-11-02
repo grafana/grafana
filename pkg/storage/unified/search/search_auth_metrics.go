@@ -60,11 +60,7 @@ func (o *searchAuthObservation) observe(mode, queryType string, started time.Tim
 	if err != nil || result == nil || result.Error != nil {
 		outcome = "error"
 	} else {
-		returned := len(result.Rows)
-		if result.Results != nil {
-			returned = len(result.Results.Rows)
-		}
-		o.metrics.SearchAuthReturned.WithLabelValues(mode, queryType).Observe(float64(returned))
+		o.metrics.SearchAuthReturned.WithLabelValues(mode, queryType).Observe(float64(len(result.Rows)))
 	}
 	o.metrics.SearchAuthDuration.WithLabelValues(mode, queryType, outcome).Observe(time.Since(started).Seconds())
 	o.metrics.SearchAuthChecks.WithLabelValues(mode, queryType).Observe(float64(o.checks.Load()))

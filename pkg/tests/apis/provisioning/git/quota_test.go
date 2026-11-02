@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -174,18 +175,18 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 3})
 
 		const repo = "incr-quota-folder-block-repo"
-		_, local := helper.CreateGitRepo(t, repo, map[string][]byte{
-			"folder1/dashboard1.json": common.DashboardJSON("incr-fblock-dash-001", "Dashboard One", 1),
-			"folder1/dashboard2.json": common.DashboardJSON("incr-fblock-dash-002", "Dashboard Two", 1),
-		})
+		files := common.FolderMetadataFiles(t, repo, "folder1")
+		files["folder1/dashboard1.json"] = common.DashboardJSON("incr-fblock-dash-001", "Dashboard One", 1)
+		files["folder1/dashboard2.json"] = common.DashboardJSON("incr-fblock-dash-002", "Dashboard Two", 1)
+		_, local := helper.CreateGitRepo(t, repo, files)
 
-		// Initial full sync: 2 dashboards + 1 implicit folder = 3/3 resources.
-		common.SyncAndWait(t, helper, common.Repo(repo), common.Warning())
+		// Initial full sync: 2 dashboards + 1 folder = 3/3 resources.
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		helper.RequireRepoDashboardCount(t, repo, 2)
 		helper.RequireRepoFolderCount(t, repo, 1)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
-		// Push a new dashboard inside a brand-new subfolder.
+		// Leave folder2 implicit to exercise quota checks when a dashboard creates its parent.
 		require.NoError(t, local.CreateFile("folder2/dashboard3.json",
 			string(common.DashboardJSON("incr-fblock-dash-003", "Dashboard Three", 1))))
 		_, err := local.Git("add", ".")
@@ -207,11 +208,10 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
 			"incremental sync should warn when a create is skipped due to quota")
 		require.Empty(t, jobObj.Status.Errors, "quota-skipped resources produce warnings, not errors")
-		require.Len(t, jobObj.Status.Warnings, 3,
-			"one quota warning and two missing folder metadata warnings expected")
-		require.Contains(t, jobObj.Status.Warnings,
+		require.ElementsMatch(t, []string{
 			"resource quota exceeded, skipping creation of folder2/dashboard3.json (file: folder2/dashboard3.json, action: ignored)",
-			"quota warning should identify the skipped file")
+			resources.NewMissingFolderMetadata("folder2/").Error() + " (file: folder2/, action: ignored)",
+		}, jobObj.Status.Warnings)
 
 		// Still 2 dashboards and 1 folder — folder2 was never created.
 		helper.RequireRepoDashboardCount(t, repo, 2)
@@ -232,12 +232,13 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		})
 
 		// Initial full sync: folder1 + dash1 + dash2 = 3/3 resources.
-		common.SyncAndWait(t, helper, common.Repo(repo), common.Warning())
+		common.SyncAndWait(t, helper, common.Repo(repo),
+			common.Expect(common.HasOnlyMissingFolderMetadataWarnings("folder1")))
 		helper.RequireRepoDashboardCount(t, repo, 2)
 		helper.RequireRepoFolderCount(t, repo, 1)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
-		// Remove the only dashboard inside folder1 so the folder becomes orphaned.
+		// Without a manifest, removing the only dashboard also removes the folder from Git.
 		require.NoError(t, local.DeleteFile("folder1/dashboard1.json"))
 		_, err := local.Git("add", ".")
 		require.NoError(t, err)

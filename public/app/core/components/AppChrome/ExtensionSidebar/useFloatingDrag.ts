@@ -4,8 +4,9 @@ import { store } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
 /**
- * Put this attribute on an element inside the floating extension sidebar to make it the handle that moves
- * the floating container (pointer drag, arrow keys, Home or double-click to reset).
+ * Put this attribute on an element inside the extension sidebar to make it the handle that moves it. Floating,
+ * it moves the container (pointer drag, arrow keys, Home or double-click to reset); docked, dragging it onto the
+ * page floats the sidebar there.
  */
 export const FLOATING_DRAG_HANDLE_ATTRIBUTE = 'data-extension-floating-drag-handle';
 
@@ -24,14 +25,21 @@ const SNAP_DISTANCE = 48;
  * where the box stopped at it, docks the sidebar when let go.
  */
 const EDGE_ACTION_DISTANCE = 32;
+/** How far left of where it was grabbed the docked sidebar's handle must be pulled before letting go floats it. */
+const FLOAT_PULL_DISTANCE = 40;
 /**
  * A drag that keeps pushing this far past where the box stopped at the bottom edge collapses the sidebar when let
  * go. Larger than the dock's, and the pointer's closeness does not count: a box resting at the bottom has little
  * room to move down, so a sideways move that drifts down a little must not collapse it.
  */
 const COLLAPSE_PUSH_DISTANCE = 64;
-/** The collapse preview's height: about a collapsed sidebar's, which core cannot measure before it collapses. */
-const COLLAPSE_PREVIEW_HEIGHT = 56;
+/**
+ * The collapse and float previews' height. Taller than a collapsed floating sidebar, which core cannot measure
+ * before it collapses or floats, so the drop target reads clearly against the page.
+ */
+const DROP_PREVIEW_HEIGHT = 168;
+/** How far below the float preview's top the pointer holds it: on the floating container's header, as when moving it. */
+const FLOAT_PREVIEW_GRAB_OFFSET = 16;
 const KEY_STEP = 16;
 const KEY_STEP_LARGE = 64;
 /** How long the container glides to an edge it snaps to; ExtensionSidebar's transition uses it too. */
@@ -55,11 +63,11 @@ interface Placement extends Offset {
 }
 
 /**
- * What letting go would do, and where the sidebar would end up, in viewport coordinates: docked, or collapsed
- * at the bottom edge.
+ * What letting go would do, and where the sidebar would end up, in viewport coordinates: docked, collapsed at the
+ * bottom edge, or, dragged from the docked sidebar, floating at the pointer.
  */
 export interface EdgeActionPreview {
-  action: 'dock' | 'collapse';
+  action: 'dock' | 'collapse' | 'float';
   top: number;
   left: number;
   width: number;
@@ -77,6 +85,12 @@ interface FloatingDragOptions {
 
 const ORIGIN: Offset = { x: 0, y: 0 };
 const DEFAULT_PLACEMENT: Placement = { ...ORIGIN, anchor: 'bottom' };
+
+/**
+ * Where a drag from the docked sidebar let go, in viewport coordinates, until the floating container mounts and
+ * moves its top left corner there. Module state for the same reason as the layout: one sidebar per page.
+ */
+let pendingFloatDrop: { left: number; top: number } | undefined;
 
 function reportMoved(method: 'drag' | 'reset', anchor: Anchor): void {
   reportInteraction('grafana_extension_sidebar_floating_moved', { method, anchor });
@@ -140,12 +154,19 @@ export function useFloatingDrag(
     }
   }, [element]);
 
-  // Floating starts where the user left it; docking (the element going away) only clears the transform.
+  // Floating starts where a drag from the docked sidebar let go, or else where the user left it; docking (the
+  // element going away) only clears the transform.
   useLayoutEffect(() => {
     if (!element) {
       return;
     }
-    chosenRef.current = readStoredPlacement();
+    if (pendingFloatDrop) {
+      chosenRef.current = dropToPlacement(element, pendingFloatDrop);
+      pendingFloatDrop = undefined;
+      store.setObject(OFFSET_LOCAL_STORAGE_KEY, chosenRef.current);
+    } else {
+      chosenRef.current = readStoredPlacement();
+    }
     place(chosenRef.current);
     return () => {
       offsetRef.current = ORIGIN;
@@ -318,6 +339,143 @@ export function useFloatingDrag(
 }
 
 /**
+ * Floats the docked extension sidebar by its drag handle. The docked sidebar stays put while the drag goes on; once
+ * the pointer is pulled a little left of where it was grabbed, or past the sidebar's left edge, the returned preview
+ * shows the floating container at the pointer, and letting go then calls `onFloat`, after which the floating
+ * container mounts where the preview was, `floatingWidth` wide. Letting go short of that does nothing. The keyboard
+ * path is the extension's own layout control.
+ */
+export function useDockedDrag(
+  element: HTMLElement | null,
+  floatingWidth: number,
+  onFloat: () => void
+): EdgeActionPreview | null {
+  const [preview, setPreview] = useState<EdgeActionPreview | null>(null);
+  const onFloatRef = useRef(onFloat);
+  onFloatRef.current = onFloat;
+  const floatingWidthRef = useRef(floatingWidth);
+  floatingWidthRef.current = floatingWidth;
+
+  useEffect(() => {
+    if (!element) {
+      return;
+    }
+    let drag:
+      | { pointerId: number; x: number; y: number; dragging: boolean; preview: EdgeActionPreview | null }
+      | undefined;
+    let swallowClick = false;
+
+    const onPointerDown = (event: PointerEvent) => {
+      const handle = event.target instanceof Element ? event.target.closest(HANDLE_SELECTOR) : null;
+      if (event.button !== 0 || !handle || !element.contains(handle)) {
+        return;
+      }
+      drag = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, dragging: false, preview: null };
+      swallowClick = false;
+      handle.setPointerCapture?.(event.pointerId);
+    };
+    const onPointerMove = (event: PointerEvent) => {
+      if (!drag || event.pointerId !== drag.pointerId) {
+        return;
+      }
+      const dx = event.clientX - drag.x;
+      const dy = event.clientY - drag.y;
+      if (!drag.dragging && Math.max(Math.abs(dx), Math.abs(dy)) < DRAG_THRESHOLD) {
+        return;
+      }
+      drag.dragging = true;
+      element.setAttribute('data-dragging', '');
+      const next = floatPreviewAt(element, event, drag, floatingWidthRef.current);
+      if (next || drag.preview) {
+        drag.preview = next;
+        setPreview(next);
+      }
+    };
+    const onPointerEnd = (event: PointerEvent) => {
+      if (!drag || event.pointerId !== drag.pointerId) {
+        return;
+      }
+      const drop = event.type === 'pointerup' ? drag.preview : null;
+      swallowClick = drag.dragging;
+      if (drag.preview) {
+        setPreview(null);
+      }
+      drag = undefined;
+      element.removeAttribute('data-dragging');
+      if (drop) {
+        pendingFloatDrop = { left: drop.left, top: drop.top };
+        onFloatRef.current();
+      }
+    };
+    const onClick = (event: MouseEvent) => {
+      if (swallowClick) {
+        swallowClick = false;
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
+    element.addEventListener('pointerdown', onPointerDown);
+    element.addEventListener('pointermove', onPointerMove);
+    element.addEventListener('pointerup', onPointerEnd);
+    element.addEventListener('pointercancel', onPointerEnd);
+    element.addEventListener('click', onClick, true);
+    return () => {
+      setPreview(null);
+      element.removeAttribute('data-dragging');
+      element.removeEventListener('pointerdown', onPointerDown);
+      element.removeEventListener('pointermove', onPointerMove);
+      element.removeEventListener('pointerup', onPointerEnd);
+      element.removeEventListener('pointercancel', onPointerEnd);
+      element.removeEventListener('click', onClick, true);
+    };
+  }, [element]);
+
+  return preview;
+}
+
+/**
+ * Where letting go would float the docked sidebar: a floating container held by its header under the pointer, once
+ * the pointer is pulled left of where it was grabbed or past the sidebar's left edge; otherwise nothing. It may
+ * cover the sidebar, whose room the page content takes once the sidebar floats.
+ */
+function floatPreviewAt(
+  sidebar: HTMLElement,
+  pointer: { clientX: number; clientY: number },
+  start: { x: number },
+  floatingWidth: number
+): EdgeActionPreview | null {
+  const pulled = start.x - pointer.clientX >= FLOAT_PULL_DISTANCE;
+  if (!pulled && pointer.clientX > sidebar.getBoundingClientRect().left) {
+    return null;
+  }
+  const content = contentEdges();
+  const right = Math.max(content.right, sidebar.getBoundingClientRect().right);
+  const width = Math.max(0, Math.min(floatingWidth, right - content.left - 2 * GUTTER));
+  const height = DROP_PREVIEW_HEIGHT;
+  const clamp = (value: number, low: number, high: number) => Math.round(Math.max(low, Math.min(value, high)));
+  return {
+    action: 'float',
+    left: clamp(pointer.clientX - width / 2, content.left + GUTTER, right - GUTTER - width),
+    top: clamp(pointer.clientY - FLOAT_PREVIEW_GRAB_OFFSET, content.top + GUTTER, content.bottom - GUTTER - height),
+    width,
+    height,
+  };
+}
+
+/**
+ * The placement that puts the element's top left corner at `drop`. Anchored to the top: the element just mounted,
+ * and its height may still change as the extension lays itself out for floating; its width and left edge are core's.
+ */
+function dropToPlacement(element: HTMLElement, drop: { left: number; top: number }): Placement {
+  return {
+    x: Math.round(drop.left - element.getBoundingClientRect().left),
+    y: Math.round(drop.top - contentEdges().top),
+    anchor: 'top',
+  };
+}
+
+/**
  * What letting go would do: dock when the drag pushes toward the page's right edge, collapse when it pushes toward
  * its bottom edge (the harder push in the corner), or nothing. A drag pushes the right edge when the pointer is near
  * it, or when it keeps going after the box has stopped at it: a large box stops long before the pointer gets there.
@@ -347,10 +505,10 @@ function edgeActionPreviewAt(
   const bottom = rect.top + rect.height;
   return {
     action: 'collapse',
-    top: bottom - COLLAPSE_PREVIEW_HEIGHT,
+    top: bottom - DROP_PREVIEW_HEIGHT,
     left: rect.left,
     width: rect.width,
-    height: COLLAPSE_PREVIEW_HEIGHT,
+    height: DROP_PREVIEW_HEIGHT,
   };
 }
 

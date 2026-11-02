@@ -568,24 +568,23 @@ function getNamedColumWidthInPixels(columnWidth: AutoGridColumnWidth) {
 }
 
 /**
- * Resolves the configured max-height mode to a CSS `max-height` value. The
- * browser enforces the bound; unlimited maps to `none`.
+ * Resolves the configured max-height mode to pixels; unlimited maps to `undefined`.
  */
-export function getMaxHeightCssValue(
+export function getMaxHeightInPixels(
   mode: AutoGridMaxHeightMode | undefined,
   customPixels: number | undefined
-): string {
+): number | undefined {
   switch (mode) {
     case 'short':
     case 'standard':
     case 'tall':
-      return `${getNamedHeightInPixels(mode)}px`;
+      return getNamedHeightInPixels(mode);
     case 'custom':
-      return customPixels != null ? `${customPixels}px` : 'none';
+      return customPixels ?? undefined;
     case 'unlimited':
     case undefined:
     default:
-      return 'none';
+      return undefined;
   }
 }
 

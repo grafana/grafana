@@ -9,13 +9,12 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
+import { FrameSelectionEditor } from 'app/features/dashboard/components/TransformationsEditor/FrameSelectionEditor';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
 
 import { defaultMarkersConfig } from '../layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry, getLayersOptions } from '../layers/registry';
 import { type MapLayerState } from '../types';
-
-import { FrameSelectionEditor } from './FrameSelectionEditor';
 
 export interface LayerEditorOptions {
   state: MapLayerState;

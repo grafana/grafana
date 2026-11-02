@@ -6,7 +6,7 @@ export function addTableCustomConfig<T extends TableFieldOptions>(
   builder: FieldConfigEditorBuilder<T>,
   options?: {
     hideFields?: boolean;
-    filters?: boolean;
+    filters?: boolean | (() => boolean);
     wrapHeaderText?: boolean;
   }
 ) {
@@ -65,12 +65,15 @@ export function addTableCustomConfig<T extends TableFieldOptions>(
   }
 
   if (options?.filters) {
+    const showFilters = typeof options.filters === 'function' ? options.filters : undefined;
     builder.addBooleanSwitch({
       path: 'filterable',
       name: t('table.name-column-filter', 'Column filter'),
       category,
       description: t('table.description-column-filter', 'Enables/disables field filters in table'),
       defaultValue: defaultTableFieldOptions.filterable,
+      showIf: showFilters,
+      showIfOverride: showFilters,
     });
   }
 

@@ -210,6 +210,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
               validate: validateDashboardName,
               onChange: handleTitleChange,
             })}
+            disabled={state.loading}
             aria-label={t(
               'dashboard-scene.save-dashboard-as-form.aria-label-save-dashboard-title-field',
               'Save dashboard title field'
@@ -225,6 +226,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
         >
           <TextArea
             {...register('description', { required: false })}
+            disabled={state.loading}
             aria-label={t(
               'dashboard-scene.save-dashboard-as-form.aria-label-save-dashboard-description-field',
               'Save dashboard description field'
@@ -234,11 +236,11 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
         </Field>
 
         <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-folder', 'Folder')}>
-          <FolderPicker onChange={onFolderChange} value={formValues.folder?.uid} />
+          <FolderPicker onChange={onFolderChange} value={formValues.folder?.uid} disabled={state.loading} />
         </Field>
         {!changeInfo.isNew && (
           <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-copy-tags', 'Copy tags')}>
-            <Switch {...register('copyTags')} />
+            <Switch {...register('copyTags')} disabled={state.loading} />
           </Field>
         )}
         <Box paddingTop={2}>{renderFooter(state.error)}</Box>

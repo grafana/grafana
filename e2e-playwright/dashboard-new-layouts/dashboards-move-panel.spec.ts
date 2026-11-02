@@ -7,7 +7,6 @@ test.use({
   featureToggles: {
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
-    groupByVariable: true,
   },
   // these tests require a larger viewport
   viewport: { width: 1920, height: 1080 },

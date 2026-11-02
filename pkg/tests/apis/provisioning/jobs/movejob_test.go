@@ -26,6 +26,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			"../testdata/timeline-demo.json": "folder/dashboard3.json",
 		},
 	}
+	common.WriteFolderMetadata(t, repo, helper.ProvisioningPath, "folder")
 	helper.CreateLocalRepo(t, testRepo)
 
 	helper.RequireRepoDashboardCount(t, repo, 3)
@@ -41,7 +42,8 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 				TargetPath: "moved/",
 			},
 		}
-		common.RequireJobWarning(t, helper.TriggerJobAndWaitForComplete(t, repo, spec))
+		common.WriteFolderMetadata(t, repo, helper.ProvisioningPath, "moved")
+		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
 		helper.DebugState(t, repo, "AFTER MOVE SINGLE FILE")
 		// TODO: This additional sync should not be necessary - the move job should handle sync properly
@@ -81,7 +83,8 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 				TargetPath: "archived/",
 			},
 		}
-		common.RequireJobWarning(t, helper.TriggerJobAndWaitForComplete(t, repo, spec))
+		common.WriteFolderMetadata(t, repo, helper.ProvisioningPath, "archived")
+		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
 		helper.DebugState(t, repo, "AFTER MOVE MULTIPLE FILES")
 		// TODO: This additional sync should not be necessary - the move job should handle sync properly
@@ -233,7 +236,8 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 				},
 			}
 
-			common.RequireJobWarning(t, helper.TriggerJobAndWaitForComplete(t, refRepo, spec))
+			common.WriteFolderMetadata(t, refRepo, helper.ProvisioningPath, "moved-by-ref")
+			helper.TriggerJobAndWaitForSuccess(t, refRepo, spec)
 			// Verify corresponding file is moved in repository
 			helper.RequireRepoFileExists(t, refRepo, "moved-by-ref", "move-source-1.json")
 
@@ -263,7 +267,8 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 					},
 				},
 			}
-			common.RequireJobWarning(t, helper.TriggerJobAndWaitForComplete(t, refRepo, spec))
+			common.WriteFolderMetadata(t, refRepo, helper.ProvisioningPath, "archived-by-ref")
+			helper.TriggerJobAndWaitForSuccess(t, refRepo, spec)
 
 			// Verify file is moved in repository
 			helper.RequireRepoFileExists(t, refRepo, "archived-by-ref", "move-source-2.json")
@@ -285,6 +290,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			tmpRootMove := filepath.Join(tmpDir, "move-to-root-test.json")
 			require.NoError(t, os.WriteFile(tmpRootMove, []byte(rootMoveContent), 0644))
 			helper.CopyToProvisioningPath(t, tmpRootMove, "inner-folder/move-to-root.json")
+			common.WriteFolderMetadata(t, refRepo, helper.ProvisioningPath, "inner-folder")
 
 			helper.SyncAndWait(t, refRepo, nil)
 
@@ -307,7 +313,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 				},
 			}
 
-			common.RequireJobWarning(t, helper.TriggerJobAndWaitForComplete(t, refRepo, spec))
+			helper.TriggerJobAndWaitForSuccess(t, refRepo, spec)
 			helper.SyncAndWait(t, refRepo, nil)
 
 			// The dashboard must NOT be deleted — it should still exist in Grafana
@@ -352,7 +358,8 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 					},
 				},
 			}
-			common.RequireJobWarning(t, helper.TriggerJobAndWaitForComplete(t, refRepo, spec))
+			common.WriteFolderMetadata(t, refRepo, helper.ProvisioningPath, "mixed-target")
+			helper.TriggerJobAndWaitForSuccess(t, refRepo, spec)
 
 			// Verify both targeted resources are moved in repository
 			helper.RequireRepoFileExists(t, refRepo, "mixed-target", "mixed-move-1.json")
