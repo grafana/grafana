@@ -31,7 +31,8 @@ type LegacyCheckRequest struct {
 	// It cannot be combined with Subject, GlobalEvaluation or Restriction.
 	InternalIdentity *LegacyInternalIdentity
 	// Restriction limits reloaded grants to actions in the caller's effective permission map.
-	// Nil is unrestricted; a non-nil value with no actions denies all.
+	// Required for global checks; nil is unrestricted for organization checks.
+	// A non-nil value with no actions denies all.
 	Restriction *LegacyActionRestriction
 }
 
