@@ -8,7 +8,7 @@ import { buildAlertRuleSearchQuery } from './alertRuleSearchQuery';
 
 describe('buildAlertRuleSearchQuery', () => {
   it('asks for the first 40 rules by title with the fields the row shows', () => {
-    expect(buildAlertRuleSearchQuery(search(createRulesApiFilter()))).toEqual({
+    expect(buildAlertRuleSearchQuery(apiArgs(createRulesApiFilter()))).toEqual({
       apiVersion: 'search.grafana.app/v0alpha1',
       kind: 'SearchQuery',
       where: undefined,
@@ -39,7 +39,7 @@ describe('buildAlertRuleSearchQuery', () => {
   });
 
   it('passes the continuation token through', () => {
-    expect(buildAlertRuleSearchQuery(search(createRulesApiFilter()), 'opaque-token').continue).toBe('opaque-token');
+    expect(buildAlertRuleSearchQuery(apiArgs(createRulesApiFilter()), 'opaque-token').continue).toBe('opaque-token');
   });
 
   it.each<[query: string, where: ListAlertRuleSearchRulesV0Alpha1RequestBody['where']]>([
@@ -64,12 +64,12 @@ describe('buildAlertRuleSearchQuery', () => {
     ['health:ok', { filter: { field: 'health', operator: 'In', values: ['OK'] } }],
     ['health:nodata', { filter: { field: 'health', operator: 'In', values: ['NoData'] } }],
   ])('builds the where clause for %j', (query, where) => {
-    expect(buildAlertRuleSearchQuery(search(parse(query, alertRuleSearchSchema).filter)).where).toEqual(where);
+    expect(buildAlertRuleSearchQuery(apiArgs(parse(query, alertRuleSearchSchema).filter)).where).toEqual(where);
   });
 
   it('filters by the resolved folder UIDs, not the typed names', () => {
     expect(
-      buildAlertRuleSearchQuery(search(parse('folder:Alerts', alertRuleSearchSchema).filter, ['f1', 'f2'])).where
+      buildAlertRuleSearchQuery(apiArgs(parse('folder:Alerts', alertRuleSearchSchema).filter, ['f1', 'f2'])).where
     ).toEqual({
       filter: { field: 'folder', operator: 'In', values: ['f1', 'f2'] },
     });
@@ -77,7 +77,7 @@ describe('buildAlertRuleSearchQuery', () => {
 
   it('combines several filters in one flat and', () => {
     expect(
-      buildAlertRuleSearchQuery(search(parse('cpu folder:Alerts label:team', alertRuleSearchSchema).filter, ['f1']))
+      buildAlertRuleSearchQuery(apiArgs(parse('cpu folder:Alerts label:team', alertRuleSearchSchema).filter, ['f1']))
         .where
     ).toEqual({
       and: [
@@ -89,6 +89,6 @@ describe('buildAlertRuleSearchQuery', () => {
   });
 });
 
-function search<Filter extends SharedRuleFilter>(filter: Filter, folderUids: string[] = []) {
+function apiArgs<Filter extends SharedRuleFilter>(filter: Filter, folderUids: string[] = []) {
   return { filter, folderUids };
 }

@@ -68,10 +68,10 @@ const alertRuleSearchAPI = generatedAPI.injectEndpoints({
 const { useSearchAlertRulesInfiniteQuery } = alertRuleSearchAPI;
 
 export function useAlertRuleSearch(filter: AlertRuleFilter, { inFolderUid }: { inFolderUid?: string } = {}) {
-  const { search, isLookingUp, lookupError, retryLookup, noMatchingFolder } = useRuleSearchApiArgs(filter, {
+  const { apiArgs, isLookingUp, lookupError, retryLookup, noMatchingFolder } = useRuleSearchApiArgs(filter, {
     inFolderUid,
   });
-  const query = useSearchAlertRulesInfiniteQuery(search ?? skipToken);
+  const query = useSearchAlertRulesInfiniteQuery(apiArgs ?? skipToken);
   const { currentData, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } = query;
   // Missing from the result type of a query that has not started.
   const isFetchNextPageError = 'isFetchNextPageError' in query && query.isFetchNextPageError;
@@ -87,7 +87,7 @@ export function useAlertRuleSearch(filter: AlertRuleFilter, { inFolderUid }: { i
   return {
     items,
     noMatchingFolder,
-    isLoading: isLookingUp || (search !== undefined && !hasLoaded && !isError),
+    isLoading: isLookingUp || (apiArgs !== undefined && !hasLoaded && !isError),
     // A failed first page replaces the list; a later failure keeps the loaded rows and shows `failure` below them.
     error: lookupError ?? firstPageError,
     failure,
@@ -119,11 +119,11 @@ export function useAlertRuleSearchRejection(
 ): FilterIssue[] {
   // There is no List search in Folders mode or for a query that doesn't parse, so skip rather than send one.
   const skip = parseIssues.length > 0 || mode === 'folders';
-  const { search } = useRuleSearchApiArgs(filter, { skip });
-  const { error } = useSearchAlertRulesInfiniteQuery(search ?? skipToken);
+  const { apiArgs } = useRuleSearchApiArgs(filter, { skip });
+  const { error } = useSearchAlertRulesInfiniteQuery(apiArgs ?? skipToken);
   return useMemo(
-    () => (search ? (getRejectionIssues(error, buildAlertRuleLeaves(search)) ?? []) : []),
-    [error, search]
+    () => (apiArgs ? (getRejectionIssues(error, buildAlertRuleLeaves(apiArgs)) ?? []) : []),
+    [error, apiArgs]
   );
 }
 

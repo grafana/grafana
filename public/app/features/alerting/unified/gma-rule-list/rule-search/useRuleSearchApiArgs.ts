@@ -8,7 +8,8 @@ import { buildFolderListSearchQuery } from '../folder-browsing/folderSearchQuery
 import { type RuleSearchApiArgs, type SharedRuleFilter } from './sharedRuleFilter';
 
 /**
- * `search` stays undefined when no folder has the filter's names, since an empty UID list would search every folder.
+ * `apiArgs` stays undefined until there is a rule search to send: when skipped, while the names are looked up, when
+ * the lookup fails, and when no folder has those names, since an empty UID list would search every folder.
  * `inFolderUid` skips the lookup: a Folders mode row knows its folder's UID, and its name could match same-named
  * folders.
  */
@@ -25,7 +26,7 @@ export function useRuleSearchApiArgs<Filter extends SharedRuleFilter>(
   const lookupResult = folderLookup.currentData;
   const lookedUpUids = useMemo(() => lookupResult?.items.map((item) => item.resource.name), [lookupResult]);
 
-  const search = useMemo((): RuleSearchApiArgs<Filter> | undefined => {
+  const apiArgs = useMemo((): RuleSearchApiArgs<Filter> | undefined => {
     if (skip) {
       return undefined;
     }
@@ -39,7 +40,7 @@ export function useRuleSearchApiArgs<Filter extends SharedRuleFilter>(
   }, [skip, inFolderUid, filter, lookedUpUids]);
 
   return {
-    search,
+    apiArgs,
     isLookingUp: lookUp && !lookedUpUids && !folderLookup.isError,
     lookupError: folderLookup.isError ? folderLookup.error : undefined,
     retryLookup: () => {

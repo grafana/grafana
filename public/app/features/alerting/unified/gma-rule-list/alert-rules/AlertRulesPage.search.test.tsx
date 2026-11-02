@@ -268,7 +268,7 @@ describe('AlertRulesPage folder names', () => {
     expect(backend.ruleSearches).toEqual([]);
   });
 
-  it('lists the rules of every folder with that name in List mode, looking the name up once first', async () => {
+  it('lists the rules of every folder with that name in List mode, with one folder search', async () => {
     renderWithSearch('folder:Alerts', 'list');
 
     expect(await screen.findByText('DB down')).toBeInTheDocument();
@@ -303,6 +303,23 @@ describe('AlertRulesPage folder names', () => {
     expect(backend.ruleSearches.map((body) => body.where)).toEqual([
       { filter: { field: 'folder', operator: 'In', values: ['db-alerts', 'k8s-alerts', 'team-01'] } },
     ]);
+  });
+
+  it('names the rejected filter when a looked-up folder comes before it in the rule search', async () => {
+    server.use(
+      http.post(ruleSearchUrl('alert'), () =>
+        HttpResponse.json(
+          { code: 422, details: { causes: [{ field: 'where.and[1].regex.pattern', message: 'missing closing )' }] } },
+          { status: 422 }
+        )
+      )
+    );
+    renderWithSearch('folder:Alerts label:team=~(', 'list');
+
+    expect(await screen.findByText('Change the search to see results')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Search' })).toHaveAccessibleDescription(
+      'label was rejected: missing closing )'
+    );
   });
 
   it('does not blame the folder when it exists but another filter matches no rule', async () => {

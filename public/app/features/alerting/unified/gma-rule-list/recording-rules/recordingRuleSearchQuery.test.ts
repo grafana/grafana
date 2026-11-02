@@ -8,7 +8,7 @@ import { buildRecordingRuleSearchQuery } from './recordingRuleSearchQuery';
 
 describe('buildRecordingRuleSearchQuery', () => {
   it('asks for the first 40 rules by title with the fields the row shows, without a state field', () => {
-    expect(buildRecordingRuleSearchQuery(search(createRulesApiFilter()))).toEqual({
+    expect(buildRecordingRuleSearchQuery(apiArgs(createRulesApiFilter()))).toEqual({
       apiVersion: 'search.grafana.app/v0alpha1',
       kind: 'SearchQuery',
       where: undefined,
@@ -30,7 +30,9 @@ describe('buildRecordingRuleSearchQuery', () => {
   });
 
   it('passes the continuation token through', () => {
-    expect(buildRecordingRuleSearchQuery(search(createRulesApiFilter()), 'opaque-token').continue).toBe('opaque-token');
+    expect(buildRecordingRuleSearchQuery(apiArgs(createRulesApiFilter()), 'opaque-token').continue).toBe(
+      'opaque-token'
+    );
   });
 
   it.each<[query: string, where: ListRecordingRuleSearchRulesV0Alpha1RequestBody['where']]>([
@@ -38,12 +40,12 @@ describe('buildRecordingRuleSearchQuery', () => {
     ['targetDatasource:prom-1', { filter: { field: 'targetDatasourceUID', operator: 'In', values: ['prom-1'] } }],
     ['health:ok', { filter: { field: 'health', operator: 'In', values: ['Recording'] } }],
   ])('builds the where clause for %j', (query, where) => {
-    expect(buildRecordingRuleSearchQuery(search(parse(query, recordingRuleSearchSchema).filter)).where).toEqual(where);
+    expect(buildRecordingRuleSearchQuery(apiArgs(parse(query, recordingRuleSearchSchema).filter)).where).toEqual(where);
   });
 
   it('filters by the resolved folder UIDs, not the typed names', () => {
     expect(
-      buildRecordingRuleSearchQuery(search(parse('folder:Metrics', recordingRuleSearchSchema).filter, ['f1', 'f2']))
+      buildRecordingRuleSearchQuery(apiArgs(parse('folder:Metrics', recordingRuleSearchSchema).filter, ['f1', 'f2']))
         .where
     ).toEqual({
       filter: { field: 'folder', operator: 'In', values: ['f1', 'f2'] },
@@ -53,7 +55,7 @@ describe('buildRecordingRuleSearchQuery', () => {
   it('combines several filters in one flat and', () => {
     expect(
       buildRecordingRuleSearchQuery(
-        search(parse('cpu health:error targetDatasource:prom-1 metric:cpu_usage', recordingRuleSearchSchema).filter)
+        apiArgs(parse('cpu health:error targetDatasource:prom-1 metric:cpu_usage', recordingRuleSearchSchema).filter)
       ).where
     ).toEqual({
       and: [
@@ -66,6 +68,6 @@ describe('buildRecordingRuleSearchQuery', () => {
   });
 });
 
-function search<Filter extends SharedRuleFilter>(filter: Filter, folderUids: string[] = []) {
+function apiArgs<Filter extends SharedRuleFilter>(filter: Filter, folderUids: string[] = []) {
   return { filter, folderUids };
 }
