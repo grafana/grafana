@@ -276,7 +276,14 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 
 	// BulkProcess requests
 	defer runner.stop()
-	rsp := backend.ProcessBulk(ctx, settings, runner)
+	var iter BulkRequestIterator = runner
+	if runner.blob != nil {
+		// Finish negotiated blob uploads before the backend begins processing. SQL
+		// backends may open a write transaction before consuming the iterator, and
+		// SQL-backed blob uploads need a separate write transaction.
+		iter = bufferBulkRequests(runner)
+	}
+	rsp := backend.ProcessBulk(ctx, settings, iter)
 	if rsp == nil {
 		rsp = &resourcepb.BulkResponse{
 			Error: &resourcepb.ErrorResult{
@@ -322,6 +329,71 @@ type batchStreamResult struct {
 	err      error
 	rollback bool
 	eof      bool
+}
+
+var (
+	_ BulkRequestIterator      = (*bufferedBulkRequests)(nil)
+	_ BulkRequestBatchIterator = (*bufferedBulkRequests)(nil)
+)
+
+type bufferedBulkRequests struct {
+	batches  [][]*resourcepb.BulkRequest
+	items    []*resourcepb.BulkRequest
+	batchIdx int
+	itemIdx  int
+	rollback bool
+}
+
+func bufferBulkRequests(source BulkRequestBatchIterator) *bufferedBulkRequests {
+	buffered := &bufferedBulkRequests{batchIdx: -1, itemIdx: -1}
+	for source.NextBatch() {
+		if source.RollbackRequested() {
+			buffered.rollback = true
+			break
+		}
+		batch := append([]*resourcepb.BulkRequest(nil), source.Batch()...)
+		buffered.batches = append(buffered.batches, batch)
+		buffered.items = append(buffered.items, batch...)
+	}
+	return buffered
+}
+
+func (b *bufferedBulkRequests) Next() bool {
+	if b.itemIdx+1 < len(b.items) {
+		b.itemIdx++
+		return true
+	}
+	return b.rollback
+}
+
+func (b *bufferedBulkRequests) Request() *resourcepb.BulkRequest {
+	if b.itemIdx < 0 || b.itemIdx >= len(b.items) {
+		return nil
+	}
+	return b.items[b.itemIdx]
+}
+
+func (b *bufferedBulkRequests) NextBatch() bool {
+	if b.batchIdx+1 < len(b.batches) {
+		b.batchIdx++
+		return true
+	}
+	return b.rollback
+}
+
+func (b *bufferedBulkRequests) Batch() []*resourcepb.BulkRequest {
+	if b.batchIdx < 0 || b.batchIdx >= len(b.batches) {
+		return nil
+	}
+	return b.batches[b.batchIdx]
+}
+
+func (b *bufferedBulkRequests) RollbackRequested() bool {
+	if b.rollback {
+		b.rollback = false
+		return true
+	}
+	return false
 }
 
 // Next implements BulkRequestIterator.
