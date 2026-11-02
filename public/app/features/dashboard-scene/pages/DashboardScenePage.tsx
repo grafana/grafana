@@ -29,7 +29,6 @@ import { DashboardConversionWarningBanner } from '../components/DashboardConvers
 import { DashboardTemplateEditBanner } from '../components/DashboardTemplateEditBanner';
 import { DashboardTemplateSavedBanner } from '../components/DashboardTemplateSavedBanner';
 import { DashboardTemplateUseBanner } from '../components/DashboardTemplateUseBanner';
-import { ScopeFiltersEditBanner } from '../components/ScopeFiltersEditBanner';
 import { ScriptedDashboardDeprecationBanner } from '../components/ScriptedDashboardDeprecationBanner';
 import { ScriptedDashboardsDisabledPage } from '../components/ScriptedDashboardsDisabledPage';
 import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
@@ -193,7 +192,6 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       <DashboardTemplateSavedBanner />
       <DashboardTemplateUseBanner dashboard={dashboard} />
       <DashboardTemplateEditBanner dashboard={dashboard} />
-      <ScopeFiltersEditBanner dashboard={dashboard} key={`scope-filters-edit-banner-${dashboard.state.key}`} />
       <DashboardLifecycleBanner dashboard={dashboard} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
