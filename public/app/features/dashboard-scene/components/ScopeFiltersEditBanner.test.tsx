@@ -1,7 +1,8 @@
+import { BehaviorSubject } from 'rxjs';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { type DataSourceInstanceSettings, type Scope } from '@grafana/data';
-import { useScopes } from '@grafana/runtime';
+import { type ScopesContextValue, useScopes } from '@grafana/runtime';
 import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
 import { SceneDataTransformer, SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { hasScopeFilteredDatasource } from 'app/features/scopes/dashboards/scopeFilteredDatasources';
@@ -69,9 +70,14 @@ function mockScopes(scopes: Scope[] | undefined) {
     mockUseScopes.mockReturnValue(undefined);
     return;
   }
-  mockUseScopes.mockReturnValue({
-    state: { value: scopes, loading: false, enabled: true, readOnly: false, drawerOpened: false },
-  } as ReturnType<typeof useScopes>);
+  const state = { value: scopes, loading: false, enabled: true, drawerOpened: false };
+  const scopesContext: ScopesContextValue = {
+    state,
+    stateObservable: new BehaviorSubject(state),
+    changeScopes: jest.fn(),
+    setEnabled: jest.fn(),
+  };
+  mockUseScopes.mockReturnValue(scopesContext);
 }
 
 function buildDashboard(opts: { isEditing: boolean; datasourceTypes: Array<string | undefined>; isNew?: boolean }) {
