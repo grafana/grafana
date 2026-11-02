@@ -174,10 +174,14 @@ func TestBulkProcessBlobValidationBeforeUpload(t *testing.T) {
 			}}}
 			srv := &server{backend: backend, blob: blob, blobTransfers: newBlobTransfers(), access: authlib.FixedAccessClient(true), bulkBatchOptions: DefaultBulkBatchOptions()}
 			req := newBulkBlobNormalizationRequest()
-			collection := *req.Key
+			collection := &resourcepb.ResourceKey{
+				Namespace: req.Key.Namespace,
+				Group:     req.Key.Group,
+				Resource:  req.Key.Resource,
+			}
 			tc.edit(req)
 			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: identity.RoleAdmin})
-			md := metadata.Join((&BulkSettings{Collection: []*resourcepb.ResourceKey{&collection}, SkipValidation: true}).ToMD(), metadata.Pairs(resourcepb.InlineBlobMetadataKey, "1"))
+			md := metadata.Join((&BulkSettings{Collection: []*resourcepb.ResourceKey{collection}, SkipValidation: true}).ToMD(), metadata.Pairs(resourcepb.InlineBlobMetadataKey, "1"))
 			ctx = metadata.NewIncomingContext(ctx, md)
 			stream := &negotiatedBulkBlobStream{bulkBlobValidationStream: bulkBlobValidationStream{testBulkProcessServer: testBulkProcessServer{ctx: ctx, requests: []*resourcepb.BulkRequest{req}}}}
 			require.NoError(t, srv.BulkProcess(stream))
