@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -26,6 +27,8 @@ type syncTarget struct {
 	origin externalSyncOrigin
 	// identifier is the name recorded on Config.status for this uid, or "" if none was recorded yet.
 	identifier string
+	// syncSucceeded is whether Config.status already reports a successful sync for this uid and origin.
+	syncSucceeded bool
 }
 
 // identifierOrUID returns the recorded identifier, falling back to the datasource UID for syncs that
@@ -59,6 +62,7 @@ func (s *ExternalAMSyncer) resolveSyncTarget(ctx context.Context, orgID int64) (
 	}
 	if target.uid != "" && cfg != nil {
 		target.identifier = recordedSyncIdentifier(&cfg.Status, target.uid)
+		target.syncSucceeded = reportsSyncSucceeded(&cfg.Status, target.uid, target.origin)
 	}
 	return target, nil
 }
@@ -92,6 +96,20 @@ func recordedSyncIdentifier(status *alertingnotifv1beta1.ConfigStatus, uid strin
 		return ""
 	}
 	return *sync.Identifier
+}
+
+// reportsSyncSucceeded is whether status already says the sync for uid and origin is working, so
+// recording another success would change nothing.
+func reportsSyncSucceeded(status *alertingnotifv1beta1.ConfigStatus, uid string, origin externalSyncOrigin) bool {
+	sync := status.ExternalAlertmanagerSync
+	if sync == nil || sync.DatasourceUid == nil || *sync.DatasourceUid != uid || sync.Origin == nil || *sync.Origin != origin {
+		return false
+	}
+	return slices.ContainsFunc(status.Conditions, func(c alertingnotifv1beta1.ConfigCondition) bool {
+		return c.Type == conditionTypeExternalAlertmanagerSynced &&
+			c.Status == alertingnotifv1beta1.ConfigConditionStatusTrue &&
+			c.Reason == conditionReasonSyncSucceeded
+	})
 }
 
 // ensureSyncIdentifier returns the identifier to import the synced configuration under, choosing and

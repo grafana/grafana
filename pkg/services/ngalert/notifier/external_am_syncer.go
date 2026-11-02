@@ -367,8 +367,9 @@ func (s *ExternalAMSyncer) FetchExtraConfig(ctx context.Context, orgID int64) (*
 		s.logger.Debug("Skipping external AM config save: response unchanged since last sync", "org_id", orgID)
 		// The saved config is still in place, so report the sync as working. The status may have moved on
 		// since (disabling sync marks it NotConfigured), and re-enabling would otherwise leave it there.
-		// An unchanged status costs no write.
-		s.recordSyncResult(ctx, orgID, uid, origin, nil)
+		if !target.syncSucceeded {
+			s.recordSyncResult(ctx, orgID, uid, origin, nil)
+		}
 		return nil, 0
 	}
 
@@ -675,13 +676,6 @@ func (s *ExternalAMSyncer) readImportState(ctx context.Context, orgID int64, ide
 	_, committed := cfg.ManagedRoutes[identifier]
 	staged := slices.ContainsFunc(cfg.ExtraConfigs, func(ec v1.ExtraConfiguration) bool { return ec.Identifier == identifier })
 	return importState{committed: committed, staged: staged}, nil
-}
-
-// isMergeCommitted reports whether the org's config already contains a managed
-// route keyed by identifier — i.e. the external config was already imported.
-func (s *ExternalAMSyncer) isMergeCommitted(ctx context.Context, orgID int64, identifier string) (bool, error) {
-	state, err := s.readImportState(ctx, orgID, identifier)
-	return state.committed, err
 }
 
 // resolveExternalAMUIDForOrg returns the datasource UID to use for external AM

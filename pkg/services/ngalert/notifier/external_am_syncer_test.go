@@ -667,6 +667,21 @@ func TestSyncExternalAMs_DedupOnIdenticalResponse(t *testing.T) {
 	assert.Equal(t, 2, proxy.callCount("mimir-uid"), "dedup compares hashes after fetching, it doesn't skip the fetch itself")
 }
 
+func TestSyncExternalAMs_UnchangedTickDoesNotRewriteStatus(t *testing.T) {
+	proxy := singleAMProxy(t, "mimir-uid", "route:\n  receiver: mimir-default\nreceivers:\n  - name: mimir-default")
+	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{makeMimirDS("mimir-uid", 1)}}
+	adminCfg := newFakeConfigClient()
+	adminCfg.setUID(1, "mimir-uid")
+
+	moa, _ := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+
+	before := adminCfg.totalGetCalls()
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	assert.Equal(t, 1, adminCfg.totalGetCalls()-before, "an unchanged tick only reads the Config to resolve the target")
+}
+
 func TestSyncExternalAMs_ReEnablingWithUnchangedConfigReportsSuccess(t *testing.T) {
 	proxy := singleAMProxy(t, "mimir-uid", "route:\n  receiver: mimir-default\nreceivers:\n  - name: mimir-default")
 
@@ -1056,7 +1071,7 @@ func configWithManagedRoute(identifier string) string {
 	return validAMConfigBase[:len(validAMConfigBase)-1] + fmt.Sprintf(`,"managed_routes":{%q:{"receiver":"grafana-default-email"}}}`, identifier)
 }
 
-func TestIsMergeCommitted(t *testing.T) {
+func TestReadImportState_Committed(t *testing.T) {
 	ctx := context.Background()
 	cases := []struct {
 		name      string
@@ -1072,13 +1087,13 @@ func TestIsMergeCommitted(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := &ExternalAMSyncer{configReader: tc.reader}
-			got, err := s.isMergeCommitted(ctx, 1, "ds-1")
+			state, err := s.readImportState(ctx, 1, "ds-1")
 			if tc.wantError {
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, tc.want, got)
+			assert.Equal(t, tc.want, state.committed)
 		})
 	}
 }
