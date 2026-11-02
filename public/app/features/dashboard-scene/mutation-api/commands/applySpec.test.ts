@@ -19,6 +19,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
 import { applyDashboardSpec } from '../../actions/dashboard/applyDashboardSpec';
+import { endBatch as endEditBatch, startBatch as startEditBatch } from '../../actions/utils/batch';
 import { buildPanelEditScene } from '../../panel-edit/PanelEditor';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { dashboardViews } from '../../scene/dashboardViewRegistry';
@@ -495,6 +496,29 @@ describe('mutation API history of APPLY_SPEC edits', () => {
     expect((await readSpec(scene)).title).toBe('Before');
     expect((await redoCommand.handler({ expectedBatchId: second }, { scene })).success).toBe(false);
     expect((await redoCommand.handler({ expectedBatchId: first }, { scene })).data).toEqual({ redone: true });
+  });
+
+  // A multi-panel delete batches its own edits: it joins the Assistant's batch instead of replacing it.
+  it("keeps the Assistant's batch when a batch of user edits starts inside it", async () => {
+    const scene = buildScene(titled('Before'));
+    const batchId = await startNamedBatch(scene);
+    await applyTitle(scene, 'First');
+    startEditBatch(scene, 'Remove panels', { actionId: 'panel.remove' });
+    userEdit(scene, 'User edit');
+    endEditBatch(scene);
+    await applyTitle(scene, 'Second');
+    await endBatch(scene);
+
+    expect(scene.state.sidebar.state.undoStack).toHaveLength(1);
+    expect((await lastAction(scene))?.action).toEqual({
+      description: 'Assistant dashboard changes',
+      actor: 'mutation-api',
+      batchId,
+    });
+    expect((await undoCommand.handler({ expectedBatchId: batchId }, { scene })).data).toEqual({ undone: true });
+    expect((await readSpec(scene)).title).toBe('Before');
+    expect((await redoCommand.handler({ expectedBatchId: batchId }, { scene })).data).toEqual({ redone: true });
+    expect((await readSpec(scene)).title).toBe('Second');
   });
 
   it('adds no entry for a batch without edits', async () => {
