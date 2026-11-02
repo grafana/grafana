@@ -12,14 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-const subscriberName = "nats-subscriber"
-
-// Service names of the bus, so the monolith can start it before its users.
-const (
-	ServerServiceName     = serverName
-	PublisherServiceName  = publisherName
-	SubscriberServiceName = subscriberName
-)
+const SubscriberServiceName = "nats-subscriber"
 
 // MessageHandler receives a message delivered to a subscribed subject. It
 // mirrors Publish's (subject, data) shape so callers never touch nats.go types.
@@ -81,7 +74,7 @@ type SubscriberService struct {
 func newSubscriber(logger log.Logger, m *subscriberMetrics, config *Config) *SubscriberService {
 	conn := newConnection(roleSubscriber, logger, m.connectionMetrics, config, config.SubscriberCredentials)
 	s := &SubscriberService{connection: conn, metrics: m}
-	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(subscriberName)
+	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(SubscriberServiceName)
 	return s
 }
 

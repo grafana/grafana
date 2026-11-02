@@ -24,7 +24,7 @@ import (
 
 const (
 	defaultServerNamePrefix = "grafana-nats-"
-	serverName              = "nats-server"
+	ServerServiceName       = "nats-server"
 )
 
 var (
@@ -73,7 +73,7 @@ func ProvideServer(cfg *setting.Cfg, sqlStore db.DB, reg prometheus.Registerer) 
 	}
 
 	s.opts = s.serverOptions()
-	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(serverName)
+	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(ServerServiceName)
 
 	return s, nil
 }
