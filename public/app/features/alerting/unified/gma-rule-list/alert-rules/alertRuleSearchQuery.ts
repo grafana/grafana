@@ -1,10 +1,11 @@
 import { type ListAlertRuleSearchRulesV0Alpha1RequestBody } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
-import { DEFAULT_POLICY, type RuleSearchFilter, STATE_API_VALUES } from '../rule-search/ruleSearchFilter';
 import { type SourcedLeaf, buildHealthLeaves, buildSharedLeaves, toWhere } from '../rule-search/searchQueryLeaves';
 
-export function buildAlertRuleSearchQuery(filter: RuleSearchFilter, continueToken?: string) {
+import { type AlertFilterKey, type AlertRuleFilter, DEFAULT_POLICY, STATE_API_VALUES } from './alertRuleFilters';
+
+export function buildAlertRuleSearchQuery(filter: AlertRuleFilter, continueToken?: string) {
   return {
     apiVersion: 'search.grafana.app/v0alpha1',
     kind: 'SearchQuery',
@@ -17,12 +18,12 @@ export function buildAlertRuleSearchQuery(filter: RuleSearchFilter, continueToke
 }
 
 /** The request's leaves in order, each with the filter it came from. */
-export function buildAlertRuleLeaves(filter: RuleSearchFilter): SourcedLeaf[] {
+export function buildAlertRuleLeaves(filter: AlertRuleFilter): Array<SourcedLeaf<AlertFilterKey>> {
   return [...buildSharedLeaves(filter), ...buildRoutingLeaves(filter), ...buildStatusLeaves(filter)];
 }
 
-function buildRoutingLeaves(filter: RuleSearchFilter): SourcedLeaf[] {
-  const leaves: SourcedLeaf[] = [];
+function buildRoutingLeaves(filter: AlertRuleFilter): Array<SourcedLeaf<AlertFilterKey>> {
+  const leaves: Array<SourcedLeaf<AlertFilterKey>> = [];
 
   if (filter.dashboardUid) {
     leaves.push({
@@ -51,8 +52,8 @@ function buildRoutingLeaves(filter: RuleSearchFilter): SourcedLeaf[] {
   return leaves;
 }
 
-function buildStatusLeaves(filter: RuleSearchFilter): SourcedLeaf[] {
-  const stateLeaves: SourcedLeaf[] = filter.state
+function buildStatusLeaves(filter: AlertRuleFilter): Array<SourcedLeaf<AlertFilterKey>> {
+  const stateLeaves: Array<SourcedLeaf<AlertFilterKey>> = filter.state
     ? [{ key: 'state', leaf: { filter: { field: 'state', operator: 'In', values: STATE_API_VALUES[filter.state] } } }]
     : [];
   return [...stateLeaves, ...buildHealthLeaves(filter, 'OK')];
