@@ -83,7 +83,7 @@ func TestLegacyCheckBackgroundResolverPermissions(t *testing.T) {
 				requester, err := identity.GetRequester(ctx)
 				require.NoError(t, err)
 
-				require.Equal(t, int64(legacyInternalTestOrgID), orgID)
+				require.Equal(t, legacyInternalTestOrgID, orgID)
 				require.Equal(t, "grafana_provisioner", requester.GetLogin())
 				require.Equal(t, org.RoleAdmin, requester.GetOrgRole())
 				require.False(t, requester.GetIsGrafanaAdmin())
