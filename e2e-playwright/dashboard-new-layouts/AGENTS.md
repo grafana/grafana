@@ -155,9 +155,7 @@ import { test, expect } from './fixtures';
 import { flows } from './helpers';
 
 test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
+  viewport: { width: 1920, height: 1080 },
 });
 
 test.describe(

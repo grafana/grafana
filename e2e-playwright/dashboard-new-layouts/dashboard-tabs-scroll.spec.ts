@@ -5,9 +5,6 @@ import { flows } from './helpers';
 import { type Canvas, type Sidebar, type Tabs } from './page-objects';
 
 test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
   // Narrow viewport guarantees the tabs overflow horizontally so the scroll
   // buttons and auto-scroll behaviour are actually exercised.
   viewport: { width: 1280, height: 800 },
