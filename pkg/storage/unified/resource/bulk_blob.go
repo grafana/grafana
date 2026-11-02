@@ -87,15 +87,18 @@ func normalizeBulkBlobUploads(ctx context.Context, req *resourcepb.BulkRequest, 
 		if !reader.complete {
 			return nil, status.Error(codes.Internal, "blob backend returned before consuming upload EOF")
 		}
-		params := make(map[string]string)
+		mediaType, params, typeErr := mime.ParseMediaType(upload.ContentType)
+		if typeErr != nil {
+			return nil, status.Error(codes.InvalidArgument, "invalid blob upload content type")
+		}
+		responseType, _, responseErr := mime.ParseMediaType(rsp.MimeType)
+		if strings.TrimSpace(rsp.Uid) == "" || rsp.Size != upload.Size || responseErr != nil || responseType != mediaType {
+			return nil, status.Error(codes.Internal, "blob backend returned invalid upload metadata")
+		}
 		if rsp.Charset != "" {
 			params["charset"] = rsp.Charset
 		}
-		contentType := mime.FormatMediaType(rsp.MimeType, params)
-		mediaType, _, typeErr := mime.ParseMediaType(contentType)
-		if strings.TrimSpace(rsp.Uid) == "" || rsp.Size != upload.Size || typeErr != nil || !strings.Contains(mediaType, "/") || strings.Contains(mediaType, "*") {
-			return nil, status.Error(codes.Internal, "blob backend returned invalid upload metadata")
-		}
+		contentType := mime.FormatMediaType(mediaType, params)
 		blobs[upload.Name], err = json.Marshal(resourcepb.BlobReference{
 			UID: rsp.Uid, ContentType: contentType, Size: rsp.Size, Hash: rsp.Hash,
 		})

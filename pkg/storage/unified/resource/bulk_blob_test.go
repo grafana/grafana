@@ -323,6 +323,9 @@ func TestNormalizeBulkBlobUploadsBackendRoundTrip(t *testing.T) {
 	}{
 		{"kv", "kv", "application/json"},
 		{"bucket", "bucket", "application/json"},
+		{"kv profile", "kv", "application/json; profile=foo"},
+		{"bucket boundary", "bucket", "multipart/form-data; boundary=abc"},
+		{"kv profile and charset", "kv", "application/json; charset=utf-8; profile=foo"},
 		{"kv quoted charset", "kv", `text/plain; charset="x;y"`},
 		{"bucket quoted charset", "bucket", `text/plain; charset="x;y"`},
 	} {
