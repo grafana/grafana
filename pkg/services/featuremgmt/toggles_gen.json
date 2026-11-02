@@ -1584,6 +1584,19 @@
     },
     {
       "metadata": {
+        "name": "dashboard.notebookComments",
+        "resourceVersion": "1793648427125",
+        "creationTimestamp": "2026-11-02T19:40:27Z"
+      },
+      "spec": {
+        "description": "Enables commenting on Notebook cells",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboard.notebooks",
         "resourceVersion": "1792173756887",
         "creationTimestamp": "2026-07-09T13:38:44Z",

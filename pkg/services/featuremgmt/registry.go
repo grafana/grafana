@@ -704,6 +704,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "dashboard.notebookComments",
+			Description: "Enables commenting on Notebook cells",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "grafana.dashboardComposer",
 			Description: "Enables Composer mode for editing dashboards with Grafana Assistant",
 			Stage:       FeatureStageExperimental,
