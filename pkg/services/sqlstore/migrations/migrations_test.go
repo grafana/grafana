@@ -182,6 +182,40 @@ func TestIntegrationMigrationLock(t *testing.T) {
 	})
 }
 
+func TestIntegrationAddColumnMigrationSkipsExistingColumn(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	testDB, err := sqlutil.GetTestDB(sqlutil.GetTestDBType())
+	require.NoError(t, err)
+	t.Cleanup(testDB.Cleanup)
+
+	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		if err := x.Close(); err != nil {
+			t.Logf("failed to close xorm engine: %v", err)
+		}
+	})
+
+	err = NewDialect(x.DriverName()).CleanDB(x)
+	require.NoError(t, err)
+
+	_, err = x.Exec("CREATE TABLE test_table (id INTEGER, existing_column VARCHAR(10))")
+	require.NoError(t, err)
+
+	mg := NewMigrator(x, &setting.Cfg{})
+	mg.AddCreateMigration()
+	mg.AddMigration("add existing_column to test_table", NewAddColumnMigration(Table{Name: "test_table"}, &Column{
+		Name: "existing_column", Type: DB_NVarchar, Length: 10, Nullable: true,
+	}))
+
+	require.NoError(t, mg.Start(false, 0))
+
+	log, err := mg.GetMigrationLog()
+	require.NoError(t, err)
+	require.Contains(t, log, "add existing_column to test_table")
+}
+
 func TestMigratorLocking(t *testing.T) {
 	dbType := sqlutil.GetTestDBType()
 

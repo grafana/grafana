@@ -114,6 +114,12 @@ func (db *PostgresDialect) IndexCheckSQL(tableName, indexName string) (string, [
 	return sql, args
 }
 
+func (db *PostgresDialect) ColumnCheckSQL(tableName, columnName string) (string, []any) {
+	args := []any{tableName, columnName}
+	sql := "SELECT 1 FROM " + db.Quote("information_schema") + "." + db.Quote("columns") + " WHERE " + db.Quote("table_schema") + " = current_schema() AND " + db.Quote("table_name") + "=? AND " + db.Quote("column_name") + "=?"
+	return sql, args
+}
+
 func (db *PostgresDialect) DropIndexSQL(tableName string, index *Index) string {
 	quote := db.Quote
 	idxName := index.XName(tableName)
