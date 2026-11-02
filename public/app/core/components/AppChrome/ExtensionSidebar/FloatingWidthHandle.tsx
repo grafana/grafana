@@ -8,7 +8,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import {
   DEFAULT_FLOATING_EXTENSION_SIDEBAR_WIDTH,
-  MAX_EXTENSION_SIDEBAR_WIDTH,
+  MAX_FLOATING_EXTENSION_SIDEBAR_WIDTH,
   MIN_FLOATING_EXTENSION_SIDEBAR_WIDTH,
 } from './constants';
 
@@ -16,7 +16,9 @@ const KEY_STEP = 16;
 const KEY_STEP_LARGE = 64;
 
 function clampWidth(width: number): number {
-  return Math.round(Math.min(MAX_EXTENSION_SIDEBAR_WIDTH, Math.max(MIN_FLOATING_EXTENSION_SIDEBAR_WIDTH, width)));
+  return Math.round(
+    Math.min(MAX_FLOATING_EXTENSION_SIDEBAR_WIDTH, Math.max(MIN_FLOATING_EXTENSION_SIDEBAR_WIDTH, width))
+  );
 }
 
 function reportResized(method: 'drag' | 'keyboard' | 'reset', width: number): void {
@@ -97,7 +99,7 @@ export function FloatingWidthHandle({ width, onWidthChange }: FloatingWidthHandl
       aria-label={t('navigation.extension-sidebar.floating-resize', 'Resize sidebar width')}
       aria-valuenow={width}
       aria-valuemin={MIN_FLOATING_EXTENSION_SIDEBAR_WIDTH}
-      aria-valuemax={MAX_EXTENSION_SIDEBAR_WIDTH}
+      aria-valuemax={MAX_FLOATING_EXTENSION_SIDEBAR_WIDTH}
       className={styles.handle}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}

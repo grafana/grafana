@@ -86,7 +86,8 @@ type FolderAPIBuilder struct {
 	variableSvc           *dynamic.NamespaceableResourceInterface
 	variableSvcMu         sync.Mutex
 	// contentsDeleter removes alert rules and library elements contained in a folder during cascade
-	// delete. Nil in MT (NewAPIService), where that cleanup is handled elsewhere.
+	// delete. Always set by RegisterAPIService (embedded); set by NewAPIService (standalone) only
+	// when the deployment opts into that cleanup.
 	contentsDeleter FolderContentsDeleter
 }
 
@@ -179,7 +180,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, dashboardSvc *dynamic.NamespaceableResourceInterface, variableSvc *dynamic.NamespaceableResourceInterface, maxNestedFolderDepth int) *FolderAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, dashboardSvc *dynamic.NamespaceableResourceInterface, variableSvc *dynamic.NamespaceableResourceInterface, maxNestedFolderDepth int, contentsDeleter FolderContentsDeleter) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
 		accessClient:           ac,
 		searcher:               searcher,
@@ -188,6 +189,7 @@ func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, fe
 		dashboardSvc:           dashboardSvc, // injected so cascade delete can remove dashboards in MT
 		variableSvc:            variableSvc,  // injected so cascade delete can remove variables in MT
 		maxNestedFolderDepth:   maxNestedFolderDepth,
+		contentsDeleter:        contentsDeleter,                                     // injected so cascade delete can remove alert rules and library panels in standalone mode
 		useZanzana:             features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
 	}
 }
@@ -558,6 +560,15 @@ func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _
 			return fmt.Errorf("obj is not folders.Folder")
 		}
 		f.Spec.Title = strings.Trim(f.Spec.Title, " ")
+		if verb == admission.Create {
+			applyCascadeDeleteFinalizerOnCreate(f, folderAsyncCascadeDeleteEnabled(ctx))
+			return nil
+		}
+		old, ok := a.GetOldObject().(*foldersv1.Folder)
+		if !ok {
+			return fmt.Errorf("old obj is not folders.Folder")
+		}
+		preserveCascadeDeleteFinalizerOnUpdate(f, old)
 		return nil
 	}
 	return nil

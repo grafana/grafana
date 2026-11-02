@@ -112,9 +112,11 @@ func newInternalIdentity(name string, namespace string, orgID int64, opts ...Ide
 		IsGrafanaAdmin: true,
 		OrgID:          orgID,
 		Permissions: map[int64]map[string][]string{
-			orgID: serviceIdentityPermissions,
+			orgID: cloneServiceIdentityPermissions(),
 		},
 		AccessTokenClaims: &claimsCopy,
+
+		internalIdentityProfile: InternalIdentityProfile(name),
 	}
 
 	for _, opt := range opts {
@@ -213,6 +215,7 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"org.users:read",                                           // accesscontrol.ActionOrgUsersRead,
 	"teams:read",                                               // accesscontrol.ActionTeamsRead,
 	"serviceaccounts:read",                                     // serviceaccounts.ActionRead,
+	"plugins.app:access",                                       // pluginaccesscontrol.ActionAppAccess
 )
 
 // Note: Any wildcard-prefixed permissions here must be whitelisted in authlib: https://github.com/grafana/authlib/blob/main/authz/service_permissions.go
@@ -232,6 +235,9 @@ var serviceIdentityTokenPermissions = []string{
 	"historian.alerting.grafana.app:*",
 	"notifications.alerting.grafana.app:*",
 	"rules.alerting.grafana.app:*",
+	"alertingassistant.grafana.app/alert-rule-reviews:get",
+	"alertingassistant.grafana.app/alert-rule-reviews:create",
+	"alertingassistant.grafana.app/alert-rule-reviews:update",
 	"advisor.grafana.app:*",
 	"annotation.grafana.app:*",
 	"setting.grafana.app:*",

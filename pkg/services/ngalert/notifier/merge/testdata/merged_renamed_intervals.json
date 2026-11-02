@@ -52,7 +52,7 @@
     ],
     "time_intervals": [
       {
-        "uid": "bXRpLTE",
+        "uid": "brmsc0nuyaadpb3ob2onl9mwm",
         "name": "mti-1",
         "time_intervals": [
           {
@@ -66,12 +66,12 @@
         ]
       },
       {
-        "uid": "bXRpLTFfbWltaXItMTIzNDU",
+        "uid": "9ohs1b6g8exgc76jy7ffohxzh",
         "name": "mti-1_mimir-12345",
         "time_intervals": null
       },
       {
-        "uid": "dGktMQ",
+        "uid": "dzo4w18a2z4z70ucpyqsu36if",
         "name": "ti-1",
         "time_intervals": [
           {
@@ -83,12 +83,12 @@
         ]
       },
       {
-        "uid": "dGktMV9taW1pci0xMjM0NQ",
+        "uid": "a82cv2vv1xiohgf0iv4ek8z3g",
         "name": "ti-1_mimir-12345",
         "time_intervals": null
       },
       {
-        "uid": "dGktMg",
+        "uid": "9g8b1a5jnk04f8qlt7cnmkn1v",
         "name": "ti-2",
         "time_intervals": [
           {

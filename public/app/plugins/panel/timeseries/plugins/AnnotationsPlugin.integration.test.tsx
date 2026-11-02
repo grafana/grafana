@@ -21,9 +21,9 @@ import { defaultGraphConfig, getGraphFieldConfig } from '../config';
 import { type Options } from '../panelcfg.gen';
 
 /**
- * Unlike AnnotationsPlugin.test.tsx, which mocks uPlot and always fires the most recently registered hook,
- * these tests render the real TimeSeriesPanel -> GraphNG -> UPlotChart -> uPlot stack. Real uPlot copies
- * its hooks when the plot is constructed, so a hook the plugin registers afterwards never fires.
+ * Unlike AnnotationsPlugin.test.tsx, which mocks uPlot, these tests render the real TimeSeriesPanel -> GraphNG ->
+ * UPlotChart -> uPlot stack. Real uPlot copies its hooks when the plot is constructed, so a hook the plugin
+ * registers afterwards never fires.
  */
 
 const T10 = Date.UTC(2025, 9, 2, 10);
@@ -78,15 +78,17 @@ function panel({
   series,
   annotations,
   timeRange,
+  structureRev = 1,
 }: {
   series: DataFrame[];
   annotations: DataFrame[];
   timeRange: TimeRange;
+  structureRev?: number;
 }) {
   const props = getPanelProps<Options>(options, {
     // A constant structureRev keeps GraphNG on the same config builder (and so the same uPlot instance) across
     // rerenders, the way a dashboard keeps it when only the data values or time range change.
-    data: { state: LoadingState.Done, series, annotations, timeRange, structureRev: 1 },
+    data: { state: LoadingState.Done, series, annotations, timeRange, structureRev },
     timeRange,
     fieldConfig,
     replaceVariables: (v) => v,
@@ -97,6 +99,13 @@ function panel({
 }
 
 const getMarkers = () => screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
+const getMarkerLefts = () => getMarkers().map((marker) => marker.style.left);
+
+// Waits for uPlot's first commit (and its `ready` hook) so the next rerender lands on a ready plot.
+async function waitForPlotReady() {
+  await waitFor(() => expect(document.querySelector('.u-axis')).toBeInTheDocument());
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
 
 describe('AnnotationsPlugin with a real uPlot instance', () => {
   beforeEach(() => {
@@ -141,29 +150,87 @@ describe('AnnotationsPlugin with a real uPlot instance', () => {
     await waitFor(() => expect(getMarkers()).toHaveLength(5));
   });
 
-  // Known bug: markers are positioned during render, before UPlotChart pushes the new data (and x range) into
-  // uPlot. The `drawAxes` hook is meant to re-render when the range changes, but it is gated on the
-  // `annotations.length` captured when the plot was constructed. A panel that first loaded a range with no
-  // annotations never re-renders them after zooming out to a range that has them. Change to `it` once fixed.
-  it.failing(
-    'renders markers after the time range changes from a range without annotations to one with them',
-    async () => {
-      const { rerender } = render(
-        panel({ series: createSeries(T10, T11), annotations: [], timeRange: createTimeRange(T10, T11) })
-      );
-      await waitFor(() => expect(document.querySelector('.u-axis')).toBeInTheDocument());
-      // Let uPlot's first commit (and its `ready` hook) run before changing the range.
-      await new Promise((resolve) => setTimeout(resolve, 0));
+  it('renders markers after the time range changes from a range without annotations to one with them', async () => {
+    const { rerender } = render(
+      panel({ series: createSeries(T10, T11), annotations: [], timeRange: createTimeRange(T10, T11) })
+    );
+    await waitForPlotReady();
 
-      rerender(
-        panel({
-          series: createSeries(T06, T11),
-          annotations: createAnnotations(ANNOTATION_TIMES),
-          timeRange: createTimeRange(T06, T11),
-        })
-      );
+    rerender(
+      panel({
+        series: createSeries(T06, T11),
+        annotations: createAnnotations(ANNOTATION_TIMES),
+        timeRange: createTimeRange(T06, T11),
+      })
+    );
 
-      await waitFor(() => expect(getMarkers()).toHaveLength(5));
-    }
-  );
+    await waitFor(() => expect(getMarkers()).toHaveLength(5));
+  });
+
+  it('renders markers for annotations that arrive after the plot is ready', async () => {
+    const series = createSeries(T06, T11);
+    const timeRange = createTimeRange(T06, T11);
+    const { rerender } = render(panel({ series, annotations: [], timeRange }));
+    await waitForPlotReady();
+
+    rerender(panel({ series, annotations: createAnnotations(ANNOTATION_TIMES), timeRange }));
+
+    await waitFor(() => expect(getMarkers()).toHaveLength(5));
+  });
+
+  it('moves markers when the same number of annotations arrive at different times', async () => {
+    const series = createSeries(T06, T11);
+    const timeRange = createTimeRange(T06, T11);
+    const { rerender } = render(panel({ series, annotations: createAnnotations(ANNOTATION_TIMES), timeRange }));
+    await waitFor(() => expect(getMarkers()).toHaveLength(5));
+    const initialLefts = getMarkerLefts();
+
+    const shiftedTimes = ANNOTATION_TIMES.map((time) => time + 6 * 60 * 1000);
+    rerender(panel({ series, annotations: createAnnotations(shiftedTimes), timeRange }));
+
+    await waitFor(() => {
+      const lefts = getMarkerLefts();
+      expect(lefts).toHaveLength(5);
+      lefts.forEach((left, i) => expect(left).not.toBe(initialLefts[i]));
+    });
+  });
+
+  it('removes markers when the annotations are cleared', async () => {
+    const series = createSeries(T06, T11);
+    const timeRange = createTimeRange(T06, T11);
+    const { rerender } = render(panel({ series, annotations: createAnnotations(ANNOTATION_TIMES), timeRange }));
+    await waitFor(() => expect(getMarkers()).toHaveLength(5));
+
+    rerender(panel({ series, annotations: [], timeRange }));
+
+    await waitFor(() => expect(getMarkers()).toHaveLength(0));
+  });
+
+  it('stops rendering markers outside the range on zoom in, and renders them again on zoom out', async () => {
+    const annotations = createAnnotations(ANNOTATION_TIMES);
+    const { rerender } = render(
+      panel({ series: createSeries(T06, T11), annotations, timeRange: createTimeRange(T06, T11) })
+    );
+    await waitFor(() => expect(getMarkers()).toHaveLength(5));
+
+    rerender(panel({ series: createSeries(T10, T11), annotations, timeRange: createTimeRange(T10, T11) }));
+    await waitFor(() => expect(getMarkers()).toHaveLength(0));
+
+    rerender(panel({ series: createSeries(T06, T11), annotations, timeRange: createTimeRange(T06, T11) }));
+    await waitFor(() => expect(getMarkers()).toHaveLength(5));
+  });
+
+  it('renders markers after a new config rebuilds the plot', async () => {
+    const timeRange = createTimeRange(T06, T11);
+    const annotations = createAnnotations(ANNOTATION_TIMES);
+    const { rerender } = render(panel({ series: createSeries(T06, T11), annotations, timeRange, structureRev: 1 }));
+    await waitFor(() => expect(getMarkers()).toHaveLength(5));
+    const firstAxis = document.querySelector('.u-axis');
+
+    // GraphNG only checks structureRev when the frames change, so a structure change needs new series too.
+    rerender(panel({ series: createSeries(T06, T11), annotations, timeRange, structureRev: 2 }));
+
+    await waitFor(() => expect(document.querySelector('.u-axis')).not.toBe(firstAxis));
+    await waitFor(() => expect(getMarkers()).toHaveLength(5));
+  });
 });

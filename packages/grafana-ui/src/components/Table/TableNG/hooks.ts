@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import {
   useState,
@@ -44,7 +43,7 @@ import {
   TABLE,
 } from './constants';
 import { getColumnMenuOptions } from './menuOptions';
-import { getScrollShadowOffsetStyles, getScrollShadowStyles, IS_SAFARI_26 } from './styles';
+import { getScrollShadowStyles, IS_SAFARI_26 } from './styles';
 import { transformTableFilters } from './transformations/rowProjection';
 import {
   type FooterFieldState,
@@ -968,13 +967,13 @@ export function useScrollShadows(
 ) {
   const [visibility, setVisibility] = useState({ top: false, bottom: false, scrollbarHeight: 0, width: 0 });
   const visibilityRef = useRef(visibility);
-  const styles = useStyles2(getScrollShadowStyles);
-  const offsetStyles = useStyles2(
-    getScrollShadowOffsetStyles,
-    topOffset,
-    bottomOffset + visibility.scrollbarHeight,
-    visibility.width
-  );
+  const styles = useStyles2(getScrollShadowStyles, visibility.top, visibility.bottom);
+  // Keep changing geometry out of Emotion's stylesheet cache during resizing.
+  const style: CSSProperties & Record<`--${string}`, string> = {
+    '--table-scroll-shadow-width': `${visibility.width}px`,
+    '--table-scroll-shadow-top': `${topOffset}px`,
+    '--table-scroll-shadow-bottom': `${bottomOffset + visibility.scrollbarHeight}px`,
+  };
 
   const sync = useCallback(() => {
     const el = ref.current?.element;
@@ -1033,14 +1032,8 @@ export function useScrollShadows(
   }, [ref, enabled, sync]);
 
   return {
-    className: enabled
-      ? css(
-          styles.scrollShadows,
-          offsetStyles,
-          visibility.top && styles.scrollShadowTop,
-          visibility.bottom && styles.scrollShadowBottom
-        )
-      : '',
+    className: enabled ? styles.scrollShadows : '',
+    style: enabled ? style : undefined,
     top: enabled && visibility.top,
     bottom: enabled && visibility.bottom,
     scrollbarHeight: enabled ? visibility.scrollbarHeight : 0,

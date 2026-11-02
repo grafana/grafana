@@ -25,6 +25,7 @@ import {
 } from '@grafana/scenes';
 import { LegendDisplayMode, type VizLegendOptions } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { appEvents } from 'app/core/app_events';
 import { LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type GetExploreUrlArguments } from 'app/core/utils/explore';
@@ -32,6 +33,7 @@ import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import * as storeModule from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardInteractions } from '../utils/interactions';
@@ -39,7 +41,7 @@ import { DashboardInteractions } from '../utils/interactions';
 import { DashboardScene } from './DashboardScene';
 import { NewAlertRuleDrawer } from './NewAlertRuleDrawer';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
-import { panelMenuBehavior, toggleVizPanelLegend } from './PanelMenuBehavior';
+import { onRemovePanel, panelMenuBehavior, toggleVizPanelLegend } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 const mocks = {
@@ -63,6 +65,25 @@ jest.mock('app/store/store', () => ({
 
 const getObservablePluginLinksMock = jest.fn().mockReturnValue(of([]));
 setGetObservablePluginLinks(getObservablePluginLinksMock);
+
+describe('onRemovePanel', () => {
+  it('opens the confirmation only after the menu has had a chance to release focus', async () => {
+    const { scene, panel } = await buildTestScene({});
+    const publish = jest.spyOn(appEvents, 'publish').mockImplementation(() => {});
+    jest.useFakeTimers();
+
+    try {
+      onRemovePanel(scene, panel);
+      expect(publish).not.toHaveBeenCalled();
+
+      jest.runOnlyPendingTimers();
+      expect(publish).toHaveBeenCalledWith(expect.any(ShowConfirmModalEvent));
+    } finally {
+      jest.useRealTimers();
+      publish.mockRestore();
+    }
+  });
+});
 
 describe('panelMenuBehavior', () => {
   beforeAll(() => {
@@ -109,12 +130,12 @@ describe('panelMenuBehavior', () => {
     expect(menu.state.items?.[5].text).toBe('Time settings');
   });
 
-  it('opens panel editing from the view menu and enters Editing', async () => {
+  it.each(['view', 'agent'] as const)('opens panel editing from the %s menu and enters Editing', async (mode) => {
     setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
     const { scene, panel, menu } = await buildTestScene({});
     let deactivateMenu = () => {};
     try {
-      scene.setState({ mode: 'view', isEditing: true, editable: true });
+      scene.setState({ mode, isEditing: true, editable: true });
       panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
       deactivateMenu = menu.activate();
       await waitFor(() =>
@@ -1293,7 +1314,7 @@ describe('panelMenuBehavior', () => {
       const items = await itemsWith({ notebooks: true, permission: true });
 
       expect(items.find((item) => item.text === 'Add to notebook')).toEqual(
-        expect.objectContaining({ iconClassName: 'book' })
+        expect.objectContaining({ iconClassName: 'gf-notebook' })
       );
       expect(items.find((item) => item.text === 'Remove')).toBeUndefined();
     });
