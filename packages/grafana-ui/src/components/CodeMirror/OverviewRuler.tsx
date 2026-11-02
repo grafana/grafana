@@ -15,7 +15,7 @@ export interface OverviewRulerState {
 
 export function createOverviewRulerExtension(onChange: (editor: OverviewRulerState | null) => void) {
   return [
-    EditorView.theme({ '.cm-scroller': { paddingRight: '24px' } }),
+    EditorView.theme({ '.cm-scroller': { marginRight: '12px' } }),
     ViewPlugin.define((view) => {
       onChange({ view });
       return {
@@ -41,7 +41,7 @@ export function createOverviewRulerExtension(onChange: (editor: OverviewRulerSta
 export function OverviewRuler({ editor }: { editor: OverviewRulerState }) {
   const styles = useStyles2(getStyles);
   const { view } = editor;
-  const [bounds, setBounds] = useState({ top: 0, height: 0, right: 12 });
+  const [bounds, setBounds] = useState({ top: 0, height: 0, left: 0 });
 
   useLayoutEffect(() => {
     let active = true;
@@ -52,9 +52,7 @@ export function OverviewRuler({ editor }: { editor: OverviewRulerState }) {
         return {
           top: scroller.top - editorBounds.top + 4,
           height: Math.max(0, view.scrollDOM.clientHeight - 8),
-          // Overlay scrollbars report zero width; leave room for them too.
-          right:
-            editorBounds.right - scroller.right + Math.max(12, view.scrollDOM.offsetWidth - view.scrollDOM.clientWidth),
+          left: scroller.right - editorBounds.left,
         };
       },
       write: (bounds) => {
