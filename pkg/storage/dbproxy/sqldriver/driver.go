@@ -78,11 +78,17 @@ type conn struct {
 	client dbproxyv1.DatabaseProxyServiceClient
 }
 
-func (*conn) Close() error              { return nil }
+func (*conn) Close() error { return nil }
+
+// Begin and BeginTx are unsupported because V1 cannot retain a transaction
+// across requests, including read-only transactions.
 func (*conn) Begin() (driver.Tx, error) { return nil, ErrUnsupported }
 func (*conn) BeginTx(context.Context, driver.TxOptions) (driver.Tx, error) {
 	return nil, ErrUnsupported
 }
+
+// V1 has no database health check. Implement Ping explicitly so database/sql
+// cannot report success just because a local logical connection exists.
 func (*conn) Ping(context.Context) error                  { return ErrUnsupported }
 func (c *conn) Prepare(query string) (driver.Stmt, error) { return &stmt{query: query, conn: c}, nil }
 func (c *conn) PrepareContext(ctx context.Context, query string) (driver.Stmt, error) {
@@ -130,6 +136,8 @@ func (c *conn) QueryContext(ctx context.Context, query string, args []driver.Nam
 	}
 	return &rows{columns: first.Columns, stream: stream, cancel: cancel}, nil
 }
+
+// ExecContext is unsupported because V1 only supports reads returning rows via QueryContext.
 func (*conn) ExecContext(context.Context, string, []driver.NamedValue) (driver.Result, error) {
 	return nil, ErrUnsupported
 }
@@ -147,12 +155,16 @@ type stmt struct {
 	conn  *conn
 }
 
-func (*stmt) Close() error                               { return nil }
-func (*stmt) NumInput() int                              { return -1 }
+func (*stmt) Close() error  { return nil }
+func (*stmt) NumInput() int { return -1 }
+
+// Exec and ExecContext are unsupported because V1 only supports reads returning rows via QueryContext.
 func (*stmt) Exec([]driver.Value) (driver.Result, error) { return nil, ErrUnsupported }
 func (*stmt) ExecContext(context.Context, []driver.NamedValue) (driver.Result, error) {
 	return nil, ErrUnsupported
 }
+
+// Query has no context to supply the required stack and query name; use QueryContext.
 func (s *stmt) Query(args []driver.Value) (driver.Rows, error) {
 	return nil, errors.New("single-tenant database proxy: query context required")
 }
