@@ -1387,6 +1387,9 @@ importers:
       tinycolor2:
         specifier: ^1.6.0
         version: 1.6.0
+      type-fest:
+        specifier: ^4.40.0
+        version: 4.41.0
     devDependencies:
       '@grafana/test-utils':
         specifier: workspace:*
@@ -1445,9 +1448,6 @@ importers:
       rollup-plugin-node-externals:
         specifier: ^8.0.0
         version: 8.0.1(rollup@4.60.1)
-      type-fest:
-        specifier: ^4.40.0
-        version: 4.41.0
       typescript:
         specifier: npm:@typescript/typescript6@^6.0.2
         version: '@typescript/typescript6@6.0.2'
