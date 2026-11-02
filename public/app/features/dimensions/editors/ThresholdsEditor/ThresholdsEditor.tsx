@@ -186,6 +186,8 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
     });
   }
 
+  const variableSuggestions = interpolationEnabled ? getVariableSuggestions() : [];
+
   function renderInput(threshold: ThresholdWithKey, idx: number) {
     const isPercent = thresholds.mode === ThresholdsMode.Percentage;
     const thresholdNumber = idx + 1;
@@ -242,7 +244,7 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
         <SuggestionsInput
           key={`${isPercent}-${inputRevisions[threshold.key] ?? 0}`}
           value={threshold.valueExpr ?? threshold.value}
-          suggestions={getVariableSuggestions()}
+          suggestions={variableSuggestions}
           onInputChange={(rawValue) => onChangeThresholdValue(threshold, rawValue)}
           onChange={(rawValue) => onCommitThresholdValue(threshold, rawValue)}
           aria-label={ariaLabel}
