@@ -47,6 +47,7 @@ declare module "@openfeature/core" {
     | "dashboards.disableLiveSaveNotices"
     | "disableScriptedDashboards"
     | "dashboard.notebooks"
+    | "dashboard.notebookComments"
     | "grafana.dashboardComposer"
     | "grafana.savedDashboardViews"
     | "grafana.dashboardPreviewMode"
