@@ -1,0 +1,31 @@
+name: End-to-end tests label dispatcher
+
+on:
+  pull_request:
+    types: [labeled]
+
+permissions: {}
+
+jobs:
+  rerun-e2e-tests:
+    if: github.event.label.name == 'run full tests' && github.event.pull_request.head.repo.fork == false
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    runs-on: ubuntu-arm64-small
+    timeout-minutes: 10
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Check out trusted action code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+          sparse-checkout: .github/actions/rerun-pr-workflow
+      - name: Re-run current PR's end-to-end workflow
+        uses: ./.github/actions/rerun-pr-workflow
+        with:
+          workflow: pr-e2e-tests.yml

@@ -2,21 +2,14 @@ name: End-to-end tests
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review, labeled]
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches:
       - main
       - release-*.*.*
 
 concurrency:
-  # Give unrelated-label runs a unique group so skipped runs cannot cancel active E2E tests.
-  # Otherwise, group by PR ref or push SHA to cancel superseded PR runs.
-  group: >-
-    ${{ github.workflow }}-${{
-      github.event.action == 'labeled' && github.event.label.name != 'run full tests' && github.run_id
-      || (startsWith(github.ref, 'refs/pull/') && github.ref
-      || github.sha)
-    }}
+  group: ${{ github.workflow }}-${{ startsWith(github.ref, 'refs/pull/') && github.ref || github.sha }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
 permissions: {}
@@ -24,27 +17,44 @@ permissions: {}
 jobs:
   detect-changes:
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
-    # Skip unrelated label additions to avoid rerunning E2E tests.
-    # Skip draft PRs unless they have the "run full tests" label.
-    if: >-
-      (github.event_name == 'pull_request' &&
-        (github.event.action != 'labeled' || github.event.label.name == 'run full tests') &&
-        (!github.event.pull_request.draft || contains(github.event.pull_request.labels.*.name, 'run full tests'))) ||
-      (github.event_name == 'push' && github.repository == 'grafana/grafana')
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Detect whether code changed
     runs-on: ubuntu-arm64-small
     permissions:
       contents: read
+      pull-requests: read
     outputs:
-      run-e2e-tests: ${{ steps.detect-changes.outputs.e2e == 'true' || github.event_name == 'push' }}
+      run-e2e-tests: ${{ steps.pr-gate.outputs.run == 'true' && (steps.detect-changes.outputs.e2e == 'true' || github.event_name == 'push') }}
     steps:
+      - name: Check current PR state
+        id: pr-gate
+        uses: actions/github-script@v8
+        with:
+          script: |
+            if (context.eventName === 'push') {
+              core.setOutput('run', true);
+              return;
+            }
+
+            // Reruns retain the original event payload, which can have stale labels and draft status.
+            const { data: pr } = await github.rest.pulls.get({
+              ...context.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+            const run = !pr.draft || pr.labels.some(label => label.name === 'run full tests');
+            core.setOutput('run', run);
+            if (!run) {
+              core.info('Skipping E2E tests for a draft PR without the "run full tests" label.');
+            }
       - uses: actions/checkout@v6
+        if: steps.pr-gate.outputs.run == 'true'
         with:
           persist-credentials: true # required to get more history in the changed-files action
           fetch-depth: 0
           filter: blob:none
       - name: Detect changes
         id: detect-changes
+        if: steps.pr-gate.outputs.run == 'true'
         uses: ./.github/actions/change-detection
         with:
           self: .github/workflows/pr-e2e-tests.yml
@@ -303,7 +313,7 @@ jobs:
 
   playwright-report:
     needs: run-playwright-tests
-    if: ${{ !cancelled() }}
+    if: ${{ !cancelled() && needs.run-playwright-tests.result != 'skipped' }}
     name: Playwright test report
     runs-on: ubuntu-x64-small
     permissions:
@@ -311,7 +321,6 @@ jobs:
       id-token: write
     steps:
       - name: Download blob reports from GitHub Actions Artifacts
-        if: needs.run-playwright-tests.result != 'skipped'
         uses: actions/download-artifact@v8
         with:
           path: blobs
@@ -319,7 +328,6 @@ jobs:
           merge-multiple: true
 
       - name: Check blob reports
-        if: needs.run-playwright-tests.result != 'skipped'
         run: |
           if [ ! "$(ls -A ./blobs)" ]; then
             echo "Error: No blob reports found in ./blobs directory"
@@ -330,11 +338,9 @@ jobs:
           ls -lah ./blobs
 
       - name: Merge into HTML Report
-        if: needs.run-playwright-tests.result != 'skipped'
         run: npx playwright merge-reports --reporter html ./blobs
 
       - name: Upload HTML report
-        if: needs.run-playwright-tests.result != 'skipped'
         id: upload-html
         uses: actions/upload-artifact@v7
         with:
@@ -346,25 +352,21 @@ jobs:
         env:
           REPORT_URL: ${{ steps.upload-html.outputs.artifact-url }}
           RUN_ID: ${{ github.run_id }}
-          TESTS_RAN: ${{ needs.run-playwright-tests.result != 'skipped' }}
         # sed removes the leading `../../src/` from the paths
-        # Only show the report if the tests actually ran.
         run: |
-          if [ "$TESTS_RAN" = "true" ]; then
-            npx playwright merge-reports --reporter list ./blobs | sed 's|\(\.\./\)\{1,\}src/|/|g'
-            echo ""
-            echo "Run the following command to view the results locally:"
-            echo "  ./scripts/view-playwright-ci.sh $RUN_ID"
-            echo ""
-            echo "Alternatively, download the test report from $REPORT_URL"
-            echo "and view it locally with:"
-            echo "  pnpm playwright show-report <path-to-unzipped-report>"
-          fi
+          npx playwright merge-reports --reporter list ./blobs | sed 's|\(\.\./\)\{1,\}src/|/|g'
+          echo ""
+          echo "Run the following command to view the results locally:"
+          echo "  ./scripts/view-playwright-ci.sh $RUN_ID"
+          echo ""
+          echo "Alternatively, download the test report from $REPORT_URL"
+          echo "and view it locally with:"
+          echo "  pnpm playwright show-report <path-to-unzipped-report>"
 
   report-playwright-bench:
     needs:
       - run-playwright-tests
-    if: ${{ !cancelled() }}
+    if: ${{ !cancelled() && needs.run-playwright-tests.result != 'skipped' }}
     name: Report Playwright benchmarks
     runs-on: ubuntu-x64-small
     permissions:
@@ -372,7 +374,6 @@ jobs:
       id-token: write
     steps:
       - name: Download blob reports from GitHub Actions Artifacts
-        if: needs.run-playwright-tests.result != 'skipped'
         uses: actions/download-artifact@v8
         with:
           path: blobs
@@ -380,13 +381,11 @@ jobs:
           merge-multiple: true
 
       - name: Merge into JSON Report
-        if: needs.run-playwright-tests.result != 'skipped'
         env:
           PLAYWRIGHT_JSON_OUTPUT_NAME: /tmp/playwright-results.json
         run: npx playwright merge-reports --reporter=json ./blobs
 
       - name: Bench report
-        if: needs.run-playwright-tests.result != 'skipped'
         run: |
           docker run --rm \
             --volume="/tmp/playwright-results.json:/home/bench/tests/playwright-results.json" \
