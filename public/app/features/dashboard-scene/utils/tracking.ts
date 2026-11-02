@@ -125,7 +125,6 @@ export function trackDropItemCrossLayout(gridItem: SceneGridItemLike) {
 const TEXT_PANEL_PLUGIN_ID = 'text';
 
 const MERMAID_PATTERN = /(?:```|~~~)[ \t]*mermaid|class=["'][^"']*\bmermaid\b/i;
-const HANDLEBARS_PATTERN = /\{\{[^}]*\}\}/;
 
 function trackTextPanelUsage(dashboard: DashboardScene) {
   if (!isTextV2WithNewFeatures()) {
@@ -158,7 +157,6 @@ function getTextPanelUsage(panels: VizPanel[]) {
     mermaid_count: 0,
     handlebars_count: 0,
     data_macro_count: 0,
-    data_bound_handlebars_count: 0,
     per_row_count: 0,
   };
 
@@ -172,17 +170,13 @@ function getTextPanelUsage(panels: VizPanel[]) {
         usage.mermaid_count++;
       }
 
-      if (HANDLEBARS_PATTERN.test(content)) {
+      if (dataUsage.handlebars) {
         usage.handlebars_count++;
       }
     }
 
     if (dataUsage.dataMacros) {
       usage.data_macro_count++;
-    }
-
-    if (dataUsage.dataBoundHandlebars === true) {
-      usage.data_bound_handlebars_count++;
     }
 
     if (dataUsage.perRow) {

@@ -15,40 +15,22 @@ it.each([
 
 it.each([
   '{{data.0.cpu}}',
-  '{{#each frames}}{{refId}}{{/each}}',
-  '{{json data}}',
-  '{{#if (gt data.length 0)}}yes{{/if}}',
-  '{{lookup this "data"}}',
-  '{{#each (variable "hosts")}}{{@root.data.0.cpu}}{{/each}}',
-  '{{#with (variableValue "host")}}{{../data.0.cpu}}{{/with}}',
-  '{{variableValue "__data.fields.cpu"}}',
-  '{{> dynamicPartial}}',
-])('protects data-bound Handlebars %s', (content) => {
-  expect(getTextDataUsage({ content }).dataBoundHandlebars).toBe(true);
-});
-
-it.each([
-  'Static content',
-  '${host}',
   '{{date}}',
-  '{{#if (eq "a" "a")}}yes{{/if}}',
   '{{variableValue "host"}}',
-  '{{join (variable "hosts") ", "}}',
-  '{{#each (variable "hosts")}}{{this}} {{@index}}{{/each}}',
-  '{{#each (variable "hosts") as |host|}}{{host}}{{/each}}',
-  '{{#with (variableValue "host")}}{{this}}{{/with}}',
+  '{{> dynamicPartial}}',
   '{{! data.0.cpu }}',
   '\\{{data.0.cpu}}',
-])('does not infer data use from static Handlebars %s', (content) => {
-  expect(getTextDataUsage({ content }).dataBoundHandlebars).toBe(false);
+  '{{#each data}}',
+])('conservatively treats Handlebars as possible data use: %s', (content) => {
+  expect(getTextDataUsage({ content }).handlebars).toBe(true);
 });
 
-it('protects malformed templates without reporting confirmed data-bound Handlebars', () => {
-  expect(getTextDataUsage({ content: '{{#each data}}' }).dataBoundHandlebars).toBeUndefined();
+it('does not report Handlebars for static content', () => {
+  expect(getTextDataUsage({ content: 'Static ${host}' }).handlebars).toBe(false);
 });
 
 it('does not interpret Handlebars in Code mode, but still recognizes macros and per-row rendering', () => {
   expect(
     getTextDataUsage({ mode: TextMode.Code, content: '{{data}} ${__value.text}', renderMode: RenderMode.PerRow })
-  ).toEqual({ dataMacros: true, perRow: true, dataBoundHandlebars: false });
+  ).toEqual({ dataMacros: true, handlebars: false, perRow: true });
 });
