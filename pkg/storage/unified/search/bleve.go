@@ -574,8 +574,7 @@ func (b *bleveBackend) shouldUpload(ctx context.Context, key resource.Namespaced
 
 	lastUploadTime, ok := b.getUploadTracking(key)
 	if !ok {
-		// An index reopened from disk has no tracking even when the store already
-		// holds a copy of its build.
+		// A reopened index has no upload history.
 		lastUploadTime, ok = b.seedUploadTrackingFromRemote(ctx, key, idx, now)
 		if !ok {
 			return true, nil
