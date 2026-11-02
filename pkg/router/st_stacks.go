@@ -105,7 +105,16 @@ func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (
 	// One caller cancelling must not cancel the lookup shared by other callers.
 	lookupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), singleTenantLookupTimeout)
 	defer cancel()
+	resolveStart := time.Now()
 	host, err := st.resolveHost(lookupCtx, stackID)
+	switch {
+	case err != nil:
+		st.lookupDurations[2].observe(time.Since(resolveStart))
+	case host.URL == "":
+		st.lookupDurations[1].observe(time.Since(resolveStart))
+	default:
+		st.lookupDurations[0].observe(time.Since(resolveStart))
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -142,6 +151,10 @@ const singleTenantStackURLFormat = "http://%s-grafana-http.hosted-grafana.svc.cl
 const maxStackResponseBytes = 1 << 20 // 1MB
 
 // The results of this call are cached
+// gcomClient is http.DefaultClient with tracing, so a lookup shows as a span
+// under the request that caused it.
+var gcomClient = &http.Client{Transport: newBackendTransport(http.DefaultTransport)}
+
 func newGComURLResolver(gcomBaseURL string, gcomToken string) func(context.Context, int64) (singleTenantStack, error) {
 	// mirroring grafana's pkg/services/gcom
 	type instance struct {
@@ -163,7 +176,7 @@ func newGComURLResolver(gcomBaseURL string, gcomToken string) func(context.Conte
 		}
 		req.Header.Set("Authorization", "Bearer "+gcomToken)
 		// #nosec G704 -- req targets the operator-controlled Grafana.com API URL constructed above.
-		resp, err := http.DefaultClient.Do(req)
+		resp, err := gcomClient.Do(req)
 		if err != nil {
 			return singleTenantStack{}, fmt.Errorf("fetching gcom instance: %w", err)
 		}

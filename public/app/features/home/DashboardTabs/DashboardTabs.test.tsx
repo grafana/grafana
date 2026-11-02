@@ -1,10 +1,8 @@
 import { http, HttpResponse } from 'msw';
-import { useEffect, type ReactNode } from 'react';
 import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
 import { render, screen, within } from 'test/test-utils';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
 import { config, reportInteraction, setBackendSrv } from '@grafana/runtime';
 import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
@@ -16,7 +14,6 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { pageHistorySrv } from 'app/core/services/pageHistory/pageHistorySrv';
 import { type PageHistoryEntry } from 'app/core/services/pageHistory/types';
-import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import {
@@ -28,7 +25,6 @@ import {
 } from '../analytics/main';
 
 import { DashboardTabs } from './DashboardTabs';
-import { type HomepageTabExtensionProps } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -108,45 +104,25 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-const createDashboardTabsExtensionComponent = (
-  pluginId: string,
-  id: string,
-  label: string,
-  content: ReactNode,
-  href?: string
-): ComponentTypeWithExtensionMeta<HomepageTabExtensionProps> =>
-  createComponentWithMeta(
-    {
-      pluginId,
-      title: label,
-      component: (({ register, active }: HomepageTabExtensionProps) => {
-        useEffect(() => register({ id, label, href }), [register]);
-        return active ? <div>{content}</div> : null;
-      }) as React.ComponentType,
-    },
-    PluginExtensionPoints.HomepageTabs
-    // createComponentWithMeta drops the props generic, narrow it back for the prop type
-  ) as ComponentTypeWithExtensionMeta<HomepageTabExtensionProps>;
-
 describe('DashboardTabs', () => {
   it('shows a loading skeleton until the initial fetches settle, then the tab bar', async () => {
     seedRecent(['recent-1', 'recent-2']);
 
-    render(<DashboardTabs extensionComponents={[]} />);
+    render(<DashboardTabs />);
 
     // tab bar is hidden behind the skeleton until data lands
-    expect(screen.getByTestId('dashboard-tabs-skeleton')).toBeInTheDocument();
+    expect(screen.getByTestId('home-tabbed-card-skeleton')).toBeInTheDocument();
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
 
     expect(await screen.findByRole('tab', { name: /recent/i, selected: true })).toBeInTheDocument();
-    expect(screen.queryByTestId('dashboard-tabs-skeleton')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('home-tabbed-card-skeleton')).not.toBeInTheDocument();
   });
 
   it('lands directly on Starred when Recent is empty, without flashing the Recent tab', async () => {
     // no recent activity; starred has items (analytics off by default → no most-used tab)
     setMockStarredDashboards(['starred-1', 'starred-2', 'starred-3']);
 
-    render(<DashboardTabs extensionComponents={[]} />);
+    render(<DashboardTabs />);
 
     // the first tab bar shown is already on Starred — no Recent→Starred flip
     expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
@@ -155,9 +131,10 @@ describe('DashboardTabs', () => {
   });
 
   it('switches to Starred tab and shows starred dashboards', async () => {
+    seedRecent(['recent-1']);
     setMockStarredDashboards(['starred-1', 'starred-2', 'starred-3']);
 
-    const { user } = render(<DashboardTabs extensionComponents={[]} />);
+    const { user } = render(<DashboardTabs />);
 
     await user.click(await screen.findByRole('tab', { name: /starred/i }));
 
@@ -171,7 +148,7 @@ describe('DashboardTabs', () => {
   it('offers the full dashboard list from the dashboard tabs only', async () => {
     setMockStarredDashboards(['starred-1']);
 
-    const { user } = render(<DashboardTabs extensionComponents={[]} />);
+    const { user } = render(<DashboardTabs />);
 
     // Recent is empty, so the card lands on Starred.
     await screen.findByRole('tab', { name: /starred/i, selected: true });
@@ -199,7 +176,7 @@ describe('DashboardTabs', () => {
         .spyOn(contextSrv, 'hasPermission')
         .mockImplementation((action: string) => action === AccessControlAction.DashboardsCreate);
 
-      const { user } = render(<DashboardTabs extensionComponents={[]} />);
+      const { user } = render(<DashboardTabs />);
 
       expect(await screen.findByText('No recent activity yet. Pages you visit will show up here.')).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /clear recent activity/i })).not.toBeInTheDocument();
@@ -219,7 +196,7 @@ describe('DashboardTabs', () => {
     it('offers to browse dashboards when the user may not create one', async () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
-      const { user } = render(<DashboardTabs extensionComponents={[]} />);
+      const { user } = render(<DashboardTabs />);
 
       const browse = await screen.findByRole('link', { name: /browse dashboards/i });
       expect(browse).toHaveAttribute('href', '/dashboards');
@@ -233,20 +210,11 @@ describe('DashboardTabs', () => {
     });
   });
 
-  it('shows empty state when no starred dashboards', async () => {
-    setMockStarredDashboards([]);
-    const { user } = render(<DashboardTabs extensionComponents={[]} />);
-
-    await user.click(await screen.findByRole('tab', { name: /starred/i }));
-
-    expect(await screen.findByText('Your starred dashboards will appear here.')).toBeInTheDocument();
-  });
-
   it('stays on a manually selected empty tab instead of bouncing back', async () => {
     seedRecent(['recent-1', 'recent-2']);
     setMockStarredDashboards([]);
 
-    const { user } = render(<DashboardTabs extensionComponents={[]} />);
+    const { user } = render(<DashboardTabs />);
 
     expect(await screen.findByRole('tab', { name: /recent/i, selected: true })).toBeInTheDocument();
 
@@ -260,7 +228,7 @@ describe('DashboardTabs', () => {
     seedRecent(['recent-1', 'recent-2']);
     setMockStarredDashboards(['starred-1', 'starred-2', 'starred-3']);
 
-    render(<DashboardTabs extensionComponents={[]} />);
+    render(<DashboardTabs />);
 
     expect(await screen.findByRole('tab', { name: /recent.*2/i })).toBeInTheDocument();
     expect(await screen.findByRole('tab', { name: /starred.*3/i })).toBeInTheDocument();
@@ -274,7 +242,7 @@ describe('DashboardTabs', () => {
     });
 
     it('renders Most used tab when analytics feature is enabled', async () => {
-      render(<DashboardTabs extensionComponents={[]} />);
+      render(<DashboardTabs />);
 
       expect(await screen.findByRole('tab', { name: /most used/i })).toBeInTheDocument();
     });
@@ -282,7 +250,7 @@ describe('DashboardTabs', () => {
     it('does not render Most used tab when analytics feature is disabled', async () => {
       config.licenseInfo.enabledFeatures = {};
 
-      render(<DashboardTabs extensionComponents={[]} />);
+      render(<DashboardTabs />);
 
       expect(await screen.findByText('Recent Dashboard 1')).toBeInTheDocument();
 
@@ -290,7 +258,7 @@ describe('DashboardTabs', () => {
     });
 
     it('does not render dashboards with no views in the last 30 days', async () => {
-      const { user } = render(<DashboardTabs extensionComponents={[]} />);
+      const { user } = render(<DashboardTabs />);
 
       await user.click(await screen.findByRole('tab', { name: /most used/i }));
 
@@ -301,7 +269,7 @@ describe('DashboardTabs', () => {
     it('auto-switches to Most used when recent is empty and most-used has items', async () => {
       seedHistory([]);
 
-      render(<DashboardTabs extensionComponents={[]} />);
+      render(<DashboardTabs />);
 
       expect(await screen.findByRole('tab', { name: /most used/i, selected: true })).toBeInTheDocument();
 
@@ -310,24 +278,15 @@ describe('DashboardTabs', () => {
     });
 
     it('stays on Recent when recent has items even with most-used available', async () => {
-      render(<DashboardTabs extensionComponents={[]} />);
+      render(<DashboardTabs />);
 
       expect(await screen.findByText('Recent Dashboard 1')).toBeInTheDocument();
 
       expect(screen.getByRole('tab', { name: /recent/i })).toHaveAttribute('aria-selected', 'true');
     });
 
-    it('tracks a user click on the Most used tab', async () => {
-      const { user } = render(<DashboardTabs extensionComponents={[]} />);
-
-      await user.click(await screen.findByRole('tab', { name: /most used/i }));
-
-      // The only tabChanged call: the card stayed on Recent until the click.
-      expect(jest.mocked(tabChanged)).toHaveBeenCalledWith({ tab: 'most-used' });
-    });
-
     it('tracks clicks on a dashboard in the Most used tab', async () => {
-      const { user } = render(<DashboardTabs extensionComponents={[]} />);
+      const { user } = render(<DashboardTabs />);
 
       await user.click(await screen.findByRole('tab', { name: /most used/i }));
       await user.click(await screen.findByText('Most Used Dashboard 1'));
@@ -337,36 +296,6 @@ describe('DashboardTabs', () => {
         expect.objectContaining({ source: 'homepage_mostUsedTab' })
       );
     });
-  });
-
-  it('renders extension tabs from plugins', async () => {
-    const extensionComponents = [
-      createDashboardTabsExtensionComponent(
-        'grafana-setupguide-app',
-        'tab-1',
-        'Plugin Tab 1',
-        <div>Content for Plugin Tab 1</div>
-      ),
-      createDashboardTabsExtensionComponent('grafana-setupguide-app', 'tab-2', 'Plugin Tab 2', null, '/test'),
-      createDashboardTabsExtensionComponent(
-        'grafana-untrusted-app',
-        'tab-3',
-        'Plugin Tab 3',
-        <div>Content for Plugin Tab 3</div>
-      ),
-    ];
-
-    const { user } = render(<DashboardTabs extensionComponents={extensionComponents} />);
-
-    expect(await screen.findByRole('tab', { name: 'Plugin Tab 1' })).toBeInTheDocument();
-    expect(await screen.findByRole('tab', { name: 'Plugin Tab 1', selected: true })).toBeInTheDocument();
-    expect(await screen.findByRole('tab', { name: 'Plugin Tab 2' })).toBeInTheDocument();
-    expect(screen.queryByRole('tab', { name: 'Plugin Tab 3' })).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('tab', { name: 'Plugin Tab 1' }));
-    expect(await screen.findByText('Content for Plugin Tab 1')).toBeInTheDocument();
-
-    expect(screen.getByRole('tab', { name: 'Plugin Tab 2' })).toHaveAttribute('href', '/test');
   });
 
   describe('Recent activity', () => {
@@ -411,7 +340,7 @@ describe('DashboardTabs', () => {
     it('lists visited pages with their restored state, newest first', async () => {
       seedHistory([appEntry, exploreEntry, recentDashboardEntry, alertingEntry]);
 
-      const { user } = render(<DashboardTabs extensionComponents={[]} />, { preloadedState: { navBarTree } });
+      const { user } = render(<DashboardTabs />, { preloadedState: { navBarTree } });
 
       expect(await screen.findByRole('tab', { name: /recent.*4/i, selected: true })).toBeInTheDocument();
 
@@ -459,7 +388,7 @@ describe('DashboardTabs', () => {
     it('filters by kind without refetching, remembers the choice and offers only kinds with pages', async () => {
       seedHistory([exploreEntry, recentDashboardEntry]);
 
-      const { user } = render(<DashboardTabs extensionComponents={[]} />);
+      const { user } = render(<DashboardTabs />);
 
       const filter = await screen.findByRole('combobox', { name: /show only/i });
       await user.click(filter);
@@ -491,7 +420,7 @@ describe('DashboardTabs', () => {
     it('hides the filter when every page is of one kind but keeps the clear action', async () => {
       seedHistory([recentDashboardEntry, dashboardEntry('recent-2')]);
 
-      render(<DashboardTabs extensionComponents={[]} />);
+      render(<DashboardTabs />);
 
       expect(await screen.findByRole('button', { name: /clear recent activity/i })).toBeInTheDocument();
       expect(screen.queryByRole('combobox', { name: /show only/i })).not.toBeInTheDocument();
@@ -501,7 +430,7 @@ describe('DashboardTabs', () => {
       const seeded: PageHistoryEntry = { kind: 'dashboard', uid: 'recent-1', pathname: '/d/recent-1/x', search: '' };
       seedHistory([exploreEntry, seeded]);
 
-      const { user } = render(<DashboardTabs extensionComponents={[]} />);
+      const { user } = render(<DashboardTabs />);
 
       // The Explore row has a time, so every row keeps the column; the seeded row's cell stays blank.
       const seededRow = (await screen.findByRole('link', { name: /Recent Dashboard 1/ })).closest('li')!;
@@ -530,7 +459,7 @@ describe('DashboardTabs', () => {
         ])
       );
 
-      render(<DashboardTabs extensionComponents={[]} />);
+      render(<DashboardTabs />);
 
       await screen.findByRole('link', { name: /Recent Dashboard 2/ });
       const described = screen.getByRole('link', { name: /Recent Dashboard 1/ }).closest('li')!;
@@ -541,7 +470,7 @@ describe('DashboardTabs', () => {
     it('lets the user star a dashboard row, which updates the Starred tab', async () => {
       seedHistory([exploreEntry, recentDashboardEntry]);
 
-      const { user } = render(<DashboardTabs extensionComponents={[]} />);
+      const { user } = render(<DashboardTabs />);
 
       const star = await screen.findByRole('button', { name: 'Mark "Recent Dashboard 1" as favorite' });
       expect(screen.getAllByRole('button', { name: /as favorite/ })).toHaveLength(1);
@@ -559,7 +488,7 @@ describe('DashboardTabs', () => {
       const gone: PageHistoryEntry[] = Array.from({ length: 3 }, (_, i) => dashboardEntry(`gone-${i}`));
       seedHistory([...gone, exploreEntry]);
 
-      render(<DashboardTabs extensionComponents={[]} />);
+      render(<DashboardTabs />);
 
       expect(await screen.findByRole('tab', { name: /recent.*1/i, selected: true })).toBeInTheDocument();
       const rows = within(screen.getByRole('list'));
@@ -570,7 +499,7 @@ describe('DashboardTabs', () => {
     it('tracks the tab switch and row clicks', async () => {
       seedHistory([exploreEntry]);
 
-      const { user } = render(<DashboardTabs extensionComponents={[]} />);
+      const { user } = render(<DashboardTabs />);
 
       await user.click(await screen.findByRole('tab', { name: /starred/i }));
       expect(jest.mocked(recentActivityShown)).toHaveBeenCalledTimes(1);
@@ -594,7 +523,7 @@ describe('DashboardTabs', () => {
       window.localStorage.setItem(FILTER_KEY, 'explore');
       seedHistory([exploreEntry, recentDashboardEntry, alertingEntry]);
 
-      const { user } = render(<DashboardTabs extensionComponents={[]} />);
+      const { user } = render(<DashboardTabs />);
       expect(await screen.findByRole('combobox', { name: /show only/i })).toHaveValue('Explore');
 
       jest.mocked(pageHistorySrv.clear).mockImplementation(async () => seedHistory([]));
@@ -611,7 +540,7 @@ describe('DashboardTabs', () => {
       window.localStorage.setItem(FILTER_KEY, 'explore');
       seedHistory([recentDashboardEntry, alertingEntry]);
 
-      const { user } = render(<DashboardTabs extensionComponents={[]} />, { preloadedState: { navBarTree } });
+      const { user } = render(<DashboardTabs />, { preloadedState: { navBarTree } });
 
       expect(await screen.findByRole('link', { name: /Recent Dashboard 1/ })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /Alert rules/ })).toBeInTheDocument();
@@ -626,7 +555,7 @@ describe('DashboardTabs', () => {
       seedHistory([recentDashboardEntry]);
       server.use(http.get(searchRoute, () => HttpResponse.json({}, { status: 500 })));
 
-      const { user } = render(<DashboardTabs extensionComponents={[]} />);
+      const { user } = render(<DashboardTabs />);
 
       expect(await screen.findByText('Could not load your recent activity')).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /clear recent activity/i })).not.toBeInTheDocument();

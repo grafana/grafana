@@ -1,0 +1,47 @@
+{
+  "body": {
+    "dashboard": {
+      "id": "<id>",
+      "schemaVersion": 41,
+      "tags": [
+        "golden"
+      ],
+      "title": "Golden provisioned",
+      "uid": "golden-provisioned",
+      "version": 1
+    },
+    "meta": {
+      "annotationsPermissions": {
+        "dashboard": {
+          "canAdd": true,
+          "canDelete": true,
+          "canEdit": true
+        }
+      },
+      "apiVersion": "v0alpha1",
+      "canAdmin": true,
+      "canDelete": true,
+      "canEdit": true,
+      "canSave": true,
+      "canStar": true,
+      "created": "<timestamp>",
+      "createdBy": "Anonymous",
+      "expires": "0001-01-01T00:00:00Z",
+      "folderId": 0,
+      "folderTitle": "General",
+      "folderUid": "",
+      "folderUrl": "",
+      "hasAcl": false,
+      "isFolder": false,
+      "provisioned": true,
+      "provisionedExternalId": "golden-provisioned.json",
+      "slug": "golden-provisioned",
+      "type": "db",
+      "updated": "<timestamp>",
+      "updatedBy": "Anonymous",
+      "url": "/d/golden-provisioned/golden-provisioned",
+      "version": 1
+    }
+  },
+  "status": 200
+}

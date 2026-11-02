@@ -116,6 +116,8 @@ export const FlagKeys = {
   DashboardUndoRedo: "dashboardUndoRedo",
   /** Enables dashboard validator app to run compatibility checks between a dashboard and data source */
   DashboardValidatorApp: "dashboardValidatorApp",
+  /** Stops an open dashboard from subscribing to Grafana Live save notices */
+  DashboardsDisableLiveSaveNotices: "dashboards.disableLiveSaveNotices",
   /** Disables public dashboards for the stack */
   DashboardsDisablePublicDashboards: "dashboards.disablePublicDashboards",
   /** Expands a horizontal repeat copied from a library panel definition to the full grid width, matching how horizontal repeats on dashboard panels are laid out */
@@ -200,8 +202,6 @@ export const FlagKeys = {
   GrafanaFilterablePanels: "grafana.filterablePanels",
   /** Adds an experimental Protomaps vector basemap to the geomap panel */
   GrafanaGeomapProtomapsBasemap: "grafana.geomapProtomapsBasemap",
-  /** Enables PLG-focused growth redesign of the unified homepage */
-  GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Deprecated: Toggle displayed fields from Log Details */
@@ -270,6 +270,8 @@ export const FlagKeys = {
   GrafanaAPIServerWithExperimentalAPIs: "grafanaAPIServerWithExperimentalAPIs",
   /** Enables the Graphite data source full backend mode */
   GraphiteBackendMode: "graphiteBackendMode",
+  /** Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis */
+  HeatmapNegativeLogBuckets: "heatmapNegativeLogBuckets",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Adds support for Kubernetes correlations */
@@ -966,6 +968,17 @@ export const useFlagDashboardValidatorApp = (options?: ReactFlagEvaluationOption
 };
 
 /**
+ * Stops an open dashboard from subscribing to Grafana Live save notices
+ *
+ * **Details:**
+ * - flag key: `dashboards.disableLiveSaveNotices`
+ * - default value: `false`
+ */
+export const useFlagDashboardsDisableLiveSaveNotices = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboards.disableLiveSaveNotices", false, options).value;
+};
+
+/**
  * Disables public dashboards for the stack
  *
  * **Details:**
@@ -1428,17 +1441,6 @@ export const useFlagGrafanaGeomapProtomapsBasemap = (options?: ReactFlagEvaluati
 };
 
 /**
- * Enables PLG-focused growth redesign of the unified homepage
- *
- * **Details:**
- * - flag key: `grafana.growthHomepage`
- * - default value: `false`
- */
-export const useFlagGrafanaGrowthHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.growthHomepage", false, options).value;
-};
-
-/**
  * Enables usage of the new annotations API client
  *
  * **Details:**
@@ -1810,6 +1812,17 @@ export const useFlagGrafanaAPIServerWithExperimentalAPIs = (options?: ReactFlagE
  */
 export const useFlagGraphiteBackendMode = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("graphiteBackendMode", false, options).value;
+};
+
+/**
+ * Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis
+ *
+ * **Details:**
+ * - flag key: `heatmapNegativeLogBuckets`
+ * - default value: `false`
+ */
+export const useFlagHeatmapNegativeLogBuckets = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("heatmapNegativeLogBuckets", false, options).value;
 };
 
 /**
