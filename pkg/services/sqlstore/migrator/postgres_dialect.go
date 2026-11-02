@@ -115,8 +115,9 @@ func (db *PostgresDialect) IndexCheckSQL(tableName, indexName string) (string, [
 }
 
 func (db *PostgresDialect) ColumnCheckSQL(tableName, columnName string) (string, []any) {
-	args := []any{tableName, columnName}
-	sql := "SELECT 1 FROM " + db.Quote("information_schema") + "." + db.Quote("columns") + " WHERE " + db.Quote("table_schema") + " = current_schema() AND " + db.Quote("table_name") + "=? AND " + db.Quote("column_name") + "=?"
+	// to_regclass resolves the table through the whole search_path, like the ALTER TABLE that adds the column.
+	args := []any{db.Quote(tableName), columnName}
+	sql := "SELECT 1 FROM pg_attribute WHERE attrelid = to_regclass(?) AND attname = ? AND attnum > 0 AND NOT attisdropped"
 	return sql, args
 }
 
