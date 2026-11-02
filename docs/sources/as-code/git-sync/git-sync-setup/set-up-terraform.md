@@ -65,17 +65,17 @@ Configure the [Grafana Terraform provider](https://registry.terraform.io/provide
       }
 
       provider "grafana" {
-        url = "https://'<STACK-URL>'.grafana.net/"
-        auth = "<YOUR-SERVICE-ACCOUNT-TOKEN>"
-        stack_id = "<YOUR-STACK-ID>"
+        url = "https://'<STACK_URL>'.grafana.net/"
+        auth = "<YOUR_SERVICE_ACCOUNT_TOKEN>"
+        stack_id = "<YOUR_STACK_ID>"
       }
    ```
 
 Replace the following field values:
 
-- _`<STACK-URL>`_: The URL of your Grafana stack. For example, `https://my-stack.grafana.net/`.
-- _`<YOUR-SERVICE-ACCOUNT-TOKEN>`_: The service account token that you created, or `<USERNAME>:<PASSWORD>` for basic auth.
-- _`<YOUR-STACK-ID>`_: The Grafana stack ID, if you're using a Grafana Cloud stack.
+- _`<STACK_URL>`_: The URL of your Grafana stack. For example, `https://my-stack.grafana.net/`.
+- _`<YOUR_SERVICE_ACCOUNT_TOKEN>`_: The service account token that you created, or `<USERNAME>:<PASSWORD>` for basic auth.
+- _`<YOUR_STACK_ID>`_: The Grafana stack ID, if you're using a Grafana Cloud stack.
 
 {{< admonition type="caution" >}}
 
@@ -107,7 +107,7 @@ resource "grafana_apps_provisioning_connection_v0alpha1" "example" {
   spec {
     title       = "My Connection"
     description = "Connection used by a folder-scoped Git Sync repository"
-    type        = "<CONNECTION-TYPE>" # githubOAuth, githubEnterpriseOAuth, gitlabOAuth, bitbucketOAuth, or gitOAuth
+    type        = "<CONNECTION_TYPE>" # githubOAuth, githubEnterpriseOAuth, gitlabOAuth, bitbucketOAuth, or gitOAuth
     url         = "https://connection.com"
   }
 
@@ -122,7 +122,7 @@ resource "grafana_apps_provisioning_connection_v0alpha1" "example" {
 
 Replace the following field values:
 
-- _`<CONNECTION-TYPE>`_: The Git provider type. For example, `github`, `gitlab` or `bitbucket`.
+- _`<CONNECTION_TYPE>`_: The Git provider type. For example, `github`, `gitlab` or `bitbucket`.
 
 For more details, optional fields, and examples, refer to [Connection resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_provisioning_connection_v0alpha1) in the Terraform registry.
 
@@ -146,14 +146,14 @@ resource "grafana_apps_provisioning_repository_v0alpha1" "example" {
     workflows = "<YOUR-WORKFLOW>"
 
     sync {
-      enabled          = "<SYNC-ENABLED>"
-      target           = "<YOUR-SYNC-TARGET>"
-      interval_seconds = 60 # Set up TBC
+      enabled          = "<SYNC_ENABLED>"
+      target           = "<YOUR_SYNC_TARGET>"
+      interval_seconds = "<SYNC_INTERVAL>"
     }
 
     github {
-      url    = "<YOUR-GITHUB-REPO-URL>"
-      branch = "<SYNC-BRANCH>"
+      url    = "<YOUR_GITHUB_REPO_URL>"
+      branch = "<SYNC_BRANCH>"
       path   = "grafanatftest"
     }
 
@@ -173,10 +173,11 @@ resource "grafana_apps_provisioning_repository_v0alpha1" "example" {
 
 Replace the following field values:
 
-- _`<YOUR-WORKFLOW>`_: The workflow you want Git Sync to use. Set to `write` to allow direct commits, or to `branch` to force using PRs.
-- _`<SYNC-ENABLED>`_: Whether you want to enable automatic synchronization. Allowed values are `true` and `false`.
-- _`<YOUR-SYNC-TARGET>`_: Where you want to place your provisioned resources. Git Sync supports two sync targets: `folder` (default) creates a folder named after the repository and places synced resources inside it, while `folderless` places synced resources at the top level without creating a wrapper folder. Refer to [Sync targets](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/key-concepts/#sync-targets) for details.
-- _`<YOUR-GITHUB-REPO-URL>`_: The repository you want to synchronize using Git Sync. For example, `https://github.com/example/grafana-dashboards`.
-- _`<SYNC-BRANCH>`_: The branch where you want to perform the sync. For example, `main`.
+- _`<YOUR_WORKFLOW>`_: The workflow you want Git Sync to use. Set to `write` to allow direct commits, or to `branch` to force using PRs.
+- _`<SYNC_ENABLED>`_: Whether you want to enable automatic synchronization. Allowed values are `true` and `false`.
+- _`<YOUR_SYNC_TARGET>`_: Where you want to place your provisioned resources. Git Sync supports two sync targets: `folder` (default) creates a folder named after the repository and places synced resources inside it, while `folderless` places synced resources at the top level without creating a wrapper folder. Refer to [Sync targets](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/key-concepts/#sync-targets) for details.
+- _`<SYNC_INTERVAL>`_: How often your Grafana instance automatically pulls updates from the folder managed with Git Sync. The default value is `300` seconds in Grafana Cloud, and `60` seconds in Grafana OSS/Enterprise.
+- _`<YOUR_GITHUB_REPO_URL>`_: The repository you want to synchronize using Git Sync. For example, `https://github.com/example/grafana-dashboards`.
+- _`<SYNC_BRANCH>`_: The branch where you want to perform the sync. For example, `main`.
 
 For more details and examples such as a GitHub repository via GitHub App Connection or a GitLab/Bitbucket repository with a token authentication, refer to [Repository resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_provisioning_repository_v0alpha1) in the Terraform registry.
