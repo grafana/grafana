@@ -63,6 +63,28 @@ const LAYOUT_SETTLE_MS = 1000;
 /** Upper bound so a layout that keeps resizing cannot hold the scroll position forever */
 const MAX_FOLLOW_MS = 10_000;
 const USER_SCROLL_EVENTS = ['wheel', 'touchstart', 'keydown', 'pointerdown'] as const;
+/** Other keys, like a modifier pressed to switch apps while the dashboard loads, must not cancel the row link */
+const SCROLL_KEYS = new Set([
+  'ArrowUp',
+  'ArrowDown',
+  'ArrowLeft',
+  'ArrowRight',
+  'PageUp',
+  'PageDown',
+  'Home',
+  'End',
+  ' ',
+]);
+
+/**
+ * The browser keeps animating a smooth scrollIntoView after we stop following the row and lets it override
+ * the user's own scrolling, so stop it by scrolling every container to where it is now.
+ */
+function stopScrollAnimation(element: HTMLElement) {
+  for (let target = element.parentElement; target; target = target.parentElement) {
+    target.scrollTo({ top: target.scrollTop, left: target.scrollLeft, behavior: 'instant' });
+  }
+}
 
 /**
  * When a dashboard is opened from a row link, the row is scrolled to before the layouts above it
@@ -86,8 +108,20 @@ export function keepRowInViewWhileLayoutSettles(row: RowItemLike): () => void {
     clearTimeout(settleTimer);
     clearTimeout(maxTimer);
     for (const event of USER_SCROLL_EVENTS) {
-      window.removeEventListener(event, stop, true);
+      window.removeEventListener(event, stopOnUserInput, true);
     }
+  }
+
+  function stopOnUserInput(event: Event) {
+    if (event instanceof KeyboardEvent && !SCROLL_KEYS.has(event.key)) {
+      return;
+    }
+
+    const element = row.containerRef.current;
+    if (element) {
+      stopScrollAnimation(element);
+    }
+    stop();
   }
 
   function observe() {
@@ -118,7 +152,7 @@ export function keepRowInViewWhileLayoutSettles(row: RowItemLike): () => void {
   }
 
   for (const event of USER_SCROLL_EVENTS) {
-    window.addEventListener(event, stop, { capture: true, passive: true });
+    window.addEventListener(event, stopOnUserInput, { capture: true, passive: true });
   }
 
   observe();

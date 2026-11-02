@@ -455,14 +455,53 @@ describe('DashboardSceneUrlSync', () => {
         expect(resizeObservers[0].observed).toEqual([]);
       });
 
-      it('stops following the row once the user scrolls', () => {
+      it('stops following the row and its running scroll animation once the user scrolls', () => {
         const { scene } = buildTestSceneWithRow('Metrics');
+        const scrollToSpy = jest.spyOn(Element.prototype, 'scrollTo');
+        document.documentElement.scrollTop = 120;
 
         scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
         window.dispatchEvent(new WheelEvent('wheel'));
         resizeLayout();
 
         expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+        expect(scrollToSpy.mock.contexts).toEqual([document.body, document.documentElement]);
+        expect(scrollToSpy).toHaveBeenLastCalledWith({ top: 120, left: 0, behavior: 'instant' });
+        scrollToSpy.mockRestore();
+        document.documentElement.scrollTop = 0;
+      });
+
+      it('stops following the row when the user presses a key that scrolls the page', () => {
+        const { scene } = buildTestSceneWithRow('Metrics');
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'PageUp' }));
+        resizeLayout();
+
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+      });
+
+      it('keeps following the row when the user presses a key that does not scroll the page', () => {
+        const { scene } = buildTestSceneWithRow('Metrics');
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Meta' }));
+        resizeLayout();
+
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
+      });
+
+      it('lets the last scroll animation finish once the layout has settled', () => {
+        const { scene } = buildTestSceneWithRow('Metrics');
+        const scrollToSpy = jest.spyOn(Element.prototype, 'scrollTo');
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+        resizeLayout();
+        jest.advanceTimersByTime(1000);
+        window.dispatchEvent(new WheelEvent('wheel'));
+
+        expect(scrollToSpy).not.toHaveBeenCalled();
+        scrollToSpy.mockRestore();
       });
 
       it('stops following the previous row when a new row link arrives', () => {
