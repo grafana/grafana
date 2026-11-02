@@ -10,6 +10,7 @@ import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { contextSrv } from 'app/core/services/context_srv';
 import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { buildShareUrl } from '../sharing/ShareButton/utils';
@@ -20,6 +21,7 @@ import { tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { DashboardScene } from './DashboardScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { RowItem } from './layout-rows/RowItem';
 
 // Mock dependencies
 jest.mock('app/core/app_events', () => ({
@@ -741,6 +743,42 @@ describe('setupKeyboardShortcuts', () => {
         getBinding('p c')!.onTrigger();
 
         expect(mockScene.copyPanel).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('remove panel (p r)', () => {
+      beforeEach(() => {
+        jest.useFakeTimers();
+        mockScene.setState({ isEditing: true });
+      });
+
+      afterEach(() => {
+        jest.useRealTimers();
+      });
+
+      it('asks to confirm removing the focused panel', () => {
+        const panel = new VizPanel({ key: 'panel-1', pluginId: 'table' });
+        jest.mocked(findVizPanelByPathId).mockReturnValue(panel);
+        setupKeyboardShortcuts(mockScene);
+        focusPanel('panel-1');
+
+        getBinding('p r')!.onTrigger();
+        jest.runAllTimers();
+
+        expect(appEvents.publish).toHaveBeenCalledWith(expect.any(ShowConfirmModalEvent));
+      });
+
+      it('does nothing when the focused panel is inside a repeated row clone', () => {
+        const panel = new VizPanel({ key: 'panel-1', pluginId: 'table' });
+        new RowItem({ repeatSourceKey: 'row-1', layout: DefaultGridLayoutManager.fromVizPanels([panel]) });
+        jest.mocked(findVizPanelByPathId).mockReturnValue(panel);
+        setupKeyboardShortcuts(mockScene);
+        focusPanel('row-1-clone-1/panel-1');
+
+        getBinding('p r')!.onTrigger();
+        jest.runAllTimers();
+
+        expect(appEvents.publish).not.toHaveBeenCalledWith(expect.any(ShowConfirmModalEvent));
       });
     });
 

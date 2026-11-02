@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash';
+import { isEmpty, noop } from 'lodash';
 import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useAsync, useToggle } from 'react-use';
@@ -13,7 +13,6 @@ import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   Box,
-  CodeEditor,
   Collapse,
   Combobox,
   type ComboboxOption,
@@ -26,6 +25,7 @@ import {
   Stack,
   Text,
 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
@@ -568,17 +568,13 @@ function OverrideWarning({ rulesThatMightBeOverwritten }: { rulesThatMightBeOver
           isOpen={showDetails}
           onToggle={toggleShowDetails}
         >
-          <CodeEditor
-            width="100%"
-            height={300}
+          <CodeMirrorEditor
+            height="300px"
             language="json"
             value={JSON.stringify(rulesThatMightBeOverwritten, null, 2)}
-            monacoOptions={{
-              minimap: { enabled: false },
-              scrollBeyondLastLine: false,
-              lineNumbers: 'on',
-              readOnly: true,
-            }}
+            onChange={noop}
+            readOnly
+            aria-label={t('alerting.import-to-gma.step2.override-warning-details', 'Rules that might be overwritten')}
           />
         </Collapse>
       </Stack>

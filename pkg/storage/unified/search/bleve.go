@@ -478,7 +478,7 @@ func (b *bleveBackend) closeIndex(idx *bleveIndex, key resource.NamespacedResour
 		b.log.Error("failed to close index", "key", key, "err", err)
 	}
 
-	b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Dec()
+	b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage, key.Resource).Dec()
 }
 
 // This function will periodically evict expired or un-owned indexes from the cache.
@@ -563,7 +563,7 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 	}
 }
 
-func (b *bleveBackend) shouldUpload(key resource.NamespacedResource, idx *bleveIndex, now time.Time) (bool, error) {
+func (b *bleveBackend) shouldUpload(ctx context.Context, key resource.NamespacedResource, idx *bleveIndex, now time.Time) (bool, error) {
 	docCount, err := idx.index.DocCount()
 	if err != nil {
 		return false, fmt.Errorf("reading document count for %v: %w", key, err)
@@ -574,7 +574,11 @@ func (b *bleveBackend) shouldUpload(key resource.NamespacedResource, idx *bleveI
 
 	lastUploadTime, ok := b.getUploadTracking(key)
 	if !ok {
-		return true, nil
+		// A reopened index has no upload history.
+		lastUploadTime, ok = b.seedUploadTrackingFromRemote(ctx, key, idx, now)
+		if !ok {
+			return true, nil
+		}
 	}
 	if b.opts.Snapshot.UploadInterval > 0 && now.Sub(lastUploadTime) < b.opts.Snapshot.UploadInterval {
 		return false, nil
@@ -667,7 +671,7 @@ func (b *bleveBackend) runUploadSnapshots(ctx context.Context) {
 			continue
 		}
 
-		shouldUpload, err := b.shouldUpload(key, idx, time.Now())
+		shouldUpload, err := b.shouldUpload(ctx, key, idx, time.Now())
 		if err != nil {
 			b.recordSnapshotUploadStatus(snapshotUploadStatusError)
 			b.log.Warn("failed to evaluate snapshot upload eligibility", "key", key, "err", err)
@@ -1127,9 +1131,12 @@ func (b *bleveBackend) BuildIndex(
 	now := time.Now().UnixMilli()
 	idx.lastFetchedFromCache.Store(now)
 	// A rebuild is not a search, so it keeps the replaced index's last search.
-	if prev != nil {
+	switch {
+	case prev != nil:
 		idx.lastSearchedAt.Store(prev.lastSearchedAt.Load())
-	} else {
+	case !options.LastSearchedAt.IsZero():
+		idx.lastSearchedAt.Store(min(options.LastSearchedAt.UnixMilli(), now))
+	default:
 		idx.lastSearchedAt.Store(now)
 	}
 	b.cache[key] = idx
@@ -1137,14 +1144,14 @@ func (b *bleveBackend) BuildIndex(
 
 	// If there was a previous index in the cache, close it.
 	if prev != nil {
-		b.indexMetrics.OpenIndexes.WithLabelValues(prev.indexStorage).Dec()
+		b.indexMetrics.OpenIndexes.WithLabelValues(prev.indexStorage, key.Resource).Dec()
 
 		err := prev.stopUpdaterAndCloseIndex()
 		if err != nil {
 			logWithDetails.Error("failed to close previous index", "key", key, "err", err)
 		}
 	}
-	b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Inc()
+	b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage, key.Resource).Inc()
 
 	// Clean up the old index directories. If we have built a new file-based index, the new name is ignored.
 	// If we have created in-memory index and fileIndexName is empty, all old directories can be removed.
@@ -1847,7 +1854,7 @@ func (b *bleveBackend) closeAllIndexes() {
 		}
 		delete(b.cache, key)
 
-		b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Dec()
+		b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage, key.Resource).Dec()
 	}
 }
 
@@ -2465,10 +2472,25 @@ func (b *bleveIndex) Search(
 	req *resourcepb.ResourceSearchRequest,
 	indexes *resource.SearchIndexes,
 	stats *resource.SearchStats,
-) (response *resourcepb.ResourceSearchResponse, resultErr error) {
+) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.Search")
 	defer span.End()
 
+	response, err := b.search(ctx, access, req, indexes, stats)
+	// Clients show where each result is, and the global index holds every folder.
+	if err == nil && response.Error == nil && b.key.IsGlobal() && !req.IsDeleted {
+		b.addFolderPaths(ctx, access, response)
+	}
+	return response, err
+}
+
+func (b *bleveIndex) search(
+	ctx context.Context,
+	access authlib.AccessClient,
+	req *resourcepb.ResourceSearchRequest,
+	indexes *resource.SearchIndexes,
+	stats *resource.SearchStats,
+) (response *resourcepb.ResourceSearchResponse, resultErr error) {
 	response = b.initialSearchResponse(req)
 	if response.Error != nil {
 		return response, nil

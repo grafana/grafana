@@ -20,8 +20,10 @@ func (c *LegacyClient) LegacyCheck(ctx context.Context, req LegacyCheckRequest) 
 		if err != nil {
 			span.RecordError(err)
 		}
+
 		span.End()
 	}()
+
 	if c.clientV1 == nil {
 		return false, errors.New("legacy check client is not configured")
 	}
@@ -34,9 +36,18 @@ func (c *LegacyClient) LegacyCheck(ctx context.Context, req LegacyCheckRequest) 
 	var global *authzextv1.LegacyGlobalEvaluation
 	if req.GlobalEvaluation != nil {
 		global = &authzextv1.LegacyGlobalEvaluation{
-			RequesterOrgId:   req.GlobalEvaluation.RequesterOrgID,
-			PermittedActions: slices.Clone(req.GlobalEvaluation.PermittedActions),
+			RequesterOrgId: req.GlobalEvaluation.RequesterOrgID,
 		}
+	}
+
+	var restriction *authzextv1.LegacyActionRestriction
+	if req.Restriction != nil {
+		restriction = &authzextv1.LegacyActionRestriction{Actions: slices.Clone(req.Restriction.Actions)}
+	}
+
+	var internal *authzextv1.LegacyInternalIdentity
+	if req.InternalIdentity != nil {
+		internal = &authzextv1.LegacyInternalIdentity{Profile: req.InternalIdentity.Profile.String()}
 	}
 
 	//nolint:staticcheck // We intentionally call the deprecated compatibility API.
@@ -48,10 +59,17 @@ func (c *LegacyClient) LegacyCheck(ctx context.Context, req LegacyCheckRequest) 
 		SkipCache:           req.SkipCache,
 		SkipScopeResolution: req.SkipScopeResolution,
 		GlobalEvaluation:    global,
+		InternalIdentity:    internal,
+		Restriction:         restriction,
 	})
 	if err != nil {
 		return false, err
 	}
+
+	if resp == nil {
+		return false, errors.New("legacy check returned no response")
+	}
+
 	switch resp.GetErrorCode() {
 	case authzextv1.LegacyCheckErrorCode_LEGACY_CHECK_ERROR_CODE_SCOPE_RESOURCE_NOT_FOUND:
 		return false, accesscontrol.ErrScopeResourceNotFound.Errorf("%s", resp.GetError())
@@ -59,8 +77,10 @@ func (c *LegacyClient) LegacyCheck(ctx context.Context, req LegacyCheckRequest) 
 	default:
 		return false, fmt.Errorf("legacy check failed with error code %d: %s", resp.GetErrorCode(), resp.GetError())
 	}
+
 	if resp.GetError() != "" {
 		return false, errors.New(resp.GetError())
 	}
+
 	return resp.GetAllowed(), nil
 }

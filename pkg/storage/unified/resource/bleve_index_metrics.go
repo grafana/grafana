@@ -118,8 +118,8 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		}, []string{}),
 		OpenIndexes: promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
 			Name: "grafana_index_server_open_indexes",
-			Help: "Number of open indexes per storage type. An open index corresponds to single resource group.",
-		}, []string{"index_storage"}), // index_storage is either "file" or "memory"
+			Help: "Number of open indexes by storage type and kind. Global indexes use kind=\"global\".",
+		}, []string{"index_storage", "kind"}), // index_storage is either "file" or "memory"
 		IndexBuilds: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_index_build_total",
 			Help: "Number of times index build was attempted due to specific reason",
@@ -238,11 +238,6 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		}, []string{"group", "resource", "verb", "mode", "exempt"}),
 	}
 
-	// Always-on label series. Snapshot-specific series are initialised separately
-	// in InitSnapshotMetrics so they don't appear on instances where the feature
-	// is disabled — see InitSnapshotMetrics for rationale.
-	m.OpenIndexes.WithLabelValues("file").Set(0)
-	m.OpenIndexes.WithLabelValues("memory").Set(0)
 	return m
 }
 

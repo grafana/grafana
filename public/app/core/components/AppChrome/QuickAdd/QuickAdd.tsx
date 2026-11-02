@@ -11,6 +11,7 @@ import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { useIsMobileEditDeprecated } from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
 import { NOTEBOOK_ENTRY_POINT } from 'app/features/notebook/analytics/types';
 import { notebookNewEditHref } from 'app/features/notebook/urls';
 import { useSelector } from 'app/types/store';
@@ -33,11 +34,18 @@ export const QuickAdd = ({}: Props) => {
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
 
   const theme = useTheme2();
 
   const actionGroups = useMemo(() => {
     const groups = findCreateActionGroups(navBarTree);
+
+    // Every current item in the "dashboards/browse" group (New dashboard, Import
+    // dashboard, Use template below) creates a dashboard
+    if (isMobileEditDeprecated) {
+      return groups.filter((g) => g.parentId !== 'dashboards/browse');
+    }
 
     if (isTemplateDashboardsAvailable) {
       const templateItem: NavModelItem = {
@@ -71,7 +79,13 @@ export const QuickAdd = ({}: Props) => {
     }
 
     return groups;
-  }, [isAnalyticsFrameworkEnabled, isCustomDashboardTemplatesEnabled, isTemplateDashboardsAvailable, navBarTree]);
+  }, [
+    isAnalyticsFrameworkEnabled,
+    isCustomDashboardTemplatesEnabled,
+    isTemplateDashboardsAvailable,
+    isMobileEditDeprecated,
+    navBarTree,
+  ]);
 
   const showQuickAdd = actionGroups.some((g) => g.items.length > 0);
 

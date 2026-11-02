@@ -390,6 +390,83 @@ func TestGlobalHandler_ReportsSkippedTypes(t *testing.T) {
 	assert.Equal(t, []string{"folder.grafana.app/folders"}, got.Metadata.SkippedTypes)
 }
 
+// Folder paths reach the caller as JSON, and a response without any leaves the
+// field out.
+func TestGlobalHandler_ReturnsFolderPaths(t *testing.T) {
+	rsp := emptyResponse()
+	rsp.FolderPaths = map[string]*resourcepb.FolderPath{
+		"leaf": {Folders: []*resourcepb.FolderPath_Folder{
+			{Name: "top", Detached: true},
+			{Name: "leaf", Title: "Leaf"},
+		}},
+	}
+	h := NewHandler(&fakeIndexClient{resp: rsp}, testProvider(), noop.NewTracerProvider().Tracer(""))
+
+	w := doGlobalRequest(t, h, globalQuery(""))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	var got struct {
+		FolderPaths json.RawMessage `json:"folderPaths"`
+	}
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
+	assert.JSONEq(t, `{"leaf": [{"name": "top", "detached": true}, {"name": "leaf", "title": "Leaf"}]}`, string(got.FolderPaths))
+
+	h = NewHandler(&fakeIndexClient{resp: emptyResponse()}, testProvider(), noop.NewTracerProvider().Tracer(""))
+	w = doGlobalRequest(t, h, globalQuery(""))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	assert.NotContains(t, w.Body.String(), "folderPaths")
+}
+
+// The groupResource facet lists every type the search covered, so a client can
+// show a type that has no results. Skipped types stay out, and other facets and
+// requests without the facet are left alone.
+func TestGlobalHandler_TypeFacetListsEmptyTypes(t *testing.T) {
+	rsp := emptyResponse()
+	rsp.Kinds = map[string]string{
+		"dashboard.grafana.app/dashboards": "Dashboard",
+		"folder.grafana.app/folders":       "Folder",
+		"playlist.grafana.app/playlists":   "Playlist",
+		"dashboard.grafana.app/notebooks":  "Notebook",
+	}
+	rsp.SkippedTypes = []string{"dashboard.grafana.app/notebooks"}
+	rsp.Facet = map[string]*resourcepb.ResourceSearchResponse_Facet{
+		resource.SEARCH_FIELD_GROUP_RESOURCE: {Field: resource.SEARCH_FIELD_GROUP_RESOURCE, Terms: []*resourcepb.ResourceSearchResponse_TermFacet{
+			{Term: "dashboard.grafana.app/dashboards", Count: 3},
+		}},
+		"tags": {Field: "tags", Terms: []*resourcepb.ResourceSearchResponse_TermFacet{{Term: "prod", Count: 1}}},
+	}
+	search := func(facets string) searchv0.GlobalSearchResults {
+		t.Helper()
+		h := NewHandler(&fakeIndexClient{resp: rsp}, testProvider(), noop.NewTracerProvider().Tracer(""))
+		body := strings.TrimSuffix(globalQuery(""), "}") + `, "facets": ` + facets + `}`
+		w := doGlobalRequest(t, h, body)
+		require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+		var got searchv0.GlobalSearchResults
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
+		return got
+	}
+
+	got := search(`["groupResource", "tags"]`)
+	assert.Equal(t, []searchv0.FacetTerm{
+		{Value: "dashboard.grafana.app/dashboards", Count: 3},
+		{Value: "folder.grafana.app/folders", Count: 0},
+		{Value: "playlist.grafana.app/playlists", Count: 0},
+	}, got.Facets[resource.SEARCH_FIELD_GROUP_RESOURCE])
+	assert.Equal(t, []searchv0.FacetTerm{{Value: "prod", Count: 1}}, got.Facets["tags"])
+
+	got = search(`["tags"]`)
+	assert.Equal(t, []searchv0.FacetTerm{
+		{Value: "dashboard.grafana.app/dashboards", Count: 3},
+	}, got.Facets[resource.SEARCH_FIELD_GROUP_RESOURCE], "without the facet requested, the backend's terms are passed on as they are")
+
+	rsp.Facet = nil
+	got = search(`["groupResource"]`)
+	assert.Equal(t, []searchv0.FacetTerm{
+		{Value: "dashboard.grafana.app/dashboards", Count: 0},
+		{Value: "folder.grafana.app/folders", Count: 0},
+		{Value: "playlist.grafana.app/playlists", Count: 0},
+	}, got.Facets[resource.SEARCH_FIELD_GROUP_RESOURCE], "a search without results still lists every type")
+}
+
 func TestGlobalHandler_FiltersByResourceType(t *testing.T) {
 	client := &fakeIndexClient{resp: emptyResponse()}
 	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
