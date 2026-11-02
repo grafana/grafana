@@ -677,6 +677,18 @@ describe('Table', () => {
 
       await userEvent.click(within(rows[1]).getByLabelText('Expand row'));
       expect(screen.getAllByRole('columnheader')).toHaveLength(8);
+
+      // The nested tables' cell is rendered first in the row, but must not shift the data cells
+      // away from their column headers.
+      const expandedRowCells = within(getTable()).getAllByRole('row')[1].querySelectorAll(':scope > [role="cell"]');
+      expect(Array.from(expandedRowCells, (cell) => cell.getAttribute('aria-colindex'))).toEqual([
+        '5',
+        '1',
+        '2',
+        '3',
+        '4',
+      ]);
+      expect(expandedRowCells[0]).toContainElement(screen.getAllByRole('table')[1]);
       expect(getColumnHeader(/humidity_0/)).toBeInTheDocument();
       expect(getColumnHeader(/humidity_1/)).toBeInTheDocument();
       expect(getColumnHeader(/status_0/)).toBeInTheDocument();
