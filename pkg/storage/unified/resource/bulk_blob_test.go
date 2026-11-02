@@ -318,10 +318,17 @@ func TestNormalizeBulkBlobUploadsNullBlobs(t *testing.T) {
 }
 
 func TestNormalizeBulkBlobUploadsBackendRoundTrip(t *testing.T) {
-	for _, backend := range []string{"kv", "bucket"} {
-		t.Run(backend, func(t *testing.T) {
+	for _, tc := range []struct {
+		name, backend, contentType string
+	}{
+		{"kv", "kv", "application/json"},
+		{"bucket", "bucket", "application/json"},
+		{"kv quoted charset", "kv", `text/plain; charset="x;y"`},
+		{"bucket quoted charset", "bucket", `text/plain; charset="x;y"`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
 			var store BlobSupport
-			if backend == "kv" {
+			if tc.backend == "kv" {
 				store = NewKVBlobSupport(setupBadgerKV(t))
 			} else {
 				bucket := memblob.OpenBucket(nil)
@@ -331,6 +338,7 @@ func TestNormalizeBulkBlobUploadsBackendRoundTrip(t *testing.T) {
 				require.NoError(t, err)
 			}
 			req := newBulkBlobNormalizationRequest()
+			req.BlobUploads[0].ContentType = tc.contentType
 			stream := &testBulkProcessServer{requests: []*resourcepb.BulkRequest{bulkTestChunk("dashboard", []byte("abc"), false), bulkTestChunk("dashboard", nil, true)}}
 			result, err := normalizeBulkBlobUploads(t.Context(), req, store.(StreamingBlobSupport), stream.Recv)
 			require.NoError(t, err)
@@ -343,7 +351,7 @@ func TestNormalizeBulkBlobUploadsBackendRoundTrip(t *testing.T) {
 			require.NotEmpty(t, ref.UID)
 			require.EqualValues(t, 3, ref.Size)
 			require.Equal(t, "900150983cd24fb0d6963f7d28e17f72", ref.Hash)
-			require.Equal(t, "application/json", ref.ContentType)
+			require.Equal(t, tc.contentType, ref.ContentType)
 			var content bytes.Buffer
 			err = store.(StreamingBlobSupport).GetResourceBlobStream(t.Context(), req.Key, &utils.BlobInfo{UID: ref.UID, MimeType: ref.ContentType}, func(contentType string) (io.Writer, error) {
 				require.Equal(t, ref.ContentType, contentType)

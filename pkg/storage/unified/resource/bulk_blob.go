@@ -13,7 +13,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -88,8 +87,11 @@ func normalizeBulkBlobUploads(ctx context.Context, req *resourcepb.BulkRequest, 
 		if !reader.complete {
 			return nil, status.Error(codes.Internal, "blob backend returned before consuming upload EOF")
 		}
-		info := utils.BlobInfo{MimeType: rsp.MimeType, Charset: rsp.Charset}
-		contentType := info.ContentType()
+		params := make(map[string]string)
+		if rsp.Charset != "" {
+			params["charset"] = rsp.Charset
+		}
+		contentType := mime.FormatMediaType(rsp.MimeType, params)
 		mediaType, _, typeErr := mime.ParseMediaType(contentType)
 		if strings.TrimSpace(rsp.Uid) == "" || rsp.Size != upload.Size || typeErr != nil || !strings.Contains(mediaType, "/") || strings.Contains(mediaType, "*") {
 			return nil, status.Error(codes.Internal, "blob backend returned invalid upload metadata")
