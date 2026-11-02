@@ -615,7 +615,10 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 		return err
 	}
 
-	// No caller wraps DeleteDataSource in an outer transaction, so the deletion has committed here.
+	// No caller wraps DeleteDataSource in an outer transaction, so the deletion has committed here and the
+	// cleanup must not be canceled with the request.
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), datasources.PermissionsDeleteTimeout)
+	defer cancel()
 	s.permissionsDeleter.DeleteDatasourcePermissions(ctx, request.GetNamespaceMapper(s.cfg)(cmd.OrgID), cmd.UID)
 	return nil
 }

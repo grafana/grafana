@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 // afterDelete runs only after unified storage deleted the datasource, including for each item of a
@@ -19,5 +20,7 @@ func (b *DataSourceAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteO
 		return
 	}
 
-	b.permissionsDeleter.DeleteDatasourcePermissions(context.Background(), meta.GetNamespace(), meta.GetName())
+	ctx, cancel := context.WithTimeout(context.Background(), datasources.PermissionsDeleteTimeout)
+	defer cancel()
+	b.permissionsDeleter.DeleteDatasourcePermissions(ctx, meta.GetNamespace(), meta.GetName())
 }
