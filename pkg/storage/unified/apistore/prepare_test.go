@@ -502,6 +502,48 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 		require.ErrorContains(t, err, "rest config unavailable")
 	})
 
+	t.Run("reads the parent folder through GetFolder and refuses an unmanaged resource in a repo-managed folder", func(t *testing.T) {
+		var gotNamespace, gotName string
+		s := &Storage{opts: StorageOptions{
+			EnableFolderSupport: true,
+			GetFolder: func(_ context.Context, namespace, name string) (utils.GrafanaMetaAccessor, error) {
+				gotNamespace, gotName = namespace, name
+				return makeDashboard(t, "", &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"}), nil
+			},
+		}}
+		err := s.ensureRepoManagedByParentFolder(context.Background(), makeDashboard(t, "some-folder", nil))
+		require.True(t, apierrors.IsForbidden(err), "want a forbidden error, got %v", err)
+		require.ErrorContains(t, err, "folder is managed by repo:my-repo, but the resource is not managed")
+		require.Equal(t, "default", gotNamespace)
+		require.Equal(t, "some-folder", gotName)
+	})
+
+	t.Run("accepts a resource managed by the folder's repository through GetFolder", func(t *testing.T) {
+		called := false
+		s := &Storage{opts: StorageOptions{
+			EnableFolderSupport: true,
+			GetFolder: func(context.Context, string, string) (utils.GrafanaMetaAccessor, error) {
+				called = true
+				return makeDashboard(t, "", &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"}), nil
+			},
+		}}
+		obj := makeDashboard(t, "some-folder", &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"})
+		require.NoError(t, s.ensureRepoManagedByParentFolder(context.Background(), obj))
+		require.True(t, called, "the parent folder should be read through GetFolder")
+	})
+
+	t.Run("returns error when GetFolder fails", func(t *testing.T) {
+		s := &Storage{opts: StorageOptions{
+			EnableFolderSupport: true,
+			GetFolder: func(context.Context, string, string) (utils.GrafanaMetaAccessor, error) {
+				return nil, errors.New("folder service unavailable")
+			},
+		}}
+		err := s.ensureRepoManagedByParentFolder(context.Background(), makeDashboard(t, "some-folder", nil))
+		require.ErrorContains(t, err, "failed to read folder some-folder")
+		require.ErrorContains(t, err, "folder service unavailable")
+	})
+
 	t.Run("create: dashboard in folder works when getDynClient is nil", func(t *testing.T) {
 		node, err := snowflake.NewNode(rand.Int64N(1024))
 		require.NoError(t, err)
@@ -695,6 +737,73 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 		_, err = s.prepareObjectForUpdate(ctx, newDash, oldDash)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "no config")
+	})
+
+	t.Run("create: unmanaged dashboard in a repo-managed folder is refused when GetFolder is set", func(t *testing.T) {
+		node, err := snowflake.NewNode(rand.Int64N(1024))
+		require.NoError(t, err)
+
+		s := &Storage{
+			gr:         dashv1.DashboardResourceInfo.GroupResource(),
+			serializer: &jsonSerializer{},
+			snowflake:  node,
+			opts: StorageOptions{
+				GVK:                 dashv1.DashboardResourceInfo.GroupVersionKind(),
+				EnableFolderSupport: true,
+				GetFolder: func(context.Context, string, string) (utils.GrafanaMetaAccessor, error) {
+					return makeDashboard(t, "", &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"}), nil
+				},
+			},
+		}
+
+		ctx := authlib.WithAuthInfo(context.Background(),
+			&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
+		)
+
+		dash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash-in-folder"}}
+		meta, err := utils.MetaAccessor(dash)
+		require.NoError(t, err)
+		meta.SetFolder("my-folder")
+
+		_, err = s.prepareObjectForStorage(ctx, dash)
+		require.True(t, apierrors.IsForbidden(err), "want a forbidden error, got %v", err)
+		require.ErrorContains(t, err, "folder is managed by repo:my-repo")
+	})
+
+	t.Run("update: moving an unmanaged dashboard into a repo-managed folder is refused when GetFolder is set", func(t *testing.T) {
+		node, err := snowflake.NewNode(rand.Int64N(1024))
+		require.NoError(t, err)
+
+		s := &Storage{
+			gr:         dashv1.DashboardResourceInfo.GroupResource(),
+			serializer: &jsonSerializer{},
+			snowflake:  node,
+			opts: StorageOptions{
+				GVK:                 dashv1.DashboardResourceInfo.GroupVersionKind(),
+				EnableFolderSupport: true,
+				GetFolder: func(context.Context, string, string) (utils.GrafanaMetaAccessor, error) {
+					return makeDashboard(t, "", &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"}), nil
+				},
+			},
+		}
+
+		ctx := authlib.WithAuthInfo(context.Background(),
+			&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
+		)
+
+		oldDash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash"}}
+		oldMeta, err := utils.MetaAccessor(oldDash)
+		require.NoError(t, err)
+		oldMeta.SetFolder("folder-a")
+
+		newDash := oldDash.DeepCopy()
+		newMeta, err := utils.MetaAccessor(newDash)
+		require.NoError(t, err)
+		newMeta.SetFolder("folder-b")
+
+		_, err = s.prepareObjectForUpdate(ctx, newDash, oldDash)
+		require.True(t, apierrors.IsForbidden(err), "want a forbidden error, got %v", err)
+		require.ErrorContains(t, err, "folder is managed by repo:my-repo")
 	})
 
 	t.Run("skips when folder annotation is 'general' (canonical root)", func(t *testing.T) {

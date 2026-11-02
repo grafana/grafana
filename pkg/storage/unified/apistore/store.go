@@ -112,6 +112,10 @@ type StorageOptions struct {
 	// Only meaningful when EnableFolderSupport=true.
 	RequireFolder bool
 
+	// GetFolder reads a resource's parent folder for the repo-manager consistency check when the
+	// storage has no configProvider to build a client from. It takes precedence over the configProvider.
+	GetFolder func(ctx context.Context, namespace, name string) (utils.GrafanaMetaAccessor, error)
+
 	// Some resources should not allow the absolute maximum (254 characters)
 	MaximumNameLength int
 
@@ -241,7 +245,7 @@ func NewStorage(
 			client = initialized
 			return client, nil
 		}
-	} else if opts.EnableFolderSupport {
+	} else if opts.EnableFolderSupport && opts.GetFolder == nil {
 		logging.DefaultLogger.Warn("configProvider is not configured; repo-manager folder consistency checks will be skipped",
 			"resource", config.GroupResource.String())
 	}
