@@ -2,11 +2,13 @@ import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
 
-interface SearchStarredArgs {
-  /** Starred dashboard uids. */
-  dashboards: string[];
-  /** Starred folder uids; empty while folders can't be starred. */
-  folders: string[];
+import { findStarredKind } from './kinds';
+
+/** The starred names of one kind, as the Stars resource stores them. */
+interface StarredNames {
+  group: string;
+  kind: string;
+  names: string[];
 }
 
 const starsAPI = collectionsAPIv1alpha1.injectEndpoints({
@@ -17,26 +19,28 @@ const starsAPI = collectionsAPIv1alpha1.injectEndpoints({
      * RTK holds a slice's tag invalidations while one of its queries is in flight, so a star toggled during this
      * search shows on its button once the search returns.
      */
-    searchStarred: build.query<DashboardQueryResult[], SearchStarredArgs>({
-      queryFn: async ({ dashboards, folders }) => {
-        const uids = [...new Set([...dashboards, ...folders])].sort();
+    searchStarred: build.query<DashboardQueryResult[], StarredNames[]>({
+      queryFn: async (starred) => {
+        // Every kind Grafana shows is in the dashboard search index, under its search kind
+        const byKind = starred.flatMap(({ group, kind, names }) => {
+          const starredKind = findStarredKind(group, kind);
+          return starredKind && names.length > 0 ? [{ searchKind: starredKind.searchKind, names }] : [];
+        });
+        const uids = [...new Set(byKind.flatMap(({ names }) => names))].sort();
         if (uids.length === 0) {
           return { data: [] };
         }
-        const kinds = folders.length ? ['dashboard', 'folder'] : ['dashboard'];
-        // A uid is matched against every kind asked for, so a resource of the other kind that shares a starred uid
+        const kinds = byKind.map(({ searchKind }) => searchKind);
+        // A uid is matched against every kind asked for, so a resource of another kind that shares a starred uid
         // comes back too: leave it room in the limit, drop it after.
-        const starredUidsByKind: Record<string, Set<string> | undefined> = {
-          dashboard: new Set(dashboards),
-          folder: new Set(folders),
-        };
+        const starredBySearchKind = new Map(byKind.map(({ searchKind, names }) => [searchKind, new Set(names)]));
         try {
           const response = await getGrafanaSearcher().search({
             name: uids,
             kind: kinds,
             limit: uids.length * kinds.length,
           });
-          return { data: response.view.toArray().filter((row) => starredUidsByKind[row.kind]?.has(row.uid)) };
+          return { data: response.view.toArray().filter((row) => starredBySearchKind.get(row.kind)?.has(row.uid)) };
         } catch (error) {
           return { error };
         }
