@@ -1,12 +1,10 @@
 import { http, HttpResponse } from 'msw';
 import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
-import { AppEvents } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { appEvents } from 'app/core/app_events';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -167,27 +165,16 @@ describe('useFiringAlerts', () => {
       'an HTML body',
       () => HttpResponse.text('<!doctype html>', { status: 200, headers: { 'Content-Type': 'text/html' } }),
     ],
-  ])('falls back to unfiltered alerts without a toast when the teams lookup returns %s', async (_, respond) => {
-    jest.useFakeTimers({ doNotFake: ['Date'] });
-    try {
-      server.use(http.get('/api/user/teams', respond));
-      const requests = mockAlerts([]);
-      const emit = jest.spyOn(appEvents, 'emit');
+  ])('falls back to unfiltered alerts when the teams lookup returns %s', async (_, respond) => {
+    server.use(http.get('/api/user/teams', respond));
+    const requests = mockAlerts([]);
 
-      const { result } = renderHook(() => useFiringAlerts(), { wrapper: getWrapper({}) });
+    const { result } = renderHook(() => useFiringAlerts(), { wrapper: getWrapper({}) });
 
-      await waitFor(() => expect(requests).toHaveLength(1));
-      expect(requests[0]).toEqual([]);
-      expect(result.current.hasTeams).toBe(false);
-      await waitFor(() => expect(result.current.loading).toBe(false));
-
-      // backendSrv schedules its error toast 50 ms after a request fails.
-      act(() => jest.advanceTimersByTime(50));
-      expect(emit).not.toHaveBeenCalledWith(AppEvents.alertError, expect.anything());
-      expect(emit).not.toHaveBeenCalledWith(AppEvents.alertWarning, expect.anything());
-    } finally {
-      jest.useRealTimers();
-    }
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(requests[0]).toEqual([]);
+    expect(result.current.hasTeams).toBe(false);
+    await waitFor(() => expect(result.current.loading).toBe(false));
   });
 
   describe('team matchers', () => {

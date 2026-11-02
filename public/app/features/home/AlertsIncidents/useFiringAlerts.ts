@@ -86,21 +86,18 @@ export function useFiringAlerts(selectedFilter: FilterSelection = '') {
   const multiTenant = useFlagGrafanaMultiTenantHomepage();
   const enabled = !multiTenant && contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead);
 
-  // Fetched once — teams change at login granularity. The lookup only scopes the default
-  // filter: any failure (endpoint missing on multi-tenant, 5xx, network) or a non-JSON body
-  // falls back to all org alerts, silently.
+  // Fetched once — teams change at login granularity. A failed fetch toasts like any other API error and
+  // leaves teams undefined, so the view falls back to all org alerts unfiltered.
   const shouldLoadTeams = enabled && contextSrv.isSignedIn;
 
-  const { value: teams, loading: teamsLoading } = useAsync(
-    () =>
-      shouldLoadTeams
-        ? getBackendSrv()
-            .get<Team[]>('/api/user/teams', undefined, undefined, { showErrorAlert: false })
-            .then((result) => (Array.isArray(result) ? result : []))
-            .catch((): Team[] => [])
-        : Promise.resolve<Team[]>([]),
-    [shouldLoadTeams]
-  );
+  const { value: teams, loading: teamsLoading } = useAsync(async (): Promise<Team[]> => {
+    if (!shouldLoadTeams) {
+      return [];
+    }
+    const result = await getBackendSrv().get<Team[]>('/api/user/teams');
+    // A proxy may answer 200 with an HTML page; don't let the row mapping crash on it.
+    return Array.isArray(result) ? result : [];
+  }, [shouldLoadTeams]);
 
   const teamNames = (teams ?? []).map((t) => t.name);
   const hasTeams = teamNames.length > 0;
