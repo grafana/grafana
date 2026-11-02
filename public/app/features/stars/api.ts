@@ -2,7 +2,7 @@ import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
 
-export interface SearchStarredArgs {
+interface SearchStarredArgs {
   /** Starred dashboard uids. */
   dashboards: string[];
   /** Starred folder uids; empty while folders can't be starred. */
@@ -11,7 +11,7 @@ export interface SearchStarredArgs {
   limit: number;
 }
 
-export interface StarredSearch {
+interface StarredSearch {
   /** The starred uids the rows were searched for, deduped across kinds and capped. */
   uids: string[];
   rows: DashboardQueryResult[];
@@ -21,7 +21,7 @@ export interface StarredSearch {
  * Starred items as search rows. The star set is the argument, so a changed set is a new cache entry: the previous
  * rows stay up as `data` while it loads, and a late answer for an old set can't overwrite it.
  */
-export const starsAPI = collectionsAPIv1alpha1.injectEndpoints({
+const starsAPI = collectionsAPIv1alpha1.injectEndpoints({
   endpoints: (build) => ({
     searchStarred: build.query<StarredSearch, SearchStarredArgs>({
       queryFn: async ({ dashboards, folders, limit }) => {
