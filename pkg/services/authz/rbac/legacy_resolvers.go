@@ -28,11 +28,13 @@ func (s *Service) WithLegacyScopeResolvers(
 }
 
 type legacyScopeRequest struct {
-	namespace      types.NamespaceInfo
-	identityType   types.IdentityType
-	userUID        string
-	skipCache      bool
-	globalIdentity *legacyGlobalIdentity
+	namespace         types.NamespaceInfo
+	identityType      types.IdentityType
+	userUID           string
+	skipCache         bool
+	restrictedActions []string
+	globalIdentity    *legacyGlobalIdentity
+	internalRequester identity.Requester
 }
 
 // Evaluate the original expression first. If it denies access, resolve its
@@ -140,6 +142,12 @@ func (s *Service) loadLegacyResolverPermissions(
 	requester identity.Requester,
 	loadedActions map[string]bool,
 ) error {
+	// Internal profiles already contain their full grants and have no database
+	// subject. Missing actions must remain denied instead of triggering a lookup.
+	if req.internalRequester != nil {
+		return nil
+	}
+
 	dependencies, ok := resolver.(accesscontrol.ScopeResolverPermissionDependencies)
 	if !ok {
 		return nil
@@ -151,33 +159,19 @@ func (s *Service) loadLegacyResolverPermissions(
 	}
 
 	for _, action := range dependencies.RequiredActions() {
+		if !req.permitsAction(action) {
+			continue
+		}
 		if _, ok := grants[action]; ok || loadedActions[action] {
 			continue
 		}
 
-		if req.globalIdentity != nil {
-			additional, err := s.getLegacyGlobalPermissions(ctx, req.globalIdentity, []string{action})
-			if err != nil {
-				return err
-			}
-			if scopes, ok := additional[action]; ok {
-				grants[action] = scopes
-			}
-		} else {
-			scopes, err := s.getLegacyIdentityScopes(
-				ctx,
-				req.namespace,
-				req.identityType,
-				req.userUID,
-				action,
-				req.skipCache,
-			)
-			if err != nil {
-				return fmt.Errorf("could not get legacy identity scopes: %w", err)
-			}
-			if len(scopes) > 0 {
-				grants[action] = scopes
-			}
+		additional, err := s.getLegacyPermissions(ctx, req, []string{action})
+		if err != nil {
+			return fmt.Errorf("could not get legacy resolver permissions: %w", err)
+		}
+		if scopes, ok := additional[action]; ok {
+			grants[action] = scopes
 		}
 		// Remember empty lookups separately: adding even a nil scope slice to
 		// grants would allow action-only checks for an action the subject lacks.
@@ -191,6 +185,10 @@ func (s *Service) legacyResolverRequester(
 	req legacyScopeRequest,
 	permissions map[string][]string,
 ) (identity.Requester, error) {
+	if req.internalRequester != nil {
+		return req.internalRequester, nil
+	}
+
 	if req.globalIdentity != nil {
 		return legacyGlobalResolverRequester(req, permissions), nil
 	}
