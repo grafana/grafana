@@ -116,3 +116,12 @@ func TestParseKeys(t *testing.T) {
 		require.Len(t, got.disp, 3, "0, anonymous, and api-key each yield a terminal display")
 	})
 }
+
+func TestAccessPolicyDisplayKeepsUserLookupsSeparate(t *testing.T) {
+	keys := parseKeys([]string{"access-policy:service", "user:service", "access-policy:42", "service-account:42"})
+	require.Equal(t, []string{"service"}, keys.uids)
+	require.Equal(t, []int64{42}, keys.ids)
+	require.Len(t, keys.disp, 2)
+	require.Empty(t, keys.invalid)
+	require.Equal(t, []string{"user:service", "service-account:42"}, unresolvedKeys(keys.keys, keys.disp, keys.invalid))
+}

@@ -1,18 +1,60 @@
-import { combineLatest, from, map, type Observable, switchMap } from 'rxjs';
+import { catchError, combineLatest, defer, forkJoin, from, map, type Observable, of, switchMap } from 'rxjs';
 
-import { PluginExtensionTypes, type PluginExtension, type PluginExtensionComponent } from '@grafana/data';
-import { type GetObservablePluginLinks, type GetObservablePluginComponents } from '@grafana/runtime/internal';
+import {
+  PluginExtensionTypes,
+  type PluginExtension,
+  type PluginExtensionComponent,
+  type PluginExtensionFunction,
+} from '@grafana/data';
+import {
+  type GetObservablePluginLinks,
+  type GetObservablePluginComponents,
+  type GetObservablePluginFunctions,
+  type GetObservablePluginFunctionsOptions,
+} from '@grafana/runtime/internal';
 
+import { loadDependentAppPlugins } from './loadDependentAppPlugins';
 import { log } from './logs/log';
+import { addedFunctionsRegistrySlice, type AddedFunctionsRegistryItem } from './registry/AddedFunctionsRegistry';
 import { getPluginExtensionRegistries } from './registry/setup';
+import { type PluginExtensionRegistries } from './registry/types';
 import { type GetExtensions, type GetExtensionsOptions } from './types';
 import {
   addedLinkToExtensionLink,
   getReadOnlyProxy,
   generateExtensionId,
+  getExtensionPointPluginDependencies,
   wrapWithPluginContext,
   getLinkExtensionOverrides,
 } from './utils';
+
+/**
+ * Loads the dependent app plugins for an extension point and fetches the extension registries, in parallel.
+ * Shared by all the `getObservablePlugin*` functions below, so each gets the registries only once the
+ * plugins that could be contributing to the extension point have had a chance to register.
+ *
+ * Wrapped in `defer()` so that neither step runs until something actually subscribes, matching normal
+ * Observable semantics.
+ */
+function loadPluginsAndRegistries(extensionPointId: string): Observable<PluginExtensionRegistries> {
+  return defer(() => {
+    const pluginsLoaded = from(loadDependentAppPlugins(extensionPointId, getExtensionPointPluginDependencies)).pipe(
+      catchError((error) => {
+        const labels = { extensionPointId };
+        if (error instanceof Error) {
+          log.error(error.message, { ...labels, stack: error.stack ?? '', message: error.message });
+        } else {
+          log.error(String(error), labels);
+        }
+        return of(undefined);
+      })
+    );
+
+    // getPluginExtensionRegistries() needs no catchError of its own: it already catches its own
+    // initialization errors and falls back to empty registries (see registry/setup.ts).
+    return forkJoin([from(getPluginExtensionRegistries()), pluginsLoaded]);
+  }).pipe(map(([registries]) => registries));
+}
 
 /**
  * Returns an observable that emits plugin extensions whenever the core extensions registries change.
@@ -28,7 +70,7 @@ export const getObservablePluginExtensions = (
 ): Observable<ReturnType<GetExtensions>> => {
   const { extensionPointId } = options;
 
-  return from(getPluginExtensionRegistries()).pipe(
+  return loadPluginsAndRegistries(extensionPointId).pipe(
     switchMap((registries) =>
       combineLatest([
         registries.addedComponentsRegistry.asObservableSlice((state) => state[extensionPointId]),
@@ -59,6 +101,53 @@ export const getObservablePluginLinks: GetObservablePluginLinks = (options) => {
 export const getObservablePluginComponents: GetObservablePluginComponents = (options) => {
   return getObservablePluginExtensions(options).pipe(
     map((value) => value.extensions.filter((extension) => extension.type === PluginExtensionTypes.component))
+  );
+};
+
+// Near-duplicate of the type-enforcing loop in `usePluginFunctions`
+const toFunctionExtensions = <Signature>(
+  registryItems: Array<AddedFunctionsRegistryItem<Signature>>,
+  extensionPointId: string,
+  limitPerPlugin?: number
+): Array<PluginExtensionFunction<Signature>> => {
+  const functions: Array<PluginExtensionFunction<Signature>> = [];
+  const extensionsByPlugin: Record<string, number> = {};
+
+  for (const { pluginId, title, description, fn } of registryItems) {
+    // Only limit if the `limitPerPlugin` is set
+    if (limitPerPlugin && extensionsByPlugin[pluginId] >= limitPerPlugin) {
+      continue;
+    }
+
+    if (extensionsByPlugin[pluginId] === undefined) {
+      extensionsByPlugin[pluginId] = 0;
+    }
+
+    functions.push({
+      id: generateExtensionId(pluginId, extensionPointId, title),
+      type: PluginExtensionTypes.function,
+      pluginId,
+      title,
+      description: description ?? '',
+      fn,
+    });
+    extensionsByPlugin[pluginId] += 1;
+  }
+
+  return functions;
+};
+
+// `options` needs an explicit type: a generic arrow doesn't get it contextually from the annotation.
+export const getObservablePluginFunctions: GetObservablePluginFunctions = <Signature>(
+  options: GetObservablePluginFunctionsOptions
+) => {
+  const { extensionPointId, limitPerPlugin } = options;
+
+  return loadPluginsAndRegistries(extensionPointId).pipe(
+    switchMap((registries) =>
+      addedFunctionsRegistrySlice<Signature>(registries.addedFunctionsRegistry, extensionPointId)
+    ),
+    map((registryItems) => toFunctionExtensions(registryItems ?? [], extensionPointId, limitPerPlugin))
   );
 };
 

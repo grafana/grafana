@@ -107,13 +107,13 @@ host = 127.0.0.1:10000
 	}
 	require.NotEqual(t, backends[0].Key(), backends[1].Key(), "the host is part of the key")
 
-	httpBackend := backends[0].(*pluginDeploymentBackend).Backend.(*PluginBackend)
+	httpBackend := backends[0].(*PluginBackend)
 	require.Nil(t, httpBackend.acquire, "an HTTP operator holds no gRPC connection")
 	_, clientV3, err := httpBackend.client(t.Context(), httpBackend.pluginID)
 	require.NoError(t, err)
 	require.NotNil(t, clientV3)
 
-	grpcBackend := backends[1].(*pluginDeploymentBackend).Backend.(*PluginBackend)
+	grpcBackend := backends[1].(*PluginBackend)
 	require.NotNil(t, grpcBackend.acquire, "a gRPC backend holds its connection")
 	release, err := grpcBackend.acquire()
 	require.NoError(t, err)

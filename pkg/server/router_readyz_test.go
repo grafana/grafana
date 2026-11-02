@@ -55,7 +55,7 @@ url = %s
 discovery_auth = none
 `, slow.URL, down.URL)))
 	require.NoError(t, err)
-	loader, err := router.ProvideCloudRoutesLoaderFactory(cfg, router.PluginDependencies{})
+	loader, err := router.NewCloudRoutesLoader(cfg, router.PluginDependencies{})
 	require.NoError(t, err)
 	require.NotNil(t, loader)
 	svc, err := router.ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry(), router.NewGrafanaRouter(nil, nil))

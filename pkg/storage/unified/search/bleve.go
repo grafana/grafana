@@ -90,6 +90,11 @@ type BleveOptions struct {
 	// Also used for file-based indexes, if they are not owned by this instance, and they are not fetched from the cache recently.
 	IndexCacheTTL time.Duration
 
+	// GlobalIndexIdleTimeout closes a global index this instance owns once it has
+	// not been searched for this long, so a namespace nobody searches stops paying
+	// for reconciles, watch writes and snapshots. 0 keeps it open.
+	GlobalIndexIdleTimeout time.Duration
+
 	BuildVersion string
 
 	Logger log.Logger
@@ -402,11 +407,27 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 
 // GetIndex will return nil if the key does not exist
 func (b *bleveBackend) GetIndex(key resource.NamespacedResource) resource.ResourceIndex {
-	idx := b.getCachedIndex(key, time.Now())
+	idx := b.getIndexForSearch(key, time.Now())
 	// Avoid returning typed nils.
 	if idx == nil {
 		return nil
 	}
+	return idx
+}
+
+// getIndexForSearch records the search while holding the cache lock, so idle
+// eviction or a rebuild replacing the index cannot slip in between the lookup
+// and the record and act on the previous search time.
+func (b *bleveBackend) getIndexForSearch(key resource.NamespacedResource, now time.Time) *bleveIndex {
+	b.cacheMx.RLock()
+	defer b.cacheMx.RUnlock()
+
+	idx := b.cache[key]
+	if idx == nil {
+		return nil
+	}
+	idx.lastFetchedFromCache.Store(now.UnixMilli())
+	idx.lastSearchedAt.Store(now.UnixMilli())
 	return idx
 }
 
@@ -457,7 +478,7 @@ func (b *bleveBackend) closeIndex(idx *bleveIndex, key resource.NamespacedResour
 		b.log.Error("failed to close index", "key", key, "err", err)
 	}
 
-	b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Dec()
+	b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage, key.Resource).Dec()
 }
 
 // This function will periodically evict expired or un-owned indexes from the cache.
@@ -480,9 +501,12 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 	cacheTTLMillis := b.opts.IndexCacheTTL.Milliseconds()
 	unownedIdleTimeoutMillis := min(b.opts.IndexCacheTTL, unownedIndexIdleTimeout).Milliseconds()
 
+	globalIdleTimeoutMillis := b.opts.GlobalIndexIdleTimeout.Milliseconds()
+
 	// Collect all expired or unowned into this map, and perform the actual closing without holding the lock.
 	expired := map[resource.NamespacedResource]*bleveIndex{}
 	unowned := map[resource.NamespacedResource]*bleveIndex{}
+	idle := map[resource.NamespacedResource]*bleveIndex{}
 	ownCheckErrors := map[resource.NamespacedResource]error{}
 
 	b.cacheMx.Lock()
@@ -494,15 +518,24 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 			continue
 		}
 
+		checkIdleGlobal := key.IsGlobal() && globalIdleTimeoutMillis > 0
+		if cacheTTLMillis <= 0 && !checkIdleGlobal {
+			continue
+		}
+
 		// Check if index is owned by this instance.
-		if cacheTTLMillis > 0 {
-			owned, err := b.ownsIndexFn(key)
-			if err != nil {
-				ownCheckErrors[key] = err
-			} else if !owned && now.UnixMilli()-idx.lastFetchedFromCache.Load() > unownedIdleTimeoutMillis {
-				delete(b.cache, key)
-				unowned[key] = idx
-			}
+		owned, err := b.ownsIndexFn(key)
+		if err != nil {
+			ownCheckErrors[key] = err
+			continue
+		}
+		switch {
+		case !owned && cacheTTLMillis > 0 && now.UnixMilli()-idx.lastFetchedFromCache.Load() > unownedIdleTimeoutMillis:
+			delete(b.cache, key)
+			unowned[key] = idx
+		case owned && checkIdleGlobal && now.UnixMilli()-idx.lastSearchedAt.Load() > globalIdleTimeoutMillis:
+			delete(b.cache, key)
+			idle[key] = idx
 		}
 	}
 	b.cacheMx.Unlock()
@@ -522,9 +555,15 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 		b.log.Info("index evicted from cache", "reason", "expired", "key", key, "storage", idx.indexStorage)
 		b.closeIndex(idx, key)
 	}
+
+	for key, idx := range idle {
+		b.clearUploadTracking(key)
+		b.log.Info("index evicted from cache", "reason", "idle", "key", key, "storage", idx.indexStorage)
+		b.closeIndex(idx, key)
+	}
 }
 
-func (b *bleveBackend) shouldUpload(key resource.NamespacedResource, idx *bleveIndex, now time.Time) (bool, error) {
+func (b *bleveBackend) shouldUpload(ctx context.Context, key resource.NamespacedResource, idx *bleveIndex, now time.Time) (bool, error) {
 	docCount, err := idx.index.DocCount()
 	if err != nil {
 		return false, fmt.Errorf("reading document count for %v: %w", key, err)
@@ -535,7 +574,11 @@ func (b *bleveBackend) shouldUpload(key resource.NamespacedResource, idx *bleveI
 
 	lastUploadTime, ok := b.getUploadTracking(key)
 	if !ok {
-		return true, nil
+		// A reopened index has no upload history.
+		lastUploadTime, ok = b.seedUploadTrackingFromRemote(ctx, key, idx, now)
+		if !ok {
+			return true, nil
+		}
 	}
 	if b.opts.Snapshot.UploadInterval > 0 && now.Sub(lastUploadTime) < b.opts.Snapshot.UploadInterval {
 		return false, nil
@@ -628,7 +671,7 @@ func (b *bleveBackend) runUploadSnapshots(ctx context.Context) {
 			continue
 		}
 
-		shouldUpload, err := b.shouldUpload(key, idx, time.Now())
+		shouldUpload, err := b.shouldUpload(ctx, key, idx, time.Now())
 		if err != nil {
 			b.recordSnapshotUploadStatus(snapshotUploadStatusError)
 			b.log.Warn("failed to evaluate snapshot upload eligibility", "key", key, "err", err)
@@ -957,17 +1000,19 @@ func (b *bleveBackend) BuildIndex(
 
 	// Prepare fields before opening/creating indexes, so that we don't need to deal with closing them in case of errors.
 	standardSearchFields := resource.StandardSearchFields()
-	allFields, err := getAllFields(standardSearchFields, fields)
-	if err != nil {
-		return nil, err
-	}
 
 	logWithDetails := b.log.FromContext(ctx).New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "reason", indexBuildReason)
 	resourceDir := b.getResourceDir(key)
-	snapshotEnabled := b.opts.Snapshot.Store != nil && docCount >= b.opts.Snapshot.MinDocCount
+	// Large enough to coordinate with other replicas: download a snapshot, or build
+	// and upload one while they wait.
+	snapshotBuildEnabled := b.opts.Snapshot.Store != nil && docCount >= b.opts.Snapshot.MinDocCount
+	// A global index is built when it is first searched, without a size, so it
+	// may be large. Downloading its snapshot is much cheaper than building it, but
+	// it must not wait for another replica's build, as a small index would.
+	downloadOnly := b.opts.Snapshot.Store != nil && docCount < 0 && key.IsGlobal()
 	skipIfBuilding := options.SkipIfBuilding
 
-	prepared, err := b.prepareIndex(ctx, key, snapshotEnabled, mapper, selectableFields, searchFieldsHash, rebuild, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails, skipIfBuilding)
+	prepared, err := b.prepareIndex(ctx, key, snapshotBuildEnabled, downloadOnly, mapper, selectableFields, searchFieldsHash, rebuild, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails, skipIfBuilding)
 	if err != nil {
 		return nil, err
 	}
@@ -1019,7 +1064,7 @@ func (b *bleveBackend) BuildIndex(
 		logWithDetails.Debug("Existing index found on filesystem", "indexRV", prepared.indexRV, "directory", filepath.Join(resourceDir, prepared.fileIndexName))
 	}
 
-	idx := b.newBleveIndex(key, prepared.index, prepared.indexStorage, fields, allFields, standardSearchFields, updater, b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
+	idx := b.newBleveIndex(key, prepared.index, prepared.indexStorage, fields, standardSearchFields, updater, b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
 	idx.searchFields = newKindSearchFields(searchFieldsProvider, key.Group, key.Resource, selectableFields)
 
 	if prepared.source.needsBuild() {
@@ -1028,7 +1073,7 @@ func (b *bleveBackend) BuildIndex(
 		var adaptive *adaptiveBuildIndex
 		if prepared.indexStorage == indexStorageMemory && b.opts.FileThreshold > 0 {
 			adaptive = newAdaptiveBuildIndex(idx, b.opts.FileThreshold, func(delegate *bleveIndex) (*bleveIndex, string, string, error) {
-				return b.promoteBuildIndexToFile(delegate, key, resourceDir, fields, allFields, standardSearchFields, updater, logWithDetails)
+				return b.promoteBuildIndexToFile(delegate, key, resourceDir, fields, standardSearchFields, updater, logWithDetails)
 			})
 			buildTarget = adaptive
 		}
@@ -1071,26 +1116,42 @@ func (b *bleveBackend) BuildIndex(
 		logWithDetails.Info("Storing index in cache", "key", key, "expiration", idx.expiration)
 	}
 
+	b.cacheMx.Lock()
+	prev := b.cache[key]
+	if rebuild && prev == nil && key.IsGlobal() {
+		// Closed for being idle while it was being rebuilt. Publishing the rebuilt
+		// index would open it again and restart its idle clock, so it is closed
+		// instead.
+		b.cacheMx.Unlock()
+		return nil, resource.ErrIndexClosedDuringRebuild
+	}
 	// We're storing index in the cache, so we can't close it.
 	closeIndex = false
-
-	b.cacheMx.Lock()
 	// A request can use a newly built index without fetching it from the cache.
-	idx.lastFetchedFromCache.Store(time.Now().UnixMilli())
-	prev := b.cache[key]
+	now := time.Now().UnixMilli()
+	idx.lastFetchedFromCache.Store(now)
+	// A rebuild is not a search, so it keeps the replaced index's last search.
+	switch {
+	case prev != nil:
+		idx.lastSearchedAt.Store(prev.lastSearchedAt.Load())
+	case !options.LastSearchedAt.IsZero():
+		idx.lastSearchedAt.Store(min(options.LastSearchedAt.UnixMilli(), now))
+	default:
+		idx.lastSearchedAt.Store(now)
+	}
 	b.cache[key] = idx
 	b.cacheMx.Unlock()
 
 	// If there was a previous index in the cache, close it.
 	if prev != nil {
-		b.indexMetrics.OpenIndexes.WithLabelValues(prev.indexStorage).Dec()
+		b.indexMetrics.OpenIndexes.WithLabelValues(prev.indexStorage, key.Resource).Dec()
 
 		err := prev.stopUpdaterAndCloseIndex()
 		if err != nil {
 			logWithDetails.Error("failed to close previous index", "key", key, "err", err)
 		}
 	}
-	b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Inc()
+	b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage, key.Resource).Inc()
 
 	// Clean up the old index directories. If we have built a new file-based index, the new name is ignored.
 	// If we have created in-memory index and fileIndexName is empty, all old directories can be removed.
@@ -1107,7 +1168,8 @@ func (b *bleveBackend) BuildIndex(
 func (b *bleveBackend) prepareIndex(
 	ctx context.Context,
 	key resource.NamespacedResource,
-	snapshotEnabled bool,
+	snapshotBuildEnabled bool,
+	downloadOnly bool,
 	mapper mapping.IndexMapping,
 	selectableFields []string,
 	searchFieldsHash string,
@@ -1125,10 +1187,10 @@ func (b *bleveBackend) prepareIndex(
 	// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
 	// If we do have an unexpired cached index already, or if rebuild is true, we always build a new index from scratch.
 	if cachedIndex == nil && !rebuild {
-		return b.prepareUncachedFileIndex(ctx, key, resourceDir, mapper, selectableFields, searchFieldsHash, lastImportTime, snapshotEnabled, logger, skipIfBuilding)
+		return b.prepareUncachedFileIndex(ctx, key, resourceDir, mapper, selectableFields, searchFieldsHash, lastImportTime, snapshotBuildEnabled, downloadOnly, logger, skipIfBuilding)
 	}
 
-	if rebuild && snapshotEnabled && maxFreshSnapshotAge > 0 {
+	if rebuild && snapshotBuildEnabled && maxFreshSnapshotAge > 0 {
 		// Rebuild path: before paying the cost of a from-scratch rebuild, coordinate
 		// with same-version replicas and accept only a snapshot fresh enough to serve
 		// as a drop-in replacement. There is no tiered fallback here because we
@@ -1171,7 +1233,8 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 	selectableFields []string,
 	searchFieldsHash string,
 	lastImportTime time.Time,
-	snapshotEnabled bool,
+	snapshotBuildEnabled bool,
+	downloadOnly bool,
 	logger log.Logger,
 	skipIfBuilding bool,
 ) (preparedBuildIndex, error) {
@@ -1189,7 +1252,7 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 		}, nil
 	}
 
-	if !snapshotEnabled {
+	if !snapshotBuildEnabled && !downloadOnly {
 		return b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, searchFieldsHash, logger)
 	}
 
@@ -1207,6 +1270,9 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 			indexStorage:  indexStorageFile,
 			source:        buildIndexSourceDownloadedSnapshot,
 		}, nil
+	}
+	if !snapshotBuildEnabled {
+		return b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, searchFieldsHash, logger)
 	}
 
 	idx, name, rv, lock, err := b.coordinateColdStartBuild(ctx, key, resourceDir, lastImportTime, logger, skipIfBuilding)
@@ -1416,7 +1482,6 @@ func (b *bleveBackend) promoteBuildIndexToFile(
 	key resource.NamespacedResource,
 	resourceDir string,
 	fields resource.SearchableDocumentFields,
-	allFields []*resourcepb.ResourceTableColumnDefinition,
 	standardSearchFields resource.SearchableDocumentFields,
 	updater resource.UpdateFn,
 	logger log.Logger,
@@ -1449,7 +1514,7 @@ func (b *bleveBackend) promoteBuildIndexToFile(
 		return nil, "", "", fmt.Errorf("opening promoted filesystem index: %w", err)
 	}
 
-	promoted := b.newBleveIndex(key, fileIndex, indexStorageFile, fields, allFields, standardSearchFields, updater, delegate.logger)
+	promoted := b.newBleveIndex(key, fileIndex, indexStorageFile, fields, standardSearchFields, updater, delegate.logger)
 	promoted.searchFields = delegate.searchFields
 	promoted.resourceVersion.Store(delegate.resourceVersion.Load())
 	cleanup = false
@@ -1789,7 +1854,7 @@ func (b *bleveBackend) closeAllIndexes() {
 		}
 		delete(b.cache, key)
 
-		b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Dec()
+		b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage, key.Resource).Dec()
 	}
 }
 
@@ -1844,9 +1909,7 @@ type bleveIndex struct {
 	// We only expire in-memory indexes.
 	expiration time.Time
 
-	// The values returned with all
-	allFields []*resourcepb.ResourceTableColumnDefinition
-	logger    log.Logger
+	logger log.Logger
 
 	updaterFn         resource.UpdateFn
 	minUpdateInterval time.Duration
@@ -1868,6 +1931,10 @@ type bleveIndex struct {
 
 	// Used to detect if the index can be safely closed, if it no longer belongs to this instance. UnixMilli.
 	lastFetchedFromCache atomic.Int64
+	// When the index was last handed to a search, UnixMilli. Unlike
+	// lastFetchedFromCache, building or rebuilding the index does not count, so
+	// an index nobody searches goes idle even when it is rebuilt periodically.
+	lastSearchedAt atomic.Int64
 
 	// Guards read-modify-write updates of the persisted snapshot mutation count
 	// stored in Bleve internal data, so concurrent BulkIndex calls don't lose increments.
@@ -1886,7 +1953,6 @@ func (b *bleveBackend) newBleveIndex(
 	index bleve.Index,
 	newIndexType string,
 	fields resource.SearchableDocumentFields,
-	allFields []*resourcepb.ResourceTableColumnDefinition,
 	standardSearchFields resource.SearchableDocumentFields,
 	updaterFn resource.UpdateFn,
 	logger log.Logger,
@@ -1910,7 +1976,6 @@ func (b *bleveBackend) newBleveIndex(
 		keepsDeletedDocuments:  slices.Contains(features, resource.IndexFeatureHoldsDeletedDocuments),
 		indexStorage:           newIndexType,
 		fields:                 fields,
-		allFields:              allFields,
 		standard:               standardSearchFields,
 		logger:                 logger,
 		updaterFn:              updaterFn,
@@ -2368,20 +2433,7 @@ func (b *bleveIndex) CountManagedObjects(ctx context.Context, stats *resource.Se
 	return vals, nil
 }
 
-func (b *bleveIndex) observeSearchResultFormat(response *resourcepb.ResourceSearchResponse) {
-	if response.GetResultFormat() == resourcepb.ResourceSearchRequest_UNSPECIFIED {
-		return
-	}
-	b.indexMetrics.SearchResultFormats.WithLabelValues(strings.ToLower(response.ResultFormat.String())).Inc()
-}
-
 func (b *bleveIndex) initialSearchResponse(req *resourcepb.ResourceSearchRequest) *resourcepb.ResourceSearchResponse {
-	resultFormat, err := selectedResultFormat(req.ResultFormat)
-	if err != nil {
-		return &resourcepb.ResourceSearchResponse{
-			Error: resource.NewBadRequestError(err.Error()),
-		}
-	}
 	if req.Options == nil || req.Options.Key == nil {
 		return &resourcepb.ResourceSearchResponse{
 			Error: resource.NewBadRequestError("missing query key"),
@@ -2389,7 +2441,7 @@ func (b *bleveIndex) initialSearchResponse(req *resourcepb.ResourceSearchRequest
 	}
 	response := &resourcepb.ResourceSearchResponse{
 		Error:        b.verifyKey(req.Options.Key),
-		ResultFormat: resultFormat,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 	// A global index combines independent listings and writes, not one revision.
 	if !b.key.IsGlobal() {
@@ -2420,17 +2472,29 @@ func (b *bleveIndex) Search(
 	req *resourcepb.ResourceSearchRequest,
 	indexes *resource.SearchIndexes,
 	stats *resource.SearchStats,
-) (response *resourcepb.ResourceSearchResponse, resultErr error) {
+) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.Search")
 	defer span.End()
 
+	response, err := b.search(ctx, access, req, indexes, stats)
+	// Clients show where each result is, and the global index holds every folder.
+	if err == nil && response.Error == nil && b.key.IsGlobal() && !req.IsDeleted {
+		b.addFolderPaths(ctx, access, response)
+	}
+	return response, err
+}
+
+func (b *bleveIndex) search(
+	ctx context.Context,
+	access authlib.AccessClient,
+	req *resourcepb.ResourceSearchRequest,
+	indexes *resource.SearchIndexes,
+	stats *resource.SearchStats,
+) (response *resourcepb.ResourceSearchResponse, resultErr error) {
 	response = b.initialSearchResponse(req)
 	if response.Error != nil {
 		return response, nil
 	}
-	defer func() {
-		b.observeSearchResultFormat(response)
-	}()
 
 	index, folderIndex, err := b.getIndexes(ctx, req, indexes)
 	if err != nil {
@@ -2504,9 +2568,9 @@ func (b *bleveIndex) Search(
 	// the collector indexes into the shorter cursor. Guard it here: if the
 	// cursor doesn't match the post-rank sort order, fall back to the in-searcher
 	// path; if it still doesn't match, reject the request.
-	cursorLen := len(req.SearchAfter)
+	cursorLen := len(searchrequest.SearchAfter)
 	if cursorLen == 0 {
-		cursorLen = len(req.SearchBefore)
+		cursorLen = len(searchrequest.SearchBefore)
 	}
 	if postRank && cursorLen > 0 && cursorLen != len(searchrequest.Sort) {
 		postRank = false
@@ -2561,7 +2625,7 @@ func (b *bleveIndex) Search(
 	stats.AddReturnedDocuments(len(res.Hits))
 
 	resultsConversionStart := time.Now()
-	if err := b.setSearchResults(ctx, response, selectFields, fieldValueSchema, res.Hits, searchrequest.Sort, req.Explain); err != nil {
+	if err := b.setSearchResults(response, fieldValueSchema, res.Hits, searchrequest.Sort); err != nil {
 		return nil, err
 	}
 
@@ -3230,8 +3294,23 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		// app-side) are added to the bleve load list in Search, separate from
 		// the response column list.
 	}
+	adaptPostRankTrashBoundary(req, searchrequest, postRankAuthz)
 
 	return searchrequest, nil
+}
+
+func adaptPostRankTrashBoundary(req *resourcepb.ResourceSearchRequest, searchRequest *bleve.SearchRequest, postRankAuthz bool) {
+	if postRankAuthz && req.IsDeleted && len(req.SortBy) == 1 &&
+		req.SortBy[0].GetField() == resource.SEARCH_FIELD_DELETED_RV && !req.SortBy[0].GetDesc() &&
+		len(searchRequest.SearchAfter) == 2 && searchRequest.SearchAfter[1] == "" &&
+		len(searchRequest.SearchBefore) == 0 && len(searchRequest.Sort) == 3 {
+		// Trash NotOlderThan listing starts at [resource version, empty name],
+		// an inclusive lower bound rather than a cursor identifying a result.
+		// Its empty name sorts before every resource, so adding the PostRank
+		// doc-ID tie-breaker preserves the bound. Real PreRank continuations
+		// must retain their shape so they still use the compatibility fallback.
+		searchRequest.SearchAfter = []string{searchRequest.SearchAfter[0], "", ""}
+	}
 }
 
 // scopeQuery restricts q to live documents, or to deleted ones for trash. Every
@@ -4576,113 +4655,6 @@ func hitSortFields(hit *search.DocumentMatch, sort search.SortOrder) []string {
 	return fields
 }
 
-func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hits search.DocumentMatchCollection, sort search.SortOrder, explain bool) (*resourcepb.ResourceTable, error) {
-	_, span := tracer.Start(ctx, "search.bleveIndex.hitsToTable")
-	defer span.End()
-
-	fields := []*resourcepb.ResourceTableColumnDefinition{}
-	for _, name := range selectFields {
-		if name == resource.SEARCH_FIELD_ALL_FIELDS {
-			fields = b.allFields
-			break
-		}
-
-		f := b.standard.Field(name)
-		if f == nil && b.fields != nil {
-			f = b.fields.Field(name)
-		}
-		if f == nil {
-			// Labels as a string
-			if strings.HasPrefix(name, "labels.") {
-				f = &resourcepb.ResourceTableColumnDefinition{
-					Name: name,
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				}
-			}
-
-			// return nil, fmt.Errorf("unknown response field: " + name)
-			if f == nil {
-				continue // OK for now
-			}
-		}
-		fields = append(fields, f)
-	}
-	if explain {
-		fields = append(fields, b.standard.Field(resource.SEARCH_FIELD_EXPLAIN))
-	}
-
-	builder, err := resource.NewTableBuilder(fields)
-	if err != nil {
-		return nil, err
-	}
-	encoders := builder.Encoders()
-
-	table := &resourcepb.ResourceTable{
-		Columns: fields,
-		Rows:    make([]*resourcepb.ResourceTableRow, hits.Len()),
-	}
-	for rowID, match := range hits {
-		row := &resourcepb.ResourceTableRow{
-			Key:             &resourcepb.ResourceKey{},
-			ResourceVersion: b.hitResourceVersion(match),
-			Cells:           make([][]byte, len(fields)),
-			SortFields:      hitSortFields(match, sort),
-		}
-		table.Rows[rowID] = row
-
-		err := resource.ReadSearchID(row.Key, match.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		for i, f := range fields {
-			var v any
-			switch f.Name {
-			case resource.SEARCH_FIELD_ID:
-				row.Cells[i] = []byte(match.ID)
-
-			case resource.SEARCH_FIELD_SCORE:
-				row.Cells[i], err = encoders[i](match.Score)
-
-			case resource.SEARCH_FIELD_EXPLAIN:
-				if match.Expl != nil {
-					row.Cells[i], err = json.Marshal(match.Expl)
-				}
-			case resource.SEARCH_FIELD_LEGACY_ID:
-				v, ok, _ := searchHitLegacyID(match)
-				if ok {
-					row.Cells[i], err = encoders[i](v)
-				}
-
-			// Served from the row rather than the stored field, which holds a string
-			// the INT64 column encoder would reject.
-			case resource.SEARCH_FIELD_RV:
-				if row.ResourceVersion > 0 {
-					row.Cells[i], err = encoders[i](row.ResourceVersion)
-				}
-			default:
-				fieldName := f.Name
-				// since the bleve index fields mix common and resource-specific fields, it is possible a conflict can happen
-				// if a specific field is named the same as a common field
-				v := match.Fields[fieldName]
-				// fields that are specific to the resource get stored as fields.<fieldName>, so we need to check for that
-				if v == nil {
-					v = match.Fields[resource.SEARCH_FIELD_PREFIX+fieldName]
-				}
-				if v != nil {
-					// Encode the value to protobuf
-					row.Cells[i], err = encoders[i](v)
-				}
-			}
-			if err != nil {
-				return nil, fmt.Errorf("error encoding (row:%d/col:%d) %v %w", rowID, i, v, err)
-			}
-		}
-	}
-
-	return table, nil
-}
-
 func defaultSearchResultFieldNames() []string {
 	return []string{
 		resource.SEARCH_FIELD_ID,
@@ -4694,26 +4666,6 @@ func defaultSearchResultFieldNames() []string {
 		resource.SEARCH_FIELD_LEGACY_ID,
 		resource.SEARCH_FIELD_MANAGER_KIND,
 	}
-}
-
-func getAllFields(standard resource.SearchableDocumentFields, custom resource.SearchableDocumentFields) ([]*resourcepb.ResourceTableColumnDefinition, error) {
-	defaultFields := defaultSearchResultFieldNames()
-	fields := make([]*resourcepb.ResourceTableColumnDefinition, len(defaultFields))
-	for i, name := range defaultFields {
-		fields[i] = standard.Field(name)
-	}
-
-	if custom != nil {
-		for _, name := range custom.Fields() {
-			fields = append(fields, custom.Field(name))
-		}
-	}
-	for _, field := range fields {
-		if field == nil {
-			return nil, fmt.Errorf("invalid all field")
-		}
-	}
-	return fields, nil
 }
 
 func newResponseFacet(v *search.FacetResult) *resourcepb.ResourceSearchResponse_Facet {

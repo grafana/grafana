@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -84,7 +85,7 @@ type Store interface {
 
 func New(cfg *setting.Cfg,
 	options Options, features featuremgmt.FeatureToggles, router routing.RouteRegister, license licensing.Licensing,
-	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
+	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore *sqlstore.SQLStore,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
 	actionSetService ActionSetService,
 	iamFeatures iamapi.Features,
@@ -141,6 +142,7 @@ func New(cfg *setting.Cfg,
 	}
 
 	s.api.registerEndpoints()
+	sqlStore.Bus().AddEventListener(s.onPermissionCachesInvalidated)
 
 	return s, nil
 }
@@ -314,7 +316,8 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 		return nil, err
 	}
 
-	s.clearUserPermissionCache(orgID, user.ID)
+	// A concurrent reader can repopulate stale permissions if we clear before commit.
+	s.invalidatePermissionCachesAfterCommit(ctx, orgID, []int64{user.ID})
 
 	return result, nil
 }
@@ -489,9 +492,45 @@ func (s *Service) SetPermissions(
 		return nil, err
 	}
 
-	s.clearUserPermissionCaches(orgID, commands)
+	// Capture IDs before the caller can reuse its command slice.
+	userIDs := make([]int64, 0, len(commands))
+	for _, cmd := range commands {
+		userIDs = append(userIDs, cmd.UserID)
+	}
+	s.invalidatePermissionCachesAfterCommit(ctx, orgID, userIDs)
 
 	return result, nil
+}
+
+// Each resource provider registers a listener on the same bus. The owner limits
+// this in-process event to the service that performed the permission write.
+type resourcePermissionCachesInvalidated struct {
+	owner   *Service
+	orgID   int64
+	userIDs []int64
+}
+
+func (s *Service) invalidatePermissionCachesAfterCommit(ctx context.Context, orgID int64, userIDs []int64) {
+	event := &resourcePermissionCachesInvalidated{owner: s, orgID: orgID, userIDs: slices.Clone(userIDs)}
+	if sess := sqlstore.SessionFromContext(ctx); sess != nil {
+		sess.PublishAfterCommit(event)
+		return
+	}
+	_ = s.onPermissionCachesInvalidated(ctx, event)
+}
+
+func (s *Service) onPermissionCachesInvalidated(_ context.Context, event *resourcePermissionCachesInvalidated) error {
+	if event.owner != s {
+		return nil
+	}
+	seen := make(map[int64]bool, len(event.userIDs))
+	for _, id := range event.userIDs {
+		if id != 0 && !seen[id] {
+			s.clearUserPermissionCache(event.orgID, id)
+			seen[id] = true
+		}
+	}
+	return nil
 }
 
 // clearUserPermissionCaches clears the permission cache of every user assigned by

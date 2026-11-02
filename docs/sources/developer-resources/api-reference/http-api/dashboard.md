@@ -19,22 +19,24 @@ title: Dashboard HTTP API
 weight: 100
 ---
 
-# Dashboard APIs
+# Dashboard API
 
 {{< admonition type="note" >}}
 Available in Grafana 12 and later.
 
 This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
 
-**This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [dashboard.grafana.app/v2](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2) in Swagger.**
-
 {{< /admonition >}}
+
+The Dashboard API (`/apis/dashboard.grafana.app/*`) replaces [`/api/dashboards/*`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/dashboard_public/), although there may not be an exact match for all legacy endpoints.
 
 ## Requirements
 
 If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
 ## Endpoints
+
+This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [dashboard.grafana.app/v2](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2) in Swagger.
 
 | Method | Summary                                      | URI                                                                      |
 | ------ | -------------------------------------------- | ------------------------------------------------------------------------ |

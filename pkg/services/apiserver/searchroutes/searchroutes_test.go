@@ -916,9 +916,9 @@ func TestGlobalHybridSearchTargets_SelectsRegisteredVersion(t *testing.T) {
 		v2Registered bool
 		want         string
 	}{
-		{"preferred", "v2", true, true, "v2"},
-		{"first when no preferred version", "", true, true, "v1"},
-		{"unknown preferred version", "v3", true, true, "v1"},
+		{"preferred", "v1", true, true, "v1"},
+		{"last when no preferred version", "", true, true, "v2"},
+		{"unknown preferred version", "v3", true, true, "v2"},
 		{"preferred opted out", "v2", false, true, "v2"},
 		{"preferred not registered here", "v2", true, false, "v1"},
 	} {
@@ -934,6 +934,36 @@ func TestGlobalHybridSearchTargets_SelectsRegisteredVersion(t *testing.T) {
 			}, got)
 		})
 	}
+}
+
+// Without registered versions there is nothing to authorize against, so a
+// missing map must not count every version.
+func TestGlobalHybridSearchTargets_NilRegisteredAllowsNoVersion(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	assert.Empty(t, globalHybridSearchTargets([]*app.ManifestData{hybridManifest(gv)}, nil))
+}
+
+// Results are named the same in every process, whatever versions it serves.
+func TestGlobalHybridSearchKinds(t *testing.T) {
+	v1 := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	v2 := schema.GroupVersion{Group: v1.Group, Version: "v2"}
+	widgets := v1.WithResource("widgets").GroupResource()
+
+	renamed := hybridManifest(v1)
+	renamed.PreferredVersion = "v2"
+	gadget := hybridManifest(v2).Versions[0]
+	gadget.Kinds[0].Kind = "Gadget"
+	renamed.Versions = append(renamed.Versions, gadget)
+	assert.Equal(t, map[schema.GroupResource]string{widgets: "Gadget"}, globalHybridSearchKinds([]*app.ManifestData{renamed}),
+		"the preferred version names the kind, even where it is not served")
+
+	clusterScoped := hybridManifest(v1)
+	clusterScoped.Versions[0].Kinds[0].Scope = "Cluster"
+	assert.Empty(t, globalHybridSearchKinds([]*app.ManifestData{clusterScoped}))
+
+	// A later manifest preferring a version that renames the kind does not win
+	// over the first manifest declaring the resource.
+	assert.Equal(t, map[schema.GroupResource]string{widgets: "Widget"}, globalHybridSearchKinds([]*app.ManifestData{nil, hybridManifest(v1), renamed}))
 }
 
 func TestGlobalHybridSearchTargets_FirstDeclarationSuppliesKind(t *testing.T) {

@@ -740,12 +740,13 @@ func TestProvideRoutesLoaderServesSettingsOnlyInGrafana(t *testing.T) {
 		{"standalone router", []string{"router"}, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsRegisterAPIServer)
 			cfg := setting.NewCfg()
 			cfg.Target = tc.target
 			loader, err := ProvideRoutesLoader(cfg, PluginLoaderDependencies{
 				PluginSources: sources,
 				PluginDependencies: PluginDependencies{
-					Features: featuremgmt.WithFeatures(featuremgmt.FlagApppluginsRegisterAPIServer),
+					Features: featuremgmt.WithFeatures(),
 				},
 			})
 			require.NoError(t, err)
