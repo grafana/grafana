@@ -2,7 +2,17 @@ import { type FieldOverrideContext } from '../../types/fieldOverrides';
 import { type InterpolateFunction } from '../../types/panel';
 import { ThresholdsMode } from '../../types/thresholds';
 
-import { thresholdsOverrideProcessor } from './processors';
+import {
+  getVarMappingKind,
+  hasVarMappingVariableReference,
+  isInVarMappingRange,
+  isVarMappingExpressionInput,
+  numberOverrideProcessor,
+  resolveVarMapping,
+  resolveVarMappingString,
+  stringOverrideProcessor,
+  thresholdsOverrideProcessor,
+} from './processors';
 
 /**
  * Emulates the function-format calling convention shared by sceneGraph.interpolate and
@@ -115,6 +125,12 @@ describe('thresholdsOverrideProcessor', () => {
     expect(result.steps).toEqual([baseStep, { value: 30, color: 'red' }]);
   });
 
+  it('falls back for a number outside the settings range, and floors integer settings', () => {
+    expect(resolveVarMapping('$t', makeContext({ t: '150' }), { min: 0, max: 100 })).toBeUndefined();
+    expect(resolveVarMapping('$t', makeContext({ t: '100' }), { min: 0, max: 100 })).toBe(100);
+    expect(resolveVarMapping('$t', makeContext({ t: '2.7' }), { integer: true })).toBe(2);
+  });
+
   it('accepts numeric values with surrounding whitespace', () => {
     const value = {
       mode: ThresholdsMode.Absolute,
@@ -211,5 +227,131 @@ describe('thresholdsOverrideProcessor', () => {
     thresholdsOverrideProcessor(value, makeContext({ t: '5' }));
 
     expect(value.steps).toEqual(stepsCopy);
+  });
+});
+
+describe('resolveVarMapping', () => {
+  it('resolves a single-value variable to a number', () => {
+    expect(resolveVarMapping('$t', makeContext({ t: '50' }))).toBe(50);
+  });
+
+  it('resolves ${var} syntax and numbers passed as raw values', () => {
+    expect(resolveVarMapping('${t}', makeContext({ t: 50 }))).toBe(50);
+  });
+
+  it('accepts a multi-value variable with exactly one selected value', () => {
+    expect(resolveVarMapping('$multi', makeContext({ multi: ['42'] }))).toBe(42);
+  });
+
+  it('falls back (returns undefined) for a multi-value variable with more than one selected value', () => {
+    expect(resolveVarMapping('$multi', makeContext({ multi: ['25', '75'] }))).toBeUndefined();
+  });
+
+  it('falls back for an unknown variable', () => {
+    expect(resolveVarMapping('$nope', makeContext({}))).toBeUndefined();
+  });
+
+  it('parses strictly: values like "80ms" fall back instead of parsing as 80', () => {
+    expect(resolveVarMapping('$latency', makeContext({ latency: '80ms' }))).toBeUndefined();
+  });
+
+  it('falls back when the expression resolves to an empty string', () => {
+    expect(resolveVarMapping('$empty', makeContext({ empty: '  ' }))).toBeUndefined();
+  });
+
+  it('accepts numeric values with surrounding whitespace', () => {
+    expect(resolveVarMapping('$padded', makeContext({ padded: ' 42 ' }))).toBe(42);
+  });
+
+  it('falls back when context.replaceVariables is missing', () => {
+    expect(resolveVarMapping('$t', makeContext())).toBeUndefined();
+  });
+});
+
+describe('resolveVarMappingString', () => {
+  it('resolves a single-value variable to its trimmed text', () => {
+    expect(resolveVarMappingString('$unit', makeContext({ unit: ' percent ' }))).toBe('percent');
+  });
+
+  it('resolves text around the variable', () => {
+    expect(resolveVarMappingString('suffix:${unit}/s', makeContext({ unit: 'req' }))).toBe('suffix:req/s');
+  });
+
+  it('accepts a multi-value variable with exactly one selected value', () => {
+    expect(resolveVarMappingString('$unit', makeContext({ unit: ['bytes'] }))).toBe('bytes');
+  });
+
+  it('falls back for a multi-value variable with more than one selected value', () => {
+    expect(resolveVarMappingString('$unit', makeContext({ unit: ['bytes', 'percent'] }))).toBeUndefined();
+  });
+
+  it('falls back for an unknown variable, alone or next to a known one', () => {
+    expect(resolveVarMappingString('$nope', makeContext({}))).toBeUndefined();
+    expect(resolveVarMappingString('${unit}$nope', makeContext({ unit: 'bytes' }))).toBeUndefined();
+  });
+
+  it('falls back when the result is empty', () => {
+    expect(resolveVarMappingString('$unit', makeContext({ unit: '  ' }))).toBeUndefined();
+  });
+
+  it('keeps a resolved custom unit that contains a $ outside variable syntax', () => {
+    expect(resolveVarMappingString('$unit', makeContext({ unit: 'prefix:$' }))).toBe('prefix:$');
+    expect(resolveVarMappingString('$unit', makeContext({ unit: 'suffix: $' }))).toBe('suffix: $');
+  });
+
+  it('falls back when the resolved value is itself variable syntax', () => {
+    expect(resolveVarMappingString('$unit', makeContext({ unit: '$bad' }))).toBeUndefined();
+    expect(resolveVarMappingString('$unit', makeContext({ unit: '[[bad]]' }))).toBeUndefined();
+  });
+
+  it('falls back when context.replaceVariables is missing', () => {
+    expect(resolveVarMappingString('$unit', makeContext())).toBeUndefined();
+  });
+});
+
+describe('getVarMappingKind', () => {
+  it('resolves numeric properties to numbers', () => {
+    expect(getVarMappingKind({ id: 'min', process: numberOverrideProcessor })).toBe('number');
+    expect(getVarMappingKind({ id: 'custom.lineWidth', process: numberOverrideProcessor })).toBe('number');
+  });
+
+  it('resolves only the standard unit to a string', () => {
+    expect(getVarMappingKind({ id: 'unit', process: stringOverrideProcessor })).toBe('string');
+    expect(getVarMappingKind({ id: 'noValue', process: stringOverrideProcessor })).toBeUndefined();
+    expect(getVarMappingKind({ id: 'custom.unit', process: stringOverrideProcessor })).toBeUndefined();
+  });
+});
+
+describe('isVarMappingExpressionInput', () => {
+  it('treats any string from a number editor as an expression', () => {
+    expect(isVarMappingExpressionInput('number', '$min')).toBe(true);
+    expect(isVarMappingExpressionInput('number', 5)).toBe(false);
+  });
+
+  it('treats a unit as an expression only when it contains variable syntax', () => {
+    expect(isVarMappingExpressionInput('string', '$unit')).toBe(true);
+    expect(isVarMappingExpressionInput('string', 'suffix:${unit}')).toBe(true);
+    expect(isVarMappingExpressionInput('string', 'bytes')).toBe(false);
+    expect(isVarMappingExpressionInput('string', 'prefix:$')).toBe(false);
+    expect(isVarMappingExpressionInput('string', '')).toBe(false);
+  });
+});
+
+describe('isInVarMappingRange', () => {
+  it('checks the min and max that are set', () => {
+    expect(isInVarMappingRange(10, { min: 0, max: 10 })).toBe(true);
+    expect(isInVarMappingRange(11, { min: 0, max: 10 })).toBe(false);
+    expect(isInVarMappingRange(-1, { min: 0 })).toBe(false);
+    expect(isInVarMappingRange(-1, undefined)).toBe(true);
+  });
+});
+
+describe('hasVarMappingVariableReference', () => {
+  it('finds $var, ${var} and [[var]] references, but not a lone or literal $', () => {
+    expect(hasVarMappingVariableReference('$b')).toBe(true);
+    expect(hasVarMappingVariableReference('${b}')).toBe(true);
+    expect(hasVarMappingVariableReference('[[b]]')).toBe(true);
+    expect(hasVarMappingVariableReference('$')).toBe(false);
+    expect(hasVarMappingVariableReference('prefix:$')).toBe(false);
   });
 });

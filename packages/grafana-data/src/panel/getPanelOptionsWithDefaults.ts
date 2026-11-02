@@ -1,4 +1,4 @@
-import { mergeWith, isArray, isObject, unset, isEqual } from 'lodash';
+import { mergeWith, isArray, isObject, set, unset, isEqual } from 'lodash';
 
 import { type FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { fieldColorModeRegistry } from '../field/fieldColor';
@@ -75,8 +75,12 @@ function applyFieldConfigDefaults(existingFieldConfig: FieldConfigSource, plugin
     fixThresholds(result.defaults.thresholds);
   }
 
-  // Filter out overrides for properties that cannot be found in registry
+  // Filter out overrides for properties that cannot be found in registry. varMappings.<id>
+  // entries are not registered themselves, so check the property they map.
   result.overrides = filterFieldConfigOverrides(result.overrides, (prop) => {
+    if (isVarMappingProp(prop)) {
+      return plugin.fieldConfigRegistry.getIfExists(unwrapVarMappingPropId(prop.id)) !== undefined;
+    }
     return plugin.fieldConfigRegistry.getIfExists(prop.id) !== undefined;
   });
 
@@ -113,6 +117,19 @@ function cleanProperties(obj: object, parentPath: string, fieldConfigRegistry: F
   let found = false;
 
   for (const [propName, value] of Object.entries(obj)) {
+    // varMappings is not a registered property and its keys are property ids, not paths, so its
+    // keys are pruned by the property they map instead, like varMappings.<id> override entries.
+    if (parentPath === '' && propName === 'varMappings') {
+      const kept = isObject(value) ? Object.entries(value).filter(([key]) => fieldConfigRegistry.getIfExists(key)) : [];
+      if (kept.length === 0) {
+        unset(obj, propName);
+      } else {
+        set(obj, propName, Object.fromEntries(kept));
+        found = true;
+      }
+      continue;
+    }
+
     const fullPath = `${parentPath}${propName}`;
     const existsInRegistry = !!fieldConfigRegistry.getIfExists(fullPath);
 
@@ -242,4 +259,32 @@ export function isCustomFieldProp(prop: DynamicConfigValue): boolean {
  */
 export function isStandardFieldProp(prop: DynamicConfigValue): boolean {
   return !isCustomFieldProp(prop);
+}
+
+const VAR_MAPPING_PROP_PREFIX = 'varMappings.';
+
+/**
+ * True for a `varMappings.<id>` override entry, which holds the expression for property `<id>`
+ * in the same rule.
+ * Used internally, not intended for external use.
+ * @internal
+ */
+export function isVarMappingProp(prop: DynamicConfigValue): boolean {
+  return prop.id.startsWith(VAR_MAPPING_PROP_PREFIX);
+}
+
+/**
+ * Used internally, not intended for external use.
+ * @internal
+ */
+export function unwrapVarMappingPropId(id: string): string {
+  return id.slice(VAR_MAPPING_PROP_PREFIX.length);
+}
+
+/**
+ * Used internally, not intended for external use.
+ * @internal
+ */
+export function wrapVarMappingPropId(id: string): string {
+  return `${VAR_MAPPING_PROP_PREFIX}${id}`;
 }
