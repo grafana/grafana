@@ -597,47 +597,26 @@ func ProvideNilPermissionsDeleter() datasources.PermissionsDeleter {
 }
 
 func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
-	if s.permissionsDeleter == nil {
-		return s.db.InTransaction(ctx, func(ctx context.Context) error {
-			cmd.UpdateSecretFn = func() error {
-				return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, kvstore.DataSourceSecretType)
-			}
-
-			if err := s.SQLStore.DeleteDataSource(ctx, cmd); err != nil {
-				return err
-			}
-
-			return s.permissionsService.DeleteResourcePermissions(ctx, cmd.OrgID, cmd.UID)
-		})
-	}
-
-	// Callers may identify the datasource by ID or name only, so resolve the UID in the transaction.
-	uid := cmd.UID
 	err := s.db.InTransaction(ctx, func(ctx context.Context) error {
 		cmd.UpdateSecretFn = func() error {
 			return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, kvstore.DataSourceSecretType)
 		}
 
-		if uid == "" {
-			ds, err := s.SQLStore.GetDataSource(ctx, &datasources.GetDataSourceQuery{ID: cmd.ID, Name: cmd.Name, OrgID: cmd.OrgID}) //nolint:staticcheck // Preserve legacy field compatibility.
-			if err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
-				return err
-			}
-			if ds != nil {
-				uid = ds.UID
-			}
+		if err := s.SQLStore.DeleteDataSource(ctx, cmd); err != nil {
+			return err
 		}
 
-		return s.SQLStore.DeleteDataSource(ctx, cmd)
+		if s.permissionsDeleter != nil {
+			return nil
+		}
+		return s.permissionsService.DeleteResourcePermissions(ctx, cmd.OrgID, cmd.UID)
 	})
-	if err != nil {
+	if err != nil || s.permissionsDeleter == nil {
 		return err
 	}
 
 	// No caller wraps DeleteDataSource in an outer transaction, so the deletion has committed here.
-	if uid != "" {
-		s.permissionsDeleter.DeleteDatasourcePermissions(ctx, request.GetNamespaceMapper(s.cfg)(cmd.OrgID), uid)
-	}
+	s.permissionsDeleter.DeleteDatasourcePermissions(ctx, request.GetNamespaceMapper(s.cfg)(cmd.OrgID), cmd.UID)
 	return nil
 }
 

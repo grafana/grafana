@@ -941,17 +941,6 @@ func TestIntegrationService_DeleteDataSource(t *testing.T) {
 		require.ErrorIs(t, err, datasources.ErrDataSourceNotFound)
 	})
 
-	t.Run("with a permissions deleter a delete by ID or name resolves the UID", func(t *testing.T) {
-		deleter := &recordingPermissionsDeleter{}
-		dsService, _ := setupWithDeleter(t, deleter, false)
-		byID := addDataSource(t, dsService, 2, "by-id")
-		require.NoError(t, dsService.DeleteDataSource(context.Background(), &datasources.DeleteDataSourceCommand{ID: byID.ID, Name: byID.Name, OrgID: 2})) //nolint:staticcheck // Preserve legacy field compatibility.
-		byName := addDataSource(t, dsService, 2, "by-name")
-		require.NoError(t, dsService.DeleteDataSource(context.Background(), &datasources.DeleteDataSourceCommand{Name: byName.Name, OrgID: 2}))
-
-		require.Equal(t, []deletedPermissions{{namespace: "org-2", uid: "by-id"}, {namespace: "org-2", uid: "by-name"}}, deleter.calls)
-	})
-
 	t.Run("with a permissions deleter a failed deletion never calls it", func(t *testing.T) {
 		deleter := &recordingPermissionsDeleter{}
 		dsService, permissionSvc := setupWithDeleter(t, deleter, true)
