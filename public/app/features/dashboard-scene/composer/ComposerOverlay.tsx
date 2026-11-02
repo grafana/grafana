@@ -67,6 +67,9 @@ export function ComposerOverlay({
   const anchorHostRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef(0);
   const [hovered, setHovered] = useState<{ key: string; box: Box } | null>(null);
+  /** The last pointer position over the document body, so a scroll under a still pointer re-resolves the hover. */
+  const hoverPointerRef = useRef<{ x: number; y: number } | null>(null);
+  const hoverFrameRef = useRef(0);
   const [layout, setLayout] = useState<Layout>(EMPTY_LAYOUT);
   /**
    * Where a press started, in viewport coordinates, and whether it has since moved far enough to be a drag;
@@ -534,18 +537,34 @@ export function ComposerOverlay({
         return;
       }
       if (!onBody(event) || isOverExtensionSidebar(event.clientX, event.clientY)) {
+        hoverPointerRef.current = null;
         hideHint();
         setHovered(null);
         return;
       }
-      followHint(event.clientX, event.clientY);
+      hoverPointerRef.current = { x: event.clientX, y: event.clientY };
+      hoverAt(event.clientX, event.clientY);
+    };
+
+    const hoverAt = (x: number, y: number) => {
+      followHint(x, y);
       if (pickMode !== 'element') {
         return;
       }
-      const elementRoot = elementAt(event.clientX, event.clientY, session.elementSelector);
+      const elementRoot = elementAt(x, y, session.elementSelector);
       const key = elementRoot?.getAttribute(session.elementKeyAttribute);
       const box = elementRoot ? boxFor(elementRoot) : null;
       setHovered(key && box ? { key, box } : null);
+    };
+
+    // The wheel scrolls the document under a still pointer, which fires no pointer move.
+    const onScroll = () => {
+      const pointer = hoverPointerRef.current;
+      if (!pointer || !picking || paused || capturing || dragStartRef.current) {
+        return;
+      }
+      cancelAnimationFrame(hoverFrameRef.current);
+      hoverFrameRef.current = requestAnimationFrame(() => hoverAt(pointer.x, pointer.y));
     };
 
     const onPointerUp = (event: PointerEvent) => {
@@ -617,13 +636,16 @@ export function ComposerOverlay({
     window.addEventListener('pointerup', onPointerUp, true);
     window.addEventListener('pointercancel', cancelDrag, true);
     window.addEventListener('click', onClick, true);
+    window.addEventListener('scroll', onScroll, { capture: true, passive: true });
     blocked.forEach((type) => window.addEventListener(type, block, true));
     return () => {
+      cancelAnimationFrame(hoverFrameRef.current);
       window.removeEventListener('pointerdown', onPointerDown, true);
       window.removeEventListener('pointermove', onPointerMove, { capture: true });
       window.removeEventListener('pointerup', onPointerUp, true);
       window.removeEventListener('pointercancel', cancelDrag, true);
       window.removeEventListener('click', onClick, true);
+      window.removeEventListener('scroll', onScroll, { capture: true });
       blocked.forEach((type) => window.removeEventListener(type, block, true));
     };
     // `elementAt` and `followHint` read refs and session only; they are recreated every render.

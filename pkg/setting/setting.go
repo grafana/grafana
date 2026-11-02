@@ -864,6 +864,7 @@ type Cfg struct {
 	QuotasErrorMessageSupportInfo string
 
 	EnableSQLKVBackend                bool
+	KeyPathReconciliationEnabled      bool
 	KVLeaseTTL                        time.Duration
 	ResourceVersionMaxWait            time.Duration
 	EnableGarbageCollection           bool
@@ -1017,6 +1018,7 @@ func RedactedValue(key, value string) string {
 		"INSTALL_TOKEN$",
 		"PROXY_TOKEN$",
 		"EXCHANGE_TOKEN$",
+		"CLIENT_TOKEN$",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword

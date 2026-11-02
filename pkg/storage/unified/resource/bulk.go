@@ -485,6 +485,13 @@ func (b *batchRunner) recvLoop() {
 			return
 		}
 
+		if err := validateBulkBlobInput(req); err != nil {
+			if !b.sendResult(batchStreamResult{err: err, rollback: true}) {
+				return
+			}
+			return
+		}
+
 		key := req.Key
 		k := NSGR(key)
 		checker, ok := b.checker[k]
