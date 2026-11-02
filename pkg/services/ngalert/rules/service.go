@@ -6,14 +6,25 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 )
 
 // Service is the rule storage boundary for callers and folder operations.
 type Service struct {
-	sql Store
+	sql rulestore.Store
 }
 
-var _ Store = (*Service)(nil)
+var _ rulestore.Store = (*Service)(nil)
+
+// ProvideService wraps the SQL store and registers the wrapper with the folder service, so folder
+// operations reach rule storage through the same boundary as every other caller.
+func ProvideService(sql *rulestore.RuleStore, folders folder.Service) (*Service, error) {
+	service := &Service{sql: sql}
+	if err := folders.RegisterService(service); err != nil {
+		return nil, err
+	}
+	return service, nil
+}
 
 func (s *Service) ListAlertRuleUIDsInFolder(ctx context.Context, orgID int64, folderUID string) ([]string, error) {
 	return s.sql.ListAlertRuleUIDsInFolder(ctx, orgID, folderUID)

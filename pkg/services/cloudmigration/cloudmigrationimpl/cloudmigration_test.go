@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertprovisioning "github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	ngalertrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngalertprovenance "github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	ngalertrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
@@ -834,7 +835,7 @@ func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigrat
 	provenanceStore := ngalertprovenance.ProvideProvenanceStore(featureToggles, sqlStore)
 	ruleStore, err := ngalertrules.ProvideRuleStore(cfg, featureToggles, sqlStore, mockFolder, accessControl, provenanceStore)
 	require.NoError(t, err)
-	ruleService, err := ngalertrules.ProvideService(ruleStore, mockFolder)
+	ruleService, err := ngalertrulesvc.ProvideService(ruleStore, mockFolder)
 	require.NoError(t, err)
 
 	ng, err := ngalert.ProvideService(

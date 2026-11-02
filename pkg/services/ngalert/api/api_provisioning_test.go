@@ -47,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
+	rulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
@@ -2384,7 +2385,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		FeatureToggles: featuremgmt.WithFeatures(),
 		Provenance:     provenance.ProvideProvenanceStore(featuremgmt.WithFeatures(), sqlStore),
 	}
-	ruleService, err := rulestore.ProvideService(ruleStore, folderService)
+	ruleService, err := rulesvc.ProvideService(ruleStore, folderService)
 	require.NoError(t, err)
 	// if not one of the two above, return ErrFolderNotFound
 	folderService.ExpectedError = dashboards.ErrFolderNotFound

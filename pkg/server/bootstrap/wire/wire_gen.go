@@ -84,7 +84,7 @@ import (
 	advisor2 "github.com/grafana/grafana/pkg/registry/apps/advisor"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/historian"
 	notifications2 "github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
-	rules2 "github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
+	rules3 "github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	correlations2 "github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
@@ -166,6 +166,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	metrics2 "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	provisioning2 "github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	rules2 "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	store3 "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
@@ -684,7 +685,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	rulesService, err := rules.ProvideService(ruleStore, folderimplService)
+	rulesService, err := rules2.ProvideService(ruleStore, folderimplService)
 	if err != nil {
 		return nil, err
 	}
@@ -858,7 +859,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	rulesAppInstaller, err := rules2.RegisterAppInstaller(cfg, alertNG, v5, dualwriteService, clientGenerator)
+	rulesAppInstaller, err := rules3.RegisterAppInstaller(cfg, alertNG, v5, dualwriteService, clientGenerator)
 	if err != nil {
 		return nil, err
 	}
@@ -1472,7 +1473,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	rulesService, err := rules.ProvideService(ruleStore, folderimplService)
+	rulesService, err := rules2.ProvideService(ruleStore, folderimplService)
 	if err != nil {
 		return nil, err
 	}
@@ -1656,7 +1657,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	rulesAppInstaller, err := rules2.RegisterAppInstaller(cfg, alertNG, v5, dualwriteService, clientGenerator)
+	rulesAppInstaller, err := rules3.RegisterAppInstaller(cfg, alertNG, v5, dualwriteService, clientGenerator)
 	if err != nil {
 		return nil, err
 	}

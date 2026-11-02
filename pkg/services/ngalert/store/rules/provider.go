@@ -54,14 +54,6 @@ func ProvideRuleStore(
 	return &store, nil
 }
 
-func ProvideService(sql *RuleStore, folders folder.Service) (*Service, error) {
-	service := &Service{sql: sql}
-	if err := folders.RegisterService(service); err != nil {
-		return nil, err
-	}
-	return service, nil
-}
-
 // legacyDatabaseProvider falls back to bare table names when LegacyDatabaseProvider is unset, so
 // a RuleStore built directly (as in tests) keeps working unchanged.
 func (st RuleStore) legacyDatabaseProvider(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {

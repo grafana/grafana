@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/cleaner"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	rulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -170,7 +171,7 @@ func TestIntegrationAlertRuleFolderConsumers_DefaultSQLJoinsTransaction(t *testi
 	}
 }
 
-func newFolderConsumerRuleService(t *testing.T) (*rules.RuleStore, *rules.Service) {
+func newFolderConsumerRuleService(t *testing.T) (*rules.RuleStore, *rulesvc.Service) {
 	t.Helper()
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.BaseInterval = 10 * time.Second
@@ -183,7 +184,7 @@ func newFolderConsumerRuleService(t *testing.T) (*rules.RuleStore, *rules.Servic
 			{Action: accesscontrol.ActionAlertingRuleDelete, Scope: folder.ScopeFoldersAll},
 		}),
 	}
-	service, err := rules.ProvideService(raw, foldertest.NewFakeService())
+	service, err := rulesvc.ProvideService(raw, foldertest.NewFakeService())
 	require.NoError(t, err)
 	return raw, service
 }

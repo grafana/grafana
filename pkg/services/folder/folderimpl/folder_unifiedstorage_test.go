@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	ngrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -330,7 +331,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		publicDashboardService: publicDashboardService,
 	}
 
-	_, err := ngrules.ProvideService(&alertingStore, folderService)
+	_, err := ngrulesvc.ProvideService(&alertingStore, folderService)
 	require.NoError(t, err)
 	require.NoError(t, folderService.RegisterService(lps))
 
@@ -1301,7 +1302,7 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 		Logger:        log.New("test-alerting-store"),
 		AccessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
 	}
-	_, err := ngrules.ProvideService(&alertingStore, &service)
+	_, err := ngrulesvc.ProvideService(&alertingStore, &service)
 	require.NoError(t, err)
 
 	mockDashboardService := dashboards.NewFakeDashboardService(t)

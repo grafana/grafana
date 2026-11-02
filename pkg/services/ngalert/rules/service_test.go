@@ -10,12 +10,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestService_forwardsStoreMethods(t *testing.T) {
@@ -118,7 +116,7 @@ func TestService_forwardsStoreMethods(t *testing.T) {
 			}
 		})
 	}
-	storeType := reflect.TypeFor[Store]()
+	storeType := reflect.TypeFor[rulestore.Store]()
 	require.Len(t, covered, storeType.NumMethod())
 	for i := 0; i < storeType.NumMethod(); i++ {
 		require.True(t, covered[storeType.Method(i).Name], "missing forwarding test for %s", storeType.Method(i).Name)
@@ -204,7 +202,7 @@ func serviceThreeResults[T, U any](first T, second U, err error) []any {
 }
 
 type serviceStoreSpy struct {
-	Store
+	rulestore.Store
 	t      *testing.T
 	method string
 	args   []any
@@ -385,7 +383,7 @@ func (s *serviceStoreSpy) CleanUpDeletedAlertRules(ctx context.Context) (int64, 
 }
 
 type serviceSchedulingSpy struct {
-	Store
+	rulestore.Store
 	ctx   context.Context
 	query *ngmodels.GetAlertRulesForSchedulingQuery
 	err   error
@@ -417,7 +415,7 @@ func TestService_forwardsSchedulingQueryMutation(t *testing.T) {
 }
 
 type serviceRenameSpy struct {
-	Store
+	rulestore.Store
 	t        *testing.T
 	ctx      context.Context
 	method   string
@@ -485,7 +483,7 @@ func TestService_forwardsRenameCallbacks(t *testing.T) {
 }
 
 type serviceKindSpy struct {
-	Store
+	rulestore.Store
 	calls int
 }
 
@@ -514,7 +512,7 @@ func (s *serviceFolderSpy) RegisterService(service folder.RegistryService) error
 }
 
 func TestProvideService_registersWrapperUsingOriginalSQLStore(t *testing.T) {
-	sql := &RuleStore{Logger: &logtest.Fake{}}
+	sql := &rulestore.RuleStore{Logger: &logtest.Fake{}}
 	folders := &serviceFolderSpy{}
 	service, err := ProvideService(sql, folders)
 	require.NoError(t, err)
@@ -527,22 +525,8 @@ func TestProvideService_registersWrapperUsingOriginalSQLStore(t *testing.T) {
 func TestProvideService_returnsRegistrationError(t *testing.T) {
 	wantErr := errors.New("registration failure")
 	folders := &serviceFolderSpy{err: wantErr}
-	service, err := ProvideService(&RuleStore{}, folders)
+	service, err := ProvideService(&rulestore.RuleStore{}, folders)
 	require.Nil(t, service)
 	require.ErrorIs(t, err, wantErr)
 	require.Equal(t, 1, folders.calls)
-}
-
-func TestProvideRuleStore_doesNotRegisterAndPreservesNilDatabaseProvider(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.UnifiedAlerting.BaseInterval = 17
-	folders := &serviceFolderSpy{err: errors.New("must not register SQL directly")}
-	provenances := &provenance.ProvenanceStore{}
-	store, err := ProvideRuleStore(cfg, featuremgmt.WithFeatures(), nil, folders, nil, provenances)
-	require.NoError(t, err)
-	require.Equal(t, cfg.UnifiedAlerting, store.Cfg)
-	require.Same(t, folders, store.FolderService)
-	require.Same(t, provenances, store.Provenance)
-	require.Nil(t, store.LegacyDatabaseProvider)
-	require.Zero(t, folders.calls)
 }

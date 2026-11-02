@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	rulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -241,7 +242,7 @@ func newBackfillTestService(t *testing.T, orgCount int) (*AlertNG, *backfillFold
 		FolderService: folders,
 		Cfg:           setting.UnifiedAlertingSettings{BaseInterval: time.Second},
 	}
-	ruleService, err := rules.ProvideService(sqlRules, folders)
+	ruleService, err := rulesvc.ProvideService(sqlRules, folders)
 	require.NoError(t, err)
 	return &AlertNG{
 		SQLStore:  sqlStore,

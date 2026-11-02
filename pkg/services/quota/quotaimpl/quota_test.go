@@ -43,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertprovisioning "github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngprovenance "github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	ngrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
@@ -633,7 +634,7 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 	provenanceStore := ngprovenance.ProvideProvenanceStore(featuremgmt.WithFeatures(), sqlStore)
 	ruleStore, err := ngrules.ProvideRuleStore(cfg, featuremgmt.WithFeatures(), sqlStore, &foldertest.FakeService{}, ac, provenanceStore)
 	require.NoError(t, err)
-	ruleService, err := ngrules.ProvideService(ruleStore, &foldertest.FakeService{})
+	ruleService, err := ngrulesvc.ProvideService(ruleStore, &foldertest.FakeService{})
 	require.NoError(t, err)
 	cfg.UnifiedAlerting.InitializationTimeout = 30 * time.Second
 	_, err = ngalert.ProvideService(
