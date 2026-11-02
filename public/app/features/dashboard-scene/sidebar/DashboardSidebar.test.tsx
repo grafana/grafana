@@ -24,7 +24,11 @@ import { changeVariableName } from '../actions/variable/changeVariableName';
 import { changeVariableType } from '../actions/variable/changeVariableType';
 import { removeVariable } from '../actions/variable/removeVariable';
 import { getPendingChangesHistory, type PendingChangesHistory } from '../lifecycle/pendingChangePreview';
-import { pendingChangesRecorded, recordPendingChange } from '../lifecycle/pendingChangesHistory';
+import {
+  pendingChangesRecorded,
+  pendingChangesSuperseded,
+  recordPendingChange,
+} from '../lifecycle/pendingChangesHistory';
 import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
@@ -69,6 +73,7 @@ jest.mock('../lifecycle/pendingChangePreview', () => ({
 jest.mock('../lifecycle/pendingChangesHistory', () => ({
   ...jest.requireActual('../lifecycle/pendingChangesHistory'),
   pendingChangesRecorded: jest.fn(() => Promise.resolve()),
+  pendingChangesSuperseded: jest.fn(() => false),
   recordPendingChange: jest.fn(),
 }));
 setPluginImportUtils({
@@ -505,6 +510,18 @@ describe('DashboardSidebar', () => {
 
       settle();
       await waitFor(() => expect(history.undo).toHaveBeenCalledTimes(1));
+    });
+
+    // The plugin's history moved on past what the page shows: stepping it would undo the wrong revision.
+    it('takes no step once a recording found the pending changes changed', async () => {
+      jest.mocked(pendingChangesSuperseded).mockReturnValueOnce(true);
+      const sidebar = buildTestScene().state.sidebar;
+      jest.mocked(history.undo).mockClear();
+
+      sidebar.undoAction();
+      await new Promise((resolve) => setTimeout(resolve));
+
+      expect(history.undo).not.toHaveBeenCalled();
     });
 
     // Each step restores a revision and reloads the page: stacked ones would race.

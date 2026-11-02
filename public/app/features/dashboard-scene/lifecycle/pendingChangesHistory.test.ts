@@ -172,8 +172,9 @@ describe('recording edits to pending changes', () => {
     expect(pendingChangesSuperseded(scene)).toBe(true);
   });
 
-  // A queue that stayed rejected would skip every later recording, and fail Apply's and Undo's wait.
-  it('keeps recording after the reload for a conflict failed', async () => {
+  // A queue that stayed rejected would fail Apply's and Undo's wait; a scene cleared of the conflict
+  // would let them act on pending changes the page never loaded.
+  it('keeps the scene superseded, and its edits unrecorded, after the reload for a conflict failed', async () => {
     setPendingChangesPageReload(jest.fn().mockRejectedValue(new Error('offline')));
     let model = specWith({ hello: { title: 'Hello' } });
     const scene = fakeScene(() => model);
@@ -184,11 +185,13 @@ describe('recording edits to pending changes', () => {
     model = specWith({ hello: { title: 'First' } });
     await recordPendingChange(scene, history, 'First edit');
     await expect(pendingChangesRecorded(scene)).resolves.toBeUndefined();
-    expect(pendingChangesSuperseded(scene)).toBe(false);
+    expect(pendingChangesSuperseded(scene)).toBe(true);
+    expect(hasUnrecordedPendingChange(scene)).toBe(true);
 
     model = specWith({ hello: { title: 'Second' } });
     await recordPendingChange(scene, history, 'Second edit');
-    expect(history.record).toHaveBeenCalledTimes(2);
+    expect(history.record).toHaveBeenCalledTimes(1);
+    expect(hasUnrecordedPendingChange(scene)).toBe(true);
   });
 });
 

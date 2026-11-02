@@ -141,7 +141,9 @@ async function sendRecording(
   proposed: DashboardV2Spec,
   description: string | undefined
 ): Promise<void> {
+  // Its pending changes moved on, and the reload to them failed: this edit isn't kept, so leaving warns.
   if (superseded.has(scene)) {
+    unrecorded.add(scene);
     return;
   }
   let recorded: boolean;
@@ -172,8 +174,9 @@ async function sendRecording(
       try {
         await reloadKeepingEditMode(uid, scene.state.isEditing);
       } catch {
-        // Still on this scene: its next recording conflicts again, and tries the reload again.
-        superseded.delete(scene);
+        // Still on this scene, which stays superseded: Apply, Undo, and Redo would otherwise act on
+        // pending changes the page never loaded. Its edit isn't kept, so leaving warns.
+        unrecorded.add(scene);
       }
     }
   }

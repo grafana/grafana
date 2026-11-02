@@ -15,7 +15,11 @@ import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import { isFullDashboardEditing, isDashboardReviewing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { getPendingChangesHistory, type PendingChangesHistory } from '../lifecycle/pendingChangePreview';
-import { pendingChangesRecorded, recordPendingChange } from '../lifecycle/pendingChangesHistory';
+import {
+  pendingChangesRecorded,
+  pendingChangesSuperseded,
+  recordPendingChange,
+} from '../lifecycle/pendingChangesHistory';
 import { dashboardModesEnabled, getDashboardMode } from '../scene/dashboardModes';
 import { dashboardViewChanged } from '../scene/dashboardViewRegistry';
 import { TabItem } from '../scene/layout-tabs/TabItem';
@@ -393,8 +397,10 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     if (this._historyStep) {
       return;
     }
-    this._historyStep = pendingChangesRecorded(getDashboardSceneFor(this))
-      .then(step)
+    const scene = getDashboardSceneFor(this);
+    this._historyStep = pendingChangesRecorded(scene)
+      // Not from pending changes the page never loaded: the plugin's history moved on past what it shows.
+      .then(() => (pendingChangesSuperseded(scene) ? undefined : step()))
       // The plugin reports a failed step itself.
       .catch(() => {})
       .finally(() => {
