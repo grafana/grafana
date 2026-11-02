@@ -1,5 +1,6 @@
 import { isEmpty } from 'lodash';
 
+import { generatedAPI, type ListStarsApiResponse } from '@grafana/api-clients/rtkq/collections/v1alpha1';
 import {
   API_GROUP as DASHBOARD_API_GROUP,
   BASE_URL as v0alphaBaseURL,
@@ -15,7 +16,6 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
-import { generatedAPI, type ListStarsApiResponse } from 'app/api/clients/collections/v1alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import kbn from 'app/core/utils/kbn';

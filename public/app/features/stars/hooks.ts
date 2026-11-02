@@ -4,14 +4,18 @@ import { useEffect, useMemo, useState } from 'react';
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { type IconName, locationUtil } from '@grafana/data';
-import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
+import {
+  useAddStarMutation,
+  useRemoveStarMutation,
+  useListStarsQuery,
+  useSearchStarredQuery,
+} from 'app/api/clients/collections/v1alpha1';
 import { setStarred, setStarredItems, type StarredNavItem } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getFolderURL, starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
 import { getIconForKind } from 'app/features/search/service/utils';
 import { dispatch } from 'app/store/store';
 
-import { useSearchStarredQuery } from './api';
 import { findStarredNames, userStarsFieldSelector } from './utils';
 
 type StarItemArgs = {
