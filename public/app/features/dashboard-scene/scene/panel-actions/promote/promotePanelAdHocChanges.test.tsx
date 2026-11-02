@@ -25,6 +25,7 @@ jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
 }));
 
 const adHocChange = { id: 'organize', options: { excludeByName: { hidden: true } } };
+const otherAdHocChange = { id: 'organize', options: { indexByName: { second: 0, first: 1 } } };
 const promotionPath = jest.fn();
 
 setPluginImportUtils({
@@ -37,13 +38,14 @@ setPluginImportUtils({
   getPanelPluginFromCache: () => undefined,
 });
 
-async function buildScene({ startEditing = false } = {}) {
+async function buildScene({ startEditing = false, withOtherTable = false } = {}) {
   const panel = new VizPanel({ key: 'panel-1', pluginId: 'table', title: 'Table' });
+  const otherPanel = new VizPanel({ key: 'panel-2', pluginId: 'table', title: 'Other table' });
   const dashboard = new DashboardScene(
     {
       title: 'My dashboard',
       meta: { canSave: true, canEdit: true },
-      body: DefaultGridLayoutManager.fromVizPanels([panel]),
+      body: DefaultGridLayoutManager.fromVizPanels(withOtherTable ? [panel, otherPanel] : [panel]),
     },
     'v2'
   );
@@ -57,6 +59,9 @@ async function buildScene({ startEditing = false } = {}) {
   deactivate.push(() => deactivateDashboard(), panel.activate());
   await act(() => new Promise((r) => setTimeout(r, 1)));
   panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, [adHocChange]);
+  if (withOtherTable) {
+    otherPanel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, [otherAdHocChange]);
+  }
   if (startEditing) {
     act(() => dashboard.onEnterEditMode());
   }
@@ -97,9 +102,9 @@ async function cancelFromDrawer(dashboard: DashboardScene) {
   await waitFor(() => expect(dashboard.state.overlay).toBeUndefined());
 }
 
-function getAdHocTransformations(dashboard: DashboardScene) {
-  const [currentPanel] = dashboardSceneGraph.getVizPanels(dashboard);
-  return currentPanel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER);
+function getAdHocTransformations(dashboard: DashboardScene, key = 'panel-1') {
+  const currentPanel = dashboardSceneGraph.getVizPanels(dashboard).find((p) => p.state.key === key);
+  return currentPanel?.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER);
 }
 
 let deactivate: Array<() => void> = [];
@@ -167,6 +172,45 @@ describe('promotePanelAdHocChanges', () => {
     const [rebuiltPanel] = dashboardSceneGraph.getVizPanels(dashboard);
     expect(rebuiltPanel.state.title).toBe('Table');
     expect(rebuiltPanel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual([]);
+  });
+
+  it("keeps other panels' ad hoc changes on their rebuilt panels while the save drawer is open", async () => {
+    const { panel, dashboard } = await buildScene({ withOtherTable: true });
+
+    await requestPromotion(panel);
+
+    expect(getAdHocTransformations(dashboard, 'panel-1')).toEqual([]);
+    expect(getAdHocTransformations(dashboard, 'panel-2')).toEqual([otherAdHocChange]);
+  });
+
+  it("keeps other panels' ad hoc changes after saving", async () => {
+    const { panel, dashboard } = await buildScene({ withOtherTable: true });
+
+    await requestPromotion(panel);
+    await saveFromDrawer(dashboard);
+
+    await waitFor(() => expect(dashboard.state.isEditing).toBe(false));
+    expect(getAdHocTransformations(dashboard, 'panel-2')).toEqual([otherAdHocChange]);
+  });
+
+  it("keeps other panels' ad hoc changes when cancelled", async () => {
+    const { panel, dashboard } = await buildScene({ withOtherTable: true });
+
+    await requestPromotion(panel);
+    await cancelFromDrawer(dashboard);
+
+    expect(getAdHocTransformations(dashboard, 'panel-1')).toEqual([adHocChange]);
+    expect(getAdHocTransformations(dashboard, 'panel-2')).toEqual([otherAdHocChange]);
+  });
+
+  it("keeps other panels' ad hoc changes when cancelled while the user was editing", async () => {
+    const { panel, dashboard } = await buildScene({ startEditing: true, withOtherTable: true });
+
+    await requestPromotion(panel);
+    await cancelFromDrawer(dashboard);
+
+    expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
+    expect(getAdHocTransformations(dashboard, 'panel-2')).toEqual([otherAdHocChange]);
   });
 
   it('restores the saved dashboard when the edit is discarded', async () => {
