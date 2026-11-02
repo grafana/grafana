@@ -190,6 +190,16 @@ describe('DashboardPrompt', () => {
         expect(ignoreChanges(scene)).toBe(true);
       });
 
+      // A new dashboard proposed as pending changes has version 0, which otherwise ignores changes.
+      it('then it should return false for a draft while an edit failed to reach the plugin', () => {
+        const scene = buildTestScene({ meta: { canSave: true, version: 0 } });
+        scene.setInitialSaveModel(transformSceneToSaveModel(scene));
+        jest.mocked(getPendingChangesHistory).mockReturnValue({} as PendingChangesHistory);
+        jest.mocked(hasUnrecordedPendingChange).mockReturnValueOnce(true);
+
+        expect(ignoreChanges(scene)).toBe(false);
+      });
+
       // Leaving would lose it: the plugin never got it.
       it('then it should return false while an edit failed to reach the plugin', () => {
         const scene = buildTestScene({ meta: { canSave: true } });

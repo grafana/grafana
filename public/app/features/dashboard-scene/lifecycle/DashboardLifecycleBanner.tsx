@@ -41,7 +41,12 @@ import {
   setHighlightingChanges,
   showOriginal,
 } from './pendingChangePreview';
-import { usePendingChangesHistoryState } from './pendingChangesHistory';
+import {
+  hasUnrecordedPendingChange,
+  pendingChangesRecorded,
+  recordPendingChange,
+  usePendingChangesHistoryState,
+} from './pendingChangesHistory';
 import { type SpecChange } from './specDiff';
 import { dashboardViewRoot, panelSelector, queryDashboardView, useChangeHighlights } from './useChangeHighlights';
 import { usePendingChangeDiff } from './usePendingChangeDiff';
@@ -170,6 +175,18 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
   const canApply = saved?.canEdit ?? false;
 
   const apply = useCallback(async () => {
+    // Apply saves what the plugin last recorded: an edit made here first has to be in it.
+    await pendingChangesRecorded(dashboard);
+    if (pending.history && hasUnrecordedPendingChange(dashboard)) {
+      await recordPendingChange(
+        dashboard,
+        pending.history,
+        t('dashboard-scene.lifecycle.edited-dashboard', 'Edit dashboard')
+      );
+      if (hasUnrecordedPendingChange(dashboard)) {
+        return;
+      }
+    }
     try {
       // This page saves the dashboard, through the plugin, and reloads itself after: the live
       // watcher's own reload for that save would race it and bring the applied changes back.
@@ -192,7 +209,7 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
         t('dashboard-scene.lifecycle.apply-failed', "Couldn't apply the changes. Try again, or compare them first."),
       ]);
     }
-  }, [pending, uid, id, title, reload]);
+  }, [dashboard, pending, uid, id, title, reload]);
 
   const discard = (
     <Button variant="destructive" fill="outline" size="sm" onClick={() => setConfirm('discard')}>

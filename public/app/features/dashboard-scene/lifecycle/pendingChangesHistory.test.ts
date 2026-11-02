@@ -4,20 +4,20 @@ import { AppEvents } from '@grafana/data';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 
-import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { type DashboardScene } from '../scene/DashboardScene';
 
 import { type PendingChangesHistory } from './pendingChangePreview';
 import {
   hasUnrecordedPendingChange,
+  pendingChangesRecorded,
   recordPendingChange,
   reloadKeepingEditMode,
   startRecordingPendingChanges,
   usePendingChangesHistoryState,
 } from './pendingChangesHistory';
+import { setPendingChangesPageReload } from './pendingChangesPageReload';
 
 jest.mock('app/core/app_events', () => ({ appEvents: { emit: jest.fn() } }));
-jest.mock('../pages/DashboardScenePageStateManager', () => ({ getDashboardScenePageStateManager: jest.fn() }));
 
 /** A v2 spec with one panel per title, as the elements part of a save model. */
 function specWith(panels: Record<string, Record<string, unknown>>): DashboardV2Spec {
@@ -116,32 +116,69 @@ describe('recording edits to pending changes', () => {
   });
 
   it('shows the latest pending changes, still editing, when they changed meanwhile', async () => {
-    const reloaded = { state: { isEditing: false }, onEnterEditMode: jest.fn() };
-    const reloadDashboardFresh = jest.fn().mockResolvedValue(undefined);
-    jest
-      .mocked(getDashboardScenePageStateManager)
-      .mockReturnValue({ reloadDashboardFresh, state: { dashboard: reloaded } } as never);
+    const pageReload = jest.fn().mockResolvedValue(undefined);
+    setPendingChangesPageReload(pageReload);
     const scene = fakeScene(() => specWith({ hello: { title: 'Hello' } }));
 
     await recordPendingChange(scene, fakeHistory(false), 'Add Panel');
 
     expect(appEvents.emit).toHaveBeenCalledWith(AppEvents.alertWarning, expect.any(Array));
-    expect(reloadDashboardFresh).toHaveBeenCalledWith(expect.objectContaining({ uid: 'abc' }));
-    expect(reloaded.onEnterEditMode).toHaveBeenCalled();
+    expect(pageReload).toHaveBeenCalledWith('abc', true);
+  });
+
+  // A slower first request would otherwise land after the second, and the plugin would keep the older spec.
+  it('sends recordings one after another, counting each as unrecorded until it lands', async () => {
+    let model = specWith({ hello: { title: 'Hello' } });
+    const scene = fakeScene(() => model);
+    startRecordingPendingChanges(scene, model);
+    const history = fakeHistory();
+    let landFirst = () => {};
+    history.record.mockImplementationOnce(
+      () => new Promise((resolve) => (landFirst = () => resolve({ recorded: true })))
+    );
+
+    model = specWith({ hello: { title: 'First' } });
+    const first = recordPendingChange(scene, history, 'First edit');
+    model = specWith({ hello: { title: 'Second' } });
+    const second = recordPendingChange(scene, history, 'Second edit');
+    await Promise.resolve();
+
+    expect(history.record).toHaveBeenCalledTimes(1);
+    expect(hasUnrecordedPendingChange(scene)).toBe(true);
+    landFirst();
+    await Promise.all([first, second, pendingChangesRecorded(scene)]);
+
+    expect(history.record.mock.calls.map(([change]) => change.description)).toEqual(['First edit', 'Second edit']);
+    expect(hasUnrecordedPendingChange(scene)).toBe(false);
+  });
+
+  // Recorded onto pending changes that changed meanwhile, a queued edit would overwrite the newer ones.
+  it('drops the recordings still queued once the pending changes changed under them', async () => {
+    setPendingChangesPageReload(jest.fn().mockResolvedValue(undefined));
+    let model = specWith({ hello: { title: 'Hello' } });
+    const scene = fakeScene(() => model);
+    startRecordingPendingChanges(scene, model);
+    const history = fakeHistory();
+    history.record.mockResolvedValueOnce({ recorded: false });
+
+    model = specWith({ hello: { title: 'First' } });
+    const first = recordPendingChange(scene, history, 'First edit');
+    model = specWith({ hello: { title: 'Second' } });
+    await Promise.all([first, recordPendingChange(scene, history, 'Second edit')]);
+
+    expect(history.record).toHaveBeenCalledTimes(1);
   });
 });
 
 describe('reloading pending changes', () => {
-  it('leaves a scene that wasn’t editing in view mode', async () => {
-    const reloaded = { state: { isEditing: false }, onEnterEditMode: jest.fn() };
-    jest.mocked(getDashboardScenePageStateManager).mockReturnValue({
-      reloadDashboardFresh: jest.fn().mockResolvedValue(undefined),
-      state: { dashboard: reloaded },
-    } as never);
+  // The page state manager sets the reload: the scene's modules can't import it.
+  it('reloads through the page', async () => {
+    const pageReload = jest.fn().mockResolvedValue(undefined);
+    setPendingChangesPageReload(pageReload);
 
     await reloadKeepingEditMode('abc', false);
 
-    expect(reloaded.onEnterEditMode).not.toHaveBeenCalled();
+    expect(pageReload).toHaveBeenCalledWith('abc', false);
   });
 });
 

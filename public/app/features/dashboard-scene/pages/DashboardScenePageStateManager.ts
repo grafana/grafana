@@ -69,6 +69,7 @@ import {
   previewedDashboardUid,
   proposesNewDashboard,
 } from '../lifecycle/pendingChangePreview';
+import { setPendingChangesPageReload } from '../lifecycle/pendingChangesPageReload';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
@@ -1774,6 +1775,17 @@ const managers: {
   v2: undefined,
   unified: undefined,
 };
+
+// A step through a plugin's pending changes history loads a new scene, and leaves the requester where they
+// were. Set here: the scene's modules can't import this one without closing an import cycle.
+setPendingChangesPageReload(async (uid, editing) => {
+  const manager = getDashboardScenePageStateManager();
+  await manager.reloadDashboardFresh({ uid, route: DashboardRoutes.Normal });
+  const reloaded = manager.state.dashboard;
+  if (editing && reloaded && !reloaded.state.isEditing) {
+    reloaded.onEnterEditMode();
+  }
+});
 
 export function getDashboardScenePageStateManager(): UnifiedDashboardScenePageStateManager;
 export function getDashboardScenePageStateManager(v: 'v1'): DashboardScenePageStateManager;

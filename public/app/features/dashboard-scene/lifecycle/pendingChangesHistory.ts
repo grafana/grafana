@@ -6,7 +6,6 @@ import { t } from '@grafana/i18n';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
-import { DashboardRoutes } from 'app/types/dashboard';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
@@ -15,6 +14,7 @@ import {
   type PendingChangesHistoryState,
   previewedDashboardUid,
 } from './pendingChangePreview';
+import { reloadPendingChangesPage } from './pendingChangesPageReload';
 
 /**
  * What an edit changes, against the pending changes as stored: the scene saves defaults the stored
@@ -33,9 +33,27 @@ const baselines = new WeakMap<DashboardScene, RecordingBaseline>();
 /** Scenes with an edit the plugin failed to record: the next recording retries it. */
 const unrecorded = new WeakSet<DashboardScene>();
 
-/** Whether an edit on `scene` hasn't reached the plugin's history, so leaving the page would lose it. */
+/**
+ * Each scene's recordings, one after another: a request starts once the one before it settled, so
+ * the plugin gets them in the order they were made, and the newest one is what it keeps.
+ */
+const queues = new WeakMap<DashboardScene, Promise<void>>();
+/** How many of a scene's recordings haven't settled yet. */
+const inFlight = new WeakMap<DashboardScene, number>();
+/** Scenes whose pending changes changed under them: their queued recordings would overwrite the newer ones. */
+const superseded = new WeakSet<DashboardScene>();
+
+/**
+ * Whether an edit on `scene` hasn't reached the plugin's history: still on its way, or failed. The
+ * scene counts as saved from the moment it's sent, so leaving or reloading the page would lose it.
+ */
 export function hasUnrecordedPendingChange(scene: DashboardScene): boolean {
-  return unrecorded.has(scene);
+  return unrecorded.has(scene) || (inFlight.get(scene) ?? 0) > 0;
+}
+
+/** Settles once every recording of `scene` sent so far has: Undo, Redo and Apply step from there. */
+export function pendingChangesRecorded(scene: DashboardScene): Promise<void> {
+  return queues.get(scene) ?? Promise.resolve();
 }
 
 /** Starts recording edits to `scene`, which shows the pending changes `stored`, as edit mode starts. */
@@ -98,6 +116,23 @@ export async function recordPendingChange(
   if (baseline && isEqual(proposed, baseline.stored) && !unrecorded.has(scene)) {
     return;
   }
+  inFlight.set(scene, (inFlight.get(scene) ?? 0) + 1);
+  const sent = (queues.get(scene) ?? Promise.resolve())
+    .then(() => sendRecording(scene, history, proposed, description))
+    .finally(() => inFlight.set(scene, (inFlight.get(scene) ?? 1) - 1));
+  queues.set(scene, sent);
+  await sent;
+}
+
+async function sendRecording(
+  scene: DashboardScene,
+  history: PendingChangesHistory,
+  proposed: DashboardV2Spec,
+  description: string | undefined
+): Promise<void> {
+  if (superseded.has(scene)) {
+    return;
+  }
   let recorded: boolean;
   try {
     recorded = (await history.record({ proposed, description })).recorded;
@@ -110,8 +145,10 @@ export async function recordPendingChange(
     ]);
     return;
   }
+  // Each recording carries the edits before it, so this one kept any that failed.
   unrecorded.delete(scene);
   if (!recorded) {
+    superseded.add(scene);
     appEvents.emit(AppEvents.alertWarning, [
       t('dashboard-scene.lifecycle.pending-changes-changed', 'These pending changes changed'),
       t(
@@ -130,14 +167,8 @@ export async function recordPendingChange(
  * Loads the dashboard page again, fresh, back in edit mode when it was editing: a step through the
  * pending changes history loads a new scene, and leaves the requester where they were.
  */
-export async function reloadKeepingEditMode(uid: string, editing: boolean | undefined): Promise<void> {
-  const { getDashboardScenePageStateManager } = await import('../pages/DashboardScenePageStateManager');
-  const manager = getDashboardScenePageStateManager();
-  await manager.reloadDashboardFresh({ uid, route: DashboardRoutes.Normal });
-  const reloaded = manager.state.dashboard;
-  if (editing && reloaded && !reloaded.state.isEditing) {
-    reloaded.onEnterEditMode();
-  }
+export function reloadKeepingEditMode(uid: string, editing: boolean | undefined): Promise<void> {
+  return reloadPendingChangesPage(uid, editing);
 }
 
 const noop = () => {};

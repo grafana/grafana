@@ -1,3 +1,5 @@
+import { waitFor } from '@testing-library/react';
+
 import { getPanelPlugin } from '@grafana/data/test';
 import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
 import {
@@ -22,7 +24,7 @@ import { changeVariableName } from '../actions/variable/changeVariableName';
 import { changeVariableType } from '../actions/variable/changeVariableType';
 import { removeVariable } from '../actions/variable/removeVariable';
 import { getPendingChangesHistory, type PendingChangesHistory } from '../lifecycle/pendingChangePreview';
-import { recordPendingChange } from '../lifecycle/pendingChangesHistory';
+import { pendingChangesRecorded, recordPendingChange } from '../lifecycle/pendingChangesHistory';
 import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
@@ -66,6 +68,7 @@ jest.mock('../lifecycle/pendingChangePreview', () => ({
 }));
 jest.mock('../lifecycle/pendingChangesHistory', () => ({
   ...jest.requireActual('../lifecycle/pendingChangesHistory'),
+  pendingChangesRecorded: jest.fn(() => Promise.resolve()),
   recordPendingChange: jest.fn(),
 }));
 setPluginImportUtils({
@@ -477,14 +480,29 @@ describe('DashboardSidebar', () => {
       expect(scene.getSaveModel()).not.toEqual(before);
     });
 
-    it('steps through the plugin’s history with Undo and Redo', () => {
+    it('steps through the plugin’s history with Undo and Redo', async () => {
       const sidebar = buildTestScene().state.sidebar;
 
       sidebar.undoAction();
       sidebar.redoAction();
 
-      expect(history.undo).toHaveBeenCalledTimes(1);
+      await waitFor(() => expect(history.undo).toHaveBeenCalledTimes(1));
       expect(history.redo).toHaveBeenCalledTimes(1);
+    });
+
+    // A recording still on its way would land after the step and bring the undone change back.
+    it('steps only once the recordings sent before have settled', async () => {
+      let settle = () => {};
+      jest.mocked(pendingChangesRecorded).mockReturnValueOnce(new Promise<void>((resolve) => (settle = resolve)));
+      const sidebar = buildTestScene().state.sidebar;
+      jest.mocked(history.undo).mockClear();
+
+      sidebar.undoAction();
+      await Promise.resolve();
+      expect(history.undo).not.toHaveBeenCalled();
+
+      settle();
+      await waitFor(() => expect(history.undo).toHaveBeenCalledTimes(1));
     });
   });
 

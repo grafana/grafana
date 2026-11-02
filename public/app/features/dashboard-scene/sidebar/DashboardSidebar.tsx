@@ -15,7 +15,7 @@ import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import { isFullDashboardEditing, isDashboardReviewing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { getPendingChangesHistory, type PendingChangesHistory } from '../lifecycle/pendingChangePreview';
-import { recordPendingChange } from '../lifecycle/pendingChangesHistory';
+import { pendingChangesRecorded, recordPendingChange } from '../lifecycle/pendingChangesHistory';
 import { dashboardModesEnabled, getDashboardMode } from '../scene/dashboardModes';
 import { dashboardViewChanged } from '../scene/dashboardViewRegistry';
 import { TabItem } from '../scene/layout-tabs/TabItem';
@@ -398,7 +398,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     }
     const history = this.pendingChangesHistory();
     if (history) {
-      history.undo();
+      // From what the plugin last recorded: an edit still on its way would land after the step.
+      void pendingChangesRecorded(getDashboardSceneFor(this)).then(() => history.undo());
       return;
     }
     this.undoLastAction();
@@ -479,7 +480,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     }
     const history = this.pendingChangesHistory();
     if (history) {
-      history.redo();
+      void pendingChangesRecorded(getDashboardSceneFor(this)).then(() => history.redo());
       return;
     }
     this.redoLastAction();

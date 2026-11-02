@@ -197,11 +197,6 @@ export function ignoreChanges(scene: DashboardScene | null) {
     return true;
   }
 
-  // Ignore changes if original is unsaved
-  if (scene?.state.meta.version === 0) {
-    return true;
-  }
-
   // Ignore changes if the user has been signed out
   if (!contextSrv.isSignedIn) {
     return true;
@@ -212,9 +207,14 @@ export function ignoreChanges(scene: DashboardScene | null) {
   }
 
   // Edits to pending changes whose plugin keeps their history are recorded as they're made, unless
-  // the plugin failed to record one.
+  // one is still on its way or failed. Before the version check: a draft has version 0.
   if (getPendingChangesHistory(scene.state)) {
     return !hasUnrecordedPendingChange(scene);
+  }
+
+  // Ignore changes if original is unsaved
+  if (scene.state.meta.version === 0) {
+    return true;
   }
 
   const dashboard = scene.getSaveModel();
