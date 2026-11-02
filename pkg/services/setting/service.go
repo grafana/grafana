@@ -55,6 +55,11 @@ var tracer tracing.Tracer = &settingTracer{otel.Tracer("github.com/grafana/grafa
 
 const LogPrefix = "setting.service"
 
+const (
+	subscriptionReadyTimeout = 5 * time.Second
+	reconnectReadyAttempts   = 5
+)
+
 const DefaultPageSize = int64(500)
 const DefaultQPS = float32(200)
 const DefaultBurst = 300
@@ -175,6 +180,16 @@ type remoteSettingService struct {
 	cacheMu sync.Mutex
 	// invalidations counts change events; a fetch that overlapped one must not populate the cache.
 	invalidations atomic.Uint64
+	// sub is set once subscribed, guarded by cacheMu.
+	sub Subscription
+}
+
+// Subscription is a handle on a bus subscription.
+type Subscription interface {
+	// WaitReady returns once the server has confirmed the subscription, so events
+	// published afterwards are delivered. The context must have a deadline.
+	WaitReady(ctx context.Context) error
+	Unsubscribe() error
 }
 
 // EventSubscriber delivers settings change notifications from the message bus.
@@ -182,7 +197,7 @@ type EventSubscriber interface {
 	Enabled() bool
 	// Subscribe must deliver every event to every subscriber (no queue group).
 	// onReconnect is called after a reconnection, never on the initial connection.
-	Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte), onReconnect func()) error
+	Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte), onReconnect func()) (Subscription, error)
 }
 
 var _ FieldSelectorService = (*remoteSettingService)(nil)
@@ -305,19 +320,35 @@ func New(config Config) (FieldSelectorService, error) {
 func (s *remoteSettingService) subscribe(sub EventSubscriber) bool {
 	gvr := schema.GroupVersionResource{Group: ApiGroup, Version: apiVersion, Resource: resource}
 	subject := resourcewatch.Subject(gvr, "")
-	err := sub.Subscribe(context.Background(), subject, s.handleEvent, s.handleReconnect)
+	subscription, err := sub.Subscribe(context.Background(), subject, s.handleEvent, s.handleReconnect)
 	if err != nil {
 		s.log.Warn("failed to subscribe to settings change events, relying on cache TTL", "subject", subject, "error", err)
 		return false
 	}
+	// Events published before the server confirms the subscription are missed.
+	ctx, cancel := context.WithTimeout(context.Background(), subscriptionReadyTimeout)
+	defer cancel()
+	if err := subscription.WaitReady(ctx); err != nil {
+		s.log.Warn("settings change subscription not ready, relying on cache TTL", "subject", subject, "error", err)
+		_ = subscription.Unsubscribe()
+		return false
+	}
+	s.cacheMu.Lock()
+	s.sub = subscription
+	s.cacheMu.Unlock()
 	s.metrics.cacheSubscribed.Set(1)
 	return true
 }
 
 func (s *remoteSettingService) handleEvent(subject string, data []byte) {
 	var n resourcepb.WatchNotification
-	if err := proto.Unmarshal(data, &n); err != nil || n.Namespace == "" {
-		s.log.Warn("unusable settings change event, flushing cache", "subject", subject, "error", err)
+	if err := proto.Unmarshal(data, &n); err != nil {
+		s.log.Warn("undecodable settings change event, flushing cache", "subject", subject, "error", err)
+		s.invalidateAll(invalidationReasonInvalidEvent)
+		return
+	}
+	if n.Namespace == "" {
+		s.log.Warn("settings change event without a namespace, flushing cache", "subject", subject)
 		s.invalidateAll(invalidationReasonInvalidEvent)
 		return
 	}
@@ -336,19 +367,40 @@ func (s *remoteSettingService) handleEvent(subject string, data []byte) {
 	}
 }
 
+// handleReconnect flushes the cache once the restored subscription is confirmed.
+// Flushing earlier would let a List re-warm the cache before delivery resumes.
 func (s *remoteSettingService) handleReconnect() {
-	s.log.Info("settings event subscription reconnected, flushing cache")
-	s.invalidateAll(invalidationReasonReconnect)
+	go func() {
+		s.cacheMu.Lock()
+		sub := s.sub
+		s.cacheMu.Unlock()
+
+		ready := false
+		for attempt := 0; sub != nil && attempt < reconnectReadyAttempts && !ready; attempt++ {
+			ctx, cancel := context.WithTimeout(context.Background(), subscriptionReadyTimeout)
+			ready = sub.WaitReady(ctx) == nil
+			cancel()
+		}
+		if !ready {
+			s.log.Warn("settings event subscription not confirmed after reconnect, flushing cache anyway")
+		}
+		flushed := s.invalidateAll(invalidationReasonReconnect)
+		s.log.Info("settings event subscription reconnected, flushed cache", "entries", flushed)
+	}()
 }
 
-func (s *remoteSettingService) invalidateAll(reason string) {
+// invalidateAll purges the cache and returns the number of entries removed.
+func (s *remoteSettingService) invalidateAll(reason string) int {
 	s.cacheMu.Lock()
 	defer s.cacheMu.Unlock()
 	s.invalidations.Add(1)
 	s.metrics.cacheInvalidationTotal.WithLabelValues(reason).Inc()
-	if s.cache != nil {
-		s.cache.Purge()
+	if s.cache == nil {
+		return 0
 	}
+	n := s.cache.Len()
+	s.cache.Purge()
+	return n
 }
 
 func (s *remoteSettingService) ListAsIni(ctx context.Context, labelSelector metav1.LabelSelector) (*ini.File, error) {

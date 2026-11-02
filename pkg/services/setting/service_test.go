@@ -1196,21 +1196,42 @@ func generateSettingListJSON(totalSettings, numSections int) string {
 }
 
 type fakeSubscriber struct {
-	enabled     bool
-	err         error
-	subject     string
-	handler     func(subject string, data []byte)
-	onReconnect func()
+	enabled      bool
+	err          error
+	subject      string
+	handler      func(subject string, data []byte)
+	onReconnect  func()
+	readyErr     error
+	unsubscribed bool
+	readyCalls   atomic.Int32
+	readyCh      chan struct{} // when set, WaitReady blocks until it is closed
+}
+
+func (f *fakeSubscriber) WaitReady(ctx context.Context) error {
+	f.readyCalls.Add(1)
+	if f.readyCh != nil {
+		select {
+		case <-f.readyCh:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+	return f.readyErr
+}
+
+func (f *fakeSubscriber) Unsubscribe() error {
+	f.unsubscribed = true
+	return nil
 }
 
 func (f *fakeSubscriber) Enabled() bool { return f.enabled }
 
-func (f *fakeSubscriber) Subscribe(_ context.Context, subject string, handler func(string, []byte), onReconnect func()) error {
+func (f *fakeSubscriber) Subscribe(_ context.Context, subject string, handler func(string, []byte), onReconnect func()) (Subscription, error) {
 	if f.err != nil {
-		return f.err
+		return nil, f.err
 	}
 	f.subject, f.handler, f.onReconnect = subject, handler, onReconnect
-	return nil
+	return f, nil
 }
 
 func (f *fakeSubscriber) publish(t *testing.T, namespace string) {
@@ -1280,7 +1301,7 @@ func TestListCacheInvalidationEvents(t *testing.T) {
 	namespaces := []string{"stacks-1", "stacks-2", "stacks-3"}
 
 	// flushesAll warms every namespace, triggers the event, then expects all of them to be refetched.
-	flushesAll := func(t *testing.T, reason string, trigger func(sub *fakeSubscriber)) {
+	flushesAll := func(t *testing.T, reason string, trigger func(c *remoteSettingService, sub *fakeSubscriber)) {
 		t.Helper()
 		var requests atomic.Int32
 		sub := &fakeSubscriber{enabled: true}
@@ -1295,7 +1316,7 @@ func TestListCacheInvalidationEvents(t *testing.T) {
 		}
 		require.Equal(t, int32(len(namespaces)), requests.Load(), "all namespaces are served from the cache")
 
-		trigger(sub)
+		trigger(c, sub)
 
 		for _, ns := range namespaces {
 			list(t, c, ns)
@@ -1306,15 +1327,18 @@ func TestListCacheInvalidationEvents(t *testing.T) {
 	}
 
 	t.Run("all namespaces are flushed on reconnect", func(t *testing.T) {
-		flushesAll(t, invalidationReasonReconnect, func(sub *fakeSubscriber) { sub.onReconnect() })
+		flushesAll(t, invalidationReasonReconnect, func(c *remoteSettingService, sub *fakeSubscriber) {
+			sub.onReconnect()
+			require.Eventually(t, func() bool { return invalidations(c, invalidationReasonReconnect) == 1 }, time.Second, time.Millisecond)
+		})
 	})
 
 	t.Run("all namespaces are flushed on an undecodable event", func(t *testing.T) {
-		flushesAll(t, invalidationReasonInvalidEvent, func(sub *fakeSubscriber) { sub.handler(sub.subject, []byte("not a proto")) })
+		flushesAll(t, invalidationReasonInvalidEvent, func(_ *remoteSettingService, sub *fakeSubscriber) { sub.handler(sub.subject, []byte("not a proto")) })
 	})
 
 	t.Run("all namespaces are flushed on an event without a namespace", func(t *testing.T) {
-		flushesAll(t, invalidationReasonInvalidEvent, func(sub *fakeSubscriber) { sub.publish(t, "") })
+		flushesAll(t, invalidationReasonInvalidEvent, func(_ *remoteSettingService, sub *fakeSubscriber) { sub.publish(t, "") })
 	})
 
 	t.Run("event during a fetch keeps the stale result out of the cache", func(t *testing.T) {
@@ -1345,6 +1369,34 @@ func TestListCacheInvalidationEvents(t *testing.T) {
 
 		list(t, c, "stacks-1")
 		assert.Equal(t, int32(2), requests.Load())
+	})
+
+	t.Run("reconnect flush waits for the subscription to be ready", func(t *testing.T) {
+		var requests atomic.Int32
+		sub := &fakeSubscriber{enabled: true}
+		c := newEventTestClient(t, countingServer(t, &requests), sub, 0)
+		list(t, c, "stacks-1")
+
+		sub.readyCh = make(chan struct{})
+		sub.onReconnect()
+		require.Eventually(t, func() bool { return sub.readyCalls.Load() >= 2 }, time.Second, time.Millisecond)
+		assert.Equal(t, float64(0), invalidations(c, invalidationReasonReconnect), "not flushed before ready")
+
+		close(sub.readyCh)
+		require.Eventually(t, func() bool { return invalidations(c, invalidationReasonReconnect) == 1 }, time.Second, time.Millisecond)
+	})
+
+	t.Run("subscription that never becomes ready falls back to TTL caching", func(t *testing.T) {
+		var requests atomic.Int32
+		sub := &fakeSubscriber{enabled: true, readyErr: errors.New("not ready")}
+		c := newEventTestClient(t, countingServer(t, &requests), sub, 0)
+
+		list(t, c, "stacks-1")
+		list(t, c, "stacks-1")
+
+		assert.Equal(t, int32(1), requests.Load())
+		assert.True(t, sub.unsubscribed)
+		assert.Equal(t, float64(0), testutil.ToFloat64(c.metrics.cacheSubscribed))
 	})
 
 	t.Run("subscribe failure falls back to TTL caching", func(t *testing.T) {
