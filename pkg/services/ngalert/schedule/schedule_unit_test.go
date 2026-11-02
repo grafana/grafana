@@ -157,9 +157,9 @@ func TestProcessTicks(t *testing.T) {
 
 	t.Run("after 1st tick rule metrics should report one active alert rule", func(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
-			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type, state and evaluation interval bucket (non-cumulative ranges).
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type, state and evaluation interval bucket (non-cumulative ranges, lower bound exclusive and upper bound inclusive).
         	            	# TYPE grafana_alerting_rule_group_rules gauge
-        	            	grafana_alerting_rule_group_rules{folder_uid="%[3]s",interval_bucket="0-10s",org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
+        	            	grafana_alerting_rule_group_rules{folder_uid="%[3]s",interval_bucket="<=10s",org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
 				`, alertRule1.OrgID, folderWithRuleGroup1, alertRule1.NamespaceUID)
 
 		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
@@ -199,10 +199,10 @@ func TestProcessTicks(t *testing.T) {
 
 	t.Run("after 2nd tick rule metrics should report two active alert rules in two groups", func(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
-			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type, state and evaluation interval bucket (non-cumulative ranges).
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type, state and evaluation interval bucket (non-cumulative ranges, lower bound exclusive and upper bound inclusive).
         	            	# TYPE grafana_alerting_rule_group_rules gauge
-        	            	grafana_alerting_rule_group_rules{folder_uid="%[4]s",interval_bucket="0-10s",org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
-        	            	grafana_alerting_rule_group_rules{folder_uid="%[5]s",interval_bucket="0-10s",org="%[1]d",rule_group="%[3]s",state="active",type="alerting"} 1
+        	            	grafana_alerting_rule_group_rules{folder_uid="%[4]s",interval_bucket="<=10s",org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
+        	            	grafana_alerting_rule_group_rules{folder_uid="%[5]s",interval_bucket="<=10s",org="%[1]d",rule_group="%[3]s",state="active",type="alerting"} 1
 				`, alertRule1.OrgID, folderWithRuleGroup1, folderWithRuleGroup2, alertRule1.NamespaceUID, alertRule2.NamespaceUID)
 
 		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
@@ -265,10 +265,10 @@ func TestProcessTicks(t *testing.T) {
 
 	t.Run("after 5th tick rule metrics should report one active and one paused alert rules in two groups", func(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
-			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type, state and evaluation interval bucket (non-cumulative ranges).
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type, state and evaluation interval bucket (non-cumulative ranges, lower bound exclusive and upper bound inclusive).
         	            	# TYPE grafana_alerting_rule_group_rules gauge
-        	            	grafana_alerting_rule_group_rules{folder_uid="%[4]s",interval_bucket="0-10s",org="%[1]d",rule_group="%[2]s",state="paused",type="alerting"} 1
-        	            	grafana_alerting_rule_group_rules{folder_uid="%[5]s",interval_bucket="0-10s",org="%[1]d",rule_group="%[3]s",state="active",type="alerting"} 1
+        	            	grafana_alerting_rule_group_rules{folder_uid="%[4]s",interval_bucket="<=10s",org="%[1]d",rule_group="%[2]s",state="paused",type="alerting"} 1
+        	            	grafana_alerting_rule_group_rules{folder_uid="%[5]s",interval_bucket="<=10s",org="%[1]d",rule_group="%[3]s",state="active",type="alerting"} 1
 				`, alertRule1.OrgID, folderWithRuleGroup1, folderWithRuleGroup2, alertRule1.NamespaceUID, alertRule2.NamespaceUID)
 
 		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
@@ -308,10 +308,10 @@ func TestProcessTicks(t *testing.T) {
 
 	t.Run("after 6th tick rule metrics should report two paused alert rules in two groups", func(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
-			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type, state and evaluation interval bucket (non-cumulative ranges).
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type, state and evaluation interval bucket (non-cumulative ranges, lower bound exclusive and upper bound inclusive).
         	            	# TYPE grafana_alerting_rule_group_rules gauge
-        	            	grafana_alerting_rule_group_rules{folder_uid="%[4]s",interval_bucket="0-10s",org="%[1]d",rule_group="%[2]s",state="paused",type="alerting"} 1
-        	            	grafana_alerting_rule_group_rules{folder_uid="%[5]s",interval_bucket="0-10s",org="%[1]d",rule_group="%[3]s",state="paused",type="alerting"} 1
+        	            	grafana_alerting_rule_group_rules{folder_uid="%[4]s",interval_bucket="<=10s",org="%[1]d",rule_group="%[2]s",state="paused",type="alerting"} 1
+        	            	grafana_alerting_rule_group_rules{folder_uid="%[5]s",interval_bucket="<=10s",org="%[1]d",rule_group="%[3]s",state="paused",type="alerting"} 1
 
 				`, alertRule1.OrgID, folderWithRuleGroup1, folderWithRuleGroup2, alertRule1.NamespaceUID, alertRule2.NamespaceUID)
 		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
@@ -336,10 +336,10 @@ func TestProcessTicks(t *testing.T) {
 
 	t.Run("after 7th tick rule metrics should report two active alert rules in two groups", func(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
-			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type, state and evaluation interval bucket (non-cumulative ranges).
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type, state and evaluation interval bucket (non-cumulative ranges, lower bound exclusive and upper bound inclusive).
         	            	# TYPE grafana_alerting_rule_group_rules gauge
-        	            	grafana_alerting_rule_group_rules{folder_uid="%[4]s",interval_bucket="0-10s",org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
-        	            	grafana_alerting_rule_group_rules{folder_uid="%[5]s",interval_bucket="0-10s",org="%[1]d",rule_group="%[3]s",state="active",type="alerting"} 1
+        	            	grafana_alerting_rule_group_rules{folder_uid="%[4]s",interval_bucket="<=10s",org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
+        	            	grafana_alerting_rule_group_rules{folder_uid="%[5]s",interval_bucket="<=10s",org="%[1]d",rule_group="%[3]s",state="active",type="alerting"} 1
 				`, alertRule1.OrgID, folderWithRuleGroup1, folderWithRuleGroup2, alertRule1.NamespaceUID, alertRule2.NamespaceUID)
 
 		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
@@ -363,9 +363,9 @@ func TestProcessTicks(t *testing.T) {
 
 	t.Run("after 8th tick rule metrics should report one active alert rule", func(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
-			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type, state and evaluation interval bucket (non-cumulative ranges).
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type, state and evaluation interval bucket (non-cumulative ranges, lower bound exclusive and upper bound inclusive).
         	            	# TYPE grafana_alerting_rule_group_rules gauge
-        	            	grafana_alerting_rule_group_rules{folder_uid="%[3]s",interval_bucket="0-10s",org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
+        	            	grafana_alerting_rule_group_rules{folder_uid="%[3]s",interval_bucket="<=10s",org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
 				`, alertRule1.OrgID, folderWithRuleGroup2, alertRule2.NamespaceUID)
 		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
 		require.NoError(t, err)
@@ -684,9 +684,9 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			sch.updateRulesMetrics([]*models.AlertRule{alertRule1})
 
 			expectedMetric := fmt.Sprintf(
-				`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type, state and evaluation interval bucket (non-cumulative ranges).
+				`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type, state and evaluation interval bucket (non-cumulative ranges, lower bound exclusive and upper bound inclusive).
 								# TYPE grafana_alerting_rule_group_rules gauge
-								grafana_alerting_rule_group_rules{folder_uid="%[3]s",interval_bucket="0-10s",org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
+								grafana_alerting_rule_group_rules{folder_uid="%[3]s",interval_bucket="<=10s",org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
 				`, alertRule1.OrgID, folderWithRuleGroup1, alertRule1.NamespaceUID)
 
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
@@ -705,10 +705,10 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			sch.updateRulesMetrics([]*models.AlertRule{alertRule1, alertRule2})
 
 			expectedMetric := fmt.Sprintf(
-				`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type, state and evaluation interval bucket (non-cumulative ranges).
+				`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type, state and evaluation interval bucket (non-cumulative ranges, lower bound exclusive and upper bound inclusive).
 								# TYPE grafana_alerting_rule_group_rules gauge
-								grafana_alerting_rule_group_rules{folder_uid="%[4]s",interval_bucket="0-10s",org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
-                	            grafana_alerting_rule_group_rules{folder_uid="%[5]s",interval_bucket="61-300s",org="%[1]d",rule_group="%[3]s",state="active",type="alerting"} 1
+								grafana_alerting_rule_group_rules{folder_uid="%[4]s",interval_bucket="<=10s",org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
+                	            grafana_alerting_rule_group_rules{folder_uid="%[5]s",interval_bucket="1m-5m",org="%[1]d",rule_group="%[3]s",state="active",type="alerting"} 1
 				`, alertRule1.OrgID, folderWithRuleGroup1, folderWithRuleGroup2, alertRule1.NamespaceUID, alertRule2.NamespaceUID)
 
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
@@ -720,10 +720,10 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			sch.updateRulesMetrics([]*models.AlertRule{alertRule1, alertRule2})
 
 			expectedMetric := fmt.Sprintf(
-				`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type, state and evaluation interval bucket (non-cumulative ranges).
+				`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type, state and evaluation interval bucket (non-cumulative ranges, lower bound exclusive and upper bound inclusive).
 								# TYPE grafana_alerting_rule_group_rules gauge
-								grafana_alerting_rule_group_rules{folder_uid="%[4]s",interval_bucket="0-10s",org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
-                	            grafana_alerting_rule_group_rules{folder_uid="%[5]s",interval_bucket="61-300s",org="%[1]d",rule_group="%[3]s",state="active",type="alerting"} 1
+								grafana_alerting_rule_group_rules{folder_uid="%[4]s",interval_bucket="<=10s",org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
+                	            grafana_alerting_rule_group_rules{folder_uid="%[5]s",interval_bucket="1m-5m",org="%[1]d",rule_group="%[3]s",state="active",type="alerting"} 1
 				`, alertRule1.OrgID, folderWithRuleGroup1, folderWithRuleGroup2, alertRule1.NamespaceUID, alertRule2.NamespaceUID)
 
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")

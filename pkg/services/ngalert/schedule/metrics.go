@@ -55,23 +55,36 @@ type ruleKey struct {
 	intervalBucket string
 }
 
+// intervalBuckets are the upper bounds (inclusive) of the interval_bucket label values, in ascending order.
+var intervalBuckets = []struct {
+	maxSeconds int64
+	label      string
+}{
+	{10, "<=10s"},
+	{30, "10s-30s"},
+	{60, "30s-1m"},
+	{5 * 60, "1m-5m"},
+	{15 * 60, "5m-15m"},
+	{30 * 60, "15m-30m"},
+	{60 * 60, "30m-1h"},
+	{6 * 60 * 60, "1h-6h"},
+	{12 * 60 * 60, "6h-12h"},
+	{24 * 60 * 60, "12h-1d"},
+}
+
+// intervalBucketOverflowLabel is the label value for intervals above the largest bucket.
+const intervalBucketOverflowLabel = ">1d"
+
 // intervalBucketLabel maps a rule evaluation interval to a bounded label value.
-// Buckets are non-overlapping, inclusive ranges in seconds, so each rule falls into exactly one.
+// Buckets are non-overlapping and non-cumulative. A range such as "10s-30s" excludes its lower
+// bound and includes its upper bound (i.e. 10s < interval <= 30s), so each rule falls into exactly one bucket.
 func intervalBucketLabel(intervalSeconds int64) string {
-	switch {
-	case intervalSeconds <= 10:
-		return "0-10s"
-	case intervalSeconds <= 30:
-		return "11-30s"
-	case intervalSeconds <= 60:
-		return "31-60s"
-	case intervalSeconds <= 5*60:
-		return "61-300s"
-	case intervalSeconds <= 15*60:
-		return "301-900s"
-	default:
-		return "901s+"
+	for _, b := range intervalBuckets {
+		if intervalSeconds <= b.maxSeconds {
+			return b.label
+		}
 	}
+	return intervalBucketOverflowLabel
 }
 
 func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {

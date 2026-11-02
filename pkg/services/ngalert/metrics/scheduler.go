@@ -129,7 +129,7 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Namespace: Namespace,
 				Subsystem: Subsystem,
 				Name:      "rule_group_rules",
-				Help:      "The number of alert rules that are scheduled, by type, state and evaluation interval bucket (non-cumulative ranges).",
+				Help:      "The number of alert rules that are scheduled, by type, state and evaluation interval bucket (non-cumulative ranges, lower bound exclusive and upper bound inclusive).",
 			},
 			[]string{"org", "type", "state", "rule_group", "folder_uid", "interval_bucket"},
 		),
