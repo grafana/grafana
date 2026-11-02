@@ -1,5 +1,6 @@
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
+import * as z from 'zod/mini';
 
 import { type Preferences } from '@grafana/api-clients/rtkq/preferences/v1';
 import {
@@ -142,6 +143,10 @@ import { createSystemVariableAdapter } from './features/variables/system/adapter
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
 import { configureStore } from './store/configureStore';
 import { getState } from './store/store';
+
+// Mini does not initialize the English validation messages that Classic provided.
+// TODO: Can we lazily pull in other Zod locales to match the user's chosen language?
+z.config(z.locales.en());
 
 // Only the top-level overlay entrypoint is loaded; scanning the entire app follows pnpm workspace symlinks.
 const extensionsIndex = require.context('./extensions', false, /^\.\/index\.ts$/);

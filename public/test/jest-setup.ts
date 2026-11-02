@@ -4,6 +4,9 @@ import './global-jquery-shim';
 import { TransformStream } from 'node:stream/web';
 import { MessageChannel, type MessagePort } from 'node:worker_threads';
 import { TextEncoder, TextDecoder } from 'util';
+import * as z from 'zod/mini';
+
+z.config(z.locales.en());
 
 // we need to isolate the `@grafana/data` module here now that it depends on `@grafana/i18n`
 jest.isolateModulesAsync(async () => {
