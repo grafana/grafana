@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
 )
@@ -123,7 +122,7 @@ func TestNatsNotifierWatch_ConvertsNotifications(t *testing.T) {
 	cases := []struct {
 		name   string
 		typ    resourcepb.WatchNotification_Type
-		action kv.DataAction
+		action DataAction
 	}{
 		{"added", resourcepb.WatchNotification_ADDED, DataActionCreated},
 		{"modified", resourcepb.WatchNotification_MODIFIED, DataActionUpdated},
@@ -170,7 +169,7 @@ func TestNatsNotifierDecode_PreviousMetadata(t *testing.T) {
 		name           string
 		previousType   resourcepb.WatchNotification_Type
 		previousFolder string
-		previousAction kv.DataAction
+		previousAction DataAction
 	}{
 		{name: "older publisher omits metadata"},
 		{name: "created in root", previousType: resourcepb.WatchNotification_ADDED, previousAction: DataActionCreated},

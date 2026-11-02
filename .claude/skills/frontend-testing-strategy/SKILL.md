@@ -13,7 +13,7 @@ fails CI.
 
 ## Running Playwright E2E tests
 
-Use `yarn e2e:playwright <spec>` with `GRAFANA_URL` unset by default. The harness starts
+Use `pnpm e2e:playwright <spec>` with `GRAFANA_URL` unset by default. The harness starts
 its own lightweight Grafana server on port 3001; this is more efficient than starting a
 separate development instance. Do not start `make run` or another Grafana server just to
 run E2E tests.
@@ -414,7 +414,7 @@ of this one), the `add-e2e-selectors` skill, `contribute/style-guides/testing.md
 
 ## Verify
 
-- `yarn test <path>` (add `--watchAll=false`) — the new tests pass and actually fail when the
+- `pnpm test <path>` (add `--watchAll=false`) — the new tests pass and actually fail when the
   asserted value is broken (mutate the expected value once to confirm it's not a no-op).
-- For E2E: `yarn e2e:playwright <spec>` — follow "Running Playwright E2E tests" above.
-- `yarn typecheck` if selectors or casts were added.
+- For E2E: `pnpm e2e:playwright <spec>` — follow "Running Playwright E2E tests" above.
+- `pnpm typecheck` if selectors or casts were added.

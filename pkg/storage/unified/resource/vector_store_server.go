@@ -57,14 +57,13 @@ type vectorWriteStore interface {
 // for externally-pushed vector collections. Failures are gRPC status codes
 // only — responses carry no ErrorResult.
 type VectorStoreServer struct {
-	store           vectorWriteStore
-	embedder        *embedder.Embedder
-	allowlist       vector.CollectionAllowlist
-	allowedServices map[string]struct{}
-	sharedAllowlist vector.CollectionAllowlist
-	sharedServices  map[string]struct{}
-	log             log.Logger
-	metrics         *VectorMetrics
+	store            vectorWriteStore
+	embedder         *embedder.Embedder
+	allowlist        vector.CollectionAllowlist
+	allowedServices  map[string]struct{}
+	sharedPublishers map[string]map[string]struct{}
+	log              log.Logger
+	metrics          *VectorMetrics
 }
 
 var _ resourcepb.VectorStoreServer = (*VectorStoreServer)(nil)
@@ -72,7 +71,7 @@ var _ resourcepb.VectorStoreServer = (*VectorStoreServer)(nil)
 // NewVectorStoreServer builds the external write service. Tenant-scoped collections
 // retain their optional service gate; shared collections require a dedicated
 // nonempty publisher identity and store rows in the shared namespace.
-func NewVectorStoreServer(store vector.VectorBackend, emb *embedder.Embedder, externalAllowlist, allowedServices, sharedCollections, sharedWriteServices []string, metrics *VectorMetrics) *VectorStoreServer {
+func NewVectorStoreServer(store vector.VectorBackend, emb *embedder.Embedder, externalAllowlist, allowedServices []string, sharedPublishers map[string][]string, metrics *VectorMetrics) *VectorStoreServer {
 	services := make(map[string]struct{}, len(allowedServices))
 	for _, s := range allowedServices {
 		// A stray comma in the config must not admit identity-less tokens.
@@ -80,25 +79,28 @@ func NewVectorStoreServer(store vector.VectorBackend, emb *embedder.Embedder, ex
 			services[s] = struct{}{}
 		}
 	}
-	sharedServices := make(map[string]struct{}, len(sharedWriteServices))
-	for _, service := range sharedWriteServices {
-		if service != "" {
-			sharedServices[service] = struct{}{}
+	shared := make(map[string]map[string]struct{}, len(sharedPublishers))
+	for collection, publishers := range sharedPublishers {
+		services := make(map[string]struct{}, len(publishers))
+		for _, publisher := range publishers {
+			if publisher != "" {
+				services[publisher] = struct{}{}
+			}
 		}
+		shared[collection] = services
 	}
 	// Recording sites should not have to check for nil.
 	if metrics == nil {
 		metrics = ProvideVectorMetrics(nil)
 	}
 	return &VectorStoreServer{
-		store:           store,
-		embedder:        emb,
-		allowlist:       vector.NewCollectionAllowlist(nil, externalAllowlist),
-		allowedServices: services,
-		sharedAllowlist: vector.NewCollectionAllowlist(nil, sharedCollections),
-		sharedServices:  sharedServices,
-		log:             log.New("vector-store-server"),
-		metrics:         metrics,
+		store:            store,
+		embedder:         emb,
+		allowlist:        vector.NewCollectionAllowlist(nil, externalAllowlist),
+		allowedServices:  services,
+		sharedPublishers: shared,
+		log:              log.New("vector-store-server"),
+		metrics:          metrics,
 	}
 }
 
@@ -168,18 +170,18 @@ func (s *VectorStoreServer) resolveWriteTarget(ctx context.Context, namespace, g
 		identity = ids[0]
 	}
 	key := vector.Collection{Group: group, Resource: resource, IsExternal: true}
-	shared := s.sharedAllowlist.Allows(key)
+	publishers, shared := s.sharedPublishers[group+"/"+resource]
 	tenantScoped := s.allowlist.Allows(key)
 	if shared && tenantScoped {
 		s.log.Error("vector store: overlapping collection enrollment", "group", group, "resource", resource)
 		return writeTarget{}, status.Error(codes.Internal, "invalid collection enrollment")
 	}
 	if shared {
-		if len(s.sharedServices) == 0 {
+		if len(publishers) == 0 {
 			s.log.Error("vector store: missing shared publishers", "group", group, "resource", resource)
 			return writeTarget{}, status.Error(codes.Internal, "invalid shared publisher configuration")
 		}
-		if _, ok := s.sharedServices[identity]; !ok {
+		if _, ok := publishers[identity]; !ok {
 			return writeTarget{}, status.Error(codes.PermissionDenied, "service identity not allowed to publish shared vectors")
 		}
 	} else if len(s.allowedServices) > 0 {

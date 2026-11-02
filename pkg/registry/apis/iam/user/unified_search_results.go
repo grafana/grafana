@@ -1,8 +1,6 @@
 package user
 
 import (
-	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -23,85 +21,10 @@ func parseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUs
 		return iamv0.NewGetSearchUsersResponse(), resource.StatusError(result.Error)
 	}
 
-	switch result.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		return parseTableResults(result)
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		return parseFieldValueResults(result)
-	default:
+	if result.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return iamv0.NewGetSearchUsersResponse(), fmt.Errorf("unsupported search result format %d", result.GetResultFormat())
 	}
-}
 
-func parseTableResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUsersResponse, error) {
-	if result.Results == nil {
-		return newUserSearchResponse(result, 0), nil
-	}
-
-	colIdx := make(map[string]int, len(result.Results.Columns))
-	for i, v := range result.Results.Columns {
-		colIdx[v.Name] = i
-	}
-
-	sr := newUserSearchResponse(result, len(result.Results.Rows))
-	for i, row := range result.Results.Rows {
-		if row == nil || row.Key == nil {
-			return iamv0.NewGetSearchUsersResponse(), fmt.Errorf("table user search result row %d has no resource key", i)
-		}
-		if len(row.Cells) != len(result.Results.Columns) {
-			return iamv0.NewGetSearchUsersResponse(), fmt.Errorf("error parsing user search response: mismatch number of columns and cells")
-		}
-		sr.Hits = append(sr.Hits, parseUserHit(row, colIdx))
-	}
-
-	return sr, nil
-}
-
-func parseUserHit(row *resourcepb.ResourceTableRow, colIdx map[string]int) iamv0.GetSearchUsersUserHit {
-	cell := func(name string) []byte {
-		if i, ok := colIdx[name]; ok {
-			return row.Cells[i]
-		}
-		return nil
-	}
-	asInt64 := func(name string) int64 {
-		if b := cell(name); len(b) == 8 {
-			return int64(binary.BigEndian.Uint64(b))
-		}
-		return 0
-	}
-
-	hit := iamv0.GetSearchUsersUserHit{
-		Name:    row.Key.Name,
-		Title:   string(cell(resource.SEARCH_FIELD_TITLE)),
-		Email:   string(cell(builders.USER_EMAIL)),
-		Login:   string(cell(builders.USER_LOGIN)),
-		Role:    string(cell(builders.USER_ROLE)),
-		Created: asInt64(resource.SEARCH_FIELD_CREATED),
-	}
-
-	if id, err := strconv.ParseInt(string(cell(legacyIDField)), 10, 64); err == nil {
-		hit.InternalId = id
-	}
-
-	if b := cell(builders.USER_DISABLED); len(b) > 0 {
-		hit.Disabled = b[0] == 1
-	}
-	if b := cell(builders.USER_LAST_SEEN_AT); len(b) == 8 {
-		hit.LastSeenAt = int64(binary.BigEndian.Uint64(b))
-		hit.LastSeenAtAge = util.GetAgeString(time.Unix(hit.LastSeenAt, 0))
-	}
-	if b := cell(builders.USER_EXTERNAL_AUTH_MODULES); len(b) > 0 {
-		var modules []string
-		if err := json.Unmarshal(b, &modules); err == nil {
-			hit.ExternalAuthModules = modules
-		}
-	}
-
-	return hit
-}
-
-func parseFieldValueResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUsersResponse, error) {
 	sr := newUserSearchResponse(result, len(result.Rows))
 	for i, row := range result.Rows {
 		if row == nil || row.Key == nil {

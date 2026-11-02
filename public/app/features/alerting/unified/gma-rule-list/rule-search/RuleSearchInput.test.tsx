@@ -1,13 +1,28 @@
 import { render, screen } from 'test/test-utils';
 
 import { RuleSearchInput } from './RuleSearchInput';
-import { alertFilters } from './alertFilters';
+import { type FilterHelp } from './filterDefinitions';
+
+const text = (value: string) => () => value;
+
+const filterHelp: FilterHelp[] = [
+  { key: 'label', label: text('Labels'), description: text('Label matcher.'), example: 'label:team=api' },
+  { key: 'folder', label: text('Folder'), description: text('Folder UID.'), example: 'folder:uid' },
+  {
+    key: 'policy',
+    label: text('Notification policy'),
+    description: text('Named policy.'),
+    example: 'policy:name',
+    unavailableValues: [{ value: 'default', reason: text("Filtering by the default policy isn't available yet.") }],
+  },
+  { key: 'paused', label: text('Paused'), description: text('Whether paused.'), example: 'paused:true' },
+];
 
 function renderInput(query = '') {
   const onApply = jest.fn();
   const view = render(
     <>
-      <RuleSearchInput query={query} onApply={onApply} filters={alertFilters} />
+      <RuleSearchInput query={query} onApply={onApply} filterHelp={filterHelp} />
       <button>elsewhere</button>
     </>
   );
@@ -66,8 +81,7 @@ describe('RuleSearchInput', () => {
 
     expect(screen.getByText('Labels')).toBeInTheDocument();
     expect(screen.getByText('label:team=api')).toBeInTheDocument();
-    expect(screen.getAllByText('Available')).toHaveLength(12);
+    expect(screen.getAllByText('Available')).toHaveLength(filterHelp.length);
     expect(screen.getByText("Filtering by the default policy isn't available yet.")).toBeInTheDocument();
-    expect(screen.getByText("Filtering by not paused isn't available yet.")).toBeInTheDocument();
   });
 });

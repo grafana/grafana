@@ -82,7 +82,7 @@ func TestNatsWatchNotificationRoundTrip(t *testing.T) {
 		establishInterest(t, ctx, out, backend)
 
 		// Guards the publish and consume switches (in separate files) staying in sync.
-		for _, action := range []kv.DataAction{DataActionCreated, DataActionUpdated, DataActionDeleted} {
+		for _, action := range []DataAction{DataActionCreated, DataActionUpdated, DataActionDeleted} {
 			backend.publishWatchNotification(ctx, Event{
 				Namespace:       "default",
 				Group:           "playlist.grafana.app",
@@ -153,7 +153,7 @@ func TestNatsWatchNotificationRoundTrip(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
 		backend := newTestKVStorageBackend(pub)
 		assert.Equal(t, int64(defaultMaxWatchNotificationBytes), pub.MaxPayload(), "the embedded server applies the NATS default")
-		assert.Equal(t, defaultMaxWatchNotificationBytes, backend.maxWatchNotificationBytes())
+		assert.Equal(t, defaultMaxWatchNotificationBytes, backend.watchPublisher.maxWatchNotificationBytes())
 		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, NewWatchExpiry(), nil, &logging.NoOpLogger{})
 		out := notifier.Watch(ctx, WatchOptions{})
 

@@ -522,6 +522,7 @@
         "save": "Speichern"
       },
       "error-title": "Speichern der Warnregel fehlgeschlagen",
+      "form-errors": "",
       "no-group-success": "Regel erfolgreich hinzugefügt"
     },
     "alert-rule-name-and-metric": {
@@ -530,8 +531,8 @@
       "label-metric": "Metrik",
       "label-name": "Name",
       "message": {
-        "must-enter-a-metric-name": "Ein Metrikname muss eingegeben werden",
-        "must-enter-a-name": "Ein Name muss eingegeben werden",
+        "metric-name-required": "",
+        "name-required": "",
         "please-select-a-data-source": "Bitte wählen Sie eine Datenquelle aus"
       },
       "metric-aria-label-metric": "metrisch",
@@ -586,6 +587,7 @@
     },
     "alertmanager-config": {
       "confirmText-yes-reset-configuration": "Ja, Konfiguration zurücksetzen",
+      "editor-label": "",
       "gma-manual-configuration-description": "Die interne Grafana-Alertmanager-Konfiguration kann nicht manuell geändert werden. Bearbeiten Sie die individuellen Ressourcen über die Benutzeroberfläche, um diese Konfiguration zu ändern.",
       "gma-manual-configuration-is-not-supported": "Manuelle Konfigurationsänderungen werden nicht unterstützt",
       "message": {
@@ -1097,6 +1099,7 @@
         "body": "Sind Sie sicher, dass Sie diese gelöschte Warnregeldefinition wiederherstellen möchten?",
         "confirm": "Ja, gelöschte Regel wiederherstellen",
         "error": "Die gelöschte Warnregel konnte nicht wiederhergestellt werden",
+        "preview-aria-label": "",
         "title": "Gelöschte Warnregel wiederherstellen"
       },
       "table": {
@@ -1314,7 +1317,7 @@
     "folder-selector": {
       "description-select-folder": "Wählen Sie einen Ordner, in dem Sie Ihre Regel speichern.",
       "message": {
-        "select-a-folder": "Einen Ordner auswählen"
+        "folder-required": ""
       }
     },
     "folderAndGroup": {
@@ -1442,19 +1445,95 @@
     },
     "gma-rule-list": {
       "alert-rules": {
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
-        "rules-error": ""
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
+        "rules-error": "",
+        "search-issues": ""
+      },
+      "datasources": "",
+      "folder-row": {
+        "collapse": "",
+        "count-description": "",
+        "count-tooltip": "",
+        "count-unavailable": "",
+        "expand": ""
       },
       "interval": "",
+      "recorded-metric": {
+        "records": "",
+        "to": ""
+      },
       "recording-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
-      "result-count": {
+      "rule-count": {
         "alert-rules_one": "",
         "alert-rules_other": "",
         "recording-rules_one": "",
         "recording-rules_other": ""
+      },
+      "search": {
+        "default-policy-unavailable": "",
+        "folders-disabled": "",
+        "help": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "label": "",
+          "metric": "",
+          "panel-id": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "help-availability": "",
+        "help-available": "",
+        "help-expression": "",
+        "help-filter-type": "",
+        "help-intro": "",
+        "help-title": "",
+        "invalid-tokens": "",
+        "invalid-value": "",
+        "label": "",
+        "not-paused-unavailable": "",
+        "placeholder": "",
+        "property": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "labels": "",
+          "metric": "",
+          "panel": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule-name": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "rejected-filter": "",
+        "rejected-search": "",
+        "renamed-value": "",
+        "unavailable-tokens": "",
+        "unclosed-quote": "",
+        "view": "",
+        "view-folders": "",
+        "view-list": "",
+        "wildcard-in-text": ""
       },
       "shared": {
         "load-more": "",
@@ -1473,7 +1552,9 @@
         "recording": "",
         "recovering": "",
         "unavailable": ""
-      }
+      },
+      "labels_one": "",
+      "labels_other": ""
     },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "Gehen Sie zur Seite Alerting Admin, um Ihre Alertmanager-Einrichtung zu ändern. Kontaktieren Sie Ihren Administrator, wenn Sie keinen Zugriff haben.",
@@ -1490,11 +1571,10 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "Gruppen werden geladen …",
       "message": {
-        "must-be-a-positive-integer": "Muss eine positive ganze Zahl sein.",
-        "must-enter-a-group-name": "Es muss ein Gruppenname eingegeben werden"
+        "evaluation-group-required": "",
+        "must-be-a-positive-integer": "Muss eine positive ganze Zahl sein."
       },
       "missing-series-resolve-placeholder": "Standard: 2",
-      "or": "oder",
       "placeholder-select-an-evaluation-group": "Wählen Sie eine Bewertungsgruppe aus …",
       "text-configure-no-data-and-error-handling": "Umgang mit „Keine Daten“ und Fehlern konfigurieren",
       "title-set-evaluation-behavior": "Bewertungsverhalten festlegen"
@@ -1788,6 +1868,7 @@
         "will-import-rules-count_one": " Importiert {{count}} Regeln",
         "will-import-rules-count_other": " Importiert {{count}} Regeln"
       },
+      "rules-preview": "",
       "source": {
         "datasource": "Bestehende von der Datenquelle verwaltete Regeln",
         "datasource-description": "Regeln aus vorhandenen Datenquellen importieren",
@@ -2920,7 +3001,7 @@
           "alerting": "Aktivieren, um die Evaluierung für diese Warnregel zu pausieren.",
           "recording": "Aktivieren, um die Evaluierung für diese Aufnahmeregel zu pausieren."
         },
-        "select-folder-before": "Wählen Sie einen Ordner aus, bevor Sie die Evaluierungsgruppe und das Intervall festlegen",
+        "select-folder-first-tooltip": "",
         "ungroup-warning": "Diese Aktion kann nicht rückgängig gemacht werden. Nach dem Speichern können Sie sie nicht wieder einer Gruppe hinzufügen.",
         "ungroup-warning-title": "Dadurch wird die Warnregel aus ihrer Gruppe entfernt"
       },
@@ -3594,6 +3675,9 @@
       "switch-to-data-source-managed": "Die ausgewählte Datenquelle in Ihrer Abfrage unterstützt die Verwaltung von Warnregeln. Wechseln Sie zur Verwaltung durch die Datenquelle, wenn die Warnregel von der Datenquelle und nicht von Grafana verwaltet werden soll.",
       "switch-to-grafana-managed": "Wechseln Sie zur Verwaltung durch Grafana, um Ausdrücke, mehrere Abfragen, Bilder in Benachrichtigungen und diverse andere Funktionen zu nutzen.",
       "title-alert-rule-types": "Warnregeltypen"
+    },
+    "sql-query-preview": {
+      "aria-label": ""
     },
     "state-history": {
       "columns": {
@@ -5663,6 +5747,17 @@
       "ungroup-rows": "Gruppierung von Zeilen aufheben",
       "ungroup-tabs": "Gruppierung von Tabs aufheben"
     },
+    "composer": {
+      "annotation-pin": "",
+      "apply-undo-title": "",
+      "overlay": {
+        "hint-panel": "",
+        "hint-region": ""
+      },
+      "region": "",
+      "untitled-panel": "",
+      "wait-for-assistant": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -5843,7 +5938,20 @@
     "edit-actions": {
       "add": "{{typeName}} hinzufügen",
       "add-conditional-rule": "Hinzufügen von {{ruleDescription}}-Regel",
+      "auto-grid-column-width": "",
+      "auto-grid-fill-screen-disable": "",
+      "auto-grid-fill-screen-enable": "",
+      "auto-grid-fit-content-disable": "",
+      "auto-grid-fit-content-enable": "",
+      "auto-grid-match-row-heights-disable": "",
+      "auto-grid-match-row-heights-enable": "",
+      "auto-grid-max-columns": "",
+      "auto-grid-max-height": "",
+      "auto-grid-min-height": "",
+      "auto-grid-row-height": "",
+      "change-settings": "",
       "collapse-all-rows": "Alle Zeilen einklappen",
+      "collapse-row": "",
       "dashboard-description": "Dashboard-Beschreibung ändern",
       "dashboard-title": "Dashboard-Titel ändern",
       "duplicate": "{{typeName}} duplizieren",
@@ -5852,6 +5960,7 @@
       "edit-template-variable-rule": "Regel für Vorlagenvariable ändern",
       "edit-time-range-rule": "Regel für Zeitbereich ändern",
       "expand-all-rows": "Alle Zeilen ausklappen",
+      "expand-row": "",
       "group-into-row": "In Zeile gruppieren",
       "group-into-tab": "In Registerkarte gruppieren",
       "move": "Verschieben von {{typeName}}",
@@ -5865,8 +5974,10 @@
       "panel-repeat-variable": "Panel-Wiederholung durch",
       "panel-title": "Änderung des Panel-Titels",
       "paste-panel": "Panel einfügen",
+      "paste-panel-styles": "",
       "remove": "{{typeName}} entfernen",
       "remove-multiple": "{{typeName}} ({{num}}) entfernen",
+      "rename": "",
       "replace-panel": "",
       "row-fill-screen-disable": "Bildschirmfüllung für Zeilen deaktivieren",
       "row-fill-screen-enable": "Bildschirmfüllung für Zeilen aktivieren",
@@ -5874,16 +5985,39 @@
       "row-repeat-variable": "Zeilenwiederholung nach",
       "row-show-header": "Zeilenkopf anzeigen",
       "row-title": "Zeilentitel ändern",
+      "rows-hide-header": "",
+      "rows-show-header": "",
       "switch-layout": "Layout wechseln",
       "switch-layout-row": "Layout wechseln",
       "switch-layout-tab": "Layout wechseln",
       "tab-repeat-variable": "Tab-Wiederholung nach",
       "tab-title": "Tab-Titel ändern",
+      "unlink-library-panel": "",
+      "variable-adhoc-default-filters": "",
+      "variable-adhoc-default-group-by": "",
+      "variable-adhoc-default-keys": "",
+      "variable-adhoc-enable-group-by": "",
+      "variable-allow-custom-value": "",
+      "variable-constant-value": "",
+      "variable-custom-all-value": "",
+      "variable-datasource": "",
+      "variable-datasource-name-filter": "",
+      "variable-datasource-type": "",
       "variable-description": "Variablenbeschreibung ändern",
       "variable-hide": "Option zum Ausblenden von Variablen ändern",
+      "variable-include-all": "",
+      "variable-interval-auto": "",
+      "variable-interval-min-interval": "",
+      "variable-interval-step-count": "",
+      "variable-interval-values": "",
       "variable-label": "Variablenlabel ändern",
+      "variable-multi-value": "",
       "variable-name": "Variablennamen ändern",
-      "variable-type": "Variablentyp ändern"
+      "variable-refresh": "",
+      "variable-switch-values": "",
+      "variable-textbox-value": "",
+      "variable-type": "Variablentyp ändern",
+      "view-panel-option": ""
     },
     "empty": {
       "add-library-panel-body": "Füge Visualisierungen hinzu, die mit anderen Dashboards geteilt werden.",
@@ -6107,6 +6241,11 @@
     "modes": {
       "agent-edit": "",
       "change-mode": "",
+      "composer": "",
+      "composer-description": "",
+      "composer-no-permission": "",
+      "composer-save-first": "",
+      "composer-unsupported": "",
       "current": "",
       "discard": "",
       "discard-body": "",
@@ -7019,7 +7158,8 @@
         "change-annotation-controls-display": "Anzeige der Anmerkungssteuerung ändern",
         "change-annotation-enabled-state": "Aktivierungsstatus der Anmerkung ändern",
         "change-annotation-name": "Anmerkungsnamen ändern",
-        "change-annotation-panel-filter": "Filter für das Anmerkungs-Panel ändern"
+        "change-annotation-panel-filter": "Filter für das Anmerkungs-Panel ändern",
+        "change-annotation-query": ""
       },
       "edit-query": "Abfrage bearbeiten"
     },
@@ -7176,11 +7316,15 @@
       "modal": {
         "cancel": "Abbrechen",
         "discard": "Verwerfen",
+        "keep-working": "",
         "save": "Speichern",
+        "stop-and-leave": "",
         "text": {
+          "leave-composer": "",
           "save-changes-question": "Möchten Sie Ihre Änderungen speichern?"
         },
         "title": {
+          "leave-composer": "",
           "unsaved-changes": "Nicht gespeicherte Änderungen"
         }
       },
@@ -7967,7 +8111,7 @@
       }
     },
     "unlink-modal": {
-      "body-unlink-panel": "Wenn Sie die Verknüpfung dieses Panels aufheben, können Sie es bearbeiten, ohne dass dies Auswirkungen auf andere Dashboards hat. Sobald Sie jedoch eine Änderung vornehmen, können Sie nicht mehr zum ursprünglichen wiederverwendbaren Panel zurückkehren.",
+      "body-unlink-panel": "",
       "confirmText-yes-unlink": "Ja, Verknüpfung aufheben",
       "title-really-unlink-panel": "Möchten Sie die Verknüpfung dieses Panels wirklich aufheben?"
     },
@@ -8939,6 +9083,12 @@
         "show-details": "Details anzeigen",
         "view-log-line": "Logzeile anzeigen"
       },
+      "error-attribute": {
+        "error-fields-label": "",
+        "error-fields-tooltip": "",
+        "stacktrace-label": "",
+        "stacktrace-tooltip": ""
+      },
       "loki-time-sort-tooltip": "Das Sortieren dieser Spalte ändert nur die Reihenfolge der angezeigten Ergebnisse. Verwenden Sie das Sortier-Steuerelement auf der rechten Seite, um die zeitbasierte Sortierreihenfolge der Abfrage zu aktualisieren."
     },
     "logs-table-empty-fields": {
@@ -9205,10 +9355,6 @@
       "attribute-category": {
         "other": "Sonstiges"
       },
-      "exception-message": "Nachricht:",
-      "exception-stacktrace": "Stacktrace",
-      "exception-title": "Ausnahme",
-      "exception-type": "Typ:",
       "label": {
         "kind": "Art:",
         "library-name": "Bibliotheksname:",
@@ -9314,6 +9460,7 @@
     },
     "trace-page-header": {
       "aria-label-share-dropdown": "Freigabe- und Feedback-Menü öffnen",
+      "copy-trace-id": "",
       "critical-path": "Kritischer Pfad",
       "critical-path-tooltip": "Wählt Spannen im kritischen Pfad aus – der längsten Folge von abhängigen Aufgaben, die die Mindestdauer des Trace bestimmen.",
       "duration": "Dauer",
@@ -9337,7 +9484,7 @@
       "share-group": "Teilen",
       "share-tooltip": "Teilen und Feedback geben",
       "spans": "Spannen",
-      "start-time": "Startzeitpunkt",
+      "start-time": "",
       "success-indicator": "Trace erfolgreich",
       "target": "Ziel",
       "tooltip-url": "{{route}} oder {{url}} oder {{target}} oder {{path}}",
@@ -9346,6 +9493,12 @@
       "trace-banner-metrics": "{{duration}} · {{percent}} % des Trace",
       "trace-banner-warning": "Trace-Warnungsbanner",
       "trace-id": "Trace-ID",
+      "trace-summary-error": "",
+      "trace-summary-error-status": "",
+      "trace-summary-hide-stacktrace": "",
+      "trace-summary-show-stacktrace": "",
+      "trace-summary-warning": "",
+      "trace-summary-warning-status": "",
       "url": "URL",
       "warning-indicator": "Trace hat Client-Fehler"
     },
@@ -10979,6 +11132,7 @@
         "add-all": "Alle angezeigten Werte zum Filter hinzufügen",
         "blanks": "(Leerzeichen)",
         "button": "{{name}}-Filter",
+        "include-missing": "",
         "operator": {
           "contains": "Enthält",
           "equals": "Gleich",
@@ -11003,6 +11157,7 @@
       "filter-popup-heading": "Nach Werten filtern:",
       "filter-popup-input-placeholder": "Filterwerte",
       "filter-popup-match-case": "Groß-/Kleinschreibung beachten",
+      "filter-popup-row-count": "",
       "footer": {
         "reducer": {
           "count": "Anzahl"
@@ -11019,6 +11174,18 @@
       "no-rows": "Keine Zeilen",
       "no-values-label": "Keine Werte",
       "pagination-summary": "{{itemsRangeStart}}–{{displayedEnd}} von {{numRows}} Zeilen",
+      "range": {
+        "apply": "",
+        "empty": "",
+        "end": "",
+        "histogram": "",
+        "invalid": "",
+        "label": "",
+        "maximum": "",
+        "minimum": "",
+        "start": "",
+        "unbounded": ""
+      },
       "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "Nach Spalte {{column}} sortieren",
@@ -11355,13 +11522,8 @@
       "severity-low": "Niedrig",
       "severity-minor": "Gering",
       "severity-unknown": "Unbekannt",
-      "title": "Auslösen von Warnungen",
       "view-all": "Alle ausgelösten Warnungen anzeigen",
-      "view-rules": "Alle Warnregeln anzeigen",
-      "critical-count_one": "{{count}} kritisch",
-      "critical-count_other": "{{count}} kritisch",
-      "high-count_one": "{{count}} hoch",
-      "high-count_other": "{{count}} hoch"
+      "view-rules": "Alle Warnregeln anzeigen"
     },
     "header-actions": {
       "active-incidents": "Aktive Vorfälle",
@@ -11387,21 +11549,13 @@
       "empty": "",
       "empty-selected-team": "",
       "error-title": "Es konnten keine aktiven Vorfälle geladen werden",
-      "title": "Aktive Vorfälle",
       "view-all": "Alle Vorfälle anzeigen"
     },
     "learn-more": "Mehr erfahren",
     "most-used-dashboards-tab": {
       "empty": "Die am häufigsten genutzten Dashboards erscheinen hier.",
-      "empty-description": "Sobald Ihr Unternehmen über Dashboards verfügt und Nutzungsdaten gesammelt wurden, werden hier die Dashboards mit den meisten Aufrufen in den letzten 30 Tagen angezeigt.",
       "error-title": "Die am häufigsten genutzten Dashboards konnten nicht geladen werden",
       "loading": "Die am häufigsten genutzten Dashboards werden geladen …"
-    },
-    "news-card": {
-      "empty": "Keine neuen Blogbeiträge.",
-      "error-title": "Neue Blogbeiträge konnten nicht geladen werden",
-      "read-more": "Lesen Sie mehr vom Grafana-Labs-Blog",
-      "title": "Das Neueste aus dem Blog"
     },
     "on-call-card": {
       "current-shift": "",
@@ -11756,7 +11910,6 @@
     },
     "starred-dashboards-tab": {
       "empty": "Ihre mit Sternen markierten Dashboards werden hier angezeigt.",
-      "empty-description": "Sie können Ihre bevorzugten Dashboards mit einem Stern markieren, indem Sie auf der Dashboard-Seite auf <1></1> klicken.",
       "error-title": "Mit Stern markierte Dashboards konnten nicht geladen werden",
       "loading": "Mit Stern markierte Dashboards werden geladen …"
     },
@@ -12190,6 +12343,7 @@
     },
     "log-details": {
       "error": {
+        "diagnose-with-assistant": "",
         "error-details": ""
       }
     },
@@ -12199,10 +12353,14 @@
     },
     "log-line": {
       "has-error": "Hat Fehler",
+      "has-error-fields": "",
+      "has-stacktrace": "",
       "is-sampled": "Ist gesampelt",
       "show-less": "weniger anzeigen",
       "show-more": "mehr anzeigen",
-      "tooltip-error": "Fehler: {{errorMessage}}"
+      "tooltip-error": "Fehler: {{errorMessage}}",
+      "tooltip-error-fields": "",
+      "tooltip-stacktrace": ""
     },
     "log-line-context": {
       "center-matched-line": "Zentral ausgerichtete Linie",
@@ -13424,7 +13582,6 @@
     "add-panel": {
       "cancel": "Abbrechen",
       "card-author": "Von {{author}}",
-      "card-selected": "{{title}} (ausgewählt)",
       "card-updated": "Aktualisiert am {{when}}",
       "create-name": "Notizbuchname",
       "create-name-required": "Ein Notizbuchname ist erforderlich",
@@ -13435,6 +13592,7 @@
       "error-open-conflict": "",
       "list-error": "Notizbücher konnten nicht geladen werden",
       "list-error-body": "Beim Laden Ihrer Notizbücher ist ein Fehler aufgetreten. Versuchen Sie es erneut oder erstellen Sie stattdessen ein neues.",
+      "list-label": "",
       "list-no-matches": "Keine Notizbücher entsprechen diesen Filtern.",
       "list-none": "Sie haben noch keine Notizbücher. Erstellen Sie stattdessen eines.",
       "list-none-read-only": "Sie haben noch keine Notizbücher und keine Berechtigung, eines zu erstellen.",
@@ -13564,6 +13722,7 @@
       "add-title": "",
       "change-visualization": "",
       "edit-query": "",
+      "edit-with-assistant": "",
       "hide-query": "",
       "open-explore": "",
       "rename": "",
@@ -14907,7 +15066,7 @@
       "resources-to-migrate-empty": "Keine Ordner oder Ressourcen stimmen mit der aktuellen Suche überein.",
       "resources-to-migrate-heading": "Zu migrierende Ressourcen",
       "resources-to-migrate-search": "Ordner und Ressourcen suchen",
-      "resources-to-migrate-subtitle": "Wählen Sie ganze Ordner oder einzelne Ressourcen darin aus. Wenn Sie einen Ordner auswählen, werden nur die direkt darin enthaltenen Ressourcen migriert – alles, was sich in Unterordnern befindet, wird über den jeweiligen Ordner migriert.",
+      "resources-to-migrate-subtitle": "",
       "retain-resources-description": "Behalten Sie die migrierten Ressourcen in dieser Instanz, während der Pull-Request offen ist, damit sie aktiv bleiben, bis der Branch zusammengeführt wird. Diese Ressourcen müssen manuell gelöscht werden, bevor der Pull-Request zusammengeführt wird. Andernfalls kommt es während der Synchronisierung aufgrund von widersprüchlichen Ressourcen zu Fehlern.",
       "retain-resources-label": "Vorhandene Ressourcen während der Überprüfung beibehalten",
       "retain-resources-warning-body": "Sie müssen die migrierten Ressourcen vor dem Zusammenführen des Pull-Requests selbst löschen. Wenn sie beim Zusammenführen des Branches noch vorhanden sind, stehen sie im Widerspruch mit den eingehenden verwalteten Ressourcen und werden nicht abgeglichen.",
@@ -15622,20 +15781,8 @@
     "explain-or-modify": "Erklären oder ändern",
     "explain-query": "",
     "explaining": "",
-    "feedback-cancel": "Abbrechen",
-    "feedback-description": "Ihr Feedback hilft, die Abfrageerfahrung in Grafana zu verbessern.",
-    "feedback-error": "Feedback konnte nicht gesendet werden. Versuchen Sie es erneut.",
     "feedback-helpful": "Hilfreich",
-    "feedback-label": "Feedback geben",
-    "feedback-negative-placeholder": "Beschreiben Sie, was nicht gut gelaufen ist und was Sie stattdessen erwartet haben.",
-    "feedback-negative-title": "Was ist schiefgelaufen?",
     "feedback-not-helpful": "Nicht hilfreich",
-    "feedback-positive-placeholder": "Was hat Ihnen gefallen? Wie hätte es noch besser sein können?",
-    "feedback-positive-title": "Was hat gut funktioniert?",
-    "feedback-privacy": "",
-    "feedback-recipient": "Ihr Feedback wird an die Teams gesendet, die an der Abfrage arbeiten.",
-    "feedback-send": "Senden",
-    "feedback-sending": "Senden …",
     "focus": "",
     "follow-up-label": "",
     "follow-up-placeholder": "",
@@ -15737,6 +15884,12 @@
       "delete-confirm-title_other": "Möchten Sie {{count}} Elemente löschen?",
       "delete-transformations-confirm-title_one": "Möchten Sie {{count}} Transformation löschen?",
       "delete-transformations-confirm-title_other": "Möchten Sie {{count}} Transformationen löschen?"
+    },
+    "datasource-error": {
+      "load-failed": "",
+      "load-failed-named": "",
+      "not-found": "",
+      "settings-not-found": ""
     },
     "delete-modal": {
       "body-transformation": "Das Entfernen einer Transformation kann andere beschädigen."
@@ -16068,6 +16221,7 @@
       "exchange": "Root-Bereich ändern zu {{scope}}",
       "expand": "Ausklappen",
       "filter": "",
+      "filterAriaLabel": "",
       "loading": "Dashboards werden geladen",
       "megaMenuSectionHeading": "",
       "noResultsForFilter": "Keine Ergebnisse für deine Abfrage gefunden",
@@ -16076,7 +16230,6 @@
       "noResultsNoScopes": "Keine Bereiche ausgewählt",
       "toggle": {
         "collapse": "Liste der vorgeschlagenen Dashboards einklappen",
-        "disabled": "Die Liste der vorgeschlagenen Dashboards ist aufgrund des schreibgeschützten Modus deaktiviert",
         "expand": "Liste der vorgeschlagenen Dashboards ausklappen"
       }
     },
@@ -16326,8 +16479,8 @@
       "copy-link-button": "Kopieren",
       "info-text": "Erstelle einen direkten Link zu diesem Dashboard oder Panel mit den folgenden angepassten Optionen.",
       "link-url": "Link-URL",
-      "render-alert": "Bild-Render-Plug-in nicht installiert",
-      "render-instructions": "Um ein Bild zu rendern, müssen Sie das <2>Grafana Image Renderer Plugin</2> installieren. Bitte kontaktieren Sie Ihren Grafana-Administrator, um das Plugin zu installieren.",
+      "render-alert": "",
+      "render-instructions": "",
       "rendered-image": "Direktlink zum gerenderten Bild",
       "save-alert": "Dashboard nicht gespeichert",
       "save-dashboard": "Um ein Panel-Bild zu rendern, muss zuerst das Dashboard gespeichert werden.",
@@ -16611,6 +16764,17 @@
     "generate-suggestion": "Vorschlag generieren",
     "improve-query": "Abfrage verbessern"
   },
+  "st-pod-ready": {
+    "error": {
+      "body-with-support": "",
+      "support-ack": "",
+      "title": "",
+      "title-fallback": ""
+    },
+    "timeout": {
+      "banner": ""
+    }
+  },
   "stars": {
     "mark-as-starred": "Als Favorit markieren",
     "mark-as-starred-with-title": "„{{title}}“ als Favorit markieren",
@@ -16780,6 +16944,9 @@
     }
   },
   "swagger": {
+    "api-picker": {
+      "preferred": ""
+    },
     "login": "Anmelden",
     "manifests": {
       "api-docs": "",
@@ -16802,6 +16969,10 @@
     },
     "namespace-unavailable": "Überprüfen Sie den Namensraum, bevor Sie Abfragen senden, oder laden Sie die Seite neu, um es erneut zu versuchen.",
     "namespace-unavailable-title": "Namensraum kann nicht geladen werden",
+    "router-fixtures": {
+      "clear": "",
+      "title": ""
+    },
     "router-nav": {
       "api-docs": "",
       "manifests": "",
@@ -16818,7 +16989,8 @@
       "failures-description": "",
       "filter-placeholder": "",
       "filtered": "",
-      "groups": "",
+      "internal": "",
+      "internal-description": "",
       "last-failed": "",
       "load-failures": "",
       "never": "",
@@ -16832,8 +17004,9 @@
       "requests-description": "",
       "shadowed": "",
       "shadowed-description": "",
-      "sources": "",
-      "stack-lookups": "",
+      "tab-groups": "",
+      "tab-lookups": "",
+      "tab-sources": "",
       "title": ""
     }
   },
@@ -17142,6 +17315,9 @@
     "truncation": {
       "label": "",
       "tooltip": ""
+    },
+    "variable-suggestions": {
+      "reduced-field": ""
     }
   },
   "theme-playground": {
@@ -17476,9 +17652,11 @@
       "placeholder-frame": "Frame"
     },
     "config-from-query-transformer-editor": {
+      "description-dynamic-field-name-matcher": "",
       "label-apply-to": "Anwenden auf",
       "label-apply-to-options": "Auf Optionen anwenden",
-      "label-config-query": "Konfigurationsabfrage"
+      "label-config-query": "Konfigurationsabfrage",
+      "name-dynamic-field-name-matcher": ""
     },
     "convert-field-type-transformer-editor": {
       "aria-label-add-a-convert-field-type-transformer": "Transformator für „Feldtyp konvertieren“ hinzufügen",

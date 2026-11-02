@@ -56,6 +56,28 @@ export async function addNewCustomVariable(
   });
 }
 
+/**
+ * Adds a variable scoped to the selected row or tab, through the section's options pane
+ * @param sectionOptions `sidebar.rowOptions` or `sidebar.tabOptions`, matching the selected section
+ */
+export async function addNewSectionVariable(
+  sidebar: Sidebar,
+  sectionOptions: Sidebar['rowOptions'] | Sidebar['tabOptions'],
+  variable: Omit<Variable, 'value'>
+): Promise<void> {
+  await test.step(`Add section variable "${variable.name}"`, async () => {
+    await sectionOptions.addVariable();
+    await sidebar.variableOptions.selectVariableType(variable.type);
+
+    await expect(sidebar.variableOptions.getNameInput()).toBeFocused();
+
+    await sidebar.variableOptions.setName(variable.name);
+    if (variable.label) {
+      await sidebar.variableOptions.setLabel(variable.label);
+    }
+  });
+}
+
 export async function saveAndGotoDashboardUrl(page: Page, controls: Controls, viewUrl: string): Promise<void> {
   await test.step('Save and go to the dashboard', async () => {
     await flows.dashboards.saveDashboard(page, controls, { reloadPageAfterSave: false });

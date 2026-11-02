@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -51,6 +52,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/search/sort"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -395,7 +397,7 @@ var _ registry.BackgroundService = (*DashboardServiceImpl)(nil)
 // This is the uber service that implements a three smaller services
 func ProvideDashboardServiceImpl(
 	cfg *setting.Cfg,
-	sqlStore db.DB,
+	sqlStore *sqlstore.SQLStore,
 	iamFeatures iamapi.Features,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	ac accesscontrol.AccessControl,
@@ -447,7 +449,29 @@ func ProvideDashboardServiceImpl(
 		return nil, err
 	}
 
+	sqlStore.Bus().AddEventListener(dashSvc.onDefaultPermissionsSet)
 	return dashSvc, nil
+}
+
+type dashboardDefaultPermissionsSet struct {
+	requester identity.Requester
+}
+
+func (dr *DashboardServiceImpl) refreshCreatorAfterCommit(ctx context.Context, requester identity.Requester) {
+	if requester == nil || !requester.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
+		return
+	}
+	event := &dashboardDefaultPermissionsSet{requester: requester}
+	if sess := sqlstore.SessionFromContext(ctx); sess != nil {
+		sess.PublishAfterCommit(event)
+		return
+	}
+	_ = dr.onDefaultPermissionsSet(ctx, event)
+}
+
+func (dr *DashboardServiceImpl) onDefaultPermissionsSet(ctx context.Context, event *dashboardDefaultPermissionsSet) error {
+	permissioncache.RefreshCreator(ctx, dr.acService, event.requester)
+	return nil
 }
 
 func (dr *DashboardServiceImpl) RegisterDashboardPermissions(service accesscontrol.DashboardPermissionsService) {
@@ -1229,11 +1253,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 		return err
 	}
 
-	// Clear permission cache for the user who created the dashboard, so that new permissions are fetched for their next call
-	// Required for cases when caller wants to immediately interact with the newly created object
-	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
-		dr.acService.ClearUserPermissionCache(user)
-	}
+	dr.refreshCreatorAfterCommit(ctx, user)
 
 	return nil
 }
@@ -1281,12 +1301,11 @@ func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, dto *
 	svc := dr.getPermissionsService(dash.IsFolder)
 	if _, err := svc.SetPermissions(ctx, dto.OrgID, dash.UID, permissions...); err != nil {
 		dr.log.Error("Could not set default permissions", "dashboard", dash.Title, "error", err)
+		return
 	}
 
-	// Clear permission cache for the user who created the dashboard, so that new permissions are fetched for their next call
-	// Required for cases when caller wants to immediately interact with the newly created object
-	if !provisioned && dto.User.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
-		dr.acService.ClearUserPermissionCache(dto.User)
+	if !provisioned {
+		dr.refreshCreatorAfterCommit(ctx, dto.User)
 	}
 }
 
@@ -1677,6 +1696,14 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 	ctx, span := tracer.Start(ctx, "dashboards.service.DeleteInFolders")
 	defer span.End()
 
+	concurrency := folder.ParallelDashboardDeleteConcurrency(ctx)
+	parallel := concurrency > 1
+	// An already canceled request must not remove public dashboards for dashboards that will then
+	// never be deleted. Only the parallel path checks, so the sequential path stays unchanged.
+	if err := ctx.Err(); parallel && err != nil {
+		return err
+	}
+
 	// Attach the requester to ctx: a context-dependent LegacyDatabaseProvider (used by
 	// DeleteByDashboardUIDs below) can only resolve the target database from here.
 	ctx = identity.WithRequester(ctx, u)
@@ -1702,6 +1729,10 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 	err = dr.publicDashboardService.DeleteByDashboardUIDs(ctx, orgID, dashboardUIDs)
 	if err != nil {
 		return err
+	}
+
+	if parallel {
+		return dr.deleteInFoldersParallel(ctx, orgID, folderUIDs, dashes, concurrency)
 	}
 
 	for _, dash := range dashes {
