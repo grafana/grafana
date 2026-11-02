@@ -230,6 +230,7 @@
 /pkg/tests/api/correlations/ @grafana/datapro
 /pkg/tests/api/swagger/ @grafana/grafana-app-platform-squad
 /pkg/tests/api/admin/encryption/ @grafana/grafana-operator-experience-squad
+/pkg/tests/ha/ @grafana/grafana-search-and-storage
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-services-squad
 /pkg/util/ @grafana/grafana-backend-services-squad
 /pkg/web/ @grafana/grafana-backend-services-squad
