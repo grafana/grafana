@@ -68,13 +68,18 @@ func (s *Service) legacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 		skipCache:    req.GetSkipCache(),
 	}
 
+	if restriction := req.GetRestriction(); restriction != nil {
+		// Preserve presence even when protobuf decodes an empty list as nil.
+		scopeRequest.restrictedActions = append([]string{}, restriction.GetActions()...)
+	}
+
 	var args legacyEvaluationArgs
 	if isInternalIdentity {
 		args, err = s.prepareLegacyInternalEvaluation(ctx, req, scopeRequest)
 	} else if global := req.GetGlobalEvaluation(); global != nil {
 		args, err = s.prepareLegacyGlobalEvaluation(ctx, global, actions, scopeRequest)
 	} else {
-		args, err = s.prepareLegacyOrgEvaluation(ctx, actions, scopeRequest)
+		args, err = s.prepareLegacyPermissions(ctx, actions, scopeRequest)
 	}
 
 	if err != nil {
@@ -106,31 +111,6 @@ func (s *Service) legacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 	}
 
 	return &authzextv1.LegacyCheckResponse{Allowed: allowed}, nil
-}
-
-// getLegacyIdentityScopes loads one action for resolver callbacks that perform
-// further checks as the subject. Composite checks use getLegacyIdentityPermissions.
-func (s *Service) getLegacyIdentityScopes(
-	ctx context.Context,
-	ns types.NamespaceInfo,
-	idType types.IdentityType,
-	userUID string,
-	action string,
-	skipCache bool,
-) ([]string, error) {
-	permissions, err := s.getLegacyIdentityPermissions(
-		ctx,
-		ns,
-		idType,
-		userUID,
-		[]string{action},
-		skipCache,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("could not get legacy identity permissions: %w", err)
-	}
-
-	return permissions[action], nil
 }
 
 // getLegacyIdentityPermissions loads only the requested actions, including
@@ -227,32 +207,4 @@ type legacyEvaluationArgs struct {
 	permissions       map[string][]string
 	hasAnyPermissions bool
 	scopeRequest      legacyScopeRequest
-}
-
-func (s *Service) prepareLegacyOrgEvaluation(
-	ctx context.Context,
-	actions []string,
-	scopeRequest legacyScopeRequest,
-) (legacyEvaluationArgs, error) {
-	permissions, err := s.getLegacyIdentityPermissions(
-		ctx,
-		scopeRequest.namespace,
-		scopeRequest.identityType,
-		scopeRequest.userUID,
-		actions,
-		scopeRequest.skipCache,
-	)
-	if err != nil {
-		return legacyEvaluationArgs{}, err
-	}
-
-	// The legacy loader adds SharedWithMe for users, service accounts and anonymous
-	// identities even without stored grants (legacypermissions/loader.go). Renderers
-	// have fixed grants. Their full permission sets are nonempty even when this
-	// filtered result is empty.
-	return legacyEvaluationArgs{
-		permissions:       permissions,
-		hasAnyPermissions: true,
-		scopeRequest:      scopeRequest,
-	}, nil
 }
