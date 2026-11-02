@@ -41,22 +41,9 @@ type Subscriber interface {
 	// running subscriber receives its own copy; pass WithQueueGroup to
 	// load-balance delivery across a group instead.
 	Subscribe(ctx context.Context, subject string, handler MessageHandler, opts ...SubscribeOption) (Subscription, error)
-}
-
-var closedChan = func() chan struct{} {
-	ch := make(chan struct{})
-	close(ch)
-	return ch
-}()
-
-// Started returns a channel closed once s has started and can subscribe.
-// Subscribe fails until then. A subscriber that cannot report it counts as
-// started.
-func Started(s Subscriber) <-chan struct{} {
-	if st, ok := s.(interface{ Started() <-chan struct{} }); ok {
-		return st.Started()
-	}
-	return closedChan
+	// Started is closed once the subscriber can subscribe; Subscribe fails
+	// until then. Callers built before the service starts wait on it.
+	Started() <-chan struct{}
 }
 
 // subscribeConfig holds the resolved options for a Subscribe call.

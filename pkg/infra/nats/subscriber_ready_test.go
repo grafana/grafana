@@ -68,12 +68,12 @@ func TestSubscriberStarted(t *testing.T) {
 		srv := startTestServer(t)
 		s := newSubscriber(log.NewNopLogger(), newSubscriberMetrics(), newTestConfig(srv, setting.NATSSettings{Enabled: true}))
 		t.Cleanup(s.close)
-		require.False(t, isClosed(Started(s)))
+		require.False(t, isClosed(s.Started()))
 		_, err := s.Subscribe(t.Context(), "grafana.started", func(string, []byte) {})
 		require.Error(t, err, "subscribing before start fails, which is why callers wait")
 
 		require.NoError(t, s.starting(t.Context()))
-		require.True(t, isClosed(Started(s)))
+		require.True(t, isClosed(s.Started()))
 		_, err = s.Subscribe(t.Context(), "grafana.started", func(string, []byte) {})
 		require.NoError(t, err)
 	})
@@ -81,18 +81,6 @@ func TestSubscriberStarted(t *testing.T) {
 	t.Run("closes when stopped before starting", func(t *testing.T) {
 		s := newSubscriber(log.NewNopLogger(), newSubscriberMetrics(), newConfig(setting.NATSSettings{Enabled: true}, nil))
 		s.close()
-		require.True(t, isClosed(Started(s)))
+		require.True(t, isClosed(s.Started()))
 	})
-
-	t.Run("subscribers that cannot report it count as started", func(t *testing.T) {
-		require.True(t, isClosed(Started(fakeSubscriber{})))
-	})
-}
-
-type fakeSubscriber struct{}
-
-func (fakeSubscriber) Enabled() bool { return true }
-
-func (fakeSubscriber) Subscribe(context.Context, string, MessageHandler, ...SubscribeOption) (Subscription, error) {
-	return nil, nil
 }
