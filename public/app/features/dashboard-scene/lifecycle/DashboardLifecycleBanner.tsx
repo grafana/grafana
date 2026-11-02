@@ -224,11 +224,12 @@ function PendingChangesBanner({
         return;
       }
       clearPendingChangePreview(uid, id);
-      onLifecycleChange?.('applied');
       appEvents.emit(AppEvents.alertSuccess, [
         t('dashboard-scene.lifecycle.applied', 'Applied your changes to {{title}}', { title }),
       ]);
       await reload();
+      // The host may select another dashboard as soon as it receives this notification.
+      onLifecycleChange?.('applied');
     } catch {
       dashboardWatcher.clearIgnoreSave();
       appEvents.emit(AppEvents.alertError, [
@@ -390,8 +391,8 @@ function PendingChangesBanner({
               uid,
               id,
               async () => {
-                onLifecycleChange?.('discarded');
                 await reload();
+                onLifecycleChange?.('discarded');
               },
               t('dashboard-scene.lifecycle.discard-pending-failed', "Couldn't discard the changes. Try again.")
             );

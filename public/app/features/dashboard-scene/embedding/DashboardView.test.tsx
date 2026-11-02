@@ -23,7 +23,7 @@ const render = (element: ReactElement) =>
   });
 
 let mockDashboard: DashboardScene;
-const reload = jest.fn(async () => undefined);
+const reload = jest.fn(async (): Promise<void> => undefined);
 const saveDashboard = jest.fn();
 const pending = {
   baseGeneration: 0,
@@ -176,29 +176,41 @@ it('shows a different dashboard when the host reuses a view after discarding its
   expect(screen.queryByText('Draft discarded')).not.toBeInTheDocument();
 });
 
-it.each(['Apply', 'Discard'] as const)('%s handles pending changes to a saved dashboard in place', async (action) => {
-  const user = userEvent.setup();
-  pending.baseGeneration = 3;
-  mockDashboard.setState({ uid: 'draft-1', meta: { isEmbedded: true, canSave: true } });
-  jest.mocked(getSavedDashboard).mockResolvedValue({
-    generation: 3,
-    title: 'Saved dashboard',
-    spec: pending.proposed,
-    canEdit: true,
-    url: '/d/draft-1',
-  });
-  const changed = jest.fn();
-  render(<DashboardView uid="draft-1" pendingChanges="chat-1" onLifecycleChange={changed} />);
-  await user.click(await screen.findByRole('button', { name: action }));
-  const dialog = await screen.findByRole('dialog');
-  expect(dialog).toBeVisible();
-  await user.click(within(dialog).getByRole('button', { name: action }));
-  await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
-  expect(changed).toHaveBeenCalledWith(action === 'Apply' ? 'applied' : 'discarded');
-  if (action === 'Apply') {
-    expect(pending.apply).toHaveBeenCalledWith({ force: false });
-  } else {
-    expect(pending.discard).toHaveBeenCalledTimes(1);
+it.each(['Apply', 'Discard'] as const)(
+  '%s reloads pending changes in place before notifying the host',
+  async (action) => {
+    const user = userEvent.setup();
+    let finishReload: () => void = () => {};
+    reload.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishReload = resolve;
+        })
+    );
+    pending.baseGeneration = 3;
+    mockDashboard.setState({ uid: 'draft-1', meta: { isEmbedded: true, canSave: true } });
+    jest.mocked(getSavedDashboard).mockResolvedValue({
+      generation: 3,
+      title: 'Saved dashboard',
+      spec: pending.proposed,
+      canEdit: true,
+      url: '/d/draft-1',
+    });
+    const changed = jest.fn();
+    render(<DashboardView uid="draft-1" pendingChanges="chat-1" onLifecycleChange={changed} />);
+    await user.click(await screen.findByRole('button', { name: action }));
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toBeVisible();
+    await user.click(within(dialog).getByRole('button', { name: action }));
+    await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
+    expect(changed).not.toHaveBeenCalled();
+    await act(async () => finishReload());
+    await waitFor(() => expect(changed).toHaveBeenCalledWith(action === 'Apply' ? 'applied' : 'discarded'));
+    if (action === 'Apply') {
+      expect(pending.apply).toHaveBeenCalledWith({ force: false });
+    } else {
+      expect(pending.discard).toHaveBeenCalledTimes(1);
+    }
+    expect(locationService.getLocation().pathname).toBe('/a/grafana-assistant-app/workspace');
   }
-  expect(locationService.getLocation().pathname).toBe('/a/grafana-assistant-app/workspace');
-});
+);
