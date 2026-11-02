@@ -18,8 +18,6 @@ interface Props {
   source: string; // for rudderstack analytics to track which page DashListItem click from
   order?: number; // for rudderstack analytics to track position in cards
   onStarChange?: (id: string, isStarred: boolean) => void;
-  // Row density for list mode. 'compact' gives denser rows for the redesigned homepage
-  density?: 'default' | 'compact';
 }
 export function DashListItem({
   dashboard,
@@ -30,10 +28,8 @@ export function DashListItem({
   order,
   onStarChange,
   source,
-  density = 'default',
 }: Props) {
   const css = useStyles2(getStyles);
-  const isCompact = density === 'compact';
 
   // Rows may be dashboards, folders or registered kinds; the star has to target the row's own kind
   const starredKind = findStarredKindBySearchKind(dashboard.kind);
@@ -60,7 +56,6 @@ export function DashListItem({
     <>
       {layoutMode === 'list' ? (
         <ListRow
-          isCompact={isCompact}
           title={dashboard.name}
           subtitle={showFolderNames && locationInfo ? locationInfo.name : undefined}
           href={url}

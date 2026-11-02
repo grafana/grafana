@@ -204,6 +204,33 @@ func TestSeededWatchesEnabled(t *testing.T) {
 	}
 }
 
+func TestKeyPathReconciliationEnabled(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		configured string
+		env        string
+		want       bool
+	}{
+		{name: "default on", want: true},
+		{name: "enabled", configured: "true", want: true},
+		{name: "disabled", configured: "false"},
+		{name: "environment enables", configured: "false", env: "true", want: true},
+		{name: "environment disables", configured: "true", env: "false"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			if tc.configured != "" {
+				cfg.Raw.Section("unified_storage").Key("key_path_reconciliation_enabled").SetValue(tc.configured)
+			}
+			if tc.env != "" {
+				t.Setenv("GF_UNIFIED_STORAGE_KEY_PATH_RECONCILIATION_ENABLED", tc.env)
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.KeyPathReconciliationEnabled)
+		})
+	}
+}
+
 func TestFastLatestKeyLookupEnabled(t *testing.T) {
 	for _, tc := range []struct {
 		name       string

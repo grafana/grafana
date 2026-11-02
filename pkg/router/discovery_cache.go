@@ -81,6 +81,19 @@ func (c *discoveryCache) fetchDeadline(key string) (deadline time.Time, overdue 
 	return deadline, false
 }
 
+// overdue counts the fetches still running past their deadline.
+func (c *discoveryCache) overdue() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	now, n := time.Now(), 0
+	for _, deadline := range c.deadlines {
+		if !now.Before(deadline) {
+			n++
+		}
+	}
+	return n
+}
+
 func (c *discoveryCache) fetchDone(key string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -126,7 +139,11 @@ func (r *GrafanaRouter) groupDiscovery(req *http.Request, name string, entry ser
 		// Shared by concurrent callers, so one caller leaving must not cancel it.
 		ctx, cancel := context.WithDeadlineCause(context.WithoutCancel(req.Context()), deadline, errRouterDeadline)
 		defer cancel()
-		d, complete := backendDiscovery(req.WithContext(ctx), name, entry)
+		d, complete := backendDiscovery(req.WithContext(ctx), name, entry, func(pluginID, reason string) {
+			if r.onBackendFailure != nil {
+				r.onBackendFailure(name, pluginID, reason)
+			}
+		})
 		if complete {
 			c.store(name, entry.key, d)
 		}

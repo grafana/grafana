@@ -522,6 +522,7 @@
         "save": "Salva"
       },
       "error-title": "Impossibile salvare la regola di avviso",
+      "form-errors": "",
       "no-group-success": "Regola aggiunta correttamente"
     },
     "alert-rule-name-and-metric": {
@@ -530,8 +531,8 @@
       "label-metric": "Metrica",
       "label-name": "Nome",
       "message": {
-        "must-enter-a-metric-name": "Devi inserire un nome per la metrica",
-        "must-enter-a-name": "Devi inserire un nome",
+        "metric-name-required": "",
+        "name-required": "",
         "please-select-a-data-source": "Seleziona un'origine di dati"
       },
       "metric-aria-label-metric": "metrica",
@@ -586,6 +587,7 @@
     },
     "alertmanager-config": {
       "confirmText-yes-reset-configuration": "Sì, ripristina la configurazione",
+      "editor-label": "",
       "gma-manual-configuration-description": "La configurazione interna di Grafana Alertmanager non può essere modificata manualmente. Per modificare questa configurazione, modifica le singole risorse tramite l'interfaccia utente.",
       "gma-manual-configuration-is-not-supported": "Modifiche alla configurazione manuale non supportate",
       "message": {
@@ -1097,6 +1099,7 @@
         "body": "Desideri davvero ripristinare questa definizione di regola di avviso eliminata?",
         "confirm": "Sì, ripristina la regola eliminata",
         "error": "Impossibile ripristinare la regola di avviso eliminata",
+        "preview-aria-label": "",
         "title": "Ripristina la regola di avviso eliminata"
       },
       "table": {
@@ -1314,7 +1317,7 @@
     "folder-selector": {
       "description-select-folder": "Seleziona una cartella in cui archiviare la regola.",
       "message": {
-        "select-a-folder": "Seleziona una cartella"
+        "folder-required": ""
       }
     },
     "folderAndGroup": {
@@ -1568,11 +1571,10 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "Caricamento di gruppi in corso...",
       "message": {
-        "must-be-a-positive-integer": "Deve essere un numero intero positivo.",
-        "must-enter-a-group-name": "Devi inserire un nome di gruppo"
+        "evaluation-group-required": "",
+        "must-be-a-positive-integer": "Deve essere un numero intero positivo."
       },
       "missing-series-resolve-placeholder": "Impostazione predefinita: 2",
-      "or": "oppure",
       "placeholder-select-an-evaluation-group": "Seleziona un gruppo di valutazione...",
       "text-configure-no-data-and-error-handling": "Non configurare la gestione dei dati e degli errori",
       "title-set-evaluation-behavior": "Imposta comportamento di valutazione"
@@ -1866,6 +1868,7 @@
         "will-import-rules-count_one": "Importazione di {{count}} regola",
         "will-import-rules-count_other": "Importazione di {{count}} regole"
       },
+      "rules-preview": "",
       "source": {
         "datasource": "Regole gestite dall'origine dati esistente",
         "datasource-description": "Importa regole da origini dati esistenti",
@@ -2998,7 +3001,7 @@
           "alerting": "Attiva per mettere in pausa la valutazione per questa regola di avviso.",
           "recording": "Attiva per mettere in pausa la valutazione per questa regola di registrazione."
         },
-        "select-folder-before": "Seleziona una cartella prima di impostare il gruppo e l'intervallo di valutazione",
+        "select-folder-first-tooltip": "",
         "ungroup-warning": "Questa azione è irreversibile. Dopo il salvataggio, non potrai più aggiungerla nuovamente a un gruppo.",
         "ungroup-warning-title": "Questa operazione rimuoverà la regola di avviso dal suo gruppo"
       },
@@ -3672,6 +3675,9 @@
       "switch-to-data-source-managed": "L'origine dei dati selezionata nella query supporta la gestione delle regole di avviso. Passa alla gestione dell'origine dei dati se desideri che la regola di avviso sia gestita dall'origine dei dati anziché da Grafana.",
       "switch-to-grafana-managed": "Passa alla gestione Grafana per utilizzare espressioni, query multiple, immagini nelle notifiche e varie altre funzionalità.",
       "title-alert-rule-types": "Tipi di regole di avviso"
+    },
+    "sql-query-preview": {
+      "aria-label": ""
     },
     "state-history": {
       "columns": {
@@ -11516,13 +11522,8 @@
       "severity-low": "Bassa",
       "severity-minor": "Minore",
       "severity-unknown": "Sconosciuta",
-      "title": "Avvisi in attivazione",
       "view-all": "Visualizza tutti gli avvisi in corso",
-      "view-rules": "Visualizza tutte le regole di avviso",
-      "critical-count_one": "{{count}} critico",
-      "critical-count_other": "{{count}} critici",
-      "high-count_one": "{{count}} alto",
-      "high-count_other": "{{count}} alti"
+      "view-rules": "Visualizza tutte le regole di avviso"
     },
     "header-actions": {
       "active-incidents": "Incidenti attivi",
@@ -11548,21 +11549,13 @@
       "empty": "",
       "empty-selected-team": "",
       "error-title": "Impossibile caricare gli incidenti attivi",
-      "title": "Incidenti attivi",
       "view-all": "Visualizza tutti gli incidenti"
     },
     "learn-more": "Scopri di più",
     "most-used-dashboards-tab": {
       "empty": "Le dashboard più utilizzate verranno visualizzate qui.",
-      "empty-description": "Una volta che la tua organizzazione dispone di dashboard e i dati di utilizzo sono stati raccolti, le dashboard con il maggior numero di visualizzazioni negli ultimi 30 giorni verranno visualizzate qui.",
       "error-title": "Impossibile caricare le dashboard più utilizzate",
       "loading": "Caricamento dashboard più utilizzate in corso..."
-    },
-    "news-card": {
-      "empty": "Nessun articolo recente del blog.",
-      "error-title": "Impossibile caricare gli articoli recenti del blog",
-      "read-more": "Scopri di più sul blog di Grafana Labs",
-      "title": "Ultime dal blog"
     },
     "on-call-card": {
       "current-shift": "",
@@ -11917,7 +11910,6 @@
     },
     "starred-dashboards-tab": {
       "empty": "Le dashboard preferite verranno visualizzate qui.",
-      "empty-description": "Puoi aggiungere ai preferiti le tue dashboard preferite facendo clic su <1></1> dalla pagina della dashboard.",
       "error-title": "Impossibile caricare le dashboard preferite",
       "loading": "Caricamento dashboard preferite in corso..."
     },
@@ -13730,6 +13722,7 @@
       "add-title": "",
       "change-visualization": "",
       "edit-query": "",
+      "edit-with-assistant": "",
       "hide-query": "",
       "open-explore": "",
       "rename": "",
@@ -15788,20 +15781,8 @@
     "explain-or-modify": "Spiega o modifica",
     "explain-query": "",
     "explaining": "",
-    "feedback-cancel": "Annulla",
-    "feedback-description": "Il tuo feedback aiuta a migliorare l'esperienza di query in Grafana.",
-    "feedback-error": "Impossibile inviare il feedback. Riprova.",
     "feedback-helpful": "Utile",
-    "feedback-label": "Condividi il feedback",
-    "feedback-negative-placeholder": "Descrivi cosa non ha funzionato e cosa invece ti aspettavi.",
-    "feedback-negative-title": "Cos'è andato storto?",
     "feedback-not-helpful": "Non è stato di aiuto",
-    "feedback-positive-placeholder": "Cosa ti è piaciuto? Come avrebbe potuto essere migliore?",
-    "feedback-positive-title": "Cosa è andato bene?",
-    "feedback-privacy": "",
-    "feedback-recipient": "Il tuo feedback verrà inviato ai team che lavorano sulle query.",
-    "feedback-send": "Invia",
-    "feedback-sending": "Invio in corso…",
     "focus": "",
     "follow-up-label": "",
     "follow-up-placeholder": "",
@@ -17008,6 +16989,8 @@
       "failures-description": "",
       "filter-placeholder": "",
       "filtered": "",
+      "internal": "",
+      "internal-description": "",
       "last-failed": "",
       "load-failures": "",
       "never": "",

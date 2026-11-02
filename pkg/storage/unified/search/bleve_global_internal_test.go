@@ -597,7 +597,8 @@ func TestGlobalIndexFolderTreeSearchEndsAtALoop(t *testing.T) {
 
 // folderAccessClient allows everything but the folders it names.
 type folderAccessClient struct {
-	denied map[string]bool
+	denied       map[string]bool
+	folderErrors map[string]error
 	// Fails batch checks of folders alone, which only folder paths send: the
 	// results' checks include other types.
 	failFolders bool
@@ -621,7 +622,12 @@ func (c *folderAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, r
 	}
 	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
 	for _, check := range req.Checks {
-		results[check.CorrelationID] = authlib.BatchCheckResult{Allowed: c.allowed(check.Resource, check.Name)}
+		result := authlib.BatchCheckResult{Allowed: c.allowed(check.Resource, check.Name)}
+		if check.Resource == folderResource && c.folderErrors[check.Name] != nil {
+			result.Allowed = false
+			result.Error = c.folderErrors[check.Name]
+		}
+		results[check.CorrelationID] = result
 	}
 	return authlib.BatchCheckResponse{Results: results}, nil
 }
@@ -659,9 +665,9 @@ func searchFolderPaths(t *testing.T, index resource.ResourceIndex, access authli
 	return paths
 }
 
-// A global search returns the path of each folder its results are in, as the
-// folder API's parents does: readable folders with titles, then the first one
-// the caller cannot read or that is missing, named only, and nothing above it.
+// A global search returns folder paths from the top down, ending with each
+// result's folder. Like the folder API's parents, the nearest unreadable or
+// missing folder comes first, named only and detached, with nothing above it.
 func TestGlobalSearchReturnsFolderPaths(t *testing.T) {
 	backend, _ := setupBleveBackend(t)
 	key := resource.GlobalSearchKey("default")
@@ -706,6 +712,66 @@ func TestGlobalSearchReturnsFolderPaths(t *testing.T) {
 
 	assert.Nil(t, searchFolderPaths(t, index, &folderAccessClient{failFolders: true}, resource.SEARCH_FIELD_FOLDER),
 		"a failed folder check leaves the paths out, not the results")
+}
+
+// An unavailable ancestor must detach only the paths that pass through it.
+func TestGlobalSearchFolderPathsDetachUnavailableAncestors(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		cached       bool
+		deleteFolder bool
+		folderError  error
+	}{
+		{
+			// Authorization may still allow a deleted UID, so index existence must bound the path.
+			name:         "deleted before tree load",
+			deleteFolder: true,
+		},
+		{
+			// A cached tree must not retain the deleted folder's ancestors.
+			name:         "deleted after tree load",
+			cached:       true,
+			deleteFolder: true,
+		},
+		{
+			// One failed folder check must leave unrelated paths available.
+			name:        "folder check error",
+			folderError: errors.New("folder check failed"),
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend, _ := setupBleveBackend(t)
+			key := resource.GlobalSearchKey("default")
+			index := buildFolderTreeIndex(t, backend, key,
+				folderTreeDoc(key, "folders", "top", ""),
+				folderTreeDoc(key, "folders", "mid", "top"),
+				folderTreeDoc(key, "folders", "leaf", "mid"),
+				folderTreeDoc(key, "folders", "other", "top"),
+				folderTreeDoc(key, "dashboards", "dash-mid", "mid"),
+				folderTreeDoc(key, "dashboards", "dash-leaf", "leaf"),
+				folderTreeDoc(key, "dashboards", "dash-other", "other"),
+			)
+			access := &folderAccessClient{folderErrors: map[string]error{"mid": tc.folderError}}
+			if tc.cached {
+				require.Equal(t, []string{"top:top", "mid:mid", "leaf:leaf"},
+					searchFolderPaths(t, index, access, resource.SEARCH_FIELD_FOLDER)["leaf"])
+			}
+
+			if tc.deleteFolder {
+				require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
+					Action: resource.ActionDelete,
+					Key:    &resourcepb.ResourceKey{Namespace: key.Namespace, Group: folderGroup, Resource: folderResource, Name: "mid"},
+				}}}))
+			}
+
+			assert.Equal(t, map[string][]string{
+				"mid":   {"mid!"},
+				"leaf":  {"mid!", "leaf:leaf"},
+				"top":   {"top:top"},
+				"other": {"top:top", "other:other"},
+			}, searchFolderPaths(t, index, access, resource.SEARCH_FIELD_FOLDER))
+		})
+	}
 }
 
 // The tree is read from the index, so an index reopened from disk answers too.
