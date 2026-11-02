@@ -115,7 +115,8 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const folderNav = useNavModel(folderDTO, 'dashboards');
   // At root the Dashboards pages share a tab bar; inside a folder the folder's
   // own tabs win
-  const dashboardsNav = useDashboardsPageNav(NavID.dashboards);
+  const currentPageId = isStarredView ? NavID.starred : NavID.dashboards;
+  const dashboardsNav = useDashboardsPageNav(NavID.dashboards, currentPageId);
   const navModel = folderUID ? folderNav : (dashboardsNav ?? folderNav);
 
   const [saveFolder] = useUpdateFolder();
@@ -180,7 +181,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
 
   return (
     <Page
-      navId={isStarredView ? 'starred' : 'dashboards/browse'}
+      navId={currentPageId}
       pageNav={navModel}
       onEditTitle={showEditTitle && !isProvisionedFolder ? onEditTitle : undefined}
       renderTitle={renderTitle}

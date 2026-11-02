@@ -18,7 +18,7 @@ import { useSelector } from 'app/types/store';
  *
  * Only the root list takes this. A folder has its own tabs, from useNavModel.
  */
-export function useDashboardsPageNav(activeId: string): NavModelItem | undefined {
+export function useDashboardsPageNav(activeId: string, currentPageId = activeId): NavModelItem | undefined {
   const isInfoArchRefresh = useFlagGrafanaNavigationInfoArchRefresh();
   const section = useSelector((state) => state.navIndex[NavID.dashboards]);
 
@@ -33,7 +33,13 @@ export function useDashboardsPageNav(activeId: string): NavModelItem | undefined
       .filter((tab) => tab !== undefined)
       .map((tab) => ({ ...tab, active: tab.id === activeId }));
 
-    // The section is already the breadcrumb, so the page must not add it again
-    return { ...section, hideFromBreadcrumbs: true, children: tabs };
-  }, [activeId, isInfoArchRefresh, section]);
+    const hideFromBreadcrumbs = currentPageId !== NavID.dashboards;
+    return {
+      ...section,
+      // A hidden synthetic URL would suppress the real page when both normalize to /dashboards (Starred does).
+      url: hideFromBreadcrumbs ? undefined : section.url,
+      hideFromBreadcrumbs,
+      children: tabs,
+    };
+  }, [activeId, currentPageId, isInfoArchRefresh, section]);
 }

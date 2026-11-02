@@ -1,0 +1,72 @@
+import { act, render, waitFor } from 'test/test-utils';
+
+import { type NavIndex, type NavModelItem } from '@grafana/data';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { Page } from 'app/core/components/Page/Page';
+import { NavID } from 'app/core/navtree/constants';
+
+import { useDashboardsPageNav } from './useDashboardsPageNav';
+
+const dashboardsSection: NavModelItem = {
+  id: NavID.dashboards,
+  text: 'Dashboards',
+  url: '/dashboards',
+  children: [
+    { id: NavID.dashboardsLibraryPanels, text: 'Library panels', url: '/library-panels' },
+    { id: NavID.dashboardsVariables, text: 'Variables', url: '/dashboards/variables' },
+    { id: NavID.dashboardsRecentlyDeleted, text: 'Recently deleted', url: '/dashboard/recently-deleted' },
+  ],
+};
+
+function buildNavIndex(): NavIndex {
+  const section: NavModelItem = {
+    ...dashboardsSection,
+    children: dashboardsSection.children?.map((child) => ({ ...child })),
+  };
+  const navIndex: NavIndex = {
+    [NavID.dashboards]: section,
+    [NavID.starred]: { id: NavID.starred, text: 'Starred', url: '/dashboards?starred' },
+  };
+
+  for (const child of section.children ?? []) {
+    child.parentItem = section;
+    if (child.id) {
+      navIndex[child.id] = child;
+    }
+  }
+
+  return navIndex;
+}
+
+function PageHarness({ activeId, currentPageId }: { activeId: string; currentPageId: string }) {
+  const pageNav = useDashboardsPageNav(activeId, currentPageId);
+  return (
+    <Page navId={currentPageId} pageNav={pageNav}>
+      <Page.Contents />
+    </Page>
+  );
+}
+
+describe('dashboard page browser titles', () => {
+  afterEach(async () => {
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
+  it.each([
+    [NavID.dashboards, NavID.dashboards, 'Dashboards - Grafana'],
+    [NavID.dashboards, NavID.starred, 'Starred - Grafana'],
+    [NavID.dashboardsLibraryPanels, NavID.dashboardsLibraryPanels, 'Library panels - Dashboards - Grafana'],
+    [NavID.dashboardsVariables, NavID.dashboardsVariables, 'Variables - Dashboards - Grafana'],
+    [NavID.dashboardsRecentlyDeleted, NavID.dashboardsRecentlyDeleted, 'Recently deleted - Dashboards - Grafana'],
+  ])('sets the title for active tab %s on page %s', async (activeId, currentPageId, expectedTitle) => {
+    setTestFlags({ 'grafana.navigationInfoArchRefresh': true });
+
+    render(<PageHarness activeId={activeId} currentPageId={currentPageId} />, {
+      preloadedState: { navIndex: buildNavIndex() },
+    });
+
+    await waitFor(() => expect(document.title).toBe(expectedTitle));
+  });
+});
