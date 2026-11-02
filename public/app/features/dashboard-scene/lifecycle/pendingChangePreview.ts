@@ -10,9 +10,12 @@ import { isPendingChangesEnabled } from './pendingChangesFlag';
 /**
  * Pending changes preview. Grafana doesn't store pending changes: the plugin that proposed
  * them (Grafana Assistant) keeps them and registers a loader at
- * PENDING_CHANGES_EXTENSION_POINT. A dashboard opens with one set of them, read-only, under a
- * banner, when the page URL has `?pendingChanges=<id>` or the embedded dashboard view is given
- * an id. **Show original** switches to the saved dashboard; the choice is kept per dashboard
+ * PENDING_CHANGES_EXTENSION_POINT. A dashboard opens with one set of them under a banner, when
+ * the page URL has `?pendingChanges=<id>` or the embedded dashboard view is given an id. The
+ * preview is read-only, except on the page when the plugin keeps their history (`history`):
+ * there each edit is recorded as the pending changes, and Undo and Redo step through the
+ * plugin's history instead of the dashboard's own (see pendingChangesHistory.ts). Apply still
+ * saves the dashboard. **Show original** switches to the saved dashboard; the choice is kept per dashboard
  * and id for the browser tab, so a reload keeps it. The page and the embedded view each keep
  * their own preview, so the same dashboard can be open in both.
  *
@@ -35,6 +38,32 @@ export const PENDING_CHANGES_VIEW_QUERY_PARAM = 'pendingChangesView';
 
 type ApplyPendingChangesResult = { applied: true } | { applied: false; currentGeneration: number };
 
+/** Labels of the steps Undo and Redo would take; a missing one turns its button off. */
+export interface PendingChangesHistoryState {
+  undo?: string;
+  redo?: string;
+  /** The pending changes as last recorded, which the banner diffs instead of `proposed`. */
+  proposed?: DashboardV2Spec;
+}
+
+/**
+ * The plugin's history of the pending changes: each edit the requester makes on the page is a
+ * step in it, like the plugin's own changes, so they share one Undo and Redo.
+ */
+export interface PendingChangesHistory {
+  /**
+   * Records an edit, made on the page, as the pending changes: `description` names it, as the
+   * dashboard's Undo does. recorded: false when the pending changes changed since the page last
+   * loaded them, so the edit wasn't kept.
+   */
+  record(change: { proposed: DashboardV2Spec; description?: string }): Promise<{ recorded: boolean }>;
+  /** Steps back or forward, then reloads the page (RELOAD_FROM_SERVER) to show the result. */
+  undo(): Promise<void>;
+  redo(): Promise<void>;
+  getState(): PendingChangesHistoryState;
+  subscribe(listener: () => void): () => void;
+}
+
 /** One set of pending changes to a dashboard, as its plugin supplies them. */
 export interface DashboardPendingChanges {
   /** The dashboard version the changes start from: 0 proposes a new dashboard. */
@@ -49,6 +78,8 @@ export interface DashboardPendingChanges {
    * Not called for a new dashboard, which the requester saves instead.
    */
   apply(options: { force: boolean }): Promise<ApplyPendingChangesResult>;
+  /** Without it, the preview is read-only. */
+  history?: PendingChangesHistory;
   /** Forgets the changes; the dashboard isn't affected. Also called once a new dashboard was saved. */
   discard(): Promise<void>;
   /** Opens where the changes were made, to bring them up to date with the dashboard. */
@@ -168,6 +199,18 @@ export function getPendingChangePreview(
 /** Whether the dashboard page shows pending changes to this dashboard. */
 export function isPreviewingPendingChanges(uid: string | undefined): boolean {
   return Boolean(getPendingChangePreview('page', uid)?.previewing);
+}
+
+/**
+ * The history of the pending changes the dashboard page shows, when the plugin keeps it: edits
+ * on the page are recorded in it, and Undo and Redo step through it.
+ */
+export function getPendingChangesHistory(scene: {
+  uid?: string;
+  meta: DashboardMeta;
+}): PendingChangesHistory | undefined {
+  const preview = getPendingChangePreview('page', previewedDashboardUid(scene));
+  return preview?.previewing ? preview.pending.history : undefined;
 }
 
 /** The id of the pending changes the dashboard page URL asks for. */
