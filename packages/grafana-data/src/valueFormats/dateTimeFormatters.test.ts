@@ -152,6 +152,7 @@ describe('duration', () => {
   it('sub-millisecond values do not render blank', () => {
     expect(formattedValueToString(toDurationInMilliseconds(0.5, 1))).toBe('0.5 milliseconds');
     expect(formattedValueToString(toDurationInMilliseconds(0.9999, 0))).toBe('1 millisecond');
+    expect(formattedValueToString(toDurationInMilliseconds(0.9999, 1))).toBe('1.0 millisecond');
     expect(formattedValueToString(toDurationInMilliseconds(-0.5, 1))).toBe('0.5 milliseconds ago');
   });
   it('sub-millisecond seconds render in fractional milliseconds', () => {

@@ -249,7 +249,7 @@ export function toDuration(size: number, decimals: DecimalCount, timeScale: Inte
       // precision instead so it still renders as non-zero.
       value = toFixed(size);
     }
-    strings.push(value + ' ' + (value === '1' ? 'millisecond' : 'milliseconds'));
+    strings.push(value + ' ' + (Number(value) === 1 ? 'millisecond' : 'milliseconds'));
   }
 
   return { text: strings.join(', ') };
