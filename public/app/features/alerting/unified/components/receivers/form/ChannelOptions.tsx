@@ -74,7 +74,7 @@ export function ChannelOptions<R extends ChannelValues>({
 
         if (secureFields && secureFields[option.secureFieldKey ?? option.propertyName]) {
           // Resetting a protected secret would leave an empty locked field, so hide Reset like for any read-only field
-          const isLocked = !!option.protected && getOptionMeta(option).readOnly;
+          const isLocked = !!option.protected && !!getOptionMeta(option).readOnly;
           return (
             <Field
               key={key}
