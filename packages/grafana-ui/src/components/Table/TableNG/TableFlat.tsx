@@ -119,6 +119,7 @@ export function TableFlat(props: TableNGProps) {
     preventHorizontalOverflow = false,
     zebraStriping = false,
     showRowNumbers = false,
+    showRowNumberToggle = false,
     showColumnsSidebar = false,
     reorderable = false,
     columnOrder: columnOrderProp,
@@ -269,8 +270,19 @@ export function TableFlat(props: TableNGProps) {
       ...(capabilities.get(name) ?? { hideable: true }),
     }));
   }, [columnCatalog, orderedVisibleFields]);
+  // Row number visibility is view state, not a field transformation or a dashboard change.
+  // When the configured default changes, follow it; otherwise preserve local sidebar interaction.
+  const [rowNumbersVisible, setRowNumbersVisible] = useState(showRowNumbers);
+  const prevConfiguredShowRowNumbers = useRef(showRowNumbers);
+  if (prevConfiguredShowRowNumbers.current !== showRowNumbers) {
+    prevConfiguredShowRowNumbers.current = showRowNumbers;
+    setRowNumbersVisible(showRowNumbers);
+  }
+  // A runtime flag disabling this feature also hides a gutter enabled via local view state.
+  const displayRowNumbers = rowNumbersVisible && (showRowNumbers || showRowNumberToggle);
+
   // The catalog includes restored columns before they return in the transformed data.
-  const hasColumnSidebar = reorderable || sidebarColumns.some((column) => column.hideable);
+  const hasColumnSidebar = reorderable || sidebarColumns.some((column) => column.hideable) || showRowNumberToggle;
 
   const [isColumnVisibilityPanelOpen, setIsColumnVisibilityPanelOpen] = useState(showColumnsSidebar);
   const [sidebarFocusRequest, setSidebarFocusRequest] = useState(0);
@@ -360,12 +372,12 @@ export function TableFlat(props: TableNGProps) {
 
   // Reserve space from the existing viewport instead of expanding the RDG width.
   // Count all sorted/filtered positions, including those not currently virtualized.
-  const rowNumberWidth = showRowNumbers
+  const rowNumberWidth = displayRowNumbers
     ? getRowNumberGutterWidth(sortedRows.length, typographyCtx.monoCharWidth, noPanelPadding)
     : 0;
   // The gutter is now the first grid column; field columns no longer carry the
   // panel-edge inset when row numbers are shown.
-  const fieldHasFirstColumnInset = noPanelPadding && !showRowNumbers;
+  const fieldHasFirstColumnInset = noPanelPadding && !displayRowNumbers;
   const fullFieldWidth = Math.max(0, fullWidth - rowNumberWidth);
 
   const frozenColumns = _frozenColumns;
@@ -464,7 +476,7 @@ export function TableFlat(props: TableNGProps) {
       shouldReserveScrollbarGutter(
         paginatedRows,
         fullRowHeight,
-        showRowNumbers ? [rowNumberWidth, ...fullWidths] : fullWidths,
+        displayRowNumbers ? [rowNumberWidth, ...fullWidths] : fullWidths,
         fullWidth,
         height -
           frameSize -
@@ -479,7 +491,7 @@ export function TableFlat(props: TableNGProps) {
       fullWidths,
       fullWidth,
       rowNumberWidth,
-      showRowNumbers,
+      displayRowNumbers,
       height,
       frameSize,
       hasHeader,
@@ -613,7 +625,7 @@ export function TableFlat(props: TableNGProps) {
   const { columns, cellRootRenderers } = useMemo(() => {
     // The column builder prepares display processors itself; wrapping JSON processors twice repeats units.
     const result = fromFields(displayedRawFields, widths, data, rows, sortedRows);
-    if (showRowNumbers) {
+    if (displayRowNumbers) {
       // A presentation-only column: no new DataFrame field or changes to row/source indices.
       result.columns.unshift(createRowNumberColumn(pageRangeStart, theme, rowNumberWidth));
       result.cellRootRenderers[ROW_NUMBER_COLUMN_KEY] = function renderRowNumberCell(key, cellProps) {
@@ -628,7 +640,7 @@ export function TableFlat(props: TableNGProps) {
     data,
     rows,
     sortedRows,
-    showRowNumbers,
+    displayRowNumbers,
     pageRangeStart,
     theme,
     rowNumberWidth,
@@ -756,6 +768,9 @@ export function TableFlat(props: TableNGProps) {
             hiddenColumns={hiddenColumns}
             onToggleColumn={handleToggleColumnVisibility}
             onColumnsReorder={handleColumnsReorder}
+            showRowNumberToggle={showRowNumberToggle}
+            showRowNumbers={displayRowNumbers}
+            onToggleRowNumbers={setRowNumbersVisible}
             onClose={closeColumnSidebar}
             headerHeight={headerHeight}
             transparent={transparent}

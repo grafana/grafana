@@ -484,6 +484,7 @@ describe('useCommonTableProps', () => {
       rangeFiltersEnabled: false,
       zebraStriping: false,
       showRowNumbers: false,
+      showRowNumberToggle: false,
     });
   });
 
@@ -554,6 +555,7 @@ describe('useCommonTableProps', () => {
       wrapper: FeatureFlagsProvider,
     });
     expect(result.current.showRowNumbers).toBe(enabled);
+    expect(result.current.showRowNumberToggle).toBe(enabled);
   });
 
   it('passes pageSize through when the pagination-page-size flag is on', () => {

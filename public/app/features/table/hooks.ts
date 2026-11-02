@@ -106,6 +106,7 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       hoverOverflow: options.hoverOverflow ?? true,
       zebraStriping: refreshNewFeaturesEnabled && options.zebraStriping,
       showRowNumbers: tableRefreshEnabled && refreshNewFeaturesEnabled && (options.showRowNumbers ?? false),
+      showRowNumberToggle: tableRefreshEnabled && refreshNewFeaturesEnabled,
       disableSanitizeHtml: getConfig().disableSanitizeHtml,
       contentAwareWidthsEnabled,
       tableRefreshEnabled,

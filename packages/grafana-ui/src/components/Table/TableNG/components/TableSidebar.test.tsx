@@ -55,6 +55,37 @@ function Harness({
 }
 
 describe('TableSidebar', () => {
+  it('keeps the generated number control outside the reorderable field list', async () => {
+    const onToggleRowNumbers = jest.fn();
+    render(
+      <TableSidebar
+        columns={columns}
+        reorderable
+        hiddenColumns={new Set()}
+        onToggleColumn={jest.fn()}
+        onColumnsReorder={jest.fn()}
+        onClose={jest.fn()}
+        showRowNumberToggle
+        showRowNumbers={false}
+        onToggleRowNumbers={onToggleRowNumbers}
+      />
+    );
+
+    const toggle = screen.getByRole('checkbox', { name: 'Show row numbers' });
+    expect(toggle).not.toBeChecked();
+    expect(screen.queryByRole('button', { name: 'Reorder Row numbers' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /^Reorder / })).toHaveLength(2);
+    expect(screen.getByText('Row numbers').parentElement).not.toHaveAttribute('draggable');
+
+    await userEvent.click(toggle);
+    expect(onToggleRowNumbers).toHaveBeenCalledWith(true);
+  });
+
+  it('omits the local row-number control unless explicitly enabled', () => {
+    render(<Harness />);
+    expect(screen.queryByRole('checkbox', { name: 'Show row numbers' })).not.toBeInTheDocument();
+  });
+
   it('removes all reorder controls when reordering is disabled', () => {
     const { rerender } = render(<Harness />);
     expect(screen.getByRole('button', { name: 'Reorder Column A' })).toBeVisible();

@@ -3892,3 +3892,43 @@ describe('generated gutter layout', () => {
     expect(frame.fields).toHaveLength(2);
   });
 });
+
+describe('row number sidebar view state', () => {
+  it('toggles the gutter without persisting field changes, and follows a changed panel default', async () => {
+    const frame = createBasicDataFrame();
+    const originalFields = frame.fields;
+    const onColumnOrderChange = jest.fn();
+    const onHiddenColumnsChange = jest.fn();
+    const props = {
+      data: frame,
+      width: 800,
+      height: 600,
+      showColumnsSidebar: true,
+      showRowNumberToggle: true,
+      onColumnOrderChange,
+      onHiddenColumnsChange,
+    };
+    const { rerender } = render(<TableNG {...props} />);
+    const toggle = screen.getByRole('checkbox', { name: 'Show row numbers' });
+
+    expect(toggle).not.toBeChecked();
+    expect(screen.getAllByRole('columnheader')).toHaveLength(2);
+    onColumnOrderChange.mockClear();
+    onHiddenColumnsChange.mockClear();
+
+    await userEvent.click(toggle);
+    expect(toggle).toBeChecked();
+    expect(screen.getAllByRole('columnheader')).toHaveLength(3);
+    expect(frame.fields).toBe(originalFields);
+    expect(onColumnOrderChange).not.toHaveBeenCalled();
+    expect(onHiddenColumnsChange).not.toHaveBeenCalled();
+
+    rerender(<TableNG {...props} />);
+    expect(screen.getAllByRole('columnheader')).toHaveLength(3);
+
+    rerender(<TableNG {...props} showRowNumbers />);
+    expect(screen.getAllByRole('columnheader')).toHaveLength(3);
+    rerender(<TableNG {...props} showRowNumbers={false} />);
+    expect(screen.getAllByRole('columnheader')).toHaveLength(2);
+  });
+});
