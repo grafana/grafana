@@ -1471,7 +1471,14 @@
         "to": "to"
       },
       "recording-rules": {
+        "folder-rules-error": "Failed to load rules",
+        "folders-error": "Failed to load folders",
+        "load-more-rules-in-folder": "Load more rules in {{title}}",
+        "loading-folders": "Loading folders...",
         "no-rules": "No recording rules found",
+        "no-rules-in-folder": "No recording rules in this folder",
+        "no-rules-match-folder": "No recording rules match this folder",
+        "retry-rules-in-folder": "Retry loading rules in {{title}}",
         "rules-error": "Failed to load recording rules",
         "search-issues": "Change the search to see results"
       },
