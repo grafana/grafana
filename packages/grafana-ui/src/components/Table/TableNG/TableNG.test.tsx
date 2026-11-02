@@ -3871,3 +3871,24 @@ describe('generated row-number gutter', () => {
     expect(frame.fields).toHaveLength(2);
   });
 });
+
+describe('generated gutter layout', () => {
+  it.each([false, true])('keeps the gutter as the first grid column (noPanelPadding=%s)', (noPanelPadding) => {
+    const frame = createBasicDataFrame();
+    const { container } = render(
+      <TableNG data={frame} width={800} height={600} showRowNumbers noPanelPadding={noPanelPadding} />
+    );
+
+    const grid = container.querySelector<HTMLElement>('[role="grid"]');
+    const widths = grid?.style.gridTemplateColumns.split(' ').map((width) => Number.parseFloat(width));
+    expect(widths).toHaveLength(3);
+    expect(widths?.[0]).toBeGreaterThanOrEqual(32);
+    expect(
+      screen
+        .getAllByRole('gridcell')
+        .slice(0, 3)
+        .map((cell) => cell.textContent)
+    ).toEqual(['1', 'A1', '1']);
+    expect(frame.fields).toHaveLength(2);
+  });
+});

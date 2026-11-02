@@ -13,7 +13,7 @@ import { usePanelContext } from '../../PanelChrome';
 import { useSplitter } from '../../Splitter/useSplitter';
 import { type DataLinksActionsTooltipState } from '../cellUtils';
 
-import { createRowNumberColumn, ROW_NUMBER_COLUMN_KEY } from './RowNumberColumn';
+import { createRowNumberColumn, getRowNumberGutterWidth, ROW_NUMBER_COLUMN_KEY } from './RowNumberColumn';
 import { TableDataGrid } from './TableDataGrid';
 import { TableSidebar, type SidebarColumn } from './components/TableSidebar';
 import { COLUMN_SETTLE_MS, FIRST_COLUMN_EXTRA_PADDING, getPaginationChromeHeight, TABLE } from './constants';
@@ -358,6 +358,16 @@ export function TableFlat(props: TableNGProps) {
   const typographyCtx = useTypographyCtx(theme);
   const headerTypographyCtx = useHeaderTypographyCtx(theme);
 
+  // Reserve space from the existing viewport instead of expanding the RDG width.
+  // Count all sorted/filtered positions, including those not currently virtualized.
+  const rowNumberWidth = showRowNumbers
+    ? getRowNumberGutterWidth(sortedRows.length, typographyCtx.monoCharWidth, noPanelPadding)
+    : 0;
+  // The gutter is now the first grid column; field columns no longer carry the
+  // panel-edge inset when row numbers are shown.
+  const fieldHasFirstColumnInset = noPanelPadding && !showRowNumbers;
+  const fullFieldWidth = Math.max(0, fullWidth - rowNumberWidth);
+
   const frozenColumns = _frozenColumns;
 
   // When a width override is removed from field config, the configured-width count drops. That
@@ -384,11 +394,17 @@ export function TableFlat(props: TableNGProps) {
     tableRefreshEnabled,
     hasColumnSidebar,
     reorderable,
-    noPanelPadding,
+    noPanelPadding: fieldHasFirstColumnInset,
     preventHorizontalOverflow,
   });
 
-  const [fullWidths] = useColWidths(displayedFields, fullWidth, frozenColumns, widthConfigResetKey, contentAwareWidths);
+  const [fullWidths] = useColWidths(
+    displayedFields,
+    fullFieldWidth,
+    frozenColumns,
+    widthConfigResetKey,
+    contentAwareWidths
+  );
 
   const fullHeaderHeight = useHeaderHeight({
     hasAssistantAction: onFieldAddToAssistant != null,
@@ -397,7 +413,7 @@ export function TableFlat(props: TableNGProps) {
     enabled: hasHeader,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx: headerTypographyCtx,
-    noPanelPadding,
+    noPanelPadding: fieldHasFirstColumnInset,
     tableRefreshEnabled,
     hasColumnSidebar,
     reorderable,
@@ -416,7 +432,7 @@ export function TableFlat(props: TableNGProps) {
     defaultHeight: defaultRowHeight,
     typographyCtx,
     maxHeight: maxRowHeight,
-    noPanelPadding,
+    noPanelPadding: fieldHasFirstColumnInset,
   });
 
   const {
@@ -448,7 +464,7 @@ export function TableFlat(props: TableNGProps) {
       shouldReserveScrollbarGutter(
         paginatedRows,
         fullRowHeight,
-        fullWidths,
+        showRowNumbers ? [rowNumberWidth, ...fullWidths] : fullWidths,
         fullWidth,
         height -
           frameSize -
@@ -462,6 +478,8 @@ export function TableFlat(props: TableNGProps) {
       fullRowHeight,
       fullWidths,
       fullWidth,
+      rowNumberWidth,
+      showRowNumbers,
       height,
       frameSize,
       hasHeader,
@@ -472,9 +490,10 @@ export function TableFlat(props: TableNGProps) {
     ]
   );
   const availableWidth = fullWidth - (needsScrollbarSpace ? scrollbarWidth : 0);
+  const availableFieldWidth = Math.max(0, availableWidth - rowNumberWidth);
   const [widths, numFrozenColsFullyInView] = useColWidths(
     displayedFields,
-    availableWidth,
+    availableFieldWidth,
     frozenColumns,
     widthConfigResetKey,
     contentAwareWidths
@@ -486,7 +505,7 @@ export function TableFlat(props: TableNGProps) {
     enabled: hasHeader,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx: headerTypographyCtx,
-    noPanelPadding,
+    noPanelPadding: fieldHasFirstColumnInset,
     tableRefreshEnabled,
     hasColumnSidebar,
     reorderable,
@@ -498,7 +517,7 @@ export function TableFlat(props: TableNGProps) {
     defaultHeight: defaultRowHeight,
     typographyCtx,
     maxHeight: maxRowHeight,
-    noPanelPadding,
+    noPanelPadding: fieldHasFirstColumnInset,
   });
   const styles = useStyles2(getGridStyles, showPagination, transparent, tableRefreshEnabled, noPanelPadding);
 
@@ -553,8 +572,8 @@ export function TableFlat(props: TableNGProps) {
       onHideColumn: handleHideColumn,
       canHideColumn: canHideAnotherColumn,
       onOpenColumnPanel: hasColumnSidebar ? openColumnSidebar : undefined,
-      // the first column here is a field column, so it's the one carrying the panel-edge inset
-      firstColumnExtraPadding: noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0,
+      // The gutter carries the panel-edge inset when visible, not the first data field.
+      firstColumnExtraPadding: fieldHasFirstColumnInset ? FIRST_COLUMN_EXTRA_PADDING : 0,
     }),
     [
       wrapFallback,
@@ -585,7 +604,7 @@ export function TableFlat(props: TableNGProps) {
       handleHideColumn,
       openColumnSidebar,
       canHideAnotherColumn,
-      noPanelPadding,
+      fieldHasFirstColumnInset,
     ]
   );
 
@@ -596,13 +615,24 @@ export function TableFlat(props: TableNGProps) {
     const result = fromFields(displayedRawFields, widths, data, rows, sortedRows);
     if (showRowNumbers) {
       // A presentation-only column: no new DataFrame field or changes to row/source indices.
-      result.columns.unshift(createRowNumberColumn(pageRangeStart, theme));
+      result.columns.unshift(createRowNumberColumn(pageRangeStart, theme, rowNumberWidth));
       result.cellRootRenderers[ROW_NUMBER_COLUMN_KEY] = function renderRowNumberCell(key, cellProps) {
         return <Cell key={key} {...cellProps} />;
       };
     }
     return { ...result, columns: markEdgeColumns(result.columns) };
-  }, [fromFields, displayedRawFields, widths, data, rows, sortedRows, showRowNumbers, pageRangeStart, theme]);
+  }, [
+    fromFields,
+    displayedRawFields,
+    widths,
+    data,
+    rows,
+    sortedRows,
+    showRowNumbers,
+    pageRangeStart,
+    theme,
+    rowNumberWidth,
+  ]);
 
   useEffect(() => {
     if (isColumnVisibilityPanelOpen) {

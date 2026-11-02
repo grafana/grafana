@@ -3,13 +3,24 @@ import { css } from '@emotion/css';
 import { FieldType, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
+import { CELL_HORIZONTAL_CHROME, FIRST_COLUMN_EXTRA_PADDING } from './constants';
 import { type TableColumn } from './types';
 
 // Distinct from user-facing field names; only used in react-data-grid, not in DataFrame.
 export const ROW_NUMBER_COLUMN_KEY = '__grafana_row_number_gutter__';
 
-// Initial compact width. Layout-aware sizing at digit boundaries follows in commit 3.
-const ROW_NUMBER_WIDTH = 50;
+/**
+ * The gutter occupies space *inside* the existing table viewport. Size it for the
+ * largest displayed position, not just the currently visible virtualized rows.
+ * The font metric comes from the same monospace canvas measurement as JSON cells.
+ */
+export function getRowNumberGutterWidth(rowCount: number, monoCharWidth: number, noPanelPadding = false): number {
+  const digits = String(Math.max(1, rowCount)).length;
+  const textWidth = digits * monoCharWidth;
+  const inset = noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0;
+  // Four extra pixels keep the last digit clear of the right-hand separator.
+  return Math.max(32, Math.ceil(textWidth + CELL_HORIZONTAL_CHROME + inset + 4));
+}
 
 /** The 1-based position in the sorted and filtered table (not the source row ID). */
 export function getDisplayedRowNumber(pageRangeStart: number, rowIdx: number): number {
@@ -17,7 +28,7 @@ export function getDisplayedRowNumber(pageRangeStart: number, rowIdx: number): n
 }
 
 /** A fixed, presentation-only column; no synthetic field is added to the source frame. */
-export function createRowNumberColumn(pageRangeStart: number, theme: GrafanaTheme2): TableColumn {
+export function createRowNumberColumn(pageRangeStart: number, theme: GrafanaTheme2, width: number): TableColumn {
   const numberClass = css({
     width: '100%',
     textAlign: 'right',
@@ -39,9 +50,9 @@ export function createRowNumberColumn(pageRangeStart: number, theme: GrafanaThem
     sortable: false,
     resizable: false,
     draggable: false,
-    width: ROW_NUMBER_WIDTH,
-    minWidth: ROW_NUMBER_WIDTH,
-    maxWidth: ROW_NUMBER_WIDTH,
+    width,
+    minWidth: width,
+    maxWidth: width,
     cellClass: gutterClass,
     headerCellClass: gutterClass,
     renderHeaderCell: () => (
@@ -50,5 +61,7 @@ export function createRowNumberColumn(pageRangeStart: number, theme: GrafanaThem
       </span>
     ),
     renderCell: ({ rowIdx }) => <span className={numberClass}>{getDisplayedRowNumber(pageRangeStart, rowIdx)}</span>,
+    // Summaries are data reducers, not displayed positions.
+    renderSummaryCell: () => null,
   };
 }
