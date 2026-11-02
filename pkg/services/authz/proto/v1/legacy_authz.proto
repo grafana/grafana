@@ -31,8 +31,18 @@ message LegacyCheckRequest {
   bool skip_scope_resolution = 8;
   // Present only for embedded instance-global evaluation. Namespace still selects the tenant.
   LegacyGlobalEvaluation global_evaluation = 9;
-  // Trusted embedded assertion. Mutually exclusive with subject and global_evaluation.
+  // Trusted embedded assertion. Mutually exclusive with subject, global_evaluation and restriction.
   LegacyInternalIdentity internal_identity = 10;
+  // Trusted caller's effective action limit, applied to both org and global checks.
+  // Absent is unrestricted; present with no actions denies all.
+  LegacyActionRestriction restriction = 11;
+}
+
+message LegacyActionRestriction {
+  // Action keys from the caller's effective permission map after authentication filtering.
+  // Include all effective actions, not only those in the check expression.
+  // The server still verifies grants and scopes.
+  repeated string actions = 1;
 }
 
 message LegacyCheckResponse {
@@ -126,11 +136,6 @@ message LegacyGlobalEvaluation {
   // Preserve the requester's org for resolver callbacks: 0 (global) or -1 (NoOrgID).
   // Both evaluate permissions from org 0, never from the transport namespace's org.
   int64 requester_org_id = 1;
-
-  // Actions in the trusted caller's effective global permission map, after
-  // authentication restrictions. Empty permits no actions. Resolver dependency
-  // lookups use the same restriction; scopes are still checked by the server.
-  repeated string permitted_actions = 2;
 }
 
 message LegacyInternalIdentity {
