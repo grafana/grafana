@@ -5,8 +5,12 @@ import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynami
 import { type GrafanaRouteComponent, type RouteDescriptor } from 'app/core/navigation/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { evaluateAccess, evaluateAccessAll } from './routePermissions';
-import { isImportWizardEnabled, isNotificationHistoryEnabled, shouldUseGmaOnlyListView } from './unified/featureToggles';
+import { evaluateAccess } from './routePermissions';
+import {
+  isImportWizardEnabled,
+  isNotificationHistoryEnabled,
+  shouldUseGmaOnlyListView,
+} from './unified/featureToggles';
 import { proxied } from './unified/plugin-proxy/withRouteProxy';
 import { ALERTING_IMPORT_SETTINGS_URL } from './unified/settings/navigation';
 import {

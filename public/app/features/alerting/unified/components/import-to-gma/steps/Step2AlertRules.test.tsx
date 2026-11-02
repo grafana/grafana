@@ -180,7 +180,7 @@ describe('Step2AlertRules', () => {
           targetFolder: { uid: 'target-folder', title: 'Target folder' },
         }}
       >
-        <Step2Content step1Completed={false} step1Skipped={true} canImport={true} />
+        <Step2Content step1Completed={false} canImport={true} />
       </TestWrapper>
     );
 
