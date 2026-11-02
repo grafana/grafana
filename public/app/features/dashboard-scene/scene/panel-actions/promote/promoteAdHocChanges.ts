@@ -10,7 +10,7 @@ import { getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../../utils/
 import { canPromoteAdHocChanges } from './utils';
 
 /**
- * Runs the promotion path of every interaction the panel declares, threading the v2 dashboard JSON through each one.
+ * Runs the promotion handler of every interaction the panel declares, threading the v2 dashboard JSON through each one.
  * Returns the resulting dashboard JSON, or `undefined` when the changes cannot be promoted; the caller decides what to do
  * with it.
  */
@@ -35,5 +35,5 @@ export function promoteAdHocChanges(panel: VizPanel): DashboardV2Spec | undefine
 
   // Panels declare one interaction today. Once applied interactions are tracked (URL or local storage),
   // only those will be promoted.
-  return interactions.reduce((json, interaction) => interaction.promotionPath(json, context), dashboard);
+  return interactions.reduce((json, interaction) => interaction.promotionHandler(json, context), dashboard);
 }

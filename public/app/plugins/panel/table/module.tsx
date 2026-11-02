@@ -167,7 +167,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         schema: ['hiddenColumns', 'reindexedColumns'],
         // Appends the ad hoc transformations to the panel's saved transformations. They go last because ad hoc
         // transformations run after the saved ones and refer to their output.
-        promotionPath: (dashboard, { elementKey, transformations }) => {
+        promotionHandler: (dashboard, { elementKey, transformations }) => {
           const element = dashboard.elements[elementKey];
 
           // Library panels keep their queries and transformations in the library panel, not the dashboard.

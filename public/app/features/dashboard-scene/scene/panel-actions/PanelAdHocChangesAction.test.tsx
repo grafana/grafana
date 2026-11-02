@@ -22,7 +22,7 @@ jest.mock('./promote/promotePanelAdHocChanges', () => ({ promotePanelAdHocChange
 
 const OWNER = TABLE_TRANSFORMATIONS_OWNER;
 const buttonTestId = selectors.components.Panels.Panel.PanelAdHocChangesHeaderAction;
-const promotionPath = jest.fn((dashboard) => dashboard);
+const promotionHandler = jest.fn((dashboard) => dashboard);
 
 setPluginImportUtils({
   importPanelPlugin: () =>
@@ -34,7 +34,7 @@ setPluginImportUtils({
             name: 'organize',
             mutates: ['TRANSFORMATION'],
             schema: [],
-            promotionPath,
+            promotionHandler,
           },
         ],
       })

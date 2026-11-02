@@ -188,7 +188,7 @@ export interface PanelInteraction {
   mutates: PanelInteractionMutation[];
   schema: unknown[];
   /** Writes the interaction into the v2 dashboard JSON and returns the updated JSON. */
-  promotionPath: (dashboard: DashboardV2Spec, context: PanelInteractionPromotionContext) => DashboardV2Spec;
+  promotionHandler: (dashboard: DashboardV2Spec, context: PanelInteractionPromotionContext) => DashboardV2Spec;
 }
 
 export interface PanelInteractionPromotionContext {

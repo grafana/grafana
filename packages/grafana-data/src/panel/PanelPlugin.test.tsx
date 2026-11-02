@@ -719,7 +719,7 @@ describe('PanelPlugin', () => {
             name: 'organize',
             mutates: ['TRANSFORMATION' as const],
             schema: ['columnName'],
-            promotionPath: jest.fn(),
+            promotionHandler: jest.fn(),
           },
         ],
       };

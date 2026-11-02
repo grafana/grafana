@@ -1049,6 +1049,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/dashboard-scene/ @grafana/dashboards-squad
 /public/app/features/dashboard-scene/panel-edit/PanelEditNext/ @grafana/datapro
 /public/app/features/dashboard-scene/panel-edit/PanelStylesSection*.tsx/ @grafana/dataviz-squad
+/public/app/features/dashboard-scene/scene/panel-actions/promote/ @grafana/dataviz-squad
 /public/app/features/dashboard-scene/scene/panel-timerange/timeCompare/ @grafana/dataviz-squad
 /public/app/features/scopes/ @grafana/grafana-operator-experience-squad
 /public/app/features/datasources/ @grafana/grafana-catalog

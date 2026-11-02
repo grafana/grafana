@@ -26,13 +26,13 @@ jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
 
 const adHocChange = { id: 'organize', options: { excludeByName: { hidden: true } } };
 const otherAdHocChange = { id: 'organize', options: { indexByName: { second: 0, first: 1 } } };
-const promotionPath = jest.fn();
+const promotionHandler = jest.fn();
 
 setPluginImportUtils({
   importPanelPlugin: () =>
     Promise.resolve(
       getPanelPlugin({ id: 'table' }).setPanelInteractions({
-        interactions: [{ id: 0, name: 'organize', mutates: ['TRANSFORMATION'], schema: [], promotionPath }],
+        interactions: [{ id: 0, name: 'organize', mutates: ['TRANSFORMATION'], schema: [], promotionHandler }],
       })
     ),
   getPanelPluginFromCache: () => undefined,
@@ -116,18 +116,18 @@ describe('promotePanelAdHocChanges', () => {
   });
 
   beforeEach(() => {
-    promotionPath.mockReset().mockImplementation((dashboard) => ({ ...dashboard, title: 'Promoted' }));
+    promotionHandler.mockReset().mockImplementation((dashboard) => ({ ...dashboard, title: 'Promoted' }));
     mockSaveDashboard.mockReset().mockResolvedValue({
       data: { uid: 'dash-1', version: 2, url: '/d/dash-1/promoted', status: 'success' },
     });
   });
 
-  it('passes the v2 dashboard JSON, the panel element key and its ad hoc transformations to the promotion path', async () => {
+  it('passes the v2 dashboard JSON, the panel element key and its ad hoc transformations to the promotion handler', async () => {
     const { panel } = await buildScene();
 
     await requestPromotion(panel);
 
-    expect(promotionPath).toHaveBeenCalledWith(expect.objectContaining({ title: 'My dashboard' }), {
+    expect(promotionHandler).toHaveBeenCalledWith(expect.objectContaining({ title: 'My dashboard' }), {
       elementKey: 'panel-1',
       transformations: [adHocChange],
     });
@@ -161,7 +161,7 @@ describe('promotePanelAdHocChanges', () => {
     act(() => remountDashboard());
     await requestPromotion(panel);
 
-    expect(promotionPath).toHaveBeenCalledTimes(1);
+    expect(promotionHandler).toHaveBeenCalledTimes(1);
   });
 
   it('rebuilds the panel without ad hoc transformations, so the changes are not applied twice', async () => {

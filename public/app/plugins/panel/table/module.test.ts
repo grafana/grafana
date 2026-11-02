@@ -206,8 +206,8 @@ describe('table module', () => {
   };
 
   describe('organize interaction promotion', () => {
-    const promote: PanelInteraction['promotionPath'] = (dashboard, context) =>
-      plugin.panelInteractions!.interactions[0].promotionPath(dashboard, context);
+    const promote: PanelInteraction['promotionHandler'] = (dashboard, context) =>
+      plugin.panelInteractions!.interactions[0].promotionHandler(dashboard, context);
 
     it('appends the ad hoc transformations after the saved transformations, as v2 transformation kinds', () => {
       const dashboard = dashboardWith({ 'panel-1': panel([savedReduce]) });

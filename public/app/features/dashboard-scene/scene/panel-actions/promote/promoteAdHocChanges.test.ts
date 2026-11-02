@@ -19,7 +19,7 @@ const promotions: Record<string, jest.Mock> = {
 };
 
 function interaction(name: string): PanelInteraction {
-  return { id: 0, name, mutates: ['TRANSFORMATION'], schema: [], promotionPath: promotions[name] };
+  return { id: 0, name, mutates: ['TRANSFORMATION'], schema: [], promotionHandler: promotions[name] };
 }
 
 setPluginImportUtils({
@@ -55,7 +55,7 @@ describe('promoteAdHocChanges', () => {
     promotions.second.mockReset().mockImplementation((json) => json);
   });
 
-  it('passes the v2 dashboard JSON, the panel element key and its ad hoc transformations to the first promotion path', async () => {
+  it('passes the v2 dashboard JSON, the panel element key and its ad hoc transformations to the first promotion handler', async () => {
     const { panel } = await buildScene();
 
     promoteAdHocChanges(panel);
