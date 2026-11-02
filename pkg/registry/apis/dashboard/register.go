@@ -68,6 +68,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
+	settingservice "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -126,6 +127,7 @@ type DashboardsAPIBuilder struct {
 	QuotaService             quota.Service
 	ProvisioningService      provisioning.ProvisioningService
 	minRefreshInterval       string
+	settingService           settingservice.Service
 	dualWriter               dualwrite.Service
 	folderClientProvider     client.K8sHandlerProvider
 	libraryPanels            libraryelements.Service // for legacy library panels
@@ -137,8 +139,7 @@ type DashboardsAPIBuilder struct {
 	homeDashboard            home.HomeDashboardGetter // On-prem home dashboard support
 	namespacer               request.NamespaceMapper
 	dashboardActivityChannel live.DashboardActivityChannel
-	dashboardK8sClient       client.K8sHandler // for provisioning checks during delete validation
-	isStandalone             bool              // skips any handling including anything to do with legacy storage
+	isStandalone             bool // skips any handling including anything to do with legacy storage
 
 	// Embedded mode builds resourcePermissionsSvc lazily from restConfigProvider; standalone
 	// injects resourcePermissionsSvc directly and leaves restConfigProvider nil.
@@ -181,7 +182,6 @@ func RegisterAPIService(
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	folderClient := client.NewK8sHandler(request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, userService, unified)
-	dashboardClient := client.NewK8sHandler(namespacer, dashv1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, userService, unified)
 
 	snapshotOptions := dashv0.SnapshotSharingOptions{
 		SnapshotsEnabled:      cfg.SnapshotEnabled,
@@ -205,7 +205,6 @@ func RegisterAPIService(
 		ProvisioningService:      provisioning,
 		minRefreshInterval:       cfg.MinRefreshInterval,
 		dualWriter:               dual,
-		dashboardK8sClient:       dashboardClient,
 		folderClientProvider:     newSimpleClientProvider(folderClient),
 		libraryPanels:            libraryPanels,
 		publicDashboardService:   publicDashboardService,
@@ -251,10 +250,11 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, search *SearchHandler, unified resource.ResourceClient) *DashboardsAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, search *SearchHandler, unified resource.ResourceClient, settingService settingservice.Service) *DashboardsAPIBuilder {
 	migration.Initialize(datasourceProvider, libraryElementProvider, migration.DefaultCacheTTL)
 	return &DashboardsAPIBuilder{
-		minRefreshInterval:     "10s",
+		minRefreshInterval:     defaultMinRefreshInterval,
+		settingService:         settingService,
 		accessClient:           ac,
 		dashboardService:       &dashsvc.DashboardServiceImpl{}, // for validation helpers only
 		folderClientProvider:   folderClientProvider,
@@ -597,28 +597,7 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 		return nil
 	}
 
-	// HACK: deletion validation currently doesn't work for the standalone case. So we currently skip it.
-	if b.isStandalone {
-		return nil
-	}
-
-	nsInfo, err := authlib.ParseNamespace(a.GetNamespace())
-	if err != nil {
-		return fmt.Errorf("%v: %w", "failed to parse namespace", err)
-	}
-
-	// Try to get the dashboard via the K8s API
-	svcCtx := identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
-	dashboardUID := a.GetName()
-	dashObj, err := b.dashboardK8sClient.Get(svcCtx, dashboardUID, nsInfo.OrgID, metav1.GetOptions{})
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return nil
-		}
-		return fmt.Errorf("delete hook failed to check if dashboard is provisioned: %w", err)
-	}
-
-	accessor, err := utils.MetaAccessor(dashObj)
+	accessor, err := utils.MetaAccessor(a.GetOldObject())
 	if err != nil {
 		return fmt.Errorf("delete hook failed to get meta accessor: %w", err)
 	}
@@ -652,7 +631,7 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 	}
 
 	// Validate refresh interval
-	if err := b.dashboardService.ValidateDashboardRefreshInterval(b.minRefreshInterval, refresh); err != nil {
+	if err := b.validateRefreshInterval(ctx, a.GetNamespace(), refresh); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
@@ -762,7 +741,7 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 	}
 
 	// Validate refresh interval
-	if err := b.dashboardService.ValidateDashboardRefreshInterval(b.minRefreshInterval, refresh); err != nil {
+	if err := b.validateRefreshInterval(ctx, a.GetNamespace(), refresh); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 

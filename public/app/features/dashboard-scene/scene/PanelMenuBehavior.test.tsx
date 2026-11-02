@@ -25,6 +25,7 @@ import {
 } from '@grafana/scenes';
 import { LegendDisplayMode, type VizLegendOptions } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { appEvents } from 'app/core/app_events';
 import { LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type GetExploreUrlArguments } from 'app/core/utils/explore';
@@ -32,6 +33,7 @@ import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import * as storeModule from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardInteractions } from '../utils/interactions';
@@ -39,7 +41,7 @@ import { DashboardInteractions } from '../utils/interactions';
 import { DashboardScene } from './DashboardScene';
 import { NewAlertRuleDrawer } from './NewAlertRuleDrawer';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
-import { panelMenuBehavior, toggleVizPanelLegend } from './PanelMenuBehavior';
+import { onRemovePanel, panelMenuBehavior, toggleVizPanelLegend } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 const mocks = {
@@ -63,6 +65,25 @@ jest.mock('app/store/store', () => ({
 
 const getObservablePluginLinksMock = jest.fn().mockReturnValue(of([]));
 setGetObservablePluginLinks(getObservablePluginLinksMock);
+
+describe('onRemovePanel', () => {
+  it('opens the confirmation only after the menu has had a chance to release focus', async () => {
+    const { scene, panel } = await buildTestScene({});
+    const publish = jest.spyOn(appEvents, 'publish').mockImplementation(() => {});
+    jest.useFakeTimers();
+
+    try {
+      onRemovePanel(scene, panel);
+      expect(publish).not.toHaveBeenCalled();
+
+      jest.runOnlyPendingTimers();
+      expect(publish).toHaveBeenCalledWith(expect.any(ShowConfirmModalEvent));
+    } finally {
+      jest.useRealTimers();
+      publish.mockRestore();
+    }
+  });
+});
 
 describe('panelMenuBehavior', () => {
   beforeAll(() => {

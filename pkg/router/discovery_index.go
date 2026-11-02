@@ -21,14 +21,31 @@ import (
 // index, in runes.
 const maxIndexTextLen = 200
 
-// indexDocs returns the markdown and HTML index, rendering them once.
-func (d *manifestDocs) indexDocs() (index, page *cachedDoc) {
-	d.indexOnce.Do(func() {
-		markdown := []byte(renderManifestIndex(d.backends, d.sources, d.manifests))
-		d.index = newCachedDoc("text/markdown; charset=utf-8", markdown)
-		d.indexHTML = newCachedDoc("text/html; charset=utf-8", renderIndexHTML(markdown))
+// indexDocs returns the markdown and HTML index, rendering each view once:
+// with internal, every group, and without it, only those not internal.
+func (d *manifestDocs) indexDocs(internal bool) (index, page *cachedDoc) {
+	if len(d.internal) == 0 {
+		internal = false // both views are the same
+	}
+	docs := &d.publicIndex
+	if internal {
+		docs = &d.internalIndex
+	}
+	docs.once.Do(func() {
+		backends := d.backends
+		if !internal && len(d.internal) > 0 {
+			backends = make([]Backend, 0, len(d.backends))
+			for _, b := range d.backends {
+				if _, hidden := d.internal[b.Group().Name]; !hidden {
+					backends = append(backends, b)
+				}
+			}
+		}
+		markdown := []byte(renderManifestIndex(backends, d.sources, d.manifests))
+		docs.index = newCachedDoc("text/markdown; charset=utf-8", markdown)
+		docs.page = newCachedDoc("text/html; charset=utf-8", renderIndexHTML(markdown))
 	})
-	return &d.index, &d.indexHTML
+	return &docs.index, &docs.page
 }
 
 // renderManifestIndex renders the markdown index of every served group, for

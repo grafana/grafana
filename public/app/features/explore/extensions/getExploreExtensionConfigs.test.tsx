@@ -59,6 +59,38 @@ describe('getExploreExtensionConfigs', () => {
     });
   });
 
+  describe('configure function for "add to dashboard" extension', () => {
+    afterEach(() => {
+      contextSrvMock.hasPermission.mockRestore();
+      setTestFlags({});
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+    });
+
+    function addToDashboardExtension() {
+      return getExploreExtensionConfigs().find((extension) => extension.title === 'Add to dashboard');
+    }
+
+    it('is hidden on mobile, even with permission', () => {
+      contextSrvMock.hasPermission.mockReturnValue(true);
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+
+      expect(addToDashboardExtension()?.configure?.(undefined)).toBeUndefined();
+    });
+
+    it('is hidden without permission, even when not blocked on mobile', () => {
+      contextSrvMock.hasPermission.mockReturnValue(false);
+
+      expect(addToDashboardExtension()?.configure?.(undefined)).toBeUndefined();
+    });
+
+    it('is shown with permission and not blocked on mobile', () => {
+      contextSrvMock.hasPermission.mockReturnValue(true);
+
+      expect(addToDashboardExtension()?.configure?.(undefined)).toEqual({});
+    });
+  });
+
   // Explore's toolbar renders the bare "Add to dashboard" button only while one link is configured
   // and an "Add" dropdown past that, so a notebook link that survived configure() with the feature
   // off would change the toolbar for everyone.
