@@ -45,6 +45,14 @@ import { type DashboardSidebarPane, type DashboardSidebarLike, type DashboardSid
 
 export const MAX_UNDO_ACTIONS = 100;
 
+/** Edit actions being collected into one undo entry, see startBatchAction/endBatchAction. */
+interface ActiveBatch {
+  meta: DashboardActionMeta;
+  source: SceneObject;
+  description?: string;
+  actions: DashboardEditActionEventPayload[];
+}
+
 export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> implements DashboardSidebarLike {
   public constructor(state?: Partial<DashboardSidebarState>) {
     super({
@@ -102,12 +110,13 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   /** Set while a batch of edit actions is being collected, see startBatchAction/endBatchAction. */
-  private _activeBatch?: {
-    meta: DashboardActionMeta;
-    source: SceneObject;
-    description?: string;
-    actions: DashboardEditActionEventPayload[];
-  };
+  private _activeBatch?: ActiveBatch;
+
+  /**
+   * Batches a newer one started inside, innermost last: a batch started while another collects, such as
+   * a multi-panel delete during an Assistant batch, joins it as one of its edits instead of replacing it.
+   */
+  private _outerBatches: ActiveBatch[] = [];
 
   private _batchSizes = new WeakMap<DashboardEditActionEventPayload, number>();
 
@@ -234,12 +243,15 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       this.setState({ redoStack: [] });
     }
 
+    if (this._activeBatch) {
+      this._outerBatches.push(this._activeBatch);
+    }
     this._activeBatch = { source, description, meta, actions: [] };
   }
 
   private endBatchAction() {
     const batch = this._activeBatch;
-    this._activeBatch = undefined;
+    this._activeBatch = this._outerBatches.pop();
 
     if (!batch || batch.actions.length === 0) {
       return;
@@ -256,6 +268,11 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
         [...batch.actions].reverse().forEach((childAction) => this.undoSingleAction(childAction));
       },
     };
+
+    if (this._activeBatch) {
+      this._activeBatch.actions.push(action);
+      return;
+    }
 
     const history = this.pendingChangesHistory();
     if (history) {
@@ -283,6 +300,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       if (!skipPerform) {
         this.performAction(action);
       }
+      getDashboardSceneFor(this).recordEditAction(action.meta.actionId);
       return;
     }
     const history = this.pendingChangesHistory();
@@ -290,6 +308,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       if (!skipPerform) {
         this.performAction(action);
       }
+      getDashboardSceneFor(this).recordEditAction(action.meta.actionId);
       this.recordToPendingChanges(history, action);
       return;
     }
@@ -303,6 +322,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     if (!skipPerform) {
       this.performAction(action);
     }
+    getDashboardSceneFor(this).recordEditAction(action.meta.actionId);
 
     this.setState({ undoStack: this.pushToUndoStack(action) });
   }

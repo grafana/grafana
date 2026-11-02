@@ -249,6 +249,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     startedAt: number;
     manualChanges: boolean;
     assistantChanges: boolean;
+    manualEdits: Map<string, number>;
+    aiEdits: Map<string, number>;
   };
 
   public trackModePickerShown() {
@@ -279,6 +281,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       startedAt: performance.now(),
       manualChanges: false,
       assistantChanges: false,
+      manualEdits: new Map(),
+      aiEdits: new Map(),
     };
     DashboardInteractions.editPeriodStarted({
       dashboard_uid: this.state.uid,
@@ -301,6 +305,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // actor recorded came from a manual edit path that doesn't report itself (e.g. legacy grid drags).
     const hadUnattributedChanges =
       !hadManualChanges && !hadAssistantChanges && Boolean(this.state.isDirty) && this.hasActualSaveChangesSafe();
+    const editCounts = (counts: Map<string, number>) =>
+      [...counts].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([action, count]) => ({ action, count }));
     return {
       edit_session_id: this._editSession.id,
       edit_source: this._editSession.source,
@@ -310,6 +316,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       had_unattributed_changes: hadUnattributedChanges,
       edit_actors: getEditActors(hadManualChanges || hadUnattributedChanges, hadAssistantChanges),
       elapsed_ms: Math.round(performance.now() - this._editSession.startedAt),
+      manual_edits: editCounts(this._editSession.manualEdits),
+      ai_edits: editCounts(this._editSession.aiEdits),
     };
   }
 
@@ -356,6 +364,17 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const after = before === null ? null : this.serializeForChangeTracking();
     if (before === null || after === null || before !== after) {
       this.recordEditMutation();
+    }
+  }
+
+  public recordEditAction(actionId: string) {
+    if (!this.state.isEditing) {
+      return;
+    }
+    this.startEditPeriod(this._assistantWrites > 0 ? 'assistant' : 'user');
+    if (this._editSession) {
+      const counts = this._assistantWrites > 0 ? this._editSession.aiEdits : this._editSession.manualEdits;
+      counts.set(actionId, (counts.get(actionId) ?? 0) + 1);
     }
   }
 

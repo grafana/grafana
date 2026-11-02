@@ -27,8 +27,8 @@ func InternalIdentityProfileFor(requester Requester) (InternalIdentityProfile, b
 		return "", false
 	}
 
-	// r.OrgRole != RoleAdmin AND !r.IsGrafanaAdmin are the defined values for
-	// WithServiceIdentity in grafana/pkg/apimachinery/identity/context.go.
+	// Require the requester's admin flags so a restricted requester cannot regain
+	// the predefined profile grants.
 	if r.Type != types.TypeAccessPolicy ||
 		r.UserUID != r.internalIdentityProfile.String() ||
 		r.OrgRole != RoleAdmin ||
