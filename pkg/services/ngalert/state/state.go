@@ -442,6 +442,13 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 				"next_ends_at",
 				nextEndsAt)
 			state.SetAlerting(reason, result.EvaluatedAt, nextEndsAt)
+		} else {
+			// The state stays Pending, but this evaluation succeeded,
+			// so a previous evaluation error must not be retained:
+			// otherwise rule health would stay "error" after the query
+			// recovers (e.g. an error recorded under KeepLastErrState
+			// while the instance was Pending).
+			state.Error = nil
 		}
 	default:
 		nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
