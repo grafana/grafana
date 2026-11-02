@@ -218,6 +218,17 @@ func TestEnsureSyncIdentifier(t *testing.T) {
 		assert.Equal(t, "mimir-prod", got)
 	})
 
+	t.Run("keeps a name-based import it recovered even when the name cannot be recorded", func(t *testing.T) {
+		adminCfg := newFakeConfigClient()
+		adminCfg.setUID(1, "ds-1")
+		adminCfg.setWriteErr(1, fmt.Errorf("storage unavailable"))
+		s := newIdentifierTestSyncer(t, adminCfg, fakeAMConfigReader{raw: configWithExtraConfig("mimir-prod")}, namedMimirDS("ds-1", "Mimir Prod", 1))
+
+		got, err := s.ensureSyncIdentifier(ctx, 1, syncTarget{uid: "ds-1", origin: originAPI})
+		require.NoError(t, err)
+		assert.Equal(t, "mimir-prod", got)
+	})
+
 	t.Run("uses a name another instance recorded first", func(t *testing.T) {
 		adminCfg := newFakeConfigClient()
 		adminCfg.setUID(1, "ds-1")

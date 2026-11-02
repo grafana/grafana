@@ -187,8 +187,13 @@ func (s *ExternalAMSyncer) ensureSyncIdentifier(ctx context.Context, orgID int64
 				return recorded, nil
 			}
 		}
-		s.logger.Warn("Failed to record external AM sync identifier; importing under the datasource UID", "org_id", orgID, "error", err)
-		return target.uid, nil
+		// A name already imported under is stable, and a save under the UID would be refused next to it.
+		fallback := target.uid
+		if _, imported := staged[candidate]; imported {
+			fallback = candidate
+		}
+		s.logger.Warn("Failed to record external AM sync identifier; importing under it anyway", "org_id", orgID, "identifier", fallback, "err", err)
+		return fallback, nil
 	}
 	return chosen, nil
 }
