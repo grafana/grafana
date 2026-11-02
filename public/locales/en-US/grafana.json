@@ -6251,6 +6251,7 @@
       "composer": "Composer",
       "composer-description": "Point at anything and ask the Assistant.",
       "composer-no-permission": "You need permission to edit this dashboard.",
+      "composer-opening": "Opening Composer…",
       "composer-save-first": "Save the dashboard before using Composer.",
       "composer-unsupported": "Composer is not available for this dashboard right now.",
       "current": "Dashboard mode: {{mode}}",
