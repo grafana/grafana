@@ -103,6 +103,11 @@ func TestIntegrationNATSEmbeddedCluster(t *testing.T) {
 
 	t.Run("a stopped node leaves the peers' routes within one interval", func(t *testing.T) {
 		portC := clusterPort(srvC)
+		// Live routes can form before discovery has applied C's row, so wait for
+		// it, or the drop below could pass without one.
+		events.waitFor(t, "A and B to route to C through discovery", func() bool {
+			return hasRoute(t, srvB, portC) && hasRoute(t, srvA, portC)
+		})
 		c.Stop()
 		stoppedAt := time.Now()
 		// A graceful stop removes the peer row, so the TTL plays no part.
@@ -120,9 +125,14 @@ func TestIntegrationNATSEmbeddedCluster(t *testing.T) {
 		portA := clusterPort(srvA)
 		row := readPeerRow(t, ctx, store, key)
 
+		events.waitFor(t, "B to route to A through discovery", func() bool { return hasRoute(t, srvB, portA) })
+
 		// A killed process never deregisters. Simulate that by putting A's row back
 		// after a graceful stop, heartbeating now, so the shutdown time doesn't count.
+		// Restore it only once B dropped A's old route, so a tick that read the
+		// missing row can't remove the route after the restore.
 		a.Stop()
+		events.waitFor(t, "B to drop the stopped node", func() bool { return !hasRoute(t, srvB, portA) })
 		killedAt := time.Now()
 		writePeerRow(t, ctx, store, key, withHeartbeat(t, row, killedAt))
 
