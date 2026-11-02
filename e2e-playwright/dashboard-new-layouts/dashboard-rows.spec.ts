@@ -247,17 +247,6 @@ test.describe('Dashboard rows', { tag: ['@dashboards'] }, () => {
       const { url } = await createDashboardViaAPI(request, selectors, buildManyRowsSpec(rowCount));
 
       await test.step('Open a link to a row below many populated rows', async () => {
-        // Grids render their panels once a ResizeObserver has measured their width. A visible browser reports
-        // that on a later frame than the scroll to the row, but headless Chromium reports it right away,
-        // so delay it to load the dashboard the way users see it.
-        await page.addInitScript(() => {
-          const NativeResizeObserver = window.ResizeObserver;
-          window.ResizeObserver = class extends NativeResizeObserver {
-            constructor(callback: ResizeObserverCallback) {
-              super((entries, observer) => setTimeout(() => callback(entries, observer), 50));
-            }
-          };
-        });
         await page.goto(`${url}?drow=Row-${linkedRow}`);
       });
 
