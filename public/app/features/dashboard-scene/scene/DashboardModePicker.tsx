@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, Tooltip, useStyles2, type IconName } from '@grafana/ui';
 
 import { canEnterComposer } from '../composer/composerAccess';
+import { getPendingComposerEnterTarget, subscribeToComposerEnterRequests } from '../composer/composerEntryRequests';
 import { useAssistantComposerEntry } from '../composer/useAssistantComposerEntry';
 import { isNewDashboard } from '../saving/shared';
 import { useIsMobileEditDeprecated } from '../utils/mobileEditDeprecation';
@@ -140,14 +141,17 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
           placement="bottom"
           content={
             composer.disabledReason ??
-            t('dashboard.modes.composer-description', 'Point at anything and ask the Assistant.')
+            (composer.opening
+              ? t('dashboard.modes.composer-opening', 'Opening Composer…')
+              : t('dashboard.modes.composer-description', 'Point at anything and ask the Assistant.'))
           }
         >
           <ToolbarButton
             variant={inComposer ? 'active' : 'canvas'}
-            icon="crosshair"
+            icon={composer.opening ? 'spinner' : 'crosshair'}
             aria-label={t('dashboard.modes.composer', 'Composer')}
             aria-pressed={inComposer}
+            aria-busy={composer.opening}
             disabled={composer.disabledReason !== undefined}
             onClick={inComposer ? () => dashboard.leaveComposer() : composer.request}
           />
@@ -164,8 +168,9 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
  */
 function useComposerOption(dashboard: DashboardScene) {
   const entry = useAssistantComposerEntry('dashboard');
+  const pending = useSyncExternalStore(subscribeToComposerEnterRequests, getPendingComposerEnterTarget);
   if (getDashboardMode(dashboard.state) === 'composer') {
-    return { disabledReason: undefined, request: () => {} };
+    return { disabledReason: undefined, opening: false, request: () => {} };
   }
   if (!dashboardComposerEnabled() || !entry) {
     return undefined;
@@ -182,8 +187,15 @@ function useComposerOption(dashboard: DashboardScene) {
       ? t('dashboard.modes.composer-save-first', 'Save the dashboard before using Composer.')
       : t('dashboard.modes.composer-unsupported', 'Composer is not available for this dashboard right now.');
   }
-  const request = () => entry.request({ resource: 'dashboard', uid: dashboard.state.uid ?? '' });
-  return { disabledReason, request };
+  const uid = dashboard.state.uid ?? '';
+  // Kept enabled while opening so keyboard focus stays on the button; a second press is ignored.
+  const opening = pending?.resource === 'dashboard' && pending.uid === uid;
+  const request = () => {
+    if (!opening) {
+      entry.request({ resource: 'dashboard', uid });
+    }
+  };
+  return { disabledReason, opening, request };
 }
 
 function SelectedMode() {

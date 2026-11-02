@@ -23,6 +23,7 @@ import {
   getPendingComposerEnterTarget,
   PENDING_REQUEST_TTL_MS,
   resetComposerEnterRequestsForTests,
+  settleComposerEnterRequest,
 } from '../composer/composerEntryRequests';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 
@@ -288,12 +289,31 @@ it('asks a listening Assistant straight away without reopening its docked sideba
   expect(scene.state.mode).not.toBe('composer');
 });
 
+it('shows Composer opening until Assistant settles the request, ignoring a second press', async () => {
+  const { user } = renderPicker();
+
+  await user.click(composerItem()!);
+
+  expect(within(composerItem()!).getByTestId('icon-spinner')).toBeInTheDocument();
+  expect(composerItem()).toHaveAttribute('aria-busy', 'true');
+  expect(composerItem()).toHaveFocus();
+  expect(await screen.findByRole('tooltip')).toHaveTextContent(/^Opening Composer…$/);
+
+  await user.click(composerItem()!);
+  expect(assistant).toHaveBeenCalledTimes(1);
+
+  act(() => settleComposerEnterRequest('picker-test'));
+
+  expect(within(composerItem()!).getByTestId('icon-crosshair')).toBeInTheDocument();
+  expect(composerItem()).toHaveAttribute('aria-busy', 'false');
+});
+
 it('ends a request Assistant has not acted on when the dashboard goes away', async () => {
   const { user } = renderPicker();
   await user.click(composerItem()!);
   expect(sidebarPresentation()).toBe('floating');
 
-  deactivate();
+  act(() => deactivate());
   deactivate = () => {};
 
   // The floated sidebar goes back to the user's layout.
