@@ -12,7 +12,7 @@ export interface QueryActionTarget {
   dsLoading: boolean;
 }
 
-export interface TransformationActionTarget {
+interface TransformationActionTarget {
   cardType: QueryEditorType.Transformation;
   transformation: Transformation;
 }
