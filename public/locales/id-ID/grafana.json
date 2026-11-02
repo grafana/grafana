@@ -517,6 +517,7 @@
         "save": "Simpan"
       },
       "error-title": "Gagal menyimpan aturan peringatan",
+      "form-errors": "",
       "no-group-success": "Aturan berhasil ditambahkan"
     },
     "alert-rule-name-and-metric": {
@@ -525,8 +526,8 @@
       "label-metric": "Metrik",
       "label-name": "Nama",
       "message": {
-        "must-enter-a-metric-name": "Harus memasukkan nama metrik",
-        "must-enter-a-name": "Anda harus memasukkan nama",
+        "metric-name-required": "",
+        "name-required": "",
         "please-select-a-data-source": "Pilih sumber data"
       },
       "metric-aria-label-metric": "metrik",
@@ -581,6 +582,7 @@
     },
     "alertmanager-config": {
       "confirmText-yes-reset-configuration": "Ya, reset konfigurasi",
+      "editor-label": "",
       "gma-manual-configuration-description": "Konfigurasi internal Alertmanager Grafana tidak dapat diubah secara manual. Untuk mengubah konfigurasi ini, edit setiap sumber daya melalui UI.",
       "gma-manual-configuration-is-not-supported": "Perubahan konfigurasi manual tidak didukung",
       "message": {
@@ -1090,6 +1092,7 @@
         "body": "Anda yakin ingin memulihkan definisi aturan peringatan yang dihapus ini?",
         "confirm": "Ya, pulihkan aturan yang dihapus",
         "error": "Tidak dapat memulihkan aturan peringatan yang dihapus",
+        "preview-aria-label": "",
         "title": "Pulihkan aturan peringatan yang dihapus"
       },
       "table": {
@@ -1307,7 +1310,7 @@
     "folder-selector": {
       "description-select-folder": "Pilih folder untuk menyimpan aturan Anda.",
       "message": {
-        "select-a-folder": "Pilih sebuah folder"
+        "folder-required": ""
       }
     },
     "folderAndGroup": {
@@ -1558,11 +1561,10 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "Memuat grup...",
       "message": {
-        "must-be-a-positive-integer": "Harus berupa bilangan bulat positif.",
-        "must-enter-a-group-name": "Harus memasukkan nama grup"
+        "evaluation-group-required": "",
+        "must-be-a-positive-integer": "Harus berupa bilangan bulat positif."
       },
       "missing-series-resolve-placeholder": "Default: 2",
-      "or": "atau",
       "placeholder-select-an-evaluation-group": "Pilih grup evaluasi...",
       "text-configure-no-data-and-error-handling": "Konfigurasikan tidak ada penanganan data dan kesalahan",
       "title-set-evaluation-behavior": "Atur perilaku evaluasi"
@@ -1855,6 +1857,7 @@
         "will-import-rules": "Akan mengimpor aturan",
         "will-import-rules-count_other": "Akan mengimpor {{count}} aturan"
       },
+      "rules-preview": "",
       "source": {
         "datasource": "Aturan yang dikelola oleh sumber data yang ada",
         "datasource-description": "Impor aturan dari sumber data yang ada",
@@ -2974,7 +2977,7 @@
           "alerting": "Aktifkan untuk menjeda evaluasi untuk aturan peringatan ini.",
           "recording": "Aktifkan untuk menjeda evaluasi untuk aturan pencatatan ini."
         },
-        "select-folder-before": "Pilih folder sebelum mengatur grup evaluasi dan interval",
+        "select-folder-first-tooltip": "",
         "ungroup-warning": "Tindakan ini tidak dapat dibatalkan. Setelah Anda menyimpan, Anda tidak akan dapat menambahkannya kembali ke grup.",
         "ungroup-warning-title": "Ini akan menghapus aturan peringatan dari grupnya"
       },
@@ -3636,6 +3639,9 @@
       "switch-to-data-source-managed": "Sumber data yang dipilih dalam kueri Anda mendukung manajemen aturan peringatan. Beralih ke aturan yang dikelol asumber data jika Anda ingin aturan peringatan dikelola oleh sumber data, bukan Grafana.",
       "switch-to-grafana-managed": "Beralih ke aturan yang dikelola Grafana untuk menggunakan pola, beberapa kueri, gambar dalam pemberitahuan dan berbagai fitur lainnya.",
       "title-alert-rule-types": "Jenis aturan peringatan"
+    },
+    "sql-query-preview": {
+      "aria-label": ""
     },
     "state-history": {
       "columns": {
@@ -11434,11 +11440,8 @@
       "severity-low": "Rendah",
       "severity-minor": "Minor",
       "severity-unknown": "Tidak diketahui",
-      "title": "Peringatan aktif",
       "view-all": "Lihat semua peringatan aktif",
-      "view-rules": "Lihat semua aturan peringatan",
-      "critical-count_other": "{{count}} kritikal",
-      "high-count_other": "{{count}} tinggi"
+      "view-rules": "Lihat semua aturan peringatan"
     },
     "header-actions": {
       "active-incidents": "Insiden aktif",
@@ -11464,21 +11467,13 @@
       "empty": "",
       "empty-selected-team": "",
       "error-title": "Tidak dapat memuat insiden aktif",
-      "title": "Insiden aktif",
       "view-all": "Lihat semua insiden"
     },
     "learn-more": "Pelajari selengkapnya",
     "most-used-dashboards-tab": {
       "empty": "Dasbor yang paling sering digunakan akan muncul di sini.",
-      "empty-description": "Setelah organisasi Anda memiliki dasbor dan data penggunaan terkumpul, dasbor dengan tayangan terbanyak selama 30 hari terakhir akan ditampilkan di sini.",
       "error-title": "Tidak dapat memuat dasbor yang paling sering digunakan",
       "loading": "Memuat dasbor yang paling sering digunakan..."
-    },
-    "news-card": {
-      "empty": "Tidak ada postingan blog terbaru.",
-      "error-title": "Tidak dapat memuat postingan blog terbaru",
-      "read-more": "Baca selengkapnya dari blog Grafana Labs",
-      "title": "Terbaru dari blog"
     },
     "on-call-card": {
       "current-shift": "",
@@ -11818,7 +11813,6 @@
     },
     "starred-dashboards-tab": {
       "empty": "Dasbor yang diberi bintang akan muncul di sini.",
-      "empty-description": "Anda dapat memberi bintang pada dasbor favorit dengan mengeklik <1></1> dari halaman dasbor.",
       "error-title": "Tidak dapat memuat dasbor yang diberi bintang",
       "loading": "Memuat dasbor yang diberi bintang..."
     },
@@ -13618,6 +13612,7 @@
       "add-title": "",
       "change-visualization": "",
       "edit-query": "",
+      "edit-with-assistant": "",
       "hide-query": "",
       "open-explore": "",
       "rename": "",
@@ -15657,20 +15652,8 @@
     "explain-or-modify": "Jelaskan atau ubah",
     "explain-query": "",
     "explaining": "",
-    "feedback-cancel": "Batalkan",
-    "feedback-description": "Umpan balik Anda membantu meningkatkan pengalaman kueri di Grafana.",
-    "feedback-error": "Umpan balik tidak dapat dikirim. Coba lagi.",
     "feedback-helpful": "Membantu",
-    "feedback-label": "Bagikan umpan balik",
-    "feedback-negative-placeholder": "Jelaskan apa yang tidak berjalan dengan baik dan apa ekspektasi Anda.",
-    "feedback-negative-title": "Apa yang salah?",
     "feedback-not-helpful": "Tidak membantu",
-    "feedback-positive-placeholder": "Apa yang Anda sukai? Bagaimana agar bisa lebih baik lagi?",
-    "feedback-positive-title": "Apa yang berjalan dengan baik?",
-    "feedback-privacy": "",
-    "feedback-recipient": "Umpan balik Anda akan dikirim ke tim yang menangani kueri.",
-    "feedback-send": "Kirim",
-    "feedback-sending": "Mengirim...",
     "focus": "",
     "follow-up-label": "",
     "follow-up-placeholder": "",
@@ -16866,6 +16849,8 @@
       "failures-description": "",
       "filter-placeholder": "",
       "filtered": "",
+      "internal": "",
+      "internal-description": "",
       "last-failed": "",
       "load-failures": "",
       "never": "",

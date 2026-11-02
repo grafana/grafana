@@ -8,4 +8,15 @@ type LegacyAccessClient = legacyclient.LegacyAccessClient
 
 type LegacyCheckRequest = legacyclient.LegacyCheckRequest
 
+type LegacyActionRestriction = legacyclient.LegacyActionRestriction
+
 type LegacyGlobalEvaluation = legacyclient.LegacyGlobalEvaluation
+
+type LegacyInternalIdentity = legacyclient.LegacyInternalIdentity
+
+type LegacyInternalIdentityProfile = legacyclient.LegacyInternalIdentityProfile
+
+const (
+	LegacyInternalIdentityService      = legacyclient.LegacyInternalIdentityService
+	LegacyInternalIdentityProvisioning = legacyclient.LegacyInternalIdentityProvisioning
+)

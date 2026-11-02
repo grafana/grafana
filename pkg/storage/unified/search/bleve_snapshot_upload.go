@@ -75,8 +75,13 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 	// failures fall through to today's upload path — the probe is an
 	// optimisation, not a correctness check.
 	if interval := b.opts.Snapshot.UploadInterval; interval > 0 {
-		notOlderThan := time.Now().Add(-interval)
-		k, _, err := findFreshSnapshotByUploadTime(ctx, b.opts.Snapshot.Store, key, notOlderThan, b.opts.BuildVersion, b.maxSupportedIndexFormat, logger)
+		// Reopened indexes can predate this binary; snapshots retain the index version.
+		bi, err := getBuildInfo(idx.index)
+		var k ulid.ULID
+		if err == nil {
+			notOlderThan := time.Now().Add(-interval)
+			k, _, err = findFreshSnapshotByUploadTime(ctx, b.opts.Snapshot.Store, key, notOlderThan, bi.BuildVersion, b.maxSupportedIndexFormat, logger)
+		}
 		if err != nil {
 			logger.Warn("Snapshot upload-time probe failed; proceeding with upload", "err", err)
 		} else if k != (ulid.ULID{}) {
@@ -107,6 +112,50 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 
 	uploadKey, rv, err = b.snapshotCopyAndUpload(ctx, key, idx, lock)
 	return err
+}
+
+func (b *bleveBackend) seedUploadTrackingFromRemote(ctx context.Context, key resource.NamespacedResource, idx *bleveIndex, now time.Time) (time.Time, bool) {
+	if b.opts.Snapshot.Store == nil {
+		return time.Time{}, false
+	}
+	start := time.Now()
+	logger := b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource)
+
+	bi, err := getBuildInfo(idx.index)
+	if err != nil {
+		logger.Warn("Failed to read index build info; skipping snapshot upload tracking seed", "err", err)
+		return time.Time{}, false
+	}
+	var notOlderThan time.Time
+	if b.opts.Snapshot.MaxIndexAge > 0 {
+		notOlderThan = now.Add(-b.opts.Snapshot.MaxIndexAge)
+	}
+
+	// Cleanup keeps one snapshot per version, not per local build,
+	// so another replica's upload must count as history too.
+	k, meta, err := findFreshSnapshotByUploadTime(ctx, b.opts.Snapshot.Store, key, notOlderThan, bi.BuildVersion, b.maxSupportedIndexFormat, logger)
+	if err != nil {
+		logger.Warn("Failed to look up remote snapshot for upload tracking seed", "elapsed", time.Since(start), "err", err)
+		return time.Time{}, false
+	}
+	if meta == nil {
+		logger.Debug("No remote snapshot of this index version; not seeding upload tracking", "elapsed", time.Since(start))
+		return time.Time{}, false
+	}
+
+	uploadedAt := meta.UploadTimestamp
+	if uploadedAt.IsZero() {
+		uploadedAt = ulid.Time(k.Time())
+	}
+	b.setUploadTracking(key, uploadedAt)
+	logger.Debug("Seeded snapshot upload tracking from remote snapshot",
+		"snapshot_key", k.String(),
+		"uploaded", uploadedAt,
+		"build_version", bi.BuildVersion,
+		"build_time", time.Unix(bi.BuildTime, 0).UTC(),
+		"elapsed", time.Since(start),
+	)
+	return uploadedAt, true
 }
 
 // snapshotCopyAndUpload copies idx to a staging dir, reads its metadata,

@@ -147,6 +147,7 @@ func NewSearchOptions(
 			PostRankAuthzEnabled:      cfg.SearchPostRankAuthz,
 			GlobalIndexEnabled:        cfg.GlobalSearchIndexEnabled,
 			GlobalIndexStartupBuild:   cfg.GlobalSearchIndexStartupBuild,
+			GlobalIndexIdleTimeout:    cfg.GlobalSearchIndexIdleTimeout,
 
 			IndexSnapshotEnabled:            cfg.IndexSnapshotEnabled,
 			IndexSnapshotThreshold:          cfg.IndexSnapshotThreshold,

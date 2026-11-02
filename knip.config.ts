@@ -49,6 +49,9 @@ const config: KnipConfig = {
     'scripts/grafana-server/tmp/**',
     'devenv/**',
 
+    // TODO DPRO-460: Remove once Alertmanager history consumes the shared viewer.
+    'public/app/core/components/DiffViewer/DiffViewer.tsx',
+
     // vendored temporarily
     'packages/grafana-data/src/datetime/easytz.js',
     'packages/grafana-data/src/datetime/luxon_moment_compat/luxon.js',
