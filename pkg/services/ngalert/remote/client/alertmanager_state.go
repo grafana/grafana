@@ -9,17 +9,12 @@ import (
 )
 
 const (
-	fullStatePath                = "/api/v1/grafana/full_state"
 	grafanaAlertmanagerStatePath = "/api/v1/grafana/state"
 )
 
-// UserState is used for both Grafana state and Mimir full state.
+// UserState is the Grafana Alertmanager state.
 type UserState struct {
 	State string `json:"state"`
-}
-
-func (mc *Mimir) GetFullState(ctx context.Context) (*UserState, error) {
-	return mc.getState(ctx, fullStatePath)
 }
 
 func (mc *Mimir) GetGrafanaAlertmanagerState(ctx context.Context) (*UserState, error) {

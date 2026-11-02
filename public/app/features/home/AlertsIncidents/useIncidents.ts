@@ -13,8 +13,7 @@ import { type FilterSelection, resolveFilterScope } from './filterSelection';
 export type IncidentsData = ReturnType<typeof useIncidents>;
 
 /**
- * All data fetching and derived state for the homepage Active incidents view,
- * shared between the old-layout card and the redesigned tabs.
+ * All data fetching and derived state for the homepage Active incidents view.
  *
  * When `selectedFilter` names a label value, incidents are filtered to that
  * value; the default scope fetches every active incident.
@@ -52,7 +51,6 @@ export function useIncidents(selectedFilter: FilterSelection = '') {
 
   const loading = pluginLoading || (isFetching && currentData === undefined);
   const count = incidents.length;
-  const hasIncidents = count > 0;
   // A 404 from the Incident backend means this org has no incident record yet (plugin installed but not
   // onboarded, or no incident ever created) — that's "no active incidents", not a failure. Every other
   // error (401/403/5xx/network) is genuine and surfaced to the user.
@@ -74,7 +72,6 @@ export function useIncidents(selectedFilter: FilterSelection = '') {
     displayed,
     count,
     hasMore,
-    hasIncidents,
     // Echoed back so the card can scope its empty message to the picked value.
     filterScope,
     enabled: pluginLoading ? undefined : !!installed,
