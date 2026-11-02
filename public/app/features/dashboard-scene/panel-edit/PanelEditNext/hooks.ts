@@ -17,6 +17,7 @@ import { QUERY_EDITOR_BANNER_DISMISSED_KEY, QUERY_EDITOR_SIDEBAR_SIZE_KEY, Sideb
 const MIN_SIDEBAR_RATIO = 0.1;
 const MAX_SIDEBAR_RATIO = 0.5;
 const MIN_SIDEBAR_PIXELS = 200;
+const MAX_DEFAULT_SIDEBAR_PIXELS = 330;
 const vizResizerClassName = css({ height: 2, width: '100%' });
 // Pre-mount placeholder — useLayoutEffect replaces this with the responsive default before the first paint.
 const FALLBACK_SIDEBAR_RATIO = 0.25;
@@ -26,9 +27,9 @@ type UseRatioResizeOptions = {
   initialRatio: number;
   containerRef: RefObject<HTMLElement | null>;
   /**
-   * If provided, called once at mount with the container's measured size to compute a
-   * responsive initial ratio (e.g. different defaults for small vs large screens).
-   * Runs in useLayoutEffect so there is no visible flash before the first paint.
+   * If provided, called with the container's measured size to compute a responsive ratio
+   * (e.g. different defaults for small vs large screens). Applied at mount in useLayoutEffect
+   * so there is no visible flash, then re-applied on container resize until the user drags the handle.
    */
   getDefaultRatio?: (containerSize: number) => number;
   minRatio?: number;
@@ -51,22 +52,38 @@ export function useRatioResize({
   const ratioRef = useRef(ratio);
   const minRatioRef = useRef(minRatio);
   const maxRatioRef = useRef(maxRatio);
+  const hasUserResizedRef = useRef(false);
 
   ratioRef.current = ratio;
   minRatioRef.current = minRatio;
   maxRatioRef.current = maxRatio;
 
-  // Override the initial ratio once with a responsive value read from the DOM.
-  // All three deps are stable for the lifetime of the hook, so this runs exactly once.
+  // All three deps are stable for the lifetime of the hook, so the observer is set up exactly once.
   useLayoutEffect(() => {
-    if (!getDefaultRatio) {
+    const container = containerRef.current;
+    if (!getDefaultRatio || !container) {
       return;
     }
-    const rect = containerRef.current?.getBoundingClientRect();
-    const size = direction === 'horizontal' ? (rect?.width ?? 0) : (rect?.height ?? 0);
-    if (size > 0) {
-      setRatio(getDefaultRatio(size));
+
+    const applyDefaultRatio = () => {
+      if (hasUserResizedRef.current) {
+        return;
+      }
+      const rect = container.getBoundingClientRect();
+      const size = direction === 'horizontal' ? rect.width : rect.height;
+      if (size > 0) {
+        setRatio(getDefaultRatio(size));
+      }
+    };
+
+    applyDefaultRatio();
+
+    if (typeof ResizeObserver === 'undefined') {
+      return;
     }
+    const observer = new ResizeObserver(applyDefaultRatio);
+    observer.observe(container);
+    return () => observer.disconnect();
   }, [containerRef, direction, getDefaultRatio]);
 
   const handleRef = useCallback(
@@ -76,15 +93,20 @@ export function useRatioResize({
       let totalSize = 0;
 
       const onPointerMove = (e: PointerEvent) => {
+        hasUserResizedRef.current = true;
         const delta = (direction === 'horizontal' ? e.clientX : e.clientY) - startPos;
         const newRatio = Math.min(maxRatioRef.current, Math.max(minRatioRef.current, startRatio + delta / totalSize));
         setRatio(newRatio);
       };
 
-      const onPointerUp = (e: PointerEvent) => {
-        handle?.releasePointerCapture(e.pointerId);
+      const onPointerEnd = (e: PointerEvent) => {
+        // After pointercancel the pointer may no longer be active, and releasing capture for it throws.
+        if (handle?.hasPointerCapture(e.pointerId)) {
+          handle.releasePointerCapture(e.pointerId);
+        }
         handle?.removeEventListener('pointermove', onPointerMove);
-        handle?.removeEventListener('pointerup', onPointerUp);
+        handle?.removeEventListener('pointerup', onPointerEnd);
+        handle?.removeEventListener('pointercancel', onPointerEnd);
       };
 
       const onPointerDown = (e: PointerEvent) => {
@@ -97,7 +119,8 @@ export function useRatioResize({
         // Pointer capture keeps move/up events on this element regardless of where the pointer travels.
         handle?.setPointerCapture(e.pointerId);
         handle?.addEventListener('pointermove', onPointerMove);
-        handle?.addEventListener('pointerup', onPointerUp);
+        handle?.addEventListener('pointerup', onPointerEnd);
+        handle?.addEventListener('pointercancel', onPointerEnd);
       };
 
       if (handle) {
@@ -164,22 +187,21 @@ export function usePanelEditorShell(model: PanelEditor) {
 }
 
 /**
- * Returns an initial sidebar ratio based on the container width measured once at mount.
- * After that, only a manual drag updates the ratio.
+ * Returns the default sidebar ratio for the measured container width.
+ * Re-applied on container resize until the user drags the sidebar handle.
  *
- * Breakpoints (containerWidth ≈ window width minus Grafana nav sidebar):
- *   >= 2200px  → large monitor full-screen (e.g. 27" 4K)   → 0.15
- *   >= 1800px  → medium-large (e.g. 24" FHD full-screen)   → 0.20
- *   below      → 16" laptop or smaller / partial window     → 0.25
+ * containerWidth is the window width minus the Grafana nav sidebar and the options pane.
+ *   >= 1400px  → 20%, capped at MAX_DEFAULT_SIDEBAR_PIXELS (reached at 1650px)
+ *   below      → 18%, floored at MIN_SIDEBAR_PIXELS
+ *
+ * The default is 200–330px (10% above 3300px) and never shrinks as the container grows. The bounds are
+ * applied to the ratio itself, clamped to the drag range, so a drag starts from the rendered width.
  */
 export function getDefaultSidebarRatio(containerWidth: number): number {
-  if (containerWidth >= 2200) {
-    return 0.15;
-  }
-  if (containerWidth >= 1800) {
-    return 0.2;
-  }
-  return 0.25;
+  const ratio = containerWidth >= 1400 ? 0.2 : 0.18;
+  const cappedRatio = Math.min(ratio, MAX_DEFAULT_SIDEBAR_PIXELS / containerWidth);
+  const flooredRatio = Math.max(MIN_SIDEBAR_RATIO, MIN_SIDEBAR_PIXELS / containerWidth, cappedRatio);
+  return Math.min(MAX_SIDEBAR_RATIO, flooredRatio);
 }
 
 export function useVizAndDataPaneLayout(

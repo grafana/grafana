@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import type React from 'react';
 
 import { useTheme2 } from '@grafana/ui';
@@ -116,18 +116,29 @@ describe('buildVizAndDataPaneGrid', () => {
 
 describe('getDefaultSidebarRatio', () => {
   it.each([
-    [2200, 0.15, 'returns a narrow sidebar at the large-monitor threshold (≥ 2200px)'],
-    [2199, 0.2, 'returns a wider sidebar just below the large-monitor threshold (< 2200px)'],
-    [1800, 0.2, 'returns the medium sidebar at the FHD threshold (≥ 1800px)'],
-    [1799, 0.25, 'returns the default sidebar just below the FHD threshold (< 1800px)'],
-  ])('%s', (width, expected) => {
-    expect(getDefaultSidebarRatio(width)).toBe(expected);
+    [300, 150, 'the 50% drag maximum when the 200px floor would exceed it'],
+    [1000, 200, 'the 200px floor when 18% would be narrower'],
+    [1399, 251.82, '18% just below the 1400px breakpoint'],
+    [1400, 280, '20% at the 1400px breakpoint'],
+    [1650, 330, '20% reaching the 330px cap'],
+    [3000, 330, 'the 330px cap on large screens'],
+    [4000, 400, 'the 10% drag minimum once the cap would go below it'],
+  ])('gives a %spx container a %spx sidebar (%s)', (width, expectedPixels) => {
+    expect(getDefaultSidebarRatio(width) * width).toBeCloseTo(expectedPixels, 2);
+  });
+
+  it('never shrinks the sidebar as the container grows', () => {
+    let previousPixels = 0;
+    for (let width = 800; width <= 4000; width++) {
+      const pixels = getDefaultSidebarRatio(width) * width;
+      expect(pixels).toBeGreaterThan(previousPixels - 1e-9);
+      previousPixels = pixels;
+    }
   });
 });
 
 describe('useRatioResize', () => {
-  function makeContainerRef(width: number, height: number): React.RefObject<HTMLElement> {
-    const el = document.createElement('div');
+  function setContainerSize(el: HTMLElement, width: number, height: number) {
     el.getBoundingClientRect = () => ({
       width,
       height,
@@ -139,6 +150,11 @@ describe('useRatioResize', () => {
       y: 0,
       toJSON: () => {},
     });
+  }
+
+  function makeContainerRef(width: number, height: number): React.RefObject<HTMLElement> {
+    const el = document.createElement('div');
+    setContainerSize(el, width, height);
     return { current: el };
   }
 
@@ -176,5 +192,104 @@ describe('useRatioResize', () => {
 
     expect(getDefaultRatio).not.toHaveBeenCalled();
     expect(result.current.ratio).toBe(0.5);
+  });
+
+  describe('on container resize', () => {
+    let notifyResize: VoidFunction;
+    let disconnect: jest.Mock;
+    let resizeObserverSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      disconnect = jest.fn();
+      resizeObserverSpy = jest
+        .spyOn(globalThis, 'ResizeObserver')
+        .mockImplementation((callback: ResizeObserverCallback) => {
+          const observer: ResizeObserver = { observe: jest.fn(), unobserve: jest.fn(), disconnect };
+          notifyResize = () => callback([], observer);
+          return observer;
+        });
+    });
+
+    afterEach(() => {
+      resizeObserverSpy.mockRestore();
+    });
+
+    const getDefaultRatio = (width: number) => (width >= 2000 ? 0.15 : 0.25);
+
+    function resizeContainer(containerRef: React.RefObject<HTMLElement>, width: number) {
+      setContainerSize(containerRef.current!, width, 600);
+      act(() => notifyResize());
+    }
+
+    // jsdom has no PointerEvent, and fireEvent drops clientX on the generic Event it falls back to.
+    function firePointer(handle: HTMLElement, type: string, clientX: number) {
+      act(() => {
+        handle.dispatchEvent(new MouseEvent(type, { clientX, cancelable: true }));
+      });
+    }
+
+    function renderWithHandle(containerRef: React.RefObject<HTMLElement>) {
+      const handle = document.createElement('div');
+      handle.setPointerCapture = jest.fn();
+      handle.releasePointerCapture = jest.fn();
+      handle.hasPointerCapture = jest.fn(() => true);
+      const rendered = renderHook(() =>
+        useRatioResize({ direction: 'horizontal', initialRatio: 0.5, containerRef, getDefaultRatio })
+      );
+      act(() => rendered.result.current.handleRef(handle));
+      return { ...rendered, handle };
+    }
+
+    it('re-applies getDefaultRatio with the new container width', () => {
+      const containerRef = makeContainerRef(2400, 600);
+      const { result } = renderWithHandle(containerRef);
+      expect(result.current.ratio).toBe(0.15);
+
+      resizeContainer(containerRef, 1200);
+
+      expect(result.current.ratio).toBe(0.25);
+    });
+
+    it('keeps the dragged ratio when the container resizes afterwards', () => {
+      const containerRef = makeContainerRef(2400, 600);
+      const { result, handle } = renderWithHandle(containerRef);
+
+      firePointer(handle, 'pointerdown', 0);
+      firePointer(handle, 'pointermove', 120);
+      firePointer(handle, 'pointerup', 120);
+      resizeContainer(containerRef, 1200);
+
+      expect(result.current.ratio).toBeCloseTo(0.2);
+    });
+
+    it('keeps responding to resizes after a click on the handle without dragging', () => {
+      const containerRef = makeContainerRef(2400, 600);
+      const { result, handle } = renderWithHandle(containerRef);
+
+      firePointer(handle, 'pointerdown', 0);
+      firePointer(handle, 'pointerup', 0);
+      resizeContainer(containerRef, 1200);
+
+      expect(result.current.ratio).toBe(0.25);
+    });
+
+    it('stops following the pointer after the drag is cancelled', () => {
+      const containerRef = makeContainerRef(2400, 600);
+      const { result, handle } = renderWithHandle(containerRef);
+
+      firePointer(handle, 'pointerdown', 0);
+      firePointer(handle, 'pointermove', 120);
+      firePointer(handle, 'pointercancel', 120);
+      firePointer(handle, 'pointermove', 480);
+
+      expect(result.current.ratio).toBeCloseTo(0.2);
+    });
+
+    it('disconnects the observer on unmount', () => {
+      const { unmount } = renderWithHandle(makeContainerRef(2400, 600));
+      unmount();
+
+      expect(disconnect).toHaveBeenCalled();
+    });
   });
 });
