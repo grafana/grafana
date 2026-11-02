@@ -306,6 +306,7 @@ export const availableIconsIndex = {
   'dollar-alt': true,
   'ai-sparkle': true,
   'message-sparkles': true,
+  'ai-select': true,
   bitbucket: true,
   git: true,
   'tachometer-fast': true,

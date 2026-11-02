@@ -148,7 +148,7 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
         >
           <ToolbarButton
             variant={inComposer ? 'active' : 'canvas'}
-            icon={composer.opening ? 'spinner' : 'crosshair'}
+            icon={composer.opening ? 'spinner' : 'ai-select'}
             aria-label={t('dashboard.modes.composer', 'Composer')}
             aria-pressed={inComposer}
             aria-busy={composer.opening}
