@@ -1,7 +1,7 @@
 # Single-tenant database proxy Go module
 
-Use this module's V1 schema and generated Go gRPC bindings for the single-tenant database proxy.
-Read the [gRPC contract](grpc-contract.md) before sending queries or implementing a server.
+Use this module to call the V1 single-tenant database proxy from Go.
+It contains the [gRPC API](grpc-contract.md), an optional authenticated [connection helper](client), and a [Go SQL driver](sql-driver.md).
 
 ## Start with the API
 
@@ -10,6 +10,7 @@ The generated package also provides `DatabaseProxyServiceServer` for server impl
 The server exposes `dbproxy.v1.DatabaseProxyService/Query`.
 The current server authenticates requests but returns `UNIMPLEMENTED` for authorized queries.
 
+For `database/sql`, follow the [SQL driver guide](sql-driver.md).
 For wire values, stream completion, errors, and SQL limits, read the [V1 contract](grpc-contract.md).
 
 ## Generate the Go bindings
