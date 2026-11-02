@@ -3,6 +3,7 @@ import { HttpResponse, http } from 'msw';
 import { type Folder } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { type AlertRule, type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import server from '@grafana/test-utils/server';
+import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import { type RuleKind } from '../shared/ruleKind';
 
@@ -108,7 +109,9 @@ export function setupRuleListBackend({
         .filter((folder) => !titles || titles.includes(folder.spec.title.toLowerCase()))
         .sort(byTitle)
         .map((folder) => folderItem(nameOf(folder), folder.spec.title));
-      return HttpResponse.json(page(listed, body, pageSize?.folders));
+      // Only the Folders list's batches are resized; the List mode name lookup reads one page of its own size.
+      const size = body.limit === DEFAULT_PER_PAGE_PAGINATION ? pageSize?.folders : undefined;
+      return HttpResponse.json(page(listed, body, size));
     }),
 
     ...(['alert', 'recording'] as const).map((kind) =>

@@ -6,11 +6,11 @@ import { type RuleSearchApiArgs } from '../rule-search/sharedRuleFilter';
 
 import { type RecordingFilterKey, type RecordingRuleFilter } from './recordingRuleFilters';
 
-export function buildRecordingRuleSearchQuery(search: RuleSearchApiArgs<RecordingRuleFilter>, continueToken?: string) {
+export function buildRecordingRuleSearchQuery(apiArgs: RuleSearchApiArgs<RecordingRuleFilter>, continueToken?: string) {
   return {
     apiVersion: 'search.grafana.app/v0alpha1',
     kind: 'SearchQuery',
-    where: toWhere(buildRecordingRuleLeaves(search)),
+    where: toWhere(buildRecordingRuleLeaves(apiArgs)),
     sort: [{ field: 'title', direction: 'asc' }],
     fields: RECORDING_RULE_FIELDS,
     limit: DEFAULT_PER_PAGE_PAGINATION,
@@ -20,12 +20,12 @@ export function buildRecordingRuleSearchQuery(search: RuleSearchApiArgs<Recordin
 
 /** The request's leaves in order, each with the filter it came from. */
 export function buildRecordingRuleLeaves(
-  search: RuleSearchApiArgs<RecordingRuleFilter>
+  apiArgs: RuleSearchApiArgs<RecordingRuleFilter>
 ): Array<SourcedLeaf<RecordingFilterKey>> {
   return [
-    ...buildSharedLeaves(search),
-    ...buildRecordingLeaves(search.filter),
-    ...buildHealthLeaves(search.filter, 'Recording'),
+    ...buildSharedLeaves(apiArgs),
+    ...buildRecordingLeaves(apiArgs.filter),
+    ...buildHealthLeaves(apiArgs.filter, 'Recording'),
   ];
 }
 
