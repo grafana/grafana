@@ -484,10 +484,12 @@ describe('DashboardSidebar', () => {
       const sidebar = buildTestScene().state.sidebar;
 
       sidebar.undoAction();
+      await waitFor(() => expect(history.undo).toHaveBeenCalledTimes(1));
+      // Once the step settled: one runs at a time.
+      await new Promise((resolve) => setTimeout(resolve));
       sidebar.redoAction();
 
-      await waitFor(() => expect(history.undo).toHaveBeenCalledTimes(1));
-      expect(history.redo).toHaveBeenCalledTimes(1);
+      await waitFor(() => expect(history.redo).toHaveBeenCalledTimes(1));
     });
 
     // A recording still on its way would land after the step and bring the undone change back.
@@ -503,6 +505,22 @@ describe('DashboardSidebar', () => {
 
       settle();
       await waitFor(() => expect(history.undo).toHaveBeenCalledTimes(1));
+    });
+
+    // Each step restores a revision and reloads the page: stacked ones would race.
+    it('takes one step for clicks made while a step waits for the recordings', async () => {
+      let settle = () => {};
+      jest.mocked(pendingChangesRecorded).mockReturnValueOnce(new Promise<void>((resolve) => (settle = resolve)));
+      const sidebar = buildTestScene().state.sidebar;
+      jest.mocked(history.undo).mockClear();
+
+      sidebar.undoAction();
+      sidebar.undoAction();
+      settle();
+
+      await waitFor(() => expect(history.undo).toHaveBeenCalledTimes(1));
+      await Promise.resolve();
+      expect(history.undo).toHaveBeenCalledTimes(1);
     });
   });
 

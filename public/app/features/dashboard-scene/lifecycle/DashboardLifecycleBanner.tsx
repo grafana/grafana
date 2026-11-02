@@ -44,6 +44,7 @@ import {
 import {
   hasUnrecordedPendingChange,
   pendingChangesRecorded,
+  pendingChangesSuperseded,
   recordPendingChange,
   usePendingChangesHistoryState,
 } from './pendingChangesHistory';
@@ -177,13 +178,17 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
   const apply = useCallback(async () => {
     // Apply saves what the plugin last recorded: an edit made here first has to be in it.
     await pendingChangesRecorded(dashboard);
+    // Changed under an edit meanwhile: the page loads the newer pending changes for the user to review.
+    if (pendingChangesSuperseded(dashboard)) {
+      return;
+    }
     if (pending.history && hasUnrecordedPendingChange(dashboard)) {
       await recordPendingChange(
         dashboard,
         pending.history,
         t('dashboard-scene.lifecycle.edited-dashboard', 'Edit dashboard')
       );
-      if (hasUnrecordedPendingChange(dashboard)) {
+      if (hasUnrecordedPendingChange(dashboard) || pendingChangesSuperseded(dashboard)) {
         return;
       }
     }

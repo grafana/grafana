@@ -10,6 +10,7 @@ import { type PendingChangesHistory } from './pendingChangePreview';
 import {
   hasUnrecordedPendingChange,
   pendingChangesRecorded,
+  pendingChangesSuperseded,
   recordPendingChange,
   reloadKeepingEditMode,
   startRecordingPendingChanges,
@@ -167,6 +168,27 @@ describe('recording edits to pending changes', () => {
     await Promise.all([first, recordPendingChange(scene, history, 'Second edit')]);
 
     expect(history.record).toHaveBeenCalledTimes(1);
+    // Nothing may act on the older pending changes this scene showed, Apply included.
+    expect(pendingChangesSuperseded(scene)).toBe(true);
+  });
+
+  // A queue that stayed rejected would skip every later recording, and fail Apply's and Undo's wait.
+  it('keeps recording after the reload for a conflict failed', async () => {
+    setPendingChangesPageReload(jest.fn().mockRejectedValue(new Error('offline')));
+    let model = specWith({ hello: { title: 'Hello' } });
+    const scene = fakeScene(() => model);
+    startRecordingPendingChanges(scene, model);
+    const history = fakeHistory();
+    history.record.mockResolvedValueOnce({ recorded: false });
+
+    model = specWith({ hello: { title: 'First' } });
+    await recordPendingChange(scene, history, 'First edit');
+    await expect(pendingChangesRecorded(scene)).resolves.toBeUndefined();
+    expect(pendingChangesSuperseded(scene)).toBe(false);
+
+    model = specWith({ hello: { title: 'Second' } });
+    await recordPendingChange(scene, history, 'Second edit');
+    expect(history.record).toHaveBeenCalledTimes(2);
   });
 });
 

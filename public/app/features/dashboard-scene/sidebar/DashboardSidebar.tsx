@@ -118,6 +118,9 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    */
   private _outerBatches: ActiveBatch[] = [];
 
+  /** A step through the pending changes history, from when it's asked for until the page shows it. */
+  private _historyStep?: Promise<void>;
+
   private _batchSizes = new WeakMap<DashboardEditActionEventPayload, number>();
 
   public setPanelEditAction(editAction: DashboardEditActionEvent) {
@@ -382,6 +385,24 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   /**
+   * Steps from what the plugin last recorded, since an edit still on its way would land after the step,
+   * and one step at a time: each restores a revision and reloads the page, so clicks made meanwhile are
+   * dropped rather than racing it.
+   */
+  private stepPendingChangesHistory(step: () => Promise<void>) {
+    if (this._historyStep) {
+      return;
+    }
+    this._historyStep = pendingChangesRecorded(getDashboardSceneFor(this))
+      .then(step)
+      // The plugin reports a failed step itself.
+      .catch(() => {})
+      .finally(() => {
+        this._historyStep = undefined;
+      });
+  }
+
+  /**
    * On pending changes whose plugin keeps their history, edits are steps in it instead of this
    * sidebar's undo stack, so Undo and Redo step through the plugin's changes too.
    */
@@ -398,8 +419,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     }
     const history = this.pendingChangesHistory();
     if (history) {
-      // From what the plugin last recorded: an edit still on its way would land after the step.
-      void pendingChangesRecorded(getDashboardSceneFor(this)).then(() => history.undo());
+      this.stepPendingChangesHistory(() => history.undo());
       return;
     }
     this.undoLastAction();
@@ -480,7 +500,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     }
     const history = this.pendingChangesHistory();
     if (history) {
-      void pendingChangesRecorded(getDashboardSceneFor(this)).then(() => history.redo());
+      this.stepPendingChangesHistory(() => history.redo());
       return;
     }
     this.redoLastAction();

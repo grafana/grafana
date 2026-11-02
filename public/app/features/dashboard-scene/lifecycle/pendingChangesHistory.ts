@@ -51,10 +51,20 @@ export function hasUnrecordedPendingChange(scene: DashboardScene): boolean {
   return unrecorded.has(scene) || (inFlight.get(scene) ?? 0) > 0;
 }
 
-/** Settles once every recording of `scene` sent so far has: Undo, Redo and Apply step from there. */
+/** Settles once every recording of `scene` sent so far has, and never rejects: Undo, Redo and Apply step from there. */
 export function pendingChangesRecorded(scene: DashboardScene): Promise<void> {
   return queues.get(scene) ?? Promise.resolve();
 }
+
+/**
+ * Whether the pending changes `scene` shows changed under one of its recordings: the page then loads
+ * the newer ones, which the user hasn't seen, so nothing may act on this scene's behalf any more.
+ */
+export function pendingChangesSuperseded(scene: DashboardScene): boolean {
+  return superseded.has(scene);
+}
+
+const ignore = () => {};
 
 /** Starts recording edits to `scene`, which shows the pending changes `stored`, as edit mode starts. */
 export function startRecordingPendingChanges(scene: DashboardScene, stored: DashboardV2Spec) {
@@ -120,7 +130,8 @@ export async function recordPendingChange(
   const sent = (queues.get(scene) ?? Promise.resolve())
     .then(() => sendRecording(scene, history, proposed, description))
     .finally(() => inFlight.set(scene, (inFlight.get(scene) ?? 1) - 1));
-  queues.set(scene, sent);
+  // The queue goes on past a recording that threw, so the later ones still go out.
+  queues.set(scene, sent.then(ignore, ignore));
   await sent;
 }
 
@@ -158,7 +169,12 @@ async function sendRecording(
     ]);
     const uid = previewedDashboardUid(scene.state);
     if (uid) {
-      await reloadKeepingEditMode(uid, scene.state.isEditing);
+      try {
+        await reloadKeepingEditMode(uid, scene.state.isEditing);
+      } catch {
+        // Still on this scene: its next recording conflicts again, and tries the reload again.
+        superseded.delete(scene);
+      }
     }
   }
 }
