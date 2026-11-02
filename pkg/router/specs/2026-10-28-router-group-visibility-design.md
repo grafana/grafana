@@ -1,7 +1,7 @@
 # Router: Per-caller group visibility
 
-Status: implemented on `router/group-visibility` (engine, config and the swagger UI's status
-page); the settings-backed `NamespaceGroups` is still to do.
+Status: implemented in #136246 (engine, config and the swagger UI's status page); the
+settings-backed `NamespaceGroups` is still to do.
 Package: `pkg/router`
 
 ## Context
@@ -37,8 +37,9 @@ group can be requested. Two cases need that to depend on the caller:
 - **The discovery group is never filtered.** `discoveryGroup` is listed for every caller, in every
   namespace, and its paths never 404 for visibility. Listing it in `internal_groups` is a startup
   error.
-- **The status page stays open to any authenticated caller, for now.** It lists every group, hidden
-  ones included. It exposes only names, states and counts, and in Cloud it sits behind a proxy.
+- **The status page is not filtered, and is admin-only.** It lists every group, hidden ones
+  included. #136398 limits who may read it to Grafana admins (and users with the Admin role where
+  `[router] status_open_to_admin` is set), since it exposes names, states and counts of every group.
 - **The engine stays deployment-agnostic.** It gets a generic `NamespaceGroups` filter and a list of
   internal groups (`SetGroupVisibility`), and knows nothing
   about settings or installs. The INI parsing and the namespace filter implementation live outside
@@ -135,7 +136,7 @@ Every place that lists groups filters through `visible`:
 
 The status page (`/apis/discovery/.../status`) is for debugging the router, so it always shows
 every group. Each group's entry gains a `visibility` field: `internal` for a configured internal
-group, and `public` otherwise. Who may read it doesn't change.
+group, and `public` otherwise.
 
 `/apis/<g>` and `/apis/<g>/<v>` need nothing beyond dispatch. The backend answers once the group is
 visible.

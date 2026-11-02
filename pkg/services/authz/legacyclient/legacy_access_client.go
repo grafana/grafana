@@ -25,8 +25,26 @@ type LegacyCheckRequest struct {
 	SkipCache           bool
 	SkipScopeResolution bool
 	// GlobalEvaluation is only supported for embedded instance-global checks.
-	// A nil value selects organization evaluation in Namespace.
+	// A nil value selects organization evaluation unless InternalIdentity is set.
 	GlobalEvaluation *LegacyGlobalEvaluation
+	// InternalIdentity asserts a predefined profile on the trusted embedded channel.
+	// It cannot be combined with Subject or GlobalEvaluation.
+	InternalIdentity *LegacyInternalIdentity
+}
+
+type LegacyInternalIdentity struct {
+	Profile LegacyInternalIdentityProfile
+}
+
+type LegacyInternalIdentityProfile string
+
+const (
+	LegacyInternalIdentityService      LegacyInternalIdentityProfile = "service"
+	LegacyInternalIdentityProvisioning LegacyInternalIdentityProfile = "provisioning"
+)
+
+func (p LegacyInternalIdentityProfile) String() string {
+	return string(p)
 }
 
 type LegacyGlobalEvaluation struct {
