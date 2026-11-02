@@ -42,6 +42,11 @@ func (s *Service) legacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
 
+	requesterOrgID, err := legacyRequesterOrgID(req, ns)
+	if err != nil {
+		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
+	}
+
 	var (
 		userUID string
 		idType  types.IdentityType
@@ -76,8 +81,8 @@ func (s *Service) legacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 	var args legacyEvaluationArgs
 	if isInternalIdentity {
 		args, err = s.prepareLegacyInternalEvaluation(ctx, req, scopeRequest)
-	} else if global := req.GetGlobalEvaluation(); global != nil {
-		args, err = s.prepareLegacyGlobalEvaluation(ctx, global, actions, scopeRequest)
+	} else if requesterOrgID == accesscontrol.GlobalOrgID || requesterOrgID == accesscontrol.NoOrgID {
+		args, err = s.prepareLegacyGlobalEvaluation(ctx, requesterOrgID, actions, scopeRequest)
 	} else {
 		args, err = s.prepareLegacyPermissions(ctx, actions, scopeRequest)
 	}
@@ -111,6 +116,31 @@ func (s *Service) legacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 	}
 
 	return &authzextv1.LegacyCheckResponse{Allowed: allowed}, nil
+}
+
+func legacyRequesterOrgID(req *authzextv1.LegacyCheckRequest, namespace types.NamespaceInfo) (int64, error) {
+	if namespace.OrgID < 1 {
+		return 0, errors.New("legacy check requires a concrete namespace")
+	}
+	if req.RequesterOrgId == nil {
+		if req.GetInternalIdentity() != nil {
+			return namespace.OrgID, nil
+		}
+		return 0, errors.New("legacy check requires requester org ID")
+	}
+
+	orgID := *req.RequesterOrgId
+	if orgID < accesscontrol.NoOrgID {
+		return 0, errors.New("requester org must be positive, 0 or NoOrgID")
+	}
+	if orgID > 0 && orgID != namespace.OrgID {
+		return 0, errors.New("requester org does not match namespace")
+	}
+	if req.GetInternalIdentity() != nil && orgID < 1 {
+		return 0, errors.New("internal legacy identity requires an organization requester")
+	}
+
+	return orgID, nil
 }
 
 // getLegacyIdentityPermissions loads only the requested actions, including
