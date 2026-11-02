@@ -270,6 +270,8 @@ export const FlagKeys = {
   GrafanaAPIServerWithExperimentalAPIs: "grafanaAPIServerWithExperimentalAPIs",
   /** Enables the Graphite data source full backend mode */
   GraphiteBackendMode: "graphiteBackendMode",
+  /** Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis */
+  HeatmapNegativeLogBuckets: "heatmapNegativeLogBuckets",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Adds support for Kubernetes correlations */
@@ -1810,6 +1812,17 @@ export const useFlagGrafanaAPIServerWithExperimentalAPIs = (options?: ReactFlagE
  */
 export const useFlagGraphiteBackendMode = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("graphiteBackendMode", false, options).value;
+};
+
+/**
+ * Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis
+ *
+ * **Details:**
+ * - flag key: `heatmapNegativeLogBuckets`
+ * - default value: `false`
+ */
+export const useFlagHeatmapNegativeLogBuckets = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("heatmapNegativeLogBuckets", false, options).value;
 };
 
 /**
