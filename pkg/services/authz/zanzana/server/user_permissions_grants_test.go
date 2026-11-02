@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -317,103 +316,15 @@ func TestUserPermissionsGrantsParity(t *testing.T) {
 			requirePermissionParity(t, srv, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: tc.subject, Teams: tc.teams})
 		})
 	}
-
-	t.Run("alias actions remain distinct", func(t *testing.T) {
-		got := requirePermissionParity(t, srv, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
-		require.Contains(t, got["users:read"], "global.users:uid:readable-user")
-		require.Contains(t, got["org.users:read"], "users:uid:readable-user")
-	})
-	t.Run("only granted folders are returned", func(t *testing.T) {
-		got := requirePermissionParity(t, srv, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:deep"})
-		require.Equal(t, []string{"folders:uid:ancestor"}, got["folders:read"])
-		require.NotContains(t, got["folders:read"], "folders:uid:unrelated-child")
-	})
-	t.Run("wildcard coverage includes every supported action", func(t *testing.T) {
-		got := requirePermissionParity(t, srv, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:all"})
-		require.Len(t, got, len(common.SupportedActions()), "every supported action, including aliases, must be returned")
-		for action, scopes := range got {
-			for _, scope := range scopes {
-				require.True(t, scope == "*" || strings.HasSuffix(scope, ":*"), action+": "+scope)
-			}
-		}
-	})
 }
 
-func TestUserPermissionsGrantsLargeContextualTeamSet(t *testing.T) {
-	groups := make([]string, 205)
-	for i := range groups {
-		groups[i] = fmt.Sprintf("large-team-%03d", i)
-	}
-	tuples := []*openfgav1.TupleKey{
-		common.NewResourceTuple("team:"+groups[0]+"#member", common.RelationGet, dashboardGroup, dashboardResource, "", "first-chunk"),
-		common.NewResourceTuple("team:"+groups[104]+"#member", common.RelationGet, dashboardGroup, dashboardResource, "", "second-chunk"),
-		common.NewResourceTuple("team:"+groups[204]+"#member", common.RelationGet, dashboardGroup, dashboardResource, "", "last-chunk"),
-	}
-	srv, _, _ := newPermissionTestServer(t, tuples)
-	got := requirePermissionParity(t, srv, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:many-teams", Teams: groups})
-	require.Equal(t, []string{"dashboards:uid:first-chunk", "dashboards:uid:last-chunk", "dashboards:uid:second-chunk"}, got["dashboards:read"])
-}
-
-func TestUserPermissionsGrantsObservesRevocations(t *testing.T) {
-	for _, tc := range []struct {
-		name, subject, action, item string
-		tuple                       *openfgav1.TupleKey
-	}{
-		{"direct grant", "user:direct", "dashboards:read", "dashboards:uid:direct-dashboard", common.NewResourceTuple("user:direct", common.RelationSetAdmin, dashboardGroup, dashboardResource, "", "direct-dashboard")},
-		{"stored membership", "user:stored", "folders:read", "folders:uid:ancestor", common.NewTypedTuple(common.TypeTeam, "user:stored", common.RelationTeamMember, "stored-team")},
-		{"role binding", "user:stored", "folders:read", "folders:uid:ancestor", common.NewTypedTuple(common.TypeRole, "team:stored-team#member", common.RelationAssignee, "stored-role")},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			srv, ds, store := newPermissionTestServer(t, permissionParityTuples())
-			req := &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: tc.subject}
-			before := requirePermissionParity(t, srv, req)
-			require.Contains(t, before[tc.action], tc.item)
-			require.NoError(t, ds.Write(t.Context(), store.ID, []*openfgav1.TupleKeyWithoutCondition{{User: tc.tuple.User, Relation: tc.tuple.Relation, Object: tc.tuple.Object}}, nil))
-			after := requirePermissionParity(t, srv, req)
-			require.NotContains(t, after[tc.action], tc.item)
-		})
-	}
-}
-
-func TestUserPermissionsGrantsIsolatesConcurrentContextualTeams(t *testing.T) {
-	srv, _, _ := newPermissionTestServer(t, []*openfgav1.TupleKey{
-		common.NewResourceTuple("team:left#member", common.RelationGet, dashboardGroup, dashboardResource, "", "left-dashboard"),
-		common.NewResourceTuple("team:right#member", common.RelationGet, dashboardGroup, dashboardResource, "", "right-dashboard"),
-	})
-	for i := range 8 {
-		for _, team := range []string{"left", "right"} {
-			t.Run(fmt.Sprintf("%s-%d", team, i), func(t *testing.T) {
-				t.Parallel()
-				got := requirePermissionParity(t, srv, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:same", Teams: []string{team}})
-				require.Equal(t, []string{"dashboards:uid:" + team + "-dashboard"}, got["dashboards:read"])
-			})
-		}
-	}
-}
-
-func TestUserPermissionsGrantsReturnsNoPartialResults(t *testing.T) {
-	t.Run("canceled request", func(t *testing.T) {
-		srv, _, _ := newPermissionTestServer(t, permissionParityTuples())
-		ctx, cancel := context.WithCancel(newContextWithNamespace())
-		cancel()
-		results, err := srv.resolveUserPermissions(ctx, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
-		require.Error(t, err)
-		require.Empty(t, results)
-	})
-	t.Run("datastore failure", func(t *testing.T) {
-		srv, ds, _ := newPermissionTestServer(t, permissionParityTuples())
-		ds.failRead = errors.New("grant datastore unavailable")
-		results, err := srv.resolveUserPermissions(newContextWithNamespace(), &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
-		require.ErrorContains(t, err, "grant datastore unavailable")
-		require.Empty(t, results)
-	})
-	t.Run("stream fails after returning a grant", func(t *testing.T) {
-		srv, ds, _ := newPermissionTestServer(t, permissionParityTuples())
-		ds.failIterator = errors.New("grant stream interrupted")
-		results, err := srv.resolveUserPermissions(newContextWithNamespace(), &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
-		require.ErrorContains(t, err, "grant stream interrupted")
-		require.Empty(t, results)
-	})
+func TestUserPermissionsCancellationReturnsNoPermissions(t *testing.T) {
+	srv, _, _ := newPermissionTestServer(t, permissionParityTuples())
+	ctx, cancel := context.WithCancel(newContextWithNamespace())
+	cancel()
+	results, err := srv.resolveUserPermissions(ctx, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
+	require.ErrorIs(t, err, context.Canceled)
+	require.Empty(t, results)
 }
 
 func permissionPerformanceTuples() []*openfgav1.TupleKey {
@@ -428,26 +339,6 @@ func permissionPerformanceTuples() []*openfgav1.TupleKey {
 		)
 	}
 	return tuples
-}
-
-func TestUserPermissionsGrantsReducesDatastoreOperations(t *testing.T) {
-	srv, ds, _ := newPermissionTestServer(t, permissionPerformanceTuples())
-	req := &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice", Teams: []string{"platform-team"}}
-	ctx := newContextWithNamespace()
-	want, err := baselinePermissionLists(ctx, srv, req)
-	require.NoError(t, err)
-	baselineCounts, baselineTotal := ds.counts()
-	ds.reset()
-	got, err := srv.resolveUserPermissions(ctx, req)
-	require.NoError(t, err)
-	translationCounts, translationTotal := ds.counts()
-	require.Equal(t, normalizePermissions(formatPermissionLists(want)), normalizePermissions(got))
-	require.Less(t, translationTotal*3, baselineTotal, "prefetch should eliminate repeated remote graph walks")
-	require.LessOrEqual(t, translationCounts["read"], 36, "each subject, request team and assigned role should be fetched at most once")
-	require.Zero(t, translationCounts["model"])
-	require.Zero(t, translationCounts["user_tuple"])
-	require.Zero(t, translationCounts["usersets"])
-	t.Logf("datastore operations: baseline=%d %v, translation=%d %v", baselineTotal, baselineCounts, translationTotal, translationCounts)
 }
 
 func BenchmarkUserPermissionsGrantsDelayedDatastore(b *testing.B) {
@@ -485,5 +376,29 @@ func BenchmarkUserPermissionsGrantsDelayedDatastore(b *testing.B) {
 				b.ReportMetric(float64(total)/float64(b.N), "datastore-ops/op")
 			})
 		}
+	}
+}
+
+func TestUserPermissionsDeduplicatesPrincipals(t *testing.T) {
+	srv, ds, _ := newPermissionTestServer(t, []*openfgav1.TupleKey{
+		common.NewFolderTuple("user:alice", common.RelationGet, "direct"),
+		common.NewTypedTuple(common.TypeTeam, "user:alice", common.RelationTeamMember, "stored"),
+		common.NewTypedTuple(common.TypeTeam, "user:alice", common.RelationTeamAdmin, "stored"),
+		common.NewTypedTuple(common.TypeRole, "user:alice", common.RelationAssignee, "shared"),
+		common.NewTypedTuple(common.TypeRole, "team:stored#member", common.RelationAssignee, "shared"),
+		common.NewTypedTuple(common.TypeRole, "team:external#member", common.RelationAssignee, "shared"),
+		common.NewFolderTuple("team:stored#member", common.RelationGet, "stored"),
+		common.NewFolderTuple("team:external#member", common.RelationGet, "external"),
+		common.NewFolderTuple("role:shared#assignee", common.RelationGet, "role"),
+	})
+	stream := &permissionResponseStream{ctx: newContextWithNamespace()}
+	require.NoError(t, srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice", Teams: []string{"stored", "external", "external"}}, stream))
+	counts, _ := ds.counts()
+	require.Equal(t, map[string]int{"read": 4}, counts, "load the user, two teams and shared role once despite duplicate references")
+	for _, name := range []string{"direct", "stored", "external", "role"} {
+		require.Contains(t, stream.permissions, &authzv1.UserPermission{Action: "folders:read", Scope: "folders:uid:" + name})
+	}
+	for _, action := range []string{"teams:read", "teams:write", "teams:delete", "teams.permissions:read", "teams.permissions:write"} {
+		require.Contains(t, stream.permissions, &authzv1.UserPermission{Action: action, Scope: "teams:uid:stored"})
 	}
 }

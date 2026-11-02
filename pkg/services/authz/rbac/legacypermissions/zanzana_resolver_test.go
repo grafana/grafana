@@ -11,6 +11,8 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -57,7 +59,7 @@ func TestListAllWithPrefix_SkipsFailingAction(t *testing.T) {
 }
 
 func TestResolveCurrentUserPermissions_UsesRequesterNamespace(t *testing.T) {
-	client := &snapshotZanzanaClient{}
+	client := &userPermissionsZanzanaClient{}
 	r := NewZanzanaPermissionResolver(client, &usertest.FakeUserService{}, nil, false)
 	usr := &identity.StaticRequester{
 		Type:      claims.TypeUser,
@@ -74,7 +76,7 @@ func TestResolveCurrentUserPermissions_UsesRequesterNamespace(t *testing.T) {
 }
 
 func TestResolveCurrentUserPermissions_DerivesNamespaceFromOrgWhenRequesterNamespaceIsEmpty(t *testing.T) {
-	client := &snapshotZanzanaClient{}
+	client := &userPermissionsZanzanaClient{}
 	r := NewZanzanaPermissionResolver(client, &usertest.FakeUserService{}, nil, false)
 	usr := &identity.StaticRequester{
 		Type:    claims.TypeUser,
@@ -763,7 +765,7 @@ func TestResolveCurrentUserPermissions_PassesTeamsAsContextualGroups(t *testing.
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			cap := &snapshotZanzanaClient{}
+			cap := &userPermissionsZanzanaClient{}
 			r := NewZanzanaPermissionResolver(cap, &usertest.FakeUserService{}, nil, tc.useExternalGroups)
 
 			_, err := r.ResolveCurrentUserPermissions(context.Background(), newReq([]string{"stored-team"}, []string{"team_a", "everyone"}), false)
@@ -1037,6 +1039,36 @@ func TestSearchUsersPermissions_KeepsDatasourceSubresourcesSeparate(t *testing.T
 			perms, err := r.SearchUsersPermissions(context.Background(), usr, 1, ac.SearchOptions{UserID: 1, Action: action})
 			require.NoError(t, err)
 			require.Equal(t, []ac.Permission{{Action: action, Scope: "datasources:uid:" + uid}}, perms[1])
+		})
+	}
+}
+
+type userPermissionsZanzanaClient struct {
+	capturingZanzanaClient
+	response claims.GetUserPermissionsResponse
+	err      error
+	info     claims.AuthInfo
+}
+
+func (c *userPermissionsZanzanaClient) GetUserPermissions(_ context.Context, info claims.AuthInfo, _ claims.GetUserPermissionsRequest) (claims.GetUserPermissionsResponse, error) {
+	c.info = info
+	return c.response, c.err
+}
+func (*userPermissionsZanzanaClient) InvalidateUserPermissions(context.Context, claims.AuthInfo, claims.GetUserPermissionsRequest) error {
+	return nil
+}
+
+func TestResolveCurrentUserPermissionsDoesNotFallbackToList(t *testing.T) {
+	for _, code := range []codes.Code{codes.Unimplemented, codes.Unavailable, codes.PermissionDenied, codes.Canceled, codes.DeadlineExceeded} {
+		t.Run(code.String(), func(t *testing.T) {
+			client := &userPermissionsZanzanaClient{err: status.Error(code, "user permissions error")}
+			client.listResp = &authzv1.ListResponse{}
+			resolver := NewZanzanaPermissionResolver(client, nil, nil, false)
+			requester := &identity.StaticRequester{Type: claims.TypeUser, UserUID: "alice", OrgID: 1}
+			result, err := resolver.ResolveCurrentUserPermissions(t.Context(), requester, false)
+			require.Equal(t, code, status.Code(err))
+			require.Nil(t, result)
+			require.Empty(t, client.listCalls, "current-user enumeration must never retry through List")
 		})
 	}
 }

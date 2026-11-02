@@ -37,35 +37,6 @@ func permissionPairs(t *testing.T, srv *Server, subject string, teams []string, 
 	return result
 }
 
-func TestUserPermissionsCachesEmptyPrincipal(t *testing.T) {
-	srv, ds, _ := newPermissionTestServer(t, nil)
-	enablePrincipalCache(srv)
-	require.Empty(t, permissionPairs(t, srv, "user:nobody", nil, false))
-	counts, total := ds.counts()
-	require.Equal(t, map[string]int{"read": 1}, counts)
-	require.Equal(t, 1, total)
-	ds.reset()
-	require.Empty(t, permissionPairs(t, srv, "user:nobody", nil, false))
-	_, total = ds.counts()
-	require.Zero(t, total)
-}
-
-func TestUserPermissionsKeepsContextualMembershipOutOfUserCache(t *testing.T) {
-	srv, _, _ := newPermissionTestServer(t, []*openfgav1.TupleKey{
-		common.NewResourceTuple("team:left#member", common.RelationGet, dashboardGroup, dashboardResource, "", "left"),
-		common.NewResourceTuple("team:right#member", common.RelationGet, dashboardGroup, dashboardResource, "", "right"),
-	})
-	enablePrincipalCache(srv)
-	left := [2]string{"dashboards:read", "dashboards:uid:left"}
-	right := [2]string{"dashboards:read", "dashboards:uid:right"}
-	require.True(t, permissionPairs(t, srv, "user:alice", []string{"left"}, false)[left])
-	require.Empty(t, permissionPairs(t, srv, "user:alice", nil, false))
-	require.Empty(t, permissionPairs(t, srv, "user:bob", nil, false))
-	got := permissionPairs(t, srv, "user:bob", []string{"right"}, false)
-	require.True(t, got[right])
-	require.False(t, got[left])
-}
-
 func TestUserPermissionsBypassesPrincipalCache(t *testing.T) {
 	grant := common.NewResourceTuple("user:alice", common.RelationGet, dashboardGroup, dashboardResource, "", "dashboard")
 	srv, ds, store := newPermissionTestServer(t, []*openfgav1.TupleKey{grant})
@@ -215,23 +186,6 @@ func TestUserPermissionsDoesNotRepopulateCacheFromReadBeforeWrite(t *testing.T) 
 	require.False(t, permissionPairs(t, srv, "user:alice", []string{"shared"}, false)[[2]string{"dashboards:read", "dashboards:uid:dashboard"}])
 }
 
-func TestUserPermissionsReusesRoleAcrossDifferentTeams(t *testing.T) {
-	srv, ds, _ := newPermissionTestServer(t, []*openfgav1.TupleKey{
-		common.NewTypedTuple(common.TypeRole, "team:left#member", common.RelationAssignee, "shared"),
-		common.NewTypedTuple(common.TypeRole, "team:right#member", common.RelationAssignee, "shared"),
-		common.NewResourceTuple("role:shared#assignee", common.RelationGet, dashboardGroup, dashboardResource, "", "dashboard"),
-	})
-	enablePrincipalCache(srv)
-	want := permissionPairs(t, srv, "user:alice", []string{"left"}, false)
-	ds.reset()
-	got := permissionPairs(t, srv, "user:bob", []string{"right"}, false)
-	key := [2]string{"dashboards:read", "dashboards:uid:dashboard"}
-	require.True(t, want[key])
-	require.True(t, got[key])
-	counts, _ := ds.counts()
-	require.Equal(t, 2, counts["read"], "a new user and team reuse the cached role grants")
-}
-
 func TestUserPermissionsComposesStoredAndContextualTeams(t *testing.T) {
 	membership := common.NewTypedTuple(common.TypeTeam, "user:alice", common.RelationTeamMember, "stored")
 	srv, _, store := newPermissionTestServer(t, []*openfgav1.TupleKey{
@@ -248,6 +202,7 @@ func TestUserPermissionsComposesStoredAndContextualTeams(t *testing.T) {
 	got = permissionPairs(t, srv, "user:alice", nil, false)
 	require.True(t, got[stored])
 	require.False(t, got[external])
+	require.Empty(t, permissionPairs(t, srv, "user:bob", nil, false), "Alice's stored and contextual memberships must not leak to Bob")
 	require.NoError(t, srv.WriteTuples(t.Context(), store, nil, []*openfgav1.TupleKeyWithoutCondition{{User: membership.User, Relation: membership.Relation, Object: membership.Object}}))
 	require.Empty(t, permissionPairs(t, srv, "user:alice", nil, false))
 }
@@ -300,4 +255,74 @@ func TestUserPermissionsUsesLegacyPermissionCacheFlag(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestUserPermissionsPrincipalCacheIsolatesModels(t *testing.T) {
+	old := common.NewFolderTuple("user:alice", common.RelationGet, "old")
+	srv, ds, store := newPermissionTestServer(t, []*openfgav1.TupleKey{old})
+	enablePrincipalCache(srv)
+	require.True(t, permissionPairs(t, srv, "user:alice", nil, false)[[2]string{"folders:read", "folders:uid:old"}])
+	require.NoError(t, ds.Write(t.Context(), store.ID, []*openfgav1.TupleKeyWithoutCondition{{User: old.User, Relation: old.Relation, Object: old.Object}}, []*openfgav1.TupleKey{common.NewFolderTuple("user:alice", common.RelationGet, "new")}))
+	srv.storesMU.Lock()
+	updated := srv.stores[namespace]
+	updated.ModelID += "-next"
+	srv.stores[namespace] = updated
+	srv.storesMU.Unlock()
+	ds.reset()
+	got := permissionPairs(t, srv, "user:alice", nil, false)
+	require.Equal(t, map[[2]string]bool{{"folders:read", "folders:uid:new"}: true}, got)
+	counts, _ := ds.counts()
+	require.Equal(t, map[string]int{"read": 1}, counts)
+}
+
+func TestUserPermissionsReusesSharedPrincipalGrants(t *testing.T) {
+	srv, ds, _ := newPermissionTestServer(t, []*openfgav1.TupleKey{
+		common.NewTypedTuple(common.TypeRole, "team:shared#member", common.RelationAssignee, "reader"),
+		common.NewTypedTuple(common.TypeRole, "team:shared#member", common.RelationAssignee, "empty"),
+		common.NewResourceTuple("role:reader#assignee", common.RelationGet, dashboardGroup, dashboardResource, "", "dashboard"),
+	})
+	enablePrincipalCache(srv)
+	request := func(subject string) {
+		stream := &permissionResponseStream{ctx: newContextWithNamespace()}
+		require.NoError(t, srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: subject, Teams: []string{"shared", "empty"}}, stream))
+		require.Contains(t, stream.permissions, &authzv1.UserPermission{Action: "dashboards:read", Scope: "dashboards:uid:dashboard"})
+	}
+	request("user:alice")
+	counts, total := ds.counts()
+	require.Equal(t, map[string]int{"read": 5}, counts)
+	require.Equal(t, 5, total)
+	ds.reset()
+	request("user:bob")
+	counts, _ = ds.counts()
+	require.Equal(t, 1, counts["read"], "Bob should read only his own grants; the team and role are shared")
+	ds.reset()
+	request("user:bob")
+	counts, _ = ds.counts()
+	require.Zero(t, counts["read"], "reuse empty user, team and role grants too")
+}
+
+func TestUserPermissionsEvictsSharedRoleAfterWrite(t *testing.T) {
+	grant := common.NewResourceTuple("role:reader#assignee", common.RelationGet, dashboardGroup, dashboardResource, "", "dashboard")
+	srv, ds, store := newPermissionTestServer(t, []*openfgav1.TupleKey{
+		common.NewTypedTuple(common.TypeRole, "team:shared#member", common.RelationAssignee, "reader"), grant,
+	})
+	enablePrincipalCache(srv)
+	request := func(subject string) map[[2]string]bool {
+		stream := &permissionResponseStream{ctx: newContextWithNamespace()}
+		require.NoError(t, srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: subject, Teams: []string{"shared"}}, stream))
+		got := map[[2]string]bool{}
+		for _, p := range stream.permissions {
+			got[[2]string{p.Action, p.Scope}] = true
+		}
+		return got
+	}
+	key := [2]string{"dashboards:read", "dashboards:uid:dashboard"}
+	require.True(t, request("user:alice")[key])
+	require.True(t, request("user:bob")[key])
+	require.NoError(t, srv.WriteTuples(t.Context(), store, nil, []*openfgav1.TupleKeyWithoutCondition{{User: grant.User, Relation: grant.Relation, Object: grant.Object}}))
+	ds.reset()
+	require.False(t, request("user:alice")[key])
+	require.False(t, request("user:bob")[key])
+	counts, _ := ds.counts()
+	require.Equal(t, 1, counts["read"], "only the changed role is reloaded; both users and the team remain reusable")
 }

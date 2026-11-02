@@ -20,14 +20,14 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 )
 
-type snapshotServer struct {
+type userPermissionsServer struct {
 	authzv1.UnimplementedAuthzServiceServer
 	calls    int
 	requests []*authzv1.GetUserPermissionsRequest
 	fail     bool
 }
 
-func (s *snapshotServer) GetUserPermissions(req *authzv1.GetUserPermissionsRequest, stream authzv1.AuthzService_GetUserPermissionsServer) error {
+func (s *userPermissionsServer) GetUserPermissions(req *authzv1.GetUserPermissionsRequest, stream authzv1.AuthzService_GetUserPermissionsServer) error {
 	s.calls++
 	s.requests = append(s.requests, req)
 	scope := "dashboards:*"
@@ -42,41 +42,41 @@ func (s *snapshotServer) GetUserPermissions(req *authzv1.GetUserPermissionsReque
 	}
 	return stream.Send(&authzv1.GetUserPermissionsResponse{Permissions: []*authzv1.UserPermission{{Action: "folders:read", Scope: "folders:uid:one"}}})
 }
-func snapshotCaller(groups []string) *authn.AuthInfo {
+func userPermissionsCaller(groups []string) *authn.AuthInfo {
 	return authn.NewIDTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{Claims: jwt.Claims{Subject: "service"}, Rest: authn.AccessTokenClaims{Namespace: "default", DelegatedPermissions: []string{"authz.grafana.app/userpermissions:get"}}},
 		&authn.Claims[authn.IDTokenClaims]{Claims: jwt.Claims{Subject: "user:alice"}, Rest: authn.IDTokenClaims{Identifier: "alice", Type: types.TypeUser, Namespace: "default", Groups: groups}})
 }
-func TestUserPermissionsSnapshotUncachedAndComplete(t *testing.T) {
-	server := &snapshotServer{}
+func TestUserPermissionsUncachedAndComplete(t *testing.T) {
+	server := &userPermissionsServer{}
 	channel := &inprocgrpc.Channel{}
 	authzv1.RegisterAuthzServiceServer(channel, server)
 	client, err := New(channel, prometheus.NewRegistry())
 	require.NoError(t, err)
 	request := types.GetUserPermissionsRequest{Namespace: "default"}
-	first, err := client.GetUserPermissions(t.Context(), snapshotCaller([]string{"team-a"}), request)
+	first, err := client.GetUserPermissions(t.Context(), userPermissionsCaller([]string{"team-a"}), request)
 	require.NoError(t, err)
 	require.Len(t, first.Permissions, 2)
-	second, err := client.GetUserPermissions(t.Context(), snapshotCaller([]string{"team-a"}), request)
+	second, err := client.GetUserPermissions(t.Context(), userPermissionsCaller([]string{"team-a"}), request)
 	require.NoError(t, err)
 	require.Equal(t, 2, server.calls)
 	require.NotEqual(t, first, second, "an unchanged caller must still observe revoked grants")
 	require.Equal(t, []string{"team-a"}, server.requests[1].GetTeams())
-	require.NoError(t, client.InvalidateUserPermissions(context.Background(), snapshotCaller(nil), request))
+	require.NoError(t, client.InvalidateUserPermissions(context.Background(), userPermissionsCaller(nil), request))
 	server.fail = true
-	result, err := client.GetUserPermissions(t.Context(), snapshotCaller([]string{"team-b"}), request)
+	result, err := client.GetUserPermissions(t.Context(), userPermissionsCaller([]string{"team-b"}), request)
 	require.Equal(t, codes.Unavailable, status.Code(err))
 	require.Empty(t, result.Permissions, "a stream error must discard already received permissions")
 	require.Equal(t, []string{"team-b"}, server.requests[2].GetTeams())
 }
 
-type snapshotDeadlineServer struct {
+type userPermissionsDeadlineServer struct {
 	authzv1.UnimplementedAuthzServiceServer
 	stall       bool
 	firstSent   chan struct{}
 	finishAfter time.Duration
 }
 
-func (s *snapshotDeadlineServer) GetUserPermissions(_ *authzv1.GetUserPermissionsRequest, stream authzv1.AuthzService_GetUserPermissionsServer) error {
+func (s *userPermissionsDeadlineServer) GetUserPermissions(_ *authzv1.GetUserPermissionsRequest, stream authzv1.AuthzService_GetUserPermissionsServer) error {
 	if err := stream.Send(&authzv1.GetUserPermissionsResponse{Permissions: []*authzv1.UserPermission{{Action: "dashboards:read", Scope: "dashboards:*"}}}); err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func (s *snapshotDeadlineServer) GetUserPermissions(_ *authzv1.GetUserPermission
 	return nil
 }
 
-func newSnapshotDeadlineClient(t *testing.T, server *snapshotDeadlineServer, timeout time.Duration) *Client {
+func newUserPermissionsDeadlineClient(t *testing.T, server *userPermissionsDeadlineServer, timeout time.Duration) *Client {
 	t.Helper()
 	listener := bufconn.Listen(1 << 20)
 	grpcServer := grpc.NewServer()
@@ -109,7 +109,7 @@ func newSnapshotDeadlineClient(t *testing.T, server *snapshotDeadlineServer, tim
 		grpcServer.Stop()
 		_ = listener.Close()
 	})
-	connection, err := grpc.NewClient("passthrough:///snapshot", grpc.WithTransportCredentials(insecure.NewCredentials()),
+	connection, err := grpc.NewClient("passthrough:///user-permissions", grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) { return listener.DialContext(ctx) }))
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, connection.Close()) })
@@ -118,12 +118,12 @@ func newSnapshotDeadlineClient(t *testing.T, server *snapshotDeadlineServer, tim
 	return client
 }
 
-func TestUserPermissionsSnapshotDeadlineCoversStreamConsumption(t *testing.T) {
-	server := &snapshotDeadlineServer{stall: true, firstSent: make(chan struct{})}
-	client := newSnapshotDeadlineClient(t, server, 200*time.Millisecond)
-	result, err := client.GetUserPermissions(context.Background(), snapshotCaller(nil), types.GetUserPermissionsRequest{Namespace: "default"})
+func TestUserPermissionsDeadlineCoversStreamConsumption(t *testing.T) {
+	server := &userPermissionsDeadlineServer{stall: true, firstSent: make(chan struct{})}
+	client := newUserPermissionsDeadlineClient(t, server, 200*time.Millisecond)
+	result, err := client.GetUserPermissions(context.Background(), userPermissionsCaller(nil), types.GetUserPermissionsRequest{Namespace: "default"})
 	require.Equal(t, codes.DeadlineExceeded, status.Code(err))
-	require.Empty(t, result.Permissions, "deadline must discard the received partial snapshot")
+	require.Empty(t, result.Permissions, "deadline must discard the received partial response")
 	select {
 	case <-server.firstSent:
 	default:
@@ -131,12 +131,12 @@ func TestUserPermissionsSnapshotDeadlineCoversStreamConsumption(t *testing.T) {
 	}
 }
 
-func TestUserPermissionsSnapshotPreservesCallerDeadline(t *testing.T) {
-	server := &snapshotDeadlineServer{finishAfter: 200 * time.Millisecond}
-	client := newSnapshotDeadlineClient(t, server, 50*time.Millisecond)
+func TestUserPermissionsPreservesCallerDeadline(t *testing.T) {
+	server := &userPermissionsDeadlineServer{finishAfter: 200 * time.Millisecond}
+	client := newUserPermissionsDeadlineClient(t, server, 50*time.Millisecond)
 	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 	defer cancel()
-	result, err := client.GetUserPermissions(ctx, snapshotCaller(nil), types.GetUserPermissionsRequest{Namespace: "default"})
+	result, err := client.GetUserPermissions(ctx, userPermissionsCaller(nil), types.GetUserPermissionsRequest{Namespace: "default"})
 	require.NoError(t, err)
 	require.Len(t, result.Permissions, 1)
 }

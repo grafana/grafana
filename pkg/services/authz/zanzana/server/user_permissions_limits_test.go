@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -116,4 +118,64 @@ func TestUserPermissionsLimitsDistinctPrincipalsAcrossStages(t *testing.T) {
 			require.Zero(t, reads, "reject an oversized principal stage before issuing its reads")
 		})
 	}
+}
+
+type boundedPermissionStore struct {
+	storage.OpenFGADatastore
+	started           chan struct{}
+	release           chan struct{}
+	mu                sync.Mutex
+	active, maxActive int
+}
+
+func (s *boundedPermissionStore) Read(ctx context.Context, store string, filter storage.ReadFilter, options storage.ReadOptions) (storage.TupleIterator, error) {
+	if strings.HasPrefix(filter.User, common.TypeTeamPrefix) {
+		s.mu.Lock()
+		s.active++
+		s.maxActive = max(s.maxActive, s.active)
+		s.mu.Unlock()
+		defer func() { s.mu.Lock(); s.active--; s.mu.Unlock() }()
+		s.started <- struct{}{}
+		select {
+		case <-s.release:
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
+	return s.OpenFGADatastore.Read(ctx, store, filter, options)
+}
+
+func TestUserPermissionsBoundsParallelPrincipalReads(t *testing.T) {
+	srv, ds, _ := newPermissionTestServer(t, nil)
+	teams := make([]string, 20)
+	for i := range teams {
+		teams[i] = fmt.Sprintf("team-%d", i)
+	}
+	store := &boundedPermissionStore{OpenFGADatastore: ds, started: make(chan struct{}, len(teams)), release: make(chan struct{})}
+	srv.store = store
+	ctx, cancel := context.WithTimeout(newContextWithNamespace(), 5*time.Second)
+	finished := make(chan struct{})
+	result := make(chan error, 1)
+	go func() {
+		defer close(finished)
+		result <- srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice", Teams: teams}, &permissionResponseStream{ctx: ctx})
+	}()
+	t.Cleanup(func() { cancel(); <-finished })
+	for range permissionPrincipalConcurrency {
+		select {
+		case <-store.started:
+		case <-ctx.Done():
+			t.Fatal(ctx.Err())
+		}
+	}
+	select {
+	case <-store.started:
+		t.Fatal("more than eight principal reads started together")
+	case <-time.After(50 * time.Millisecond):
+	}
+	close(store.release)
+	require.NoError(t, <-result)
+	store.mu.Lock()
+	require.Equal(t, permissionPrincipalConcurrency, store.maxActive)
+	store.mu.Unlock()
 }

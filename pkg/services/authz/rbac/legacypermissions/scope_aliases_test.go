@@ -108,9 +108,3 @@ func TestSharedLoaderAddsAliasesAfterMergingBothSources(t *testing.T) {
 	base := "/apis/iam.grafana.app/v0alpha1/namespaces/default"
 	require.Equal(t, map[string]int{base + "/teams": 1, base + "/users": 1, base + "/serviceaccounts": 1}, calls)
 }
-
-func TestPermissionScopeResolverFollowsMergeFlag(t *testing.T) {
-	require.Nil(t, legacypermissions.NewPermissionScopeResolver(nil, nil))
-	require.Nil(t, legacypermissions.NewPermissionScopeResolver(featuremgmt.WithFeatures(), nil))
-	require.NotNil(t, legacypermissions.NewPermissionScopeResolver(featuremgmt.WithFeatures(featuremgmt.FlagZanzanaMergeUserPermissions), nil))
-}

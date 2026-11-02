@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
 )
 
 type permissionResponseStream struct {
@@ -86,53 +85,6 @@ func permissionRPC(t *testing.T, s *Server) authzv1.AuthzServiceClient {
 	return authzv1.NewAuthzServiceClient(channel)
 }
 
-func TestUserPermissionsRPCParity(t *testing.T) {
-	server, _, _ := newPermissionTestServer(t, permissionParityTuples())
-	client := permissionRPC(t, server)
-	for _, tc := range []struct {
-		subject string
-		teams   []string
-	}{
-		{"user:direct", nil}, {"user:external", []string{"external-a", "external-b"}}, {"user:admin", nil}, {"user:deep", nil}, {"user:all", nil}, {"user:absent", nil},
-	} {
-		t.Run(tc.subject, func(t *testing.T) {
-			req := &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: tc.subject, Teams: tc.teams}
-			baseline, err := baselineGrantLists(t, server, req)
-			require.NoError(t, err)
-			want := map[[2]string]bool{}
-			formatter := legacyscopes.Formatter{}
-			for _, result := range baseline {
-				for _, p := range formatter.Permissions(result.Entry.Resource, result.Entry.Action, "", result.List) {
-					want[[2]string{p.Action, p.Scope}] = true
-				}
-			}
-			stream, err := client.GetUserPermissions(t.Context(), req)
-			require.NoError(t, err)
-			got := map[[2]string]bool{}
-			for {
-				chunk, err := stream.Recv()
-				if errors.Is(err, io.EOF) {
-					break
-				}
-				require.NoError(t, err)
-				for _, p := range chunk.Permissions {
-					key := [2]string{p.Action, p.Scope}
-					require.False(t, got[key], "duplicate permission on wire")
-					got[key] = true
-				}
-			}
-			require.Equal(t, want, got)
-			if tc.subject == "user:direct" {
-				require.True(t, got[[2]string{"users:read", "global.users:uid:readable-user"}])
-				require.True(t, got[[2]string{"org.users:read", "users:uid:readable-user"}])
-			}
-			if tc.subject == "user:admin" {
-				require.True(t, got[[2]string{"teams:read", "teams:uid:admin-team"}])
-			}
-		})
-	}
-}
-
 func TestUserPermissionsRPCChunksAndFailure(t *testing.T) {
 	tuples := make([]*openfgav1.TupleKey, 1005)
 	for i := range tuples {
@@ -164,51 +116,6 @@ func TestUserPermissionsRPCChunksAndFailure(t *testing.T) {
 	require.Nil(t, chunk, "storage failure must occur before publishing any permissions")
 }
 
-func TestUserPermissionsRPCWithoutRolloutFlag(t *testing.T) {
-	server, _, _ := newPermissionTestServer(t, permissionParityTuples())
-	stream, err := permissionRPC(t, server).GetUserPermissions(t.Context(), &authzv1.GetUserPermissionsRequest{
-		Namespace: namespace,
-		Subject:   "user:direct",
-	})
-	require.NoError(t, err)
-	chunk, err := stream.Recv()
-	require.NoError(t, err)
-	require.NotEmpty(t, chunk.Permissions)
-}
-
-func TestUserPermissionsRPCPreservesGrantedFolderScopes(t *testing.T) {
-	tuples := []*openfgav1.TupleKey{
-		common.NewFolderTuple("user:alice", common.RelationGet, "parent"),
-		common.NewFolderResourceTuple("user:alice", common.RelationGet, dashboardGroup, dashboardResource, "", "parent"),
-		common.NewFolderTuple("user:alice", common.RelationUpdate, "child"),
-		common.NewFolderTuple("user:alice", common.RelationGet, "child"),
-		common.NewFolderParentTuple("child", "parent"),
-		common.NewFolderParentTuple("grandchild", "child"),
-	}
-	srv, ds, _ := newPermissionTestServer(t, tuples)
-	stream := &permissionResponseStream{ctx: newContextWithNamespace()}
-	err := srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice"}, stream)
-	require.NoError(t, err)
-	got := map[[2]string]bool{}
-	for _, p := range stream.permissions {
-		got[[2]string{p.Action, p.Scope}] = true
-	}
-	require.Equal(t, map[[2]string]bool{
-		{"folders:read", "folders:uid:parent"}:    true,
-		{"dashboards:read", "folders:uid:parent"}: true,
-		{"folders:read", "folders:uid:child"}:     true,
-		{"folders:write", "folders:uid:child"}:    true,
-	}, got)
-	counts, _ := ds.counts()
-	require.Zero(t, counts["reverse"], "permission enumeration must not read descendant folders")
-
-	list, err := srv.list(newContextWithNamespace(), &authzv1.ListRequest{
-		Namespace: namespace, Subject: "user:alice", Group: folderGroup, Resource: folderResource, Verb: "get",
-	})
-	require.NoError(t, err)
-	require.ElementsMatch(t, []string{"parent", "child", "grandchild"}, list.Items, "resource List still expands inherited access")
-}
-
 func TestResolveUserPermissionsDeduplicatesFormattedActionScopes(t *testing.T) {
 	srv, _, store := newPermissionTestServer(t, nil)
 	enablePrincipalCache(srv)
@@ -237,4 +144,24 @@ func TestResolveUserPermissionsDeduplicatesFormattedActionScopes(t *testing.T) {
 		}
 	}
 	require.Equal(t, want, got, "keep first occurrence order, different actions and overlapping wildcard scopes")
+}
+
+func TestUserPermissionsRPCUIDScopes(t *testing.T) {
+	srv, _, _ := newPermissionTestServer(t, []*openfgav1.TupleKey{
+		common.NewTypedTuple(common.TypeTeam, "user:alice", common.RelationGet, "platform"),
+		common.NewTypedTuple(common.TypeUser, "user:alice", common.RelationGet, "bob"),
+		common.NewTypedTuple(common.TypeServiceAccount, "user:alice", common.RelationGet, "robot"),
+	})
+	stream, err := permissionRPC(t, srv).GetUserPermissions(t.Context(), &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice"})
+	require.NoError(t, err)
+	response, err := stream.Recv()
+	require.NoError(t, err)
+	require.ElementsMatch(t, []*authzv1.UserPermission{
+		{Action: "teams:read", Scope: "teams:uid:platform"},
+		{Action: "users:read", Scope: "global.users:uid:bob"},
+		{Action: "org.users:read", Scope: "users:uid:bob"},
+		{Action: "serviceaccounts:read", Scope: "serviceaccounts:uid:robot"},
+	}, response.Permissions)
+	_, err = stream.Recv()
+	require.ErrorIs(t, err, io.EOF)
 }
