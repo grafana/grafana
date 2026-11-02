@@ -5,7 +5,7 @@ import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../constants';
 import { type QueryEditorUIState } from '../QueryEditorContext';
-import { makeStackedMode, renderWithQueryEditorProvider } from '../testUtils';
+import { makeStackedMode, mockQueryOptionsState, renderWithQueryEditorProvider } from '../testUtils';
 import { type Transformation } from '../types';
 
 import { StackedEditorRenderer } from './StackedEditorRenderer';
@@ -132,6 +132,19 @@ describe('StackedEditorRenderer', () => {
     expect(headingIds).toHaveLength(3);
     expect(new Set(headingIds).size).toBe(headingIds.length);
     expect(headingIds.every((id) => id && id.length > 0)).toBe(true);
+  });
+
+  it('shows the query options sidebar over the stack when query options are open', () => {
+    renderStackedEditor({ queryOptions: { ...mockQueryOptionsState, isQueryOptionsOpen: true } });
+
+    expect(screen.getByLabelText('Max data points')).toBeInTheDocument();
+    expect(screen.getByLabelText('Relative time')).toBeInTheDocument();
+  });
+
+  it('hides the query options sidebar when query options are closed', () => {
+    renderStackedEditor();
+
+    expect(screen.queryByLabelText('Max data points')).not.toBeInTheDocument();
   });
 
   it('clicking the exit button exits stacked mode', async () => {

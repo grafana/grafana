@@ -50,8 +50,13 @@ describe('QueryEditorContent', () => {
 
     expect(screen.getByTestId('stacked-editor-renderer')).toBeInTheDocument();
     expect(screen.queryByTestId('query-editor-body')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('query-editor-footer')).not.toBeInTheDocument();
     expect(screen.queryByTestId('queries-empty-state')).not.toBeInTheDocument();
+  });
+
+  it('shows the query options footer below the stacked editor', () => {
+    renderContent({ stackedMode: makeStackedMode({ enabled: true }) });
+
+    expect(screen.getByTestId('query-editor-footer')).toBeInTheDocument();
   });
 
   it.each([
@@ -108,6 +113,7 @@ describe('QueryEditorContent', () => {
 
       expect(screen.getByTestId('queries-empty-state')).toBeInTheDocument();
       expect(screen.queryByTestId('stacked-editor-renderer')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('query-editor-footer')).not.toBeInTheDocument();
     });
 
     it('keeps the transformation card editor when only transformations remain', () => {

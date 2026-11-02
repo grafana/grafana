@@ -45,13 +45,17 @@ export function QueryEditorContent() {
     <div className={styles.container}>
       {isQueriesEmptyState ? (
         <QueriesEmptyState />
-      ) : shouldShowStackedEditor ? (
-        <StackedEditorRenderer />
       ) : (
         <>
-          {shouldShowHeader && <ContentHeaderSceneWrapper />}
-          {shouldShowDatasourceHelp && <DatasourceHelpPanel />}
-          <QueryEditorBody />
+          {shouldShowStackedEditor ? (
+            <StackedEditorRenderer />
+          ) : (
+            <>
+              {shouldShowHeader && <ContentHeaderSceneWrapper />}
+              {shouldShowDatasourceHelp && <DatasourceHelpPanel />}
+              <QueryEditorBody />
+            </>
+          )}
           {shouldShowFooter && <QueryEditorFooter />}
         </>
       )}
