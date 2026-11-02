@@ -28,6 +28,7 @@ import {
   validateFieldConfig,
 } from './fieldOverrides';
 import { getFieldDisplayName } from './fieldState';
+import { booleanOverrideProcessor, numberOverrideProcessor } from './overrides/processors';
 
 const property1: FieldConfigPropertyItem = {
   id: 'custom.property1', // Match field properties
@@ -73,8 +74,30 @@ const shouldApplyFalse: FieldConfigPropertyItem = {
   name: 'Should Apply False',
 };
 
+const customNumber: FieldConfigPropertyItem = {
+  id: 'custom.number',
+  path: 'number',
+  isCustom: true,
+  process: numberOverrideProcessor,
+  shouldApply: () => true,
+  override: jest.fn(),
+  editor: jest.fn(),
+  name: 'Custom Number',
+};
+
+const customBoolean: FieldConfigPropertyItem = {
+  id: 'custom.boolean',
+  path: 'boolean',
+  isCustom: true,
+  process: booleanOverrideProcessor,
+  shouldApply: () => true,
+  override: jest.fn(),
+  editor: jest.fn(),
+  name: 'Custom Boolean',
+};
+
 export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => {
-  return [property1, property2, property3, shouldApplyFalse, ...mockStandardProperties()];
+  return [property1, property2, property3, shouldApplyFalse, customNumber, customBoolean, ...mockStandardProperties()];
 });
 
 locationUtil.initialize({
@@ -567,6 +590,422 @@ describe('applyFieldOverrides', () => {
         { value: 80, color: 'red' },
         { value: 90, color: 'blue' },
       ],
+    });
+  });
+
+  describe('varMappings', () => {
+    // A clean numeric field with no pre-set min/max/decimals/custom (unlike f0.fields[1] above,
+    // which the outer describe block hardcodes for other tests), so setFieldConfigDefaults'
+    // `currentConfig == null` gate always lets defaults (and their varMappings) run.
+    const numField = toDataFrame([{ value: 10 }, { value: 20 }]);
+
+    function makeReplaceVariables(variables: Record<string, unknown>): InterpolateFunction {
+      // Mimics the function-format calling convention shared by sceneGraph.interpolate and
+      // templateSrv.replace: the custom format function receives the raw variable value, which
+      // is an array for multi-value variables. Unknown variables are left as-is.
+      return (value, _scopedVars, format) => {
+        return value.replace(/\$(\w+)/g, (match: string, name: string) => {
+          if (!(name in variables)) {
+            return match;
+          }
+          if (typeof format === 'function') {
+            return format(variables[name]);
+          }
+          return String(variables[name]);
+        });
+      };
+    }
+
+    it('resolves defaults.varMappings into min/max/decimals, falling back to the stored value on failure', () => {
+      const replaceVariables = makeReplaceVariables({ minVar: '5', maxVar: ['1', '2'] });
+
+      const data = applyFieldOverrides({
+        data: [numField],
+        fieldConfig: {
+          defaults: {
+            min: 0,
+            max: 100,
+            decimals: 3,
+            varMappings: { min: '$minVar', max: '$maxVar', decimals: '$missing' },
+          },
+          overrides: [],
+        },
+        replaceVariables,
+        theme: createTheme(),
+        fieldConfigRegistry: customFieldRegistry,
+      })[0];
+
+      const config = data.fields[0].config;
+      expect(config.min).toEqual(5); // resolved from $minVar
+      expect(config.max).toEqual(100); // $maxVar has 2 values selected -> fallback to stored value
+      expect(config.decimals).toEqual(3); // $missing is an unknown variable -> fallback to stored value
+      // Resolved field configs never carry varMappings
+      expect(config.varMappings).toBeUndefined();
+    });
+
+    it('accepts a field config without defaults', () => {
+      const fieldConfig = { overrides: [] } as unknown as FieldConfigSource;
+
+      expect(() =>
+        applyFieldOverrides({
+          data: [numField],
+          fieldConfig,
+          replaceVariables: (value) => value,
+          theme: createTheme(),
+        })
+      ).not.toThrow();
+    });
+
+    it('resolves a varMappings.<id> synthetic override entry independently of unrelated properties in the same rule', () => {
+      const replaceVariables = makeReplaceVariables({ warnMin: '7' });
+
+      const data = applyFieldOverrides({
+        data: [numField],
+        fieldConfig: {
+          defaults: { min: 0, max: 50 },
+          overrides: [
+            {
+              matcher: { id: FieldMatcherID.numeric },
+              properties: [
+                { id: 'min', value: 20 }, // fallback value, stays in sync with the mapping's own id
+                { id: 'varMappings.min', value: '$warnMin' },
+                { id: 'max', value: 80 }, // unrelated property in the same rule, untouched by varMappings
+              ],
+            },
+          ],
+        },
+        replaceVariables,
+        theme: createTheme(),
+        fieldConfigRegistry: customFieldRegistry,
+      })[0];
+
+      const config = data.fields[0].config;
+      expect(config.min).toEqual(7); // resolved from $warnMin
+      expect(config.max).toEqual(80); // unaffected by the varMappings.min entry
+      expect(config.varMappings).toBeUndefined();
+    });
+
+    it('uses a plain override value over an expression from the defaults', () => {
+      const data = applyFieldOverrides({
+        data: [numField],
+        fieldConfig: {
+          defaults: { min: 0, max: 100, varMappings: { min: '$t', max: '$t' } },
+          overrides: [
+            {
+              matcher: { id: FieldMatcherID.numeric },
+              properties: [{ id: 'min', value: 5 }],
+            },
+          ],
+        },
+        replaceVariables: makeReplaceVariables({ t: '99' }),
+        theme: createTheme(),
+        fieldConfigRegistry: customFieldRegistry,
+      })[0];
+
+      const config = data.fields[0].config;
+      expect(config.min).toEqual(5);
+      expect(config.max).toEqual(99);
+    });
+
+    it('applies an override expression only to the property set in the same rule', () => {
+      const replaceVariables = makeReplaceVariables({ rMin: '2', rMax: '3' });
+
+      const data = applyFieldOverrides({
+        data: [numField],
+        fieldConfig: {
+          defaults: { min: 10, max: 40 },
+          overrides: [
+            {
+              matcher: { id: FieldMatcherID.numeric },
+              properties: [{ id: 'varMappings.min', value: '$rMin' }],
+            },
+            {
+              matcher: { id: FieldMatcherID.numeric },
+              properties: [
+                { id: 'min', value: 20 },
+                { id: 'max', value: 30 },
+                { id: 'varMappings.max', value: '$rMax' },
+              ],
+            },
+          ],
+        },
+        replaceVariables,
+        theme: createTheme(),
+        fieldConfigRegistry: customFieldRegistry,
+      })[0];
+
+      const config = data.fields[0].config;
+      expect(config.min).toEqual(20);
+      expect(config.max).toEqual(3);
+    });
+
+    it('keeps an override expression to the fields its rule matches, leaving the defaults as they were', () => {
+      const varMappings = { min: '$d' };
+      const data = applyFieldOverrides({
+        data: [toDataFrame([{ a: 1, b: 2 }])],
+        fieldConfig: {
+          defaults: { min: 0, varMappings },
+          overrides: [
+            {
+              matcher: { id: FieldMatcherID.byName, options: 'a' },
+              properties: [
+                { id: 'min', value: 5 },
+                { id: 'varMappings.min', value: '$o' },
+              ],
+            },
+          ],
+        },
+        replaceVariables: makeReplaceVariables({ d: '1', o: '2' }),
+        theme: createTheme(),
+        fieldConfigRegistry: customFieldRegistry,
+      })[0];
+
+      expect(data.fields.map((field) => field.config.min)).toEqual([2, 1]);
+      expect(varMappings).toEqual({ min: '$d' });
+    });
+
+    it('falls back for a number outside the property settings range, and floors integer settings', () => {
+      const ranged: FieldConfigPropertyItem = { ...customNumber, settings: { min: 0, max: 10, integer: true } };
+      const resolve = (value: string) =>
+        applyFieldOverrides({
+          data: [numField],
+          fieldConfig: {
+            defaults: { custom: { number: 1 }, varMappings: { 'custom.number': '$v' } },
+            overrides: [],
+          },
+          replaceVariables: makeReplaceVariables({ v: value }),
+          theme: createTheme(),
+          fieldConfigRegistry: new Registry<FieldConfigPropertyItem>(() => [ranged]),
+        })[0].fields[0].config.custom.number;
+
+      expect(resolve('50')).toEqual(1);
+      expect(resolve('-1')).toEqual(1);
+      expect(resolve('7.8')).toEqual(7);
+    });
+
+    it('resolves varMappings for custom numeric properties only', () => {
+      const replaceVariables = makeReplaceVariables({ v: '9' });
+
+      const data = applyFieldOverrides({
+        data: [numField],
+        fieldConfig: {
+          defaults: {
+            custom: { number: 1, boolean: false },
+            varMappings: { 'custom.number': '$v', 'custom.boolean': '$v' },
+          },
+          overrides: [],
+        },
+        replaceVariables,
+        theme: createTheme(),
+        fieldConfigRegistry: customFieldRegistry,
+      })[0];
+
+      const custom = data.fields[0].config.custom;
+      expect(custom.number).toEqual(9);
+      expect(custom.boolean).toEqual(false);
+    });
+
+    describe('unit', () => {
+      function applyUnit(fieldConfig: FieldConfigSource, variables: Record<string, unknown>) {
+        return applyFieldOverrides({
+          data: [numField],
+          fieldConfig,
+          replaceVariables: makeReplaceVariables(variables),
+          theme: createTheme(),
+          fieldConfigRegistry: customFieldRegistry,
+        })[0].fields[0].config;
+      }
+
+      it('resolves defaults.varMappings.unit to the variable value', () => {
+        const config = applyUnit(
+          { defaults: { unit: 'none', varMappings: { unit: '$u' } }, overrides: [] },
+          { u: 'bytes' }
+        );
+
+        expect(config.unit).toBe('bytes');
+        expect(config.varMappings).toBeUndefined();
+      });
+
+      it('falls back to the stored unit when the expression does not resolve', () => {
+        const fieldConfig = { defaults: { unit: 'percent', varMappings: { unit: '$u' } }, overrides: [] };
+
+        expect(applyUnit(fieldConfig, {}).unit).toBe('percent');
+        expect(applyUnit(fieldConfig, { u: ['bytes', 'short'] }).unit).toBe('percent');
+        expect(applyUnit(fieldConfig, { u: '' }).unit).toBe('percent');
+      });
+
+      it('resolves an override rule expression next to its unit', () => {
+        const config = applyUnit(
+          {
+            defaults: { unit: 'none' },
+            overrides: [
+              {
+                matcher: { id: FieldMatcherID.byName, options: 'value' },
+                properties: [
+                  { id: 'unit', value: 'short' },
+                  { id: 'varMappings.unit', value: '$u' },
+                ],
+              },
+            ],
+          },
+          { u: 'bytes' }
+        );
+
+        expect(config.unit).toBe('bytes');
+      });
+
+      it('uses a plain override unit over a defaults expression', () => {
+        const config = applyUnit(
+          {
+            defaults: { unit: 'none', varMappings: { unit: '$u' } },
+            overrides: [
+              {
+                matcher: { id: FieldMatcherID.byName, options: 'value' },
+                properties: [{ id: 'unit', value: 'short' }],
+              },
+            ],
+          },
+          { u: 'bytes' }
+        );
+
+        expect(config.unit).toBe('short');
+      });
+    });
+
+    describe('thresholds', () => {
+      const steps = [
+        { value: -Infinity, color: 'green' },
+        { value: 50, color: 'orange' },
+        { value: 80, color: 'red' },
+      ];
+
+      function applyThresholds(fieldConfig: FieldConfigSource, variables: Record<string, unknown>) {
+        return applyFieldOverrides({
+          data: [numField],
+          fieldConfig,
+          replaceVariables: makeReplaceVariables(variables),
+          theme: createTheme(),
+          fieldConfigRegistry: customFieldRegistry,
+        })[0].fields[0].config;
+      }
+
+      it('resolves mapped steps from defaults, re-sorts them and keeps the base step first', () => {
+        const config = applyThresholds(
+          {
+            defaults: {
+              thresholds: { mode: ThresholdsMode.Absolute, steps },
+              varMappings: { 'thresholds.steps.0': '$low', 'thresholds.steps.1': '$high' },
+            },
+            overrides: [],
+          },
+          { low: '5', high: '95' }
+        );
+
+        expect(config.thresholds).toEqual({
+          mode: ThresholdsMode.Absolute,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 80, color: 'red' },
+            { value: 95, color: 'orange' },
+          ],
+        });
+        expect(config.varMappings).toBeUndefined();
+      });
+
+      it('falls back to the stored value when a mapping does not resolve', () => {
+        const config = applyThresholds(
+          {
+            defaults: {
+              thresholds: { mode: ThresholdsMode.Absolute, steps },
+              varMappings: { 'thresholds.steps.1': '$multi', 'thresholds.steps.2': '$missing' },
+            },
+            overrides: [],
+          },
+          { multi: ['1', '2'] }
+        );
+
+        expect(config.thresholds?.steps).toEqual(steps);
+      });
+
+      it('prefers a mapping over valueExpr, even when the mapping does not resolve', () => {
+        const config = applyThresholds(
+          {
+            defaults: {
+              thresholds: {
+                mode: ThresholdsMode.Absolute,
+                steps: [
+                  { value: -Infinity, color: 'green' },
+                  { value: 50, valueExpr: '$fromExpr', color: 'orange' },
+                  { value: 80, valueExpr: '$fromExpr', color: 'red' },
+                ],
+              },
+              varMappings: { 'thresholds.steps.1': '$fromMapping', 'thresholds.steps.2': '$missing' },
+            },
+            overrides: [],
+          },
+          { fromExpr: '10', fromMapping: '90' }
+        );
+
+        expect(config.thresholds?.steps).toEqual([
+          { value: -Infinity, color: 'green' },
+          { value: 80, color: 'red' },
+          { value: 90, color: 'orange' },
+        ]);
+      });
+
+      it("uses an override rule's own step mappings for its thresholds, not the defaults mappings", () => {
+        const config = applyThresholds(
+          {
+            defaults: {
+              thresholds: { mode: ThresholdsMode.Absolute, steps },
+              varMappings: { 'thresholds.steps.1': '$fromDefaults' },
+            },
+            overrides: [
+              {
+                matcher: { id: FieldMatcherID.byName, options: 'value' },
+                properties: [
+                  {
+                    id: 'thresholds',
+                    value: {
+                      mode: ThresholdsMode.Absolute,
+                      steps: [
+                        { value: -Infinity, color: 'blue' },
+                        { value: 10, color: 'purple' },
+                        { value: 20, color: 'yellow' },
+                      ],
+                    },
+                  },
+                  { id: 'varMappings.thresholds.steps.2', value: '$fromOverride' },
+                ],
+              },
+            ],
+          },
+          { fromDefaults: '99', fromOverride: '5' }
+        );
+
+        expect(config.thresholds?.steps).toEqual([
+          { value: -Infinity, color: 'blue' },
+          { value: 5, color: 'yellow' },
+          { value: 10, color: 'purple' },
+        ]);
+      });
+
+      it('ignores override step mappings in a rule that does not set thresholds', () => {
+        const config = applyThresholds(
+          {
+            defaults: { thresholds: { mode: ThresholdsMode.Absolute, steps } },
+            overrides: [
+              {
+                matcher: { id: FieldMatcherID.byName, options: 'value' },
+                properties: [{ id: 'varMappings.thresholds.steps.1', value: '$v' }],
+              },
+            ],
+          },
+          { v: '99' }
+        );
+
+        expect(config.thresholds?.steps).toEqual(steps);
+      });
     });
   });
 

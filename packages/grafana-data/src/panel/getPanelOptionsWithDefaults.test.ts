@@ -339,6 +339,118 @@ describe('getPanelOptionsWithDefaults', () => {
       expect(result.fieldConfig.overrides[0].properties.length).toBe(0);
     });
   });
+
+  describe('varMappings', () => {
+    it('prunes defaults.varMappings keys whose property is no longer registered, like override entries', () => {
+      const result = runScenario({
+        defaults: {
+          unit: 'bytes',
+          varMappings: {
+            unit: '$myVar',
+            'custom.customProp': '$c',
+            'thresholds.steps.1': '$t',
+            'custom.fillOpacity': '$other',
+          },
+        },
+      });
+
+      expect(result.fieldConfig.defaults.varMappings).toEqual({
+        unit: '$myVar',
+        'custom.customProp': '$c',
+        'thresholds.steps.1': '$t',
+      });
+    });
+
+    it('drops defaults.varMappings when none of its keys are registered', () => {
+      const result = runScenario({ defaults: { varMappings: { doesNotExist: '$other' } } });
+
+      expect(result.fieldConfig.defaults).not.toHaveProperty('varMappings');
+    });
+
+    it('keeps a varMappings.<id> override entry when the wrapped property id is registered', () => {
+      // varMappings.custom.customProp is never itself a registered id - filterFieldConfigOverrides
+      // must unwrap the 'varMappings.' prefix and check the wrapped id (custom.customProp,
+      // registered by runScenario's default plugin) instead of dropping it as unknown.
+      const result = runScenario({
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [
+              { id: 'custom.customProp', value: 30 },
+              { id: 'varMappings.custom.customProp', value: '$expr' },
+            ],
+          },
+        ],
+      });
+
+      expect(result.fieldConfig.overrides[0].properties).toEqual([
+        { id: 'custom.customProp', value: 30 },
+        { id: 'varMappings.custom.customProp', value: '$expr' },
+      ]);
+    });
+
+    it('keeps a varMappings.thresholds.steps.<i> override entry when thresholds is registered', () => {
+      const thresholds = {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 80, color: 'red' },
+        ],
+      };
+      const result = runScenario({
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [
+              { id: 'thresholds', value: thresholds },
+              { id: 'varMappings.thresholds.steps.1', value: '$expr' },
+            ],
+          },
+        ],
+      });
+
+      expect(result.fieldConfig.overrides[0].properties).toEqual([
+        { id: 'thresholds', value: thresholds },
+        { id: 'varMappings.thresholds.steps.1', value: '$expr' },
+      ]);
+    });
+
+    it('keeps a varMappings.unit override entry next to its unit', () => {
+      const result = runScenario({
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [
+              { id: 'unit', value: 'bytes' },
+              { id: 'varMappings.unit', value: '$unit' },
+            ],
+          },
+        ],
+      });
+
+      expect(result.fieldConfig.overrides[0].properties).toEqual([
+        { id: 'unit', value: 'bytes' },
+        { id: 'varMappings.unit', value: '$unit' },
+      ]);
+    });
+
+    it('drops a varMappings.<id> override entry when the wrapped property id no longer exists in the registry', () => {
+      const result = runScenario({
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [{ id: 'varMappings.custom.doesNotExist', value: '$expr' }],
+          },
+        ],
+      });
+
+      expect(result.fieldConfig.overrides[0].properties).toEqual([]);
+    });
+  });
 });
 
 describe('restoreCustomOverrideRules', () => {
