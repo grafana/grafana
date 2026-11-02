@@ -3,7 +3,6 @@ import { t } from '@grafana/i18n';
 import { handleError } from 'app/api/utils';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
 
 interface SearchStarredArgs {
@@ -66,6 +65,9 @@ export const collectionsAPIv1alpha1 = generatedAPI
             folder: new Set(folders),
           };
           try {
+            // Lazy-imported to avoid a circular dependency: the searcher's unified implementation imports this
+            // module for `listStars`.
+            const { getGrafanaSearcher } = await import('app/features/search/service/searcher');
             const response = await getGrafanaSearcher().search({
               name: uids,
               kind: folders.length ? ['dashboard', 'folder'] : ['dashboard'],
