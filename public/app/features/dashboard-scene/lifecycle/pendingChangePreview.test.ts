@@ -158,6 +158,23 @@ describe('a new dashboard proposed as pending changes', () => {
     expect(getPendingChangePreview('page', 'new-dash')).toBeUndefined();
   });
 
+  it('finishes only the draft saved by the embedded view when the page previews another chat', async () => {
+    const page = proposal();
+    registerLoaders(async () => page);
+    await loadPendingChangePreview('page', 'new-dash', 'chat-page');
+    const embedded = proposal();
+    registerLoaders(async () => embedded);
+    await loadPendingChangePreview('embedded', 'new-dash', 'chat-embedded');
+
+    await finishSavingNewDashboard('new-dash', 'embedded');
+
+    expect(embedded.discard).toHaveBeenCalledTimes(1);
+    expect(page.discard).not.toHaveBeenCalled();
+    expect(getPendingChangePreview('page', 'new-dash')?.id).toBe('chat-page');
+    expect(getPendingChangePreview('embedded', 'new-dash')).toBeUndefined();
+    clearPendingChangePreview('new-dash', 'chat-page');
+  });
+
   it('leaves the page URL without its preview', () => {
     expect(withoutPendingChangesPreview('?pendingChanges=chat-1&orgId=1')).toBe('?orgId=1');
     expect(withoutPendingChangesPreview('?pendingChanges=chat-1&pendingChangesView=original')).toBe('');

@@ -66,6 +66,9 @@ const UNHIGHLIGHTED_KEY = 'grafana.dashboard.pendingChanges.unhighlighted';
 /** Where a dashboard is shown: the dashboard page, or the embedded dashboard view. */
 export type PendingChangesView = 'page' | 'embedded';
 
+/** A lifecycle action completed by the requester in this dashboard view. */
+export type DashboardLifecycleAction = 'saved' | 'applied' | 'discarded';
+
 export interface PendingChangePreview {
   id: string;
   pending: DashboardPendingChanges;
@@ -278,8 +281,8 @@ export function withoutPendingChangesPreview(search: string): string {
  * dashboard now, so the plugin discards it. A failed discard is harmless, since pending changes
  * to version 0 no longer apply once the dashboard exists.
  */
-export async function finishSavingNewDashboard(uid: string): Promise<void> {
-  const preview = getPendingChangePreview('page', uid) ?? getPendingChangePreview('embedded', uid);
+export async function finishSavingNewDashboard(uid: string, view: PendingChangesView = 'page'): Promise<void> {
+  const preview = getPendingChangePreview(view, uid);
   if (!preview) {
     return;
   }

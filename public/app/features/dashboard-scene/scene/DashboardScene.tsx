@@ -1191,7 +1191,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       shareView: null,
     });
 
-    locationService.replace(locationUtil.stripBaseFromUrl(url));
+    if (!this.state.meta.isEmbedded) {
+      locationService.replace(locationUtil.stripBaseFromUrl(url));
+    }
 
     if (restoreInitialState) {
       // Restore initial state and disable editing
@@ -1354,12 +1356,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     saveDashboardTemplate,
     saveAsDashboardTemplate,
     onSaveSuccess,
+    onDismiss,
     recoverToNewBranch,
   }: {
     saveAsCopy?: boolean;
     saveDashboardTemplate?: boolean;
     saveAsDashboardTemplate?: boolean;
     onSaveSuccess?: () => void;
+    onDismiss?: () => void;
     recoverToNewBranch?: RecoverToNewBranch;
     showDiff?: boolean;
   }) {
@@ -1390,6 +1394,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           saveAsDashboardTemplate,
           saveDashboardTemplate,
           onSaveSuccess,
+          onDismiss,
           recoverToNewBranch,
         },
         () => this.hasVariableErrors()

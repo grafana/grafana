@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { AppEvents, type GrafanaTheme2, locationUtil, urlUtil } from '@grafana/data';
+import { AppEvents, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
@@ -13,7 +13,6 @@ import {
   ConfirmModal,
   Icon,
   IconButton,
-  LinkButton,
   Stack,
   Text,
   TextLink,
@@ -31,9 +30,9 @@ import { getSavedDashboard, type SavedDashboard } from './lifecycleApi';
 import {
   clearPendingChangePreview,
   type DashboardPendingChanges,
+  type DashboardLifecycleAction,
   getPendingChangePreview,
   isHighlightingChanges,
-  PENDING_CHANGES_QUERY_PARAM,
   type PendingChangesView,
   previewedDashboardUid,
   proposesNewDashboard,
@@ -53,6 +52,8 @@ interface Props {
    * discarded. Defaults to the dashboard page.
    */
   reload?: () => Promise<void>;
+  onLifecycleChange?: (action: DashboardLifecycleAction) => void;
+  onDiscardDraft?: () => void;
 }
 
 /**
@@ -60,7 +61,13 @@ interface Props {
  * previewing them, with Compare, Apply, and Discard; while viewing the saved dashboard, with a
  * way back to the preview. Pending changes that propose a new dashboard are a draft, with Save.
  */
-export function DashboardLifecycleBanner({ dashboard, placement = 'page', reload }: Props) {
+export function DashboardLifecycleBanner({
+  dashboard,
+  placement = 'page',
+  reload,
+  onLifecycleChange,
+  onDiscardDraft,
+}: Props) {
   const visualRefresh = useFlagGrafanaVisualDesignRefresh();
   // With the visual refresh, a dashboard page is a card inset from the page edge; line up with it.
   const inset: BannerInset = placement === 'page' ? (visualRefresh ? 'card' : 'page') : 'embedded';
@@ -87,6 +94,8 @@ export function DashboardLifecycleBanner({ dashboard, placement = 'page', reload
         placement={placement}
         inset={inset}
         reload={load}
+        onLifecycleChange={onLifecycleChange}
+        onDiscardDraft={onDiscardDraft}
       />
     );
   }
@@ -103,6 +112,7 @@ export function DashboardLifecycleBanner({ dashboard, placement = 'page', reload
       placement={placement}
       inset={inset}
       reload={load}
+      onLifecycleChange={onLifecycleChange}
     />
   ) : (
     <PendingChangesHint uid={uid} id={preview.id} placement={placement} inset={inset} reload={load} />
@@ -121,13 +131,23 @@ interface PendingChangesProps {
   placement: PendingChangesView;
   inset: BannerInset;
   reload: () => Promise<void>;
+  onLifecycleChange?: Props['onLifecycleChange'];
 }
 
 /**
  * While the scene shows the requester's pending changes: what they are, and Apply or Discard. Once
  * the dashboard moved on since they were made, Rebase or Discard instead.
  */
-function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, reload }: PendingChangesProps) {
+function PendingChangesBanner({
+  dashboard,
+  uid,
+  id,
+  pending,
+  placement,
+  inset,
+  reload,
+  onLifecycleChange,
+}: PendingChangesProps) {
   const styles = useStyles2(getStyles, inset);
   const [saved, setSaved] = useState<SavedDashboard | null | undefined>(undefined);
   const [currentGeneration, setCurrentGeneration] = useState<number | undefined>(undefined);
@@ -171,6 +191,7 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
         return;
       }
       clearPendingChangePreview(uid, id);
+      onLifecycleChange?.('applied');
       appEvents.emit(AppEvents.alertSuccess, [
         t('dashboard-scene.lifecycle.applied', 'Applied your changes to {{title}}', { title }),
       ]);
@@ -180,7 +201,7 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
         t('dashboard-scene.lifecycle.apply-failed', "Couldn't apply the changes. Try again, or compare them first."),
       ]);
     }
-  }, [pending, uid, id, title, reload]);
+  }, [pending, uid, id, title, reload, onLifecycleChange]);
 
   const discard = (
     <Button variant="destructive" fill="outline" size="sm" onClick={() => setConfirm('discard')}>
@@ -334,7 +355,10 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
               pending,
               uid,
               id,
-              reload,
+              async () => {
+                onLifecycleChange?.('discarded');
+                await reload();
+              },
               t('dashboard-scene.lifecycle.discard-pending-failed', "Couldn't discard the changes. Try again.")
             );
           }}
@@ -346,19 +370,39 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
 
 interface NewDashboardProps extends PendingChangesProps {
   placement: PendingChangesView;
+  onDiscardDraft?: () => void;
 }
 
 /**
  * While the scene shows a new dashboard proposed as pending changes: Save, through the dashboard's
- * own save form, which creates it under the uid it was proposed for, or Discard. The embedded view
- * can't save, so it links to the dashboard page instead.
+ * own save form, which creates it under the uid it was proposed for, or Discard.
  */
-function NewDashboardBanner({ dashboard, uid, id, pending, placement, inset, reload }: NewDashboardProps) {
+function NewDashboardBanner({
+  dashboard,
+  uid,
+  id,
+  pending,
+  placement,
+  inset,
+  reload,
+  onLifecycleChange,
+  onDiscardDraft,
+}: NewDashboardProps) {
   const styles = useStyles2(getStyles, inset);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const save = () => {
     dashboard.onEnterEditMode();
-    dashboard.openSaveDrawer({});
+    dashboard.openSaveDrawer(
+      placement === 'embedded'
+        ? {
+            onSaveSuccess: () => {
+              dashboard.exitEditMode({ skipConfirm: true, restoreInitialState: false });
+              onLifecycleChange?.('saved');
+            },
+            onDismiss: () => dashboard.exitEditMode({ skipConfirm: true, restoreInitialState: true }),
+          }
+        : {}
+    );
   };
 
   return (
@@ -371,19 +415,9 @@ function NewDashboardBanner({ dashboard, uid, id, pending, placement, inset, rel
             <Button variant="destructive" fill="outline" size="sm" onClick={() => setConfirmDiscard(true)}>
               <Trans i18nKey="dashboard-scene.lifecycle.discard">Discard</Trans>
             </Button>
-            {placement === 'page' ? (
-              <Button variant="primary" size="sm" onClick={save}>
-                <Trans i18nKey="dashboard-scene.lifecycle.save">Save</Trans>
-              </Button>
-            ) : (
-              <LinkButton
-                variant="primary"
-                size="sm"
-                href={locationUtil.assureBaseUrl(urlUtil.renderUrl(`/d/${uid}`, { [PENDING_CHANGES_QUERY_PARAM]: id }))}
-              >
-                <Trans i18nKey="dashboard-scene.lifecycle.open-to-save">Open to save</Trans>
-              </LinkButton>
-            )}
+            <Button variant="primary" size="sm" onClick={save}>
+              <Trans i18nKey="dashboard-scene.lifecycle.save">Save</Trans>
+            </Button>
           </>
         }
       >
@@ -412,7 +446,16 @@ function NewDashboardBanner({ dashboard, uid, id, pending, placement, inset, rel
               uid,
               id,
               // Nothing is left to show on the page.
-              placement === 'page' ? async () => locationService.push('/dashboards') : reload,
+              async () => {
+                onLifecycleChange?.('discarded');
+                if (placement === 'page') {
+                  locationService.push('/dashboards');
+                } else if (onDiscardDraft) {
+                  onDiscardDraft();
+                } else {
+                  await reload();
+                }
+              },
               t('dashboard-scene.lifecycle.discard-draft-failed', "Couldn't discard the draft. Try again.")
             );
           }}

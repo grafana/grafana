@@ -2358,7 +2358,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
         expect(scene?.state.meta.canSave).toBe(true);
       });
 
-      // DashboardView embeds it view-only: its banner offers Open to save instead.
+      // The embedded canvas stays view-only; its save drawer owns a temporary edit session.
       it('opens view-only where it is embedded', async () => {
         const { manager } = await loadMissingDashboard(0, DashboardRoutes.Embedded);
 
