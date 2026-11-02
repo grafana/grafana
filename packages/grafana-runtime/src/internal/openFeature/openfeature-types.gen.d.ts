@@ -44,6 +44,7 @@ declare module "@openfeature/core" {
     | "dashboards.libraryPanelRepeatFromServerResolution"
     | "dashboards.publicDashboardBadgeFromApi"
     | "dashboards.libraryPanelHorizontalRepeatFullWidth"
+    | "dashboards.disableLiveSaveNotices"
     | "disableScriptedDashboards"
     | "dashboard.notebooks"
     | "grafana.dashboardComposer"
@@ -120,6 +121,7 @@ declare module "@openfeature/core" {
     | "alertingTriage"
     | "graphiteBackendMode"
     | "azureResourcePickerUpdates"
+    | "heatmapNegativeLogBuckets"
     | "pieChartGradientColorScheme"
     | "pluginInsights"
     | "panelTimeSettings"
@@ -128,6 +130,7 @@ declare module "@openfeature/core" {
     | "globalDashboardVariables"
     | "grafana.dashboardGlobalVariables"
     | "grafana.dashboardVariablesMigration"
+    | "grafana.dashboardPreferences"
     | "smoothingTransformation"
     | "queryWithAssistant"
     | "queryEditorNext"
@@ -173,7 +176,6 @@ declare module "@openfeature/core" {
     | "grafana.customizableMegaMenu"
     | "cujTracking"
     | "grafana.dashboardSettingsRedesign"
-    | "grafana.growthHomepage"
     | "grafana.onDemandDiagnostics"
     | "assistant.dashboardPlanning"
     | "assistant.dashboardPlanBuildingScreen"
@@ -200,7 +202,8 @@ declare module "@openfeature/core" {
     | "datasources.gatewayAuditPolicy"
     | "grafana.geomapProtomapsBasemap"
     | "reporting.removeLogoUrlField"
-    | "dashboards.disablePublicDashboards";
+    | "dashboards.disablePublicDashboards"
+    | "grafana.panelActionsPopover";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =
