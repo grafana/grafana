@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 )
@@ -102,7 +103,7 @@ func TestService_LegacyCheckComposites(t *testing.T) {
 			name: "any denies without a matching action",
 			expression: legacyAnyExpression(
 				legacyPermissionExpression("dashboards:read"),
-				legacyPermissionExpression("folders:read"),
+				legacyPermissionExpression("folders:write"),
 			),
 			permissions: []accesscontrol.Permission{
 				{
@@ -298,13 +299,12 @@ func TestService_LegacyCheckEmptyComposites(t *testing.T) {
 							require.NoError(t, err)
 							require.Empty(t, response.GetError())
 
-							hasAnyPermissions := subject == "render:0" || len(grants.permissions) > 0
-							require.Equal(t, hasAnyPermissions && tc.allowedWithPermissions, response.GetAllowed())
+							require.Equal(t, tc.allowedWithPermissions, response.GetAllowed())
 							require.Nil(t, localEvaluator.user)
+							require.Empty(t, permissions.presenceQueries)
 
 							if subject == "render:0" {
 								require.Empty(t, permissions.queries)
-								require.Empty(t, permissions.presenceQueries)
 							}
 						})
 					}
@@ -381,12 +381,8 @@ func TestService_LegacyCheckCompositeQueries(t *testing.T) {
 	require.Equal(t, 1, identityStore.calls)
 }
 
-func TestService_LegacyCheckUnrelatedPermissionQuery(t *testing.T) {
-	s := NewTestService("u-1", []accesscontrol.Permission{
-		{
-			Action: "users:create",
-		},
-	}, nil)
+func TestService_LegacyCheckSharedWithMeAvoidsPresenceQuery(t *testing.T) {
+	s := NewTestService("u-1", nil, nil)
 	s.actionResolver = legacyActionResolver{}
 	s.store.(*fakeStore).basicRole = &store.BasicRole{Role: "Viewer"}
 	s.identityStore.(*fakeIdentityStore).userTeams = []int64{10}
@@ -418,14 +414,7 @@ func TestService_LegacyCheckUnrelatedPermissionQuery(t *testing.T) {
 			ActionSets:    []string{"dashboards:view", "dashboards:edit"},
 		},
 	}, permissions.queries)
-	require.Equal(t, []store.PermissionsQuery{
-		{
-			UserID:        1,
-			TeamIDs:       []int64{10},
-			Role:          "Viewer",
-			IsServerAdmin: false,
-		},
-	}, permissions.presenceQueries)
+	require.Empty(t, permissions.presenceQueries)
 }
 
 func TestService_LegacyCheckCompositeStoreFailure(t *testing.T) {
@@ -443,17 +432,17 @@ func TestService_LegacyCheckCompositeStoreFailure(t *testing.T) {
 			failAction: "folders:read",
 		},
 		{
-			name:       "empty all denies when checking permission presence fails",
-			expression: legacyAllExpression(),
-			failAction: "",
+			name:       "shared with me denies when loading folder grants fails",
+			expression: legacyPermissionExpression(acimpl.SharedWithMeFolderPermission.Action, acimpl.SharedWithMeFolderPermission.Scope),
+			failAction: "folders:read",
 		},
 		{
-			name: "nested empty all denies when checking permission presence fails",
+			name: "nested empty all denies when loading a requested action fails",
 			expression: legacyAnyExpression(
 				legacyPermissionExpression("users:delete"),
 				legacyAllExpression(),
 			),
-			failAction: "",
+			failAction: "users:delete",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

@@ -100,8 +100,6 @@ export const FlagKeys = {
   CujTracking: "cujTracking",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
-  /** Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser */
-  DashboardRecentlyDeletedViaTrash: "dashboard.recentlyDeletedViaTrash",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
   DashboardVectorSearch: "dashboard.vectorSearch",
   /** Supports __from and __to macros that always use the dashboard level time range */
@@ -118,6 +116,10 @@ export const FlagKeys = {
   DashboardUndoRedo: "dashboardUndoRedo",
   /** Enables dashboard validator app to run compatibility checks between a dashboard and data source */
   DashboardValidatorApp: "dashboardValidatorApp",
+  /** Stops an open dashboard from subscribing to Grafana Live save notices */
+  DashboardsDisableLiveSaveNotices: "dashboards.disableLiveSaveNotices",
+  /** Disables public dashboards for the stack */
+  DashboardsDisablePublicDashboards: "dashboards.disablePublicDashboards",
   /** Expands a horizontal repeat copied from a library panel definition to the full grid width, matching how horizontal repeats on dashboard panels are laid out */
   DashboardsLibraryPanelHorizontalRepeatFullWidth: "dashboards.libraryPanelHorizontalRepeatFullWidth",
   /** Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state */
@@ -166,14 +168,20 @@ export const FlagKeys = {
   GrafanaAnnouncementBannerDismissible: "grafana.announcementBannerDismissible",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
   GrafanaCmdkHybridSearch: "grafana.cmdkHybridSearch",
+  /** Enables using the Config From Query Results transformation's Dynamic Field Name option */
+  GrafanaConfigFromQueryDynamicName: "grafana.configFromQueryDynamicName",
   /** Enables custom dashboard templates for enterprise */
   GrafanaCustomDashboardTemplates: "grafana.customDashboardTemplates",
   /** Allows users to customise the mega menu by hiding top-level navigation items they are not interested in */
   GrafanaCustomizableMegaMenu: "grafana.customizableMegaMenu",
   /** Uses auto grid as the default layout for new dashboards */
   GrafanaDashboardAutoGridDefault: "grafana.dashboardAutoGridDefault",
+  /** Enables Composer mode for editing dashboards with Grafana Assistant */
+  GrafanaDashboardComposer: "grafana.dashboardComposer",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GrafanaDashboardGlobalVariables: "grafana.dashboardGlobalVariables",
+  /** Enables org, folder and user preferences for new dashboards and panels (DashboardPreferences in dashboard.grafana.app) */
+  GrafanaDashboardPreferences: "grafana.dashboardPreferences",
   /** Enables Viewing and Editing modes for dynamic dashboards */
   GrafanaDashboardPreviewMode: "grafana.dashboardPreviewMode",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
@@ -194,16 +202,14 @@ export const FlagKeys = {
   GrafanaFilterablePanels: "grafana.filterablePanels",
   /** Adds an experimental Protomaps vector basemap to the geomap panel */
   GrafanaGeomapProtomapsBasemap: "grafana.geomapProtomapsBasemap",
-  /** Offers the reserved Grafana home option in the home dashboard preference */
-  GrafanaGlobalHomePreference: "grafana.globalHomePreference",
-  /** Enables PLG-focused growth redesign of the unified homepage */
-  GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Deprecated: Toggle displayed fields from Log Details */
   GrafanaLogDetailsDisplayedFieldControls: "grafana.logDetailsDisplayedFieldControls",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
+  /** Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports */
+  GrafanaMobileEditDeprecation: "grafana.mobileEditDeprecation",
   /** Enables multi-tenant fallback behavior */
   GrafanaMtFallback: "grafana.mtFallback",
   /** Builds the navigation tree client-side instead of reading it from /bootdata */
@@ -220,6 +226,8 @@ export const FlagKeys = {
   GrafanaOnDemandDiagnostics: "grafana.onDemandDiagnostics",
   /** Enables a new version of log details optimized for displaying OTel logs */
   GrafanaOtelLogDetails: "grafana.otelLogDetails",
+  /** Replaces the dashboard panel menu button and hover widget with a panel actions popover in view and edit mode */
+  GrafanaPanelActionsPopover: "grafana.panelActionsPopover",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Let panel plugins register system transformations */
@@ -250,8 +258,6 @@ export const FlagKeys = {
   GrafanaStarredFolders: "grafana.starredFolders",
   /** Enables using dashboard variables in panel threshold values */
   GrafanaThresholdsInterpolation: "grafana.thresholdsInterpolation",
-  /** Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins */
-  GrafanaUnifiedDataSourcePicker: "grafana.unifiedDataSourcePicker",
   /** Use the find default scope endpoint to seed the initial scope selection when none is set. */
   GrafanaUseDefaultScopesEndpoint: "grafana.useDefaultScopesEndpoint",
   /** Enables semantic (vector) dashboard search in the command palette */
@@ -324,8 +330,6 @@ export const FlagKeys = {
   QueryHistoryLocalOnly: "queryHistory.localOnly",
   /** Replace the Query History drawer with a new Recent Queries modal UI */
   QueryHistoryRecentQueriesUI: "queryHistory.recentQueriesUI",
-  /** Enables Saved queries (query library) feature */
-  QueryLibrary: "queryLibrary",
   /** Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query */
   QueryService: "queryService",
   /** Adds datasource connections to the query service */
@@ -876,17 +880,6 @@ export const useFlagDashboardNotebooks = (options?: ReactFlagEvaluationOptions):
 };
 
 /**
- * Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser
- *
- * **Details:**
- * - flag key: `dashboard.recentlyDeletedViaTrash`
- * - default value: `true`
- */
-export const useFlagDashboardRecentlyDeletedViaTrash = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("dashboard.recentlyDeletedViaTrash", true, options).value;
-};
-
-/**
  * Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
  *
  * **Details:**
@@ -972,6 +965,28 @@ export const useFlagDashboardUndoRedo = (options?: ReactFlagEvaluationOptions): 
  */
 export const useFlagDashboardValidatorApp = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboardValidatorApp", false, options).value;
+};
+
+/**
+ * Stops an open dashboard from subscribing to Grafana Live save notices
+ *
+ * **Details:**
+ * - flag key: `dashboards.disableLiveSaveNotices`
+ * - default value: `false`
+ */
+export const useFlagDashboardsDisableLiveSaveNotices = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboards.disableLiveSaveNotices", false, options).value;
+};
+
+/**
+ * Disables public dashboards for the stack
+ *
+ * **Details:**
+ * - flag key: `dashboards.disablePublicDashboards`
+ * - default value: `false`
+ */
+export const useFlagDashboardsDisablePublicDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboards.disablePublicDashboards", false, options).value;
 };
 
 /**
@@ -1239,6 +1254,17 @@ export const useFlagGrafanaCmdkHybridSearch = (options?: ReactFlagEvaluationOpti
 };
 
 /**
+ * Enables using the Config From Query Results transformation's Dynamic Field Name option
+ *
+ * **Details:**
+ * - flag key: `grafana.configFromQueryDynamicName`
+ * - default value: `false`
+ */
+export const useFlagGrafanaConfigFromQueryDynamicName = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.configFromQueryDynamicName", false, options).value;
+};
+
+/**
  * Enables custom dashboard templates for enterprise
  *
  * **Details:**
@@ -1272,6 +1298,17 @@ export const useFlagGrafanaDashboardAutoGridDefault = (options?: ReactFlagEvalua
 };
 
 /**
+ * Enables Composer mode for editing dashboards with Grafana Assistant
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardComposer`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardComposer = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardComposer", false, options).value;
+};
+
+/**
  * Enables global and folder-scoped dashboard variables via dashboard.grafana.app
  *
  * **Details:**
@@ -1280,6 +1317,17 @@ export const useFlagGrafanaDashboardAutoGridDefault = (options?: ReactFlagEvalua
  */
 export const useFlagGrafanaDashboardGlobalVariables = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardGlobalVariables", false, options).value;
+};
+
+/**
+ * Enables org, folder and user preferences for new dashboards and panels (DashboardPreferences in dashboard.grafana.app)
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardPreferences`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardPreferences = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardPreferences", false, options).value;
 };
 
 /**
@@ -1393,28 +1441,6 @@ export const useFlagGrafanaGeomapProtomapsBasemap = (options?: ReactFlagEvaluati
 };
 
 /**
- * Offers the reserved Grafana home option in the home dashboard preference
- *
- * **Details:**
- * - flag key: `grafana.globalHomePreference`
- * - default value: `false`
- */
-export const useFlagGrafanaGlobalHomePreference = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.globalHomePreference", false, options).value;
-};
-
-/**
- * Enables PLG-focused growth redesign of the unified homepage
- *
- * **Details:**
- * - flag key: `grafana.growthHomepage`
- * - default value: `false`
- */
-export const useFlagGrafanaGrowthHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.growthHomepage", false, options).value;
-};
-
-/**
  * Enables usage of the new annotations API client
  *
  * **Details:**
@@ -1445,6 +1471,17 @@ export const useFlagGrafanaLogDetailsDisplayedFieldControls = (options?: ReactFl
  */
 export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.logLevelInference", false, options).value;
+};
+
+/**
+ * Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports
+ *
+ * **Details:**
+ * - flag key: `grafana.mobileEditDeprecation`
+ * - default value: `false`
+ */
+export const useFlagGrafanaMobileEditDeprecation = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.mobileEditDeprecation", false, options).value;
 };
 
 /**
@@ -1533,6 +1570,17 @@ export const useFlagGrafanaOnDemandDiagnostics = (options?: ReactFlagEvaluationO
  */
 export const useFlagGrafanaOtelLogDetails = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.otelLogDetails", false, options).value;
+};
+
+/**
+ * Replaces the dashboard panel menu button and hover widget with a panel actions popover in view and edit mode
+ *
+ * **Details:**
+ * - flag key: `grafana.panelActionsPopover`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPanelActionsPopover = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.panelActionsPopover", false, options).value;
 };
 
 /**
@@ -1698,17 +1746,6 @@ export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOption
  */
 export const useFlagGrafanaThresholdsInterpolation = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.thresholdsInterpolation", true, options).value;
-};
-
-/**
- * Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins
- *
- * **Details:**
- * - flag key: `grafana.unifiedDataSourcePicker`
- * - default value: `true`
- */
-export const useFlagGrafanaUnifiedDataSourcePicker = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.unifiedDataSourcePicker", true, options).value;
 };
 
 /**
@@ -2105,17 +2142,6 @@ export const useFlagQueryHistoryLocalOnly = (options?: ReactFlagEvaluationOption
  */
 export const useFlagQueryHistoryRecentQueriesUI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("queryHistory.recentQueriesUI", false, options).value;
-};
-
-/**
- * Enables Saved queries (query library) feature
- *
- * **Details:**
- * - flag key: `queryLibrary`
- * - default value: `true`
- */
-export const useFlagQueryLibrary = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("queryLibrary", true, options).value;
 };
 
 /**

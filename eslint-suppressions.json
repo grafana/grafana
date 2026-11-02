@@ -377,11 +377,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/Cascader/styles.ts": {
-    "@grafana/no-unreduced-motion": {
-      "count": 17
-    }
-  },
   "packages/grafana-ui/src/components/ColorPicker/ColorPicker.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -482,11 +477,6 @@
   },
   "packages/grafana-ui/src/components/PanelChrome/index.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/QueryField/QueryField.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -618,9 +608,6 @@
   "packages/grafana-ui/src/components/uPlot/Plot.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/uPlot/config/UPlotConfigBuilder.ts": {
@@ -692,11 +679,6 @@
   "packages/grafana-ui/src/types/react-table-config.d.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
-    }
-  },
-  "packages/grafana-ui/src/utils/useAsyncDependency.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "public/app/app.ts": {
@@ -1080,9 +1062,6 @@
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/ExpressionEditor.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     }
@@ -1095,14 +1074,6 @@
   "public/app/features/alerting/unified/components/rule-editor/GroupAndNamespaceFields.tsx": {
     "@grafana/require-no-margin": {
       "count": 2
-    }
-  },
-  "public/app/features/alerting/unified/components/rule-editor/PreviewRule.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/QueryRows.tsx": {
@@ -1160,11 +1131,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rules/Filter/useRuleFilterAutocomplete.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rules/RuleDetailsDataSources.tsx": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
@@ -1198,9 +1164,6 @@
   "public/app/features/alerting/unified/components/silences/SilencesEditor.tsx": {
     "@grafana/require-no-margin": {
       "count": 3
-    },
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
     }
   },
   "public/app/features/alerting/unified/featureToggles.ts": {
@@ -1412,11 +1375,6 @@
   },
   "public/app/features/auth-config/utils/data.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/browse-dashboards/components/DeletedDashboardsLimitBanner.tsx": {
-    "react-hooks/exhaustive-deps": {
       "count": 1
     }
   },
@@ -2723,11 +2681,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/annolist/AnnoListPanel.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/barchart/bars.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -2835,14 +2788,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/live/LivePanel.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/logstable/LogsTableDetails.test.tsx": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
@@ -2856,16 +2801,6 @@
   "public/app/plugins/panel/nodeGraph/layout.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
-    }
-  },
-  "public/app/plugins/panel/stat/StatMigrations.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/table/migrations.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 4
     }
   },
   "public/app/plugins/panel/text/v1/textPanelMigrationHandler.ts": {

@@ -5,6 +5,7 @@ import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
+import { useFlagGrafanaScopesDashboardsMegaMenu } from '@grafana/runtime/internal';
 import {
   type SceneObjectState,
   SceneObjectBase,
@@ -32,6 +33,7 @@ import { KioskMode } from 'app/types/dashboard';
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { usePanelEditDirty } from '../panel-edit/usePanelEditDirty';
+import { useIsMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 import { findVizPanelByPathId } from '../utils/pathId';
 import { getDashboardSceneFor, isLibraryPanel } from '../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
@@ -212,6 +214,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const dashboard = getDashboardSceneFor(model);
   const { links, editPanel } = dashboard.useState();
   const styles = useStyles2(getStyles);
+  const scopesMegaMenuEnabled = useFlagGrafanaScopesDashboardsMegaMenu();
   const showDebugger = window.location.search.includes('scene-debugger');
   const hasDashboardControls = useHasDashboardControls(dashboard);
   const panelEditVariables = getPanelEditVariables(dashboard);
@@ -271,7 +274,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           </div>
         )}
       </div>
-      {config.featureToggles.scopeFilters && !editPanel && (
+      {config.featureToggles.scopeFilters && !editPanel && !scopesMegaMenuEnabled && (
         <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
       )}
       {!hideVariableControls && (
@@ -305,6 +308,7 @@ function DashboardControlActions({
   const { isPlaying } = playlistSrv.useState();
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
 
   if (kioskMode === KioskMode.Full) {
     return null;
@@ -322,16 +326,13 @@ function DashboardControlActions({
 
   const showShareButton = hasUid && !isSnapshot && !isEmbedded && !isPlaying && !editPanel;
   const modesEnabled = dashboardModesEnabled();
-  const hasChanges = dashboard.state.isDirty;
   const showSaveButton =
-    isEditing &&
-    (canSave || canSaveAs) &&
-    !isEditingLibraryPanel &&
-    (!modesEnabled || getDashboardMode(dashboard.state) !== 'view' || hasChanges || !hasUid);
+    isEditing && (canSave || canSaveAs) && !isEditingLibraryPanel && getDashboardMode(dashboard.state) !== 'view';
   // A draft (a new dashboard proposed as pending changes) has no uid until it's saved.
   const isDraft = Boolean(meta.newDashboardUid);
-  const showEditButton = (hasUid || isDraft || isEditing) && !isPlaying && canEditDashboard && isEditable && !editPanel;
-  const showMakeEditableButton = !isPlaying && canEditDashboard && !isEditable && !isEditing;
+  const showEditButton =
+    (hasUid || isDraft) && !isPlaying && canEditDashboard && isEditable && !editPanel && !isMobileEditDeprecated;
+  const showMakeEditableButton = !isPlaying && canEditDashboard && !isEditable && !isEditing && !isMobileEditDeprecated;
   const showPanelEditButtons = Boolean(editPanel);
 
   return (

@@ -9,6 +9,7 @@ import { canManageDashboardTemplates } from 'app/features/dashboard/dashgrid/Das
 import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/dashboard-templates/main';
 import { getSaveAsTemplateForm } from 'app/features/dashboard-scene/saving/enterprise-components/SaveAsTemplateFormExtension';
 
+import { useComposerPaused } from '../../../composer/useComposerPaused';
 import { getDashboardSaveActions } from '../../../saving/dashboardSaveActions';
 import { dashboardModesEnabled } from '../../dashboardModes';
 import { type ToolbarActionProps } from '../types';
@@ -19,6 +20,8 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const isDashboardTemplatesFlagEnabled = useFlagGrafanaCustomDashboardTemplates();
   const showChanges = dashboardModesEnabled() && isEditing;
+  // Discarding mid-turn would swap the dashboard out from under Assistant's edits.
+  const busy = useComposerPaused(dashboard);
 
   const { save, saveAsCopy: onSaveAsCopy, isNew } = getDashboardSaveActions(dashboard, isDashboardTemplatesFlagEnabled);
   const isManaged = dashboard.isManaged();
@@ -62,6 +65,12 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
                     label={t('dashboard.modes.discard', 'Discard changes')}
                     icon="trash-alt"
                     onClick={() => setConfirmDiscard(true)}
+                    disabled={busy}
+                    description={
+                      busy
+                        ? t('dashboard.composer.wait-for-assistant', 'Wait for Assistant to finish editing')
+                        : undefined
+                    }
                   />
                 )}
               </Menu>

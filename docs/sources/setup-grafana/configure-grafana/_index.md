@@ -505,6 +505,24 @@ Set to `true` to add metrics and tracing for database queries. The default value
 
 <hr />
 
+### `[unified_storage]`
+
+Controls unified resource storage in Grafana.
+
+#### `key_path_reconciliation_enabled`
+
+Enables a background job that fills missing `key_path` values in `resource_history` rows written by older Grafana instances during a rolling upgrade. The default value is `true`.
+
+This setting applies only when you enable the SQL KV storage backend with `[unified_storage] enable_sqlkv_backend = true`. It has no effect on file or remote storage backends.
+
+The job starts after startup migrations complete, with one instance reconciling at a time. It processes up to 100 rows per batch, with a one-second pause between batches. After it finds no missing paths, it waits one hour before checking again. If it encounters an error or another instance is reconciling, it retries after one minute.
+
+Search checks for affected indexes every five minutes. As with imports, clock skew or concurrent index builds can leave search stale until another rebuild.
+
+You can optionally set this value to `false` after all Grafana instances that write to the database have been upgraded and a subsequent pass logs `Key path reconciliation succeeded; no missing key paths remain`. Keep the job enabled until the upgrade finishes, even if an earlier pass reports success.
+
+<hr />
+
 ### `[remote_cache]`
 
 Caches authentication tokens and other temporary authentication-related data in the configured database, Redis, or Memcached. This setting doesn't configure [Query Caching in Grafana Enterprise](../../administration/data-source-management/#query-and-resource-caching).
@@ -918,7 +936,7 @@ This also limits the refresh interval options in Explore.
 
 #### `default_home_dashboard_path`
 
-Path to a custom default home dashboard. If this value is empty, Grafana uses the unified homepage.
+Path to a custom default home dashboard. Grafana shows this dashboard to users who have no home dashboard preference at the user, team, or organization level, and to users who select **Grafana home** in that preference. If [`home_page`](#home_page) is also set, `home_page` takes precedence. If this value is empty, Grafana shows the Grafana home page.
 
 Grafana no longer ships a bundled `home.json`. Replacing `public/dashboards/home.json` on disk is not supported. If you previously customized home that way, set this option to the path of your JSON file.
 
@@ -928,7 +946,7 @@ The file may contain either a classic dashboard JSON or a Kubernetes-format dash
 
 The `preload` value given to newly created dashboards. When `true`, a new dashboard starts with all panels loading as soon as it opens, instead of lazy loading them as they scroll into view. Default is `false`.
 
-The value is written into the dashboard when it is created, so authors can change it in dashboard settings afterwards and their choice wins.
+The value is written into the dashboard when it is created, so authors can change it in dashboard settings afterwards and their choice takes precedence.
 
 This setting only applies to dashboards created after you set it. Existing dashboards keep whatever `preload` value they already have, so turning it on never changes how they behave. It applies to dashboards created in the UI; dashboards created through the API or provisioning use the `preload` value in the payload.
 
@@ -1050,7 +1068,7 @@ The default is `en-US`.
 
 #### `home_page`
 
-Path to a custom home page. Users are only redirected to this when no home dashboard UID is configured. It should match a frontend route and contain a leading slash.
+Path to a custom home page, for example `/a/my-app/home`. It must match a frontend route and start with a slash. Grafana redirects users here when they have no home dashboard preference at the user, team, or organization level, and when they select **Grafana home** in that preference. This option wins over [`default_home_dashboard_path`](#default_home_dashboard_path). For the full order, refer to [How Grafana picks the home page](../../administration/organization-preferences/#how-grafana-picks-the-home-page).
 
 #### `External user management`
 
@@ -1085,6 +1103,16 @@ Default is `15m` (15 minutes). The minimum supported duration is `5m` (5 minutes
 #### `hidden_users`
 
 This is a comma-separated list of usernames. Users specified here are hidden in the Grafana UI. They are still visible to Grafana administrators and to themselves.
+
+<hr>
+
+### `[service_accounts]`
+
+#### `token_expiration_day_limit`
+
+The maximum number of days a new service account token can be valid for. When set, Grafana rejects new tokens that have no expiration date or that expire later than this limit. Existing tokens aren't affected. By default, there is no limit.
+
+For more information, refer to [Service account token expiration dates](../../administration/service-accounts/#service-account-token-expiration-dates).
 
 <hr>
 

@@ -144,107 +144,6 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(4);
       });
 
-      test('can paste a copied row', async ({ selectors, page, controls, sidebar, panels, rows, canvas }) => {
-        await flows.dashboards.importTestDashboard(page, selectors, 'Paste row');
-        await controls.enterEditMode();
-
-        await canvas.groupPanels('row'); // New row
-        await expectRowVisibility('New row', rows, 'visible');
-
-        // Copy-paste the new row
-        await sidebar.copySelection();
-        await canvas.pasteRow();
-
-        let firstRow = await expectRowVisibility('New row', rows, 'visible');
-        await firstRow.content.scrollIntoViewIfNeeded();
-        await expect(panels.getPanels('New panel', firstRow.content)).toHaveCount(3);
-
-        let secondRow = await expectRowVisibility('New row 1', rows, 'visible');
-        await secondRow.content.scrollIntoViewIfNeeded();
-        await expect(panels.getPanels('New panel', secondRow.content)).toHaveCount(3);
-
-        await flows.dashboards.saveDashboard(page, controls);
-
-        firstRow = await expectRowVisibility('New row', rows, 'visible');
-        await firstRow.content.scrollIntoViewIfNeeded();
-        await expect(panels.getPanels('New panel', firstRow.content)).toHaveCount(3);
-
-        secondRow = await expectRowVisibility('New row 1', rows, 'visible');
-        await secondRow.content.scrollIntoViewIfNeeded();
-        await expect(panels.getPanels('New panel', secondRow.content)).toHaveCount(3);
-      });
-
-      test('can duplicate a row', async ({ selectors, page, controls, sidebar, panels, rows, canvas }) => {
-        await flows.dashboards.importTestDashboard(page, selectors, 'Duplicate row');
-        await controls.enterEditMode();
-
-        await canvas.groupPanels('row'); // New row
-        await expectRowVisibility('New row', rows, 'visible');
-
-        // Duplicate the new row
-        await sidebar.duplicateSelection();
-
-        let firstRow = await expectRowVisibility('New row', rows, 'visible');
-        await firstRow.content.scrollIntoViewIfNeeded();
-        await expect(panels.getPanels('New panel', firstRow.content)).toHaveCount(3);
-
-        let secondRow = await expectRowVisibility('New row 1', rows, 'visible');
-        await secondRow.content.scrollIntoViewIfNeeded();
-        await expect(panels.getPanels('New panel', secondRow.content)).toHaveCount(3);
-
-        await flows.dashboards.saveDashboard(page, controls);
-
-        firstRow = await expectRowVisibility('New row', rows, 'visible');
-        await firstRow.content.scrollIntoViewIfNeeded();
-        await expect(panels.getPanels('New panel', firstRow.content)).toHaveCount(3);
-
-        secondRow = await expectRowVisibility('New row 1', rows, 'visible');
-        await secondRow.content.scrollIntoViewIfNeeded();
-        await expect(panels.getPanels('New panel', secondRow.content)).toHaveCount(3);
-      });
-
-      test('can collapse rows', async ({ selectors, page, controls, sidebar, panels, rows, canvas }) => {
-        await flows.dashboards.importTestDashboard(page, selectors, 'Collapse rows');
-        await controls.enterEditMode();
-
-        await canvas.groupPanels('row'); // New row
-        await expectRowVisibility('New row', rows, 'visible');
-
-        // Duplicate the new row
-        await sidebar.duplicateSelection();
-
-        const firstRow = await expectRowVisibility('New row', rows, 'visible');
-        await firstRow.content.scrollIntoViewIfNeeded();
-        await expect(panels.getPanels('New panel', firstRow.content)).toHaveCount(3);
-
-        const secondRow = await expectRowVisibility('New row 1', rows, 'visible');
-        await secondRow.content.scrollIntoViewIfNeeded();
-        await expect(panels.getPanels('New panel', secondRow.content)).toHaveCount(3);
-
-        // Collapse rows by clicking on the row toggles
-        await rows.toggle('New row');
-        await rows.toggle('New row 1');
-
-        // Collapsed rows keep their titles visible but unmount their content
-        await expect(firstRow.title).toBeVisible();
-        await expect(firstRow.content).toBeHidden();
-
-        await expect(secondRow.title).toBeVisible();
-        await expect(secondRow.content).toBeHidden();
-
-        await expect(panels.getPanels('New panel')).toHaveCount(0);
-
-        await flows.dashboards.saveDashboard(page, controls);
-
-        await expect(firstRow.title).toBeVisible();
-        await expect(firstRow.content).toBeHidden();
-
-        await expect(secondRow.title).toBeVisible();
-        await expect(secondRow.content).toBeHidden();
-
-        await expect(panels.getPanels('New panel')).toHaveCount(0);
-      });
-
       test('can convert rows into tabs when changing layout', async ({
         selectors,
         page,
@@ -340,36 +239,6 @@ test.describe(
         await expect(tabs.getTitle('New tab')).toBeHidden();
         await expect(panels.getPanels('New panel')).toHaveCount(3);
       });
-
-      test('cannot add a row without a title', async ({ selectors, page, controls, sidebar, rows, canvas }) => {
-        await flows.dashboards.importTestDashboard(page, selectors, 'Cannot add row without title');
-        await controls.enterEditMode();
-
-        await canvas.groupPanels('row'); // New row
-        await expectRowVisibility('New row', rows, 'visible');
-
-        // edit row title to a non-default
-        await sidebar.rowOptions.setTitle('Test row 1');
-        await expectRowVisibility('Test row 1', rows, 'visible');
-
-        // clear the title input to simulate no title and trigger onBlur
-        await sidebar.rowOptions.setTitle('');
-        // title should be set to a default name
-        await expectRowVisibility('New row', rows, 'visible');
-
-        // add another row
-        await canvas.addRow();
-        await expectRowVisibility('New row 1', rows, 'visible');
-
-        // edit row title to a non-default
-        await sidebar.rowOptions.setTitle('Test row 2');
-        await expectRowVisibility('Test row 2', rows, 'visible');
-
-        // clear the title input to simulate no title and trigger onBlur
-        await sidebar.rowOptions.setTitle('');
-        // title should be set to a default name + 1 to avoid duplicates
-        await expectRowVisibility('New row 1', rows, 'visible');
-      });
     });
 
     test.describe('Tabs', () => {
@@ -457,49 +326,6 @@ test.describe(
         await expect(tabs.getTitle('New tab 2')).toBeHidden();
 
         await expectTabVisibility('New tab', tabs, 'visible');
-        await expect(panels.getPanels('New panel')).toHaveCount(3);
-      });
-
-      test('can paste a copied tab', async ({ selectors, page, controls, sidebar, panels, tabs, canvas }) => {
-        await flows.dashboards.importTestDashboard(page, selectors, 'Paste tab');
-        await controls.enterEditMode();
-
-        await canvas.groupPanels('tab');
-        await expect(tabs.getTitle('New tab')).toBeVisible();
-
-        // Copy-paste the new tab
-        await sidebar.copySelection();
-        await canvas.pasteTab();
-
-        await expect(tabs.getTitle('New tab')).toBeVisible();
-        await expect(tabs.getTitle('New tab 1')).toBeVisible();
-        await expect(panels.getPanels('New panel')).toHaveCount(3);
-
-        await flows.dashboards.saveDashboard(page, controls);
-
-        await expect(tabs.getTitle('New tab')).toBeVisible();
-        await expect(tabs.getTitle('New tab 1')).toBeVisible();
-        await expect(panels.getPanels('New panel')).toHaveCount(3);
-      });
-
-      test('can duplicate a tab', async ({ selectors, page, controls, sidebar, panels, tabs, canvas }) => {
-        await flows.dashboards.importTestDashboard(page, selectors, 'Duplicate tab');
-        await controls.enterEditMode();
-
-        await canvas.groupPanels('tab');
-        await expect(tabs.getTitle('New tab')).toBeVisible();
-
-        // Duplicate by selecting tab and using duplicate button
-        await sidebar.duplicateSelection();
-
-        await expect(tabs.getTitle('New tab')).toBeVisible();
-        await expect(tabs.getTitle('New tab 1')).toBeVisible();
-        await expect(panels.getPanels('New panel')).toHaveCount(3);
-
-        await flows.dashboards.saveDashboard(page, controls);
-
-        await expect(tabs.getTitle('New tab')).toBeVisible();
-        await expect(tabs.getTitle('New tab 1')).toBeVisible();
         await expect(panels.getPanels('New panel')).toHaveCount(3);
       });
 
@@ -610,40 +436,6 @@ test.describe(
         await expect(tabs.getTitle('New tab')).toBeHidden();
         await expect(rows.getTitle('New row')).toBeHidden();
         await expect(panels.getPanels('New panel')).toHaveCount(3);
-      });
-
-      test('cannot add a tab without a title', async ({ selectors, page, controls, sidebar, tabs, canvas }) => {
-        await flows.dashboards.importTestDashboard(page, selectors, 'Cannot add tab without title');
-        await controls.enterEditMode();
-
-        await canvas.groupPanels('tab');
-        await expect(tabs.getTitle('New tab')).toBeVisible();
-
-        // edit tab title to a non-default and close the pane to trigger the title update
-        await sidebar.tabOptions.setTitle('Test tab 1');
-        await sidebar.closePane();
-
-        // clear the title input to simulate no title and close the pane to trigger the title update
-        await tabs.select('Test tab 1');
-        await sidebar.tabOptions.setTitle('');
-        await sidebar.closePane();
-        // title should be set to a default name
-        await expect(tabs.getTitle('New tab')).toBeVisible();
-
-        // add another tab
-        await canvas.addTab();
-        await expect(tabs.getTitle('New tab 1')).toBeVisible();
-
-        // edit tab title to a non-default and close the pane to trigger the title update
-        await sidebar.tabOptions.setTitle('Test tab 2');
-        await sidebar.closePane();
-
-        // clear the title input to simulate no title and close the pane to trigger the title update
-        await tabs.select('Test tab 2');
-        await sidebar.tabOptions.setTitle('');
-        await sidebar.closePane();
-        // title should be set to a default name + 1 to avoid duplicates
-        await expect(tabs.getTitle('New tab 1')).toBeVisible();
       });
     });
   }

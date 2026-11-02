@@ -5,6 +5,7 @@ import {
   getAlertmanagerConfig,
   setAlertmanagerConfig,
 } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
+import { filterBySelector } from 'app/features/alerting/unified/mocks/server/handlers/k8s/utils';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
 import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
@@ -15,6 +16,8 @@ const usedByPolicies = ['grafana-default-email'];
 const usedByRules = ['grafana-default-email'];
 const cannotBeEdited = ['grafana-default-email'];
 const cannotBeDeleted = ['grafana-default-email'];
+
+export const receiverUidFor = (title: string) => `uid-${title}`;
 
 const getReceiversList = () => {
   const config = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
@@ -32,8 +35,8 @@ const getReceiversList = () => {
         apiVersion: `${API_GROUP}/${API_VERSION}`,
         kind: 'Receiver',
         metadata: {
-          // This isn't exactly accurate, but its the cleanest way to use the same data for AM config and K8S responses
-          uid: contactPoint.name,
+          // Deliberately different from spec.title so tests catch code that confuses the two
+          uid: receiverUidFor(contactPoint.name),
           annotations: {
             [K8sAnnotations.Provenance]: provenance,
             [K8sAnnotations.CanUse]: canUse ? 'true' : 'false',
@@ -55,8 +58,14 @@ const getReceiversList = () => {
 };
 
 const listNamespacedReceiverHandler = () =>
-  http.get<{ namespace: string }>(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/receivers`, () => {
-    return HttpResponse.json(getReceiversList());
+  http.get<{ namespace: string }>(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/receivers`, ({ request }) => {
+    const receivers = getReceiversList();
+    // Rudimentary filter support for `spec.title`
+    const fieldSelector = new URL(request.url).searchParams.get('fieldSelector');
+    if (fieldSelector?.includes('spec.title')) {
+      return HttpResponse.json({ ...receivers, items: filterBySelector(receivers.items, fieldSelector) });
+    }
+    return HttpResponse.json(receivers);
   });
 
 const getNamespacedReceiverHandler = () =>
@@ -103,12 +112,16 @@ const deleteNamespacedReceiverHandler = () =>
     ({ params }) => {
       const { name } = params;
       const config = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
-      const matchedReceiver = config.alertmanager_config?.receivers?.find((receiver) => receiver.name === name);
+      const matchedReceiver = config.alertmanager_config?.receivers?.find(
+        (receiver) => receiverUidFor(receiver.name) === name
+      );
       if (!matchedReceiver) {
         return HttpResponse.json({}, { status: 404 });
       }
 
-      const newConfig = config.alertmanager_config?.receivers?.filter((receiver) => receiver.name !== name);
+      const newConfig = config.alertmanager_config?.receivers?.filter(
+        (receiver) => receiverUidFor(receiver.name) !== name
+      );
       setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, {
         ...config,
         alertmanager_config: {

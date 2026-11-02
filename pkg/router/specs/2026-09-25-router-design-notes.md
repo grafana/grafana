@@ -1,6 +1,6 @@
 # Router: Design notes
 
-Status: reference (updated 2026-10-10 for #134652)
+Status: reference (updated 2026-10-26 for #135946)
 Package: `pkg/router`
 
 Rationale moved out of `pkg/router/AGENTS.md` during the 2026-09-25 cleanup. AGENTS.md keeps the
@@ -13,7 +13,8 @@ A kube-aggregator-style mux (`PathRecorderMux`) flattens every route into an ano
 `map[prefix]handler` and does a longest-prefix scan. That erases the group at dispatch time and
 buries the not-found decision. Two different cases then collapse into one catch-all:
 
-- a path in a group the router doesn't own, which should fall through to `next`;
+- a path in a group the router doesn't own, which gets a 404 (or, standalone, may go to the ST
+  fallback);
 - an unknown subpath inside a group the router does own, which is the backend's problem.
 
 The router has exactly one path grammar, `/apis/<group>/<version>/...`, so the group is segment 2
@@ -26,6 +27,13 @@ Reconcile keys `served` by group, so a group is never split across backends. Tha
 `/apis/{group}` be proxied straight to the owning backend, with no merge across backends. If this
 rule is ever relaxed, `/apis/{group}` has to become a synthesized merge, and AGENTS.md and
 `discovery_handler.go` have to change together.
+
+One exception, by resource rather than by version: `dashboard.grafana.app` (#135613, #135703). Its
+owning backend serves through `singleTenantResourcesHandler`, a `requestRouter` that sends
+`librarypanels`, `snapshots` and users' writes to the caller's single-tenant stack. The group still has one backend, one key and one discovery document,
+so the rule above holds for discovery and OpenAPI. Only the breaker differs: `handlerFor` picks the
+handler per request, and only that handler's breakers apply, so the group's breaker and its
+`breaker_state` series reflect the multi-tenant backend alone.
 
 A duplicate group within one `Load` overwrites the earlier one and logs a warning; it does not
 panic. Routes are dynamic GitOps config, not static code, so a bad duplicate must not crash the
@@ -85,7 +93,7 @@ Both cases were found in PR review, in two passes.
 
 ## Two transports per aggregate target
 
-`ProvideCloudRoutesLoaderFactory` builds two `newAggregateBaseTransport` clones per aggregate
+`NewCloudRoutesLoader` builds two `newAggregateBaseTransport` clones per aggregate
 target:
 
 - **The discovery client.** One clone becomes `rest.Config.Transport`, wrapped by
@@ -97,10 +105,10 @@ target:
 Each clone owns its connection pool instead of sharing the process-wide `http.DefaultTransport`,
 which allows only 2 idle connections per host.
 
-## Why `group_regex` patterns are globs
+## Why `group_patterns` are globs
 
 `*` is the only special character, and everything else goes through `regexp.QuoteMeta`. An earlier
 version escaped only `.`, which left `+`, `(`, `[` and the rest live. That *widened* matches: for
-example, `foo+.grafana.app` matched `foooo.grafana.app`. `group_regex` is a narrowing allowlist, so
+example, `foo+.grafana.app` matched `foooo.grafana.app`. `group_patterns` is a narrowing allowlist, so
 over-matching is the wrong way to fail. A side effect is that pattern compilation can't fail, so
 `compileGroupPatterns` returns no error.

@@ -17,11 +17,8 @@ import { DashboardSavedEvent } from 'app/types/events';
 import { updateDashboardUidLastUsedDatasource } from '../../dashboard/utils/dashboard';
 import { finishSavingNewDashboard, withoutPendingChangesPreview } from '../lifecycle/pendingChangePreview';
 import { type DashboardScene } from '../scene/DashboardScene';
-import { dashboardModesEnabled, getDashboardMode } from '../scene/dashboardModes';
 import { DashboardInteractions } from '../utils/interactions';
 import { trackDashboardSceneCreatedOrSaved } from '../utils/tracking';
-
-import { setDashboardModeAfterSave } from './dashboardModeAfterSave';
 
 export function useSaveDashboard(isCopy = false) {
   const notifyApp = useAppNotification();
@@ -38,6 +35,7 @@ export function useSaveDashboard(isCopy = false) {
     ) => {
       {
         let saveModel = options.rawDashboardJSON ?? scene.getSaveModel();
+        const saveAsSource = options.saveAsCopy ? scene.state : undefined;
 
         if (options.saveAsCopy) {
           saveModel = scene.getSaveAsModel({
@@ -82,7 +80,7 @@ export function useSaveDashboard(isCopy = false) {
         // Capture before saveCompleted re-snapshots the baseline (which would make this report ~0).
         const diffCount = scene.getDashboardChanges().diffCount;
 
-        await scene.saveCompleted(saveModel, resultData, options.folderUid);
+        await scene.saveCompleted(saveModel, resultData, options.folderUid, saveAsSource);
 
         if (newDashboardUid) {
           await finishSavingNewDashboard(newDashboardUid);
@@ -127,9 +125,6 @@ export function useSaveDashboard(isCopy = false) {
 
         if (newUrl !== currentLocation.pathname || search !== currentLocation.search) {
           setTimeout(() => {
-            if (dashboardModesEnabled()) {
-              setDashboardModeAfterSave(resultData.uid, getDashboardMode(scene.state));
-            }
             locationService.push({ pathname: newUrl, search });
           });
         }

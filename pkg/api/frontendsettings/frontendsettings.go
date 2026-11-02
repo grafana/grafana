@@ -15,6 +15,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -99,7 +100,7 @@ func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, 
 		PluginRestrictedAPIsAllowList:    cfg.PluginRestrictedAPIsAllowList,
 		PluginRestrictedAPIsBlockList:    cfg.PluginRestrictedAPIsBlockList,
 		PublicDashboardAccessToken:       reqCtx.PublicDashboardAccessToken,
-		PublicDashboardsEnabled:          cfg.PublicDashboardsEnabled,
+		PublicDashboardsEnabled:          publicdashboards.Enabled(reqCtx.Req.Context(), cfg),
 		CloudMigrationEnabled:            cfg.CloudMigration.Enabled,
 		CloudMigrationIsTarget:           isCloudMigrationTarget,
 		CloudMigrationPollIntervalMs:     int(cfg.CloudMigration.FrontendPollInterval.Milliseconds()),

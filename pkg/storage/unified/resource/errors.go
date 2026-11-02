@@ -21,6 +21,7 @@ import (
 // Package-level errors.
 var (
 	ErrNotImplementedYet = errors.New("not implemented yet")
+	errQueueTimeout      = errors.New("request timed out in QOS queue")
 
 	ErrResourceAlreadyExists error = &apierrors.StatusError{
 		ErrStatus: metav1.Status{

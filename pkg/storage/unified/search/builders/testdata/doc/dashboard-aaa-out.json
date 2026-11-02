@@ -26,6 +26,7 @@
   "folder": "the-folder-uid",
   "created": 1730313054000,
   "createdBy": "user:be2g71ke8yoe8b",
+  "updated": 1730313054000,
   "fields": {
     "ds_types": [
       "my-custom-plugin"

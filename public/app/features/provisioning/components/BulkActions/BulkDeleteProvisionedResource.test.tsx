@@ -91,6 +91,7 @@ function setup(repository: RepositoryView | null, job: Job = successJob()) {
   };
 
   const onDismiss = jest.fn();
+  const onJobCreated = jest.fn();
   const posted = mockDeleteJob(job);
 
   mockUseGetResourceRepositoryView.mockReturnValue({
@@ -109,11 +110,17 @@ function setup(repository: RepositoryView | null, job: Job = successJob()) {
   });
 
   const renderResult = render(
-    <BulkDeleteProvisionedResource folderUid="test-folder" selectedItems={selectedItems} onDismiss={onDismiss} />
+    <BulkDeleteProvisionedResource
+      folderUid="test-folder"
+      selectedItems={selectedItems}
+      onDismiss={onDismiss}
+      onJobCreated={onJobCreated}
+    />
   );
 
   return {
     onDismiss,
+    onJobCreated,
     posted,
     selectedItems,
     defaultRepository,
@@ -197,7 +204,7 @@ describe('BulkDeleteProvisionedResource', () => {
   });
 
   it('posts the selected resources as a delete job and shows its outcome', async () => {
-    const { user, posted, defaultRepository } = setup(null);
+    const { user, posted, defaultRepository, onJobCreated } = setup(null);
 
     await user.click(screen.getByRole('button', { name: /Delete/i }));
 
@@ -217,11 +224,12 @@ describe('BulkDeleteProvisionedResource', () => {
     );
 
     expect(await screen.findByRole('status')).toBeInTheDocument();
+    expect(onJobCreated).toHaveBeenCalledTimes(1);
   });
 
   it('handles deletion errors', async () => {
     const mockPublish = jest.fn();
-    const { user } = setup(null);
+    const { user, onJobCreated } = setup(null);
     server.use(
       http.post(`${BASE}/repositories/:name/jobs`, () =>
         HttpResponse.json({ message: 'Network error' }, { status: 500 })
@@ -243,6 +251,7 @@ describe('BulkDeleteProvisionedResource', () => {
     // Should remain on form (not show JobStatus) when there's an error
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Delete/i })).toBeInTheDocument();
+    expect(onJobCreated).not.toHaveBeenCalled();
   });
 
   it('shows the job progress in place of the form while it runs', async () => {
