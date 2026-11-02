@@ -1,0 +1,48 @@
+{
+  "body": {
+    "dashboard": {
+      "id": "<id>",
+      "schemaVersion": 41,
+      "tags": [
+        "golden",
+        "nested"
+      ],
+      "title": "Golden nested",
+      "uid": "golden-nested",
+      "version": 1
+    },
+    "meta": {
+      "annotationsPermissions": {
+        "dashboard": {
+          "canAdd": true,
+          "canDelete": true,
+          "canEdit": true
+        }
+      },
+      "apiVersion": "v0alpha1",
+      "canAdmin": true,
+      "canDelete": true,
+      "canEdit": true,
+      "canSave": true,
+      "canStar": true,
+      "created": "<timestamp>",
+      "createdBy": "grafana-admin",
+      "expires": "0001-01-01T00:00:00Z",
+      "folderId": "<id>",
+      "folderTitle": "Golden child",
+      "folderUid": "golden-child",
+      "folderUrl": "/dashboards/f/golden-child/golden-child",
+      "hasAcl": false,
+      "isFolder": false,
+      "provisioned": false,
+      "provisionedExternalId": "",
+      "slug": "golden-nested",
+      "type": "db",
+      "updated": "<timestamp>",
+      "updatedBy": "grafana-admin",
+      "url": "/d/golden-nested/golden-nested",
+      "version": 1
+    }
+  },
+  "status": 200
+}

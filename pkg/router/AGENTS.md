@@ -450,10 +450,10 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | `st_lookup_rate`, `st_lookup_burst` | Rate limit on grafana.com stack lookups, per second and burst. Default `20` and `40`; a rate of `0` disables the limit. |
 | `st_discovery_cache_bytes` | Total size of the discovery documents the ST fallback caches per stack. Default 64 MiB; `0` disables the cache. |
 
-`[router]` has one key of its own: `status_open_to_admin` lets a requester with the Admin role
-read `/apis/discovery/v1alpha2/status`, which otherwise needs a Grafana (server) admin. It
-defaults to `true` in a development environment (`app_mode = development`) and `false` elsewhere.
-It is read once, at startup.
+`[router]` has two keys of its own, both read once, at startup. `status_open_to_admin` lets a
+requester with the Admin role read `/apis/discovery/v1alpha2/status`, which otherwise needs a
+Grafana (server) admin. It defaults to `true` in a development environment
+(`app_mode = development`) and `false` elsewhere. `internal_groups` is in the table above.
 
 Aggregate targets are configured in uniquely named `[router.aggregate.<name>]` sections, in
 priority order. Repeating a section name merges its keys; it does not create another target.

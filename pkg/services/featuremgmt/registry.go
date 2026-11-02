@@ -3066,14 +3066,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "grafana.growthHomepage",
-			Description: "Enables PLG-focused growth redesign of the unified homepage",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendNavigation,
-			Generate:    Generate{React: true},
-			Expression:  "false",
-		},
-		{
 			Name:         "grafana.multiTenantHomepage",
 			Description:  "Hides homepage sections whose only backend is a legacy /api endpoint (firing alerts, IRM incidents and on-call, plugin offers) and skips the legacy datasource health probe, for multi-tenant stacks that do not serve /api",
 			Stage:        FeatureStageExperimental,

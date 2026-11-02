@@ -212,8 +212,8 @@ func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, acti
 		if isRoleManagementAction(action) {
 			return permissionsTypeResolverFunc, nil
 		}
-		// The literal alone gates delegation checks; deriving a wildcard here
-		// would grant the action itself on every resource.
+		// Only role-management actions interpret delegate as wildcard access.
+		// Expanding other actions would grant access on every resource.
 		return nil, nil
 	}
 	if scopePrefix == "serviceaccounts:id:" {
@@ -267,9 +267,7 @@ func (s *Service) resolveScopeMap(ctx context.Context, ns types.NamespaceInfo, a
 		}
 		if resolved != "" {
 			scopeMap[resolved] = true
-			// Keep permissions:type:* literals alongside their resolved value.
-			// delegate resolves to "*" for the roles resource, but the permissions resource
-			// skips wildcards (SkipWildcard) to block privilege escalation
+			// Preserve the public permission-type scope alongside its resolved value.
 			if !strings.HasPrefix(scope, "permissions:type:") {
 				delete(scopeMap, scope)
 			}

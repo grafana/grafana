@@ -480,11 +480,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/QueryField/QueryField.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/SecretFormField/SecretFormField.tsx": {
     "@grafana/no-gf-form": {
       "count": 2
@@ -2686,11 +2681,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/annolist/AnnoListPanel.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/barchart/bars.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -2795,14 +2785,6 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/live/LivePanel.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },

@@ -73,8 +73,7 @@ function resolveMatchers(scope: FilterScope, userTeamNames: string[]) {
 export type FiringAlertsData = ReturnType<typeof useFiringAlerts>;
 
 /**
- * All data fetching and derived state for the homepage Firing alerts view,
- * shared between the old-layout card and the redesigned tabs.
+ * All data fetching and derived state for the homepage Firing alerts view.
  *
  * When `selectedFilter` names a label (from the filter dropdown) it overrides the default
  * filter of the user's own teams.
@@ -129,7 +128,7 @@ export function useFiringAlerts(selectedFilter: FilterSelection = '') {
   const loading = enabled && (teamsLoading || alertsLoading);
 
   // Severity and timestamp are derived once per alert so the sort comparator,
-  // the badge counts, and the rows don't recompute them.
+  // the header's severity counts, and the rows don't recompute them.
   const { visibleAlerts, criticalCount, highCount } = useMemo(() => {
     let criticalCount = 0;
     let highCount = 0;
@@ -144,7 +143,7 @@ export function useFiringAlerts(selectedFilter: FilterSelection = '') {
     });
     // Most severe first, most recent first within the same severity
     decorated.sort((a, b) => b.rank - a.rank || b.startedAt - a.startedAt);
-    // Cap the rendered rows; counts above are over every alert so the badges stay accurate.
+    // Cap the rendered rows; counts above are over every alert so the header pills stay accurate.
     return { visibleAlerts: decorated.slice(0, HOME_CARD_MAX_ITEMS), criticalCount, highCount };
   }, [alerts]);
 
