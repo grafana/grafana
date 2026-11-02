@@ -671,17 +671,20 @@ func TestRunInQueue(t *testing.T) {
 	})
 
 	t.Run("should time out if a task is sitting in the queue beyond the timeout", func(t *testing.T) {
-		s, _ := newTestServerWithQueue(t, 1, 1)
-		executed := make(chan struct{}, 1)
-		runnable := func(ctx context.Context) {
-			time.Sleep(1 * time.Second)
-			executed <- struct{}{}
-		}
+		synctest.Test(t, func(t *testing.T) {
+			s, _ := newTestServerWithQueue(t, 1, 1)
+			executed := make(chan struct{})
+			runnable := func(ctx context.Context) {
+				<-ctx.Done()
+				close(executed)
+			}
 
-		err := s.runInQueue(context.Background(), testTenantID, "read", runnable)
-		require.Error(t, err)
-		assert.Equal(t, context.DeadlineExceeded, err)
-		<-executed
+			err := s.runInQueue(t.Context(), testTenantID, "read", runnable)
+			require.ErrorIs(t, err, errQueueTimeout)
+			require.NotErrorIs(t, err, context.DeadlineExceeded)
+			require.NoError(t, t.Context().Err())
+			<-executed
+		})
 	})
 
 	t.Run("should use cluster-scoped tenant for empty tenantID", func(t *testing.T) {
@@ -5098,6 +5101,106 @@ func TestResourceServerQOSTenantIsolation(t *testing.T) {
 			assertRead(awaitQOSTestResult(t, slowResults))
 		}
 	})
+}
+
+func TestResourceServerQOSTimeoutStatus(t *testing.T) {
+	for _, mode := range []string{"enqueue", "queued", "executing", "inline"} {
+		t.Run(mode, func(t *testing.T) {
+			for _, tc := range []struct {
+				name     string
+				httpCode int32
+				grpcCode codes.Code
+			}{
+				{"server timeout", http.StatusInternalServerError, codes.Internal},
+				{"caller deadline", http.StatusGatewayTimeout, codes.DeadlineExceeded},
+				{"caller cancellation", 499, codes.Canceled},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					synctest.Test(t, func(t *testing.T) {
+						access := &callbackAccessClient{}
+						srv := &server{
+							backend:     &internalReadBackend{},
+							access:      access,
+							log:         log.NewNopLogger(),
+							queueConfig: QueueConfig{Timeout: time.Second, MinBackoff: time.Second, MaxBackoff: time.Second, MaxRetries: 10},
+						}
+						ctx := authlib.WithAuthInfo(t.Context(), newWatchTestUser())
+						key := &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource, Namespace: watchTestNamespace, Name: "timeout-test"}
+						if mode == "inline" {
+							srv.queue = scheduler.NewNoopQueue()
+						} else {
+							q := scheduler.NewQueue(&scheduler.QueueOptions{MaxSizePerTenant: 1})
+							startQOSTestService(t, q)
+							srv.queue = q
+							if mode == "enqueue" {
+								require.NoError(t, q.Enqueue(t.Context(), watchTestNamespace, func() { t.Error("queued work ran") }))
+							}
+							if mode == "executing" {
+								worker, err := scheduler.NewScheduler(q, &scheduler.Config{NumWorkers: 1})
+								require.NoError(t, err)
+								startQOSTestService(t, worker)
+							}
+						}
+
+						release := make(chan struct{})
+						unblock := sync.OnceFunc(func() { close(release) })
+						t.Cleanup(unblock)
+						started := make(chan struct{}, 1)
+						access.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) {
+							started <- struct{}{}
+							<-release
+							return authlib.CheckResponse{Allowed: true}, nil
+						}
+						callerCtx, cancel := context.WithCancel(ctx)
+						defer cancel()
+						if tc.name == "caller deadline" {
+							var deadlineCancel context.CancelFunc
+							callerCtx, deadlineCancel = context.WithTimeout(callerCtx, 100*time.Millisecond)
+							defer deadlineCancel()
+						}
+						type result struct {
+							rsp *resourcepb.ReadResponse
+							err error
+						}
+						results := make(chan result, 1)
+						go func() {
+							rsp, err := srv.Read(callerCtx, &resourcepb.ReadRequest{Key: key})
+							results <- result{rsp, err}
+						}()
+						synctest.Wait()
+						if mode == "executing" || mode == "inline" {
+							require.Len(t, started, 1)
+						} else {
+							require.Empty(t, started)
+						}
+						if tc.name == "caller cancellation" {
+							cancel()
+						}
+
+						// Keep execution blocked until the server budget has expired too.
+						time.Sleep(2 * time.Second)
+						if tc.name == "server timeout" {
+							require.NoError(t, callerCtx.Err())
+							_, hasDeadline := callerCtx.Deadline()
+							require.False(t, hasDeadline)
+						}
+						unblock()
+						r := awaitQOSTestResult(t, results)
+						require.NoError(t, r.err)
+						require.NotNil(t, r.rsp)
+						require.NotNil(t, r.rsp.Error)
+						require.Equal(t, tc.httpCode, r.rsp.Error.Code)
+						_, err := UnaryErrorResultInterceptor()(callerCtx, nil, nil, func(context.Context, any) (any, error) {
+							return r.rsp, nil
+						})
+						require.Equal(t, tc.grpcCode, status.Code(err))
+						require.True(t, proto.Equal(r.rsp.Error, AsErrorResult(err)))
+						synctest.Wait()
+					})
+				})
+			}
+		})
+	}
 }
 
 func TestResourceServerQOSQueueWaitSpan(t *testing.T) {

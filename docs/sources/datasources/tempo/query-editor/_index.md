@@ -50,7 +50,7 @@ For a language overview, refer to the [TraceQL documentation](https://grafana.co
 
 ## Choose a query editing mode
 
-The query editor has three **Query types** that you can use to explore your tracing data.
+The query editor has four **Query types** that you can use to explore your tracing data.
 You can use these modes by themselves or in combination to create building blocks to generate custom queries.
 Adding another query adds a new query block.
 Refer to [Use query types together](#use-query-types-together) for more information.
@@ -71,12 +71,98 @@ Refer to [Search traces using the query builder](traceql-search/) for more infor
 
 Use the **TraceQL** editor when you need complex filters, structural queries across parent and child spans, or aggregations that the Search builder doesn't support.
 The editor provides autocomplete for attribute names, scopes, and operators.
-You can also search for a trace ID by entering it directly into the query field.
+To look up a single trace by its ID, use the [**Trace ID** query type](#trace-id-query).
 
 For copy-paste query examples, refer to [TraceQL query examples](traceql-query-examples/).
 Refer to [Write TraceQL queries with the editor](traceql-editor/) for more information.
 
 ![The TraceQL query editor](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-traceql-v11.png)
+
+### Trace ID query
+
+Use the **Trace ID** query type to retrieve a single trace when you already know its ID, for example from a log line, an error report, or a link.
+Unlike the **TraceQL** editor, it provides options to shrink the returned trace: you can collapse repeated spans with span pruning and filter the trace to the spans you care about.
+
+To look up a trace:
+
+1. Select the **Trace ID** query type.
+1. Enter the trace ID in the **Trace ID** field.
+   The field is marked invalid if the value doesn't start with letters and numbers.
+1. Press <kbd>Enter</kbd> to run the query.
+
+The **Trace ID** field only accepts a trace ID.
+
+#### Span pruning options
+
+Span pruning collapses groups of similar leaf spans into a single summary span, which makes large traces easier to read and smaller to load.
+Each summary span records how many spans it replaces.
+
+{{< admonition type="note" >}}
+Span pruning is an experimental Tempo feature and requires Tempo 3.1 or later.
+If your Tempo version doesn't support the span pruning or filter options, Tempo ignores them and Grafana shows the full trace without an error.
+The span pruning and filter options might change in future releases.
+For details about the underlying request parameters, refer to the [Tempo HTTP API documentation](https://grafana.com/docs/tempo/<TEMPO_VERSION>/api_docs/#query-v2).
+{{< /admonition >}}
+
+Expand **Span Pruning Options** to change how pruning behaves.
+The collapsed section shows a summary of the current values.
+
+**On/Off**
+: Turns span pruning on or off for this query. Default value is **On**.
+
+**Group By**
+: A comma-separated list of attribute names used to group spans for pruning, for example `db.sql.table, http.method`. Spans are grouped when they share a name, kind, and status. Spans must also have identical values for every attribute listed here. By default, no attributes are used.
+
+**Min Spans**
+: The minimum number of similar spans required in a group before pruning is applied. Groups smaller than this value aren't pruned. Default value is `5`.
+
+**Max Parent Depth**
+: How many ancestor levels above the aggregated leaf spans can also be aggregated. Use `0` to aggregate only leaves, `-1` for unlimited depth, or `n` for a bounded depth. Default value is `1`.
+
+#### Filter options
+
+Filter options reduce the returned trace to the spans that match a TraceQL filter.
+Expand **Filter Options** to set them.
+You can expand **Span Pruning Options** and **Filter Options** independently.
+
+**Filter**
+: A TraceQL spanset filter evaluated against the spans in the trace, for example `{ status = error && name = "foo" }`. The filter supports a single `{ ... }` block. Chained filters and pipelines aren't supported. Leave the field empty to skip filtering. The field shows an error when the filter isn't valid.
+
+**Keep Hierarchy**
+: Includes each matched span's ancestor path back to the root, so the result displays as a complete waterfall instead of only the matching spans. Default value is **Off**.
+
+**Match Depth**
+: How many levels of descendants to keep below each matched span, independent of **Keep Hierarchy**. Use `-1` to keep all descendants, `0` for only the matched spans, or `n` for a bounded depth. Default value is `0`.
+
+**Ancestor Depth**
+: How many levels of ancestors to keep above each matched span. Use `-1` for the whole path to the root, `0` for none, or `n` for a bounded depth. Only used when **Keep Hierarchy** is on. Default value is `-1`.
+
+**Keep Hierarchy**, **Match Depth**, and **Ancestor Depth** are disabled until **Filter** contains a valid filter.
+**Ancestor Depth** is also disabled while **Keep Hierarchy** is off.
+Select **Clear Filter** to remove the filter and reset all filter options.
+
+##### Example: Focus on one service in a large trace
+
+A trace that spans many services can contain thousands of spans, and most of them are rarely relevant to the problem you're investigating.
+Use **Filter** and **Match Depth** to load only the part of the trace you care about.
+
+For example, you're investigating slow requests in the `checkout` service, and the trace passes through dozens of other services.
+To show only the work that starts in `checkout`:
+
+1. In **Filter Options**, set **Filter** to `{ resource.service.name = "checkout" }`.
+1. Set **Match Depth** to `-1`.
+1. Run the query.
+
+The filter matches every span that belongs to the `checkout` service.
+Because **Match Depth** is `-1`, Tempo also keeps all descendants of each matched span, so you still see everything those spans called downstream.
+The rest of the trace is left out.
+
+To see where `checkout` sits in the wider request, turn **Keep Hierarchy** on.
+Tempo then also keeps each matched span's ancestors back to the root, so the result displays as a complete waterfall.
+Use **Ancestor Depth** to limit how many ancestor levels are kept.
+
+To narrow the result further, add conditions to the filter, for example `{ resource.service.name = "checkout" && status = error }`.
+You can combine the filter with span pruning to also collapse repeated spans in the part of the trace you kept.
 
 ### Service graph view
 
@@ -112,6 +198,7 @@ For example dashboards with traces, visit [Grafana Play](https://play.grafana.or
 
 The following options are available for the **Search** and **TraceQL** query types.
 You can modify these settings in the **Options** section.
+The **Trace ID** query type has its own options, described in [Trace ID query](#trace-id-query).
 
 ![Options section in the query editors](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-options.png)
 
@@ -135,7 +222,7 @@ Streaming
 ## Use query types together
 
 You can use **+ Add query** to create customized queries that use one or more of the query types together.
-Each time you add a new query, it adds a new section, or query block, that contains **Search**, **TraceQL**, or **Service Graph** user interface.
+Each time you add a new query, it adds a new section, or query block, that contains **Search**, **TraceQL**, **Trace ID**, or **Service Graph** user interface.
 
 The added query and results table appear in the navigation under **Queries** and **Tables** respectively.
 You can use the navigation to view query, results table, and service graph blocks.
@@ -145,7 +232,7 @@ You can use the navigation to view query, results table, and service graph block
 To add a query block:
 
 1. Select **+ Add query**.
-1. Choose a query type: **Search**, **TraceQL**, or **Service Graph**.
+1. Choose a query type: **Search**, **TraceQL**, **Trace ID**, or **Service Graph**.
 
 To remove a query block, select the **Remove query** trash can icon.
 

@@ -246,20 +246,14 @@ func TestGetUIDFromLegacyID(t *testing.T) {
 		Limit: folderSearchLimit,
 	}
 	searchRes := &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-			},
-			Rows: []*resourcepb.ResourceTableRow{
-				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "resolved-uid",
-						Resource: "folders",
-					},
-					Cells: [][]byte{[]byte("")},
-				},
-			},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING},
 		},
+		Rows: []*resourcepb.ResourceSearchRow{{
+			Key:    &resourcepb.ResourceKey{Name: "resolved-uid", Resource: "folders"},
+			Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{""}}},
+		}},
 		TotalHits: 1,
 	}
 

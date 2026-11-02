@@ -1577,19 +1577,6 @@ func TestGetChildrenBatchPagination(t *testing.T) {
 		require.False(t, hasMore)
 	})
 
-	t.Run("hasMore true via NextPageToken even when TotalHits is missing", func(t *testing.T) {
-		searcher := &mockSearchClient{
-			folders:          makeFolders(5),
-			paginate:         true,
-			useNextPageToken: true,
-			dropTotalHits:    true,
-		}
-		children, hasMore, err := getChildrenBatch(context.Background(), searcher, namespace, []string{parent}, 2, 0)
-		require.NoError(t, err)
-		require.Len(t, children, 2)
-		require.True(t, hasMore)
-	})
-
 	t.Run("hasMore false when only one page exists and neither signal indicates more", func(t *testing.T) {
 		searcher := &mockSearchClient{folders: makeFolders(2), paginate: true}
 		children, hasMore, err := getChildrenBatch(context.Background(), searcher, namespace, []string{parent}, 10, 0)
@@ -1637,9 +1624,7 @@ type mockSearchClient struct {
 	folders []folders.Folder
 
 	// pagination controls (opt-in: zero values preserve the original "return everything" behavior)
-	paginate         bool
-	useNextPageToken bool
-	dropTotalHits    bool
+	paginate bool
 
 	searchCalls       int
 	lastSearchRequest *resourcepb.ResourceSearchRequest
@@ -1668,7 +1653,7 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 	}
 
 	// find children that match the parent filter
-	var rows []*resourcepb.ResourceTableRow
+	var rows []*resourcepb.ResourceSearchRow
 	for i := range m.folders {
 		meta, err := utils.MetaAccessor(&m.folders[i])
 		if err != nil {
@@ -1676,7 +1661,7 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 		}
 		parentUID := meta.GetFolder()
 		if parentSet[parentUID] {
-			rows = append(rows, &resourcepb.ResourceTableRow{
+			rows = append(rows, &resourcepb.ResourceSearchRow{
 				Key: &resourcepb.ResourceKey{Name: m.folders[i].Name},
 			})
 		}
@@ -1684,7 +1669,9 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 
 	if !m.paginate {
 		return &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{Rows: rows},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Rows:         rows,
+			TotalHits:    int64(len(rows)),
 		}, nil
 	}
 
@@ -1694,20 +1681,11 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 	if req.Limit > 0 && offset+req.Limit < end {
 		end = offset + req.Limit
 	}
-	pageRows := rows[offset:end]
-
-	nextToken := ""
-	if m.useNextPageToken && end < total {
-		nextToken = fmt.Sprintf("next-%d", end)
-	}
-
-	resp := &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{Rows: pageRows, NextPageToken: nextToken},
-	}
-	if !m.dropTotalHits {
-		resp.TotalHits = total
-	}
-	return resp, nil
+	return &resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Rows:         rows[offset:end],
+		TotalHits:    total,
+	}, nil
 }
 
 // allow is a single (group, resource, verb, name, folder) tuple the mock

@@ -4,14 +4,20 @@ import { EmptyState, Stack } from '@grafana/ui';
 import { ResultCount } from '../rule-row/ResultCount';
 import { RuleListSkeleton } from '../rule-row/RuleListSkeleton';
 import { RuleRowList } from '../rule-row/RuleRowList';
+import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import { InlineRequestError } from '../shared/InlineRequestError';
 import { LoadMoreFooter } from '../shared/LoadMoreFooter';
 
 import { RecordingRuleListEntry } from './RecordingRuleListEntry';
 import { useRecordingRuleSearch } from './recordingRuleSearch';
 
-export function RecordingRulesListView() {
-  const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry, total } = useRecordingRuleSearch();
+interface ListViewProps {
+  filter: RuleSearchFilter;
+}
+
+export function RecordingRulesListView({ filter }: ListViewProps) {
+  const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry, total } =
+    useRecordingRuleSearch(filter);
 
   if (isLoading) {
     return (

@@ -100,6 +100,7 @@ func NewSearchOptions(
 			Root:                           root,
 			FileThreshold:                  int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
 			IndexCacheTTL:                  cfg.IndexCacheTTL,             // How long to keep the index cache in memory
+			GlobalIndexIdleTimeout:         cfg.GlobalSearchIndexIdleTimeout,
 			BuildVersion:                   cfg.BuildVersion,
 			OwnsIndex:                      ownsIndexFn,
 			IndexMinUpdateInterval:         cfg.IndexMinUpdateInterval,
@@ -159,12 +160,14 @@ func NewSearchOptions(
 			EmbeddingConfig:                 embeddingConfig,
 			HybridSearchConfig:              hybridSearchConfig,
 			GlobalSearchCoverage:            resource.NewGlobalSearchCoverageRegistry(resource.AppManifests()),
+			AllowedReadServices:             cfg.VectorAllowedReadServices,
 		}, nil
 	}
 	return resource.SearchOptions{
-		EmbeddingConfig:    embeddingConfig,
-		SearchFields:       searchFields,
-		HybridSearchConfig: hybridSearchConfig,
+		EmbeddingConfig:     embeddingConfig,
+		SearchFields:        searchFields,
+		HybridSearchConfig:  hybridSearchConfig,
+		AllowedReadServices: cfg.VectorAllowedReadServices,
 		// it is used for search after write and throttles index updates
 		IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
 		IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,

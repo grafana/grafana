@@ -19,54 +19,6 @@ func TestParseResultsPreservesErrorStatus(t *testing.T) {
 }
 
 func TestParseResults(t *testing.T) {
-	t.Run("should parse results", func(t *testing.T) {
-		searchResp := &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "email",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "provisioned",
-						Type: resourcepb.ResourceTableColumnDefinition_BOOLEAN,
-					},
-					{
-						Name: "externalUID",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid",
-							Resource: "team",
-						},
-						Cells: [][]byte{
-							[]byte("Team 1"),
-							[]byte("team1@example.com"),
-							[]byte("true"),
-							[]byte("team1-uid"),
-						},
-					},
-				},
-			},
-			TotalHits: 1,
-		}
-
-		results, err := ParseResults(searchResp, 0)
-		require.NoError(t, err)
-		require.Len(t, results.Hits, 1)
-		require.Equal(t, "Team 1", results.Hits[0].Title)
-		require.Equal(t, "team1@example.com", results.Hits[0].Email)
-		require.True(t, results.Hits[0].Provisioned)
-		require.Equal(t, "team1-uid", results.Hits[0].ExternalUID)
-	})
-
 	t.Run("should parse field-value results", func(t *testing.T) {
 		searchResp := &resourcepb.ResourceSearchResponse{
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
@@ -108,172 +60,57 @@ func TestParseResults(t *testing.T) {
 		require.Equal(t, int64(42), *results.Hits[0].InternalId)
 	})
 
-	t.Run("should handle nil result", func(t *testing.T) {
-		results, err := ParseResults(nil, 0)
-		require.NoError(t, err)
-		require.Empty(t, results.Hits)
-		require.Zero(t, results.TotalHits)
+	t.Run("should handle empty results", func(t *testing.T) {
+		for _, response := range []*resourcepb.ResourceSearchResponse{
+			nil,
+			{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES},
+		} {
+			results, err := ParseResults(response, 0)
+			require.NoError(t, err)
+			require.Empty(t, results.Hits)
+			require.Zero(t, results.TotalHits)
+		}
 	})
 
-	t.Run("should handle nil Results", func(t *testing.T) {
-		searchResp := &resourcepb.ResourceSearchResponse{
-			Results:   nil,
-			TotalHits: 0,
+	t.Run("should reject unsupported result formats", func(t *testing.T) {
+		for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+			resourcepb.ResourceSearchRequest_UNSPECIFIED,
+			resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+			99,
+		} {
+			t.Run(format.String(), func(t *testing.T) {
+				_, err := ParseResults(&resourcepb.ResourceSearchResponse{ResultFormat: format}, 0)
+				require.ErrorContains(t, err, "unsupported search result format")
+			})
 		}
-
-		results, err := ParseResults(searchResp, 0)
-		require.NoError(t, err)
-		require.Empty(t, results.Hits)
-		require.Zero(t, results.TotalHits)
 	})
 
-	t.Run("should handle nil Results.Rows", func(t *testing.T) {
-		searchResp := &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-				},
-				Rows: nil,
-			},
-			TotalHits: 0,
+	t.Run("should reject malformed rows", func(t *testing.T) {
+		for _, row := range []*resourcepb.ResourceSearchRow{
+			nil,
+			{},
+			{Key: &resourcepb.ResourceKey{Name: "uid"}, Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0}}},
+		} {
+			_, err := ParseResults(&resourcepb.ResourceSearchResponse{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Rows:         []*resourcepb.ResourceSearchRow{row},
+			}, 0)
+			require.Error(t, err)
 		}
-
-		results, err := ParseResults(searchResp, 0)
-		require.NoError(t, err)
-		require.Empty(t, results.Hits)
-		require.Zero(t, results.TotalHits)
 	})
 
-	t.Run("should return error for mismatched number of columns and cells", func(t *testing.T) {
-		searchResp := &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "email",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "provisioned",
-						Type: resourcepb.ResourceTableColumnDefinition_BOOLEAN,
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid",
-							Resource: "team",
-						},
-						Cells: [][]byte{
-							[]byte("Team 1"),
-							[]byte("team1@example.com"),
-						},
-					},
-				},
-			},
-			TotalHits: 1,
+	t.Run("should use title fallback for an absent title", func(t *testing.T) {
+		response := &resourcepb.ResourceSearchResponse{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields:       []*resourcepb.ResourceSearchField{{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING}},
+			Rows:         []*resourcepb.ResourceSearchRow{{Key: &resourcepb.ResourceKey{Name: "uid"}}},
 		}
-
-		results, err := ParseResults(searchResp, 0)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "mismatch number of columns and cells")
-		require.Empty(t, results.Hits)
-	})
-
-	t.Run("should return error for error response", func(t *testing.T) {
-		searchResp := &resourcepb.ResourceSearchResponse{
-			Error: &resourcepb.ErrorResult{
-				Code:    500,
-				Message: "Internal server error",
-				Details: &resourcepb.ErrorDetails{
-					Name: "test-resource",
-				},
-			},
+		for _, fields := range [][]*resourcepb.ResourceSearchField{response.Fields, nil} {
+			response.Fields = fields
+			results, err := ParseResults(response, 0)
+			require.NoError(t, err)
+			require.Len(t, results.Hits, 1)
+			require.Equal(t, "(no title)", results.Hits[0].Title)
 		}
-
-		results, err := ParseResults(searchResp, 0)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "Internal server error")
-		require.True(t, apierrors.IsInternalError(err))
-		require.Empty(t, results.Hits)
-	})
-
-	t.Run("should use (no title) fallback when title cell is nil", func(t *testing.T) {
-		searchResp := &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "email",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid",
-							Resource: "team",
-						},
-						Cells: [][]byte{
-							nil, // title cell is nil
-							[]byte("team1@example.com"),
-						},
-					},
-				},
-			},
-			TotalHits: 1,
-		}
-
-		results, err := ParseResults(searchResp, 0)
-		require.NoError(t, err)
-		require.Len(t, results.Hits, 1)
-		require.Equal(t, "(no title)", results.Hits[0].Title)
-		require.Equal(t, "team1@example.com", results.Hits[0].Email)
-	})
-
-	t.Run("should use (no title) fallback when title column is missing", func(t *testing.T) {
-		searchResp := &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "email",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "provisioned",
-						Type: resourcepb.ResourceTableColumnDefinition_BOOLEAN,
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid",
-							Resource: "team",
-						},
-						Cells: [][]byte{
-							[]byte("team1@example.com"),
-							[]byte("true"),
-						},
-					},
-				},
-			},
-			TotalHits: 1,
-		}
-
-		results, err := ParseResults(searchResp, 0)
-		require.NoError(t, err)
-		require.Len(t, results.Hits, 1)
-		require.Equal(t, "(no title)", results.Hits[0].Title)
-		require.Equal(t, "team1@example.com", results.Hits[0].Email)
-		require.True(t, results.Hits[0].Provisioned)
 	})
 }

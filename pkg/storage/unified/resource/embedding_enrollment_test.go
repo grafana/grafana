@@ -58,7 +58,7 @@ func TestEmbeddingEnrollmentGatesQueries(t *testing.T) {
 			}
 			t.Run(name, func(t *testing.T) {
 				backend := &fakeVectorBackend{collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r", IsExternal: tc.external}}
-				s, _, provider := newHybridTestServer(lexTableResponse(), backend)
+				s, _, provider := newHybridTestServer(lexFieldValueResponse(), backend)
 				calls := 0
 				s.embeddingBuilders = embeddingBuilderProvider{
 					validate: func() error { return tc.validationErr },

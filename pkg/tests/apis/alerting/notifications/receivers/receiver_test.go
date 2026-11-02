@@ -1587,7 +1587,6 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	require.Len(t, receivers.Items, 3) // Includes default.
 
 	t.Run("should filter by receiver name", func(t *testing.T) {
-		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
 		list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{
 			FieldSelectors: []string{
 				"spec.title=" + recv1.Spec.Title,

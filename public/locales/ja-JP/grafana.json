@@ -1436,16 +1436,75 @@
     "gma-rule-list": {
       "alert-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
+      "datasources": "",
       "interval": "",
+      "recorded-metric": {
+        "records": "",
+        "to": ""
+      },
       "recording-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
       "result-count": {
         "alert-rules_other": "",
         "recording-rules_other": ""
+      },
+      "search": {
+        "default-policy-unavailable": "",
+        "help": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "label": "",
+          "metric": "",
+          "panel-id": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "help-availability": "",
+        "help-available": "",
+        "help-expression": "",
+        "help-filter-type": "",
+        "help-intro": "",
+        "help-title": "",
+        "invalid-tokens": "",
+        "invalid-value": "",
+        "label": "",
+        "not-paused-unavailable": "",
+        "placeholder": "",
+        "property": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "labels": "",
+          "metric": "",
+          "panel": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule-name": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "rejected-filter": "",
+        "rejected-search": "",
+        "renamed-value": "",
+        "unavailable-tokens": "",
+        "unclosed-quote": "",
+        "wildcard-in-text": ""
       },
       "shared": {
         "load-more": "",
@@ -1464,7 +1523,8 @@
         "recording": "",
         "recovering": "",
         "unavailable": ""
-      }
+      },
+      "labels_other": ""
     },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "Alertmanagerの設定を変更するには、アラート管理ページに移動してください。アクセス権がない場合は、管理者にお問い合わせください。",
@@ -5614,6 +5674,17 @@
       "ungroup-rows": "行のグループ化を解除",
       "ungroup-tabs": "タブのグループ化を解除"
     },
+    "composer": {
+      "annotation-pin": "",
+      "apply-undo-title": "",
+      "overlay": {
+        "hint-panel": "",
+        "hint-region": ""
+      },
+      "region": "",
+      "untitled-panel": "",
+      "wait-for-assistant": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -5794,7 +5865,20 @@
     "edit-actions": {
       "add": "{{typeName}}を追加",
       "add-conditional-rule": "{{ruleDescription}}ルールを追加",
+      "auto-grid-column-width": "",
+      "auto-grid-fill-screen-disable": "",
+      "auto-grid-fill-screen-enable": "",
+      "auto-grid-fit-content-disable": "",
+      "auto-grid-fit-content-enable": "",
+      "auto-grid-match-row-heights-disable": "",
+      "auto-grid-match-row-heights-enable": "",
+      "auto-grid-max-columns": "",
+      "auto-grid-max-height": "",
+      "auto-grid-min-height": "",
+      "auto-grid-row-height": "",
+      "change-settings": "",
       "collapse-all-rows": "すべての行を折りたたむ",
+      "collapse-row": "",
       "dashboard-description": "ダッシュボードの説明を変更",
       "dashboard-title": "ダッシュボードのタイトルを変更",
       "duplicate": "{{typeName}}を複製",
@@ -5803,6 +5887,7 @@
       "edit-template-variable-rule": "テンプレート変数ルールを変更",
       "edit-time-range-rule": "時間範囲ルールを変更",
       "expand-all-rows": "すべての行を展開",
+      "expand-row": "",
       "group-into-row": "行にグループ化",
       "group-into-tab": "タブにグループ化",
       "move": "{{typeName}}を移動",
@@ -5816,8 +5901,10 @@
       "panel-repeat-variable": "パネルの繰り返し",
       "panel-title": "パネルのタイトルの変更",
       "paste-panel": "パネルを貼り付け",
+      "paste-panel-styles": "",
       "remove": "{{typeName}}を削除",
       "remove-multiple": "{{typeName}}（{{num}}）を削除",
+      "rename": "",
       "replace-panel": "",
       "row-fill-screen-disable": "行の画面全体表示を無効にする",
       "row-fill-screen-enable": "行の画面全体表示を有効にする",
@@ -5825,16 +5912,39 @@
       "row-repeat-variable": "行の繰り返し基準",
       "row-show-header": "行のヘッダを表示",
       "row-title": "行のタイトルを変更",
+      "rows-hide-header": "",
+      "rows-show-header": "",
       "switch-layout": "レイアウトを切り替え",
       "switch-layout-row": "レイアウトを切り替える",
       "switch-layout-tab": "レイアウトを切り替える",
       "tab-repeat-variable": "タブの繰り返し基準",
       "tab-title": "タブのタイトルを変更",
+      "unlink-library-panel": "",
+      "variable-adhoc-default-filters": "",
+      "variable-adhoc-default-group-by": "",
+      "variable-adhoc-default-keys": "",
+      "variable-adhoc-enable-group-by": "",
+      "variable-allow-custom-value": "",
+      "variable-constant-value": "",
+      "variable-custom-all-value": "",
+      "variable-datasource": "",
+      "variable-datasource-name-filter": "",
+      "variable-datasource-type": "",
       "variable-description": "変数の説明を変更",
       "variable-hide": "変数の非表示設定を変更",
+      "variable-include-all": "",
+      "variable-interval-auto": "",
+      "variable-interval-min-interval": "",
+      "variable-interval-step-count": "",
+      "variable-interval-values": "",
       "variable-label": "変数ラベルを変更",
+      "variable-multi-value": "",
       "variable-name": "変数名を変更",
-      "variable-type": "変数の種類を変更"
+      "variable-refresh": "",
+      "variable-switch-values": "",
+      "variable-textbox-value": "",
+      "variable-type": "変数の種類を変更",
+      "view-panel-option": ""
     },
     "empty": {
       "add-library-panel-body": "他のダッシュボードと共有されている視覚化を追加します。",
@@ -6058,6 +6168,11 @@
     "modes": {
       "agent-edit": "",
       "change-mode": "",
+      "composer": "",
+      "composer-description": "",
+      "composer-no-permission": "",
+      "composer-save-first": "",
+      "composer-unsupported": "",
       "current": "",
       "discard": "",
       "discard-body": "",
@@ -6967,7 +7082,8 @@
         "change-annotation-controls-display": "注釈コントロールの表示を変更",
         "change-annotation-enabled-state": "注釈の有効状態を変更",
         "change-annotation-name": "注釈の名前を変更",
-        "change-annotation-panel-filter": "注釈パネルのフィルターを変更"
+        "change-annotation-panel-filter": "注釈パネルのフィルターを変更",
+        "change-annotation-query": ""
       },
       "edit-query": "クエリを編集"
     },
@@ -7905,7 +8021,7 @@
       }
     },
     "unlink-modal": {
-      "body-unlink-panel": "このパネルのリンクを解除すると、他のダッシュボードに影響を与えずに編集できます。ただし、変更を加えると、元の再利用可能パネルには戻せなくなります。",
+      "body-unlink-panel": "",
       "confirmText-yes-unlink": "はい、リンクを解除します",
       "title-really-unlink-panel": "このパネルのリンクを解除してもよろしいですか？"
     },
@@ -9136,10 +9252,6 @@
       "attribute-category": {
         "other": "その他"
       },
-      "exception-message": "メッセージ：",
-      "exception-stacktrace": "スタックトレース",
-      "exception-title": "例外",
-      "exception-type": "種類：",
       "label": {
         "kind": "種類：",
         "library-name": "ライブラリ名：",
@@ -9244,6 +9356,7 @@
     },
     "trace-page-header": {
       "aria-label-share-dropdown": "共有とフィードバックメニューを開く",
+      "copy-trace-id": "",
       "critical-path": "クリティカルパス",
       "critical-path-tooltip": "クリティカルパスのスパンを選択します。これは、トレースの最短期間を決定する依存タスクの最長シーケンスです。",
       "duration": "期間",
@@ -9267,7 +9380,7 @@
       "share-group": "共有",
       "share-tooltip": "共有とフィードバック",
       "spans": "スパン",
-      "start-time": "開始時間",
+      "start-time": "",
       "success-indicator": "トレースが成功しました",
       "target": "ターゲット",
       "tooltip-url": "{{route}}または{{url}}または{{target}}または{{path}}",
@@ -9276,6 +9389,12 @@
       "trace-banner-metrics": "{{duration}} · トレース全体の{{percent}}%",
       "trace-banner-warning": "トレースの警告バナー",
       "trace-id": "トレースID",
+      "trace-summary-error": "",
+      "trace-summary-error-status": "",
+      "trace-summary-hide-stacktrace": "",
+      "trace-summary-show-stacktrace": "",
+      "trace-summary-warning": "",
+      "trace-summary-warning-status": "",
       "url": "URL",
       "warning-indicator": "トレースにクライアントエラーあり"
     },
@@ -12094,10 +12213,14 @@
     },
     "log-line": {
       "has-error": "エラーあり",
+      "has-error-fields": "",
+      "has-stacktrace": "",
       "is-sampled": "サンプリング済み",
       "show-less": "表示を減らす",
       "show-more": "さらに表示する",
-      "tooltip-error": "エラー：{{errorMessage}}"
+      "tooltip-error": "エラー：{{errorMessage}}",
+      "tooltip-error-fields": "",
+      "tooltip-stacktrace": ""
     },
     "log-line-context": {
       "center-matched-line": "一致した行を中央に表示",
@@ -13314,7 +13437,6 @@
     "add-panel": {
       "cancel": "キャンセル",
       "card-author": "{{author}}による",
-      "card-selected": "{{title}}（選択済み）",
       "card-updated": "{{when}}に更新",
       "create-name": "ノートブック名",
       "create-name-required": "ノートブック名は必須です",
@@ -13325,6 +13447,7 @@
       "error-open-conflict": "",
       "list-error": "ノートブックの読み込みに失敗しました",
       "list-error-body": "ノートブックの読み込み中に問題が発生しました。もう一度お試しいただくか、代わりに新しいノートブックを作成してください。",
+      "list-label": "",
       "list-no-matches": "これらのフィルターに一致するノートブックはありません。",
       "list-none": "まだノートブックがありません。代わりにノートブックを作成してください。",
       "list-none-read-only": "まだノートブックがなく、作成する権限もありません。",
@@ -14791,7 +14914,7 @@
       "resources-to-migrate-empty": "現在の検索に一致するフォルダまたはリソースはありません。",
       "resources-to-migrate-heading": "移行するリソース",
       "resources-to-migrate-search": "フォルダとリソースを検索",
-      "resources-to-migrate-subtitle": "フォルダ全体、またはフォルダ内の個々のリソースを選択します。フォルダを選択すると、そのフォルダ内に直接あるリソースのみが移行されます。サブフォルダ内のものは、それぞれのフォルダを介して移行されます。",
+      "resources-to-migrate-subtitle": "",
       "retain-resources-description": "プルリクエストが開いている間は、移行したリソースをこのインスタンスに保持し、ブランチがマージされるまで有効な状態を維持します。これらのリソースは、プルリクエストをマージする前に手動で削除する必要があります。削除しないと、リソースが競合して同期中にエラーが発生します。",
       "retain-resources-label": "レビュー中は既存のリソースを保持",
       "retain-resources-warning-body": "プルリクエストをマージする前に、移行したリソースを手動で削除する必要があります。ブランチのマージ時にこれらが残っていると、取り込まれる管理対象リソースと競合し、同期されません。",
@@ -15606,6 +15729,12 @@
       "delete-confirm-title_other": "{{count}}個の項目を削除しますか？",
       "delete-transformations-confirm-title_other": "{{count}}個の変換を削除しますか？"
     },
+    "datasource-error": {
+      "load-failed": "",
+      "load-failed-named": "",
+      "not-found": "",
+      "settings-not-found": ""
+    },
     "delete-modal": {
       "body-transformation": "1つの変換を削除すると、他の変換が破損する可能性があります。"
     },
@@ -15929,6 +16058,7 @@
       "exchange": "ルートスコープを{{scope}}に変更",
       "expand": "展開",
       "filter": "",
+      "filterAriaLabel": "",
       "loading": "ダッシュボードを読み込んでいます",
       "megaMenuSectionHeading": "",
       "noResultsForFilter": "クエリに一致する結果が見つかりませんでした。",
@@ -15937,7 +16067,6 @@
       "noResultsNoScopes": "スコープが選択されていません",
       "toggle": {
         "collapse": "推奨ダッシュボードリストを折りたたむ",
-        "disabled": "読み取り専用モードのため、推奨されるダッシュボードリストは無効になっています",
         "expand": "推奨ダッシュボードリストを展開"
       }
     },
@@ -16186,8 +16315,8 @@
       "copy-link-button": "コピー",
       "info-text": "以下のオプションでカスタマイズした、このダッシュボードまたはパネルへの直接リンクを作成します。",
       "link-url": "URLをリンク",
-      "render-alert": "画像レンダラープラグインがインストールされていません",
-      "render-instructions": "画像をレンダリングするには、<2>Grafana画像レンダラープラグイン</2>をインストールする必要があります。プラグインをインストールするには、Grafana管理者にお問い合わせください。",
+      "render-alert": "",
+      "render-instructions": "",
       "rendered-image": "レンダリングされた画像への直接リンク",
       "save-alert": "ダッシュボードは保存されていません",
       "save-dashboard": "パネル画像をレンダリングするには、最初にダッシュボードを保存する必要があります。",
@@ -16471,6 +16600,17 @@
     "generate-suggestion": "提案を生成",
     "improve-query": "クエリを改善"
   },
+  "st-pod-ready": {
+    "error": {
+      "body-with-support": "",
+      "support-ack": "",
+      "title": "",
+      "title-fallback": ""
+    },
+    "timeout": {
+      "banner": ""
+    }
+  },
   "stars": {
     "mark-as-starred": "お気に入りに登録",
     "mark-as-starred-with-title": "「{{title}}」をお気に入りに登録",
@@ -16639,6 +16779,9 @@
     }
   },
   "swagger": {
+    "api-picker": {
+      "preferred": ""
+    },
     "login": "ログイン",
     "manifests": {
       "api-docs": "",
@@ -17001,6 +17144,9 @@
     "truncation": {
       "label": "",
       "tooltip": ""
+    },
+    "variable-suggestions": {
+      "reduced-field": ""
     }
   },
   "theme-playground": {
@@ -17335,9 +17481,11 @@
       "placeholder-frame": "フレーム"
     },
     "config-from-query-transformer-editor": {
+      "description-dynamic-field-name-matcher": "",
       "label-apply-to": "適用先",
       "label-apply-to-options": "適用先オプション",
-      "label-config-query": "クエリを設定"
+      "label-config-query": "クエリを設定",
+      "name-dynamic-field-name-matcher": ""
     },
     "convert-field-type-transformer-editor": {
       "aria-label-add-a-convert-field-type-transformer": "フィールドタイプ変換機能を追加",

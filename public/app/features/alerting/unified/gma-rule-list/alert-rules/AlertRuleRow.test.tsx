@@ -1,5 +1,8 @@
 import { render, screen } from 'test/test-utils';
 
+import { mockDataSource } from '../../mocks';
+import { setupDataSources } from '../../testSetup/datasources';
+
 import { AlertRuleRow } from './AlertRuleRow';
 import { type AlertRuleSearchHit } from './alertRuleSearchHit';
 
@@ -74,5 +77,30 @@ describe('AlertRuleRow', () => {
     renderRow({ searchHit: baseHit() });
 
     expect(screen.queryByRole('img', { name: /Evaluated every/ })).not.toBeInTheDocument();
+  });
+
+  it('shows queried datasources when the hit has them', () => {
+    setupDataSources(mockDataSource({ uid: 'ds-prom', name: 'Prometheus' }));
+    renderRow({ searchHit: baseHit({ datasourceUIDs: ['ds-prom'] }) });
+
+    expect(screen.getByRole('link', { name: 'Prometheus' })).toBeInTheDocument();
+  });
+
+  it('shows no datasources when the hit has none', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByRole('link', { name: /data source/i })).not.toBeInTheDocument();
+  });
+
+  it('shows labels when the hit has them', () => {
+    renderRow({ searchHit: baseHit({ labels: { team: 'platform', env: 'prod' } }) });
+
+    expect(screen.getByText('2 labels')).toBeInTheDocument();
+  });
+
+  it('shows no labels when the hit has none', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText(/label/)).not.toBeInTheDocument();
   });
 });

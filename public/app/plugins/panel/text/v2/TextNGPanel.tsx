@@ -10,7 +10,6 @@ import {
   type GrafanaTheme2,
   type PanelProps,
   type InterpolateFunction,
-  VariableSuggestionsScope,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import {
@@ -24,7 +23,6 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import config from 'app/core/config';
-import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import {
   type CodeOptions,
@@ -48,6 +46,7 @@ import { usePagination } from './pagination';
 import { catchTemplateError, renderContent, type RenderedContent, type RowWindow } from './renderContent';
 import { useThemedReplaceVariables } from './useThemedReplaceVariables';
 import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat, isTextNewFeaturesEnabled } from './utils';
+import { getTextVariableSuggestions } from './variableSuggestions';
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
 
@@ -63,16 +62,25 @@ export interface Props extends PanelProps<Options> {}
 
 export function TextNGPanel(props: Props) {
   const { app } = usePanelContext();
-  const { eventBus, options, onOptionsChange, data, renderCounter, fitContent, transparent, height, width, title, id } =
-    props;
+  const {
+    eventBus,
+    options,
+    onOptionsChange,
+    data,
+    renderCounter,
+    fitContent,
+    fitMaxHeight,
+    transparent,
+    height,
+    width,
+    title,
+    id,
+  } = props;
   const styles = useStyles2(getStyles);
   const replaceVariables = useThemedReplaceVariables(props.replaceVariables);
   const isEditing = app === CoreApp.PanelEditor;
   // Repeated copies share `id`. The dashboard gives each copy its own id in the request.
   const consent = { panelId: data.request?.panelId ?? id, panelTitle: title, dashboardUid: data.request?.dashboardUID };
-  // Fit-content only applies to the rendered view: the inline editor keeps its
-  // bounded, scrollable layout since active editing needs stable interactive space.
-  const fitContentOn = fitContent && !isEditing;
   const content = options.content ?? defaultOptions.content ?? '';
   // Gated here and not only in the options pane: a panel saved while the flag was on
   // still carries its per-row mode, and the pane cannot withhold what is already set.
@@ -89,10 +97,9 @@ export function TextNGPanel(props: Props) {
     [newFeatures, frames, currentFrameIndex]
   );
 
-  // Values scope, so the ${__value} macros the renderer resolves are offered.
   const suggestions = useMemo(
-    () => (isEditing ? getDataLinksVariableSuggestions(series, VariableSuggestionsScope.Values) : []),
-    [isEditing, series]
+    () => (isEditing ? getTextVariableSuggestions(series, renderMode) : []),
+    [isEditing, series, renderMode]
   );
 
   const [view, setViewState] = useState<ViewMode>(() => viewModeByPanel.get(eventBus) ?? DEFAULT_VIEW_MODE);
@@ -107,18 +114,35 @@ export function TextNGPanel(props: Props) {
     }
   }, [isEditing, eventBus]);
 
-  const { active, page, numPages, rangeStart, rangeEnd, rowCount, rowWindow, smallVersion, setPage, contentRef } =
-    usePagination({
-      content,
-      mode: options.mode,
-      renderMode,
-      pageSize: options.pageSize,
-      series,
-      height,
-      width,
-      // Not fitContentOn: the editor must not offer a page the applied panel will not honour.
-      fitContent,
-    });
+  const {
+    active,
+    page,
+    numPages,
+    rangeStart,
+    rangeEnd,
+    rowCount,
+    rowWindow,
+    smallVersion,
+    fitHeight,
+    setPage,
+    contentRef,
+  } = usePagination({
+    content,
+    mode: options.mode,
+    renderMode,
+    pageSize: options.pageSize,
+    series,
+    height,
+    width,
+    // Not fitContentOn: the editor must not offer a page the applied panel will not honour.
+    fitContent,
+    fitMaxHeight,
+  });
+
+  // Fit-content only applies to the rendered view: the inline editor keeps its
+  // bounded, scrollable layout since active editing needs stable interactive space.
+  // A capped panel fitting pages to its cap lays out at the cap, as a fixed-height panel would.
+  const fitContentOn = fitContent && !isEditing && fitHeight === undefined;
 
   const [processed, setProcessed] = useState<ProcessedContent>(() =>
     // The editor renders its own preview, so skip the render pass on entry.
@@ -290,7 +314,7 @@ export function TextNGPanel(props: Props) {
   }
 
   return (
-    <Stack direction="column" gap={1} height="100%">
+    <Stack direction="column" gap={1} height={fitHeight === undefined ? '100%' : `${fitHeight}px`}>
       <Stack direction="column" grow={1} minHeight={0}>
         {panel}
       </Stack>

@@ -70,7 +70,7 @@ jobs:
           echo "Grafana version: $GRAFANA_VERSION"
 
       - name: Run coverage for ${{ matrix.codeowner }}
-        run: yarn test:coverage:by-codeowner "${{ matrix.codeowner }}" --maxWorkers=1
+        run: npm run test:coverage:by-codeowner -- "${{ matrix.codeowner }}" --maxWorkers=1
         env:
           SHOULD_OPEN_COVERAGE_REPORT: 'false'
           CI: 'true'

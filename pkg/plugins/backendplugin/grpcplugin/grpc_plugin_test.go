@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 
+	"github.com/grafana/grafana-app-sdk/plugin"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 
 	localv3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
@@ -139,7 +140,7 @@ func TestGrpcPluginRevokesTokenWhenProcessCannotStart(t *testing.T) {
 		token, err = localv3.IssueLocalAccessPolicyToken("missing-app", nil)
 		require.NoError(t, err)
 		t.Cleanup(func() { localv3.RevokeLocalAccessPolicyToken(token) })
-		return []string{localv3.EnvVarAccessPolicyToken + "=" + token}
+		return []string{plugin.EnvVarAPIAccessCAPToken + "=" + token}
 	})
 	require.NoError(t, err)
 	require.Error(t, p.Start(context.Background()))

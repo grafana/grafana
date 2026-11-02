@@ -113,6 +113,44 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/folders/${queryArg.name}/parents` }),
         providesTags: ['Folder'],
       }),
+      getFolderStatus: build.query<GetFolderStatusApiResponse, GetFolderStatusApiArg>({
+        query: (queryArg) => ({
+          url: `/folders/${queryArg.name}/status`,
+          params: {
+            pretty: queryArg.pretty,
+          },
+        }),
+        providesTags: ['Folder'],
+      }),
+      replaceFolderStatus: build.mutation<ReplaceFolderStatusApiResponse, ReplaceFolderStatusApiArg>({
+        query: (queryArg) => ({
+          url: `/folders/${queryArg.name}/status`,
+          method: 'PUT',
+          body: queryArg.folder,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['Folder'],
+      }),
+      updateFolderStatus: build.mutation<UpdateFolderStatusApiResponse, UpdateFolderStatusApiArg>({
+        query: (queryArg) => ({
+          url: `/folders/${queryArg.name}/status`,
+          method: 'PATCH',
+          body: queryArg.patch,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+            force: queryArg.force,
+          },
+        }),
+        invalidatesTags: ['Folder'],
+      }),
     }),
     overrideExisting: false,
   });
@@ -238,6 +276,43 @@ export type GetFolderParentsApiArg = {
   /** name of the FolderInfoList */
   name: string;
 };
+export type GetFolderStatusApiResponse = /** status 200 OK */ Folder;
+export type GetFolderStatusApiArg = {
+  /** name of the Folder */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+};
+export type ReplaceFolderStatusApiResponse = /** status 200 OK */ Folder | /** status 201 Created */ Folder;
+export type ReplaceFolderStatusApiArg = {
+  /** name of the Folder */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  folder: Folder;
+};
+export type UpdateFolderStatusApiResponse = /** status 200 OK */ Folder | /** status 201 Created */ Folder;
+export type UpdateFolderStatusApiArg = {
+  /** name of the Folder */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch). */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
+  force?: boolean;
+  patch: Patch;
+};
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
   categories?: string[];
@@ -356,6 +431,24 @@ export type FolderSpec = {
   description?: string;
   title: string;
 };
+export type FolderCascadeDeleteStatus = {
+  /** Errors encountered while deleting descendants. */
+  errors?: string[];
+  /** When the cascade reached a terminal state, in Unix milliseconds. */
+  finished?: number;
+  /** Descendants not yet deleted. */
+  remaining?: number;
+  /** When the cascade started, in Unix milliseconds. */
+  started?: number;
+  /** Current phase of the cascade delete. */
+  state: string;
+  /** Descendants discovered when the cascade started; the fixed denominator for remaining. */
+  total?: number;
+};
+export type FolderStatus = {
+  /** Progress of a finalizer-driven cascade delete. Absent until deletion starts. */
+  cascadeDelete?: FolderCascadeDeleteStatus;
+};
 export type Folder = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -364,6 +457,7 @@ export type Folder = {
   metadata: ObjectMeta;
   /** Spec is the spec of the Folder */
   spec: FolderSpec;
+  status?: FolderStatus;
 };
 export type ListMeta = {
   /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
@@ -613,4 +707,8 @@ export const {
   useLazyGetFolderCountsQuery,
   useGetFolderParentsQuery,
   useLazyGetFolderParentsQuery,
+  useGetFolderStatusQuery,
+  useLazyGetFolderStatusQuery,
+  useReplaceFolderStatusMutation,
+  useUpdateFolderStatusMutation,
 } = injectedRtkApi;

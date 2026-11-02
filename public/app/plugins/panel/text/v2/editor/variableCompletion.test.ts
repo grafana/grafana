@@ -4,7 +4,7 @@ import { EditorView } from '@codemirror/view';
 
 import { VariableOrigin, type VariableSuggestion } from '@grafana/data';
 
-import { variableCompletion } from './variableCompletion';
+import { reducerCompletion, variableCompletion } from './variableCompletion';
 
 const suggestions: VariableSuggestion[] = [
   { value: 'myVar', label: 'myVar', documentation: 'Custom variable', origin: VariableOrigin.Template },
@@ -58,5 +58,34 @@ describe('variableCompletion', () => {
   it('does not double the brace `closeBrackets` inserted', () => {
     // The editor leaves bracket closing on, so typing `${` gives `${|}`.
     expect(completeAndApply('${|}', '${myVar}')).toBe('${myVar}');
+  });
+});
+
+describe('reducerCompletion', () => {
+  function completeReducer(doc: string) {
+    return reducerCompletion(new CompletionContext(EditorState.create({ doc }), doc.length, false));
+  }
+
+  it('offers reducers after :reduce: in a data macro, replacing only the id', () => {
+    const doc = 'CPU ${__data.fields.cpu:reduce:me';
+    const result = completeReducer(doc);
+
+    expect(result?.from).toBe(doc.length - 'me'.length);
+    expect(result?.options.map((o) => o.label)).toEqual(expect.arrayContaining(['lastNotNull', 'mean', 'max']));
+  });
+
+  it('leaves out reducers that return every value rather than one', () => {
+    const labels = completeReducer('${__data.fields.cpu:reduce:')?.options.map((o) => o.label);
+
+    expect(labels).not.toContain('allValues');
+    expect(labels).not.toContain('uniqueValues');
+  });
+
+  it.each([
+    ['outside a data macro', '${myVar:reduce:'],
+    ['after the macro is closed', '${__data.fields.cpu:reduce:mean} '],
+    ['before :reduce:', '${__data.fields.cpu'],
+  ])('does not respond %s', (_name, doc) => {
+    expect(completeReducer(doc)).toBeNull();
   });
 });

@@ -65,7 +65,7 @@ jobs:
     - name: Install Playwright browsers
       uses: ./.github/actions/setup-playwright
     - name: Start Storybook
-      run: STORYBOOK_THEME=${{ matrix.STORYBOOK_THEME }} yarn storybook &
+      run: STORYBOOK_THEME=${{ matrix.STORYBOOK_THEME }} npm run storybook &
     - name: Run tests
       # the chromium browser used by Playwright sets its locale to "en_US@posix" by default
       # this is not a valid language code, and causes some stories to fail to load!
@@ -73,4 +73,4 @@ jobs:
       # see https://github.com/microsoft/playwright/issues/34046
       env:
         LANG: en_US
-      run: yarn wait-on --timeout 120000 http://localhost:9001 && yarn test:storybook
+      run: npm exec --no -- wait-on --timeout 120000 http://localhost:9001 && npm run test:storybook

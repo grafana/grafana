@@ -17,6 +17,12 @@ inputs:
       When 'false', only GOMODCACHE is cached via actions/cache.
     required: false
     default: 'true'
+  cache-modules-save:
+    description: >-
+      Whether to save the modules-only cache. Set to 'false' for matrix jobs
+      that should only restore it. Only applies when cache-build is 'false'.
+    required: false
+    default: 'true'
 
 runs:
   using: "composite"
@@ -29,12 +35,20 @@ runs:
         cache: ${{ inputs.cache == 'true' && inputs.cache-build == 'true' }}
         cache-dependency-path: ${{ inputs.cache == 'true' && inputs.cache-build == 'true' && '**/*.mod' || '' }}
 
-    # When cache-build is disabled, cache only GOMODCACHE via actions/cache.
+    # When cache-build is disabled, cache only GOMODCACHE.
     # This avoids restoring/saving the large GOCACHE (~5 GB) for jobs that
     # do little or no compilation (lint, codegen, workspace checks).
     - name: Cache Go modules only
-      if: inputs.cache == 'true' && inputs.cache-build != 'true'
+      if: inputs.cache == 'true' && inputs.cache-build != 'true' && inputs.cache-modules-save == 'true'
       uses: actions/cache@v4
+      with:
+        path: ~/go/pkg/mod
+        key: gomod-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.mod') }}
+        restore-keys: gomod-${{ runner.os }}-${{ runner.arch }}-
+
+    - name: Restore Go modules only
+      if: inputs.cache == 'true' && inputs.cache-build != 'true' && inputs.cache-modules-save != 'true'
+      uses: actions/cache/restore@v4
       with:
         path: ~/go/pkg/mod
         key: gomod-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.mod') }}

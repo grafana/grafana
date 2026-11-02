@@ -173,7 +173,6 @@ func globalSearchDescription() string {
 		"Each result names its own group, resource and kind, and is authorized on its own.\n\n" +
 		"Only the fields every resource has can be used, plus:\n\n" +
 		"- `" + resource.SEARCH_FIELD_GROUP_RESOURCE + "` (`{group}/{resource}`): filter and facet, to narrow the search to some types or count results per type.\n" +
-		"- `" + resource.SEARCH_FIELD_CREATED + "` and `" + resource.SEARCH_FIELD_UPDATED + "`: also filter (including range) and sort, so results of several types can be ordered by time.\n" +
 		"- `" + resource.SEARCH_FIELD_FOLDER_TREE + "`: filter with `In` only. Matches what is in the named folders or in any folder below them, not the named folders themselves. " +
 		"`general` names the root folder and matches everything; an empty value is rejected.\n\n" +
 		"Results are eventually consistent: just after a change, a search can still return what was there before, " +

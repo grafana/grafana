@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -70,8 +71,8 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 		}, nil, nil)
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
-		names := make([]string, 0, len(rsp.Results.Rows))
-		for _, row := range rsp.Results.Rows {
+		names := make([]string, 0, len(rsp.Rows))
+		for _, row := range rsp.Rows {
 			names = append(names, row.Key.Name)
 		}
 		return names
@@ -117,8 +118,8 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
 
-		names := make([]string, 0, len(rsp.Results.Rows))
-		for _, row := range rsp.Results.Rows {
+		names := make([]string, 0, len(rsp.Rows))
+		for _, row := range rsp.Rows {
 			names = append(names, row.Key.Name)
 		}
 		assert.ElementsMatch(t, []string{"folder-a"}, names)
@@ -133,7 +134,7 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 		require.Nil(t, rsp.Error)
 
 		found := map[string]string{}
-		for _, row := range rsp.Results.Rows {
+		for _, row := range rsp.Rows {
 			found[row.Key.Name] = row.Key.Group + "/" + row.Key.Resource
 		}
 		assert.Equal(t, map[string]string{
@@ -160,25 +161,17 @@ func TestSearchResponseResourceVersion(t *testing.T) {
 			idx, err := backend.BuildIndex(ctx, tc.key, 1, "test", indexTestDocs(src, 1, 42), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 			require.NoError(t, err)
 
-			for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
-				resourcepb.ResourceSearchRequest_UNSPECIFIED,
-				resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
-				resourcepb.ResourceSearchRequest_FIELD_VALUES,
-			} {
-				t.Run(format.String(), func(t *testing.T) {
-					response, err := idx.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
-						Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
-							Namespace: src.Namespace, Group: src.Group, Resource: src.Resource,
-						}},
-						Limit:        10,
-						ResultFormat: format,
-					}, nil, nil)
-					require.NoError(t, err)
-					require.Nil(t, response.Error)
-					assert.Equal(t, int64(1), response.TotalHits)
-					assert.Equal(t, tc.rv, response.ResourceVersion)
-				})
-			}
+			response, err := idx.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Namespace: src.Namespace, Group: src.Group, Resource: src.Resource,
+				}},
+				Limit:        10,
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			}, nil, nil)
+			require.NoError(t, err)
+			require.Nil(t, response.Error)
+			assert.Equal(t, int64(1), response.TotalHits)
+			assert.Equal(t, tc.rv, response.ResourceVersion)
 		})
 	}
 }
@@ -248,10 +241,10 @@ func TestGlobalIndexSearchFields(t *testing.T) {
 	_, ok = perResource.keywordFields[resource.SEARCH_FIELD_GROUP_RESOURCE]
 	assert.False(t, ok, "the resource type must stay unavailable to per-resource search")
 
-	// Timestamps are sortable here and nowhere else.
+	// Timestamps are sortable in both, so results can be ordered by time.
 	for _, name := range []string{resource.SEARCH_FIELD_CREATED, resource.SEARCH_FIELD_UPDATED} {
 		assert.True(t, global.sortableFields[name], name)
-		assert.False(t, perResource.sortableFields[name], name)
+		assert.True(t, perResource.sortableFields[name], name)
 	}
 
 	// A namespace-wide index holds no deleted documents, so it does not offer the
@@ -317,10 +310,10 @@ func TestGlobalIndexPagesThroughSameNamedDocuments(t *testing.T) {
 		}, nil, nil)
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
-		if len(rsp.Results.Rows) == 0 {
+		if len(rsp.Rows) == 0 {
 			break
 		}
-		row := rsp.Results.Rows[0]
+		row := rsp.Rows[0]
 		seen = append(seen, row.Key.Group+"/"+row.Key.Resource+"/"+row.Key.Name)
 		after = row.SortFields
 	}
@@ -523,8 +516,8 @@ func searchFolderTree(t *testing.T, index resource.ResourceIndex, folders ...str
 	}, nil, nil)
 	require.NoError(t, err)
 	require.Nil(t, rsp.Error)
-	names := make([]string, 0, len(rsp.Results.Rows))
-	for _, row := range rsp.Results.Rows {
+	names := make([]string, 0, len(rsp.Rows))
+	for _, row := range rsp.Rows {
 		names = append(names, row.Key.Name)
 	}
 	return names
@@ -694,8 +687,8 @@ func TestPerResourceFolderTreeSearch(t *testing.T) {
 					require.NoError(t, err)
 					require.Nil(t, rsp.Error)
 					assert.True(t, proto.Equal(before, req), "the caller's filters must not change")
-					names := make([]string, 0, len(rsp.Results.Rows))
-					for _, row := range rsp.Results.Rows {
+					names := make([]string, 0, len(rsp.Rows))
+					for _, row := range rsp.Rows {
 						assert.Equal(t, "dashboards", row.Key.Resource)
 						names = append(names, row.Key.Name)
 					}
@@ -759,7 +752,7 @@ func TestPerResourceFolderTreeUsesCurrentFolderIndex(t *testing.T) {
 	rsp, err := search(folders)
 	require.NoError(t, err)
 	require.Nil(t, rsp.Error)
-	require.Len(t, rsp.Results.Rows, 1)
+	require.Len(t, rsp.Rows, 1)
 
 	current, err := backend.BuildIndex(ctx, folderKey, 1, "test", func(index resource.ResourceIndex) (int64, error) {
 		return 2, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{folderTreeDoc(folderKey, "folders", "mid", "other")}})
@@ -772,7 +765,7 @@ func TestPerResourceFolderTreeUsesCurrentFolderIndex(t *testing.T) {
 	rsp, err = search(current)
 	require.NoError(t, err)
 	require.Nil(t, rsp.Error)
-	assert.Empty(t, rsp.Results.Rows)
+	assert.Empty(t, rsp.Rows)
 
 	for name, source := range map[string]resource.ResourceIndex{
 		"wrong resource":  dashboards,
@@ -815,8 +808,8 @@ func TestPerResourceFolderTreeReopensFromDisk(t *testing.T) {
 	}, &resource.SearchIndexes{Folders: folders}, nil)
 	require.NoError(t, err)
 	require.Nil(t, rsp.Error)
-	require.Len(t, rsp.Results.Rows, 1)
-	assert.Equal(t, "dash", rsp.Results.Rows[0].Key.Name)
+	require.Len(t, rsp.Rows, 1)
+	assert.Equal(t, "dash", rsp.Rows[0].Key.Name)
 }
 
 func TestPerResourceFolderTreeRestoresSnapshot(t *testing.T) {
@@ -847,8 +840,8 @@ func TestPerResourceFolderTreeRestoresSnapshot(t *testing.T) {
 	}, Limit: 10}, &resource.SearchIndexes{Folders: folderIndex}, nil)
 	require.NoError(t, err)
 	require.Nil(t, rsp.Error)
-	require.Len(t, rsp.Results.Rows, 1)
-	assert.Equal(t, "dash", rsp.Results.Rows[0].Key.Name)
+	require.Len(t, rsp.Rows, 1)
+	assert.Equal(t, "dash", rsp.Rows[0].Key.Name)
 }
 
 func TestPerResourceFolderTreeSharedDuringMoves(t *testing.T) {
@@ -1026,10 +1019,10 @@ func TestFolderTreeSearchOperators(t *testing.T) {
 
 	rsp := search(string(selection.Equals), "top")
 	require.Nil(t, rsp.Error)
-	assert.Len(t, rsp.Results.Rows, 1)
+	assert.Len(t, rsp.Rows, 1)
 	rsp = search(string(selection.Equals), "general")
 	require.Nil(t, rsp.Error)
-	assert.Len(t, rsp.Results.Rows, 2, "everything is below the top")
+	assert.Len(t, rsp.Rows, 2, "everything is below the top")
 
 	for _, tc := range []struct {
 		operator string
@@ -1205,7 +1198,7 @@ func BenchmarkGlobalFolderTree(b *testing.B) {
 		}, nil, nil)
 		require.NoError(b, err)
 		require.Nil(b, rsp.Error)
-		require.Len(b, rsp.Results.Rows, 10)
+		require.Len(b, rsp.Rows, 10)
 	}
 
 	for _, st := range subtrees[:3] {
@@ -1382,9 +1375,78 @@ func TestFolderSetCheckErrorsReachTheSearchWithATextQuery(t *testing.T) {
 		}, nil, nil)
 	require.NoError(t, err)
 	require.Nil(t, rsp.Error)
-	require.Len(t, rsp.Results.Rows, 1)
-	assert.Equal(t, "dash-top", rsp.Results.Rows[0].Key.Name)
+	require.Len(t, rsp.Rows, 1)
+	assert.Equal(t, "dash-top", rsp.Rows[0].Key.Name)
 
 	_, err = run(func(index.IndexReader) (index.DocValueReader, error) { return failingDocValues{}, nil })
 	require.ErrorContains(t, err, "doc values are unreadable")
+}
+
+// Clients lock provisioned resources whose manager does not allow edits, so
+// false must come back as false, not be left out like a resource with no manager.
+func TestSearchReturnsManagerAllowEdits(t *testing.T) {
+	src := newTestNsResource()
+	for _, key := range []resource.NamespacedResource{src, resource.GlobalSearchKey(src.Namespace)} {
+		t.Run(key.String(), func(t *testing.T) {
+			backend, _ := setupBleveBackend(t)
+			ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: src.Namespace})
+			doc := func(name string, manager *utils.ManagerProperties) *resource.BulkIndexItem {
+				return &resource.BulkIndexItem{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
+					RV: 1, Name: name, Title: name, Manager: manager,
+					Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource, Name: name},
+				}}
+			}
+			idx, err := backend.BuildIndex(ctx, key, 3, "test", func(index resource.ResourceIndex) (int64, error) {
+				return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+					doc("editable", &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "repo", AllowsEdits: true}),
+					doc("locked", &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "repo"}),
+					doc("unmanaged", nil),
+				}})
+			}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+			require.NoError(t, err)
+
+			for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+				resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+				resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			} {
+				t.Run(format.String(), func(t *testing.T) {
+					rsp, err := idx.Search(ctx, NewStubAccessClient(map[string]bool{src.Resource: true}), &resourcepb.ResourceSearchRequest{
+						Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource}},
+						Fields:       []string{resource.SEARCH_FIELD_MANAGER_KIND, resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS},
+						Limit:        10,
+						ResultFormat: format,
+					}, nil, nil)
+					require.NoError(t, err)
+					require.Nil(t, rsp.Error)
+					assert.Equal(t, map[string]any{"editable": true, "locked": false, "unmanaged": nil}, allowEditsByName(t, rsp))
+				})
+			}
+		})
+	}
+}
+
+func allowEditsByName(t *testing.T, rsp *resourcepb.ResourceSearchResponse) map[string]any {
+	t.Helper()
+	got := map[string]any{}
+	if rsp.Results != nil {
+		col := slices.IndexFunc(rsp.Results.Columns, func(c *resourcepb.ResourceTableColumnDefinition) bool {
+			return c.Name == resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS
+		})
+		require.GreaterOrEqual(t, col, 0, "no %s column", resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS)
+		for _, row := range rsp.Results.Rows {
+			got[row.Key.Name] = nil
+			if cell := row.Cells[col]; len(cell) > 0 {
+				v, err := resource.DecodeCell(rsp.Results.Columns[col], col, cell)
+				require.NoError(t, err)
+				got[row.Key.Name] = v
+			}
+		}
+		return got
+	}
+	for _, row := range rsp.Rows {
+		values, err := resource.DecodeSearchValues(rsp.Fields, row)
+		require.NoError(t, err)
+		got[row.Key.Name] = values[resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS]
+	}
+	return got
 }

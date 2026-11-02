@@ -1382,7 +1382,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			return err
 		}
 		snapshotGr := snapshots.GroupResource()
-		snapshotDualWrite, err := opts.DualWriteBuilder(snapshotGr, snapshotLegacyStore, unifiedSnapshotStore)
+		snapshotDualWrite, err := opts.DualWriteBuilder(snapshotGr, snapshotLegacyStore, snapshot.NewUnifiedBlobStorage(unifiedSnapshotStore, b.unified))
 		if err != nil {
 			return err
 		}

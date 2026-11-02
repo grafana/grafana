@@ -1,11 +1,10 @@
-import { within } from '@testing-library/react';
+import { waitFor, within } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { render, screen } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
-import { base64UrlEncode } from '@grafana/alerting';
-
 import { setupMswServer } from '../../mockApi';
+import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from '../../mocks/server/utils';
 
 import { StagedConfiguration } from './StagedConfiguration';
 
@@ -58,6 +57,13 @@ receivers:
 
 const server = setupMswServer();
 
+const receiver = (title: string, name: string) => ({
+  apiVersion: 'notifications.alerting.grafana.app/v1beta1',
+  kind: 'Receiver',
+  metadata: { name, annotations: {} },
+  spec: { title, integrations: [] },
+});
+
 const ui = {
   heading: byRole('heading', { name: 'prometheus-prod' }),
   badge: byText(/staged · read-only/i),
@@ -76,6 +82,20 @@ const ui = {
 };
 
 describe('StagedConfiguration', () => {
+  beforeEach(() => {
+    server.use(
+      http.get(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/receivers`, () =>
+        HttpResponse.json(
+          getK8sResponse('ReceiverList', [
+            receiver('default', 'uid-default'),
+            receiver('default_prometheus-prod', 'uid-default-staged'),
+            receiver('slack-platform', 'uid-slack'),
+          ])
+        )
+      )
+    );
+  });
+
   it('renders the identifier, staged badge and resource sections', () => {
     render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert />);
 
@@ -107,10 +127,14 @@ describe('StagedConfiguration', () => {
 
     await user.click(ui.expandAll.get());
 
+    // Contact points are resolved by title once the receivers load
+    await waitFor(() => {
+      const links = screen.getAllByRole('link', { name: /view/i }).map((link) => link.getAttribute('href'));
+      expect(links.some((href) => href?.includes('/receivers/uid-default/edit'))).toBe(true);
+    });
     const hrefs = screen.getAllByRole('link', { name: /view/i }).map((link) => link.getAttribute('href'));
 
-    // Contact points are addressed by base64url(name).
-    expect(hrefs.some((href) => href?.includes(`/receivers/${base64UrlEncode('default')}/edit`))).toBe(true);
+    // Contact points are addressed by their persisted UID, which is unrelated to the title.
     // Time intervals use the raw name.
     expect(hrefs.some((href) => href?.includes('/mute-timing/edit') && href?.includes('muteName=weekends'))).toBe(true);
     // Templates have no per-item detail page, so they link to the templates list.
@@ -147,18 +171,35 @@ describe('StagedConfiguration', () => {
 
     await user.click(ui.expandAll.get());
 
+    await waitFor(() => {
+      const links = screen.getAllByRole('link', { name: /view/i }).map((link) => link.getAttribute('href'));
+      expect(links).toContainEqual(expect.stringContaining('/receivers/uid-default-staged/edit'));
+    });
     const hrefs = screen.getAllByRole('link', { name: /view/i }).map((link) => link.getAttribute('href'));
 
-    expect(hrefs).toContainEqual(
-      expect.stringContaining(`/receivers/${base64UrlEncode('default_prometheus-prod')}/edit`)
-    );
-    expect(hrefs).not.toContainEqual(expect.stringContaining(`/receivers/${base64UrlEncode('default')}/edit`));
+    expect(hrefs).not.toContainEqual(expect.stringContaining('/receivers/uid-default/edit'));
     expect(hrefs).toContainEqual(expect.stringContaining('muteName=weekends_prometheus-prod'));
     // Unaffected resources keep their original name.
-    expect(hrefs).toContainEqual(expect.stringContaining(`/receivers/${base64UrlEncode('slack-platform')}/edit`));
+    expect(hrefs).toContainEqual(expect.stringContaining('/receivers/uid-slack/edit'));
     // The labels still show the staged config's own names — only the link targets are the merged ones.
     expect(screen.queryByText('default_prometheus-prod')).not.toBeInTheDocument();
     expect(screen.queryByText('weekends_prometheus-prod')).not.toBeInTheDocument();
+  });
+
+  it('falls back to searching contact points by title when its UID is unknown', async () => {
+    server.use(
+      http.get(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/receivers`, () =>
+        HttpResponse.json(getK8sResponse('ReceiverList', []))
+      )
+    );
+    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert />);
+
+    await user.click(ui.expandAll.get());
+
+    const hrefs = screen.getAllByRole('link', { name: /view/i }).map((link) => link.getAttribute('href'));
+    expect(hrefs).toContainEqual(expect.stringContaining('/alerting/notifications?'));
+    const searchHref = hrefs.find((href) => href?.includes('search=default'));
+    expect(new URLSearchParams(searchHref?.split('?')[1]).get('search')).toBe('default');
   });
 
   it('shows inhibition rule details inline (no link)', async () => {

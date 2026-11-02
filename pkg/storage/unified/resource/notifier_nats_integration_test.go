@@ -82,7 +82,7 @@ func TestNatsWatchNotificationRoundTrip(t *testing.T) {
 		establishInterest(t, ctx, out, backend)
 
 		// Guards the publish and consume switches (in separate files) staying in sync.
-		for _, action := range []kv.DataAction{DataActionCreated, DataActionUpdated, DataActionDeleted} {
+		for _, action := range []DataAction{DataActionCreated, DataActionUpdated, DataActionDeleted} {
 			backend.publishWatchNotification(ctx, Event{
 				Namespace:       "default",
 				Group:           "playlist.grafana.app",

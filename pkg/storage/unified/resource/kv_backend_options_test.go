@@ -21,7 +21,6 @@ var callerSuppliedFields = map[string]string{
 	"DBKeepAlive":               "reference to the caller's database provider",
 	"GCGate":                    "shared with the caller's startup sequencing",
 	"UseChannelNotifier":        "derived from high-availability detection, not from a single setting",
-	"RvManager":                 "built by the caller from a live database connection",
 	"EventPublisher":            "NATS publisher injected by the caller",
 	"WatchNotificationMetadata": "set together with EventPublisher by the caller",
 	"WatchInvalidator":          "shared watch invalidation injected by the caller",

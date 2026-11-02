@@ -12,7 +12,18 @@ describe('buildAlertRuleSearchQuery', () => {
       kind: 'SearchQuery',
       where: undefined,
       sort: [{ field: 'title', direction: 'asc' }],
-      fields: ['title', 'folder', 'paused', 'state', 'health', 'lastError', 'annotations', 'interval'],
+      fields: [
+        'title',
+        'folder',
+        'paused',
+        'state',
+        'health',
+        'lastError',
+        'annotations',
+        'interval',
+        'labels',
+        'datasourceUIDs',
+      ],
       limit: 40,
     });
   });

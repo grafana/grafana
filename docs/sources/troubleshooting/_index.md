@@ -27,7 +27,7 @@ cards:
       height: 24
       href: ./send-panel-to-grafana-support/
       description: Send a panel to Grafana Labs support for troubleshooting.
-weight: 700
+weight: 900
 ---
 
 # Troubleshooting
