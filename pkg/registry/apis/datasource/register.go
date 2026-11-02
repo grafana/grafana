@@ -157,13 +157,13 @@ func RegisterAPIService(
 			flags,
 			dataSourceRequestValidator,
 			proxyDependencies,
+			permissionsDeleter,
 		)
 		if err != nil {
 			return nil, err
 		}
 
 		builder.SetDataSourceCRUDMetrics(dataSourceCRUDMetric)
-		builder.permissionsDeleter = permissionsDeleter
 
 		// Register the openapi and query types
 		if plugin.Schemas != nil {
@@ -197,6 +197,7 @@ func NewDataSourceAPIBuilder(
 	cfg DataSourceAPIBuilderConfig,
 	dataSourceRequestValidator validations.DataSourceRequestValidator,
 	proxyDependencies ProxyDependenciesProvider,
+	permissionsDeleter datasources.PermissionsDeleter,
 ) (*DataSourceAPIBuilder, error) {
 	registerSubresourceMetrics(prometheus.DefaultRegisterer)
 
@@ -211,6 +212,7 @@ func NewDataSourceAPIBuilder(
 		cfg:                        cfg,
 		dataSourceRequestValidator: dataSourceRequestValidator,
 		proxyDependencies:          proxyDependencies,
+		permissionsDeleter:         permissionsDeleter,
 	}
 	return builder, nil
 }
