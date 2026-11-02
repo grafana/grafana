@@ -98,6 +98,8 @@ export const FlagKeys = {
   CreateAlertRuleFromPanel: "createAlertRuleFromPanel",
   /** Enables Critical User Journey (CUJ) tracking */
   CujTracking: "cujTracking",
+  /** Enables commenting on Notebook cells */
+  DashboardNotebookComments: "dashboard.notebookComments",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
@@ -862,6 +864,17 @@ export const useFlagCreateAlertRuleFromPanel = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagCujTracking = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("cujTracking", false, options).value;
+};
+
+/**
+ * Enables commenting on Notebook cells
+ *
+ * **Details:**
+ * - flag key: `dashboard.notebookComments`
+ * - default value: `false`
+ */
+export const useFlagDashboardNotebookComments = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboard.notebookComments", false, options).value;
 };
 
 /**
