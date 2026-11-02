@@ -697,7 +697,13 @@ function withVisibility(filter: GlValue | undefined, visible: GlValue | undefine
   if (visible === undefined) {
     return filter;
   }
-  return filter === undefined ? visible : ['all', toExpressionFilter(filter), visible];
+  if (visible === undefined) {
+    return filter;
+  }
+  if (filter === undefined) {
+    return visible;
+  }
+  return ['all', toExpressionFilter(filter), visible];
 }
 
 /** Converts the legacy filter forms the Protomaps style generator emits, and leaves expressions alone */
