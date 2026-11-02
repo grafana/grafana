@@ -239,6 +239,10 @@ const (
 	// Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
 	FlagDashboardNotebooks = "dashboard.notebooks"
 
+	// FlagDashboardNotebookComments
+	// Enables commenting on Notebook cells
+	FlagDashboardNotebookComments = "dashboard.notebookComments"
+
 	// FlagGrafanaSavedDashboardViews
 	// Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state
 	FlagGrafanaSavedDashboardViews = "grafana.savedDashboardViews"
@@ -633,10 +637,6 @@ const (
 	// FlagAlertingNotificationHistory
 	// Enables the notification history feature
 	FlagAlertingNotificationHistory = "alertingNotificationHistory"
-
-	// FlagAlertmanagerRemoteSecondaryWithRemoteState
-	// Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
-	FlagAlertmanagerRemoteSecondaryWithRemoteState = "alertmanagerRemoteSecondaryWithRemoteState"
 
 	// FlagNewClickhouseConfigPageDesign
 	// Enables new design for the Clickhouse data source configuration page

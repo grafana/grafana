@@ -231,6 +231,25 @@ message ResourceSearchResponse {
   // {group}/{resource}, for the results to report. The API layer may not know
   // the kinds this server takes from manifests read at runtime.
   map<string, string> kinds = 14;
+
+  // The path of each folder the rows of a global search are in, keyed by the
+  // folder's name. Only rows that return the folder field are covered, and the
+  // root folder has no path.
+  map<string, FolderPath> folder_paths = 15;
+}
+
+// FolderPath lists ancestors before descendants, ending with the containing
+// folder. Like the folder API's parents, the nearest unreadable folder or
+// folder missing from the global index appears first, by name only and marked
+// detached. Its ancestors are omitted.
+message FolderPath {
+  message Folder {
+    string name = 1;
+    string title = 2;
+    bool detached = 3;
+  }
+
+  repeated Folder folders = 1;
 }
 
 message ResourceSearchField {

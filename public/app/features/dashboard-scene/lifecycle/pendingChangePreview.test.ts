@@ -8,6 +8,8 @@ import {
   clearPendingChangePreview,
   finishSavingNewDashboard,
   getPendingChangePreview,
+  getPendingChangesHistory,
+  type PendingChangesHistory,
   isHighlightingChanges,
   loadPendingChangePreview,
   previewedDashboardUid,
@@ -132,6 +134,28 @@ describe('showing the saved dashboard instead of the pending changes', () => {
 
 describe('a new dashboard proposed as pending changes', () => {
   const proposal = () => ({ ...pending, baseGeneration: 0, discard: jest.fn(async () => undefined) });
+
+  it("uses each scene's own view for history when different chats preview the same dashboard", async () => {
+    const history = (label: string): PendingChangesHistory => ({
+      record: jest.fn(async () => ({ recorded: true })),
+      undo: jest.fn(async () => undefined),
+      redo: jest.fn(async () => undefined),
+      getState: () => ({ undo: label }),
+      subscribe: () => () => {},
+    });
+    registerLoaders(async () => ({ ...proposal(), history: history('Page edit') }));
+    await loadPendingChangePreview('page', 'history-dash', 'chat-page');
+    registerLoaders(async () => ({ ...proposal(), history: history('Embedded edit') }));
+    await loadPendingChangePreview('embedded', 'history-dash', 'chat-embedded');
+
+    expect(
+      getPendingChangesHistory({ uid: '', meta: { isEmbedded: true, newDashboardUid: 'history-dash' } })?.getState()
+        .undo
+    ).toBe('Embedded edit');
+    expect(getPendingChangesHistory({ uid: 'history-dash', meta: {} })?.getState().undo).toBe('Page edit');
+    clearPendingChangePreview('history-dash', 'chat-page');
+    clearPendingChangePreview('history-dash', 'chat-embedded');
+  });
 
   it('is always previewed: there is no saved dashboard to show instead', async () => {
     registerLoaders(async () => proposal());

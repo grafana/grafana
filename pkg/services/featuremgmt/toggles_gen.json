@@ -914,7 +914,8 @@
       "metadata": {
         "name": "alertmanagerRemoteSecondaryWithRemoteState",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-25T15:06:59Z"
+        "creationTimestamp": "2025-07-25T15:06:59Z",
+        "deletionTimestamp": "2026-10-29T12:42:24Z"
       },
       "spec": {
         "description": "Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.",
@@ -1560,6 +1561,19 @@
         "description": "Uses field-value results for requests from the /api/search endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboard.notebookComments",
+        "resourceVersion": "1793648427125",
+        "creationTimestamp": "2026-11-02T19:40:27Z"
+      },
+      "spec": {
+        "description": "Enables commenting on Notebook cells",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
         "expression": "false"
       }
     },
@@ -3072,7 +3086,8 @@
       "metadata": {
         "name": "grafana.growthHomepage",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-02T15:20:33Z"
+        "creationTimestamp": "2026-07-02T15:20:33Z",
+        "deletionTimestamp": "2026-10-28T11:31:14Z"
       },
       "spec": {
         "description": "Enables PLG-focused growth redesign of the unified homepage",
