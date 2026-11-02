@@ -6,12 +6,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -252,6 +255,25 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 		})
 	}
 
+	if versions, requested := md[resourcepb.InlineBlobMetadataKey]; requested {
+		if len(versions) != 1 || versions[0] != strconv.Itoa(resourcepb.InlineBlobVersion) {
+			return sendAndClose(&resourcepb.BulkResponse{Error: &resourcepb.ErrorResult{
+				Message: "unsupported bulk inline blob version", Code: http.StatusPreconditionFailed,
+			}})
+		}
+		blob, ok := s.blob.(StreamingBlobSupport)
+		if !ok {
+			return sendAndClose(&resourcepb.BulkResponse{Error: &resourcepb.ErrorResult{
+				Message: "blob backend does not support streaming", Code: http.StatusNotImplemented,
+			}})
+		}
+		runner.blob = blob
+		runner.acquireBlobTransfer = s.acquireBlobTransfer
+		if err := stream.SendHeader(metadata.Pairs(resourcepb.InlineBlobMetadataKey, versions[0])); err != nil {
+			return err
+		}
+	}
+
 	// BulkProcess requests
 	defer runner.stop()
 	rsp := backend.ProcessBulk(ctx, settings, runner)
@@ -276,15 +298,17 @@ var (
 )
 
 type batchRunner struct {
-	stream    resourcepb.BulkStore_BulkProcessServer
-	rollback  bool
-	request   *resourcepb.BulkRequest
-	batch     []*resourcepb.BulkRequest
-	batchIdx  int
-	err       error
-	checker   map[string]authlib.ItemChecker
-	span      trace.Span
-	batchOpts BulkBatchOptions
+	stream              resourcepb.BulkStore_BulkProcessServer
+	rollback            bool
+	request             *resourcepb.BulkRequest
+	batch               []*resourcepb.BulkRequest
+	batchIdx            int
+	err                 error
+	checker             map[string]authlib.ItemChecker
+	blob                StreamingBlobSupport
+	acquireBlobTransfer func(string) (func(), error)
+	span                trace.Span
+	batchOpts           BulkBatchOptions
 
 	recvOnce sync.Once
 	recvCh   chan batchStreamResult
@@ -485,7 +509,16 @@ func (b *batchRunner) recvLoop() {
 			return
 		}
 
-		if err := validateBulkBlobInput(req); err != nil {
+		if b.blob != nil && len(req.BlobUploads) > 0 {
+			if frameErr := resourcepb.ValidateBulkBlobFrame(req); frameErr != nil {
+				err = status.Errorf(codes.InvalidArgument, "invalid bulk blob frame: %s", frameErr)
+			} else if failure := verifyRequestKey(req.Key); failure != nil {
+				err = status.Error(codes.InvalidArgument, failure.Message)
+			}
+		} else {
+			err = validateBulkBlobInput(req)
+		}
+		if err != nil {
 			if !b.sendResult(batchStreamResult{err: err, rollback: true}) {
 				return
 			}
@@ -514,6 +547,21 @@ func (b *batchRunner) recvLoop() {
 		}
 
 		b.span.AddEvent("next", trace.WithAttributes(attrs...))
+		if len(req.BlobUploads) > 0 {
+			release, err := b.acquireBlobTransfer(key.Namespace)
+			if err != nil {
+				b.sendResult(batchStreamResult{err: err, rollback: true})
+				return
+			}
+			uploadCtx, cancel := context.WithTimeout(b.stream.Context(), blobStreamTimeout)
+			req, err = normalizeBulkBlobUploads(uploadCtx, req, b.blob, b.stream.Recv)
+			cancel()
+			release()
+			if err != nil {
+				b.sendResult(batchStreamResult{err: err, rollback: true})
+				return
+			}
+		}
 		if !b.sendResult(batchStreamResult{request: req}) {
 			return
 		}

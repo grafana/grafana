@@ -16,8 +16,7 @@ func validateBulkBlobInput(req *resourcepb.BulkRequest) error {
 	if err := resourcepb.ValidateBulkBlobFrame(req); err != nil {
 		return status.Errorf(codes.InvalidArgument, "invalid bulk blob frame: %s", err)
 	}
-	// Do not accept framing until uploads, reference publication, and lifecycle
-	// protection are implemented together. In particular, chunks have no key.
+	// Unnegotiated framing must fail closed. In particular, chunks have no key.
 	if req.BlobChunk != nil || len(req.BlobUploads) > 0 {
 		return status.Error(codes.Unimplemented, "framed bulk blob uploads are not supported yet")
 	}
