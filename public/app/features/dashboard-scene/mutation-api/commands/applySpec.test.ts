@@ -430,6 +430,11 @@ describe('mutation API history of APPLY_SPEC edits', () => {
   const startBatch = (scene: DashboardScene) =>
     startBatchCommand.handler({ description: 'Assistant dashboard changes' }, { scene });
   const endBatch = (scene: DashboardScene) => endBatchCommand.handler({}, { scene });
+  /** Starts a batch and returns the id START_BATCH named it with. */
+  const startNamedBatch = async (scene: DashboardScene) => {
+    const { data } = await startBatch(scene);
+    return (data as { batchId?: string } | undefined)?.batchId;
+  };
   const lastAction = async (scene: DashboardScene) => (await getLastActionCommand.handler({}, { scene })).data;
   const undo = (scene: DashboardScene) => undoCommand.handler({ expectedActor: 'mutation-api' }, { scene });
   const redo = (scene: DashboardScene) => redoCommand.handler({ expectedActor: 'mutation-api' }, { scene });
@@ -451,6 +456,45 @@ describe('mutation API history of APPLY_SPEC edits', () => {
 
     expect((await redo(scene)).data).toEqual({ redone: true });
     expect((await readSpec(scene)).title).toBe('Second');
+  });
+
+  // Every batch has the same actor and description; its id tells its caller's entries apart.
+  it('names each batch, and reports the name with the entry it became', async () => {
+    const scene = buildScene(titled('Before'));
+    const first = await startNamedBatch(scene);
+    await applyTitle(scene, 'First');
+    await endBatch(scene);
+    const second = await startNamedBatch(scene);
+    await applyTitle(scene, 'Second');
+    await endBatch(scene);
+
+    expect(first).toEqual(expect.any(String));
+    expect(second).not.toBe(first);
+    expect(await lastAction(scene)).toEqual({
+      action: { description: 'Assistant dashboard changes', actor: 'mutation-api', batchId: second },
+      undoneAction: null,
+    });
+  });
+
+  it("refuses to undo or redo another batch's entry, once the dashboard's own Undo moved the history", async () => {
+    const scene = buildScene(titled('Before'));
+    const first = await startNamedBatch(scene);
+    await applyTitle(scene, 'First');
+    await endBatch(scene);
+    const second = await startNamedBatch(scene);
+    await applyTitle(scene, 'Second');
+    await endBatch(scene);
+    // The user steps back from the dashboard's own controls: the first batch is now newest.
+    scene.state.sidebar.undoAction();
+
+    const undoSecond = await undoCommand.handler({ expectedActor: 'mutation-api', expectedBatchId: second }, { scene });
+    expect(undoSecond.success).toBe(false);
+    expect((await readSpec(scene)).title).toBe('First');
+
+    expect((await undoCommand.handler({ expectedBatchId: first }, { scene })).data).toEqual({ undone: true });
+    expect((await readSpec(scene)).title).toBe('Before');
+    expect((await redoCommand.handler({ expectedBatchId: second }, { scene })).success).toBe(false);
+    expect((await redoCommand.handler({ expectedBatchId: first }, { scene })).data).toEqual({ redone: true });
   });
 
   it('adds no entry for a batch without edits', async () => {

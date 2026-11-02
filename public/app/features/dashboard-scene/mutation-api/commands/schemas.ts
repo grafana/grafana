@@ -798,6 +798,11 @@ const expectedActorSchema = z
   .optional()
   .describe('Refuse, changing nothing, unless the entry was made by this actor (e.g. "mutation-api").');
 
+const expectedBatchIdSchema = z
+  .string()
+  .optional()
+  .describe('Refuse, changing nothing, unless the entry is the batch START_BATCH returned this batchId for.');
+
 const scopeSelectionSchema = z.union([
   z.literal('all'),
   z.literal('none'),
@@ -992,22 +997,23 @@ export const payloads = {
     .strict()
     .describe(
       'Start collecting edits into one undo entry, made by the "mutation-api" actor, until END_BATCH. ' +
-        "Every dashboard edit in between joins it, including the user's, so end it as soon as the work is done."
+        "Every dashboard edit in between joins it, including the user's, so end it as soon as the work is done. " +
+        'Returns the batchId that names the entry.'
     ),
   endBatch: z.object({}).strict().describe('Close the batch START_BATCH opened. A batch with no edits adds no entry.'),
   getLastAction: z
     .object({})
     .strict()
     .describe(
-      'Return the description and actor of the newest undo entry (action) and of the newest undone entry ' +
-        '(undoneAction), each null when there is none.'
+      'Return the description, actor, and batchId (for an entry START_BATCH collected) of the newest undo ' +
+        'entry (action) and of the newest undone entry (undoneAction), each null when there is none.'
     ),
   undo: z
-    .object({ expectedActor: expectedActorSchema })
+    .object({ expectedActor: expectedActorSchema, expectedBatchId: expectedBatchIdSchema })
     .strict()
     .describe('Undo the newest dashboard undo entry. Reports undone=false when there is nothing to undo.'),
   redo: z
-    .object({ expectedActor: expectedActorSchema })
+    .object({ expectedActor: expectedActorSchema, expectedBatchId: expectedBatchIdSchema })
     .strict()
     .describe(
       'Redo the newest undone dashboard entry. Reports redone=false when there is nothing to redo; any new ' +
