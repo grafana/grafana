@@ -286,11 +286,10 @@ func interpolateIfaceValue(val string) (interface{}, string, error) {
 	if len(parts) > 1 {
 		return interpolateValue(val)
 	}
-	expanded, err := setting.ExpandVar(val)
+	expandedEnv, err := expandValue(val)
 	if err != nil {
 		return val, val, fmt.Errorf("failed to interpolate value '%s': %w", val, err)
 	}
-	expandedEnv := os.ExpandEnv(expanded)
 	if expandedEnv != val {
 		// If the value is an environment variable, consider it may not be a string
 		intV, err := strconv.ParseInt(expandedEnv, 10, 64)
@@ -316,14 +315,36 @@ func interpolateValue(val string) (string, string, error) {
 	parts := strings.Split(val, "$$")
 	interpolated := make([]string, len(parts))
 	for i, v := range parts {
-		expanded, err := setting.ExpandVar(v)
+		expanded, err := expandValue(v)
 		if err != nil {
 			return val, val, fmt.Errorf("failed to interpolate value '%s': %w", val, err)
 		}
-		v = expanded
-		interpolated[i] = os.ExpandEnv(v)
+		interpolated[i] = expanded
 	}
 	return strings.Join(interpolated, "$"), val, nil
+}
+
+// expandValue runs the setting expanders and environment variable interpolation on s. The output of an expander is
+// used verbatim, so that a '$' in e.g. a secret read with $__file{} is not treated as an environment variable.
+func expandValue(s string) (string, error) {
+	var b strings.Builder
+	last := 0
+	for _, loc := range setting.GetExpanderRegex().FindAllStringIndex(s, -1) {
+		b.WriteString(os.ExpandEnv(s[last:loc[0]]))
+		match := s[loc[0]:loc[1]]
+		expanded, err := setting.ExpandVar(match)
+		if err != nil {
+			return "", err
+		}
+		if expanded == match {
+			// No registered expander handled it, so interpolate it like the rest of the string.
+			expanded = os.ExpandEnv(match)
+		}
+		b.WriteString(expanded)
+		last = loc[1]
+	}
+	b.WriteString(os.ExpandEnv(s[last:]))
+	return b.String(), nil
 }
 
 type interpolated struct {
