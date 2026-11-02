@@ -117,7 +117,7 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
     actionContainer: css({
       display: 'flex',
       gap: theme.spacing(1),
-      alignItems: 'center',
+      alignItems: 'baseline',
       fontSize: theme.typography.fontSize,
       width: '100%',
       minWidth: 0,
@@ -152,6 +152,6 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
     }),
-    managedBadge: css({ display: 'flex', flexShrink: 0 }),
+    managedBadge: css({ display: 'flex', flexShrink: 0, alignSelf: 'center' }),
   };
 };
