@@ -478,7 +478,7 @@ func (b *bleveBackend) closeIndex(idx *bleveIndex, key resource.NamespacedResour
 		b.log.Error("failed to close index", "key", key, "err", err)
 	}
 
-	b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Dec()
+	b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage, key.Resource).Dec()
 }
 
 // This function will periodically evict expired or un-owned indexes from the cache.
@@ -1144,14 +1144,14 @@ func (b *bleveBackend) BuildIndex(
 
 	// If there was a previous index in the cache, close it.
 	if prev != nil {
-		b.indexMetrics.OpenIndexes.WithLabelValues(prev.indexStorage).Dec()
+		b.indexMetrics.OpenIndexes.WithLabelValues(prev.indexStorage, key.Resource).Dec()
 
 		err := prev.stopUpdaterAndCloseIndex()
 		if err != nil {
 			logWithDetails.Error("failed to close previous index", "key", key, "err", err)
 		}
 	}
-	b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Inc()
+	b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage, key.Resource).Inc()
 
 	// Clean up the old index directories. If we have built a new file-based index, the new name is ignored.
 	// If we have created in-memory index and fileIndexName is empty, all old directories can be removed.
@@ -1854,7 +1854,7 @@ func (b *bleveBackend) closeAllIndexes() {
 		}
 		delete(b.cache, key)
 
-		b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Dec()
+		b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage, key.Resource).Dec()
 	}
 }
 
