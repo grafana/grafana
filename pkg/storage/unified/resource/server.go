@@ -496,6 +496,7 @@ type SearchOptions struct {
 	// Vector API collection allowlists: "group/resource" entries; empty allows nothing.
 	AllowedInternalCollections []string
 	AllowedExternalCollections []string
+	SharedExternalCollections  []string
 	AllowedReadServices        map[string][]string
 }
 
