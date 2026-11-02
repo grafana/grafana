@@ -745,11 +745,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/QueryField/QueryField.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/QueryInput/QueryInput.story.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1

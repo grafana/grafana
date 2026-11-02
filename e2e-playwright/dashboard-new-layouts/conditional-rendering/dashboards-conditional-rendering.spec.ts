@@ -12,12 +12,6 @@ import { buildDashboardVariableValueSpec } from './fixtures/dashboard-variable-v
 const HIDDEN_WRAPPER_SELECTOR = '.dashboard-visible-hidden-element';
 const HIDDEN_ICON_TEST_ID = 'icon-eye-slash';
 
-test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
-});
-
 test.describe(
   'Dashboard - Conditional Rendering - Rules creation',
   {
@@ -353,10 +347,11 @@ test.describe(
       await controls.enterEditMode();
 
       // the row is on the canvas and greyed
-      const rowA = await expectRowVisibility('Row A', rows, 'visible');
+      await expectRowVisibility('Row A', rows, 'visible');
 
-      const rowAHiddenWrapper = page.locator(HIDDEN_WRAPPER_SELECTOR).filter({ has: rowA.title });
+      const rowAHiddenWrapper = rows.getContainer('Row A');
       await expect(rowAHiddenWrapper).toBeVisible();
+      await expect(rowAHiddenWrapper).toHaveClass(/\bdashboard-visible-hidden-element\b/);
 
       // the row is selectable
       await rowAHiddenWrapper.hover();
@@ -381,6 +376,7 @@ test.describe(
 
       // the panel is on the canvas and greyed
       const panel3 = panels.getPanel('Panel 3');
+      await panel3.scrollIntoViewIfNeeded();
       await expect(panel3).toBeVisible();
 
       const panel3HiddenWrapper = page.locator(HIDDEN_WRAPPER_SELECTOR).filter({ has: panel3 });

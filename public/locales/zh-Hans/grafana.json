@@ -517,6 +517,7 @@
         "save": "保存"
       },
       "error-title": "保存警报规则失败",
+      "form-errors": "",
       "no-group-success": "规则已成功添加"
     },
     "alert-rule-name-and-metric": {
@@ -525,8 +526,8 @@
       "label-metric": "指标",
       "label-name": "名称",
       "message": {
-        "must-enter-a-metric-name": "必须输入指标名称",
-        "must-enter-a-name": "必须输入一个名称",
+        "metric-name-required": "",
+        "name-required": "",
         "please-select-a-data-source": "请选择数据源"
       },
       "metric-aria-label-metric": "指标",
@@ -581,6 +582,7 @@
     },
     "alertmanager-config": {
       "confirmText-yes-reset-configuration": "是，重置配置",
+      "editor-label": "",
       "gma-manual-configuration-description": "无法手动更改内部 Grafana Alertmanager 配置。要更改此配置，请通过用户界面编辑单个资源。",
       "gma-manual-configuration-is-not-supported": "不支持手动进行配置更改",
       "message": {
@@ -1090,6 +1092,7 @@
         "body": "您确定要还原此已删除的警报规则定义吗？",
         "confirm": "是，还原已删除的规则",
         "error": "无法还原已删除的警报规则",
+        "preview-aria-label": "",
         "title": "还原已删除的警报规则"
       },
       "table": {
@@ -1307,7 +1310,7 @@
     "folder-selector": {
       "description-select-folder": "选择一个文件夹来存储规则。",
       "message": {
-        "select-a-folder": "选择一个文件夹"
+        "folder-required": ""
       }
     },
     "folderAndGroup": {
@@ -1558,11 +1561,10 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "正在加载组…",
       "message": {
-        "must-be-a-positive-integer": "必须是正整数。",
-        "must-enter-a-group-name": "输入一个组名称"
+        "evaluation-group-required": "",
+        "must-be-a-positive-integer": "必须是正整数。"
       },
       "missing-series-resolve-placeholder": "默认值：2",
-      "or": "或",
       "placeholder-select-an-evaluation-group": "选择一个评估组...",
       "text-configure-no-data-and-error-handling": "配置无数据和错误处理",
       "title-set-evaluation-behavior": "设置评估行为"
@@ -1855,6 +1857,7 @@
         "will-import-rules": "将导入规则",
         "will-import-rules-count_other": "将导入 {{count}} 条规则"
       },
+      "rules-preview": "",
       "source": {
         "datasource": "现有数据源管理的规则",
         "datasource-description": "从现有数据源导入规则",
@@ -2974,7 +2977,7 @@
           "alerting": "开启以暂停此提醒规则的评估。",
           "recording": "开启以暂停此录制规则的评估。"
         },
-        "select-folder-before": "在设置评估组和间隔之前选择一个文件夹",
+        "select-folder-first-tooltip": "",
         "ungroup-warning": "这个操作是不可逆转的。保存后，您将无法将其重新添加到组中。",
         "ungroup-warning-title": "这将把警报规则从其组中移除"
       },
@@ -3636,6 +3639,9 @@
       "switch-to-data-source-managed": "您在查询中选择的数据源支持警报规则管理。如果您希望警报规则由数据源而不是 Grafana 管理，请切换到数据源管理。",
       "switch-to-grafana-managed": "切换到 Grafana 管理，以使用表达式、多个查询、通知中的图像和各种其他功能。",
       "title-alert-rule-types": "警报规则类型"
+    },
+    "sql-query-preview": {
+      "aria-label": ""
     },
     "state-history": {
       "columns": {
@@ -11434,11 +11440,8 @@
       "severity-low": "低",
       "severity-minor": "轻微",
       "severity-unknown": "未知",
-      "title": "触发中的警报",
       "view-all": "查看所有触发中的警报",
-      "view-rules": "查看所有警报规则",
-      "critical-count_other": "{{count}} 个严重",
-      "high-count_other": "{{count}} 个高"
+      "view-rules": "查看所有警报规则"
     },
     "header-actions": {
       "active-incidents": "活跃的事件",
@@ -11464,21 +11467,13 @@
       "empty": "",
       "empty-selected-team": "",
       "error-title": "无法加载活跃的事故",
-      "title": "没有活跃的事故",
       "view-all": "查看所有事故"
     },
     "learn-more": "了解更多",
     "most-used-dashboards-tab": {
       "empty": "最常用的数据面板将显示在此处。",
-      "empty-description": "当您的组织拥有数据面板且已收集到使用情况数据后，此处将显示过去 30 天内浏览量最多的数据面板。",
       "error-title": "无法加载最常用的数据面板",
       "loading": "正在加载最常用的数据面板..."
-    },
-    "news-card": {
-      "empty": "没有近期博客文章。",
-      "error-title": "无法加载近期博客文章",
-      "read-more": "阅读 Grafana Labs 博客的更多内容",
-      "title": "博客的最新内容"
     },
     "on-call-card": {
       "current-shift": "",
@@ -11818,7 +11813,6 @@
     },
     "starred-dashboards-tab": {
       "empty": "您加星标的数据面板将显示在此处。",
-      "empty-description": "您可以在数据面板页面点击 <1></1>，为您喜爱的数据面板加星标。",
       "error-title": "无法加载已加星标的数据面板",
       "loading": "正在加载已加星标的数据面板..."
     },
@@ -13618,6 +13612,7 @@
       "add-title": "",
       "change-visualization": "",
       "edit-query": "",
+      "edit-with-assistant": "",
       "hide-query": "",
       "open-explore": "",
       "rename": "",
@@ -15657,20 +15652,8 @@
     "explain-or-modify": "解释或修改",
     "explain-query": "",
     "explaining": "",
-    "feedback-cancel": "取消",
-    "feedback-description": "您的反馈有助于改善 Grafana 中的查询体验。",
-    "feedback-error": "不能发送反馈。再试一次。",
     "feedback-helpful": "有帮助",
-    "feedback-label": "分享反馈",
-    "feedback-negative-placeholder": "请描述哪些方面不尽如人意，以及您期望的结果。",
-    "feedback-negative-title": "哪里出问题了呢？",
     "feedback-not-helpful": "没有帮助",
-    "feedback-positive-placeholder": "您喜欢哪些方面？如何才能做得更好？",
-    "feedback-positive-title": "哪些方面进展顺利？",
-    "feedback-privacy": "",
-    "feedback-recipient": "您的反馈将发送给负责查询的团队。",
-    "feedback-send": "发送",
-    "feedback-sending": "正在发送…",
     "focus": "",
     "follow-up-label": "",
     "follow-up-placeholder": "",
@@ -16866,6 +16849,8 @@
       "failures-description": "",
       "filter-placeholder": "",
       "filtered": "",
+      "internal": "",
+      "internal-description": "",
       "last-failed": "",
       "load-failures": "",
       "never": "",
