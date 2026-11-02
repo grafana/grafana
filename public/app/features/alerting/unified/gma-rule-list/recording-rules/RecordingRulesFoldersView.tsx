@@ -10,7 +10,7 @@ import { useFolderPath } from '../folder-browsing/folderLookups';
 import { useSearchRuleFoldersInfiniteQuery } from '../folder-browsing/folderSearch';
 import { RuleListSkeleton } from '../rule-row/RuleListSkeleton';
 import { RuleRowList } from '../rule-row/RuleRowList';
-import { createEmptyFilter } from '../rule-search/sharedRuleFilter';
+import { createRulesApiFilter } from '../rule-search/sharedRuleFilter';
 import { InlineRequestError } from '../shared/InlineRequestError';
 import { LoadMoreFooter } from '../shared/LoadMoreFooter';
 import { PagedFailureAlert } from '../shared/PagedFailureAlert';
@@ -114,10 +114,9 @@ function RecordingFolderListEntry({ folderUid, title, expanded, onToggle }: Reco
 }
 
 function ExpandedFolderRules({ folderUid, title }: { folderUid: string; title: string }) {
-  const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry } = useRecordingRuleSearch({
-    ...createEmptyFilter(),
-    folders: [folderUid],
-  });
+  const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry } = useRecordingRuleSearch(
+    createRulesApiFilter({ folders: [folderUid] })
+  );
 
   const retryLabel = t(
     'alerting.gma-rule-list.recording-rules.retry-rules-in-folder',
