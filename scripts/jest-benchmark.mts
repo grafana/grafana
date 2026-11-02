@@ -12,6 +12,7 @@ interface BenchmarkOptions {
   environment?: 'jsdom' | 'happy-dom';
   shard?: string;
   listTests?: boolean;
+  outputFile?: string;
   timeoutMs?: number;
 }
 
@@ -58,6 +59,7 @@ export async function runBenchmark({
   environment = 'jsdom',
   shard = '5/8',
   listTests = false,
+  outputFile,
   timeoutMs = 30 * 60 * 1000,
 }: BenchmarkOptions): Promise<number> {
   validateShard(shard);
@@ -174,7 +176,13 @@ export async function runBenchmark({
 
     await mkdir(executionCache);
     const executionStarted = performance.now();
-    const result = await runJest(['--cacheDirectory', executionCache, '--runTestsByPath', ...files]);
+    const result = await runJest([
+      '--cacheDirectory',
+      executionCache,
+      ...(outputFile === undefined ? [] : ['--json', '--outputFile', path.resolve(rootDir, outputFile)]),
+      '--runTestsByPath',
+      ...files,
+    ]);
     console.log(
       `Jest execution: ${((performance.now() - executionStarted) / 1000).toFixed(2)}s | ` +
         `total including discovery: ${((performance.now() - started) / 1000).toFixed(2)}s | exit ${result.code}`
@@ -203,6 +211,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
         listTests: { type: 'boolean', default: false },
         environment: { type: 'string', default: 'jsdom' },
         shard: { type: 'string', default: '5/8' },
+        outputFile: { type: 'string' },
       },
     });
     process.exitCode = await runBenchmark({
@@ -210,6 +219,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
       environment: parseEnvironment(values.environment),
       shard: values.shard,
       listTests: values.listTests,
+      outputFile: values.outputFile,
     });
   } catch (error) {
     console.error(error instanceof Error ? error.message : error);

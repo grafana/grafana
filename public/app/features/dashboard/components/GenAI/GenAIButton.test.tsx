@@ -160,12 +160,33 @@ describe('GenAIButton', () => {
       });
     });
 
-    it('shows an enabled stop button while generating', () => {
-      setup();
+    it('replaces Auto-generate with an enabled Stop generating button when generation starts', () => {
+      const streamState = {
+        messages: [],
+        error: undefined,
+        streamStatus: StreamStatus.IDLE,
+        reply: '',
+        setMessages: jest.fn(),
+        stopGeneration: setShouldStopMock,
+        value: {
+          enabled: true,
+          stream: new Observable().subscribe(),
+        },
+      };
+      jest.mocked(useLLMStream).mockReturnValue(streamState);
+      const { rerender } = setup();
+      const generateButton = screen.getByRole('button', { name: 'Auto-generate' });
+
+      expect(generateButton).toBeVisible();
+      expect(generateButton).toBeEnabled();
+
+      jest.mocked(useLLMStream).mockReturnValue({ ...streamState, streamStatus: StreamStatus.GENERATING });
+      rerender(<GenAIButton text="Auto-generate" onGenerate={onGenerate} messages={[]} eventTrackingSrc={eventTrackingSrc} />);
       const stopButton = screen.getByRole('button', { name: 'Stop generating' });
 
       expect(stopButton).toBeVisible();
       expect(stopButton).toBeEnabled();
+      expect(screen.queryByText('Auto-generate')).not.toBeInTheDocument();
     });
 
     it('should not call onGenerate when the text is generating', async () => {

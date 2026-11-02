@@ -54,6 +54,20 @@ npm run test:bench:happy-dom -- --shard=5/8 --listTests
 
 The benchmark prints the selected-suite count and selection hash. Test failures retain a nonzero exit code. Cleanup removes only the benchmark's private cache.
 
+### Save per-suite results
+
+To save Jest JSON for comparison with the original baseline, run:
+
+```sh
+npm run test:bench:happy-dom -- --shard=1/8 --outputFile=shard-1-happy-dom.json
+```
+
+The `--outputFile` option also works with `test:bench:jsdom`. Relative output paths resolve from the repository root. Absolute paths remain unchanged.
+
+Only test execution receives the output path. Discovery still uses a separate cache. With `--listTests`, the runner does not write a results file.
+
+The report includes suite timestamps, test counts, statuses, and assertion results. A failed test run retains its nonzero exit code.
+
 ## Sucrase patch
 
 The root development dependencies pin `@sucrase/jest-plugin` to 3.0.0 and `sucrase` to 3.35.1. pnpm applies `patches/sucrase-3.35.1.patch` through `patchedDependencies`.

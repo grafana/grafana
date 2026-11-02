@@ -130,6 +130,45 @@ for (const environment of [undefined, 'jsdom', 'happy-dom']) {
   });
 }
 
+for (const absolute of [false, true]) {
+  for (const exitCode of [0, 1]) {
+    test(`CLI writes execution JSON with absolute=${absolute} and preserves exit ${exitCode}`, (t) => {
+      const report = { success: exitCode === 0, testResults: [] };
+      const rootDir = project(
+        t,
+        `fs.writeFileSync(args[args.indexOf('--outputFile') + 1], ${JSON.stringify(JSON.stringify(report))});
+process.exitCode = ${exitCode};`
+      );
+      const outputPath = path.join(rootDir, 'results with spaces.json');
+      const result = runCli(rootDir, [
+        '--environment=happy-dom',
+        '--shard=1/8',
+        '--outputFile',
+        absolute ? outputPath : 'results with spaces.json',
+      ]);
+      assert.equal(result.error, undefined);
+      assert.equal(result.status, exitCode, result.stderr);
+      const { args, cache } = invocation(rootDir);
+      assert.ok(args.includes('--json'));
+      assert.equal(args[args.indexOf('--outputFile') + 1], outputPath);
+      assert.deepEqual(args.slice(args.indexOf('--runTestsByPath') + 1), [path.join(rootDir, 'example.test.ts')]);
+      assert.equal(invocation(rootDir, 'discovery').args.includes('--outputFile'), false);
+      assert.deepEqual(JSON.parse(readFileSync(outputPath, 'utf8')), report);
+      assert.equal(existsSync(cache), false);
+    });
+  }
+}
+
+test('listTests does not write an execution report', (t) => {
+  const rootDir = project(t);
+  const result = runCli(rootDir, ['--listTests', '--outputFile=results.json']);
+  assert.equal(result.status, 0, result.stderr);
+  assert.ok(result.stdout.includes('example.test.ts'));
+  assert.equal(invocation(rootDir, 'discovery').args.includes('--outputFile'), false);
+  assert.equal(existsSync(path.join(rootDir, 'invocation.json')), false);
+  assert.equal(existsSync(path.join(rootDir, 'results.json')), false);
+});
+
 for (const shard of ['1/8', '5/8']) {
   test(`Happy DOM CLI shard ${shard} selects its Sucrase configuration`, (t) => {
     const rootDir = project(t);
