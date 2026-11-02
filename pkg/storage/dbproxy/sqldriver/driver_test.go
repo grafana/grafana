@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net"
 	"reflect"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -243,6 +244,15 @@ func TestMalformedStreamFails(t *testing.T) {
 		"rows before schema": func(s grpc.ServerStreamingServer[dbproxyv1.QueryResponse]) error {
 			return s.Send(&dbproxyv1.QueryResponse{Rows: []*dbproxyv1.Row{{}}})
 		},
+		"empty schema": func(s grpc.ServerStreamingServer[dbproxyv1.QueryResponse]) error {
+			return s.Send(&dbproxyv1.QueryResponse{})
+		},
+		"warnings before schema": func(s grpc.ServerStreamingServer[dbproxyv1.QueryResponse]) error {
+			return s.Send(&dbproxyv1.QueryResponse{Warnings: []*dbproxyv1.Warning{{}}})
+		},
+		"unspecified type": func(s grpc.ServerStreamingServer[dbproxyv1.QueryResponse]) error {
+			return s.Send(&dbproxyv1.QueryResponse{Columns: []*dbproxyv1.Column{{}}})
+		},
 		"unknown kind": func(s grpc.ServerStreamingServer[dbproxyv1.QueryResponse]) error {
 			return s.Send(&dbproxyv1.QueryResponse{Columns: []*dbproxyv1.Column{{ValueType: dbproxyv1.ValueType(99)}}})
 		},
@@ -259,12 +269,24 @@ func TestMalformedStreamFails(t *testing.T) {
 			}
 			return s.Send(schema)
 		},
+		"empty response after schema": func(s grpc.ServerStreamingServer[dbproxyv1.QueryResponse]) error {
+			if err := s.Send(&dbproxyv1.QueryResponse{Columns: []*dbproxyv1.Column{{ValueType: dbproxyv1.ValueType_VALUE_TYPE_INT64}}}); err != nil {
+				return err
+			}
+			return s.Send(&dbproxyv1.QueryResponse{})
+		},
 		"negative length": func(s grpc.ServerStreamingServer[dbproxyv1.QueryResponse]) error {
 			length := int64(-1)
 			return s.Send(&dbproxyv1.QueryResponse{Columns: []*dbproxyv1.Column{{ValueType: dbproxyv1.ValueType_VALUE_TYPE_STRING, Length: &length}}})
 		},
 		"scale exceeds precision": func(s grpc.ServerStreamingServer[dbproxyv1.QueryResponse]) error {
 			return s.Send(&dbproxyv1.QueryResponse{Columns: []*dbproxyv1.Column{{ValueType: dbproxyv1.ValueType_VALUE_TYPE_BYTES, DecimalSize: &dbproxyv1.DecimalSize{Precision: 2, Scale: 3}}}})
+		},
+		"negative precision": func(s grpc.ServerStreamingServer[dbproxyv1.QueryResponse]) error {
+			return s.Send(&dbproxyv1.QueryResponse{Columns: []*dbproxyv1.Column{{ValueType: dbproxyv1.ValueType_VALUE_TYPE_BYTES, DecimalSize: &dbproxyv1.DecimalSize{Precision: -1}}}})
+		},
+		"negative scale": func(s grpc.ServerStreamingServer[dbproxyv1.QueryResponse]) error {
+			return s.Send(&dbproxyv1.QueryResponse{Columns: []*dbproxyv1.Column{{ValueType: dbproxyv1.ValueType_VALUE_TYPE_BYTES, DecimalSize: &dbproxyv1.DecimalSize{Precision: 2, Scale: -1}}}})
 		},
 		"nonnullable NULL": func(s grpc.ServerStreamingServer[dbproxyv1.QueryResponse]) error {
 			no := false
@@ -292,13 +314,39 @@ func TestMalformedStreamFails(t *testing.T) {
 			return s.Send(&dbproxyv1.QueryResponse{Rows: []*dbproxyv1.Row{{Values: []*dbproxyv1.Value{{Kind: &dbproxyv1.Value_StringValue{StringValue: "x"}}}}}})
 		},
 	}
+	reasons := map[string]string{
+		"missing schema":              "stream ended without schema",
+		"rows before schema":          "initial response contains rows before schema (count: 1)",
+		"empty schema":                "initial response has no columns",
+		"warnings before schema":      "initial response contains warnings before schema (count: 1)",
+		"unspecified type":            "column 0 has unspecified type",
+		"unknown kind":                "column 0 has unknown type 99",
+		"wrong row width":             "row has 0 values, expected 1",
+		"repeated schema":             "response after schema repeats columns (count: 1)",
+		"empty response after schema": "empty response after schema",
+		"negative length":             "column 0 has negative length",
+		"scale exceeds precision":     "column 0 decimal scale 3 exceeds precision 2",
+		"negative precision":          "column 0 has negative decimal precision -1",
+		"negative scale":              "column 0 has negative decimal scale -1",
+		"nonnullable NULL":            "NULL in nonnullable column",
+		"invalid timestamp":           "invalid timestamp",
+		"missing value kind":          "missing value kind",
+		"mismatched kind":             "value kind VALUE_TYPE_STRING differs from column type VALUE_TYPE_INT64",
+	}
 	for name, send := range cases {
 		t.Run(name, func(t *testing.T) {
+			wantReason, ok := reasons[name]
+			if !ok || wantReason == "" {
+				t.Fatal("test case is missing an expected error reason")
+			}
 			pool := openPool(t, func(_ *dbproxyv1.QueryRequest, s grpc.ServerStreamingServer[dbproxyv1.QueryResponse]) error {
 				return send(s)
 			})
 			rows, err := pool.QueryContext(sqldriver.WithQuery(context.Background(), "stacks-5", "test.malformed"), "SELECT n")
 			if err != nil {
+				if !strings.Contains(err.Error(), wantReason) {
+					t.Fatalf("error %q does not explain %s", err, name)
+				}
 				return
 			}
 			defer func() {
@@ -308,8 +356,8 @@ func TestMalformedStreamFails(t *testing.T) {
 			}()
 			for rows.Next() {
 			}
-			if rows.Err() == nil {
-				t.Fatal("malformed stream accepted")
+			if err := rows.Err(); err == nil || !strings.Contains(err.Error(), wantReason) {
+				t.Fatalf("malformed stream error = %v, want reason %q", err, wantReason)
 			}
 		})
 	}
@@ -321,10 +369,17 @@ func TestMissingIdentityAndWritesFailLocally(t *testing.T) {
 		attempts.Add(1)
 		return nil
 	})
-	for _, ctx := range []context.Context{context.Background(), sqldriver.WithQuery(context.Background(), "stacks-0", "test.bad"),
-		sqldriver.WithQuery(context.Background(), "stacks-999999999999999999999", "test.bad"), sqldriver.WithQuery(context.Background(), "stacks-1", "Bad.Name")} {
-		if _, err := pool.QueryContext(ctx, "SELECT 1"); err == nil {
-			t.Fatal("invalid identity accepted")
+	for _, tc := range []struct {
+		ctx    context.Context
+		reason string
+	}{
+		{context.Background(), "stack namespace and query name missing from context"},
+		{sqldriver.WithQuery(context.Background(), "stacks-0", "test.bad"), "invalid stack namespace: must identify a stack with a positive ID"},
+		{sqldriver.WithQuery(context.Background(), "stacks-999999999999999999999", "test.bad"), "invalid stack namespace: must identify a stack with a positive ID"},
+		{sqldriver.WithQuery(context.Background(), "stacks-1", "Bad.Name"), "invalid query name: must match ^[a-z][a-z0-9_.-]{0,127}$"},
+	} {
+		if _, err := pool.QueryContext(tc.ctx, "SELECT 1"); err == nil || !strings.Contains(err.Error(), tc.reason) {
+			t.Fatalf("invalid identity error = %v, want reason %q", err, tc.reason)
 		}
 	}
 	if _, err := pool.ExecContext(context.Background(), "DELETE FROM t"); !errors.Is(err, sqldriver.ErrUnsupported) {

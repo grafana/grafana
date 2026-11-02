@@ -99,8 +99,14 @@ func (c *conn) PrepareContext(ctx context.Context, query string) (driver.Stmt, e
 }
 func (c *conn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
 	identity, ok := ctx.Value(queryContextKey{}).(queryIdentity)
-	if !ok || !validNamespace(identity.namespace) || !queryNamePattern.MatchString(identity.name) {
-		return nil, errors.New("single-tenant database proxy: valid stack namespace and query name required")
+	if !ok {
+		return nil, errors.New("single-tenant database proxy: stack namespace and query name missing from context")
+	}
+	if !validNamespace(identity.namespace) {
+		return nil, errors.New("single-tenant database proxy: invalid stack namespace: must identify a stack with a positive ID")
+	}
+	if !queryNamePattern.MatchString(identity.name) {
+		return nil, errors.New("single-tenant database proxy: invalid query name: must match " + queryNamePattern.String())
 	}
 	if query == "" {
 		return nil, errors.New("single-tenant database proxy: empty SQL")
@@ -253,12 +259,27 @@ func parameterValue(value any) (*dbproxyv1.Value, error) {
 	}
 }
 func validateSchema(response *dbproxyv1.QueryResponse) error {
-	if response == nil || len(response.Columns) == 0 || len(response.Rows) > 0 || len(response.Warnings) > 0 {
-		return errors.New("invalid stream schema")
+	if response == nil {
+		return errors.New("missing initial schema response")
+	}
+	if len(response.Rows) > 0 {
+		return fmt.Errorf("initial response contains rows before schema (count: %d)", len(response.Rows))
+	}
+	if len(response.Warnings) > 0 {
+		return fmt.Errorf("initial response contains warnings before schema (count: %d)", len(response.Warnings))
+	}
+	if len(response.Columns) == 0 {
+		return errors.New("initial response has no columns")
 	}
 	for i, col := range response.Columns {
-		if col == nil || !knownType(col.ValueType) || col.ValueType == dbproxyv1.ValueType_VALUE_TYPE_UNSPECIFIED {
-			return fmt.Errorf("column %d has unknown type", i)
+		if col == nil {
+			return fmt.Errorf("column %d is missing", i)
+		}
+		if col.ValueType == dbproxyv1.ValueType_VALUE_TYPE_UNSPECIFIED {
+			return fmt.Errorf("column %d has unspecified type", i)
+		}
+		if !knownType(col.ValueType) {
+			return fmt.Errorf("column %d has unknown type %d", i, col.ValueType)
 		}
 		if col.ValueType == dbproxyv1.ValueType_VALUE_TYPE_NULL && col.Nullable != nil && !*col.Nullable {
 			return fmt.Errorf("column %d is nonnullable NULL", i)
@@ -266,8 +287,16 @@ func validateSchema(response *dbproxyv1.QueryResponse) error {
 		if col.Length != nil && *col.Length < 0 {
 			return fmt.Errorf("column %d has negative length", i)
 		}
-		if size := col.DecimalSize; size != nil && (size.Precision < 0 || size.Scale < 0 || size.Scale > size.Precision) {
-			return fmt.Errorf("column %d has invalid decimal size", i)
+		if size := col.DecimalSize; size != nil {
+			if size.Precision < 0 {
+				return fmt.Errorf("column %d has negative decimal precision %d", i, size.Precision)
+			}
+			if size.Scale < 0 {
+				return fmt.Errorf("column %d has negative decimal scale %d", i, size.Scale)
+			}
+			if size.Scale > size.Precision {
+				return fmt.Errorf("column %d decimal scale %d exceeds precision %d", i, size.Scale, size.Precision)
+			}
 		}
 	}
 	return nil
@@ -317,20 +346,35 @@ func (r *rows) Next(dest []driver.Value) error {
 			}
 			return fmt.Errorf("proxy query stream: %w", err)
 		}
-		if response == nil || len(response.Columns) > 0 || (len(response.Rows) == 0 && len(response.Warnings) == 0) {
+		if response == nil {
 			r.done = true
 			r.cancel()
-			return errors.New("proxy query stream: invalid response after schema")
+			return errors.New("proxy query stream: missing response after schema")
+		}
+		if len(response.Columns) > 0 {
+			r.done = true
+			r.cancel()
+			return fmt.Errorf("proxy query stream: response after schema repeats columns (count: %d)", len(response.Columns))
+		}
+		if len(response.Rows) == 0 && len(response.Warnings) == 0 {
+			r.done = true
+			r.cancel()
+			return errors.New("proxy query stream: empty response after schema")
 		}
 		r.batch = response.Rows
 		r.index = 0
 	}
 	row := r.batch[r.index]
 	r.index++
-	if row == nil || len(row.Values) != len(r.columns) {
+	if row == nil {
 		r.done = true
 		r.cancel()
-		return errors.New("proxy query stream: row width differs from schema")
+		return errors.New("proxy query stream: row is missing")
+	}
+	if len(row.Values) != len(r.columns) {
+		r.done = true
+		r.cancel()
+		return fmt.Errorf("proxy query stream: row has %d values, expected %d", len(row.Values), len(r.columns))
 	}
 	for i, v := range row.Values {
 		converted, err := resultValue(v, r.columns[i])
