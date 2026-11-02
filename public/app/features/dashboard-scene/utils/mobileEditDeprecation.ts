@@ -41,7 +41,7 @@ export function notifyMobileEditNotAvailable(): void {
 
 /**
  * Warns and redirects away from a route that exists only to build or edit a dashboard (e.g.
- * /dashboard/new, /dashboard/import, the Template route), since landing there on mobile would
+ * /dashboard/new, the Template route), since landing there on mobile would
  * otherwise show a dead-end page that can never be completed.
  */
 export function redirectAwayFromMobileEdit(): void {
