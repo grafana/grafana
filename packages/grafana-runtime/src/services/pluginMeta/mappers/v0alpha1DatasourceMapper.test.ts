@@ -135,31 +135,15 @@ describe('v0alpha1DatasourceMapper', () => {
     });
 
     it('should map extensions property correctly', () => {
-      const extensions = result[pluginId].extensions ?? {
+      // None of the fixture datasources declare extensions; a dedicated test below covers
+      // the non-empty case.
+      expect(result[pluginId].extensions).toEqual({
         addedComponents: [],
         addedFunctions: [],
         addedLinks: [],
         exposedComponents: [],
         extensionPoints: [],
-      };
-
-      expect(extensions.addedComponents).toEqual(spec.pluginJson.extensions?.addedComponents ?? []);
-      expect(extensions.addedFunctions).toEqual(spec.pluginJson.extensions?.addedFunctions ?? []);
-      expect(extensions.addedLinks).toEqual(spec.pluginJson.extensions?.addedLinks ?? []);
-      expect(extensions.exposedComponents).toEqual(
-        (spec.pluginJson.extensions?.exposedComponents ?? []).map((v) => ({
-          ...v,
-          description: v.description ?? '',
-          title: v.title ?? '',
-        }))
-      );
-      expect(extensions.extensionPoints).toEqual(
-        (spec.pluginJson.extensions?.extensionPoints ?? []).map((v) => ({
-          ...v,
-          description: v.description ?? '',
-          title: v.title ?? '',
-        }))
-      );
+      });
     });
   });
 
@@ -184,5 +168,71 @@ describe('v0alpha1DatasourceMapper', () => {
     expect(testdata.annotations).toBe(true);
     expect(testdata.backend).toBe(true);
     expect(testdata.queryOptions).toEqual({ maxDataPoints: true, minInterval: true });
+  });
+
+  it('should map a datasource with non-empty extension metadata', () => {
+    const graphite = v0alpha1Response.items.find((i) => i.spec.pluginJson.id === 'graphite')!;
+    const withExtensions = {
+      ...graphite,
+      spec: {
+        ...graphite.spec,
+        pluginJson: {
+          ...graphite.spec.pluginJson,
+          extensions: {
+            addedComponents: [
+              {
+                targets: ['grafana/dashboard/panel/menu'],
+                title: 'Added component',
+                description: 'Added component description',
+              },
+            ],
+            addedLinks: [
+              {
+                targets: ['grafana/explore/toolbar/action'],
+                title: 'Added link',
+                description: 'Added link description',
+              },
+            ],
+            addedFunctions: [
+              {
+                targets: ['grafana/alerting/action'],
+                title: 'Added function',
+                description: 'Added function description',
+              },
+            ],
+            exposedComponents: [{ id: 'graphite/widget/v1' }],
+            extensionPoints: [
+              {
+                id: 'graphite/configure/v1',
+                title: 'Configure',
+                description: 'Lets other plugins extend the config page',
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    const mapped = v0alpha1DatasourceMapper({ ...v0alpha1Response, items: [withExtensions] });
+
+    expect(mapped['graphite'].extensions).toEqual({
+      addedComponents: [
+        {
+          targets: ['grafana/dashboard/panel/menu'],
+          title: 'Added component',
+          description: 'Added component description',
+        },
+      ],
+      addedLinks: [
+        { targets: ['grafana/explore/toolbar/action'], title: 'Added link', description: 'Added link description' },
+      ],
+      addedFunctions: [
+        { targets: ['grafana/alerting/action'], title: 'Added function', description: 'Added function description' },
+      ],
+      exposedComponents: [{ id: 'graphite/widget/v1', title: '', description: '' }],
+      extensionPoints: [
+        { id: 'graphite/configure/v1', title: 'Configure', description: 'Lets other plugins extend the config page' },
+      ],
+    });
   });
 });
