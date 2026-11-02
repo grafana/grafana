@@ -210,8 +210,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   }
 
   const yFieldConfig: FieldConfig | undefined = yField.config?.custom;
-  const declaredYScale = yFieldConfig?.scaleDistribution;
-  const yScale = declaredYScale ?? { type: ScaleDistribution.Linear };
+  const yScale = yFieldConfig?.scaleDistribution ?? { type: ScaleDistribution.Linear };
   const yAxisReverse = Boolean(yAxisConfig.reverse);
   const isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
 
@@ -219,13 +218,10 @@ export function prepConfig(opts: PrepConfigOpts) {
     if (yBucketScale) {
       return yBucketScale.type;
     }
-    if (yScale.type !== ScaleDistribution.Linear) {
+    if (yScale.type !== ScaleDistribution.Linear || isSparseHeatmap) {
       return ScaleDistribution.Log;
     }
-    // Sparse cells frames fall back to log for Prometheus native histograms, whose buckets are
-    // exponential and which declare no scale of their own. A y field that declares linear has
-    // already said which scale it wants.
-    return isSparseHeatmap && declaredYScale == null ? ScaleDistribution.Log : ScaleDistribution.Linear;
+    return ScaleDistribution.Linear;
   })();
 
   const scaleLog = toLogBase(yBucketScale?.log ?? yScale.log);

@@ -1,11 +1,11 @@
 import uPlot from 'uplot';
 
 import { createDataFrame, createTheme, DataFrameType, dateTime, FieldType } from '@grafana/data';
-import { AxisPlacement, HeatmapCellLayout, ScaleDistribution, type ScaleDistributionConfig } from '@grafana/schema';
+import { AxisPlacement, HeatmapCellLayout, ScaleDistribution } from '@grafana/schema';
 import { type UPlotConfigBuilder } from '@grafana/ui';
 
 import { type HeatmapData } from './fields';
-import { HeatmapSelectionMode } from './panelcfg.gen';
+import { HeatmapSelectionMode, type Options } from './panelcfg.gen';
 import {
   applyExplicitMinMax,
   boundedMinMax,
@@ -445,67 +445,33 @@ describe('prepConfig', () => {
   });
 
   describe('y scale distribution', () => {
-    /** Puts a declared scale on the y field, the way a datasource would send it on the frame. */
-    function declaring(data: HeatmapData, scaleDistribution?: ScaleDistributionConfig): HeatmapData {
-      if (scaleDistribution) {
-        data.heatmap!.fields[1].config.custom = { scaleDistribution };
-      }
-      return data;
+    function prep(data: HeatmapData, rowsFrame?: Options['rowsFrame']) {
+      return prepConfig({
+        dataRef: { current: data },
+        theme,
+        timeZone: 'utc',
+        getTimeRange: () => timeRange,
+        exemplarColor: 'magenta',
+        yAxisConfig: { axisPlacement: AxisPlacement.Left },
+        rowsFrame,
+      });
     }
 
     // uPlot scale distributions: 1 is linear, 3 is log.
-    it.each([
-      { desc: 'sparse frame, nothing declared, falls back to log', sparse: true, declared: undefined, distr: 3 },
-      { desc: 'dense frame, nothing declared, falls back to linear', sparse: false, declared: undefined, distr: 1 },
-      {
-        desc: 'sparse frame uses a declared linear scale',
-        sparse: true,
-        declared: { type: ScaleDistribution.Linear },
-        distr: 1,
-      },
-      {
-        desc: 'sparse frame uses a declared log scale',
-        sparse: true,
-        declared: { type: ScaleDistribution.Log, log: 2 },
-        distr: 3,
-      },
-      {
-        desc: 'a declared ordinal scale keeps falling back to log',
-        sparse: true,
-        declared: { type: ScaleDistribution.Ordinal },
-        distr: 3,
-      },
-    ])('$desc', ({ sparse, declared, distr }) => {
-      const data = declaring(sparse ? createSparseHeatmapData() : createMinimalHeatmapData(), declared);
-
-      const builder = prepConfig({
-        dataRef: { current: data },
-        theme,
-        timeZone: 'utc',
-        getTimeRange: () => timeRange,
-        exemplarColor: 'magenta',
-        yAxisConfig: { axisPlacement: AxisPlacement.Left },
-      });
+    // Native histogram buckets are exponential and the frame carries no scale of its own, so
+    // the log fallback has to survive any change to how the scale is chosen.
+    it('falls back to log on a sparse frame with no bucket scale set', () => {
+      const builder = prep(createSparseHeatmapData());
 
       const { scaleKey } = getYScaleRangeInfo(builder);
-      expect(builder.getConfig().scales?.[scaleKey]).toMatchObject({ distr });
+      expect(builder.getConfig().scales?.[scaleKey]).toMatchObject({ distr: 3 });
     });
 
-    it('takes the panel option over a declared scale', () => {
-      const data = declaring(createSparseHeatmapData(), { type: ScaleDistribution.Linear });
-
-      const builder = prepConfig({
-        dataRef: { current: data },
-        theme,
-        timeZone: 'utc',
-        getTimeRange: () => timeRange,
-        exemplarColor: 'magenta',
-        yAxisConfig: { axisPlacement: AxisPlacement.Left },
-        rowsFrame: { yBucketScale: { type: ScaleDistribution.Log, log: 2 } },
-      });
+    it('uses the Y bucket scale option on a sparse frame', () => {
+      const builder = prep(createSparseHeatmapData(), { yBucketScale: { type: ScaleDistribution.Linear } });
 
       const { scaleKey } = getYScaleRangeInfo(builder);
-      expect(builder.getConfig().scales?.[scaleKey]).toMatchObject({ distr: 3, log: 2 });
+      expect(builder.getConfig().scales?.[scaleKey]).toMatchObject({ distr: 1 });
     });
   });
 

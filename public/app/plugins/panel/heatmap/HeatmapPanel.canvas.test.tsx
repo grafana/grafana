@@ -526,18 +526,13 @@ describe('HeatmapPanel (canvas)', () => {
       await assertCanvasOutput(compactCanvas);
     });
 
-    /** Evenly spaced buckets 10-20 and 20-30, with the y field declaring a linear scale. */
-    function createLinearSparseFrame() {
+    /** Buckets 10-20 and 20-30: equal widths, so a linear y scale draws them the same height. */
+    function createEvenlySpacedCellsFrame() {
       return toDataFrame({
         meta: { type: DataFrameType.HeatmapCells },
         fields: [
           { name: 'xMax', type: FieldType.time, values: [1000, 1000, 2000, 2000] },
-          {
-            name: 'yMin',
-            type: FieldType.number,
-            values: [10, 20, 10, 20],
-            config: { custom: { scaleDistribution: { type: ScaleDistribution.Linear } } },
-          },
+          { name: 'yMin', type: FieldType.number, values: [10, 20, 10, 20] },
           { name: 'yMax', type: FieldType.number, values: [20, 30, 20, 30] },
           { name: 'count', type: FieldType.number, values: [5, 10, 15, 20] },
         ],
@@ -552,11 +547,20 @@ describe('HeatmapPanel (canvas)', () => {
         .map((event) => Math.round(event.props.path[0].props.height * 100) / 100);
     }
 
-    // Both buckets span 10 units, so a linear y scale gives them the same height. Before the
-    // declared scale was read, the forced log scale drew the same two buckets at 115.33 and
-    // 67.05 pixels.
-    it('draws evenly spaced buckets at equal heights when the y field declares linear', async () => {
-      renderHeatmapPanel({ series: [createLinearSparseFrame()] }, undefined, { timeRange });
+    it('keeps the log fallback when no Y bucket scale is set', async () => {
+      renderHeatmapPanel({ series: [createEvenlySpacedCellsFrame()] }, undefined, { timeRange });
+      await assertUPlotReady();
+
+      // Equal-width buckets come out unequal on the log scale native histograms want.
+      expect(new Set(filledCellHeights()).size).toBe(2);
+    });
+
+    it('draws equal-width buckets at equal heights when the Y bucket scale is linear', async () => {
+      renderHeatmapPanel(
+        { series: [createEvenlySpacedCellsFrame()] },
+        { rowsFrame: { yBucketScale: { type: ScaleDistribution.Linear } } },
+        { timeRange }
+      );
       await assertUPlotReady();
 
       const heights = filledCellHeights();
