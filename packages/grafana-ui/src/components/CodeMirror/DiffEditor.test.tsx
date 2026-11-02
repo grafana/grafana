@@ -22,6 +22,8 @@ function DiffWithParentInput({ lineSeparator }: { lineSeparator: string }): Reac
 
 function DiffWithMountConfigurationChange(): ReactElement {
   const [lineNumbers, setLineNumbers] = useState(true);
+  // deliberately changes config during the mount commit, before the merge view exists
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useLayoutEffect(() => setLineNumbers(false), []);
 
   return <DiffEditor original="before" modified="after" lineNumbers={lineNumbers} />;
