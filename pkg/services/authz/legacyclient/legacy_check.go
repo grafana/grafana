@@ -48,6 +48,19 @@ func (c *LegacyClient) LegacyCheck(ctx context.Context, req LegacyCheckRequest) 
 	var internal *authzextv1.LegacyInternalIdentity
 	if req.InternalIdentity != nil {
 		internal = &authzextv1.LegacyInternalIdentity{Profile: req.InternalIdentity.Profile.String()}
+
+		if background := req.InternalIdentity.Background; background != nil {
+			permissions := make(map[string]*authzextv1.LegacyPermissionScopes, len(background.Permissions))
+			for action, scopes := range background.Permissions {
+				permissions[action] = &authzextv1.LegacyPermissionScopes{Scopes: slices.Clone(scopes)}
+			}
+
+			internal.Background = &authzextv1.LegacyBackgroundIdentity{
+				Name:        background.Name,
+				OrgRole:     background.OrgRole,
+				Permissions: permissions,
+			}
+		}
 	}
 
 	//nolint:staticcheck // We intentionally call the deprecated compatibility API.
