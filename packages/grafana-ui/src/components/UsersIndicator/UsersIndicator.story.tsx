@@ -1,4 +1,4 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { UsersIndicator } from './UsersIndicator';
 import mdx from './UsersIndicator.mdx';

@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { render, screen } from 'test/test-utils';
 
 import {
   ActionType,
@@ -255,6 +255,20 @@ describe('BarChartPanel', () => {
         },
       });
 
+      expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
+    });
+
+    it('hides legend when legend.displayMode is hidden, even if showLegend is true', () => {
+      renderBarChartPanel(undefined, {
+        legend: {
+          showLegend: true,
+          displayMode: LegendDisplayMode.Hidden,
+          placement: 'bottom',
+          calcs: [],
+        },
+      });
+
+      expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
       expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
     });
   });

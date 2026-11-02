@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/metrics"
 	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -95,27 +96,28 @@ func (r *Runner) discoverNamespaces(ctx context.Context, log logging.Logger) ([]
 	}()
 
 	// List Check metadata cluster-wide (namespace ""); discovery only reads
-	// each Check's namespace and creation timestamp.
-	items, err := r.listChecksMetadata(ctx, log, metav1.NamespaceAll)
+	// each Check's namespace and creation timestamp, so pages are folded into
+	// lastCreated as they arrive and memory stays proportional to the number
+	// of namespaces, not the number of Checks.
+	lastCreated := make(map[string]time.Time)
+	checksTotal, skipped := 0, 0
+	err := r.forEachCheckMetadata(ctx, log, metav1.NamespaceAll, func(item *metav1.PartialObjectMetadata) {
+		checksTotal++
+		ns := item.GetNamespace()
+		info, parseErr := types.ParseNamespace(ns)
+		if parseErr != nil || info.StackID == 0 {
+			skipped++
+			return
+		}
+		itemCreated := item.GetCreationTimestamp().Time
+		if itemCreated.After(lastCreated[ns]) {
+			lastCreated[ns] = itemCreated
+		}
+	})
 	if err != nil {
 		log.Debug("checkscheduler discoverNamespaces cluster-wide Check list failed", "error", err)
 		discoveryErr = err
 		return nil, nil, err
-	}
-
-	lastCreated := make(map[string]time.Time)
-	skipped := 0
-	for i := range items {
-		ns := items[i].GetNamespace()
-		info, parseErr := types.ParseNamespace(ns)
-		if parseErr != nil || info.StackID == 0 {
-			skipped++
-			continue
-		}
-		itemCreated := items[i].GetCreationTimestamp().Time
-		if itemCreated.After(lastCreated[ns]) {
-			lastCreated[ns] = itemCreated
-		}
 	}
 
 	namespaces := make([]string, 0, len(lastCreated))
@@ -124,7 +126,7 @@ func (r *Runner) discoverNamespaces(ctx context.Context, log logging.Logger) ([]
 	}
 	sort.Strings(namespaces)
 	metrics.MTSchedulerNamespacesDiscovered.Set(float64(len(namespaces)))
-	log.Debug("checkscheduler discoverNamespaces complete", "checks_total", len(items),
+	log.Debug("checkscheduler discoverNamespaces complete", "checks_total", checksTotal,
 		"skipped_non_stack", skipped, "stack_namespace_count", len(namespaces))
 	return namespaces, lastCreated, nil
 }
@@ -147,6 +149,11 @@ func (r *Runner) runInitialCleanupParallelMT(ctx context.Context, logger logging
 		namespace := namespace
 		if lastCreated[namespace].IsZero() {
 			continue
+		}
+		// Stop scheduling once ctx is done (shutdown or lost leader lease)
+		// instead of failing, and logging, once per remaining namespace.
+		if ctx.Err() != nil {
+			break
 		}
 		g.Go(func() error {
 			nsLogger := logger.With("namespace", namespace)
@@ -180,6 +187,9 @@ func (r *Runner) runTickParallelMT(ctx context.Context, logger logging.Logger, n
 	var g errgroup.Group
 	g.SetLimit(maxConcurrency)
 	for _, namespace := range namespaces {
+		if ctx.Err() != nil {
+			break
+		}
 		last := lastCreatedMap[namespace]
 		g.Go(func() error {
 			nsLogger := logger.With("namespace", namespace)
@@ -224,6 +234,17 @@ func (r *Runner) tickNamespace(ctx context.Context, log logging.Logger, namespac
 			"last_created", lastCreated, "eval_deadline", deadline, "eval_interval", r.defaultEvalInterval)
 		tickResult = "skipped_not_stale"
 		return lastCreated, nil
+	}
+	// Skip namespaces the check registry rejects. If the lookup fails, schedule as usual.
+	if skipper, ok := r.checkRegistry.(checkregistry.NamespaceSkipper); ok {
+		reason, err := skipper.SkipReason(ctx, namespace)
+		if err != nil {
+			log.Debug("checkscheduler tickNamespace skip lookup failed, scheduling anyway", "error", err)
+		} else if reason != "" {
+			log.Debug("checkscheduler tickNamespace skip", "reason", reason)
+			tickResult = "skipped_" + reason
+			return lastCreated, nil
+		}
 	}
 	observeDuration = true
 	// In MT, CheckType registration is on-demand (the "/register" endpoint),

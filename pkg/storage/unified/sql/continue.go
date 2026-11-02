@@ -7,9 +7,12 @@ import (
 )
 
 type ContinueToken struct {
-	StartOffset     int64 `json:"o"`
-	ResourceVersion int64 `json:"v"`
-	SortAscending   bool  `json:"s"`
+	StartOffset     int64  `json:"o"`
+	ResourceVersion int64  `json:"v"`
+	SortAscending   bool   `json:"s"`
+	KeysOnly        bool   `json:"ko,omitempty"`
+	ClusterWide     bool   `json:"cw,omitempty"`
+	Namespace       string `json:"ns,omitempty"`
 }
 
 func (c ContinueToken) String() string {

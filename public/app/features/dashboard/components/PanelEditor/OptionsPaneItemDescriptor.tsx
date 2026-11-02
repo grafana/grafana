@@ -3,18 +3,18 @@ import { type ReactNode } from 'react';
 import * as React from 'react';
 import Highlighter from 'react-highlight-words';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Field, Label, useStyles2 } from '@grafana/ui';
 import { getLabelStyles } from '@grafana/ui/internal';
 
 import { type OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemOverrides } from './OptionsPaneItemOverrides';
+import { useOptionsPaneReadOnly } from './OptionsPaneReadOnlyContext';
 import { type OptionPaneItemOverrideInfo } from './types';
 
 export interface OptionsPaneItemInfo {
   title?: string;
-  value?: any;
+  value?: unknown;
   description?: string;
   popularRank?: number;
   render: (descriptor: OptionsPaneItemDescriptor) => React.ReactElement<Record<string, unknown>>;
@@ -66,6 +66,7 @@ function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) 
   const { title, description, id, render, skipField, useFieldset } = itemDescriptor.props;
   const key = `${itemDescriptor.parent.props.id} ${title}`;
   const showIf = itemDescriptor.useShowIf();
+  const readOnly = useOptionsPaneReadOnly();
 
   if (!showIf) {
     return null;
@@ -83,6 +84,7 @@ function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) 
       data-testid={selectors.components.PanelEditor.OptionsPane.fieldLabel(key)}
       htmlFor={id}
       useFieldset={useFieldset}
+      disabled={readOnly ? true : undefined}
     >
       {render(itemDescriptor)}
     </Field>
@@ -169,7 +171,7 @@ function OptionPaneLabel({ title, description, overrides, addon, htmlFor, useFie
   );
 }
 
-function getOptionPaneLabelStyles(theme: GrafanaTheme2) {
+function getOptionPaneLabelStyles() {
   return {
     container: css({
       display: 'flex',

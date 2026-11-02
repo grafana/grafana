@@ -68,9 +68,12 @@ jest.mock('@grafana/assistant', () => {
 });
 
 const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+const useFlagMock = jest.fn((_: string, defaultValue: boolean) => ({ value: defaultValue }));
+
 jest.mock('@openfeature/react-sdk', () => ({
   ...jest.requireActual('@openfeature/react-sdk'),
   useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+  useFlag: (flag: string, defaultValue: boolean) => useFlagMock(flag, defaultValue),
 }));
 
 const defaultProps = {

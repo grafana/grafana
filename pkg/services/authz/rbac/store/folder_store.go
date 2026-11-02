@@ -21,7 +21,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -211,6 +213,8 @@ func (s *APIFolderStore) listFoldersViaSearch(ctx context.Context, ns types.Name
 				Resource:  gvr.Resource,
 			},
 		},
+		Fields:       []string{resource.SEARCH_FIELD_FOLDER},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 
 	// dashboardsearch.SearchAll expects a (ctx, orgID, req) search func; the
@@ -267,7 +271,7 @@ func (s *APIFolderStore) listFoldersViaList(ctx context.Context, ns types.Namesp
 
 		folder := Folder{UID: object.GetName()}
 		parent := object.GetFolder()
-		if parent != "" {
+		if !foldermodel.IsRootFolderUID(parent) {
 			folder.ParentUID = &parent
 		}
 

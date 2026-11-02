@@ -1,13 +1,11 @@
 package apiregistry
 
 import (
-	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	"github.com/grafana/grafana/pkg/registry/apis/collections"
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
-	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
@@ -29,8 +27,6 @@ func ProvideRegistryServiceSink(
 	_ *preferences.APIBuilder,
 	_ *collections.APIBuilder,
 	_ *provisioning.APIBuilder,
-	_ *ofrep.APIBuilder,
-	_ *appplugin.AppPluginAPIBuilder,
 	_ *secret.DependencyRegisterer,
 	_ *provisioning.DependencyRegisterer,
 ) *Service {

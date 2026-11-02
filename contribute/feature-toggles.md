@@ -18,12 +18,12 @@ Exhaustive documentation on OpenFeature can be found at [OpenFeature.dev](https:
 
 The `Generate` field on a `FeatureFlag` controls which clients are generated. The available targets are:
 
-| Target                   | Description                                                                                                             |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| `GenerateLegacyGo`       | Generates a Go constant in `toggles_gen.go`, skipping new name requirements (legacy, prefer `GenerateGo` for new flags) |
-| `GenerateLegacyFrontend` | Generates a TypeScript constant in `featureToggles.gen.ts` (legacy, prefer `GenerateReact` for new flags)               |
-| `GenerateGo`             | Generates a Go constant in `toggles_gen.go`                                                                             |
-| `GenerateReact`          | Generates a typed React hook in `openfeature.gen.ts` via the OpenFeature CLI                                            |
+| Target           | Description                                                                                                     |
+| ---------------- | --------------------------------------------------------------------------------------------------------------- |
+| `LegacyGo`       | Generates a Go constant in `toggles_gen.go`, skipping new name requirements (legacy, prefer `Go` for new flags) |
+| `LegacyFrontend` | Generates a TypeScript constant in `featureToggles.gen.ts` (legacy, prefer `React` for new flags)               |
+| `Go`             | Generates a Go constant in `toggles_gen.go`                                                                     |
+| `React`          | Generates a typed React hook in `openfeature.gen.ts` via the OpenFeature CLI                                    |
 
 e.g.
 
@@ -32,11 +32,44 @@ e.g.
     Name:        "grafana.newPreferencesPage",
     Description: "Whether to use the new SharedPreferences functional component",
     Stage:       FeatureStageExperimental,
-    Generate:    []GenerateTarget{GenerateGo, GenerateReact},
+    Generate:    Generate{Go: true, React: true},
     Owner:       grafanaFrontendPlatformSquad,
     Expression:  "false",
 },
 ```
+
+## Migrating an existing legacy flag to OpenFeature
+
+Reading a flag from `config.featureToggles` is blocked by the `@grafana/no-config-feature-toggles`
+lint rule. That map is a static bootData snapshot, and the multi-tenant frontend service serves it
+empty — so every flag read through it resolves to `false` there, including flags that are GA and
+enabled by default.
+
+If you hit that rule on a flag that already exists as a legacy toggle, add `React: true` **alongside**
+its existing `LegacyFrontend`:
+
+```go
+Generate: Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
+```
+
+Do **not** rename the flag to the `component.flagName` convention as part of this. The name is the
+OFREP key, and it is also the key used in `custom.ini` under `[feature_toggles]` and in any Cloud
+per-stack override, so renaming it silently drops those. Keeping either legacy target set also keeps
+the naming check satisfied. Then run `make gen-feature-toggles` and move the frontend reads over to
+the generated hook or the client.
+
+Existing reads can be migrated incrementally — a flag can have both targets while some call sites are
+still legacy.
+
+Two things to watch when you migrate the reads:
+
+- **The evaluation default changes for default-on flags.** The generated `useFlagXxx` hook bakes the
+  registry `Expression` in as its default, so a flag with `Expression: "true"` starts resolving to
+  `true` where the legacy read gave `false` (jest starts with an empty `config.featureToggles`).
+  That is the correct behaviour, but it can flip unrelated test suites onto the new code path.
+- **Tests need `setTestFlags`.** `testWithFeatureToggles` only writes `config.featureToggles`, so it
+  no longer gates a migrated read. Use `setTestFlags` from `@grafana/test-utils/unstable` instead,
+  and reset it in `afterEach` wrapped in `act` — it fires OpenFeature events into mounted components.
 
 ## How to use the flag in your code
 

@@ -5,7 +5,7 @@
  * Through the exports declared in package.json we can import this code in core Grafana and the grafana/data
  * package will continue to be able to access all code when it's published to npm as it's private to the package.
  *
- * During the yarn pack lifecycle the exports[./internal] property is deleted from the package.json
+ * During the pnpm pack lifecycle the exports[./internal] property is deleted from the package.json
  * preventing the code from being importable by plugins or other npm packages making it truly "internal".
  *
  */
@@ -121,6 +121,13 @@ export { decoupleHideFromState } from '../field/decoupleHideFromState';
 export { findNumericFieldMinMax } from '../field/fieldOverrides';
 export { type PluginViewOptionsQuickToggles, type PanelPluginViewOptions } from '../panel/PanelPlugin';
 export { sanitize, sanitizeUrl } from '../text/sanitize';
+export { getPanelDataStatusItems, PanelStatusStore } from '../panel/PanelNotices';
 
 export { NewThemeOptionsSchema } from '../themes/createTheme';
 export { createFieldsOrdererAuto } from '../transformations/transformers/order';
+export { getRowIdentity } from '../transformations/frameIdentity';
+
+export { filterByValueTransformer, type FilterByValueConfig } from '../transformations/transformers/filterByValue';
+export { type ValueSetOptions } from '../transformations/matchers/valueMatchers/setMatchers';
+export { dateTimeFormatTimeAgoShort } from '../datetime/formatter';
+export { getAllowedRestrictedGrafanaApis } from '../context/plugins/RestrictedGrafanaApis';

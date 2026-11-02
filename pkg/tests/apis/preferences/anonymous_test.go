@@ -31,7 +31,6 @@ func TestIntegrationPreferences_Anonymous(t *testing.T) {
 		AnonymousUserRole: org.RoleViewer, // anonymous lands in org 1 "Main Org."
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-			featuremgmt.FlagPreferencesRerouteLegacyAPIs,
 		},
 	})
 

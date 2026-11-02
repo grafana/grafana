@@ -19,7 +19,7 @@ export interface UseGetRepositoryFoldersProps {
 
 // The generated API client types `items` loosely (path is optional/unknown),
 // so a runtime guard is needed to safely access `file.path`.
-function isFileItem(obj: unknown): obj is { path: string } {
+export function isFileItem(obj: unknown): obj is { path: string } {
   return isObject(obj) && 'path' in obj && typeof obj.path === 'string';
 }
 

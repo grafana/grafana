@@ -2,9 +2,15 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { locationUtil } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 
 import { AttributePluginPromoTip } from './AttributePluginPromoTip';
 import { type AttributePluginPromo } from './attributePluginPromos';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 
 const promo: AttributePluginPromo = {
   pluginId: 'grafana-dbo11y-app',
@@ -15,6 +21,10 @@ const promo: AttributePluginPromo = {
 };
 
 describe('AttributePluginPromoTip', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('renders children and shows promo content on click', async () => {
     const user = userEvent.setup();
     render(
@@ -33,5 +43,24 @@ describe('AttributePluginPromoTip', () => {
 
     const learnMore = screen.getByRole('link', { name: /learn more/i });
     expect(learnMore).toHaveAttribute('href', locationUtil.assureBaseUrl(`/plugins/${promo.pluginId}`));
+  });
+
+  it('reports interaction when the learn more link is clicked', async () => {
+    const user = userEvent.setup();
+    render(
+      <AttributePluginPromoTip promo={promo}>
+        <span>SELECT 1</span>
+      </AttributePluginPromoTip>
+    );
+
+    await user.click(screen.getByTestId('attribute-plugin-promo-trigger'));
+
+    const learnMore = await screen.findByRole('link', { name: /learn more/i });
+    learnMore.addEventListener('click', (event) => event.preventDefault());
+    await user.click(learnMore);
+
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_traces_trace_view_attribute_plugin_promo_clicked', {
+      pluginId: 'grafana-dbo11y-app',
+    });
   });
 });

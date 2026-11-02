@@ -102,7 +102,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
             }
 
             const fieldName = getFieldDisplayName(field);
-            const aggregations = options.fields[fieldName].aggregations;
+            const aggregations = (options.fields[fieldName] ?? options.fields[field.name]).aggregations;
             const valuesByAggregation: Record<string, unknown[]> = {};
 
             valuesByGroupKey.forEach((value) => {
@@ -147,8 +147,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
 // exported for test
 export const shouldCalculateField = (field: Field, options: GroupByTransformerOptions): boolean => {
   const fieldName = getFieldDisplayName(field);
-  const { operation, aggregations = [] } = options.fields[fieldName] ?? {};
-
+  const { operation, aggregations = [] } = options.fields[fieldName] ?? options.fields[field.name] ?? {};
   if (!Array.isArray(aggregations)) {
     return false;
   } else if (operation === GroupByOperationID.aggregate) {

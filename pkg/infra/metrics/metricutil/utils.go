@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 
@@ -82,9 +83,7 @@ func buildLabelSets(labels []string, labelValues map[string][]string) []promethe
 
 func copyLabelSet(ls prometheus.Labels) prometheus.Labels {
 	newLs := make(prometheus.Labels, len(ls))
-	for l, v := range ls {
-		newLs[l] = v
-	}
+	maps.Copy(newLs, ls)
 	return newLs
 }
 

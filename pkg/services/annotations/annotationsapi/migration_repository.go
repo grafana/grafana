@@ -3,12 +3,30 @@ package annotationsapi
 import (
 	"context"
 	"errors"
+	"net/http"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// annotationTracer wraps an otel tracer and implements the tracing.Tracer interface.
+type annotationTracer struct {
+	trace.Tracer
+}
+
+func (t *annotationTracer) Inject(ctx context.Context, header http.Header, _ trace.Span) {
+	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(header))
+}
+
+var tracer tracing.Tracer = &annotationTracer{otel.Tracer("github.com/grafana/grafana/pkg/services/annotations/annotationsapi")}
 
 // annotationProxy is the subset of MigrationProxy the repository depends on:
 // it forwards annotation operations to the new API server.
@@ -52,6 +70,11 @@ func NewMigrationRepository(legacy annotations.Repository, proxy *MigrationProxy
 }
 
 func (r *migrationRepository) Find(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+	ctx, span := tracer.Start(ctx, "annotations.migration.Find", trace.WithAttributes(
+		attribute.String("annotations.migration_phase", r.cfg.AnnotationAppPlatform.APIMigrationPhase),
+	))
+	defer span.End()
+
 	switch {
 	case isAlertQuery(query):
 		return r.legacy.Find(ctx, query) // alerts live only in legacy
@@ -147,6 +170,11 @@ func isAlertQuery(query *annotations.ItemQuery) bool {
 
 // Save writes to the new store and copies the new legacy ID onto item.ID.
 func (r *migrationRepository) Save(ctx context.Context, item *annotations.Item) error {
+	ctx, span := tracer.Start(ctx, "annotations.migration.Save", trace.WithAttributes(
+		attribute.String("annotations.migration_phase", r.cfg.AnnotationAppPlatform.APIMigrationPhase),
+	))
+	defer span.End()
+
 	legacyID, err := r.proxy.Create(ctx, item.OrgID, item)
 	if err != nil {
 		return err
@@ -157,6 +185,11 @@ func (r *migrationRepository) Save(ctx context.Context, item *annotations.Item) 
 
 // SaveMany is not proxied. It is only used for alerting annotations, which stay in legacy.
 func (r *migrationRepository) SaveMany(ctx context.Context, items []annotations.Item) error {
+	ctx, span := tracer.Start(ctx, "annotations.migration.SaveMany", trace.WithAttributes(
+		attribute.String("annotations.migration_phase", r.cfg.AnnotationAppPlatform.APIMigrationPhase),
+	))
+	defer span.End()
+
 	return r.legacy.SaveMany(ctx, items)
 }
 
@@ -164,6 +197,11 @@ func (r *migrationRepository) SaveMany(ctx context.Context, items []annotations.
 // which preserves any Data the caller omits. On ErrGone (deleted in the new store) it
 // returns the error without falling back, so an update can't resurrect a deleted record.
 func (r *migrationRepository) Update(ctx context.Context, item *annotations.Item) error {
+	ctx, span := tracer.Start(ctx, "annotations.migration.Update", trace.WithAttributes(
+		attribute.String("annotations.migration_phase", r.cfg.AnnotationAppPlatform.APIMigrationPhase),
+	))
+	defer span.End()
+
 	err := r.proxy.Update(ctx, item.OrgID, item.ID, item)
 	if err == nil || !errors.Is(err, ErrNotFound) {
 		return err
@@ -176,6 +214,11 @@ func (r *migrationRepository) Update(ctx context.Context, item *annotations.Item
 // When a record is already deleted in the new store (ErrGone), we still best-effort delete the
 // legacy record to ensure consistency.
 func (r *migrationRepository) Delete(ctx context.Context, params *annotations.DeleteParams) error {
+	ctx, span := tracer.Start(ctx, "annotations.migration.Delete", trace.WithAttributes(
+		attribute.String("annotations.migration_phase", r.cfg.AnnotationAppPlatform.APIMigrationPhase),
+	))
+	defer span.End()
+
 	// No ID means a mass delete by dashboard/panel.
 	if params.ID == 0 {
 		return r.massDelete(ctx, params)
@@ -218,6 +261,11 @@ func (r *migrationRepository) massDelete(ctx context.Context, params *annotation
 
 // FindTags reads tag counts from the new store and merges in what the legacy store still owns.
 func (r *migrationRepository) FindTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+	ctx, span := tracer.Start(ctx, "annotations.migration.FindTags", trace.WithAttributes(
+		attribute.String("annotations.migration_phase", r.cfg.AnnotationAppPlatform.APIMigrationPhase),
+	))
+	defer span.End()
+
 	newResult, err := r.proxy.FindTags(ctx, query.OrgID, query)
 	if err != nil {
 		if r.cfg.AnnotationAppPlatform.ProxyAll() {

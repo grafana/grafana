@@ -80,6 +80,19 @@ export const InstallControlsWarning = ({ plugin, pluginStatus, latestCompatibleV
     return <Alert severity="warning" title={statusToMessage(pluginStatus)} className={styles.alert} />;
   }
 
+  if (!isRemotePluginsAvailable) {
+    return (
+      <Alert
+        severity="warning"
+        title={t(
+          'plugins.install-controls-warning.title-remote-plugins-unavailable',
+          'The install controls have been disabled because the Grafana server cannot access grafana.com.'
+        )}
+        className={styles.alert}
+      />
+    );
+  }
+
   if (!plugin.isPublished) {
     return (
       <Alert severity="warning" title="" className={styles.alert}>
@@ -89,7 +102,7 @@ export const InstallControlsWarning = ({ plugin, pluginStatus, latestCompatibleV
             <TextLink href="https://www.grafana.com/plugins" external>
               grafana.com/plugins
             </TextLink>{' '}
-            and can't be managed via the catalog.
+            and can&apos;t be managed via the catalog.
           </Trans>
         </div>
       </Alert>
@@ -103,19 +116,6 @@ export const InstallControlsWarning = ({ plugin, pluginStatus, latestCompatibleV
         title={t(
           'plugins.install-controls-warning.title-plugin-doesnt-support-version-grafana',
           "This plugin doesn't support your version of Grafana."
-        )}
-        className={styles.alert}
-      />
-    );
-  }
-
-  if (!isRemotePluginsAvailable) {
-    return (
-      <Alert
-        severity="warning"
-        title={t(
-          'plugins.install-controls-warning.title-remote-plugins-unavailable',
-          'The install controls have been disabled because the Grafana server cannot access grafana.com.'
         )}
         className={styles.alert}
       />

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sort"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -30,22 +32,22 @@ type Factory interface {
 type factory struct {
 	extras  map[provisioning.ConnectionType]Extra
 	enabled map[provisioning.ConnectionType]struct{}
+	tracer  trace.Tracer
 }
 
-// ToConnectionTypes maps the configured repository types to the connection
-// types they enable.
-func ToConnectionTypes(repositoryTypes []string) map[provisioning.ConnectionType]struct{} {
-	enabled := make(map[provisioning.ConnectionType]struct{}, len(repositoryTypes))
-	for _, t := range repositoryTypes {
+func ToConnectionTypes(connectionTypes []string) map[provisioning.ConnectionType]struct{} {
+	enabled := make(map[provisioning.ConnectionType]struct{}, len(connectionTypes))
+	for _, t := range connectionTypes {
 		enabled[provisioning.ConnectionType(t)] = struct{}{}
 	}
 	return enabled
 }
 
-func ProvideFactory(enabled map[provisioning.ConnectionType]struct{}, extras []Extra) (Factory, error) {
+func ProvideFactory(enabled map[provisioning.ConnectionType]struct{}, extras []Extra, tracer trace.Tracer) (Factory, error) {
 	f := &factory{
 		enabled: enabled,
 		extras:  make(map[provisioning.ConnectionType]Extra, len(extras)),
+		tracer:  tracer,
 	}
 
 	for _, e := range extras {
@@ -74,17 +76,38 @@ func (f *factory) Types() []provisioning.ConnectionType {
 }
 
 func (f *factory) Build(ctx context.Context, c *provisioning.Connection) (Connection, error) {
+	// Build is the single chokepoint every caller funnels through to construct a
+	// connection, and where the connection's token is decrypted via the secrets
+	// service. Tracing it here gives that decrypt call a descriptive parent
+	// regardless of the caller.
+	ctx, span := f.tracer.Start(ctx, "provisioning.connection.build",
+		trace.WithAttributes(
+			attribute.String("connection.name", c.GetName()),
+			attribute.String("connection.namespace", c.GetNamespace()),
+			attribute.String("connection.type", string(c.Spec.Type)),
+		),
+	)
+	defer span.End()
+
 	for _, e := range f.extras {
 		if e.Type() == c.Spec.Type {
 			if _, enabled := f.enabled[e.Type()]; !enabled {
-				return nil, fmt.Errorf("connection type %q is not enabled", e.Type())
+				err := fmt.Errorf("connection type %q is not enabled", e.Type())
+				span.RecordError(err)
+				return nil, err
 			}
 
-			return e.Build(ctx, c)
+			conn, err := e.Build(ctx, c)
+			if err != nil {
+				span.RecordError(err)
+			}
+			return conn, err
 		}
 	}
 
-	return nil, fmt.Errorf("connection type %q is not supported", c.Spec.Type)
+	err := fmt.Errorf("connection type %q is not supported", c.Spec.Type)
+	span.RecordError(err)
+	return nil, err
 }
 
 func (f *factory) Mutate(ctx context.Context, obj runtime.Object) error {

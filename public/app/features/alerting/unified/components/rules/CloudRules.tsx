@@ -4,7 +4,6 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Badge, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -53,7 +52,6 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
 
   const canMigrateToGMA =
     hasDataSourcesConfigured &&
-    config.featureToggles.alertingMigrationUI &&
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 

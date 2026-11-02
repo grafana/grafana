@@ -20,8 +20,7 @@ export function generatePath({ timestamp, pathFromAnnotation, slug, folderPath =
   let path = '';
 
   if (pathFromAnnotation) {
-    const hashIndex = pathFromAnnotation.indexOf('#');
-    return hashIndex > 0 ? pathFromAnnotation.substring(0, hashIndex) : pathFromAnnotation;
+    return splitSourcePath(pathFromAnnotation).filePath ?? pathFromAnnotation;
   }
 
   const pathSlug = slug || `new-dashboard-${timestamp}`;
@@ -33,6 +32,22 @@ export function generatePath({ timestamp, pathFromAnnotation, slug, folderPath =
   }
 
   return path;
+}
+
+/**
+ * The `grafana.app/sourcePath` annotation carries a `#ref` fragment on provisioning previews
+ * (the loader appends the ref it actually loaded from). Split it off so the file path stays valid
+ * and callers can target that branch/commit.
+ */
+export function splitSourcePath(sourcePath?: string): { filePath?: string; fragmentRef?: string } {
+  if (!sourcePath) {
+    return {};
+  }
+  const hashIndex = sourcePath.indexOf('#');
+  if (hashIndex <= 0) {
+    return { filePath: sourcePath };
+  }
+  return { filePath: sourcePath.substring(0, hashIndex), fragmentRef: sourcePath.substring(hashIndex + 1) };
 }
 
 /**

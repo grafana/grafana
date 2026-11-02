@@ -39,7 +39,7 @@ func newTestBadgerKV(t *testing.T) kv.KV {
 
 func newTestLeaseManager(t *testing.T, store kv.KV, holder string) *lease.Manager {
 	t.Helper()
-	mgr := lease.NewManager(store, holder, nil,
+	mgr := lease.NewManager(store, holder, "test", nil,
 		lease.WithInternalMinTTL(kvTestMinTTL),
 		lease.WithGarbageCollectionDisabled,
 	)
@@ -121,9 +121,19 @@ func TestKVRemoteIndexStore_UploadDownloadBleveIndex(t *testing.T) {
 	destDir := filepath.Join(t.TempDir(), "downloaded")
 	gotMeta, err := DownloadIndexSnapshot(ctx, store, ns, indexKey, destDir)
 	require.NoError(t, err)
+	// Manifest paths must be root-relative, forward-slash, and canonical.
+	for k := range gotMeta.Files {
+		require.False(t, strings.HasPrefix(k, "./"), "manifest key %q has ./ prefix", k)
+		require.Equal(t, filepath.ToSlash(filepath.Clean(k)), k, "manifest key %q is not canonical", k)
+	}
 	assert.Equal(t, meta.BuildVersion, gotMeta.BuildVersion)
 	assert.Equal(t, meta.LatestResourceVersion, gotMeta.LatestResourceVersion)
 	assert.True(t, gotMeta.BuildTime.Equal(buildStart))
+
+	listed, err := ListIndexSnapshots(ctx, store, ns, testLogger)
+	require.NoError(t, err)
+	require.Contains(t, listed, indexKey)
+	assert.True(t, listed[indexKey].BuildTime.Equal(buildStart))
 
 	// Open and query the downloaded index to confirm the data round-tripped.
 	idx, err := bleve.Open(destDir)
@@ -172,6 +182,9 @@ func TestKVRemoteIndexStore_ListAndDeleteIndexes(t *testing.T) {
 		assertNoDataKeys(t, store, ns, key)
 		assertNoManifestKey(t, store, ns, key)
 	}
+
+	_, err = DownloadIndexSnapshot(ctx, store, ns, keys[0], filepath.Join(t.TempDir(), "dl"))
+	require.ErrorIs(t, err, ErrSnapshotNotFound)
 }
 
 func TestKVRemoteIndexStore_DeleteIndex_LargeFileCount(t *testing.T) {
@@ -201,6 +214,32 @@ func TestKVRemoteIndexStore_ReadSnapshotManifest_MissingReturnsNotFound(t *testi
 	store := newTestKVRemoteIndexStore(t)
 	_, err := store.ReadSnapshotManifest(t.Context(), newTestNsResource(), ulid.Make())
 	require.ErrorIs(t, err, ErrSnapshotNotFound)
+}
+
+// oversizedManifestKV returns a manifest bigger than maxSnapshotManifestSize on
+// every manifest read. Badger refuses to store values that large, so the test
+// can't write one through the store.
+type oversizedManifestKV struct {
+	kv.KV
+}
+
+func (o *oversizedManifestKV) Get(ctx context.Context, section string, key string) (io.ReadCloser, error) {
+	if section == IndexSnapshotManifestSection {
+		return io.NopCloser(strings.NewReader(strings.Repeat("x", maxSnapshotManifestSize+1))), nil
+	}
+	return o.KV.Get(ctx, section, key)
+}
+
+func TestKVRemoteIndexStore_ReadSnapshotManifest_OversizedFails(t *testing.T) {
+	store := newTestKVRemoteIndexStoreOn(t, &oversizedManifestKV{KV: newTestBadgerKV(t)}, "test-owner")
+	ns := newTestNsResource()
+
+	_, err := store.ReadSnapshotManifest(t.Context(), ns, ulid.Make())
+	require.ErrorIs(t, err, ErrInvalidManifest)
+
+	// The download helper must reject it the same way.
+	_, err = DownloadIndexSnapshot(t.Context(), store, ns, ulid.Make(), filepath.Join(t.TempDir(), "dl"))
+	require.ErrorIs(t, err, ErrInvalidManifest)
 }
 
 func TestKVRemoteIndexStore_ReadSnapshotFile_MissingReturnsNotFound(t *testing.T) {
@@ -477,7 +516,10 @@ func TestKVRemoteIndexStore_LockBuildIndex_Contention(t *testing.T) {
 
 	_, err = store2.LockBuildIndex(ctx, ns, "11.5.0")
 	require.Error(t, err)
-	require.ErrorIs(t, err, lease.ErrLeaseAlreadyHeld)
+	// Build coordination keeps waiting only for errLockHeld. The lease
+	// sentinel stays internal to the store.
+	require.ErrorIs(t, err, errLockHeld)
+	require.NotErrorIs(t, err, lease.ErrLeaseAlreadyHeld)
 
 	require.NoError(t, lock1.Release())
 
@@ -539,7 +581,7 @@ func TestKVRemoteIndexStore_LockNamespaceForCleanup_Contention(t *testing.T) {
 	t.Cleanup(func() { _ = lock1.Release() })
 
 	_, err = store2.LockNamespaceForCleanup(ctx, "stack-1")
-	require.ErrorIs(t, err, lease.ErrLeaseAlreadyHeld)
+	require.ErrorIs(t, err, errLockHeld)
 
 	// Different namespace must be acquirable independently.
 	lock2, err := store2.LockNamespaceForCleanup(ctx, "stack-2")
@@ -564,7 +606,7 @@ func TestKVRemoteIndexStore_LockBuildIndex_LossOnExpiry(t *testing.T) {
 	// we control auto-renew. The store's lock plumbing is exercised by the
 	// other tests; here we're verifying Lost() wiring on a kvIndexStoreLock
 	// wrapping a real lost lease.
-	name := buildIndexLockKey(ns, "11.5.0")
+	name := kvBuildLeaseName(ns, "11.5.0")
 	l1, err := mgr1.Acquire(ctx, name, lease.WithTTL(kvTestMinTTL))
 	require.NoError(t, err)
 

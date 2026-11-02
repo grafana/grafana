@@ -20,6 +20,10 @@ review_date: 2026-04-10
 
 # Parca query editor
 
+{{< admonition type="warning" >}}
+This plugin is deprecated and will only receive critical security updates. Support will end on January 2, 2027.
+{{< /admonition >}}
+
 This document explains how to use the Parca query editor to query and visualize continuous profiling data.
 
 The query editor gives you access to a profile type selector, a label selector with autocomplete, and collapsible options for controlling query behavior.

@@ -23,7 +23,7 @@ export interface FinishedJobProps {
 
 export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusChange, onRetry }: FinishedJobProps) {
   const retryCount = useRef(0);
-  const pendingRetry = useRef<ReturnType<typeof setTimeout>>();
+  const pendingRetry = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const finishedQuery = useGetRepositoryJobsWithPathQuery({
     name: repositoryName,
     uid: jobUid,
@@ -91,6 +91,7 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
           success: {
             title: t('provisioning.job-status.status.title-success-running-job', 'Job completed successfully'),
           },
+          urls: job.status.url,
         });
       } else if (state === 'warning') {
         onStatusChange?.({

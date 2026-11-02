@@ -7,7 +7,13 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useStyles2, Badge } from '@grafana/ui';
 
-import { formatGrafanaDependency, getLatestCompatibleVersion, shouldDisablePluginInstall } from '../helpers';
+import {
+  formatGrafanaDependency,
+  getLatestCompatibleVersion,
+  isMarketplacePlugin,
+  shouldDisablePluginInstall,
+} from '../helpers';
+import { usePluginEntitlement } from '../hooks/usePluginEntitlement';
 import { type CatalogPlugin, PluginUpdateStrategy, type Version } from '../types';
 
 import { VersionInstallButton } from './VersionInstallButton';
@@ -21,6 +27,8 @@ export const VersionList = ({ plugin }: Props) => {
   const pluginId = plugin.id;
   const versions = useMemo(() => plugin.details?.versions ?? [], [plugin.details?.versions]);
   const disableInstallation = useMemo(() => shouldDisablePluginInstall(plugin), [plugin]);
+  const entitlement = usePluginEntitlement(plugin);
+  const notEntitled = isMarketplacePlugin(plugin) && !entitlement.entitled;
 
   const isManagedPlugin = plugin.managed.enabled;
   // For managed plugins the stored installedVersion may be stale, so it is never displayed as
@@ -91,6 +99,10 @@ export const VersionList = ({ plugin }: Props) => {
             tooltip = `This plugin can't be managed through the Plugin Catalog`;
           }
 
+          if (notEntitled) {
+            tooltip = 'Contact us to install this plugin';
+          }
+
           return (
             <tr key={version.version}>
               {/* Version number */}
@@ -131,6 +143,7 @@ export const VersionList = ({ plugin }: Props) => {
                       version.angularDetected ||
                       !version.isCompatible ||
                       disableInstallation ||
+                      notEntitled ||
                       shouldDisableVersionInstallation({
                         version,
                         latestMajorVersions,

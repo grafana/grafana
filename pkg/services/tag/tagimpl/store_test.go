@@ -20,7 +20,7 @@ type getStore func(db.DB) store
 func testIntegrationSavingTags(t *testing.T, fn getStore) {
 	t.Helper()
 
-	ss := db.InitTestDB(t)
+	ss := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	store := fn(ss)
 	tagPairs := []*tag.Tag{
 		{Key: "outage"},

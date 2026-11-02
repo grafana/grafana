@@ -10,12 +10,12 @@ import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { ShowModalReactEvent } from '../../../../types/events';
 import { appEvents } from '../../../app_events';
 import { getFooterLinks } from '../../Footer/Footer';
-import { HelpModal } from '../../help/HelpModal';
 
 import { DOCK_MENU_BUTTON_ID, MEGA_MENU_HEADER_TOGGLE_ID } from './MegaMenuHeader';
 import { getNavExperimentPayload } from './navExperiment';
 
-const emitOpenShortcutsModal = () => {
+const emitOpenShortcutsModal = async () => {
+  const { HelpModal } = await import(/* webpackChunkName: "help-modal" */ '../../help/HelpModal');
   appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
 };
 
@@ -269,6 +269,34 @@ const PROTECTED_NAV_IDS = new Set(['home', 'bookmarks', 'starred']);
 export const NON_MENU_NAV_IDS = new Set(['profile', 'help', HOME_NAV_ID]);
 
 /**
+ * Items excluded from the main left navigation for all users, including pins and customisation.
+ * Use the exact nav item id (e.g. 'explore', 'dashboards/playlists', 'plugin-page-my-app').
+ * For items without an id, use their nav URL without the app sub URL; it is added when matching.
+ * Hiding a parent also hides its descendants. This only controls menu visibility, not access.
+ * Should be a temporary way to fix the menu sprawl until a more robust solution.
+ */
+export const HIDDEN_NAV_ITEMS = new Set<string>([
+  '/a/grafana-adaptive-metrics-app/configuration',
+  '/a/grafana-adaptive-metrics-app/rule-management',
+  '/a/grafana-adaptive-metrics-app/segments',
+
+  '/a/grafana-adaptivelogs-app/drop-rules',
+  '/a/grafana-adaptivelogs-app/segments',
+  '/a/grafana-adaptivelogs-app/patterns',
+  '/a/grafana-adaptivelogs-app/exemptions',
+
+  '/a/grafana-adaptivetraces-app/policies',
+
+  '/a/grafana-cmab-app/usage',
+  '/a/grafana-cmab-app/cardinality',
+  '/a/grafana-cmab-app/attributions',
+  '/a/grafana-cmab-app/usage-alerts',
+  '/a/grafana-cmab-app/invoices',
+  '/a/grafana-cmab-app/settings',
+  '/a/grafana-cmab-app/resources',
+]);
+
+/**
  * The stable key identifying an item for hiding — its id, or its url when it has no id (plugin nav
  * items often have only a url). Everything hiding-related keys on this so any linked row can be hidden.
  */
@@ -379,20 +407,6 @@ export function reorderSections(
   // moveItem returns the same array for out-of-range indices; keep the stored order untouched then
   // rather than persisting the fully-expanded `ordered` list.
   return next === ordered ? currentOrder : next;
-}
-
-export function findByUrl(nodes: NavModelItem[], url: string): NavModelItem | null {
-  for (const item of nodes) {
-    if (item.url === url) {
-      return item;
-    } else if (item.children?.length) {
-      const found = findByUrl(item.children, url);
-      if (found) {
-        return found;
-      }
-    }
-  }
-  return null;
 }
 
 /**

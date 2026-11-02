@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-app-sdk/resource"
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 )
 
 func TestValidateGroupLabels(t *testing.T) {

@@ -27,6 +27,15 @@ import (
 func createTestService(t *testing.T, cfg *setting.Cfg) *frontendService {
 	t.Helper()
 
+	service, err := newTestService(cfg)
+	require.NoError(t, err)
+
+	return service
+}
+
+// newTestService builds a test service and returns the construction error, for tests
+// that assert the service refuses to start.
+func newTestService(cfg *setting.Cfg) (*frontendService, error) {
 	features := featuremgmt.WithFeatures()
 	license := &licensing.OSSLicensingService{}
 	hooksService := hooks.ProvideService()
@@ -38,10 +47,7 @@ func createTestService(t *testing.T, cfg *setting.Cfg) *frontendService {
 		cfg.BuildVersion = "10.3.0"
 	}
 
-	service, err := ProvideFrontendService(cfg, features, promGatherer, promRegister, license, hooksService)
-	require.NoError(t, err)
-
-	return service
+	return ProvideFrontendService(cfg, features, promGatherer, promRegister, license, hooksService)
 }
 
 func TestFrontendService_ServerCreation(t *testing.T) {

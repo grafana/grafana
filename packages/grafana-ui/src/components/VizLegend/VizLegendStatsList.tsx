@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 
-import { type DisplayValue, formattedValueToString } from '@grafana/data';
+import { type DisplayValue, formattedValueToString, type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { InlineList } from '../List/InlineList';
@@ -33,13 +33,14 @@ export const VizLegendStatsList = ({ stats }: Props) => {
   );
 };
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   list: css({
     flexGrow: 1,
     textAlign: 'right',
   }),
   item: css({
     marginLeft: '8px',
+    fontVariantNumeric: theme.flags.tabularNums ? 'tabular-nums' : undefined,
   }),
 });
 

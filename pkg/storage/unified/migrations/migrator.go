@@ -36,20 +36,26 @@ type unifiedMigration struct {
 	client         resource.ResourceClient
 	log            log.Logger
 	registry       *MigrationRegistry
+	rebuildBackoff *backoff.Config
+}
+
+type Option func(*unifiedMigration)
+
+func WithRebuildBackoff(cfg backoff.Config) Option {
+	return func(m *unifiedMigration) {
+		m.rebuildBackoff = &cfg
+	}
 }
 
 // streamProvider abstracts the different ways to create a bulk process stream
 type streamProvider interface {
-	createStream(ctx context.Context, opts MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error)
+	createStream(ctx context.Context, opts MigrateOptions) (resourcepb.BulkStore_BulkProcessClient, error)
 }
 
-func buildCollectionSettings(opts MigrateOptions, registry *MigrationRegistry) resource.BulkSettings {
+func buildCollectionSettings(opts MigrateOptions) resource.BulkSettings {
 	settings := resource.BulkSettings{SkipValidation: true}
 	for _, res := range opts.Resources {
-		key := buildResourceKey(res, opts.Namespace, registry)
-		if key != nil {
-			settings.Collection = append(settings.Collection, key)
-		}
+		settings.Collection = append(settings.Collection, buildResourceKey(res, opts.Namespace))
 	}
 	return settings
 }
@@ -58,8 +64,8 @@ type resourceClientStreamProvider struct {
 	client resource.ResourceClient
 }
 
-func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error) {
-	settings := buildCollectionSettings(opts, registry)
+func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts MigrateOptions) (resourcepb.BulkStore_BulkProcessClient, error) {
+	settings := buildCollectionSettings(opts)
 	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
 	return r.client.BulkProcess(ctx)
 }
@@ -69,11 +75,20 @@ func ProvideUnifiedMigrator(
 	client resource.ResourceClient,
 	registry *MigrationRegistry,
 ) UnifiedMigrator {
+	return NewUnifiedMigrator(client, registry)
+}
+
+func NewUnifiedMigrator(
+	client resource.ResourceClient,
+	registry *MigrationRegistry,
+	opts ...Option,
+) UnifiedMigrator {
 	return newUnifiedMigrator(
 		&resourceClientStreamProvider{client: client},
 		client,
 		log.New("storage.unified.migrator"),
 		registry,
+		opts...,
 	)
 }
 
@@ -82,13 +97,18 @@ func newUnifiedMigrator(
 	client resource.ResourceClient,
 	log log.Logger,
 	registry *MigrationRegistry,
+	opts ...Option,
 ) UnifiedMigrator {
-	return &unifiedMigration{
+	m := &unifiedMigration{
 		streamProvider: streamProvider,
 		client:         client,
 		log:            log,
 		registry:       registry,
 	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
 }
 
 func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error) {
@@ -109,36 +129,13 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 	streamCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	origResources := opts.Resources
-
-	// If a definition provides a dynamic group resolver, call it to discover
-	// which groups actually exist in this namespace. The resolver receives the
-	// ResourceClient so it can also query unified storage for stale groups and
-	// merge them in — keeping all resource-specific logic in the resolver.
-	//
-	// If the result is empty (namespace has no data at all), keep
-	// opts.Resources unchanged so the stream can still open and close cleanly.
-	for _, res := range origResources {
-		resolveFn := m.registry.GetResourceGroupsFunc(res)
-		if resolveFn == nil {
-			continue
-		}
-		resolved, err := resolveFn(ctx, opts.Namespace, m.client)
-		if err != nil {
-			return nil, fmt.Errorf("resolving resource groups for %s/%s: %w", res.Group, res.Resource, err)
-		}
-		if len(resolved) > 0 {
-			opts.Resources = resolved
-		}
-	}
-
-	stream, err := m.streamProvider.createStream(streamCtx, opts, m.registry)
+	stream, err := m.streamProvider.createStream(streamCtx, opts)
 	if err != nil {
 		return nil, err
 	}
 
 	migratorFuncs := []MigratorFunc{}
-	for _, res := range origResources {
+	for _, res := range opts.Resources {
 		fn := m.registry.GetMigratorFunc(res)
 		if fn == nil {
 			return nil, fmt.Errorf("unsupported resource: %s/%s", res.Group, res.Resource)
@@ -159,19 +156,6 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 	return stream.CloseAndRecv()
 }
 
-// MergeGroupResources returns the union of a and b, deduplicated by Group.
-func MergeGroupResources(a, b []schema.GroupResource) []schema.GroupResource {
-	seen := make(map[string]bool, len(a)+len(b))
-	result := make([]schema.GroupResource, 0, len(a)+len(b))
-	for _, gr := range append(a, b...) {
-		if !seen[gr.Group] {
-			seen[gr.Group] = true
-			result = append(result, gr)
-		}
-	}
-	return result
-}
-
 type RebuildIndexOptions struct {
 	UsingDistributor    bool
 	NamespaceInfo       authlib.NamespaceInfo
@@ -179,56 +163,78 @@ type RebuildIndexOptions struct {
 	MigrationFinishedAt time.Time
 }
 
-func (m *unifiedMigration) RebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error {
-	m.log.Info("start rebuilding index for resources", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
-	defer m.log.Info("finished rebuilding index for resources", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
-
-	boff := backoff.New(ctx, backoff.Config{
+var (
+	singleInstanceRebuildBackoff = backoff.Config{
 		MinBackoff: 500 * time.Millisecond,
 		MaxBackoff: 3 * time.Second,
 		MaxRetries: 5,
-	})
+	}
+
+	distributorRebuildBackoff = backoff.Config{
+		MinBackoff: 5 * time.Second,
+		MaxBackoff: 30 * time.Second,
+		MaxRetries: 10,
+	}
+)
+
+func (m *unifiedMigration) backoffConfig(opts RebuildIndexOptions) backoff.Config {
+	switch {
+	case m.rebuildBackoff != nil:
+		return *m.rebuildBackoff
+	case opts.UsingDistributor:
+		return distributorRebuildBackoff
+	default:
+		return singleInstanceRebuildBackoff
+	}
+}
+
+func (m *unifiedMigration) RebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error {
+	logger := m.log.New("namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
+	logger.Info("start rebuilding index for resources")
+
+	cfg := m.backoffConfig(opts)
+	boff := backoff.New(ctx, cfg)
 
 	var lastErr error
 	for boff.Ongoing() {
 		err := m.rebuildIndexes(ctx, opts)
 		if err == nil {
+			logger.Info("finished rebuilding index for resources", "attempts", boff.NumRetries()+1)
 			return nil
 		}
 
 		lastErr = err
-		m.log.Error("retrying rebuild indexes", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "error", err, "attempt", boff.NumRetries())
+		logger.Error("retrying rebuild indexes", "error", err, "attempt", boff.NumRetries()+1, "maxAttempts", cfg.MaxRetries)
 		boff.Wait()
 	}
 
-	if err := boff.ErrCause(); err != nil {
-		m.log.Error("failed to rebuild indexes after retries", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "error", lastErr)
-		return lastErr
+	if lastErr == nil {
+		lastErr = fmt.Errorf("unknown error rebuilding indexes after %d attempts", boff.NumRetries())
 	}
 
-	return nil
+	err := fmt.Errorf("%w: last rebuild error: %w", boff.ErrCause(), lastErr)
+	if ctx.Err() != nil {
+		logger.Error("context ended while rebuilding indexes", "error", err, "attempts", boff.NumRetries())
+	} else {
+		logger.Error("failed to rebuild indexes after retries", "error", err, "attempts", boff.NumRetries())
+	}
+
+	return err
 }
 
 func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error {
-	keys := []*resourcepb.ResourceKey{}
+	keys := make([]*resourcepb.ResourceKey, 0, len(opts.Resources))
 	for _, res := range opts.Resources {
-		key := buildResourceKey(res, opts.NamespaceInfo.Value, m.registry)
-		if key != nil {
-			keys = append(keys, key)
-		}
+		keys = append(keys, buildResourceKey(res, opts.NamespaceInfo.Value))
 	}
 
 	response, err := m.client.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{
 		Namespace: opts.NamespaceInfo.Value,
 		Keys:      keys,
 	})
-	if err != nil {
-		return fmt.Errorf("error rebuilding index: %w", err)
-	}
-
-	if response.Error != nil {
-		m.log.Error("error rebuilding index for resource", "error", response.Error.Message, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
-		return fmt.Errorf("rebuild index error: %s", response.Error.Message)
+	if err := resource.ErrorFromResponse(response.GetError(), err); err != nil {
+		m.log.Error("error rebuilding index for resource", "error", err, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
+		return fmt.Errorf("rebuild index error: %w", err)
 	}
 
 	if opts.UsingDistributor {
@@ -245,6 +251,8 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 			buildTimeMap[key] = bt.BuildTimeUnix
 		}
 
+		// RebuildIndexes checks freshness against the import time before reporting build times.
+		// Accept the finish second: build times are only reported at second precision.
 		migrationFinishTime := opts.MigrationFinishedAt.Unix()
 
 		// Only validate resources that have a build time reported.

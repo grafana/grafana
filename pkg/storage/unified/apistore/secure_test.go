@@ -15,14 +15,15 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/storage"
 
 	claims "github.com/grafana/authlib/types"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/secret"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	secret "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -63,7 +64,7 @@ func TestSecureLifecycle(t *testing.T) {
 			"b": common.InlineSecureValue{Create: "SecretBBB"},
 		})
 
-		err := prepareSecureValues(context.Background(), secureStore, obj, nil, info)
+		err := prepareSecureValues(context.Background(), secureStore, obj, nil, utils.ToObjectReference(obj), info)
 		require.NoError(t, err)
 		require.True(t, info.hasChanged)
 		slices.Sort(info.createdSecureValues) // keep a predictable order
@@ -95,7 +96,7 @@ func TestSecureLifecycle(t *testing.T) {
 		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretBBB"), (*string)(nil)).
 			Return("", expectError).Maybe()
 
-		err := prepareSecureValues(context.Background(), secureStore, obj, nil, info)
+		err := prepareSecureValues(context.Background(), secureStore, obj, nil, utils.ToObjectReference(obj), info)
 		require.Error(t, err, "should error when secure value creation fails")
 		require.Equal(t, expectError, err, "error should be propagated")
 		secureStore.AssertExpectations(t)
@@ -109,7 +110,7 @@ func TestSecureLifecycle(t *testing.T) {
 		info := &objectForStorage{}
 		secureStore := secret.NewMockInlineSecureValueSupport(t)
 
-		err := prepareSecureValues(context.Background(), secureStore, obj, nil, info)
+		err := prepareSecureValues(context.Background(), secureStore, obj, nil, utils.ToObjectReference(obj), info)
 		require.ErrorContains(t, err, "unable to save secure value reference with legacy datasource prefix")
 		secureStore.AssertExpectations(t)
 	})
@@ -123,7 +124,7 @@ func TestSecureLifecycle(t *testing.T) {
 			info := &objectForStorage{}
 			secureStore := secret.NewMockInlineSecureValueSupport(t)
 
-			err := prepareSecureValues(context.Background(), secureStore, obj, nil, info)
+			err := prepareSecureValues(context.Background(), secureStore, obj, nil, utils.ToObjectReference(obj), info)
 			require.ErrorContains(t, err, "only one of name, create, or remove is allowed")
 			secureStore.AssertExpectations(t)
 		})
@@ -135,7 +136,7 @@ func TestSecureLifecycle(t *testing.T) {
 			info := &objectForStorage{}
 			secureStore := secret.NewMockInlineSecureValueSupport(t)
 
-			err := prepareSecureValues(context.Background(), secureStore, obj, nil, info)
+			err := prepareSecureValues(context.Background(), secureStore, obj, nil, utils.ToObjectReference(obj), info)
 			require.ErrorContains(t, err, "only one of name, create, or remove is allowed")
 			secureStore.AssertExpectations(t)
 		})
@@ -147,7 +148,7 @@ func TestSecureLifecycle(t *testing.T) {
 			info := &objectForStorage{}
 			secureStore := secret.NewMockInlineSecureValueSupport(t)
 
-			err := prepareSecureValues(context.Background(), secureStore, obj, nil, info)
+			err := prepareSecureValues(context.Background(), secureStore, obj, nil, utils.ToObjectReference(obj), info)
 			require.ErrorContains(t, err, "only one of create, or remove is allowed")
 			secureStore.AssertExpectations(t)
 		})
@@ -168,7 +169,7 @@ func TestSecureLifecycle(t *testing.T) {
 			// "c" will be loaded from the previous object without changes
 		})
 
-		err := prepareSecureValues(context.Background(), secureStore, obj, previous, info)
+		err := prepareSecureValues(context.Background(), secureStore, obj, previous, utils.ToObjectReference(obj), info)
 		require.NoError(t, err)
 		require.True(t, info.hasChanged)
 		require.Empty(t, info.createdSecureValues)
@@ -193,7 +194,7 @@ func TestSecureLifecycle(t *testing.T) {
 		objWithoutSecrets := resourceWithSecureValues(nil)
 
 		// Note that the secure values from the previous object are copied over
-		err := prepareSecureValues(context.Background(), secureStore, objWithoutSecrets, previousObject, info)
+		err := prepareSecureValues(context.Background(), secureStore, objWithoutSecrets, previousObject, utils.ToObjectReference(objWithoutSecrets), info)
 		require.NoError(t, err)
 		require.False(t, info.hasChanged)
 		secure, err := objWithoutSecrets.GetSecureValues()
@@ -221,7 +222,7 @@ func TestSecureLifecycle(t *testing.T) {
 
 		// Prepare secure values does not change anything when removing
 		info := &objectForStorage{}
-		err := prepareSecureValues(context.Background(), secureStore, obj, previous, info)
+		err := prepareSecureValues(context.Background(), secureStore, obj, previous, utils.ToObjectReference(obj), info)
 		require.NoError(t, err)
 		require.True(t, info.hasChanged)  // value was removed
 		secureStore.AssertExpectations(t) // nothing called
@@ -259,7 +260,7 @@ func TestSecureLifecycle(t *testing.T) {
 
 		// Previous values must exist for remove to execute
 		info := &objectForStorage{}
-		err := prepareSecureValues(context.Background(), secureStore, obj, resourceWithSecureValues(nil), info)
+		err := prepareSecureValues(context.Background(), secureStore, obj, resourceWithSecureValues(nil), utils.ToObjectReference(obj), info)
 		require.Nil(t, err, "should noop when previous value does not exist")
 		require.False(t, info.hasChanged, "noop remove should not mark the object as changed")
 		secure, err := obj.GetSecureValues()
@@ -279,7 +280,7 @@ func TestSecureLifecycle(t *testing.T) {
 		})
 
 		info := &objectForStorage{}
-		err := prepareSecureValues(context.Background(), secureStore, obj, resourceWithSecureValues(nil), info)
+		err := prepareSecureValues(context.Background(), secureStore, obj, resourceWithSecureValues(nil), utils.ToObjectReference(obj), info)
 		require.NoError(t, err)
 		require.True(t, info.hasChanged, "creating a secure value should still mark the object as changed")
 		secure, err := obj.GetSecureValues()
@@ -303,7 +304,7 @@ func TestSecureLifecycle(t *testing.T) {
 		secureStore.On("DeleteWhenOwnedByResource", mock.Anything, owner, "NameForA").
 			Return(nil).Once()
 
-		err = handleSecureValuesDelete(context.Background(), secureStore, obj)
+		err = handleSecureValuesDelete(context.Background(), secureStore, obj, utils.ToObjectReference(obj))
 		require.NoError(t, err)
 		secureStore.AssertExpectations(t)
 		sv, err = obj.GetSecureValues()
@@ -318,7 +319,7 @@ func TestSecureLifecycle(t *testing.T) {
 		secureStore = secret.NewMockInlineSecureValueSupport(t)
 		secureStore.On("DeleteWhenOwnedByResource", mock.Anything, owner, "NameForA").
 			Return(expectError).Once()
-		err = handleSecureValuesDelete(context.Background(), secureStore, obj)
+		err = handleSecureValuesDelete(context.Background(), secureStore, obj, utils.ToObjectReference(obj))
 		require.Equal(t, expectError, err, "error should be passed through")
 		secureStore.AssertExpectations(t)
 	})
@@ -329,7 +330,7 @@ func TestSecureLifecycle(t *testing.T) {
 		info := &objectForStorage{}
 		err := prepareSecureValues(context.Background(), secureStore, resourceWithSecureValues(common.InlineSecureValues{
 			"a": common.InlineSecureValue{}, // MUST have Create, Remove or Name
-		}), nil, info)
+		}), nil, common.ObjectReference{}, info)
 		require.Error(t, err)
 	})
 
@@ -350,26 +351,26 @@ func TestSecureLifecycle(t *testing.T) {
 			},
 		})
 		info := &objectForStorage{}
-		err := prepareSecureValues(context.Background(), nil, invalid, nil, info)
+		err := prepareSecureValues(context.Background(), nil, invalid, nil, utils.ToObjectReference(invalid), info)
 		require.Error(t, err, "should error when secure values are not a map")
 
-		err = prepareSecureValues(context.Background(), nil, objWithCreateSecret, invalid, info)
+		err = prepareSecureValues(context.Background(), nil, objWithCreateSecret, invalid, utils.ToObjectReference(objWithCreateSecret), info)
 		require.Error(t, err, "should error when previous secure values are not a map")
 
-		err = prepareSecureValues(context.Background(), nil, objWithCreateSecret, nil, info)
+		err = prepareSecureValues(context.Background(), nil, objWithCreateSecret, nil, utils.ToObjectReference(objWithCreateSecret), info)
 		require.Error(t, err, "should error when secure value storage is not configured")
 
-		err = prepareSecureValues(context.Background(), nil, objWithCreateSecret, objWithoutSecrets, info)
+		err = prepareSecureValues(context.Background(), nil, objWithCreateSecret, objWithoutSecrets, utils.ToObjectReference(objWithCreateSecret), info)
 		require.Error(t, err, "should error when secure value storage is not configured")
 
-		err = prepareSecureValues(context.Background(), nil, objWithoutSecrets, objWithCreateSecret, info)
+		err = prepareSecureValues(context.Background(), nil, objWithoutSecrets, objWithCreateSecret, utils.ToObjectReference(objWithoutSecrets), info)
 		require.Error(t, err, "should error when previous value does not have a name")
 
 		// DELETE Setup errors
-		err = handleSecureValuesDelete(context.Background(), nil, invalid)
+		err = handleSecureValuesDelete(context.Background(), nil, invalid, utils.ToObjectReference(invalid))
 		require.Error(t, err, "should error when secure values are not a map")
 
-		err = handleSecureValuesDelete(context.Background(), nil, objWithCreateSecret)
+		err = handleSecureValuesDelete(context.Background(), nil, objWithCreateSecret, utils.ToObjectReference(objWithCreateSecret))
 		require.Error(t, err, "should error when secure value storage is not configured")
 	})
 
@@ -397,10 +398,10 @@ func TestSecureLifecycle(t *testing.T) {
 			Return(nil).Once()
 
 		s := &Storage{
-			codec:     unstructured.UnstructuredJSONScheme,
-			newFunc:   func() runtime.Object { return &unstructured.Unstructured{} },
-			versioner: &storage.APIObjectVersioner{},
-			store:     &conflictOnceClient{prev: raw.Bytes()},
+			serializer: &jsonSerializer{},
+			newFunc:    func() runtime.Object { return &unstructured.Unstructured{} },
+			versioner:  &storage.APIObjectVersioner{},
+			store:      &conflictOnceClient{prev: raw.Bytes()},
 			getKey: func(string) (*resourcepb.ResourceKey, error) {
 				return &resourcepb.ResourceKey{Namespace: "default", Group: "example.grafana.app", Resource: "examples", Name: "test"}, nil
 			},
@@ -423,7 +424,7 @@ func TestSecureLifecycle(t *testing.T) {
 }
 
 type conflictOnceClient struct {
-	resource.ResourceClient
+	resourceclient.ResourceClient
 	prev    []byte
 	updates int
 }
@@ -513,11 +514,12 @@ func TestCreateCleansUpSecretsWhenPermissionCreationFails(t *testing.T) {
 
 	// store is left nil: the object must never be written, so any store access would panic.
 	s := &Storage{
+		serializer: &jsonSerializer{},
 		getKey: func(string) (*resourcepb.ResourceKey, error) {
 			return &resourcepb.ResourceKey{Namespace: "default", Resource: "customkinds", Name: "test"}, nil
 		},
 		opts: StorageOptions{
-			Scheme:               runtime.NewScheme(),
+			GVK:                  schema.GroupVersionKind{Group: "something.grafana.app", Version: "v1beta1", Kind: "CustomKind"},
 			SecureValues:         secureStore,
 			MaximumNameLength:    100,
 			DeprecatedInternalID: DeprecatedID_None,

@@ -77,6 +77,13 @@ describe('valueFormats', () => {
     ${'dateTimeAsSystem'}              | ${0}         | ${dateTime(new Date(2010, 6, 2)).valueOf()} | ${'2010-07-02 00:00:00'}
     ${'dtdurationms'}                  | ${undefined} | ${100000}                                   | ${'1 minute'}
     ${'dtdurationms'}                  | ${undefined} | ${150000}                                   | ${'2 minutes'}
+    ${'ordinal'}                       | ${undefined} | ${1}                                        | ${'1st'}
+    ${'ordinal'}                       | ${undefined} | ${2}                                        | ${'2nd'}
+    ${'ordinal'}                       | ${undefined} | ${3}                                        | ${'3rd'}
+    ${'ordinal'}                       | ${undefined} | ${11}                                       | ${'11th'}
+    ${'ordinal'}                       | ${undefined} | ${22}                                       | ${'22nd'}
+    ${'ordinal'}                       | ${2}         | ${5.25}                                     | ${'5th'}
+    ${'ordinal'}                       | ${undefined} | ${-3}                                       | ${'-3rd'}
   `(
     'With format=$format decimals=$decimals and value=$value then result should be = $expected',
     async ({ format, value, decimals, expected }) => {
@@ -136,6 +143,27 @@ describe('valueFormats', () => {
       expect(toFixed(NaN)).toBe('NaN');
       expect(toFixed(Number.NEGATIVE_INFINITY)).toBe(negInf);
       expect(toFixed(Number.POSITIVE_INFINITY)).toBe(posInf);
+    });
+
+    it('toFixed should pad with zeros past the point where the factor turns exponential', () => {
+      expect(toFixed(5, 20)).toBe(`5.${'0'.repeat(20)}`);
+      // 10 ** 21 stringifies as '1e+21', so the old padding appended that
+      // exponent to the value and 1.5 rendered as 1.5e+21.
+      expect(toFixed(5, 21)).toBe(`5.${'0'.repeat(21)}`);
+      expect(toFixed(1.5, 21)).toBe(`1.5${'0'.repeat(20)}`);
+      expect(toFixed(1.5, 100)).toBe(`1.5${'0'.repeat(99)}`);
+    });
+
+    it('toFixed should keep exponent output for values too small for 100 decimals', () => {
+      expect(toFixed(1e-101)).toBe('1e-101');
+      expect(toFixed(-1e-101)).toBe('-1e-101');
+    });
+
+    it('toFixed should not throw for a decimal count outside the range toFixed accepts', () => {
+      expect(toFixed(0, 101)).toBe(`0.${'0'.repeat(100)}`);
+      expect(toFixed(0, -3)).toBe('0');
+      expect(toFixed(1.5, 101)).toBe(`1.5${'0'.repeat(99)}`);
+      expect(toFixed(1.5, -3)).toBe('2');
     });
 
     it('scaledUnits should handle non number input gracefully', () => {

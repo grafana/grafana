@@ -13,7 +13,7 @@ func ProvideOSSUserProtectionService() *OSSUserProtectionImpl {
 	return &OSSUserProtectionImpl{}
 }
 
-func (*OSSUserProtectionImpl) AllowUserMapping(_ *user.User, _ string) error {
+func (*OSSUserProtectionImpl) AllowUserMapping(_ context.Context, _ *user.User, _ string) error {
 	return nil
 }
 

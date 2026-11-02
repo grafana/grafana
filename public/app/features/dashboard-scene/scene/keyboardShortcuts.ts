@@ -9,25 +9,29 @@ import { notifyApp } from 'app/core/reducers/appNotification';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { InspectTab } from 'app/features/inspector/types';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
-import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
+import { duplicatePanel } from '../actions/layout/duplicatePanel';
+import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { buildShareUrl } from '../sharing/ShareButton/utils';
-import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
+import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
 import { findVizPanelByPathId } from '../utils/pathId';
 import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
-import { getPanelIdForVizPanel } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { DashboardScene } from './DashboardScene';
 import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
+import { canManuallyEditDashboard, getDashboardMode, isViewingDashboard } from './dashboardModes';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
+import { refuseWhilePlanning } from './refuseWhilePlanning';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
@@ -56,6 +60,13 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     };
   }
 
+  function enterEditingForShortcut(): boolean {
+    if (canManuallyEditDashboard(scene.state)) {
+      return true;
+    }
+    return isViewingDashboard(scene.state) && scene.setDashboardMode('edit', 'shortcut');
+  }
+
   // View panel
   keybindings.addBinding({
     key: 'v',
@@ -70,22 +81,28 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     }),
   });
 
-  // Panel share link (copy to clipboard)
+  // Panel share link (copy to clipboard). Neither this nor 'p e'/'p s'/'i' below check isEditing
+  // anywhere in their chain — each is reachable during planning by construction, so it's refused
+  // explicitly here (see refuseWhilePlanning).
   keybindings.addBinding({
     key: 'p u',
     onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+      if (refuseWhilePlanning(scene)) {
+        return;
+      }
       await buildShareUrl(scene, vizPanel);
     }),
   });
   keybindings.addBinding({
     key: 'p e',
     onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-      const drawer = new ShareDrawer({
+      if (refuseWhilePlanning(scene)) {
+        return;
+      }
+      await openShareDrawer(scene, {
         shareView: shareDashboardType.embed,
         panelRef: vizPanel.getRef(),
       });
-
-      scene.showModal(drawer);
     }),
   });
 
@@ -97,12 +114,13 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'p s',
       onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-        const drawer = new ShareDrawer({
+        if (refuseWhilePlanning(scene)) {
+          return;
+        }
+        await openShareDrawer(scene, {
           shareView: shareDashboardType.snapshot,
           panelRef: vizPanel.getRef(),
         });
-
-        scene.showModal(drawer);
       }),
     });
   }
@@ -111,7 +129,10 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'i',
     onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-      scene.showModal(new PanelInspectDrawer({ panelRef: vizPanel.getRef(), currentTab: InspectTab.Data }));
+      if (refuseWhilePlanning(scene)) {
+        return;
+      }
+      await openPanelInspector(vizPanel, InspectTab.Data);
     }),
   });
 
@@ -121,7 +142,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
       const url = await tryGetExploreUrlForPanel(vizPanel);
       if (url) {
-        locationService.push(url);
+        locationService.push(locationUtil.stripBaseFromUrl(url));
       }
     }),
   });
@@ -229,15 +250,20 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'e',
       onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+        if (!enterEditingForShortcut()) {
+          return;
+        }
         const panelId = getPanelIdForVizPanel(vizPanel);
         DashboardInteractions.panelActionClicked('edit', panelId, 'keyboard', vizPanel.state.pluginId);
         const sceneRoot = vizPanel.getRoot();
         if (sceneRoot instanceof DashboardScene) {
           if (scene.state.editPanel) {
             locationService.push(
-              locationUtil.getUrlForPartial(locationService.getLocation(), {
-                editPanel: undefined,
-              })
+              locationUtil.stripBaseFromUrl(
+                locationUtil.getUrlForPartial(locationService.getLocation(), {
+                  editPanel: undefined,
+                })
+              )
             );
           } else {
             const url = locationUtil.stripBaseFromUrl(getEditPanelUrl(panelId));
@@ -250,14 +276,23 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     // Dashboard settings
     keybindings.addBinding({
       key: 'd s',
-      onTrigger: scene.onOpenSettings,
+      onTrigger: () => {
+        if (enterEditingForShortcut()) {
+          scene.onOpenSettings();
+        }
+      },
     });
 
     // Open save drawer
     if (canSave) {
       keybindings.addBinding({
         key: 'mod+s',
-        onTrigger: () => scene.openSaveDrawer({}),
+        onTrigger: () => {
+          // Viewing keeps the edit session open (isEditing stays true), so gate on the mode as well
+          if (getDashboardMode(scene.state) !== 'view') {
+            scene.openSaveDrawer({});
+          }
+        },
       });
     }
 
@@ -265,7 +300,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'p r',
       onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-        if (scene.state.isEditing) {
+        if (isFullDashboardEditing(scene.state)) {
           const panelId = getPanelIdForVizPanel(vizPanel);
           DashboardInteractions.panelActionClicked('delete', panelId, 'keyboard');
           onRemovePanel(scene, vizPanel);
@@ -278,8 +313,8 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       key: 'p d',
       onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
         DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(vizPanel), 'keyboard');
-        if (scene.state.isEditing) {
-          scene.duplicatePanel(vizPanel);
+        if (isFullDashboardEditing(scene.state)) {
+          duplicatePanel(vizPanel);
         }
       }),
     });
@@ -288,7 +323,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'p v',
       onTrigger: () => {
-        if (scene.state.isEditing && store.exists(LS_PANEL_COPY_KEY)) {
+        if (isFullDashboardEditing(scene.state) && store.exists(LS_PANEL_COPY_KEY)) {
           const sidebar = scene.state.sidebar;
           const selectedObj = sidebar.getSelectedObject();
           sidebar.pastePanel(selectedObj);

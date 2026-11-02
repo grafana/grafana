@@ -1,46 +1,61 @@
-import { type ChangeEvent } from 'react';
+import { isEqual } from 'lodash';
+import { lazy, Suspense } from 'react';
 
-import { PageLayoutType } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { type SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
+import { t } from '@grafana/i18n';
+import { behaviors, type SceneComponentProps, sceneGraph, SceneObjectBase } from '@grafana/scenes';
 import { type TimeZone } from '@grafana/schema';
-import {
-  Box,
-  CollapsableSection,
-  Field,
-  Input,
-  Label,
-  RadioButtonGroup,
-  Stack,
-  Switch,
-  TagsInput,
-  TextArea,
-  type WeekStart,
-} from '@grafana/ui';
-import { Page } from 'app/core/components/Page/Page';
-import { GenAIDashDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIDashDescriptionButton';
-import { GenAIDashTitleButton } from 'app/features/dashboard/components/GenAI/GenAIDashTitleButton';
-import { MoveProvisionedDashboardDrawer } from 'app/features/provisioning/components/Dashboards/MoveProvisionedDashboardDrawer';
-import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
+import { Spinner, type WeekStart } from '@grafana/ui';
 
 import { updateNavModel } from '../pages/utils';
 import { type DashboardScene } from '../scene/DashboardScene';
-import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { DeleteDashboardButton } from './DeleteDashboardButton';
-import { TimePickerSettings } from './TimePickerSettings';
-import { type DashboardEditView, type DashboardEditViewState, useDashboardEditPageNav } from './utils';
+import { type DashboardEditView, type DashboardEditViewState } from './utils';
+
+const GeneralSettingsEditViewRenderer = lazy(() =>
+  import('./SettingsRenderers').then((m) => ({ default: m.GeneralSettingsEditViewRenderer }))
+);
+
+function LazyGeneralSettingsEditViewRenderer(props: SceneComponentProps<GeneralSettingsEditView>) {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <GeneralSettingsEditViewRenderer {...props} />
+    </Suspense>
+  );
+}
 
 export interface GeneralSettingsEditViewState extends DashboardEditViewState {
   showMoveModal?: boolean;
   moveModalProps?: {
     targetFolderUID?: string;
-    targetFolderTitle?: string;
+  };
+}
+
+interface SettingChange {
+  perform(): void;
+  undo(): void;
+}
+
+function captureSetting<T>(
+  read: () => T,
+  write: (value: T) => void,
+  equals: (before: T, after: T) => boolean = isEqual
+): () => SettingChange | undefined {
+  const before = read();
+
+  return () => {
+    const after = read();
+    if (equals(before, after)) {
+      return undefined;
+    }
+
+    return {
+      perform: () => write(after),
+      undo: () => write(before),
+    };
   };
 }
 
@@ -48,6 +63,143 @@ export class GeneralSettingsEditView
   extends SceneObjectBase<GeneralSettingsEditViewState>
   implements DashboardEditView
 {
+  constructor(state: GeneralSettingsEditViewState) {
+    super(state);
+
+    this.addActivationHandler(() => this.onActivate());
+  }
+
+  private onActivate() {
+    const dashboard = this._dashboard;
+    const sidebar = dashboard.state.sidebar;
+    const timeRange = this.getTimeRange();
+    const controls = dashboard.state.controls;
+    const captures = this.captureSettings(dashboard);
+
+    return () => {
+      // Discard and schema edits can close settings while replacing the objects being edited.
+      if (
+        !dashboard.state.isEditing ||
+        dashboard.state.sidebar !== sidebar ||
+        dashboard.state.controls !== controls ||
+        sceneGraph.getTimeRange(dashboard) !== timeRange
+      ) {
+        return;
+      }
+
+      const changes = captures
+        .map((finish) => finish())
+        .filter((change): change is SettingChange => change !== undefined);
+      if (changes.length === 0) {
+        return;
+      }
+
+      sidebar.recordCompletedEdit({
+        source: dashboard,
+        meta: { actionId: 'dashboard.changeSettings' },
+        description: t('dashboard.edit-actions.change-settings', 'Change dashboard settings'),
+        perform: () => changes.forEach((change) => change.perform()),
+        undo: () => [...changes].reverse().forEach((change) => change.undo()),
+      });
+    };
+  }
+
+  private captureSettings(dashboard: DashboardScene) {
+    const timeRange = this.getTimeRange();
+    const controls = dashboard.state.controls;
+    const refreshPicker = controls?.state.refreshPicker;
+    const cursorSync = this.getCursorSync();
+    const liveNow = sceneGraph.findObject(dashboard, (object) => object instanceof behaviors.LiveNowTimer);
+
+    const captures = [
+      captureSetting(
+        () => dashboard.state.title,
+        (title) => dashboard.setState({ title })
+      ),
+      captureSetting(
+        () => dashboard.state.description,
+        (description) => dashboard.setState({ description })
+      ),
+      captureSetting(
+        () => dashboard.state.tags?.slice(),
+        (tags) => dashboard.setState({ tags: tags?.slice() })
+      ),
+      captureSetting(
+        () => dashboard.state.editable,
+        (editable) => dashboard.setState({ editable })
+      ),
+      captureSetting(
+        () => dashboard.state.preload,
+        (preload) => dashboard.setState({ preload })
+      ),
+      captureSetting(
+        () => timeRange.state.timeZone,
+        (timeZone) => timeRange.setState({ timeZone })
+      ),
+      captureSetting(
+        () => timeRange.state.weekStart,
+        (weekStart) => timeRange.setState({ weekStart })
+      ),
+      captureSetting(
+        () => timeRange.state.UNSAFE_nowDelay,
+        (UNSAFE_nowDelay) => timeRange.setState({ UNSAFE_nowDelay })
+      ),
+      captureSetting(
+        () => dashboard.state.preferences,
+        (preferences) => dashboard.setState({ preferences }),
+        (before, after) => before?.defaultLayoutTemplate?.descriptor.id === after?.defaultLayoutTemplate?.descriptor.id
+      ),
+    ];
+
+    if (controls) {
+      captures.push(
+        captureSetting(
+          () => controls.state.hideTimeControls,
+          (hideTimeControls) => controls.setState({ hideTimeControls })
+        )
+      );
+    }
+    if (refreshPicker) {
+      captures.push(
+        captureSetting(
+          () => refreshPicker.state.intervals?.slice(),
+          (intervals) => refreshPicker.setState({ intervals: intervals?.slice() })
+        )
+      );
+    }
+    if (cursorSync) {
+      captures.push(
+        captureSetting(
+          () => cursorSync.state.sync,
+          (sync) => cursorSync.setState({ sync })
+        )
+      );
+    }
+    if (liveNow instanceof behaviors.LiveNowTimer) {
+      captures.push(
+        captureSetting(
+          () => liveNow.state.enabled,
+          (enabled) => (enabled ? liveNow.enable() : liveNow.disable())
+        )
+      );
+    }
+    if (!dashboard.isManagedRepository()) {
+      captures.push(
+        captureSetting(
+          () => ({ folderUid: dashboard.state.meta.folderUid, folderTitle: dashboard.state.meta.folderTitle }),
+          (folder) => {
+            dashboard.setState({ meta: { ...dashboard.state.meta, ...folder } });
+            if (folder.folderUid) {
+              void updateNavModel(folder.folderUid);
+            }
+          }
+        )
+      );
+    }
+
+    return captures;
+  }
+
   private get _dashboard(): DashboardScene {
     return getDashboardSceneFor(this);
   }
@@ -98,17 +250,18 @@ export class GeneralSettingsEditView
   };
 
   public onFolderChange = async (newUID: string | undefined, newTitle: string | undefined) => {
+    const dashboard = this._dashboard;
     const newMeta = {
-      ...this._dashboard.state.meta,
-      folderUid: newUID || this._dashboard.state.meta.folderUid,
-      folderTitle: newTitle || this._dashboard.state.meta.folderTitle,
+      ...dashboard.state.meta,
+      folderUid: newUID || dashboard.state.meta.folderUid,
+      folderTitle: newTitle || dashboard.state.meta.folderTitle,
     };
+
+    dashboard.setState({ meta: newMeta });
 
     if (newMeta.folderUid) {
       await updateNavModel(newMeta.folderUid);
     }
-
-    this._dashboard.setState({ meta: newMeta });
   };
 
   public onEditableChange = (value: boolean) => {
@@ -173,14 +326,11 @@ export class GeneralSettingsEditView
 
   public onDeleteDashboard = () => {};
 
-  public onProvisionedFolderChange = async (newUID?: string, newTitle?: string) => {
+  public onProvisionedFolderChange = async (newUID?: string) => {
     if (newUID !== this._dashboard.state.meta.folderUid) {
       this.setState({
         showMoveModal: true,
-        moveModalProps: {
-          targetFolderUID: newUID,
-          targetFolderTitle: newTitle,
-        },
+        moveModalProps: { targetFolderUID: newUID },
       });
     }
   };
@@ -192,212 +342,5 @@ export class GeneralSettingsEditView
     });
   };
 
-  public onMoveSuccess = (folderUID: string, folderTitle: string) => {
-    const newMeta = {
-      ...this._dashboard.state.meta,
-      folderUid: folderUID,
-      folderTitle: folderTitle,
-    };
-    this._dashboard.setState({ meta: newMeta });
-    this.onMoveModalDismiss();
-  };
-
-  static Component = GeneralSettingsEditViewComponent;
-}
-
-function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<GeneralSettingsEditView>) {
-  const dashboard = model.getDashboard();
-  const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
-  const { title, description, tags, meta, editable } = dashboard.useState();
-  const { showMoveModal, moveModalProps } = model.useState();
-  const { sync: graphTooltip } = model.getCursorSync()?.useState() || {};
-  const { timeZone, weekStart, UNSAFE_nowDelay: nowDelay } = model.getTimeRange().useState();
-  const { intervals } = model.getRefreshPicker().useState();
-  const { hideTimeControls } = model.getDashboardControls().useState();
-  const { enabled: liveNow } = model.getLiveNowTimer().useState();
-  const EDITABLE_OPTIONS = [
-    {
-      label: t('dashboard-scene.general-settings-edit-view.editable_options.label.editable', 'Editable'),
-      value: true,
-    },
-    {
-      label: t('dashboard-scene.general-settings-edit-view.editable_options.label.readonly', 'Read-only'),
-      value: false,
-    },
-  ];
-
-  const DEFAULT_GRID_OPTIONS = [
-    {
-      label: t('dashboard-scene.general-settings-edit-view.default_grid_options.label.auto', 'Auto grid'),
-      value: AutoGridLayoutManager.descriptor.id,
-    },
-    {
-      label: t('dashboard-scene.general-settings-edit-view.default_grid_options.label.custom', 'Custom grid'),
-      value: DefaultGridLayoutManager.descriptor.id,
-    },
-  ];
-
-  const defaultGrid = dashboard.getDefaultLayoutType();
-
-  const GRAPH_TOOLTIP_OPTIONS = [
-    {
-      value: 0,
-      label: t('dashboard-scene.general-settings-edit-view.graph_tooltip_options.label.default', 'Default'),
-    },
-    {
-      value: 1,
-      label: t(
-        'dashboard-scene.general-settings-edit-view.graph_tooltip_options.label.shared-crosshair',
-        'Shared crosshair'
-      ),
-    },
-    {
-      value: 2,
-      label: t(
-        'dashboard-scene.general-settings-edit-view.graph_tooltip_options.label.shared-tooltip',
-        'Shared tooltip'
-      ),
-    },
-  ];
-
-  return (
-    <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
-      <NavToolbarActions dashboard={dashboard} />
-      <div style={{ maxWidth: '600px' }}>
-        <Box display="flex" direction="column" gap={2} marginBottom={5}>
-          <Field
-            noMargin
-            label={
-              <Stack justifyContent="space-between">
-                <Label htmlFor="title-input">
-                  <Trans i18nKey="dashboard-settings.general.title-label">Title</Trans>
-                </Label>
-                <GenAIDashTitleButton onGenerate={(title) => model.onTitleChange(title)} />
-              </Stack>
-            }
-          >
-            <Input
-              id="title-input"
-              name="title"
-              value={title}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => model.onTitleChange(e.target.value)}
-            />
-          </Field>
-          <Field
-            noMargin
-            label={
-              <Stack justifyContent="space-between">
-                <Label htmlFor="description-input">
-                  {t('dashboard-settings.general.description-label', 'Description')}
-                </Label>
-                <GenAIDashDescriptionButton onGenerate={(description) => model.onDescriptionChange(description)} />
-              </Stack>
-            }
-          >
-            <TextArea
-              id="description-input"
-              name="description"
-              value={description}
-              onChange={(e: ChangeEvent<HTMLTextAreaElement>) => model.onDescriptionChange(e.target.value)}
-            />
-          </Field>
-          <Field noMargin label={t('dashboard-settings.general.tags-label', 'Tags')}>
-            <TagsInput id="tags-input" tags={tags} onChange={model.onTagsChange} width={40} />
-          </Field>
-          {!meta.isDashboardTemplate && (
-            <Field noMargin label={t('dashboard-settings.general.folder-label', 'Folder')}>
-              <ProvisioningAwareFolderPicker
-                value={meta.folderUid}
-                onChange={dashboard.isManagedRepository() ? model.onProvisionedFolderChange : model.onFolderChange}
-                repositoryName={dashboard.getManagerIdentity()}
-                excludeUIDs={meta?.folderUid ? [meta.folderUid] : undefined}
-              />
-            </Field>
-          )}
-
-          {/* Render here so move-form load errors appear under the Move field. */}
-          {showMoveModal && moveModalProps && (
-            <MoveProvisionedDashboardDrawer
-              dashboard={dashboard}
-              targetFolderUID={moveModalProps.targetFolderUID}
-              targetFolderTitle={moveModalProps.targetFolderTitle}
-              onDismiss={model.onMoveModalDismiss}
-              onSuccess={model.onMoveSuccess}
-            />
-          )}
-
-          <Field
-            noMargin
-            label={t('dashboard-settings.general.editable-label', 'Editable')}
-            description={t(
-              'dashboard-settings.general.editable-description',
-              'Set to read-only to disable all editing. Reload the dashboard for changes to take effect'
-            )}
-          >
-            <RadioButtonGroup value={editable} options={EDITABLE_OPTIONS} onChange={model.onEditableChange} />
-          </Field>
-
-          <Field
-            noMargin
-            label={t('dashboard-settings.general.default-grid-label', 'Default grid')}
-            description={t(
-              'dashboard-settings.general.default-grid-description',
-              'Select layout type to be used for new rows and tabs'
-            )}
-          >
-            <RadioButtonGroup value={defaultGrid} options={DEFAULT_GRID_OPTIONS} onChange={model.onDefaultGridChange} />
-          </Field>
-        </Box>
-
-        <TimePickerSettings
-          onTimeZoneChange={model.onTimeZoneChange}
-          onWeekStartChange={model.onWeekStartChange}
-          onRefreshIntervalChange={model.onRefreshIntervalChange}
-          onNowDelayChange={model.onNowDelayChange}
-          onHideTimePickerChange={model.onHideTimePickerChange}
-          onLiveNowChange={model.onLiveNowChange}
-          refreshIntervals={intervals}
-          timePickerHidden={hideTimeControls}
-          nowDelay={nowDelay || ''}
-          liveNow={liveNow}
-          timezone={timeZone || ''}
-          weekStart={weekStart}
-        />
-
-        {/* @todo: Update "Graph tooltip" description to remove prompt about reloading when resolving #46581 */}
-        <CollapsableSection label={t('dashboard-settings.general.panel-options-label', 'Panel options')} isOpen={true}>
-          <Stack direction="column" gap={2}>
-            <Field
-              noMargin
-              label={t('dashboard-settings.general.panel-options-graph-tooltip-label', 'Graph tooltip')}
-              description={t(
-                'dashboard-settings.general.panel-options-graph-tooltip-description',
-                'Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect'
-              )}
-            >
-              <RadioButtonGroup onChange={model.onTooltipChange} options={GRAPH_TOOLTIP_OPTIONS} value={graphTooltip} />
-            </Field>
-
-            <Field
-              noMargin
-              label={t('dashboard-settings.general.panels-preload-label', 'Preload panels')}
-              description={t(
-                'dashboard-settings.general.panels-preload-description',
-                'When enabled all panels will start loading as soon as the dashboard has been loaded.'
-              )}
-            >
-              <Switch
-                id="preload-panels-dashboards-toggle"
-                // Reflect the effective value: when the dashboard has no explicit preload, show the instance default.
-                value={dashboard.state.preload ?? config.dashboardDefaultPreload}
-                onChange={(e) => model.onPreloadChange(e.currentTarget.checked)}
-              />
-            </Field>
-          </Stack>
-        </CollapsableSection>
-
-        <Box marginTop={3}>{meta.canDelete && <DeleteDashboardButton dashboard={dashboard} />}</Box>
-      </div>
-    </Page>
-  );
+  static Component = LazyGeneralSettingsEditViewRenderer;
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
@@ -47,10 +48,7 @@ func TestRun(t *testing.T) {
 					Item:     "Plugin 1",
 					ItemID:   "plugin1",
 					Links: []advisor.CheckErrorLink{
-						{
-							Url:     "/plugins/plugin1",
-							Message: "View plugin",
-						},
+						checks.NewErrorLink("view-plugin", "/plugins/plugin1"),
 					},
 				},
 			},
@@ -70,10 +68,7 @@ func TestRun(t *testing.T) {
 					Item:     "Plugin 2",
 					ItemID:   "plugin2",
 					Links: []advisor.CheckErrorLink{
-						{
-							Url:     "/plugins/plugin2?page=version-history",
-							Message: "Upgrade",
-						},
+						checks.NewErrorLink("upgrade", "/plugins/plugin2?page=version-history"),
 					},
 				},
 			},
@@ -145,21 +140,21 @@ func TestRun(t *testing.T) {
 					StepID:   UnsignedStepID,
 					Item:     "Plugin 6",
 					ItemID:   "plugin6",
-					Links:    []advisor.CheckErrorLink{{Url: "/plugins/plugin6", Message: "View plugin"}},
+					Links:    []advisor.CheckErrorLink{checks.NewErrorLink("view-plugin", "/plugins/plugin6")},
 				},
 				{
 					Severity: advisor.CheckReportFailureSeverityLow,
 					StepID:   UnsignedStepID,
 					Item:     "Plugin 7",
 					ItemID:   "plugin7",
-					Links:    []advisor.CheckErrorLink{{Url: "/plugins/plugin7", Message: "View plugin"}},
+					Links:    []advisor.CheckErrorLink{checks.NewErrorLink("view-plugin", "/plugins/plugin7")},
 				},
 				{
 					Severity: advisor.CheckReportFailureSeverityLow,
 					StepID:   UnsignedStepID,
 					Item:     "Plugin 8",
 					ItemID:   "plugin8",
-					Links:    []advisor.CheckErrorLink{{Url: "/plugins/plugin8", Message: "View plugin"}},
+					Links:    []advisor.CheckErrorLink{checks.NewErrorLink("view-plugin", "/plugins/plugin8")},
 				},
 				{
 					Severity: advisor.CheckReportFailureSeverityHigh,

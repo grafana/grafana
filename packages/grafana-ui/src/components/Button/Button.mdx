@@ -36,18 +36,82 @@ When using a button please always follow a11y rules (e.g. W3C Recommendation [3.
 
 ## Variants
 
-| Type          | Component                                                                                                                       | Emphasis | Purpose                                                                                                                                                                                                                                                                                                                                                               |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Primary**   | <p>Filled with Label</p> <p>Filled with Icon + Label</p> <p>Filled with Label + Icon</p> <p>Filled with Icon + Label + Icon</p> | High     | Used for "call to action", i.e. triggering the main action. There should never be more than one on a page. If you need multiple buttons for different actions, decide which action is the most important and make that the primary Button. All other Button components should be secondary. If there is no primary action, all Button components should be secondary. |
-| **Secondary** | <p>Filled</p> <p>Outline</p> <p>Ghost</p>                                                                                       | Default  | The secondary Button is the default button style and can trigger various actions. How it is used depends on its surroundings: 1. When next to the primary Button, the Secondary style can for example be used for "Cancel" or "Abort" actions. 2. When there is no main important action on a given page, all Button components should use the secondary style.       |
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Type</th>
+      <th scope="col">Component</th>
+      <th scope="col">Emphasis</th>
+      <th scope="col">Purpose</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">Primary</th>
+      <td>
+        <p>Filled with Label</p>
+        <p>Filled with Icon + Label</p>
+        <p>Filled with Label + Icon</p>
+        <p>Filled with Icon + Label + Icon</p>
+      </td>
+      <td>High</td>
+      <td>
+        Used for "call to action", i.e. triggering the main action. There should never be more than one on a page. If
+        you need multiple buttons for different actions, decide which action is the most important and make that the
+        primary Button. All other Button components should be secondary. If there is no primary action, all Button
+        components should be secondary.
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Secondary</th>
+      <td>
+        <p>Filled</p>
+        <p>Outline</p>
+        <p>Ghost</p>
+      </td>
+      <td>Default</td>
+      <td>
+        The secondary Button is the default button style and can trigger various actions. How it is used depends on its
+        surroundings: 1. When next to the primary Button, the Secondary style can for example be used for "Cancel" or
+        "Abort" actions. 2. When there is no main important action on a given page, all Button components should use the
+        secondary style.
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 ## Button Sizes and Label Typography
 
-| Size       | Width-Height (px - rem) | Font-Size | Font-Weight |
-| ---------- | ----------------------- | --------- | ----------- |
-| **Small**  | Auto - 24px             | 12px      | 500         |
-| **Medium** | Auto - 32px             | 14px      | 500         |
-| **Large**  | Auto - 48px             | 18px      | 500         |
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Size</th>
+      <th scope="col">Width-Height (px - rem)</th>
+      <th scope="col">Font-Size</th>
+      <th scope="col">Font-Weight</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">Small</th>
+      <td>Auto - 24px</td>
+      <td>12px</td>
+      <td>500</td>
+    </tr>
+    <tr>
+      <th scope="row">Medium</th>
+      <td>Auto - 32px</td>
+      <td>14px</td>
+      <td>500</td>
+    </tr>
+    <tr>
+      <th scope="row">Large</th>
+      <td>Auto - 48px</td>
+      <td>18px</td>
+      <td>500</td>
+    </tr>
+  </tbody>
+</table>
 
 ![button sizes](./images/button.sizes.png 'Visual representation of button sizes')
 
@@ -153,6 +217,7 @@ The secondary `Button` is the default button style and can trigger various actio
 ## Destructive
 
 Used for triggering a removing or deleting action. Because of its dominant coloring, it should be used sparingly. If you need multiple Destructive `Button` components in one view, we recommend using a secondary `Button` or Link variant instead and only use the Destructive variant to double confirm.
+If a destructive action has a confirmation step it does not need to be destructive, as long as the confirmation step has a destructive button. In tables containing delete actions we recommend using a secondary variant `Button` with trash-alt icon.
 
 <ExampleFrame>
   <Button variant="destructive" size="sm" style={{ margin: '5px' }}>

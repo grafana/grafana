@@ -63,7 +63,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     bottom: 0,
     background: theme.colors.background.primary,
     borderTop: `1px solid ${theme.colors.border.weak}`,
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     zIndex: theme.zIndex.navbarFixed,
   }),
   drawerActive: css({

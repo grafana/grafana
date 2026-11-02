@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync/atomic"
 	"testing"
-	"time"
+	"testing/synctest"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -126,17 +126,22 @@ func TestEnsureNamespace_ShortCircuitsOnCachedNamespace(t *testing.T) {
 	assert.Equal(t, int32(0), srv.getStoreIdx.Load(), "GetStore should not be called for a cached namespace")
 }
 
-func TestEnsureNamespace_ExistingStoreIsCachedWithoutReconcile(t *testing.T) {
-	// Store already exists → GetOrCreateStore and reconcile must be skipped,
-	// but the namespace should still be cached.
+func TestEnsureNamespace_ExistingStoreWithoutStateStoreIsReconciled(t *testing.T) {
+	// A reconciler built without a state store has no record to consult, which
+	// must mean "not reconciled" — reading an existing store as reconciled is
+	// the bug the state exists to fix.
+	//
+	// notFoundClientFactory drives reconcileNamespace into its "namespace
+	// deleted" branch, so reaching it is observable through DeleteStore.
 	srv := &stubServer{getStoreResults: []*zanzana.StoreInfo{{ID: "store-1", Name: "existing-ns"}}}
 	r := newReconcilerForTest(srv, notFoundClientFactory{})
 
-	require.NoError(t, r.EnsureNamespace(context.Background(), "existing-ns"))
+	require.ErrorContains(t, r.EnsureNamespace(context.Background(), "existing-ns"), "store disappeared")
 
-	_, cached := r.ensuredNamespaces.Load("existing-ns")
-	assert.True(t, cached)
+	assert.Equal(t, int32(1), srv.deleteStoreCalls.Load())
 	assert.Equal(t, int32(0), srv.getOrCreateCalls.Load(), "GetOrCreateStore should not be called when store already exists")
+	_, cached := r.ensuredNamespaces.Load("existing-ns")
+	assert.False(t, cached)
 }
 
 func TestReconcileNamespace_EvictsCacheOnNotFound(t *testing.T) {
@@ -253,35 +258,38 @@ func TestQueueAllNamespaces_ReenqueuesAfterDedupEntryCleared(t *testing.T) {
 }
 
 func TestRunWorker_ClearsDedupEntryAfterReconcile(t *testing.T) {
-	// The worker must remove the namespace from queuedNamespaces after
-	// reconciliation completes, otherwise it would be permanently locked out
-	// of future cycles.
-	srv := &stubServer{}
-	r := newReconcilerForTest(srv, notFoundClientFactory{})
-	r.workQueue = make(chan string, 10)
+	synctest.Test(t, func(t *testing.T) {
+		// The worker must remove the namespace from queuedNamespaces after
+		// reconciliation completes, otherwise it would be permanently locked out
+		// of future cycles.
+		srv := &stubServer{}
+		r := newReconcilerForTest(srv, notFoundClientFactory{})
+		r.workQueue = make(chan string, 10)
 
-	// Simulate queueAllNamespaces having reserved and enqueued ns-1.
-	r.queuedNamespaces.Store("ns-1", struct{}{})
-	r.workQueue <- "ns-1"
+		// Simulate queueAllNamespaces having reserved and enqueued ns-1.
+		r.queuedNamespaces.Store("ns-1", struct{}{})
+		r.workQueue <- "ns-1"
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		r.runWorker(ctx, 0)
-	}()
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			r.runWorker(ctx, 0)
+		}()
 
-	require.Eventually(t, func() bool {
+		// Finish reconciliation and release the dedup reservation before checking requeue eligibility.
+		synctest.Wait()
+
 		_, loaded := r.queuedNamespaces.Load("ns-1")
-		return !loaded
-	}, 2*time.Second, 10*time.Millisecond, "worker did not release ns-1 from queuedNamespaces")
+		require.False(t, loaded)
 
-	// notFoundClientFactory drives reconcileNamespace into its "namespace
-	// deleted" branch, which calls DeleteStore exactly once.
-	assert.Equal(t, int32(1), srv.deleteStoreCalls.Load())
+		// notFoundClientFactory drives reconcileNamespace into its "namespace
+		// deleted" branch, which calls DeleteStore exactly once.
+		assert.Equal(t, int32(1), srv.deleteStoreCalls.Load())
 
-	cancel()
-	<-done
+		cancel()
+		<-done
+	})
 }

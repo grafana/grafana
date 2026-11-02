@@ -1,3 +1,5 @@
+import { upperFirst } from 'lodash';
+
 import {
   type AlertState,
   type DataTransformerConfig,
@@ -9,6 +11,7 @@ import { t } from '@grafana/i18n';
 import { type CustomTransformerDefinition, SafeSerializableSceneObject, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { isExpressionQuery } from 'app/features/expressions/guards';
+import { getExpressionLabel, type ExpressionQuery } from 'app/features/expressions/types';
 
 import { getAlertStateColor, getQueryEditorTypeConfig, QueryEditorType } from '../constants';
 
@@ -52,10 +55,26 @@ export function getEditorType(
   return QueryEditorType.Query;
 }
 
+/**
+ * Section label for an expression card, e.g. "SQL Expression". Shared by the single-edit header and
+ * the stacked editor so both render expression labels identically, matching the names on the
+ * expression type picker cards.
+ */
+export function getExpressionSectionLabel(query: ExpressionQuery): string {
+  // The fallback looks unreachable because `type` is typed as an enum member, but isExpressionQuery
+  // accepts any query pointing at the __expr__ datasource without validating `type`, so an absent
+  // or unrecognised type reaches here at runtime.
+  const typeName = getExpressionLabel(query.type) ?? upperFirst(query.type);
+
+  return t('query-editor-next.labels.expression-title', '{{type}} Expression', { type: typeName });
+}
+
 function isDataTransformerConfig(
-  transformation: DataTransformerConfig | DataQuery | CustomTransformerDefinition | null
+  transformation: DataTransformerConfig | CustomTransformerDefinition | null
 ): transformation is DataTransformerConfig {
-  return transformation !== null && 'id' in transformation && !('refId' in transformation);
+  // A CustomTransformerDefinition is an operator function or `{ operator, topic }`, so `id` is the
+  // only discriminator. `refId` is not: a transformation config can carry a user-set one.
+  return typeof transformation === 'object' && transformation !== null && 'id' in transformation;
 }
 
 /**

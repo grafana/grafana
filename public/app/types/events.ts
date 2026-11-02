@@ -180,3 +180,7 @@ export class PanelEditExitedEvent extends BusEventWithPayload<number> {
 export class PanelEditNextFeedbackEvent extends BusEventBase {
   static type = 'panel-edit-next-feedback';
 }
+
+export class TextPanelFeedbackEvent extends BusEventBase {
+  static type = 'text-panel-feedback';
+}

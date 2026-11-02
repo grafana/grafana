@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"testing"
 	"time"
 
@@ -32,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -197,10 +197,7 @@ func (f *fakeConfigStore) GetAppliedConfigurations(_ context.Context, orgID int6
 	// Iterate backwards to get the latest applied configs.
 	var configs []*models.HistoricAlertConfiguration
 	start := len(configsByOrg) - 1
-	end := start - limit
-	if end < 0 {
-		end = 0
-	}
+	end := max(start-limit, 0)
 
 	for i := start; i >= end; i-- {
 		if configsByOrg[i].LastApplied > 0 {
@@ -650,15 +647,13 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 		nil,
 		false,
 		// Sync deps are nil — tests do not enable the sync feature flag.
-		NewExternalAMSyncer(nil, nil, &validations.OSSDataSourceRequestValidator{}, cfg, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"), nil, nil, nil),
+		NewExternalAMSyncer(nil, nil, cfg, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"), nil, nil, nil),
 		moaOpts...,
 	)
 	require.NoError(t, err)
 
 	if options.alertmanagers != nil {
-		for orgID, am := range options.alertmanagers {
-			moa.alertmanagers[orgID] = am
-		}
+		maps.Copy(moa.alertmanagers, options.alertmanagers)
 	}
 
 	if !options.skipLoad {

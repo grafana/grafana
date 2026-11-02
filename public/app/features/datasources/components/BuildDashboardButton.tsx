@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { locationUtil, type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -9,6 +9,7 @@ import { createWarningNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { useIsMobileEditDeprecated } from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
 import { useDispatch } from 'app/types/store';
 
 import { type ButtonFill } from '../../../../../packages/grafana-ui/src/components/Button/Button';
@@ -26,6 +27,11 @@ interface BuildDashboardButtonProps {
 export const BuildDashboardButton = ({ dataSource, size, fill, context }: BuildDashboardButtonProps) => {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
+
+  if (isMobileEditDeprecated) {
+    return null;
+  }
 
   if (!config.featureToggles.suggestedDashboards) {
     return (
@@ -33,7 +39,7 @@ export const BuildDashboardButton = ({ dataSource, size, fill, context }: BuildD
         size={size}
         variant="secondary"
         fill={fill}
-        href={`dashboard/new-with-ds/${dataSource.uid}`}
+        href={locationUtil.assureBaseUrl(`/dashboard/new-with-ds/${dataSource.uid}`)}
         onClick={() => {
           trackDsConfigClicked('build_a_dashboard');
           trackCreateDashboardClicked({
@@ -93,7 +99,7 @@ export const BuildDashboardButton = ({ dataSource, size, fill, context }: BuildD
               <Menu.Item
                 label={t('datasources.build-a-dashboard-button.blank', 'Blank')}
                 icon="plus"
-                url={`dashboard/new-with-ds/${dataSource.uid}`}
+                url={locationUtil.assureBaseUrl(`/dashboard/new-with-ds/${dataSource.uid}`)}
                 onClick={() => {
                   trackDsConfigClicked('build_a_dashboard');
                   trackCreateDashboardClicked({

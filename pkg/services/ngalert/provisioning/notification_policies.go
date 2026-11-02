@@ -9,14 +9,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type managedRoutesService interface {
-	GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error)
+	GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (v1.ManagedRoute, error)
 }
 
 type NotificationPolicyService struct {
@@ -63,7 +62,7 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 }
 
 func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, route definitions.Route, p models.Provenance, version string) (definitions.Route, string, error) {
-	tree := v1.RouteToModel(&route)
+	tree := notifier.RouteFromAPI(&route)
 	err := tree.Validate()
 	if err != nil {
 		return definitions.Route{}, "", models.MakeErrRouteInvalidFormat(err)
@@ -117,7 +116,7 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 
 	defaultCfg, err := notifier.Load([]byte(nps.settings.DefaultConfiguration))
 	if err != nil {
-		nps.log.Error("Failed to parse default alertmanager config: %w", err)
+		nps.log.Error("Failed to parse default alertmanager config", "error", err)
 		return definitions.Route{}, fmt.Errorf("failed to parse default alertmanager config: %w", err)
 	}
 	route := defaultCfg.AlertmanagerConfig.Route
@@ -139,14 +138,14 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 	})
 
 	if err != nil {
-		return definitions.Route{}, nil
-	} // TODO should be error?
+		return definitions.Route{}, err
+	}
 
 	return *notifier.RouteToAPI(route), nil
 }
 
 func calculateRouteFingerprint(route v1.Route) string {
-	return legacy_storage.CalculateRouteFingerprint(route)
+	return v1.CalculateRouteFingerprint(route)
 }
 
 func (nps *NotificationPolicyService) checkOptimisticConcurrency(current v1.Route, provenance models.Provenance, desiredVersion string, action string) error {
@@ -165,7 +164,7 @@ func (nps *NotificationPolicyService) checkOptimisticConcurrency(current v1.Rout
 }
 
 // GetManagedRoute returns managed route by name.
-func (nps *NotificationPolicyService) GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error) {
+func (nps *NotificationPolicyService) GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (v1.ManagedRoute, error) {
 	// This is a workaround for exporting managed routes to include provisioning permissions to access authorization.
 	return nps.routeService.GetManagedRoute(ctx, orgID, name, user)
 }

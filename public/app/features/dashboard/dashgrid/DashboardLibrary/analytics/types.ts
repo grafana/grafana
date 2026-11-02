@@ -120,8 +120,10 @@ export interface MappingFormCompletedProperties extends EventProperty {
 export interface EntryPointClickedProperties extends EventProperty {
   /** The specific entry point (button, link, etc.) the user interacted with. */
   entryPoint: SourceEntryPoint;
-  /** The category of content accessible through this entry point. */
-  /** @deprecated Use contentKinds instead. */
+  /**
+   * The category of content accessible through this entry point.
+   * @deprecated Use contentKinds instead.
+   */
   contentKind: ContentKind | undefined;
   /** The categories of content accessible through this entry point. */
   contentKinds: ContentKind[];

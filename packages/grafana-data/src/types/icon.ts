@@ -135,6 +135,7 @@ export const availableIconsIndex = {
   'file-landscape-alt': true,
   filter: true,
   flask: true,
+  'flask-bubbling': true,
   'filter-plus': true,
   'filter-minus': true,
   flip: true,
@@ -171,6 +172,7 @@ export const availableIconsIndex = {
   'gf-pin-unfilled': true,
   'gf-prometheus': true,
   'gf-traces': true,
+  'gf-variable': true,
   globe: true,
   grafana: true,
   grid: true,
@@ -220,6 +222,8 @@ export const availableIconsIndex = {
   'mobile-android': true,
   monitor: true,
   'multi-step': true,
+  'open-telemetry': true,
+  pages: true,
   palette: true,
   'panel-add': true,
   paragraph: true,
@@ -238,6 +242,7 @@ export const availableIconsIndex = {
   process: true,
   'question-circle': true,
   'record-audio': true,
+  redo: true,
   repeat: true,
   rocket: true,
   'ruler-combined': true,
@@ -312,6 +317,7 @@ export const availableIconsIndex = {
   'cursor-logo': true,
   'github-copilot-logo': true,
   robot: true,
+  workflows: true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;

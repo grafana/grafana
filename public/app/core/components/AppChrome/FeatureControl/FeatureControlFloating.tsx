@@ -4,16 +4,11 @@ import type { GrafanaTheme2 } from '@grafana/data';
 import { Portal, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { FeatureControlFlags } from './FeatureControlFlags';
-import { useFeatureControlContext } from './FeatureControlProvider';
 
+// Rendered via LazyFeatureControlFloating, which owns the `isOpen` check.
 export const FeatureControlFloating = () => {
-  const { isOpen } = useFeatureControlContext();
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-
-  if (!isOpen) {
-    return null;
-  }
 
   return (
     <Portal zIndex={theme.zIndex.modal}>

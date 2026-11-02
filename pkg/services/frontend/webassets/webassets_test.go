@@ -19,7 +19,7 @@ func TestGetWebAssets_WithoutCDNConfigured(t *testing.T) {
 	license.On("ContentDeliveryPrefix").Return("grafana")
 	ctx := context.Background()
 
-	assets, err := fswebassets.GetWebAssets(ctx, cfg, license)
+	assets, err := fswebassets.GetWebAssets(ctx, cfg, license, "build")
 	assert.NoError(t, err)
 	assert.NotNil(t, assets)
 
@@ -37,7 +37,7 @@ func TestGetWebAssets_PrefixFromLicense(t *testing.T) {
 	license.On("ContentDeliveryPrefix").Return("grafana-pro-max")
 	ctx := context.Background()
 
-	assets, err := fswebassets.GetWebAssets(ctx, cfg, license)
+	assets, err := fswebassets.GetWebAssets(ctx, cfg, license, "build")
 	assert.NoError(t, err)
 	assert.NotNil(t, assets)
 
@@ -54,7 +54,7 @@ func TestGetWebAssets_PrefixFromConfig(t *testing.T) {
 	license.On("ContentDeliveryPrefix").Return("should-not-be-used")
 	ctx := context.Background()
 
-	assets, err := fswebassets.GetWebAssets(ctx, cfg, license)
+	assets, err := fswebassets.GetWebAssets(ctx, cfg, license, "build")
 	assert.NoError(t, err)
 	assert.NotNil(t, assets)
 
@@ -72,7 +72,7 @@ func TestGetWebAssets_PrefixFromConfigTrailingSlash(t *testing.T) {
 	license.On("ContentDeliveryPrefix").Return("should-not-be-used")
 	ctx := context.Background()
 
-	assets, err := fswebassets.GetWebAssets(ctx, cfg, license)
+	assets, err := fswebassets.GetWebAssets(ctx, cfg, license, "build")
 	assert.NoError(t, err)
 	assert.NotNil(t, assets)
 

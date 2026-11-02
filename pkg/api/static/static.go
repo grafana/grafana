@@ -22,6 +22,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 
@@ -123,10 +124,8 @@ func staticHandler(ctx *web.Context, log log.Logger, opt StaticOptions) bool {
 	}
 
 	file := ctx.Req.URL.Path
-	for _, p := range opt.Exclude {
-		if file == p {
-			return false
-		}
+	if slices.Contains(opt.Exclude, file) {
+		return false
 	}
 
 	// if we have a prefix, filter requests by stripping the prefix

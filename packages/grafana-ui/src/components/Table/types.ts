@@ -28,7 +28,7 @@ export {
   type TableJsonViewCellOptions,
 } from '@grafana/schema';
 
-export type InspectCell = { value: any; mode: TableCellInspectorMode };
+export type InspectCell = { value: unknown; mode: TableCellInspectorMode };
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
@@ -161,6 +161,9 @@ export type TableCellOptions = schema.TableCellOptions | TableCustomCellOptions;
 export type TableFieldOptions = Omit<schema.TableFieldOptions, 'cellOptions'> & {
   cellOptions: TableCellOptions;
   headerComponent?: React.ComponentType<CustomHeaderRendererProps>;
+  headerTooltip?: string;
+  /** Controls whether this column can be resized. */
+  resizable?: boolean;
 };
 
 // Cell background and text colors

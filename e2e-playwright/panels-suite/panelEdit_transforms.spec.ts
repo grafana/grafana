@@ -2,6 +2,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 const SMOKE_DASHBOARD_UID = 'transforms-smoke';
 const PANEL_MULTI_FIELD_TIME_SERIES = '1';
+const PANEL_NO_TIME_FIELD = '2';
 
 test.describe(
   'Panels test: Transformations',
@@ -61,10 +62,7 @@ test.describe(
       await expect(editor.getByRole('alert', { name: 'An unexpected error happened' })).toBeHidden();
     });
 
-    test('Merge series/tables is flagged as not applicable in the legacy picker', async ({
-      selectors,
-      gotoDashboardPage,
-    }) => {
+    test('Merge series/tables stays applicable for a single-series input', async ({ selectors, gotoDashboardPage }) => {
       const dashboardPage = await gotoDashboardPage({
         uid: SMOKE_DASHBOARD_UID,
         queryParams: new URLSearchParams({ editPanel: PANEL_MULTI_FIELD_TIME_SERIES }),
@@ -77,10 +75,24 @@ test.describe(
         selectors.components.TransformTab.newTransform('Merge series/tables')
       );
       await expect(card).toBeVisible();
+      await expect(card.getByTestId(selectors.components.Transforms.applicabilityInfo)).toBeHidden();
+    });
+
+    test('Format time is flagged as not applicable in the legacy picker', async ({ selectors, gotoDashboardPage }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: SMOKE_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: PANEL_NO_TIME_FIELD }),
+      });
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Transformations')).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Transforms.addTransformationButton).click();
+
+      const card = dashboardPage.getByGrafanaSelector(selectors.components.TransformTab.newTransform('Format time'));
+      await expect(card).toBeVisible();
 
       const applicabilityInfo = card.getByTestId(selectors.components.Transforms.applicabilityInfo);
       await expect(applicabilityInfo).toBeVisible();
-      await expect(applicabilityInfo).toHaveAttribute('aria-label', /at least 2 data series/);
+      await expect(applicabilityInfo).toHaveAttribute('aria-label', /requires a time field/);
     });
   }
 );

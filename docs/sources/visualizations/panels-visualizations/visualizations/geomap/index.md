@@ -525,7 +525,7 @@ The XYZ Tile layer is a map from a generic tile layer.
 {{< figure src="/static/img/docs/geomap-panel/geomap-xyz-9-1-0.png" max-width="600px" alt="Geomap panel xyz example" >}}
 
 - **URL template** - Set a valid tile server URL, with {z}/{x}/{y} for example: `https://tile.openstreetmap.org/{z}/{x}/{y}.png`. Dashboard variables are supported, for example, `https://example.com/maps/${version}/{z}/{x}/{y}.png`.
-- **Attribution** sets the reference string for the layer if displayed in [map controls](#show-attribution). Dashboard variables are supported.
+- **Attribution** sets the reference string for the layer if displayed in [map controls](#show-optional-attribution). Dashboard variables are supported.
 - **Min zoom** - Minimum zoom level. Tiles aren't loaded below this level.
 - **Max zoom** - Maximum zoom level provided by the server. Beyond this level, the map is rendered by scaling up existing tiles.
 - **Opacity** from 0 (transparent) to 1 (opaque)
@@ -656,7 +656,7 @@ The map controls section contains various options for map information and tool o
 | ------ | ----------- |
 | [Show zoom control](#show-zoom-control) | Displays zoom controls in the upper left corner. |
 | [Mouse wheel zoom](#mouse-wheel-zoom) | Enables the mouse wheel to be used for zooming in or out. |
-| [Show attribution](#show-attribution) | Displays attribution for basemap layers. |
+| [Show optional attribution](#show-optional-attribution) | Displays attribution for basemap layers whose license doesn't require it. |
 | [Show scale](#show-scale) | Displays scale information in the bottom left corner in meters (m) or kilometers (km). |
 | [Show measure tools](#show-measure-tools) | Displays measure tools in the upper right corner. This includes the [Length](#length) and [Area](#area) options. |
 | [Show debug](#show-debug) | Displays debug information in the upper right corner. |
@@ -673,9 +673,9 @@ Displays zoom controls in the upper left corner. This control can be useful when
 
 Enables the mouse wheel to be used for zooming in or out.
 
-#### Show attribution
+#### Show optional attribution
 
-Displays attribution for basemap layers.
+Displays attribution for basemap layers whose license doesn't require it. When a layer license requires attribution, Grafana always displays it and this option has no effect.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-attribution-9-1-0.png" max-width="400px" alt="Geomap panel attribution" >}}
 
@@ -744,7 +744,7 @@ When a data point on the geomap represents one row&mdash;that is, only a single 
 
 When a data point represents more than one row&mdash;that is, different rows but with the same geographical information&mdash;then each row appears as a single entry:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-multiple-row-marker-v12.1.png" max-width="750px" alt="A data point with mulitple rows of associated data" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-multiple-row-marker-v12.1.png" max-width="750px" alt="A data point with multiple rows of associated data" >}}
 
 The text displayed in each tooltip row is associated with the first field value in each data row.
 Click it to expand and display the full details of the data row.

@@ -1,3 +1,5 @@
+import { testWithFeatureToggles } from 'test/test-utils';
+
 import {
   type SceneGridItemLike,
   SceneGridLayout,
@@ -7,8 +9,10 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
-import { findVizPanelByKey, getQueryRunnerFor } from '../../utils/utils';
+import { findVizPanelByKey } from '../../utils/findVizPanel';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
@@ -18,7 +22,47 @@ import { type DashboardSceneState } from '../types/dashboard';
 import { DashboardGridItem } from './DashboardGridItem';
 import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
 
+afterEach(() => setTestFlags({}));
+
 describe('DefaultGridLayoutManager', () => {
+  it('disables a freshly attached grid when it activates during review', () => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+    const manager = DefaultGridLayoutManager.createEmpty();
+    new DashboardScene({ body: manager, isEditing: true, mode: 'view' });
+    expect(manager.state.grid.state.isDraggable).toBe(true);
+
+    const deactivate = manager.activate();
+    expect(manager.state.grid.state.isDraggable).toBe(false);
+    deactivate();
+  });
+
+  describe('edit presentation', () => {
+    testWithFeatureToggles({ enable: ['dashboardNewLayouts'] });
+
+    it('disables interaction immediately and cancels a pending enable when switching to review', () => {
+      jest.useFakeTimers();
+      try {
+        const { manager, grid } = setup();
+        grid.setState({ isDraggable: true, isResizable: true });
+        manager.editModeChanged(true);
+        manager.editModeChanged(false);
+
+        expect(grid.state.isDraggable).toBe(false);
+        expect(grid.state.isResizable).toBe(false);
+        jest.runOnlyPendingTimers();
+        expect(grid.state.isDraggable).toBe(false);
+        expect(grid.state.isResizable).toBe(false);
+
+        manager.editModeChanged(true);
+        jest.runOnlyPendingTimers();
+        expect(grid.state.isDraggable).toBe(true);
+        expect(grid.state.isResizable).toBe(true);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+  });
+
   describe('getVizPanels', () => {
     it('Should return all panels', () => {
       const { manager } = setup();
@@ -164,63 +208,6 @@ describe('DefaultGridLayoutManager', () => {
 
       const gridRow = grid.state.children[2] as SceneGridRow;
       expect(gridRow.state.children.length).toBe(1);
-    });
-  });
-
-  describe('duplicatePanel', () => {
-    it('Should duplicate a panel', () => {
-      const { manager, grid } = setup();
-      const vizPanel = findVizPanelByKey(manager, 'panel-1')!;
-
-      expect(grid.state.children.length).toBe(3);
-
-      manager.duplicatePanel(vizPanel);
-
-      const newGridItem = grid.state.children[3];
-
-      expect(grid.state.children.length).toBe(4);
-      expect(newGridItem.state.key).toBe('grid-item-4');
-    });
-
-    it('Should maintain size of duplicated panel', () => {
-      const { manager, grid } = setup();
-
-      const gItem = grid.state.children[0] as DashboardGridItem;
-      gItem.setState({ height: 1 });
-
-      const vizPanel = gItem.state.body;
-      manager.duplicatePanel(vizPanel);
-
-      const newGridItem = grid.state.children[grid.state.children.length - 1] as DashboardGridItem;
-
-      expect(newGridItem.state.height).toBe(1);
-      expect(newGridItem.state.itemHeight).toBe(1);
-    });
-
-    it('Should duplicate a repeated panel', () => {
-      const { manager, grid } = setup();
-      const gItem = grid.state.children[0] as DashboardGridItem;
-      gItem.setState({ variableName: 'server', repeatDirection: 'v', maxPerRow: 100 });
-      const vizPanel = gItem.state.body;
-      manager.duplicatePanel(vizPanel as VizPanel);
-
-      const newGridItem = grid.state.children[grid.state.children.length - 1] as DashboardGridItem;
-
-      expect(newGridItem.state.variableName).toBe('server');
-      expect(newGridItem.state.repeatDirection).toBe('v');
-      expect(newGridItem.state.maxPerRow).toBe(100);
-    });
-
-    it('Should duplicate a panel in a row', () => {
-      const { manager } = setup();
-      const vizPanel = findVizPanelByKey(manager, 'panel-within-row1')!;
-      const gridRow = vizPanel.parent?.parent as SceneGridRow;
-
-      expect(gridRow.state.children.length).toBe(2);
-
-      manager.duplicatePanel(vizPanel);
-
-      expect(gridRow.state.children.length).toBe(3);
     });
   });
 
@@ -414,9 +401,11 @@ function setup(options?: TestOptions) {
   const grid = new SceneGridLayout({ children: gridItems });
   const manager = new DefaultGridLayoutManager({ grid: grid });
 
-  new DashboardScene({ body: manager });
+  const scene = new DashboardScene({ body: manager });
+  // add/remove/duplicate publish edit actions that the sidebar performs.
+  scene.activateSidebar();
 
-  return { manager, grid };
+  return { manager, grid, scene };
 }
 
 const panelOptions = { legend: { displayMode: 'list', placement: 'bottom' } };

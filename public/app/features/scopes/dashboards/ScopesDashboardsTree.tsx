@@ -14,6 +14,11 @@ export interface ScopesDashboardsTreeProps {
   folderPath: string[];
   subScopePath?: string[];
   onFolderUpdate: OnFolderUpdate;
+  /** Called after a navigation link is clicked, e.g. so an overlay nav menu can close itself. */
+  onNavigate?: () => void;
+  /** Whether this tree is rendered inside the mega menu section rather than the legacy standalone
+   * docked drawer. Threaded through to the leaf components, which gate their color styles on it. */
+  megaMenuStyle?: boolean;
 }
 
 export function ScopesDashboardsTree({
@@ -22,6 +27,8 @@ export function ScopesDashboardsTree({
   folders,
   folderPath,
   onFolderUpdate,
+  onNavigate,
+  megaMenuStyle,
 }: ScopesDashboardsTreeProps) {
   const [queryParams] = useQueryParams();
   const styles = useStyles2(getStyles);
@@ -52,10 +59,15 @@ export function ScopesDashboardsTree({
       {regularFolders.map(([subFolderId, subFolder]) => (
         <ScopesDashboardsTreeFolderItem
           key={subFolderId}
+          // Inherit parent subScope so dashboards under group folders still write nav_scope_path.
+          subScope={subScope}
+          subScopePath={subScopePath}
           folder={subFolder}
           folders={folder.folders}
           folderPath={[...folderPath, subFolderId]}
           onFolderUpdate={onFolderUpdate}
+          onNavigate={onNavigate}
+          megaMenuStyle={megaMenuStyle}
         />
       ))}
       {regularNavigations.map((navigation) => (
@@ -66,6 +78,8 @@ export function ScopesDashboardsTree({
           to={urlUtil.renderUrl(navigation.url, queryParams)}
           title={navigation.title}
           id={navigation.id}
+          onNavigate={onNavigate}
+          megaMenuStyle={megaMenuStyle}
         />
       ))}
 
@@ -81,6 +95,8 @@ export function ScopesDashboardsTree({
           folders={folder.folders}
           folderPath={[...folderPath, subFolderId]}
           onFolderUpdate={onFolderUpdate}
+          onNavigate={onNavigate}
+          megaMenuStyle={megaMenuStyle}
         />
       ))}
     </div>

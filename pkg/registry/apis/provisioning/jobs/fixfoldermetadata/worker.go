@@ -131,13 +131,15 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 				continue
 			}
 
+			// Build the result before the write so its recorded duration covers it.
+			rb := jobs.NewFolderResult(folder.Path).
+				WithName(folder.ID).
+				WithAction(repository.FileActionCreated)
+
 			manifest := resources.NewFolderManifest(util.GenerateShortUID(), safepath.Base(folder.Path), folderGVK)
 			_, writeErr := resources.WriteFolderMetadata(ctx, rw, folder.Path, manifest, ref,
 				fmt.Sprintf("Add folder metadata for %s", folder.Path))
 
-			rb := jobs.NewFolderResult(folder.Path).
-				WithName(folder.ID).
-				WithAction(repository.FileActionCreated)
 			if writeErr != nil {
 				wrappedErr := fmt.Errorf("writing folder metadata for %s: %w", folder.Path, writeErr)
 				rb.WithError(wrappedErr)

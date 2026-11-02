@@ -42,7 +42,7 @@
         "spec": {
           "id": 1,
           "title": "Multi-field time series",
-          "description": "Three-field frame (time, value, category). Used by editor-mount smoke tests; also drives the Merge applicability check because a single frame is not mergeable.",
+          "description": "Three-field frame (time, value, category). Used by editor-mount smoke tests; its single frame also asserts Merge stays pickable when merging would be a no-op.",
           "links": [],
           "data": {
             "kind": "QueryGroup",

@@ -6,13 +6,14 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgdelete"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 type DeletionService struct {
@@ -24,13 +25,15 @@ type DeletionService struct {
 	k8sDeleter resourceDeleter
 }
 
-func ProvideDeletionService(db db.DB, cfg *setting.Cfg, dashboardService dashboards.DashboardService, ac accesscontrol.AccessControl, restCfg apiserver.RestConfigProvider) (org.DeletionService, error) {
+var _ org.DeletionService = (*DeletionService)(nil)
+var _ orgdelete.Registrar = (*DeletionService)(nil)
+
+func ProvideDeletionService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, dashboardService dashboards.DashboardService, ac accesscontrol.AccessControl, restCfg apiserver.RestConfigProvider) (*DeletionService, error) {
 	log := log.New("org deletion service")
 	s := &DeletionService{
 		store: &sqlStore{
-			db:      db,
-			dialect: db.GetDialect(),
-			log:     log,
+			sql: sql,
+			log: log,
 		},
 		cfg:        cfg,
 		dashSvc:    dashboardService,
@@ -40,6 +43,14 @@ func ProvideDeletionService(db db.DB, cfg *setting.Cfg, dashboardService dashboa
 	}
 
 	return s, nil
+}
+
+func ProvideDeleteRegistrar(service *DeletionService) orgdelete.Registrar {
+	return service
+}
+
+func (s *DeletionService) RegisterDelete(renderer orgdelete.Renderer) {
+	s.store.RegisterDelete(renderer)
 }
 
 func (s *DeletionService) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error {

@@ -3,6 +3,7 @@ package resourcekinds
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,7 +22,6 @@ func TestIntegrationProvisioning_ResourceKinds_DeleteJob(t *testing.T) {
 	helper := sharedHelper(t)
 
 	for _, rk := range resourceKinds {
-		rk := rk
 		t.Run(rk.name, func(t *testing.T) {
 			client := rk.client(t, helper)
 
@@ -35,7 +35,7 @@ func TestIntegrationProvisioning_ResourceKinds_DeleteJob(t *testing.T) {
 			const count = 2
 			paths := make([]string, count)
 			names := make([]string, count)
-			for i := 0; i < count; i++ {
+			for i := range count {
 				name, title := rk.instance(i)
 				paths[i] = fmt.Sprintf("del-%s.json", name)
 				names[i] = name
@@ -70,13 +70,14 @@ func TestIntegrationProvisioning_ResourceKinds_MoveJob(t *testing.T) {
 	helper := sharedHelper(t)
 
 	for _, rk := range resourceKinds {
-		rk := rk
 		t.Run(rk.name, func(t *testing.T) {
 			client := rk.client(t, helper)
 
 			repo := rk.name + "-move-job-repo"
+			repoPath := filepath.Join(helper.ProvisioningPath, repo)
 			helper.CreateLocalRepo(t, common.TestRepo{
 				Name:       repo,
+				LocalPath:  repoPath,
 				SyncTarget: "folder",
 				Workflows:  []string{"write"},
 			})
@@ -84,7 +85,7 @@ func TestIntegrationProvisioning_ResourceKinds_MoveJob(t *testing.T) {
 			const count = 2
 			paths := make([]string, count)
 			names := make([]string, count)
-			for i := 0; i < count; i++ {
+			for i := range count {
 				name, title := rk.instance(i)
 				paths[i] = fmt.Sprintf("mv-%s.json", name)
 				names[i] = name
@@ -94,8 +95,7 @@ func TestIntegrationProvisioning_ResourceKinds_MoveJob(t *testing.T) {
 				t.Cleanup(func() { _ = client.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{}) })
 			}
 
-			// Bulk move both files into a subdirectory in a single job. The move plus its
-			// post-move re-upsert must complete cleanly.
+			common.WriteFolderMetadata(t, repo, repoPath, "archived")
 			helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 				Action: provisioning.JobActionMove,
 				Move:   &provisioning.MoveJobOptions{Paths: paths, TargetPath: "archived/"},

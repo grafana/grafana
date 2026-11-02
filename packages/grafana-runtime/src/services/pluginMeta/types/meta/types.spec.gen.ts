@@ -1,7 +1,9 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-// JSON configuration schema for Grafana plugins
-// Converted from: https://github.com/grafana/grafana/blob/main/docs/sources/developers/plugins/plugin.schema.json
+/**
+ * JSON configuration schema for Grafana plugins
+ * Converted from: https://github.com/grafana/grafana/blob/main/docs/sources/developers/plugins/plugin.schema.json
+ */
 export interface JSONData {
 	// Unique name of the plugin
 	id: string;

@@ -30,47 +30,129 @@ export interface LocationService {
   update: (update: LocationUpdate) => void;
 }
 
-/** @internal */
-export class HistoryWrapper implements LocationService {
-  private readonly history: H.History;
+/**
+ * Wraps `H.History` so every navigation — programmatic push/replace,
+ * `<Link>` clicks, and `<a href>` rendering via createHref — flows through
+ * `appendOrgId` at one chokepoint. `getHistory()` returns `this`, so
+ * react-router uses the wrapper too.
+ * @internal
+ */
+export class HistoryWrapper implements LocationService, H.History {
+  private readonly base: H.History;
   private locationObservable: BehaviorSubject<H.Location>;
+  private orgIdGetter?: () => number;
+  private singleHistoryEntryMode = false;
 
   constructor(history?: H.History) {
-    // If no history passed create an in memory one if being called from test
-    this.history =
+    this.base =
       history ||
       (process.env.NODE_ENV === 'test'
         ? H.createMemoryHistory({ initialEntries: ['/'] })
         : H.createBrowserHistory({ basename: config.appSubUrl ?? '/' }));
 
-    this.locationObservable = new BehaviorSubject(this.history.location);
-
-    this.history.listen((location) => {
-      this.locationObservable.next(location);
-    });
-
-    this.partial = this.partial.bind(this);
-    this.push = this.push.bind(this);
-    this.replace = this.replace.bind(this);
-    this.getSearch = this.getSearch.bind(this);
-    this.getHistory = this.getHistory.bind(this);
-    this.getLocation = this.getLocation.bind(this);
+    this.locationObservable = new BehaviorSubject(this.base.location);
+    this.base.listen((location) => this.locationObservable.next(location));
   }
 
-  getLocationObservable() {
+  // The history library mutates these on the base instance after each
+  // navigation, so getters keep readers in sync.
+  get length() {
+    return this.base.length;
+  }
+  get action() {
+    return this.base.action;
+  }
+  get location() {
+    return this.base.location;
+  }
+
+  // Every member below is an arrow class field, not a prototype method, because callers alias
+  // them off the instance (`const m = history.push; m(loc)` in react-router, `const update =
+  // locationService.partial` in AlertmanagerContext). Arrow fields auto-bind, so `this` — and
+  // therefore the orgId injection — survives being detached. Do not convert these back to
+  // methods without binding them in the constructor.
+  push: H.History['push'] = (location, state) =>
+    this.singleHistoryEntryMode
+      ? this.base.replace(this.appendOrgId(location), state)
+      : this.base.push(this.appendOrgId(location), state);
+  replace: H.History['replace'] = (location, state) => this.base.replace(this.appendOrgId(location), state);
+  createHref: H.History['createHref'] = (location) => this.base.createHref(this.appendOrgId(location));
+
+  go: H.History['go'] = (n) => this.base.go(n);
+  goBack: H.History['goBack'] = () => this.base.goBack();
+  goForward: H.History['goForward'] = () => this.base.goForward();
+  block: H.History['block'] = (prompt) => this.base.block(prompt);
+  listen: H.History['listen'] = (listener) => this.base.listen(listener);
+
+  setOrgIdGetter = (fn: () => number) => {
+    this.orgIdGetter = fn;
+  };
+
+  // While enabled, `push` behaves as `replace`, so everything navigated to stays within
+  // the entry that was current when the mode was enabled
+  setSingleHistoryEntryMode = (enabled: boolean) => {
+    this.singleHistoryEntryMode = enabled;
+  };
+
+  // The only prototype method left: the overloads are needed because `base.createHref` accepts
+  // only a LocationDescriptorObject, and an arrow field cannot carry overloads without a cast.
+  // Safe because it is on neither LocationService nor H.History, so nothing detaches it — every
+  // caller reaches it as `this.appendOrgId(...)` from the bound arrow fields above.
+  appendOrgId(location: H.LocationDescriptorObject): H.LocationDescriptorObject;
+  appendOrgId(location: H.Path | H.LocationDescriptor): H.Path | H.LocationDescriptor;
+  appendOrgId(location: H.Path | H.LocationDescriptor): H.Path | H.LocationDescriptor {
+    const orgId = this.orgIdGetter?.() ?? 0;
+    if (!Number.isFinite(orgId) || orgId <= 0) {
+      return location;
+    }
+    const orgIdStr = String(Math.floor(orgId));
+
+    if (typeof location === 'string') {
+      const url = new URL(location, 'http://_');
+      if (url.searchParams.has('orgId')) {
+        return location;
+      }
+      url.searchParams.set('orgId', orgIdStr);
+      // A query- or hash-only string is a relative navigation that keeps the
+      // current path; omitting pathname lets the router preserve it instead of
+      // resolving to '/'.
+      const relative = location.startsWith('?') || location.startsWith('#');
+      return relative
+        ? { search: url.search, hash: url.hash }
+        : { pathname: url.pathname, search: url.search, hash: url.hash };
+    }
+
+    const params = new URLSearchParams(location.search ?? '');
+    if (params.has('orgId')) {
+      return location;
+    }
+    params.set('orgId', orgIdStr);
+    return { ...location, search: `?${params.toString()}` };
+  }
+
+  // LocationService
+  getLocationObservable = () => {
     return this.locationObservable.asObservable();
-  }
+  };
 
-  getHistory() {
-    return this.history;
-  }
+  getHistory = () => {
+    return this;
+  };
 
-  getSearch() {
-    return new URLSearchParams(this.history.location.search);
-  }
+  getSearch = () => {
+    return new URLSearchParams(this.base.location.search);
+  };
 
-  partial(query: Record<string, any>, replace?: boolean) {
-    const currentLocation = this.history.location;
+  getLocation = () => {
+    return this.base.location;
+  };
+
+  getSearchObject = () => {
+    return locationSearchToObject(this.base.location.search);
+  };
+
+  partial = (query: Record<string, any>, replace?: boolean) => {
+    const currentLocation = this.base.location;
     const newQuery = this.getSearchObject();
 
     for (const key in query) {
@@ -85,38 +167,29 @@ export class HistoryWrapper implements LocationService {
     const updatedUrl = urlUtil.renderUrl(currentLocation.pathname, newQuery);
 
     if (replace) {
-      this.history.replace(updatedUrl, this.history.location.state);
+      this.replace(updatedUrl, currentLocation.state);
     } else {
-      this.history.push(updatedUrl, this.history.location.state);
+      this.push(updatedUrl, currentLocation.state);
     }
-  }
+  };
 
-  push(location: H.Path | H.LocationDescriptor) {
-    this.history.push(location);
-  }
-
-  replace(location: H.Path | H.LocationDescriptor) {
-    this.history.replace(location);
-  }
-
-  reload() {
-    const prevState = (this.history.location.state as any)?.routeReloadCounter;
-    this.history.replace({
-      ...this.history.location,
-      state: { routeReloadCounter: prevState ? prevState + 1 : 1 },
+  reload = () => {
+    const state = this.base.location.state;
+    let prevCounter: number | undefined;
+    if (state !== null && typeof state === 'object' && 'routeReloadCounter' in state) {
+      const counter = state.routeReloadCounter;
+      if (typeof counter === 'number') {
+        prevCounter = counter;
+      }
+    }
+    this.base.replace({
+      ...this.base.location,
+      state: { routeReloadCounter: prevCounter !== undefined ? prevCounter + 1 : 1 },
     });
-  }
-
-  getLocation() {
-    return this.history.location;
-  }
-
-  getSearchObject() {
-    return locationSearchToObject(this.history.location.search);
-  }
+  };
 
   /** @deprecated use partial, push or replace instead */
-  update(options: LocationUpdate) {
+  update = (options: LocationUpdate) => {
     deprecationWarning('LocationSrv', 'update', 'partial, push or replace');
     if (options.partial && options.query) {
       this.partial(options.query, options.partial);
@@ -133,7 +206,7 @@ export class HistoryWrapper implements LocationService {
         this.push(newLocation);
       }
     }
-  }
+  };
 }
 
 /**

@@ -44,19 +44,19 @@ function setPermissions({ isEditor = false, canManageRepositories = false } = {}
 }
 
 describe('ManagedBadge', () => {
-  let originalProvisioning: boolean | undefined;
+  let originalProvisioning: boolean;
   let originalIsEditor: boolean;
 
   beforeEach(() => {
-    originalProvisioning = config.featureToggles.provisioning;
+    originalProvisioning = config.provisioningEnabled;
     originalIsEditor = contextSrv.isEditor;
-    config.featureToggles.provisioning = true;
+    config.provisioningEnabled = true;
     hasPermissionSpy = jest.spyOn(contextSrv, 'hasPermission');
     setPermissions();
   });
 
   afterEach(() => {
-    config.featureToggles.provisioning = originalProvisioning;
+    config.provisioningEnabled = originalProvisioning;
     contextSrv.isEditor = originalIsEditor;
     jest.restoreAllMocks();
   });
@@ -244,7 +244,7 @@ describe('ManagedBadge', () => {
 
     it('renders a plain badge when the provisioning feature toggle is off', () => {
       setPermissions({ isEditor: true, canManageRepositories: true });
-      config.featureToggles.provisioning = false;
+      config.provisioningEnabled = false;
 
       render(<ManagedBadge managerKind={ManagerKind.Repo} repositoryName="my-repo" sourcePath="dashboards/foo.json" />);
 

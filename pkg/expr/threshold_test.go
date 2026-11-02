@@ -6,13 +6,14 @@ import (
 	"maps"
 	"math"
 	"slices"
-	"sort"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
@@ -234,7 +235,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				        ],
 				        "type": "lt"
 				      },
-				      "loadedDimensions": {"schema":{"name":"test","meta":{"type":"fingerprints","typeVersion":[1,0]},"fields":[{"name":"fingerprints","type":"number","typeInfo":{"frame":"uint64"}}]},"data":{"values":[[18446744073709551615,2,3,4,5]]}}
+				      "loadedFingerprints": ["18446744073709551615","2","3","4","5"]
 				    }
 				  ]
 				}`,
@@ -254,9 +255,69 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				for fingerprint := range cmd.LoadedDimensions {
 					actual = append(actual, uint64(fingerprint))
 				}
-				sort.Slice(actual, func(i, j int) bool {
-					return actual[i] < actual[j]
-				})
+				slices.Sort(actual)
+
+				require.EqualValues(t, []uint64{2, 3, 4, 5, 18446744073709551615}, actual)
+			},
+		},
+		{
+			description: "legacy frame loaded dimensions are ignored",
+			query: `{
+				  "conditions": [
+				    {
+				      "evaluator": {
+				        "params": [
+				          100
+				        ],
+				        "type": "gt"
+				      },
+				      "loadedDimensions": {"data":{"values":[[18446744073709551615,2,3,4,5]]},"schema":{"fields":[{"name":"fingerprints","type":"number","typeInfo":{"frame":"uint64"}}],"meta":{"type":"fingerprints","typeVersion":[1,0]},"name":"test"}},
+				      "unloadEvaluator": {
+				        "params": [
+				          31
+				        ],
+				        "type": "lt"
+				      }
+				    }
+				  ],
+				  "expression": "B"
+				}`,
+			assert: func(t *testing.T, c Command) {
+				require.IsType(t, &HysteresisCommand{}, c)
+				cmd := c.(*HysteresisCommand)
+				require.Empty(t, cmd.LoadedDimensions)
+			},
+		},
+		{
+			description: "unmarshal as hysteresis command from loadedFingerprints",
+			query: `{
+				  "expression": "B",
+				  "conditions": [
+				    {
+				      "evaluator": {
+				        "params": [
+				          100
+				        ],
+				        "type": "gt"
+				      },
+				      "unloadEvaluator": {
+				        "params": [
+				          31
+				        ],
+				        "type": "lt"
+				      },
+				      "loadedFingerprints": ["18446744073709551615","2","3","4","5"]
+				    }
+				  ]
+				}`,
+			assert: func(t *testing.T, c Command) {
+				require.IsType(t, &HysteresisCommand{}, c)
+				cmd := c.(*HysteresisCommand)
+				actual := make([]uint64, 0, len(cmd.LoadedDimensions))
+				for fingerprint := range cmd.LoadedDimensions {
+					actual = append(actual, uint64(fingerprint))
+				}
+				slices.Sort(actual)
 
 				require.EqualValues(t, []uint64{2, 3, 4, 5, 18446744073709551615}, actual)
 			},
@@ -396,6 +457,11 @@ func TestIsHysteresisExpression(t *testing.T) {
 			expected: false,
 		},
 		{
+			name:     "false if unloadEvaluator is null",
+			input:    json.RawMessage(`{ "type": "threshold", "conditions": [{ "unloadEvaluator" : null}] }`),
+			expected: false,
+		},
+		{
 			name:     "true type is threshold and a single condition has unloadEvaluator field",
 			input:    json.RawMessage(`{ "type": "threshold", "conditions": [{ "unloadEvaluator" : {}}] }`),
 			expected: true,
@@ -468,6 +534,45 @@ func TestSetLoadedDimensionsToHysteresisCommand(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, fingerprints, cmd.(*HysteresisCommand).LoadedDimensions)
+	})
+}
+
+func TestLoadedFingerprintsEncoding(t *testing.T) {
+	const model = `{ "type": "threshold", "conditions": [{ "evaluator": { "params": [5], "type": "gt" }, "unloadEvaluator" : {"params": [2], "type": "lt"}}], "expression": "A" }`
+
+	// A query reaches the expression service through callers that re-serialise it via simplejson,
+	// which sorts object keys on the way out — the ordering the frame encoding cannot survive.
+	t.Run("survives JSON round-trips", func(t *testing.T) {
+		query := map[string]any{}
+		require.NoError(t, json.Unmarshal([]byte(model), &query))
+		fingerprints := Fingerprints{math.MaxUint64: {}, 2: {}, 3: {}}
+		require.NoError(t, SetLoadedDimensionsToHysteresisCommand(query, fingerprints))
+
+		raw, err := json.Marshal(query)
+		require.NoError(t, err)
+		sj, err := simplejson.NewJson(raw)
+		require.NoError(t, err)
+		raw, err = sj.MarshalJSON()
+		require.NoError(t, err)
+
+		var generic map[string]any
+		require.NoError(t, json.Unmarshal(raw, &generic))
+		raw, err = json.Marshal(generic)
+		require.NoError(t, err)
+
+		cmd, err := UnmarshalThresholdCommand(&rawNode{RefID: "B", QueryRaw: raw})
+		require.NoError(t, err)
+		require.Equal(t, fingerprints, cmd.(*HysteresisCommand).LoadedDimensions)
+	})
+
+	t.Run("writes only fingerprints", func(t *testing.T) {
+		query := map[string]any{}
+		require.NoError(t, json.Unmarshal([]byte(model), &query))
+		require.NoError(t, SetLoadedDimensionsToHysteresisCommand(query, Fingerprints{2: {}, 3: {}}))
+
+		condition := query["conditions"].([]any)[0].(map[string]any)
+		require.ElementsMatch(t, []string{"2", "3"}, condition["loadedFingerprints"])
+		require.NotContains(t, condition, "loadedDimensions")
 	})
 }
 

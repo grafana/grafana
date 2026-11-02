@@ -19,8 +19,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
-	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/singleflight"
@@ -94,13 +94,24 @@ func (e *AzureMonitorDatasource) ResourceRequest(rw http.ResponseWriter, req *ht
 	return e.Proxy.Do(rw, req, cli)
 }
 
+// Registered in pkg/services/featuremgmt; referenced by name because the
+// coreplugins depguard rule forbids importing Grafana core packages.
+const batchAPIFlag = "datasources.azureMonitorBatchAPI"
+
+// Defaults to off when the flag cannot be evaluated (e.g. the standalone
+// plugin binary has no provider).
+func isBatchFlagEnabled(ctx context.Context) bool {
+	return openfeature.NewDefaultClient().Boolean(ctx, batchAPIFlag, false, openfeature.TransactionContext(ctx))
+}
+
 // executeTimeSeriesQuery does the following:
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
 func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, fromAlert bool) (*backend.QueryDataResponse, error) {
-	batchFlagEnabled := config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorBatchAPI")
-	if dsInfo.Settings.BatchAPIEnabled && batchFlagEnabled {
+	// Short-circuiting keeps the flag evaluation off the hot path for
+	// datasources that did not opt in via batchAPIEnabled.
+	if dsInfo.Settings.BatchAPIEnabled && isBatchFlagEnabled(ctx) {
 		// The batch data-plane service only exists when the datasource has a
 		// metrics data-plane route (e.g. metrics.monitor.azure.com, or .cn for
 		// China); customized-cloud configs must supply the metricsDataPlane
@@ -112,11 +123,13 @@ func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, ori
 			e.Logger.Error("Azure Monitor datasource has batchAPIEnabled=true but no batch metrics service is configured")
 			return nil, backend.DownstreamError(errors.New("the Azure Monitor metrics batch service is not configured; please validate your Azure cloud configuration includes the metrics data plane route"))
 		}
+		e.Logger.Debug("routing metrics queries to the Batch data-plane API", "api", "batch", "endpoint", svc.URL, "numQueries", len(originalQueries))
 		return e.executeBatchTimeSeriesQuery(ctx, originalQueries, dsInfo, client, svc.HTTPClient, svc.URL)
 	}
-	if dsInfo.Settings.BatchAPIEnabled && !batchFlagEnabled {
-		e.Logger.Warn("Azure Monitor datasource has batchAPIEnabled=true but the azureMonitorBatchAPI feature toggle is off; falling back to the legacy ARM metrics endpoint")
+	if dsInfo.Settings.BatchAPIEnabled {
+		e.Logger.Warn("Azure Monitor datasource has batchAPIEnabled=true but the datasources.azureMonitorBatchAPI feature flag is off; falling back to the legacy ARM metrics endpoint")
 	}
+	e.Logger.Debug("routing metrics queries to the ARM control-plane API", "api", "arm", "endpoint", url, "numQueries", len(originalQueries))
 
 	result := backend.NewQueryDataResponse()
 	for _, query := range originalQueries {
@@ -151,6 +164,10 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 	}
 
 	azJSONModel := queryJSONModel.AzureMonitor
+	if azJSONModel == nil {
+		// A query saved through the API can set queryType "Azure Monitor" without the azureMonitor object.
+		return nil, backend.DownstreamError(fmt.Errorf("query %s: the Azure Monitor metrics query has no azureMonitor object", query.RefID))
+	}
 	// Legacy: If only MetricDefinition is set, use it as namespace
 	if azJSONModel.MetricDefinition != nil && *azJSONModel.MetricDefinition != "" &&
 		azJSONModel.MetricNamespace != nil && *azJSONModel.MetricNamespace == "" {

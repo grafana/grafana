@@ -197,6 +197,7 @@ func AddKnownTypes(gv schema.GroupVersion, scheme *runtime.Scheme) error {
 		&FileList{},
 		&HistoryList{},
 		&TestResults{},
+		&ConnectionAuthorizeRequest{},
 		&ResourceList{},
 		&ResourceStats{},
 		&Job{},

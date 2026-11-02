@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -46,6 +47,31 @@ func (c *CustomRouteClient) CreateRegister(ctx context.Context, namespace string
 	err = json.Unmarshal(resp, &cast)
 	if err != nil {
 		return nil, fmt.Errorf("unable to unmarshal response bytes into CreateRegisterResponse: %w", err)
+	}
+	return &cast, nil
+}
+
+type GetTranslationsRequest struct {
+	Params  GetTranslationsRequestParams
+	Headers http.Header
+}
+
+func (c *CustomRouteClient) GetTranslations(ctx context.Context, namespace string, request GetTranslationsRequest) (*GetTranslationsResponse, error) {
+	params := url.Values{}
+	params.Set("lang", fmt.Sprintf("%v", request.Params.Lang))
+	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
+		Path:    "/translations",
+		Verb:    "GET",
+		Query:   params,
+		Headers: request.Headers,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cast := GetTranslationsResponse{}
+	err = json.Unmarshal(resp, &cast)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response bytes into GetTranslationsResponse: %w", err)
 	}
 	return &cast, nil
 }

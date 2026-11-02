@@ -7,8 +7,11 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/features"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 //go:generate mockery --name Migrator --structname MockMigrator --inpackage --filename mock_migrator.go --with-expecter
@@ -18,20 +21,17 @@ type Migrator interface {
 
 type MigrationWorker struct {
 	unifiedMigrator Migrator
-	enabled         bool
 }
 
-func NewMigrationWorkerFromUnified(unifiedMigrator Migrator, enabled bool) *MigrationWorker {
+func NewMigrationWorkerFromUnified(unifiedMigrator Migrator) *MigrationWorker {
 	return &MigrationWorker{
 		unifiedMigrator: unifiedMigrator,
-		enabled:         enabled,
 	}
 }
 
-func NewMigrationWorker(unifiedMigrator Migrator, enabled bool) *MigrationWorker {
+func NewMigrationWorker(unifiedMigrator Migrator) *MigrationWorker {
 	return &MigrationWorker{
 		unifiedMigrator: unifiedMigrator,
-		enabled:         enabled,
 	}
 }
 
@@ -40,13 +40,18 @@ func (w *MigrationWorker) IsSupported(ctx context.Context, job provisioning.Job)
 }
 
 func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) (processErr error) {
-	if !w.enabled {
-		return errors.New("migrate functionality is disabled by configuration")
-	}
-
 	options := job.Spec.Migrate
 	if options == nil {
 		return errors.New("missing migrate settings")
+	}
+
+	cfg := repo.Config()
+	evalCtx := features.EvaluationContextFromTargetingKey(cfg.Namespace)
+	enabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningExport, false, evalCtx)
+	if !enabled {
+		// A disabled feature is an expected configuration state, not a failure:
+		// complete the job in a warning state so it is not logged or alerted as an error.
+		return jobs.AsWarning(errors.New("migrate functionality is disabled"))
 	}
 
 	logger := logging.FromContext(ctx).With("options", options)

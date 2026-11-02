@@ -75,7 +75,7 @@ func TestBleveMappingsGoldenJSON(t *testing.T) {
 
 	// In production the mapping's provider comes from the shared registry, built
 	// from the app manifests, not from the builder. Mirror that here.
-	manifestProvider := resource.NewManifestBackedProvider(resource.AppManifests())
+	manifestProvider := resource.NewManifestBackedProvider(resource.AppManifests()...)
 
 	cases := []struct {
 		name string

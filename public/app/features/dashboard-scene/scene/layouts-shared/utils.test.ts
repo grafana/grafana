@@ -17,21 +17,24 @@ describe('getIsLazy', () => {
     config.dashboardDefaultPreload = originalDefault;
   });
 
-  it('is not lazy when preload is explicitly true', () => {
+  it('is not lazy when preload is true', () => {
     expect(getIsLazy(true)).toBe(false);
   });
 
-  it('is lazy when preload is explicitly false, regardless of the instance default', () => {
-    config.dashboardDefaultPreload = true;
+  it('is lazy when preload is false', () => {
     expect(getIsLazy(false)).toBe(true);
   });
 
-  it('falls back to the instance default when preload is undefined', () => {
-    config.dashboardDefaultPreload = false;
+  it('is lazy when preload is undefined', () => {
     expect(getIsLazy(undefined)).toBe(true);
+  });
 
+  // default_preload seeds new dashboards at creation time only. If it were read here, switching it
+  // on would silently change every existing dashboard that has no preload value.
+  it('ignores the instance default', () => {
     config.dashboardDefaultPreload = true;
-    expect(getIsLazy(undefined)).toBe(false);
+    expect(getIsLazy(undefined)).toBe(true);
+    expect(getIsLazy(false)).toBe(true);
   });
 
   it('is never lazy for the image renderer user', () => {

@@ -4,7 +4,7 @@
 import { useMemo, useState } from 'react';
 import type uPlot from 'uplot';
 
-import { type Field, getDisplayProcessor, type PanelProps, useDataLinksContext } from '@grafana/data';
+import { type DataFrame, type Field, getDisplayProcessor, type PanelProps, useDataLinksContext } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { DashboardCursorSync, TooltipDisplayMode } from '@grafana/schema';
 import {
@@ -17,6 +17,7 @@ import {
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
 import { type AxisProps, type ScaleProps, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { getAssistantTooltipContext } from 'app/core/components/AssistantTooltip/buildAssistantContext';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
@@ -31,9 +32,12 @@ import { drawMarkers, type FieldIndices } from './utils';
 
 interface CandlestickPanelProps extends PanelProps<Options> {}
 
+const noAnnotations: DataFrame[] = [];
+
 export const CandlestickPanel = ({
   data,
   id,
+  title,
   timeRange,
   timeZone,
   width,
@@ -307,6 +311,7 @@ export const CandlestickPanel = ({
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
                       canExecuteActions={userCanExecuteActions}
+                      assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, [info.frame])}
                     />
                   );
                 }}
@@ -323,15 +328,13 @@ export const CandlestickPanel = ({
               setNewRange={setNewAnnotationRange}
             />
             <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
-            {data.annotations && (
-              <ExemplarsPlugin
-                config={uplotConfig}
-                exemplars={data.annotations}
-                timeZone={timeZone}
-                maxHeight={options.tooltip.maxHeight}
-                maxWidth={options.tooltip.maxWidth}
-              />
-            )}
+            <ExemplarsPlugin
+              config={uplotConfig}
+              exemplars={data.annotations ?? noAnnotations}
+              timeZone={timeZone}
+              maxHeight={options.tooltip.maxHeight}
+              maxWidth={options.tooltip.maxWidth}
+            />
           </>
         );
       }}

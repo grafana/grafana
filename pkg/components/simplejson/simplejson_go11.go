@@ -1,5 +1,4 @@
 //go:build go1.1
-// +build go1.1
 
 package simplejson
 

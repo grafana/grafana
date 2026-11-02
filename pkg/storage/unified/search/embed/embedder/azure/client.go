@@ -2,10 +2,26 @@ package azure
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"math"
+	"net"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/azure"
+	"github.com/openai/openai-go/v3/option"
+
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+)
+
+const (
+	retryAfterMsHeader = "Retry-After-Ms"
+	retryAfterHeader   = "Retry-After"
 )
 
 // restClient wraps the OpenAI SDK configured for an Azure OpenAI deployment.
@@ -23,14 +39,27 @@ var _ Client = (*restClient)(nil)
 // the `api-key` header. deployment is the Azure deployment name, not the base
 // model name.
 func NewClient(endpoint, deployment, apiVersion, apiKey string) (Client, error) {
+	if apiKey == "" {
+		return nil, fmt.Errorf("azure: api key is required")
+	}
+	return newClient(endpoint, deployment, apiVersion, azure.WithAPIKey(apiKey))
+}
+
+// NewClientWithTokenCredential uses Entra ID tokens instead of an API key.
+// The SDK requests the Cognitive Services scope and refreshes tokens as needed.
+func NewClientWithTokenCredential(endpoint, deployment, apiVersion string, credential azcore.TokenCredential) (Client, error) {
+	if credential == nil {
+		return nil, fmt.Errorf("azure: token credential is required")
+	}
+	return newClient(endpoint, deployment, apiVersion, azure.WithTokenCredential(credential))
+}
+
+func newClient(endpoint, deployment, apiVersion string, auth option.RequestOption) (Client, error) {
 	if endpoint == "" {
 		return nil, fmt.Errorf("azure: endpoint is required")
 	}
 	if deployment == "" {
 		return nil, fmt.Errorf("azure: deployment is required")
-	}
-	if apiKey == "" {
-		return nil, fmt.Errorf("azure: api key is required")
 	}
 	if apiVersion == "" {
 		apiVersion = "2024-02-01"
@@ -38,7 +67,7 @@ func NewClient(endpoint, deployment, apiVersion, apiKey string) (Client, error) 
 	return &restClient{
 		client: openai.NewClient(
 			azure.WithEndpoint(endpoint, apiVersion),
-			azure.WithAPIKey(apiKey),
+			auth,
 		),
 		deployment: deployment,
 	}, nil
@@ -56,7 +85,7 @@ func (c *restClient) EmbedTexts(ctx context.Context, texts []string, dimensions 
 
 	resp, err := c.client.Embeddings.New(ctx, params)
 	if err != nil {
-		return EmbedResult{}, fmt.Errorf("azure: embeddings: %w", err)
+		return EmbedResult{}, fmt.Errorf("azure: embeddings: %w", retryableError(err, time.Now()))
 	}
 	if len(resp.Data) != len(texts) {
 		return EmbedResult{}, fmt.Errorf("azure: got %d vectors for %d inputs", len(resp.Data), len(texts))
@@ -73,4 +102,51 @@ func (c *restClient) EmbedTexts(ctx context.Context, texts []string, dimensions 
 		vectors[d.Index] = v
 	}
 	return EmbedResult{Vectors: vectors, InputTokens: int(resp.Usage.PromptTokens)}, nil
+}
+
+func retryableError(err error, now time.Time) error {
+	var netErr net.Error
+	retryable := errors.Is(err, context.DeadlineExceeded) || (errors.As(err, &netErr) && netErr.Timeout())
+	var delay time.Duration
+	if apiErr, ok := errors.AsType[*openai.Error](err); ok {
+		switch apiErr.StatusCode {
+		case http.StatusRequestTimeout, http.StatusConflict, http.StatusTooManyRequests,
+			http.StatusInternalServerError, http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
+			retryable = true
+		default:
+			retryable = false
+		}
+		if retryable && apiErr.Response != nil {
+			delay = retryAfter(apiErr.Response.Header, now)
+		}
+	}
+	if !retryable {
+		return err
+	}
+	return &embedder.RetryableError{Err: err, RetryAfter: delay}
+}
+
+func retryAfter(headers http.Header, now time.Time) time.Duration {
+	// Azure's millisecond hint is more precise than Retry-After.
+	for _, hint := range []struct {
+		name string
+		unit time.Duration
+	}{
+		{retryAfterMsHeader, time.Millisecond},
+		{retryAfterHeader, time.Second},
+	} {
+		value := strings.TrimSpace(headers.Get(hint.name))
+		if value == "" {
+			continue
+		}
+		if n, err := strconv.ParseFloat(value, 64); err == nil && n > 0 && n < float64(math.MaxInt64)/float64(hint.unit) {
+			return time.Duration(n * float64(hint.unit))
+		}
+		if hint.name == retryAfterHeader {
+			if deadline, err := http.ParseTime(value); err == nil {
+				return max(0, deadline.Sub(now))
+			}
+		}
+	}
+	return 0
 }

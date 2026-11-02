@@ -15,6 +15,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import cx from 'clsx';
 
+import { createTheme } from '@grafana/data';
+
 import TimelineColumnResizer, { getStyles, type TimelineColumnResizerProps } from './TimelineColumnResizer';
 
 const mockOnChange = jest.fn();
@@ -40,13 +42,13 @@ describe('<TimelineColumnResizer>', () => {
   });
 
   it('does not render a dragging indicator when not dragging', () => {
-    const styles = getStyles();
+    const styles = getStyles(createTheme());
     expect(screen.getByTestId('TimelineColumnResizer--dragger')).toHaveStyle(`right: ${undefined}`);
     expect(screen.getByTestId('TimelineColumnResizer--dragger')).toHaveClass(styles.dragger);
   });
 
   it('renders a dragging indicator when dragging', () => {
-    const styles = getStyles();
+    const styles = getStyles(createTheme());
     fireEvent.mouseDown(screen.getByTestId('TimelineColumnResizer--dragger'), { clientX: 0 });
     fireEvent.mouseMove(screen.getByTestId('TimelineColumnResizer--dragger'), { clientX: -5 });
     expect(screen.getByTestId('TimelineColumnResizer--dragger')).toHaveClass(

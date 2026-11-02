@@ -313,8 +313,7 @@ func schema_pkg_apis_dashboard_v1_DashboardList(ref common.ReferenceCallback) co
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Dashboard{}.OpenAPIModelName()),
+										Ref: ref(Dashboard{}.OpenAPIModelName()),
 									},
 								},
 							},

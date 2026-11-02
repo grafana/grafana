@@ -31,8 +31,8 @@ To import a dashboard, follow these steps:
 1. Click **New** and select **Import dashboard** in the drop-down menu.
 1. Perform one of the following steps:
    - Upload a dashboard JSON file.
-   - Paste a [Grafana.com dashboard](#discover-dashboards-on-grafanacom) URL or ID into the field provided.
-   - Paste dashboard JSON text directly into the text area.
+   - Paste a [Grafana.com dashboard](#discover-dashboards-on-grafanacom) URL or ID into the field provided, and click **Load**.
+   - Paste dashboard JSON text directly into the text area, and click **Load**.
 
 1. (Optional) Change the dashboard name, folder, or UID, and specify metric prefixes, if the dashboard uses any.
 1. Select a data source, if required.
@@ -49,3 +49,21 @@ You can also add to this library by exporting one of your own dashboards. For mo
 ## More examples
 
 Your Grafana Cloud stack comes with several default dashboards in the **Grafana Cloud** folder in **Dashboards**. If you're running your own installation of Grafana, you can find more example dashboards in the `public/dashboards/` directory.
+
+## Frequently asked questions
+
+{{< qa-list >}}
+{{< qa question="Where can I find dashboards to import?" >}}
+Grafana.com provides a library of official and community-created dashboards for common technologies and applications.
+You can browse the library, copy a dashboard's URL or ID, and import it directly into your Grafana instance.
+{{< /qa >}}
+{{< qa question="Why do I need to select a data source when importing a dashboard?" >}}
+Many imported dashboards contain queries that reference a data source.
+During import, Grafana lets you map those references to data sources that exist in your environment so the dashboard can display data correctly.
+{{< /qa >}}
+{{< qa question="Can I import dashboards into both Grafana Cloud and self-managed Grafana?" >}}
+Yes.
+Dashboard import is supported in both Grafana Cloud and self-managed Grafana.
+Regardless of where your Grafana instance is running, you can import dashboards from a JSON file, by pasting dashboard JSON, or by using a dashboard URL or ID from Grafana.com.
+{{< /qa >}}
+{{< /qa-list >}}

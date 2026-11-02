@@ -2,6 +2,7 @@ package informer
 
 import (
 	"context"
+	"maps"
 	"sync"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -14,7 +15,8 @@ import (
 // Store.
 type Cache interface {
 	List(ctx context.Context) []runtime.Object
-	Update(ctx context.Context, obj runtime.Object)
+	// Update writes obj into the store and reports whether the store took it.
+	Update(ctx context.Context, obj runtime.Object) bool
 	Delete(ctx context.Context, namespace, name string)
 }
 
@@ -100,10 +102,14 @@ func (s *store) List(_ context.Context) []runtime.Object {
 // resource version — the write-through used to keep the store warm between
 // re-lists. A write at or past a tombstoned delete supersedes it: the object was
 // re-created, so drop the tombstone.
-func (s *store) Update(_ context.Context, obj runtime.Object) {
+//
+// It reports whether the write was taken: an object with no key, or a write a
+// newer delete supersedes, is refused. Callers that track the store's contents
+// cannot tell that from the contents alone.
+func (s *store) Update(_ context.Context, obj runtime.Object) bool {
 	key, err := cache.MetaNamespaceKeyFunc(obj)
 	if err != nil {
-		return
+		return false
 	}
 	rv := objectResourceVersion(obj)
 	s.mu.Lock()
@@ -111,11 +117,12 @@ func (s *store) Update(_ context.Context, obj runtime.Object) {
 	if trv, ok := s.tombstones[key]; ok {
 		if rv < trv {
 			// A newer delete supersedes this write; keep the object evicted.
-			return
+			return false
 		}
 		delete(s.tombstones, key) // this write is at or past the delete: re-created
 	}
 	s.items[key] = entry{obj: obj, rv: rv}
+	return true
 }
 
 // Delete removes an object from the store, the write-through counterpart to
@@ -169,9 +176,7 @@ func (s *store) Replace(objs []runtime.Object, listRV int64) (added, updated, re
 	// result is the snapshot we install: objs, minus resurrections we suppress,
 	// plus live writes newer than the snapshot we carry forward.
 	result := make(map[string]entry, len(next))
-	for key, e := range next {
-		result[key] = e
-	}
+	maps.Copy(result, next)
 
 	// Classify snapshot objects in objs order (not map order) so added/updated
 	// are deterministic. A LIST carries no duplicate keys, but guard anyway.

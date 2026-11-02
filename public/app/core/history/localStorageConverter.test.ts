@@ -5,8 +5,8 @@ import { fromDTO, toDTO } from './localStorageConverter';
 
 const devTest = { uid: 'dev-test', name: 'name-of-dev-test' };
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceSettings: (nameOrUid: string | { uid: string }) => {
     if (typeof nameOrUid === 'string') {
       return Promise.resolve(nameOrUid === devTest.name ? devTest : undefined);

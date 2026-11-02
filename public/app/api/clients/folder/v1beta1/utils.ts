@@ -14,7 +14,7 @@ export async function isProvisionedFolderCheck(
   folderUID: string,
   options?: { warning?: string }
 ) {
-  if (config.featureToggles.provisioning) {
+  if (config.provisioningEnabled) {
     const folder = await dispatch(folderAPI.endpoints.getFolder.initiate({ name: folderUID }));
     // TODO: taken from browseDashboardAPI as it is, but this error handling should be moved up to UI code.
     if (folder.data && isProvisionedFolder(folder.data)) {

@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	starapi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -60,7 +59,6 @@ func TestSearch_SortedResults(t *testing.T) {
 		sqlstore:         db,
 		starClient:       starClient,
 		dashboardService: ds,
-		features:         &featuremgmt.FeatureManager{},
 	}
 
 	query := &Query{
@@ -105,7 +103,6 @@ func TestSearch_StarredResults(t *testing.T) {
 		sqlstore:         db,
 		starClient:       starClient,
 		dashboardService: ds,
-		features:         &featuremgmt.FeatureManager{},
 	}
 
 	query := &Query{

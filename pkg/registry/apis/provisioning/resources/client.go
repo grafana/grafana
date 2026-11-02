@@ -3,14 +3,17 @@ package resources
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"sync"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -212,6 +215,17 @@ func (p *singleAPIClients) onlyOnce(ctx context.Context) error {
 			return
 		}
 
+		// Wrap the transport with otelhttp so outbound requests carry W3C trace
+		// context. Without this the operator's writes to the apiserver (resource
+		// creates, folder ensures, job status updates) are leaf spans with no
+		// children — the apiserver has no incoming traceparent to continue the
+		// trace. The gRPC search path already propagates via its own interceptor.
+		// Copy first: GetRestConfig returns a shared config used by other clients.
+		restConfig = rest.CopyConfig(restConfig)
+		restConfig.Wrap(func(rt http.RoundTripper) http.RoundTripper {
+			return otelhttp.NewTransport(rt)
+		})
+
 		p.dynamic, e = dynamic.NewForConfig(restConfig)
 		if e != nil {
 			p.initErr = fmt.Errorf("create dynamic client: %w", e)
@@ -363,7 +377,7 @@ func (c *resourceClients) ForKind(ctx context.Context, gvk schema.GroupVersionKi
 	var versionless schema.GroupVersionKind
 	if gvk.Version == "" {
 		versionless = gvk
-		gvr, gvk, err = discovery.GetPreferredVersionForKind(schema.GroupKind{
+		gvr, gvk, err = discovery.GetPreferredVersionForKind(ctx, schema.GroupKind{
 			Group: gvk.Group,
 			Kind:  gvk.Kind,
 		})
@@ -377,7 +391,7 @@ func (c *resourceClients) ForKind(ctx context.Context, gvk schema.GroupVersionKi
 			return info.client, info.gvr, nil
 		}
 	} else {
-		gvr, err = discovery.GetResourceForKind(gvk)
+		gvr, err = discovery.GetResourceForKind(ctx, gvk)
 		if err != nil {
 			return nil, schema.GroupVersionResource{}, err
 		}
@@ -417,7 +431,7 @@ func (c *resourceClients) ForResource(ctx context.Context, gvr schema.GroupVersi
 	var versionless schema.GroupVersionResource
 	if gvr.Version == "" {
 		versionless = gvr
-		gvr, gvk, err = discovery.GetPreferredVesion(schema.GroupResource{
+		gvr, gvk, err = discovery.GetPreferredVersion(ctx, schema.GroupResource{
 			Group:    gvr.Group,
 			Resource: gvr.Resource,
 		})

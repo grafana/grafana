@@ -1,72 +1,64 @@
 import { renderHook } from '@testing-library/react';
 
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { type RepositoryViewData, RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
 import { useProvisionedFolderFormData } from './useProvisionedFolderFormData';
 
-jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => ({
-  useGetResourceRepositoryView: jest.fn(),
-}));
-
-const mockUseGetResourceRepositoryView = jest.mocked(useGetResourceRepositoryView);
+function renderFolderFormData(view: Partial<RepositoryViewData> = {}, title?: string) {
+  return renderHook(() => useProvisionedFolderFormData({ view: repositoryViewData(view), title }));
+}
 
 const repoView = (overrides: Partial<RepositoryView> = {}): RepositoryView => ({
   name: 'my-repo',
   title: 'My Repo',
   type: 'github',
   target: 'folder',
+  branch: 'main',
   workflows: ['branch', 'write'],
   ...overrides,
 });
 
-function setupRepoView(overrides: Partial<ReturnType<typeof useGetResourceRepositoryView>> = {}) {
-  mockUseGetResourceRepositoryView.mockReturnValue({
+function repositoryViewData(overrides: Partial<RepositoryViewData>): RepositoryViewData {
+  return {
+    status: RepoViewStatus.Ready,
     isLoading: false,
     isInstanceManaged: false,
     isReadOnlyRepo: false,
     isMissingRepo: false,
     ...overrides,
-  } as ReturnType<typeof useGetResourceRepositoryView>);
+  };
 }
 
 describe('useProvisionedFolderFormData', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
   describe('isMissingRepo passthrough', () => {
     it('is false while the repository view is loading', () => {
-      setupRepoView({ isLoading: true, isMissingRepo: false });
-
-      const { result } = renderHook(() => useProvisionedFolderFormData({ folderUid: 'folder-1' }));
+      const { result } = renderFolderFormData({ isLoading: true, isMissingRepo: false });
 
       expect(result.current.isLoading).toBe(true);
       expect(result.current.isMissingRepo).toBe(false);
     });
 
     it('is true when no repository could be resolved', () => {
-      setupRepoView({ isMissingRepo: true });
-
-      const { result } = renderHook(() => useProvisionedFolderFormData({ folderUid: 'folder-1' }));
+      const { result } = renderFolderFormData({ isMissingRepo: true });
 
       expect(result.current.isMissingRepo).toBe(true);
       expect(result.current.initialValues).toBeUndefined();
     });
 
     it('is false when a repository is resolved', () => {
-      setupRepoView({ repository: repoView(), isMissingRepo: false });
-
-      const { result } = renderHook(() => useProvisionedFolderFormData({ folderUid: 'folder-1', title: 'My folder' }));
+      const { result } = renderFolderFormData({ repository: repoView(), isMissingRepo: false }, 'My folder');
 
       expect(result.current.isMissingRepo).toBe(false);
       expect(result.current.initialValues).toBeDefined();
     });
 
     it('is false when the repository is read-only', () => {
-      setupRepoView({ repository: repoView({ workflows: [] }), isReadOnlyRepo: true, isMissingRepo: false });
-
-      const { result } = renderHook(() => useProvisionedFolderFormData({ folderUid: 'folder-1' }));
+      const { result } = renderFolderFormData({
+        repository: repoView({ workflows: [] }),
+        isReadOnlyRepo: true,
+        isMissingRepo: false,
+      });
 
       expect(result.current.isReadOnlyRepo).toBe(true);
       expect(result.current.isMissingRepo).toBe(false);
@@ -75,30 +67,28 @@ describe('useProvisionedFolderFormData', () => {
 
   describe('initialValues', () => {
     it('is undefined while loading, even if a repository is already cached', () => {
-      setupRepoView({ repository: repoView(), isLoading: true });
-
-      const { result } = renderHook(() => useProvisionedFolderFormData({ folderUid: 'folder-1' }));
+      const { result } = renderFolderFormData({ repository: repoView(), isLoading: true });
 
       expect(result.current.initialValues).toBeUndefined();
     });
 
+    it('commits at the repository root when the view has no folder', () => {
+      const { result } = renderFolderFormData({ repository: repoView({ target: 'folderless' }) }, 'My Team');
+
+      expect(result.current.initialValues).toMatchObject({ repo: 'my-repo', path: '' });
+    });
+
     it('is populated from the repository once loaded', () => {
-      setupRepoView({ repository: repoView() });
-
-      const { result } = renderHook(() => useProvisionedFolderFormData({ folderUid: 'folder-1', title: 'My folder' }));
-
+      const { result } = renderFolderFormData({ repository: repoView() }, 'My folder');
       expect(result.current.initialValues).toMatchObject({
         title: 'My folder',
         repo: 'my-repo',
-        workflow: 'branch',
       });
     });
   });
 
-  it('coerces isLoading to a boolean when the upstream hook returns undefined', () => {
-    setupRepoView({ isLoading: undefined });
-
-    const { result } = renderHook(() => useProvisionedFolderFormData({ folderUid: 'folder-1' }));
+  it('coerces isLoading to a boolean when the view leaves it undefined', () => {
+    const { result } = renderFolderFormData({ isLoading: undefined });
 
     expect(result.current.isLoading).toBe(false);
   });

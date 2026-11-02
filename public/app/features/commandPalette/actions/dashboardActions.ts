@@ -2,23 +2,36 @@ import debounce from 'debounce-promise';
 import { useEffect, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
+import { useFlagDashboardNotebooks, useFlagGrafanaCmdkHybridSearch } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
+import { searchNotebookTitles } from 'app/features/notebook/list/notebookSearchApi';
+import { canReadNotebooks } from 'app/features/notebook/permissions';
+import { notebookViewHref } from 'app/features/notebook/urls';
+import { isRootFolderUID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { type LocationInfo } from 'app/features/search/service/types';
+import { toURL } from 'app/features/search/service/unified';
 import { extractManagerKind } from 'app/features/search/service/utils';
 
+import { searchDashboardsHybrid } from '../api/hybridSearch';
 import { type CommandPaletteAction } from '../types';
 import {
   SECTION_DASHBOARDS,
   SECTION_FOLDERS,
+  SECTION_NOTEBOOKS,
   SECTION_RECENT_DASHBOARDS,
   RECENT_DASHBOARDS_PRIORITY,
   SEARCH_RESULTS_PRIORITY,
 } from '../values';
 
 const MAX_SEARCH_RESULTS = 100;
+// Hybrid search is a top-k API tuned for relevance, not exhaustive listing,
+// so keep the dashboard list short
+const MAX_HYBRID_SEARCH_RESULTS = 20;
 const MAX_RECENT_DASHBOARDS = 5;
+const MAX_NOTEBOOK_SEARCH_RESULTS = 10;
 
 const debouncedSearch = debounce(getSearchResultActions, 200);
 
@@ -45,14 +58,68 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
   return recentDashboardActions;
 }
 
-export async function getSearchResultActions(searchQuery: string): Promise<CommandPaletteAction[]> {
+export async function getSearchResultActions(
+  searchQuery: string,
+  useHybridSearch = false,
+  notebooksEnabled = false
+): Promise<CommandPaletteAction[]> {
   // Empty strings should not come through to here
   if (searchQuery.length === 0 || (!contextSrv.user.isSignedIn && !config.anonymousEnabled)) {
     return [];
   }
 
+  const notebookActions = notebooksEnabled && canReadNotebooks() ? getNotebookSearchResultActions(searchQuery) : [];
+
+  if (!useHybridSearch) {
+    const [classicActions, notebooks] = await Promise.all([
+      getClassicSearchResultActions(searchQuery, ['dashboard', 'folder']),
+      notebookActions,
+    ]);
+    return [...classicActions, ...notebooks];
+  }
+
+  // Folders aren't indexed for hybrid search, so they still come from the classic searcher
+  const [dashboardActions, folderActions, notebooks] = await Promise.all([
+    getHybridDashboardActions(searchQuery),
+    getClassicSearchResultActions(searchQuery, ['folder']),
+    notebookActions,
+  ]);
+
+  return [...dashboardActions, ...folderActions, ...notebooks];
+}
+
+async function getNotebookSearchResultActions(searchQuery: string): Promise<CommandPaletteAction[]> {
+  try {
+    const items = await searchNotebookTitles(searchQuery, MAX_NOTEBOOK_SEARCH_RESULTS);
+    return items.flatMap((item) => {
+      const title = item.fields?.title;
+      const uid = item.resource.name;
+      if (!uid || typeof title !== 'string') {
+        return [];
+      }
+      return [
+        {
+          id: `go/notebook/${uid}`,
+          name: title,
+          section: t('command-palette.section.notebook-search-results', 'Notebooks'),
+          sectionId: SECTION_NOTEBOOKS,
+          priority: SEARCH_RESULTS_PRIORITY,
+          url: notebookViewHref(uid),
+        },
+      ];
+    });
+  } catch (error) {
+    console.error('Notebook search failed; omitting notebook results.', error);
+    return [];
+  }
+}
+
+async function getClassicSearchResultActions(
+  searchQuery: string,
+  kinds: Array<'dashboard' | 'folder'>
+): Promise<CommandPaletteAction[]> {
   const data = await getGrafanaSearcher().search({
-    kind: ['dashboard', 'folder'],
+    kind: kinds,
     query: searchQuery,
     limit: MAX_SEARCH_RESULTS,
   });
@@ -77,6 +144,60 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
   return goToSearchResultActions;
 }
 
+// Remember a missing endpoint until reload, including across palette opens. The hybrid endpoint may not be
+// rolled out everywhere yet, in which case we have a fallback we don't want to spam the nonexistent endpoint.
+let hybridSearchUnavailable = false;
+
+/**
+ * Dashboard search backed by the hybrid (lexical + semantic) endpoint. Falls
+ * back to the classic searcher when the request fails, e.g. when the vector
+ * backend isn't configured (501) or the endpoint's toggle is off (404).
+ */
+async function getHybridDashboardActions(searchQuery: string): Promise<CommandPaletteAction[]> {
+  if (hybridSearchUnavailable) {
+    return getClassicSearchResultActions(searchQuery, ['dashboard']);
+  }
+
+  let hits;
+  try {
+    hits = await searchDashboardsHybrid(searchQuery, { limit: MAX_HYBRID_SEARCH_RESULTS });
+  } catch (error) {
+    if (isFetchError(error) && error.status === 404) {
+      hybridSearchUnavailable = true;
+      console.warn('Hybrid dashboard search not available, falling back to the classic search.', error);
+    } else {
+      console.error('Hybrid dashboard search failed, falling back to the classic search.', error);
+    }
+    return getClassicSearchResultActions(searchQuery, ['dashboard']);
+  }
+
+  // Folder titles are best-effort; use the cached folder lookup when absent.
+  // If the lookup fails, the dashboard results should still be shown.
+  let locationInfo: Record<string, LocationInfo> = {};
+  try {
+    locationInfo = await getGrafanaSearcher().getLocationInfo();
+  } catch (error) {
+    console.error('Failed to load folder info for hybrid search results.', error);
+  }
+
+  return hits.map((hit) => {
+    const url = toURL(hit.resource.resource, hit.resource.name, hit.title);
+    // Root-parented dashboards come back with an empty folder; collapse to the
+    // synthetic "general" UID the location lookup uses for root items
+    const location = isRootFolderUID(hit.folder) ? 'general' : hit.folder;
+    return {
+      id: `go/dashboard${url}`,
+      name: hit.title,
+      section: t('command-palette.section.dashboard-search-results', 'Dashboards'),
+      sectionId: SECTION_DASHBOARDS,
+      priority: SEARCH_RESULTS_PRIORITY,
+      url,
+      subtitle: hit.folderTitle || locationInfo[location]?.name,
+      managedBy: extractManagerKind(hit.managedBy),
+    };
+  });
+}
+
 /**
  * Implements actual search logic for dashboards and folders.
  */
@@ -84,13 +205,15 @@ export function useSearchResults({ searchQuery, show }: { searchQuery: string; s
   const [searchResults, setSearchResults] = useState<CommandPaletteAction[]>([]);
   const [isFetchingSearchResults, setIsFetchingSearchResults] = useState(false);
   const lastSearchTimestamp = useRef<number>(0);
+  const hybridSearchEnabled = useFlagGrafanaCmdkHybridSearch();
+  const notebooksEnabled = useFlagDashboardNotebooks();
 
   // Hit dashboards API
   useEffect(() => {
     const timestamp = Date.now();
     if (show && searchQuery.length > 0) {
       setIsFetchingSearchResults(true);
-      debouncedSearch(searchQuery).then((resultActions) => {
+      debouncedSearch(searchQuery, hybridSearchEnabled, notebooksEnabled).then((resultActions) => {
         // Only keep the results if it's was issued after the most recently resolved search.
         // This prevents results showing out of order if first request is slower than later ones.
         // We don't need to worry about clearing the isFetching state either - if there's a later
@@ -106,7 +229,7 @@ export function useSearchResults({ searchQuery, show }: { searchQuery: string; s
       setIsFetchingSearchResults(false);
       lastSearchTimestamp.current = timestamp;
     }
-  }, [show, searchQuery]);
+  }, [show, searchQuery, hybridSearchEnabled, notebooksEnabled]);
 
   return {
     searchResults,

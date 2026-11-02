@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
     {
         echo "pkgs-with-tests-named.sh: Find packages with tests in them, filtered by the test names."
-        echo "usage: $0 [-h] [-d <directory>] -b <beginning_with> [-s]"
+        echo "usage: $0 [-h] [-d <directory>] [-t <tags>] -b <beginning_with> [-s]"
         echo
         echo "  -h: Show this help message."
         echo "  -b: Tests beginning with this name will be included."
@@ -13,14 +13,18 @@ usage() {
         echo "      Can be a path or a /... style pattern."
         echo "      Can be repeated to specify multiple directories."
         echo "      Default: ./..."
+        echo "  -t: Build tags to resolve packages with."
+        echo "      A /... pattern only expands to packages that build under these tags, so"
+        echo "      this must match the tags the tests will be run with."
         echo "  -s: Split final package list with spaces rather than newlines."
     } >&2
 }
 
 beginningWith=""
 dirs=()
+tags=""
 s=0
-while getopts ":hb:c:d:s" opt; do
+while getopts ":hb:c:d:st:" opt; do
     case $opt in
         h)
             usage
@@ -34,6 +38,9 @@ while getopts ":hb:c:d:s" opt; do
             ;;
         s)
             s=1
+            ;;
+        t)
+            tags="$OPTARG"
             ;;
         *)
             usage
@@ -57,7 +64,12 @@ if [ -z "$beginningWith" ]; then
     exit 0
 fi
 
-readarray -t PACKAGES <<< "$(go list -f '{{.Dir}}' -e "${dirs[@]}")"
+GO_LIST_ARGS=(-f '{{.Dir}}' -e)
+if [ -n "$tags" ]; then
+    GO_LIST_ARGS+=(-tags "$tags")
+fi
+
+readarray -t PACKAGES <<< "$(go list "${GO_LIST_ARGS[@]}" "${dirs[@]}")"
 
 for i in "${!PACKAGES[@]}"; do
     readarray -t PKG_FILES <<< "$(find "${PACKAGES[$i]}" -maxdepth 1 -type f -name '*_test.go')"

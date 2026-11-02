@@ -1351,6 +1351,30 @@ func userTeamsResponse(rows []iamv0alpha1.GetUserTeamsUserTeam) iamv0alpha1.GetU
 	}
 }
 
+func TestTeamK8sService_ListUserTeamsReturnsAllPages(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		response := userTeamsResponse([]iamv0alpha1.GetUserTeamsUserTeam{{User: "user-1", Team: "team-1"}})
+		if r.URL.Query().Get("continue") == "next+/=" {
+			response.Items[0].Team = "team-2"
+		} else {
+			response.Continue = "next+/="
+		}
+		require.NoError(t, json.NewEncoder(w).Encode(response))
+	}))
+	defer server.Close()
+
+	provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: server.URL}}
+	service := NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), provider, tracing.InitializeTracerForTest())
+
+	rows, err := service.listUserTeams(contextWithReqContext(), "org-1", "user-1")
+	require.NoError(t, err)
+	require.Equal(t, []iamv0alpha1.GetUserTeamsUserTeam{
+		{User: "user-1", Team: "team-1"},
+		{User: "user-1", Team: "team-2"},
+	}, rows)
+}
+
 func TestTeamK8sService_GetTeamsByUser(t *testing.T) {
 	tests := []struct {
 		name                   string

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"regexp"
 	"strings"
 	"time"
@@ -14,6 +15,8 @@ import (
 )
 
 const unifiedParent = "embeddings"
+
+const promoterAdvisoryLockName = "vectorpromoter"
 
 var sanitizeRe = regexp.MustCompile(`[^a-zA-Z0-9]`)
 
@@ -28,12 +31,24 @@ func subtreeName(resource string) string {
 	return fmt.Sprintf("%s_%s", unifiedParent, resource)
 }
 
-// partialHNSWName builds the per-tenant partial HNSW index name. Format is
-// `<resource>_<sanitized_namespace>_hnsw`. Postgres caps identifiers at 63
-// chars: with `stacks_<int64>` namespaces (max 26 chars), resource names up
-// to ~31 chars are safe.
+// pgMaxIdentifierLen is Postgres's identifier limit. Names past it are
+// silently truncated, which breaks lookups against the untruncated name and
+// lets namespaces sharing a truncated prefix collide.
+const pgMaxIdentifierLen = 63
+
+// partialHNSWName builds the per-tenant partial HNSW index name,
+// `<resource>_<sanitized_namespace>_hnsw`. When that would exceed Postgres's
+// identifier limit, the namespace collapses to a bounded hash so the name
+// stays unique and lookupable (resource ≤ maxPartitionKeyLen keeps the hash
+// form under the limit).
 func partialHNSWName(resource, namespace string) string {
-	return fmt.Sprintf("%s_%s_hnsw", resource, sanitizeIdentifier(namespace))
+	name := fmt.Sprintf("%s_%s_hnsw", resource, sanitizeIdentifier(namespace))
+	if len(name) <= pgMaxIdentifierLen {
+		return name
+	}
+	h := fnv.New64a()
+	_, _ = h.Write([]byte(namespace))
+	return fmt.Sprintf("%s_%016x_hnsw", resource, h.Sum64())
 }
 
 // Promoter creates per-tenant partial HNSW indexes on each resource sub-tree
@@ -78,8 +93,29 @@ func (s *Promoter) Run(ctx context.Context) error {
 	}
 }
 
-// Promote runs one pass over every resource sub-tree. Exported for tests.
+// Promote runs one pass over every resource sub-tree, unless another replica
+// is running one: concurrent passes drop each other's in-progress builds and
+// deadlock on concurrent index builds. Exported for tests.
 func (s *Promoter) Promote(ctx context.Context) error {
+	conn, err := s.db.SqlDB().Conn(ctx)
+	if err != nil {
+		return fmt.Errorf("promoter lock conn: %w", err)
+	}
+	defer func() { _ = conn.Close() }()
+	var got bool
+	if err := conn.QueryRowContext(ctx,
+		"SELECT pg_try_advisory_lock(hashtext($1)::bigint)", promoterAdvisoryLockName,
+	).Scan(&got); err != nil {
+		return fmt.Errorf("pg_try_advisory_lock: %w", err)
+	}
+	if !got {
+		return nil
+	}
+	defer func() {
+		_, _ = conn.ExecContext(context.Background(),
+			"SELECT pg_advisory_unlock(hashtext($1)::bigint)", promoterAdvisoryLockName)
+	}()
+
 	resources, err := s.discoverResources(ctx)
 	if err != nil {
 		return fmt.Errorf("discover resource sub-trees: %w", err)

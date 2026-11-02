@@ -74,7 +74,7 @@ func TestLocalResolver(t *testing.T) {
 				Path: tempDir,
 			},
 		},
-	}, resolver)
+	}, resolver, nil)
 
 	// Verify we can read the tree
 	tree, err := repo.ReadTree(context.Background(), "")
@@ -131,7 +131,7 @@ func TestLocal(t *testing.T) {
 						Path: tc.Path,
 					},
 				},
-			}, &LocalFolderResolver{PermittedPrefixes: tc.PermittedPrefixes, HomePath: "/home/grafana"})
+			}, &LocalFolderResolver{PermittedPrefixes: tc.PermittedPrefixes, HomePath: "/home/grafana"}, nil)
 
 			assert.Equal(t, tc.ExpectedPath, r.path, "expected path to be resolved")
 			// Validation is now handled by the validator function, not the repository instance
@@ -156,7 +156,7 @@ func TestLocal(t *testing.T) {
 						Path: tc.Path,
 					},
 				},
-			}, &LocalFolderResolver{PermittedPrefixes: tc.PermittedPrefixes, HomePath: "/home/grafana"})
+			}, &LocalFolderResolver{PermittedPrefixes: tc.PermittedPrefixes, HomePath: "/home/grafana"}, nil)
 
 			require.Empty(t, r.path, "no path should be resolved")
 
@@ -237,7 +237,7 @@ func TestLocalRepository_Test(t *testing.T) {
 						Path: tc.path,
 					},
 				},
-			}, resolver)
+			}, resolver, nil)
 
 			// If we're testing a valid path, set it to our test path
 			if tc.path != "" {
@@ -1385,6 +1385,128 @@ func TestLocalRepository_ReadTree(t *testing.T) {
 					}
 				}
 			}
+		})
+	}
+}
+
+func TestLocalRepository_ReadTree_HiddenPaths(t *testing.T) {
+	root := filepath.Join(t.TempDir(), ".configured")
+	for _, path := range []string{
+		"dashboard.json", "team/.keep", "team/dashboard.json", "team.v2/dashboard.json",
+		".config.json", ".git/config", ".git/objects/ab/object", ".ci/_folder.json", ".ci/.keep",
+		"team/.hidden.json", "team/.ci/config.json", ".keep/dashboard.json",
+	} {
+		filePath := filepath.Join(root, path)
+		require.NoError(t, os.MkdirAll(filepath.Dir(filePath), 0700))
+		require.NoError(t, os.WriteFile(filePath, []byte("content"), 0600))
+	}
+
+	// A dangling hidden symlink fails if ReadTree tries to hash it.
+	require.NoError(t, os.Symlink(filepath.Join(root, "missing.json"), filepath.Join(root, ".unreadable.json")))
+
+	repo := NewRepository(&provisioning.Repository{
+		Spec: provisioning.RepositorySpec{
+			Local: &provisioning.LocalRepositoryConfig{Path: root},
+		},
+	}, &LocalFolderResolver{PermittedPrefixes: []string{root}}, nil)
+
+	entries, err := repo.ReadTree(t.Context(), "")
+	require.NoError(t, err)
+	for i := range entries {
+		if entries[i].Blob {
+			require.EqualValues(t, len("content"), entries[i].Size)
+			require.NotEmpty(t, entries[i].Hash)
+		}
+		entries[i].Hash = ""
+		entries[i].Size = 0
+	}
+	require.ElementsMatch(t, []repository.FileTreeEntry{
+		{Path: "dashboard.json", Blob: true},
+		{Path: "team/"},
+		{Path: "team/.keep", Blob: true},
+		{Path: "team/dashboard.json", Blob: true},
+		{Path: "team.v2/"},
+		{Path: "team.v2/dashboard.json", Blob: true},
+	}, entries)
+}
+
+func TestLocalRepository_ReadTree_NativePathSeparators(t *testing.T) {
+	root := t.TempDir()
+	for _, path := range []string{".config.json", ".git/config", "team/.ci/config.json", "team/.keep", "team/dashboard.json"} {
+		filePath := filepath.Join(root, path)
+		require.NoError(t, os.MkdirAll(filepath.Dir(filePath), 0700))
+		require.NoError(t, os.WriteFile(filePath, []byte("content"), 0600))
+	}
+
+	for _, tt := range []struct {
+		name string
+		root string
+	}{
+		{"without trailing separator", root},
+		{"with trailing separator", root + string(filepath.Separator)},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &localRepository{path: tt.root}
+			entries, err := repo.ReadTree(t.Context(), "")
+			require.NoError(t, err)
+			paths := make([]string, 0, len(entries))
+			for _, entry := range entries {
+				paths = append(paths, entry.Path)
+			}
+			require.ElementsMatch(t, []string{"team/", "team/.keep", "team/dashboard.json"}, paths)
+		})
+	}
+}
+
+func TestLocalRepository_ReadTree_UnreadableDirectories(t *testing.T) {
+	for _, tt := range []struct {
+		path    string
+		ignored bool
+	}{
+		{path: ".git", ignored: true},
+		{path: ".ci", ignored: true},
+		{path: "team/.ci", ignored: true},
+		{path: ".keep", ignored: true},
+		{path: "visible"},
+		{path: ""},
+	} {
+		t.Run(tt.path, func(t *testing.T) {
+			root := filepath.Join(t.TempDir(), ".configured")
+			require.NoError(t, os.MkdirAll(root, 0700))
+			require.NoError(t, os.WriteFile(filepath.Join(root, "dashboard.json"), []byte("content"), 0600))
+			unreadable := filepath.Join(root, tt.path)
+			require.NoError(t, os.MkdirAll(unreadable, 0700))
+			t.Cleanup(func() {
+				require.NoError(t, os.Chmod(unreadable, 0700)) //nolint:gosec // Cleanup needs directory traversal permission.
+			})
+			require.NoError(t, os.Chmod(unreadable, 0))
+			if _, err := os.ReadDir(unreadable); err == nil {
+				t.Skip("directory permissions do not prevent reads in this environment")
+			} else {
+				require.ErrorIs(t, err, os.ErrPermission)
+			}
+
+			repo := &localRepository{path: root}
+			entries, err := repo.ReadTree(t.Context(), "")
+			if !tt.ignored {
+				require.ErrorIs(t, err, os.ErrPermission)
+				return
+			}
+			require.NoError(t, err)
+			paths := make([]string, 0, len(entries))
+			for _, entry := range entries {
+				paths = append(paths, entry.Path)
+				if entry.Blob {
+					require.Equal(t, "dashboard.json", entry.Path)
+					require.EqualValues(t, len("content"), entry.Size)
+					require.NotEmpty(t, entry.Hash)
+				}
+			}
+			want := []string{"dashboard.json"}
+			if tt.path == "team/.ci" {
+				want = append(want, "team/")
+			}
+			require.ElementsMatch(t, want, paths)
 		})
 	}
 }

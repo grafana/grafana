@@ -3,14 +3,15 @@ import { type Unsubscribable } from 'rxjs';
 
 import { dateTime, usePluginContext, PluginLoadingStrategy, type PluginMeta } from '@grafana/data';
 import { config, type AppPluginConfig } from '@grafana/runtime';
-import { setAppPluginMetas } from '@grafana/runtime/internal';
+import { clearAppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { deepFreeze } from './deepFreeze';
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
 import {
-  deepFreeze,
   handleErrorsInFn,
   getReadOnlyProxy,
   createOpenModalFunction,
@@ -22,10 +23,11 @@ import {
   getMutationObserverProxy,
   writableProxy,
   isMutationObserverProxy,
+  isReadOnlyProxy,
 } from './utils';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getPluginSettings: () => Promise.resolve({ info: { version: '1.0.0' }, id: 'test-plugin' }),
 }));
 
@@ -389,6 +391,42 @@ describe('Plugin Extensions / Utils', () => {
       expect(source.isSame(proxy.a)).toBe(true);
       expect(source).not.toBe(proxy.a);
     });
+
+    describe('when React element props are enabled', () => {
+      beforeEach(() => {
+        setTestFlags({ 'grafana.pluginExtensionReactElementProps': true });
+      });
+
+      afterEach(() => {
+        setTestFlags({});
+      });
+
+      it('keeps React elements in context by reference', () => {
+        const element = <div>hello</div>;
+        const proxy = getReadOnlyProxy({ element });
+
+        expect(proxy.element).toBe(element);
+        expect(isReadOnlyProxy(proxy.element)).toBe(false);
+      });
+    });
+
+    describe('when React element props are disabled', () => {
+      beforeEach(() => {
+        setTestFlags({ 'grafana.pluginExtensionReactElementProps': false });
+      });
+
+      afterEach(() => {
+        setTestFlags({});
+      });
+
+      it('keeps React elements in context read-only', () => {
+        const element = <div>hello</div>;
+        const proxy = getReadOnlyProxy({ element });
+
+        expect(proxy.element).not.toBe(element);
+        expect(isReadOnlyProxy(proxy.element)).toBe(true);
+      });
+    });
   });
 
   describe('getMutationObserverProxy()', () => {
@@ -617,6 +655,52 @@ describe('Plugin Extensions / Utils', () => {
           stack: expect.any(String),
         }
       );
+    });
+
+    describe('when React element props are enabled', () => {
+      beforeEach(() => {
+        setTestFlags({ 'grafana.pluginExtensionReactElementProps': true });
+      });
+
+      afterEach(() => {
+        setTestFlags({});
+      });
+
+      it('returns React elements untouched', () => {
+        const element = <div>hello</div>;
+
+        expect(writableProxy(element)).toBe(element);
+      });
+
+      it('keeps React elements inside props by reference', () => {
+        const child = <span>hello</span>;
+        const props = { children: child, extra: { label: 'a' } };
+
+        const copy = writableProxy(props);
+
+        expect(copy).not.toBe(props);
+        expect(copy.children).toBe(child);
+        expect(copy.extra).not.toBe(props.extra);
+        expect(copy.extra.label).toBe('a');
+      });
+    });
+
+    describe('when React element props are disabled', () => {
+      beforeEach(() => {
+        setTestFlags({ 'grafana.pluginExtensionReactElementProps': false });
+      });
+
+      afterEach(() => {
+        setTestFlags({});
+      });
+
+      it('clones and proxies React elements', () => {
+        const element = <div>hello</div>;
+        const copy = writableProxy(element);
+
+        expect(copy).not.toBe(element);
+        expect(isMutationObserverProxy(copy)).toBe(true);
+      });
     });
   });
 
@@ -1041,7 +1125,7 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     beforeEach(() => {
-      setAppPluginMetas({});
+      clearAppPluginMetas();
     });
 
     test('should return the app plugin configs based on the provided plugin ids', async () => {
@@ -1092,7 +1176,7 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     beforeEach(() => {
-      setAppPluginMetas({});
+      clearAppPluginMetas();
     });
 
     test('should return the app plugin ids that register extensions to a link extension point', async () => {
@@ -1305,7 +1389,7 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     beforeEach(() => {
-      setAppPluginMetas({});
+      clearAppPluginMetas();
     });
 
     test('should only return the app plugin id that exposes the component, if that component does not depend on anything', async () => {
@@ -1478,7 +1562,7 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     beforeEach(() => {
-      setAppPluginMetas({});
+      clearAppPluginMetas();
     });
 
     it('should return empty map when no plugins have extensions for the point', async () => {

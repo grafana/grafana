@@ -17,13 +17,13 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azusercontext"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/testdata"
 	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
@@ -284,10 +284,10 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			azureMonitorJSON, _ := json.Marshal(tt.azureMonitorVariedProperties)
 			tsdbQuery := []backend.DataQuery{
 				{
-					JSON: []byte(fmt.Sprintf(`{
+					JSON: fmt.Appendf(nil, `{
 							"subscription": "12345678-aaaa-bbbb-cccc-123456789abc",
 							"azureMonitor": %s
-						}`, string(azureMonitorJSON))),
+						}`, string(azureMonitorJSON)),
 					RefID:    "A",
 					Interval: tt.queryInterval,
 					TimeRange: backend.TimeRange{
@@ -413,6 +413,29 @@ func TestAzureMonitorBuildQueriesRejectsMultiValueStartsWithFilter(t *testing.T)
 			require.True(t, backend.IsDownstreamError(err), "a multi-value sw filter is a query configuration error, not a plugin error")
 		})
 	}
+}
+
+func TestAzureMonitorBuildQueryWithoutAzureMonitorObject(t *testing.T) {
+	datasource := &AzureMonitorDatasource{}
+	query := backend.DataQuery{
+		RefID:     "A",
+		QueryType: string(dataquery.AzureQueryTypeAzureMonitor),
+		JSON: []byte(`{
+			"queryType": "Azure Monitor",
+			"subscription": "12345678-aaaa-bbbb-cccc-123456789abc"
+		}`),
+		TimeRange: backend.TimeRange{
+			From: time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC),
+			To:   time.Date(2018, 3, 15, 13, 34, 0, 0, time.UTC),
+		},
+	}
+
+	var err error
+	require.NotPanics(t, func() {
+		_, err = datasource.buildQuery(query, types.DatasourceInfo{})
+	})
+	require.ErrorContains(t, err, "query A: the Azure Monitor metrics query has no azureMonitor object")
+	require.True(t, backend.IsDownstreamError(err), "a query without an azureMonitor object is a query configuration error, not a plugin error")
 }
 
 func TestCustomNamespace(t *testing.T) {

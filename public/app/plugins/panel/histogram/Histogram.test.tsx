@@ -220,6 +220,15 @@ describe('Histogram', () => {
         expect(screen.queryByTestId(selectors.components.VizLegend.legend)).not.toBeInTheDocument();
       });
 
+      it('does not render legend when displayMode is hidden, even if showLegend is true', () => {
+        setUp(undefined, {
+          legend: { ...defaultLegendOptions, showLegend: true, displayMode: LegendDisplayMode.Hidden },
+        });
+
+        expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
+        expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
+      });
+
       it('renders with combine: false', async () => {
         setUp(undefined, { combine: false });
 

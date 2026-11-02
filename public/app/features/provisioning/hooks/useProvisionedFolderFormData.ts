@@ -3,18 +3,15 @@ import { useMemo } from 'react';
 import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
-import {
-  getCanPushToConfiguredBranch,
-  getDefaultRef,
-  getDefaultWorkflow,
-} from 'app/features/provisioning/components/defaults';
+import { getCanPushToConfiguredBranch, getDefaultRef } from 'app/features/provisioning/components/defaults';
 import { ensureFolderPathTrailingSlash } from 'app/features/provisioning/components/utils/path';
-import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { type RepositoryViewData } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
 import { type BaseProvisionedFormData } from '../types/form';
 
 interface UseProvisionedFolderFormDataProps {
-  folderUid?: string;
+  /** Resolved by the caller, so each form states its own lookup policy at the call site */
+  view: RepositoryViewData;
   title?: string;
   branchPrefix?: string;
 }
@@ -34,13 +31,11 @@ export interface ProvisionedFolderFormDataResult {
  * Hook for managing provisioned folder form data (create/rename/delete).
  */
 export function useProvisionedFolderFormData({
-  folderUid,
+  view,
   title,
   branchPrefix = 'folder',
 }: UseProvisionedFolderFormDataProps): ProvisionedFolderFormDataResult {
-  const { repository, folder, isLoading, isReadOnlyRepo, isMissingRepo } = useGetResourceRepositoryView({
-    folderName: folderUid,
-  });
+  const { repository, folder, isLoading, isReadOnlyRepo, isMissingRepo } = view;
 
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
 
@@ -55,7 +50,6 @@ export function useProvisionedFolderFormData({
       ref: getDefaultRef(repository, branchPrefix),
       repo: repository.name || '',
       path: ensureFolderPathTrailingSlash(folder?.metadata?.annotations?.[AnnoKeySourcePath] || ''),
-      workflow: getDefaultWorkflow(repository),
     };
   }, [repository, isLoading, title, folder?.metadata?.annotations, branchPrefix]);
 

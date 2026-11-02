@@ -2,6 +2,7 @@ package historian
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 
@@ -111,8 +112,6 @@ func (p PanelKey) PanelID() int64 {
 }
 
 func mergeLabels(base, into data.Labels) data.Labels {
-	for k, v := range into {
-		base[k] = v
-	}
+	maps.Copy(base, into)
 	return base
 }

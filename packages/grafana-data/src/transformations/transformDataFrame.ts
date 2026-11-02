@@ -74,6 +74,14 @@ const getOperator =
                   return v;
                 });
 
+            // Applied after interpolation so the static refId stays the literal the user typed.
+            // Blank is normalised to unset here rather than per transformer: the UI already clears
+            // to undefined, but dashboard JSON and API callers can still supply "" or whitespace.
+            const staticRefId = config.refId?.trim();
+            if (staticRefId) {
+              interpolated.refId = staticRefId;
+            }
+
             return of(filterInput(before, matcher)).pipe(
               transformation.operator(interpolated, ctx),
               postProcessTransform(before, info, matcher)

@@ -121,6 +121,12 @@ repository: {
 					// Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}.
 					// When empty, a built-in default is used (e.g. "Save dashboard: <title>").
 					singleResourceMessageTemplate?: string
+					// Name used as the commit author instead of the user who triggered
+					// the commit. Only valid when signingMethod is unset.
+					authorName?: string
+					// Email used as the commit author instead of the user who triggered
+					// the commit. Only valid when signingMethod is unset.
+					authorEmail?: string
 					// Name used as the commit signer. Required for the signing key's
 					// identity to match the commit, which providers need to mark commits
 					// as Verified. When empty, defaults to "Grafana".
@@ -157,6 +163,8 @@ repository: {
 					started?: int
 					// When the sync job finished
 					finished?: int
+					// When the controller last attempted a sync or an interval check (Unix milliseconds).
+					lastChecked?: int
 					// When the next sync check is scheduled
 					scheduled?: int
 					// Summary messages (will be shown to users)

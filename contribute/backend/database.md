@@ -84,6 +84,18 @@ Before you add a migration, make sure that you:
 - Never change a migration that has been committed and pushed to `main`.
 - Always add new migrations, to change or undo previous migrations.
 
+Treat a new migration as a last resort. Resources are moving to the app platform, so schema you add to the legacy SQL store is a dead end that has to be migrated again later. On top of that, every migration runs once on every Grafana instance that upgrades, against databases of every size that we don't control, and it can never be rolled back or edited afterwards — the only way to correct it is another migration. Prefer a change that leaves the schema alone.
+
+Because of that, the set of migrations registered by the `migrations` package is pinned to a golden file, [testdata/migration_ids.txt](/pkg/services/sqlstore/migrations/testdata/migration_ids.txt). Adding a migration fails `TestOSSMigrationIDsGolden` until you regenerate it:
+
+```
+go test ./pkg/services/sqlstore/migrations/ -run TestOSSMigrationIDsGolden -update-golden
+```
+
+> **Important:** A human must run this command. Coding agents must not regenerate the golden file on their own, and must instead stop and ask. The file exists so that a person consciously decided the migration is warranted; an agent quietly regenerating it defeats the whole purpose.
+
+Commit the regenerated file together with your migration, so that the new migration shows up in the pull request diff and gets reviewed deliberately.
+
 Add a migration using one of the following methods:
 
 - Add migrations in the `migrations` package.
@@ -98,7 +110,7 @@ Most services have their migrations located in the [migrations](/pkg/services/sq
 To add a migration:
 
 - Open the [migrations.go](/pkg/services/sqlstore/migrations/migrations.go) file.
-- In the `AddMigrations` function, find the `addXxxMigration` function for the service you want to create a migration for.
+- In the `AddMigration` method, find the `addXxxMigration` function for the service you want to create a migration for.
 - At the end of the `addXxxMigration` function, register your migration (refer to the following example).
 
 - [Example](https://github.com/grafana/grafana/blob/00d0640b6e778ddaca021670fe851fe00982acf2/pkg/services/sqlstore/migrations/migrations.go#L55-L70)

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/log"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -28,8 +29,8 @@ var (
 )
 
 var (
-	_ authn.HookClient         = new(APIKey)
-	_ authn.ContextAwareClient = new(APIKey)
+	_ authn.HookClient         = (*APIKey)(nil)
+	_ authn.ContextAwareClient = (*APIKey)(nil)
 )
 
 const (
@@ -85,7 +86,7 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	return newServiceAccountIdentity(key), nil
 }
 
-func (s *APIKey) IsEnabled() bool {
+func (s *APIKey) IsEnabled(context.Context) bool {
 	return true
 }
 
@@ -148,7 +149,13 @@ func (s *APIKey) getFromTokenLegacy(ctx context.Context, token string) (*apikey.
 }
 
 func (s *APIKey) Test(ctx context.Context, r *authn.Request) bool {
-	return looksLikeApiKey(getTokenFromRequest(r))
+	token := getTokenFromRequest(r)
+	// Plugins send their local access policy token to the local token exchange,
+	// which authenticates it; it is never an API key.
+	if strings.HasPrefix(token, v3.LocalAccessPolicyTokenPrefix) {
+		return false
+	}
+	return looksLikeApiKey(token)
 }
 
 func (s *APIKey) Priority() uint {
@@ -156,31 +163,35 @@ func (s *APIKey) Priority() uint {
 }
 
 func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
-	ctx, span := s.tracer.Start(ctx, "authn.apikey.Hook") //nolint:ineffassign,staticcheck
+	ctx, span := s.tracer.Start(ctx, "authn.apikey.Hook")
 	defer span.End()
 
 	if r.GetMeta(metaKeySkipLastUsed) != "" {
 		return nil
 	}
 
-	go func(keyID string) {
+	// Detach the write from the request deadline but keep context values, so
+	// stores that resolve their database from the context keep working.
+	updateCtx := context.WithoutCancel(ctx)
+
+	go func(keyID string, logger log.Logger) {
 		defer func() {
 			if err := recover(); err != nil {
-				s.log.Error("Panic during user last seen sync", "err", err)
+				logger.Error("Panic during user last seen sync", "err", err)
 			}
 		}()
 
 		id, err := strconv.ParseInt(keyID, 10, 64)
 		if err != nil {
-			s.log.Warn("Invalid api key id", "id", keyID, "err", err)
+			logger.Warn("Invalid api key id", "id", keyID, "err", err)
 			return
 		}
 
-		if err := s.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), id); err != nil {
-			s.log.Warn("Failed to update last used date for api key", "id", keyID, "err", err)
+		if err := s.apiKeyService.UpdateAPIKeyLastUsedDate(updateCtx, id); err != nil {
+			logger.Warn("Failed to update last used date for api key", "id", keyID, "err", err)
 			return
 		}
-	}(r.GetMeta(metaKeyID))
+	}(r.GetMeta(metaKeyID), s.log.FromContext(ctx))
 
 	return nil
 }
@@ -197,8 +208,8 @@ func getTokenFromRequest(r *authn.Request) string {
 
 	header := r.HTTPRequest.Header.Get("Authorization")
 
-	if strings.HasPrefix(header, bearerPrefix) {
-		return strings.TrimPrefix(header, bearerPrefix)
+	if after, ok := strings.CutPrefix(header, bearerPrefix); ok {
+		return after
 	}
 	if strings.HasPrefix(header, basicPrefix) {
 		username, password, err := util.DecodeBasicAuthHeader(header)

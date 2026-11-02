@@ -6,7 +6,9 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboards "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 )
@@ -71,12 +73,31 @@ var (
 	dashboardGroup    = dashboards.DashboardResourceInfo.GroupResource().Group
 	dashboardResource = dashboards.DashboardResourceInfo.GroupResource().Resource
 
+	notebookGroup    = dashv2beta1.NotebookResourceInfo.GroupResource().Group
+	notebookResource = dashv2beta1.NotebookResourceInfo.GroupResource().Resource
+
 	iamGroup      = iamv0.TeamResourceInfo.GroupResource().Group
 	teamsResource = iamv0.TeamResourceInfo.GroupResource().Resource
 	usersResource = iamv0.UserResourceInfo.GroupResource().Resource
 )
 
 var resourceTranslations = map[string]resourceTranslation{
+	"datasources": {
+		typ:      TypeResource,
+		group:    "datasource.grafana.app",
+		resource: "datasources",
+		mapping: map[string]actionMapping{
+			"datasources:create":            newUnscopedMapping(RelationCreate),
+			"datasources:read":              newMapping(RelationGet, ""),
+			"datasources:write":             newMapping(RelationUpdate, ""),
+			"datasources:delete":            newMapping(RelationDelete, ""),
+			"datasources:query":             newMapping(RelationCreate, "query"),
+			"datasources.permissions:read":  newMapping(RelationGetPermissions, ""),
+			"datasources.permissions:write": newMapping(RelationSetPermissions, ""),
+			"datasources.caching:read":      newMapping(RelationGet, "caching"),
+			"datasources.caching:write":     newMapping(RelationUpdate, "caching"),
+		},
+	},
 	KindFolders: {
 		typ:      TypeFolder,
 		group:    folderGroup,
@@ -102,6 +123,14 @@ var resourceTranslations = map[string]resourceTranslation{
 			"dashboards:view":  newScopedMapping(RelationSetView, dashboardGroup, dashboardResource, ""),
 			"dashboards:edit":  newScopedMapping(RelationSetEdit, dashboardGroup, dashboardResource, ""),
 			"dashboards:admin": newScopedMapping(RelationSetAdmin, dashboardGroup, dashboardResource, ""),
+			// Notebooks (folder-inherited), scoped to the notebook group/resource
+			"notebooks:read":   newScopedMapping(RelationGet, notebookGroup, notebookResource, ""),
+			"notebooks:write":  newScopedMapping(RelationUpdate, notebookGroup, notebookResource, ""),
+			"notebooks:create": newScopedMapping(RelationCreate, notebookGroup, notebookResource, ""),
+			"notebooks:delete": newScopedMapping(RelationDelete, notebookGroup, notebookResource, ""),
+			"notebooks:view":   newScopedMapping(RelationSetView, notebookGroup, notebookResource, ""),
+			"notebooks:edit":   newScopedMapping(RelationSetEdit, notebookGroup, notebookResource, ""),
+			"notebooks:admin":  newScopedMapping(RelationSetAdmin, notebookGroup, notebookResource, ""),
 		},
 	},
 	KindDashboards: {
@@ -120,6 +149,44 @@ var resourceTranslations = map[string]resourceTranslation{
 			"dashboards:view":  newMapping(RelationSetView, ""),
 			"dashboards:edit":  newMapping(RelationSetEdit, ""),
 			"dashboards:admin": newMapping(RelationSetAdmin, ""),
+		},
+	},
+	KindNotebooks: {
+		typ:      TypeResource,
+		group:    notebookGroup,
+		resource: notebookResource,
+		mapping: map[string]actionMapping{
+			"notebooks:read":   newMapping(RelationGet, ""),
+			"notebooks:write":  newMapping(RelationUpdate, ""),
+			"notebooks:create": newMapping(RelationCreate, ""),
+			"notebooks:delete": newMapping(RelationDelete, ""),
+			// Action sets
+			"notebooks:view":  newMapping(RelationSetView, ""),
+			"notebooks:edit":  newMapping(RelationSetEdit, ""),
+			"notebooks:admin": newMapping(RelationSetAdmin, ""),
+		},
+	},
+	KindSnapshots: {
+		typ:      TypeResource,
+		group:    dashv0.SnapshotResourceInfo.GroupResource().Group,
+		resource: dashv0.SnapshotResourceInfo.GroupResource().Resource,
+		mapping: map[string]actionMapping{
+			"snapshots:read":   newUnscopedMapping(RelationGet),
+			"snapshots:create": newUnscopedMapping(RelationCreate),
+			"snapshots:delete": newUnscopedMapping(RelationDelete),
+		},
+	},
+	KindServiceAccounts: {
+		typ:      TypeServiceAccount,
+		group:    iamGroup,
+		resource: KindServiceAccounts,
+		mapping: map[string]actionMapping{
+			"serviceaccounts:create":            newUnscopedMapping(RelationCreate),
+			"serviceaccounts:read":              newMapping(RelationGet, ""),
+			"serviceaccounts:write":             newMapping(RelationUpdate, ""),
+			"serviceaccounts:delete":            newMapping(RelationDelete, ""),
+			"serviceaccounts.permissions:read":  newMapping(RelationGetPermissions, ""),
+			"serviceaccounts.permissions:write": newMapping(RelationSetPermissions, ""),
 		},
 	},
 	KindTeams: {
@@ -163,22 +230,18 @@ func TranslateToCheckRequest(namespace, action, kind, name string) (*authlib.Che
 		return nil, false
 	}
 
-	m, ok := translation.mapping[action]
-	if !ok {
-		return nil, false
-	}
-
-	verb, ok := RelationToVerbMapping[m.relation]
+	group, resource, subresource, verb, ok := translateActionToKubernetesAttributes(translation, action)
 	if !ok {
 		return nil, false
 	}
 
 	req := &authlib.CheckRequest{
-		Namespace: namespace,
-		Verb:      verb,
-		Group:     translation.group,
-		Resource:  translation.resource,
-		Name:      name,
+		Namespace:   namespace,
+		Verb:        verb,
+		Group:       group,
+		Resource:    resource,
+		Name:        name,
+		Subresource: subresource,
 	}
 
 	return req, true
@@ -217,7 +280,11 @@ func IsBasicRole(name string) bool {
 	return slices.Contains(basicRolesUIDs, name)
 }
 
-func actionListParams(translation resourceTranslation, m actionMapping) (group, resource, verb string, ok bool) {
+func translateActionToKubernetesAttributes(translation resourceTranslation, action string) (group, resource, subresource, verb string, ok bool) {
+	m, ok := translation.mapping[action]
+	if !ok {
+		return "", "", "", "", false
+	}
 	group = translation.group
 	resource = translation.resource
 	if m.group != "" && m.resource != "" {
@@ -225,17 +292,18 @@ func actionListParams(translation resourceTranslation, m actionMapping) (group, 
 		resource = m.resource
 	}
 
+	subresource = m.subresource
 	verb, ok = RelationToVerbMapping[m.relation]
 	if !ok {
-		return "", "", "", false
+		return "", "", "", "", false
 	}
 
-	return group, resource, verb, true
+	return group, resource, subresource, verb, true
 }
 
-// TranslateActionToListParams translates an RBAC action to Zanzana List request parameters (group, resource, verb).
+// TranslateActionToListParams translates an RBAC action to Zanzana List request parameters (group, resource, subresource, verb).
 // Returns empty strings if the action cannot be translated.
-func TranslateActionToListParams(action string) (group, resource, verb string) {
+func TranslateActionToListParams(action string) (group, resource, subresource, verb string) {
 	translationTypes := make([]string, 0, len(resourceTranslations))
 	for typ := range resourceTranslations {
 		translationTypes = append(translationTypes, typ)
@@ -244,24 +312,21 @@ func TranslateActionToListParams(action string) (group, resource, verb string) {
 
 	for _, typ := range translationTypes {
 		translation := resourceTranslations[typ]
-		if m, ok := translation.mapping[action]; ok {
-			group, resource, verb, ok := actionListParams(translation, m)
-			if !ok {
-				return "", "", ""
-			}
-			return group, resource, verb
+		if group, resource, subresource, verb, ok := translateActionToKubernetesAttributes(translation, action); ok {
+			return group, resource, subresource, verb
 		}
 	}
-	return "", "", ""
+	return "", "", "", ""
 }
 
 // ActionListEntry describes an action that Zanzana supports, along with
 // its List request parameters.
 type ActionListEntry struct {
-	Action   string
-	Group    string
-	Resource string
-	Verb     string
+	Action      string
+	Group       string
+	Resource    string
+	Subresource string
+	Verb        string
 }
 
 // supportedActions is the memoized result of building the action list from
@@ -286,21 +351,21 @@ var supportedActions = func() []ActionListEntry {
 		sort.Strings(actions)
 
 		for _, action := range actions {
-			m := translation.mapping[action]
 			if _, ok := seen[action]; ok {
 				continue
 			}
-			group, resource, verb, ok := actionListParams(translation, m)
+			group, resource, subresource, verb, ok := translateActionToKubernetesAttributes(translation, action)
 			if !ok {
 				continue
 			}
 
 			seen[action] = struct{}{}
 			out = append(out, ActionListEntry{
-				Action:   action,
-				Group:    group,
-				Resource: resource,
-				Verb:     verb,
+				Action:      action,
+				Group:       group,
+				Resource:    resource,
+				Subresource: subresource,
+				Verb:        verb,
 			})
 		}
 	}

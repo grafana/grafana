@@ -3,6 +3,7 @@ import path from 'path';
 
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
@@ -56,10 +57,8 @@ jest.mock('@grafana/runtime', () => {
       '-- Mixed --': { type: 'mixed', uid: '-- Mixed --', name: '-- Mixed --', meta: { id: 'mixed' } },
     },
     featureToggles: {
-      dashboardNewLayouts: true,
       unifiedAlertingEnabled: true,
       scopeFilters: false,
-      reloadDashboardsOnParamsChange: false,
       timeComparison: false,
     },
     dashboardPerformanceMetrics: [],
@@ -115,9 +114,14 @@ const TARGET_VERSIONS = ['v0alpha1', 'v1beta1'] as const;
 
 describe('V2 to V1 Dashboard Transformation Comparison', () => {
   beforeEach(() => {
+    setTestFlags({ dashboardNewLayouts: true });
     jest.clearAllMocks();
     jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    setTestFlags({});
   });
 
   const inputDir = path.join(

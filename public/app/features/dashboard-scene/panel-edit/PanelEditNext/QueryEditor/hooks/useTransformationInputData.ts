@@ -1,9 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 
-import { type DataFrame, type DataTransformContext, transformDataFrame } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { type DataFrame } from '@grafana/data';
 
 import { type Transformation } from '../types';
+
+import {
+  NO_CONFIGS,
+  frameMatcherFor,
+  precedingTransformations,
+  useInterpolatedConfigs,
+  useTransformedFrames,
+} from './useTransformedFrames';
 
 interface UseTransformationInputDataOptions {
   selectedTransformation: Transformation | null;
@@ -12,12 +19,13 @@ interface UseTransformationInputDataOptions {
 }
 
 /**
- * Returns the input data for the selected transformation — the output of everything before it
- * in the pipeline. The first transformation gets raw query data.
+ * Returns the input data for the selected transformation — the output of everything before it in
+ * the pipeline (see {@link precedingTransformations}), narrowed to the frames its own filter admits.
  *
  * Without this, editors always see raw query data regardless of where they sit in the pipeline.
  * That causes false errors like "Organize fields only works with a single frame" even when
- * a Join earlier in the pipeline has already merged the frames.
+ * a Join earlier in the pipeline has already merged the frames, or when the transformation's own
+ * filter picks out the single frame it runs over.
  *
  * @param selectedTransformation - The transformation currently open in the editor.
  * @param allTransformations - The full ordered list of transformations in the pipeline.
@@ -29,37 +37,31 @@ export function useTransformationInputData({
   allTransformations,
   rawData,
 }: UseTransformationInputDataOptions): DataFrame[] {
-  const [inputData, setInputData] = useState<DataFrame[]>(rawData);
+  const precedingConfigs = useMemo(
+    () =>
+      // TransformationEditorRenderer won't render without a selected transformation, but the hook
+      // accepts null so we guard here too and fall back to rawData.
+      selectedTransformation ? precedingTransformations(selectedTransformation, allTransformations) : NO_CONFIGS,
+    [selectedTransformation, allTransformations]
+  );
 
-  useEffect(() => {
-    // TransformationEditorRenderer won't render without a selected transformation, but
-    // the hook accepts null so we guard here too and fall back to rawData.
-    if (!selectedTransformation) {
-      setInputData(rawData);
-      return;
-    }
+  const precedingOutput = useTransformedFrames(precedingConfigs, rawData);
 
-    // Where in the pipeline is this transformation? Everything before it needs to run first.
-    const selectedIndex = allTransformations.findIndex(
-      ({ transformId }) => transformId === selectedTransformation.transformId
-    );
+  // Interpolated the same way the replay interpolates the configs it runs, so a filter written as
+  // `$var` narrows by the value the pipeline matched on rather than by the literal.
+  const selfConfigs = useMemo(
+    () => (selectedTransformation ? [selectedTransformation.transformConfig] : NO_CONFIGS),
+    [selectedTransformation]
+  );
+  const [interpolatedSelf] = useInterpolatedConfigs(selfConfigs);
 
-    // First in the pipeline (or not found) — raw query data is the input.
-    if (selectedIndex <= 0) {
-      setInputData(rawData);
-      return;
-    }
+  return useMemo(() => {
+    // The transformation only ever runs over the frames its filter admits — `transformDataFrame`
+    // applies that filter itself and merges the rest back afterwards — so the editor has to be shown
+    // the same narrowed set. Otherwise an Organize editor sits behind a filter that picks one frame
+    // and still reports on all of them.
+    const matcher = frameMatcherFor(interpolatedSelf);
 
-    // Collect the DataTransformerConfig for every transformation that runs before the selected one.
-    const precedingConfigs = allTransformations.slice(0, selectedIndex).map(({ transformConfig }) => transformConfig);
-    // Provide template variable interpolation so transformers can resolve $variables in their options.
-    const ctx: DataTransformContext = { interpolate: (v: string) => getTemplateSrv().replace(v) };
-
-    // Run the pipeline up to (but not including) the selected transformation and update state when it emits.
-    const subscription = transformDataFrame(precedingConfigs, rawData, ctx).subscribe(setInputData);
-
-    return () => subscription.unsubscribe();
-  }, [selectedTransformation, allTransformations, rawData]);
-
-  return inputData;
+    return matcher ? precedingOutput.filter((frame) => matcher(frame)) : precedingOutput;
+  }, [interpolatedSelf, precedingOutput]);
 }

@@ -2,6 +2,7 @@ package setting
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -25,6 +26,20 @@ func TestReadNATSSettings(t *testing.T) {
 		require.Empty(t, cfg.NATS.ClientURLs)
 		require.False(t, cfg.NATS.TLS.Enabled)
 		require.Equal(t, NATSAuthModeNone, cfg.NATS.Auth.Mode)
+		require.False(t, cfg.NATS.Notifier)
+		require.Zero(t, cfg.NATS.NotifierWatchMaxAge)
+	})
+
+	t.Run("parses notifier watch max age", func(t *testing.T) {
+		cfg := NewCfg()
+		f, err := ini.Load([]byte("[nats]\nnotifier = true\nnotifier_watch_max_age = 5m\n"))
+		require.NoError(t, err)
+		cfg.Raw = f
+
+		require.NoError(t, readNATSSettings(cfg))
+
+		require.True(t, cfg.NATS.Notifier)
+		require.Equal(t, 5*time.Minute, cfg.NATS.NotifierWatchMaxAge)
 	})
 
 	t.Run("parses overrides", func(t *testing.T) {

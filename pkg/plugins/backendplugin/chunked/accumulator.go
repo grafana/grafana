@@ -1,11 +1,10 @@
 package chunked
 
 import (
+	"encoding/json/jsontext"
 	"errors"
 	"fmt"
 	"io"
-
-	"github.com/go-json-experiment/json/jsontext"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/datasourcetest"

@@ -37,7 +37,7 @@ export function HistoryErrorMessage({ error }: HistoryErrorMessageProps) {
         )}
         severity="error"
       >
-        <Trans i18nKey="alerting.central-alert-history.error.server-error.description">
+        <Trans i18nKey="alerting.central-alert-history.error.server-error-description">
           This can happen when a regex or negation label filter matches too many alert instances and the response
           exceeds the server&apos;s size limit. Try using a shorter time range or a more specific filter (e.g. an exact
           match instead of a regex).
@@ -46,7 +46,7 @@ export function HistoryErrorMessage({ error }: HistoryErrorMessageProps) {
     );
   }
 
-  const title = t('alerting.central-alert-history.error', 'Something went wrong loading the alert state history');
+  const title = t('alerting.central-alert-history.error.title', 'Something went wrong loading the alert state history');
   const errorStr = stringifyErrorLike(error);
 
   return <Alert title={title}>{errorStr}</Alert>;

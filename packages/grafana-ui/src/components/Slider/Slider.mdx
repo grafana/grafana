@@ -1,5 +1,5 @@
 import { Meta, ArgTypes } from '@storybook/addon-docs/blocks';
-import { SliderProps } from './types';
+import { Slider } from './Slider';
 
 <Meta title="MDX|Slider" />
 
@@ -17,7 +17,7 @@ The text input behavior depends on whether the step value or min value are integ
 
 `onChange` will only be called with valid values, clamped to the min, max, and step. If `min - max` isn't evenly divisible by `step`, behavior may be unexpected near the maximum.
 
-<ArgTypes of={SliderProps} />
+<ArgTypes of={Slider} />
 
 ## Design decisions
 

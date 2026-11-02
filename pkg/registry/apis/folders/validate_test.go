@@ -2,34 +2,44 @@ package folders
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"regexp"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	authlib "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/federated"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestValidateCreate(t *testing.T) {
 	tests := []struct {
-		name        string
-		folder      *folders.Folder
-		mockFolders map[string]*folders.Folder
-		expectedErr error
-		maxDepth    int // defaults to 5 unless set
+		name           string
+		folder         *folders.Folder
+		mockFolders    map[string]*folders.Folder
+		expectedErr    error
+		maxDepth       int  // defaults to 5 unless set
+		serviceAccount bool // the requester is a service account
 	}{
 		{
 			name: "ok",
@@ -146,6 +156,127 @@ func TestValidateCreate(t *testing.T) {
 				},
 			},
 			expectedErr: folder.ErrFolderCannotBeParentOfItself,
+		},
+		{
+			name: "error to create a folder inside the k6 folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: accesscontrol.K6FolderUID},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
+			},
+			mockFolders: map[string]*folders.Folder{
+				accesscontrol.K6FolderUID: {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: accesscontrol.K6FolderUID,
+					},
+					Spec: folders.FolderSpec{
+						Title: "k6",
+					},
+				},
+			},
+			expectedErr: folder.ErrFolderCannotBeCreatedInK6,
+		},
+		{
+			name: "error to create a folder under an existing descendant of the k6 folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: "legacy-k6-child"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
+			},
+			mockFolders: map[string]*folders.Folder{
+				"legacy-k6-child": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "legacy-k6-child",
+						Annotations: map[string]string{utils.AnnoKeyFolder: accesscontrol.K6FolderUID},
+					},
+					Spec: folders.FolderSpec{
+						Title: "created before k6 was restricted",
+					},
+				},
+				accesscontrol.K6FolderUID: {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: accesscontrol.K6FolderUID,
+					},
+					Spec: folders.FolderSpec{
+						Title: "k6",
+					},
+				},
+			},
+			expectedErr: folder.ErrFolderCannotBeCreatedInK6,
+		},
+		{
+			name: "service account can create a folder inside the k6 folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: accesscontrol.K6FolderUID},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
+			},
+			mockFolders: map[string]*folders.Folder{
+				accesscontrol.K6FolderUID: {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: accesscontrol.K6FolderUID,
+					},
+					Spec: folders.FolderSpec{
+						Title: "k6",
+					},
+				},
+			},
+			serviceAccount: true,
+		},
+		{
+			name: "service account can create a folder deeper in the k6 tree",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: "k6-child"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
+			},
+			mockFolders: map[string]*folders.Folder{
+				"k6-child": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "k6-child",
+						Annotations: map[string]string{utils.AnnoKeyFolder: accesscontrol.K6FolderUID},
+					},
+					Spec: folders.FolderSpec{
+						Title: "k6 child",
+					},
+				},
+				accesscontrol.K6FolderUID: {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: accesscontrol.K6FolderUID,
+					},
+					Spec: folders.FolderSpec{
+						Title: "k6",
+					},
+				},
+			},
+			serviceAccount: true,
+		},
+		{
+			name: "the k6 folder itself can be created at root",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: accesscontrol.K6FolderUID,
+				},
+				Spec: folders.FolderSpec{
+					Title: "k6",
+				},
+			},
 		},
 		{
 			name: "can not create a tree that is too deep",
@@ -343,15 +474,20 @@ func TestValidateCreate(t *testing.T) {
 				maxDepth = 5
 			}
 
+			ctx := request.WithNamespace(context.Background(), "default")
+			if tt.serviceAccount {
+				ctx = identity.WithRequester(ctx, &user.SignedInUser{UserID: 1, OrgID: 1, IsServiceAccount: true})
+			}
+
 			mockStorage := grafanarest.NewMockStorage(t)
 			for name, f := range tt.mockFolders {
 				f.Name = name
-				mockStorage.On("Get", context.Background(), name, &metav1.GetOptions{}).Return(f, nil).Maybe()
+				mockStorage.On("Get", mock.Anything, name, &metav1.GetOptions{}).Return(f, nil).Maybe()
 			}
 
-			getter := newParentsGetter(mockStorage, maxDepth)
+			getter := newCreateParentsGetter(mockStorage)
 
-			err := validateOnCreate(context.Background(), tt.folder, getter, maxDepth)
+			err := validateOnCreate(ctx, tt.folder, getter, maxDepth, false)
 
 			if tt.expectedErr == nil {
 				require.NoError(t, err)
@@ -360,6 +496,51 @@ func TestValidateCreate(t *testing.T) {
 				require.Contains(t, err.Error(), tt.expectedErr.Error())
 			}
 		})
+	}
+}
+
+func TestValidateCreateDetachedAncestors(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		brokenAt string
+		getErr   error
+	}{
+		{name: "immediate parent missing", brokenAt: "C", getErr: apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "C")},
+		{name: "immediate parent unreadable", brokenAt: "C", getErr: apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), "C", errors.New("forbidden"))},
+		{name: "grandparent missing", brokenAt: "B", getErr: apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "B")},
+		{name: "great-grandparent missing", brokenAt: "A", getErr: apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "A")},
+		{name: "full chain readable"},
+	} {
+		for _, dryRun := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/dryRun=%t", tc.name, dryRun), func(t *testing.T) {
+				storage := grafanarest.NewMockStorage(t)
+				parents := map[string]string{"C": "B", "B": "A", "A": folder.GeneralFolderUID}
+				for _, name := range []string{"C", "B", "A"} {
+					if name == tc.brokenAt {
+						storage.On("Get", mock.Anything, name, &metav1.GetOptions{}).Return(nil, tc.getErr).Once()
+						break
+					}
+					storage.On("Get", mock.Anything, name, &metav1.GetOptions{}).Return(&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{Name: name, Annotations: map[string]string{utils.AnnoKeyFolder: parents[name]}},
+						Spec:       folders.FolderSpec{Title: name},
+					}, nil).Once()
+				}
+
+				obj := &folders.Folder{
+					ObjectMeta: metav1.ObjectMeta{Name: "new", Annotations: map[string]string{utils.AnnoKeyFolder: "C"}},
+					Spec:       folders.FolderSpec{Title: "new"},
+				}
+				ctx := request.WithNamespace(context.Background(), "default")
+				err := validateOnCreate(ctx, obj, newCreateParentsGetter(storage), 5, dryRun)
+				if dryRun || tc.brokenAt != "C" {
+					require.NoError(t, err)
+					return
+				}
+				require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
+				require.Equal(t, int32(http.StatusBadRequest), responsewriters.ErrorToAPIStatus(err).Code)
+				require.ErrorContains(t, err, "C")
+			})
+		}
 	}
 }
 
@@ -555,6 +736,68 @@ func TestValidateUpdate(t *testing.T) {
 				},
 			},
 			expectedErr: "k6 project may not be moved",
+		},
+		{
+			name: "error to move into an existing descendant of the k6 folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "legacy-k6-child",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+				},
+				Spec: folders.FolderSpec{
+					Title: "old title",
+				},
+			},
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: accesscontrol.K6FolderUID, Title: "k6"},
+					{Name: "legacy-k6-child", Title: "created before k6 was restricted", Parent: accesscontrol.K6FolderUID},
+				},
+			},
+			expectedErr: "[folder.cannot-be-moved-to-k6] k6 project may not be moved",
+		},
+		{
+			name: "error to move a folder out of the k6 tree",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: folder.GeneralFolderUID,
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "legacy-k6-child",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "old title",
+				},
+			},
+			// resolved for the source chain, which still runs through k6
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: accesscontrol.K6FolderUID, Title: "k6"},
+					{Name: "legacy-k6-child", Title: "created before k6 was restricted", Parent: accesscontrol.K6FolderUID},
+				},
+			},
+			expectedErr: "[folder.bad-request] k6 project may not be moved",
 		},
 		{
 			name: "error to move the k6 folder itself",
@@ -895,7 +1138,7 @@ func TestValidateDelete(t *testing.T) {
 		searcher: &mockSearchClient{
 			stats: &resourcepb.ResourceStatsResponse{},
 		},
-		expectedErr: "could not verify if folder is empty",
+		expectedErr: "folder delete count failed for folder contents: count response did not include stats",
 	}, {
 		name: "stats error - search error",
 		folder: &folders.Folder{
@@ -917,11 +1160,13 @@ func TestValidateDelete(t *testing.T) {
 		searcher: &mockSearchClient{
 			stats: &resourcepb.ResourceStatsResponse{
 				Error: &resourcepb.ErrorResult{
-					Reason: "error",
+					Reason:  string(metav1.StatusReasonInternalError),
+					Code:    http.StatusInternalServerError,
+					Message: "stats unavailable",
 				},
 			},
 		},
-		expectedErr: "could not verify if folder is empty",
+		expectedErr: "stats unavailable",
 	}, {
 		name: "folder not empty with gracePeriodSeconds=0 is allowed",
 		folder: &folders.Folder{
@@ -964,6 +1209,68 @@ func TestValidateDelete(t *testing.T) {
 		cascadeDeleteEnabled: false,
 		expectedErr:          "[folder.not-empty]",
 	}, {
+		name: "finalizer folder not empty with gracePeriodSeconds=0 is allowed when cascade flag is disabled",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       "nnn",
+				Finalizers: []string{folders.CascadeDeleteFinalizer},
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "folder.grafana.app",
+						Resource: "folders",
+						Count:    2,
+					},
+				},
+			},
+		},
+		deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+		cascadeDeleteEnabled: false,
+	}, {
+		name: "finalizer folder not empty without gracePeriodSeconds=0 is blocked",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       "nnn",
+				Finalizers: []string{folders.CascadeDeleteFinalizer},
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "dashboard.grafana.app",
+						Resource: "dashboards",
+						Count:    1,
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
+		name: "folder with only another finalizer and gracePeriodSeconds=0 is blocked when cascade flag is disabled",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       "nnn",
+				Finalizers: []string{"example.com/other"},
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "dashboard.grafana.app",
+						Resource: "dashboards",
+						Count:    1,
+					},
+				},
+			},
+		},
+		deleteOptions: &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+		expectedErr:   "[folder.not-empty]",
+	}, {
 		name: "folder not empty - contains dashboards",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
@@ -977,6 +1284,25 @@ func TestValidateDelete(t *testing.T) {
 						Group:    "dashboard.grafana.app",
 						Resource: "dashboards",
 						Count:    10, // not empty
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
+		name: "folder not empty - contains variables",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "dashboard.grafana.app",
+						Resource: "variables",
+						Count:    4, // not empty
 					},
 				},
 			},
@@ -1021,6 +1347,25 @@ func TestValidateDelete(t *testing.T) {
 		},
 		expectedErr: "[folder.not-empty]",
 	}, {
+		name: "folder not empty - contains migrated library panels",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "dashboard.grafana.app",
+						Resource: "librarypanels",
+						Count:    3,
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
 		name: "folder not empty - contains folders",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1034,6 +1379,25 @@ func TestValidateDelete(t *testing.T) {
 						Group:    "folder.grafana.app",
 						Resource: "folders",
 						Count:    2, // not empty
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
+		name: "folder not empty - contains recordingrules",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "rules.alerting.grafana.app",
+						Resource: "recordingrules",
+						Count:    22, // not empty
 					},
 				},
 			},
@@ -1100,6 +1464,24 @@ func TestValidateDelete(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidateDeleteCountFailureIsSanitized500(t *testing.T) {
+	ctx, _, requestSpan := newFolderTrace(t)
+	original := errors.New("pq: permission denied for table alert_rule")
+	err := validateOnDelete(ctx, &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "nnn"}}, &mockSearchClient{
+		statsErr: &federated.CountError{Resources: []string{"alertrules"}, Err: original},
+	}, nil, false)
+
+	var apiStatus apierrors.APIStatus
+	require.ErrorAs(t, err, &apiStatus)
+	require.Equal(t, int32(500), apiStatus.Status().Code)
+	require.Equal(t, "Folder cannot be deleted: could not count alert rules", apiStatus.Status().Message)
+
+	recorded, ok := requestSpan.(sdktrace.ReadOnlySpan)
+	require.True(t, ok)
+	requireFolderSpanError(t, recorded)
+	require.Contains(t, recorded.Status().Description, original.Error())
 }
 
 func TestValidateOwnerReferencesOnManagedFolder(t *testing.T) {
@@ -1228,7 +1610,7 @@ func TestGetChildrenBatchPagination(t *testing.T) {
 
 	makeFolders := func(n int) []folders.Folder {
 		out := make([]folders.Folder, 0, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			out = append(out, folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:        fmt.Sprintf("c%d", i),
@@ -1245,6 +1627,8 @@ func TestGetChildrenBatchPagination(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, children, 2)
 		require.True(t, hasMore)
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, searcher.lastSearchRequest.ResultFormat)
+		require.Equal(t, []string{resource.SEARCH_FIELD_NAME}, searcher.lastSearchRequest.Fields)
 	})
 
 	t.Run("hasMore false on the final page", func(t *testing.T) {
@@ -1253,19 +1637,6 @@ func TestGetChildrenBatchPagination(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, children, 1)
 		require.False(t, hasMore)
-	})
-
-	t.Run("hasMore true via NextPageToken even when TotalHits is missing", func(t *testing.T) {
-		searcher := &mockSearchClient{
-			folders:          makeFolders(5),
-			paginate:         true,
-			useNextPageToken: true,
-			dropTotalHits:    true,
-		}
-		children, hasMore, err := getChildrenBatch(context.Background(), searcher, namespace, []string{parent}, 2, 0)
-		require.NoError(t, err)
-		require.Len(t, children, 2)
-		require.True(t, hasMore)
 	})
 
 	t.Run("hasMore false when only one page exists and neither signal indicates more", func(t *testing.T) {
@@ -1285,7 +1656,7 @@ func TestCheckSubtreeDepthIteratesAllPages(t *testing.T) {
 	const childCount = 1001
 
 	all := make([]folders.Folder, 0, childCount)
-	for i := 0; i < childCount; i++ {
+	for i := range childCount {
 		all = append(all, folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        fmt.Sprintf("c%d", i),
@@ -1305,7 +1676,7 @@ func TestCheckSubtreeDepthIteratesAllPages(t *testing.T) {
 }
 
 var (
-	_ = resourcepb.ResourceIndexClient(&mockSearchClient{})
+	_ resourcepb.ResourceIndexClient = (*mockSearchClient)(nil)
 )
 
 type mockSearchClient struct {
@@ -1315,11 +1686,10 @@ type mockSearchClient struct {
 	folders []folders.Folder
 
 	// pagination controls (opt-in: zero values preserve the original "return everything" behavior)
-	paginate         bool
-	useNextPageToken bool
-	dropTotalHits    bool
+	paginate bool
 
-	searchCalls int
+	searchCalls       int
+	lastSearchRequest *resourcepb.ResourceSearchRequest
 }
 
 // GetStats implements resourcepb.ResourceIndexClient.
@@ -1330,6 +1700,7 @@ func (m *mockSearchClient) GetStats(ctx context.Context, in *resourcepb.Resource
 // Search implements resourcepb.ResourceIndexClient.
 func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	m.searchCalls++
+	m.lastSearchRequest = req
 
 	// get the list of parents from the search request
 	parentSet := make(map[string]bool)
@@ -1344,7 +1715,7 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 	}
 
 	// find children that match the parent filter
-	var rows []*resourcepb.ResourceTableRow
+	var rows []*resourcepb.ResourceSearchRow
 	for i := range m.folders {
 		meta, err := utils.MetaAccessor(&m.folders[i])
 		if err != nil {
@@ -1352,7 +1723,7 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 		}
 		parentUID := meta.GetFolder()
 		if parentSet[parentUID] {
-			rows = append(rows, &resourcepb.ResourceTableRow{
+			rows = append(rows, &resourcepb.ResourceSearchRow{
 				Key: &resourcepb.ResourceKey{Name: m.folders[i].Name},
 			})
 		}
@@ -1360,36 +1731,23 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 
 	if !m.paginate {
 		return &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{Rows: rows},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Rows:         rows,
+			TotalHits:    int64(len(rows)),
 		}, nil
 	}
 
 	total := int64(len(rows))
-	offset := req.Offset
-	if offset < 0 {
-		offset = 0
-	}
-	if offset > total {
-		offset = total
-	}
+	offset := min(max(req.Offset, 0), total)
 	end := total
 	if req.Limit > 0 && offset+req.Limit < end {
 		end = offset + req.Limit
 	}
-	pageRows := rows[offset:end]
-
-	nextToken := ""
-	if m.useNextPageToken && end < total {
-		nextToken = fmt.Sprintf("next-%d", end)
-	}
-
-	resp := &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{Rows: pageRows, NextPageToken: nextToken},
-	}
-	if !m.dropTotalHits {
-		resp.TotalHits = total
-	}
-	return resp, nil
+	return &resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Rows:         rows[offset:end],
+		TotalHits:    total,
+	}, nil
 }
 
 // allow is a single (group, resource, verb, name, folder) tuple the mock
@@ -1463,6 +1821,41 @@ func TestCheckMoveAccess(t *testing.T) {
 			newParent: folder.GeneralFolderUID,
 			oldParent: oldParentUID,
 			allows:    []allow{allowFolder(utils.VerbCreate, "", folder.GeneralFolderUID)},
+		},
+		{
+			// Empty root parent passes through as-is; RBAC applies create-time
+			// empty->general itself, so the create probe matches the empty folder.
+			name:      "move to empty root: destination-create checked at empty parent",
+			newParent: folder.LegacyRootFolderUID, //nolint:staticcheck // exercising the deprecated legacy empty-string root parent is intentional
+			oldParent: oldParentUID,
+			allows:    []allow{allowFolder(utils.VerbCreate, "", folder.LegacyRootFolderUID)}, //nolint:staticcheck
+		},
+		{
+			name:      "move to empty root detects Editor to Admin escalation",
+			newParent: folder.LegacyRootFolderUID, //nolint:staticcheck // exercising the deprecated legacy empty-string root parent is intentional
+			oldParent: oldParentUID,
+			allows: []allow{
+				allowFolder(utils.VerbCreate, "", folder.LegacyRootFolderUID), //nolint:staticcheck
+				canUpdateOnSourceUnderOld,
+				allowFolder(utils.VerbUpdate, sourceUID, folder.LegacyRootFolderUID),         //nolint:staticcheck
+				allowFolder(utils.VerbSetPermissions, sourceUID, folder.LegacyRootFolderUID), //nolint:staticcheck
+			},
+			expectedErr: "folders.accessEscalation",
+		},
+		{
+			// Regression: a general-scoped setperms grant must NOT inflate the tier
+			// of an empty-parent root folder. Old tier is None, so gaining Editor
+			// (update) under the new parent is a real None->Editor escalation. The
+			// old empty->general normalization masked this as Admin.
+			name:      "move from empty root: general grant does not inflate old tier",
+			newParent: newParentUID,
+			oldParent: folder.LegacyRootFolderUID, //nolint:staticcheck // exercising the deprecated legacy empty-string root parent is intentional
+			allows: []allow{
+				canCreateFolderInNew,
+				allowFolder(utils.VerbSetPermissions, sourceUID, folder.GeneralFolderUID), // scoped to general: intentionally ignored for an empty-parent root folder
+				canUpdateOnSourceUnderNew,
+			},
+			expectedErr: "folders.accessEscalation",
 		},
 		{
 			name:        "move to root denied without create at root",
@@ -1552,12 +1945,13 @@ func TestCheckMoveAccess(t *testing.T) {
 		})
 	}
 
-	t.Run("surfaces BatchCheck transport error", func(t *testing.T) {
+	t.Run("sanitizes BatchCheck transport error", func(t *testing.T) {
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: orgID})
 		mock := newMockAccessClient(nil)
 		mock.batchCheckErr = fmt.Errorf("boom")
 		err := checkMoveAccess(ctx, namespace, sourceUID, oldParentUID, newParentUID, mock)
-		require.ErrorContains(t, err, "boom")
+		require.True(t, apierrors.IsInternalError(err))
+		require.NotContains(t, err.Error(), "boom")
 		require.Equal(t, 1, mock.batchCheckCall)
 	})
 

@@ -23,7 +23,7 @@ type getStore func(db.DB) store
 func testIntegrationPreferencesDataAccess(t *testing.T, fn getStore) {
 	t.Helper()
 	weekStartOne := "1"
-	ss := db.InitTestDB(t)
+	ss := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	prefStore := fn(ss)
 
 	t.Run("Get with saved org and user home dashboard returns not found", func(t *testing.T) {
@@ -128,7 +128,7 @@ func testIntegrationPreferencesDataAccess(t *testing.T, fn getStore) {
 	})
 
 	t.Run("Update for a user should only modify a single value", func(t *testing.T) {
-		ss := db.InitTestDB(t)
+		ss := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		prefStore := fn(ss)
 		id, err := prefStore.Insert(context.Background(), &pref.Preference{
 			UserID:           user.SignedInUser{}.UserID,

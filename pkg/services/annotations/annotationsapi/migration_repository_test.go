@@ -560,7 +560,7 @@ func TestMigrationRepository_Delete(t *testing.T) {
 		proxy := &fakeProxy{}
 		repo := newTestRepo(t, "proxy-all", legacy, proxy, usertest.NewUserServiceFake())
 
-		params := &annotations.DeleteParams{OrgID: 1, DashboardID: 9, PanelID: 2}
+		params := &annotations.DeleteParams{OrgID: 1, DashboardID: 9, PanelID: 2} //nolint:staticcheck // Exercise legacy field compatibility.
 		require.ErrorContains(t, repo.Delete(context.Background(), params), "dashboard UID is required for mass delete")
 
 		assert.Empty(t, proxy.massDeleteCalls)

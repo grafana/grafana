@@ -123,7 +123,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     zIndex: 1000,
     display: 'flex',
     alignItems: 'center',
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z1 : theme.shadows.z3,
     border: `1px solid ${theme.colors.border.weak}`,
     // Base font size - will be scaled via inline style
     fontSize: theme.typography.body.fontSize,

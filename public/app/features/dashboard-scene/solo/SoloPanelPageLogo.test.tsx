@@ -93,6 +93,7 @@ describe('SoloPanelPageLogo', () => {
     transitions: {
       handleMotion: jest.fn(() => ({})),
     },
+    flags: {},
   } as unknown as GrafanaTheme2;
 
   beforeEach(() => {

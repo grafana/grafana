@@ -9,6 +9,7 @@ import {
   type AzureMonitorMetricsMetadataResponse,
   type AzureMonitorOption,
   type Location,
+  type Metric,
   type Subscription,
 } from '../types/types';
 
@@ -89,6 +90,24 @@ export default class ResponseParser {
         value: dimension.value,
       };
     });
+  }
+
+  static parseMetadataDimensionValues(result: AzureAPIResponse<Metric>, dimensionName: string): string[] {
+    const values = new Set<string>();
+    const requestedDimension = dimensionName.trim().toLowerCase();
+
+    for (const metric of result?.value ?? []) {
+      for (const series of metric.timeseries ?? []) {
+        for (const metadata of series.metadatavalues ?? []) {
+          const value = metadata.value?.trim();
+          if (metadata.name?.value?.trim().toLowerCase() === requestedDimension && value) {
+            values.add(value);
+          }
+        }
+      }
+    }
+
+    return [...values].sort();
   }
 
   static parseSubscriptions(result: AzureAPIResponse<Subscription>): Array<{ text: string; value: string }> {

@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"errors"
 	"io"
 	"os"
@@ -9,9 +10,63 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
+	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
+
+func TestPluginClientV3(t *testing.T) {
+	t.Run("returns false when the backend does not support V3", func(t *testing.T) {
+		p := &Plugin{}
+		p.RegisterClient(&backendClient{})
+
+		client, ok := p.ClientV3(context.Background())
+		require.False(t, ok)
+		require.Nil(t, client)
+	})
+
+	t.Run("returns the V3 client when supported", func(t *testing.T) {
+		expected := &fakeClientV3{}
+		p := &Plugin{}
+		p.RegisterClient(&backendClientV3{client: expected})
+
+		client, ok := p.ClientV3(context.Background())
+		require.True(t, ok)
+		require.Same(t, expected, client)
+	})
+}
+
+type backendClient struct {
+	backendplugin.Plugin
+}
+
+type backendClientV3 struct {
+	backendplugin.Plugin
+	client appclientv3.Client
+}
+
+func (c *backendClientV3) ClientV3(context.Context) (appclientv3.Client, bool) {
+	return c.client, c.client != nil
+}
+
+var _ appclientv3.Client = (*fakeClientV3)(nil)
+
+type fakeClientV3 struct{}
+
+func (*fakeClientV3) AdmissionReview(context.Context, *pluginv3.AdmissionReviewRequest) (*pluginv3.AdmissionReviewResponse, error) {
+	panic("unimplemented")
+}
+
+func (*fakeClientV3) CallRoute(context.Context, *pluginv3.CallRouteRequest) (grpc.ServerStreamingClient[pluginv3.CallRouteResponse], error) {
+	panic("unimplemented")
+}
+
+func (*fakeClientV3) ConvertObjects(context.Context, *pluginv3.ConvertObjectsRequest) (*pluginv3.ConvertObjectsResponse, error) {
+	panic("unimplemented")
+}
 
 func Test_ReadPluginJSON(t *testing.T) {
 	tests := []struct {

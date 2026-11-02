@@ -1,14 +1,7 @@
-import type OpenLayersMap from 'ol/Map';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 
-import {
-  type MapLayerRegistryItem,
-  type MapLayerOptions,
-  type GrafanaTheme2,
-  type EventBus,
-  textUtil,
-} from '@grafana/data';
+import { type MapLayerRegistryItem, textUtil } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 export interface XYZConfig {
@@ -24,24 +17,38 @@ export const defaultXYZConfig: XYZConfig = {
   attribution: `Tiles © <a href="${sampleURL}">ArcGIS</a>`,
 };
 
-export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
+/** A layer config whose XYZ fields are still unset, as saved panel options have them. */
+export type UnresolvedXYZConfig<T extends XYZConfig = XYZConfig> = Omit<T, keyof XYZConfig> & Partial<XYZConfig>;
+
+/** The same config once the XYZ fields are guaranteed present. */
+type ResolvedXYZConfig<T extends XYZConfig = XYZConfig> = Omit<T, keyof XYZConfig> & XYZConfig;
+
+/**
+ * Saved panel options are only ever partial, so fill in the gaps once here with defaults if needed
+ * and let everything downstream work with a complete config.
+ */
+export function resolveXYZConfig<T extends XYZConfig = XYZConfig>(
+  config: UnresolvedXYZConfig<T>
+): ResolvedXYZConfig<T> {
+  if (!config.url) {
+    return {
+      ...config,
+      url: defaultXYZConfig.url,
+      attribution: config.attribution ?? defaultXYZConfig.attribution,
+    };
+  }
+  return { ...config, url: config.url, attribution: config.attribution ?? '' };
+}
+
+export const xyzTiles: MapLayerRegistryItem<UnresolvedXYZConfig<XYZConfig>> = {
   id: 'xyz',
   name: 'XYZ Tile layer',
   description: 'Add map from a generic tile layer',
   isBaseMap: true,
 
-  create: async (
-    map: OpenLayersMap,
-    options: MapLayerOptions<XYZConfig>,
-    eventBus: EventBus,
-    theme: GrafanaTheme2
-  ) => ({
+  create: async (_map, options) => ({
     init: () => {
-      const cfg = { ...options.config };
-      if (!cfg.url) {
-        cfg.url = defaultXYZConfig.url;
-        cfg.attribution = cfg.attribution ?? defaultXYZConfig.attribution;
-      }
+      const cfg = resolveXYZConfig(options.config ?? {});
       const noRepeat = options.noRepeat ?? false;
       const interpolatedUrl = textUtil.sanitizeUrl(getTemplateSrv().replace(cfg.url));
       const interpolatedAttribution = textUtil.sanitizeTextPanelContent(getTemplateSrv().replace(cfg.attribution));
@@ -49,7 +56,8 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
       return new TileLayer({
         source: new XYZ({
           url: interpolatedUrl,
-          attributions: interpolatedAttribution,
+          // An empty string would add a blank entry to the attribution control
+          attributions: interpolatedAttribution || undefined,
           wrapX: !noRepeat,
           minZoom: cfg.minZoom,
           maxZoom: cfg.maxZoom,

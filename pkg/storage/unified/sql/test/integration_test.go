@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/kv"
@@ -29,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
-	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -43,7 +43,7 @@ var initMutex = &sync.Mutex{}
 // newTestBackend creates a fresh database and backend for a test.
 // It uses a mutex to ensure the entire initialization and migration
 // process is atomic and does not race with other parallel tests.
-func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Duration, maxOpenConn int) resource.StorageBackend {
+func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Duration, maxOpenConn int, opts ...sql.StorageBackendOption) resource.StorageBackend {
 	// Lock to ensure the entire init block is atomic.
 	initMutex.Lock()
 	// Unlock once the function returns the initialized backend.
@@ -59,7 +59,7 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	cfg.SimulatedNetworkLatency = simulatedNetworkLatency
 	cfg.DisablePruner = db.IsTestDbSQLite()
 	cfg.NotifierSettleDelay = time.Millisecond // keep it low in tests as most of them don't exercise concurrent writes
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t)                //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	dbSection := cfg.SectionWithEnvOverrides("database")
 	if isHA {
 		dbSection.Key("high_availability").SetValue("true")
@@ -71,7 +71,7 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	}
 	eDB, err := sql.ProvideResourceDB(cfg, dbstore)
 	require.NoError(t, err)
-	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil, nil)
+	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil, nil, opts...)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 	backendService, ok := backend.(services.Service)
@@ -120,70 +120,63 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 	})
 }
 
-func TestIntegrationSQLStorageAndSQLKVCompatibilityTests(t *testing.T) {
+type recordingPublisher struct {
+	mu            sync.Mutex
+	notifications []*resourcepb.WatchNotification
+	subjects      []string
+}
+
+func (p *recordingPublisher) Enabled() bool { return true }
+
+func (p *recordingPublisher) Publish(_ context.Context, subject string, data []byte) error {
+	n := &resourcepb.WatchNotification{}
+	if err := proto.Unmarshal(data, n); err != nil {
+		return err
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.subjects = append(p.subjects, subject)
+	p.notifications = append(p.notifications, n)
+	return nil
+}
+
+func TestIntegrationSQLBackendPublishesWatchNotifications(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	t.Cleanup(db.CleanupTestDB)
 
-	newKvBackend := func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
-		return unitest.NewTestSqlKvBackend(t, ctx, unitest.SQLKVBackendModeRVManager)
-	}
+	pub := &recordingPublisher{}
+	backend := newTestBackend(t, !db.IsTestDbSQLite(), 0, 0, sql.WithEventPublisher(pub))
+	ctx := testutil.NewDefaultTestContext(t)
 
-	opts := &unitest.TestOptions{
-		SearchServerFactory: newTestResourceServerWithSearch,
-	}
-
-	t.Run("IsHA (polling notifier)", func(t *testing.T) {
-		if db.IsTestDbSQLite() {
-			t.Skip("sqlite not compatible with HA")
-		}
-
-		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) resource.StorageBackend {
-			return newTestBackend(t, true, 0, 0)
-		}, newKvBackend, opts)
-	})
-
-	t.Run("NotHA (in process notifier)", func(t *testing.T) {
-		if !db.IsTestDbSQLite() {
-			t.Skip("in-process notifier only used with sqlite")
-		}
-
-		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) resource.StorageBackend {
-			return newTestBackend(t, false, 0, 0)
-		}, newKvBackend, opts)
-	})
-}
-
-// newTestResourceServerWithSearch creates a ResourceServer with search enabled for testing
-func newTestResourceServerWithSearch(t *testing.T, backend resource.StorageBackend) resource.ResourceServer {
-	t.Helper()
-
-	// Create test config
-	cfg := setting.NewCfg()
-	cfg.EnableSearch = true
-	cfg.IndexFileThreshold = 1000 // Ensures memory indexing
-	cfg.IndexPath = t.TempDir()   // Temporary directory for indexes
-
-	// Initialize document builders for playlists
-	docBuilders := &resource.TestDocumentBuilderSupplier{
-		GroupsResources: map[string]string{
-			"playlist.grafana.app": "playlists",
-		},
-	}
-
-	// Create search options
-	searchOpts, err := search.NewSearchOptions(cfg, docBuilders, nil, nil, nil)
+	created, err := unitest.WriteEvent(ctx, backend, "item", resourcepb.WatchEvent_ADDED)
+	require.NoError(t, err)
+	updated, err := unitest.WriteEvent(ctx, backend, "item", resourcepb.WatchEvent_MODIFIED, unitest.WithNamespaceAndRV("namespace", created))
+	require.NoError(t, err)
+	deleted, err := unitest.WriteEvent(ctx, backend, "item", resourcepb.WatchEvent_DELETED, unitest.WithNamespaceAndRV("namespace", updated))
 	require.NoError(t, err)
 
-	// Create ResourceServer with search enabled
-	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Backend:      backend,
-		AccessClient: types.FixedAccessClient(true), // Allow all operations for testing
-		Search:       searchOpts,
-		Reg:          nil,
-	})
-	require.NoError(t, err)
-
-	return server
+	subject := "us.watch.v1.group.namespace.resource"
+	require.Equal(t, []string{subject, subject, subject}, pub.subjects)
+	want := []struct {
+		typ    resourcepb.WatchNotification_Type
+		rv     int64
+		prevRV int64
+	}{
+		{resourcepb.WatchNotification_ADDED, created, 0},
+		{resourcepb.WatchNotification_MODIFIED, updated, created},
+		{resourcepb.WatchNotification_DELETED, deleted, updated},
+	}
+	for i, w := range want {
+		got := pub.notifications[i]
+		require.Equal(t, w.typ, got.GetType())
+		require.Equal(t, "group", got.GetGroup())
+		require.Equal(t, "resource", got.GetResource())
+		require.Equal(t, "namespace", got.GetNamespace())
+		require.Equal(t, "item", got.GetName())
+		require.Equal(t, "folderuid", got.GetFolder())
+		require.Equal(t, w.rv, got.GetResourceVersion())
+		require.Equal(t, w.prevRV, got.GetPreviousResourceVersion())
+	}
 }
 
 func TestIntegrationSearchAndStorage(t *testing.T) {
@@ -208,13 +201,74 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 	unitest.RunTestSearchAndStorage(t, ctx, storage, searchBackend)
 }
 
+// TestIntegrationSearchBackedList runs the search-backed LIST contract against
+// each backend. It uses an isolated backend + index per subtest (the runner
+// builds indexes over everything the backend holds, so it must hold only the
+// resources under test). Batch-read assertions apply only to KV backends; the
+// legacy SQL backend takes the per-resource fallback.
+func TestIntegrationSearchBackedList(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	newBleve := func(t *testing.T) resource.SearchBackend {
+		sb, err := search.NewBleveBackend(search.BleveOptions{FileThreshold: 0, Root: t.TempDir()}, nil)
+		require.NoError(t, err)
+		t.Cleanup(sb.Stop)
+		return sb
+	}
+
+	t.Run("kv backend (batched reads)", func(t *testing.T) {
+		ctx := context.Background()
+		scans := &unitest.DataKeyScanCounter{}
+		backend, _ := unitest.NewTestSqlKvBackendWithKV(t, ctx, scans.Wrap)
+		unitest.RunTestSearchBackedList(t, ctx, backend, newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: true, DataKeyScans: scans.Scans})
+	})
+
+	t.Run("kv backend (batched reads, authorize before fetch)", func(t *testing.T) {
+		ctx := context.Background()
+		scans := &unitest.DataKeyScanCounter{}
+		backend, _ := unitest.NewTestSqlKvBackendWithKV(t, ctx, scans.Wrap)
+		unitest.RunTestSearchBackedList(t, ctx, backend, newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: true, AuthorizeBeforeFetch: true, DataKeyScans: scans.Scans})
+	})
+
+	t.Run("sql backend (per-resource fallback)", func(t *testing.T) {
+		ctx := context.Background()
+		unitest.RunTestSearchBackedList(t, ctx, newTestBackend(t, false, 0, 0), newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: false})
+	})
+}
+
+func TestIntegrationSearchBackedTrashList(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	newBleve := func(t *testing.T) resource.SearchBackend {
+		sb, err := search.NewBleveBackend(search.BleveOptions{
+			FileThreshold: 0,
+			Root:          t.TempDir(),
+		}, nil)
+		require.NoError(t, err)
+		t.Cleanup(sb.Stop)
+		return sb
+	}
+
+	t.Run("kv backend (batched reads)", func(t *testing.T) {
+		ctx := context.Background()
+		scans := &unitest.DataKeyScanCounter{}
+		backend, _ := unitest.NewTestSqlKvBackendWithKV(t, ctx, scans.Wrap)
+		unitest.RunTestSearchBackedTrashList(t, ctx, backend, newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: true, DataKeyScans: scans.Scans})
+	})
+
+	t.Run("sql backend (storage fallback)", func(t *testing.T) {
+		ctx := context.Background()
+		unitest.RunTestSearchBackedTrashList(t, ctx, newTestBackend(t, false, 0, 0), newBleve(t), unitest.SearchBackedListOptions{})
+	})
+}
+
 func TestClientServer(t *testing.T) {
 	if db.IsTestDbSQLite() {
 		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
 	}
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	cfg := setting.NewCfg()
 	cfg.GRPCServer.Address = "localhost:0" // get a free address
@@ -243,6 +297,7 @@ func TestClientServer(t *testing.T) {
 		}),
 	)
 	require.NoError(t, err)
+	grpcService.Health.Register(svc, resourcepb.ResourceStore_ServiceDesc.ServiceName)
 	var client resourcepb.ResourceStoreClient
 
 	clientCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
@@ -315,7 +370,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	cfg := setting.NewCfg()
 	cfg.GRPCServer.Address = "localhost:0" // get a free address
@@ -355,6 +410,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	)
 	require.NoError(t, err)
 
+	grpcService.Health.Register(svc, resourcepb.ResourceIndex_ServiceDesc.ServiceName)
 	var client resource.SearchClient
 	// Use identity.WithRequester to set up proper auth context for gRPC client interceptors
 	clientCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
@@ -396,6 +452,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 					Resource:  "playlists",
 				},
 			},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, resp)

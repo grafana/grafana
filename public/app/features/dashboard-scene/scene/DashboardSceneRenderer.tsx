@@ -1,32 +1,45 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
 import { type SceneComponentProps } from '@grafana/scenes';
+import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { useSelector } from 'app/types/store';
 
+import { ComposerOverlay } from '../composer/ComposerOverlay';
 import { DashboardSidebarSplitter } from '../sidebar/DashboardSidebarSplitter';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../solo/SoloPanelContext';
 
+import { DashboardOverlay } from './DashboardOverlay';
 import { type DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
+import { PlanBuildingOverlay } from './PlanBuildingOverlay';
+import { PlanningControls } from './new-toolbar/PlanningControls';
+import { SandboxConsentBanner } from './sandbox-consent/SandboxConsentBanner';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
     controls,
-    overlay,
     editview,
     body,
     editPanel,
+    loadingView,
     viewPanel,
     panelSearch,
     panelsPerRow,
     isEditing,
     layoutOrchestrator,
+    planning,
+    mode,
+    uid,
   } = model.useState();
+  const composerSession = mode === 'composer' ? model.getComposerSession() : undefined;
 
   const scopesServices = useScopesServices();
 
@@ -63,31 +76,50 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       : getNavModel(navIndex, 'dashboards/browse');
   const isSettingsOpen = editview !== undefined;
   const soloPanelContext = useDefineSoloPanelContext(viewPanel);
+  const isPanelEditorLoading = loadingView === 'editPanel';
+  const subViewOpen = useRef(false);
 
   // Remember scroll pos when going into view panel, edit panel or settings
   useMemo(() => {
-    if (viewPanel || isSettingsOpen || editPanel) {
+    const isOpen = Boolean(viewPanel || isSettingsOpen || editPanel || isPanelEditorLoading);
+    if (isOpen && !subViewOpen.current) {
       model.rememberScrollPos();
     }
-  }, [isSettingsOpen, editPanel, viewPanel, model]);
+    subViewOpen.current = isOpen;
+  }, [isSettingsOpen, editPanel, viewPanel, isPanelEditorLoading, model]);
 
   // Restore scroll pos when coming back
   useEffect(() => {
-    if (!viewPanel && !isSettingsOpen && !editPanel) {
+    if (!viewPanel && !isSettingsOpen && !editPanel && !isPanelEditorLoading) {
       model.restoreScrollPos();
     }
-  }, [isSettingsOpen, editPanel, viewPanel, model]);
+  }, [isSettingsOpen, editPanel, viewPanel, isPanelEditorLoading, model]);
+
+  if (isPanelEditorLoading) {
+    return (
+      <Page navModel={navModel} layout={PageLayoutType.Canvas}>
+        <Box paddingY={4} display="flex" direction="column" alignItems="center">
+          <PageLoader />
+        </Box>
+      </Page>
+    );
+  }
 
   if (editview) {
     return (
       <>
         <editview.Component model={editview} />
-        {overlay && <overlay.Component model={overlay} />}
+        <DashboardOverlay dashboard={model} />
       </>
     );
   }
 
   function renderBody() {
+    // The body is empty until the builder's first write, so the loading screen takes its place.
+    if (planning?.phase === 'building') {
+      return <PlanBuildingOverlay />;
+    }
+
     if (!viewPanel && (panelSearch || panelsPerRow)) {
       return <PanelSearchLayout panelSearch={panelSearch} panelsPerRow={panelsPerRow} dashboard={model} />;
     }
@@ -103,20 +135,39 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     return <body.Component model={body} />;
   }
 
+  /**
+   * PlanningControls exposes the plan actions and variables without save/settings/share
+   * or a time picker, since placeholders have no queries. The legacy toolbar supplies
+   * plan actions through NavToolbarActions in app chrome.
+   */
+  function renderControls() {
+    if (planning) {
+      return isDashboardNewLayoutsEnabled() && planning.phase === 'preview' ? (
+        <PlanningControls dashboard={model} planning={planning} />
+      ) : null;
+    }
+
+    return controls && <controls.Component model={controls} />;
+  }
+
   return (
     <>
       {layoutOrchestrator && <layoutOrchestrator.Component model={layoutOrchestrator} />}
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
         {editPanel && <editPanel.Component model={editPanel} />}
+        {!editPanel && <SandboxConsentBanner dashboardUid={uid} />}
         {!editPanel && (
           <DashboardSidebarSplitter
             dashboard={model}
-            isEditing={isEditing}
-            controls={controls && <controls.Component model={controls} />}
+            isEditing={isFullDashboardEditing(model.state)}
+            // Only the preview gets the planning canvas; the building screen sits on a plain one.
+            isPlanning={planning?.phase === 'preview'}
+            controls={renderControls()}
             body={renderBody()}
+            overlay={composerSession && <ComposerOverlay session={composerSession} />}
           />
         )}
-        {overlay && <overlay.Component model={overlay} />}
+        <DashboardOverlay dashboard={model} />
       </Page>
     </>
   );

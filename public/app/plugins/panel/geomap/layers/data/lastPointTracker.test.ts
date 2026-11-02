@@ -14,7 +14,9 @@ import {
 } from '@grafana/data';
 import { getCenterPointWGS84 } from 'app/features/transformers/spatial/utils';
 
-import { lastPointTracker } from './lastPointTracker';
+import { ensureInstanceOf } from '../test-utils';
+
+import { type LastPointConfig, lastPointTracker } from './lastPointTracker';
 
 // lastPointTracker imports the whole `ol/source` barrel, which pulls in ol/source/GeoTIFF ->
 // geotiff -> quick-lru (untransformed ESM under jest). Only Vector is used, so stub the barrel.
@@ -42,17 +44,13 @@ const coordsData = (lats: number[], lons: number[]): PanelData => ({
 });
 
 async function setup() {
-  return lastPointTracker.create(
-    {} as OpenLayersMap,
-    {
-      type: 'last-point-tracker',
-      name: 'Last point',
-      location: { mode: FrameGeometrySourceMode.Coords, latitude: 'lat', longitude: 'lon' },
-      config: {},
-    } as MapLayerOptions,
-    new EventBusSrv(),
-    createTheme()
-  );
+  const options: MapLayerOptions<LastPointConfig> = {
+    type: 'last-point-tracker',
+    name: 'Last point',
+    location: { mode: FrameGeometrySourceMode.Coords, latitude: 'lat', longitude: 'lon' },
+    config: {},
+  };
+  return lastPointTracker.create({} as OpenLayersMap, options, new EventBusSrv(), createTheme());
 }
 
 describe('lastPointTracker', () => {
@@ -60,12 +58,12 @@ describe('lastPointTracker', () => {
     const handler = await setup();
     const layer = handler.init();
     expect(layer).toBeInstanceOf(VectorLayer);
-    expect((layer as VectorLayer).getSource()!.getFeatures()).toHaveLength(1);
+    expect(ensureInstanceOf<VectorLayer>(layer, VectorLayer).getSource()!.getFeatures()).toHaveLength(1);
   });
 
   it('update() moves the point to the last row coordinate', async () => {
     const handler = await setup();
-    const layer = handler.init() as VectorLayer;
+    const layer = ensureInstanceOf<VectorLayer>(handler.init(), VectorLayer);
 
     handler.update!(coordsData([0, 10, 20], [0, 30, 60]));
 
@@ -77,7 +75,7 @@ describe('lastPointTracker', () => {
 
   it('update() leaves the point untouched for an empty frame', async () => {
     const handler = await setup();
-    const layer = handler.init() as VectorLayer;
+    const layer = ensureInstanceOf<VectorLayer>(handler.init(), VectorLayer);
     const point = layer.getSource()!.getFeatures()[0];
 
     handler.update!({ state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: [] });

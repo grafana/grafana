@@ -6,12 +6,11 @@ test.describe(
     tag: ['@various'],
   },
   () => {
-    test.beforeEach(async ({ page, selectors }) => {
+    test.beforeEach(async ({ page }) => {
       await page.goto('/');
 
       // Wait for the page to load
-      const panelTitle = page.getByTestId(selectors.components.Panels.Panel.title('Latest from the blog'));
-      await expect(panelTitle).toBeVisible();
+      await expect(page.getByText('Welcome to Grafana')).toBeVisible();
     });
 
     test('sequence shortcuts should work', async ({ page, selectors }) => {
@@ -27,8 +26,7 @@ test.describe(
 
       // Navigate back to home with 'gh' shortcut
       await page.keyboard.type('gh');
-      const panelTitle = page.getByTestId(selectors.components.Panels.Panel.title('Latest from the blog'));
-      await expect(panelTitle).toBeVisible();
+      await expect(page.getByText('Welcome to Grafana')).toBeVisible();
     });
 
     test('ctrl+z should zoom out the time range', async ({ page, selectors }) => {

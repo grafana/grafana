@@ -119,8 +119,7 @@ func DriverType() string {
 }
 
 func IsBusyOrLocked(err error) bool {
-	var sqliteErr *sqlite.Error
-	if errors.As(err, &sqliteErr) {
+	if sqliteErr, ok := errors.AsType[*sqlite.Error](err); ok {
 		// Code is 32-bit number, low 8 bits are the SQLite error code, high 24 bits are extended code.
 		code := sqliteErr.Code() & 0xff
 		return code == sqlite3.SQLITE_BUSY || code == sqlite3.SQLITE_LOCKED
@@ -132,8 +131,7 @@ func IsBusyOrLocked(err error) bool {
 }
 
 func IsUniqueConstraintViolation(err error) bool {
-	var sqliteErr *sqlite.Error
-	if errors.As(err, &sqliteErr) {
+	if sqliteErr, ok := errors.AsType[*sqlite.Error](err); ok {
 		// These constants are extended codes combined with primary code, so we can check them directly.
 		return sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY || sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE
 	}
@@ -144,8 +142,7 @@ func IsUniqueConstraintViolation(err error) bool {
 }
 
 func ErrorMessage(err error) string {
-	var sqliteErr *sqlite.Error
-	if errors.As(err, &sqliteErr) {
+	if sqliteErr, ok := errors.AsType[*sqlite.Error](err); ok {
 		return sqliteErr.Error()
 	}
 	return err.Error()

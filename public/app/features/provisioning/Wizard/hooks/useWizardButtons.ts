@@ -80,8 +80,9 @@ export function useWizardButtons({
 
   const isNextDisabled = useMemo(() => {
     if (activeStep === 'authType') {
-      // Only disable next if github app is in create connection mode
-      return githubAuthType === 'github-app' && githubAppMode === 'new';
+      // Disable next while a new connection (GitHub App or OAuth app) must be
+      // created and authorized first — the repository picker is hidden in that mode.
+      return githubAuthType !== 'pat' && githubAppMode === 'new';
     }
     // Don't block on hasStepError for connection steps - users can fix their input and retry
     if (!['connection'].includes(activeStep) && hasStepError) {

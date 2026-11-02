@@ -3,6 +3,7 @@ import { type ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { render, renderHook, screen, waitFor } from 'test/test-utils';
 
+import { mockComboboxRect } from '@grafana/test-utils';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
@@ -53,7 +54,6 @@ interface SetupOptions {
   formDefaultValues?: Partial<ProvisionedDashboardFormData>;
   isNew?: boolean;
   readOnly?: boolean;
-  workflow?: 'write' | 'branch';
   repository?: RepositoryView;
   canPushToConfiguredBranch?: boolean;
   allowPathEdit?: boolean;
@@ -67,7 +67,6 @@ function setup(options: SetupOptions = {}) {
     canPushToConfiguredBranch = true,
     isNew,
     readOnly,
-    workflow,
     repository,
     allowPathEdit,
     lockComment,
@@ -78,7 +77,6 @@ function setup(options: SetupOptions = {}) {
     path: '',
     comment: '',
     ref: '',
-    workflow: 'write',
     ...formDefaultValues,
   };
 
@@ -94,7 +92,6 @@ function setup(options: SetupOptions = {}) {
     canPushToConfiguredBranch,
     isNew,
     readOnly,
-    workflow,
     repository,
     allowPathEdit,
     lockComment,
@@ -117,14 +114,14 @@ describe('ResourceEditFormSharedFields', () => {
       expect(screen.getByRole('textbox', { name: 'Comment' })).toBeInTheDocument();
     });
 
-    it('should not render workflow fields when repository is false', () => {
+    it('should not render the branch field when repository is false', () => {
       setup({ repository: mockRepo.local });
 
-      expect(screen.queryByText('Workflow')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/branch/i)).not.toBeInTheDocument();
     });
 
-    it('should render workflow fields when repository is true', () => {
-      setup({ repository: mockRepo.github, workflow: 'write', formDefaultValues: { workflow: 'write' } });
+    it('should render the branch field when the repository is git-backed', () => {
+      setup({ repository: mockRepo.github });
 
       expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
     });
@@ -145,10 +142,10 @@ describe('ResourceEditFormSharedFields', () => {
       expect(commentTextarea).toBeDisabled();
     });
 
-    it('should not render workflow fields when readOnly is true and repository is true', () => {
+    it('should not render the branch field when readOnly is true and repository is true', () => {
       setup({ readOnly: true, repository: mockRepo.github });
 
-      expect(screen.queryByText('Workflow')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/branch/i)).not.toBeInTheDocument();
     });
 
     it('should make comment field readonly but not disabled when lockComment is true', () => {
@@ -162,19 +159,7 @@ describe('ResourceEditFormSharedFields', () => {
     });
   });
 
-  describe('Workflow Fields', () => {
-    it('should render branch field when workflow is write', () => {
-      setup({ formDefaultValues: { workflow: 'write' }, repository: mockRepo.github, workflow: 'write' });
-
-      expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
-    });
-
-    it('should render branch field when workflow is branch', () => {
-      setup({ formDefaultValues: { workflow: 'branch' }, repository: mockRepo.github, workflow: 'branch' });
-
-      expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
-    });
-
+  describe('Branch field', () => {
     it('should render a read-only branch input when only configured branch is allowed', () => {
       const restrictedRepo: RepositoryView = {
         ...mockRepo.github,
@@ -182,9 +167,8 @@ describe('ResourceEditFormSharedFields', () => {
       };
 
       setup({
-        formDefaultValues: { workflow: 'write', ref: 'main' },
+        formDefaultValues: { ref: 'main' },
         repository: restrictedRepo,
-        workflow: 'write',
         canPushToConfiguredBranch: true,
       });
 
@@ -195,9 +179,7 @@ describe('ResourceEditFormSharedFields', () => {
 
     it('should allow selecting a branch when only non-configured branches are allowed', () => {
       setup({
-        formDefaultValues: { workflow: 'write' },
         repository: mockRepo.github,
-        workflow: 'write',
         canPushToConfiguredBranch: false,
       });
 
@@ -306,26 +288,9 @@ describe('ResourceEditFormSharedFields', () => {
       expect(commentTextarea).toHaveValue('Test comment');
     });
 
-    it('should allow selecting a branch value', async () => {
+    it('accepts a typed branch name', async () => {
       const { user } = setup({
         repository: mockRepo.github,
-        workflow: 'write',
-        formDefaultValues: { workflow: 'write' },
-      });
-
-      const branchInput = screen.getByRole('combobox', { name: /branch/i });
-      await user.click(branchInput);
-      await user.type(branchInput, 'feature-branch');
-      await user.keyboard('{Enter}');
-
-      expect(branchInput).toHaveValue('feature-branch');
-    });
-
-    it('should allow typing in branch field when workflow is branch', async () => {
-      const { user } = setup({
-        formDefaultValues: { workflow: 'branch' },
-        repository: mockRepo.github,
-        workflow: 'branch',
       });
 
       const branchInput = screen.getByRole('combobox', { name: /branch/i });
@@ -343,7 +308,7 @@ describe('ResourceEditFormSharedFields', () => {
 
       const TestComponent = () => {
         const methods = useForm<ProvisionedDashboardFormData>({
-          defaultValues: { path: '', comment: '', ref: '', workflow: 'write' },
+          defaultValues: { path: '', comment: '', ref: '' },
         });
 
         // Capture form values for assertion
@@ -373,7 +338,7 @@ describe('ResourceEditFormSharedFields', () => {
 
       const TestComponent = () => {
         const methods = useForm<ProvisionedDashboardFormData>({
-          defaultValues: { path: 'dashboards/test.json', comment: '', ref: '', workflow: 'write' },
+          defaultValues: { path: 'dashboards/test.json', comment: '', ref: '' },
         });
 
         formValues = methods.watch();
@@ -403,9 +368,8 @@ describe('ResourceEditFormSharedFields', () => {
   describe('Validation', () => {
     it('should show validation error for invalid branch name', async () => {
       const { user } = setup({
-        formDefaultValues: { workflow: 'branch' },
+        formDefaultValues: { ref: 'feature/new-branch' },
         repository: mockRepo.github,
-        workflow: 'branch',
       });
 
       const branchInput = screen.getByRole('combobox', { name: /branch/i });
@@ -418,6 +382,37 @@ describe('ResourceEditFormSharedFields', () => {
 
       // Check if validation error appears
       expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+
+    it('blocks submitting the configured branch when pushes to it are disabled', async () => {
+      // The read-only configured-branch option stays listed for context, and a typed name can match it;
+      // committing it would be a direct write the backend rejects with a 403.
+      const onValid = jest.fn();
+      const TestComponent = () => {
+        const methods = useForm<ProvisionedDashboardFormData>({
+          defaultValues: { path: 'dashboards/test.json', comment: '', ref: 'main' },
+        });
+        return (
+          <FormProvider {...methods}>
+            <form onSubmit={methods.handleSubmit(onValid)}>
+              <ResourceEditFormSharedFields
+                canPushToConfiguredBranch={false}
+                repository={{ ...mockRepo.github, branch: 'main' }}
+                resourceType="dashboard"
+              />
+              <button type="submit">Submit</button>
+            </form>
+          </FormProvider>
+        );
+      };
+      const { user } = render(<TestComponent />);
+
+      await user.click(screen.getByRole('button', { name: 'Submit' }));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'Pushing to the configured branch is disabled for this repository'
+      );
+      expect(onValid).not.toHaveBeenCalled();
     });
   });
 
@@ -546,7 +541,7 @@ describe('ResourceEditFormSharedFields', () => {
       const { user } = setup({
         isNew: true,
         repository: mockRepo.github,
-        formDefaultValues: { path: 'dashboards/test.json', ref: 'main', workflow: 'write' },
+        formDefaultValues: { path: 'dashboards/test.json', ref: 'main' },
       });
 
       // Seed the validator by editing the filename so the path field is touched.
@@ -565,6 +560,45 @@ describe('ResourceEditFormSharedFields', () => {
       await user.keyboard('{Enter}');
 
       await waitFor(() => expect(refsInRequest).toContain('feature-branch'));
+    });
+  });
+
+  describe('Folder suggestions', () => {
+    it('should not request folder suggestions for a branch that does not exist yet', async () => {
+      mockComboboxRect();
+      jest.mocked(useGetRepositoryFolders).mockClear();
+
+      const { user } = setup({
+        isNew: true,
+        repository: mockRepo.github,
+        formDefaultValues: { ref: 'dashboard/2026-01-01-abc123' },
+      });
+
+      // Refs are loaded once a known remote branch shows up in the dropdown
+      await user.click(screen.getByRole('combobox', { name: /branch/i }));
+      expect(await screen.findByRole('option', { name: /develop/ })).toBeInTheDocument();
+
+      const calls = jest.mocked(useGetRepositoryFolders).mock.calls;
+      expect(calls.length).toBeGreaterThan(0);
+      for (const [args] of calls) {
+        expect(args.ref).toBeUndefined();
+      }
+    });
+
+    it('should request folder suggestions at the selected branch once it is a known ref', async () => {
+      jest.mocked(useGetRepositoryFolders).mockClear();
+
+      setup({
+        isNew: true,
+        repository: mockRepo.github,
+        formDefaultValues: { ref: 'develop' },
+      });
+
+      await waitFor(() => {
+        expect(jest.mocked(useGetRepositoryFolders)).toHaveBeenLastCalledWith(
+          expect.objectContaining({ repositoryName: 'test-repo', ref: 'develop' })
+        );
+      });
     });
   });
 });

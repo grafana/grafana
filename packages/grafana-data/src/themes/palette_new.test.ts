@@ -34,7 +34,7 @@ describe('resolvePaletteRefs', () => {
   });
 
   it('recurses into arrays', () => {
-    expect(resolvePaletteRefs(['palette.blue500', 'palette.coral500'])).toEqual([palette.blue500, palette.coral500]);
+    expect(resolvePaletteRefs(['palette.blue500', 'palette.rose500'])).toEqual([palette.blue500, palette.rose500]);
   });
 
   it('handles arrays nested inside objects', () => {
