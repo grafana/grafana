@@ -356,8 +356,6 @@ export const FlagKeys = {
   ReportingHeaderSettings: "reportingHeaderSettings",
   /** Enables the new role picker drawer design */
   RolePickerDrawer: "rolePickerDrawer",
-  /** Enables Saved queries (query library) RBAC permissions */
-  SavedQueriesRBAC: "savedQueriesRBAC",
   /** Enables the use of scope filters in Grafana */
   ScopeFilters: "scopeFilters",
   /** Enable scope search to include all levels of the scope node tree */
@@ -2287,17 +2285,6 @@ export const useFlagReportingHeaderSettings = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagRolePickerDrawer = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("rolePickerDrawer", false, options).value;
-};
-
-/**
- * Enables Saved queries (query library) RBAC permissions
- *
- * **Details:**
- * - flag key: `savedQueriesRBAC`
- * - default value: `true`
- */
-export const useFlagSavedQueriesRBAC = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("savedQueriesRBAC", true, options).value;
 };
 
 /**

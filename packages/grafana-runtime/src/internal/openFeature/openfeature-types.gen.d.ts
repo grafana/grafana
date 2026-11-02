@@ -67,7 +67,6 @@ declare module "@openfeature/core" {
     | "grafana.filterablePanels"
     | "grafana.savedQueriesPage"
     | "playlistsRBAC"
-    | "savedQueriesRBAC"
     | "newSavedQueriesExperience"
     | "dashboardLibrary"
     | "suggestedDashboards"
