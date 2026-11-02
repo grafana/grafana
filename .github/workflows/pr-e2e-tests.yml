@@ -2,13 +2,21 @@ name: End-to-end tests
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
   push:
     branches:
       - main
       - release-*.*.*
 
 concurrency:
-  group: ${{ github.workflow }}-${{ startsWith(github.ref, 'refs/pull/') && github.ref || github.sha }}
+  # Give unrelated-label runs a unique group so skipped runs cannot cancel active E2E tests.
+  # Otherwise, group by PR ref or push SHA to cancel superseded PR runs.
+  group: >-
+    ${{ github.workflow }}-${{
+      github.event.action == 'labeled' && github.event.label.name != 'run full tests' && github.run_id
+      || (startsWith(github.ref, 'refs/pull/') && github.ref
+      || github.sha)
+    }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
 permissions: {}
@@ -16,7 +24,13 @@ permissions: {}
 jobs:
   detect-changes:
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
-    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
+    # Skip unrelated label additions to avoid rerunning E2E tests.
+    # Skip draft PRs unless they have the "run full tests" label.
+    if: >-
+      (github.event_name == 'pull_request' &&
+        (github.event.action != 'labeled' || github.event.label.name == 'run full tests') &&
+        (!github.event.pull_request.draft || contains(github.event.pull_request.labels.*.name, 'run full tests'))) ||
+      (github.event_name == 'push' && github.repository == 'grafana/grafana')
     name: Detect whether code changed
     runs-on: ubuntu-arm64-small
     permissions:
