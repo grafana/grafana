@@ -9,6 +9,7 @@ import {
   type PanelPlugin,
   type PanelPluginMeta,
   PluginLoadingStrategy,
+  PluginType,
   type PluginMeta,
   throwIfAngular,
 } from '@grafana/data';
@@ -16,6 +17,7 @@ import { getLogger } from '@grafana/runtime/unstable';
 import { type GenericDataSourcePlugin } from 'app/features/datasources/types';
 import { getPanelPluginLoadError } from 'app/features/panel/components/PanelPluginError';
 
+import { clearPluginLoadStates, setPluginLoadState } from '../extensions/pluginLoadState';
 import { getPluginExtensionRegistries } from '../extensions/registry/setup';
 
 import { importPluginModule } from './importPluginModule';
@@ -192,10 +194,33 @@ const importPlugin = <M extends PluginMeta, P extends PanelPlugin | GenericDataS
     return getPromiseFromCache(meta);
   }
 
-  const args = preImportStrategy(meta);
-  const module = importPluginModule(args);
-  const plugin = postImportStrategy(meta, module);
-  promisesCache.set(meta.id, plugin);
+  const isApp = meta.type === PluginType.app;
+  if (isApp) {
+    setPluginLoadState(meta.id, { status: 'loading' });
+  }
+  try {
+    const args = preImportStrategy(meta);
+    const module = importPluginModule(args);
+    const imported = postImportStrategy(meta, module);
+    const plugin = isApp
+      ? imported.then(
+          (plugin) => {
+            setPluginLoadState(meta.id, { status: 'loaded' });
+            return plugin;
+          },
+          (error: unknown) => {
+            setPluginLoadState(meta.id, { status: 'failed', error: toError(error) });
+            throw error;
+          }
+        )
+      : imported;
+    promisesCache.set(meta.id, plugin);
+  } catch (error) {
+    if (isApp) {
+      setPluginLoadState(meta.id, { status: 'failed', error: toError(error) });
+    }
+    throw error;
+  }
 
   return getPromiseFromCache(meta);
 };
@@ -207,7 +232,12 @@ export const pluginImporter: PluginImporter = {
   getPanel: (id: string) => getPluginFromCache<PanelPlugin>(id), // we need this sync because how the panel plugins are loaded in PanelRenderer
 };
 
+function toError(error: unknown): Error {
+  return error instanceof Error ? error : new Error(String(error));
+}
+
 export const clearCaches = () => {
+  clearPluginLoadStates();
   promisesCache.clear();
   pluginsCache.clear();
 };

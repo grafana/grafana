@@ -78,3 +78,9 @@ export {
   /** @deprecated Import from `@grafana/runtime` instead. */
   type UseHasDataSourceInstanceResult,
 } from './services/dataSource/hooks';
+
+export {
+  usePluginExtensionRegistration,
+  type PluginExtensionRegistrationTarget,
+  type PluginExtensionRegistrationState,
+} from './services/pluginExtensions/usePluginExtensionRegistration';
