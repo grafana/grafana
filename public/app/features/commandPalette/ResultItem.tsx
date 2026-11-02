@@ -6,10 +6,10 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useFlagGrafanaCmdkDashboardTags } from '@grafana/runtime/internal';
 import { useStyles2 } from '@grafana/ui';
-import { type ManagerKind } from 'app/features/apiserver/types';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 
 import { ResultTags } from './ResultTags';
+import { getActionManagedBy, getActionTags } from './types';
 
 export const ResultItem = React.forwardRef(
   (
@@ -40,19 +40,9 @@ export const ResultItem = React.forwardRef(
     const styles = useStyles2(getResultItemStyles);
     const dashboardTagsEnabled = useFlagGrafanaCmdkDashboardTags();
 
-    // type assertion needed because kbar's ActionImpl copies all properties from the input Action object at runtime,
-    // but its TS type doesn't reflect custom properties like managedBy or url.
-    // See the same pattern for `url` in KBarResults.tsx and below command url
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const managedBy = (action as ActionImpl & { managedBy?: ManagerKind }).managedBy;
+    const managedBy = getActionManagedBy(action);
+    const tags = getActionTags(action);
     const showProvisionedBadge = config.provisioningEnabled && Boolean(managedBy);
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const tags = (action as ActionImpl & { tags?: string[] }).tags;
-    const managedBadge = showProvisionedBadge ? (
-      <span className={styles.managedBadge}>
-        <ManagedBadge managerKind={managedBy} />
-      </span>
-    ) : undefined;
 
     let name = action.name;
 
@@ -83,7 +73,11 @@ export const ResultItem = React.forwardRef(
             <span>{name}</span>
           </div>
           {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
-          {managedBadge}
+          {showProvisionedBadge && (
+            <span className={styles.managedBadge}>
+              <ManagedBadge managerKind={managedBy} />
+            </span>
+          )}
           {dashboardTagsEnabled && tags && tags.length > 0 && <ResultTags tags={tags} />}
         </div>
       </div>
