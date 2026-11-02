@@ -16,5 +16,5 @@ export function shouldClearTextQueries(pluginVersion: string | undefined, option
   }
 
   const usage = getTextDataUsage(options);
-  return !usage.dataMacros && !usage.perRow && usage.dataBoundHandlebars === false;
+  return !usage.dataMacros && !usage.handlebars && !usage.perRow;
 }

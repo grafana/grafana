@@ -11,7 +11,7 @@ it.each(['13.3.0', '13.3.10', '13.3.0-pre', '13.3.1+security', undefined, '', 'i
   'protects possible data use for version %s',
   (version) => {
     expect(shouldClearTextQueries(version, { content: 'Static' })).toBe(true);
-    expect(shouldClearTextQueries(version, { content: '{{date}} ${host}' })).toBe(true);
+    expect(shouldClearTextQueries(version, { content: '{{date}} ${host}' })).toBe(false);
     expect(shouldClearTextQueries(version, { content: '${__data.fields.cpu}' })).toBe(false);
     expect(shouldClearTextQueries(version, { content: '{{#each data}}{{cpu}}{{/each}}' })).toBe(false);
     expect(shouldClearTextQueries(version, { content: 'Static', renderMode: RenderMode.PerRow })).toBe(false);

@@ -45,7 +45,6 @@ export const DashboardInteractions = {
     mermaid_count: number;
     handlebars_count: number;
     data_macro_count: number;
-    data_bound_handlebars_count: number;
     per_row_count: number;
     dashboard_uid?: string;
   }) => {
