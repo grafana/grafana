@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
+	"google.golang.org/protobuf/proto"
 
 	authlib "github.com/grafana/authlib/types"
 
@@ -151,7 +152,7 @@ func TestBulkProcessNegotiatedBlobUploads(t *testing.T) {
 			blobs, err := resourcepb.DecodeBlobEntries(body["blobs"])
 			require.NoError(t, err)
 			require.Equal(t, "uploaded", blobs["dashboard"].UID)
-			require.Same(t, stream.requests[3], backend.forwarded[1])
+			require.True(t, proto.Equal(stream.requests[3], backend.forwarded[1]))
 		})
 	}
 }
@@ -187,7 +188,8 @@ func TestBulkProcessBlobValidationBeforeUpload(t *testing.T) {
 			require.NoError(t, srv.BulkProcess(stream))
 			require.Zero(t, uploads)
 			require.Empty(t, backend.forwarded)
-			require.True(t, backend.rollback)
+			require.False(t, backend.called)
+			require.False(t, backend.rollback)
 			require.EqualValues(t, http.StatusBadRequest, stream.response.Error.Code)
 		})
 	}
@@ -231,6 +233,42 @@ func TestBulkProcessRemoteBlobHandshake(t *testing.T) {
 	require.Empty(t, backend.forwarded[0].BlobUploads)
 }
 
+func TestBulkProcessNegotiatedInputUsesBoundedDiskSpool(t *testing.T) {
+	requestBytes := len(newTestBulkRequest("item-1").Value)
+	for _, tc := range []struct {
+		name string
+		opts BulkBatchOptions
+	}{
+		{name: "max items", opts: testBulkBatchOptions(2, 1<<20, 0)},
+		{name: "max bytes", opts: testBulkBatchOptions(100, requestBytes+1, 0)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := &bulkBlobValidationBackend{}
+			blob := bulkBlobEndpointSupport{StreamingBlobSupport: bulkBlobUploadFunc{put: func(_ context.Context, _ *resourcepb.PutBlobRequest, reader io.Reader) (*resourcepb.PutBlobResponse, error) {
+				return completedBulkBlobUpload(reader)
+			}}}
+			srv := &server{backend: backend, blob: blob, blobTransfers: newBlobTransfers(), access: authlib.FixedAccessClient(true), bulkBatchOptions: tc.opts}
+			reqs := []*resourcepb.BulkRequest{
+				newTestBulkRequest("item-1"),
+				newTestBulkRequest("item-2"),
+				newTestBulkRequest("item-3"),
+				newTestBulkRequest("item-4"),
+				newTestBulkRequest("item-5"),
+			}
+			settings := BulkSettings{Collection: []*resourcepb.ResourceKey{reqs[0].Key}}
+			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: identity.RoleAdmin})
+			ctx = metadata.NewIncomingContext(ctx, metadata.Join(settings.ToMD(), metadata.Pairs(resourcepb.InlineBlobMetadataKey, "1")))
+			stream := &negotiatedBulkBlobStream{bulkBlobValidationStream: bulkBlobValidationStream{testBulkProcessServer: testBulkProcessServer{ctx: ctx, requests: reqs}}}
+
+			require.NoError(t, srv.BulkProcess(stream))
+			require.Nil(t, stream.response.Error)
+			require.True(t, backend.diskBacked)
+			require.Equal(t, []int{2, 2, 1}, backend.batchSizes)
+			require.Len(t, backend.forwarded, len(reqs))
+		})
+	}
+}
+
 func TestBulkProcessBlobUploadFailureDoesNotPublish(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
@@ -263,7 +301,8 @@ func TestBulkProcessBlobUploadFailureDoesNotPublish(t *testing.T) {
 			require.NoError(t, srv.BulkProcess(stream))
 			require.NoError(t, resourcepb.ValidateInlineBlobAcknowledgement(stream.headers))
 			require.Empty(t, backend.forwarded)
-			require.True(t, backend.rollback)
+			require.False(t, backend.called)
+			require.False(t, backend.rollback)
 			require.NotNil(t, stream.response.Error)
 			require.Zero(t, stream.response.Processed)
 		})
@@ -350,19 +389,36 @@ func runBulkBlobValidationTest(t *testing.T, req *resourcepb.BulkRequest, skip b
 
 type bulkBlobValidationBackend struct {
 	UnimplementedStorageBackend
-	settings  BulkSettings
-	forwarded []*resourcepb.BulkRequest
-	rollback  bool
+	settings   BulkSettings
+	forwarded  []*resourcepb.BulkRequest
+	batchSizes []int
+	called     bool
+	rollback   bool
+	diskBacked bool
 }
 
 func (b *bulkBlobValidationBackend) ProcessBulk(_ context.Context, settings BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
+	b.called = true
 	b.settings = settings
-	for iter.Next() {
-		if iter.RollbackRequested() {
-			b.rollback = true
-			break
+	_, b.diskBacked = iter.(*spooledBulkRequests)
+	if batchIter, ok := iter.(BulkRequestBatchIterator); ok {
+		for batchIter.NextBatch() {
+			if batchIter.RollbackRequested() {
+				b.rollback = true
+				break
+			}
+			batch := batchIter.Batch()
+			b.batchSizes = append(b.batchSizes, len(batch))
+			b.forwarded = append(b.forwarded, batch...)
 		}
-		b.forwarded = append(b.forwarded, iter.Request())
+	} else {
+		for iter.Next() {
+			if iter.RollbackRequested() {
+				b.rollback = true
+				break
+			}
+			b.forwarded = append(b.forwarded, iter.Request())
+		}
 	}
 	return &resourcepb.BulkResponse{Processed: int64(len(b.forwarded))}
 }
