@@ -175,6 +175,18 @@ func TestEnsureSyncIdentifier(t *testing.T) {
 		assert.Equal(t, "mimir-prod-2", got)
 	})
 
+	t.Run("avoids the names reserved for the default routing tree", func(t *testing.T) {
+		for name, want := range map[string]string{"Default": "default-2", "User Defined": "user-defined-2"} {
+			adminCfg := newFakeConfigClient()
+			adminCfg.setUID(1, "ds-1")
+			s := newIdentifierTestSyncer(t, adminCfg, fakeAMConfigReader{raw: validAMConfigBase}, namedMimirDS("ds-1", name, 1))
+
+			got, err := s.ensureSyncIdentifier(ctx, 1, syncTarget{uid: "ds-1", origin: originAPI})
+			require.NoError(t, err)
+			assert.Equal(t, want, got, name)
+		}
+	})
+
 	t.Run("uses a name another instance recorded first", func(t *testing.T) {
 		adminCfg := newFakeConfigClient()
 		adminCfg.setUID(1, "ds-1")

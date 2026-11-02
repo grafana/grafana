@@ -12,6 +12,7 @@ import (
 
 	alertingnotifv1beta1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
@@ -134,7 +135,7 @@ func (s *ExternalAMSyncer) ensureSyncIdentifier(ctx context.Context, orgID int64
 		return "", &SyncError{Reason: ReasonConfigRead, Cause: fmt.Errorf("parse alertmanager configuration: %w", err)}
 	}
 
-	taken := make(map[string]struct{}, len(amCfg.ManagedRoutes)+len(amCfg.ExtraConfigs))
+	taken := make(map[string]struct{}, len(amCfg.ManagedRoutes)+len(amCfg.ExtraConfigs)+2)
 	for name := range amCfg.ManagedRoutes {
 		taken[name] = struct{}{}
 	}
@@ -152,6 +153,9 @@ func (s *ExternalAMSyncer) ensureSyncIdentifier(ctx context.Context, orgID int64
 		if err != nil {
 			return "", &SyncError{Reason: ReasonDatasourceLookup, Cause: fmt.Errorf("look up datasource: %w", err)}
 		}
+		// Merging rejects the default routing tree's names, so a new import can't use them.
+		taken[models.DefaultRoutingTreeName] = struct{}{}
+		taken[models.DefaultRoutingTreeNameAlias] = struct{}{}
 		candidate = uniqueSyncIdentifier(syncIdentifierFromName(ds.Name), taken)
 	}
 
