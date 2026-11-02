@@ -192,11 +192,13 @@ func TestIntegrationSQLPollingNotifierDeliversAllWrites(t *testing.T) {
 	}
 	t.Cleanup(db.CleanupTestDB)
 
-	initMutex.Lock()
-	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	watched := startTestBackend(t, dbstore, true, 0, 0)
-	other := startTestBackend(t, dbstore, true, 0, 0)
-	initMutex.Unlock()
+	// Deferred so a failed require (FailNow) still releases the lock.
+	watched, other := func() (resource.StorageBackend, resource.StorageBackend) {
+		initMutex.Lock()
+		defer initMutex.Unlock()
+		dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		return startTestBackend(t, dbstore, true, 0, 0), startTestBackend(t, dbstore, true, 0, 0)
+	}()
 
 	// Hang guard only.
 	ctx := testutil.NewTestContext(t, time.Now().Add(time.Minute))
