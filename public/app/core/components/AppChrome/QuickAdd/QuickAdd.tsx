@@ -41,10 +41,13 @@ export const QuickAdd = ({}: Props) => {
   const actionGroups = useMemo(() => {
     const groups = findCreateActionGroups(navBarTree);
 
-    // Every current item in the "dashboards/browse" group (New dashboard, Import
-    // dashboard, Use template below) creates a dashboard
+    // New dashboard and Use template need edit mode
     if (isMobileEditDeprecated) {
-      return groups.filter((g) => g.parentId !== 'dashboards/browse');
+      return groups
+        .map((g) =>
+          g.parentId === 'dashboards/browse' ? { ...g, items: g.items.filter((i) => i.id === 'dashboards/import') } : g
+        )
+        .filter((g) => g.items.length > 0);
     }
 
     if (isTemplateDashboardsAvailable) {
