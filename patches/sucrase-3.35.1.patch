@@ -1,0 +1,272 @@
+diff --git a/dist/CJSImportProcessor.js b/dist/CJSImportProcessor.js
+index 44a71ca4..1957b99d 100644
+--- a/dist/CJSImportProcessor.js
++++ b/dist/CJSImportProcessor.js
+@@ -36,6 +36,8 @@ var _getNonTypeIdentifiers = require('./util/getNonTypeIdentifiers');
+    __init3() {this.importsToReplace = new Map()}
+    __init4() {this.identifierReplacements = new Map()}
+    __init5() {this.exportBindingsByLocalName = new Map()}
++   __init6() {this.explicitExportNames = new Set()}
++   __init7() {this.exportStarExclusionName = null}
+
+   constructor(
+      nameManager,
+@@ -45,7 +47,7 @@ var _getNonTypeIdentifiers = require('./util/getNonTypeIdentifiers');
+      isTypeScriptTransformEnabled,
+      keepUnusedImports,
+      helperManager,
+-  ) {;this.nameManager = nameManager;this.tokens = tokens;this.enableLegacyTypeScriptModuleInterop = enableLegacyTypeScriptModuleInterop;this.options = options;this.isTypeScriptTransformEnabled = isTypeScriptTransformEnabled;this.keepUnusedImports = keepUnusedImports;this.helperManager = helperManager;CJSImportProcessor.prototype.__init.call(this);CJSImportProcessor.prototype.__init2.call(this);CJSImportProcessor.prototype.__init3.call(this);CJSImportProcessor.prototype.__init4.call(this);CJSImportProcessor.prototype.__init5.call(this);}
++  ) {;this.nameManager = nameManager;this.tokens = tokens;this.enableLegacyTypeScriptModuleInterop = enableLegacyTypeScriptModuleInterop;this.options = options;this.isTypeScriptTransformEnabled = isTypeScriptTransformEnabled;this.keepUnusedImports = keepUnusedImports;this.helperManager = helperManager;CJSImportProcessor.prototype.__init.call(this);CJSImportProcessor.prototype.__init2.call(this);CJSImportProcessor.prototype.__init3.call(this);CJSImportProcessor.prototype.__init4.call(this);CJSImportProcessor.prototype.__init5.call(this);CJSImportProcessor.prototype.__init6.call(this);CJSImportProcessor.prototype.__init7.call(this);}
+
+   preprocessTokens() {
+     for (let i = 0; i < this.tokens.tokens.length; i++) {
+@@ -158,9 +160,12 @@ var _getNonTypeIdentifiers = require('./util/getNonTypeIdentifiers');
+         requireCode += ` exports.${exportStarName} = ${secondaryImportName};`;
+       }
+       if (hasStarExport) {
++        if (this.exportStarExclusionName === null) {
++          this.exportStarExclusionName = this.nameManager.claimFreeName("_explicitExports");
++        }
+         requireCode += ` ${this.helperManager.getHelperName(
+           "createStarExport",
+-        )}(${primaryImportName});`;
++        )}(${primaryImportName}, ${this.exportStarExclusionName});`;
+       }
+
+       this.importsToReplace.set(path, requireCode);
+@@ -174,6 +179,13 @@ var _getNonTypeIdentifiers = require('./util/getNonTypeIdentifiers');
+     }
+   }
+
++  getExportStarExclusionPrefix() {
++    if (this.exportStarExclusionName === null) return "";
++    // Collect names from emitted exports so erased TypeScript declarations do not hide runtime exports.
++    const properties = [...this.explicitExportNames].map((name) => `[${JSON.stringify(name)}]: true`).join(",");
++    return `var ${this.exportStarExclusionName} = {${properties}};`;
++  }
++
+   getFreeIdentifierForPath(path) {
+     const components = path.split("/");
+     const lastComponent = components[components.length - 1];
+@@ -286,10 +298,16 @@ var _getNonTypeIdentifiers = require('./util/getNonTypeIdentifiers');
+         this.tokens.matches1AtIndex(i, _types.TokenType.bracketR)
+       ) {
+         depth--;
+-      } else if (depth === 0 && !this.tokens.matches1AtIndex(i, _types.TokenType.name)) {
++      } else if (
++        depth === 0 &&
++        !this.tokens.tokens[i].isType &&
++        !this.tokens.matches1AtIndex(i, _types.TokenType.name) &&
++        !this.tokens.matches1AtIndex(i, _types.TokenType.eq) &&
++        !this.tokens.matches1AtIndex(i, _types.TokenType.comma)
++      ) {
+         break;
+-      } else if (this.tokens.matches1AtIndex(1, _types.TokenType.eq)) {
+-        const endIndex = this.tokens.currentToken().rhsEndIndex;
++      } else if (this.tokens.matches1AtIndex(i, _types.TokenType.eq)) {
++        const endIndex = this.tokens.tokens[i].rhsEndIndex;
+         if (endIndex == null) {
+           throw new Error("Expected = token with an end index.");
+         }
+diff --git a/dist/HelperManager.js b/dist/HelperManager.js
+index 6dcc9c99..ef84d97a 100644
+--- a/dist/HelperManager.js
++++ b/dist/HelperManager.js
+@@ -33,16 +33,13 @@ const HELPERS = {
+       Object.defineProperty(exports, localName, {enumerable: true, configurable: true, get: () => obj[importedName]});
+     }
+   `,
+-  // Note that TypeScript and Babel do this differently; TypeScript does a simple existence
+-  // check in the exports object and does a plain assignment, whereas Babel uses
+-  // defineProperty and builds an object of explicitly-exported names so that star exports can
+-  // always take lower precedence. For now, we do the easier TypeScript thing.
++  // Explicit runtime exports take precedence even when a star export executes first.
+   createStarExport: `
+-    function createStarExport(obj) {
++    function createStarExport(obj, explicitNames) {
+       Object.keys(obj)
+         .filter((key) => key !== "default" && key !== "__esModule")
+         .forEach((key) => {
+-          if (exports.hasOwnProperty(key)) {
++          if (Object.prototype.hasOwnProperty.call(explicitNames, key) || Object.prototype.hasOwnProperty.call(exports, key)) {
+             return;
+           }
+           Object.defineProperty(exports, key, {enumerable: true, configurable: true, get: () => obj[key]});
+diff --git a/dist/transformers/CJSImportTransformer.js b/dist/transformers/CJSImportTransformer.js
+index 170e5bb8..f05e54ee 100644
+--- a/dist/transformers/CJSImportTransformer.js
++++ b/dist/transformers/CJSImportTransformer.js
+@@ -52,7 +52,7 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+     if (this.hadExport) {
+       prefix += 'Object.defineProperty(exports, "__esModule", {value: true});';
+     }
+-    return prefix;
++    return prefix + this.importProcessor.getExportStarExclusionPrefix();
+   }
+
+   getSuffixCode() {
+@@ -311,6 +311,8 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+       this.tokens.matches3(_types.TokenType._export, _types.TokenType._const, _types.TokenType._enum)
+     ) {
+       this.hadNamedExport = true;
++      const nameIndex = this.tokens.currentIndex() + (this.tokens.matches2(_types.TokenType._export, _types.TokenType._enum) ? 2 : 3);
++      this.importProcessor.explicitExportNames.add(this.tokens.identifierNameAtIndex(nameIndex));
+       // Let the TypeScript transform handle it.
+       return false;
+     }
+@@ -609,10 +611,18 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+    * Transform a declaration like `export var`, `export let`, or `export const`.
+    */
+    processExportVar() {
+-    if (this.isSimpleExportVar()) {
+-      this.processSimpleExportVar();
+-    } else {
+-      this.processComplexExportVar();
++    this.tokens.removeInitialToken();
++    const kind = this.tokens.matches1(_types.TokenType._const) ? "const" : this.tokens.matches1(_types.TokenType._let) ? "let" : "var";
++    this.tokens.removeToken();
++    while (true) {
++      if (this.isSimpleExportVar()) {
++        this.processSimpleExportVar(kind);
++      } else {
++        this.processComplexExportVar();
++      }
++      if (!this.tokens.matches1(_types.TokenType.comma)) break;
++      // Publish each initializer before the next one, retaining inferred names for functions and classes.
++      this.tokens.replaceToken(";");
+     }
+   }
+
+@@ -623,10 +633,6 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+    */
+    isSimpleExportVar() {
+     let tokenIndex = this.tokens.currentIndex();
+-    // export
+-    tokenIndex++;
+-    // var/let/const
+-    tokenIndex++;
+     if (!this.tokens.matches1AtIndex(tokenIndex, _types.TokenType.name)) {
+       return false;
+     }
+@@ -653,12 +659,10 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+    * have an inferred name of "f", which wouldn't happen in the more general
+    * case below.
+    */
+-   processSimpleExportVar() {
+-    // export
+-    this.tokens.removeInitialToken();
+-    // var/let/const
+-    this.tokens.copyToken();
++   processSimpleExportVar(kind) {
++    this.tokens.appendCode(`${kind} `);
+     const varName = this.tokens.identifierName();
++    this.importProcessor.explicitExportNames.add(varName);
+     // x: number  ->  x
+     while (!this.tokens.matches1(_types.TokenType.eq)) {
+       this.rootTransformer.processToken();
+@@ -681,8 +685,6 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+    * ({x: [exports.a = 2, exports.b], c: exports.c} = d;)
+    */
+    processComplexExportVar() {
+-    this.tokens.removeInitialToken();
+-    this.tokens.removeToken();
+     const needsParens = this.tokens.matches1(_types.TokenType.braceL);
+     if (needsParens) {
+       this.tokens.appendCode("(");
+@@ -703,6 +705,7 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+       } else if (
+         depth === 0 &&
+         !this.tokens.matches1(_types.TokenType.name) &&
++        !this.tokens.matches1(_types.TokenType.eq) &&
+         !this.tokens.currentToken().isType
+       ) {
+         break;
+@@ -720,6 +723,7 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+         const token = this.tokens.currentToken();
+         if (_tokenizer.isDeclaration.call(void 0, token)) {
+           const name = this.tokens.identifierName();
++          this.importProcessor.explicitExportNames.add(name);
+           let replacement = this.importProcessor.getIdentifierReplacement(name);
+           if (replacement === null) {
+             throw new Error(`Expected a replacement for ${name} in \`export var\` syntax.`);
+@@ -735,14 +739,6 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+     }
+
+     if (needsParens) {
+-      // Seek to the end of the RHS.
+-      const endIndex = this.tokens.currentToken().rhsEndIndex;
+-      if (endIndex == null) {
+-        throw new Error("Expected = token with an end index.");
+-      }
+-      while (this.tokens.currentIndex() < endIndex) {
+-        this.rootTransformer.processToken();
+-      }
+       this.tokens.appendCode(")");
+     }
+   }
+@@ -756,6 +752,7 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+    processExportFunction() {
+     this.tokens.replaceToken("");
+     const name = this.processNamedFunction();
++    this.importProcessor.explicitExportNames.add(name);
+     this.tokens.appendCode(` exports.${name} = ${name};`);
+   }
+
+@@ -809,6 +806,7 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+       this.tokens.removeToken();
+     }
+     const name = this.rootTransformer.processNamedClass();
++    this.importProcessor.explicitExportNames.add(name);
+     this.tokens.appendCode(` exports.${name} = ${name};`);
+   }
+
+@@ -851,6 +849,7 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+         (!isReExport && this.shouldElideExportedIdentifier(specifierInfo.leftName));
+       if (!shouldRemoveExport) {
+         const exportedName = specifierInfo.rightName;
++        this.importProcessor.explicitExportNames.add(exportedName);
+         if (exportedName === "default") {
+           this.hadDefaultExport = true;
+         } else {
+@@ -894,6 +893,9 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+   }
+
+    processExportStar() {
++    if (this.tokens.matches3(_types.TokenType._export, _types.TokenType.star, _types.TokenType._as)) {
++      this.importProcessor.explicitExportNames.add(this.tokens.identifierNameAtIndex(this.tokens.currentIndex() + 3));
++    }
+     this.tokens.removeInitialToken();
+     while (!this.tokens.matches1(_types.TokenType.string)) {
+       this.tokens.removeToken();
+diff --git a/dist/util/getClassInfo.js b/dist/util/getClassInfo.js
+index 510a7712..f2358aa5 100644
+--- a/dist/util/getClassInfo.js
++++ b/dist/util/getClassInfo.js
+@@ -116,6 +116,9 @@ var _types = require('../parser/tokenizer/types');
+
+       const nameStartIndex = tokens.currentIndex();
+       skipFieldName(tokens);
++      if (tokens.matches1(_types.TokenType.question) && tokens.currentToken().isType) {
++        tokens.nextToken();
++      }
+       if (tokens.matches1(_types.TokenType.lessThan) || tokens.matches1(_types.TokenType.parenL)) {
+         // This is a method, so nothing to process.
+         skipToNextClassElement(tokens, classContextId);
+diff --git a/dist/transformers/JSXTransformer.js b/dist/transformers/JSXTransformer.js
+index df51be3d..b442a0f1 100644
+--- a/dist/transformers/JSXTransformer.js
++++ b/dist/transformers/JSXTransformer.js
+@@ -39,6 +39,13 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+     this.jsxPragmaInfo = _getJSXPragmaInfo2.default.call(void 0, options);
+     this.isAutomaticRuntime = options.jsxRuntime === "automatic";
+     this.jsxImportSource = options.jsxImportSource || "react";
++    // Only leading comments can select a runtime; strings and JSX text cannot.
++    const leading = tokens.code.slice(0, tokens.tokens[0].start);
++    for (const comment of leading.matchAll(/\/\*[\s\S]*?\*\/|\/\/[^\r\n]*/g)) {
++      if (!comment[0].startsWith("/*")) continue;
++      const pragma = /(?:^|\s)@jsxImportSource\s+([^\s*]+)/.exec(comment[0]);
++      if (pragma) this.jsxImportSource = pragma[1];
++    }
+   }
+
+   process() {

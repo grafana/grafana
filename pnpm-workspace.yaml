@@ -57,6 +57,7 @@ patchedDependencies:
   "slate-dev-environment@0.2.5": patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch
   "react-grid-layout@1.4.4": patches/react-grid-layout-npm-1.4.4-4024c5395b.patch
   "storybook@10.6.2": patches/storybook-npm-10.6.2-7da1cdbbd6.patch
+  "sucrase@3.35.1": patches/sucrase-3.35.1.patch
   "react-calendar@6.0.1": patches/react-calendar-npm-6.0.1-22fe91a41c.patch
 
 linkWorkspacePackages: true

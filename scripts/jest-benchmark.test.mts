@@ -15,6 +15,7 @@ function project(t: TestContext, behavior = '', selected = ['example.test.ts'], 
   mkdirSync(packageDir, { recursive: true });
   writeFileSync(path.join(rootDir, 'package.json'), '{}');
   writeFileSync(path.join(rootDir, 'jest.config.js'), 'module.exports = {};\n');
+  writeFileSync(path.join(rootDir, 'jest.happy-dom.config.js'), 'module.exports = {};\n');
   for (const file of selected) {
     mkdirSync(path.dirname(path.join(rootDir, file)), { recursive: true });
     writeFileSync(path.join(rootDir, file), '');
@@ -97,8 +98,11 @@ for (const environment of ['jsdom', 'happy-dom'] as const) {
     const rootDir = project(t);
     assert.equal(await runBenchmark({ rootDir, environment }), 0);
     const expected = environment === 'jsdom' ? 'jsdom' : path.resolve(rootDir, 'public/test/happy-dom-environment.js');
+    const config = environment === 'happy-dom' ? 'jest.happy-dom.config.js' : 'jest.config.js';
     for (const phase of ['discovery', 'invocation']) {
-      assert.deepEqual(invocation(rootDir, phase).args.filter((arg) => arg.startsWith('--env=')), [`--env=${expected}`]);
+      const { args } = invocation(rootDir, phase);
+      assert.deepEqual(args.filter((arg) => arg.startsWith('--env=')), [`--env=${expected}`]);
+      assert.equal(args[args.indexOf('--config') + 1], path.join(rootDir, config));
     }
   });
 }
@@ -123,6 +127,21 @@ for (const environment of [undefined, 'jsdom', 'happy-dom']) {
     }
     assert.ok(result.stdout.startsWith(`${environment ?? 'jsdom'} | shard 5/8 + split companions |`));
     assert.ok(invocation(rootDir, 'discovery').args.includes('--shard=5/8'));
+  });
+}
+
+for (const shard of ['1/8', '5/8']) {
+  test(`Happy DOM CLI shard ${shard} selects its Sucrase configuration`, (t) => {
+    const rootDir = project(t);
+    const result = runCli(rootDir, ['--environment=happy-dom', `--shard=${shard}`]);
+    assert.equal(result.status, 0, result.stderr);
+    for (const phase of ['discovery', 'invocation']) {
+      const { args } = invocation(rootDir, phase);
+      assert.equal(args[args.indexOf('--config') + 1], path.join(rootDir, 'jest.happy-dom.config.js'));
+      assert.ok(args.includes('--maxWorkers=4'));
+    }
+    assert.ok(invocation(rootDir, 'discovery').args.includes(`--shard=${shard}`));
+    assert.equal(invocation(rootDir).args.some((arg) => arg.startsWith('--shard')), false);
   });
 }
 

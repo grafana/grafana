@@ -69,7 +69,7 @@ export async function runBenchmark({
   const commonArgs = [
     jest,
     '--config',
-    path.join(rootDir, 'jest.config.js'),
+    path.join(rootDir, environment === 'happy-dom' ? 'jest.happy-dom.config.js' : 'jest.config.js'),
     `--env=${jestEnvironment}`,
     '--ci',
     '--watch=false',
