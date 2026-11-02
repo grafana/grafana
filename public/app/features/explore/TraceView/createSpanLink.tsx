@@ -8,7 +8,6 @@ import {
   FieldType,
   type LinkModel,
   mapInternalLinkToExplore,
-  rangeUtil,
   type ScopedVars,
   type SplitOpen,
   type TimeRange,
@@ -28,7 +27,7 @@ import { type ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageIn
 import { getTraceToLogsSpanQuery, interpolateQueries } from './components/logsLink';
 import { type SpanLinkDef, type SpanLinkFunc, SpanLinkType } from './components/types/links';
 import { type Trace, type TraceSpan, type TraceSpanReference } from './components/types/trace';
-import { getTimeRangeFromTimestamps, scopedVarsFromTrace } from './createTraceLink';
+import { getTimeRangeFromTimestamps, scopedVarsFromTrace, timeShiftToMs } from './createTraceLink';
 import { getDefaultMetricTags, getDefaultProfilingTags, getFormattedTags, getSpanTags } from './crossSignalConfig';
 
 /**
@@ -190,12 +189,8 @@ function legacyCreateSpanLinkFactory(
             range: getTimeRangeFromSpan(
               span,
               {
-                startMs: traceToLogsOptions.spanStartTimeShift
-                  ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
-                  : 0,
-                endMs: traceToLogsOptions.spanEndTimeShift
-                  ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift)
-                  : 0,
+                startMs: timeShiftToMs(traceToLogsOptions.spanStartTimeShift),
+                endMs: timeShiftToMs(traceToLogsOptions.spanEndTimeShift),
               },
               isSplunkDS
             ),
@@ -311,12 +306,8 @@ function legacyCreateSpanLinkFactory(
           internalLink: dataLink.internal!,
           scopedVars,
           range: getTimeRangeFromSpan(span, {
-            startMs: traceToMetricsOptions.spanStartTimeShift
-              ? rangeUtil.intervalToMs(traceToMetricsOptions.spanStartTimeShift)
-              : -120000,
-            endMs: traceToMetricsOptions.spanEndTimeShift
-              ? rangeUtil.intervalToMs(traceToMetricsOptions.spanEndTimeShift)
-              : 120000,
+            startMs: timeShiftToMs(traceToMetricsOptions.spanStartTimeShift, -120000),
+            endMs: timeShiftToMs(traceToMetricsOptions.spanEndTimeShift, 120000),
           }),
           field: {
             name: '',

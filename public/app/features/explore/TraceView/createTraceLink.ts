@@ -67,10 +67,8 @@ export function createTraceLogsLink({
       range: getTimeRangeFromTrace(
         trace,
         {
-          startMs: traceToLogsOptions.spanStartTimeShift
-            ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
-            : 0,
-          endMs: traceToLogsOptions.spanEndTimeShift ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift) : 0,
+          startMs: timeShiftToMs(traceToLogsOptions.spanStartTimeShift),
+          endMs: timeShiftToMs(traceToLogsOptions.spanEndTimeShift),
         },
         isSplunkDS
       ),
@@ -134,6 +132,21 @@ export function createTraceLogsLink({
     ...link,
     title: getLogsButtonCTA(traceDataSourceSettings, 'trace'),
   };
+}
+
+/**
+ * Converts a configured span time shift to milliseconds. An invalid shift, such as a unit-less "0" that
+ * rangeUtil.intervalToMs rejects, is treated as unset so it cannot break building links.
+ */
+export function timeShiftToMs(shift: string | undefined, defaultMs = 0): number {
+  if (!shift) {
+    return defaultMs;
+  }
+  try {
+    return rangeUtil.intervalToMs(shift);
+  } catch {
+    return defaultMs;
+  }
 }
 
 /**
