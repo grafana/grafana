@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/kv"
@@ -42,12 +43,17 @@ var initMutex = &sync.Mutex{}
 // newTestBackend creates a fresh database and backend for a test.
 // It uses a mutex to ensure the entire initialization and migration
 // process is atomic and does not race with other parallel tests.
-func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Duration, maxOpenConn int) resource.StorageBackend {
+func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Duration, maxOpenConn int, opts ...sql.StorageBackendOption) resource.StorageBackend {
 	// Lock to ensure the entire init block is atomic.
 	initMutex.Lock()
 	// Unlock once the function returns the initialized backend.
 	defer initMutex.Unlock()
 
+	return startTestBackend(t, db.InitTestDB(t), isHA, simulatedNetworkLatency, maxOpenConn, opts...) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+}
+
+// startTestBackend starts a backend on dbstore. Callers must hold initMutex.
+func startTestBackend(t *testing.T, dbstore db.DB, isHA bool, simulatedNetworkLatency time.Duration, maxOpenConn int, opts ...sql.StorageBackendOption) resource.StorageBackend {
 	cfg := setting.NewCfg()
 	cfg.GRPCServer.Address = "localhost:0" // get a free address
 	cfg.GRPCServer.Network = "tcp"
@@ -58,7 +64,6 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	cfg.SimulatedNetworkLatency = simulatedNetworkLatency
 	cfg.DisablePruner = db.IsTestDbSQLite()
 	cfg.NotifierSettleDelay = time.Millisecond // keep it low in tests as most of them don't exercise concurrent writes
-	dbstore := db.InitTestDB(t)                //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	dbSection := cfg.SectionWithEnvOverrides("database")
 	if isHA {
 		dbSection.Key("high_availability").SetValue("true")
@@ -70,7 +75,7 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	}
 	eDB, err := sql.ProvideResourceDB(cfg, dbstore)
 	require.NoError(t, err)
-	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil, nil)
+	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil, nil, opts...)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 	backendService, ok := backend.(services.Service)
@@ -117,6 +122,148 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 			return newTestBackend(t, false, 0, 0)
 		}, nil)
 	})
+}
+
+type recordingPublisher struct {
+	mu            sync.Mutex
+	notifications []*resourcepb.WatchNotification
+	subjects      []string
+}
+
+func (p *recordingPublisher) Enabled() bool { return true }
+
+func (p *recordingPublisher) Publish(_ context.Context, subject string, data []byte) error {
+	n := &resourcepb.WatchNotification{}
+	if err := proto.Unmarshal(data, n); err != nil {
+		return err
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.subjects = append(p.subjects, subject)
+	p.notifications = append(p.notifications, n)
+	return nil
+}
+
+func TestIntegrationSQLBackendPublishesWatchNotifications(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	t.Cleanup(db.CleanupTestDB)
+
+	pub := &recordingPublisher{}
+	backend := newTestBackend(t, !db.IsTestDbSQLite(), 0, 0, sql.WithEventPublisher(pub))
+	ctx := testutil.NewDefaultTestContext(t)
+
+	created, err := unitest.WriteEvent(ctx, backend, "item", resourcepb.WatchEvent_ADDED)
+	require.NoError(t, err)
+	updated, err := unitest.WriteEvent(ctx, backend, "item", resourcepb.WatchEvent_MODIFIED, unitest.WithNamespaceAndRV("namespace", created))
+	require.NoError(t, err)
+	deleted, err := unitest.WriteEvent(ctx, backend, "item", resourcepb.WatchEvent_DELETED, unitest.WithNamespaceAndRV("namespace", updated))
+	require.NoError(t, err)
+
+	subject := "us.watch.v1.group.namespace.resource"
+	require.Equal(t, []string{subject, subject, subject}, pub.subjects)
+	want := []struct {
+		typ    resourcepb.WatchNotification_Type
+		rv     int64
+		prevRV int64
+	}{
+		{resourcepb.WatchNotification_ADDED, created, 0},
+		{resourcepb.WatchNotification_MODIFIED, updated, created},
+		{resourcepb.WatchNotification_DELETED, deleted, updated},
+	}
+	for i, w := range want {
+		got := pub.notifications[i]
+		require.Equal(t, w.typ, got.GetType())
+		require.Equal(t, "group", got.GetGroup())
+		require.Equal(t, "resource", got.GetResource())
+		require.Equal(t, "namespace", got.GetNamespace())
+		require.Equal(t, "item", got.GetName())
+		require.Equal(t, "folderuid", got.GetFolder())
+		require.Equal(t, w.rv, got.GetResourceVersion())
+		require.Equal(t, w.prevRV, got.GetPreviousResourceVersion())
+	}
+}
+
+// Two instances share one DB: the polling notifier of one must deliver every
+// write of both exactly once and in RV order, including writes batched together.
+func TestIntegrationSQLPollingNotifierDeliversAllWrites(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	if db.IsTestDbSQLite() {
+		t.Skip("sqlite not compatible with HA")
+	}
+	t.Cleanup(db.CleanupTestDB)
+
+	// Deferred so a failed require (FailNow) still releases the lock.
+	watched, other := func() (resource.StorageBackend, resource.StorageBackend) {
+		initMutex.Lock()
+		defer initMutex.Unlock()
+		dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		return startTestBackend(t, dbstore, true, 0, 0), startTestBackend(t, dbstore, true, 0, 0)
+	}()
+
+	// Hang guard only.
+	ctx := testutil.NewTestContext(t, time.Now().Add(time.Minute))
+	events, err := watched.WatchWriteEvents(ctx)
+	require.NoError(t, err)
+
+	expectDelivered := func(t *testing.T, want map[string]int64) {
+		t.Helper()
+		got := map[string]int64{}
+		var lastRV int64
+		for len(got) < len(want) {
+			select {
+			case e := <-events:
+				require.NotContains(t, got, e.Key.Name, "event delivered twice")
+				require.Greater(t, e.ResourceVersion, lastRV, "events out of RV order")
+				lastRV = e.ResourceVersion
+				got[e.Key.Name] = e.ResourceVersion
+			case <-ctx.Done():
+				t.Fatalf("got %d of %d events: %v", len(got), len(want), got)
+			}
+		}
+		require.Equal(t, want, got)
+	}
+
+	writeConcurrently := func(t *testing.T, prefix string, n int) map[string]int64 {
+		t.Helper()
+		var (
+			mu   sync.Mutex
+			wg   sync.WaitGroup
+			rvs  = map[string]int64{}
+			errs []error
+		)
+		for i := range n {
+			backend := watched
+			if i%2 == 1 {
+				backend = other
+			}
+			name := prefix + strconv.Itoa(i)
+			wg.Go(func() {
+				rv, err := unitest.WriteEvent(ctx, backend, name, resourcepb.WatchEvent_ADDED)
+				mu.Lock()
+				defer mu.Unlock()
+				rvs[name] = rv
+				errs = append(errs, err)
+			})
+		}
+		wg.Wait()
+		for _, err := range errs {
+			require.NoError(t, err)
+		}
+		return rvs
+	}
+
+	// Concurrent first writes from two instances race on the resource_version
+	// insert, so create the collection first.
+	rv, err := unitest.WriteEvent(ctx, other, "seed", resourcepb.WatchEvent_ADDED)
+	require.NoError(t, err)
+	expectDelivered(t, map[string]int64{"seed": rv})
+
+	expectDelivered(t, writeConcurrently(t, "first-", 20))
+	// Later writes to the same collection, once the poller has caught up.
+	expectDelivered(t, writeConcurrently(t, "second-", 20))
+	rv, err = unitest.WriteEvent(ctx, other, "last", resourcepb.WatchEvent_ADDED)
+	require.NoError(t, err)
+	expectDelivered(t, map[string]int64{"last": rv})
 }
 
 func TestIntegrationSearchAndStorage(t *testing.T) {

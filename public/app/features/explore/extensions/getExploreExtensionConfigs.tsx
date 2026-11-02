@@ -4,6 +4,7 @@ import { type PluginExtensionAddedLinkConfig, PluginExtensionPoints } from '@gra
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { Spinner } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { isMobileEditDeprecated } from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
 import { ADD_PANEL_MODAL_WIDTH, addPanelToNotebookTitle } from 'app/features/notebook/addPanel/addPanelModal';
 import { canAddPanelToNotebook } from 'app/features/notebook/permissions';
 import { dispatch } from 'app/store/store';
@@ -47,6 +48,11 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
 
           // hide option if user has insufficient permissions
           if (!canAddPanelToDashboard) {
+            return undefined;
+          }
+
+          // Adding a panel requires edit mode on the target dashboard, which is unavailable on mobile.
+          if (isMobileEditDeprecated()) {
             return undefined;
           }
 

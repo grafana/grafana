@@ -58,15 +58,36 @@ func TestNewCloudRoutesLoader_NoTargetsConfigured(t *testing.T) {
 	require.Nil(t, loader) // falls back to dummyRoutesLoader upstream
 }
 
-func TestNewCloudRoutesLoader_PluginsGroupPatternsAndRegexConflict(t *testing.T) {
+// [router.backend_grpc] only matters once a manifests URL is set, so an invalid
+// section must not stop a router that has no sources from falling back.
+func TestNewCloudRoutesLoader_BackendGRPCIgnoredWithoutManifestsURLs(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{})
+	grpcSection, err := cfg.Raw.NewSection(backendGRPCSection)
+	require.NoError(t, err)
+	_, err = grpcSection.NewKey("retry_max", "-1")
+	require.NoError(t, err)
+
+	loader, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
+	require.NoError(t, err)
+	require.Nil(t, loader)
+
+	cfg.Raw.Section(cloudRouterSection).Key("bridge_url").SetValue("https://bridge.invalid/plugins")
+	_, err = NewCloudRoutesLoader(cfg, PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.ErrorContains(t, err, backendGRPCSection)
+}
+
+func TestNewCloudRoutesLoader_PluginsGroupPatternsWinOverRegex(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
 		"plugins_url":            "http://plugins.invalid/plugins",
 		"plugins_group_patterns": "*.a",
 		"plugins_group_regex":    "*.b",
 	})
 
-	_, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
-	require.EqualError(t, err, "cloud_router: set plugins_group_patterns or plugins_group_regex, not both")
+	loader, err := NewCloudRoutesLoader(cfg, PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.NoError(t, err)
+	target := pluginManifestsTargetOf(loader.(*cloudLoader), sourcePlugins)
+	require.NotNil(t, target)
+	require.Len(t, target.patterns, 1)
 }
 
 // A deployment still configured only for the removed appmanifest apiserver
@@ -302,7 +323,7 @@ func TestNewCloudRoutesLoader_PluginsURLAloneActivatesWithoutCapToken(t *testing
 
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
-	require.NotNil(t, pluginManifestsTargetOf(loader, sourcePluginsURL))
+	require.NotNil(t, pluginManifestsTargetOf(loader, sourcePlugins))
 	require.Empty(t, aggregateTargetsOf(loader))
 }
 
@@ -317,10 +338,10 @@ func TestNewCloudRoutesLoader_CoreURLAloneActivatesWithoutCapToken(t *testing.T)
 	require.NoError(t, err)
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
-	require.NotNil(t, pluginManifestsTargetOf(loader, sourceCoreURL))
-	require.Nil(t, pluginManifestsTargetOf(loader, sourcePluginsURL))
-	require.Equal(t, sourceCoreURL, pluginManifestsTargetOf(loader, sourceCoreURL).source)
-	require.Equal(t, coreKeyPrefix, pluginManifestsTargetOf(loader, sourceCoreURL).keyPrefix)
+	require.NotNil(t, pluginManifestsTargetOf(loader, sourceCore))
+	require.Nil(t, pluginManifestsTargetOf(loader, sourcePlugins))
+	require.Equal(t, sourceCore, pluginManifestsTargetOf(loader, sourceCore).source)
+	require.Equal(t, sourceCore, pluginManifestsTargetOf(loader, sourceCore).keyPrefix)
 }
 
 func TestNewCloudRoutesLoader_CoreAndPluginsURLShareRegisterer(t *testing.T) {
@@ -335,8 +356,8 @@ func TestNewCloudRoutesLoader_CoreAndPluginsURLShareRegisterer(t *testing.T) {
 	require.NoError(t, err)
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
-	require.NotNil(t, pluginManifestsTargetOf(loader, sourceCoreURL))
-	require.NotNil(t, pluginManifestsTargetOf(loader, sourcePluginsURL))
+	require.NotNil(t, pluginManifestsTargetOf(loader, sourceCore))
+	require.NotNil(t, pluginManifestsTargetOf(loader, sourcePlugins))
 }
 
 func TestNewCloudRoutesLoader_PluginsURLRejectsNonAbsoluteURL(t *testing.T) {
@@ -369,7 +390,7 @@ func TestNewCloudRoutesLoader_PluginManifestsTLS(t *testing.T) {
 		require.NoError(t, err)
 		loader, ok := loaderIface.(*cloudLoader)
 		require.True(t, ok)
-		return pluginManifestsTargetOf(loader, sourcePluginsURL), pluginManifestsTargetOf(loader, sourceCoreURL)
+		return pluginManifestsTargetOf(loader, sourcePlugins), pluginManifestsTargetOf(loader, sourceCore)
 	}
 	poll := func(target *pluginManifestsTarget) error {
 		_, err := fetchPluginManifests(context.Background(), target.client, target.url)
@@ -657,7 +678,7 @@ func TestCloudLoaderAggregateSectionPriority(t *testing.T) {
 	t.Cleanup(exchange.Close)
 	cfg := setting.NewCfg()
 	var err error
-	cfg.Raw, err = ini.Load([]byte(fmt.Sprintf(`
+	cfg.Raw, err = ini.Load(fmt.Appendf(nil, `
 [cloud_router]
 cap_token = token
 token_exchange_url = %s
@@ -667,7 +688,7 @@ audience = first
 [router.aggregate.a_second]
 url = %s
 audience = second
-`, exchange.URL, first.URL, second.URL)))
+`, exchange.URL, first.URL, second.URL))
 	require.NoError(t, err)
 	result, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 	require.NoError(t, err)
@@ -699,16 +720,26 @@ func TestPluginManifestsPollInterval(t *testing.T) {
 	section := func(t *testing.T, kv map[string]string) *setting.DynamicSection {
 		return cfgWithCloudRouterSection(t, kv).SectionWithEnvOverrides(cloudRouterSection)
 	}
-	plugins, core, err := newPluginManifestsTargets(setting.NewCfg(), section(t, map[string]string{
+	targets, err := readManifestsTargets(setting.NewCfg(), section(t, map[string]string{
 		"plugins_url":           "https://plugins.invalid/plugins",
 		"core_url":              "https://core.invalid/plugins",
 		"plugins_poll_interval": "5m",
 	}), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
 	require.NoError(t, err)
-	require.Equal(t, 5*time.Minute, plugins.cooldown.steady)
-	require.Equal(t, defaultAggregatePollInterval, core.cooldown.steady)
+	require.Len(t, targets, 2)
+	require.Equal(t, 5*time.Minute, targets[0].cooldown.steady)
+	require.Equal(t, defaultAggregatePollInterval, targets[1].cooldown.steady)
 
-	_, _, err = newPluginManifestsTargets(setting.NewCfg(), section(t, map[string]string{
+	targets, err = readManifestsTargets(setting.NewCfg(), section(t, map[string]string{
+		"bridge_url":           "https://bridge.invalid/plugins",
+		"bridge_poll_interval": "2m",
+	}), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.NoError(t, err)
+	require.Len(t, targets, 1)
+	require.Equal(t, sourceBridge, targets[0].source)
+	require.Equal(t, 2*time.Minute, targets[0].cooldown.steady)
+
+	_, err = readManifestsTargets(setting.NewCfg(), section(t, map[string]string{
 		"core_url":           "https://core.invalid/plugins",
 		"core_poll_interval": "0s",
 	}), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
@@ -718,13 +749,13 @@ func TestPluginManifestsPollInterval(t *testing.T) {
 // The loader tears its sources down once it stops, which closes the managed
 // plugin connections.
 func TestCloudLoaderStopClosesPluginConnections(t *testing.T) {
-	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, "http://127.0.0.1:1/plugins", nil, http.DefaultClient,
+	target, err := newPluginManifestsTarget(sourcePlugins, "http://127.0.0.1:1/plugins", nil, http.DefaultClient,
 		defaultPluginGRPCConfig(), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
 	require.NoError(t, err)
 	release, err := target.acquireConnection("localhost:50051", "grafana-appsdktest-app")
 	require.NoError(t, err)
 	defer release()
-	loader, err := newCloudLoader(nil, target, nil, nil)
+	loader, err := newCloudLoader(nil, []*pluginManifestsTarget{target}, nil)
 	require.NoError(t, err)
 
 	require.NoError(t, services.StartAndAwaitRunning(t.Context(), loader))

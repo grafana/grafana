@@ -441,6 +441,10 @@ var ErrIndexClosedDuringRebuild = errors.New("index was closed while it was bein
 type BuildIndexOptions struct {
 	// Startup workers can try other indexes instead of waiting for a replica.
 	SkipIfBuilding bool
+
+	// LastSearchedAt is when an index reopened at startup was last searched
+	// before the restart, so its idle time carries on. Zero means now.
+	LastSearchedAt time.Time
 }
 
 // UpdateFn is responsible for updating index with changes since given RV. It should return new RV (to be used as next sinceRV), number of updated documents and error, if any.
@@ -580,6 +584,7 @@ type searchServer struct {
 	globalIndexEnabled        bool
 	globalIndexStartupBuild   bool
 	globalIndexBuildWait      time.Duration
+	globalIndexIdleTimeout    time.Duration
 	// uncheckedGlobalTypesLogged holds the {group}/{resource} of each type already
 	// logged as left out of global search for being unchecked.
 	uncheckedGlobalTypesLogged sync.Map
@@ -594,10 +599,11 @@ type searchServer struct {
 // resource: dashboards use IndexRebuildInterval (cfg.IndexRebuildInterval),
 // other resources use MaxFileIndexAge. Zero means "no age-based rebuild".
 //
-// A namespace-wide index holds dashboards too, and it is the more expensive one
-// to rebuild, so it follows the dashboard interval rather than the default.
+// Dashboards are rebuilt more often to pick up usage insights. A global index
+// holds none, and its hourly reconcile already repairs what changed, so it
+// follows the default.
 func (s *searchServer) getIndexMaxAge(key NamespacedResource) time.Duration {
-	if key.Resource == dashboardv1.DASHBOARD_RESOURCE || key.IsGlobal() {
+	if key.Resource == dashboardv1.DASHBOARD_RESOURCE {
 		return s.dashboardIndexMaxAge
 	}
 	return s.maxIndexAge
@@ -680,6 +686,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		globalIndexEnabled:        opts.GlobalIndexEnabled,
 		globalIndexStartupBuild:   opts.GlobalIndexStartupBuild,
 		globalIndexBuildWait:      cmp.Or(opts.GlobalIndexBuildWait, defaultGlobalIndexBuildWait),
+		globalIndexIdleTimeout:    opts.GlobalIndexIdleTimeout,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
 
 		queryCache:             opts.QueryCache,
@@ -1687,7 +1694,7 @@ func (s *searchServer) buildStartupIndex(ctx context.Context, info ResourceStats
 	if s.search.PeekIndex(info.NamespacedResource) != nil {
 		return nil
 	}
-	_, err := s.buildWithOptions(ctx, info.NamespacedResource, info.Count, "init", false, lastImportTime, BuildIndexOptions{SkipIfBuilding: true})
+	_, err := s.buildWithOptions(ctx, info.NamespacedResource, info.Count, "init", false, lastImportTime, BuildIndexOptions{SkipIfBuilding: true, LastSearchedAt: info.LastSearchedAt})
 	return err
 }
 
@@ -1703,12 +1710,23 @@ func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 
 	builds := make([]ResourceStats, 0, len(stats))
 	var backgroundBuilds []ResourceStats
+	idle := 0
+	now := time.Now()
 	for _, info := range s.ownedIndexStats(stats) {
+		// It would be closed as idle soon after, but reopening it costs a
+		// comparison with storage first.
+		if info.IsGlobal() && s.globalIndexIdleTimeout > 0 && !info.LastSearchedAt.IsZero() && now.Sub(info.LastSearchedAt) > s.globalIndexIdleTimeout {
+			idle++
+			continue
+		}
 		if info.IsGlobal() && !s.globalIndexStartupBuild {
 			backgroundBuilds = append(backgroundBuilds, info)
 		} else {
 			builds = append(builds, info)
 		}
+	}
+	if idle > 0 {
+		s.log.Info("Not reopening global search indexes that were idle before the restart", "indexes", idle)
 	}
 	if len(builds)+len(backgroundBuilds) == 0 {
 		return 0, nil
@@ -2201,7 +2219,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	}
 
 	// Pass rebuild=true to force rebuild of any existing file-based index.
-	_, err = s.build(ctx, req.NamespacedResource, size, "rebuild", true, time.Time{})
+	_, err = s.build(ctx, req.NamespacedResource, size, "rebuild", true, req.lastImportTime)
 	if errors.Is(err, ErrIndexClosedDuringRebuild) {
 		l.Info("index was closed while it was being rebuilt, discarding the rebuilt index")
 	} else if err != nil {
