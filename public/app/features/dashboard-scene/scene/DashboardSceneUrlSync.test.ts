@@ -71,6 +71,42 @@ describe('DashboardSceneUrlSync', () => {
         }
       }
     );
+
+    describe('when entering edit mode is blocked on mobile', () => {
+      beforeEach(() => {
+        setTestFlags({ 'grafana.mobileEditDeprecation': true });
+        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      });
+
+      afterEach(() => {
+        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+      });
+
+      it('does not wait on an unloaded library panel or start loading the editor', () => {
+        const pending = createDeferred<LibraryPanel>();
+        const fetchPanel = jest.spyOn(libraryPanels, 'getLibraryPanel').mockReturnValue(pending.promise);
+        const behavior = new LibraryPanelBehavior({ uid: 'library-a', name: 'Library A' });
+        const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', $behaviors: [behavior] });
+        const scene = new DashboardScene({ body: DefaultGridLayoutManager.fromVizPanels([panel]) });
+        const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
+        try {
+          scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
+
+          expect(onEnterEditMode).toHaveBeenCalledTimes(1);
+          expect(scene.state.isEditing).toBeFalsy();
+          expect(scene.state.loadingView).toBeUndefined();
+          expect(scene.state.editPanel).toBeUndefined();
+          expect(scene.urlSync?.getUrlState().editPanel).toBeUndefined();
+          // Nothing is left waiting: the library panel is neither fetched nor kept active
+          expect(fetchPanel).not.toHaveBeenCalled();
+          expect(behavior.isActive).toBeFalsy();
+          expect(panel.isActive).toBeFalsy();
+        } finally {
+          scene.cancelPendingViews();
+          fetchPanel.mockRestore();
+        }
+      });
+    });
   });
   describe('Given a standard scene', () => {
     it('Should set UNSAFE_fitPanels when url has autofitpanels', () => {
@@ -636,6 +672,23 @@ describe('DashboardSceneUrlSync', () => {
         await waitFor(() => expect(onEnterEditMode).toHaveBeenCalled());
         expect(scene.state.isEditing).toBe(false);
         expect(scene.state.editview).toBeUndefined();
+      });
+
+      it('does not start the panel editor when entering edit mode is blocked on mobile', () => {
+        setTestFlags({ 'grafana.mobileEditDeprecation': true });
+        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+        const scene = buildTestScene();
+        scene.setState({ isEditing: false });
+        const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
+
+        scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
+
+        // One attempt only, so a single warning toast
+        expect(onEnterEditMode).toHaveBeenCalledTimes(1);
+        expect(scene.state.isEditing).toBe(false);
+        expect(scene.state.editPanel).toBeUndefined();
+        expect(scene.state.loadingView).toBeUndefined();
+        expect(scene.urlSync?.getUrlState().editPanel).toBeUndefined();
       });
     });
 

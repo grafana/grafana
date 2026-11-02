@@ -140,7 +140,12 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       if (!isEditing || !isFullDashboardEditing(this._scene.state)) {
         // Keep the editor URL while entering full editing before its view has loaded.
         this._heldEditPanelId = values.editPanel;
-        this._scene.openFullEditor();
+        // Blocked (e.g. on mobile): openFullEditor has already warned, so don't also wait on a
+        // library panel or start the editor load for edit mode that never engaged.
+        if (!this._scene.openFullEditor()) {
+          this._releaseEditPanel();
+          return;
+        }
       }
 
       const libPanelBehavior = getLibraryPanelBehavior(panel);
