@@ -6,7 +6,11 @@ import {
   type FieldConfigSource,
   type DataFrame,
   FieldType,
+  identityOverrideProcessor,
+  numberOverrideProcessor,
   Registry,
+  stringOverrideProcessor,
+  ThresholdsMode,
 } from '@grafana/data';
 
 import { type OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
@@ -283,6 +287,430 @@ describe('getFieldOverrideCategories', () => {
         property: DynamicConfigValue;
       }>;
       expect(element.props.property).toEqual({ id: 'custom.lineWidth', value: 5 });
+    });
+  });
+
+  describe('varMappings', () => {
+    const makeMinItem = (process: FieldConfigPropertyItem['process'] = numberOverrideProcessor) =>
+      makeItem('min', { isCustom: false, process });
+
+    it('shows the stored number and drops the varMappings.<id> entry on change when the flag is off', () => {
+      const registry = makeRegistry([makeMinItem()]);
+      const onFieldConfigsChange = jest.fn();
+      const fieldConfig: FieldConfigSource = {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [
+              { id: 'min', value: 20 },
+              { id: 'varMappings.min', value: '$myVar' },
+            ],
+          },
+        ],
+      };
+
+      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', onFieldConfigsChange);
+      const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
+      const element = propertyItem?.props.render(propertyItem!) as React.ReactElement<{
+        property: DynamicConfigValue;
+        varMappingKind?: string;
+        onChange: (value: unknown) => void;
+      }>;
+
+      expect(element.props.property).toEqual({ id: 'min', value: 20 });
+      expect(element.props.varMappingKind).toBeUndefined();
+
+      element.props.onChange(42);
+      expect(onFieldConfigsChange).toHaveBeenCalledWith({
+        ...fieldConfig,
+        overrides: [{ matcher: { id: 'byName', options: 'A-series' }, properties: [{ id: 'min', value: 42 }] }],
+      });
+    });
+
+    it('displays the stored expression instead of the numeric value when a sibling varMappings.<id> entry exists', () => {
+      const registry = makeRegistry([makeMinItem()]);
+      const fieldConfig: FieldConfigSource = {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [
+              { id: 'min', value: 20 },
+              { id: 'varMappings.min', value: '$myVar' },
+            ],
+          },
+        ],
+      };
+
+      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', jest.fn(), undefined, true);
+      const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
+      const element = propertyItem?.props.render(propertyItem!) as React.ReactElement<{
+        property: DynamicConfigValue;
+      }>;
+
+      expect(element.props.property).toEqual({ id: 'min', value: '$myVar' });
+    });
+
+    it('renders exactly one row for a property with a varMappings.<id> sibling entry, not two', () => {
+      const registry = makeRegistry([makeMinItem()]);
+      const fieldConfig: FieldConfigSource = {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [
+              { id: 'min', value: 20 },
+              { id: 'varMappings.min', value: '$myVar' },
+            ],
+          },
+        ],
+      };
+
+      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', jest.fn(), undefined, true);
+      const propertyItems = categories[0].items.filter((item) => item.props.id?.includes('-property-'));
+
+      expect(propertyItems).toHaveLength(1);
+    });
+
+    it('never offers a varMappings.<id> synthetic id in the "Add override property" picker', () => {
+      const registry = makeRegistry([makeMinItem()]);
+      const fieldConfig: FieldConfigSource = {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [
+              { id: 'min', value: 20 },
+              { id: 'varMappings.min', value: '$myVar' },
+            ],
+          },
+        ],
+      };
+
+      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', jest.fn(), undefined, true);
+      const addButtonItem = categories[0].items[categories[0].items.length - 1];
+      const element = addButtonItem.props.render(addButtonItem) as React.ReactElement<{
+        options: Array<{ value: string }>;
+      }>;
+
+      const optionValues = element.props.options.map((o) => o.value);
+      expect(optionValues).not.toContain('varMappings.min');
+    });
+
+    it('routes a $-containing onChange value into a new varMappings.<id> entry, leaving the stored value untouched', () => {
+      const registry = makeRegistry([makeMinItem()]);
+      const onFieldConfigsChange = jest.fn();
+      const fieldConfig: FieldConfigSource = {
+        defaults: {},
+        overrides: [{ matcher: { id: 'byName', options: 'A-series' }, properties: [{ id: 'min', value: 20 }] }],
+      };
+
+      const categories = getFieldOverrideCategories(
+        fieldConfig,
+        registry,
+        [],
+        '',
+        onFieldConfigsChange,
+        undefined,
+        true
+      );
+      const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
+      const element = propertyItem?.props.render(propertyItem!) as React.ReactElement<{
+        onChange: (value: unknown) => void;
+      }>;
+
+      element.props.onChange('$myVar');
+
+      expect(onFieldConfigsChange).toHaveBeenCalledWith({
+        ...fieldConfig,
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [
+              { id: 'min', value: 20 },
+              { id: 'varMappings.min', value: '$myVar' },
+            ],
+          },
+        ],
+      });
+    });
+
+    it('updates an existing varMappings.<id> entry in place rather than appending a duplicate', () => {
+      const registry = makeRegistry([makeMinItem()]);
+      const onFieldConfigsChange = jest.fn();
+      const fieldConfig: FieldConfigSource = {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [
+              { id: 'min', value: 20 },
+              { id: 'varMappings.min', value: '$old' },
+            ],
+          },
+        ],
+      };
+
+      const categories = getFieldOverrideCategories(
+        fieldConfig,
+        registry,
+        [],
+        '',
+        onFieldConfigsChange,
+        undefined,
+        true
+      );
+      const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
+      const element = propertyItem?.props.render(propertyItem!) as React.ReactElement<{
+        onChange: (value: unknown) => void;
+      }>;
+
+      element.props.onChange('$new');
+
+      expect(onFieldConfigsChange).toHaveBeenCalledWith({
+        ...fieldConfig,
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [
+              { id: 'min', value: 20 },
+              { id: 'varMappings.min', value: '$new' },
+            ],
+          },
+        ],
+      });
+    });
+
+    it('clears an existing varMappings.<id> entry when a plain number is committed', () => {
+      const registry = makeRegistry([makeMinItem()]);
+      const onFieldConfigsChange = jest.fn();
+      const fieldConfig: FieldConfigSource = {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [
+              { id: 'min', value: 20 },
+              { id: 'varMappings.min', value: '$myVar' },
+            ],
+          },
+        ],
+      };
+
+      const categories = getFieldOverrideCategories(
+        fieldConfig,
+        registry,
+        [],
+        '',
+        onFieldConfigsChange,
+        undefined,
+        true
+      );
+      const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
+      const element = propertyItem?.props.render(propertyItem!) as React.ReactElement<{
+        onChange: (value: unknown) => void;
+      }>;
+
+      element.props.onChange(42);
+
+      expect(onFieldConfigsChange).toHaveBeenCalledWith({
+        ...fieldConfig,
+        overrides: [{ matcher: { id: 'byName', options: 'A-series' }, properties: [{ id: 'min', value: 42 }] }],
+      });
+    });
+
+    it('does not route a string onChange value into varMappings for a non-numeric property', () => {
+      const registry = makeRegistry([makeMinItem(identityOverrideProcessor)]);
+      const onFieldConfigsChange = jest.fn();
+      const fieldConfig: FieldConfigSource = {
+        defaults: {},
+        overrides: [{ matcher: { id: 'byName', options: 'A-series' }, properties: [{ id: 'min', value: 20 }] }],
+      };
+
+      const categories = getFieldOverrideCategories(
+        fieldConfig,
+        registry,
+        [],
+        '',
+        onFieldConfigsChange,
+        undefined,
+        true
+      );
+      const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
+      const element = propertyItem?.props.render(propertyItem!) as React.ReactElement<{
+        onChange: (value: unknown) => void;
+      }>;
+
+      element.props.onChange('$myVar');
+
+      expect(onFieldConfigsChange).toHaveBeenCalledWith({
+        ...fieldConfig,
+        overrides: [{ matcher: { id: 'byName', options: 'A-series' }, properties: [{ id: 'min', value: '$myVar' }] }],
+      });
+    });
+
+    describe('unit', () => {
+      const fieldConfig: FieldConfigSource = {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [
+              { id: 'unit', value: 'short' },
+              { id: 'varMappings.unit', value: '$unit' },
+            ],
+          },
+        ],
+      };
+
+      function renderRow(varMappingsEnabled: boolean, onFieldConfigsChange = jest.fn()) {
+        const registry = makeRegistry([makeItem('unit', { isCustom: false, process: stringOverrideProcessor })]);
+        const categories = getFieldOverrideCategories(
+          fieldConfig,
+          registry,
+          [],
+          '',
+          onFieldConfigsChange,
+          undefined,
+          varMappingsEnabled
+        );
+        const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
+        return propertyItem?.props.render(propertyItem!) as React.ReactElement<{
+          property: DynamicConfigValue;
+          varMappingKind?: string;
+          onChange: (value: unknown) => void;
+        }>;
+      }
+
+      const properties = (onFieldConfigsChange: jest.Mock) =>
+        onFieldConfigsChange.mock.calls[0][0].overrides[0].properties;
+
+      it('shows the expression with the unit picker and writes a new one to the sibling entry', () => {
+        const onFieldConfigsChange = jest.fn();
+        const element = renderRow(true, onFieldConfigsChange);
+
+        expect(element.props.property).toEqual({ id: 'unit', value: '$unit' });
+        expect(element.props.varMappingKind).toBe('string');
+
+        element.props.onChange('${other}');
+        expect(properties(onFieldConfigsChange)).toEqual([
+          { id: 'unit', value: 'short' },
+          { id: 'varMappings.unit', value: '${other}' },
+        ]);
+      });
+
+      it('drops the sibling entry when a plain unit is picked', () => {
+        const onFieldConfigsChange = jest.fn();
+        renderRow(true, onFieldConfigsChange).props.onChange('bytes');
+
+        expect(properties(onFieldConfigsChange)).toEqual([{ id: 'unit', value: 'bytes' }]);
+      });
+
+      it('shows the stored unit with the flag off, and a picked unit drops the sibling entry', () => {
+        const onFieldConfigsChange = jest.fn();
+        const element = renderRow(false, onFieldConfigsChange);
+
+        expect(element.props.property).toEqual({ id: 'unit', value: 'short' });
+
+        element.props.onChange('bytes');
+        expect(properties(onFieldConfigsChange)).toEqual([{ id: 'unit', value: 'bytes' }]);
+      });
+    });
+
+    describe('thresholds', () => {
+      const thresholds = {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 50, color: 'orange', valueExpr: '$warn' },
+          { value: 80, color: 'red' },
+        ],
+      };
+      const fieldConfig: FieldConfigSource = {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [{ id: 'thresholds', value: thresholds }],
+          },
+        ],
+      };
+
+      function renderRow(varMappingsEnabled: boolean, onFieldConfigsChange = jest.fn()) {
+        const registry = makeRegistry([makeItem('thresholds', { isCustom: false })]);
+        const categories = getFieldOverrideCategories(
+          fieldConfig,
+          registry,
+          [],
+          '',
+          onFieldConfigsChange,
+          undefined,
+          varMappingsEnabled
+        );
+        const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
+        return propertyItem?.props.render(propertyItem!) as React.ReactElement<{
+          property: DynamicConfigValue;
+          onChange: (value: unknown) => void;
+          onRemove: () => void;
+        }>;
+      }
+
+      it('edits the thresholds with their step valueExprs as stored', () => {
+        const onFieldConfigsChange = jest.fn();
+        const element = renderRow(true, onFieldConfigsChange);
+
+        expect(element.props.property).toEqual({ id: 'thresholds', value: thresholds });
+
+        const edited = {
+          ...thresholds,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 10, color: 'red' },
+            { value: 50, color: 'orange', valueExpr: '$warn' },
+          ],
+        };
+        element.props.onChange(edited);
+        expect(onFieldConfigsChange.mock.calls[0][0].overrides[0].properties).toEqual([
+          { id: 'thresholds', value: edited },
+        ]);
+      });
+    });
+
+    it('removing the property row also removes its varMappings.<id> sibling entry', () => {
+      const registry = makeRegistry([makeMinItem()]);
+      const onFieldConfigsChange = jest.fn();
+      const fieldConfig: FieldConfigSource = {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [
+              { id: 'min', value: 20 },
+              { id: 'varMappings.min', value: '$myVar' },
+            ],
+          },
+        ],
+      };
+
+      const categories = getFieldOverrideCategories(
+        fieldConfig,
+        registry,
+        [],
+        '',
+        onFieldConfigsChange,
+        undefined,
+        true
+      );
+      const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
+      const element = propertyItem?.props.render(propertyItem!) as React.ReactElement<{ onRemove: () => void }>;
+
+      element.props.onRemove();
+
+      expect(onFieldConfigsChange).toHaveBeenCalledWith({
+        ...fieldConfig,
+        overrides: [{ matcher: { id: 'byName', options: 'A-series' }, properties: [] }],
+      });
     });
   });
 
