@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test';
 
-// These tests exercise browser security enforcement without a running Grafana server.
+// These tests exercise browser security enforcement without requiring a running Grafana server.
 export default defineConfig({
   testDir: './panels-suite',
   testMatch: 'text-sandbox.spec.ts',
