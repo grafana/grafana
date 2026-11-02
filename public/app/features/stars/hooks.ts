@@ -105,47 +105,57 @@ export const useStarredItems = (group: string, kind: string, options?: { skip?: 
 /**
  * The user's starred dashboards, and folders where those can be starred, as search rows that follow the star set.
  * The set is RTK cache every star toggle invalidates and the search is keyed by it, so a toggle anywhere re-searches
- * while the previous rows stay up.
+ * while the previous rows stay up. `cap` bounds the uids searched, in uid order; without it the whole set is.
  */
-export const useStarredSearch = () => {
+export const useStarredSearch = (cap?: number) => {
   const foldersEnabled = starredFoldersEnabled();
   const stars = useListStarsQuery({ fieldSelector: userStarsFieldSelector() });
 
-  // Sorted so the cache key is the set, not the order the API listed it in.
-  const args = useMemo(
-    () =>
-      stars.data
-        ? {
-            dashboards: [...findStarredNames(stars.data, DASHBOARD_API_GROUP, 'Dashboard')].sort(),
-            folders: foldersEnabled ? [...findStarredNames(stars.data, FOLDER_API_GROUP, 'Folder')].sort() : [],
-          }
-        : skipToken,
-    [stars.data, foldersEnabled]
-  );
+  // Sorted so the cache key is the set, not the order the API listed it in; deduped so a uid starred as both kinds
+  // takes one cap slot.
+  const searched = useMemo(() => {
+    if (!stars.data) {
+      return undefined;
+    }
+    const dashboards = findStarredNames(stars.data, DASHBOARD_API_GROUP, 'Dashboard');
+    const folders = foldersEnabled ? findStarredNames(stars.data, FOLDER_API_GROUP, 'Folder') : [];
+    const uids = [...new Set([...dashboards, ...folders])].sort().slice(0, cap);
+    const inCap = new Set(uids);
+    return {
+      uids,
+      args: {
+        dashboards: dashboards.filter((uid) => inCap.has(uid)).sort(),
+        folders: folders.filter((uid) => inCap.has(uid)).sort(),
+      },
+    };
+  }, [stars.data, foldersEnabled, cap]);
   // Refetched on every mount so an unchanged set still picks up renamed or deleted items.
-  const search = useSearchStarredQuery(args, { refetchOnMountOrArgChange: true });
+  const search = useSearchStarredQuery(searched?.args ?? skipToken, { refetchOnMountOrArgChange: true });
 
   return {
-    uids: search.data?.uids,
-    rows: search.data?.rows,
+    uids: searched?.uids,
+    rows: search.data,
     // Until the first rows land; a changed star set keeps the previous rows up while it loads.
     loading: stars.isLoading || search.isLoading,
     error: stars.isError || search.isError,
     retry: () => {
       stars.refetch();
-      if (args !== skipToken) {
+      if (searched) {
         search.refetch();
       }
     },
   };
 };
 
+// Bounds the nav section and the uid list its search request carries
+const STARRED_NAV_CAP = 50;
+
 /**
  * Sync starred dashboards into the nav tree on mount and when the star set changes.
  * Replaces whatever the backend shipped in bootData (which is empty in dual-writer mode 5).
  */
 export const useSyncStarredItemsInNav = () => {
-  const { uids, rows, loading, error } = useStarredSearch();
+  const { uids, rows, loading, error } = useStarredSearch(STARRED_NAV_CAP);
 
   // Initialized from the search so a remount with a warm RTK cache doesn't flash a loading state: the nav tree is
   // already correct from the prior sync.

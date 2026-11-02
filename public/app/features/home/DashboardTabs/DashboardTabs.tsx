@@ -27,7 +27,7 @@ export function DashboardTabs() {
 
   const recent = useRecentActivity();
   const { rows: starredRows, loading: starredLoading, error: starredError, retry: starredRetry } = useStarredSearch();
-  // One starred search is cached app-wide; the card shows a slice of it.
+  // Searched in full, then cut: stars on deleted or inaccessible items don't take up slots.
   const starredDashboards = starredRows?.slice(0, MAX_STARRED);
 
   const {
