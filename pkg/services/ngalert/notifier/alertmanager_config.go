@@ -50,6 +50,18 @@ var (
 		errutil.WithPublic(msgAlertmanagerMultipleExtraConfigsUnsupported),
 	)
 
+	msgAlertmanagerExtraConfigManagedByAutoSync = "extra configuration with identifier {{ .Public.Identifier }} is managed by external alertmanager sync and cannot be modified while sync is active"
+	ErrAlertmanagerExtraConfigManagedByAutoSync = errutil.Conflict("alerting.notifications.alertmanager.extraConfigManagedByAutoSync").MustTemplate(
+		msgAlertmanagerExtraConfigManagedByAutoSync,
+		errutil.WithPublic(msgAlertmanagerExtraConfigManagedByAutoSync),
+	)
+
+	msgAlertmanagerExtraConfigManagedManually = "extra configuration with identifier {{ .Public.Identifier }} was staged manually and will not be overwritten by external alertmanager sync; delete the staged configuration and sync will re-create it"
+	ErrAlertmanagerExtraConfigManagedManually = errutil.Conflict("alerting.notifications.alertmanager.extraConfigManagedManually").MustTemplate(
+		msgAlertmanagerExtraConfigManagedManually,
+		errutil.WithPublic(msgAlertmanagerExtraConfigManagedManually),
+	)
+
 	ErrIdentifierAlreadyExists = errutil.BadRequest("alerting.notifications.alertmanager.identifierAlreadyExists").MustTemplate("identifier [{{ .Public.Identifier }}] already used by existing managed routes",
 		errutil.WithPublic(
 			"Identifier [{{ .Public.Identifier }}] is already used by existing managed routes. Use another identifier or delete the existing route.",
@@ -350,29 +362,36 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	return result, nil
 }
 
+// activeSyncUID returns the datasource UID that sync writes to, or "" when sync is off or unconfigured.
+func (moa *MultiOrgAlertmanager) activeSyncUID(ctx context.Context, orgID int64) string {
+	client := openfeature.NewDefaultClient()
+	if !client.Boolean(ctx, featuremgmt.FlagAlertingSyncExternalAlertmanager, false, openfeature.TransactionContext(ctx)) {
+		return ""
+	}
+	if moa.externalAMSyncer == nil { // nil in tests that bypass NewMultiOrgAlertmanager
+		return ""
+	}
+	uid, _, err := moa.externalAMSyncer.resolveExternalAMUIDForOrg(ctx, orgID)
+	if err != nil {
+		// Degrade to "no active sync" so config reads keep working.
+		moa.logger.Warn("Failed to resolve external AM sync UID", "err", err, "org_id", orgID)
+		return ""
+	}
+	return uid
+}
+
 func (moa *MultiOrgAlertmanager) setExtraConfigOrigin(ctx context.Context, orgID int64, extraConfigs []definitions.ExtraConfiguration) {
 	if len(extraConfigs) == 0 {
 		return
 	}
 
-	var syncUID string
-	// Same flag gate as FetchExtraConfig: a stale UID match must not read as auto-sync once sync is off.
-	client := openfeature.NewDefaultClient()
-	syncEnabled := client.Boolean(ctx, featuremgmt.FlagAlertingSyncExternalAlertmanager, false, openfeature.TransactionContext(ctx))
-	if syncEnabled && moa.externalAMSyncer != nil { // nil in tests that bypass NewMultiOrgAlertmanager
-		uid, _, err := moa.externalAMSyncer.resolveExternalAMUIDForOrg(ctx, orgID)
-		if err != nil {
-			// Degrade to "manual" rather than fail a config read that worked before this field existed.
-			moa.logger.Warn("Failed to resolve external AM sync UID while computing staged config origin", "err", err, "org_id", orgID)
-		}
-		syncUID = uid
-	}
-
+	syncUID := moa.activeSyncUID(ctx, orgID)
 	for i := range extraConfigs {
-		if syncUID != "" && extraConfigs[i].Identifier == syncUID {
-			extraConfigs[i].ManagedBy = "auto-sync"
+		// Only reads as auto-sync while sync is active, so the UI still allows revert after a flag rollback.
+		if syncUID != "" && extraConfigs[i].ManagedBy == v1.ExtraConfigManagedByAutoSync {
+			extraConfigs[i].ManagedBy = v1.ExtraConfigManagedByAutoSync
 		} else {
-			extraConfigs[i].ManagedBy = "manual"
+			extraConfigs[i].ManagedBy = v1.ExtraConfigManagedByManual
 		}
 	}
 }
@@ -486,6 +505,10 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Cont
 			}
 		}
 
+		if err := checkSyncDoesNotOverwriteManual(configs, extraConfig); err != nil {
+			return nil, err
+		}
+
 		isNew := true
 		for _, c := range configs {
 			if c.Identifier == extraConfig.Identifier {
@@ -519,11 +542,31 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Cont
 	return result, nil
 }
 
+// checkSyncDoesNotOverwriteManual stops sync from overwriting a config that was not written by sync.
+// A config with no recorded owner counts as manual.
+func checkSyncDoesNotOverwriteManual(existing []v1.ExtraConfiguration, incoming v1.ExtraConfiguration) error {
+	if incoming.ManagedBy != v1.ExtraConfigManagedByAutoSync {
+		return nil
+	}
+	for _, c := range existing {
+		if c.Identifier == incoming.Identifier && c.ManagedBy != v1.ExtraConfigManagedByAutoSync {
+			return ErrAlertmanagerExtraConfigManagedManually.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": c.Identifier}})
+		}
+	}
+	return nil
+}
+
 // DeleteExtraConfiguration deletes an ExtraConfiguration by its identifier while preserving the main AlertmanagerConfig.
 func (moa *MultiOrgAlertmanager) DeleteExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz ExtraConfigAuthz, identifier string) error {
+	syncUID := moa.activeSyncUID(ctx, org)
 	modifyFunc := func(configs []v1.ExtraConfiguration) ([]v1.ExtraConfiguration, error) {
 		if err := authz.AuthorizeDelete(ctx, user, identifier); err != nil {
 			return nil, err
+		}
+		for _, c := range configs {
+			if c.Identifier == identifier && syncUID != "" && c.ManagedBy == v1.ExtraConfigManagedByAutoSync {
+				return nil, ErrAlertmanagerExtraConfigManagedByAutoSync.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": identifier}})
+			}
 		}
 		filtered := make([]v1.ExtraConfiguration, 0, len(configs))
 		for _, ec := range configs {
