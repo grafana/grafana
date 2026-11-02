@@ -13,6 +13,9 @@ import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import type { DashboardScene } from '../../scene/DashboardScene';
 import type { MutationResult } from '../types';
 
+/** The `actor` recorded on undo entries the mutation API creates, and the `trigger` of its undo/redo interactions. */
+export const MUTATION_API_ACTOR = 'mutation-api';
+
 /** The scene a command operates on. Defaults to DashboardScene so a dashboard command names no type parameter. */
 export interface MutationContext<TScene = DashboardScene> {
   scene: TScene;

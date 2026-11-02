@@ -10,6 +10,7 @@ import { type CombinedFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { STARRED_FOLDERS_UID } from 'app/features/search/constants';
+import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
 
 import { FolderDetailsActions } from './FolderDetailsActions';
@@ -62,6 +63,33 @@ describe('FolderDetailsActions', () => {
 
     // Starring triggers a refetch that adds the folder to the rendered list
     expect(await screen.findByText(folderToStar.title)).toBeInTheDocument();
+  });
+
+  describe('on mobile with mobileEditDeprecation enabled', () => {
+    beforeEach(() => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('hides the New button when the user cannot create folders', async () => {
+      jest
+        .spyOn(contextSrv, 'hasPermission')
+        .mockImplementation((action) => action === AccessControlAction.DashboardsCreate);
+      render(<FolderDetailsActions />);
+
+      await screen.findByText('Recently deleted');
+      expect(screen.queryByTestId(selectors.components.CreateNewButton.newButton)).not.toBeInTheDocument();
+    });
+
+    it('shows the New button when the user can create folders', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      render(<FolderDetailsActions />);
+
+      expect(await screen.findByTestId(selectors.components.CreateNewButton.newButton)).toBeInTheDocument();
+    });
   });
 
   describe('with a read-only folderless repository configured', () => {

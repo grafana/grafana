@@ -112,9 +112,11 @@ func newInternalIdentity(name string, namespace string, orgID int64, opts ...Ide
 		IsGrafanaAdmin: true,
 		OrgID:          orgID,
 		Permissions: map[int64]map[string][]string{
-			orgID: serviceIdentityPermissions,
+			orgID: cloneServiceIdentityPermissions(),
 		},
 		AccessTokenClaims: &claimsCopy,
+
+		internalIdentityProfile: InternalIdentityProfile(name),
 	}
 
 	for _, opt := range opts {
