@@ -5,11 +5,13 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
 import { IconButton, Stack, useStyles2 } from '@grafana/ui';
+import { useAddToAssistant } from 'app/core/assistant/useAddToAssistant';
 import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 
 import { type NotebookCellItem } from './NotebookCellItem';
 import { PanelExploreLink } from './PanelExploreLink';
 import { VizSuggestionsButton } from './VizSuggestionsButton';
+import { buildNotebookPanelAssistantContext } from './buildNotebookPanelAssistantContext';
 import { NotebookCellActions } from './edit/NotebookCellActions';
 import { NOTEBOOK_CELL_CONTROLS_CLASS, NOTEBOOK_CELL_CONTROLS_PINNED_CLASS } from './edit/cellClassNames';
 
@@ -45,6 +47,9 @@ export function NotebookPanelActions({
   const [actionsOpen, setActionsOpen] = useState(false);
   const pinned = suggestionsOpen || actionsOpen || timeRangeOpen;
   const canEditPanel = isEditing && !isLibraryPanel(panel);
+  const { isAvailable: assistantAvailable, addToAssistant } = useAddToAssistant({
+    origin: 'grafana/notebook-panel-actions',
+  });
   return (
     <div
       ref={toolbarRef}
@@ -57,6 +62,14 @@ export function NotebookPanelActions({
       data-notebook-panel-actions
     >
       <Stack direction="row" gap={0.5} alignItems="center">
+        {assistantAvailable && canEditPanel && (
+          <IconButton
+            name="ai-sparkle"
+            size="sm"
+            tooltip={t('notebooks.panel.edit-with-assistant', 'Edit with Assistant')}
+            onClick={() => addToAssistant(buildNotebookPanelAssistantContext(cell, panel))}
+          />
+        )}
         {timeRangeControl}
         {canEditPanel && onToggleQueryEditor && (
           <IconButton

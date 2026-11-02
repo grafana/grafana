@@ -218,7 +218,7 @@ export function TableDataGrid({
   return (
     <>
       <div className={styles.gridFrame}>
-        <div className={clsx(styles.gridWrapper, scrollShadows.className)}>
+        <div className={clsx(styles.gridWrapper, scrollShadows.className)} style={scrollShadows.style}>
           <DataGrid<TableRow, TableSummaryRow, string>
             {...dataGridOverrides}
             {...commonDataGridProps}
