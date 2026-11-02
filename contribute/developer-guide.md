@@ -15,7 +15,7 @@ Run the remaining commands from this directory.
 
 ## Dependencies
 
-We recommend [mise](https://mise.jdx.dev/getting-started.html) to manage Go, Node.js, and other development tool versions in one place. Once set up, install Go, Node.js, and pnpm with:
+We recommend [mise](https://mise.jdx.dev/getting-started.html) to manage Go, Node.js, and other development tool versions in one place. Once set up, install Go, Node.js, pnpm, and golangci-lint with:
 
 ```sh
 mise install

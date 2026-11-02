@@ -2,6 +2,7 @@ min_version = "2026.2.8"
 
 [tools]
 go = '''{{ exec(command="awk '/^go [0-9]/{print $2}' go.mod") }}'''
+golangci-lint = '''{{ exec(command="awk '$1==\"github.com/golangci/golangci-lint/v2\"{sub(/^v/,\"\",$2); print $2}' .citools/src/golangci-lint/go.mod") }}'''
 
 [settings]
 idiomatic_version_file_enable_tools = ["node", "pnpm"]
