@@ -1132,9 +1132,12 @@ func (b *bleveBackend) BuildIndex(
 	now := time.Now().UnixMilli()
 	idx.lastFetchedFromCache.Store(now)
 	// A rebuild is not a search, so it keeps the replaced index's last search.
-	if prev != nil {
+	switch {
+	case prev != nil:
 		idx.lastSearchedAt.Store(prev.lastSearchedAt.Load())
-	} else {
+	case !options.LastSearchedAt.IsZero():
+		idx.lastSearchedAt.Store(min(options.LastSearchedAt.UnixMilli(), now))
+	default:
 		idx.lastSearchedAt.Store(now)
 	}
 	b.cache[key] = idx

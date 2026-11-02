@@ -337,6 +337,10 @@ type ResourceStats struct {
 
 	Count           int64
 	ResourceVersion int64
+
+	// LastSearchedAt is when a global index was last searched before a restart,
+	// so its idle time carries on. Zero when unknown.
+	LastSearchedAt time.Time
 }
 
 // This interface is not exposed to end users directly
@@ -432,6 +436,11 @@ type SearchOptions struct {
 	// namespace's first search does not hang. Defaults to
 	// defaultGlobalIndexBuildWait; only tests change it.
 	GlobalIndexBuildWait time.Duration
+
+	// GlobalIndexIdleTimeout is how long a global index may go unsearched before
+	// it is closed. Startup does not reopen one that was idle that long before
+	// the restart.
+	GlobalIndexIdleTimeout time.Duration
 
 	// SearchFields holds the per-kind search-field wiring shared with the index
 	// backend. The search server reads the selectable fields and the definition
