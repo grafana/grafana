@@ -108,7 +108,7 @@ func TestIntegrationIAMUserPermissions_SearchFlagsPreserveRouting(t *testing.T) 
 					features, &licensing.OSSLicensingService{}, nil).WithSearchPermissionStore(searchStore)
 				service := &iamPermissionRoutingService{}
 				clients, err := authz.ProvideAuthZClients(cfg, features, nil, tracer, prometheus.NewRegistry(), sql, service, actionResolver, nil,
-					apiserver.ProvideEventualRestConfigProvider(), nil, loader)
+					apiserver.ProvideEventualRestConfigProvider(), nil, loader, ac.NewScopeResolverRegistry())
 				require.NoError(t, err)
 				require.NotNil(t, service.client)
 				client := &iamPermissionRoutingClient{UserPermissionsClient: authz.ProvideAuthZUserPermissionsClient(clients)}
