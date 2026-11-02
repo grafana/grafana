@@ -50,4 +50,36 @@ describe('SuggestionsInput', () => {
     expect(screen.getByText('before')).toBeInTheDocument();
     expect(screen.getByText('after')).toBeInTheDocument();
   });
+
+  it('commits once when a suggestion is clicked, without the half-typed text first', async () => {
+    const onChange = jest.fn();
+    render(<SuggestionsInput value="" onChange={onChange} suggestions={suggestions} />);
+
+    await userEvent.type(screen.getByRole('textbox'), '$');
+    await userEvent.click(await screen.findByText('t'));
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith('${t}');
+  });
+
+  it('narrows the list to what is typed after $, and Enter only picks a match', async () => {
+    const onChange = jest.fn();
+    const twoSuggestions = [
+      { value: 'min', label: 'min', origin: VariableOrigin.Template },
+      { value: 'other', label: 'other', origin: VariableOrigin.Template },
+    ];
+    render(<SuggestionsInput value="" onChange={onChange} suggestions={twoSuggestions} />);
+
+    const input = screen.getByRole('textbox');
+    await userEvent.type(input, '$ot');
+    expect(screen.queryByText('min')).not.toBeInTheDocument();
+    await userEvent.keyboard('{Enter}');
+    expect(onChange).toHaveBeenLastCalledWith('${other}');
+
+    await userEvent.clear(input);
+    await userEvent.type(input, '$zz');
+    expect(screen.queryByText('other')).not.toBeInTheDocument();
+    await userEvent.keyboard('{Enter}');
+    expect(input).toHaveValue('$zz');
+  });
 });

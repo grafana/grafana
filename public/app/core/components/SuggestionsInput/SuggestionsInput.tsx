@@ -90,6 +90,12 @@ export const SuggestionsInput = ({
   const theme = useTheme2();
   const styles = getStyles(theme, inputHeight);
 
+  // What's typed after the `$` narrows the list, so Enter can't pick a variable that wasn't typed
+  const query = showingSuggestions ? getSuggestionQuery(variableValue, startPos) : '';
+  const shownSuggestions = query
+    ? suggestions.filter((suggestion) => suggestion.value.toLowerCase().includes(query))
+    : suggestions;
+
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null | undefined>(undefined);
 
   useEffect(() => {
@@ -167,24 +173,29 @@ export const SuggestionsInput = ({
           return setSuggestionsIndex(0);
 
         case 'Enter':
+          if (shownSuggestions.length === 0) {
+            setShowingSuggestions(false);
+            return;
+          }
           event.preventDefault();
-          return onVariableSelect(suggestions[suggestionsIndex]);
+          return onVariableSelect(shownSuggestions[suggestionsIndex]);
 
         case 'ArrowDown':
         case 'ArrowUp':
           event.preventDefault();
           const direction = event.key === 'ArrowDown' ? 1 : -1;
-          return setSuggestionsIndex((index) => modulo(index + direction, suggestions.length));
+          return setSuggestionsIndex((index) => modulo(index + direction, Math.max(shownSuggestions.length, 1)));
         default:
           return;
       }
     },
-    [showingSuggestions, suggestions, suggestionsIndex, onVariableSelect]
+    [showingSuggestions, shownSuggestions, suggestionsIndex, onVariableSelect]
   );
 
   const onValueChanged = React.useCallback(
     (event: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       setVariableValue(event.currentTarget.value);
+      setSuggestionsIndex(0);
       onInputChange?.(event.currentTarget.value);
     },
     [onInputChange]
@@ -214,9 +225,17 @@ export const SuggestionsInput = ({
 
   return (
     <div className={styles.inputWrapper} style={style ?? {}}>
-      {showingSuggestions && (
+      {showingSuggestions && shownSuggestions.length > 0 && (
         <Portal>
-          <div ref={refs.setFloating} style={floatingStyles} className={styles.suggestionsWrapper}>
+          {/* Keeps focus in the input while a suggestion is clicked, so its blur doesn't commit the
+              half-typed text first */}
+          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+          <div
+            ref={refs.setFloating}
+            style={floatingStyles}
+            className={styles.suggestionsWrapper}
+            onMouseDown={(event) => event.preventDefault()}
+          >
             <ScrollContainer
               maxHeight="300px"
               onScroll={(event) => setScrollTop(event.currentTarget.scrollTop ?? 0)}
@@ -228,7 +247,7 @@ export const SuggestionsInput = ({
                     We should probably rename this to something more general. */}
               <DataLinkSuggestions
                 activeRef={activeRef}
-                suggestions={suggestions}
+                suggestions={shownSuggestions}
                 onSuggestionSelect={onVariableSelect}
                 onClose={() => setShowingSuggestions(false)}
                 activeIndex={suggestionsIndex}
@@ -252,6 +271,16 @@ export const SuggestionsInput = ({
 };
 
 SuggestionsInput.displayName = 'SuggestionsInput';
+
+/** The variable name typed so far after the `$` or `${` at `startPos` */
+function getSuggestionQuery(text: string, startPos: number): string {
+  return (
+    text
+      .slice(startPos)
+      .match(/^\$?\{?(\w*)/)?.[1]
+      .toLowerCase() ?? ''
+  );
+}
 
 function getElementPosition(suggestionElement: HTMLElement | null, activeIndex: number) {
   return (suggestionElement?.clientHeight ?? 0) * activeIndex;
