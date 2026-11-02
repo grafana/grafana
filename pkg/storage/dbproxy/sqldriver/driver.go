@@ -87,8 +87,8 @@ func (*conn) BeginTx(context.Context, driver.TxOptions) (driver.Tx, error) {
 	return nil, ErrUnsupported
 }
 
-// V1 has no database health check. Implement Ping explicitly so database/sql
-// cannot report success just because a local logical connection exists.
+// Without this method, db.Ping would succeed without contacting the proxy.
+// Return ErrUnsupported because the driver has no remote health check.
 func (*conn) Ping(context.Context) error                  { return ErrUnsupported }
 func (c *conn) Prepare(query string) (driver.Stmt, error) { return &stmt{query: query, conn: c}, nil }
 func (c *conn) PrepareContext(ctx context.Context, query string) (driver.Stmt, error) {
