@@ -697,9 +697,6 @@ function withVisibility(filter: GlValue | undefined, visible: GlValue | undefine
   if (visible === undefined) {
     return filter;
   }
-  if (visible === undefined) {
-    return filter;
-  }
   if (filter === undefined) {
     return visible;
   }
