@@ -3840,3 +3840,34 @@ describe('TableNG', () => {
     });
   });
 });
+
+describe('generated row-number gutter', () => {
+  it('does not render a gutter by default', () => {
+    const frame = createBasicDataFrame();
+    render(<TableNG data={frame} width={800} height={600} />);
+    expect(screen.getAllByRole('columnheader')).toHaveLength(2);
+    expect(frame.fields).toHaveLength(2);
+  });
+
+  it('renders sequential row positions without altering the source DataFrame', () => {
+    const frame = createBasicDataFrame();
+    const fields = frame.fields;
+
+    render(<TableNG data={frame} width={800} height={600} showRowNumbers />);
+
+    expect(screen.getAllByRole('columnheader')).toHaveLength(3);
+    expect(screen.getAllByRole('gridcell').map((cell) => cell.textContent)).toEqual([
+      '1',
+      'A1',
+      '1',
+      '2',
+      'A2',
+      '2',
+      '3',
+      'A3',
+      '3',
+    ]);
+    expect(frame.fields).toBe(fields);
+    expect(frame.fields).toHaveLength(2);
+  });
+});

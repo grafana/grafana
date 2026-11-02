@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type Field } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { type DataGridHandle, type DataGridProps } from '@grafana/react-data-grid';
+import { Cell, type DataGridHandle, type DataGridProps } from '@grafana/react-data-grid';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { clamp } from '../../../utils/clamp';
@@ -13,6 +13,7 @@ import { usePanelContext } from '../../PanelChrome';
 import { useSplitter } from '../../Splitter/useSplitter';
 import { type DataLinksActionsTooltipState } from '../cellUtils';
 
+import { createRowNumberColumn, ROW_NUMBER_COLUMN_KEY } from './RowNumberColumn';
 import { TableDataGrid } from './TableDataGrid';
 import { TableSidebar, type SidebarColumn } from './components/TableSidebar';
 import { COLUMN_SETTLE_MS, FIRST_COLUMN_EXTRA_PADDING, getPaginationChromeHeight, TABLE } from './constants';
@@ -117,6 +118,7 @@ export function TableFlat(props: TableNGProps) {
     tableRefreshEnabled = false,
     preventHorizontalOverflow = false,
     zebraStriping = false,
+    showRowNumbers = false,
     showColumnsSidebar = false,
     reorderable = false,
     columnOrder: columnOrderProp,
@@ -323,6 +325,9 @@ export function TableFlat(props: TableNGProps) {
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
   const onCellClick: OnCellClick = useCallback(
     ({ column, row }, ev) => {
+      if (column.key === ROW_NUMBER_COLUMN_KEY) {
+        return;
+      }
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const field = (column as unknown as TableColumn).field;
 
@@ -589,8 +594,15 @@ export function TableFlat(props: TableNGProps) {
   const { columns, cellRootRenderers } = useMemo(() => {
     // The column builder prepares display processors itself; wrapping JSON processors twice repeats units.
     const result = fromFields(displayedRawFields, widths, data, rows, sortedRows);
+    if (showRowNumbers) {
+      // A presentation-only column: no new DataFrame field or changes to row/source indices.
+      result.columns.unshift(createRowNumberColumn(pageRangeStart, theme));
+      result.cellRootRenderers[ROW_NUMBER_COLUMN_KEY] = function renderRowNumberCell(key, cellProps) {
+        return <Cell key={key} {...cellProps} />;
+      };
+    }
     return { ...result, columns: markEdgeColumns(result.columns) };
-  }, [fromFields, displayedRawFields, widths, data, rows, sortedRows]);
+  }, [fromFields, displayedRawFields, widths, data, rows, sortedRows, showRowNumbers, pageRangeStart, theme]);
 
   useEffect(() => {
     if (isColumnVisibilityPanelOpen) {
