@@ -50,6 +50,28 @@ type ruleKey struct {
 	ruleGroup models.AlertRuleGroupKeyWithFolderFullpath
 	ruleType  models.RuleType
 	state     string
+	// intervalBucket is derived from the rule's evaluation interval, which is shared by all
+	// rules in a group, so it does not add series beyond those of the group.
+	intervalBucket string
+}
+
+// intervalBucketLabel maps a rule evaluation interval to a bounded label value.
+// Buckets are non-overlapping, inclusive ranges in seconds, so each rule falls into exactly one.
+func intervalBucketLabel(intervalSeconds int64) string {
+	switch {
+	case intervalSeconds <= 10:
+		return "0-10s"
+	case intervalSeconds <= 30:
+		return "11-30s"
+	case intervalSeconds <= 60:
+		return "31-60s"
+	case intervalSeconds <= 5*60:
+		return "61-300s"
+	case intervalSeconds <= 15*60:
+		return "301-900s"
+	default:
+		return "901s+"
+	}
 }
 
 func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
@@ -81,6 +103,8 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 			ruleGroup: ruleGroup,
 			ruleType:  rule.Type(),
 			state:     state,
+
+			intervalBucket: intervalBucketLabel(rule.IntervalSeconds),
 		}
 		buckets[key]++
 
@@ -135,7 +159,7 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 
 	// Set metrics
 	for key, count := range buckets {
-		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(key.orgID), key.ruleType.String(), key.state, makeRuleGroupLabelValue(key.ruleGroup), key.ruleGroup.NamespaceUID).Set(float64(count))
+		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(key.orgID), key.ruleType.String(), key.state, makeRuleGroupLabelValue(key.ruleGroup), key.ruleGroup.NamespaceUID, key.intervalBucket).Set(float64(count))
 	}
 	for orgID, numRulesNfSettings := range orgsNfSettings {
 		sch.metrics.SimpleNotificationRules.WithLabelValues(fmt.Sprint(orgID)).Set(float64(numRulesNfSettings))
