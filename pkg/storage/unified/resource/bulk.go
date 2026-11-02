@@ -281,19 +281,21 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 	// BulkProcess requests
 	defer runner.stop()
 	var iter BulkRequestIterator = runner
+	var spool *spooledBulkRequests
 	if runner.blob != nil {
 		// Finish negotiated blob uploads before the backend begins processing. SQL
 		// backends may open a write transaction before consuming the iterator, and
 		// SQL-backed blob uploads need a separate write transaction.
-		spooled, err := spoolBulkRequests(runner, s.bulkBatchOptions)
+		var err error
+		spool, err = spoolBulkRequests(runner, s.bulkBatchOptions)
 		if err != nil {
 			if runner.err != nil {
 				err = runner.err
 			}
 			return sendAndClose(&resourcepb.BulkResponse{Error: AsErrorResult(err)})
 		}
-		defer spooled.Close()
-		iter = spooled
+		defer spool.Close()
+		iter = spool
 	}
 	rsp := backend.ProcessBulk(ctx, settings, iter)
 	if rsp == nil {
@@ -303,6 +305,9 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 				Message: "Nothing returned from process batch",
 			},
 		}
+	}
+	if spool != nil && spool.err != nil {
+		rsp.Error = AsErrorResult(spool.err)
 	}
 	if runner.err != nil {
 		rsp.Error = AsErrorResult(runner.err)
@@ -356,6 +361,7 @@ type spooledBulkRequests struct {
 	batch     []*resourcepb.BulkRequest
 	rollback  bool
 	eof       bool
+	err       error
 }
 
 func spoolBulkRequests(source BulkRequestBatchIterator, opts BulkBatchOptions) (_ *spooledBulkRequests, err error) {
@@ -416,6 +422,7 @@ func (s *spooledBulkRequests) Next() bool {
 		return false
 	}
 	if err != nil {
+		s.err = err
 		s.rollback = true
 		return true
 	}
@@ -448,6 +455,7 @@ func (s *spooledBulkRequests) NextBatch() bool {
 		}
 		if err != nil {
 			s.batch = s.batch[:0]
+			s.err = err
 			s.rollback = true
 			return true
 		}
@@ -487,7 +495,10 @@ func (s *spooledBulkRequests) readRequest() (*resourcepb.BulkRequest, error) {
 	}
 	data := make([]byte, int(size))
 	if _, err := io.ReadFull(s.reader, data); err != nil {
-		return nil, fmt.Errorf("read bulk spool: %w", err)
+		if errors.Is(err, io.EOF) {
+			err = io.ErrUnexpectedEOF
+		}
+		return nil, fmt.Errorf("read truncated bulk spool record: %w", err)
 	}
 	req := &resourcepb.BulkRequest{}
 	if err := proto.Unmarshal(data, req); err != nil {

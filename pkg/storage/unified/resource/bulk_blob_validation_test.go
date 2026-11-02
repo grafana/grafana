@@ -269,6 +269,37 @@ func TestBulkProcessNegotiatedInputUsesBoundedDiskSpool(t *testing.T) {
 	}
 }
 
+func TestBulkProcessReturnsDiskSpoolReplayErrors(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		corruption []byte
+		message    string
+	}{
+		{name: "truncated record", corruption: []byte{3}, message: "truncated"},
+		{name: "invalid record", corruption: []byte{1, 0xff}, message: "unmarshal"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := &corruptBulkSpoolBackend{corruption: tc.corruption}
+			blob := bulkBlobEndpointSupport{StreamingBlobSupport: bulkBlobUploadFunc{put: func(_ context.Context, _ *resourcepb.PutBlobRequest, reader io.Reader) (*resourcepb.PutBlobResponse, error) {
+				return completedBulkBlobUpload(reader)
+			}}}
+			srv := &server{backend: backend, blob: blob, blobTransfers: newBlobTransfers(), access: authlib.FixedAccessClient(true), bulkBatchOptions: DefaultBulkBatchOptions()}
+			req := newTestBulkRequest("item")
+			settings := BulkSettings{Collection: []*resourcepb.ResourceKey{req.Key}}
+			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: identity.RoleAdmin})
+			ctx = metadata.NewIncomingContext(ctx, metadata.Join(settings.ToMD(), metadata.Pairs(resourcepb.InlineBlobMetadataKey, "1")))
+			stream := &negotiatedBulkBlobStream{bulkBlobValidationStream: bulkBlobValidationStream{testBulkProcessServer: testBulkProcessServer{ctx: ctx, requests: []*resourcepb.BulkRequest{req}}}}
+
+			require.NoError(t, srv.BulkProcess(stream))
+			require.NoError(t, backend.err)
+			require.True(t, backend.rollback)
+			require.NotNil(t, stream.response.Error)
+			require.Contains(t, stream.response.Error.Message, tc.message)
+			require.Zero(t, stream.response.Processed)
+		})
+	}
+}
+
 func TestBulkProcessBlobUploadFailureDoesNotPublish(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
@@ -421,6 +452,38 @@ func (b *bulkBlobValidationBackend) ProcessBulk(_ context.Context, settings Bulk
 		}
 	}
 	return &resourcepb.BulkResponse{Processed: int64(len(b.forwarded))}
+}
+
+type corruptBulkSpoolBackend struct {
+	UnimplementedStorageBackend
+	corruption []byte
+	rollback   bool
+	err        error
+}
+
+func (b *corruptBulkSpoolBackend) ProcessBulk(_ context.Context, _ BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
+	spool := iter.(*spooledBulkRequests)
+	if b.err = spool.file.Truncate(0); b.err != nil {
+		return &resourcepb.BulkResponse{}
+	}
+	if _, b.err = spool.file.Seek(0, io.SeekStart); b.err != nil {
+		return &resourcepb.BulkResponse{}
+	}
+	if _, b.err = spool.file.Write(b.corruption); b.err != nil {
+		return &resourcepb.BulkResponse{}
+	}
+	if _, b.err = spool.file.Seek(0, io.SeekStart); b.err != nil {
+		return &resourcepb.BulkResponse{}
+	}
+	spool.reader.Reset(spool.file)
+	batchIter := iter.(BulkRequestBatchIterator)
+	for batchIter.NextBatch() {
+		if batchIter.RollbackRequested() {
+			b.rollback = true
+			break
+		}
+	}
+	return &resourcepb.BulkResponse{}
 }
 
 type bulkBlobValidationStream struct {
