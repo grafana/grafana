@@ -170,7 +170,7 @@ func executeNode(ctx context.Context, node ExecutableNode, now time.Time, vars m
 		if p := recover(); p != nil {
 			logger.FromContext(ctx).Error("Panic while executing node", "refId", node.RefID(), "error", p, "stack", log.Stack(1))
 			res = mathexp.Results{}
-			err = makePanicError(node.RefID(), p)
+			err = makePanicError(node.RefID())
 		}
 	}()
 	return node.Execute(ctx, now, vars, s)

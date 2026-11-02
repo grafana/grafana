@@ -185,7 +185,7 @@ func TestSQLCommandPanicCountsAsError(t *testing.T) {
 
 	res, err := cmd.Execute(t.Context(), time.Now(), vars, &testTracer{}, m)
 	require.NoError(t, err)
-	require.ErrorContains(t, res.Error, "panic")
+	require.ErrorIs(t, res.Error, PanicError)
 
 	require.Equal(t, 1.0, counterVal(t, m.SqlCommandCount, "error", "unknown"))
 	require.Equal(t, 0.0, counterVal(t, m.SqlCommandCount, "ok", "none"))

@@ -303,10 +303,10 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 					logger.Error("Panic while querying data source", "error", p, "stack", log.Stack(1))
 					for _, dn := range nodeGroup {
 						if _, ok := vars[dn.refID]; !ok {
-							vars[dn.refID] = mathexp.Results{Error: makePanicError(dn.refID, p)}
+							vars[dn.refID] = mathexp.Results{Error: makePanicError(dn.refID)}
 						}
 					}
-					instrument(makePanicError(firstNode.refID, p), "")
+					instrument(makePanicError(firstNode.refID), "")
 				}
 			}()
 
@@ -434,7 +434,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		if p := recover(); p != nil {
 			logger.Error("Panic while querying data source", "error", p, "stack", log.Stack(1))
 			r = mathexp.Results{}
-			e = makePanicError(dn.refID, p)
+			e = makePanicError(dn.refID)
 		}
 	}()
 

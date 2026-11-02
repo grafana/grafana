@@ -181,19 +181,21 @@ func makeUnexpectedNodeTypeError(refID, nodeType string) error {
 	return UnexpectedNodeTypeError.Build(data)
 }
 
-var panicErrString = "failed to execute query or expression [{{ .Public.refId }}]: panic: {{ .Public.panic }}"
+var panicErrString = "failed to execute query or expression [{{ .Public.refId }}]: internal error, see the Grafana server logs"
 
 var PanicError = errutil.Internal("sse.panic").MustTemplate(
 	panicErrString,
 	errutil.WithPublic(panicErrString))
 
-func makePanicError(refID string, p any) error {
+// makePanicError leaves out the panic value because it can hold query data or
+// internal state, and the error reaches users and alert notifications. Callers
+// log the value with a stack trace instead.
+func makePanicError(refID string) error {
 	data := errutil.TemplateData{
 		Public: map[string]any{
 			"refId": refID,
-			"panic": fmt.Sprintf("%v", p),
 		},
-		Error: fmt.Errorf("panic while executing %v: %v", refID, p),
+		Error: fmt.Errorf("panic while executing %v", refID),
 	}
 
 	return PanicError.Build(data)

@@ -245,8 +245,9 @@ func TestMLNodeExecutePanicCountsAsFailure(t *testing.T) {
 	}
 
 	_, err := node.Execute(t.Context(), time.Now(), nil, s)
+	require.ErrorIs(t, err, PanicError)
 	require.ErrorContains(t, err, "[A]")
-	require.ErrorContains(t, err, "panic")
+	require.NotContains(t, err.Error(), "nil pointer dereference")
 
 	require.Equal(t, 1.0, counterVal(t, s.metrics.DSRequests, "failure", "false", mlPluginID))
 	require.Equal(t, 0.0, counterVal(t, s.metrics.DSRequests, "success", "false", mlPluginID))

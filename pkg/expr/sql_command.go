@@ -184,8 +184,8 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	// Runs before the metrics defer above, so a panic counts as an error.
 	defer func() {
 		if p := recover(); p != nil {
-			gr.logger.Error("Panic while executing SQL command", "error", p, "stack", glog.Stack(1))
-			rsp = mathexp.Results{Error: makePanicError(gr.refID, p)}
+			gr.logger.Error("Panic while executing SQL command", "refId", gr.refID, "error", p, "stack", glog.Stack(1))
+			rsp = mathexp.Results{Error: makePanicError(gr.refID)}
 		}
 	}()
 

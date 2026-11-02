@@ -375,9 +375,9 @@ func TestSQLServiceDataSourcePanic(t *testing.T) {
 			res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
 			require.NoError(t, err)
 
+			require.ErrorIs(t, res.Responses["A"].Error, PanicError)
 			require.ErrorContains(t, res.Responses["A"].Error, "[A]")
-			require.ErrorContains(t, res.Responses["A"].Error, "panic")
-			require.ErrorContains(t, res.Responses["A"].Error, "nil pointer dereference")
+			require.NotContains(t, res.Responses["A"].Error.Error(), "nil pointer dereference")
 
 			require.NoError(t, res.Responses["B"].Error)
 			require.Len(t, res.Responses["B"].Frames, 1)

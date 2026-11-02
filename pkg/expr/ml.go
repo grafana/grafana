@@ -95,7 +95,7 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 		if p := recover(); p != nil {
 			logger.Error("Panic while querying data source", "error", p, "stack", log.Stack(1))
 			r = mathexp.Results{}
-			e = makePanicError(m.refID, p)
+			e = makePanicError(m.refID)
 		}
 	}()
 
