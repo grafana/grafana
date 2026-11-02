@@ -1912,6 +1912,10 @@
           "skipDataQuery": {
             "type": "boolean"
           },
+          "skipDefaultQuery": {
+            "description": "Alpha: suppress automatic starter queries without disabling explicit queries.",
+            "type": "boolean"
+          },
           "state": {
             "type": "string",
             "enum": ["alpha", "beta", "stable", "deprecated"]
