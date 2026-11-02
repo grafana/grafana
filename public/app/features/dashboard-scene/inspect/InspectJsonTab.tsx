@@ -177,8 +177,8 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
       return;
     }
 
-    if (!dashboard.state.isEditing) {
-      dashboard.onEnterEditMode();
+    if (!dashboard.state.isEditing && !dashboard.onEnterEditMode()) {
+      return;
     }
 
     const oldState = gridItem.state;
@@ -235,8 +235,8 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
 
     const vizPanel = buildVizPanel(jsonObj, jsonObj.spec.id);
 
-    if (!dashboard.state.isEditing) {
-      dashboard.onEnterEditMode();
+    if (!dashboard.state.isEditing && !dashboard.onEnterEditMode()) {
+      return;
     }
 
     reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
@@ -260,8 +260,8 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
       return;
     }
 
-    if (!dashboard.state.isEditing) {
-      dashboard.onEnterEditMode();
+    if (!dashboard.state.isEditing && !dashboard.onEnterEditMode()) {
+      return;
     }
 
     panel.parent.setState(newState);

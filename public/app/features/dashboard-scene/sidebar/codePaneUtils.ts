@@ -95,8 +95,14 @@ export function applyJsonToDashboard(
       return validation;
     }
 
-    if (!dashboard.state.isEditing) {
-      dashboard.onEnterEditMode();
+    if (!dashboard.state.isEditing && !dashboard.onEnterEditMode()) {
+      return {
+        success: false,
+        error: t(
+          'dashboard.edit.mobile-not-available',
+          'Dashboard editing is not available on small screens. Switch to a larger screen to continue.'
+        ),
+      };
     }
 
     applyDashboardSpec({

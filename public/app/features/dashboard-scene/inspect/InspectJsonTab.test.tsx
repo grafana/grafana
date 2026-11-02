@@ -189,6 +189,28 @@ describe('InspectJsonTab', () => {
     expect(tab.state.onClose).toHaveBeenCalled();
   });
 
+  it('does not update the panel when entering edit mode is blocked', async () => {
+    const { tab, panel, scene } = await buildTestScene();
+    jest.spyOn(scene, 'onEnterEditMode').mockReturnValue(false);
+    scene.setState({ isEditing: false });
+
+    tab.onJsonTextChange(`{
+      "id": 12,
+      "type": "table",
+      "title": "New title",
+      "gridPos": { "x": 1, "y": 2, "w": 3, "h": 4 },
+      "options": {},
+      "fieldConfig": {},
+      "transformations": [],
+      "transparent": false
+    }`);
+
+    tab.onApplyChange();
+
+    expect(findVizPanelByKey(scene, panel.state.key)!.state.title).not.toBe('New title');
+    expect(tab.state.onClose).not.toHaveBeenCalled();
+  });
+
   it('Can update gridPos and forces layout re-render', async () => {
     const { tab, panel, scene } = await buildTestScene();
 
