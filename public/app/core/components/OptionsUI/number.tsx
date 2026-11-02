@@ -2,10 +2,13 @@ import { type KeyboardEvent, useCallback, useState } from 'react';
 
 import { type StandardEditorProps, type NumberFieldConfigSettings } from '@grafana/data';
 import { hasVarMappingVariableReference, isInVarMappingRange } from '@grafana/data/internal';
+import { Stack } from '@grafana/ui';
 import { SuggestionsInput } from 'app/core/components/SuggestionsInput/SuggestionsInput';
 import { getVariableSuggestions } from 'app/core/components/SuggestionsInput/getVariableSuggestions';
 
 import { getOutOfRangeText, NumberInput } from './NumberInput';
+import { getVarMappingChecks, VarMappingChecks } from './varMappingChecks';
+import { useVarMappingVariableUpdates, type VarMappingVariableSource } from './varMappingVariables';
 
 type Props = StandardEditorProps<number, NumberFieldConfigSettings>;
 
@@ -35,6 +38,8 @@ export const NumberValueEditor = ({ value, onChange, item, id }: Props) => {
 type VarMappingProps = Omit<StandardEditorProps<number | string, NumberFieldConfigSettings>, 'value' | 'onChange'> & {
   value?: number | string;
   onChange: (value?: number | string) => void;
+  /** The dashboard variables, to check the expression against */
+  variables?: VarMappingVariableSource;
 };
 
 /**
@@ -47,7 +52,7 @@ type VarMappingProps = Omit<StandardEditorProps<number | string, NumberFieldConf
  * isn't stored. Anything else is parsed as a number in the settings' range, or reverted when it
  * isn't one.
  */
-export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMappingProps) => {
+export const VarMappingNumberValueEditor = ({ value, onChange, item, id, context, variables }: VarMappingProps) => {
   const { settings } = item;
   const formatted = value == null ? '' : String(value);
   const [text, setText] = useState(formatted);
@@ -55,6 +60,9 @@ export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMa
   // The last text passed to onChange, so the blur after Enter doesn't commit it again
   const [committed, setCommitted] = useState(formatted);
   const [prevFormatted, setPrevFormatted] = useState(formatted);
+
+  // Only an expression is checked against the variables, so a plain number doesn't follow them
+  useVarMappingVariableUpdates(typeof value === 'string' ? variables : undefined);
 
   if (formatted !== prevFormatted) {
     setPrevFormatted(formatted);
@@ -107,27 +115,41 @@ export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMa
     [committed, onChange, settings]
   );
 
+  const checks =
+    typeof value === 'string'
+      ? getVarMappingChecks({
+          kind: 'number',
+          settings,
+          expression: value,
+          interpolate: variables?.interpolate ?? context.replaceVariables,
+          variables: variables?.getVariables() ?? [],
+        })
+      : [];
+
   return (
-    // Only captures Enter bubbling up from the input; the input itself stays the interactive element
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-    <div
-      onKeyDown={(e: KeyboardEvent<HTMLDivElement>) => {
-        // SuggestionsInput only handles Enter to pick a suggestion, and prevents the default then
-        if (e.key === 'Enter' && !e.defaultPrevented && e.target instanceof HTMLInputElement) {
-          commit(e.target.value);
-        }
-      }}
-    >
-      <SuggestionsInput
-        id={id}
-        value={text}
-        placeholder={settings?.placeholder}
-        suggestions={getVariableSuggestions()}
-        invalid={rangeError !== undefined}
-        error={rangeError}
-        onInputChange={setText}
-        onChange={commit}
-      />
-    </div>
+    <Stack direction="column" gap={0.5}>
+      {/* Only captures Enter bubbling up from the input; the input itself stays the interactive element */}
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+      <div
+        onKeyDown={(e: KeyboardEvent<HTMLDivElement>) => {
+          // SuggestionsInput only handles Enter to pick a suggestion, and prevents the default then
+          if (e.key === 'Enter' && !e.defaultPrevented && e.target instanceof HTMLInputElement) {
+            commit(e.target.value);
+          }
+        }}
+      >
+        <SuggestionsInput
+          id={id}
+          value={text}
+          placeholder={settings?.placeholder}
+          suggestions={getVariableSuggestions()}
+          invalid={rangeError !== undefined}
+          error={rangeError}
+          onInputChange={setText}
+          onChange={commit}
+        />
+      </div>
+      <VarMappingChecks checks={checks} />
+    </Stack>
   );
 };

@@ -1,17 +1,12 @@
 import {
   type FieldConfig,
   type FieldConfigSource,
-  booleanOverrideProcessor,
-  numberOverrideProcessor,
   type PanelPlugin,
-  standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   ThresholdsMode,
 } from '@grafana/data';
-import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
 
 import {
-  getVarMappingEditingKind,
   setOptionImmutably,
   supportsDataQuery,
   updateDefaultFieldConfigValue,
@@ -270,22 +265,5 @@ describe('setOptionImmutably', () => {
     expect(input.a.b).not.toEqual(result.a.b);
     expect(input.a.b.c).not.toEqual(result.a.b.c);
     expect(input.a.b.e).toEqual(result.a.b.e);
-  });
-});
-
-describe('getVarMappingEditingKind', () => {
-  standardEditorsRegistry.setInit(getAllOptionEditors);
-  const editor = (id: string) => standardEditorsRegistry.get(id).editor;
-
-  it('lets numbers and the unit take expressions, but keeps sliders as sliders', () => {
-    expect(getVarMappingEditingKind({ id: 'min', process: numberOverrideProcessor, editor: editor('number') })).toBe(
-      'number'
-    );
-    expect(
-      getVarMappingEditingKind({ id: 'custom.lineWidth', process: numberOverrideProcessor, editor: editor('slider') })
-    ).toBeUndefined();
-    expect(
-      getVarMappingEditingKind({ id: 'custom.show', process: booleanOverrideProcessor, editor: editor('boolean') })
-    ).toBeUndefined();
   });
 });

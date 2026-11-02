@@ -15,11 +15,13 @@ import {
   FieldConfigProperty,
   PanelOptionsEditorBuilder,
 } from '@grafana/data';
-import { isVarMappingExpressionInput, splitThresholdStepExpressions } from '@grafana/data/internal';
+import { getVarMappingKind, isVarMappingExpressionInput, splitThresholdStepExpressions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
 import { VarMappingNumberValueEditor } from 'app/core/components/OptionsUI/number';
+import { getVarMappingToggleKind, VarMappingToggleEditor } from 'app/core/components/OptionsUI/varMappingToggle';
+import { type VarMappingVariableSource } from 'app/core/components/OptionsUI/varMappingVariables';
 import { LibraryVizPanelInfo } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
 import { type LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
@@ -30,7 +32,6 @@ import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { getOptionOverrides, getVarMappingOptionOverrides } from './state/getOptionOverrides';
 import { type OptionPaneRenderProps } from './types';
 import {
-  getVarMappingEditingKind,
   hasThresholdSteps,
   setOptionImmutably,
   updateDefaultFieldConfigValue,
@@ -127,8 +128,10 @@ function getDefaultsEditing(
   if (!varMappingsEnabled && fieldOption.id === FieldConfigProperty.Thresholds) {
     return {
       Editor: fieldOption.editor,
+      numberExpressions: false,
       storedValue,
       value: storedValue,
+      toggle: undefined,
       // Step expressions can't be shown with the flag off, and an edit may move steps, so drop them
       toFieldConfig: (v: unknown) => writeValue(updateDefaultThresholdStepVarMappings(fieldConfig, {}), v),
     };
@@ -137,8 +140,10 @@ function getDefaultsEditing(
   if (fieldOption.id === FieldConfigProperty.Thresholds) {
     return {
       Editor: fieldOption.editor,
+      numberExpressions: false,
       storedValue,
       value: withThresholdStepExpressions(storedValue, (key) => defaults.varMappings?.[key]),
+      toggle: undefined,
       toFieldConfig: (v: unknown) => {
         if (!hasThresholdSteps(v)) {
           return writeValue(updateDefaultThresholdStepVarMappings(fieldConfig, {}), v);
@@ -149,13 +154,18 @@ function getDefaultsEditing(
     };
   }
 
-  const kind = varMappingsEnabled ? getVarMappingEditingKind(fieldOption) : undefined;
+  const kind = varMappingsEnabled ? getVarMappingKind(fieldOption) : undefined;
+  const expression = kind ? defaults.varMappings?.[fieldOption.id] : undefined;
+  const toggleKind = getVarMappingToggleKind(fieldOption, kind);
 
   return {
     // The unit picker already accepts custom text, so it can take an expression as is
-    Editor: kind === 'number' ? VarMappingNumberValueEditor : fieldOption.editor,
+    Editor: fieldOption.editor,
+    numberExpressions: kind === 'number' && !toggleKind,
     storedValue,
-    value: (kind ? defaults.varMappings?.[fieldOption.id] : undefined) ?? storedValue,
+    // Toggle editors show the stored value and the expression separately
+    value: toggleKind ? storedValue : (expression ?? storedValue),
+    toggle: toggleKind ? { kind: toggleKind, expression } : undefined,
     toFieldConfig: (v: unknown) => {
       if (kind && isVarMappingExpressionInput(kind, v)) {
         return updateDefaultFieldConfigVarMapping(fieldConfig, fieldOption.id, v);
@@ -309,6 +319,7 @@ export interface OptionPaneRenderProps2 {
   onOptionsChange?: (options: Record<string, unknown>, name: string, category: string) => void;
   onFieldConfigChange?: (fieldConfig: FieldConfigSource, name: string, category: string) => void;
   varMappingsEnabled?: boolean;
+  varMappingVariables?: VarMappingVariableSource;
 }
 
 export function getVisualizationOptions2(props: OptionPaneRenderProps2): OptionsPaneCategoryDescriptor[] {
@@ -321,6 +332,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
     currentOptions,
     currentFieldConfig,
     varMappingsEnabled = false,
+    varMappingVariables,
   } = props;
 
   const categoryIndex: Record<string, OptionsPaneCategoryDescriptor> = {};
@@ -386,7 +398,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
     }
 
     const category = getOptionsPaneCategory(fieldOption.category);
-    const { Editor, storedValue, value, toFieldConfig } = getDefaultsEditing(
+    const { Editor, numberExpressions, storedValue, value, toggle, toFieldConfig } = getDefaultsEditing(
       fieldOption,
       currentFieldConfig,
       varMappingsEnabled
@@ -424,6 +436,35 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
               value: JSON.stringify(value),
             });
           };
+
+          if (numberExpressions) {
+            return (
+              <VarMappingNumberValueEditor
+                value={typeof value === 'number' || typeof value === 'string' ? value : undefined}
+                onChange={onChange}
+                item={fieldOption}
+                context={context}
+                id={htmlId}
+                variables={varMappingVariables}
+              />
+            );
+          }
+
+          if (toggle) {
+            return (
+              <VarMappingToggleEditor
+                editor={Editor}
+                kind={toggle.kind}
+                expression={toggle.expression}
+                variables={varMappingVariables}
+                value={value}
+                onChange={onChange}
+                item={fieldOption}
+                context={context}
+                id={htmlId}
+              />
+            );
+          }
 
           return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={htmlId} />;
         },
