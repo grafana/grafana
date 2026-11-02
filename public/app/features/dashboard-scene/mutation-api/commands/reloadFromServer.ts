@@ -15,7 +15,7 @@ import {
   pendingChangesIdFromLocation,
   previewedDashboardUid,
 } from '../../lifecycle/pendingChangePreview';
-import { reloadKeepingEditMode } from '../../lifecycle/pendingChangesHistory';
+import { hasUnrecordedPendingChange, reloadKeepingEditMode } from '../../lifecycle/pendingChangesHistory';
 
 import { payloads } from './schemas';
 import { readOnly, type MutationCommand } from './types';
@@ -37,8 +37,9 @@ export const reloadFromServerCommand: MutationCommand<{ pendingChanges?: string 
       return { success: false, error: 'The open dashboard has not been saved yet.', changes: [] };
     }
     // Pending changes whose history the plugin keeps record each edit as it is made: what's left
-    // is defaults the scene filled in since, which reloading loses nothing of.
-    if (scene.state.isDirty && !getPendingChangesHistory(scene.state)) {
+    // is defaults the scene filled in since, which reloading loses nothing of, unless an edit failed
+    // to record.
+    if ((scene.state.isDirty && !getPendingChangesHistory(scene.state)) || hasUnrecordedPendingChange(scene)) {
       return { success: true, data: { reloaded: false, reason: 'unsaved-changes' }, changes: [] };
     }
     const preview = payload.pendingChanges;

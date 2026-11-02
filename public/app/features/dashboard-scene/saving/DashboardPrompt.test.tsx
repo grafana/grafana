@@ -12,7 +12,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { type DashboardSceneState } from '../scene/types/dashboard';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 
-import { ignoreChanges, isEmptyDashboard } from './DashboardPrompt';
+import { hasChangesToLose, ignoreChanges, isEmptyDashboard } from './DashboardPrompt';
 
 jest.mock('../lifecycle/pendingChangePreview', () => ({
   ...jest.requireActual('../lifecycle/pendingChangePreview'),
@@ -198,6 +198,16 @@ describe('DashboardPrompt', () => {
         jest.mocked(hasUnrecordedPendingChange).mockReturnValueOnce(true);
 
         expect(ignoreChanges(scene)).toBe(false);
+      });
+
+      // Recording cleared isDirty before the request failed, so leaving the tab or page must not go by it alone.
+      it('counts an edit that failed to reach the plugin as a change leaving would lose', () => {
+        const scene = buildTestScene({ meta: { canSave: true } });
+        scene.setState({ isDirty: false });
+        expect(hasChangesToLose(scene)).toBe(false);
+
+        jest.mocked(hasUnrecordedPendingChange).mockReturnValueOnce(true);
+        expect(hasChangesToLose(scene)).toBe(true);
       });
 
       // Exiting discards an open panel editor, so the edit is read before that, and a failed one is retried.
