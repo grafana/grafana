@@ -701,6 +701,7 @@ approval_rules:
           - ^pkg\/registry\/apps\/annotation\/proto\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/storage\/unified\/proto\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/storage\/unified\/resourcepb\/(?:(?:[^/]*(?:/|$))*)$
+          - ^pkg\/storage\/dbproxy\/(?:(?:[^/]*(?:/|$))*)$
           - ^\.github\/workflows\/proto-breaking-changes\.yml$
       file_not_deleted:
         paths:

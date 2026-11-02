@@ -1099,6 +1099,7 @@
         "body": "Are you sure you want to restore this deleted alert rule definition?",
         "confirm": "Yes, restore deleted rule",
         "error": "Could not restore deleted alert rule",
+        "preview-aria-label": "Deleted alert rule JSON",
         "title": "Restore deleted alert rule"
       },
       "table": {
@@ -1871,6 +1872,7 @@
         "will-import-rules-count_one": "Will import {{count}} rules",
         "will-import-rules-count_other": "Will import {{count}} rules"
       },
+      "rules-preview": "Alert rules preview",
       "source": {
         "datasource": "Existing data source-managed rules",
         "datasource-description": "Import rules from existing data sources",
@@ -3673,6 +3675,9 @@
       "switch-to-data-source-managed": "The data source selected in your query supports alert rule management. Switch to data source-managed if you want the alert rule to be managed by the data source instead of Grafana.",
       "switch-to-grafana-managed": "Switch to Grafana-managed to use expressions, multiple queries, images in notifications and various other features.",
       "title-alert-rule-types": "Alert rule types"
+    },
+    "sql-query-preview": {
+      "aria-label": "SQL query preview"
     },
     "state-history": {
       "columns": {
@@ -15781,20 +15786,8 @@
     "explain-or-modify": "Explain or modify",
     "explain-query": "Explain this query",
     "explaining": "Explaining query…",
-    "feedback-cancel": "Cancel",
-    "feedback-description": "Your feedback helps improve the query experience in Grafana.",
-    "feedback-error": "Feedback could not be sent. Try again.",
     "feedback-helpful": "Helpful",
-    "feedback-label": "Share feedback",
-    "feedback-negative-placeholder": "Describe what didn't go well and what you expected instead.",
-    "feedback-negative-title": "What went wrong?",
     "feedback-not-helpful": "Not helpful",
-    "feedback-positive-placeholder": "What did you like? How could it have been even better?",
-    "feedback-positive-title": "What went well?",
-    "feedback-privacy": "Your rating, comment, whether this was a proposal or handoff, and the selected option rank and count are sent. Your query, prompt, and Assistant response are not included.",
-    "feedback-recipient": "Your feedback will be sent to the teams working on querying.",
-    "feedback-send": "Send",
-    "feedback-sending": "Sending…",
     "focus": "Focus",
     "follow-up-label": "Ask a follow up",
     "follow-up-placeholder": "Ask a follow up…",

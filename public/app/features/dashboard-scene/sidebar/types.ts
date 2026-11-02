@@ -41,7 +41,9 @@ export interface DashboardSidebarLike extends SceneObject<DashboardSidebarState>
   refreshAfterRebuild(): void;
   getSelectedObject(key?: string): SceneObject | undefined;
   undoAction(): void;
+  undoLastAction(trigger?: string): void;
   redoAction(): void;
+  redoLastAction(trigger?: string): void;
   pendingChangesHistory(): PendingChangesHistory | undefined;
   recordCompletedEdit(action: DashboardEditActionEventPayload): void;
   clearHistory(): void;
