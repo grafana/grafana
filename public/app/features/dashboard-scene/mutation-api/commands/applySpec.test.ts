@@ -510,10 +510,9 @@ describe('mutation API history of APPLY_SPEC edits', () => {
     await endBatch(scene);
 
     expect(scene.state.sidebar.state.undoStack).toHaveLength(1);
-    expect((await lastAction(scene))?.action).toEqual({
-      description: 'Assistant dashboard changes',
-      actor: 'mutation-api',
-      batchId,
+    expect(await lastAction(scene)).toEqual({
+      action: { description: 'Assistant dashboard changes', actor: 'mutation-api', batchId },
+      undoneAction: null,
     });
     expect((await undoCommand.handler({ expectedBatchId: batchId }, { scene })).data).toEqual({ undone: true });
     expect((await readSpec(scene)).title).toBe('Before');
