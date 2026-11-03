@@ -582,20 +582,7 @@
     }
   },
   "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker.tsx": {
-    "react-hooks/purity": {
-      "count": 1
-    },
     "react-hooks/refs": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/TimePickerFooter.tsx": {
-    "react-hooks/purity": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/DateTimePickers/TimeZonePicker.tsx": {
-    "react-hooks/purity": {
       "count": 1
     }
   },
@@ -829,9 +816,6 @@
   "packages/grafana-ui/src/components/Splitter/useSplitter.ts": {
     "react-hooks/immutability": {
       "count": 1
-    },
-    "react-hooks/use-memo": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/Table/Cells/DefaultCell.tsx": {
@@ -845,11 +829,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Table/TableNG/Filter/DateRangeFilter.tsx": {
-    "react-hooks/purity": {
-      "count": 2
     }
   },
   "packages/grafana-ui/src/components/Table/TableNG/Filter/StringMatchingFilter.tsx": {
@@ -1393,9 +1372,6 @@
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     },
-    "react-hooks/purity": {
-      "count": 1
-    },
     "react-hooks/set-state-in-effect": {
       "count": 1
     }
@@ -1506,9 +1482,6 @@
   },
   "public/app/features/alerting/unified/components/alert-groups/AlertGroupFilter.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "react-hooks/purity": {
       "count": 1
     }
   },
@@ -1639,11 +1612,6 @@
   },
   "public/app/features/alerting/unified/components/receivers/form/GrafanaCommonChannelSettings.tsx": {
     "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/receivers/form/ReceiverForm.tsx": {
-    "react-hooks/purity": {
       "count": 1
     }
   },
@@ -1799,31 +1767,13 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rules/CloudRules.tsx": {
-    "react-hooks/use-memo": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rules/Filter/RulesFilter.v1.tsx": {
-    "react-hooks/purity": {
-      "count": 1
-    },
     "react-hooks/refs": {
       "count": 1
     }
   },
   "public/app/features/alerting/unified/components/rules/RuleDetailsDataSources.tsx": {
     "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/rules/RuleDetailsMatchingInstances.tsx": {
-    "react-hooks/purity": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/rules/RuleListStateView.tsx": {
-    "react-hooks/use-memo": {
       "count": 1
     }
   },
@@ -1912,7 +1862,7 @@
   },
   "public/app/features/alerting/unified/hooks/abilities/rules/ruleAbilities.ts": {
     "react-hooks/use-memo": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/alerting/unified/hooks/useAbilities.ts": {
@@ -2037,14 +1987,6 @@
   },
   "public/app/features/alerting/unified/rule-list/PaginatedGrafanaLoader.tsx": {
     "react-hooks/refs": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/rule-list/RuleList.v1.tsx": {
-    "react-hooks/preserve-manual-memoization": {
-      "count": 1
-    },
-    "react-hooks/use-memo": {
       "count": 1
     }
   },
@@ -2510,11 +2452,6 @@
       "count": 3
     }
   },
-  "public/app/features/dashboard-scene/panel-edit/PanelVizTypePicker.tsx": {
-    "react-hooks/use-memo": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/panel-edit/splitter/useSnappingSplitter.ts": {
     "react-hooks/immutability": {
       "count": 19
@@ -2889,11 +2826,6 @@
   },
   "public/app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor.tsx": {
     "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/components/PanelEditor/OptionsPaneOptions.tsx": {
-    "react-hooks/use-memo": {
       "count": 1
     }
   },
@@ -3538,11 +3470,6 @@
       "count": 1
     }
   },
-  "public/app/features/logs/components/panel/LogLineDetailsDisplayedFields.tsx": {
-    "react-hooks/refs": {
-      "count": 3
-    }
-  },
   "public/app/features/logs/components/panel/LogLineDetailsFields.tsx": {
     "react-hooks/preserve-manual-memoization": {
       "count": 1
@@ -4139,11 +4066,6 @@
       "count": 2
     }
   },
-  "public/app/features/transformers/joinByLabels/JoinByLabelsTransformerEditor.tsx": {
-    "react-hooks/purity": {
-      "count": 1
-    }
-  },
   "public/app/features/transformers/lookupGazetteer/FieldLookupTransformerEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -4500,9 +4422,6 @@
   "public/app/plugins/datasource/grafana/components/TimeRegionEditor.tsx": {
     "@grafana/require-no-margin": {
       "count": 6
-    },
-    "react-hooks/purity": {
-      "count": 1
     }
   },
   "public/app/plugins/datasource/grafana/datasource.ts": {
@@ -4665,17 +4584,11 @@
     }
   },
   "public/app/plugins/panel/canvas/components/connections/ConnectionSVG.tsx": {
-    "react-hooks/purity": {
-      "count": 1
-    },
     "react-hooks/set-state-in-effect": {
       "count": 1
     }
   },
   "public/app/plugins/panel/canvas/components/connections/ConnectionSVG2.tsx": {
-    "react-hooks/purity": {
-      "count": 1
-    },
     "react-hooks/set-state-in-effect": {
       "count": 1
     }
@@ -4734,7 +4647,7 @@
   },
   "public/app/plugins/panel/debug/RenderInfoViewer.tsx": {
     "react-hooks/purity": {
-      "count": 2
+      "count": 1
     },
     "react-hooks/refs": {
       "count": 19

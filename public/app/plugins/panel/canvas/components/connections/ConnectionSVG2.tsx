@@ -32,8 +32,9 @@ const htmlElementTypes = ['input', 'textarea'];
 export const ConnectionSVG = ({ setLineRef, setVertexPathRef, setVertexRef, setConnectionsSVGRef, scene }: Props) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
+  const [now] = useState(Date.now);
 
-  const headId = Date.now() + '_' + idCounter++;
+  const headId = now + '_' + idCounter++;
   const CONNECTION_LINE_ID = useMemo(() => `connectionLineId-${headId}`, [headId]);
   const EDITOR_HEAD_ID = useMemo(() => `editorHead-${headId}`, [headId]);
   const defaultArrowColor = theme.colors.text.primary;
