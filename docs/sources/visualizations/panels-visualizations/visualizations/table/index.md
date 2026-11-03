@@ -79,7 +79,7 @@ Tables are a highly flexible visualization designed to display data in columns a
 The table visualization can take multiple datasets and provide the option to switch between them.
 With this versatility, it's the preferred visualization for viewing multiple data types, aiding in your data analysis needs.
 
-![Basic table visualization](/media/docs/grafana/panels-visualizations/screenshot-basic-table-v11.3.png)
+![Basic table visualization](/media/docs/grafana/panels-visualizations/screenshot-basic-table-v13.3.png)
 
 You can use a table visualization to show datasets such as:
 
@@ -160,7 +160,7 @@ To filter column values, follow these steps:
 
    The dialog box with the filter options for the column opens.
 
-   {{< figure src="/media/docs/grafana/panels-visualizations/filter-column-values_12.2.png" max-width="300px" alt="Filter column values" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-filter-column-values-v13.3.png" max-width="350px" alt="Filter column values" >}}
 
 1. Do one of the following, depending on the type of data in that column:
    - **Values**: Click the checkboxes next to the values you want to include or click **Select all**. To narrow the set of values, enter text in the search field and then choose an operator:
