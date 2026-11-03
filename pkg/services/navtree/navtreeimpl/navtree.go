@@ -154,6 +154,10 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		treeRoot.AddSection(notebooksSection)
 	}
 
+	if slideshowsSection := s.buildSlideshowsNavLink(c); slideshowsSection != nil {
+		treeRoot.AddSection(slideshowsSection)
+	}
+
 	if s.cfg.ProfileEnabled && c.IsSignedIn {
 		treeRoot.AddSection(s.getProfileNode(c))
 	}
@@ -348,26 +352,45 @@ func (s *ServiceImpl) buildNotebooksNavLink(c *contextmodel.ReqContext) *navtree
 	return link
 }
 
+// canReadPlaylists reports whether the user may see playlists. Playlists are visible to anonymous
+// users too, so the nav stays consistent with the playlist page and API which both serve
+// anonymous Viewers.
+func (s *ServiceImpl) canReadPlaylists(c *contextmodel.ReqContext) bool {
+	if !c.IsSignedIn && !c.IsAnonymous {
+		return false
+	}
+	if openfeature.NewDefaultClient().Boolean(c.Req.Context(), featuremgmt.FlagPlaylistsRBAC, false, openfeature.TransactionContext(c.Req.Context())) {
+		return ac.HasAccess(s.accessControl, c)(ac.EvalPermission(playlistregistry.ActionPlaylistsRead))
+	}
+	return c.HasRole(org.RoleViewer)
+}
+
+// buildSlideshowsNavLink returns the top-level Slideshows section for users who can read playlists,
+// because slideshows share the playlist permissions.
+func (s *ServiceImpl) buildSlideshowsNavLink(c *contextmodel.ReqContext) *navtree.NavLink {
+	if !s.canReadPlaylists(c) {
+		return nil
+	}
+
+	return &navtree.NavLink{
+		Text:       "Slideshows",
+		Id:         navtree.NavIDSlideshows,
+		SubTitle:   "Groups of dashboards, notebooks and other pages that are displayed in a sequence",
+		Icon:       "presentation-play",
+		SortWeight: navtree.WeightSlideshows,
+		Url:        s.cfg.AppSubURL + "/slideshows",
+	}
+}
+
 func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 
 	dashboardChildNavs := []*navtree.NavLink{}
 
-	// Playlists are visible to anonymous users too, so the nav stays consistent
-	// with the playlist page and API which both serve anonymous Viewers.
-	if c.IsSignedIn || c.IsAnonymous {
-		showPlaylist := c.HasRole(org.RoleViewer)
-		if openfeature.NewDefaultClient().Boolean(c.Req.Context(), featuremgmt.FlagPlaylistsRBAC, false, openfeature.TransactionContext(c.Req.Context())) {
-			showPlaylist = hasAccess(ac.EvalPermission(playlistregistry.ActionPlaylistsRead))
-		}
-		if showPlaylist {
-			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-				Text: "Playlists", SubTitle: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
-			})
-			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-				Text: "Slideshows", SubTitle: "Groups of dashboards, notebooks and other pages that are displayed in a sequence", Id: "dashboards/slideshows", Url: s.cfg.AppSubURL + "/slideshows", Icon: "presentation-play",
-			})
-		}
+	if s.canReadPlaylists(c) {
+		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+			Text: "Playlists", SubTitle: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
+		})
 	}
 
 	if c.IsSignedIn {

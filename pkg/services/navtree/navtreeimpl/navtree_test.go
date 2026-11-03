@@ -88,16 +88,13 @@ func TestBuildDashboardNavLinks(t *testing.T) {
 		}
 	}
 
-	hasLink := func(navLinks []*navtree.NavLink, id string) bool {
+	hasPlaylistLink := func(navLinks []*navtree.NavLink) bool {
 		for _, link := range navLinks {
-			if link.Id == id {
+			if link.Id == "dashboards/playlists" {
 				return true
 			}
 		}
 		return false
-	}
-	hasPlaylistLink := func(navLinks []*navtree.NavLink) bool {
-		return hasLink(navLinks, "dashboards/playlists")
 	}
 
 	t.Run("Should show Playlists link for an anonymous Viewer", func(t *testing.T) {
@@ -115,7 +112,6 @@ func TestBuildDashboardNavLinks(t *testing.T) {
 		navLinks := service.buildDashboardNavLinks(reqCtx)
 
 		require.True(t, hasPlaylistLink(navLinks), "expected anonymous Viewer to see the Playlists nav link")
-		require.True(t, hasLink(navLinks, "dashboards/slideshows"), "expected anonymous Viewer to see the Slideshows nav link")
 	})
 
 	t.Run("Should not show Playlists link for an unauthenticated user", func(t *testing.T) {
@@ -133,7 +129,6 @@ func TestBuildDashboardNavLinks(t *testing.T) {
 		navLinks := service.buildDashboardNavLinks(reqCtx)
 
 		require.False(t, hasPlaylistLink(navLinks), "expected unauthenticated user to not see the Playlists nav link")
-		require.False(t, hasLink(navLinks, "dashboards/slideshows"), "expected unauthenticated user to not see the Slideshows nav link")
 	})
 }
 
@@ -253,6 +248,41 @@ func TestBuildNotebooksNavLink(t *testing.T) {
 			}}, link.Children)
 		})
 	}
+}
+
+func TestBuildSlideshowsNavLink(t *testing.T) {
+	newService := func() *ServiceImpl {
+		return &ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+			features:      featuremgmt.WithFeatures(),
+		}
+	}
+
+	newReqCtx := func(signedIn, anonymous bool) *contextmodel.ReqContext {
+		httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+		return &contextmodel.ReqContext{
+			SignedInUser: &user.SignedInUser{IsAnonymous: anonymous, OrgRole: org.RoleViewer},
+			IsSignedIn:   signedIn,
+			Context:      &web.Context{Req: httpReq},
+		}
+	}
+
+	t.Run("Should show Slideshows for a signed-in Viewer", func(t *testing.T) {
+		link := newService().buildSlideshowsNavLink(newReqCtx(true, false))
+
+		require.NotNil(t, link)
+		require.Equal(t, navtree.NavIDSlideshows, link.Id)
+		require.Equal(t, "/slideshows", link.Url)
+	})
+
+	t.Run("Should show Slideshows for an anonymous Viewer", func(t *testing.T) {
+		require.NotNil(t, newService().buildSlideshowsNavLink(newReqCtx(false, true)))
+	})
+
+	t.Run("Should not show Slideshows for an unauthenticated user", func(t *testing.T) {
+		require.Nil(t, newService().buildSlideshowsNavLink(newReqCtx(false, false)))
+	})
 }
 
 func TestBuildAlertNavLinks(t *testing.T) {

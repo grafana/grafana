@@ -40,7 +40,7 @@ export default function SlideshowEditPage() {
   };
 
   return (
-    <Page navId="dashboards/slideshows" pageNav={pageNav}>
+    <Page navId="slideshows" pageNav={pageNav}>
       <Page.Contents isLoading={!isNew && isLoading}>
         {isError && (
           <div>
