@@ -21,34 +21,47 @@ var (
 	DashboardResourceV2beta1  = dashboardV2beta1.DashboardResourceInfo.GroupVersionResource()
 )
 
-// WildcardGroupPrefix marks a configured group as a storage collection whose members are
-// discovered rather than enumerated. Several API groups can be persisted in one collection --
-// every data source plugin serves its own group but is stored in datasource.grafana.app -- and
-// the members depend on what is installed, so they cannot be written in configuration by hand.
-const WildcardGroupPrefix = "*."
+// WildcardGroupMarker introduces a configured group that is a pattern over served groups rather
+// than one group. It stands for the part of a served group that identifies the member, so a served
+// group is covered when it ends with the literal rest of the pattern. Several API groups can be
+// persisted in one storage collection -- every data source plugin serves its own group but is
+// stored in datasource.grafana.app -- and which groups those are depends on what the instance has
+// installed, so they cannot be written in configuration by hand.
+const WildcardGroupMarker = "*"
 
-// IsWildcardGroup reports whether a configured group names a collection rather than a served group.
+// WildcardGroupPrefix is the dotted pattern, whose literal part is itself the collection group:
+// *.datasource.grafana.app covers prometheus.datasource.grafana.app.
+const WildcardGroupPrefix = WildcardGroupMarker + "."
+
+// CollectionSeparator qualifies a pattern with the group its members are stored under, for a
+// pattern that does not name it: *-app@plugins.grafana.app covers the app plugin settings served
+// under a bare plugin ID.
+const CollectionSeparator = "@"
+
+// IsWildcardGroup reports whether a configured group is a pattern rather than a served group.
 func IsWildcardGroup(group string) bool {
-	return strings.HasPrefix(group, WildcardGroupPrefix)
+	return strings.HasPrefix(group, WildcardGroupMarker)
 }
 
-// CollectionGroup returns the collection a configured group names, which for a wildcard is the
-// group the collection is persisted under and for anything else is the group itself.
+// CollectionGroup returns the group a configured entry's resources are stored under: the qualifier
+// when the pattern carries one, the literal part of a dotted pattern, and otherwise the group
+// itself. It is what provisioning addresses a collection by -- the search index reports a stored
+// member under it, and the operator registers one API server for it.
 func CollectionGroup(configured string) string {
+	if _, collection, ok := strings.Cut(configured, CollectionSeparator); ok {
+		return collection
+	}
 	return strings.TrimPrefix(configured, WildcardGroupPrefix)
 }
 
 // MatchesGroup reports whether a served group is covered by a configured one: exactly, or as a
-// member of the named collection. Membership is structural -- a served group inside a collection
-// carries it as a suffix -- so it holds for any collection that follows that convention without
-// this package knowing which collections exist.
-//
-// It does NOT hold for a collection that tells its members apart by name rather than by a group
-// suffix (app plugin settings are served under the bare plugin ID), so those cannot be declared
-// with a wildcard.
+// member matching its pattern. Membership is structural -- the member identifies itself in the
+// part of the served group the wildcard stands for -- so it holds for any collection that follows
+// that convention without this package knowing which collections exist.
 func MatchesGroup(configured, served string) bool {
-	if !IsWildcardGroup(configured) {
-		return configured == served
+	pattern, _, _ := strings.Cut(configured, CollectionSeparator)
+	if !IsWildcardGroup(pattern) {
+		return pattern == served
 	}
-	return strings.HasSuffix(served, "."+CollectionGroup(configured))
+	return strings.HasSuffix(served, strings.TrimPrefix(pattern, WildcardGroupMarker))
 }

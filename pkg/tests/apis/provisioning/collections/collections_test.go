@@ -34,11 +34,15 @@ func TestIntegrationProvisioning_SettingsReportsTheCollection(t *testing.T) {
 		Group: datasourceCollection, Kind: "DataSource",
 	}, "a wildcard entry is reported as the collection it names")
 	require.Contains(t, settings.AvailableResources, provisioning.SupportedResource{
-		Group: pluginCollection, Kind: "Thing",
+		Group: extCollection, Kind: "Thing",
 	}, "a plugin-served collection is reported the same way")
+	require.Contains(t, settings.AvailableResources, provisioning.SupportedResource{
+		Group: settingsCollection, Kind: "Settings",
+	}, "a pattern that names its collection is reported as that collection")
 
 	for _, r := range settings.AvailableResources {
 		require.NotContains(t, r.Group, "*", "the wildcard token itself is never surfaced")
+		require.NotContains(t, r.Group, "@", "nor the collection qualifier")
 	}
 }
 
@@ -64,7 +68,12 @@ func TestIntegrationProvisioning_JobValidationCollectionGroup(t *testing.T) {
 		},
 		{
 			name:         "a plugin-served member is accepted",
-			resource:     map[string]interface{}{"name": "thing-1", "kind": "Thing", "group": "router-test." + pluginCollection},
+			resource:     map[string]interface{}{"name": "thing-1", "kind": "Thing", "group": "router-test." + extCollection},
+			wantAccepted: true,
+		},
+		{
+			name:         "a member of a pattern that names its collection is accepted",
+			resource:     map[string]interface{}{"name": "instance", "kind": "Settings", "group": "grafana-slo-app"},
 			wantAccepted: true,
 		},
 		{

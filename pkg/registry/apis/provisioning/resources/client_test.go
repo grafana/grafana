@@ -119,6 +119,9 @@ func TestParseSupportedResources(t *testing.T) {
 		{"no slash", "Dashboard"},
 		{"group without a dot", "dashboard/Dashboard"},
 		{"unknown capability", "dashboard.grafana.app/Dashboard:bogus"},
+		{"unqualified non-dotted pattern", "*-app/Settings"},
+		{"collection on a concrete group", "playlist.grafana.app@plugins.grafana.app/Playlist"},
+		{"collection without a dot", "*-app@plugins/Settings"},
 	} {
 		t.Run("rejects "+tc.name, func(t *testing.T) {
 			_, err := ParseSupportedResources([]string{tc.entry})
@@ -238,6 +241,20 @@ func TestExpandWildcardGroups(t *testing.T) {
 		require.Empty(t, expanded)
 	})
 
+	t.Run("expands a pattern qualified with its collection", func(t *testing.T) {
+		configured, err := ParseSupportedResources([]string{"*-app@plugins.grafana.app/Settings"})
+		require.NoError(t, err)
+
+		expanded, err := expandWildcardGroups(t.Context(), served(
+			"grafana-slo-app",
+			"grafana-app-sdk",
+			"plugins.grafana.app",
+		), configured)
+		require.NoError(t, err)
+		require.Equal(t, []schema.GroupKind{{Group: "grafana-slo-app", Kind: "Settings"}}, groupKinds(expanded),
+			"only a group matching the pattern's literal part is a member")
+	})
+
 	t.Run("asks discovery once for several collections", func(t *testing.T) {
 		configured, err := ParseSupportedResources([]string{
 			"*.datasource.grafana.app/DataSource",
@@ -271,16 +288,27 @@ func TestExpandWildcardGroups(t *testing.T) {
 
 func TestMultiResourceClientsClientsFor(t *testing.T) {
 	collection := NewMockResourceClients(t)
+	plugins := NewMockResourceClients(t)
 	dashboards := NewMockResourceClients(t)
-	clients := &multiResourceClients{resourceClientsByAPIGroup: map[string]ResourceClients{
-		"datasource.grafana.app": collection,
-		"dashboard.grafana.app":  dashboards,
-	}}
+	clients := &multiResourceClients{
+		resourceClientsByAPIGroup: map[string]ResourceClients{
+			"datasource.grafana.app": collection,
+			"plugins.grafana.app":    plugins,
+			"dashboard.grafana.app":  dashboards,
+		},
+		collections: []string{"*.datasource.grafana.app", "*-app@plugins.grafana.app"},
+	}
 
 	t.Run("resolves a member group to the collection's API server", func(t *testing.T) {
 		got, ok := clients.clientsFor("prometheus.datasource.grafana.app")
 		require.True(t, ok)
 		require.Same(t, collection, got)
+	})
+
+	t.Run("resolves a member of a qualified collection", func(t *testing.T) {
+		got, ok := clients.clientsFor("grafana-slo-app")
+		require.True(t, ok)
+		require.Same(t, plugins, got)
 	})
 
 	t.Run("prefers an exact match", func(t *testing.T) {

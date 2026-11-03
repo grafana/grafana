@@ -86,11 +86,13 @@ func (r SupportedResource) IsFolderScoped() bool { return r.Capabilities.Has(Cap
 //
 //	<group>/<Kind>[:cap[:cap...]]
 //
-// Group and kind are split on the last "/" (groups contain dots and may be multi-segment).
-// Capabilities are ":"-separated and must be in KnownCapabilities. Parsing is strict and
-// fails fast at startup: each entry must be "<group>/<Kind>" with a non-empty, dotted group
-// and non-empty kind; capabilities must be known and not repeated; and a resource ID must
-// not appear twice. Whitespace is trimmed and empty entries are skipped.
+// Group and kind are split on the last "/" (groups contain dots and may be multi-segment). The
+// group may be a wildcard pattern over the groups served inside a storage collection, optionally
+// qualified with the group those are stored under: "*.datasource.grafana.app" or
+// "*-app@plugins.grafana.app". Capabilities are ":"-separated and must be in KnownCapabilities.
+// Parsing is strict and fails fast at startup: each entry must be "<group>/<Kind>" with a
+// non-empty, dotted group and non-empty kind; capabilities must be known and not repeated; and a
+// resource ID must not appear twice. Whitespace is trimmed and empty entries are skipped.
 func ParseSupportedResources(entries []string) ([]SupportedResource, error) {
 	out := make([]SupportedResource, 0, len(entries))
 	seen := sets.New[schema.GroupKind]()
@@ -107,8 +109,8 @@ func ParseSupportedResources(entries []string) ([]SupportedResource, error) {
 			return nil, fmt.Errorf("invalid provisioning resource %q: expected <group>/<Kind>", entry)
 		}
 		group, kind := id[:slash], id[slash+1:]
-		if !strings.Contains(group, ".") {
-			return nil, fmt.Errorf("invalid provisioning resource %q: group %q must contain a dot", entry, group)
+		if err := validateGroup(entry, group); err != nil {
+			return nil, err
 		}
 
 		gk := schema.GroupKind{Group: group, Kind: kind}
@@ -132,6 +134,29 @@ func ParseSupportedResources(entries []string) ([]SupportedResource, error) {
 		out = append(out, SupportedResource{GroupKind: gk, Capabilities: caps})
 	}
 	return out, nil
+}
+
+// validateGroup checks a configured group, which may be a wildcard pattern. A pattern that does
+// not name a dotted group in its literal part must be qualified with the collection its members
+// are stored under: provisioning addresses a collection by that group, and nothing else in the
+// entry can supply it.
+func validateGroup(entry, group string) error {
+	pattern, collection, qualified := strings.Cut(group, provisioningresources.CollectionSeparator)
+	switch {
+	case qualified && !provisioningresources.IsWildcardGroup(pattern):
+		return fmt.Errorf("invalid provisioning resource %q: only a wildcard group names a collection", entry)
+	case qualified:
+		group = collection
+	case provisioningresources.IsWildcardGroup(pattern) && !strings.HasPrefix(pattern, provisioningresources.WildcardGroupPrefix):
+		return fmt.Errorf("invalid provisioning resource %q: wildcard group %q must name the collection its members are stored in, e.g. %s@plugins.grafana.app",
+			entry, pattern, pattern)
+	default:
+		group = provisioningresources.CollectionGroup(pattern)
+	}
+	if !strings.Contains(group, ".") {
+		return fmt.Errorf("invalid provisioning resource %q: group %q must contain a dot", entry, group)
+	}
+	return nil
 }
 
 // supportsFolderAnnotation reports whether gvk is a supported, folder-scoped resource that
@@ -292,7 +317,7 @@ func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.
 		clientFactories[api] = clientFactory
 	}
 
-	return &multiClientFactory{clientFactories: clientFactories}
+	return &multiClientFactory{clientFactories: clientFactories, collections: collectionPatterns(supported)}
 }
 
 // activeResources returns only the active resources. Disabled resources are declared (and
@@ -317,6 +342,20 @@ func defaultSupportedResources(supported []SupportedResource) []SupportedResourc
 
 type multiClientFactory struct {
 	clientFactories map[string]ClientFactory
+	// collections are the configured wildcard patterns, kept so a served member group can be
+	// resolved back onto the API server registered for its collection.
+	collections []string
+}
+
+// collectionPatterns returns the configured groups that are wildcard patterns.
+func collectionPatterns(configured []SupportedResource) []string {
+	out := make([]string, 0, len(configured))
+	for _, r := range configured {
+		if provisioningresources.IsWildcardGroup(r.Group) {
+			out = append(out, r.Group)
+		}
+	}
+	return out
 }
 
 func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
@@ -347,6 +386,7 @@ func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (Res
 		namespace:                 namespace,
 		resourceClientsByAPIGroup: clients,
 		supportedResources:        supported,
+		collections:               m.collections,
 	}, nil
 }
 
@@ -507,6 +547,8 @@ type multiResourceClients struct {
 	mutex                     sync.Mutex
 	resourceClientsByAPIGroup map[string]ResourceClients
 	supportedResources        []SupportedResource
+	// collections are the configured wildcard patterns a member group is resolved through.
+	collections []string
 }
 
 // ForKind returns a client for a kind.
@@ -559,8 +601,11 @@ func (c *multiResourceClients) clientsFor(group string) (ResourceClients, bool) 
 	if clients, ok := c.resourceClientsByAPIGroup[group]; ok {
 		return clients, true
 	}
-	for registered, clients := range c.resourceClientsByAPIGroup {
-		if provisioningresources.MatchesGroup(provisioningresources.WildcardGroupPrefix+registered, group) {
+	for _, pattern := range c.collections {
+		if !provisioningresources.MatchesGroup(pattern, group) {
+			continue
+		}
+		if clients, ok := c.resourceClientsByAPIGroup[provisioningresources.CollectionGroup(pattern)]; ok {
 			return clients, true
 		}
 	}

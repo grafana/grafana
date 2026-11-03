@@ -25,6 +25,11 @@ func TestMatchesGroup(t *testing.T) {
 		{"plugin-served app group", "*.ext.grafana.app", "router-test.ext.grafana.app", true},
 		// Unlike the identity allow-list wildcard, a member may carry more than one segment.
 		{"multi-segment plugin group", "*.ext.grafana.app", "assistant.alertrules.ext.grafana.app", true},
+		// A pattern that is not a dotted group names its collection, and matches on its literal part.
+		{"qualified suffix member", "*-app@plugins.grafana.app", "grafana-slo-app", true},
+		{"qualified suffix non-member", "*-app@plugins.grafana.app", "grafana-app-sdk", false},
+		{"the qualified collection is not its own member", "*-app@plugins.grafana.app", "plugins.grafana.app", false},
+		{"qualified dotted pattern", "*.datasource.grafana.app@datasource.grafana.app", "loki.datasource.grafana.app", true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -36,4 +41,5 @@ func TestMatchesGroup(t *testing.T) {
 func TestCollectionGroup(t *testing.T) {
 	require.Equal(t, "datasource.grafana.app", CollectionGroup("*.datasource.grafana.app"))
 	require.Equal(t, "playlist.grafana.app", CollectionGroup("playlist.grafana.app"))
+	require.Equal(t, "plugins.grafana.app", CollectionGroup("*-app@plugins.grafana.app"))
 }
