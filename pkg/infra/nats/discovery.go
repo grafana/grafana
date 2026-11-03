@@ -8,7 +8,6 @@ import (
 	"maps"
 	"net/url"
 	"slices"
-	"sync"
 	"time"
 
 	natsserver "github.com/nats-io/nats-server/v2/server"
@@ -70,8 +69,7 @@ type discovery struct {
 	wake     chan struct{}
 	wakeConn *natsclient.Conn
 
-	// mu guards the applied peer route set.
-	mu     sync.RWMutex
+	// routes is the applied peer route set; only touched by the loop goroutine.
 	routes map[string]struct{}
 }
 
@@ -204,7 +202,7 @@ func (d *discovery) reconcile(peers []peer) {
 		desired[p.RouteURL] = struct{}{}
 	}
 
-	if maps.Equal(d.routeSet(), desired) {
+	if maps.Equal(d.routes, desired) {
 		return
 	}
 
@@ -212,17 +210,8 @@ func (d *discovery) reconcile(peers []peer) {
 		d.log.Error("failed to apply nats cluster routes", "err", err)
 		return
 	}
-	d.mu.Lock()
 	d.routes = desired
-	d.mu.Unlock()
-
 	d.log.Info("reconciled nats cluster routes", "peers", len(desired))
-}
-
-func (d *discovery) routeSet() map[string]struct{} {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-	return maps.Clone(d.routes)
 }
 
 func (d *discovery) applyRoutes(routes map[string]struct{}) error {

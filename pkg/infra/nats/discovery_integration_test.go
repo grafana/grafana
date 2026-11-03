@@ -2,6 +2,7 @@ package nats
 
 import (
 	"context"
+	"net/url"
 	"testing"
 	"time"
 
@@ -76,8 +77,8 @@ func TestDiscoveryDisabled(t *testing.T) {
 	// Two nodes share a registry, but discovery is off, so neither should register
 	// or dial the other.
 	store := newSharedTestKV(t)
-	a, _ := newTestDiscoveryServer(t, store, false, 50*time.Millisecond, time.Minute)
-	b, _ := newTestDiscoveryServer(t, store, false, 50*time.Millisecond, time.Minute)
+	a, _ := newTestDiscoveryServer(t, store, false)
+	b, _ := newTestDiscoveryServer(t, store, false)
 	startService(t, ctx, a)
 	startService(t, ctx, b)
 
@@ -91,41 +92,37 @@ func TestDiscoveryDisabled(t *testing.T) {
 	}, time.Second, 100*time.Millisecond, "nodes formed a cluster route with discovery disabled")
 }
 
-// TestIntegrationDiscoveryWakeOnLeave asserts a departing node's hint makes the
-// remaining peers drop its route ahead of their own periodic tick. The wake
-// counters are zero until c leaves, so the drop cannot be explained by a tick
-// that merely happened to land inside the window.
-func TestIntegrationDiscoveryWakeOnLeave(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
-
-	const interval = 5 * time.Second
-	const ttl = 5 * time.Minute
-
+// TestDiscoveryWakeOnLeave asserts that a node leaving gracefully makes its
+// peers drop its route without waiting for their next tick. The interval is too
+// long for a periodic tick to fire during the test, so after each loop's first
+// tick only the wake can trigger a reload. Deliberately not named
+// TestIntegration*: the registry is in-memory Badger.
+func TestDiscoveryWakeOnLeave(t *testing.T) {
 	store := newSharedTestKV(t)
-	a, _ := newTestDiscoveryServer(t, store, true, interval, ttl)
-	b, _ := newTestDiscoveryServer(t, store, true, interval, ttl)
-	c, _ := newTestDiscoveryServer(t, store, true, interval, ttl)
-	startService(t, ctx, a)
-	startService(t, ctx, b)
-	startService(t, ctx, c)
-	routeC := selfRoute(c)
+	newCfg := func() *setting.Cfg {
+		cfg := newEmbeddedTestCfg("127.0.0.1", "")
+		cfg.NATS.DiscoveryInterval = time.Hour
+		return cfg
+	}
+	a := startSteppedTestServer(t, newCfg(), store)
+	b := startSteppedTestServer(t, newCfg(), store)
+	c := startSteppedTestServer(t, newCfg(), store)
 
-	require.Eventually(t, func() bool {
-		return hasDiscoveryRoute(a, routeC) && hasDiscoveryRoute(b, routeC)
-	}, 30*time.Second, 50*time.Millisecond, "a and b did not pick up c before the leave")
-	require.Zero(t, wakesReceived(a)+wakesReceived(b), "no wake hint is expected before a peer leaves")
+	// The first tick of each loop routes to everyone registered above.
+	reloadsA := runWithReloads(t, a)
+	reloadsB := runWithReloads(t, b)
+	requireReload(t, reloadsA, routeSetOf(b, c))
+	requireReload(t, reloadsB, routeSetOf(a, c))
+	// The wake travels over c's routes, so they must carry interest first.
+	requireDelivery(t, c, a)
+	requireDelivery(t, c, b)
 
-	c.StopAsync()
-	require.NoError(t, c.AwaitTerminated(ctx))
+	require.NoError(t, c.stopping(nil))
 
-	require.Eventually(t, func() bool {
-		return !hasDiscoveryRoute(a, routeC) && !hasDiscoveryRoute(b, routeC)
-	}, 2*time.Second, 20*time.Millisecond, "a and b did not drop the departed peer within the %s interval", interval)
-	require.NotZero(t, wakesReceived(a), "a dropped the departed peer without a wake hint")
-	require.NotZero(t, wakesReceived(b), "b dropped the departed peer without a wake hint")
+	requireReload(t, reloadsA, routeSetOf(b))
+	requireReload(t, reloadsB, routeSetOf(a))
+	require.Equal(t, 1.0, promtestutil.ToFloat64(a.metrics.discoveryWakesReceived))
+	require.Equal(t, 1.0, promtestutil.ToFloat64(b.metrics.discoveryWakesReceived))
 }
 
 // TestIntegrationDiscoverySQL runs discovery against the nats_discovery_peers
@@ -202,8 +199,8 @@ func startTwoNodeCluster(t *testing.T) (context.Context, *Server, *Server, nodeC
 	t.Cleanup(cancel)
 
 	store := newSharedTestKV(t)
-	a, cfgA := newTestDiscoveryServer(t, store, true, 50*time.Millisecond, time.Minute)
-	b, cfgB := newTestDiscoveryServer(t, store, true, 50*time.Millisecond, time.Minute)
+	a, cfgA := newTestDiscoveryServer(t, store, true)
+	b, cfgB := newTestDiscoveryServer(t, store, true)
 	startService(t, ctx, a)
 	startService(t, ctx, b)
 
@@ -212,7 +209,7 @@ func startTwoNodeCluster(t *testing.T) (context.Context, *Server, *Server, nodeC
 
 // newTestDiscoveryServer builds a Server running a real embedded NATS server on
 // OS-chosen ports, sharing the given KV-backed peer registry for auto-discovery.
-func newTestDiscoveryServer(t *testing.T, store kv.KV, discoveryEnabled bool, interval, ttl time.Duration) (*Server, *setting.Cfg) {
+func newTestDiscoveryServer(t *testing.T, store kv.KV, discoveryEnabled bool) (*Server, *setting.Cfg) {
 	t.Helper()
 	cfg := setting.NewCfg()
 	cfg.NATS = setting.NATSSettings{
@@ -224,8 +221,8 @@ func newTestDiscoveryServer(t *testing.T, store kv.KV, discoveryEnabled bool, in
 		ClientPort:        natsserver.RANDOM_PORT,
 		ClusterPort:       natsserver.RANDOM_PORT,
 		DiscoveryEnabled:  discoveryEnabled,
-		DiscoveryInterval: interval,
-		DiscoveryTTL:      ttl,
+		DiscoveryInterval: 50 * time.Millisecond,
+		DiscoveryTTL:      time.Minute,
 	}
 	s, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
 	require.NoError(t, err)
@@ -307,30 +304,45 @@ func numRoutes(s *Server) int {
 	return s.server.NumRoutes()
 }
 
-// selfRoute is the route URL a node advertises, which identifies it in its
-// peers' route sets.
-func selfRoute(s *Server) string {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	if s.discovery == nil {
-		return ""
+// runWithReloads runs s's discovery loop until the test ends and reports every
+// route set it reloads, so a test can wait on reconciliation instead of polling.
+func runWithReloads(t *testing.T, s *Server) <-chan map[string]struct{} {
+	t.Helper()
+	ctx, cancel := context.WithCancel(t.Context())
+	reloads := make(chan map[string]struct{})
+	reload := s.discovery.reload
+	s.discovery.reload = func(routes []*url.URL) error {
+		err := reload(routes)
+		set := make(map[string]struct{}, len(routes))
+		for _, u := range routes {
+			set[u.String()] = struct{}{}
+		}
+		select {
+		case reloads <- set:
+		case <-ctx.Done():
+		}
+		return err
 	}
-	return s.discovery.self.RouteURL
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		_ = s.discovery.run(ctx)
+	}()
+	t.Cleanup(func() {
+		cancel()
+		<-done
+	})
+	return reloads
 }
 
-// hasDiscoveryRoute reports whether the discovery loop has reconciled routeURL
-// into its applied route set, read under the locks both fields are written with.
-func hasDiscoveryRoute(s *Server, routeURL string) bool {
-	s.mu.RLock()
-	d := s.discovery
-	s.mu.RUnlock()
-	if d == nil {
-		return false
+// requireReload waits for the next route reload and checks its route set. The
+// timer only guards against a hang; no assertion depends on it.
+func requireReload(t *testing.T, reloads <-chan map[string]struct{}, want map[string]struct{}) {
+	t.Helper()
+	select {
+	case got := <-reloads:
+		require.Equal(t, want, got)
+	case <-time.After(30 * time.Second):
+		t.Fatal("discovery did not reload its routes")
 	}
-	_, ok := d.routeSet()[routeURL]
-	return ok
-}
-
-func wakesReceived(s *Server) float64 {
-	return promtestutil.ToFloat64(s.metrics.discoveryWakesReceived)
 }
