@@ -282,7 +282,7 @@ To group or delete multiple panels, follow these steps:
 1. Click **Save**.
 1. Click **Exit edit**.
 
-If you hover over a panel that isn't part of your selection, the tooltip shows the usual single-panel options instead.
+If you hover over a panel that isn't part of your selection, the tooltip displays single-panel options instead.
 
 When multiple panels are selected, the count includes their [repeated instances](#configure-repeat-options).
 Selecting only one panel that repeats still shows the single-panel actions.
