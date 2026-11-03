@@ -189,6 +189,8 @@ func TestInlineBlobsValidateBeforeUploading(t *testing.T) {
 	for _, blobs := range []string{
 		`{"a":{"contentType":"application/json","data":"e30="},"z":{"data":null}}`,
 		`{"dashboard":{"uid":"old","data":"e30="}}`,
+		`{"dashboard":{"data":null}}`,
+		`{"dashboard":{"data":""}}`,
 		`{"dashboard":{"contentType":"application/json","data":"invalid"}}`,
 		`{"dashboard":{"contentType":"application/json","data":"e30=","hash":"untrusted"}}`,
 		`{"dashboard":{"contentType":"application/json","data":"e30="},"dashboard":{"uid":"old"}}`,
@@ -205,6 +207,49 @@ func TestInlineBlobsValidateBeforeUploading(t *testing.T) {
 	}
 }
 
+func TestInlineBlobsPreserveEmptyUIDReference(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		for _, operation := range []string{"create", "update"} {
+			t.Run(fmt.Sprintf("enabled=%t/%s", enabled, operation), func(t *testing.T) {
+				client := &inlineBlobClient{}
+				s := testStorage(t, client)
+				s.opts.EnableInlineBlobs = enabled
+				obj := inlineBlobObject(t)
+				obj.Object["blobs"] = map[string]any{"dashboard": map[string]any{"uid": ""}}
+				out := &unstructured.Unstructured{}
+				if operation == "create" {
+					require.NoError(t, s.Create(testContext(t), "test", obj, out, 0))
+				} else {
+					client.value = testObject(t)
+					require.NoError(t, s.GuaranteedUpdate(testContext(t), "test", out, false, &storage.Preconditions{}, func(runtime.Object, storage.ResponseMeta) (runtime.Object, *uint64, error) {
+						return obj, nil, nil
+					}, nil))
+				}
+				require.Empty(t, client.puts)
+				uid, found, err := unstructured.NestedString(out.Object, "blobs", "dashboard", "uid")
+				require.NoError(t, err)
+				require.True(t, found)
+				require.Empty(t, uid)
+			})
+		}
+	}
+}
+
+func TestInlineBlobsPreserveLooseReferencesWithInlineData(t *testing.T) {
+	client := &inlineBlobClient{}
+	s := testStorage(t, client)
+	s.opts.EnableInlineBlobs = true
+	obj := inlineBlobObject(t)
+	obj.Object["blobs"].(map[string]any)["existing"] = map[string]any{"uid": "", "size": "legacy", "extension": true}
+	out := &unstructured.Unstructured{}
+	require.NoError(t, s.Create(testContext(t), "test", obj, out, 0))
+	require.Len(t, client.puts, 1)
+	reference, found, err := unstructured.NestedMap(out.Object, "blobs", "existing")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, obj.Object["blobs"].(map[string]any)["existing"], reference)
+}
+
 func TestInlineBlobsDisabledAndReferenceOnly(t *testing.T) {
 	client := &inlineBlobClient{}
 	s := testStorage(t, client)
@@ -212,7 +257,11 @@ func TestInlineBlobsDisabledAndReferenceOnly(t *testing.T) {
 	require.True(t, apierrors.IsBadRequest(err))
 	require.Empty(t, client.puts)
 	require.Zero(t, client.writes)
-	for _, raw := range []string{`{"spec":{}}`, `{"blobs":null}`, `{"blobs":{}}`, `{"blobs":{"dashboard":{"uid":"old","custom":true}}}`} {
+	for _, data := range []string{`null`, `""`} {
+		_, err := s.prepareInlineBlobs(testContext(t), json.RawMessage(`{"blobs":{"dashboard":{"data":`+data+`}}}`), nil, nil)
+		require.True(t, apierrors.IsBadRequest(err))
+	}
+	for _, raw := range []string{`{"spec":{}}`, `{"blobs":null}`, `{"blobs":{}}`, `{"blobs":{"dashboard":{"uid":"old","custom":true}}}`, `{"blobs":{"dashboard":{"uid":""}}}`, `{"blobs":{"dashboard":null,"existing":{}}}`, `{"blobs":{"dashboard":{"uid":"","size":"legacy"}}}`} {
 		actual, err := s.prepareInlineBlobs(testContext(t), json.RawMessage(raw), nil, nil)
 		require.NoError(t, err)
 		require.Equal(t, raw, string(actual))

@@ -28,29 +28,46 @@ func (s *Storage) prepareInlineBlobs(ctx context.Context, raw json.RawMessage, k
 	if !present || bytes.Equal(bytes.TrimSpace(blobJSON), []byte("null")) {
 		return raw, nil
 	}
-	entries, err := resourcepb.DecodeBlobEntries(blobJSON)
+	blobs, err := resourcepb.DecodeBlobObject(blobJSON)
 	if err != nil {
 		return nil, apierrors.NewBadRequest(err.Error())
 	}
-	names := make([]string, 0, len(entries))
-	for name, entry := range entries {
-		if len(entry.Data) > 0 {
-			names = append(names, name)
+	inline := make(map[string]json.RawMessage)
+	for name, raw := range blobs {
+		var fields map[string]json.RawMessage
+		if err := json.Unmarshal(raw, &fields); err != nil {
+			return nil, apierrors.NewBadRequest(fmt.Sprintf("blobs.%s: %s", name, err))
+		}
+		if _, present := fields["data"]; present {
+			inline[name] = raw
 		}
 	}
-	if len(names) == 0 {
+	if len(inline) == 0 {
 		return raw, nil
 	}
 	if !s.opts.EnableInlineBlobs {
 		return nil, apierrors.NewBadRequest("inline blobs are not enabled for this resource")
 	}
+	if len(blobs) > resourcepb.MaxInlineBlobEntries {
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("inline blobs allow at most %d entries", resourcepb.MaxInlineBlobEntries))
+	}
+	// Existing references may have empty UIDs or legacy metadata. Only entries
+	// carrying data opt into the stricter write-input contract.
+	inlineJSON, err := json.Marshal(inline)
+	if err != nil {
+		return nil, err
+	}
+	entries, err := resourcepb.DecodeBlobEntries(inlineJSON)
+	if err != nil {
+		return nil, apierrors.NewBadRequest(err.Error())
+	}
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
 		return nil, err
 	}
-	blobs, err := resourcepb.DecodeBlobObject(blobJSON)
-	if err != nil {
-		return nil, err
+	names := make([]string, 0, len(entries))
+	for name := range entries {
+		names = append(names, name)
 	}
 	sort.Strings(names)
 	for _, name := range names {
