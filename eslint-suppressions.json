@@ -3538,11 +3538,6 @@
       "count": 1
     }
   },
-  "public/app/features/logs/components/panel/LogLineDetailsDisplayedFields.tsx": {
-    "react-hooks/refs": {
-      "count": 3
-    }
-  },
   "public/app/features/logs/components/panel/LogLineDetailsFields.tsx": {
     "react-hooks/preserve-manual-memoization": {
       "count": 1
