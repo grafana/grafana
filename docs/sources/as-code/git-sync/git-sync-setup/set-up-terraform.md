@@ -89,7 +89,7 @@ The Git Sync resources are App Platform resources and talk directly to the Grafa
 
 You need to create one or two resources to configure and manage Git Sync:
 
-- The [connection resource](#configure-the-connection-resource) configures your Git provider credentials. This resource is only needed if you're connecting with OAuth or Github App.
+- The [connection resource](#configure-the-connection-resource) configures your Git provider credentials. This resource is only needed if you're connecting with OAuth or GitHub App.
 - The [repository resource](#configure-the-repository-resource) configures the Git repository to sync Grafana resources with.
 
 For better understanding of the required resources, refer to [Git Sync key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/key-concepts).
