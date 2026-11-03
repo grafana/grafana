@@ -339,24 +339,6 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     });
 
     if (!isMobileEditDeprecated()) {
-      // Dashboard settings
-      keybindings.addBinding({
-        key: 'd s',
-        onTrigger: () => {
-          if (enterEditingForShortcut()) {
-            scene.onOpenSettings();
-          }
-        },
-      });
-
-      // Open save drawer
-      if (canSave) {
-        keybindings.addBinding({
-          key: 'mod+s',
-          onTrigger: () => scene.openSaveDrawer({}),
-        });
-      }
-
       // paste panel (not panel-scoped: adds the copied panel to the dashboard)
       keybindings.addBinding({
         key: 'p v',

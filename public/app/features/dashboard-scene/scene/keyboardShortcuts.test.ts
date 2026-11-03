@@ -520,7 +520,7 @@ describe('setupKeyboardShortcuts', () => {
       Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
     });
 
-    it('blocks the mod+s/d s shortcuts', () => {
+    it('does not register the paste shortcut', () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
       Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
       jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(true);
@@ -528,8 +528,24 @@ describe('setupKeyboardShortcuts', () => {
 
       setupKeyboardShortcuts(mockScene);
 
-      expect(getBinding('mod+s')).toBeUndefined();
-      expect(getBinding('d s')).toBeUndefined();
+      expect(getBinding('p v')).toBeUndefined();
+    });
+
+    it('warns instead of opening settings when d s is pressed', () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(true);
+      mockScene.setState({ meta: { ...mockScene.state.meta, canSave: true } });
+      const partialSpy = jest.spyOn(locationService, 'partial');
+      const emitSpy = jest.spyOn(appEvents, 'emit');
+
+      setupKeyboardShortcuts(mockScene);
+      getBinding('d s')!.onTrigger();
+
+      expect(partialSpy).not.toHaveBeenCalledWith({ editview: 'settings' });
+      expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertWarning, [
+        'Dashboard editing is not available on small screens. Switch to a larger screen to continue.',
+      ]);
     });
 
     it('blocks e shortcut and warns instead of entering edit mode', async () => {
