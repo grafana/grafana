@@ -16,7 +16,7 @@ func (rev *ConfigRevision) DeleteReceiver(uid string) {
 
 func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) (*models.Receiver, error) {
 	if _, exists := rev.Config.Receivers[v1.ResourceUID(receiver.GetUID())]; exists {
-		return nil, models.ErrReceiverExists.Errorf("")
+		return nil, models.MakeErrReceiverUidExists(receiver.GetUID())
 	}
 
 	if err := validateAndSetIntegrationUIDs(receiver); err != nil {

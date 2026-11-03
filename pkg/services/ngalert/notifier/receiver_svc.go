@@ -414,9 +414,14 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		return nil, models.ErrReceiverInvalid(err)
 	}
 
-	// A brand new receiver gets its own independent UID, unless it is given one; it has no existing identity to
-	// preserve. The occupancy check in revision.CreateReceiver guards against reusing a UID that is already taken.
-	if createdReceiver.UID == "" {
+	// A brand new receiver gets its own independent UID; it has no existing identity to preserve.
+	// A caller may supply its own (validated below); otherwise one is generated. Either way, the
+	// occupancy check in revision.CreateReceiver guards against reusing a UID that's already taken.
+	if createdReceiver.UID != "" {
+		if err := v1.ValidateReceiverUID(createdReceiver.UID); err != nil {
+			return nil, models.ErrReceiverInvalid(err)
+		}
+	} else {
 		createdReceiver.UID = util.GenerateShortUID()
 	}
 

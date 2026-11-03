@@ -73,11 +73,29 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		},
 	}
 
-	t.Run("create should fail if object name is specified", func(t *testing.T) {
+	t.Run("create should fail if object name is not a valid UID", func(t *testing.T) {
 		receiver := newResource.Copy().(*v1beta1.Receiver)
-		receiver.Name = "new-receiver"
+		receiver.Name = "New-Receiver" // contains an uppercase letter, not a valid DNS subdomain
 		_, err := client.Create(ctx, receiver, resource.CreateOptions{})
 		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest but got %s", err)
+	})
+
+	t.Run("create should honor a client-supplied object name as the UID", func(t *testing.T) {
+		receiver := newResource.Copy().(*v1beta1.Receiver)
+		receiver.Name = "my-custom-receiver-uid"
+		receiver.Spec.Title = "Receiver-With-Custom-UID"
+		actual, err := client.Create(ctx, receiver, resource.CreateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "my-custom-receiver-uid", actual.Name)
+
+		t.Run("create should fail if the UID is already taken", func(t *testing.T) {
+			other := receiver.Copy().(*v1beta1.Receiver)
+			other.Spec.Title = "A-Different-Title"
+			_, err := client.Create(ctx, other, resource.CreateOptions{})
+			require.Truef(t, errors.IsConflict(err), "Expected Conflict but got %s", err)
+		})
+
+		require.NoError(t, client.Delete(ctx, actual.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
 	})
 
 	var resourceID resource.Identifier

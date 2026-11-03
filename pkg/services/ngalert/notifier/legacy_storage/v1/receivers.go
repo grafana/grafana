@@ -5,14 +5,36 @@ import (
 	"hash/fnv"
 	"maps"
 	"slices"
+	"strings"
 	"unsafe"
 
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
 // ReceiverUID returns the deterministic UID for a receiver group with the given name.
 func ReceiverUID(name string) ResourceUID {
 	return ResourceUID(models.NameToUid(name))
+}
+
+// ValidateReceiverUID validates a client-supplied receiver UID: non-empty, no ':', a valid
+// DNS-1123 subdomain, and not longer than ualert.UIDMaxLength. Mirrors ValidateTimeIntervalUID.
+func ValidateReceiverUID(uid string) error {
+	if strings.TrimSpace(uid) == "" {
+		return fmt.Errorf("receiver uid is required")
+	}
+	if strings.Contains(uid, ":") {
+		return fmt.Errorf("receiver uid cannot contain invalid character ':'")
+	}
+	if len(uid) > ualert.UIDMaxLength {
+		return fmt.Errorf("receiver uid cannot be longer than %d characters", ualert.UIDMaxLength)
+	}
+	if errs := k8svalidation.IsDNS1123Subdomain(uid); len(errs) > 0 {
+		return fmt.Errorf("receiver uid must be a valid DNS subdomain: %s", strings.Join(errs, ", "))
+	}
+	return nil
 }
 
 // NewReceiver builds a PostableApiReceiver with the given UID.

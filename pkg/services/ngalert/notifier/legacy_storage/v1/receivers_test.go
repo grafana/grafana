@@ -2,6 +2,7 @@ package v1
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -102,4 +103,23 @@ func TestReceiversToModel_UIDs(t *testing.T) {
 	assert.Equal(t, ResourceUID("persisted"), got["persisted"].UID)
 	require.Contains(t, got, ReceiverUID("no uid"))
 	assert.Equal(t, ReceiverUID("no uid"), got[ReceiverUID("no uid")].UID)
+}
+
+func TestValidateReceiverUID(t *testing.T) {
+	for _, uid := range []string{"a", "my-receiver", "my.receiver-1", "0123", strings.Repeat("a", 40)} {
+		assert.NoErrorf(t, ValidateReceiverUID(uid), "%q should be valid", uid)
+	}
+	for description, uid := range map[string]string{
+		"empty":             "",
+		"blank":             "  ",
+		"colon":             "my:receiver",
+		"uppercase":         "My-Receiver",
+		"underscore":        "my_receiver",
+		"leading hyphen":    "-receiver",
+		"trailing hyphen":   "receiver-",
+		"slash":             "my/receiver",
+		"longer than limit": strings.Repeat("a", 41),
+	} {
+		assert.Errorf(t, ValidateReceiverUID(uid), "%s should be invalid", description)
+	}
 }

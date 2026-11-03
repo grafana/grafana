@@ -106,7 +106,7 @@ func TestCreateReceiver(t *testing.T) {
 				UID:  NameToUid("receiver1"),
 				Name: "New receiver name",
 			},
-			expectedError: models.ErrReceiverExists,
+			expectedError: models.ErrReceiverUidExists,
 		},
 		{
 			name: "should error if receiver already exists by name",
