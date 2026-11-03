@@ -53,7 +53,7 @@ const STARRED_DASHBOARD = {
 const setupSearcher = (items = [STARRED_DASHBOARD]) => {
   const search = jest.fn(({ name }: { name: string[] }) => {
     const rows = items.filter((d) => name.includes(d.uid));
-    return Promise.resolve({ view: { length: rows.length, get: (i: number) => rows[i] } });
+    return Promise.resolve({ view: { length: rows.length, get: (i: number) => rows[i], toArray: () => rows } });
   });
   jest.mocked(getGrafanaSearcher).mockReturnValue({ search } as unknown as ReturnType<typeof getGrafanaSearcher>);
 };

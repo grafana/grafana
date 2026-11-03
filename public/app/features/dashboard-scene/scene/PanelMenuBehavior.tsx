@@ -306,16 +306,14 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     items.push(getInspectMenuItem(plugin, panel, dashboard));
 
-    if (getFeatureFlagClient().getBooleanValue(FlagKeys.PanelTimeSettings, true)) {
-      items.push({
-        text: t('panel.header-menu.time-settings', 'Time settings'),
-        iconClassName: 'clock-nine',
-        onClick: (e) => {
-          e.preventDefault();
-          dashboard.showModal(new PanelTimeRangeDrawer({ panelRef: panel.getRef() }));
-        },
-      });
-    }
+    items.push({
+      text: t('panel.header-menu.time-settings', 'Time settings'),
+      iconClassName: 'clock-nine',
+      onClick: (e) => {
+        e.preventDefault();
+        dashboard.showModal(new PanelTimeRangeDrawer({ panelRef: panel.getRef() }));
+      },
+    });
 
     const extensions = await firstValueFrom(
       getObservablePluginLinks({
@@ -405,7 +403,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
       items.push({
         text: t('panel.header-menu.add-to-notebook', 'Add to notebook'),
-        iconClassName: 'book',
+        iconClassName: 'gf-notebook',
         onClick: () => {
           dashboard.showModal(new AddPanelToNotebookScene({ panelRef: panel.getRef() }));
         },
