@@ -346,7 +346,9 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	}
 
 	if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil {
-		return v, err
+		if !s.allowOrphanedUpdate(ctx, obj, previous) {
+			return v, err
+		}
 	}
 
 	// If staying in the same folder but manager properties changed, re-validate
