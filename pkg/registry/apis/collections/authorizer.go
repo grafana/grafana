@@ -2,26 +2,22 @@ package collections
 
 import (
 	"context"
+	"errors"
+	"sync/atomic"
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-// newAuthorizer sends slideshow requests to the playlist permissions, because slideshows are
-// shared within an org like playlists. Everything else keeps the per-user ownership rules that
-// stars rely on.
-//
-// The playlist permissions are read from the permissions on the requester, because this builder
-// is constructed without the access control service.
-func newAuthorizer(logger log.Logger) authorizer.Authorizer {
-	slideshows := playlist.NewAuthorizer(func(_ context.Context, user identity.Requester, action string) (bool, error) {
-		return accesscontrol.EvalPermission(action).Evaluate(user.GetPermissions()), nil
-	}, logger)
+// newAuthorizer sends slideshow requests through the playlist authorizer, because slideshows are
+// shared within an org like playlists and use the playlist permissions. Everything else keeps the
+// per-user ownership rules that stars rely on.
+func newAuthorizer(accessClient authlib.AccessChecker, logger log.Logger) authorizer.Authorizer {
+	slideshows := playlist.NewAuthorizer(accessClient, logger)
 	owned := &utils.AuthorizeFromName{
 		AllowOrgAdmin: true,
 		Resource: map[string][]utils.ResourceOwner{
@@ -35,4 +31,22 @@ func newAuthorizer(logger log.Logger) authorizer.Authorizer {
 		}
 		return owned.Authorize(ctx, attr)
 	})
+}
+
+// lateAccessChecker is an access checker that is given its client after the builder has been
+// constructed, because the builder's constructor does not take one.
+type lateAccessChecker struct {
+	client atomic.Pointer[authlib.AccessClient]
+}
+
+func (l *lateAccessChecker) set(client authlib.AccessClient) {
+	l.client.Store(&client)
+}
+
+func (l *lateAccessChecker) Check(ctx context.Context, info authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+	client := l.client.Load()
+	if client == nil {
+		return authlib.CheckResponse{}, errors.New("access client is not available")
+	}
+	return (*client).Check(ctx, info, req, folder)
 }

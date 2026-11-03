@@ -13,6 +13,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	authlib "github.com/grafana/authlib/types"
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -29,13 +30,15 @@ import (
 )
 
 var (
-	_ builder.APIGroupBuilder    = (*APIBuilder)(nil)
-	_ builder.APIGroupMutation   = (*APIBuilder)(nil)
-	_ builder.APIGroupValidation = (*APIBuilder)(nil)
+	_ builder.APIGroupBuilder           = (*APIBuilder)(nil)
+	_ builder.APIGroupMutation          = (*APIBuilder)(nil)
+	_ builder.APIGroupValidation        = (*APIBuilder)(nil)
+	_ builder.APIGroupAccessClientAware = (*APIBuilder)(nil)
 )
 
 type APIBuilder struct {
 	authorizer  authorizer.Authorizer
+	accessCheck *lateAccessChecker
 	legacyStars *legacy.DashboardStarsStorage
 }
 
@@ -48,8 +51,10 @@ func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 ) *APIBuilder {
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
+	accessCheck := &lateAccessChecker{}
 	builder := &APIBuilder{
-		authorizer: newAuthorizer(log.New("collections.authz")),
+		authorizer:  newAuthorizer(accessCheck, log.New("collections.authz")),
+		accessCheck: accessCheck,
 	}
 
 	namespacer := request.GetNamespaceMapper(cfg)
@@ -59,6 +64,11 @@ func RegisterAPIService(
 
 	apiregistration.RegisterAPI(builder)
 	return builder
+}
+
+// SetAccessClient implements builder.APIGroupAccessClientAware.
+func (b *APIBuilder) SetAccessClient(client authlib.AccessClient) {
+	b.accessCheck.set(client)
 }
 
 // AllowedV0Alpha1Resources implements builder.APIGroupBuilder.

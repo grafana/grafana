@@ -312,6 +312,9 @@ func (s *service) start(ctx context.Context) error {
 		pvs := s.scheme.PrioritizedVersionsForGroup(gvs[0].Group)
 
 		for _, gv := range pvs {
+			if aware, ok := b.(builder.APIGroupAccessClientAware); ok {
+				aware.SetAccessClient(s.accessClient)
+			}
 			if a, ok := b.(builder.APIGroupAuthorizer); ok {
 				auth := a.GetAuthorizer()
 				if auth != nil {

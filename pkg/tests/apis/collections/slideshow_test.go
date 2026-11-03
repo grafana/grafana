@@ -2,7 +2,9 @@ package collections
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -110,9 +112,16 @@ func TestIntegrationSlideshows(t *testing.T) {
 		require.Error(t, err)
 		require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
 	})
+
+	t.Run("access follows the org role while playlistsRBAC is off", func(t *testing.T) {
+		checkSlideshowAccess(t, helper, slideshowAccess{
+			// Users with no role keep the viewer-level read access playlists give them.
+			noneCanRead: true,
+		})
+	})
 }
 
-// With the playlist permissions enforced, access follows the permissions on the requester.
+// With the playlist permissions enforced, access follows playlists:read and playlists:write.
 func TestIntegrationSlideshowsWithPlaylistsRBAC(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -125,26 +134,84 @@ func TestIntegrationSlideshowsWithPlaylistsRBAC(t *testing.T) {
 		},
 	})
 
-	gvr := collections.SlideshowResourceInfo.GroupVersionResource()
-	editor := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Editor, GVR: gvr})
-	viewer := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Viewer, GVR: gvr})
-	ctx := context.Background()
+	// Users with no role hold neither permission.
+	checkSlideshowAccess(t, helper, slideshowAccess{noneCanRead: false})
+}
 
+type slideshowAccess struct {
+	noneCanRead bool
+}
+
+// checkSlideshowAccess runs the same expectations for both toggle states: viewers read, editors
+// and admins write, and service accounts follow their role. Only users with no role differ.
+func checkSlideshowAccess(t *testing.T, helper *apis.K8sTestHelper, want slideshowAccess) {
+	t.Helper()
+	ctx := context.Background()
+	gvr := collections.SlideshowResourceInfo.GroupVersionResource()
 	spec := map[string]any{
 		"title":    "Wall",
 		"interval": "5m",
 		"items":    []any{map[string]any{"group": "dashboard.grafana.app", "resource": "dashboards", "name": "cpu"}},
 	}
+	name := fmt.Sprintf("acl-%d", time.Now().UnixNano())
 
-	// Editors hold playlists:write, viewers only playlists:read.
-	_, err := editor.Resource.Create(ctx, slideshowObject("wall", spec), metav1.CreateOptions{})
-	require.NoError(t, err)
+	org := helper.Org1
+	byUser := func(u apis.User) *apis.K8sResourceClient {
+		return helper.GetResourceClient(apis.ResourceClientArgs{User: u, GVR: gvr})
+	}
+	byToken := func(token string) *apis.K8sResourceClient {
+		return helper.GetResourceClient(apis.ResourceClientArgs{ServiceAccountToken: token, Namespace: "default", GVR: gvr})
+	}
 
-	_, err = viewer.Resource.Get(ctx, "wall", metav1.GetOptions{})
-	require.NoError(t, err)
+	// An editor creates the slideshow the others try to read.
+	_, err := byUser(org.Editor).Resource.Create(ctx, slideshowObject(name, spec), metav1.CreateOptions{})
+	require.NoError(t, err, "editor creates")
 
-	_, err = viewer.Resource.Create(ctx, slideshowObject("viewer-made", spec), metav1.CreateOptions{})
-	require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+	readers := map[string]*apis.K8sResourceClient{
+		"viewer":                 byUser(org.Viewer),
+		"editor":                 byUser(org.Editor),
+		"admin":                  byUser(org.Admin),
+		"viewer service account": byToken(org.ViewerServiceAccountToken),
+		"editor service account": byToken(org.EditorServiceAccountToken),
+	}
+	for who, client := range readers {
+		_, err := client.Resource.Get(ctx, name, metav1.GetOptions{})
+		require.NoError(t, err, "%s reads", who)
+		list, err := client.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err, "%s lists", who)
+		require.NotEmpty(t, list.Items, who)
+	}
 
-	require.True(t, apierrors.IsForbidden(viewer.Resource.Delete(ctx, "wall", metav1.DeleteOptions{})))
+	_, err = byUser(org.None).Resource.Get(ctx, name, metav1.GetOptions{})
+	if want.noneCanRead {
+		require.NoError(t, err, "a user with no role reads")
+	} else {
+		require.True(t, apierrors.IsForbidden(err), "a user with no role must not read, got %v", err)
+	}
+
+	// Writes: viewers, users with no role and viewer service accounts are refused.
+	refused := map[string]*apis.K8sResourceClient{
+		"viewer":                 byUser(org.Viewer),
+		"none":                   byUser(org.None),
+		"viewer service account": byToken(org.ViewerServiceAccountToken),
+	}
+	for who, client := range refused {
+		_, err := client.Resource.Create(ctx, slideshowObject("refused-"+who[:3], spec), metav1.CreateOptions{})
+		require.True(t, apierrors.IsForbidden(err), "%s must not create, got %v", who, err)
+		require.True(t, apierrors.IsForbidden(client.Resource.Delete(ctx, name, metav1.DeleteOptions{})),
+			"%s must not delete", who)
+	}
+
+	// Writers: editors, admins and editor service accounts.
+	writers := map[string]*apis.K8sResourceClient{
+		"editor":                 byUser(org.Editor),
+		"admin":                  byUser(org.Admin),
+		"editor service account": byToken(org.EditorServiceAccountToken),
+	}
+	for who, client := range writers {
+		created := "made-" + who[:3] + fmt.Sprint(len(who))
+		_, err := client.Resource.Create(ctx, slideshowObject(created, spec), metav1.CreateOptions{})
+		require.NoError(t, err, "%s creates", who)
+		require.NoError(t, client.Resource.Delete(ctx, created, metav1.DeleteOptions{}), "%s deletes", who)
+	}
 }

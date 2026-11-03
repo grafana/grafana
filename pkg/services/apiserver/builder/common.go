@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -57,6 +58,12 @@ type APIGroupVersionProvider interface {
 
 type APIGroupVersionsProvider interface {
 	GetGroupVersions() []schema.GroupVersion
+}
+
+// APIGroupAccessClientAware is implemented by builders that authorize through the access client but
+// are constructed without one. The apiserver service hands it over before asking for the authorizer.
+type APIGroupAccessClientAware interface {
+	SetAccessClient(client authlib.AccessClient)
 }
 
 type APIGroupAuthorizer interface {
