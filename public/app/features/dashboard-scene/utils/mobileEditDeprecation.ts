@@ -5,6 +5,9 @@ import { FlagKeys, getFeatureFlagClient, useFlagGrafanaMobileEditDeprecation } f
 import { appEvents } from 'app/core/app_events';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
+import { type DashboardScene } from '../scene/DashboardScene';
+import { isFullDashboardEditing } from '../scene/types/dashboard';
+
 /**
  * Non-reactive check for use outside React (e.g. DashboardScene class methods,
  * mutation-api permission checks).
@@ -26,17 +29,28 @@ export function useIsMobileEditDeprecated(): boolean {
 }
 
 /**
+ * Whether *starting* an edit is blocked. A session already in full editing is never blocked. A
+ * Viewing or Composer session is still `isEditing` but cannot switch back to Editing here, so it
+ * counts as blocked.
+ */
+export function isEditEntryBlocked(scene: DashboardScene): boolean {
+  return isMobileEditDeprecated() && !isFullDashboardEditing(scene.state);
+}
+
+export function mobileEditNotAvailableMessage(): string {
+  return t(
+    'dashboard.edit.mobile-not-available',
+    'Dashboard editing is not available on small screens. Switch to a larger screen to continue.'
+  );
+}
+
+/**
  * Warns the user that an edit-mode action was blocked on mobile. Call this at every
  * no-op/redirect site gated by `isMobileEditDeprecated()`, so a silent block (e.g. visiting
  * /dashboard/new directly) doesn't look like the app just did nothing.
  */
 export function notifyMobileEditNotAvailable(): void {
-  appEvents.emit(AppEvents.alertWarning, [
-    t(
-      'dashboard.edit.mobile-not-available',
-      'Dashboard editing is not available on small screens. Switch to a larger screen to continue.'
-    ),
-  ]);
+  appEvents.emit(AppEvents.alertWarning, [mobileEditNotAvailableMessage()]);
 }
 
 /**

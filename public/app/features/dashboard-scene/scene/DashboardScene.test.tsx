@@ -56,6 +56,7 @@ import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { DashboardInteractions } from '../utils/interactions';
+import { isEditEntryBlocked } from '../utils/mobileEditDeprecation';
 import { toControlSourceRef } from '../utils/predefinedVariables';
 import { createDeferred } from '../utils/test-utils';
 import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
@@ -77,7 +78,7 @@ import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
 import { setPendingPlanBuild, takePendingPlanBuild } from './pendingPlanBuild';
 import { DashboardPlanningEvent } from './planningEvents';
 import { allowOrigins, getAllowedOrigins } from './sandbox-consent/sandboxConsent';
-import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
+import { isFullDashboardEditing, type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
 
 const mockRestoreDashboardVersion = jest.fn();
 
@@ -436,7 +437,9 @@ describe('DashboardScene', () => {
 
           expect(scene.setDashboardMode('edit')).toBe(true);
           expect(scene.onEnterEditMode()).toBe(true);
-          expect(scene.openFullEditor()).toBe(true);
+          expect(isEditEntryBlocked(scene)).toBe(false);
+          scene.openFullEditor();
+          expect(isFullDashboardEditing(scene.state)).toBe(true);
           expect(scene.state.isEditing).toBe(true);
           expect(alertSpy.mock.calls.filter(([e]) => e === AppEvents.alertWarning)).toEqual([]);
         });
@@ -449,8 +452,9 @@ describe('DashboardScene', () => {
           setMobileViewport();
 
           expect(scene.setDashboardMode('edit')).toBe(false);
-          // openFullEditor reports the blocked switch instead of claiming the editor is available
-          expect(scene.openFullEditor()).toBe(false);
+          expect(isEditEntryBlocked(scene)).toBe(true);
+          scene.openFullEditor();
+          expect(isFullDashboardEditing(scene.state)).toBe(false);
           expect(getDashboardMode(scene.state)).toBe('view');
         });
       });

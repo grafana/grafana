@@ -902,24 +902,17 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     sidebar.openPane(saved.openPane.clone());
   }
 
-  /**
-   * Returns whether the dashboard is in full editing afterwards, so callers know not to proceed into
-   * an editor when it could not be entered (e.g. blocked on mobile). This includes a Viewing session,
-   * which is still isEditing but cannot switch back to Editing there.
-   */
-  public openFullEditor(): boolean {
+  public openFullEditor() {
     // A manual-edit entry point (edit panel URL, settings) leaves Composer first.
     this.exitComposerMode();
-    if (!this.state.isEditing && !this.onEnterEditMode()) {
-      return false;
+    if (!this.state.isEditing) {
+      this.onEnterEditMode();
     }
     if (dashboardModesEnabled()) {
       this.setDashboardMode('edit');
     } else {
       this.applyDashboardMode();
     }
-    // A Viewing session is still isEditing, so setDashboardMode('edit') can be the step that was blocked.
-    return isFullDashboardEditing(this.state);
   }
 
   /**

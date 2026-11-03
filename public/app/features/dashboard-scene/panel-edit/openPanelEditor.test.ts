@@ -1,6 +1,7 @@
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { testWithFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -40,13 +41,26 @@ describe('openPanelEditor', () => {
     expect(scene.state.editPanel).toBeDefined();
   });
 
-  it('does not load the panel editor view when onEnterEditMode is blocked and editing never starts', async () => {
-    const { scene, panel } = buildTestScene();
-    jest.spyOn(scene, 'onEnterEditMode').mockImplementation(() => false);
+  describe('when edit entry is blocked on mobile', () => {
+    testWithFlags({ 'grafana.mobileEditDeprecation': true });
 
-    await openPanelEditor(scene, panel, true);
+    beforeEach(() => {
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+    });
 
-    expect(scene.state.isEditing).toBeFalsy();
-    expect(scene.state.editPanel).toBeUndefined();
+    afterEach(() => {
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+    });
+
+    it('does not enter edit mode or load the panel editor view', async () => {
+      const { scene, panel } = buildTestScene();
+      const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
+
+      await openPanelEditor(scene, panel, true);
+
+      expect(onEnterEditMode).not.toHaveBeenCalled();
+      expect(scene.state.isEditing).toBeFalsy();
+      expect(scene.state.editPanel).toBeUndefined();
+    });
   });
 });

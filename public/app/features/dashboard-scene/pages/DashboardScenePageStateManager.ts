@@ -1201,33 +1201,32 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       }
 
       // Special handling for Template route - set up edit mode and dirty state
-      if (
+      const isTemplateRoute =
         getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false) &&
-        options.route === DashboardRoutes.Template
-      ) {
-        if (isMobileEditDeprecated()) {
-          // Building or editing a dashboard template requires edit mode, which is unavailable on mobile.
-          redirectAwayFromMobileEdit();
-        } else {
-          const editMode = !!options.editTemplate;
+        options.route === DashboardRoutes.Template;
 
-          if (options.dashboardTemplateUid && editMode) {
-            scene.setState({
-              meta: {
-                ...scene.state.meta,
-                isDashboardTemplate: true,
-                dashboardTemplateUid: options.dashboardTemplateUid,
-              },
-            });
-          }
+      if (isTemplateRoute && isMobileEditDeprecated()) {
+        // Building or editing a dashboard template requires edit mode, which is unavailable on mobile.
+        redirectAwayFromMobileEdit();
+      } else if (isTemplateRoute) {
+        const editMode = !!options.editTemplate;
 
-          scene.onEnterEditMode();
+        if (options.dashboardTemplateUid && editMode) {
+          scene.setState({
+            meta: {
+              ...scene.state.meta,
+              isDashboardTemplate: true,
+              dashboardTemplateUid: options.dashboardTemplateUid,
+            },
+          });
+        }
 
-          // Use-template flow forces isDirty so Save-As is primed. Edit-template flow
-          // starts clean — dirtiness should reflect real user edits.
-          if (!editMode) {
-            scene.setState({ isDirty: true });
-          }
+        scene.onEnterEditMode();
+
+        // Use-template flow forces isDirty so Save-As is primed. Edit-template flow
+        // starts clean — dirtiness should reflect real user edits.
+        if (!editMode) {
+          scene.setState({ isDirty: true });
         }
       }
 

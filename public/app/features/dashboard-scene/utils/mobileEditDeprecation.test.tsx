@@ -3,10 +3,13 @@ import { render } from 'test/test-utils';
 
 import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 
+import { DashboardScene } from '../scene/DashboardScene';
+
 import {
+  isEditEntryBlocked,
   isMobileEditDeprecated,
   notifyMobileEditNotAvailable,
   redirectAwayFromMobileEdit,
@@ -43,6 +46,46 @@ describe('isMobileEditDeprecated', () => {
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
 
     expect(isMobileEditDeprecated()).toBe(false);
+  });
+});
+
+describe('isEditEntryBlocked', () => {
+  function buildScene(state?: Partial<ConstructorParameters<typeof DashboardScene>[0]>) {
+    return new DashboardScene({ title: 'hello', meta: { canEdit: true }, ...state });
+  }
+
+  testWithFlags({ 'grafana.mobileEditDeprecation': true });
+
+  beforeEach(() => {
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+  });
+
+  it('blocks a dashboard that is not editing', () => {
+    expect(isEditEntryBlocked(buildScene())).toBe(true);
+  });
+
+  it('does not block a session already in full editing, so a viewport change mid-session is harmless', () => {
+    expect(isEditEntryBlocked(buildScene({ isEditing: true }))).toBe(false);
+  });
+
+  it('blocks a Viewing session, which is still isEditing but cannot switch back to Editing', () => {
+    setTestFlags({
+      dashboardNewLayouts: true,
+      'grafana.dashboardPreviewMode': true,
+      'grafana.mobileEditDeprecation': true,
+    });
+
+    expect(isEditEntryBlocked(buildScene({ isEditing: true, mode: 'view' }))).toBe(true);
+  });
+
+  it('does not block anything once the viewport is at least the sm breakpoint', () => {
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1200 });
+
+    expect(isEditEntryBlocked(buildScene())).toBe(false);
   });
 });
 

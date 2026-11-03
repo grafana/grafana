@@ -5,6 +5,7 @@ import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues, type VizPane
 import { openPanelEditor } from '../panel-edit/openPanelEditor';
 import { createDashboardEditViewFor } from '../settings/createDashboardEditViewFor';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
+import { isEditEntryBlocked } from '../utils/mobileEditDeprecation';
 import { findEditPanel, getLibraryPanelBehavior } from '../utils/utils';
 
 import { type DashboardScene } from './DashboardScene';
@@ -75,35 +76,36 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   }
 
   updateFromUrl(values: SceneObjectUrlValues): void {
-    const { viewPanel, isEditing, editPanel, editview, shareView } = this._scene.state;
+    const { viewPanel, isEditing, editPanel, shareView } = this._scene.state;
     const update: Partial<DashboardSceneState> = {};
     let panelToEdit: VizPanel | undefined;
 
     // Reachable directly via ?editview=, independent of any settings entry point: without this
     // check, the branch below calls onEnterEditMode() unconditionally when not already editing,
     // undoing the invariant a plan preview depends on (see refuseWhilePlanning).
-    if (typeof values.editview === 'string' && this._scene.canEditDashboard() && !refuseWhilePlanning(this._scene)) {
-      const editViewKey = values.editview;
-
+    if (
+      typeof values.editview === 'string' &&
+      this._scene.canEditDashboard() &&
+      !isEditEntryBlocked(this._scene) &&
+      !refuseWhilePlanning(this._scene)
+    ) {
       if (isEditing) {
         this._scene.openFullEditor();
-        update.editview = createDashboardEditViewFor(editViewKey);
-      } else if (this._scene.state.editable) {
-        // Not sure what is best to do here.
-        // The reason for the timeout is for this change to happen after the url sync has completed.
-        // onEnterEditMode can no-op (e.g. blocked on mobile) without throwing -- only open the
-        // editview pane once it's confirmed edit mode was actually entered.
-        setTimeout(() => {
-          if (this._scene.onEnterEditMode()) {
-            this._scene.setState({ editview: createDashboardEditViewFor(editViewKey) });
-          } else {
-            // Url sync only writes state back on a state change, so force one to drop `?editview=`;
-            // otherwise a later sync with the same search string retries and warns again.
-            this._scene.setState({ editview: undefined });
-          }
-        });
       }
-    } else if (editview && values.hasOwnProperty('editview')) {
+      update.editview = createDashboardEditViewFor(values.editview);
+
+      if (!isEditing) {
+        if (this._scene.state.editable) {
+          // Not sure what is best to do here.
+          // The reason for the timeout is for this change to happen after the url sync has completed
+          setTimeout(() => this._scene.onEnterEditMode());
+        } else {
+          update.editview = undefined;
+        }
+      }
+    } else if (values.hasOwnProperty('editview')) {
+      // Clear the param whenever it was not honoured
+      // without this a later sync with the same search string keeps re-triggering the branch above.
       update.editview = undefined;
     }
 
@@ -120,7 +122,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
     // Same reason as editview above: the branch below calls onEnterEditMode() unconditionally
     // if not already editing, so this must be checked first.
-    if (typeof values.editPanel === 'string' && !refuseWhilePlanning(this._scene)) {
+    if (typeof values.editPanel === 'string' && !isEditEntryBlocked(this._scene) && !refuseWhilePlanning(this._scene)) {
       const panel = findEditPanel(this._scene, values.editPanel);
 
       if (!panel) {
@@ -135,38 +137,28 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
-      let editBlocked = false;
+      // We cannot simultaneously be in edit and view panel state.
+      if (this._scene.state.viewPanel) {
+        update.viewPanel = undefined;
+      }
 
       // If we are not in editing (for example after full page reload)
       if (!isEditing || !isFullDashboardEditing(this._scene.state)) {
         // Keep the editor URL while entering full editing before its view has loaded.
         this._heldEditPanelId = values.editPanel;
-        if (!this._scene.openFullEditor()) {
-          // Blocked (e.g. on mobile). Clearing editPanel in the update below is the state change
-          // that removes the param from the URL, so a later sync doesn't retry and warn again.
-          this._releaseEditPanel();
-          update.editPanel = undefined;
-          editBlocked = true;
-        }
+        this._scene.openFullEditor();
       }
 
-      if (!editBlocked) {
-        // We cannot simultaneously be in edit and view panel state.
-        if (this._scene.state.viewPanel) {
-          update.viewPanel = undefined;
-        }
-
-        const libPanelBehavior = getLibraryPanelBehavior(panel);
-        if (libPanelBehavior && !libPanelBehavior?.state.isLoaded) {
-          this._waitForLibPanelToLoadBeforeEnteringPanelEdit(values.editPanel, libPanelBehavior);
-          return;
-        }
-
-        panelToEdit = panel;
+      const libPanelBehavior = getLibraryPanelBehavior(panel);
+      if (libPanelBehavior && !libPanelBehavior?.state.isLoaded) {
+        this._waitForLibPanelToLoadBeforeEnteringPanelEdit(values.editPanel, libPanelBehavior);
+        return;
       }
+
+      panelToEdit = panel;
     } else if (typeof values.editPanel === 'string') {
-      // Refused while planning: clear the param rather than leaving it to keep re-triggering on
-      // every sync tick.
+      // Refused (while planning, or edit entry blocked on mobile): clear the param rather than
+      // leaving it to keep re-triggering on every sync tick.
       update.editPanel = undefined;
     } else if (values.editPanel === null) {
       // Closing the pane supersedes a re-open still waiting on a library panel.
