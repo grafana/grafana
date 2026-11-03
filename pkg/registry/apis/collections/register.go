@@ -17,8 +17,9 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/collections/legacy"
-	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -29,8 +30,9 @@ import (
 )
 
 var (
-	_ builder.APIGroupBuilder  = (*APIBuilder)(nil)
-	_ builder.APIGroupMutation = (*APIBuilder)(nil)
+	_ builder.APIGroupBuilder    = (*APIBuilder)(nil)
+	_ builder.APIGroupMutation   = (*APIBuilder)(nil)
+	_ builder.APIGroupValidation = (*APIBuilder)(nil)
 )
 
 type APIBuilder struct {
@@ -42,18 +44,14 @@ func RegisterAPIService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	db db.DB,
+	ac accesscontrol.AccessControl,
 	stars star.Service,
 	users user.Service,
 	apiregistration builder.APIRegistrar,
 ) *APIBuilder {
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
-		authorizer: &utils.AuthorizeFromName{
-			AllowOrgAdmin: true,
-			Resource: map[string][]utils.ResourceOwner{
-				"stars": {utils.UserResourceOwner},
-			},
-		},
+		authorizer: newAuthorizer(ac, log.New("collections.authz")),
 	}
 
 	namespacer := request.GetNamespaceMapper(cfg)
@@ -103,6 +101,13 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	}
 	storage[resource.StoragePath()] = &starStorage{Storage: stars} // wrap List so we only return one value
 	storage[resource.StoragePath("update")] = &starsREST{store: stars}
+
+	// Slideshows only exist in unified storage: there is no legacy table to dual write to.
+	slideshows, err := grafanaregistry.NewRegistryStore(opts.Scheme, collections.SlideshowResourceInfo, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+	storage[collections.SlideshowResourceInfo.StoragePath()] = slideshows
 
 	apiGroupInfo.VersionedResourcesStorageMap[collections.APIVersion] = storage
 	return nil

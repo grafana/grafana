@@ -18,9 +18,12 @@ import (
 )
 
 var (
-	rawSchemaStarsv1alpha1     = []byte(`{"Resource":{"additionalProperties":false,"properties":{"group":{"type":"string"},"kind":{"type":"string"},"names":{"description":"The set of resources\n+listType=set","items":{"type":"string"},"type":"array"}},"required":["group","kind","names"],"type":"object"},"Stars":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"resource":{"items":{"$ref":"#/components/schemas/Resource"},"type":"array"}},"required":["resource"],"type":"object"}}`)
-	versionSchemaStarsv1alpha1 app.VersionSchema
-	_                          = json.Unmarshal(rawSchemaStarsv1alpha1, &versionSchemaStarsv1alpha1)
+	rawSchemaStarsv1alpha1         = []byte(`{"Resource":{"additionalProperties":false,"properties":{"group":{"type":"string"},"kind":{"type":"string"},"names":{"description":"The set of resources\n+listType=set","items":{"type":"string"},"type":"array"}},"required":["group","kind","names"],"type":"object"},"Stars":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"resource":{"items":{"$ref":"#/components/schemas/Resource"},"type":"array"}},"required":["resource"],"type":"object"}}`)
+	versionSchemaStarsv1alpha1     app.VersionSchema
+	_                              = json.Unmarshal(rawSchemaStarsv1alpha1, &versionSchemaStarsv1alpha1)
+	rawSchemaSlideshowv1alpha1     = []byte(`{"Item":{"additionalProperties":false,"properties":{"group":{"description":"API group of the object, e.g. dashboard.grafana.app","type":"string"},"interval":{"description":"Optional per-item display interval (e.g. \"30s\", \"2m\"). When unset, the\nslideshow's spec.interval is used.","type":"string"},"name":{"description":"The k8s name of the object","type":"string"},"resource":{"description":"Resource (plural) of the object, e.g. dashboards","type":"string"}},"required":["group","resource","name"],"type":"object"},"Slideshow":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"interval":{"description":"How long each item is shown, e.g. \"5m\"","type":"string"},"items":{"description":"Played in order\n+listType=atomic","items":{"$ref":"#/components/schemas/Item"},"type":"array"},"title":{"type":"string"}},"required":["title","interval","items"],"type":"object"}}`)
+	versionSchemaSlideshowv1alpha1 app.VersionSchema
+	_                              = json.Unmarshal(rawSchemaSlideshowv1alpha1, &versionSchemaSlideshowv1alpha1)
 )
 
 var appManifestData = app.ManifestData{
@@ -54,6 +57,25 @@ var appManifestData = app.ManifestData{
 					},
 					Schema: &versionSchemaStarsv1alpha1,
 				},
+
+				{
+					Kind:       "Slideshow",
+					Plural:     "Slideshows",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: func(b bool) *bool { return &b }(false),
+					},
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+					Schema: &versionSchemaSlideshowv1alpha1,
+				},
 			},
 		},
 	},
@@ -68,7 +90,8 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"Stars/v1alpha1": v1alpha1.StarsKind(),
+	"Stars/v1alpha1":     v1alpha1.StarsKind(),
+	"Slideshow/v1alpha1": v1alpha1.SlideshowKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.

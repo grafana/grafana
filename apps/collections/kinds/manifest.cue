@@ -11,6 +11,7 @@ manifest: {
 			}
 			kinds: [
 				starsV1alpha1,
+				slideshowV1alpha1,
 			]
 		}
 	}
