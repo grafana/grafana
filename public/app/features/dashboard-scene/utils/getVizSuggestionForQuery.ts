@@ -13,6 +13,7 @@ import { getDataSourceInstance } from '@grafana/runtime';
 import { SceneDataTransformer, SceneQueryRunner, type SceneObject, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';
+import { getDefaultSuggestion } from 'app/features/panel/suggestions/utils';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 import { runRequest } from 'app/features/query/state/runRequest';
 
@@ -53,7 +54,7 @@ export async function getVizSuggestionForQuery(
   const series: DataFrame[] = panelData.series ?? [];
   const { suggestions } = await getAllSuggestions(series);
 
-  return suggestions[0];
+  return getDefaultSuggestion(suggestions);
 }
 
 // Inlined here (rather than imported from utils/utils.ts) to avoid a circular dependency:

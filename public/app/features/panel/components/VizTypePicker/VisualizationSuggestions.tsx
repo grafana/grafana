@@ -19,7 +19,7 @@ import { useStructureRev } from '../../../explore/Graph/useStructureRev';
 import { filterPluginList } from '../../state/util';
 import { panelsWithoutData } from '../../suggestions/consts';
 import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
-import { hasData } from '../../suggestions/utils';
+import { getDefaultSuggestion, hasData } from '../../suggestions/utils';
 
 import { VisualizationCardGrid, type VisualizationCardGridGroup } from './VisualizationCardGrid';
 import { VizTypePicker } from './VizTypePicker';
@@ -128,6 +128,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
         pluginId: suggestion.pluginId,
         options: suggestion.options,
         fieldConfig: suggestion.fieldConfig,
+        transformations: suggestion.transformations,
         withModKey: false,
         fromSuggestions: true,
         suggestionMetadata: {
@@ -153,17 +154,17 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
     // if the first suggestion has changed, we're going to change the currently selected suggestion and
     // set the firstCardHash to the new first suggestion's hash. We also choose the first suggestion if
     // the previously selected suggestion is no longer present in the list.
-    const newFirstCardHash = suggestions[0]?.hash ?? null;
-    if (firstCardHash !== newFirstCardHash) {
+    const firstSuggestion = getDefaultSuggestion(suggestions);
+    if (firstSuggestion && firstCardHash !== firstSuggestion.hash) {
       onChange({
-        pluginId: suggestions[0].pluginId,
-        options: suggestions[0].options,
-        fieldConfig: suggestions[0].fieldConfig,
+        pluginId: firstSuggestion.pluginId,
+        options: firstSuggestion.options,
+        fieldConfig: firstSuggestion.fieldConfig,
         withModKey: true,
         fromSuggestions: true,
       });
 
-      setFirstCardHash(newFirstCardHash);
+      setFirstCardHash(firstSuggestion.hash);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [suggestions, firstCardHash, isUnconfiguredPanel]);

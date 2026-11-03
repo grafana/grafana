@@ -19,6 +19,7 @@ import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   type DeepPartial,
   type SceneComponentProps,
+  SceneDataTransformer,
   SceneObjectBase,
   type SceneObjectRef,
   type SceneObjectState,
@@ -100,6 +101,12 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 
     if (cachedFieldConfig) {
       newFieldConfig = restoreCustomOverrideRules(newFieldConfig, cachedFieldConfig);
+    }
+
+    if (options.transformations?.length && panel.state.$data instanceof SceneDataTransformer) {
+      const transformer = panel.state.$data;
+      transformer.setState({ transformations: [...transformer.state.transformations, ...options.transformations] });
+      transformer.reprocessTransformations();
     }
 
     panel.changePluginType(pluginId, cachedOptions, newFieldConfig);

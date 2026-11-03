@@ -27,6 +27,9 @@ const LAST_VALUES_PANEL = '2';
 const SUGGESTIONS_DASHBOARD_UID = 'text-suggestions';
 const VALUE_PER_CATEGORY_PANEL = '8';
 const TWO_QUERIES_PANEL = '11';
+const AFTER_A_TRANSFORMATION_PANEL = '13';
+const DIFFERENT_TIMESTAMPS_PANEL = '14';
+const LABELS_ONLY_PANEL = '15';
 
 test.use({ openFeature: { flags: { 'grafana.newTextPanel': true, 'text.newFeatures': true } } });
 
@@ -386,7 +389,11 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       );
     });
 
-    test('applies a summary with an entry for each query', async ({ gotoDashboardPage, selectors, page }) => {
+    test('merges several queries into one frame, in the preview and the applied panel', async ({
+      gotoDashboardPage,
+      selectors,
+      page,
+    }) => {
       const dashboardPage = await gotoDashboardPage({
         uid: SUGGESTIONS_DASHBOARD_UID,
         queryParams: new URLSearchParams({ editPanel: TWO_QUERIES_PANEL }),
@@ -408,8 +415,80 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
         'CPU: 75',
         'Memory: 65',
       ]);
-      await expect(editor.locator('.cm-content')).toContainText('${__data.series["CPU"]:reduce:lastNotNull}');
+      await expect(editor.locator('.cm-content')).toContainText('${__data.fields.CPU:reduce:lastNotNull}');
       await expect(editor.getByRole('combobox', { name: 'Query' })).toHaveCount(0);
+
+      await page.getByRole('tab', { name: /Transformations/ }).click();
+      await expect(page.getByText('1 - Merge series/tables')).toBeVisible();
+      await expect(page.getByText('2 - Sort by')).toBeVisible();
+    });
+
+    test('adds its transformations after the ones the panel already has', async ({
+      gotoDashboardPage,
+      selectors,
+      page,
+    }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: SUGGESTIONS_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: AFTER_A_TRANSFORMATION_PANEL }),
+      });
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Suggestions')).click();
+
+      const summary = dashboardPage.getByGrafanaSelector(
+        selectors.components.VisualizationPreview.card('Text - summary')
+      );
+
+      await expect(renderedContent(summary).locator('li')).toHaveText(['CPU: 75', 'Memory: 65']);
+
+      await summary.click();
+
+      await expect(renderedContent(page.getByTestId('TextNGEditor-preview')).locator('li')).toHaveText([
+        'CPU: 75',
+        'Memory: 65',
+      ]);
+
+      await page.getByRole('tab', { name: /Transformations/ }).click();
+      await expect(page.getByText('1 - Filter data by query')).toBeVisible();
+      await expect(page.getByText('2 - Merge series/tables')).toBeVisible();
+      await expect(page.getByText('3 - Sort by')).toBeVisible();
+    });
+
+    test('shows the newest value of a series with a timestamp the others lack', async ({
+      gotoDashboardPage,
+      selectors,
+    }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: SUGGESTIONS_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: DIFFERENT_TIMESTAMPS_PANEL }),
+      });
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Suggestions')).click();
+
+      const summary = dashboardPage.getByGrafanaSelector(
+        selectors.components.VisualizationPreview.card('Text - summary')
+      );
+
+      await expect(renderedContent(summary).locator('li')).toHaveText(['CPU: 75', 'Memory: 65']);
+    });
+
+    test('offers nothing for series told apart only by labels', async ({ gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: SUGGESTIONS_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: LABELS_ONLY_PANEL }),
+      });
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Suggestions')).click();
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.VisualizationPreview.card('Table'))
+      ).toBeVisible();
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.VisualizationPreview.card('Text - summary'))
+      ).toHaveCount(0);
     });
   });
 });

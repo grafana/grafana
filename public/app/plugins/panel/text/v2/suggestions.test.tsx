@@ -1,10 +1,12 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import { lastValueFrom } from 'rxjs';
 import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
 import {
   applyFieldOverrides,
   createTheme,
   type DataFrame,
+  DataTransformerID,
   FieldType,
   getDefaultTimeRange,
   getPanelDataSummary,
@@ -16,7 +18,9 @@ import {
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   toDataFrame,
+  transformDataFrame,
 } from '@grafana/data';
+import { mergeTransformer, mockTransformationsRegistry, sortByTransformer } from '@grafana/data/internal';
 import { setTemplateSrv } from '@grafana/runtime';
 import { FlagKeys, setPanelPluginMetas } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -28,7 +32,7 @@ import { RenderMode, TextMode } from '../panelcfg.gen';
 
 import { TextNGPanel } from './TextNGPanel';
 import { MAX_RENDERED_ROWS, renderContent } from './renderContent';
-import { MAX_LIST_ROWS, MAX_TEMPLATE_FIELDS, textSuggestionsSupplier } from './suggestions';
+import { MAX_LIST_ROWS, MAX_MERGED_FRAMES, MAX_TEMPLATE_FIELDS, textSuggestionsSupplier } from './suggestions';
 import { createData, createProps } from './test-utils';
 
 jest.mock('./SandboxFrame');
@@ -43,6 +47,7 @@ afterAll(() => {
 
 standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
+mockTransformationsRegistry([mergeTransformer, sortByTransformer]);
 
 const SUMMARY = 'Text - summary';
 const STATISTICS = 'Text - statistics';
@@ -111,6 +116,19 @@ function queries(): DataFrame[] {
   ];
 }
 
+function labelled(name: string, labels: Record<string, string>): DataFrame {
+  return toDataFrame({ fields: [time, { name, type: FieldType.number, values: [1, 2, 3], labels }] });
+}
+
+function sampledAt(times: number[], name: string, values: number[]): DataFrame {
+  return toDataFrame({
+    fields: [
+      { ...time, values: times },
+      { name, type: FieldType.number, values },
+    ],
+  });
+}
+
 function numberFields(count: number) {
   return Array.from({ length: count }, (_, index) => ({
     name: `cpu${index}`,
@@ -173,6 +191,17 @@ function renderSuggestion(name: string, frames: DataFrame[], series = frames, re
   return container;
 }
 
+/** What a panel with this suggestion applied receives for `series`: its transformations' real output. */
+async function appliedData(name: string, frames: DataFrame[], series = frames) {
+  const transformations = suggest(frames)?.find((suggestion) => suggestion.name === name)?.transformations ?? [];
+
+  return withDisplay(await lastValueFrom(transformDataFrame(transformations, series)));
+}
+
+async function renderMerged(name: string, frames: DataFrame[], series = frames) {
+  return renderSuggestion(name, frames, await appliedData(name, frames, series));
+}
+
 function listItems(container: HTMLElement) {
   return Array.from(container.querySelectorAll('li'), (item) => item.textContent?.trim());
 }
@@ -221,7 +250,102 @@ describe('textSuggestionsSupplier', () => {
           }),
         ],
       },
-      { name: 'several frames whose series share a display name', frames: [usage(), usage()] },
+      { name: 'several frames whose series share a name', frames: [usage(), usage()] },
+      {
+        name: 'several frames told apart only by labels, which Merge would collapse',
+        frames: [labelled('Value', { host: 'web-1' }), labelled('Value', { host: 'web-2' })],
+      },
+      {
+        name: 'several frames with distinct names whose labels Merge would drop',
+        frames: [labelled('CPU', { host: 'web-1' }), labelled('Memory', { host: 'web-2' })],
+      },
+      {
+        name: 'several frames told apart by frame names, which Merge would drop',
+        frames: [
+          { ...timeSeries('CPU'), name: 'web' },
+          { ...timeSeries('Memory'), name: 'db' },
+        ],
+      },
+      {
+        name: 'a series renamed by a display name, which Merge would drop',
+        frames: [timeSeries('CPU', [1, 2, 3], { displayName: 'Processor' }), timeSeries('Memory')],
+      },
+      {
+        name: 'several series the data source displays under one name',
+        frames: [
+          timeSeries('a', [1, 2, 3], { displayNameFromDS: 'CPU' }),
+          timeSeries('b', [1, 2, 3], { displayNameFromDS: 'CPU' }),
+        ],
+      },
+      {
+        name: 'several frames without a time field, which Merge would leave apart',
+        frames: [
+          toDataFrame({ fields: [{ name: 'CPU', type: FieldType.number, values: [1, 2] }] }),
+          toDataFrame({ fields: [{ name: 'Memory', type: FieldType.number, values: [3, 4] }] }),
+        ],
+      },
+      {
+        name: 'several frames whose time fields have different names, which Merge would leave apart',
+        frames: [
+          timeSeries('CPU'),
+          toDataFrame({
+            fields: [
+              { ...time, name: 'time' },
+              { name: 'Memory', type: FieldType.number, values: [1, 2, 3] },
+            ],
+          }),
+        ],
+      },
+      {
+        name: 'several frames where only some have the time field',
+        frames: [
+          timeSeries('CPU'),
+          timeSeries('Memory'),
+          toDataFrame({ fields: [{ name: 'Disk', type: FieldType.number, values: [1, 2, 3] }] }),
+        ],
+      },
+      {
+        name: 'several frames joined on a number rather than a time field',
+        frames: [
+          toDataFrame({
+            fields: [
+              { name: 'id', type: FieldType.number, values: [1, 2] },
+              { name: 'CPU', type: FieldType.number, values: [3, 4] },
+            ],
+          }),
+          toDataFrame({
+            fields: [
+              { name: 'id', type: FieldType.number, values: [1, 2] },
+              { name: 'Memory', type: FieldType.number, values: [5, 6] },
+            ],
+          }),
+        ],
+      },
+      {
+        name: 'several frames sharing a string field, which Merge would collapse',
+        frames: [
+          hostUsage(),
+          toDataFrame({
+            fields: [
+              time,
+              { name: 'Host', type: FieldType.string, values: ['web-01', 'web-01', 'web-02'] },
+              { name: 'Memory', type: FieldType.number, values: [1, 2, 3] },
+            ],
+          }),
+        ],
+      },
+      {
+        name: 'several frames sharing a second time field',
+        frames: ['CPU', 'Memory'].map((name) =>
+          toDataFrame({
+            fields: [time, { ...time, name: 'End' }, { name, type: FieldType.number, values: [1, 2, 3] }],
+          })
+        ),
+      },
+      {
+        name: 'a frame that repeats a timestamp, as Merge would copy the other series onto each of its rows',
+        frames: [sampledAt([1000, 1000, 2000], 'CPU', [1, 2, 3]), sampledAt([1000, 2000], 'Memory', [10, 20])],
+      },
       { name: 'several frames with a table among them', frames: [timeSeries('CPU'), services()] },
       {
         name: 'several frames with a series name that no quotes can hold',
@@ -267,6 +391,11 @@ describe('textSuggestionsSupplier', () => {
         frames: [toDataFrame({ fields: [time, { name: 'CPU', type: FieldType.number, values: [null, NaN, null] }] })],
         expected: [SUMMARY],
       },
+      {
+        name: 'a time series with one value, where every statistic is the same value',
+        frames: [toDataFrame({ fields: [time, { name: 'CPU', type: FieldType.number, values: [null, 7, null] }] })],
+        expected: [SUMMARY],
+      },
       { name: 'a value per category', frames: [services()], expected: [LIST] },
       {
         name: 'an instant query with a row per series',
@@ -299,6 +428,43 @@ describe('textSuggestionsSupplier', () => {
           })
         ),
         expected: [SUMMARY],
+      },
+      {
+        name: 'several frames with one value each, at different times',
+        frames: [sampledAt([1000], 'CPU', [1]), sampledAt([2000], 'Memory', [2])],
+        expected: [SUMMARY],
+      },
+      {
+        name: 'several frames whose timestamps only partly match',
+        frames: [sampledAt([1000, 3000], 'CPU', [1, 3]), sampledAt([1000, 2000, 3000], 'Memory', [10, 20, 30])],
+        expected: [SUMMARY, STATISTICS],
+      },
+      {
+        name: 'several frames with a frame that has no fields, as a query without results returns',
+        frames: [toDataFrame({ fields: [] }), timeSeries('CPU')],
+        expected: [SUMMARY, STATISTICS],
+      },
+      {
+        name: 'several frames with a string dimension of their own',
+        frames: [
+          hostUsage(),
+          toDataFrame({
+            fields: [
+              time,
+              { name: 'Region', type: FieldType.string, values: ['eu', 'eu', 'us'] },
+              { name: 'Memory', type: FieldType.number, values: [1, 2, 3] },
+            ],
+          }),
+        ],
+        expected: [SUMMARY, STATISTICS],
+      },
+      {
+        name: 'several series named by the data source, as Merge keeps that name',
+        frames: [
+          timeSeries('a', [1, 2, 3], { displayNameFromDS: 'CPU' }),
+          timeSeries('b', [1, 2, 3], { displayNameFromDS: 'Memory' }),
+        ],
+        expected: [SUMMARY, STATISTICS],
       },
       {
         name: `a table of exactly ${MAX_LIST_ROWS} rows`,
@@ -507,48 +673,85 @@ describe('textSuggestionsSupplier', () => {
       expect(listItems(renderSuggestion(SUMMARY, withDisplay(frames)))).toEqual(['a: 3', 'b: 6']);
     });
 
-    it('binds each series of several frames by its display name', () => {
+    it('binds each series of several frames to the field it becomes once merged', () => {
       expect(getOptions(SUMMARY, queries()).content).toBe(
         [
           '{{#if (eq frames.length 0)}}',
           'No data',
           '{{else}}',
-          '- **CPU**: ${__data.series["CPU"]:reduce:lastNotNull}',
-          '- **Memory**: ${__data.series["Memory"]:reduce:lastNotNull}',
+          '- **CPU**: ${__data.fields.CPU:reduce:lastNotNull}',
+          '- **Memory**: ${__data.fields.Memory:reduce:lastNotNull}',
           '{{/if}}',
         ].join('\n')
       );
       expect(getOptions(STATISTICS, queries()).content?.split('\n').at(-2)).toBe(
-        '| Memory | ${__data.series["Memory"]:reduce:lastNotNull} | ${__data.series["Memory"]:reduce:min} | ${__data.series["Memory"]:reduce:mean} | ${__data.series["Memory"]:reduce:max} |'
+        '| Memory | ${__data.fields.Memory:reduce:lastNotNull} | ${__data.fields.Memory:reduce:min} | ${__data.fields.Memory:reduce:mean} | ${__data.fields.Memory:reduce:max} |'
       );
     });
 
-    it('quotes a series name that holds double quotes in single quotes', () => {
-      const frames = ['web-1', 'web-2'].map((instance) =>
+    it('quotes the name of a series that is not an identifier', () => {
+      const frames = ['A-series', 'A-series1'].map((name) => timeSeries(name));
+
+      expect(itemLines(SUMMARY, frames)).toEqual([
+        '- **A-series**: ${__data.fields["A-series"]:reduce:lastNotNull}',
+        '- **A-series1**: ${__data.fields["A-series1"]:reduce:lastNotNull}',
+      ]);
+    });
+
+    it('merges several frames, then sorts by the time field they share', () => {
+      const transformations = [
+        { id: DataTransformerID.merge, options: {} },
+        { id: DataTransformerID.sortBy, options: { sort: [{ field: 'Time' }] } },
+      ];
+
+      expect(suggest(queries())?.map((suggestion) => suggestion.transformations)).toEqual([
+        transformations,
+        transformations,
+      ]);
+    });
+
+    it('says that it adds transformations, as a merged suggestion changes the data of the panel', () => {
+      expect(suggest(queries())?.map(({ description }) => description)).toEqual([
+        'Text - summary: adds transformations that merge the series into one table',
+        'Text - statistics: adds transformations that merge the series into one table',
+      ]);
+    });
+
+    it('leaves the data of a single frame alone', () => {
+      expect(
+        [usage(), services()].flatMap((frame) => (suggest([frame]) ?? []).map(({ transformations }) => transformations))
+      ).toEqual([undefined, undefined, undefined]);
+    });
+
+    it(`lists every series of exactly ${MAX_MERGED_FRAMES} frames`, () => {
+      const frames = Array.from({ length: MAX_MERGED_FRAMES }, (_, index) => timeSeries(`cpu${index}`));
+      const summary = itemLines(SUMMARY, frames);
+
+      expect(summary).toHaveLength(MAX_MERGED_FRAMES);
+      expect(summary.at(-1)).toBe('- **cpu49**: ${__data.fields.cpu49:reduce:lastNotNull}');
+    });
+
+    it(`offers nothing for more than ${MAX_MERGED_FRAMES} frames, which would be slow to merge`, () => {
+      const frames = Array.from({ length: MAX_MERGED_FRAMES + 1 }, (_, index) => timeSeries(`cpu${index}`));
+
+      expect(suggest(frames)).toBeUndefined();
+    });
+
+    it(`lists the first ${MAX_TEMPLATE_FIELDS} fields of frames that have more between them`, () => {
+      const frames = Array.from({ length: 2 }, (_, frame) =>
         toDataFrame({
           fields: [
             time,
-            { name: 'Value', type: FieldType.number, values: [1, 2, 3], labels: { instance, job: 'api' } },
+            ...Array.from({ length: MAX_TEMPLATE_FIELDS }, (_, index) => ({
+              name: `cpu${frame}_${index}`,
+              type: FieldType.number,
+              values: [1, 2, 3],
+            })),
           ],
         })
       );
 
-      expect(itemLines(SUMMARY, frames)).toEqual([
-        `- **{instance="web-1", job="api"}**: \${__data.series['{instance="web-1", job="api"}']:reduce:lastNotNull}`,
-        `- **{instance="web-2", job="api"}**: \${__data.series['{instance="web-2", job="api"}']:reduce:lastNotNull}`,
-      ]);
-      expect(listItems(renderSuggestion(SUMMARY, withDisplay(frames)))).toEqual([
-        '{instance="web-1", job="api"}: 3',
-        '{instance="web-2", job="api"}: 3',
-      ]);
-    });
-
-    it(`lists the first ${MAX_TEMPLATE_FIELDS} series of more frames, rather than offering nothing`, () => {
-      const frames = Array.from({ length: MAX_TEMPLATE_FIELDS + 1 }, (_, index) => timeSeries(`cpu${index}`));
-      const summary = itemLines(SUMMARY, frames);
-
-      expect(summary).toHaveLength(MAX_TEMPLATE_FIELDS);
-      expect(summary.at(-1)).toBe('- **cpu49**: ${__data.series["cpu49"]:reduce:lastNotNull}');
+      expect(itemLines(SUMMARY, frames)).toHaveLength(MAX_TEMPLATE_FIELDS);
     });
 
     it('labels a field whose name is only whitespace as Value', () => {
@@ -627,19 +830,64 @@ describe('generated templates', () => {
     expect(listItems(renderSuggestion(SUMMARY, withDisplay([hostUsage()])))).toEqual(['Host: web-02', 'CPU: 75.0%']);
   });
 
-  it('render an entry for each series of several frames, formatted by its own config', () => {
-    expect(listItems(renderSuggestion(SUMMARY, withDisplay(queries())))).toEqual(['CPU: 75.0%', 'Memory: 65 B']);
-    expect(tableRows(renderSuggestion(STATISTICS, withDisplay(queries())))).toEqual([
+  it('render an entry for each series of several frames, formatted by its own config', async () => {
+    expect(listItems(await renderMerged(SUMMARY, queries()))).toEqual(['CPU: 75.0%', 'Memory: 65 B']);
+    expect(tableRows(await renderMerged(STATISTICS, queries()))).toEqual([
       ['Field', 'Last', 'Min', 'Mean', 'Max'],
       ['CPU', '75.0%', '40.0%', '57.5%', '75.0%'],
       ['Memory', '65 B', '35 B', '48.3 B', '65 B'],
     ]);
   });
 
-  it('render a series that a later query no longer returns as empty, not as another series', () => {
-    const container = renderSuggestion(SUMMARY, queries(), withDisplay([queries()[1]]));
+  it('render the newest value of a series with a timestamp that an earlier frame lacks', async () => {
+    const frames = [sampledAt([1000, 3000], 'CPU', [1, 3]), sampledAt([1000, 2000, 3000], 'Memory', [10, 20, 30])];
+
+    expect(listItems(await renderMerged(SUMMARY, frames))).toEqual(['CPU: 3', 'Memory: 30']);
+    expect(tableRows(await renderMerged(STATISTICS, frames))).toEqual([
+      ['Field', 'Last', 'Min', 'Mean', 'Max'],
+      ['CPU', '3', '1', '2', '3'],
+      ['Memory', '30', '10', '20', '30'],
+    ]);
+  });
+
+  it('render the newest value of a series, whichever order its frames come in', async () => {
+    const frames = [sampledAt([2000, 3000], 'CPU', [2, 3]), sampledAt([1000, 2000], 'Memory', [10, 20])];
+
+    expect(listItems(await renderMerged(SUMMARY, frames))).toEqual(['CPU: 3', 'Memory: 20']);
+  });
+
+  it('render a series without any value next to a series with one', async () => {
+    const frames = [sampledAt([1000, 2000], 'CPU', [1, 2]), timeSeries('Memory', [null, null, null])];
+
+    expect(listItems(await renderMerged(SUMMARY, frames))).toEqual(['CPU: 2', 'Memory:']);
+  });
+
+  it('render a series that a later query no longer returns as empty, not as another series', async () => {
+    const container = await renderMerged(SUMMARY, queries(), [queries()[1]]);
 
     expect(listItems(container)).toEqual(['CPU:', 'Memory: 65 B']);
+  });
+
+  it('render the series of a later query whose frames can no longer be merged, by the selected frame', async () => {
+    const later = [
+      queries()[0],
+      toDataFrame({
+        fields: [
+          { ...time, name: 'time' },
+          { name: 'Memory', type: FieldType.number, values: [35, 45, 65], config: { unit: 'bytes' } },
+        ],
+      }),
+    ];
+    const series = await appliedData(SUMMARY, queries(), later);
+
+    expect(series).toHaveLength(2);
+    expect(listItems(renderSuggestion(SUMMARY, queries(), [series[0]]))).toEqual(['CPU: 75.0%', 'Memory:']);
+  });
+
+  it('render a merged series as No data once the query returns no frames', async () => {
+    const container = await renderMerged(SUMMARY, queries(), []);
+
+    expect(container.textContent?.trim()).toBe('No data');
   });
 
   it('render the statistics of numeric samples that have no time field', () => {
@@ -855,6 +1103,30 @@ describe('an applied suggestion', () => {
 
     expect(listItems(screen.getByTestId('TextNGPanel-converted-content'))).toEqual(['API: 99.5%', 'Web: 98%']);
   });
+
+  it('keeps every merged series in step with new query data, without a query selector', async () => {
+    const props = createProps(createReplaceVariables(), {
+      data: createData(await appliedData(SUMMARY, queries())),
+      options: getOptions(SUMMARY, queries()),
+    });
+
+    const { rerender } = render(<TextNGPanel {...props} />);
+
+    expect(listItems(screen.getByTestId('TextNGPanel-converted-content'))).toEqual(['CPU: 75.0%', 'Memory: 65 B']);
+    expect(screen.queryByRole('combobox', { name: 'Query' })).not.toBeInTheDocument();
+
+    const newData = await appliedData(SUMMARY, queries(), [
+      timeSeries('CPU', [40, 75, 90], { unit: 'percent', decimals: 1 }),
+      timeSeries('Memory', [35, 45, 80], { unit: 'bytes' }),
+    ]);
+    rerender(<TextNGPanel {...props} data={createData(newData)} />);
+    act(() => {
+      jest.advanceTimersByTime(200);
+    });
+
+    expect(listItems(screen.getByTestId('TextNGPanel-converted-content'))).toEqual(['CPU: 90.0%', 'Memory: 80 B']);
+    expect(screen.queryByRole('combobox', { name: 'Query' })).not.toBeInTheDocument();
+  });
 });
 
 describe('among the other visualization suggestions', () => {
@@ -906,26 +1178,49 @@ describe('among the other visualization suggestions', () => {
     ]);
   });
 
-  it('previews the summary of several queries with every series, not only the first frame', async () => {
+  it('lists a merged Text suggestion after the established panels, so a new panel never defaults to it', async () => {
+    const { suggestions } = await getAllSuggestions(queries());
+
+    expect(suggestions[0].transformations).toBeUndefined();
+    expect(suggestions.slice(-2).map(({ pluginId, name }) => `${pluginId}: ${name}`)).toEqual([
+      `text: ${SUMMARY}`,
+      `text: ${STATISTICS}`,
+    ]);
+  });
+
+  it('previews the summary of several queries through its transformations, with every series', async () => {
     const { suggestions } = await getAllSuggestions(queries());
     const summary = suggestions.find(({ pluginId, name }) => pluginId === 'text' && name === SUMMARY);
     if (!summary) {
       throw new Error('no summary suggestion');
     }
 
-    render(
-      <VisualizationSuggestionCard
-        data={{ series: queries(), state: LoadingState.Done, timeRange: getDefaultTimeRange() }}
-        suggestion={summary}
-        width={200}
-      />
-    );
+    const data = { series: queries(), state: LoadingState.Done, timeRange: getDefaultTimeRange() };
+    const { rerender } = render(<VisualizationSuggestionCard data={data} suggestion={summary} width={200} />);
 
     expect(listItems(await screen.findByTestId('TextNGPanel-converted-content'))).toEqual([
       'CPU: 75.0%',
       'Memory: 65 B',
     ]);
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+
+    rerender(
+      <VisualizationSuggestionCard
+        data={{
+          ...data,
+          series: [
+            timeSeries('CPU', [40, 75, 90], { unit: 'percent', decimals: 1 }),
+            timeSeries('Memory', [35, 45, 80], { unit: 'bytes' }),
+          ],
+        }}
+        suggestion={summary}
+        width={200}
+      />
+    );
+
+    await waitFor(() =>
+      expect(listItems(screen.getByTestId('TextNGPanel-converted-content'))).toEqual(['CPU: 90.0%', 'Memory: 80 B'])
+    );
   });
 
   it('previews the list with every row', async () => {

@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import { type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
+import { type CSSProperties, type HTMLAttributes, type ReactNode, useMemo } from 'react';
 
 import {
   type GrafanaTheme2,
@@ -11,6 +11,10 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getTemplateSrv } from '@grafana/runtime';
 import { Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  NO_CONFIGS,
+  useFrameReplay,
+} from 'app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/hooks/useTransformedFrames';
 
 import { PanelRenderer } from '../PanelRenderer';
 
@@ -28,6 +32,13 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
   const styles = useStyles2(getStyles);
   const { innerStyles, outerStyles, renderWidth, renderHeight } = getPreviewDimensionsAndStyles(width);
   const cardOptions = suggestion.cardOptions ?? {};
+  const transformations = suggestion.transformations ?? NO_CONFIGS;
+  const { settled: transformedSeries } = useFrameReplay(transformations, data.series);
+  const hasTransformations = transformations.length > 0;
+  const suggestionData = useMemo(
+    () => (hasTransformations ? { ...data, series: transformedSeries } : data),
+    [hasTransformations, data, transformedSeries]
+  );
 
   const commonButtonProps = {
     'aria-label': suggestion.name,
@@ -55,7 +66,9 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
 
     const maxSeries = Math.min(cardOptions.maxSeries ?? Infinity, config.panelSeriesLimit || Infinity);
     const maxRows = cardOptions.maxRows;
-    let previewData = Number.isFinite(maxSeries) ? { ...data, series: data.series.slice(0, maxSeries) } : data;
+    let previewData = Number.isFinite(maxSeries)
+      ? { ...suggestionData, series: suggestionData.series.slice(0, maxSeries) }
+      : suggestionData;
 
     if (maxRows && previewData.series.some((frame) => frame.length > maxRows)) {
       previewData = {
@@ -75,16 +88,19 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
     content = (
       <div {...commonButtonProps}>
         <div style={innerStyles} className={styles.renderContainer} inert>
-          <PanelRenderer
-            title=""
-            data={previewData}
-            pluginId={suggestion.pluginId}
-            width={renderWidth}
-            height={renderHeight}
-            options={preview.options}
-            fieldConfig={preview.fieldConfig}
-            replaceVariables={replaceVariables}
-          />
+          {/* The applied panel never gets the raw frames, so there is nothing to show until these have run. */}
+          {(!hasTransformations || transformedSeries.length > 0) && (
+            <PanelRenderer
+              title=""
+              data={previewData}
+              pluginId={suggestion.pluginId}
+              width={renderWidth}
+              height={renderHeight}
+              options={preview.options}
+              fieldConfig={preview.fieldConfig}
+              replaceVariables={replaceVariables}
+            />
+          )}
         </div>
       </div>
     );

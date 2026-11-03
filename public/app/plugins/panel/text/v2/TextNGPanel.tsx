@@ -43,7 +43,6 @@ import { type TextNGEditorChange } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
 import { DEFAULT_VIEW_MODE, type ViewMode } from './editor/viewMode';
 import { usePagination } from './pagination';
-import { readsSeriesByName } from './reducerMacros';
 import { catchTemplateError, renderContent, type RenderedContent, type RowWindow } from './renderContent';
 import { useThemedReplaceVariables } from './useThemedReplaceVariables';
 import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat, isTextNewFeaturesEnabled } from './utils';
@@ -93,11 +92,9 @@ export function TextNGPanel(props: Props) {
   // Withheld with the selector: a saved index would otherwise pick a frame the reader
   // has no UI to change, and the macros read every frame again, as they did before it.
   const currentFrameIndex = newFeatures ? getCurrentFrameIndex(frames, options) : 0;
-  const readsEverySeries = useMemo(() => newFeatures && readsSeriesByName(content), [newFeatures, content]);
-  const selectsFrame = newFeatures && frames.length > 1 && !readsEverySeries;
   const series = useMemo(
-    () => (selectsFrame ? [frames[currentFrameIndex]] : frames),
-    [selectsFrame, frames, currentFrameIndex]
+    () => (newFeatures && frames.length > 1 ? [frames[currentFrameIndex]] : frames),
+    [newFeatures, frames, currentFrameIndex]
   );
 
   const suggestions = useMemo(
@@ -214,17 +211,18 @@ export function TextNGPanel(props: Props) {
   );
 
   // Auto width so the dropdown hugs the query name instead of spanning the footer.
-  const frameSelector = selectsFrame ? (
-    <Combobox
-      aria-label={t('textng.frame-picker.label', 'Query')}
-      options={frameOptions}
-      value={frameOptions[currentFrameIndex]}
-      width="auto"
-      minWidth={8}
-      maxWidth={20}
-      onChange={(val) => onOptionsChange({ ...options, frameIndex: val.value ?? 0 })}
-    />
-  ) : null;
+  const frameSelector =
+    newFeatures && frames.length > 1 ? (
+      <Combobox
+        aria-label={t('textng.frame-picker.label', 'Query')}
+        options={frameOptions}
+        value={frameOptions[currentFrameIndex]}
+        width="auto"
+        minWidth={8}
+        maxWidth={20}
+        onChange={(val) => onOptionsChange({ ...options, frameIndex: val.value ?? 0 })}
+      />
+    ) : null;
 
   // Not in the editor, where the preview's own footer carries it.
   const truncationNotice = !isEditing && processed.truncated ? <TextNGTruncationNotice /> : null;

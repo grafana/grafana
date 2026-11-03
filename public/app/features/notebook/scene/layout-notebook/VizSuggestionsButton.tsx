@@ -68,7 +68,8 @@ function SuggestionsContent({
       void getAllSuggestions(data.series)
         .then((result) => {
           if (!cancelled) {
-            setSuggestions(result.suggestions.slice(0, 6));
+            // A cell loses its query editor once its panel has transformations, see isEditableQueryPanel.
+            setSuggestions(result.suggestions.filter((s) => !s.transformations?.length).slice(0, 6));
           }
         })
         .catch(() => {

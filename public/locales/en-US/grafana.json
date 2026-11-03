@@ -17333,6 +17333,7 @@
     },
     "suggestions": {
       "list": "Text - list",
+      "merged-description": "{{name}}: adds transformations that merge the series into one table",
       "no-data": "No data",
       "statistic-field": "Field",
       "statistic-last": "Last",
