@@ -3,6 +3,7 @@ package setting
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -22,10 +23,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/transport"
 	"k8s.io/client-go/util/flowcontrol"
+	"k8s.io/client-go/util/retry"
 
 	authlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/instrument"
@@ -428,6 +431,28 @@ func (s *remoteSettingService) fetchPage(ctx context.Context, namespace, labelSe
 		req = req.Param("continue", continueToken)
 	}
 
+	var settings []*Setting
+	var nextToken string
+	attempt := 0
+	var lastErr error
+	err := retry.OnError(retry.DefaultBackoff, isTransientConnError, func() error {
+		attempt++
+		if lastErr != nil {
+			s.log.FromContext(ctx).Warn("Retrying settings page fetch after transient connection error",
+				"grafana.namespace.name", namespace, "attempt", attempt, "error", lastErr)
+			span.AddEvent("retry", trace.WithAttributes(
+				attribute.Int("attempt", attempt), attribute.String("error", lastErr.Error())))
+		}
+		settings, nextToken, lastErr = streamPage(ctx, req)
+		return lastErr
+	})
+	if err != nil {
+		return nil, "", err
+	}
+	return settings, nextToken, nil
+}
+
+func streamPage(ctx context.Context, req *rest.Request) ([]*Setting, string, error) {
 	stream, err := req.Stream(ctx)
 	if err != nil {
 		return nil, "", fmt.Errorf("request failed: %w", err)
@@ -435,6 +460,15 @@ func (s *remoteSettingService) fetchPage(ctx context.Context, namespace, labelSe
 	defer func() { _ = stream.Close() }()
 
 	return parseSettingList(ctx, stream)
+}
+
+// isTransientConnError matches the GET errors that client-go retries in Request.Do but not in
+// Request.Stream. It also matches a connection that drops while the body streams, and a
+// refused connection (e.g. a pod that is shutting down), which Request.Do does not retry.
+func isTransientConnError(err error) bool {
+	return utilnet.IsConnectionReset(err) || utilnet.IsProbableEOF(err) ||
+		utilnet.IsHTTP2ConnectionLost(err) || utilnet.IsConnectionRefused(err) ||
+		errors.Is(err, io.ErrUnexpectedEOF)
 }
 
 // parseSettingList parses a SettingList JSON response using token-by-token streaming.

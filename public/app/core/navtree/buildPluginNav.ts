@@ -9,10 +9,18 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getNavTitle } from 'app/core/utils/navBarItem-translations';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { type AppNavConfig, appNavConfigFor, appNavPathConfigFor } from './appNavConfig';
+import { type AppNavConfig, appNavConfigFor, appNavPathConfigFor, isOperatorPlacedSection } from './appNavConfig';
 import { NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
 import { PLUGIN_NAV_OVERRIDES } from './pluginNavOverrides';
-import { appendIntoSection, hoistedPluginPageId, pluginPageId, standalonePluginPageId, withAppSubUrl } from './utils';
+import {
+  appendIntoSection,
+  findNavById,
+  hoistedPluginPageId,
+  pluginPageId,
+  standalonePluginPageId,
+  updateNavById,
+  withAppSubUrl,
+} from './utils';
 
 // Whether the user may see one of an app's pages. An include declaring an RBAC
 // action is gated on that action; otherwise the user's org role must rank at or
@@ -155,9 +163,13 @@ function buildAppLink(app: AppPluginConfig): {
     // whatever addToNav says — plugins should not lean on that, a page meant for
     // the nav sets addToNav.
     const pathConfig = appNavPathConfigFor(include.path);
+    if (pathConfig?.hidden) {
+      continue;
+    }
     if (pathConfig) {
       standalonePages.push({
-        sectionId: pathConfig.sectionId,
+        // A page entry always names a section — only a hidden one may leave it out
+        sectionId: pathConfig.sectionId ?? NavID.apps,
         link: { ...withNavConfig(link, pathConfig), id: standalonePluginPageId(include.path) },
       });
       continue;
@@ -196,8 +208,27 @@ interface StandalonePage {
   link: NavModelItem;
 }
 
-/** Places a lifted page at the top level, or into the section it names */
+/**
+ * Places a lifted page at the top level, or into the section it names. A page
+ * whose url matches one already in that section replaces it rather than sitting
+ * beside it, which is how an operator points a core page at a plugin (Cloud does
+ * this for Add new connection and Infrastructure).
+ */
 function placeStandalonePage(tree: NavModelItem[], { sectionId, link }: StandalonePage): NavModelItem[] {
+  const section = findNavById(tree, sectionId);
+  const replaced = section?.children?.find((child) => child.url === link.url);
+  if (section && replaced) {
+    return updateNavById(tree, sectionId, (node) => ({
+      ...node,
+      children: (node.children ?? []).map((child) =>
+        // Only the fields the server copies (applinks.go): the core page keeps its
+        // own text, subtitle, keywords and flags, the plugin takes over the routing
+        child === replaced
+          ? { ...child, id: link.id, sortWeight: link.sortWeight, pluginId: link.pluginId, children: [] }
+          : child
+      ),
+    }));
+  }
   return appendIntoSection(tree, sectionId, [link]) ?? tree;
 }
 
@@ -210,7 +241,9 @@ function placeStandalonePage(tree: NavModelItem[], { sectionId, link }: Standalo
 function withNavConfig(link: NavModelItem, { sortWeight, text, subTitle, isNew, icon }: AppNavConfig): NavModelItem {
   return {
     ...link,
-    sortWeight,
+    // A config that names no weight means the appended position, as a zero weight
+    // does server-side — not "keep the default the link was built with"
+    sortWeight: sortWeight ?? 0,
     ...(text !== undefined && { text }),
     ...(subTitle !== undefined && { subTitle }),
     ...(isNew !== undefined && { isNew }),
@@ -231,6 +264,12 @@ function withAppNavConfig(app: AppPluginConfig, appLink: NavModelItem): NavModel
  */
 function placeAppInSection(tree: NavModelItem[], app: AppPluginConfig, appLink: NavModelItem): NavModelItem[] {
   const navConfig = appNavConfigFor(app.id);
+  // A hidden app leaves no node behind, but its pages are placed on their own
+  // terms: Cloud hides the Collector app and lists three of its pages directly,
+  // both through the instance config
+  if (navConfig?.hidden) {
+    return tree;
+  }
   const sectionId = navConfig?.sectionId ?? NavID.apps;
 
   const sectionChildren = navConfig?.hoistPages ? hoistAppPages(appLink, navConfig.hoistPages) : [appLink];
@@ -242,7 +281,11 @@ function placeAppInSection(tree: NavModelItem[], app: AppPluginConfig, appLink: 
 
   const shellConfig = PLUGIN_SECTION_SHELLS[sectionId];
   if (!shellConfig) {
-    console.warn('[navtree] plugin app nav id not found', app.id, sectionId);
+    // An operator naming a section that does not exist is how an app gets hidden,
+    // so only our own tables pointing somewhere unknown is worth warning about
+    if (!isOperatorPlacedSection(sectionId)) {
+      console.warn('[navtree] plugin app nav id not found', app.id, sectionId);
+    }
     return tree;
   }
   const { shell, absorbs = [], imgFromAppLogo } = shellConfig;

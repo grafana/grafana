@@ -175,7 +175,8 @@ func globalSearchDescription() string {
 		"Like the folder API's parents, the nearest unreadable folder or folder missing from the global index appears first, by name only and marked `detached`. " +
 		"Its ancestors are omitted.\n\n" +
 		"Only the fields every resource has can be used, plus:\n\n" +
-		"- `" + resource.SEARCH_FIELD_GROUP_RESOURCE + "` (`{group}/{resource}`): filter and facet, to narrow the search to some types or count results per type.\n" +
+		"- `" + resource.SEARCH_FIELD_GROUP_RESOURCE + "` (`{group}/{resource}`): filter and facet, to narrow the search to some types or count results per type. " +
+		"Its facet lists every type the search covers, with a count of 0 for those without results, after the `facetLimit` terms.\n" +
 		"- `" + resource.SEARCH_FIELD_FOLDER_TREE + "`: filter with `In` only. Matches what is in the named folders or in any folder below them, not the named folders themselves. " +
 		"`general` names the root folder and matches everything; an empty value is rejected.\n\n" +
 		"Results are eventually consistent: just after a change, a search can still return what was there before, " +

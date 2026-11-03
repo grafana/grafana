@@ -81,6 +81,8 @@ const (
 	ReasonValidate           SyncReason = "validate"
 	ReasonSave               SyncReason = "save"
 	ReasonIdentifierMismatch SyncReason = "identifier_mismatch"
+	// ReasonForeignOwner: the config was staged manually, so sync does not overwrite it.
+	ReasonForeignOwner SyncReason = "foreign_owner"
 	// ReasonNoUpstreamConfig: Mimir returned an empty alertmanager_config.
 	// Distinct from ReasonSave — nothing was attempted to persist.
 	ReasonNoUpstreamConfig SyncReason = "no_upstream_config"
@@ -113,6 +115,8 @@ func (r SyncReason) ConditionReason() string {
 		return "SaveFailed"
 	case ReasonIdentifierMismatch:
 		return "IdentifierMismatch"
+	case ReasonForeignOwner:
+		return "ForeignOwner"
 	case ReasonNoUpstreamConfig:
 		return "NoUpstreamConfig"
 	case ReasonConfigRead:
@@ -161,6 +165,9 @@ func ClassifySaveError(err error) *SyncError {
 	}
 	if errors.Is(err, ErrAlertmanagerMultipleExtraConfigsUnsupported.Base) {
 		return &SyncError{Reason: ReasonIdentifierMismatch, Cause: err}
+	}
+	if errors.Is(err, ErrAlertmanagerExtraConfigManagedManually.Base) {
+		return &SyncError{Reason: ReasonForeignOwner, Cause: err}
 	}
 	return &SyncError{Reason: ReasonSave, Cause: err}
 }
@@ -607,6 +614,7 @@ func (s *ExternalAMSyncer) fetchExtraConfig(ctx context.Context, orgID int64, ui
 		Identifier:         uid,
 		AlertmanagerConfig: mimirCfg.AlertmanagerConfig,
 		TemplateFiles:      mimirCfg.TemplateFiles,
+		ManagedBy:          v1.ExtraConfigManagedByAutoSync,
 	}, hash, nil
 }
 

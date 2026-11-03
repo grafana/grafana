@@ -441,6 +441,10 @@ var ErrIndexClosedDuringRebuild = errors.New("index was closed while it was bein
 type BuildIndexOptions struct {
 	// Startup workers can try other indexes instead of waiting for a replica.
 	SkipIfBuilding bool
+
+	// LastSearchedAt is when an index reopened at startup was last searched
+	// before the restart, so its idle time carries on. Zero means now.
+	LastSearchedAt time.Time
 }
 
 // UpdateFn is responsible for updating index with changes since given RV. It should return new RV (to be used as next sinceRV), number of updated documents and error, if any.
@@ -530,14 +534,15 @@ type searchServer struct {
 	initMinSize       int
 	initRetryInterval time.Duration
 
-	queryCache             vector.QueryEmbeddingCache
-	queryCacheMaxPerTenant int
-	rateLimiter            vector.RateLimiter
-	rateLimitPerTenant     int
-	rateLimitWindow        time.Duration
-	collectionAllowlist    vector.CollectionAllowlist
-	allowedReadServices    map[string][]string
-	embeddingBuilders      embed.BuilderProvider
+	queryCache                vector.QueryEmbeddingCache
+	queryCacheMaxPerTenant    int
+	rateLimiter               vector.RateLimiter
+	rateLimitPerTenant        int
+	rateLimitWindow           time.Duration
+	collectionAllowlist       vector.CollectionAllowlist
+	sharedCollectionAllowlist vector.CollectionAllowlist
+	allowedReadServices       map[string][]string
+	embeddingBuilders         embed.BuilderProvider
 
 	ownsIndexFn func(key NamespacedResource) (bool, error)
 
@@ -580,6 +585,7 @@ type searchServer struct {
 	globalIndexEnabled        bool
 	globalIndexStartupBuild   bool
 	globalIndexBuildWait      time.Duration
+	globalIndexIdleTimeout    time.Duration
 	// uncheckedGlobalTypesLogged holds the {group}/{resource} of each type already
 	// logged as left out of global search for being unchecked.
 	uncheckedGlobalTypesLogged sync.Map
@@ -681,16 +687,18 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		globalIndexEnabled:        opts.GlobalIndexEnabled,
 		globalIndexStartupBuild:   opts.GlobalIndexStartupBuild,
 		globalIndexBuildWait:      cmp.Or(opts.GlobalIndexBuildWait, defaultGlobalIndexBuildWait),
+		globalIndexIdleTimeout:    opts.GlobalIndexIdleTimeout,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
 
-		queryCache:             opts.QueryCache,
-		queryCacheMaxPerTenant: opts.QueryCacheMaxPerTenant,
-		rateLimiter:            opts.RateLimiter,
-		rateLimitPerTenant:     opts.RateLimitPerTenant,
-		rateLimitWindow:        opts.RateLimitWindow,
-		collectionAllowlist:    vector.NewCollectionAllowlist(opts.AllowedInternalCollections, opts.AllowedExternalCollections),
-		allowedReadServices:    opts.AllowedReadServices,
-		embeddingBuilders:      opts.EmbeddingBuilders,
+		queryCache:                opts.QueryCache,
+		queryCacheMaxPerTenant:    opts.QueryCacheMaxPerTenant,
+		rateLimiter:               opts.RateLimiter,
+		rateLimitPerTenant:        opts.RateLimitPerTenant,
+		rateLimitWindow:           opts.RateLimitWindow,
+		collectionAllowlist:       vector.NewCollectionAllowlist(opts.AllowedInternalCollections, opts.AllowedExternalCollections),
+		sharedCollectionAllowlist: vector.NewCollectionAllowlist(nil, opts.SharedExternalCollections),
+		allowedReadServices:       opts.AllowedReadServices,
+		embeddingBuilders:         opts.EmbeddingBuilders,
 	}
 
 	// pgvector doubles as the FTS lexical searcher.
@@ -1180,7 +1188,7 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 	// An unprovisioned (group, resource) pair — no catalog row, so no
 	// partition to search — is NOT_FOUND before we spend an embedding on
 	// the query.
-	coll, collAllowed, err := s.resolveAllowedCollection(ctx, req.Key.Group, req.Key.Resource)
+	target, collAllowed, err := s.resolveAllowedCollection(ctx, req.Key.Namespace, req.Key.Group, req.Key.Resource)
 	if err != nil {
 		return nil, s.grpcStatusError(ctx, "vector search: resolve collection", err)
 	}
@@ -1194,7 +1202,7 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 	}
 
 	results, err := s.vectorBackend.Search(ctx,
-		req.Key.Namespace, s.embedder.Model, coll.PartitionKey,
+		target.storageNamespace, s.embedder.Model, target.collection.PartitionKey,
 		dense, limit, translateVectorSearchFilters(req.Filters)...)
 	if err != nil {
 		if ctx.Err() != nil {
@@ -1207,7 +1215,7 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 	// Using authz post-filtering for now
 	// Downside is that the results could be lower than expected
 	// For example: VectorSearch returns 10 results, user has access to 3 items, we would only return 3 items
-	allowed, err := s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
+	allowed, err := s.authorizeVectorSearchResults(ctx, user, req.Key, target.shared, results)
 	if err != nil {
 		if ctx.Err() != nil {
 			return nil, status.FromContextError(ctx.Err()).Err()
@@ -1294,6 +1302,7 @@ func (s *searchServer) embedVectorSearchQuery(ctx context.Context, namespace, qu
 	// projections per side of the retrieval pair).
 	out, err := s.embedder.EmbedText(ctx, embedder.EmbedTextInput{
 		Texts:     []string{query},
+		Tenant:    namespace,
 		Normalize: s.embedder.ShouldNormalize(),
 		Task:      embedder.TaskRetrievalQuery,
 	})
@@ -1358,6 +1367,18 @@ func (s *searchServer) storeCachedQueryEmbedding(ctx context.Context, namespace,
 	if err := s.queryCache.Put(ctx, namespace, s.embedder.Model, queryHash, dense); err != nil {
 		s.log.Warn("vector search: cache put failed", "err", err)
 	}
+}
+
+// authorizeVectorSearchResults applies the resolved collection's read policy.
+func (s *searchServer) authorizeVectorSearchResults(ctx context.Context, user types.AuthInfo, key *resourcepb.ResourceKey, shared bool, results []vector.VectorSearchResult) (map[vectorAuthzKey]bool, error) {
+	if !shared {
+		return s.batchCheckVectorSearchResults(ctx, user, key, results)
+	}
+	allowed := make(map[vectorAuthzKey]bool, len(results))
+	for _, result := range results {
+		allowed[vectorAuthzKey{result.UID, result.Folder}] = true
+	}
+	return allowed, nil
 }
 
 // vectorAuthzKey de-dupes (UID, Folder) so sub-resources of the same
@@ -1688,7 +1709,7 @@ func (s *searchServer) buildStartupIndex(ctx context.Context, info ResourceStats
 	if s.search.PeekIndex(info.NamespacedResource) != nil {
 		return nil
 	}
-	_, err := s.buildWithOptions(ctx, info.NamespacedResource, info.Count, "init", false, lastImportTime, BuildIndexOptions{SkipIfBuilding: true})
+	_, err := s.buildWithOptions(ctx, info.NamespacedResource, info.Count, "init", false, lastImportTime, BuildIndexOptions{SkipIfBuilding: true, LastSearchedAt: info.LastSearchedAt})
 	return err
 }
 
@@ -1704,12 +1725,23 @@ func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 
 	builds := make([]ResourceStats, 0, len(stats))
 	var backgroundBuilds []ResourceStats
+	idle := 0
+	now := time.Now()
 	for _, info := range s.ownedIndexStats(stats) {
+		// It would be closed as idle soon after, but reopening it costs a
+		// comparison with storage first.
+		if info.IsGlobal() && s.globalIndexIdleTimeout > 0 && !info.LastSearchedAt.IsZero() && now.Sub(info.LastSearchedAt) > s.globalIndexIdleTimeout {
+			idle++
+			continue
+		}
 		if info.IsGlobal() && !s.globalIndexStartupBuild {
 			backgroundBuilds = append(backgroundBuilds, info)
 		} else {
 			builds = append(builds, info)
 		}
+	}
+	if idle > 0 {
+		s.log.Info("Not reopening global search indexes that were idle before the restart", "indexes", idle)
 	}
 	if len(builds)+len(backgroundBuilds) == 0 {
 		return 0, nil
