@@ -591,8 +591,7 @@ func (s *service) start(ctx context.Context) error {
 	s.options = o
 
 	var runningServer *genericapiserver.GenericAPIServer
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	isKubernetesAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) || s.cfg.EnableKubernetesAggregator
+	isKubernetesAggregatorEnabled := s.cfg.EnableKubernetesAggregator
 
 	if isKubernetesAggregatorEnabled {
 		aggregatorServer, err := s.aggregatorRunner.Configure(
@@ -605,7 +604,7 @@ func (s *service) start(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		// we are running with KubernetesAggregator FT set to true but with enterprise unlinked, handle this gracefully
+		// we are running with the kubernetes aggregator enabled but with enterprise unlinked, handle this gracefully
 		if aggregatorServer != nil {
 			runningServer, err = s.aggregatorRunner.Run(ctx, transport, s.stoppedCh)
 			if err != nil {
@@ -613,7 +612,7 @@ func (s *service) start(ctx context.Context) error {
 				return err
 			}
 		} else {
-			// even though the FT is set to true, enterprise isn't linked
+			// even though the aggregator is enabled, enterprise isn't linked
 			isKubernetesAggregatorEnabled = false
 		}
 	}
