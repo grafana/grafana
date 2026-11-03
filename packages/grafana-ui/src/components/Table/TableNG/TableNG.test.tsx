@@ -4031,3 +4031,117 @@ describe('nested generated row-number gutters', () => {
     expect(innerGrid).toHaveTextContent('30');
   });
 });
+
+describe('generated gutter regression coverage', () => {
+  it('numbers filtered rows in sorted display order without touching source field positions', async () => {
+    const frame = createBasicDataFrame();
+    const originalFields = frame.fields;
+    frame.fields[0].config.custom = { ...frame.fields[0].config.custom, filterable: true };
+
+    render(
+      <TableNG
+        data={frame}
+        width={800}
+        height={600}
+        tableRefreshEnabled
+        showRowNumbers
+        sortBy={[{ displayName: 'Column B', desc: true }]}
+      />
+    );
+
+    const values = () => screen.getAllByRole('gridcell').map((cell) => cell.textContent);
+    expect(values()).toEqual(['1', 'A3', '3', '2', 'A2', '2', '3', 'A1', '1']);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Column options for Column A' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Filter values' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'A2' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+
+    expect(values()).toEqual(['1', 'A2', '2']);
+    expect(frame.fields).toBe(originalFields);
+    expect(frame.fields).toHaveLength(2);
+  });
+
+  it('continues numbering after changing a flat table page and preserves source values', async () => {
+    const frame = createBasicDataFrame();
+    const originalFields = frame.fields;
+    const { container } = render(
+      <TableNG data={frame} width={800} height={300} showRowNumbers enablePagination pageSize={2} />
+    );
+
+    const values = () => screen.getAllByRole('gridcell').map((cell) => cell.textContent);
+    expect(values()).toEqual(['1', 'A1', '1', '2', 'A2', '2']);
+
+    await userEvent.click(container.querySelector('[aria-label="next page" i], [aria-label*="Next" i]')!);
+    expect(values()).toEqual(['3', 'A3', '3']);
+    expect(frame.fields).toBe(originalFields);
+    expect(frame.fields[1].values).toEqual([1, 2, 3]);
+  });
+
+  it('keeps cell action source indexes correct after sorting with the gutter enabled', async () => {
+    const frame = createBasicDataFrame();
+    const onCellAddToAssistant = jest.fn();
+    render(
+      <TableNG
+        data={frame}
+        width={800}
+        height={600}
+        tableRefreshEnabled
+        showRowNumbers
+        sortBy={[{ displayName: 'Column B', desc: true }]}
+        onCellAddToAssistant={onCellAddToAssistant}
+      />
+    );
+
+    const firstRow = screen.getAllByRole('row')[1];
+    expect(within(firstRow).getByText('A3')).toBeInTheDocument();
+    expect(within(firstRow).getAllByRole('gridcell')[0]).toHaveTextContent('1');
+
+    within(firstRow).getAllByRole('button', { name: 'Cell actions' })[0].focus();
+    await userEvent.keyboard('{Enter}');
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Add to Assistant' }));
+
+    expect(onCellAddToAssistant).toHaveBeenCalledTimes(1);
+    expect(onCellAddToAssistant).toHaveBeenCalledWith(
+      frame,
+      expect.objectContaining({ name: 'Column A', values: ['A1', 'A2', 'A3'] }),
+      2
+    );
+  });
+
+  it('repeatedly shows and hides the gutter without mutating the DataFrame or column state', async () => {
+    const frame = createBasicDataFrame();
+    const originalFields = frame.fields;
+    const onColumnOrderChange = jest.fn();
+    const onHiddenColumnsChange = jest.fn();
+    const { container } = render(
+      <TableNG
+        data={frame}
+        width={800}
+        height={600}
+        showColumnsSidebar
+        showRowNumberToggle
+        onColumnOrderChange={onColumnOrderChange}
+        onHiddenColumnsChange={onHiddenColumnsChange}
+      />
+    );
+    const toggle = screen.getByRole('checkbox', { name: 'Show row numbers' });
+    const headers = () => screen.getAllByRole('columnheader');
+    const grid = container.querySelector<HTMLElement>('[role="grid"]')!;
+    const widths = () => grid.style.gridTemplateColumns.split(' ').map((value) => Number.parseFloat(value));
+
+    expect(headers()).toHaveLength(2);
+    expect(widths()).toHaveLength(2);
+
+    await userEvent.click(toggle);
+    expect(headers()).toHaveLength(3);
+    expect(widths()).toHaveLength(3);
+
+    await userEvent.click(toggle);
+    expect(headers()).toHaveLength(2);
+    expect(widths()).toHaveLength(2);
+    expect(frame.fields).toBe(originalFields);
+    expect(onColumnOrderChange).not.toHaveBeenCalled();
+    expect(onHiddenColumnsChange).not.toHaveBeenCalled();
+  });
+});
