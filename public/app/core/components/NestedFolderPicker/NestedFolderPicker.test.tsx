@@ -225,7 +225,7 @@ describe('NestedFolderPicker', () => {
   });
 
   it('applies the folder filter while browsing and keeps the owning root selectable', async () => {
-    setTestFlags({ foldersAppPlatformAPI: true, 'grafana.starredFolders': true });
+    setTestFlags({ foldersAppPlatformAPI: true });
 
     const rootFolderItem = getCustomRootFolderItem({
       title: 'Infra dashboards',
@@ -342,7 +342,7 @@ describe('NestedFolderPicker', () => {
   });
 
   it('keeps the team and starred sections for a local move and hides their managed children', async () => {
-    setTestFlags({ foldersAppPlatformAPI: true, 'grafana.starredFolders': true });
+    setTestFlags({ foldersAppPlatformAPI: true });
     useGetTeamFoldersMock.mockReturnValue({
       foldersByTeam: [
         {
@@ -552,9 +552,9 @@ describe('NestedFolderPicker', () => {
     });
   });
 
-  describe('when starredFolders is enabled', () => {
+  describe('starred folders', () => {
     beforeEach(() => {
-      setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
+      setTestFlags({ foldersAppPlatformAPI: true });
     });
 
     afterEach(async () => {
@@ -602,9 +602,9 @@ describe('NestedFolderPicker', () => {
     });
   });
 
-  describe('when starredFolders is enabled but foldersAppPlatformAPI is disabled', () => {
+  describe('starred folders with the folders app platform API disabled', () => {
     beforeEach(() => {
-      setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: false });
+      setTestFlags({ foldersAppPlatformAPI: false });
     });
 
     afterEach(async () => {

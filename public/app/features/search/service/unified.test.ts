@@ -246,8 +246,6 @@ describe('Unified Storage Searcher', () => {
 
     beforeEach(() => {
       searchRequests = [];
-      // One call — putConfiguration replaces the whole flag set, so a second call would drop the first.
-      setTestFlags({ foldersAppPlatformAPI: true, 'grafana.starredFolders': true });
       // starred() reads stars via an RTK Query dispatch on the global store, so wire one up.
       const store = configureStore({
         reducer: { [collectionsAPIv1alpha1.reducerPath]: collectionsAPIv1alpha1.reducer },
@@ -274,8 +272,8 @@ describe('Unified Storage Searcher', () => {
       expect(folderHit.url).toContain('/dashboards/f/f1');
     });
 
-    it('keeps the search dashboards-only when the starred folders flag is off', async () => {
-      setTestFlags({});
+    it('keeps the search dashboards-only when the folders app platform API is off', async () => {
+      setTestFlags({ foldersAppPlatformAPI: false });
       server.use(starsHandler(bothStarredResources), captureSearchHandler(starredHits.slice(0, 1)));
 
       const searcher = new UnifiedSearcher();

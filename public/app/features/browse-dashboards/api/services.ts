@@ -23,7 +23,6 @@ import {
   isVirtualStarredFolder,
   isVirtualTeamFolder,
   parseOwnerRef,
-  starredFoldersEnabled,
   teamOwnerRef,
 } from '../utils/dashboards';
 
@@ -72,24 +71,23 @@ async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) 
       });
     }
 
-    // Add team folders virtual item
-    const insertIndex = config.sharedWithMeFolderUID ? 1 : 0;
-    folders.splice(insertIndex, 0, {
-      ...virtualFolderBase,
-      name: t('browse-dashboards.my-team-folders', 'My team folders'),
-      uid: TEAM_FOLDERS_UID,
-    });
-
-    // Add starred folders virtual item after the other virtual roots so root order is
+    // Add the team and starred folders virtual items so root order is
     // [Shared with me, Team folders, Starred folders, ...real folders]
-    if (starredFoldersEnabled()) {
-      const insertIndex = (config.sharedWithMeFolderUID ? 1 : 0) + 1;
-      folders.splice(insertIndex, 0, {
+    const insertIndex = config.sharedWithMeFolderUID ? 1 : 0;
+    folders.splice(
+      insertIndex,
+      0,
+      {
+        ...virtualFolderBase,
+        name: t('browse-dashboards.my-team-folders', 'My team folders'),
+        uid: TEAM_FOLDERS_UID,
+      },
+      {
         ...virtualFolderBase,
         name: t('browse-dashboards.starred-folders', 'Starred folders'),
         uid: STARRED_FOLDERS_UID,
-      });
-    }
+      }
+    );
   }
 
   return folders.map<NestedFolderDTO>((item) => {

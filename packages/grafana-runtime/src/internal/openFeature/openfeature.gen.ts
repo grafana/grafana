@@ -256,8 +256,6 @@ export const FlagKeys = {
   GrafanaSecretsReferenceValueUI: "grafana.secretsReferenceValueUI",
   /** Enables the SMTP settings admin page, which edits a stack's SMTP config through the settings service */
   GrafanaSmtpSettingsPage: "grafana.smtpSettingsPage",
-  /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
-  GrafanaStarredFolders: "grafana.starredFolders",
   /** Enables using dashboard variables in panel threshold values */
   GrafanaThresholdsInterpolation: "grafana.thresholdsInterpolation",
   /** Use the find default scope endpoint to seed the initial scope selection when none is set. */
@@ -1733,17 +1731,6 @@ export const useFlagGrafanaSecretsReferenceValueUI = (options?: ReactFlagEvaluat
  */
 export const useFlagGrafanaSmtpSettingsPage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.smtpSettingsPage", false, options).value;
-};
-
-/**
- * Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker
- *
- * **Details:**
- * - flag key: `grafana.starredFolders`
- * - default value: `false`
- */
-export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.starredFolders", false, options).value;
 };
 
 /**

@@ -35,11 +35,6 @@ const StarredFoldersList = () => {
 };
 
 describe('FolderDetailsActions', () => {
-  // starredFoldersEnabled() gates the star button on both of these flags
-  beforeEach(() => {
-    setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
-  });
-
   afterEach(async () => {
     await act(async () => {
       setTestFlags({});
