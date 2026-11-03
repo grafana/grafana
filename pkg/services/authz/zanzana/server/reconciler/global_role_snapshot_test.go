@@ -173,7 +173,7 @@ func TestGlobalRoleSnapshot_RestartPreservesPermissionsAndAppliesRevocations(t *
 			revokedTuples, err := zanzana.RoleToTuples("deleted-local-role", perms)
 			require.NoError(t, err)
 			require.NotEmpty(t, revokedTuples)
-			var wantDeletes []*openfgav1.TupleKeyWithoutCondition
+			wantDeletes := make([]*openfgav1.TupleKeyWithoutCondition, 0, len(revokedTuples))
 			for _, tuple := range revokedTuples {
 				srv.tuples = append(srv.tuples, toTuple(tuple))
 				wantDeletes = append(wantDeletes, &openfgav1.TupleKeyWithoutCondition{User: tuple.User, Relation: tuple.Relation, Object: tuple.Object})
