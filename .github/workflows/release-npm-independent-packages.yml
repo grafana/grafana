@@ -72,6 +72,15 @@ jobs:
           rm -rf ./npm-artifacts
           npm run packages:pack:independent
 
+      # Recorded before already-published tarballs are removed, so a re-run after a failed tagging
+      # step still tags versions that the first run published.
+      - name: List release tags
+        run: |
+          for tarball in ./npm-artifacts/*.tgz; do
+            tar -xzOf "$tarball" package/package.json | jq -r '"\(.name)@\(.version)"'
+          done > "$RUNNER_TEMP/release-tags.txt"
+          cat "$RUNNER_TEMP/release-tags.txt"
+
       - name: Select packages that are not published yet
         id: select
         run: |
@@ -94,3 +103,31 @@ jobs:
       - name: Report dry run
         if: steps.select.outputs.count != '0' && env.DRY_RUN == 'true'
         run: echo "Dry run, the tarballs listed above would have been published to the latest dist-tag."
+
+      - name: Get GitHub App token (writer)
+        id: get-writer-app-token
+        if: github.event_name == 'push'
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+        with:
+          github_app: grafana-writer
+          permission_set: release-writer-main
+
+      # nx release finds the commits for the next version from these tags. Only a push tags, because
+      # it runs on the merged release commit; a manual run could tag a later commit and skip changes.
+      - name: Tag released versions
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          while read -r tag; do
+            if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" > /dev/null 2>&1; then
+              echo "Tag ${tag} already exists, leaving it as is."
+              continue
+            fi
+            gh api "repos/${GITHUB_REPOSITORY}/git/refs" \
+              --method POST \
+              -f "ref=refs/tags/${tag}" \
+              -f "sha=${COMMIT_SHA}" > /dev/null
+            echo "Created tag ${tag} at ${COMMIT_SHA}."
+          done < "$RUNNER_TEMP/release-tags.txt"
