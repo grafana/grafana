@@ -67,6 +67,8 @@ func TestSlideshowValidation(t *testing.T) {
 		{"missing interval", func(s *collections.Slideshow) { s.Spec.Interval = "" }, "spec.interval"},
 		{"unparseable interval", func(s *collections.Slideshow) { s.Spec.Interval = "soon" }, "spec.interval"},
 		{"interval under ten seconds", func(s *collections.Slideshow) { s.Spec.Interval = "9s" }, "spec.interval"},
+		{"compound interval the player cannot read", func(s *collections.Slideshow) { s.Spec.Interval = "1h30m" }, "spec.interval"},
+		{"fractional item interval the player cannot read", func(s *collections.Slideshow) { s.Spec.Items[0].Interval = ptr("1.5m") }, "spec.items[0].interval"},
 		{"empty group", func(s *collections.Slideshow) { s.Spec.Items[0].Group = "" }, "spec.items[0].group"},
 		{"empty resource", func(s *collections.Slideshow) { s.Spec.Items[1].Resource = "" }, "spec.items[1].resource"},
 		{"empty name", func(s *collections.Slideshow) { s.Spec.Items[0].Name = "" }, "spec.items[0].name"},

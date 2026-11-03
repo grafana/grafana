@@ -3,6 +3,7 @@ package collections
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -13,6 +14,8 @@ import (
 
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 )
+
+var simpleInterval = regexp.MustCompile(`^[0-9]+(ms|s|m|h|d|w|M|y)$`)
 
 const (
 	// A floor keeps a typo such as "1s" from turning a wall display into a tight reload loop.
@@ -83,9 +86,11 @@ func validateSlideshowInterval(path *field.Path, value string) *field.Error {
 	if value == "" {
 		return field.Required(path, "interval is required")
 	}
+	// One whole number and one unit: that is all the player reads, so a longer form such as
+	// 1h30m would be accepted here and then play for a different time.
 	d, err := gtime.ParseDuration(value)
-	if err != nil {
-		return field.Invalid(path, value, "must be a duration such as 30s or 5m")
+	if err != nil || !simpleInterval.MatchString(value) {
+		return field.Invalid(path, value, "must be a whole number and a unit, such as 30s or 5m")
 	}
 	if d < minSlideshowInterval {
 		return field.Invalid(path, value, "must be at least "+minSlideshowInterval.String())
