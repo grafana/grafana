@@ -7063,7 +7063,6 @@
     "grafana-dashboard-template-modal": {
       "no-results-found": "No template dashboards found"
     },
-    "merged-description": "Browse and select from data-source provided or community dashboards",
     "merged-empty-no-dashboards": "No dashboards are available for this datasource.",
     "merged-empty-search": "Try a different search term or browse more dashboards on Grafana.com.",
     "merged-empty-title": "No dashboards found",
@@ -17333,7 +17332,6 @@
     },
     "suggestions": {
       "list": "Text - list",
-      "merged-description": "{{name}}: adds transformations that merge the series into one table",
       "no-data": "No data",
       "statistic-field": "Field",
       "statistic-last": "Last",

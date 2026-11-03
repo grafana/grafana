@@ -65,16 +65,6 @@ export function hasData(data?: PanelData): boolean {
 
 /**
  * @internal
- * The suggestion to apply when nobody picked one. A suggestion with transformations also rewrites the
- * panel's data, which should take an explicit choice.
- * @param suggestions - suggestions, sorted best first
- */
-export function getDefaultSuggestion<S extends VisualizationSuggestion>(suggestions: S[]): S | undefined {
-  return suggestions.find((suggestion) => !suggestion.transformations?.length);
-}
-
-/**
- * @internal
  * Hidden legend config for previewing suggestion cards.
  * This should only be used in previewModifier.
  */
