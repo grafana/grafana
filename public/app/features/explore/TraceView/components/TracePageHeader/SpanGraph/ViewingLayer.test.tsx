@@ -14,8 +14,9 @@
 
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { StrictMode } from 'react';
+import { StrictMode, useState } from 'react';
 
+import { type ViewRangeTime } from '../../TraceTimelineViewer/types';
 import { polyfill as polyfillAnimationFrame } from '../../utils/test/requestAnimationFrame';
 
 import ViewingLayer, { type ViewingLayerProps } from './ViewingLayer';
@@ -28,7 +29,7 @@ function getViewRange(viewStart: number, viewEnd: number) {
   };
 }
 
-describe('<UnthemedViewingLayer>', () => {
+describe('<ViewingLayer>', () => {
   polyfillAnimationFrame(window);
 
   let props: ViewingLayerProps;
@@ -85,15 +86,59 @@ describe('<UnthemedViewingLayer>', () => {
     expect(screen.getByTestId('right-ViewingLayerInactive')).toHaveAttribute('x', '80%');
   });
 
-  it('starts dragging the start scrubber under StrictMode', async () => {
-    render(
-      <StrictMode>
-        <ViewingLayer {...props} />
-      </StrictMode>
-    );
-    await userEvent.pointer({ keys: '[MouseLeft>]', target: screen.getAllByTestId('scrubber-component-g')[0] });
-    expect(props.updateNextViewRangeTime).toHaveBeenCalledWith({ shiftStart: expect.any(Number) });
-    await userEvent.pointer({ keys: '[/MouseLeft]' });
+  describe('dragging', () => {
+    beforeEach(() => {
+      jest.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+        x: 0,
+        y: 0,
+        top: 0,
+        left: 0,
+        width: 100,
+        height: 60,
+        right: 100,
+        bottom: 60,
+        toJSON: () => ({}),
+      });
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('drags the start scrubber under StrictMode', async () => {
+      render(
+        <StrictMode>
+          <ViewingLayer {...props} />
+        </StrictMode>
+      );
+      const target = screen.getAllByTestId('scrubber-component-g')[0];
+      await userEvent.pointer([
+        { keys: '[MouseLeft>]', target, coords: { clientX: 25 } },
+        { keys: '[/MouseLeft]', coords: { clientX: 40 } },
+      ]);
+      expect(props.updateNextViewRangeTime).toHaveBeenCalledWith({ shiftStart: 0.25 });
+      expect(props.updateViewRangeTime).toHaveBeenCalledWith(0.4, 1, 'minimap');
+    });
+
+    it('reframes using the anchor from the latest props', async () => {
+      function StatefulViewingLayer() {
+        const [time, setTime] = useState<ViewRangeTime>({ current: [0, 1] });
+        return (
+          <ViewingLayer
+            {...props}
+            viewRange={{ time }}
+            updateNextViewRangeTime={(update) => setTime((prev) => ({ ...prev, ...update }))}
+          />
+        );
+      }
+      render(<StatefulViewingLayer />);
+      const target = screen.getByTestId('ticks').closest('svg')!;
+      await userEvent.pointer([
+        { keys: '[MouseLeft>]', target, coords: { clientX: 20 } },
+        { keys: '[/MouseLeft]', coords: { clientX: 60 } },
+      ]);
+      expect(props.updateViewRangeTime).toHaveBeenCalledWith(0.2, 0.6, 'minimap');
+    });
   });
 
   describe('reset selection button', () => {
