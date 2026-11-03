@@ -28,10 +28,16 @@ type permissionResponseStream struct {
 	grpc.ServerStream
 	ctx         context.Context
 	permissions []*authzv1.UserPermission
+	onSend      func() error
 }
 
 func (s *permissionResponseStream) Context() context.Context { return s.ctx }
 func (s *permissionResponseStream) Send(response *authzv1.GetUserPermissionsResponse) error {
+	if s.onSend != nil {
+		if err := s.onSend(); err != nil {
+			return err
+		}
+	}
 	s.permissions = append(s.permissions, response.Permissions...)
 	return nil
 }
@@ -105,6 +111,37 @@ func TestUserPermissionsRPCChunksAndFailure(t *testing.T) {
 		sizes = append(sizes, len(chunk.Permissions))
 	}
 	require.Equal(t, []int{1000, 5}, sizes)
+	sendFailure := errors.New("final send failed")
+	for _, tc := range []struct {
+		name        string
+		cancelAfter int
+		sendError   error
+		wantError   error
+		wantCount   int
+	}{
+		{"cancellation after final send", 2, nil, nil, len(tuples)},
+		{"cancellation before final send", 1, nil, context.Canceled, userPermissionsChunkSize},
+		{"final send failure", 0, sendFailure, sendFailure, userPermissionsChunkSize},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(newContextWithNamespace())
+			defer cancel()
+			calls := 0
+			response := &permissionResponseStream{ctx: ctx, onSend: func() error {
+				calls++
+				if calls == tc.cancelAfter {
+					cancel()
+				}
+				if calls == 2 {
+					return tc.sendError
+				}
+				return nil
+			}}
+			err := server.GetUserPermissions(req, response)
+			require.ErrorIs(t, err, tc.wantError)
+			require.Len(t, response.permissions, tc.wantCount)
+		})
+	}
 	ds.mu.Lock()
 	ds.failRead = errors.New("remote datastore unavailable")
 	ds.mu.Unlock()

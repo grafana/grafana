@@ -58,5 +58,5 @@ func (s *Server) GetUserPermissions(req *authzv1.GetUserPermissionsRequest, stre
 			return err
 		}
 	}
-	return ctx.Err()
+	return nil
 }
