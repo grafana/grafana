@@ -9,6 +9,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
@@ -61,4 +62,58 @@ func (p *notFoundDatasourceProvider) GetDataSource(context.Context, string) (*v0
 
 func (p *notFoundDatasourceProvider) DeleteDataSource(context.Context, string) error {
 	return p.failure()
+}
+
+// Under dual write it is the object the legacy store returns, not the request, that is written to
+// unified storage -- so metadata the data_source row cannot hold has to survive the round trip or
+// it is lost for good. Manager annotations are the case that matters.
+func TestRestoreUnstorableMeta(t *testing.T) {
+	t.Run("puts back what the row dropped and keeps what it derived", func(t *testing.T) {
+		from := &v0alpha1.DataSource{ObjectMeta: metav1.ObjectMeta{
+			Labels:      map[string]string{"team": "platform", "env": "prod"},
+			Annotations: map[string]string{utils.AnnoKeyManagerKind: "repo", utils.AnnoKeyManagerIdentity: "my-repo"},
+		}}
+		to := &v0alpha1.DataSource{ObjectMeta: metav1.ObjectMeta{
+			Labels:      map[string]string{"default": "true", utils.LabelKeyDeprecatedInternalID: "12"},
+			Annotations: map[string]string{utils.AnnoKeyUpdatedTimestamp: "2026-11-03T00:00:00Z"},
+		}}
+
+		restoreUnstorableMeta(from, to)
+
+		require.Equal(t, map[string]string{
+			"team": "platform", "env": "prod",
+			"default": "true", utils.LabelKeyDeprecatedInternalID: "12",
+		}, to.Labels)
+		require.Equal(t, map[string]string{
+			utils.AnnoKeyManagerKind:      "repo",
+			utils.AnnoKeyManagerIdentity:  "my-repo",
+			utils.AnnoKeyUpdatedTimestamp: "2026-11-03T00:00:00Z",
+		}, to.Annotations)
+	})
+
+	// The row is the authority for anything it does store.
+	t.Run("does not overwrite a key the row set", func(t *testing.T) {
+		from := &v0alpha1.DataSource{ObjectMeta: metav1.ObjectMeta{
+			Labels: map[string]string{"default": "false"},
+		}}
+		to := &v0alpha1.DataSource{ObjectMeta: metav1.ObjectMeta{
+			Labels: map[string]string{"default": "true"},
+		}}
+
+		restoreUnstorableMeta(from, to)
+
+		require.Equal(t, "true", to.Labels["default"])
+	})
+
+	t.Run("fills empty maps", func(t *testing.T) {
+		from := &v0alpha1.DataSource{ObjectMeta: metav1.ObjectMeta{
+			Annotations: map[string]string{utils.AnnoKeyManagerKind: "repo"},
+		}}
+		to := &v0alpha1.DataSource{}
+
+		restoreUnstorableMeta(from, to)
+
+		require.Equal(t, map[string]string{utils.AnnoKeyManagerKind: "repo"}, to.Annotations)
+		require.Nil(t, to.Labels)
+	})
 }

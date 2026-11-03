@@ -139,6 +139,7 @@ func (c *unifiedConnections) ListConnections(ctx context.Context, query datasour
 			APIGroup:    group,
 			APIVersion:  datasourceV0.VERSION,
 			Plugin:      plugin,
+			URL:         ds.Spec.URL(),
 			Labels:      reportableLabels(ds.Labels),
 			Annotations: ds.Annotations,
 		})

@@ -43,6 +43,10 @@ type DataSourceConnection struct {
 
 	Plugin string `json:"plugin,omitempty"`
 
+	// URL the data source is configured against, so a caller listing connections can show it
+	// without a per-uid read. Empty for a data source that has none.
+	URL string `json:"url,omitempty"`
+
 	Labels map[string]string `json:"labels,omitempty"`
 
 	// Annotations carries the stored object's annotations, so a caller can tell which system

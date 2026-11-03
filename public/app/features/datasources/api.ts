@@ -1,15 +1,81 @@
 import { isString } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
-import { type DataSourceSettings, type DataSourceJsonData } from '@grafana/data';
+import { type DataSourceSettings, type DataSourceJsonData, type DataSourcePluginMeta } from '@grafana/data';
 import { config, getDataSourceInstanceList } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import {
+  type DataSourceConnection,
+  fetchConnections,
+  FlagKeys,
+  getDatasourcePluginMetas,
+  getFeatureFlagClient,
+} from '@grafana/runtime/internal';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 
 import { DeprecatedInternalId } from '../apiserver/types';
+/**
+ * Lists every data source the user can read.
+ *
+ * Reads the connections endpoint when the CRUD APIs serve the page, because that is the only list
+ * that covers every plugin group: /api/datasources reads the legacy table, so it cannot see a data
+ * source that lives only in unified storage, nor one whose plugin is no longer installed. It also
+ * carries the manager annotations, which the legacy list has no column for.
+ *
+ * The plugin meta supplies the display name and logo, the same join the runtime cache does; a
+ * connection whose plugin has no meta is kept, since dropping it would hide a data source from the
+ * page that administers it.
+ */
 export const getDataSources = async (): Promise<DataSourceSettings[]> => {
-  return await getBackendSrv().get('/api/datasources');
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs, false)) {
+    return await getBackendSrv().get('/api/datasources');
+  }
+
+  const [connections, metas] = await Promise.all([
+    fetchConnections({ requestId: 'datasources-list', isCurrent: () => true }),
+    getDatasourcePluginMetas(),
+  ]);
+
+  const metaByType = new Map(metas.map((meta) => [meta.id, meta]));
+  for (const meta of metas) {
+    for (const alias of meta.aliasIDs ?? []) {
+      if (!metaByType.has(alias)) {
+        metaByType.set(alias, meta);
+      }
+    }
+  }
+
+  return (connections?.items ?? []).map((connection) => toDataSourceSettings(connection, metaByType));
+};
+
+const toDataSourceSettings = (
+  connection: DataSourceConnection,
+  metaByType: Map<string, DataSourcePluginMeta>
+): DataSourceSettings => {
+  const type = connection.plugin || connection.group.replace(/\.datasource\.grafana\.app$/, '');
+  const meta = metaByType.get(type);
+  return {
+    // The connection answers what the list renders; the rest is only read on the settings page,
+    // which fetches the data source itself.
+    id: Number(connection.labels?.[DeprecatedInternalId] ?? 0),
+    uid: connection.name,
+    orgId: 0,
+    name: connection.title,
+    type: meta?.id ?? type,
+    typeName: meta?.name ?? type,
+    typeLogoUrl: meta?.info?.logos?.small ?? '',
+    url: connection.url ?? '',
+    isDefault: connection.labels?.default === 'true',
+    access: '',
+    user: '',
+    database: '',
+    basicAuth: false,
+    basicAuthUser: '',
+    withCredentials: false,
+    readOnly: false,
+    jsonData: {},
+    secureJsonFields: {},
+  };
 };
 
 // From pkg/storage/unified/apistore/secure.go
