@@ -105,12 +105,18 @@ func TestFeaturesValidate(t *testing.T) {
 		require.ErrorContains(t, err, "resource permissions")
 	})
 
+	t.Run("datasource resource permissions require resource permissions", func(t *testing.T) {
+		err := (Features{DatasourceResourcePermissions: true}).Validate()
+		require.ErrorContains(t, err, "resource permissions")
+	})
+
 	t.Run("accepts valid dependencies", func(t *testing.T) {
 		err := (Features{
 			ServiceAccountsAPI:                true,
 			ServiceAccountTokensAPI:           true,
 			ResourcePermissionsAPI:            true,
 			ServiceAccountResourcePermissions: true,
+			DatasourceResourcePermissions:     true,
 		}).Validate()
 		require.NoError(t, err)
 	})
@@ -148,12 +154,14 @@ func TestProvideFeatures(t *testing.T) {
 				"api":                  "roles, rolebindings, resourcepermissions",
 				"zanzana_sync_enabled": "false",
 				"service_account_resource_permissions_enabled": "true",
+				"datasource_resource_permissions_enabled":      "true",
 			},
 			want: Features{
 				RolesAPI:                          true,
 				RoleBindingsAPI:                   true,
 				ResourcePermissionsAPI:            true,
 				ServiceAccountResourcePermissions: true,
+				DatasourceResourcePermissions:     true,
 			},
 		},
 		{
@@ -242,6 +250,7 @@ func TestFeaturesFromFlags(t *testing.T) {
 		{name: "auth info", flag: featuremgmt.FlagKubernetesAuthInfoApi, want: Features{AuthInfoAPI: true}},
 		{name: "user permissions", flag: featuremgmt.FlagAuthzUserPermissions, want: Features{UserPermissionsAPI: true}},
 		{name: "service account resource permissions", flag: featuremgmt.FlagKubernetesAuthzServiceAccountResourcePermissions, want: Features{ServiceAccountResourcePermissions: true}},
+		{name: "datasource resource permissions", flag: featuremgmt.FlagKubernetesAuthzDatasourceResourcePermissions, want: Features{DatasourceResourcePermissions: true}},
 		{name: "Zanzana sync", flag: featuremgmt.FlagKubernetesAuthzZanzanaSync, want: Features{ZanzanaSync: true}},
 	}
 
