@@ -40,7 +40,11 @@ export {
 } from './grafana/notificationPolicies/routingTree.utils';
 
 // Time intervals
-export { useListTimeIntervals } from './grafana/muteTimings/hooks/useListTimeIntervals';
+export {
+  useListTimeIntervals,
+  type TimeIntervalView,
+  type TimeIntervalsStatus,
+} from './grafana/muteTimings/hooks/useListTimeIntervals';
 
 // Notification settings
 export {

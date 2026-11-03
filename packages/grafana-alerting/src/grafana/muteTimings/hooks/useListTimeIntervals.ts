@@ -8,7 +8,7 @@ export interface TimeIntervalView {
   isImported: boolean;
 }
 
-type TimeIntervalsStatus = 'skipped' | 'loading' | 'success' | 'error';
+export type TimeIntervalsStatus = 'skipped' | 'loading' | 'success' | 'error';
 
 /** Mute and active timings share this one resource type; a rule's own muteTimeIntervals/activeTimeIntervals
  * field decides which side a name is used on. A refetch that fails keeps the last good list. */
