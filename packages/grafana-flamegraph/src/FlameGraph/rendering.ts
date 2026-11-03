@@ -16,7 +16,7 @@ import {
   GROUP_STRIP_MARGIN_LEFT,
   GROUP_TEXT_OFFSET,
 } from '../constants';
-import { type ClickedItemData, ColorScheme, ColorSchemeDiff, type TextAlign } from '../types';
+import { type ClickedItemData, ColorScheme, ColorSchemeDiff, type FrameType, type TextAlign } from '../types';
 
 import {
   BAR_GROUP_STRIP_COLOR,
@@ -24,6 +24,7 @@ import {
   getBarColorByDiff,
   getBarColorByPackage,
   getBarColorByValue,
+  getBarColorBySpace,
 } from './colors';
 import { type CollapseConfig, type CollapsedMap, type FlameGraphDataContainer, type LevelItem } from './dataTransform';
 
@@ -121,13 +122,13 @@ export function useFlameRender(options: RenderOptions) {
       rangeMax,
       wrapperWidth,
       collapsedMap,
-      (item, x, y, width, height, label, muted) => {
+      (item, x, y, width, height, label, frameType, muted) => {
         if (muted) {
           // We do a bit of optimization for muted regions, and we render them all in single fill later on as they don't
           // have labels and are the same color.
           mutedPath2D.rect(x, y, width, height);
         } else {
-          renderFunc(item, x, y, width, height, label);
+          renderFunc(item, x, y, width, height, label, frameType);
         }
       },
       devicePixelRatio
@@ -152,7 +153,15 @@ export function useFlameRender(options: RenderOptions) {
   ]);
 }
 
-type RenderFunc = (item: LevelItem, x: number, y: number, width: number, height: number, label: string) => void;
+type RenderFunc = (
+  item: LevelItem,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  label: string,
+  frameType: FrameType
+) => void;
 
 type RenderFuncWrap = (
   item: LevelItem,
@@ -161,6 +170,7 @@ type RenderFuncWrap = (
   width: number,
   height: number,
   label: string,
+  frameType: FrameType,
   muted: boolean
 ) => void;
 
@@ -175,7 +185,7 @@ type RenderFuncWrap = (
 function useRenderFunc(
   ctx: CanvasRenderingContext2D | undefined,
   data: FlameGraphDataContainer,
-  getBarColor: (item: LevelItem, label: string, muted: boolean) => string,
+  getBarColor: (item: LevelItem, label: string, frameType: FrameType, muted: boolean) => string,
   textAlign: TextAlign,
   collapsedMap: CollapsedMap,
   devicePixelRatio: number
@@ -186,10 +196,10 @@ function useRenderFunc(
     }
 
     const dpr = devicePixelRatio;
-    const renderFunc: RenderFunc = (item, x, y, width, height, label) => {
+    const renderFunc: RenderFunc = (item, x, y, width, height, label, frameType) => {
       ctx.beginPath();
       ctx.rect(x + BAR_BORDER_WIDTH * dpr, y, width, height);
-      ctx.fillStyle = getBarColor(item, label, false);
+      ctx.fillStyle = getBarColor(item, label, frameType, false);
       ctx.stroke();
       ctx.fill();
 
@@ -334,11 +344,12 @@ export function walkTree(
       const barY = (item.level + levelOffset) * PIXELS_PER_LEVEL * dpr;
 
       let label = data.getLabel(item.itemIndexes[0]);
+      let frameType = data.getFrameType(item.itemIndexes[0]);
       if (isCollapsedItem) {
         collapsedItemRendered = item;
       }
 
-      renderFunc(item, barX, barY, width, height, label, muted);
+      renderFunc(item, barX, barY, width, height, label, frameType, muted);
     }
 
     const nextList = direction === 'children' ? item.children : item.parents;
@@ -360,7 +371,7 @@ function useColorFunction(
   topLevel: number
 ) {
   return useCallback(
-    function getColor(item: LevelItem, label: string, muted: boolean) {
+    function getColor(item: LevelItem, label: string, frameType: FrameType, muted: boolean) {
       // If collapsed and no search we can quickly return the muted color
       if (muted && !matchedLabels) {
         // Collapsed are always grayed
@@ -373,7 +384,9 @@ function useColorFunction(
           ? getBarColorByDiff(item.value, item.valueRight!, totalTicks, totalTicksRight!, colorScheme)
           : colorScheme === ColorScheme.ValueBased
             ? getBarColorByValue(item.value, totalTicks, rangeMin, rangeMax)
-            : getBarColorByPackage(label, theme);
+            : colorScheme === ColorScheme.SpaceBased
+              ? getBarColorBySpace(frameType)
+              : getBarColorByPackage(label, theme);
 
       if (matchedLabels) {
         // Means we are searching, we use color for matches and gray the rest
