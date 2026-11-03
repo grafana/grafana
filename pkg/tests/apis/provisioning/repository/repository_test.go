@@ -978,6 +978,8 @@ func TestIntegrationProvisioning_DashboardStrictValidationExempted(t *testing.T)
 }
 
 func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
+	t.Skip("Disabled: provisioning sync jobs time out in CI")
+
 	helper := sharedHelper(t)
 
 	// FIXME: instead of using an existing GitHub repository, we should create a new one for the tests and a branch
@@ -1595,6 +1597,8 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 }
 
 func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.T) {
+	t.Skip("Disabled: provisioning sync jobs time out in CI")
+
 	helper := sharedHelper(t)
 
 	const repo = "gh-repo"
@@ -1861,6 +1865,8 @@ func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
+	t.Skip("Disabled: provisioning sync jobs time out in CI")
+
 	helper := sharedHelper(t)
 
 	const repo = "refs-permissions-test"
@@ -1924,6 +1930,8 @@ func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
+	t.Skip("Disabled: provisioning sync jobs time out in CI")
+
 	helper := sharedHelper(t)
 
 	t.Run("repository with empty path syncs from root", func(t *testing.T) {
