@@ -115,6 +115,9 @@ func (d *discovery) connectWake() {
 		natsclient.InProcessServer(d.server),
 		natsclient.Name("grafana-nats-discovery-wake"),
 		natsclient.NoEcho(),
+		// An in-process connection only drops when the server shuts down, so
+		// reconnecting would retry a server that is gone.
+		natsclient.NoReconnect(),
 	)
 	if err != nil {
 		d.log.Warn("nats discovery wake unavailable; relying on periodic ticks only", "err", err)
