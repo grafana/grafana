@@ -81,7 +81,7 @@ The connection resource includes:
 
 ## Git Sync repository resource
 
-A repository resource is a Grafana configuration object that defines the connection between a group of repositories and your Grafana instance via Git Sync.
+A repository resource is a Grafana configuration object that defines the connection between your Git repository and your Grafana instance via Git Sync.
 
 - Which Git repository to sync with your Grafana instance.
 - Which branch to use.
