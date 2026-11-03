@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	authlib "github.com/grafana/authlib/types"
 
@@ -152,10 +153,10 @@ func TestResourceWritesRejectInlineBlobData(t *testing.T) {
 				var failure *resourcepb.ErrorResult
 				var err error
 				if operation == "create" {
-					createKey := *key
+					createKey := proto.Clone(key).(*resourcepb.ResourceKey)
 					createKey.Name = "new-item"
 					createValue := []byte(strings.ReplaceAll(string(value), `"name":"item"`, `"name":"new-item"`))
-					rsp, callErr := srv.Create(ctx, &resourcepb.CreateRequest{Key: &createKey, Value: createValue})
+					rsp, callErr := srv.Create(ctx, &resourcepb.CreateRequest{Key: createKey, Value: createValue})
 					failure, err = rsp.GetError(), callErr
 				} else {
 					rsp, callErr := srv.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: value, ResourceVersion: created.ResourceVersion})
