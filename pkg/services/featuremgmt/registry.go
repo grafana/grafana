@@ -704,6 +704,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "dashboard.notebookComments",
+			Description: "Enables commenting on Notebook cells",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "grafana.dashboardComposer",
 			Description: "Enables Composer mode for editing dashboards with Grafana Assistant",
 			Stage:       FeatureStageExperimental,
@@ -790,14 +798,6 @@ var (
 			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDatavizSquad,
 			Expression:  "false",
-		},
-		{
-			Name:        "timeComparison",
-			Description: "Enables time comparison option in supported panels",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true, React: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
 		},
 		{
 			Name:        "tableSharedCrosshair",
@@ -2128,16 +2128,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:            "panelTimeSettings",
-			Description:     "Enables a new panel time settings drawer",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaDashboardsSquad,
-			RequiresRestart: false,
-			HideFromDocs:    false,
-			Expression:      "true",
-		},
-		{
 			Name:        "awsDatasourcesHttpProxy",
 			Description: "Enables http proxy settings for aws datasources",
 			Stage:       FeatureStageExperimental,
@@ -3025,6 +3015,14 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:        "grafana.preserveDashboardLoginTabTitle",
+			Description: "Preserves dashboard names in login tab titles when grafana.preserveLoginTabTitle is enabled",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "grafana.preserveLoginTabTitle",
 			Description: "Preserves the navigation section label in the browser tab title after session expiry",
 			Stage:       FeatureStageExperimental,
@@ -3064,6 +3062,15 @@ var (
 			Generate:    Generate{React: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
+		},
+		{
+			Name:         "grafana.multiTenantHomepage",
+			Description:  "Hides homepage sections whose only backend is a legacy /api endpoint (firing alerts, IRM incidents and on-call, plugin offers) and skips the legacy datasource health probe, for multi-tenant stacks that do not serve /api",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendNavigation,
+			HideFromDocs: true,
+			Generate:     Generate{React: true},
+			Expression:   "false",
 		},
 		{
 			Name:            "kubernetesReporting",
@@ -3349,14 +3356,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
-		},
-		{
-			Name:        "grafana.logDetailsDisplayedFieldControls",
-			Description: "Deprecated: Toggle displayed fields from Log Details",
-			Stage:       FeatureStageDeprecated,
-			Owner:       grafanaObservabilityLogsSquad,
-			Expression:  "false",
-			Generate:    Generate{React: true},
 		},
 		{
 			Name:         "grafana.mtFallback",

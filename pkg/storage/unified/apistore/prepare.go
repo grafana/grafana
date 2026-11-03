@@ -362,6 +362,13 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		}
 	}
 
+	if !v.hasChanged && s.opts.EnableInlineBlobs {
+		v.hasChanged, err = s.blobsChanged(ctx, updateObject, previousObject)
+		if err != nil {
+			return v, err
+		}
+	}
+
 	// Mark the resource as changed
 	if v.hasChanged {
 		obj.SetGeneration(previous.GetGeneration() + 1)
