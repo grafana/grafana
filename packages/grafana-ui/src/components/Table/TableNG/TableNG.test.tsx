@@ -3932,3 +3932,102 @@ describe('row number sidebar view state', () => {
     expect(screen.getAllByRole('columnheader')).toHaveLength(2);
   });
 });
+
+describe('nested generated row-number gutters', () => {
+  it('numbers parent rows independently of expansion rows and restarts each nested grid at one', async () => {
+    const frame = createNestedDataFrame();
+    const fields = frame.fields;
+    const { container } = render(<TableNG data={frame} width={800} height={600} showRowNumbers />);
+    const outerGrid = screen.getByRole('treegrid');
+    const parentNumbers = () =>
+      Array.from(outerGrid.querySelectorAll<HTMLElement>(':scope > .rdg-row'))
+        .filter((row) => row.querySelector('[aria-label="Expand row"], [aria-label="Collapse row"]'))
+        .map((row) => row.querySelector(':scope > .rdg-cell')?.textContent);
+
+    expect(parentNumbers()).toEqual(['1', '2']);
+    await userEvent.click(container.querySelectorAll('[aria-label="Expand row"]')[0]);
+    expect(parentNumbers()).toEqual(['1', '2']);
+    const firstNestedGrid = screen.getByRole('grid');
+    expect(
+      Array.from(firstNestedGrid.querySelectorAll<HTMLElement>(':scope > .rdg-row > .rdg-cell:first-child')).map(
+        (cell) => cell.textContent
+      )
+    ).toEqual(['1', '2']);
+
+    await userEvent.click(container.querySelectorAll('[aria-label="Expand row"]')[0]);
+    expect(parentNumbers()).toEqual(['1', '2']);
+    expect(screen.getAllByRole('grid')).toHaveLength(2);
+    for (const grid of screen.getAllByRole('grid')) {
+      const numbers = Array.from(grid.querySelectorAll<HTMLElement>(':scope > .rdg-row > .rdg-cell:first-child')).map(
+        (cell) => cell.textContent
+      );
+      expect(numbers).toEqual(['1', '2']);
+    }
+    expect(frame.fields).toBe(fields);
+  });
+
+  it('keeps outer positions sequential when the parent fields are sorted descending', async () => {
+    const { container } = render(
+      <TableNG
+        data={createNestedDataFrame()}
+        width={800}
+        height={600}
+        showRowNumbers
+        sortBy={[{ displayName: 'Column B', desc: true }]}
+      />
+    );
+    const outerGrid = screen.getByRole('treegrid');
+    const displayedRows = Array.from(outerGrid.querySelectorAll<HTMLElement>(':scope > .rdg-row'));
+    const numberedParents = displayedRows.filter((row) =>
+      row.querySelector('[aria-label="Expand row"], [aria-label="Collapse row"]')
+    );
+    expect(numberedParents.map((row) => row.querySelector(':scope > .rdg-cell')?.textContent)).toEqual(['1', '2']);
+    expect(numberedParents[0]).toHaveTextContent('A2');
+    expect(numberedParents[1]).toHaveTextContent('A1');
+
+    await userEvent.click(container.querySelectorAll('[aria-label="Expand row"]')[0]);
+    expect(screen.getByRole('grid')).toBeInTheDocument();
+    expect(
+      Array.from(outerGrid.querySelectorAll<HTMLElement>(':scope > .rdg-row'))
+        .filter((row) => row.querySelector('[aria-label="Expand row"], [aria-label="Collapse row"]'))
+        .map((row) => row.querySelector(':scope > .rdg-cell')?.textContent)
+    ).toEqual(['1', '2']);
+  });
+
+  it('continues parent positions across pages while nested rows start from one', async () => {
+    const { container } = render(
+      <TableNG data={createNestedDataFrame()} width={800} height={300} showRowNumbers enablePagination pageSize={1} />
+    );
+    const outerGrid = screen.getByRole('treegrid');
+    const parentNumber = () =>
+      Array.from(outerGrid.querySelectorAll<HTMLElement>(':scope > .rdg-row'))
+        .filter((row) => row.querySelector('[aria-label="Expand row"]'))
+        .map((row) => row.querySelector(':scope > .rdg-cell')?.textContent);
+    expect(parentNumber()).toEqual(['1']);
+    await userEvent.click(container.querySelector('[aria-label="next page" i], [aria-label*="Next" i]')!);
+    expect(parentNumber()).toEqual(['2']);
+    await userEvent.click(container.querySelector('[aria-label="Expand row"]')!);
+    const nestedGrid = screen.getByRole('grid');
+    expect(
+      Array.from(nestedGrid.querySelectorAll<HTMLElement>(':scope > .rdg-row > .rdg-cell:first-child')).map(
+        (cell) => cell.textContent
+      )
+    ).toEqual(['1', '2']);
+  });
+
+  it('renders an empty nested frame and skips numbering in nested footer cells', async () => {
+    const view = render(<TableNG data={createEmptyNestedDataFrame()} width={800} height={600} showRowNumbers />);
+    expect(view.container.querySelector('[role="treegrid"]')).toBeInTheDocument();
+    expect(screen.getByText('No rows')).toBeInTheDocument();
+    view.unmount();
+
+    const { container } = render(
+      <TableNG data={createNestedDataFrameWithFooter()} width={800} height={600} showRowNumbers />
+    );
+    await userEvent.click(container.querySelector('[aria-label="Expand row"]')!);
+    const innerGrid = screen.getByRole('grid');
+    const footerFirstCell = innerGrid.querySelector('.rdg-bottom-summary-row > .rdg-cell');
+    expect(footerFirstCell).toHaveTextContent('');
+    expect(innerGrid).toHaveTextContent('30');
+  });
+});

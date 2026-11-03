@@ -4,7 +4,7 @@ import { FieldType, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { CELL_HORIZONTAL_CHROME, FIRST_COLUMN_EXTRA_PADDING } from './constants';
-import { type TableColumn } from './types';
+import { type TableColumn, type TableRow } from './types';
 
 // Distinct from user-facing field names; only used in react-data-grid, not in DataFrame.
 export const ROW_NUMBER_COLUMN_KEY = '__grafana_row_number_gutter__';
@@ -27,8 +27,28 @@ export function getDisplayedRowNumber(pageRangeStart: number, rowIdx: number): n
   return pageRangeStart + rowIdx;
 }
 
+/**
+ * Map source parent indexes to their 1-based displayed positions. Placeholder rows
+ * for expanded nested grids have depth 1 and must never consume a row number.
+ */
+export function getDisplayedParentRowNumbers(rows: readonly TableRow[], pageRangeStart = 1): Map<number, number> {
+  const positions = new Map<number, number>();
+  let position = pageRangeStart;
+  for (const row of rows) {
+    if (row.__depth === 0) {
+      positions.set(row.__index, position++);
+    }
+  }
+  return positions;
+}
+
 /** A fixed, presentation-only column; no synthetic field is added to the source frame. */
-export function createRowNumberColumn(pageRangeStart: number, theme: GrafanaTheme2, width: number): TableColumn {
+export function createRowNumberColumn(
+  pageRangeStart: number,
+  theme: GrafanaTheme2,
+  width: number,
+  getRowNumber?: (row: TableRow, rowIdx: number) => number | undefined
+): TableColumn {
   const numberClass = css({
     width: '100%',
     textAlign: 'right',
@@ -60,7 +80,10 @@ export function createRowNumberColumn(pageRangeStart: number, theme: GrafanaThem
         #
       </span>
     ),
-    renderCell: ({ rowIdx }) => <span className={numberClass}>{getDisplayedRowNumber(pageRangeStart, rowIdx)}</span>,
+    renderCell: ({ row, rowIdx }) => {
+      const number = getRowNumber ? getRowNumber(row, rowIdx) : getDisplayedRowNumber(pageRangeStart, rowIdx);
+      return number === undefined ? null : <span className={numberClass}>{number}</span>;
+    },
     // Summaries are data reducers, not displayed positions.
     renderSummaryCell: () => null,
   };

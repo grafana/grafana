@@ -1,5 +1,6 @@
-import { getDisplayedRowNumber, getRowNumberGutterWidth } from './RowNumberColumn';
+import { getDisplayedParentRowNumbers, getDisplayedRowNumber, getRowNumberGutterWidth } from './RowNumberColumn';
 import { FIRST_COLUMN_EXTRA_PADDING } from './constants';
+import { type TableRow } from './types';
 
 describe('getDisplayedRowNumber', () => {
   it.each([
@@ -26,5 +27,28 @@ describe('getRowNumberGutterWidth', () => {
     expect(getRowNumberGutterWidth(100, 8, true)).toBe(
       getRowNumberGutterWidth(100, 8, false) + FIRST_COLUMN_EXTRA_PADDING
     );
+  });
+});
+
+describe('getDisplayedParentRowNumbers', () => {
+  it('counts only parents in display order and continues from the page start', () => {
+    const rows: TableRow[] = [
+      { __index: 9, __depth: 0 },
+      { __index: 9, __depth: 1 },
+      { __index: 4, __depth: 0 },
+      { __index: 4, __depth: 1 },
+      { __index: 7, __depth: 0 },
+    ];
+    const positions = getDisplayedParentRowNumbers(rows, 26);
+    expect([...positions.entries()]).toEqual([
+      [9, 26],
+      [4, 27],
+      [7, 28],
+    ]);
+  });
+
+  it('returns no positions for an empty or placeholder-only page', () => {
+    expect(getDisplayedParentRowNumbers([]).size).toBe(0);
+    expect(getDisplayedParentRowNumbers([{ __index: 1, __depth: 1 }]).size).toBe(0);
   });
 });
