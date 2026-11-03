@@ -96,8 +96,9 @@ function getMergedSuggestions(frames: DataFrame[], isInstant: boolean): TextSugg
   }
 
   const merged = mergeFrames(frames);
+  const sortField = merged ? getSortField(merged, timeField) : undefined;
 
-  if (!merged || !keepsSeriesNames(frames, merged)) {
+  if (!merged || sortField === undefined || !keepsSeriesNames(frames, merged)) {
     return;
   }
 
@@ -108,7 +109,7 @@ function getMergedSuggestions(frames: DataFrame[], isInstant: boolean): TextSugg
       '{{name}}: adds transformations that merge the series into one table',
       { name: suggestion.name }
     ),
-    transformations: getMergeTransformations(timeField),
+    transformations: getMergeTransformations(sortField),
   }));
 }
 
@@ -158,6 +159,17 @@ function mergeFrames(frames: DataFrame[]): DataFrame | undefined {
 }
 
 /**
+ * The name Sort by will find the time field under. It matches display names, which Merge can leave
+ * different from the field's name, and takes the first match if another field displays the same.
+ */
+function getSortField(merged: DataFrame, timeField: string): string | undefined {
+  const names = merged.fields.map((field) => getFieldDisplayName(field, merged));
+  const name = names[merged.fields.findIndex((field) => field.name === timeField)];
+
+  return names.indexOf(name) === names.lastIndexOf(name) ? name : undefined;
+}
+
+/**
  * Merge drops labels, frame names and display name overrides, so a series named by any of them would
  * come out called something else. A series read by its index could also come to show another series'
  * value, as the index moves when an earlier series is missing from a later query.
@@ -186,12 +198,12 @@ function keepsSeriesNames(frames: DataFrame[], merged: DataFrame): boolean {
   return true;
 }
 
-function getMergeTransformations(timeField: string): DataTransformerConfig[] {
+function getMergeTransformations(sortField: string): DataTransformerConfig[] {
   return [
     { id: DataTransformerID.merge, options: {} },
     // Merge orders rows by when it first meets each timestamp. A timestamp only a later frame has lands
     // after that frame's newest row, where lastNotNull would read it as the latest value.
-    { id: DataTransformerID.sortBy, options: { sort: [{ field: timeField }] } },
+    { id: DataTransformerID.sortBy, options: { sort: [{ field: sortField }] } },
   ];
 }
 

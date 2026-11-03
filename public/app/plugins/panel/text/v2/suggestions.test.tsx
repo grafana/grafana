@@ -120,10 +120,10 @@ function labelled(name: string, labels: Record<string, string>): DataFrame {
   return toDataFrame({ fields: [time, { name, type: FieldType.number, values: [1, 2, 3], labels }] });
 }
 
-function sampledAt(times: number[], name: string, values: number[]): DataFrame {
+function sampledAt(times: number[], name: string, values: number[], timeConfig = {}): DataFrame {
   return toDataFrame({
     fields: [
-      { ...time, values: times },
+      { ...time, values: times, config: timeConfig },
       { name, type: FieldType.number, values },
     ],
   });
@@ -192,10 +192,14 @@ function renderSuggestion(name: string, frames: DataFrame[], series = frames, re
 }
 
 /** What a panel with this suggestion applied receives for `series`: its transformations' real output. */
-async function appliedData(name: string, frames: DataFrame[], series = frames) {
+function transformedData(name: string, frames: DataFrame[], series = frames) {
   const transformations = suggest(frames)?.find((suggestion) => suggestion.name === name)?.transformations ?? [];
 
-  return withDisplay(await lastValueFrom(transformDataFrame(transformations, series)));
+  return lastValueFrom(transformDataFrame(transformations, series));
+}
+
+async function appliedData(name: string, frames: DataFrame[], series = frames) {
+  return withDisplay(await transformedData(name, frames, series));
 }
 
 async function renderMerged(name: string, frames: DataFrame[], series = frames) {
@@ -275,6 +279,28 @@ describe('textSuggestionsSupplier', () => {
         frames: [
           timeSeries('a', [1, 2, 3], { displayNameFromDS: 'CPU' }),
           timeSeries('b', [1, 2, 3], { displayNameFromDS: 'CPU' }),
+        ],
+      },
+      {
+        name: 'a series displayed under the name of the time field, which Sort by could sort by instead',
+        frames: [timeSeries('a', [1, 2, 3], { displayNameFromDS: 'Time' }), timeSeries('Memory')],
+      },
+      {
+        name: 'a field of another type displayed under the name of the time field, for the same reason',
+        frames: [
+          toDataFrame({
+            fields: [
+              {
+                name: 'up',
+                type: FieldType.boolean,
+                values: [true, false, true],
+                config: { displayNameFromDS: 'Time' },
+              },
+              time,
+              { name: 'CPU', type: FieldType.number, values: [1, 2, 3] },
+            ],
+          }),
+          timeSeries('Memory'),
         ],
       },
       {
@@ -710,6 +736,38 @@ describe('textSuggestionsSupplier', () => {
       ]);
     });
 
+    it('sorts by the name the data source gives the time field, as that is what Sort by matches', () => {
+      const frames = ['CPU', 'Memory'].map((name) =>
+        sampledAt([1000, 2000], name, [1, 2], { displayNameFromDS: 'Timestamp' })
+      );
+
+      expect(suggest(frames)?.map(({ transformations }) => transformations?.[1].options)).toEqual([
+        { sort: [{ field: 'Timestamp' }] },
+        { sort: [{ field: 'Timestamp' }] },
+      ]);
+    });
+
+    it('sorts by the name of a time field renamed by a display name, as Merge drops that', () => {
+      const frames = ['CPU', 'Memory'].map((name) =>
+        sampledAt([1000, 2000], name, [1, 2], { displayName: 'Timestamp' })
+      );
+
+      expect(suggest(frames)?.[0].transformations?.[1].options).toEqual({ sort: [{ field: 'Time' }] });
+    });
+
+    it('offers the same templates without merging again, once a panel has the merged frame', async () => {
+      const merged = await transformedData(SUMMARY, queries());
+
+      expect(merged).toHaveLength(1);
+      expect(suggest(merged)?.map(({ name, transformations }) => [name, transformations])).toEqual([
+        [SUMMARY, undefined],
+        [STATISTICS, undefined],
+      ]);
+      expect(suggest(merged)?.map(({ options }) => options?.content)).toEqual(
+        suggest(queries())?.map(({ options }) => options?.content)
+      );
+    });
+
     it('says that it adds transformations, as a merged suggestion changes the data of the panel', () => {
       expect(suggest(queries())?.map(({ description }) => description)).toEqual([
         'Text - summary: adds transformations that merge the series into one table',
@@ -854,6 +912,47 @@ describe('generated templates', () => {
     const frames = [sampledAt([2000, 3000], 'CPU', [2, 3]), sampledAt([1000, 2000], 'Memory', [10, 20])];
 
     expect(listItems(await renderMerged(SUMMARY, frames))).toEqual(['CPU: 3', 'Memory: 20']);
+  });
+
+  it.each([
+    { name: 'a time field the data source names itself', config: { displayNameFromDS: 'Timestamp' } },
+    { name: 'a time field renamed by a display name', config: { displayName: 'Timestamp' } },
+  ])('render the newest value of a series through $name', async ({ config }) => {
+    const frames = [
+      sampledAt([1000, 3000], 'CPU', [1, 3], config),
+      sampledAt([1000, 2000, 3000], 'Memory', [10, 20, 30], config),
+    ];
+
+    expect(listItems(await renderMerged(SUMMARY, frames))).toEqual(['CPU: 3', 'Memory: 30']);
+  });
+
+  it('render the newest value of a series when the time field is not the first field of its frame', async () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'End', type: FieldType.time, values: [9000, 9001] },
+          { name: 'CPU', type: FieldType.number, values: [1, 3] },
+          { ...time, values: [1000, 3000] },
+        ],
+      }),
+      sampledAt([1000, 2000, 3000], 'Memory', [10, 20, 30]),
+    ];
+
+    expect(suggest(frames)?.[0].transformations?.[1].options).toEqual({ sort: [{ field: 'Time' }] });
+    expect(listItems(await renderMerged(SUMMARY, frames))).toEqual(['CPU: 3', 'Memory: 30']);
+  });
+
+  it('render a merged summary once per row, after a switch to Per row', async () => {
+    const container = renderSuggestion(SUMMARY, queries(), await appliedData(SUMMARY, queries()), RenderMode.PerRow);
+
+    expect(listItems(container)).toEqual([
+      'CPU: 75.0%',
+      'Memory: 65 B',
+      'CPU: 75.0%',
+      'Memory: 65 B',
+      'CPU: 75.0%',
+      'Memory: 65 B',
+    ]);
   });
 
   it('render a series without any value next to a series with one', async () => {
