@@ -167,7 +167,6 @@ To group select panels on a dashboard:
    You can select panels inside an existing grouping, but all selected panels must be in the same row, tab, or grid to group them together.
 
 1. Do one of the following:
-
    - In the sidebar, select **Group into row** or **Group into tab**.
    - Hover your cursor over one of the selected panels and, in the bulk actions tooltip, click **Group into row** or **Group into tab**.
 
