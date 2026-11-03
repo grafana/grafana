@@ -1,6 +1,7 @@
 package nats
 
 import (
+	"cmp"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -45,6 +46,11 @@ type Server struct {
 	server    *natsserver.Server
 	opts      *natsserver.Options
 	discovery *discovery
+
+	// reloadMu serialises ReloadOptions calls; see reload.
+	reloadMu sync.Mutex
+	// clusterTLS is nil unless cluster TLS is configured.
+	clusterTLS *clusterTLSWatcher
 }
 
 func ProvideServer(cfg *setting.Cfg, sqlStore db.DB, reg prometheus.Registerer) (*Server, error) {
@@ -81,6 +87,19 @@ func ProvideServer(cfg *setting.Cfg, sqlStore db.DB, reg prometheus.Registerer) 
 	}
 
 	s.opts = s.serverOptions()
+	if !s.IsDisabled() {
+		if s.cfg.ClientListen {
+			// The client port has no TLS or auth, so it never follows listen_address.
+			s.opts.Host = cmp.Or(s.cfg.ClientListenAddress, "127.0.0.1")
+		} else {
+			restrictToInProcessClients(s.opts)
+		}
+		if s.cfg.ClusterTLS.Enabled() {
+			if err := s.configureClusterTLS(reg); err != nil {
+				return nil, err
+			}
+		}
+	}
 	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(ServerServiceName)
 
 	return s, nil
@@ -133,6 +152,13 @@ func (s *Server) dialOptions() []natsclient.Option {
 }
 
 func (s *Server) running(ctx context.Context) error {
+	if s.clusterTLS != nil {
+		var wg sync.WaitGroup
+		wg.Go(func() { s.clusterTLS.run(ctx) })
+		// Stop reloading before stopping shuts the server down.
+		defer wg.Wait()
+	}
+
 	s.mu.RLock()
 	d := s.discovery
 	s.mu.RUnlock()
@@ -185,6 +211,7 @@ func (s *Server) startEmbeddedServer(_ context.Context) error {
 	if err != nil {
 		return fmt.Errorf("create embedded nats server: %w", err)
 	}
+	server.SetLoggerV2(serverLogger{log: s.log}, false, false, false)
 	server.Start()
 	if !server.ReadyForConnections(10 * time.Second) {
 		server.Shutdown()
@@ -208,7 +235,7 @@ func (s *Server) startEmbeddedServer(_ context.Context) error {
 			newKVPeerStore(s.kv, opts.Cluster.Name),
 			peer{ServerName: opts.ServerName, RouteURL: routeURL},
 			discoveryOptions{
-				baseOpts: opts,
+				reload:   s.setRoutes,
 				interval: s.cfg.DiscoveryInterval,
 				ttl:      s.cfg.DiscoveryTTL,
 			},
@@ -217,7 +244,15 @@ func (s *Server) startEmbeddedServer(_ context.Context) error {
 	s.mu.Unlock()
 
 	s.metrics.embeddedServerUp.Set(1)
-	s.log.Info("started embedded nats server", "client_url", clientURL, "route_url", routeURL)
+	s.log.Info("started embedded nats server", "client_url", clientURL, "client_listen", s.cfg.ClientListen,
+		"route_url", routeURL, "cluster_tls", s.cfg.ClusterTLS.Enabled())
+	if s.cfg.ClientListen {
+		s.log.Warn("nats client port is open without TLS or authentication; anyone who can reach it can publish and subscribe on every subject",
+			"client_url", clientURL)
+	}
+	if s.cfg.TLS.Enabled {
+		s.log.Warn("nats tls_* settings only apply to external NATS servers and are ignored in embedded mode; use cluster_tls_* to secure routes between instances")
+	}
 
 	// Discovery advertises route_url to peers via the shared DB. A loopback route
 	// resolves to the advertising node itself, so peers on other hosts can never
@@ -248,7 +283,6 @@ func (s *Server) serverOptions() *natsserver.Options {
 		ServerName:            defaultServerNamePrefix + randomSuffix(),
 		Host:                  s.cfg.ListenAddress,
 		Port:                  s.cfg.ClientPort,
-		NoLog:                 true,
 		NoSigs:                true,
 		JetStream:             false,
 		NoSystemAccount:       true,
@@ -264,6 +298,25 @@ func (s *Server) serverOptions() *natsserver.Options {
 			NoAdvertise: true,
 		},
 	}
+}
+
+func (s *Server) configureClusterTLS(reg prometheus.Registerer) error {
+	tc, fingerprint, err := loadClusterTLS(s.cfg.ClusterTLS)
+	if err != nil {
+		return err
+	}
+	metrics := newClusterTLSMetrics(reg)
+	metrics.recordReloadSuccess(time.Now())
+	s.opts.Cluster.TLSConfig = tc
+	s.clusterTLS = &clusterTLSWatcher{
+		log:      s.log,
+		metrics:  metrics,
+		cfg:      s.cfg.ClusterTLS,
+		interval: clusterTLSReloadInterval,
+		apply:    s.setClusterTLS,
+		last:     fingerprint,
+	}
+	return nil
 }
 
 func (s *Server) shutdown() {
@@ -296,6 +349,10 @@ func routeURLForServer(cfg setting.NATSSettings, server *natsserver.Server) stri
 	if host == "" || host == "0.0.0.0" || host == "::" {
 		host = "127.0.0.1"
 	}
-	u := url.URL{Scheme: "nats", Host: net.JoinHostPort(host, fmt.Sprintf("%d", addr.Port))}
+	scheme := "nats"
+	if cfg.ClusterTLS.Enabled() {
+		scheme = "tls"
+	}
+	u := url.URL{Scheme: scheme, Host: net.JoinHostPort(host, fmt.Sprintf("%d", addr.Port))}
 	return u.String()
 }
