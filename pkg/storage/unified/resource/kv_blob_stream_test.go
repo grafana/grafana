@@ -24,11 +24,9 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestIntegrationKVBlobStreamCallerTransaction(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+func TestKVBlobStreamCallerTransaction(t *testing.T) {
 	for _, commit := range []bool{false, true} {
 		name := "rollback"
 		if commit {
@@ -68,8 +66,7 @@ func TestIntegrationKVBlobStreamCallerTransaction(t *testing.T) {
 	}
 }
 
-func TestIntegrationBulkBlobCallerTransactionInProcess(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+func TestBulkBlobCallerTransactionInProcess(t *testing.T) {
 	backend, db := setupSqlKVWithDB(t)
 	blobs := NewKVBlobSupport(backend).(*kvBlobSupport)
 	bulk := &bulkBlobValidationBackend{}
