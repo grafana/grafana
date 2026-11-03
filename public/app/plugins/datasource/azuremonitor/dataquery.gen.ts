@@ -14,6 +14,10 @@ import * as common from '@grafana/schema';
 
 export interface AzureMonitorQuery extends common.DataQuery {
   /**
+   * Azure Monitor health models sub-query properties.
+   */
+  azureHealthModels?: AzureHealthModelsQuery;
+  /**
    * Azure Monitor Logs sub-query properties.
    */
   azureLogAnalytics?: AzureLogsQuery;
@@ -90,6 +94,7 @@ export const defaultAzureMonitorQuery: Partial<AzureMonitorQuery> = {
  * Defines the supported queryTypes. GrafanaTemplateVariableFn is deprecated
  */
 export enum AzureQueryType {
+  AzureHealthModels = 'Azure Health Models',
   AzureMonitor = 'Azure Monitor',
   AzureResourceGraph = 'Azure Resource Graph',
   AzureTraces = 'Azure Traces',
@@ -285,6 +290,22 @@ export const defaultAzureTracesQuery: Partial<AzureTracesQuery> = {
   resources: [],
   traceTypes: [],
 };
+
+export interface AzureHealthModelsQuery {
+  /**
+   * Full ARM resource ID of the selected Health Model.
+   */
+  healthModelResourceId?: string;
+  /**
+   * Type of health model query to run.
+   */
+  queryType?: AzureHealthModelsQueryType;
+}
+
+export enum AzureHealthModelsQueryType {
+  EntityHealthHistory = 'Entity Health History',
+  EntityHealthSnapshot = 'Entity Health Snapshot',
+}
 
 export interface AzureTracesFilter {
   /**

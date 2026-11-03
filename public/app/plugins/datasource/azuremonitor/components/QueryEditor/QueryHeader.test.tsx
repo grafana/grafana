@@ -1,3 +1,4 @@
+import { OpenFeatureTestProvider } from '@openfeature/react-sdk';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -6,6 +7,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 
 import { AzureQueryType, LogsEditorMode } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
+import { HEALTH_MODELS_FLAG, OPEN_FEATURE_DOMAIN } from '../../featureFlags';
 import createMockQuery from '../../mocks/query';
 import { type AzureMonitorQuery } from '../../types/query';
 import { selectOptionInTest } from '../../utils/testUtils';
@@ -23,14 +25,16 @@ describe('Azure Monitor QueryHeader', () => {
 
   const renderComponent = (query: AzureMonitorQuery, props?: Partial<React.ComponentProps<typeof QueryHeader>>) => {
     return render(
-      <QueryHeader
-        query={query}
-        onQueryChange={props?.onQueryChange ?? jest.fn()}
-        setAzureLogsCheatSheetModalOpen={setAzureLogsCheatSheetModalOpen}
-        data={props?.data}
-        onRunQuery={onRunQuery}
-        app={props?.app}
-      />
+      <OpenFeatureTestProvider domain={OPEN_FEATURE_DOMAIN} flagValueMap={{ [HEALTH_MODELS_FLAG]: false }}>
+        <QueryHeader
+          query={query}
+          onQueryChange={props?.onQueryChange ?? jest.fn()}
+          setAzureLogsCheatSheetModalOpen={setAzureLogsCheatSheetModalOpen}
+          data={props?.data}
+          onRunQuery={onRunQuery}
+          app={props?.app}
+        />
+      </OpenFeatureTestProvider>
     );
   };
 

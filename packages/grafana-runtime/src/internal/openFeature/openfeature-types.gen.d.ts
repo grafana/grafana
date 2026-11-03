@@ -105,6 +105,7 @@ declare module "@openfeature/core" {
     | "alertingMigrationWizardUI"
     | "azureMonitorLogsBuilderEditor"
     | "datasources.azureMonitorBatchAPI"
+    | "grafana-azure-monitor-datasource.health-models"
     | "alertingRuleRecoverDeleted"
     | "unifiedNavbars"
     | "alertingListViewV2PreviewToggle"

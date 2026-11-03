@@ -1,3 +1,4 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { debounce } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 import { useEffectOnce } from 'react-use';
@@ -10,6 +11,7 @@ import { Alert, CodeEditor, Space, TextLink } from '@grafana/ui';
 import { AzureQueryType } from '../../dataquery.gen';
 import type AzureMonitorDatasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
+import { OPEN_FEATURE_DOMAIN } from '../../featureFlags';
 import { type AzureMonitorQuery } from '../../types/query';
 import {
   type AzureMonitorDataSourceJsonData,
@@ -18,6 +20,7 @@ import {
 } from '../../types/types';
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor/ArgQueryEditor';
+import HealthModelsQueryEditor from '../HealthModelsQueryEditor/HealthModelsQueryEditor';
 import { AzureCheatSheetModal } from '../LogsQueryEditor/AzureCheatSheetModal';
 import LogsQueryEditor from '../LogsQueryEditor/LogsQueryEditor';
 import NewMetricsQueryEditor from '../MetricsQueryEditor/MetricsQueryEditor';
@@ -101,14 +104,16 @@ const QueryEditor = ({
         onClose={() => setAzureLogsCheatSheetModalOpen(false)}
         onChange={(a) => onChange({ ...a, queryType: AzureQueryType.LogAnalytics })}
       />
-      <QueryHeader
-        query={query}
-        onQueryChange={onQueryChange}
-        setAzureLogsCheatSheetModalOpen={setAzureLogsCheatSheetModalOpen}
-        onRunQuery={baseOnRunQuery}
-        data={data}
-        app={app}
-      />
+      <OpenFeatureProvider domain={OPEN_FEATURE_DOMAIN}>
+        <QueryHeader
+          query={query}
+          onQueryChange={onQueryChange}
+          setAzureLogsCheatSheetModalOpen={setAzureLogsCheatSheetModalOpen}
+          onRunQuery={baseOnRunQuery}
+          data={data}
+          app={app}
+        />
+      </OpenFeatureProvider>
       <EditorForQueryType
         data={data}
         subscriptionId={subscriptionId}
@@ -216,6 +221,17 @@ const EditorForQueryType = ({
           variableOptionGroup={variableOptionGroup}
           setError={setError}
           range={range}
+        />
+      );
+    case AzureQueryType.AzureHealthModels:
+      return (
+        <HealthModelsQueryEditor
+          subscriptionId={subscriptionId}
+          query={query}
+          datasource={datasource}
+          onChange={onChange}
+          variableOptionGroup={variableOptionGroup}
+          setError={setError}
         />
       );
 

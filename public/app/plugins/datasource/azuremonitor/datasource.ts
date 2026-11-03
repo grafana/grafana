@@ -15,6 +15,7 @@ import {
 } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
+import AzureHealthModelsDatasource from './azure_health_models/azure_health_models_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
@@ -33,6 +34,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
 
   azureMonitorDatasource: AzureMonitorDatasource;
   azureLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
+  azureHealthModelsDatasource: AzureHealthModelsDatasource;
   resourcePickerData: ResourcePickerData;
   azureResourceGraphDatasource: AzureResourceGraphDatasource;
   currentUserAuth: boolean;
@@ -40,7 +42,11 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   defaultSubscriptionId?: string;
 
   pseudoDatasource: {
-    [key in AzureQueryType]?: AzureMonitorDatasource | AzureLogAnalyticsDatasource | AzureResourceGraphDatasource;
+    [key in AzureQueryType]?:
+      | AzureMonitorDatasource
+      | AzureLogAnalyticsDatasource
+      | AzureResourceGraphDatasource
+      | AzureHealthModelsDatasource;
   } = {};
 
   declare optionsKey: Record<AzureQueryType, string>;
@@ -53,6 +59,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
     this.azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
+    this.azureHealthModelsDatasource = new AzureHealthModelsDatasource(instanceSettings);
     this.resourcePickerData = new ResourcePickerData(
       instanceSettings,
       this.azureMonitorDatasource,
@@ -64,6 +71,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
       [AzureQueryType.LogAnalytics]: this.azureLogAnalyticsDatasource,
       [AzureQueryType.AzureResourceGraph]: this.azureResourceGraphDatasource,
       [AzureQueryType.AzureTraces]: this.azureLogAnalyticsDatasource,
+      [AzureQueryType.AzureHealthModels]: this.azureHealthModelsDatasource,
     };
 
     this.variables = new VariableSupport(this);
@@ -250,6 +258,10 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     return this.azureMonitorDatasource.getSubscriptions();
   }
 
+  getHealthModels(subscriptionId: string) {
+    return this.azureHealthModelsDatasource.getHealthModels(subscriptionId);
+  }
+
   /*Azure Log Analytics */
   getAzureLogAnalyticsWorkspaces(subscriptionId: string) {
     return this.azureLogAnalyticsDatasource.getWorkspaces(subscriptionId);
@@ -338,6 +350,9 @@ function hasQueryForType(query: AzureMonitorQuery): boolean {
     case AzureQueryType.AzureTraces:
     case AzureQueryType.TraceExemplar:
       return !!query.azureTraces;
+
+    case AzureQueryType.AzureHealthModels:
+      return false;
 
     case AzureQueryType.GrafanaTemplateVariableFn:
       return !!query.grafanaTemplateVariableFn;

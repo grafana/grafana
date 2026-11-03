@@ -5,6 +5,7 @@ import { Trans, t } from '@grafana/i18n';
 import { EditorHeader, FlexItem, InlineSelect } from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, RadioButtonGroup } from '@grafana/ui';
+import { useHealthModelsFlag } from '../../featureFlags';
 
 import { AzureQueryType, LogsEditorMode } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
@@ -28,6 +29,7 @@ export const QueryHeader = ({
   onRunQuery,
 }: QueryTypeFieldProps) => {
   const isLoading = useMemo(() => data?.state === LoadingState.Loading, [data?.state]);
+  const healthModelsEnabled = useHealthModelsFlag();
 
   const [showModeSwitchWarning, setShowModeSwitchWarning] = useState(false);
   const [pendingModeChange, setPendingModeChange] = useState<LogsEditorMode | null>(null);
@@ -44,6 +46,7 @@ export const QueryHeader = ({
     { value: AzureQueryType.LogAnalytics, label: 'Logs' },
     { value: AzureQueryType.AzureTraces, label: 'Traces' },
     { value: AzureQueryType.AzureResourceGraph, label: 'Azure Resource Graph' },
+    ...(healthModelsEnabled ? [{ value: AzureQueryType.AzureHealthModels, label: 'Health Models' }] : []),
   ];
 
   const handleChange = useCallback(

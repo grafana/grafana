@@ -1689,6 +1689,14 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
+			Name:        "grafana-azure-monitor-datasource.health-models",
+			Description: "Enables health models for the Azure Monitor data source",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaDataSourcesPlugins,
+			Expression:  "false", // disabled by default
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:         "alertingRuleRecoverDeleted",
 			Description:  "Enables the UI functionality to recover and view deleted alert rules",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // changes navtree from the backend

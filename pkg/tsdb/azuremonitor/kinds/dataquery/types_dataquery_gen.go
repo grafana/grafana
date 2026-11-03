@@ -40,6 +40,8 @@ type AzureMonitorQuery struct {
 	AzureResourceGraph *AzureResourceGraphQuery `json:"azureResourceGraph,omitempty"`
 	// Application Insights Traces sub-query properties.
 	AzureTraces *AzureTracesQuery `json:"azureTraces,omitempty"`
+	// Azure Monitor health models sub-query properties.
+	AzureHealthModels *AzureHealthModelsQuery `json:"azureHealthModels,omitempty"`
 	// @deprecated Legacy template variable support.
 	GrafanaTemplateVariableFn *GrafanaTemplateVariableQuery `json:"grafanaTemplateVariableFn,omitempty"`
 	// Resource group used in template variable queries
@@ -478,6 +480,18 @@ func NewAzureTracesFilter() *AzureTracesFilter {
 	}
 }
 
+type AzureHealthModelsQuery struct {
+	// Full ARM resource ID of the selected Health Model.
+	HealthModelResourceId *string `json:"healthModelResourceId,omitempty"`
+	// Type of health model query to run.
+	QueryType *AzureHealthModelsQueryType `json:"queryType,omitempty"`
+}
+
+// NewAzureHealthModelsQuery creates a new AzureHealthModelsQuery object.
+func NewAzureHealthModelsQuery() *AzureHealthModelsQuery {
+	return &AzureHealthModelsQuery{}
+}
+
 type GrafanaTemplateVariableQuery = AppInsightsMetricNameQueryOrAppInsightsGroupByQueryOrSubscriptionsQueryOrResourceGroupsQueryOrResourceNamesQueryOrMetricNamespaceQueryOrMetricDefinitionsQueryOrMetricNamesQueryOrWorkspacesQueryOrUnknownQuery
 
 // NewGrafanaTemplateVariableQuery creates a new GrafanaTemplateVariableQuery object.
@@ -632,6 +646,7 @@ const (
 	AzureQueryTypeLogAnalytics              AzureQueryType = "Azure Log Analytics"
 	AzureQueryTypeAzureResourceGraph        AzureQueryType = "Azure Resource Graph"
 	AzureQueryTypeAzureTraces               AzureQueryType = "Azure Traces"
+	AzureQueryTypeAzureHealthModels         AzureQueryType = "Azure Health Models"
 	AzureQueryTypeSubscriptionsQuery        AzureQueryType = "Azure Subscriptions"
 	AzureQueryTypeResourceGroupsQuery       AzureQueryType = "Azure Resource Groups"
 	AzureQueryTypeNamespacesQuery           AzureQueryType = "Azure Namespaces"
@@ -645,6 +660,13 @@ const (
 	AzureQueryTypeTraceExemplar             AzureQueryType = "traceql"
 	AzureQueryTypeCustomNamespacesQuery     AzureQueryType = "Azure Custom Namespaces"
 	AzureQueryTypeCustomMetricNamesQuery    AzureQueryType = "Azure Custom Metric Names"
+)
+
+type AzureHealthModelsQueryType string
+
+const (
+	AzureHealthModelsQueryTypeEntityHealthSnapshot AzureHealthModelsQueryType = "Entity Health Snapshot"
+	AzureHealthModelsQueryTypeEntityHealthHistory  AzureHealthModelsQueryType = "Entity Health History"
 )
 
 type SelectableValue struct {
