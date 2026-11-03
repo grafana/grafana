@@ -1,6 +1,6 @@
 import { type PropsWithChildren } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { DataSourceApi, DataSourcePlugin, type QueryEditorProps } from '@grafana/data';
 import { setPluginLinksHook } from '@grafana/runtime';
@@ -32,6 +32,11 @@ function StubQueryEditor({ query }: QueryEditorProps<DataSourceApi, DataQuery>) 
 const prometheus = mockDataSource({ uid: 'prom-uid', name: 'Prometheus', isDefault: true }, { alerting: true });
 const otherPrometheus = mockDataSource({ uid: 'prom-2-uid', name: 'Other Prometheus' }, { alerting: true });
 const loki = mockDataSource({ uid: 'loki-uid', name: 'Loki', type: 'loki' }, { alerting: true });
+const SLOW_PLUGIN_ID = 'slow-prometheus';
+const slowPrometheus = mockDataSource(
+  { uid: 'slow-prom-uid', name: 'Slow Prometheus' },
+  { alerting: true, id: SLOW_PLUGIN_ID }
+);
 const nonAlertingDefault = mockDataSource(
   { uid: 'zipkin-uid', name: 'Zipkin', type: 'zipkin', isDefault: true },
   { alerting: false, tracing: true }
@@ -71,15 +76,34 @@ function renderQueryRows(queries: AlertQuery[]) {
   return { ...view, onQueriesChange };
 }
 
+function createPlugin() {
+  return new DataSourcePlugin<DataSourceApi>(TestDataSource).setQueryEditor(StubQueryEditor);
+}
+
+// Holds the slow plugin's code until the test calls the returned function
+function holdSlowPluginImport() {
+  let finishImport!: () => void;
+  const imported = new Promise<void>((resolve) => (finishImport = resolve));
+  setDataSourcePluginImporter(async (meta) => {
+    if (meta.id === SLOW_PLUGIN_ID) {
+      await imported;
+    }
+    return createPlugin();
+  });
+  return finishImport;
+}
+
 beforeAll(() => {
   mockBoundingClientRect();
 });
 
 beforeEach(() => {
-  setupDataSources(prometheus, otherPrometheus, loki);
-  setDataSourcePluginImporter(async () =>
-    new DataSourcePlugin<DataSourceApi>(TestDataSource).setQueryEditor(StubQueryEditor)
-  );
+  setupDataSources(prometheus, otherPrometheus, loki, slowPrometheus);
+  setDataSourcePluginImporter(async () => createPlugin());
+});
+
+afterEach(() => {
+  jest.useRealTimers();
 });
 
 describe('QueryRows', () => {
@@ -177,6 +201,22 @@ describe('QueryRows', () => {
         model: { refId: 'A', hide: false, instant: true, datasource: { type: 'loki', uid: 'loki-uid' } },
       },
     ]);
+  });
+
+  it('shows a skeleton after 300 ms of plugin loading, then replaces it with the query editor', async () => {
+    jest.useFakeTimers();
+    const finishImport = holdSlowPluginImport();
+    renderQueryRows([dataQuery(slowPrometheus.uid)]);
+
+    await act(() => jest.advanceTimersByTimeAsync(299));
+    expect(screen.queryByTestId('alert-query-row-skeleton')).not.toBeInTheDocument();
+
+    await act(() => jest.advanceTimersByTimeAsync(1));
+    expect(screen.getByTestId('alert-query-row-skeleton')).toBeInTheDocument();
+
+    await act(async () => finishImport());
+    expect(await screen.findByText('Query editor for A')).toBeInTheDocument();
+    expect(screen.queryByTestId('alert-query-row-skeleton')).not.toBeInTheDocument();
   });
 });
 

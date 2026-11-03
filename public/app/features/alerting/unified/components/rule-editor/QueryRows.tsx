@@ -24,9 +24,16 @@ import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOp
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { useSlowQuery } from '../../hooks/useSlowQuery';
 import { getInstantFromDataQuery } from '../../utils/rule-form';
 
-import { type AlertQueryOptions, EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
+import {
+  type AlertQueryOptions,
+  EmptyQueryWrapper,
+  QUERY_ROW_LOADING_INDICATOR_DELAY_MS,
+  QueryRowSkeleton,
+  QueryWrapper,
+} from './QueryWrapper';
 import {
   type ThresholdDefinition,
   errorFromCurrentCondition,
@@ -228,14 +235,21 @@ const QueryRowItem = ({
   onSetCondition,
 }: QueryRowItemProps) => {
   const { settings, isLoading } = useDataSourceInstanceSettings(query.datasourceUid);
-
-  if (isLoading) {
-    return null;
-  }
+  const [loadedDataSourceUid, setLoadedDataSourceUid] = useState<string>();
 
   // The hook keeps the settings of the old datasourceUid for one render after it changes
-  if (settings && settings.uid !== query.datasourceUid) {
-    return null;
+  const isLoadingSettings = isLoading || (settings !== undefined && settings.uid !== query.datasourceUid);
+  // One timer for both phases, so the loading indicator does not drop out when the plugin starts to load
+  const isLoadingRow = isLoadingSettings || (settings !== undefined && loadedDataSourceUid !== query.datasourceUid);
+  const isSlow = useSlowQuery(isLoadingRow, { threshold: QUERY_ROW_LOADING_INDICATOR_DELAY_MS });
+  const showLoadingIndicator = isLoadingRow && isSlow;
+
+  if (isLoadingSettings) {
+    return showLoadingIndicator ? (
+      <EmptyQueryWrapper>
+        <QueryRowSkeleton />
+      </EmptyQueryWrapper>
+    ) : null;
   }
 
   if (!settings) {
@@ -271,6 +285,8 @@ const QueryRowItem = ({
       onRunQueries={onRunQueries}
       condition={condition}
       onSetCondition={onSetCondition}
+      onDataSourceLoaded={() => setLoadedDataSourceUid(query.datasourceUid)}
+      showLoadingIndicator={showLoadingIndicator}
     />
   );
 };
