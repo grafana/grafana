@@ -1,7 +1,7 @@
 import { useCallback, useSyncExternalStore } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
 import { Button, Dropdown, Icon, Menu } from '@grafana/ui';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
@@ -41,16 +41,18 @@ export function PanelAdHocChangesAction({ panel }: Props) {
     return null;
   }
 
+  const tooltip = t('panel-adhoc-changes.tooltip', 'This panel has unsaved changes that affect its view');
+
   const button = (
     <Button
       variant="secondary"
       size="sm"
       fill="text"
       icon="eye"
-      tooltip={t('panel-adhoc-changes.tooltip', 'This panel has view changes that are not saved with the dashboard')}
+      tooltip={tooltip}
+      aria-label={tooltip}
       data-testid={selectors.components.Panels.Panel.PanelAdHocChangesHeaderAction}
     >
-      <Trans i18nKey="panel-adhoc-changes.button">Changes to view</Trans>
       <Icon name="angle-down" />
     </Button>
   );

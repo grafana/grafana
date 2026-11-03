@@ -93,7 +93,9 @@ describe('PanelAdHocChangesAction', () => {
 
     addAdHocChange(panel);
 
-    expect(screen.getByTestId(buttonTestId)).toHaveTextContent('Changes to view');
+    expect(screen.getByTestId(buttonTestId)).toHaveAccessibleName(
+      'This panel has unsaved changes that affect its view'
+    );
   });
 
   it('shows the button in view mode when the panel has ad hoc changes', async () => {
@@ -101,7 +103,9 @@ describe('PanelAdHocChangesAction', () => {
 
     addAdHocChange(panel);
 
-    expect(screen.getByTestId(buttonTestId)).toHaveTextContent('Changes to view');
+    expect(screen.getByTestId(buttonTestId)).toHaveAccessibleName(
+      'This panel has unsaved changes that affect its view'
+    );
   });
 
   it('hides the button again when the ad hoc changes are cleared', async () => {

@@ -14017,10 +14017,9 @@
     }
   },
   "panel-adhoc-changes": {
-    "button": "Changes to view",
     "remove-changes": "Remove changes",
     "save-to-dashboard": "Save to dashboard",
-    "tooltip": "This panel has view changes that are not saved with the dashboard",
+    "tooltip": "This panel has unsaved changes that affect its view",
     "undo-title": "Save view changes"
   },
   "panel-data-pane": {
