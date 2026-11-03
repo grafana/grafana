@@ -1,5 +1,6 @@
 import { SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
+import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -105,6 +106,14 @@ describe('getOutlineSettingsTarget', () => {
 
       expect(getOutlineSettingsTarget(dataLayerSet)?.categoryId).toBe(SidebarCategoryType.TabSectionAnnotations);
       expect(getOutlineSettingsTarget(dataLayerSet)?.parent).toBe(tab);
+      expect(tab.getOutlineChildren(true)).not.toContain(dataLayerSet);
+
+      dataLayerSet.addAnnotationLayer(
+        new DashboardAnnotationsDataLayer({
+          name: 'deploys',
+          query: { name: 'deploys', enable: true, iconColor: 'red' },
+        })
+      );
       expect(tab.getOutlineChildren(true)).toContain(dataLayerSet);
     });
 
@@ -117,6 +126,14 @@ describe('getOutlineSettingsTarget', () => {
 
       expect(getOutlineSettingsTarget(dataLayerSet)?.categoryId).toBe(SidebarCategoryType.RowSectionAnnotations);
       expect(getOutlineSettingsTarget(dataLayerSet)?.parent).toBe(row);
+      expect(row.getOutlineChildren(true)).not.toContain(dataLayerSet);
+
+      dataLayerSet.addAnnotationLayer(
+        new DashboardAnnotationsDataLayer({
+          name: 'deploys',
+          query: { name: 'deploys', enable: true, iconColor: 'red' },
+        })
+      );
       expect(row.getOutlineChildren(true)).toContain(dataLayerSet);
     });
   });

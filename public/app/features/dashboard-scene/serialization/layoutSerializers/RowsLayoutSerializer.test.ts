@@ -530,7 +530,7 @@ describe('serialization', () => {
     );
     const emptySpec = serializeRowsLayout(empty).spec as RowsLayoutSpec;
     expect(emptySpec.rows[0].spec.annotations).toBeUndefined();
-    expect(empty.state.rows[0].state.$data).toBeUndefined();
+    expect((empty.state.rows[0].state.$data as DashboardDataLayerSet).state.annotationLayers).toEqual([]);
   });
 
   it('does not create live section layers when loading a snapshot', () => {
@@ -552,7 +552,7 @@ describe('serialization', () => {
     };
 
     const deserialized = deserializeRowsLayout(layout, {}, false, undefined, true);
-    expect(deserialized.state.rows[0].state.$data).toBeUndefined();
+    expect((deserialized.state.rows[0].state.$data as DashboardDataLayerSet).state.annotationLayers).toEqual([]);
   });
 });
 

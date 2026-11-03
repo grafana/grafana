@@ -69,6 +69,14 @@ describe('AnnotationControlsDisplayPicker', () => {
     expect(screen.queryByText('Controls menu')).not.toBeInTheDocument();
   });
 
+  it('shows a tab annotation placed in the controls menu at the top of the tab', () => {
+    const layer = layerOnTab();
+    layer.setState({ placement: 'inControlsMenu' });
+    render(<AnnotationControlsDisplayPicker layer={layer} />);
+
+    expect(screen.getByRole('combobox')).toHaveValue('Top of tab');
+  });
+
   it('keeps controls menu for a dashboard annotation', async () => {
     const user = userEvent.setup();
     render(<AnnotationControlsDisplayPicker layer={layerOnDashboard()} />);

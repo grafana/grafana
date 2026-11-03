@@ -36,9 +36,8 @@ function SectionAnnotationControls({ data }: { data?: SceneObject }) {
 function SectionAnnotationControlsInner({ dataLayerSet }: { dataLayerSet: DashboardDataLayerSet }) {
   const { annotationLayers } = dataLayerSet.useState();
   const styles = useStyles2(getStyles);
-  const visibleLayers = annotationLayers.filter(
-    (layer) => !layer.state.isHidden && layer.state.placement === undefined
-  );
+  // Sections have no controls menu, so layers placed there are shown in the section controls instead
+  const visibleLayers = annotationLayers.filter((layer) => !layer.state.isHidden);
 
   if (visibleLayers.length === 0) {
     return null;

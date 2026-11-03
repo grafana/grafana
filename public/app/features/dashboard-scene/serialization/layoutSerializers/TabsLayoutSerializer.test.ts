@@ -200,7 +200,7 @@ describe('deserialization', () => {
     );
     const emptySerialized = serializeTabsLayout(empty);
     expect(emptySerialized.kind === 'TabsLayout' && emptySerialized.spec.tabs[0].spec.annotations).toBeUndefined();
-    expect(empty.state.tabs[0].state.$data).toBeUndefined();
+    expect((empty.state.tabs[0].state.$data as DashboardDataLayerSet).state.annotationLayers).toEqual([]);
   });
 
   it('does not create live section layers when loading a snapshot', () => {
@@ -226,7 +226,7 @@ describe('deserialization', () => {
       true
     );
 
-    expect(deserialized.state.tabs[0].state.$data).toBeUndefined();
+    expect((deserialized.state.tabs[0].state.$data as DashboardDataLayerSet).state.annotationLayers).toEqual([]);
   });
 });
 

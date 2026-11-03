@@ -160,11 +160,12 @@ export function AnnotationControlsDisplayPicker({ layer }: { layer: AnnotationLa
     if (isHidden) {
       return AnnotationControlsDisplay.Hidden;
     }
-    if (placement === 'inControlsMenu') {
+    // Sections have no controls menu and render such layers in the section controls
+    if (placement === 'inControlsMenu' && !hideControlsMenuOption) {
       return AnnotationControlsDisplay.InControlsMenu;
     }
     return AnnotationControlsDisplay.Visible;
-  }, [isHidden, placement]);
+  }, [hideControlsMenuOption, isHidden, placement]);
 
   return (
     <Field label={t('dashboard.sidebar.annotation.display', 'Show annotation controls in')} noMargin>

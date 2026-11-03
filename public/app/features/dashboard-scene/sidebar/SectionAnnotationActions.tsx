@@ -41,12 +41,9 @@ export function AddSectionAnnotationButton({ sectionOwner }: { sectionOwner: Sce
 }
 
 export async function addSectionAnnotation(sectionOwner: SceneObject): Promise<DashboardAnnotationsDataLayer> {
-  const current = sectionOwner.state.$data;
-  const dataLayerSet =
-    current instanceof DashboardDataLayerSet ? current : new DashboardDataLayerSet({ annotationLayers: [] });
-
-  if (!(current instanceof DashboardDataLayerSet)) {
-    sectionOwner.setState({ $data: dataLayerSet });
+  const dataLayerSet = sectionOwner.state.$data;
+  if (!(dataLayerSet instanceof DashboardDataLayerSet)) {
+    throw new Error('Section has no DashboardDataLayerSet');
   }
 
   const addedObject = await dataLayerSet.createDefaultAnnotationLayer();

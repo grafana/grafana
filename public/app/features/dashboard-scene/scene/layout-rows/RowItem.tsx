@@ -83,6 +83,8 @@ export class RowItem
       title: state?.title ?? t('dashboard.rows-layout.row.new', 'New row'),
       layout: state?.layout ?? AutoGridLayoutManager.createEmpty(),
       conditionalRendering: state?.conditionalRendering ?? ConditionalRenderingGroup.createEmpty(),
+      // Query runners collect data layers when they activate, so a set attached later would not reach panels
+      $data: state?.$data ?? new DashboardDataLayerSet({}),
     });
 
     this.addActivationHandler(() => this._activationHandler());
@@ -117,7 +119,10 @@ export class RowItem
 
   public getOutlineChildren(isEditing?: boolean): SceneObject[] {
     const layoutChildren = this.state.layout.getOutlineChildren();
-    const sectionAnnotations = this.state.$data instanceof DashboardDataLayerSet ? [this.state.$data] : [];
+    const sectionAnnotations =
+      this.state.$data instanceof DashboardDataLayerSet && this.state.$data.state.annotationLayers.length > 0
+        ? [this.state.$data]
+        : [];
 
     if (isEditing && this.state.$variables) {
       return [this.getFiltersSet(), this.state.$variables, ...sectionAnnotations, ...layoutChildren];

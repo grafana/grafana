@@ -1,3 +1,4 @@
+import { arrayToDataFrame, DataTopic, getDefaultTimeRange, LoadingState, type PanelData } from '@grafana/data';
 import {
   dataLayers,
   SceneGridLayout,
@@ -496,6 +497,38 @@ describe('section annotations', () => {
       expect(layer.isActive).toBe(true);
       expect(runLayer).toHaveBeenCalledTimes(1);
       deactivate();
+    });
+
+    it('delivers an annotation added to a section without annotations to its running panels', () => {
+      class EmittingLayer extends DashboardAnnotationsDataLayer {
+        public emit(data: PanelData) {
+          this.publishResults(data);
+        }
+      }
+
+      const runQueries = jest.spyOn(SceneQueryRunner.prototype, 'runQueries').mockImplementation(() => undefined);
+      const runner = new SceneQueryRunner({ queries: [{ refId: 'A' }] });
+      const panel = new VizPanel({ title: 'CPU', pluginId: 'timeseries', $data: runner });
+      const row = new RowItem({ title: 'Row', layout: gridWith(panel) });
+      const dashboard = new DashboardScene({
+        $data: new DashboardDataLayerSet({ annotationLayers: [annotationLayer('dashboard')] }),
+        body: new RowsLayoutManager({ rows: [row] }),
+      });
+      const deactivations = [dashboard.activate(), dashboard.state.body.activate(), row.activate(), runner.activate()];
+
+      const layer = new EmittingLayer({
+        name: 'section',
+        query: { name: 'section', enable: true, iconColor: 'red' },
+      });
+      const set = row.state.$data as DashboardDataLayerSet;
+      set.addAnnotationLayer(layer);
+      const events = arrayToDataFrame([{ time: 1, text: 'deploy' }]);
+      events.meta = { dataTopic: DataTopic.Annotations };
+      layer.emit({ state: LoadingState.Done, series: [events], timeRange: getDefaultTimeRange() });
+
+      expect(runner.state.data?.annotations).toEqual([events]);
+      deactivations.reverse().forEach((deactivate) => deactivate());
+      runQueries.mockRestore();
     });
   });
 });

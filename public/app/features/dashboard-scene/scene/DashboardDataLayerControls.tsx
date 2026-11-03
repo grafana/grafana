@@ -62,8 +62,11 @@ export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDat
   }, [sourceLayer]);
 
   const onClickEditLayerQuery = useCallback(() => {
+    // Query editors suggest variables from the sidebar selection, so select the layer to scope them to its section
+    const dashboard = sceneGraph.getAncestor(sourceLayer, DashboardScene);
+    dashboard.state.sidebar.selectObject(sourceLayer);
     setIsQueryEditorOpen(true);
-  }, []);
+  }, [sourceLayer]);
 
   const onClickDuplicateLayer = useCallback(() => {
     if (sourceLayer instanceof DashboardAnnotationsDataLayer) {

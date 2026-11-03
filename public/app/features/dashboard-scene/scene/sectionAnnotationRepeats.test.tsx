@@ -1,5 +1,4 @@
-import { act, screen, waitFor } from '@testing-library/react';
-import { render } from 'test/test-utils';
+import { act, fireEvent, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { locationService, setPluginLinksHook } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, SceneVariableSet, TestVariable } from '@grafana/scenes';
@@ -12,6 +11,7 @@ import { getRepeatSourceObject } from '../utils/clone';
 import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from './DashboardDataLayerSet';
 import { DashboardScene } from './DashboardScene';
+import { WAIT_FOR_MOUSE_REST_DURATION_MS } from './edit-actions-popover/EditActionsPopover';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
@@ -59,6 +59,7 @@ function setup(kind: 'row' | 'tab') {
 
   const scene = new DashboardScene({
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    $data: new DashboardDataLayerSet({}),
     $variables: new SceneVariableSet({
       variables: [
         new TestVariable({
@@ -166,6 +167,29 @@ describe.each(['row', 'tab'] as const)('section annotations in a repeated %s', (
 
     expect(layersOf(section)[0].state.query.iconColor).toBe('red');
     expect(layersOf(getClone())[0].state.query.iconColor).toBe('red');
+  });
+
+  it('selects the layer when its query editor opens from a section control, so suggestions use its section', async () => {
+    const { scene, section } = await setupRepeated();
+    // Another object is selected, as when editing one row's annotation while a different row is selected
+    act(() => scene.state.sidebar.selectObject(scene));
+
+    const [control] = screen.getAllByText('deploys');
+    jest.useFakeTimers();
+    try {
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      await user.hover(control);
+      act(() => jest.advanceTimersByTime(WAIT_FOR_MOUSE_REST_DURATION_MS));
+    } finally {
+      jest.useRealTimers();
+    }
+
+    // user.click moves the pointer off the control, which closes the hover popover before the click lands
+    fireEvent.click(screen.getByRole('button', { name: 'Edit query' }));
+    // Let the lazily loaded query editor modal and its data source lookups settle
+    await act(async () => {});
+
+    expect(scene.state.sidebar.getSelectedObject()?.state.key).toBe(layersOf(section)[0].state.key);
   });
 
   it('does not add an edit when the modal closes without changes', async () => {
