@@ -100,3 +100,40 @@ func TestIntegrationSlideshows(t *testing.T) {
 		require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
 	})
 }
+
+// With the playlist permissions enforced, access follows the permissions on the requester.
+func TestIntegrationSlideshowsWithPlaylistsRBAC(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction: false,
+		DisableAnonymous:  true,
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+			featuremgmt.FlagPlaylistsRBAC,
+		},
+	})
+
+	gvr := collections.SlideshowResourceInfo.GroupVersionResource()
+	editor := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Editor, GVR: gvr})
+	viewer := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Viewer, GVR: gvr})
+	ctx := context.Background()
+
+	spec := map[string]any{
+		"title":    "Wall",
+		"interval": "5m",
+		"items":    []any{map[string]any{"group": "dashboard.grafana.app", "resource": "dashboards", "name": "cpu"}},
+	}
+
+	// Editors hold playlists:write, viewers only playlists:read.
+	_, err := editor.Resource.Create(ctx, slideshowObject("wall", spec), metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	_, err = viewer.Resource.Get(ctx, "wall", metav1.GetOptions{})
+	require.NoError(t, err)
+
+	_, err = viewer.Resource.Create(ctx, slideshowObject("viewer-made", spec), metav1.CreateOptions{})
+	require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+
+	require.True(t, apierrors.IsForbidden(viewer.Resource.Delete(ctx, "wall", metav1.DeleteOptions{})))
+}

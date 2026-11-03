@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/collections/legacy"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -44,14 +43,13 @@ func RegisterAPIService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	db db.DB,
-	ac accesscontrol.AccessControl,
 	stars star.Service,
 	users user.Service,
 	apiregistration builder.APIRegistrar,
 ) *APIBuilder {
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
-		authorizer: newAuthorizer(ac, log.New("collections.authz")),
+		authorizer: newAuthorizer(log.New("collections.authz")),
 	}
 
 	namespacer := request.GetNamespaceMapper(cfg)

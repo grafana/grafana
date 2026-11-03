@@ -5,6 +5,7 @@ import (
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
@@ -14,8 +15,13 @@ import (
 // newAuthorizer sends slideshow requests to the playlist permissions, because slideshows are
 // shared within an org like playlists. Everything else keeps the per-user ownership rules that
 // stars rely on.
-func newAuthorizer(ac accesscontrol.AccessControl, logger log.Logger) authorizer.Authorizer {
-	slideshows := playlist.NewAuthorizer(ac, logger)
+//
+// The playlist permissions are read from the permissions on the requester, because this builder
+// is constructed without the access control service.
+func newAuthorizer(logger log.Logger) authorizer.Authorizer {
+	slideshows := playlist.NewAuthorizer(func(_ context.Context, user identity.Requester, action string) (bool, error) {
+		return accesscontrol.EvalPermission(action).Evaluate(user.GetPermissions()), nil
+	}, logger)
 	owned := &utils.AuthorizeFromName{
 		AllowOrgAdmin: true,
 		Resource: map[string][]utils.ResourceOwner{
