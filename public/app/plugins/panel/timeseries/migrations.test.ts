@@ -642,26 +642,29 @@ describe('Graph Migrations', () => {
   });
 
   describe('null values', () => {
-    test('nullPointMode = null', () => {
-      const old = {
-        angular: {
-          nullPointMode: 'null',
-        },
-      };
-      const panel = {} as PanelModel;
-      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
-      expect(panel.fieldConfig.defaults.custom.spanNulls).toBeFalsy();
-    });
-    test('nullPointMode = connected', () => {
-      const old = {
-        angular: {
-          nullPointMode: 'connected',
-        },
-      };
-      const panel = {} as PanelModel;
-      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
-      expect(panel.fieldConfig.defaults.custom.spanNulls).toBeTruthy();
-    });
+    // The angular save model stores nullPointMode as a raw string, so these fixtures are string
+    // literals rather than NullValueMode members — the enum drifting from persisted data is a bug.
+    test.each<{ nullPointMode: string | undefined; spanNulls: boolean; nullValueMode: string | undefined }>([
+      { nullPointMode: 'null', spanNulls: false, nullValueMode: 'null' },
+      { nullPointMode: 'connected', spanNulls: true, nullValueMode: 'connected' },
+      { nullPointMode: 'null as zero', spanNulls: false, nullValueMode: 'null as zero' },
+      { nullPointMode: undefined, spanNulls: false, nullValueMode: undefined },
+    ])(
+      'migrates nullPointMode $nullPointMode to spanNulls $spanNulls and nullValueMode $nullValueMode',
+      ({ nullPointMode, spanNulls, nullValueMode }) => {
+        const old = {
+          angular: {
+            nullPointMode,
+          },
+        };
+        const panel = {} as PanelModel;
+        panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+
+        // spanNulls is typed `boolean | number`, where a number is a connect-gaps threshold in ms.
+        expect(panel.fieldConfig.defaults.custom.spanNulls).toBe(spanNulls);
+        expect(panel.fieldConfig.defaults.nullValueMode).toBe(nullValueMode);
+      }
+    );
   });
 
   describe('seriesOverride lines: true', () => {

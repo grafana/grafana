@@ -10,9 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// naturalOrderSnapshot captures each group's natural version priority (highest first) before
+// NaturalOrderSnapshot captures each group's natural version priority (highest first) before
 // applyPreferredAPIVersions reorders the scheme, so the cap ranks against natural order.
-func naturalOrderSnapshot(scheme *runtime.Scheme, groupVersions []schema.GroupVersion) map[string][]string {
+func NaturalOrderSnapshot(scheme *runtime.Scheme, groupVersions []schema.GroupVersion) map[string][]string {
 	order := make(map[string][]string, len(groupVersions))
 	for _, gv := range groupVersions {
 		if _, ok := order[gv.Group]; ok {
@@ -52,7 +52,7 @@ func mergeGroupVersionListSetting(settingName, csvSetting string, layer map[stri
 	if csvSetting == "" {
 		return nil
 	}
-	for _, part := range strings.Split(csvSetting, ",") {
+	for part := range strings.SplitSeq(csvSetting, ",") {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue

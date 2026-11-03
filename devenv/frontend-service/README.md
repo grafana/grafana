@@ -13,17 +13,23 @@ On top of the main Grafana development dependencies, you will need installed:
 - [Docker](https://docs.docker.com/get-started/get-docker/)
 - [Tilt](https://docs.tilt.dev/install.html). At the moment we're not using Kubernetes locally, so you shouldn't need to follow the instructions to install kubectl or kind.
 
-To start the stack, from the root of the Grafana project run `make frontend-service`. Tilt will orchestrate the webpack and docker builds, and then run the services with Docker compose. You can monitor it's progress and see logs with the URL to the Tilt console. Once done, you can access Grafana at `http://localhost:3000`.
+To start the stack, from the root of the Grafana project run `make frontend-service`. Tilt will orchestrate the rspack and docker builds, and then run the services with Docker compose. You can monitor it's progress and see logs with the URL to the Tilt console. Once done, you can access Grafana at `http://localhost:3000`.
 
 Quitting the process will stop the service from running.
 
+### Rebuilding boot.js
+
+Tilt runs an `rspack boot` resource. When a file in `public/boot` changes, that resource rebuilds `public/build/boot.js`. The main rspack watch does not include that entry point.
+
+Hot module replacement is off in this stack on purpose: the CDN serves assets from disk, so the build has to write files instead of holding them in a dev server.
+
 ### Grafana config
 
-The Grafana API and frontend-service containers are configured in two places:
+The Grafana API and frontend-service containers are configured in three places:
 
 - `GF_` environment variables in the docker-compose file. Config specific to this development stack, that should be the same for everyone, is set here.
-
-- `configs/{frontend-service,grafana-api}.local.ini` file is where you can set your own personal config values, such as feature toggles. This file is git-ignored.
+- `configs/grafana-api.local.ini` — git-ignored local config for the backend container. Feature toggles set here resolve to the browser's React `useFlagX` hooks via OFREP.
+- `configs/frontend-service.local.ini` — git-ignored local config for the frontend-service container. Feature toggles set here only affect server-side rendering and legacy bootdata.
 
 ### Frontend Observability (Faro)
 
@@ -62,6 +68,29 @@ To simulate the `/bootdata` endpoint being available, there are special control 
 - `/-/up` - Restores the endpoint to being available.
 
 When unavailable, the API will return `HTTP 503 Service Unavailable` with a JSON payload.
+
+### Gateway `/_/status` endpoint
+
+The nginx proxy mocks the upstream gateway's `/_/status` endpoint (as per ADR 0014 in the hosted gateway), which the frontend polls for ST pod readiness. It always returns `{"status":"active"}` with `Cache-Control: no-store`. Use browser devtools to simulate other states.
+
+| HTTP | Body                       |
+| ---- | -------------------------- |
+| 200  | `{"status":"active"}`      |
+| 200  | `{"status":"starting"}`    |
+| 200  | `{"status":"captcha"}`     |
+| 200  | `{"status":"migrating"}`   |
+| 200  | `{"status":"restoring"}`   |
+| 200  | `{"status":"archiving"}`   |
+| 200  | `{"status":"migrated"}`    |
+| 200  | `{"status":"suspended"}`   |
+| 200  | `{"status":"deleting"}`    |
+| 200  | `{"status":"outdated"}`    |
+| 200  | `{"status":"unavailable"}` |
+| 404  | `{"status":"not_found"}`   |
+| 500  | `{"status":"error"}`       |
+
+> [!NOTE]
+> `starting` and `migrating` responses may include a `Retry-After: <seconds>` header. Non-GET requests return `405` with `Allow: GET`.
 
 ### Leave service running
 

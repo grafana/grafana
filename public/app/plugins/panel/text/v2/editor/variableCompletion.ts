@@ -1,40 +1,47 @@
 import { type VariableSuggestion } from '@grafana/data';
 import {
-  type CodeMirrorCompletion,
   type CodeMirrorCompletionContext,
   type CodeMirrorCompletionResult,
+  createVariableCompletionSource,
 } from '@grafana/ui/unstable';
 
-// A variable being typed at the cursor: `$`, an optional brace, and the name so far.
-const TRIGGER_PATTERN = /\$\{?[\w.]*$/;
+import { getMacroReducers } from '../reducerMacros';
 
-const toCompletion = (suggestion: VariableSuggestion): CodeMirrorCompletion => ({
-  label: `\${${suggestion.value}}`,
-  detail: suggestion.value === suggestion.label ? suggestion.origin : `${suggestion.label} / ${suggestion.origin}`,
-  info: suggestion.documentation,
-  type: 'variable',
-});
+// The reducer id typed so far, after `:reduce:` in a data macro.
+const REDUCER_ID_BEFORE_CURSOR = /(?<=\$\{__data[^}]*:reduce:)\w*$/;
 
 /**
  * Autocompletion source for template and field variables, triggered by `$`.
  *
- * Options insert a full `${...}` reference, so the replaced range starts at the
- * `$`. That `${` prefix would defeat CodeMirror's own matching, hence `filter: false`.
+ * Options are labelled with the reference they insert rather than with the bare
+ * variable name, so the list shows exactly what will land in the document.
  */
 export function variableCompletion(
   suggestions: VariableSuggestion[]
 ): (context: CodeMirrorCompletionContext) => CodeMirrorCompletionResult | null {
-  return (context) => {
-    const word = context.matchBefore(TRIGGER_PATTERN);
-    if (!word) {
-      return null;
-    }
+  return createVariableCompletionSource(suggestions, {
+    toDisplay: (suggestion) => ({
+      label: `\${${suggestion.value}}`,
+      detail: suggestion.value === suggestion.label ? suggestion.origin : `${suggestion.label} / ${suggestion.origin}`,
+    }),
+  });
+}
 
-    const typed = word.text.replace(/^\$\{?/, '').toLowerCase();
-    const matches = typed
-      ? suggestions.filter((s) => s.value.toLowerCase().includes(typed) || s.label.toLowerCase().includes(typed))
-      : suggestions;
+/** Autocompletion for the reducer in `${__data.fields.x:reduce:<id>}`. Replaces only the id. */
+export function reducerCompletion(context: CodeMirrorCompletionContext): CodeMirrorCompletionResult | null {
+  const match = context.matchBefore(REDUCER_ID_BEFORE_CURSOR);
+  if (!match) {
+    return null;
+  }
 
-    return { from: word.from, options: matches.map(toCompletion), filter: false };
+  return {
+    from: match.from,
+    options: getMacroReducers().map((reducer) => ({
+      label: reducer.id,
+      detail: reducer.name,
+      info: reducer.description,
+      type: 'enum',
+    })),
+    validFor: /^\w*$/,
   };
 }

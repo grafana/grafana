@@ -37,7 +37,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
         <div className={styles.firstAlertManagerLine} />
         <div className={styles.alertManagerName}>
           <Trans i18nKey="alerting.rule-form.simple-routing.alertmanager-label">Alertmanager:</Trans>
-          <img src={alertManager.imgUrl} alt="Alert manager logo" className={styles.img} />
+          <img src={alertManager.imgUrl} alt="Alertmanager logo" className={styles.img} />
           {alertManagerName}
         </div>
         <div className={styles.secondAlertManagerLine} />

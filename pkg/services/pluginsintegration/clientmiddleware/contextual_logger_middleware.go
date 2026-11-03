@@ -47,6 +47,11 @@ func (m *ContextualLoggerMiddleware) QueryData(ctx context.Context, req *backend
 	return m.BaseHandler.QueryData(ctx, req)
 }
 
+func (m *ContextualLoggerMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	ctx = instrumentContext(ctx, req.PluginContext)
+	return m.BaseHandler.QueryChunkedData(ctx, req, w)
+}
+
 func (m *ContextualLoggerMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	ctx = instrumentContext(ctx, req.PluginContext)
 	return m.BaseHandler.CallResource(ctx, req, sender)

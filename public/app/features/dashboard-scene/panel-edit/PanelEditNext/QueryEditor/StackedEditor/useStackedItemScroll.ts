@@ -7,9 +7,9 @@ import { getStackedItemKey, getStackedItemsKey, type StackedItem } from './utils
 
 interface UseStackedItemScrollArgs {
   /** The scrollable viewport. scrollIntoView targets the section's nearest scrollable ancestor. */
-  containerRef: RefObject<HTMLDivElement>;
+  containerRef: RefObject<HTMLDivElement | null>;
   /** Wrapper around the sections, observed for size changes as their async editors finish loading. */
-  contentRef: RefObject<HTMLDivElement>;
+  contentRef: RefObject<HTMLDivElement | null>;
   items: readonly StackedItem[];
   /** The currently selected card. While auto-following we keep it pinned to the top of the view. */
   selectedItem: StackedEditorItem | null;

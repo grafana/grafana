@@ -1,7 +1,5 @@
 import { test, expect, type DashboardPage, type DashboardPageArgs, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { importTestDashboard } from '../dashboard-new-layouts/utils';
-
 const DASHBOARD_UID = 'gdev-view-panel-tests';
 
 // Separate user to isolate changes from other tests

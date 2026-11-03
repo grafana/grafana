@@ -134,12 +134,22 @@ func (s *ServiceAccountsProxy) RetrieveServiceAccount(ctx context.Context, query
 		return nil, err
 	}
 
-	if s.isProxyEnabled {
-		sa.IsExternal = serviceaccounts.IsExternalServiceAccount(sa.Login)
-		sa.RequiredBy = strings.ReplaceAll(sa.Name, serviceaccounts.ExtSvcPrefix, "")
-	}
+	s.decorateServiceAccount(sa)
 
 	return sa, nil
+}
+
+func (s *ServiceAccountsProxy) RetrieveServiceAccountsByUIDs(ctx context.Context, orgID int64, uids []string) ([]*serviceaccounts.ServiceAccountProfileDTO, error) {
+	serviceAccounts, err := s.proxiedService.RetrieveServiceAccountsByUIDs(ctx, orgID, uids)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, serviceAccount := range serviceAccounts {
+		s.decorateServiceAccount(serviceAccount)
+	}
+
+	return serviceAccounts, nil
 }
 
 func (s *ServiceAccountsProxy) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
@@ -177,6 +187,13 @@ func (s *ServiceAccountsProxy) SearchOrgServiceAccounts(ctx context.Context, que
 		}
 	}
 	return sa, nil
+}
+
+func (s *ServiceAccountsProxy) decorateServiceAccount(serviceAccount *serviceaccounts.ServiceAccountProfileDTO) {
+	if s.isProxyEnabled {
+		serviceAccount.IsExternal = serviceaccounts.IsExternalServiceAccount(serviceAccount.Login)
+		serviceAccount.RequiredBy = strings.ReplaceAll(serviceAccount.Name, serviceaccounts.ExtSvcPrefix, "")
+	}
 }
 
 func isNameValid(name string) bool {

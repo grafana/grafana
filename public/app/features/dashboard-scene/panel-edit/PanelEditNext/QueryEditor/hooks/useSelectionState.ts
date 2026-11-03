@@ -12,6 +12,20 @@ export interface UseSelectionStateOptions {
   onClearSideEffects?: () => void;
 }
 
+/**
+ * What happens to the bulk (checkbox) selection when the active card moves.
+ *
+ * - `clear` (default): drop it, for a deliberate single-card pick.
+ * - `seed`: replace it with just the newly active card.
+ * - `keep`: leave it — and the range anchors — untouched, for the stacked view where scrolling
+ *   moves the active card as a side effect of navigation rather than a selection change.
+ */
+type BulkSelectionEffect = 'clear' | 'seed' | 'keep';
+
+export interface CardSelectionOptions {
+  bulk?: BulkSelectionEffect;
+}
+
 export interface UseSelectionStateResult {
   activeQueryRefId: string | null;
   activeTransformationId: string | null;
@@ -20,7 +34,7 @@ export interface UseSelectionStateResult {
   onCardSelectionChange: (
     queryRefId: string | null,
     transformationId: string | null,
-    options?: { seedBulk?: boolean }
+    options?: CardSelectionOptions
   ) => void;
   trackQueryRename: (originalRefId: string, updatedRefId: string) => void;
   activateQuery: (query: DataQuery | ExpressionQuery) => void;
@@ -147,11 +161,17 @@ export function useSelectionState({
   }, [transformations, activeTransformationId, queries]);
 
   const onCardSelectionChange = useCallback(
-    (queryRefId: string | null, transformationId: string | null, options?: { seedBulk?: boolean }) => {
+    (queryRefId: string | null, transformationId: string | null, options?: CardSelectionOptions) => {
       setActiveQueryRefId(queryRefId);
       setActiveTransformationId(transformationId);
+
+      const bulk = options?.bulk ?? 'clear';
+      if (bulk === 'keep') {
+        return;
+      }
+
       resetSelectionAnchors();
-      if (options?.seedBulk) {
+      if (bulk === 'seed') {
         setSelectedQueryRefIds(queryRefId ? [queryRefId] : []);
         setSelectedTransformationIds(transformationId ? [transformationId] : []);
         queryAnchorRef.current = queryRefId;

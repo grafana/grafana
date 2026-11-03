@@ -81,6 +81,8 @@ export type AzureMonitorDashboardLoadedProps = {
   azure_namespaces_query: number;
   azure_resource_names_query: number;
   azure_metric_names_query: number;
+  azure_dimensions_query: number;
+  azure_dimension_values_query: number;
   azure_workspaces_query: number;
   azure_grafana_template_variable_query: number;
   azure_locations_query: number;
@@ -89,7 +91,7 @@ export type AzureMonitorDashboardLoadedProps = {
 
 /**
  * Fired when a user toggles the Metrics Batch API setting in the datasource
- * config editor (only visible behind the azureMonitorBatchAPI feature toggle).
+ * config editor (only visible behind the datasources.azureMonitorBatchAPI feature flag).
  *
  * This allows answering questions about adoption of the Metrics Batch API:
  * how many datasources enable it, and whether users turn it back off.

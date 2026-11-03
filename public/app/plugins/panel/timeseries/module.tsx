@@ -48,8 +48,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
   .setViewPanelOptions({
     fanout: { enabled: true },
     quickToggles: {
-      optionProperties: ['legend.showLegend'],
-      fieldConfigProperties: ['custom.stacking'],
+      optionProperties: ['legend.showLegend', 'legend.placement'],
+      fieldConfigProperties: ['custom.stacking', 'custom.scaleDistribution'],
     },
   })
   .setDataSupport({ annotations: true, alertStates: true });

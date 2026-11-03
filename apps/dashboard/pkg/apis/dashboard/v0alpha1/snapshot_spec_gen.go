@@ -12,6 +12,8 @@ type SnapshotSpec struct {
 	External *bool `json:"external,omitempty"`
 	// The external URL where the snapshot can be seen
 	ExternalUrl *string `json:"externalUrl,omitempty"`
+	// The server-provided URL for deleting the external snapshot
+	ExternalDeleteUrl *string `json:"externalDeleteUrl,omitempty"`
 	// The URL that created the dashboard originally
 	OriginalUrl *string `json:"originalUrl,omitempty"`
 	// Snapshot creation timestamp

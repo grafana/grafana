@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 
 import { standardTransformersRegistry } from '@grafana/data';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
@@ -10,8 +10,12 @@ import { TransformationTypePicker } from './TransformationTypePicker';
 describe('TransformationTypePicker', () => {
   standardTransformersRegistry.setInit(getStandardTransformers);
 
-  it('renders a search input and the transformation cards', () => {
+  it('renders a search input and the transformation cards', async () => {
     renderWithQueryEditorProvider(<TransformationTypePicker />);
+
+    await act(async () => {
+      await Promise.resolve();
+    });
 
     expect(screen.getByPlaceholderText('Search for transformation')).toBeInTheDocument();
     expect(screen.getByText('Reduce')).toBeInTheDocument();

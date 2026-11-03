@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"context"
 	"embed"
 	"encoding/hex"
 	"errors"
@@ -11,8 +12,11 @@ import (
 	"path/filepath"
 	"syscall"
 
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -29,7 +33,10 @@ type IndexProvider struct {
 	hooksService *hooks.HooksService
 	config       *setting.Cfg
 	license      licensing.Licensing
-	bootScript   template.JS
+	previewCfg   fswebassets.PreviewAssetsConfig
+
+	// bootScript is read at startup so rendering never touches disk.
+	bootScript template.JS
 }
 
 type IndexViewData struct {
@@ -46,6 +53,9 @@ type IndexViewData struct {
 	Assets      dtos.EntryPointAssets // Includes CDN info
 	DefaultUser dtos.CurrentUser
 
+	// Set when Assets come from a preview build (see preview_assets.go).
+	PreviewAssetsFolder string
+
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
 	Nonce string
 
@@ -53,6 +63,9 @@ type IndexViewData struct {
 
 	// Feature flag for image-renderer to check support for binding calls
 	RenderBindingSupported bool
+
+	// Feature flag for selecting the Luxon-backed date-time implementation
+	UseLuxon bool
 
 	// Options for controlling the inclusion and behavior of the Meticulous AI session recorder script.
 	MeticulousAIEnabled                   bool
@@ -67,34 +80,40 @@ type IndexViewData struct {
 	// Feature flag for reducing the usage of Bootdata
 	ReduceBootdataAPI bool
 
-	// Feature flag for the new preferences page
-	NewPreferencesPage bool
-
 	// Feature flag for controlling behaviour of blocking or alerting legacy api usage from the frontend
 	LegacyAPIMode string
+
+	// Feature flag for controlling how the frontend handles reads of the legacy feature toggle map
+	LegacyFeatureToggleMode string
+
+	// ESModuleAssetsEnabled mirrors Assets.ESModule — the template uses it to pick the
+	// matching <script type>.
+	ESModuleAssetsEnabled bool
 }
 
 // Templates setup.
 var (
-	//go:embed *.html
+	//go:embed index.html
 	templatesFS embed.FS
 
 	// templates
-	htmlTemplates = template.Must(template.New("html").Delims("[[", "]]").ParseFS(templatesFS, `*.html`))
+	htmlTemplates = template.Must(template.New("html").Delims("[[", "]]").ParseFS(templatesFS, `index.html`))
 )
 
-func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksService *hooks.HooksService) (*IndexProvider, error) {
+func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksService *hooks.HooksService, previewCfg fswebassets.PreviewAssetsConfig) (*IndexProvider, error) {
 	t := htmlTemplates.Lookup("index.html")
 	if t == nil {
 		return nil, fmt.Errorf("missing index template")
 	}
 
-	bootScriptRaw, err := os.ReadFile(filepath.Join(cfg.StaticRootPath, "build", "boot.js"))
-	if err != nil {
-		return nil, fmt.Errorf("read boot.js: %w", err)
-	}
-
 	logger := logging.DefaultLogger.With("logger", "index-provider")
+
+	bootScriptPath := filepath.Join(cfg.StaticRootPath, webassets.BuildDir, "boot.js")
+	//nolint:gosec
+	rawBootScript, err := os.ReadFile(bootScriptPath)
+	if err != nil {
+		return nil, fmt.Errorf("no boot script found at %s: %w", bootScriptPath, err)
+	}
 
 	// subset of frontend settings needed for the login page
 	// TODO what about enterprise settings here?
@@ -105,8 +124,8 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksServic
 		hooksService: hooksService,
 		config:       cfg,
 		license:      license,
-		//nolint:gosec
-		bootScript: template.JS(bootScriptRaw),
+		previewCfg:   previewCfg,
+		bootScript:   template.JS(rawBootScript), //nolint:gosec
 	}, nil
 }
 
@@ -126,7 +145,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		return
 	}
 
-	assetsManifest, err := fswebassets.GetWebAssets(ctx, p.config, p.license)
+	assetsManifest, previewFolder, err := p.resolveAssets(ctx, request)
 	if err != nil {
 		p.log.Error("unable to get web assets", "err", err)
 		http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
@@ -140,33 +159,36 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 
 	ofClient := openfeature.NewDefaultClient()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
-	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
+	useLuxon, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagDatetimeUseLuxon, false, openfeature.TransactionContext(ctx))
 	meticulousAIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaMeticulousAIMode, "off", openfeature.TransactionContext(ctx))
 	meticulousAIEnabled := meticulousAIMode == "on-prod-env" || meticulousAIMode == "on-dev-env"
 	meticulousAIProductionEnvironmentFlag := meticulousAIMode == "on-prod-env"
 	reduceBootdataAPI := requestConfig.FullFrontendSettings != nil
-	newPreferencesPage, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaNewPreferencesPage, false, openfeature.TransactionContext(ctx))
 	legacyAPIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyAPIHandling, "off", openfeature.TransactionContext(ctx))
+	legacyFeatureToggleMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyFeatureToggleHandling, "off", openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
 		AppTitle:                              "Grafana",
 		AppSubUrl:                             p.config.AppSubURL,
 		IsDevelopmentEnv:                      p.config.Env == setting.Dev,
 		Assets:                                assetsManifest,
+		PreviewAssetsFolder:                   previewFolder,
 		DefaultUser:                           dtos.CurrentUser{},
 		Nonce:                                 reqCtx.RequestNonce,
 		PublicDashboardAccessToken:            reqCtx.PublicDashboardAccessToken,
 		Settings:                              fsSettings,
 		FullSettings:                          requestConfig.FullFrontendSettings, // only populated when FlagFrontendServiceReducedBootDataAPI enabled
 		RenderBindingSupported:                renderBindingSupported,
-		AssetSriChecksEnabled:                 grafanaAssetSriChecks,
+		UseLuxon:                              useLuxon,
+		AssetSriChecksEnabled:                 p.config.AssetSriChecksEnabled,
 		MeticulousAIEnabled:                   meticulousAIEnabled,
 		MeticulousAIRecordingToken:            p.config.MeticulousAIRecordingToken,
 		MeticulousAIProductionEnvironmentFlag: meticulousAIProductionEnvironmentFlag,
 		ReduceBootdataAPI:                     reduceBootdataAPI,
-		NewPreferencesPage:                    newPreferencesPage,
 		BootScript:                            p.bootScript,
 		LegacyAPIMode:                         legacyAPIMode,
+		LegacyFeatureToggleMode:               legacyFeatureToggleMode,
+		ESModuleAssetsEnabled:                 assetsManifest.ESModule,
 	}
 
 	// Check for login_error cookie. Two writers exist:
@@ -210,6 +232,25 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		}
 		panic(fmt.Sprintf("Error rendering index\n %s", err.Error()))
 	}
+}
+
+// resolveAssets returns the preview build's assets when a valid preview cookie is
+// present, falling back to the default assets so a stale cookie can't break the page.
+func (p *IndexProvider) resolveAssets(ctx context.Context, req *http.Request) (dtos.EntryPointAssets, string, error) {
+	// The cookie only takes effect on stacks that have opted in.
+	if p.previewCfg.Active(k8srequest.NamespaceValue(ctx)) {
+		if cookie, err := req.Cookie(previewAssetsCookieName); err == nil && cookie.Value != "" {
+			assets, err := fswebassets.GetPreviewWebAssets(ctx, p.previewCfg, cookie.Value, webassets.BuildDir)
+			if err == nil {
+				p.log.Info("resolved preview assets", "folder", cookie.Value)
+				return assets, cookie.Value, nil
+			}
+			p.log.Warn("unable to load preview assets, falling back to default assets", "folder", cookie.Value, "err", err)
+		}
+	}
+
+	assets, err := fswebassets.GetWebAssets(ctx, p.config, p.license, webassets.BuildDir)
+	return assets, "", err
 }
 
 func (p *IndexProvider) runIndexDataHooks(reqCtx *contextmodel.ReqContext, data *IndexViewData) {

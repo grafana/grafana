@@ -3,19 +3,19 @@ package apikeyimpl
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 type Service struct {
 	store store
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, quotaService quota.Service) (apikey.Service, error) {
+func ProvideService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, quotaService quota.Service) (apikey.Service, error) {
 	s := &Service{
-		store: &sqlStore{db: db},
+		store: &sqlStore{sql: sql},
 	}
 	defaultLimits, err := readQuotaConfig(cfg)
 	if err != nil {

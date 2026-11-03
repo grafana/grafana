@@ -67,6 +67,8 @@ const ui = {
   closeModalButton: byRole('button', { name: /Close/ }),
   existingOnCallIntegrationSelect: (index: number) =>
     byTestId(selectors.pages.Alerting.ContactPointForm.settingsField(`items.${index}.settings.url`)),
+  urlField: (index: number) =>
+    byTestId(selectors.pages.Alerting.ContactPointForm.settingsField(`items.${index}.settings.url`)),
   saveButton: byRole('button', { name: /save contact point/i }),
   slack: {
     recipient: byRole('textbox', { name: /^Recipient/ }),
@@ -153,7 +155,7 @@ describe('GrafanaReceiverForm', () => {
 
   it('handles nested secure fields correctly', async () => {
     const capturedRequests = captureRequests(
-      (req) => req.url.includes('/v0alpha1/namespaces/default/receivers') && req.method === 'POST'
+      (req) => req.url.includes('/v1beta1/namespaces/default/receivers') && req.method === 'POST'
     );
     const { user } = renderWithProvider(<GrafanaReceiverForm />);
     const { type, click } = user;
@@ -324,7 +326,7 @@ describe('GrafanaReceiverForm', () => {
         .build({ id: 'amazon-sns-id', name: contactPointName, metadata: { name: contactPointName } });
 
       const capture = captureRequests(
-        (req) => req.url.includes(`/v0alpha1/namespaces/default/receivers/${contactPoint.id}`) && req.method === 'PUT'
+        (req) => req.url.includes(`/v1beta1/namespaces/default/receivers/${contactPoint.id}`) && req.method === 'PUT'
       );
 
       const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
@@ -599,7 +601,7 @@ describe('GrafanaReceiverForm', () => {
         .build({ id: 'webhook-id', name: contactPointName, metadata: { name: contactPointName } });
 
       const capture = captureRequests(
-        (req) => req.url.includes(`/v0alpha1/namespaces/default/receivers/${contactPoint.id}`) && req.method === 'PUT'
+        (req) => req.url.includes(`/v1beta1/namespaces/default/receivers/${contactPoint.id}`) && req.method === 'PUT'
       );
 
       const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
@@ -648,7 +650,7 @@ describe('GrafanaReceiverForm', () => {
       const savedIntegrations: Array<{ settings: Record<string, unknown> }> = [];
       server.use(
         http.put(
-          '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name',
+          '/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace/receivers/:name',
           async ({ request }) => {
             const body = await request.clone().json();
             savedIntegrations.push(...body.spec.integrations);
@@ -835,7 +837,7 @@ describe('GrafanaReceiverForm', () => {
       // This proves the correct endpoint was called through UI side effects
       server.use(
         http.post<{ namespace: string; name: string }>(
-          '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
+          '/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace/receivers/:name/test',
           ({ params }) => {
             if (params.name !== '-') {
               return HttpResponse.json(
@@ -844,7 +846,7 @@ describe('GrafanaReceiverForm', () => {
               );
             }
             return HttpResponse.json({
-              apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
+              apiVersion: 'notifications.alerting.grafana.app/v1beta1',
               kind: 'CreateReceiverIntegrationTest',
               status: 'success',
               duration: '150ms',
@@ -939,11 +941,11 @@ describe('GrafanaReceiverForm', () => {
       // Use a delayed handler to observe the loading state
       server.use(
         http.post<{ namespace: string; name: string }>(
-          '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
+          '/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace/receivers/:name/test',
           async () => {
             await delay(100);
             return HttpResponse.json({
-              apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
+              apiVersion: 'notifications.alerting.grafana.app/v1beta1',
               kind: 'CreateReceiverIntegrationTest',
               status: 'success',
               duration: '150ms',
@@ -985,10 +987,10 @@ describe('GrafanaReceiverForm', () => {
       const errorMessage = 'Connection refused: unable to reach webhook endpoint';
       server.use(
         http.post<{ namespace: string; name: string }>(
-          '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
+          '/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace/receivers/:name/test',
           () => {
             return HttpResponse.json({
-              apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
+              apiVersion: 'notifications.alerting.grafana.app/v1beta1',
               kind: 'CreateReceiverIntegrationTest',
               status: 'failure',
               duration: '50ms',
@@ -1024,7 +1026,7 @@ describe('GrafanaReceiverForm', () => {
     it('should display error message when K8s API returns HTTP error', async () => {
       server.use(
         http.post<{ namespace: string; name: string }>(
-          '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
+          '/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace/receivers/:name/test',
           () => {
             return HttpResponse.json({ message: 'Internal server error: database connection failed' }, { status: 500 });
           }
@@ -1151,6 +1153,44 @@ describe('GrafanaReceiverForm', () => {
     });
   });
 
+  describe('Protected fields without the modify-protected permission', () => {
+    it('should let the user enter a URL on a newly added integration', async () => {
+      const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
+        .withIntegrations((integrationFactory) => [integrationFactory.webhook().build()])
+        .build({ metadata: { annotations: { 'grafana.com/access/canWrite': 'true' } } });
+
+      const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode />);
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      await user.click(screen.getByRole('button', { name: /add contact point integration/i }));
+      await clickSelectOption(
+        byTestId(selectors.pages.Alerting.ContactPointForm.integrationTypeField('items.1.')).get(),
+        'Webhook'
+      );
+
+      // existing integration stays locked, the one just added must not be
+      expect(within(ui.urlField(0).get()).getByRole('textbox')).toHaveAttribute('readonly');
+      expect(within(ui.urlField(1).get()).getByRole('textbox')).not.toHaveAttribute('readonly');
+    });
+
+    it('should not offer to reset a configured protected secret on an existing integration', async () => {
+      const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
+        .withIntegrations((integrationFactory) => [
+          integrationFactory
+            .webhook()
+            .params({ secureFields: { url: true } })
+            .build(),
+        ])
+        .build({ metadata: { annotations: { 'grafana.com/access/canWrite': 'true' } } });
+
+      renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode />);
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      expect(screen.getByTestId('lock-icon')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Reset' })).not.toBeInTheDocument();
+    });
+  });
+
   describe('with alertingSyncNotifiersApiMigration flag enabled', () => {
     beforeEach(() => {
       config.featureToggles.alertingSyncNotifiersApiMigration = true;
@@ -1194,11 +1234,11 @@ describe('GrafanaReceiverForm', () => {
 
     it('surfaces the backend message and details.causes in the toast on save failure', async () => {
       const capturedRequests = captureRequests(
-        (req) => req.url.includes('/v0alpha1/namespaces/default/receivers') && req.method === 'POST'
+        (req) => req.url.includes('/v1beta1/namespaces/default/receivers') && req.method === 'POST'
       );
 
       server.use(
-        http.post('/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers', () =>
+        http.post('/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace/receivers', () =>
           HttpResponse.json(
             {
               kind: 'Status',
@@ -1251,11 +1291,11 @@ describe('GrafanaReceiverForm', () => {
 
     it('logs 5xx save failures at error level', async () => {
       const capturedRequests = captureRequests(
-        (req) => req.url.includes('/v0alpha1/namespaces/default/receivers') && req.method === 'POST'
+        (req) => req.url.includes('/v1beta1/namespaces/default/receivers') && req.method === 'POST'
       );
 
       server.use(
-        http.post('/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers', () =>
+        http.post('/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace/receivers', () =>
           HttpResponse.json({ message: 'database unavailable' }, { status: 500 })
         )
       );

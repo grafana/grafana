@@ -4,17 +4,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useLocalStorage } from 'react-use';
 
-import {
-  useGetUserPreferencesQuery,
-  usePatchUserPreferencesMutation,
-} from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
 import { useListPreferencesQuery, useUpdatePreferencesMutation } from '@grafana/api-clients/rtkq/preferences/v1';
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
-import { useFlagGrafanaNewPreferencesPage } from '@grafana/runtime/internal';
+import { config, reportInteraction } from '@grafana/runtime';
+import { useFlagGrafanaNavigationInfoArchRefresh } from '@grafana/runtime/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { findNavByUrl } from 'app/core/navtree/utils';
 import { setBookmark } from 'app/core/reducers/navBarTree';
 import { useDispatch, useSelector } from 'app/types/store';
 
@@ -23,9 +20,9 @@ import { contextSrv } from '../../../services/context_srv';
 import { getNavExperimentPayload, reportNavExperimentViewOnce, setNavExperimentVariant } from './navExperiment';
 import {
   enrichWithInteractionTracking,
-  findByUrl,
   getActiveItem,
   getPinnedEntries,
+  HIDDEN_NAV_ITEMS,
   hiddenKey,
   hideItem,
   isHideable,
@@ -39,19 +36,12 @@ import {
 } from './utils';
 
 export const usePinnedItems = () => {
-  const newPrefsEnabled = useFlagGrafanaNewPreferencesPage();
   const k8sPreferences = useListPreferencesQuery(
-    contextSrv.user.isSignedIn && newPrefsEnabled
-      ? { fieldSelector: `metadata.name=user-${contextSrv.user.uid}` }
-      : skipToken
-  );
-  // TODO remove the legacy query once newPrefsEnabled is fully rolled out
-  const legacyPreferences = useGetUserPreferencesQuery(
-    contextSrv.user.isSignedIn && !newPrefsEnabled ? undefined : skipToken
+    contextSrv.user.isSignedIn ? { fieldSelector: `metadata.name=user-${contextSrv.user.uid}` } : skipToken
   );
 
-  const preferences = newPrefsEnabled ? k8sPreferences.data?.items[0]?.spec : legacyPreferences.data;
-  const isLoading = newPrefsEnabled ? k8sPreferences.isLoading : legacyPreferences.isLoading;
+  const preferences = k8sPreferences.data?.items[0]?.spec;
+  const isLoading = k8sPreferences.isLoading;
   const pinnedItems = useMemo(() => preferences?.navbar?.bookmarkUrls || [], [preferences]);
 
   return { pinnedItems, isLoading };
@@ -112,8 +102,6 @@ const usePinning = ({
 } => {
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
-  const newPrefsEnabled = useFlagGrafanaNewPreferencesPage();
-  const [patchPreferences] = usePatchUserPreferencesMutation();
   const [patchPreferencesK8s] = useUpdatePreferencesMutation();
   const { pinnedItems, isLoading } = usePinnedItems();
 
@@ -130,14 +118,12 @@ const usePinning = ({
         onSuccess?.();
         return true;
       };
-      return newPrefsEnabled
-        ? patchPreferencesK8s({
-            name: `user-${contextSrv.user.uid}`,
-            patch: { spec: { navbar: { bookmarkUrls } } },
-          }).then(onResult)
-        : patchPreferences({ patchPrefsCmd: { navbar: { bookmarkUrls } } }).then(onResult);
+      return patchPreferencesK8s({
+        name: `user-${contextSrv.user.uid}`,
+        patch: { spec: { navbar: { bookmarkUrls } } },
+      }).then(onResult);
     },
-    [newPrefsEnabled, patchPreferences, patchPreferencesK8s, notifyApp]
+    [patchPreferencesK8s, notifyApp]
   );
 
   // Local copy of the pinned urls so pin/unpin updates the menu immediately (the patch mutation
@@ -311,6 +297,7 @@ export const useNavCustomization = () => {
   const docked = state.megaMenuDocked;
 
   const customizableMegaMenu = useBooleanFlagValue('grafana.customizableMegaMenu', false);
+  const navigationInfoArchRefresh = useFlagGrafanaNavigationInfoArchRefresh();
   const canCustomise = customizableMegaMenu && contextSrv.isSignedIn;
 
   // A/B experiment instrumentation: with a boolean flag, "treatment" = flag on, "control" = flag
@@ -329,10 +316,16 @@ export const useNavCustomization = () => {
   // Set while the Save (Done) preferences write is in flight, so the control can show a spinner.
   const [isSaving, setIsSaving] = useState(false);
 
-  // Base tree without the items the mega menu never lists directly. When customisation is on, the
-  // dedicated Bookmarks section is also dropped — pinned items are re-presented in the pinned box.
-  const baseItems = navTree.filter(
-    (item) => !NON_MENU_NAV_IDS.has(item.id ?? '') && !(canCustomise && item.id === 'bookmarks')
+  // Apply hard-coded exclusions before resolving pins or edit-mode items so neither can reveal them.
+  // When customisation is on, drop Bookmarks too — pinned items are re-presented in the pinned box.
+  const hiddenNavItems = new Set(
+    [...NON_MENU_NAV_IDS, ...(navigationInfoArchRefresh ? HIDDEN_NAV_ITEMS : [])].map((key) =>
+      // If the key starts with a slash, it means it is a URL so we add the subUrl to it
+      key.startsWith('/') ? `${config.appSubUrl}${key}` : key
+    )
+  );
+  const baseItems = removeHiddenItems(navTree, hiddenNavItems).filter(
+    (item) => !(canCustomise && item.id === 'bookmarks')
   );
 
   const {
@@ -397,7 +390,7 @@ export const useNavCustomization = () => {
     if (bookmarksItem) {
       // Add children to the legacy bookmarks section
       bookmarksItem.children = pinnedItems.reduce<NavModelItem[]>((acc, url) => {
-        const item = findByUrl(navItems, url);
+        const item = findNavByUrl(navItems, (itemUrl) => itemUrl === url);
         if (!item) {
           return acc;
         }

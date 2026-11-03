@@ -83,8 +83,21 @@ type RoleRegistry interface {
 	RegisterFixedRoles(ctx context.Context) error
 }
 
+type UserPermissionsClient interface {
+	GetUserPermissions(ctx context.Context, user identity.Requester, options Options) ([]Permission, error)
+}
+
+type UserPermissionsClientSetter interface {
+	SetUserPermissionsClient(client UserPermissionsClient)
+}
+
+type UserPermissionsEvaluator interface {
+	GetLocalUserPermissions(ctx context.Context, user identity.Requester, options Options) ([]Permission, error)
+}
+
 type Options struct {
-	ReloadCache bool
+	ReloadCache      bool
+	SkipZanzanaCache bool
 }
 
 type SearchOptions struct {

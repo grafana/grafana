@@ -5,7 +5,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceSettings } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
@@ -50,8 +50,8 @@ jest.mock('app/features/manage-dashboards/import/utils/validation', () => ({
   validateUid: jest.fn().mockResolvedValue(true),
 }));
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceSettings: jest.fn(),
 }));
 

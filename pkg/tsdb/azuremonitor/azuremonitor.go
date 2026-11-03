@@ -239,6 +239,22 @@ func (s *Service) getDataSourceFromPluginReq(ctx context.Context, req *backend.Q
 
 func (s *Service) newQueryMux() *datasource.QueryTypeMux {
 	mux := datasource.NewQueryTypeMux()
+	// The SDK's default fallback reports every unmatched query type as a plugin error. A missing
+	// query type means the request was malformed by the caller, so attribute that to downstream.
+	mux.HandleFunc("", func(_ context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+		responses := backend.Responses{}
+		for _, q := range req.Queries {
+			errorSource := backend.ErrorSourcePlugin
+			if q.QueryType == "" {
+				errorSource = backend.ErrorSourceDownstream
+			}
+			responses[q.RefID] = backend.DataResponse{
+				Error:       fmt.Errorf("no handler found for query type '%s'", q.QueryType),
+				ErrorSource: errorSource,
+			}
+		}
+		return &backend.QueryDataResponse{Responses: responses}, nil
+	})
 	for dsType := range s.executors {
 		// Make a copy of the string to keep the reference after the iterator
 		dst := dsType

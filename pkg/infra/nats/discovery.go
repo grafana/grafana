@@ -7,6 +7,7 @@ import (
 	"io"
 	"maps"
 	"net/url"
+	"slices"
 	"sync"
 	"time"
 
@@ -18,6 +19,9 @@ import (
 )
 
 const (
+	// keeps each prune under the KV BatchDelete limit (200 keys).
+	maxPeerDeleteBatch = 199
+
 	// discoveryClusterName scopes peer rows so independent Grafana clusters can
 	// share one DB without cross-wiring meshes; matches Cluster.Name.
 	discoveryClusterName = "grafana"
@@ -56,7 +60,7 @@ type peerRegistry interface {
 type discovery struct {
 	log      log.Logger
 	server   *natsserver.Server
-	baseOpts natsserver.Options
+	reload   func(routes []*url.URL) error
 	registry peerRegistry
 	self     peer
 	interval time.Duration
@@ -71,11 +75,11 @@ type discovery struct {
 	routes map[string]struct{}
 }
 
-// discoveryOptions bundles the embedded server's base options with the
-// discovery loop cadence. baseOpts is the template applyRoutes reloads routes
-// from; interval/ttl fall back to package defaults when non-positive.
+// discoveryOptions bundles how routes reach the embedded server with the
+// discovery loop cadence. reload replaces the server's solicited routes;
+// interval/ttl fall back to package defaults when non-positive.
 type discoveryOptions struct {
-	baseOpts natsserver.Options
+	reload   func(routes []*url.URL) error
 	interval time.Duration
 	ttl      time.Duration
 	metrics  *serverMetrics
@@ -93,7 +97,7 @@ func newDiscovery(logger log.Logger, server *natsserver.Server, registry peerReg
 	d := &discovery{
 		log:      logger,
 		server:   server,
-		baseOpts: opts.baseOpts,
+		reload:   opts.reload,
 		registry: registry,
 		self:     self,
 		interval: interval,
@@ -235,11 +239,7 @@ func (d *discovery) applyRoutes(routes map[string]struct{}) error {
 		urls = append(urls, u)
 	}
 
-	// Reload from a copy: ReloadOptions mutates what it's given, so we keep baseOpts
-	// stable and rebuild Routes from scratch each time.
-	opts := d.baseOpts
-	opts.Routes = urls
-	return d.server.ReloadOptions(&opts)
+	return d.reload(urls)
 }
 
 // deregister removes this node's row so peers stop dialing it immediately instead
@@ -311,10 +311,10 @@ func (s *kvPeerStore) listActive(ctx context.Context, ttl time.Duration) ([]peer
 		}
 		peers = append(peers, peer{ServerName: rec.ServerName, RouteURL: rec.RouteURL})
 	}
-	// Best-effort prune in one round-trip; the active set above already excludes
+	// Best-effort prune; the active set above already excludes
 	// these, so a failed delete just leaves them for the next tick.
-	if len(stale) > 0 {
-		if err := s.kv.BatchDelete(ctx, kv.NATSPeersSection, stale); err != nil {
+	for chunk := range slices.Chunk(stale, maxPeerDeleteBatch) {
+		if err := s.kv.BatchDelete(ctx, kv.NATSPeersSection, chunk); err != nil {
 			return peers, err
 		}
 	}

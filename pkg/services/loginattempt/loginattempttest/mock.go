@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 )
 
-var _ loginattempt.Service = new(MockLoginAttemptService)
+var _ loginattempt.Service = (*MockLoginAttemptService)(nil)
 
 type MockLoginAttemptService struct {
 	AddCalled      bool

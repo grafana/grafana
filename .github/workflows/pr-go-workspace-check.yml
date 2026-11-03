@@ -47,10 +47,21 @@ jobs:
       with:
         persist-credentials: false
 
+    # Runs before Setup Enterprise, so it inspects committed module files rather than
+    # the overlay's local edits.
+    - name: Go modules must not reference grafana-enterprise
+      run: |
+        for mod in go.mod apps/{advisor,dashvalidator,iam,plugins}/go.mod; do
+          if grep -q 'github.com/grafana/grafana-enterprise' "$mod"; then
+            echo "::error file=$mod::$mod references grafana-enterprise. The enterprise overlay adds these lines locally; they must not be committed."
+            exit 1
+          fi
+        done
+
     - name: Get GitHub App token
       if: github.event.pull_request.head.repo.fork == false
       id: get-github-app-token
-      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
       with:
         github_app: grafana-ci-bot
     - name: Setup Enterprise
@@ -71,6 +82,12 @@ jobs:
 
     - name: Check for go mod & workspace changes
       run: |
+        # Drop the local enterprise overlay before checking for genuine module drift.
+        # A committed overlay would already have failed the earlier check.
+        go mod edit -droprequire=github.com/grafana/grafana-enterprise -dropreplace=github.com/grafana/grafana-enterprise
+        for mod in apps/{advisor,dashvalidator,iam,plugins}/go.mod; do
+          go mod edit -dropreplace=github.com/grafana/grafana-enterprise "$mod"
+        done
         if ! git diff --exit-code --quiet -- go.mod go.sum '**/go.mod' '**/go.sum' go.work go.work.sum pkg/extensions/enterprise_imports*.go; then
           echo "Changes detected:"
           git diff -- go.mod go.sum '**/go.mod' '**/go.sum' go.work go.work.sum pkg/extensions/enterprise_imports*.go
@@ -98,7 +115,7 @@ jobs:
     - name: Get GitHub App token
       if: github.event.pull_request.head.repo.fork == false
       id: get-github-app-token
-      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
       with:
         github_app: grafana-ci-bot
     - name: Setup Enterprise
@@ -168,29 +185,3 @@ jobs:
           fi
           exit 1
         fi
-
-  # This is the job that is actually required by rulesets.
-  # We want to only require one job instead of all the individual tests.
-  # Future work also allows us to start skipping some tests based on changed files.
-  required-go-workspace-check:
-    needs:
-      - check-workspace
-      - check-wire
-    # always() is the best function here.
-    # success() || failure() will skip this function if any need is also skipped.
-    # That means conditional jobs will fail the entire requirement check.
-    if: always()
-
-    name: All Go Workspace Checks complete
-    runs-on: ubuntu-arm64-small
-    steps:
-      - name: Check the checks
-        env:
-          NEEDS: ${{ toJson(needs) }}
-        run: |
-          FAILURES="$(echo "$NEEDS" | jq 'with_entries(select(.value.result == "failure")) | map_values(.result)')"
-          echo "$FAILURES"
-          if [ "$(echo "$FAILURES" | jq '. | length')" != "0" ]; then
-            exit 1
-          fi
-          echo "All OK!"

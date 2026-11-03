@@ -74,10 +74,7 @@ func (s *Service) handleUSAScenario(ctx context.Context, req *backend.QueryDataR
 
 		totalFactor := int64(len(usa.States)) * int64(len(usa.Fields))
 		if totalFactor > 0 {
-			maxAllowed := maxUSAResults / totalFactor
-			if maxAllowed < 1 {
-				maxAllowed = 1
-			}
+			maxAllowed := max(maxUSAResults/totalFactor, 1)
 			if usa.maxDataPoints > maxAllowed {
 				usa.maxDataPoints = maxAllowed
 			}

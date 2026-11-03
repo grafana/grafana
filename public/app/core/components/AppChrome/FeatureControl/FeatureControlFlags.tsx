@@ -1,39 +1,18 @@
 import { css } from '@emotion/css';
-import { ClientProviderEvents } from '@openfeature/web-sdk';
-import { useEffect, useState } from 'react';
 
 import type { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { getLocalStorageProvider } from '@grafana/runtime/internal';
 import { Card, Dropdown, Icon, IconButton, Menu, MenuItem, Stack, Text, useStyles2 } from '@grafana/ui';
+import { getPreviewAssetsFolder } from 'app/core/utils/previewAssets';
 
-import { FeatureControlFlag, type FeatureControlFlagProps } from './FeatureControlFlag';
+import { FeatureControlFlag } from './FeatureControlFlag';
 import { useFeatureControlContext } from './FeatureControlProvider';
-
-const compare = new Intl.Collator('en', { sensitivity: 'base', numeric: true }).compare;
-
-type Flag = NonNullable<FeatureControlFlagProps['flag']>;
+import { PreviewAssetsMessage } from './PreviewAssetsMessage';
 
 export const FeatureControlFlags = () => {
-  const { setIsOpen, setIsAccessible } = useFeatureControlContext();
-  const [flags, setFlags] = useState<Flag[]>([]);
+  const { setIsOpen, setIsAccessible, overrides } = useFeatureControlContext();
   const styles = useStyles2(getStyles);
-
-  useEffect(() => {
-    const loadFlags = () => {
-      setFlags(
-        Object.entries(getLocalStorageProvider().getFlags())
-          .map(([key, value]) => ({ key, value }))
-          .sort((a, b) => compare(a.key, b.key))
-      );
-    };
-    loadFlags();
-
-    getLocalStorageProvider().events.addHandler(ClientProviderEvents.ConfigurationChanged, loadFlags);
-    return () => {
-      getLocalStorageProvider().events.removeHandler(ClientProviderEvents.ConfigurationChanged, loadFlags);
-    };
-  }, []);
+  const previewAssetsFolder = getPreviewAssetsFolder();
 
   return (
     <Card noMargin className={styles.card}>
@@ -52,7 +31,7 @@ export const FeatureControlFlags = () => {
                   setIsAccessible(false);
                 }}
                 destructive
-                icon="times"
+                icon="trash-alt"
                 label={t('feature-control.dismiss.label', 'Remove UI and toolbar button')}
                 component={() => (
                   <Text color="secondary" variant="bodySmall" textAlignment="start">
@@ -81,8 +60,10 @@ export const FeatureControlFlags = () => {
         </Trans>
       </Text>
 
+      {previewAssetsFolder && <PreviewAssetsMessage previewAssetsFolder={previewAssetsFolder} />}
+
       <div className={styles.list}>
-        {flags.map((flag) => (
+        {overrides.map((flag) => (
           <FeatureControlFlag key={flag.key} flag={flag} />
         ))}
         <FeatureControlFlag />

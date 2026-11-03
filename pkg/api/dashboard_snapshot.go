@@ -17,45 +17,47 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 // r.Post("/api/snapshots/"
 func (hs *HTTPServer) getCreatedSnapshotHandler() web.Handler {
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesSnapshots) {
-		return hs.CreateDashboardSnapshot
-	}
-
-	// Opt-in backward-compat lever for public-mode external snapshot hosts:
-	// keep accepting unauthenticated pushes on /api/snapshots so old senders
-	// (and new senders without externalSnapshotsK8SAPIPush) can still post to
-	// a migrated external instance. CreateDashboardSnapshot itself branches
-	// to CreateDashboardSnapshotPublic when SnapshotPublicMode is set. Default
-	// off rejects anonymous legacy pushes; flip on during the migration window
-	// and off again once all senders have migrated.
-	//
-	// Not compatible with snapshot dual-write Mode5: in Mode5 unified storage
-	// is the only store, the k8s create API is mandatory, and this bypass
-	// would write to legacy SQL where reads will never find it.
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if hs.Cfg.SnapshotPublicMode &&
-		hs.Features.IsEnabledGlobally(featuremgmt.FlagExternalSnapshotsSupportLegacyAPI) {
-		return hs.CreateDashboardSnapshot
-	}
-
 	namespaceMapper := request.GetNamespaceMapper(hs.Cfg)
-	return func(w http.ResponseWriter, r *http.Request) {
-		requester, err := identity.GetRequester(r.Context())
-		if err != nil || requester == nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			_, _ = w.Write([]byte(`{"message":"Unauthorized"}`))
+	return func(c *contextmodel.ReqContext) {
+		ctx := c.Req.Context()
+		if !snapshotAPIEnabled(ctx) {
+			hs.CreateDashboardSnapshot(c)
 			return
 		}
-		r.URL.Path = "/apis/dashboard.grafana.app/v0alpha1/namespaces/" +
-			namespaceMapper(requester.GetOrgID()) + "/snapshots/create"
-		hs.clientConfigProvider.DirectlyServeHTTP(w, r)
+
+		// Opt-in backward-compat lever for public-mode external snapshot hosts:
+		// keep accepting unauthenticated pushes on /api/snapshots so old senders
+		// (and new senders without externalSnapshotsK8SAPIPush) can still post to
+		// a migrated external instance. CreateDashboardSnapshot itself branches
+		// to CreateDashboardSnapshotPublic when SnapshotPublicMode is set. Default
+		// off rejects anonymous legacy pushes; flip on during the migration window
+		// and off again once all senders have migrated.
+		//
+		// Not compatible with snapshot dual-write Mode5: in Mode5 unified storage
+		// is the only store, the k8s create API is mandatory, and this bypass
+		// would write to legacy SQL where reads will never find it.
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if hs.Cfg.SnapshotPublicMode && hs.Features.IsEnabledGlobally(featuremgmt.FlagExternalSnapshotsSupportLegacyAPI) {
+			hs.CreateDashboardSnapshot(c)
+			return
+		}
+
+		if !c.IsSignedIn {
+			c.JsonApiErr(http.StatusUnauthorized, "Unauthorized", nil)
+			return
+		}
+		c.Req.URL.Path = "/apis/dashboard.grafana.app/v0alpha1/namespaces/" +
+			namespaceMapper(c.GetOrgID()) + "/snapshots/create"
+		// Direct dispatch bypasses the API proxy that normally installs SignedInUser as the requester.
+		req := c.Req.WithContext(identity.WithRequester(ctx, c.SignedInUser))
+		hs.clientConfigProvider.DirectlyServeHTTP(c.Resp, req)
 	}
 }
 
@@ -138,11 +140,35 @@ func (hs *HTTPServer) GetDashboardSnapshot(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "Empty snapshot key", nil)
 	}
 
-	query := &dashboardsnapshots.GetDashboardSnapshotQuery{Key: key}
+	useAPI := snapshotAPIEnabled(c.Req.Context())
+	if useAPI && hs.Cfg.StackID == "" {
+		// Self-managed instances have no stack namespace for public-key lookups.
+		// Consult the resolved mode because a completed migration overrides configuration.
+		// TODO: Enable self-managed unified public reads once public keys have an indexed lookup.
+		mode, err := hs.migrationStatusReader.GetStorageMode(c.Req.Context(), snapshot.SnapshotResourceInfo.GroupResource())
+		if err != nil {
+			return response.Error(http.StatusServiceUnavailable, "Unable to determine snapshot storage mode", err)
+		}
+		if mode != unifiedmigrations.StorageModeLegacy {
+			return response.Error(http.StatusServiceUnavailable, "Self-managed public snapshot reads require legacy storage", nil)
+		}
+		// The default namespace resolves public keys via a cross-namespace LIST,
+		// including background unified reads in Mode 1. Bypass the dual writer.
+		useAPI = false
+	}
 
-	queryResult, err := hs.dashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
-	if err != nil {
-		return response.Err(err)
+	var queryResult *dashboardsnapshots.DashboardSnapshot
+	var err error
+	if useAPI {
+		queryResult, err = hs.getSnapshotFromAPI(c, key)
+		if err != nil {
+			return snapshotAPIError(err)
+		}
+	} else {
+		queryResult, err = hs.dashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), &dashboardsnapshots.GetDashboardSnapshotQuery{Key: key})
+		if err != nil {
+			return response.Err(err)
+		}
 	}
 
 	snapshot := queryResult
@@ -190,6 +216,13 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *contextmodel.ReqCont
 		return response.Error(http.StatusNotFound, "Snapshot not found", nil)
 	}
 
+	// Preserve the explicit legacy opt-in for anonymous public-mode snapshot hosts.
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	legacyPublic := hs.Cfg.SnapshotPublicMode && hs.Features.IsEnabledGlobally(featuremgmt.FlagExternalSnapshotsSupportLegacyAPI)
+	if snapshotAPIEnabled(c.Req.Context()) && !legacyPublic {
+		return hs.deleteSnapshotFromAPI(c, key, true)
+	}
+
 	err := dashboardsnapshots.DeleteWithKey(c.Req.Context(), key, hs.dashboardsnapshotsService)
 	if err != nil {
 		if errors.Is(err, dashboardsnapshots.ErrBaseNotFound) {
@@ -221,6 +254,10 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) respon
 	key := web.Params(c.Req)[":key"]
 	if len(key) == 0 {
 		return response.Error(http.StatusNotFound, "Snapshot not found", nil)
+	}
+
+	if snapshotAPIEnabled(c.Req.Context()) {
+		return hs.deleteSnapshotFromAPI(c, key, false)
 	}
 
 	query := &dashboardsnapshots.GetDashboardSnapshotQuery{Key: key}
@@ -308,9 +345,18 @@ func (hs *HTTPServer) SearchDashboardSnapshots(c *contextmodel.ReqContext) respo
 		SignedInUser: c.SignedInUser,
 	}
 
-	searchQueryResult, err := hs.dashboardsnapshotsService.SearchDashboardSnapshots(c.Req.Context(), &searchQuery)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Search failed", err)
+	var searchQueryResult dashboardsnapshots.DashboardSnapshotsList
+	var err error
+	if snapshotAPIEnabled(c.Req.Context()) {
+		searchQueryResult, err = hs.searchSnapshotsFromAPI(c, query, limit)
+		if err != nil {
+			return snapshotAPIError(err)
+		}
+	} else {
+		searchQueryResult, err = hs.dashboardsnapshotsService.SearchDashboardSnapshots(c.Req.Context(), &searchQuery)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Search failed", err)
+		}
 	}
 
 	dto := make([]*dashboardsnapshots.DashboardSnapshotDTO, len(searchQueryResult))
@@ -390,7 +436,11 @@ type SearchDashboardSnapshotsResponse struct {
 }
 
 // swagger:response getDashboardSnapshotResponse
-type GetDashboardSnapshotResponse DashboardResponse
+type GetDashboardSnapshotResponse struct {
+	// The response message
+	// in: body
+	Body dtos.DashboardFullWithMeta `json:"body"`
+}
 
 // swagger:response getSharingOptionsResponse
 type GetSharingOptionsResponse struct {

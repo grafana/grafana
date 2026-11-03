@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -47,6 +48,18 @@ var (
 	ErrAlertmanagerMultipleExtraConfigsUnsupported = errutil.Conflict("alerting.notifications.alertmanager.multipleExtraConfigsUnsupported").MustTemplate(
 		msgAlertmanagerMultipleExtraConfigsUnsupported,
 		errutil.WithPublic(msgAlertmanagerMultipleExtraConfigsUnsupported),
+	)
+
+	msgAlertmanagerExtraConfigManagedByAutoSync = "extra configuration with identifier {{ .Public.Identifier }} is managed by external alertmanager sync and cannot be modified while sync is active"
+	ErrAlertmanagerExtraConfigManagedByAutoSync = errutil.Conflict("alerting.notifications.alertmanager.extraConfigManagedByAutoSync").MustTemplate(
+		msgAlertmanagerExtraConfigManagedByAutoSync,
+		errutil.WithPublic(msgAlertmanagerExtraConfigManagedByAutoSync),
+	)
+
+	msgAlertmanagerExtraConfigManagedManually = "extra configuration with identifier {{ .Public.Identifier }} was staged manually and will not be overwritten by external alertmanager sync; delete the staged configuration and sync will re-create it"
+	ErrAlertmanagerExtraConfigManagedManually = errutil.Conflict("alerting.notifications.alertmanager.extraConfigManagedManually").MustTemplate(
+		msgAlertmanagerExtraConfigManagedManually,
+		errutil.WithPublic(msgAlertmanagerExtraConfigManagedManually),
 	)
 
 	ErrIdentifierAlreadyExists = errutil.BadRequest("alerting.notifications.alertmanager.identifierAlreadyExists").MustTemplate("identifier [{{ .Public.Identifier }}] already used by existing managed routes",
@@ -105,13 +118,13 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 	// Add managed routes and extra route as managed route to the configuration.
 	// Also add extra inhibition rules to the configuration if extra route exists and doesn't conflict with existing
 	// route
-	prepared.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(prepared.AlertmanagerConfig.Route, prepared.ManagedRoutes)
+	routingTree := WithManagedRoutes(prepared)
 
-	if err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, prepared, onInvalid, moa.featureManager); err != nil {
+	if err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, prepared, routingTree, onInvalid, moa.featureManager); err != nil {
 		return alertingNotify.NotificationsConfiguration{}, err
 	}
 
-	return PostableAPIConfigToNotificationsConfiguration(*prepared, moa.limits)
+	return PostableAPIConfigToNotificationsConfiguration(*prepared, routingTree, moa.limits)
 }
 
 func (moa *MultiOrgAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context, orgId int64) error {
@@ -275,14 +288,14 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to decrypt external configurations: %w", err)
 	}
 
-	alertmanagerConfig := cfg.AlertmanagerConfig
+	apiConfig := PostableApiAlertingConfigToAPI(cfg.AlertmanagerConfig, cfg.SortedTimeIntervals())
 
 	if withAutogen {
 		// We validate the notification settings in a similar way to when we POST.
 		// Otherwise, broken settings (e.g. a receiver that doesn't exist) will cause the config returned here to be
 		// different than the config currently in-use.
 		// TODO: Preferably, we'd be getting the config directly from the in-memory AM so adding the autogen config would not be necessary.
-		err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, cfg, LogInvalidReceivers, moa.featureManager)
+		err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, cfg, apiConfig.Route, LogInvalidReceivers, moa.featureManager)
 		if err != nil {
 			return definitions.GettableUserConfig{}, err
 		}
@@ -291,21 +304,23 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	result := definitions.GettableUserConfig{
 		TemplateFiles: v1.TemplatesToTemplateFiles(cfg.Templates),
 		AlertmanagerConfig: definitions.GettableApiAlertingConfig{
-			Config: PostableApiAlertingConfigToAPI(alertmanagerConfig).Config,
+			Config: apiConfig,
 		},
 		ExtraConfigs: ExtraConfigsToAPI(cfg.ExtraConfigs),
 	}
+	moa.setExtraConfigOrigin(ctx, orgID, result.ExtraConfigs)
 
 	// First we encrypt the secure settings.
 	// This is done to ensure that any secure settings incorrectly stored in Settings are encrypted and moved to
 	// SecureSettings. This can happen if an integration definition is updated to make a field secure.
-	if err := EncryptReceiverConfigSettings(alertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+	receivers := cfg.GetReceivers()
+	if err := EncryptReceiverConfigSettings(receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
 		return moa.Crypto.Encrypt(ctx, payload, secrets.WithoutScope())
 	}); err != nil {
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to encrypt receivers: %w", err)
 	}
 
-	for _, recv := range alertmanagerConfig.Receivers {
+	for _, recv := range receivers {
 		receivers := make([]*definitions.GettableGrafanaReceiver, 0, len(recv.GrafanaManagedReceivers))
 		for _, pr := range recv.GrafanaManagedReceivers {
 			secureFields := make(map[string]bool, len(pr.SecureSettings))
@@ -347,6 +362,50 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	return result, nil
 }
 
+// activeSyncIdentifier returns the identifier sync currently writes to, or "" when sync is off or unconfigured.
+// It returns an error when the identifier cannot be resolved, which is different from "".
+// Keep identifier comparisons behind this helper and isOwnedByActiveSync so the identifier can change in one place.
+func (moa *MultiOrgAlertmanager) activeSyncIdentifier(ctx context.Context, orgID int64) (string, error) {
+	client := openfeature.NewDefaultClient()
+	if !client.Boolean(ctx, featuremgmt.FlagAlertingSyncExternalAlertmanager, false, openfeature.TransactionContext(ctx)) {
+		return "", nil
+	}
+	if moa.externalAMSyncer == nil { // nil in tests that bypass NewMultiOrgAlertmanager
+		return "", nil
+	}
+	uid, _, err := moa.externalAMSyncer.resolveExternalAMUIDForOrg(ctx, orgID)
+	if err != nil {
+		return "", fmt.Errorf("resolve external alertmanager sync identifier: %w", err)
+	}
+	return uid, nil
+}
+
+// isOwnedByActiveSync reports whether sync wrote the config and still writes to its identifier.
+// A config left behind by a changed datasource is not owned by active sync.
+func isOwnedByActiveSync(identifier, managedBy, activeIdentifier string) bool {
+	return activeIdentifier != "" && identifier == activeIdentifier && managedBy == v1.ExtraConfigManagedByAutoSync
+}
+
+func (moa *MultiOrgAlertmanager) setExtraConfigOrigin(ctx context.Context, orgID int64, extraConfigs []definitions.ExtraConfiguration) {
+	if len(extraConfigs) == 0 {
+		return
+	}
+
+	activeIdentifier, err := moa.activeSyncIdentifier(ctx, orgID)
+	if err != nil {
+		// Reads keep working and report manual, as they did before owners were stored.
+		moa.logger.Warn("Failed to resolve external AM sync identifier", "err", err, "org_id", orgID)
+	}
+	for i := range extraConfigs {
+		// Only reads as auto-sync while sync writes to it, so the UI still allows revert otherwise.
+		if isOwnedByActiveSync(extraConfigs[i].Identifier, extraConfigs[i].ManagedBy, activeIdentifier) {
+			extraConfigs[i].ManagedBy = v1.ExtraConfigManagedByAutoSync
+		} else {
+			extraConfigs[i].ManagedBy = v1.ExtraConfigManagedByManual
+		}
+	}
+}
+
 // modifyAndApplyExtraConfiguration is a helper function that loads the current configuration,
 // applies a modification function to the ExtraConfigs, and saves the result.
 // If promote is true, the saved config is immediately promoted into the main Grafana config.
@@ -371,8 +430,7 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 
 	cfg.ExtraConfigs, err = modifyFn(cfg.ExtraConfigs)
 	if err != nil {
-		var grafanaErr errutil.Error
-		if errors.As(err, &grafanaErr) {
+		if _, ok := errors.AsType[errutil.Error](err); ok {
 			return merge.MergeResult{}, err
 		}
 		return merge.MergeResult{}, fmt.Errorf("failed to apply extra configuration: %w", err)
@@ -388,6 +446,15 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 
 	if err = moa.Crypto.DecryptExtraConfigs(ctx, cfg); err != nil {
 		return merge.MergeResult{}, fmt.Errorf("failed to decrypt external configurations: %w", err)
+	}
+
+	if promote {
+		// Configurations stored before strict import validation may carry unknown fields that promotion would drop.
+		for _, c := range cfg.ExtraConfigs {
+			if err := c.ValidateStrict(); err != nil {
+				return merge.MergeResult{}, err
+			}
+		}
 	}
 
 	mergedConfig, mergeResult, err := merge.MergeExtraConfig(ctx, cfg)
@@ -448,6 +515,10 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Cont
 			}
 		}
 
+		if err := checkSyncDoesNotOverwriteManual(configs, extraConfig); err != nil {
+			return nil, err
+		}
+
 		isNew := true
 		for _, c := range configs {
 			if c.Identifier == extraConfig.Identifier {
@@ -481,11 +552,38 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Cont
 	return result, nil
 }
 
+// checkSyncDoesNotOverwriteManual stops sync from overwriting a config that was not written by sync.
+// A config with no recorded owner counts as manual.
+func checkSyncDoesNotOverwriteManual(existing []v1.ExtraConfiguration, incoming v1.ExtraConfiguration) error {
+	if incoming.ManagedBy != v1.ExtraConfigManagedByAutoSync {
+		return nil
+	}
+	for _, c := range existing {
+		if c.Identifier == incoming.Identifier && c.ManagedBy != v1.ExtraConfigManagedByAutoSync {
+			return ErrAlertmanagerExtraConfigManagedManually.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": c.Identifier}})
+		}
+	}
+	return nil
+}
+
 // DeleteExtraConfiguration deletes an ExtraConfiguration by its identifier while preserving the main AlertmanagerConfig.
 func (moa *MultiOrgAlertmanager) DeleteExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz ExtraConfigAuthz, identifier string) error {
+	activeIdentifier, resolveErr := moa.activeSyncIdentifier(ctx, org)
 	modifyFunc := func(configs []v1.ExtraConfiguration) ([]v1.ExtraConfiguration, error) {
 		if err := authz.AuthorizeDelete(ctx, user, identifier); err != nil {
 			return nil, err
+		}
+		for _, c := range configs {
+			if c.Identifier != identifier || c.ManagedBy != v1.ExtraConfigManagedByAutoSync {
+				continue
+			}
+			// Without the active identifier we cannot tell whether sync still writes to this config.
+			if resolveErr != nil {
+				return nil, resolveErr
+			}
+			if isOwnedByActiveSync(c.Identifier, c.ManagedBy, activeIdentifier) {
+				return nil, ErrAlertmanagerExtraConfigManagedByAutoSync.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": identifier}})
+			}
 		}
 		filtered := make([]v1.ExtraConfiguration, 0, len(configs))
 		for _, ec := range configs {
@@ -522,7 +620,7 @@ type provisioningStore interface {
 	SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
 	DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error
 	GetManagerProperties(ctx context.Context, o models.Provisionable, org int64) (utils.ManagerProperties, error)
-	GetManagerPropertiesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]utils.ManagerProperties, error)
+	GetAllManagerProperties(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error)
 	SetManagerProperties(ctx context.Context, o models.Provisionable, org int64, m utils.ManagerProperties) error
 }
 
@@ -557,8 +655,7 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 		config.TemplateFileProvenances[key] = definitions.Provenance(provenance)
 	}
 
-	mt := definitions.MuteTimeInterval{}
-	mtProvs, err := moa.ProvStore.GetProvenances(ctx, org, mt.ResourceType())
+	mtProvs, err := moa.ProvStore.GetProvenances(ctx, org, (&v1.TimeInterval{}).ResourceType())
 	if err != nil {
 		return definitions.GettableUserConfig{}, nil
 	}
@@ -580,13 +677,13 @@ func (moa *MultiOrgAlertmanager) cleanPermissions(ctx context.Context, orgID int
 
 	var errs []error
 	for receiverName := range previousReceiverNames.Difference(newReceiverNames) { // Deleted receivers.
-		if err := moa.receiverResourcePermissions.DeleteResourcePermissions(ctx, orgID, legacy_storage.NameToUid(receiverName)); err != nil {
+		if err := moa.receiverResourcePermissions.DeleteResourcePermissions(ctx, orgID, string(v1.ReceiverUID(receiverName))); err != nil { // TODO: This won't work with static UIDs.
 			errs = append(errs, fmt.Errorf("failed to delete permissions for receiver %s: %w", receiverName, err))
 		}
 	}
 
 	for receiverName := range newReceiverNames.Difference(previousReceiverNames) { // Added receivers.
-		moa.receiverResourcePermissions.SetDefaultPermissions(ctx, orgID, nil, legacy_storage.NameToUid(receiverName))
+		moa.receiverResourcePermissions.SetDefaultPermissions(ctx, orgID, nil, string(v1.ReceiverUID(receiverName))) // TODO: This won't work with static UIDs.
 	}
 
 	return errors.Join(errs...)
@@ -655,7 +752,7 @@ func newSaveAMConfigCmd(cfg string, orgID int64, isDefault bool) *models.SaveAle
 
 // saveAndApplyConfig saves a full legacy configuration blob to the database and applies the configuration to the Alertmanager.
 // This should not be generally used but exists to facilitate operations that rely on the legacy blob config:
-// - Create/Update ExtraConfig, whose storage currently piggybacks on PostableUserConfig.
+// - Create/Update ExtraConfig, whose storage currently piggybacks on the legacy AMConfigDB blob.
 // - Config version history revert, which will eventually need to be replaced with per-resource version history.
 func (moa *MultiOrgAlertmanager) saveAndApplyConfig(ctx context.Context, orgID int64, am Alertmanager, cfg *v1.AMConfigV1) error {
 	moa.alertmanagersMtx.RLock()

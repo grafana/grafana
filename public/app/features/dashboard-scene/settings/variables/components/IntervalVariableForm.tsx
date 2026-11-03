@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { type ChangeEvent, type FormEvent } from 'react';
+import { Fragment, type ChangeEvent, type FormEvent } from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
+import { FieldSet, useStyles2 } from '@grafana/ui';
 
 import { VariableCheckboxField } from './VariableCheckboxField';
 import { VariableLegend } from './VariableLegend';
@@ -16,6 +16,7 @@ interface IntervalVariableFormProps {
   onIntervalsChange: (event: FormEvent<HTMLInputElement>) => void;
   onAutoEnabledChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onAutoMinIntervalChanged: (event: FormEvent<HTMLInputElement>) => void;
+  onAutoMinIntervalBlur?: () => void;
   onAutoCountChanged: (option: SelectableValue) => void;
   autoEnabled: boolean;
   autoMinInterval: string;
@@ -28,6 +29,7 @@ export function IntervalVariableForm({
   onIntervalsChange,
   onAutoEnabledChange,
   onAutoMinIntervalChanged,
+  onAutoMinIntervalBlur,
   onAutoCountChanged,
   autoEnabled,
   autoMinInterval,
@@ -39,11 +41,12 @@ export function IntervalVariableForm({
     value: count,
   }));
   const styles = useStyles2(getStyles);
+  const Wrapper = inline ? Fragment : FieldSet;
 
   const stepCount = STEP_OPTIONS.find((option) => option.value === autoStepCount) ?? STEP_OPTIONS[0];
 
   return (
-    <>
+    <Wrapper>
       {!inline && (
         <VariableLegend>
           <Trans i18nKey="dashboard-scene.interval-variable-form.interval-options">Interval options</Trans>
@@ -94,12 +97,13 @@ export function IntervalVariableForm({
             // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             placeholder="10s"
             onChange={onAutoMinIntervalChanged}
+            onBlur={onAutoMinIntervalBlur}
             width={11}
             testId={selectors.pages.Dashboard.Settings.Variables.Edit.IntervalVariable.minIntervalInput}
           />
         </div>
       )}
-    </>
+    </Wrapper>
   );
 }
 

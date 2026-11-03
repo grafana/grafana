@@ -71,8 +71,9 @@ type TagProvider interface {
 }
 
 type TagListOptions struct {
-	Prefix string
-	Limit  int
+	Prefix   string
+	Contains string
+	Limit    int
 }
 
 type Tag struct {

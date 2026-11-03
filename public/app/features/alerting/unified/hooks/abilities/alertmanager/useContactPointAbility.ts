@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 
 import { getContactPointInUseRoutes, getContactPointInUseRules } from '@grafana/alerting/unstable';
-import { AccessControlAction } from 'app/types/accessControl';
 
 import { useAlertmanager } from '../../../state/AlertmanagerContext';
-import { notificationsPermissions } from '../../../utils/access-control';
+import {
+  externalContactPointPermissions as EXTERNAL_AM_PERMISSIONS,
+  grafanaContactPointPermissions as PERMISSIONS,
+} from '../../../utils/alertmanagerPermissions';
 import {
   type EntityToCheck,
   canDeleteEntity,
@@ -23,36 +25,6 @@ export type ContactPointAbilityParam =
   | { action: ContactPointAction.Delete; context: EntityToCheck }
   | { action: ContactPointAction.Export; context: EntityToCheck }
   | { action: ContactPointAction.Test; context?: EntityToCheck };
-
-/** Permissions for the Grafana-managed alertmanager (internal k8s API). */
-const PERMISSIONS: Record<ContactPointAction, AccessControlAction[]> = {
-  [ContactPointAction.View]: [notificationsPermissions.read.grafana, AccessControlAction.AlertingReceiversRead],
-  [ContactPointAction.Create]: [notificationsPermissions.create.grafana, AccessControlAction.AlertingReceiversCreate],
-  [ContactPointAction.Update]: [notificationsPermissions.update.grafana, AccessControlAction.AlertingReceiversWrite],
-  [ContactPointAction.Delete]: [notificationsPermissions.delete.grafana, AccessControlAction.AlertingReceiversDelete],
-  [ContactPointAction.Export]: [notificationsPermissions.read.grafana, AccessControlAction.AlertingReceiversRead],
-  [ContactPointAction.BulkExport]: [notificationsPermissions.read.grafana, AccessControlAction.AlertingReceiversRead],
-  [ContactPointAction.Test]: [
-    notificationsPermissions.update.grafana, // alert.notifications:write — legacy broad permission
-    AccessControlAction.AlertingReceiversTest, // deprecated specific action, kept for backward compat
-    AccessControlAction.AlertingReceiversTestCreate, // current scoped test action
-  ],
-};
-
-/** Permissions for external alertmanagers (Mimir, Cortex, Vanilla Alertmanager, etc.). */
-const EXTERNAL_AM_PERMISSIONS: Record<ContactPointAction, AccessControlAction[]> = {
-  [ContactPointAction.View]: [notificationsPermissions.read.external],
-  [ContactPointAction.Create]: [notificationsPermissions.create.external],
-  [ContactPointAction.Update]: [notificationsPermissions.update.external],
-  [ContactPointAction.Delete]: [notificationsPermissions.delete.external],
-  [ContactPointAction.Export]: [notificationsPermissions.read.external],
-  [ContactPointAction.BulkExport]: [], // Not applicable — gated by isGrafanaAlertmanager
-  [ContactPointAction.Test]: [], // Not applicable — the k8s test endpoint is Grafana AM only
-};
-
-export const PERMISSIONS_CONTACT_POINTS: AccessControlAction[] = Object.values(PERMISSIONS).flatMap(
-  (permissions) => permissions
-);
 
 /**
  * Global (unscoped) contact point ability check.

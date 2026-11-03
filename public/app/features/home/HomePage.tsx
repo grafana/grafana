@@ -1,197 +1,97 @@
-import { css } from '@emotion/css';
-import { Suspense, useCallback, useEffect, useRef } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 
-import { PageLayoutType, PluginExtensionPoints } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/internal';
-import { t } from '@grafana/i18n';
-import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
-import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
-import { Grid, Stack, useStyles2 } from '@grafana/ui';
-import { Page } from 'app/core/components/Page/Page';
-import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
-import { isOnPrem } from 'app/core/utils/isOnPrem';
+import { OrgRole, PluginExtensionPoints } from '@grafana/data';
+import { renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
+import { ErrorBoundaryAlert, Stack } from '@grafana/ui';
+import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
+import { useStoredString } from 'app/core/hooks/useStored';
+import { contextSrv } from 'app/core/services/context_srv';
 
-import { usePluginBridge } from '../alerting/unified/hooks/usePluginBridge';
-import { SupportedPlugin } from '../alerting/unified/types/pluginBridges';
-
-import { AlertIncidentTabs } from './AlertsIncidents/AlertIncidentTabs';
-import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
-import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
-import { NewsCard } from './AlertsIncidents/NewsCard';
-import { canViewFiringAlerts } from './AlertsIncidents/useFiringAlerts';
+import { AlertIncidentTabs, type AlertIncidentSwitchHandle } from './AlertsIncidents/AlertIncidentTabs';
+import { ALERTS_FILTER_STORAGE_KEY, INCIDENTS_FILTER_STORAGE_KEY } from './AlertsIncidents/filterSelection';
+import { useFiringAlerts } from './AlertsIncidents/useFiringAlerts';
+import { useIncidents } from './AlertsIncidents/useIncidents';
+import { AssistantInputSlot } from './AssistantInputSlot';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
-import { type HomepageTabExtensionProps } from './DashboardTabs/types';
-import { HomePageSkeleton } from './HomePageSkeleton';
-import { HomeSection } from './HomeSection';
+import { HeaderActions } from './HeaderActions';
+import { HomeGrid } from './HomeGrid';
+import { HomePageFrame } from './HomePageFrame';
 import { Overview } from './Overview/Overview';
 import { Recommendations } from './Recommendations/Recommendations';
 import { homepageViewed } from './analytics/main';
-import useHomeGreeting from './useHomeGreeting';
-
-const getEdition = () => {
-  if (!isOnPrem()) {
-    return t('home.home-page.edition.cloud', 'Grafana Cloud');
-  }
-
-  if (config.buildInfo.edition === GrafanaEdition.Enterprise) {
-    return t('home.home-page.edition.enterprise', 'Grafana Enterprise');
-  }
-
-  return t('home.home-page.edition.open-source', 'Grafana');
-};
+import { useHomepageSolutions } from './useHomepageSolutions';
 
 /**
- * Renders nothing; reports a view on mount. Inside a Suspense boundary, React defers
- * the effect until the content is revealed.
+ * Each section owns its loading state, so the shell paints at once. The setup-guide sections come last: arriving
+ * late moves nothing above them.
  */
-function HomepageViewTracker({ onView }: { onView: () => void }) {
-  useEffect(() => {
-    onView();
-  }, [onView]);
-
-  return null;
-}
-
 export default function HomePage() {
-  const styles = useStyles2(getStyles);
-  const greeting = useHomeGreeting();
+  const solutions = useHomepageSolutions();
+  // Onboarding for org members; anonymous or no-org users can't act on it, so skip the sections and their probes.
+  const showSolutions = contextSrv.isSignedIn && contextSrv.user.orgRole !== OrgRole.None;
 
-  const redesignEnabled = useFlagGrafanaGrowthHomepage();
-
-  const { components: assistantComponents, isLoading: isLoadingAssistant } = usePluginComponents({
-    extensionPointId: PluginExtensionPoints.HomepageAssistant,
-  });
-
-  const { components: extraComponents, isLoading: isLoadingExtra } = usePluginComponents({
+  const { components: extraComponents } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.HomepageExtra,
   });
 
-  const { components: tabComponents, isLoading: isLoadingTabs } = usePluginComponents<HomepageTabExtensionProps>({
-    extensionPointId: PluginExtensionPoints.HomepageTabs,
-  });
+  // Persisted filter scopes, one per view; each also drives that view's header pill.
+  const [alertsFilter, setAlertsFilter] = useStoredString(ALERTS_FILTER_STORAGE_KEY, '');
+  const [incidentsFilter, setIncidentsFilter] = useStoredString(INCIDENTS_FILTER_STORAGE_KEY, '');
+  const alertsData = useFiringAlerts(alertsFilter);
+  const incidentsData = useIncidents(incidentsFilter);
+  const alertIncidentRef = useRef<AlertIncidentSwitchHandle | null>(null);
 
-  const irm = usePluginBridge(SupportedPlugin.Irm);
-
-  const isWaitingForTabs = !redesignEnabled && isLoadingTabs;
-  const isWaitingForIRM = !redesignEnabled && irm.loading;
-  const isLoadingExtensions = isLoadingAssistant || isLoadingExtra || isWaitingForTabs || isWaitingForIRM;
-
-  // The impression counts a rendered homepage, never a skeleton: the tracker mounts inside
-  // the Suspense boundary below, so a suspended lazy extension defers it until reveal. The
-  // ref keeps it once per mount (extension loading can flip and remount the boundary's
-  // children; StrictMode replays effects). HomeRoute only mounts HomePage when the unified
-  // homepage actually renders (redirect / home-dashboard branches never reach here).
+  // Once per mount, StrictMode replays included. HomeRoute mounts this only when the unified homepage renders.
   const hasTrackedView = useRef(false);
-  const trackView = useCallback(() => {
+  useEffect(() => {
     if (!hasTrackedView.current) {
       hasTrackedView.current = true;
       homepageViewed();
     }
   }, []);
 
-  // SetupGuide injects assorted sections for Cloud users. Computed once so showExtra matches
-  // what actually renders below.
-  const extraContent = renderLimitedComponents({
-    props: {},
-    components: extraComponents,
-    pluginId: SETUPGUIDE_PLUGIN_ID,
-    wrapper: ({ children }) =>
-      redesignEnabled ? (
-        children
-      ) : (
-        <div className={styles.extra}>
-          <HomeSection>{children}</HomeSection>
-        </div>
-      ),
-  });
-  const showExtra = extraContent !== null;
-  const showAlertsCard = canViewFiringAlerts();
-  const showIRMNewsCard = irm.loading || irm.installed || config.newsFeedEnabled;
-  const skeleton = (
-    <HomePageSkeleton
-      showAlertsCard={showAlertsCard}
-      showIRMNewsCard={showIRMNewsCard}
-      showExtra={showExtra}
-      redesignEnabled={redesignEnabled}
-    />
-  );
-
   return (
-    <Page
-      navId="home"
-      pageNav={{
-        text: greeting,
-        subTitle: t('home.home-page.placeholder', 'Welcome to {{edition}}.', { edition: getEdition() }),
-        hideFromBreadcrumbs: true,
-      }}
-      layout={PageLayoutType.Home}
+    <HomePageFrame
+      actions={
+        <HeaderActions alertsData={alertsData} incidentsData={incidentsData} alertIncidentRef={alertIncidentRef} />
+      }
     >
-      <Page.Contents>
-        {isLoadingExtensions ? (
-          skeleton
-        ) : (
-          <Suspense fallback={skeleton}>
-            <HomepageViewTracker onView={trackView} />
-            <Stack direction="column" gap={2}>
-              {redesignEnabled ? (
-                <>
-                  {renderLimitedComponents({
-                    props: {},
-                    limit: 1,
-                    components: assistantComponents,
-                    pluginId: ASSISTANT_PLUGIN_ID,
-                    wrapper: ({ children }) => (
-                      <div className={styles.extra}>
-                        <HomeSection>{children}</HomeSection>
-                      </div>
-                    ),
-                  })}
+      <Stack direction="column" gap={2}>
+        <AssistantInputSlot />
 
-                  <Recommendations />
-                  <Overview />
+        <HomeGrid columns={2} gap={2}>
+          <ErrorBoundaryAlert boundaryName="home-dashboard-tabs">
+            <DashboardTabs />
+          </ErrorBoundaryAlert>
+          <ErrorBoundaryAlert boundaryName="home-alerts-incidents">
+            <AlertIncidentTabs
+              alertsData={alertsData}
+              incidentsData={incidentsData}
+              alertsFilter={alertsFilter}
+              onAlertsFilterChange={setAlertsFilter}
+              incidentsFilter={incidentsFilter}
+              onIncidentsFilterChange={setIncidentsFilter}
+              switchRef={alertIncidentRef}
+            />
+          </ErrorBoundaryAlert>
+        </HomeGrid>
 
-                  <Grid gap={2} columns={{ xs: 1, md: 2 }}>
-                    {/* Skip the HomepageTabs extension point for the redesign UI */}
-                    <DashboardTabs extensionComponents={[]} />
-                    <AlertIncidentTabs />
-                  </Grid>
-                </>
-              ) : (
-                <>
-                  <HomeSection direction="column" display="flex" gap={2}>
-                    {/* Assistant injects an Assistant-based prompt input when available */}
-                    {renderLimitedComponents({
-                      props: {},
-                      limit: 1,
-                      components: assistantComponents,
-                      pluginId: ASSISTANT_PLUGIN_ID,
-                    })}
-                    <DashboardTabs extensionComponents={tabComponents} />
-                  </HomeSection>
-
-                  <Grid gap={2} columns={{ xs: 1, md: 2 }}>
-                    <FiringAlertsCard />
-                    {irm.installed ? <IncidentsCard /> : config.newsFeedEnabled && <NewsCard />}
-                  </Grid>
-                </>
-              )}
-              {extraContent}
-            </Stack>
-          </Suspense>
+        {showSolutions && (
+          <>
+            <ErrorBoundaryAlert boundaryName="home-recommendations">
+              <Recommendations solutions={solutions} />
+            </ErrorBoundaryAlert>
+            <ErrorBoundaryAlert boundaryName="home-overview">
+              <Overview solutions={solutions.solutions} />
+            </ErrorBoundaryAlert>
+          </>
         )}
-      </Page.Contents>
-    </Page>
+
+        {/* SetupGuide injects assorted sections for Cloud users. */}
+        <Suspense fallback={null}>
+          {renderLimitedComponents({ props: {}, components: extraComponents, pluginId: SETUPGUIDE_PLUGIN_ID })}
+        </Suspense>
+      </Stack>
+    </HomePageFrame>
   );
 }
-
-const getStyles = () => ({
-  extra: css({
-    display: 'contents',
-
-    '> div': {
-      '&:empty': {
-        display: 'none',
-      },
-    },
-  }),
-});

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/notify/webhook"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -150,14 +151,14 @@ func TestExtraAlertmanagerConfig_ToGrafanaTimeIntervals(t *testing.T) {
 
 	times := c.ToGrafanaTimeIntervals()
 	require.Len(t, times, 2)
-	assert.Equal(t, "weekends", times[0].Name)
-	assert.Equal(t, "business-hours", times[1].Name)
+	assert.Equal(t, "weekends", times[0].Title)
+	assert.Equal(t, "business-hours", times[1].Title)
 }
 
 func TestExtraAlertmanagerConfig_ReceiverNameStubs(t *testing.T) {
 	c := ExtraAlertmanagerConfig{
 		Receivers: []config.Receiver{
-			{Name: "recv1", WebhookConfigs: []*config.WebhookConfig{{}}},
+			{Name: "recv1", WebhookConfigs: []*webhook.WebhookConfig{{}}},
 			{Name: "recv2"},
 		},
 	}

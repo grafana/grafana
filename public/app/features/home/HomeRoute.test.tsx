@@ -2,12 +2,12 @@ import { http, HttpResponse } from 'msw';
 import { type ComponentProps } from 'react';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { useMergedPreferencesQuery } from '@grafana/api-clients/rtkq/preferences/v1';
 import { locationService, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import { MERGED_PREFS_URL } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
-import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
 
 import HomeRoute from './HomeRoute';
 import { homepageViewed } from './analytics/main';
@@ -26,12 +26,22 @@ jest.mock('./analytics/main', () => ({
   homepageViewed: jest.fn(),
 }));
 
-jest.mock('app/plugins/panel/news/useNewsFeed');
+// Call through by default so MSW-backed tests keep working; override only for the
+// cached-data-after-error case that is hard to reproduce via the network layer.
+jest.mock('@grafana/api-clients/rtkq/preferences/v1', () => {
+  const actual = jest.requireActual('@grafana/api-clients/rtkq/preferences/v1');
+  return {
+    ...actual,
+    useMergedPreferencesQuery: jest.fn(actual.useMergedPreferencesQuery),
+  };
+});
 
 setBackendSrv(backendSrv);
 setupMockServer();
 
-const useNewsFeedMock = jest.mocked(useNewsFeed);
+const useMergedPreferencesQueryMock = jest.mocked(useMergedPreferencesQuery);
+const actualUseMergedPreferencesQuery = jest.requireActual('@grafana/api-clients/rtkq/preferences/v1')
+  .useMergedPreferencesQuery as typeof useMergedPreferencesQuery;
 
 describe('HomeRoute', () => {
   let probeCallCount = 0;
@@ -47,20 +57,17 @@ describe('HomeRoute', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    useMergedPreferencesQueryMock.mockImplementation(actualUseMergedPreferencesQuery);
     probeCallCount = 0;
     setPluginComponentsHook(() => ({ components: [], isLoading: false }));
-    useNewsFeedMock.mockReturnValue({
-      state: { loading: false, error: undefined, value: undefined },
-      getNews: jest.fn(),
-    });
 
-    // Deny alerting permission so the FiringAlertsCard renders null
+    // Deny alerting permission so the alerts tab is not offered
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
     // Stub endpoints the alerts/incidents cards probe so unhandled requests don't fail the test
     server.use(
       http.get('/api/user/teams', () => HttpResponse.json([])),
       http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () => HttpResponse.json([])),
-      // IncidentsCard checks the IRM/Incident plugins; report them absent so it renders nothing
+      // The incidents and on-call tabs check the IRM/Incident plugins; report them absent so neither is offered
       http.get('/api/plugins/:pluginId/settings', () => HttpResponse.json({ enabled: false }))
     );
   });
@@ -107,12 +114,27 @@ describe('HomeRoute', () => {
     expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
   });
 
-  it('merged endpoint returns 500 → renders dashboard proxy', async () => {
+  it('merged endpoint returns 500 → renders HomePage', async () => {
     server.use(
       http.get(MERGED_PREFS_URL, () => {
         return HttpResponse.json({ message: 'boom' }, { status: 500 });
       })
     );
+
+    render(<HomeRoute {...props} />);
+
+    expect(await screen.findByText(/Welcome to Grafana/i)).toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
+  });
+
+  it('prefs error with cached homeDashboardUID → still renders dashboard proxy', async () => {
+    // Simulate RTK Query keeping previous data after a failed refetch.
+    useMergedPreferencesQueryMock.mockReturnValue({
+      data: { metadata: {}, spec: { homeDashboardUID: 'abc' } },
+      isLoading: false,
+      isError: true,
+      refetch: jest.fn(),
+    } as unknown as ReturnType<typeof useMergedPreferencesQuery>);
 
     render(<HomeRoute {...props} />);
 

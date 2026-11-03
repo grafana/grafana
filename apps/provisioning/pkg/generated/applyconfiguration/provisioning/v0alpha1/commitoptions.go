@@ -21,6 +21,12 @@ type CommitOptionsApplyConfiguration struct {
 	// When true, the Comment field in Save drawers is pre-filled from
 	// SingleResourceMessageTemplate and rendered read-only.
 	EnforceTemplate *bool `json:"enforceTemplate,omitempty"`
+	// Name used as the commit author instead of the user who triggered the
+	// commit. Only valid when signingMethod is unset.
+	AuthorName *string `json:"authorName,omitempty"`
+	// Email used as the commit author instead of the user who triggered the
+	// commit. Only valid when signingMethod is unset.
+	AuthorEmail *string `json:"authorEmail,omitempty"`
 	// Name used as the commit signer. Required for the signing key's identity
 	// to match the commit, which providers need to mark commits as Verified. When
 	// empty, defaults to "Grafana".
@@ -60,6 +66,22 @@ func (b *CommitOptionsApplyConfiguration) WithSingleResourceMessageTemplate(valu
 // If called multiple times, the EnforceTemplate field is set to the value of the last call.
 func (b *CommitOptionsApplyConfiguration) WithEnforceTemplate(value bool) *CommitOptionsApplyConfiguration {
 	b.EnforceTemplate = &value
+	return b
+}
+
+// WithAuthorName sets the AuthorName field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the AuthorName field is set to the value of the last call.
+func (b *CommitOptionsApplyConfiguration) WithAuthorName(value string) *CommitOptionsApplyConfiguration {
+	b.AuthorName = &value
+	return b
+}
+
+// WithAuthorEmail sets the AuthorEmail field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the AuthorEmail field is set to the value of the last call.
+func (b *CommitOptionsApplyConfiguration) WithAuthorEmail(value string) *CommitOptionsApplyConfiguration {
+	b.AuthorEmail = &value
 	return b
 }
 

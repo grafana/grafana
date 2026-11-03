@@ -46,8 +46,19 @@ jest.mock('@grafana/runtime', () => ({
     getList: () => [defaultDatasource, promDatasource],
     getInstanceSettings: (uid: string) => (uid === promDatasource.uid ? promDatasource : defaultDatasource),
   }),
+  getDataSourceInstance: jest.fn(async () => ({
+    ...defaultDatasource,
+    variables: {
+      getType: () => VariableSupportType.Custom,
+      query: jest.fn(),
+      editor: jest.fn().mockImplementation(LegacyVariableQueryEditor),
+    },
+  })),
+  getDataSourceInstanceSettings: jest.fn(async (ref: { uid?: string } | string) => {
+    const uid = typeof ref === 'string' ? ref : ref?.uid;
+    return uid === promDatasource.uid ? promDatasource : defaultDatasource;
+  }),
 }));
-
 const runRequestMock = jest.fn().mockReturnValue(
   of<PanelData>({
     state: LoadingState.Done,

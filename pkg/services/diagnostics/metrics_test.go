@@ -21,7 +21,7 @@ func TestMain(m *testing.M) {
 
 func TestMetricsConcurrentInstancesDoNotLoseIncrements(t *testing.T) {
 	ctx := context.Background()
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	clearDiagnosticsMetrics(t, sqlStore)
 	firstUsage := &usagestats.UsageStatsMock{T: t}
 	secondUsage := &usagestats.UsageStatsMock{T: t}
@@ -31,15 +31,13 @@ func TestMetricsConcurrentInstancesDoNotLoseIncrements(t *testing.T) {
 	const incrementsPerInstance = 20
 	var wg sync.WaitGroup
 	for i := range incrementsPerInstance * 2 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if i%2 == 0 {
 				first.RecordStarted(ctx, ScopeDashboard)
 				return
 			}
 			second.RecordStarted(ctx, ScopeDashboard)
-		}()
+		})
 	}
 	wg.Wait()
 
@@ -86,7 +84,7 @@ func TestMetricsPersistsUsageStatsAfterRequestCancellation(t *testing.T) {
 
 func TestMetricsCountersSurviveRecreation(t *testing.T) {
 	ctx := context.Background()
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	clearDiagnosticsMetrics(t, sqlStore)
 	firstUsage := &usagestats.UsageStatsMock{T: t}
 	first := NewMetrics(sqlStore, firstUsage, prometheus.NewPedanticRegistry())
@@ -116,11 +114,9 @@ func TestMetricsConcurrentIncrementsAreNotLost(t *testing.T) {
 	const increments = 50
 	var wg sync.WaitGroup
 	for range increments {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			metrics.RecordStarted(ctx, ScopeDashboard)
-		}()
+		})
 	}
 	wg.Wait()
 

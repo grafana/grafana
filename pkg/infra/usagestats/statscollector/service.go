@@ -2,6 +2,7 @@ package statscollector
 
 import (
 	"context"
+	"maps"
 	"math/rand"
 	"strings"
 	"time"
@@ -228,9 +229,7 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]any, error
 	}
 
 	featureUsageStats := s.features.GetUsageStats(ctx)
-	for k, v := range featureUsageStats {
-		m[k] = v
-	}
+	maps.Copy(m, featureUsageStats)
 
 	return m, nil
 }
@@ -314,7 +313,7 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 		return false
 	}
 
-	statsResult, err := s.statsService.GetSystemStats(ctx, &stats.GetSystemStatsQuery{})
+	statsResult, err := s.statsService.GetSystemStats(ctx, &stats.GetSystemStatsQuery{SkipProvisionedDashboardCount: true})
 	if err != nil {
 		s.log.Error("Failed to get system stats", "error", err)
 		return false

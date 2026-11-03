@@ -89,8 +89,7 @@ func makeBody(t *testing.T, body string) io.ReadCloser {
 }
 
 func asBadRequestError(t *testing.T, err error) *BadRequestError {
-	var badErr *BadRequestError
-	if errors.As(err, &badErr) {
+	if badErr, ok := errors.AsType[*BadRequestError](err); ok {
 		return badErr
 	}
 	assert.FailNow(t, "Error was not of type BadRequestError")

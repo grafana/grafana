@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "skonfigurowano",
       "reset-symbol-client-secret": "Zresetuj"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "Logi pomocnicze",
+      "description-auxiliary-logs": "Włączenie tej funkcji wiąże się z opłatami Azure Monitor za każde zapytanie w przypadku paneli pulpitu, które wysyłają zapytania do tabel skonfigurowanych dla <2>logów pomocniczych</2>. Logi pomocnicze nie podlegają pod umowy SLA dotyczące czasu reakcji, są przeznaczone wyłącznie do zapytań ad hoc i przeglądania danych oraz nie powinny być używane w przypadku pulpitów wymagających danych w czasie rzeczywistym ani do generowania alertów.",
+      "label-enable-auxiliary-logs": "Włącz logi pomocnicze"
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "Nieprzetworzone zapytanie {{queryDisplayName}}",
       "aria-label-use-query": "Użyj tego przycisku zapytania",
@@ -79,9 +84,9 @@
       "label-enable-basic-logs": "Włącz podstawowe dzienniki"
     },
     "batch-api-toggle": {
-      "aria-label-enable-batch-api": "",
-      "description-batch-api": "",
-      "label-enable-batch-api": ""
+      "aria-label-enable-batch-api": "Interfejs API operacji zbiorczych",
+      "description-batch-api": "Przesyła zapytania do wielu zasobów w ramach jednego żądania, poprawiając wydajność w przypadku dużych pulpitów. Wymaga roli <2>Odczytujący dane monitorowania</2> w zakresie subskrypcji pod adresem <6>metrics.monitor.azure.com</6>. Poza bezpłatnym poziomem mogą <9>zostać naliczone dodatkowe koszty</9>.",
+      "label-enable-batch-api": "Włącz interfejs API operacji zbiorczych"
     },
     "config-editor": {
       "description-additional-settings": "Dodatkowe ustawienia to opcje, które można skonfigurować, aby uzyskać większą kontrolę nad źródłem danych. Obejmują one Secure Socks Proxy, limit czasu żądania i przekazywane pliki cookie.",
@@ -105,7 +110,11 @@
       "load-subscriptions": "Załaduj subskrypcje"
     },
     "dimension-fields": {
-      "aria-label-remove": "Usuń",
+      "aria-label-field": "Pole wymiaru {{position}}",
+      "aria-label-operator": "Operator wymiaru {{position}}",
+      "aria-label-remove": "Usuń wymiar {{position}}",
+      "aria-label-value": "Wartość wymiaru {{position}}",
+      "aria-label-values": "Wartości wymiaru {{position}}",
       "label-dimensions": "Wymiary",
       "placeholder-field": "Pole",
       "placeholder-operation": "Operacja",
@@ -178,19 +187,47 @@
       "tooltip-limit": "Ogranicz liczbę zwracanych wierszy (domyślnie 1000)."
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "Czy na pewno chcesz przełączyć się na logi pomocnicze?",
       "body-basic-logs-queries": "Czy na pewno chcesz przełączyć się na logi podstawowe?",
       "confirmText-confirm": "Potwierdź",
+      "description-auxiliary-logs-queries": "Zapytania dotyczące logów pomocniczych wiążą się z kosztami w zależności od ilości przeskanowanych danych. Logi pomocnicze nie podlegają pod umowy SLA dotyczące czasu reakcji i nie powinny być używane w przypadku pulpitów wymagających danych w czasie rzeczywistym ani do generowania alertów.",
       "description-basic-logs-queries": "Zapytania dotyczące podstawowych dzienników wiążą się z kosztami w zależności od ilości przeskanowanych danych.",
+      "label-analytics": "Analityka",
+      "label-auxiliary": "Pomocnicze",
+      "label-basic": "Podstawowe",
       "label-logs": "Logi",
+      "title-auxiliary-logs-queries": "Zapytania dotyczące logów pomocniczych",
       "title-basic-logs-queries": "Zapytania dotyczące podstawowych dzienników",
-      "tooltip-logs": "Określa, czy uruchomić zapytanie dotyczące dzienników podstawowych, czy analitycznych."
+      "tooltip-logs": "Określa, czy uruchomić zapytanie dotyczące dzienników podstawowych, czy analitycznych.",
+      "tooltip-logs-all": "Określa, czy uruchomić zapytanie dotyczące logów analitycznych, podstawowych, czy pomocniczych.",
+      "tooltip-logs-aux": "Określa, czy uruchomić zapytanie dotyczące logów analitycznych, czy pomocniczych."
     },
     "logs-query-builder": {
       "title-no-tables": "Zasób został załadowany, ale bez tabel"
     },
     "logs-query-editor": {
       "learn-more": "Dowiedz się więcej",
-      "view-query": "Wyświetl zapytanie w Portalu Azure"
+      "notice-auxiliary-single-resource": "Korzystając z logów pomocniczych, możesz wybrać tylko jeden zasób naraz.",
+      "notice-basic-single-resource": "Korzystając z logów podstawowych, możesz wybrać tylko jeden zasób naraz.",
+      "notice-same-resource-type": "Możesz wybrać tylko elementy z tym samym typem zasobu.",
+      "tier-switch-body-analytics": "<0>{{tableName}}</0> jest tabelą analityczną.",
+      "tier-switch-body-auxiliary": "<0>{{tableName}}</0> jest tabelą logów pomocniczych – wiąże się z kosztami za każdy przeskanowany GiB, nie podlega pod umowę SLA dotyczącą czasu reakcji i nie nadaje się do scenariuszy obsługiwanych w czasie rzeczywistym ani do generowania alertów.",
+      "tier-switch-body-basic": "<0>{{tableName}}</0> jest tabelą logów podstawowych – wiąże się z kosztami za każdy przeskanowany GiB.",
+      "tier-switch-revert": "Przywróć do {{fromTier}}",
+      "tier-switch-title": "Poziom zapytania ustawiony na {{toTier}}",
+      "view-query": "Wyświetl zapytanie w Portalu Azure",
+      "warning-auxiliary-data-ingested": "To zapytanie dotyczące logów pomocniczych przetwarza w trakcie wykonywania {{dataIngested}} GiB. Logi pomocnicze nie podlegają pod umowę SLA dotyczącą czasu reakcji i nie nadają się do scenariuszy obsługiwanych w czasie rzeczywistym ani do generowania alertów. ",
+      "warning-auxiliary-raw": "To jest zapytanie do logów pomocniczych – wykorzystuje punkt końcowy wyszukiwania, wiąże się z kosztami za każdy przeskanowany GiB, nie podlega pod umowę SLA dotyczącą czasu reakcji i nie nadaje się do scenariuszy obsługiwanych w czasie rzeczywistym ani do generowania alertów. W tym trybie nie można wysyłać zapytań do tabel planu analitycznego (w tym celu należy użyć poziomu analitycznego). ",
+      "warning-basic-raw": "To jest zapytanie do logów podstawowych – wykorzystuje punkt końcowy wyszukiwania i wiąże się z kosztami za każdy przeskanowany GiB. W tym trybie nie można wysyłać zapytań do tabel planu analitycznego (w tym celu należy użyć poziomu analitycznego). ",
+      "warning-data-ingested": "To zapytanie przetwarza w trakcie wykonywania {{dataIngested}} GiB. "
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "Ta tabela jest objęta planem logów pomocniczych. Aby wysyłać do niej zapytania, włącz opcję „Logi pomocnicze” w ustawieniach źródła danych.",
+      "description-auxiliary-enabled": "Wybranie tej tabeli spowoduje przełączenie trybu zapytania na logi pomocnicze",
+      "description-basic-disabled": "Ta tabela jest objęta planem logów podstawowych. Aby wysyłać do niej zapytania, włącz opcję „Logi podstawowe” w ustawieniach źródła danych.",
+      "description-basic-enabled": "Wybranie tej tabeli spowoduje przełączenie trybu zapytania na logi podstawowe",
+      "description-plan-unavailable": "Nie można wybrać tej tabeli, ponieważ nie udało się określić jej planu logów.",
+      "label-all-columns": "Wszystkie kolumny"
     },
     "metric-name-field": {
       "label-metric": "Metryka"
@@ -199,11 +236,11 @@
       "label-metric-namespace": "Przestrzeń nazw wskaźników"
     },
     "metrics-query-editor": {
-      "selection-notice-batch": "",
-      "selection-notice-standard": ""
+      "selection-notice-batch": "Możesz wybrać elementy z tym samym typem zasobu w różnych subskrypcjach i regionach. Zasoby w różnych subskrypcjach lub regionach są odpytywane w oddzielnych żądaniach i mogą niezależnie od siebie zakończyć się niepowodzeniem. Aby wybrać zasoby innego typu, najpierw usuń zaznaczenie bieżącego wyboru.",
+      "selection-notice-standard": "Możesz wybrać elementy z tym samym typem zasobu i tą samą lokalizacją. Aby wybrać zasoby innego typu lub w innej lokalizacji, najpierw usuń zaznaczenie bieżącego wyboru."
     },
     "monitor-config": {
-      "title-features": ""
+      "title-features": "Funkcje"
     },
     "nested-row": {
       "text-loading": "Ładowanie…"
@@ -218,8 +255,8 @@
       "tooltip-order-by": "Sortuj wyniki na podstawie jednej lub kilku kolumn w kolejności rosnącej lub malejącej."
     },
     "pagination": {
-      "results-truncated-message": "",
-      "results-truncated-title": ""
+      "results-truncated-message": "Wczytywanie zostało przerwane po {{maxPages}} stronach. Niektóre wyniki mogły zostać pominięte.",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "Podczas wysyłania żądania metadanych do narzędzia Azure Monitor wystąpił błąd"
@@ -319,6 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "Wybierz niestandardową przestrzeń nazw",
+      "aria-label-select-dimension-name": "Wybierz nazwę wymiaru",
+      "aria-label-select-metric-name": "Wybierz nazwę wskaźnika",
       "aria-label-select-namespace": "Wybierz przestrzeń nazw",
       "aria-label-select-query-type": "Wybierz typ zapytania",
       "aria-label-select-region": "Wybierz region",
@@ -326,6 +365,8 @@
       "aria-label-select-resource-group": "Wybierz grupę zasobów",
       "aria-label-select-subscription": "Wybierz subskrypcję",
       "label-custom-namespace": "Niestandardowa przestrzeń nazw",
+      "label-dimension-name": "Nazwa wymiaru",
+      "label-metric-name": "Nazwa wskaźnika",
       "label-namespace": "Przestrzeń nazw",
       "label-query-type": "Typ zapytania",
       "label-region": "Region",

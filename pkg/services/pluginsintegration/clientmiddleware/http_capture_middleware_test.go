@@ -55,6 +55,42 @@ func TestHTTPCaptureMiddleware_withBuffer_injectsContextualMiddlewareAndSetsHead
 	assert.Equal(t, "true", gotHeader, "external gRPC plugins are signalled via the capture header")
 }
 
+func TestHTTPCaptureMiddleware_withBuffer_QueryChunkedData(t *testing.T) {
+	var contextualMWs []sdkhttpclient.Middleware
+	var gotHeader string
+	cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(NewHTTPCaptureMiddleware()))
+	cdt.TestHandler.QueryChunkedDataFunc = func(ctx context.Context, req *backend.QueryChunkedDataRequest, _ backend.ChunkedDataWriter) error {
+		contextualMWs = sdkhttpclient.ContextualMiddlewareFromContext(ctx)
+		gotHeader = req.Headers[harCaptureHeader]
+		return nil
+	}
+
+	ctx, _ := harcapture.WithCapture(context.Background())
+	err := cdt.MiddlewareHandler.QueryChunkedData(ctx, &backend.QueryChunkedDataRequest{}, nopChunkedWriter{})
+	require.NoError(t, err)
+	assert.NotEmpty(t, contextualMWs, "core (in-process) capturing RoundTripper is injected")
+	assert.Equal(t, "true", gotHeader, "external gRPC plugins are signalled via the capture header")
+}
+
+func TestHTTPCaptureMiddleware_noBuffer_QueryChunkedData_passthrough(t *testing.T) {
+	var contextualMWs []sdkhttpclient.Middleware
+	var called bool
+	var gotHeader string
+	cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(NewHTTPCaptureMiddleware()))
+	cdt.TestHandler.QueryChunkedDataFunc = func(ctx context.Context, req *backend.QueryChunkedDataRequest, _ backend.ChunkedDataWriter) error {
+		called = true
+		contextualMWs = sdkhttpclient.ContextualMiddlewareFromContext(ctx)
+		gotHeader = req.Headers[harCaptureHeader]
+		return nil
+	}
+
+	err := cdt.MiddlewareHandler.QueryChunkedData(context.Background(), &backend.QueryChunkedDataRequest{}, nopChunkedWriter{})
+	require.NoError(t, err)
+	assert.True(t, called)
+	assert.Empty(t, contextualMWs)
+	assert.Empty(t, gotHeader)
+}
+
 func TestHTTPCaptureMiddleware_withBuffer_capturesHTTPEntry(t *testing.T) {
 	cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(NewHTTPCaptureMiddleware()))
 	cdt.TestHandler.QueryDataFunc = func(ctx context.Context, _ *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

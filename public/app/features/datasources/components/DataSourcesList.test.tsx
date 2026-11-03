@@ -2,7 +2,6 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { getMockDataSources } from '../mocks/dataSourcesMocks';
@@ -27,13 +26,6 @@ jest.mock('@grafana/runtime', () => {
   return {
     ...runtime,
     useFavoriteDatasources: () => mockUseFavoriteDatasources(),
-    config: {
-      ...runtime.config,
-      featureToggles: {
-        ...runtime.config.featureToggles,
-        favoriteDatasources: true,
-      },
-    },
   };
 });
 
@@ -135,10 +127,6 @@ describe('<DataSourcesList>', () => {
   });
 
   describe('Favorites functionality', () => {
-    beforeEach(() => {
-      config.featureToggles.favoriteDatasources = true;
-    });
-
     it('should render favorites checkbox when feature toggle is enabled', async () => {
       setup({ favoriteDataSources: mockUseFavoriteDatasources() });
 
@@ -147,9 +135,7 @@ describe('<DataSourcesList>', () => {
       expect(checkbox).not.toBeChecked();
     });
 
-    it('should not render favorites checkbox when feature toggle is disabled', async () => {
-      config.featureToggles.favoriteDatasources = false;
-
+    it('should not render favorites checkbox when favorite data sources are not enabled', async () => {
       setup();
 
       expect(await screen.findByPlaceholderText('Search by name or type')).toBeInTheDocument();

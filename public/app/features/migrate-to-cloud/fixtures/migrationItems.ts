@@ -30,6 +30,20 @@ export function wellFormedDashboardMigrationItem(
   };
 }
 
+export function wellFormedPluginMigrationItem(
+  seed = 1,
+  partial: Partial<MigrateDataResponseItemDto> = {}
+): MigrateDataResponseItemDto {
+  const random = Chance(seed);
+
+  return {
+    type: 'PLUGIN',
+    refId: random.guid(),
+    status: random.pickone(['OK', 'ERROR']),
+    ...partial,
+  };
+}
+
 export function wellFormedLibraryElementMigrationItem(
   seed = 1,
   partial: Partial<MigrateDataResponseItemDto> = {}

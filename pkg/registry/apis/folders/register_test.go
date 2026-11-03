@@ -7,13 +7,17 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -143,7 +147,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 
 			b := &FolderAPIBuilder{
 				storage:              us,
-				parents:              newParentsGetter(us, 2),
+				parents:              newParentsGetter(us),
 				maxNestedFolderDepth: setting.NewCfg().MaxNestedFolderDepth,
 			}
 
@@ -154,7 +158,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 				tt.setupFn(us)
 			}
 
-			err := b.Validate(context.Background(), admission.NewAttributesRecord(
+			err := b.Validate(request.WithNamespace(context.Background(), "stacks-123"), admission.NewAttributesRecord(
 				tt.input.obj,
 				nil,
 				folders.SchemeGroupVersion.WithKind("folder"),
@@ -178,6 +182,56 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 	}
 }
 
+func TestFolderAPIBuilder_Validate_CreateMissingParent(t *testing.T) {
+	for _, tc := range []struct {
+		name               string
+		parentName         string
+		missingGrandparent bool
+	}{
+		{name: "immediate parent missing", parentName: "missing"},
+		{name: "grandparent missing", parentName: "parent", missingGrandparent: true},
+	} {
+		for _, dryRun := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/dryRun=%t", tc.name, dryRun), func(t *testing.T) {
+				storage := grafanarest.NewMockStorage(t)
+				if tc.missingGrandparent {
+					storage.On("Get", mock.Anything, "parent", &metav1.GetOptions{}).Return(&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "parent",
+							Annotations: map[string]string{utils.AnnoKeyFolder: "missing"},
+						},
+						Spec: folders.FolderSpec{Title: "parent"},
+					}, nil).Once()
+				}
+				storage.On("Get", mock.Anything, "missing", &metav1.GetOptions{}).
+					Return(nil, apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "missing")).Once()
+				b := &FolderAPIBuilder{
+					storage:              storage,
+					parents:              newParentsGetter(storage),
+					maxNestedFolderDepth: 5,
+				}
+				obj := &folders.Folder{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "child",
+						Annotations: map[string]string{utils.AnnoKeyFolder: tc.parentName},
+					},
+					Spec: folders.FolderSpec{Title: "child"},
+				}
+				err := b.Validate(request.WithNamespace(context.Background(), "default"), admission.NewAttributesRecord(
+					obj, nil, folders.SchemeGroupVersion.WithKind("Folder"), "default", obj.Name,
+					folders.SchemeGroupVersion.WithResource("folders"), "", admission.Create,
+					nil, dryRun, &user.SignedInUser{},
+				), nil)
+				if dryRun || tc.missingGrandparent {
+					require.NoError(t, err)
+				} else {
+					require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
+				}
+			})
+		}
+	}
+}
+
 func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 	zeroGrace := int64(0)
 
@@ -198,6 +252,13 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 			name: "should return folder not empty when folder contains dashboards",
 			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
 				{Count: 2, Resource: "dashboards", Group: "dashboard.grafana.app"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return folder not empty when folder contains variables",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
+				{Count: 4, Resource: "variables", Group: "dashboard.grafana.app"},
 			},
 			wantErr: true,
 		},
@@ -503,7 +564,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 			b := &FolderAPIBuilder{
 				storage:  us,
 				searcher: sm,
-				parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+				parents:  newParentsGetter(us),
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
@@ -590,12 +651,13 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: false})
 			us := grafanarest.NewMockStorage(t)
 			sm := resource.NewMockResourceClient(t)
 			b := &FolderAPIBuilder{
 				storage:  us,
 				searcher: sm,
-				parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+				parents:  newParentsGetter(us),
 			}
 			admAttr := admission.NewAttributesRecord(
 				tt.input,
@@ -699,7 +761,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 	b := &FolderAPIBuilder{
 		storage:  us,
 		searcher: sm,
-		parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+		parents:  newParentsGetter(us),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -729,4 +791,48 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 			require.Equal(t, tt.input, tt.expected)
 		})
 	}
+}
+
+func TestFolderAPIBuilder_Mutate_CascadeDeleteFinalizer(t *testing.T) {
+	newBuilder := func(t *testing.T) *FolderAPIBuilder {
+		us := grafanarest.NewMockStorage(t)
+		return &FolderAPIBuilder{
+			storage:  us,
+			searcher: resource.NewMockResourceClient(t),
+			parents:  newParentsGetter(us),
+		}
+	}
+	attrs := func(obj, old *folders.Folder, op admission.Operation) admission.Attributes {
+		// Keep the interface nil on create; a typed nil pointer would look like an old object.
+		var oldObj runtime.Object
+		if old != nil {
+			oldObj = old
+		}
+		return admission.NewAttributesRecord(
+			obj, oldObj,
+			folders.SchemeGroupVersion.WithKind("folder"),
+			"stacks-123", obj.Name,
+			folders.SchemeGroupVersion.WithResource("folders"),
+			"", op, nil, false, &user.SignedInUser{},
+		)
+	}
+
+	t.Run("create with flag on stamps", func(t *testing.T) {
+		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: true})
+		f := folderWithFinalizers()
+		require.NoError(t, newBuilder(t).Mutate(context.Background(), attrs(f, nil, admission.Create), nil))
+		require.Equal(t, []string{folders.CascadeDeleteFinalizer}, f.Finalizers)
+	})
+	t.Run("create with flag off strips", func(t *testing.T) {
+		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: false})
+		f := folderWithFinalizers(folders.CascadeDeleteFinalizer)
+		require.NoError(t, newBuilder(t).Mutate(context.Background(), attrs(f, nil, admission.Create), nil))
+		require.Nil(t, f.Finalizers)
+	})
+	t.Run("update restores a dropped finalizer", func(t *testing.T) {
+		f := folderWithFinalizers()
+		old := folderWithFinalizers(folders.CascadeDeleteFinalizer)
+		require.NoError(t, newBuilder(t).Mutate(context.Background(), attrs(f, old, admission.Update), nil))
+		require.Equal(t, []string{folders.CascadeDeleteFinalizer}, f.Finalizers)
+	})
 }

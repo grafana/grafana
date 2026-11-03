@@ -1,43 +1,91 @@
-import { test } from '@playwright/test';
+import { type Locator, test } from '@playwright/test';
 
-import { PageObject } from '../PageObject';
+import { PageObject, type PageObjectArgs } from '../PageObject';
 
-// The "Dashboard options" pane in the sidebar — title/description inputs
-// and the layout switcher (auto/custom grid)
+import { GridLayoutOptions } from './shared/GridLayoutOptions';
+
+type VariableListName = 'Above dashboard' | 'Controls menu' | 'Hidden';
+
+// the options group id of each placement list, see DashboardVariablesList.tsx
+const variableListIds: Record<VariableListName, string> = {
+  'Above dashboard': 'variables-list-visible',
+  'Controls menu': 'variables-list-controls-menu',
+  Hidden: 'variables-list-hidden',
+};
+
+/**
+ * The "Dashboard options" pane in the sidebar — title/description inputs, the variables list,
+ * plus the shared layout switcher (auto/custom grid, rows, tabs)
+ */
 export class DashboardOptions extends PageObject {
-  getTitleInput() {
-    return this.dashboardPage
-      .getByGrafanaSelector(this.selectors.components.PanelEditor.OptionsPane.fieldLabel('dashboard-options Title'))
-      .locator('input');
+  readonly gridLayoutOptions: GridLayoutOptions;
+
+  constructor(args: PageObjectArgs) {
+    super(args);
+    this.gridLayoutOptions = new GridLayoutOptions(args);
   }
 
-  getDescriptionTextarea() {
-    return this.dashboardPage
-      .getByGrafanaSelector(
-        this.selectors.components.PanelEditor.OptionsPane.fieldLabel('dashboard-options Description')
-      )
-      .locator('textarea');
+  /** Returns the dashboard title input */
+  getTitleInput(): Locator {
+    return this.getByGrafanaSelector(
+      this.selectors.components.PanelEditor.OptionsPane.fieldLabel('dashboard-options Title')
+    ).locator('input');
   }
 
-  async switchLayout(layoutType: 'auto' | 'custom', { confirm = false }: { confirm?: boolean } = {}) {
-    const stepTitle = confirm
-      ? `Switch layout to ${layoutType} grid (with confirmation)`
-      : `Switch layout to ${layoutType} grid`;
+  /** Returns the dashboard description textarea */
+  getDescriptionTextarea(): Locator {
+    return this.getByGrafanaSelector(
+      this.selectors.components.PanelEditor.OptionsPane.fieldLabel('dashboard-options Description')
+    ).locator('textarea');
+  }
 
-    await test.step(stepTitle, async () => {
-      const layoutGroup = this.dashboardPage.getByGrafanaSelector(
-        this.selectors.components.OptionsGroup.group('layout'),
-        { root: this.dashboardPage.getByGrafanaSelector(this.selectors.components.Sidebar.container) }
-      );
+  /** The "Variables" category, which lists the dashboard variables by placement */
+  readonly variableList = {
+    /** Returns the placement list (header included), which is also the drop target when dragging a variable into it */
+    getList: (listName: VariableListName): Locator =>
+      this.getByGrafanaSelector(this.selectors.components.Sidebar.container).getByTestId(
+        this.selectors.components.OptionsGroup.group(variableListIds[listName])
+      ),
+    /** Expands the placement list when it is collapsed, which is the initial state of an empty list */
+    expand: async (listName: VariableListName) => {
+      const toggle = this.variableList
+        .getList(listName)
+        .getByTestId(this.selectors.components.OptionsGroup.toggle(variableListIds[listName]));
 
-      // the option's aria-label is layout-selection-option-<layout name>, with the name capitalized
-      const optionName = layoutType === 'auto' ? 'Auto' : 'Custom';
-      await layoutGroup.getByLabel(`layout-selection-option-${optionName}`).click();
-
-      if (confirm) {
-        // despite its name, ConfirmModal.delete is the testid of every ConfirmModal confirm button (see ConfirmContent.tsx)
-        await this.dashboardPage.getByGrafanaSelector(this.selectors.pages.ConfirmModal.delete).click();
+      // the toggle collapses an already-open list, so only click when collapsed
+      if ((await toggle.getAttribute('aria-expanded')) !== 'true') {
+        await test.step(`Expand the "${listName}" variables list`, async () => {
+          await toggle.click();
+        });
       }
-    });
-  }
+    },
+    /** Returns every variable of the placement list, in display order; each item's text is the variable name */
+    getItems: (listName: VariableListName): Locator => this.variableList.getList(listName).getByRole('listitem'),
+    /** Returns the variable's item, whatever its placement list */
+    getItem: (variableName: string): Locator =>
+      this.getByGrafanaSelector(this.selectors.components.Sidebar.container)
+        .getByTestId(this.selectors.components.OptionsGroup.group('dashboard-variables'))
+        .getByRole('listitem')
+        .filter({ has: this.page.getByText(variableName, { exact: true }) }),
+    /** Duplicates the variable with its item's "Duplicate" button */
+    duplicate: async (variableName: string) => {
+      await test.step(`Duplicate variable "${variableName}" from the variables list`, async () => {
+        const item = this.variableList.getItem(variableName);
+        // the item's buttons are only visible while it is hovered
+        await item.hover();
+        await item.getByRole('button', { name: 'Duplicate', exact: true }).click();
+      });
+    },
+    /** Deletes the variable with its item's "Delete" button, then confirms in the confirmation modal */
+    delete: async (variableName: string) => {
+      await test.step(`Delete variable "${variableName}" from the variables list`, async () => {
+        const item = this.variableList.getItem(variableName);
+        // the item's buttons are only visible while it is hovered
+        await item.hover();
+        await item.getByRole('button', { name: 'Delete', exact: true }).click();
+        // despite its name, ConfirmModal.delete is the testid of every ConfirmModal confirm button (see ConfirmContent.tsx)
+        await this.getByGrafanaSelector(this.selectors.pages.ConfirmModal.delete).click();
+      });
+    },
+  };
 }

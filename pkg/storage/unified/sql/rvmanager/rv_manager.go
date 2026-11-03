@@ -16,6 +16,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
@@ -25,41 +26,46 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager")
 
-var (
-	rvmWriteDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Name:                        "rvmanager_write_duration_seconds",
-		Help:                        "Duration of ResourceVersionManager write operations",
-		Namespace:                   "grafana",
-		NativeHistogramBucketFactor: 1.1,
-	}, []string{"group", "resource", "status"})
+type metrics struct {
+	writeDuration          *prometheus.HistogramVec
+	execBatchDuration      *prometheus.HistogramVec
+	execBatchPhaseDuration *prometheus.HistogramVec
+	inflightWrites         *prometheus.GaugeVec
+	batchSize              *prometheus.HistogramVec
+}
 
-	rvmExecBatchDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Name:                        "rvmanager_exec_batch_duration_seconds",
-		Help:                        "Duration of ResourceVersionManager batch operations",
-		Namespace:                   "grafana",
-		NativeHistogramBucketFactor: 1.1,
-	}, []string{"group", "resource", "status"})
+func newMetrics(reg prometheus.Registerer) *metrics {
+	return &metrics{
+		writeDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                        "grafana_rvmanager_write_duration_seconds",
+			Help:                        "Duration of ResourceVersionManager write operations",
+			NativeHistogramBucketFactor: 1.1,
+		}, []string{"group", "resource", "status"}),
 
-	rvmExecBatchPhaseDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Name:                        "rvmanager_exec_batch_phase_duration_seconds",
-		Help:                        "Duration of batch operation phases",
-		Namespace:                   "grafana",
-		NativeHistogramBucketFactor: 1.1,
-	}, []string{"group", "resource", "phase"})
+		execBatchDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                        "grafana_rvmanager_exec_batch_duration_seconds",
+			Help:                        "Duration of ResourceVersionManager batch operations",
+			NativeHistogramBucketFactor: 1.1,
+		}, []string{"group", "resource", "status"}),
 
-	rvmInflightWrites = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name:      "rvmanager_inflight_writes",
-		Help:      "Number of concurrent write operations",
-		Namespace: "grafana",
-	}, []string{"group", "resource"})
+		execBatchPhaseDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                        "grafana_rvmanager_exec_batch_phase_duration_seconds",
+			Help:                        "Duration of batch operation phases",
+			NativeHistogramBucketFactor: 1.1,
+		}, []string{"group", "resource", "phase"}),
 
-	rvmBatchSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Name:                        "rvmanager_batch_size",
-		Help:                        "Number of write operations per batch",
-		Namespace:                   "grafana",
-		NativeHistogramBucketFactor: 1.1,
-	}, []string{"group", "resource"})
-)
+		inflightWrites: promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
+			Name: "grafana_rvmanager_inflight_writes",
+			Help: "Number of concurrent write operations",
+		}, []string{"group", "resource"}),
+
+		batchSize: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                        "grafana_rvmanager_batch_size",
+			Help:                        "Number of write operations per batch",
+			NativeHistogramBucketFactor: 1.1,
+		}, []string{"group", "resource"}),
+	}
+}
 
 const (
 	defaultMaxBatchSize     = 25
@@ -88,6 +94,8 @@ type ResourceVersionManager struct {
 	maxBatchSize     int           // The maximum number of operations to batch together
 	maxBatchWaitTime time.Duration // The maximum time to wait for a batch to be ready
 	batchTxnTimeout  time.Duration // 0 = use defaultBatchTimeout for each batched WithTx
+
+	metrics *metrics
 }
 
 type writeOpResult struct {
@@ -121,6 +129,9 @@ type ResourceManagerOptions struct {
 	// BatchTransactionTimeout is the maximum duration for one batched transaction
 	// (all writes, lock, RV updates). Zero selects defaultBatchTimeout.
 	BatchTransactionTimeout time.Duration
+	// Reg is where the manager's metrics are registered. A nil Reg leaves them
+	// unregistered.
+	Reg prometheus.Registerer
 }
 
 // NewResourceVersionManager creates a new ResourceVersionManager
@@ -144,6 +155,7 @@ func NewResourceVersionManager(opts ResourceManagerOptions) (*ResourceVersionMan
 		maxBatchSize:     opts.MaxBatchSize,
 		maxBatchWaitTime: opts.MaxBatchWaitTime,
 		batchTxnTimeout:  opts.BatchTransactionTimeout,
+		metrics:          newMetrics(opts.Reg),
 	}, nil
 }
 
@@ -160,10 +172,13 @@ func (m *ResourceVersionManager) DB() db.DB {
 	return m.db
 }
 
-// ExecWithRV executes the given function with an incremented resource version
-func (m *ResourceVersionManager) ExecWithRV(ctx context.Context, key *resourcepb.ResourceKey, fn WriteEventFunc) (rv int64, err error) {
-	rvmInflightWrites.WithLabelValues(key.Group, key.Resource).Inc()
-	defer rvmInflightWrites.WithLabelValues(key.Group, key.Resource).Dec()
+// ExecWithRV executes the given function with an incremented resource version.
+// onCommit, when not nil, runs once with the committed RV. It also runs when ctx
+// ends while the write is queued, because the batch may still commit it; then
+// it runs on another goroutine after ExecWithRV has returned ctx.Err().
+func (m *ResourceVersionManager) ExecWithRV(ctx context.Context, key *resourcepb.ResourceKey, fn WriteEventFunc, onCommit func(rv int64)) (rv int64, err error) {
+	m.metrics.inflightWrites.WithLabelValues(key.Group, key.Resource).Inc()
+	defer m.metrics.inflightWrites.WithLabelValues(key.Group, key.Resource).Dec()
 
 	var status string
 	timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
@@ -171,7 +186,7 @@ func (m *ResourceVersionManager) ExecWithRV(ctx context.Context, key *resourcepb
 		if err != nil {
 			status = "error"
 		}
-		rvmWriteDuration.WithLabelValues(key.Group, key.Resource, status).Observe(v)
+		m.metrics.writeDuration.WithLabelValues(key.Group, key.Resource, status).Observe(v)
 	}))
 	defer timer.ObserveDuration()
 
@@ -210,8 +225,18 @@ func (m *ResourceVersionManager) ExecWithRV(ctx context.Context, key *resourcepb
 		)
 		span.AddLink(res.batchTraceLink)
 
+		if res.err == nil && onCommit != nil {
+			onCommit(res.rv)
+		}
 		return res.rv, res.err
 	case <-ctx.Done():
+		if onCommit != nil {
+			go func() {
+				if res := <-op.done; res.err == nil {
+					onCommit(res.rv)
+				}
+			}()
+		}
 		return 0, ctx.Err()
 	}
 }
@@ -249,7 +274,7 @@ func (m *ResourceVersionManager) startBatchProcessor(group, resource string) {
 			}
 		}
 
-		rvmBatchSize.WithLabelValues(group, resource).Observe(float64(len(batch)))
+		m.metrics.batchSize.WithLabelValues(group, resource).Observe(float64(len(batch)))
 		m.execBatch(ctx, group, resource, batch)
 	}
 }
@@ -275,7 +300,7 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 		if err != nil {
 			status = "error"
 		}
-		rvmExecBatchDuration.WithLabelValues(group, resource, status).Observe(v)
+		m.metrics.execBatchDuration.WithLabelValues(group, resource, status).Observe(v)
 	}))
 	defer timer.ObserveDuration()
 
@@ -301,7 +326,7 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 			span.AddEvent("starting_batch_transaction")
 
 			writeTimer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
-				rvmExecBatchPhaseDuration.WithLabelValues(group, resource, "write_ops").Observe(v)
+				m.metrics.execBatchPhaseDuration.WithLabelValues(group, resource, "write_ops").Observe(v)
 			}))
 			for i := range batch {
 				guid, err := batch[i].fn(ctx, tx)
@@ -318,7 +343,7 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 			span.AddEvent("batch_operations_completed")
 
 			lockTimer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
-				rvmExecBatchPhaseDuration.WithLabelValues(group, resource, "waiting_for_lock").Observe(v)
+				m.metrics.execBatchPhaseDuration.WithLabelValues(group, resource, "waiting_for_lock").Observe(v)
 			}))
 			rv, err := m.Lock(ctx, tx, group, resource)
 			lockTimer.ObserveDuration()
@@ -333,7 +358,7 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 			))
 
 			rvUpdateTimer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
-				rvmExecBatchPhaseDuration.WithLabelValues(group, resource, "update_resource_versions").Observe(v)
+				m.metrics.execBatchPhaseDuration.WithLabelValues(group, resource, "update_resource_versions").Observe(v)
 			}))
 			defer rvUpdateTimer.ObserveDuration()
 			// Allocate the RVs
@@ -423,7 +448,7 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 // takes a unix microsecond RV and transforms into a snowflake format. The timestamp is converted from microsecond to
 // millisecond (the integer division) and the remainder is saved in the stepbits section. machine id is always 0
 func SnowflakeFromRV(rv int64) int64 {
-	return (((rv / 1000) - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)) + (rv % 1000)
+	return resourceutil.SnowflakeFromRV(rv)
 }
 
 // It is generally not possible to convert from a snowflakeID to a microsecond RV due to the loss in precision

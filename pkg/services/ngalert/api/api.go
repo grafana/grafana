@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -46,7 +47,7 @@ type AlertingStore interface {
 type RuleAccessControlService interface {
 	HasAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) (bool, error)
 	AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
-	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
+	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error
 	AuthorizeDatasourceAccessForRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) error
 	AuthorizeDatasourceAccessForRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
 	AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, namespaced models.Namespaced) error
@@ -87,6 +88,9 @@ type API struct {
 	AppUrl                *url.URL
 	UserService           user.Service
 	SilenceLimitsProvider notifier.LimitsProvider
+	// ExternalRulerSync gates manual convert-API rule imports when external
+	// ruler sync owns the org's rules. Always set in RegisterAPIEndpoints.
+	ExternalRulerSync ExternalRulerSyncChecker
 
 	// Hooks can be used to replace API handlers for specific paths.
 	Hooks *Hooks
@@ -110,6 +114,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		api.FeatureManager,
 		api.MultiOrgAlertmanager,
 		accesscontrol.NewAlertmanagerImportsAccess(api.AccessControl),
+		api.ExternalRulerSync,
 	)
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.
@@ -128,7 +133,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			ruleAuthzService,
 			api.SilenceLimitsProvider,
 		),
-		receiverAuthz: accesscontrol.NewReceiverAccess[ReceiverStatus](api.AccessControl, false),
+		receiverService: api.ReceiverService,
 	}), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(

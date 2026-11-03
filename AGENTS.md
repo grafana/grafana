@@ -13,15 +13,24 @@ This file provides guidance to AI agents when working with code in the Grafana r
 
 ## Project Overview
 
-Grafana is a monitoring and observability platform. Go backend, TypeScript/React frontend, monorepo with Yarn workspaces (frontend) and Go workspaces (backend).
+Grafana is a monitoring and observability platform. Go backend, TypeScript/React frontend, monorepo with pnpm workspaces (frontend) and Go workspaces (backend).
 
 ## Principles
 
 - Follow existing patterns in the surrounding code
-- Write tests for new functionality
+- Write tests for new functionality — for Go code, use `testing/synctest` over sleeps and
+  time-based assertions; for frontend code, use the `frontend-testing-strategy` skill for this
+  repo's testing conventions (and `panel-testing-strategy` on top of it for visualization/panel code)
 - Keep changes focused — avoid over-engineering
 - Separate PRs for frontend and backend changes (deployed at different cadences)
 - Security: prevent XSS, SQL injection, command injection
+- Security issues should be reported via [Grafana's security issue reporting page](https://grafana.com/legal/report-a-security-issue/) and not directly in this repository.
+
+## Code Review Rules
+
+### Metrics
+
+- Review metric changes against `contribute/backend/instrumentation.md`, especially registration, duplicate registration, label cardinality, and the impact of renames on dashboards and alerts.
 
 ## Comments
 
@@ -39,8 +48,8 @@ Before running `git push`, stop and get explicit human approval. When changes ar
 ```bash
 make run                          # Backend with hot reload (localhost:3000, admin/admin)
 make build-backend                # Backend only
-yarn start                        # Frontend dev server (watches for changes)
-yarn build                        # Frontend production build
+pnpm start                        # Frontend dev server (watches for changes)
+pnpm build                        # Frontend production build
 ```
 
 ### Test
@@ -52,22 +61,22 @@ make test-go-unit                                  # All unit tests
 make test-go-integration                           # Integration tests
 
 # Frontend
-yarn test path/to/file                             # Specific file
-yarn test -t "pattern"                             # By name pattern
-yarn test -u                                       # Update snapshots
+pnpm test path/to/file                             # Specific file
+pnpm test -t "pattern"                             # By name pattern
+pnpm test -u                                       # Update snapshots
 
 # E2E
-yarn e2e:playwright path/to/test.spec.ts           # Specific test
+pnpm e2e:playwright path/to/test.spec.ts           # Specific test
 ```
 
 ### Lint & Format
 
 ```bash
 make lint-go                      # Go linter
-yarn lint                         # ESLint
-yarn lint:fix                     # ESLint auto-fix
-yarn prettier:write               # Prettier auto-format
-yarn typecheck                    # TypeScript check
+pnpm lint                         # ESLint
+pnpm lint:fix                     # ESLint auto-fix
+pnpm prettier:write               # Prettier auto-format
+pnpm typecheck                    # TypeScript check
 ```
 
 ### Code Generation
@@ -85,7 +94,7 @@ make update-workspace             # Go workspace (after adding modules)
 ### Dev Environment
 
 ```bash
-yarn install --immutable                          # Install frontend deps
+pnpm install --frozen-lockfile                     # Install frontend deps
 make devenv sources=influxdb        # Start backing services
 make devenv-down                                  # Stop backing services
 make lefthook-install                             # Pre-commit hooks
@@ -114,7 +123,7 @@ make lefthook-install                             # Pre-commit hooks
 | ---------------------- | ----------------------------------------------------- |
 | `public/app/core/`     | Shared services, components, utilities                |
 | `public/app/features/` | Feature code by domain (dashboard, alerting, explore) |
-| `public/app/plugins/`  | Built-in plugins (many are Yarn workspaces)           |
+| `public/app/plugins/`  | Built-in plugins (many are pnpm workspaces)           |
 | `public/app/types/`    | TypeScript type definitions                           |
 | `public/app/store/`    | Redux store configuration                             |
 
@@ -132,10 +141,11 @@ Standalone Go apps using Grafana App SDK: `apps/dashboard/`, `apps/folder/`, `ap
 
 These built-in plugins require separate build steps: `azuremonitor`, `loki`, `grafana-testdata-datasource`.
 
-Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
+Build a specific plugin: `pnpm --filter @grafana-plugins/<name> dev`
 
 ## Key Notes
 
+- When calling a unified storage gRPC client, handle both error forms (transport `err` and response `Error`) with the helpers described in `pkg/storage/unified/resource/doc.go`; never check only one of them.
 - **Wire DI**: Backend service init changes require `make gen-go`. Wire catches circular deps at compile time.
 - **CUE schemas**: Dashboard/panel schemas in `kinds/` generate both Go and TS code via `make gen-cue`.
 - **Feature toggles**: Defined in `pkg/services/featuremgmt/`, auto-generate code. Run `make gen-feature-toggles` after changes.
@@ -144,26 +154,27 @@ Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 - **Config**: Defaults in `conf/defaults.ini`, overrides in `conf/custom.ini`.
 - **Database migrations**: Live in `pkg/services/sqlstore/migrations/`. Test with `make devenv sources=postgres_tests,mysql_tests` then `make test-go-integration-postgres`.
 - **CI sharding**: Backend tests use `SHARD`/`SHARDS` env vars for parallelization.
+- **Backend test classification**: Use `TestIntegration*` for tests that need the SQL database matrix. SQLite-only tests and SQL-independent tests should run once in the normal suite. Follow the [backend testing guidelines](contribute/backend/style-guide.md#integration-tests) for short-mode guards, mixed-backend suites, and external-service tests.
+- **Metrics**: Before adding, renaming or registering metrics, read `contribute/backend/instrumentation.md` for naming and registration conventions.
 - **Service compatibility**: Unified storage/search (`pkg/storage/unified/`) can be deployed as separate services at a different cadence than the Grafana API layer. Changes spanning API-layer callers and `pkg/storage/unified/` must be backwards compatible in both directions — see `pkg/storage/unified/AGENTS.md`.
 
 ## Cursor Cloud specific instructions
 
 ### Prerequisites
 
-- **Node.js** — version pinned in `.nvmrc` (check that file for the exact version). Installed via nvm and set as the nvm default. **PATH gotcha:** the infra injects `/exec-daemon/node` ahead of nvm, so the plain non-login shell may resolve `node` to an older version — check it satisfies the `engines` range in `package.json` (it does today, so builds/tests work), but it is not the pinned version. Login shells (tmux sessions, `bash -lc '...'`) get the pinned version because `~/.bashrc` prepends the nvm bin. Run `yarn` / `yarn start` / `jest` / webpack via a login shell (tmux or `bash -lc`) to use the pinned Node.
+- **Node.js** — version pinned in `.nvmrc` (check that file for the exact version). Installed via nvm and set as the nvm default. **PATH gotcha:** the infra injects `/exec-daemon/node` ahead of nvm, so the plain non-login shell may resolve `node` to an older version — check it satisfies the `engines` range in `package.json` (it does today, so builds/tests work), but it is not the pinned version. Login shells (tmux sessions, `bash -lc '...'`) get the pinned version because `~/.bashrc` prepends the nvm bin. Run `pnpm` / `pnpm start` / `jest` / rspack via a login shell (tmux or `bash -lc`) to use the pinned Node.
 - **Go** — version pinned in `go.mod` (check that file for the exact version), installed at `/usr/local/go` and symlinked to `/usr/local/bin/go`. The distro `/usr/bin/go` is older; `/usr/local/bin` wins in PATH so `go` resolves correctly. If `go.mod` bumps Go, reinstall a matching toolchain into `/usr/local/go`.
-- **Yarn** via corepack — version pinned by `package.json` `packageManager` (check that field for the exact version). Run `corepack enable` if `yarn` is not found. `.yarnrc.yml` sets `enableScripts: false`, so dependency build/lifecycle scripts are disabled by default.
 - **GCC** required for CGo/SQLite compilation of the backend.
 - Repos in this environment live under `/agent/repos/<repo>` (e.g. `/agent/repos/grafana`); this is a multi-repo workspace, not the single `~/grafana` layout described in `grafana-enterprise/AGENTS.md`.
 
 ### Running services
 
 - **Backend**: `make run` — builds and starts Grafana backend with hot-reload (air) on `localhost:3000`. Default login: `admin`/`admin`. First build takes ~3 minutes due to debug symbols (`-gcflags all=-N -l`); subsequent hot-reload rebuilds are faster.
-- **Frontend**: `yarn start` — starts webpack dev server that watches for changes. The backend proxies to it. First compile takes ~45s.
+- **Frontend**: `pnpm start` — starts the rspack dev server, which hot-reloads changes. The backend points the browser at it for frontend assets.
 - No external databases required — Grafana uses embedded SQLite by default.
 
 ### Testing gotchas
 
-- **Frontend tests**: The `yarn test` script includes `--watch` by default. Always use `yarn jest --no-watch` or add `--watchAll=false` to run tests once and exit.
+- **Frontend tests**: The `pnpm test` script includes `--watch` by default. Always use `pnpm exec jest --no-watch` or add `--watchAll=false` to run tests once and exit.
 - **Backend tests**: Some packages (e.g. `pkg/api/`) have slow test compilation (~2 min) due to large dependency graphs. Use targeted test runs with `-run TestName` where possible.
 - All standard build/test/lint commands are documented in the Commands section above.

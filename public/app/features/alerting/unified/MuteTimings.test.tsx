@@ -1,22 +1,28 @@
 import { type InitialEntry } from 'history';
 import { last } from 'lodash';
+import { HttpResponse, http } from 'msw';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render, screen, userEvent, within } from 'test/test-utils';
 import { byTestId } from 'testing-library-selector';
 
+import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { MOCK_DATASOURCE_EXTERNAL_VANILLA_ALERTMANAGER_UID } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
 import {
-  TIME_INTERVAL_NAME_FILE_PROVISIONED,
   TIME_INTERVAL_NAME_HAPPY_PATH,
+  TIME_INTERVAL_RESOURCE_NAME_FILE_PROVISIONED,
+  TIME_INTERVAL_RESOURCE_NAME_HAPPY_PATH,
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
+import { ALERTING_API_SERVER_BASE_URL } from 'app/features/alerting/unified/mocks/server/utils';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { ERROR_TIME_INTERVAL_NAME_EXISTS } from 'app/features/alerting/unified/utils/k8s/errors';
 import { type AlertManagerCortexConfig, type MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import EditMuteTimingPage from './components/mute-timings/EditMuteTiming';
+import EditMuteTimingByPathPage from './components/mute-timings/EditMuteTimingByPath';
 import NewMuteTimingPage from './components/mute-timings/NewMuteTiming';
 import { defaultConfig, muteTimeInterval } from './components/mute-timings/mocks';
 import { grantUserPermissions, mockDataSource } from './mocks';
@@ -28,11 +34,15 @@ const Index = () => {
 };
 const renderMuteTimings = (location?: InitialEntry) => {
   render(
-    <Routes>
-      <Route path={'/alerting/routes'} element={<Index />} />
-      <Route path={'/alerting/routes/new'} element={<NewMuteTimingPage />} />
-      <Route path={'/alerting/routes/edit'} element={<EditMuteTimingPage />} />
-    </Routes>,
+    <>
+      <AppNotificationList />
+      <Routes>
+        <Route path={'/alerting/routes'} element={<Index />} />
+        <Route path={'/alerting/routes/new'} element={<NewMuteTimingPage />} />
+        <Route path={'/alerting/routes/edit'} element={<EditMuteTimingPage />} />
+        <Route path={'/alerting/routes/mute-timing/:name/edit'} element={<EditMuteTimingByPathPage />} />
+      </Routes>
+    </>,
     { historyOptions: location ? { initialEntries: [location] } : undefined }
   );
 };
@@ -148,7 +158,7 @@ const saveMuteTiming = async () => {
   await user.click(await screen.findByText(/save time interval/i));
 };
 
-setupMswServer();
+const server = setupMswServer();
 
 const getAlertmanagerConfigUpdate = async (requests: Request[]): Promise<AlertManagerCortexConfig> => {
   const alertmanagerUpdate = requests.find(
@@ -326,6 +336,40 @@ describe('Mute timings', () => {
     await expectToHaveRedirectedToRoutesRoute();
   });
 
+  it('shows an error notification when creating a mute timing fails', async () => {
+    server.use(
+      http.post(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/timeintervals`, () =>
+        HttpResponse.json(
+          {
+            kind: 'Status',
+            apiVersion: 'v1',
+            metadata: {},
+            status: 'Failure',
+            code: 400,
+            reason: 'BadRequest',
+            message: 'Time interval with this name already exists. Use a different name or update existing one.',
+            details: {
+              uid: ERROR_TIME_INTERVAL_NAME_EXISTS,
+            },
+          },
+          { status: 400 }
+        )
+      )
+    );
+
+    renderMuteTimings({ pathname: '/alerting/routes/new', search: `?alertmanager=${GRAFANA_RULES_SOURCE_NAME}` });
+
+    await fillOutForm({ name: 'a new time interval' });
+    await saveMuteTiming();
+
+    const notification = await screen.findByRole('alert', { name: /failed to save time interval/i });
+    expect(
+      within(notification).getByText(
+        'Time interval with this name already exists. Use a different name or update existing one.'
+      )
+    ).toBeInTheDocument();
+  });
+
   it('shows error when mute timing does not exist', async () => {
     renderMuteTimings({
       pathname: '/alerting/routes/edit',
@@ -333,6 +377,50 @@ describe('Mute timings', () => {
     });
 
     expect(await screen.findByText(/No matching time interval found/i)).toBeInTheDocument();
+  });
+
+  it('loads edit form using the resource name, which is unrelated to the display name', async () => {
+    renderMuteTimings({
+      pathname: `/alerting/routes/mute-timing/${TIME_INTERVAL_RESOURCE_NAME_HAPPY_PATH}/edit`,
+      search: `?alertmanager=${GRAFANA_RULES_SOURCE_NAME}`,
+    });
+
+    expect(await screen.findByDisplayValue(TIME_INTERVAL_NAME_HAPPY_PATH)).toBeInTheDocument();
+  });
+
+  it('sends updates to the existing resource name even when the display name changes', async () => {
+    const capture = captureRequests((r) => r.method === 'PUT');
+    renderMuteTimings({
+      pathname: `/alerting/routes/mute-timing/${TIME_INTERVAL_RESOURCE_NAME_HAPPY_PATH}/edit`,
+      search: `?alertmanager=${GRAFANA_RULES_SOURCE_NAME}`,
+    });
+
+    const nameInput = await screen.findByDisplayValue(TIME_INTERVAL_NAME_HAPPY_PATH);
+    await userEvent.setup().clear(nameInput);
+    await userEvent.setup().type(nameInput, 'Renamed interval');
+    await saveMuteTiming();
+    await expectToHaveRedirectedToRoutesRoute();
+
+    const [putRequest] = await capture;
+    expect(putRequest.url).toContain(`timeintervals/${TIME_INTERVAL_RESOURCE_NAME_HAPPY_PATH}`);
+    const body = await putRequest.clone().json();
+    expect(body.metadata.name).toBe(TIME_INTERVAL_RESOURCE_NAME_HAPPY_PATH);
+    expect(body.spec.name).toBe('Renamed interval');
+  });
+
+  it('resolves an old name-based edit URL by matching spec.name and updates the real resource', async () => {
+    const capture = captureRequests((r) => r.method === 'PUT');
+    renderMuteTimings({
+      pathname: '/alerting/routes/edit',
+      search: `?alertmanager=${GRAFANA_RULES_SOURCE_NAME}&muteName=${encodeURIComponent(TIME_INTERVAL_NAME_HAPPY_PATH)}`,
+    });
+
+    expect(await screen.findByDisplayValue(TIME_INTERVAL_NAME_HAPPY_PATH)).toBeInTheDocument();
+    await saveMuteTiming();
+    await expectToHaveRedirectedToRoutesRoute();
+
+    const [putRequest] = await capture;
+    expect(putRequest.url).toContain(`timeintervals/${TIME_INTERVAL_RESOURCE_NAME_HAPPY_PATH}`);
   });
 
   it('loads edit form correctly and allows saving', async () => {
@@ -347,8 +435,8 @@ describe('Mute timings', () => {
 
   it('loads view form for provisioned interval', async () => {
     renderMuteTimings({
-      pathname: '/alerting/routes/edit',
-      search: `?muteName=${TIME_INTERVAL_NAME_FILE_PROVISIONED}`,
+      pathname: `/alerting/routes/mute-timing/${TIME_INTERVAL_RESOURCE_NAME_FILE_PROVISIONED}/edit`,
+      search: `?`,
     });
 
     expect(await screen.findByText(/This time interval cannot be edited through the UI/i)).toBeInTheDocument();

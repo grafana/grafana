@@ -63,6 +63,7 @@ import { type ExploreItemState } from 'app/types/explore';
 import { useDispatch } from 'app/types/store';
 
 import { getDefaultFieldSelectorWidth } from '../../logs/components/fieldSelector/FieldSelector';
+import { type InfiniteScrollTimeRange } from '../../logs/components/infiniteScrollUtils';
 import { isLokiQuery } from '../../loki-helpers/queryUtils';
 import { LokiQueryDirection } from '../../loki-helpers/types';
 import {
@@ -130,7 +131,7 @@ interface Props extends Themeable2 {
   range: TimeRange;
   onClickFilterString?: (value: string, refId?: string) => void;
   onClickFilterOutString?: (value: string, refId?: string) => void;
-  loadMoreLogs?(range: AbsoluteTimeRange): void;
+  loadMoreLogs?(range: InfiniteScrollTimeRange): void;
   onPinLineCallback?: () => void;
 }
 
@@ -776,11 +777,15 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     setFilterLevels(levels.map((level) => getLogLevelFromKey(level)));
   }, []);
 
-  const panelData: PanelData = {
-    state: loading ? LoadingState.Loading : LoadingState.Done,
-    series: props.logsFrames ?? [],
-    timeRange: props.range,
-  };
+  const panelData: PanelData = useMemo(
+    () => ({
+      state: loading ? LoadingState.Loading : LoadingState.Done,
+      series: props.logsFrames ?? [],
+      timeRange: props.range,
+      request: getState().explore.panes[exploreId]?.queryResponse.request,
+    }),
+    [exploreId, loading, props.logsFrames, props.range]
+  );
 
   return (
     <>

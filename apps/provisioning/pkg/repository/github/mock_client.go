@@ -5,6 +5,7 @@ package github
 import (
 	context "context"
 
+	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	repository "github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -518,29 +519,29 @@ func (_c *MockClient_GetWebhook_Call) RunAndReturn(run func(context.Context, rep
 	return _c
 }
 
-// ListPullRequestFiles provides a mock function with given fields: ctx, number
-func (_m *MockClient) ListPullRequestFiles(ctx context.Context, number int) ([]CommitFile, error) {
-	ret := _m.Called(ctx, number)
+// ListRepositories provides a mock function with given fields: ctx
+func (_m *MockClient) ListRepositories(ctx context.Context) ([]v0alpha1.ExternalRepository, error) {
+	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ListPullRequestFiles")
+		panic("no return value specified for ListRepositories")
 	}
 
-	var r0 []CommitFile
+	var r0 []v0alpha1.ExternalRepository
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) ([]CommitFile, error)); ok {
-		return rf(ctx, number)
+	if rf, ok := ret.Get(0).(func(context.Context) ([]v0alpha1.ExternalRepository, error)); ok {
+		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int) []CommitFile); ok {
-		r0 = rf(ctx, number)
+	if rf, ok := ret.Get(0).(func(context.Context) []v0alpha1.ExternalRepository); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]CommitFile)
+			r0 = ret.Get(0).([]v0alpha1.ExternalRepository)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
-		r1 = rf(ctx, number)
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -548,31 +549,30 @@ func (_m *MockClient) ListPullRequestFiles(ctx context.Context, number int) ([]C
 	return r0, r1
 }
 
-// MockClient_ListPullRequestFiles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListPullRequestFiles'
-type MockClient_ListPullRequestFiles_Call struct {
+// MockClient_ListRepositories_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListRepositories'
+type MockClient_ListRepositories_Call struct {
 	*mock.Call
 }
 
-// ListPullRequestFiles is a helper method to define mock.On call
+// ListRepositories is a helper method to define mock.On call
 //   - ctx context.Context
-//   - number int
-func (_e *MockClient_Expecter) ListPullRequestFiles(ctx interface{}, number interface{}) *MockClient_ListPullRequestFiles_Call {
-	return &MockClient_ListPullRequestFiles_Call{Call: _e.mock.On("ListPullRequestFiles", ctx, number)}
+func (_e *MockClient_Expecter) ListRepositories(ctx interface{}) *MockClient_ListRepositories_Call {
+	return &MockClient_ListRepositories_Call{Call: _e.mock.On("ListRepositories", ctx)}
 }
 
-func (_c *MockClient_ListPullRequestFiles_Call) Run(run func(ctx context.Context, number int)) *MockClient_ListPullRequestFiles_Call {
+func (_c *MockClient_ListRepositories_Call) Run(run func(ctx context.Context)) *MockClient_ListRepositories_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int))
+		run(args[0].(context.Context))
 	})
 	return _c
 }
 
-func (_c *MockClient_ListPullRequestFiles_Call) Return(_a0 []CommitFile, _a1 error) *MockClient_ListPullRequestFiles_Call {
+func (_c *MockClient_ListRepositories_Call) Return(_a0 []v0alpha1.ExternalRepository, _a1 error) *MockClient_ListRepositories_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockClient_ListPullRequestFiles_Call) RunAndReturn(run func(context.Context, int) ([]CommitFile, error)) *MockClient_ListPullRequestFiles_Call {
+func (_c *MockClient_ListRepositories_Call) RunAndReturn(run func(context.Context) ([]v0alpha1.ExternalRepository, error)) *MockClient_ListRepositories_Call {
 	_c.Call.Return(run)
 	return _c
 }

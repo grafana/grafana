@@ -41,11 +41,11 @@ image_maps:
       - x_coord: 52
         y_coord: 9.5
         content: |
-          Ungroups all the tabs inside **Row with tabs**, leaving the panels in that row.
+          Ungroups the tabs inside **Row with tabs**. Nested rows move up a level and tabs that contain only panels are converted to rows.
       - x_coord: 20.5
         y_coord: 96
         content: |
-          Removes all groupings on the dashboard, leaving just the panels on the dashboard.
+          Ungroups the top-level rows. Nested tabs move up a level and rows that contain only panels are converted to tabs.
 ---
 
 # Dashboard panel groupings
@@ -79,6 +79,10 @@ The following screenshot demonstrates how groupings work:
 
 In addition to the option to add groupings from the sidebar, when you hover your cursor over relevant parts of the dashboard, **+ Add panel**, **+ New row**, **+ New tab**, **Group panels**, and ungroup buttons are visible.
 
+To see a repeating row in action, explore this demo dashboard on Grafana Play:
+
+{{< docs/play title="Repeat rows" url="https://play.grafana.org/d/000000153/" >}}
+
 The following sections describe:
 
 - [Grouping configuration options](#grouping-configuration-options)
@@ -99,7 +103,7 @@ The following table describes the options you can set for a row or tab:
 | Hide row header | Toggle the switch on to hide row headers in view mode. In edit mode, the row header is visible, but crossed out with the hidden icon next to it. Rows only. |
 | Filters       | Add filters that apply to only the panels in the grouping. For more information, refer to [Section-level variables and filters](#grouping-level-variables-and-filters). For information on configuring the **Filter and Group by** feature, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-filters-and-group-by-controls). |
 | Variables       | Add variables that apply to only the panels in the grouping. For more information, refer to [Section-level variables and filters](#grouping-level-variables-and-filters). For information on configuring variables, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables). |
-| Layout          | Select the layout. If the grouping contains another grouping, choose from **Rows** or **Tabs**. If the grouping contains panels, choose from **Custom** or **Auto grid**. For more information, refer to [Panel layouts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-layouts) or [Grouping layouts](#grouping-layouts). |
+| Layout          | Select the layout. If the grouping contains another grouping, choose from **Rows** or **Tabs**. If the grouping contains panels, choose from **Custom** or **Auto**. For more information, refer to [Panel layouts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-layouts) or [Grouping layouts](#grouping-layouts). |
 | Repeat options > [Repeat by variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#configure-repeat-options) | Configure the dashboard to dynamically add panels, rows, or tabs based on the value of a variable. |
 | Show / hide rules > [Panel/Row/Tab visibility](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#configure-showhide-rules) | Control whether or not panels, rows, or tabs are displayed based on variable values, a time range, or query results (panels only). |
 
@@ -122,7 +126,11 @@ You can switch between rows and tabs or update the panel layout by clicking the 
 
 ## Group panels
 
-To group panels already on a dashboard, follow these steps:
+You can group all the panels on a dashboard or select specific ones.
+
+### Group all panels
+
+To group all the panels on a dashboard, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
@@ -147,7 +155,28 @@ To group panels already on a dashboard, follow these steps:
 1. Click **Save**.
 1. Click **Exit edit**.
 
-You can also start a grouping by adding a row or tab from the sidebar and then adding panels to that grouping.
+### Group select panels
+
+To group select panels on a dashboard:
+
+1. Navigate to the dashboard you want to update.
+1. Click **Edit**.
+1. Press the `Shift` key and select all the panels you want to group.
+   A dotted blue line surrounds the selected panels.
+   You can select panels that are already in other groupings.
+
+1. In the sidebar, select **Group into row** or **Group into tab**.
+   The panels you've selected are grouped and any remaining panels are added to another grouping of the same type.
+
+1. Set the [grouping configuration options](#grouping-configuration-options) in the sidebar.
+1. (Optional) Add one or both of the following:
+   - Other [groupings at the same level](#add-more-groupings-at-the-same-level).
+   - A [nested grouping](#add-nested-groupings)
+
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
 
 ### Add more groupings at the same level
 
@@ -185,8 +214,18 @@ You can add more one more level of grouping if needed.
 
 You can ungroup some or all of the dashboard groupings without losing your panels.
 
-When you ungroup a row or tab, all the groupings inside it are ungrouped and the panels are moved into the next higher-level grouping.
-If there are no more groupings left, the panels are moved onto the dashboard.
+What happens when you ungroup rows or tabs depends on what they contain:
+
+- **Groupings that contain only panels**: The grouping level is removed and the panels are merged into the next higher-level grouping. If there are no groupings left, the panels are moved onto the dashboard.
+- **Groupings that contain nested groupings**: Only the grouping level you're ungrouping is removed. The nested groupings move up a level, and any groupings at the same level that contain only panels are converted to the same grouping type, so the structure of your dashboard content is preserved.
+
+When the groupings you're ungrouping contain nested groupings, the following rules apply:
+
+- If the nested groupings are all rows or all tabs, Grafana automatically converts everything at that level to that grouping type.
+- If the nested groupings are a mix of rows and tabs, or if converting to tabs isn't possible because tabs can't be directly nested inside a tab, you're prompted to choose between **Convert to rows** and **Convert to tabs**.
+- If any of the ungrouped groupings have repeat options configured, those repeat options are lost. Grafana warns you before making the change.
+
+Section-level variables and filters configured on the ungrouped groupings aren't lost; they move up to the next level.
 
 {{< image-map key="ungrouping" >}}
 
@@ -201,8 +240,9 @@ To remove groupings, follow these steps:
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
 1. (Optional) Click the **Content outline** icon to quickly navigate to the grouping you want to remove.
-1. Hover your mouse over the relevant area to show the **Ungroup rows** or **Ungroup tabs** button, then click it to ungroup all rows or tabs, including any nested groupings.
-1. If you've ungrouped panels that were previously in different panel layouts, you'll be prompted to select a common layout type for all the panels; click **Convert to Auto grid** or **Convert to Custom**.
+1. Hover your mouse over the relevant area to show the **Ungroup rows** or **Ungroup tabs** button, then click it.
+1. If you've ungrouped panels that were previously in different panel layouts, you'll be prompted to select a common layout type for all the panels; click **Convert to Auto** or **Convert to Custom**.
+1. If the ungrouped groupings contain a mix of nested rows and tabs, you'll be prompted to select how to convert them; click **Convert to rows** or **Convert to tabs**.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
@@ -241,3 +281,4 @@ Panels in the grouping resolve section-level variables and filters first, then f
 
 The panel query editor is context-aware, so the autocomplete only shows the variables available to the panel you're editing.
 Also, section-level variables and filters carry over when you convert between rows and tabs, change layouts, and work with repeating rows and tabs.
+When you ungroup rows or tabs, their section-level variables and filters move up to the next level.

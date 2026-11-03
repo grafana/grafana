@@ -53,9 +53,11 @@ func (e *WriteEvent) Validate() error {
 
 // WrittenEvent is a WriteEvent reported with a resource version.
 type WrittenEvent struct {
-	Type       resourcepb.WatchEvent_Type
-	Key        *resourcepb.ResourceKey
-	PreviousRV int64
+	Type           resourcepb.WatchEvent_Type
+	Key            *resourcepb.ResourceKey
+	PreviousRV     int64
+	PreviousAction DataAction
+	PreviousFolder string
 
 	// The json payload (without resourceVersion)
 	Value []byte
@@ -68,6 +70,14 @@ type WrittenEvent struct {
 
 	// Timestamp when the event is created
 	Timestamp int64
+}
+
+func (e *WrittenEvent) sizeBytes() int64 {
+	if e == nil {
+		return 0
+	}
+	// Count capacity because a short payload can retain a larger backing array.
+	return int64(cap(e.Value))
 }
 
 // EventAppender is a function to write events.

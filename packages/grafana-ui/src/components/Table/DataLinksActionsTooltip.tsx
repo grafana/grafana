@@ -118,7 +118,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       background: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.weak}`,
-      boxShadow: theme.shadows.z3,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
       maxHeight: `calc(100vh - ${theme.spacing(4)})`,
       overflowX: 'hidden',
       userSelect: 'text',

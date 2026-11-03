@@ -12,8 +12,13 @@
 export * from './utils/skeleton';
 
 export { CodeMirrorEditor } from './components/CodeMirror/CodeEditorLazy';
+export { CodeMirrorDiffEditor } from './components/CodeMirror/DiffEditorLazy';
+export { CODE_MIRROR_LANGUAGES } from './components/CodeMirror/languages';
+export { createCodeEditorTheme } from './components/CodeMirror/theme';
 export { signatureHelp } from './components/CodeMirror/signatureHelp';
 export type { SignatureHelpOptions } from './components/CodeMirror/signatureHelp';
+export { applyVariableReference, createVariableCompletionSource } from './components/CodeMirror/variableCompletion';
+export type { VariableCompletionDisplay, VariableCompletionOptions } from './components/CodeMirror/variableCompletion';
 export type {
   CodeMirrorBasicSetup,
   CodeMirrorCompletion,
@@ -21,6 +26,7 @@ export type {
   CodeMirrorCompletionMode,
   CodeMirrorCompletionResult,
   CodeMirrorCompletionSource,
+  CodeMirrorDiffEditorProps,
   CodeMirrorEditorLanguage,
   CodeMirrorEditorProps,
   CodeMirrorEditorTheme,
@@ -34,3 +40,7 @@ export type {
 export { getQueryFieldConfig } from './components/QueryFieldConfig/queryFieldConfig';
 export type { QueryFieldConfig, QueryFieldConfigOptions } from './components/QueryFieldConfig/queryFieldConfig';
 export { TableNG } from './components/Table/TableNG/TableNG';
+export { RangeSliderG14 } from './components/Slider/RangeSliderG14';
+export type { RangeSliderG14Props } from './components/Slider/types';
+export { usePanelNotices, usePanelStatusSnapshot, PanelStatusActions } from './components/PanelChrome';
+export { SanitizedSVG } from './components/SanitizedSVG/SanitizedSVG';

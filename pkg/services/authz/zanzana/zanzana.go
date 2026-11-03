@@ -69,6 +69,10 @@ const (
 )
 
 var (
+	// KindNotebooks is a var (not const) because common.KindNotebooks is derived from
+	// NotebookResourceInfo at init rather than a string constant.
+	KindNotebooks = common.KindNotebooks
+
 	ToAuthzExtTupleKey                  = common.ToAuthzExtTupleKey
 	ToAuthzExtTupleKeys                 = common.ToAuthzExtTupleKeys
 	ToAuthzExtTupleKeyWithoutCondition  = common.ToAuthzExtTupleKeyWithoutCondition
@@ -83,6 +87,7 @@ var (
 	NewObjectEntry            = common.NewObjectEntry
 	NewGroupResourceTuple     = common.NewGroupResourceTuple
 	TranslateToResourceTuple  = common.TranslateToResourceTuple
+	TranslateToResourceTuples = common.TranslateToResourceTuples
 	IsFolderResourceTuple     = common.IsFolderResourceTuple
 	MergeFolderResourceTuples = common.MergeFolderResourceTuples
 

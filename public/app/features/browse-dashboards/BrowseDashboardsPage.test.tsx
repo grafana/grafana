@@ -3,7 +3,7 @@ import { type ComponentProps } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import type AutoSizer from 'react-virtualized-auto-sizer';
 import { of } from 'rxjs';
-import { render as testRender, screen, waitFor, testWithFeatureToggles } from 'test/test-utils';
+import { act, render as testRender, screen, waitFor } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -53,8 +53,8 @@ const defaultTestDataSource = {
   type: 'grafana-testdata-datasource',
 } as DataSourceInstanceListItem;
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [defaultTestDataSource] })),
 }));
 
@@ -208,9 +208,15 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     describe('folder owner', () => {
-      testWithFeatureToggles({ enable: ['foldersAppPlatformAPI'] });
       beforeEach(() => {
+        setTestFlags({ foldersAppPlatformAPI: true });
         jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
+      });
+
+      afterEach(async () => {
+        await act(async () => {
+          setTestFlags({});
+        });
       });
 
       it('allows choosing a team to own the folder', async () => {
@@ -402,26 +408,14 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       expect(checkbox).toBeInTheDocument();
     });
 
-    describe('with starred folders enabled', () => {
-      testWithFeatureToggles({ enable: ['starsFromAPIServer', 'foldersAppPlatformAPI'] });
+    it('shows the star toggle as the first action, before "Recently deleted"', async () => {
+      render(<BrowseDashboardsPage queryParams={{}} />);
 
-      beforeEach(() => {
-        setTestFlags({ 'grafana.starredFolders': true });
-      });
+      const star = await screen.findByTestId(selectors.components.NavToolbar.markAsFavorite);
+      const recentlyDeleted = await screen.findByRole('link', { name: 'Recently deleted' });
 
-      afterEach(() => {
-        setTestFlags({});
-      });
-
-      it('shows the star toggle as the first action, before "Recently deleted"', async () => {
-        render(<BrowseDashboardsPage queryParams={{}} />);
-
-        const star = await screen.findByTestId(selectors.components.NavToolbar.markAsFavorite);
-        const recentlyDeleted = await screen.findByRole('link', { name: 'Recently deleted' });
-
-        // star precedes "Recently deleted" in document order, so it is the first action
-        expect(star.compareDocumentPosition(recentlyDeleted) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-      });
+      // star precedes "Recently deleted" in document order, so it is the first action
+      expect(star.compareDocumentPosition(recentlyDeleted) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
   });
 
@@ -461,6 +455,40 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       });
       await screen.findByText('Sort');
       expect(screen.queryByRole('dialog', { name: 'Start a dashboard from a template' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('starred view', () => {
+    // The starred view swaps the page's nav identity, so the nav index needs both entries.
+    const preloadedState = {
+      navIndex: {
+        'dashboards/browse': { text: 'Dashboards', id: 'dashboards/browse' },
+        starred: { text: 'Starred', id: 'starred' },
+      },
+    };
+
+    beforeEach(() => {
+      // The child-folder describe's useParams mock leaks across describes; force the root view.
+      (useParams as jest.Mock).mockReturnValue({});
+    });
+
+    it('displays "Starred" as the page title when the starred param is set', async () => {
+      render(<BrowseDashboardsPage queryParams={{}} />, {
+        preloadedState,
+        historyOptions: { initialEntries: ['/dashboards?starred'] },
+      });
+      expect(await screen.findByRole('heading', { name: 'Starred' })).toBeInTheDocument();
+      // The heading appears before the search completes; wait for real rows before cleanup.
+      expect(await screen.findByRole('link', { name: dashbdD.item.title })).toBeInTheDocument();
+    });
+
+    it('displays "Starred" as the page title for the starred=true shape the filter checkbox writes', async () => {
+      render(<BrowseDashboardsPage queryParams={{}} />, {
+        preloadedState,
+        historyOptions: { initialEntries: ['/dashboards?starred=true'] },
+      });
+      expect(await screen.findByRole('heading', { name: 'Starred' })).toBeInTheDocument();
+      expect(await screen.findByRole('link', { name: dashbdD.item.title })).toBeInTheDocument();
     });
   });
 });

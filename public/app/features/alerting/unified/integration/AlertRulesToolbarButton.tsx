@@ -1,12 +1,10 @@
 import { useContext } from 'react';
+import { useAsync } from 'react-use';
 
 import { t } from '@grafana/i18n';
 import { ModalsContext, ToolbarButton } from '@grafana/ui';
 
-import { alertRuleApi } from '../api/alertRuleApi';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
-
-import { AlertRulesDrawer } from './AlertRulesDrawer';
+import { loadDashboardAlertRuleGroups } from '../../../dashboard-scene/scene/loadPanelAlertStateCandidates';
 
 interface AlertRulesToolbarButtonProps {
   dashboardUid: string;
@@ -14,19 +12,17 @@ interface AlertRulesToolbarButtonProps {
 
 export default function AlertRulesToolbarButton({ dashboardUid }: AlertRulesToolbarButtonProps) {
   const { showModal, hideModal } = useContext(ModalsContext);
+  const { value: groups = [] } = useAsync(() => loadDashboardAlertRuleGroups(dashboardUid), [dashboardUid]);
+  const hasAlertRules = groups.some((group) => group.rules.length > 0);
 
-  const { data: namespaces = [] } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery({
-    ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
-    dashboardUid: dashboardUid,
-  });
-
-  if (namespaces.length === 0) {
+  if (!hasAlertRules) {
     return null;
   }
 
-  const onShowDrawer = () => {
+  const onShowDrawer = async () => {
+    const { AlertRulesDrawer } = await import(/* webpackChunkName: "DashboardAlertingView" */ './AlertRulesDrawer');
     showModal(AlertRulesDrawer, {
-      dashboardUid: dashboardUid,
+      dashboardUid,
       onDismiss: hideModal,
     });
   };

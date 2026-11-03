@@ -219,7 +219,7 @@ func (s *TeamK8sService) listUserTeams(ctx context.Context, namespace, userUID s
 	svcCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
 
 	// Propagate every error (including 404) so teamimpl falls back to legacy when the subresource is gated off.
-	resp, err := client.GetUserTeams(svcCtx, sdkresource.Identifier{Namespace: namespace, Name: userUID}, iamv0alpha1.GetUserTeamsRequest{})
+	resp, err := client.GetUserTeamsAll(svcCtx, sdkresource.Identifier{Namespace: namespace, Name: userUID}, iamv0alpha1.GetUserTeamsRequest{})
 	if err != nil {
 		return nil, err
 	}
@@ -615,6 +615,9 @@ func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeam
 	}
 	if query.WithAccessControl {
 		req = req.Param("accesscontrol", "true")
+	}
+	if query.MemberUID != "" {
+		req = req.Param("member", query.MemberUID)
 	}
 	for _, uid := range query.UIDs {
 		req = req.Param("uid", uid)
@@ -1204,5 +1207,3 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 
 	return members, nil
 }
-
-func (s *TeamK8sService) RegisterDelete(query string) {}

@@ -258,6 +258,7 @@ export class LogLineVirtualization {
 
 export interface DisplayOptions {
   hasLogsWithErrors?: boolean;
+  hasLogsWithErrorAttributes?: boolean;
   hasSampledLogs?: boolean;
   showDuplicates: boolean;
   showTime: boolean;
@@ -269,7 +270,7 @@ export function getLogLineSize(
   logs: LogListModel[],
   container: HTMLDivElement | null,
   displayedFields: string[],
-  { hasLogsWithErrors, hasSampledLogs, showDuplicates, showTime, wrap }: DisplayOptions,
+  { hasLogsWithErrors, hasLogsWithErrorAttributes, hasSampledLogs, showDuplicates, showTime, wrap }: DisplayOptions,
   index: number
 ) {
   if (!container) {
@@ -280,7 +281,7 @@ export function getLogLineSize(
     return virtualization.getLineHeight() + virtualization.getPaddingBottom();
   }
 
-  const storedSize = virtualization.retrieveLogLineSize(logs[index].uid, container);
+  const storedSize = virtualization.retrieveLogLineSize(logs[index].uniqueKey, container);
   if (storedSize) {
     return storedSize;
   }
@@ -305,6 +306,9 @@ export function getLogLineSize(
     optionsWidth += virtualization.getGridSize() * 4.5 + iconsGap;
   }
   if (hasLogsWithErrors) {
+    optionsWidth += virtualization.getGridSize() * 2 + iconsGap;
+  }
+  if (hasLogsWithErrorAttributes) {
     optionsWidth += virtualization.getGridSize() * 2 + iconsGap;
   }
   if (hasSampledLogs) {

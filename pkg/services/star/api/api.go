@@ -55,6 +55,10 @@ func (api *API) GetStars(c *contextmodel.ReqContext) response.Response {
 //
 // Stars the given Dashboard for the actual user.
 //
+// Use: PUT /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}/update/{group}/{kind}/{id}
+//
+// Deprecated: true
+//
 // Responses:
 // 200: okResponse
 // 400: badRequestError
@@ -79,6 +83,10 @@ func (api *API) StarDashboardByUID(c *contextmodel.ReqContext) response.Response
 // Unstar a dashboard.
 //
 // Deletes the starring of the given Dashboard for the actual user.
+//
+// Use: DELETE /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}/update/{group}/{kind}/{id}
+//
+// Deprecated: true
 //
 // Responses:
 // 200: okResponse

@@ -10,7 +10,7 @@ import {
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { InspectTab } from 'app/features/inspector/types';
 
-import { getQueryRunnerFor } from '../utils/utils';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 
 export interface InspectQueryTabState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;

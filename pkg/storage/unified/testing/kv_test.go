@@ -29,8 +29,8 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestSQLKV(t *testing.T) {
-	dbstore := db.InitTestDB(t)
+func TestIntegrationSQLKV(t *testing.T) {
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
 	dbConn, err := eDB.Init(context.Background())

@@ -12,8 +12,10 @@ import {
   nullToValue,
 } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { type GraphFieldConfig, LineInterpolation } from '@grafana/schema';
 import { buildScaleKey } from '@grafana/ui/internal';
+import { findFrameWithNullTimeValue } from 'app/features/panel/frames/validation';
 
 type ScaleKey = string;
 
@@ -100,7 +102,7 @@ function reEnumFields(frames: DataFrame[]): DataFrame[] {
 }
 
 /**
- * Returns null if there are no graphable fields
+ * Returns graphable frames or a warning explaining why no graphable frames are available.
  */
 export function prepareGraphableFields(
   series: DataFrame[],
@@ -108,9 +110,9 @@ export function prepareGraphableFields(
   timeRange?: TimeRange,
   // numeric X requires a single frame where the first field is numeric
   xNumFieldIdx?: number
-): DataFrame[] | null {
+): { frames: DataFrame[]; warn?: string } {
   if (!series?.length) {
-    return null;
+    return { frames: [] };
   }
 
   cacheFieldDisplayNames(series);
@@ -159,12 +161,18 @@ export function prepareGraphableFields(
     let hasTimeField = false;
     let hasValueField = false;
 
+    // Compare frames still sit in their own earlier window at this point - they are only shifted onto
+    // the current range afterwards, by the panel. Offsetting the pseudo range by the same amount keeps
+    // gap filling from reading the whole compare offset as a gap and padding it with nulls that end up
+    // outside the visible range once the frame is shifted.
+    const compareOffsetMs = Math.abs(frame.meta?.timeCompare?.diffMs ?? 0);
+
     let nulledFrame = useNumericX
       ? frame
       : applyNullInsertThreshold({
           frame,
-          refFieldPseudoMin: timeRange?.from.valueOf(),
-          refFieldPseudoMax: timeRange?.to.valueOf(),
+          refFieldPseudoMin: timeRange == null ? undefined : timeRange.from.valueOf() - compareOffsetMs,
+          refFieldPseudoMax: timeRange == null ? undefined : timeRange.to.valueOf() - compareOffsetMs,
         });
 
     const frameFields = nullToValue(nulledFrame).fields;
@@ -263,10 +271,34 @@ export function prepareGraphableFields(
   if (frames.length) {
     setClassicPaletteIdxs(frames, theme, 0);
     matchEnumColorToSeriesColor(frames, theme);
-    return frames;
+
+    // The Data Plane timeseries spec requires non-null timestamps, and time-axis
+    // panels (timeseries, state-timeline, status-history, candlestick) crash on
+    // null time cells via the zoom-to-data path. Trend in numeric-X mode never
+    // mounts the zoom plugin, so it is exempt from this check.
+    if (!useNumericX) {
+      const invalidFrame = findFrameWithNullTimeValue(frames);
+      if (invalidFrame) {
+        return {
+          frames: [],
+          warn: invalidFrame.refId
+            ? t(
+                'timeseries.time-series-panel.null-time-value-query',
+                'Query {{refId}} returned a time field with null values; filter out rows with empty timestamps',
+                { refId: invalidFrame.refId }
+              )
+            : t(
+                'timeseries.time-series-panel.null-time-value',
+                'A query returned a time field with null values; filter out rows with empty timestamps'
+              ),
+        };
+      }
+    }
+
+    return { frames };
   }
 
-  return null;
+  return { frames: [] };
 }
 
 const matchEnumColorToSeriesColor = (frames: DataFrame[], theme: GrafanaTheme2) => {
@@ -350,4 +382,43 @@ export function getTimezones(timezones: string[] | undefined, defaultTimezone: s
     return [defaultTimezone];
   }
   return timezones.map((v) => (v?.length ? v : defaultTimezone));
+}
+
+/**
+ * Bidirectional pairing between a time-comparison series and its current-period counterpart, keyed
+ * by index into `alignedFrame.fields`.
+ */
+export function getComparisonFieldPairs(alignedFrame: DataFrame, allFrames: DataFrame[]): Map<number, number> {
+  const pairs = new Map<number, number>();
+  const bySeriesIndex = new Map<number, number[]>();
+
+  // field 0 is the join/x field and has no counterpart
+  for (let i = 1; i < alignedFrame.fields.length; i++) {
+    const seriesIndex = alignedFrame.fields[i].state?.seriesIndex;
+    if (seriesIndex == null) {
+      continue;
+    }
+    const group = bySeriesIndex.get(seriesIndex);
+    group == null ? bySeriesIndex.set(seriesIndex, [i]) : group.push(i);
+  }
+
+  const isCompare = (fieldIdx: number) => {
+    const frameIndex = alignedFrame.fields[fieldIdx].state?.origin?.frameIndex;
+    return frameIndex == null ? false : allFrames[frameIndex]?.meta?.timeCompare?.isTimeShiftQuery === true;
+  };
+
+  for (const group of bySeriesIndex.values()) {
+    // Only create pairs of two, in case a custom palette makes series with unrelated series on an index
+    if (group.length !== 2) {
+      continue;
+    }
+    const [a, b] = group;
+    if (isCompare(a) === isCompare(b)) {
+      continue;
+    }
+    pairs.set(a, b);
+    pairs.set(b, a);
+  }
+
+  return pairs;
 }

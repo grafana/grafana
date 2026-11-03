@@ -2,6 +2,7 @@ package install
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"strings"
@@ -19,6 +20,8 @@ import (
 
 const (
 	PluginInstallSourceAnnotation = "plugins.grafana.app/install-source"
+	// PluginStoreSyncServiceIdentity identifies writes made by install sync.
+	PluginStoreSyncServiceIdentity = "plugins.installsync"
 	// AppliedDependenciesAnnotation records the dependency plugin IDs that the
 	// plugin storage hooks have applied for a plugin. The hooks stamp it
 	// authoritatively from plugin metadata on create/update.
@@ -31,6 +34,10 @@ const (
 	// solely as dependencies of other plugins.
 	DependencyPluginVersion = "latest"
 )
+
+// ErrSyncDidNotConverge indicates that storage hooks kept changing plugin
+// records through every reconciliation pass.
+var ErrSyncDidNotConverge = errors.New("plugin install sync did not converge")
 
 type Source = string
 
@@ -240,7 +247,7 @@ func (r *InstallRegistrar) register(ctx context.Context, namespace string, insta
 	existing, err := client.Get(ctx, identifier)
 	if err != nil && !errorsK8s.IsNotFound(err) {
 		logger.Error("Failed to get existing plugin", "error", err)
-		metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()
+		metrics.RegistrationOperationsTotal.WithLabelValues("register", outcomeForError(err)).Inc()
 		return false, err
 	}
 
@@ -254,7 +261,7 @@ func (r *InstallRegistrar) register(ctx context.Context, namespace string, insta
 					return true, nil
 				}
 				logger.Error("Failed to update plugin", "error", err)
-				metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()
+				metrics.RegistrationOperationsTotal.WithLabelValues("register", outcomeForError(err)).Inc()
 				return false, err
 			}
 			metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
@@ -272,11 +279,23 @@ func (r *InstallRegistrar) register(ctx context.Context, namespace string, insta
 			return true, nil
 		}
 		logger.Error("Failed to create plugin", "error", err)
-		metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()
+		metrics.RegistrationOperationsTotal.WithLabelValues("register", outcomeForError(err)).Inc()
 		return false, err
 	}
 	metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
 	return true, nil
+}
+
+// outcomeForError classifies transient API failures separately from generic
+// errors so fleet-wide rate limiting and unavailability remain distinguishable.
+func outcomeForError(err error) string {
+	if errorsK8s.IsTooManyRequests(err) {
+		return "rate_limited"
+	}
+	if errorsK8s.IsServiceUnavailable(err) || errorsK8s.IsServerTimeout(err) || errorsK8s.IsTimeout(err) {
+		return "unavailable"
+	}
+	return "error"
 }
 
 // maxSyncNamespacePasses bounds SyncNamespace's passes. A namespace still
@@ -284,11 +303,11 @@ func (r *InstallRegistrar) register(ctx context.Context, namespace string, insta
 const maxSyncNamespacePasses = 5
 
 // SyncNamespace reconciles the namespace's plugin installs from the given
-// source to match desired, unregistering records not in it. In-sync records
-// are skipped without a read, and because writes fire storage hooks that can
-// rewrite sibling records, passes repeat against a fresh list until one
-// writes nothing.
-func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, source Source, desired []PluginInstall) error {
+// source to match desired, unregistering records not in it unless their ID is
+// in retain. In-sync records are skipped without a read, and because writes
+// fire storage hooks that can rewrite sibling records, passes repeat against a
+// fresh list until one writes nothing.
+func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, source Source, desired []PluginInstall, retain []string) error {
 	client, err := r.GetClient()
 	if err != nil {
 		return err
@@ -298,13 +317,19 @@ func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, 
 	for i := range desired {
 		desiredIDs[desired[i].ID] = struct{}{}
 	}
+	retainIDs := make(map[string]struct{}, len(retain))
+	for _, id := range retain {
+		retainIDs[id] = struct{}{}
+	}
 
 	var written []string
-	for pass := 0; pass < maxSyncNamespacePasses; pass++ {
+	for pass := range maxSyncNamespacePasses {
 		existing, err := client.ListAll(ctx, namespace, resource.ListOptions{})
 		if err != nil {
+			metrics.RegistrationOperationsTotal.WithLabelValues("list", outcomeForError(err)).Inc()
 			return err
 		}
+		metrics.RegistrationOperationsTotal.WithLabelValues("list", "success").Inc()
 
 		written = written[:0]
 
@@ -315,6 +340,13 @@ func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, 
 				continue
 			}
 			if _, ok := desiredIDs[record.Spec.Id]; ok {
+				continue
+			}
+			if _, ok := retainIDs[record.Spec.Id]; ok {
+				if pass == 0 {
+					r.logger.WithContext(ctx).Info("Keeping retained plugin install", "requestNamespace", namespace, "pluginId", record.Spec.Id)
+					metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "retained").Inc()
+				}
 				continue
 			}
 			if r.unregisterIsNoOp(record, source) {
@@ -360,7 +392,7 @@ func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, 
 		}
 	}
 
-	return fmt.Errorf("plugin install sync did not converge after %d passes, still writing: %v", maxSyncNamespacePasses, written)
+	return fmt.Errorf("%w after %d passes, still writing: %v", ErrSyncDidNotConverge, maxSyncNamespacePasses, written)
 }
 
 // unregisterIsNoOp reports whether the listed record proves Unregister would
@@ -402,7 +434,7 @@ func (r *InstallRegistrar) unregister(ctx context.Context, namespace string, nam
 	existing, err := client.Get(ctx, identifier)
 	if err != nil && !errorsK8s.IsNotFound(err) {
 		logger.Error("Failed to get existing plugin", "error", err)
-		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "error").Inc()
+		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", outcomeForError(err)).Inc()
 		return false, err
 	}
 	// if the plugin doesn't exist, nothing to unregister
@@ -437,7 +469,7 @@ func (r *InstallRegistrar) unregister(ctx context.Context, namespace string, nam
 				return true, nil
 			}
 			logger.Error("Failed to demote plugin to dependency install", "error", err)
-			metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "error").Inc()
+			metrics.RegistrationOperationsTotal.WithLabelValues("unregister", outcomeForError(err)).Inc()
 			return false, err
 		}
 		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()
@@ -446,7 +478,7 @@ func (r *InstallRegistrar) unregister(ctx context.Context, namespace string, nam
 	err = client.Delete(ctx, identifier, resource.DeleteOptions{})
 	if err != nil {
 		logger.Error("Failed to delete plugin", "error", err)
-		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "error").Inc()
+		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", outcomeForError(err)).Inc()
 		return false, err
 	}
 	metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()

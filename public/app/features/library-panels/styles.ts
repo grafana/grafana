@@ -17,7 +17,7 @@ export function getModalStyles(theme: GrafanaTheme2) {
       width: '100%',
 
       thead: {
-        color: '#538ade',
+        color: theme.colors.accent.text,
         fontSize: theme.typography.bodySmall.fontSize,
       },
 

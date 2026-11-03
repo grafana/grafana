@@ -1,11 +1,6 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Controls, Panels, Sidebar } from './page-objects';
+import { expect, test } from './fixtures';
 
 test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
   viewport: { width: 1920, height: 1080 },
 });
 
@@ -17,29 +12,14 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('hide button is available in view mode on desktop', async ({
-      gotoDashboardPage,
-      selectors,
-      page,
-      components,
-    }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
+    test('hide button is available in view mode on desktop', async ({ gotoDashboardPage, sidebar }) => {
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(sidebar.getContainer()).toBeVisible();
       await expect(sidebar.toolbar.getVisibilityToggle()).toBeVisible();
     });
 
-    test('hide button is available in edit mode on desktop', async ({
-      gotoDashboardPage,
-      selectors,
-      page,
-      components,
-    }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
+    test('hide button is available in edit mode on desktop', async ({ gotoDashboardPage, controls, sidebar }) => {
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await controls.enterEditMode();
 
       await expect(sidebar.getContainer()).toBeVisible();
@@ -48,13 +28,9 @@ test.describe(
 
     test('clicking hide in view mode hides the sidebar and shows the toggle', async ({
       gotoDashboardPage,
-      selectors,
-      page,
-      components,
+      sidebar,
     }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await sidebar.toolbar.getVisibilityToggle().click();
 
       await expect(sidebar.getContainer()).not.toBeVisible();
@@ -62,15 +38,8 @@ test.describe(
       await expect(sidebar.toolbar.getVisibilityToggle()).toBeVisible();
     });
 
-    test('clicking show re-displays the sidebar after hiding it', async ({
-      gotoDashboardPage,
-      selectors,
-      page,
-      components,
-    }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
+    test('clicking show re-displays the sidebar after hiding it', async ({ gotoDashboardPage, sidebar }) => {
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await sidebar.toolbar.getVisibilityToggle().click();
       await expect(sidebar.getContainer()).not.toBeVisible();
 
@@ -78,16 +47,8 @@ test.describe(
       await expect(sidebar.getContainer()).toBeVisible();
     });
 
-    test('hidden state is shared between view mode and edit mode', async ({
-      gotoDashboardPage,
-      selectors,
-      page,
-      components,
-    }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
+    test('hidden state is shared between view mode and edit mode', async ({ gotoDashboardPage, controls, sidebar }) => {
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       // Hide in view mode
       await sidebar.toolbar.getVisibilityToggle().click();
       await expect(sidebar.getContainer()).not.toBeVisible();
@@ -100,15 +61,11 @@ test.describe(
 
     test('selecting a panel while hidden temporarily shows the sidebar and de-selecting re-hides it', async ({
       gotoDashboardPage,
-      selectors,
-      page,
-      components,
+      controls,
+      sidebar,
+      panels,
     }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       // Enter edit mode
       await controls.enterEditMode();
 
@@ -126,7 +83,7 @@ test.describe(
       await expect(sidebar.getDockToggle()).not.toBeVisible();
 
       // Close the pane (de-select) via the X button — sidebar should re-hide
-      await sidebar.clickCloseButton();
+      await sidebar.closePane();
 
       await expect(sidebar.getContainer()).not.toBeVisible();
       await expect(sidebar.toolbar.getVisibilityToggle()).toBeVisible();

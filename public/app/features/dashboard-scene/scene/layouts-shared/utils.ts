@@ -1,10 +1,14 @@
 import { useEffect, useRef } from 'react';
 
-import { config } from '@grafana/runtime';
+import { type VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
+import { type RowItem } from '../layout-rows/RowItem';
+import { type TabItem } from '../layout-tabs/TabItem';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
+import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 export interface SidebarInputAutoFocusProps {
   autoFocus?: boolean;
@@ -55,20 +59,50 @@ export function generateUniqueTitle(title: string | undefined, existingTitles: S
   return baseTitle;
 }
 
-export function ungroupLayout(layout: DashboardLayoutManager, innerLayout: DashboardLayoutManager, skipUndo?: boolean) {
-  const layoutParent = layout.parent!;
-  if (isLayoutParent(layoutParent)) {
-    innerLayout.clearParent();
-    layoutParent.switchLayout(innerLayout, skipUndo);
+export function deduplicateTitles(items: TabItem[] | RowItem[]) {
+  const existingTitles = new Set<string>();
+
+  for (const item of items) {
+    if (!item.state.title) {
+      continue;
+    }
+
+    const uniqueTitle = generateUniqueTitle(item.state.title, existingTitles);
+
+    if (uniqueTitle !== item.state.title) {
+      item.setState({ title: uniqueTitle });
+    }
+
+    existingTitles.add(uniqueTitle);
   }
 }
 
+function switchLayoutOnParent(current: DashboardLayoutManager, newLayout: DashboardLayoutManager, skipUndo?: boolean) {
+  const layoutParent = current.parent;
+  if (layoutParent && isLayoutParent(layoutParent)) {
+    layoutParent.switchLayout(newLayout, skipUndo);
+  }
+}
+
+export function changeLayoutTo(
+  currentManager: DashboardLayoutManager,
+  layoutItem: LayoutRegistryItem,
+  skipUndo?: boolean
+) {
+  switchLayoutOnParent(currentManager, layoutItem.createFromLayout(currentManager), skipUndo);
+}
+
+export function ungroupLayout(layout: DashboardLayoutManager, innerLayout: DashboardLayoutManager, skipUndo?: boolean) {
+  innerLayout.clearParent();
+  switchLayoutOnParent(layout, innerLayout, skipUndo);
+}
+
 export function getIsLazy(preload: boolean | undefined): boolean {
-  // When a dashboard does not explicitly set preload, fall back to the instance-wide default.
-  // Nullish coalescing keeps an explicit `false` authoritative - only undefined defers to the config default.
-  const shouldPreload = preload ?? config.dashboardDefaultPreload;
+  // The dashboard's own value is the only input. [dashboards] default_preload seeds this value when
+  // a dashboard is created; it deliberately has no effect at load time, so turning it on never
+  // changes how existing dashboards behave.
   // We don't want to lazy load panels in the case of image renderer
-  return !(shouldPreload || (contextSrv.user && contextSrv.user.authenticatedBy === 'render'));
+  return !(preload || (contextSrv.user && contextSrv.user.authenticatedBy === 'render'));
 }
 
 export enum GridLayoutType {
@@ -85,4 +119,62 @@ export function mapIdToGridLayoutType(id?: string): GridLayoutType | undefined {
     default:
       return undefined;
   }
+}
+
+/**
+ * Given the sibling being removed and the full list of siblings it lived in, finds the nearest
+ * remaining VizPanel to move keyboard focus to (next sibling first, then previous). Used so that
+ * removing a panel doesn't drop keyboard/screen reader focus back to document.body.
+ */
+export function findAdjacentVizPanel<T>(
+  removedSibling: T,
+  siblings: T[],
+  getPanel: (sibling: T) => VizPanel | undefined
+): VizPanel | undefined {
+  const index = siblings.indexOf(removedSibling);
+  if (index === -1) {
+    return undefined;
+  }
+
+  for (let i = index + 1; i < siblings.length; i++) {
+    const panel = getPanel(siblings[i]);
+    if (panel) {
+      return panel;
+    }
+  }
+
+  for (let i = index - 1; i >= 0; i--) {
+    const panel = getPanel(siblings[i]);
+    if (panel) {
+      return panel;
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Moves keyboard focus to the given panel's chrome. Deferred to the next animation frame because
+ * the caller removes another panel from the layout first, and the DOM needs to reflect that
+ * removal before we can safely move focus into what's left.
+ *
+ * Only acts when focus has dropped to document.body, i.e. the removal took the focused element
+ * with it. Programmatic removals (moves, mutation commands) leave focus where the user has it.
+ *
+ * Panels inside repeated rows and tabs keep the source panel's key, so the DOM lookup below
+ * can't tell them apart and would focus the source panel instead.
+ */
+export function focusVizPanel(panel: VizPanel | undefined): void {
+  if (!panel || isRepeatCloneOrChildOf(panel)) {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    if (document.activeElement && document.activeElement !== document.body) {
+      return;
+    }
+
+    const panelEl = document.querySelector<HTMLElement>(`[data-viz-panel-key="${panel.state.key}"] section`);
+    panelEl?.focus();
+  });
 }

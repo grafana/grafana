@@ -342,7 +342,6 @@ type GetCorrelationsParams struct {
 	Page int64 `json:"page"`
 	// Source datasource UID filter to be applied to correlations
 	// in:query
-	// type: array
 	// collectionFormat: multi
 	// required:false
 	SourceUIDs []string `json:"sourceUID"`

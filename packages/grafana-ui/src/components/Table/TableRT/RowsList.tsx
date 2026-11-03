@@ -46,7 +46,7 @@ interface RowsListProps {
   listHeight: number;
   width: number;
   cellHeight?: TableCellHeight;
-  listRef: React.RefObject<VariableSizeList>;
+  listRef: React.RefObject<VariableSizeList | null>;
   tableState: TableState;
   tableStyles: TableStyles;
   nestedDataField?: Field;
@@ -337,6 +337,7 @@ export const RowsList = (props: RowsListProps) => {
               rowIndex={row.index}
               width={width}
               cellHeight={cellHeight}
+              columnCount={row.cells.length}
             />
           )}
           {row.cells.map((cell: Cell, index: number) => (

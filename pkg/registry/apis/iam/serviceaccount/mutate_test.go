@@ -9,7 +9,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
-func TestMutateOnCreate(t *testing.T) {
+func TestMutateOnCreateAndUpdate(t *testing.T) {
 	ctx := request.WithNamespace(context.Background(), "default")
 
 	testCases := []struct {
@@ -61,7 +61,7 @@ func TestMutateOnCreate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := MutateOnCreate(ctx, tc.inputSA)
+			err := MutateOnCreateAndUpdate(ctx, tc.inputSA)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedRole, tc.inputSA.Spec.Role)
 		})

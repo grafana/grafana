@@ -956,6 +956,36 @@ func TestTeamK8sService_SearchTeams(t *testing.T) {
 			},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, []string{"uid-1", "uid-2"}, r.URL.Query()["uid"])
+				assert.False(t, r.URL.Query().Has("member"))
+
+				resp := iamv0alpha1.GetSearchTeamsResponse{
+					GetSearchTeamsBody: iamv0alpha1.GetSearchTeamsBody{
+						TotalHits: 1,
+						Hits:      []iamv0alpha1.GetSearchTeamsTeamHit{{Name: "uid-1", Title: "Team One"}},
+					},
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(resp)
+			},
+			expectResult: team.SearchTeamQueryResult{
+				TotalCount: 1,
+				Page:       1,
+				PerPage:    10,
+				Teams: []*team.TeamDTO{
+					{UID: "uid-1", OrgID: 1, Name: "Team One"},
+				},
+			},
+		},
+		{
+			name: "forwards member param when MemberUID is set",
+			query: &team.SearchTeamsQuery{
+				OrgID:     1,
+				MemberUID: "member-1",
+				Limit:     10,
+				Page:      1,
+			},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "member-1", r.URL.Query().Get("member"))
 
 				resp := iamv0alpha1.GetSearchTeamsResponse{
 					GetSearchTeamsBody: iamv0alpha1.GetSearchTeamsBody{
@@ -1349,6 +1379,30 @@ func userTeamsResponse(rows []iamv0alpha1.GetUserTeamsUserTeam) iamv0alpha1.GetU
 		TypeMeta:         metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "GetUserTeamsResponse"},
 		GetUserTeamsBody: iamv0alpha1.GetUserTeamsBody{Items: rows},
 	}
+}
+
+func TestTeamK8sService_ListUserTeamsReturnsAllPages(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		response := userTeamsResponse([]iamv0alpha1.GetUserTeamsUserTeam{{User: "user-1", Team: "team-1"}})
+		if r.URL.Query().Get("continue") == "next+/=" {
+			response.Items[0].Team = "team-2"
+		} else {
+			response.Continue = "next+/="
+		}
+		require.NoError(t, json.NewEncoder(w).Encode(response))
+	}))
+	defer server.Close()
+
+	provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: server.URL}}
+	service := NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), provider, tracing.InitializeTracerForTest())
+
+	rows, err := service.listUserTeams(contextWithReqContext(), "org-1", "user-1")
+	require.NoError(t, err)
+	require.Equal(t, []iamv0alpha1.GetUserTeamsUserTeam{
+		{User: "user-1", Team: "team-1"},
+		{User: "user-1", Team: "team-2"},
+	}, rows)
 }
 
 func TestTeamK8sService_GetTeamsByUser(t *testing.T) {

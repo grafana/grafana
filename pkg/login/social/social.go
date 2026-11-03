@@ -38,11 +38,11 @@ const (
 var SocialBaseUrl = "/login/"
 
 type Service interface {
-	GetOAuthProviders() map[string]bool
-	GetOAuthHttpClient(string) (*http.Client, error)
-	GetConnector(string) (SocialConnector, error)
-	GetOAuthInfoProvider(string) *OAuthInfo
-	GetOAuthInfoProviders() map[string]*OAuthInfo
+	GetOAuthProviders(context.Context) (map[string]bool, error)
+	GetOAuthHttpClient(context.Context, string) (*http.Client, error)
+	GetConnector(context.Context, string) (SocialConnector, error)
+	GetOAuthInfoProvider(context.Context, string) (*OAuthInfo, error)
+	GetOAuthInfoProviders(context.Context) (map[string]*OAuthInfo, error)
 }
 
 //go:generate mockery --name SocialConnector --structname MockSocialConnector --outpkg socialtest --filename social_connector_mock.go --output ./socialtest/

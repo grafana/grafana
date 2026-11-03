@@ -41,7 +41,8 @@ export interface JoinOptions {
   frames: DataFrame[];
 
   /**
-   * The field to join -- frames that do not have this field will be dropped
+   * The field to join -- frames that do not have this field will be dropped, except for
+   * JoinMode.inner, where they instead make the result empty
    */
   joinBy?: FieldMatcher;
 
@@ -113,6 +114,16 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     const joinFieldMatcher = getJoinMatcher(options);
     let joinIndex = frameCopy.fields.findIndex((f) => joinFieldMatcher(f, frameCopy, options.frames));
 
+    if (joinIndex < 0 && options.mode === JoinMode.inner) {
+      // nothing to join on, so there are no matching rows -- same result as the multi-frame path
+      // gives when no frame has the join field. Outer joins instead return the frame untouched, so
+      // that a panel with a single series still renders when it has no field to join by.
+      return {
+        length: 0,
+        fields: [],
+      };
+    }
+
     if (options.keepOriginIndices) {
       frameCopy = {
         ...frame,
@@ -169,10 +180,17 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
   const originalFields: Field[] = [];
   const joinFieldMatcher = getJoinMatcher(options);
 
+  // Frames that cannot be joined are dropped (see JoinOptions.joinBy), which for an outer join keeps
+  // one unrelated series from blanking out a whole visualization. An inner join only yields rows
+  // present in every input, so there dropping a frame would widen the result instead: nothing can
+  // match a frame that contributes no join values, making the correct output zero rows.
+  let droppedFrame = false;
+
   for (let frameIndex = 0; frameIndex < options.frames.length; frameIndex++) {
     const frame = options.frames[frameIndex];
 
     if (!frame || !frame.fields?.length) {
+      droppedFrame = true;
       continue; // skip the frame
     }
 
@@ -221,6 +239,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     }
 
     if (!join) {
+      droppedFrame = true;
       continue; // skip the frame
     }
 
@@ -248,6 +267,14 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     return {
       length: 0,
       fields: originalFields,
+    };
+  }
+
+  if (droppedFrame && options.mode === JoinMode.inner) {
+    // keep the joinable frames' fields so consumers still see the expected columns, just no rows
+    return {
+      length: 0,
+      fields: originalFields.map((f) => ({ ...f, values: [] })),
     };
   }
 

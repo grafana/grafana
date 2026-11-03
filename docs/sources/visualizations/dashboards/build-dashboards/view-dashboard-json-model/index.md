@@ -52,7 +52,7 @@ There are currently three dashboard JSON schema models:
 - [Classic](#classic-model): A non-Kubernetes resource that was the default before Grafana v12.2.0. It's been widely used for exporting, importing, and sharing dashboards in the Grafana dashboards collection at [grafana.com/dashboards](https://grafana.com/grafana/dashboards/). Dashboards created using this model can be exported using either this model or V2.
 
 {{< admonition type="note" >}}
-[Observability as Code](https://grafana.com/docs/grafana/latest/as-code/observability-as-code/) works with both versions of the JSON model, but it's fully compatible with version 2.
+[Observability as Code](https://grafana.com/docs/grafana/latest/as-code/) works with both versions of the JSON model, but it's fully compatible with version 2.
 {{< /admonition >}}
 
 ## Access and update the JSON model {#view-json}
@@ -62,10 +62,10 @@ To access the JSON representation of a dashboard:
 1. Navigate to the dashboard.
 1. Click **Edit** in the top-right corner.
 1. In the toolbar, click the **Dashboard options** icon.
-1. In the sidebar, click **Settings**.
+1. In the sidebar, click **View all settings**.
 1. Go to the **JSON Model** tab.
 1. When you've finished updating the JSON, click **Save changes** at the bottom of the tab.
-1. Click **Back to dashboard** and **Exit edit**.
+1. Click **Back** and **Exit edit**.
 
 ## V2 Resource model
 

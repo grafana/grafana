@@ -17,7 +17,8 @@ import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getElements, panelQueryKindToSceneQuery } from '../../serialization/layoutSerializers/utils';
-import { getQueryRunnerFor, getVizPanelKeyForPanelId } from '../../utils/utils';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
+import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 
 import { serializeResultLayoutItem } from './panelSerialization';
 import { payloads, type PanelQueryKind, type TransformationKind } from './schemas';
@@ -167,6 +168,7 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
           if (dataSpec.transformations !== undefined && isDataTransformer(dataPipeline)) {
             const transformations = dataSpec.transformations.map((t: TransformationKind) => ({
               id: t.group,
+              refId: t.spec.refId,
               disabled: t.spec.disabled,
               filter: t.spec.filter,
               topic: t.spec.topic,

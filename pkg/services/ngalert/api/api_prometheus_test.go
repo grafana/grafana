@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/url"
 	"slices"
@@ -326,9 +327,7 @@ func withNoDataState() forEachState {
 
 func withLabels(labels data.Labels) forEachState {
 	return func(s *state.State) *state.State {
-		for k, v := range labels {
-			s.Labels[k] = v
-		}
+		maps.Copy(s.Labels, labels)
 		return s
 	}
 }
@@ -1141,7 +1140,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 			require.Len(t, result.Data.RuleGroups, 9)
 			require.NotZero(t, len(result.Data.Totals))
-			for i := 0; i < 9; i++ {
+			for i := range 9 {
 				folder, err := ruleStore.GetNamespaceByUID(context.Background(), fmt.Sprintf("namespace_%d", i/9), orgID, user)
 				require.NoError(t, err)
 				require.Equal(t, folder.Fullpath, result.Data.RuleGroups[i].File)
@@ -1168,7 +1167,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.NotEmpty(t, result.Data.NextToken)
 			token := result.Data.NextToken
 
-			for i := 0; i < 3; i++ {
+			for range 3 {
 				r, err := http.NewRequest("GET", fmt.Sprintf("/api/v1/rules?group_limit=2&group_next_token=%s", token), nil)
 				require.NoError(t, err)
 
@@ -1202,7 +1201,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			returnedGroups = append(returnedGroups, result.Data.RuleGroups...)
 			require.Empty(t, result.Data.NextToken)
 
-			for i := 0; i < 9; i++ {
+			for i := range 9 {
 				folder, err := ruleStore.GetNamespaceByUID(context.Background(), fmt.Sprintf("namespace_%d", i/9), orgID, user)
 				require.NoError(t, err)
 				require.Equal(t, folder.Fullpath, returnedGroups[i].File)
@@ -2422,15 +2421,15 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			// create folders
 			for i := 1; i <= numGroups; i++ {
 				store.Folders[orgID] = append(store.Folders[orgID], &folder.Folder{
-					ID:       int64(i),
+					ID:       int64(i), //nolint:staticcheck // Exercise legacy field compatibility.
 					UID:      fmt.Sprintf("ns-%d", i),
 					Title:    fmt.Sprintf("Namespace %d", i),
 					Fullpath: fmt.Sprintf("/namespace-%d", i),
 				})
 			}
 
-			for i := 0; i < numGroups; i++ {
-				for j := 0; j < rulesPerGroup; j++ {
+			for i := range numGroups {
+				for j := range rulesPerGroup {
 					rule := gen.With(gen.WithOrgID(orgID), func(r *ngmodels.AlertRule) {
 						r.NamespaceUID = fmt.Sprintf("ns-%d", i+1)
 						r.RuleGroup = fmt.Sprintf("group-%d", i+1)

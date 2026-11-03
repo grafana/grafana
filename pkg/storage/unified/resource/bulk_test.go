@@ -1,9 +1,12 @@
 package resource
 
 import (
+	"bufio"
 	"context"
+	"errors"
 	"io"
 	"iter"
+	"os"
 	"testing"
 	"time"
 
@@ -46,6 +49,66 @@ func TestResourceServerOptionsBulkBatchOptions(t *testing.T) {
 			require.Equal(t, tc.want, tc.opts.bulkBatchOptions())
 		})
 	}
+}
+
+func TestProcessBulkWithPreflightRejectsBeforeBackend(t *testing.T) {
+	want := errors.New("invalid spool")
+	iter := &failingPreflightIterator{err: want}
+	backend := &preflightTestBackend{}
+
+	rsp := processBulkWithPreflight(t.Context(), backend, BulkSettings{}, iter)
+
+	require.False(t, backend.called)
+	require.NotNil(t, rsp.Error)
+	require.Contains(t, rsp.Error.Message, want.Error())
+}
+
+func TestSpooledBulkRequestsPreflightRejectsCorruptRecords(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		content []byte
+		message string
+	}{
+		{name: "truncated record", content: []byte{3}, message: "truncated"},
+		{name: "invalid record", content: []byte{1, 0xff}, message: "unmarshal"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			file, err := os.CreateTemp(t.TempDir(), "bulk-spool-*.tmp")
+			require.NoError(t, err)
+			_, err = file.Write(tc.content)
+			require.NoError(t, err)
+			spool := &spooledBulkRequests{file: file, reader: bufio.NewReader(file)}
+			t.Cleanup(spool.Close)
+
+			err = spool.Preflight()
+			require.ErrorContains(t, err, tc.message)
+		})
+	}
+}
+
+func TestBulkSpoolBudgetBoundsAggregateUsage(t *testing.T) {
+	budget := newBulkSpoolBudget(10)
+
+	require.NoError(t, budget.reserve(6))
+	require.EqualValues(t, 6, budget.used())
+	require.Error(t, budget.reserve(5))
+	require.EqualValues(t, 6, budget.used())
+
+	budget.release(6)
+	require.NoError(t, budget.reserve(5))
+	require.EqualValues(t, 5, budget.used())
+}
+
+func TestSpoolBulkRequestsReleasesBudgetAfterQuotaError(t *testing.T) {
+	budget := newBulkSpoolBudget(1)
+	iter := newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{newTestBulkRequest("item")})
+
+	spool, err := spoolBulkRequests(iter, DefaultBulkBatchOptions(), budget)
+
+	require.Nil(t, spool)
+	require.Error(t, err)
+	require.EqualValues(t, 0, budget.used())
+	require.EqualValues(t, 413, AsErrorResult(err).Code)
 }
 
 func TestBatchRunnerNextBatchHonorsMaxItemsAndEOF(t *testing.T) {
@@ -232,6 +295,26 @@ func newTestBulkRequest(name string) *resourcepb.BulkRequest {
 	}
 }
 
+type failingPreflightIterator struct {
+	err error
+}
+
+func (i *failingPreflightIterator) Preflight() error                 { return i.err }
+func (i *failingPreflightIterator) Next() bool                       { return false }
+func (i *failingPreflightIterator) Request() *resourcepb.BulkRequest { return nil }
+func (i *failingPreflightIterator) RollbackRequested() bool          { return false }
+
+type preflightTestBackend struct {
+	called bool
+}
+
+func (*preflightTestBackend) RequiresBulkPreflight() {}
+
+func (b *preflightTestBackend) ProcessBulk(context.Context, BulkSettings, BulkRequestIterator) *resourcepb.BulkResponse {
+	b.called = true
+	return &resourcepb.BulkResponse{}
+}
+
 type testBulkProcessServer struct {
 	ctx         context.Context
 	requests    []*resourcepb.BulkRequest
@@ -345,6 +428,6 @@ func (b *panicBulkBackend) GetResourceStats(context.Context, NamespacedResource,
 	return nil, nil
 }
 
-func (b *panicBulkBackend) GetResourceLastImportTimes(context.Context) iter.Seq2[ResourceLastImportTime, error] {
-	return nil
+func (b *panicBulkBackend) GetResourceLastImportTime(context.Context, NamespacedResource) (time.Time, error) {
+	panic("not implemented")
 }

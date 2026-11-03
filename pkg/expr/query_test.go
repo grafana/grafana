@@ -89,7 +89,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 		},
 	}, {
 		Discriminators: data.NewDiscriminators("type", QueryTypeClassic),
-		GoType:         reflect.TypeOf(&ClassicQuery{}),
+		GoType:         reflect.TypeFor[*ClassicQuery](),
 		Examples: []data.QueryExample{
 			{
 				Name: "Where query A > 5",
@@ -116,7 +116,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 		},
 	}, {
 		Discriminators: data.NewDiscriminators("type", QueryTypeThreshold),
-		GoType:         reflect.TypeOf(&ThresholdQuery{}),
+		GoType:         reflect.TypeFor[*ThresholdQuery](),
 		Examples: []data.QueryExample{
 			{
 				Name: "Where query A > 5",
@@ -148,7 +148,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 							  ],
 							  "type": "lt"
 							},
-							"loadedDimensions": {"schema":{"name":"test","meta":{"type":"fingerprints","typeVersion":[1,0]},"fields":[{"name":"fingerprints","type":"number","typeInfo":{"frame":"uint64"}}]},"data":{"values":[[18446744073709551615,2,3,4,5]]}}
+							"loadedFingerprints": ["18446744073709551615","2","3","4","5"]
 						  }
 						]
 					  }`),

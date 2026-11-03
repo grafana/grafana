@@ -20,9 +20,9 @@ func makeAlerts(amount int) []Alert {
 
 	alerts := make([]Alert, amount)
 
-	for i := 0; i < len(alerts); i++ {
+	for i := range alerts {
 		lbls := make(map[string]string)
-		for label := 0; label < numLabels; label++ {
+		for label := range numLabels {
 			lbls[fmt.Sprintf("label_%d", label)] = fmt.Sprintf("label_%d_value_%d", label, i%100)
 		}
 		alerts[i].Labels = LabelsFromMap(lbls)

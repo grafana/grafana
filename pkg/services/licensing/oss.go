@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	openSource = "Open Source"
+	OpenSourceEdition = "Open Source"
 )
 
 type OSSLicensingService struct {
@@ -17,12 +17,16 @@ type OSSLicensingService struct {
 	HooksService *hooks.HooksService
 }
 
+func (*OSSLicensingService) HasValidLicense() bool {
+	return false
+}
+
 func (*OSSLicensingService) Expiry() int64 {
 	return 0
 }
 
 func (*OSSLicensingService) Edition() string {
-	return openSource
+	return OpenSourceEdition
 }
 
 func (*OSSLicensingService) StateInfo() string {

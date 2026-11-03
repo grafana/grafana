@@ -17,7 +17,7 @@ labels:
     - enterprise
     - oss
 menuTitle: Template variables
-review_date: 2026-05-19
+review_date: 2026-08-10
 title: Microsoft SQL Server template variables
 weight: 350
 ---

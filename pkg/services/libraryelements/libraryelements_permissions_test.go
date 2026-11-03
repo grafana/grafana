@@ -39,7 +39,7 @@ func TestIntegrationLibraryElementPermissions(t *testing.T) {
 	cfgProvider, err := configprovider.ProvideService(env.Cfg)
 	require.NoError(t, err)
 	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(env.SQLStore), cfgProvider)
-	orgService, err := orgimpl.ProvideService(env.SQLStore, env.Cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(env.SQLStore), env.Cfg, quotaService)
 	require.NoError(t, err)
 
 	sharedOrg, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "test org"})
@@ -128,6 +128,25 @@ func TestIntegrationLibraryElementPermissions(t *testing.T) {
 		})
 	})
 
+	t.Run("missing element", func(t *testing.T) {
+		for _, tc := range []struct {
+			method string
+			path   string
+			body   any
+		}{
+			{method: http.MethodDelete},
+			{method: http.MethodPatch, body: map[string]any{"kind": 1, "version": 1}},
+			{method: http.MethodGet, path: "/connections"},
+		} {
+			t.Run(tc.method, func(t *testing.T) {
+				resp := makeHTTPRequest(t, tc.method, fmt.Sprintf("http://admin2:admin@%s/api/library-elements/missing-panel-uid%s", grafanaListedAddr, tc.path), tc.body, http.StatusNotFound)
+				var result map[string]string
+				require.NoError(t, json.Unmarshal(resp, &result))
+				require.Equal(t, "library element could not be found", result["message"])
+			})
+		}
+	})
+
 	t.Run("delete", func(t *testing.T) {
 		t.Run("When viewer tries to delete library panel, it should fail", func(t *testing.T) {
 			deleteLibraryElement(t, grafanaListedAddr, "viewer", "viewer", uid, http.StatusForbidden)
@@ -148,7 +167,7 @@ func TestIntegrationLibraryElementGranularPermissions(t *testing.T) {
 	cfgProvider, err := configprovider.ProvideService(env.Cfg)
 	require.NoError(t, err)
 	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(env.SQLStore), cfgProvider)
-	orgService, err := orgimpl.ProvideService(env.SQLStore, env.Cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(env.SQLStore), env.Cfg, quotaService)
 	require.NoError(t, err)
 
 	sharedOrg, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "test org"})
@@ -270,7 +289,7 @@ func TestIntegrationLibraryElementNameRouteRequiresReadPermission(t *testing.T) 
 	cfgProvider, err := configprovider.ProvideService(env.Cfg)
 	require.NoError(t, err)
 	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(env.SQLStore), cfgProvider)
-	orgService, err := orgimpl.ProvideService(env.SQLStore, env.Cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(env.SQLStore), env.Cfg, quotaService)
 	require.NoError(t, err)
 
 	sharedOrg, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "test org"})
@@ -441,10 +460,10 @@ func createUserInOrg(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUs
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
 	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(db), cfgProvider)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(db), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)

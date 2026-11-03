@@ -2,13 +2,21 @@ package socialimpl
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -18,15 +26,25 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	secretsfake "github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
+	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
+}
+
+func mustConfigProvider(t *testing.T, cfg *setting.Cfg) configprovider.ConfigProvider {
+	t.Helper()
+	provider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	return provider
 }
 
 func TestIntegrationSocialService_ProvideService(t *testing.T) {
@@ -61,11 +79,12 @@ func TestIntegrationSocialService_ProvideService(t *testing.T) {
 
 	secrets := secretsfake.NewMockService(t)
 	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	ssoSettingsSvc := ssosettingsimpl.ProvideService(
 		cfg,
-		sqlStore,
+		mustConfigProvider(t, cfg),
+		legacysql.NewDatabaseProvider(sqlStore),
 		accessControl,
 		routing.NewRouteRegister(),
 		featuremgmt.WithFeatures(),
@@ -87,16 +106,19 @@ func TestIntegrationSocialService_ProvideService(t *testing.T) {
 			usageInsights := &usagestats.UsageStatsMock{}
 			supportBundle := supportbundlestest.NewFakeBundleService()
 
-			socialService := ProvideService(cfg, featuremgmt.WithFeatures(), usageInsights, supportBundle, remotecache.NewFakeStore(t), nil, ssoSettingsSvc)
-			require.Equal(t, tc.expectedSocialMapLength, len(socialService.GetOAuthProviders()))
+			socialService := ProvideService(ctx, mustConfigProvider(t, cfg), featuremgmt.WithFeatures(), usageInsights, supportBundle, remotecache.NewFakeStore(t), nil, ssoSettingsSvc)
+			providers, err := socialService.GetOAuthProviders(ctx)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedSocialMapLength, len(providers))
 
-			genericOAuthInfo := socialService.GetOAuthInfoProvider("generic_oauth")
+			genericOAuthInfo, err := socialService.GetOAuthInfoProvider(ctx, "generic_oauth")
+			require.NoError(t, err)
 			if genericOAuthInfo != nil {
 				require.Equal(t, tc.expectedGenericOAuthSkipOrgRoleSync, genericOAuthInfo.SkipOrgRoleSync)
 			}
 
-			for name, enabled := range socialService.GetOAuthProviders() {
-				client, err := socialService.GetOAuthHttpClient(name)
+			for name, enabled := range providers {
+				client, err := socialService.GetOAuthHttpClient(ctx, name)
 				if !enabled {
 					require.Error(t, err)
 					require.Nil(t, client)
@@ -125,6 +147,55 @@ func TestIntegrationSocialService_ProvideService(t *testing.T) {
 			require.Len(t, createdBundles, tc.expectedSocialMapLength)
 		})
 	}
+}
+
+func TestSocialService_GetConnectorUsesCurrentSettings(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfgProvider := mustConfigProvider(t, cfg)
+
+	clientSecret := "initial-secret"
+	settingsForCurrentSecret := func() *models.SSOSettings {
+		return &models.SSOSettings{
+			Provider: social.GenericOAuthProviderName,
+			Settings: map[string]any{
+				"enabled":       true,
+				"client_id":     "client-id",
+				"client_secret": clientSecret,
+				"auth_url":      "https://idp.example.com/authorize",
+				"token_url":     "https://idp.example.com/token",
+			},
+		}
+	}
+
+	settingsSvc := ssosettingstests.NewFakeService()
+	settingsSvc.ListFn = func(context.Context) ([]*models.SSOSettings, error) {
+		return []*models.SSOSettings{settingsForCurrentSecret()}, nil
+	}
+	settingsSvc.GetForProviderFn = func(_ context.Context, provider string) (*models.SSOSettings, error) {
+		require.Equal(t, social.GenericOAuthProviderName, provider)
+		return settingsForCurrentSecret(), nil
+	}
+
+	svc := ProvideService(
+		context.Background(),
+		cfgProvider,
+		featuremgmt.WithFeatures(),
+		&usagestats.UsageStatsMock{},
+		supportbundlestest.NewFakeBundleService(),
+		remotecache.NewFakeStore(t),
+		nil,
+		settingsSvc,
+	)
+
+	initial, err := svc.GetConnector(context.Background(), social.GenericOAuthProviderName)
+	require.NoError(t, err)
+	require.Equal(t, "initial-secret", initial.(*connectors.SocialGenericOAuth).ClientSecret)
+
+	clientSecret = "rotated-secret"
+	rotated, err := svc.GetConnector(context.Background(), social.GenericOAuthProviderName)
+	require.NoError(t, err)
+	require.Equal(t, "rotated-secret", rotated.(*connectors.SocialGenericOAuth).ClientSecret)
+	require.NotSame(t, initial, rotated)
 }
 
 func TestIntegrationSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
@@ -235,11 +306,12 @@ func TestIntegrationSocialService_ProvideService_GrafanaComGrafanaNet(t *testing
 
 			secrets := secretsfake.NewMockService(t)
 			accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-			sqlStore := db.InitTestDB(t)
+			sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 			ssoSettingsSvc := ssosettingsimpl.ProvideService(
 				cfg,
-				sqlStore,
+				mustConfigProvider(t, cfg),
+				legacysql.NewDatabaseProvider(sqlStore),
 				accessControl,
 				routing.NewRouteRegister(),
 				featuremgmt.WithFeatures(),
@@ -250,7 +322,8 @@ func TestIntegrationSocialService_ProvideService_GrafanaComGrafanaNet(t *testing
 				&licensing.OSSLicensingService{},
 			)
 
-			socialService := ProvideService(cfg, featuremgmt.WithFeatures(), &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeStore(t), nil, ssoSettingsSvc)
+			ctx := context.Background()
+			socialService := ProvideService(ctx, mustConfigProvider(t, cfg), featuremgmt.WithFeatures(), &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeStore(t), nil, ssoSettingsSvc)
 
 			// Create a custom comparison that treats nil slices as equal to empty slices for the tests
 			opts := cmp.Options{
@@ -268,7 +341,8 @@ func TestIntegrationSocialService_ProvideService_GrafanaComGrafanaNet(t *testing
 				}),
 			}
 
-			actual := socialService.GetOAuthInfoProvider("grafana_com")
+			actual, err := socialService.GetOAuthInfoProvider(ctx, "grafana_com")
+			require.NoError(t, err)
 			if diff := cmp.Diff(tc.expectedGrafanaComOAuthInfo, actual, opts); diff != "" {
 				t.Errorf("OAuthInfo mismatch (-want +got):\n%s", diff)
 			}
@@ -375,4 +449,35 @@ signout_redirect_url = https://oauth.com/signout?post_logout_redirect_uri=https:
 	require.NoError(t, err)
 
 	require.Equal(t, expectedOAuthInfo, oauthInfo)
+}
+
+func TestNewOAuthTransport(t *testing.T) {
+	previous := otel.GetTextMapPropagator()
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+	t.Cleanup(func() { otel.SetTextMapPropagator(previous) })
+
+	traceparent := make(chan string, 1)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		traceparent <- r.Header.Get("traceparent")
+	}))
+	t.Cleanup(server.Close)
+
+	recorder := tracetest.NewSpanRecorder()
+	tp := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
+	client := &http.Client{Transport: newOAuthTransport("generic_oauth", http.DefaultTransport, otelhttp.WithTracerProvider(tp))}
+
+	ctx, parent := tp.Tracer("test").Start(t.Context(), "parent")
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, server.URL+"/token", nil)
+	require.NoError(t, err)
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	require.NoError(t, resp.Body.Close())
+	parent.End()
+
+	require.Empty(t, <-traceparent)
+
+	spans := recorder.Ended()
+	require.Len(t, spans, 2)
+	require.Equal(t, "oauth.generic_oauth POST", spans[0].Name())
+	require.Equal(t, parent.SpanContext().SpanID(), spans[0].Parent().SpanID())
 }

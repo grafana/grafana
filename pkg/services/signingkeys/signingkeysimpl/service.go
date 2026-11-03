@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -29,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystore"
 )
 
-var _ signingkeys.Service = new(Service)
+var _ signingkeys.Service = (*Service)(nil)
 
 func ProvideEmbeddedSigningKeysService(dbStore db.DB,
 	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
@@ -117,7 +118,7 @@ func (s *Service) buildJWKS(ctx context.Context, keys []signingkeys.SigningKey) 
 
 // GetOrCreatePrivateKey returns the private key with the specified key ID. If the key does not exist, it will be
 // created with the specified algorithm.
-// The key will be automatically rotated at the beginning of each month. The previous key will be kept for 30 days.
+// The key will be automatically rotated at the beginning of each month.
 func (s *Service) GetOrCreatePrivateKey(ctx context.Context,
 	keyPrefix string, alg jose.SignatureAlgorithm) (string, crypto.Signer, error) {
 	if alg != jose.ES256 {
@@ -158,7 +159,10 @@ func (s *Service) getPrivateKey(ctx context.Context, keyID string) (crypto.Signe
 
 	signer, err := s.decodePrivateKey(ctx, key.PrivateKey)
 	if err != nil {
-		return nil, err
+		// Usually this means the key was encrypted with a different secret_key (for example, the
+		// secret changed or the database was copied from another instance). Restore the original
+		// secret_key, or delete the row from the signing_key table so the key is regenerated.
+		return nil, fmt.Errorf("failed to decode signing key %q (was it encrypted with a different secret_key?): %w", keyID, err)
 	}
 
 	s.localCache.Set(keyID, signer, privateKeyTTL)
@@ -178,8 +182,10 @@ func (s *Service) addPrivateKey(ctx context.Context, keyID string, alg jose.Sign
 		return nil, err
 	}
 
+	// Set expiration to a bit over a month to account for things like
+	// 31-day months or longer-lived tokens.
 	now := time.Now()
-	expiry := now.Add(30 * 24 * time.Hour)
+	expiry := now.Add(33 * 24 * time.Hour)
 	key, err := s.store.Add(ctx, &signingkeys.SigningKey{
 		KeyID:      keyID,
 		PrivateKey: string(encoded),

@@ -68,10 +68,10 @@ To create your first dashboard using the built-in `-- Grafana --` data source:
 1. Click **Refresh** to query the data source.
 1. When you've finished editing your panel, click **Save**.
 
-   Alternatively, click **Back to dashboard** if you want to see your changes applied to the dashboard first. Then click **Save** when you're ready.
+   Alternatively, click **Back** if you want to see your changes applied to the dashboard first. Then click **Save** when you're ready.
 
 1. Add a descriptive title for the dashboard, or have Grafana create one using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards), and then click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back** and then **Exit edit**.
 
 Congratulations, you have created your first dashboard and it's displaying results.
 

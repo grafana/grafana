@@ -23,34 +23,38 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   /** Use constant color from TAG_COLORS. Using index instead of color directly so we can match other styling.
    * The index wraps around, so a value beyond the number of colors is fine. */
   colorIndex?: number;
+  /** Base CSS color for a tonal background and foreground pair. Takes precedence over colorIndex. */
+  baseColor?: string;
   onClick?: OnTagClick;
 }
 
-const TagComponent = forwardRef<HTMLElement, Props>(({ name, onClick, icon, className, colorIndex, ...rest }, ref) => {
-  const theme = useTheme2();
-  const styles = getTagStyles(theme, name, colorIndex);
+const TagComponent = forwardRef<HTMLElement, Props>(
+  ({ name, onClick, icon, className, colorIndex, baseColor, ...rest }, ref) => {
+    const theme = useTheme2();
+    const styles = getTagStyles(theme, name, colorIndex, baseColor);
 
-  const onTagClick = (event: React.MouseEvent<HTMLElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
+    const onTagClick = (event: React.MouseEvent<HTMLElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
 
-    onClick?.(name, event);
-  };
+      onClick?.(name, event);
+    };
 
-  const classes = cx(styles.wrapper, className, { [styles.hover]: onClick !== undefined });
+    const classes = cx(styles.wrapper, className, { [styles.hover]: onClick !== undefined });
 
-  return onClick ? (
-    <button {...rest} className={classes} onClick={onTagClick} ref={ref as React.ForwardedRef<HTMLButtonElement>}>
-      {icon && <Icon name={icon} />}
-      {name}
-    </button>
-  ) : (
-    <span {...rest} className={classes} ref={ref}>
-      {icon && <Icon name={icon} />}
-      {name}
-    </span>
-  );
-});
+    return onClick ? (
+      <button {...rest} className={classes} onClick={onTagClick} ref={ref as React.ForwardedRef<HTMLButtonElement>}>
+        {icon && <Icon name={icon} />}
+        {name}
+      </button>
+    ) : (
+      <span {...rest} className={classes} ref={ref}>
+        {icon && <Icon name={icon} />}
+        {name}
+      </span>
+    );
+  }
+);
 TagComponent.displayName = 'Tag';
 
 const TagSkeleton: SkeletonComponent = ({ rootProps }) => {
@@ -71,25 +75,37 @@ const getSkeletonStyles = () => ({
   }),
 });
 
-const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) => {
+const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number, baseColor?: string) => {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-  const { background, text } =
-    colorIndex === undefined ? getTagColorsFromName(name, theme) : getTagColor(colorIndex, theme);
+  const color = baseColor ?? colorIndex;
+  const { background, text } = color === undefined ? getTagColorsFromName(name, theme) : getTagColor(color, theme);
   return {
-    wrapper: css({
-      appearance: 'none',
-      borderStyle: 'none',
-      fontWeight: visualRefreshEnabled ? theme.typography.fontWeightRegular : theme.typography.fontWeightMedium,
-      fontSize: theme.typography.size.sm,
-      lineHeight: theme.typography.bodySmall.lineHeight,
-      verticalAlign: 'baseline',
-      backgroundColor: background,
-      color: text,
-      whiteSpace: 'pre',
-      textShadow: 'none',
-      padding: '3px 6px',
-      borderRadius: theme.shape.radius.sm,
-    }),
+    wrapper: css(
+      {
+        appearance: 'none',
+        borderStyle: 'none',
+        fontWeight: theme.typography.fontWeightMedium,
+        fontSize: theme.typography.size.sm,
+        lineHeight: theme.typography.bodySmall.lineHeight,
+        verticalAlign: 'baseline',
+        backgroundColor: background,
+        color: text,
+        whiteSpace: 'pre',
+        textShadow: 'none',
+        padding: '3px 6px',
+        borderRadius: theme.shape.radius.sm,
+      },
+      visualRefreshEnabled && {
+        gap: '3px',
+        borderRadius: theme.shape.radius.pill,
+        padding: `3px ${theme.spacing.x1}`,
+        // needed for the icon/text gap below to take effect
+        display: 'inline-flex',
+        alignItems: 'center',
+        fontSize: theme.typography.size.xs,
+        fontWeight: theme.typography.fontWeightRegular,
+      }
+    ),
     hover: css({
       '&:hover': {
         opacity: 0.85,

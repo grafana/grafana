@@ -2,9 +2,12 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -19,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
 )
 
 // fakeTextEmbedder returns a deterministic fixed-length vector for any
@@ -58,6 +62,7 @@ func newTestEmbedder(client *fakeTextEmbedder) *embedder.Embedder {
 // Other VectorBackend methods are stubbed to keep the test focused on
 // the search path.
 type fakeVectorBackend struct {
+	mu                                  sync.Mutex
 	gotNamespace, gotModel, gotResource string
 	gotEmbedding                        []float32
 	gotLimit                            int
@@ -69,46 +74,74 @@ type fakeVectorBackend struct {
 	// {PartitionKey: resource}. Set collection to override, or
 	// resolveNotFound/resolveErr to exercise those paths.
 	collection      *vector.Collection
+	collections     map[string]vector.Collection
+	resolveCalls    int
 	resolveNotFound bool
 	resolveErr      error
 }
 
 func (f *fakeVectorBackend) ResolveCollection(_ context.Context, group, resource string) (vector.Collection, bool, error) {
+	f.resolveCalls++
 	if f.resolveErr != nil {
 		return vector.Collection{}, false, f.resolveErr
 	}
 	if f.resolveNotFound {
 		return vector.Collection{}, false, nil
 	}
-	if f.collection != nil {
-		return *f.collection, true, nil
+	if found, ok := f.collections[group+"/"+resource]; ok {
+		return found, true, nil
 	}
-	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
+	if f.collection != nil {
+		collection := *f.collection
+		if collection.Scope == "" {
+			collection.Scope = vector.ScopeTenant
+		}
+		return collection, true, nil
+	}
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource, Scope: vector.ScopeTenant}, true, nil
+}
+
+func (f *fakeVectorBackend) EnsureCollectionWithScope(ctx context.Context, group, resource string, isExternal bool, scope vector.CollectionScope) (vector.Collection, error) {
+	return f.EnsureCollection(ctx, group, resource, isExternal)
+}
+
+func (f *fakeVectorBackend) EnsureCollection(_ context.Context, group, resource string, isExternal bool) (vector.Collection, error) {
+	key := resource
+	if isExternal {
+		key += "_external"
+	}
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: key, IsExternal: isExternal}, nil
 }
 
 func (f *fakeVectorBackend) Search(_ context.Context, namespace, model, resource string,
 	embedding []float32, limit int, filters ...vector.SearchFilter,
 ) ([]vector.VectorSearchResult, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	f.gotNamespace = namespace
 	f.gotModel = model
 	f.gotResource = resource
 	f.gotEmbedding = embedding
 	f.gotLimit = limit
 	f.gotFilters = filters
-	return f.results, f.err
+	return append([]vector.VectorSearchResult(nil), f.results...), f.err
 }
 
 // stub the rest of VectorBackend; not exercised by these tests.
 func (f *fakeVectorBackend) Upsert(context.Context, []vector.Vector) error { return nil }
-func (f *fakeVectorBackend) UpsertReplaceSubresources(context.Context, string, string, string, string, []vector.Vector, []string) error {
+func (f *fakeVectorBackend) UpsertReplaceSubresources(context.Context, string, string, string, string, []vector.Vector, []vector.VectorMeta, []string) error {
 	return nil
 }
-func (f *fakeVectorBackend) Delete(context.Context, string, string, string, string) error {
-	return nil
+func (f *fakeVectorBackend) DeleteRows(context.Context, string, string, string, vector.DeleteSelector) (int64, bool, error) {
+	return 0, false, nil
 }
 func (f *fakeVectorBackend) DeleteSubresources(context.Context, string, string, string, string, []string) error {
 	return nil
 }
+func (f *fakeVectorBackend) UpdateMetadata(context.Context, string, string, *filter.Filter, json.RawMessage, []string) (int64, error) {
+	return 0, nil
+}
+
 func (f *fakeVectorBackend) DeleteNamespace(context.Context, string) (int64, error) {
 	return 0, nil
 }
@@ -117,6 +150,18 @@ func (f *fakeVectorBackend) GetSubresourceContent(context.Context, string, strin
 }
 func (f *fakeVectorBackend) Exists(context.Context, string, string, string, string) (bool, error) {
 	return false, nil
+}
+func (f *fakeVectorBackend) CountStoredEmbeddings(context.Context) ([]vector.EmbeddingCount, error) {
+	return nil, nil
+}
+func (f *fakeVectorBackend) ContentVersion(context.Context, string, string, string, string) (int, bool, error) {
+	return 0, false, nil
+}
+func (f *fakeVectorBackend) UpdateContentVersion(context.Context, string, string, string, string, int) error {
+	return nil
+}
+func (f *fakeVectorBackend) UpdateFolder(context.Context, string, string, string, string, string) error {
+	return nil
 }
 func (f *fakeVectorBackend) GetLatestRV(context.Context) (int64, error) { return 0, nil }
 func (f *fakeVectorBackend) SetLatestRV(context.Context, int64) error   { return nil }
@@ -127,8 +172,11 @@ func (f *fakeVectorBackend) ListIncompleteBackfillJobs(context.Context, string) 
 	return nil, nil
 }
 func (f *fakeVectorBackend) EnsureResourcePartition(context.Context, string) error { return nil }
-func (f *fakeVectorBackend) CreateBackfillJob(_ context.Context, _, _ string, _ int64) error {
+func (f *fakeVectorBackend) CreateBackfillJob(_ context.Context, _, _ string, _ int64, _ int) error {
 	return nil
+}
+func (f *fakeVectorBackend) ReopenStaleBackfillJobs(context.Context, string, string, int, int64) (bool, error) {
+	return false, nil
 }
 func (f *fakeVectorBackend) UpdateBackfillJobCheckpoint(context.Context, int64, string, string) error {
 	return nil
@@ -139,6 +187,9 @@ func (f *fakeVectorBackend) MarkBackfillJobError(context.Context, int64, string)
 func (f *fakeVectorBackend) CompleteBackfillJob(context.Context, int64) error { return nil }
 func (f *fakeVectorBackend) TryAcquireBackfillLock(context.Context) (func(), bool, error) {
 	return func() {}, true, nil
+}
+func (f *fakeVectorBackend) WithEntityLock(ctx context.Context, _, _, _ string, fn func(context.Context) error) error {
+	return fn(ctx)
 }
 
 // newTestSearchServer builds a searchServer with just the fields the
@@ -156,6 +207,8 @@ func newTestSearchServer(emb *embedder.Embedder, backend vector.VectorBackend, a
 		vectorBackend: backend,
 		embedder:      emb,
 		access:        ac,
+		indexMetrics:  ProvideIndexMetrics(nil),
+		vectorMetrics: ProvideVectorMetrics(nil),
 		// validKey()'s pair, allowed on both lists so tests exercise paths past the allowlist.
 		collectionAllowlist: vector.NewCollectionAllowlist([]string{"g/r"}, []string{"g/r"}),
 	}
@@ -669,18 +722,16 @@ func TestVectorSearch_SearchesPartitionKeyNotWireName(t *testing.T) {
 	assert.Equal(t, "part_key", backend.gotResource)
 }
 
-func TestVectorSearch_ExternalCollectionSkipsAuthz(t *testing.T) {
-	// External rows aren't unified-storage resources; per-result authz is
-	// skipped (the caller post-filters), so every row comes back even
-	// when the access client would deny everything.
+func TestVectorSearch_ExternalCollectionEnforcesAuthz(t *testing.T) {
+	// External collections are batch-checked per result like internal resources.
 	backend := &fakeVectorBackend{
-		collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r", IsExternal: true},
+		collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r_external", IsExternal: true},
 		results: []vector.VectorSearchResult{
-			{UID: "u1", Title: "T1", Score: 0.1},
-			{UID: "u2", Title: "T2", Score: 0.2},
+			{UID: "u1", Title: "T1", Folder: "f-allowed", Score: 0.1},
+			{UID: "u2", Title: "T2", Folder: "f-denied", Score: 0.2},
 		},
 	}
-	access := &countingAccessClient{allow: func(string, string) bool { return false }}
+	access := &countingAccessClient{allow: func(_, folder string) bool { return folder == "f-allowed" }}
 	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend, access)
 
 	resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
@@ -688,8 +739,9 @@ func TestVectorSearch_ExternalCollectionSkipsAuthz(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Nil(t, resp.Error)
-	require.Len(t, resp.Results, 2)
-	assert.Zero(t, access.batchCalls, "BatchCheck must not be called for external collections")
+	require.Len(t, resp.Results, 1)
+	assert.Equal(t, "u1", resp.Results[0].Name)
+	assert.NotZero(t, access.batchCalls, "BatchCheck must run for external collections")
 }
 
 func TestVectorSearch_ResolveCollectionErrorIsInternal(t *testing.T) {
@@ -704,9 +756,7 @@ func TestVectorSearch_ResolveCollectionErrorIsInternal(t *testing.T) {
 }
 
 func TestVectorSearch_NamespaceMismatchIsForbidden(t *testing.T) {
-	// A caller authenticated for one namespace must not read another
-	// tenant's rows — critical for external collections, where the
-	// per-result BatchCheck (the old implicit tenant guard) is skipped.
+	// A caller authenticated for one namespace must not read another tenant's rows.
 	backend := &fakeVectorBackend{
 		collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r", IsExternal: true},
 		results:    []vector.VectorSearchResult{{UID: "u1", Title: "T1", Score: 0.1}},
@@ -756,4 +806,98 @@ func TestVectorSearch_AllowlistSeparatesInternalAndExternal(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, resp.Error)
 	assert.Equal(t, int32(404), resp.Error.Code)
+}
+
+func TestVectorSearchSharedCollectionReadableByTwoTenants(t *testing.T) {
+	backend := &fakeVectorBackend{
+		collection: &vector.Collection{Group: "docs.example.com", Resource: "manuals", PartitionKey: "manuals_external", IsExternal: true, Scope: vector.ScopeShared},
+		results:    []vector.VectorSearchResult{{UID: "guide", Title: "Guide", Content: "shared guide"}},
+	}
+	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend, authlib.FixedAccessClient(false))
+	s.sharedCollectionAllowlist = vector.NewCollectionAllowlist(nil, []string{"docs.example.com/manuals"})
+	for _, namespace := range []string{"tenant-a", "tenant-b"} {
+		t.Run(namespace, func(t *testing.T) {
+			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{UserID: 1, UserUID: "reader", Namespace: namespace, Type: authlib.TypeUser})
+			response, err := s.VectorSearch(ctx, &resourcepb.VectorSearchRequest{Key: &resourcepb.ResourceKey{Namespace: namespace, Group: "docs.example.com", Resource: "manuals"}, Query: "guide"})
+			require.NoError(t, err)
+			require.Nil(t, response.GetError())
+			require.Len(t, response.GetResults(), 1)
+			require.Equal(t, "guide", response.GetResults()[0].GetName())
+			require.Equal(t, vector.SharedNamespace, backend.gotNamespace)
+		})
+	}
+}
+
+func TestVectorSearchSharedCollectionRejectsUnauthenticatedAndMismatchedNamespacesBeforeLookup(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		ctx       context.Context
+		namespace string
+		code      int32
+	}{
+		{name: "missing identity", ctx: context.Background(), namespace: "tenant-a", code: http.StatusUnauthorized},
+		{name: "other tenant", ctx: authedCtx(), namespace: "tenant-a", code: http.StatusForbidden},
+		{name: "shared storage marker", ctx: authedCtx(), namespace: vector.SharedNamespace, code: http.StatusForbidden},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := &fakeVectorBackend{collection: &vector.Collection{Group: "docs.example.com", Resource: "manuals", PartitionKey: "manuals_external", IsExternal: true, Scope: vector.ScopeShared}}
+			embed := &fakeTextEmbedder{dim: 4}
+			s := newTestSearchServer(newTestEmbedder(embed), backend)
+			s.sharedCollectionAllowlist = vector.NewCollectionAllowlist(nil, []string{"docs.example.com/manuals"})
+			response, err := s.VectorSearch(tc.ctx, &resourcepb.VectorSearchRequest{Key: &resourcepb.ResourceKey{Namespace: tc.namespace, Group: "docs.example.com", Resource: "manuals"}, Query: "guide"})
+			require.NoError(t, err)
+			require.Equal(t, tc.code, response.GetError().GetCode())
+			require.Empty(t, response.GetResults())
+			require.Zero(t, backend.resolveCalls)
+			require.Empty(t, embed.gotIn.Texts)
+			require.Empty(t, backend.gotNamespace)
+		})
+	}
+}
+
+func TestVectorSearchSharedCatalogAndEnrollmentMustAgree(t *testing.T) {
+	shared := vector.Collection{Group: "docs.example.com", Resource: "manuals", PartitionKey: "manuals_external", IsExternal: true, Scope: vector.ScopeShared}
+	for _, tc := range []struct {
+		name                           string
+		catalog                        vector.Collection
+		sharedEnrollment               bool
+		tenantInternal, tenantExternal bool
+		resolveErr                     error
+		wantCode                       codes.Code
+	}{
+		{name: "missing enrollment", catalog: shared, wantCode: codes.NotFound},
+		{name: "tenant scope under shared enrollment", catalog: vector.Collection{Group: shared.Group, Resource: shared.Resource, PartitionKey: shared.PartitionKey, IsExternal: true, Scope: vector.ScopeTenant}, sharedEnrollment: true, wantCode: codes.Internal},
+		{name: "internal shared collection", catalog: vector.Collection{Group: shared.Group, Resource: shared.Resource, PartitionKey: shared.PartitionKey, Scope: vector.ScopeShared}, sharedEnrollment: true, wantCode: codes.Internal},
+		{name: "unknown scope", catalog: vector.Collection{Group: shared.Group, Resource: shared.Resource, PartitionKey: shared.PartitionKey, IsExternal: true, Scope: "other"}, sharedEnrollment: true, wantCode: codes.Internal},
+		{name: "overlap with tenant external", catalog: shared, sharedEnrollment: true, tenantExternal: true, wantCode: codes.Internal},
+		{name: "overlap with tenant internal", catalog: shared, sharedEnrollment: true, tenantInternal: true, wantCode: codes.Internal},
+		{name: "catalog error", catalog: shared, sharedEnrollment: true, resolveErr: errors.New("catalog unavailable"), wantCode: codes.Internal},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := &fakeVectorBackend{collection: &tc.catalog, resolveErr: tc.resolveErr}
+			embed := &fakeTextEmbedder{dim: 4}
+			s := newTestSearchServer(newTestEmbedder(embed), backend)
+			s.collectionAllowlist = vector.NewCollectionAllowlist(nil, nil)
+			name := "docs.example.com/manuals"
+			if tc.tenantInternal {
+				s.collectionAllowlist = vector.NewCollectionAllowlist([]string{name}, nil)
+			}
+			if tc.tenantExternal {
+				s.collectionAllowlist = vector.NewCollectionAllowlist(nil, []string{name})
+			}
+			if tc.sharedEnrollment {
+				s.sharedCollectionAllowlist = vector.NewCollectionAllowlist(nil, []string{name})
+			}
+			response, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{Key: &resourcepb.ResourceKey{Namespace: "ns", Group: shared.Group, Resource: shared.Resource}, Query: "guide"})
+			if tc.wantCode == codes.NotFound {
+				require.NoError(t, err)
+				require.EqualValues(t, http.StatusNotFound, response.GetError().GetCode())
+			} else {
+				require.Equal(t, tc.wantCode, status.Code(err))
+				require.Nil(t, response)
+			}
+			require.Empty(t, embed.gotIn.Texts)
+			require.Empty(t, backend.gotNamespace)
+		})
+	}
 }

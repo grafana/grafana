@@ -18,10 +18,8 @@ func TestNewPlugin(t *testing.T) {
 		ExpectedNotFoundErr bool
 	}{
 		{ID: AzureMonitor},
-		{ID: CloudWatch},
 		{ID: Grafana, ExpectedNotFoundErr: true},
 		{ID: Graphite},
-		{ID: InfluxDB},
 		{ID: TestData, ExpectedAlias: TestDataAlias},
 		{ID: TestDataAlias, ExpectedID: TestData, ExpectedAlias: TestDataAlias},
 	}

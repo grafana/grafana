@@ -14,7 +14,7 @@ labels:
 menuTitle: Template variables
 title: MySQL template variables
 weight: 300
-review_date: 2026-05-11
+review_date: 2026-08-10
 ---
 
 # MySQL template variables

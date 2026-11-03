@@ -23,7 +23,7 @@ func TestMain(m *testing.M) {
 func createTestableServerLock(t *testing.T) (*ServerLockService, db.DB) {
 	t.Helper()
 
-	store := db.InitTestDB(t)
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	return &ServerLockService{
 		sql:    legacysql.NewDatabaseProvider(store),

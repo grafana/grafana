@@ -1,7 +1,7 @@
 import { property } from 'lodash';
 
 interface FieldAccessorCache {
-  [key: string]: (obj: object) => any;
+  [key: string]: (obj: object) => unknown;
 }
 
 let fieldAccessorCache: FieldAccessorCache = {};

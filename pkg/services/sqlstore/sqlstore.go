@@ -90,6 +90,9 @@ func ProvideService(cfg *setting.Cfg,
 }
 
 func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, bus bus.Bus, migrations registry.DatabaseMigrator) (*SQLStore, error) {
+	if _, ok := t.(sqlutil.TestDBPeer); ok {
+		return newTestDBPeerStore(cfg, features, migrations, bus)
+	}
 	ss, err := initTestDB(t, cfg, features, migrations, bus, InitTestDBOpt{})
 	if err != nil {
 		return nil, err
@@ -387,8 +390,7 @@ func (ss *SQLStore) ensureTransactionIsolationCompatibility(engine *xorm.Engine,
 	var result string
 	_, err := engine.SQL("SELECT 1").Get(&result)
 
-	var mysqlError *mysql.MySQLError
-	if errors.As(err, &mysqlError) {
+	if mysqlError, ok := errors.AsType[*mysql.MySQLError](err); ok {
 		// if there was an error due to transaction isolation
 		if strings.Contains(mysqlError.Message, "Unknown system variable 'transaction_isolation'") {
 			ss.log.Debug("transaction_isolation system var is unknown, overriding in connection string with tx_isolation instead")
@@ -431,8 +433,7 @@ func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 			err := sess.SQL(recQry).Find(&result)
 			return err
 		}); err != nil {
-			var driverErr *mysql.MySQLError
-			if errors.As(err, &driverErr) {
+			if driverErr, ok := errors.AsType[*mysql.MySQLError](err); ok {
 				if driverErr.Number == mysqlerr.ER_PARSE_ERROR || driverErr.Number == mysqlerr.ER_NOT_SUPPORTED_YET {
 					return false, nil
 				}
@@ -462,6 +463,10 @@ type InitTestDBOpt struct {
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
+//
+// Deprecated: use NewTestStore with WithMigrator instead. It gives each test
+// an isolated, temporary database instead of sharing one database with
+// truncation between tests. New calls fail lint (staticcheck SA1019).
 func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
@@ -474,6 +479,11 @@ func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigra
 }
 
 // InitTestDB initializes the test DB.
+//
+// Deprecated: use NewTestStore instead. It gives each test an isolated,
+// temporary database instead of sharing one database with truncation between
+// tests, which also allows tests to run in parallel. New calls fail lint
+// (staticcheck SA1019).
 func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cfg) {
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
@@ -639,5 +649,45 @@ func TestMain(m *testing.M) {
 		return nil, err
 	}
 
+	// The store outlives the server that created it, so events published after a
+	// commit must go to the bus of the server now using it, where its listeners are.
+	if bus != nil {
+		testSQLStore.bus = bus
+	}
+
 	return testSQLStore, nil
+}
+
+// newTestDBPeerStore connects another server to the shared test database.
+func newTestDBPeerStore(cfg *setting.Cfg, features featuremgmt.FeatureToggles, migrations registry.DatabaseMigrator, bus bus.Bus) (*SQLStore, error) {
+	testSQLStoreMutex.Lock()
+	ready := testSQLStore != nil
+	testSQLStoreMutex.Unlock()
+	if !ready {
+		return nil, errors.New("a test DB peer needs another server to set up the test database first")
+	}
+
+	dbType := sqlutil.GetTestDBType()
+	if dbType == migrator.SQLite {
+		return nil, errors.New("test DB peers need a server database (MySQL or Postgres)")
+	}
+	testDB, err := sqlutil.GetTestDB(dbType)
+	if err != nil {
+		return nil, err
+	}
+	cfgDBSec := cfg.Raw.Section("database")
+	cfgDBSec.Key("type").SetValue(dbType)
+	cfgDBSec.Key("connection_string").SetValue(testDB.ConnStr)
+
+	ss, err := newStore(cfg, nil, features, migrations, bus, tracing.InitializeTracerForTest())
+	if err != nil {
+		return nil, err
+	}
+	if err := ss.Migrate(ss.dbCfg.MigrationLock); err != nil {
+		return nil, err
+	}
+	if err := ss.Reset(); err != nil {
+		return nil, err
+	}
+	return ss, nil
 }

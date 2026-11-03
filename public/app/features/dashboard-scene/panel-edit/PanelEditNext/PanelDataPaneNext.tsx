@@ -9,8 +9,14 @@ import {
   getNextRefId,
   type ScopedVars,
 } from '@grafana/data';
-import { config, isExpressionReference, reportInteraction } from '@grafana/runtime';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { t } from '@grafana/i18n';
+import {
+  config,
+  isExpressionReference,
+  reportInteraction,
+  getDataSourceInstance,
+  getDataSourceInstanceSettings,
+} from '@grafana/runtime';
 import {
   SceneDataTransformer,
   SceneObjectBase,
@@ -28,9 +34,11 @@ import { type QueryGroupOptions } from 'app/types/query';
 
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
-import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
+import { getDashboardSceneFor } from '../../utils/utils';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
+import { startQueryPreview, type QueryPreview } from './QueryEditor/coauthoring/queryPreview';
 import { filterDataTransformerConfigs, getPanelScopedVars } from './QueryEditor/utils';
 import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from './constants';
 
@@ -222,7 +230,13 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       // Treat a missing dsSettings as a load failure so the catch block can attempt the
       // default fallback — same recovery path as a rejected get() call.
       if (!datasource || !dsSettings) {
-        throw new Error(`Datasource settings not found for uid: ${JSON.stringify(datasourceToLoad)}`);
+        throw new Error(
+          t(
+            'query-editor-next.datasource-error.settings-not-found',
+            'Datasource settings not found for uid: {{datasource}}',
+            { datasource: JSON.stringify(datasourceToLoad), interpolation: { escapeValue: false } }
+          )
+        );
       }
 
       this.setState({ datasource, dsSettings, dsError: undefined });
@@ -246,7 +260,10 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
         this.setState({
           datasource: undefined,
           dsSettings: undefined,
-          dsError: err instanceof Error ? err : new Error('Failed to load datasource'),
+          dsError:
+            err instanceof Error
+              ? err
+              : new Error(t('query-editor-next.datasource-error.load-failed', 'Failed to load datasource')),
         });
       }
     }
@@ -388,6 +405,10 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
   };
 
+  public startQueryPreview = (originalRefId: string, proposedQuery: DataQuery): QueryPreview | undefined => {
+    return startQueryPreview(this.state.panelRef.resolve(), originalRefId, proposedQuery);
+  };
+
   public bulkDeleteQueries = (refIds: readonly string[]) => {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
     if (!queryRunner) {
@@ -441,7 +462,14 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     const panelContext = this.getPanelContext();
     const newDataSource = await getDataSourceInstanceSettings(dsRef, panelContext);
     if (!newDataSource) {
-      this.setState({ dsError: new Error(`Datasource not found: ${dsRef.uid ?? dsRef.type}`) });
+      this.setState({
+        dsError: new Error(
+          t('query-editor-next.datasource-error.not-found', 'Datasource not found: {{datasource}}', {
+            datasource: dsRef.uid ?? dsRef.type,
+            interpolation: { escapeValue: false },
+          })
+        ),
+      });
       return;
     }
 
@@ -450,7 +478,14 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       const ds = await getDataSourceInstance(dsRef, panelContext);
       defaultQuery = ds.getDefaultQuery?.(CoreApp.PanelEditor);
     } catch {
-      this.setState({ dsError: new Error(`Failed to load datasource: ${newDataSource.name ?? newDataSource.uid}`) });
+      this.setState({
+        dsError: new Error(
+          t('query-editor-next.datasource-error.load-failed-named', 'Failed to load datasource: {{datasource}}', {
+            datasource: newDataSource.name ?? newDataSource.uid,
+            interpolation: { escapeValue: false },
+          })
+        ),
+      });
       return;
     }
 
@@ -495,6 +530,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       });
     }
 
+    this.setState({ dsError: undefined });
     this.resolveUniformDatasource();
     queryRunner.runQueries();
   };
@@ -642,7 +678,14 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     if (!newDataSource) {
       // Surface the failure in the editor rather than throwing — the caller (sidebar DS picker)
       // does not wrap changeDataSource in a try/catch, so a thrown error would be silently swallowed.
-      this.setState({ dsError: new Error(`Datasource not found: ${dsRef.uid ?? dsRef.type}`) });
+      this.setState({
+        dsError: new Error(
+          t('query-editor-next.datasource-error.not-found', 'Datasource not found: {{datasource}}', {
+            datasource: dsRef.uid ?? dsRef.type,
+            interpolation: { escapeValue: false },
+          })
+        ),
+      });
       return;
     }
 
@@ -665,7 +708,14 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
         const ds = await getDataSourceInstance(dsRef, panelContext);
         updatedQuery = { ...ds.getDefaultQuery?.(CoreApp.PanelEditor), ...targetQuery, datasource: dsRef };
       } catch {
-        this.setState({ dsError: new Error(`Failed to load datasource: ${newDataSource.name ?? newDataSource.uid}`) });
+        this.setState({
+          dsError: new Error(
+            t('query-editor-next.datasource-error.load-failed-named', 'Failed to load datasource: {{datasource}}', {
+              datasource: newDataSource.name ?? newDataSource.uid,
+              interpolation: { escapeValue: false },
+            })
+          ),
+        });
         return;
       }
     } else {
@@ -706,6 +756,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       queryRunner.setState({ queries });
     }
 
+    this.setState({ dsError: undefined });
     this.resolveUniformDatasource();
     queryRunner.runQueries();
   };

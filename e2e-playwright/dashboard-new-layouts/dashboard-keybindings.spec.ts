@@ -1,22 +1,12 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Panels } from './page-objects';
-
-test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
-});
+import { expect, test } from './fixtures';
 
 test.describe('Dashboard keybindings with new layouts', { tag: ['@dashboards'] }, () => {
   test.use({
     viewport: { width: 1280, height: 1080 },
   });
 
-  test('should collapse and expand all rows', async ({ gotoDashboardPage, page, selectors, components }) => {
-    const dashboardPage = await gotoDashboardPage({ uid: 'Repeating-rows-uid/repeating-rows' });
-    const panels = new Panels({ page, dashboardPage, selectors, components });
-
+  test('should collapse and expand all rows', async ({ gotoDashboardPage, page, panels }) => {
+    await gotoDashboardPage({ uid: 'Repeating-rows-uid/repeating-rows' });
     const panelBodies = panels.getBodies();
     await expect(panelBodies).toHaveCount(5);
     await expect(panels.getPanel('server = A, pod = Bob')).toBeVisible();
@@ -39,10 +29,8 @@ test.describe('Dashboard keybindings with new layouts', { tag: ['@dashboards'] }
     await expect(page.getByText('server = B, pod = Bob')).toBeVisible();
   });
 
-  test('should open panel inspect', async ({ gotoDashboardPage, page, selectors, components }) => {
+  test('should open panel inspect', async ({ gotoDashboardPage, page, selectors, panels }) => {
     const dashboardPage = await gotoDashboardPage({ uid: 'edediimbjhdz4b/a-tall-dashboard' });
-    const panels = new Panels({ page, dashboardPage, selectors, components });
-
     const panel1 = panels.getPanel('Panel #1');
     await expect(panel1).toBeVisible();
     await panel1.press('i');

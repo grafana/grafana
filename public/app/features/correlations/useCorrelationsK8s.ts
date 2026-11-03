@@ -6,8 +6,12 @@ import {
   useListCorrelationQuery,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { SupportedTransformationType } from '@grafana/data';
-import { type CorrelationData, type CorrelationExternal, type CorrelationQuery } from '@grafana/runtime';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import {
+  type CorrelationData,
+  type CorrelationExternal,
+  type CorrelationQuery,
+  getDataSourceInstanceSettings,
+} from '@grafana/runtime';
 
 import { toEnrichedCorrelationData } from './useCorrelations';
 

@@ -8,12 +8,12 @@ import (
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
 
 	"github.com/grafana/alerting/apps/historian/pkg/apis"
 	historianApp "github.com/grafana/alerting/apps/historian/pkg/app"
 	historianAppConfig "github.com/grafana/alerting/apps/historian/pkg/app/config"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"

@@ -1,8 +1,11 @@
+import { http, HttpResponse } from 'msw';
+
 import { store } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
-import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
+import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import {
   SEARCH_SELECTED_LAYOUT,
   SEARCH_SELECTED_LAYOUT_DELETED,
@@ -11,6 +14,8 @@ import {
 } from 'app/features/search/constants';
 import { SearchLayout } from 'app/features/search/types';
 
+import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
+import { getGrafanaSearcher } from '../../search/service/searcher';
 import { initialState } from '../../search/state/SearchStateManager';
 
 import { TrashStateManager } from './useRecentlyDeletedStateManager';
@@ -45,6 +50,7 @@ describe('TrashStateManager', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+    dashboardAPIVersionResolver.reset();
   });
 
   describe('onSortChange', () => {
@@ -111,6 +117,53 @@ describe('TrashStateManager', () => {
       expect(stm.state.layout).toBe(SearchLayout.List);
       expect(stm.state.sort).toBe('deleted-asc');
       expect(stm.state.prevSort).toBe('deleted-asc');
+    });
+
+    it('reloads folder locations on entry, then reuses them across searches', async () => {
+      dashboardAPIVersionResolver.set({ v1: 'v1beta1', v2: 'v2beta1' });
+      deletedDashboardsCache.clear();
+
+      const folderRequest = jest.fn();
+      let folders = [
+        { name: 'deleted-parent', title: 'Deleted parent', resource: 'folders' },
+        { name: 'live-folder', title: 'Live folder', resource: 'folders' },
+      ];
+      server.use(
+        http.get(searchRoute, () => {
+          folderRequest();
+          return HttpResponse.json({ totalHits: folders.length, hits: folders });
+        }),
+        http.post('/apis/dashboard.grafana.app/v1beta1/namespaces/:namespace/dashboards/trash', () =>
+          HttpResponse.json({
+            metadata: { totalHits: 1, totalHitsRelation: 'eq' },
+            items: [
+              {
+                resource: { group: 'dashboard.grafana.app', resource: 'dashboards', name: 'parent-dashboard' },
+                fields: { title: 'Parent dashboard', folder: 'deleted-parent' },
+              },
+            ],
+          })
+        )
+      );
+      // The shared lookup still holds the folder from before it was deleted.
+      await getGrafanaSearcher().reloadLocationInfo();
+      folders = [{ name: 'live-folder', title: 'Live folder', resource: 'folders' }];
+
+      const stm = createTrashStateManager();
+      stm.initStateFromUrl(undefined, false);
+      await stm.doSearch();
+
+      const locationInfo = stm.state.result?.view.dataFrame.meta?.custom?.locationInfo;
+      expect(locationInfo['live-folder']).toEqual({
+        kind: 'folder',
+        name: 'Live folder',
+        url: '/dashboards/f/live-folder',
+      });
+      expect(locationInfo).not.toHaveProperty('deleted-parent');
+
+      folderRequest.mockClear();
+      await stm.doSearch();
+      expect(folderRequest).not.toHaveBeenCalled();
     });
   });
 });

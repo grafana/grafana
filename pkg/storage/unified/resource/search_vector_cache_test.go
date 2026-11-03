@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"errors"
+	"net/http"
 	"sync"
 	"testing"
 	"time"
@@ -12,6 +13,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
@@ -96,16 +99,66 @@ type fakeRateLimiter struct {
 	sweeps  int
 	swept   int64
 	sweepEr error
+	counts  map[string]int64
 }
 
-func (f *fakeRateLimiter) Allow(_ context.Context, _ string, _ time.Duration, _ int) (bool, int64, error) {
+func (f *fakeRateLimiter) Allow(_ context.Context, namespace string, _ time.Duration, limit int) (bool, int64, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.calls++
 	if f.err != nil {
 		return false, 0, f.err
 	}
+	if f.counts != nil {
+		f.counts[namespace]++
+		return f.counts[namespace] <= int64(limit), f.counts[namespace], nil
+	}
 	return f.allow, f.count, nil
+}
+
+func TestVectorSearch_SharedCollectionQueryPolicyUsesCallerNamespace(t *testing.T) {
+	key := validKey()
+	collection := key.Group + "/" + key.Resource
+	provider := &fakeTextEmbedder{dim: 4}
+	backend := &fakeVectorBackend{collection: &vector.Collection{
+		Group: key.Group, Resource: key.Resource, PartitionKey: "r_external", IsExternal: true, Scope: vector.ScopeShared,
+	}, results: []vector.VectorSearchResult{{UID: "published", Title: "Published"}}}
+	cache := newFakeQueryCache()
+	limiter := &fakeRateLimiter{counts: map[string]int64{}}
+	s := newTestSearchServerWithCache(newTestEmbedder(provider), backend, cache, limiter)
+	s.sharedCollectionAllowlist = vector.NewCollectionAllowlist(nil, []string{collection})
+	s.collectionAllowlist = vector.NewCollectionAllowlist(nil, nil)
+	s.rateLimitPerTenant = 2
+
+	search := func(namespace string) (*resourcepb.VectorSearchResponse, error) {
+		ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{UserID: 1, UserUID: "reader", Namespace: namespace, Type: authlib.TypeUser})
+		return s.VectorSearch(ctx, &resourcepb.VectorSearchRequest{
+			Key: &resourcepb.ResourceKey{Namespace: namespace, Group: key.Group, Resource: key.Resource}, Query: "same query",
+		})
+	}
+	for _, namespace := range []string{"tenant-a", "tenant-b"} {
+		resp, err := search(namespace)
+		require.NoError(t, err)
+		require.Nil(t, resp.Error)
+		require.Len(t, resp.Results, 1)
+		assert.Equal(t, "published", resp.Results[0].Name)
+		assert.Equal(t, namespace, provider.gotIn.Tenant)
+		assert.Equal(t, vector.SharedNamespace, backend.gotNamespace)
+	}
+	assert.Equal(t, 2, cache.putCalls, "each tenant embeds and caches the same query separately")
+	assert.Len(t, cache.entries, 2)
+
+	resp, err := search("tenant-a")
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	assert.Equal(t, 2, cache.putCalls, "a cached repeat does not embed again")
+	resp, err = search("tenant-a")
+	require.Nil(t, resp)
+	require.Equal(t, codes.ResourceExhausted, status.Code(err))
+	resp, err = search("tenant-b")
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	assert.Equal(t, map[string]int64{"tenant-a": 3, "tenant-b": 2}, limiter.counts)
 }
 
 func (f *fakeRateLimiter) SweepOlderThan(_ context.Context, _ time.Time) (int64, error) {
@@ -208,20 +261,46 @@ func TestVectorSearch_RateLimitErrorFailsClosedUnavailable(t *testing.T) {
 	assert.Equal(t, codes.Unavailable, status.Code(err), "limiter errors must fail closed")
 }
 
-func TestVectorSearch_RateLimitedRunsBeforeEmbedAndCache(t *testing.T) {
+func TestVectorSearch_RateLimitedRunsBeforeCatalogCacheAndEmbed(t *testing.T) {
 	fake := &fakeTextEmbedder{dim: 4}
 	emb := newTestEmbedder(fake)
 	cache := newFakeQueryCache()
 	rl := &fakeRateLimiter{allow: false, count: 99}
-	s := newTestSearchServerWithCache(emb, &fakeVectorBackend{}, cache, rl)
+	backend := &fakeVectorBackend{}
+	s := newTestSearchServerWithCache(emb, backend, cache, rl)
 
 	_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
 		Key: validKey(), Query: "q",
 	})
 	require.Error(t, err)
 	assert.Equal(t, codes.ResourceExhausted, status.Code(err))
+	assert.Zero(t, backend.resolveCalls, "rejected request must not touch the catalog")
 	assert.Equal(t, 0, cache.getCalls, "rejected request must not touch the cache")
 	assert.Empty(t, fake.gotIn.Texts, "rejected request must not call the embedder")
+}
+
+func TestVectorSearch_UnavailableCollectionsConsumeRateLimit(t *testing.T) {
+	for _, missing := range []bool{true, false} {
+		name := "disallowed"
+		if missing {
+			name = "unknown"
+		}
+		t.Run(name, func(t *testing.T) {
+			fake := &fakeTextEmbedder{dim: 4}
+			backend := &fakeVectorBackend{resolveNotFound: missing}
+			rl := &fakeRateLimiter{allow: true}
+			s := newTestSearchServerWithCache(newTestEmbedder(fake), backend, nil, rl)
+			s.collectionAllowlist = vector.NewCollectionAllowlist(nil, nil)
+
+			resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{Key: validKey(), Query: "q"})
+			require.NoError(t, err)
+			require.NotNil(t, resp.Error)
+			assert.EqualValues(t, http.StatusNotFound, resp.Error.Code)
+			assert.Equal(t, 1, rl.calls)
+			assert.Equal(t, 1, backend.resolveCalls)
+			assert.Empty(t, fake.gotIn.Texts)
+		})
+	}
 }
 
 func TestSha256HexStable(t *testing.T) {

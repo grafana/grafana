@@ -1,10 +1,15 @@
+import { isEqual } from 'lodash';
+
 import { t } from '@grafana/i18n';
 import { type dataLayers } from '@grafana/scenes';
 import { type AnnotationPanelFilter } from '@grafana/schema/dist/esm/index.gen';
 
+import { addElement } from '../../actions/element/addElement';
+import { duplicateElement } from '../../actions/element/duplicateElement';
+import { removeElement } from '../../actions/element/removeElement';
+import { edit } from '../../actions/utils/edit';
 import { type DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
-import { dashboardEditActions } from '../../sidebar/shared';
 
 type DataLayer = dataLayers.AnnotationsDataLayer | DashboardAnnotationsDataLayer;
 
@@ -12,7 +17,8 @@ export const annotationEditActions = {
   addAnnotation({ source, addedObject }: { addedObject: DataLayer; source: DashboardDataLayerSet }) {
     const layersBeforeAddition = [...source.state.annotationLayers];
 
-    dashboardEditActions.addElement({
+    addElement({
+      meta: { actionId: 'annotation.add' },
       source,
       addedObject,
       perform() {
@@ -23,10 +29,28 @@ export const annotationEditActions = {
       },
     });
   },
+  duplicateAnnotation(layer: DataLayer) {
+    const dataLayerSet = layer.parent;
+    if (!(dataLayerSet instanceof DashboardDataLayerSet)) {
+      return;
+    }
+
+    const layersBefore = [...dataLayerSet.state.annotationLayers];
+
+    duplicateElement({
+      meta: { actionId: 'annotation.duplicate' },
+      duplicatedObject: layer,
+      source: dataLayerSet,
+      cloneState: { name: `${layer.state.name} - Copy` },
+      perform: (copy) => dataLayerSet.setState({ annotationLayers: [...layersBefore, copy] }),
+      undo: () => dataLayerSet.setState({ annotationLayers: layersBefore }),
+    });
+  },
   removeAnnotation({ source, removedObject }: { removedObject: DataLayer; source: DashboardDataLayerSet }) {
     const layersBeforeRemoval = [...source.state.annotationLayers];
 
-    dashboardEditActions.removeElement({
+    removeElement({
+      meta: { actionId: 'annotation.remove' },
       source,
       removedObject,
       perform() {
@@ -42,7 +66,8 @@ export const annotationEditActions = {
       return;
     }
 
-    dashboardEditActions.edit({
+    edit({
+      meta: { actionId: 'annotation.changeName' },
       description: t(
         'dashboard-scene.annotation-edit-actions.description.change-annotation-name',
         'Change annotation name'
@@ -69,7 +94,8 @@ export const annotationEditActions = {
     });
   },
   changeAnnotationEnabled({ source, oldValue, newValue }: { source: DataLayer; oldValue: boolean; newValue: boolean }) {
-    dashboardEditActions.edit({
+    edit({
+      meta: { actionId: 'annotation.changeEnabled' },
       description: t(
         'dashboard-scene.annotation-edit-actions.description.change-annotation-enabled-state',
         'Change annotation enabled state'
@@ -96,7 +122,8 @@ export const annotationEditActions = {
     });
   },
   changeAnnotationColor({ source, oldValue, newValue }: { source: DataLayer; oldValue: string; newValue: string }) {
-    dashboardEditActions.edit({
+    edit({
+      meta: { actionId: 'annotation.changeColor' },
       description: t(
         'dashboard-scene.annotation-edit-actions.description.change-annotation-color',
         'Change annotation color'
@@ -140,7 +167,8 @@ export const annotationEditActions = {
       }
     };
 
-    dashboardEditActions.edit({
+    edit({
+      meta: { actionId: 'annotation.changeDisplay' },
       description: t(
         'dashboard-scene.annotation-edit-actions.description.change-annotation-controls-display',
         'Change annotation controls display'
@@ -172,6 +200,40 @@ export const annotationEditActions = {
       },
     });
   },
+  changeAnnotationQuery({
+    source,
+    oldValue,
+    newValue,
+    scope,
+  }: {
+    source: DataLayer;
+    oldValue: DataLayer['state']['query'];
+    newValue: DataLayer['state']['query'];
+    scope: 'query-editor' | 'query-library';
+  }) {
+    if (isEqual(oldValue, newValue)) {
+      return;
+    }
+
+    // The query editor applies changes live, so the query may already be set when the change is recorded
+    const setQuery = (query: DataLayer['state']['query']) => {
+      if (source.state.query !== query) {
+        source.setState({ query });
+        source.runLayer();
+      }
+    };
+
+    edit({
+      meta: { actionId: 'annotation.changeQuery', scope },
+      description: t(
+        'dashboard-scene.annotation-edit-actions.description.change-annotation-query',
+        'Change annotation query'
+      ),
+      source,
+      perform: () => setQuery(newValue),
+      undo: () => setQuery(oldValue),
+    });
+  },
   changeAnnotationPanelFilter({
     source,
     oldValue,
@@ -181,7 +243,8 @@ export const annotationEditActions = {
     oldValue?: AnnotationPanelFilter;
     newValue?: AnnotationPanelFilter;
   }) {
-    dashboardEditActions.edit({
+    edit({
+      meta: { actionId: 'annotation.changePanelFilter' },
       description: t(
         'dashboard-scene.annotation-edit-actions.description.change-annotation-panel-filter',
         'Change annotation panel filter'

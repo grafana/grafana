@@ -76,11 +76,7 @@ func (s *OSSService) SearchUser(c *contextmodel.ReqContext) (*user.SearchUserQue
 	if perPage <= 0 {
 		perPage = 1000
 	}
-	page := c.QueryInt("page")
-
-	if page < 1 {
-		page = 1
-	}
+	page := max(c.QueryInt("page"), 1)
 
 	searchQuery := c.Query("query")
 	filters := []user.Filter{}

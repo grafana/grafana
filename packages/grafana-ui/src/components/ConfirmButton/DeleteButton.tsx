@@ -29,8 +29,8 @@ export const DeleteButton = ({ size, disabled, onConfirm, 'aria-label': ariaLabe
     >
       <Button
         aria-label={ariaLabel ?? t('grafana-ui.confirm-button.aria-label-delete', 'Delete')}
-        variant="destructive"
-        icon="times"
+        variant="secondary"
+        icon="trash-alt"
         size={size || 'sm'}
       />
     </ConfirmButton>

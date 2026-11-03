@@ -1,6 +1,9 @@
 package nats
 
 import (
+	"time"
+
+	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -18,6 +21,7 @@ type connectionMetrics struct {
 	disconnects         prometheus.Counter
 	connectionErrors    prometheus.Counter
 	disconnectedSeconds prometheus.Histogram
+	asyncErrors         *prometheus.CounterVec
 }
 
 func newConnectionMetrics(role connRole) connectionMetrics {
@@ -45,7 +49,7 @@ func newConnectionMetrics(role connRole) connectionMetrics {
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
 			Name:      prefix + "connection_errors_total",
-			Help:      "Total number of NATS asynchronous connection errors.",
+			Help:      "Total number of failed NATS connect attempts.",
 		}),
 		// Observed when the connection is re-established: the length of each outage
 		// is exactly the window during which this node relies on the polling
@@ -57,40 +61,53 @@ func newConnectionMetrics(role connRole) connectionMetrics {
 			Help:      "Duration of NATS disconnections, observed when the connection reconnects.",
 			Buckets:   []float64{0.5, 1, 2, 5, 10, 30, 60, 120, 300},
 		}),
+		asyncErrors: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      prefix + "async_errors_total",
+			Help:      "NATS asynchronous errors reported on the connection, by group, resource and classified error.",
+		}, []string{"group", "resource", "error"}),
 	}
 }
 
+func (m connectionMetrics) recordAsyncError(sub *natsclient.Subscription, err error) {
+	if err == nil {
+		return
+	}
+	m.asyncErrors.WithLabelValues(asyncErrorLabels(sub, err)).Inc()
+}
+
 func (m connectionMetrics) collectors() []prometheus.Collector {
-	return []prometheus.Collector{m.connectionStatus, m.reconnects, m.disconnects, m.connectionErrors, m.disconnectedSeconds}
+	return []prometheus.Collector{m.connectionStatus, m.reconnects, m.disconnects, m.connectionErrors, m.disconnectedSeconds, m.asyncErrors}
 }
 
 // publisherMetrics covers the publisher connection plus its publish counters.
 type publisherMetrics struct {
 	connectionMetrics
-	messagesPublished prometheus.Counter
-	publishErrors     prometheus.Counter
+	messagesAccepted prometheus.Counter
+	publishErrors    prometheus.Counter
 }
 
 func newPublisherMetrics() *publisherMetrics {
 	return &publisherMetrics{
 		connectionMetrics: newConnectionMetrics(rolePublisher),
-		messagesPublished: prometheus.NewCounter(prometheus.CounterOpts{
+		messagesAccepted: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
-			Name:      "publisher_messages_published_total",
-			Help:      "Total number of messages published to NATS.",
+			Name:      "publisher_messages_accepted_total",
+			Help:      "Total number of messages accepted by the local NATS client; this is not subscriber delivery.",
 		}),
 		publishErrors: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
 			Name:      "publisher_publish_errors_total",
-			Help:      "Total number of NATS publish errors.",
+			Help:      "Total number of local NATS publish failures, before subscriber delivery.",
 		}),
 	}
 }
 
 func (m *publisherMetrics) collectors() []prometheus.Collector {
-	return append(m.connectionMetrics.collectors(), m.messagesPublished, m.publishErrors)
+	return append(m.connectionMetrics.collectors(), m.messagesAccepted, m.publishErrors)
 }
 
 // subscriberMetrics covers the subscriber connection plus its delivery counters.
@@ -99,7 +116,6 @@ type subscriberMetrics struct {
 	messagesReceived prometheus.Counter
 	subscribeErrors  prometheus.Counter
 	handlerDuration  prometheus.Histogram
-	slowConsumers    prometheus.Counter
 }
 
 func newSubscriberMetrics() *subscriberMetrics {
@@ -119,7 +135,7 @@ func newSubscriberMetrics() *subscriberMetrics {
 		}),
 		// Time spent in the message handler, the leading indicator of a slow
 		// consumer: a handler that lags lets the client-side buffer fill until the
-		// broker drops messages (slowConsumers below).
+		// broker drops messages (asyncErrors, error="slow_consumer").
 		handlerDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
@@ -127,19 +143,11 @@ func newSubscriberMetrics() *subscriberMetrics {
 			Help:      "Time spent processing a received message in the subscriber handler.",
 			Buckets:   prometheus.DefBuckets,
 		}),
-		// Slow-consumer async errors are connection-wide (NATS cannot attribute the
-		// dropped messages to a single logical subscriber), so this is unlabeled.
-		slowConsumers: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: metricsNamespace,
-			Subsystem: metricsSubsystem,
-			Name:      "subscriber_slow_consumers_total",
-			Help:      "Total number of NATS slow-consumer errors (messages dropped because the client could not keep up).",
-		}),
 	}
 }
 
 func (m *subscriberMetrics) collectors() []prometheus.Collector {
-	return append(m.connectionMetrics.collectors(), m.messagesReceived, m.subscribeErrors, m.handlerDuration, m.slowConsumers)
+	return append(m.connectionMetrics.collectors(), m.messagesReceived, m.subscribeErrors, m.handlerDuration)
 }
 
 // serverMetrics covers the embedded NATS server. It is registered only in
@@ -169,4 +177,44 @@ func newServerMetrics(reg prometheus.Registerer) *serverMetrics {
 	reg.MustRegister(m.embeddedServerUp, m.discoveryWakesReceived)
 
 	return m
+}
+
+// clusterTLSMetrics covers certificate reloads. It is registered only when
+// cluster TLS is configured.
+type clusterTLSMetrics struct {
+	reloadFailures    *prometheus.CounterVec
+	lastReloadSuccess prometheus.Gauge
+}
+
+func newClusterTLSMetrics(reg prometheus.Registerer) *clusterTLSMetrics {
+	m := &clusterTLSMetrics{
+		reloadFailures: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "cluster_tls_reload_failures_total",
+			Help:      "Failed checks of the cluster TLS certificate files, by reason (read, invalid, apply). The last valid certificates stay in use.",
+		}, []string{"reason"}),
+		lastReloadSuccess: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "cluster_tls_last_reload_success_timestamp_seconds",
+			Help:      "Unix time of the last successful cluster TLS certificate load, at startup or on reload.",
+		}),
+	}
+	// Export every reason from the start so rate() sees the first failure.
+	for _, reason := range []string{clusterTLSReasonRead, clusterTLSReasonInvalid, clusterTLSReasonApply} {
+		m.reloadFailures.WithLabelValues(reason)
+	}
+
+	reg.MustRegister(m.reloadFailures, m.lastReloadSuccess)
+
+	return m
+}
+
+func (m *clusterTLSMetrics) recordReloadFailure(reason string) {
+	m.reloadFailures.WithLabelValues(reason).Inc()
+}
+
+func (m *clusterTLSMetrics) recordReloadSuccess(at time.Time) {
+	m.lastReloadSuccess.Set(float64(at.Unix()))
 }

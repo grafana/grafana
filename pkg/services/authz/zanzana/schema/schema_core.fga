@@ -15,13 +15,18 @@ type service-account
     define update: [user, service-account, team#member, role#assignee]
     define delete: [user, service-account, team#member, role#assignee]
 
+    define get_permissions: [user, service-account, team#member, role#assignee]
+    define set_permissions: [user, service-account, team#member, role#assignee]
+
 type render
 
 type anonymous
 
 type role
   relations
-    define assignee: [user, service-account, anonymous, team#member, role#assignee]
+    # Roles are not nestable. Role bindings only accept user, team and service
+    # account subjects, so a role can never be assigned to another role.
+    define assignee: [user, service-account, anonymous, team#member]
 
     define get: [user, service-account, team#member, role#assignee]
     define create: [user, service-account, team#member, role#assignee]

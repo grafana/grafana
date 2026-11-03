@@ -3,6 +3,7 @@ package pullrequest
 import (
 	"context"
 	"errors"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -12,6 +13,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -39,6 +43,46 @@ func setupTempFile(t *testing.T) (string, func()) {
 	}
 
 	return tmpFile, cleanup
+}
+
+func TestScreenshotRenderer_PutBlobErrors(t *testing.T) {
+	result := &resourcepb.ErrorResult{
+		Code: http.StatusForbidden, Reason: string(metav1.StatusReasonForbidden), Message: "blob write denied",
+		Details: &resourcepb.ErrorDetails{
+			Group: provisioning.GROUP, Kind: "repositories", Name: "repo",
+			Causes: []*resourcepb.ErrorCause{{Reason: "FieldValueForbidden", Field: "value", Message: "not allowed"}},
+		},
+	}
+	st, err := status.New(codes.PermissionDenied, result.Message).WithDetails(result)
+	require.NoError(t, err)
+	transportErr := errors.New("transport failed")
+	for _, tc := range []struct {
+		name     string
+		response *resourcepb.PutBlobResponse
+		err      error
+	}{
+		{name: "embedded", response: &resourcepb.PutBlobResponse{Error: result, Url: "https://example.com/invalid.png", Uid: "invalid"}},
+		{name: "grpc details", err: st.Err()},
+		{name: "ordinary transport", err: transportErr},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			file, cleanup := setupTempFile(t)
+			t.Cleanup(cleanup)
+			render := rendering.NewMockService(gomock.NewController(t))
+			render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any()).Return(&rendering.RenderResult{FilePath: file}, nil)
+			blobstore := NewMockBlobStoreClient(t)
+			blobstore.EXPECT().PutBlob(mock.Anything, mock.Anything).Return(tc.response, tc.err).Once()
+
+			url, err := NewScreenshotRenderer(render, blobstore).RenderScreenshot(context.Background(), provisioning.ResourceRepositoryInfo{
+				Namespace: "default", Name: "repo",
+			}, "dashboard", nil)
+			require.Error(t, err)
+			require.Empty(t, url)
+			if tc.err != nil {
+				require.Same(t, tc.err, err)
+			}
+		})
+	}
 }
 
 func TestScreenshotRenderer_IsAvailable(t *testing.T) {

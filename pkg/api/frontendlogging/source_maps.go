@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	sourcemap "github.com/go-sourcemap/sourcemap"
+	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -79,7 +80,7 @@ func (store *SourceMapStore) guessSourceMapLocation(ctx context.Context, sourceU
 		if len(pathParts) == 2 {
 			return &sourceMapLocation{
 				dir:      store.cfg.StaticRootPath,
-				path:     filepath.Join("build", pathParts[1]+".map"),
+				path:     filepath.Join(webassets.BuildDir, pathParts[1]+".map"),
 				pluginID: "",
 			}, nil
 		}

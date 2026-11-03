@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/grafana/dskit/instrument"
@@ -81,20 +82,25 @@ func provideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, 
 		}
 	}
 
+	var instrumentationOptions []middleware.InstrumentationOption
+	if cfg.GRPCServer.ReportGRPCCodesInInstrumentationLabelEnabled {
+		instrumentationOptions = append(instrumentationOptions, middleware.ReportGRPCStatusOption)
+	}
+
 	// Recovery is listed first so it is outermost and catches panics in every
 	// subsequent interceptor and in the handlers themselves. Without it an
 	// unrecovered panic crashes the whole process.
 	unaryInterceptors := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryPanicRecoveryInterceptor(),
 		interceptors.LoggingUnaryInterceptor(s.logger, s.cfg.EnableLogging), // needs to be registered after tracing interceptor to get trace id
-		middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
+		middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration, instrumentationOptions...),
 		interceptors.InnermostServiceIdentityUnaryServerInterceptor(),
 	}
 	streamInterceptors := []grpc.StreamServerInterceptor{
 		interceptors.StreamPanicRecoveryInterceptor(),
 		interceptors.TracingStreamInterceptor(tracer),
 		interceptors.LoggingStreamInterceptor(s.logger, s.cfg.EnableLogging),
-		middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
+		middleware.StreamServerInstrumentInterceptor(grpcRequestDuration, instrumentationOptions...),
 		interceptors.InnermostServiceIdentityStreamServerInterceptor(),
 	}
 
@@ -134,6 +140,10 @@ func provideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, 
 	}
 	keepalivePolicy := keepalive.EnforcementPolicy{
 		MinTime: s.cfg.KeepaliveMinTime,
+		// Clients such as dskit's also ping connections without active calls.
+		// Without this, each of those pings counts as a violation, and the
+		// connection is closed after a few with GOAWAY(too_many_pings).
+		PermitWithoutStream: true,
 	}
 
 	// Only add keepalive options if any values are configured
@@ -233,6 +243,13 @@ type DSKitService struct {
 
 	// Health is the gRPC health server registered on this service.
 	Health *HealthService
+
+	drain func()
+}
+
+// Drain lets dependent services finish accepted RPCs before closing their backends.
+func (s *DSKitService) Drain() {
+	s.drain()
 }
 
 // ProvideDSKitService wraps a Provider into a dskit BasicService.
@@ -272,13 +289,19 @@ func ProvideDSKitServiceWithListener(
 	hs.setServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 	grpc_health_v1.RegisterHealthServer(grpcService.GetServer(), hs)
 
-	svc := &DSKitService{Provider: grpcService, Health: hs}
+	svc := &DSKitService{
+		Provider: grpcService,
+		Health:   hs,
+		drain: sync.OnceFunc(func() {
+			hs.Shutdown()
+			grpcService.shutdown()
+		}),
+	}
 	svc.BasicService = services.NewBasicService(func(context.Context) error {
 		hs.start()
 		return nil
 	}, grpcService.Run, func(_ error) error {
-		hs.Shutdown()
-		grpcService.shutdown()
+		svc.Drain()
 		return nil
 	}).WithName(serviceName)
 	return svc, nil
