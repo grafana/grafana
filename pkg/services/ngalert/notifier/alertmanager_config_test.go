@@ -883,6 +883,34 @@ receivers:
 		require.Equal(t, v1.ExtraConfigManagedByAutoSync, storedOwner(t, mam))
 	})
 
+	t.Run("delete is allowed on a stale auto-sync slot after the sync datasource changes", func(t *testing.T) {
+		mam := setup(t, true)
+		require.NoError(t, save(mam, staged(syncUID, v1.ExtraConfigManagedByAutoSync), false))
+
+		mam.externalAMSyncer.settings.UnifiedAlerting.ExternalAlertmanagerUID = "other-ds-uid"
+
+		gettable, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Len(t, gettable.ExtraConfigs, 1)
+		require.Equal(t, v1.ExtraConfigManagedByManual, gettable.ExtraConfigs[0].ManagedBy)
+
+		require.NoError(t, mam.DeleteExtraConfiguration(ctx, orgID, signedIn, noopExtraConfigAuthz{}, syncUID))
+	})
+
+	t.Run("stored auto-sync owner reads as manual once sync is inactive", func(t *testing.T) {
+		mam := setup(t, true)
+		require.NoError(t, save(mam, staged(syncUID, v1.ExtraConfigManagedByAutoSync), false))
+
+		gettable, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Equal(t, v1.ExtraConfigManagedByAutoSync, gettable.ExtraConfigs[0].ManagedBy)
+
+		setSyncFlag(t, false)
+		gettable, err = mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Equal(t, v1.ExtraConfigManagedByManual, gettable.ExtraConfigs[0].ManagedBy)
+	})
+
 	t.Run("delete is allowed on an auto-sync slot once sync is inactive", func(t *testing.T) {
 		mam := setup(t, true)
 		require.NoError(t, save(mam, staged(syncUID, v1.ExtraConfigManagedByAutoSync), false))
