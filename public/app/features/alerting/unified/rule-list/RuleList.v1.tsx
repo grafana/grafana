@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAsyncFn, useInterval } from 'react-use';
 
 import { t } from '@grafana/i18n';
@@ -48,7 +48,7 @@ const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const RuleListV1 = () => {
   const { navId, pageNav } = useAlertRulesNav();
   const dispatch = useDispatch();
-  const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
+  const [rulesDataSourceNames] = useState(getAllRulesSourceNames);
   const [expandAll, setExpandAll] = useState(false);
 
   const onFilterCleared = useCallback(() => setExpandAll(false), []);

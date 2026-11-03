@@ -200,10 +200,19 @@ func (c *ExtraAlertmanagerConfig) Validate() error {
 	return nil
 }
 
+const (
+	// ExtraConfigManagedByManual is reported for configs not written by sync.
+	ExtraConfigManagedByManual = "manual"
+	// ExtraConfigManagedByAutoSync marks configs written by the external Alertmanager sync.
+	ExtraConfigManagedByAutoSync = "auto-sync"
+)
+
 type ExtraConfiguration struct {
 	Identifier         string
 	TemplateFiles      map[string]string
 	AlertmanagerConfig string
+	// ManagedBy is auto-sync when sync wrote the config, empty otherwise.
+	ManagedBy string
 }
 
 // GetAlertmanagerConfig parses the stored Prometheus/Mimir alertmanager YAML into

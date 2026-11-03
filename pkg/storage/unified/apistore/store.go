@@ -118,6 +118,10 @@ type StorageOptions struct {
 	// How should we handle deprecated internal IDs
 	DeprecatedInternalID DeprecatedIDState
 
+	// EnableInlineBlobs accepts write-only blobs.<name>.data on the unified side.
+	// Enable only for resources whose schema and legacy adapter support this input.
+	EnableInlineBlobs bool
+
 	// Process inline secure values
 	SecureValues secrets.InlineSecureValueSupport
 
@@ -382,6 +386,10 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		// Re-route managed resources; clean up any secrets preparation created if the write failed.
 		cleanupSafe, err := s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_ADDED, key, obj, out)
 		return s.cleanupSecretsAfterFailedPreparation(ctx, v, cleanupSafe, err)
+	}
+	v.raw, err = s.prepareInlineBlobs(ctx, v.raw, rkey, obj)
+	if err != nil {
+		return v.finish(ctx, err, s.opts.SecureValues)
 	}
 	req := &resourcepb.CreateRequest{
 		Value: v.raw,
@@ -936,6 +944,10 @@ func (s *Storage) GuaranteedUpdate(
 			return s.cleanupSecretsAfterFailedPreparation(ctx, v, cleanupSafe, err)
 		}
 
+		v.raw, err = s.prepareInlineBlobs(ctx, v.raw, req.Key, updatedObj)
+		if err != nil {
+			return v.finish(ctx, err, s.opts.SecureValues)
+		}
 		req.Value = v.raw
 		req.ResourceVersion = readResponse.ResourceVersion
 		updateResponse, err := s.store.Update(ctx, req) // Also does RBAC check
