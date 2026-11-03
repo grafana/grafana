@@ -674,6 +674,28 @@ describe('DashboardSceneUrlSync', () => {
         expect(scene.state.editview).toBeUndefined();
       });
 
+      it('removes ?editview= from the url once entering edit mode is blocked on mobile', async () => {
+        setTestFlags({ 'grafana.mobileEditDeprecation': true });
+        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+        locationService.push('/d/test/test?editview=links');
+        const scene = buildTestScene();
+        scene.setState({
+          editable: true,
+          isEditing: false,
+          meta: { ...scene.state.meta, canEdit: true },
+        });
+        const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
+        const urlSync = new UrlSyncManager();
+        try {
+          urlSync.initSync(scene);
+
+          await waitFor(() => expect(locationService.getSearchObject().editview).toBeUndefined());
+          expect(onEnterEditMode).toHaveBeenCalledTimes(1);
+        } finally {
+          urlSync.cleanUp(scene);
+        }
+      });
+
       it('does not start the panel editor when entering edit mode is blocked on mobile', () => {
         setTestFlags({ 'grafana.mobileEditDeprecation': true });
         Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
@@ -689,6 +711,38 @@ describe('DashboardSceneUrlSync', () => {
         expect(scene.state.editPanel).toBeUndefined();
         expect(scene.state.loadingView).toBeUndefined();
         expect(scene.urlSync?.getUrlState().editPanel).toBeUndefined();
+      });
+
+      it('removes ?editPanel= from the url once entering edit mode is blocked on mobile', async () => {
+        setTestFlags({ 'grafana.mobileEditDeprecation': true });
+        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+        locationService.push('/d/test/test?editPanel=1');
+        const scene = buildTestScene();
+        scene.setState({ isEditing: false });
+        const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
+        const urlSync = new UrlSyncManager();
+        try {
+          urlSync.initSync(scene);
+
+          await waitFor(() => expect(locationService.getSearchObject().editPanel).toBeUndefined());
+          expect(onEnterEditMode).toHaveBeenCalledTimes(1);
+        } finally {
+          urlSync.cleanUp(scene);
+        }
+      });
+
+      it('still applies the other url updates from the same pass when entering edit mode is blocked on mobile', () => {
+        setTestFlags({ 'grafana.mobileEditDeprecation': true });
+        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+        const scene = buildTestScene();
+        scene.setState({ isEditing: false });
+        const grid = (scene.state.body as DefaultGridLayoutManager).state.grid;
+        expect(grid.state.UNSAFE_fitPanels).toBeFalsy();
+
+        scene.urlSync?.updateFromUrl({ editPanel: 'panel-1', autofitpanels: '' });
+
+        expect(scene.state.editPanel).toBeUndefined();
+        expect(grid.state.UNSAFE_fitPanels).toBe(true);
       });
     });
 

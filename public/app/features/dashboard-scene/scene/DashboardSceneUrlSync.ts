@@ -96,6 +96,10 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         setTimeout(() => {
           if (this._scene.onEnterEditMode()) {
             this._scene.setState({ editview: createDashboardEditViewFor(editViewKey) });
+          } else {
+            // Url sync only writes state back on a state change, so force one to drop `?editview=`;
+            // otherwise a later sync with the same search string retries and warns again.
+            this._scene.setState({ editview: undefined });
           }
         });
       }
@@ -131,30 +135,35 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
-      // We cannot simultaneously be in edit and view panel state.
-      if (this._scene.state.viewPanel) {
-        update.viewPanel = undefined;
-      }
+      let editBlocked = false;
 
       // If we are not in editing (for example after full page reload)
       if (!isEditing || !isFullDashboardEditing(this._scene.state)) {
         // Keep the editor URL while entering full editing before its view has loaded.
         this._heldEditPanelId = values.editPanel;
-        // Blocked (e.g. on mobile): openFullEditor has already warned, so don't also wait on a
-        // library panel or start the editor load for edit mode that never engaged.
         if (!this._scene.openFullEditor()) {
+          // Blocked (e.g. on mobile). Clearing editPanel in the update below is the state change
+          // that removes the param from the URL, so a later sync doesn't retry and warn again.
           this._releaseEditPanel();
-          return;
+          update.editPanel = undefined;
+          editBlocked = true;
         }
       }
 
-      const libPanelBehavior = getLibraryPanelBehavior(panel);
-      if (libPanelBehavior && !libPanelBehavior?.state.isLoaded) {
-        this._waitForLibPanelToLoadBeforeEnteringPanelEdit(values.editPanel, libPanelBehavior);
-        return;
-      }
+      if (!editBlocked) {
+        // We cannot simultaneously be in edit and view panel state.
+        if (this._scene.state.viewPanel) {
+          update.viewPanel = undefined;
+        }
 
-      panelToEdit = panel;
+        const libPanelBehavior = getLibraryPanelBehavior(panel);
+        if (libPanelBehavior && !libPanelBehavior?.state.isLoaded) {
+          this._waitForLibPanelToLoadBeforeEnteringPanelEdit(values.editPanel, libPanelBehavior);
+          return;
+        }
+
+        panelToEdit = panel;
+      }
     } else if (typeof values.editPanel === 'string') {
       // Refused while planning: clear the param rather than leaving it to keep re-triggering on
       // every sync tick.
