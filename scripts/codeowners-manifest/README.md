@@ -60,7 +60,9 @@ By default these scripts will write the following files to the `/codeowners-mani
 
 ## Excluded paths
 
-For a list of excluded paths and filenames, see `jest.config.codeowner.js`.
+Exclusions are defined in `coverage.ignore` using gitignore syntax, relative to the
+repository root. `coverage-files.js` applies these rules to JavaScript and TypeScript
+source files. Matching is case-sensitive.
 
 ## Meticulous coverage by team
 
@@ -114,7 +116,8 @@ not an average of file percentages. Shared files count fully for every owning
 `@grafana/` team; the overall total counts each file once. Files without a Grafana
 team, including paths absent from the local manifest, appear in a separate row.
 
-Jest and Meticulous share the source-file filter in `coverage-files.js`. Tests,
+Jest and Meticulous share the source-file filter in `coverage-files.js` and the
+exclusion patterns in `coverage.ignore`. Tests,
 mocks, stories, generated files, declarations, graveyard code, scripts, Jest
 configs, panel module entrypoints, and all `e2e-playwright/` files (including
 helpers and test plugins) are excluded from both reports. Exclusions apply

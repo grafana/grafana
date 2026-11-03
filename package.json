@@ -202,6 +202,7 @@
     "fishery": "^2.2.2",
     "github-codeowners": "^0.2.1",
     "i18next-cli": "^1.48.0",
+    "ignore": "7.0.12",
     "ini": "^5.0.0",
     "jest": "29.7.0",
     "jest-canvas-mock": "2.5.2",

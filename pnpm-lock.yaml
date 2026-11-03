@@ -1006,6 +1006,9 @@ importers:
       i18next-cli:
         specifier: ^1.48.0
         version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
+      ignore:
+        specifier: 7.0.12
+        version: 7.0.12
       ini:
         specifier: ^5.0.0
         version: 5.0.0
