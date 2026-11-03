@@ -271,6 +271,8 @@ To group or delete multiple panels, follow these steps:
    The tooltip shows the number of panels selected, including their [repeated instances](#configure-repeat-options).
    If you select only one panel that repeats, the tooltip displays single-panel options, and not bulk actions.
    
+1. Choose one of the following:
+
    - **Group into row**: Moves the selected panels into a new row.
    - **Group into tab**: Moves the selected panels into a new tab.
    - **Delete**: Deletes all the selected panels, after you confirm.
