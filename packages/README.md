@@ -43,25 +43,24 @@ All packages in the `grafana` group are versioned according to the current Grafa
 
 ### Independent packages
 
-`@grafana/plugin-compat` has its own version. Its version bump and its `CHANGELOG.md` entry are written as a version plan in the same pull request that changes the package. Do not edit the `version` field or `CHANGELOG.md` by hand.
+`@grafana/plugin-compat` has its own version. Its version bump and its `CHANGELOG.md` entry come from the [conventional commit](https://www.conventionalcommits.org/) titles of the pull requests that change the package. Do not edit the `version` field or `CHANGELOG.md` by hand.
 
-Add a plan with:
+A pull request that changes the package must have a title of the form `<type>: <description>`, for example `feat: Add useDataSourceInstanceList`. The title becomes the squash-merged commit message that Nx reads, so the description should make sense to consumers.
 
-```shell
-pnpm exec nx release plan <major|minor|patch> --groups=plugin-compat --only-touched=false -m "Describe the change for consumers"
-```
-
-This creates a file in `.nx/version-plans/`, which you commit with your change. The `Check version plans` workflow runs `nx release plan:check` and fails a pull request that changes the package without a plan. Changes to test files do not need one.
+Do not add a scope such as `feat(plugin-compat): ...`. Nx finds the package from the files a pull request changes, and a scope that does not match the project name makes it release a breaking change as a patch.
 
 Below 1.0 the bump is shifted down one level, so choose by intent:
 
-| Plan    | Use for                              | Released as (from 0.6.0) |
-| ------- | ------------------------------------ | ------------------------ |
-| `major` | A breaking change for consumers      | 0.7.0                    |
-| `minor` | A new feature or export              | 0.6.1                    |
-| `patch` | A bug fix or an internal improvement | 0.6.1                    |
+| Title        | Use for                         | Released as (from 0.6.0) |
+| ------------ | ------------------------------- | ------------------------ |
+| `feat!: ...` | A breaking change for consumers | 0.7.0                    |
+| `feat: ...`  | A new feature or export         | 0.6.1                    |
+| `fix: ...`   | A bug fix                       | 0.6.1                    |
+| `chore: ...` | A change that needs no release  | no release               |
 
-Several plans in one release combine into the highest bump, and every plan text becomes a changelog entry. The `README.md` in `.nx/version-plans/` keeps the folder in git when no plans are pending. Nx reads every file in that folder as a plan and rejects files with no text, so do not replace it with an empty `.gitkeep`.
+`perf`, `refactor`, `docs`, `build`, `types`, `examples`, `test`, `style`, `ci` and `revert` do not release either. Use `fix` for an internal improvement that consumers should get. Several pull requests in one release combine into the highest bump, and every releasing title becomes a changelog entry.
+
+Nx finds the changes since the last release from the `@grafana/plugin-compat@<version>` git tag, which the publish workflow creates. Do not delete these tags.
 
 ### Stable releases
 
