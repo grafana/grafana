@@ -143,7 +143,7 @@ resource "grafana_apps_provisioning_repository_v0alpha1" "example" {
     description = "Folder-scoped GitHub repository authenticated directly with a token"
     type        = "github"
 
-    workflows = "<YOUR-WORKFLOW>"
+    workflows = "<YOUR-WORKFLOWS>" # For example, ["write", "branch"]
 
     sync {
       enabled          = "<SYNC_ENABLED>"
@@ -173,7 +173,7 @@ resource "grafana_apps_provisioning_repository_v0alpha1" "example" {
 
 Replace the following field values:
 
-- _`<YOUR_WORKFLOW>`_: The workflow you want Git Sync to use. Set to `write` to allow direct commits, or to `branch` to force using PRs.
+- _`<YOUR_WORKFLOWS>`_: Array with the workflows you want Git Sync to use. For example, `["write", "branch"]`. Use `write` to allow direct commits, `branch` to force using PRs, or leave blank if the repository is read-only. 
 - _`<SYNC_ENABLED>`_: Whether you want to enable automatic synchronization. Allowed values are `true` and `false`.
 - _`<YOUR_SYNC_TARGET>`_: Where you want to place your provisioned resources. Git Sync supports two sync targets: `folder` (default) creates a folder named after the repository and places synced resources inside it, while `folderless` places synced resources at the top level without creating a wrapper folder. Refer to [Sync targets](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/key-concepts/#sync-targets) for details.
 - _`<SYNC_INTERVAL>`_: How often your Grafana instance automatically pulls updates from the folder managed with Git Sync. The default value is `300` seconds in Grafana Cloud, and `60` seconds in Grafana OSS/Enterprise.
