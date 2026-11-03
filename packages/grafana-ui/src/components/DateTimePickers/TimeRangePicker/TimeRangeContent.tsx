@@ -72,6 +72,7 @@ export const TimeRangeContent = (props: Props) => {
   } = props;
   const style = useStyles2(getStyles);
   const [isOpen, setOpen] = useState(false);
+  const nowLabel = t('time-picker.range-content.now', 'Now');
 
   const {
     handleSubmit,
@@ -81,8 +82,8 @@ export const TimeRangeContent = (props: Props) => {
     watch,
   } = useForm<FormState>({
     defaultValues: {
-      from: valueAsString(value.raw.from, timeZone),
-      to: valueAsString(value.raw.to, timeZone),
+      from: valueAsString(value.raw.from, timeZone, nowLabel),
+      to: valueAsString(value.raw.to, timeZone, nowLabel),
     },
   });
 
@@ -91,26 +92,29 @@ export const TimeRangeContent = (props: Props) => {
 
   // Synchronize internal state with external value
   useEffect(() => {
-    setValue('from', valueAsString(value.raw.from, timeZone));
-    setValue('to', valueAsString(value.raw.to, timeZone));
-  }, [value.raw.from, value.raw.to, setValue, timeZone]);
+    setValue('from', valueAsString(value.raw.from, timeZone, nowLabel));
+    setValue('to', valueAsString(value.raw.to, timeZone, nowLabel));
+  }, [value.raw.from, value.raw.to, setValue, timeZone, nowLabel]);
 
   const onOpen = () => setOpen(true);
 
   const onApply = useCallback(() => {
     handleSubmit((data) => {
-      const raw: RawTimeRange = { from: data.from, to: data.to };
+      const raw: RawTimeRange = {
+        from: rawTimeValue(data.from, nowLabel),
+        to: rawTimeValue(data.to, nowLabel),
+      };
       const timeRange = rangeUtil.convertRawToRange(raw, timeZone, fiscalYearStartMonth);
       onApplyFromProps(timeRange);
     })();
-  }, [handleSubmit, timeZone, fiscalYearStartMonth, onApplyFromProps]);
+  }, [handleSubmit, timeZone, fiscalYearStartMonth, onApplyFromProps, nowLabel]);
 
   const onChange = useCallback(
     (from: DateTime | string, to: DateTime | string) => {
-      setValue('from', valueAsString(from, timeZone));
-      setValue('to', valueAsString(to, timeZone));
+      setValue('from', valueAsString(from, timeZone, nowLabel));
+      setValue('to', valueAsString(to, timeZone, nowLabel));
     },
-    [setValue, timeZone]
+    [nowLabel, setValue, timeZone]
   );
 
   const submitOnEnter = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -138,8 +142,8 @@ export const TimeRangeContent = (props: Props) => {
       return;
     }
 
-    setValue('from', valueAsString(range.from, timeZone));
-    setValue('to', valueAsString(range.to, timeZone));
+    setValue('from', valueAsString(range.from, timeZone, nowLabel));
+    setValue('to', valueAsString(range.to, timeZone, nowLabel));
   };
 
   const fiscalYear = rangeUtil.convertRawToRange({ from: 'now/fy', to: 'now/fy' }, timeZone, fiscalYearStartMonth);
@@ -183,13 +187,13 @@ export const TimeRangeContent = (props: Props) => {
               required: ERROR_MESSAGES.required(),
 
               validate: (value, formValues) => {
-                if (!isValid(value, false, timeZone)) {
+                if (!isValid(rawTimeValue(value, nowLabel), false, timeZone)) {
                   return ERROR_MESSAGES.default();
                 }
                 if (
                   !!formValues.to &&
-                  isValid(formValues.to, true, timeZone) &&
-                  isRangeInvalid(value, formValues.to, timeZone)
+                  isValid(rawTimeValue(formValues.to, nowLabel), true, timeZone) &&
+                  isRangeInvalid(rawTimeValue(value, nowLabel), rawTimeValue(formValues.to, nowLabel), timeZone)
                 ) {
                   return ERROR_MESSAGES.range();
                 }
@@ -211,13 +215,13 @@ export const TimeRangeContent = (props: Props) => {
             {...register('to', {
               required: ERROR_MESSAGES.required(),
               validate: (value, formValues) => {
-                if (!isValid(value, true, timeZone)) {
+                if (!isValid(rawTimeValue(value, nowLabel), true, timeZone)) {
                   return ERROR_MESSAGES.default();
                 }
                 if (
                   !!formValues.from &&
-                  isValid(formValues.from, false, timeZone) &&
-                  isRangeInvalid(formValues.from, value, timeZone)
+                  isValid(rawTimeValue(formValues.from, nowLabel), false, timeZone) &&
+                  isRangeInvalid(rawTimeValue(formValues.from, nowLabel), rawTimeValue(value, nowLabel), timeZone)
                 ) {
                   return ERROR_MESSAGES.range();
                 }
@@ -279,9 +283,13 @@ function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
   return !valid;
 }
 
-function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
+function valueAsString(value: DateTime | string, timeZone?: TimeZone, nowLabel?: string): string {
   if (isDateTime(value)) {
     return dateTimeFormat(value, { timeZone });
+  }
+
+  if (nowLabel && isNowExpression(value)) {
+    return `${nowLabel}${value.slice('now'.length)}`;
   }
 
   if (value.endsWith('Z')) {
@@ -290,6 +298,23 @@ function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
   }
 
   return value;
+}
+
+function rawTimeValue(value: string, nowLabel: string): string {
+  if (isNowExpression(value, nowLabel)) {
+    return `now${value.slice(nowLabel.length)}`;
+  }
+
+  return value;
+}
+
+function isNowExpression(value: string, nowLabel = 'now'): boolean {
+  return (
+    value === nowLabel ||
+    value.startsWith(`${nowLabel}-`) ||
+    value.startsWith(`${nowLabel}+`) ||
+    value.startsWith(`${nowLabel}/`)
+  );
 }
 
 function getStyles(theme: GrafanaTheme2) {

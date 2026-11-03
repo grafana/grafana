@@ -452,19 +452,19 @@ export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone, quic
   const options = { timeZone };
 
   if (isDateTime(range.from) && isDateTime(range.to)) {
-    return dateTimeFormat(range.from, options) + ' to ' + dateTimeFormat(range.to, options);
+    return dateTimeFormat(range.from, options) + ` ${t('time-picker.range-picker.to', 'to')} ` + dateTimeFormat(range.to, options);
   }
 
   // TODO: We could update these to all use Intl APIs.
   // Could we use formatRangeToParts and replace the 'other side' with the ago formatting?
   if (isDateTime(range.from)) {
     const parsed = dateMath.parse(range.to, true, 'utc');
-    return parsed ? dateTimeFormat(range.from, options) + ' to ' + dateTimeFormatTimeAgo(parsed, options) : '';
+    return parsed ? dateTimeFormat(range.from, options) + ` ${t('time-picker.range-picker.to', 'to')} ` + dateTimeFormatTimeAgo(parsed, options) : '';
   }
 
   if (isDateTime(range.to)) {
     const parsed = dateMath.parse(range.from, false, 'utc');
-    return parsed ? dateTimeFormatTimeAgo(parsed, options) + ' to ' + dateTimeFormat(range.to, options) : '';
+    return parsed ? dateTimeFormatTimeAgo(parsed, options) + ` ${t('time-picker.range-picker.to', 'to')} ` + dateTimeFormat(range.to, options) : '';
   }
 
   if (range.to.toString() === 'now') {
@@ -472,7 +472,7 @@ export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone, quic
     return res.display;
   }
 
-  return range.from.toString() + ' to ' + range.to.toString();
+  return range.from.toString() + ` ${t('time-picker.range-picker.to', 'to')} ` + range.to.toString();
 }
 
 export const isValidTimeSpan = (value: string) => {

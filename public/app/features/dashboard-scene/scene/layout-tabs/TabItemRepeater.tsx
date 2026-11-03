@@ -142,7 +142,7 @@ function createTabRepeats({
   tab: TabItem;
 }) {
   const variableValues = values.length ? values : [''];
-  const variableTexts = texts.length ? texts : variable.hasAllValue() ? ['All'] : ['None'];
+  const variableTexts = texts.length ? texts : variable.hasAllValue() ? [t('variable.picker.option-all', 'All')] : ['None'];
   const repeats: TabItem[] = [];
   const baseSectionVariables = getSectionBaseVariables(tab);
 

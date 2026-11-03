@@ -1,3 +1,5 @@
+import { t } from '@grafana/i18n';
+
 import { localTimeFormat, systemDateFormats } from '../datetime/formats';
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '../datetime/formatter';
 import { toDuration as duration, toUtc, dateTime } from '../datetime/moment_wrapper';
@@ -5,7 +7,7 @@ import { type DecimalCount } from '../types/displayValue';
 import { type TimeZone } from '../types/time';
 import { type FormattedValue, type ValueFormatter } from '../types/valueFormats';
 
-import { toFixed, toFixedScaled } from './baseFormatters';
+import { toFixed, toFixedScaled, translateTimeUnitSuffix } from './baseFormatters';
 
 interface IntervalsInSeconds {
   [interval: string]: number;
@@ -44,13 +46,29 @@ const INTERVALS_IN_SECONDS: IntervalsInSeconds = {
   [Interval.Millisecond]: 0.001,
 };
 
+const translateTimeInterval = (interval: Interval, isPlural: boolean) =>
+  isPlural
+    ? t(`grafana-data.valueFormats.duration.unit-${interval}s`, ` ${interval}s`)
+    : t(`grafana-data.valueFormats.duration.unit-${interval}`, ` ${interval}`);
+
+const DURATION_UNIT_TRANSLATORS: Record<Interval, (isPlural: boolean) => string> = {
+  [Interval.Year]: (isPlural) => translateTimeInterval(Interval.Year, isPlural),
+  [Interval.Month]: (isPlural) => translateTimeInterval(Interval.Month, isPlural),
+  [Interval.Week]: (isPlural) => translateTimeInterval(Interval.Week, isPlural),
+  [Interval.Day]: (isPlural) => translateTimeInterval(Interval.Day, isPlural),
+  [Interval.Hour]: (isPlural) => translateTimeInterval(Interval.Hour, isPlural),
+  [Interval.Minute]: (isPlural) => translateTimeInterval(Interval.Minute, isPlural),
+  [Interval.Second]: (isPlural) => translateTimeInterval(Interval.Second, isPlural),
+  [Interval.Millisecond]: (isPlural) => translateTimeInterval(Interval.Millisecond, isPlural),
+};
+
 export function toNanoSeconds(size: number, decimals?: DecimalCount): FormattedValue {
   if (size === null) {
     return { text: '' };
   }
 
   if (Math.abs(size) < 1000) {
-    return { text: toFixed(size, decimals), suffix: ' ns' };
+    return { text: toFixed(size, decimals), suffix: translateTimeUnitSuffix(' ns', false) };
   } else if (Math.abs(size) < 1000000) {
     return toFixedScaled(size / 1000, decimals, ' µs');
   } else if (Math.abs(size) < 1000000000) {
@@ -72,7 +90,7 @@ export function toMicroSeconds(size: number, decimals?: DecimalCount): Formatted
   }
 
   if (Math.abs(size) < 1000) {
-    return { text: toFixed(size, decimals), suffix: ' µs' };
+    return { text: toFixed(size, decimals), suffix: translateTimeUnitSuffix(' µs', false) };
   } else if (Math.abs(size) < 1000000) {
     return toFixedScaled(size / 1000, decimals, ' ms');
   } else {
@@ -86,7 +104,7 @@ export function toMilliSeconds(size: number, decimals?: DecimalCount, scaledDeci
   }
 
   if (Math.abs(size) < 1000) {
-    return { text: toFixed(size, decimals), suffix: ' ms' };
+    return { text: toFixed(size, decimals), suffix: translateTimeUnitSuffix(' ms', false) };
   } else if (Math.abs(size) < 60000) {
     // Less than 1 min
     return toFixedScaled(size / 1000, decimals, ' s');
@@ -111,7 +129,7 @@ export function toSeconds(size: number, decimals?: DecimalCount): FormattedValue
 
   // If 0, use s unit instead of ns
   if (size === 0) {
-    return { text: '0', suffix: ' s' };
+    return { text: '0', suffix: translateTimeUnitSuffix(' s', false) };
   }
 
   // Less than 1 µs, divide in ns
@@ -128,7 +146,7 @@ export function toSeconds(size: number, decimals?: DecimalCount): FormattedValue
   }
 
   if (Math.abs(size) < 60) {
-    return { text: toFixed(size, decimals), suffix: ' s' };
+    return { text: toFixed(size, decimals), suffix: translateTimeUnitSuffix(' s', false) };
   } else if (Math.abs(size) < 3600) {
     // Less than 1 hour, divide in minutes
     return toFixedScaled(size / 60, decimals, ' min');
@@ -152,7 +170,7 @@ export function toMinutes(size: number, decimals?: DecimalCount): FormattedValue
   }
 
   if (Math.abs(size) < 60) {
-    return { text: toFixed(size, decimals), suffix: ' min' };
+    return { text: toFixed(size, decimals), suffix: translateTimeUnitSuffix(' min', false) };
   } else if (Math.abs(size) < 1440) {
     return toFixedScaled(size / 60, decimals, ' hour');
   } else if (Math.abs(size) < 10080) {
@@ -170,7 +188,7 @@ export function toHours(size: number, decimals?: DecimalCount): FormattedValue {
   }
 
   if (Math.abs(size) < 24) {
-    return { text: toFixed(size, decimals), suffix: ' hour' };
+    return { text: toFixed(size, decimals), suffix: translateTimeUnitSuffix(' hour', false) };
   } else if (Math.abs(size) < 168) {
     return toFixedScaled(size / 24, decimals, ' day');
   } else if (Math.abs(size) < 8760) {
@@ -194,13 +212,17 @@ export function toDays(size: number, decimals?: DecimalCount): FormattedValue {
   }
 }
 
+function translateDurationUnit(interval: Interval, isPlural: boolean): string {
+  return DURATION_UNIT_TRANSLATORS[interval]?.(isPlural) ?? ' ' + interval;
+}
+
 export function toDuration(size: number, decimals: DecimalCount, timeScale: Interval): FormattedValue {
   if (size === null) {
     return { text: '' };
   }
 
   if (size === 0) {
-    return { text: '0', suffix: ' ' + timeScale + 's' };
+    return { text: '0', suffix: translateDurationUnit(timeScale, true) };
   }
 
   if (size < 0) {
@@ -232,8 +254,8 @@ export function toDuration(size: number, decimals: DecimalCount, timeScale: Inte
     if (value >= 1 || decrementDecimals) {
       decrementDecimals = true;
       const floor = Math.floor(value);
-      const unit = UNITS[i] + (floor !== 1 ? 's' : '');
-      strings.push(floor + ' ' + unit);
+      const unit = translateDurationUnit(UNITS[i], floor !== 1);
+      strings.push(floor + unit);
       size = size % interval;
       decimalsCount--;
     }

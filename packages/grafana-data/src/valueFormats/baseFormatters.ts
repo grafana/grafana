@@ -1,5 +1,7 @@
 import { clamp } from 'lodash';
 
+import { t } from '@grafana/i18n';
+
 import { type DecimalCount } from '../types/displayValue';
 import { type FormattedValue, type ValueFormatter } from '../types/valueFormats';
 
@@ -64,25 +66,33 @@ function getDecimalsForValue(value: number): number {
 export function toFixedScaled(value: number, decimals: DecimalCount, ext?: string): FormattedValue {
   return {
     text: toFixed(value, decimals),
-    suffix: appendPluralIf(ext, Math.abs(value) > 1),
+    suffix: translateTimeUnitSuffix(ext, Math.abs(value) !== 1),
   };
 }
 
-function appendPluralIf(ext: string | undefined, condition: boolean): string | undefined {
-  if (!condition) {
+const translateDurationSuffix =
+  (unit: string, singularSuffix: string, pluralSuffix: string) => (isPlural: boolean) =>
+    isPlural
+      ? t(`grafana-data.valueFormats.duration.${unit}s`, pluralSuffix)
+      : t(`grafana-data.valueFormats.duration.${unit}`, singularSuffix);
+
+const TIME_UNIT_SUFFIX_TRANSLATORS: Record<string, (isPlural: boolean) => string> = {
+  ' ns': () => t('grafana-data.valueFormats.duration.nanoseconds', ' ns'),
+  ' µs': () => t('grafana-data.valueFormats.duration.microseconds', ' µs'),
+  ' ms': () => t('grafana-data.valueFormats.duration.milliseconds', ' ms'),
+  ' s': () => t('grafana-data.valueFormats.duration.seconds', ' s'),
+  ' min': translateDurationSuffix('minute', ' min', ' mins'),
+  ' hour': translateDurationSuffix('hour', ' hour', ' hours'),
+  ' day': translateDurationSuffix('day', ' day', ' days'),
+  ' week': translateDurationSuffix('week', ' week', ' weeks'),
+  ' year': translateDurationSuffix('year', ' year', ' years'),
+};
+
+export function translateTimeUnitSuffix(ext: string | undefined, isPlural: boolean): string | undefined {
+  if (ext === undefined) {
     return ext;
   }
-
-  switch (ext) {
-    case ' min':
-    case ' hour':
-    case ' day':
-    case ' week':
-    case ' year':
-      return `${ext}s`;
-    default:
-      return ext;
-  }
+  return TIME_UNIT_SUFFIX_TRANSLATORS[ext]?.(isPlural) ?? ext;
 }
 
 export function toFixedUnit(unit: string, asPrefix?: boolean): ValueFormatter {

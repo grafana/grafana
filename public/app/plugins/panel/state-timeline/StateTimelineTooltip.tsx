@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 
 import { FieldType, type TimeRange, usePluginContext } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { SortOrder } from '@grafana/schema';
 import {
   TooltipDisplayMode,
@@ -69,7 +70,7 @@ export const StateTimelineTooltip = ({
       endTime = to;
     }
 
-    contentItems.push({ label: 'Duration', value: duration });
+    contentItems.push({ label: t('state-timeline.tooltip.duration', 'Duration'), value: duration });
   }
 
   let footer: ReactNode;

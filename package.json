@@ -281,7 +281,7 @@
     "@grafana/plugin-ui": "^0.13.1",
     "@grafana/prometheus": "13.1.2",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "^8.2.6",
+    "@grafana/scenes": "patch:@grafana/scenes@npm%3A8.2.6#~/.yarn/patches/@grafana-scenes-npm-8.2.6-4c67e9d1bc.patch",
     "@grafana/scenes-react": "^8.2.6",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
@@ -444,7 +444,8 @@
     "@types/slate-react/immutable": "^4.0.0",
     "ws": "^8.20.1",
     "js-cookie": "^3.0.7",
-    "@opentelemetry/core": "2.8.0"
+    "@opentelemetry/core": "2.8.0",
+    "@grafana/scenes@npm:8.2.6": "patch:@grafana/scenes@npm%3A8.2.6#~/.yarn/patches/@grafana-scenes-npm-8.2.6-4c67e9d1bc.patch"
   },
   "workspaces": {
     "packages": [

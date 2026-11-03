@@ -25,9 +25,9 @@ const customRawTimeRange = {
   to: '2023-06-19 23:59:00',
 };
 
-function setup(initial: TimeRange = defaultTimeRange, timeZone = 'utc') {
+function setup(initial: TimeRange = defaultTimeRange, timeZone = 'utc', onApply = () => {}) {
   return {
-    ...render(<TimeRangeContent isFullscreen={true} value={initial} onApply={() => {}} timeZone={timeZone} />),
+    ...render(<TimeRangeContent isFullscreen={true} value={initial} onApply={onApply} timeZone={timeZone} />),
     getCalendarDayByLabelText: (label: string) => {
       const item = screen.getByLabelText(label);
       return item?.parentElement as HTMLButtonElement;
@@ -73,6 +73,23 @@ describe('TimeRangeForm', () => {
 
     expect(await findByLabelText('From')).toHaveValue(fromValue);
     expect(await findByLabelText('To')).toHaveValue(toValue);
+  });
+
+  it('should localize now expressions without changing their raw values', async () => {
+    const onApply = jest.fn();
+    const nowRange: TimeRange = {
+      from: dateTimeParse('now-30d'),
+      to: dateTimeParse('now'),
+      raw: { from: 'now-30d', to: 'now' },
+    };
+    const { findByLabelText } = setup(nowRange, 'utc', onApply);
+
+    expect(await findByLabelText('From')).toHaveValue('Now-30d');
+    expect(await findByLabelText('To')).toHaveValue('Now');
+
+    await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+
+    expect(onApply).toHaveBeenCalledWith(expect.objectContaining({ raw: { from: 'now-30d', to: 'now' } }));
   });
 
   it('should parse UTC iso strings and render in current timezone', async () => {

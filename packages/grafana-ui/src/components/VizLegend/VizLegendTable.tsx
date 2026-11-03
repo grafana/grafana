@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useMemo, type JSX } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { type LegendPlacement } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes/ThemeContext';
@@ -13,7 +13,6 @@ import { useLimit } from '../List/hooks';
 import { LegendTableItem } from './VizLegendTableItem';
 import { type VizLegendItem, type VizLegendTableProps } from './types';
 
-const nameSortKey = 'Name';
 const naturalCompare = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' }).compare;
 
 /**
@@ -37,6 +36,7 @@ export const VizLegendTable = <T extends unknown>({
   overflow,
 }: VizLegendTableProps<T>): JSX.Element => {
   const styles = useStyles2(getStyles, placement);
+  const nameSortKey = t('legend.container.column-name', 'Name');
   const header: Record<string, string> = {
     [nameSortKey]: '',
   };

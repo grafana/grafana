@@ -1,5 +1,6 @@
 import { isEqual } from 'lodash';
 
+import { t } from '@grafana/i18n';
 import {
   MultiValueVariable,
   sceneGraph,
@@ -128,7 +129,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     // adding a placeholder in this case so that there is at least empty panel that can display error
     const emptyVariablePlaceholderOption = {
       values: [''],
-      texts: variable.hasAllValue() ? ['All'] : ['None'],
+      texts: variable.hasAllValue() ? [t('variable.picker.option-all', 'All')] : ['None'],
     };
 
     const variableValues = values.length ? values : emptyVariablePlaceholderOption.values;

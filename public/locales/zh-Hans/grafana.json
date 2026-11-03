@@ -4831,6 +4831,11 @@
     "wind-turbine-item": {
       "category-wind-turbine": "风轮机",
       "name-rpm": "转速"
+    },
+    "metric-value": {
+      "double-click-to-set-field": "双击以设置字段",
+      "field-not-found": "找不到字段",
+      "no-data": "无数据"
     }
   },
   "carousel": {
@@ -9343,6 +9348,116 @@
         "otherGroup": "其他"
       }
     },
+    "field-reducers": {
+      "all-is-null": {
+        "description": "所有值均为空",
+        "name": "全部为空"
+      },
+      "all-is-zero": {
+        "description": "所有值均为零",
+        "name": "全部为零"
+      },
+      "all-values": {
+        "description": "返回包含所有值的数组",
+        "name": "所有值"
+      },
+      "change-count": {
+        "description": "数值变化的次数",
+        "name": "变化次数"
+      },
+      "count": {
+        "description": "响应中的值数量",
+        "name": "计数"
+      },
+      "count-all": {
+        "description": "值的数量（包括空值）",
+        "name": "全部计数"
+      },
+      "delta": {
+        "description": "值的累计变化",
+        "name": "增量"
+      },
+      "diff": {
+        "description": "首尾值之间的差值",
+        "name": "區間首末值差额"
+      },
+      "diffperc": {
+        "description": "首末值之间的百分比差异",
+        "name": "差异百分比"
+      },
+      "distinct-count": {
+        "description": "不同值的数量",
+        "name": "不同值计数"
+      },
+      "first": {
+        "description": "首值",
+        "name": "首个"
+      },
+      "first-not-null": {
+        "description": "第一个非空值（同时排除 NaN）",
+        "name": "首个 *"
+      },
+      "last": {
+        "description": "最后一个值",
+        "name": "区间期末值"
+      },
+      "last-not-null": {
+        "description": "最后一个非空值（同时排除 NaN）",
+        "name": "区间期末值 *"
+      },
+      "logmin": {
+        "description": "用于对数最小尺度",
+        "name": "最小值（大于零）"
+      },
+      "max": {
+        "description": "最大",
+        "name": "最大"
+      },
+      "mean": {
+        "description": "平均值",
+        "name": "平均"
+      },
+      "median": {
+        "description": "中位数",
+        "name": "中位数"
+      },
+      "min": {
+        "description": "最小值",
+        "name": "最小"
+      },
+      "range": {
+        "description": "最小值与最大值之间的差值",
+        "name": "范围"
+      },
+      "std-dev": {
+        "description": "字段中所有值的标准差",
+        "name": "标准差"
+      },
+      "step": {
+        "description": "值之间的最小间隔",
+        "name": "步长"
+      },
+      "sum": {
+        "description": "所有值之和",
+        "name": "总计"
+      },
+      "unique-values": {
+        "description": "返回包含所有唯一值的数组",
+        "name": "所有唯一值"
+      },
+      "variance": {
+        "description": "字段中所有值的方差",
+        "name": "方差"
+      }
+    },
+    "timezones": {
+      "browser-time": "浏览器时间",
+      "default": "默认",
+      "local-browser-time": "本地浏览器时间",
+      "utc": "UTC",
+      "utc-long": "协调世界时",
+      "your-local-time": "您的本地时间"
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9743,7 +9858,42 @@
           },
           "name": "容量"
         }
+      },
+      "duration": {
+        "day": "天",
+        "days": "天",
+        "hour": "小时",
+        "hours": "小时",
+        "microseconds": "µs",
+        "milliseconds": "ms",
+        "minute": "分钟",
+        "minutes": "分钟",
+        "nanoseconds": "ns",
+        "seconds": "秒",
+        "unit-day": "天",
+        "unit-days": "天",
+        "unit-hour": "小时",
+        "unit-hours": "小时",
+        "unit-millisecond": "毫秒",
+        "unit-milliseconds": "毫秒",
+        "unit-minute": "分钟",
+        "unit-minutes": "分钟",
+        "unit-month": "个月",
+        "unit-months": "个月",
+        "unit-second": "秒",
+        "unit-seconds": "秒",
+        "unit-week": "周",
+        "unit-weeks": "周",
+        "unit-year": "年",
+        "unit-years": "年",
+        "week": "周",
+        "weeks": "周",
+        "year": "年",
+        "years": "年"
       }
+    },
+    "field-display": {
+      "no-data": "无数据"
     }
   },
   "grafana-ui": {
@@ -10885,7 +11035,8 @@
   "legend": {
     "container": {
       "series-color-and-icon": "",
-      "show-all-series": "显示全部 {{total}} 个项目"
+      "show-all-series": "显示全部 {{total}} 个项目",
+      "column-name": "名称"
     }
   },
   "library-panel": {
@@ -15033,6 +15184,9 @@
       "label-always": "始终",
       "label-auto": "自动",
       "label-never": "从不"
+    },
+    "tooltip": {
+      "duration": "持续时间"
     }
   },
   "status-history": {
@@ -15368,13 +15522,14 @@
     },
     "range-content": {
       "apply-button": "应用时间范围",
-      "default-error": "",
+      "default-error": "输入日期（{{dateExample}}）或相对时间（{{relativeTimeExample1}}、{{relativeTimeExample2}}）",
       "fiscal-year": "财政年度：{{from}} - {{to}}",
       "from-input": "来自",
       "open-input-calendar": "打开日历",
-      "range-error": "",
-      "required-error": "",
-      "to-input": "结束"
+      "range-error": "“来自”日期必须早于“结束”日期",
+      "required-error": "此字段为必填项",
+      "to-input": "结束",
+      "now": "现在"
     },
     "range-picker": {
       "backwards-time-aria-label": "向后移动时间范围",
@@ -15382,7 +15537,8 @@
       "forwards-time-aria-label": "向前移动时间范围",
       "to": "至",
       "zoom-out-button": "缩放时间范围",
-      "zoom-out-tooltip-new": "时间范围拉宽 <br/> t -"
+      "zoom-out-tooltip-new": "时间范围拉宽 <br/> t -",
+      "absolute-to-display": "{{from}} 至 {{to}}"
     },
     "time-range": {
       "apply": "应用时间范围",
@@ -15398,6 +15554,9 @@
     "zone": {
       "select-aria-label": "时区选择器",
       "select-search-input": "输入以搜索(国家、城市、缩写)"
+    },
+    "relative-range": {
+      "to-display": "{{from}} 至 {{to}}"
     }
   },
   "timeline": {

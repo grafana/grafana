@@ -1,0 +1,38 @@
+diff --git a/dist/esm/locales/zh-Hans/grafana-scenes.json.js b/dist/esm/locales/zh-Hans/grafana-scenes.json.js
+index ac562bdc8bce30683b0ad5f6e353af338f5a201f..9043fb9fd85304729d919e909d32ba6ff2ef655c 100644
+--- a/dist/esm/locales/zh-Hans/grafana-scenes.json.js
++++ b/dist/esm/locales/zh-Hans/grafana-scenes.json.js
+@@ -46,8 +46,8 @@ var grafanaScenes = {
+ 			"aria-label-pane-resize-widget": "窗格大小调整小部件"
+ 		},
+ 		"time-picker": {
+-			"move-backward-tooltip": "",
+-			"move-forward-tooltip": ""
++			"move-backward-tooltip": "向后移动 {{moveBackwardDuration}}",
++			"move-forward-tooltip": "向前移动 {{moveForwardDuration}}"
+ 		},
+ 		"viz-panel": {
+ 			title: {
+diff --git a/dist/esm/variables/components/VariableValueSelect.js b/dist/esm/variables/components/VariableValueSelect.js
+--- a/dist/esm/variables/components/VariableValueSelect.js
++++ b/dist/esm/variables/components/VariableValueSelect.js
+@@ -10,5 +10,6 @@
+ import { getVariableControlId } from '../utils.js';
+ 
+ const filterNoOp = () => true;
+ const filterAll = (v) => v.value !== "$__all";
++const localizeOption = (option) => option.value === "$__all" ? { ...option, label: t("variable.picker.option-all", "All") } : option;
+ const determineToggleAllState = (selectedValues, options) => {
+@@ -44,4 +45,4 @@
+     return value2;
+   };
+-  const filteredOptions = optionSearcher(inputValue);
++  const filteredOptions = optionSearcher(inputValue).map(localizeOption);
+   const onOpenMenu = () => {
+@@ -118,4 +119,4 @@
+     return inputValue;
+   };
+-  const placeholder = options.length > 0 ? "Select value" : "";
+-  const filteredOptions = optionSearcher(inputValue);
++  const placeholder = options.length > 0 ? t("grafana-scenes.variables.variable-value-select.placeholder-select-value", "Select value") : "";
++  const filteredOptions = optionSearcher(inputValue).map(localizeOption);

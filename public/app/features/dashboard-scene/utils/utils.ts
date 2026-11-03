@@ -480,10 +480,15 @@ function getRepeatLocalScopedVars<T extends RepeatableSectionState>(scene: Scene
     return undefined;
   }
 
+  const repeatValue = repeatLocalVariable.getValue();
+  const isAll =
+    (Array.isArray(repeatValue) ? repeatValue.includes('$__all') : repeatValue === '$__all') ||
+    repeatLocalVariable.state.text === 'All';
+
   return {
     [repeatLocalVariable.state.name]: {
-      value: repeatLocalVariable.getValue(),
-      text: repeatLocalVariable.state.text,
+      value: repeatValue,
+      text: isAll ? t('variable.picker.option-all', 'All') : repeatLocalVariable.state.text,
     },
   };
 }

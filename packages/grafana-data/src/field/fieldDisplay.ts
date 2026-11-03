@@ -1,5 +1,7 @@
 import { isEmpty } from 'lodash';
 
+import { t } from '@grafana/i18n';
+
 import { DataFrameView } from '../dataframe/DataFrameView';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { type GrafanaTheme2 } from '../themes/types';
@@ -427,7 +429,7 @@ export function getDisplayValueAlignmentFactors(values: FieldDisplay[]): Display
 }
 
 function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): FieldDisplay {
-  const displayName = 'No data';
+  const displayName = t('grafana-data.field-display.no-data', 'No data');
   const { fieldConfig, timeZone } = options;
   const { defaults } = fieldConfig;
 

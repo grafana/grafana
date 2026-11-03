@@ -1,6 +1,7 @@
 import { isEqual } from 'lodash';
 import { useEffect } from 'react';
 
+import { t } from '@grafana/i18n';
 import {
   type MultiValueVariable,
   NewSceneObjectAddedEvent,
@@ -88,7 +89,7 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
   }
 
   const variableValues = values.length ? values : [''];
-  const variableTexts = texts.length ? texts : variable.hasAllValue() ? ['All'] : ['None'];
+  const variableTexts = texts.length ? texts : variable.hasAllValue() ? [t('variable.picker.option-all', 'All')] : ['None'];
   const clonedRows: RowItem[] = [];
   const baseSectionVariables = getSectionBaseVariables(row);
 

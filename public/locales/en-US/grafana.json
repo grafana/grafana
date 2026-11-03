@@ -4680,6 +4680,11 @@
     "line-style-options": {
       "label-solid": "Solid"
     },
+    "metric-value": {
+      "double-click-to-set-field": "Double click to set field",
+      "field-not-found": "Field not found",
+      "no-data": "No data"
+    },
     "metric-value-item": {
       "label": {
         "bottom": "Bottom",
@@ -9291,6 +9296,119 @@
         "otherGroup": "Others"
       }
     },
+    "field-display": {
+      "no-data": "No data"
+    },
+    "field-reducers": {
+      "all-is-null": {
+        "description": "All values are null",
+        "name": "All Nulls"
+      },
+      "all-is-zero": {
+        "description": "All values are zero",
+        "name": "All Zeros"
+      },
+      "all-values": {
+        "description": "Returns an array with all values",
+        "name": "All values"
+      },
+      "change-count": {
+        "description": "Number of times the value changes",
+        "name": "Change Count"
+      },
+      "count": {
+        "description": "Number of values in response",
+        "name": "Count"
+      },
+      "count-all": {
+        "description": "Number of values (including empty)",
+        "name": "Count all"
+      },
+      "delta": {
+        "description": "Cumulative change in value",
+        "name": "Delta"
+      },
+      "diff": {
+        "description": "Difference between first and last values",
+        "name": "Difference"
+      },
+      "diffperc": {
+        "description": "Percentage difference between first and last values",
+        "name": "Difference percent"
+      },
+      "distinct-count": {
+        "description": "Number of distinct values",
+        "name": "Distinct Count"
+      },
+      "first": {
+        "description": "First Value",
+        "name": "First"
+      },
+      "first-not-null": {
+        "description": "First non-null value (also excludes NaNs)",
+        "name": "First *"
+      },
+      "last": {
+        "description": "Last value",
+        "name": "Last"
+      },
+      "last-not-null": {
+        "description": "Last non-null value (also excludes NaNs)",
+        "name": "Last *"
+      },
+      "logmin": {
+        "description": "Used for log min scale",
+        "name": "Min (above zero)"
+      },
+      "max": {
+        "description": "Maximum Value",
+        "name": "Max"
+      },
+      "mean": {
+        "description": "Average Value",
+        "name": "Mean"
+      },
+      "median": {
+        "description": "Median Value",
+        "name": "Median"
+      },
+      "min": {
+        "description": "Minimum Value",
+        "name": "Min"
+      },
+      "range": {
+        "description": "Difference between minimum and maximum values",
+        "name": "Range"
+      },
+      "std-dev": {
+        "description": "Standard deviation of all values in a field",
+        "name": "StdDev"
+      },
+      "step": {
+        "description": "Minimum interval between values",
+        "name": "Step"
+      },
+      "sum": {
+        "description": "The sum of all values",
+        "name": "Total"
+      },
+      "unique-values": {
+        "description": "Returns an array with all unique values",
+        "name": "All unique values"
+      },
+      "variance": {
+        "description": "Variance of all values in a field",
+        "name": "Variance"
+      }
+    },
+    "timezones": {
+      "browser-time": "Browser Time",
+      "default": "Default",
+      "local-browser-time": "Local browser time",
+      "utc": "UTC",
+      "utc-long": "Coordinated Universal Time",
+      "your-local-time": "Your local time"
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9691,6 +9809,38 @@
           },
           "name": "Volume"
         }
+      },
+      "duration": {
+        "day": " day",
+        "days": " days",
+        "hour": " hour",
+        "hours": " hours",
+        "microseconds": " µs",
+        "milliseconds": " ms",
+        "minute": " min",
+        "minutes": " mins",
+        "nanoseconds": " ns",
+        "seconds": " s",
+        "unit-day": " day",
+        "unit-days": " days",
+        "unit-hour": " hour",
+        "unit-hours": " hours",
+        "unit-millisecond": " millisecond",
+        "unit-milliseconds": " milliseconds",
+        "unit-minute": " minute",
+        "unit-minutes": " minutes",
+        "unit-month": " month",
+        "unit-months": " months",
+        "unit-second": " second",
+        "unit-seconds": " seconds",
+        "unit-week": " week",
+        "unit-weeks": " weeks",
+        "unit-year": " year",
+        "unit-years": " years",
+        "week": " week",
+        "weeks": " weeks",
+        "year": " year",
+        "years": " years"
       }
     }
   },
@@ -10837,6 +10987,7 @@
   },
   "legend": {
     "container": {
+      "column-name": "Name",
       "series-color-and-icon": "Series color",
       "show-all-series": "...show all {{total}} items"
     }
@@ -15038,6 +15189,9 @@
       "label-always": "Always",
       "label-auto": "Auto",
       "label-never": "Never"
+    },
+    "tooltip": {
+      "duration": "Duration"
     }
   },
   "status-history": {
@@ -15377,18 +15531,23 @@
       "default-error": "Enter a date ({{dateExample}}) or relative time ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
       "fiscal-year": "Fiscal year: {{from}} - {{to}}",
       "from-input": "From",
+      "now": "Now",
       "open-input-calendar": "Open calendar",
       "range-error": "\"From\" date must be before \"To\" date",
       "required-error": "This field is required",
       "to-input": "To"
     },
     "range-picker": {
+      "absolute-to-display": "{{from}} to {{to}}",
       "backwards-time-aria-label": "Move time range backwards",
       "current-time-selected": "Time range selected: {{currentTimeRange}}",
       "forwards-time-aria-label": "Move time range forwards",
       "to": "to",
       "zoom-out-button": "Zoom out time range",
       "zoom-out-tooltip-new": "Time range zoom out <br/> t -"
+    },
+    "relative-range": {
+      "to-display": "{{from}} to {{to}}"
     },
     "time-range": {
       "apply": "Apply time range",

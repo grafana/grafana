@@ -1,4 +1,5 @@
 import { type RelativeTimeRange, type TimeOption } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 const regex = /^now$|^now(\-|\+)(\d{1,10})([wdhms])$/;
 
@@ -13,7 +14,7 @@ export const mapRelativeTimeRangeToOption = (range: RelativeTimeRange): TimeOpti
   const from = secondsToRelativeFormat(range.from);
   const to = secondsToRelativeFormat(range.to);
 
-  return { from, to, display: `${from} to ${to}` };
+  return { from, to, display: t('time-picker.relative-range.to-display', '{{from}} to {{to}}', { from, to }) };
 };
 
 export type RangeValidation = {

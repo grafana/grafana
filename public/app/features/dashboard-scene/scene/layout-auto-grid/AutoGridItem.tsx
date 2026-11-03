@@ -1,6 +1,7 @@
 import { isEqual } from 'lodash';
 import React from 'react';
 
+import { t } from '@grafana/i18n';
 import {
   CustomVariable,
   MultiValueVariable,
@@ -108,7 +109,7 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
     // adding a placeholder in this case so that there is at least empty panel that can display error
     const emptyVariablePlaceholderOption = {
       values: [''],
-      texts: variable.hasAllValue() ? ['All'] : ['None'],
+      texts: variable.hasAllValue() ? [t('variable.picker.option-all', 'All')] : ['None'],
     };
 
     const variableValues = values.length ? values : emptyVariablePlaceholderOption.values;

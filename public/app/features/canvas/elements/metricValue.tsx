@@ -45,14 +45,14 @@ const MetricValueDisplay = (props: CanvasElementProps<TextConfig, TextData>) => 
 
   const getDisplayValue = () => {
     if (panelData && config.text?.field && fieldNotFound()) {
-      return 'Field not found';
+      return t('canvas.metric-value.field-not-found', 'Field not found');
     }
 
     if (panelData && config.text?.field && !data?.text) {
-      return 'No data';
+      return t('canvas.metric-value.no-data', 'No data');
     }
 
-    return data?.text ? data.text : 'Double click to set field';
+    return data?.text ? data.text : t('canvas.metric-value.double-click-to-set-field', 'Double click to set field');
   };
 
   const fieldNotFound = () => {

@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { type ReactNode } from 'react';
 
 import { type TimeZoneInfo, type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 
@@ -20,6 +21,10 @@ export const TimeZoneTitle = ({ title }: Props) => {
 };
 
 export const getTimeZoneTitle = (info: TimeZoneInfo): string => {
+  if (info.zone === 'browser') {
+    return t('grafana-data.timezones.browser-time', 'Browser Time');
+  }
+
   return info.name.split('/').at(-1)!.replace(/_/g, ' ');
 };
 

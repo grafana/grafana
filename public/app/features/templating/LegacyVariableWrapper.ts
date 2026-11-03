@@ -1,4 +1,5 @@
 import { type VariableValue, type FormatVariable } from '@grafana/scenes';
+import { t } from '@grafana/i18n';
 import { type VariableModel, type VariableType } from '@grafana/schema';
 
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
@@ -18,7 +19,7 @@ export class LegacyVariableWrapper implements FormatVariable {
     const { value, text } = this.state;
 
     if (typeof text === 'string') {
-      return value === ALL_VARIABLE_VALUE ? ALL_VARIABLE_TEXT : text;
+      return value === ALL_VARIABLE_VALUE ? t('variable.picker.link-all', ALL_VARIABLE_TEXT) : text;
     }
 
     if (Array.isArray(text)) {

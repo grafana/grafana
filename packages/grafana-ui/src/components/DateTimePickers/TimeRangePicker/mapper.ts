@@ -1,4 +1,5 @@
 import { type TimeOption, type TimeRange, type TimeZone, rangeUtil, dateTimeFormat } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 /**
  * Takes a printable TimeOption and builds a TimeRange with DateTime properties from it
@@ -17,6 +18,6 @@ export const mapRangeToTimeOption = (range: TimeRange, timeZone?: TimeZone): Tim
   return {
     from,
     to,
-    display: `${from} to ${to}`,
+    display: t('time-picker.range-picker.absolute-to-display', '{{from}} to {{to}}', { from, to }),
   };
 };
