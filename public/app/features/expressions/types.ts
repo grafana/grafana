@@ -169,7 +169,6 @@ export interface DynamicThresholdPolicyV1 {
 export interface DynamicThresholdMetadataV1 {
   version: 1;
   policy: DynamicThresholdPolicyV1;
-  artifactHash?: string;
 }
 
 export interface SqlExpressionQuery extends ExpressionQuery {

@@ -32,7 +32,6 @@ export type BuildDynamicThresholdResult =
       ok: true;
       expressionSql: string;
       previewSql: string;
-      artifactHash: string;
       labelColumns: string[];
     }
   | { ok: false; errors: DynamicThresholdValidationError[] };
@@ -56,20 +55,6 @@ const CLIENT_QUERY_LENGTH_WARNING = 64_000;
 
 export function isRangeEvaluator(evaluator: EvalFunction): boolean {
   return RANGE_EVALUATORS.has(evaluator);
-}
-
-export function canonicalizeDynamicThresholdPolicy(policy: DynamicThresholdPolicyV1): string {
-  return JSON.stringify({
-    inputRefId: policy.inputRefId,
-    valueField: policy.valueField,
-    matchLabel: policy.matchLabel,
-    labelColumns: policy.labelColumns,
-    evaluator: policy.evaluator,
-    mappings: policy.mappings.map(({ labelValue, thresholds }) => ({ labelValue, thresholds })),
-    defaultThreshold: policy.defaultThreshold,
-  })
-    .replaceAll('\u2028', '\\u2028')
-    .replaceAll('\u2029', '\\u2029');
 }
 
 export function buildDynamicThreshold(policy: DynamicThresholdPolicyV1): BuildDynamicThresholdResult {
@@ -109,8 +94,7 @@ export function buildDynamicThreshold(policy: DynamicThresholdPolicyV1): BuildDy
     };
   }
 
-  const artifactHash = sha256(`${canonicalizeDynamicThresholdPolicy(policy)}\n${expressionSql}`);
-  return { ok: true, expressionSql, previewSql, artifactHash, labelColumns: [...policy.labelColumns] };
+  return { ok: true, expressionSql, previewSql, labelColumns: [...policy.labelColumns] };
 }
 
 function buildThresholdExpression(policy: DynamicThresholdPolicyV1, label: string, thresholdIndex: number): string {
@@ -351,84 +335,4 @@ function quoteString(value: string): string {
 
 function formatNumber(value: number): string {
   return Object.is(value, -0) ? '0' : String(value);
-}
-
-// Small synchronous SHA-256 implementation keeps compilation atomic and browser-compatible.
-function sha256(input: string): string {
-  const bytes = new TextEncoder().encode(input);
-  const bitLength = bytes.length * 8;
-  const paddedLength = Math.ceil((bytes.length + 9) / 64) * 64;
-  const data = new Uint8Array(paddedLength);
-  data.set(bytes);
-  data[bytes.length] = 0x80;
-  const view = new DataView(data.buffer);
-  view.setUint32(paddedLength - 4, bitLength >>> 0);
-  view.setUint32(paddedLength - 8, Math.floor(bitLength / 0x100000000));
-  const h = new Uint32Array([
-    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
-  ]);
-  const k = new Uint32Array(64);
-  for (let i = 0; i < 64; i++) {
-    const p = nthPrime(i + 1);
-    k[i] = Math.floor((Math.cbrt(p) % 1) * 0x100000000);
-  }
-  const w = new Uint32Array(64);
-  for (let offset = 0; offset < data.length; offset += 64) {
-    for (let i = 0; i < 16; i++) {
-      w[i] = view.getUint32(offset + i * 4);
-    }
-    for (let i = 16; i < 64; i++) {
-      const a = w[i - 15];
-      const b = w[i - 2];
-      const s0 = rotr(a, 7) ^ rotr(a, 18) ^ (a >>> 3);
-      const s1 = rotr(b, 17) ^ rotr(b, 19) ^ (b >>> 10);
-      w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
-    }
-    let [a, b, c, d, e, f, g, hh] = h;
-    for (let i = 0; i < 64; i++) {
-      const s1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
-      const ch = (e & f) ^ (~e & g);
-      const temp1 = (hh + s1 + ch + k[i] + w[i]) >>> 0;
-      const s0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
-      const maj = (a & b) ^ (a & c) ^ (b & c);
-      const temp2 = (s0 + maj) >>> 0;
-      hh = g;
-      g = f;
-      f = e;
-      e = (d + temp1) >>> 0;
-      d = c;
-      c = b;
-      b = a;
-      a = (temp1 + temp2) >>> 0;
-    }
-    h[0] = (h[0] + a) >>> 0;
-    h[1] = (h[1] + b) >>> 0;
-    h[2] = (h[2] + c) >>> 0;
-    h[3] = (h[3] + d) >>> 0;
-    h[4] = (h[4] + e) >>> 0;
-    h[5] = (h[5] + f) >>> 0;
-    h[6] = (h[6] + g) >>> 0;
-    h[7] = (h[7] + hh) >>> 0;
-  }
-  return Array.from(h, (value) => value.toString(16).padStart(8, '0')).join('');
-}
-
-function rotr(value: number, shift: number): number {
-  return (value >>> shift) | (value << (32 - shift));
-}
-
-function nthPrime(n: number): number {
-  let found = 0;
-  for (let value = 2; ; value++) {
-    let prime = true;
-    for (let divisor = 2; divisor * divisor <= value; divisor++) {
-      if (value % divisor === 0) {
-        prime = false;
-        break;
-      }
-    }
-    if (prime && ++found === n) {
-      return value;
-    }
-  }
 }

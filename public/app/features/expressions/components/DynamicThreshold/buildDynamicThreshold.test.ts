@@ -1,9 +1,7 @@
-import { createHash } from 'crypto';
-
 import { EvalFunction } from '../../../alerting/state/alertDef';
 import { type DynamicThresholdPolicyV1 } from '../../types';
 
-import { buildDynamicThreshold, canonicalizeDynamicThresholdPolicy } from './buildDynamicThreshold';
+import { buildDynamicThreshold } from './buildDynamicThreshold';
 
 const scalarOperators: Array<[EvalFunction, string]> = [
   [EvalFunction.IsAbove, '>'],
@@ -139,7 +137,7 @@ describe('buildDynamicThreshold', () => {
     }
   });
 
-  it('produces deterministic SQL and a canonical SHA-256 artifact hash', () => {
+  it('produces deterministic exact alert and preview SQL', () => {
     const input = policy();
     const first = buildDynamicThreshold(input);
     const second = buildDynamicThreshold(structuredClone(input));
@@ -147,30 +145,35 @@ describe('buildDynamicThreshold', () => {
     expect(first).toEqual(second);
     expect(first.ok).toBe(true);
     if (first.ok) {
-      const expectedHash = createHash('sha256')
-        .update(`${canonicalizeDynamicThresholdPolicy(input)}\n${first.expressionSql}`)
-        .digest('hex');
-      expect(canonicalizeDynamicThresholdPolicy(input)).toBe(
-        '{"inputRefId":"A","valueField":"__value__","matchLabel":"environment","labelColumns":["environment","region"],"evaluator":"gt","mappings":[{"labelValue":"production","thresholds":[2]}],"defaultThreshold":[5]}'
-      );
-      expect(first.artifactHash).toBe(expectedHash);
-      expect(first.artifactHash).toBe('6daa709c5dedb0d4f94c4cf8e2fe75f18d58bcb518df4f4040f869dc007e2ee5');
-    }
-  });
-
-  it('canonicalizes U+2028, U+2029, and negative zero consistently with the backend hash contract', () => {
-    const input = policy({
-      mappings: [{ labelValue: 'line\u2028paragraph\u2029', thresholds: [-0] }],
-      defaultThreshold: [-0],
-    });
-    const result = buildDynamicThreshold(input);
-
-    expect(canonicalizeDynamicThresholdPolicy(input)).toContain('line\\u2028paragraph\\u2029');
-    expect(canonicalizeDynamicThresholdPolicy(input)).toContain('"thresholds":[0]');
-    expect(canonicalizeDynamicThresholdPolicy(input)).toContain('"defaultThreshold":[0]');
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.artifactHash).toBe('a3280102953c28db6ec06b59b473fbb41908bcc317f1eff273e2cc58490d5590');
+      expect(first.expressionSql).toBe(`SELECT
+  \`A\`.\`environment\` AS \`environment\`,
+  \`A\`.\`region\` AS \`region\`,
+  CASE
+    WHEN \`A\`.\`__value__\` IS NULL THEN NULL
+    WHEN \`A\`.\`__value__\` > CASE \`A\`.\`environment\`
+      WHEN 'production' THEN 2
+      ELSE 5
+    END THEN 1
+    ELSE 0
+  END AS \`alert_result\`
+FROM \`A\``);
+      expect(first.previewSql).toBe(`SELECT
+  \`A\`.\`environment\` AS \`environment\`,
+  \`A\`.\`region\` AS \`region\`,
+  \`A\`.\`__value__\` AS \`current_value\`,
+  CASE \`A\`.\`environment\`
+      WHEN 'production' THEN 2
+      ELSE 5
+    END AS \`matched_threshold\`,
+  CASE
+    WHEN \`A\`.\`__value__\` IS NULL THEN NULL
+    WHEN \`A\`.\`__value__\` > CASE \`A\`.\`environment\`
+      WHEN 'production' THEN 2
+      ELSE 5
+    END THEN 1
+    ELSE 0
+  END AS \`condition_result\`
+FROM \`A\``);
     }
   });
 
