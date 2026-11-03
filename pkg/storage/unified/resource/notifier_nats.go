@@ -35,6 +35,25 @@ type EventSubscriber interface {
 	Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte), onReconnect func()) (Subscription, error)
 }
 
+// startedSubscriber is an EventSubscriber that can only subscribe once the
+// channel Started returns is closed.
+type startedSubscriber interface {
+	Started() <-chan struct{}
+}
+
+var closedChan = func() chan struct{} {
+	ch := make(chan struct{})
+	close(ch)
+	return ch
+}()
+
+func subscriberStarted(s EventSubscriber) <-chan struct{} {
+	if st, ok := s.(startedSubscriber); ok {
+		return st.Started()
+	}
+	return closedChan
+}
+
 // watchNotificationTypeToAction maps a wire event type back to a data action.
 // UNKNOWN reports ok=false so the caller drops it rather than emit a bogus change.
 func watchNotificationTypeToAction(t resourcepb.WatchNotification_Type) (DataAction, bool) {
@@ -182,35 +201,54 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 	}
 
 	// Subscribe synchronously so a healthy bus wires delivery before returning;
-	// if the bus is unreachable (e.g. embedded server not started yet), retry in
-	// the background instead of closing out and losing the watch until restart.
-	// Once subscribed, the nats client auto-resumes across reconnects.
-	if !n.trySubscribe(ctx, handler) {
-		go func() {
-			bo := backoff.New(ctx, backoff.Config{
-				MinBackoff: opts.MinBackoff,
-				MaxBackoff: opts.MaxBackoff,
-				MaxRetries: 0, // infinite retries; ctx cancel stops the loop
-			})
-			for bo.Ongoing() {
-				bo.Wait()
-				if n.trySubscribe(ctx, handler) {
-					if ctx.Err() != nil {
-						return
-					}
-					// Watches may have opened while capture was unavailable. The first
-					// successful connection does not necessarily emit a reconnect callback.
-					n.invalidate()
-					opts.captured(nil)
-					return
-				}
-			}
-		}()
-	} else {
-		opts.captured(nil)
+	// otherwise subscribe in the background instead of closing out and losing
+	// the watch until restart. Once subscribed, the nats client auto-resumes
+	// across reconnects.
+	started := subscriberStarted(n.subscriber)
+	select {
+	case <-started:
+		if n.trySubscribe(ctx, handler) {
+			opts.captured(nil)
+			return out
+		}
+		go n.retrySubscribe(ctx, handler, opts, nil)
+	default:
+		// The monolith builds the storage server before it starts the subscriber.
+		go n.retrySubscribe(ctx, handler, opts, started)
 	}
-
 	return out
+}
+
+// retrySubscribe subscribes once started is closed, or after a backoff when
+// started is nil, and retries until it succeeds or ctx ends.
+func (n *natsNotifier) retrySubscribe(ctx context.Context, handler func(subject string, data []byte), opts WatchOptions, started <-chan struct{}) {
+	bo := backoff.New(ctx, backoff.Config{
+		MinBackoff: opts.MinBackoff,
+		MaxBackoff: opts.MaxBackoff,
+		MaxRetries: 0, // infinite retries; ctx cancel stops the loop
+	})
+	if started != nil {
+		select {
+		case <-ctx.Done():
+			return
+		case <-started:
+		}
+	} else {
+		bo.Wait()
+	}
+	for bo.Ongoing() {
+		if n.trySubscribe(ctx, handler) {
+			if ctx.Err() != nil {
+				return
+			}
+			// Watches may have opened while capture was unavailable. The first
+			// successful connection does not necessarily emit a reconnect callback.
+			n.invalidate()
+			opts.captured(nil)
+			return
+		}
+		bo.Wait()
+	}
 }
 
 // trySubscribe subscribes to the whole change stream once. On success it
@@ -308,6 +346,11 @@ const writtenKeysBufferSize = 10000
 func (k *kvStorageBackend) WatchWrittenKeys(ctx context.Context, types []schema.GroupResource, onLost func(namespace string)) (<-chan *WrittenEvent, error) {
 	if k.keysSubscriber == nil || !k.keysSubscriber.Enabled() {
 		return nil, ErrWrittenKeysUnsupported
+	}
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case <-subscriberStarted(k.keysSubscriber):
 	}
 
 	keys := make(chan *WrittenEvent, writtenKeysBufferSize)

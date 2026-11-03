@@ -279,6 +279,7 @@ func ExtraConfigToModel(in store.ExtraConfigurationDB) ExtraConfiguration {
 		Identifier:         in.Identifier,
 		TemplateFiles:      maps.Clone(in.TemplateFiles),
 		AlertmanagerConfig: in.AlertmanagerConfig,
+		ManagedBy:          in.ManagedBy,
 	}
 }
 
@@ -536,6 +537,7 @@ func ExtraConfigToDB(in ExtraConfiguration) store.ExtraConfigurationDB {
 		Identifier:         in.Identifier,
 		TemplateFiles:      maps.Clone(in.TemplateFiles),
 		AlertmanagerConfig: in.AlertmanagerConfig,
+		ManagedBy:          in.ManagedBy,
 	}
 }
 

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2, urlUtil } from '@grafana/data';
@@ -31,7 +31,7 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
   const styles = useStyles2(getStyles);
 
   const promRules = useUnifiedAlertingSelector((state) => state.promRules);
-  const rulesDataSources = useMemo(getRulesDataSources, []);
+  const [rulesDataSources] = useState(getRulesDataSources);
   const groupsWithNamespaces = useCombinedGroupNamespace(namespaces);
 
   const dataSourcesLoading = useMemo(

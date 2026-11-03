@@ -407,6 +407,10 @@ const (
 	// Route legacy access-control evaluations through the AuthZ LegacyCheck RPC.
 	FlagAuthzUseLegacyCheck = "authz.useLegacyCheck"
 
+	// FlagAuthzUseLegacyCheckShadow
+	// Compare local access-control evaluations with the AuthZ LegacyCheck RPC in the background.
+	FlagAuthzUseLegacyCheckShadow = "authz.useLegacyCheckShadow"
+
 	// FlagZanzana
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
@@ -697,10 +701,6 @@ const (
 	// FlagExcludeRedundantManagedPermissions
 	// Exclude redundant individual dashboard/folder permissions from managed roles at query time
 	FlagExcludeRedundantManagedPermissions = "excludeRedundantManagedPermissions"
-
-	// FlagPanelTimeSettings
-	// Enables a new panel time settings drawer
-	FlagPanelTimeSettings = "panelTimeSettings"
 
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources
