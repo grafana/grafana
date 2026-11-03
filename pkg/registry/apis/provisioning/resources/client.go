@@ -166,8 +166,21 @@ type ClientFactory interface {
 
 type clientFactory struct {
 	clientsProvider clientsProvider
-	// supportedResources is the merged base + registered set, computed once.
-	supportedResources []SupportedResource
+	// configuredResources is the merged base + registered set as configured, so it may still
+	// name collections rather than served groups.
+	configuredResources []SupportedResource
+	// expanded caches the result of resolving collections through discovery.
+	expandOnce sync.Once
+	expanded   []SupportedResource
+	expandErr  error
+}
+
+// supportedResources resolves the configured set to served groups, once.
+func (f *clientFactory) supportedResources(ctx context.Context) ([]SupportedResource, error) {
+	f.expandOnce.Do(func() {
+		f.expanded, f.expandErr = expandWildcardGroups(ctx, discoveryGroups(f.clientsProvider), f.configuredResources)
+	})
+	return f.expanded, f.expandErr
 }
 
 // TODO: Rename to NamespacedClients
@@ -264,8 +277,8 @@ func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.G
 // static SupportedProvisioningResources base set.
 func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...SupportedResource) ClientFactory {
 	return &clientFactory{
-		clientsProvider:    newSingleAPIClients(configProvider),
-		supportedResources: activeResources(defaultSupportedResources(supported)),
+		clientsProvider:     newSingleAPIClients(configProvider),
+		configuredResources: activeResources(defaultSupportedResources(supported)),
 	}
 }
 
@@ -279,7 +292,7 @@ func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.
 		clientFactories[api] = clientFactory
 	}
 
-	return &multiClientFactory{clientFactories: clientFactories, supportedResources: activeResources(defaultSupportedResources(supported))}
+	return &multiClientFactory{clientFactories: clientFactories}
 }
 
 // activeResources returns only the active resources. Disabled resources are declared (and
@@ -304,12 +317,12 @@ func defaultSupportedResources(supported []SupportedResource) []SupportedResourc
 
 type multiClientFactory struct {
 	clientFactories map[string]ClientFactory
-	// supportedResources is the merged base + registered set, computed once.
-	supportedResources []SupportedResource
 }
 
 func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
 	clients := make(map[string]ResourceClients)
+	seen := sets.New[schema.GroupKind]()
+	var supported []SupportedResource
 	for group, clientFactory := range m.clientFactories {
 		c, err := clientFactory.Clients(ctx, namespace)
 		if err != nil {
@@ -317,6 +330,14 @@ func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (Res
 		}
 
 		clients[group] = c
+		// Each API server resolves the configured set against its own discovery, so a
+		// collection is expanded by whichever server actually serves its members.
+		for _, r := range c.SupportedResources() {
+			if !seen.Has(r.GroupKind) {
+				seen.Insert(r.GroupKind)
+				supported = append(supported, r)
+			}
+		}
 	}
 	if len(clients) == 0 {
 		return nil, fmt.Errorf("no client factories available")
@@ -325,15 +346,19 @@ func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (Res
 	return &multiResourceClients{
 		namespace:                 namespace,
 		resourceClientsByAPIGroup: clients,
-		supportedResources:        m.supportedResources,
+		supportedResources:        supported,
 	}, nil
 }
 
 func (f *clientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
+	supported, err := f.supportedResources(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return &resourceClients{
 		namespace:          namespace,
 		clientsProvider:    f.clientsProvider,
-		supportedResources: f.supportedResources,
+		supportedResources: supported,
 		byKind:             make(map[schema.GroupVersionKind]*clientInfo),
 		byResource:         make(map[schema.GroupVersionResource]*clientInfo),
 	}, nil
@@ -491,7 +516,7 @@ func (c *multiResourceClients) ForKind(ctx context.Context, gvk schema.GroupVers
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	resourceClients, ok := c.resourceClientsByAPIGroup[gvk.Group]
+	resourceClients, ok := c.clientsFor(gvk.Group)
 	if !ok {
 		return nil, schema.GroupVersionResource{}, fmt.Errorf("no clients provider for group %s", gvk.Group)
 	}
@@ -506,7 +531,7 @@ func (c *multiResourceClients) ForResource(ctx context.Context, gvr schema.Group
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	resourceClients, ok := c.resourceClientsByAPIGroup[gvr.Group]
+	resourceClients, ok := c.clientsFor(gvr.Group)
 	if !ok {
 		return nil, schema.GroupVersionKind{}, fmt.Errorf("no clients provider for group %s", gvr.Group)
 	}
@@ -525,6 +550,21 @@ func (c *multiResourceClients) User(ctx context.Context) (dynamic.ResourceInterf
 
 func (c *multiResourceClients) SupportedResources() []SupportedResource {
 	return c.supportedResources
+}
+
+// clientsFor resolves the API server serving a group, falling back to the one registered for the
+// collection the group belongs to. Members of a collection are served together, so the caller
+// registers one provider per collection rather than one per member it cannot enumerate up front.
+func (c *multiResourceClients) clientsFor(group string) (ResourceClients, bool) {
+	if clients, ok := c.resourceClientsByAPIGroup[group]; ok {
+		return clients, true
+	}
+	for registered, clients := range c.resourceClientsByAPIGroup {
+		if provisioningresources.MatchesGroup(provisioningresources.WildcardGroupPrefix+registered, group) {
+			return clients, true
+		}
+	}
+	return nil, false
 }
 
 // ForEach applies the function to each resource returned from the list operation
@@ -553,4 +593,70 @@ func ForEach(ctx context.Context, client dynamic.ResourceInterface, fn func(item
 	}
 
 	return nil
+}
+
+// nonProvisionableGroups are served groups that a wildcard entry never expands to. The built-in
+// data sources hold no stored instances, so provisioning them would add an empty list to every
+// export and three inert rows to the settings endpoint.
+var nonProvisionableGroups = sets.New(
+	"grafana.datasource.grafana.app",
+	"mixed.datasource.grafana.app",
+	"dashboard.datasource.grafana.app",
+)
+
+// expandWildcardGroups turns each configured collection entry into one entry per API group served
+// inside that collection, asking discovery which groups those are. Entries that already name a
+// served group are passed through.
+//
+// Discovery is the right source rather than the installed plugin list: a plugin can be installed
+// without its group being served, and it is the served group a client has to address. The result is
+// cached on first success, so the ~15 call sites that take a client do not each cost a /apis round
+// trip; a group that starts being served later needs a restart, as installing the plugin does.
+func expandWildcardGroups(ctx context.Context, listGroups groupLister, configured []SupportedResource) ([]SupportedResource, error) {
+	var served []string
+	out := make([]SupportedResource, 0, len(configured))
+	for _, r := range configured {
+		if !provisioningresources.IsWildcardGroup(r.Group) {
+			out = append(out, r)
+			continue
+		}
+		if served == nil {
+			var err error
+			if served, err = listGroups(ctx); err != nil {
+				return nil, err
+			}
+		}
+		for _, group := range served {
+			if !provisioningresources.MatchesGroup(r.Group, group) || nonProvisionableGroups.Has(group) {
+				continue
+			}
+			out = append(out, SupportedResource{
+				GroupKind:    schema.GroupKind{Group: group, Kind: r.Kind},
+				Capabilities: r.Capabilities,
+			})
+		}
+	}
+	return out, nil
+}
+
+// groupLister lists the API groups a server serves.
+type groupLister func(ctx context.Context) ([]string, error)
+
+// discoveryGroups lists every API group the server serves, through its discovery client.
+func discoveryGroups(provider clientsProvider) groupLister {
+	return func(ctx context.Context) ([]string, error) {
+		_, discovery, err := provider.GetClientsForKind(ctx, schema.GroupVersionKind{})
+		if err != nil {
+			return nil, fmt.Errorf("get discovery client for collection expansion: %w", err)
+		}
+		list, err := discovery.ServerGroups()
+		if err != nil {
+			return nil, fmt.Errorf("list server groups for collection expansion: %w", err)
+		}
+		out := make([]string, 0, len(list.Groups))
+		for _, g := range list.Groups {
+			out = append(out, g.Name)
+		}
+		return out, nil
+	}
 }

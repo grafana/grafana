@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -177,4 +178,107 @@ func TestSingleAPIClients_PropagatesTraceContext(t *testing.T) {
 	require.NotEmpty(t, gotTraceparent, "expected the dynamic client to send a traceparent header")
 	assert.Contains(t, gotTraceparent, span.SpanContext().TraceID().String(),
 		"traceparent should carry the active span's trace id")
+}
+
+func TestExpandWildcardGroups(t *testing.T) {
+	served := func(groups ...string) groupLister {
+		return func(context.Context) ([]string, error) { return groups, nil }
+	}
+	installed := served(
+		"dashboard.grafana.app",
+		"prometheus.datasource.grafana.app",
+		"loki.datasource.grafana.app",
+		"grafana.datasource.grafana.app",
+	)
+
+	t.Run("expands a collection into the groups served inside it", func(t *testing.T) {
+		configured, err := ParseSupportedResources([]string{"*.datasource.grafana.app/DataSource"})
+		require.NoError(t, err)
+
+		expanded, err := expandWildcardGroups(t.Context(), installed, configured)
+		require.NoError(t, err)
+		require.ElementsMatch(t, []schema.GroupKind{
+			{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
+			{Group: "loki.datasource.grafana.app", Kind: "DataSource"},
+		}, groupKinds(expanded), "built-in data sources hold no instances and are left out")
+	})
+
+	t.Run("carries the collection's capabilities onto every member", func(t *testing.T) {
+		configured, err := ParseSupportedResources([]string{"*.datasource.grafana.app/DataSource:disabled"})
+		require.NoError(t, err)
+
+		expanded, err := expandWildcardGroups(t.Context(), installed, configured)
+		require.NoError(t, err)
+		require.Len(t, expanded, 2)
+		for _, r := range expanded {
+			require.False(t, r.IsActive(), "member of a disabled collection stays disabled")
+		}
+	})
+
+	t.Run("passes a concrete group through without asking discovery", func(t *testing.T) {
+		configured, err := ParseSupportedResources([]string{"playlist.grafana.app/Playlist"})
+		require.NoError(t, err)
+
+		expanded, err := expandWildcardGroups(t.Context(), func(context.Context) ([]string, error) {
+			t.Fatal("discovery should not be consulted without a wildcard entry")
+			return nil, nil
+		}, configured)
+		require.NoError(t, err)
+		require.Equal(t, []schema.GroupKind{{Group: "playlist.grafana.app", Kind: "Playlist"}}, groupKinds(expanded))
+	})
+
+	// A collection nobody serves expands to nothing rather than erroring: provisioning should start
+	// when a plugin is uninstalled, and the kind simply has no groups to act on.
+	t.Run("a collection with no served members expands to nothing", func(t *testing.T) {
+		configured, err := ParseSupportedResources([]string{"*.datasource.grafana.app/DataSource"})
+		require.NoError(t, err)
+
+		expanded, err := expandWildcardGroups(t.Context(), served("dashboard.grafana.app"), configured)
+		require.NoError(t, err)
+		require.Empty(t, expanded)
+	})
+
+	t.Run("propagates a discovery failure", func(t *testing.T) {
+		configured, err := ParseSupportedResources([]string{"*.datasource.grafana.app/DataSource"})
+		require.NoError(t, err)
+
+		_, err = expandWildcardGroups(t.Context(), func(context.Context) ([]string, error) {
+			return nil, errors.New("apis unreachable")
+		}, configured)
+		require.ErrorContains(t, err, "apis unreachable")
+	})
+}
+
+func TestMultiResourceClientsClientsFor(t *testing.T) {
+	collection := NewMockResourceClients(t)
+	dashboards := NewMockResourceClients(t)
+	clients := &multiResourceClients{resourceClientsByAPIGroup: map[string]ResourceClients{
+		"datasource.grafana.app": collection,
+		"dashboard.grafana.app":  dashboards,
+	}}
+
+	t.Run("resolves a member group to the collection's API server", func(t *testing.T) {
+		got, ok := clients.clientsFor("prometheus.datasource.grafana.app")
+		require.True(t, ok)
+		require.Same(t, collection, got)
+	})
+
+	t.Run("prefers an exact match", func(t *testing.T) {
+		got, ok := clients.clientsFor("dashboard.grafana.app")
+		require.True(t, ok)
+		require.Same(t, dashboards, got)
+	})
+
+	t.Run("reports an unregistered group", func(t *testing.T) {
+		_, ok := clients.clientsFor("playlist.grafana.app")
+		require.False(t, ok)
+	})
+}
+
+func groupKinds(rs []SupportedResource) []schema.GroupKind {
+	out := make([]schema.GroupKind, 0, len(rs))
+	for _, r := range rs {
+		out = append(out, r.GroupKind)
+	}
+	return out
 }
