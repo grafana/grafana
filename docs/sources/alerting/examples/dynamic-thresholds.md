@@ -182,10 +182,6 @@ You can use the [TestData data source](/docs/grafana/<GRAFANA_VERSION>/datasourc
 
 Instead of a Math expression, you can define dynamic thresholds with a [SQL expression](/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/sql-expressions/).
 
-{{< admonition type="note" >}}
-SQL expressions can only query data from backend data sources. You can't use them with the output of other expressions, such as Math or Reduce.
-{{< /admonition >}}
-
 With SQL expressions, you don't need a second query for the thresholds. The SQL expression can compare each series against its own threshold and returns the alert condition result.
 
 The following table illustrates the evaluation:
