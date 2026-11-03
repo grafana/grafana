@@ -88,8 +88,8 @@ func TestPermissions_DeletePermissions(t *testing.T) {
 		other := newPermissionsClient("stacks-1", "uid")
 		p := New(staticClient(client), testGR)
 
-		p.DeletePermissions(context.Background(), namespace, "uid")
-		p.DeletePermissions(context.Background(), "stacks-3", "uid")
+		require.NoError(t, p.DeletePermissions(context.Background(), namespace, "uid"))
+		require.NoError(t, p.DeletePermissions(context.Background(), "stacks-3", "uid"))
 
 		require.False(t, permissionExists(t, client, namespace, "uid"))
 		require.True(t, permissionExists(t, client, namespace, "other"))
@@ -100,11 +100,11 @@ func TestPermissions_DeletePermissions(t *testing.T) {
 		client := newPermissionsClient(namespace)
 		p := New(staticClient(client), testGR)
 
-		require.NotPanics(t, func() { p.DeletePermissions(context.Background(), namespace, "gone") })
+		require.NoError(t, p.DeletePermissions(context.Background(), namespace, "gone"))
 		require.Len(t, client.Actions(), 1)
 	})
 
-	t.Run("failures are only logged", func(t *testing.T) {
+	t.Run("failures are returned", func(t *testing.T) {
 		client := newPermissionsClient(namespace, "uid")
 		client.PrependReactor("delete", "resourcepermissions", func(k8stesting.Action) (bool, runtime.Object, error) {
 			return true, nil, errors.New("iam unavailable")
@@ -119,7 +119,7 @@ func TestPermissions_DeletePermissions(t *testing.T) {
 		for name, provider := range providers {
 			t.Run(name, func(t *testing.T) {
 				p := New(provider, testGR)
-				require.NotPanics(t, func() { p.DeletePermissions(context.Background(), namespace, "uid") })
+				require.Error(t, p.DeletePermissions(context.Background(), namespace, "uid"))
 			})
 		}
 		require.True(t, permissionExists(t, client, namespace, "uid"))

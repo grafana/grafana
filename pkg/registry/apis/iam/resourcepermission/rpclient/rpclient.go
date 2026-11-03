@@ -14,7 +14,6 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
 )
 
@@ -63,22 +62,20 @@ func Name(gr schema.GroupResource, name string) string {
 type Permissions struct {
 	client ClientProvider
 	gr     schema.GroupResource
-	logger log.Logger
 }
 
 // New returns the Permissions of the resources of gr.
 func New(client ClientProvider, gr schema.GroupResource) *Permissions {
-	return &Permissions{client: client, gr: gr, logger: log.New("iam.resourcepermission.client")}
+	return &Permissions{client: client, gr: gr}
 }
 
-// DeletePermissions removes the permissions of a deleted resource. It is best effort: a missing
-// permission counts as deleted and other failures are logged, so they cannot fail the deletion.
-func (p *Permissions) DeletePermissions(ctx context.Context, namespace, name string) {
+// DeletePermissions removes the permissions of a deleted resource. A missing permission counts as deleted.
+func (p *Permissions) DeletePermissions(ctx context.Context, namespace, name string) error {
 	rpName := Name(p.gr, name)
 	if err := p.delete(ctx, namespace, rpName); err != nil {
-		p.logger.FromContext(ctx).Error("Failed to delete resource permission",
-			"group", p.gr.Group, "resource", p.gr.Resource, "namespace", namespace, "name", name, "resourcePermission", rpName, "error", err)
+		return fmt.Errorf("delete resource permission %s/%s: %w", namespace, rpName, err)
 	}
+	return nil
 }
 
 func (p *Permissions) delete(ctx context.Context, namespace, name string) error {
