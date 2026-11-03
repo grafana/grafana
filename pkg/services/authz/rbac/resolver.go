@@ -180,8 +180,6 @@ func (s *Service) newUserNameResolver(ctx context.Context, ns types.NamespaceInf
 
 func permissionsTypeResolverFunc(scope string) (string, error) {
 	switch strings.TrimPrefix(scope, "permissions:type:") {
-	case "delegate":
-		return "*", nil
 	case "escalate":
 		return "", nil
 	default:
@@ -189,15 +187,16 @@ func permissionsTypeResolverFunc(scope string) (string, error) {
 	}
 }
 
-// isRoleManagementAction reports whether the action manages roles or role
-// bindings. Role management is the only family where a permissions:type:delegate
+// isRoleMutationAction reports whether the action mutates roles or role
+// bindings. These mutations are the only actions where a permissions:type:delegate
 // grant also implies the wildcard scope: holding the delegate scope must allow
 // operating on any role or role binding. Expanding it for other actions would
 // turn a delegation-only grant into global access to the resource itself.
-func isRoleManagementAction(action string) bool {
+func isRoleMutationAction(action string) bool {
 	switch action {
-	case "roles:read", "roles:write", "roles:delete",
-		"users.roles:read", "users.roles:add", "users.roles:remove":
+	case "roles:write", "roles:delete",
+		"users.roles:add", "users.roles:remove",
+		"teams.roles:add", "teams.roles:remove":
 		return true
 	}
 	return false
@@ -209,11 +208,10 @@ func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, acti
 	}
 
 	if scopePrefix == "permissions:type:" {
-		if isRoleManagementAction(action) {
+		if isRoleMutationAction(action) {
 			return permissionsTypeResolverFunc, nil
 		}
-		// Only role-management actions interpret delegate as wildcard access.
-		// Expanding other actions would grant access on every resource.
+		// Permission-type scopes are only supported for role mutations.
 		return nil, nil
 	}
 	if scopePrefix == "serviceaccounts:id:" {
@@ -230,12 +228,20 @@ func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, acti
 // It assumes only one scope resolver is needed for a given scope map, based on the first valid scope encountered.
 // The action the scopes were granted on decides whether permissions:type:delegate expands to the wildcard.
 func (s *Service) resolveScopeMap(ctx context.Context, ns types.NamespaceInfo, action string, scopeMap map[string]bool) (map[string]bool, error) {
+	// Expand delegate independently of which scope selects the name resolver.
+	if scopeMap["permissions:type:delegate"] && isRoleMutationAction(action) {
+		scopeMap["*"] = true
+	}
+
 	var (
 		prefix        string
 		scopeResolver ScopeResolverFunc
 		err           error
 	)
 	for scope := range scopeMap {
+		if scope == "permissions:type:delegate" {
+			continue
+		}
 		// Find the resolver based on the first scope with a valid prefix
 		if prefix == "" {
 			if len(strings.Split(scope, ":")) < 3 {
