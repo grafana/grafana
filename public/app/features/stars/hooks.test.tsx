@@ -64,7 +64,7 @@ const StarFolderHarness = ({ uid }: { uid: string }) => {
       <span data-testid="star-done">{String(starDone)}</span>
       <ul data-testid="starred-list">
         {starred?.children?.map((child) => (
-          <li key={child.id} data-testid={`synced-${child.id}`}>
+          <li key={child.id} data-testid={`synced-${child.id}`} data-icon={child.icon} data-url={child.url}>
             {child.text}
           </li>
         ))}
@@ -321,6 +321,20 @@ describe('useStarItem', () => {
       { id: 'home', text: 'Home', url: '/' },
       { id: 'starred', text: 'Starred', children: [] },
     ];
+  });
+
+  it('adds a starred folder to the nav starred section with the folder url and icon', async () => {
+    const folderUid = folderA.item.uid;
+    setMockStarredFolders([]);
+
+    const { user } = render(<StarFolderHarness uid={folderUid} />);
+
+    await user.click(screen.getByRole('button', { name: 'star folder' }));
+
+    const entry = await screen.findByTestId(`synced-starred/${folderUid}`);
+    expect(entry).toHaveTextContent('My Folder');
+    expect(entry).toHaveAttribute('data-url', expect.stringContaining(`/dashboards/f/${folderUid}/`));
+    expect(entry).toHaveAttribute('data-icon', 'folder');
   });
 
   // A successful folder star lands in the nav, so a rejected one must not.

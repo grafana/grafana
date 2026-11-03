@@ -7,7 +7,7 @@ import { legacyAPI } from 'app/api/clients/legacy';
 import { contextSrv } from 'app/core/services/context_srv';
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID, isRootFolderUID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { type DashboardQueryResult, type NestedFolderDTO } from 'app/features/search/service/types';
+import { type NestedFolderDTO } from 'app/features/search/service/types';
 import { extractManagerId, extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { resolveStarredFolders } from 'app/features/stars/folders';
@@ -37,63 +37,32 @@ async function searchOldAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) 
   });
 }
 
-const virtualFolderBase = {
-  kind: 'folder',
-  url: '',
-  panel_type: '',
-  tags: [],
-  location: '',
-  ds_uid: [],
-};
-
-async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) {
-  const searcher = getGrafanaSearcher();
-  const foldersResults = await searcher.search({
+async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE): Promise<NestedFolderDTO[]> {
+  const results = await getGrafanaSearcher().search({
     kind: ['folder'],
     location: parentUID || 'general',
     from: (page - 1) * pageSize, // our pages are 1-indexed, so we need to -1 to convert that to correct value to skip
     limit: pageSize,
     offset: (page - 1) * pageSize,
   });
+  const folders = results.view
+    .toArray()
+    .map<NestedFolderDTO>(({ uid, name, managedBy }) => ({ uid, title: name, managedBy }));
 
-  const folders: DashboardQueryResult[] = foldersResults.view.toArray();
-
-  // Virtual root folders are only injected at the top level (first page, no parent), in the order
-  // [Shared with me, Team folders, Starred folders, ...real folders].
-  if (page === 1 && !parentUID) {
-    // Shared with me isn't returned by the API, so it's added statically and shown whether or not it
-    // has children, as in the folder picker.
-    const sharedWithMe = config.sharedWithMeFolderUID
-      ? [
-          {
-            ...virtualFolderBase,
-            uid: config.sharedWithMeFolderUID,
-            name: t('browse-dashboards.shared-with-me', 'Shared with me'),
-          },
-        ]
-      : [];
-    folders.unshift(
-      ...sharedWithMe,
-      {
-        ...virtualFolderBase,
-        name: t('browse-dashboards.my-team-folders', 'My team folders'),
-        uid: TEAM_FOLDERS_UID,
-      },
-      {
-        ...virtualFolderBase,
-        name: t('browse-dashboards.starred-folders', 'Starred folders'),
-        uid: STARRED_FOLDERS_UID,
-      }
-    );
+  // Virtual roots only at the top level (first page, no parent), ahead of the real folders.
+  if (page !== 1 || parentUID) {
+    return folders;
   }
-
-  return folders.map<NestedFolderDTO>((item) => {
-    return {
-      uid: item.uid,
-      title: item.name,
-      managedBy: item.managedBy,
-    };
-  });
+  // Shared with me isn't returned by the API, so it's added statically and shown whether or not it
+  // has children, as in the folder picker.
+  const virtualRoots: NestedFolderDTO[] = [
+    ...(config.sharedWithMeFolderUID
+      ? [{ uid: config.sharedWithMeFolderUID, title: t('browse-dashboards.shared-with-me', 'Shared with me') }]
+      : []),
+    { uid: TEAM_FOLDERS_UID, title: t('browse-dashboards.my-team-folders', 'My team folders') },
+    { uid: STARRED_FOLDERS_UID, title: t('browse-dashboards.starred-folders', 'Starred folders') },
+  ];
+  return [...virtualRoots, ...folders];
 }
 
 export async function listFolders(

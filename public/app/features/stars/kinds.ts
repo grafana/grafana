@@ -1,7 +1,6 @@
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { type IconName, locationUtil } from '@grafana/data';
-import { type StarredNavItem } from 'app/core/reducers/navBarTree';
 import { getFolderURL } from 'app/features/browse-dashboards/utils/dashboards';
 import { getIconForKind } from 'app/features/search/service/utils';
 
@@ -48,13 +47,4 @@ export function findStarredKind(group: string, kind: string): StarredKind | unde
 /** The kind behind a search row's kind string; undefined for rows nobody can star, such as panels. */
 export function findStarredKindBySearchKind(searchKind: string): StarredKind | undefined {
   return STARRED_KINDS.find((candidate) => candidate.searchKind === searchKind);
-}
-
-/** Nav Starred entry (url, icon, sort rank) for one starred object. */
-export function starredNavEntry(kind: StarredKind, id: string): Omit<StarredNavItem, 'id' | 'title'> {
-  return {
-    url: kind.url(id),
-    icon: kind.icon,
-    sortWeight: kind.sortWeight,
-  };
 }

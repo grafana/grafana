@@ -7,7 +7,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { dispatch } from 'app/store/store';
 
 import { useSearchStarredQuery } from './api';
-import { STARRED_KINDS, findStarredKind, findStarredKindBySearchKind, starredNavEntry } from './kinds';
+import { STARRED_KINDS, findStarredKind, findStarredKindBySearchKind } from './kinds';
 import { findStarredNames, userStarsFieldSelector } from './utils';
 
 type StarItemArgs = {
@@ -38,7 +38,8 @@ export const useStarItem = (group: string, kind: string) => {
     const starredKind = findStarredKind(group, kind);
     // A star of a kind the nav doesn't show is stored all the same
     if (starredKind) {
-      dispatch(setStarred({ id, title, ...starredNavEntry(starredKind, id), isStarred: newStarredState }));
+      const { icon, sortWeight } = starredKind;
+      dispatch(setStarred({ id, title, url: starredKind.url(id), icon, sortWeight, isStarred: newStarredState }));
     }
   };
 };
@@ -137,7 +138,7 @@ export const useSyncStarredItemsInNav = () => {
     const items = rows.flatMap((row): StarredNavItem[] => {
       const kind = findStarredKindBySearchKind(row.kind);
       // The search row carries the slugged url, which the nav keeps over the kind's plain one
-      return kind ? [{ ...starredNavEntry(kind, row.uid), id: row.uid, title: row.name, url: row.url }] : [];
+      return kind ? [{ id: row.uid, title: row.name, url: row.url, icon: kind.icon, sortWeight: kind.sortWeight }] : [];
     });
     dispatch(setStarredItems({ uids, items }));
     setHasSynced(true);
