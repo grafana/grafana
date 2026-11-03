@@ -940,27 +940,6 @@ func (b *DashboardsAPIBuilder) validateFolderExists(ctx context.Context, folderU
 	return folder, nil
 }
 
-// getFolder reads a folder through the folder client that admission uses, because standalone storage
-// has no REST config provider to build its own.
-func (b *DashboardsAPIBuilder) getFolder(ctx context.Context, namespace, name string) (utils.GrafanaMetaAccessor, error) {
-	nsInfo, err := authlib.ParseNamespace(namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	folderClient := b.folderClientProvider.GetOrCreateHandler(namespace)
-	if folderClient == nil {
-		return nil, fmt.Errorf("folder client handler is not configured for namespace %q", namespace)
-	}
-
-	folder, err := folderClient.Get(ctx, name, nsInfo.OrgID, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	return utils.MetaAccessor(folder)
-}
-
 // getDashboardProperties extracts title and refresh interval from any dashboard version
 func getDashboardProperties(obj runtime.Object) (string, string, error) {
 	var title, refresh string
@@ -1053,10 +1032,6 @@ func (b *DashboardsAPIBuilder) dashboardStorageOpts() apistore.StorageOptions {
 		storageOpts.Permissions = b.setDefaultDashboardPermissions
 	} else {
 		storageOpts.Permissions = b.dashboardPermissions.SetDefaultPermissionsAfterCreate
-	}
-
-	if b.isStandalone && b.folderClientProvider != nil {
-		storageOpts.GetFolder = b.getFolder
 	}
 	return storageOpts
 }

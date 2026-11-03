@@ -20,7 +20,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -52,7 +51,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	apiserverrequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/restoptions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -649,60 +647,6 @@ func TestDashboardStorageDeclaresPerVersionGVK(t *testing.T) {
 		{Group: group, Version: "v2beta1", Kind: "Dashboard"},
 		{Group: group, Version: "v2", Kind: "Dashboard"},
 	}, got, "each version declares itself, and v1 is not conflated with v1beta1")
-}
-
-// A standalone builder has no REST config provider for storage to build a folder client from, so it
-// hands storage the folder client that admission already uses.
-func TestDashboardStorageOptsGetFolder(t *testing.T) {
-	t.Run("standalone reads folders through the folder client", func(t *testing.T) {
-		handler := &recordingFolderHandler{folder: &unstructured.Unstructured{Object: map[string]any{
-			"metadata": map[string]any{
-				"name": "repo-folder",
-				"annotations": map[string]any{
-					utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
-					utils.AnnoKeyManagerIdentity: "my-repo",
-				},
-			},
-		}}}
-		b := &DashboardsAPIBuilder{isStandalone: true, folderClientProvider: &staticHandlerProvider{handler: handler}}
-
-		opts := b.dashboardStorageOpts()
-		require.NotNil(t, opts.GetFolder, "standalone storage has no other way to read the parent folder")
-
-		folder, err := opts.GetFolder(context.Background(), "stacks-13013", "repo-folder")
-		require.NoError(t, err)
-		manager, ok := folder.GetManagerProperties()
-		require.True(t, ok)
-		require.Equal(t, "my-repo", manager.Identity)
-		require.Equal(t, "repo-folder", handler.gotName)
-		require.Equal(t, int64(1), handler.gotOrgID)
-	})
-
-	t.Run("errors when the folder client is not configured for the namespace", func(t *testing.T) {
-		b := &DashboardsAPIBuilder{isStandalone: true, folderClientProvider: &staticHandlerProvider{}}
-		_, err := b.dashboardStorageOpts().GetFolder(context.Background(), "stacks-13013", "repo-folder")
-		require.ErrorContains(t, err, `folder client handler is not configured for namespace "stacks-13013"`)
-	})
-
-	t.Run("embedded keeps the storage's own client", func(t *testing.T) {
-		b := &DashboardsAPIBuilder{
-			iamFeatures:          iamapi.Features{ResourcePermissionsAPI: true},
-			folderClientProvider: &staticHandlerProvider{handler: &recordingFolderHandler{}},
-		}
-		require.Nil(t, b.dashboardStorageOpts().GetFolder)
-	})
-}
-
-type recordingFolderHandler struct {
-	client.K8sHandler
-	folder   *unstructured.Unstructured
-	gotName  string
-	gotOrgID int64
-}
-
-func (h *recordingFolderHandler) Get(_ context.Context, name string, orgID int64, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
-	h.gotName, h.gotOrgID = name, orgID
-	return h.folder, nil
 }
 
 func TestLegacyOnlySnapshotCreateAfterModeChanges(t *testing.T) {
