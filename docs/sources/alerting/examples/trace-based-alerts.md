@@ -307,7 +307,8 @@ The following example demonstrates how to recreate the previous **alert rule tha
 Follow these steps to create the alert:
 
 1. Enable TraceQL alerting
-   To use TraceQL in alerts, you must enable the [**`tempoAlerting`** feature flag in your Grafana configuration](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#feature_toggles).
+   
+   To use TraceQL in alerts, you must enable the [experimental **`tempoAlerting`** feature flag in your Grafana configuration](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#feature_toggles).
 
    If you use Grafana Cloud, contact Support to enable TraceQL alerting.
 
@@ -358,7 +359,8 @@ Calculating the error rate in a single TraceQL query requires Grafana Tempo v3.1
 Follow these steps to create the alert:
 
 1. Enable TraceQL alerting
-   To use TraceQL in alerts, you must enable the [**`tempoAlerting`** feature flag in your Grafana configuration](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#feature_toggles).
+   
+   To use TraceQL in alerts, you must enable the [experimental **`tempoAlerting`** feature flag in your Grafana configuration](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#feature_toggles).
 
    If you use Grafana Cloud, contact Support to enable TraceQL alerting.
 
