@@ -65,6 +65,7 @@ const toDataSourceSettings = (
     typeName: meta?.name ?? type,
     typeLogoUrl: meta?.info?.logos?.small ?? '',
     url: connection.url ?? '',
+    annotations: connection.annotations,
     isDefault: connection.labels?.default === 'true',
     access: '',
     user: '',
