@@ -3,12 +3,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert, Spinner, useStyles2 } from '@grafana/ui';
+import { Alert, EmptyState, Spinner, useStyles2 } from '@grafana/ui';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardLifecycleBanner } from '../lifecycle/DashboardLifecycleBanner';
+import { type DashboardLifecycleAction } from '../lifecycle/pendingChangePreview';
 import { UnifiedDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
+import { DashboardOverlay } from '../scene/DashboardOverlay';
 import { type DashboardScene } from '../scene/DashboardScene';
 
 export interface DashboardViewProps {
@@ -23,20 +25,28 @@ export interface DashboardViewProps {
    * grafana/dashboard/pending-changes/v1).
    */
   pendingChanges?: string;
+  /** Reports a completed action so the host can update its selected dashboard reference. */
+  onLifecycleChange?: (action: DashboardLifecycleAction) => void;
 }
 
 /**
  * EXPOSED COMPONENT (experimental, behind `assistant.dashboard.artifacts`): `grafana/dashboard-view/v1`
  *
  * A saved dashboard rendered outside the dashboard route, with its pending changes
- * banner, for a host such as the Grafana Assistant Workspace canvas. Viewing only:
- * editing happens on the dashboard page (Open in Grafana).
+ * banner and lifecycle actions, for a host such as the Grafana Assistant Workspace canvas.
+ * Full editing happens on the dashboard page; a draft can be saved in place.
  *
  * Uses its own page state manager rather than the route's singleton, so mounting it
  * never clears or replaces the dashboard the route has open. Treat props and visible
  * behavior as a stable contract; breaking changes go to a new v2 component.
  */
-export function DashboardView({ uid, controlsBackground, onTitleChange, pendingChanges }: DashboardViewProps) {
+export function DashboardView({
+  uid,
+  controlsBackground,
+  onTitleChange,
+  pendingChanges,
+  onLifecycleChange,
+}: DashboardViewProps) {
   const stateManager = useMemo(() => new UnifiedDashboardScenePageStateManager({}), []);
   const { dashboard, loadError } = stateManager.useState();
 
@@ -68,19 +78,30 @@ export function DashboardView({ uid, controlsBackground, onTitleChange, pendingC
   if (!dashboard) {
     return <Spinner />;
   }
-  return <DashboardViewRenderer model={dashboard} controlsBackground={controlsBackground} reload={reload} />;
+  return (
+    <DashboardViewRenderer
+      key={dashboard.state.key}
+      model={dashboard}
+      controlsBackground={controlsBackground}
+      reload={reload}
+      onLifecycleChange={onLifecycleChange}
+    />
+  );
 }
 
 function DashboardViewRenderer({
   model,
   controlsBackground,
   reload,
+  onLifecycleChange,
 }: {
   model: DashboardScene;
   controlsBackground?: string;
   reload: () => Promise<void>;
+  onLifecycleChange?: DashboardViewProps['onLifecycleChange'];
 }) {
   const [isActive, setIsActive] = useState(false);
+  const [discarded, setDiscarded] = useState(false);
   const { controls, body } = model.useState();
   const styles = useStyles2(getStyles, controlsBackground);
 
@@ -92,11 +113,30 @@ function DashboardViewRenderer({
   if (!isActive) {
     return null;
   }
+  if (discarded) {
+    return (
+      <EmptyState variant="completed" message={t('dashboard-scene.lifecycle.draft-discarded', 'Draft discarded')} />
+    );
+  }
 
   return (
     // DASHBOARD_VIEW_ATTRIBUTE: keeps the pending changes highlights to this view's panels.
     <div className={styles.root} data-dashboard-view="">
-      <DashboardLifecycleBanner dashboard={model} placement="embedded" reload={reload} />
+      <DashboardLifecycleBanner
+        dashboard={model}
+        placement="embedded"
+        reload={reload}
+        onLifecycleChange={onLifecycleChange}
+        onDiscardDraft={() => setDiscarded(true)}
+      />
+      <DashboardOverlay
+        dashboard={model}
+        onDismissLoading={() => {
+          if (model.state.isEditing) {
+            model.exitEditMode({ skipConfirm: true, restoreInitialState: true });
+          }
+        }}
+      />
       <div className={cx(styles.canvas, controls && styles.canvasWithControls)}>
         {controls && (
           <div className={styles.controls}>

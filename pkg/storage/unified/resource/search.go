@@ -996,6 +996,10 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 		}, nil
 	}
 
+	if err := ValidateAccessVerbs(req); err != nil {
+		return &resourcepb.ResourceSearchResponse{Error: err}, nil
+	}
+
 	for _, field := range req.Options.Fields {
 		if field.Key != SEARCH_FIELD_FOLDER_TREE {
 			continue
@@ -1023,6 +1027,27 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 		return permissionErrorResponse(span, err), nil
 	}
 	return s.searchIndex(ctx, stats, req, nsr, prepare)
+}
+
+// SearchAccessVerbs are the verbs a search can check for each returned row.
+var SearchAccessVerbs = []string{utils.VerbUpdate, utils.VerbDelete, utils.VerbSetPermissions}
+
+// ValidateAccessVerbs checks the verbs a search asks to check for each row.
+func ValidateAccessVerbs(req *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
+	if len(req.AccessVerbs) == 0 {
+		return nil
+	}
+	// Rows are checked against the documents of the searched index, and trash
+	// answers the trash rule instead.
+	if req.IsDeleted || len(req.Federated) > 0 {
+		return NewBadRequestError("access verbs are not supported for deleted resources or federated queries")
+	}
+	for _, verb := range req.AccessVerbs {
+		if !slices.Contains(SearchAccessVerbs, verb) {
+			return NewBadRequestError(fmt.Sprintf("unsupported access verb %q, expected one of %s", verb, strings.Join(SearchAccessVerbs, ", ")))
+		}
+	}
+	return nil
 }
 
 // searchGlobal searches the namespace-wide index, which holds several resource

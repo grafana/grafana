@@ -2983,6 +2983,33 @@ func TestSearchRejectsInvalidFolderTreeBeforeResolvingIndexes(t *testing.T) {
 	}
 }
 
+// Only verbs a row can be checked for are accepted, and not where rows come from
+// another index or trash, whose checks differ.
+func TestValidateAccessVerbs(t *testing.T) {
+	for name, tc := range map[string]struct {
+		req     *resourcepb.ResourceSearchRequest
+		wantErr bool
+	}{
+		"none":            {req: &resourcepb.ResourceSearchRequest{}},
+		"supported verbs": {req: &resourcepb.ResourceSearchRequest{AccessVerbs: []string{"update", "delete", "set_permissions"}}},
+		"unknown verb":    {req: &resourcepb.ResourceSearchRequest{AccessVerbs: []string{"update", "get"}}, wantErr: true},
+		"deleted":         {req: &resourcepb.ResourceSearchRequest{AccessVerbs: []string{"update"}, IsDeleted: true}, wantErr: true},
+		"federated": {req: &resourcepb.ResourceSearchRequest{AccessVerbs: []string{"update"}, Federated: []*resourcepb.ResourceKey{
+			{Group: "folder.grafana.app", Resource: "folders"},
+		}}, wantErr: true},
+	} {
+		t.Run(name, func(t *testing.T) {
+			err := ValidateAccessVerbs(tc.req)
+			if tc.wantErr {
+				require.NotNil(t, err)
+				require.Equal(t, int32(http.StatusBadRequest), err.Code)
+			} else {
+				require.Nil(t, err)
+			}
+		})
+	}
+}
+
 func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 	opts := SearchOptions{
 		Backend: &mockSearchBackend{},

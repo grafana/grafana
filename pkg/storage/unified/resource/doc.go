@@ -1,5 +1,13 @@
 // Package resource creates a ResourceServer that handles generic storage operations.
 //
+// # Blob write transport
+//
+// Create and Update accept blob references only in resource bodies. Upload bytes
+// separately through the blob store before issuing a resource write. BulkProcess
+// may also upload bytes through negotiated chunk framing, never inline body data.
+// The reference-only check is independent of schema validation and also applies
+// to no-op updates so inline data cannot bypass the write boundary.
+//
 // # Error handling
 //
 // Unified storage calls can report failure through a response-embedded ErrorResult
