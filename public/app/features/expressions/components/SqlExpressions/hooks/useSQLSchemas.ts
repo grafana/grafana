@@ -61,6 +61,7 @@ export function useSQLSchemas({ queries, enabled, timeRange, scopedVars, filters
   scopedVarsRef.current = scopedVars;
   const filtersRef = useRef(filters);
   filtersRef.current = filters;
+  const requestIdRef = useRef(0);
 
   const fetchSchemas = useCallback(async () => {
     if (!enabled || !isFeatureEnabled) {
@@ -72,15 +73,19 @@ export function useSQLSchemas({ queries, enabled, timeRange, scopedVars, filters
       return;
     }
 
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError(null);
+    setSchemas(null);
 
     try {
       const nonDashboardQueries = currentQueries.filter((q) => !isDashboardDatasource(q));
 
       if (nonDashboardQueries.length === 0) {
-        setSchemas({ kind: 'SQLSchemaResponse', apiVersion: 'query.grafana.app/v0alpha1', sqlSchemas: {} });
-        setLoading(false);
+        if (requestId === requestIdRef.current) {
+          setSchemas({ kind: 'SQLSchemaResponse', apiVersion: 'query.grafana.app/v0alpha1', sqlSchemas: {} });
+          setLoading(false);
+        }
         return;
       }
 
@@ -114,11 +119,17 @@ export function useSQLSchemas({ queries, enabled, timeRange, scopedVars, filters
         }
       );
 
-      setSchemas(response);
+      if (requestId === requestIdRef.current) {
+        setSchemas(response);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch SQL schemas'));
+      if (requestId === requestIdRef.current) {
+        setError(err instanceof Error ? err : new Error('Failed to fetch SQL schemas'));
+      }
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [enabled, isFeatureEnabled, timeRange]);
 
