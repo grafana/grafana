@@ -1,11 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useDeepCompareEffect } from 'react-use';
 
-import { FieldType, getDefaultTimeRange, type SelectableValue } from '@grafana/data';
+import { FieldType, generateUUID, getDefaultTimeRange, type SelectableValue } from '@grafana/data';
 import { quoteIdentifierIfNecessary } from '@grafana/sql';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { dataSource } from '../../ExpressionDatasource';
 import { isExpressionQuery } from '../../guards';
+import { interpolateSourceQueries } from '../../utils/interpolateSourceQueries';
+import { fetchSQLFields } from '../../utils/metaSqlExpr';
 import { SQL_EXPRESSIONS_DIALECT } from '../../utils/sqlIdentifier';
 import { type SQLSchemaField, useSQLSchemas } from '../SqlExpressions/hooks/useSQLSchemas';
 
@@ -29,8 +32,8 @@ export function classifySchemaFields(columns: SQLSchemaField[]): Omit<DynamicThr
   const stringFields: string[] = [];
 
   for (const column of columns) {
-    const type = column.dataFrameFieldType.toLowerCase();
-    if (type === FieldType.number || type === 'number') {
+    const type = column.dataFrameFieldType.toLowerCase().replace(/^\*+/, '');
+    if (type === FieldType.number || type === 'number' || /^(?:u?int|float)/.test(type)) {
       numericFields.push(column.name);
     } else if (type === FieldType.string || type === 'string') {
       stringFields.push(column.name);
@@ -43,10 +46,30 @@ export function classifySchemaFields(columns: SQLSchemaField[]): Omit<DynamicThr
 export function useDynamicThresholdSourcePreview(queries: AlertQuery[], inputRefId: string, matchLabel: string) {
   const sourceQuery = queries.find((query) => query.refId === inputRefId && !isExpressionQuery(query.model));
   const sourceQueries = useMemo(() => (sourceQuery ? [sourceQuery.model] : []), [sourceQuery]);
-  const { schemas, loading, error, isFeatureEnabled } = useSQLSchemas({
+  const { schemas, loading, error, isFeatureEnabled, refetch } = useSQLSchemas({
     queries: sourceQueries,
     enabled: Boolean(sourceQuery),
   });
+  const sourceKey = sourceQuery ? `${inputRefId}\0${JSON.stringify(sourceQuery.model)}` : '';
+  const initialSchemaFetch = useRef(true);
+  const [schemaSourceKey, setSchemaSourceKey] = useState(sourceKey);
+  useDeepCompareEffect(() => {
+    if (initialSchemaFetch.current) {
+      initialSchemaFetch.current = false;
+      return;
+    }
+    let cancelled = false;
+    setSchemaSourceKey('');
+    void refetch().then(() => {
+      if (!cancelled) {
+        setSchemaSourceKey(sourceKey);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [sourceQuery?.model, inputRefId, refetch]);
+
   const [fallbackResult, setFallbackResult] = useState<{
     key: string;
     fields: SQLSchemaField[] | null;
@@ -63,20 +86,15 @@ export function useDynamicThresholdSourcePreview(queries: AlertQuery[], inputRef
     }
 
     let cancelled = false;
-    dataSource
-      .runMetaSQLExprQuery(
-        { rawSql: `SELECT * FROM ${quoteIdentifierIfNecessary(inputRefId, SQL_EXPRESSIONS_DIALECT)} LIMIT 1` },
-        getDefaultTimeRange(),
-        [sourceQuery.model]
-      )
-      .then((frame) => {
+    fetchSQLFields({ table: inputRefId }, [sourceQuery.model])
+      .then((fields) => {
         if (!cancelled) {
           setFallbackResult({
-            key: inputRefId,
-            fields: frame.fields.map((field) => ({
+            key: sourceKey,
+            fields: fields.map((field) => ({
               name: field.name,
-              mysqlType: field.type,
-              dataFrameFieldType: field.type,
+              mysqlType: field.type ?? '',
+              dataFrameFieldType: field.type ?? '',
               nullable: true,
             })),
             error: null,
@@ -87,7 +105,7 @@ export function useDynamicThresholdSourcePreview(queries: AlertQuery[], inputRef
         (reason) =>
           !cancelled &&
           setFallbackResult({
-            key: inputRefId,
+            key: sourceKey,
             fields: null,
             error: reason instanceof Error ? reason : new Error(String(reason)),
           })
@@ -95,7 +113,7 @@ export function useDynamicThresholdSourcePreview(queries: AlertQuery[], inputRef
     return () => {
       cancelled = true;
     };
-  }, [inputRefId, isFeatureEnabled, sourceQuery]);
+  }, [inputRefId, isFeatureEnabled, sourceKey, sourceQuery]);
 
   useEffect(() => {
     if (!sourceQuery || !matchLabel) {
@@ -105,41 +123,47 @@ export function useDynamicThresholdSourcePreview(queries: AlertQuery[], inputRef
     let cancelled = false;
     const table = quoteIdentifierIfNecessary(inputRefId, SQL_EXPRESSIONS_DIALECT);
     const label = quoteIdentifierIfNecessary(matchLabel, SQL_EXPRESSIONS_DIALECT);
-    dataSource
-      .runMetaSQLExprQuery(
-        { rawSql: `SELECT DISTINCT ${label} FROM ${table} WHERE ${label} IS NOT NULL ORDER BY ${label} LIMIT 100` },
-        getDefaultTimeRange(),
-        [sourceQuery.model]
+    const refId = `dynamic-threshold-label-values-${generateUUID()}`;
+    interpolateSourceQueries([sourceQuery.model], {})
+      .then((interpolatedQueries) =>
+        dataSource.runMetaSQLExprQuery(
+          {
+            rawSql: `SELECT DISTINCT ${label} FROM ${table} WHERE ${label} IS NOT NULL ORDER BY ${label} LIMIT 100`,
+            refId,
+          },
+          getDefaultTimeRange(),
+          interpolatedQueries
+        )
       )
       .then((frame) => {
         if (!cancelled) {
           const field = frame.fields.find((field) => field.name === matchLabel) ?? frame.fields[0];
           setLabelValueResult({
-            key: `${inputRefId}\0${matchLabel}`,
+            key: `${sourceKey}\0${matchLabel}`,
             values: field
               ? Array.from(new Set(field.values.filter((value): value is string => typeof value === 'string')))
               : [],
           });
         }
       })
-      .catch(() => (!cancelled ? setLabelValueResult({ key: `${inputRefId}\0${matchLabel}`, values: [] }) : undefined));
+      .catch(() => (!cancelled ? setLabelValueResult({ key: `${sourceKey}\0${matchLabel}`, values: [] }) : undefined));
     return () => {
       cancelled = true;
     };
-  }, [inputRefId, matchLabel, sourceQuery]);
+  }, [inputRefId, matchLabel, sourceKey, sourceQuery]);
 
-  const schema = schemas?.sqlSchemas[inputRefId];
-  const fields = isFeatureEnabled ? schema?.columns : fallbackResult.key === inputRefId ? fallbackResult.fields : null;
+  const schema = schemaSourceKey === sourceKey ? schemas?.sqlSchemas[inputRefId] : undefined;
+  const fields = isFeatureEnabled ? schema?.columns : fallbackResult.key === sourceKey ? fallbackResult.fields : null;
   const classified = classifySchemaFields(fields ?? []);
-  const labelValues = labelValueResult.key === `${inputRefId}\0${matchLabel}` ? labelValueResult.values : [];
+  const labelValues = labelValueResult.key === `${sourceKey}\0${matchLabel}` ? labelValueResult.values : [];
 
   return {
     ...classified,
     labelValues,
-    loading: isFeatureEnabled ? loading : Boolean(sourceQuery) && fallbackResult.key !== inputRefId,
+    loading: isFeatureEnabled ? loading : Boolean(sourceQuery) && fallbackResult.key !== sourceKey,
     error: isFeatureEnabled
       ? (error ?? (schema?.error ? new Error(schema.error) : null))
-      : fallbackResult.key === inputRefId
+      : fallbackResult.key === sourceKey
         ? fallbackResult.error
         : null,
     hasSchema: fields !== null && fields !== undefined,

@@ -12,6 +12,7 @@ export type DynamicThresholdValidationErrorCode =
   | 'thresholdArity'
   | 'thresholdValue'
   | 'range'
+  | 'blankMapping'
   | 'duplicateMapping'
   | 'labelColumnCollision'
   | 'queryLength';
@@ -201,7 +202,15 @@ function validatePolicy(policy: DynamicThresholdPolicyV1): DynamicThresholdValid
   validateThresholds(policy.defaultThreshold, expectedArity, { field: 'defaultThreshold' }, errors);
   const values = new Set<string>();
   policy.mappings.forEach((mapping, mappingIndex) => {
-    if (values.has(mapping.labelValue)) {
+    if (!mapping.labelValue.trim()) {
+      errors.push({
+        code: 'blankMapping',
+        message: t('expressions.dynamic-threshold.error-blank-mapping', 'Mapping row {{row}} requires a label value.', {
+          row: mappingIndex + 1,
+        }),
+        location: { field: 'mappings', mappingIndex },
+      });
+    } else if (values.has(mapping.labelValue)) {
       errors.push({
         code: 'duplicateMapping',
         message: t(
@@ -212,14 +221,16 @@ function validatePolicy(policy: DynamicThresholdPolicyV1): DynamicThresholdValid
         location: { field: 'mappings', mappingIndex },
       });
     }
-    values.add(mapping.labelValue);
+    if (mapping.labelValue.trim()) {
+      values.add(mapping.labelValue);
+    }
     validateThresholds(mapping.thresholds, expectedArity, { field: 'mappings', mappingIndex }, errors);
   });
   return errors;
 }
 
 function validateThresholds(
-  thresholds: number[],
+  thresholds: Array<number | undefined>,
   expectedArity: number,
   location: DynamicThresholdValidationError['location'],
   errors: DynamicThresholdValidationError[]
@@ -244,7 +255,11 @@ function validateThresholds(
     });
     return;
   }
-  if (thresholds.some((threshold) => !Number.isFinite(threshold))) {
+  if (
+    Array.from({ length: expectedArity }, (_, index) => thresholds[index]).some(
+      (threshold) => typeof threshold !== 'number' || !Number.isFinite(threshold)
+    )
+  ) {
     errors.push({
       code: 'thresholdValue',
       message: isMapping
@@ -260,7 +275,12 @@ function validateThresholds(
       location,
     });
   }
-  if (expectedArity === 2 && thresholds[0] >= thresholds[1]) {
+  if (
+    expectedArity === 2 &&
+    typeof thresholds[0] === 'number' &&
+    typeof thresholds[1] === 'number' &&
+    thresholds[0] >= thresholds[1]
+  ) {
     errors.push({
       code: 'range',
       message: isMapping
@@ -313,6 +333,6 @@ function quoteString(value: string): string {
   return `'${value.replaceAll('\\', '\\\\').replaceAll("'", "''")}'`;
 }
 
-function formatNumber(value: number): string {
+function formatNumber(value: number | undefined): string {
   return String(value);
 }

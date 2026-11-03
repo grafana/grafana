@@ -27,7 +27,11 @@ export function DynamicThresholdMappings({ mappings, labelValues, thresholdCount
   return (
     <Stack direction="column" gap={1}>
       {mappings.map((mapping, index) => {
-        const error = errors.find((error) => error.location.mappingIndex === index)?.message;
+        const rowNumber = index + 1;
+        const error = errors
+          .filter((error) => error.location.mappingIndex === index)
+          .map((error) => error.message)
+          .join(' ');
         return (
           <Stack key={index} direction="row" gap={1} alignItems="flex-start">
             <Field
@@ -37,7 +41,9 @@ export function DynamicThresholdMappings({ mappings, labelValues, thresholdCount
               error={error}
             >
               <Select
-                aria-label={t('expressions.dynamic-threshold.label-value', 'Label value')}
+                aria-label={t('expressions.dynamic-threshold.mapping-label-value', 'Mapping row {{row}} label value', {
+                  row: rowNumber,
+                })}
                 options={labelValues.map((value) => ({ value, label: value }))}
                 value={mapping.labelValue ? { value: mapping.labelValue, label: mapping.labelValue } : null}
                 allowCustomValue
@@ -59,16 +65,30 @@ export function DynamicThresholdMappings({ mappings, labelValues, thresholdCount
                 }
               >
                 <Input
-                  aria-label={t('expressions.dynamic-threshold.threshold-input', 'Threshold {{number}}', {
-                    number: thresholdIndex + 1,
-                  })}
+                  aria-label={
+                    thresholdCount === 1
+                      ? t('expressions.dynamic-threshold.mapping-threshold-input', 'Mapping row {{row}} threshold', {
+                          row: rowNumber,
+                        })
+                      : thresholdIndex === 0
+                        ? t(
+                            'expressions.dynamic-threshold.mapping-lower-threshold-input',
+                            'Mapping row {{row}} lower threshold',
+                            { row: rowNumber }
+                          )
+                        : t(
+                            'expressions.dynamic-threshold.mapping-upper-threshold-input',
+                            'Mapping row {{row}} upper threshold',
+                            { row: rowNumber }
+                          )
+                  }
                   type="number"
                   value={mapping.thresholds[thresholdIndex] ?? ''}
                   onChange={(event) => {
                     const thresholds = [...mapping.thresholds];
                     const value = event.currentTarget.value;
                     if (value === '') {
-                      thresholds.splice(thresholdIndex, 1);
+                      thresholds[thresholdIndex] = undefined;
                     } else {
                       thresholds[thresholdIndex] = Number(value);
                     }
@@ -80,19 +100,25 @@ export function DynamicThresholdMappings({ mappings, labelValues, thresholdCount
             <Stack direction="row" gap={0.5}>
               <IconButton
                 name="arrow-up"
-                aria-label={t('expressions.dynamic-threshold.move-up', 'Move mapping up')}
+                aria-label={t('expressions.dynamic-threshold.move-up', 'Move mapping row {{row}} up', {
+                  row: rowNumber,
+                })}
                 disabled={index === 0}
                 onClick={() => move(index, -1)}
               />
               <IconButton
                 name="arrow-down"
-                aria-label={t('expressions.dynamic-threshold.move-down', 'Move mapping down')}
+                aria-label={t('expressions.dynamic-threshold.move-down', 'Move mapping row {{row}} down', {
+                  row: rowNumber,
+                })}
                 disabled={index === mappings.length - 1}
                 onClick={() => move(index, 1)}
               />
               <IconButton
                 name="trash-alt"
-                aria-label={t('expressions.dynamic-threshold.remove-mapping', 'Remove mapping')}
+                aria-label={t('expressions.dynamic-threshold.remove-mapping', 'Remove mapping row {{row}}', {
+                  row: rowNumber,
+                })}
                 onClick={() => onChange(mappings.filter((_, currentIndex) => currentIndex !== index))}
               />
             </Stack>

@@ -276,6 +276,12 @@ FROM \`A\``);
       { field: 'labelColumns' },
     ],
     [
+      'blank mapping value',
+      policy({ mappings: [{ labelValue: '   ', thresholds: [1] }] }),
+      'blankMapping',
+      { field: 'mappings', mappingIndex: 0 },
+    ],
+    [
       'duplicate mapping values',
       policy({
         mappings: [
@@ -292,6 +298,28 @@ FROM \`A\``);
       policy({ evaluator: 'unsupported' as EvalFunction }),
       'evaluator',
       { field: 'evaluator' },
+    ],
+    [
+      'sparse default threshold',
+      policy({
+        evaluator: EvalFunction.IsWithinRange,
+        mappings: [],
+        defaultThreshold: [undefined, 2],
+      }),
+      'thresholdValue',
+      { field: 'defaultThreshold' },
+    ],
+    [
+      'undefined mapping threshold',
+      policy({ mappings: [{ labelValue: 'production', thresholds: [undefined] }] }),
+      'thresholdValue',
+      { field: 'mappings', mappingIndex: 0 },
+    ],
+    [
+      'non-number default threshold',
+      policy({ defaultThreshold: ['5' as unknown as number] }),
+      'thresholdValue',
+      { field: 'defaultThreshold' },
     ],
     [
       'infinite default threshold',
@@ -331,6 +359,7 @@ FROM \`A\``);
     const result = buildDynamicThreshold(input);
 
     expect(result.ok).toBe(false);
+    expect(JSON.stringify(result)).not.toContain('undefined');
     if (!result.ok) {
       expect(result.errors).toEqual(expect.arrayContaining([expect.objectContaining({ code: errorCode, location })]));
     }

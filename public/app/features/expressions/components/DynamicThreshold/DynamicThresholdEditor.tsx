@@ -46,13 +46,11 @@ export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
     if (!source.hasSchema) {
       return;
     }
-    const valueField = source.numericFields.length === 1 ? source.numericFields[0] : policy.valueField;
-    const labelColumns = source.stringFields;
-    if (
-      valueField !== policy.valueField ||
-      labelColumns.length !== policy.labelColumns.length ||
-      labelColumns.some((column, index) => column !== policy.labelColumns[index])
-    ) {
+    const valueField =
+      !policy.valueField && source.numericFields.length === 1 ? source.numericFields[0] : policy.valueField;
+    const labelColumns =
+      policy.labelColumns.length === 0 && source.stringFields.length > 0 ? source.stringFields : policy.labelColumns;
+    if (valueField !== policy.valueField || labelColumns !== policy.labelColumns) {
       updatePolicy({ ...policy, valueField, labelColumns });
     }
     // The schema result is the trigger; query updates feed the new policy back through props.
@@ -63,6 +61,9 @@ export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
     errors.find((error) => error.location.field === field && error.location.mappingIndex === undefined)?.message;
 
   const changeMatchLabel = (matchLabel: string) => {
+    if (matchLabel === policy.matchLabel) {
+      return;
+    }
     if (policy.mappings.length > 0 || policy.defaultThreshold.length > 0) {
       setPendingMatchLabel(matchLabel);
     } else {
@@ -164,9 +165,9 @@ export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
               evaluator,
               mappings: policy.mappings.map((mapping) => ({
                 ...mapping,
-                thresholds: mapping.thresholds.slice(0, count),
+                thresholds: resizeThresholds(mapping.thresholds, count),
               })),
-              defaultThreshold: policy.defaultThreshold.slice(0, count),
+              defaultThreshold: resizeThresholds(policy.defaultThreshold, count),
             });
           }}
         />
@@ -192,14 +193,18 @@ export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
             <Input
               key={index}
               type="number"
-              aria-label={t('expressions.dynamic-threshold.default-threshold-input', 'Default threshold {{number}}', {
-                number: index + 1,
-              })}
+              aria-label={
+                thresholdCount === 1
+                  ? t('expressions.dynamic-threshold.default-threshold-input', 'Default threshold')
+                  : index === 0
+                    ? t('expressions.dynamic-threshold.default-lower-threshold-input', 'Default lower threshold')
+                    : t('expressions.dynamic-threshold.default-upper-threshold-input', 'Default upper threshold')
+              }
               value={policy.defaultThreshold[index] ?? ''}
               onChange={(event) => {
                 const values = [...policy.defaultThreshold];
                 if (event.currentTarget.value === '') {
-                  values.splice(index, 1);
+                  values[index] = undefined;
                 } else {
                   values[index] = Number(event.currentTarget.value);
                 }
@@ -226,4 +231,12 @@ export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
       />
     </Stack>
   );
+}
+
+function resizeThresholds(thresholds: Array<number | undefined>, count: number): Array<number | undefined> {
+  const resized = thresholds.slice(0, count);
+  while (resized.length < count) {
+    resized.push(undefined);
+  }
+  return resized;
 }

@@ -128,7 +128,7 @@ describe('DynamicThresholdEditor', () => {
     const onChange = jest.fn();
     render(<DynamicThresholdEditor query={makeQuery()} queries={[sourceQuery]} onChange={onChange} />);
 
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'Default threshold 1' }), {
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Default threshold' }), {
       target: { value: '12' },
     });
 
@@ -148,10 +148,10 @@ describe('DynamicThresholdEditor', () => {
     const onChange = jest.fn();
     render(<DynamicThresholdEditor query={makeQuery()} queries={[sourceQuery]} onChange={onChange} />);
 
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'Default threshold 1' }), { target: { value: '' } });
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Default threshold' }), { target: { value: '' } });
 
     expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ expression: '' }));
-    expect(onChange.mock.calls.at(-1)?.[0].dynamicThreshold.policy.defaultThreshold).toEqual([]);
+    expect(onChange.mock.calls.at(-1)?.[0].dynamicThreshold.policy.defaultThreshold).toEqual([undefined]);
   });
 
   it('clears schema-dependent policy state when the input query changes', async () => {
@@ -185,6 +185,115 @@ describe('DynamicThresholdEditor', () => {
         }),
       })
     );
+  });
+
+  it('does not rewrite a populated saved policy when schema loads or returns no data', () => {
+    const onChange = jest.fn();
+    const { rerender } = render(
+      <DynamicThresholdEditor query={makeQuery()} queries={[sourceQuery]} onChange={onChange} />
+    );
+
+    expect(onChange).not.toHaveBeenCalled();
+    mockSourcePreview.mockReturnValue({
+      numericFields: [],
+      stringFields: [],
+      labelValues: [],
+      loading: false,
+      error: null,
+      hasSchema: true,
+    });
+    rerender(<DynamicThresholdEditor query={makeQuery()} queries={[sourceQuery]} onChange={onChange} />);
+
+    expect(onChange).not.toHaveBeenCalled();
+
+    rerender(
+      <DynamicThresholdEditor
+        query={makeQuery({ valueField: '', labelColumns: [] })}
+        queries={[sourceQuery]}
+        onChange={onChange}
+      />
+    );
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('preserves positional range slots when either bound is cleared or entered first', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    render(
+      <DynamicThresholdEditor
+        query={makeQuery({ evaluator: EvalFunction.IsWithinRange, defaultThreshold: [1, 2] })}
+        queries={[sourceQuery]}
+        onChange={onChange}
+      />
+    );
+
+    const lower = screen.getByRole('spinbutton', { name: 'Default lower threshold' });
+    const upper = screen.getByRole('spinbutton', { name: 'Default upper threshold' });
+    await user.clear(lower);
+    expect(onChange.mock.calls.at(-1)?.[0].dynamicThreshold.policy.defaultThreshold).toEqual([undefined, 2]);
+
+    fireEvent.change(upper, { target: { value: '' } });
+    fireEvent.change(upper, { target: { value: '9' } });
+    expect(onChange.mock.calls.at(-1)?.[0].dynamicThreshold.policy.defaultThreshold).toEqual([1, 9]);
+  });
+
+  it('resizes threshold slots only when operator arity changes', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    const { rerender } = render(
+      <DynamicThresholdEditor query={makeQuery()} queries={[sourceQuery]} onChange={onChange} />
+    );
+
+    await user.click(screen.getByRole('combobox', { name: 'Operator' }));
+    await user.click(screen.getByText('Is within range'));
+    expect(onChange.mock.calls.at(-1)?.[0].dynamicThreshold.policy.defaultThreshold).toEqual([10, undefined]);
+    expect(onChange.mock.calls.at(-1)?.[0].dynamicThreshold.policy.mappings[0].thresholds).toEqual([5, undefined]);
+
+    rerender(
+      <DynamicThresholdEditor
+        query={makeQuery({
+          evaluator: EvalFunction.IsWithinRange,
+          defaultThreshold: [10, 20],
+          mappings: [{ labelValue: 'us-east', thresholds: [5, 15] }],
+        })}
+        queries={[sourceQuery]}
+        onChange={onChange}
+      />
+    );
+    await user.click(screen.getByRole('combobox', { name: 'Operator' }));
+    await user.click(screen.getByText('Is above'));
+    expect(onChange.mock.calls.at(-1)?.[0].dynamicThreshold.policy.defaultThreshold).toEqual([10]);
+    expect(onChange.mock.calls.at(-1)?.[0].dynamicThreshold.policy.mappings[0].thresholds).toEqual([5]);
+  });
+
+  it('keeps mappings unchanged when preview suggestions refresh', () => {
+    const onChange = jest.fn();
+    const { rerender } = render(
+      <DynamicThresholdEditor query={makeQuery()} queries={[sourceQuery]} onChange={onChange} />
+    );
+    mockSourcePreview.mockReturnValue({
+      numericFields: ['value'],
+      stringFields: ['region', 'cluster'],
+      labelValues: ['new-suggestion'],
+      loading: false,
+      error: null,
+      hasSchema: true,
+    });
+    rerender(<DynamicThresholdEditor query={makeQuery()} queries={[sourceQuery]} onChange={onChange} />);
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('selecting the current match label is a no-op', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    render(<DynamicThresholdEditor query={makeQuery()} queries={[sourceQuery]} onChange={onChange} />);
+
+    await user.click(screen.getByRole('combobox', { name: 'Match label' }));
+    await user.click(screen.getAllByText('region').at(-1)!);
+
+    expect(screen.queryByText('Change match label?')).not.toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('requires confirmation before changing labels and cancel preserves policy', async () => {

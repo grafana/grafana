@@ -153,7 +153,7 @@ export interface ExpressionQuery extends DataQuery {
 
 export interface DynamicThresholdMapping {
   labelValue: string;
-  thresholds: number[];
+  thresholds: Array<number | undefined>;
 }
 
 export interface DynamicThresholdPolicyV1 {
@@ -163,7 +163,7 @@ export interface DynamicThresholdPolicyV1 {
   labelColumns: string[];
   evaluator: EvalFunction;
   mappings: DynamicThresholdMapping[];
-  defaultThreshold: number[];
+  defaultThreshold: Array<number | undefined>;
 }
 
 export interface DynamicThresholdMetadataV1 {
