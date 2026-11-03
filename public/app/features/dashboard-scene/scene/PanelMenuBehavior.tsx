@@ -35,6 +35,7 @@ import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { pastePanelStyles } from '../actions/panel/pastePanelStyles';
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
@@ -253,7 +254,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (canManuallyEditDashboard(dashboard.state) && hasLegendOptions(panel.state.options) && !isEditingPanel) {
+    if (hasLegendOptions(panel.state.options) && !isEditingPanel) {
       moreSubMenu.push({
         text: shouldShowLegend(panel.state.options.legend)
           ? t('panel.header-menu.hide-legend', 'Hide legend')
@@ -305,16 +306,14 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     items.push(getInspectMenuItem(plugin, panel, dashboard));
 
-    if (config.featureToggles.panelTimeSettings && canManuallyEditDashboard(dashboard.state)) {
-      items.push({
-        text: t('panel.header-menu.time-settings', 'Time settings'),
-        iconClassName: 'clock-nine',
-        onClick: (e) => {
-          e.preventDefault();
-          dashboard.showModal(new PanelTimeRangeDrawer({ panelRef: panel.getRef() }));
-        },
-      });
-    }
+    items.push({
+      text: t('panel.header-menu.time-settings', 'Time settings'),
+      iconClassName: 'clock-nine',
+      onClick: (e) => {
+        e.preventDefault();
+        dashboard.showModal(new PanelTimeRangeDrawer({ panelRef: panel.getRef() }));
+      },
+    });
 
     const extensions = await firstValueFrom(
       getObservablePluginLinks({
@@ -366,7 +365,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
               panel.state.pluginId,
               getPanelIdForVizPanel(panel) ?? -1
             );
-            dashboard.pastePanelStyles(panel);
+            pastePanelStyles(dashboard, panel);
           },
         });
       }
@@ -404,7 +403,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
       items.push({
         text: t('panel.header-menu.add-to-notebook', 'Add to notebook'),
-        iconClassName: 'book',
+        iconClassName: 'gf-notebook',
         onClick: () => {
           dashboard.showModal(new AddPanelToNotebookScene({ panelRef: panel.getRef() }));
         },
@@ -578,14 +577,18 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
 }
 
 export function onRemovePanel(dashboard: DashboardScene, panel: VizPanel) {
-  appEvents.publish(
-    new ShowConfirmModalEvent({
-      title: t('dashboard-scene.on-remove-panel.title.remove-panel', 'Remove panel'),
-      text: t('dashboard-scene.on-remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?'),
-      yesText: 'Remove',
-      onConfirm: () => dashboard.removePanel(panel),
-    })
-  );
+  // Let the menu close and release focus before mounting the confirmation modal.
+  // Otherwise its aria-hidden ancestor still contains the focused trigger.
+  setTimeout(() => {
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard-scene.on-remove-panel.title.remove-panel', 'Remove panel'),
+        text: t('dashboard-scene.on-remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?'),
+        yesText: 'Remove',
+        onConfirm: () => dashboard.removePanel(panel),
+      })
+    );
+  }, 0);
 }
 
 const onCreateAlert = async (panel: VizPanel, dashboard: DashboardScene) => {
@@ -646,9 +649,6 @@ const onCreateAlert = async (panel: VizPanel, dashboard: DashboardScene) => {
 };
 
 export function toggleVizPanelLegend(vizPanel: VizPanel): void {
-  if (dashboardModesEnabled() && !canManuallyEditDashboard(getDashboardSceneFor(vizPanel).state)) {
-    return;
-  }
   const options = vizPanel.state.options;
   if (hasLegendOptions(options) && typeof options.legend.showLegend === 'boolean') {
     if (shouldShowLegend(options.legend)) {

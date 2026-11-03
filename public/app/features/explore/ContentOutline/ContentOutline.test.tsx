@@ -16,7 +16,11 @@ jest.mock('./ContentOutlineContext', () => ({
 const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
 
 jest.mock('@openfeature/react-sdk', () => ({
-  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagDetails: (flag: string, defaultValue: boolean) => ({
+    value: useBooleanFlagValueMock(flag, defaultValue),
+  }),
+  useOpenFeatureClientStatus: () => 'NOT_READY',
 }));
 
 const scrollIntoViewMock = jest.fn();
@@ -123,6 +127,7 @@ const setup = async (
   const rendered = render(
     <ContentOutline
       scroller={scrollerMock}
+      exploreId="1"
       panelId="content-outline-container-1"
       showSignalExplorer={showSignalExplorer}
       queries={queries}
@@ -171,11 +176,13 @@ describe('<ContentOutline />', () => {
     // Explore assigns its scroll container in a ref callback, so the outline's first render gets
     // nothing. Without tracking it, the active item never moves off the one it started on.
     const { rerender } = render(
-      <ContentOutline scroller={undefined} panelId="content-outline-container-1" timeRange={timeRange} />
+      <ContentOutline scroller={undefined} exploreId="1" panelId="content-outline-container-1" timeRange={timeRange} />
     );
     expect(addScrollListener).not.toHaveBeenCalled();
 
-    rerender(<ContentOutline scroller={scroller} panelId="content-outline-container-1" timeRange={timeRange} />);
+    rerender(
+      <ContentOutline scroller={scroller} exploreId="1" panelId="content-outline-container-1" timeRange={timeRange} />
+    );
 
     expect(addScrollListener).toHaveBeenCalledWith('scroll', expect.any(Function), expect.anything());
   });
@@ -324,7 +331,14 @@ describe('<ContentOutline />', () => {
         unregister: unregisterMock,
       });
 
-      render(<ContentOutline scroller={scrollerMock} panelId="content-outline-container-1" timeRange={timeRange} />);
+      render(
+        <ContentOutline
+          scroller={scrollerMock}
+          exploreId="1"
+          panelId="content-outline-container-1"
+          timeRange={timeRange}
+        />
+      );
       await userEvent.click(screen.getByRole('button', { name: 'Collapse outline' }));
 
       expect(screen.getByRole('button', { name: 'Logs' })).toBeInTheDocument();

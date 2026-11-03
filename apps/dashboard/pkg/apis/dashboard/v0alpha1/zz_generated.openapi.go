@@ -1415,6 +1415,13 @@ func schema_pkg_apis_dashboard_v0alpha1_SnapshotSpec(ref common.ReferenceCallbac
 							Format:      "",
 						},
 					},
+					"externalDeleteUrl": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The server-provided URL for deleting the external snapshot",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"originalUrl": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The URL that created the dashboard originally",

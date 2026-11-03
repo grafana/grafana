@@ -3,9 +3,8 @@ import { render } from 'test/test-utils';
 
 import type { PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { setPluginImportUtils, setPluginLinksHook } from '@grafana/runtime';
 import { CustomVariable, SceneGridLayout, SceneTimeRange, SceneVariableSet, VizPanel } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardScene } from '../DashboardScene';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
@@ -25,6 +24,8 @@ setPluginImportUtils({
   getPanelPluginFromCache: () => undefined,
 });
 
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
+
 function getInterceptors() {
   return screen.queryAllByTestId(interceptorTestId);
 }
@@ -40,18 +41,6 @@ async function flushPanelLoad() {
 }
 
 describe('AutoGridResizeIntercept', () => {
-  beforeEach(() => {
-    // New layouts mount the sidebar extension point, which calls usePluginLinks. These tests
-    // render the scene without starting that hook.
-    setTestFlags({ dashboardNewLayouts: false });
-  });
-
-  afterEach(() => {
-    act(() => {
-      setTestFlags({});
-    });
-  });
-
   it('renders for a panel that does not repeat', async () => {
     await buildAutoGridScene({ repeat: false });
     expect(getInterceptors()).toHaveLength(1);

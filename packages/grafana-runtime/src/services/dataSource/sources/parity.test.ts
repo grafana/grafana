@@ -161,7 +161,6 @@ function connections(): DataSourceConnection[] {
       title: notInstalled.name,
       name: notInstalled.uid,
       group: `${notInstalled.storedType}.datasource.grafana.app`,
-      version: 'v0alpha1',
       plugin: notInstalled.storedType,
     },
   ];
@@ -306,10 +305,8 @@ describe('boot data and MT parity', () => {
     invalidateCachedPromisesCache();
     await answersFromMT();
     const mtLoki = await getDataSourceInstanceSettings('uid-loki');
-    const mtProm = await getDataSourceInstanceListItem('uid-prom');
 
     expect(bootLoki?.basicAuth).toBe('Basic ZHVtbXktdXNlcjpkdW1teS1wYXNzd29yZA==');
     expect(mtLoki?.basicAuth).toBeUndefined();
-    expect(mtProm?.apiVersion).toBe('v0alpha1');
   });
 });

@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
 )
 
 type TemplateGroup struct {
@@ -120,7 +121,7 @@ func TemplatesToTemplateFiles(templates map[ResourceUID]TemplateGroup) map[strin
 }
 
 // ManagedTemplatesToTemplates converts a ManagedTemplates map (keyed by UID) to the internal TemplateGroup map.
-func ManagedTemplatesToTemplates(managed map[string]definition.PostableApiTemplate) map[ResourceUID]TemplateGroup {
+func ManagedTemplatesToTemplates(managed map[string]store.PostableApiTemplateDB) map[ResourceUID]TemplateGroup {
 	if managed == nil {
 		return nil
 	}
@@ -133,16 +134,16 @@ func ManagedTemplatesToTemplates(managed map[string]definition.PostableApiTempla
 }
 
 // TemplatesToManagedTemplates converts the internal TemplateGroup map to a ManagedTemplates map keyed by UID.
-func TemplatesToManagedTemplates(templates map[ResourceUID]TemplateGroup) map[string]definition.PostableApiTemplate {
+func TemplatesToManagedTemplates(templates map[ResourceUID]TemplateGroup) map[string]store.PostableApiTemplateDB {
 	if templates == nil {
 		return nil
 	}
-	out := make(map[string]definition.PostableApiTemplate, len(templates))
+	out := make(map[string]store.PostableApiTemplateDB, len(templates))
 	for uid, tg := range templates {
-		out[string(uid)] = definition.PostableApiTemplate{
+		out[string(uid)] = store.PostableApiTemplateDB{
 			Name:    tg.Title,
 			Content: tg.Content,
-			Kind:    definition.TemplateKind(tg.Kind),
+			Kind:    string(tg.Kind),
 		}
 	}
 	return out

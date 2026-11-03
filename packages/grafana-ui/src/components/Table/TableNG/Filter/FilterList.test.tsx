@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
+import * as textMeasurement from '../../../../utils/measureText';
 import { FilterOperator } from '../types';
 
 import { FilterList } from './FilterList';
@@ -304,4 +305,71 @@ describe('FilterList', () => {
       expect(screen.getByRole('checkbox', { name: /1 selected/ })).toBeInTheDocument();
     });
   });
+});
+
+it('sizes from the widest available label and keeps that width while searching', () => {
+  const measurement = jest
+    .spyOn(textMeasurement, 'measureText')
+    .mockImplementation((text) => ({ width: text === 'WWWW' ? 250 : 120 }) as TextMetrics);
+  const options = [
+    { value: 'wide', label: 'WWWW' },
+    { value: 'long', label: 'iiiiiiii' },
+  ];
+  const onWidthChange = jest.fn();
+  const props = { options, values: [], onChange: jest.fn(), onWidthChange, operator: containsOp() };
+  try {
+    const { rerender } = render(<FilterList {...props} searchFilter="" />);
+    expect(onWidthChange).toHaveBeenLastCalledWith(314);
+    onWidthChange.mockClear();
+    rerender(<FilterList {...props} searchFilter="iiii" />);
+    expect(screen.getByRole('checkbox', { name: 'iiiiiiii' })).toBeInTheDocument();
+    expect(onWidthChange).not.toHaveBeenCalled();
+  } finally {
+    measurement.mockRestore();
+  }
+});
+
+it('does not measure labels when dynamic width is disabled', () => {
+  const measurement = jest.spyOn(textMeasurement, 'measureText');
+  try {
+    render(
+      <FilterList
+        options={[{ value: 'value', label: 'Label' }]}
+        values={[]}
+        onChange={jest.fn()}
+        operator={containsOp()}
+        searchFilter=""
+      />
+    );
+    expect(measurement).not.toHaveBeenCalled();
+  } finally {
+    measurement.mockRestore();
+  }
+});
+
+it('measures at most 100 of the longest labels', () => {
+  const measurement = jest
+    .spyOn(textMeasurement, 'measureText')
+    .mockImplementation((text) => ({ width: text.length }) as TextMetrics);
+  const options = Array.from({ length: 150 }, (_, index) => ({
+    value: String(index),
+    label: 'x'.repeat(index + 1),
+  }));
+  try {
+    render(
+      <FilterList
+        options={options}
+        values={[]}
+        onChange={jest.fn()}
+        onWidthChange={jest.fn()}
+        operator={containsOp()}
+        searchFilter=""
+      />
+    );
+    expect(measurement).toHaveBeenCalledTimes(100);
+    expect(measurement).toHaveBeenCalledWith('x'.repeat(150), expect.any(Number));
+    expect(measurement).not.toHaveBeenCalledWith('x', expect.any(Number));
+  } finally {
+    measurement.mockRestore();
+  }
 });

@@ -2,6 +2,7 @@ import { type ExtensionSidebarAPI } from '@grafana/data';
 import {
   canFloatExtensionSidebar,
   setExtensionSidebarPresentation,
+  subscribeToFloatingExtensionSidebarCollapse,
 } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
 
 export const extensionSidebarApi: ExtensionSidebarAPI = {
@@ -12,4 +13,11 @@ export const extensionSidebarApi: ExtensionSidebarAPI = {
       setExtensionSidebarPresentation(presentation);
     }
   },
+  subscribeToCollapse: (listener) => {
+    if (typeof listener !== 'function') {
+      return () => {};
+    }
+    return subscribeToFloatingExtensionSidebarCollapse(listener);
+  },
+  canDragToFloat: () => canFloatExtensionSidebar(),
 };

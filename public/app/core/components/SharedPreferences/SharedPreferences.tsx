@@ -5,7 +5,6 @@ import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useFlagGrafanaGlobalHomePreference } from '@grafana/runtime/internal';
 import {
   Alert,
   Box,
@@ -55,11 +54,8 @@ export const SharedPreferences = memo((props: SharedPreferencesProps) => {
     useSharedPreferences(resourceUri);
 
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
-  const includeGlobalHomeOption = useFlagGrafanaGlobalHomePreference();
-  const homeDashboardStaticOptions = useMemo(
-    () => (includeGlobalHomeOption ? [getGlobalHomeOption()] : undefined),
-    [includeGlobalHomeOption]
-  );
+  // Stable identity: the picker re-resolves its current value whenever this changes.
+  const homeDashboardStaticOptions = useMemo(() => [getGlobalHomeOption()], []);
   const [state, setState] = useState<PrefsState>({
     theme: undefined,
     timezone: '',

@@ -51,6 +51,7 @@ jobs:
               # (keep in sync with the negations in unified_storage below)
               - 'pkg/storage/unified/apistore/**'
               - 'pkg/storage/unified/federated/**'
+              - 'pkg/storage/unified/informer/**'
               - 'pkg/storage/unified/*.go'
               # test-only files don't ship, so they can't break cross-version compatibility
               - '!**/*_test.go'
@@ -61,6 +62,7 @@ jobs:
               # server (keep in sync with the client-side block in api_layer above)
               - '!pkg/storage/unified/apistore/**'
               - '!pkg/storage/unified/federated/**'
+              - '!pkg/storage/unified/informer/**'
               - '!pkg/storage/unified/*.go'
               # test-only files don't ship, so they can't break cross-version compatibility
               - '!**/*_test.go'

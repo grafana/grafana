@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/grafana/dskit/instrument"
@@ -242,6 +243,13 @@ type DSKitService struct {
 
 	// Health is the gRPC health server registered on this service.
 	Health *HealthService
+
+	drain func()
+}
+
+// Drain lets dependent services finish accepted RPCs before closing their backends.
+func (s *DSKitService) Drain() {
+	s.drain()
 }
 
 // ProvideDSKitService wraps a Provider into a dskit BasicService.
@@ -281,13 +289,19 @@ func ProvideDSKitServiceWithListener(
 	hs.setServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 	grpc_health_v1.RegisterHealthServer(grpcService.GetServer(), hs)
 
-	svc := &DSKitService{Provider: grpcService, Health: hs}
+	svc := &DSKitService{
+		Provider: grpcService,
+		Health:   hs,
+		drain: sync.OnceFunc(func() {
+			hs.Shutdown()
+			grpcService.shutdown()
+		}),
+	}
 	svc.BasicService = services.NewBasicService(func(context.Context) error {
 		hs.start()
 		return nil
 	}, grpcService.Run, func(_ error) error {
-		hs.Shutdown()
-		grpcService.shutdown()
+		svc.Drain()
 		return nil
 	}).WithName(serviceName)
 	return svc, nil

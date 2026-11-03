@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { useFlagTableRefresh, useFlagTableRefreshNewFeatures } from '@grafana/runtime/internal';
 import { FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
@@ -23,12 +24,14 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [listMode, setListMode] = useState(OptionFilter.All);
   const styles = useStyles2(getStyles);
+  const tableRefreshEnabled = useFlagTableRefresh();
+  const tableRefreshNewFeaturesEnabled = useFlagTableRefreshNewFeatures();
 
   const [panelFrameOptions, vizOptions, libraryPanelOptions] = useMemo(
     () => [getPanelFrameCategory(props), getVisualizationOptions(props), getLibraryPanelOptionsCategory(props)],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [panel.configRev, props.data, props.instanceState, searchQuery]
+    [panel.configRev, props.data, props.instanceState, searchQuery, tableRefreshEnabled, tableRefreshNewFeaturesEnabled]
   );
 
   const justOverrides = useMemo(
@@ -42,7 +45,7 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
         props.panel.getOptions()
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [panel.configRev, props.data, props.instanceState, searchQuery]
+    [panel.configRev, props.data, props.instanceState, searchQuery, tableRefreshEnabled, tableRefreshNewFeaturesEnabled]
   );
 
   const mainBoxElements: React.ReactNode[] = [];

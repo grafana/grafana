@@ -37,6 +37,7 @@ import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { activateFullSceneTree } from '../utils/test-utils';
+import { getLibraryPanelBehavior } from '../utils/utils';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
@@ -360,6 +361,28 @@ describe('PanelEditor', () => {
       expect((gridItem.state.body as VizPanel).state.title).toBe('changed title');
     });
 
+    it('restores the library link when undoing a completed panel edit', async () => {
+      setTestFlags({ dashboardNewLayouts: true });
+      const libraryPanel = new LibraryPanelBehavior({
+        uid: 'lib-uid',
+        name: 'Library panel',
+        isLoaded: true,
+        _loadedPanel: { uid: 'lib-uid', name: 'Library panel', type: 'panel', version: 1, model: { type: 'text' } },
+      });
+      const { dashboard, panel, panelEditor, gridItem } = await setup({ libraryPanel });
+      panelEditor.onConfirmUnlinkLibraryPanel();
+      expect(getLibraryPanelBehavior(panel)).toBeUndefined();
+      deactivate!();
+      deactivate = undefined;
+      dashboard.setState({ editPanel: undefined });
+      deactivate = activateFullSceneTree(dashboard);
+      expect(dashboard.state.sidebar.state.undoStack).toHaveLength(1);
+      dashboard.state.sidebar.undoAction();
+      expect(getLibraryPanelBehavior(gridItem.state.body)?.state.uid).toBe('lib-uid');
+      dashboard.state.sidebar.redoAction();
+      expect(getLibraryPanelBehavior(gridItem.state.body)).toBeUndefined();
+    });
+
     it('unlinks library panel', () => {
       const libraryPanelModel = {
         title: 'title',
@@ -509,6 +532,7 @@ interface SetupOptions {
   repeatByVariable?: string;
   skipWait?: boolean;
   pluginLoadTime?: number;
+  libraryPanel?: LibraryPanelBehavior;
   initialTableTransformations?: DataTransformerConfig[];
 }
 
@@ -525,6 +549,7 @@ async function setup(options: SetupOptions = {}) {
     key: 'panel-1',
     pluginId: panelPluginId,
     title: 'original title',
+    $behaviors: options.libraryPanel ? [options.libraryPanel] : undefined,
     $data: new SceneDataTransformer({
       transformations: [],
       $data: new SceneQueryRunner({

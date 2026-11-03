@@ -12,6 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -78,35 +79,17 @@ func decodeUserTeamSearchRows(result *resourcepb.ResourceSearchResponse) ([]user
 		return nil, nil
 	}
 
-	switch result.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		table := result.GetResults()
-		if table == nil {
-			return nil, nil
-		}
-		rows := make([]userTeamSearchRow, 0, len(table.Rows))
-		for _, row := range table.Rows {
-			if row == nil {
-				continue
-			}
-			rows = append(rows, userTeamSearchRow{
-				key:        row.Key,
-				sortFields: row.SortFields,
-			})
-		}
-		return rows, nil
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		rows := make([]userTeamSearchRow, 0, len(result.Rows))
-		for i, row := range result.Rows {
-			if row == nil || row.Key == nil {
-				return nil, fmt.Errorf("field-value user team search result row %d has no resource key", i)
-			}
-			rows = append(rows, userTeamSearchRow{key: row.Key, sortFields: row.SortFields})
-		}
-		return rows, nil
-	default:
+	if result.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return nil, fmt.Errorf("unsupported search result format %d", result.GetResultFormat())
 	}
+	rows := make([]userTeamSearchRow, 0, len(result.Rows))
+	for i, row := range result.Rows {
+		if row == nil || row.Key == nil {
+			return nil, fmt.Errorf("field-value user team search result row %d has no resource key", i)
+		}
+		rows = append(rows, userTeamSearchRow{key: row.Key, sortFields: row.SortFields})
+	}
+	return rows, nil
 }
 
 func (c *unifiedUserTeamsBackend) buildItems(ctx context.Context, rows []userTeamSearchRow, userName string) ([]iamv0alpha1.GetUserTeamsUserTeam, error) {
@@ -135,12 +118,18 @@ func (c *unifiedUserTeamsBackend) buildItems(ctx context.Context, rows []userTea
 			if !ok {
 				return nil
 			}
-			items[i] = iamv0alpha1.GetUserTeamsUserTeam{
+			item := iamv0alpha1.GetUserTeamsUserTeam{
 				User:       userName,
 				Team:       row.key.Name,
 				Permission: string(m.Permission),
 				External:   m.External,
 			}
+			if meta, err := apiutils.MetaAccessor(t); err == nil {
+				if id := meta.GetDeprecatedInternalID(); id > 0 { //nolint:staticcheck // compatibility for legacy numeric team references
+					item.TeamInternalId = &id
+				}
+			}
+			items[i] = item
 			return nil
 		})
 	}

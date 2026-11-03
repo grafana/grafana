@@ -1,14 +1,16 @@
 import { act, screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
+import { setPluginLinksHook } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 
 import { TabItem } from './TabItem';
 import { TabsLayoutManager } from './TabsLayoutManager';
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 async function renderTab({ title = 'Overview', key = 'tab-1' } = {}) {
   const tab = new TabItem({
@@ -28,17 +30,6 @@ async function renderTab({ title = 'Overview', key = 'tab-1' } = {}) {
 }
 
 describe('TabItemRenderer', () => {
-  beforeEach(() => {
-    // New layouts mount the sidebar extension point, which calls usePluginLinks. These tests render the scene without starting that hook.
-    setTestFlags({ dashboardNewLayouts: false });
-  });
-
-  afterEach(() => {
-    act(() => {
-      setTestFlags({});
-    });
-  });
-
   it('stamps data-dashboard-element-key and data-dashboard-element-type on the tab', async () => {
     await renderTab({ key: 'tab-1', title: 'Overview' });
 

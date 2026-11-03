@@ -13,7 +13,7 @@ const reactPreferFunctionComponentPlugin = require('eslint-plugin-react-prefer-f
 const testingLibraryPlugin = require('eslint-plugin-testing-library');
 const unicornPlugin = require('eslint-plugin-unicorn');
 
-const grafanaConfig = require('@grafana/eslint-config/flat');
+const grafanaConfig = require('@grafana/eslint-config').default;
 const grafanaPlugin = require('@grafana/eslint-plugin');
 const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
 
@@ -117,7 +117,6 @@ module.exports = [
     name: 'grafana/ignores',
     ignores: [
       '.github',
-      '.yarn',
       '**/.*', // dotfiles aren't ignored by default in FlatConfig
       ...generatedFiles,
       '**/build/',
@@ -174,7 +173,7 @@ module.exports = [
 
     settings: {
       'import/internal-regex': '^(app/)|(@grafana)',
-      'import/external-module-folders': ['node_modules', '.yarn'],
+      'import/external-module-folders': ['node_modules'],
       // Silences a warning when linting enterprise code
       react: {
         version: 'detect',
@@ -245,6 +244,8 @@ module.exports = [
           additionalHooks: 'use(Async)$',
         },
       ],
+      // disabling warnings for now
+      'react-hooks/incompatible-library': 'off',
     },
   },
 
@@ -525,7 +526,6 @@ module.exports = [
     name: 'grafana/decoupled-plugins-overrides',
     files: [
       'public/app/plugins/datasource/azuremonitor/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/cloudwatch/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/graphite/**/*.{ts,tsx}',
     ],

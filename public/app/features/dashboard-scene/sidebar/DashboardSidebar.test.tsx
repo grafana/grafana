@@ -1,3 +1,5 @@
+import { waitFor } from '@testing-library/react';
+
 import { getPanelPlugin } from '@grafana/data/test';
 import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
 import {
@@ -21,6 +23,12 @@ import { edit } from '../actions/utils/edit';
 import { changeVariableName } from '../actions/variable/changeVariableName';
 import { changeVariableType } from '../actions/variable/changeVariableType';
 import { removeVariable } from '../actions/variable/removeVariable';
+import { getPendingChangesHistory, type PendingChangesHistory } from '../lifecycle/pendingChangePreview';
+import {
+  pendingChangesRecorded,
+  pendingChangesSuperseded,
+  recordPendingChange,
+} from '../lifecycle/pendingChangesHistory';
 import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
@@ -56,6 +64,17 @@ jest.mock('@grafana/runtime', () => ({
     getInstanceSettings: (_uid: string | null) => ({ uid: 'ds1' }),
   }),
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+}));
+// Off unless a test previews pending changes whose plugin keeps their history.
+jest.mock('../lifecycle/pendingChangePreview', () => ({
+  ...jest.requireActual('../lifecycle/pendingChangePreview'),
+  getPendingChangesHistory: jest.fn(),
+}));
+jest.mock('../lifecycle/pendingChangesHistory', () => ({
+  ...jest.requireActual('../lifecycle/pendingChangesHistory'),
+  pendingChangesRecorded: jest.fn(() => Promise.resolve()),
+  pendingChangesSuperseded: jest.fn(() => false),
+  recordPendingChange: jest.fn(),
 }));
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -438,6 +457,102 @@ describe('DashboardSidebar', () => {
 
     await scene.onCreateNewPanel();
 
+    expect(sidebar.state.redoStack).toHaveLength(0);
+  });
+
+  describe('pending changes whose plugin keeps their history', () => {
+    const history: PendingChangesHistory = {
+      record: jest.fn(),
+      undo: jest.fn(),
+      redo: jest.fn(),
+      getState: () => ({}),
+      subscribe: () => () => {},
+    };
+
+    beforeEach(() => jest.mocked(getPendingChangesHistory).mockReturnValue(history));
+    afterEach(() => jest.mocked(getPendingChangesHistory).mockReturnValue(undefined));
+
+    it('records an edit in the plugin’s history instead of the undo stack', async () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+      const before = scene.getSaveModel();
+
+      await scene.onCreateNewPanel();
+
+      expect(sidebar.state.undoStack).toHaveLength(0);
+      expect(recordPendingChange).toHaveBeenCalledWith(scene, history, expect.any(String), before);
+      // The edit itself stays: recording replays it after taking the scene before it.
+      expect(scene.getSaveModel()).not.toEqual(before);
+    });
+
+    it('steps through the plugin’s history with Undo and Redo', async () => {
+      const sidebar = buildTestScene().state.sidebar;
+
+      sidebar.undoAction();
+      await waitFor(() => expect(history.undo).toHaveBeenCalledTimes(1));
+      // Once the step settled: one runs at a time.
+      await new Promise((resolve) => setTimeout(resolve));
+      sidebar.redoAction();
+
+      await waitFor(() => expect(history.redo).toHaveBeenCalledTimes(1));
+    });
+
+    // A recording still on its way would land after the step and bring the undone change back.
+    it('steps only once the recordings sent before have settled', async () => {
+      let settle = () => {};
+      jest.mocked(pendingChangesRecorded).mockReturnValueOnce(new Promise<void>((resolve) => (settle = resolve)));
+      const sidebar = buildTestScene().state.sidebar;
+      jest.mocked(history.undo).mockClear();
+
+      sidebar.undoAction();
+      await Promise.resolve();
+      expect(history.undo).not.toHaveBeenCalled();
+
+      settle();
+      await waitFor(() => expect(history.undo).toHaveBeenCalledTimes(1));
+    });
+
+    // The plugin's history moved on past what the page shows: stepping it would undo the wrong revision.
+    it('takes no step once a recording found the pending changes changed', async () => {
+      jest.mocked(pendingChangesSuperseded).mockReturnValueOnce(true);
+      const sidebar = buildTestScene().state.sidebar;
+      jest.mocked(history.undo).mockClear();
+
+      sidebar.undoAction();
+      await new Promise((resolve) => setTimeout(resolve));
+
+      expect(history.undo).not.toHaveBeenCalled();
+    });
+
+    // Each step restores a revision and reloads the page: stacked ones would race.
+    it('takes one step for clicks made while a step waits for the recordings', async () => {
+      let settle = () => {};
+      jest.mocked(pendingChangesRecorded).mockReturnValueOnce(new Promise<void>((resolve) => (settle = resolve)));
+      const sidebar = buildTestScene().state.sidebar;
+      jest.mocked(history.undo).mockClear();
+
+      sidebar.undoAction();
+      sidebar.undoAction();
+      settle();
+
+      await waitFor(() => expect(history.undo).toHaveBeenCalledTimes(1));
+      await Promise.resolve();
+      expect(history.undo).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('clearHistory should empty undo and redo stacks', async () => {
+    const scene = buildTestScene();
+    const sidebar = scene.state.sidebar;
+
+    await scene.onCreateNewPanel();
+    await scene.onCreateNewPanel();
+
+    sidebar.undoAction();
+
+    sidebar.clearHistory();
+
+    expect(sidebar.state.undoStack).toHaveLength(0);
     expect(sidebar.state.redoStack).toHaveLength(0);
   });
 

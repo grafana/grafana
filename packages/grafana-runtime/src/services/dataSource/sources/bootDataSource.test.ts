@@ -23,9 +23,7 @@ describe('createBootDataSnapshot', () => {
 
     const snapshot = createBootDataSnapshot({ datasources: { Alpha: alpha }, defaultDatasource: 'Alpha' });
 
-    expect(snapshot.items).toEqual([
-      { uid: 'uid-alpha', name: 'Alpha', type: 'test-db', apiVersion: 'v1', meta: alpha.meta },
-    ]);
+    expect(snapshot.items).toEqual([{ uid: 'uid-alpha', name: 'Alpha', type: 'test-db', meta: alpha.meta }]);
     expect(snapshot.settings).toEqual({ 'uid-alpha': alpha });
     expect(snapshot.settings?.['uid-alpha']).toBe(alpha);
   });

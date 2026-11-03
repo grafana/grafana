@@ -81,7 +81,7 @@ func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
 
 	// Assets
 	hash.Reset()
-	dto, err := webassets.GetWebAssets(c.Req.Context(), webassets.ResolveBuildDir(c.Req.Context()), hs.Cfg, hs.License)
+	dto, err := webassets.GetWebAssets(c.Req.Context(), webassets.BuildDir, hs.Cfg, hs.License)
 	if err == nil && dto != nil {
 		_, _ = hash.Write([]byte(dto.ContentDeliveryURL))
 		_, _ = hash.Write([]byte(dto.Dark))
@@ -266,6 +266,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			Angular:                   plugin.Angular,
 			MultiValueFilterOperators: plugin.MultiValueFilterOperators,
 			LoadingStrategy:           plugin.LoadingStrategy,
+			Extensions:                plugin.Extensions,
 			Translations:              plugin.Translations,
 		}
 
@@ -347,6 +348,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 					// ModuleHash: hs.pluginAssets.ModuleHash(c.Req.Context(), ds),
 					BaseURL:      ds.BaseURL,
 					Angular:      ds.Angular,
+					Extensions:   ds.Extensions,
 					Translations: ds.Translations,
 				},
 			}

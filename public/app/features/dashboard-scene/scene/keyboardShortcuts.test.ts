@@ -10,6 +10,7 @@ import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { contextSrv } from 'app/core/services/context_srv';
 import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { buildShareUrl } from '../sharing/ShareButton/utils';
@@ -20,6 +21,7 @@ import { tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { DashboardScene } from './DashboardScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { RowItem } from './layout-rows/RowItem';
 
 // Mock dependencies
 jest.mock('app/core/app_events', () => ({
@@ -164,6 +166,16 @@ describe('setupKeyboardShortcuts', () => {
       expect(mockOnRefresh).toHaveBeenCalled();
     });
 
+    it.each(['view', 'composer'] as const)('should toggle cursor sync in %s mode', (mode) => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      mockScene.setState({ mode, isEditing: mode === 'composer' });
+      mockCursorSync.setState({ sync: DashboardCursorSync.Off });
+
+      modOHandler();
+
+      expect(mockCursorSync.setState).toHaveBeenCalledWith({ sync: DashboardCursorSync.Crosshair });
+    });
+
     it('should handle missing CursorSync behavior gracefully', () => {
       // Create scene without CursorSync behavior by overriding state
       const sceneWithoutCursorSync = new DashboardScene({
@@ -299,7 +311,7 @@ describe('setupKeyboardShortcuts', () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
       mockScene.setState({
-        planning: { planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
+        planning: { phase: 'preview', planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
       });
       setupKeyboardShortcuts(mockScene);
 
@@ -365,6 +377,26 @@ describe('setupKeyboardShortcuts', () => {
       }
     }
   );
+
+  it.each([
+    { mode: 'view' as const, editable: true },
+    { mode: 'view' as const, editable: false },
+    { mode: 'agent' as const, editable: true },
+    { mode: 'agent' as const, editable: false },
+  ])('dashboard settings shortcut enters Editing from $mode only when editable=$editable', ({ mode, editable }) => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+    try {
+      mockScene.setState({ mode, isEditing: true, editable });
+      locationService.replace('/d/test-uid');
+      setupKeyboardShortcuts(mockScene);
+      const binding = mockKeybindingSet.addBinding.mock.calls.find(([binding]) => binding.key === 'd s')![0];
+      binding.onTrigger();
+      expect(mockScene.state.mode).toBe(editable ? 'edit' : mode);
+      expect(locationService.getSearchObject().editview).toBe(editable ? 'settings' : undefined);
+    } finally {
+      setTestFlags({});
+    }
+  });
 
   describe('navigation when Grafana is served from a sub-path', () => {
     const originalLocationService = locationService;
@@ -444,6 +476,21 @@ describe('setupKeyboardShortcuts', () => {
     it('should setup save shortcut (mod+s) when can edit', () => {
       const modSBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 'mod+s');
       expect(modSBinding).toBeDefined();
+    });
+
+    it.each([
+      { mode: 'view', opens: false },
+      { mode: 'edit', opens: true },
+      { mode: 'agent', opens: true },
+    ] as const)('save shortcut (mod+s) opens the save drawer in $mode mode: $opens', ({ mode, opens }) => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      mockScene.setState({ mode, isEditing: true });
+      const openSaveDrawer = jest.spyOn(mockScene, 'openSaveDrawer').mockResolvedValue(undefined);
+      const modSBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 'mod+s');
+
+      modSBinding![0].onTrigger();
+
+      expect(openSaveDrawer).toHaveBeenCalledTimes(opens ? 1 : 0);
     });
 
     it('should setup dashboard settings shortcut (d s) when can edit', () => {
@@ -696,6 +743,42 @@ describe('setupKeyboardShortcuts', () => {
         getBinding('p c')!.onTrigger();
 
         expect(mockScene.copyPanel).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('remove panel (p r)', () => {
+      beforeEach(() => {
+        jest.useFakeTimers();
+        mockScene.setState({ isEditing: true });
+      });
+
+      afterEach(() => {
+        jest.useRealTimers();
+      });
+
+      it('asks to confirm removing the focused panel', () => {
+        const panel = new VizPanel({ key: 'panel-1', pluginId: 'table' });
+        jest.mocked(findVizPanelByPathId).mockReturnValue(panel);
+        setupKeyboardShortcuts(mockScene);
+        focusPanel('panel-1');
+
+        getBinding('p r')!.onTrigger();
+        jest.runAllTimers();
+
+        expect(appEvents.publish).toHaveBeenCalledWith(expect.any(ShowConfirmModalEvent));
+      });
+
+      it('does nothing when the focused panel is inside a repeated row clone', () => {
+        const panel = new VizPanel({ key: 'panel-1', pluginId: 'table' });
+        new RowItem({ repeatSourceKey: 'row-1', layout: DefaultGridLayoutManager.fromVizPanels([panel]) });
+        jest.mocked(findVizPanelByPathId).mockReturnValue(panel);
+        setupKeyboardShortcuts(mockScene);
+        focusPanel('row-1-clone-1/panel-1');
+
+        getBinding('p r')!.onTrigger();
+        jest.runAllTimers();
+
+        expect(appEvents.publish).not.toHaveBeenCalledWith(expect.any(ShowConfirmModalEvent));
       });
     });
 

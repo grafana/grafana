@@ -18,8 +18,8 @@ import {
   Spinner,
   TextLink,
   useStyles2,
-  CodeMirrorEditor,
 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { ExportFormat } from 'app/features/dashboard/api/types';
@@ -193,18 +193,18 @@ export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: 
         </div>
         <Box paddingTop={2}>
           <Stack gap={2}>
-            <Button variant="secondary" onClick={drawer.onClose} fill="outline">
-              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
+            <Button type="submit" onClick={saveToFile} disabled={isK8sMode && k8sResource.loading}>
+              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.save-json-to-file">
+                Save JSON to file
+              </Trans>
             </Button>
             <ClipboardButton icon="copy" getText={() => displayJson} disabled={isK8sMode && k8sResource.loading}>
               <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.copy-json-to-clipboard">
                 Copy JSON to clipboard
               </Trans>
             </ClipboardButton>
-            <Button type="submit" onClick={saveToFile} disabled={isK8sMode && k8sResource.loading}>
-              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.save-json-to-file">
-                Save JSON to file
-              </Trans>
+            <Button variant="secondary" onClick={drawer.onClose} fill="outline">
+              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
             </Button>
           </Stack>
         </Box>

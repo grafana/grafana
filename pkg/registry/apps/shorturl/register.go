@@ -10,12 +10,12 @@ import (
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/shorturl/pkg/apis"
 	shorturl "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
 	shorturlapp "github.com/grafana/grafana/apps/shorturl/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"

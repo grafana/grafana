@@ -1414,7 +1414,7 @@
         }
       },
       "SearchResults": {
-        "description": "SearchResults is the response body for POST .../{resource}/search and POST .../namespaces/{namespace}/global/search. On the global search, each item names its own resource type.",
+        "description": "SearchResults is the response body for POST .../{resource}/search.",
         "type": "object",
         "required": ["metadata", "items"],
         "properties": {

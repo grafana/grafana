@@ -155,6 +155,26 @@ func TestMutateNotebook(t *testing.T) {
 
 		require.Empty(t, nb.Spec.Title)
 	})
+
+	for _, tc := range []struct {
+		name string
+		op   admission.Operation
+		opts runtime.Object
+	}{
+		{"create", admission.Create, &metav1.CreateOptions{}},
+		{"update", admission.Update, &metav1.UpdateOptions{}},
+	} {
+		t.Run("a hidden time picker is turned off on "+tc.name, func(t *testing.T) {
+			nb := newNotebook("nb")
+			nb.Spec.TimeSettings.HideTimepicker = true
+			nb.Spec.TimeSettings.From = "now-1h"
+
+			require.NoError(t, mutateNotebook(notebookAttributes(tc.op, nb, tc.opts)))
+
+			require.False(t, nb.Spec.TimeSettings.HideTimepicker)
+			require.Equal(t, "now-1h", nb.Spec.TimeSettings.From)
+		})
+	}
 }
 
 func TestDashboardsAPIBuilderMutateNotebook(t *testing.T) {

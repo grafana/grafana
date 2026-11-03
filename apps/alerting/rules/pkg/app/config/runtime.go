@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/simple"
 
-	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 )
 
 type RuleRef struct {
@@ -38,12 +38,15 @@ type RuntimeConfig struct {
 	BaseEvaluationInterval time.Duration
 	// set of strings which are illegal for label keys on rules
 	ReservedLabelKeys             map[string]struct{}
-	NotificationSettingsValidator func(ctx context.Context, notificationSettings v0alpha1.AlertRuleNotificationSettings) error
+	NotificationSettingsValidator func(ctx context.Context, notificationSettings v1beta1.AlertRuleNotificationSettings) error
 	ResolveRuleRef                func(ctx context.Context, uid string) (RuleRef, bool, error)
 	// MembershipResolver is used by admission validators to look up which
 	// RuleSequence (if any) owns a rule UID. The default implementation is a
 	// watch-backed in-memory index that provides O(1) lookups.
 	MembershipResolver RuleSequenceMembershipResolver
+	// AllowDeletingSequenceMembers permits org cleanup to remove rules even when
+	// the watch-backed membership index has not observed sequence deletion yet.
+	AllowDeletingSequenceMembers func(context.Context) (bool, error)
 	// WatchNamespace scopes the RuleSequence informer to one namespace. Empty
 	// watches all namespaces (on-prem default); in cloud it must be the stack
 	// namespace, else the all-namespace watch is rejected as a mismatch.

@@ -49,12 +49,24 @@ func (m *BlobGCMetrics) Record(count int, dryRun bool, err error) {
 	if m == nil {
 		return
 	}
-	m.Runs.Inc()
+	m.recordProgress(count, dryRun)
 	if err != nil {
 		m.Errors.Inc()
 	} else {
 		m.Candidates.Set(float64(count))
 	}
+}
+
+// RecordInterrupted retains attempted runs and completed deletions without
+// treating a partial pass as a successful scan or a failure.
+func (m *BlobGCMetrics) RecordInterrupted(count int, dryRun bool) {
+	if m != nil {
+		m.recordProgress(count, dryRun)
+	}
+}
+
+func (m *BlobGCMetrics) recordProgress(count int, dryRun bool) {
+	m.Runs.Inc()
 	if !dryRun {
 		m.Deleted.Add(float64(count))
 	}

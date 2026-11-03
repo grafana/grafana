@@ -1,5 +1,8 @@
 export type MetricType = 'counter' | 'gauge' | 'histogram' | 'native histogram' | 'summary' | 'unknown';
 
+/** Which row an "Add to query" button sits on. */
+export type AddToQueryItemType = 'metric' | 'label' | 'value';
+
 // Labels and label values are not part of this shape: they are fetched per expanded metric and
 // arrive from `useMetricDetail`/`useLabelValues` as plain `string[]`, so a field here would only ever
 // read `undefined`.

@@ -26,8 +26,6 @@ The Graphite data source includes a query editor for building metric queries and
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/).
 
-{{< docs/play title="Graphite: Sample Website Dashboard" url="https://play.grafana.org/d/000000003/" >}}
-
 ## Supported features
 
 The Graphite data source supports the following features:

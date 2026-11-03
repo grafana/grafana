@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
 )
@@ -38,7 +37,7 @@ type EventSubscriber interface {
 
 // watchNotificationTypeToAction maps a wire event type back to a data action.
 // UNKNOWN reports ok=false so the caller drops it rather than emit a bogus change.
-func watchNotificationTypeToAction(t resourcepb.WatchNotification_Type) (kv.DataAction, bool) {
+func watchNotificationTypeToAction(t resourcepb.WatchNotification_Type) (DataAction, bool) {
 	switch t {
 	case resourcepb.WatchNotification_ADDED:
 		return DataActionCreated, true
@@ -287,6 +286,7 @@ func (n *natsNotifier) decode(subject string, data []byte) (Event, bool) {
 		PreviousRV:      notification.PreviousResourceVersion,
 		PreviousAction:  previousAction,
 		PreviousFolder:  notification.PreviousFolder,
+		Metadata:        notification.GetMetadata(),
 	}, true
 }
 

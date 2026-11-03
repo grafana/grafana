@@ -27,6 +27,22 @@ v0alpha1: {
 
 	routes: {
 		namespaced: {
+			"/teamlbacusage": {
+				"GET": {
+					name: "getTeamLBACUsage"
+					response: {
+						counts: {[string]: {
+							datasources: int64
+							teams:       int64
+							filters:     int64
+						}}
+					}
+					responseMetadata: {
+						typeMeta:   false
+						objectMeta: false
+					}
+				}
+			}
 			"/searchUsers": {
 				"GET": {
 					name: "getSearchUsers"

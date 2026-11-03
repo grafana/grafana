@@ -7,6 +7,8 @@ export type PageIdentity = { pathname: string } & (
   | { kind: 'dashboard'; uid: string }
   /** `session` is the left pane's id; Explore keeps it through query edits and splits, so it tells sessions apart. */
   | { kind: 'explore'; session: string }
+  /** A Grafana Page (the Assistant app's `/pages/<id>`); its own kind so it is not just another app page. */
+  | { kind: 'page' }
   | { kind: 'alerting' }
   | { kind: 'app' }
 );

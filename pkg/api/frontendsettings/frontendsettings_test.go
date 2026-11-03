@@ -1,6 +1,8 @@
 package frontendsettings
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,10 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func newTestReqContext() *contextmodel.ReqContext {
 	return &contextmodel.ReqContext{
+		Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/", nil)},
 		SignedInUser: &user.SignedInUser{},
 	}
 }
@@ -86,6 +90,31 @@ func TestGetBaseFrontendSettings(t *testing.T) {
 		require.NotNil(t, settings.UnifiedAlerting.StateHistory)
 		assert.Equal(t, "loki", settings.UnifiedAlerting.StateHistory.Backend)
 		assert.Equal(t, "loki", settings.UnifiedAlerting.AlertStateHistoryBackend)
+	})
+
+	t.Run("sends the prometheus target data source whenever it is set", func(t *testing.T) {
+		for _, tc := range []struct {
+			backend string
+			uid     string
+			want    string
+		}{
+			{backend: "prometheus", uid: "prom-uid", want: "prom-uid"},
+			// Grafana Cloud: a separate ruler service writes the metrics, this Grafana only writes to Loki
+			{backend: "loki", uid: "prom-uid", want: "prom-uid"},
+			{backend: "loki", uid: "", want: ""},
+		} {
+			cfg := setting.NewCfg()
+			cfg.UnifiedAlerting.StateHistory.Enabled = true
+			cfg.UnifiedAlerting.StateHistory.Backend = tc.backend
+			cfg.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID = tc.uid
+
+			license := &licensing.OSSLicensingService{Cfg: cfg}
+
+			settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license, nil)
+			require.NoError(t, err)
+			require.NotNil(t, settings.UnifiedAlerting.StateHistory)
+			assert.Equal(t, tc.want, settings.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID, tc.backend)
+		}
 	})
 
 	t.Run("reports whether unified alerting notification history is enabled", func(t *testing.T) {

@@ -42,9 +42,7 @@ const fakeDsMock: DataSourceApi = {
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
-    featureToggles: {
-      newDashboardWithFiltersAndGroupBy: false,
-    },
+    featureToggles: {},
     apps: {},
     bootData: {
       ...jest.requireActual('@grafana/runtime').config.bootData,
@@ -77,12 +75,12 @@ describe('buildNewDashboardSaveModelV1', () => {
     });
   });
 
-  describe('when featureToggles.newDashboardWithFiltersAndGroupBy is true', () => {
+  describe('when the newDashboardWithFiltersAndGroupBy flag is on', () => {
     beforeAll(() => {
-      config.featureToggles.newDashboardWithFiltersAndGroupBy = true;
+      setTestFlags({ newDashboardWithFiltersAndGroupBy: true });
     });
     afterAll(() => {
-      config.featureToggles.newDashboardWithFiltersAndGroupBy = false;
+      setTestFlags({});
     });
 
     it('should add filter and group by variables if the datasource supports it and is set as default', async () => {
@@ -145,12 +143,10 @@ describe('buildNewDashboardSaveModelV2', () => {
     expect(result.spec.preferences?.layout?.kind).toBe('AutoGridLayout');
   });
 
-  describe('when featureToggles.newDashboardWithFiltersAndGroupBy is true', () => {
-    beforeAll(() => {
-      config.featureToggles.newDashboardWithFiltersAndGroupBy = true;
-    });
-    afterAll(() => {
-      config.featureToggles.newDashboardWithFiltersAndGroupBy = false;
+  describe('when the newDashboardWithFiltersAndGroupBy flag is on', () => {
+    // setTestFlags replaces the whole flag set, so re-apply the outer beforeEach's flag alongside this one.
+    beforeEach(() => {
+      setTestFlags({ 'grafana.dashboardAutoGridDefault': false, newDashboardWithFiltersAndGroupBy: true });
     });
 
     it('should add filter and group by variables if the datasource supports it and is set as default', async () => {

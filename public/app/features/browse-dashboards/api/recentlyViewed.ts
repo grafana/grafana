@@ -1,35 +1,17 @@
 import impressionSrv from 'app/core/services/impression_srv';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
 
+import { searchDashboardsByUid } from './searchDashboardsByUid';
+
 /**
- * Returns dashboard search results ordered the same way the user opened them.
+ * Returns dashboard search results ordered the same way the user opened them. Dashboards the user
+ * can no longer see are skipped.
  */
 export async function getRecentlyViewedDashboards(maxItems = 5): Promise<DashboardQueryResult[]> {
   try {
     const recentlyOpened = (await impressionSrv.getDashboardOpened()).slice(0, maxItems);
-    if (!recentlyOpened.length) {
-      return [];
-    }
-
-    const searchResults = await getGrafanaSearcher().search({
-      kind: ['dashboard'],
-      limit: recentlyOpened.length,
-      uid: recentlyOpened,
-    });
-
-    const dashboards = searchResults.view.toArray();
-    // Keep dashboards in the same order the user opened them.
-    // When a UID is missing from the search response
-    // push it to the end instead of letting indexOf return -1
-    const order = (uid: string) => {
-      const idx = recentlyOpened.indexOf(uid);
-      return idx === -1 ? recentlyOpened.length : idx;
-    };
-
-    dashboards.sort((a, b) => order(a.uid) - order(b.uid));
-    // Defensive: never return more than the caller asked for
-    return dashboards.slice(0, maxItems);
+    const byUid = await searchDashboardsByUid(recentlyOpened);
+    return recentlyOpened.flatMap((uid) => byUid.get(uid) ?? []);
   } catch (error) {
     console.error('Failed to load recently viewed dashboards', error);
     return [];

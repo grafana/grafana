@@ -36,8 +36,21 @@ func TestIntegrationEmbeddedPermissionRPCsShareLoader(t *testing.T) {
 	// This service deliberately has no local evaluator. Enumeration must no longer
 	// call back into Access Control, even when using the pre-existing AuthZ client.
 	service := &recordingAccessControlService{}
-	clients, err := ProvideAuthZClients(cfg, features, nil, tracing.InitializeTracerForTest(), prometheus.NewRegistry(), sql,
-		service, resourcepermissions.NewActionSetService(), nil, apiserver.ProvideEventualRestConfigProvider(), nil, loader)
+	clients, err := ProvideAuthZClients(
+		cfg,
+		features,
+		nil,
+		tracing.InitializeTracerForTest(),
+		prometheus.NewRegistry(),
+		sql,
+		service,
+		resourcepermissions.NewActionSetService(),
+		nil,
+		apiserver.ProvideEventualRestConfigProvider(),
+		nil,
+		loader,
+		ac.NewScopeResolverRegistry(),
+	)
 	require.NoError(t, err)
 	previousClient := newUserPermissionsClient(ProvideAuthZUserPermissionsClient(clients), false)
 	legacyClient := legacypermissions.NewEmbeddedClient(loader, cfg)

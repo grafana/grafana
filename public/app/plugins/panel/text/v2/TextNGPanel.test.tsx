@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -40,8 +40,7 @@ afterAll(() => {
 });
 
 // Stub the lazy CodeMirror bundle used by the inline editor and the read-only code view.
-jest.mock('@grafana/ui', () => ({
-  ...jest.requireActual('@grafana/ui'),
+jest.mock('@grafana/ui/unstable', () => ({
   __esModule: true,
   // The stubbed editor never runs completions; the source itself is covered by
   // editor/variableCompletion.test.ts.
@@ -215,7 +214,7 @@ describe('TextNGPanel', () => {
 
   it('renders code mode as an unrendered, syntax-highlighted block', async () => {
     const contentTest = '{\n  "a": 1\n}';
-    replaceVariablesMock.mockReturnValueOnce(contentTest);
+    replaceVariablesMock.mockReturnValue(contentTest);
     const props = Object.assign({}, defaultProps, {
       options: { content: contentTest, mode: TextMode.Code },
     });
@@ -223,7 +222,7 @@ describe('TextNGPanel', () => {
     setup(props);
 
     expect(screen.getByTestId('TextNGPanel-code')).toBeInTheDocument();
-    expect(await screen.findByRole('textbox')).toHaveValue('{\n  "a": 1\n}');
+    await waitFor(() => expect(screen.getByRole('textbox')).toHaveValue('{\n  "a": 1\n}'));
     expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
   });
 
@@ -575,6 +574,22 @@ describe('TextNGPanel', () => {
       expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
     });
 
+    it('pages a panel sized to its content when the layout caps its height', () => {
+      const props = createProps(reportRowIndex, {
+        width: 1000,
+        height: 0,
+        fitContent: true,
+        fitMaxHeight: 400,
+        data: createData([numberedFrame(150)]),
+        options: { content: 'row', mode: TextMode.Markdown, renderMode: RenderMode.PerRow },
+      });
+
+      setup(props, CoreApp.Dashboard);
+
+      expect(renderedRows().length).toBeLessThan(150);
+      expect(screen.getByRole('navigation')).toBeInTheDocument();
+    });
+
     it('renders a once template whole, having no per-row blocks to page', () => {
       setupPaged({ renderMode: RenderMode.Once });
 
@@ -741,6 +756,31 @@ describe('TextNGPanel', () => {
         expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
         expect(screen.getByRole('radio', { name: 'Split' })).toBeChecked();
       });
+    });
+  });
+
+  describe('frame fill', () => {
+    const frameProps = () => jest.mocked(SandboxFrame).mock.calls.at(-1)![0];
+
+    it('stretches the frame to the measured panel box so positioned content lays out against the panel', async () => {
+      replaceVariablesMock.mockReturnValue('hello');
+      setup(
+        Object.assign({}, defaultProps, { options: { content: 'hello', mode: TextMode.Markdown } }),
+        CoreApp.Dashboard
+      );
+
+      await waitFor(() => expect(frameProps().minHeight).toBe(500));
+    });
+
+    it('lets a fit-content panel size to its content instead of a panel box', async () => {
+      replaceVariablesMock.mockReturnValue('hello');
+      setup(
+        Object.assign({}, defaultProps, { fitContent: true, options: { content: 'hello', mode: TextMode.Markdown } }),
+        CoreApp.Dashboard
+      );
+
+      await act(async () => {});
+      expect(frameProps().minHeight).toBeUndefined();
     });
   });
 

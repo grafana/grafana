@@ -103,20 +103,17 @@ func TestUnifiedUserLookupResults(t *testing.T) {
 		response *resourcepb.ResourceSearchResponse
 		conflict bool
 	}{
-		{name: "no match", response: &resourcepb.ResourceSearchResponse{}},
-		{name: "old server table with same user", response: &resourcepb.ResourceSearchResponse{
-			TotalHits: 1,
-			Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{{
-				Key: &resourcepb.ResourceKey{Name: "user-1"},
-			}}},
+		{name: "no match", response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}},
+		{name: "same user", response: &resourcepb.ResourceSearchResponse{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			TotalHits:    1,
+			Rows:         []*resourcepb.ResourceSearchRow{{Key: &resourcepb.ResourceKey{Name: "user-1"}}},
 		}},
-		{name: "old server table with another user", conflict: true, response: &resourcepb.ResourceSearchResponse{
-			TotalHits: 1,
-			Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{{
-				Key: &resourcepb.ResourceKey{Name: "other"},
-			}}},
+		{name: "another user", conflict: true, response: &resourcepb.ResourceSearchResponse{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			TotalHits:    1,
+			Rows:         []*resourcepb.ResourceSearchRow{{Key: &resourcepb.ResourceKey{Name: "other"}}},
 		}},
-		{name: "count without a table", conflict: true, response: &resourcepb.ResourceSearchResponse{TotalHits: 1}},
 		{name: "count without field-value rows", conflict: true, response: &resourcepb.ResourceSearchResponse{
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, TotalHits: 1,
 		}},
@@ -148,11 +145,13 @@ func TestUnifiedUserLookupInvalidResponse(t *testing.T) {
 		{name: "unknown format", response: &resourcepb.ResourceSearchResponse{
 			ResultFormat: resourcepb.ResourceSearchRequest_ResultFormat(-1),
 		}, want: "unsupported search result format"},
-		{name: "nil table row", response: &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{nil}},
-		}, want: "has no resource key"},
-		{name: "table row without key", response: &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{{}}},
+		{name: "unspecified format", response: &resourcepb.ResourceSearchResponse{}, want: "unsupported search result format"},
+		{name: "table format", response: &resourcepb.ResourceSearchResponse{
+			ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+		}, want: "unsupported search result format"},
+		{name: "nil field-value row", response: &resourcepb.ResourceSearchResponse{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Rows:         []*resourcepb.ResourceSearchRow{nil},
 		}, want: "has no resource key"},
 		{name: "field-value row without key", response: &resourcepb.ResourceSearchResponse{
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,

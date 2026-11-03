@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	ngalertac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
@@ -452,6 +453,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	return result, nil
 }
 
+//nolint:gocyclo
 func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receiver, storedSecureFields map[string][]string, orgID int64, user identity.Requester) (*models.Receiver, error) {
 	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.update", trace.WithAttributes(
 		attribute.String("receiver", r.Name),
@@ -523,7 +525,10 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	}
 
 	// if user does not have permissions to update protected, check the diff and return error if there is a change in protected fields
-	canUpdateProtected, _ := rs.authz.HasUpdateProtected(ctx, user, r)
+	canUpdateProtected, err := rs.authz.HasUpdateProtected(ctx, user, r)
+	if err != nil && !errors.Is(err, ngalertac.ErrAuthorizationBase) {
+		return nil, fmt.Errorf("failed to check protected fields permission: %w", err)
+	}
 	if !canUpdateProtected {
 		diff := models.HasReceiversDifferentProtectedFields(existing, r)
 		if len(diff) > 0 {

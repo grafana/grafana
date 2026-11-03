@@ -103,6 +103,7 @@ export function StackedQueryItem({ query, headingId }: StackedQueryItemProps) {
       />
       <div className={styles.itemBody}>
         <QueryEditorPanel
+          panel={panel}
           query={query}
           queryDsData={queryDsData}
           queryDsLoading={queryDsLoading}

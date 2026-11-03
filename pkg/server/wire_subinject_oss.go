@@ -53,7 +53,6 @@ var moduleServerSet = wire.NewSet(
 	resource.ProvideVectorMetrics,
 	ProvideNoopModuleRegisterer,
 	sql.ProvideModuleServerKV,
-	sql.ProvideExperimentalKV,
 	zStore.ProvideDefaultStoreProvider,
 	authz.ProvideReconcileCRDs,
 	authz.ProvideDeferredZanzanaReconcilerState,
