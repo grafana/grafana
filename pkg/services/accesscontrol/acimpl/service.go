@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"maps"
 	"slices"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -829,35 +828,10 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 			return nil, err
 		}
 
-		// helper to filter out permissions the signed in users cannot see
-		canView := func() func(userID int64) bool {
-			siuPermissions := usr.GetPermissions()
-			if len(siuPermissions) == 0 {
-				return func(_ int64) bool { return false }
-			}
-			scopes, ok := siuPermissions[accesscontrol.ActionUsersPermissionsRead]
-			if !ok {
-				return func(_ int64) bool { return false }
-			}
-
-			ids := map[int64]bool{}
-			for i := range scopes {
-				if strings.HasSuffix(scopes[i], "*") {
-					return func(_ int64) bool { return true }
-				}
-				parts := strings.Split(scopes[i], ":")
-				if len(parts) != 3 {
-					continue
-				}
-				id, err := strconv.ParseInt(parts[2], 10, 64)
-				if err != nil {
-					continue
-				}
-				ids[id] = true
-			}
-
-			return func(userID int64) bool { return ids[userID] }
-		}()
+		canView, err := legacyscopes.UserPermissionsReadFilter(ctx, usr, s.scopeResolver)
+		if err != nil {
+			return nil, err
+		}
 
 		// Merge stored (DB) and basic role permissions (RAM)
 		// Assumes that all users with stored permissions have org roles

@@ -70,3 +70,52 @@ func TestLocalPermissionLoaderPreservesScopesWithFlagOff(t *testing.T) {
 	require.Contains(t, got, original[0])
 	require.NotContains(t, got, accesscontrol.Permission{Action: "teams:read", Scope: "teams:uid:platform"})
 }
+
+func TestPermissionSearchSeparatesUserIDsAndUIDs(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		scopes  []string
+		resolve bool
+		wantIDs []int64
+	}{
+		{"ID and numeric UID aliases", []string{"users:id:8", "users:uid:42"}, true, []int64{8}},
+		{"UID only", []string{"users:uid:42"}, true, []int64{8}},
+		{"unresolved UID", []string{"users:uid:42"}, false, nil},
+		{"numeric ID needs no lookup", []string{"users:id:8"}, false, []int64{8}},
+		{"user wildcard", []string{"users:*"}, false, []int64{8, 42}},
+		{"UID wildcard", []string{"users:uid:*"}, false, []int64{8, 42}},
+		{"different resource", []string{"teams:id:42"}, false, nil},
+		{"different attribute", []string{"users:name:42"}, false, nil},
+		{"partial wildcard", []string{"users:uid:4*"}, true, nil},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			permission := accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:one"}
+			store := &actest.FakeStore{
+				ExpectedUsersRoles:       map[int64][]string{8: {"Viewer"}, 42: {"Viewer"}},
+				ExpectedUsersPermissions: map[int64][]accesscontrol.Permission{8: {permission}, 42: {permission}},
+			}
+			service := setupServiceWithFakeStore(t, store, nil, nil)
+			service.roles = map[string]*accesscontrol.RoleDTO{"Viewer": {}}
+			service.scopeResolver = nil
+			if tc.resolve {
+				service.scopeResolver = localScopeResolver(func(_ context.Context, _ types.NamespaceInfo, ref legacyscopes.ScopeReference) (string, error) {
+					require.Equal(t, "users", ref.Resource)
+					require.Equal(t, "uid", ref.Attribute)
+					if ref.Value == "42" {
+						return "8", nil
+					}
+					return "", nil
+				})
+			}
+			requester := &user.SignedInUser{OrgID: 1, Namespace: "default", Permissions: map[int64]map[string][]string{
+				1: {accesscontrol.ActionUsersPermissionsRead: tc.scopes},
+			}}
+			got, err := service.SearchUsersPermissions(t.Context(), requester, accesscontrol.SearchOptions{Action: permission.Action})
+			require.NoError(t, err)
+			require.Len(t, got, len(tc.wantIDs))
+			for _, id := range tc.wantIDs {
+				require.Equal(t, []accesscontrol.Permission{permission}, got[id])
+			}
+		})
+	}
+}

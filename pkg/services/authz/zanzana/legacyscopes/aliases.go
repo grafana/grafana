@@ -124,6 +124,39 @@ func ResolveUserScopes(ctx context.Context, user identity.Requester, resolver Sc
 	return WithAliases(ctx, namespace, "", resolver, permissions)
 }
 
+// UserPermissionsReadFilter resolves UID grants before comparing them with legacy
+// numeric result keys; a numeric-looking UID must never identify another user.
+func UserPermissionsReadFilter(ctx context.Context, user identity.Requester, resolver ScopeResolver) (func(int64) bool, error) {
+	scopes := user.GetPermissions()[ac.ActionUsersPermissionsRead]
+	for _, scope := range scopes {
+		switch scope {
+		case "*", "users:*", "users:id:*", "users:uid:*":
+			return func(int64) bool { return true }, ctx.Err()
+		}
+	}
+	ids := make(map[int64]bool)
+	for _, scope := range scopes {
+		kind, attribute, value := ac.SplitScope(scope)
+		if kind != "users" {
+			continue
+		}
+		if attribute == "uid" {
+			resolved, err := LegacySearchScope(ctx, user, resolver, scope)
+			if err != nil {
+				return nil, err
+			}
+			_, attribute, value = ac.SplitScope(resolved)
+		}
+		if attribute != "id" {
+			continue
+		}
+		if id, err := strconv.ParseInt(value, 10, 64); err == nil && id > 0 {
+			ids[id] = true
+		}
+	}
+	return func(id int64) bool { return ids[id] }, ctx.Err()
+}
+
 // LegacySearchScope maps a UID filter to the equivalent numeric filter before
 // legacy storage filters rows. Response filtering uses the original scope.
 func LegacySearchScope(ctx context.Context, user identity.Requester, resolver ScopeResolver, scope string) (string, error) {
