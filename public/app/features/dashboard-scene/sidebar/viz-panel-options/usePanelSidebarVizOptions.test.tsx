@@ -27,10 +27,10 @@ const timeseries = getPanelPlugin({ id: 'timeseries' })
     useCustomConfig: (builder) =>
       builder.addBooleanSwitch({ path: 'axisBorderShow', name: 'Axis border', category: ['Axis'] }),
   });
-const text = getPanelPlugin({ id: 'text' }).setPanelOptions((builder) =>
+const gauge = getPanelPlugin({ id: 'gauge' }).setPanelOptions((builder) =>
   builder.addBooleanSwitch({ path: 'legend.showLegend', name: 'Visibility', category: ['Legend'] })
 );
-const plugins = [timeseries, text];
+const plugins = [timeseries, gauge];
 
 setPluginImportUtils({
   importPanelPlugin: async (id) => plugins.find((p) => p.meta.id === id)!,
@@ -76,7 +76,7 @@ describe('usePanelSidebarVizOptions', () => {
   });
 
   it('adds nothing for visualizations without options configured', () => {
-    setup({ pluginId: 'text' });
+    setup({ pluginId: 'gauge' });
 
     expect(screen.queryByRole('switch')).not.toBeInTheDocument();
   });

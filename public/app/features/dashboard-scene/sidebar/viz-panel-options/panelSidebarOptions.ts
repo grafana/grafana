@@ -50,6 +50,13 @@ export const PANEL_SIDEBAR_OPTIONS: Record<string, string[]> = {
     'options.cellHeight',
     'options.showHeader',
   ],
+  text: [
+    'options.mode',
+    'options.code.language',
+    'options.code.showLineNumbers',
+    'options.code.showMiniMap',
+    'options.content',
+  ],
 };
 
 const OPTIONS_PREFIX = 'options.';
