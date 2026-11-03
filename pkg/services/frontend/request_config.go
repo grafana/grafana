@@ -182,6 +182,10 @@ func (c *FSRequestConfig) ApplyOverrides(settings *ini.File, logger log.Logger, 
 		applyString(settings, "analytics", "rudderstack_config_url", &c.FullFrontendSettings.RudderstackConfigUrl, logger)
 		applyString(settings, "analytics", "rudderstack_integrations_url", &c.FullFrontendSettings.RudderstackIntegrationsUrl, logger)
 		applyInt(settings, "analytics", "rudderstack_batch_interval", &c.FullFrontendSettings.RudderstackBatchInterval, logger)
+
+		applyString(settings, "analytics", "google_analytics_ua_id", &c.FullFrontendSettings.GoogleAnalyticsId, logger)
+		applyString(settings, "analytics", "google_analytics_4_id", &c.FullFrontendSettings.GoogleAnalytics4Id, logger)
+		applyBool(settings, "analytics", "google_analytics_4_send_manual_page_views", &c.FullFrontendSettings.GoogleAnalytics4SendManualPageViews, logger)
 	} else {
 		applyString(settings, "analytics", "rudderstack_write_key", &c.RudderstackWriteKey, logger)
 		applyString(settings, "analytics", "rudderstack_data_plane_url", &c.RudderstackDataPlaneUrl, logger)
@@ -190,6 +194,10 @@ func (c *FSRequestConfig) ApplyOverrides(settings *ini.File, logger log.Logger, 
 		applyString(settings, "analytics", "rudderstack_config_url", &c.RudderstackConfigUrl, logger)
 		applyString(settings, "analytics", "rudderstack_integrations_url", &c.RudderstackIntegrationsUrl, logger)
 		applyOptionalInt(settings, "analytics", "rudderstack_batch_interval", &c.RudderstackBatchInterval, logger)
+
+		applyString(settings, "analytics", "google_analytics_ua_id", &c.GoogleAnalyticsId, logger)
+		applyString(settings, "analytics", "google_analytics_4_id", &c.GoogleAnalytics4Id, logger)
+		applyBool(settings, "analytics", "google_analytics_4_send_manual_page_views", &c.GoogleAnalytics4SendManualPageViews, logger)
 	}
 }
 
@@ -209,6 +217,17 @@ func getValue(settings *ini.File, section, key string) *ini.Key {
 func applyString(settings *ini.File, sectionName, keyName string, target *string, logger log.Logger) {
 	if key := getValue(settings, sectionName, keyName); key != nil {
 		*target = key.String()
+
+		logger.Debug("applying request config override",
+			"section", sectionName,
+			"key", keyName,
+			"value", *target)
+	}
+}
+
+func applyBool(settings *ini.File, sectionName, keyName string, target *bool, logger log.Logger) {
+	if key := getValue(settings, sectionName, keyName); key != nil {
+		*target = key.MustBool(*target)
 
 		logger.Debug("applying request config override",
 			"section", sectionName,

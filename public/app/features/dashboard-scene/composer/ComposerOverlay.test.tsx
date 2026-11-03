@@ -1445,6 +1445,20 @@ describe('hover pass-through', () => {
     expect(document.querySelector('[data-testid="dashboard-composer-overlay"] > div')).toBeInTheDocument();
   });
 
+  it('moves the outline to what scrolls under a still pointer', async () => {
+    const { startPick } = setup();
+    startPick();
+    const { plot } = panelInContainer();
+    fireEvent.pointerMove(plot, { clientX: 200, clientY: 350 });
+    expect(document.querySelector('[data-testid="dashboard-composer-overlay"] > div')).toBeInTheDocument();
+
+    document.elementsFromPoint = () => [];
+    fireEvent.scroll(window);
+    await nextFrame();
+
+    expect(document.querySelector('[data-testid="dashboard-composer-overlay"] > div')).not.toBeInTheDocument();
+  });
+
   it('picks the panel on a click, which never reaches the panel', async () => {
     const { startPick } = setup();
     const pick = startPick();

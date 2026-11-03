@@ -536,6 +536,9 @@ func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, feature
 
 		annotation, resp := findAnnotationByID(tmpCtx, annotationsRepo, int64(annotationId), tempUser)
 		if resp != nil {
+			if resp.Status() == http.StatusNotFound {
+				return nil, accesscontrol.ErrScopeResourceNotFound.Errorf("annotation not found")
+			}
 			return nil, errors.New("could not resolve annotation type")
 		}
 

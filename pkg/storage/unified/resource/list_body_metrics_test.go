@@ -135,7 +135,7 @@ func TestServerListKeysOnlyDoesNotRecordBodyMetrics(t *testing.T) {
 }
 
 func TestDataStoreListBodyStatsAreLazyAndRequestScoped(t *testing.T) {
-	ds := newDataStore(setupBadgerKV(t), nil)
+	ds := newDataStore(setupBadgerKV(t))
 	keys := make([]DataKey, dataBatchSize+10)
 	for i := range keys {
 		keys[i] = DataKey{

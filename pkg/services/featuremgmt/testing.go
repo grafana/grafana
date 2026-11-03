@@ -28,16 +28,30 @@ func WithDisabledFlags(t *testing.T, flags ...string) {
 func WithFlags(t *testing.T, enabled, disabled []string) {
 	t.Helper()
 
-	inMemoryFlags := make(map[string]memprovider.InMemoryFlag, len(enabled)+len(disabled))
+	values := make(map[string]any, len(enabled)+len(disabled))
 	for _, f := range enabled {
-		inMemoryFlags[f] = setting.NewInMemoryFlag(f, true)
+		values[f] = true
 	}
 
 	for _, f := range disabled {
-		_, ok := inMemoryFlags[f]
+		_, ok := values[f]
 		require.False(t, ok, fmt.Sprintf("flag %s cannot be enabled and disabled at time", f))
 
-		inMemoryFlags[f] = setting.NewInMemoryFlag(f, false)
+		values[f] = false
+	}
+
+	WithFlagValues(t, values)
+}
+
+// WithFlagValues sets up an OpenFeature static provider serving the given flag values, which may be
+// of any type a flag supports (bool, int, float, string, object), for the duration of the test,
+// then resets to the no-op provider.
+func WithFlagValues(t *testing.T, values map[string]any) {
+	t.Helper()
+
+	inMemoryFlags := make(map[string]memprovider.InMemoryFlag, len(values))
+	for name, value := range values {
+		inMemoryFlags[name] = setting.NewInMemoryFlag(name, value)
 	}
 
 	provider, err := CreateStaticProviderWithStandardFlags(inMemoryFlags)
