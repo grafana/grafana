@@ -37,8 +37,8 @@
       "plugin-compat": {
         "projects": ["@grafana/plugin-compat"],
         "projectsRelationship": "independent",
-        "versionPlans": {
-          "ignorePatternsForPlanCheck": ["**/*.test.ts", "**/*.test.tsx"]
+        "version": {
+          "conventionalCommits": true
         },
         "changelog": {
           "file": "{projectRoot}/CHANGELOG.md",
