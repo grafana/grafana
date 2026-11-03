@@ -1,10 +1,12 @@
-import { act, screen } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { getLibraryPanelsWithUnsavedChanges } from '../../saving/getLibraryPanelsWithUnsavedChanges';
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -30,7 +32,15 @@ const timeseries = getPanelPlugin({ id: 'timeseries' })
 const gauge = getPanelPlugin({ id: 'gauge' }).setPanelOptions((builder) =>
   builder.addBooleanSwitch({ path: 'legend.showLegend', name: 'Visibility', category: ['Legend'] })
 );
-const plugins = [timeseries, gauge];
+// Like the new text panel, which registers its content options as hidden
+const text = getPanelPlugin({ id: 'text' }).setPanelOptions((builder) =>
+  builder.addTextInput({ path: 'content', name: 'Content', category: ['Text'], showIf: () => false })
+);
+const plugins = [timeseries, gauge, text];
+
+jest.mock('./TextNGSidebarEditor', () => ({
+  TextNGSidebarEditor: () => <textarea aria-label="Text content" />,
+}));
 
 setPluginImportUtils({
   importPanelPlugin: async (id) => plugins.find((p) => p.meta.id === id)!,
@@ -42,7 +52,10 @@ function SidebarVizOptions({ panel }: { panel: VizPanel }) {
 }
 
 let deactivate: () => void;
-afterEach(() => deactivate?.());
+afterEach(() => {
+  deactivate?.();
+  setTestFlags({});
+});
 
 function setup({ pluginId = 'timeseries', libraryPanel = false } = {}) {
   const panel = new VizPanel({
@@ -97,6 +110,26 @@ describe('usePanelSidebarVizOptions', () => {
     act(() => sidebar.redoAction());
     expect(panel.state.options.legend?.showLegend).toBe(false);
   });
+
+  it.each([
+    { newTextPanel: true, shown: true },
+    { newTextPanel: false, shown: false },
+  ])(
+    'shows the text editor for text panels: $shown with grafana.newTextPanel=$newTextPanel',
+    async ({ newTextPanel, shown }) => {
+      setTestFlags({ [FlagKeys.GrafanaNewTextPanel]: newTextPanel });
+      const { panel } = setup({ pluginId: 'text' });
+      await waitFor(() => expect(panel.getPlugin()?.meta.id).toBe('text'));
+
+      if (shown) {
+        expect(await screen.findByRole('group', { name: 'Text' })).toContainElement(
+          screen.getByRole('textbox', { name: 'Text content' })
+        );
+      } else {
+        expect(screen.queryByRole('textbox', { name: 'Text content' })).not.toBeInTheDocument();
+      }
+    }
+  );
 
   describe('library panels', () => {
     it('tracks unsaved changes until undone', async () => {

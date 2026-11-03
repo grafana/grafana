@@ -1,13 +1,17 @@
 import { useMemo } from 'react';
 
+import { t } from '@grafana/i18n';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
+import { isNewTextPanelEnabled } from 'app/plugins/panel/text/v2/utils';
 
 import { changePanelFieldConfig, changePanelOptions } from '../../actions/panel/changePanelOptions';
 import { getLibraryPanelBehavior } from '../../utils/utils';
 
 import { LibraryPanelSidebarNotice } from './LibraryPanelSidebarNotice';
+import { TextNGSidebarEditor } from './TextNGSidebarEditor';
 import { filterOptionsPaneCategories, getPanelSidebarOptionIds } from './panelSidebarOptions';
 
 /**
@@ -41,6 +45,12 @@ export function usePanelSidebarVizOptions(panel: VizPanel): OptionsPaneCategoryD
       itemIds
     );
 
+    // The new text panel registers its content options as hidden and edits them inside the panel,
+    // so the mapped text options never show. Its in-panel editor takes their place.
+    if (pluginId === 'text' && isNewTextPanelEnabled()) {
+      categories.push(getTextNGEditorCategory(panel));
+    }
+
     const libraryPanel = getLibraryPanelBehavior(panel);
     if (!libraryPanel || categories.length === 0) {
       return categories;
@@ -56,4 +66,17 @@ export function usePanelSidebarVizOptions(panel: VizPanel): OptionsPaneCategoryD
 
     return [libraryPanelNotice, ...categories];
   }, [panel, plugin, pluginId, data, options, fieldConfig, _pluginInstanceState]);
+}
+
+function getTextNGEditorCategory(panel: VizPanel): OptionsPaneCategoryDescriptor {
+  const title = t('dashboard.sidebar.viz-panel.text-editor.category', 'Text');
+
+  return new OptionsPaneCategoryDescriptor({ title, id: 'Text' }).addItem(
+    new OptionsPaneItemDescriptor({
+      title: t('dashboard.sidebar.viz-panel.text-editor.content', 'Content'),
+      id: 'text-ng-editor',
+      skipField: true,
+      render: () => <TextNGSidebarEditor panel={panel} />,
+    })
+  );
 }

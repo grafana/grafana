@@ -6769,6 +6769,13 @@
           "description": "Description",
           "title-option": "Title",
           "transparent-background": "Transparent background"
+        },
+        "text-editor": {
+          "category": "Text",
+          "content": "Content",
+          "line-numbers": "Line numbers",
+          "loading": "Loading",
+          "mode": "Mode"
         }
       }
     },

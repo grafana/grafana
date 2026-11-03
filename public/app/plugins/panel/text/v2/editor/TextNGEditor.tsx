@@ -55,6 +55,8 @@ export interface TextNGEditorProps {
   /** Whether the panel has a title set. */
   hasTitle?: boolean;
   consent?: TextSandboxProps['consent'];
+  /** Hidden where the view is fixed, such as the dashboard edit pane, which only writes. */
+  showViewToggle?: boolean;
 }
 
 const getLanguageLabels = (): Record<CodeLanguage, string> => ({
@@ -93,6 +95,7 @@ export function TextNGEditor({
   transparent,
   hasTitle,
   consent,
+  showViewToggle = true,
 }: TextNGEditorProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -279,7 +282,7 @@ export function TextNGEditor({
     <div className={styles.wrapper} data-testid="TextNGEditor">
       <div className={cx(!hasTitle && styles.toolbarRowGuard)}>
         <Stack gap={1} alignItems="center" wrap="wrap" minHeight={theme.components.height.md}>
-          <RadioButtonGroup options={viewOptions} value={view} onChange={onViewChange} size="sm" />
+          {showViewToggle && <RadioButtonGroup options={viewOptions} value={view} onChange={onViewChange} size="sm" />}
           {showEditor && <TextNGFormatToolbar mode={mode} editorContainerRef={editorContainerRef} />}
           <Dropdown placement="bottom-end" overlay={renderModeMenu}>
             <Button

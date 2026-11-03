@@ -11,8 +11,26 @@ function recordLibraryPanelSavedOptions(panel: VizPanel) {
   getLibraryPanelBehavior(panel)?.recordSavedOptions();
 }
 
-export function changePanelOptions(panel: VizPanel, options: Record<string, unknown>, name: string, category: string) {
-  const oldOptions = panel.state.options;
+/**
+ * Applies options without recording an edit, for live updates while typing. Record the edit once the
+ * user is done with changePanelOptions, passing the options from before the first live update.
+ */
+export function previewPanelOptions(panel: VizPanel, options: object) {
+  recordLibraryPanelSavedOptions(panel);
+  panel.onOptionsChange(options, true);
+}
+
+/**
+ * @param previousOptions what undo restores, when the change was already applied with previewPanelOptions
+ */
+export function changePanelOptions(
+  panel: VizPanel,
+  options: object,
+  name: string,
+  category: string,
+  previousOptions: object = panel.state.options
+) {
+  const oldOptions = previousOptions;
   if (isEqual(oldOptions, options)) {
     return;
   }
