@@ -28,7 +28,7 @@ export default function SlideshowsPage() {
 
   return (
     <Page
-      navId="dashboards/playlists"
+      navId="dashboards/slideshows"
       pageNav={{ text: t('slideshows.page.title', 'Slideshows') }}
       actions={
         canWrite ? (

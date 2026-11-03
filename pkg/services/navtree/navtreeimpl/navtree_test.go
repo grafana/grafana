@@ -88,13 +88,16 @@ func TestBuildDashboardNavLinks(t *testing.T) {
 		}
 	}
 
-	hasPlaylistLink := func(navLinks []*navtree.NavLink) bool {
+	hasLink := func(navLinks []*navtree.NavLink, id string) bool {
 		for _, link := range navLinks {
-			if link.Id == "dashboards/playlists" {
+			if link.Id == id {
 				return true
 			}
 		}
 		return false
+	}
+	hasPlaylistLink := func(navLinks []*navtree.NavLink) bool {
+		return hasLink(navLinks, "dashboards/playlists")
 	}
 
 	t.Run("Should show Playlists link for an anonymous Viewer", func(t *testing.T) {
@@ -112,6 +115,7 @@ func TestBuildDashboardNavLinks(t *testing.T) {
 		navLinks := service.buildDashboardNavLinks(reqCtx)
 
 		require.True(t, hasPlaylistLink(navLinks), "expected anonymous Viewer to see the Playlists nav link")
+		require.True(t, hasLink(navLinks, "dashboards/slideshows"), "expected anonymous Viewer to see the Slideshows nav link")
 	})
 
 	t.Run("Should not show Playlists link for an unauthenticated user", func(t *testing.T) {
@@ -129,6 +133,7 @@ func TestBuildDashboardNavLinks(t *testing.T) {
 		navLinks := service.buildDashboardNavLinks(reqCtx)
 
 		require.False(t, hasPlaylistLink(navLinks), "expected unauthenticated user to not see the Playlists nav link")
+		require.False(t, hasLink(navLinks, "dashboards/slideshows"), "expected unauthenticated user to not see the Slideshows nav link")
 	})
 }
 
