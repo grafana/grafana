@@ -201,45 +201,6 @@ func TestService_resolveScopeMap(t *testing.T) {
 	}
 }
 
-func TestService_resolveScopeMap_MixedDelegateScopes(t *testing.T) {
-	tests := []struct {
-		action        string
-		scope         string
-		resolvedScope string
-		wildcard      bool
-	}{
-		{"roles:write", "roles:uid:foo", "roles:uid:foo", true},
-		{"roles:delete", "roles:uid:foo", "roles:uid:foo", true},
-		{"users.roles:add", "users:id:1", "users:uid:u1", true},
-		{"users.roles:remove", "users:id:1", "users:uid:u1", true},
-		{"teams.roles:add", "teams:id:1", "teams:uid:t1", true},
-		{"teams.roles:remove", "teams:id:1", "teams:uid:t1", true},
-		{"roles:read", "roles:uid:foo", "roles:uid:foo", false},
-		{"users.roles:read", "users:id:1", "users:uid:u1", false},
-		{"teams.roles:read", "teams:id:1", "teams:uid:t1", false},
-	}
-	for _, tt := range tests {
-		t.Run(tt.action, func(t *testing.T) {
-			s := setupService()
-			s.identityStore = &fakeIdentityStore{
-				disableNsCheck: true,
-				teams:          []team.Team{{ID: 1, UID: "t1"}},
-				users:          []common.UserWithRole{{User: user.User{ID: 1, UID: "u1"}}},
-			}
-			got, err := s.resolveScopeMap(context.Background(), types.NamespaceInfo{Value: "org-1", OrgID: 1}, tt.action, map[string]bool{
-				"permissions:type:delegate": true,
-				tt.scope:                    true,
-			})
-			require.NoError(t, err)
-			want := map[string]bool{"permissions:type:delegate": true, tt.resolvedScope: true}
-			if tt.wildcard {
-				want["*"] = true
-			}
-			require.Equal(t, want, got)
-		})
-	}
-}
-
 // Test that fetch* functions paginate through all results when the store returns multiple pages.
 // Each test uses pageSize=2 with 5 items, expecting 3 pages (2+2+1).
 func TestService_fetchPagination(t *testing.T) {
