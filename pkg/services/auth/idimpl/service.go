@@ -84,7 +84,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		token    string
 		idClaims *auth.IDClaims
 	}
-	result, err, _ := s.si.Do(cacheKey, func() (any, error) {
+	load := func() (any, error) {
 		if !cacheDisabled {
 			cachedToken, err := s.cache.Get(ctx, cacheKey)
 			if err == nil {
@@ -150,7 +150,16 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		}
 
 		return resultType{token: token, idClaims: idClaims}, nil
-	})
+	}
+
+	var result any
+	var err error
+	if cacheDisabled {
+		// Skip singleflight so overlapping authentications don't share one token.
+		result, err = load()
+	} else {
+		result, err, _ = s.si.Do(cacheKey, load)
+	}
 
 	if err != nil {
 		return "", nil, err

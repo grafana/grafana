@@ -7,6 +7,8 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/go-jose/go-jose/v4"
@@ -268,10 +270,10 @@ func TestService_SignIdentity(t *testing.T) {
 func TestService_IDTokenCacheDisabled(t *testing.T) {
 	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagIdTokenCacheDisabled)
 
-	calls := 0
+	var calls atomic.Int32
 	signer := &idtest.FakeSigner{
 		SignIDTokenFn: func(_ context.Context, c *auth.IDClaims) (string, error) {
-			calls++
+			calls.Add(1)
 			s, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: testKey}, nil)
 			require.NoError(t, err)
 			return jwt.Signed(s).Claims(c.Claims).Claims(c.Rest).Serialize()
@@ -290,8 +292,41 @@ func TestService_IDTokenCacheDisabled(t *testing.T) {
 			require.NoError(t, err)
 			require.NotEmpty(t, token)
 		}
-		assert.Equal(t, 2, calls)
+		assert.EqualValues(t, 2, calls.Load())
 		assert.Empty(t, cache.Storage)
+	})
+
+	t.Run("should not share a token between overlapping calls", func(t *testing.T) {
+		calls.Store(0)
+		release := make(chan struct{})
+		entered := make(chan struct{}, 2)
+		blocking := &idtest.FakeSigner{
+			SignIDTokenFn: func(ctx context.Context, c *auth.IDClaims) (string, error) {
+				entered <- struct{}{}
+				<-release
+				return signer.SignIDToken(ctx, c)
+			},
+		}
+		bs := ProvideService(
+			setting.NewCfg(), blocking, remotecache.NewFakeCacheStorage(),
+			&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
+		)
+
+		var wg sync.WaitGroup
+		for range 2 {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				_, _, err := bs.SignIdentity(context.Background(), ident)
+				assert.NoError(t, err)
+			}()
+		}
+		// Both calls must reach the signer before either is released.
+		<-entered
+		<-entered
+		close(release)
+		wg.Wait()
+		assert.EqualValues(t, 2, calls.Load())
 	})
 
 	t.Run("should not read tokens from the cache", func(t *testing.T) {
