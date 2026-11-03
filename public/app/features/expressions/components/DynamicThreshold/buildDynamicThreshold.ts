@@ -1,9 +1,7 @@
 import { t } from '@grafana/i18n';
-import { quoteIdentifierIfNecessary } from '@grafana/sql';
 
 import { EvalFunction } from '../../../alerting/state/alertDef';
 import { type DynamicThresholdPolicyV1 } from '../../types';
-import { SQL_EXPRESSIONS_DIALECT } from '../../utils/sqlIdentifier';
 
 export type DynamicThresholdValidationErrorCode =
   | 'inputRefId'
@@ -15,11 +13,18 @@ export type DynamicThresholdValidationErrorCode =
   | 'thresholdValue'
   | 'range'
   | 'duplicateMapping'
+  | 'invalidString'
   | 'queryLength';
+
+export type DynamicThresholdValidationField = keyof DynamicThresholdPolicyV1;
 
 export interface DynamicThresholdValidationError {
   code: DynamicThresholdValidationErrorCode;
   message: string;
+  location: {
+    field: DynamicThresholdValidationField;
+    mappingIndex?: number;
+  };
 }
 
 export type BuildDynamicThresholdResult =
@@ -62,7 +67,9 @@ export function canonicalizeDynamicThresholdPolicy(policy: DynamicThresholdPolic
     evaluator: policy.evaluator,
     mappings: policy.mappings.map(({ labelValue, thresholds }) => ({ labelValue, thresholds })),
     defaultThreshold: policy.defaultThreshold,
-  });
+  })
+    .replaceAll('\u2028', '\\u2028')
+    .replaceAll('\u2029', '\\u2029');
 }
 
 export function buildDynamicThreshold(policy: DynamicThresholdPolicyV1): BuildDynamicThresholdResult {
@@ -71,32 +78,23 @@ export function buildDynamicThreshold(policy: DynamicThresholdPolicyV1): BuildDy
     return { ok: false, errors };
   }
 
-  const table = quoteIdentifierIfNecessary(policy.inputRefId, SQL_EXPRESSIONS_DIALECT);
-  const value = `${table}.${quoteIdentifierIfNecessary(policy.valueField, SQL_EXPRESSIONS_DIALECT)}`;
-  const label = `${table}.${quoteIdentifierIfNecessary(policy.matchLabel, SQL_EXPRESSIONS_DIALECT)}`;
+  const table = quoteIdentifier(policy.inputRefId);
+  const value = `${table}.${quoteIdentifier(policy.valueField)}`;
+  const label = `${table}.${quoteIdentifier(policy.matchLabel)}`;
   const labels = policy.labelColumns.map(
-    (column) =>
-      `${table}.${quoteIdentifierIfNecessary(column, SQL_EXPRESSIONS_DIALECT)} AS ${quoteIdentifierIfNecessary(column, SQL_EXPRESSIONS_DIALECT)}`
+    (column) => `${table}.${quoteIdentifier(column)} AS ${quoteIdentifier(column)}`
   );
-  const thresholdCases = policy.mappings
-    .map((mapping) => `      WHEN ${quoteString(mapping.labelValue)} THEN ${formatNumber(mapping.thresholds[0])}`)
-    .join('\n');
-  const thresholdExpression = `CASE ${label}\n${thresholdCases}\n      ELSE ${formatNumber(policy.defaultThreshold[0])}\n    END`;
-  const upperThresholdCases = isRangeEvaluator(policy.evaluator)
-    ? policy.mappings
-        .map((mapping) => `      WHEN ${quoteString(mapping.labelValue)} THEN ${formatNumber(mapping.thresholds[1])}`)
-        .join('\n')
-    : '';
+  const thresholdExpression = buildThresholdExpression(policy, label, 0);
   const upperThresholdExpression = isRangeEvaluator(policy.evaluator)
-    ? `CASE ${label}\n${upperThresholdCases}\n      ELSE ${formatNumber(policy.defaultThreshold[1])}\n    END`
+    ? buildThresholdExpression(policy, label, 1)
     : undefined;
   const condition = buildCondition(value, thresholdExpression, upperThresholdExpression, policy.evaluator);
   const selectedLabels = labels.length > 0 ? `${labels.join(',\n  ')},\n  ` : '';
-  const expressionSql = `SELECT\n  ${selectedLabels}CASE\n    WHEN ${value} IS NULL THEN NULL\n    WHEN ${condition} THEN 1\n    ELSE 0\n  END AS alert_result\nFROM ${table}`;
+  const expressionSql = `SELECT\n  ${selectedLabels}CASE\n    WHEN ${value} IS NULL THEN NULL\n    WHEN ${condition} THEN 1\n    ELSE 0\n  END AS ${quoteIdentifier('alert_result')}\nFROM ${table}`;
   const previewThresholds = upperThresholdExpression
-    ? `${thresholdExpression} AS matched_threshold_lower,\n  ${upperThresholdExpression} AS matched_threshold_upper,`
-    : `${thresholdExpression} AS matched_threshold,`;
-  const previewSql = `SELECT\n  ${selectedLabels}${value} AS current_value,\n  ${previewThresholds}\n  CASE\n    WHEN ${value} IS NULL THEN NULL\n    WHEN ${condition} THEN 1\n    ELSE 0\n  END AS condition_result\nFROM ${table}`;
+    ? `${thresholdExpression} AS ${quoteIdentifier('matched_threshold_lower')},\n  ${upperThresholdExpression} AS ${quoteIdentifier('matched_threshold_upper')},`
+    : `${thresholdExpression} AS ${quoteIdentifier('matched_threshold')},`;
+  const previewSql = `SELECT\n  ${selectedLabels}${value} AS ${quoteIdentifier('current_value')},\n  ${previewThresholds}\n  CASE\n    WHEN ${value} IS NULL THEN NULL\n    WHEN ${condition} THEN 1\n    ELSE 0\n  END AS ${quoteIdentifier('condition_result')}\nFROM ${table}`;
 
   if (expressionSql.length > CLIENT_QUERY_LENGTH_WARNING) {
     return {
@@ -105,6 +103,7 @@ export function buildDynamicThreshold(policy: DynamicThresholdPolicyV1): BuildDy
         {
           code: 'queryLength',
           message: t('expressions.dynamic-threshold.error-query-length', 'Generated SQL is too long.'),
+          location: { field: 'mappings' },
         },
       ],
     };
@@ -114,32 +113,56 @@ export function buildDynamicThreshold(policy: DynamicThresholdPolicyV1): BuildDy
   return { ok: true, expressionSql, previewSql, artifactHash, labelColumns: [...policy.labelColumns] };
 }
 
+function buildThresholdExpression(policy: DynamicThresholdPolicyV1, label: string, thresholdIndex: number): string {
+  const defaultValue = formatNumber(policy.defaultThreshold[thresholdIndex]);
+  if (policy.mappings.length === 0) {
+    return defaultValue;
+  }
+
+  const thresholdCases = policy.mappings
+    .map(
+      (mapping) =>
+        `      WHEN ${quoteString(mapping.labelValue)} THEN ${formatNumber(mapping.thresholds[thresholdIndex])}`
+    )
+    .join('\n');
+  return `CASE ${label}\n${thresholdCases}\n      ELSE ${defaultValue}\n    END`;
+}
+
 function validatePolicy(policy: DynamicThresholdPolicyV1): DynamicThresholdValidationError[] {
   const errors: DynamicThresholdValidationError[] = [];
   if (!policy.inputRefId.trim()) {
     errors.push({
       code: 'inputRefId',
       message: t('expressions.dynamic-threshold.error-input-query', 'Select an input query.'),
+      location: { field: 'inputRefId' },
     });
   }
   if (!policy.valueField.trim()) {
     errors.push({
       code: 'valueField',
       message: t('expressions.dynamic-threshold.error-value-field', 'Select a numeric field.'),
+      location: { field: 'valueField' },
     });
   }
   if (!policy.matchLabel.trim()) {
     errors.push({
       code: 'matchLabel',
       message: t('expressions.dynamic-threshold.error-match-label', 'Select a match label.'),
+      location: { field: 'matchLabel' },
     });
   }
   if (!SUPPORTED_EVALUATORS.has(policy.evaluator)) {
     errors.push({
       code: 'evaluator',
       message: t('expressions.dynamic-threshold.error-operator', 'Select an operator.'),
+      location: { field: 'evaluator' },
     });
   }
+  validateWellFormedString(policy.inputRefId, 'inputRefId', errors);
+  validateWellFormedString(policy.valueField, 'valueField', errors);
+  validateWellFormedString(policy.matchLabel, 'matchLabel', errors);
+  policy.labelColumns.forEach((column) => validateWellFormedString(column, 'labelColumns', errors));
+
   const labelSet = new Set(policy.labelColumns);
   if (policy.labelColumns.some((column) => !column.trim()) || labelSet.size !== policy.labelColumns.length) {
     errors.push({
@@ -148,6 +171,7 @@ function validatePolicy(policy: DynamicThresholdPolicyV1): DynamicThresholdValid
         'expressions.dynamic-threshold.error-label-column-names',
         'Label column names must be unique and non-empty.'
       ),
+      location: { field: 'labelColumns' },
     });
   }
   if (policy.matchLabel && !labelSet.has(policy.matchLabel)) {
@@ -157,6 +181,7 @@ function validatePolicy(policy: DynamicThresholdPolicyV1): DynamicThresholdValid
         'expressions.dynamic-threshold.error-match-label-schema',
         'The match label must be a known label column.'
       ),
+      location: { field: 'matchLabel' },
     });
   }
   if (labelSet.has(policy.valueField)) {
@@ -166,59 +191,125 @@ function validatePolicy(policy: DynamicThresholdPolicyV1): DynamicThresholdValid
         'expressions.dynamic-threshold.error-value-field-label',
         'The numeric value field cannot be a label column.'
       ),
+      location: { field: 'valueField' },
     });
   }
   const expectedArity = isRangeEvaluator(policy.evaluator) ? 2 : 1;
-  validateThresholds(policy.defaultThreshold, expectedArity, 'default threshold', errors);
+  validateThresholds(policy.defaultThreshold, expectedArity, { field: 'defaultThreshold' }, errors);
   const values = new Set<string>();
-  for (const mapping of policy.mappings) {
+  policy.mappings.forEach((mapping, mappingIndex) => {
+    validateWellFormedString(mapping.labelValue, 'mappings', errors, mappingIndex);
     if (values.has(mapping.labelValue)) {
       errors.push({
         code: 'duplicateMapping',
-        message: t('expressions.dynamic-threshold.error-duplicate-mapping', 'Duplicate mapping for {{labelValue}}.', {
-          labelValue: mapping.labelValue,
-        }),
+        message: t(
+          'expressions.dynamic-threshold.error-duplicate-mapping',
+          'Mapping row {{row}} duplicates another label value.',
+          { row: mappingIndex + 1 }
+        ),
+        location: { field: 'mappings', mappingIndex },
       });
     }
     values.add(mapping.labelValue);
-    validateThresholds(mapping.thresholds, expectedArity, `mapping ${mapping.labelValue}`, errors);
-  }
+    validateThresholds(mapping.thresholds, expectedArity, { field: 'mappings', mappingIndex }, errors);
+  });
   return errors;
+}
+
+function validateWellFormedString(
+  value: string,
+  field: DynamicThresholdValidationField,
+  errors: DynamicThresholdValidationError[],
+  mappingIndex?: number
+) {
+  if (!isWellFormedString(value)) {
+    errors.push({
+      code: 'invalidString',
+      message:
+        mappingIndex === undefined
+          ? t('expressions.dynamic-threshold.error-invalid-string', 'The selected field contains invalid text.')
+          : t(
+              'expressions.dynamic-threshold.error-invalid-mapping-string',
+              'Mapping row {{row}} contains invalid text.',
+              { row: mappingIndex + 1 }
+            ),
+      location: { field, mappingIndex },
+    });
+  }
+}
+
+function isWellFormedString(value: string): boolean {
+  for (let index = 0; index < value.length; index++) {
+    const code = value.charCodeAt(index);
+    if (code >= 0xd800 && code <= 0xdbff) {
+      const next = value.charCodeAt(index + 1);
+      if (!(next >= 0xdc00 && next <= 0xdfff)) {
+        return false;
+      }
+      index++;
+    } else if (code >= 0xdc00 && code <= 0xdfff) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function validateThresholds(
   thresholds: number[],
   expectedArity: number,
-  name: string,
+  location: DynamicThresholdValidationError['location'],
   errors: DynamicThresholdValidationError[]
 ) {
+  const isMapping = location.mappingIndex !== undefined;
+  const row = isMapping ? location.mappingIndex! + 1 : undefined;
   if (thresholds.length !== expectedArity) {
     errors.push({
       code: 'thresholdArity',
-      message: t(
-        'expressions.dynamic-threshold.error-threshold-arity',
-        '{{name}} requires {{expectedArity}} value(s).',
-        { name, expectedArity }
-      ),
+      message: isMapping
+        ? t(
+            'expressions.dynamic-threshold.error-mapping-threshold-arity',
+            'Mapping row {{row}} requires {{expectedArity}} threshold value(s).',
+            { row, expectedArity }
+          )
+        : t(
+            'expressions.dynamic-threshold.error-default-threshold-arity',
+            'The default threshold requires {{expectedArity}} value(s).',
+            { expectedArity }
+          ),
+      location,
     });
     return;
   }
   if (thresholds.some((threshold) => !Number.isFinite(threshold))) {
     errors.push({
       code: 'thresholdValue',
-      message: t('expressions.dynamic-threshold.error-threshold-value', '{{name}} must contain finite numbers.', {
-        name,
-      }),
+      message: isMapping
+        ? t(
+            'expressions.dynamic-threshold.error-mapping-threshold-value',
+            'Mapping row {{row}} must contain finite threshold values.',
+            { row }
+          )
+        : t(
+            'expressions.dynamic-threshold.error-default-threshold-value',
+            'The default threshold must contain finite values.'
+          ),
+      location,
     });
   }
   if (expectedArity === 2 && thresholds[0] >= thresholds[1]) {
     errors.push({
       code: 'range',
-      message: t(
-        'expressions.dynamic-threshold.error-range',
-        '{{name}} lower value must be less than its upper value.',
-        { name }
-      ),
+      message: isMapping
+        ? t(
+            'expressions.dynamic-threshold.error-mapping-range',
+            'Mapping row {{row}} must have a lower value that is less than its upper value.',
+            { row }
+          )
+        : t(
+            'expressions.dynamic-threshold.error-default-range',
+            'The default threshold lower value must be less than its upper value.'
+          ),
+      location,
     });
   }
 }
@@ -250,8 +341,12 @@ function buildCondition(value: string, lower: string, upper: string | undefined,
   }
 }
 
+function quoteIdentifier(value: string): string {
+  return `\`${value.replaceAll('`', '``')}\``;
+}
+
 function quoteString(value: string): string {
-  return `'${value.replaceAll("'", "''")}'`;
+  return `'${value.replaceAll('\\', '\\\\').replaceAll("'", "''")}'`;
 }
 
 function formatNumber(value: number): string {
