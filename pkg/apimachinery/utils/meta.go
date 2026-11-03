@@ -26,8 +26,10 @@ const LabelKeyGetTrash = "grafana.app/get-trash"
 // AnnoKeyKubectlLastAppliedConfig is the annotation kubectl writes with the entire previous config
 const AnnoKeyKubectlLastAppliedConfig = "kubectl.kubernetes.io/last-applied-configuration"
 
-// AnnoKeyGrantPermissions allows users to explicitly grant themself permissions when creating
-// resoures in the "root" folder.  This annotation is not saved and invalud for update.
+// AnnoKeyGrantPermissions lets a caller explicitly request the default permissions for a
+// resource in the "root" folder, where there is no parent folder to inherit access from. It is
+// acted on when the resource is created at the root and when an update moves it there; any
+// other update ignores it. The annotation itself is never saved.
 const AnnoKeyGrantPermissions = "grafana.app/grant-permissions"
 
 // AnnoGrantPermissionsDefault is the value that should be sent with AnnoKeyGrantPermissions
