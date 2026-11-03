@@ -19,6 +19,7 @@ import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { buildShareUrl } from '../sharing/ShareButton/utils';
 import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
+import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
 import { findVizPanelByPathId } from '../utils/pathId';
@@ -27,7 +28,7 @@ import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { DashboardScene } from './DashboardScene';
 import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
-import { canManuallyEditDashboard, isViewingDashboard } from './dashboardModes';
+import { canManuallyEditDashboard, getDashboardMode, isViewingDashboard } from './dashboardModes';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
@@ -289,7 +290,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
         key: 'mod+s',
         onTrigger: () => {
           // Viewing keeps the edit session open (isEditing stays true), so gate on the mode as well
-          if (!isViewingDashboard(scene.state)) {
+          if (getDashboardMode(scene.state) !== 'view') {
             scene.openSaveDrawer({});
           }
         },
@@ -300,7 +301,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'p r',
       onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-        if (isFullDashboardEditing(scene.state)) {
+        if (isFullDashboardEditing(scene.state) && !isRepeatCloneOrChildOf(vizPanel)) {
           const panelId = getPanelIdForVizPanel(vizPanel);
           DashboardInteractions.panelActionClicked('delete', panelId, 'keyboard');
           onRemovePanel(scene, vizPanel);

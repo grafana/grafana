@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type Field, FieldType } from '@grafana/data';
@@ -30,14 +30,15 @@ function renderPopup(overrides: Partial<Parameters<typeof FilterPopup>[0]> = {})
       onApplyValues={onApplyValues}
       onClear={onClear}
       onClose={onClose}
-      field={makeField('Status')}
+      field={{ ...makeField('Status'), values: overrides.rows?.map((row) => row.Status) ?? ['active', 'inactive'] }}
       searchFilter=""
       setSearchFilter={jest.fn()}
       operator={defaultOperator}
       setOperator={jest.fn()}
       buttonElement={buttonElement}
       {...overrides}
-    />
+    />,
+    { wrapper: ({ children }) => <div onKeyDown={(event) => event.stopPropagation()}>{children}</div> }
   );
 
   return { onApplyValues, onClear, onClose, buttonElement, ...view };
@@ -47,6 +48,39 @@ describe('FilterPopup', () => {
   afterEach(() => {
     // clean up any button elements added to body
     document.body.querySelectorAll('button').forEach((b) => b.remove());
+  });
+
+  it('previews selected string rows, including repeated values', async () => {
+    const user = userEvent.setup();
+    renderPopup({ rows: makeRows('Status', ['active', 'active', 'inactive']), rangeFiltersEnabled: true });
+    expect(screen.getByRole('status')).toHaveTextContent('3 of 3 rows');
+
+    await user.click(screen.getByRole('checkbox', { name: 'active' }));
+    expect(screen.getByRole('status')).toHaveTextContent('2 of 3 rows');
+
+    await user.click(screen.getByRole('checkbox', { name: 'inactive' }));
+    expect(screen.getByRole('status')).toHaveTextContent('3 of 3 rows');
+
+    await user.click(screen.getByRole('checkbox', { name: 'active' }));
+    expect(screen.getByRole('status')).toHaveTextContent('1 of 3 rows');
+
+    await user.click(screen.getByRole('checkbox', { name: 'inactive' }));
+    expect(screen.getByRole('status')).toHaveTextContent('3 of 3 rows');
+  });
+
+  it('clears the search with an accessible icon button and returns focus to the input', async () => {
+    const user = userEvent.setup();
+    const setSearchFilter = jest.fn();
+    renderPopup({ searchFilter: 'active', setSearchFilter, rangeFiltersEnabled: true });
+    const input = screen.getByPlaceholderText('Filter values');
+    await waitFor(() => expect(input).toHaveFocus());
+    const clearButton = screen.getByRole('button', { name: 'Clear' });
+
+    expect(clearButton).not.toHaveTextContent(/./);
+    await user.click(clearButton);
+
+    expect(setSearchFilter).toHaveBeenCalledWith('');
+    expect(input).toHaveFocus();
   });
 
   describe('Cancel button', () => {
@@ -86,6 +120,65 @@ describe('FilterPopup', () => {
     });
   });
 
+  it.each([FieldType.number, FieldType.time])('clears and closes an active %s range filter', async (type) => {
+    const user = userEvent.setup();
+    const field: Field = { name: 'Value', type, values: [0, 10], config: {} };
+    const { onClear, onClose } = renderPopup({
+      field,
+      rangeFiltersEnabled: true,
+      rows: makeRows('Value', ['0', '10']),
+      range: { min: 0, max: 10, includeMissing: false },
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Clear filter' }));
+
+    expect(onClear).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('mounts the date range editor for time fields', () => {
+    const field: Field = { name: 'Time', type: FieldType.time, values: [Date.UTC(2026, 8, 17)], config: {} };
+    renderPopup({ field, rows: makeRows('Time', ['2026-09-17']), rangeFiltersEnabled: true });
+
+    expect(screen.getByRole('textbox', { name: 'Start' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'End' })).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Filter values')).not.toBeInTheDocument();
+  });
+
+  it('announces a range filter field name without HTML escaping', () => {
+    const name = 'CPU & memory < max';
+    const field: Field = { name, type: FieldType.number, values: [0, 10], config: {} };
+    renderPopup({ field, rows: makeRows(name, ['0', '10']), rangeFiltersEnabled: true });
+
+    expect(screen.getByRole('group', { name: `Filter ${name}` })).toBeInTheDocument();
+  });
+
+  it.each([FieldType.number, FieldType.time])(
+    'uses the string editor for %s fields without the new-features flag',
+    (type) => {
+      const field: Field = { name: 'Value', type, values: [0, 10], config: {} };
+      renderPopup({ field, rows: makeRows('Value', ['0', '10']) });
+
+      expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
+      expect(screen.getByRole('checkbox', { name: '0' })).toBeInTheDocument();
+      expect(screen.queryByRole('slider')).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: 'Start' })).not.toBeInTheDocument();
+    }
+  );
+
+  it('keeps an existing value filter in the string editor with range filters enabled', () => {
+    const field: Field = { name: 'Value', type: FieldType.number, values: [0, 10], config: {} };
+    renderPopup({
+      field,
+      rows: makeRows('Value', ['0', '10']),
+      rangeFiltersEnabled: true,
+      filterValue: [{ value: '0', label: '0' }],
+    });
+
+    expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: '0' })).toBeChecked();
+  });
+
   describe('Ok button', () => {
     it('closes when Ok is clicked', async () => {
       const user = userEvent.setup();
@@ -120,14 +213,121 @@ describe('FilterPopup', () => {
     });
   });
 
+  it('keeps the legacy string-filter controls without the new-features flag', () => {
+    renderPopup({ searchFilter: 'active' });
+
+    expect(screen.getByText('Status')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Clear' })).toHaveTextContent('Clear');
+    expect(screen.getByRole('button', { name: 'Ok' })).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: 'Include missing values' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
   describe('Escape key', () => {
-    it('calls onClose when Escape is pressed', async () => {
+    it('closes and restores focus when an ancestor stops keyboard propagation', async () => {
       const user = userEvent.setup();
-      const { onClose } = renderPopup();
+      const { onClose, buttonElement } = renderPopup();
+      await waitFor(() => expect(screen.getByPlaceholderText('Filter values')).toHaveFocus());
 
       await user.keyboard('{Escape}');
 
       expect(onClose).toHaveBeenCalledTimes(1);
+      expect(buttonElement).toHaveFocus();
+    });
+
+    it('closes the date calendar before closing the filter popup', async () => {
+      const user = userEvent.setup();
+      const field: Field = { name: 'Time', type: FieldType.time, values: [Date.UTC(2026, 8, 17)], config: {} };
+      const { onClose } = renderPopup({
+        field,
+        rows: makeRows('Time', ['2026-09-17']),
+        rangeFiltersEnabled: true,
+      });
+
+      const calendarButton = screen.getAllByRole('button', { name: 'Open calendar' })[0];
+      await user.click(calendarButton);
+      const calendar = screen.getByRole('dialog');
+      calendar.focus();
+
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(onClose).not.toHaveBeenCalled();
+      await waitFor(() => expect(calendarButton).toHaveFocus());
+
+      await user.keyboard('{Escape}');
+      expect(onClose).toHaveBeenCalledTimes(1);
     });
   });
+
+  it('keeps the numeric filter open when a slider drag ends outside, then closes on a separate outside click', async () => {
+    const user = userEvent.setup();
+    const field: Field = { name: 'Value', type: FieldType.number, values: [0, 10], config: {} };
+    const { onClose } = renderPopup({ field, rows: makeRows('Value', ['0', '10']), rangeFiltersEnabled: true });
+    const popup = screen.getByRole('group', { name: 'Filter Value' });
+
+    await user.pointer([
+      { target: popup, keys: '[MouseLeft>]' },
+      { target: document.body, keys: '[/MouseLeft]' },
+    ]);
+
+    expect(screen.getByRole('slider', { name: 'Minimum' })).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+
+    await user.click(document.body);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+it('keeps a range on a changed string field clearable', async () => {
+  const { onClear } = renderPopup({ rangeFiltersEnabled: true, range: { min: 1, includeMissing: false } });
+  await userEvent.click(screen.getByRole('button', { name: 'Clear filter' }));
+  expect(onClear).toHaveBeenCalledTimes(1);
+});
+
+it('selects missing string values separately from empty strings and mapped labels', async () => {
+  const values = [null, undefined, '', '-', 'ok'];
+  const field: Field = {
+    name: 'Status',
+    type: FieldType.string,
+    config: {},
+    values,
+    display: (value) => ({ text: value == null ? '-' : String(value), numeric: NaN }),
+  };
+  const { onApplyValues } = renderPopup({
+    field,
+    rows: values.map((value, i) => ({ __depth: 0, __index: i, Status: value ?? undefined })),
+    rangeFiltersEnabled: true,
+  });
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Include missing values' }));
+  expect(screen.getByRole('status')).toHaveTextContent('2 of 5 rows');
+  await userEvent.click(screen.getByRole('checkbox', { name: '(Blanks)' }));
+  expect(screen.getByRole('status')).toHaveTextContent('3 of 5 rows');
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(onApplyValues).toHaveBeenCalledWith([{ label: '(Blanks)', value: '' }], true);
+});
+
+it('keeps missing values in the value list without the new-features flag', async () => {
+  const values = [null, 'active'];
+  const field: Field = { name: 'Status', type: FieldType.string, config: {}, values };
+  const { onApplyValues } = renderPopup({
+    field,
+    rows: values.map((value, __index) => ({ __depth: 0, __index, Status: value })),
+  });
+
+  await userEvent.click(screen.getByRole('checkbox', { name: 'null' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+  expect(onApplyValues).toHaveBeenCalledWith([{ label: 'null', value: 'null' }]);
+});
+
+it('closes on Escape after clicking the histogram without bubbling to the panel', async () => {
+  const field: Field = { name: 'Value', type: FieldType.number, values: [1, 2], config: {} };
+  const { onClose, buttonElement } = renderPopup({
+    field,
+    rangeFiltersEnabled: true,
+    rows: [1, 2].map((Value, __index) => ({ Value, __index, __depth: 0 })),
+  });
+  await userEvent.click(screen.getByRole('img', { name: /Value distribution/ }));
+  await userEvent.keyboard('{Escape}');
+  expect(onClose).toHaveBeenCalledTimes(1);
+  expect(buttonElement).toHaveFocus();
 });

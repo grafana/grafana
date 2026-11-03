@@ -285,8 +285,8 @@ export const Table = memo((props: Props) => {
   const itemCount = enablePagination ? page.length : rows.length;
 
   // Virtualization means only the visible rows exist in the DOM, so we announce the real
-  // row count to screen readers. ARIA row counts are 1-based and include the header row.
-  const ariaRowCount = (noHeader ? 0 : 1) + rows.length;
+  // row count to screen readers. ARIA row counts are 1-based and include the header and footer rows.
+  const ariaRowCount = (noHeader ? 0 : 1) + rows.length + (footerItems ? 1 : 0);
   let paginationEl = null;
   if (enablePagination) {
     const itemsRangeStart = state.pageIndex * state.pageSize + 1;
@@ -338,72 +338,95 @@ export const Table = memo((props: Props) => {
 
   const rendered = (
     <>
-      <div
-        {...getTableProps()}
-        className={tableStyles.table}
-        aria-label={ariaLabel}
-        aria-rowcount={ariaRowCount}
-        role="table"
-        ref={tableDivRef}
-        style={{ width, height }}
-      >
-        <CustomScrollbar hideVerticalTrack={true}>
-          <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
-            {!noHeader && (
-              <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} tableStyles={tableStyles} />
-            )}
-            {itemCount > 0 ? (
-              <div
-                data-testid={selectors.components.Panels.Visualization.Table.body}
-                ref={variableSizeListScrollbarRef}
-              >
-                <RowsList
-                  headerGroups={headerGroups}
-                  data={data}
-                  rows={rows}
-                  width={width}
-                  cellHeight={cellHeight}
-                  headerHeight={headerHeight}
-                  rowHeight={tableStyles.rowHeight}
-                  itemCount={itemCount}
-                  noHeader={noHeader}
-                  pageIndex={state.pageIndex}
-                  listHeight={listHeight}
-                  listRef={listRef}
-                  tableState={state}
-                  prepareRow={prepareRow}
-                  timeRange={timeRange}
-                  onCellFilterAdded={onCellFilterAdded}
-                  nestedDataField={nestedDataField}
-                  tableStyles={tableStyles}
-                  footerPaginationEnabled={Boolean(enablePagination)}
-                  enableSharedCrosshair={enableSharedCrosshair}
-                  initialRowIndex={initialRowIndex}
-                  longestField={longestField}
-                  textWrapField={textWrapField}
-                  getActions={getActions}
-                  replaceVariables={replaceVariables}
-                  setInspectCell={setInspectCell}
-                />
+      {/*
+        `paginationEl` is not row/rowgroup content, so when present it can't live inside the
+        `role="table"` element below (a `table` may only own `row`/`rowgroup` children). In that
+        case, `tableGrid` gets an extra, visually-transparent (`display: contents`) outer layer so
+        the actual sizing/layout (`tableStyles.table`, explicit width/height) can move to a plain
+        wrapper div shared with the pagination control, keeping `role="table"` off of the pagination
+        control's ancestor chain. When there's no pagination, `tableGrid` renders exactly as before.
+      */}
+      {(() => {
+        const tableGrid = (
+          <div
+            {...getTableProps()}
+            className={paginationEl ? undefined : tableStyles.table}
+            aria-label={ariaLabel}
+            aria-rowcount={ariaRowCount}
+            role="table"
+            ref={tableDivRef}
+            style={paginationEl ? { display: 'contents' } : { width, height }}
+          >
+            <CustomScrollbar hideVerticalTrack={true}>
+              <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
+                {!noHeader && (
+                  <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} tableStyles={tableStyles} />
+                )}
+                {itemCount > 0 ? (
+                  <div
+                    data-testid={selectors.components.Panels.Visualization.Table.body}
+                    ref={variableSizeListScrollbarRef}
+                  >
+                    <RowsList
+                      headerGroups={headerGroups}
+                      data={data}
+                      rows={rows}
+                      width={width}
+                      cellHeight={cellHeight}
+                      headerHeight={headerHeight}
+                      rowHeight={tableStyles.rowHeight}
+                      itemCount={itemCount}
+                      noHeader={noHeader}
+                      pageIndex={state.pageIndex}
+                      listHeight={listHeight}
+                      listRef={listRef}
+                      tableState={state}
+                      prepareRow={prepareRow}
+                      timeRange={timeRange}
+                      onCellFilterAdded={onCellFilterAdded}
+                      nestedDataField={nestedDataField}
+                      tableStyles={tableStyles}
+                      footerPaginationEnabled={Boolean(enablePagination)}
+                      enableSharedCrosshair={enableSharedCrosshair}
+                      initialRowIndex={initialRowIndex}
+                      longestField={longestField}
+                      textWrapField={textWrapField}
+                      getActions={getActions}
+                      replaceVariables={replaceVariables}
+                      setInspectCell={setInspectCell}
+                    />
+                  </div>
+                ) : (
+                  <div style={{ height: height - headerHeight, width }} className={tableStyles.noData}>
+                    {noValuesDisplayText}
+                  </div>
+                )}
+                {footerItems && (
+                  <FooterRow
+                    isPaginationVisible={Boolean(enablePagination)}
+                    footerValues={footerItems}
+                    footerGroups={footerGroups}
+                    totalColumnsWidth={totalColumnsWidth}
+                    tableStyles={tableStyles}
+                    ariaRowIndex={ariaRowCount}
+                  />
+                )}
               </div>
-            ) : (
-              <div style={{ height: height - headerHeight, width }} className={tableStyles.noData}>
-                {noValuesDisplayText}
-              </div>
-            )}
-            {footerItems && (
-              <FooterRow
-                isPaginationVisible={Boolean(enablePagination)}
-                footerValues={footerItems}
-                footerGroups={footerGroups}
-                totalColumnsWidth={totalColumnsWidth}
-                tableStyles={tableStyles}
-              />
-            )}
+            </CustomScrollbar>
           </div>
-        </CustomScrollbar>
-        {paginationEl}
-      </div>
+        );
+
+        if (!paginationEl) {
+          return tableGrid;
+        }
+
+        return (
+          <div className={tableStyles.table} style={{ width, height }}>
+            {tableGrid}
+            {paginationEl}
+          </div>
+        );
+      })()}
 
       {inspectCell !== null && (
         <TableCellInspector

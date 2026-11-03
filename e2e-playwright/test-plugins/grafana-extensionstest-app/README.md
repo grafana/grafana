@@ -9,18 +9,18 @@ Further reading:
 
 ## Build
 
-To build this plugin run `yarn e2e:plugin:build`.
+To build this plugin run `pnpm e2e:plugin:build`.
 
 ## Development
 
 1: Install frontend dependencies:
-`yarn install --immutable`
+`pnpm install --frozen-lockfile`
 
 2: Build and watch the core frontend
-`yarn start`
+`pnpm start`
 
 3: Build and watch the test plugins
-`yarn e2e:plugin:build:dev`
+`pnpm e2e:plugin:build:dev`
 
 4: Build the backend
 `make build-go`
@@ -32,4 +32,4 @@ Note that this plugin extends the `@grafana/plugin-configs` configs which is why
 
 ## Run Playwright tests
 
-- `yarn playwright test --project extensions-test-app`
+- `pnpm e2e:playwright --project extensions-test-app`

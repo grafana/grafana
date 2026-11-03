@@ -27,6 +27,7 @@ func TestTemplates(t *testing.T) {
 			UserTable:       dbHelper.Table("user"),
 			FilteredUsers:   []string{"hidden-user", "another-hidden-user"},
 			OrgID:           7,
+			MemberUID:       "user-a",
 			NamePattern:     "%operations%",
 			Name:            "Operations",
 			TeamIDs:         []int64{11, 12},

@@ -1209,6 +1209,68 @@ func TestValidateDelete(t *testing.T) {
 		cascadeDeleteEnabled: false,
 		expectedErr:          "[folder.not-empty]",
 	}, {
+		name: "finalizer folder not empty with gracePeriodSeconds=0 is allowed when cascade flag is disabled",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       "nnn",
+				Finalizers: []string{folders.CascadeDeleteFinalizer},
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "folder.grafana.app",
+						Resource: "folders",
+						Count:    2,
+					},
+				},
+			},
+		},
+		deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+		cascadeDeleteEnabled: false,
+	}, {
+		name: "finalizer folder not empty without gracePeriodSeconds=0 is blocked",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       "nnn",
+				Finalizers: []string{folders.CascadeDeleteFinalizer},
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "dashboard.grafana.app",
+						Resource: "dashboards",
+						Count:    1,
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
+		name: "folder with only another finalizer and gracePeriodSeconds=0 is blocked when cascade flag is disabled",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       "nnn",
+				Finalizers: []string{"example.com/other"},
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "dashboard.grafana.app",
+						Resource: "dashboards",
+						Count:    1,
+					},
+				},
+			},
+		},
+		deleteOptions: &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+		expectedErr:   "[folder.not-empty]",
+	}, {
 		name: "folder not empty - contains dashboards",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{

@@ -18,6 +18,7 @@ var (
 	ErrNoneRoleAssignment       = errutil.BadRequest("accesscontrol.noneRoleAssignment", errutil.WithPublicMessage("none role cannot receive permissions"))
 	ErrAssignmentEntityNotFound = errutil.BadRequest("accesscontrol.assignmentEntityNotFound").
 					MustTemplate(assignmentEntityNotFoundMessage, errutil.WithPublic(assignmentEntityNotFoundMessage))
+	ErrScopeResourceNotFound = errutil.NotFound("accesscontrol.scopeResourceNotFound", errutil.WithPublicMessage("Resource not found"))
 
 	// Note: these are intended to be replaced by equivalent errutil implementations.
 	// Avoid creating new errors with errors.New and prefer errutil
