@@ -378,4 +378,92 @@ describe('PlaylistSrv with slideshows', () => {
     expect(pathname()).toBe('/things/b');
     expect(locationService.getSearchObject()).toMatchObject({ kiosk: true, '_dash.hideTimePicker': true });
   });
+
+  it('does not bring kiosk back after the viewer leaves it', async () => {
+    kindThings(async (name) => ({ url: `/things/${name}`, title: name }));
+    locationService.push('/slideshows/play/wall?kiosk=true&_dash.hideTimePicker=true');
+    await srv.startSlideshow(slideshow([item('a'), item('b')]));
+
+    // Esc in kiosk mode only changes the query string of the current page.
+    locationService.partial({ kiosk: null });
+    srv.next();
+
+    expect(pathname()).toBe('/things/b');
+    expect(locationService.getSearchObject()).not.toHaveProperty('kiosk');
+    expect(locationService.getSearchObject()).toMatchObject({ '_dash.hideTimePicker': true });
+  });
+
+  it('does not bring kiosk back after the viewer leaves it during a dashboard playlist', async () => {
+    locationService.push('/playlists/play/foo?kiosk=true');
+    await srv.start(mockPlaylist);
+
+    locationService.partial({ kiosk: null });
+    srv.next();
+
+    expect(pathname()).toBe('/url/to/bbb');
+    expect(locationService.getSearchObject()).not.toHaveProperty('kiosk');
+  });
+
+  it('stops when a page replaces its url a second time in the same slot', async () => {
+    kindThings(async (name) => ({ url: `/things/${name}`, title: name }));
+    await srv.startSlideshow(slideshow([item('a'), item('b')]));
+
+    locationService.getHistory().replace('/things/a/first');
+    expect(srv.state.isPlaying).toBe(true);
+    locationService.getHistory().replace('/somewhere/else');
+
+    expect(srv.state.isPlaying).toBe(false);
+  });
+
+  it('adopts a redirect again in the next slot', async () => {
+    kindThings(async (name) => ({ url: `/things/${name}`, title: name }));
+    await srv.startSlideshow(slideshow([item('a'), item('b')]));
+
+    locationService.getHistory().replace('/things/a/first');
+    srv.next();
+    locationService.getHistory().replace('/things/b/first');
+
+    expect(srv.state.isPlaying).toBe(true);
+  });
+
+  it.each(['bogus', '0s', '-5s'])(
+    'plays an item whose interval %p cannot be used, with the default interval',
+    async (bad) => {
+      jest.useFakeTimers();
+      const warn = jest.spyOn(console, 'warn').mockImplementation();
+      kindThings(async (name) => ({ url: `/things/${name}`, title: name }));
+
+      await srv.startSlideshow(slideshow([item('a', bad), item('b')], '5m'));
+      expect(pathname()).toBe('/things/a');
+
+      jest.advanceTimersByTime(4 * 60_000 + 59_000);
+      expect(pathname()).toBe('/things/a');
+      jest.advanceTimersByTime(1_000);
+      expect(pathname()).toBe('/things/b');
+      warn.mockRestore();
+    }
+  );
+
+  it('plays a dashboard playlist whose item interval cannot be used, with the playlist interval', async () => {
+    jest.useFakeTimers();
+    const warn = jest.spyOn(console, 'warn').mockImplementation();
+    const playlist: Playlist = {
+      ...mockPlaylist,
+      spec: {
+        ...mockPlaylist.spec,
+        interval: '5m',
+        items: [
+          { type: 'dashboard_by_uid', value: 'aaa', interval: 'bogus' },
+          { type: 'dashboard_by_uid', value: 'bbb' },
+        ],
+      },
+    };
+
+    await srv.start(playlist);
+    expect(pathname()).toBe('/url/to/aaa');
+
+    jest.advanceTimersByTime(5 * 60_000);
+    expect(pathname()).toBe('/url/to/bbb');
+    warn.mockRestore();
+  });
 });

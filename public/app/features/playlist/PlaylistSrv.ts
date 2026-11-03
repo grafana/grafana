@@ -38,9 +38,12 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   private items: PlayableItem[] = []; // the items we need to load
   private index = 0;
   declare private interval: number;
-  // Kiosk and display options are read once at start, because a page that rewrites its own url
-  // can drop them from the location.
+  // Kiosk and display options as they were last seen on a page the player opened. A page that
+  // redirects itself can drop them from the location, so the next item reads them from here
+  // instead; changes the viewer makes on the page (such as leaving kiosk) update them.
   private preservedParams: Record<string, unknown> = {};
+  // Whether the page of the current item has already redirected itself.
+  private redirected = false;
   declare private startUrl: string;
   private numberOfLoops = 0;
   declare private validPlaylistUrl: string;
@@ -58,10 +61,8 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
 
     this.index++;
     this.validPlaylistUrl = nextDashboardUrl;
-    this.nextTimeoutId = setTimeout(
-      () => this.next(),
-      item.interval ? rangeUtil.intervalToMs(item.interval) : this.interval
-    );
+    this.redirected = false;
+    this.nextTimeoutId = setTimeout(() => this.next(), this.intervalFor(item));
 
     const urlWithParams = nextDashboardUrl + '?' + urlUtil.toUrlParams(this.preservedParams);
 
@@ -73,6 +74,24 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     } else {
       locationService.push(urlWithParams);
     }
+  }
+
+  // The item's own interval when it has a usable one. The playlist API accepts any string, so an
+  // unusable value must not stop the playlist from playing.
+  private intervalFor(item: PlayableItem): number {
+    if (!item.interval) {
+      return this.interval;
+    }
+    try {
+      const ms = rangeUtil.intervalToMs(item.interval);
+      if (Number.isFinite(ms) && ms > 0) {
+        return ms;
+      }
+    } catch {
+      // handled below
+    }
+    console.warn(`Ignoring playlist item interval "${item.interval}", using the playlist interval`);
+    return this.interval;
   }
 
   next() {
@@ -102,12 +121,15 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   // Detect url changes not caused by playlist srv and stop playlist
   locationUpdated(location: Location, action?: string) {
     if (location.pathname === this.validPlaylistUrl) {
+      // Same page: the viewer may have changed kiosk or a display option.
+      this.preservedParams = this.pickPreserved();
       return;
     }
 
-    // A page that corrects its own url does so with a replace. Anything else, such as a click,
-    // pushes a new entry and ends the playlist.
-    if (action === 'REPLACE') {
+    // A page that corrects its own url does so once, with a replace, right after we opened it.
+    // Anything else, such as a click, pushes a new entry or moves again and ends the playlist.
+    if (action === 'REPLACE' && !this.redirected) {
+      this.redirected = true;
       this.validPlaylistUrl = location.pathname;
       return;
     }
@@ -162,15 +184,16 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     );
   }
 
+  private pickPreserved() {
+    return pickBy(locationService.getSearchObject(), (value: unknown, key: string) => queryParamsToPreserve[key]);
+  }
+
   private begin() {
     this.stop();
 
     this.startUrl = window.location.href;
     this.index = 0;
-    this.preservedParams = pickBy(
-      locationService.getSearchObject(),
-      (value: unknown, key: string) => queryParamsToPreserve[key]
-    );
+    this.preservedParams = this.pickPreserved();
 
     this.setState({ isPlaying: true });
 
