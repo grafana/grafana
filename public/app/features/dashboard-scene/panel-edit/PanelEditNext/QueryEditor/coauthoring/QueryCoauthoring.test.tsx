@@ -28,6 +28,7 @@ const mockCancel = jest.fn();
 const mockReset = jest.fn();
 const mockOpenAssistant = jest.fn();
 const mockPost = jest.fn();
+const mockPublish = jest.fn();
 const mockReportInteraction = jest.fn();
 const VIEWPORT_TEST_MARGIN = 8;
 let mockIsGenerating = false;
@@ -68,6 +69,7 @@ jest.mock('@grafana/assistant', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  getAppEvents: () => ({ publish: mockPublish }),
   getBackendSrv: () => ({
     post: (...args: unknown[]) => mockPost(...args),
   }),
@@ -1215,7 +1217,7 @@ describe('QueryCoauthoring', () => {
     expect(stagePreview).toHaveBeenCalledTimes(1);
   });
 
-  it('hands off all ranked options and Original selection and sends only rank and count with feedback', async () => {
+  it('hands off all ranked options and Original selection and publishes feedback without option metadata', async () => {
     const { user } = await setup();
     await user.type(screen.getByRole('textbox'), 'Count requests');
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
@@ -1231,8 +1233,12 @@ describe('QueryCoauthoring', () => {
     });
     await user.click(screen.getByRole('tab', { name: 'Option 2' }));
     await user.click(screen.getByRole('button', { name: 'Helpful' }));
-    await user.click(screen.getByRole('button', { name: 'Send' }));
-    expect(mockPost.mock.calls[0][1].metadata).toEqual({ outcome: 'proposal', selectedOptionRank: 2, optionCount: 2 });
+    expect(mockPublish).toHaveBeenCalledTimes(1);
+    expect(mockPublish.mock.calls[0][0]).toEqual({
+      type: 'query-coauthoring-feedback',
+      payload: { rating: 1, outcome: 'proposal' },
+    });
+    expect(mockPost).not.toHaveBeenCalled();
     expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_option_selected', { rank: 2 });
     await user.click(screen.getByRole('tab', { name: 'Original' }));
     await user.click(screen.getByRole('button', { name: 'Open in Chat' }));
@@ -2649,106 +2655,13 @@ describe('QueryCoauthoring', () => {
     expect(screen.getByRole('button', { name: 'Close coauthoring' })).toBeInTheDocument();
   });
 
-  it('submits privacy-bounded feedback for a query proposal', async () => {
-    const { user } = await setup();
-
-    await user.type(screen.getByRole('textbox'), 'Use increase');
-    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
-
-    const request = mockGenerate.mock.calls[0][0];
-    await act(async () => {
-      await request.tools[0].invoke({
-        options: [
-          {
-            proposedQuery: 'increase(http_requests_total[5m])',
-            why: ['Returns the increase over the selected range.'],
-          },
-        ],
-      });
-      request.onComplete('');
-    });
-
-    await user.click(screen.getByRole('button', { name: 'Helpful' }));
-    expect(screen.getByRole('dialog', { name: 'What went well?' })).toBeInTheDocument();
-    expect(screen.getByText(/feedback will be sent to the teams working on querying/i)).toBeInTheDocument();
-    expect(screen.getByText(/your query, prompt, and assistant response are not included/i)).toBeInTheDocument();
-    await user.type(screen.getByRole('textbox', { name: 'Share feedback' }), 'The explanation was clear.');
-    await user.click(screen.getByRole('button', { name: 'Send' }));
-
-    expect(mockPost).toHaveBeenCalledWith('/api/plugins/grafana-assistant-app/resources/api/v1/feedback', {
-      targetKind: 'query-coauthoring',
-      targetId: 'grafana.query.coauthor.v1',
-      rating: 1,
-      comment: 'The explanation was clear.',
-      metadata: { outcome: 'proposal', selectedOptionRank: 1, optionCount: 1 },
-    });
-  });
-
-  it('cancels negative feedback without sending anything', async () => {
-    const { user } = await setup();
-
-    await user.type(screen.getByRole('textbox'), 'Use increase');
-    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
-
-    const request = mockGenerate.mock.calls[0][0];
-    await act(async () => {
-      await request.tools[0].invoke({
-        options: [
-          {
-            proposedQuery: 'increase(http_requests_total[5m])',
-            why: ['Returns the increase over the selected range.'],
-          },
-        ],
-      });
-      request.onComplete('');
-    });
-
-    await user.click(screen.getByRole('button', { name: 'Not helpful' }));
-    expect(screen.getByRole('dialog', { name: 'What went wrong?' })).toBeInTheDocument();
-    await user.type(screen.getByRole('textbox', { name: 'Share feedback' }), 'The change was too broad.');
-    await user.click(
-      within(screen.getByRole('dialog', { name: 'What went wrong?' })).getByRole('button', { name: 'Cancel' })
-    );
-
-    expect(mockPost).not.toHaveBeenCalled();
-    expect(screen.queryByRole('dialog', { name: 'What went wrong?' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
-  });
-
-  it('closes feedback on Escape without dismissing the proposal', async () => {
-    const { user, dismissInvocation } = await setup();
-
-    await user.type(screen.getByRole('textbox'), 'Use increase');
-    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
-
-    const request = mockGenerate.mock.calls[0][0];
-    await act(async () => {
-      await request.tools[0].invoke({
-        options: [
-          {
-            proposedQuery: 'increase(http_requests_total[5m])',
-            why: ['Returns the increase over the selected range.'],
-          },
-        ],
-      });
-      request.onComplete('');
-    });
-
-    await user.click(screen.getByRole('button', { name: 'Helpful' }));
-    await user.keyboard('{Escape}');
-
-    expect(screen.queryByRole('dialog', { name: 'What went well?' })).not.toBeInTheDocument();
-    expect(screen.getByRole('dialog', { name: 'Query coauthor' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
-    expect(dismissInvocation).not.toHaveBeenCalled();
-  });
-
-  it('keeps Enter available for multiline feedback instead of accepting the proposal', async () => {
+  it.each([
+    { rating: 1, button: 'Helpful' },
+    { rating: -1, button: 'Not helpful' },
+  ])('publishes only rating $rating and proposal outcome after $button', async ({ rating, button }) => {
     const { user, onAccept, dismissInvocation } = await setup();
-
     await user.type(screen.getByRole('textbox'), 'Use increase');
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
-
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
@@ -2762,14 +2675,41 @@ describe('QueryCoauthoring', () => {
       request.onComplete('');
     });
 
-    await user.click(screen.getByRole('button', { name: 'Not helpful' }));
-    const feedbackInput = screen.getByRole('textbox', { name: 'Share feedback' });
-    await user.type(feedbackInput, 'The grouping is wrong.{enter}I expected handler.');
-
-    expect(feedbackInput).toHaveValue('The grouping is wrong.\nI expected handler.');
-    expect(screen.getByRole('dialog', { name: 'What went wrong?' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
+    expect(mockPublish).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: button }));
+    expect(mockPublish).toHaveBeenCalledTimes(1);
+    expect(mockPublish.mock.calls[0][0]).toEqual({
+      type: 'query-coauthoring-feedback',
+      payload: { rating, outcome: 'proposal' },
+    });
+    expect(mockPost).not.toHaveBeenCalled();
     expect(onAccept).not.toHaveBeenCalled();
     expect(dismissInvocation).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { rating: 1, button: 'Helpful' },
+    { rating: -1, button: 'Not helpful' },
+  ])('publishes only rating $rating and handoff outcome after $button', async ({ rating, button }) => {
+    const { user } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Use another data source');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[1].invoke({ reason: 'This change needs Assistant chat.' });
+      request.onComplete('');
+    });
+
+    expect(screen.getByRole('button', { name: 'Open in Chat' })).toBeInTheDocument();
+    expect(mockPublish).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: button }));
+    expect(mockPublish).toHaveBeenCalledTimes(1);
+    expect(mockPublish.mock.calls[0][0]).toEqual({
+      type: 'query-coauthoring-feedback',
+      payload: { rating, outcome: 'handoff' },
+    });
+    expect(mockPost).not.toHaveBeenCalled();
   });
 
   it('does not accept a proposal when Enter activates another control', async () => {
@@ -2802,9 +2742,11 @@ describe('QueryCoauthoring', () => {
 
     act(() => screen.getByRole('button', { name: 'Helpful' }).focus());
     await user.keyboard('{Enter}');
-    expect(screen.getByRole('dialog', { name: 'What went well?' })).toBeInTheDocument();
+    expect(mockPublish.mock.calls[0][0]).toEqual({
+      type: 'query-coauthoring-feedback',
+      payload: { rating: 1, outcome: 'proposal' },
+    });
     expect(onAccept).not.toHaveBeenCalled();
-    await user.keyboard('{Escape}');
 
     act(() => screen.getByRole('button', { name: 'Cancel' }).focus());
     await user.keyboard('{Enter}');

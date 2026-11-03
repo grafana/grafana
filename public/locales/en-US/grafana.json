@@ -522,6 +522,7 @@
         "save": "Save"
       },
       "error-title": "Failed to save alert rule",
+      "form-errors": "There are errors in the form. Please correct them and try again!",
       "no-group-success": "Rule added successfully"
     },
     "alert-rule-name-and-metric": {
@@ -530,8 +531,8 @@
       "label-metric": "Metric",
       "label-name": "Name",
       "message": {
-        "must-enter-a-metric-name": "Must enter a metric name",
-        "must-enter-a-name": "Must enter a name",
+        "metric-name-required": "Metric name is required",
+        "name-required": "Name is required",
         "please-select-a-data-source": "Please select a data source"
       },
       "metric-aria-label-metric": "metric",
@@ -586,6 +587,7 @@
     },
     "alertmanager-config": {
       "confirmText-yes-reset-configuration": "Yes, reset configuration",
+      "editor-label": "Alertmanager configuration",
       "gma-manual-configuration-description": "The internal Grafana Alertmanager configuration cannot be manually changed. To change this configuration, edit the individual resources through the UI.",
       "gma-manual-configuration-is-not-supported": "Manual configuration changes not supported",
       "message": {
@@ -1097,6 +1099,7 @@
         "body": "Are you sure you want to restore this deleted alert rule definition?",
         "confirm": "Yes, restore deleted rule",
         "error": "Could not restore deleted alert rule",
+        "preview-aria-label": "Deleted alert rule JSON",
         "title": "Restore deleted alert rule"
       },
       "table": {
@@ -1314,7 +1317,7 @@
     "folder-selector": {
       "description-select-folder": "Select a folder to store your rule in.",
       "message": {
-        "select-a-folder": "Select a folder"
+        "folder-required": "Folder is required"
       }
     },
     "folderAndGroup": {
@@ -1442,11 +1445,24 @@
     },
     "gma-rule-list": {
       "alert-rules": {
+        "folders-error": "Failed to load folders",
+        "load-more-rules-in-folder": "Load more rules in {{title}}",
+        "loading-folders": "Loading folders...",
         "no-rules": "No alert rules found",
+        "no-rules-in-folder": "No alert rules in this folder",
+        "no-rules-match-folder": "No alert rules match this folder",
+        "retry-rules-in-folder": "Retry loading rules in {{title}}",
         "rules-error": "Failed to load rules",
         "search-issues": "Change the search to see results"
       },
       "datasources": "{{numSources}} data sources",
+      "folder-row": {
+        "collapse": "Collapse {{title}}",
+        "count-description": "{{label}}. {{explanation}}",
+        "count-tooltip": "Rules directly in this folder. Subfolders are listed separately.",
+        "count-unavailable": "Count unavailable",
+        "expand": "Expand {{title}}"
+      },
       "interval": "Evaluated every {{interval}}",
       "labels_one": "{{formatted}} label",
       "labels_other": "{{formatted}} labels",
@@ -1455,11 +1471,18 @@
         "to": "to"
       },
       "recording-rules": {
+        "folder-rules-error": "Failed to load rules",
+        "folders-error": "Failed to load folders",
+        "load-more-rules-in-folder": "Load more rules in {{title}}",
+        "loading-folders": "Loading folders...",
         "no-rules": "No recording rules found",
+        "no-rules-in-folder": "No recording rules in this folder",
+        "no-rules-match-folder": "No recording rules match this folder",
+        "retry-rules-in-folder": "Retry loading rules in {{title}}",
         "rules-error": "Failed to load recording rules",
         "search-issues": "Change the search to see results"
       },
-      "result-count": {
+      "rule-count": {
         "alert-rules_one": "{{formatted}} alert rule",
         "alert-rules_other": "{{formatted}} alert rules",
         "recording-rules_one": "{{formatted}} recording rule",
@@ -1467,6 +1490,7 @@
       },
       "search": {
         "default-policy-unavailable": "Filtering by the default policy isn't available yet.",
+        "folders-disabled": "Clear filters to browse by folder",
         "help": {
           "contact-point": "Direct contact point (mutually exclusive with policy:).",
           "dashboard": "Dashboard the rule is linked to (canonical value is the dashboard UID).",
@@ -1515,6 +1539,9 @@
         "renamed-value": "Use {{to}} instead of {{from}}.",
         "unavailable-tokens": "Some filters are not available yet: {{tokens}}",
         "unclosed-quote": "A quote in the search is not closed.",
+        "view": "View",
+        "view-folders": "Folders",
+        "view-list": "List",
         "wildcard-in-text": "Search text cannot contain * or %."
       },
       "shared": {
@@ -1551,11 +1578,10 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "Loading groups...",
       "message": {
-        "must-be-a-positive-integer": "Must be a positive integer.",
-        "must-enter-a-group-name": "Must enter a group name"
+        "evaluation-group-required": "Evaluation group is required",
+        "must-be-a-positive-integer": "Must be a positive integer."
       },
       "missing-series-resolve-placeholder": "Default: 2",
-      "or": "or",
       "placeholder-select-an-evaluation-group": "Select an evaluation group...",
       "text-configure-no-data-and-error-handling": "Configure no data and error handling",
       "title-set-evaluation-behavior": "Set evaluation behavior"
@@ -1853,6 +1879,7 @@
         "will-import-rules-count_one": "Will import {{count}} rules",
         "will-import-rules-count_other": "Will import {{count}} rules"
       },
+      "rules-preview": "Alert rules preview",
       "source": {
         "datasource": "Existing data source-managed rules",
         "datasource-description": "Import rules from existing data sources",
@@ -2981,7 +3008,7 @@
           "alerting": "Turn on to pause evaluation for this alert rule.",
           "recording": "Turn on to pause evaluation for this recording rule."
         },
-        "select-folder-before": "Select a folder before setting evaluation group and interval",
+        "select-folder-first-tooltip": "Select a folder first",
         "ungroup-warning": "This action is irreversible. After you save, you will not be able to add it back to a group.",
         "ungroup-warning-title": "This will remove the alert rule from its group"
       },
@@ -3655,6 +3682,9 @@
       "switch-to-data-source-managed": "The data source selected in your query supports alert rule management. Switch to data source-managed if you want the alert rule to be managed by the data source instead of Grafana.",
       "switch-to-grafana-managed": "Switch to Grafana-managed to use expressions, multiple queries, images in notifications and various other features.",
       "title-alert-rule-types": "Alert rule types"
+    },
+    "sql-query-preview": {
+      "aria-label": "SQL query preview"
     },
     "state-history": {
       "columns": {
@@ -6219,8 +6249,9 @@
       "agent-edit": "Agent editing",
       "change-mode": "Change dashboard mode",
       "composer": "Composer",
-      "composer-description": "Point at anything and ask Assistant to change it.",
+      "composer-description": "Point at anything and ask the Assistant.",
       "composer-no-permission": "You need permission to edit this dashboard.",
+      "composer-opening": "Opening Composer…",
       "composer-save-first": "Save the dashboard before using Composer.",
       "composer-unsupported": "Composer is not available for this dashboard right now.",
       "current": "Dashboard mode: {{mode}}",
@@ -7293,11 +7324,18 @@
       "modal": {
         "cancel": "Cancel",
         "discard": "Discard",
+        "keep-working": "Keep working",
         "save": "Save",
+        "stop-and-leave": "Stop and leave",
+        "stop-and-switch": "Stop and switch",
         "text": {
+          "composer-stop-editing": "Assistant is still making changes to this dashboard. Switching to Viewing stops it. Changes it has already made stay.",
+          "leave-composer": "Assistant is still making changes to this dashboard. Leaving Composer stops it. Changes it has already made stay.",
           "save-changes-question": "Do you want to save your changes?"
         },
         "title": {
+          "composer-stop-editing": "Switch to Viewing?",
+          "leave-composer": "Leave Composer?",
           "unsaved-changes": "Unsaved changes"
         }
       },
@@ -7614,17 +7652,20 @@
       "discard-pending-failed": "Couldn't discard the changes. Try again.",
       "discard-pending-title": "Discard your pending changes?",
       "draft-body": "Previewing a new dashboard, only you can see it until you save it.",
-      "draft-body-source": "Previewing a new dashboard {{source}}, only you can see it until you save it.",
       "draft-title": "Draft",
+      "edited-dashboard": "Edit dashboard",
       "highlight-changes": "Highlight changes on the dashboard",
       "open-to-save": "Open to save",
       "pending-body": "Previewing pending changes, only you can see them.",
       "pending-body-source": "Previewing pending changes {{source}}, only you can see them.",
+      "pending-changes-changed": "These pending changes changed",
+      "pending-changes-changed-text": "Your last change was not saved. Showing the latest pending changes.",
       "pending-hint": "You’re viewing the saved dashboard. It has pending changes that only you can see.",
       "pending-stale": "Dashboard has been updated since your changes were made",
       "pending-title": "Pending changes",
       "preview-changes": "Preview changes",
       "rebase": "Rebase",
+      "record-pending-change-failed": "Your change could not be saved",
       "save": "Save",
       "show-original-dashboard": "Show original dashboard",
       "stop-highlighting-changes": "Stop highlighting changes"
@@ -9055,6 +9096,12 @@
         "inspect-value": "Inspect value",
         "show-details": "Show details",
         "view-log-line": "View log line"
+      },
+      "error-attribute": {
+        "error-fields-label": "Has error fields",
+        "error-fields-tooltip": "This log line contains error-related fields.",
+        "stacktrace-label": "Has a stack trace",
+        "stacktrace-tooltip": "This log line contains a stack trace."
       },
       "loki-time-sort-tooltip": "Sorting this column only changes the order of the displayed results. To update the query's time-based sort order, use the Sort control on the right."
     },
@@ -10685,6 +10732,8 @@
       "clear-button": "Clear selection"
     },
     "code-mirror": {
+      "diff-modified": "Modified",
+      "diff-original": "Original",
       "error-label": "CodeMirror editor failed to load",
       "language-load-failed": "Syntax highlighting failed to load",
       "language-load-failed-description": "The editor will continue without language-specific features.",
@@ -11101,6 +11150,7 @@
         "add-all": "Add all displayed values to the filter",
         "blanks": "(Blanks)",
         "button": "Filter {{name}}",
+        "include-missing": "Include missing values",
         "operator": {
           "contains": "Contains",
           "equals": "Equals",
@@ -11125,6 +11175,7 @@
       "filter-popup-heading": "Filter by values:",
       "filter-popup-input-placeholder": "Filter values",
       "filter-popup-match-case": "Match case",
+      "filter-popup-row-count": "{{selected}} of {{total}} rows",
       "footer": {
         "reducer": {
           "count": "Count"
@@ -11141,6 +11192,18 @@
       "no-rows": "No rows",
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
+      "range": {
+        "apply": "Apply",
+        "empty": "No finite values match the other filters.",
+        "end": "End",
+        "histogram": "Value distribution, {{amount}} finite values",
+        "invalid": "Enter valid bounds with minimum no greater than maximum.",
+        "label": "Filter {{field}}",
+        "maximum": "Maximum",
+        "minimum": "Minimum",
+        "start": "Start",
+        "unbounded": "No limit"
+      },
       "reorder-column-label": "Reorder {{columnName}}",
       "show-column-label": "Show {{columnName}}",
       "sort-by-column": "Sort by column {{column}}",
@@ -11468,20 +11531,15 @@
     },
     "firing-alerts-card": {
       "create": "Create an alert rule",
-      "critical-count_one": "{{count}} critical",
-      "critical-count_other": "{{count}} critical",
       "empty": "All clear! No alerts are firing.",
       "empty-selected-label": "All clear! No alerts are firing with {{label}}.",
       "empty-teams": "All clear! No alerts are firing for your teams.",
       "error-title": "Could not load firing alerts",
-      "high-count_one": "{{count}} high",
-      "high-count_other": "{{count}} high",
       "severity-critical": "Critical",
       "severity-high": "High",
       "severity-low": "Low",
       "severity-minor": "Minor",
       "severity-unknown": "Unknown",
-      "title": "Firing alerts",
       "view-all": "View all firing alerts",
       "view-rules": "View all alert rules"
     },
@@ -11509,21 +11567,13 @@
       "empty": "All quiet! No active incidents.",
       "empty-selected-team": "All quiet! No active incidents for {{team}}.",
       "error-title": "Could not load active incidents",
-      "title": "Active incidents",
       "view-all": "View all incidents"
     },
     "learn-more": "Learn more",
     "most-used-dashboards-tab": {
       "empty": "Most used dashboards will appear here.",
-      "empty-description": "Once your organization has dashboards and usage data has been collected, dashboards with the most views over the last 30 days will be displayed here.",
       "error-title": "Could not load most used dashboards",
       "loading": "Loading most used dashboards..."
-    },
-    "news-card": {
-      "empty": "No recent blog posts.",
-      "error-title": "Could not load recent blog posts",
-      "read-more": "Read more from the Grafana Labs blog",
-      "title": "Latest from the blog"
     },
     "on-call-card": {
       "current-shift": "You're on call until {{end}}",
@@ -11878,7 +11928,6 @@
     },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
-      "empty-description": "You can star your favorite dashboards by clicking the <1></1> from the dashboard page.",
       "error-title": "Could not load starred dashboards",
       "loading": "Loading starred dashboards..."
     },
@@ -12312,6 +12361,7 @@
     },
     "log-details": {
       "error": {
+        "diagnose-with-assistant": "Diagnose with assistant",
         "error-details": "Error details"
       }
     },
@@ -12351,7 +12401,6 @@
       "copy-log-line-json": "Copy log contents as JSON",
       "copy-shortlink": "Copy shortlink",
       "copy-to-clipboard": "Copy to clipboard",
-      "displayed-fields-section": "Organize displayed fields",
       "fields": {
         "adhoc-statistics": "Ad-hoc statistics",
         "copy-value-to-clipboard": "Copy value to clipboard",
@@ -12375,14 +12424,11 @@
       "log-attributes-field": "Log attributes",
       "log-line-field": "Log line",
       "log-line-section": "Log line",
-      "move-displayed-field-down": "Move down",
-      "move-displayed-field-up": "Move up",
       "no-details": "No fields to display.",
       "open-assistant": "Explain log line in Assistant",
       "open-value-in": "Open value in",
       "pin-line": "Pin log",
       "prettify": "Prettify",
-      "remove-displayed-field": "Remove field",
       "remove-log": "Remove log",
       "scroll-to-logline": "Scroll to log line",
       "search": {
@@ -13690,6 +13736,7 @@
       "add-title": "Add title",
       "change-visualization": "Change visualization",
       "edit-query": "Edit query",
+      "edit-with-assistant": "Edit with Assistant",
       "hide-query": "Hide query editor",
       "open-explore": "Open in Explore",
       "rename": "Edit panel title",
@@ -15748,20 +15795,8 @@
     "explain-or-modify": "Explain or modify",
     "explain-query": "Explain this query",
     "explaining": "Explaining query…",
-    "feedback-cancel": "Cancel",
-    "feedback-description": "Your feedback helps improve the query experience in Grafana.",
-    "feedback-error": "Feedback could not be sent. Try again.",
     "feedback-helpful": "Helpful",
-    "feedback-label": "Share feedback",
-    "feedback-negative-placeholder": "Describe what didn't go well and what you expected instead.",
-    "feedback-negative-title": "What went wrong?",
     "feedback-not-helpful": "Not helpful",
-    "feedback-positive-placeholder": "What did you like? How could it have been even better?",
-    "feedback-positive-title": "What went well?",
-    "feedback-privacy": "Your rating, comment, whether this was a proposal or handoff, and the selected option rank and count are sent. Your query, prompt, and Assistant response are not included.",
-    "feedback-recipient": "Your feedback will be sent to the teams working on querying.",
-    "feedback-send": "Send",
-    "feedback-sending": "Sending…",
     "focus": "Focus",
     "follow-up-label": "Ask a follow up",
     "follow-up-placeholder": "Ask a follow up…",
@@ -16968,6 +17003,8 @@
       "failures-description": "Of those, the ones counted against the backend: 502, 503 and 504 responses, and failures to proxy, such as connection errors and timeouts. Other errors, and callers that disconnect, are not counted. Consecutive failures open the breaker.",
       "filter-placeholder": "Filter by group, key or plugin",
       "filtered": "{{shown}} of {{total}}",
+      "internal": "internal",
+      "internal-description": "Only access policies see this group. Every other caller gets a 404 for it, and it is not listed in their discovery.",
       "last-failed": "Last reconcile failed",
       "load-failures": "Load failures",
       "never": "never",

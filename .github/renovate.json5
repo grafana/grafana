@@ -1,5 +1,5 @@
 {
-  extends: ["config:recommended", "security:gomodIndirectSecurityUpdates"],
+  extends: ["config:recommended", "security:gomodIndirectSecurityUpdates", "group:goOpenapi"],
   enabledManagers: ["npm", "docker-compose", "gomod", "github-actions"],
   ignorePresets: [
     "github>grafana/grafana-renovate-config//presets/labels",
@@ -137,6 +137,114 @@
       automerge: false,
       labels: ["dependencies", "no-changelog"],
       reviewers: [],
+    },
+    {
+      description: "Group indirect Go dependencies of the root module",
+      matchManagers: ["gomod"],
+      matchFileNames: ["go.mod"],
+      matchDepTypes: ["indirect"],
+      groupName: "Go indirect dependencies",
+      schedule: ["before 6am on monday"],
+    },
+    {
+      matchManagers: ["gomod"],
+      matchPackageNames: ["cloud.google.com/go/**", "google.golang.org/api", "google.golang.org/genproto/**", "github.com/googleapis/gax-go/**"],
+      groupName: "Google Cloud Go",
+    },
+    {
+      matchManagers: ["gomod"],
+      matchPackageNames: ["golang.org/x/**"],
+      groupName: "golang.org/x",
+      groupSlug: "golang-x",
+    },
+    {
+      matchManagers: ["gomod"],
+      matchPackageNames: ["github.com/prometheus/client_golang", "github.com/prometheus/common"],
+      groupName: "Prometheus client libraries",
+    },
+    {
+      matchManagers: ["gomod"],
+      matchPackageNames: ["github.com/openfga/**"],
+      groupName: "openfga",
+    },
+    {
+      matchManagers: ["gomod"],
+      matchPackageNames: ["go.etcd.io/etcd/**"],
+      groupName: "etcd",
+    },
+    {
+      matchManagers: ["gomod"],
+      matchPackageNames: ["github.com/blevesearch/**"],
+      groupName: "bleve",
+    },
+    {
+      matchManagers: ["gomod"],
+      matchPackageNames: ["github.com/nats-io/**"],
+      groupName: "nats",
+    },
+    {
+      matchManagers: ["gomod"],
+      matchPackageNames: ["github.com/redis/go-redis/**"],
+      groupName: "go-redis",
+    },
+    {
+      description: "Group github.com/grafana Go modules by the team that owns them in go.mod",
+      matchManagers: ["gomod"],
+      matchPackageNames: [
+        "github.com/grafana/alerting",
+        "github.com/grafana/alerting/apps/historian",
+        "github.com/grafana/grafana-api-golang-client",
+        "github.com/grafana/loki/pkg/push",
+      ],
+      groupName: "Go modules owned by alerting-backend",
+    },
+    {
+      matchManagers: ["gomod"],
+      matchPackageNames: ["github.com/grafana/authlib", "github.com/grafana/authlib/types", "github.com/grafana/saml"],
+      groupName: "Go modules owned by identity-access-team",
+    },
+    {
+      matchManagers: ["gomod"],
+      matchPackageNames: ["github.com/grafana/dataplane/examples", "github.com/grafana/dataplane/sdata"],
+      groupName: "Go modules owned by observability-metrics",
+    },
+    {
+      matchManagers: ["gomod"],
+      matchPackageNames: ["github.com/grafana/dskit", "github.com/grafana/grafana-openapi-client-go"],
+      groupName: "Go modules owned by grafana-backend-group",
+    },
+    {
+      matchManagers: ["gomod"],
+      matchPackageNames: ["github.com/grafana/e2e", "github.com/grafana/grafana-app-sdk", "github.com/grafana/grafana-app-sdk/logging"],
+      groupName: "Go modules owned by grafana-app-platform-squad",
+    },
+    {
+      matchManagers: ["gomod"],
+      matchPackageNames: ["github.com/grafana/gomemcache", "github.com/grafana/grafana-cloud-migration-snapshot"],
+      groupName: "Go modules owned by grafana-operator-experience-squad",
+    },
+    {
+      matchManagers: ["gomod"],
+      matchPackageNames: [
+        "github.com/grafana/grafana-aws-sdk",
+        "github.com/grafana/grafana-azure-sdk-go/v2",
+        "github.com/grafana/grafana-google-sdk-go",
+        "github.com/grafana/pyroscope-go/godeltaprof",
+        "github.com/grafana/tempo",
+      ],
+      groupName: "Go modules owned by data-sources-plugins",
+    },
+    {
+      matchManagers: ["gomod"],
+      matchPackageNames: ["github.com/grafana/nanogit", "github.com/grafana/nanogit/gittest"],
+      groupName: "Go modules owned by grafana-git-ui-sync-team",
+    },
+    {
+      description: "Group Go CI tool dependencies, after the package groups above so tool updates stay in this group",
+      matchManagers: ["gomod"],
+      matchFileNames: [".citools/**"],
+      groupName: "Go CI tools",
+      schedule: ["before 6am on monday"],
     },
     {
       matchManagers: ["gomod", "github-actions"],
