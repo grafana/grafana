@@ -263,7 +263,9 @@ To group or delete multiple panels, follow these steps:
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
 1. Hold `Shift` and click each panel you want to select.
+
    A dotted blue line surrounds the selected panels.
+
 1. Hover your cursor over any of the selected panels to display the actions tooltip.
    The tooltip shows how many panels are selected, for example **3 panels selected**, followed by these options:
    - **Group into row**: Moves the selected panels into a new row.
