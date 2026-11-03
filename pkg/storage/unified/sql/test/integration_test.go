@@ -741,3 +741,40 @@ func TestIntegrationSQLBackendWatchesFromNATS(t *testing.T) {
 		}
 	}
 }
+
+func TestIntegrationSQLBackendWatchResumeFloors(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	t.Cleanup(db.CleanupTestDB)
+
+	bus := &loopbackBus{}
+	backends := newSharedDBBackends(t,
+		[]sql.StorageBackendOption{sql.WithEventPublisher(bus), sql.WithNatsNotifier(bus, resource.NewWatchExpiry())},
+		[]sql.StorageBackendOption{sql.WithEventPublisher(bus)},
+	)
+	natsBackend, pollingBackend := backends[0].(resource.ResumeFloorWatchBackend), backends[1].(resource.ResumeFloorWatchBackend)
+	require.True(t, natsBackend.WatchResumeFloorsEnabled())
+	require.False(t, pollingBackend.WatchResumeFloorsEnabled(), "each poller starts on its own, so polling has no floor")
+	ctx := testutil.NewTestContext(t, time.Now().Add(time.Minute))
+
+	before, err := unitest.WriteEvent(ctx, backends[1], "before", resourcepb.WatchEvent_ADDED)
+	require.NoError(t, err)
+
+	floors, events, err := natsBackend.WatchWriteEventsWithResumeFloors(ctx, noLostWrites{}, func() {})
+	require.NoError(t, err)
+	floor := floors[resource.GroupResource{Group: "group", Resource: "resource"}]
+	require.Greater(t, floor, before, "a resume from before the stream started is below the floor")
+
+	after, err := unitest.WriteEvent(ctx, backends[1], "after", resourcepb.WatchEvent_ADDED)
+	require.NoError(t, err)
+	got := receiveWritten(t, events)
+	require.Equal(t, "after", got.Key.Name)
+	require.Equal(t, after, got.ResourceVersion)
+	require.Greater(t, after, floor)
+}
+
+// noLostWrites ignores the writes a watch stream loses.
+type noLostWrites struct{}
+
+func (noLostWrites) Raise(resource.GroupResource, int64) {}
+func (noLostWrites) Hold()                               {}
+func (noLostWrites) Release()                            {}
