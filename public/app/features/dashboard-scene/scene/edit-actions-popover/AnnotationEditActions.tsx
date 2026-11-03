@@ -36,13 +36,13 @@ export function AnnotationEditActions({
 
   return (
     <>
-      <SettingsActionButton
-        tooltip={t('dashboard-scene.annotation-edit-actions.tooltip-edit-annotation-settings', 'Annotation settings')}
-        onClick={onClickEdit}
-      />
       <EditActionButton
         onClick={onClickEditQueryInternal}
         tooltip={t('dashboard-scene.annotation-edit-actions.tooltip-edit-annotation-query', 'Edit query')}
+      />
+      <SettingsActionButton
+        tooltip={t('dashboard-scene.annotation-edit-actions.tooltip-edit-annotation-settings', 'Annotation settings')}
+        onClick={onClickEdit}
       />
       <div className={styles.actionsDivider} />
       <DuplicateActionButton onClick={onClickDuplicate} />

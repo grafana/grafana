@@ -13,7 +13,7 @@ export function EditActionButton({ onClick, tooltip }: { onClick: () => void; to
   const styles = useStyles2(getActionStyles);
   return (
     <IconButton
-      name="edit"
+      name="pen"
       variant="secondary"
       size="md"
       className={styles.action}

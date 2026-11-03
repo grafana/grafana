@@ -42,13 +42,13 @@ export function PanelEditActions({
 
   return (
     <>
-      <SettingsActionButton
-        onClick={onClickEdit}
-        tooltip={t('dashboard-scene.panel-edit-actions.tooltip-panel-settings', 'Panel settings')}
-      />
       <EditActionButton
         onClick={onClickEditVisualization}
         tooltip={t('dashboard-scene.panel-edit-actions.tooltip-edit-panel-visualization', 'Edit visualization')}
+      />
+      <SettingsActionButton
+        onClick={onClickEdit}
+        tooltip={t('dashboard-scene.panel-edit-actions.tooltip-panel-settings', 'Panel settings')}
       />
       <div className={styles.actionsDivider} />
       <CopyActionButton onClick={onClickCopy} isRepeated={isRepeated} />

@@ -71,10 +71,6 @@ export function VariableEditActions({
 
   return (
     <>
-      <SettingsActionButton
-        onClick={onClickEdit}
-        tooltip={t('dashboard-scene.variable-edit-actions.tooltip-variable-settings', 'Variable settings')}
-      />
       {hasQueryEditor && (
         <EditActionButton
           onClick={onClickEditQueryInternal}
@@ -85,6 +81,10 @@ export function VariableEditActions({
           }
         />
       )}
+      <SettingsActionButton
+        onClick={onClickEdit}
+        tooltip={t('dashboard-scene.variable-edit-actions.tooltip-variable-settings', 'Variable settings')}
+      />
       <div className={styles.actionsDivider} />
       <DuplicateActionButton onClick={onClickDuplicate} />
       <DeleteActionButton
