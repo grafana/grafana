@@ -6,6 +6,7 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { TextMode } from 'app/plugins/panel/text/panelcfg.gen';
+import { FORMAT_TOOLBAR_TEST_ID } from 'app/plugins/panel/text/v2/editor/TextNGFormatToolbar';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
@@ -66,6 +67,17 @@ describe('TextNGSidebarEditor', () => {
     expect(screen.getByRole('button', { name: 'Bullet list' })).toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: 'Preview' })).not.toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: 'Write' })).not.toBeInTheDocument();
+  });
+
+  it('puts the mode picker above the format toolbar', async () => {
+    setup();
+    await screen.findByRole('textbox', { name: 'Text content' });
+
+    const modePicker = screen.getByRole('button', { name: 'Text mode: Markdown' });
+    const toolbar = screen.getByTestId(FORMAT_TOOLBAR_TEST_ID);
+
+    expect(modePicker.compareDocumentPosition(toolbar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(toolbar).not.toContainElement(modePicker);
   });
 
   it('applies typing to the panel right away and records one undoable edit when focus leaves', async () => {

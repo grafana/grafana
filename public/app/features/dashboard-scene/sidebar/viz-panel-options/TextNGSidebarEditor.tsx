@@ -99,6 +99,7 @@ export function TextNGSidebarEditor({ panel }: { panel: VizPanel }) {
           view="write"
           onViewChange={noop}
           showViewToggle={false}
+          modePickerPlacement="above"
           hasTitle
         />
       </Suspense>
