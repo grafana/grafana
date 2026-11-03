@@ -1,0 +1,7 @@
+version: v2
+lint:
+  use:
+    - STANDARD
+breaking:
+  use:
+    - FILE

@@ -337,6 +337,10 @@ type ResourceStats struct {
 
 	Count           int64
 	ResourceVersion int64
+
+	// LastSearchedAt is when a global index was last searched before a restart,
+	// so its idle time carries on. Zero when unknown.
+	LastSearchedAt time.Time
 }
 
 // This interface is not exposed to end users directly
@@ -433,6 +437,11 @@ type SearchOptions struct {
 	// defaultGlobalIndexBuildWait; only tests change it.
 	GlobalIndexBuildWait time.Duration
 
+	// GlobalIndexIdleTimeout is how long a global index may go unsearched before
+	// it is closed. Startup does not reopen one that was idle that long before
+	// the restart.
+	GlobalIndexIdleTimeout time.Duration
+
 	// SearchFields holds the per-kind search-field wiring shared with the index
 	// backend. The search server reads the selectable fields and the definition
 	// hash from it and triggers a rebuild when either differs from the values
@@ -487,6 +496,7 @@ type SearchOptions struct {
 	// Vector API collection allowlists: "group/resource" entries; empty allows nothing.
 	AllowedInternalCollections []string
 	AllowedExternalCollections []string
+	SharedExternalCollections  []string
 	AllowedReadServices        map[string][]string
 }
 
@@ -1267,6 +1277,10 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		return rsp, nil
 	}
 
+	if _, _, err := decodeReferenceOnlyBlobBody(req.Value); err != nil {
+		return nil, err
+	}
+
 	err := s.checkQuota(ctx, NamespacedResource{
 		Namespace: req.Key.Namespace,
 		Group:     req.Key.Group,
@@ -1393,6 +1407,10 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 			Code:    http.StatusUnauthorized,
 		}
 		return rsp, nil
+	}
+
+	if _, _, err := decodeReferenceOnlyBlobBody(req.Value); err != nil {
+		return nil, err
 	}
 
 	var (
@@ -2399,12 +2417,12 @@ func (s *server) initWatcher() error {
 		}
 	}()
 
-	s.broadcaster = NewBroadcaster(s.ctx, out, s.storageMetrics.Broadcaster, func(e *WrittenEvent) string {
+	s.broadcaster = newBroadcasterWithSizes(s.ctx, out, watchChanSize, defaultOverflowCap, s.storageMetrics.Broadcaster, func(e *WrittenEvent) string {
 		if e == nil || e.Key == nil {
 			return ""
 		}
 		return e.Key.Resource
-	})
+	}, &seededCacheConfig[*WrittenEvent]{identity: writtenEventIdentity})
 	return nil
 }
 
@@ -2471,12 +2489,12 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 	name := fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace)
 	var stream <-chan *WrittenEvent
-	if s.watchStartup != nil {
+	if b, ok := s.broadcaster.(*broadcaster[*WrittenEvent]); ok && b.cache.identity != nil {
 		var resume *watchResume
 		if req.Since > 0 && !req.SendInitialEvents {
 			resume = &watchResume{groupResource: GroupResource{Group: key.Group, Resource: key.Resource}, since: requestedSince, requestedRV: req.Since}
 		}
-		stream, err = s.watchStartup.broadcaster.subscribeWatch(ctx, name, key.Resource, resume)
+		stream, err = b.subscribeWatch(ctx, name, key.Resource, resume)
 	} else {
 		stream, err = s.broadcaster.Subscribe(ctx, name, key.Resource)
 	}
@@ -3030,12 +3048,7 @@ func (s *server) resolveBlobGet(ctx context.Context, req *resourcepb.GetBlobRequ
 
 const BlobsField = "blobs"
 
-type BlobReference struct {
-	UID         string `json:"uid"`
-	Size        int64  `json:"size,omitempty"`
-	Hash        string `json:"hash,omitempty"`
-	ContentType string `json:"contentType,omitempty"`
-}
+type BlobReference = resourcepb.BlobReference
 
 func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.ResourceKey, rv int64) (map[string]*utils.BlobInfo, bool, *resourcepb.ErrorResult) {
 	if r := verifyRequestKey(key); r != nil {

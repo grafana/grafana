@@ -522,6 +522,7 @@
         "save": "Opslaan"
       },
       "error-title": "Kan waarschuwingsregel niet opslaan",
+      "form-errors": "",
       "no-group-success": "Regel is toegevoegd"
     },
     "alert-rule-name-and-metric": {
@@ -530,8 +531,8 @@
       "label-metric": "Metrisch",
       "label-name": "Naam",
       "message": {
-        "must-enter-a-metric-name": "Een metrische naam is vereist",
-        "must-enter-a-name": "Een naam is vereist",
+        "metric-name-required": "",
+        "name-required": "",
         "please-select-a-data-source": "Selecteer een gegevensbron"
       },
       "metric-aria-label-metric": "metrisch",
@@ -586,6 +587,7 @@
     },
     "alertmanager-config": {
       "confirmText-yes-reset-configuration": "Ja, instellingen terugzetten",
+      "editor-label": "",
       "gma-manual-configuration-description": "De interne Grafana Alertmanager-configuratie kan niet handmatig worden gewijzigd. Bewerk de individuele bronnen via de gebruikersinterface om deze configuratie te wijzigen.",
       "gma-manual-configuration-is-not-supported": "Handmatige configuratiewijzigingen worden niet ondersteund",
       "message": {
@@ -1097,6 +1099,7 @@
         "body": "Weet je zeker dat je deze verwijderde definitie van waarschuwingsregels wilt herstellen?",
         "confirm": "Ja, verwijderde regel herstellen",
         "error": "Kon verwijderde waarschuwingsregel niet herstellen",
+        "preview-aria-label": "",
         "title": "Verwijderde waarschuwingsregel herstellen"
       },
       "table": {
@@ -1314,7 +1317,7 @@
     "folder-selector": {
       "description-select-folder": "Selecteer een map om je regel in op te slaan.",
       "message": {
-        "select-a-folder": "Selecteer een map"
+        "folder-required": ""
       }
     },
     "folderAndGroup": {
@@ -1442,22 +1445,42 @@
     },
     "gma-rule-list": {
       "alert-rules": {
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
       "datasources": "",
+      "folder-row": {
+        "collapse": "",
+        "count-description": "",
+        "count-tooltip": "",
+        "count-unavailable": "",
+        "expand": ""
+      },
       "interval": "",
       "recorded-metric": {
         "records": "",
         "to": ""
       },
       "recording-rules": {
+        "folder-rules-error": "",
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
-      "result-count": {
+      "rule-count": {
         "alert-rules_one": "",
         "alert-rules_other": "",
         "recording-rules_one": "",
@@ -1465,6 +1488,7 @@
       },
       "search": {
         "default-policy-unavailable": "",
+        "folders-disabled": "",
         "help": {
           "contact-point": "",
           "dashboard": "",
@@ -1513,6 +1537,9 @@
         "renamed-value": "",
         "unavailable-tokens": "",
         "unclosed-quote": "",
+        "view": "",
+        "view-folders": "",
+        "view-list": "",
         "wildcard-in-text": ""
       },
       "shared": {
@@ -1551,11 +1578,10 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "Groepen laden...",
       "message": {
-        "must-be-a-positive-integer": "Moet een positief geheel getal zijn.",
-        "must-enter-a-group-name": "Een groepsnaam is vereist"
+        "evaluation-group-required": "",
+        "must-be-a-positive-integer": "Moet een positief geheel getal zijn."
       },
       "missing-series-resolve-placeholder": "Standaard: 2",
-      "or": "of",
       "placeholder-select-an-evaluation-group": "Selecteer een evaluatiegroep...",
       "text-configure-no-data-and-error-handling": "Geen gegevens en foutafhandeling configureren",
       "title-set-evaluation-behavior": "Evaluatiegedrag instellen"
@@ -1849,6 +1875,7 @@
         "will-import-rules-count_one": "Zal  {{count}} regels importeren",
         "will-import-rules-count_other": "Zal  {{count}} regels importeren"
       },
+      "rules-preview": "",
       "source": {
         "datasource": "Bestaande regels voor door gegevensbron beheerde regels",
         "datasource-description": "Regels importeren uit bestaande gegevensbronnen",
@@ -2981,7 +3008,7 @@
           "alerting": "Schakel in om de evaluatie voor deze waarschuwingsregel te pauzeren.",
           "recording": "Schakel in om de evaluatie voor deze opnameregel te pauzeren."
         },
-        "select-folder-before": "Selecteer een map voordat je de evaluatiegroep en het interval instelt",
+        "select-folder-first-tooltip": "",
         "ungroup-warning": "Deze actie is onomkeerbaar. Nadat je het hebt opgeslagen, kun je het niet meer aan een groep toevoegen.",
         "ungroup-warning-title": "Hiermee wordt de waarschuwingsregel uit de groep verwijderd"
       },
@@ -3655,6 +3682,9 @@
       "switch-to-data-source-managed": "De bron die in je zoekopdracht is geselecteerd, ondersteunt het beheer van waarschuwingsregels. Schakel over naar beheerd door gegevensbron als je wilt dat de waarschuwingsregel wordt beheerd door de gegevensbron in plaats van Grafana.",
       "switch-to-grafana-managed": "Schakel over naar beheerd door Grafana om expressies, meerdere query's, afbeeldingen in meldingen en verschillende andere functies te gebruiken.",
       "title-alert-rule-types": "Soorten waarschuwingsregels"
+    },
+    "sql-query-preview": {
+      "aria-label": ""
     },
     "state-history": {
       "columns": {
@@ -6221,6 +6251,7 @@
       "composer": "",
       "composer-description": "",
       "composer-no-permission": "",
+      "composer-opening": "",
       "composer-save-first": "",
       "composer-unsupported": "",
       "current": "",
@@ -7293,11 +7324,18 @@
       "modal": {
         "cancel": "Annuleren",
         "discard": "Negeren",
+        "keep-working": "",
         "save": "Opslaan",
+        "stop-and-leave": "",
+        "stop-and-switch": "",
         "text": {
+          "composer-stop-editing": "",
+          "leave-composer": "",
           "save-changes-question": "Wil je de wijzigingen opslaan?"
         },
         "title": {
+          "composer-stop-editing": "",
+          "leave-composer": "",
           "unsaved-changes": "Onopgeslagen wijzigingen"
         }
       },
@@ -7612,17 +7650,20 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
-      "draft-body-source": "",
       "draft-title": "",
+      "edited-dashboard": "",
       "highlight-changes": "",
       "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
+      "pending-changes-changed": "",
+      "pending-changes-changed-text": "",
       "pending-hint": "",
       "pending-stale": "",
       "pending-title": "",
       "preview-changes": "",
       "rebase": "",
+      "record-pending-change-failed": "",
       "save": "",
       "show-original-dashboard": "",
       "stop-highlighting-changes": "",
@@ -9055,6 +9096,12 @@
         "inspect-value": "Waarde inspecteren",
         "show-details": "Details weergeven",
         "view-log-line": "Logregel bekijken"
+      },
+      "error-attribute": {
+        "error-fields-label": "",
+        "error-fields-tooltip": "",
+        "stacktrace-label": "",
+        "stacktrace-tooltip": ""
       },
       "loki-time-sort-tooltip": "Het sorteren van deze kolom verandert alleen de volgorde van de weergegeven resultaten. Gebruik het besturingselement Sorteren rechts om de op tijd gebaseerde sorteervolgorde van de query bij te werken."
     },
@@ -10683,6 +10730,8 @@
       "clear-button": "Selectie wissen"
     },
     "code-mirror": {
+      "diff-modified": "",
+      "diff-original": "",
       "error-label": "De CodeMirror-editor kan niet worden geladen",
       "language-load-failed": "De syntaxismarkering kan niet worden geladen",
       "language-load-failed-description": "De editor gaat verder zonder taalspecifieke functies.",
@@ -11099,6 +11148,7 @@
         "add-all": "Voeg alle weergegeven waarden toe aan het filter",
         "blanks": "(Lege velden)",
         "button": "Filter {{name}}",
+        "include-missing": "",
         "operator": {
           "contains": "Bevat",
           "equals": "Gelijk aan",
@@ -11123,6 +11173,7 @@
       "filter-popup-heading": "Filteren op waarden:",
       "filter-popup-input-placeholder": "Filter waarden",
       "filter-popup-match-case": "Case matchen",
+      "filter-popup-row-count": "",
       "footer": {
         "reducer": {
           "count": "Telling"
@@ -11139,6 +11190,18 @@
       "no-rows": "Geen rijen",
       "no-values-label": "Geen waarden",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} van {{numRows}} rijen",
+      "range": {
+        "apply": "",
+        "empty": "",
+        "end": "",
+        "histogram": "",
+        "invalid": "",
+        "label": "",
+        "maximum": "",
+        "minimum": "",
+        "start": "",
+        "unbounded": ""
+      },
       "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "Sorteren op kolom {{column}}",
@@ -11475,13 +11538,8 @@
       "severity-low": "Laag",
       "severity-minor": "Licht",
       "severity-unknown": "Onbekend",
-      "title": "Actieve waarschuwingen",
       "view-all": "Alle actieve waarschuwingen weergeven",
-      "view-rules": "Alle waarschuwingsregels weergeven",
-      "critical-count_one": "{{count}} kritiek",
-      "critical-count_other": "{{count}} kritiek",
-      "high-count_one": "{{count}} hoog",
-      "high-count_other": "{{count}} hoog"
+      "view-rules": "Alle waarschuwingsregels weergeven"
     },
     "header-actions": {
       "active-incidents": "Actieve incidenten",
@@ -11507,21 +11565,13 @@
       "empty": "",
       "empty-selected-team": "",
       "error-title": "Kon actieve incidenten niet laden",
-      "title": "Actieve incidenten",
       "view-all": "Alle incidenten bekijken"
     },
     "learn-more": "Meer informatie",
     "most-used-dashboards-tab": {
       "empty": "De meest gebruikte dashboards worden hier weergegeven.",
-      "empty-description": "Zodra je organisatie dashboards heeft en er gebruiksgegevens zijn verzameld, worden hier de dashboards weergegeven met de meeste weergaven in de afgelopen 30 dagen.",
       "error-title": "Kon meest gebruikte dashboards niet laden",
       "loading": "Meest gebruikte dashboards laden..."
-    },
-    "news-card": {
-      "empty": "Geen recente blogberichten.",
-      "error-title": "Kon recente blogberichten niet laden",
-      "read-more": "Lees meer op het Grafana Labs-blog",
-      "title": "Laatste blogberichten"
     },
     "on-call-card": {
       "current-shift": "",
@@ -11876,7 +11926,6 @@
     },
     "starred-dashboards-tab": {
       "empty": "Je favoriete dashboards worden hier weergegeven.",
-      "empty-description": "Je kunt je favoriete dashboards een ster geven door op de <1></1> op de dashboardpagina te klikken.",
       "error-title": "Kon favoriete dashboards niet laden",
       "loading": "Favoriete dashboards laden..."
     },
@@ -12310,6 +12359,7 @@
     },
     "log-details": {
       "error": {
+        "diagnose-with-assistant": "",
         "error-details": ""
       }
     },
@@ -13688,6 +13738,7 @@
       "add-title": "",
       "change-visualization": "",
       "edit-query": "",
+      "edit-with-assistant": "",
       "hide-query": "",
       "open-explore": "",
       "rename": "",
@@ -15746,20 +15797,8 @@
     "explain-or-modify": "Uitleggen of wijzigen",
     "explain-query": "",
     "explaining": "",
-    "feedback-cancel": "Annuleren",
-    "feedback-description": "Je feedback helpt de query-ervaring in Grafana te verbeteren.",
-    "feedback-error": "Feedback kon niet worden verzonden. Probeer het opnieuw.",
     "feedback-helpful": "Nuttig",
-    "feedback-label": "Feedback delen",
-    "feedback-negative-placeholder": "Beschrijf wat er niet goed ging en wat je in plaats daarvan had verwacht.",
-    "feedback-negative-title": "Wat ging er mis?",
     "feedback-not-helpful": "Niet nuttig",
-    "feedback-positive-placeholder": "Wat vond je goed? Hoe had het nog beter kunnen zijn?",
-    "feedback-positive-title": "Wat ging er goed?",
-    "feedback-privacy": "",
-    "feedback-recipient": "Je feedback wordt verzonden naar de teams die aan query's werken.",
-    "feedback-send": "Verzenden",
-    "feedback-sending": "Verzenden...",
     "focus": "",
     "follow-up-label": "",
     "follow-up-placeholder": "",
@@ -16946,6 +16985,10 @@
     },
     "namespace-unavailable": "Controleer de namespace voordat je verzoeken verzendt of laad de pagina opnieuw om het opnieuw te proberen.",
     "namespace-unavailable-title": "Kan namespace niet laden",
+    "router-fixtures": {
+      "clear": "",
+      "title": ""
+    },
     "router-nav": {
       "api-docs": "",
       "manifests": "",
@@ -16962,7 +17005,8 @@
       "failures-description": "",
       "filter-placeholder": "",
       "filtered": "",
-      "groups": "",
+      "internal": "",
+      "internal-description": "",
       "last-failed": "",
       "load-failures": "",
       "never": "",
@@ -16976,8 +17020,9 @@
       "requests-description": "",
       "shadowed": "",
       "shadowed-description": "",
-      "sources": "",
-      "stack-lookups": "",
+      "tab-groups": "",
+      "tab-lookups": "",
+      "tab-sources": "",
       "title": ""
     }
   },

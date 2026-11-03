@@ -8,6 +8,8 @@ import {
   clearPendingChangePreview,
   finishSavingNewDashboard,
   getPendingChangePreview,
+  getPendingChangesHistory,
+  type PendingChangesHistory,
   isHighlightingChanges,
   loadPendingChangePreview,
   previewedDashboardUid,
@@ -133,6 +135,28 @@ describe('showing the saved dashboard instead of the pending changes', () => {
 describe('a new dashboard proposed as pending changes', () => {
   const proposal = () => ({ ...pending, baseGeneration: 0, discard: jest.fn(async () => undefined) });
 
+  it("uses each scene's own view for history when different chats preview the same dashboard", async () => {
+    const history = (label: string): PendingChangesHistory => ({
+      record: jest.fn(async () => ({ recorded: true })),
+      undo: jest.fn(async () => undefined),
+      redo: jest.fn(async () => undefined),
+      getState: () => ({ undo: label }),
+      subscribe: () => () => {},
+    });
+    registerLoaders(async () => ({ ...proposal(), history: history('Page edit') }));
+    await loadPendingChangePreview('page', 'history-dash', 'chat-page');
+    registerLoaders(async () => ({ ...proposal(), history: history('Embedded edit') }));
+    await loadPendingChangePreview('embedded', 'history-dash', 'chat-embedded');
+
+    expect(
+      getPendingChangesHistory({ uid: '', meta: { isEmbedded: true, newDashboardUid: 'history-dash' } })?.getState()
+        .undo
+    ).toBe('Embedded edit');
+    expect(getPendingChangesHistory({ uid: 'history-dash', meta: {} })?.getState().undo).toBe('Page edit');
+    clearPendingChangePreview('history-dash', 'chat-page');
+    clearPendingChangePreview('history-dash', 'chat-embedded');
+  });
+
   it('is always previewed: there is no saved dashboard to show instead', async () => {
     registerLoaders(async () => proposal());
     locationService.push('/d/new-dash?pendingChanges=chat-1&pendingChangesView=original');
@@ -156,6 +180,23 @@ describe('a new dashboard proposed as pending changes', () => {
 
     expect(proposed.discard).toHaveBeenCalledTimes(1);
     expect(getPendingChangePreview('page', 'new-dash')).toBeUndefined();
+  });
+
+  it('finishes only the draft saved by the embedded view when the page previews another chat', async () => {
+    const page = proposal();
+    registerLoaders(async () => page);
+    await loadPendingChangePreview('page', 'new-dash', 'chat-page');
+    const embedded = proposal();
+    registerLoaders(async () => embedded);
+    await loadPendingChangePreview('embedded', 'new-dash', 'chat-embedded');
+
+    await finishSavingNewDashboard('new-dash', 'embedded');
+
+    expect(embedded.discard).toHaveBeenCalledTimes(1);
+    expect(page.discard).not.toHaveBeenCalled();
+    expect(getPendingChangePreview('page', 'new-dash')?.id).toBe('chat-page');
+    expect(getPendingChangePreview('embedded', 'new-dash')).toBeUndefined();
+    clearPendingChangePreview('new-dash', 'chat-page');
   });
 
   it('leaves the page URL without its preview', () => {

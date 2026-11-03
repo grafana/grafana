@@ -215,10 +215,6 @@ const (
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
 
-	// FlagAlertmanagerRemoteSecondary
-	// Enable Grafana to sync configuration and state with a remote Alertmanager.
-	FlagAlertmanagerRemoteSecondary = "alertmanagerRemoteSecondary"
-
 	// FlagAlertingProvenanceLockWrites
 	// Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL
 	FlagAlertingProvenanceLockWrites = "alertingProvenanceLockWrites"
@@ -242,6 +238,10 @@ const (
 	// FlagDashboardNotebooks
 	// Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
 	FlagDashboardNotebooks = "dashboard.notebooks"
+
+	// FlagDashboardNotebookComments
+	// Enables commenting on Notebook cells
+	FlagDashboardNotebookComments = "dashboard.notebookComments"
 
 	// FlagGrafanaSavedDashboardViews
 	// Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state
@@ -406,6 +406,10 @@ const (
 	// FlagAuthzUseLegacyCheck
 	// Route legacy access-control evaluations through the AuthZ LegacyCheck RPC.
 	FlagAuthzUseLegacyCheck = "authz.useLegacyCheck"
+
+	// FlagAuthzUseLegacyCheckShadow
+	// Compare local access-control evaluations with the AuthZ LegacyCheck RPC in the background.
+	FlagAuthzUseLegacyCheckShadow = "authz.useLegacyCheckShadow"
 
 	// FlagZanzana
 	// Use openFGA as authorization engine.
@@ -638,10 +642,6 @@ const (
 	// Enables the notification history feature
 	FlagAlertingNotificationHistory = "alertingNotificationHistory"
 
-	// FlagAlertmanagerRemoteSecondaryWithRemoteState
-	// Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
-	FlagAlertmanagerRemoteSecondaryWithRemoteState = "alertmanagerRemoteSecondaryWithRemoteState"
-
 	// FlagNewClickhouseConfigPageDesign
 	// Enables new design for the Clickhouse data source configuration page
 	FlagNewClickhouseConfigPageDesign = "newClickhouseConfigPageDesign"
@@ -702,10 +702,6 @@ const (
 	// Exclude redundant individual dashboard/folder permissions from managed roles at query time
 	FlagExcludeRedundantManagedPermissions = "excludeRedundantManagedPermissions"
 
-	// FlagPanelTimeSettings
-	// Enables a new panel time settings drawer
-	FlagPanelTimeSettings = "panelTimeSettings"
-
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
@@ -733,6 +729,10 @@ const (
 	// FlagGrafanaDashboardVariablesMigration
 	// Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables
 	FlagGrafanaDashboardVariablesMigration = "grafana.dashboardVariablesMigration"
+
+	// FlagGrafanaDashboardPreferences
+	// Enables org, folder and user preferences for new dashboards and panels (DashboardPreferences in dashboard.grafana.app)
+	FlagGrafanaDashboardPreferences = "grafana.dashboardPreferences"
 
 	// FlagSecretsManagementAppPlatformAwsKeeper
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager

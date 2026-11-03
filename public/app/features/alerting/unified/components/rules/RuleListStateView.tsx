@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { Counter, LoadingBar, Pagination, Stack } from '@grafana/ui';
@@ -144,7 +144,7 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
 
 function useDataSourcesLoadingState() {
   const promRules = useUnifiedAlertingSelector((state) => state.promRules);
-  const rulesDataSources = useMemo(getRulesDataSources, []);
+  const [rulesDataSources] = useState(getRulesDataSources);
 
   const grafanaLoading = useUnifiedAlertingSelector((state) => {
     const promLoading = isAsyncRequestStatePending(state.promRules[GRAFANA_RULES_SOURCE_NAME]);
