@@ -1176,3 +1176,86 @@ func TestExistingFolderCanonicalRoot(t *testing.T) {
 	parsed := &ParsedResource{Existing: &unstructured.Unstructured{Object: map[string]interface{}{"metadata": map[string]interface{}{"annotations": map[string]interface{}{"grafana.app/folder": "general"}}}}}
 	require.Empty(t, parsed.ExistingFolder(), "root must not become an orphan-folder cleanup target")
 }
+
+func TestParser_RootLevelGrantPermissions(t *testing.T) {
+	// A folder-scoped kind with no permission setter registered in unified storage. It must never
+	// ask for the default permissions, because the write would be rejected.
+	libraryPanelGVK := schema.GroupVersionKind{Group: "dashboard.grafana.app", Version: "v0alpha1", Kind: "LibraryPanel"}
+	libraryPanelGVR := schema.GroupVersionResource{Group: "dashboard.grafana.app", Version: "v0alpha1", Resource: "librarypanels"}
+
+	supported := []SupportedResource{
+		{GroupKind: dashboardV0.DashboardResourceInfo.GroupVersionKind().GroupKind(), Capabilities: sets.New(CapabilityFolder)},
+		{GroupKind: libraryPanelGVK.GroupKind(), Capabilities: sets.New(CapabilityFolder)},
+	}
+
+	clients := NewMockResourceClients(t)
+	clients.On("ForKind", mock.Anything, dashboardV0.DashboardResourceInfo.GroupVersionKind()).
+		Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
+	clients.On("ForKind", mock.Anything, libraryPanelGVK).
+		Return(nil, libraryPanelGVR, nil).Maybe()
+	clients.On("SupportedResources").Return(supported).Maybe()
+
+	// A folderless (instance-scoped) repository, so repo-root files land at the top level.
+	parser := &parser{
+		repo: provisioning.ResourceRepositoryInfo{
+			Type:      provisioning.LocalRepositoryType,
+			Namespace: "xxx",
+			Name:      "repo",
+		},
+		clients: clients,
+		config: &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "xxx", Name: "repo"},
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.LocalRepositoryType,
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance},
+			},
+		},
+	}
+
+	dashboardFile := func(path string) *repository.FileInfo {
+		return &repository.FileInfo{
+			Path: path,
+			Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
+kind: Dashboard
+metadata:
+  name: test-dashboard
+spec:
+  title: Test dashboard
+`),
+		}
+	}
+
+	t.Run("a dashboard at the top level asks for the default permissions", func(t *testing.T) {
+		parsed, err := parser.Parse(context.Background(), dashboardFile("test-dashboard.json"))
+		require.NoError(t, err)
+		require.Empty(t, parsed.Meta.GetFolder(), "a repo-root file must land at the top level")
+		require.Equal(t, utils.AnnoGrantPermissionsDefault,
+			parsed.Meta.GetAnnotation(utils.AnnoKeyGrantPermissions),
+			"a top-level dashboard has no folder to inherit access from")
+	})
+
+	t.Run("a dashboard inside a folder does not", func(t *testing.T) {
+		parsed, err := parser.Parse(context.Background(), dashboardFile("team-a/test-dashboard.json"))
+		require.NoError(t, err)
+		require.NotEmpty(t, parsed.Meta.GetFolder())
+		require.Empty(t, parsed.Meta.GetAnnotation(utils.AnnoKeyGrantPermissions),
+			"a nested dashboard inherits access from its folder")
+	})
+
+	t.Run("a kind without a permission setter does not", func(t *testing.T) {
+		parsed, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Path: "my-panel.json",
+			Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
+kind: LibraryPanel
+metadata:
+  name: my-panel
+spec:
+  title: My panel
+`),
+		})
+		require.NoError(t, err)
+		require.Empty(t, parsed.Meta.GetFolder())
+		require.Empty(t, parsed.Meta.GetAnnotation(utils.AnnoKeyGrantPermissions),
+			"unified storage rejects the annotation for a kind with no permission setter")
+	})
+}
