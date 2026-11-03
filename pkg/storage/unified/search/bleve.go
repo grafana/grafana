@@ -2299,7 +2299,9 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 	}
 
 	// Documents of a shared collection carry the group that serves them in a label,
-	// because the key they are indexed under names the collection instead.
+	// because the key they are indexed under names the collection instead. Reading it back
+	// depends on the labels sub-document being dynamically mapped with stored values; making
+	// it static, or mapping it without Store, silently empties every served group.
 	sharedGroupField := labelFieldPrefix + utils.SharedGroupLabelKey(b.key.Group)
 
 	start := time.Now()
