@@ -48,10 +48,12 @@ interface StoredRegion {
   /** The tabs that were selected when it was drawn; it is shown only while all of them still are. */
   tabKeys: string[];
   /**
-   * Drawn starting above the scroll container, on the dashboard controls, which do not scroll: kept
-   * relative to the overlay instead, so it stays on the controls.
+   * Drawn wholly on the dashboard controls, which do not scroll: kept relative to the overlay instead, so it
+   * stays on the controls.
    */
   fixed: boolean;
+  /** Drawn starting on the controls: seen through the whole overlay, since its top is above the scroller's. */
+  onControls: boolean;
 }
 
 type PickResult = ElementPick | RegionPick | null;
@@ -211,7 +213,7 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
       return failed('busy');
     }
     const rect = this.getRegionViewportRect(regionId);
-    if (!rect || !isFullyVisible(rect, getVisibleBounds(getRegionFrame(overlay, region)))) {
+    if (!rect || !isFullyVisible(rect, getVisibleBounds(getRegionView(overlay, region)))) {
       return failed('not_visible');
     }
     if (overlapsAny(rect, container.querySelectorAll(DASHBOARD_ACTIONS_SELECTOR))) {
@@ -374,7 +376,7 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
       return;
     }
     const container = getRegionScroller(root);
-    const visible = getVisibleBounds(container);
+    const visible = getVisibleBounds(getRegionView(root, region));
     let delta = 0;
     if (rect.height > visible.bottom - visible.top) {
       delta = rect.top + point.y * rect.height - (visible.top + visible.bottom) / 2;
@@ -483,12 +485,14 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
     const rootRect = root.getBoundingClientRect();
     const { tabKeys, tabPath, timeRange } = this.document.regionContext();
     const regionId = `region-${generateUUID()}`;
-    const fixed = rect.top < getVisibleBounds(getRegionScroller(root)).top;
+    const scrollerTop = getVisibleBounds(getRegionScroller(root)).top;
+    const fixed = rect.top + rect.height <= scrollerTop;
     const origin = getContentOrigin(getRegionFrame(root, { fixed }));
     this.regions.set(regionId, {
       box: { left: rect.left - origin.left, top: rect.top - origin.top, width: rect.width, height: rect.height },
       tabKeys,
       fixed,
+      onControls: rect.top < scrollerTop,
     });
 
     // Normalised to the visible part of the dashboard.
@@ -548,7 +552,7 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
       rect = this.getRegionViewportRect(ref.regionId);
       const root = this.getOverlayRoot();
       const region = this.regions.get(ref.regionId);
-      container = root && region ? getRegionFrame(root, region) : undefined;
+      container = root && region ? getRegionView(root, region) : undefined;
     } else {
       const element = this.findElementRoot(ref);
       rect = element?.getBoundingClientRect() ?? null;
@@ -700,9 +704,14 @@ function getRegionScroller(overlayRoot: HTMLElement): HTMLElement {
   return body instanceof HTMLElement ? body : getScrollContainer(overlayRoot);
 }
 
-/** What a region moves with and is seen through: the overlay for one fixed on the controls, else its scroller. */
+/** What a region moves with: the overlay for one fixed on the controls, else its scroller. */
 function getRegionFrame(overlayRoot: HTMLElement, { fixed }: Pick<StoredRegion, 'fixed'>): HTMLElement {
   return fixed ? overlayRoot : getRegionScroller(overlayRoot);
+}
+
+/** What a region is seen through: the whole overlay for one drawn starting on the controls, else its scroller. */
+function getRegionView(overlayRoot: HTMLElement, { onControls }: Pick<StoredRegion, 'onControls'>): HTMLElement {
+  return onControls ? overlayRoot : getRegionScroller(overlayRoot);
 }
 
 /** Where the scrolled content of `scroller` starts, in viewport coordinates: it moves as `scroller` scrolls. */

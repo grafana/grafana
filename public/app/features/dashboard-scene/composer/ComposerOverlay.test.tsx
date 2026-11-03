@@ -1172,34 +1172,57 @@ describe('region capture', () => {
     }
   });
 
-  it('captures a region drawn from the dashboard controls, and keeps it on them while the body scrolls', async () => {
-    const { session, annotate } = setup();
-    const body = mountDashboardBody();
-    // The body scrolls below the 64px controls bar, as the sidebar layout renders it.
-    bodyRect = { left: 0, top: 64, width: 1024, height: 704 };
-    try {
+  describe('a region drawn from the dashboard controls', () => {
+    const drawFromControls = async (to: { x: number; y: number }) => {
+      const { session, annotate } = setup();
+      const body = mountDashboardBody();
+      // The body scrolls below the 64px controls bar, as the sidebar layout renders it.
+      bodyRect = { left: 0, top: 64, width: 1024, height: 704 };
       let pick: Promise<unknown> = Promise.resolve();
       act(() => {
         pick = session.pickRegion(live());
       });
       const overlay = screen.getByTestId('dashboard-composer-overlay');
       fireEvent.pointerDown(overlay, { clientX: 20, clientY: 10, button: 0 });
-      fireEvent.pointerUp(overlay, { clientX: 300, clientY: 300 });
+      fireEvent.pointerUp(overlay, { clientX: to.x, clientY: to.y });
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
       const { regionId } = ((await pick) as { ref: { kind: 'region'; regionId: string } }).ref;
       annotate([item({ id: 'r', ref: { kind: 'region', regionId }, point: { x: 1, y: 0 } })]);
+      const scrollBody = async (top: number) => {
+        body.scrollTop = top;
+        fireEvent.scroll(body);
+        await nextFrame();
+      };
+      return { session, body, regionId, scrollBody };
+    };
 
-      await expect(capture(session, regionId)).resolves.toMatchObject({ status: 'ready' });
+    it('is captured, and stays on the controls while the body scrolls when it lies wholly on them', async () => {
+      const { session, body, regionId, scrollBody } = await drawFromControls({ x: 300, y: 50 });
+      try {
+        await expect(capture(session, regionId)).resolves.toMatchObject({ status: 'ready' });
 
-      body.scrollTop = 100;
-      fireEvent.scroll(body);
-      await nextFrame();
+        await scrollBody(100);
 
-      expect(screen.getByTestId('composer-annotation-outline-r')).toHaveStyle({ left: '20px', top: '10px' });
-      await expect(capture(session, regionId)).resolves.toMatchObject({ status: 'ready' });
-    } finally {
-      body.remove();
-    }
+        expect(screen.getByTestId('composer-annotation-outline-r')).toHaveStyle({ left: '20px', top: '10px' });
+        await expect(capture(session, regionId)).resolves.toMatchObject({ status: 'ready' });
+      } finally {
+        body.remove();
+      }
+    });
+
+    it('is captured, and moves with the body content it covers when it runs into it', async () => {
+      const { session, body, regionId, scrollBody } = await drawFromControls({ x: 300, y: 300 });
+      try {
+        await expect(capture(session, regionId)).resolves.toMatchObject({ status: 'ready' });
+
+        await scrollBody(100);
+
+        expect(screen.getByTestId('composer-annotation-outline-r')).toHaveStyle({ left: '20px', top: '-90px' });
+        await expect(capture(session, regionId)).resolves.toEqual({ status: 'failed', reason: 'not_visible' });
+      } finally {
+        body.remove();
+      }
+    });
   });
 
   it("refuses a region over the dashboard's own buttons, and captures one beside them", async () => {
