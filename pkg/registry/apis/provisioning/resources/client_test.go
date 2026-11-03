@@ -120,6 +120,8 @@ func TestParseSupportedResources(t *testing.T) {
 		{"group without a dot", "dashboard/Dashboard"},
 		{"unknown capability", "dashboard.grafana.app/Dashboard:bogus"},
 		{"unqualified non-dotted pattern", "*-app/Settings"},
+		{"unqualified trailing pattern", "grafana-*/Settings"},
+		{"two wildcards", "*.*.grafana.app/Thing"},
 		{"collection on a concrete group", "playlist.grafana.app@plugins.grafana.app/Playlist"},
 		{"collection without a dot", "*-app@plugins/Settings"},
 	} {
@@ -239,6 +241,19 @@ func TestExpandWildcardGroups(t *testing.T) {
 		expanded, err := expandWildcardGroups(t.Context(), served("dashboard.grafana.app"), configured)
 		require.NoError(t, err)
 		require.Empty(t, expanded)
+	})
+
+	t.Run("expands a trailing-wildcard pattern", func(t *testing.T) {
+		configured, err := ParseSupportedResources([]string{"grafana-*@plugins.grafana.app/Settings"})
+		require.NoError(t, err)
+
+		expanded, err := expandWildcardGroups(t.Context(), served(
+			"grafana-slo-app",
+			"acme-slo-app",
+			"plugins.grafana.app",
+		), configured)
+		require.NoError(t, err)
+		require.Equal(t, []schema.GroupKind{{Group: "grafana-slo-app", Kind: "Settings"}}, groupKinds(expanded))
 	})
 
 	t.Run("expands a pattern qualified with its collection", func(t *testing.T) {

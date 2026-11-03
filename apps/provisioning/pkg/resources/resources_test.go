@@ -30,6 +30,12 @@ func TestMatchesGroup(t *testing.T) {
 		{"qualified suffix non-member", "*-app@plugins.grafana.app", "grafana-app-sdk", false},
 		{"the qualified collection is not its own member", "*-app@plugins.grafana.app", "plugins.grafana.app", false},
 		{"qualified dotted pattern", "*.datasource.grafana.app@datasource.grafana.app", "loki.datasource.grafana.app", true},
+		// The wildcard may sit anywhere, so a member that suffixes a shared prefix matches too.
+		{"trailing wildcard", "grafana-*@plugins.grafana.app", "grafana-slo-app", true},
+		{"trailing wildcard non-member", "grafana-*@plugins.grafana.app", "acme-slo-app", false},
+		{"trailing wildcard standing for nothing", "grafana-*@plugins.grafana.app", "grafana-", false},
+		{"wildcard between literals", "grafana-*-app@plugins.grafana.app", "grafana-slo-app", true},
+		{"wildcard between literals, wrong tail", "grafana-*-app@plugins.grafana.app", "grafana-slo-datasource", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -42,4 +48,12 @@ func TestCollectionGroup(t *testing.T) {
 	require.Equal(t, "datasource.grafana.app", CollectionGroup("*.datasource.grafana.app"))
 	require.Equal(t, "playlist.grafana.app", CollectionGroup("playlist.grafana.app"))
 	require.Equal(t, "plugins.grafana.app", CollectionGroup("*-app@plugins.grafana.app"))
+}
+
+func TestIsDottedWildcardGroup(t *testing.T) {
+	require.True(t, IsDottedWildcardGroup("*.datasource.grafana.app"))
+	require.False(t, IsDottedWildcardGroup("*-app"), "the literal part is not a group")
+	require.False(t, IsDottedWildcardGroup("grafana-*"), "nor is the literal part of a trailing pattern")
+	require.False(t, IsDottedWildcardGroup("*.*.grafana.app"), "one wildcard only")
+	require.False(t, IsDottedWildcardGroup("playlist.grafana.app"))
 }

@@ -87,9 +87,9 @@ func (r SupportedResource) IsFolderScoped() bool { return r.Capabilities.Has(Cap
 //	<group>/<Kind>[:cap[:cap...]]
 //
 // Group and kind are split on the last "/" (groups contain dots and may be multi-segment). The
-// group may be a wildcard pattern over the groups served inside a storage collection, optionally
-// qualified with the group those are stored under: "*.datasource.grafana.app" or
-// "*-app@plugins.grafana.app". Capabilities are ":"-separated and must be in KnownCapabilities.
+// group may be a wildcard pattern over the groups served inside a storage collection, with the "*"
+// anywhere in it, optionally qualified with the group those are stored under:
+// "*.datasource.grafana.app", "*-app@plugins.grafana.app" or "grafana-*@plugins.grafana.app". Capabilities are ":"-separated and must be in KnownCapabilities.
 // Parsing is strict and fails fast at startup: each entry must be "<group>/<Kind>" with a
 // non-empty, dotted group and non-empty kind; capabilities must be known and not repeated; and a
 // resource ID must not appear twice. Whitespace is trimmed and empty entries are skipped.
@@ -147,7 +147,7 @@ func validateGroup(entry, group string) error {
 		return fmt.Errorf("invalid provisioning resource %q: only a wildcard group names a collection", entry)
 	case qualified:
 		group = collection
-	case provisioningresources.IsWildcardGroup(pattern) && !strings.HasPrefix(pattern, provisioningresources.WildcardGroupPrefix):
+	case provisioningresources.IsWildcardGroup(pattern) && !provisioningresources.IsDottedWildcardGroup(pattern):
 		return fmt.Errorf("invalid provisioning resource %q: wildcard group %q must name the collection its members are stored in, e.g. %s@plugins.grafana.app",
 			entry, pattern, pattern)
 	default:

@@ -22,11 +22,13 @@ var (
 )
 
 // WildcardGroupMarker introduces a configured group that is a pattern over served groups rather
-// than one group. It stands for the part of a served group that identifies the member, so a served
-// group is covered when it ends with the literal rest of the pattern. Several API groups can be
-// persisted in one storage collection -- every data source plugin serves its own group but is
-// stored in datasource.grafana.app -- and which groups those are depends on what the instance has
-// installed, so they cannot be written in configuration by hand.
+// than one group. It stands for the part of a served group that identifies the member, and may sit
+// anywhere in the pattern: leading for a member that prefixes a shared suffix
+// (*.datasource.grafana.app, *-app), trailing for one that suffixes a shared prefix
+// (grafana-plugin-*), or between the two. Several API groups can be persisted in one storage
+// collection -- every data source plugin serves its own group but is stored in
+// datasource.grafana.app -- and which groups those are depends on what the instance has installed,
+// so they cannot be written in configuration by hand.
 const WildcardGroupMarker = "*"
 
 // WildcardGroupPrefix is the dotted pattern, whose literal part is itself the collection group:
@@ -40,7 +42,14 @@ const CollectionSeparator = "@"
 
 // IsWildcardGroup reports whether a configured group is a pattern rather than a served group.
 func IsWildcardGroup(group string) bool {
-	return strings.HasPrefix(group, WildcardGroupMarker)
+	return strings.Contains(group, WildcardGroupMarker)
+}
+
+// IsDottedWildcardGroup reports whether a pattern is the dotted form, the only one whose literal
+// part is itself the collection group and so needs no qualifier.
+func IsDottedWildcardGroup(group string) bool {
+	return strings.HasPrefix(group, WildcardGroupPrefix) &&
+		!strings.Contains(strings.TrimPrefix(group, WildcardGroupPrefix), WildcardGroupMarker)
 }
 
 // CollectionGroup returns the group a configured entry's resources are stored under: the qualifier
@@ -58,10 +67,16 @@ func CollectionGroup(configured string) string {
 // member matching its pattern. Membership is structural -- the member identifies itself in the
 // part of the served group the wildcard stands for -- so it holds for any collection that follows
 // that convention without this package knowing which collections exist.
+//
+// A member is never empty, so a pattern does not cover the group left when the wildcard stands for
+// nothing: *.datasource.grafana.app does not cover datasource.grafana.app itself.
 func MatchesGroup(configured, served string) bool {
 	pattern, _, _ := strings.Cut(configured, CollectionSeparator)
-	if !IsWildcardGroup(pattern) {
+	before, after, wildcard := strings.Cut(pattern, WildcardGroupMarker)
+	if !wildcard {
 		return pattern == served
 	}
-	return strings.HasSuffix(served, strings.TrimPrefix(pattern, WildcardGroupMarker))
+	return len(served) > len(before)+len(after) &&
+		strings.HasPrefix(served, before) &&
+		strings.HasSuffix(served, after)
 }
