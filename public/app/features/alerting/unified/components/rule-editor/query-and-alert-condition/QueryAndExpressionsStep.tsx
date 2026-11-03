@@ -621,7 +621,11 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
               )}
               <Stack direction="row">
                 {!simplifiedQueryStep && config.expressionsEnabled && (
-                  <TypeSelectorButton onClickType={onClickType} onClickDynamicThreshold={onClickDynamicThreshold} />
+                  <TypeSelectorButton
+                    onClickType={onClickType}
+                    onClickDynamicThreshold={onClickDynamicThreshold}
+                    isGrafanaAlertingType={isGrafanaAlertingType}
+                  />
                 )}
 
                 {isPreviewLoading && (
@@ -695,12 +699,14 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
 interface TypeSelectorButtonProps {
   onClickType: (type: ExpressionQueryType) => void;
   onClickDynamicThreshold: () => void;
+  isGrafanaAlertingType: boolean;
   sqlExpressionsEnabled?: boolean;
 }
 
 export function TypeSelectorButton({
   onClickType,
   onClickDynamicThreshold,
+  isGrafanaAlertingType,
   sqlExpressionsEnabled = expressionTypes.some(({ value }) => value === ExpressionQueryType.sql),
 }: TypeSelectorButtonProps) {
   const dynamicThresholdEnabled = useFlagAlertingDynamicThresholdExpression();
@@ -715,7 +721,7 @@ export function TypeSelectorButton({
           />
         </Tooltip>
       ))}
-      {sqlExpressionsEnabled && dynamicThresholdEnabled && (
+      {isGrafanaAlertingType && sqlExpressionsEnabled && dynamicThresholdEnabled && (
         <Tooltip
           content={t(
             'alerting.type-selector-button.dynamic-threshold-description',

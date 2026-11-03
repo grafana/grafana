@@ -7,7 +7,15 @@ import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { TypeSelectorButton } from './QueryAndExpressionsStep';
 
-const renderTypeSelector = (sqlExpressionsEnabled = true) => {
+interface RenderTypeSelectorOptions {
+  isGrafanaAlertingType?: boolean;
+  sqlExpressionsEnabled?: boolean;
+}
+
+const renderTypeSelector = ({
+  isGrafanaAlertingType = true,
+  sqlExpressionsEnabled = true,
+}: RenderTypeSelectorOptions = {}) => {
   const onClickDynamicThreshold = jest.fn();
   const onClickType = jest.fn();
 
@@ -15,6 +23,7 @@ const renderTypeSelector = (sqlExpressionsEnabled = true) => {
     <TypeSelectorButton
       onClickType={onClickType}
       onClickDynamicThreshold={onClickDynamicThreshold}
+      isGrafanaAlertingType={isGrafanaAlertingType}
       sqlExpressionsEnabled={sqlExpressionsEnabled}
     />
   );
@@ -38,9 +47,12 @@ describe('TypeSelectorButton', () => {
     expect(screen.queryByText('Dynamic threshold')).not.toBeInTheDocument();
   });
 
-  it('shows dynamic threshold when SQL expressions and the feature flag are enabled', async () => {
+  it('shows dynamic threshold for an alert rule when SQL expressions and the feature flag are enabled', async () => {
     setTestFlags({ [FlagKeys.AlertingDynamicThresholdExpression]: true });
-    const { onClickDynamicThreshold } = renderTypeSelector();
+    const { onClickDynamicThreshold } = renderTypeSelector({
+      isGrafanaAlertingType: true,
+      sqlExpressionsEnabled: true,
+    });
 
     const user = await openExpressionMenu();
     await user.click(screen.getByText('Dynamic threshold'));
@@ -48,9 +60,18 @@ describe('TypeSelectorButton', () => {
     expect(onClickDynamicThreshold).toHaveBeenCalledTimes(1);
   });
 
+  it('hides dynamic threshold for a recording rule', async () => {
+    setTestFlags({ [FlagKeys.AlertingDynamicThresholdExpression]: true });
+    renderTypeSelector({ isGrafanaAlertingType: false, sqlExpressionsEnabled: true });
+
+    await openExpressionMenu();
+
+    expect(screen.queryByText('Dynamic threshold')).not.toBeInTheDocument();
+  });
+
   it('hides dynamic threshold when SQL expressions are unavailable', async () => {
     setTestFlags({ [FlagKeys.AlertingDynamicThresholdExpression]: true });
-    renderTypeSelector(false);
+    renderTypeSelector({ sqlExpressionsEnabled: false });
 
     await openExpressionMenu();
 
