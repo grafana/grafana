@@ -2,7 +2,7 @@ import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dash
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { type IconName, locationUtil } from '@grafana/data';
 import { type StarredNavItem } from 'app/core/reducers/navBarTree';
-import { getFolderURL, starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
+import { getFolderURL } from 'app/features/browse-dashboards/utils/dashboards';
 import { getIconForKind } from 'app/features/search/service/utils';
 
 /**
@@ -38,29 +38,23 @@ const FOLDER: StarredKind = {
   url: getFolderURL,
 };
 
-// Fixed arrays, so a render keyed on the list sees the same reference while the flag holds
-const DASHBOARDS_ONLY: readonly StarredKind[] = [DASHBOARD];
-const WITH_FOLDERS: readonly StarredKind[] = [DASHBOARD, FOLDER];
-
 /** The kinds whose stars Grafana shows, in display order. */
-export function getStarredKinds(): readonly StarredKind[] {
-  return starredFoldersEnabled() ? WITH_FOLDERS : DASHBOARDS_ONLY;
-}
+export const STARRED_KINDS: readonly StarredKind[] = [DASHBOARD, FOLDER];
 
 export function findStarredKind(group: string, kind: string): StarredKind | undefined {
-  return getStarredKinds().find((candidate) => candidate.group === group && candidate.kind === kind);
+  return STARRED_KINDS.find((candidate) => candidate.group === group && candidate.kind === kind);
 }
 
 /** The kind behind a search row's kind string; undefined for rows nobody can star, such as panels. */
 export function findStarredKindBySearchKind(searchKind: string): StarredKind | undefined {
-  return getStarredKinds().find((candidate) => candidate.searchKind === searchKind);
+  return STARRED_KINDS.find((candidate) => candidate.searchKind === searchKind);
 }
 
-/** Nav Starred entry (url, icon, sort rank) for one starred object. Icons only once more than one kind can appear. */
+/** Nav Starred entry (url, icon, sort rank) for one starred object. */
 export function starredNavEntry(kind: StarredKind, id: string): Omit<StarredNavItem, 'id' | 'title'> {
   return {
     url: kind.url(id),
-    icon: getStarredKinds().length > 1 ? kind.icon : undefined,
+    icon: kind.icon,
     sortWeight: kind.sortWeight,
   };
 }

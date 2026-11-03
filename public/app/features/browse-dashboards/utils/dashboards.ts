@@ -1,5 +1,4 @@
 import { config } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type ResourceRef } from 'app/features/provisioning/types/job';
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
@@ -66,12 +65,6 @@ export function isNonSelectableVirtualFolder(uid: string): boolean {
     isVirtualStarredFolder(uid) ||
     uid.startsWith(STARRED_FOLDER_PREFIX)
   );
-}
-
-// Single gate for the starred-folders feature. Starred folders only exist on the app-platform folder
-// API; the legacy /api/folders list has no virtual roots to hold them.
-export function starredFoldersEnabled(): boolean {
-  return getFeatureFlagClient().getBooleanValue(FlagKeys.FoldersAppPlatformAPI, true);
 }
 
 // Construct folder URL and append orgId to it

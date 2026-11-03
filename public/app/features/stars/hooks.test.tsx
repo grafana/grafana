@@ -1,15 +1,10 @@
 import { http, HttpResponse } from 'msw';
 import { useState } from 'react';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import {
-  getFolderFixtures,
-  setMockStarredDashboards,
-  setMockStarredFolders,
-  setTestFlags,
-} from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setMockStarredDashboards, setMockStarredFolders } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type GrafanaSearcher, type SearchQuery } from 'app/features/search/service/types';
@@ -317,47 +312,6 @@ describe('useSyncStarredItemsInNav', () => {
       expect(screen.getByTestId('starred-list').children).toHaveLength(1);
     });
   });
-
-  // The legacy folder API has no virtual roots to show starred folders under, so folder
-  // stars are ignored and the nav keeps its pre-feature shape.
-  describe('with the folders app platform API disabled', () => {
-    beforeEach(() => {
-      setTestFlags({ foldersAppPlatformAPI: false });
-    });
-
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
-      });
-    });
-
-    it('syncs only starred dashboards, without kind icons', async () => {
-      const dashUid = dashbdD.item.uid;
-      const folderUid = folderA.item.uid;
-      setMockStarredDashboards([dashUid]);
-      setMockStarredFolders([folderUid]);
-
-      const mockSearcher = setupSearchMock([
-        { uid: dashUid, name: 'My Dashboard', url: `/d/${dashUid}`, kind: 'dashboard' },
-        { uid: folderUid, name: 'My Folder', url: `/dashboards/f/${folderUid}`, kind: 'folder' },
-      ]);
-
-      render(<TestHarness />);
-
-      // Folders aren't a shown kind, so the search stays dashboards-only with a folder starred
-      await waitFor(() => {
-        expect(mockSearcher.search).toHaveBeenCalledWith({ name: [dashUid], kind: ['dashboard'], limit: 1 });
-      });
-
-      await waitFor(() => {
-        expect(screen.getByTestId(`synced-starred/${dashUid}`)).toBeInTheDocument();
-      });
-      expect(screen.getByTestId(`synced-starred/${dashUid}`)).not.toHaveAttribute('data-icon');
-      // The starred folder stays out of the nav
-      expect(screen.queryByTestId(`synced-starred/${folderUid}`)).not.toBeInTheDocument();
-      expect(screen.getByTestId('starred-list').children).toHaveLength(1);
-    });
-  });
 });
 
 describe('useStarItem', () => {
@@ -393,37 +347,5 @@ describe('useStarItem', () => {
     // ...and the rejected star never mutated the nav tree
     expect(screen.queryByTestId(`synced-starred/${folderUid}`)).not.toBeInTheDocument();
     expect(screen.getByTestId('starred-list').children).toHaveLength(0);
-  });
-
-  // Without the app-platform folder API starredFoldersEnabled() is false, so kind Folder must
-  // never surface in the nav Starred section.
-  describe('with the folders app platform API disabled', () => {
-    beforeEach(() => {
-      setTestFlags({ foldersAppPlatformAPI: false });
-    });
-
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
-      });
-    });
-
-    it('stars a folder without adding it to the nav starred section', async () => {
-      const folderUid = folderA.item.uid;
-      setMockStarredFolders([]);
-
-      const { user } = render(<StarFolderHarness uid={folderUid} />);
-
-      await user.click(screen.getByRole('button', { name: 'star folder' }));
-
-      // The star mutation round-trip finished...
-      await waitFor(() => {
-        expect(screen.getByTestId('star-done')).toHaveTextContent('true');
-      });
-
-      // ...but the gated-out kind dispatched nothing into the nav tree
-      expect(screen.queryByTestId(`synced-starred/${folderUid}`)).not.toBeInTheDocument();
-      expect(screen.getByTestId('starred-list').children).toHaveLength(0);
-    });
   });
 });

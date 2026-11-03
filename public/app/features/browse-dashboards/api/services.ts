@@ -56,27 +56,24 @@ async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) 
     offset: (page - 1) * pageSize,
   });
 
-  let folders: DashboardQueryResult[] = foldersResults.view.toArray();
+  const folders: DashboardQueryResult[] = foldersResults.view.toArray();
 
-  // Virtual root folders are only injected at the top level (first page, no parent).
+  // Virtual root folders are only injected at the top level (first page, no parent), in the order
+  // [Shared with me, Team folders, Starred folders, ...real folders].
   if (page === 1 && !parentUID) {
-    // Add shared with me item statically to the array as it is not returned from the
-    // API anymore. This also means we show it every time, whether it has children or not. This is the same as in folder
-    // picker for now. In the future we could to additional request to see if there are any children in it.
-    if (config.sharedWithMeFolderUID) {
-      folders.unshift({
-        ...virtualFolderBase,
-        uid: config.sharedWithMeFolderUID,
-        name: t('browse-dashboards.shared-with-me', 'Shared with me'),
-      });
-    }
-
-    // Add the team and starred folders virtual items so root order is
-    // [Shared with me, Team folders, Starred folders, ...real folders]
-    const insertIndex = config.sharedWithMeFolderUID ? 1 : 0;
-    folders.splice(
-      insertIndex,
-      0,
+    // Shared with me isn't returned by the API, so it's added statically and shown whether or not it
+    // has children, as in the folder picker.
+    const sharedWithMe = config.sharedWithMeFolderUID
+      ? [
+          {
+            ...virtualFolderBase,
+            uid: config.sharedWithMeFolderUID,
+            name: t('browse-dashboards.shared-with-me', 'Shared with me'),
+          },
+        ]
+      : [];
+    folders.unshift(
+      ...sharedWithMe,
       {
         ...virtualFolderBase,
         name: t('browse-dashboards.my-team-folders', 'My team folders'),

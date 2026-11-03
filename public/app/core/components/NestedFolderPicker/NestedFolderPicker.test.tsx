@@ -76,12 +76,9 @@ describe('NestedFolderPicker', () => {
       error: undefined,
     });
 
-    useStarredItemsMock.mockImplementation((_group: string, _kind: string, options?: { skip?: boolean }) =>
-      options?.skip ? { data: undefined, error: undefined } : { data: ['starred-folder-1'], error: undefined }
-    );
-    resolveStarredFoldersMock.mockResolvedValue([
-      { kind: 'folder', uid: 'starred-folder-1', title: 'Starred Folder One' },
-    ]);
+    // Nothing starred by default; tests that show the section seed it, so the rest don't resolve
+    // starred folders asynchronously after their last assertion.
+    useStarredItemsMock.mockReturnValue({ data: [], error: undefined });
   });
 
   afterAll(() => {
@@ -360,6 +357,7 @@ describe('NestedFolderPicker', () => {
       isLoading: false,
       error: undefined,
     });
+    useStarredItemsMock.mockReturnValue({ data: ['starred-local', 'starred-managed'], error: undefined });
     resolveStarredFoldersMock.mockResolvedValue([
       { kind: 'folder', uid: 'starred-local', title: 'Starred local' },
       {
@@ -552,15 +550,13 @@ describe('NestedFolderPicker', () => {
     });
   });
 
+  // Folder stars come from the collections API, so the section renders on either folder tree.
   describe('starred folders', () => {
     beforeEach(() => {
-      setTestFlags({ foldersAppPlatformAPI: true });
-    });
-
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
-      });
+      useStarredItemsMock.mockReturnValue({ data: ['starred-folder-1'], error: undefined });
+      resolveStarredFoldersMock.mockResolvedValue([
+        { kind: 'folder', uid: 'starred-folder-1', title: 'Starred Folder One' },
+      ]);
     });
 
     it('shows the starred folders virtual root with its selectable children', async () => {
@@ -599,28 +595,6 @@ describe('NestedFolderPicker', () => {
       await user.click(await screen.findByRole('button', { name: 'Select folder' }));
 
       await waitFor(() => expect(resolveStarredFoldersMock).toHaveBeenCalledWith(['starred-folder-1'], 'edit'));
-    });
-  });
-
-  describe('starred folders with the folders app platform API disabled', () => {
-    beforeEach(() => {
-      setTestFlags({ foldersAppPlatformAPI: false });
-    });
-
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
-      });
-    });
-
-    it('does not render starred folders (hard gate on the app-platform folder API)', async () => {
-      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
-      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
-
-      // Anchor on a real folder to confirm the tree rendered before asserting starred absence.
-      expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();
-      expect(screen.queryByLabelText('Starred folders')).toBeNull();
-      expect(screen.queryByLabelText('Starred Folder One')).toBeNull();
     });
   });
 });
