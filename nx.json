@@ -35,7 +35,7 @@
           "file": "{projectRoot}/CHANGELOG.md",
           "renderOptions": {
             "authors": false,
-            "commitReferences": false,
+            "commitReferences": true,
             "versionTitleDate": true
           }
         }
