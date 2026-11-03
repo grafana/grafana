@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 
@@ -12,9 +13,11 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
+	k8sdiscovery "k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
@@ -561,28 +564,43 @@ func ForEach(ctx context.Context, client dynamic.ResourceInterface, fn func(item
 
 func expandWildcardGroups(ctx context.Context, provider clientsProvider, supported []SupportedResource) ([]SupportedResource, error) {
 	out := make([]SupportedResource, 0, len(supported))
-	var groups *metav1.APIGroupList
+	var lists []*metav1.APIResourceList
+	fetched := false
 	for _, r := range supported {
 		if !provisioningresources.IsWildcardGroup(r.Group) {
 			out = append(out, r)
 			continue
 		}
-		if groups == nil {
+		if !fetched {
 			_, discovery, err := provider.GetClientsForKind(ctx, schema.GroupVersionKind{})
 			if err != nil {
 				return nil, fmt.Errorf("get discovery client: %w", err)
 			}
-			if groups, err = discovery.ServerGroups(); err != nil {
-				return nil, fmt.Errorf("list server groups: %w", err)
+			lists, err = discovery.ServerPreferredResourcesWithContext(ctx)
+			if err != nil {
+				if !k8sdiscovery.IsGroupDiscoveryFailedError(err) {
+					return nil, fmt.Errorf("list server preferred resources: %w", err)
+				}
+				logging.FromContext(ctx).Warn("Ignoring API groups that failed discovery", "error", err)
 			}
+			fetched = true
 		}
-		for _, g := range groups.Groups {
-			if provisioningresources.MatchesGroup(r.Group, g.Name) {
-				out = append(out, SupportedResource{
-					GroupKind:    schema.GroupKind{Group: g.Name, Kind: r.Kind},
-					Capabilities: r.Capabilities,
-				})
+		seen := sets.New[string]()
+		for _, list := range lists {
+			gv, err := schema.ParseGroupVersion(list.GroupVersion)
+			if err != nil || seen.Has(gv.Group) || !provisioningresources.MatchesGroup(r.Group, gv.Group) {
+				continue
 			}
+			if !slices.ContainsFunc(list.APIResources, func(res metav1.APIResource) bool {
+				return res.Kind == r.Kind && !strings.Contains(res.Name, "/")
+			}) {
+				continue
+			}
+			seen.Insert(gv.Group)
+			out = append(out, SupportedResource{
+				GroupKind:    schema.GroupKind{Group: gv.Group, Kind: r.Kind},
+				Capabilities: r.Capabilities,
+			})
 		}
 	}
 	return out, nil
