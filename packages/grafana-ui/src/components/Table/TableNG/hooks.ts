@@ -20,13 +20,7 @@ import {
   reduceField,
   ReducerID,
 } from '@grafana/data';
-import {
-  type Column,
-  type ColumnWidths,
-  type DataGridHandle,
-  type DataGridProps,
-  type SortColumn,
-} from '@grafana/react-data-grid';
+import { type Column, type ColumnWidths, type DataGridHandle, type SortColumn } from '@grafana/react-data-grid';
 import { type MatcherScope } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
@@ -43,6 +37,7 @@ import {
   TABLE,
 } from './constants';
 import { getColumnMenuOptions } from './menuOptions';
+import { ROW_NUMBER_KEY } from './rowNumbers';
 import { getScrollShadowStyles, IS_SAFARI_26 } from './styles';
 import { transformTableFilters } from './transformations/rowProjection';
 import {
@@ -817,7 +812,7 @@ const INITIAL_COL_RESIZE_STATE = Object.freeze({ columnKey: undefined, width: 0 
 export function useColumnResize(
   onColumnResize: TableColumnResizeActionCallback = () => {},
   fieldScope?: MatcherScope
-): DataGridProps<TableRow, TableSummaryRow>['onColumnResize'] {
+): (column: Column<TableRow, TableSummaryRow>, width: number) => void {
   // these must be refs. if we used setState, we would run into race conditions with these event listeners
   const colResizeState = useRef<UseColumnResizeState>({ ...INITIAL_COL_RESIZE_STATE });
   const pointerIsDown = useRef(false);
@@ -856,6 +851,9 @@ export function useColumnResize(
   // this is the callback that gets passed to react-data-grid
   const dataGridResizeHandler = useCallback(
     (column: Column<TableRow, TableSummaryRow>, width: number) => {
+      if (column.key === ROW_NUMBER_KEY) {
+        return;
+      }
       if (!colResizeState.current.columnKey) {
         window.addEventListener('click', dispatchEvent, { capture: true });
       }

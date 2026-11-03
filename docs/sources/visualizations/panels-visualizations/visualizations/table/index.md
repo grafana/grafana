@@ -238,6 +238,7 @@ For more information, refer to [Apply overrides to nested table fields](#apply-o
 | Option               | Description                                               |
 | -------------------- | --------------------------------------------------------- |
 | Show table header    | Show or hide column names imported from your data source. |
+| Show row numbers     | Show generated positions after sorting and filtering. Numbers continue across pages, and nested tables have independent numbering. Requires the `table.refreshNewFeatures` feature toggle. |
 | Frozen columns       | Freeze columns starting from the left side of the table. Enter a value to set how many columns are frozen. |
 | Cell height          | Set the height of the cell. Choose from **Small**, **Medium**, or **Large**. |
 | Max row height       | Define the maximum height for a row in the table. This can be useful when **Wrap text** is enabled for one or more columns. |
@@ -249,6 +250,8 @@ For more information, refer to [Apply overrides to nested table fields](#apply-o
 | Wrap text            | Enables text wrapping for cell content. |
 | Wrap header text     | Enables text wrapping for column headers. |
 <!-- prettier-ignore-end -->
+
+With `table.refreshNewFeatures` enabled, you can also toggle **Row numbers** in the columns sidebar. This changes the current table view without saving the dashboard or adding a transformation.
 
 ### Table footer options
 

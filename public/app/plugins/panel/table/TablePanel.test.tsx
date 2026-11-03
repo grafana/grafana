@@ -33,7 +33,7 @@ import { plugin } from './module';
 
 const options: TableOptions = { showHeader: true, cellHeight: TableCellHeight.Sm, frameIndex: 0, sortBy: [] };
 const fieldConfig = { defaults: {}, overrides: [] };
-function setup(empty = false) {
+function setup(empty = false, showRowNumbers = false) {
   const series = empty
     ? []
     : applyFieldOverrides({
@@ -43,7 +43,7 @@ function setup(empty = false) {
         timeZone: 'utc',
         replaceVariables: (s) => s,
       });
-  const props = getPanelProps(options, {
+  const props = getPanelProps(showRowNumbers ? { ...options, showRowNumbers } : options, {
     fieldConfig,
     data: { series, state: LoadingState.Done, timeRange: getDefaultTimeRange() },
   });
@@ -188,6 +188,9 @@ it.each(['hide-first', 'filter-first'])(
       await user.click(screen.getByRole('checkbox', { name: `Hide ${name}` }));
     };
     try {
+      await user.click(screen.getByRole('checkbox', { name: 'Row numbers' }));
+      expect(screen.getAllByRole('gridcell')[0]).toHaveTextContent('1');
+      await user.click(screen.getByRole('checkbox', { name: 'Row numbers' }));
       if (order === 'hide-first') {
         await hide('Extra');
       }
@@ -244,3 +247,9 @@ it.each(['hide-first', 'filter-first'])(
     }
   }
 );
+
+it.each([false, true])('gates configured row numbers behind the new-features flag (%s)', (enabled) => {
+  setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: enabled });
+  setup(false, true);
+  expect(screen.queryByRole('columnheader', { name: 'Row numbers' }) !== null).toBe(enabled);
+});

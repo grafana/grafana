@@ -53,10 +53,16 @@ test.describe('Table scrollbar geometry', () => {
       .toEqual({ overflowing: true, horizontalOverflow: false, policy: 'auto' });
   });
 
-  for (const refreshed of [false, true]) {
-    test(`nested grids do not reserve an unused gutter (refreshed ${refreshed})`, async ({ page }) => {
+  for (const [refreshed, rowNumbers] of [
+    [false, false],
+    [true, false],
+    [true, true],
+  ]) {
+    test(`nested grids do not reserve an unused gutter (refreshed ${refreshed}, row numbers ${rowNumbers})`, async ({
+      page,
+    }) => {
       await page.goto(
-        `/iframe.html?id=plugins-table-ng--nested-scrollbar&viewMode=story&args=tableRefreshEnabled:${refreshed}`
+        `/iframe.html?id=plugins-table-ng--nested-scrollbar&viewMode=story&args=tableRefreshEnabled:${refreshed};showRowNumbers:${rowNumbers}`
       );
       await page.addStyleTag({
         content: `
@@ -83,18 +89,20 @@ test.describe('Table scrollbar geometry', () => {
     });
   }
 
-  for (const { zoom, refreshed, width = 800.5, wrapText = false, footer = true, rowCount = 8 } of [
+  for (const { zoom, refreshed, width = 800.5, wrapText = false, footer = true, rowCount = 8, rowNumbers = false } of [
     { zoom: 1, refreshed: false },
     { zoom: 0.75, refreshed: false },
     { zoom: 0.67, refreshed: true },
     { zoom: 1, refreshed: false, width: 320.5, wrapText: true, rowCount: 2 },
     { zoom: 1, refreshed: false, footer: false },
+    { zoom: 1, refreshed: true, width: 360.5, wrapText: true, rowCount: 2, rowNumbers: true },
+    { zoom: 0.67, refreshed: true, rowNumbers: true },
   ]) {
-    test(`reserves space only while overflowing (zoom ${zoom}, refreshed ${refreshed}, wrapping ${wrapText}, footer ${footer})`, async ({
+    test(`reserves space only while overflowing (zoom ${zoom}, refreshed ${refreshed}, wrapping ${wrapText}, footer ${footer}, row numbers ${rowNumbers})`, async ({
       page,
     }) => {
       await page.goto(
-        `/iframe.html?id=plugins-table-ng--scrollbar-boundary&viewMode=story&args=width:${width};tableRefreshEnabled:${refreshed};wrapText:${wrapText};footer:${footer};rowCount:${rowCount}`
+        `/iframe.html?id=plugins-table-ng--scrollbar-boundary&viewMode=story&args=width:${width};tableRefreshEnabled:${refreshed};wrapText:${wrapText};footer:${footer};rowCount:${rowCount};showRowNumbers:${rowNumbers}`
       );
       // Explicit scrollbar styling emulates classic scrollbars on overlay-scrollbar platforms.
       await page.addStyleTag({
@@ -105,7 +113,7 @@ test.describe('Table scrollbar geometry', () => {
         `,
       });
       const grid = page.getByRole('grid');
-      await expect(grid.getByRole('columnheader', { name: 'Name', exact: true })).toBeVisible();
+      await expect(grid.getByRole('columnheader', { name: /^Name(?:$| )/ })).toBeVisible();
       const geometry = () =>
         grid.evaluate((element) => ({
           gutter: element.offsetWidth - element.clientWidth,
@@ -122,6 +130,7 @@ test.describe('Table scrollbar geometry', () => {
       await expect.poll(async () => (await geometry()).gutter).toBeGreaterThan(0);
       await expect.poll(async () => (await geometry()).columns).not.toBe(initial.columns);
       const overflowing = await geometry();
+      await expect.poll(() => grid.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
       // Observe several debounce intervals: a single settled frame does not exclude oscillation.
       const states = await grid.evaluate(
         (element) =>
@@ -195,4 +204,16 @@ test.describe('Table scrollbar geometry', () => {
     });
     await expect.poll(() => grid.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
   });
+});
+
+test('generated positions continue through virtual scrolling', async ({ page }) => {
+  await page.goto(
+    '/iframe.html?id=plugins-table-ng--scrollbar-boundary&viewMode=story&args=rowCount:100;footer:false;showRowNumbers:true'
+  );
+  const grid = page.getByRole('grid');
+  await expect(grid.getByRole('columnheader', { name: 'Row numbers', exact: true })).toBeVisible();
+  await grid.evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+  });
+  await expect.poll(() => grid.locator('[role="gridcell"][aria-colindex="1"]').last().textContent()).toBe('100');
 });

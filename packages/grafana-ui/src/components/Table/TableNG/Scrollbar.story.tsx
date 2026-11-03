@@ -17,6 +17,7 @@ interface Args {
   wrapText: boolean;
   enablePagination: boolean;
   tableRefreshEnabled: boolean;
+  showRowNumbers: boolean;
 }
 
 const meta: Meta<Args> = {
@@ -29,6 +30,7 @@ const meta: Meta<Args> = {
     wrapText: false,
     enablePagination: false,
     tableRefreshEnabled: false,
+    showRowNumbers: false,
   },
 };
 
@@ -40,6 +42,7 @@ export const ScrollbarBoundary: StoryFn<Args> = ({
   wrapText,
   enablePagination,
   tableRefreshEnabled,
+  showRowNumbers,
 }) => {
   const [moreRows, setMoreRows] = useState(false);
   const [compact, setCompact] = useState(false);
@@ -78,6 +81,8 @@ export const ScrollbarBoundary: StoryFn<Args> = ({
       <Button onClick={() => setCompact(!compact)}>{compact ? 'Restore panel height' : 'Shrink panel height'}</Button>
       <div style={{ width, height: panelHeight }}>
         <TableNG
+          rowNumbersEnabled={showRowNumbers}
+          showRowNumbers={showRowNumbers}
           data={data}
           width={width}
           height={panelHeight}
@@ -90,7 +95,7 @@ export const ScrollbarBoundary: StoryFn<Args> = ({
   );
 };
 
-export const NestedScrollbar: StoryFn<Args> = ({ width, height, tableRefreshEnabled }) => {
+export const NestedScrollbar: StoryFn<Args> = ({ width, height, tableRefreshEnabled, showRowNumbers }) => {
   const theme = useTheme2();
   const data = useMemo(() => {
     const nested = prepDataForStorybook(
@@ -118,7 +123,14 @@ export const NestedScrollbar: StoryFn<Args> = ({ width, height, tableRefreshEnab
   }, [theme]);
   return (
     <div style={{ width, height }}>
-      <TableNG data={data} width={width} height={height} tableRefreshEnabled={tableRefreshEnabled} />
+      <TableNG
+        data={data}
+        width={width}
+        height={height}
+        tableRefreshEnabled={tableRefreshEnabled}
+        rowNumbersEnabled={showRowNumbers}
+        showRowNumbers={showRowNumbers}
+      />
     </div>
   );
 };

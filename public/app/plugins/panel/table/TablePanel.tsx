@@ -175,7 +175,9 @@ export function TablePanel(props: Props) {
       {...commonTableProps}
       {...adHocColumns}
       reorderable={Boolean(adHocColumns)}
-      showColumnsSidebar={columnManagementEnabled && options.showColumnsSidebar}
+      rowNumbersEnabled={tableRefreshNewFeaturesEnabled}
+      showRowNumbers={options.showRowNumbers}
+      showColumnsSidebar={(columnManagementEnabled || tableRefreshNewFeaturesEnabled) && options.showColumnsSidebar}
       rowTransformationsEnabled={adHocTransformationsEnabled}
       localFilterScope={JSON.stringify([currentIndex, outputMain?.refId])}
       onFilterError={notifyTableFilterError}

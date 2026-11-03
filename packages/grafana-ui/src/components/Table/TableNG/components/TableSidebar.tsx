@@ -23,6 +23,7 @@ export interface SidebarColumn {
 
 interface TableSidebarProps {
   focusRequest?: number;
+  rowNumbers?: { visible: boolean; onChange: (visible: boolean) => void };
   /** All columns in display order, including hidden columns. */
   columns: SidebarColumn[];
   reorderable?: boolean;
@@ -38,6 +39,7 @@ interface TableSidebarProps {
 
 export function TableSidebar({
   focusRequest = 0,
+  rowNumbers,
   columns,
   reorderable = false,
   hiddenColumns,
@@ -99,6 +101,15 @@ export function TableSidebar({
         </Stack>
       </div>
       <div className={styles.columnList}>
+        {rowNumbers && (
+          <div className={styles.row}>
+            <Checkbox
+              label={t('grafana-ui.table.row-numbers', 'Row numbers')}
+              value={rowNumbers.visible}
+              onChange={(event) => rowNumbers.onChange(event.currentTarget.checked)}
+            />
+          </div>
+        )}
         {columns.map(({ name: displayName, hideable }) => {
           const isVisible = !hiddenColumns.has(displayName);
           const isLastVisible = isVisible && visibleCount <= 1;

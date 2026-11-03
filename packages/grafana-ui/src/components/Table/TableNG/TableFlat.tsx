@@ -40,6 +40,7 @@ import {
   useColumnBuilderFromFields,
   useDataGridRows,
 } from './render-hooks';
+import { getRowNumberWidth, useRowNumbers, withRowNumbers } from './rowNumbers';
 import { shouldReserveScrollbarGutter } from './scrollbar';
 import { getGridStyles } from './styles';
 import {
@@ -127,6 +128,7 @@ export function TableFlat(props: TableNGProps) {
   } = props;
 
   const theme = useTheme2();
+  const rowNumbers = useRowNumbers(props);
   const panelContext = usePanelContext();
   const userCanExecuteActions = useMemo(() => panelContext.canExecuteActions?.() ?? false, [panelContext]);
 
@@ -268,7 +270,7 @@ export function TableFlat(props: TableNGProps) {
     }));
   }, [columnCatalog, orderedVisibleFields]);
   // The catalog includes restored columns before they return in the transformed data.
-  const hasColumnSidebar = reorderable || sidebarColumns.some((column) => column.hideable);
+  const hasColumnSidebar = rowNumbers.available || reorderable || sidebarColumns.some((column) => column.hideable);
 
   const [isColumnVisibilityPanelOpen, setIsColumnVisibilityPanelOpen] = useState(showColumnsSidebar);
   const [sidebarFocusRequest, setSidebarFocusRequest] = useState(0);
@@ -323,6 +325,9 @@ export function TableFlat(props: TableNGProps) {
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
   const onCellClick: OnCellClick = useCallback(
     ({ column, row }, ev) => {
+      if (!('field' in column)) {
+        return;
+      }
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const field = (column as unknown as TableColumn).field;
 
@@ -353,6 +358,10 @@ export function TableFlat(props: TableNGProps) {
   const typographyCtx = useTypographyCtx(theme);
   const headerTypographyCtx = useHeaderTypographyCtx(theme);
 
+  const gutterWidth = rowNumbers.visible
+    ? getRowNumberWidth(sortedRows.length, typographyCtx.monoCharWidth, noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0)
+    : 0;
+  const fieldInset = noPanelPadding && !gutterWidth;
   const frozenColumns = _frozenColumns;
 
   // When a width override is removed from field config, the configured-width count drops. That
@@ -379,11 +388,17 @@ export function TableFlat(props: TableNGProps) {
     tableRefreshEnabled,
     hasColumnSidebar,
     reorderable,
-    noPanelPadding,
+    noPanelPadding: fieldInset,
     preventHorizontalOverflow,
   });
 
-  const [fullWidths] = useColWidths(displayedFields, fullWidth, frozenColumns, widthConfigResetKey, contentAwareWidths);
+  const [fullWidths] = useColWidths(
+    displayedFields,
+    Math.max(fullWidth - gutterWidth, 0),
+    frozenColumns,
+    widthConfigResetKey,
+    contentAwareWidths
+  );
 
   const fullHeaderHeight = useHeaderHeight({
     hasAssistantAction: onFieldAddToAssistant != null,
@@ -392,7 +407,7 @@ export function TableFlat(props: TableNGProps) {
     enabled: hasHeader,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx: headerTypographyCtx,
-    noPanelPadding,
+    noPanelPadding: fieldInset,
     tableRefreshEnabled,
     hasColumnSidebar,
     reorderable,
@@ -411,7 +426,7 @@ export function TableFlat(props: TableNGProps) {
     defaultHeight: defaultRowHeight,
     typographyCtx,
     maxHeight: maxRowHeight,
-    noPanelPadding,
+    noPanelPadding: fieldInset,
   });
 
   const {
@@ -443,7 +458,7 @@ export function TableFlat(props: TableNGProps) {
       shouldReserveScrollbarGutter(
         paginatedRows,
         fullRowHeight,
-        fullWidths,
+        [...fullWidths, gutterWidth],
         fullWidth,
         height -
           frameSize -
@@ -456,6 +471,7 @@ export function TableFlat(props: TableNGProps) {
       paginatedRows,
       fullRowHeight,
       fullWidths,
+      gutterWidth,
       fullWidth,
       height,
       frameSize,
@@ -469,7 +485,7 @@ export function TableFlat(props: TableNGProps) {
   const availableWidth = fullWidth - (needsScrollbarSpace ? scrollbarWidth : 0);
   const [widths, numFrozenColsFullyInView] = useColWidths(
     displayedFields,
-    availableWidth,
+    Math.max(availableWidth - gutterWidth, 0),
     frozenColumns,
     widthConfigResetKey,
     contentAwareWidths
@@ -481,7 +497,7 @@ export function TableFlat(props: TableNGProps) {
     enabled: hasHeader,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx: headerTypographyCtx,
-    noPanelPadding,
+    noPanelPadding: fieldInset,
     tableRefreshEnabled,
     hasColumnSidebar,
     reorderable,
@@ -493,7 +509,7 @@ export function TableFlat(props: TableNGProps) {
     defaultHeight: defaultRowHeight,
     typographyCtx,
     maxHeight: maxRowHeight,
-    noPanelPadding,
+    noPanelPadding: fieldInset,
   });
   const styles = useStyles2(getGridStyles, showPagination, transparent, tableRefreshEnabled, noPanelPadding);
 
@@ -548,8 +564,8 @@ export function TableFlat(props: TableNGProps) {
       onHideColumn: handleHideColumn,
       canHideColumn: canHideAnotherColumn,
       onOpenColumnPanel: hasColumnSidebar ? openColumnSidebar : undefined,
-      // the first column here is a field column, so it's the one carrying the panel-edge inset
-      firstColumnExtraPadding: noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0,
+      // Only the leading column carries the panel-edge inset.
+      firstColumnExtraPadding: fieldInset ? FIRST_COLUMN_EXTRA_PADDING : 0,
     }),
     [
       wrapFallback,
@@ -580,7 +596,7 @@ export function TableFlat(props: TableNGProps) {
       handleHideColumn,
       openColumnSidebar,
       canHideAnotherColumn,
-      noPanelPadding,
+      fieldInset,
     ]
   );
 
@@ -588,9 +604,14 @@ export function TableFlat(props: TableNGProps) {
 
   const { columns, cellRootRenderers } = useMemo(() => {
     // The column builder prepares display processors itself; wrapping JSON processors twice repeats units.
-    const result = fromFields(displayedRawFields, widths, data, rows, sortedRows);
+    const result = withRowNumbers(
+      fromFields(displayedRawFields, widths, data, rows, sortedRows),
+      sortedRows,
+      gutterWidth,
+      rowNumbers.className
+    );
     return { ...result, columns: markEdgeColumns(result.columns) };
-  }, [fromFields, displayedRawFields, widths, data, rows, sortedRows]);
+  }, [fromFields, displayedRawFields, widths, data, rows, sortedRows, gutterWidth, rowNumbers.className]);
 
   useEffect(() => {
     if (isColumnVisibilityPanelOpen) {
@@ -708,6 +729,9 @@ export function TableFlat(props: TableNGProps) {
       >
         {isColumnVisibilityPanelOpen && (
           <TableSidebar
+            rowNumbers={
+              rowNumbers.available ? { visible: rowNumbers.visible, onChange: rowNumbers.setVisible } : undefined
+            }
             focusRequest={sidebarFocusRequest}
             columns={sidebarColumns}
             reorderable={reorderable}

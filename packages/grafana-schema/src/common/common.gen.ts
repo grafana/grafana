@@ -1077,6 +1077,10 @@ export interface TableOptions {
    */
   showHeader: boolean;
   /**
+   * Configured default for the generated row-number gutter.
+   */
+  showRowNumbers?: boolean;
+  /**
    * Controls whether the header should show icons for the column types
    */
   showTypeIcons?: boolean;
