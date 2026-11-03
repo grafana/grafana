@@ -278,20 +278,46 @@ You can use the [TestData data source](/docs/grafana/<GRAFANA_VERSION>/datasourc
    Open the example to view alert evaluation results, generated alert instances, and alert rule details.
    {{< /admonition >}}
 
-## Other use cases
+### Join thresholds from another query
+
+Instead of hardcoding thresholds in the SQL expression, you can retrieve them from another query, such as a query to a CSV file, a database, or another data source:
+
+ ```csv
+ service, threshold
+ checkout-api, 1.5
+ auth-api, 2
+ catalog-api, 4
+ sync-work, 5
+ ```
+
+To combine both queries, use a `LEFT JOIN` between them on a shared column such as `service`:
+
+```sql
+SELECT
+  A.service AS service,
+  CASE
+    WHEN A.__value__ > COALESCE(B.threshold, 2) THEN 1
+    ELSE 0
+  END AS alert_result
+FROM A
+LEFT JOIN B ON A.service = B.service
+```
+
+In this example:
+
+- `A` is the data returned by the p95 latency query.
+- `B` is the data returned by the threshold query. It must include the `service` column and a `threshold` column.
+- `LEFT JOIN` keeps every row from `A` and matches it with the row in `B` that has the same `service`.
+- `COALESCE(B.threshold, 2)` uses `2` as the default threshold when `B` has no row for a service. Without a `LEFT JOIN` and a default, services without a threshold are dropped from the result.
+- The `service` column becomes the label of each alert instance, and `alert_result` is the numeric output used as the **alert condition**.
+
+## Combine multiple conditions
 
 This example showed how to build a single alert rule with different thresholds per series using [multi-dimensional alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/examples/multi-dimensional-alerts/).
 
-This approach scales well when monitoring similar components with distinct reliability goals.
+This approach scales well when monitoring similar components with distinct reliability goals. By aligning series from two queries, you can apply a dynamic threshold—one value per label set—without duplicating rules.
 
-By aligning series from two queries, you can apply a dynamic threshold—one value per label set—without duplicating rules.
-
-While this example uses static content to define thresholds, the same technique works in other scenarios:
-
-- **Dynamic thresholds from queries or recording rules**: Fetch threshold values from a real-time query, or from [custom recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/).
-- **Combine multiple conditions**: Build more advanced threshold logic by combining multiple conditions—such as latency, error rate, or traffic volume.
-
-For example, you can define a PromQL expression that sets a latency threshold which adjusts based on traffic—allowing higher response times during periods of high-load.
+The same technique works in other scenarios to build more advanced threshold logic by combining multiple conditions—such as latency, error rate, or traffic volume. For example, you can define a PromQL expression that sets a latency threshold which adjusts based on traffic—allowing higher response times during periods of high-load.
 
 ```
 (
