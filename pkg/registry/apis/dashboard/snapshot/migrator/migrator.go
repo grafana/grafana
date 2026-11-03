@@ -165,24 +165,10 @@ func (m *snapshotMigrator) MigrateSnapshots(ctx context.Context, orgId int64, op
 					snap.Spec.ExternalUrl = &row.externalURL.String
 				}
 			} else {
-				if len(row.dashboardEncrypted) == 0 {
-					return fmt.Errorf("missing dashboard for local snapshot %q", row.key)
-				}
-				plain, err := m.decrypt(ctx, row.dashboardEncrypted)
+				dashboard, err = m.decryptDashboard(ctx, row)
 				if err != nil {
-					return fmt.Errorf("decrypt snapshot %q: %w", row.key, err)
+					return err
 				}
-				if len(plain) == 0 || len(plain) > resourcepb.MaxInlineBlobSize {
-					return fmt.Errorf("invalid dashboard size for snapshot %q: %d", row.key, len(plain))
-				}
-				var object map[string]json.RawMessage
-				if err := json.Unmarshal(plain, &object); err != nil {
-					return fmt.Errorf("parse dashboard JSON for snapshot %q: %w", row.key, err)
-				}
-				if object == nil {
-					return fmt.Errorf("dashboard for snapshot %q must be a JSON object", row.key)
-				}
-				dashboard = plain
 			}
 
 			// Mirror the logic in conversions.go: treat dates past year 2070 as "never expires".
@@ -243,6 +229,27 @@ func (m *snapshotMigrator) MigrateSnapshots(ctx context.Context, orgId int64, op
 	opts.Progress(count, fmt.Sprintf("finished writing snapshots to unified storage in %s (%d)", writeDuration, count))
 	opts.Progress(-2, fmt.Sprintf("finished snapshots... (%d)", count))
 	return nil
+}
+
+func (m *snapshotMigrator) decryptDashboard(ctx context.Context, row snapshotRow) ([]byte, error) {
+	if len(row.dashboardEncrypted) == 0 {
+		return nil, fmt.Errorf("missing dashboard for local snapshot %q", row.key)
+	}
+	plain, err := m.decrypt(ctx, row.dashboardEncrypted)
+	if err != nil {
+		return nil, fmt.Errorf("decrypt snapshot %q: %w", row.key, err)
+	}
+	if len(plain) == 0 || len(plain) > resourcepb.MaxInlineBlobSize {
+		return nil, fmt.Errorf("invalid dashboard size for snapshot %q: %d", row.key, len(plain))
+	}
+	var object map[string]json.RawMessage
+	if err := json.Unmarshal(plain, &object); err != nil {
+		return nil, fmt.Errorf("parse dashboard JSON for snapshot %q: %w", row.key, err)
+	}
+	if object == nil {
+		return nil, fmt.Errorf("dashboard for snapshot %q must be a JSON object", row.key)
+	}
+	return plain, nil
 }
 
 type snapshotUpload struct {
