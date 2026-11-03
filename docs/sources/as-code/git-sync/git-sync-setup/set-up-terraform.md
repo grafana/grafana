@@ -122,7 +122,7 @@ resource "grafana_apps_provisioning_connection_v0alpha1" "example" {
 
 Replace the following field values:
 
-- _`<CONNECTION_TYPE>`_: The Git provider type. For example, `github`, `gitlab` or `bitbucket`.
+- _`<CONNECTION_TYPE>`_: The Git provider type. Possible values are `githubOAuth`, `githubEnterpriseOAuth`, `gitlabOAuth`, `bitbucketOAuth`, and `gitOAuth`.
 
 For more details, optional fields, and examples, refer to [Connection resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_provisioning_connection_v0alpha1) in the Terraform registry.
 
