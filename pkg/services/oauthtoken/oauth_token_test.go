@@ -853,31 +853,43 @@ func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
 
 func TestGetExternalSession_DelegatedUser(t *testing.T) {
 	latest := &auth.ExternalSession{ID: 2, UserID: 1, AuthModule: login.GenericOAuthModule}
-	older := &auth.ExternalSession{ID: 1, UserID: 1, AuthModule: login.GenericOAuthModule}
 
 	tests := []struct {
 		desc            string
 		authenticatedBy string
 		serviceIdentity string
 		flagEnabled     bool
-		sessions        []*auth.ExternalSession
-		expected        *auth.ExternalSession
-		expectedErr     error
+		// validSessions are the user's sessions that are neither revoked nor expired, as GetUserTokens returns them.
+		validSessions []*auth.UserToken
+		expected      *auth.ExternalSession
+		expectedErr   error
 	}{
 		{
-			desc:            "should use the most recent external session when Assistant acts for the user",
+			desc:            "should use the external session of the most recent valid session when Assistant acts for the user",
 			authenticatedBy: login.ExtendedJWTModule,
 			serviceIdentity: assistantServiceIdentity,
 			flagEnabled:     true,
-			sessions:        []*auth.ExternalSession{latest, older},
-			expected:        latest,
+			validSessions: []*auth.UserToken{
+				{Id: 1, UserId: 1, ExternalSessionId: 1, CreatedAt: 100},
+				{Id: 2, UserId: 1, ExternalSessionId: latest.ID, CreatedAt: 200},
+				{Id: 3, UserId: 1, CreatedAt: 300},
+			},
+			expected: latest,
 		},
 		{
-			desc:            "should return not found when the user has no external session",
+			desc:            "should return not found when no valid session has an external session",
 			authenticatedBy: login.ExtendedJWTModule,
 			serviceIdentity: assistantServiceIdentity,
 			flagEnabled:     true,
-			sessions:        []*auth.ExternalSession{},
+			validSessions:   []*auth.UserToken{{Id: 3, UserId: 1, CreatedAt: 300}},
+			expectedErr:     auth.ErrExternalSessionNotFound,
+		},
+		{
+			desc:            "should return not found when the user has no valid session",
+			authenticatedBy: login.ExtendedJWTModule,
+			serviceIdentity: assistantServiceIdentity,
+			flagEnabled:     true,
+			validSessions:   []*auth.UserToken{},
 			expectedErr:     auth.ErrExternalSessionNotFound,
 		},
 		{
@@ -917,8 +929,11 @@ func TestGetExternalSession_DelegatedUser(t *testing.T) {
 				setOAuthTokenForDelegatedUsers(t, tt.flagEnabled)
 
 				sessionService := authtest.NewMockUserAuthTokenService(t)
-				if tt.sessions != nil {
-					sessionService.On("FindExternalSessions", mock.Anything, &auth.ListExternalSessionQuery{UserID: 1}).Return(tt.sessions, nil).Once()
+				if tt.validSessions != nil {
+					sessionService.On("GetUserTokens", mock.Anything, int64(1)).Return(tt.validSessions, nil).Once()
+				}
+				if tt.expected != nil {
+					sessionService.On("GetExternalSession", mock.Anything, tt.expected.ID).Return(tt.expected, nil).Once()
 				}
 				service := &Service{sessionService: sessionService}
 
@@ -940,14 +955,15 @@ func TestGetCurrentOAuthToken_DelegatedUser(t *testing.T) {
 	setOAuthTokenForDelegatedUsers(t, true)
 
 	sessionService := authtest.NewMockUserAuthTokenService(t)
-	sessionService.On("FindExternalSessions", mock.Anything, &auth.ListExternalSessionQuery{UserID: 1}).Return([]*auth.ExternalSession{{
+	sessionService.On("GetUserTokens", mock.Anything, int64(1)).Return([]*auth.UserToken{{Id: 1, UserId: 1, ExternalSessionId: 2}}, nil).Once()
+	sessionService.On("GetExternalSession", mock.Anything, int64(2)).Return(&auth.ExternalSession{
 		ID:          2,
 		UserID:      1,
 		AuthModule:  login.GenericOAuthModule,
 		AccessToken: unexpiredTokenWithoutRefreshWithIDToken.AccessToken,
 		ExpiresAt:   unexpiredTokenWithoutRefreshWithIDToken.Expiry,
 		IDToken:     UNEXPIRED_ID_TOKEN,
-	}}, nil).Once()
+	}, nil).Once()
 	authInfoService := authinfotest.NewMockAuthInfoService(t)
 	authInfoService.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{UserId: 1}).Return(&login.UserAuth{
 		AuthModule: login.GenericOAuthModule,

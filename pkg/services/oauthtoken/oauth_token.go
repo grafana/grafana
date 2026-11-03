@@ -568,7 +568,8 @@ func getExpiryWithSkew(expiry time.Time) (adjustedExpiry time.Time, hasTokenExpi
 // getExternalSession fetches the external session based on the user and session token.
 // When using the render module, it fetches the most recent external session for the user
 // since the session token ID is not available. With auth.oauthTokenForDelegatedUsers enabled,
-// the same applies to a service calling Grafana on the user's behalf with an extended JWT.
+// Grafana Assistant calling Grafana on the user's behalf with an extended JWT gets the external
+// session of the user's most recent valid session.
 // For regular users, it uses the session token ID to fetch the external session.
 func (o *Service) getExternalSession(ctx context.Context, usr identity.Requester, userID int64, sessionToken *auth.UserToken) (*auth.ExternalSession, error) {
 	if usr.GetAuthenticatedBy() == login.RenderModule {
@@ -580,8 +581,8 @@ func (o *Service) getExternalSession(ctx context.Context, usr identity.Requester
 
 	if canForwardForDelegatingService(ctx, usr) {
 		// A service acting for the user has no session token either, so data sources with OAuth pass-through
-		// receive the identity from the user's most recent login instead.
-		return o.getLatestExternalSession(ctx, userID)
+		// receive the identity from the user's most recent valid session instead.
+		return o.getLatestValidExternalSession(ctx, userID)
 	}
 
 	if sessionToken == nil {
@@ -629,4 +630,30 @@ func (o *Service) getLatestExternalSession(ctx context.Context, userID int64) (*
 	}
 
 	return externalSessions[0], nil
+}
+
+// getLatestValidExternalSession returns the external session of the user's most recent session that is
+// neither revoked nor expired, so the user's OAuth identity stops being forwarded once they log out or
+// their sessions are revoked or expire.
+func (o *Service) getLatestValidExternalSession(ctx context.Context, userID int64) (*auth.ExternalSession, error) {
+	sessions, err := o.sessionService.GetUserTokens(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var latest *auth.UserToken
+	for _, session := range sessions {
+		if session.ExternalSessionId == 0 {
+			continue
+		}
+		if latest == nil || session.CreatedAt > latest.CreatedAt {
+			latest = session
+		}
+	}
+
+	if latest == nil {
+		return nil, auth.ErrExternalSessionNotFound
+	}
+
+	return o.sessionService.GetExternalSession(ctx, latest.ExternalSessionId)
 }
