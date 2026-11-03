@@ -211,3 +211,15 @@ type noopRegistrar struct{}
 func (noopRegistrar) RegisterAPI(builder.APIGroupBuilder) {}
 
 func (noopRegistrar) RegisterAppInstaller(appsdkapiserver.AppInstaller) {}
+
+func TestAccessClientNilIsIgnored(t *testing.T) {
+	withRBAC(t, true)
+	b := RegisterAPIService(&setting.Cfg{}, nil, nil, nil, nil, noopRegistrar{})
+
+	// Handing over a nil client must not turn a later check into a panic.
+	b.SetAccessClient(nil)
+
+	got, _, err := b.GetAuthorizer().Authorize(userCtx(identity.RoleAdmin, authlib.TypeUser), slideshowAttrs("get"))
+	require.Error(t, err)
+	require.Equal(t, authorizer.DecisionDeny, got)
+}

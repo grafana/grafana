@@ -40,6 +40,9 @@ type lateAccessChecker struct {
 }
 
 func (l *lateAccessChecker) set(client authlib.AccessClient) {
+	if client == nil {
+		return
+	}
 	l.client.Store(&client)
 }
 
