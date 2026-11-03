@@ -846,6 +846,68 @@ func TestValidateJob(t *testing.T) {
 			},
 		},
 		{
+			name: "push action with a member of a configured collection",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{Name: "ds-1", Kind: "DataSource", Group: "prometheus.datasource.grafana.app"},
+						},
+					},
+				},
+			},
+			supportedResources: []provisioning.SupportedResource{
+				{Group: "*.datasource.grafana.app", Kind: "DataSource"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "push action omitting the group of a configured collection",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "ds-1", Kind: "DataSource"}},
+					},
+				},
+			},
+			supportedResources: []provisioning.SupportedResource{
+				{Group: "*.datasource.grafana.app", Kind: "DataSource"},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0].group")
+				require.Contains(t, err.Error(), "served by several groups")
+			},
+		},
+		{
+			name: "push action naming the collection group itself",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{Name: "ds-1", Kind: "DataSource", Group: "datasource.grafana.app"},
+						},
+					},
+				},
+			},
+			supportedResources: []provisioning.SupportedResource{
+				{Group: "*.datasource.grafana.app", Kind: "DataSource"},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0].group")
+			},
+		},
+		{
 			name: "migrate action with wrong group for configured kind",
 			job: &provisioning.Job{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},

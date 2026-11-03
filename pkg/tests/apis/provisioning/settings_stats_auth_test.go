@@ -215,20 +215,17 @@ func TestIntegrationProvisioning_StatsAuthorization(t *testing.T) {
 	})
 }
 
-// TestIntegrationProvisioning_SettingsResourceGroups verifies that a storage collection declared
-// through [provisioning] resource_groups is expanded into the API groups served inside it, so an
-// operator declares data sources once instead of writing a token per installed plugin.
-//
-// This also guards the startup ordering: the expansion runs while dependencies are being
-// constructed, so reading the plugin store (whose accessors block until it has started) instead of
-// the plugin sources would deadlock the server before it ever serves this endpoint.
-func TestIntegrationProvisioning_SettingsResourceGroups(t *testing.T) {
+// TestIntegrationProvisioning_SettingsCollectionGroup verifies that a storage collection declared
+// as a wildcard in [provisioning] resources is reported to the frontend as the collection itself,
+// not expanded into one entry per installed plugin: the collection group is what the search index
+// reports a stored member under, so it is what the frontend matches stats and list rows against.
+func TestIntegrationProvisioning_SettingsCollectionGroup(t *testing.T) {
 	helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningResources = []string{
 			"folder.grafana.app/Folder:folder",
 			"dashboard.grafana.app/Dashboard:folder",
+			"*.datasource.grafana.app/DataSource",
 		}
-		opts.ProvisioningResourceGroups = []string{"datasource.grafana.app/DataSource"}
 		opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagDatasourceUseNewCRUDAPIs)
 	})
 
@@ -241,20 +238,11 @@ func TestIntegrationProvisioning_SettingsResourceGroups(t *testing.T) {
 	require.NoError(t, result.Error(), "should be able to GET settings")
 	require.NoError(t, result.Into(settings), "should be able to unmarshal settings response")
 
-	// The collection group itself is never surfaced: no API server serves it.
-	require.NotContains(t, settings.AvailableResources, provisioning.SupportedResource{
-		Group: "datasource.grafana.app", Kind: "DataSource",
-	}, "the collection group is not a served group")
-
 	require.Contains(t, settings.AvailableResources, provisioning.SupportedResource{
-		Group: "grafana-testdata-datasource.datasource.grafana.app", Kind: "DataSource",
-	}, "a collection entry should expand to the group each installed plugin serves")
+		Group: "datasource.grafana.app", Kind: "DataSource",
+	}, "a wildcard entry is reported as the collection it names")
 
 	for _, r := range settings.AvailableResources {
-		require.NotContains(t, []string{
-			"grafana.datasource.grafana.app",
-			"mixed.datasource.grafana.app",
-			"dashboard.datasource.grafana.app",
-		}, r.Group, "built-in data sources hold no instances and are left out")
+		require.NotContains(t, r.Group, "*", "the wildcard token itself is never surfaced")
 	}
 }

@@ -18,6 +18,8 @@ export interface MigratableResource {
   uid: string;
   title: string;
   kind: ResourceKindInfo;
+  /** The group serving this resource, when the kind's registry group names a collection. */
+  group?: string;
 }
 
 /**
@@ -171,14 +173,14 @@ function aggregate(folders: ListedResource[], results: KindResult[]): { rows: Fo
           title: kind.pluralLabel(),
           path: [],
           resourceCount: unmanaged.length,
-          directResources: unmanaged.map((r) => ({ uid: r.uid, title: r.title, kind })),
+          directResources: unmanaged.map((r) => ({ uid: r.uid, title: r.title, kind, group: r.group })),
         });
       }
       continue;
     }
 
     for (const r of unmanaged) {
-      const item: MigratableResource = { uid: r.uid, title: r.title, kind };
+      const item: MigratableResource = { uid: r.uid, title: r.title, kind, group: r.group };
       if (!r.parentUid) {
         rootResources.push(item);
         continue;

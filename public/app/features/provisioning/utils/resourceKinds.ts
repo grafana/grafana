@@ -36,6 +36,12 @@ export interface ListedResource {
   parentUid?: string;
   /** Already owned by a manager (Git Sync, Terraform, …) — not a migration target. */
   managed: boolean;
+  /**
+   * The API group serving this resource, when the kind's registry entry names a collection and
+   * so cannot supply it. A job references a resource through the group that serves it; reading a
+   * collection member through the collection group, or through another member's, does not find it.
+   */
+  group?: string;
 }
 
 /** Dependencies a kind's `list()` may need. `dispatch` lets a kind read through
@@ -528,7 +534,11 @@ async function listDataSources(): Promise<ListedResource[]> {
   // Built-in data sources (-- Grafana --, -- Mixed --, -- Dashboard --) have no group.
   const types = new Set(instances.filter((item) => item.type && !item.name.startsWith('--')).map((item) => item.type));
   const perType = await Promise.all(
-    Array.from(types, (type) => listViaApiserver(`${type}.${DATASOURCE_COLLECTION_GROUP}`, 'v0alpha1', 'datasources'))
+    Array.from(types, async (type) => {
+      const group = `${type}.${DATASOURCE_COLLECTION_GROUP}`;
+      const listed = await listViaApiserver(group, 'v0alpha1', 'datasources');
+      return listed.map((item) => ({ ...item, group }));
+    })
   );
   return perType.flat();
 }

@@ -1,6 +1,10 @@
 {
   "folderScoped": false,
-  "featureFlags": ["grafanaAPIServerWithExperimentalAPIs", "datasource.useNewCRUDAPIs"],
+  "collection": "datasource.grafana.app",
+  "featureFlags": [
+    "grafanaAPIServerWithExperimentalAPIs",
+    "datasource.useNewCRUDAPIs"
+  ],
   "manifest": {
     "apiVersion": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1",
     "kind": "DataSource",

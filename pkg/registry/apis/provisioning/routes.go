@@ -13,6 +13,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -171,10 +172,14 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// A wildcard entry is reported as the collection it names rather than expanded: the
+	// collection is what the search index reports a stored member under, so it is what the
+	// frontend already matches stats and list rows against, and it keeps this list one entry
+	// per configured kind rather than one per installed plugin.
 	availableResources := make([]provisioning.SupportedResource, 0, len(b.supportedResources))
 	for _, r := range b.supportedResources {
 		availableResources = append(availableResources, provisioning.SupportedResource{
-			Group:    r.Group,
+			Group:    provisioningresources.CollectionGroup(r.Group),
 			Kind:     r.Kind,
 			Disabled: !r.IsActive(),
 		})
