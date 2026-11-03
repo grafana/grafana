@@ -365,17 +365,19 @@ func TestIntegrationContactPointService(t *testing.T) {
 		assert.Equal(t, models.ProvenanceAPI, svc.Calls[0].Args[5])
 	})
 
-	t.Run("update copies permissions with the requester during a rename", func(t *testing.T) {
+	t.Run("update copies permissions with the requester when a rename creates a receiver", func(t *testing.T) {
 		failure := errors.New("save failed")
 		for _, tc := range []struct {
 			name    string
 			rename  bool
+			split   bool // The renamed integration shares its receiver with another one.
 			saveErr error
 			want    []string
 		}{
-			{name: "rename", rename: true, want: []string{"copy", "save"}},
+			{name: "rename of the only integration keeps the receiver", rename: true, want: []string{"save"}},
+			{name: "rename of one of many integrations creates a receiver", rename: true, split: true, want: []string{"copy", "save"}},
 			{name: "unchanged name", want: []string{"save"}},
-			{name: "save failure", rename: true, saveErr: failure, want: []string{"copy", "save"}},
+			{name: "save failure", rename: true, split: true, saveErr: failure, want: []string{"copy", "save"}},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
 				cfg := createEncryptedConfig(t, secretsService)
@@ -385,6 +387,10 @@ func TestIntegrationContactPointService(t *testing.T) {
 
 				cp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestContactPoint(), models.ProvenanceAPI)
 				require.NoError(t, err)
+				if tc.split {
+					_, err = sut.CreateContactPoint(context.Background(), 1, adminUser, createTestContactPoint(), models.ProvenanceAPI)
+					require.NoError(t, err)
+				}
 				if tc.rename {
 					cp.Name = "new-name"
 				}
@@ -420,7 +426,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 			name   string
 			rename bool
 		}{
-			{name: "rename is allowed", rename: true},
+			{name: "rename creating a receiver is allowed", rename: true},
 			{name: "unchanged name is allowed"},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
@@ -432,6 +438,9 @@ func TestIntegrationContactPointService(t *testing.T) {
 				cp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestContactPoint(), models.ProvenanceAPI)
 				require.NoError(t, err)
 				if tc.rename {
+					// Share the receiver with another integration so that renaming creates a new one.
+					_, err = sut.CreateContactPoint(context.Background(), 1, adminUser, createTestContactPoint(), models.ProvenanceAPI)
+					require.NoError(t, err)
 					cp.Name = "new-name"
 				}
 
@@ -1108,22 +1117,20 @@ func TestIntegrationAuthorization(t *testing.T) {
 				integration2 = newVersion
 			})
 
-			t.Run("authorize delete A and create B if receiver is deleted and new is created", func(t *testing.T) {
+			t.Run("authorize update A if the only integration is renamed and the receiver is renamed in place", func(t *testing.T) {
 				authz.Reset()
-				authz.AuthorizeDeleteByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+				uidA := uidOf(receiverA)
+				authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
 					assert.Equal(t, user, requester)
-					assert.Equal(t, uidOf(receiverA), uid)
-					return nil
-				}
-				authz.AuthorizeCreateFunc = func(ctx context.Context, requester identity.Requester) error {
-					assert.Equal(t, user, requester)
+					assert.Equal(t, uidA, uid)
 					return nil
 				}
 				newVersion := integration3
 				newVersion.Name = receiverC
 				err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
 				require.NoError(t, err)
-				assert.ElementsMatch(t, []string{"HasUpdateProtected", "AuthorizeDeleteByUID", "AuthorizeCreate"}, authz.Calls.Methods())
+				assert.ElementsMatch(t, []string{"HasUpdateProtected", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
+				assert.Equal(t, uidA, uidOf(receiverC), "the receiver should keep its UID when renamed")
 				integration3 = newVersion
 			})
 			t.Run("authorize delete A and update B if receivers are merged", func(t *testing.T) {
@@ -1384,15 +1391,13 @@ func TestStitchReceivers(t *testing.T) {
 			},
 		},
 		{
-			name: "rename with only one receiver in group, renames group and references",
+			name: "rename with only one receiver in group, renames group in place keeping its UID",
 			new: &v1.PostableGrafanaReceiver{
 				UID:  "abc",
 				Name: "new-receiver",
 				Type: "slack",
 			},
-			expOldReceiver:     "receiver-1",
-			expCreatedReceiver: true,
-			expFullRemoval:     true,
+			expOldReceiver: "receiver-1",
 			expCfg: v1.AMConfigV1{
 				AlertmanagerConfig: v1.PostableApiAlertingConfig{
 					Config: v1.Config{
@@ -1408,7 +1413,7 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
-						UID:  "_new_receiver_uid", // Let's us know which receiver is newly created so we can handle the randomly generated UID.
+						UID:  v1.ReceiverUID("receiver-1"),
 						Name: "new-receiver",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
 							{
