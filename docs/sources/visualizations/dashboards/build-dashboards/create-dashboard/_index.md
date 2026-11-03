@@ -284,9 +284,7 @@ To group or delete multiple panels, follow these steps:
 
 If you hover over a panel that isn't part of your selection, the tooltip displays single-panel options instead.
 
-When multiple panels are selected, the count includes their [repeated instances](#configure-repeat-options).
-Selecting only one panel that repeats still shows the single-panel actions.
-If a grouping option isn't available for your selection, for example because the selected panels are in different rows, the option is disabled; hover your cursor over it to see why.
+When grouping isn't available for your selection, for example because the selected panels are in different rows, hover your cursor over one of the selected panels to display a tooltip explaining why.
 
 ## Panel layouts
 
