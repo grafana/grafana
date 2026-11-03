@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"mime"
 	"reflect"
 	"sort"
 
@@ -61,12 +62,19 @@ func (s *Storage) prepareInlineBlobs(ctx context.Context, raw json.RawMessage, k
 		if err := resourceutil.StatusErrorFromResponse(rsp.GetError(), err); err != nil {
 			return nil, err
 		}
-		if rsp.GetUid() == "" || rsp.GetSize() != int64(len(entry.Data)) || rsp.GetMimeType() == "" {
-			return nil, apierrors.NewInternalError(fmt.Errorf("incomplete blob upload response for %q", name))
+		mediaType, params, err := mime.ParseMediaType(entry.ContentType)
+		if err != nil {
+			return nil, apierrors.NewBadRequest("invalid blob upload content type")
 		}
-		info := utils.BlobInfo{MimeType: rsp.MimeType, Charset: rsp.Charset}
+		responseType, _, responseErr := mime.ParseMediaType(rsp.GetMimeType())
+		if rsp.GetUid() == "" || rsp.GetSize() != int64(len(entry.Data)) || responseErr != nil || responseType != mediaType {
+			return nil, apierrors.NewInternalError(fmt.Errorf("invalid blob upload response for %q", name))
+		}
+		if rsp.Charset != "" {
+			params["charset"] = rsp.Charset
+		}
 		blobs[name], err = json.Marshal(resourcepb.BlobReference{
-			UID: rsp.Uid, ContentType: info.ContentType(), Size: rsp.Size, Hash: rsp.Hash,
+			UID: rsp.Uid, ContentType: mime.FormatMediaType(mediaType, params), Size: rsp.Size, Hash: rsp.Hash,
 		})
 		if err != nil {
 			return nil, err

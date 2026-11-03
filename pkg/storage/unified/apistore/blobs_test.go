@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"mime"
 	"net/http"
 	"testing"
 	"testing/synctest"
@@ -141,6 +142,49 @@ func TestInlineBlobsCreateAndRead(t *testing.T) {
 	require.Contains(t, obj.GetAnnotations(), utils.AnnoKeyKubectlLastAppliedConfig)
 }
 
+func TestInlineBlobsPreserveMediaTypeParameters(t *testing.T) {
+	for _, operation := range []string{"create", "update"} {
+		for _, serverCharset := range []string{"", "utf-8"} {
+			t.Run(operation+"/charset="+serverCharset, func(t *testing.T) {
+				const contentType = `application/ld+json; profile="https://example.com/profile"; charset=iso-8859-1`
+				ctx := testContext(t)
+				client := &inlineBlobClient{put: func(_ context.Context, req *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
+					require.Equal(t, contentType, req.ContentType)
+					return &resourcepb.PutBlobResponse{Uid: "uploaded", Size: int64(len(req.Value)), MimeType: "application/ld+json", Charset: serverCharset}, nil
+				}}
+				s := testStorage(t, client)
+				s.opts.EnableInlineBlobs = true
+				obj := inlineBlobObject(t)
+				require.NoError(t, unstructured.SetNestedField(obj.Object, contentType, "blobs", "dashboard", "contentType"))
+				out := &unstructured.Unstructured{}
+				if operation == "create" {
+					require.NoError(t, s.Create(ctx, "test", obj, out, 0))
+				} else {
+					client.value = testObject(t)
+					require.NoError(t, s.GuaranteedUpdate(ctx, "test", out, false, &storage.Preconditions{}, func(runtime.Object, storage.ResponseMeta) (runtime.Object, *uint64, error) {
+						return obj, nil, nil
+					}, nil))
+				}
+				stored := &unstructured.Unstructured{}
+				require.NoError(t, stored.UnmarshalJSON(client.value))
+				for _, result := range []*unstructured.Unstructured{stored, out} {
+					value, found, err := unstructured.NestedString(result.Object, "blobs", "dashboard", "contentType")
+					require.NoError(t, err)
+					require.True(t, found)
+					mediaType, params, err := mime.ParseMediaType(value)
+					require.NoError(t, err)
+					require.Equal(t, "application/ld+json", mediaType)
+					charset := serverCharset
+					if charset == "" {
+						charset = "iso-8859-1"
+					}
+					require.Equal(t, map[string]string{"profile": "https://example.com/profile", "charset": charset}, params)
+				}
+			})
+		}
+	}
+}
+
 func TestInlineBlobsValidateBeforeUploading(t *testing.T) {
 	for _, blobs := range []string{
 		`{"a":{"contentType":"application/json","data":"e30="},"z":{"data":null}}`,
@@ -201,6 +245,12 @@ func TestInlineBlobsUploadFailurePreventsWrite(t *testing.T) {
 		},
 		"missing type": func(context.Context, *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
 			return &resourcepb.PutBlobResponse{Uid: "bad", Size: 2}, nil
+		},
+		"invalid type": func(context.Context, *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
+			return &resourcepb.PutBlobResponse{Uid: "bad", Size: 2, MimeType: "application/json; invalid"}, nil
+		},
+		"mismatched type": func(context.Context, *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
+			return &resourcepb.PutBlobResponse{Uid: "bad", Size: 2, MimeType: "text/plain"}, nil
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
