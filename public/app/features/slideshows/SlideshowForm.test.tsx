@@ -125,4 +125,13 @@ describe('SlideshowForm', () => {
       { group: 'assistant.ext.grafana.app', resource: 'pages', name: 'p1' },
     ]);
   });
+
+  it('opens a slideshow stored without items as an empty one', async () => {
+    const onSubmit = jest.fn();
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const stored = { ...slideshow(), spec: { title: 'Empty', interval: '5m', items: null } } as unknown as Slideshow;
+    render(<SlideshowForm slideshow={stored} onSubmit={onSubmit} />);
+
+    expect(await screen.findByText('This slideshow is empty. Add items below.')).toBeInTheDocument();
+  });
 });

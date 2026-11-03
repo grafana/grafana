@@ -18,7 +18,7 @@ export function SlideshowForm({ slideshow, onSubmit }: Props) {
   const intervalId = useId();
   const [title, setTitle] = useState(slideshow.spec.title);
   const [interval, setInterval] = useState(slideshow.spec.interval);
-  const [items, setItems] = useState<SlideshowItemDraft[]>(slideshow.spec.items);
+  const [items, setItems] = useState<SlideshowItemDraft[]>(slideshow.spec.items ?? []);
   const [saving, setSaving] = useState(false);
 
   const move = (from: number, to: number) => {

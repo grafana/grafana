@@ -141,7 +141,7 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     this.begin();
 
     const resolved = await Promise.all(
-      slideshow.spec.items.map(async (item): Promise<PlayableItem | undefined> => {
+      (slideshow.spec.items ?? []).map(async (item): Promise<PlayableItem | undefined> => {
         const kind = getPlaylistItemKind(item.group, item.resource);
         if (!kind) {
           return undefined;

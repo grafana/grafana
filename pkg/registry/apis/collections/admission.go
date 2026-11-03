@@ -30,6 +30,16 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 		}
 		stars.Spec.Normalize()
 		return nil
+	case "slideshows":
+		slideshow, ok := obj.(*collections.Slideshow)
+		if !ok {
+			return fmt.Errorf("expected slideshow object: (%T)", obj)
+		}
+		// A spec without items would otherwise be stored and served as null.
+		if slideshow.Spec.Items == nil {
+			slideshow.Spec.Items = []collections.SlideshowItem{}
+		}
+		return nil
 	}
 	return nil
 }

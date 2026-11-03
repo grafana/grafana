@@ -89,3 +89,16 @@ func TestSlideshowValidation(t *testing.T) {
 		})
 	}
 }
+
+func TestSlideshowDefaultsMissingItemsToEmpty(t *testing.T) {
+	s := validSlideshow()
+	s.Spec.Items = nil
+
+	attrs := admission.NewAttributesRecord(s, nil,
+		collections.SlideshowResourceInfo.GroupVersionKind(), "default", "noc-wall",
+		collections.SlideshowResourceInfo.GroupVersionResource(), "", admission.Create, nil, false, nil)
+	require.NoError(t, (&APIBuilder{}).Mutate(context.Background(), attrs, nil))
+
+	require.NotNil(t, s.Spec.Items)
+	require.Empty(t, s.Spec.Items)
+}

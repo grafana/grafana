@@ -88,6 +88,17 @@ func TestIntegrationSlideshows(t *testing.T) {
 		require.Contains(t, err.Error(), "spec.items[0].group")
 	})
 
+	t.Run("stores a slideshow without items as an empty list", func(t *testing.T) {
+		created, err := admin.Resource.Create(ctx,
+			slideshowObject("no-items", map[string]any{"title": "Empty", "interval": "5m"}), metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		items, found, err := unstructured.NestedSlice(created.Object, "spec", "items")
+		require.NoError(t, err)
+		require.True(t, found, "items should be present")
+		require.Empty(t, items)
+	})
+
 	t.Run("viewers can read but not write", func(t *testing.T) {
 		_, err := admin.Resource.Create(ctx, slideshowObject("shared", spec), metav1.CreateOptions{})
 		require.NoError(t, err)

@@ -275,6 +275,16 @@ describe('PlaylistSrv with slideshows', () => {
     warn.mockRestore();
   });
 
+  it('does not start a slideshow stored without items', async () => {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const stored = { spec: { interval: '5m', items: null } } as unknown as Parameters<PlaylistSrv['startSlideshow']>[0];
+
+    await srv.startSlideshow(stored);
+
+    expect(pathname()).toBe('/playlists/foo');
+    expect(srv.state.isPlaying).toBe(false);
+  });
+
   it('does not start when every item is skipped', async () => {
     kindThings(async () => undefined);
 
