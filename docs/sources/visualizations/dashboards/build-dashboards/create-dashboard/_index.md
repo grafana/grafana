@@ -258,7 +258,7 @@ To edit a dashboard, follow these steps:
 When you select more than one panel, you can group or delete them all at once, with the bulk actions menu.
 This lets you make these changes directly on the dashboard, without opening the sidebar.
 
-To edit multiple panels, follow these steps:
+To group or delete multiple panels, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
