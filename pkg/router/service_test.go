@@ -244,7 +244,7 @@ func TestRouterTargetServesRegisteredSingleTenantDiscovery(t *testing.T) {
 	cfg.Target = []string{"router"}
 	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
 	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
-	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	loader, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	cloud := loader.(*cloudLoader)
 	cloud.singleTenantFallback.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
@@ -382,27 +382,29 @@ func TestMiddlewareEnabledBySettingsAPI(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
 		cfg        *setting.Cfg
-		flags      []any
+		toggles    []any
+		flags      []string // served by OpenFeature only
 		middleware bool
 		settings   bool
 	}{
-		{"no flags", grafana, nil, false, false},
-		{"router middleware", grafana, []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, true, false},
-		{"settings API", grafana, []any{featuremgmt.FlagApppluginsRegisterAPIServer}, true, true},
-		{"standalone router with the settings API", standalone, []any{featuremgmt.FlagApppluginsRegisterAPIServer}, false, false},
-		{"standalone router with router middleware", standalone, []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, false, false},
+		{"no flags", grafana, nil, nil, false, false},
+		{"router middleware", grafana, []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, nil, true, false},
+		{"settings API", grafana, nil, []string{featuremgmt.FlagApppluginsRegisterAPIServer}, true, true},
+		{"standalone router with the settings API", standalone, nil, []string{featuremgmt.FlagApppluginsRegisterAPIServer}, false, false},
+		{"standalone router with router middleware", standalone, []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, nil, false, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			features := featuremgmt.WithFeatures(tc.flags...)
+			featuremgmt.WithEnabledFlags(t, tc.flags...)
+			features := featuremgmt.WithFeatures(tc.toggles...)
 			require.Equal(t, tc.middleware, middlewareEnabled(tc.cfg, features))
-			require.Equal(t, tc.settings, settingsEnabled(tc.cfg, features))
+			require.Equal(t, tc.settings, settingsEnabled(tc.cfg))
 			svc, err := ProvideService(tc.cfg, features, dummyRoutesLoader{}, prometheus.NewRegistry(), NewGrafanaRouter(nil, nil))
 			require.NoError(t, err)
 			require.Equal(t, tc.middleware, svc.middleware)
 		})
 	}
 	require.False(t, middlewareEnabled(grafana, nil))
-	require.False(t, settingsEnabled(grafana, nil))
+	require.False(t, settingsEnabled(grafana))
 }
 
 // The router wire provides publishes the manifests compiled into Grafana for

@@ -1,3 +1,4 @@
+import { cache } from '@emotion/css';
 import { act, renderHook } from '@testing-library/react';
 import { createElement, useLayoutEffect } from 'react';
 
@@ -664,9 +665,11 @@ describe('TableNG hooks', () => {
       { tableRefreshEnabled: true, noPanelPadding: false, height: 58, pageSize: undefined, expected: 1 },
       { tableRefreshEnabled: false, noPanelPadding: false, height: 58, pageSize: undefined, expected: 2 },
       { tableRefreshEnabled: true, noPanelPadding: true, height: 66, pageSize: undefined, expected: 2 },
+      { tableRefreshEnabled: true, noPanelPadding: true, transparent: true, height: 66, expected: 1 },
+      { tableRefreshEnabled: false, noPanelPadding: true, transparent: true, height: 66, expected: 2 },
       { tableRefreshEnabled: true, noPanelPadding: false, height: 58, pageSize: 2, expected: 2 },
     ])(
-      'fits $expected rows with refresh=$tableRefreshEnabled, noPanelPadding=$noPanelPadding, pageSize=$pageSize',
+      'fits $expected rows with refresh=$tableRefreshEnabled, noPanelPadding=$noPanelPadding, transparent=$transparent, pageSize=$pageSize',
       ({ expected, ...options }) => {
         const { rows } = setupData();
         const { result } = renderHook(() =>
@@ -2318,6 +2321,28 @@ describe('TableNG hooks', () => {
 });
 
 describe('useScrollShadows', () => {
+  it('does not insert new CSS rules when shadow width changes', () => {
+    const element = document.createElement('div');
+    Object.defineProperties(element, {
+      scrollHeight: { value: 1000 },
+      clientHeight: { value: 200 },
+      offsetHeight: { value: 210 },
+      clientWidth: { value: 400, configurable: true },
+    });
+    element.style.gridTemplateColumns = '1000px';
+    const ref = { current: { element } as DataGridHandle };
+    const { result, rerender } = renderHook(() => useScrollShadows(ref, true, { topOffset: 30, bottomOffset: 20 }));
+    expect(result.current).toMatchObject({ top: false, bottom: true, scrollbarHeight: 10 });
+    const insertedRules = Object.keys(cache.inserted).length;
+
+    for (let width = 401; width <= 420; width++) {
+      Object.defineProperty(element, 'clientWidth', { value: width });
+      rerender();
+    }
+
+    expect(Object.keys(cache.inserted)).toHaveLength(insertedRules);
+  });
+
   it('tracks scroll edges without rerendering between visibility transitions', () => {
     const wrapper = document.createElement('div');
     const element = document.createElement('div');

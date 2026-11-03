@@ -13,7 +13,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys, setGetObservablePluginLinks } from '@grafana/runtime/internal';
 import {
   LocalValueVariable,
@@ -25,6 +25,7 @@ import {
 } from '@grafana/scenes';
 import { LegendDisplayMode, type VizLegendOptions } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { appEvents } from 'app/core/app_events';
 import { LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type GetExploreUrlArguments } from 'app/core/utils/explore';
@@ -32,6 +33,7 @@ import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import * as storeModule from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardInteractions } from '../utils/interactions';
@@ -39,7 +41,7 @@ import { DashboardInteractions } from '../utils/interactions';
 import { DashboardScene } from './DashboardScene';
 import { NewAlertRuleDrawer } from './NewAlertRuleDrawer';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
-import { panelMenuBehavior, toggleVizPanelLegend } from './PanelMenuBehavior';
+import { onRemovePanel, panelMenuBehavior, toggleVizPanelLegend } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 const mocks = {
@@ -63,6 +65,25 @@ jest.mock('app/store/store', () => ({
 
 const getObservablePluginLinksMock = jest.fn().mockReturnValue(of([]));
 setGetObservablePluginLinks(getObservablePluginLinksMock);
+
+describe('onRemovePanel', () => {
+  it('opens the confirmation only after the menu has had a chance to release focus', async () => {
+    const { scene, panel } = await buildTestScene({});
+    const publish = jest.spyOn(appEvents, 'publish').mockImplementation(() => {});
+    jest.useFakeTimers();
+
+    try {
+      onRemovePanel(scene, panel);
+      expect(publish).not.toHaveBeenCalled();
+
+      jest.runOnlyPendingTimers();
+      expect(publish).toHaveBeenCalledWith(expect.any(ShowConfirmModalEvent));
+    } finally {
+      jest.useRealTimers();
+      publish.mockRestore();
+    }
+  });
+});
 
 describe('panelMenuBehavior', () => {
   beforeAll(() => {
@@ -177,6 +198,22 @@ describe('panelMenuBehavior', () => {
 
       const moreSubMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
       expect(moreSubMenu?.find((i) => /legend/.test(i.text))?.text).toBe(expected);
+    });
+
+    it.each(['view', 'composer'] as const)('offers the legend toggle and Time settings in %s mode', async (mode) => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true, panelTimeSettings: true });
+      const { scene, menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+      panel.setState({ options: { legend: legend({}) } });
+      scene.setState({ mode, isEditing: true });
+
+      const deactivate = menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+      deactivate();
+
+      const moreSubMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu ?? [];
+      const itemTexts = [...(menu.state.items ?? []), ...moreSubMenu].map((i) => i.text);
+      expect(itemTexts).toEqual(expect.arrayContaining(['Hide legend', 'Time settings']));
     });
 
     it.each([
@@ -1054,6 +1091,14 @@ describe('panelMenuBehavior', () => {
   });
 
   describe('Panel styles menu', () => {
+    let deactivatePanel: (() => void) | undefined;
+    let deactivateSidebar: (() => void) | undefined;
+    afterEach(() => {
+      deactivateSidebar?.();
+      deactivateSidebar = undefined;
+      deactivatePanel?.();
+      deactivatePanel = undefined;
+    });
     async function buildTimeseriesTestScene(isEditing = true) {
       const menu = new VizPanelMenu({ $behaviors: [panelMenuBehavior] });
       const panel = new VizPanel({
@@ -1065,7 +1110,7 @@ describe('panelMenuBehavior', () => {
 
       panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
 
-      new DashboardScene({
+      const dashboard = new DashboardScene({
         title: 'My dashboard',
         uid: 'dash-1',
         meta: { canEdit: true },
@@ -1076,7 +1121,7 @@ describe('panelMenuBehavior', () => {
       menu.activate();
       await new Promise((r) => setTimeout(r, 1));
 
-      return { menu, panel };
+      return { menu, panel, dashboard };
     }
 
     afterEach(() => {
@@ -1098,10 +1143,35 @@ describe('panelMenuBehavior', () => {
       const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
       const { menu } = await buildTimeseriesTestScene();
 
-      const pasteItem = menu.state.items?.find((i) => i.text === 'Styles')?.subMenu?.[1];
+      const pasteItem = menu.state.items
+        ?.find((i) => i.text === 'Styles')
+        ?.subMenu?.find((i) => i.text === 'Paste styles');
       pasteItem?.onClick?.({} as never);
 
       expect(spy).toHaveBeenCalledWith('paste', 'timeseries', expect.any(Number));
+    });
+
+    it('should record pasting styles in the undo history', async () => {
+      setPluginImportUtils({
+        getPanelPluginFromCache: () => getPanelPlugin({ id: 'timeseries' }),
+        importPanelPlugin: async () => getPanelPlugin({ id: 'timeseries' }),
+      });
+      store.set(
+        LS_STYLES_COPY_KEY,
+        JSON.stringify({ panelType: 'timeseries', styles: { options: { legend: { showLegend: false } } } })
+      );
+      const { menu, dashboard, panel } = await buildTimeseriesTestScene();
+      deactivatePanel = panel.activate();
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      deactivateSidebar = dashboard.state.sidebar.activate();
+
+      const pasteItem = menu.state.items
+        ?.find((i) => i.text === 'Styles')
+        ?.subMenu?.find((i) => i.text === 'Paste styles');
+      pasteItem?.onClick?.({} as never);
+
+      expect(panel.state.options).toMatchObject({ legend: { showLegend: false } });
+      expect(dashboard.state.sidebar.state.undoStack).toHaveLength(1);
     });
 
     it('should not show styles menu for unsupported panel types', async () => {
@@ -1264,7 +1334,7 @@ describe('panelMenuBehavior', () => {
       const items = await itemsWith({ notebooks: true, permission: true });
 
       expect(items.find((item) => item.text === 'Add to notebook')).toEqual(
-        expect.objectContaining({ iconClassName: 'book' })
+        expect.objectContaining({ iconClassName: 'gf-notebook' })
       );
       expect(items.find((item) => item.text === 'Remove')).toBeUndefined();
     });

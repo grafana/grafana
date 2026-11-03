@@ -18,7 +18,7 @@ require (
 	github.com/dlclark/regexp2 v1.12.0 // indirect
 	github.com/emicklei/proto v1.14.3 // indirect
 	github.com/fatih/color v1.19.0 // indirect
-	github.com/getkin/kin-openapi v0.151.0 // indirect
+	github.com/getkin/kin-openapi v0.152.0 // indirect
 	github.com/go-openapi/jsonpointer v1.0.2 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
 	github.com/golang/glog v1.2.5 // indirect
@@ -28,7 +28,7 @@ require (
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/hashicorp/go-plugin v1.8.0 // indirect
 	github.com/hashicorp/yamux v0.1.2 // indirect
-	github.com/huandu/xstrings v1.6.2 // indirect
+	github.com/huandu/xstrings v1.6.3 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lib/pq v1.12.3 // indirect
@@ -45,7 +45,7 @@ require (
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
 	golang.org/x/mod v0.42.0 // indirect
-	golang.org/x/net v0.61.0 // indirect
+	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.43.0 // indirect

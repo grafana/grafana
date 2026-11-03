@@ -287,7 +287,9 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
       error: Object.keys(errors).toString(),
       formAction: existing ? 'update' : 'create',
     });
-    notifyApp.error('There are errors in the form. Please correct them and try again!');
+    notifyApp.error(
+      t('alerting.alert-rule-form.form-errors', 'There are errors in the form. Please correct them and try again!')
+    );
   };
 
   const cancelRuleCreation = () => {

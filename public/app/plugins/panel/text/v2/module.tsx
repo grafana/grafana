@@ -71,6 +71,9 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
 };
 
 const SUPPORTED_FIELD_CONFIGS = new Set<FieldConfigProperty>([
+  FieldConfigProperty.Unit,
+  FieldConfigProperty.Decimals,
+  FieldConfigProperty.NoValue,
   FieldConfigProperty.Mappings,
   FieldConfigProperty.Thresholds,
 ]);

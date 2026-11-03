@@ -1,5 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { act, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
@@ -454,6 +454,7 @@ describe('DashboardControls', () => {
     });
 
     afterEach(() => {
+      cleanup();
       jest.clearAllMocks();
     });
 
@@ -465,12 +466,29 @@ describe('DashboardControls', () => {
       expect(screen.queryByRole('button', { name: /make editable/i })).not.toBeInTheDocument();
     });
 
+    it('should not show EditDashboardSwitch or MakeDashboardEditableButton on mobile when mobileEditDeprecation is enabled', async () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
+      const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
+
+      expect(screen.queryByRole('button', { name: /enter edit mode/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /make editable/i })).not.toBeInTheDocument();
+    });
+
     it('should show MakeDashboardEditableButton when editable is false', async () => {
       const controls = buildTestSceneWithEditable({ editable: false, canEdit: false, canMakeEditable: true });
       renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
       expect(await screen.findByRole('button', { name: /make editable/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /^edit$/i })).not.toBeInTheDocument();
+    });
+
+    it('should not show MakeDashboardEditableButton on mobile when mobileEditDeprecation is enabled', async () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
+      const controls = buildTestSceneWithEditable({ editable: false, canEdit: false, canMakeEditable: true });
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
+
+      expect(screen.queryByRole('button', { name: /make editable/i })).not.toBeInTheDocument();
     });
 
     it('should not show edit buttons when canEditDashboard returns false', async () => {
@@ -504,6 +522,14 @@ describe('DashboardControls', () => {
       renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
       expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
+    });
+
+    it('should not show Exit edit for a new dashboard in edit mode', () => {
+      const controls = buildTestSceneWithEditable({ hasUid: false, editable: true, canEdit: true, isEditing: true });
+
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
+
+      expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.editButton)).not.toBeInTheDocument();
     });
 
     it('should show playlist nav buttons when hidePlaylistNav is undefined', async () => {
@@ -603,6 +629,28 @@ describe('DashboardControls', () => {
 
       expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
       expect(screen.queryByText('Save as copy')).not.toBeInTheDocument();
+    });
+
+    it('should not show save button in Viewing mode, even with unsaved changes', () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      const controls = buildTestSceneWithEditable({ canSave: true, canEdit: true, isEditing: true });
+      getDashboard(controls).setState({ mode: 'view', isDirty: true });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
+    });
+
+    it.each([
+      [false, 'not show'],
+      [true, 'show'],
+    ])('should %2$s save button when Composer is over %1$s Editing', (composerEditing) => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      const controls = buildTestSceneWithEditable({ canSave: true, canEdit: true, isEditing: true });
+      getDashboard(controls).setState({ mode: 'composer', composerEditing, isDirty: true });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      const save = screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton);
+      expect(Boolean(save)).toBe(composerEditing);
     });
   });
 

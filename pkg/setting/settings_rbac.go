@@ -7,7 +7,10 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const DefaultLegacyUserPermissionsShadowMaxConcurrent = 32
+
 type RBACSettings struct {
+	LegacyUserPermissionsShadowMaxConcurrent int
 	// Enable permission cache
 	PermissionCache bool
 	// Enable Permission validation during role creation and provisioning
@@ -46,6 +49,10 @@ func (cfg *Cfg) readRBACSettings() {
 
 	rbac := cfg.Raw.Section("rbac")
 	s.PermissionCache = rbac.Key("permission_cache").MustBool(true)
+	s.LegacyUserPermissionsShadowMaxConcurrent = cfg.SectionWithEnvOverrides("rbac").Key("legacy_user_permissions_shadow_max_concurrent").MustInt(DefaultLegacyUserPermissionsShadowMaxConcurrent)
+	if s.LegacyUserPermissionsShadowMaxConcurrent < 1 {
+		s.LegacyUserPermissionsShadowMaxConcurrent = DefaultLegacyUserPermissionsShadowMaxConcurrent
+	}
 	s.PermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
 	s.ResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
 	s.SingleOrganization = rbac.Key("single_organization").MustBool(false)

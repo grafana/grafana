@@ -6,6 +6,7 @@ import {
   useEffect,
   useState,
   useMemo,
+  useRef,
   useSyncExternalStore,
 } from 'react';
 import { useAsync, useLocalStorage } from 'react-use';
@@ -22,6 +23,7 @@ import {
   DEFAULT_FLOATING_EXTENSION_SIDEBAR_WIDTH,
   MAX_EXTENSION_SIDEBAR_WIDTH,
   MIN_EXTENSION_SIDEBAR_WIDTH,
+  MAX_FLOATING_EXTENSION_SIDEBAR_WIDTH,
   MIN_FLOATING_EXTENSION_SIDEBAR_WIDTH,
 } from './constants';
 import {
@@ -29,7 +31,9 @@ import {
   getEffectiveExtensionSidebarPresentation,
   getRequestedExtensionSidebarPresentation,
   holdFloatingExtensionSidebar,
+  isExtensionSidebarFloatingOverridden,
   isFloatingExtensionSidebarHeld,
+  notifyExtensionSidebarClosed,
   releaseFloatingExtensionSidebarHolds,
   resolveExtensionSidebarPresentation,
   subscribeToExtensionSidebarPresentation,
@@ -131,7 +135,11 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     subscribeToExtensionSidebarPresentation,
     getRequestedExtensionSidebarPresentation
   );
-  // Turning the flag off docks a floating sidebar.
+  const floatingOverridden = useSyncExternalStore(
+    subscribeToExtensionSidebarPresentation,
+    isExtensionSidebarFloatingOverridden
+  );
+  // Turning the flag off docks a sidebar the user floated; the override (Composer) floats it regardless.
   const canFloat = useFlagGrafanaExtensionSidebarFloating();
   const floatingHeld = useSyncExternalStore(subscribeToExtensionSidebarPresentation, isFloatingExtensionSidebarHeld);
   const storedDockedPluginId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
@@ -206,7 +214,8 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   const presentation: ExtensionSidebarPresentation = resolveExtensionSidebarPresentation(
     requestedPresentation,
     canFloat,
-    getComponentMetaFromComponentId(dockedComponentId ?? '')?.pluginId
+    getComponentMetaFromComponentId(dockedComponentId ?? '')?.pluginId,
+    floatingOverridden
   );
   const floatingHidden = dockedComponentId !== undefined && presentation === 'floating' && floatingHeld;
 
@@ -287,6 +296,16 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     };
   }, [setDockedComponentWithProps, availableComponents, dockedComponentId, floatingHidden]);
 
+  // Closing the sidebar, or replacing its component, ends what lived in it (a Composer session).
+  const shownComponentId = useRef(dockedComponentId);
+  useEffect(() => {
+    const previous = shownComponentId.current;
+    shownComponentId.current = dockedComponentId;
+    if (previous !== undefined && previous !== dockedComponentId) {
+      notifyExtensionSidebarClosed();
+    }
+  }, [dockedComponentId]);
+
   // update the stored docked component id when it changes
   useEffect(() => {
     // wait for the plugin links to be loaded before we update the stored docked component id
@@ -333,7 +352,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
             floatingExtensionSidebarWidth ?? DEFAULT_FLOATING_EXTENSION_SIDEBAR_WIDTH,
             MIN_FLOATING_EXTENSION_SIDEBAR_WIDTH
           ),
-          MAX_EXTENSION_SIDEBAR_WIDTH
+          MAX_FLOATING_EXTENSION_SIDEBAR_WIDTH
         ),
         setFloatingExtensionSidebarWidth,
         presentation,

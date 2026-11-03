@@ -126,7 +126,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		token, err := s.signer.SignIDToken(ctx, idClaims)
 		if err != nil {
 			s.metrics.failedTokenSigningCounter.Inc()
-			return resultType{}, nil
+			return resultType{}, fmt.Errorf("failed to sign id token: %w", err)
 		}
 
 		extracted, err := s.extractTokenClaims(token)

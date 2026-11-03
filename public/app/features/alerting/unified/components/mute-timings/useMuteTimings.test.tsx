@@ -7,11 +7,12 @@ import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import {
   TIME_INTERVAL_NAME_FILE_PROVISIONED,
   TIME_INTERVAL_NAME_HAPPY_PATH,
+  TIME_INTERVAL_RESOURCE_NAME_HAPPY_PATH,
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { useGetMuteTiming, useMuteTimings } from './useMuteTimings';
+import { useGetMuteTiming, useMuteTimings, useSearchMuteTiming } from './useMuteTimings';
 
 const wrapper = ({ children }: { children: ReactNode }) => {
   const ProviderWrapper = getWrapper({ renderWithRouter: true });
@@ -89,27 +90,65 @@ describe('useMuteTimings', () => {
   });
 
   describe('useGetMuteTiming', () => {
-    it('should return single mute timing by name for editing', async () => {
-      const { result } = renderHook(
-        () =>
-          useGetMuteTiming({
-            alertmanager: GRAFANA_RULES_SOURCE_NAME,
-            name: TIME_INTERVAL_NAME_HAPPY_PATH,
-          }),
-        {
-          wrapper,
-        }
-      );
+    const renderGet = (id: string) =>
+      renderHook(() => useGetMuteTiming({ alertmanager: GRAFANA_RULES_SOURCE_NAME, id }), { wrapper });
+
+    it('should return a single time interval by its resource name', async () => {
+      const { result } = renderGet(TIME_INTERVAL_RESOURCE_NAME_HAPPY_PATH);
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.data).toBeDefined();
       expect(result.current.data?.name).toBe(TIME_INTERVAL_NAME_HAPPY_PATH);
-      expect(result.current.data?.id).toBe(TIME_INTERVAL_NAME_HAPPY_PATH);
+      expect(result.current.data?.id).toBe(TIME_INTERVAL_RESOURCE_NAME_HAPPY_PATH);
+      expect(result.current.data?.metadata?.name).toBe(TIME_INTERVAL_RESOURCE_NAME_HAPPY_PATH);
       expect(result.current.data).toHaveProperty('time_intervals');
       expect(result.current.isError).toBe(false);
+    });
+
+    it('should not treat a display name as a resource name', async () => {
+      const { result } = renderGet(TIME_INTERVAL_NAME_HAPPY_PATH);
+
+      await waitFor(() => {
+        expect(result.current.isError).toBe(true);
+      });
+      expect(result.current.data).toBeUndefined();
+    });
+  });
+
+  describe('useSearchMuteTiming', () => {
+    const renderSearch = (name: string) =>
+      renderHook(() => useSearchMuteTiming({ alertmanager: GRAFANA_RULES_SOURCE_NAME, name }), { wrapper });
+
+    it('should resolve a display name by matching spec.name', async () => {
+      const { result } = renderSearch(TIME_INTERVAL_NAME_HAPPY_PATH);
+
+      await waitFor(() => {
+        expect(result.current.data).toBeDefined();
+      });
+
+      expect(result.current.data?.name).toBe(TIME_INTERVAL_NAME_HAPPY_PATH);
+      expect(result.current.data?.id).toBe(TIME_INTERVAL_RESOURCE_NAME_HAPPY_PATH);
+      expect(result.current.isError).toBe(false);
+    });
+
+    it('should not match on the resource name', async () => {
+      const { result } = renderSearch(TIME_INTERVAL_RESOURCE_NAME_HAPPY_PATH);
+
+      await waitFor(() => {
+        expect(result.current.isError).toBe(true);
+      });
+      expect(result.current.data).toBeUndefined();
+    });
+
+    it('should report an error when nothing matches', async () => {
+      const { result } = renderSearch('does not exist');
+
+      await waitFor(() => {
+        expect(result.current.isError).toBe(true);
+      });
+      expect(result.current.data).toBeUndefined();
     });
   });
 });

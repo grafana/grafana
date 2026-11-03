@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as React from 'react';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, CodeEditor, Dropdown, Menu, Stack, Toggletip, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, Menu, Stack, Toggletip, useStyles2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { EditorColumnHeader } from '../EditorColumnHeader';
@@ -33,6 +34,12 @@ export function PayloadEditor({
   className?: string;
 }) {
   const styles = useStyles2(getStyles);
+  const [draftPayload, setDraftPayload] = useState(payload);
+
+  useEffect(() => {
+    setDraftPayload(payload);
+  }, [payload]);
+
   const onReset = () => {
     setPayload(defaultPayload);
   };
@@ -125,20 +132,16 @@ export function PayloadEditor({
         <div className={styles.editorWrapper}>
           <AutoSizer>
             {({ width, height }: Size) => (
-              <CodeEditor
-                containerStyles={styles.editorContainer}
-                width={width}
-                height={height}
-                language={'json'}
-                showLineNumbers={true}
-                showMiniMap={false}
-                value={payload}
-                readOnly={false}
-                onBlur={setPayload}
-                monacoOptions={{
-                  scrollBeyondLastLine: false,
-                }}
-              />
+              <div className={styles.editorContainer} style={{ width }}>
+                <CodeMirrorEditor
+                  height={`${height}px`}
+                  language="json"
+                  value={draftPayload}
+                  onChange={setDraftPayload}
+                  onBlur={setPayload}
+                  aria-label={t('alerting.payload-editor.label-payload', 'Payload')}
+                />
+              </div>
             )}
           </AutoSizer>
         </div>
@@ -171,10 +174,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   editorWrapper: css({
     flex: 1,
+    minHeight: 0,
   }),
   editorContainer: css({
-    width: 'fit-content',
-    border: 'none',
+    '.cm-editor': {
+      border: 'none',
+    },
   }),
   templateDataDocsHeader: css({
     color: theme.colors.text.primary,
