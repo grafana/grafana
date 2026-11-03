@@ -50,6 +50,8 @@ const (
 	// Small enough that a team with hundreds of members doesn't blast the
 	// apiserver, large enough to keep latency bounded.
 	usersGetParallelism = 8
+	// membershipSearchPageSize matches the searchTeams default page size.
+	membershipSearchPageSize = 500
 )
 
 var teamGVR = schema.GroupVersionResource{
@@ -1077,6 +1079,76 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 	}
 
 	return members, nil
+}
+
+// GetUserTeamMembershipsByUID reads each Team returned by the searchTeams member filter, because the
+// search index stores member UIDs but not membership origin or permission. Offset pages can shift when
+// memberships change between page reads, so a concurrent change may be missed until the next call.
+func (s *TeamK8sService) GetUserTeamMembershipsByUID(ctx context.Context, query *team.GetUserTeamMembershipsByUIDQuery) ([]team.UserTeamMembership, error) {
+	ctx, span := s.tracer.Start(ctx, "team.GetUserTeamMembershipsByUID", trace.WithAttributes(
+		attribute.Int64("orgID", query.OrgID),
+		attribute.String("userUID", query.UserUID),
+	))
+	defer span.End()
+
+	fail := func(err error) ([]team.UserTeamMembership, error) {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	if query.UserUID == "" {
+		return fail(errors.New("user UID is required"))
+	}
+
+	var teamUIDs []string
+	seen := make(map[string]struct{})
+	for page := 1; ; page++ {
+		result, err := s.SearchTeams(ctx, &team.SearchTeamsQuery{
+			OrgID:     query.OrgID,
+			MemberUID: query.UserUID,
+			Limit:     membershipSearchPageSize,
+			Page:      page,
+		})
+		if err != nil {
+			return fail(fmt.Errorf("failed to search user teams: %w", err))
+		}
+		for _, t := range result.Teams {
+			if _, ok := seen[t.UID]; !ok {
+				seen[t.UID] = struct{}{}
+				teamUIDs = append(teamUIDs, t.UID)
+			}
+		}
+		if len(result.Teams) == 0 || int64(page*membershipSearchPageSize) >= result.TotalCount {
+			break
+		}
+	}
+
+	teams, err := s.listTeamsByUIDs(ctx, s.namespaceMapper(query.OrgID), teamUIDs)
+	if err != nil {
+		return fail(fmt.Errorf("failed to fetch user teams: %w", err))
+	}
+
+	memberships := make([]team.UserTeamMembership, 0, len(teamUIDs))
+	// The team or the membership may have been removed after the search ran.
+	for _, uid := range teamUIDs {
+		t, ok := teams[uid]
+		if !ok {
+			continue
+		}
+		member, ok := findMemberInTeam(t, query.UserUID)
+		if !ok || (query.External && !member.External) {
+			continue
+		}
+		memberships = append(memberships, team.UserTeamMembership{
+			TeamID:     deprecatedInternalID(t),
+			TeamUID:    t.Name,
+			External:   member.External,
+			Permission: permissionFromMember(member.Permission),
+		})
+	}
+
+	return memberships, nil
 }
 
 // cloneTeamMemberDTOs deep-copies elements so a caller mutating a returned

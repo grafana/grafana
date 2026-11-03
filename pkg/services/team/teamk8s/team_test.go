@@ -2012,6 +2012,180 @@ func TestTeamK8sService_GetUserTeamMemberships_Cache(t *testing.T) {
 	})
 }
 
+func TestTeamK8sService_GetUserTeamMembershipsByUID(t *testing.T) {
+	newTeam := func(name, internalID string, members ...iamv0alpha1.TeamTeamMember) *iamv0alpha1.Team {
+		return &iamv0alpha1.Team{
+			TypeMeta: metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "Team"},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: "default",
+				Labels:    map[string]string{"grafana.app/deprecatedInternalID": internalID},
+			},
+			Spec: iamv0alpha1.TeamSpec{Title: name, Members: members},
+		}
+	}
+	externalAdmin := iamv0alpha1.TeamTeamMember{Kind: "User", Name: "user-1", Permission: iamv0alpha1.TeamTeamPermissionAdmin, External: true}
+	manualMember := iamv0alpha1.TeamTeamMember{Kind: "User", Name: "user-1", Permission: iamv0alpha1.TeamTeamPermissionMember}
+	otherUser := iamv0alpha1.TeamTeamMember{Kind: "User", Name: "user-2", External: true}
+
+	type searchPage struct {
+		hits      []string
+		totalHits int64
+	}
+
+	tests := []struct {
+		name         string
+		userUID      string
+		external     bool
+		pages        map[string]searchPage
+		teams        map[string]*iamv0alpha1.Team
+		searchStatus int
+		failTeam     string
+		expectErr    string
+		expected     []team.UserTeamMembership
+	}{
+		{
+			name:    "returns external and manual memberships from team members",
+			userUID: "user-1",
+			pages:   map[string]searchPage{"1": {hits: []string{"team-a", "team-b"}, totalHits: 2}},
+			teams: map[string]*iamv0alpha1.Team{
+				"team-a": newTeam("team-a", "10", otherUser, externalAdmin),
+				"team-b": newTeam("team-b", "20", manualMember),
+			},
+			expected: []team.UserTeamMembership{
+				{TeamID: 10, TeamUID: "team-a", External: true, Permission: team.PermissionTypeAdmin},
+				{TeamID: 20, TeamUID: "team-b", External: false, Permission: team.PermissionTypeMember},
+			},
+		},
+		{
+			name:     "external filter drops manual memberships",
+			userUID:  "user-1",
+			external: true,
+			pages:    map[string]searchPage{"1": {hits: []string{"team-a", "team-b"}, totalHits: 2}},
+			teams: map[string]*iamv0alpha1.Team{
+				"team-a": newTeam("team-a", "10", externalAdmin),
+				"team-b": newTeam("team-b", "20", manualMember),
+			},
+			expected: []team.UserTeamMembership{
+				{TeamID: 10, TeamUID: "team-a", External: true, Permission: team.PermissionTypeAdmin},
+			},
+		},
+		{
+			name:    "reads every search page and drops teams repeated across pages",
+			userUID: "user-1",
+			pages: map[string]searchPage{
+				"1": {hits: []string{"team-a"}, totalHits: membershipSearchPageSize + 1},
+				"2": {hits: []string{"team-a", "team-b"}, totalHits: membershipSearchPageSize + 1},
+			},
+			teams: map[string]*iamv0alpha1.Team{
+				"team-a": newTeam("team-a", "10", externalAdmin),
+				"team-b": newTeam("team-b", "20", externalAdmin),
+			},
+			expected: []team.UserTeamMembership{
+				{TeamID: 10, TeamUID: "team-a", External: true, Permission: team.PermissionTypeAdmin},
+				{TeamID: 20, TeamUID: "team-b", External: true, Permission: team.PermissionTypeAdmin},
+			},
+		},
+		{
+			name:    "skips teams deleted or left after the search",
+			userUID: "user-1",
+			pages:   map[string]searchPage{"1": {hits: []string{"team-a", "team-deleted", "team-left"}, totalHits: 3}},
+			teams: map[string]*iamv0alpha1.Team{
+				"team-a":    newTeam("team-a", "10", externalAdmin),
+				"team-left": newTeam("team-left", "30", otherUser),
+			},
+			expected: []team.UserTeamMembership{
+				{TeamID: 10, TeamUID: "team-a", External: true, Permission: team.PermissionTypeAdmin},
+			},
+		},
+		{
+			name:     "returns empty list when the user is in no teams",
+			userUID:  "user-1",
+			external: true,
+			pages:    map[string]searchPage{"1": {totalHits: 0}},
+			expected: []team.UserTeamMembership{},
+		},
+		{
+			name:         "returns search errors",
+			userUID:      "user-1",
+			searchStatus: http.StatusInternalServerError,
+			expectErr:    "failed to search user teams",
+		},
+		{
+			name:      "returns team read errors",
+			userUID:   "user-1",
+			pages:     map[string]searchPage{"1": {hits: []string{"team-a"}, totalHits: 1}},
+			failTeam:  "team-a",
+			expectErr: "failed to fetch user teams",
+		},
+		{
+			name:      "requires a user UID",
+			expectErr: "user UID is required",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				path := r.URL.Path
+				switch {
+				case strings.Contains(path, "/users"):
+					t.Errorf("unexpected users API request: %s %s", r.Method, path)
+					w.WriteHeader(http.StatusNotFound)
+				case strings.HasSuffix(path, "/searchTeams"):
+					assert.Equal(t, tt.userUID, r.URL.Query().Get("member"))
+					assert.Equal(t, "500", r.URL.Query().Get("limit"))
+					if tt.searchStatus != 0 {
+						w.WriteHeader(tt.searchStatus)
+						return
+					}
+					page := tt.pages[r.URL.Query().Get("page")]
+					hits := make([]iamv0alpha1.GetSearchTeamsTeamHit, 0, len(page.hits))
+					for _, name := range page.hits {
+						hits = append(hits, iamv0alpha1.GetSearchTeamsTeamHit{Name: name, Title: name})
+					}
+					_ = json.NewEncoder(w).Encode(iamv0alpha1.GetSearchTeamsResponse{
+						GetSearchTeamsBody: iamv0alpha1.GetSearchTeamsBody{TotalHits: page.totalHits, Hits: hits},
+					})
+				case r.Method == http.MethodGet && strings.Contains(path, "/teams/"):
+					name := path[strings.LastIndex(path, "/")+1:]
+					if name == tt.failTeam {
+						w.WriteHeader(http.StatusInternalServerError)
+						_ = json.NewEncoder(w).Encode(metav1.Status{Status: metav1.StatusFailure, Code: http.StatusInternalServerError})
+						return
+					}
+					obj, ok := tt.teams[name]
+					if !ok {
+						w.WriteHeader(http.StatusNotFound)
+						_ = json.NewEncoder(w).Encode(metav1.Status{Status: metav1.StatusFailure, Code: http.StatusNotFound, Reason: metav1.StatusReasonNotFound})
+						return
+					}
+					_ = json.NewEncoder(w).Encode(mustToUnstructured(t, obj))
+				default:
+					t.Errorf("unexpected request: %s %s", r.Method, path)
+					w.WriteHeader(http.StatusNotFound)
+				}
+			}))
+			defer ts.Close()
+
+			provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
+			svc := NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), provider, tracing.InitializeTracerForTest())
+			ctx := identity.WithRequester(contextWithReqContext(), &identity.StaticRequester{OrgID: 1})
+
+			result, err := svc.GetUserTeamMembershipsByUID(ctx, &team.GetUserTeamMembershipsByUIDQuery{
+				OrgID: 1, UserUID: tt.userUID, External: tt.external,
+			})
+			if tt.expectErr != "" {
+				require.ErrorContains(t, err, tt.expectErr)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}
+
 func TestTeamK8sService_GetTeamMembers(t *testing.T) {
 	tests := []struct {
 		name           string
