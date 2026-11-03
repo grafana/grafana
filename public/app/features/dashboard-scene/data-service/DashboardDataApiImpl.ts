@@ -43,10 +43,9 @@ const CHANGE_KEYS = [
   'tabs',
   'rows',
   'isCollapsed',
-  // Saving a new dashboard gives it a uid and permissions.
+  // Saving a new dashboard gives it a uid and a URL.
   'uid',
   'meta',
-  'isEditing',
 ];
 
 function getCurrentDashboard(): { dashboard: DashboardSceneLike; visitId: string } | undefined {
@@ -65,7 +64,7 @@ export class DashboardDataApiImpl implements DashboardDataAPI {
       return undefined;
     }
     const { dashboard, visitId } = current;
-    const { uid, title, description, meta, isEditing } = dashboard.state;
+    const { uid, title, description, meta } = dashboard.state;
     const range = sceneGraph.getTimeRange(dashboard).state.value;
     return {
       instanceKey: visitId,
@@ -80,8 +79,6 @@ export class DashboardDataApiImpl implements DashboardDataAPI {
         updateQuery: { editPanel: null, viewPanel: null, editview: null, inspect: null, inspectTab: null },
         absolute: true,
       }),
-      canEdit: Boolean(meta.canEdit),
-      isEditing: Boolean(isEditing),
       timeRange: { from: range.from.toISOString(), to: range.to.toISOString() },
       variables: getVariableValues(dashboard),
       allPanelsRef: ALL_PANELS_REF,

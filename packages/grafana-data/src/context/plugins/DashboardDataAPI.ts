@@ -26,8 +26,6 @@ export interface DashboardInfo {
   description: string;
   /** Absolute URL of the dashboard with the current time range and variables. */
   url: string;
-  canEdit: boolean;
-  isEditing: boolean;
   /** ISO 8601 timestamps. */
   timeRange: { from: string; to: string };
   /** Interpolated values by variable name. */
@@ -235,7 +233,7 @@ export interface DashboardDataAPI {
   getExploreUrl(panelKey: string, timeWindow: { from: string; to: string }): Promise<string | undefined>;
   /**
    * Subscribes to the dashboard open now. `changed` fires at most once per animation frame on panel data, time
-   * range, variable, filter, layout, edit mode, and save changes; `deactivated` fires when that dashboard is left.
+   * range, variable, filter, layout, and save changes; `deactivated` fires when that dashboard is left.
    */
   subscribe(listener: (event: DashboardDataEvent) => void): () => void;
 }
