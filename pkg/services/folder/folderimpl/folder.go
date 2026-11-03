@@ -40,6 +40,7 @@ var (
 )
 
 type Service struct {
+	cfg                    *setting.Cfg
 	unifiedStore           folder.Store
 	log                    *slog.Logger
 	features               featuremgmt.FeatureToggles
@@ -69,6 +70,7 @@ func ProvideService(
 	restConfig apiserver.RestConfigProvider,
 ) *Service {
 	srv := &Service{
+		cfg:                    cfg,
 		log:                    slog.Default().With("logger", "folder-service"),
 		features:               features,
 		accessControl:          ac,

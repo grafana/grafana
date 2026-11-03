@@ -85,39 +85,6 @@ func TestIndexSources(t *testing.T) {
 	assert.Contains(t, sources, dashboards)
 }
 
-func TestGlobalIndexStats(t *testing.T) {
-	stats := []ResourceStats{
-		{NamespacedResource: NamespacedResource{Namespace: "a", Group: "dashboard.grafana.app", Resource: "dashboards"}, Count: 10},
-		{NamespacedResource: NamespacedResource{Namespace: "a", Group: "folder.grafana.app", Resource: "folders"}, Count: 5},
-		{NamespacedResource: NamespacedResource{Namespace: "a", Group: "playlist.grafana.app", Resource: "playlists"}, Count: 100},
-		{NamespacedResource: NamespacedResource{Namespace: "b", Group: "folder.grafana.app", Resource: "folders"}, Count: 2},
-		{NamespacedResource: NamespacedResource{Namespace: "c", Group: "playlist.grafana.app", Resource: "playlists"}, Count: 7},
-	}
-
-	t.Run("nothing is added while the index is switched off", func(t *testing.T) {
-		s := &searchServer{}
-		assert.Empty(t, s.globalIndexStats(stats))
-	})
-
-	t.Run("one index per namespace, sized by the types it covers", func(t *testing.T) {
-		s := &searchServer{globalIndexEnabled: true}
-		// Namespace c holds none of the covered types, so it gets no index. The
-		// playlists in namespace a are not counted.
-		assert.Equal(t, []ResourceStats{
-			{NamespacedResource: GlobalSearchKey("a"), Count: 15},
-			{NamespacedResource: GlobalSearchKey("b"), Count: 2},
-		}, s.globalIndexStats(stats))
-	})
-
-	t.Run("an index already named in the stats is not added twice", func(t *testing.T) {
-		s := &searchServer{globalIndexEnabled: true}
-		withGlobal := append(slices.Clone(stats), ResourceStats{NamespacedResource: GlobalSearchKey("a"), Count: 15})
-		assert.Equal(t, []ResourceStats{
-			{NamespacedResource: GlobalSearchKey("b"), Count: 2},
-		}, s.globalIndexStats(withGlobal))
-	})
-}
-
 func TestGlobalSearchFieldsHash(t *testing.T) {
 	hash := GlobalSearchFieldsHash()
 	assert.NotEmpty(t, hash)

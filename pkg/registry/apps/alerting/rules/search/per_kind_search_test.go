@@ -49,24 +49,6 @@ func (f *fakeIndex) Search(ctx context.Context, req *resourcepb.ResourceSearchRe
 	return f.resp, nil
 }
 
-// legacyRows builds the result table the legacy backend would return for the
-// given rules, so a handler test reads real encoded cells rather than a
-// hand-built table that could disagree with the encoders.
-func legacyRows(t *testing.T, rules ...*ngmodels.AlertRule) *resourcepb.ResourceSearchResponse {
-	t.Helper()
-	table := &resourcepb.ResourceTable{Columns: resultColumnDefinitions()}
-	for _, r := range rules {
-		cells, err := ruleCells(ruleColumnValues(r))
-		require.NoError(t, err)
-		table.Rows = append(table.Rows, &resourcepb.ResourceTableRow{Key: ruleKey("default", r), Cells: cells})
-	}
-	return &resourcepb.ResourceSearchResponse{
-		Results:        table,
-		TotalHits:      int64(len(rules)),
-		TotalHitsExact: true,
-	}
-}
-
 func fieldValueRows(key *resourcepb.ResourceKey, fields []*resourcepb.ResourceSearchField, values ...*resourcepb.ResourceSearchValue) *resourcepb.ResourceSearchResponse {
 	return &resourcepb.ResourceSearchResponse{
 		ResultFormat:   resourcepb.ResourceSearchRequest_FIELD_VALUES,
@@ -216,7 +198,7 @@ func decodeResults(t *testing.T, rec *httptest.ResponseRecorder) searchv0.Search
 // TestSearch_requestBody covers decoding. The body is required, because the
 // envelope inside it is what identifies the contract being spoken.
 func TestPerKindSearch_requestBody(t *testing.T) {
-	empty := &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}
+	empty := &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}
 
 	t.Run("accepts a well-formed body", func(t *testing.T) {
 		rec, _ := callWithBody(t, validBody, empty)
@@ -294,7 +276,7 @@ func TestPerKindSearch_backendErrorInPayload(t *testing.T) {
 // search group, not the alerting group serving it, so the wire response does not
 // change when the generic endpoint takes these routes over.
 func TestPerKindSearch_responseEnvelope(t *testing.T) {
-	rec, index := callWithBody(t, validBody, legacyRows(t, testAlertRule()))
+	rec, index := callWithBody(t, validBody, ruleRows(t, testAlertRule()))
 	require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, index.got.ResultFormat)
 	out := decodeResults(t, rec)
 
@@ -421,9 +403,9 @@ func TestPerKindSearch_fieldValuesFromRealIndex(t *testing.T) {
 			require.Nil(t, resp.Error)
 			require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, resp.ResultFormat)
 
-			hits, err := NewUnifiedClient(nil).decodeHits(t.Context(), translated, resp)
+			result, err := NewUnifiedClient(&fakeIndex{resp: resp}).Search(t.Context(), translated)
 			require.NoError(t, err)
-			items := resultItems(&Result{Hits: hits}, tc.fields, kind)
+			items := resultItems(result, tc.fields, kind)
 			require.Len(t, items, 1)
 			assert.Equal(t, tc.key.Name, items[0].Resource.Name)
 			assert.Equal(t, tc.want, items[0].Fields.Object)
@@ -434,13 +416,9 @@ func TestPerKindSearch_fieldValuesFromRealIndex(t *testing.T) {
 func TestPerKindSearch_omitsBackendScore(t *testing.T) {
 	for _, score := range []float64{0, 2.5} {
 		t.Run(fmt.Sprint(score), func(t *testing.T) {
-			table, err := unifiedresource.NewTableBuilder([]*resourcepb.ResourceTableColumnDefinition{
-				{Name: unifiedresource.SEARCH_FIELD_SCORE, Type: resourcepb.ResourceTableColumnDefinition_DOUBLE},
-			})
-			require.NoError(t, err)
-			require.NoError(t, table.AddRow(ruleKey("default", testAlertRule()), 0, map[string]any{unifiedresource.SEARCH_FIELD_SCORE: score}))
-			rec, index := callWithBody(t, `{"apiVersion":"`+searchv0.APIVERSION+`","kind":"SearchQuery","where":{"text":{"value":"cpu"}},"fields":["interval"]}`,
-				&resourcepb.ResourceSearchResponse{Results: &table.ResourceTable, TotalHits: 1, TotalHitsExact: true})
+			response := fieldValueRows(ruleKey("default", testAlertRule()), nil)
+			response.Rows[0].Score = &score
+			rec, index := callWithBody(t, `{"apiVersion":"`+searchv0.APIVERSION+`","kind":"SearchQuery","where":{"text":{"value":"cpu"}},"fields":["interval"]}`, response)
 			require.Equal(t, http.StatusOK, rec.Code)
 			require.Equal(t, []string{fieldInterval}, index.got.Fields)
 			out := decodeResults(t, rec)
@@ -455,7 +433,7 @@ func TestPerKindSearch_omitsBackendScore(t *testing.T) {
 // values, unshaped: that is what the generic endpoint returns for the same
 // fields, so re-shaping them here would make the response change at migration.
 func TestPerKindSearch_projection(t *testing.T) {
-	resp := legacyRows(t, testAlertRule())
+	resp := ruleRows(t, testAlertRule())
 
 	t.Run("defaults to title and folder", func(t *testing.T) {
 		rec, _ := callWithBody(t, validBody, resp)
@@ -476,9 +454,6 @@ func TestPerKindSearch_projection(t *testing.T) {
 		values := decodeResults(t, rec).Items[0].Fields.Object
 
 		assert.Equal(t, true, values["paused"])
-		// Eight digits is exactly the width of the int64 fast path in
-		// resourceTableColumn.Decode, so a panel ID written as a decimal string
-		// would decode to an unrelated number instead of failing.
 		assert.EqualValues(t, 12345678, values["panelID"])
 		assert.Equal(t, "1m", values["interval"])
 		assert.Equal(t, "5m", values["for"])
@@ -501,7 +476,7 @@ func TestPerKindSearch_projection(t *testing.T) {
 	// A field the rule does not carry is absent rather than present and empty, so
 	// a client can tell "unset" from "set to nothing".
 	t.Run("omits fields the rule does not carry", func(t *testing.T) {
-		rec, _ := callWithBody(t, projection("title", "dashboardUID", "receiver"), legacyRows(t, minimalAlertRule()))
+		rec, _ := callWithBody(t, projection("title", "dashboardUID", "receiver"), ruleRows(t, minimalAlertRule()))
 		values := decodeResults(t, rec).Items[0].Fields.Object
 
 		assert.Equal(t, "bare", values["title"])
@@ -554,7 +529,7 @@ func TestPerKindSearch_recordingRuleEndpoint(t *testing.T) {
 // resumes from where this one stopped. The token is opaque, so the test reads it
 // back through the same encoding rather than asserting on its text.
 func TestPerKindSearch_continueToken(t *testing.T) {
-	resp := legacyRows(t, testAlertRule())
+	resp := ruleRows(t, testAlertRule())
 	resp.TotalHits = 5
 
 	rec, _ := callWithBody(t, validBody, resp)

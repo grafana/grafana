@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo, type GrafanaTheme2 } from '@grafana/data';
@@ -8,19 +8,27 @@ import {
   Alert,
   Badge,
   type BadgeColor,
+  Box,
   Button,
   Icon,
   Input,
   Select,
   Stack,
+  Tab,
+  TabContent,
+  TabsBar,
   Text,
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
 
-import { RouterShell, Section, Table } from './RouterShell';
+import { devFixture, RouterShell, Section, Table } from './RouterShell';
 
 export const routerStatusURL = 'apis/discovery/v1alpha2/status';
+
+/** The status page's groups, filtered to those a source serves. */
+export const groupsBySourceHref = (source: string) =>
+  `swagger?${new URLSearchParams({ router: 'status', tab: 'groups', source })}`;
 
 // Mirrors routerStatusDoc in pkg/router/discovery_status.go
 export interface RouterStatus {
@@ -61,6 +69,8 @@ export interface GroupStatus {
   plugin?: { id: string; version?: string; hasBackend: boolean };
   loadedAt: string;
   manifest: boolean;
+  // internal for a group only access policies see, public otherwise
+  visibility: string;
   discovery: string;
   openapiCached?: string[];
   watches: number;
@@ -107,6 +117,10 @@ function formatTime(value?: string) {
 
 export const RouterStatusPage = () => {
   const status = useAsyncRetry(async () => {
+    const fixture = devFixture<RouterStatus>('routerStatusFixture');
+    if (fixture) {
+      return fixture;
+    }
     const rsp = await fetch(routerStatusURL, { cache: 'no-store' });
     if (!rsp.ok) {
       throw new Error(`HTTP ${rsp.status} ${rsp.statusText}`);
@@ -135,26 +149,87 @@ export const RouterStatusPage = () => {
   );
 };
 
+type StatusTab = 'groups' | 'sources' | 'lookups';
+
+// The tab and the group source filter live in the URL so a view can be bookmarked or shared
+function readTab(): StatusTab {
+  const tab = new URLSearchParams(window.location.search).get('tab');
+  return tab === 'sources' || tab === 'lookups' ? tab : 'groups';
+}
+
+function readSource(): string | undefined {
+  return new URLSearchParams(window.location.search).get('source') || undefined;
+}
+
+function writeView(tab: StatusTab, source?: string) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('tab', tab);
+  if (source) {
+    url.searchParams.set('source', source);
+  } else {
+    url.searchParams.delete('source');
+  }
+  // Each change of view is a history entry, so Back returns to the previous one
+  if (url.href !== window.location.href) {
+    window.history.pushState(null, '', url);
+  }
+}
+
+function viewHref(tab: StatusTab, source?: string) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('tab', tab);
+  if (source) {
+    url.searchParams.set('source', source);
+  } else {
+    url.searchParams.delete('source');
+  }
+  return `${url.pathname}${url.search}`;
+}
+
+// Plain clicks change the view in place; a modified click is left to the browser, to open the link elsewhere
+function onPlainClick(e: React.MouseEvent, navigate: () => void) {
+  if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+    // The row holding the link would otherwise navigate this window too
+    e.stopPropagation();
+    return;
+  }
+  e.preventDefault();
+  navigate();
+}
+
 const RouterStatusView = ({ status }: { status: RouterStatus }) => {
   const { reconciler, breakers } = status;
   const [query, setQuery] = useState('');
-  const [source, setSource] = useState<string>();
+  const [source, setSource] = useState(readSource);
+  const [requestedTab, setTab] = useState(readTab);
+  const showView = (nextTab: StatusTab, nextSource: string | undefined) => {
+    setTab(nextTab);
+    setSource(nextSource);
+    writeView(nextTab, nextSource);
+  };
+  const switchTab = (next: StatusTab) => showView(next, source);
+  useEffect(() => {
+    const onPopState = () => {
+      setTab(readTab());
+      setSource(readSource());
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+  const groupCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const g of status.groups) {
+      counts.set(g.source, (counts.get(g.source) ?? 0) + 1);
+    }
+    return counts;
+  }, [status.groups]);
+  const hasLookups = Boolean(status.stackLookups && Object.keys(status.stackLookups).length > 0);
+  const tab = requestedTab === 'lookups' && !hasLookups ? 'groups' : requestedTab;
 
   const sources = useMemo(
     () => [...new Set(status.groups.map((g) => g.source))].sort().map((s) => ({ label: s, value: s })),
     [status.groups]
   );
-  const health = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const g of status.groups) {
-      // A group without a group breaker, such as an embedded or single-tenant
-      // one, has no health to show.
-      if (g.health !== 'unknown') {
-        counts[g.health] = (counts[g.health] ?? 0) + 1;
-      }
-    }
-    return Object.entries(counts).sort(([a], [b]) => healthOrder(a) - healthOrder(b));
-  }, [status.groups]);
   const groups = useMemo(() => {
     const q = query.trim().toLowerCase();
     return status.groups.filter(
@@ -199,147 +274,214 @@ const RouterStatusView = ({ status }: { status: RouterStatus }) => {
         </Stack>
       </Stack>
 
-      {Boolean(status.sources?.length) && (
-        <Section title={t('swagger.router-status.sources', 'Sources')}>
-          <Table
-            headers={['Source', 'Last success', 'Successes', 'Failures', 'Skipped']}
-            rows={status.sources!.map((s) => [
-              <SourceBadge key="source" source={s.source} />,
-              <TimeAgo key="last" value={s.lastSuccess} />,
-              s.successes,
-              <Count key="failures" value={s.failures} color="error" />,
-              <Count key="skipped" value={s.skipped} color="warning" />,
-            ])}
+      <div>
+        <TabsBar>
+          <Tab
+            label={t('swagger.router-status.tab-groups', 'Groups')}
+            counter={status.groups.length}
+            active={tab === 'groups'}
+            href={viewHref('groups', source)}
+            onChangeTab={(e) => onPlainClick(e, () => switchTab('groups'))}
           />
-        </Section>
-      )}
-
-      {Boolean(status.loadFailures?.length) && (
-        <Section title={t('swagger.router-status.load-failures', 'Load failures')}>
-          <Table
-            headers={['Group', 'Key', 'Failures', 'Since', 'Retry at', 'Serving']}
-            rows={status.loadFailures!.map((f) => [
-              f.group,
-              <code key="key">{f.key}</code>,
-              <Count key="failures" value={f.failures} color="error" />,
-              <TimeAgo key="since" value={f.since} />,
-              formatTime(f.retryAt),
-              f.serving ? 'yes' : <Text color="error">no</Text>,
-            ])}
+          <Tab
+            label={t('swagger.router-status.tab-sources', 'Sources')}
+            counter={status.sources?.length}
+            active={tab === 'sources'}
+            href={viewHref('sources', source)}
+            onChangeTab={(e) => onPlainClick(e, () => switchTab('sources'))}
           />
-        </Section>
-      )}
-
-      <Section title={t('swagger.router-status.groups', 'Groups')}>
-        <Stack gap={1} alignItems="center" wrap="wrap">
-          {health.map(([h, n]) => (
-            <Badge key={h} color={healthColors[h] ?? 'darkgrey'} text={`${n} ${h}`} />
-          ))}
-        </Stack>
-        <Stack gap={1} alignItems="center">
-          <Input
-            prefix={<Icon name="search" />}
-            placeholder={t('swagger.router-status.filter-placeholder', 'Filter by group, key or plugin')}
-            value={query}
-            onChange={(e) => setQuery(e.currentTarget.value)}
-            width={40}
-          />
-          {sources.length > 1 && (
-            <Select
-              options={sources}
-              value={source ?? null}
-              onChange={(v) => setSource(v?.value)}
-              placeholder={t('swagger.router-status.all-sources', 'All sources')}
-              isClearable
-              width={30}
+          {hasLookups && (
+            <Tab
+              label={t('swagger.router-status.tab-lookups', 'Stack lookups')}
+              active={tab === 'lookups'}
+              href={viewHref('lookups', source)}
+              onChangeTab={(e) => onPlainClick(e, () => switchTab('lookups'))}
             />
           )}
-          {groups.length !== status.groups.length && (
-            <Text color="secondary">
-              <Trans
-                i18nKey="swagger.router-status.filtered"
-                values={{ shown: groups.length, total: status.groups.length }}
-              >
-                {'{{shown}}'} of {'{{total}}'}
-              </Trans>
-            </Text>
-          )}
-        </Stack>
-        <Table
-          headers={[
-            'Group',
-            'Health',
-            'Source',
-            'Breaker',
-            {
-              label: 'Requests',
-              tooltip: t(
-                'swagger.router-status.requests-description',
-                "Requests the group's breaker let through to the backend, or the plugin's client calls when its scope is plugin-calls. Counted since the backend was loaded or the breaker last changed state."
-              ),
-            },
-            {
-              label: 'Failures',
-              tooltip: t(
-                'swagger.router-status.failures-description',
-                'Of those, the ones counted against the backend: 502, 503 and 504 responses, and failures to proxy, such as connection errors and timeouts. Other errors, and callers that disconnect, are not counted. Consecutive failures open the breaker.'
-              ),
-            },
-            'Plugin',
-            'Loaded',
-            'Discovery',
-            'OpenAPI cached',
-            'Watches',
-          ]}
-          rows={groups.map((g) => [
-            g.group,
-            g.health === 'unknown' ? null : (
-              <Badge key="health" color={healthColors[g.health] ?? 'darkgrey'} text={g.health} />
-            ),
-            <Tooltip key="source" content={<code>{g.key}</code>}>
-              <span>
-                <SourceBadge source={g.source} />
-              </span>
-            </Tooltip>,
-            <BreakerCell key="breaker" breaker={g.breaker} />,
-            g.breaker.requests,
-            g.breaker.consecutiveFailures ? (
-              <Text color="error">{`${g.breaker.failures} (${g.breaker.consecutiveFailures} consecutive)`}</Text>
-            ) : (
-              g.breaker.failures
-            ),
-            <PluginCell key="plugin" plugin={g.plugin} />,
-            <TimeAgo key="loaded" value={g.loadedAt} />,
-            <DiscoveryCell key="discovery" discovery={g.discovery} />,
-            g.openapiCached?.join(', ') || '-',
-            g.watches,
-          ])}
-        />
-      </Section>
+        </TabsBar>
+        <TabContent>
+          <Box paddingTop={2}>
+            <Stack direction="column" gap={3}>
+              {tab === 'groups' && (
+                <>
+                  {Boolean(status.loadFailures?.length) && (
+                    <Section title={t('swagger.router-status.load-failures', 'Load failures')}>
+                      <Table
+                        headers={['Group', 'Key', 'Failures', 'Since', 'Retry at', 'Serving']}
+                        rows={status.loadFailures!.map((f) => [
+                          f.group,
+                          <code key="key">{f.key}</code>,
+                          <Count key="failures" value={f.failures} color="error" />,
+                          <TimeAgo key="since" value={f.since} />,
+                          formatTime(f.retryAt),
+                          f.serving ? 'yes' : <Text color="error">no</Text>,
+                        ])}
+                        sortValues={status.loadFailures!.map((f) => [
+                          f.group,
+                          f.key,
+                          f.failures,
+                          timeValue(f.since),
+                          timeValue(f.retryAt),
+                          f.serving ? 1 : 0,
+                        ])}
+                      />
+                    </Section>
+                  )}
 
-      {Boolean(status.shadowed?.length) && (
-        <Section title={t('swagger.router-status.shadowed', 'Shadowed groups')}>
-          <Text color="secondary">
-            <Trans i18nKey="swagger.router-status.shadowed-description">
-              Groups a source offers that a higher-priority source serves instead.
-            </Trans>
-          </Text>
-          <Table
-            headers={['Group', 'Offered by', 'Served by']}
-            rows={status.shadowed!.map((s) => [
-              s.group,
-              <SourceBadge key="source" source={s.source} />,
-              <SourceBadge key="by" source={s.servedBy} />,
-            ])}
-          />
-        </Section>
-      )}
-
-      {status.stackLookups && Object.keys(status.stackLookups).length > 0 && (
-        <Section title={t('swagger.router-status.stack-lookups', 'Stack lookups')}>
-          <StackLookups lookups={status.stackLookups} />
-        </Section>
-      )}
+                  <Stack direction="column" gap={1}>
+                    <Stack gap={1} alignItems="center">
+                      <Input
+                        prefix={<Icon name="search" />}
+                        placeholder={t('swagger.router-status.filter-placeholder', 'Filter by group, key or plugin')}
+                        value={query}
+                        onChange={(e) => setQuery(e.currentTarget.value)}
+                        width={40}
+                      />
+                      {sources.length > 1 && (
+                        <Select
+                          options={sources}
+                          value={source ?? null}
+                          onChange={(v) => showView(tab, v?.value)}
+                          placeholder={t('swagger.router-status.all-sources', 'All sources')}
+                          isClearable
+                          width={30}
+                        />
+                      )}
+                      {groups.length !== status.groups.length && (
+                        <Text color="secondary">
+                          <Trans
+                            i18nKey="swagger.router-status.filtered"
+                            values={{ shown: groups.length, total: status.groups.length }}
+                          >
+                            {'{{shown}}'} of {'{{total}}'}
+                          </Trans>
+                        </Text>
+                      )}
+                    </Stack>
+                    <Table
+                      headers={[
+                        'Group',
+                        'Health',
+                        'Source',
+                        'Breaker',
+                        {
+                          label: 'Requests',
+                          tooltip: t(
+                            'swagger.router-status.requests-description',
+                            "Requests the group's breaker let through to the backend, or the plugin's client calls when its scope is plugin-calls. Counted since the backend was loaded or the breaker last changed state."
+                          ),
+                        },
+                        {
+                          label: 'Failures',
+                          tooltip: t(
+                            'swagger.router-status.failures-description',
+                            'Of those, the ones counted against the backend: 502, 503 and 504 responses, and failures to proxy, such as connection errors and timeouts. Other errors, and callers that disconnect, are not counted. Consecutive failures open the breaker.'
+                          ),
+                        },
+                        'Plugin',
+                        'Loaded',
+                        'Discovery',
+                        'OpenAPI cached',
+                        'Watches',
+                      ]}
+                      rows={groups.map((g) => [
+                        <GroupCell key="group" group={g} />,
+                        g.health === 'unknown' ? null : (
+                          <Badge key="health" color={healthColors[g.health] ?? 'darkgrey'} text={g.health} />
+                        ),
+                        <Tooltip key="source" content={<code>{g.key}</code>}>
+                          <span>
+                            <SourceBadge source={g.source} />
+                          </span>
+                        </Tooltip>,
+                        <BreakerCell key="breaker" breaker={g.breaker} />,
+                        g.breaker.requests,
+                        g.breaker.consecutiveFailures ? (
+                          <Text color="error">{`${g.breaker.failures} (${g.breaker.consecutiveFailures} consecutive)`}</Text>
+                        ) : (
+                          g.breaker.failures
+                        ),
+                        <PluginCell key="plugin" plugin={g.plugin} />,
+                        <TimeAgo key="loaded" value={g.loadedAt} />,
+                        <DiscoveryCell key="discovery" discovery={g.discovery} />,
+                        g.openapiCached?.join(', ') || '-',
+                        g.watches,
+                      ])}
+                      defaultSort={{ column: 4, descending: true }}
+                      sortValues={groups.map((g) => [
+                        g.group,
+                        healthOrder(g.health),
+                        g.source,
+                        g.breaker.state ?? g.breaker.scope,
+                        g.breaker.requests,
+                        g.breaker.failures,
+                        g.plugin?.id,
+                        timeValue(g.loadedAt),
+                        g.discovery,
+                        g.openapiCached?.join(', '),
+                        g.watches,
+                      ])}
+                    />
+                  </Stack>
+                  {Boolean(status.shadowed?.length) && (
+                    <Section title={t('swagger.router-status.shadowed', 'Shadowed groups')}>
+                      <Text color="secondary">
+                        <Trans i18nKey="swagger.router-status.shadowed-description">
+                          Groups a source offers that a higher-priority source serves instead.
+                        </Trans>
+                      </Text>
+                      <Table
+                        headers={['Group', 'Offered by', 'Served by']}
+                        rows={status.shadowed!.map((s) => [
+                          s.group,
+                          <SourceBadge key="source" source={s.source} />,
+                          <SourceBadge key="by" source={s.servedBy} />,
+                        ])}
+                        sortValues={status.shadowed!.map((s) => [s.group, s.source, s.servedBy])}
+                      />
+                    </Section>
+                  )}
+                </>
+              )}
+              {tab === 'sources' && (
+                <>
+                  {Boolean(status.sources?.length) && (
+                    <Table
+                      headers={['Source', 'Groups', 'Last success', 'Successes', 'Failures', 'Skipped']}
+                      defaultSort={{ column: 1, descending: true }}
+                      onRowClick={(i) => showView('groups', status.sources![i].source)}
+                      rows={status.sources!.map((s) => [
+                        <a
+                          key="source"
+                          href={viewHref('groups', s.source)}
+                          // The row handles a plain click; the link is for opening it elsewhere
+                          onClick={(e) => onPlainClick(e, () => undefined)}
+                        >
+                          <SourceBadge source={s.source} />
+                        </a>,
+                        groupCounts.get(s.source) ?? 0,
+                        <TimeAgo key="last" value={s.lastSuccess} />,
+                        s.successes,
+                        <Count key="failures" value={s.failures} color="error" />,
+                        <Count key="skipped" value={s.skipped} color="warning" />,
+                      ])}
+                      sortValues={status.sources!.map((s) => [
+                        s.source,
+                        groupCounts.get(s.source) ?? 0,
+                        timeValue(s.lastSuccess),
+                        s.successes,
+                        s.failures,
+                        s.skipped,
+                      ])}
+                    />
+                  )}
+                </>
+              )}
+              {tab === 'lookups' && hasLookups && <StackLookups lookups={status.stackLookups!} />}
+            </Stack>
+          </Box>
+        </TabContent>
+      </div>
     </Stack>
   );
 };
@@ -357,9 +499,11 @@ function sourceColor(source: string): BadgeColor {
   switch (source) {
     case 'single-tenant':
       return 'purple';
-    case 'core_url':
+    case 'core':
+      return 'brand';
+    case 'plugins':
       return 'green';
-    case 'plugins_url':
+    case 'bridge':
       return 'orange';
   }
   return 'darkgrey';
@@ -368,6 +512,9 @@ function sourceColor(source: string): BadgeColor {
 export const SourceBadge = ({ source }: { source: string }) => <Badge color={sourceColor(source)} text={source} />;
 
 const isZeroTime = (value?: string) => !value || value.startsWith('0001-');
+
+// A time that never happened has no sort value, so it sorts last
+const timeValue = (value?: string) => (isZeroTime(value) ? undefined : Date.parse(value!));
 
 const TimeAgo = ({ value }: { value?: string }) => {
   if (isZeroTime(value)) {
@@ -382,6 +529,27 @@ const TimeAgo = ({ value }: { value?: string }) => {
 
 const Count = ({ value, color }: { value: number; color: 'error' | 'warning' }) =>
   value > 0 ? <Text color={color}>{value}</Text> : <Text color="secondary">0</Text>;
+
+const GroupCell = ({ group }: { group: GroupStatus }) => {
+  if (group.visibility !== 'internal') {
+    return <>{group.group}</>;
+  }
+  return (
+    <Stack gap={1} alignItems="center">
+      <span>{group.group}</span>
+      <Tooltip
+        content={t(
+          'swagger.router-status.internal-description',
+          'Only access policies see this group. Every other caller gets a 404 for it, and it is not listed in their discovery.'
+        )}
+      >
+        <span>
+          <Badge color="purple" text={t('swagger.router-status.internal', 'internal')} />
+        </span>
+      </Tooltip>
+    </Stack>
+  );
+};
 
 const PluginCell = ({ plugin }: { plugin?: GroupStatus['plugin'] }) => {
   if (!plugin) {

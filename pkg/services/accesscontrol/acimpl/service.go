@@ -68,6 +68,7 @@ func ProvideService(
 	restConfigProvider restcfg.RestConfigProvider,
 	iamFeatures IAMFeatures,
 	legacyClient legacyclient.Service, roleCatalog *legacypermissions.RoleCatalog,
+	reg prometheus.Registerer,
 ) (*Service, error) {
 	service := ProvideOSSService(
 		cfg,
@@ -82,6 +83,8 @@ func ProvideService(
 		iamFeatures,
 		legacyClient, roleCatalog,
 	)
+
+	service.legacyShadow = NewLegacyUserPermissionsShadow(reg, cfg.RBAC.LegacyUserPermissionsShadowMaxConcurrent)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, userService).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service); err != nil {
@@ -127,6 +130,7 @@ func ProvideOSSService(
 		permRegistry:              permRegistry,
 		sql:                       db,
 		serverLock:                lock,
+		legacyShadow:              NewLegacyUserPermissionsShadow(nil, cfg.RBAC.LegacyUserPermissionsShadowMaxConcurrent),
 		legacyClient:              legacyClient,
 		roleCatalog:               roleCatalog,
 	}
@@ -158,6 +162,7 @@ type Service struct {
 	sql                       db.DB
 	serverLock                *serverlock.ServerLockService
 	singleFlight              singleflight.Group
+	legacyShadow              *LegacyUserPermissionsShadow
 	legacyClient              legacyclient.Service
 	userPermissionsClient     accesscontrol.UserPermissionsClient
 	zanzanaResolver           *ZanzanaPermissionResolver
@@ -179,7 +184,9 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	defer span.End()
 
 	delegate := s.cfg.RBAC.SingleOrganization && user.GetOrgID() != accesscontrol.GlobalOrgID && s.userPermissionsAPIEnabled
-	legacy := !delegate && LegacyUserPermissionsEnabled(ctx)
+	legacyEnabled := !delegate && LegacyUserPermissionsEnabled(ctx)
+	shadow := legacyEnabled && LegacyUserPermissionsShadowEnabled(ctx)
+	legacy := legacyEnabled && !shadow
 	// The legacy loader owns timing on this route.
 	if !legacy {
 		timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
@@ -195,6 +202,11 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	// The legacy toggle replaces local enumeration, not the delegated authority.
 	if legacy {
 		return GetLegacyUserPermissions(ctx, s.legacyClient, user, options, s.cfg)
+	}
+	if shadow {
+		return s.legacyShadow.GetUserPermissions(ctx, s.legacyClient, user, options, s.cfg, func() ([]accesscontrol.Permission, error) {
+			return s.getLocalUserPermissions(ctx, user, options)
+		})
 	}
 	return s.getLocalUserPermissions(ctx, user, options)
 }
@@ -628,6 +640,7 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 	})
 
 	s.isInitialized = true
+	s.publishRoleCatalogLocked()
 
 	rolesSnapshot := s.getBasicRolePermissionsLocked()
 	s.rolesMu.Unlock()
@@ -672,7 +685,6 @@ func (s *Service) getBasicRolePermissionsLocked() map[string][]accesscontrol.Per
 // registerRolesLocked processes a single role registration and adds permissions to basic roles.
 // Must be called with s.rolesMu locked.
 func (s *Service) registerRolesLocked(registration accesscontrol.RoleRegistration) {
-	defer s.publishRoleCatalogLocked()
 	for br := range accesscontrol.BuiltInRolesWithParents(registration.Grants) {
 		if basicRole, ok := s.roles[br]; ok {
 			for _, p := range registration.Role.Permissions {
@@ -729,6 +741,7 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 		if initialized {
 			s.rolesMu.Lock()
 			s.registerRolesLocked(r)
+			s.publishRoleCatalogLocked()
 			updatedBasicRoles = true
 			s.rolesMu.Unlock()
 			s.cache.Flush()
