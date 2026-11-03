@@ -20,6 +20,14 @@ export * from './templateSrv';
 export * from './live';
 export * from './LocationService';
 export * from './appEvents';
+export {
+  registerPlaylistItemKind,
+  getPlaylistItemKinds,
+  getPlaylistItemKind,
+  type PlaylistItemKind,
+  type PlaylistItemResolution,
+  type PlaylistItemSearchResult,
+} from './playlistItemKinds';
 
 export {
   setPluginComponentHook,

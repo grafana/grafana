@@ -128,6 +128,7 @@ import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
 import { cleanupOldExpandedFolders } from './features/search/utils';
+import { registerSlideshowKinds } from './features/slideshows/resolvers/registerKinds';
 import { variableAdapters } from './features/variables/adapters';
 import { createAdHocVariableAdapter } from './features/variables/adhoc/adapter';
 import { createConstantVariableAdapter } from './features/variables/constant/adapter';
@@ -275,6 +276,8 @@ export class GrafanaApp {
       initExtensions();
 
       initAlerting();
+
+      registerSlideshowKinds().catch((err) => console.error('Failed to register slideshow kinds', err));
 
       standardEditorsRegistry.setInit(getAllOptionEditors);
       standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
