@@ -143,14 +143,3 @@ working-tree files. If the commit or source file is unavailable locally, fetch
 the run's commit and retry. The script does not fetch Git history automatically.
 Ownership still comes from the current checkout. The run and source commit are
 shown in the HTML report.
-
-### Testing the Meticulous scripts
-
-The CLI tests use Jest's ESM support with an isolated Node configuration; the
-report tests use Node's test runner and generate real Monocart HTML in a temporary
-Git repository. Neither suite needs a Meticulous token.
-
-```bash
-node --experimental-vm-modules node_modules/jest/bin/jest.js scripts/tests/meticulous-coverage-by-codeowner.test.js --watch=false --runInBand --config '{"testEnvironment":"node","roots":["<rootDir>/scripts/tests"],"transform":{}}'
-node --test scripts/tests/meticulous-coverage-report.test.mjs scripts/tests/codeowner-coverage-files.test.mjs
-```
