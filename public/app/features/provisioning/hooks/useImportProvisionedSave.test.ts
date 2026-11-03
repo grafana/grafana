@@ -48,6 +48,12 @@ describe('useImportProvisionedSave', () => {
     capturedRequest = null;
     jest.clearAllMocks();
     dashboardAPIVersionResolver.set({ v1: 'v1', v2: 'v2' });
+    // locationUtil keeps module-level config, so reset it between tests
+    locationUtil.initialize({
+      config: { appSubUrl: '' } as GrafanaConfig,
+      getTimeRangeForUrl: jest.fn(),
+      getVariablesUrlParams: jest.fn(),
+    });
 
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
@@ -230,6 +236,15 @@ describe('useImportProvisionedSave', () => {
   });
 
   describe('save outcomes', () => {
+    // Serve from a sub path: the router basename carries it, so navigate() must get bare paths
+    beforeEach(() => {
+      locationUtil.initialize({
+        config: { appSubUrl: '/grafana' } as GrafanaConfig,
+        getTimeRangeForUrl: jest.fn(),
+        getVariablesUrlParams: jest.fn(),
+      });
+    });
+
     it('navigates to the new dashboard after a configured-branch save', async () => {
       server.use(
         http.post(`${BASE}/repositories/:name/files/*`, () =>
@@ -249,7 +264,7 @@ describe('useImportProvisionedSave', () => {
       });
 
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/d/new-dash-uid/my-dashboard'));
+        expect(mockNavigate).toHaveBeenCalledWith('/d/new-dash-uid/my-dashboard');
       });
       expect(result.current.error).toBeUndefined();
     });
@@ -274,71 +289,6 @@ describe('useImportProvisionedSave', () => {
         expect(mockNavigate).toHaveBeenCalledWith('/dashboards/f/folder-abc/');
       });
       expect(result.current.error).toBeUndefined();
-    });
-
-    describe('when Grafana is served from a sub path', () => {
-      // The router history is created with config.appSubUrl as its basename, so
-      // navigate() must receive bare paths; a prefixed path doubles the sub path (#136789).
-      beforeEach(() => {
-        locationUtil.initialize({
-          config: { appSubUrl: '/grafana' } as GrafanaConfig,
-          getTimeRangeForUrl: jest.fn(),
-          getVariablesUrlParams: jest.fn(),
-        });
-      });
-
-      afterEach(() => {
-        locationUtil.initialize({
-          config: { appSubUrl: '' } as GrafanaConfig,
-          getTimeRangeForUrl: jest.fn(),
-          getVariablesUrlParams: jest.fn(),
-        });
-      });
-
-      it('navigates to the new dashboard without repeating the sub path', async () => {
-        server.use(
-          http.post(`${BASE}/repositories/:name/files/*`, () =>
-            HttpResponse.json({ resource: { upsert: { metadata: { name: 'new-dash-uid' } } } })
-          )
-        );
-
-        const { result } = renderImportSaveHook(repository);
-
-        await act(async () => {
-          await result.current.save(
-            makeSaveParams({
-              title: 'My Dashboard',
-              form: { ref: 'main', path: 'dash.json' },
-            })
-          );
-        });
-
-        await waitFor(() => {
-          expect(mockNavigate).toHaveBeenCalledWith(expect.stringMatching(/^\/d\/new-dash-uid\/my-dashboard/));
-        });
-        expect(mockNavigate).not.toHaveBeenCalledWith(expect.stringContaining('/grafana/'));
-      });
-
-      it('falls back to the folder view without repeating the sub path', async () => {
-        server.use(
-          http.post(`${BASE}/repositories/:name/files/*`, () => HttpResponse.json({ resource: { upsert: {} } }))
-        );
-
-        const { result } = renderImportSaveHook(repository);
-
-        await act(async () => {
-          await result.current.save(
-            makeSaveParams({
-              folderUid: 'folder-abc',
-              form: { ref: 'main', path: 'dash.json' },
-            })
-          );
-        });
-
-        await waitFor(() => {
-          expect(mockNavigate).toHaveBeenCalledWith('/dashboards/f/folder-abc/');
-        });
-      });
     });
 
     it('navigates to the preview page after a new-branch save', async () => {

@@ -1,4 +1,4 @@
-import { buildResourceBranchRedirectUrl, getJobListRedirectUrl } from './redirect';
+import { buildResourceBranchRedirectUrl, getJobListRedirectUrl, getSavedDashboardPath } from './redirect';
 
 describe('buildResourceBranchRedirectUrl', () => {
   it('returns the base URL with no params when nothing is provided', () => {
@@ -87,5 +87,26 @@ describe('getJobListRedirectUrl', () => {
     expect(getJobListRedirectUrl({ workflow: 'branch', urls: undefined, repoType: 'github', prTitle: '' })).toBe(
       '/dashboards?repo_type=github'
     );
+  });
+});
+
+describe('getSavedDashboardPath', () => {
+  const originalHref = window.location.href;
+
+  afterEach(() => {
+    window.history.replaceState({}, '', originalHref);
+  });
+
+  it('builds the dashboard path from the uid and the slugified title', () => {
+    expect(getSavedDashboardPath('abc', 'My Dashboard')).toBe('/d/abc/my-dashboard');
+  });
+
+  it('omits the slug when there is no title', () => {
+    expect(getSavedDashboardPath('abc')).toBe('/d/abc');
+  });
+
+  it('keeps the current query params', () => {
+    window.history.replaceState({}, '', '/?orgId=1');
+    expect(getSavedDashboardPath('abc', 'My Dashboard')).toBe('/d/abc/my-dashboard?orgId=1');
   });
 });
