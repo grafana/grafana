@@ -8,10 +8,10 @@ export const StPodReadyGate = ({ skip }: { skip: boolean }) => {
   const status = stPodReady.useStatus();
 
   useEffect(() => {
-    if (status === StPodStatus.Captcha) {
+    if (!skip && status === StPodStatus.Captcha) {
       window.location.reload();
     }
-  }, [status]);
+  }, [skip, status]);
 
   if (skip || status === StPodStatus.Ready || status === StPodStatus.Unknown || status === StPodStatus.Captcha) {
     return null;

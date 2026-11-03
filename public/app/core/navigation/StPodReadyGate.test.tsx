@@ -115,5 +115,13 @@ describe('StPodReadyGate', () => {
 
       expect(screen.queryByText('waiting for pod')).not.toBeInTheDocument();
     });
+
+    it('does not reload on captcha when the check is skipped', async () => {
+      service.state.next(StPodStatus.Captcha);
+
+      await renderGate(true, service);
+
+      expect(reloadSpy).not.toHaveBeenCalled();
+    });
   });
 });
