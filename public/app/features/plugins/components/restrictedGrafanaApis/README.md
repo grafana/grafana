@@ -33,7 +33,7 @@ addPanel = "myorg-test-app"
 ```
 
 **How to use restricted APIs in a plugin?**
-You should be access the restricted APIs in your plugin using the `useRestrictedGrafanaApis()` hook. It works in app pages, extension components, and the panel component of a panel plugin. Other components Grafana renders for a plugin, such as panel option editors, don't receive the APIs.
+You should be access the restricted APIs in your plugin using the `useRestrictedGrafanaApis()` hook:
 
 ```ts
 import { RestrictedGrafanaApisContextType, useRestrictedGrafanaApis } from "@grafana/data";
@@ -48,7 +48,7 @@ if (addPanel) {
 ```
 
 **How to use restricted APIs outside a component (app plugins only)?**
-`useRestrictedGrafanaApis()` works only inside an app page, an extension component, or the panel component of a panel plugin. For code that runs when Grafana loads the plugin, use `AppPlugin.onRestrictedApis()`:
+`useRestrictedGrafanaApis()` works only inside an app page or an extension component. For code that runs when Grafana loads the plugin, use `AppPlugin.onRestrictedApis()`:
 
 ```ts
 import { AppPlugin } from '@grafana/data';
