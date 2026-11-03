@@ -550,33 +550,34 @@ export function ComposerOverlay({
         return;
       }
       const variable = variableAt(event.target);
-      const key = variable?.getAttribute('data-dashboard-element-key');
-      const box = variable ? boxFor(variable) : null;
-      if (key && box) {
-        hoverPointerRef.current = null;
-        followHint(event.clientX, event.clientY, 'variable');
-        setHovered({ key, box });
-        return;
-      }
-      if (!onBody(event) || isOverExtensionSidebar(event.clientX, event.clientY)) {
+      if (!variable && (!onBody(event) || isOverExtensionSidebar(event.clientX, event.clientY))) {
         hoverPointerRef.current = null;
         hideHint();
         setHovered(null);
         return;
       }
-      hoverPointerRef.current = { x: event.clientX, y: event.clientY };
-      hoverAt(event.clientX, event.clientY);
+      // The controls do not scroll, so a variable needs no re-hover on scroll.
+      hoverPointerRef.current = variable ? null : { x: event.clientX, y: event.clientY };
+      hoverAt(event.clientX, event.clientY, variable);
     };
 
-    const hoverAt = (x: number, y: number) => {
-      followHint(x, y);
+    const hoverAt = (x: number, y: number, variable: HTMLElement | null = null) => {
+      followHint(x, y, variable ? 'variable' : undefined);
       if (pickMode !== 'element') {
         return;
       }
-      const elementRoot = elementAt(x, y, session.elementSelector);
-      const key = elementRoot?.getAttribute(session.elementKeyAttribute);
-      const box = elementRoot ? boxFor(elementRoot) : null;
-      setHovered(key && box ? { key, box } : null);
+      const picked = pickableAt(x, y, variable);
+      const box = picked ? boxFor(picked.element) : null;
+      setHovered(picked && box ? { key: picked.key, box } : null);
+    };
+
+    /** What Select picks at a point: the variable the pointer is on, else the element under it. */
+    const pickableAt = (x: number, y: number, variable: HTMLElement | null) => {
+      const element = variable ?? elementAt(x, y, session.elementSelector);
+      const key = variable
+        ? variable.getAttribute('data-dashboard-element-key')
+        : element?.getAttribute(session.elementKeyAttribute);
+      return element && key ? { element, key } : null;
     };
 
     // The wheel scrolls the document under a still pointer, which fires no pointer move.
@@ -617,17 +618,7 @@ export function ComposerOverlay({
 
     const onClick = (event: MouseEvent) => {
       const variable = variableAt(event.target);
-      if (variable) {
-        event.preventDefault();
-        event.stopPropagation();
-        const key = variable.getAttribute('data-dashboard-element-key');
-        const pick = key ? session.resolveVariablePick(key) : null;
-        if (pick) {
-          session.completePick(withModifier(pick, event));
-        }
-        return;
-      }
-      if (!onBody(event) || isUsableTab(event.target)) {
+      if (!variable && (!onBody(event) || isUsableTab(event.target))) {
         return;
       }
       // Legends, links and panel menus never respond to a click while Composer is open.
@@ -647,17 +638,16 @@ export function ComposerOverlay({
       ) {
         return;
       }
-      const elementRoot = elementAt(event.clientX, event.clientY, session.elementSelector);
-      const key = elementRoot?.getAttribute(session.elementKeyAttribute);
-      if (!elementRoot || !key) {
+      const picked = pickableAt(event.clientX, event.clientY, variable);
+      if (!picked) {
         return;
       }
-      const rect = elementRoot.getBoundingClientRect();
+      const rect = picked.element.getBoundingClientRect();
       const point = {
         x: rect.width > 0 ? (event.clientX - rect.left) / rect.width : 0,
         y: rect.height > 0 ? (event.clientY - rect.top) / rect.height : 0,
       };
-      const pick = session.resolveElementPick(key, point);
+      const pick = variable ? session.resolveVariablePick(picked.key) : session.resolveElementPick(picked.key, point);
       if (pick) {
         session.completePick(withModifier(pick, event));
       }
