@@ -277,7 +277,6 @@ To group or delete multiple panels, follow these steps:
    - **Group into tab**: Moves the selected panels into a new tab.
    - **Delete**: Deletes all the selected panels.
 
-1. Click **Group into row**, **Group into tab**, or **Delete**. If you choose **Delete**, confirm the deletion.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
