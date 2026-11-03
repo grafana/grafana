@@ -524,7 +524,8 @@ To resize a panel, follow these steps:
 
 ## Copy, duplicate, or delete dashboard elements
 
-You can copy and paste, duplicate, or delete any dashboard elements using the sidebar. To delete several panels at once, you can also use the actions tooltip; refer to [Edit multiple panels](#edit-multiple-panels).
+You can copy and paste, duplicate, or delete any dashboard elements using the sidebar.
+To delete several panels at once, you can also use the actions tooltip; refer to [Edit multiple panels](#group-or-delete-multiple-panels-with-bulk-actions).
 
 To manage dashboard elements, follow these steps:
 
