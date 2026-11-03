@@ -406,7 +406,7 @@ Content-Type: application/json
 
 `PUT /apis/annotation.grafana.app/v0alpha1/namespaces/:namespace/annotations/:name`
 
-Replaces an annotation. Provide the entire annotation, including `metadata.name` and `metadata.namespace`. You can change `text` and `tags`. The `time`, `timeEnd`, `dashboardUID`, and `panelID` values must match the existing annotation.
+Replaces an annotation. Provide the entire annotation, including `metadata.name` and `metadata.namespace`. You can only change `text` and `tags`. The `time`, `timeEnd`, `dashboardUID`, and `panelID` values must match the existing annotation, and you can't modify them after creation.
 
 - `name`: The `metadata.name` of the annotation.
 
@@ -467,7 +467,7 @@ Content-Type: application/json
 
 `PATCH /apis/annotation.grafana.app/v0alpha1/namespaces/:namespace/annotations/:name`
 
-Updates only the fields you provide, using a JSON merge patch. The same restrictions as for [Update an annotation](#update-an-annotation) apply.
+Updates only the fields you provide, using a JSON merge patch. The same restrictions as for [Update an annotation](#update-an-annotation) apply: You can only change `text` and `tags`, and you can't modify `time`, `timeEnd`, `dashboardUID`, and `panelID` after creation.
 
 - `name`: The `metadata.name` of the annotation.
 
@@ -563,18 +563,18 @@ This API replaces the legacy [Annotations API](https://grafana.com/docs/grafana/
 
 The following table describes how the legacy API maps to this API:
 
-| Legacy API                                                            | New API                                                                                                                       |
-| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Annotation identified by numeric `id`.                                | Annotation identified by `metadata.name`.                                                                                     |
-| `POST /api/annotations` returns `message` and `id`.                   | `POST /annotations` returns the created annotation.                                                                           |
-| `GET /api/annotations` with query parameters.                         | `GET /search` with query parameters.                                                                                          |
-| `dashboardId` and `dashboardUID`, `panelId`.                          | `dashboardUID` and `panelID`. `dashboardId` isn't supported.                                                                  |
-| `tags` (repeated) and `matchAny`.                                     | `tag` (repeated) and `tagsMatchAny`.                                                                                          |
-| `userId` filter.                                                      | `createdBy` filter, which takes a user UID.                                                                                   |
-| `userId`, `userName`, `login`, `email`, and `avatarUrl` in responses. | The creator is in `metadata.annotations["grafana.app/createdBy"]`, in the format `user:<UID>`.                                |
-| `alertId`, `alertName`, `newState`, `prevState`, and `type`.          | Not available.                                                                                                                |
-| `data`.                                                               | Not available.                                                                                                                |
-| `PUT` and `PATCH` can change `time` and `timeEnd`.                    | `PUT` and `PATCH` can change `text` and `tags`. `time`, `timeEnd`, `dashboardUID`, and `panelID` can't change after creation. |
-| `GET /api/annotations/tags` with `tag` filter. Tags are in `result`.  | `GET /tags` with `contains` filter. Tags are at the top level of the response.                                                |
-| `POST /api/annotations/mass-delete`.                                  | Not available. Delete annotations individually.                                                                               |
-| `POST /api/annotations/graphite`.                                     | `POST /graphite`, with the same request body. The response is the created annotation.                                         |
+| Legacy API                                                            | New API                                                                                                                           |
+| --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Annotation identified by numeric `id`.                                | Annotation identified by `metadata.name`.                                                                                         |
+| `POST /api/annotations` returns `message` and `id`.                   | `POST /annotations` returns the created annotation.                                                                               |
+| `GET /api/annotations` with query parameters.                         | `GET /search` with query parameters.                                                                                              |
+| `dashboardId` and `dashboardUID`, `panelId`.                          | `dashboardUID` and `panelID`. `dashboardId` isn't supported.                                                                      |
+| `tags` (repeated) and `matchAny`.                                     | `tag` (repeated) and `tagsMatchAny`.                                                                                              |
+| `userId` filter.                                                      | `createdBy` filter, which takes a user UID.                                                                                       |
+| `userId`, `userName`, `login`, `email`, and `avatarUrl` in responses. | The creator is in `metadata.annotations["grafana.app/createdBy"]`, in the format `user:<UID>`.                                    |
+| `alertId`, `alertName`, `newState`, `prevState`, and `type`.          | Not available.                                                                                                                    |
+| `data`.                                                               | Not available.                                                                                                                    |
+| `PUT` and `PATCH` can change `time` and `timeEnd`.                    | `PUT` and `PATCH` can update `text` and `tags`. You can't modify `time`, `timeEnd`, `dashboardUID`, and `panelID` after creation. |
+| `GET /api/annotations/tags` with `tag` filter. Tags are in `result`.  | `GET /tags` with `contains` filter. Tags are at the top level of the response.                                                    |
+| `POST /api/annotations/mass-delete`.                                  | Not available. Delete annotations individually.                                                                                   |
+| `POST /api/annotations/graphite`.                                     | `POST /graphite`, with the same request body. The response is the created annotation.                                             |
