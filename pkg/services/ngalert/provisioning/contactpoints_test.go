@@ -864,7 +864,7 @@ func TestCheckProtectedFields_HasUpdateProtectedError(t *testing.T) {
 					return false, tc.hasErr
 				},
 			}}
-			err := svc.checkProtectedFields(context.Background(), usr, typeSchema, cp, cp)
+			err := svc.checkProtectedFields(context.Background(), usr, "receiver-uid", typeSchema, cp, cp)
 			if tc.expectedErr != "" {
 				require.ErrorIs(t, err, tc.hasErr)
 				require.ErrorContains(t, err, tc.expectedErr)
@@ -1057,6 +1057,11 @@ func TestIntegrationAuthorization(t *testing.T) {
 			newVersion.Settings = integration2.Settings.DeepCopy()
 			newVersion.Settings.Set("message", "something else")
 			authz.Reset()
+			uidA := uidOf(receiverA)
+			authz.HasUpdateProtectedFunc = func(ctx context.Context, requester identity.Requester, receiver *models.Receiver) (bool, error) {
+				assert.Equal(t, uidA, receiver.UID, "protected fields should be checked against the stored receiver")
+				return true, nil
+			}
 			authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
 				assert.Equal(t, user, requester)
 				assert.Equal(t, uidOf(receiverA), uid)
