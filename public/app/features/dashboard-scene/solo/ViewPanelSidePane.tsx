@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { type PanelData } from '@grafana/data';
+import { type DataFrame, DataFrameType, FieldType, type PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import {
@@ -113,18 +113,21 @@ interface ViewPaneFanoutOptionsProps {
 function ViewPanelFanoutOptions({ panel, pane }: ViewPaneFanoutOptionsProps) {
   const { fanoutMode } = pane.useState();
   const [labels, setLabels] = useState<string[] | undefined>(undefined);
+  const [hasWideFrames, setHasWideFrames] = useState(false);
 
   const modeValue = fanoutMode ?? '$__none__$';
 
   useEffect(() => {
     const dataProvider = panel.state.$data!;
 
-    const dataSub = dataProvider.subscribeToState((state) => {
-      const labels = extractLabelsFromData(state.data);
-      setLabels(labels);
-    });
+    const update = (data: PanelData | undefined) => {
+      setLabels(extractLabelsFromData(data));
+      setHasWideFrames(Boolean(data?.series.some(isWideFrame)));
+    };
 
-    setLabels(extractLabelsFromData(dataProvider.state.data));
+    const dataSub = dataProvider.subscribeToState((state) => update(state.data));
+
+    update(dataProvider.state.data);
 
     return () => dataSub.unsubscribe();
   }, [panel]);
@@ -157,21 +160,27 @@ function ViewPanelFanoutOptions({ panel, pane }: ViewPaneFanoutOptionsProps) {
         </Text>
       </Box>
       <Box direction="column" gap={1} display="flex" paddingLeft={1}>
-        {labels && labels.length === 0 && (
+        {hasWideFrames && (
+          <Text italic variant="bodySmall">
+            {t('dashboard.sidebar.view-panel.fanout-wide-frames', 'Not available for wide data frames')}
+          </Text>
+        )}
+        {!hasWideFrames && labels && labels.length === 0 && (
           <Text italic variant="bodySmall">
             {t('dashboard.sidebar.view-panel.fanout-no-labels', 'Data has no labels')}
           </Text>
         )}
-        {labels?.map((label) => (
-          <RadioButtonDot
-            key={label}
-            name="fanout"
-            id={getModeForLabel(label)}
-            label={label}
-            checked={modeValue === getModeForLabel(label)}
-            onClick={() => pane.onSetMode(getModeForLabel(label))}
-          />
-        ))}
+        {!hasWideFrames &&
+          labels?.map((label) => (
+            <RadioButtonDot
+              key={label}
+              name="fanout"
+              id={getModeForLabel(label)}
+              label={label}
+              checked={modeValue === getModeForLabel(label)}
+              onClick={() => pane.onSetMode(getModeForLabel(label))}
+            />
+          ))}
       </Box>
     </OptionsPaneCategory>
   );
@@ -192,6 +201,16 @@ function extractLabelsFromData(panelData: PanelData | undefined): string[] {
   });
 
   return Array.from(labelSet);
+}
+
+// Fanout by label groups whole frames, so a wide frame (several value fields, each with its own
+// labels) can't be split and would collapse into one group. Many datasources don't set meta.type,
+// so more than one number field also counts as wide.
+function isWideFrame(frame: DataFrame): boolean {
+  if (frame.meta?.type === DataFrameType.TimeSeriesWide) {
+    return true;
+  }
+  return frame.fields.filter((f) => f.type === FieldType.number).length > 1;
 }
 
 function getModeForLabel(label: string) {

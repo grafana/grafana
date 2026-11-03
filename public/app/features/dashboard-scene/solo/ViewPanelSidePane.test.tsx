@@ -2,9 +2,10 @@ import { act, screen } from '@testing-library/react';
 import { type ReactNode } from 'react';
 import { render } from 'test/test-utils';
 
+import { type DataFrame, FieldType, LoadingState, createDataFrame, getDefaultTimeRange } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { SceneDataNode, SceneGridLayout, VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { Sidebar, useSidebar } from '@grafana/ui';
 
@@ -25,7 +26,10 @@ const plugin = getPanelPlugin({ id: 'quick-toggles' })
       defaultValue: true,
     })
   )
-  .setViewPanelOptions({ quickToggles: { optionProperties: ['legend.showLegend'], fieldConfigProperties: [] } });
+  .setViewPanelOptions({
+    quickToggles: { optionProperties: ['legend.showLegend'], fieldConfigProperties: [] },
+    fanout: { enabled: true },
+  });
 
 setPluginImportUtils({ importPanelPlugin: async () => plugin, getPanelPluginFromCache: () => plugin });
 
@@ -33,8 +37,12 @@ jest.mock('app/features/plugins/importPanelPlugin', () => ({
   importPanelPlugin: () => Promise.resolve(plugin),
 }));
 
-async function setup(mode: DashboardMode) {
-  const panel = new VizPanel({ key: 'panel-1', pluginId: 'quick-toggles' });
+async function setup(mode: DashboardMode, series: DataFrame[] = []) {
+  const panel = new VizPanel({
+    key: 'panel-1',
+    pluginId: 'quick-toggles',
+    $data: new SceneDataNode({ data: { state: LoadingState.Done, series, timeRange: getDefaultTimeRange() } }),
+  });
   const dashboard = new DashboardScene({
     mode,
     isEditing: mode !== 'view',
@@ -73,5 +81,37 @@ describe('ViewPanelSidePane', () => {
     await setup(mode);
 
     expect(screen.getByText('Show legend')).toBeInTheDocument();
+  });
+
+  describe('fanout by label', () => {
+    const seriesFrame = (job: string) =>
+      createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1] },
+          { name: 'value', type: FieldType.number, values: [1], labels: { bot_job: job } },
+        ],
+      });
+
+    it('lists the labels of multi-frame data', async () => {
+      await setup('view', [seriesFrame('a'), seriesFrame('b')]);
+
+      expect(screen.getByLabelText('bot_job')).toBeInTheDocument();
+      expect(screen.queryByText('Not available for wide data frames')).not.toBeInTheDocument();
+    });
+
+    it('hides the labels for a wide frame', async () => {
+      const wide = createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1] },
+          { name: 'a', type: FieldType.number, values: [1], labels: { bot_job: 'a' } },
+          { name: 'b', type: FieldType.number, values: [1], labels: { bot_job: 'b' } },
+        ],
+      });
+      await setup('view', [wide]);
+
+      expect(screen.queryByLabelText('bot_job')).not.toBeInTheDocument();
+      expect(screen.getByText('Not available for wide data frames')).toBeInTheDocument();
+      expect(screen.getByLabelText('By series')).toBeInTheDocument();
+    });
   });
 });
