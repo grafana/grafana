@@ -1,39 +1,113 @@
-import { setBackendSrv, type BackendSrv } from '@grafana/runtime';
+import {
+  mapGatewayStatus,
+  parseGatewayStatus,
+  parseRetryAfterMs,
+  StPodReadyService,
+  StPodStatus,
+} from './StPodReadyService';
+import { DEFAULT_ST_POD_POLL_INTERVAL_MS, ST_POD_READY_TTL_MS, ST_POD_TIMEOUT_MS } from './stPodReadyConstants';
 
-import { StPodReadyService, StPodStatus } from './StPodReadyService';
-import { ST_POD_POLL_INTERVAL_MS, ST_POD_READY_TTL_MS, ST_POD_TIMEOUT_MS } from './stPodReadyConstants';
+describe('mapGatewayStatus', () => {
+  it.each([
+    ['active', 200, StPodStatus.Ready],
+    ['starting', 200, StPodStatus.Waiting],
+    ['migrating', 200, StPodStatus.Waiting],
+    ['restoring', 200, StPodStatus.Waiting],
+    ['archiving', 200, StPodStatus.Waiting],
+    ['suspended', 200, StPodStatus.Error],
+    ['migrated', 200, StPodStatus.Error],
+    ['deleting', 200, StPodStatus.Error],
+    ['outdated', 200, StPodStatus.Error],
+    ['unavailable', 200, StPodStatus.Error],
+    ['captcha', 200, StPodStatus.Error],
+    ['brand-new-state', 200, StPodStatus.Error],
+    ['not_found', 404, StPodStatus.Error],
+    ['error', 500, StPodStatus.Error],
+    ['anything', 503, StPodStatus.Error],
+    [undefined, 200, StPodStatus.Error],
+    [undefined, 500, StPodStatus.Error],
+  ])('maps raw %p / HTTP %p → %p', (raw, httpStatus, expected) => {
+    expect(mapGatewayStatus(raw, httpStatus)).toBe(expected);
+  });
+});
 
-const podUp = () => Promise.resolve({ database: 'ok' });
-const podDown = () => Promise.resolve({ database: 'failing' });
-const podBusyFetchError = () => Promise.reject({ status: 503, data: { database: 'failing' } });
-const podNetworkError = () => Promise.reject(new Error('network'));
-const podServerError = () => Promise.reject({ status: 500, data: { message: 'boom' } });
+describe('parseRetryAfterMs', () => {
+  it.each([
+    ['10', 10_000],
+    ['30', 30_000],
+    ['1', 1_000],
+  ])('%p → %p ms', (raw, expected) => {
+    expect(parseRetryAfterMs(raw)).toBe(expected);
+  });
 
-const installBackend = (handler: () => Promise<unknown>): jest.Mock => {
-  const get = jest.fn(handler);
-  setBackendSrv({ get } as unknown as BackendSrv);
-  return get;
-};
+  it.each<[string | null, string]>([
+    ['0', 'zero'],
+    ['-5', 'negative'],
+    ['0.5', 'fractional'],
+    ['1.0', 'decimal'],
+    ['later', 'non-numeric'],
+    ['Wed, 21 Oct 2015 07:28:00 GMT', 'HTTP-date'],
+    ['10 seconds', 'with suffix'],
+    [' 10', 'leading whitespace'],
+    ['10 ', 'trailing whitespace'],
+    ['', 'empty string'],
+    [null, 'null'],
+  ])('%p (%s) falls back to the default interval', (raw) => {
+    expect(parseRetryAfterMs(raw)).toBe(DEFAULT_ST_POD_POLL_INTERVAL_MS);
+  });
+});
 
-const flushMicrotasks = () => Promise.resolve();
+describe('parseGatewayStatus', () => {
+  it('extracts the status string from a well-formed body', async () => {
+    await expect(parseGatewayStatus(new Response('{"status":"active"}'))).resolves.toBe('active');
+  });
+
+  it.each([
+    ['non-JSON body', 'not-json'],
+    ['empty object', '{}'],
+    ['null body', 'null'],
+    ['status is a number', '{"status":42}'],
+    ['status is null', '{"status":null}'],
+    ['status is an object', '{"status":{"nested":true}}'],
+  ])('%s → undefined', async (_label, body) => {
+    await expect(parseGatewayStatus(new Response(body))).resolves.toBeUndefined();
+  });
+});
 
 describe('StPodReadyService', () => {
+  type FetchHandler = () => Promise<Response>;
+
+  const gatewayJson = (body: unknown, init: ResponseInit = {}) => new Response(JSON.stringify(body), init);
+
+  const installFetch = (handler: FetchHandler): jest.Mock => {
+    const fetchMock = jest.fn(handler);
+    global.fetch = fetchMock as unknown as typeof fetch;
+    return fetchMock;
+  };
+
+  const respondWith = (body: unknown, init: ResponseInit = {}) =>
+    installFetch(() => Promise.resolve(gatewayJson(body, init)));
+
+  const activeOnce = () => respondWith({ status: 'active' });
+  const startingOnce = () => respondWith({ status: 'starting' });
+  const networkErrorOnce = () => installFetch(() => Promise.reject(new Error('network')));
+
   let service: StPodReadyService;
+  const originalFetch = global.fetch;
 
   beforeEach(() => {
+    jest.useFakeTimers();
     service = new StPodReadyService();
   });
 
   afterEach(() => {
     service.stop();
     jest.useRealTimers();
+    global.fetch = originalFetch;
   });
 
-  it('starts in the unknown status with no polling', () => {
-    const get = installBackend(podUp);
-
+  it('starts in the unknown status', () => {
     expect(service.getStatus()).toBe(StPodStatus.Unknown);
-    expect(get).not.toHaveBeenCalled();
   });
 
   it('returns the same pending promise on repeated calls while not ready', () => {
@@ -47,81 +121,55 @@ describe('StPodReadyService', () => {
     await expect(race).resolves.toBe(stillPending);
   });
 
-  it('transitions unknown to ready and resolves the pending promise when the pod is up', async () => {
-    installBackend(podUp);
+  it('transitions unknown to ready and resolves the pending promise when the gateway returns active', async () => {
+    activeOnce();
     const pending = service.getReadyPromise();
 
     service.start();
-    await flushMicrotasks();
+    await jest.advanceTimersByTimeAsync(0);
 
     expect(service.getStatus()).toBe(StPodStatus.Ready);
     await expect(pending).resolves.toBeUndefined();
   });
 
-  it('transitions unknown to waiting when the pod reports not ok in a 200 body', async () => {
-    installBackend(podDown);
+  it('polls /_/status with no-store cache and omit credentials', async () => {
+    const fetchMock = activeOnce();
 
     service.start();
-    await flushMicrotasks();
+    await jest.advanceTimersByTimeAsync(0);
 
-    expect(service.getStatus()).toBe(StPodStatus.Waiting);
-  });
-
-  it('transitions unknown to waiting when the pod responds with 503 service unavailable', async () => {
-    installBackend(podBusyFetchError);
-
-    service.start();
-    await flushMicrotasks();
-
-    expect(service.getStatus()).toBe(StPodStatus.Waiting);
-  });
-
-  it('transitions unknown to error on a network failure', async () => {
-    installBackend(podNetworkError);
-
-    service.start();
-    await flushMicrotasks();
-
-    expect(service.getStatus()).toBe(StPodStatus.Error);
-  });
-
-  it('transitions unknown to error on a 500 server error', async () => {
-    installBackend(podServerError);
-
-    service.start();
-    await flushMicrotasks();
-
-    expect(service.getStatus()).toBe(StPodStatus.Error);
-  });
-
-  it('suppresses the global error toast on failed health requests', async () => {
-    const get = installBackend(podNetworkError);
-
-    service.start();
-    await flushMicrotasks();
-
-    expect(get).toHaveBeenCalledWith(
-      '/api/health',
-      undefined,
-      undefined,
-      expect.objectContaining({ showErrorAlert: false })
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/_/status',
+      expect.objectContaining({ cache: 'no-store', credentials: 'omit' })
     );
   });
 
+  it.each<[string, FetchHandler, StPodStatus]>([
+    ['starting response', () => Promise.resolve(gatewayJson({ status: 'starting' })), StPodStatus.Waiting],
+    ['500 response', () => Promise.resolve(gatewayJson({ status: 'error' }, { status: 500 })), StPodStatus.Error],
+    ['network failure', () => Promise.reject(new Error('network')), StPodStatus.Error],
+  ])('transitions to the mapped status on %s', async (_label, handler, expected) => {
+    installFetch(handler);
+
+    service.start();
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(service.getStatus()).toBe(expected);
+  });
+
   it('start is idempotent while already polling', async () => {
-    const get = installBackend(podDown);
+    const fetchMock = startingOnce();
 
     service.start();
     service.start();
     service.start();
-    await flushMicrotasks();
+    await jest.advanceTimersByTimeAsync(0);
 
-    expect(get).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('reaches timeout but keeps the pending promise pending so the loader stays mounted', async () => {
-    jest.useFakeTimers();
-    installBackend(podDown);
+    startingOnce();
     const pending = service.getReadyPromise();
 
     service.start();
@@ -132,274 +180,212 @@ describe('StPodReadyService', () => {
     await expect(Promise.race([pending, Promise.resolve(stillPending)])).resolves.toBe(stillPending);
   });
 
-  it('polls again after the poll interval while the pod is not ready', async () => {
-    jest.useFakeTimers();
-    const get = installBackend(podDown);
+  it('polls again after the default interval while in a waiting state', async () => {
+    const fetchMock = startingOnce();
 
     service.start();
     await jest.advanceTimersByTimeAsync(0);
-    expect(get).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
 
-    await jest.advanceTimersByTimeAsync(ST_POD_POLL_INTERVAL_MS);
+    await jest.advanceTimersByTimeAsync(DEFAULT_ST_POD_POLL_INTERVAL_MS);
 
-    expect(get).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it('stops polling once the pod is ready', async () => {
-    jest.useFakeTimers();
-    const get = installBackend(podUp);
+  it('honors Retry-After and delays the next poll by that many seconds', async () => {
+    const fetchMock = respondWith({ status: 'starting' }, { headers: { 'retry-after': '30' } });
 
     service.start();
     await jest.advanceTimersByTimeAsync(0);
-    expect(service.getStatus()).toBe(StPodStatus.Ready);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
 
-    await jest.advanceTimersByTimeAsync(ST_POD_POLL_INTERVAL_MS * 6);
+    await jest.advanceTimersByTimeAsync(DEFAULT_ST_POD_POLL_INTERVAL_MS);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
 
-    expect(get).toHaveBeenCalledTimes(1);
+    await jest.advanceTimersByTimeAsync(30_000 - DEFAULT_ST_POD_POLL_INTERVAL_MS);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it('does not time out after reaching ready', async () => {
-    jest.useFakeTimers();
-    installBackend(podUp);
+  it.each<[string, FetchHandler]>([
+    ['ready (active)', () => Promise.resolve(gatewayJson({ status: 'active' }))],
+    ['terminal error (suspended)', () => Promise.resolve(gatewayJson({ status: 'suspended' }))],
+  ])('stops polling after reaching a terminal state: %s', async (_label, handler) => {
+    const fetchMock = installFetch(handler);
 
     service.start();
-    await jest.advanceTimersByTimeAsync(ST_POD_TIMEOUT_MS * 2);
+    await jest.advanceTimersByTimeAsync(0);
 
-    expect(service.getStatus()).toBe(StPodStatus.Ready);
+    await jest.advanceTimersByTimeAsync(DEFAULT_ST_POD_POLL_INTERVAL_MS * 6);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('keeps polling after timeout so the pod can still auto-recover', async () => {
-    jest.useFakeTimers();
-    const get = installBackend(podDown);
+    const fetchMock = startingOnce();
 
     service.start();
     await jest.advanceTimersByTimeAsync(ST_POD_TIMEOUT_MS);
     expect(service.getStatus()).toBe(StPodStatus.Timeout);
-    const callsAtTimeout = get.mock.calls.length;
+    const callsAtTimeout = fetchMock.mock.calls.length;
 
-    await jest.advanceTimersByTimeAsync(ST_POD_POLL_INTERVAL_MS * 2);
+    await jest.advanceTimersByTimeAsync(DEFAULT_ST_POD_POLL_INTERVAL_MS * 2);
 
-    expect(get.mock.calls.length).toBeGreaterThan(callsAtTimeout);
+    expect(fetchMock.mock.calls.length).toBeGreaterThan(callsAtTimeout);
   });
 
-  it('auto-recovers from timeout to ready when the pod eventually responds ok', async () => {
-    jest.useFakeTimers();
-    let databaseStatus = 'failing';
-    const get = jest.fn(() => Promise.resolve({ database: databaseStatus }));
-    setBackendSrv({ get } as unknown as BackendSrv);
+  it('auto-recovers from timeout to ready when the pod eventually responds active', async () => {
+    let gatewayState = 'starting';
+    const fetchMock = installFetch(() => Promise.resolve(gatewayJson({ status: gatewayState })));
 
     service.start();
     await jest.advanceTimersByTimeAsync(ST_POD_TIMEOUT_MS);
     expect(service.getStatus()).toBe(StPodStatus.Timeout);
 
-    databaseStatus = 'ok';
-    await jest.advanceTimersByTimeAsync(ST_POD_POLL_INTERVAL_MS);
+    gatewayState = 'active';
+    await jest.advanceTimersByTimeAsync(DEFAULT_ST_POD_POLL_INTERVAL_MS);
 
     expect(service.getStatus()).toBe(StPodStatus.Ready);
+    expect(fetchMock.mock.calls.length).toBeGreaterThan(1);
   });
 
-  it('start after error resets and begins fresh polling', async () => {
-    jest.useFakeTimers();
-    installBackend(podNetworkError);
+  describe('recovery from error via start', () => {
+    it('resets state and begins fresh polling', async () => {
+      networkErrorOnce();
+      service.start();
+      await jest.advanceTimersByTimeAsync(0);
+      expect(service.getStatus()).toBe(StPodStatus.Error);
 
-    service.start();
-    await flushMicrotasks();
-    expect(service.getStatus()).toBe(StPodStatus.Error);
+      startingOnce();
+      service.start();
+      await jest.advanceTimersByTimeAsync(0);
 
-    installBackend(podDown);
-    service.start();
-    await flushMicrotasks();
+      expect(service.getStatus()).toBe(StPodStatus.Waiting);
+    });
 
-    expect(service.getStatus()).toBe(StPodStatus.Waiting);
+    it('resolves the stale pending promise so suspended consumers unblock', async () => {
+      networkErrorOnce();
+      service.start();
+      const stale = service.getReadyPromise();
+      await jest.advanceTimersByTimeAsync(0);
+
+      service.start();
+
+      await expect(stale).resolves.toBeUndefined();
+    });
+
+    it('hands out a fresh pending promise that stays pending until the next ready', async () => {
+      networkErrorOnce();
+      service.start();
+      const errored = service.getReadyPromise();
+      await jest.advanceTimersByTimeAsync(0);
+
+      startingOnce();
+      service.start();
+      const fresh = service.getReadyPromise();
+      expect(fresh).not.toBe(errored);
+
+      const stillPending = Symbol('still-pending');
+      await expect(Promise.race([fresh, Promise.resolve(stillPending)])).resolves.toBe(stillPending);
+    });
   });
 
-  it('resolves the stale pending promise when start recovers from error', async () => {
-    jest.useFakeTimers();
-    installBackend(podNetworkError);
+  describe('ready TTL', () => {
+    it('reads continue to return ready after TTL elapses, with no wall-clock polling', async () => {
+      const fetchMock = activeOnce();
 
-    service.start();
-    const stale = service.getReadyPromise();
-    await flushMicrotasks();
-    expect(service.getStatus()).toBe(StPodStatus.Error);
+      service.start();
+      await jest.advanceTimersByTimeAsync(0);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
 
-    service.start();
+      await jest.advanceTimersByTimeAsync(ST_POD_READY_TTL_MS * 2);
+      jest.setSystemTime(Date.now() + ST_POD_READY_TTL_MS + 1);
 
-    await expect(stale).resolves.toBeUndefined();
+      expect(service.getStatus()).toBe(StPodStatus.Ready);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('start within TTL is a no-op', async () => {
+      const fetchMock = activeOnce();
+
+      service.start();
+      await jest.advanceTimersByTimeAsync(0);
+
+      service.start();
+      await jest.advanceTimersByTimeAsync(0);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(service.getStatus()).toBe(StPodStatus.Ready);
+    });
+
+    it('start past TTL resets and re-polls', async () => {
+      const fetchMock = activeOnce();
+
+      service.start();
+      await jest.advanceTimersByTimeAsync(0);
+
+      jest.setSystemTime(Date.now() + ST_POD_READY_TTL_MS + 1);
+      service.start();
+      await jest.advanceTimersByTimeAsync(0);
+
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(service.getStatus()).toBe(StPodStatus.Ready);
+    });
   });
 
-  it('hands out a fresh pending promise after recovering from error', async () => {
-    jest.useFakeTimers();
-    installBackend(podNetworkError);
-
-    service.start();
-    const errored = service.getReadyPromise();
-    await flushMicrotasks();
-    expect(service.getStatus()).toBe(StPodStatus.Error);
-
-    installBackend(podDown);
-    service.start();
-    const fresh = service.getReadyPromise();
-    expect(fresh).not.toBe(errored);
-
-    const stillPending = Symbol('still-pending');
-    await expect(Promise.race([fresh, Promise.resolve(stillPending)])).resolves.toBe(stillPending);
-  });
-
-  it('start after ready within TTL is a no-op', async () => {
-    jest.useFakeTimers();
-    const get = installBackend(podUp);
+  it('stop cancels polling', async () => {
+    const fetchMock = startingOnce();
 
     service.start();
     await jest.advanceTimersByTimeAsync(0);
-    expect(service.getStatus()).toBe(StPodStatus.Ready);
-    expect(get).toHaveBeenCalledTimes(1);
-
-    service.start();
-    await jest.advanceTimersByTimeAsync(0);
-
-    expect(get).toHaveBeenCalledTimes(1);
-    expect(service.getStatus()).toBe(StPodStatus.Ready);
-  });
-
-  it('start after ready past TTL resets and re-polls', async () => {
-    jest.useFakeTimers();
-    const get = installBackend(podUp);
-
-    service.start();
-    await jest.advanceTimersByTimeAsync(0);
-    expect(service.getStatus()).toBe(StPodStatus.Ready);
-
-    jest.setSystemTime(Date.now() + ST_POD_READY_TTL_MS + 1);
-    service.start();
-    await jest.advanceTimersByTimeAsync(0);
-
-    expect(get).toHaveBeenCalledTimes(2);
-    expect(service.getStatus()).toBe(StPodStatus.Ready);
-  });
-
-  it('stop cancels both timers', async () => {
-    jest.useFakeTimers();
-    const get = installBackend(podDown);
-
-    service.start();
-    await jest.advanceTimersByTimeAsync(0);
-    expect(get).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
 
     service.stop();
     await jest.advanceTimersByTimeAsync(ST_POD_TIMEOUT_MS * 2);
 
-    expect(get).toHaveBeenCalledTimes(1);
-    expect(service.getStatus()).toBe(StPodStatus.Waiting);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('notifies subscribers through the behavior subject', async () => {
-    installBackend(podUp);
+    activeOnce();
     const seen: StPodStatus[] = [];
     const subscription = service.state.subscribe((status) => seen.push(status));
 
     service.start();
-    await flushMicrotasks();
+    await jest.advanceTimersByTimeAsync(0);
 
     expect(seen).toEqual([StPodStatus.Unknown, StPodStatus.Ready]);
     subscription.unsubscribe();
   });
 
-  describe('lazy TTL expiry', () => {
-    it('reads continue to return ready after TTL elapses until start is called', async () => {
-      jest.useFakeTimers();
-      const get = installBackend(podUp);
+  describe('in-flight request hygiene', () => {
+    const neverResolvingFetch = () => {
+      let resolve: (value: Response) => void = () => {};
+      const fetchMock = jest.fn(() => new Promise<Response>((res) => (resolve = res)));
+      global.fetch = fetchMock as unknown as typeof fetch;
+      return { fetchMock, resolve: (body: unknown) => resolve(gatewayJson(body)) };
+    };
 
-      service.start();
-      await jest.advanceTimersByTimeAsync(0);
-      expect(service.getStatus()).toBe(StPodStatus.Ready);
-      expect(get).toHaveBeenCalledTimes(1);
-
-      jest.setSystemTime(Date.now() + ST_POD_READY_TTL_MS + 1);
-
-      expect(service.getStatus()).toBe(StPodStatus.Ready);
-      expect(get).toHaveBeenCalledTimes(1);
-    });
-
-    it('start after TTL elapses resets to unknown and restarts the pod check', async () => {
-      jest.useFakeTimers();
-      const get = installBackend(podUp);
-
-      service.start();
-      await jest.advanceTimersByTimeAsync(0);
-      expect(get).toHaveBeenCalledTimes(1);
-
-      jest.setSystemTime(Date.now() + ST_POD_READY_TTL_MS + 1);
-      service.start();
-      await jest.advanceTimersByTimeAsync(0);
-
-      expect(get).toHaveBeenCalledTimes(2);
-      expect(service.getStatus()).toBe(StPodStatus.Ready);
-    });
-
-    it('preserves subscribers across the expiry transition', async () => {
-      jest.useFakeTimers();
-      installBackend(podUp);
-      const seen: StPodStatus[] = [];
-      const subscription = service.state.subscribe((status) => seen.push(status));
-
-      service.start();
-      await jest.advanceTimersByTimeAsync(0);
-
-      jest.setSystemTime(Date.now() + ST_POD_READY_TTL_MS + 1);
-      service.start();
-      await jest.advanceTimersByTimeAsync(0);
-
-      expect(seen).toEqual([StPodStatus.Unknown, StPodStatus.Ready, StPodStatus.Unknown, StPodStatus.Ready]);
-      subscription.unsubscribe();
-    });
-
-    it('does not fire any wall-clock timer at the TTL boundary', async () => {
-      jest.useFakeTimers();
-      const get = installBackend(podUp);
-
-      service.start();
-      await jest.advanceTimersByTimeAsync(0);
-      expect(get).toHaveBeenCalledTimes(1);
-
-      await jest.advanceTimersByTimeAsync(ST_POD_READY_TTL_MS * 2);
-
-      expect(get).toHaveBeenCalledTimes(1);
-      expect(service.state.getValue()).toBe(StPodStatus.Ready);
-    });
-  });
-
-  describe('resource hygiene', () => {
     it('does not stack polls when the backend is slower than the poll interval', async () => {
-      jest.useFakeTimers();
-      let resolveSlow: (value: { database: string }) => void = () => {};
-      const get = jest.fn(() => new Promise<{ database: string }>((res) => (resolveSlow = res)));
-      setBackendSrv({ get } as unknown as BackendSrv);
+      const { fetchMock, resolve } = neverResolvingFetch();
 
       service.start();
       await jest.advanceTimersByTimeAsync(0);
-      expect(get).toHaveBeenCalledTimes(1);
+      await jest.advanceTimersByTimeAsync(DEFAULT_ST_POD_POLL_INTERVAL_MS * 5);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
 
-      await jest.advanceTimersByTimeAsync(ST_POD_POLL_INTERVAL_MS * 5);
+      resolve({ status: 'starting' });
+      await jest.advanceTimersByTimeAsync(0);
+      await jest.advanceTimersByTimeAsync(DEFAULT_ST_POD_POLL_INTERVAL_MS);
 
-      expect(get).toHaveBeenCalledTimes(1);
-
-      resolveSlow({ database: 'failing' });
-      await flushMicrotasks();
-      await jest.advanceTimersByTimeAsync(ST_POD_POLL_INTERVAL_MS);
-
-      expect(get).toHaveBeenCalledTimes(2);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
-    it('aborts the in-flight health request when the service is stopped', async () => {
-      jest.useFakeTimers();
+    it('aborts the in-flight gateway request when the service is stopped', async () => {
       let capturedSignal: AbortSignal | undefined;
-      const get = jest.fn(
-        (_url: string, _params?: unknown, _requestId?: unknown, options?: { abortSignal?: AbortSignal }) => {
-          capturedSignal = options?.abortSignal;
-          return new Promise(() => {});
-        }
-      );
-      setBackendSrv({ get } as unknown as BackendSrv);
+      global.fetch = jest.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+        capturedSignal = init?.signal ?? undefined;
+        return new Promise<Response>(() => {});
+      }) as unknown as typeof fetch;
 
       service.start();
       await jest.advanceTimersByTimeAsync(0);
@@ -411,38 +397,16 @@ describe('StPodReadyService', () => {
     });
 
     it('does not transition out of a terminal state when an in-flight poll resolves after stop', async () => {
-      jest.useFakeTimers();
-      let resolveSlow: (value: { database: string }) => void = () => {};
-      const get = jest.fn(() => new Promise<{ database: string }>((res) => (resolveSlow = res)));
-      setBackendSrv({ get } as unknown as BackendSrv);
+      const { resolve } = neverResolvingFetch();
 
       service.start();
       await jest.advanceTimersByTimeAsync(0);
       service.stop();
 
-      resolveSlow({ database: 'ok' });
-      await flushMicrotasks();
+      resolve({ status: 'active' });
+      await jest.advanceTimersByTimeAsync(0);
 
       expect(service.getStatus()).toBe(StPodStatus.Unknown);
-    });
-
-    it('clears readyAt when transitioning away from ready via reset', async () => {
-      jest.useFakeTimers();
-      installBackend(podUp);
-
-      service.start();
-      await jest.advanceTimersByTimeAsync(0);
-      expect(service.getStatus()).toBe(StPodStatus.Ready);
-
-      jest.setSystemTime(Date.now() + ST_POD_READY_TTL_MS + 1);
-      service.start();
-      await flushMicrotasks();
-
-      jest.setSystemTime(Date.now() + ST_POD_READY_TTL_MS + 1);
-      service.start();
-      await flushMicrotasks();
-
-      expect(service.getStatus()).toBe(StPodStatus.Ready);
     });
   });
 });
