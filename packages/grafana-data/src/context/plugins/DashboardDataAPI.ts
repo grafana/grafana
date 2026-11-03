@@ -188,7 +188,10 @@ export interface DashboardPanelCapture {
   /** Section references that resolve to no panels. Removed panels are reported as `missing` panels instead. */
   missingRefs: DashboardUnavailableSource[];
   panels: CapturedPanel[];
-  /** What the captured panels' annotation layers show within the range, merged across panels. Empty for variant captures. */
+  /**
+   * What the captured panels' annotation layers show within the range, merged across panels, oldest first. Empty for
+   * variant captures.
+   */
   annotations: CapturedAnnotation[];
 }
 

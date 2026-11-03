@@ -86,10 +86,13 @@ function hasErrors(data: PanelData): boolean {
   return data.state === LoadingState.Error || Boolean(data.error || data.errors?.length);
 }
 
-/** What the dashboard shows for the panel now. */
-function readLive(source: SourcePanel, from: string, to: string): PanelResult {
+/** What the dashboard shows for the panel now. `loaded`: the capture waited for its query, up to the load timeout. */
+function readLive(source: SourcePanel, from: string, to: string, loaded: boolean): PanelResult {
   const data = getPanelData(source.panel);
   if (!data || data.state === LoadingState.NotStarted) {
+    return { status: 'not-loaded', frames: [] };
+  }
+  if (data.state === LoadingState.Loading && loaded) {
     return { status: 'not-loaded', frames: [] };
   }
   if (data.state === LoadingState.Loading || data.state === LoadingState.Streaming) {
@@ -197,7 +200,8 @@ export async function capturePanels(
   const variant: PanelVariant | undefined =
     request.timeRange || variable ? { timeRange: request.timeRange, variable } : undefined;
 
-  if (!variant && request.load) {
+  const loaded = !variant && Boolean(request.load);
+  if (loaded) {
     await loadPanels(
       keys.flatMap((key) => byKey.get(key)?.panel ?? []),
       signal
@@ -210,7 +214,7 @@ export async function capturePanels(
       if (!source) {
         return { key, title: key, description: '', sections: [], status: 'missing', frames: [] };
       }
-      const result = variant ? await readVariant(source, variant, signal) : readLive(source, from, to);
+      const result = variant ? await readVariant(source, variant, signal) : readLive(source, from, to, loaded);
       return { key, title: source.title, description: source.description, sections: toSectionInfo(source), ...result };
     })
   );

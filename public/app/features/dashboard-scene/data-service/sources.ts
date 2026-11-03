@@ -1,5 +1,5 @@
 import { applyFieldOverrides, LoadingState, type PanelData } from '@grafana/data';
-import { config, getTemplateSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { getPanelPluginMetasMapSync, type PanelPluginMetas } from '@grafana/runtime/internal';
 import { SceneGridRow, sceneGraph, type SceneDataProvider, type SceneObject, type VizPanel } from '@grafana/scenes';
 
@@ -100,15 +100,20 @@ export function getPanelData(panel: VizPanel): PanelData | undefined {
   return data && applyPanelFieldOverrides(panel, data);
 }
 
-/** Display names and units come from the panel's field config, as the viewer sees them. */
-export function applyPanelFieldOverrides(panel: VizPanel, data: PanelData): PanelData {
+/**
+ * Display names and units come from the panel's field config, as the viewer sees them. Variables in it are read from
+ * `context`, so a variant shows its own value rather than the dashboard's.
+ */
+export function applyPanelFieldOverrides(panel: VizPanel, data: PanelData, context: SceneObject = panel): PanelData {
   return {
     ...data,
     series: applyFieldOverrides({
       data: data.series,
       fieldConfig: panel.state.fieldConfig,
       theme: config.theme2,
-      replaceVariables: (value, scopedVars, format) => getTemplateSrv().replace(value, scopedVars, format),
+      // sceneGraph.interpolate takes string formats and its own formatter type, not any function.
+      replaceVariables: (value, scopedVars, format) =>
+        sceneGraph.interpolate(context, value, scopedVars, typeof format === 'string' ? format : undefined),
     }),
   };
 }

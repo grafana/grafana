@@ -202,7 +202,7 @@ export function loadVariantData(
     const deactivate = context.activate();
     try {
       const data = await waitForData(copy, range, signal);
-      return data && applyPanelFieldOverrides(panel, data);
+      return data && applyPanelFieldOverrides(panel, data, context);
     } finally {
       deactivate();
     }
