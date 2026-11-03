@@ -48,6 +48,15 @@ func TestSlideshowValidation(t *testing.T) {
 		require.NoError(t, validate(t, admission.Delete, &collections.Slideshow{}))
 	})
 
+	t.Run("accepts intervals up to 24 hours", func(t *testing.T) {
+		for _, interval := range []string{"10s", "30s", "5m", "1h", "24h", "1d", "1440m"} {
+			s := validSlideshow()
+			s.Spec.Interval = interval
+			s.Spec.Items[0].Interval = ptr(interval)
+			require.NoError(t, validate(t, admission.Create, s), interval)
+		}
+	})
+
 	t.Run("accepts exactly 500 items", func(t *testing.T) {
 		s := validSlideshow()
 		s.Spec.Items = make([]collections.SlideshowItem, 500)
@@ -69,6 +78,11 @@ func TestSlideshowValidation(t *testing.T) {
 		{"interval under ten seconds", func(s *collections.Slideshow) { s.Spec.Interval = "9s" }, "spec.interval"},
 		{"compound interval the player cannot read", func(s *collections.Slideshow) { s.Spec.Interval = "1h30m" }, "spec.interval"},
 		{"fractional item interval the player cannot read", func(s *collections.Slideshow) { s.Spec.Items[0].Interval = ptr("1.5m") }, "spec.items[0].interval"},
+		{"interval over 24 hours", func(s *collections.Slideshow) { s.Spec.Interval = "25h" }, "spec.interval"},
+		{"interval of days over the cap", func(s *collections.Slideshow) { s.Spec.Interval = "2d" }, "spec.interval"},
+		{"interval of weeks", func(s *collections.Slideshow) { s.Spec.Interval = "4w" }, "spec.interval"},
+		{"item interval of a month", func(s *collections.Slideshow) { s.Spec.Items[0].Interval = ptr("1M") }, "spec.items[0].interval"},
+		{"item interval of a year", func(s *collections.Slideshow) { s.Spec.Items[0].Interval = ptr("1y") }, "spec.items[0].interval"},
 		{"empty group", func(s *collections.Slideshow) { s.Spec.Items[0].Group = "" }, "spec.items[0].group"},
 		{"empty resource", func(s *collections.Slideshow) { s.Spec.Items[1].Resource = "" }, "spec.items[1].resource"},
 		{"empty name", func(s *collections.Slideshow) { s.Spec.Items[0].Name = "" }, "spec.items[0].name"},

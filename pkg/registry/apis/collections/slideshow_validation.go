@@ -20,6 +20,9 @@ var simpleInterval = regexp.MustCompile(`^[0-9]+(ms|s|m|h|d|w|M|y)$`)
 const (
 	// A floor keeps a typo such as "1s" from turning a wall display into a tight reload loop.
 	minSlideshowInterval = 10 * time.Second
+	// Browsers treat a timer longer than about 24.8 days as one millisecond, so a long interval
+	// would rotate on every tick instead of waiting.
+	maxSlideshowInterval = 24 * time.Hour
 	maxSlideshowItems    = 500
 )
 
@@ -94,6 +97,9 @@ func validateSlideshowInterval(path *field.Path, value string) *field.Error {
 	}
 	if d < minSlideshowInterval {
 		return field.Invalid(path, value, "must be at least "+minSlideshowInterval.String())
+	}
+	if d > maxSlideshowInterval {
+		return field.Invalid(path, value, "must be at most 24h")
 	}
 	return nil
 }
