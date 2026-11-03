@@ -1,7 +1,8 @@
 import { getBackendSrv, logError } from '@grafana/runtime';
 import { API_GROUP, API_VERSION, type UserPermissions } from 'app/api/clients/iam/v0alpha1';
 import { extractErrorMessage, getAPIBaseURL } from 'app/api/utils';
-import { type UserPermission } from 'app/types/accessControl';
+import { setAppAccessScopes } from 'app/core/navtree/pluginAccess';
+import { AccessControlAction, type UserPermission } from 'app/types/accessControl';
 
 /**
  * Loads the current user's effective permissions from the multi-tenant AuthZ
@@ -23,6 +24,18 @@ export async function loadUserPermissions(): Promise<UserPermission | null> {
       // not worth a toast on top of that — boot in particular has no context to
       // show one against
       { showErrorAlert: false }
+    );
+
+    // The nav gates each app plugin on its own plugins:id:<id> scope, which the
+    // action-keyed map below throws away. Hand them over before folding.
+    setAppAccessScopes(
+      new Set(
+        // flatMap rather than filter + map: a filter predicate does not narrow
+        // scope, which the response leaves optional
+        permissions.flatMap(({ action, scope }) =>
+          action === AccessControlAction.PluginsAppAccess && scope !== undefined ? [scope] : []
+        )
+      )
     );
 
     return permissions.reduce<UserPermission>((acc, { action }) => {
