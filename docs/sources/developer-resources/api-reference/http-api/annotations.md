@@ -29,7 +29,7 @@ Annotations mark points or regions in time with text and tags. An annotation tha
 
 ## Before you begin
 
-**This API is in alpha (`v0alpha1`) and might change**. For more details about versioning, refer to [New API versioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api#version).
+**This API is in alpha (`v0alpha1`) and might change**. For more details about versioning, refer to [New API versioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis#version).
 
 Availability depends on where you run Grafana:
 
@@ -37,6 +37,8 @@ Availability depends on where you run Grafana:
 - **Self-managed Grafana:** The API is disabled by default. To enable it, set `enabled = true` in the [`[annotations.app_platform]`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#annotationsapp_platform) section of the Grafana configuration.
 
 All paths use the `annotation.grafana.app` group and the `v0alpha1` version. Replace `:namespace` with your namespace. To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+**Alert annotations aren't available in this API yet**
 
 ## Requirements
 
@@ -557,7 +559,7 @@ The Annotations HTTP API uses the following status codes:
 
 This API replaces the legacy [Annotations API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/annotations/) (`/api/annotations`).
 
-Alert annotations aren't available in this API. Use the legacy API to work with them.
+**Alert annotations aren't available in this API yet**. For the moment, use the legacy API to work with them.
 
 The following table describes how the legacy API maps to this API:
 
