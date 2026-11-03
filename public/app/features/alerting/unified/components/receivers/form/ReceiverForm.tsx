@@ -46,7 +46,7 @@ interface Props<R extends ChannelValues> {
   showDefaultRouteWarning?: boolean;
   contactPointId?: string;
   canManagePermissions?: boolean;
-  canEditProtectedFields: boolean;
+  canModifyProtectedFields: boolean;
 }
 
 export function ReceiverForm<R extends ChannelValues>({
@@ -63,7 +63,7 @@ export function ReceiverForm<R extends ChannelValues>({
   showDefaultRouteWarning,
   contactPointId,
   canManagePermissions,
-  canEditProtectedFields,
+  canModifyProtectedFields,
 }: Props<R>) {
   const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
@@ -211,7 +211,7 @@ export function ReceiverForm<R extends ChannelValues>({
               commonSettingsComponent={commonSettingsComponent}
               isEditable={isEditable}
               isTestable={isTestable}
-              canEditProtectedFields={canEditProtectedFields}
+              canModifyProtectedFields={canModifyProtectedFields}
               customValidators={customValidators ? customValidators[field.type] : undefined}
             />
           );

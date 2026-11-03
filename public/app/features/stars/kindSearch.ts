@@ -7,6 +7,7 @@ import {
   type SearchResults,
   type WhereNode,
 } from 'app/features/apiserver/search';
+import { type SearchHit } from 'app/features/search/service/unified';
 
 import { type KindSearchStarredKind } from './kinds';
 
@@ -19,16 +20,6 @@ import { type KindSearchStarredKind } from './kinds';
 // Server page-size cap for a single search request
 const MAX_SEARCH_LIMIT = 500;
 
-export interface StarredResource {
-  name: string;
-  /** The kind's plural, as the API serves it. */
-  resource: string;
-  title: string;
-  folder: string;
-  description: string;
-  tags: string[];
-}
-
 export interface StarredResourceFilter {
   text?: string;
   tags?: string[];
@@ -36,15 +27,15 @@ export interface StarredResourceFilter {
 }
 
 /**
- * Titles and folders of the starred objects of a kind that the user may read. A kind whose API is
- * unavailable (plugin disabled, apiserver down, search not enabled for the kind) yields nothing:
- * its stars go unshown rather than failing the list around them.
+ * The starred objects of a kind that the user may read, as search hits carrying their kind and url. A kind whose
+ * API is unavailable (plugin disabled, apiserver down, search not enabled for the kind) yields nothing: its stars
+ * go unshown rather than failing the list around them.
  */
-export async function searchStarredResources(
+export async function searchStarredHits(
   kind: KindSearchStarredKind,
   names: string[],
   filter: StarredResourceFilter = {}
-): Promise<StarredResource[]> {
+): Promise<SearchHit[]> {
   if (names.length === 0) {
     return [];
   }
@@ -88,13 +79,17 @@ export async function searchStarredResources(
 
   return results.items.map((item) => {
     const fields = item.fields ?? {};
+    const { name, resource } = item.resource;
     return {
-      name: item.resource.name,
-      resource: item.resource.resource,
-      title: typeof fields.title === 'string' && fields.title ? fields.title : item.resource.name,
+      resource,
+      kind: kind.searchKind,
+      name,
+      title: typeof fields.title === 'string' && fields.title ? fields.title : name,
       folder: typeof fields.folder === 'string' ? fields.folder : '',
       description: typeof fields.description === 'string' ? fields.description : '',
       tags: Array.isArray(fields.tags) ? fields.tags.filter((tag): tag is string => typeof tag === 'string') : [],
+      field: {},
+      url: kind.url(name),
     };
   });
 }

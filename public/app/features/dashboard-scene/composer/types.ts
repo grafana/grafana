@@ -36,8 +36,9 @@ export interface ComposerEnterRequestOptions {
 
 interface ComposerEnterOptions {
   /**
-   * 'floating' (the default) floats the extension sidebar over the document when the session starts, even
-   * with `grafana.extensionSidebarFloating` off. The user may dock it and stay in Composer. When the session
+   * 'floating' (the default) keeps floating a sidebar the entry request opened floating, even with
+   * `grafana.extensionSidebarFloating` off; a sidebar already open keeps its layout. The user may switch
+   * layouts and stay in Composer. When the session
    * ends, the layout from before it comes back, unless the user chose another one since. Closing the
    * sidebar ends the session. 'none' leaves the sidebar alone and does not tie the session to it.
    */
@@ -219,9 +220,9 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
   listElements(): ComposerElement[];
   highlight(target: ElementRef | null): void;
   /**
-   * Paused while the Assistant runs a turn that edits the document: picking and pins are disabled. Leaving
-   * Composer from the dashboard mode picker asks for confirmation while the session is paused, because
-   * ending the session stops that turn.
+   * Paused while the Assistant runs a turn that edits the document: picking and pins are disabled. Turning
+   * Composer off, or switching it to Viewing, asks for confirmation while the session is paused, because
+   * either stops that turn.
    */
   setPaused(paused: boolean): void;
 
@@ -259,6 +260,14 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
    */
   readSpec(): Promise<{ spec: Spec; revision: number }>;
   applySpec(spec: Spec, opts: ComposerApplyOptions): Promise<ApplyOutcome<Spec>>;
+  /**
+   * Whether the dashboard is in Editing, where Composer writes. Over Viewing, an `applySpec` first switches
+   * the dashboard to Editing, as an Assistant edit from Viewing starts Agent editing. False once the
+   * session has ended.
+   */
+  readonly canWrite: boolean;
+  /** Fires when `canWrite` changes (Viewing and Editing switched). Returns an unsubscribe. */
+  onCanWriteChange(listener: (canWrite: boolean) => void): () => void;
 
   /**
    * Leaves Composer. A dashboard session never saves or discards and returns nothing. A notebook keeps its

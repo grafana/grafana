@@ -3,9 +3,12 @@ import { parse } from './parser';
 import { buildSharedLeaves } from './searchQueryLeaves';
 import { getRejectionIssues } from './searchRejection';
 import { sharedFilters } from './sharedFilters';
-import { type SharedRuleFilter, createEmptyFilter } from './sharedRuleFilter';
+import { type SharedRuleFilter, createRulesApiFilter } from './sharedRuleFilter';
 
-const schema: RuleSearchSchema<SharedRuleFilter> = { filters: Object.values(sharedFilters), createEmptyFilter };
+const schema: RuleSearchSchema<SharedRuleFilter> = {
+  filters: Object.values(sharedFilters),
+  createEmptyFilter: createRulesApiFilter,
+};
 
 function rejectionOf(query: string, causes: Array<{ field?: string; message: string }>) {
   const error = { status: 422, data: { message: 'invalid', details: { causes } } };

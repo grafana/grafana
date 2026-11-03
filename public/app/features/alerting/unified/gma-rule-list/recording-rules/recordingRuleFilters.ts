@@ -2,7 +2,7 @@ import { t } from '@grafana/i18n';
 
 import { type RuleSearchSchema } from '../rule-search/filterDefinitions';
 import { type SharedFilterKey, hasWildcard, sharedFilters } from '../rule-search/sharedFilters';
-import { type SharedRuleFilter, createEmptyFilter } from '../rule-search/sharedRuleFilter';
+import { type SharedRuleFilter, createRulesApiFilter } from '../rule-search/sharedRuleFilter';
 
 export interface RecordingRuleFilter extends SharedRuleFilter {
   metric?: string;
@@ -12,7 +12,7 @@ export interface RecordingRuleFilter extends SharedRuleFilter {
 export type RecordingFilterKey = SharedFilterKey | 'metric' | 'targetDatasource';
 
 export const recordingRuleSearchSchema: RuleSearchSchema<RecordingRuleFilter, RecordingFilterKey> = {
-  createEmptyFilter,
+  createEmptyFilter: createRulesApiFilter,
   filters: [
     sharedFilters.rule,
     sharedFilters.label,

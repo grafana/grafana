@@ -31,7 +31,7 @@ export function DashListItem({
 }: Props) {
   const css = useStyles2(getStyles);
 
-  // Rows may be dashboards, folders or registered kinds; the star has to target the row's own kind
+  // Rows can be folders or app kinds too; the star targets the row's own kind, and a kind nobody can star gets none
   const starredKind = findStarredKindBySearchKind(dashboard.kind);
   const starButton = starredKind ? (
     <StarToolbarButton

@@ -16,6 +16,7 @@ import {
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { type GrafanaSearcher, type SearchQuery } from 'app/features/search/service/types';
 import { useSelector } from 'app/types/store';
 
 import { useSyncStarredItemsInNav } from './hooks';
@@ -68,18 +69,24 @@ const TestHarness = () => {
   );
 };
 
-function setupSearchMock(items: Array<{ uid: string; name: string; url: string; kind: string }>) {
-  const view = {
-    length: items.length,
-    get: (i: number) => items[i],
-    dataFrame: { fields: [], length: items.length },
-  };
+type SearchRow = { uid: string; name: string; url: string; kind: string };
+
+/** Mocks the searcher over `items`, answering each request with the rows of the kinds and names it asked for. */
+function setupSearchMock(items: SearchRow[]) {
   const mockSearcher = {
-    search: jest.fn().mockResolvedValue({
-      view,
-      totalRows: items.length,
-      isItemLoaded: () => true,
-      loadMoreItems: () => Promise.resolve(),
+    search: jest.fn(({ name = [], kind = [] }: SearchQuery) => {
+      const rows = items.filter((item) => kind.includes(item.kind) && name.includes(item.uid));
+      return Promise.resolve({
+        view: {
+          length: rows.length,
+          get: (i: number) => rows[i],
+          toArray: () => rows,
+          dataFrame: { fields: [], length: rows.length },
+        },
+        totalRows: rows.length,
+        isItemLoaded: () => true,
+        loadMoreItems: () => Promise.resolve(),
+      });
     }),
     starred: jest.fn(),
     tags: jest.fn(),
@@ -88,7 +95,7 @@ function setupSearchMock(items: Array<{ uid: string; name: string; url: string; 
     reloadLocationInfo: jest.fn(),
     getFolderViewSort: jest.fn().mockReturnValue('name_sort'),
   };
-  mockedGetGrafanaSearcher.mockReturnValue(mockSearcher);
+  mockedGetGrafanaSearcher.mockReturnValue(mockSearcher as unknown as GrafanaSearcher);
   return mockSearcher;
 }
 
@@ -121,6 +128,7 @@ describe('useSyncStarredItemsInNav', () => {
       expect(mockSearcher.search).toHaveBeenCalledWith({
         name: starredDashboards.map((d) => d.uid).sort(),
         kind: ['dashboard'],
+        limit: starredDashboards.length,
       });
     });
 
@@ -271,7 +279,7 @@ describe('useSyncStarredItemsInNav', () => {
     });
 
     // Nothing knows how to show a Ghost, so it is neither searched for nor listed
-    expect(mockSearcher.search).toHaveBeenCalledWith({ name: [dashUid], kind: ['dashboard'] });
+    expect(mockSearcher.search).toHaveBeenCalledWith({ name: [dashUid], kind: ['dashboard'], limit: 1 });
     expect(screen.getByTestId('starred-list').children).toHaveLength(1);
     expect(screen.getByTestId(`synced-starred/${dashUid}`)).not.toHaveAttribute('data-icon');
   });
@@ -300,11 +308,13 @@ describe('useSyncStarredItemsInNav', () => {
 
       render(<TestHarness />);
 
-      // One combined search across both kinds, keyed by the sorted union of starred uids
+      // One search across both kinds, keyed by the sorted union of starred uids, with room for a same-uid resource
+      // of the other kind
       await waitFor(() => {
         expect(mockSearcher.search).toHaveBeenCalledWith({
           name: [dashUid, folderUid].sort(),
           kind: ['dashboard', 'folder'],
+          limit: 4,
         });
       });
 
@@ -354,10 +364,9 @@ describe('useSyncStarredItemsInNav', () => {
       setMockStarredDashboards([dashUid]);
       setMockStarredFolders([folderUid]);
 
-      // The single search matches the uid union against BOTH kinds, so it can return an
-      // UNSTARRED folder that happens to share the starred dashboard's uid. That bogus row
-      // is deliberately last: setStarredItems keeps the last item per uid, so without the
-      // per-kind post-filter it would replace the legit dashboard row in the nav.
+      // The single search matches the uid union against BOTH kinds, so it returns an UNSTARRED folder that shares
+      // the starred dashboard's uid. That bogus row is deliberately last: setStarredItems keeps the last item per
+      // uid, so without the per-kind post-filter it would replace the legit dashboard row in the nav.
       setupSearchMock([
         { uid: dashUid, name: 'My Dashboard', url: `/d/${dashUid}`, kind: 'dashboard' },
         { uid: folderUid, name: 'My Folder', url: `/dashboards/f/${folderUid}`, kind: 'folder' },
@@ -377,7 +386,7 @@ describe('useSyncStarredItemsInNav', () => {
       expect(collisionRows[0]).toHaveTextContent('My Dashboard');
       expect(screen.queryByText('Bogus Folder')).not.toBeInTheDocument();
 
-      // ...while the genuinely starred folder is untouched by the filter
+      // ...while the genuinely starred folder is there
       expect(screen.getByTestId(`synced-starred/${folderUid}`)).toHaveAttribute('data-icon', 'folder');
       expect(screen.getByTestId('starred-list').children).toHaveLength(2);
     });
@@ -394,10 +403,7 @@ describe('useSyncStarredItemsInNav', () => {
 
       // The union of the per-kind star sets is deduped: the uid lands in `name` exactly once
       await waitFor(() => {
-        expect(mockSearcher.search).toHaveBeenCalledWith({
-          name: [uid],
-          kind: ['dashboard', 'folder'],
-        });
+        expect(mockSearcher.search).toHaveBeenCalledWith({ name: [uid], kind: ['dashboard', 'folder'], limit: 2 });
       });
 
       // ...and occupies exactly one nav row instead of one per star record
@@ -434,6 +440,7 @@ describe('useSyncStarredItemsInNav', () => {
       expect(mockSearcher.search).toHaveBeenCalledWith({
         name: [dashUid, folderUid].sort(),
         kind: ['dashboard', 'folder'],
+        limit: 4,
       });
 
       const thingRow = screen.getByTestId(`synced-starred/${THING_UUID}`);

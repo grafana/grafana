@@ -10,7 +10,7 @@ import { DashboardTabError } from './DashboardTabError';
 interface Props {
   dashboards: DashboardQueryResult[];
   loading: boolean;
-  error: Error | undefined;
+  error: boolean;
   retry: () => void;
   foldersByUid: Record<string, LocationInfo>;
   loadingText: string;
@@ -18,7 +18,6 @@ interface Props {
   emptyMessage: string;
   // Identifies the tab in the row click analytics.
   source: string;
-  onStarChange?: () => void;
 }
 
 /** A tab body listing dashboards with their folder: the load, error and empty states around the rows. */
@@ -32,7 +31,6 @@ export function DashboardListTab({
   errorTitle,
   emptyMessage,
   source,
-  onStarChange,
 }: Props) {
   if (loading) {
     return <PageLoader text={loadingText} />;
@@ -57,7 +55,6 @@ export function DashboardListTab({
             locationInfo={foldersByUid[dash.location]}
             layoutMode="list"
             source={source}
-            onStarChange={onStarChange}
           />
         </li>
       ))}

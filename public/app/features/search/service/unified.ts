@@ -18,7 +18,7 @@ import { generatedAPI, type ListStarsApiResponse } from 'app/api/clients/collect
 import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import kbn from 'app/core/utils/kbn';
-import { searchStarredResources } from 'app/features/stars/kindSearch';
+import { searchStarredHits } from 'app/features/stars/kindSearch';
 import {
   getStarredKinds,
   type KindSearchStarredKind,
@@ -178,25 +178,13 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (names.length === 0 || dashboardOnlyFilter || query.location === 'general') {
       return [];
     }
-    const resources = await searchStarredResources(kind, names, {
+    const hits = await searchStarredHits(kind, names, {
       text: query.query,
       tags: query.tags,
       folder: query.location || undefined,
     });
     const descending = toSortParam(query.sort ?? '') === '-title';
-    return resources
-      .sort((a, b) => (descending ? -1 : 1) * titleCollator.compare(a.title, b.title))
-      .map(({ name, resource, title, description, folder, tags }) => ({
-        resource,
-        kind: kind.searchKind,
-        name,
-        title,
-        description,
-        folder,
-        tags,
-        field: {},
-        url: kind.url(name),
-      }));
+    return hits.sort((a, b) => (descending ? -1 : 1) * titleCollator.compare(a.title, b.title));
   }
 
   async tags(query: SearchQuery): Promise<TermCount[]> {

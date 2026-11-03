@@ -2931,6 +2931,8 @@ func (s *singleBulkRequestBatchIterator) RollbackRequested() bool {
 	return s.iter.RollbackRequested()
 }
 
+func (*kvStorageBackend) RequiresBulkPreflight() {}
+
 //nolint:gocyclo
 func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ProcessBulk")

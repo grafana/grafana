@@ -49,6 +49,11 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	// Unlock once the function returns the initialized backend.
 	defer initMutex.Unlock()
 
+	return startTestBackend(t, db.InitTestDB(t), isHA, simulatedNetworkLatency, maxOpenConn, opts...) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+}
+
+// startTestBackend starts a backend on dbstore. Callers must hold initMutex.
+func startTestBackend(t *testing.T, dbstore db.DB, isHA bool, simulatedNetworkLatency time.Duration, maxOpenConn int, opts ...sql.StorageBackendOption) resource.StorageBackend {
 	cfg := setting.NewCfg()
 	cfg.GRPCServer.Address = "localhost:0" // get a free address
 	cfg.GRPCServer.Network = "tcp"
@@ -59,7 +64,6 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	cfg.SimulatedNetworkLatency = simulatedNetworkLatency
 	cfg.DisablePruner = db.IsTestDbSQLite()
 	cfg.NotifierSettleDelay = time.Millisecond // keep it low in tests as most of them don't exercise concurrent writes
-	dbstore := db.InitTestDB(t)                //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	dbSection := cfg.SectionWithEnvOverrides("database")
 	if isHA {
 		dbSection.Key("high_availability").SetValue("true")
@@ -177,6 +181,89 @@ func TestIntegrationSQLBackendPublishesWatchNotifications(t *testing.T) {
 		require.Equal(t, w.rv, got.GetResourceVersion())
 		require.Equal(t, w.prevRV, got.GetPreviousResourceVersion())
 	}
+}
+
+// Two instances share one DB: the polling notifier of one must deliver every
+// write of both exactly once and in RV order, including writes batched together.
+func TestIntegrationSQLPollingNotifierDeliversAllWrites(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	if db.IsTestDbSQLite() {
+		t.Skip("sqlite not compatible with HA")
+	}
+	t.Cleanup(db.CleanupTestDB)
+
+	// Deferred so a failed require (FailNow) still releases the lock.
+	watched, other := func() (resource.StorageBackend, resource.StorageBackend) {
+		initMutex.Lock()
+		defer initMutex.Unlock()
+		dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		return startTestBackend(t, dbstore, true, 0, 0), startTestBackend(t, dbstore, true, 0, 0)
+	}()
+
+	// Hang guard only.
+	ctx := testutil.NewTestContext(t, time.Now().Add(time.Minute))
+	events, err := watched.WatchWriteEvents(ctx)
+	require.NoError(t, err)
+
+	expectDelivered := func(t *testing.T, want map[string]int64) {
+		t.Helper()
+		got := map[string]int64{}
+		var lastRV int64
+		for len(got) < len(want) {
+			select {
+			case e := <-events:
+				require.NotContains(t, got, e.Key.Name, "event delivered twice")
+				require.Greater(t, e.ResourceVersion, lastRV, "events out of RV order")
+				lastRV = e.ResourceVersion
+				got[e.Key.Name] = e.ResourceVersion
+			case <-ctx.Done():
+				t.Fatalf("got %d of %d events: %v", len(got), len(want), got)
+			}
+		}
+		require.Equal(t, want, got)
+	}
+
+	writeConcurrently := func(t *testing.T, prefix string, n int) map[string]int64 {
+		t.Helper()
+		var (
+			mu   sync.Mutex
+			wg   sync.WaitGroup
+			rvs  = map[string]int64{}
+			errs []error
+		)
+		for i := range n {
+			backend := watched
+			if i%2 == 1 {
+				backend = other
+			}
+			name := prefix + strconv.Itoa(i)
+			wg.Go(func() {
+				rv, err := unitest.WriteEvent(ctx, backend, name, resourcepb.WatchEvent_ADDED)
+				mu.Lock()
+				defer mu.Unlock()
+				rvs[name] = rv
+				errs = append(errs, err)
+			})
+		}
+		wg.Wait()
+		for _, err := range errs {
+			require.NoError(t, err)
+		}
+		return rvs
+	}
+
+	// Concurrent first writes from two instances race on the resource_version
+	// insert, so create the collection first.
+	rv, err := unitest.WriteEvent(ctx, other, "seed", resourcepb.WatchEvent_ADDED)
+	require.NoError(t, err)
+	expectDelivered(t, map[string]int64{"seed": rv})
+
+	expectDelivered(t, writeConcurrently(t, "first-", 20))
+	// Later writes to the same collection, once the poller has caught up.
+	expectDelivered(t, writeConcurrently(t, "second-", 20))
+	rv, err = unitest.WriteEvent(ctx, other, "last", resourcepb.WatchEvent_ADDED)
+	require.NoError(t, err)
+	expectDelivered(t, map[string]int64{"last": rv})
 }
 
 func TestIntegrationSearchAndStorage(t *testing.T) {

@@ -58,7 +58,7 @@ const STARRED_DASHBOARD = {
 const setupSearcher = (items = [STARRED_DASHBOARD]) => {
   const search = jest.fn(({ name }: { name: string[] }) => {
     const rows = items.filter((d) => name.includes(d.uid));
-    return Promise.resolve({ view: { length: rows.length, get: (i: number) => rows[i] } });
+    return Promise.resolve({ view: { length: rows.length, get: (i: number) => rows[i], toArray: () => rows } });
   });
   jest.mocked(getGrafanaSearcher).mockReturnValue({ search } as unknown as ReturnType<typeof getGrafanaSearcher>);
 };
@@ -700,7 +700,7 @@ describe('MegaMenu', () => {
     setupSearcher([]);
 
     // The plugin's page in the nav tree is what links the kind into the plugin
-    const { user } = renderMegaMenu({ navBarTree: [...customisableNavTree, MOCK_STARRED_KIND_PAGE] });
+    const { user, unmount } = renderMegaMenu({ navBarTree: [...customisableNavTree, MOCK_STARRED_KIND_PAGE] });
 
     await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
 
@@ -714,6 +714,8 @@ describe('MegaMenu', () => {
 
     // The kind icon doubles as the row's accessible kind, like the dashboard/folder icons do.
     expect(starredSection().getByTitle('Thing')).toBe(starredSection().getByTestId('icon-cube'));
+    // Forgetting the kinds re-renders a mounted menu, so take it down first
+    unmount();
     resetStarredKinds();
   });
 });

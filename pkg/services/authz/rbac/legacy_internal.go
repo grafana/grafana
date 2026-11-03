@@ -59,6 +59,10 @@ func (s *Service) validateLegacyInternalEvaluation(
 	req *authzv1.LegacyCheckRequest,
 	namespace types.NamespaceInfo,
 ) error {
+	if req.GetRestriction() != nil {
+		return errors.New("internal legacy identity cannot be combined with an action restriction")
+	}
+
 	if req.GetSubject() != "" || req.GetGlobalEvaluation() != nil {
 		return errors.New("internal legacy identity cannot be combined with a subject or global evaluation")
 	}

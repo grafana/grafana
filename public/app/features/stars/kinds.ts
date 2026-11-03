@@ -151,28 +151,28 @@ async function discoverAppKinds(): Promise<KindSearchStarredKind[]> {
   return kinds;
 }
 
-let appKinds: KindSearchStarredKind[] = [];
+let appKinds: readonly KindSearchStarredKind[] = [];
 let appKindsLoad: Promise<void> | undefined;
+const listeners = new Set<() => void>();
+
+function setAppKinds(kinds: readonly KindSearchStarredKind[]) {
+  appKinds = kinds;
+  listeners.forEach((listener) => listener());
+}
 
 /**
  * Finds the app kinds Grafana can show as starred: every namespaced kind API discovery lists for
  * a group other than Grafana's own, with a plugin page to link to. Loaded once per page load; a
- * failed load is retried by the next caller. Rows of these kinds only exist after a caller
- * awaited this, so the synchronous readers below see them.
+ * failed load is retried by the next caller. Subscribers hear when the kinds change.
  */
 export function loadStarredKinds(): Promise<void> {
   if (!appKindsLoad) {
-    const load = discoverAppKinds().then(
-      (kinds) => {
-        appKinds = kinds;
-      },
-      (err: unknown) => {
-        console.error('Failed to load the starred kinds', err);
-        if (appKindsLoad === load) {
-          appKindsLoad = undefined;
-        }
+    const load = discoverAppKinds().then(setAppKinds, (err: unknown) => {
+      console.error('Failed to load the starred kinds', err);
+      if (appKindsLoad === load) {
+        appKindsLoad = undefined;
       }
-    );
+    });
     appKindsLoad = load;
   }
   return appKindsLoad;
@@ -181,24 +181,40 @@ export function loadStarredKinds(): Promise<void> {
 /** Loads the app kinds when the stars hold an object of one; stars of Grafana's own kinds need no discovery. */
 export async function loadStarredKindsFor(stars: StarsList | undefined): Promise<void> {
   const resources = stars?.items?.[0]?.spec.resource ?? [];
-  if (resources.some(({ group, kind, names }) => names.length > 0 && !GRAFANA_KINDS.has(`${group}/${kind}`))) {
+  if (resources.some(({ group, kind, names }) => names.length > 0 && !isGrafanaKind(group, kind))) {
     await loadStarredKinds();
   }
 }
 
 /** Forgets the loaded app kinds, so the next load discovers again. Tests only. */
 export function resetStarredKinds(): void {
-  appKinds = [];
   appKindsLoad = undefined;
+  setAppKinds([]);
 }
 
-/** Grafana's own kinds, then the app kinds loaded so far. */
-export function getStarredKinds(): StarredKind[] {
-  const kinds = [dashboardKind()];
-  if (starredFoldersEnabled()) {
-    kinds.push(folderKind());
+export function subscribeStarredKinds(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+// The list is rebuilt only when the folders flag or the app kinds change, so a render keyed on it sees the same
+// reference while they hold. Built on first use rather than at module load, since the titles need translations.
+let cached: { foldersEnabled: boolean; appKinds: readonly KindSearchStarredKind[]; kinds: readonly StarredKind[] } = {
+  foldersEnabled: false,
+  appKinds: [],
+  kinds: [],
+};
+
+/** Grafana's own kinds, then the app kinds loaded so far, in display order. */
+export function getStarredKinds(): readonly StarredKind[] {
+  const foldersEnabled = starredFoldersEnabled();
+  if (cached.kinds.length === 0 || cached.foldersEnabled !== foldersEnabled || cached.appKinds !== appKinds) {
+    const grafanaKinds = foldersEnabled ? [dashboardKind(), folderKind()] : [dashboardKind()];
+    cached = { foldersEnabled, appKinds, kinds: [...grafanaKinds, ...appKinds] };
   }
-  return [...kinds, ...appKinds];
+  return cached.kinds;
 }
 
 export function findStarredKind(group: string, kind: string): StarredKind | undefined {
