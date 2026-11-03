@@ -24,7 +24,7 @@ import (
 
 const (
 	defaultServerNamePrefix = "grafana-nats-"
-	serverName              = "nats-server"
+	ServerServiceName       = "nats-server"
 )
 
 var (
@@ -70,10 +70,18 @@ func ProvideServer(cfg *setting.Cfg, sqlStore db.DB, reg prometheus.Registerer) 
 	// the embedded server; external/Cloud mode owns nothing here.
 	if !s.IsDisabled() {
 		s.metrics = newServerMetrics(reg)
+
+		// The resolved host feeds both Cluster.Advertise and the registry route URL,
+		// so gossip and discovery hand peers the same address.
+		host, detected := resolveAdvertiseHost(s.cfg, upInterfaceIPs)
+		if detected {
+			s.log.Info("detected nats cluster advertise address", "address", host)
+		}
+		s.cfg.AdvertiseAddress = host
 	}
 
 	s.opts = s.serverOptions()
-	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(serverName)
+	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(ServerServiceName)
 
 	return s, nil
 }
@@ -244,9 +252,17 @@ func (s *Server) serverOptions() *natsserver.Options {
 		NoSigs:                true,
 		JetStream:             false,
 		NoSystemAccount:       true,
-		Cluster:               natsserver.ClusterOpts{Name: "grafana", Host: s.cfg.ListenAddress, Port: s.cfg.ClusterPort},
 		ConnectErrorReports:   1,
 		ReconnectErrorReports: 1,
+		Cluster: natsserver.ClusterOpts{
+			Name:      "grafana",
+			Host:      s.cfg.ListenAddress,
+			Port:      s.cfg.ClusterPort,
+			Advertise: clusterAdvertise(s.cfg.AdvertiseAddress),
+			// Clients connect in-process, so peers' client URLs would only fill
+			// their server pools with addresses they never dial.
+			NoAdvertise: true,
+		},
 	}
 }
 

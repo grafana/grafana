@@ -239,6 +239,10 @@ const (
 	// Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
 	FlagDashboardNotebooks = "dashboard.notebooks"
 
+	// FlagDashboardNotebookComments
+	// Enables commenting on Notebook cells
+	FlagDashboardNotebookComments = "dashboard.notebookComments"
+
 	// FlagGrafanaSavedDashboardViews
 	// Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state
 	FlagGrafanaSavedDashboardViews = "grafana.savedDashboardViews"
@@ -693,10 +697,6 @@ const (
 	// FlagExcludeRedundantManagedPermissions
 	// Exclude redundant individual dashboard/folder permissions from managed roles at query time
 	FlagExcludeRedundantManagedPermissions = "excludeRedundantManagedPermissions"
-
-	// FlagPanelTimeSettings
-	// Enables a new panel time settings drawer
-	FlagPanelTimeSettings = "panelTimeSettings"
 
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources

@@ -471,6 +471,52 @@ func TestNatsNotifierWatch_RetriesUntilSubscribeSucceeds(t *testing.T) {
 	})
 }
 
+// startingEventSubscriber fails to subscribe until started is closed, like
+// the NATS subscriber service before it starts.
+type startingEventSubscriber struct {
+	*fakeEventSubscriber
+	started chan struct{}
+	calls   atomic.Int32
+}
+
+func (s *startingEventSubscriber) Started() <-chan struct{} { return s.started }
+
+func (s *startingEventSubscriber) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte), onReconnect func()) (Subscription, error) {
+	s.calls.Add(1)
+	select {
+	case <-s.started:
+		return s.fakeEventSubscriber.Subscribe(ctx, subject, handler, onReconnect)
+	default:
+		return nil, errors.New("nats subscriber connection is not established")
+	}
+}
+
+func TestNatsNotifierWatch_WaitsForTheSubscriberToStart(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := &startingEventSubscriber{fakeEventSubscriber: &fakeEventSubscriber{enabled: true}, started: make(chan struct{})}
+		expiry := NewWatchExpiry()
+		invalidated := expiry.WatchInvalidation()
+		n := newNatsNotifier(sub, expiry, nil, &logging.NoOpLogger{})
+
+		ready := make(chan error, 1)
+		n.Watch(t.Context(), WatchOptions{captureReady: ready})
+		time.Sleep(time.Minute)
+		synctest.Wait()
+		require.Zero(t, sub.calls.Load(), "subscribing before the subscriber started would fail and log an error")
+		require.Empty(t, ready)
+
+		close(sub.started)
+		require.NoError(t, <-ready)
+		require.EqualValues(t, 1, sub.calls.Load())
+		require.Equal(t, resourcewatch.SubjectAllResources, sub.subject)
+		select {
+		case <-invalidated:
+		default:
+			t.Fatal("watches opened before capture must expire")
+		}
+	})
+}
+
 func TestNatsNotifierPublishIsNoOp(t *testing.T) {
 	expiry := NewWatchExpiry()
 	n := newNatsNotifier(&fakeEventSubscriber{enabled: true}, expiry, nil, &logging.NoOpLogger{})
@@ -811,6 +857,24 @@ func TestWatchWrittenKeys(t *testing.T) {
 		for _, sub := range sub.subs {
 			require.True(t, sub.wasUnsubscribed())
 		}
+	})
+}
+
+func TestWatchWrittenKeysWaitsForTheSubscriberToStart(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := &startingEventSubscriber{fakeEventSubscriber: &fakeEventSubscriber{enabled: true}, started: make(chan struct{})}
+		backend := &kvStorageBackend{keysSubscriber: sub, log: logging.DefaultLogger}
+		done := make(chan error, 1)
+		go func() {
+			_, err := backend.WatchWrittenKeys(t.Context(), []schema.GroupResource{{Group: "dashboard.grafana.app", Resource: "dashboards"}}, func(string) {})
+			done <- err
+		}()
+		synctest.Wait()
+		require.Zero(t, sub.calls.Load())
+
+		close(sub.started)
+		require.NoError(t, <-done)
+		require.EqualValues(t, 1, sub.calls.Load())
 	})
 }
 

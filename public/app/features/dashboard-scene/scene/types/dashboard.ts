@@ -89,6 +89,11 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
    * toolbar shows only the plan banner (Build/Dismiss) in place of the normal actions.
    */
   planning?: DashboardPlanningState;
+  /**
+   * In `composer` mode: whether Composer is over Editing (it writes, inside the edit session) or over
+   * Viewing (it only asks, and there is nothing to save). Unset outside Composer.
+   */
+  composerEditing?: boolean;
 }
 
 export function isFullDashboardEditing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {

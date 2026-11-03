@@ -174,7 +174,7 @@ spec:
   sync:
     enabled: true
     intervalSeconds: 60
-    target: folder
+    target: '<YOUR_TARGET'>
   workflows:
     - write
     - branch
@@ -243,19 +243,14 @@ To use an OAuth App connection, set `spec.connection.name` instead of `secure.to
 
 Replace the placeholders with your values:
 
-- _`<REPOSITORY_NAME>`_: Unique identifier for this repository resource
-- _`<REPOSITORY_TITLE>`_: Human-readable name displayed in Grafana UI
-- _`<GIT_REPO_URL>`_: GitHub repository URL
-- _`<BRANCH>`_: Branch to sync
-- _`<GITHUB_CONNECTION_NAME>`_: The name of your GitHub connection
-- _`<GITHUB_ENTERPRISE_CONNECTION_NAME>`_: The name of your GitHub Enterprise connection
-- _`<GIT_PAT>`_: Git provider Personal Access Token
-
-{{< admonition type="note" >}}
-
-Git Sync supports two sync targets: `target: folder` (the default) creates a folder named after the repository and places synced resources inside it, while `target: folderless` places synced resources at the top level without creating a wrapper folder. Refer to [Sync targets](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/key-concepts/#sync-targets) for details.
-
-{{< /admonition >}}
+- _`<YOUR_TARGET>`_: Git Sync supports two sync targets: `folder` (default) creates a folder named after the repository and places synced resources inside it, while `folderless` places synced resources at the top level without creating a wrapper folder. Refer to [Sync targets](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/key-concepts/#sync-targets) for details.
+- _`<REPOSITORY_NAME>`_: Unique identifier for this repository resource.
+- _`<REPOSITORY_TITLE>`_: Human-readable name displayed in Grafana UI.
+- _`<GIT_REPO_URL>`_: GitHub repository URL.
+- _`<BRANCH>`_: Branch to sync.
+- _`<GITHUB_CONNECTION_NAME>`_: The name of your GitHub connection.
+- _`<GITHUB_ENTERPRISE_CONNECTION_NAME>`_: The name of your GitHub Enterprise connection.
+- _`<GIT_PAT>`_: Git provider Personal Access Token.
 
 ## Configuration parameters
 

@@ -1566,6 +1566,19 @@
     },
     {
       "metadata": {
+        "name": "dashboard.notebookComments",
+        "resourceVersion": "1793648427125",
+        "creationTimestamp": "2026-11-02T19:40:27Z"
+      },
+      "spec": {
+        "description": "Enables commenting on Notebook cells",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboard.notebooks",
         "resourceVersion": "1792173756887",
         "creationTimestamp": "2026-07-09T13:38:44Z",
@@ -3102,7 +3115,8 @@
       "metadata": {
         "name": "grafana.logDetailsDisplayedFieldControls",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T08:46:56Z"
+        "creationTimestamp": "2026-09-16T08:46:56Z",
+        "deletionTimestamp": "2026-10-28T16:06:05Z"
       },
       "spec": {
         "description": "Deprecated: Toggle displayed fields from Log Details",
@@ -3360,6 +3374,20 @@
         "description": "Nest app plugin navigation items in the mega menu based on their URL path hierarchy",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.preserveDashboardLoginTabTitle",
+        "resourceVersion": "1792406798478",
+        "creationTimestamp": "2026-10-19T10:46:38Z"
+      },
+      "spec": {
+        "description": "Preserves dashboard names in login tab titles when grafana.preserveLoginTabTitle is enabled",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -4812,6 +4840,7 @@
         "name": "panelTimeSettings",
         "resourceVersion": "1791345985856",
         "creationTimestamp": "2025-10-29T08:06:23Z",
+        "deletionTimestamp": "2026-10-28T18:03:43Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-10-07 04:06:25.856468 +0000 UTC"
         }
@@ -6293,6 +6322,7 @@
         "name": "timeComparison",
         "resourceVersion": "1791345985856",
         "creationTimestamp": "2025-07-24T20:07:28Z",
+        "deletionTimestamp": "2026-10-28T18:03:43Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-10-07 04:06:25.856468 +0000 UTC"
         }
