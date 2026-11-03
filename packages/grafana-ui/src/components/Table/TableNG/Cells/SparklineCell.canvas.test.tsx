@@ -2,6 +2,7 @@ import { render, waitFor } from '@testing-library/react';
 import type uPlot from 'uplot';
 
 import {
+  type AbsoluteTimeRange,
   applyFieldOverrides,
   createTheme,
   FieldColorModeId,
@@ -51,8 +52,17 @@ function sparklineField(config: Field['config'], type: FieldType = FieldType.fra
   })[0].fields[0];
 }
 
-function renderSparklineCell(field: Field) {
-  return render(<SparklineCell field={field} rowIdx={0} theme={createTheme()} value={field.values[0]} width={width} />);
+function renderSparklineCell(field: Field, onTimeRangeSelected?: (range: AbsoluteTimeRange) => void) {
+  return render(
+    <SparklineCell
+      field={field}
+      rowIdx={0}
+      theme={createTheme()}
+      value={field.values[0]}
+      width={width}
+      onTimeRangeSelected={onTimeRangeSelected}
+    />
+  );
 }
 
 let uPlotInstance: InstanceType<typeof uPlot> | undefined;
@@ -152,6 +162,34 @@ describe('TableNG SparklineCell threshold wiring (canvas)', () => {
 
   // The 5th positional prepareConfig arg is `enableHover`; the cell must forward
   // cellOptions.showTooltip so the sparkline only enables the cursor when opted in.
+  it.each([
+    [true, false, true],
+    [false, false, false],
+    [true, true, false],
+  ])(
+    'selects time only when opted in and without data links (option=%s, links=%s)',
+    async (selectTimeRange, hasLinks, enabled) => {
+      const onTimeRangeSelected = jest.fn();
+      renderSparklineCell(
+        sparklineField({
+          custom: { cellOptions: { type: TableCellDisplayMode.Sparkline, hideValue: true, selectTimeRange } },
+          ...(hasLinks ? { links: [{ title: 'Details', url: 'https://example.com' }] } : {}),
+        }),
+        onTimeRangeSelected
+      );
+      await waitFor(() => expect(uPlotInstance?.status).toBe(1));
+      expect(uPlotInstance!.cursor.drag?.x ?? false).toBe(enabled);
+      const left = uPlotInstance!.valToPos(1000, 'x');
+      const right = uPlotInstance!.valToPos(2000, 'x');
+      uPlotInstance!.setSelect({ left, width: right - left, top: 0, height });
+      if (enabled) {
+        expect(onTimeRangeSelected).toHaveBeenCalledWith({ from: 1000, to: 2000 });
+      } else {
+        expect(onTimeRangeSelected).not.toHaveBeenCalled();
+      }
+    }
+  );
+
   it('leaves hover disabled when showTooltip is unset', async () => {
     renderSparklineCell(sparklineField({ custom: { cellOptions: { type: TableCellDisplayMode.Sparkline } } }));
 

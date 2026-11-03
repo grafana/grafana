@@ -66,6 +66,8 @@ TableSparklineCellOptions: {
 	type:         TableCellDisplayMode & "sparkline"
 	hideValue?:   bool
 	showTooltip?: bool
+	// Allow dragging to select a time range when the host supports it.
+	selectTimeRange?: bool
 } @cuetsy(kind="interface")
 
 // Colored background cell options

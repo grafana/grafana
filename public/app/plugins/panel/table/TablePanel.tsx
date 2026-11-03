@@ -202,6 +202,7 @@ export function TablePanel(props: Props) {
       onFieldAddToAssistant={onFieldAddToAssistant}
       onCellAddToAssistant={onCellAddToAssistant}
       timeRange={timeRange}
+      onTimeRangeSelected={tableRefreshNewFeaturesEnabled ? props.onChangeTimeRange : undefined}
       timeZone={props.timeZone}
       enableSharedCrosshair={enableSharedCrosshair}
       fieldConfig={fieldConfig}

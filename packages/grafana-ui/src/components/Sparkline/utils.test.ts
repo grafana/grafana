@@ -384,6 +384,67 @@ describe('prepareConfig hover', () => {
       rect: { left: 100, top: 50 },
     }) as unknown as uPlot;
 
+  it('selects a time interval without changing the local plot scale', () => {
+    const sparkline = makeHoverSparkline();
+    sparkline.x!.type = FieldType.time;
+    const onRangeSelected = jest.fn();
+    const config = prepareConfig(
+      sparkline,
+      toDataFrame({ fields: [sparkline.x, sparkline.y] }),
+      theme,
+      false,
+      false,
+      undefined,
+      onRangeSelected
+    ).getConfig();
+    expect(config.cursor?.drag).toEqual({ x: true, y: false, setScale: false, dist: 5 });
+    const plot = {
+      select: { left: 10, width: 20 },
+      posToVal: jest.fn().mockReturnValueOnce(1000.4).mockReturnValueOnce(2000.4),
+      setSelect: jest.fn(),
+    } as unknown as uPlot;
+    config.hooks!.setSelect![0]!(plot);
+    expect(onRangeSelected).toHaveBeenCalledWith({ from: 1000, to: 2000 });
+    expect(plot.setSelect).toHaveBeenCalledWith({ left: 0, top: 0, width: 0, height: 0 }, false);
+  });
+
+  it.each([FieldType.number, undefined])('does not enable time selection for an x field of type %s', (type) => {
+    const sparkline = makeHoverSparkline();
+    sparkline.x!.type = FieldType.time;
+    sparkline.x = type ? { ...sparkline.x!, type } : undefined;
+    const frame = toDataFrame({ fields: sparkline.x ? [sparkline.x, sparkline.y] : [sparkline.y] });
+    const config = prepareConfig(sparkline, frame, theme, false, false, undefined, jest.fn()).getConfig();
+    expect(config.cursor?.show).toBe(false);
+    expect(config.hooks?.setSelect).toBeUndefined();
+  });
+
+  it.each([
+    [NaN, 2000],
+    [2000, 2000],
+    [3000, 2000],
+  ])('ignores an invalid time selection (%s, %s)', (from, to) => {
+    const sparkline = makeHoverSparkline();
+    sparkline.x!.type = FieldType.time;
+    const onRangeSelected = jest.fn();
+    const config = prepareConfig(
+      sparkline,
+      toDataFrame({ fields: [sparkline.x, sparkline.y] }),
+      theme,
+      false,
+      false,
+      undefined,
+      onRangeSelected
+    ).getConfig();
+    const plot = {
+      select: { left: 10, width: 20 },
+      posToVal: jest.fn().mockReturnValueOnce(from).mockReturnValueOnce(to),
+      setSelect: jest.fn(),
+    } as unknown as uPlot;
+    config.hooks!.setSelect![0]!(plot);
+    expect(plot.setSelect).toHaveBeenCalledWith({ left: 0, top: 0, width: 0, height: 0 }, false);
+    expect(onRangeSelected).not.toHaveBeenCalled();
+  });
+
   it('disables the cursor and registers no hover hook by default', () => {
     const sparkline = makeHoverSparkline();
     const dataFrame = toDataFrame({ fields: [sparkline.x, sparkline.y] });

@@ -855,6 +855,10 @@ export interface TableBarGaugeCellOptions {
  */
 export interface TableSparklineCellOptions extends GraphFieldConfig {
   hideValue?: boolean;
+  /**
+   * Allow dragging to select a time range when the host supports it.
+   */
+  selectTimeRange?: boolean;
   showTooltip?: boolean;
   type: TableCellDisplayMode.Sparkline;
 }

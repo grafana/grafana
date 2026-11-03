@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
 import * as React from 'react';
 
-import { type FieldConfig, getMinMaxAndDelta, type Field, isDataFrameWithValue } from '@grafana/data';
+import { type FieldConfig, getMinMaxAndDelta, type Field, FieldType, isDataFrameWithValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   BarAlignment,
@@ -37,7 +37,7 @@ const defaultSparklineCellConfig: TableSparklineCellOptions = {
 };
 
 export const SparklineCell = (props: SparklineCellProps) => {
-  const { field, value, theme, timeRange, rowIdx, width } = props;
+  const { field, value, theme, timeRange, rowIdx, width, onTimeRangeSelected } = props;
   const sparkline = prepareSparklineValue(value, field);
 
   if (!sparkline) {
@@ -104,6 +104,11 @@ export const SparklineCell = (props: SparklineCellProps) => {
         config={config}
         theme={theme}
         showTooltip={cellOptions.showTooltip}
+        onRangeSelected={
+          cellOptions.selectTimeRange && sparkline.x?.type === FieldType.time && !field.config.links?.length
+            ? onTimeRangeSelected
+            : undefined
+        }
       />
     </MaybeWrapWithLink>
   );
