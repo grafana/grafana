@@ -5,7 +5,6 @@ import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
-import { isNewTextPanelEnabled } from 'app/plugins/panel/text/v2/utils';
 
 import { changePanelFieldConfig, changePanelOptions } from '../../actions/panel/changePanelOptions';
 import { getLibraryPanelBehavior } from '../../utils/utils';
@@ -45,9 +44,11 @@ export function usePanelSidebarVizOptions(panel: VizPanel): OptionsPaneCategoryD
       itemIds
     );
 
-    // The new text panel registers its content options as hidden and edits them inside the panel,
-    // so the mapped text options never show. Its in-panel editor takes their place.
-    if (pluginId === 'text' && isNewTextPanelEnabled()) {
+    // The new text panel registers its content option as hidden and edits it inside the panel, so
+    // the mapped text options don't show and its in-panel editor takes their place. This looks at the
+    // loaded plugin rather than the grafana.newTextPanel flag, which can read differently by the time
+    // the edit pane renders than when the text module picked a version.
+    if (pluginId === 'text' && !hasItem(categories, 'content')) {
       categories.push(getTextNGEditorCategory(panel));
     }
 
@@ -78,5 +79,11 @@ function getTextNGEditorCategory(panel: VizPanel): OptionsPaneCategoryDescriptor
       skipField: true,
       render: () => <TextNGSidebarEditor panel={panel} />,
     })
+  );
+}
+
+function hasItem(categories: OptionsPaneCategoryDescriptor[], itemId: string): boolean {
+  return categories.some(
+    (category) => category.items.some((item) => item.props.id === itemId) || hasItem(category.categories, itemId)
   );
 }

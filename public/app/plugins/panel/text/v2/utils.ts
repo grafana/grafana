@@ -8,11 +8,6 @@ import { type TextNGEditorChange } from './editor/TextNGEditor';
 
 export const EMPTY_CONTENT = ' ';
 
-/** Whether the "text" plugin id resolves to this panel rather than v1 */
-export function isNewTextPanelEnabled(): boolean {
-  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewTextPanel, false);
-}
-
 export function isTextNewFeaturesEnabled(): boolean {
   return getFeatureFlagClient().getBooleanValue(FlagKeys.TextNewFeatures, false);
 }

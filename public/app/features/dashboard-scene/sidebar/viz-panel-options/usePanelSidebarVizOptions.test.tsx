@@ -32,19 +32,23 @@ const timeseries = getPanelPlugin({ id: 'timeseries' })
 const gauge = getPanelPlugin({ id: 'gauge' }).setPanelOptions((builder) =>
   builder.addBooleanSwitch({ path: 'legend.showLegend', name: 'Visibility', category: ['Legend'] })
 );
-// Like the new text panel, which registers its content options as hidden
-const text = getPanelPlugin({ id: 'text' }).setPanelOptions((builder) =>
+// The text panel versions differ in whether the panel editor shows the content option
+const textV1 = getPanelPlugin({ id: 'text' }).setPanelOptions((builder) =>
+  builder.addTextInput({ path: 'content', name: 'Content', category: ['Text'] })
+);
+const textV2 = getPanelPlugin({ id: 'text' }).setPanelOptions((builder) =>
   builder.addTextInput({ path: 'content', name: 'Content', category: ['Text'], showIf: () => false })
 );
-const plugins = [timeseries, gauge, text];
+let text = textV1;
+const getPlugin = (id: string) => [timeseries, gauge, text].find((p) => p.meta.id === id);
 
 jest.mock('./TextNGSidebarEditor', () => ({
   TextNGSidebarEditor: () => <textarea aria-label="Text content" />,
 }));
 
 setPluginImportUtils({
-  importPanelPlugin: async (id) => plugins.find((p) => p.meta.id === id)!,
-  getPanelPluginFromCache: (id) => plugins.find((p) => p.meta.id === id),
+  importPanelPlugin: async (id) => getPlugin(id)!,
+  getPanelPluginFromCache: getPlugin,
 });
 
 function SidebarVizOptions({ panel }: { panel: VizPanel }) {
@@ -111,25 +115,28 @@ describe('usePanelSidebarVizOptions', () => {
     expect(panel.state.options.legend?.showLegend).toBe(false);
   });
 
-  it.each([
-    { newTextPanel: true, shown: true },
-    { newTextPanel: false, shown: false },
-  ])(
-    'shows the text editor for text panels: $shown with grafana.newTextPanel=$newTextPanel',
-    async ({ newTextPanel, shown }) => {
-      setTestFlags({ [FlagKeys.GrafanaNewTextPanel]: newTextPanel });
-      const { panel } = setup({ pluginId: 'text' });
-      await waitFor(() => expect(panel.getPlugin()?.meta.id).toBe('text'));
+  // The flag is set against the loaded version on purpose: on rollouts it can read differently in the
+  // edit pane than when the text module picked its version, so only the loaded plugin decides.
+  it('shows the new text panel editor when the loaded text panel hides its content option', async () => {
+    text = textV2;
+    setTestFlags({ [FlagKeys.GrafanaNewTextPanel]: false });
+    setup({ pluginId: 'text' });
 
-      if (shown) {
-        expect(await screen.findByRole('group', { name: 'Text' })).toContainElement(
-          screen.getByRole('textbox', { name: 'Text content' })
-        );
-      } else {
-        expect(screen.queryByRole('textbox', { name: 'Text content' })).not.toBeInTheDocument();
-      }
-    }
-  );
+    expect(await screen.findByRole('group', { name: 'Text' })).toContainElement(
+      screen.getByRole('textbox', { name: 'Text content' })
+    );
+    expect(screen.queryByRole('textbox', { name: 'Content' })).not.toBeInTheDocument();
+  });
+
+  it('shows the mapped options instead when the loaded text panel shows its content option', async () => {
+    text = textV1;
+    setTestFlags({ [FlagKeys.GrafanaNewTextPanel]: true });
+    const { panel } = setup({ pluginId: 'text' });
+    await waitFor(() => expect(panel.getPlugin()?.meta.id).toBe('text'));
+
+    expect(await screen.findByRole('textbox', { name: 'Content' })).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Text content' })).not.toBeInTheDocument();
+  });
 
   describe('library panels', () => {
     it('tracks unsaved changes until undone', async () => {
