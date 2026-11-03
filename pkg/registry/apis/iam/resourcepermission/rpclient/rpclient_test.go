@@ -16,7 +16,9 @@ import (
 	clientrest "k8s.io/client-go/rest"
 	k8stesting "k8s.io/client-go/testing"
 
+	authlib "github.com/grafana/authlib/types"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 var testGR = schema.GroupResource{Group: "test.grafana.app", Resource: "things"}
@@ -78,6 +80,85 @@ func TestFromRestConfig(t *testing.T) {
 	_, err = provider(context.Background())
 	require.NoError(t, err)
 	require.Equal(t, 2, calls, "the client is built once the rest config is available, then reused")
+}
+
+func TestWithCreatorAdmin(t *testing.T) {
+	defaults := []iamv0.ResourcePermissionspecPermission{
+		{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Viewer", Verb: "view"},
+	}
+
+	tests := []struct {
+		name    string
+		creator *identity.StaticRequester
+		want    []iamv0.ResourcePermissionspecPermission
+	}{
+		{
+			name:    "user",
+			creator: &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1"},
+			want: append([]iamv0.ResourcePermissionspecPermission{
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "u1", Verb: "admin"},
+			}, defaults...),
+		},
+		{
+			name:    "anonymous",
+			creator: &identity.StaticRequester{Type: authlib.TypeAnonymous},
+			want:    defaults,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, WithCreatorAdmin(tt.creator, defaults))
+		})
+	}
+}
+
+func TestPermissions_SetPermissions(t *testing.T) {
+	const namespace = "stacks-2"
+	perms := []iamv0.ResourcePermissionspecPermission{
+		{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "u1", Verb: "admin"},
+		{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Viewer", Verb: "view"},
+	}
+	wantSpec := map[string]any{
+		"resource": map[string]any{"apiGroup": testGR.Group, "resource": testGR.Resource, "name": "uid"},
+		"permissions": []any{
+			map[string]any{"kind": "User", "name": "u1", "verb": "admin"},
+			map[string]any{"kind": "BasicRole", "name": "Viewer", "verb": "view"},
+		},
+	}
+	getSpec := func(t *testing.T, client dynamic.Interface) any {
+		t.Helper()
+		obj, err := client.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace).
+			Get(context.Background(), Name(testGR, "uid"), metav1.GetOptions{})
+		require.NoError(t, err)
+		return obj.Object["spec"]
+	}
+
+	t.Run("creates a missing resource permission", func(t *testing.T) {
+		client := newPermissionsClient(namespace)
+		p := New(staticClient(client), testGR)
+
+		require.NoError(t, p.SetPermissions(context.Background(), namespace, "uid", perms))
+		require.Equal(t, wantSpec, getSpec(t, client))
+	})
+
+	t.Run("replaces an existing resource permission", func(t *testing.T) {
+		client := newPermissionsClient(namespace, "uid")
+		p := New(staticClient(client), testGR)
+
+		require.NoError(t, p.SetPermissions(context.Background(), namespace, "uid", perms))
+		require.Equal(t, wantSpec, getSpec(t, client))
+	})
+
+	t.Run("a get failure is returned without creating", func(t *testing.T) {
+		client := newPermissionsClient(namespace)
+		client.PrependReactor("get", "resourcepermissions", func(k8stesting.Action) (bool, runtime.Object, error) {
+			return true, nil, errors.New("iam unavailable")
+		})
+		p := New(staticClient(client), testGR)
+
+		require.Error(t, p.SetPermissions(context.Background(), namespace, "uid", perms))
+		require.Len(t, client.Actions(), 1)
+	})
 }
 
 func TestPermissions_DeletePermissions(t *testing.T) {

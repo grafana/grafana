@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"maps"
 	"strconv"
-	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -50,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission/rpclient"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
@@ -118,10 +118,9 @@ type DashboardsAPIBuilder struct {
 	legacy                  legacy.DashboardAccessor
 	unified                 resource.ResourceClient
 	dashboardPermissions    dashboards.PermissionsRegistrationService
-	dashboardPermissionsSvc accesscontrol.DashboardPermissionsService // TODO: once kubernetesAuthzResourcePermissionApis is enabled, rely solely on resourcePermissionsSvc and add integration test afterDelete hook
-	// Do not access directly: use `resourcePermissionsClient(ctx)`. In embedded mode this is
-	// built lazily from restConfigProvider and is nil until the first call.
-	resourcePermissionsSvc   *dynamic.NamespaceableResourceInterface
+	dashboardPermissionsSvc accesscontrol.DashboardPermissionsService // TODO: once kubernetesAuthzResourcePermissionApis is enabled, rely solely on resourcePermissions and add integration test afterDelete hook
+	// resourcePermissions is nil when the App Platform permission path is off.
+	resourcePermissions      *rpclient.Permissions
 	scheme                   *runtime.Scheme
 	search                   *SearchHandler
 	QuotaService             quota.Service
@@ -140,11 +139,6 @@ type DashboardsAPIBuilder struct {
 	namespacer               request.NamespaceMapper
 	dashboardActivityChannel live.DashboardActivityChannel
 	isStandalone             bool // skips any handling including anything to do with legacy storage
-
-	// Embedded mode builds resourcePermissionsSvc lazily from restConfigProvider; standalone
-	// injects resourcePermissionsSvc directly and leaves restConfigProvider nil.
-	restConfigProvider       apiserver.RestConfigProvider
-	resourcePermissionsSvcMu sync.Mutex
 }
 
 func RegisterAPIService(
@@ -220,7 +214,7 @@ func RegisterAPIService(
 
 	// Opt into the App Platform permission path (lazy ResourcePermission client) when the flag is on.
 	if iamFeatures.ResourcePermissionsAPI {
-		builder.restConfigProvider = restConfigProvider
+		builder.resourcePermissions = rpclient.New(rpclient.FromRestConfig(restConfigProvider), dashv1.DashboardResourceInfo.GroupResource())
 	}
 
 	migration.RegisterMetrics(reg)
@@ -252,20 +246,23 @@ func RegisterAPIService(
 
 func NewAPIService(ac authlib.AccessClient, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, search *SearchHandler, unified resource.ResourceClient, settingService settingservice.Service) *DashboardsAPIBuilder {
 	migration.Initialize(datasourceProvider, libraryElementProvider, migration.DefaultCacheTTL)
-	return &DashboardsAPIBuilder{
-		minRefreshInterval:     defaultMinRefreshInterval,
-		settingService:         settingService,
-		accessClient:           ac,
-		dashboardService:       &dashsvc.DashboardServiceImpl{}, // for validation helpers only
-		folderClientProvider:   folderClientProvider,
-		resourcePermissionsSvc: resourcePermissionsSvc,
-		search:                 search,
+	b := &DashboardsAPIBuilder{
+		minRefreshInterval:   defaultMinRefreshInterval,
+		settingService:       settingService,
+		accessClient:         ac,
+		dashboardService:     &dashsvc.DashboardServiceImpl{}, // for validation helpers only
+		folderClientProvider: folderClientProvider,
+		search:               search,
 		// The resource client doubles as the search index client used to enforce
 		// deprecatedInternalID uniqueness (StorageOptions.Index). Without it,
 		// ensureSingleDeprecatedInternalID is skipped and duplicate IDs slip through.
 		unified:      unified,
 		isStandalone: true,
 	}
+	if resourcePermissionsSvc != nil {
+		b.resourcePermissions = rpclient.New(rpclient.Static(*resourcePermissionsSvc), dashv1.DashboardResourceInfo.GroupResource())
+	}
+	return b
 }
 
 func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
@@ -1381,49 +1378,12 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	return nil
 }
 
-// resourcePermissionsClient returns the ResourcePermission dynamic client, building it lazily from
-// restConfigProvider in embedded mode. Returns nil when no client is configured (e.g. flag off).
-func (b *DashboardsAPIBuilder) resourcePermissionsClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
-	// Standalone: injected directly, never mutated, restConfigProvider nil.
-	if b.restConfigProvider == nil {
-		return b.resourcePermissionsSvc, nil
-	}
-
-	// Embedded: build lazily (loopback config isn't ready at registration). The mutex avoids a
-	// data race; failures aren't cached so a transient error doesn't poison later creates.
-	b.resourcePermissionsSvcMu.Lock()
-	defer b.resourcePermissionsSvcMu.Unlock()
-
-	if b.resourcePermissionsSvc != nil {
-		return b.resourcePermissionsSvc, nil
-	}
-
-	cfg, err := b.restConfigProvider.GetRestConfig(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("get rest config: %w", err)
-	}
-	dyn, err := dynamic.NewForConfig(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("create dynamic client: %w", err)
-	}
-	client := dyn.Resource(iamv0alpha1.ResourcePermissionInfo.GroupVersionResource())
-	b.resourcePermissionsSvc = &client
-	return b.resourcePermissionsSvc, nil
-}
-
 func (b *DashboardsAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptions) {
-	ctx := context.Background()
+	if b.resourcePermissions == nil {
+		return
+	}
+
 	log := logging.DefaultLogger
-
-	resourcePermissionsSvc, err := b.resourcePermissionsClient(ctx)
-	if err != nil {
-		log.Error("failed to build resource permissions client", "error", err)
-		return
-	}
-	if resourcePermissionsSvc == nil {
-		return
-	}
-
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
 		log.Error("Failed to access deleted dashboard object metadata", "error", err)
@@ -1431,135 +1391,23 @@ func (b *DashboardsAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteO
 	}
 
 	log.Debug("deleting dashboard permissions", "uid", meta.GetName(), "namespace", meta.GetNamespace())
-	client := (*resourcePermissionsSvc).Namespace(meta.GetNamespace())
-	name := fmt.Sprintf("%s-%s-%s", dashv1.DashboardResourceInfo.GroupVersionResource().Group, dashv1.DashboardResourceInfo.GroupVersionResource().Resource, meta.GetName())
-	err = client.Delete(ctx, name, metav1.DeleteOptions{})
-	if err != nil && !apierrors.IsNotFound(err) {
+	if err := b.resourcePermissions.DeletePermissions(context.Background(), meta.GetNamespace(), meta.GetName()); err != nil {
 		log.Error("failed to delete dashboard permissions", "error", err)
 	}
 }
 
-var defaultDashboardPermissions = []map[string]any{
-	{
-		"kind": "BasicRole",
-		"name": "Editor",
-		"verb": "edit",
-	},
-	{
-		"kind": "BasicRole",
-		"name": "Viewer",
-		"verb": "view",
-	},
-}
-
-// buildDefaultDashboardPermissions returns the permission list applied to a newly created
-// root dashboard. The creator (a user or service account) is granted admin so they can
-// manage the dashboard they just created, mirroring the legacy SetDefaultPermissionsAfterCreate.
-func buildDefaultDashboardPermissions(id authlib.AuthInfo) []map[string]any {
-	var creatorKind string
-	switch id.GetIdentityType() {
-	case authlib.TypeUser:
-		creatorKind = string(iamv0alpha1.ResourcePermissionSpecPermissionKindUser)
-	case authlib.TypeServiceAccount:
-		creatorKind = string(iamv0alpha1.ResourcePermissionSpecPermissionKindServiceAccount)
-	default:
-		// Other identity types (API keys, anonymous, render service, etc.) do not get
-		// creator-admin permissions; they fall back to the default permission set.
-	}
-
-	if creatorKind == "" {
-		return defaultDashboardPermissions
-	}
-
-	permissions := make([]map[string]any, 0, len(defaultDashboardPermissions)+1)
-	permissions = append(permissions, map[string]any{
-		"kind": creatorKind,
-		"name": id.GetIdentifier(),
-		"verb": "admin",
-	})
-	return append(permissions, defaultDashboardPermissions...)
+var defaultDashboardPermissions = []iamv0alpha1.ResourcePermissionspecPermission{
+	{Kind: iamv0alpha1.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "edit"},
+	{Kind: iamv0alpha1.ResourcePermissionSpecPermissionKindBasicRole, Name: "Viewer", Verb: "view"},
 }
 
 func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Context, key *resourcepb.ResourceKey, id authlib.AuthInfo, obj utils.GrafanaMetaAccessor) error {
-	resourcePermissionsSvc, err := b.resourcePermissionsClient(ctx)
-	if err != nil {
-		return err
-	}
-	if resourcePermissionsSvc == nil {
+	if b.resourcePermissions == nil || !folder.IsRootFolderUID(obj.GetFolder()) {
 		return nil
 	}
 
-	if !folder.IsRootFolderUID(obj.GetFolder()) {
-		return nil
-	}
-
-	log := logging.FromContext(ctx)
-	log.Debug("setting default dashboard permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace())
-
-	// Setting the default permissions is a system operation triggered by the creation
-	// of the dashboard, not an action the requester performs directly. The creator does
-	// not yet have permission to manage permissions on the brand-new dashboard, so we use
-	// a service identity to write them through the ResourcePermission API.
-	nsInfo, err := authlib.ParseNamespace(obj.GetNamespace())
-	if err != nil {
-		return fmt.Errorf("parse namespace: %w", err)
-	}
-	ctx = identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
-
-	// The creator gets admin on their dashboard, in addition to the default basic-role
-	// permissions. Anonymous and other non-user identities don't get an explicit grant.
-	permissions := buildDefaultDashboardPermissions(id)
-
-	client := (*resourcePermissionsSvc).Namespace(obj.GetNamespace())
-	name := fmt.Sprintf("%s-%s-%s", dashv1.DashboardResourceInfo.GroupVersionResource().Group, dashv1.DashboardResourceInfo.GroupVersionResource().Resource, obj.GetName())
-
-	if _, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
-		_, err := client.Update(ctx, &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]any{
-					"name":      name,
-					"namespace": obj.GetNamespace(),
-				},
-				"spec": map[string]any{
-					"resource": map[string]any{
-						"apiGroup": dashv1.DashboardResourceInfo.GroupVersionResource().Group,
-						"resource": dashv1.DashboardResourceInfo.GroupVersionResource().Resource,
-						"name":     obj.GetName(),
-					},
-					"permissions": permissions,
-				},
-			},
-		}, metav1.UpdateOptions{})
-		if err != nil {
-			log.Error("failed to update dashboard permissions", "error", err)
-			return fmt.Errorf("update dashboard permissions: %w", err)
-		}
-
-		return nil
-	}
-
-	_, err = client.Create(ctx, &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"metadata": map[string]any{
-				"name":      name,
-				"namespace": obj.GetNamespace(),
-			},
-			"spec": map[string]any{
-				"resource": map[string]any{
-					"apiGroup": dashv1.DashboardResourceInfo.GroupVersionResource().Group,
-					"resource": dashv1.DashboardResourceInfo.GroupVersionResource().Resource,
-					"name":     obj.GetName(),
-				},
-				"permissions": permissions,
-			},
-		},
-	}, metav1.CreateOptions{})
-	if err != nil {
-		log.Error("failed to create dashboard permissions", "error", err)
-		return fmt.Errorf("create dashboard permissions: %w", err)
-	}
-
-	return nil
+	logging.FromContext(ctx).Debug("setting default dashboard permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace())
+	return b.resourcePermissions.SetPermissions(ctx, obj.GetNamespace(), obj.GetName(), rpclient.WithCreatorAdmin(id, defaultDashboardPermissions))
 }
 
 func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {

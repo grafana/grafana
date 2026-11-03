@@ -8,6 +8,8 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
@@ -69,6 +71,68 @@ func New(client ClientProvider, gr schema.GroupResource) *Permissions {
 	return &Permissions{client: client, gr: gr}
 }
 
+// WithCreatorAdmin returns permissions preceded by admin for the creator of a resource.
+// Only users and service accounts are granted admin; other identities get permissions as is.
+func WithCreatorAdmin(creator authlib.AuthInfo, permissions []iamv0.ResourcePermissionspecPermission) []iamv0.ResourcePermissionspecPermission {
+	var kind iamv0.ResourcePermissionSpecPermissionKind
+	switch creator.GetIdentityType() {
+	case authlib.TypeUser:
+		kind = iamv0.ResourcePermissionSpecPermissionKindUser
+	case authlib.TypeServiceAccount:
+		kind = iamv0.ResourcePermissionSpecPermissionKindServiceAccount
+	default:
+		return permissions
+	}
+	return append([]iamv0.ResourcePermissionspecPermission{{
+		Kind: kind,
+		Name: creator.GetIdentifier(),
+		Verb: "admin",
+	}}, permissions...)
+}
+
+// SetPermissions replaces the permissions of a resource, creating its ResourcePermission when missing.
+func (p *Permissions) SetPermissions(ctx context.Context, namespace, name string, permissions []iamv0.ResourcePermissionspecPermission) error {
+	rpName := Name(p.gr, name)
+	if err := p.set(ctx, namespace, name, rpName, permissions); err != nil {
+		return fmt.Errorf("set resource permission %s/%s: %w", namespace, rpName, err)
+	}
+	return nil
+}
+
+func (p *Permissions) set(ctx context.Context, namespace, name, rpName string, permissions []iamv0.ResourcePermissionspecPermission) error {
+	ctx, client, err := p.namespaced(ctx, namespace)
+	if err != nil {
+		return err
+	}
+
+	spec, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&iamv0.ResourcePermissionSpec{
+		Resource: iamv0.ResourcePermissionspecResource{
+			ApiGroup: p.gr.Group,
+			Resource: p.gr.Resource,
+			Name:     name,
+		},
+		Permissions: permissions,
+	})
+	if err != nil {
+		return fmt.Errorf("convert spec: %w", err)
+	}
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": iamv0.ResourcePermissionInfo.GroupVersion().String(),
+		"kind":       iamv0.ResourcePermissionInfo.GroupVersionKind().Kind,
+		"metadata":   map[string]any{"name": rpName, "namespace": namespace},
+		"spec":       spec,
+	}}
+
+	_, err = client.Get(ctx, rpName, metav1.GetOptions{})
+	switch {
+	case err == nil:
+		_, err = client.Update(ctx, obj, metav1.UpdateOptions{})
+	case apierrors.IsNotFound(err):
+		_, err = client.Create(ctx, obj, metav1.CreateOptions{})
+	}
+	return err
+}
+
 // DeletePermissions removes the permissions of a deleted resource. A missing permission counts as deleted.
 func (p *Permissions) DeletePermissions(ctx context.Context, namespace, name string) error {
 	rpName := Name(p.gr, name)
@@ -79,23 +143,31 @@ func (p *Permissions) DeletePermissions(ctx context.Context, namespace, name str
 }
 
 func (p *Permissions) delete(ctx context.Context, namespace, name string) error {
-	ns, err := authlib.ParseNamespace(namespace)
+	ctx, client, err := p.namespaced(ctx, namespace)
 	if err != nil {
-		return fmt.Errorf("parse namespace: %w", err)
+		return err
 	}
-	client, err := p.client(ctx)
-	if err != nil {
-		return fmt.Errorf("get IAM resource permission client: %w", err)
-	}
-	if client == nil {
-		return fmt.Errorf("IAM resource permission client is not configured")
-	}
-
-	// The cleanup follows a deletion the caller was already allowed to make.
-	ctx = identity.WithServiceIdentityContext(ctx, ns.OrgID)
-	err = client.Namespace(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+	err = client.Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}
 	return nil
+}
+
+// namespaced returns the client of namespace with a service identity: permissions are written as a
+// consequence of a resource change the caller was already allowed to make, and a creator cannot
+// manage the permissions of the resource it just created yet.
+func (p *Permissions) namespaced(ctx context.Context, namespace string) (context.Context, dynamic.ResourceInterface, error) {
+	ns, err := authlib.ParseNamespace(namespace)
+	if err != nil {
+		return nil, nil, fmt.Errorf("parse namespace: %w", err)
+	}
+	client, err := p.client(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("get IAM resource permission client: %w", err)
+	}
+	if client == nil {
+		return nil, nil, fmt.Errorf("IAM resource permission client is not configured")
+	}
+	return identity.WithServiceIdentityContext(ctx, ns.OrgID), client.Namespace(namespace), nil
 }
