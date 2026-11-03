@@ -742,7 +742,7 @@ Configure Meticulous session recording in the frontend service. Recording is dis
 Apply these settings to the process serving frontend HTML and restart it after changes.
 
 {{< admonition type="warning" >}}
-Use only synthetic, non-sensitive test data when enabling recording. Recordings are uploaded to Meticulous and can include network requests, responses, and credentials. You and your team are responsible for ensuring the instance and connected datasources contain no customer or sensitive data.
+Use only synthetic, non-sensitive test data when enabling recording. Recordings are uploaded to Meticulous and can include network requests, responses, and credentials. You and your team are responsible for ensuring the instance and connected data sources contain no customer or sensitive data.
 {{< /admonition >}}
 
 #### `enabled`
