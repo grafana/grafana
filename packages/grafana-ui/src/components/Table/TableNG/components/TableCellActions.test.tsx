@@ -114,6 +114,23 @@ describe('TableCellActions', () => {
       expect(screen.queryByText('Add to Assistant')).not.toBeInTheDocument();
     });
 
+    it.each([false, true])('uses JSON detection for inspection only when enabled (%s)', async (enabled) => {
+      const value = '{"count":3}';
+      const { setInspectCell } = setup({
+        tableRefreshEnabled: true,
+        autoDetectJsonEnabled: enabled,
+        field: { name: 'value', type: FieldType.string, values: [value], config: {} },
+        value,
+      });
+      await userEvent.click(screen.getByRole('button', { name: 'Cell actions' }));
+      await userEvent.click(screen.getByRole('menuitem', { name: 'Inspect value' }));
+      expect(setInspectCell).toHaveBeenCalledWith(
+        enabled
+          ? { value: '{\n  "count": 3\n}', mode: TableCellInspectorMode.code }
+          : { value, mode: TableCellInspectorMode.text }
+      );
+    });
+
     it('opens inspection with the cell value and closes the menu', async () => {
       const { setInspectCell } = setup({ tableRefreshEnabled: true });
       await userEvent.click(screen.getByRole('button', { name: 'Cell actions' }));
