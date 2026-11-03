@@ -1386,6 +1386,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support
 /.github/workflows/lint-build-docs.yml @grafana/docs-tooling
 /.github/workflows/pr-bundle-size.yml @grafana/grafana-frontend-platform
+/.github/workflows/pr-check-plugin-compat-title.yml @grafana/grafana-frontend-platform
 /.github/workflows/pr-checks.yml @tolzhabayev
 /.github/workflows/pr-endpoint-feature-toggle.yml @grafana/alerting-squad
 /.github/workflows/pr-mt-service-compatibility.yml @evictorero
