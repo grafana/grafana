@@ -17,6 +17,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { type Repository, type ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
+import { useAppManifestKinds } from 'app/features/apiserver/appManifests';
 
 import { RecentJobs } from '../Job/RecentJobs';
 import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
@@ -42,6 +43,7 @@ function getColumnCount(hasWebhook: boolean): { xxlColumn: 5 | 4; lgColumn: 3 | 
 
 export function RepositoryOverview({ repo }: { repo: Repository }) {
   const styles = useStyles2(getStyles);
+  const manifestKinds = useAppManifestKinds();
   const repoName = repo.metadata?.name ?? '';
 
   const status = repo.status;
@@ -94,7 +96,8 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         size: 100,
       },
     ],
-    [repo]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [repo, manifestKinds]
   );
   return (
     <Box padding={2}>

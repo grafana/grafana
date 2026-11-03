@@ -1,39 +1,54 @@
-import { getManifestKinds, setManifestKinds } from './manifestKinds';
+import { type AppManifestKind } from 'app/features/apiserver/appManifests';
 
-describe('setManifestKinds', () => {
-  afterEach(() => setManifestKinds([]));
+import { getManifestKinds } from './manifestKinds';
 
-  it('keeps the active resources that an app manifest declares', () => {
-    setManifestKinds([
-      { group: 'example.ext.grafana.app', kind: 'Widget', resource: 'widgets', label: 'Widget', icon: 'apps' },
-      { group: 'example.ext.grafana.app', kind: 'Gadget', resource: 'gadgets', disabled: true },
-      { group: 'dashboard.grafana.app', kind: 'LibraryPanel' },
-    ]);
+const mockAppManifestKinds: AppManifestKind[] = [];
+jest.mock('app/features/apiserver/appManifests', () => ({
+  ...jest.requireActual('app/features/apiserver/appManifests'),
+  getAppManifestKinds: () => mockAppManifestKinds,
+}));
 
-    expect(getManifestKinds()).toEqual([
-      {
-        group: 'example.ext.grafana.app',
-        kind: 'Widget',
-        resource: 'widgets',
-        label: 'Widget',
-        pluralLabel: 'Widget',
-        icon: 'apps',
-      },
-    ]);
+describe('getManifestKinds', () => {
+  afterEach(() => mockAppManifestKinds.splice(0, mockAppManifestKinds.length));
+
+  it('names a kind after its kind and plural without a translation, and links its resources', () => {
+    mockAppManifestKinds.push({
+      appName: 'example-app',
+      group: 'example.ext.grafana.app',
+      kind: 'Widget',
+      plural: 'Widgets',
+      resource: 'widgets',
+      labelKey: 'kinds.widget',
+      url: '/a/example-app/widgets/{name}',
+      icon: 'apps',
+    });
+
+    const [kind] = getManifestKinds();
+
+    expect(kind).toMatchObject({
+      group: 'example.ext.grafana.app',
+      kind: 'Widget',
+      resource: 'widgets',
+      label: 'Widget',
+      pluralLabel: 'Widgets',
+      icon: 'apps',
+    });
+    expect(kind.getRoute?.('a')).toBe('/a/example-app/widgets/a');
   });
 
-  it('defaults the labels to the kind and an unknown icon to the file icon', () => {
-    setManifestKinds([{ group: 'example.ext.grafana.app', kind: 'Widget', resource: 'widgets', icon: 'not-an-icon' }]);
+  it('uses the file icon for an unknown icon, and gives no route without a url', () => {
+    mockAppManifestKinds.push({
+      appName: 'example-app',
+      group: 'example.ext.grafana.app',
+      kind: 'Widget',
+      plural: 'Widgets',
+      resource: 'widgets',
+      icon: 'not-an-icon',
+    });
 
-    expect(getManifestKinds()).toEqual([
-      {
-        group: 'example.ext.grafana.app',
-        kind: 'Widget',
-        resource: 'widgets',
-        label: 'Widget',
-        pluralLabel: 'Widget',
-        icon: 'file-alt',
-      },
-    ]);
+    const [kind] = getManifestKinds();
+
+    expect(kind.icon).toBe('file-alt');
+    expect(kind.getRoute).toBeUndefined();
   });
 });

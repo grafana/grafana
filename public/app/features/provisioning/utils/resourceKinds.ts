@@ -256,6 +256,7 @@ function allDisplayKinds(): ResourceKindDisplay[] {
       resource: m.resource,
       itemType: m.label,
       icon: m.icon,
+      getRoute: m.getRoute,
     }));
   return [...allKindInfos, ...manifestKinds];
 }
@@ -336,6 +337,24 @@ export function getKindInfoByStat(stat: { group?: string; resource?: string }): 
     return byResource;
   }
   return getKindInfoByStatGroup(stat.group);
+}
+
+/**
+ * Whether provisioning manages the kind of a stat: registry kinds always, and manifest kinds only
+ * when the settings endpoint's `availableResources` enables them.
+ */
+export function isProvisionedStat(
+  stat: { group?: string; resource?: string },
+  availableResources?: SupportedResource[]
+): boolean {
+  const info = getKindInfoByStat(stat);
+  if (!info) {
+    return false;
+  }
+  if (allKindInfos.some((registryKind) => registryKind === info)) {
+    return true;
+  }
+  return Boolean(availableResources?.some((r) => r.group === info.group && r.kind === info.kind && !r.disabled));
 }
 
 /**
