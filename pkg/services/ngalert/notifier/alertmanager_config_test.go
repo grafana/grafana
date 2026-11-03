@@ -11,6 +11,7 @@ import (
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -140,6 +141,47 @@ receivers:
 		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
 		require.NoError(t, err)
 		require.Len(t, gettableConfig.ExtraConfigs, 0, "configuration should not be saved in dry run mode")
+	})
+
+	t.Run("dry run builds the imported contact points", func(t *testing.T) {
+		webhookConfig := func(url string) v1.ExtraConfiguration {
+			return v1.ExtraConfiguration{
+				Identifier: "dry-run-config",
+				AlertmanagerConfig: `route:
+  receiver: webhook
+receivers:
+  - name: webhook
+    webhook_configs:
+      - url: ` + url,
+			}
+		}
+
+		t.Run("accepts a contact point that builds", func(t *testing.T) {
+			mam := setupMam(t, nil)
+			ctx := context.Background()
+			require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+			_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, webhookConfig("https://example.com/hook"), false, true, false)
+			require.NoError(t, err)
+		})
+
+		// Alertmanager accepts "<secret>" for a URL so it can read back configuration it masked, but the
+		// contact point built from it has no URL and fails when the configuration is applied.
+		t.Run("rejects a masked URL", func(t *testing.T) {
+			mam := setupMam(t, nil)
+			ctx := context.Background()
+			require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+			_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, webhookConfig("<secret>"), false, true, false)
+			var errutilErr errutil.Error
+			require.ErrorAs(t, err, &errutilErr)
+			require.Equal(t, "alerting.notifications.alertmanager.importedReceiverInvalid", errutilErr.MessageID)
+			require.Contains(t, errutilErr.PublicMessage, "[webhook]")
+
+			gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+			require.NoError(t, err)
+			require.Empty(t, gettableConfig.ExtraConfigs)
+		})
 	})
 
 	t.Run("replace existing extra configuration with same identifier", func(t *testing.T) {

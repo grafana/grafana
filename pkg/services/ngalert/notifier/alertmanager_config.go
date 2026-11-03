@@ -50,6 +50,11 @@ var (
 		errutil.WithPublic(msgAlertmanagerMultipleExtraConfigsUnsupported),
 	)
 
+	ErrImportedReceiverInvalid = errutil.BadRequest("alerting.notifications.alertmanager.importedReceiverInvalid").MustTemplate(
+		"imported contact point [{{ .Public.Receiver }}] is invalid: {{ .Error }}",
+		errutil.WithPublic("Imported contact point [{{ .Public.Receiver }}] is invalid: {{ .Public.Reason }}"),
+	)
+
 	ErrIdentifierAlreadyExists = errutil.BadRequest("alerting.notifications.alertmanager.identifierAlreadyExists").MustTemplate("identifier [{{ .Public.Identifier }}] already used by existing managed routes",
 		errutil.WithPublic(
 			"Identifier [{{ .Public.Identifier }}] is already used by existing managed routes. Use another identifier or delete the existing route.",
@@ -439,6 +444,12 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 		cfg = &mergedConfig
 	}
 	if dryRun {
+		// The merge only checks that the configuration fits into Grafana's. Contact points are built when the
+		// configuration is applied, so a dry run would pass for an import that then fails there, for example
+		// a URL that reads "<secret>". Build the ones this import adds now instead.
+		if err := validateImportedReceivers(ctx, mergedConfig, mergeResult.AddedReceivers); err != nil {
+			return merge.MergeResult{}, err
+		}
 		moa.logger.Debug("Dry run: extra configuration validated successfully", "org", org)
 		return mergeResult, nil
 	}
@@ -462,6 +473,38 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 
 	moa.logger.Info("Applied alertmanager configuration with extra config", "org", org, "promoted", promote)
 	return mergeResult, nil
+}
+
+// validateImportedReceivers checks the contact points an import adds the way applying the configuration
+// builds them, and returns an error for the first one that fails. Contact points that were already in the
+// configuration were checked when they were saved.
+func validateImportedReceivers(ctx context.Context, cfg v1.AMConfigV1, added []string) error {
+	if len(added) == 0 {
+		return nil
+	}
+	addedNames := make(map[string]struct{}, len(added))
+	for _, name := range added {
+		addedNames[name] = struct{}{}
+	}
+
+	for _, receiver := range cfg.GetReceivers() {
+		if _, ok := addedNames[receiver.Name]; !ok {
+			continue
+		}
+		receiverCfg, err := ModelToReceiverConfig(receiver)
+		if err == nil {
+			// Imported contact points keep their settings in plain text, with no secure settings, so there is
+			// nothing to decrypt.
+			err = alertingNotify.ValidateAPIReceiver(ctx, receiverCfg, alertingNotify.DecodeSecretsFromBase64, alertingNotify.NoopDecrypt)
+		}
+		if err != nil {
+			return ErrImportedReceiverInvalid.Build(errutil.TemplateData{
+				Public: map[string]any{"Receiver": receiver.Name, "Reason": err.Error()},
+				Error:  err,
+			})
+		}
+	}
+	return nil
 }
 
 // SaveAndApplyExtraConfiguration adds or replaces an ExtraConfiguration while preserving the main AlertmanagerConfig.
