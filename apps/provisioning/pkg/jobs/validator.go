@@ -197,7 +197,7 @@ func validateExportResourceRefs(base *field.Path, refs []provisioning.ResourceRe
 				continue
 			}
 			kindOK = true
-			if r.Group == "" || r.Group == s.Group {
+			if r.Group == "" || resources.MatchesGroup(s.Group, r.Group) {
 				groupOK = true
 				break
 			}

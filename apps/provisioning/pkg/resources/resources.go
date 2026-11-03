@@ -5,6 +5,8 @@
 package resources
 
 import (
+	"strings"
+
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
@@ -18,3 +20,20 @@ var (
 	DashboardResourceV2alpha1 = dashboardV2alpha1.DashboardResourceInfo.GroupVersionResource()
 	DashboardResourceV2beta1  = dashboardV2beta1.DashboardResourceInfo.GroupVersionResource()
 )
+
+var builtInGroups = map[string]bool{
+	"grafana.datasource.grafana.app":   true,
+	"mixed.datasource.grafana.app":     true,
+	"dashboard.datasource.grafana.app": true,
+}
+
+func IsWildcardGroup(group string) bool {
+	return strings.HasPrefix(group, "*.")
+}
+
+func MatchesGroup(configured, served string) bool {
+	if !IsWildcardGroup(configured) {
+		return configured == served
+	}
+	return strings.HasSuffix(served, configured[1:]) && !builtInGroups[served]
+}

@@ -49,9 +49,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/definition"
-	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	informer "github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -349,7 +346,6 @@ func RegisterAPIService(
 	connectionFactory connection.Factory,
 	quotaGetter quotas.QuotaGetter,
 	natsSubscriber nats.Subscriber,
-	pluginSources sources.Registry,
 ) (*APIBuilder, error) {
 	if !cfg.ProvisioningEnabled {
 		return nil, nil
@@ -365,20 +361,7 @@ func RegisterAPIService(
 		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
 	}
 
-	resourceGroups, err := resources.ParseSupportedResources(cfg.ProvisioningResourceGroups)
-	if err != nil {
-		return nil, fmt.Errorf("invalid [provisioning] resource_groups configuration: %w", err)
-	}
-	members, err := collectionMembers(context.Background(), pluginSources)
-	if err != nil {
-		return nil, err
-	}
-	expanded, err := resources.ExpandResourceGroups(resourceGroups, members)
-	if err != nil {
-		return nil, fmt.Errorf("invalid [provisioning] resource_groups configuration: %w", err)
-	}
-	supportedResources = append(supportedResources, expanded...)
-	warnUnmigratedCollections(context.Background(), resourceGroups, storageStatus)
+	warnUnmigratedCollections(context.Background(), supportedResources, storageStatus)
 
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
@@ -1949,35 +1932,6 @@ func getJSONResponse(ref string) *spec3.Responses {
 	}
 }
 
-// builtInDataSourcePlugins hold no instances, so their groups are left out of the expansion even
-// though an API group is registered for them.
-var builtInDataSourcePlugins = map[string]bool{"grafana": true, "mixed": true, "dashboard": true}
-
-// collectionMembers reports the member names of each storage collection whose groups can be
-// provisioned, for expanding [provisioning] resource_groups. Data sources are the only collection
-// today: every installed plugin serves its own group inside datasource.grafana.app.
-//
-// The plugin sources are read rather than the plugin store because this runs while dependencies are
-// being constructed, and the store's accessors block until it has started. These are the same
-// sources the data source API builder enumerates to register those groups, so the expansion matches
-// the groups actually served.
-func collectionMembers(ctx context.Context, pluginSources sources.Registry) (map[string][]string, error) {
-	defs, err := definition.LoadPluginDefinition(ctx, pluginSources, definition.Options{
-		Filter: func(jsonData plugins.JSONData) bool {
-			return jsonData.Type == plugins.TypeDataSource && !builtInDataSourcePlugins[jsonData.ID]
-		},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("listing data source plugins for [provisioning] resource_groups: %w", err)
-	}
-
-	names := make([]string, 0, len(defs))
-	for _, def := range defs {
-		names = append(names, def.JSONData.ID)
-	}
-	return map[string][]string{datasourceV0.GROUP: names}, nil
-}
-
 // collectionStorage names the resource whose storage mode governs each provisionable collection.
 var collectionStorage = map[string]schema.GroupResource{
 	datasourceV0.GROUP: {Group: datasourceV0.GROUP, Resource: datasourceV0.DataSourceResourceInfo.GetName()},
@@ -1992,7 +1946,7 @@ var collectionStorage = map[string]schema.GroupResource{
 // operator is better told at startup than left to read an empty managed-object list.
 func warnUnmigratedCollections(ctx context.Context, collections []resources.SupportedResource, storageStatus dualwrite.Service) {
 	for _, collection := range collections {
-		gr, ok := collectionStorage[collection.Group]
+		gr, ok := collectionStorage[strings.TrimPrefix(collection.Group, "*.")]
 		if !ok {
 			continue
 		}

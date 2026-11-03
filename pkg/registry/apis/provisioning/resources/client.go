@@ -18,7 +18,6 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
@@ -331,10 +330,14 @@ func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (Res
 }
 
 func (f *clientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
+	supported, err := expandWildcardGroups(ctx, f.clientsProvider, f.supportedResources)
+	if err != nil {
+		return nil, err
+	}
 	return &resourceClients{
 		namespace:          namespace,
 		clientsProvider:    f.clientsProvider,
-		supportedResources: f.supportedResources,
+		supportedResources: supported,
 		byKind:             make(map[schema.GroupVersionKind]*clientInfo),
 		byResource:         make(map[schema.GroupVersionResource]*clientInfo),
 	}, nil
@@ -556,33 +559,30 @@ func ForEach(ctx context.Context, client dynamic.ResourceInterface, fn func(item
 	return nil
 }
 
-// ExpandResourceGroups turns each configured storage-collection entry into one entry per API group
-// served inside that collection, given the collection's member names.
-//
-// A data source plugin serves its own API group (`prometheus.datasource.grafana.app`) while every
-// plugin is persisted in one collection (`datasource.grafana.app`), so without this an operator has
-// to enumerate every installed plugin in [provisioning] resources by hand. Expanding here rather
-// than matching collections downstream keeps every consumer comparing concretely served groups:
-// discovery, the operator's per-group API server URLs and the settings endpoint all keep working
-// unchanged.
-//
-// `members` maps a collection group to its member names. A configured collection with no entry in
-// it is an error, so a typo fails at startup rather than silently provisioning nothing.
-func ExpandResourceGroups(collections []SupportedResource, members map[string][]string) ([]SupportedResource, error) {
-	out := make([]SupportedResource, 0, len(collections))
-	for _, collection := range collections {
-		names, ok := members[collection.Group]
-		if !ok {
-			return nil, fmt.Errorf("invalid provisioning resource group %q: not a known storage collection", collection.Group)
+func expandWildcardGroups(ctx context.Context, provider clientsProvider, supported []SupportedResource) ([]SupportedResource, error) {
+	out := make([]SupportedResource, 0, len(supported))
+	var groups *metav1.APIGroupList
+	for _, r := range supported {
+		if !provisioningresources.IsWildcardGroup(r.Group) {
+			out = append(out, r)
+			continue
 		}
-		for _, name := range names {
-			out = append(out, SupportedResource{
-				GroupKind: schema.GroupKind{
-					Group: utils.SharedGroupFromLabel(collection.Group, name),
-					Kind:  collection.Kind,
-				},
-				Capabilities: collection.Capabilities,
-			})
+		if groups == nil {
+			_, discovery, err := provider.GetClientsForKind(ctx, schema.GroupVersionKind{})
+			if err != nil {
+				return nil, fmt.Errorf("get discovery client: %w", err)
+			}
+			if groups, err = discovery.ServerGroups(); err != nil {
+				return nil, fmt.Errorf("list server groups: %w", err)
+			}
+		}
+		for _, g := range groups.Groups {
+			if provisioningresources.MatchesGroup(r.Group, g.Name) {
+				out = append(out, SupportedResource{
+					GroupKind:    schema.GroupKind{Group: g.Name, Kind: r.Kind},
+					Capabilities: r.Capabilities,
+				})
+			}
 		}
 	}
 	return out, nil
