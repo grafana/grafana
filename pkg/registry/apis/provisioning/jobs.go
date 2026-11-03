@@ -14,6 +14,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/open-feature/go-sdk/openfeature"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
@@ -107,7 +108,9 @@ func (c *jobsConnector) Connect(
 
 		spec := provisioning.JobSpec{}
 		if err := unmarshalJSON(r, defaultMaxBodySize, &spec); err != nil {
-			responder.Error(apierrors.NewBadRequest("error decoding provisioning.Job from request"))
+			logger := logging.FromContext(ctx).With("logger", "jobs-connector", "repository_name", name)
+			logger.Warn("failed to decode job request", "error", err, "content_length", r.ContentLength)
+			responder.Error(newDecodeError("provisioning.Job", err))
 			return
 		}
 		spec.Repository = name
