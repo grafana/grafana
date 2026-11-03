@@ -5334,6 +5334,9 @@
       "preferences": "Preferences",
       "recent-dashboards": "Recent dashboards",
       "recent-scopes": "Recent scopes"
+    },
+    "tags": {
+      "label": "Tags"
     }
   },
   "common": {
