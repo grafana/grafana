@@ -1,10 +1,8 @@
 import { screen, waitFor, within } from '@testing-library/react';
-import { HttpResponse, http } from 'msw';
 import { render } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import SettingsPage from './Settings';
-import history from './components/settings/mocks/api/alertmanager/grafana/config/history.json';
 import DataSourcesResponse from './components/settings/mocks/api/datasources.json';
 import { setupGrafanaManagedServer, withExternalOnlySetting } from './components/settings/mocks/server';
 import { setupMswServer } from './mockApi';
@@ -108,14 +106,6 @@ describe('Alerting settings', () => {
   });
 
   it('should compare a previous configuration with the latest version', async () => {
-    server.use(
-      http.get('/api/alertmanager/grafana/config/history', () =>
-        HttpResponse.json([
-          { ...history[0], template_files: { 'test.tmpl': 'current template' } },
-          { ...history[1], template_files: { 'test.tmpl': 'previous template' } },
-        ])
-      )
-    );
     const { user } = render(<SettingsPage />);
 
     // wait for loading to be done
