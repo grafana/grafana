@@ -185,6 +185,41 @@ func TestSubProxyREST_Connect(t *testing.T) {
 		require.ErrorIs(t, responder.lastErr, unavailable)
 	})
 
+	t.Run("rejects a datasource without a URL", func(t *testing.T) {
+		builder := newProxyTestBuilder(&proxyMockDatasourceProvider{ds: &datasourceV0.DataSource{}})
+		storage := &subProxyREST{builder: builder, transports: newProxyTransportCache()}
+		t.Cleanup(storage.Destroy)
+		responder := &resourceMockResponder{}
+		handler, err := storage.Connect(proxyTestContext(), "test-ds", nil, responder)
+		require.NoError(t, err)
+		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/datasources/test-ds/proxy/api/v1/query", nil))
+		require.True(t, apierrors.IsBadRequest(responder.lastErr))
+		require.ErrorContains(t, responder.lastErr, "datasource has no URL configured")
+	})
+
+	t.Run("proxies a datasource without a URL when a route supplies one", func(t *testing.T) {
+		var gotPath string
+		target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			gotPath = req.URL.Path
+		}))
+		defer target.Close()
+
+		provider := &proxyMockDatasourceProvider{ds: &datasourceV0.DataSource{}}
+		provider.instanceSettings = &backend.DataSourceInstanceSettings{UID: "test-ds", Type: "test", JSONData: []byte("{}")}
+		builder := newProxyTestBuilder(provider)
+		builder.pluginJSON.Routes = []*plugins.Route{{Path: "api", URL: target.URL}}
+		storage := &subProxyREST{builder: builder, transports: newProxyTransportCache()}
+		t.Cleanup(storage.Destroy)
+		responder := &resourceMockResponder{}
+		handler, err := storage.Connect(proxyTestContext(), "test-ds", nil, responder)
+		require.NoError(t, err)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/datasources/test-ds/proxy/api/v1/query", nil))
+		require.NoError(t, responder.lastErr)
+		require.Equal(t, http.StatusOK, rec.Code)
+		require.Equal(t, "/v1/query", gotPath)
+	})
+
 	t.Run("returns an error when proxy dependencies are not configured", func(t *testing.T) {
 		builder := newProxyTestBuilder(&proxyMockDatasourceProvider{})
 		builder.proxyDependencies = nil
