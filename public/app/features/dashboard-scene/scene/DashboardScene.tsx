@@ -51,7 +51,10 @@ import { getDashboardSceneProfiler } from 'app/features/dashboard/services/Dashb
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
-import { scrollToRow } from 'app/features/dashboard-scene/scene/layout-rows/scrollToRow';
+import {
+  keepRowInViewWhileLayoutSettles,
+  scrollToRow,
+} from 'app/features/dashboard-scene/scene/layout-rows/scrollToRow';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
 import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
@@ -74,7 +77,18 @@ import { edit } from '../actions/utils/edit';
 import { type ComposerSession } from '../composer/ComposerSession';
 import { clearPendingComposerEnterRequest } from '../composer/composerEntryRequests';
 import { getLifecycleBreadcrumbLabel } from '../lifecycle/lifecycle';
-import { getPendingChangePreview, previewedDashboardUid } from '../lifecycle/pendingChangePreview';
+import {
+  getPendingChangePreview,
+  getPendingChangesHistory,
+  getScenePendingChangePreview,
+  previewedDashboardUid,
+  proposesNewDashboard,
+} from '../lifecycle/pendingChangePreview';
+import {
+  hasUnrecordedPendingChange,
+  recordPendingChange,
+  startRecordingPendingChanges,
+} from '../lifecycle/pendingChangesHistory';
 import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type DashboardChangeInfo, isNewDashboard } from '../saving/shared';
@@ -431,6 +445,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   /** Row slug path from the url that did not match any row yet (e.g. a repeated row not created yet) */
   private _pendingRowScroll?: string;
   private _pendingRowScrollSub?: Unsubscribable;
+  /**
+   * Not tied to activation: url sync runs before the scene activates, and StrictMode deactivates and
+   * re-activates it in development. Following stops by itself once the row leaves the page.
+   */
+  private _stopFollowingRow?: () => void;
 
   /**
    * What initiated the current edit session, e.g. the assistant building a dashboard for the user
@@ -734,6 +753,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this._sidebarBeforeViewing = undefined;
 
       this.state.sidebar.clearHistory();
+      const preview = getScenePendingChangePreview(this.state);
+      if (preview && getPendingChangesHistory(this.state)) {
+        startRecordingPendingChanges(this, preview.pending.history?.getState().proposed ?? preview.pending.proposed);
+      }
 
       // Capture the discard baseline only once per edit session. A plan's building screen is
       // transient: the build's first write enters edit mode while it is still up, and discarding
@@ -1161,6 +1184,17 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
+    // Edits that skipped the edit actions, which record each change, are recorded as one here, and
+    // an edit the plugin failed to record is retried. Before exiting: that discards an open panel editor.
+    const history = getPendingChangesHistory(this.state);
+    if (history && !restoreInitialState) {
+      if ((this.state.isDirty && hasActualSaveChanges(this)) || hasUnrecordedPendingChange(this)) {
+        void recordPendingChange(this, history, t('dashboard-scene.lifecycle.edited-dashboard', 'Edit dashboard'));
+      }
+      this.exitEditModeConfirmed(false);
+      return;
+    }
+
     if (!this.state.isDirty || skipConfirm || !hasActualSaveChanges(this) || this.managedResourceCannotBeEdited()) {
       this.exitEditModeConfirmed(restoreInitialState || this.state.isDirty);
       return;
@@ -1242,7 +1276,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       shareView: null,
     });
 
-    locationService.replace(locationUtil.stripBaseFromUrl(url));
+    if (!this.state.meta.isEmbedded) {
+      locationService.replace(locationUtil.stripBaseFromUrl(url));
+    }
 
     if (restoreInitialState) {
       // Restore initial state and disable editing
@@ -1265,6 +1301,23 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     // Disable grid dragging
     this.state.body.editModeChanged?.(false);
+  }
+
+  /** Whether edits are recorded in the history of pending changes to a saved dashboard, with no Save. */
+  public recordsToPendingChanges(): boolean {
+    const preview = getScenePendingChangePreview(this.state);
+    return Boolean(getPendingChangesHistory(this.state) && preview && !proposesNewDashboard(preview.pending));
+  }
+
+  /**
+   * The scene as recorded in the pending changes it previews (see pendingChangesHistory.ts): later
+   * edits count as changes from there.
+   */
+  public markPendingChangesRecorded(saveModel: DashboardV2Spec) {
+    if (this.serializer instanceof V2DashboardSerializer) {
+      this.serializer.initialSaveModel = sortedDeepCloneWithoutNulls(saveModel);
+    }
+    this.setState({ isDirty: false });
   }
 
   public canDiscard() {
@@ -1407,16 +1460,24 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     saveDashboardTemplate,
     saveAsDashboardTemplate,
     onSaveSuccess,
+    onDismiss,
     recoverToNewBranch,
   }: {
     saveAsCopy?: boolean;
     saveDashboardTemplate?: boolean;
     saveAsDashboardTemplate?: boolean;
     onSaveSuccess?: () => void;
+    onDismiss?: () => void;
     recoverToNewBranch?: RecoverToNewBranch;
     showDiff?: boolean;
   }) {
     if (!this.state.isEditing) {
+      return;
+    }
+
+    // Edits to pending changes are recorded as they're made; Apply saves them to the dashboard.
+    // A new dashboard's are saved as the dashboard, here.
+    if (this.recordsToPendingChanges() && !saveAsCopy && !saveAsDashboardTemplate) {
       return;
     }
 
@@ -1443,6 +1504,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           saveAsDashboardTemplate,
           saveDashboardTemplate,
           onSaveSuccess,
+          onDismiss,
           recoverToNewBranch,
         },
         () => this.hasVariableErrors()
@@ -2221,8 +2283,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public scrollToRow(drow: string) {
     locationService.partial({ drow: null }, true);
+    this._stopFollowingRow?.();
 
-    if (scrollToRow(drow, this.state.body)) {
+    if (this._scrollToRowAndFollow(drow)) {
       this._pendingRowScroll = undefined;
       return;
     }
@@ -2233,10 +2296,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // NewSceneObjectAddedEvent when done, so keep the slug pending and retry on that event.
     this._pendingRowScroll = drow;
     this._pendingRowScrollSub ??= this.subscribeToEvent(NewSceneObjectAddedEvent, () => {
-      if (this._pendingRowScroll && scrollToRow(this._pendingRowScroll, this.state.body)) {
+      if (this._pendingRowScroll && this._scrollToRowAndFollow(this._pendingRowScroll)) {
         this._pendingRowScroll = undefined;
       }
     });
+  }
+
+  private _scrollToRowAndFollow(drow: string): boolean {
+    const row = scrollToRow(drow, this.state.body);
+    if (!row) {
+      return false;
+    }
+
+    this._stopFollowingRow = keepRowInViewWhileLayoutSettles(row);
+    return true;
   }
 
   getSaveModel(): Dashboard | DashboardV2Spec {

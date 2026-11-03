@@ -126,6 +126,58 @@ func TestSearchAuthMetricsCursorFallback(t *testing.T) {
 	require.Zero(t, authHistogram(t, metrics.SearchAuthDuration, "post_rank", "page", "success").GetSampleCount())
 }
 
+func TestSearchAuthMetricsTrashResourceVersionBoundary(t *testing.T) {
+	for _, mode := range []string{"pre_rank", "post_rank"} {
+		t.Run(mode, func(t *testing.T) {
+			index, metrics := newAuthMetricsIndex(t, mode == "post_rank", search.PostRankAuthzConfig{})
+			for _, doc := range []struct {
+				name, folder string
+				rv           int64
+			}{
+				{"older", "allowed", 9},
+				{"boundary-a", "allowed", 10},
+				{"boundary-b", "allowed", 10},
+				{"boundary-denied", "denied", 10},
+				{"newer", "allowed", 11},
+			} {
+				item := trashDoc(doc.name, doc.folder, trashAlice)
+				deletedRV := fmt.Sprint(doc.rv)
+				item.Doc.DeletedRV = &deletedRV
+				indexDocs(t, index, []*resource.BulkIndexItem{item})
+			}
+			access := &trashAccessClient{adminFolders: map[string]bool{"allowed": true}, readAll: true}
+			query := trashQueryFor(func(q *resourcepb.ResourceSearchRequest) {
+				q.Limit = 2
+				q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_DELETED_RV}}
+				q.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+				q.Fields = []string{resource.SEARCH_FIELD_RV, resource.SEARCH_FIELD_FOLDER}
+				// Match the inclusive lower bound produced by listTrashFromSearch.
+				q.SearchAfter = []string{fmt.Sprintf("%019d", 10), ""}
+			})
+			first := runTrashSearch(t, index, access, "carol", query)
+			require.Equal(t, []string{"boundary-a", "boundary-b"}, namesOf(first))
+			require.Equal(t, []string{fmt.Sprintf("%019d", 10), ""}, query.SearchAfter, "do not mutate the caller's cursor")
+			require.EqualValues(t, 1, authHistogram(t, metrics.SearchAuthDuration, mode, "trash", "success").GetSampleCount())
+			require.Zero(t, testutil.ToFloat64(metrics.SearchAuthEvents.WithLabelValues("cursor_fallback")))
+
+			query.SearchAfter = first.Rows[len(first.Rows)-1].SortFields
+			second := runTrashSearch(t, index, access, "carol", query)
+			require.Equal(t, []string{"newer"}, namesOf(second), "pagination must neither skip nor repeat allowed documents")
+			require.EqualValues(t, 2, authHistogram(t, metrics.SearchAuthDuration, mode, "trash", "success").GetSampleCount())
+
+			if mode == "post_rank" {
+				// A real PreRank continuation still uses the compatibility fallback.
+				query.SearchAfter = []string{fmt.Sprintf("%019d", 10), "boundary-a"}
+				continued := runTrashSearch(t, index, access, "carol", query)
+				require.Equal(t, []string{"boundary-b", "newer"}, namesOf(continued))
+				require.EqualValues(t, 1, testutil.ToFloat64(metrics.SearchAuthEvents.WithLabelValues("cursor_fallback")))
+				require.EqualValues(t, 1, authHistogram(t, metrics.SearchAuthDuration, "pre_rank", "trash", "success").GetSampleCount())
+			}
+			require.Zero(t, access.readChecks, "trash must retain folder-admin/deleter authorization")
+		})
+	}
+}
+
 func TestSearchAuthMetricsFieldValues(t *testing.T) {
 	for _, mode := range []string{"pre_rank", "post_rank"} {
 		t.Run(mode, func(t *testing.T) {

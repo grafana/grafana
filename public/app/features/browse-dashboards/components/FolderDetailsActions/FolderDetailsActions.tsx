@@ -20,7 +20,6 @@ import { useDispatch } from 'app/types/store';
 import { PAGE_SIZE } from '../../api/constants';
 import { getFolderPermissions } from '../../permissions';
 import { refetchChildren } from '../../state/actions';
-import { starredFoldersEnabled } from '../../utils/dashboards';
 import CreateNewButton from '../CreateNewButton';
 import { FolderActionsButton } from '../FolderActionsButton';
 
@@ -50,7 +49,7 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
 
   return (
     <Stack alignItems="center" wrap>
-      {starredFoldersEnabled() && folderDTO && (
+      {folderDTO && (
         <StarToolbarButton
           group="folder.grafana.app"
           kind="Folder"
