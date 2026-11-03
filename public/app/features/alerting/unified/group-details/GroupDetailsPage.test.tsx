@@ -309,9 +309,9 @@ describe('GroupDetailsPage', () => {
         const ruleItem = screen.getByRole('treeitem');
         if (badge) {
           expect(within(ruleItem).getByText(badge)).toBeInTheDocument();
-        } else {
-          expect(within(ruleItem).queryByText('Imported')).not.toBeInTheDocument();
-          expect(within(ruleItem).queryByText('Provisioned')).not.toBeInTheDocument();
+        }
+        for (const otherBadge of ['Imported', 'Provisioned'].filter((text) => text !== badge)) {
+          expect(within(ruleItem).queryByText(otherBadge)).not.toBeInTheDocument();
         }
       });
     });
