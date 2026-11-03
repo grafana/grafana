@@ -18,7 +18,7 @@ function isUnhealthyHealthCheckError(err: unknown): boolean {
   );
 }
 
-function getLegacyHealth(pluginId: string, showErrorAlert?: boolean): Promise<HealthCheckResult> {
+function getLegacyAppHealth(pluginId: string, showErrorAlert?: boolean): Promise<HealthCheckResult> {
   const options = { showErrorAlert, validatePath: true };
 
   return getBackendSrv()
@@ -39,7 +39,7 @@ function getLegacyHealth(pluginId: string, showErrorAlert?: boolean): Promise<He
     });
 }
 
-function getHealth(pluginId: string, apiVersion: string, showErrorAlert?: boolean): Promise<HealthCheckResult> {
+function getAppHealth(pluginId: string, apiVersion: string, showErrorAlert?: boolean): Promise<HealthCheckResult> {
   const options = { showErrorAlert, validatePath: true };
 
   return getBackendSrv()
@@ -74,24 +74,24 @@ function getHealth(pluginId: string, apiVersion: string, showErrorAlert?: boolea
  * @returns The plugin's `HealthCheckResult`, or `undefined` for non-app plugins
  * when k8s metadata is available.
  */
-export async function getPluginHealth(
+export async function getAppPluginHealth(
   pluginId: string,
   showErrorAlert = false,
   apiVersion = getApiVersion()
 ): Promise<HealthCheckResult | undefined> {
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPluginSettings, false)) {
-    return getLegacyHealth(pluginId, showErrorAlert);
+    return getLegacyAppHealth(pluginId, showErrorAlert);
   }
 
   const meta = await getPluginMetaFromCache(pluginId);
   if (!meta) {
     logPluginSettingsDebug('PluginHealth: falling back to getting legacy plugin health', { pluginId });
-    return getLegacyHealth(pluginId, showErrorAlert);
+    return getLegacyAppHealth(pluginId, showErrorAlert);
   }
 
   if (meta.spec.pluginJson.type !== 'app') {
     return undefined;
   }
 
-  return getHealth(pluginId, apiVersion, showErrorAlert);
+  return getAppHealth(pluginId, apiVersion, showErrorAlert);
 }

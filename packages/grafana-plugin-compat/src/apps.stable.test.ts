@@ -2,7 +2,7 @@ import { type PluginMeta } from '@grafana/data';
 import {
   getPluginSettings as stableGetPluginSettings,
   updateAppPluginSettings as stableUpdateAppPluginSettings,
-  getPluginHealth as stableGetPluginHealth,
+  getAppPluginHealth as stableGetAppPluginHealth,
   type HealthCheckResult,
   HealthStatus,
 } from '@grafana/runtime';
@@ -11,13 +11,13 @@ import {
   updateAppPluginSettings as unstableUpdateAppPluginSettings,
 } from '@grafana/runtime/unstable';
 
-import { getPluginHealth, getPluginSettings, updateAppPluginSettings } from './apps';
+import { getAppPluginHealth, getPluginSettings, updateAppPluginSettings } from './apps';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getPluginSettings: jest.fn(),
   updateAppPluginSettings: jest.fn(),
-  getPluginHealth: jest.fn(),
+  getAppPluginHealth: jest.fn(),
 }));
 
 jest.mock('@grafana/runtime/unstable', () => ({
@@ -30,7 +30,7 @@ const mockStableGetPluginSettings = jest.mocked(stableGetPluginSettings);
 const mockUnstableGetPluginSettings = jest.mocked(unstableGetPluginSettings);
 const mockStableUpdateAppPluginSettings = jest.mocked(stableUpdateAppPluginSettings);
 const mockUnstableUpdateAppPluginSettings = jest.mocked(unstableUpdateAppPluginSettings);
-const mockStableGetPluginHealth = jest.mocked(stableGetPluginHealth);
+const mockStableGetAppPluginHealth = jest.mocked(stableGetAppPluginHealth);
 const mockData: Partial<PluginMeta> = { enabled: true, pinned: true };
 const result: HealthCheckResult = { status: HealthStatus.OK, message: 'All good', details: { set: true } };
 
@@ -64,22 +64,22 @@ describe('updateAppPluginSettings', () => {
   });
 });
 
-describe('getPluginHealth', () => {
+describe('getAppPluginHealth', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    mockStableGetPluginHealth.mockResolvedValue(result);
+    mockStableGetAppPluginHealth.mockResolvedValue(result);
   });
 
   it('should prefer the stable export over the unstable one', async () => {
-    const result = await getPluginHealth('grafana-exploretraces-app', true);
+    const result = await getAppPluginHealth('grafana-exploretraces-app', true);
 
-    expect(mockStableGetPluginHealth).toHaveBeenCalledWith('grafana-exploretraces-app', true, undefined);
+    expect(mockStableGetAppPluginHealth).toHaveBeenCalledWith('grafana-exploretraces-app', true, undefined);
     expect(result).toStrictEqual({ details: { set: true }, message: 'All good', status: 'OK' });
   });
 
   it('should use supplied apiVersion argument to fetch health result', async () => {
-    await getPluginHealth('grafana-exploretraces-app', true, 'v1alpha1');
+    await getAppPluginHealth('grafana-exploretraces-app', true, 'v1alpha1');
 
-    expect(mockStableGetPluginHealth).toHaveBeenCalledWith('grafana-exploretraces-app', true, 'v1alpha1');
+    expect(mockStableGetAppPluginHealth).toHaveBeenCalledWith('grafana-exploretraces-app', true, 'v1alpha1');
   });
 });

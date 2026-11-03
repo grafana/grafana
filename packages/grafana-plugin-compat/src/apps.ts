@@ -2,7 +2,7 @@ import { type PluginMeta } from '@grafana/data';
 import {
   getBackendSrv,
   getPluginSettings as stableGetPluginSettings,
-  getPluginHealth as stableGetPluginHealth,
+  getAppPluginHealth as stableGetAppPluginHealth,
   updateAppPluginSettings as stableUpdateAppPluginSettings,
   type HealthCheckResult,
   HealthStatus,
@@ -52,16 +52,16 @@ async function backwardsCompatibleUpdatePluginSettings(
   return backwardsCompatibleGetPluginSettings(pluginId);
 }
 
-export async function getPluginHealth(
+export async function getAppPluginHealth(
   pluginId: string,
   showErrorAlert = false,
   apiVersion?: string
 ): Promise<HealthCheckResult | undefined> {
-  if (typeof stableGetPluginHealth === 'function') {
-    return stableGetPluginHealth(pluginId, showErrorAlert, apiVersion);
+  if (typeof stableGetAppPluginHealth === 'function') {
+    return stableGetAppPluginHealth(pluginId, showErrorAlert, apiVersion);
   }
 
-  return backwardsCompatibleGetAppHealth(pluginId, showErrorAlert);
+  return backwardsCompatibleGetAppPluginHealth(pluginId, showErrorAlert);
 }
 
 function isLegacyUnhealthyHealthCheckError(err: unknown): boolean {
@@ -72,7 +72,10 @@ function isLegacyUnhealthyHealthCheckError(err: unknown): boolean {
   );
 }
 
-async function backwardsCompatibleGetAppHealth(pluginId: string, showErrorAlert = false): Promise<HealthCheckResult> {
+async function backwardsCompatibleGetAppPluginHealth(
+  pluginId: string,
+  showErrorAlert = false
+): Promise<HealthCheckResult> {
   return getBackendSrv()
     .get<HealthCheckResult>(`/api/plugins/${pluginId}/health`, undefined, undefined, {
       showErrorAlert,

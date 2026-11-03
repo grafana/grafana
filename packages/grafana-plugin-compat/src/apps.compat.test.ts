@@ -1,7 +1,7 @@
 import { type PluginMeta } from '@grafana/data';
 import { type BackendSrv, setBackendSrv } from '@grafana/runtime';
 
-import { getPluginHealth, getPluginSettings, updateAppPluginSettings } from './apps';
+import { getAppPluginHealth, getPluginSettings, updateAppPluginSettings } from './apps';
 import { getMockedBackendSrv } from './utils/mocks';
 
 jest.mock('@grafana/runtime/unstable', () => ({
@@ -13,7 +13,7 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getPluginSettings: undefined,
   updateAppPluginSettings: undefined,
-  getPluginHealth: undefined,
+  getAppPluginHealth: undefined,
 }));
 
 const mockBackendSrv = getMockedBackendSrv();
@@ -95,15 +95,15 @@ describe('updateAppPluginSettings', () => {
   });
 });
 
-describe('getPluginHealth', () => {
+describe('getAppPluginHealth', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     setBackendSrv(mockBackendSrv);
     mockBackendSrv.get = jest.fn().mockResolvedValue({});
   });
 
-  it('should call correct function when getPluginHealth does not exist', async () => {
-    await getPluginHealth('grafana-exploretraces-app', true);
+  it('should call correct function when getAppPluginHealth does not exist', async () => {
+    await getAppPluginHealth('grafana-exploretraces-app', true);
 
     expect(mockBackendSrv.get).toHaveBeenCalled();
     expect(mockBackendSrv.get).toHaveBeenCalledWith(
@@ -117,8 +117,8 @@ describe('getPluginHealth', () => {
     );
   });
 
-  it('should default to showErrorAlert === false when getPluginHealth does not exist', async () => {
-    await getPluginHealth('grafana-exploretraces-app');
+  it('should default to showErrorAlert === false when getAppPluginHealth does not exist', async () => {
+    await getAppPluginHealth('grafana-exploretraces-app');
 
     expect(mockBackendSrv.get).toHaveBeenCalled();
     expect(mockBackendSrv.get).toHaveBeenCalledWith(
@@ -138,7 +138,7 @@ describe('getPluginHealth', () => {
       data: { status: 'ERROR', message: 'Invalid credentials', details: { reason: 'credentials' } },
     });
 
-    const response = await getPluginHealth('grafana-exploretraces-app');
+    const response = await getAppPluginHealth('grafana-exploretraces-app');
 
     expect(response).toEqual({ status: 'ERROR', message: 'Invalid credentials', details: { reason: 'credentials' } });
   });
@@ -149,7 +149,7 @@ describe('getPluginHealth', () => {
       data: { status: 'UNKNOWN', message: 'Health unknown' },
     });
 
-    const response = await getPluginHealth('grafana-exploretraces-app');
+    const response = await getAppPluginHealth('grafana-exploretraces-app');
 
     expect(response).toEqual({ status: 'UNKNOWN', message: 'Health unknown' });
   });
@@ -160,7 +160,7 @@ describe('getPluginHealth', () => {
       data: { message: 'Bad request' },
     });
 
-    await expect(getPluginHealth('grafana-exploretraces-app')).rejects.toEqual({
+    await expect(getAppPluginHealth('grafana-exploretraces-app')).rejects.toEqual({
       status: 400,
       data: { message: 'Bad request' },
     });
@@ -172,7 +172,7 @@ describe('getPluginHealth', () => {
       data: { status: 'ERROR', message: 'Backend failed' },
     });
 
-    await expect(getPluginHealth('grafana-exploretraces-app')).rejects.toEqual({
+    await expect(getAppPluginHealth('grafana-exploretraces-app')).rejects.toEqual({
       status: 500,
       data: { status: 'ERROR', message: 'Backend failed' },
     });
@@ -184,7 +184,7 @@ describe('getPluginHealth', () => {
       data: { message: 'Unauthorized' },
     });
 
-    await expect(getPluginHealth('grafana-exploretraces-app')).rejects.toEqual({
+    await expect(getAppPluginHealth('grafana-exploretraces-app')).rejects.toEqual({
       status: 401,
       data: { message: 'Unauthorized' },
       isHandled: true,
@@ -197,7 +197,7 @@ describe('getPluginHealth', () => {
       data: { message: 'Forbidden' },
     });
 
-    await expect(getPluginHealth('grafana-exploretraces-app')).rejects.toEqual({
+    await expect(getAppPluginHealth('grafana-exploretraces-app')).rejects.toEqual({
       status: 403,
       data: { message: 'Forbidden' },
       isHandled: true,
@@ -208,7 +208,7 @@ describe('getPluginHealth', () => {
     const error = { status: 404, message: 'Not found' };
     mockBackendSrv.get = jest.fn().mockRejectedValue(error);
 
-    await expect(getPluginHealth('grafana-exploretraces-app')).rejects.toEqual({
+    await expect(getAppPluginHealth('grafana-exploretraces-app')).rejects.toEqual({
       status: 404,
       message: 'Not found',
     });
@@ -217,6 +217,6 @@ describe('getPluginHealth', () => {
   it('should reject when getBackendSrv is not setup', async () => {
     setBackendSrv(undefined as unknown as BackendSrv);
 
-    await expect(getPluginHealth('grafana-exploretraces-app')).rejects.toThrow();
+    await expect(getAppPluginHealth('grafana-exploretraces-app')).rejects.toThrow();
   });
 });
