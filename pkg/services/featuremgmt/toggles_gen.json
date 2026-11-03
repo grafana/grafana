@@ -1200,6 +1200,20 @@
     },
     {
       "metadata": {
+        "name": "authz.useLegacyCheckShadow",
+        "resourceVersion": "1793714945722",
+        "creationTimestamp": "2026-11-03T14:09:05Z"
+      },
+      "spec": {
+        "description": "Compare local access-control evaluations with the AuthZ LegacyCheck RPC in the background.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "authz.userPermissions",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-20T18:39:56Z"
@@ -3618,7 +3632,8 @@
       "metadata": {
         "name": "grafana.starredFolders",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-06-24T07:52:23Z"
+        "creationTimestamp": "2026-06-24T07:52:23Z",
+        "deletionTimestamp": "2026-11-02T14:11:54Z"
       },
       "spec": {
         "description": "Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker",
