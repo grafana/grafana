@@ -82,6 +82,7 @@ import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { transformV2ToV1AnnotationQuery } from './annotations';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
+import { fillNullLists } from './fillNullLists';
 import { migrateGroupByVariablesV2 } from './groupByMigration';
 import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
 import { getDataSourceForQuery, getRuntimeVariableDataSource } from './layoutSerializers/utils';
@@ -112,6 +113,8 @@ export function transformSaveModelSchemaV2ToScene(
   dto: DashboardWithLoadInfo<DashboardV2Spec>,
   options?: LoadDashboardOptions
 ): DashboardScene {
+  // Fill before anything reads the spec, including the copy kept as the initial save model.
+  fillNullLists(dto.spec);
   const { spec: dashboard, metadata, apiVersion } = dto;
 
   const isSnapshot = Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]);

@@ -1,5 +1,5 @@
 import { waitFor } from '@testing-library/react';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, set } from 'lodash';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { config, getDataSourceInstanceSettings } from '@grafana/runtime';
@@ -1123,6 +1123,104 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         useValueAsTime: true,
         step: '1m',
       });
+    });
+  });
+
+  // Older API servers stored lists that a client left out as null.
+  describe('null lists', () => {
+    const load = (spec: unknown) =>
+      transformSaveModelSchemaV2ToScene({ ...defaultDashboard, spec: spec as DashboardV2Spec });
+
+    it('loads a dashboard whose omitted lists were stored as null', () => {
+      const spec = {
+        title: 'repro',
+        timeSettings: { from: 'now-6h', to: 'now', autoRefresh: '', autoRefreshIntervals: null },
+        variables: [],
+        annotations: null,
+        links: null,
+        tags: null,
+        cursorSync: '',
+        preload: false,
+        elements: {
+          p1: {
+            kind: 'Panel',
+            spec: {
+              id: 1,
+              title: 'Up',
+              links: null,
+              vizConfig: {
+                kind: 'VizConfig',
+                group: 'timeseries',
+                version: '',
+                spec: { options: null, fieldConfig: { defaults: {}, overrides: null } },
+              },
+              data: {
+                kind: 'QueryGroup',
+                spec: {
+                  queries: [
+                    {
+                      kind: 'PanelQuery',
+                      spec: {
+                        refId: 'A',
+                        hidden: false,
+                        query: { kind: 'DataQuery', group: 'prometheus', version: '', spec: { expr: 'up' } },
+                      },
+                    },
+                  ],
+                  transformations: null,
+                  queryOptions: {},
+                },
+              },
+            },
+          },
+        },
+        layout: {
+          kind: 'GridLayout',
+          spec: {
+            items: [
+              {
+                kind: 'GridLayoutItem',
+                spec: { x: 0, y: 0, width: 24, height: 8, element: { kind: 'ElementReference', name: 'p1' } },
+              },
+            ],
+          },
+        },
+      };
+
+      const scene = load(spec);
+
+      expect(scene.state.links).toEqual([]);
+      expect(scene.state.controls?.state.refreshPicker.state.intervals).toContain('5s');
+      const panel = dashboardSceneGraph.getVizPanels(scene)[0];
+      expect((panel.state.$data as SceneDataTransformer).state.transformations).toEqual([]);
+    });
+
+    it('loads a panel whose queries are null', () => {
+      const spec = set(cloneDeep(handyTestingSchema), 'elements.panel-1.spec.data.spec.queries', null);
+
+      const scene = load(spec);
+
+      const panel = dashboardSceneGraph.getVizPanels(scene).find((p) => p.state.key === 'panel-1')!;
+      expect(getQueryRunnerFor(panel)?.state.queries).toHaveLength(1);
+      expect(scene.serializer.getDynamicDashboardsTrackingInformation(scene)).toBeDefined();
+    });
+
+    it.each([
+      ['GridLayout', { kind: 'GridLayout', spec: { items: null } }],
+      [
+        'AutoGridLayout',
+        {
+          kind: 'AutoGridLayout',
+          spec: { maxColumnCount: 3, columnWidthMode: 'standard', rowHeightMode: 'standard', items: null },
+        },
+      ],
+      ['RowsLayout', { kind: 'RowsLayout', spec: { rows: null } }],
+      ['TabsLayout', { kind: 'TabsLayout', spec: { tabs: null } }],
+    ])('loads a %s whose children are null', (_, layout) => {
+      const scene = load({ ...cloneDeep(handyTestingSchema), layout });
+
+      expect(dashboardSceneGraph.getVizPanels(scene)).toEqual([]);
+      expect(scene.serializer.getDynamicDashboardsTrackingInformation(scene)?.panelCount).toBe(0);
     });
   });
 });
