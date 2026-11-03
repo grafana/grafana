@@ -35,6 +35,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { NotebookAnalytics } from '../../analytics/main';
 import { NOTEBOOK_BLOCK_INSERT_VIA, type NotebookBlockInsertVia } from '../../analytics/types';
+import { mintElementName } from '../../elementName';
 import {
   type CellContentKind,
   defaultCodeCellContentKind,
@@ -944,7 +945,8 @@ export class NotebookLayoutManager
     const nextId = dashboardSceneGraph.getPanelIdGenerator(this);
     const copy = cell.clone({
       key: undefined,
-      elementName: this.nextElementName(`${cell.state.elementName}-copy`),
+      // From the block type, not the source's name: a copy of a copy would otherwise grow the name.
+      elementName: this.nextElementName(blockTypeOf(cell)),
       body: cell.state.body?.clone({
         key: getVizPanelKeyForPanelId(nextId()),
       }),
@@ -1096,12 +1098,7 @@ export class NotebookLayoutManager
   private nextElementName(base: string): string {
     const taken = new Set(this.state.cells.map((current) => current.state.elementName));
 
-    let suffix = 1;
-    while (taken.has(`${base}-${suffix}`)) {
-      suffix++;
-    }
-
-    return `${base}-${suffix}`;
+    return mintElementName(base, (name) => taken.has(name));
   }
 
   public addPanel(): void {}

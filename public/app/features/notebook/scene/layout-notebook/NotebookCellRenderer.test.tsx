@@ -394,7 +394,7 @@ describe('NotebookCellRenderer', () => {
       act(() => layout.duplicateCell(cell));
       await waitFor(() => expect(screen.getAllByRole('heading', { name: 'Latency' })).toHaveLength(2));
       const original = within(screen.getByRole('group', { name: 'panel-1' }));
-      const copy = within(screen.getByRole('group', { name: 'panel-1-copy-1' }));
+      const copy = within(screen.getByRole('group', { name: /^visualization-[a-z0-9]{6}$/ }));
       expect(original.getAllByRole('button', { name: 'Block actions' })).toHaveLength(1);
       expect(copy.getAllByRole('button', { name: 'Block actions' })).toHaveLength(1);
       expect(copy.getAllByRole('button', { name: 'Edit panel title' })).toHaveLength(1);
