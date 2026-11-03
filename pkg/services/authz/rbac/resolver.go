@@ -213,7 +213,8 @@ func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, acti
 		if isRoleManagementAction(action) {
 			return permissionsTypeResolverFunc, nil
 		}
-		// Permission-type scopes are only supported for role mutations.
+		// Only role-management actions interpret delegate as wildcard access.
+		// Expanding other actions would grant access on every resource.
 		return nil, nil
 	}
 	if scopePrefix == "serviceaccounts:id:" {
