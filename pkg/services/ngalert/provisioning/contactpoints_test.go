@@ -1408,6 +1408,7 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
+						UID:  "_new_receiver_uid", // Let's us know which receiver is newly created so we can handle the randomly generated UID.
 						Name: "new-receiver",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
 							{
@@ -1789,6 +1790,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
+						UID:  "_new_receiver_uid", // Let's us know which receiver is newly created so we can handle the randomly generated UID.
 						Name: "brand-new-group",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
 							{
@@ -1851,6 +1853,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
+						UID:  "_new_receiver_uid", // Let's us know which receiver is newly created so we can handle the randomly generated UID.
 						Name: "brand-new-group",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
 							{
@@ -2023,7 +2026,7 @@ func TestStitchReceivers(t *testing.T) {
 				cfg = c.initial
 			}
 
-			oldReceiver, _, fullRemoval, createdReceiver := stitchReceiver(cfg, c.new)
+			oldReceiver, newReceiver, fullRemoval, createdReceiver := stitchReceiver(cfg, c.new)
 			var renamedReceiver string
 			if oldReceiver != nil {
 				renamedReceiver = oldReceiver.Name
@@ -2032,6 +2035,23 @@ func TestStitchReceivers(t *testing.T) {
 			assert.EqualValuesf(t, c.expOldReceiver, renamedReceiver, "expected old receiver to be %v, got %v", c.expOldReceiver, renamedReceiver)
 			assert.Equalf(t, c.expFullRemoval, fullRemoval, "expected full removal to be %t, got %t", c.expFullRemoval, fullRemoval)
 			assert.Equalf(t, c.expCreatedReceiver, createdReceiver, "expected created receiver to be %t, got %t", c.expCreatedReceiver, createdReceiver)
+
+			// Newly created receivers have randomly generated UIDs, so we need to ensure the tests ignore them.
+			if c.expCreatedReceiver {
+				// Verify it exists and doesn't have the same UID as the old receiver.
+				require.NotEmptyf(t, newReceiver.UID, "created receiver UID should not be empty")
+				require.NotEqualf(t, newReceiver.UID, oldReceiver.UID, "created receiver UID should not be the same as the old receiver UID")
+
+				// Fix the UID in the expected receivers so equality check will ignore the randomly generated UID.
+				expNewReceiver, ok := c.expCfg.Receivers["_new_receiver_uid"]
+				if !ok {
+					t.Fatalf("expected receiver with UID _new_receiver_uid to exist in expCfg.Receivers")
+				}
+				delete(c.expCfg.Receivers, "_new_receiver_uid")
+				expNewReceiver.UID = newReceiver.UID
+				c.expCfg.Receivers[newReceiver.UID] = expNewReceiver
+			}
+
 			require.Equal(t, c.expCfg, *cfg)
 		})
 	}

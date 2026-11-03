@@ -46,30 +46,21 @@ func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) (*models.Re
 	return rev.setReceiver(receiver)
 }
 
+// setReceiver stores the receiver under its own UID. The caller is responsible for that UID
+// already being right: a create assigns a fresh one if necessary, an update carries the existing one forward
+// so a rename doesn't change identity.
 func (rev *ConfigRevision) setReceiver(receiver *models.Receiver) (*models.Receiver, error) {
 	postable, err := ReceiverToPostableApiReceiver(receiver)
 	if err != nil {
 		return nil, err
 	}
 
-	// The UID is derived from the name, so always key by the name's UID rather than trusting
-	// the caller's value. On rename the caller passes the old UID (to locate the existing entry);
-	// recomputing here ensures the renamed receiver is stored under its new UID instead of
-	// overwriting and then being deleted under the old one.
-	oldUID := postable.UID
-	postable.UID = v1.ReceiverUID(postable.Name)
 	postable.RefreshVersion()
 
 	if rev.Config.Receivers == nil {
 		rev.Config.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, 1)
 	}
 	rev.Config.Receivers[postable.UID] = postable
-
-	if postable.UID != oldUID {
-		// Since the UID is derived from the name, a rename must move the entry to a new key rather than
-		// trusting the caller's (now-stale) UID.
-		delete(rev.Config.Receivers, oldUID)
-	}
 
 	return PostableApiReceiverToReceiver(postable, receiver.Origin)
 }

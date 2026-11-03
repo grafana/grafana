@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // ReceiverService is the service for managing alertmanager receivers.
@@ -392,6 +393,11 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 
 	span.AddEvent("Loaded Alertmanager configuration", trace.WithAttributes(attribute.String("concurrency_token", revision.ConcurrencyToken)))
 
+	// Check for a name collision, now that UID no longer doubles as a name check. This check is also performed later but this is more explicit and allows an early exit.
+	if _, exists := revision.GetReceiversNames()[r.Name]; exists {
+		return nil, models.ErrReceiverExists.Errorf("")
+	}
+
 	createdReceiver := r.Clone()
 	for _, integration := range createdReceiver.Integrations {
 		if err := rs.validateNoDuplicateSecretFields(integration.Config, integration.Settings); err != nil {
@@ -408,8 +414,11 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		return nil, models.ErrReceiverInvalid(err)
 	}
 
-	// Generate UID from name.
-	createdReceiver.UID = string(v1.ReceiverUID(createdReceiver.Name))
+	// A brand new receiver gets its own independent UID, unless it is given one; it has no existing identity to
+	// preserve. The occupancy check in revision.CreateReceiver guards against reusing a UID that is already taken.
+	if createdReceiver.UID == "" {
+		createdReceiver.UID = util.GenerateShortUID()
+	}
 
 	result, err = revision.CreateReceiver(&createdReceiver)
 	if err != nil {
@@ -551,17 +560,6 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		if existing.Name != r.Name {
 			err := rs.RenameReceiverInDependentResources(ctx, orgID, revision, existing.Name, r.Name, r.Provenance)
 			if err != nil {
-				return err
-			}
-			// Update receiver permissions
-			permissionsUpdated, err := rs.resourcePermissions.CopyPermissions(ctx, orgID, user, existing.UID, result.UID)
-			if err != nil {
-				return err
-			}
-			if permissionsUpdated > 0 {
-				logger.Info("Moved custom receiver permissions", "oldName", existing.Name, "count", permissionsUpdated)
-			}
-			if err := rs.resourcePermissions.DeleteResourcePermissions(ctx, orgID, existing.UID); err != nil {
 				return err
 			}
 		}

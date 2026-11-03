@@ -101,6 +101,28 @@ func TestIntegrationReceiverService_GetReceivers(t *testing.T) {
 			accesscontrol.ActionAlertingNotificationsRead: nil,
 		},
 	}}
+	writer := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingNotificationsWrite: nil,
+			accesscontrol.ActionAlertingNotificationsRead:  nil,
+		},
+	}}
+
+	t.Run("finds a receiver by name after it was created with an independently-generated UID", func(t *testing.T) {
+		sut := createReceiverServiceSut(t, secretsService)
+
+		created, err := sut.CreateReceiver(context.Background(), &models.Receiver{
+			Name:   "brand-new-receiver",
+			Origin: models.ResourceOriginGrafana,
+		}, 1, writer)
+		require.NoError(t, err)
+		require.NotEmpty(t, created.UID)
+
+		recvs, err := sut.GetReceivers(context.Background(), multiQ(1, "brand-new-receiver"), redactedUser)
+		require.NoError(t, err)
+		require.Len(t, recvs, 1)
+		require.Equal(t, created.UID, recvs[0].UID)
+	})
 
 	t.Run("service gets receivers from AM config", func(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
@@ -611,7 +633,7 @@ func TestReceiverService_Create(t *testing.T) {
 					),
 				),
 			)),
-			expectedStored: new(v1.NewReceiver(v1.ReceiverUID(lineIntegration.Name), lineIntegration.Name, []*v1.PostableGrafanaReceiver{
+			expectedStored: new(v1.NewReceiver(v1.ResourceUID(baseReceiver.UID), lineIntegration.Name, []*v1.PostableGrafanaReceiver{
 				{
 					UID:                   lineIntegration.UID,
 					Name:                  lineIntegration.Name,
@@ -718,7 +740,7 @@ func TestReceiverService_Create(t *testing.T) {
 			assert.Equal(t, tc.expectedCreate, *created)
 
 			// Ensure receiver saved to store is correct.
-			stored, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(tc.receiver.Name), true, decryptUser)
+			stored, err := sut.GetReceiver(context.Background(), created.UID, true, decryptUser)
 			require.NoError(t, err)
 			decrypted := models.CopyReceiverWith(tc.expectedCreate, models.ReceiverMuts.Decrypted(models.Base64Decrypt))
 			decrypted.Version = tc.expectedCreate.Version // Version is calculated before decryption.
@@ -952,9 +974,11 @@ func TestReceiverService_Update(t *testing.T) {
 			expectedErr: models.ErrReceiverOrigin,
 		},
 		{
-			name:        "receivers of non-Grafana origin cannot be updated",
-			user:        writer,
-			receiver:    models.CopyReceiverWith(baseReceiver, rm.WithName("receiver1")),
+			name: "receivers of non-Grafana origin cannot be updated",
+			user: writer,
+			// The imported receiver this is meant to match has no persisted UID of its own - it's
+			// looked up by its name-derived UID, same as any other imported/non-Grafana receiver.
+			receiver:    models.CopyReceiverWith(baseReceiver, rm.WithName("receiver1"), rm.WithUID(string(v1.ReceiverUID("receiver1")))),
 			expectedErr: models.ErrReceiverOrigin,
 			opts:        []createReceiverServiceSutOpt{withImportedIncluded},
 		},
@@ -1062,7 +1086,7 @@ func TestReceiverService_Update(t *testing.T) {
 			assert.Equal(t, tc.expectedUpdate, *updated)
 
 			// Ensure receiver saved to store is correct.
-			stored, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(tc.receiver.Name), true, decryptUser)
+			stored, err := sut.GetReceiver(context.Background(), updated.UID, true, decryptUser)
 			require.NoError(t, err)
 			decrypted := models.CopyReceiverWith(tc.expectedUpdate, models.ReceiverMuts.Decrypted(models.Base64Decrypt))
 			decrypted.Version = tc.expectedUpdate.Version // Version is calculated before decryption.
@@ -1130,7 +1154,9 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 	receiverName := "grafana-default-email"
 	newReceiverName := "new-name"
 	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName(receiverName), models.IntegrationMuts.WithValidConfig("slack"))()
-	baseReceiver := models.ReceiverGen(models.ReceiverMuts.WithName(receiverName), models.ReceiverMuts.WithIntegrations(slackIntegration))()
+	// UID must match the seeded "grafana-default-email" entry in defaultAlertmanagerConfigJSON,
+	// which (having no persisted uid of its own) resolves to its name-derived UID on load.
+	baseReceiver := models.ReceiverGen(models.ReceiverMuts.WithName(receiverName), models.ReceiverMuts.WithUID(string(v1.ReceiverUID(receiverName))), models.ReceiverMuts.WithIntegrations(slackIntegration))()
 	baseReceiver.Version = "4e43d5834c652a74" // Correct version for grafana-default-email.
 	baseReceiver.Name = newReceiverName       // Done here instead of in a mutator so we keep the same uid.
 
@@ -1223,7 +1249,7 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		sut.ruleNotificationsStore = ruleStore
 
 		newReceiverName = "receiver1"
-		actual, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(newReceiverName), false, writer)
+		actual, err := sut.GetReceiver(context.Background(), string(v1.ReceiverUID(newReceiverName)), false, writer)
 		require.NoError(t, err)
 		require.Equal(t, models.ResourceOriginImported, actual.Origin)
 		require.Equal(t, newReceiverName, actual.Name)
@@ -1236,9 +1262,10 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		require.NotEqual(t, actual, recv)
 		require.Equal(t, models.ResourceOriginGrafana, recv.Origin)
 
-		actual, err = sut.GetReceiver(context.Background(), legacy_storage.NameToUid(newReceiverName), false, writer)
+		grafanaManaged, err := sut.GetReceiver(context.Background(), recv.UID, false, writer)
 		require.NoError(t, err)
-		require.Equal(t, recv.Name, actual.Name)
+		require.Equal(t, recv.Name, grafanaManaged.Name)
+		require.Equal(t, models.ResourceOriginGrafana, grafanaManaged.Origin)
 	})
 
 	t.Run("cannot rename receiver to name that is already used by another receiver of same origin", func(t *testing.T) {
@@ -1462,7 +1489,7 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 				return false
 			}
 			for _, recv := range allReceivers() {
-				response, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(recv.Name), false, usr)
+				response, err := sut.GetReceiver(context.Background(), recv.UID, false, usr)
 				if isVisible(recv.UID) {
 					require.NoErrorf(t, err, "receiver '%s' should be visible, but isn't", recv.Name)
 					assert.NotNil(t, response)
@@ -1484,7 +1511,7 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 			}
 			sut.authz = ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), true)
 			for _, recv := range allReceivers() {
-				response, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(recv.Name), false, usr)
+				response, err := sut.GetReceiver(context.Background(), recv.UID, false, usr)
 				if isVisibleInProvisioning(recv.UID) {
 					require.NoErrorf(t, err, "receiver '%s' should be visible, but isn't", recv.Name)
 					assert.NotNil(t, response)
@@ -1941,10 +1968,10 @@ func TestReceiverService_InUseMetadata(t *testing.T) {
 			name: "mixed metadata",
 			user: admin,
 			existing: []*models.Receiver{
-				new(models.ReceiverGen(models.ReceiverMuts.WithName("receiver1"))()),
-				new(models.ReceiverGen(models.ReceiverMuts.WithName("receiver2"))()),
-				new(models.ReceiverGen(models.ReceiverMuts.WithName("receiver3"))()),
-				new(models.ReceiverGen(models.ReceiverMuts.WithName("receiver4"))()),
+				new(models.ReceiverGen(models.ReceiverMuts.WithUID("receiver1-uid"), models.ReceiverMuts.WithName("receiver1"))()),
+				new(models.ReceiverGen(models.ReceiverMuts.WithUID("receiver2-uid"), models.ReceiverMuts.WithName("receiver2"))()),
+				new(models.ReceiverGen(models.ReceiverMuts.WithUID("receiver3-uid"), models.ReceiverMuts.WithName("receiver3"))()),
+				new(models.ReceiverGen(models.ReceiverMuts.WithUID("receiver4-uid"), models.ReceiverMuts.WithName("receiver4"))()),
 			},
 			storeSettings: map[models.AlertRuleKey]models.ContactPointRouting{
 				{OrgID: 1, UID: "rule1uid"}: models.ContactPointRoutingGen(models.CPRMuts.WithReceiver("receiver1"))(),
@@ -1965,22 +1992,22 @@ func TestReceiverService_InUseMetadata(t *testing.T) {
 				},
 			},
 			expectedMetadata: map[string]models.ReceiverMetadata{
-				legacy_storage.NameToUid("receiver1"): {
+				"receiver1-uid": {
 					InUseByRules:  []models.AlertRuleKey{{OrgID: 1, UID: "rule1uid"}},
 					InUseByRoutes: 2,
 					CanUse:        true,
 				},
-				legacy_storage.NameToUid("receiver2"): {
+				"receiver2-uid": {
 					InUseByRules:  []models.AlertRuleKey{{OrgID: 1, UID: "rule2uid"}},
 					InUseByRoutes: 1,
 					CanUse:        true,
 				},
-				legacy_storage.NameToUid("receiver3"): {
+				"receiver3-uid": {
 					InUseByRules:  []models.AlertRuleKey{},
 					InUseByRoutes: 2,
 					CanUse:        true,
 				},
-				legacy_storage.NameToUid("receiver4"): {
+				"receiver4-uid": {
 					InUseByRules:  []models.AlertRuleKey{},
 					InUseByRoutes: 1,
 					CanUse:        true,

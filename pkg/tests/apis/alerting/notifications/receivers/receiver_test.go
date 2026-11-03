@@ -96,7 +96,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		require.Equal(t, newResource.Spec, actual.Spec)
 	})
 
-	t.Run("update should rename receiver if name in the specification changes", func(t *testing.T) {
+	t.Run("update should preserve UID when name in the specification changes", func(t *testing.T) {
 		existing, err := client.Get(ctx, resourceID)
 		require.NoError(t, err)
 
@@ -106,7 +106,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		actual, err := client.Update(ctx, updated, resource.UpdateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, updated.Spec, actual.Spec)
-		require.NotEqualf(t, updated.Name, actual.Name, "Update should change the resource name but it didn't")
+		require.Equalf(t, updated.Name, actual.Name, "Renaming a receiver should preserve its UID (resource name), but it changed")
 		require.NotEqualf(t, updated.ResourceVersion, actual.ResourceVersion, "Update should change the resource version but it didn't")
 
 		resource, err := client.Get(ctx, actual.GetStaticMetadata().Identifier())
@@ -1300,6 +1300,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 
 			actual, err := adminClient.Update(ctx, renamed, resource.UpdateOptions{})
 			require.NoError(t, err)
+			require.Equalf(t, receiver.Name, actual.Name, "renaming a receiver should preserve its UID (resource name)")
 
 			updatedRuleGroup, status := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
 			require.Equal(t, http.StatusAccepted, status)

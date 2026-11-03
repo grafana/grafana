@@ -701,7 +701,8 @@ func (moa *MultiOrgAlertmanager) cleanPermissions(ctx context.Context, orgID int
 
 // extractReceiverUIDs extracts the resolved receiver UIDs from the raw Alertmanager configuration. Unmarshalling
 // ignores fields unrelated to receivers, making it more resilient to invalid configurations. A receiver with no
-// persisted uid falls back to its name-derived UID, see v1.ResolveReceiverUID.
+// persisted uid (a legacy row never resaved since UID persistence was introduced) falls back to its name-derived UID,
+// see v1.ResolveReceiverUID.
 func extractReceiverUIDs(rawConfig string) (sets.Set[string], error) {
 	// Slimmed down version of the Alertmanager configuration to extract receivers. This is more resilient to
 	// invalid configurations when all we are interested in is name/uid.
