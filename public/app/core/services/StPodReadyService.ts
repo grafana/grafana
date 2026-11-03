@@ -12,7 +12,7 @@ export enum StPodStatus {
   Error = 'error',
 }
 
-export enum GatewayState {
+enum GatewayState {
   Active = 'active',
   Starting = 'starting',
   Migrating = 'migrating',
