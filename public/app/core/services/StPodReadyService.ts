@@ -234,6 +234,8 @@ const WAITING_GATEWAY_STATES = new Set<string>([
   GatewayState.Migrating,
   GatewayState.Restoring,
   GatewayState.Archiving,
+  GatewayState.Migrated,
+  GatewayState.Unavailable,
 ]);
 
 function createPending(): PendingResolver {
