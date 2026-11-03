@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -186,14 +187,21 @@ func TestSingleAPIClients_PropagatesTraceContext(t *testing.T) {
 }
 
 func TestExpandWildcardGroups(t *testing.T) {
-	served := func(groups ...string) groupLister {
-		return func(context.Context) ([]string, error) { return groups, nil }
+	// served builds a lister over "<group>/<Kind>" pairs, the shape discovery reports.
+	served := func(pairs ...string) groupKindLister {
+		kinds := make([]schema.GroupKind, 0, len(pairs))
+		for _, pair := range pairs {
+			group, kind, ok := strings.Cut(pair, "/")
+			require.True(t, ok, "served pair %q must be <group>/<Kind>", pair)
+			kinds = append(kinds, schema.GroupKind{Group: group, Kind: kind})
+		}
+		return func(context.Context) ([]schema.GroupKind, error) { return kinds, nil }
 	}
 	installed := served(
-		"dashboard.grafana.app",
-		"prometheus.datasource.grafana.app",
-		"loki.datasource.grafana.app",
-		"grafana.datasource.grafana.app",
+		"dashboard.grafana.app/Dashboard",
+		"prometheus.datasource.grafana.app/DataSource",
+		"loki.datasource.grafana.app/DataSource",
+		"grafana.datasource.grafana.app/DataSource",
 	)
 
 	t.Run("expands a collection into the groups served inside it", func(t *testing.T) {
@@ -224,7 +232,7 @@ func TestExpandWildcardGroups(t *testing.T) {
 		configured, err := ParseSupportedResources([]string{"playlist.grafana.app/Playlist"})
 		require.NoError(t, err)
 
-		expanded, err := expandWildcardGroups(t.Context(), func(context.Context) ([]string, error) {
+		expanded, err := expandWildcardGroups(t.Context(), func(context.Context) ([]schema.GroupKind, error) {
 			t.Fatal("discovery should not be consulted without a wildcard entry")
 			return nil, nil
 		}, configured)
@@ -238,7 +246,7 @@ func TestExpandWildcardGroups(t *testing.T) {
 		configured, err := ParseSupportedResources([]string{"*.datasource.grafana.app/DataSource"})
 		require.NoError(t, err)
 
-		expanded, err := expandWildcardGroups(t.Context(), served("dashboard.grafana.app"), configured)
+		expanded, err := expandWildcardGroups(t.Context(), served("dashboard.grafana.app/Dashboard"), configured)
 		require.NoError(t, err)
 		require.Empty(t, expanded)
 	})
@@ -248,9 +256,9 @@ func TestExpandWildcardGroups(t *testing.T) {
 		require.NoError(t, err)
 
 		expanded, err := expandWildcardGroups(t.Context(), served(
-			"grafana-slo-app",
-			"acme-slo-app",
-			"plugins.grafana.app",
+			"grafana-slo-app/Settings",
+			"acme-slo-app/Settings",
+			"plugins.grafana.app/Settings",
 		), configured)
 		require.NoError(t, err)
 		require.Equal(t, []schema.GroupKind{{Group: "grafana-slo-app", Kind: "Settings"}}, groupKinds(expanded))
@@ -261,9 +269,9 @@ func TestExpandWildcardGroups(t *testing.T) {
 		require.NoError(t, err)
 
 		expanded, err := expandWildcardGroups(t.Context(), served(
-			"grafana-slo-app",
-			"grafana-app-sdk",
-			"plugins.grafana.app",
+			"grafana-slo-app/Settings",
+			"grafana-app-sdk/Settings",
+			"plugins.grafana.app/Settings",
 		), configured)
 		require.NoError(t, err)
 		require.Equal(t, []schema.GroupKind{{Group: "grafana-slo-app", Kind: "Settings"}}, groupKinds(expanded),
@@ -278,9 +286,12 @@ func TestExpandWildcardGroups(t *testing.T) {
 		require.NoError(t, err)
 
 		calls := 0
-		expanded, err := expandWildcardGroups(t.Context(), func(context.Context) ([]string, error) {
+		expanded, err := expandWildcardGroups(t.Context(), func(context.Context) ([]schema.GroupKind, error) {
 			calls++
-			return []string{"prometheus.datasource.grafana.app", "router-test.ext.grafana.app"}, nil
+			return []schema.GroupKind{
+				{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
+				{Group: "router-test.ext.grafana.app", Kind: "Thing"},
+			}, nil
 		}, configured)
 		require.NoError(t, err)
 		require.Equal(t, 1, calls, "the served groups are listed once for the whole set")
@@ -290,11 +301,26 @@ func TestExpandWildcardGroups(t *testing.T) {
 		}, groupKinds(expanded))
 	})
 
+	// A pattern can cover a group that does not serve the kind at all. Expanding onto it would
+	// produce an entry whose client cannot be resolved, so the kind has to match as well.
+	t.Run("skips a covered group that does not serve the kind", func(t *testing.T) {
+		configured, err := ParseSupportedResources([]string{"*.grafana.app/Playlist"})
+		require.NoError(t, err)
+
+		expanded, err := expandWildcardGroups(t.Context(), served(
+			"playlist.grafana.app/Playlist",
+			"dashboard.grafana.app/Dashboard",
+			"folder.grafana.app/Folder",
+		), configured)
+		require.NoError(t, err)
+		require.Equal(t, []schema.GroupKind{{Group: "playlist.grafana.app", Kind: "Playlist"}}, groupKinds(expanded))
+	})
+
 	t.Run("propagates a discovery failure", func(t *testing.T) {
 		configured, err := ParseSupportedResources([]string{"*.datasource.grafana.app/DataSource"})
 		require.NoError(t, err)
 
-		_, err = expandWildcardGroups(t.Context(), func(context.Context) ([]string, error) {
+		_, err = expandWildcardGroups(t.Context(), func(context.Context) ([]schema.GroupKind, error) {
 			return nil, errors.New("apis unreachable")
 		}, configured)
 		require.ErrorContains(t, err, "apis unreachable")

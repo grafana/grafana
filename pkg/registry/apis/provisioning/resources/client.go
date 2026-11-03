@@ -203,7 +203,7 @@ type clientFactory struct {
 // supportedResources resolves the configured set to served groups, once.
 func (f *clientFactory) supportedResources(ctx context.Context) ([]SupportedResource, error) {
 	f.expandOnce.Do(func() {
-		f.expanded, f.expandErr = expandWildcardGroups(ctx, discoveryGroups(f.clientsProvider), f.configuredResources)
+		f.expanded, f.expandErr = expandWildcardGroups(ctx, discoveryKinds(f.clientsProvider, f.configuredResources), f.configuredResources)
 	})
 	return f.expanded, f.expandErr
 }
@@ -649,16 +649,18 @@ var nonProvisionableGroups = sets.New(
 	"dashboard.datasource.grafana.app",
 )
 
-// expandWildcardGroups turns each configured collection entry into one entry per API group served
-// inside that collection, asking discovery which groups those are. Entries that already name a
-// served group are passed through.
+// expandWildcardGroups turns each configured collection entry into one entry per API group that
+// serves that kind inside the collection, asking discovery which those are. Entries that already
+// name a served group are passed through.
 //
 // Discovery is the right source rather than the installed plugin list: a plugin can be installed
-// without its group being served, and it is the served group a client has to address. The result is
-// cached on first success, so the ~15 call sites that take a client do not each cost a /apis round
-// trip; a group that starts being served later needs a restart, as installing the plugin does.
-func expandWildcardGroups(ctx context.Context, listGroups groupLister, configured []SupportedResource) ([]SupportedResource, error) {
-	var served []string
+// without its group being served, and it is the served group a client has to address. Matching the
+// kind as well as the group keeps a broad pattern from expanding onto groups that do not serve it,
+// which would then fail to resolve a client. The result is cached on first success, so the ~15 call
+// sites that take a client do not each cost a /apis round trip; a group that starts being served
+// later needs a restart, as installing the plugin does.
+func expandWildcardGroups(ctx context.Context, listKinds groupKindLister, configured []SupportedResource) ([]SupportedResource, error) {
+	var served []schema.GroupKind
 	var listed bool
 	out := make([]SupportedResource, 0, len(configured))
 	for _, r := range configured {
@@ -668,41 +670,66 @@ func expandWildcardGroups(ctx context.Context, listGroups groupLister, configure
 		}
 		if !listed {
 			var err error
-			if served, err = listGroups(ctx); err != nil {
+			if served, err = listKinds(ctx); err != nil {
 				return nil, err
 			}
 			listed = true
 		}
-		for _, group := range served {
-			if !provisioningresources.MatchesGroup(r.Group, group) || nonProvisionableGroups.Has(group) {
+		for _, gk := range served {
+			if gk.Kind != r.Kind || !provisioningresources.MatchesGroup(r.Group, gk.Group) || nonProvisionableGroups.Has(gk.Group) {
 				continue
 			}
-			out = append(out, SupportedResource{
-				GroupKind:    schema.GroupKind{Group: group, Kind: r.Kind},
-				Capabilities: r.Capabilities,
-			})
+			out = append(out, SupportedResource{GroupKind: gk, Capabilities: r.Capabilities})
 		}
 	}
 	return out, nil
 }
 
-// groupLister lists the API groups a server serves.
-type groupLister func(ctx context.Context) ([]string, error)
+// groupKindLister lists the group/kind pairs a server serves.
+type groupKindLister func(ctx context.Context) ([]schema.GroupKind, error)
 
-// discoveryGroups lists every API group the server serves, through its discovery client.
-func discoveryGroups(provider clientsProvider) groupLister {
-	return func(ctx context.Context) ([]string, error) {
-		_, discovery, err := provider.GetClientsForKind(ctx, schema.GroupVersionKind{})
+// discoveryKinds lists every kind the server serves, through its discovery client. Discovery
+// failures of groups no configured pattern covers are tolerated, so one unavailable API group does
+// not stop the collections that are available from expanding; a failure inside a collection is
+// not, since a member would then silently go missing.
+func discoveryKinds(provider clientsProvider, configured []SupportedResource) groupKindLister {
+	relevant := func(group string) bool {
+		for _, r := range configured {
+			if provisioningresources.MatchesGroup(r.Group, group) {
+				return true
+			}
+		}
+		return false
+	}
+
+	return func(ctx context.Context) ([]schema.GroupKind, error) {
+		_, discoveryClient, err := provider.GetClientsForKind(ctx, schema.GroupVersionKind{})
 		if err != nil {
 			return nil, fmt.Errorf("get discovery client for collection expansion: %w", err)
 		}
-		list, err := discovery.ServerGroups()
+		lists, err := discoveryClient.PreferredResources(ctx, relevant)
 		if err != nil {
-			return nil, fmt.Errorf("list server groups for collection expansion: %w", err)
+			return nil, fmt.Errorf("list served resources for collection expansion: %w", err)
 		}
-		out := make([]string, 0, len(list.Groups))
-		for _, g := range list.Groups {
-			out = append(out, g.Name)
+
+		seen := sets.New[schema.GroupKind]()
+		out := make([]schema.GroupKind, 0, len(lists))
+		for _, list := range lists {
+			gv, err := schema.ParseGroupVersion(list.GroupVersion)
+			if err != nil {
+				continue
+			}
+			for _, served := range list.APIResources {
+				// Subresources carry their parent's kind; only the resource itself is addressable.
+				if strings.Contains(served.Name, "/") {
+					continue
+				}
+				gk := schema.GroupKind{Group: gv.Group, Kind: served.Kind}
+				if !seen.Has(gk) {
+					seen.Insert(gk)
+					out = append(out, gk)
+				}
+			}
 		}
 		return out, nil
 	}
