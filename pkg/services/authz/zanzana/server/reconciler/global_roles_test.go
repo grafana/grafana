@@ -21,15 +21,19 @@ import (
 
 type globalRoleTestServer struct {
 	*stubServer
-	tuples []*openfgav1.Tuple
-	writes int
+	tuples  []*openfgav1.Tuple
+	writes  int
+	added   []*openfgav1.TupleKey
+	deleted []*openfgav1.TupleKeyWithoutCondition
 }
 
 func (s *globalRoleTestServer) ReadTuples(context.Context, *zanzana.StoreInfo, *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
 	return &openfgav1.ReadResponse{Tuples: s.tuples}, nil
 }
 
-func (s *globalRoleTestServer) WriteTuples(context.Context, *zanzana.StoreInfo, []*openfgav1.TupleKey, []*openfgav1.TupleKeyWithoutCondition) error {
+func (s *globalRoleTestServer) WriteTuples(_ context.Context, _ *zanzana.StoreInfo, added []*openfgav1.TupleKey, deleted []*openfgav1.TupleKeyWithoutCondition) error {
+	s.added = append(s.added, added...)
+	s.deleted = append(s.deleted, deleted...)
 	s.writes++
 	return nil
 }
@@ -78,19 +82,52 @@ func TestEnsureNamespace_EmptyGlobalRoleSnapshot(t *testing.T) {
 }
 
 func TestQueueAllNamespaces_GlobalRoleFetchFailurePreservesSnapshot(t *testing.T) {
-	dyn := newGlobalRoleTestClient()
-	dyn.PrependReactor("list", "globalroles", func(clienttesting.Action) (bool, runtime.Object, error) {
-		return true, nil, errors.New("global roles unavailable")
-	})
-	r := newReconcilerForTest(&stubServer{listAllStoresResults: []zanzana.StoreInfo{{Name: "test-ns"}}}, fakeAnonClientFactory{dyn: dyn})
-	r.workQueue = make(chan string, 1)
-	perms := map[string][]*authzextv1.RolePermission{"reader": {{Action: "dashboards:read", Scope: "dashboards:uid:d1"}}}
-	r.setGlobalRolePerms(perms)
+	for _, tc := range []struct {
+		name  string
+		perms map[string][]*authzextv1.RolePermission
+	}{
+		{name: "missing snapshot"},
+		{name: "empty snapshot", perms: map[string][]*authzextv1.RolePermission{}},
+		{name: "populated snapshot", perms: map[string][]*authzextv1.RolePermission{"reader": {{Action: "dashboards:read", Scope: "dashboards:uid:d1"}}}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dyn := newGlobalRoleTestClient()
+			dyn.PrependReactor("list", "globalroles", func(clienttesting.Action) (bool, runtime.Object, error) {
+				return true, nil, errors.New("global roles unavailable")
+			})
+			srv := &globalRoleTestServer{stubServer: &stubServer{listAllStoresResults: []zanzana.StoreInfo{{Name: "test-ns"}}}}
+			for name, perms := range tc.perms {
+				tuples, err := zanzana.RoleToTuples(name, perms)
+				require.NoError(t, err)
+				require.NotEmpty(t, tuples)
+				for _, tuple := range tuples {
+					srv.tuples = append(srv.tuples, toTuple(tuple))
+				}
+			}
+			// The namespace Role was deleted, but its permission tuple remains in Zanzana.
+			revoked := makeTuple("role:deleted-role#assignee", "get", "resource:dashboard.grafana.app/dashboards/d1")
+			srv.tuples = append(srv.tuples, toTuple(revoked))
+			r := newReconcilerForTest(srv.stubServer, fakeAnonClientFactory{dyn: dyn})
+			r.server = srv
+			r.cfg.CRDs = []schema.GroupVersionResource{iamv0.RoleInfo.GroupVersionResource()}
+			r.workQueue = make(chan string, 1)
+			r.setGlobalRolePerms(tc.perms)
 
-	r.queueAllNamespaces(context.Background())
+			r.queueAllNamespaces(context.Background())
 
-	require.Empty(t, r.workQueue)
-	require.Equal(t, perms, r.getGlobalRolePerms())
+			require.Equal(t, tc.perms, r.getGlobalRolePerms())
+			if tc.perms == nil {
+				require.Empty(t, r.workQueue)
+				require.Zero(t, srv.writes)
+				return
+			}
+			require.Len(t, r.workQueue, 1)
+			r.runNamespaceReconciliation(context.Background(), <-r.workQueue, 0)
+			require.Equal(t, 1, srv.writes)
+			require.Empty(t, srv.added)
+			require.Equal(t, []*openfgav1.TupleKeyWithoutCondition{{User: revoked.User, Relation: revoked.Relation, Object: revoked.Object}}, srv.deleted)
+		})
+	}
 }
 
 func TestEnsureNamespace_FollowerPreservesGlobalRolePermissions(t *testing.T) {

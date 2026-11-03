@@ -204,10 +204,13 @@ func (r *Reconciler) queueAllNamespaces(ctx context.Context) {
 	if err != nil {
 		r.logger.Error("Failed to fetch global roles", "error", err)
 		r.metrics.errorsTotal.WithLabelValues("fetch_global_roles").Inc()
-		return
+		// Keep namespace-local revocations progressing with the last valid snapshot.
+		if r.getGlobalRolePerms() == nil {
+			return
+		}
+	} else {
+		r.setGlobalRolePerms(globalPerms)
 	}
-
-	r.setGlobalRolePerms(globalPerms)
 
 	stores, err := r.server.ListAllStores(ctx)
 	if err != nil {
