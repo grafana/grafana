@@ -40,7 +40,7 @@ function optionPaths(frames: Array<ReturnType<typeof createCellsFrame>>, options
   const builder = new PanelOptionsEditorBuilder<Options>();
   plugin.getPanelOptionsSupplier()(builder, {
     data: frames,
-    options: { ...defaultOptions, ...options },
+    options: { ...defaultOptions, ...options } as Options,
   });
   return builder.getItems().map((item) => item.path);
 }
