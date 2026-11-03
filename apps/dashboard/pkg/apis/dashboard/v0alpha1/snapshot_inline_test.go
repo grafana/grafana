@@ -42,6 +42,17 @@ func TestSnapshotHistoricalDashboardDoesNotOverrideReference(t *testing.T) {
 	require.Equal(t, "authoritative", *snap.Blobs.Dashboard.Uid)
 }
 
+func TestDashboardSnapshotWithDeleteKeyDecode(t *testing.T) {
+	var response DashboardSnapshotWithDeleteKey
+	require.NoError(t, json.Unmarshal([]byte(`{"metadata":{"name":"example"},"spec":{"dashboard":{"id":9007199254740993}},"deleteKey":"secret"}`), &response))
+	require.Equal(t, "example", response.Name)
+	require.Equal(t, "secret", response.DeleteKey)
+	require.NotNil(t, response.Blobs.Dashboard)
+	value, err := base64.StdEncoding.DecodeString(*response.Blobs.Dashboard.Data)
+	require.NoError(t, err)
+	require.JSONEq(t, `{"id":9007199254740993}`, string(value))
+}
+
 func TestSnapshotInlinePresenceValidation(t *testing.T) {
 	for _, blob := range []string{
 		`{"data":null}`, `{"data":""}`, `{"data":123}`,

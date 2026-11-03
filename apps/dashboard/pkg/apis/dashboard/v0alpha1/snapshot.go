@@ -106,6 +106,21 @@ type DashboardSnapshotWithDeleteKey struct {
 	DeleteKey string `json:"deleteKey,omitempty"`
 }
 
+func (s *DashboardSnapshotWithDeleteKey) UnmarshalJSON(data []byte) error {
+	var snapshot Snapshot
+	if err := json.Unmarshal(data, &snapshot); err != nil {
+		return err
+	}
+	var response struct {
+		DeleteKey string `json:"deleteKey"`
+	}
+	if err := json.Unmarshal(data, &response); err != nil {
+		return err
+	}
+	*s = DashboardSnapshotWithDeleteKey{Snapshot: snapshot, DeleteKey: response.DeleteKey}
+	return nil
+}
+
 func (DashboardSnapshotWithDeleteKey) OpenAPIModelName() string {
 	return OpenAPIPrefix + "DashboardSnapshotWithDeleteKey"
 }
