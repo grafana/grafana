@@ -264,6 +264,42 @@ func TestService_SignIdentity(t *testing.T) {
 	})
 }
 
+func TestService_SignIdentity_UserAttributeChange(t *testing.T) {
+	calls := 0
+	signer := &idtest.FakeSigner{
+		SignIDTokenFn: func(_ context.Context, c *auth.IDClaims) (string, error) {
+			calls++
+			s, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: testKey}, nil)
+			require.NoError(t, err)
+			return jwt.Signed(s).Claims(c.Claims).Claims(c.Rest).Serialize()
+		},
+	}
+	s := ProvideService(
+		setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
+		&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
+	)
+	newIdent := func(email string, verified bool) *authn.Identity {
+		return &authn.Identity{
+			ID: "1", Type: claims.TypeUser, OrgID: 1, AuthenticatedBy: login.PasswordAuthModule,
+			Email: email, EmailVerified: verified, Login: "u1", Name: "U1",
+			OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
+		}
+	}
+
+	_, first, err := s.SignIdentity(context.Background(), newIdent("old@example.com", false))
+	require.NoError(t, err)
+	_, cached, err := s.SignIdentity(context.Background(), newIdent("old@example.com", false))
+	require.NoError(t, err)
+	assert.Equal(t, 1, calls, "unchanged identity should be served from the cache")
+	assert.Equal(t, first.Rest.Email, cached.Rest.Email)
+
+	_, changed, err := s.SignIdentity(context.Background(), newIdent("new@example.com", true))
+	require.NoError(t, err)
+	assert.Equal(t, 2, calls, "changed email must not be served from the cache")
+	assert.Equal(t, "new@example.com", changed.Rest.Email)
+	assert.True(t, changed.Rest.EmailVerified)
+}
+
 func TestService_SyncIDToken(t *testing.T) {
 	t.Run("should not fail authentication when signing fails", func(t *testing.T) {
 		failing := &idtest.FakeSigner{
