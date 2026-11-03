@@ -309,22 +309,12 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		configProviders[group] = newConfigProvider(group, url)
 	}
 
+	// The aggregated server is the router, which also publishes the app manifests.
 	var fallback func(group string) apiserver.RestConfigProvider
+	var manifests resources.ManifestLister
 	if aggregatedServerURL != "" {
 		fallback = func(group string) apiserver.RestConfigProvider { return newConfigProvider(group, aggregatedServerURL) }
-	}
-
-	var manifests resources.ManifestLister
-	if c.Settings.ManifestDiscoveryAddress != "" && c.Settings.ManifestDiscoveryAudience != "" {
-		manifests, err = resources.NewRemoteManifestLister(&rest.Config{
-			APIPath:         "/apis",
-			Host:            c.Settings.ManifestDiscoveryAddress,
-			WrapTransport:   clientauth.NewStaticTokenExchangeTransportWrapper(tokenExchangeClient, c.Settings.ManifestDiscoveryAudience, clientauth.WildcardNamespace),
-			TLSClientConfig: tlsConfig,
-		})
-		if err != nil {
-			return nil, err
-		}
+		manifests = resources.NewRemoteManifestLister(fallback(resource.ManifestDiscoveryGVR.Group))
 	}
 
 	clients := resources.NewClientFactoryForMultipleAPIServersWithResources(configProviders, fallback, resources.ManifestSupportedResources(manifests, supportedResources))
