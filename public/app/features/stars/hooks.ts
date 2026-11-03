@@ -7,7 +7,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { dispatch } from 'app/store/store';
 
 import { useSearchStarredQuery } from './api';
-import { findStarredKind, findStarredKindBySearchKind, getStarredKinds, starredNavEntry } from './kinds';
+import { STARRED_KINDS, findStarredKind, findStarredKindBySearchKind } from './kinds';
 import { findStarredNames, userStarsFieldSelector } from './utils';
 
 type StarItemArgs = {
@@ -38,7 +38,8 @@ export const useStarItem = (group: string, kind: string) => {
     const starredKind = findStarredKind(group, kind);
     // A star of a kind the nav doesn't show is stored all the same
     if (starredKind) {
-      dispatch(setStarred({ id, title, ...starredNavEntry(starredKind, id), isStarred: newStarredState }));
+      const { icon, sortWeight } = starredKind;
+      dispatch(setStarred({ id, title, url: starredKind.url(id), icon, sortWeight, isStarred: newStarredState }));
     }
   };
 };
@@ -46,9 +47,8 @@ export const useStarItem = (group: string, kind: string) => {
 /**
  * Get starred items from the app platform API
  */
-export const useStarredItems = (group: string, kind: string, options?: { skip?: boolean }) => {
-  const skip = options?.skip ?? false;
-  const response = useListStarsQuery(skip ? skipToken : { fieldSelector: userStarsFieldSelector() });
+export const useStarredItems = (group: string, kind: string) => {
+  const response = useListStarsQuery({ fieldSelector: userStarsFieldSelector() });
 
   // Keyed on the response data, not the response: a refetch that returns the same stars keeps the same array.
   const { data, isLoading, isUninitialized } = response;
@@ -80,8 +80,6 @@ export const useStarredItems = (group: string, kind: string, options?: { skip?: 
  * previous rows stay up. `cap` bounds the uids searched, in uid order; without it the whole set is.
  */
 export const useStarredSearch = (cap?: number) => {
-  // Read during render so a flag flip, which changes the kinds listed, re-runs the search
-  const kinds = getStarredKinds();
   const stars = useListStarsQuery({ fieldSelector: userStarsFieldSelector() });
 
   // Sorted so the cache key is the set, not the order the API listed it in; deduped so a uid starred as several
@@ -90,7 +88,7 @@ export const useStarredSearch = (cap?: number) => {
     if (!stars.data) {
       return undefined;
     }
-    const byKind = kinds.map((kind) => ({ kind, names: findStarredNames(stars.data, kind.group, kind.kind) }));
+    const byKind = STARRED_KINDS.map((kind) => ({ kind, names: findStarredNames(stars.data, kind.group, kind.kind) }));
     const uids = [...new Set(byKind.flatMap(({ names }) => names))].sort().slice(0, cap);
     const inCap = new Set(uids);
     return {
@@ -100,7 +98,7 @@ export const useStarredSearch = (cap?: number) => {
         return searched.length > 0 ? [{ group: kind.group, kind: kind.kind, names: searched }] : [];
       }),
     };
-  }, [stars.data, kinds, cap]);
+  }, [stars.data, cap]);
   // Refetched on every mount so an unchanged set still picks up renamed or deleted items.
   const search = useSearchStarredQuery(searched?.args ?? skipToken, { refetchOnMountOrArgChange: true });
 
@@ -127,7 +125,6 @@ const STARRED_NAV_CAP = 50;
  * Replaces whatever the backend shipped in bootData (which is empty in dual-writer mode 5).
  */
 export const useSyncStarredItemsInNav = () => {
-  const kinds = getStarredKinds();
   const { uids, rows, loading, error } = useStarredSearch(STARRED_NAV_CAP);
 
   // Initialized from the search so a remount with a warm RTK cache doesn't flash a loading state: the nav tree is
@@ -141,12 +138,11 @@ export const useSyncStarredItemsInNav = () => {
     const items = rows.flatMap((row): StarredNavItem[] => {
       const kind = findStarredKindBySearchKind(row.kind);
       // The search row carries the slugged url, which the nav keeps over the kind's plain one
-      return kind ? [{ ...starredNavEntry(kind, row.uid), id: row.uid, title: row.name, url: row.url }] : [];
+      return kind ? [{ id: row.uid, title: row.name, url: row.url, icon: kind.icon, sortWeight: kind.sortWeight }] : [];
     });
     dispatch(setStarredItems({ uids, items }));
     setHasSynced(true);
-    // `kinds` decides the icons; the rows don't change when the flag flips
-  }, [uids, rows, kinds]);
+  }, [uids, rows]);
 
   // A failed search resolves loading too, rather than spinning forever.
   return { isLoading: loading || (!hasSynced && !error), isError: error };

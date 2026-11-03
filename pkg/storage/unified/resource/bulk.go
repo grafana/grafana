@@ -71,13 +71,14 @@ type BulkRequestIterator interface {
 }
 
 type BulkRequestBatchIterator interface {
-	// NextBatch advances the iterator to the next batch if one exists.
-	NextBatch() bool
+	// NextBatch advances to the next batch, returning false at EOF or on
+	// cancellation. Callers must check ctx.Err() after iteration stops.
+	NextBatch(ctx context.Context) bool
 
-	// Batch returns the current batch. Only valid after NextBatch() returns true.
+	// Batch returns the current batch. Only valid after NextBatch returns true.
 	Batch() []*resourcepb.BulkRequest
 
-	// RollbackRequested returns true if there was an error advancing the iterator. Checked after NextBatch() returns true.
+	// RollbackRequested returns true if there was an error advancing the iterator. Checked after NextBatch returns true.
 	RollbackRequested() bool
 }
 
@@ -304,7 +305,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 		// backends may open a write transaction before consuming the iterator, and
 		// SQL-backed blob uploads need a separate write transaction.
 		var err error
-		spool, err = spoolBulkRequests(runner, s.bulkBatchOptions, sharedBulkSpoolBudget)
+		spool, err = spoolBulkRequests(ctx, runner, s.bulkBatchOptions, sharedBulkSpoolBudget)
 		if err != nil {
 			if runner.err != nil {
 				err = runner.err
@@ -426,7 +427,7 @@ func (b *bulkSpoolBudget) used() int64 {
 	return b.usedBytes
 }
 
-func spoolBulkRequests(source BulkRequestBatchIterator, opts BulkBatchOptions, budget *bulkSpoolBudget) (_ *spooledBulkRequests, err error) {
+func spoolBulkRequests(ctx context.Context, source BulkRequestBatchIterator, opts BulkBatchOptions, budget *bulkSpoolBudget) (_ *spooledBulkRequests, err error) {
 	file, err := os.CreateTemp("", "grafana-bulk-*.spool")
 	if err != nil {
 		return nil, fmt.Errorf("create bulk spool: %w", err)
@@ -447,7 +448,7 @@ func spoolBulkRequests(source BulkRequestBatchIterator, opts BulkBatchOptions, b
 
 	writer := bufio.NewWriter(file)
 	var sizeBuf [binary.MaxVarintLen64]byte
-	for source.NextBatch() {
+	for source.NextBatch(ctx) {
 		if source.RollbackRequested() {
 			return nil, fmt.Errorf("bulk preprocessing failed")
 		}
@@ -469,6 +470,9 @@ func spoolBulkRequests(source BulkRequestBatchIterator, opts BulkBatchOptions, b
 				return nil, fmt.Errorf("write bulk spool: %w", err)
 			}
 		}
+	}
+	if err = ctx.Err(); err != nil {
+		return nil, err
 	}
 	if err = writer.Flush(); err != nil {
 		return nil, fmt.Errorf("flush bulk spool: %w", err)
@@ -534,7 +538,10 @@ func (s *spooledBulkRequests) Request() *resourcepb.BulkRequest {
 	return s.request
 }
 
-func (s *spooledBulkRequests) NextBatch() bool {
+func (s *spooledBulkRequests) NextBatch(ctx context.Context) bool {
+	if ctx.Err() != nil {
+		return false
+	}
 	if s.rollback {
 		return true
 	}
@@ -545,6 +552,9 @@ func (s *spooledBulkRequests) NextBatch() bool {
 	s.batch = s.batch[:0]
 	payloadBytes := 0
 	for {
+		if ctx.Err() != nil {
+			return false
+		}
 		req, err := s.readRequest()
 		if errors.Is(err, io.EOF) {
 			s.eof = true
@@ -630,7 +640,7 @@ func (b *batchRunner) Next() bool {
 		return true
 	}
 
-	if !b.NextBatch() {
+	if !b.NextBatch(b.stream.Context()) {
 		return false
 	}
 	if b.rollback {
@@ -648,7 +658,10 @@ func (b *batchRunner) Next() bool {
 	return true
 }
 
-func (b *batchRunner) NextBatch() bool {
+func (b *batchRunner) NextBatch(ctx context.Context) bool {
+	if ctx.Err() != nil {
+		return false
+	}
 	if b.rollback {
 		return true
 	}
@@ -671,7 +684,7 @@ func (b *batchRunner) NextBatch() bool {
 		return false
 	}
 
-	result := b.readNextResult()
+	result := b.readNextResult(ctx)
 	switch {
 	case result.eof:
 		return false
@@ -725,6 +738,8 @@ func (b *batchRunner) NextBatch() bool {
 			}
 		case <-timerC:
 			return true
+		case <-ctx.Done():
+			return false
 		}
 	}
 }
@@ -761,18 +776,22 @@ func (b *batchRunner) recvChannel() <-chan batchStreamResult {
 	return b.recvCh
 }
 
-func (b *batchRunner) readNextResult() batchStreamResult {
+func (b *batchRunner) readNextResult(ctx context.Context) batchStreamResult {
 	if b.pending != nil {
 		result := *b.pending
 		b.pending = nil
 		return result
 	}
 
-	result, ok := <-b.recvChannel()
-	if !ok {
-		return batchStreamResult{eof: true}
+	select {
+	case result, ok := <-b.recvChannel():
+		if !ok {
+			return batchStreamResult{eof: true}
+		}
+		return result
+	case <-ctx.Done():
+		return batchStreamResult{err: ctx.Err(), rollback: true}
 	}
-	return result
 }
 
 func (b *batchRunner) recvLoop() {
