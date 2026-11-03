@@ -1551,6 +1551,15 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:         "teamlbac.apiNoFallback",
+			Description:  "Return Team LBAC API Kubernetes errors instead of falling back to legacy datasource rules",
+			Stage:        FeatureStageExperimental,
+			Generate:     Generate{Go: true},
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:        "elasticsearchImprovedParsing",
 			Description: "Enables less memory intensive Elasticsearch result parsing",
 			Stage:       FeatureStageExperimental,
