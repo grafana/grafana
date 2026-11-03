@@ -12,59 +12,42 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	"github.com/grafana/grafana-app-sdk/app"
-	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 )
 
 func TestManifestSupportedResources(t *testing.T) {
-	label := "Widget"
-	icon := "apps"
 	folder := SupportedResource{GroupKind: schema.GroupKind{Group: "folder.grafana.app", Kind: "Folder"}, Capabilities: sets.New(CapabilityFolder)}
 
 	t.Run("adds the kinds that opt in to provisioning", func(t *testing.T) {
 		lister := NewMockManifestLister(t)
 		lister.EXPECT().ListManifests(mock.Anything).Return(testManifestList(
-			testManifestKind("Widget", true, true, &appmanifestv1alpha2.AppManifestManifestVersionKindUI{Label: &label, Icon: &icon}),
-			testManifestKind("Gadget", true, false, nil),
-			testManifestKind("Other", false, true, nil),
+			testManifestKind("Widget", true, true),
+			testManifestKind("Gadget", true, false),
+			testManifestKind("Other", false, true),
 		), nil)
 
 		got := ManifestSupportedResources(lister, []SupportedResource{folder})(context.Background())
 
 		require.Equal(t, []SupportedResource{
 			folder,
-			{
-				GroupKind:    schema.GroupKind{Group: testManifestGroup, Kind: "Widget"},
-				Capabilities: sets.New(CapabilityFolder),
-				Resource:     "widgets",
-				UI:           &app.ManifestVersionKindUI{Label: label, Icon: icon},
-			},
-			{
-				GroupKind:    schema.GroupKind{Group: testManifestGroup, Kind: "Gadget"},
-				Capabilities: sets.New[string](),
-				Resource:     "gadgets",
-			},
+			{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Widget"}, Capabilities: sets.New(CapabilityFolder)},
+			{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Gadget"}, Capabilities: sets.New[string]()},
 		}, got)
 	})
 
 	t.Run("keeps the configured capabilities of a kind that a manifest declares", func(t *testing.T) {
 		configured := SupportedResource{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Widget"}, Capabilities: sets.New(CapabilityDisabled)}
 		lister := NewMockManifestLister(t)
-		lister.EXPECT().ListManifests(mock.Anything).Return(testManifestList(testManifestKind("Widget", true, true, nil)), nil)
+		lister.EXPECT().ListManifests(mock.Anything).Return(testManifestList(testManifestKind("Widget", true, true)), nil)
 
 		got := ManifestSupportedResources(lister, []SupportedResource{configured})(context.Background())
 
-		require.Equal(t, []SupportedResource{{
-			GroupKind:    configured.GroupKind,
-			Capabilities: sets.New(CapabilityDisabled),
-			Resource:     "widgets",
-		}}, got)
+		require.Equal(t, []SupportedResource{configured}, got)
 	})
 
 	t.Run("reads the manifests again only after the cache expires", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			lister := NewMockManifestLister(t)
-			lister.EXPECT().ListManifests(mock.Anything).Return(testManifestList(testManifestKind("Widget", true, true, nil)), nil).Once()
+			lister.EXPECT().ListManifests(mock.Anything).Return(testManifestList(testManifestKind("Widget", true, true)), nil).Once()
 			supported := ManifestSupportedResources(lister, nil)
 
 			require.Len(t, supported(context.Background()), 1)
@@ -79,7 +62,7 @@ func TestManifestSupportedResources(t *testing.T) {
 	t.Run("keeps the last set when the manifests cannot be read", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			lister := NewMockManifestLister(t)
-			lister.EXPECT().ListManifests(mock.Anything).Return(testManifestList(testManifestKind("Widget", true, true, nil)), nil).Once()
+			lister.EXPECT().ListManifests(mock.Anything).Return(testManifestList(testManifestKind("Widget", true, true)), nil).Once()
 			supported := ManifestSupportedResources(lister, nil)
 			require.Len(t, supported(context.Background()), 1)
 

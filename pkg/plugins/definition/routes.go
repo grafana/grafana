@@ -54,7 +54,7 @@ func migrateVersionRoutes(version *app.ManifestVersion) {
 	add(namespacedRoutePrefix, legacy.Namespaced)
 	for i := range version.Kinds {
 		kind := &version.Kinds[i]
-		prefix := "/" + kind.Resource() + "/{name}"
+		prefix := "/" + kind.Resource + "/{name}"
 		if kind.Scope != "Cluster" {
 			prefix = namespacedRoutePrefix + prefix
 		}
