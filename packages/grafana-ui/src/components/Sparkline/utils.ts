@@ -228,8 +228,10 @@ export const prepareConfig = (
       if (width <= 0) {
         return;
       }
-      const from = Math.round(plot.posToVal(left, 'x'));
-      const to = Math.round(plot.posToVal(left + width, 'x'));
+      const start = Math.round(plot.posToVal(left, 'x'));
+      const end = Math.round(plot.posToVal(left + width, 'x'));
+      const from = Math.min(start, end);
+      const to = Math.max(start, end);
       plot.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
       if (Number.isFinite(from) && Number.isFinite(to) && to > from) {
         onRangeSelected({ from, to });

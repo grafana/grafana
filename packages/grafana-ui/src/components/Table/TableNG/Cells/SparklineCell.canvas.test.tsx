@@ -17,6 +17,7 @@ import { applyDefaultUPlotAxisMeasureTextMock, removeCanvasTransforms } from '@g
 import { measureText as uPlotAxisMeasureText } from '../../../../utils/measureText';
 import * as sparklineUtils from '../../../Sparkline/utils';
 import { type UPlotConfigBuilder } from '../../../uPlot/config/UPlotConfigBuilder';
+import { TableNG } from '../TableNG';
 
 import { SparklineCell } from './SparklineCell';
 
@@ -195,6 +196,26 @@ describe('TableNG SparklineCell threshold wiring (canvas)', () => {
 
     await waitFor(() => expect(uPlotInstance?.status).toBe(1));
     expect(prepareConfigSpy.mock.calls.at(-1)?.[4]).toBe(false);
+  });
+
+  it('forwards selected time ranges through the TableNG cell renderer', async () => {
+    const onTimeRangeSelected = jest.fn();
+    const field = sparklineField({
+      custom: { cellOptions: { type: TableCellDisplayMode.Sparkline, hideValue: true, selectTimeRange: true } },
+    });
+    render(
+      <TableNG
+        data={{ fields: [field], length: 1 }}
+        width={width}
+        height={100}
+        onTimeRangeSelected={onTimeRangeSelected}
+      />
+    );
+    await waitFor(() => expect(uPlotInstance?.status).toBe(1));
+    const plot = uPlotInstance!;
+    const left = plot.valToPos(1000, 'x');
+    plot.setSelect({ left, width: plot.valToPos(2000, 'x') - left, top: 0, height });
+    expect(onTimeRangeSelected).toHaveBeenCalledWith({ from: 1000, to: 2000 });
   });
 
   it('enables hover when showTooltip is on', async () => {

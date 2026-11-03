@@ -47,7 +47,9 @@ function getChartCellConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<Gr
           'Drag to select a time range. Disabled for fields with data links.'
         ),
         defaultValue: false,
-        showIf: () => getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
+        showIf: () =>
+          getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefresh, false) &&
+          getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
       });
       builder.addBooleanSwitch({
         path: 'showTooltip',

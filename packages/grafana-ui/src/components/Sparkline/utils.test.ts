@@ -384,7 +384,10 @@ describe('prepareConfig hover', () => {
       rect: { left: 100, top: 50 },
     }) as unknown as uPlot;
 
-  it('selects a time interval without changing the local plot scale', () => {
+  it.each([
+    [1000.4, 2000.4],
+    [2000.4, 1000.4],
+  ])('selects an ascending interval from projected bounds %s and %s', (start, end) => {
     const sparkline = makeHoverSparkline();
     sparkline.x!.type = FieldType.time;
     const onRangeSelected = jest.fn();
@@ -400,7 +403,7 @@ describe('prepareConfig hover', () => {
     expect(config.cursor?.drag).toEqual({ x: true, y: false, setScale: false, dist: 5 });
     const plot = {
       select: { left: 10, width: 20 },
-      posToVal: jest.fn().mockReturnValueOnce(1000.4).mockReturnValueOnce(2000.4),
+      posToVal: jest.fn().mockReturnValueOnce(start).mockReturnValueOnce(end),
       setSelect: jest.fn(),
     } as unknown as uPlot;
     config.hooks!.setSelect![0]!(plot);
@@ -421,7 +424,7 @@ describe('prepareConfig hover', () => {
   it.each([
     [NaN, 2000],
     [2000, 2000],
-    [3000, 2000],
+    [1000, Infinity],
   ])('ignores an invalid time selection (%s, %s)', (from, to) => {
     const sparkline = makeHoverSparkline();
     sparkline.x!.type = FieldType.time;
