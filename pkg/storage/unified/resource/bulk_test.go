@@ -103,7 +103,7 @@ func TestSpoolBulkRequestsReleasesBudgetAfterQuotaError(t *testing.T) {
 	budget := newBulkSpoolBudget(1)
 	iter := newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{newTestBulkRequest("item")})
 
-	spool, err := spoolBulkRequests(iter, DefaultBulkBatchOptions(), budget)
+	spool, err := spoolBulkRequests(t.Context(), iter, DefaultBulkBatchOptions(), budget)
 
 	require.Nil(t, spool)
 	require.Error(t, err)
