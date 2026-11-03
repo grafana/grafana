@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useEffect } from 'react';
+import { useEffect, type CSSProperties } from 'react';
 import {
   type Row,
   type HeaderGroup,
@@ -65,15 +65,23 @@ export function CallTreeTable({
     }
   }, [availableWidth, shouldBeCompact, isCompact, setIsCompact]);
 
-  const functionColumnWidth = getFunctionColumnWidth(availableWidth, isCompact);
+  // Minimum width so short names still fill the panel. The column grows past this when a nested
+  // name is wider, which is what makes the table scroll sideways.
+  const functionColumnMinWidth = getFunctionColumnWidth(availableWidth, isCompact);
+  const pinnedRightOffsets = getPinnedRightOffsets(headerGroups);
 
   if (width < 3 || height < 3) {
     return null;
   }
 
   return (
-    <div style={{ width, height, display: 'flex', flexDirection: 'column' }}>
-      <table {...getTableProps()} className={cx(styles.table, styles.headerTable)} style={{ flexShrink: 0 }}>
+    <div
+      ref={scrollContainerRef}
+      data-testid="call-tree-scroll-container"
+      className={styles.scrollContainer}
+      style={{ width, height, overflow: 'auto' }}
+    >
+      <table {...getTableProps()} className={styles.table}>
         <thead>
           {headerGroups.map((headerGroup) => {
             const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
@@ -81,17 +89,13 @@ export function CallTreeTable({
               <tr key={key} {...headerGroupProps}>
                 {headerGroup.headers.map((column) => {
                   const { key: headerKey, ...headerProps } = column.getHeaderProps(column.getSortByToggleProps());
-                  const columnWidth = column.id === 'label' ? functionColumnWidth : column.width;
+                  const pinnedRight = pinnedRightOffsets.get(column.id);
                   return (
                     <th
                       key={headerKey}
                       {...headerProps}
                       className={styles.th}
-                      style={{
-                        ...(columnWidth !== undefined && { width: columnWidth }),
-                        textAlign: column.id === 'self' || column.id === 'total' ? 'right' : undefined,
-                        ...(column.minWidth !== undefined && { minWidth: column.minWidth }),
-                      }}
+                      style={getColumnStyle(column, functionColumnMinWidth, pinnedRight)}
                     >
                       {column.render('Header')}
                       {column.isSorted && (
@@ -108,66 +112,101 @@ export function CallTreeTable({
             );
           })}
         </thead>
-      </table>
-      <div
-        ref={scrollContainerRef}
-        style={{ flex: 1, overflowY: 'scroll', overflowX: 'auto' }}
-        className={styles.scrollContainer}
-      >
-        <table {...getTableProps()} className={styles.table}>
-          <tbody {...getTableBodyProps()} className={styles.tbody}>
-            {rows.map((row, rowIndex) => {
-              prepareRow(row);
-              const { key, ...rowProps } = row.getRowProps();
-              const isFocusedRow = row.original.id === focusedNodeId;
-              const isCallersTargetRow = callersNodeLabel && row.original.label === callersNodeLabel;
-              const isSearchMatchRow = currentSearchMatchId && row.original.id === currentSearchMatchId;
+        <tbody {...getTableBodyProps()} className={styles.tbody}>
+          {rows.map((row, rowIndex) => {
+            prepareRow(row);
+            const { key, ...rowProps } = row.getRowProps();
+            const isFocusedRow = row.original.id === focusedNodeId;
+            const isCallersTargetRow = callersNodeLabel && row.original.label === callersNodeLabel;
+            const isSearchMatchRow = currentSearchMatchId && row.original.id === currentSearchMatchId;
 
-              return (
-                <tr
-                  key={key}
-                  {...rowProps}
-                  ref={isSearchMatchRow ? searchMatchRowRef : null}
-                  className={cx(
-                    styles.tr,
-                    (isFocusedRow ||
-                      (focusedNodeId?.startsWith('label:') && focusedNodeId.substring(6) === row.original.label)) &&
-                      styles.focusedRow,
-                    isCallersTargetRow && styles.callersTargetRow,
-                    isSearchMatchRow && styles.searchMatchRow
-                  )}
-                >
-                  {row.cells.map((cell) => {
-                    const { key: cellKey, ...cellProps } = cell.getCellProps();
-                    const isValueColumn = cell.column.id === 'self' || cell.column.id === 'total';
-                    const isActionsColumn = cell.column.id === 'actions';
-                    const columnWidth = cell.column.id === 'label' ? functionColumnWidth : cell.column.width;
-                    return (
-                      <td
-                        key={cellKey}
-                        {...cellProps}
-                        className={cx(
-                          styles.td,
-                          isActionsColumn && styles.actionsColumnCell,
-                          isValueColumn && styles.valueColumnCell
-                        )}
-                        style={{
-                          ...(columnWidth !== undefined && { width: columnWidth }),
-                          ...(cell.column.minWidth !== undefined && { minWidth: cell.column.minWidth }),
-                        }}
-                      >
-                        {cell.render('Cell', { rowIndex })}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+            return (
+              <tr
+                key={key}
+                {...rowProps}
+                ref={isSearchMatchRow ? searchMatchRowRef : null}
+                className={cx(
+                  styles.tr,
+                  (isFocusedRow ||
+                    (focusedNodeId?.startsWith('label:') && focusedNodeId.substring(6) === row.original.label)) &&
+                    styles.focusedRow,
+                  isCallersTargetRow && styles.callersTargetRow,
+                  isSearchMatchRow && styles.searchMatchRow
+                )}
+              >
+                {row.cells.map((cell) => {
+                  const { key: cellKey, ...cellProps } = cell.getCellProps();
+                  const isValueColumn = cell.column.id === 'self' || cell.column.id === 'total';
+                  const isActionsColumn = cell.column.id === 'actions';
+                  const pinnedRight = pinnedRightOffsets.get(cell.column.id);
+                  return (
+                    <td
+                      key={cellKey}
+                      {...cellProps}
+                      className={cx(
+                        styles.td,
+                        isActionsColumn && styles.actionsColumnCell,
+                        isValueColumn && styles.valueColumnCell,
+                        pinnedRight !== undefined && styles.pinnedCell
+                      )}
+                      style={getColumnStyle(cell.column, functionColumnMinWidth, pinnedRight)}
+                    >
+                      {cell.render('Cell', { rowIndex })}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
+}
+
+function getPinnedRightOffsets(headerGroups: Array<HeaderGroup<CallTreeNode>>): Map<string, number> {
+  const offsets = new Map<string, number>();
+  const headers = headerGroups[0]?.headers;
+  if (!headers) {
+    return offsets;
+  }
+
+  const labelIndex = headers.findIndex((column) => column.id === 'label');
+  if (labelIndex === -1) {
+    return offsets;
+  }
+
+  let right = 0;
+  for (let index = headers.length - 1; index > labelIndex; index--) {
+    const column = headers[index];
+    offsets.set(column.id, right);
+    right += typeof column.width === 'number' ? column.width : (column.minWidth ?? 0);
+  }
+
+  return offsets;
+}
+
+function getColumnStyle(
+  column: { id: string; width?: number | string; minWidth?: number },
+  functionColumnMinWidth: number | undefined,
+  pinnedRight?: number
+): CSSProperties {
+  if (column.id === 'label') {
+    return {
+      ...(functionColumnMinWidth !== undefined && { minWidth: functionColumnMinWidth }),
+      width: 'max-content',
+      overflow: 'visible',
+      whiteSpace: 'nowrap',
+      paddingRight: 2,
+    };
+  }
+
+  return {
+    ...(column.width !== undefined && { width: column.width, maxWidth: column.width }),
+    ...(column.minWidth !== undefined && { minWidth: column.minWidth }),
+    ...(pinnedRight !== undefined && { position: 'sticky', right: pinnedRight }),
+    textAlign: column.id === 'self' || column.id === 'total' ? 'right' : undefined,
+  };
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -175,6 +214,7 @@ function getStyles(theme: GrafanaTheme2) {
     scrollContainer: css({
       '&::-webkit-scrollbar': {
         width: '8px',
+        height: '8px',
       },
       '&::-webkit-scrollbar-track': {
         background: theme.colors.background.secondary,
@@ -187,23 +227,21 @@ function getStyles(theme: GrafanaTheme2) {
         background: theme.colors.text.secondary,
       },
     }),
+    // One table so the growing Function column stays aligned with its header. Separate borders keep the
+    // header corner radius; row accent stripes are inset shadows because borders on <tr> are dropped.
     table: css({
-      width: '100%',
-      tableLayout: 'fixed',
-      borderCollapse: 'collapse',
+      width: 'max-content',
+      minWidth: '100%',
+      tableLayout: 'auto',
+      borderCollapse: 'separate',
+      borderSpacing: 0,
       fontSize: theme.typography.fontSize,
       color: theme.colors.text.primary,
     }),
-    // The body table keeps the collapsed border model because the row highlights paint their stripe as a
-    // border on the tr, which the separate model would drop. The header has no row borders, so it can use
-    // the separate model - the only one where border-radius on cells is honoured.
-    headerTable: css({
-      borderCollapse: 'separate',
-      borderSpacing: 0,
-    }),
     th: css({
-      // Painted per cell rather than on thead so the outer cells can round the top of the pane without a
-      // square-cornered strip showing through behind them.
+      position: 'sticky',
+      top: 0,
+      zIndex: 2,
       backgroundColor: theme.colors.background.secondary,
       '&:first-of-type': {
         borderStartStartRadius: theme.shape.radius.default,
@@ -232,24 +270,30 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     focusedRow: css({
       backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.08),
-      borderLeft: `3px solid ${theme.colors.accent.main}`,
       fontWeight: theme.typography.fontWeightMedium,
+      '& > td:first-of-type': {
+        boxShadow: `inset 3px 0 0 0 ${theme.colors.accent.main}`,
+      },
       '&:hover': {
         backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.1),
       },
     }),
     callersTargetRow: css({
       backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.08),
-      borderLeft: `3px solid ${theme.colors.info.main}`,
       fontWeight: theme.typography.fontWeightMedium,
+      '& > td:first-of-type': {
+        boxShadow: `inset 3px 0 0 0 ${theme.colors.info.main}`,
+      },
       '&:hover': {
         backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.1),
       },
     }),
     searchMatchRow: css({
       backgroundColor: theme.colors.warning.transparent,
-      borderLeft: `3px solid ${theme.colors.warning.main}`,
       fontWeight: theme.typography.fontWeightMedium,
+      '& > td:first-of-type': {
+        boxShadow: `inset 3px 0 0 0 ${theme.colors.warning.main}`,
+      },
       '&:hover': {
         backgroundColor: theme.colors.emphasize(theme.colors.warning.transparent, 0.1),
       },
@@ -273,6 +317,11 @@ function getStyles(theme: GrafanaTheme2) {
     valueColumnCell: css({
       overflow: 'visible',
       textAlign: 'right',
+    }),
+    pinnedCell: css({
+      zIndex: 1,
+      // Solid, so a scrolled function name does not show through the value columns.
+      backgroundColor: theme.colors.background.primary,
     }),
   };
 }

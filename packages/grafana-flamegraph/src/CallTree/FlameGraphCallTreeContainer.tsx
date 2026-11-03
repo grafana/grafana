@@ -373,7 +373,7 @@ const FlameGraphCallTreeContainer = memo(
     }, [nodes, focusedNodeId, callersNodeLabel, callersNode, currentSearchMatchId]);
 
     const ACTIONS_WIDTH = 30;
-    const COLOR_BAR_WIDTH = 200;
+    const COLOR_BAR_WIDTH = 48;
     const SELF_WIDTH = 150;
     const TOTAL_WIDTH = 150;
     const BASELINE_WIDTH = 100;
