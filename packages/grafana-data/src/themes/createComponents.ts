@@ -351,6 +351,7 @@ const getBadgeColorToken = (colors: ThemeColors): ThemeComponents['badge'] => {
   const BADGE_GREEN = mode === 'dark' ? '#73BF69' : '#56A64B';
   const BADGE_BLUE = mode === 'dark' ? '#5794F2' : '#3274D9';
   const BADGE_PURPLE = mode === 'dark' ? '#B877D9' : '#A352CC';
+  const BADGE_DARKGREY = '#a9a9a9';
 
   return {
     red: getBadgeColor(BADGE_RED, mode),
@@ -358,11 +359,7 @@ const getBadgeColorToken = (colors: ThemeColors): ThemeComponents['badge'] => {
     green: getBadgeColor(BADGE_GREEN, mode),
     blue: getBadgeColor(BADGE_BLUE, mode),
     purple: getBadgeColor(BADGE_PURPLE, mode),
-    darkgrey: {
-      background: colors.background.secondary,
-      border: colors.border.strong,
-      text: colors.text.primary,
-    },
+    darkgrey: getBadgeColor(BADGE_DARKGREY, mode),
     brand: {
       background: colors.gradients.brandHorizontal,
       border: 'transparent',
