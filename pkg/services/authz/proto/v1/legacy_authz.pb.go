@@ -21,6 +21,52 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type LegacyCheckErrorCode int32
+
+const (
+	LegacyCheckErrorCode_LEGACY_CHECK_ERROR_CODE_UNSPECIFIED              LegacyCheckErrorCode = 0
+	LegacyCheckErrorCode_LEGACY_CHECK_ERROR_CODE_SCOPE_RESOURCE_NOT_FOUND LegacyCheckErrorCode = 1
+)
+
+// Enum value maps for LegacyCheckErrorCode.
+var (
+	LegacyCheckErrorCode_name = map[int32]string{
+		0: "LEGACY_CHECK_ERROR_CODE_UNSPECIFIED",
+		1: "LEGACY_CHECK_ERROR_CODE_SCOPE_RESOURCE_NOT_FOUND",
+	}
+	LegacyCheckErrorCode_value = map[string]int32{
+		"LEGACY_CHECK_ERROR_CODE_UNSPECIFIED":              0,
+		"LEGACY_CHECK_ERROR_CODE_SCOPE_RESOURCE_NOT_FOUND": 1,
+	}
+)
+
+func (x LegacyCheckErrorCode) Enum() *LegacyCheckErrorCode {
+	p := new(LegacyCheckErrorCode)
+	*p = x
+	return p
+}
+
+func (x LegacyCheckErrorCode) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (LegacyCheckErrorCode) Descriptor() protoreflect.EnumDescriptor {
+	return file_legacy_authz_proto_enumTypes[0].Descriptor()
+}
+
+func (LegacyCheckErrorCode) Type() protoreflect.EnumType {
+	return &file_legacy_authz_proto_enumTypes[0]
+}
+
+func (x LegacyCheckErrorCode) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use LegacyCheckErrorCode.Descriptor instead.
+func (LegacyCheckErrorCode) EnumDescriptor() ([]byte, []int) {
+	return file_legacy_authz_proto_rawDescGZIP(), []int{0}
+}
+
 type LegacyCheckRequest struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	Namespace string                 `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
@@ -37,8 +83,13 @@ type LegacyCheckRequest struct {
 	SkipScopeResolution bool `protobuf:"varint,8,opt,name=skip_scope_resolution,json=skipScopeResolution,proto3" json:"skip_scope_resolution,omitempty"`
 	// Present only for embedded instance-global evaluation. Namespace still selects the tenant.
 	GlobalEvaluation *LegacyGlobalEvaluation `protobuf:"bytes,9,opt,name=global_evaluation,json=globalEvaluation,proto3" json:"global_evaluation,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// Trusted embedded assertion. Mutually exclusive with subject, global_evaluation and restriction.
+	InternalIdentity *LegacyInternalIdentity `protobuf:"bytes,10,opt,name=internal_identity,json=internalIdentity,proto3" json:"internal_identity,omitempty"`
+	// Trusted caller's effective action limit, applied to both org and global checks.
+	// Absent is unrestricted; present with no actions denies all.
+	Restriction   *LegacyActionRestriction `protobuf:"bytes,11,opt,name=restriction,proto3" json:"restriction,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *LegacyCheckRequest) Reset() {
@@ -120,18 +171,82 @@ func (x *LegacyCheckRequest) GetGlobalEvaluation() *LegacyGlobalEvaluation {
 	return nil
 }
 
+func (x *LegacyCheckRequest) GetInternalIdentity() *LegacyInternalIdentity {
+	if x != nil {
+		return x.InternalIdentity
+	}
+	return nil
+}
+
+func (x *LegacyCheckRequest) GetRestriction() *LegacyActionRestriction {
+	if x != nil {
+		return x.Restriction
+	}
+	return nil
+}
+
+type LegacyActionRestriction struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Action keys from the caller's effective permission map after authentication filtering.
+	// Include all effective actions, not only those in the check expression.
+	// The server still verifies grants and scopes.
+	Actions       []string `protobuf:"bytes,1,rep,name=actions,proto3" json:"actions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LegacyActionRestriction) Reset() {
+	*x = LegacyActionRestriction{}
+	mi := &file_legacy_authz_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LegacyActionRestriction) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LegacyActionRestriction) ProtoMessage() {}
+
+func (x *LegacyActionRestriction) ProtoReflect() protoreflect.Message {
+	mi := &file_legacy_authz_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LegacyActionRestriction.ProtoReflect.Descriptor instead.
+func (*LegacyActionRestriction) Descriptor() ([]byte, []int) {
+	return file_legacy_authz_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *LegacyActionRestriction) GetActions() []string {
+	if x != nil {
+		return x.Actions
+	}
+	return nil
+}
+
 type LegacyCheckResponse struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
 	Allowed bool                   `protobuf:"varint,1,opt,name=allowed,proto3" json:"allowed,omitempty"`
 	// Populated when evaluation failed. Failures always deny.
-	Error         string `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	Error string `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	// Classifies evaluation failures without relying on the diagnostic error text.
+	// Servers also populate error so older clients continue to deny on failure.
+	ErrorCode     LegacyCheckErrorCode `protobuf:"varint,3,opt,name=error_code,json=errorCode,proto3,enum=authz.extention.v1.LegacyCheckErrorCode" json:"error_code,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *LegacyCheckResponse) Reset() {
 	*x = LegacyCheckResponse{}
-	mi := &file_legacy_authz_proto_msgTypes[1]
+	mi := &file_legacy_authz_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -143,7 +258,7 @@ func (x *LegacyCheckResponse) String() string {
 func (*LegacyCheckResponse) ProtoMessage() {}
 
 func (x *LegacyCheckResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_legacy_authz_proto_msgTypes[1]
+	mi := &file_legacy_authz_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -156,7 +271,7 @@ func (x *LegacyCheckResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LegacyCheckResponse.ProtoReflect.Descriptor instead.
 func (*LegacyCheckResponse) Descriptor() ([]byte, []int) {
-	return file_legacy_authz_proto_rawDescGZIP(), []int{1}
+	return file_legacy_authz_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *LegacyCheckResponse) GetAllowed() bool {
@@ -171,6 +286,13 @@ func (x *LegacyCheckResponse) GetError() string {
 		return x.Error
 	}
 	return ""
+}
+
+func (x *LegacyCheckResponse) GetErrorCode() LegacyCheckErrorCode {
+	if x != nil {
+		return x.ErrorCode
+	}
+	return LegacyCheckErrorCode_LEGACY_CHECK_ERROR_CODE_UNSPECIFIED
 }
 
 type LegacyExpression struct {
@@ -189,7 +311,7 @@ type LegacyExpression struct {
 
 func (x *LegacyExpression) Reset() {
 	*x = LegacyExpression{}
-	mi := &file_legacy_authz_proto_msgTypes[2]
+	mi := &file_legacy_authz_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -201,7 +323,7 @@ func (x *LegacyExpression) String() string {
 func (*LegacyExpression) ProtoMessage() {}
 
 func (x *LegacyExpression) ProtoReflect() protoreflect.Message {
-	mi := &file_legacy_authz_proto_msgTypes[2]
+	mi := &file_legacy_authz_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -214,7 +336,7 @@ func (x *LegacyExpression) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LegacyExpression.ProtoReflect.Descriptor instead.
 func (*LegacyExpression) Descriptor() ([]byte, []int) {
-	return file_legacy_authz_proto_rawDescGZIP(), []int{2}
+	return file_legacy_authz_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *LegacyExpression) GetNode() isLegacyExpression_Node {
@@ -288,7 +410,7 @@ type LegacyPermission struct {
 
 func (x *LegacyPermission) Reset() {
 	*x = LegacyPermission{}
-	mi := &file_legacy_authz_proto_msgTypes[3]
+	mi := &file_legacy_authz_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -300,7 +422,7 @@ func (x *LegacyPermission) String() string {
 func (*LegacyPermission) ProtoMessage() {}
 
 func (x *LegacyPermission) ProtoReflect() protoreflect.Message {
-	mi := &file_legacy_authz_proto_msgTypes[3]
+	mi := &file_legacy_authz_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -313,7 +435,7 @@ func (x *LegacyPermission) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LegacyPermission.ProtoReflect.Descriptor instead.
 func (*LegacyPermission) Descriptor() ([]byte, []int) {
-	return file_legacy_authz_proto_rawDescGZIP(), []int{3}
+	return file_legacy_authz_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *LegacyPermission) GetAction() string {
@@ -339,7 +461,7 @@ type LegacyExpressionList struct {
 
 func (x *LegacyExpressionList) Reset() {
 	*x = LegacyExpressionList{}
-	mi := &file_legacy_authz_proto_msgTypes[4]
+	mi := &file_legacy_authz_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -351,7 +473,7 @@ func (x *LegacyExpressionList) String() string {
 func (*LegacyExpressionList) ProtoMessage() {}
 
 func (x *LegacyExpressionList) ProtoReflect() protoreflect.Message {
-	mi := &file_legacy_authz_proto_msgTypes[4]
+	mi := &file_legacy_authz_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -364,7 +486,7 @@ func (x *LegacyExpressionList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LegacyExpressionList.ProtoReflect.Descriptor instead.
 func (*LegacyExpressionList) Descriptor() ([]byte, []int) {
-	return file_legacy_authz_proto_rawDescGZIP(), []int{4}
+	return file_legacy_authz_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *LegacyExpressionList) GetExpressions() []*LegacyExpression {
@@ -401,7 +523,7 @@ type LegacyPermissionIdentity struct {
 
 func (x *LegacyPermissionIdentity) Reset() {
 	*x = LegacyPermissionIdentity{}
-	mi := &file_legacy_authz_proto_msgTypes[5]
+	mi := &file_legacy_authz_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -413,7 +535,7 @@ func (x *LegacyPermissionIdentity) String() string {
 func (*LegacyPermissionIdentity) ProtoMessage() {}
 
 func (x *LegacyPermissionIdentity) ProtoReflect() protoreflect.Message {
-	mi := &file_legacy_authz_proto_msgTypes[5]
+	mi := &file_legacy_authz_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -426,7 +548,7 @@ func (x *LegacyPermissionIdentity) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LegacyPermissionIdentity.ProtoReflect.Descriptor instead.
 func (*LegacyPermissionIdentity) Descriptor() ([]byte, []int) {
-	return file_legacy_authz_proto_rawDescGZIP(), []int{5}
+	return file_legacy_authz_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *LegacyPermissionIdentity) GetType() string {
@@ -520,7 +642,7 @@ type LegacyGetUserPermissionsRequest struct {
 
 func (x *LegacyGetUserPermissionsRequest) Reset() {
 	*x = LegacyGetUserPermissionsRequest{}
-	mi := &file_legacy_authz_proto_msgTypes[6]
+	mi := &file_legacy_authz_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -532,7 +654,7 @@ func (x *LegacyGetUserPermissionsRequest) String() string {
 func (*LegacyGetUserPermissionsRequest) ProtoMessage() {}
 
 func (x *LegacyGetUserPermissionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_legacy_authz_proto_msgTypes[6]
+	mi := &file_legacy_authz_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -545,7 +667,7 @@ func (x *LegacyGetUserPermissionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LegacyGetUserPermissionsRequest.ProtoReflect.Descriptor instead.
 func (*LegacyGetUserPermissionsRequest) Descriptor() ([]byte, []int) {
-	return file_legacy_authz_proto_rawDescGZIP(), []int{6}
+	return file_legacy_authz_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *LegacyGetUserPermissionsRequest) GetIdentity() *LegacyPermissionIdentity {
@@ -602,7 +724,7 @@ type LegacyUserPermission struct {
 
 func (x *LegacyUserPermission) Reset() {
 	*x = LegacyUserPermission{}
-	mi := &file_legacy_authz_proto_msgTypes[7]
+	mi := &file_legacy_authz_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -614,7 +736,7 @@ func (x *LegacyUserPermission) String() string {
 func (*LegacyUserPermission) ProtoMessage() {}
 
 func (x *LegacyUserPermission) ProtoReflect() protoreflect.Message {
-	mi := &file_legacy_authz_proto_msgTypes[7]
+	mi := &file_legacy_authz_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -627,7 +749,7 @@ func (x *LegacyUserPermission) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LegacyUserPermission.ProtoReflect.Descriptor instead.
 func (*LegacyUserPermission) Descriptor() ([]byte, []int) {
-	return file_legacy_authz_proto_rawDescGZIP(), []int{7}
+	return file_legacy_authz_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *LegacyUserPermission) GetAction() string {
@@ -654,7 +776,7 @@ type LegacyGetUserPermissionsResponse struct {
 
 func (x *LegacyGetUserPermissionsResponse) Reset() {
 	*x = LegacyGetUserPermissionsResponse{}
-	mi := &file_legacy_authz_proto_msgTypes[8]
+	mi := &file_legacy_authz_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -666,7 +788,7 @@ func (x *LegacyGetUserPermissionsResponse) String() string {
 func (*LegacyGetUserPermissionsResponse) ProtoMessage() {}
 
 func (x *LegacyGetUserPermissionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_legacy_authz_proto_msgTypes[8]
+	mi := &file_legacy_authz_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -679,7 +801,7 @@ func (x *LegacyGetUserPermissionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LegacyGetUserPermissionsResponse.ProtoReflect.Descriptor instead.
 func (*LegacyGetUserPermissionsResponse) Descriptor() ([]byte, []int) {
-	return file_legacy_authz_proto_rawDescGZIP(), []int{8}
+	return file_legacy_authz_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *LegacyGetUserPermissionsResponse) GetPermissions() []*LegacyUserPermission {
@@ -694,17 +816,13 @@ type LegacyGlobalEvaluation struct {
 	// Preserve the requester's org for resolver callbacks: 0 (global) or -1 (NoOrgID).
 	// Both evaluate permissions from org 0, never from the transport namespace's org.
 	RequesterOrgId int64 `protobuf:"varint,1,opt,name=requester_org_id,json=requesterOrgId,proto3" json:"requester_org_id,omitempty"`
-	// Actions in the trusted caller's effective global permission map, after
-	// authentication restrictions. Empty permits no actions. Resolver dependency
-	// lookups use the same restriction; scopes are still checked by the server.
-	PermittedActions []string `protobuf:"bytes,2,rep,name=permitted_actions,json=permittedActions,proto3" json:"permitted_actions,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *LegacyGlobalEvaluation) Reset() {
 	*x = LegacyGlobalEvaluation{}
-	mi := &file_legacy_authz_proto_msgTypes[9]
+	mi := &file_legacy_authz_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -716,7 +834,7 @@ func (x *LegacyGlobalEvaluation) String() string {
 func (*LegacyGlobalEvaluation) ProtoMessage() {}
 
 func (x *LegacyGlobalEvaluation) ProtoReflect() protoreflect.Message {
-	mi := &file_legacy_authz_proto_msgTypes[9]
+	mi := &file_legacy_authz_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -729,7 +847,7 @@ func (x *LegacyGlobalEvaluation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LegacyGlobalEvaluation.ProtoReflect.Descriptor instead.
 func (*LegacyGlobalEvaluation) Descriptor() ([]byte, []int) {
-	return file_legacy_authz_proto_rawDescGZIP(), []int{9}
+	return file_legacy_authz_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *LegacyGlobalEvaluation) GetRequesterOrgId() int64 {
@@ -739,18 +857,56 @@ func (x *LegacyGlobalEvaluation) GetRequesterOrgId() int64 {
 	return 0
 }
 
-func (x *LegacyGlobalEvaluation) GetPermittedActions() []string {
+type LegacyInternalIdentity struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Selects server-owned grants; the profile name itself is not authentication.
+	Profile       string `protobuf:"bytes,1,opt,name=profile,proto3" json:"profile,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LegacyInternalIdentity) Reset() {
+	*x = LegacyInternalIdentity{}
+	mi := &file_legacy_authz_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LegacyInternalIdentity) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LegacyInternalIdentity) ProtoMessage() {}
+
+func (x *LegacyInternalIdentity) ProtoReflect() protoreflect.Message {
+	mi := &file_legacy_authz_proto_msgTypes[11]
 	if x != nil {
-		return x.PermittedActions
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
 	}
-	return nil
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LegacyInternalIdentity.ProtoReflect.Descriptor instead.
+func (*LegacyInternalIdentity) Descriptor() ([]byte, []int) {
+	return file_legacy_authz_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *LegacyInternalIdentity) GetProfile() string {
+	if x != nil {
+		return x.Profile
+	}
+	return ""
 }
 
 var File_legacy_authz_proto protoreflect.FileDescriptor
 
 const file_legacy_authz_proto_rawDesc = "" +
 	"\n" +
-	"\x12legacy_authz.proto\x12\x12authz.extention.v1\"\xd4\x02\n" +
+	"\x12legacy_authz.proto\x12\x12authz.extention.v1\"\xfc\x03\n" +
 	"\x12LegacyCheckRequest\x12\x1c\n" +
 	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x18\n" +
 	"\asubject\x18\x02 \x01(\tR\asubject\x12\x14\n" +
@@ -761,10 +917,17 @@ const file_legacy_authz_proto_rawDesc = "" +
 	"expression\x18\a \x01(\v2$.authz.extention.v1.LegacyExpressionR\n" +
 	"expression\x122\n" +
 	"\x15skip_scope_resolution\x18\b \x01(\bR\x13skipScopeResolution\x12W\n" +
-	"\x11global_evaluation\x18\t \x01(\v2*.authz.extention.v1.LegacyGlobalEvaluationR\x10globalEvaluation\"E\n" +
+	"\x11global_evaluation\x18\t \x01(\v2*.authz.extention.v1.LegacyGlobalEvaluationR\x10globalEvaluation\x12W\n" +
+	"\x11internal_identity\x18\n" +
+	" \x01(\v2*.authz.extention.v1.LegacyInternalIdentityR\x10internalIdentity\x12M\n" +
+	"\vrestriction\x18\v \x01(\v2+.authz.extention.v1.LegacyActionRestrictionR\vrestriction\"3\n" +
+	"\x17LegacyActionRestriction\x12\x18\n" +
+	"\aactions\x18\x01 \x03(\tR\aactions\"\x8e\x01\n" +
 	"\x13LegacyCheckResponse\x12\x18\n" +
 	"\aallowed\x18\x01 \x01(\bR\aallowed\x12\x14\n" +
-	"\x05error\x18\x02 \x01(\tR\x05error\"\xde\x01\n" +
+	"\x05error\x18\x02 \x01(\tR\x05error\x12G\n" +
+	"\n" +
+	"error_code\x18\x03 \x01(\x0e2(.authz.extention.v1.LegacyCheckErrorCodeR\terrorCode\"\xde\x01\n" +
 	"\x10LegacyExpression\x12F\n" +
 	"\n" +
 	"permission\x18\x01 \x01(\v2$.authz.extention.v1.LegacyPermissionH\x00R\n" +
@@ -806,10 +969,14 @@ const file_legacy_authz_proto_rawDesc = "" +
 	"\x06action\x18\x01 \x01(\tR\x06action\x12\x14\n" +
 	"\x05scope\x18\x02 \x01(\tR\x05scope\"n\n" +
 	" LegacyGetUserPermissionsResponse\x12J\n" +
-	"\vpermissions\x18\x01 \x03(\v2(.authz.extention.v1.LegacyUserPermissionR\vpermissions\"o\n" +
+	"\vpermissions\x18\x01 \x03(\v2(.authz.extention.v1.LegacyUserPermissionR\vpermissions\"B\n" +
 	"\x16LegacyGlobalEvaluation\x12(\n" +
-	"\x10requester_org_id\x18\x01 \x01(\x03R\x0erequesterOrgId\x12+\n" +
-	"\x11permitted_actions\x18\x02 \x03(\tR\x10permittedActions2\x83\x02\n" +
+	"\x10requester_org_id\x18\x01 \x01(\x03R\x0erequesterOrgId\"2\n" +
+	"\x16LegacyInternalIdentity\x12\x18\n" +
+	"\aprofile\x18\x01 \x01(\tR\aprofile*u\n" +
+	"\x14LegacyCheckErrorCode\x12'\n" +
+	"#LEGACY_CHECK_ERROR_CODE_UNSPECIFIED\x10\x00\x124\n" +
+	"0LEGACY_CHECK_ERROR_CODE_SCOPE_RESOURCE_NOT_FOUND\x10\x012\x83\x02\n" +
 	"\x12LegacyAuthzService\x12^\n" +
 	"\vLegacyCheck\x12&.authz.extention.v1.LegacyCheckRequest\x1a'.authz.extention.v1.LegacyCheckResponse\x12\x8c\x01\n" +
 	"\x18LegacyGetUserPermissions\x123.authz.extention.v1.LegacyGetUserPermissionsRequest\x1a4.authz.extention.v1.LegacyGetUserPermissionsResponse\"\x03\x88\x02\x010\x01B8Z6github.com/grafana/grafana/pkg/services/authz/proto/v1b\x06proto3"
@@ -826,37 +993,44 @@ func file_legacy_authz_proto_rawDescGZIP() []byte {
 	return file_legacy_authz_proto_rawDescData
 }
 
-var file_legacy_authz_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_legacy_authz_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_legacy_authz_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_legacy_authz_proto_goTypes = []any{
-	(*LegacyCheckRequest)(nil),               // 0: authz.extention.v1.LegacyCheckRequest
-	(*LegacyCheckResponse)(nil),              // 1: authz.extention.v1.LegacyCheckResponse
-	(*LegacyExpression)(nil),                 // 2: authz.extention.v1.LegacyExpression
-	(*LegacyPermission)(nil),                 // 3: authz.extention.v1.LegacyPermission
-	(*LegacyExpressionList)(nil),             // 4: authz.extention.v1.LegacyExpressionList
-	(*LegacyPermissionIdentity)(nil),         // 5: authz.extention.v1.LegacyPermissionIdentity
-	(*LegacyGetUserPermissionsRequest)(nil),  // 6: authz.extention.v1.LegacyGetUserPermissionsRequest
-	(*LegacyUserPermission)(nil),             // 7: authz.extention.v1.LegacyUserPermission
-	(*LegacyGetUserPermissionsResponse)(nil), // 8: authz.extention.v1.LegacyGetUserPermissionsResponse
-	(*LegacyGlobalEvaluation)(nil),           // 9: authz.extention.v1.LegacyGlobalEvaluation
+	(LegacyCheckErrorCode)(0),                // 0: authz.extention.v1.LegacyCheckErrorCode
+	(*LegacyCheckRequest)(nil),               // 1: authz.extention.v1.LegacyCheckRequest
+	(*LegacyActionRestriction)(nil),          // 2: authz.extention.v1.LegacyActionRestriction
+	(*LegacyCheckResponse)(nil),              // 3: authz.extention.v1.LegacyCheckResponse
+	(*LegacyExpression)(nil),                 // 4: authz.extention.v1.LegacyExpression
+	(*LegacyPermission)(nil),                 // 5: authz.extention.v1.LegacyPermission
+	(*LegacyExpressionList)(nil),             // 6: authz.extention.v1.LegacyExpressionList
+	(*LegacyPermissionIdentity)(nil),         // 7: authz.extention.v1.LegacyPermissionIdentity
+	(*LegacyGetUserPermissionsRequest)(nil),  // 8: authz.extention.v1.LegacyGetUserPermissionsRequest
+	(*LegacyUserPermission)(nil),             // 9: authz.extention.v1.LegacyUserPermission
+	(*LegacyGetUserPermissionsResponse)(nil), // 10: authz.extention.v1.LegacyGetUserPermissionsResponse
+	(*LegacyGlobalEvaluation)(nil),           // 11: authz.extention.v1.LegacyGlobalEvaluation
+	(*LegacyInternalIdentity)(nil),           // 12: authz.extention.v1.LegacyInternalIdentity
 }
 var file_legacy_authz_proto_depIdxs = []int32{
-	2,  // 0: authz.extention.v1.LegacyCheckRequest.expression:type_name -> authz.extention.v1.LegacyExpression
-	9,  // 1: authz.extention.v1.LegacyCheckRequest.global_evaluation:type_name -> authz.extention.v1.LegacyGlobalEvaluation
-	3,  // 2: authz.extention.v1.LegacyExpression.permission:type_name -> authz.extention.v1.LegacyPermission
-	4,  // 3: authz.extention.v1.LegacyExpression.all:type_name -> authz.extention.v1.LegacyExpressionList
-	4,  // 4: authz.extention.v1.LegacyExpression.any:type_name -> authz.extention.v1.LegacyExpressionList
-	2,  // 5: authz.extention.v1.LegacyExpressionList.expressions:type_name -> authz.extention.v1.LegacyExpression
-	5,  // 6: authz.extention.v1.LegacyGetUserPermissionsRequest.identity:type_name -> authz.extention.v1.LegacyPermissionIdentity
-	7,  // 7: authz.extention.v1.LegacyGetUserPermissionsResponse.permissions:type_name -> authz.extention.v1.LegacyUserPermission
-	0,  // 8: authz.extention.v1.LegacyAuthzService.LegacyCheck:input_type -> authz.extention.v1.LegacyCheckRequest
-	6,  // 9: authz.extention.v1.LegacyAuthzService.LegacyGetUserPermissions:input_type -> authz.extention.v1.LegacyGetUserPermissionsRequest
-	1,  // 10: authz.extention.v1.LegacyAuthzService.LegacyCheck:output_type -> authz.extention.v1.LegacyCheckResponse
-	8,  // 11: authz.extention.v1.LegacyAuthzService.LegacyGetUserPermissions:output_type -> authz.extention.v1.LegacyGetUserPermissionsResponse
-	10, // [10:12] is the sub-list for method output_type
-	8,  // [8:10] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	4,  // 0: authz.extention.v1.LegacyCheckRequest.expression:type_name -> authz.extention.v1.LegacyExpression
+	11, // 1: authz.extention.v1.LegacyCheckRequest.global_evaluation:type_name -> authz.extention.v1.LegacyGlobalEvaluation
+	12, // 2: authz.extention.v1.LegacyCheckRequest.internal_identity:type_name -> authz.extention.v1.LegacyInternalIdentity
+	2,  // 3: authz.extention.v1.LegacyCheckRequest.restriction:type_name -> authz.extention.v1.LegacyActionRestriction
+	0,  // 4: authz.extention.v1.LegacyCheckResponse.error_code:type_name -> authz.extention.v1.LegacyCheckErrorCode
+	5,  // 5: authz.extention.v1.LegacyExpression.permission:type_name -> authz.extention.v1.LegacyPermission
+	6,  // 6: authz.extention.v1.LegacyExpression.all:type_name -> authz.extention.v1.LegacyExpressionList
+	6,  // 7: authz.extention.v1.LegacyExpression.any:type_name -> authz.extention.v1.LegacyExpressionList
+	4,  // 8: authz.extention.v1.LegacyExpressionList.expressions:type_name -> authz.extention.v1.LegacyExpression
+	7,  // 9: authz.extention.v1.LegacyGetUserPermissionsRequest.identity:type_name -> authz.extention.v1.LegacyPermissionIdentity
+	9,  // 10: authz.extention.v1.LegacyGetUserPermissionsResponse.permissions:type_name -> authz.extention.v1.LegacyUserPermission
+	1,  // 11: authz.extention.v1.LegacyAuthzService.LegacyCheck:input_type -> authz.extention.v1.LegacyCheckRequest
+	8,  // 12: authz.extention.v1.LegacyAuthzService.LegacyGetUserPermissions:input_type -> authz.extention.v1.LegacyGetUserPermissionsRequest
+	3,  // 13: authz.extention.v1.LegacyAuthzService.LegacyCheck:output_type -> authz.extention.v1.LegacyCheckResponse
+	10, // 14: authz.extention.v1.LegacyAuthzService.LegacyGetUserPermissions:output_type -> authz.extention.v1.LegacyGetUserPermissionsResponse
+	13, // [13:15] is the sub-list for method output_type
+	11, // [11:13] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_legacy_authz_proto_init() }
@@ -864,24 +1038,25 @@ func file_legacy_authz_proto_init() {
 	if File_legacy_authz_proto != nil {
 		return
 	}
-	file_legacy_authz_proto_msgTypes[2].OneofWrappers = []any{
+	file_legacy_authz_proto_msgTypes[3].OneofWrappers = []any{
 		(*LegacyExpression_Permission)(nil),
 		(*LegacyExpression_All)(nil),
 		(*LegacyExpression_Any)(nil),
 	}
-	file_legacy_authz_proto_msgTypes[5].OneofWrappers = []any{}
+	file_legacy_authz_proto_msgTypes[6].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_legacy_authz_proto_rawDesc), len(file_legacy_authz_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   10,
+			NumEnums:      1,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_legacy_authz_proto_goTypes,
 		DependencyIndexes: file_legacy_authz_proto_depIdxs,
+		EnumInfos:         file_legacy_authz_proto_enumTypes,
 		MessageInfos:      file_legacy_authz_proto_msgTypes,
 	}.Build()
 	File_legacy_authz_proto = out.File

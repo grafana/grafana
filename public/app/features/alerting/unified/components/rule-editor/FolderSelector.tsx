@@ -24,7 +24,7 @@ export function FolderSelector() {
 
   const handleFolderCreation = (folder: Folder) => {
     resetGroup();
-    setValue('folder', folder);
+    setValue('folder', folder, { shouldValidate: true });
   };
 
   return (
@@ -43,11 +43,12 @@ export function FolderSelector() {
             </Label>
           }
           error={errors.folder?.message}
+          invalid={!!errors.folder?.message}
           data-testid={selectors.components.AlertRules.folderPicker}
         >
-          <Stack direction="row" alignItems="center">
-            <Controller
-              render={({ field: { ref, ...field } }) => (
+          <Controller
+            render={({ field: { ref, ...field } }) => (
+              <Stack direction="row" alignItems="center">
                 <div style={{ width: 420 }}>
                   <ProvisioningAwareFolderPicker
                     permission="view"
@@ -58,7 +59,7 @@ export function FolderSelector() {
                     value={folder?.uid}
                     onChange={(uid, title) => {
                       if (uid && title) {
-                        setValue('folder', { title, uid });
+                        setValue('folder', { title, uid }, { shouldValidate: true });
                       } else {
                         setValue('folder', undefined);
                       }
@@ -67,17 +68,17 @@ export function FolderSelector() {
                     }}
                   />
                 </div>
-              )}
-              name="folder"
-              rules={{
-                required: {
-                  value: true,
-                  message: t('alerting.folder-selector.message.select-a-folder', 'Select a folder'),
-                },
-              }}
-            />
-            <CreateNewFolder onCreate={handleFolderCreation} />
-          </Stack>
+                <CreateNewFolder onCreate={handleFolderCreation} />
+              </Stack>
+            )}
+            name="folder"
+            rules={{
+              required: {
+                value: true,
+                message: t('alerting.folder-selector.message.folder-required', 'Folder is required'),
+              },
+            }}
+          />
         </Field>
       }
     </Stack>

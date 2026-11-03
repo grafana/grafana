@@ -69,6 +69,7 @@ import {
   previewedDashboardUid,
   proposesNewDashboard,
 } from '../lifecycle/pendingChangePreview';
+import { setPendingChangesPageReload } from '../lifecycle/pendingChangesPageReload';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
@@ -80,6 +81,7 @@ import {
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
+import { registerDashboardPageStateCaches } from '../utils/cache';
 import {
   countPredefinedVariableOrigins,
   getGlobalVariablesMode,
@@ -1563,8 +1565,9 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 
   /**
    * Swaps in the pending changes the load asked for, unless the requester is viewing the
-   * original (see pendingChangePreview.ts). The preview is a read-only v2 dashboard that never
-   * goes through the scene cache: it shares the saved dashboard's version.
+   * original (see pendingChangePreview.ts). The preview is a v2 dashboard that never goes through
+   * the scene cache: it shares the saved dashboard's version. It is read-only unless the plugin
+   * keeps the pending changes' history, on the page: edits are then recorded in it.
    */
   private async withPendingChanges(
     rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null,
@@ -1580,12 +1583,16 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
         preview.previewing = false;
         return rsp;
       }
+      // Editable as far as the requester may edit the dashboard itself.
+      const editable = Boolean(preview.pending.history) && options.route === DashboardRoutes.Normal;
       const previewRsp = {
         ...saved,
         // A copy: building the scene adds defaults to the spec it is given, and the banner
         // diffs the pending changes as saved.
         spec: structuredClone(preview.pending.proposed),
-        access: { ...saved.access, canEdit: false, canSave: false, canDelete: false },
+        access: editable
+          ? { ...saved.access, canDelete: false }
+          : { ...saved.access, canEdit: false, canSave: false, canDelete: false },
       };
       shownPendingChanges.set(previewRsp, preview);
       return previewRsp;
@@ -1769,6 +1776,17 @@ const managers: {
   unified: undefined,
 };
 
+// A step through a plugin's pending changes history loads a new scene, and leaves the requester where they
+// were. Set here: the scene's modules can't import this one without closing an import cycle.
+setPendingChangesPageReload(async (uid, editing) => {
+  const manager = getDashboardScenePageStateManager();
+  await manager.reloadDashboardFresh({ uid, route: DashboardRoutes.Normal });
+  const reloaded = manager.state.dashboard;
+  if (editing && reloaded && !reloaded.state.isEditing) {
+    reloaded.onEnterEditMode();
+  }
+});
+
 export function getDashboardScenePageStateManager(): UnifiedDashboardScenePageStateManager;
 export function getDashboardScenePageStateManager(v: 'v1'): DashboardScenePageStateManager;
 export function getDashboardScenePageStateManager(v: 'v2'): DashboardScenePageStateManagerV2;
@@ -1790,6 +1808,7 @@ export function getDashboardScenePageStateManager(v?: 'v1' | 'v2') {
 
   if (!managers.unified) {
     managers.unified = new UnifiedDashboardScenePageStateManager({});
+    registerDashboardPageStateCaches(managers.unified);
   }
 
   return managers.unified;

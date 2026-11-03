@@ -244,7 +244,7 @@ export function useSplitter(options: UseSplitterOptions) {
         }
       }
     },
-    [direction, handlePressedKeys, , measurementProp, usePixels]
+    [direction, handlePressedKeys, measurementProp, usePixels]
   );
 
   const onKeyUp = useCallback(

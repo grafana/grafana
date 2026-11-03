@@ -32,6 +32,7 @@ import {
   isPreviewingPendingChanges,
   loadPendingChangePreview,
 } from '../lifecycle/pendingChangePreview';
+import { reloadPendingChangesPage } from '../lifecycle/pendingChangesPageReload';
 import { DashboardScene } from '../scene/DashboardScene';
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardInteractions } from '../utils/interactions';
@@ -42,6 +43,7 @@ import {
   DashboardScenePageStateManagerV2,
   UnifiedDashboardScenePageStateManager,
   DASHBOARD_CACHE_TTL,
+  getDashboardScenePageStateManager,
 } from './DashboardScenePageStateManager';
 const fetchMock = jest.fn();
 
@@ -2358,7 +2360,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
         expect(scene?.state.meta.canSave).toBe(true);
       });
 
-      // DashboardView embeds it view-only: its banner offers Open to save instead.
+      // The embedded canvas stays view-only; its save drawer owns a temporary edit session.
       it('opens view-only where it is embedded', async () => {
         const { manager } = await loadMissingDashboard(0, DashboardRoutes.Embedded);
 
@@ -3728,3 +3730,20 @@ const v2ProvisionedDashboardResource = {
     upsert: null,
   },
 };
+
+// The scene's modules reach the page's reload through pendingChangesPageReload, which this module sets.
+describe('reloading pending changes through the page', () => {
+  it('loads the dashboard fresh and keeps the requester in edit mode', async () => {
+    const manager = getDashboardScenePageStateManager();
+    const reloaded = { state: { isEditing: false }, onEnterEditMode: jest.fn() };
+    const reload = jest.spyOn(manager, 'reloadDashboardFresh').mockImplementation(async () => {
+      manager.setState({ dashboard: reloaded as unknown as DashboardScene });
+    });
+
+    await reloadPendingChangesPage('abc', true);
+
+    expect(reload).toHaveBeenCalledWith({ uid: 'abc', route: DashboardRoutes.Normal });
+    expect(reloaded.onEnterEditMode).toHaveBeenCalled();
+    reload.mockRestore();
+  });
+});

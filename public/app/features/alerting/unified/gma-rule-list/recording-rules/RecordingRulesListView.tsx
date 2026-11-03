@@ -8,10 +8,16 @@ import { InlineRequestError } from '../shared/InlineRequestError';
 import { LoadMoreFooter } from '../shared/LoadMoreFooter';
 
 import { RecordingRuleListEntry } from './RecordingRuleListEntry';
+import { type RecordingRuleFilter } from './recordingRuleFilters';
 import { useRecordingRuleSearch } from './recordingRuleSearch';
 
-export function RecordingRulesListView() {
-  const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry, total } = useRecordingRuleSearch();
+interface ListViewProps {
+  filter: RecordingRuleFilter;
+}
+
+export function RecordingRulesListView({ filter }: ListViewProps) {
+  const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry, total } =
+    useRecordingRuleSearch(filter);
 
   if (isLoading) {
     return (
@@ -46,7 +52,7 @@ export function RecordingRulesListView() {
       <ResultCount kind="recording" total={total} />
       <RuleRowList>
         {items.map((searchHit) => (
-          <RecordingRuleListEntry key={searchHit.uid} searchHit={searchHit} />
+          <RecordingRuleListEntry key={searchHit.uid} searchHit={searchHit} showFolderPath />
         ))}
       </RuleRowList>
       <LoadMoreFooter

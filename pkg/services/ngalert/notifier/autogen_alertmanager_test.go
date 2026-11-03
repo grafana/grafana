@@ -46,7 +46,7 @@ func TestAddAutogenConfig(t *testing.T) {
 			}
 		}
 		for _, muteInterval := range muteIntervals {
-			ti := v1.NewTimeInterval(muteInterval, nil, models.ProvenanceNone)
+			ti := v1.NewTimeInterval(v1.TimeIntervalUID(muteInterval), muteInterval, nil, models.ProvenanceNone)
 			cfg.TimeIntervals[ti.UID] = ti
 		}
 		return cfg

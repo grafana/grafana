@@ -244,9 +244,9 @@
         "border": "palette.violet800"
       },
       "darkgrey": {
-        "text": "palette.ink300",
-        "background": "palette.ink950",
-        "border": "palette.ink800"
+        "text": "palette.ink150",
+        "background": "palette.ink750",
+        "border": "palette.ink550"
       }
     }
   },

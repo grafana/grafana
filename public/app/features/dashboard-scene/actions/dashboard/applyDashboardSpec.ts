@@ -31,9 +31,10 @@ export interface ApplyDashboardSpecProps {
   description: string;
   /** Where the spec edit came from, reported with undo/redo interactions. */
   scope: string;
+  actor?: string;
 }
 
-export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDashboardSpecProps): void {
+export function applyDashboardSpec({ scene, spec, description, scope, actor }: ApplyDashboardSpecProps): void {
   const dto = buildDashboardWithAccessInfoFromScene(scene, spec);
   const rebuilt = transformSaveModelSchemaV2ToScene(dto);
   // The URL state each spec produces on its own, before any URL is applied. Their difference is
@@ -67,9 +68,11 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
     scene.state.editPanel?.getUrlKey() ?? (typeof requestedPanel === 'string' ? requestedPanel : undefined);
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrow the base handler to the dashboard's own, which owns the hold below
   const urlSync = scene.urlSync as DashboardUrlSync | undefined;
+  // The first perform swaps in a fresh tree, which queries on its own; a later one is a redo.
+  let performed = false;
 
   edit({
-    meta: { actionId: 'dashboard.editSchema', scope },
+    meta: { actionId: 'dashboard.editSchema', scope, ...(actor ? { actor } : {}) },
     source: scene,
     description,
     perform: () => {
@@ -114,6 +117,11 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
       if (editPanelKey) {
         urlSync?.updateFromUrl({ editPanel: editPanelKey });
       }
+
+      if (performed) {
+        refreshSwappedInData(scene);
+      }
+      performed = true;
     },
     undo: () => {
       const outgoingKeys = Object.keys(sceneUtils.getUrlState(scene));
@@ -129,8 +137,15 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
         toSpec: getPreviousSpecUrl,
       });
       syncRebuiltChildrenFromUrl(scene, urlUpdates);
+      refreshSwappedInData(scene);
     },
   });
+}
+
+// Undo and redo swap back a tree whose query runners still hold the data they had when set aside, and
+// a runner only re-queries on activation once the time range has moved past that data.
+function refreshSwappedInData(scene: DashboardScene) {
+  sceneGraph.getTimeRange(scene).onRefresh();
 }
 
 /** The URL state of the spec the scene serializes to, rebuilt on its own. */
