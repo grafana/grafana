@@ -202,6 +202,18 @@ describe('TableCellActions', () => {
     expect(screen.getByLabelText('Inspect value')).toBeInTheDocument();
   });
 
+  it('detects JSON through the inline inspect button', async () => {
+    const value = '{"count":3}';
+    const { setInspectCell } = setup({
+      tableRefreshEnabled: false,
+      autoDetectJsonEnabled: true,
+      field: { name: 'value', type: FieldType.string, values: [value], config: {} },
+      value,
+    });
+    await userEvent.click(screen.getByRole('button', { name: 'Inspect value' }));
+    expect(setInspectCell).toHaveBeenCalledWith({ value: '{\n  "count": 3\n}', mode: TableCellInspectorMode.code });
+  });
+
   it('does not render the inspect button when cellInspect is false', () => {
     setup({ cellInspect: false });
     expect(screen.queryByLabelText('Inspect value')).not.toBeInTheDocument();
