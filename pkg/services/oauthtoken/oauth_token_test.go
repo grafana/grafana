@@ -909,26 +909,30 @@ func TestGetExternalSession_DelegatedUser(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			setOAuthTokenForDelegatedUsers(t, tt.flagEnabled)
+		id := delegatedUser(tt.authenticatedBy, tt.serviceIdentity)
+		// OAuthTokenMiddleware passes the user.SignedInUser that the context handler derives from the identity.
+		requesters := map[string]identity.Requester{"identity": id, "signed in user": id.SignedInUser()}
+		for kind, usr := range requesters {
+			t.Run(tt.desc+" ("+kind+")", func(t *testing.T) {
+				setOAuthTokenForDelegatedUsers(t, tt.flagEnabled)
 
-			sessionService := authtest.NewMockUserAuthTokenService(t)
-			if tt.sessions != nil {
-				sessionService.On("FindExternalSessions", mock.Anything, &auth.ListExternalSessionQuery{UserID: 1}).Return(tt.sessions, nil).Once()
-			}
-			service := &Service{sessionService: sessionService}
+				sessionService := authtest.NewMockUserAuthTokenService(t)
+				if tt.sessions != nil {
+					sessionService.On("FindExternalSessions", mock.Anything, &auth.ListExternalSessionQuery{UserID: 1}).Return(tt.sessions, nil).Once()
+				}
+				service := &Service{sessionService: sessionService}
 
-			usr := delegatedUser(tt.authenticatedBy, tt.serviceIdentity)
-			session, err := service.getExternalSession(context.Background(), usr, 1, nil)
+				session, err := service.getExternalSession(context.Background(), usr, 1, nil)
 
-			if tt.expectedErr != nil {
-				require.ErrorIs(t, err, tt.expectedErr)
-				assert.Nil(t, session)
-				return
-			}
-			require.NoError(t, err)
-			assert.Equal(t, tt.expected, session)
-		})
+				if tt.expectedErr != nil {
+					require.ErrorIs(t, err, tt.expectedErr)
+					assert.Nil(t, session)
+					return
+				}
+				require.NoError(t, err)
+				assert.Equal(t, tt.expected, session)
+			})
+		}
 	}
 }
 
@@ -955,7 +959,8 @@ func TestGetCurrentOAuthToken_DelegatedUser(t *testing.T) {
 		tracer:          tracing.InitializeTracerForTest(),
 	}
 
-	usr := delegatedUser(login.ExtendedJWTModule, assistantServiceIdentity)
+	// OAuthTokenMiddleware passes the user.SignedInUser that the context handler derives from the identity.
+	usr := delegatedUser(login.ExtendedJWTModule, assistantServiceIdentity).SignedInUser()
 	token := service.GetCurrentOAuthToken(context.Background(), usr, nil)
 
 	require.NotNil(t, token)

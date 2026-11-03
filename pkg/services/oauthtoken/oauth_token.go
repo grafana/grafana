@@ -601,8 +601,21 @@ func canForwardForDelegatingService(ctx context.Context, usr identity.Requester)
 	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagAuthOauthTokenForDelegatedUsers, false, openfeature.TransactionContext(ctx)) {
 		return false
 	}
-	ids := usr.GetExtra()[authnlib.ServiceIdentityKey]
+	ids := serviceIdentities(usr)
 	return len(ids) == 1 && strings.TrimSpace(ids[0]) == assistantServiceIdentity
+}
+
+// serviceIdentities returns the service identities in the access token that authenticated usr.
+func serviceIdentities(usr identity.Requester) []string {
+	// OAuthTokenMiddleware passes the user.SignedInUser the context handler derives from the authn.Identity.
+	// It keeps the access token claims but, unlike authn.Identity, doesn't report the service identity in GetExtra.
+	if u, ok := usr.(*user.SignedInUser); ok {
+		if u.AccessTokenClaims == nil || u.AccessTokenClaims.Rest.ServiceIdentity == "" {
+			return nil
+		}
+		return []string{u.AccessTokenClaims.Rest.ServiceIdentity}
+	}
+	return usr.GetExtra()[authnlib.ServiceIdentityKey]
 }
 
 func (o *Service) getLatestExternalSession(ctx context.Context, userID int64) (*auth.ExternalSession, error) {
