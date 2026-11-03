@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
-import { type KeyboardEvent, useEffect, useRef } from 'react';
+import { type KeyboardEvent, useEffect, useRef, useSyncExternalStore } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { type VizPanel } from '@grafana/scenes';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 
@@ -94,6 +95,26 @@ interface Props {
  * gutter, both revealed by hovering (or focusing into) the cell. The cell renderer itself stays a pure
  * content dispatcher, so everything about editing lives here.
  */
+/**
+ * The cell's own state doesn't change when its panel is renamed, so reading `body.state.title` during
+ * render would leave the label stale. Not `body.useState()`: markdown and code cells have no body, and
+ * a hook can't be called conditionally.
+ */
+function usePanelTitle(body: VizPanel | undefined): string | undefined {
+  return useSyncExternalStore(
+    (onChange) => {
+      const subscription = body?.subscribeToState((next, previous) => {
+        if (next.title !== previous.title) {
+          onChange();
+        }
+      });
+
+      return () => subscription?.unsubscribe();
+    },
+    () => body?.state.title
+  );
+}
+
 export function NotebookCellFrame({
   cell,
   index,
@@ -113,15 +134,21 @@ export function NotebookCellFrame({
   onNavigate,
 }: Props) {
   const styles = useStyles2(getStyles);
-  const { collapsed, body, content, elementName } = cell.useState();
+  const { collapsed, body, content } = cell.useState();
   // Markdown/Code hand a focus grant to their own editor's caret (via useFocusExtension) and detect
   // an ArrowUp/Down boundary themselves. A Panel or Collapsed cell has no caret to do either with, so
   // the frame itself stands in for both below.
   const isEditorCell = !collapsed && !body && (content?.kind === 'Markdown' || content?.kind === 'Code');
 
+  // Not elementName: it ends in a random suffix, which a screen reader would spell out.
+  const panelTitle = usePanelTitle(body);
   const frameLabel = collapsed
-    ? t('notebook.cell.frame.aria-label-collapsed', 'Collapsed block: {{name}}', { name: elementName })
-    : t('notebook.cell.frame.aria-label-panel', 'Visualization block: {{name}}', { name: elementName });
+    ? panelTitle
+      ? t('notebook.cell.frame.aria-label-collapsed-titled', 'Collapsed block: {{title}}', { title: panelTitle })
+      : t('notebook.cell.frame.aria-label-collapsed', 'Collapsed block')
+    : panelTitle
+      ? t('notebook.cell.frame.aria-label-panel-titled', 'Visualization block: {{title}}', { title: panelTitle })
+      : t('notebook.cell.frame.aria-label-panel', 'Visualization block');
   const dragHandleLabel = t('notebook.cell.drag-handle', 'Drag to reorder');
 
   const frameRef = useRef<HTMLDivElement>(null);
