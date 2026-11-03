@@ -236,6 +236,79 @@ func managedResourceCommitMessage(obj utils.GrafanaMetaAccessor, action resource
 	}
 }
 
+func (s *Storage) provisioningClient(ctx context.Context) (rest.Interface, error) {
+	cfg, err := s.configProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	cfg.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
+	cfg.GroupVersion = &schema.GroupVersion{
+		Group:   "provisioning.grafana.app",
+		Version: "v0alpha1",
+	}
+	return rest.RESTClientFor(cfg)
+}
+
+// getManager looks up the manager of obj. The error is a NotFound error once the manager no
+// longer exists, so a write cannot be routed to it. Managers that cannot be looked up are
+// returned without an error.
+func (s *Storage) getManager(ctx context.Context, obj utils.GrafanaMetaAccessor) (utils.ManagerProperties, error) {
+	manager, ok := obj.GetManagerProperties()
+	if !ok {
+		return manager, fmt.Errorf("expected managed resource")
+	}
+	switch manager.Kind {
+	case utils.ManagerKindRepo:
+		return manager, s.getRepository(ctx, obj.GetNamespace(), manager.Identity, true)
+	default:
+		return manager, nil
+	}
+}
+
+// with allowProvisioningIdentity, the
+// lookup runs as the provisioning identity instead of the caller. Only set it for existence
+// probes, where the caller may be allowed to write a resource without being allowed to read
+// repositories.
+func (s *Storage) getRepository(ctx context.Context, namespace, name string, allowProvisioningIdentity bool) error {
+	if s.configProvider == nil || name == "" {
+		return nil
+	}
+	if allowProvisioningIdentity {
+		var err error
+		ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace)
+		if err != nil {
+			return err
+		}
+	}
+	client, err := s.provisioningClient(ctx)
+	if err != nil {
+		return err
+	}
+	return client.Get().
+		Namespace(namespace).
+		Resource("repositories").
+		Name(name).
+		Do(ctx).
+		Error()
+}
+
+// allowOrphanedUpdate reports whether an update to a resource that the managed-resource check
+// rejected may proceed because its manager no longer exists. Only updates that leave the content,
+// folder and ownership untouched pass, such as the label write that starts a folder deletion.
+func (s *Storage) allowOrphanedUpdate(ctx context.Context, err error, obj, previous utils.GrafanaMetaAccessor, contentChanged bool) bool {
+	newManager, _ := obj.GetManagerProperties()
+	oldManager, _ := previous.GetManagerProperties()
+	newSource, _ := obj.GetSourceProperties()
+	oldSource, _ := previous.GetSourceProperties()
+	_, managerErr := s.getManager(ctx, previous)
+
+	return errors.Is(err, errResourceIsManagedInRepository) &&
+		!contentChanged &&
+		newManager == oldManager &&
+		newSource == oldSource &&
+		apierrors.IsNotFound(managerErr)
+}
+
 // handleManagedResourceRouting re-routes a write for a repo-managed resource to the provisioning
 // files endpoint. cleanupSafe reports whether the write definitely did not persist (so a caller may
 // safely delete secrets it created for it): true only when the provisioning request was never sent,
@@ -268,16 +341,7 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 		return true, fmt.Errorf("managed resource is missing source path annotation")
 	}
 
-	cfg, err := s.configProvider.GetRestConfig(ctx)
-	if err != nil {
-		return true, err
-	}
-	cfg.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
-	cfg.GroupVersion = &schema.GroupVersion{
-		Group:   "provisioning.grafana.app",
-		Version: "v0alpha1",
-	}
-	client, err := rest.RESTClientFor(cfg)
+	client, err := s.provisioningClient(ctx)
 	if err != nil {
 		return true, err
 	}
