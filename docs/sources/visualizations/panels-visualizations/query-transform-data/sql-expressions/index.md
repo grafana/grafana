@@ -36,7 +36,7 @@ In Grafana, a server-side expression is a way to transform or calculate data aft
 
 For general information on Grafana expressions, refer to [Write expression queries](ref:expressions).
 
-![Query editor in stacked view with a hidden Prometheus query A and a SQL expression that smooths the series of each namespace with a window function](/media/docs/grafana/panels-visualizations/sql-expressions-example-v13.3.png)
+![Query editor in stacked view with a hidden Prometheus query A and a SQL expression that smooths the series of each namespace with a window function](/media/docs/grafana/panels-visualizations/screenshot-sql-expressions-example-v13.3.png)
 
 To see examples of filtering, aggregation, and JOIN operations with SQL expressions, explore this demo dashboard on Grafana Play:
 
@@ -110,7 +110,7 @@ After you have added a SQL expression, you can select from other data source que
 The **RefID** is a unique identifier assigned to each query within a Grafana panel that serves as a reference name for that query's data.
 {{< /admonition >}}
 
-![Query editor showing query A with the Edit query name option for its RefID](/media/docs/grafana/panels-visualizations/using-the-refid-v13.3.png)
+![Query editor showing query A with the Edit query name option for its RefID](/media/docs/grafana/panels-visualizations/screenshot-using-refid-2-v13.3.png)
 
 ## Workflow to build SQL expressions
 
@@ -184,11 +184,11 @@ The Schema inspector has a tab for each source query and lists the following det
 
    The panel displays the CPU usage by Go garbage collection (GC) over time, broken down by namespace.
 
-   ![Time series panel showing Go garbage collection CPU usage by namespace from a Prometheus query](/media/docs/grafana/panels-visualizations/sql-expressions-prom-query-example-v13.3.png)
+   ![Time series panel showing Go garbage collection CPU usage by namespace from a Prometheus query](/media/docs/grafana/panels-visualizations/screenshot-sql-expression-prom-query-ex-v13.3.png)
 
 2. Add the SQL expression `SELECT * from A`. After you add a SQL expression that selects from RefID A, Grafana converts it to a table response:
 
-   ![Table panel showing the result of a SQL expression that selects all rows from hidden query A](/media/docs/grafana/panels-visualizations/add-the-sql-expression-v13.3.png)
+   ![Table panel showing the result of a SQL expression that selects all rows from hidden query A](/media/docs/grafana/panels-visualizations/screenshot-add-sql-expression-v13.3.png)
 
 ## SQL conversion rules
 
