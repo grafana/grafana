@@ -200,9 +200,7 @@ export function extensionsMapper(spec: v0alpha1Spec): PluginExtensions {
     title: v.title ?? '',
   }));
 
-  const skills = spec.pluginJson.extensions?.skills;
   const extensions: PluginExtensions = {
-    ...(skills ? { skills } : {}),
     addedComponents,
     addedFunctions,
     addedLinks,
