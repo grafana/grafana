@@ -204,7 +204,7 @@ func (r *Reconciler) queueAllNamespaces(ctx context.Context) {
 	if err != nil {
 		r.logger.Error("Failed to fetch global roles", "error", err)
 		r.metrics.errorsTotal.WithLabelValues("fetch_global_roles").Inc()
-		globalPerms = nil
+		return
 	}
 
 	r.setGlobalRolePerms(globalPerms)
@@ -334,8 +334,20 @@ func (r *Reconciler) reconcileNamespace(ctx context.Context, namespace string) (
 
 	result := &ReconcileResult{}
 
+	globalRolePerms := r.getGlobalRolePerms()
+	if globalRolePerms == nil {
+		// Followers do not run queueAllNamespaces. Fetch a snapshot for this
+		// reconciliation without retaining a cache that no leader loop refreshes.
+		var err error
+		globalRolePerms, err = r.fetchGlobalRolePerms(ctx)
+		if err != nil {
+			r.metrics.errorsTotal.WithLabelValues("fetch_global_roles").Inc()
+			return nil, fmt.Errorf("failed to fetch global roles: %w", err)
+		}
+	}
+
 	// 1. Build expected tuple map from CRDs
-	expectedMap, err := r.fetchAndTranslateTuples(ctx, namespace)
+	expectedMap, err := r.fetchAndTranslateTuples(ctx, namespace, globalRolePerms)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			r.logger.Warn("Namespace deleted or archived, removing store from Zanzana", "namespace", namespace)
