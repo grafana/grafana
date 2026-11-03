@@ -282,13 +282,13 @@ You can use the [TestData data source](/docs/grafana/<GRAFANA_VERSION>/datasourc
 
 Instead of defining static thresholds in the SQL expression, you can retrieve them from another query:
 
- ```B
- service, threshold
- checkout-api, 1.5
- auth-api, 2
- catalog-api, 4
- sync-work, 5
- ```
+```B
+service, threshold
+checkout-api, 1.5
+auth-api, 2
+catalog-api, 4
+sync-work, 5
+```
 
 To combine both queries, use a `LEFT JOIN` between them on a shared column such as `service`:
 
