@@ -276,7 +276,8 @@ function createPanelDataProvider(
   // Wrap inner data provider in a data transformer
   return new SceneDataTransformer({
     $data: dataProvider,
-    transformations: panel.data.spec.transformations.map((t) => {
+    // A dashboard saved at v2 with the list left out of the body is stored with null (#136859)
+    transformations: (panel.data.spec.transformations ?? []).map((t) => {
       const normalized = normalizeTransformation(t);
       return {
         id: normalized.group,
