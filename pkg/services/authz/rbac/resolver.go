@@ -180,6 +180,8 @@ func (s *Service) newUserNameResolver(ctx context.Context, ns types.NamespaceInf
 
 func permissionsTypeResolverFunc(scope string) (string, error) {
 	switch strings.TrimPrefix(scope, "permissions:type:") {
+	case "delegate":
+		return "*", nil
 	case "escalate":
 		return "", nil
 	default:
@@ -187,12 +189,12 @@ func permissionsTypeResolverFunc(scope string) (string, error) {
 	}
 }
 
-// isRoleMutationAction reports whether the action mutates roles or role
-// bindings. These mutations are the only actions where a permissions:type:delegate
+// isRoleManagementAction reports whether the action mutates roles or role
+// bindings. These are the only actions where a `permissions:type:delegate“
 // grant also implies the wildcard scope: holding the delegate scope must allow
 // operating on any role or role binding. Expanding it for other actions would
 // turn a delegation-only grant into global access to the resource itself.
-func isRoleMutationAction(action string) bool {
+func isRoleManagementAction(action string) bool {
 	switch action {
 	case "roles:write", "roles:delete",
 		"users.roles:add", "users.roles:remove",
@@ -208,7 +210,7 @@ func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, acti
 	}
 
 	if scopePrefix == "permissions:type:" {
-		if isRoleMutationAction(action) {
+		if isRoleManagementAction(action) {
 			return permissionsTypeResolverFunc, nil
 		}
 		// Permission-type scopes are only supported for role mutations.
@@ -228,20 +230,12 @@ func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, acti
 // It assumes only one scope resolver is needed for a given scope map, based on the first valid scope encountered.
 // The action the scopes were granted on decides whether permissions:type:delegate expands to the wildcard.
 func (s *Service) resolveScopeMap(ctx context.Context, ns types.NamespaceInfo, action string, scopeMap map[string]bool) (map[string]bool, error) {
-	// Expand delegate independently of which scope selects the name resolver.
-	if scopeMap["permissions:type:delegate"] && isRoleMutationAction(action) {
-		scopeMap["*"] = true
-	}
-
 	var (
 		prefix        string
 		scopeResolver ScopeResolverFunc
 		err           error
 	)
 	for scope := range scopeMap {
-		if scope == "permissions:type:delegate" {
-			continue
-		}
 		// Find the resolver based on the first scope with a valid prefix
 		if prefix == "" {
 			if len(strings.Split(scope, ":")) < 3 {
