@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import kbn from 'app/core/utils/kbn';
@@ -116,18 +115,16 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
               // have a dashboard uid to navigate to.
               const dashboardUid = upsert?.metadata?.name;
               if (!dashboardUid) {
-                navigate(
-                  locationUtil.assureBaseUrl(targetFolderUid ? `/dashboards/f/${targetFolderUid}/` : '/dashboards')
-                );
+                // navigate() resolves against the router basename, which is already the
+                // app sub path, so the paths below must stay bare (#136789).
+                navigate(targetFolderUid ? `/dashboards/f/${targetFolderUid}/` : '/dashboards');
                 return;
               }
-              const url = locationUtil.assureBaseUrl(
-                getDashboardUrl({
-                  uid: dashboardUid,
-                  slug: kbn.slugifyForUrl(title),
-                  currentQueryParams: window.location.search,
-                })
-              );
+              const url = getDashboardUrl({
+                uid: dashboardUid,
+                slug: kbn.slugifyForUrl(title),
+                currentQueryParams: window.location.search,
+              });
               navigate(url);
             },
             onBranchSuccess: ({ ref, path }, info) => {

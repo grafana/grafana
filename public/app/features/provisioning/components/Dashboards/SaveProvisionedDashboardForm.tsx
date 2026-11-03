@@ -210,14 +210,14 @@ export function SaveProvisionedDashboardForm({
 
   const handleNewDashboard = useCallback(
     (upsert: Resource<Dashboard>) => {
-      // Navigation for new dashboards
-      const url = locationUtil.assureBaseUrl(
-        getDashboardUrl({
-          uid: upsert.metadata.name,
-          slug: kbn.slugifyForUrl(upsert.spec.title ?? ''),
-          currentQueryParams: window.location.search,
-        })
-      );
+      // Navigation for new dashboards. The router history already carries the app
+      // sub path as its basename, so navigate() must get the bare path: prefixing
+      // it here lands on /<subpath>/<subpath>/d/... (#136789).
+      const url = getDashboardUrl({
+        uid: upsert.metadata.name,
+        slug: kbn.slugifyForUrl(upsert.spec.title ?? ''),
+        currentQueryParams: window.location.search,
+      });
       navigate(url);
     },
     [navigate]

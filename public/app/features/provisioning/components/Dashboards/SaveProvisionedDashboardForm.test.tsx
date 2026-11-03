@@ -1,6 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
+import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { type Dashboard } from '@grafana/schema';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
@@ -365,6 +366,50 @@ describe('SaveProvisionedDashboardForm', () => {
     });
     expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/d/new-dashboard'));
     expect(dashboardWatcher.clearIgnoreSave).toHaveBeenCalled();
+  });
+
+  it('navigates to the new dashboard without repeating the app sub path', async () => {
+    // The router history is created with config.appSubUrl as its basename, so a path that
+    // already carries the sub path ends up as /<subpath>/<subpath>/d/... (#136789).
+    locationUtil.initialize({
+      config: { appSubUrl: '/grafana' } as GrafanaConfig,
+      getTimeRangeForUrl: jest.fn(),
+      getVariablesUrlParams: jest.fn(),
+    });
+
+    try {
+      server.use(
+        http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          capturedRequest = { url: new URL(request.url), body: await request.json() };
+          return saveSuccessResponse(request, 'new-dashboard', 'New Dashboard');
+        })
+      );
+
+      const { user, props } = setup();
+      props.dashboard.getSaveResource = jest.fn().mockReturnValue({
+        apiVersion: 'dashboard.grafana.app/v1alpha1',
+        kind: 'Dashboard',
+        metadata: { generateName: 'p', name: undefined },
+        spec: { title: 'New Dashboard', description: '', panels: [], schemaVersion: 36 },
+      });
+
+      const titleInput = screen.getByRole('textbox', { name: /title/i });
+      await user.clear(titleInput);
+      await user.type(titleInput, 'New Dashboard');
+      await user.click(screen.getByRole('button', { name: /save/i }));
+
+      await waitFor(() => {
+        expect(props.dashboard.saveCompleted).toHaveBeenCalled();
+      });
+      expect(mockNavigate).toHaveBeenCalledWith(expect.stringMatching(/^\/d\/new-dashboard/));
+      expect(mockNavigate).not.toHaveBeenCalledWith(expect.stringContaining('/grafana/'));
+    } finally {
+      locationUtil.initialize({
+        config: { appSubUrl: '' } as GrafanaConfig,
+        getTimeRangeForUrl: jest.fn(),
+        getVariablesUrlParams: jest.fn(),
+      });
+    }
   });
 
   it('uses the repository commit.singleResourceMessageTemplate when the comment is empty', async () => {
