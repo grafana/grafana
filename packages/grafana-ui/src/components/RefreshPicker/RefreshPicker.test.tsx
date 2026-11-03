@@ -95,4 +95,22 @@ describe('RefreshPicker', () => {
       expect(button).not.toBeInTheDocument();
     });
   });
+  describe('run button', () => {
+    it('should use the visible text as its name', () => {
+      render(<RefreshPicker onIntervalChanged={jest.fn()} text="Run" />);
+      expect(screen.getByRole('button', { name: 'Run' })).toBeInTheDocument();
+    });
+    it('should be named Refresh when it has no text', () => {
+      render(<RefreshPicker onIntervalChanged={jest.fn()} />);
+      expect(screen.getByRole('button', { name: 'Refresh' })).toBeInTheDocument();
+    });
+    it('should render only the icon when it has no text', () => {
+      render(<RefreshPicker onIntervalChanged={jest.fn()} />);
+      expect(screen.getByTestId(selectors.components.RefreshPicker.runButtonV2).childElementCount).toBe(1);
+    });
+    it('should use the tooltip as its name when it has no text', () => {
+      render(<RefreshPicker onIntervalChanged={jest.fn()} isLoading tooltip="Cancel all queries" />);
+      expect(screen.getByRole('button', { name: 'Cancel all queries' })).toBeInTheDocument();
+    });
+  });
 });

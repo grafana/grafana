@@ -114,14 +114,20 @@ const RefreshPickerComponent = memo((props: Props) => {
   const tooltipAutoRefreshOff = t('refresh-picker.tooltip.turned-off', 'Auto refresh off');
   const tooltipAutoRefresh = selectedValue.value === '' ? tooltipAutoRefreshOff : tooltipIntervalSelected;
 
+  // Without visible text the button is icon-only, so it still needs an accessible name and a tooltip
+  const refreshLabel = t('refresh-picker.refresh-button.label', 'Refresh');
+  const runButtonAriaLabel = loadingText && isLoading ? loadingText : text || tooltip || refreshLabel;
+  const runButtonTooltip = tooltip ?? (text ? undefined : refreshLabel);
+
   return (
     <ButtonGroup className="refresh-picker">
       <ToolbarButton
-        aria-label={loadingText && isLoading ? loadingText : text}
-        tooltip={tooltip}
+        aria-label={runButtonAriaLabel}
+        tooltip={runButtonTooltip}
         onClick={onRefresh}
         variant={variant}
         icon={isLoading ? 'spinner' : 'sync'}
+        iconOnly={!text && !loadingText}
         style={width ? { width } : undefined}
         data-testid={selectors.components.RefreshPicker.runButtonV2}
       >
