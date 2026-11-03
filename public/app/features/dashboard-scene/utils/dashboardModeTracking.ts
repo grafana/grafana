@@ -7,6 +7,7 @@ export type DashboardModeTrigger =
   | 'manual_change'
   | 'assistant'
   | 'navigation'
+  | 'composer'
   | 'restore';
 
 /** `exited`: left edit mode without discarding. `abandoned`: navigated away or closed the tab while editing. */
@@ -23,6 +24,9 @@ export interface DashboardEditSessionTracking {
   had_unattributed_changes: boolean;
   edit_actors: DashboardEditActors;
   elapsed_ms: number;
+  /** Original action executions during the period; undo/redo do not change these counts. */
+  manual_edits: Array<{ action: string; count: number }>;
+  ai_edits: Array<{ action: string; count: number }>;
 }
 
 export function getEditActors(manual: boolean, assistant: boolean): DashboardEditActors {

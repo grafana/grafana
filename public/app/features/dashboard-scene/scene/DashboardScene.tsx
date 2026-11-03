@@ -1,5 +1,5 @@
 import type * as H from 'history';
-import { isEqual } from 'lodash';
+import { isEqual, isPlainObject } from 'lodash';
 import { type Unsubscribable } from 'rxjs';
 
 import {
@@ -51,7 +51,10 @@ import { getDashboardSceneProfiler } from 'app/features/dashboard/services/Dashb
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
-import { scrollToRow } from 'app/features/dashboard-scene/scene/layout-rows/scrollToRow';
+import {
+  keepRowInViewWhileLayoutSettles,
+  scrollToRow,
+} from 'app/features/dashboard-scene/scene/layout-rows/scrollToRow';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
 import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
@@ -71,8 +74,21 @@ import {
 } from '../../apiserver/types';
 import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { edit } from '../actions/utils/edit';
+import { type ComposerSession } from '../composer/ComposerSession';
+import { clearPendingComposerEnterRequest } from '../composer/composerEntryRequests';
 import { getLifecycleBreadcrumbLabel } from '../lifecycle/lifecycle';
-import { getPendingChangePreview, previewedDashboardUid } from '../lifecycle/pendingChangePreview';
+import {
+  getPendingChangePreview,
+  getPendingChangesHistory,
+  getScenePendingChangePreview,
+  previewedDashboardUid,
+  proposesNewDashboard,
+} from '../lifecycle/pendingChangePreview';
+import {
+  hasUnrecordedPendingChange,
+  recordPendingChange,
+  startRecordingPendingChanges,
+} from '../lifecycle/pendingChangesHistory';
 import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type DashboardChangeInfo, isNewDashboard } from '../saving/shared';
@@ -132,9 +148,12 @@ import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import {
+  dashboardComposerEnabled,
   dashboardModesEnabled,
   getDashboardMode,
   canManuallyEditDashboard,
+  isComposerEditing,
+  isComposerMode,
   type DashboardMode,
 } from './dashboardModes';
 import { dashboardViews, dashboardViewChanged, type DashboardViewRequest } from './dashboardViewRegistry';
@@ -220,6 +239,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   private _sidebarActivation?: CancelActivationHandler;
   private _assistantWrites = 0;
+  /** The open Composer session and the mode to return to when it ends. Set only while mode is `composer`. */
+  private _composer?: { session: ComposerSession; modeBefore: DashboardMode };
   private _modePickerShown = false;
   private _modePickerOpened = false;
   private _editSession?: {
@@ -228,6 +249,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     startedAt: number;
     manualChanges: boolean;
     assistantChanges: boolean;
+    manualEdits: Map<string, number>;
+    aiEdits: Map<string, number>;
   };
 
   public trackModePickerShown() {
@@ -258,6 +281,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       startedAt: performance.now(),
       manualChanges: false,
       assistantChanges: false,
+      manualEdits: new Map(),
+      aiEdits: new Map(),
     };
     DashboardInteractions.editPeriodStarted({
       dashboard_uid: this.state.uid,
@@ -280,6 +305,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // actor recorded came from a manual edit path that doesn't report itself (e.g. legacy grid drags).
     const hadUnattributedChanges =
       !hadManualChanges && !hadAssistantChanges && Boolean(this.state.isDirty) && this.hasActualSaveChangesSafe();
+    const editCounts = (counts: Map<string, number>) =>
+      [...counts].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([action, count]) => ({ action, count }));
     return {
       edit_session_id: this._editSession.id,
       edit_source: this._editSession.source,
@@ -289,6 +316,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       had_unattributed_changes: hadUnattributedChanges,
       edit_actors: getEditActors(hadManualChanges || hadUnattributedChanges, hadAssistantChanges),
       elapsed_ms: Math.round(performance.now() - this._editSession.startedAt),
+      manual_edits: editCounts(this._editSession.manualEdits),
+      ai_edits: editCounts(this._editSession.aiEdits),
     };
   }
 
@@ -338,6 +367,17 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   }
 
+  public recordEditAction(actionId: string) {
+    if (!this.state.isEditing) {
+      return;
+    }
+    this.startEditPeriod(this._assistantWrites > 0 ? 'assistant' : 'user');
+    if (this._editSession) {
+      const counts = this._assistantWrites > 0 ? this._editSession.aiEdits : this._editSession.manualEdits;
+      counts.set(actionId, (counts.get(actionId) ?? 0) + 1);
+    }
+  }
+
   private serializeForChangeTracking(): string | null {
     try {
       return JSON.stringify(this.getSaveModel());
@@ -384,6 +424,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public prepareEditAction() {
+    // In Composer only Assistant writes; one over Viewing switches Composer to Editing first.
+    if (isComposerMode(this.state)) {
+      return this._assistantWrites > 0 && (isComposerEditing(this.state) || this.startComposerEditingForAssistant());
+    }
     if (dashboardModesEnabled() && getDashboardMode(this.state) === 'agent' && this._assistantWrites === 0) {
       return this.setDashboardMode('edit', 'manual_change');
     }
@@ -401,6 +445,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   /** Row slug path from the url that did not match any row yet (e.g. a repeated row not created yet) */
   private _pendingRowScroll?: string;
   private _pendingRowScrollSub?: Unsubscribable;
+  /**
+   * Not tied to activation: url sync runs before the scene activates, and StrictMode deactivates and
+   * re-activates it in development. Following stops by itself once the row leaves the page.
+   */
+  private _stopFollowingRow?: () => void;
 
   /**
    * What initiated the current edit session, e.g. the assistant building a dashboard for the user
@@ -497,9 +546,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     let clearKeyBindings = () => {};
-    if (!config.publicDashboardAccessToken) {
-      clearKeyBindings = setupKeyboardShortcuts(this);
-    }
+    const bindKeys = () => {
+      if (!config.publicDashboardAccessToken) {
+        clearKeyBindings = setupKeyboardShortcuts(this);
+      }
+    };
+    bindKeys();
     const oldDashboardWrapper = new DashboardModelCompatibilityWrapper(this);
 
     // @ts-expect-error
@@ -514,11 +566,33 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         this.applyDashboardMode();
       }
     });
+    // Composer owns the keyboard while active: no dashboard shortcut can edit around it. Leaving the
+    // mode by any path (exit, discard, a manual-edit entry point) closes the session.
+    const composerSubscription = this.subscribeToState((state, previousState) => {
+      const active = isComposerMode(state);
+      if (active === isComposerMode(previousState)) {
+        return;
+      }
+      if (active) {
+        clearKeyBindings();
+        clearKeyBindings = () => {};
+        return;
+      }
+      bindKeys();
+      this.closeComposerSession();
+    });
+
     // Closing the tab or reloading never deactivates the scene, so an open edit period would go unreported.
     const onPageHide = () => this.endEditPeriod('abandoned');
     window.addEventListener('pagehide', onPageHide);
 
     return () => {
+      // Leaving the dashboard ends Composer, and drops a request to enter it that Assistant has not taken
+      // yet; the cached scene must not come back in it.
+      clearPendingComposerEnterRequest();
+      this.exitComposerMode();
+      this.closeComposerSession();
+      composerSubscription.unsubscribe();
       window.removeEventListener('pagehide', onPageHide);
       this.endEditPeriod('abandoned');
       this.cancelPendingViews();
@@ -678,7 +752,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this._editSessionSource = source;
       this._sidebarBeforeViewing = undefined;
 
-      this.state.sidebar.setState({ undoStack: [], redoStack: [] });
+      this.state.sidebar.clearHistory();
+      const preview = getScenePendingChangePreview(this.state);
+      if (preview && getPendingChangesHistory(this.state)) {
+        startRecordingPendingChanges(this, preview.pending.history?.getState().proposed ?? preview.pending.proposed);
+      }
 
       // Capture the discard baseline only once per edit session. A plan's building screen is
       // transient: the build's first write enters edit mode while it is still up, and discarding
@@ -705,10 +783,19 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   };
 
   public setDashboardMode(mode: DashboardMode, trigger: DashboardModeTrigger = 'navigation'): boolean {
+    // Only a Composer session enters Composer (see enterComposerMode); any other mode request leaves it.
+    if (mode === 'composer' && trigger !== 'composer') {
+      return false;
+    }
+    if (mode !== 'composer' && isComposerMode(this.state)) {
+      this.exitComposerMode();
+      if (getDashboardMode(this.state) === mode) {
+        return true;
+      }
+    }
     if (
       !dashboardModesEnabled() ||
       !this.canEditDashboard() ||
-      this.managedResourceCannotBeEdited() ||
       this.state.planning ||
       this.state.editPanel ||
       this.state.editview ||
@@ -746,11 +833,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       );
       return false;
     }
-    if (!this.state.isEditing && mode !== 'view') {
-      this.onEnterEditMode('user', 'restore');
+    // Composer is entered by Assistant, so its edit session and period are Assistant's. Over Viewing it
+    // has none.
+    const source = trigger === 'assistant' || trigger === 'composer' ? 'assistant' : 'user';
+    const startsEditing = mode !== 'view' && (mode !== 'composer' || this.state.composerEditing === true);
+    if (!this.state.isEditing && startsEditing) {
+      this.onEnterEditMode(source, 'restore');
     }
-    if (trigger !== 'restore' && mode !== 'view') {
-      this.startEditPeriod(trigger === 'assistant' ? 'assistant' : 'user');
+    if (trigger !== 'restore' && startsEditing) {
+      this.startEditPeriod(source);
     }
     if (previous === 'edit') {
       this._sidebarBeforeViewing = {
@@ -788,6 +879,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public openFullEditor() {
+    // A manual-edit entry point (edit panel URL, settings) leaves Composer first.
+    this.exitComposerMode();
     if (!this.state.isEditing) {
       this.onEnterEditMode();
     }
@@ -796,6 +889,164 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     } else {
       this.applyDashboardMode();
     }
+  }
+
+  /**
+   * Enters Composer for `session`, over the mode it is entered from; every manual edit surface is hidden.
+   * From Editing it writes inside the edit session, as unsaved changes with native undo. From Viewing it
+   * starts no edit session until the user (`setComposerEditing`) or an Assistant edit switches it to Editing.
+   */
+  public enterComposerMode(session: ComposerSession): boolean {
+    if (this._composer || !dashboardComposerEnabled()) {
+      return false;
+    }
+    const modeBefore = getDashboardMode(this.state);
+    this.setState({ composerEditing: modeBefore === 'edit' });
+    if (!this.setDashboardMode('composer', 'composer')) {
+      this.setState({ composerEditing: undefined });
+      return false;
+    }
+    this._composer = { session, modeBefore };
+    return true;
+  }
+
+  /** Leaves Composer for the mode it is over: Editing, or what it was entered from. Never saves or discards. */
+  public exitComposerMode() {
+    if (!isComposerMode(this.state)) {
+      return;
+    }
+    const modeBefore = this._composer?.modeBefore;
+    const mode: DashboardMode = isComposerEditing(this.state) ? 'edit' : modeBefore === 'agent' ? 'agent' : 'view';
+    // An Assistant edit and its undo leave the dashboard dirty though it matches the saved version.
+    this.clearDirtyIfUnchanged();
+    this.setState({ mode, composerEditing: undefined });
+    this.applyDashboardMode();
+    if (mode === 'edit') {
+      this.restoreSidebarAfterViewing();
+    }
+    this.reportModeChange('composer', 'composer');
+  }
+
+  /** Whether the open Composer session may write: only over Editing. */
+  public canComposerWrite(): boolean {
+    return isComposerEditing(this.state);
+  }
+
+  /**
+   * Switches Composer between Viewing and Editing (the mode picker inside Composer); Composer stays on.
+   * Editing starts the edit session. Viewing stops Composer's writes: while Assistant runs a turn it asks
+   * first, since that stops the turn; then it asks to save or discard unsaved changes.
+   */
+  public setComposerEditing(editing: boolean) {
+    if (!isComposerMode(this.state) || isComposerEditing(this.state) === editing) {
+      return;
+    }
+    if (editing) {
+      if (!this.state.editable || !this.canEditDashboard()) {
+        return;
+      }
+      if (this.state.isEditing) {
+        this.startEditPeriod('user');
+      } else {
+        this.onEnterEditMode('user', 'picker');
+      }
+      this.setState({ composerEditing: true });
+      return;
+    }
+    if (this.getComposerSession()?.getOverlayState().paused) {
+      appEvents.publish(
+        new ShowConfirmModalEvent({
+          title: t('dashboard-scene.dashboard-scene.modal.title.composer-stop-editing', 'Switch to Viewing?'),
+          text: t(
+            'dashboard-scene.dashboard-scene.modal.text.composer-stop-editing',
+            'Assistant is still making changes to this dashboard. Switching to Viewing stops it. Changes it has already made stay.'
+          ),
+          yesText: t('dashboard-scene.dashboard-scene.modal.stop-and-switch', 'Stop and switch'),
+          noText: t('dashboard-scene.dashboard-scene.modal.keep-working', 'Keep working'),
+          onConfirm: () => {
+            // Assistant stops its turn once Composer can no longer write, before any save prompt.
+            this.setState({ composerEditing: false });
+            // The confirm modal hides itself after onConfirm returns, which would also close the save
+            // prompt, so continue once it has closed.
+            queueMicrotask(() => this.offerToSaveComposerEdits(() => {}));
+          },
+        })
+      );
+      return;
+    }
+    this.offerToSaveComposerEdits(() => this.setState({ composerEditing: false }));
+  }
+
+  /**
+   * An Assistant edit while Composer is over Viewing switches it to Editing, with an Assistant edit session,
+   * as an Assistant edit from Viewing starts Agent editing without Composer. False when the user cannot edit.
+   */
+  public startComposerEditingForAssistant(): boolean {
+    if (!isComposerMode(this.state) || !this.state.editable || !this.canEditDashboard()) {
+      return false;
+    }
+    if (!isComposerEditing(this.state)) {
+      if (this.state.isEditing) {
+        this.startEditPeriod('assistant');
+      } else {
+        this.onEnterEditMode('assistant', 'assistant');
+      }
+      this.setState({ composerEditing: true });
+    }
+    return true;
+  }
+
+  /** Asks to save or discard unsaved changes, then runs `done`; Cancel skips it. */
+  private offerToSaveComposerEdits(done: () => void) {
+    this.clearDirtyIfUnchanged();
+    if (!this.state.isDirty || this.managedResourceCannotBeEdited()) {
+      done();
+      return;
+    }
+    this.showUnsavedChangesDialog(done, () => {
+      this.discardChangesAndKeepEditing();
+      done();
+    });
+  }
+
+  /** Drops the dirty flag when the dashboard has no changes to save, by the comparison Save uses. */
+  public clearDirtyIfUnchanged() {
+    if (this.state.isDirty && !hasActualSaveChanges(this)) {
+      this.setState({ isDirty: false });
+    }
+  }
+
+  /**
+   * Turns Composer off (its toolbar button), back to the mode it is over. Ending the session stops a running
+   * turn, so while one runs it asks first: Keep working stays in Composer. Never saves or discards.
+   */
+  public leaveComposer() {
+    if (!this.getComposerSession()?.getOverlayState().paused) {
+      this.exitComposerMode();
+      return;
+    }
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard-scene.dashboard-scene.modal.title.leave-composer', 'Leave Composer?'),
+        text: t(
+          'dashboard-scene.dashboard-scene.modal.text.leave-composer',
+          'Assistant is still making changes to this dashboard. Leaving Composer stops it. Changes it has already made stay.'
+        ),
+        yesText: t('dashboard-scene.dashboard-scene.modal.stop-and-leave', 'Stop and leave'),
+        noText: t('dashboard-scene.dashboard-scene.modal.keep-working', 'Keep working'),
+        onConfirm: () => this.exitComposerMode(),
+      })
+    );
+  }
+
+  public getComposerSession(): ComposerSession | undefined {
+    return isComposerMode(this.state) ? this._composer?.session : undefined;
+  }
+
+  private closeComposerSession() {
+    const composer = this._composer;
+    this._composer = undefined;
+    composer?.session.close();
   }
 
   public applyDashboardMode() {
@@ -933,6 +1184,17 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
+    // Edits that skipped the edit actions, which record each change, are recorded as one here, and
+    // an edit the plugin failed to record is retried. Before exiting: that discards an open panel editor.
+    const history = getPendingChangesHistory(this.state);
+    if (history && !restoreInitialState) {
+      if ((this.state.isDirty && hasActualSaveChanges(this)) || hasUnrecordedPendingChange(this)) {
+        void recordPendingChange(this, history, t('dashboard-scene.lifecycle.edited-dashboard', 'Edit dashboard'));
+      }
+      this.exitEditModeConfirmed(false);
+      return;
+    }
+
     if (!this.state.isDirty || skipConfirm || !hasActualSaveChanges(this) || this.managedResourceCannotBeEdited()) {
       this.exitEditModeConfirmed(restoreInitialState || this.state.isDirty);
       return;
@@ -1014,18 +1276,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       shareView: null,
     });
 
-    locationService.replace(locationUtil.stripBaseFromUrl(url));
+    if (!this.state.meta.isEmbedded) {
+      locationService.replace(locationUtil.stripBaseFromUrl(url));
+    }
 
     if (restoreInitialState) {
       // Restore initial state and disable editing
       const { loadingView, ...initialState } = this._initialState ?? {};
-      this.setState({ ...initialState, isEditing: false, mode: undefined });
+      this.setState({ ...initialState, isEditing: false, mode: undefined, composerEditing: undefined });
       this.restoreSerializerAnnotationsFromInitialState();
       appEvents.publish(new DashboardDiscardedEvent());
       DashboardInteractions.dashboardEditDiscarded();
     } else {
       // Do not restore
-      this.setState({ isEditing: false, mode: undefined });
+      this.setState({ isEditing: false, mode: undefined, composerEditing: undefined });
     }
 
     // if we are in edit panel, we need to onDiscard()
@@ -1037,6 +1301,23 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     // Disable grid dragging
     this.state.body.editModeChanged?.(false);
+  }
+
+  /** Whether edits are recorded in the history of pending changes to a saved dashboard, with no Save. */
+  public recordsToPendingChanges(): boolean {
+    const preview = getScenePendingChangePreview(this.state);
+    return Boolean(getPendingChangesHistory(this.state) && preview && !proposesNewDashboard(preview.pending));
+  }
+
+  /**
+   * The scene as recorded in the pending changes it previews (see pendingChangesHistory.ts): later
+   * edits count as changes from there.
+   */
+  public markPendingChangesRecorded(saveModel: DashboardV2Spec) {
+    if (this.serializer instanceof V2DashboardSerializer) {
+      this.serializer.initialSaveModel = sortedDeepCloneWithoutNulls(saveModel);
+    }
+    this.setState({ isDirty: false });
   }
 
   public canDiscard() {
@@ -1074,6 +1355,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.setState({
       ...restoredState,
       mode,
+      // The baseline was taken when editing started; Composer's Viewing/Editing is now's, not then's.
+      composerEditing: this.state.composerEditing,
       isEditing: true,
       editable: true,
       isDirty: false,
@@ -1177,16 +1460,24 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     saveDashboardTemplate,
     saveAsDashboardTemplate,
     onSaveSuccess,
+    onDismiss,
     recoverToNewBranch,
   }: {
     saveAsCopy?: boolean;
     saveDashboardTemplate?: boolean;
     saveAsDashboardTemplate?: boolean;
     onSaveSuccess?: () => void;
+    onDismiss?: () => void;
     recoverToNewBranch?: RecoverToNewBranch;
     showDiff?: boolean;
   }) {
     if (!this.state.isEditing) {
+      return;
+    }
+
+    // Edits to pending changes are recorded as they're made; Apply saves them to the dashboard.
+    // A new dashboard's are saved as the dashboard, here.
+    if (this.recordsToPendingChanges() && !saveAsCopy && !saveAsDashboardTemplate) {
       return;
     }
 
@@ -1213,6 +1504,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           saveAsDashboardTemplate,
           saveDashboardTemplate,
           onSaveSuccess,
+          onDismiss,
           recoverToNewBranch,
         },
         () => this.hasVariableErrors()
@@ -1466,7 +1758,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     try {
       const stylesCopy: CopiedPanelStyles = JSON.parse(stylesJson);
-      return stylesCopy.panelType === panelType;
+      return (
+        stylesCopy.panelType === panelType &&
+        isPlainObject(stylesCopy.styles) &&
+        (stylesCopy.styles.options === undefined || isPlainObject(stylesCopy.styles.options)) &&
+        (stylesCopy.styles.fieldConfig === undefined || isPlainObject(stylesCopy.styles.fieldConfig))
+      );
     } catch (e) {
       return false;
     }
@@ -1986,8 +2283,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public scrollToRow(drow: string) {
     locationService.partial({ drow: null }, true);
+    this._stopFollowingRow?.();
 
-    if (scrollToRow(drow, this.state.body)) {
+    if (this._scrollToRowAndFollow(drow)) {
       this._pendingRowScroll = undefined;
       return;
     }
@@ -1998,10 +2296,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // NewSceneObjectAddedEvent when done, so keep the slug pending and retry on that event.
     this._pendingRowScroll = drow;
     this._pendingRowScrollSub ??= this.subscribeToEvent(NewSceneObjectAddedEvent, () => {
-      if (this._pendingRowScroll && scrollToRow(this._pendingRowScroll, this.state.body)) {
+      if (this._pendingRowScroll && this._scrollToRowAndFollow(this._pendingRowScroll)) {
         this._pendingRowScroll = undefined;
       }
     });
+  }
+
+  private _scrollToRowAndFollow(drow: string): boolean {
+    const row = scrollToRow(drow, this.state.body);
+    if (!row) {
+      return false;
+    }
+
+    this._stopFollowingRow = keepRowInViewWhileLayoutSettles(row);
+    return true;
   }
 
   getSaveModel(): Dashboard | DashboardV2Spec {

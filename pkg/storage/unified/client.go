@@ -92,6 +92,10 @@ type natsEventSubscriber struct {
 
 func (a natsEventSubscriber) Enabled() bool { return a.sub.Enabled() }
 
+// Started lets the notifier wait for the subscriber service, which the
+// monolith starts after it builds the storage server.
+func (a natsEventSubscriber) Started() <-chan struct{} { return a.sub.Started() }
+
 func (a natsEventSubscriber) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte), onReconnect func()) (resource.Subscription, error) {
 	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler), nats.WithOnReconnect(onReconnect))
 }
@@ -100,6 +104,9 @@ func NatsStorageBackendOptions(cfg *setting.Cfg, publisher nats.Publisher, subsc
 	var opts []sql.StorageBackendOption
 	if publisher != nil {
 		opts = append(opts, sql.WithEventPublisher(publisher))
+		if cfg.NATS.NotificationMetadata {
+			opts = append(opts, sql.WithWatchNotificationMetadata())
+		}
 	}
 	if subscriber == nil {
 		return opts

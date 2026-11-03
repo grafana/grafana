@@ -6,7 +6,9 @@ import {
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
 } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { TableCellDisplayMode } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { TablePanel } from './TablePanel';
@@ -31,6 +33,24 @@ function customConfigItem(path: string) {
 }
 
 describe('table module', () => {
+  afterEach(() => setTestFlags({}));
+
+  it.each([
+    { refresh: false, newFeatures: false, shown: true },
+    { refresh: true, newFeatures: false, shown: true },
+    { refresh: false, newFeatures: true, shown: true },
+    { refresh: true, newFeatures: true, shown: false },
+  ])(
+    'offers the Column filter setting and new override when refresh=$refresh and newFeatures=$newFeatures',
+    ({ refresh, newFeatures, shown }) => {
+      setTestFlags({ [FlagKeys.TableRefresh]: refresh, [FlagKeys.TableRefreshNewFeatures]: newFeatures });
+      const filterable = customConfigItem('filterable');
+
+      expect(filterable.showIf?.({}, undefined)).toBe(shown);
+      expect(filterable.showIfOverride?.({ data: [] })).toBe(shown);
+    }
+  );
+
   it('exports a PanelPlugin rendering TablePanel', () => {
     expect(plugin).toBeInstanceOf(PanelPlugin);
     expect(plugin.panel).toBe(TablePanel);
@@ -70,6 +90,10 @@ describe('table module', () => {
         'styleField',
       ])
     );
+  });
+
+  it('replaces inherited footer calculations with override values', () => {
+    expect(customConfigItem('footer.reducers').arrayOverrideStrategy).toBe('replace');
   });
 
   describe('"Cell value inspect" visibility', () => {

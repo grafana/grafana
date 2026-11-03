@@ -49,10 +49,7 @@ export const getFormFieldsForSilence = (silence: Silence): SilenceFormFields => 
     comment: silence.comment,
     createdBy: isExpired ? contextSrv.user.name : silence.createdBy,
     duration: intervalToAbbreviatedDurationString(interval),
-    isRegex: false,
     matchers: silence.matchers?.map(matcherToMatcherField) || [],
-    matcherName: '',
-    matcherValue: '',
     timeZone: DefaultTimeZone,
   };
 };
@@ -71,9 +68,6 @@ export const getDefaultSilenceFormValues = (partial?: Partial<SilenceFormFields>
     comment: `created ${dateTime().format('YYYY-MM-DD HH:mm')}`,
     createdBy: contextSrv.user.name,
     duration: '2h',
-    isRegex: false,
-    matcherName: '',
-    matcherValue: '',
     timeZone: DefaultTimeZone,
     matchers: [{ name: '', value: '', operator: MatcherOperator.equal }],
     ...partial,

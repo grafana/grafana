@@ -32,7 +32,7 @@ import {
   isPreviewingPendingChanges,
   loadPendingChangePreview,
 } from '../lifecycle/pendingChangePreview';
-import { consumeDashboardModeAfterSave, setDashboardModeAfterSave } from '../saving/dashboardModeAfterSave';
+import { reloadPendingChangesPage } from '../lifecycle/pendingChangesPageReload';
 import { DashboardScene } from '../scene/DashboardScene';
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardInteractions } from '../utils/interactions';
@@ -43,6 +43,7 @@ import {
   DashboardScenePageStateManagerV2,
   UnifiedDashboardScenePageStateManager,
   DASHBOARD_CACHE_TTL,
+  getDashboardScenePageStateManager,
 } from './DashboardScenePageStateManager';
 const fetchMock = jest.fn();
 
@@ -262,51 +263,6 @@ beforeEach(() => {
 });
 
 describe('DashboardScenePageStateManager v1', () => {
-  describe('dashboard mode after save navigation', () => {
-    afterEach(() => {
-      setTestFlags({});
-      consumeDashboardModeAfterSave('');
-    });
-
-    it.each(['view', 'edit', 'agent'] as const)(
-      'restores %s once after saving and starts later Assistant edits in the right mode',
-      async (presentation) => {
-        setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
-        setupLoadDashboardMock({
-          dashboard: { uid: 'saved-copy', title: 'Saved title', editable: true },
-          meta: { canEdit: true },
-        });
-        setDashboardModeAfterSave('saved-copy', presentation);
-        const loader = new DashboardScenePageStateManager({});
-        await loader.loadDashboard({ uid: 'saved-copy', route: DashboardRoutes.Normal });
-        const dashboard = loader.state.dashboard!;
-        dashboard.onEnterEditMode('assistant');
-        expect(dashboard.state.mode).toBe(presentation === 'view' ? 'agent' : presentation);
-        expect(dashboard.state.isEditing).toBe(true);
-        expect(dashboard.getInitialState()?.title).toBe('Saved title');
-        dashboard.setState({ title: 'Later edit' });
-        dashboard.exitEditMode({ skipConfirm: true, restoreInitialState: true });
-        expect(dashboard.state.title).toBe('Saved title');
-
-        loader.clearSceneCache();
-        await loader.loadDashboard({ uid: 'saved-copy', route: DashboardRoutes.Normal });
-        expect(loader.state.dashboard!.state.mode).toBeUndefined();
-        expect(loader.state.dashboard!.state.isEditing).toBeFalsy();
-      }
-    );
-
-    it('drops the handoff when another dashboard is opened first', async () => {
-      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
-      setupLoadDashboardMock({ dashboard: { uid: 'other', editable: true }, meta: { canEdit: true } });
-      setDashboardModeAfterSave('saved-copy', 'view');
-      const loader = new DashboardScenePageStateManager({});
-      await loader.loadDashboard({ uid: 'other', route: DashboardRoutes.Normal });
-      expect(loader.state.dashboard!.state.uid).toBe('other');
-      expect(loader.state.dashboard!.state.isEditing).toBeFalsy();
-      expect(consumeDashboardModeAfterSave('saved-copy')).toBeUndefined();
-    });
-  });
-
   afterEach(() => {
     store.delete(DASHBOARD_FROM_LS_KEY);
 
@@ -2404,7 +2360,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
         expect(scene?.state.meta.canSave).toBe(true);
       });
 
-      // DashboardView embeds it view-only: its banner offers Open to save instead.
+      // The embedded canvas stays view-only; its save drawer owns a temporary edit session.
       it('opens view-only where it is embedded', async () => {
         const { manager } = await loadMissingDashboard(0, DashboardRoutes.Embedded);
 
@@ -3774,3 +3730,20 @@ const v2ProvisionedDashboardResource = {
     upsert: null,
   },
 };
+
+// The scene's modules reach the page's reload through pendingChangesPageReload, which this module sets.
+describe('reloading pending changes through the page', () => {
+  it('loads the dashboard fresh and keeps the requester in edit mode', async () => {
+    const manager = getDashboardScenePageStateManager();
+    const reloaded = { state: { isEditing: false }, onEnterEditMode: jest.fn() };
+    const reload = jest.spyOn(manager, 'reloadDashboardFresh').mockImplementation(async () => {
+      manager.setState({ dashboard: reloaded as unknown as DashboardScene });
+    });
+
+    await reloadPendingChangesPage('abc', true);
+
+    expect(reload).toHaveBeenCalledWith({ uid: 'abc', route: DashboardRoutes.Normal });
+    expect(reloaded.onEnterEditMode).toHaveBeenCalled();
+    reload.mockRestore();
+  });
+});

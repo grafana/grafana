@@ -5,15 +5,17 @@
  * Through the exports declared in package.json we can import this code in core Grafana and the grafana/ui
  * package will continue to be able to access all code when it's published to npm as it's private to the package.
  *
- * During the yarn pack lifecycle the exports[./internal] property is deleted from the package.json
+ * During the pnpm pack lifecycle the exports[./internal] property is deleted from the package.json
  * preventing the code from being importable by plugins or other npm packages making it truly "internal".
  *
  */
 
+export { groupPanelStatusItems } from '../components/PanelChrome/groupPanelStatusItems';
 export { useDragAndDrop } from '../components/DragAndDrop/useDragAndDrop';
 export type { DragAndDropComponents, DragAndDropModule } from '../components/DragAndDrop/useDragAndDrop';
 
 export { UPlotChart } from '../components/uPlot/Plot';
+export { EventsCanvasView } from '../components/uPlot/geometries/EventsCanvas';
 export { type AxisProps, UPLOT_AXIS_FONT_SIZE, timeUnitSize } from '../components/uPlot/config/UPlotAxisBuilder';
 export {
   type Renderers,

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"iter"
 	"net/http"
-	"slices"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -116,6 +115,7 @@ func (m *multiTypeStorage) ListModifiedSince(_ context.Context, key NamespacedRe
 	}
 }
 
+// Construct outside synctest bubbles: the builder cache starts a cleanup goroutine with no stop hook.
 func globalTestServer(t *testing.T, storage StorageBackend, search *mockSearchBackend) *searchServer {
 	t.Helper()
 	server, err := newSearchServer(SearchOptions{
@@ -1368,23 +1368,36 @@ func TestWatchIgnoresWhatTheIndexDoesNotCover(t *testing.T) {
 
 // Keys are taken until the watch is cancelled; the stream itself never ends.
 func TestWatchAppliesKeysUntilCancelled(t *testing.T) {
-	storage := &watchStorage{keys: make(chan *WrittenEvent, 4)}
+	storage := &watchStorage{}
 	storage.live = map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}}
+	// Create the builder cache outside the bubble: its cleanup goroutine has no stop hook.
 	server, idx := repairServer(t, storage, nil)
-	ctx, cancel := context.WithCancel(t.Context())
 
-	storage.keys <- writtenKey(dashboardType("ns"), "dash-a")
-	storage.keys <- writtenKey(dashboardType("ns"), "dash-b")
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		server.runGlobalIndexWatch(ctx)
-	}()
-	require.Eventually(t, func() bool { return len(idx.indexedItems()) == 2 }, 5*time.Second, 10*time.Millisecond)
-	cancel()
-	<-done
+	synctest.Test(t, func(t *testing.T) {
+		storage.keys = make(chan *WrittenEvent, 4)
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
 
-	assert.Equal(t, map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}}, indexedNames(t, idx))
+		storage.keys <- writtenKey(dashboardType("ns"), "dash-a")
+		storage.keys <- writtenKey(dashboardType("ns"), "dash-b")
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			server.runGlobalIndexWatch(ctx)
+		}()
+
+		// Consume the written keys before starting the watch batch deadline.
+		synctest.Wait()
+
+		// Flush the pending key batch and finish applying it to the global index.
+		synctest.Sleep(globalWatchBatchWait)
+
+		require.Len(t, idx.indexedItems(), 2)
+		cancel()
+		<-done
+
+		assert.Equal(t, map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}}, indexedNames(t, idx))
+	})
 }
 
 // Keys arriving shortly after the first go into one batch, so a burst of
@@ -1414,50 +1427,74 @@ func TestWatchBatchesKeysArrivingTogether(t *testing.T) {
 // and while it is disconnected, so every open global index this instance owns is
 // reconciled once the watch is ready and again after a reconnect.
 func TestWatchReconcilesOwnedIndexesWhenReadyAndOnReconnect(t *testing.T) {
-	storage := &watchStorage{keys: make(chan *WrittenEvent)}
+	storage := &watchStorage{}
 	server, _ := repairServer(t, storage, nil)
-	server.search.(*mockSearchBackend).openIndexes = []NamespacedResource{GlobalSearchKey("ns"), dashboardType("ns")}
-	ctx, cancel := context.WithCancel(t.Context())
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		server.runGlobalIndexWatch(ctx)
-	}()
-	require.Eventually(t, func() bool { return server.reconcileQueue.Len() == 1 }, 5*time.Second, 10*time.Millisecond, "queued once ready")
-	assert.Equal(t, GlobalSearchResourceTypes(), storage.watchedTypes())
-	req, err := server.reconcileQueue.Next(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, GlobalSearchKey("ns"), req.NamespacedResource)
-	assert.True(t, req.reconcile)
 
-	storage.reconnect()
-	require.Eventually(t, func() bool { return server.reconcileQueue.Len() == 1 }, 5*time.Second, 10*time.Millisecond, "queued again after a reconnect")
-	cancel()
-	<-done
+	synctest.Test(t, func(t *testing.T) {
+		storage.keys = make(chan *WrittenEvent)
+		server.search.(*mockSearchBackend).openIndexes = []NamespacedResource{GlobalSearchKey("ns"), dashboardType("ns")}
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			server.runGlobalIndexWatch(ctx)
+		}()
+
+		// Settle the global-index watch before inspecting its delivered or queued work.
+		synctest.Wait()
+
+		require.Equal(t, 1, server.reconcileQueue.Len())
+		assert.Equal(t, GlobalSearchResourceTypes(), storage.watchedTypes())
+		req, err := server.reconcileQueue.Next(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, GlobalSearchKey("ns"), req.NamespacedResource)
+		assert.True(t, req.reconcile)
+
+		storage.reconnect()
+
+		// Settle the global-index watch before inspecting its delivered or queued work.
+		synctest.Wait()
+
+		require.Equal(t, 1, server.reconcileQueue.Len())
+		cancel()
+		<-done
+	})
 }
 
 // The bus delivers keys only of the types the watch asked for, so the watch is
 // opened again when the covered types change.
 func TestWatchFollowsCoverageChanges(t *testing.T) {
 	yes := true
-	storage := &watchStorage{keys: make(chan *WrittenEvent)}
+	storage := &watchStorage{}
 	server, _ := repairServer(t, storage, nil)
-	server.globalCoverage = NewGlobalSearchCoverageRegistry(testBuiltinManifests())
-	ctx, cancel := context.WithCancel(t.Context())
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		server.runGlobalIndexWatch(ctx)
-	}()
-	require.Eventually(t, func() bool { return slices.Equal(storage.watchedTypes(), GlobalSearchResourceTypes()) },
-		5*time.Second, 10*time.Millisecond)
 
-	pages := schema.GroupResource{Group: "x.ext.grafana.app", Resource: "pages"}
-	server.globalCoverage.Reload(testBuiltinManifests(), []*app.ManifestData{testGlobalManifest(pages.Group, testGlobalKind("Page", "Pages", &yes))})
-	require.Eventually(t, func() bool { return slices.Contains(storage.watchedTypes(), pages) },
-		5*time.Second, 10*time.Millisecond, "opened again at once, with the added type")
-	cancel()
-	<-done
+	synctest.Test(t, func(t *testing.T) {
+		storage.keys = make(chan *WrittenEvent)
+		server.globalCoverage = NewGlobalSearchCoverageRegistry(testBuiltinManifests())
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			server.runGlobalIndexWatch(ctx)
+		}()
+
+		// Finish opening or replacing the watch before inspecting its covered resource types.
+		synctest.Wait()
+
+		require.Equal(t, GlobalSearchResourceTypes(), storage.watchedTypes())
+
+		pages := schema.GroupResource{Group: "x.ext.grafana.app", Resource: "pages"}
+		server.globalCoverage.Reload(testBuiltinManifests(), []*app.ManifestData{testGlobalManifest(pages.Group, testGlobalKind("Page", "Pages", &yes))})
+
+		// Finish opening or replacing the watch before inspecting its covered resource types.
+		synctest.Wait()
+
+		require.Contains(t, storage.watchedTypes(), pages)
+		cancel()
+		<-done
+	})
 }
 
 // scanCountingStorage counts the rebuild scans, each of which reads the import
@@ -1478,30 +1515,38 @@ func TestCoverageChangeSyncsTypesAtOnce(t *testing.T) {
 	yes := true
 	storage := &scanCountingStorage{reconcileStorage: &reconcileStorage{}}
 	server, idx := repairServer(t, storage, nil)
-	server.search.(*mockSearchBackend).openIndexes = []NamespacedResource{GlobalSearchKey("ns")}
-	server.globalCoverage = NewGlobalSearchCoverageRegistry(testBuiltinManifests())
-	for _, gr := range GlobalSearchResourceTypes() {
-		require.NoError(t, idx.RecordCompletedTypeBuild(gr, TypeBuild{}))
-	}
-	ctx, cancel := context.WithCancel(t.Context())
-	server.bgTaskWg.Add(1)
-	go server.runPeriodicScanForIndexesToRebuild(ctx)
-	t.Cleanup(func() {
-		cancel()
-		server.bgTaskWg.Wait()
+
+	synctest.Test(t, func(t *testing.T) {
+		server.search.(*mockSearchBackend).openIndexes = []NamespacedResource{GlobalSearchKey("ns")}
+		server.globalCoverage = NewGlobalSearchCoverageRegistry(testBuiltinManifests())
+		for _, gr := range GlobalSearchResourceTypes() {
+			require.NoError(t, idx.RecordCompletedTypeBuild(gr, TypeBuild{}))
+		}
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		server.bgTaskWg.Add(1)
+		go server.runPeriodicScanForIndexesToRebuild(ctx)
+		t.Cleanup(func() {
+			cancel()
+			server.bgTaskWg.Wait()
+		})
+
+		// After the scan at start, so only the change can queue the sync.
+
+		// Finish the initial index scan before changing coverage, so only the change queues a sync.
+		synctest.Wait()
+
+		require.Equal(t, int32(1), storage.scans.Load())
+
+		pages := schema.GroupResource{Group: "x.ext.grafana.app", Resource: "pages"}
+		server.globalCoverage.Reload(testBuiltinManifests(), []*app.ManifestData{testGlobalManifest(pages.Group, testGlobalKind("Page", "Pages", &yes))})
+		waitCtx, stop := context.WithTimeout(ctx, 5*time.Second)
+		defer stop()
+		req, err := server.rebuildQueue.Next(waitCtx)
+		require.NoError(t, err, "a type sync is queued")
+		assert.Equal(t, GlobalSearchKey("ns"), req.NamespacedResource)
+		assert.Equal(t, []schema.GroupResource{pages}, req.staleTypes)
 	})
-
-	// After the scan at start, so only the change can queue the sync.
-	require.Eventually(t, func() bool { return storage.scans.Load() == 1 }, 5*time.Second, 10*time.Millisecond)
-
-	pages := schema.GroupResource{Group: "x.ext.grafana.app", Resource: "pages"}
-	server.globalCoverage.Reload(testBuiltinManifests(), []*app.ManifestData{testGlobalManifest(pages.Group, testGlobalKind("Page", "Pages", &yes))})
-	waitCtx, stop := context.WithTimeout(ctx, 5*time.Second)
-	defer stop()
-	req, err := server.rebuildQueue.Next(waitCtx)
-	require.NoError(t, err, "a type sync is queued")
-	assert.Equal(t, GlobalSearchKey("ns"), req.NamespacedResource)
-	assert.Equal(t, []schema.GroupResource{pages}, req.staleTypes)
 }
 
 // blockingTypesIndex holds the first DocumentTypes call, which a type-sync scan
@@ -1556,20 +1601,32 @@ func TestCoverageChangeDuringAScanSyncsTypes(t *testing.T) {
 // A backend that cannot report written keys is followed through its watch
 // stream instead, which is slower but still live.
 func TestWatchFallsBackToTheWatchStream(t *testing.T) {
-	storage := &watchStorage{err: ErrWrittenKeysUnsupported, events: make(chan *WrittenEvent, 1)}
+	storage := &watchStorage{err: ErrWrittenKeysUnsupported}
 	storage.live = map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}}
 	server, idx := repairServer(t, storage, nil)
-	ctx, cancel := context.WithCancel(t.Context())
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		server.runGlobalIndexWatch(ctx)
-	}()
 
-	storage.events <- &WrittenEvent{Type: resourcepb.WatchEvent_MODIFIED, Key: writtenKey(dashboardType("ns"), "dash-a").Key}
-	require.Eventually(t, func() bool { return len(idx.indexedItems()) == 1 }, 5*time.Second, 10*time.Millisecond)
-	cancel()
-	<-done
+	synctest.Test(t, func(t *testing.T) {
+		storage.events = make(chan *WrittenEvent, 1)
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			server.runGlobalIndexWatch(ctx)
+		}()
+
+		storage.events <- &WrittenEvent{Type: resourcepb.WatchEvent_MODIFIED, Key: writtenKey(dashboardType("ns"), "dash-a").Key}
+
+		// Consume the written keys before starting the watch batch deadline.
+		synctest.Wait()
+
+		// Flush the pending key batch and finish applying it to the global index.
+		synctest.Sleep(globalWatchBatchWait)
+
+		require.Len(t, idx.indexedItems(), 1)
+		cancel()
+		<-done
+	})
 }
 
 func TestSearchDoesNotWaitForGlobalIndex(t *testing.T) {
@@ -1691,21 +1748,30 @@ func TestWatchToleratesAnExtraReadResponse(t *testing.T) {
 
 // A stream that never sends does not hold up shutdown.
 func TestWatchStopsOnAnIdleStreamWhenCancelled(t *testing.T) {
-	storage := &watchStorage{keys: make(chan *WrittenEvent)}
+	storage := &watchStorage{}
 	server := globalTestServer(t, storage, &mockSearchBackend{})
-	ctx, cancel := context.WithCancel(t.Context())
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		server.runGlobalIndexWatch(ctx)
-	}()
-	require.Eventually(t, storage.onReconnectSet, 5*time.Second, 10*time.Millisecond)
-	cancel()
-	select {
-	case <-done:
-	case <-time.After(5 * time.Second):
-		t.Fatal("still waiting for a key after cancellation")
-	}
+
+	synctest.Test(t, func(t *testing.T) {
+		storage.keys = make(chan *WrittenEvent)
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			server.runGlobalIndexWatch(ctx)
+		}()
+
+		// Establish the idle watch before cancelling it to exercise shutdown while awaiting a key.
+		synctest.Wait()
+
+		require.True(t, storage.onReconnectSet())
+		cancel()
+		select {
+		case <-done:
+		case <-time.After(5 * time.Second):
+			t.Fatal("still waiting for a key after cancellation")
+		}
+	})
 }
 
 var playlistsGroupResource = schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}
@@ -1781,20 +1847,26 @@ func TestStartupSyncsTheTypesOfAReusedGlobalIndex(t *testing.T) {
 		listRVs: map[NamespacedResource]int64{folderType("ns"): 50},
 	}}
 	server, idx := repairServer(t, storage, nil)
-	server.search.(*mockSearchBackend).openIndexes = []NamespacedResource{GlobalSearchKey("ns")}
-	// Written when only dashboards were covered.
-	idx.completedTypeBuilds = map[schema.GroupResource]TypeBuild{dashboardsGroupResource: {}}
-	idx.buildInfo = IndexBuildInfo{BuildTime: time.Now(), Features: CurrentIndexFeatures(), SearchFieldsHash: GlobalSearchFieldsHash()}
 
-	require.NoError(t, server.init(t.Context()))
-	t.Cleanup(server.stop)
+	synctest.Test(t, func(t *testing.T) {
+		server.search.(*mockSearchBackend).openIndexes = []NamespacedResource{GlobalSearchKey("ns")}
+		// Written when only dashboards were covered.
+		idx.completedTypeBuilds = map[schema.GroupResource]TypeBuild{dashboardsGroupResource: {}}
+		idx.buildInfo = IndexBuildInfo{BuildTime: time.Now(), Features: CurrentIndexFeatures(), SearchFieldsHash: GlobalSearchFieldsHash()}
 
-	require.Eventually(t, func() bool {
-		builds, err := idx.CompletedTypeBuilds()
-		require.NoError(t, err)
-		_, ok := builds[foldersGroupResource]
-		return ok
-	}, 5*time.Second, 10*time.Millisecond, "folders were synced without waiting for the scan")
+		require.NoError(t, server.init(t.Context()))
+		t.Cleanup(server.stop)
+
+		// Finish the startup type sync before checking that the reused index includes folders.
+		synctest.Wait()
+
+		{
+			builds, err := idx.CompletedTypeBuilds()
+			require.NoError(t, err)
+			_, ok := builds[foldersGroupResource]
+			require.True(t, ok)
+		}
+	})
 }
 
 func TestBackgroundStartupSyncsTypesAfterTheInitialScan(t *testing.T) {
@@ -1833,10 +1905,15 @@ func TestBackgroundStartupSyncsTypesAfterTheInitialScan(t *testing.T) {
 				}
 				require.NoError(t, server.init(t.Context()))
 				defer server.stop()
+
+				// Finish the initial scan while the global build remains blocked, so it cannot queue the later type sync.
 				synctest.Wait()
+
 				require.Nil(t, backend.GetIndex(GlobalSearchKey("ns")), "the initial scan must finish before this index opens")
 				storage.lastImportTimes = importedAt(importTuesday, time.Time{})
 				close(release)
+
+				// Finish the released global build and its deferred startup type sync before reading completed types.
 				synctest.Wait()
 
 				builds, err := idx.CompletedTypeBuilds()
@@ -1892,8 +1969,9 @@ func TestGlobalSearchIsUnavailableWhileTheIndexIsDisabled(t *testing.T) {
 	server.globalIndexEnabled = false
 
 	rsp, err := server.Search(t.Context(), &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "ns", Group: GlobalSearchGroup, Resource: GlobalSearchResource}},
-		Limit:   10,
+		Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "ns", Group: GlobalSearchGroup, Resource: GlobalSearchResource}},
+		Limit:        10,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, rsp.Error)
@@ -2105,22 +2183,30 @@ func TestReconcileWorkerRunsQueuedReconciles(t *testing.T) {
 		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
 	}}
 	server, idx := repairServer(t, storage, nil)
-	idx.buildInfo = IndexBuildInfo{BuildTime: time.Now(), Features: CurrentIndexFeatures(), SearchFieldsHash: GlobalSearchFieldsHash()}
-	ctx, cancel := context.WithCancel(t.Context())
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		server.runGlobalIndexReconciler(ctx)
-	}()
 
-	server.queueReconcile(GlobalSearchKey("ns"))
-	require.Eventually(t, func() bool {
-		at, err := idx.ReconciledAt()
-		return err == nil && !at.IsZero()
-	}, 5*time.Second, 10*time.Millisecond)
-	assert.Equal(t, map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}}, indexedNames(t, idx))
-	cancel()
-	<-done
+	synctest.Test(t, func(t *testing.T) {
+		idx.buildInfo = IndexBuildInfo{BuildTime: time.Now(), Features: CurrentIndexFeatures(), SearchFieldsHash: GlobalSearchFieldsHash()}
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			server.runGlobalIndexReconciler(ctx)
+		}()
+
+		server.queueReconcile(GlobalSearchKey("ns"))
+
+		// Finish the queued reconcile before inspecting its checkpoint and indexed documents.
+		synctest.Wait()
+
+		{
+			at, err := idx.ReconciledAt()
+			require.True(t, err == nil && !at.IsZero())
+		}
+		assert.Equal(t, map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}}, indexedNames(t, idx))
+		cancel()
+		<-done
+	})
 }
 
 // A reconcile that arrives while the index is being rebuilt is set aside, and

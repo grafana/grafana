@@ -36,6 +36,7 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveDashboardTemplate?: boolean;
   showVariablesWarning?: boolean;
   onSaveSuccess?: () => void;
+  onDismiss?: () => void;
   recoverToNewBranch?: RecoverToNewBranch;
   /** Where a new save at the root of a folderless repository goes; unset means wherever the lookup says */
   saveTarget?: SaveTarget;
@@ -63,6 +64,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
       meta: shouldRestoreMeta ? (dashboard.getInitialState()?.meta ?? dashboard.state.meta) : dashboard.state.meta,
     });
     dashboard.closeModal();
+    this.state.onDismiss?.();
   };
 
   public onToggleSaveTimeRange = () => {
@@ -205,17 +207,19 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
       {/* The form stays mounted (hidden) while the Changes tab is open so its field state survives tab switches */}
       <Box display={showDiff ? 'none' : 'flex'} direction="column" height="100%">
         <ScrollContainer showScrollIndicators>
-          <Stack direction="column" gap={2}>
-            {isNewSave && <FolderDeadEndAlert {...view.lookup} />}
-            {renderForm()}
-            {view.canChooseTarget && (
-              <SaveTargetSwitch
-                resource="dashboard"
-                target={target}
-                onChange={(saveTarget) => model.setState({ saveTarget })}
-              />
-            )}
-          </Stack>
+          <Box padding={0.5}>
+            <Stack direction="column" gap={2}>
+              {isNewSave && <FolderDeadEndAlert {...view.lookup} />}
+              {renderForm()}
+              {view.canChooseTarget && (
+                <SaveTargetSwitch
+                  resource="dashboard"
+                  target={target}
+                  onChange={(saveTarget) => model.setState({ saveTarget })}
+                />
+              )}
+            </Stack>
+          </Box>
         </ScrollContainer>
       </Box>
       {showDiff && changesCount === 0 && (

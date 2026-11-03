@@ -18,11 +18,12 @@ import { useMetricCatalog } from './data/useMetricCatalog';
 import { useLoadMoreSentinel } from './hooks/useLoadMoreSentinel';
 import { useVisibleBatch } from './hooks/useVisibleBatch';
 import {
+  trackSignalExplorerAddToQueryClicked,
   trackSignalExplorerMetricExpanded,
   trackSignalExplorerMetricsMetadataViewed,
   trackSignalExplorerSearchPerformed,
 } from './tracking';
-import { type MetricSelection } from './types';
+import { type AddToQueryItemType, type MetricSelection } from './types';
 
 /** How long the row count has to hold still before the screen reader status announces it. */
 export const STATUS_SETTLE_MS = 300;
@@ -137,8 +138,15 @@ export const MetricsList = memo(function MetricsList({
   );
   const codeMode = (editorMode ?? defaultEditor) === 'code';
   const addToQuery = useCallback(
-    (text: string, kind: ExprTextKind) => onAddToQuery?.(refId, text, kind),
-    [onAddToQuery, refId]
+    (text: string, itemType: AddToQueryItemType) => {
+      trackSignalExplorerAddToQueryClicked({
+        data_source_type: dsType,
+        stacked_queries_count: stackedQueriesCount,
+        item_type: itemType,
+      });
+      onAddToQuery?.(refId, text, itemType === 'value' ? 'value' : 'name');
+    },
+    [onAddToQuery, refId, dsType, stackedQueriesCount]
   );
   const rowAddToQuery = onAddToQuery && codeMode ? addToQuery : undefined;
 

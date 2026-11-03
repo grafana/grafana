@@ -303,15 +303,9 @@ func globalSources(namespace string, types []schema.GroupResource) []NamespacedR
 }
 
 // GlobalSearchFieldDefinitions returns the searchable fields of a
-// namespace-wide index. It starts from the standard set, because such an index
-// holds nothing resource-specific, and differs in two ways:
-//
-//   - The resource type of each document is filterable, so a query can pick out
-//     one type from an index holding several.
-//   - created and updated are filterable and sortable, so results of different
-//     types can be ordered by time. The per-resource indexes cannot have this
-//     yet: indexing those fields changes the index-affecting hash and would
-//     rebuild every index in the deployment.
+// namespace-wide index: the standard set, because such an index holds nothing
+// resource-specific, plus the resource type of each document, so a query can
+// pick out one type from an index holding several.
 func GlobalSearchFieldDefinitions() []SearchFieldDefinition {
 	standard := StandardSearchFieldDefinitions()
 	out := make([]SearchFieldDefinition, 0, len(standard)+1)
@@ -323,13 +317,7 @@ func GlobalSearchFieldDefinitions() []SearchFieldDefinition {
 		Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityFacet},
 		Description:  "Resource type of the document, as {group}/{resource}.",
 	})
-	for _, def := range standard {
-		if def.Name == SEARCH_FIELD_CREATED || def.Name == SEARCH_FIELD_UPDATED {
-			def.Capabilities = append(slices.Clone(def.Capabilities), SearchCapabilityFilter, SearchCapabilitySort)
-		}
-		out = append(out, def)
-	}
-	return out
+	return append(out, standard...)
 }
 
 // IndexFieldDefinitions returns the field sets an index declares beyond its own

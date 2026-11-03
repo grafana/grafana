@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { type ExtensionInfo, PluginExtensionTypes } from '@grafana/data';
 import { config, usePluginComponents } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type AddedComponentRegistryItem } from 'app/features/plugins/extensions/registry/AddedComponentsRegistry';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
@@ -9,7 +10,7 @@ import { ExtensionSidebar } from './ExtensionSidebar';
 import { type ExtensionSidebarContextType, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import { setExtensionSidebarPresentation } from './extensionSidebarLayout';
 import { getComponentIdFromComponentMeta } from './extensionSidebarUtils';
-import { useFloatingDrag } from './useFloatingDrag';
+import { useDockedDrag, useFloatingDrag } from './useFloatingDrag';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -29,11 +30,13 @@ jest.mock('./extensionSidebarLayout', () => ({
 jest.mock('./useFloatingDrag', () => ({
   ...jest.requireActual('./useFloatingDrag'),
   useFloatingDrag: jest.fn(),
+  useDockedDrag: jest.fn(),
 }));
 
 const mockUsePluginComponents = jest.mocked(usePluginComponents);
 const mockUseExtensionSidebarContext = jest.mocked(useExtensionSidebarContext);
 const mockUseFloatingDrag = jest.mocked(useFloatingDrag);
+const mockUseDockedDrag = jest.mocked(useDockedDrag);
 
 const MockComponent = ({ extensionSidebarPresentation }: { extensionSidebarPresentation?: string }) => (
   <div data-testid="working-component" data-presentation={extensionSidebarPresentation}>
@@ -83,6 +86,7 @@ describe('ExtensionSidebar', () => {
     jest.clearAllMocks();
     config.buildInfo.env = 'development';
     mockUseFloatingDrag.mockReturnValue(null);
+    mockUseDockedDrag.mockReturnValue(null);
   });
 
   afterEach(() => {
@@ -223,15 +227,72 @@ describe('ExtensionSidebar', () => {
     });
 
     it('shows the collapse preview where the drag puts it', () => {
-      mockUseFloatingDrag.mockReturnValue({ action: 'collapse', top: 700, left: 300, width: 400, height: 56 });
+      mockUseFloatingDrag.mockReturnValue({ action: 'collapse', top: 588, left: 300, width: 400, height: 168 });
 
       render(<ExtensionSidebar />);
 
       expect(screen.getByTestId('extension-sidebar-collapse-preview')).toHaveStyle({
-        top: '700px',
+        top: '588px',
         left: '300px',
         width: '400px',
-        height: '56px',
+        height: '168px',
+      });
+    });
+  });
+
+  describe('while docked', () => {
+    const floatingPluginId = 'grafana-assistant-app';
+    const FloatingCapable = (props: { extensionSidebarPresentation?: string }) => <MockComponent {...props} />;
+    FloatingCapable.meta = { ...MockComponent.meta, pluginId: floatingPluginId };
+
+    const renderDocked = (component: typeof MockComponent | typeof FloatingCapable) => {
+      const item: AddedComponentRegistryItem = {
+        ...addedComponentRegistryItemMock,
+        pluginId: component.meta.pluginId,
+        component,
+      };
+      mockUsePluginComponents.mockReturnValue({
+        components: [createComponentWithMeta(item, extensionPointId)],
+        isLoading: false,
+      });
+      mockUseExtensionSidebarContext.mockReturnValue({
+        ...extensionSidebarContextMock,
+        dockedComponentId: getComponentIdFromComponentMeta(component.meta.pluginId, addedComponentConfigMock.title),
+      });
+      render(<ExtensionSidebar />);
+    };
+
+    afterEach(() => setTestFlags({}));
+
+    it('lets a plugin that can float be dragged out to float', () => {
+      setTestFlags({ 'grafana.extensionSidebarFloating': true });
+      renderDocked(FloatingCapable);
+
+      expect(mockUseDockedDrag.mock.lastCall?.[0]).toBeInstanceOf(HTMLElement);
+      expect(mockUseDockedDrag.mock.lastCall?.[1]).toBe(480);
+      mockUseDockedDrag.mock.lastCall?.[2]();
+      expect(setExtensionSidebarPresentation).toHaveBeenCalledWith('floating');
+    });
+
+    it('offers no drag while the sidebar cannot float, or for a plugin that cannot', () => {
+      renderDocked(FloatingCapable);
+      expect(mockUseDockedDrag.mock.lastCall?.[0]).toBeNull();
+
+      setTestFlags({ 'grafana.extensionSidebarFloating': true });
+      renderDocked(MockComponent);
+      expect(mockUseDockedDrag.mock.lastCall?.[0]).toBeNull();
+    });
+
+    it('shows the float preview where the drag puts it', () => {
+      mockUseDockedDrag.mockReturnValue({ action: 'float', top: 216, left: 60, width: 480, height: 168 });
+      setTestFlags({ 'grafana.extensionSidebarFloating': true });
+      renderDocked(FloatingCapable);
+
+      expect(screen.getByTestId('extension-sidebar-float-preview')).toHaveStyle({
+        top: '216px',
+        left: '60px',
+        width: '480px',
+        height: '168px',
       });
     });
   });

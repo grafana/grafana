@@ -370,3 +370,32 @@ func TestSQLCommandLabelNamedLikeGeneratedColumn(t *testing.T) {
 		}, got)
 	})
 }
+
+func TestSQLCommandTableInputWithRepeatedColumnNames(t *testing.T) {
+	input := data.Frames{
+		data.NewFrame("",
+			data.NewField("host", nil, []string{"a", "a", "b"}),
+			data.NewField("host", nil, []string{"x", "y", "x"}),
+			data.NewField("value", nil, []float64{1, 2, 3}),
+		),
+	}
+	converted, _ := handleSqlInput(t.Context(), &testTracer{}, "A", map[string]struct{}{"B": {}}, "fakeDS", input)
+	require.NoError(t, converted.Error)
+
+	cmd, err := NewSQLCommand(t.Context(), log.NewNullLogger(), "B", "alerting", "SELECT host, host_2, value FROM A", 0, 0, 0)
+	require.NoError(t, err)
+	res, err := cmd.Execute(t.Context(), time.Now(), mathexp.Vars{"A": converted}, tracing.NewNoopTracerService(), metrics.NewTestMetrics())
+	require.NoError(t, err)
+	require.NoError(t, res.Error)
+
+	got := map[string]float64{}
+	for _, val := range res.Values {
+		n := val.(mathexp.Number)
+		got[n.GetLabels().String()] = *n.GetFloat64Value()
+	}
+	require.Equal(t, map[string]float64{
+		data.Labels{"host": "a", "host_2": "x"}.String(): 1,
+		data.Labels{"host": "a", "host_2": "y"}.String(): 2,
+		data.Labels{"host": "b", "host_2": "x"}.String(): 3,
+	}, got)
+}

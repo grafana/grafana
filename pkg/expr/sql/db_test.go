@@ -445,6 +445,93 @@ func (ts *testSpan) AddEvent(name string, options ...trace.EventOption) {
 func (ts *testSpan) RecordError(err error, options ...trace.EventOption) {
 }
 
+func TestQueryFramesRepeatedColumnNames(t *testing.T) {
+	db := DB{}
+
+	run := func(t *testing.T, query string, input *data.Frame) *data.Frame {
+		t.Helper()
+		frame, err := db.QueryFrames(t.Context(), &testTracer{}, "B", query, []*data.Frame{input.SetRefID("A")})
+		require.NoError(t, err)
+		return frame
+	}
+
+	t.Run("SELECT * suffixes the second host column", func(t *testing.T) {
+		input := data.NewFrame("",
+			data.NewField("host", nil, []string{"a", "b"}),
+			data.NewField("host", nil, []string{"c", "d"}),
+		)
+		want := data.NewFrame("B",
+			data.NewField("host", nil, []string{"a", "b"}),
+			data.NewField("host_2", nil, []string{"c", "d"}),
+		).SetRefID("B")
+		if diff := cmp.Diff(want, run(t, "SELECT * FROM A", input), data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Result mismatch (-want +got):%s\n", diff)
+		}
+	})
+
+	t.Run("both host columns can be selected by name", func(t *testing.T) {
+		input := data.NewFrame("",
+			data.NewField("host", nil, []string{"a", "b"}),
+			data.NewField("host", nil, []string{"c", "d"}),
+		)
+		want := data.NewFrame("B",
+			data.NewField("host_2", nil, []string{"d"}),
+			data.NewField("host", nil, []string{"b"}),
+		).SetRefID("B")
+		got := run(t, "SELECT host_2, host FROM A WHERE host_2 = 'd'", input)
+		if diff := cmp.Diff(want, got, data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Result mismatch (-want +got):%s\n", diff)
+		}
+	})
+
+	t.Run("names that differ only by case are repeats", func(t *testing.T) {
+		input := data.NewFrame("",
+			data.NewField("host", nil, []string{"a"}),
+			data.NewField("Host", nil, []string{"b"}),
+		)
+		want := data.NewFrame("B",
+			data.NewField("host", nil, []string{"a"}),
+			data.NewField("Host_2", nil, []string{"b"}),
+		).SetRefID("B")
+		if diff := cmp.Diff(want, run(t, "SELECT host, Host_2 FROM A", input), data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Result mismatch (-want +got):%s\n", diff)
+		}
+	})
+
+	t.Run("a suffix the frame already uses is skipped", func(t *testing.T) {
+		input := data.NewFrame("",
+			data.NewField("host", nil, []string{"a"}),
+			data.NewField("host", nil, []string{"b"}),
+			data.NewField("HOST_2", nil, []string{"c"}),
+		)
+		want := data.NewFrame("B",
+			data.NewField("host", nil, []string{"a"}),
+			data.NewField("host_3", nil, []string{"b"}),
+			data.NewField("HOST_2", nil, []string{"c"}),
+		).SetRefID("B")
+		if diff := cmp.Diff(want, run(t, "SELECT * FROM A", input), data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Result mismatch (-want +got):%s\n", diff)
+		}
+	})
+}
+
+func TestSchemaFromFrameUniqueNames(t *testing.T) {
+	frame := data.NewFrame("",
+		data.NewField("host", nil, []string{}),
+		data.NewField("Host", nil, []string{}),
+		data.NewField("host_2", nil, []string{}),
+		data.NewField("value", nil, []float64{}),
+		data.NewField("host", nil, []string{}),
+	).SetRefID("A")
+
+	names := make([]string, 0, len(frame.Fields))
+	for _, col := range SchemaFromFrame(frame) {
+		names = append(names, col.Name)
+	}
+	require.Equal(t, []string{"host", "Host_3", "host_2", "value", "host_4"}, names)
+	require.Equal(t, "Host", frame.Fields[1].Name, "the input frame must not change")
+}
+
 func TestQueryFrames_EnumField(t *testing.T) {
 	enumConfig := &data.FieldConfig{TypeConfig: &data.FieldTypeConfig{
 		Enum: &data.EnumFieldConfig{Text: []string{"Unknown", "Up", "Down"}},

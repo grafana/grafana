@@ -18,6 +18,7 @@ interface HeaderCellMenuProps {
   displayName: string;
   /** Whether this column currently has an active filter — swaps the menu item's label to reflect it. */
   hasActiveFilter?: boolean;
+  isFilterOpen?: boolean;
   /** Opens the column's filter popup, anchored to the passed element. */
   onOpenFilter: (anchor: HTMLButtonElement | null) => void;
   onHideColumn?: () => void;
@@ -36,6 +37,7 @@ export function HeaderCellMenu({
   displayName,
   groups,
   hasActiveFilter,
+  isFilterOpen,
   onOpenFilter,
   onHideColumn,
   canHideColumn,
@@ -47,7 +49,10 @@ export function HeaderCellMenu({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const styles = useStyles2(getStyles);
 
-  const menuLabel = t('grafana-ui.table.column-menu-label', 'Column options for {{name}}', { name: displayName });
+  const menuLabel = t('grafana-ui.table.column-menu-label', 'Column options for {{name}}', {
+    name: displayName,
+    interpolation: { escapeValue: false },
+  });
 
   const overlay = useCallback(
     () => (
@@ -123,6 +128,7 @@ export function HeaderCellMenu({
       <Dropdown overlay={overlay} placement="bottom-end">
         <IconButton
           className={styles.button}
+          data-filter-open={isFilterOpen || undefined}
           name="ellipsis-v"
           size="sm"
           aria-label={menuLabel}
@@ -156,7 +162,11 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
     // Scoped to `.table-ng-header-cell` (HeaderCell's own root), not bare `.rdg-cell`: in a nested
     // table, a column's header cell also sits inside the outer grid's `.rdg-cell`, so `:hover` on
     // bare `.rdg-cell` would reveal every column's menu in the nested table at once.
-    '.table-ng-header-cell:hover &, &:focus-visible, &[aria-expanded="true"]': {
+    '.table-ng-header-cell:hover &, &:focus-visible, &[aria-expanded="true"], &[data-filter-open="true"]': {
+      opacity: 1,
+    },
+    '&[data-filter-open="true"]:before': {
+      backgroundColor: theme.colors.action.hover,
       opacity: 1,
     },
   }),

@@ -10,6 +10,8 @@ export interface ValueSetOptions {
   mode?: 'raw' | 'display';
   displayConfig?: FieldConfig;
   timeZone?: string;
+  /** When specified, match null/undefined independently of formatted values. */
+  includeMissing?: boolean;
 }
 
 const fallbackTheme = createTheme();
@@ -26,6 +28,9 @@ export const valueSetMatcher: ValueMatcherInfo<ValueSetOptions> = {
     const displays = new WeakMap<Field, ReturnType<typeof getDisplayProcessor>>();
     return (index, field) => {
       const value = field.values[index];
+      if (options.includeMissing !== undefined && value == null) {
+        return options.includeMissing;
+      }
       if (options.mode !== 'display') {
         return selected.has(value);
       }
@@ -43,5 +48,5 @@ export const valueSetMatcher: ValueMatcherInfo<ValueSetOptions> = {
       return selected.has(formattedValueToString(display(value)));
     };
   },
-  getOptionsDisplayText: (options) => `Is in set: ${options.values.join(', ')}`,
+  getOptionsDisplayText: (options) => `Is in set: ${Array.isArray(options.values) ? options.values.join(', ') : ''}`,
 };

@@ -31,8 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	sqlBackend "github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
@@ -610,15 +608,8 @@ func TestIntegrationRun_SQLiteRetryReleasesLock(t *testing.T) {
 		kvStore, err := kv.NewSQLKV(resDB.SqlDB(), resDB.DriverName())
 		require.NoError(t, err)
 
-		rvMgr, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
-			Dialect: sqltemplate.SQLite,
-			DB:      resDB,
-		})
-		require.NoError(t, err)
-
 		backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
 			KvStore:                kvStore,
-			RvManager:              rvMgr,
 			DBKeepAlive:            eDB,
 			DisableStorageServices: true,
 			Log:                    logging.DefaultLogger.With("logger", "test.kv.retry"),
@@ -754,6 +745,7 @@ func openTestSearchIndex(t *testing.T, client resource.ResourceClient, gr schema
 				Resource:  gr.Resource,
 			},
 		},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
 	require.NoError(t, err)
 	require.Nil(t, searchResp.Error)

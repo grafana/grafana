@@ -7,6 +7,7 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel"
 	"golang.org/x/sync/singleflight"
 
@@ -39,16 +40,17 @@ type MigratedPermissions interface {
 }
 
 type Loader struct {
-	store    permissionStore
-	catalog  *RoleCatalog
-	actions  ac.ActionResolver
-	cache    *localcache.CacheService
-	cfg      *setting.Cfg
-	features featuremgmt.FeatureToggles
-	license  licensing.Licensing
-	zanzana  MigratedPermissions
-	flight   singleflight.Group
-	log      log.Logger
+	store             permissionStore
+	catalog           *RoleCatalog
+	actions           ac.ActionResolver
+	cache             *localcache.CacheService
+	cfg               *setting.Cfg
+	features          featuremgmt.FeatureToggles
+	openFeatureClient *openfeature.Client
+	license           licensing.Licensing
+	zanzana           MigratedPermissions
+	flight            singleflight.Group
+	log               log.Logger
 }
 
 func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver,
@@ -56,15 +58,16 @@ func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver
 	license licensing.Licensing, zanzana MigratedPermissions,
 ) *Loader {
 	return &Loader{
-		store:    permissionStore{sql},
-		catalog:  catalog,
-		actions:  actionResolver,
-		cache:    cache,
-		cfg:      cfg,
-		features: features,
-		license:  license,
-		zanzana:  zanzana,
-		log:      log.New("authz.legacypermissions"),
+		store:             permissionStore{sql},
+		catalog:           catalog,
+		actions:           actionResolver,
+		cache:             cache,
+		cfg:               cfg,
+		features:          features,
+		openFeatureClient: openfeature.NewDefaultClient(),
+		license:           license,
+		zanzana:           zanzana,
+		log:               log.New("authz.legacypermissions"),
 	}
 }
 
@@ -97,7 +100,7 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 	var err error
 	if !cached {
 		permissions, err = l.uncached(ctx, user, settings)
-	} else if settings.enforcementEnabled || options.ReloadCache {
+	} else if settings.enforcementEnabled || options.ReloadCache || isPermissionShadow(ctx) {
 		permissions, err = l.assemble(ctx, user, options, settings)
 	} else {
 		value, loadErr, _ := l.flight.Do(user.GetCacheKey(), func() (any, error) {
@@ -114,6 +117,12 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 	if err != nil {
 		return nil, err
 	}
+	if cached && !settings.enforcementEnabled {
+		// Catalog grants must stay outside caches and singleflight: a request
+		// joining an older SQL assembly still needs the current complete batch.
+		static := l.catalog.Permissions(ac.GetOrgRoles(user)...)
+		permissions = append(static, permissions...)
+	}
 	// Enterprise's unlicensed fallback has no Zanzana resolver. OSS itself
 	// still merges Zanzana grants even though enforcement is always disabled.
 	if l.zanzana == nil || (!settings.enforcementEnabled && l.license.Edition() != licensing.OpenSourceEdition) {
@@ -124,7 +133,7 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 	if !cached || options.SkipZanzanaCache {
 		migrated, err = resolve()
 	} else {
-		migrated, err = l.cached(ac.GetZanzanaUserPermissionCacheKey(user), options, resolve)
+		migrated, err = l.cached(ctx, ac.GetZanzanaUserPermissionCacheKey(user), options, resolve)
 	}
 	if err != nil {
 		l.log.Warn("could not get zanzana user permissions, using legacy only", "error", err)
@@ -179,7 +188,7 @@ func (l *Loader) uncached(ctx context.Context, user identity.Requester, p loadSe
 func (l *Loader) assemble(ctx context.Context, user identity.Requester, options ac.Options, p loadSettings) ([]ac.Permission, error) {
 	var permissions []ac.Permission
 	for _, role := range ac.GetOrgRoles(user) {
-		basic, err := l.cached(ac.GetBasicRolePermissionCacheKey(role, user.GetOrgID()), options, func() ([]ac.Permission, error) {
+		load := func() ([]ac.Permission, error) {
 			q := queryFor(user.GetOrgID(), p)
 			q.Roles = []string{role}
 			// Both old basic-role stores drop this flag; preserve that asymmetry.
@@ -188,12 +197,19 @@ func (l *Loader) assemble(ctx context.Context, user identity.Requester, options 
 			if err != nil {
 				return nil, err
 			}
-			stored = l.actions.ExpandActionSets(stored)
-			if p.enforcementEnabled {
-				return stored, nil
-			}
-			return append(l.catalog.Permissions(role), stored...), nil
-		})
+			return l.actions.ExpandActionSets(stored), nil
+		}
+		var basic []ac.Permission
+		var err error
+		if p.enforcementEnabled {
+			basic, err = l.cached(ctx, ac.GetBasicRolePermissionCacheKey(role, user.GetOrgID()), options, load)
+		} else {
+			// Local readers cache catalog and SQL grants together under this key.
+			// This path adds fresh catalog grants separately, so it needs SQL-only
+			// grants. The cached value includes catalog grants, and replacing it with
+			// SQL-only grants would make local readers lose their catalog grants.
+			basic, err = load()
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -203,7 +219,7 @@ func (l *Loader) assemble(ctx context.Context, user identity.Requester, options 
 	if err != nil {
 		return nil, err
 	}
-	direct, err := l.cached(ac.GetUserDirectPermissionCacheKey(user), options, func() ([]ac.Permission, error) {
+	direct, err := l.cached(ctx, ac.GetUserDirectPermissionCacheKey(user), options, func() ([]ac.Permission, error) {
 		q := queryFor(user.GetOrgID(), p)
 		if p.enforcementEnabled {
 			q.ExcludeRedundantManagedPermissions = false
@@ -225,8 +241,8 @@ func (l *Loader) assemble(ctx context.Context, user identity.Requester, options 
 	if err != nil {
 		return nil, err
 	}
-	// Allocate once for the complete snapshot. The exact capacity also forces
-	// Zanzana merging to detach from concurrent OSS assemblies' shared result.
+	// Detach from cached slices. The exact capacity also prevents a later
+	// Zanzana merge from mutating an assembly shared by concurrent callers.
 	snapshot := make([]ac.Permission, 0, len(permissions)+len(teams)+len(direct))
 	snapshot = append(snapshot, permissions...)
 	snapshot = append(snapshot, teams...)
@@ -260,13 +276,15 @@ func (l *Loader) cachedTeams(ctx context.Context, user identity.Requester, optio
 	}
 	for teamID, grants := range teams {
 		grants = l.actions.ExpandActionSets(grants)
-		l.cache.Set(ac.GetTeamPermissionCacheKey(teamID, user.GetOrgID()), grants, cacheTTL)
+		if !isPermissionShadow(ctx) {
+			l.cache.Set(ac.GetTeamPermissionCacheKey(teamID, user.GetOrgID()), grants, cacheTTL)
+		}
 		permissions = append(permissions, grants...)
 	}
 	return permissions, nil
 }
 
-func (l *Loader) cached(key string, options ac.Options, load func() ([]ac.Permission, error)) ([]ac.Permission, error) {
+func (l *Loader) cached(ctx context.Context, key string, options ac.Options, load func() ([]ac.Permission, error)) ([]ac.Permission, error) {
 	if !options.ReloadCache {
 		if value, ok := l.cache.Get(key); ok {
 			metrics.MAccessPermissionsCacheUsage.WithLabelValues(ac.CacheHit).Inc()
@@ -274,6 +292,10 @@ func (l *Loader) cached(key string, options ac.Options, load func() ([]ac.Permis
 		}
 	}
 	metrics.MAccessPermissionsCacheUsage.WithLabelValues(ac.CacheMiss).Inc()
+	// Shadow misses and refreshes must not populate the authoritative cache or join its writes.
+	if isPermissionShadow(ctx) {
+		return load()
+	}
 	var fresh []ac.Permission
 	get := func() (any, error) {
 		var err error
