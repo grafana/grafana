@@ -1,8 +1,12 @@
-import { type SupportedResource } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { isIconName } from '@grafana/data';
 import { type IconName } from '@grafana/ui';
+import {
+  type AppManifestKind,
+  getAppManifestKindLabel,
+  getAppManifestKinds,
+} from 'app/features/apiserver/appManifests';
 
-/** A provisioning kind described by its app manifest, from the settings endpoint's `availableResources`. */
+/** How the provisioning pages show a kind that an app manifest declares. */
 export interface ManifestKind {
   group: string;
   kind: string;
@@ -10,30 +14,22 @@ export interface ManifestKind {
   label: string;
   pluralLabel: string;
   icon: IconName;
-}
-
-let manifestKinds: ManifestKind[] = [];
-
-/** Replaces the manifest kinds with the active `availableResources` that an app manifest declares. */
-export function setManifestKinds(availableResources: SupportedResource[] = []) {
-  manifestKinds = availableResources.flatMap((r) => {
-    if (!r.resource || r.disabled) {
-      return [];
-    }
-    const label = r.label || r.kind;
-    return [
-      {
-        group: r.group,
-        kind: r.kind,
-        resource: r.resource,
-        label,
-        pluralLabel: r.pluralLabel || label,
-        icon: isIconName(r.icon) ? r.icon : 'file-alt',
-      },
-    ];
-  });
+  getRoute?: (name: string) => string;
 }
 
 export function getManifestKinds(): ManifestKind[] {
-  return manifestKinds;
+  return getAppManifestKinds().map(toManifestKind);
+}
+
+function toManifestKind(kind: AppManifestKind): ManifestKind {
+  const url = kind.url;
+  return {
+    group: kind.group,
+    kind: kind.kind,
+    resource: kind.resource,
+    label: getAppManifestKindLabel(kind, 1),
+    pluralLabel: getAppManifestKindLabel(kind, 2),
+    icon: isIconName(kind.icon) ? kind.icon : 'file-alt',
+    getRoute: url ? (name: string) => url.replace('{name}', encodeURIComponent(name)) : undefined,
+  };
 }

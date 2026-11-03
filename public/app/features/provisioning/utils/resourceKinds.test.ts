@@ -1,7 +1,7 @@
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
+import { type AppManifestKind } from 'app/features/apiserver/appManifests';
 import { getIconForKind } from 'app/features/search/service/utils';
 
-import { setManifestKinds } from './manifestKinds';
 import {
   resourceKindInfos,
   getAvailableResourceKinds,
@@ -13,9 +13,16 @@ import {
   getKindInfoByStatGroup,
   getMigratableKinds,
   getRepositoryRoute,
+  isProvisionedStat,
   isResourceKindAvailable,
   readImmediateParent,
 } from './resourceKinds';
+
+const mockAppManifestKinds: AppManifestKind[] = [];
+jest.mock('app/features/apiserver/appManifests', () => ({
+  ...jest.requireActual('app/features/apiserver/appManifests'),
+  getAppManifestKinds: () => mockAppManifestKinds,
+}));
 
 describe('resourceKinds registry', () => {
   it('exposes an info record per kind with consistent identifiers', () => {
@@ -320,17 +327,18 @@ describe('getMigratableKinds', () => {
 });
 
 describe('kinds from app manifests', () => {
-  const widget: SupportedResource = {
+  const widget: AppManifestKind = {
+    appName: 'example-app',
     group: 'example.ext.grafana.app',
     kind: 'Widget',
+    plural: 'Widgets',
     resource: 'widgets',
-    label: 'Widget',
-    pluralLabel: 'Widgets',
+    url: '/a/example-app/widgets/{name}',
     icon: 'apps',
   };
 
-  beforeEach(() => setManifestKinds([widget]));
-  afterEach(() => setManifestKinds([]));
+  beforeEach(() => mockAppManifestKinds.splice(0, mockAppManifestKinds.length, widget));
+  afterEach(() => mockAppManifestKinds.splice(0, mockAppManifestKinds.length));
 
   it('resolves a manifest kind by group and resource, with its manifest label and icon', () => {
     const info = getKindInfoByStat({ group: widget.group, resource: 'widgets' });
@@ -342,7 +350,7 @@ describe('kinds from app manifests', () => {
   });
 
   it('does not match a manifest kind on the resource alone', () => {
-    setManifestKinds([{ ...widget, resource: 'dashboards' }]);
+    mockAppManifestKinds.splice(0, mockAppManifestKinds.length, { ...widget, resource: 'dashboards' });
     expect(getKindInfoByStat({ group: 'dashboard.grafana.app', resource: 'dashboards' })).toBe(
       resourceKindInfos.dashboard
     );
@@ -350,22 +358,37 @@ describe('kinds from app manifests', () => {
   });
 
   it('keeps the registry entry when a manifest declares a registry kind', () => {
-    setManifestKinds([{ group: 'playlist.grafana.app', kind: 'Playlist', resource: 'playlists', label: 'Other' }]);
+    mockAppManifestKinds.splice(0, mockAppManifestKinds.length, {
+      appName: 'playlist',
+      group: 'playlist.grafana.app',
+      kind: 'Playlist',
+      plural: 'Playlists',
+      resource: 'playlists',
+    });
     expect(getKindInfoByStat({ group: 'playlist.grafana.app', resource: 'playlists' })).toBe(
       resourceKindInfos.playlist
     );
   });
 
-  it('gives a manifest kind no repository route', () => {
+  it('routes a manifest kind resource to its manifest url, with no repository route', () => {
     const info = getKindInfoByStat({ group: widget.group, resource: 'widgets' });
     const repo: Repository = {
       spec: { title: 'r', type: 'github', sync: { target: 'folder', enabled: true }, workflows: [] },
     };
+    expect(info?.getRoute?.('my widget')).toBe('/a/example-app/widgets/my%20widget');
     expect(info && getRepositoryRoute(info, repo)).toBeUndefined();
   });
 
   it('keeps core-only lookups to the registry', () => {
     expect(getKindInfoByGroupKind(widget.group, 'Widget')).toBeUndefined();
-    expect(getMigratableKinds([widget]).map((k) => k.kind)).not.toContain('Widget');
+    expect(getMigratableKinds([{ group: widget.group, kind: 'Widget' }]).map((k) => k.kind)).not.toContain('Widget');
+  });
+
+  it('counts a manifest kind as provisioned only when availableResources enables it', () => {
+    const stat = { group: widget.group, resource: 'widgets' };
+    expect(isProvisionedStat(stat, [{ group: widget.group, kind: 'Widget' }])).toBe(true);
+    expect(isProvisionedStat(stat, [{ group: widget.group, kind: 'Widget', disabled: true }])).toBe(false);
+    expect(isProvisionedStat(stat, undefined)).toBe(false);
+    expect(isProvisionedStat({ group: 'dashboard.grafana.app', resource: 'dashboards' }, [])).toBe(true);
   });
 });

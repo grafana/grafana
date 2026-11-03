@@ -2,6 +2,8 @@ import { t } from '@grafana/i18n';
 import { Icon, InteractiveTable, Stack } from '@grafana/ui';
 import { type JobResourceSummary } from 'app/api/clients/provisioning/v0alpha1';
 
+import { useAppManifestKinds } from 'app/features/apiserver/appManifests';
+
 import { getKindDisplayByGroupKind } from '../utils/resourceKinds';
 
 type SummaryCell = {
@@ -70,6 +72,7 @@ interface Props {
 }
 
 export function JobSummary({ summary }: Props) {
+  useAppManifestKinds();
   return (
     <Stack direction="column" gap={2}>
       <InteractiveTable
