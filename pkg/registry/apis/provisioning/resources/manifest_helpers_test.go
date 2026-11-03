@@ -16,12 +16,13 @@ func testManifestList(kinds ...appmanifestv1alpha2.AppManifestManifestVersionKin
 	}}}
 }
 
-func testManifestKind(kind string, provisionable bool, folderScoped bool, ui *appmanifestv1alpha2.AppManifestManifestVersionKindUI) appmanifestv1alpha2.AppManifestManifestVersionKind {
+func testManifestKind(kind string, provisionable bool, folderScoped bool) appmanifestv1alpha2.AppManifestManifestVersionKind {
 	return appmanifestv1alpha2.AppManifestManifestVersionKind{
 		Kind:         kind,
 		Scope:        appmanifestv1alpha2.AppManifestManifestVersionKindScopeNamespaced,
 		FolderScoped: &folderScoped,
-		Provisioning: &appmanifestv1alpha2.AppManifestManifestVersionKindProvisioning{Enabled: &provisionable},
-		Ui:           ui,
+		Extensions: &appmanifestv1alpha2.AppManifestManifestVersionKindExtensions{
+			Provisioning: &appmanifestv1alpha2.AppManifestManifestVersionKindProvisioning{Enabled: &provisionable},
+		},
 	}
 }

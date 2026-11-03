@@ -16,8 +16,6 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
-	"github.com/grafana/grafana-app-sdk/app"
-
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
@@ -74,10 +72,6 @@ type SupportedResource struct {
 	schema.GroupKind
 	// Capabilities is the set of declared capabilities (see Capability* constants).
 	Capabilities sets.Set[string]
-	// Resource is the plural resource name from the app manifest, when one declares the kind.
-	Resource string
-	// UI is the display information from the app manifest, when one declares it.
-	UI *app.ManifestVersionKindUI
 }
 
 // IsActive reports whether the resource is acted on by the pipeline (the default).
