@@ -2391,6 +2391,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "idTokenCacheDisabled",
+			Description:  "Disables the remote cache for signed ID tokens; a new token is signed on every authentication",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:         "kubernetesUsersRedirectNoFallback",
 			Description:  "Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back",
 			Stage:        FeatureStageExperimental,

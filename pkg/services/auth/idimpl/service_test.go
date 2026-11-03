@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/idtest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -261,6 +262,49 @@ func TestService_SignIdentity(t *testing.T) {
 		_, _, err = s.SignIdentity(context.Background(), ident)
 		require.ErrorIs(t, err, signErr)
 		assert.Equal(t, 2, calls, "failed signing must not be cached")
+	})
+}
+
+func TestService_IDTokenCacheDisabled(t *testing.T) {
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagIdTokenCacheDisabled)
+
+	calls := 0
+	signer := &idtest.FakeSigner{
+		SignIDTokenFn: func(_ context.Context, c *auth.IDClaims) (string, error) {
+			calls++
+			s, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: testKey}, nil)
+			require.NoError(t, err)
+			return jwt.Signed(s).Claims(c.Claims).Claims(c.Rest).Serialize()
+		},
+	}
+	cache := remotecache.NewFakeCacheStorage()
+	s := ProvideService(
+		setting.NewCfg(), signer, cache,
+		&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
+	)
+	ident := &authn.Identity{ID: "1", Type: claims.TypeUser}
+
+	t.Run("should sign on every call and not write to the cache", func(t *testing.T) {
+		for range 2 {
+			token, _, err := s.SignIdentity(context.Background(), ident)
+			require.NoError(t, err)
+			require.NotEmpty(t, token)
+		}
+		assert.Equal(t, 2, calls)
+		assert.Empty(t, cache.Storage)
+	})
+
+	t.Run("should not read tokens from the cache", func(t *testing.T) {
+		cache.Storage[s.getCacheKey(ident)] = []byte("not-a-jwt")
+
+		token, _, err := s.SignIdentity(context.Background(), ident)
+		require.NoError(t, err)
+		assert.NotEqual(t, "not-a-jwt", token)
+	})
+
+	t.Run("should not touch the cache when removing a token", func(t *testing.T) {
+		require.NoError(t, s.RemoveIDToken(context.Background(), ident))
+		assert.Contains(t, cache.Storage, s.getCacheKey(ident))
 	})
 }
 
