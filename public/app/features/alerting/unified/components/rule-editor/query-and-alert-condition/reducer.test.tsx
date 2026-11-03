@@ -11,6 +11,7 @@ import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import {
   type QueriesAndExpressionsState,
+  addDynamicThresholdExpression,
   addNewDataQuery,
   addNewExpression,
   duplicateQuery,
@@ -161,6 +162,39 @@ describe('Query and expressions reducer', () => {
     const newState = queriesAndExpressionsReducer(initialState, addNewExpression(ExpressionQueryType.math));
     expect(newState.queries).toHaveLength(2);
     expect(newState).toMatchSnapshot();
+  });
+
+  it('should add a dynamic threshold as an incomplete alerting SQL expression', () => {
+    const initialState: QueriesAndExpressionsState = {
+      queries: [alertQuery],
+    };
+
+    const newState = queriesAndExpressionsReducer(initialState, addDynamicThresholdExpression());
+
+    expect(newState.queries.at(-1)).toEqual({
+      datasourceUid: ExpressionDatasourceUID,
+      model: expect.objectContaining({
+        refId: 'B',
+        type: ExpressionQueryType.sql,
+        format: 'alerting',
+        expression: '',
+        dynamicThreshold: {
+          version: 1,
+          policy: {
+            inputRefId: '',
+            valueField: '',
+            matchLabel: '',
+            labelColumns: [],
+            evaluator: 'gt',
+            mappings: [],
+            defaultThreshold: [],
+          },
+        },
+      }),
+      queryType: '',
+      refId: 'B',
+      relativeTimeRange: undefined,
+    });
   });
 
   it('should remove an expression or alert query', () => {
