@@ -15,6 +15,7 @@ declare module "@openfeature/core" {
     | "canvasPanelNesting"
     | "cloudWatchCrossAccountQuerying"
     | "alertingBacktesting"
+    | "alerting.dynamicThresholdExpression"
     | "lokiShardSplitting"
     | "lokiLogsDataplane"
     | "faroSessionReplay"

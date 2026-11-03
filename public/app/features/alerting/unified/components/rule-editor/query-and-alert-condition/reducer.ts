@@ -11,7 +11,12 @@ import {
 import { type DataQuery } from '@grafana/schema';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import {
+  ExpressionDatasourceUID,
+  type ExpressionQuery,
+  ExpressionQueryType,
+  type SqlExpressionQuery,
+} from 'app/features/expressions/types';
 import {
   defaultCondition,
   isReducerExpression,
@@ -19,6 +24,7 @@ import {
 } from 'app/features/expressions/utils/expressionTypes';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { EvalFunction } from '../../../../state/alertDef';
 import { logError } from '../../../Analytics';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { getDefaultQueries, getInstantFromDataQuery } from '../../../utils/rule-form';
@@ -56,6 +62,7 @@ export const addNewDataQuery = createAction('addNewDataQuery');
 export const setDataQueries = createAction<AlertQuery[]>('setDataQueries');
 
 export const addNewExpression = createAction<ExpressionQueryType>('addNewExpression');
+export const addDynamicThresholdExpression = createAction('addDynamicThresholdExpression');
 export const removeExpression = createAction<string>('removeExpression');
 export const removeExpressions = createAction('removeExpressions');
 export const addExpressions = createAction<AlertQuery[]>('addExpressions');
@@ -149,6 +156,32 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
           conditions: [{ ...defaultCondition, query: { params: [] } }],
           expression: '',
         }),
+      });
+    })
+    .addCase(addDynamicThresholdExpression, (state) => {
+      const model: SqlExpressionQuery = {
+        ...expressionDatasource.newQuery({
+          type: ExpressionQueryType.sql,
+          expression: '',
+        }),
+        format: 'alerting',
+        dynamicThreshold: {
+          version: 1,
+          policy: {
+            inputRefId: '',
+            valueField: '',
+            matchLabel: '',
+            labelColumns: [],
+            evaluator: EvalFunction.IsAbove,
+            mappings: [],
+            defaultThreshold: [],
+          },
+        },
+      };
+
+      state.queries = addQuery(state.queries, {
+        datasourceUid: ExpressionDatasourceUID,
+        model,
       });
     })
     .addCase(removeExpression, (state, { payload }) => {

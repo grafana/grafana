@@ -3968,7 +3968,9 @@
       "state-pending": "Pending"
     },
     "type-selector-button": {
-      "add-expression": "Add expression"
+      "add-expression": "Add expression",
+      "dynamic-threshold": "Dynamic threshold",
+      "dynamic-threshold-description": "Create an alert condition with thresholds that vary by label value."
     },
     "unknown-contact-point-details": {
       "unknown-contact-point": "Unknown contact point",
