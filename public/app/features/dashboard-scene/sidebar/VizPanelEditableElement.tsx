@@ -173,7 +173,7 @@ const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
         locationService.partial({ editPanel: panelId });
         DashboardInteractions.panelActionClicked('configure', panelId, 'edit_pane');
       }}
-      icon="graph-bar"
+      icon="pen"
       variant="secondary"
       fullWidth
       tooltip={t(
