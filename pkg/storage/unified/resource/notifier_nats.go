@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -109,6 +110,33 @@ const dropLogInterval = 10 * time.Second
 
 var dropReasons = []string{dropReasonBufferFull, dropReasonUnmarshalError, dropReasonUnknownType}
 
+func newNatsNotifierDroppedMetric(reg prometheus.Registerer) *prometheus.CounterVec {
+	return promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+		Name: "grafana_storage_server_nats_notifier_dropped_events_total",
+		Help: "Notifications dropped by the NATS notifier before delivery, by reason (unmarshal_error, unknown_type, buffer_full).",
+	}, []string{"reason"})
+}
+
+// NatsEventSource lets other backends reuse the KV NATS notifier. Events carry
+// no body.
+type NatsEventSource struct {
+	notifier *natsNotifier
+}
+
+func NewNatsEventSource(subscriber EventSubscriber, reg prometheus.Registerer, log logging.Logger) *NatsEventSource {
+	return &NatsEventSource{notifier: newNatsNotifier(subscriber, nil, newNatsNotifierDroppedMetric(reg), log)}
+}
+
+// Watch subscribes on its own, sends nil on the buffered ready once the server
+// confirms the subscription, possibly after Watch returns, and calls
+// onMissingEvent when this watch may have missed notifications. onMissingEvent
+// must not block.
+func (s *NatsEventSource) Watch(ctx context.Context, opts WatchOptions, ready chan<- error, onMissingEvent func()) <-chan Event {
+	opts.captureReady = ready
+	opts.onMissingEvent = onMissingEvent
+	return s.notifier.Watch(ctx, opts)
+}
+
 func newNatsNotifier(subscriber EventSubscriber, invalidator Invalidator, dropped *prometheus.CounterVec, logger logging.Logger) *natsNotifier {
 	if dropped != nil {
 		for _, r := range dropReasons {
@@ -196,7 +224,7 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 		default:
 			n.drop(dropReasonBufferFull, "dropped watch notification, channel full", "subject", subject)
 			// Every watch missed this write, so force their clients to re-list.
-			n.invalidate()
+			n.missingEvent(opts)
 		}
 	}
 
@@ -207,7 +235,7 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 	started := subscriberStarted(n.subscriber)
 	select {
 	case <-started:
-		if n.trySubscribe(ctx, handler) {
+		if n.trySubscribe(ctx, handler, opts) {
 			opts.captured(nil)
 			return out
 		}
@@ -237,13 +265,13 @@ func (n *natsNotifier) retrySubscribe(ctx context.Context, handler func(subject 
 		bo.Wait()
 	}
 	for bo.Ongoing() {
-		if n.trySubscribe(ctx, handler) {
+		if n.trySubscribe(ctx, handler, opts) {
 			if ctx.Err() != nil {
 				return
 			}
 			// Watches may have opened while capture was unavailable. The first
 			// successful connection does not necessarily emit a reconnect callback.
-			n.invalidate()
+			n.missingEvent(opts)
 			opts.captured(nil)
 			return
 		}
@@ -254,7 +282,7 @@ func (n *natsNotifier) retrySubscribe(ctx context.Context, handler func(subject 
 // trySubscribe subscribes to the whole change stream once. On success it
 // unsubscribes on ctx cancel and returns true; on failure it logs and returns
 // false so the caller can retry.
-func (n *natsNotifier) trySubscribe(ctx context.Context, handler func(subject string, data []byte)) bool {
+func (n *natsNotifier) trySubscribe(ctx context.Context, handler func(subject string, data []byte), opts WatchOptions) bool {
 	reconnected := make(chan struct{}, 1)
 	sub, err := n.subscriber.Subscribe(ctx, resourcewatch.SubjectAllResources, handler, func() {
 		select {
@@ -280,7 +308,7 @@ func (n *natsNotifier) trySubscribe(ctx context.Context, handler func(subject st
 	// acknowledged. Keep the old generation until restored capture is ready so
 	// watches started during restoration also expire. This runs independently of
 	// event delivery; repeated reconnect signals can safely coalesce.
-	go reportReconnects(ctx, []Subscription{sub}, reconnected, n.invalidate)
+	go reportReconnects(ctx, []Subscription{sub}, reconnected, func() { n.missingEvent(opts) })
 	n.log.Info("subscribed to nats watch stream")
 	context.AfterFunc(ctx, func() {
 		if err := sub.Unsubscribe(); err != nil {
@@ -288,6 +316,16 @@ func (n *natsNotifier) trySubscribe(ctx context.Context, handler func(subject st
 		}
 	})
 	return true
+}
+
+// missingEvent reports that a watch may have missed events: to its own
+// handler when it has one, otherwise by expiring every watch.
+func (n *natsNotifier) missingEvent(opts WatchOptions) {
+	if opts.onMissingEvent != nil {
+		opts.onMissingEvent()
+		return
+	}
+	n.invalidate()
 }
 
 // invalidate expires the watches that may have missed events, so their clients

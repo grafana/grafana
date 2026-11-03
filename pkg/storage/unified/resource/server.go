@@ -2435,6 +2435,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 	// Capture before setup: invalidations during subscription or snapshot reads must
 	// expire this watch too, even if it has not entered the live loop yet.
+	cached, _ := s.broadcaster.(*broadcaster[*WrittenEvent])
+	waitsForStartup := cached != nil && cached.cache.identity != nil && cached.starting()
 	watchExpiryC := s.watchExpiry.WatchInvalidation()
 
 	// Treat a closed client transport and cancellation of this watch's context
@@ -2489,7 +2491,15 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 	name := fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace)
 	var stream <-chan *WrittenEvent
-	if b, ok := s.broadcaster.(*broadcaster[*WrittenEvent]); ok && b.cache.identity != nil {
+	if b := cached; b != nil && b.cache.identity != nil {
+		// Invalidations while the cache starts, such as the one when capture
+		// first starts, predate the stream a waiting watch subscribes to.
+		if waitsForStartup {
+			if err := b.ensureReady(ctx); err != nil {
+				return err
+			}
+			watchExpiryC = s.watchExpiry.WatchInvalidation()
+		}
 		var resume *watchResume
 		if req.Since > 0 && !req.SendInitialEvents {
 			resume = &watchResume{groupResource: GroupResource{Group: key.Group, Resource: key.Resource}, since: requestedSince, requestedRV: req.Since}

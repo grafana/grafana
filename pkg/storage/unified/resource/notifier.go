@@ -61,6 +61,9 @@ type WatchOptions struct {
 
 	// captureReady is a buffered, one-shot startup acknowledgment, not a timer.
 	captureReady chan<- error
+	// onMissingEvent, when set, replaces expiring every watch when this watch
+	// may have missed events.
+	onMissingEvent func()
 }
 
 func (opts WatchOptions) captured(err error) {

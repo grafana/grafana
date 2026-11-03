@@ -561,3 +561,90 @@ func TestLegacyWatchHasNoStartupFloor(t *testing.T) {
 		close(backend.events)
 	})
 }
+
+func TestWatchOpenedBeforeStartupIgnoresStartupInvalidation(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		backend := &gatedWatchBackend{
+			seed: make(chan watchSeed), events: make(chan *WrittenEvent),
+			list: func() (int64, error) { return 100, nil },
+		}
+		srv := initWatchServer(t, backend)
+
+		ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
+		defer cancel()
+		req := bookmarkWatchRequest()
+		req.AllowWatchBookmarks = false
+		req.Since = 0
+		stream := newMockWatchServer(ctx)
+		done := make(chan error, 1)
+		go func() { done <- srv.Watch(req, stream) }()
+		synctest.Wait()
+
+		// Capture starting expires the watches opened while it was unavailable.
+		srv.watchExpiry.Invalidate()
+		backend.seed <- watchSeed{initialCacheFloor: 100, highestRV: 100}
+		synctest.Wait()
+
+		backend.events <- bookmarkWrittenEvent(300)
+		synctest.Wait()
+		select {
+		case err := <-done:
+			t.Fatalf("a watch waiting for startup must not expire, got %v", err)
+		case event := <-stream.events:
+			require.Equal(t, int64(300), event.Resource.Version)
+		default:
+			t.Fatal("missing live event")
+		}
+		cancel()
+		require.NoError(t, <-done)
+	})
+}
+
+// compileHookAccess runs onCompile while a watch is being set up.
+type compileHookAccess struct {
+	authlib.AccessClient
+	onCompile func()
+}
+
+func (a compileHookAccess) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	a.onCompile()
+	//nolint:staticcheck // SA1019: the watch still uses Compile
+	return a.AccessClient.Compile(ctx, id, req)
+}
+
+func TestWatchKeepsMissingEventInvalidationsDuringSetup(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		backend := &gatedWatchBackend{seed: make(chan watchSeed, 1), events: make(chan *WrittenEvent)}
+		backend.seed <- watchSeed{initialCacheFloor: 200, highestRV: 200}
+		expiry := NewWatchExpiry()
+		srv, err := NewUninitializedResourceServer(ResourceServerOptions{
+			Backend: backend, StorageMetrics: ProvideStorageMetrics(prometheus.NewRegistry()), WatchExpiry: expiry,
+			SeededWatchesEnabled: true,
+			// A missing event while the watch is being set up.
+			AccessClient: compileHookAccess{AccessClient: authlib.FixedAccessClient(true), onCompile: expiry.Invalidate},
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+			_ = srv.Stop(ctx)
+		})
+		require.NoError(t, srv.initWatcher())
+		require.NoError(t, srv.watchStartup.broadcaster.waitReady(t.Context()))
+
+		ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
+		defer cancel()
+		req := bookmarkWatchRequest()
+		req.AllowWatchBookmarks = false
+		req.Since = 250
+		done := make(chan error, 1)
+		go func() { done <- srv.Watch(req, newMockWatchServer(ctx)) }()
+		synctest.Wait()
+		select {
+		case err := <-done:
+			require.True(t, IsResourceVersionExpired(err), "got %v", err)
+		default:
+			t.Fatal("a missing event during setup must expire the watch once the cache is ready")
+		}
+	})
+}

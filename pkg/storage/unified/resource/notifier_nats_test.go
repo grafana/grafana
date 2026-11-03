@@ -969,3 +969,47 @@ func TestWatchWrittenKeysNeedsTheNatsNotifier(t *testing.T) {
 	assert.Nil(t, keysSubscriber(KVBackendOptions{EventSubscriber: sub, EnableNatsNotifierShadow: true}))
 	assert.Equal(t, EventSubscriber(sub), keysSubscriber(KVBackendOptions{EventSubscriber: sub, EnableNatsNotifier: true}))
 }
+
+func TestNatsEventSourceWatch(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := &fakeEventSubscriber{enabled: true}
+		reg := prometheus.NewRegistry()
+		src := NewNatsEventSource(sub, reg, &logging.NoOpLogger{})
+
+		ready := make(chan error, 1)
+		missed := 0
+		out := src.Watch(t.Context(), WatchOptions{BufferSize: 1}, ready, func() { missed++ })
+		require.NoError(t, <-ready)
+		require.Equal(t, resourcewatch.SubjectAllResources, sub.subject)
+
+		notification := mustMarshalNotification(t, &resourcepb.WatchNotification{
+			Type: resourcepb.WatchNotification_ADDED, Group: "g", Resource: "r", Namespace: "ns", Name: "n", ResourceVersion: 10,
+		})
+		sub.currentHandler()("some.subject", notification)
+		// One settle tick emits the already settled event.
+		time.Sleep(time.Second)
+		synctest.Wait()
+		select {
+		case evt := <-out:
+			require.Equal(t, Event{Namespace: "ns", Group: "g", Resource: "r", Name: "n", ResourceVersion: 10, Action: DataActionCreated}, evt)
+		default:
+			t.Fatal("expected a settled event")
+		}
+
+		// Fill the output, then block the settle loop on it, then the input:
+		// the next drop is reported to this watch's own handler.
+		for range 2 {
+			sub.currentHandler()("some.subject", notification)
+			time.Sleep(time.Second)
+			synctest.Wait()
+		}
+		sub.currentHandler()("some.subject", notification)
+		require.Zero(t, missed)
+		sub.currentHandler()("some.subject", notification)
+		require.Equal(t, 1, missed)
+
+		count, err := testutil.GatherAndCount(reg, "grafana_storage_server_nats_notifier_dropped_events_total")
+		require.NoError(t, err)
+		require.Equal(t, len(dropReasons), count)
+	})
+}
