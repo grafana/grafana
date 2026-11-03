@@ -1,4 +1,13 @@
-import { getDataSourceAuthType } from './tracking';
+import { getDataSourceAuthType, hasAuthTypeResolver } from './tracking';
+
+describe('hasAuthTypeResolver', () => {
+  it('is true only for plugins with a resolver', () => {
+    expect(hasAuthTypeResolver('stackdriver')).toBe(true);
+    expect(hasAuthTypeResolver('grafana-bigquery-datasource')).toBe(true);
+    expect(hasAuthTypeResolver('prometheus')).toBe(false);
+    expect(hasAuthTypeResolver('constructor')).toBe(false);
+  });
+});
 
 describe('getDataSourceAuthType', () => {
   it.each(['grafana-bigquery-datasource', 'stackdriver'])('returns the configured auth type for %s', (pluginId) => {

@@ -12,6 +12,7 @@ import {
   config,
   type DataSourceSrv,
   DataSourceWithBackend,
+  getDataSourceInstanceSettings,
   getPluginSettings,
   HealthCheckError,
   type HealthCheckResultDetails,
@@ -33,7 +34,7 @@ import { type ThunkDispatch, type ThunkResult } from 'app/types/store';
 
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';
-import { getDataSourceAuthType, trackDataSourceCreated, trackDataSourceTested } from '../tracking';
+import { getDataSourceAuthType, hasAuthTypeResolver, trackDataSourceCreated, trackDataSourceTested } from '../tracking';
 
 import { buildCategories } from './buildCategories';
 import { buildNavModel } from './navModel';
@@ -66,7 +67,7 @@ export interface InitDataSourceSettingDependencies {
 }
 
 export interface TestDataSourceDependencies {
-  getDatasourceSrv: () => Pick<DataSourceSrv, 'get'> & Partial<Pick<DataSourceSrv, 'getInstanceSettings'>>;
+  getDatasourceSrv: () => Pick<DataSourceSrv, 'get'>;
   getBackendSrv: typeof getBackendSrv;
 }
 
@@ -159,10 +160,11 @@ export const testDataSource = (
 
     dispatch(testDataSourceStarting());
 
-    const authentication_type = getDataSourceAuthType(
-      dsApi.meta.id,
-      dependencies.getDatasourceSrv().getInstanceSettings?.(dsApi.uid)?.jsonData
-    );
+    // Tracking must never block or fail the test, so a failed settings lookup just drops the property.
+    const instanceSettings = hasAuthTypeResolver(dsApi.meta.id)
+      ? await getDataSourceInstanceSettings(dsApi.uid).catch(() => undefined)
+      : undefined;
+    const authentication_type = getDataSourceAuthType(dsApi.meta.id, instanceSettings?.jsonData);
 
     dependencies.getBackendSrv().withNoBackendCache(async () => {
       try {

@@ -86,9 +86,12 @@ const authTypeResolvers: Record<string, AuthTypeResolver> = {
   stackdriver: googleAuthType,
 };
 
+/** Whether the plugin's auth method is tracked, so callers only fetch its settings when needed. */
+export const hasAuthTypeResolver = (pluginId: string): boolean => Object.hasOwn(authTypeResolvers, pluginId);
+
 /** Returns the configured auth method for plugins listed in `authTypeResolvers`, otherwise undefined. */
 export const getDataSourceAuthType = (pluginId: string, jsonData?: AuthTypeJsonData): string | undefined => {
-  const resolver = Object.hasOwn(authTypeResolvers, pluginId) ? authTypeResolvers[pluginId] : undefined;
+  const resolver = hasAuthTypeResolver(pluginId) ? authTypeResolvers[pluginId] : undefined;
   return resolver && jsonData ? resolver(jsonData) : undefined;
 };
 
