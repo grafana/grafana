@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
+	authnlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/configprovider"
@@ -857,33 +858,51 @@ func TestGetExternalSession_DelegatedUser(t *testing.T) {
 	tests := []struct {
 		desc            string
 		authenticatedBy string
+		serviceIdentity string
 		flagEnabled     bool
 		sessions        []*auth.ExternalSession
 		expected        *auth.ExternalSession
 		expectedErr     error
 	}{
 		{
-			desc:            "should use the most recent external session for an extended JWT user",
+			desc:            "should use the most recent external session when Assistant acts for the user",
 			authenticatedBy: login.ExtendedJWTModule,
+			serviceIdentity: assistantServiceIdentity,
 			flagEnabled:     true,
 			sessions:        []*auth.ExternalSession{latest, older},
 			expected:        latest,
 		},
 		{
-			desc:            "should return not found when an extended JWT user has no external session",
+			desc:            "should return not found when the user has no external session",
 			authenticatedBy: login.ExtendedJWTModule,
+			serviceIdentity: assistantServiceIdentity,
 			flagEnabled:     true,
 			sessions:        []*auth.ExternalSession{},
 			expectedErr:     auth.ErrExternalSessionNotFound,
 		},
 		{
-			desc:            "should require a session token for an extended JWT user when the flag is disabled",
+			desc:            "should require a session token when the flag is disabled",
 			authenticatedBy: login.ExtendedJWTModule,
+			serviceIdentity: assistantServiceIdentity,
+			expectedErr:     auth.ErrExternalSessionTokenNotFound,
+		},
+		{
+			desc:            "should require a session token when another service acts for the user",
+			authenticatedBy: login.ExtendedJWTModule,
+			serviceIdentity: "other-service",
+			flagEnabled:     true,
+			expectedErr:     auth.ErrExternalSessionTokenNotFound,
+		},
+		{
+			desc:            "should require a session token when the access token has no service identity",
+			authenticatedBy: login.ExtendedJWTModule,
+			flagEnabled:     true,
 			expectedErr:     auth.ErrExternalSessionTokenNotFound,
 		},
 		{
 			desc:            "should still require a session token for other users when the flag is enabled",
 			authenticatedBy: login.GenericOAuthModule,
+			serviceIdentity: assistantServiceIdentity,
 			flagEnabled:     true,
 			expectedErr:     auth.ErrExternalSessionTokenNotFound,
 		},
@@ -899,7 +918,7 @@ func TestGetExternalSession_DelegatedUser(t *testing.T) {
 			}
 			service := &Service{sessionService: sessionService}
 
-			usr := &authn.Identity{ID: "1", Type: claims.TypeUser, AuthenticatedBy: tt.authenticatedBy}
+			usr := delegatedUser(tt.authenticatedBy, tt.serviceIdentity)
 			session, err := service.getExternalSession(context.Background(), usr, 1, nil)
 
 			if tt.expectedErr != nil {
@@ -936,12 +955,22 @@ func TestGetCurrentOAuthToken_DelegatedUser(t *testing.T) {
 		tracer:          tracing.InitializeTracerForTest(),
 	}
 
-	usr := &authn.Identity{ID: "1", Type: claims.TypeUser, AuthenticatedBy: login.ExtendedJWTModule}
+	usr := delegatedUser(login.ExtendedJWTModule, assistantServiceIdentity)
 	token := service.GetCurrentOAuthToken(context.Background(), usr, nil)
 
 	require.NotNil(t, token)
 	assert.Equal(t, unexpiredTokenWithoutRefreshWithIDToken.AccessToken, token.AccessToken)
 	assert.Equal(t, UNEXPIRED_ID_TOKEN, token.Extra("id_token"))
+}
+
+// delegatedUser returns user 1 as authenticated by authenticatedBy, with serviceIdentity in its access token claims.
+func delegatedUser(authenticatedBy, serviceIdentity string) *authn.Identity {
+	return &authn.Identity{
+		ID:                "1",
+		Type:              claims.TypeUser,
+		AuthenticatedBy:   authenticatedBy,
+		AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{ServiceIdentity: serviceIdentity}},
+	}
 }
 
 func setOAuthTokenForDelegatedUsers(t *testing.T, enabled bool) {

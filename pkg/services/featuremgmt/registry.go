@@ -974,7 +974,7 @@ var (
 		},
 		{
 			Name:         "auth.oauthTokenForDelegatedUsers",
-			Description:  "Forward the user's OAuth identity to data sources with OAuth pass-through when a service calls Grafana on the user's behalf with an extended JWT.",
+			Description:  "Forward the user's OAuth identity to data sources with OAuth pass-through when Grafana Assistant calls Grafana on the user's behalf with an extended JWT.",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,

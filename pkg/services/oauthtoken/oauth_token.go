@@ -16,6 +16,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
 
+	authnlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -30,6 +31,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// assistantServiceIdentity is the service identity in the access tokens of Grafana Assistant.
+const assistantServiceIdentity = "assistant"
 
 var (
 	logger = log.New("oauthtoken")
@@ -574,8 +578,7 @@ func (o *Service) getExternalSession(ctx context.Context, usr identity.Requester
 		return o.getLatestExternalSession(ctx, userID)
 	}
 
-	if usr.GetAuthenticatedBy() == login.ExtendedJWTModule &&
-		openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagAuthOauthTokenForDelegatedUsers, false, openfeature.TransactionContext(ctx)) {
+	if canForwardForDelegatingService(ctx, usr) {
 		// A service acting for the user has no session token either, so data sources with OAuth pass-through
 		// receive the identity from the user's most recent login instead.
 		return o.getLatestExternalSession(ctx, userID)
@@ -587,6 +590,19 @@ func (o *Service) getExternalSession(ctx context.Context, usr identity.Requester
 
 	// For regular users, we use the session token ID to fetch the external session
 	return o.sessionService.GetExternalSession(ctx, sessionToken.ExternalSessionId)
+}
+
+// canForwardForDelegatingService reports whether usr is Grafana Assistant acting for a user with an extended JWT,
+// the only service allowed to forward the user's OAuth identity without a session.
+func canForwardForDelegatingService(ctx context.Context, usr identity.Requester) bool {
+	if usr.GetAuthenticatedBy() != login.ExtendedJWTModule {
+		return false
+	}
+	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagAuthOauthTokenForDelegatedUsers, false, openfeature.TransactionContext(ctx)) {
+		return false
+	}
+	ids := usr.GetExtra()[authnlib.ServiceIdentityKey]
+	return len(ids) == 1 && strings.TrimSpace(ids[0]) == assistantServiceIdentity
 }
 
 func (o *Service) getLatestExternalSession(ctx context.Context, userID int64) (*auth.ExternalSession, error) {

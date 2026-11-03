@@ -1109,11 +1109,14 @@
     {
       "metadata": {
         "name": "auth.oauthTokenForDelegatedUsers",
-        "resourceVersion": "1793204879968",
-        "creationTimestamp": "2026-10-28T16:27:59Z"
+        "resourceVersion": "1793727830029",
+        "creationTimestamp": "2026-10-28T16:27:59Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-03 17:43:50.029374 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Forward the user's OAuth identity to data sources with OAuth pass-through when a service calls Grafana on the user's behalf with an extended JWT.",
+        "description": "Forward the user's OAuth identity to data sources with OAuth pass-through when Grafana Assistant calls Grafana on the user's behalf with an extended JWT.",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
