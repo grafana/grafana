@@ -391,8 +391,14 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 	// Map Extensions
 	if len(jsonData.Extensions.AddedLinks) > 0 || len(jsonData.Extensions.AddedComponents) > 0 ||
 		len(jsonData.Extensions.ExposedComponents) > 0 || len(jsonData.Extensions.ExtensionPoints) > 0 ||
-		len(jsonData.Extensions.AddedFunctions) > 0 {
+		len(jsonData.Extensions.AddedFunctions) > 0 || len(jsonData.Extensions.Skills) > 0 {
 		extensions := &pluginsv0alpha1.MetaExtensions{}
+		if len(jsonData.Extensions.Skills) > 0 {
+			extensions.Skills = make(map[string]pluginsv0alpha1.MetaV0alpha1ExtensionsSkills, len(jsonData.Extensions.Skills))
+			for slug, skill := range jsonData.Extensions.Skills {
+				extensions.Skills[slug] = pluginsv0alpha1.MetaV0alpha1ExtensionsSkills{Path: skill.Path}
+			}
+		}
 
 		if len(jsonData.Extensions.AddedLinks) > 0 {
 			extensions.AddedLinks = make([]pluginsv0alpha1.MetaV0alpha1ExtensionsAddedLinks, 0, len(jsonData.Extensions.AddedLinks))

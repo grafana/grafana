@@ -17,6 +17,18 @@ import (
 )
 
 func TestJsonDataToMetaJSONData(t *testing.T) {
+	t.Run("preserves skills without UI extensions", func(t *testing.T) {
+		jsonData := plugins.JSONData{ID: "example-app", Type: plugins.TypeApp}
+		jsonData.Extensions.Skills = map[string]plugins.Skill{
+			"investigate-errors": {Path: "skills/investigate-errors/SKILL.md"},
+		}
+		meta := jsonDataToMetaJSONData(jsonData)
+		require.NotNil(t, meta.Extensions)
+		assert.Equal(t, map[string]pluginsv0alpha1.MetaV0alpha1ExtensionsSkills{
+			"investigate-errors": {Path: "skills/investigate-errors/SKILL.md"},
+		}, meta.Extensions.Skills)
+	})
+
 	t.Run("converts plugin types", func(t *testing.T) {
 		testCases := []struct {
 			name       string

@@ -604,6 +604,33 @@
       "type": "object",
       "description": "Plugin extensions are a way to extend either the UI of core Grafana or other plugins.",
       "properties": {
+        "skills": {
+          "type": "object",
+          "description": "Bundled Markdown skills keyed by a stable plugin-local slug. Titles, descriptions, and instructions belong in the skill file. Declaring a skill does not activate it or grant permissions.",
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9-]{0,63}$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": ["path"],
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "type": "string",
+                "maxLength": 1024,
+                "pattern": "^[A-Za-z0-9_-][A-Za-z0-9._/-]*\\.md$",
+                "description": "Path relative to the plugin package, for example skills/investigate-errors/SKILL.md. Empty, dot, and parent directory segments are not allowed. Files are public plugin assets and must not contain secrets.",
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": "(^|/)\\.{1,2}(/|$)|//"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
         "addedComponents": {
           "type": "array",
           "description": "This list must contain all component extensions that your plugin registers to other extension points using [`.addComponent()`](https://grafana.com/developers/plugin-tools/reference/ui-extensions-reference/ui-extensions#addcomponent). **Components that are not listed here won't work.**",
