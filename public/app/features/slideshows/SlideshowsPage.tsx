@@ -6,7 +6,8 @@ import {
   useListSlideshowQuery,
 } from '@grafana/api-clients/rtkq/collections/v1alpha1';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Card, ConfirmModal, EmptyState, LinkButton, Stack } from '@grafana/ui';
+import { Alert, Button, Card, ConfirmModal, EmptyState, LinkButton, Stack } from '@grafana/ui';
+import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 
 import { StartModal } from '../playlist/StartModal';
@@ -20,10 +21,20 @@ export default function SlideshowsPage() {
   const [toDelete, setToDelete] = useState<Slideshow | undefined>();
   const slideshows = data?.items ?? [];
 
-  const onDelete = () => {
-    if (toDelete) {
-      deleteSlideshow({ name: toDelete.metadata.name ?? '' }).finally(() => setToDelete(undefined));
+  const [deleteError, setDeleteError] = useState<string | undefined>();
+
+  const onDelete = async () => {
+    if (!toDelete) {
+      return;
     }
+    setDeleteError(undefined);
+    const result = await deleteSlideshow({ name: toDelete.metadata.name ?? '' });
+    if (result.error) {
+      setDeleteError(
+        extractErrorMessage(result.error, t('slideshows.page.delete-error', 'Could not delete the slideshow'))
+      );
+    }
+    setToDelete(undefined);
   };
 
   return (
@@ -39,6 +50,11 @@ export default function SlideshowsPage() {
       }
     >
       <Page.Contents isLoading={isLoading}>
+        {deleteError && (
+          <Alert severity="error" title={t('slideshows.page.delete-error-title', 'Delete failed')}>
+            {deleteError}
+          </Alert>
+        )}
         {slideshows.length === 0 && !isLoading && (
           <EmptyState variant="completed" message={t('slideshows.page.empty', 'There are no slideshows yet')} />
         )}

@@ -16707,6 +16707,8 @@
       "load-error": "Error loading slideshow:",
       "new-title": "New slideshow",
       "save": "Save",
+      "save-error": "Could not save the slideshow",
+      "save-error-title": "Save failed",
       "title-label": "Title"
     },
     "kinds": {
@@ -16718,6 +16720,8 @@
       "delete": "Delete",
       "delete-body": "Are you sure you want to delete {{name}} slideshow?",
       "delete-confirm": "Delete",
+      "delete-error": "Could not delete the slideshow",
+      "delete-error-title": "Delete failed",
       "delete-label": "Delete slideshow {{ name }}",
       "edit": "Edit",
       "edit-label": "Edit slideshow {{ name }}",

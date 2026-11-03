@@ -1,5 +1,5 @@
 import { screen } from '@testing-library/react';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { render } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
@@ -66,5 +66,22 @@ describe('SlideshowsPage', () => {
     expect(await screen.findByText('NOC wall')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /edit slideshow/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete slideshow/i })).not.toBeInTheDocument();
+  });
+
+  it('shows the server message and keeps the slideshow when deleting fails', async () => {
+    jest
+      .spyOn(backendSrv, 'fetch')
+      .mockImplementation((options) =>
+        options.method === 'DELETE'
+          ? throwError(() => ({ status: 403, data: { message: 'not allowed to delete slideshows' } }))
+          : of(createFetchResponse(list))
+      );
+    const { user } = render(<SlideshowsPage />);
+
+    await user.click(await screen.findByRole('button', { name: 'Delete slideshow NOC wall' }));
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+
+    expect(await screen.findByText('not allowed to delete slideshows')).toBeInTheDocument();
+    expect(screen.getByText('NOC wall')).toBeInTheDocument();
   });
 });

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import {
@@ -9,6 +10,8 @@ import {
 import { type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { Alert } from '@grafana/ui';
+import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 
 import { SlideshowForm } from './SlideshowForm';
@@ -28,11 +31,17 @@ export default function SlideshowEditPage() {
   const [create] = useCreateSlideshowMutation();
   const [replace] = useReplaceSlideshowMutation();
 
+  const [saveError, setSaveError] = useState<string | undefined>();
+
   const onSubmit = async (slideshow: Slideshow) => {
+    setSaveError(undefined);
     const result = uid ? await replace({ name: uid, slideshow }) : await create({ slideshow });
-    if (!result.error) {
-      locationService.push('/slideshows');
+    if (result.error) {
+      // The form keeps what the user typed, so they can retry once the cause is fixed.
+      setSaveError(extractErrorMessage(result.error, t('slideshows.edit.save-error', 'Could not save the slideshow')));
+      return;
     }
+    locationService.push('/slideshows');
   };
 
   const pageNav: NavModelItem = {
@@ -46,6 +55,11 @@ export default function SlideshowEditPage() {
           <div>
             <Trans i18nKey="slideshows.edit.load-error">Error loading slideshow:</Trans> {JSON.stringify(error)}
           </div>
+        )}
+        {saveError && (
+          <Alert severity="error" title={t('slideshows.edit.save-error-title', 'Save failed')}>
+            {saveError}
+          </Alert>
         )}
         {isNew && <SlideshowForm slideshow={newSlideshow()} onSubmit={onSubmit} />}
         {data && <SlideshowForm slideshow={data} onSubmit={onSubmit} />}
