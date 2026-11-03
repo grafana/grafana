@@ -2,6 +2,9 @@ package dashboard
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -462,4 +465,128 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			}
 		})
 	}
+}
+
+// The body leaves out the lists, like mcp-grafana's v2 example.
+const sparseV2DashboardSpec = `{
+  "title": "repro",
+  "timeSettings": {"from": "now-6h", "to": "now"},
+  "variables": [],
+  "elements": {"p1": {"kind": "Panel", "spec": {"id": 1, "title": "Up",
+    "vizConfig": {"kind": "VizConfig", "group": "timeseries", "spec": {}},
+    "data": {"kind": "QueryGroup", "spec": {"queries": [{"kind": "PanelQuery", "spec": {"refId": "A",
+      "query": {"kind": "DataQuery", "group": "prometheus", "datasource": {"name": "DS_UID"}, "spec": {"expr": "up"}}}}]}}}}},
+  "layout": {"kind": "GridLayout", "spec": {"items": [{"kind": "GridLayoutItem",
+    "spec": {"x": 0, "y": 0, "width": 24, "height": 8, "element": {"kind": "ElementReference", "name": "p1"}}}]}}
+}`
+
+func TestDashboardAPIBuilder_Mutate_FillsOmittedCollections(t *testing.T) {
+	tests := []struct {
+		name string
+		obj  func(t *testing.T) (runtime.Object, any)
+	}{
+		{
+			name: "v2alpha1",
+			obj: func(t *testing.T) (runtime.Object, any) {
+				d := &dashv2alpha1.Dashboard{}
+				require.NoError(t, json.Unmarshal([]byte(sparseV2DashboardSpec), &d.Spec))
+				return d, &d.Spec
+			},
+		},
+		{
+			name: "v2beta1",
+			obj: func(t *testing.T) (runtime.Object, any) {
+				d := &dashv2beta1.Dashboard{}
+				require.NoError(t, json.Unmarshal([]byte(sparseV2DashboardSpec), &d.Spec))
+				return d, &d.Spec
+			},
+		},
+		{
+			name: "v2",
+			obj: func(t *testing.T) (runtime.Object, any) {
+				d := &dashv2.Dashboard{}
+				require.NoError(t, json.Unmarshal([]byte(sparseV2DashboardSpec), &d.Spec))
+				return d, &d.Spec
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			obj, spec := tt.obj(t)
+			b := &DashboardsAPIBuilder{}
+			err := b.Mutate(context.Background(), admission.NewAttributesRecord(
+				obj, nil,
+				dashv1.DashboardResourceInfo.GroupVersionKind(), "", "test",
+				dashv1.DashboardResourceInfo.GroupVersionResource(), "",
+				// Default (strict) validation still accepts the body.
+				admission.Create, &metav1.CreateOptions{}, false, nil,
+			), nil)
+			require.NoError(t, err)
+
+			data, err := json.Marshal(spec)
+			require.NoError(t, err)
+			var out map[string]any
+			require.NoError(t, json.Unmarshal(data, &out))
+			require.Empty(t, nullPaths("spec", out))
+			require.Equal(t,
+				[]any{"5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"},
+				out["timeSettings"].(map[string]any)["autoRefreshIntervals"],
+				"a missing list with a non-empty schema default gets that default")
+		})
+	}
+}
+
+func TestFillNilCollections(t *testing.T) {
+	type inner struct {
+		List []string `json:"list"`
+	}
+	type sample struct {
+		Required  []string          `json:"required"`
+		Optional  []string          `json:"optional,omitempty"`
+		Map       map[string]string `json:"map"`
+		OptMap    map[string]string `json:"optMap,omitempty"`
+		Ptr       *float64          `json:"ptr"`
+		Nested    *inner            `json:"nested"`
+		NilNested *inner            `json:"nilNested"`
+		Items     []inner           `json:"items"`
+		ByName    map[string]inner  `json:"byName"`
+		Kept      []string          `json:"kept"`
+	}
+
+	s := sample{
+		Nested: &inner{},
+		Items:  []inner{{}},
+		ByName: map[string]inner{"a": {}},
+		Kept:   []string{"x"},
+	}
+	fillNilCollections(reflect.ValueOf(&s))
+
+	require.NotNil(t, s.Required)
+	require.Nil(t, s.Optional)
+	require.NotNil(t, s.Map)
+	require.Nil(t, s.OptMap)
+	require.Nil(t, s.Ptr, "nil pointers carry meaning and are left alone")
+	require.NotNil(t, s.Nested.List)
+	require.Nil(t, s.NilNested)
+	require.NotNil(t, s.Items[0].List)
+	require.NotNil(t, s.ByName["a"].List)
+	require.Equal(t, []string{"x"}, s.Kept)
+}
+
+func nullPaths(path string, v any) []string {
+	var out []string
+	switch val := v.(type) {
+	case nil:
+		out = append(out, path)
+	case map[string]any:
+		for k, child := range val {
+			out = append(out, nullPaths(path+"."+k, child)...)
+		}
+	case []any:
+		for i, child := range val {
+			out = append(out, nullPaths(fmt.Sprintf("%s[%d]", path, i), child)...)
+		}
+	}
+	return out
 }

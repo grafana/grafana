@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
@@ -68,6 +69,7 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 
 	var migrationErr error
 	var resourceInfo utils.ResourceInfo
+	var fillDefaults func()
 	switch v := obj.(type) {
 	case *dashboardV0.Dashboard:
 		delete(v.Spec.Object, "uid")
@@ -110,6 +112,12 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 		// Strip BOMs from all string fields recursively
 		util.StripBOMFromStruct(&v.Spec)
 		resourceInfo = dashboardV2alpha1.DashboardResourceInfo
+		fillDefaults = func() {
+			if v.Spec.TimeSettings.AutoRefreshIntervals == nil {
+				v.Spec.TimeSettings.AutoRefreshIntervals = dashboardV2alpha1.NewDashboardTimeSettingsSpec().AutoRefreshIntervals
+			}
+			fillNilCollections(reflect.ValueOf(&v.Spec))
+		}
 
 	case *dashboardV2beta1.Dashboard:
 		// Temporary fix: The generator fails to properly initialize this property, so we'll do it here
@@ -123,6 +131,12 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 		// Strip BOMs from all string fields recursively
 		util.StripBOMFromStruct(&v.Spec)
 		resourceInfo = dashboardV2beta1.DashboardResourceInfo
+		fillDefaults = func() {
+			if v.Spec.TimeSettings.AutoRefreshIntervals == nil {
+				v.Spec.TimeSettings.AutoRefreshIntervals = dashboardV2beta1.NewDashboardTimeSettingsSpec().AutoRefreshIntervals
+			}
+			fillNilCollections(reflect.ValueOf(&v.Spec))
+		}
 
 	case *dashboardV2.Dashboard:
 		if v.Spec.Layout.GridLayoutKind == nil && v.Spec.Layout.RowsLayoutKind == nil && v.Spec.Layout.AutoGridLayoutKind == nil && v.Spec.Layout.TabsLayoutKind == nil {
@@ -134,6 +148,12 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 		// Strip BOMs from all string fields recursively
 		util.StripBOMFromStruct(&v.Spec)
 		resourceInfo = dashboardV2.DashboardResourceInfo
+		fillDefaults = func() {
+			if v.Spec.TimeSettings.AutoRefreshIntervals == nil {
+				v.Spec.TimeSettings.AutoRefreshIntervals = dashboardV2.NewDashboardTimeSettingsSpec().AutoRefreshIntervals
+			}
+			fillNilCollections(reflect.ValueOf(&v.Spec))
+		}
 
 	default:
 		return fmt.Errorf("mutation error: expected to dashboard, got %T", obj)
@@ -143,7 +163,17 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 		meta.SetDeprecatedInternalID(internalID) // nolint:staticcheck
 	}
 
-	return b.validateDashboardIfStrict(ctx, a, migrationErr, resourceInfo)
+	if err := b.validateDashboardIfStrict(ctx, a, migrationErr, resourceInfo); err != nil {
+		return err
+	}
+
+	// Fill after validation: a null list can hide other CUE errors, so filling
+	// first would reject bodies that are accepted today. A missing
+	// autoRefreshIntervals means the default intervals, not none.
+	if fillDefaults != nil {
+		fillDefaults()
+	}
+	return nil
 }
 
 // validateDashboardIfStrict validates the dashboard spec if field validation mode is strict.
@@ -262,4 +292,63 @@ func getFieldValidationMode(a admission.Attributes) string {
 	}
 
 	return validation
+}
+
+// fillNilCollections replaces nil slices and maps with empty ones in fields
+// without omitempty, so a list or map a client left out is not stored as null.
+func fillNilCollections(v reflect.Value) {
+	switch v.Kind() {
+	case reflect.Pointer:
+		if !v.IsNil() {
+			fillNilCollections(v.Elem())
+		}
+	case reflect.Struct:
+		for i := range v.NumField() {
+			field := v.Field(i)
+			sf := v.Type().Field(i)
+			if !sf.IsExported() {
+				continue
+			}
+			if field.Kind() == reflect.Slice && field.IsNil() && !nilIsOmitted(sf) {
+				field.Set(reflect.MakeSlice(field.Type(), 0, 0))
+			}
+			if field.Kind() == reflect.Map && field.IsNil() && !nilIsOmitted(sf) {
+				field.Set(reflect.MakeMap(field.Type()))
+			}
+			fillNilCollections(field)
+		}
+	case reflect.Slice:
+		for i := range v.Len() {
+			fillNilCollections(v.Index(i))
+		}
+	case reflect.Map:
+		iter := v.MapRange()
+		for iter.Next() {
+			val := iter.Value()
+			if val.Kind() == reflect.Pointer {
+				fillNilCollections(val)
+			} else if val.Kind() == reflect.Struct {
+				// Map values are not addressable, so fill a copy and store it back.
+				cp := reflect.New(val.Type()).Elem()
+				cp.Set(val)
+				fillNilCollections(cp)
+				v.SetMapIndex(iter.Key(), cp)
+			}
+		}
+	default:
+		// Interfaces hold free-form JSON, which is stored as sent.
+	}
+}
+
+func nilIsOmitted(sf reflect.StructField) bool {
+	name, opts, _ := strings.Cut(sf.Tag.Get("json"), ",")
+	if name == "-" && opts == "" {
+		return true
+	}
+	for opt := range strings.SplitSeq(opts, ",") {
+		if opt == "omitempty" || opt == "omitzero" {
+			return true
+		}
+	}
+	return false
 }
