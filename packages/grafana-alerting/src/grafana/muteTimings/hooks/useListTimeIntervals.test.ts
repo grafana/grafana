@@ -25,17 +25,17 @@ function renderList() {
 }
 
 describe('useListTimeIntervals', () => {
-  it('maps each interval to the title rules reference it by and whether it can be used', async () => {
+  it('maps each interval to the title rules reference it by and whether it was imported', async () => {
     serveIntervals(TimeIntervalFactory.build({ metadata: { name: 'uid-1' }, spec: { name: 'business-hours' } }));
 
     const { result } = renderList();
 
-    expect(result.current.isLoading).toBe(true);
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.timeIntervals).toEqual([{ name: 'business-hours', canUse: true }]);
+    expect(result.current.status).toBe('loading');
+    await waitFor(() => expect(result.current.status).toBe('success'));
+    expect(result.current.timeIntervals).toEqual([{ name: 'business-hours', isImported: false }]);
   });
 
-  it('marks an interval flagged as not usable', async () => {
+  it('marks an interval flagged as not usable as imported', async () => {
     serveIntervals(
       TimeIntervalFactory.build({
         metadata: { annotations: { 'grafana.com/canUse': 'false' } },
@@ -46,10 +46,10 @@ describe('useListTimeIntervals', () => {
     const { result } = renderList();
 
     await waitFor(() => expect(result.current.timeIntervals).toHaveLength(1));
-    expect(result.current.timeIntervals[0]).toEqual({ name: 'imported', canUse: false });
+    expect(result.current.timeIntervals[0]).toEqual({ name: 'imported', isImported: true });
   });
 
-  it('treats an interval without the canUse annotation as unusable', async () => {
+  it('treats an interval without the canUse annotation as imported', async () => {
     // Built then stripped: factory params are deep-merged into the default annotation.
     const unannotated = TimeIntervalFactory.build({ spec: { name: 'unannotated' } });
     delete unannotated.metadata.annotations;
@@ -58,7 +58,7 @@ describe('useListTimeIntervals', () => {
     const { result } = renderList();
 
     await waitFor(() => expect(result.current.timeIntervals).toHaveLength(1));
-    expect(result.current.timeIntervals[0].canUse).toBe(false);
+    expect(result.current.timeIntervals[0].isImported).toBe(true);
   });
 
   it('reports a failed fetch', async () => {
@@ -66,7 +66,7 @@ describe('useListTimeIntervals', () => {
 
     const { result } = renderList();
 
-    await waitFor(() => expect(result.current.isError).toBe(true));
+    await waitFor(() => expect(result.current.status).toBe('error'));
     expect(result.current.timeIntervals).toEqual([]);
   });
 
@@ -82,7 +82,7 @@ describe('useListTimeIntervals', () => {
     });
 
     expect(result.current.timeIntervals.map((interval) => interval.name)).toEqual(['weekends']);
-    expect(result.current.isError).toBe(false);
+    expect(result.current.status).toBe('success');
   });
 
   it('makes no request while skipped, and loads once it is no longer skipped', async () => {
@@ -104,7 +104,7 @@ describe('useListTimeIntervals', () => {
     });
 
     expect(requested).not.toHaveBeenCalled();
-    expect(result.current).toEqual({ timeIntervals: [], isLoading: false, isError: false });
+    expect(result.current).toEqual({ status: 'skipped', timeIntervals: [] });
 
     rerender({ skip: false });
 
