@@ -26,6 +26,15 @@ describe('ResultTags', () => {
     jest.restoreAllMocks();
   });
 
+  it('shows more than three tags when they fit in the row', () => {
+    availableWidth = 400;
+    render(<ResultTags tags={['a', 'b', 'c', 'd', 'e']} />);
+    const tagList = screen.getByRole('list', { name: 'Tags' });
+    expect(within(tagList).getAllByRole('listitem')).toHaveLength(5);
+    expect(within(tagList).getByText('e')).toBeInTheDocument();
+    expect(within(tagList).queryByText(/\+/)).not.toBeInTheDocument();
+  });
+
   it('recalculates fitting tags when the available width shrinks and grows', () => {
     render(<ResultTags tags={tags} />);
     const list = screen.getByRole('list', { name: 'Tags' });

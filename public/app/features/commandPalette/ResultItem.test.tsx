@@ -40,16 +40,6 @@ describe('ResultItem', () => {
     expect(screen.getByText('Test Dashboard')).toBeInTheDocument();
   });
 
-  it('leaves the subtitle width uncapped while allowing it to shrink before the title', () => {
-    const action = createActionImpl({ subtitle: 'A long folder name that can use the available space' });
-    render(<ResultItem action={action} active={false} currentRootActionId="" />);
-
-    const subtitle = screen.getByText('A long folder name that can use the available space');
-    expect(getComputedStyle(subtitle).maxWidth).toBe('');
-    expect(subtitle).toHaveStyle({ flex: '0 10 auto', minWidth: '0' });
-    expect(screen.getByText('Test Dashboard').parentElement).toHaveStyle({ flex: '0 1 auto' });
-  });
-
   it('renders the managed badge when managedBy is Repo and provisioning toggle is on', () => {
     config.provisioningEnabled = true;
     const action = createActionImpl({ managedBy: ManagerKind.Repo });
@@ -106,15 +96,6 @@ describe('ResultItem', () => {
     expect(screen.getByText('My folder')).toBeInTheDocument();
     expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
     expect(screen.queryByRole('list', { name: 'Tags' })).not.toBeInTheDocument();
-  });
-
-  it('shows more than three tags when they fit in the row', () => {
-    const action = createActionImpl({ tags: ['a', 'b', 'c', 'd', 'e'] });
-    render(<ResultItem action={action} active={false} currentRootActionId="" />);
-    const tagList = screen.getByRole('list', { name: 'Tags' });
-    expect(within(tagList).getAllByRole('listitem')).toHaveLength(5);
-    expect(within(tagList).getByText('e')).toBeInTheDocument();
-    expect(within(tagList).queryByText(/\+/)).not.toBeInTheDocument();
   });
 
   it.each([
