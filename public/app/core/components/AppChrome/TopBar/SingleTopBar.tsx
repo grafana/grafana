@@ -26,6 +26,7 @@ import { QuickAdd } from '../QuickAdd/QuickAdd';
 
 import { HelpTopBarButton } from './HelpTopBarButton';
 import { NavRightButton } from './InviteUserButton';
+import { NotebooksTopBarButton } from './NotebooksTopBarButton';
 import { ProfileButton } from './ProfileButton';
 import { SignInLink } from './SignInLink';
 import { SingleTopBarActions } from './SingleTopBarActions';
@@ -105,6 +106,7 @@ export const SingleTopBar = memo(function SingleTopBar({
           {!isSmallScreen && <QuickAdd />}
           <LazyFeatureControlButton />
           <HelpTopBarButton isSmallScreen={isSmallScreen} />
+          {!isSmallScreen && <NotebooksTopBarButton />}
           <NavToolbarSeparator />
           {!isSmallScreen && <ExtensionToolbarItem compact={isSmallScreen} />}
           {!showToolbarLevel && actions}

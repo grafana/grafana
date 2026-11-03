@@ -55,6 +55,15 @@ describe('getExploreExtensionConfigs', () => {
           onClick: expect.any(Function),
           category: 'Dashboards',
         },
+        {
+          title: 'Add to open notebook',
+          description: 'Add the query and panel from explore to the notebook open in the side panel',
+          targets: [PluginExtensionPoints.ExploreToolbarAction],
+          icon: 'gf-notebook',
+          configure: expect.any(Function),
+          onClick: expect.any(Function),
+          category: 'Dashboards',
+        },
       ]);
     });
   });
@@ -94,6 +103,64 @@ describe('getExploreExtensionConfigs', () => {
   // Explore's toolbar renders the bare "Add to dashboard" button only while one link is configured
   // and an "Add" dropdown past that, so a notebook link that survived configure() with the feature
   // off would change the toolbar for everyone.
+  describe('configure function for "add to open notebook" extension', () => {
+    afterEach(() => {
+      contextSrvMock.hasPermission.mockRestore();
+      setTestFlags({});
+    });
+
+    const openNotebook = { uid: 'nb-1', title: 'Latency investigation' };
+
+    function openNotebookExtension() {
+      return getExploreExtensionConfigs().find((extension) => extension.title === 'Add to open notebook');
+    }
+
+    // The context only matters to the one field this link reads.
+    function contextWith(open?: typeof openNotebook) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial context: configure reads only openNotebook
+      return { openNotebook: open } as Parameters<
+        NonNullable<ReturnType<typeof openNotebookExtension>>['configure'] & Function
+      >[0];
+    }
+
+    it('is hidden when notebooks are disabled', () => {
+      contextSrvMock.hasPermission.mockReturnValue(true);
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: false });
+
+      expect(openNotebookExtension()?.configure?.(contextWith(openNotebook))).toBeUndefined();
+    });
+
+    it('is hidden when no notebook is open in the side panel', () => {
+      contextSrvMock.hasPermission.mockReturnValue(true);
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
+
+      expect(openNotebookExtension()?.configure?.(contextWith(undefined))).toBeUndefined();
+    });
+
+    it('is hidden without permission to write notebooks', () => {
+      contextSrvMock.hasPermission.mockImplementation((action) => action !== 'notebooks:write');
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
+
+      expect(openNotebookExtension()?.configure?.(contextWith(openNotebook))).toBeUndefined();
+    });
+
+    it('is shown, naming the notebook, when one is open and the reader can write', () => {
+      contextSrvMock.hasPermission.mockReturnValue(true);
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
+
+      expect(openNotebookExtension()?.configure?.(contextWith(openNotebook))).toEqual({
+        title: 'Add to open: Latency investigation',
+      });
+    });
+
+    it('keeps the default title while the notebook has no name yet', () => {
+      contextSrvMock.hasPermission.mockReturnValue(true);
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
+
+      expect(openNotebookExtension()?.configure?.(contextWith({ uid: 'nb-1', title: '' }))).toEqual({});
+    });
+  });
+
   describe('configure function for "add to notebook" extension', () => {
     afterEach(() => {
       contextSrvMock.hasPermission.mockRestore();

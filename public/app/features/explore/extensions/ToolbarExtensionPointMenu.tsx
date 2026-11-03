@@ -5,6 +5,9 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Menu } from '@grafana/ui';
 import { truncateTitle } from 'app/features/plugins/extensions/utils';
 
+// Long enough for "Add to open: <notebook name>" to stay recognisable.
+const MAX_TITLE_LENGTH = 40;
+
 type Props = {
   extensions: PluginExtensionLink[];
   onSelect: (extension: PluginExtensionLink) => void;
@@ -39,7 +42,7 @@ function renderItems(extensions: PluginExtensionLink[], onSelect: (link: PluginE
         ariaLabel={extension.title}
         icon={extension?.icon || 'plug'}
         key={extension.id}
-        label={truncateTitle(extension.title, 25)}
+        label={truncateTitle(extension.title, MAX_TITLE_LENGTH)}
         onClick={(event) => {
           if (extension.path) {
             return onSelect(extension);

@@ -26,6 +26,7 @@ import {
   MAX_FLOATING_EXTENSION_SIDEBAR_WIDTH,
   MIN_FLOATING_EXTENSION_SIDEBAR_WIDTH,
 } from './constants';
+import { CORE_NOTEBOOKS_PLUGIN_ID, useCanUseCoreNotebooksSidebar } from './coreSidebarComponents';
 import {
   type ExtensionSidebarPresentation,
   getEffectiveExtensionSidebarPresentation,
@@ -152,6 +153,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     DEFAULT_FLOATING_EXTENSION_SIDEBAR_WIDTH
   );
 
+  const canUseCoreNotebooks = useCanUseCoreNotebooksSidebar();
   const [currentPath, setCurrentPath] = useState(locationService.getLocation().pathname);
 
   useEffect(() => {
@@ -226,7 +228,11 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
 
     if (dockedComponentId) {
       const dockedMeta = getComponentMetaFromComponentId(dockedComponentId);
-      if (dockedMeta) {
+      if (dockedMeta?.pluginId === CORE_NOTEBOOKS_PLUGIN_ID) {
+        if (!canUseCoreNotebooks) {
+          setDockedComponentId(undefined);
+        }
+      } else if (dockedMeta) {
         const plugin = availableComponents.get(dockedMeta.pluginId);
         if (!plugin || !plugin.addedComponents.some((c) => c.title === dockedMeta.componentTitle)) {
           setDockedComponentId(undefined);
@@ -236,7 +242,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
         setDockedComponentId(undefined);
       }
     }
-  }, [isLoading, availableComponents, dockedComponentId]);
+  }, [isLoading, availableComponents, dockedComponentId, canUseCoreNotebooks]);
 
   const setDockedComponentWithProps = useCallback(
     (componentId: string | undefined, props?: Record<string, unknown>) => {
@@ -253,6 +259,16 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   useEffect(() => {
     // handler to open the extension sidebar from plugins. this is done with the `helpers.openSidebar` function
     const openSidebarHandler = (event: OpenExtensionSidebarEvent) => {
+      if (event.payload.pluginId === CORE_NOTEBOOKS_PLUGIN_ID) {
+        if (canUseCoreNotebooks) {
+          setDockedComponentWithProps(
+            JSON.stringify({ pluginId: event.payload.pluginId, componentTitle: event.payload.componentTitle }),
+            event.payload.props
+          );
+        }
+        return;
+      }
+
       if (
         event.payload.pluginId &&
         event.payload.componentTitle &&
@@ -294,7 +310,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
       closeSubscription.unsubscribe();
       toggleSubscription.unsubscribe();
     };
-  }, [setDockedComponentWithProps, availableComponents, dockedComponentId, floatingHidden]);
+  }, [setDockedComponentWithProps, availableComponents, dockedComponentId, floatingHidden, canUseCoreNotebooks]);
 
   // Closing the sidebar, or replacing its component, ends what lived in it (a Composer session).
   const shownComponentId = useRef(dockedComponentId);

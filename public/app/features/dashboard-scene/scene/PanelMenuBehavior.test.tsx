@@ -31,6 +31,10 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { type GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
+import {
+  clearOpenSidePanelNotebook,
+  setOpenSidePanelNotebook,
+} from 'app/features/notebook/sidePanel/openSidePanelNotebook';
 import * as storeModule from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -58,6 +62,11 @@ jest.mock('app/core/utils/explore', () => ({
 }));
 
 jest.mock('app/core/services/context_srv');
+
+const mockAddPanelToOpenNotebook = jest.fn();
+jest.mock('app/features/notebook/addPanel/addToOpenNotebook', () => ({
+  addPanelToOpenNotebook: (...args: unknown[]) => mockAddPanelToOpenNotebook(...args),
+}));
 
 jest.mock('app/store/store', () => ({
   dispatch: jest.fn(),
@@ -1317,6 +1326,54 @@ describe('panelMenuBehavior', () => {
         expect.objectContaining({ iconClassName: 'gf-notebook' })
       );
       expect(items.find((item) => item.text === 'Remove')).toBeUndefined();
+    });
+
+    describe('with a notebook open in the side panel', () => {
+      afterEach(() => {
+        clearOpenSidePanelNotebook();
+        mockAddPanelToOpenNotebook.mockReset();
+      });
+
+      async function notebookItemWith({ canWrite }: { canWrite: boolean }) {
+        setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
+        mocks.contextSrv.hasPermission.mockImplementation((action: string) => canWrite || action !== 'notebooks:write');
+        setOpenSidePanelNotebook({ uid: 'nb-1', title: 'Latency investigation' });
+
+        const { menu, panel } = await buildTestScene({});
+        panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+        menu.activate();
+        await new Promise((r) => setTimeout(r, 1));
+
+        return (menu.state.items ?? []).find((item) => item.text === 'Add to notebook');
+      }
+
+      it('becomes a submenu offering the open notebook and the picker', async () => {
+        const item = await notebookItemWith({ canWrite: true });
+
+        expect(item?.type).toBe('submenu');
+        expect(item?.subMenu?.map((sub) => sub.text)).toEqual([
+          'Add to open: Latency investigation',
+          'Choose notebook…',
+        ]);
+      });
+
+      it('stays a plain item without permission to write, which appending needs', async () => {
+        const item = await notebookItemWith({ canWrite: false });
+
+        expect(item?.type).not.toBe('submenu');
+        expect(item?.subMenu).toBeUndefined();
+      });
+
+      it('adds the panel to the open notebook from the first sub-option', async () => {
+        const item = await notebookItemWith({ canWrite: true });
+
+        await item?.subMenu?.[0].onClick?.(new MouseEvent('click') as never);
+
+        await waitFor(() => expect(mockAddPanelToOpenNotebook).toHaveBeenCalledTimes(1));
+        expect(mockAddPanelToOpenNotebook).toHaveBeenCalledWith(
+          expect.objectContaining({ open: { uid: 'nb-1', title: 'Latency investigation' } })
+        );
+      });
     });
 
     it('sits in its own section immediately above Remove while editing', async () => {

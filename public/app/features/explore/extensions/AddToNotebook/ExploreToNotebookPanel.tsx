@@ -1,12 +1,11 @@
-import { getPanelPluginMetasMap } from '@grafana/runtime/internal';
 import { AddPanelToNotebookModalBody } from 'app/features/notebook/addPanel/AddPanelToNotebookModalBody';
-import { buildPanelElementFromExplore } from 'app/features/notebook/addPanel/buildPanelElementFromExplore';
-import { captureTimeRange } from 'app/features/notebook/addPanel/capturedTimeRange';
 import { NOTEBOOK_ENTRY_POINT } from 'app/features/notebook/analytics/types';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { useSelector, type StoreState } from 'app/types/store';
 
 import { getExploreItemSelector } from '../../state/selectors';
+
+import { getExploreNotebookSource } from './getExploreNotebookSource';
 
 interface Props {
   exploreId: string;
@@ -22,21 +21,8 @@ interface Props {
  */
 export function ExploreToNotebookPanel({ exploreId, onClose }: Props) {
   const exploreItem = useSelector(getExploreItemSelector(exploreId))!;
-  // The pane's own time zone, so the captured window is described to the user the way Explore's
-  // time picker described it.
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
-
-  const buildPanel = async () => {
-    // buildPanelElementFromExplore is synchronous and reads the panel metas map.
-    await getPanelPluginMetasMap();
-
-    return buildPanelElementFromExplore({
-      datasource: exploreItem.datasourceInstance?.getRef(),
-      queries: exploreItem.queries,
-      queryResponse: exploreItem.queryResponse,
-      panelState: exploreItem.panelsState,
-    });
-  };
+  const { buildPanel, capturedTimeRange } = getExploreNotebookSource(exploreItem, timeZone);
 
   return (
     <AddPanelToNotebookModalBody
@@ -45,7 +31,7 @@ export function ExploreToNotebookPanel({ exploreId, onClose }: Props) {
       entryPoint={NOTEBOOK_ENTRY_POINT.EXPLORE}
       // Explore builds its panel from the pane's queries, so there is no library panel to send.
       isLibraryPanel={false}
-      capturedTimeRange={captureTimeRange(exploreItem.range.raw, timeZone)}
+      capturedTimeRange={capturedTimeRange}
     />
   );
 }
