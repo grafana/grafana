@@ -104,7 +104,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       // and going into panel edit should make the dashboard go into edit mode is it's not already
       items.push({
         text: t('panel.header-menu.edit', `Edit`),
-        iconClassName: 'edit',
+        iconClassName: 'pen',
         shortcut: 'e',
         href: getEditPanelUrl(getPanelIdForVizPanel(panel)),
         onClick: () => {
@@ -306,16 +306,14 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     items.push(getInspectMenuItem(plugin, panel, dashboard));
 
-    if (getFeatureFlagClient().getBooleanValue(FlagKeys.PanelTimeSettings, true)) {
-      items.push({
-        text: t('panel.header-menu.time-settings', 'Time settings'),
-        iconClassName: 'clock-nine',
-        onClick: (e) => {
-          e.preventDefault();
-          dashboard.showModal(new PanelTimeRangeDrawer({ panelRef: panel.getRef() }));
-        },
-      });
-    }
+    items.push({
+      text: t('panel.header-menu.time-settings', 'Time settings'),
+      iconClassName: 'clock-nine',
+      onClick: (e) => {
+        e.preventDefault();
+        dashboard.showModal(new PanelTimeRangeDrawer({ panelRef: panel.getRef() }));
+      },
+    });
 
     const extensions = await firstValueFrom(
       getObservablePluginLinks({
@@ -405,7 +403,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
       items.push({
         text: t('panel.header-menu.add-to-notebook', 'Add to notebook'),
-        iconClassName: 'book',
+        iconClassName: 'gf-notebook',
         onClick: () => {
           dashboard.showModal(new AddPanelToNotebookScene({ panelRef: panel.getRef() }));
         },
@@ -579,14 +577,18 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
 }
 
 export function onRemovePanel(dashboard: DashboardScene, panel: VizPanel) {
-  appEvents.publish(
-    new ShowConfirmModalEvent({
-      title: t('dashboard-scene.on-remove-panel.title.remove-panel', 'Remove panel'),
-      text: t('dashboard-scene.on-remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?'),
-      yesText: 'Remove',
-      onConfirm: () => dashboard.removePanel(panel),
-    })
-  );
+  // Let the menu close and release focus before mounting the confirmation modal.
+  // Otherwise its aria-hidden ancestor still contains the focused trigger.
+  setTimeout(() => {
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard-scene.on-remove-panel.title.remove-panel', 'Remove panel'),
+        text: t('dashboard-scene.on-remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?'),
+        yesText: 'Remove',
+        onConfirm: () => dashboard.removePanel(panel),
+      })
+    );
+  }, 0);
 }
 
 const onCreateAlert = async (panel: VizPanel, dashboard: DashboardScene) => {

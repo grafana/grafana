@@ -478,7 +478,7 @@ func (b *bleveBackend) closeIndex(idx *bleveIndex, key resource.NamespacedResour
 		b.log.Error("failed to close index", "key", key, "err", err)
 	}
 
-	b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Dec()
+	b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage, key.Resource).Dec()
 }
 
 // This function will periodically evict expired or un-owned indexes from the cache.
@@ -574,8 +574,7 @@ func (b *bleveBackend) shouldUpload(ctx context.Context, key resource.Namespaced
 
 	lastUploadTime, ok := b.getUploadTracking(key)
 	if !ok {
-		// An index reopened from disk has no tracking even when the store already
-		// holds a copy of its build.
+		// A reopened index has no upload history.
 		lastUploadTime, ok = b.seedUploadTrackingFromRemote(ctx, key, idx, now)
 		if !ok {
 			return true, nil
@@ -1132,9 +1131,12 @@ func (b *bleveBackend) BuildIndex(
 	now := time.Now().UnixMilli()
 	idx.lastFetchedFromCache.Store(now)
 	// A rebuild is not a search, so it keeps the replaced index's last search.
-	if prev != nil {
+	switch {
+	case prev != nil:
 		idx.lastSearchedAt.Store(prev.lastSearchedAt.Load())
-	} else {
+	case !options.LastSearchedAt.IsZero():
+		idx.lastSearchedAt.Store(min(options.LastSearchedAt.UnixMilli(), now))
+	default:
 		idx.lastSearchedAt.Store(now)
 	}
 	b.cache[key] = idx
@@ -1142,14 +1144,14 @@ func (b *bleveBackend) BuildIndex(
 
 	// If there was a previous index in the cache, close it.
 	if prev != nil {
-		b.indexMetrics.OpenIndexes.WithLabelValues(prev.indexStorage).Dec()
+		b.indexMetrics.OpenIndexes.WithLabelValues(prev.indexStorage, key.Resource).Dec()
 
 		err := prev.stopUpdaterAndCloseIndex()
 		if err != nil {
 			logWithDetails.Error("failed to close previous index", "key", key, "err", err)
 		}
 	}
-	b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Inc()
+	b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage, key.Resource).Inc()
 
 	// Clean up the old index directories. If we have built a new file-based index, the new name is ignored.
 	// If we have created in-memory index and fileIndexName is empty, all old directories can be removed.
@@ -1852,7 +1854,7 @@ func (b *bleveBackend) closeAllIndexes() {
 		}
 		delete(b.cache, key)
 
-		b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Dec()
+		b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage, key.Resource).Dec()
 	}
 }
 
@@ -2508,6 +2510,9 @@ func (b *bleveIndex) search(
 	// the match set, otherwise Bleve's unfiltered count with
 	// TotalHitsExact=false.
 	postRank := b.postRankAuthzEnabled && access != nil
+	// Not observed: checking access to the returned rows is not part of the
+	// search's own authorization.
+	rowAccess := access
 	access, authMetrics := withSearchAuthObservation(access, b.indexMetrics)
 	cursorFallback := false
 
@@ -2566,9 +2571,9 @@ func (b *bleveIndex) search(
 	// the collector indexes into the shorter cursor. Guard it here: if the
 	// cursor doesn't match the post-rank sort order, fall back to the in-searcher
 	// path; if it still doesn't match, reject the request.
-	cursorLen := len(req.SearchAfter)
+	cursorLen := len(searchrequest.SearchAfter)
 	if cursorLen == 0 {
-		cursorLen = len(req.SearchBefore)
+		cursorLen = len(searchrequest.SearchBefore)
 	}
 	if postRank && cursorLen > 0 && cursorLen != len(searchrequest.Sort) {
 		postRank = false
@@ -2604,7 +2609,7 @@ func (b *bleveIndex) search(
 	stats.AddRequestConversionTime(time.Since(conversionStarts))
 
 	if postRank {
-		return b.runPostFilterAuthz(ctx, access, req, index, searchrequest, selectFields, fieldValueSchema, stats, response, trashAuthz)
+		return b.runPostFilterAuthz(ctx, access, rowAccess, req, index, searchrequest, selectFields, fieldValueSchema, stats, response, trashAuthz)
 	}
 
 	res, err := searchInContext(ctx, index, searchrequest)
@@ -2626,6 +2631,7 @@ func (b *bleveIndex) search(
 	if err := b.setSearchResults(response, fieldValueSchema, res.Hits, searchrequest.Sort); err != nil {
 		return nil, err
 	}
+	b.addRowAccess(ctx, rowAccess, req.AccessVerbs, response, res.Hits)
 
 	// parse the facet fields
 	for k, v := range res.Facets {
@@ -3292,8 +3298,23 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		// app-side) are added to the bleve load list in Search, separate from
 		// the response column list.
 	}
+	adaptPostRankTrashBoundary(req, searchrequest, postRankAuthz)
 
 	return searchrequest, nil
+}
+
+func adaptPostRankTrashBoundary(req *resourcepb.ResourceSearchRequest, searchRequest *bleve.SearchRequest, postRankAuthz bool) {
+	if postRankAuthz && req.IsDeleted && len(req.SortBy) == 1 &&
+		req.SortBy[0].GetField() == resource.SEARCH_FIELD_DELETED_RV && !req.SortBy[0].GetDesc() &&
+		len(searchRequest.SearchAfter) == 2 && searchRequest.SearchAfter[1] == "" &&
+		len(searchRequest.SearchBefore) == 0 && len(searchRequest.Sort) == 3 {
+		// Trash NotOlderThan listing starts at [resource version, empty name],
+		// an inclusive lower bound rather than a cursor identifying a result.
+		// Its empty name sorts before every resource, so adding the PostRank
+		// doc-ID tie-breaker preserves the bound. Real PreRank continuations
+		// must retain their shape so they still use the compatibility fallback.
+		searchRequest.SearchAfter = []string{searchRequest.SearchAfter[0], "", ""}
+	}
 }
 
 // scopeQuery restricts q to live documents, or to deleted ones for trash. Every
