@@ -326,15 +326,17 @@ func (hs *HTTPServer) handleK8sError(err error) response.Response {
 }
 
 // getK8sDataSourcesHandler returns a handler that serves GET /api/datasources from unified storage
-// when the feature toggle is enabled.
+// once unified storage is the source of truth for data sources.
 //
 // The legacy list reads the data_source table, so it cannot see a data source that lives only in
-// unified storage -- every data source written through the new APIs once the collection runs at
-// dual-writer mode 5, everything Git Sync provisions included.
+// unified storage -- everything Git Sync provisions included. Below that the table is the complete
+// list and the collection holds only what has been written since dual-write started, so the mode is
+// checked per request and not just at registration: the API groups migrate before the data does,
+// and the toggle that reroutes this route only says the groups are served.
 //
-// It is one request, not one per plugin: every plugin type is persisted in the same collection and
-// names the group serving it in a label. That also makes it see a data source whose plugin is no
-// longer installed, which a listing driven by the installed plugins cannot.
+// Reading the collection is one request, not one per plugin: every plugin type is persisted in the
+// same collection and names the group serving it in a label. That also makes it see a data source
+// whose plugin is no longer installed, which a listing driven by the installed plugins cannot.
 func (hs *HTTPServer) getK8sDataSourcesHandler() web.Handler {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !hs.Features.IsEnabledGlobally(featuremgmt.FlagDatasourcesRerouteLegacyCRUDAPIs) {
@@ -357,6 +359,14 @@ func (hs *HTTPServer) getK8sDataSourcesHandler() web.Handler {
 		defer func() {
 			metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("getK8sDataSourcesHandler"), time.Since(start).Seconds())
 		}()
+
+		readUnified, err := hs.dualWrite.ReadFromUnified(c.Req.Context(), dsregistry.DataSourceCollectionResource)
+		if err != nil {
+			hs.log.Warn("could not read the data source storage mode, listing from legacy", "error", err)
+		}
+		if !readUnified {
+			return hs.GetDataSources(c)
+		}
 
 		dataSources, err := dsregistry.ListStoredDataSources(c.Req.Context(), hs.unifiedClient, hs.namespacer, hs.namespacer(c.GetOrgID()))
 		if err != nil {

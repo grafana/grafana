@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -125,6 +126,7 @@ func RegisterAPIService(
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
 	exprService *expr.Service,
 	unified resource.ResourceClient,
+	dualWrite dualwrite.Service,
 ) (*QueryAPIBuilder, error) {
 	if !featuremgmt.AnyEnabled(features,
 		featuremgmt.FlagQueryService,
@@ -158,12 +160,13 @@ func RegisterAPIService(
 		}).Inc()
 	}
 
-	// The legacy provider reads the data_source table, so it has no row for a data source written
-	// only through the API groups. Read the shared collection instead once those groups are served.
+	// The flag says the data source groups are served; it does not say where the data lives, since
+	// the groups are migrated before the data moves. Which store to read is settled per request
+	// from the storage mode.
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	var connections datasourceV0.DataSourceConnectionProvider = dataSourcesService
 	if features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs) {
-		connections = datasource.ProvideUnifiedConnections(unified, accessControl)
+		connections = datasource.ProvideConnections(dataSourcesService, unified, accessControl, dualWrite)
 	}
 
 	builder, err := NewQueryAPIBuilder(

@@ -3,6 +3,7 @@ package datasource
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -70,7 +72,7 @@ func TestUnifiedConnections_ListConnections(t *testing.T) {
 		client.EXPECT().List(mock.Anything, mock.Anything).
 			Return(listResponse(&resourcepb.ResourceWrapper{Value: raw}), nil).Once()
 
-		list, err := ProvideUnifiedConnections(client, actest.FakeAccessControl{ExpectedEvaluate: true}).
+		list, err := newUnifiedConnections(client, actest.FakeAccessControl{ExpectedEvaluate: true}).
 			ListConnections(withUser(t, readAll), datasourceV0.DataSourceConnectionQuery{Namespace: "default"})
 		require.NoError(t, err)
 		require.Equal(t, map[string]string{
@@ -86,7 +88,7 @@ func TestUnifiedConnections_ListConnections(t *testing.T) {
 			&resourcepb.ResourceWrapper{Value: storedValue(t, "loki-uid", "Loki", "loki", nil)},
 		), nil).Once()
 
-		list, err := ProvideUnifiedConnections(client, actest.FakeAccessControl{ExpectedEvaluate: true}).
+		list, err := newUnifiedConnections(client, actest.FakeAccessControl{ExpectedEvaluate: true}).
 			ListConnections(withUser(t, readAll), datasourceV0.DataSourceConnectionQuery{Namespace: "default"})
 		require.NoError(t, err)
 
@@ -118,7 +120,7 @@ func TestUnifiedConnections_ListConnections(t *testing.T) {
 			&resourcepb.ResourceWrapper{Value: storedValue(t, "prom-uid", "Prom", "prometheus", nil)},
 		), nil).Once()
 
-		list, err := ProvideUnifiedConnections(client, actest.FakeAccessControl{ExpectedEvaluate: false}).
+		list, err := newUnifiedConnections(client, actest.FakeAccessControl{ExpectedEvaluate: false}).
 			ListConnections(withUser(t, nil), datasourceV0.DataSourceConnectionQuery{Namespace: "default"})
 		require.NoError(t, err)
 		require.Empty(t, list.Items)
@@ -131,7 +133,7 @@ func TestUnifiedConnections_ListConnections(t *testing.T) {
 			&resourcepb.ResourceWrapper{Value: storedValue(t, "orphan", "Orphan", "", nil)},
 		), nil).Once()
 
-		list, err := ProvideUnifiedConnections(client, actest.FakeAccessControl{ExpectedEvaluate: true}).
+		list, err := newUnifiedConnections(client, actest.FakeAccessControl{ExpectedEvaluate: true}).
 			ListConnections(withUser(t, readAll), datasourceV0.DataSourceConnectionQuery{Namespace: "default"})
 		require.NoError(t, err)
 		require.Empty(t, list.Items)
@@ -148,7 +150,7 @@ func TestUnifiedConnections_ListConnections(t *testing.T) {
 			return req.NextPageToken == "page-2"
 		})).Return(listResponse(&resourcepb.ResourceWrapper{Value: storedValue(t, "b", "B", "loki", nil)}), nil).Once()
 
-		list, err := ProvideUnifiedConnections(client, actest.FakeAccessControl{ExpectedEvaluate: true}).
+		list, err := newUnifiedConnections(client, actest.FakeAccessControl{ExpectedEvaluate: true}).
 			ListConnections(withUser(t, readAll), datasourceV0.DataSourceConnectionQuery{Namespace: "default"})
 		require.NoError(t, err)
 		require.Equal(t, []string{"a", "b"}, []string{list.Items[0].Name, list.Items[1].Name})
@@ -161,7 +163,7 @@ func TestUnifiedConnections_ListConnections(t *testing.T) {
 			captured = req
 		}).Return(listResponse(), nil).Once()
 
-		_, err := ProvideUnifiedConnections(client, actest.FakeAccessControl{ExpectedEvaluate: true}).
+		_, err := newUnifiedConnections(client, actest.FakeAccessControl{ExpectedEvaluate: true}).
 			ListConnections(withUser(t, readAll), datasourceV0.DataSourceConnectionQuery{Namespace: "default", Name: "prom-uid"})
 		require.NoError(t, err)
 
@@ -179,14 +181,14 @@ func TestUnifiedConnections_ListConnections(t *testing.T) {
 			Error: &resourcepb.ErrorResult{Code: 500, Message: "boom"},
 		}, nil).Once()
 
-		_, err := ProvideUnifiedConnections(client, actest.FakeAccessControl{ExpectedEvaluate: true}).
+		_, err := newUnifiedConnections(client, actest.FakeAccessControl{ExpectedEvaluate: true}).
 			ListConnections(withUser(t, readAll), datasourceV0.DataSourceConnectionQuery{Namespace: "default"})
 		require.Error(t, err)
 	})
 
 	t.Run("requires a namespace", func(t *testing.T) {
 		client := resource.NewMockResourceClient(t)
-		_, err := ProvideUnifiedConnections(client, actest.FakeAccessControl{ExpectedEvaluate: true}).
+		_, err := newUnifiedConnections(client, actest.FakeAccessControl{ExpectedEvaluate: true}).
 			ListConnections(withUser(t, readAll), datasourceV0.DataSourceConnectionQuery{})
 		require.ErrorContains(t, err, "namespace")
 	})
@@ -258,4 +260,116 @@ func storedValueIn(t *testing.T, namespace, name, title, pluginLabel string) []b
 	})
 	require.NoError(t, err)
 	return raw
+}
+
+// The API groups are served before the data moves, so the provider has to follow the storage mode
+// and not the toggle that serves them.
+func TestStorageAwareConnections(t *testing.T) {
+	readAll := map[string][]string{datasources.ActionRead: {allDatasources}}
+	query := datasourceV0.DataSourceConnectionQuery{Namespace: "default"}
+
+	legacyList := func() *datasourceV0.DataSourceConnectionList {
+		return &datasourceV0.DataSourceConnectionList{Items: []datasourceV0.DataSourceConnection{
+			{Name: "prom-uid", Title: "Prom", Plugin: "prometheus"},
+			{Name: "loki-uid", Title: "Loki", Plugin: "loki"},
+		}}
+	}
+
+	annotated := func(t *testing.T) *resourcepb.ResourceWrapper {
+		t.Helper()
+		raw, err := json.Marshal(map[string]any{
+			"metadata": map[string]any{
+				"name":        "prom-uid",
+				"labels":      map[string]string{datasourceV0.LabelKeyGroup: "prometheus"},
+				"annotations": map[string]string{"grafana.app/managedBy": "repo"},
+			},
+			"spec": map[string]any{"title": "Prom"},
+		})
+		require.NoError(t, err)
+		return &resourcepb.ResourceWrapper{Value: raw}
+	}
+
+	t.Run("lists from legacy and never touches the collection while it is not written", func(t *testing.T) {
+		client := resource.NewMockResourceClient(t)
+		storage := dualwrite.NewMockService(t)
+		storage.EXPECT().Status(mock.Anything, DataSourceCollectionResource).
+			Return(dualwrite.StorageStatus{WriteLegacy: true}, nil).Once()
+
+		list, err := ProvideConnections(&fakeConnections{list: legacyList()}, client, actest.FakeAccessControl{ExpectedEvaluate: true}, storage).
+			ListConnections(withUser(t, readAll), query)
+		require.NoError(t, err)
+		require.Equal(t, []string{"prom-uid", "loki-uid"}, []string{list.Items[0].Name, list.Items[1].Name})
+		require.Nil(t, list.Items[0].Annotations)
+	})
+
+	// The table is the complete list while dual-writing; the collection only has what has been
+	// written since, but it is the only store with the manager annotations.
+	t.Run("lists from legacy and takes the annotations from the collection while dual writing", func(t *testing.T) {
+		client := resource.NewMockResourceClient(t)
+		client.EXPECT().List(mock.Anything, mock.Anything).Return(listResponse(annotated(t)), nil).Once()
+		storage := dualwrite.NewMockService(t)
+		storage.EXPECT().Status(mock.Anything, DataSourceCollectionResource).
+			Return(dualwrite.StorageStatus{WriteLegacy: true, WriteUnified: true}, nil).Once()
+
+		list, err := ProvideConnections(&fakeConnections{list: legacyList()}, client, actest.FakeAccessControl{ExpectedEvaluate: true}, storage).
+			ListConnections(withUser(t, readAll), query)
+		require.NoError(t, err)
+		require.Len(t, list.Items, 2)
+		require.Equal(t, map[string]string{"grafana.app/managedBy": "repo"}, list.Items[0].Annotations)
+		require.Nil(t, list.Items[1].Annotations)
+	})
+
+	// Losing the list would cost more than losing a badge.
+	t.Run("keeps the legacy list when the annotation read fails", func(t *testing.T) {
+		client := resource.NewMockResourceClient(t)
+		client.EXPECT().List(mock.Anything, mock.Anything).Return(nil, errors.New("boom")).Once()
+		storage := dualwrite.NewMockService(t)
+		storage.EXPECT().Status(mock.Anything, mock.Anything).
+			Return(dualwrite.StorageStatus{WriteLegacy: true, WriteUnified: true}, nil).Once()
+
+		list, err := ProvideConnections(&fakeConnections{list: legacyList()}, client, actest.FakeAccessControl{ExpectedEvaluate: true}, storage).
+			ListConnections(withUser(t, readAll), query)
+		require.NoError(t, err)
+		require.Len(t, list.Items, 2)
+		require.Nil(t, list.Items[0].Annotations)
+	})
+
+	t.Run("lists from the collection once it is the source of truth", func(t *testing.T) {
+		client := resource.NewMockResourceClient(t)
+		client.EXPECT().List(mock.Anything, mock.Anything).Return(listResponse(annotated(t)), nil).Once()
+		storage := dualwrite.NewMockService(t)
+		storage.EXPECT().Status(mock.Anything, mock.Anything).
+			Return(dualwrite.StorageStatus{WriteUnified: true, ReadUnified: true}, nil).Once()
+
+		legacy := &fakeConnections{list: legacyList()}
+		list, err := ProvideConnections(legacy, client, actest.FakeAccessControl{ExpectedEvaluate: true}, storage).
+			ListConnections(withUser(t, readAll), query)
+		require.NoError(t, err)
+		require.Equal(t, []string{"prom-uid"}, []string{list.Items[0].Name})
+		require.Zero(t, legacy.calls)
+	})
+
+	// An unreadable mode must not promote a deployment that has not migrated to the empty collection.
+	t.Run("falls back to legacy when the storage mode cannot be read", func(t *testing.T) {
+		client := resource.NewMockResourceClient(t)
+		storage := dualwrite.NewMockService(t)
+		storage.EXPECT().Status(mock.Anything, mock.Anything).
+			Return(dualwrite.StorageStatus{}, errors.New("boom")).Once()
+
+		list, err := ProvideConnections(&fakeConnections{list: legacyList()}, client, actest.FakeAccessControl{ExpectedEvaluate: true}, storage).
+			ListConnections(withUser(t, readAll), query)
+		require.NoError(t, err)
+		require.Len(t, list.Items, 2)
+	})
+}
+
+type fakeConnections struct {
+	list  *datasourceV0.DataSourceConnectionList
+	err   error
+	calls int
+}
+
+func (f *fakeConnections) ListConnections(context.Context, datasourceV0.DataSourceConnectionQuery) (*datasourceV0.DataSourceConnectionList, error) {
+	f.calls++
+	return f.list, f.err
 }

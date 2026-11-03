@@ -378,6 +378,7 @@ func RegisterAPIService(
 		return nil, fmt.Errorf("invalid [provisioning] resource_groups configuration: %w", err)
 	}
 	supportedResources = append(supportedResources, expanded...)
+	warnUnmigratedCollections(context.Background(), resourceGroups, storageStatus)
 
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
@@ -1975,4 +1976,32 @@ func collectionMembers(ctx context.Context, pluginSources sources.Registry) (map
 		names = append(names, def.JSONData.ID)
 	}
 	return map[string][]string{datasourceV0.GROUP: names}, nil
+}
+
+// collectionStorage names the resource whose storage mode governs each provisionable collection.
+var collectionStorage = map[string]schema.GroupResource{
+	datasourceV0.GROUP: {Group: datasourceV0.GROUP, Resource: datasourceV0.DataSourceResourceInfo.GetName()},
+}
+
+// warnUnmigratedCollections reports a collection that is configured as provisionable while its data
+// still lives only in the legacy tables.
+//
+// Provisioning tracks what it manages through the search index, which indexes unified storage, and
+// the manager annotations have no column in the legacy tables. Until the data moves, a repository
+// can be configured against such a kind and will appear to sync while managing nothing, so the
+// operator is better told at startup than left to read an empty managed-object list.
+func warnUnmigratedCollections(ctx context.Context, collections []resources.SupportedResource, storageStatus dualwrite.Service) {
+	for _, collection := range collections {
+		gr, ok := collectionStorage[collection.Group]
+		if !ok {
+			continue
+		}
+		status, err := storageStatus.Status(ctx, gr)
+		if err != nil || status.WriteUnified {
+			continue
+		}
+		logging.DefaultLogger.Warn("provisioning is configured for a resource group whose data is not in unified storage; "+
+			"nothing will be tracked as managed until it is dual-written or migrated",
+			"group", collection.Group, "resource", gr.String())
+	}
 }

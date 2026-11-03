@@ -6,14 +6,17 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource/converter"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -106,8 +109,8 @@ type unifiedConnections struct {
 
 var _ datasourceV0.DataSourceConnectionProvider = (*unifiedConnections)(nil)
 
-// ProvideUnifiedConnections returns a connection provider backed by unified storage.
-func ProvideUnifiedConnections(client resource.ResourceClient, ac accesscontrol.AccessControl) datasourceV0.DataSourceConnectionProvider {
+// newUnifiedConnections returns a connection provider backed by unified storage.
+func newUnifiedConnections(client resource.ResourceClient, ac accesscontrol.AccessControl) *unifiedConnections {
 	return &unifiedConnections{client: client, ac: ac}
 }
 
@@ -193,4 +196,84 @@ func reportableLabels(labels map[string]string) map[string]string {
 		out[key] = value
 	}
 	return out
+}
+
+// DataSourceCollectionResource names the resource whose storage mode decides where data sources are
+// read from. Every plugin type shares it; see [eachStoredDataSource].
+var DataSourceCollectionResource = schema.GroupResource{
+	Group:    datasourceV0.GROUP,
+	Resource: datasourceV0.DataSourceResourceInfo.GetName(),
+}
+
+// storageAwareConnections answers the connections endpoint from whichever store actually holds the
+// data sources, which the API groups being served does not tell you: the groups migrate first and
+// the data follows.
+//
+//   - Legacy: list from the data_source table. The collection is empty.
+//   - Dual write: list from the table, which is the complete one -- the collection holds only what
+//     has been written since dual-write started -- and take the manager annotations from the
+//     collection, the only store with a place for them.
+//   - Unified: list from the collection. The table is no longer written.
+type storageAwareConnections struct {
+	legacy  datasourceV0.DataSourceConnectionProvider
+	unified *unifiedConnections
+	storage dualwrite.Service
+	logger  log.Logger
+}
+
+// ProvideConnections returns a connection provider that follows the data source storage mode.
+func ProvideConnections(
+	legacy datasourceV0.DataSourceConnectionProvider,
+	client resource.ResourceClient,
+	ac accesscontrol.AccessControl,
+	storage dualwrite.Service,
+) datasourceV0.DataSourceConnectionProvider {
+	return &storageAwareConnections{
+		legacy:  legacy,
+		unified: newUnifiedConnections(client, ac),
+		storage: storage,
+		logger:  log.New("datasource.connections"),
+	}
+}
+
+// ListConnections implements [datasourceV0.DataSourceConnectionProvider].
+func (c *storageAwareConnections) ListConnections(ctx context.Context, query datasourceV0.DataSourceConnectionQuery) (*datasourceV0.DataSourceConnectionList, error) {
+	status, err := c.storage.Status(ctx, DataSourceCollectionResource)
+	if err != nil {
+		// The table is what every deployment that has not migrated needs, so prefer it when the
+		// mode cannot be read rather than listing a collection that may hold nothing.
+		c.logger.Warn("could not read the data source storage mode, listing connections from legacy", "error", err)
+		return c.legacy.ListConnections(ctx, query)
+	}
+	if status.ReadUnified {
+		return c.unified.ListConnections(ctx, query)
+	}
+
+	list, err := c.legacy.ListConnections(ctx, query)
+	if err != nil || !status.WriteUnified || len(list.Items) == 0 {
+		return list, err
+	}
+	c.annotate(ctx, query, list)
+	return list, nil
+}
+
+// annotate fills in the manager annotations from the collection. A failed read leaves the list as
+// it is: the annotations only drive the provisioning surfaces, and losing the list costs more.
+func (c *storageAwareConnections) annotate(ctx context.Context, query datasourceV0.DataSourceConnectionQuery, list *datasourceV0.DataSourceConnectionList) {
+	annotations := map[string]map[string]string{}
+	err := eachStoredDataSource(ctx, c.unified.client, query.Namespace, query.Name, func(ds *datasourceV0.DataSource, _, _ string) error {
+		if len(ds.Annotations) > 0 {
+			annotations[ds.Name] = ds.Annotations
+		}
+		return nil
+	})
+	if err != nil {
+		c.logger.Warn("could not read the data source annotations from unified storage", "error", err)
+		return
+	}
+	for i := range list.Items {
+		if found, ok := annotations[list.Items[i].Name]; ok {
+			list.Items[i].Annotations = found
+		}
+	}
 }

@@ -15,20 +15,28 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	dsregistry "github.com/grafana/grafana/pkg/registry/apis/datasource"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -862,4 +870,69 @@ func TestCallK8sDataSourceHealthHandler(t *testing.T) {
 			}
 		})
 	}
+}
+
+// The route is rerouted by a toggle that says the API groups are served, which happens before the
+// data moves; until the collection is the source of truth the table is the only complete list.
+func TestGetK8sDataSourcesHandler_FollowsStorageMode(t *testing.T) {
+	newServer := func(t *testing.T, mode rest.DualWriterMode, unified resource.ResourceClient) *HTTPServer {
+		t.Helper()
+		cfg := setting.NewCfg()
+		cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+			dsregistry.DataSourceCollectionResource.String(): {DualWriterMode: mode},
+		}
+		hs := &HTTPServer{
+			Cfg: cfg,
+			Features: featuremgmt.WithFeatures(
+				featuremgmt.FlagDatasourcesRerouteLegacyCRUDAPIs,
+				featuremgmt.FlagDatasourceUseNewCRUDAPIs,
+			),
+			log:                log.New("test"),
+			namespacer:         func(int64) string { return "default" },
+			unifiedClient:      unified,
+			dualWrite:          dualwrite.ProvideServiceForTests(cfg),
+			pluginStore:        &pluginstore.FakePluginStore{},
+			DataSourcesService: &dataSourcesServiceMock{expectedDatasources: []*datasources.DataSource{{Name: "from-legacy"}}},
+			dsGuardian:         guardian.ProvideGuardian(),
+		}
+		hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
+		return hs
+	}
+
+	run := func(t *testing.T, hs *HTTPServer) []map[string]any {
+		t.Helper()
+		sc := setupScenarioContext(t, "/api/datasources")
+		sc.m.Get("/api/datasources", hs.getK8sDataSourcesHandler())
+		sc.fakeReq("GET", "/api/datasources").exec()
+		require.Equal(t, http.StatusOK, sc.resp.Code)
+		var body []map[string]any
+		require.NoError(t, json.NewDecoder(sc.resp.Body).Decode(&body))
+		return body
+	}
+
+	t.Run("lists from legacy while the collection is not the source of truth", func(t *testing.T) {
+		// The mock fails the test if the collection is read at all.
+		body := run(t, newServer(t, rest.Mode2, resource.NewMockResourceClient(t)))
+		require.Len(t, body, 1)
+		require.Equal(t, "from-legacy", body[0]["name"])
+	})
+
+	t.Run("lists from the collection once it is the source of truth", func(t *testing.T) {
+		raw, err := json.Marshal(map[string]any{
+			"metadata": map[string]any{
+				"name":      "from-unified",
+				"namespace": "default",
+				"labels":    map[string]string{queryV0.LabelKeyGroup: "prometheus"},
+			},
+			"spec": map[string]any{"title": "From unified"},
+		})
+		require.NoError(t, err)
+		unified := resource.NewMockResourceClient(t)
+		unified.EXPECT().List(mock.Anything, mock.Anything).
+			Return(&resourcepb.ListResponse{Items: []*resourcepb.ResourceWrapper{{Value: raw}}}, nil).Once()
+
+		body := run(t, newServer(t, rest.Mode5, unified))
+		require.Len(t, body, 1)
+		require.Equal(t, "From unified", body[0]["name"])
+	})
 }

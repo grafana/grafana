@@ -57,9 +57,8 @@ export interface DataSourceSettingsK8s {
 }
 
 const getDataSourceK8sGroup = async (uid: string): Promise<string> => {
-  // The instance list is filled by the data source cache, which reads the API groups when
-  // datasources.listFromApiGroups is on; without it this cannot resolve a data source that lives
-  // only in unified storage.
+  // The instance list comes from boot data, which is built from the legacy table, so a data source
+  // that lives only in unified storage cannot be resolved to a group here.
   const instances = await getDataSourceInstanceList({ all: true });
   for (const ds of instances) {
     // Built-in data sources (-- Grafana --, -- Mixed --, -- Dashboard --) have no k8s group.
