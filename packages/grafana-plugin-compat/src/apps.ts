@@ -2,7 +2,11 @@ import { type PluginMeta } from '@grafana/data';
 import {
   getBackendSrv,
   getPluginSettings as stableGetPluginSettings,
+  getPluginHealth as stableGetPluginHealth,
   updateAppPluginSettings as stableUpdateAppPluginSettings,
+  type HealthCheckResult,
+  HealthStatus,
+  isFetchError,
 } from '@grafana/runtime';
 import {
   getPluginSettings as unstableGetPluginSettings,
@@ -46,4 +50,44 @@ async function backwardsCompatibleUpdatePluginSettings(
 ): Promise<PluginMeta> {
   await getBackendSrv().post(`/api/plugins/${pluginId}/settings`, data, { validatePath: true });
   return backwardsCompatibleGetPluginSettings(pluginId);
+}
+
+export async function getPluginHealth(
+  pluginId: string,
+  showErrorAlert = false,
+  apiVersion?: string
+): Promise<HealthCheckResult | undefined> {
+  if (typeof stableGetPluginHealth === 'function') {
+    return stableGetPluginHealth(pluginId, showErrorAlert, apiVersion);
+  }
+
+  return backwardsCompatibleGetAppHealth(pluginId, showErrorAlert);
+}
+
+function isLegacyUnhealthyHealthCheckError(err: unknown): boolean {
+  return (
+    isFetchError<HealthCheckResult>(err) &&
+    err.status === 400 &&
+    (err.data?.status === HealthStatus.Error || err.data?.status === HealthStatus.Unknown)
+  );
+}
+
+async function backwardsCompatibleGetAppHealth(pluginId: string, showErrorAlert = false): Promise<HealthCheckResult> {
+  return getBackendSrv()
+    .get<HealthCheckResult>(`/api/plugins/${pluginId}/health`, undefined, undefined, {
+      showErrorAlert,
+      validatePath: true,
+    })
+    .catch((err) => {
+      if (isFetchError(err) && (err.status === 401 || err.status === 403)) {
+        err.isHandled = true;
+        return Promise.reject(err);
+      }
+
+      if (isLegacyUnhealthyHealthCheckError(err)) {
+        return err.data;
+      }
+
+      return Promise.reject(err);
+    });
 }

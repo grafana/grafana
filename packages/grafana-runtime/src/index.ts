@@ -126,3 +126,4 @@ export {
   type UseDefaultDataSourceInstanceListItemResult,
   type UseHasDataSourceInstanceResult,
 } from './services/dataSource/hooks';
+export { getPluginHealth } from './services/pluginHealth/getPluginHealth';
