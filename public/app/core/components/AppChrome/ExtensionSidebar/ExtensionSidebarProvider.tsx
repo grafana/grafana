@@ -23,6 +23,7 @@ import {
   DEFAULT_FLOATING_EXTENSION_SIDEBAR_WIDTH,
   MAX_EXTENSION_SIDEBAR_WIDTH,
   MIN_EXTENSION_SIDEBAR_WIDTH,
+  MAX_FLOATING_EXTENSION_SIDEBAR_WIDTH,
   MIN_FLOATING_EXTENSION_SIDEBAR_WIDTH,
 } from './constants';
 import {
@@ -351,7 +352,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
             floatingExtensionSidebarWidth ?? DEFAULT_FLOATING_EXTENSION_SIDEBAR_WIDTH,
             MIN_FLOATING_EXTENSION_SIDEBAR_WIDTH
           ),
-          MAX_EXTENSION_SIDEBAR_WIDTH
+          MAX_FLOATING_EXTENSION_SIDEBAR_WIDTH
         ),
         setFloatingExtensionSidebarWidth,
         presentation,

@@ -35,6 +35,8 @@ type openIndexListEntry struct {
 	Group     string `json:"group"`
 	Resource  string `json:"resource"`
 	DocCount  int64  `json:"docCount"`
+	// LastSearchedAt is in Unix milliseconds, set for global indexes only.
+	LastSearchedAt int64 `json:"lastSearchedAt,omitempty"`
 }
 
 func (b *bleveBackend) LoadOpenIndexStats(now time.Time, maxAge time.Duration) ([]resource.ResourceStats, error) {
@@ -111,8 +113,12 @@ func validateOpenIndexListTimestamp(writtenAtValue string, now time.Time, maxAge
 }
 
 func openIndexListStat(entry openIndexListEntry) (resource.ResourceStats, bool) {
-	if entry.Namespace == "" || entry.Group == "" || entry.Resource == "" || entry.DocCount <= 0 {
+	if entry.Namespace == "" || entry.Group == "" || entry.Resource == "" || entry.DocCount <= 0 || entry.LastSearchedAt < 0 {
 		return resource.ResourceStats{}, false
+	}
+	var lastSearchedAt time.Time
+	if entry.LastSearchedAt > 0 {
+		lastSearchedAt = time.UnixMilli(entry.LastSearchedAt)
 	}
 	return resource.ResourceStats{
 		NamespacedResource: resource.NamespacedResource{
@@ -120,7 +126,8 @@ func openIndexListStat(entry openIndexListEntry) (resource.ResourceStats, bool) 
 			Group:     entry.Group,
 			Resource:  entry.Resource,
 		},
-		Count: entry.DocCount,
+		Count:          entry.DocCount,
+		LastSearchedAt: lastSearchedAt,
 	}, true
 }
 
@@ -153,12 +160,17 @@ func (b *bleveBackend) WriteOpenIndexStats(now time.Time) error {
 			continue
 		}
 
-		indexes = append(indexes, openIndexListEntry{
+		entry := openIndexListEntry{
 			Namespace: key.Namespace,
 			Group:     key.Group,
 			Resource:  key.Resource,
 			DocCount:  int64(docCount),
-		})
+		}
+		// Only a global index is closed for not being searched.
+		if key.IsGlobal() {
+			entry.LastSearchedAt = idx.lastSearchedAt.Load()
+		}
+		indexes = append(indexes, entry)
 	}
 
 	path := filepath.Join(b.opts.Root, openIndexListFileName)

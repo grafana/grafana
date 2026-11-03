@@ -37,7 +37,7 @@ import { useCommitTarget } from '../../hooks/useCommitTarget';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type CommitTemplateVars, getResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
-import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
+import { buildResourceBranchRedirectUrl, getSavedDashboardPath } from '../../utils/redirect';
 import { getRequestRef } from '../../utils/workflow';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
@@ -210,15 +210,7 @@ export function SaveProvisionedDashboardForm({
 
   const handleNewDashboard = useCallback(
     (upsert: Resource<Dashboard>) => {
-      // Navigation for new dashboards
-      const url = locationUtil.assureBaseUrl(
-        getDashboardUrl({
-          uid: upsert.metadata.name,
-          slug: kbn.slugifyForUrl(upsert.spec.title ?? ''),
-          currentQueryParams: window.location.search,
-        })
-      );
-      navigate(url);
+      navigate(getSavedDashboardPath(upsert.metadata.name, upsert.spec.title));
     },
     [navigate]
   );

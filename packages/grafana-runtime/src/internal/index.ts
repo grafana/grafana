@@ -27,6 +27,11 @@ export {
   setGetObservablePluginLinks,
   type GetObservablePluginLinks,
 } from '../services/pluginExtensions/getObservablePluginLinks';
+export {
+  setGetObservablePluginFunctions,
+  type GetObservablePluginFunctions,
+  type GetObservablePluginFunctionsOptions,
+} from '../services/pluginExtensions/getObservablePluginFunctions';
 
 export { UserStorage, useUserStorage } from '../utils/userStorage';
 
@@ -101,3 +106,4 @@ export {
   FALLBACK_TO_LEGACY_SETTINGS_WARNING,
 } from '../services/dataSource/constants';
 export { setExpressionDataSourceInstance } from '../services/dataSource/expressionDs';
+export { isSignedInOrAnonymous } from '../services/user';

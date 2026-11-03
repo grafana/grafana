@@ -37,6 +37,8 @@ type ExtraConfigurationDB struct {
 	Identifier         string            `yaml:"identifier" json:"identifier"`
 	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
 	AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
+	// ManagedBy is auto-sync when sync wrote the config, empty otherwise.
+	ManagedBy string `yaml:"managed_by,omitempty" json:"managed_by,omitempty"`
 }
 
 // UnmarshalJSON validates the route, the extra-config count, and every managed inhibition

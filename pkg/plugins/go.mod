@@ -11,7 +11,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/authlib v0.0.0-20261023105149-ed7cea0f2b27
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3
-	github.com/grafana/grafana-app-sdk v0.61.0
+	github.com/grafana/grafana-app-sdk v0.61.1
 	github.com/grafana/grafana-plugin-sdk-go v0.297.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260424202308-770920975880
 	github.com/hashicorp/go-hclog v1.6.3
@@ -43,7 +43,7 @@ require (
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.6 // indirect
-	github.com/getkin/kin-openapi v0.151.0 // indirect
+	github.com/getkin/kin-openapi v0.152.0 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v1.0.2 // indirect
@@ -68,7 +68,7 @@ require (
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // indirect
-	github.com/grafana/grafana-app-sdk/logging v0.61.0 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.61.1 // indirect
 	github.com/grafana/otel-profiling-go v0.7.0 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.12 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.1 // indirect
@@ -101,7 +101,7 @@ require (
 	github.com/prometheus/client_golang v1.25.0 // indirect
 	github.com/prometheus/client_model v0.6.3 // indirect
 	github.com/prometheus/common v0.72.1 // indirect
-	github.com/prometheus/procfs v0.22.0 // indirect
+	github.com/prometheus/procfs v0.23.0 // indirect
 	github.com/puzpuzpuz/xsync/v4 v4.5.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
@@ -139,7 +139,7 @@ require (
 	k8s.io/apiserver v0.37.1 // indirect
 	k8s.io/client-go v0.37.1 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
-	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3 // indirect
+	k8s.io/utils v0.0.0-20261023123148-ca04ba58ecab // indirect
 	sigs.k8s.io/json v0.0.0-20260909141634-11ed52e25bc5 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.2 // indirect

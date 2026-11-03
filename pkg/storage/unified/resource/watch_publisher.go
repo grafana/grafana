@@ -3,10 +3,12 @@ package resource
 import (
 	"context"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
 )
@@ -28,7 +30,7 @@ type EventPublisher interface {
 // actionToWatchNotificationType maps the stored data action onto the wire event
 // type, mirroring how server.go derives WatchEvent.Type. An unknown action maps
 // to UNKNOWN so it is not mistaken for a real change.
-func actionToWatchNotificationType(action kv.DataAction) resourcepb.WatchNotification_Type {
+func actionToWatchNotificationType(action DataAction) resourcepb.WatchNotification_Type {
 	switch action {
 	case DataActionCreated:
 		return resourcepb.WatchNotification_ADDED
@@ -51,8 +53,23 @@ type maxPayloadReporter interface {
 	MaxPayload() int64
 }
 
-func (k *kvStorageBackend) maxWatchNotificationBytes() int {
-	if r, ok := k.eventPublisher.(maxPayloadReporter); ok {
+// WatchNotificationPublisher announces committed writes on NATS for both the KV
+// and legacy SQL backends. Nil is a no-op.
+type WatchNotificationPublisher struct {
+	publisher EventPublisher
+	log       logging.Logger
+	metrics   *watchNotificationMetrics
+}
+
+func NewWatchNotificationPublisher(p EventPublisher, reg prometheus.Registerer, log logging.Logger) *WatchNotificationPublisher {
+	if p == nil {
+		return nil
+	}
+	return &WatchNotificationPublisher{publisher: p, log: log, metrics: newWatchNotificationMetrics(reg)}
+}
+
+func (w *WatchNotificationPublisher) maxWatchNotificationBytes() int {
+	if r, ok := w.publisher.(maxPayloadReporter); ok {
 		if n := r.MaxPayload(); n > 0 {
 			return int(n)
 		}
@@ -60,22 +77,42 @@ func (k *kvStorageBackend) maxWatchNotificationBytes() int {
 	return defaultMaxWatchNotificationBytes
 }
 
-// publishWatchNotification announces a committed write on the NATS resource
-// subject as a metadata-only WatchNotification (identity, labels and a few
-// ObjectMeta fields). Consumers re-fetch the object at
-// their own API version, so no object body is sent. Errors are logged and
-// swallowed: the write is already durable in the event store.
-func (k *kvStorageBackend) publishWatchNotification(ctx context.Context, event Event) {
-	if k.eventPublisher == nil || !k.eventPublisher.Enabled() {
+// Publish sends n without the object body. Errors are
+// only logged.
+func (w *WatchNotificationPublisher) Publish(ctx context.Context, n *resourcepb.WatchNotification) {
+	if w == nil || !w.publisher.Enabled() {
 		return
 	}
 
 	subject := resourcewatch.Subject(schema.GroupVersionResource{
-		Group:    event.Group,
-		Resource: event.Resource,
-	}, event.Namespace)
+		Group:    n.Group,
+		Resource: n.Resource,
+	}, n.Namespace)
 
-	n := &resourcepb.WatchNotification{
+	payload, err := proto.Marshal(n)
+	if err == nil && n.Metadata != nil && len(payload) > w.maxWatchNotificationBytes() {
+		// Identity alone is enough for consumers to fall back to a GET.
+		w.metrics.recordMetadataDropped(n)
+		w.log.Warn("watch notification too large, publishing without metadata", "subject", subject, "name", n.Name, "bytes", len(payload))
+		n.Metadata = nil
+		payload, err = proto.Marshal(n)
+	}
+	if err != nil {
+		w.metrics.recordPublishFailures(n)
+		w.log.Warn("failed to marshal watch notification", "subject", subject, "name", n.Name, "error", err)
+		return
+	}
+
+	if err := w.publisher.Publish(ctx, subject, payload); err != nil {
+		w.metrics.recordPublishFailures(n)
+		w.log.Warn("failed to publish watch notification", "subject", subject, "name", n.Name, "error", err)
+		return
+	}
+	w.metrics.recordPublished(n)
+}
+
+func (k *kvStorageBackend) publishWatchNotification(ctx context.Context, event Event) {
+	k.watchPublisher.Publish(ctx, &resourcepb.WatchNotification{
 		Type:                    actionToWatchNotificationType(event.Action),
 		Group:                   event.Group,
 		Resource:                event.Resource,
@@ -87,25 +124,45 @@ func (k *kvStorageBackend) publishWatchNotification(ctx context.Context, event E
 		PreviousType:            actionToWatchNotificationType(event.PreviousAction),
 		PreviousFolder:          event.PreviousFolder,
 		Metadata:                event.Metadata,
-	}
-	payload, err := proto.Marshal(n)
-	if err == nil && event.Metadata != nil && len(payload) > k.maxWatchNotificationBytes() {
-		// Identity alone is enough for consumers to fall back to a GET.
-		k.metrics.recordWatchNotificationMetadataDropped(event)
-		k.log.Warn("watch notification too large, publishing without metadata", "subject", subject, "name", event.Name, "bytes", len(payload))
-		n.Metadata = nil
-		payload, err = proto.Marshal(n)
-	}
-	if err != nil {
-		k.metrics.recordWatchNotificationPublishFailure(event)
-		k.log.Warn("failed to marshal watch notification", "subject", subject, "name", event.Name, "error", err)
-		return
-	}
+	})
+}
 
-	if err := k.eventPublisher.Publish(ctx, subject, payload); err != nil {
-		k.metrics.recordWatchNotificationPublishFailure(event)
-		k.log.Warn("failed to publish watch notification", "subject", subject, "name", event.Name, "error", err)
-		return
+type watchNotificationMetrics struct {
+	Published       *prometheus.CounterVec
+	PublishFailures *prometheus.CounterVec
+	MetadataDropped *prometheus.CounterVec
+}
+
+func newWatchNotificationMetrics(reg prometheus.Registerer) *watchNotificationMetrics {
+	return &watchNotificationMetrics{
+		Published: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_storage_server_watch_notifications_published_total",
+			Help: "Watch notifications successfully published to NATS, by group, resource, and action. The denominator for consumer delivery completeness: compare against the consumers' live-received totals to measure events missed in flight.",
+		}, []string{"group", "resource", "action"}),
+		PublishFailures: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_storage_server_watch_notifications_publish_failures_total",
+			Help: "Watch notifications that failed to marshal or publish to NATS, by group, resource, and action. Each one is an event live consumers never receive; they recover it on their next re-list.",
+		}, []string{"group", "resource", "action"}),
+		MetadataDropped: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_storage_server_watch_notification_metadata_dropped_total",
+			Help: "Watch notifications published without their metadata because it pushed the message over the size limit, by group, resource, and action.",
+		}, []string{"group", "resource", "action"}),
 	}
-	k.metrics.recordWatchNotificationPublished(event)
+}
+
+func watchNotificationActionLabel(n *resourcepb.WatchNotification) string {
+	action, _ := watchNotificationTypeToAction(n.Type)
+	return string(action)
+}
+
+func (m *watchNotificationMetrics) recordPublished(n *resourcepb.WatchNotification) {
+	m.Published.WithLabelValues(n.Group, n.Resource, watchNotificationActionLabel(n)).Inc()
+}
+
+func (m *watchNotificationMetrics) recordPublishFailures(n *resourcepb.WatchNotification) {
+	m.PublishFailures.WithLabelValues(n.Group, n.Resource, watchNotificationActionLabel(n)).Inc()
+}
+
+func (m *watchNotificationMetrics) recordMetadataDropped(n *resourcepb.WatchNotification) {
+	m.MetadataDropped.WithLabelValues(n.Group, n.Resource, watchNotificationActionLabel(n)).Inc()
 }
