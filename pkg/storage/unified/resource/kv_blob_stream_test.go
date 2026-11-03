@@ -26,6 +26,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+// These SQLite migration transaction regressions belong in the normal suite, not
+// the TestIntegration SQL database matrix.
 func TestKVBlobStreamCallerTransaction(t *testing.T) {
 	for _, commit := range []bool{false, true} {
 		name := "rollback"
