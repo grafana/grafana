@@ -31,8 +31,11 @@ func TestIntegrationProvisioning_SettingsReportsTheCollection(t *testing.T) {
 	require.NoError(t, result.Into(settings), "should be able to unmarshal settings response")
 
 	require.Contains(t, settings.AvailableResources, provisioning.SupportedResource{
-		Group: collectionGroup, Kind: "DataSource",
+		Group: datasourceCollection, Kind: "DataSource",
 	}, "a wildcard entry is reported as the collection it names")
+	require.Contains(t, settings.AvailableResources, provisioning.SupportedResource{
+		Group: pluginCollection, Kind: "Thing",
+	}, "a plugin-served collection is reported the same way")
 
 	for _, r := range settings.AvailableResources {
 		require.NotContains(t, r.Group, "*", "the wildcard token itself is never surfaced")
@@ -56,7 +59,12 @@ func TestIntegrationProvisioning_JobValidationCollectionGroup(t *testing.T) {
 	}{
 		{
 			name:         "a member of the collection is accepted",
-			resource:     map[string]interface{}{"name": "ds-1", "kind": "DataSource", "group": "prometheus." + collectionGroup},
+			resource:     map[string]interface{}{"name": "ds-1", "kind": "DataSource", "group": "prometheus." + datasourceCollection},
+			wantAccepted: true,
+		},
+		{
+			name:         "a plugin-served member is accepted",
+			resource:     map[string]interface{}{"name": "thing-1", "kind": "Thing", "group": "router-test." + pluginCollection},
 			wantAccepted: true,
 		},
 		{
@@ -66,8 +74,8 @@ func TestIntegrationProvisioning_JobValidationCollectionGroup(t *testing.T) {
 		},
 		{
 			name:        "the collection group itself is rejected",
-			resource:    map[string]interface{}{"name": "ds-1", "kind": "DataSource", "group": collectionGroup},
-			expectedErr: fmt.Sprintf("spec.push.resources[0].group: Invalid value: %q: group %q is not supported for kind DataSource", collectionGroup, collectionGroup),
+			resource:    map[string]interface{}{"name": "ds-1", "kind": "DataSource", "group": datasourceCollection},
+			expectedErr: fmt.Sprintf("spec.push.resources[0].group: Invalid value: %q: group %q is not supported for kind DataSource", datasourceCollection, datasourceCollection),
 		},
 		{
 			name:        "a group outside the collection is rejected",

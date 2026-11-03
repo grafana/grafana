@@ -238,6 +238,26 @@ func TestExpandWildcardGroups(t *testing.T) {
 		require.Empty(t, expanded)
 	})
 
+	t.Run("asks discovery once for several collections", func(t *testing.T) {
+		configured, err := ParseSupportedResources([]string{
+			"*.datasource.grafana.app/DataSource",
+			"*.ext.grafana.app/Thing",
+		})
+		require.NoError(t, err)
+
+		calls := 0
+		expanded, err := expandWildcardGroups(t.Context(), func(context.Context) ([]string, error) {
+			calls++
+			return []string{"prometheus.datasource.grafana.app", "router-test.ext.grafana.app"}, nil
+		}, configured)
+		require.NoError(t, err)
+		require.Equal(t, 1, calls, "the served groups are listed once for the whole set")
+		require.ElementsMatch(t, []schema.GroupKind{
+			{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
+			{Group: "router-test.ext.grafana.app", Kind: "Thing"},
+		}, groupKinds(expanded))
+	})
+
 	t.Run("propagates a discovery failure", func(t *testing.T) {
 		configured, err := ParseSupportedResources([]string{"*.datasource.grafana.app/DataSource"})
 		require.NoError(t, err)

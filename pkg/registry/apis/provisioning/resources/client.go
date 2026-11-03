@@ -614,17 +614,19 @@ var nonProvisionableGroups = sets.New(
 // trip; a group that starts being served later needs a restart, as installing the plugin does.
 func expandWildcardGroups(ctx context.Context, listGroups groupLister, configured []SupportedResource) ([]SupportedResource, error) {
 	var served []string
+	var listed bool
 	out := make([]SupportedResource, 0, len(configured))
 	for _, r := range configured {
 		if !provisioningresources.IsWildcardGroup(r.Group) {
 			out = append(out, r)
 			continue
 		}
-		if served == nil {
+		if !listed {
 			var err error
 			if served, err = listGroups(ctx); err != nil {
 				return nil, err
 			}
+			listed = true
 		}
 		for _, group := range served {
 			if !provisioningresources.MatchesGroup(r.Group, group) || nonProvisionableGroups.Has(group) {

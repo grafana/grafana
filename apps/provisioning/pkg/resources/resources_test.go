@@ -22,6 +22,9 @@ func TestMatchesGroup(t *testing.T) {
 		{"member of another collection", "*.datasource.grafana.app", "playlist.grafana.app", false},
 		// App plugin settings are served under the bare plugin ID, so no wildcard reaches them.
 		{"name-separated collection member", "*.plugins.grafana.app", "grafana-slo-app", false},
+		{"plugin-served app group", "*.ext.grafana.app", "router-test.ext.grafana.app", true},
+		// Unlike the identity allow-list wildcard, a member may carry more than one segment.
+		{"multi-segment plugin group", "*.ext.grafana.app", "assistant.alertrules.ext.grafana.app", true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
