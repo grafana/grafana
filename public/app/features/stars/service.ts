@@ -7,14 +7,13 @@ import { setStarred } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { dispatch, store } from 'app/store/store';
 
-import { findStarredKind, isGrafanaKind, loadStarredKinds, starredNavEntry } from './kinds';
+import { findStarredKind, isGrafanaKind, loadStarredKinds, type StarredKind, starredNavEntry } from './kinds';
 import { findStarredNames, userStarsFieldSelector } from './utils';
 
 /** Stars objects over the collections API and keeps Grafana's Starred nav and lists in sync. */
 export class CollectionsStarsSrv implements StarsSrv {
   async canStar(group: string, kind: string): Promise<boolean> {
-    await loadStarredKinds();
-    return findStarredKind(group, kind) !== undefined;
+    return (await this.starredKindFor(group, kind)) !== undefined;
   }
 
   star(ref: StarredResourceRef): Promise<void> {
@@ -60,13 +59,19 @@ export class CollectionsStarsSrv implements StarsSrv {
     // Rejects on server error; the Stars tag invalidation refetches listStars so starred() re-emits.
     await dispatch(endpoint.initiate({ id, name, group, kind })).unwrap();
 
-    // A star of a kind Grafana cannot show is stored all the same; only the nav has nothing to do with it
-    if (!isGrafanaKind(group, kind)) {
-      await loadStarredKinds();
-    }
-    const starredKind = findStarredKind(group, kind);
+    // The nav re-syncs from the star set only while the menu is mounted, so it is patched here as well. A star
+    // of a kind Grafana cannot show is stored all the same; the nav just has nothing to do with it.
+    const starredKind = await this.starredKindFor(group, kind);
     if (starredKind) {
       dispatch(setStarred({ id, title, ...starredNavEntry(starredKind, id), isStarred }));
     }
+  }
+
+  /** The starrable kind behind group/kind. App kinds are discovered first; Grafana's own need no discovery. */
+  private async starredKindFor(group: string, kind: string): Promise<StarredKind | undefined> {
+    if (!isGrafanaKind(group, kind)) {
+      await loadStarredKinds();
+    }
+    return findStarredKind(group, kind);
   }
 }

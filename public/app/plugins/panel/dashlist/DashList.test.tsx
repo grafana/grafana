@@ -13,7 +13,6 @@ import {
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
-import { resetStarredKinds } from 'app/features/stars/kinds';
 import { CollectionsStarsSrv } from 'app/features/stars/service';
 
 import { getPanelProps } from '../test-utils';
@@ -123,7 +122,6 @@ describe('DashList', () => {
   it('lists a starred app object and un-stars it under its own kind', async () => {
     const thingUuid = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
     setMockStarredPluginKind(MOCK_STARRED_KIND_SERVED.group, MOCK_STARRED_KIND_SERVED.kind, [thingUuid]);
-    resetStarredKinds();
     const deletedStars: string[] = [];
     server.use(
       getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED),
@@ -158,7 +156,6 @@ describe('DashList', () => {
     // The star targets the row's own kind, not the dashboard kind every row used to get
     expect(deletedStars).toEqual([`${MOCK_STARRED_KIND_SERVED.group}/${MOCK_STARRED_KIND_SERVED.kind}/${thingUuid}`]);
     expect(screen.queryByText('Capacity review')).not.toBeInTheDocument();
-    resetStarredKinds();
   });
 
   it('shows recently viewed dashboards', async () => {

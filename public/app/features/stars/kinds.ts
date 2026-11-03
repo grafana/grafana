@@ -1,15 +1,17 @@
+import { createSelector } from '@reduxjs/toolkit';
+
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
-import { type IconName, locationUtil, type NavModelItem } from '@grafana/data';
+import { type IconName, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { type StarsList } from 'app/api/clients/collections/v1alpha1';
-import {
-  discoveryResources,
-  getAPIGroupDiscoveryList,
-  type GroupDiscoveryResource,
-} from 'app/features/apiserver/discovery';
+import { collectionsAPIv1alpha1, type StarsList } from 'app/api/clients/collections/v1alpha1';
+import { type StarredNavItem } from 'app/core/reducers/navBarTree';
+import { discoveryResources, getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { getFolderURL, starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
-import { store } from 'app/store/store';
+import { getIconForKind } from 'app/features/search/service/utils';
+import { dispatch, store } from 'app/store/store';
+
+import { appKindListPathResolver } from './appKindPages';
 
 interface StarredKindBase {
   group: string;
@@ -17,7 +19,7 @@ interface StarredKindBase {
   /** The kind string search rows and nav leaves carry: `dashboard`, `folder`, or `group/Kind` for an app kind. */
   searchKind: string;
   /** Singular display name. */
-  title: string;
+  title(): string;
   icon: IconName;
   /** Starred lists group kinds by this rank, alphabetical within a rank: dashboards, folders, then app kinds. */
   sortWeight: number;
@@ -28,7 +30,7 @@ interface StarredKindBase {
 export type KindSearchStarredKind = StarredKindBase & { source: 'kind-search'; version: string; resource: string };
 
 /**
- * A kind whose starred objects Grafana shows. The Stars resource stores names per API group and
+ * A kind Grafana can show starred objects of. The Stars resource stores names per API group and
  * kind; this describes how Grafana shows those names and where it finds their titles: dashboards
  * and folders through the dashboard search index, whose objects the browse views may move or
  * delete, and app plugin kinds through their own search endpoint.
@@ -39,191 +41,220 @@ export function resolvesThroughKindSearch(kind: StarredKind): kind is KindSearch
   return kind.source === 'kind-search';
 }
 
-const APP_KIND_FIRST_SORT_WEIGHT = 2;
+/** The starred names of one kind, as the Stars resource stores them. */
+export interface StarredNames {
+  group: string;
+  kind: string;
+  names: string[];
+}
+
+export type StarredNamesOfKind<K extends StarredKind = StarredKind> = { kind: K; names: string[] };
+
+const DASHBOARD: StarredKind = {
+  group: DASHBOARD_API_GROUP,
+  kind: 'Dashboard',
+  searchKind: 'dashboard',
+  title: () => t('stars.kinds.dashboard', 'Dashboard'),
+  icon: getIconForKind('dashboard'),
+  sortWeight: 0,
+  source: 'dashboard-search',
+  url: (name) => locationUtil.assureBaseUrl(`/d/${name}`),
+};
+
+const FOLDER: StarredKind = {
+  group: FOLDER_API_GROUP,
+  kind: 'Folder',
+  searchKind: 'folder',
+  title: () => t('stars.kinds.folder', 'Folder'),
+  icon: getIconForKind('folder'),
+  sortWeight: 1,
+  source: 'dashboard-search',
+  url: getFolderURL,
+};
+
+const GRAFANA_KINDS: readonly StarredKind[] = [DASHBOARD, FOLDER];
+const APP_KIND_FIRST_SORT_WEIGHT = GRAFANA_KINDS.length;
 // One icon for every app kind until a kind can declare its own
 const APP_KIND_ICON: IconName = 'cube';
-
-/** Nav Starred entry (url + icon + sort rank + kind) for one starred object. */
-export interface StarredNavEntry {
-  url: string;
-  icon?: IconName;
-  sortWeight: number;
-  kind: string;
-}
-
-function dashboardKind(): StarredKind {
-  return {
-    group: DASHBOARD_API_GROUP,
-    kind: 'Dashboard',
-    searchKind: 'dashboard',
-    title: t('stars.kinds.dashboard', 'Dashboard'),
-    icon: 'apps',
-    sortWeight: 0,
-    source: 'dashboard-search',
-    url: (name) => locationUtil.assureBaseUrl(`/d/${name}`),
-  };
-}
-
-function folderKind(): StarredKind {
-  return {
-    group: FOLDER_API_GROUP,
-    kind: 'Folder',
-    searchKind: 'folder',
-    title: t('stars.kinds.folder', 'Folder'),
-    icon: 'folder',
-    sortWeight: 1,
-    source: 'dashboard-search',
-    url: getFolderURL,
-  };
-}
-
-const GRAFANA_KINDS = new Set([`${DASHBOARD_API_GROUP}/Dashboard`, `${FOLDER_API_GROUP}/Folder`]);
+const NO_APP_KINDS: readonly KindSearchStarredKind[] = [];
 
 /** Whether the kind is one Grafana serves itself, so no app kind has to be discovered for it. */
 export function isGrafanaKind(group: string, kind: string): boolean {
-  return GRAFANA_KINDS.has(`${group}/${kind}`);
+  return GRAFANA_KINDS.some((candidate) => candidate.group === group && candidate.kind === kind);
 }
 
-/** Paths of the app plugin pages in the nav tree, without the app sub url, query or trailing slash. */
-function pluginPagePaths(): string[] {
-  const paths = new Set<string>();
-  const visit = (items: NavModelItem[]) => {
-    for (const item of items) {
-      const path = item.url && locationUtil.stripBaseFromUrl(item.url).split(/[?#]/)[0].replace(/\/$/, '');
-      if (path?.startsWith('/a/')) {
-        paths.add(path);
-      }
-      if (item.children) {
-        visit(item.children);
-      }
-    }
-  };
-  visit(store.getState().navBarTree);
-  return [...paths];
+/** What discovery found for an app kind. Plain data, since the store caches it; the kind is derived from it. */
+interface DiscoveredAppKind {
+  group: string;
+  kind: string;
+  version: string;
+  resource: string;
+  listPath: string;
 }
 
-/**
- * Interim, until a kind can declare its page: the app platform manifest carries no UI route yet,
- * so the list page is taken to be the plugin page whose path ends in the kind's plural, e.g.
- * `/a/grafana-irm-app/incidents` for `incidents`, and an object's page is that path plus its
- * name. A kind with no such page, or with several, is not shown. Replace with the declared path
- * (manifest `ui.path`) once it exists.
- */
-function appKindListPath(resource: GroupDiscoveryResource, pluginPages: string[]): string | undefined {
-  const matches = pluginPages.filter((path) => path.endsWith(`/${resource.resource}`));
-  return matches.length === 1 ? matches[0] : undefined;
-}
-
-function appKind(resource: GroupDiscoveryResource, listPath: string, sortWeight: number): KindSearchStarredKind {
-  const { group, kind, version } = resource.responseKind;
+function appKind(
+  { group, kind, version, resource, listPath }: DiscoveredAppKind,
+  index: number
+): KindSearchStarredKind {
   return {
     group,
     kind,
     searchKind: `${group}/${kind}`,
     // Kind names are singular nouns, which serves as the label until a kind can declare one
-    title: kind,
+    title: () => kind,
     icon: APP_KIND_ICON,
-    sortWeight,
+    sortWeight: APP_KIND_FIRST_SORT_WEIGHT + index,
     source: 'kind-search',
     version,
-    resource: resource.resource,
+    resource,
     url: (name) => locationUtil.assureBaseUrl(`${listPath}/${encodeURIComponent(name)}`),
   };
 }
 
-async function discoverAppKinds(): Promise<KindSearchStarredKind[]> {
-  const resources = discoveryResources(await getAPIGroupDiscoveryList());
-  const pages = pluginPagePaths();
-  const seen = new Set<string>();
-  const kinds: KindSearchStarredKind[] = [];
-  for (const resource of resources) {
-    const key = `${resource.responseKind.group}/${resource.responseKind.kind}`;
-    // Discovery lists a group's versions by preference, so a kind's first entry is its preferred version
-    if (resource.scope !== 'Namespaced' || GRAFANA_KINDS.has(key) || seen.has(key)) {
-      continue;
-    }
-    seen.add(key);
-    const listPath = appKindListPath(resource, pages);
-    if (listPath) {
-      kinds.push(appKind(resource, listPath, APP_KIND_FIRST_SORT_WEIGHT + kinds.length));
-    }
-  }
-  return kinds;
-}
-
-let appKinds: readonly KindSearchStarredKind[] = [];
-let appKindsLoad: Promise<void> | undefined;
-const listeners = new Set<() => void>();
-
-function setAppKinds(kinds: readonly KindSearchStarredKind[]) {
-  appKinds = kinds;
-  listeners.forEach((listener) => listener());
+/** The app kinds behind a discovery result, in discovery order. */
+export function appKindsFrom(discovered: readonly DiscoveredAppKind[] | undefined): readonly KindSearchStarredKind[] {
+  return discovered?.map(appKind) ?? NO_APP_KINDS;
 }
 
 /**
- * Finds the app kinds Grafana can show as starred: every namespaced kind API discovery lists for
- * a group other than Grafana's own, with a plugin page to link to. Loaded once per page load; a
- * failed load is retried by the next caller. Subscribers hear when the kinds change.
+ * The app kinds Grafana can show as starred: every namespaced kind API discovery lists for a
+ * group other than Grafana's own, with a plugin page to link to.
  */
-export function loadStarredKinds(): Promise<void> {
-  if (!appKindsLoad) {
-    const load = discoverAppKinds().then(setAppKinds, (err: unknown) => {
-      console.error('Failed to load the starred kinds', err);
-      if (appKindsLoad === load) {
-        appKindsLoad = undefined;
-      }
-    });
-    appKindsLoad = load;
+async function discoverAppKinds(): Promise<DiscoveredAppKind[]> {
+  const resources = discoveryResources(await getAPIGroupDiscoveryList());
+  const listPathFor = appKindListPathResolver();
+  const seen = new Set<string>();
+  const discovered: DiscoveredAppKind[] = [];
+  for (const { responseKind, scope, resource } of resources) {
+    const { group, kind, version } = responseKind;
+    const key = `${group}/${kind}`;
+    // Discovery lists a group's versions by preference, so a kind's first entry is its preferred version
+    if (scope !== 'Namespaced' || isGrafanaKind(group, kind) || seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    const listPath = listPathFor(resource);
+    if (listPath) {
+      discovered.push({ group, kind, version, resource, listPath });
+    }
   }
-  return appKindsLoad;
+  return discovered;
+}
+
+const appKindsAPI = collectionsAPIv1alpha1.injectEndpoints({
+  endpoints: (build) => ({
+    /**
+     * Discovered once per page load and kept for its whole life: what an instance serves only changes
+     * with a deploy. A failed discovery is retried by the next caller, since RTK re-runs a rejected query.
+     */
+    discoverAppKinds: build.query<DiscoveredAppKind[], void>({
+      queryFn: async () => {
+        try {
+          return { data: await discoverAppKinds() };
+        } catch (error) {
+          console.error('Failed to load the starred kinds', error);
+          return { error };
+        }
+      },
+      keepUnusedDataFor: Infinity,
+    }),
+  }),
+});
+
+export const { useDiscoverAppKindsQuery } = appKindsAPI;
+
+// Memoized on the discovery result, so repeated lookups share one set of kind objects
+const selectAppKinds = createSelector(appKindsAPI.endpoints.discoverAppKinds.select(), ({ data }) =>
+  appKindsFrom(data)
+);
+
+/** The app kinds discovered so far; none until discovery has run, or before the store exists. */
+function loadedAppKinds(): readonly KindSearchStarredKind[] {
+  return store ? selectAppKinds(store.getState()) : NO_APP_KINDS;
+}
+
+/** Discovers the app kinds, or waits for the discovery already running. Resolves either way. */
+export async function loadStarredKinds(): Promise<void> {
+  await dispatch(appKindsAPI.endpoints.discoverAppKinds.initiate());
+}
+
+/** Whether the stars hold an object of a kind other than Grafana's own, which only discovery can describe. */
+export function starsHoldAppKind(stars: StarsList | undefined): boolean {
+  const resources = stars?.items?.[0]?.spec.resource ?? [];
+  return resources.some(({ group, kind, names }) => names.length > 0 && !isGrafanaKind(group, kind));
 }
 
 /** Loads the app kinds when the stars hold an object of one; stars of Grafana's own kinds need no discovery. */
 export async function loadStarredKindsFor(stars: StarsList | undefined): Promise<void> {
-  const resources = stars?.items?.[0]?.spec.resource ?? [];
-  if (resources.some(({ group, kind, names }) => names.length > 0 && !isGrafanaKind(group, kind))) {
+  if (starsHoldAppKind(stars)) {
     await loadStarredKinds();
   }
 }
 
-/** Forgets the loaded app kinds, so the next load discovers again. Tests only. */
-export function resetStarredKinds(): void {
-  appKindsLoad = undefined;
-  setAppKinds([]);
+/** Only folders are gated: their stars show once the starred-folders flag is on. */
+function isStarrable(kind: StarredKind, foldersEnabled = starredFoldersEnabled()): boolean {
+  return kind !== FOLDER || foldersEnabled;
 }
 
-export function subscribeStarredKinds(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
+/** Among every kind Grafana can describe, its own and then the loaded app kinds. */
+function findKnownKind(predicate: (kind: StarredKind) => boolean): StarredKind | undefined {
+  return GRAFANA_KINDS.find(predicate) ?? loadedAppKinds().find(predicate);
 }
 
-// The list is rebuilt only when the folders flag or the app kinds change, so a render keyed on it sees the same
-// reference while they hold. Built on first use rather than at module load, since the titles need translations.
-let cached: { foldersEnabled: boolean; appKinds: readonly KindSearchStarredKind[]; kinds: readonly StarredKind[] } = {
-  foldersEnabled: false,
-  appKinds: [],
-  kinds: [],
-};
+/**
+ * How a search row's or nav leaf's kind is shown, whether or not it can be starred right now;
+ * undefined for kinds nobody can star, such as panels.
+ */
+export function findKind(searchKind: string): StarredKind | undefined {
+  return findKnownKind((candidate) => candidate.searchKind === searchKind);
+}
 
-/** Grafana's own kinds, then the app kinds loaded so far, in display order. */
-export function getStarredKinds(): readonly StarredKind[] {
-  const foldersEnabled = starredFoldersEnabled();
-  if (cached.kinds.length === 0 || cached.foldersEnabled !== foldersEnabled || cached.appKinds !== appKinds) {
-    const grafanaKinds = foldersEnabled ? [dashboardKind(), folderKind()] : [dashboardKind()];
-    cached = { foldersEnabled, appKinds, kinds: [...grafanaKinds, ...appKinds] };
-  }
-  return cached.kinds;
+/** The kinds whose stars Grafana shows, in display order. */
+export function starredKindsOf(
+  foldersEnabled: boolean,
+  appKinds: readonly KindSearchStarredKind[] = NO_APP_KINDS
+): StarredKind[] {
+  return [...GRAFANA_KINDS, ...appKinds].filter((kind) => isStarrable(kind, foldersEnabled));
+}
+
+export function getStarredKinds(): StarredKind[] {
+  return starredKindsOf(starredFoldersEnabled(), loadedAppKinds());
 }
 
 export function findStarredKind(group: string, kind: string): StarredKind | undefined {
-  return getStarredKinds().find((candidate) => candidate.group === group && candidate.kind === kind);
+  const found = findKnownKind((candidate) => candidate.group === group && candidate.kind === kind);
+  return found && isStarrable(found) ? found : undefined;
 }
 
-/** The kind behind a search row's kind string; undefined for rows nobody can star, such as panels. */
 export function findStarredKindBySearchKind(searchKind: string): StarredKind | undefined {
-  return getStarredKinds().find((candidate) => candidate.searchKind === searchKind);
+  const found = findKind(searchKind);
+  return found && isStarrable(found) ? found : undefined;
+}
+
+/**
+ * Splits a star set by where its kinds' titles come from, in display order: Grafana's kinds
+ * through the dashboard search index, app kinds through their own search. Stars of kinds Grafana
+ * cannot show are left out.
+ */
+export function partitionStarred(resources: StarredNames[]): {
+  indexed: StarredNamesOfKind[];
+  app: Array<StarredNamesOfKind<KindSearchStarredKind>>;
+} {
+  const namesByKind = new Map(resources.map(({ group, kind, names }) => [`${group}/${kind}`, names]));
+  const indexed: StarredNamesOfKind[] = [];
+  const app: Array<StarredNamesOfKind<KindSearchStarredKind>> = [];
+  for (const kind of getStarredKinds()) {
+    const names = namesByKind.get(`${kind.group}/${kind.kind}`) ?? [];
+    if (names.length === 0) {
+      continue;
+    }
+    if (resolvesThroughKindSearch(kind)) {
+      app.push({ kind, names });
+    } else {
+      indexed.push({ kind, names });
+    }
+  }
+  return { indexed, app };
 }
 
 /** Whether starred lists need a kind icon per row: only when more than one kind can appear. */
@@ -231,7 +262,8 @@ export function starredKindsNeedIcons(): boolean {
   return getStarredKinds().length > 1;
 }
 
-export function starredNavEntry(starredKind: StarredKind, id: string): StarredNavEntry {
+/** Nav Starred entry (url, icon, sort rank, kind) for one starred object. */
+export function starredNavEntry(starredKind: StarredKind, id: string): Omit<StarredNavItem, 'id' | 'title'> {
   return {
     url: starredKind.url(id),
     icon: starredKindsNeedIcons() ? starredKind.icon : undefined,

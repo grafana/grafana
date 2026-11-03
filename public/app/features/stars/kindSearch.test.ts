@@ -31,7 +31,7 @@ describe('searchStarredHits', () => {
     group,
     kind,
     searchKind: THING,
-    title: kind,
+    title: () => kind,
     icon: 'cube',
     sortWeight: 2,
     source: 'kind-search',
@@ -96,6 +96,14 @@ describe('searchStarredHits', () => {
     await searchStarredHits(thing, ['t1'], { text: '*' });
 
     expect(requests[0].where).toEqual({ filter: { field: 'name', operator: 'In', values: ['t1'] } });
+  });
+
+  it('asks the server to sort, so a page of several kinds needs no client ordering', async () => {
+    server.use(captureHandler());
+
+    await searchStarredHits(thing, ['t1'], { sort: { field: 'title', direction: 'desc' } });
+
+    expect(requests[0].sort).toEqual([{ field: 'title', direction: 'desc' }]);
   });
 
   it("maps results to search hits of the kind, linking to the kind's page and falling back to the name as title", async () => {

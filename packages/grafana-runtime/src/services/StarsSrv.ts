@@ -12,12 +12,9 @@ export interface StarredResourceRef {
  * Stars objects on behalf of the signed-in user and reads back what they have starred.
  *
  * App plugins get this through {@link getStarsSrv}. Stars of any kind are stored. Grafana shows
- * its own kinds (dashboards, folders) and the kinds of installed app plugins it can link to,
- * wherever starred dashboards appear, and keeps its Starred navigation and lists in sync as stars
- * change. Until a kind can declare its page, Grafana links a starred object to the plugin page
- * whose path ends in the kind's plural (`/a/grafana-irm-app/incidents` for `incidents`), plus the
- * object's name; titles come from the kind's own `/search` endpoint, so the kind's app manifest has
- * to enable search.
+ * its own kinds (dashboards, folders), and the kinds of installed app plugins that it can link to
+ * and whose API serves search, wherever starred dashboards appear; {@link StarsSrv.canStar} tells
+ * which. Its Starred navigation and lists follow every change.
  */
 export interface StarsSrv {
   /** Whether Grafana shows starred objects of the kind. Stars of other kinds are stored but not shown. */

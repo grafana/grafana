@@ -105,9 +105,7 @@ describe('MegaMenuItem rendering branches', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('labels a starred folder leaf icon so screen readers can tell folders and dashboards apart', async () => {
-    // A folder leaf only exists while folders are starrable, which is when the registry names the kind
-    setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
+  it('labels a starred folder leaf icon so screen readers can tell folders and dashboards apart', () => {
     const starredFolder: NavModelItem = {
       id: 'starred/abc',
       text: 'My Folder',
@@ -119,9 +117,6 @@ describe('MegaMenuItem rendering branches', () => {
     renderMenuItem(service, { link: starredFolder });
 
     expect(screen.getByTitle('Folder')).toBeInTheDocument();
-    await act(async () => {
-      setTestFlags({});
-    });
   });
 
   it('labels a starred dashboard leaf icon so screen readers can tell folders and dashboards apart', () => {

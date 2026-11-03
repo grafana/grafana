@@ -15,7 +15,6 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import { MOCK_STARRED_KIND_PAGE, MOCK_STARRED_KIND_SERVED, setTestFlags } from '@grafana/test-utils/unstable';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { resetStarredKinds } from 'app/features/stars/kinds';
 import { setStore } from 'app/store/store';
 
 import { type SearchQuery } from './types';
@@ -328,11 +327,8 @@ describe('Unified Storage Searcher', () => {
       const THING_URL = '/a/test-things-app/things/t1';
 
       beforeEach(() => {
-        resetStarredKinds();
         server.use(getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED));
       });
-
-      afterEach(() => resetStarredKinds());
 
       it('appends the plugin rows after the dashboard and folder rows, linking into the plugin', async () => {
         server.use(
@@ -417,7 +413,6 @@ describe('Unified Storage Searcher', () => {
       });
 
       it('ignores stars of a kind no plugin lists', async () => {
-        resetStarredKinds();
         server.use(
           getKindDiscoveryHandler(),
           starsHandler([...bothStarredResources, thingResource]),

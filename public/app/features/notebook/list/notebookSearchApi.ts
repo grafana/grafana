@@ -14,8 +14,6 @@ import { dispatch } from 'app/types/store';
  * search.grafana.app types.
  */
 
-export type ResultItem = SearchResultItem;
-
 /**
  * `continue` is absent on purpose: it is the page cursor, supplied per page by the endpoint below,
  * and including it here would make every page a separate cache entry rather than one paged list.
@@ -140,7 +138,7 @@ const notebookSearchAPI = dashboardAPIv2beta1.injectEndpoints({
 /**
  * Imperative rather than a hook: the caller is a debounced module-level function, not a component.
  */
-export async function searchNotebookTitles(query: string, limit: number): Promise<ResultItem[]> {
+export async function searchNotebookTitles(query: string, limit: number): Promise<SearchResultItem[]> {
   const { data, error } = await dispatch(
     notebookSearchAPI.endpoints.searchNotebookTitles.initiate({ query, limit }, { subscribe: false })
   );

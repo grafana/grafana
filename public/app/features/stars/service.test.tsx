@@ -15,7 +15,6 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { type StoreState } from 'app/types/store';
 
-import { resetStarredKinds } from './kinds';
 import { CollectionsStarsSrv } from './service';
 
 const USER_UID = 'test-uid';
@@ -48,7 +47,6 @@ beforeEach(async () => {
     { id: 'starred', text: 'Starred', children: [] },
     MOCK_STARRED_KIND_PAGE,
   ];
-  resetStarredKinds();
   store = configureStore();
   srv = new CollectionsStarsSrv();
 });

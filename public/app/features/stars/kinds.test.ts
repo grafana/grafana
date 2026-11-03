@@ -10,12 +10,13 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { configureStore } from 'app/store/configureStore';
 
 import {
+  findKind,
   findStarredKind,
   findStarredKindBySearchKind,
   getStarredKinds,
   loadStarredKinds,
   loadStarredKindsFor,
-  resetStarredKinds,
+  partitionStarred,
   starredKindsNeedIcons,
   starredNavEntry,
 } from './kinds';
@@ -26,14 +27,16 @@ setupMockServer();
 const THING = `${MOCK_STARRED_KIND_SERVED.group}/${MOCK_STARRED_KIND_SERVED.kind}`;
 const WIDGETS_SERVED = { group: 'widgets.ext.grafana.app', version: 'v1', kind: 'Widget', plural: 'widgets' };
 
-/** Builds the store from a nav tree holding the given plugin pages, which is where the kinds find their list page. */
+/**
+ * Builds a fresh store from a nav tree holding the given plugin pages, which is where the kinds find their list
+ * page. A fresh store also forgets the kinds discovered by the previous test.
+ */
 function setNavTree(...pages: NavModelItem[]) {
   config.bootData.navTree = [{ id: 'home', text: 'Home', url: '/' }, ...pages];
   configureStore();
 }
 
 beforeEach(() => {
-  resetStarredKinds();
   setNavTree(MOCK_STARRED_KIND_PAGE);
   server.use(getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED));
 });
@@ -67,6 +70,19 @@ describe('getStarredKinds', () => {
   });
 });
 
+describe('findKind', () => {
+  it('describes folders for display while their stars are not shown', () => {
+    const folder = findKind('folder');
+
+    expect([folder?.title(), folder?.icon]).toEqual(['Folder', 'folder']);
+    expect(findStarredKindBySearchKind('folder')).toBeUndefined();
+  });
+
+  it('describes nothing for a kind nobody can star', () => {
+    expect(findKind('panel')).toBeUndefined();
+  });
+});
+
 describe('loadStarredKinds', () => {
   it('describes an app kind from discovery, with the kind name as label and the generic icon', async () => {
     await loadStarredKinds();
@@ -74,12 +90,12 @@ describe('loadStarredKinds', () => {
     const thing = findStarredKind(MOCK_STARRED_KIND_SERVED.group, MOCK_STARRED_KIND_SERVED.kind);
     expect(thing).toMatchObject({
       searchKind: THING,
-      title: 'Thing',
       icon: 'cube',
       source: 'kind-search',
       version: 'v1alpha1',
       resource: 'things',
     });
+    expect(thing?.title()).toBe('Thing');
     expect(findStarredKindBySearchKind('panel')).toBeUndefined();
   });
 
@@ -173,6 +189,31 @@ describe('loadStarredKindsFor', () => {
     await loadStarredKindsFor(starsWith(MOCK_STARRED_KIND_SERVED) as never);
 
     expect(findStarredKindBySearchKind(THING)).toBeDefined();
+  });
+});
+
+describe('partitionStarred', () => {
+  const thingResource = { group: MOCK_STARRED_KIND_SERVED.group, kind: MOCK_STARRED_KIND_SERVED.kind, names: ['t1'] };
+  const dashboardResource = { group: 'dashboard.grafana.app', kind: 'Dashboard', names: ['d1', 'd2'] };
+
+  it('sends app kinds to their own search and the rest to the dashboard index, in display order', async () => {
+    await loadStarredKinds();
+
+    const { indexed, app } = partitionStarred([thingResource, dashboardResource]);
+
+    expect(indexed.map(({ kind, names }) => [kind.searchKind, names])).toEqual([['dashboard', ['d1', 'd2']]]);
+    expect(app.map(({ kind, names }) => [kind.searchKind, names])).toEqual([[THING, ['t1']]]);
+  });
+
+  it('leaves out kinds Grafana cannot show and kinds with nothing starred', () => {
+    const { indexed, app } = partitionStarred([
+      thingResource,
+      { group: 'folder.grafana.app', kind: 'Folder', names: ['f1'] },
+      { ...dashboardResource, names: [] },
+    ]);
+
+    expect(indexed).toEqual([]);
+    expect(app).toEqual([]);
   });
 });
 

@@ -1,17 +1,19 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
 import { setStarredItems, type StarredNavItem } from 'app/core/reducers/navBarTree';
+import { starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
 import { dispatch } from 'app/store/store';
 
 import { useSearchStarredQuery } from './api';
 import {
+  appKindsFrom,
   findStarredKindBySearchKind,
-  getStarredKinds,
-  loadStarredKindsFor,
+  starredKindsOf,
   starredNavEntry,
-  subscribeStarredKinds,
+  starsHoldAppKind,
+  useDiscoverAppKindsQuery,
 } from './kinds';
 import { findStarredNames, userStarsFieldSelector } from './utils';
 
@@ -52,19 +54,22 @@ export const useStarredItems = (group: string, kind: string, options?: { skip?: 
  * previous rows stay up. `cap` bounds the uids searched, in uid order; without it the whole set is.
  */
 export const useStarredSearch = (cap?: number) => {
-  // Read during render so a flag flip or the app kinds loading, which change the kinds listed, re-runs the search
-  const kinds = useSyncExternalStore(subscribeStarredKinds, getStarredKinds);
   const stars = useListStarsQuery({ fieldSelector: userStarsFieldSelector() });
-
-  // App kinds are found once the stars hold one; their rows join the search when they are
-  useEffect(() => {
-    loadStarredKindsFor(stars.data);
-  }, [stars.data]);
+  // App kinds are discovered once the stars hold one, and the search waits for them so it runs once, over every kind
+  const needsAppKinds = starsHoldAppKind(stars.data);
+  const appKinds = useDiscoverAppKindsQuery(needsAppKinds ? undefined : skipToken);
+  const kindsSettled = !needsAppKinds || appKinds.isSuccess || appKinds.isError;
+  // Read during render so a flag flip, which changes the kinds listed, re-runs the search
+  const foldersEnabled = starredFoldersEnabled();
+  const kinds = useMemo(
+    () => starredKindsOf(foldersEnabled, appKindsFrom(appKinds.data)),
+    [foldersEnabled, appKinds.data]
+  );
 
   // Sorted so the cache key is the set, not the order the API listed it in; deduped so a uid starred as several
   // kinds takes one cap slot.
   const searched = useMemo(() => {
-    if (!stars.data) {
+    if (!stars.data || !kindsSettled) {
       return undefined;
     }
     const byKind = kinds.map((kind) => ({ kind, names: findStarredNames(stars.data, kind.group, kind.kind) }));
@@ -77,18 +82,23 @@ export const useStarredSearch = (cap?: number) => {
         return searched.length > 0 ? [{ group: kind.group, kind: kind.kind, names: searched }] : [];
       }),
     };
-  }, [stars.data, kinds, cap]);
+  }, [stars.data, kinds, cap, kindsSettled]);
   // Refetched on every mount so an unchanged set still picks up renamed or deleted items.
   const search = useSearchStarredQuery(searched?.args ?? skipToken, { refetchOnMountOrArgChange: true });
 
   return {
+    kinds,
     uids: searched?.uids,
     rows: search.data,
     // Until the first rows land; a changed star set keeps the previous rows up while it loads.
-    loading: stars.isLoading || search.isLoading,
+    loading: stars.isLoading || appKinds.isLoading || search.isLoading,
+    // A failed discovery is not one: the dashboards and folders still list
     error: stars.isError || search.isError,
     retry: () => {
       stars.refetch();
+      if (appKinds.isError) {
+        appKinds.refetch();
+      }
       if (searched) {
         search.refetch();
       }
@@ -104,8 +114,7 @@ const STARRED_NAV_CAP = 50;
  * Replaces whatever the backend shipped in bootData (which is empty in dual-writer mode 5).
  */
 export const useSyncStarredItemsInNav = () => {
-  const kinds = useSyncExternalStore(subscribeStarredKinds, getStarredKinds);
-  const { uids, rows, loading, error } = useStarredSearch(STARRED_NAV_CAP);
+  const { kinds, uids, rows, loading, error } = useStarredSearch(STARRED_NAV_CAP);
 
   // Initialized from the search so a remount with a warm RTK cache doesn't flash a loading state: the nav tree is
   // already correct from the prior sync.

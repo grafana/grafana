@@ -1,5 +1,5 @@
 import { iamAPIv0alpha1, type DisplayList } from 'app/api/clients/iam/v0alpha1';
-import { type SortField, type WhereNode } from 'app/features/apiserver/search';
+import { type SearchResultItem, type SortField, type WhereNode } from 'app/features/apiserver/search';
 import { dispatch } from 'app/types/store';
 
 import { getMessageFromError, getStatusFromError } from '../../../core/utils/errors';
@@ -11,7 +11,6 @@ import {
   TRASH_FIELD_FOLDER,
   TRASH_FIELD_TAGS,
   TRASH_FIELD_TITLE,
-  type TrashItem,
   type TrashQuery,
 } from './trashSearchApi';
 import { type SearchHit } from './unified';
@@ -54,7 +53,7 @@ const MAX_TRASH_PAGES = 8;
  * us about from every other one.
  */
 type TrashFetchResult =
-  | { failed: false; items: TrashItem[]; truncated: boolean }
+  | { failed: false; items: SearchResultItem[]; truncated: boolean }
   | { failed: true; unavailable: boolean };
 
 /**
@@ -250,7 +249,7 @@ class DeletedDashboardsCache {
    */
   private async fetchTrash(query: DeletedDashboardsQuery): Promise<TrashFetchResult> {
     try {
-      const items: TrashItem[] = [];
+      const items: SearchResultItem[] = [];
       let continueToken: string | undefined;
       let pages = 0;
 
@@ -394,13 +393,13 @@ function extractDisplayData(
 }
 
 /** Reads one string field off a trash item. Absent fields are omitted by the server. */
-function readString(item: TrashItem, name: string): string | undefined {
+function readString(item: SearchResultItem, name: string): string | undefined {
   const value = item.fields?.[name];
   return typeof value === 'string' && value !== '' ? value : undefined;
 }
 
 /** Converts a trash result item to the SearchHit shape the deleted dashboards view renders. */
-function trashItemToSearchResult(item: TrashItem, deletedByDisplayMap: Map<string, string>): SearchHit {
+function trashItemToSearchResult(item: SearchResultItem, deletedByDisplayMap: Map<string, string>): SearchHit {
   const field: Record<string, string | number> = {};
 
   // The endpoint reports the deletion time as unix millis; the rest of the UI expects the

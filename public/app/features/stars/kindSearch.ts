@@ -1,15 +1,16 @@
-import { getAPINamespace } from '@grafana/api-clients';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
+import { getAPIBaseURL } from 'app/api/utils';
 import {
   SEARCH_API_VERSION,
   SEARCH_QUERY_KIND,
   type SearchQueryBody,
   type SearchResults,
+  type SortField,
   type WhereNode,
 } from 'app/features/apiserver/search';
 import { type SearchHit } from 'app/features/search/service/unified';
 
-import { type KindSearchStarredKind } from './kinds';
+import { type KindSearchStarredKind, type StarredNamesOfKind } from './kinds';
 
 /**
  * Resolves starred names of an app kind to titles and folders through the kind's own search
@@ -24,6 +25,7 @@ export interface StarredResourceFilter {
   text?: string;
   tags?: string[];
   folder?: string;
+  sort?: SortField;
 }
 
 /**
@@ -52,11 +54,12 @@ export async function searchStarredHits(
   }
   const query: SearchQueryBody = {
     where: leaves.length === 1 ? leaves[0] : { and: leaves },
+    ...(filter.sort ? { sort: [filter.sort] } : {}),
     fields: ['title', 'folder', 'description', 'tags'],
     limit: Math.min(names.length, MAX_SEARCH_LIMIT),
   };
 
-  const url = `/apis/${kind.group}/${kind.version}/namespaces/${getAPINamespace()}/${kind.resource}/search`;
+  const url = `${getAPIBaseURL(kind.group, kind.version)}/${kind.resource}/search`;
   let results: SearchResults;
   try {
     results = await getBackendSrv().post<SearchResults>(
@@ -92,4 +95,13 @@ export async function searchStarredHits(
       url: kind.url(name),
     };
   });
+}
+
+/** The starred objects of several app kinds, each through its own search endpoint, in kind order. */
+export async function searchAppKindHits(
+  entries: ReadonlyArray<StarredNamesOfKind<KindSearchStarredKind>>,
+  filter?: StarredResourceFilter
+): Promise<SearchHit[]> {
+  const hits = await Promise.all(entries.map(({ kind, names }) => searchStarredHits(kind, names, filter)));
+  return hits.flat();
 }

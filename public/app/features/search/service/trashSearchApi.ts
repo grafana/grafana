@@ -1,11 +1,6 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { getAPIBaseURL } from 'app/api/utils';
-import {
-  SEARCH_API_VERSION,
-  type SearchQueryBody,
-  type SearchResultItem,
-  type SearchResults,
-} from 'app/features/apiserver/search';
+import { SEARCH_API_VERSION, type SearchQueryBody, type SearchResults } from 'app/features/apiserver/search';
 import {
   DASHBOARD_API_GROUP,
   dashboardAPIVersionResolver,
@@ -29,8 +24,6 @@ export const TRASH_FIELD_FOLDER = 'folder';
 export const TRASH_FIELD_TAGS = 'tags';
 export const TRASH_FIELD_DELETED_BY = 'deleted_by';
 export const TRASH_FIELD_DELETION_TIME = 'deletion_time';
-
-export type TrashItem = SearchResultItem;
 
 /**
  * The request body, minus the envelope's apiVersion/kind, which the caller cannot get wrong

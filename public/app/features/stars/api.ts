@@ -4,17 +4,8 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
 import { toDashboardResults } from 'app/features/search/service/unified';
 
-import { searchStarredHits } from './kindSearch';
-import { findStarredKind, type KindSearchStarredKind, resolvesThroughKindSearch, type StarredKind } from './kinds';
-
-/** The starred names of one kind, as the Stars resource stores them. */
-interface StarredNames {
-  group: string;
-  kind: string;
-  names: string[];
-}
-
-type StarredNamesOfKind<K extends StarredKind = StarredKind> = { kind: K; names: string[] };
+import { searchAppKindHits } from './kindSearch';
+import { type KindSearchStarredKind, partitionStarred, type StarredNames, type StarredNamesOfKind } from './kinds';
 
 /** Rows of the kinds the dashboard search index holds, in one search over the union of their starred uids. */
 async function searchDashboardIndex(byKind: StarredNamesOfKind[]): Promise<DashboardQueryResult[]> {
@@ -34,7 +25,7 @@ async function searchDashboardIndex(byKind: StarredNamesOfKind[]): Promise<Dashb
 async function searchAppKinds(
   byKind: Array<StarredNamesOfKind<KindSearchStarredKind>>
 ): Promise<DashboardQueryResult[]> {
-  const hits = (await Promise.all(byKind.map(({ kind, names }) => searchStarredHits(kind, names)))).flat();
+  const hits = await searchAppKindHits(byKind);
   if (hits.length === 0) {
     return [];
   }
@@ -51,20 +42,11 @@ const starsAPI = collectionsAPIv1alpha1.injectEndpoints({
      */
     searchStarred: build.query<DashboardQueryResult[], StarredNames[]>({
       queryFn: async (starred) => {
-        const byKind = starred.flatMap(({ group, kind, names }): StarredNamesOfKind[] => {
-          const starredKind = findStarredKind(group, kind);
-          return starredKind && names.length > 0 ? [{ kind: starredKind, names }] : [];
-        });
-        const appKinds = byKind.flatMap(({ kind, names }) =>
-          resolvesThroughKindSearch(kind) ? [{ kind, names }] : []
-        );
+        const { indexed, app } = partitionStarred(starred);
         try {
           // The app rows trail the indexed rows, which keep the order the search gave them
-          const [indexed, apps] = await Promise.all([
-            searchDashboardIndex(byKind.filter(({ kind }) => !resolvesThroughKindSearch(kind))),
-            searchAppKinds(appKinds),
-          ]);
-          return { data: [...indexed, ...apps] };
+          const [indexedRows, appRows] = await Promise.all([searchDashboardIndex(indexed), searchAppKinds(app)]);
+          return { data: [...indexedRows, ...appRows] };
         } catch (error) {
           return { error };
         }

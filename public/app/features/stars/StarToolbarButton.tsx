@@ -90,6 +90,7 @@ export function StarToolbarButton({ title, group, kind, id, onStarChange }: Prop
 export function StarToolbarButtonExposed(props: Partial<Props>) {
   const { title, group, kind, id } = props;
   if (!title || !group || !kind || !id) {
+    console.error('[StarToolbarButton] Pass title, group, kind and id: the object to star.');
     return null;
   }
   return <StarToolbarButton {...props} title={title} group={group} kind={kind} id={id} />;

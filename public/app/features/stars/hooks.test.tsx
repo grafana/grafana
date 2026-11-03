@@ -20,7 +20,6 @@ import { type GrafanaSearcher, type SearchQuery } from 'app/features/search/serv
 import { useSelector } from 'app/types/store';
 
 import { useSyncStarredItemsInNav } from './hooks';
-import { resetStarredKinds } from './kinds';
 
 jest.mock('app/features/search/service/searcher');
 
@@ -42,11 +41,6 @@ setupMockServer();
 function installThingsApp() {
   server.use(getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED));
 }
-
-afterEach(() => {
-  // Forget the app kinds: the cache outlives a test
-  resetStarredKinds();
-});
 
 /** Renders the hook plus a read-only component that reflects Redux starred state */
 const TestHarness = () => {
