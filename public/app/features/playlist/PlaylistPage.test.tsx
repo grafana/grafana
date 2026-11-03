@@ -50,6 +50,14 @@ describe('PlaylistPage', () => {
     });
   });
 
+  it('links to the slideshows preview', async () => {
+    setup();
+    expect(await screen.findByRole('link', { name: 'Try Slideshows (preview)' })).toHaveAttribute(
+      'href',
+      '/slideshows'
+    );
+  });
+
   describe('when mounted without a playlist', () => {
     it('page should load', () => {
       setup();

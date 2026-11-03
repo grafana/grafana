@@ -582,6 +582,33 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/slideshows',
+      roles: getFeatureFlagClient().getBooleanValue(FlagKeys.PlaylistsRBAC, false)
+        ? () => contextSrv.evaluatePermission([AccessControlAction.PlaylistsRead])
+        : undefined,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SlideshowsPage"*/ 'app/features/slideshows/SlideshowsPage')
+      ),
+    },
+    {
+      path: '/slideshows/play/:uid',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SlideshowPlayPage"*/ 'app/features/slideshows/SlideshowPlayPage')
+      ),
+    },
+    {
+      path: '/slideshows/new',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SlideshowEditPage"*/ 'app/features/slideshows/SlideshowEditPage')
+      ),
+    },
+    {
+      path: '/slideshows/edit/:uid',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SlideshowEditPage"*/ 'app/features/slideshows/SlideshowEditPage')
+      ),
+    },
+    {
       path: '/sandbox/benchmarks',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "BenchmarksPage"*/ 'app/features/sandbox/BenchmarksPage')
