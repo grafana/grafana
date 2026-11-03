@@ -742,12 +742,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.setState({ links: nonDefaultLinks });
   }
 
-  /** Returns false if entering edit mode (or switching mode while already editing) was blocked, e.g. on mobile. */
+  /** Returns false if starting an edit session was blocked, e.g. on mobile. A session already underway is never blocked. */
   public onEnterEditMode = (
     source: 'user' | 'assistant' = 'user',
     trigger: DashboardModeTrigger = source === 'assistant' ? 'assistant' : 'navigation'
   ): boolean => {
-    if (isMobileEditDeprecated()) {
+    if (!this.state.isEditing && isMobileEditDeprecated()) {
       notifyMobileEditNotAvailable();
       return false;
     }
@@ -797,6 +797,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return true;
   };
 
+  /**
+   * Returns false if the switch was refused. On mobile, switching into a non-view mode is blocked with
+   * a warning, but staying in the current mode is not.
+   */
   public setDashboardMode(mode: DashboardMode, trigger: DashboardModeTrigger = 'navigation'): boolean {
     // Only a Composer session enters Composer (see enterComposerMode); any other mode request leaves it.
     if (mode === 'composer' && trigger !== 'composer') {
@@ -815,8 +819,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.state.editPanel ||
       this.state.editview ||
       (this.state.viewPanel && mode !== 'edit') ||
-      this.state.layoutOrchestrator.isDragging() ||
-      (mode !== 'view' && isMobileEditDeprecated())
+      this.state.layoutOrchestrator.isDragging()
     ) {
       return false;
     }
@@ -832,6 +835,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const previous = getDashboardMode(this.state);
     if (previous === mode) {
       return true;
+    }
+    // A switch into any other non-view mode is blocked
+    if (mode !== 'view' && isMobileEditDeprecated()) {
+      notifyMobileEditNotAvailable();
+      return false;
     }
     if (
       trigger === 'picker' &&
@@ -894,7 +902,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     sidebar.openPane(saved.openPane.clone());
   }
 
-  /** Returns false if editing could not actually be entered (e.g. blocked on mobile), so callers know not to proceed into the editor. */
+  /**
+   * Returns whether the dashboard is in full editing afterwards, so callers know not to proceed into
+   * an editor when it could not be entered (e.g. blocked on mobile). This includes a Viewing session,
+   * which is still isEditing but cannot switch back to Editing there.
+   */
   public openFullEditor(): boolean {
     // A manual-edit entry point (edit panel URL, settings) leaves Composer first.
     this.exitComposerMode();
@@ -906,7 +918,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     } else {
       this.applyDashboardMode();
     }
-    return true;
+    // A Viewing session is still isEditing, so setDashboardMode('edit') can be the step that was blocked.
+    return isFullDashboardEditing(this.state);
   }
 
   /**

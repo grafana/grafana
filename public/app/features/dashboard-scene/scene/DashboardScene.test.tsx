@@ -65,6 +65,7 @@ import { DashboardControls } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { DashboardFiltersOverviewDrawer } from './dashboard-filters-overview/DashboardFiltersOverviewDrawer';
+import { getDashboardMode } from './dashboardModes';
 import { dashboardViews } from './dashboardViewRegistry';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
@@ -409,6 +410,49 @@ describe('DashboardScene', () => {
 
         expect(result).toBe(false);
         expect(scene.state.isEditing).toBeFalsy();
+      });
+
+      describe('after the window shrinks mid-session', () => {
+        const modesAndMobile = {
+          dashboardNewLayouts: true,
+          'grafana.dashboardPreviewMode': true,
+          'grafana.mobileEditDeprecation': true,
+        };
+
+        function startEditingOnDesktop() {
+          setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+          const scene = buildTestScene({ meta: { canEdit: true, canSave: true } });
+          scene.activate();
+          scene.onEnterEditMode();
+          return scene;
+        }
+
+        it('keeps an active edit session: re-entering the same mode is not rejected or warned about', () => {
+          const scene = startEditingOnDesktop();
+          const alertSpy = jest.spyOn(appEvents, 'emit');
+          alertSpy.mockClear();
+          setTestFlags(modesAndMobile);
+          setMobileViewport();
+
+          expect(scene.setDashboardMode('edit')).toBe(true);
+          expect(scene.onEnterEditMode()).toBe(true);
+          expect(scene.openFullEditor()).toBe(true);
+          expect(scene.state.isEditing).toBe(true);
+          expect(alertSpy.mock.calls.filter(([e]) => e === AppEvents.alertWarning)).toEqual([]);
+        });
+
+        it('does not let a Viewing session switch back to Editing', () => {
+          const scene = startEditingOnDesktop();
+          expect(scene.setDashboardMode('view')).toBe(true);
+          expect(scene.state.isEditing).toBe(true);
+          setTestFlags(modesAndMobile);
+          setMobileViewport();
+
+          expect(scene.setDashboardMode('edit')).toBe(false);
+          // openFullEditor reports the blocked switch instead of claiming the editor is available
+          expect(scene.openFullEditor()).toBe(false);
+          expect(getDashboardMode(scene.state)).toBe('view');
+        });
       });
     });
 
