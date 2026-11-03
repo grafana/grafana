@@ -12,7 +12,9 @@ const search = jest.fn();
 function viewOf(rows: Array<Partial<DashboardQueryResult>>) {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const view = {
-    get: (i: number) => rows[i],
+    length: rows.length,
+    // Like a real DataFrameView, which hands back an empty row object for an out-of-range index.
+    get: (i: number) => rows[i] ?? {},
     [Symbol.iterator]: () => rows[Symbol.iterator](),
   };
   return { view } as unknown as { view: DataFrameView<DashboardQueryResult> };

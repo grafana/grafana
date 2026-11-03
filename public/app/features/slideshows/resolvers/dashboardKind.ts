@@ -15,8 +15,11 @@ export const dashboardKind: PlaylistItemKind = {
     // The search service already returns the slugged /d/<uid>/<slug> url and only returns
     // dashboards the viewer can see.
     const res = await getGrafanaSearcher().search({ query: '*', kind: ['dashboard'], uid: [uid], limit: 1 });
+    if (!res.view.length) {
+      return undefined;
+    }
     const row = res.view.get(0);
-    return row ? { url: row.url, title: row.name } : undefined;
+    return { url: row.url, title: row.name };
   },
 
   async search(query, limit) {
