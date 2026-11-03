@@ -349,7 +349,7 @@ func TestToDBModel_ToStaticJSON(t *testing.T) {
 			),
 		},
 		Receivers: map[ResourceUID]PostableApiReceiver{
-			ReceiverUID("email-receiver"): NewReceiver("email-receiver", []*PostableGrafanaReceiver{
+			ReceiverUID("email-receiver"): NewReceiver(ReceiverUID("email-receiver"), "email-receiver", []*PostableGrafanaReceiver{
 				{UID: "int-1", Name: "email-receiver", Type: "email"},
 			}, models.ProvenanceNone),
 		},

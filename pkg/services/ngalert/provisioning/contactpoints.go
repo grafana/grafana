@@ -251,7 +251,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 		if err := ecp.authz.AuthorizeCreate(ctx, user); err != nil {
 			return apimodels.EmbeddedContactPoint{}, err
 		}
-		newReceiver := v1.NewReceiver(grafanaReceiver.Name, []*v1.PostableGrafanaReceiver{grafanaReceiver}, models.ProvenanceNone)
+		newReceiver := v1.NewReceiver(v1.ReceiverUID(grafanaReceiver.Name), grafanaReceiver.Name, []*v1.PostableGrafanaReceiver{grafanaReceiver}, models.ProvenanceNone)
 		if revision.Config.Receivers == nil {
 			revision.Config.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, 1)
 		}
@@ -656,7 +656,7 @@ groupLoop:
 
 				// Target didn't match an existing group, so we create a new one.
 				newReceiverCreated = true
-				newGroup := v1.NewReceiver(target.Name, []*v1.PostableGrafanaReceiver{target}, models.ProvenanceNone)
+				newGroup := v1.NewReceiver(v1.ReceiverUID(target.Name), target.Name, []*v1.PostableGrafanaReceiver{target}, models.ProvenanceNone)
 				cfg.Receivers[newGroup.UID] = newGroup
 				newReceiver = &newGroup
 				break groupLoop

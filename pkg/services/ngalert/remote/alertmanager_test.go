@@ -1648,13 +1648,13 @@ func receiverDBToAPI(r *v1store.ReceiverDB) *definition.PostableApiReceiver {
 	}
 }
 
-// receiverAPIToDB converts the shared upstream definition.PostableApiReceiver into the
-// persisted ReceiverDB shape.
-func receiverAPIToDB(r *definition.PostableApiReceiver) *v1store.ReceiverDB {
-	return &v1store.ReceiverDB{
-		Name:                    r.Name,
-		GrafanaManagedReceivers: integrationsAPIToDB(r.GrafanaManagedReceivers),
+// receiverToDB converts the ngmodels.Receiver into the persisted ReceiverDB shape.
+func receiverToDB(r *ngmodels.Receiver) (*v1store.ReceiverDB, error) {
+	m, err := legacy_storage.ReceiverToPostableApiReceiver(r)
+	if err != nil {
+		return nil, err
 	}
+	return v1.PostableApiReceiverToDB(&m), nil
 }
 
 func integrationsDBToAPI(in []*v1store.PostableGrafanaReceiverDB) []*definition.PostableGrafanaReceiver {
@@ -1693,8 +1693,10 @@ func integrationsAPIToDB(in []*definition.PostableGrafanaReceiver) []*v1store.Po
 func encryptedGrafanaReceivers(receivers []*v1store.ReceiverDB, encryptFn ngmodels.EncryptFn) ([]*v1store.ReceiverDB, error) {
 	encrypted := make([]*v1store.ReceiverDB, len(receivers))
 	for i, r := range receivers {
-		// We don't care about the provenance here, so we pass ProvenanceNone.
-		rcv, err := PostableApiReceiverToReceiver(receiverDBToAPI(r), ngmodels.ProvenanceNone, ngmodels.ResourceOriginGrafana)
+		if r == nil {
+			continue
+		}
+		rcv, err := legacy_storage.PostableApiReceiverToReceiver(v1.ReceiverToModel(*r), ngmodels.ResourceOriginGrafana)
 		if err != nil {
 			return nil, err
 		}
@@ -1703,11 +1705,11 @@ func encryptedGrafanaReceivers(receivers []*v1store.ReceiverDB, encryptFn ngmode
 			return nil, fmt.Errorf("failed to encrypt receiver %q: %w", rcv.Name, err)
 		}
 
-		postable, err := ReceiverToPostableApiReceiver(rcv)
+		storable, err := receiverToDB(rcv)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert Receiver %q to APIReceiver: %w", rcv.Name, err)
 		}
-		encrypted[i] = receiverAPIToDB(postable)
+		encrypted[i] = storable
 	}
 	return encrypted, nil
 }
