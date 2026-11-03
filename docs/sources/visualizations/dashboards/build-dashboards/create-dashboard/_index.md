@@ -253,7 +253,7 @@ To edit a dashboard, follow these steps:
 
 <!-- prettier-ignore-end -->
 
-### Edit multiple panels
+### Group and delete multiple panels with bulk actions
 
 When you select more than one panel, you can group or delete them all at once, directly on the dashboard, without opening the sidebar.
 
