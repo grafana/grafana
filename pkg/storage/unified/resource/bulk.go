@@ -305,7 +305,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 		// backends may open a write transaction before consuming the iterator, and
 		// SQL-backed blob uploads need a separate write transaction.
 		var err error
-		spool, err = spoolBulkRequests(runner, s.bulkBatchOptions, sharedBulkSpoolBudget)
+		spool, err = spoolBulkRequests(ctx, runner, s.bulkBatchOptions, sharedBulkSpoolBudget)
 		if err != nil {
 			if runner.err != nil {
 				err = runner.err
@@ -427,7 +427,7 @@ func (b *bulkSpoolBudget) used() int64 {
 	return b.usedBytes
 }
 
-func spoolBulkRequests(source BulkRequestBatchIterator, opts BulkBatchOptions, budget *bulkSpoolBudget) (_ *spooledBulkRequests, err error) {
+func spoolBulkRequests(ctx context.Context, source BulkRequestBatchIterator, opts BulkBatchOptions, budget *bulkSpoolBudget) (_ *spooledBulkRequests, err error) {
 	file, err := os.CreateTemp("", "grafana-bulk-*.spool")
 	if err != nil {
 		return nil, fmt.Errorf("create bulk spool: %w", err)
@@ -448,11 +448,14 @@ func spoolBulkRequests(source BulkRequestBatchIterator, opts BulkBatchOptions, b
 
 	writer := bufio.NewWriter(file)
 	var sizeBuf [binary.MaxVarintLen64]byte
-	for source.NextBatch() {
+	for source.NextBatch(ctx) {
 		if source.RollbackRequested() {
 			return nil, fmt.Errorf("bulk preprocessing failed")
 		}
 		for _, req := range source.Batch() {
+			if err = ctx.Err(); err != nil {
+				return nil, err
+			}
 			data, marshalErr := proto.Marshal(req)
 			if marshalErr != nil {
 				return nil, fmt.Errorf("marshal bulk request: %w", marshalErr)
@@ -470,6 +473,9 @@ func spoolBulkRequests(source BulkRequestBatchIterator, opts BulkBatchOptions, b
 				return nil, fmt.Errorf("write bulk spool: %w", err)
 			}
 		}
+	}
+	if err = ctx.Err(); err != nil {
+		return nil, err
 	}
 	if err = writer.Flush(); err != nil {
 		return nil, fmt.Errorf("flush bulk spool: %w", err)
@@ -535,7 +541,10 @@ func (s *spooledBulkRequests) Request() *resourcepb.BulkRequest {
 	return s.request
 }
 
-func (s *spooledBulkRequests) NextBatch() bool {
+func (s *spooledBulkRequests) NextBatch(ctx context.Context) bool {
+	if ctx.Err() != nil {
+		return false
+	}
 	if s.rollback {
 		return true
 	}
@@ -546,6 +555,9 @@ func (s *spooledBulkRequests) NextBatch() bool {
 	s.batch = s.batch[:0]
 	payloadBytes := 0
 	for {
+		if ctx.Err() != nil {
+			return false
+		}
 		req, err := s.readRequest()
 		if errors.Is(err, io.EOF) {
 			s.eof = true

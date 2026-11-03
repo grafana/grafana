@@ -103,7 +103,7 @@ func TestSpoolBulkRequestsReleasesBudgetAfterQuotaError(t *testing.T) {
 	budget := newBulkSpoolBudget(1)
 	iter := newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{newTestBulkRequest("item")})
 
-	spool, err := spoolBulkRequests(iter, DefaultBulkBatchOptions(), budget)
+	spool, err := spoolBulkRequests(t.Context(), iter, DefaultBulkBatchOptions(), budget)
 
 	require.Nil(t, spool)
 	require.Error(t, err)
@@ -430,4 +430,22 @@ func (b *panicBulkBackend) GetResourceStats(context.Context, NamespacedResource,
 
 func (b *panicBulkBackend) GetResourceLastImportTime(context.Context, NamespacedResource) (time.Time, error) {
 	panic("not implemented")
+}
+
+func TestBulkSpoolCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	budget := newBulkSpoolBudget(1 << 20)
+	source := newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{newTestBulkRequest("item")})
+	spool, err := spoolBulkRequests(ctx, source, DefaultBulkBatchOptions(), budget)
+	require.ErrorIs(t, err, context.Canceled)
+	require.Nil(t, spool)
+	require.Zero(t, budget.used())
+
+	spool, err = spoolBulkRequests(t.Context(), source, DefaultBulkBatchOptions(), budget)
+	require.NoError(t, err)
+	t.Cleanup(spool.Close)
+	require.False(t, spool.NextBatch(ctx))
+	require.True(t, spool.NextBatch(t.Context()))
+	require.Equal(t, "item", spool.Batch()[0].Key.Name)
 }
