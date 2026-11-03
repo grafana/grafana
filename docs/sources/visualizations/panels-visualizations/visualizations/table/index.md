@@ -200,6 +200,14 @@ and clicking the column name.
 
 {{< figure src="/static/img/docs/tables/sort-descending.png" max-width="350px" alt="Sort descending" class="docs-image--no-shadow" >}}
 
+## Row numbers
+
+When the `table.refresh` and `table.refreshNewFeatures` feature toggles are enabled, turn on **Show row numbers** in the table options to display 1-based row positions in a gutter at the left of the table. Numbers reflect the displayed order after sorting and filtering, continue across pages, and do not restart during virtual scrolling.
+
+For regular tables, the **Row numbers** checkbox in the **Columns** sidebar shows or hides the gutter for the current view without changing the saved panel option. To change the default for the panel, use **Show row numbers** in table options. The gutter is not a data field and cannot be resized, reordered, or unpinned.
+
+For nested tables, expanding a parent row does not change the parent numbers. Each nested table starts its own sequence at 1, and footer rows are not numbered.
+
 ## Dataset selector
 
 If the data queried contains multiple datasets, a table displays a drop-down list at the bottom, so you can select the dataset you want to visualize.
@@ -238,6 +246,7 @@ For more information, refer to [Apply overrides to nested table fields](#apply-o
 | Option               | Description                                               |
 | -------------------- | --------------------------------------------------------- |
 | Show table header    | Show or hide column names imported from your data source. |
+| Show row numbers     | Display a numbered gutter at the left of the table. Available with the `table.refresh` and `table.refreshNewFeatures` feature toggles. |
 | Frozen columns       | Freeze columns starting from the left side of the table. Enter a value to set how many columns are frozen. |
 | Cell height          | Set the height of the cell. Choose from **Small**, **Medium**, or **Large**. |
 | Max row height       | Define the maximum height for a row in the table. This can be useful when **Wrap text** is enabled for one or more columns. |
