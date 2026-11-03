@@ -12,11 +12,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/rest"
 
 	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana-app-sdk/logging"
 
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -42,20 +42,31 @@ type ManifestLister interface {
 }
 
 // NewRemoteManifestLister reads the manifests that the router publishes at
-// /apis/discovery/v1alpha2/manifests. cfg must authenticate against the router.
-func NewRemoteManifestLister(cfg *rest.Config) (ManifestLister, error) {
-	client, err := dynamic.NewForConfig(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("create manifest discovery client: %w", err)
-	}
-	return &remoteManifestLister{client: client}, nil
+// /apis/discovery/v1alpha2/manifests, with the config that configProvider returns. The router
+// accepts a token for the resource.ManifestDiscoveryGVR group on that path.
+func NewRemoteManifestLister(configProvider apiserver.RestConfigProvider) ManifestLister {
+	return &remoteManifestLister{configProvider: configProvider}
 }
 
 type remoteManifestLister struct {
-	client dynamic.Interface
+	configProvider apiserver.RestConfigProvider
+	once           sync.Once
+	client         dynamic.Interface
+	err            error
 }
 
 func (l *remoteManifestLister) ListManifests(ctx context.Context) (*appmanifestv1alpha2.AppManifestList, error) {
+	l.once.Do(func() {
+		cfg, err := l.configProvider.GetRestConfig(ctx)
+		if err != nil {
+			l.err = fmt.Errorf("get manifest discovery config: %w", err)
+			return
+		}
+		l.client, l.err = dynamic.NewForConfig(cfg)
+	})
+	if l.err != nil {
+		return nil, l.err
+	}
 	list, err := l.client.Resource(resource.ManifestDiscoveryGVR).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("list app manifests: %w", err)
