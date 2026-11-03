@@ -267,7 +267,10 @@ To group or delete multiple panels, follow these steps:
    A dotted blue line surrounds the selected panels.
 
 1. Hover your cursor over any of the selected panels to display the actions tooltip.
-   The tooltip shows how many panels are selected, for example **3 panels selected**, followed by these options:
+
+   The tooltip shows the number of panels selected, including their [repeated instances](#configure-repeat-options).
+   If you select only one panel that repeats, the tooltip displays single-panel options, and not bulk actions.
+   
    - **Group into row**: Moves the selected panels into a new row.
    - **Group into tab**: Moves the selected panels into a new tab.
    - **Delete**: Deletes all the selected panels, after you confirm.
