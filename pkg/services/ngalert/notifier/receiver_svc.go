@@ -189,10 +189,7 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, uid string, decrypt 
 	rcv, err := revision.GetReceiver(uid)
 	if err != nil {
 		if errors.Is(err, models.ErrReceiverNotFound) && rs.includeImported {
-			imported := rs.getImportedReceivers(ctx, span, []string{uid}, revision)
-			if len(imported) > 0 {
-				rcv = imported[0]
-			}
+			rcv = rs.getImportedReceiver(ctx, span, uid, revision)
 		}
 		if rcv == nil {
 			return nil, err
@@ -238,11 +235,6 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	))
 	defer span.End()
 
-	uids := make([]string, 0, len(q.Names))
-	for _, name := range q.Names {
-		uids = append(uids, string(v1.ReceiverUID(name))) // TODO: This won't work with static UIDs.
-	}
-
 	revision, err := rs.cfgStore.Get(ctx, q.OrgID)
 	if err != nil {
 		return nil, err
@@ -251,7 +243,7 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 		return nil, err
 	}
 
-	receivers, err := revision.GetReceivers(uids)
+	receivers, err := revision.GetReceivers(q.Names)
 	if err != nil {
 		return nil, err
 	}
@@ -262,7 +254,7 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	))
 
 	if rs.includeImported {
-		imported := rs.getImportedReceivers(ctx, span, uids, revision)
+		imported := rs.getImportedReceivers(ctx, span, q.Names, revision)
 		receivers = append(receivers, imported...)
 	}
 
@@ -324,9 +316,8 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		}
 		if rs.includeImported {
 			// try to get the imported receiver and return a specific error if it exists
-			result := rs.getImportedReceivers(ctx, span, []string{uid}, revision)
-			if len(result) > 0 {
-				return makeErrReceiverOrigin(result[0], "delete")
+			if imported := rs.getImportedReceiver(ctx, span, uid, revision); imported != nil {
+				return makeErrReceiverOrigin(imported, "delete")
 			}
 		}
 		return nil
@@ -490,9 +481,8 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	if err != nil {
 		if errors.Is(err, models.ErrReceiverNotFound) && rs.includeImported {
 			// try to get the imported receiver and return a specific error if it exists
-			result := rs.getImportedReceivers(ctx, span, []string{r.GetUID()}, revision)
-			if len(result) > 0 {
-				return nil, makeErrReceiverOrigin(result[0], "update")
+			if imported := rs.getImportedReceiver(ctx, span, r.GetUID(), revision); imported != nil {
+				return nil, makeErrReceiverOrigin(imported, "update")
 			}
 		}
 		return nil, err
@@ -969,11 +959,29 @@ func (rs *ReceiverService) ReceiverNameUsedByRoutes(ctx context.Context, rev *le
 	return rs.routeService.ReceiverNameUsedByRoutes(ctx, rev, name)
 }
 
-func (rs *ReceiverService) getImportedReceivers(ctx context.Context, span trace.Span, uids []string, revision *legacy_storage.ConfigRevision) []*models.Receiver {
+// getImportedReceiver returns the imported receiver with the given UID, or nil if there is none.
+func (rs *ReceiverService) getImportedReceiver(ctx context.Context, span trace.Span, uid string, revision *legacy_storage.ConfigRevision) *models.Receiver {
+	imported, err := revision.Imported()
+	if err != nil {
+		rs.log.FromContext(ctx).Warn("Unable to include imported receivers. Skipping", "err", err)
+		span.RecordError(err, trace.WithAttributes(
+			attribute.String("concurrency_token", revision.ConcurrencyToken),
+		))
+		return nil
+	}
+	receiver, err := imported.GetReceiver(uid)
+	if err != nil {
+		return nil
+	}
+	return receiver
+}
+
+// getImportedReceivers returns the imported receivers, optionally filtered by name.
+func (rs *ReceiverService) getImportedReceivers(ctx context.Context, span trace.Span, names []string, revision *legacy_storage.ConfigRevision) []*models.Receiver {
 	var result []*models.Receiver
 	imported, err := revision.Imported()
 	if err == nil {
-		result, err = imported.GetReceivers(uids)
+		result, err = imported.GetReceivers(names)
 	}
 	if err != nil {
 		rs.log.FromContext(ctx).Warn("Unable to include imported receivers. Skipping", "err", err)
