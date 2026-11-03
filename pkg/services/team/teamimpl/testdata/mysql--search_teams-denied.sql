@@ -19,6 +19,12 @@ AND team.name LIKE '%operations%'
 AND LOWER(team.name) = LOWER('Operations')
 AND team.id IN (11, 12)
 AND team.uid IN ('team-a', 'team-b')
+AND EXISTS (
+    SELECT 1 FROM `test_schema`.`team_member` AS membership
+    INNER JOIN `test_schema`.`user` AS member_user ON member_user.id = membership.user_id
+    WHERE membership.team_id = team.id AND membership.org_id = team.org_id
+      AND member_user.uid = 'user-a'
+  )
 AND 1 = 0
 ORDER BY
 LOWER(team.name) DESC, member_count ASC

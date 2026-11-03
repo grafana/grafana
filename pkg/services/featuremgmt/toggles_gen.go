@@ -407,6 +407,10 @@ const (
 	// Route legacy access-control evaluations through the AuthZ LegacyCheck RPC.
 	FlagAuthzUseLegacyCheck = "authz.useLegacyCheck"
 
+	// FlagAuthzUseLegacyCheckShadow
+	// Compare local access-control evaluations with the AuthZ LegacyCheck RPC in the background.
+	FlagAuthzUseLegacyCheckShadow = "authz.useLegacyCheckShadow"
+
 	// FlagZanzana
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
