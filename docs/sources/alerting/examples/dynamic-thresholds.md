@@ -280,9 +280,9 @@ You can use the [TestData data source](/docs/grafana/<GRAFANA_VERSION>/datasourc
 
 ### Join thresholds from another query
 
-Instead of hardcoding thresholds in the SQL expression, you can retrieve them from another query, such as a query to a CSV file, a database, or another data source:
+Instead of defining static thresholds in the SQL expression, you can retrieve them from another query:
 
- ```csv
+ ```B
  service, threshold
  checkout-api, 1.5
  auth-api, 2
