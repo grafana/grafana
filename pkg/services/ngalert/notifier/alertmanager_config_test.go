@@ -897,6 +897,27 @@ receivers:
 		require.NoError(t, mam.DeleteExtraConfiguration(ctx, orgID, signedIn, noopExtraConfigAuthz{}, syncUID))
 	})
 
+	t.Run("delete of an auto-sync config is refused when the sync identifier cannot be resolved", func(t *testing.T) {
+		setSyncFlag(t, true)
+		// No ini UID and no client generator, so resolution fails.
+		mam := setupMam(t, nil)
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+		require.NoError(t, save(mam, staged(syncUID, v1.ExtraConfigManagedByAutoSync), false))
+
+		err := mam.DeleteExtraConfiguration(ctx, orgID, signedIn, noopExtraConfigAuthz{}, syncUID)
+		require.ErrorContains(t, err, "resolve external alertmanager sync identifier")
+		require.Equal(t, v1.ExtraConfigManagedByAutoSync, storedOwner(t, mam))
+	})
+
+	t.Run("delete of a manual config still works when the sync identifier cannot be resolved", func(t *testing.T) {
+		setSyncFlag(t, true)
+		mam := setupMam(t, nil)
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+		require.NoError(t, save(mam, staged("manual-import", ""), false))
+
+		require.NoError(t, mam.DeleteExtraConfiguration(ctx, orgID, signedIn, noopExtraConfigAuthz{}, "manual-import"))
+	})
+
 	t.Run("stored auto-sync owner reads as manual once sync is inactive", func(t *testing.T) {
 		mam := setup(t, true)
 		require.NoError(t, save(mam, staged(syncUID, v1.ExtraConfigManagedByAutoSync), false))

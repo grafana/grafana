@@ -363,22 +363,21 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 }
 
 // activeSyncIdentifier returns the identifier sync currently writes to, or "" when sync is off or unconfigured.
+// It returns an error when the identifier cannot be resolved, which is different from "".
 // Keep identifier comparisons behind this helper and isOwnedByActiveSync so the identifier can change in one place.
-func (moa *MultiOrgAlertmanager) activeSyncIdentifier(ctx context.Context, orgID int64) string {
+func (moa *MultiOrgAlertmanager) activeSyncIdentifier(ctx context.Context, orgID int64) (string, error) {
 	client := openfeature.NewDefaultClient()
 	if !client.Boolean(ctx, featuremgmt.FlagAlertingSyncExternalAlertmanager, false, openfeature.TransactionContext(ctx)) {
-		return ""
+		return "", nil
 	}
 	if moa.externalAMSyncer == nil { // nil in tests that bypass NewMultiOrgAlertmanager
-		return ""
+		return "", nil
 	}
 	uid, _, err := moa.externalAMSyncer.resolveExternalAMUIDForOrg(ctx, orgID)
 	if err != nil {
-		// Degrade to "no active sync" so config reads keep working.
-		moa.logger.Warn("Failed to resolve external AM sync UID", "err", err, "org_id", orgID)
-		return ""
+		return "", fmt.Errorf("resolve external alertmanager sync identifier: %w", err)
 	}
-	return uid
+	return uid, nil
 }
 
 // isOwnedByActiveSync reports whether sync wrote the config and still writes to its identifier.
@@ -392,7 +391,11 @@ func (moa *MultiOrgAlertmanager) setExtraConfigOrigin(ctx context.Context, orgID
 		return
 	}
 
-	activeIdentifier := moa.activeSyncIdentifier(ctx, orgID)
+	activeIdentifier, err := moa.activeSyncIdentifier(ctx, orgID)
+	if err != nil {
+		// Reads keep working and report manual, as they did before owners were stored.
+		moa.logger.Warn("Failed to resolve external AM sync identifier", "err", err, "org_id", orgID)
+	}
 	for i := range extraConfigs {
 		// Only reads as auto-sync while sync writes to it, so the UI still allows revert otherwise.
 		if isOwnedByActiveSync(extraConfigs[i].Identifier, extraConfigs[i].ManagedBy, activeIdentifier) {
@@ -565,13 +568,20 @@ func checkSyncDoesNotOverwriteManual(existing []v1.ExtraConfiguration, incoming 
 
 // DeleteExtraConfiguration deletes an ExtraConfiguration by its identifier while preserving the main AlertmanagerConfig.
 func (moa *MultiOrgAlertmanager) DeleteExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz ExtraConfigAuthz, identifier string) error {
-	activeIdentifier := moa.activeSyncIdentifier(ctx, org)
+	activeIdentifier, resolveErr := moa.activeSyncIdentifier(ctx, org)
 	modifyFunc := func(configs []v1.ExtraConfiguration) ([]v1.ExtraConfiguration, error) {
 		if err := authz.AuthorizeDelete(ctx, user, identifier); err != nil {
 			return nil, err
 		}
 		for _, c := range configs {
-			if c.Identifier == identifier && isOwnedByActiveSync(c.Identifier, c.ManagedBy, activeIdentifier) {
+			if c.Identifier != identifier || c.ManagedBy != v1.ExtraConfigManagedByAutoSync {
+				continue
+			}
+			// Without the active identifier we cannot tell whether sync still writes to this config.
+			if resolveErr != nil {
+				return nil, resolveErr
+			}
+			if isOwnedByActiveSync(c.Identifier, c.ManagedBy, activeIdentifier) {
 				return nil, ErrAlertmanagerExtraConfigManagedByAutoSync.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": identifier}})
 			}
 		}
