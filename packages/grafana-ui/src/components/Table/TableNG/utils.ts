@@ -741,7 +741,7 @@ export function getAlignmentFactor(
 
     for (let i = rowIndex + 1; i < maxIndex; i++) {
       const rawValue = field.values[i];
-      const value = isDataFrameWithValue(rawValue) ? rawValue.value : rawValue;
+      const value = isDataFrame(rawValue) ? (isDataFrameWithValue(rawValue) ? rawValue.value : null) : rawValue;
       const nextDisplayValue = field.display?.(value) ?? { text: String(value ?? '') };
       const nextLength = formattedValueToString(nextDisplayValue).length;
       if (nextLength > longestLength) {

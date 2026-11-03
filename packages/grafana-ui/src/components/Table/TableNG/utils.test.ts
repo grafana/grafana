@@ -470,6 +470,24 @@ describe('TableNG utils', () => {
   });
 
   describe('getAlignmentFactor', () => {
+    it('measures unreduced sparkline frames as null', () => {
+      const frame = createDataFrame({
+        fields: [{ name: 'value', type: FieldType.number, values: [12345] }],
+      });
+      const field: Field = {
+        name: 'sparkline',
+        type: FieldType.frame,
+        config: { custom: { cellOptions: { type: TableCellDisplayMode.Sparkline } } },
+        values: [{ ...frame, value: 1 }, frame],
+        display: (value) => ({ text: value === null ? 'N/A' : String(value), numeric: Number(value) }),
+      };
+
+      expect(getAlignmentFactor(field, { text: '1', numeric: 1 }, 0)).toEqual({
+        text: 'N/A',
+        numeric: 0,
+      });
+    });
+
     it('measures reduced sparkline values instead of data frame objects', () => {
       const field: Field = {
         name: 'sparkline',
