@@ -16,7 +16,7 @@ import {
   type ReceiverFormValues,
 } from '../../../types/receiver-form';
 
-import { ConfiguredSecretInput, OptionField } from './fields/OptionField';
+import { ConfiguredSecretInput, OptionField, ProtectedFieldLabel } from './fields/OptionField';
 
 export interface Props<R extends ChannelValues> {
   defaultValues: R;
@@ -73,17 +73,19 @@ export function ChannelOptions<R extends ChannelValues>({
         }
 
         if (secureFields && secureFields[option.secureFieldKey ?? option.propertyName]) {
+          // Resetting a protected secret would leave an empty locked field, so hide Reset like for any read-only field
+          const isLocked = !!option.protected && !!getOptionMeta(option).readOnly;
           return (
             <Field
               key={key}
-              label={option.label}
+              label={isLocked ? <ProtectedFieldLabel label={option.label} /> : option.label}
               description={option.description}
               htmlFor={`${settingsPath}${option.propertyName}`}
               noMargin
             >
               <ConfiguredSecretInput
                 id={`${settingsPath}${option.propertyName}`}
-                readOnly={readOnly}
+                readOnly={readOnly || isLocked}
                 onReset={() => onResetSecureField(option.secureFieldKey ?? option.propertyName)}
               />
             </Field>

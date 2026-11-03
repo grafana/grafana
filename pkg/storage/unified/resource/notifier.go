@@ -176,9 +176,9 @@ func settleEvents(ctx context.Context, raw <-chan Event, out chan<- Event, opts 
 		})
 
 		// Emit events that have "settled" (old enough that concurrent writes should have appeared).
-		threshold := snowflakeFromTime(time.Now().Add(-opts.SettleDelay))
+		settled := settledBefore(time.Now().Add(-opts.SettleDelay))
 		emitted := 0
-		for emitted < len(buffer) && buffer[emitted].ResourceVersion <= threshold {
+		for emitted < len(buffer) && settled(buffer[emitted].ResourceVersion) {
 			select {
 			case out <- buffer[emitted]:
 			case <-ctx.Done():
@@ -187,6 +187,18 @@ func settleEvents(ctx context.Context, raw <-chan Event, out chan<- Event, opts 
 			emitted++
 		}
 		buffer = buffer[emitted:]
+	}
+}
+
+// settledBefore reports whether an RV was written before cutoff. Legacy SQL RVs
+// are microsecond timestamps, which compare below any snowflake threshold.
+func settledBefore(cutoff time.Time) func(rv int64) bool {
+	snowflakeCutoff, microCutoff := snowflakeFromTime(cutoff), cutoff.UnixMicro()
+	return func(rv int64) bool {
+		if IsSnowflake(rv) {
+			return rv <= snowflakeCutoff
+		}
+		return rv <= microCutoff
 	}
 }
 

@@ -315,11 +315,6 @@ export interface FeatureToggles {
   */
   canvasPanelPanZoom?: boolean;
   /**
-  * Enables time comparison option in supported panels
-  * @default true
-  */
-  timeComparison?: boolean;
-  /**
   * Enables shared crosshair in table panel
   * @default false
   */
@@ -977,11 +972,6 @@ export interface FeatureToggles {
   * @default false
   */
   pluginInsights?: boolean;
-  /**
-  * Enables a new panel time settings drawer
-  * @default true
-  */
-  panelTimeSettings?: boolean;
   /**
   * Enables http proxy settings for aws datasources
   * @default false
