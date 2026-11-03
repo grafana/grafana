@@ -3305,11 +3305,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/components/TracePageHeader/SpanGraph/ViewingLayer.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/TraceView/components/TraceTimelineViewer/ListView/index.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -3323,14 +3318,6 @@
   "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/LogsLink.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/TimelineHeaderRow/TimelineColumnResizer.tsx": {
-    "react-hooks/refs": {
-      "count": 2
-    },
-    "react-hooks/rules-of-hooks": {
-      "count": 4
     }
   },
   "public/app/features/explore/TraceView/components/TraceTimelineViewer/TimelineHeaderRow/TimelineViewingLayer.tsx": {
