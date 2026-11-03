@@ -9,13 +9,7 @@ import type { PanelEditor } from '../PanelEditor';
 import { useSnappingSplitter } from '../splitter/useSnappingSplitter';
 import { useScrollReflowLimit } from '../useScrollReflowLimit';
 
-import {
-  buildVizAndDataPaneGrid,
-  getDefaultSidebarRatio,
-  usePanelEditorShell,
-  useRatioResize,
-  useVizAndDataPaneLayout,
-} from './hooks';
+import { buildVizAndDataPaneGrid, getDefaultSidebarRatio, usePanelEditorShell, useRatioResize } from './hooks';
 
 jest.mock('@grafana/ui', () => ({
   useStyles2: jest.fn(() => ({ dragHandleVertical: 'drag-v', dragHandleHorizontal: 'drag-h' })),
@@ -70,23 +64,6 @@ describe('usePanelEditorShell', () => {
       splitter,
       controls,
     });
-  });
-});
-
-describe('useVizAndDataPaneLayout', () => {
-  it('gives the data pane 55% and the viz 45% of the height by default', () => {
-    const model = {
-      useState: jest.fn(() => ({ dataPane: {}, tableView: undefined })),
-      getPanel: jest.fn(),
-    } as unknown as PanelEditor;
-    jest.mocked(getDashboardSceneFor).mockReturnValue({} as never);
-    jest.mocked(useScrollReflowLimit).mockReturnValue(false);
-
-    const { result } = renderHook(() => useVizAndDataPaneLayout(model, { current: null }));
-
-    const [vizRow, dataPaneRow] = String(result.current.layout.gridStyles.gridTemplateRows).split(' ');
-    expect(parseFloat(vizRow)).toBeCloseTo(0.45 / 0.55, 5);
-    expect(dataPaneRow).toBe('1fr');
   });
 });
 

@@ -12,12 +12,16 @@ import { type PanelEditor } from '../PanelEditor';
 import { useSnappingSplitter } from '../splitter/useSnappingSplitter';
 import { useScrollReflowLimit } from '../useScrollReflowLimit';
 
-import { QUERY_EDITOR_BANNER_DISMISSED_KEY, QUERY_EDITOR_SIDEBAR_SIZE_KEY, SidebarSize } from './constants';
+import {
+  DEFAULT_VIZ_RATIO,
+  QUERY_EDITOR_BANNER_DISMISSED_KEY,
+  QUERY_EDITOR_SIDEBAR_SIZE_KEY,
+  SidebarSize,
+} from './constants';
 
 const MIN_SIDEBAR_RATIO = 0.1;
 const MAX_SIDEBAR_RATIO = 0.5;
 const MIN_SIDEBAR_PIXELS = 200;
-const DEFAULT_VIZ_RATIO = 0.45;
 const MIN_VIZ_RATIO = 0.1;
 const MAX_VIZ_RATIO = 0.9;
 const vizResizerClassName = css({ height: 2, width: '100%' });
