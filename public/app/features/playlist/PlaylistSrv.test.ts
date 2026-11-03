@@ -373,6 +373,8 @@ describe('PlaylistSrv with slideshows', () => {
 
     // The page rewrites its own url and loses the query string.
     locationService.getHistory().replace('/things/a/with-slug');
+    // The redirected page then syncs its time range into its own url, which says nothing about kiosk.
+    locationService.getHistory().replace('/things/a/with-slug?from=now-6h&to=now&timezone=browser');
     srv.next();
 
     expect(pathname()).toBe('/things/b');
@@ -426,7 +428,7 @@ describe('PlaylistSrv with slideshows', () => {
     expect(srv.state.isPlaying).toBe(true);
   });
 
-  it.each(['bogus', '0s', '-5s'])(
+  it.each(['bogus', '0s', '-5s', '30d'])(
     'plays an item whose interval %p cannot be used, with the default interval',
     async (bad) => {
       jest.useFakeTimers();

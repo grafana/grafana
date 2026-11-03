@@ -21,6 +21,8 @@ const queryParamsToPreserve: { [key: string]: boolean } = {
   '_dash.hidePlaylistNav': true,
 };
 
+const MAX_TIMER_MS = 2 ** 31 - 1;
+
 export interface PlaylistSrvState {
   isPlaying: boolean;
 }
@@ -42,6 +44,9 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   // redirects itself can drop them from the location, so the next item reads them from here
   // instead; changes the viewer makes on the page (such as leaving kiosk) update them.
   private preservedParams: Record<string, unknown> = {};
+  // The kept params on the page as last seen, to tell what the viewer changed from what a page
+  // does to its own url.
+  private seenParams: Record<string, unknown> = {};
   // Whether the page of the current item has already redirected itself.
   private redirected = false;
   declare private startUrl: string;
@@ -62,6 +67,7 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     this.index++;
     this.validPlaylistUrl = nextDashboardUrl;
     this.redirected = false;
+    this.seenParams = { ...this.preservedParams };
     this.nextTimeoutId = setTimeout(() => this.next(), this.intervalFor(item));
 
     const urlWithParams = nextDashboardUrl + '?' + urlUtil.toUrlParams(this.preservedParams);
@@ -84,7 +90,8 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     }
     try {
       const ms = rangeUtil.intervalToMs(item.interval);
-      if (Number.isFinite(ms) && ms > 0) {
+      // Timers longer than this run after one millisecond instead.
+      if (Number.isFinite(ms) && ms > 0 && ms <= MAX_TIMER_MS) {
         return ms;
       }
     } catch {
@@ -121,8 +128,20 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   // Detect url changes not caused by playlist srv and stop playlist
   locationUpdated(location: Location, action?: string) {
     if (location.pathname === this.validPlaylistUrl) {
-      // Same page: the viewer may have changed kiosk or a display option.
-      this.preservedParams = this.pickPreserved();
+      // Same page: carry over only the options whose value changed, such as the viewer leaving
+      // kiosk. A page syncing other params into its url must not wipe options it never had.
+      const current = this.pickPreserved();
+      for (const key of Object.keys(queryParamsToPreserve)) {
+        if (String(current[key]) === String(this.seenParams[key])) {
+          continue;
+        }
+        if (key in current) {
+          this.preservedParams[key] = current[key];
+        } else {
+          delete this.preservedParams[key];
+        }
+      }
+      this.seenParams = current;
       return;
     }
 
@@ -131,6 +150,8 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     if (action === 'REPLACE' && !this.redirected) {
       this.redirected = true;
       this.validPlaylistUrl = location.pathname;
+      // What the redirect dropped is not something the viewer chose.
+      this.seenParams = this.pickPreserved();
       return;
     }
 
