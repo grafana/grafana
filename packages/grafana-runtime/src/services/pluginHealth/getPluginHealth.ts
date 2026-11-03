@@ -93,6 +93,5 @@ export async function getPluginHealth(
     return undefined;
   }
 
-  const health = await getHealth(pluginId, apiVersion, showErrorAlert);
-  return health;
+  return getHealth(pluginId, apiVersion, showErrorAlert);
 }
