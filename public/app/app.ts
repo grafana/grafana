@@ -56,6 +56,7 @@ import {
   setPanelDataErrorView,
   setPanelRenderer,
   setPluginPage,
+  setPluginExtensionRegistrationHook,
 } from '@grafana/runtime/internal';
 import { initializeLoggersRegistry } from '@grafana/runtime/unstable';
 import { loadResources as loadScenesResources, sceneUtils } from '@grafana/scenes';
@@ -116,6 +117,7 @@ import {
 } from './features/plugins/extensions/getPluginExtensions';
 import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
+import { usePluginExtensionRegistration } from './features/plugins/extensions/usePluginExtensionRegistration';
 import { usePluginFunctions } from './features/plugins/extensions/usePluginFunctions';
 import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
 import { getAppPluginsToPreload } from './features/plugins/extensions/utils';
@@ -349,6 +351,7 @@ export class GrafanaApp {
       setHelpNavItemHook(useHelpNode);
       setPluginLinksHook(usePluginLinks);
       setPluginComponentHook(usePluginComponent);
+      setPluginExtensionRegistrationHook(usePluginExtensionRegistration);
       setPluginComponentsHook(usePluginComponents);
       setPluginFunctionsHook(usePluginFunctions);
       setGetObservablePluginLinks(getObservablePluginLinks);

@@ -2,6 +2,7 @@ import type { AppPluginConfig } from '@grafana/data';
 import { getPluginSettings } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
+import { setPluginLoadState } from './extensions/pluginLoadState';
 import { pluginImporter } from './importer/pluginImporter';
 
 const preloadPromises = new Map<string, Promise<void>>();
@@ -25,10 +26,16 @@ export async function preloadPlugins(apps: AppPluginConfig[] = []) {
 async function preload(config: AppPluginConfig): Promise<void> {
   const showErrorAlert = contextSrv.user.orgRole !== '';
 
+  setPluginLoadState(config.id, { status: 'loading' });
   try {
     const meta = await getPluginSettings(config.id, showErrorAlert);
     await pluginImporter.importApp(meta);
+    setPluginLoadState(config.id, { status: 'loaded' });
   } catch (error) {
+    setPluginLoadState(config.id, {
+      status: 'failed',
+      error: error instanceof Error ? error : new Error(String(error)),
+    });
     if (!showErrorAlert) {
       return;
     }

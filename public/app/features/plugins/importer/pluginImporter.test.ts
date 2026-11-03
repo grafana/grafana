@@ -1,3 +1,5 @@
+import { firstValueFrom, Subject } from 'rxjs';
+
 import {
   AppPlugin,
   type AppPluginMeta,
@@ -11,6 +13,7 @@ import {
 } from '@grafana/data';
 
 import * as restrictedGrafanaApis from '../components/restrictedGrafanaApis/restrictedGrafanaApis';
+import { pluginLoadStates } from '../extensions/pluginLoadState';
 import { AddedComponentsRegistry } from '../extensions/registry/AddedComponentsRegistry';
 import { AddedFunctionsRegistry } from '../extensions/registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from '../extensions/registry/AddedLinksRegistry';
@@ -240,6 +243,46 @@ describe('pluginImporter', () => {
   });
 
   describe('importApp', () => {
+    it('publishes loading and completion once, without restarting cached imports', async () => {
+      const states: Array<string | undefined> = [];
+      const subscription = pluginLoadStates.subscribe((value) => states.push(value.get(appPlugin.id)?.status));
+      const pending = new Subject<{ plugin: AppPlugin }>();
+      jest.spyOn(importPluginModule, 'importPluginModule').mockReturnValue(firstValueFrom(pending));
+      const first = pluginImporter.importApp(appPlugin);
+      const second = pluginImporter.importApp(appPlugin);
+      expect(states).toEqual([undefined, 'loading']);
+      pending.next({ plugin: new AppPlugin() });
+      await Promise.all([first, second]);
+      await pluginImporter.importApp(appPlugin);
+      expect(states).toEqual([undefined, 'loading', 'loaded']);
+      subscription.unsubscribe();
+    });
+
+    it('publishes a failed import while preserving the original rejection', async () => {
+      const states: unknown[] = [];
+      const subscription = pluginLoadStates.subscribe((value) => states.push(value.get(appPlugin.id)));
+      const error = new Error('Module unavailable');
+      jest.spyOn(importPluginModule, 'importPluginModule').mockRejectedValue(error);
+      await expect(pluginImporter.importApp(appPlugin)).rejects.toBe(error);
+      expect(states).toEqual([undefined, { status: 'loading' }, { status: 'failed', error }]);
+      subscription.unsubscribe();
+    });
+
+    it('publishes a synchronous loader failure without changing how it is thrown', () => {
+      const states: unknown[] = [];
+      const subscription = pluginLoadStates.subscribe((value) => states.push(value.get(appPlugin.id)));
+      jest.spyOn(importPluginModule, 'importPluginModule').mockImplementation(() => {
+        throw 'Import failed';
+      });
+      expect(() => pluginImporter.importApp(appPlugin)).toThrow('Import failed');
+      expect(states).toEqual([
+        undefined,
+        { status: 'loading' },
+        { status: 'failed', error: new Error('Import failed') },
+      ]);
+      subscription.unsubscribe();
+    });
+
     it('should import a app plugin successfully with fallbackLoadingStrategy', async () => {
       const init = jest.fn();
       const setComponentsFromLegacyExports = jest.fn();

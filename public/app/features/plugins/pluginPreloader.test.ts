@@ -13,6 +13,7 @@ import {
 import { getPluginSettings } from '@grafana/runtime';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
+import { clearPluginLoadStates, pluginLoadStates } from './extensions/pluginLoadState';
 import { pluginImporter } from './importer/pluginImporter';
 import { clearPreloadedPluginsCache, preloadPlugins } from './pluginPreloader';
 
@@ -75,6 +76,30 @@ const createMockPluginMeta = (overrides: Partial<PluginMeta> = {}): PluginMeta =
 });
 
 describe('pluginPreloader', () => {
+  it('reports settings failure even when the existing loader suppresses anonymous-user alerts', async () => {
+    const context = new ContextSrv();
+    context.user.orgRole = '';
+    setContextSrv(context);
+    const states: unknown[] = [];
+    const subscription = pluginLoadStates.subscribe((value) => states.push(value.get('test-plugin')));
+    const error = new Error('Settings unavailable');
+    getPluginSettingsMock.mockRejectedValue(error);
+    await preloadPlugins([createMockAppPluginConfig()]);
+    expect(states).toEqual([undefined, { status: 'loading' }, { status: 'failed', error }]);
+    expect(importAppPluginMock).not.toHaveBeenCalled();
+    subscription.unsubscribe();
+  });
+
+  it('reports completion when preloading an already imported app', async () => {
+    const states: unknown[] = [];
+    const subscription = pluginLoadStates.subscribe((value) => states.push(value.get('test-plugin')));
+    getPluginSettingsMock.mockResolvedValue(createMockPluginMeta());
+    importAppPluginMock.mockResolvedValue(new AppPlugin());
+    await preloadPlugins([createMockAppPluginConfig()]);
+    expect(states).toEqual([undefined, { status: 'loading' }, { status: 'loaded' }]);
+    subscription.unsubscribe();
+  });
+
   beforeEach(() => {
     const contextSrv = new ContextSrv();
     contextSrv.user.orgRole = OrgRole.Admin;
@@ -82,6 +107,7 @@ describe('pluginPreloader', () => {
     jest.clearAllMocks();
     jest.resetModules();
     clearPreloadedPluginsCache();
+    clearPluginLoadStates();
   });
 
   afterEach(() => {
