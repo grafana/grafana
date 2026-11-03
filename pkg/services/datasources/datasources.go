@@ -13,7 +13,6 @@ import (
 
 // PermissionsDeleter removes a deleted datasource's permissions in place of the SQL permission cleanup.
 // It is an extension point that is nil by default. It is called after the deletion committed and must not fail it.
-// Callers bound ctx with PermissionsDeleteTimeout; implementations must honor it.
 type PermissionsDeleter interface {
 	DeleteDatasourcePermissions(ctx context.Context, namespace, uid string)
 }
