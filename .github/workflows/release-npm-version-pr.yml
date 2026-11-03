@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - '.nx/version-plans/**'
+      - 'packages/grafana-plugin-compat/**'
   workflow_dispatch:
     inputs:
       groups:
@@ -30,8 +30,8 @@ env:
 jobs:
   release-pr:
     name: Create or update release PR
-    # Merging the release PR deletes the version plans, which also matches the push paths filter above.
-    # GitHub cannot tell an added file from a deleted one, so the job skips itself instead.
+    # Merging the release PR changes the package's version and changelog, which also matches the push
+    # paths filter above, so the job skips itself instead of rebuilding a release PR with nothing in it.
     if: "github.repository == 'grafana/grafana' && !startsWith(github.event.head_commit.message, 'Release: Frontend packages')"
     runs-on: ubuntu-x64
     permissions:
@@ -62,6 +62,11 @@ jobs:
         with:
           ref: main
           persist-credentials: false
+          # nx release reads the commits since the package's last release tag, so it needs the full
+          # history and the tags. It lists the changed files of each of those commits, which needs
+          # trees but not blobs.
+          fetch-depth: 0
+          filter: blob:none
 
       - name: Setup Node
         uses: ./.github/actions/setup-node
@@ -71,36 +76,11 @@ jobs:
         with:
           hardened-mode: 'true'
 
-      - name: Find pending version plans
-        id: plans
-        run: |
-          count=$(find .nx/version-plans -maxdepth 1 -type f -name '*.md' ! -name 'README.md' | wc -l | tr -d ' ')
-          echo "count=$count" >> "$GITHUB_OUTPUT"
-          echo "Pending version plans: $count"
-
-      - name: Close stale release PR
-        if: steps.plans.outputs.count == '0'
-        env:
-          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
-        run: |
-          existing=$(gh pr list --head "$RELEASE_BRANCH" --base main --state open --json number --jq '.[0].number // empty')
-          if [ -z "$existing" ]; then
-            echo "No version plans and no open release PR, nothing to do."
-            exit 0
-          fi
-          if [ "$DRY_RUN" = 'true' ]; then
-            echo "Dry run: would close release PR #$existing."
-            exit 0
-          fi
-          gh pr close "$existing" --delete-branch --comment "There are no pending version plans on main, so this release PR is no longer needed."
-
       - name: Version and generate changelogs
-        if: steps.plans.outputs.count != '0'
-        run: ./.github/workflows/scripts/apply-version-plans.sh "$RELEASE_GROUPS"
+        run: ./.github/workflows/scripts/version-and-changelog.sh "$RELEASE_GROUPS"
 
       - name: Describe the release
         id: describe
-        if: steps.plans.outputs.count != '0'
         run: |
           git status --short
           if [ -z "$(git status --porcelain)" ]; then
@@ -110,7 +90,7 @@ jobs:
           fi
           echo "changed=true" >> "$GITHUB_OUTPUT"
           {
-            echo "This pull request applies the pending version plans in \`.nx/version-plans\` to the independently versioned packages below. Merging it publishes them to npm."
+            echo "This pull request releases the independently versioned packages below, with versions and changelog entries derived from the conventional commit titles merged since their last release. Merging it publishes them to npm."
             echo
             echo "| Package | Version |"
             echo "| --- | --- |"
@@ -123,10 +103,26 @@ jobs:
               fi
             done
             echo
-            echo "This pull request is generated and is rebuilt from main whenever a version plan changes. Do not edit it."
+            echo "This pull request is generated and is rebuilt from main whenever a change to these packages lands. Do not edit it."
           } > "$RUNNER_TEMP/pr-body.md"
           cat "$RUNNER_TEMP/pr-body.md"
           git diff --stat
+
+      - name: Close stale release PR
+        if: steps.describe.outputs.changed == 'false'
+        env:
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+        run: |
+          existing=$(gh pr list --head "$RELEASE_BRANCH" --base main --state open --json number --jq '.[0].number // empty')
+          if [ -z "$existing" ]; then
+            echo "Nothing to release and no open release PR, nothing to do."
+            exit 0
+          fi
+          if [ "$DRY_RUN" = 'true' ]; then
+            echo "Dry run: would close release PR #$existing."
+            exit 0
+          fi
+          gh pr close "$existing" --delete-branch --comment "There are no releasable changes on main since the last release, so this release PR is no longer needed."
 
       - name: Reset release branch to main
         if: steps.describe.outputs.changed == 'true' && env.DRY_RUN != 'true'
@@ -147,7 +143,7 @@ jobs:
           fi
 
       # Commits made through the Git Data API with an app token are signed by the app, which
-      # satisfies the signed-commits rule, and the single commit includes the deleted plan files.
+      # satisfies the signed-commits rule.
       - name: Commit release changes
         if: steps.describe.outputs.changed == 'true' && env.DRY_RUN != 'true'
         uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22

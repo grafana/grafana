@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 #
-# Applies the pending version plans to the given nx release groups: bumps the versions, then
-# writes the changelog entries, which also deletes the plan files.
+# Bumps the versions of the given nx release groups from the conventional commits since their last
+# release tag, then writes the changelog entries.
 #
 # nx release changelog needs the new version, and the top-level "nx release" command cannot be
 # used because it rejects the per-subcommand git settings that "nx release version" requires.
 # Each group is expected to contain a single package that lives in packages/.
 #
-# Usage: apply-version-plans.sh <group>[,<group>...]
+# Usage: version-and-changelog.sh <group>[,<group>...]
 
 set -euo pipefail
 
-RELEASE_GROUPS="${1:?Usage: apply-version-plans.sh <group>[,<group>...]}"
+RELEASE_GROUPS="${1:?Usage: version-and-changelog.sh <group>[,<group>...]}"
 
 pnpm exec nx release version --groups="$RELEASE_GROUPS"
 
@@ -33,7 +33,7 @@ for group in "${groups[@]}"; do
   old_version=$(git show "HEAD:$manifest" | jq -r .version)
   new_version=$(jq -r .version "$manifest")
   if [ "$old_version" = "$new_version" ]; then
-    echo "$project has no pending version plan, skipping its changelog."
+    echo "$project has no releasable commits since its last release, skipping its changelog."
     continue
   fi
 
