@@ -13,7 +13,7 @@ export type DynamicThresholdValidationErrorCode =
   | 'thresholdValue'
   | 'range'
   | 'duplicateMapping'
-  | 'invalidString'
+  | 'labelColumnCollision'
   | 'queryLength';
 
 export type DynamicThresholdValidationField = keyof DynamicThresholdPolicyV1;
@@ -51,7 +51,15 @@ const SUPPORTED_EVALUATORS = new Set([
   EvalFunction.IsLessThanEqual,
   ...RANGE_EVALUATORS,
 ]);
-const CLIENT_QUERY_LENGTH_WARNING = 64_000;
+const QUERY_LENGTH_LIMIT = 10_000;
+const GENERATED_OUTPUT_COLUMNS = new Set([
+  'alert_result',
+  'current_value',
+  'matched_threshold',
+  'matched_threshold_lower',
+  'matched_threshold_upper',
+  'condition_result',
+]);
 
 export function isRangeEvaluator(evaluator: EvalFunction): boolean {
   return RANGE_EVALUATORS.has(evaluator);
@@ -81,13 +89,17 @@ export function buildDynamicThreshold(policy: DynamicThresholdPolicyV1): BuildDy
     : `${thresholdExpression} AS ${quoteIdentifier('matched_threshold')},`;
   const previewSql = `SELECT\n  ${selectedLabels}${value} AS ${quoteIdentifier('current_value')},\n  ${previewThresholds}\n  CASE\n    WHEN ${value} IS NULL THEN NULL\n    WHEN ${condition} THEN 1\n    ELSE 0\n  END AS ${quoteIdentifier('condition_result')}\nFROM ${table}`;
 
-  if (expressionSql.length > CLIENT_QUERY_LENGTH_WARNING) {
+  if (expressionSql.length > QUERY_LENGTH_LIMIT || previewSql.length > QUERY_LENGTH_LIMIT) {
     return {
       ok: false,
       errors: [
         {
           code: 'queryLength',
-          message: t('expressions.dynamic-threshold.error-query-length', 'Generated SQL is too long.'),
+          message: t(
+            'expressions.dynamic-threshold.error-query-length',
+            'Generated SQL must not exceed {{limit}} characters.',
+            { limit: QUERY_LENGTH_LIMIT }
+          ),
           location: { field: 'mappings' },
         },
       ],
@@ -142,11 +154,6 @@ function validatePolicy(policy: DynamicThresholdPolicyV1): DynamicThresholdValid
       location: { field: 'evaluator' },
     });
   }
-  validateWellFormedString(policy.inputRefId, 'inputRefId', errors);
-  validateWellFormedString(policy.valueField, 'valueField', errors);
-  validateWellFormedString(policy.matchLabel, 'matchLabel', errors);
-  policy.labelColumns.forEach((column) => validateWellFormedString(column, 'labelColumns', errors));
-
   const labelSet = new Set(policy.labelColumns);
   if (policy.labelColumns.some((column) => !column.trim()) || labelSet.size !== policy.labelColumns.length) {
     errors.push({
@@ -154,6 +161,18 @@ function validatePolicy(policy: DynamicThresholdPolicyV1): DynamicThresholdValid
       message: t(
         'expressions.dynamic-threshold.error-label-column-names',
         'Label column names must be unique and non-empty.'
+      ),
+      location: { field: 'labelColumns' },
+    });
+  }
+  const collidingColumn = policy.labelColumns.find((column) => GENERATED_OUTPUT_COLUMNS.has(column));
+  if (collidingColumn) {
+    errors.push({
+      code: 'labelColumnCollision',
+      message: t(
+        'expressions.dynamic-threshold.error-label-column-collision',
+        'Label column {{column}} conflicts with a generated output column.',
+        { column: collidingColumn }
       ),
       location: { field: 'labelColumns' },
     });
@@ -182,7 +201,6 @@ function validatePolicy(policy: DynamicThresholdPolicyV1): DynamicThresholdValid
   validateThresholds(policy.defaultThreshold, expectedArity, { field: 'defaultThreshold' }, errors);
   const values = new Set<string>();
   policy.mappings.forEach((mapping, mappingIndex) => {
-    validateWellFormedString(mapping.labelValue, 'mappings', errors, mappingIndex);
     if (values.has(mapping.labelValue)) {
       errors.push({
         code: 'duplicateMapping',
@@ -198,44 +216,6 @@ function validatePolicy(policy: DynamicThresholdPolicyV1): DynamicThresholdValid
     validateThresholds(mapping.thresholds, expectedArity, { field: 'mappings', mappingIndex }, errors);
   });
   return errors;
-}
-
-function validateWellFormedString(
-  value: string,
-  field: DynamicThresholdValidationField,
-  errors: DynamicThresholdValidationError[],
-  mappingIndex?: number
-) {
-  if (!isWellFormedString(value)) {
-    errors.push({
-      code: 'invalidString',
-      message:
-        mappingIndex === undefined
-          ? t('expressions.dynamic-threshold.error-invalid-string', 'The selected field contains invalid text.')
-          : t(
-              'expressions.dynamic-threshold.error-invalid-mapping-string',
-              'Mapping row {{row}} contains invalid text.',
-              { row: mappingIndex + 1 }
-            ),
-      location: { field, mappingIndex },
-    });
-  }
-}
-
-function isWellFormedString(value: string): boolean {
-  for (let index = 0; index < value.length; index++) {
-    const code = value.charCodeAt(index);
-    if (code >= 0xd800 && code <= 0xdbff) {
-      const next = value.charCodeAt(index + 1);
-      if (!(next >= 0xdc00 && next <= 0xdfff)) {
-        return false;
-      }
-      index++;
-    } else if (code >= 0xdc00 && code <= 0xdfff) {
-      return false;
-    }
-  }
-  return true;
 }
 
 function validateThresholds(
@@ -334,5 +314,5 @@ function quoteString(value: string): string {
 }
 
 function formatNumber(value: number): string {
-  return Object.is(value, -0) ? '0' : String(value);
+  return String(value);
 }
