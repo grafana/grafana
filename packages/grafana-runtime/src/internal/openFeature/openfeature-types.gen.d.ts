@@ -115,7 +115,6 @@ declare module "@openfeature/core" {
     | "otelLogsFormatting"
     | "dashboardLevelTimeMacros"
     | "favoriteDatasources"
-    | "grafana.starredFolders"
     | "grafana.newTextPanel"
     | "text.newFeatures"
     | "alertingTriage"

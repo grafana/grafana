@@ -1963,14 +1963,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "grafana.starredFolders",
-			Description: "Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{React: true},
-			Owner:       grafanaFrontendNavigation,
-			Expression:  "false",
-		},
-		{
 			Name:        "grafana.newTextPanel",
 			Description: "Enables the new text panel",
 			Stage:       FeatureStagePublicPreview,
