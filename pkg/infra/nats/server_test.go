@@ -9,7 +9,6 @@ import (
 	"math/big"
 	"net"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -90,7 +89,7 @@ func TestServerClusterTLS(t *testing.T) {
 		a := startTestTLSServer(t, store, writeTestClusterTLS(t, ca, ca))
 		b := startTestTLSServer(t, store, writeTestClusterTLS(t, ca, ca))
 
-		requireRoute(t, a, b)
+		requireDelivery(t, a, b)
 		require.True(t, strings.HasPrefix(routeURLForServer(a.cfg, a.server), "tls://"))
 	})
 
@@ -124,6 +123,40 @@ func TestServerClusterTLS(t *testing.T) {
 		require.Zero(t, numRoutes(plain))
 	})
 
+	t.Run("a route to a peer whose certificate doesn't match its address is rejected", func(t *testing.T) {
+		ca := newTestCA(t, "grafana-nats-ca")
+		hookA := newLogHook()
+		// No discovery: only A dials, so the failure is A verifying B's server certificate.
+		a := startTestTLSServerWithLog(t, nil, writeTestClusterTLS(t, ca, ca), hookA)
+		tlsB := writeTestClusterTLS(t, ca, ca)
+		writeTestKeyPair(t, tlsB, ca.issueWith(t, "elsewhere", func(c *x509.Certificate) {
+			c.IPAddresses = []net.IP{net.ParseIP("10.9.9.9")}
+		}))
+		b := startTestTLSServer(t, nil, tlsB)
+
+		require.NoError(t, a.setRoutes(natsserver.RoutesFromStr(routeURLForServer(b.cfg, b.server))))
+		hookA.waitForLog(t, "certificate is valid for 10.9.9.9, not 127.0.0.1")
+		require.Zero(t, numRoutes(a))
+		require.Zero(t, numRoutes(b))
+	})
+
+	t.Run("a peer with an expired certificate cannot join", func(t *testing.T) {
+		ca := newTestCA(t, "grafana-nats-ca")
+		store := newSharedTestKV(t)
+		hookA := newLogHook()
+		a := startTestTLSServerWithLog(t, store, writeTestClusterTLS(t, ca, ca), hookA)
+		tlsB := writeTestClusterTLS(t, ca, ca)
+		writeTestKeyPair(t, tlsB, ca.issueWith(t, "expired", func(c *x509.Certificate) {
+			c.NotBefore = time.Now().Add(-2 * time.Hour)
+			c.NotAfter = time.Now().Add(-time.Hour)
+		}))
+		b := startTestTLSServer(t, store, tlsB)
+
+		hookA.waitForLog(t, "certificate has expired")
+		require.Zero(t, numRoutes(a))
+		require.Zero(t, numRoutes(b))
+	})
+
 	t.Run("a rotated CA bundle is picked up without a restart", func(t *testing.T) {
 		caA := newTestCA(t, "ca-a")
 		caB := newTestCA(t, "ca-b")
@@ -140,7 +173,7 @@ func TestServerClusterTLS(t *testing.T) {
 		writeFileAtomic(t, tlsA.CAPath, append(caA.pem(), caB.pem()...))
 		a.clusterTLS.check()
 
-		requireRoute(t, a, b)
+		requireDelivery(t, a, b)
 	})
 
 	t.Run("a rotated certificate is served to new connections", func(t *testing.T) {
@@ -203,7 +236,7 @@ func TestServerClusterTLS(t *testing.T) {
 
 		last := certs[len(certs)-1].Leaf.SerialNumber
 		require.Equal(t, 0, servedLeaf(t, a.server.ClusterAddr().String(), ca.pool(), ca.issue(t, "peer")).Cmp(last))
-		requireRoute(t, a, b)
+		requireDelivery(t, a, b)
 
 		// The reloads keep the client port closed to socket clients.
 		_, err := natsclient.Connect(a.clientURL(), natsclient.Timeout(2*time.Second))
@@ -244,10 +277,15 @@ func TestServerClusterTLS(t *testing.T) {
 
 func TestServerClientPort(t *testing.T) {
 	t.Run("the client port is closed by default", func(t *testing.T) {
-		port := freePort(t)
-		s := startTestClientPortServer(t, port, false)
-		_, err := net.DialTimeout("tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(port)), time.Second)
-		require.Error(t, err, "nothing should listen on the client port")
+		// Hold the configured port: the embedded server must start without binding it.
+		held, err := net.Listen("tcp", "127.0.0.1:0")
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = held.Close() })
+
+		s := startTestClientPortServer(t, setting.NATSSettings{
+			ListenAddress: "127.0.0.1",
+			ClientPort:    held.Addr().(*net.TCPAddr).Port,
+		}, nil)
 		require.NoError(t, s.Health(t.Context()))
 
 		// The loopback listener nats-server needs for routing rejects socket clients.
@@ -258,11 +296,18 @@ func TestServerClientPort(t *testing.T) {
 		connectInProcess(t, s)
 	})
 
-	t.Run("client_listen lets socket clients exchange messages", func(t *testing.T) {
-		port := freePort(t)
-		s := startTestClientPortServer(t, port, true)
+	t.Run("client_listen lets socket clients exchange messages on client_listen_address", func(t *testing.T) {
+		hook := newLogHook()
+		// The cluster port binds every interface; the client port must stay on loopback.
+		s := startTestClientPortServer(t, setting.NATSSettings{
+			ListenAddress: "0.0.0.0",
+			ClientPort:    natsserver.RANDOM_PORT,
+			ClientListen:  true,
+		}, hook)
+		hook.waitForLog(t, "warn: nats client port is open without TLS or authentication")
+		require.True(t, s.server.Addr().(*net.TCPAddr).IP.IsLoopback(), "client port bound to %s", s.server.Addr())
 
-		external, err := natsclient.Connect("nats://"+net.JoinHostPort("127.0.0.1", strconv.Itoa(port)), natsclient.Timeout(2*time.Second))
+		external, err := natsclient.Connect(s.clientURL(), natsclient.Timeout(2*time.Second))
 		require.NoError(t, err)
 		t.Cleanup(external.Close)
 
@@ -328,19 +373,20 @@ func TestServerLogger(t *testing.T) {
 	require.Equal(t, logtest.Logs{Calls: 2, Message: "listen failed"}, fake.ErrorLogs)
 }
 
-func startTestClientPortServer(t *testing.T, port int, listen bool) *Server {
+// startTestClientPortServer starts an embedded server without discovery from
+// the given client settings.
+func startTestClientPortServer(t *testing.T, nats setting.NATSSettings, hook *logHook) *Server {
 	t.Helper()
 	cfg := setting.NewCfg()
-	cfg.NATS = setting.NATSSettings{
-		Enabled:       true,
-		Mode:          setting.NATSModeEmbedded,
-		ListenAddress: "127.0.0.1",
-		ClientPort:    port,
-		ClusterPort:   natsserver.RANDOM_PORT,
-		ClientListen:  listen,
-	}
+	nats.Enabled = true
+	nats.Mode = setting.NATSModeEmbedded
+	nats.ClusterPort = natsserver.RANDOM_PORT
+	cfg.NATS = nats
 	s, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
 	require.NoError(t, err)
+	if hook != nil {
+		s.log = hook
+	}
 	startService(t, t.Context(), s)
 	return s
 }
@@ -411,13 +457,4 @@ func servedLeaf(t *testing.T, addr string, roots *x509.CertPool, cert tls.Certif
 	require.NoError(t, err)
 	defer func() { _ = conn.Close() }()
 	return conn.ConnectionState().PeerCertificates[0].SerialNumber
-}
-
-func freePort(t *testing.T) int {
-	t.Helper()
-	l, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-	port := l.Addr().(*net.TCPAddr).Port
-	require.NoError(t, l.Close())
-	return port
 }

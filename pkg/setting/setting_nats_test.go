@@ -29,6 +29,7 @@ func TestReadNATSSettings(t *testing.T) {
 		require.False(t, cfg.NATS.Notifier)
 		require.Zero(t, cfg.NATS.NotifierWatchMaxAge)
 		require.False(t, cfg.NATS.ClientListen)
+		require.Equal(t, "127.0.0.1", cfg.NATS.ClientListenAddress)
 		require.False(t, cfg.NATS.ClusterTLS.Enabled())
 	})
 
@@ -38,6 +39,7 @@ func TestReadNATSSettings(t *testing.T) {
 [nats]
 enabled = true
 client_listen = true
+client_listen_address = 10.0.0.7
 cluster_tls_cert_path = /etc/nats/tls.crt
 cluster_tls_key_path = /etc/nats/tls.key
 cluster_tls_ca_path = /etc/nats/ca.crt
@@ -48,6 +50,7 @@ cluster_tls_ca_path = /etc/nats/ca.crt
 		require.NoError(t, readNATSSettings(cfg))
 
 		require.True(t, cfg.NATS.ClientListen)
+		require.Equal(t, "10.0.0.7", cfg.NATS.ClientListenAddress)
 		require.True(t, cfg.NATS.ClusterTLS.Enabled())
 		require.Equal(t, NATSClusterTLSSettings{
 			CertPath: "/etc/nats/tls.crt",

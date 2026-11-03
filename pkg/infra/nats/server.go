@@ -1,6 +1,7 @@
 package nats
 
 import (
+	"cmp"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -87,11 +88,14 @@ func ProvideServer(cfg *setting.Cfg, sqlStore db.DB, reg prometheus.Registerer) 
 
 	s.opts = s.serverOptions()
 	if !s.IsDisabled() {
-		if !s.cfg.ClientListen {
+		if s.cfg.ClientListen {
+			// The client port has no TLS or auth, so it never follows listen_address.
+			s.opts.Host = cmp.Or(s.cfg.ClientListenAddress, "127.0.0.1")
+		} else {
 			restrictToInProcessClients(s.opts)
 		}
 		if s.cfg.ClusterTLS.Enabled() {
-			if err := s.configureClusterTLS(); err != nil {
+			if err := s.configureClusterTLS(reg); err != nil {
 				return nil, err
 			}
 		}
@@ -242,6 +246,10 @@ func (s *Server) startEmbeddedServer(_ context.Context) error {
 	s.metrics.embeddedServerUp.Set(1)
 	s.log.Info("started embedded nats server", "client_url", clientURL, "client_listen", s.cfg.ClientListen,
 		"route_url", routeURL, "cluster_tls", s.cfg.ClusterTLS.Enabled())
+	if s.cfg.ClientListen {
+		s.log.Warn("nats client port is open without TLS or authentication; anyone who can reach it can publish and subscribe on every subject",
+			"client_url", clientURL)
+	}
 	if s.cfg.TLS.Enabled {
 		s.log.Warn("nats tls_* settings only apply to external NATS servers and are ignored in embedded mode; use cluster_tls_* to secure routes between instances")
 	}
@@ -292,14 +300,17 @@ func (s *Server) serverOptions() *natsserver.Options {
 	}
 }
 
-func (s *Server) configureClusterTLS() error {
+func (s *Server) configureClusterTLS(reg prometheus.Registerer) error {
 	tc, fingerprint, err := loadClusterTLS(s.cfg.ClusterTLS)
 	if err != nil {
 		return err
 	}
+	metrics := newClusterTLSMetrics(reg)
+	metrics.recordReloadSuccess(time.Now())
 	s.opts.Cluster.TLSConfig = tc
 	s.clusterTLS = &clusterTLSWatcher{
 		log:      s.log,
+		metrics:  metrics,
 		cfg:      s.cfg.ClusterTLS,
 		interval: clusterTLSReloadInterval,
 		apply:    s.setClusterTLS,

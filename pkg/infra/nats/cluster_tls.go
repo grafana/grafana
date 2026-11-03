@@ -78,17 +78,35 @@ func loadClusterTLS(c setting.NATSClusterTLSSettings) (*tls.Config, [sha256.Size
 	return tc, f.fingerprint(), nil
 }
 
-// clusterTLSWatcher reloads the route TLS config when the certificate files change.
+// clusterTLSFailureReminder is how often a persistent reload failure is logged
+// again, so it stays visible without logging every tick.
+const clusterTLSFailureReminder = 10 * time.Minute
+
+// Reasons a reload can fail, used as the failures metric label.
+const (
+	clusterTLSReasonRead    = "read"
+	clusterTLSReasonInvalid = "invalid"
+	clusterTLSReasonApply   = "apply"
+)
+
+// clusterTLSWatcher reloads the route TLS config when the certificate files
+// change. It keeps serving the last valid config while the files can't be applied.
 type clusterTLSWatcher struct {
 	log      log.Logger
+	metrics  *clusterTLSMetrics
 	cfg      setting.NATSClusterTLSSettings
 	interval time.Duration
 	apply    func(*tls.Config) error
 
-	// last is the fingerprint of the files last applied or found invalid. An
-	// invalid set is reported once and retried only after the files change; a
-	// failed apply isn't recorded, so the next tick retries it.
+	// last is the fingerprint of the applied files. It changes only on a
+	// successful apply, so every failure is retried on the next tick.
 	last [sha256.Size]byte
+
+	// failing is the reason of the current failure, empty while the applied
+	// config matches the files.
+	failing  string
+	since    time.Time
+	remindAt time.Time
 }
 
 func (w *clusterTLSWatcher) run(ctx context.Context) {
@@ -107,25 +125,52 @@ func (w *clusterTLSWatcher) run(ctx context.Context) {
 func (w *clusterTLSWatcher) check() {
 	f, err := readClusterTLSFiles(w.cfg)
 	if err != nil {
-		// Files can be briefly missing while a secret volume is updated; retry next tick.
-		w.log.Warn("failed to read nats cluster tls files; keeping the current certificates", "err", err)
+		w.fail(clusterTLSReasonRead, err)
 		return
 	}
 	sum := f.fingerprint()
 	if sum == w.last {
+		w.recover()
 		return
 	}
 
 	tc, err := f.tlsConfig(w.cfg)
 	if err != nil {
-		w.last = sum
-		w.log.Error("invalid nats cluster tls files; keeping the current certificates", "err", err)
+		w.fail(clusterTLSReasonInvalid, err)
 		return
 	}
 	if err := w.apply(tc); err != nil {
-		w.log.Error("failed to reload nats cluster tls certificates; retrying", "err", err)
+		w.fail(clusterTLSReasonApply, err)
 		return
 	}
 	w.last = sum
+	w.metrics.recordReloadSuccess(time.Now())
 	w.log.Info("reloaded nats cluster tls certificates")
+	w.recover()
+}
+
+// fail logs a new or changed failure at once and a persistent one every
+// clusterTLSFailureReminder.
+func (w *clusterTLSWatcher) fail(reason string, err error) {
+	w.metrics.recordReloadFailure(reason)
+	now := time.Now()
+	switch {
+	case w.failing != reason:
+		w.since = now
+		w.log.Error("nats cluster tls reload failing; keeping the current certificates", "reason", reason, "err", err)
+	case !now.Before(w.remindAt):
+		w.log.Error("nats cluster tls reload still failing; keeping the current certificates", "reason", reason, "since", w.since, "err", err)
+	default:
+		return
+	}
+	w.failing = reason
+	w.remindAt = now.Add(clusterTLSFailureReminder)
+}
+
+func (w *clusterTLSWatcher) recover() {
+	if w.failing == "" {
+		return
+	}
+	w.log.Info("nats cluster tls reload recovered", "reason", w.failing, "since", w.since)
+	w.failing = ""
 }

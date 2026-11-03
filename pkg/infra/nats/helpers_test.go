@@ -218,6 +218,12 @@ func (ca *testCA) pool() *x509.CertPool {
 // issue signs a leaf for 127.0.0.1 usable as both route server and client.
 func (ca *testCA) issue(t *testing.T, name string) tls.Certificate {
 	t.Helper()
+	return ca.issueWith(t, name, func(*x509.Certificate) {})
+}
+
+// issueWith is issue with the template adjusted by edit, e.g. other SANs or validity.
+func (ca *testCA) issueWith(t *testing.T, name string, edit func(*x509.Certificate)) tls.Certificate {
+	t.Helper()
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	require.NoError(t, err)
 	tmpl := &x509.Certificate{
@@ -229,6 +235,7 @@ func (ca *testCA) issue(t *testing.T, name string) tls.Certificate {
 		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		IPAddresses:  []net.IP{net.ParseIP("127.0.0.1")},
 	}
+	edit(tmpl)
 	der, err := x509.CreateCertificate(rand.Reader, tmpl, ca.cert, &key.PublicKey, ca.key)
 	require.NoError(t, err)
 	leaf, err := x509.ParseCertificate(der)
@@ -295,7 +302,8 @@ func replaceFile(path string, data []byte) error {
 // hangGuard bounds event waits so a regression fails instead of hanging.
 const hangGuard = 15 * time.Second
 
-// logHook is a logger that hands warnings and errors to the test.
+// logHook is a logger that hands info, warning and error messages to the test,
+// prefixed with their level.
 type logHook struct {
 	log.Logger
 	msgs chan string
@@ -305,8 +313,9 @@ func newLogHook() *logHook {
 	return &logHook{Logger: log.NewNopLogger(), msgs: make(chan string, 1024)}
 }
 
-func (h *logHook) Warn(msg string, _ ...any)  { h.send(msg) }
-func (h *logHook) Error(msg string, _ ...any) { h.send(msg) }
+func (h *logHook) Info(msg string, _ ...any)  { h.send("info: " + msg) }
+func (h *logHook) Warn(msg string, _ ...any)  { h.send("warn: " + msg) }
+func (h *logHook) Error(msg string, _ ...any) { h.send("error: " + msg) }
 
 func (h *logHook) send(msg string) {
 	select {
@@ -315,7 +324,7 @@ func (h *logHook) send(msg string) {
 	}
 }
 
-// waitForLog blocks until a warning or error containing substr is logged.
+// waitForLog blocks until a message containing substr is logged.
 func (h *logHook) waitForLog(t *testing.T, substr string) {
 	t.Helper()
 	guard := time.After(hangGuard)
@@ -331,37 +340,15 @@ func (h *logHook) waitForLog(t *testing.T, substr string) {
 	}
 }
 
-// requireRoute blocks until a message published on from reaches a subscriber
-// on to, which needs an established route with propagated interest.
-func requireRoute(t *testing.T, from, to *Server) {
-	t.Helper()
-	pub := connectInProcess(t, from)
-	sub := connectInProcess(t, to)
-
-	subject := "grafana.test.route." + randomSuffix()
-	received := make(chan struct{}, 1)
-	_, err := sub.Subscribe(subject, func(*natsclient.Msg) {
-		select {
-		case received <- struct{}{}:
-		default:
-		}
-	})
-	require.NoError(t, err)
-	require.NoError(t, sub.Flush())
-
-	deadline := time.Now().Add(hangGuard)
+// drain returns the messages logged so far.
+func (h *logHook) drain() []string {
+	var msgs []string
 	for {
-		require.NoError(t, pub.Publish(subject, nil))
-		// Each try is paced by round trips to both servers.
-		require.NoError(t, pub.Flush())
-		require.NoError(t, sub.Flush())
 		select {
-		case <-received:
-			return
+		case msg := <-h.msgs:
+			msgs = append(msgs, msg)
 		default:
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("no route: probe never reached the peer")
+			return msgs
 		}
 	}
 }

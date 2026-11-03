@@ -54,6 +54,9 @@ type NATSSettings struct {
 	// process. Grafana connects in-process and other instances join over cluster
 	// routes; the port has no TLS or auth, so it isn't for other Grafana instances.
 	ClientListen bool
+	// ClientListenAddress is where the client port listens when ClientListen is
+	// on. It is separate from ListenAddress, which also binds the cluster port.
+	ClientListenAddress string
 
 	// ClusterTLS secures routes between embedded servers with mutual TLS.
 	ClusterTLS NATSClusterTLSSettings
@@ -175,14 +178,15 @@ func readNATSSettings(cfg *Cfg) error {
 	}
 
 	cfg.NATS = NATSSettings{
-		Enabled:          section.Key("enabled").MustBool(false),
-		Mode:             mode,
-		ClientURLs:       util.SplitString(section.Key("client_urls").MustString("")),
-		ListenAddress:    section.Key("listen_address").MustString("127.0.0.1"),
-		ClientPort:       section.Key("client_port").MustInt(4222),
-		ClusterPort:      section.Key("cluster_port").MustInt(6222),
-		AdvertiseAddress: section.Key("advertise_address").MustString(""),
-		ClientListen:     section.Key("client_listen").MustBool(false),
+		Enabled:             section.Key("enabled").MustBool(false),
+		Mode:                mode,
+		ClientURLs:          util.SplitString(section.Key("client_urls").MustString("")),
+		ListenAddress:       section.Key("listen_address").MustString("127.0.0.1"),
+		ClientPort:          section.Key("client_port").MustInt(4222),
+		ClusterPort:         section.Key("cluster_port").MustInt(6222),
+		AdvertiseAddress:    section.Key("advertise_address").MustString(""),
+		ClientListen:        section.Key("client_listen").MustBool(false),
+		ClientListenAddress: section.Key("client_listen_address").MustString("127.0.0.1"),
 		ClusterTLS: NATSClusterTLSSettings{
 			CertPath: section.Key("cluster_tls_cert_path").MustString(""),
 			KeyPath:  section.Key("cluster_tls_key_path").MustString(""),

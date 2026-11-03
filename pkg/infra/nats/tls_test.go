@@ -9,6 +9,8 @@ import (
 	"testing/synctest"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -43,12 +45,20 @@ func TestBuildTLSConfig(t *testing.T) {
 }
 
 func TestClusterTLSWatcher(t *testing.T) {
-	t.Run("reloads changed files only", func(t *testing.T) {
+	const (
+		failing   = "error: nats cluster tls reload failing; keeping the current certificates"
+		reminder  = "error: nats cluster tls reload still failing; keeping the current certificates"
+		reloaded  = "info: reloaded nats cluster tls certificates"
+		recovered = "info: nats cluster tls reload recovered"
+	)
+
+	t.Run("reloads changed files only and records the success time", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			w := startTestWatcher(t)
 
 			w.tick()
 			require.Empty(t, w.applied, "unchanged files must not reload")
+			require.Empty(t, w.hook.drain())
 
 			rotated := w.ca.issue(t, "rotated")
 			writeTestKeyPair(t, w.cfg, rotated)
@@ -57,30 +67,43 @@ func TestClusterTLSWatcher(t *testing.T) {
 			tc := <-w.applied
 			require.Equal(t, rotated.Certificate[0], tc.Certificates[0].Certificate[0])
 			require.Equal(t, tls.RequireAndVerifyClientCert, tc.ClientAuth)
+			require.Equal(t, []string{reloaded}, w.hook.drain())
+			require.Equal(t, float64(time.Now().Unix()), testutil.ToFloat64(w.metrics.lastReloadSuccess))
 
 			w.tick()
 			require.Empty(t, w.applied)
 		})
 	})
 
-	t.Run("an invalid pair is reported once and retried after the files change", func(t *testing.T) {
+	t.Run("a persistent failure is logged once, reminded every 10 minutes, and its recovery logged", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			w := startTestWatcher(t)
+			lastSuccess := testutil.ToFloat64(w.metrics.lastReloadSuccess)
 
 			writeFileAtomic(t, w.cfg.KeyPath, keyPEM(t, w.ca.issue(t, "other")))
 			w.tick()
+			require.Equal(t, []string{failing}, w.hook.drain())
+
+			ticksPerReminder := int(clusterTLSFailureReminder / clusterTLSReloadInterval)
+			for range ticksPerReminder - 1 {
+				w.tick()
+			}
+			require.Empty(t, w.hook.drain(), "no log between reminders")
 			w.tick()
+			require.Equal(t, []string{reminder}, w.hook.drain())
+
 			require.Empty(t, w.applied)
-			require.Len(t, w.hook.msgs, 1)
-			require.Contains(t, <-w.hook.msgs, "invalid nats cluster tls files")
+			require.Equal(t, float64(ticksPerReminder+1), w.failures(clusterTLSReasonInvalid))
+			require.Equal(t, lastSuccess, testutil.ToFloat64(w.metrics.lastReloadSuccess))
 
 			writeTestKeyPair(t, w.cfg, w.ca.issue(t, "fixed"))
 			w.tick()
 			require.Len(t, w.applied, 1)
+			require.Equal(t, []string{reloaded, recovered}, w.hook.drain())
 		})
 	})
 
-	t.Run("missing files keep the current certificates until restored", func(t *testing.T) {
+	t.Run("restoring missing files is a recovery without a reload", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			w := startTestWatcher(t)
 			cert, err := os.ReadFile(w.cfg.CertPath)
@@ -89,20 +112,28 @@ func TestClusterTLSWatcher(t *testing.T) {
 			require.NoError(t, os.Remove(w.cfg.CertPath))
 			w.tick()
 			w.tick()
-			require.Empty(t, w.applied)
-			require.Len(t, w.hook.msgs, 2, "a missing file is reported every tick")
-			require.Contains(t, <-w.hook.msgs, "failed to read nats cluster tls files")
+			require.Equal(t, []string{failing}, w.hook.drain())
+			require.Equal(t, float64(2), w.failures(clusterTLSReasonRead))
 
-			// Restoring the same files is not a change.
 			writeFileAtomic(t, w.cfg.CertPath, cert)
 			w.tick()
-			require.Empty(t, w.applied)
+			require.Empty(t, w.applied, "the same files are already applied")
+			require.Equal(t, []string{recovered}, w.hook.drain())
+		})
+	})
 
-			require.NoError(t, os.Remove(w.cfg.KeyPath))
+	t.Run("a changed failure reason is logged at once", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			w := startTestWatcher(t)
+
+			require.NoError(t, os.Remove(w.cfg.CertPath))
 			w.tick()
-			writeTestKeyPair(t, w.cfg, w.ca.issue(t, "restored"))
+			writeTestKeyPair(t, w.cfg, w.ca.issue(t, "rotated"))
+			writeFileAtomic(t, w.cfg.KeyPath, keyPEM(t, w.ca.issue(t, "other")))
 			w.tick()
-			require.Len(t, w.applied, 1)
+			require.Equal(t, []string{failing, failing}, w.hook.drain())
+			require.Equal(t, float64(1), w.failures(clusterTLSReasonRead))
+			require.Equal(t, float64(1), w.failures(clusterTLSReasonInvalid))
 		})
 	})
 
@@ -115,11 +146,13 @@ func TestClusterTLSWatcher(t *testing.T) {
 			w.tick()
 			require.Len(t, w.applied, 1)
 			<-w.applied
-			require.Contains(t, <-w.hook.msgs, "failed to reload nats cluster tls certificates")
+			require.Equal(t, []string{failing}, w.hook.drain())
+			require.Equal(t, float64(1), w.failures(clusterTLSReasonApply))
 
 			w.tick()
 			require.Len(t, w.applied, 1, "the same files must be applied again")
 			<-w.applied
+			require.Equal(t, []string{reloaded, recovered}, w.hook.drain())
 
 			w.tick()
 			require.Empty(t, w.applied, "a successful apply is recorded")
@@ -146,8 +179,11 @@ func startTestWatcher(t *testing.T) *testWatcher {
 	require.NoError(t, err)
 
 	w := &testWatcher{ca: ca, hook: newLogHook(), applied: make(chan *tls.Config, 8), applyErrs: make(chan error, 8)}
+	metrics := newClusterTLSMetrics(prometheus.NewRegistry())
+	metrics.recordReloadSuccess(time.Now())
 	w.clusterTLSWatcher = &clusterTLSWatcher{
 		log:      w.hook,
+		metrics:  metrics,
 		cfg:      cfg,
 		interval: clusterTLSReloadInterval,
 		apply: func(tc *tls.Config) error {
@@ -179,4 +215,8 @@ func startTestWatcher(t *testing.T) *testWatcher {
 func (w *testWatcher) tick() {
 	time.Sleep(w.interval)
 	synctest.Wait()
+}
+
+func (w *testWatcher) failures(reason string) float64 {
+	return testutil.ToFloat64(w.metrics.reloadFailures.WithLabelValues(reason))
 }
