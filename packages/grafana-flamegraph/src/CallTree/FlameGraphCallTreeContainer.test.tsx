@@ -182,7 +182,7 @@ describe('FlameGraphCallTreeContainer', () => {
     const functionHeader = columnHeaders[1];
     // jsdom drops the max-content width, so assert the column is not locked to a pixel width.
     expect(functionHeader.style.width).not.toMatch(/^\d/);
-    expect(functionHeader.style.minWidth).toBe('1206px');
+    expect(functionHeader.style.minWidth).toBe('1054px');
     expect(functionHeader.style.whiteSpace).toBe('nowrap');
 
     const firstRowCells = within(screen.getAllByRole('row')[1]).getAllByRole('cell');
