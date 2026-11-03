@@ -177,10 +177,10 @@ grafana cli plugins list-remote
 To list the versions of a plugin that are available in the plugin repository, run:
 
 ```sh
-grafana cli plugins list-versions <PLUGIN_ID>
+grafana cli plugins list-versions <plugin-id>
 ```
 
-Replace _`<PLUGIN_ID>`_ with the ID of the plugin.
+Replace _`<plugin-id>`_ with the ID of the plugin.
 
 ### Install the latest version of a plugin
 
