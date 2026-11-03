@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, type RenderOptions, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 
@@ -13,9 +13,11 @@ import {
   LoadingState,
   getDefaultTimeRange,
   EventBusSrv,
+  DataHoverEvent,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { PanelContextProvider } from '@grafana/ui';
 
 import { PieChartPanel, comparePieChartItemsByValue } from './PieChartPanel';
 import {
@@ -459,6 +461,42 @@ describe('PieChartPanel', () => {
     });
   });
 
+  describe('slice highlight', () => {
+    const getSliceClasses = () =>
+      screen.getAllByTestId('data testid Pie Chart Slice').map((slice) => slice.getAttribute('class'));
+
+    it('highlights a slice when its own legend item is hovered', async () => {
+      setup({ data: { series: defaultSliceSeries } });
+      const before = getSliceClasses();
+
+      await userEvent.hover(screen.getByText('Firefox'));
+
+      expect(getSliceClasses()).not.toEqual(before);
+    });
+
+    it('ignores hover events from other panels on the dashboard bus', () => {
+      const dashboardBus = new EventBusSrv();
+      setup(
+        { data: { series: defaultSliceSeries } },
+        {
+          wrapper: ({ children }) => (
+            <PanelContextProvider value={{ eventsScope: 'global', eventBus: dashboardBus }}>
+              {children}
+            </PanelContextProvider>
+          ),
+        }
+      );
+      const before = getSliceClasses();
+
+      // Another panel's legend publishing a hover for a series with the same name.
+      act(() => {
+        dashboardBus.publish(new DataHoverEvent({ point: {}, dataId: 'Firefox' }));
+      });
+
+      expect(getSliceClasses()).toEqual(before);
+    });
+  });
+
   describe('panel states', () => {
     it('renders the error view instead of a chart when there are no data frames', () => {
       setup({ data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: [] } });
@@ -590,7 +628,7 @@ const buildOptions = (overrides: Partial<Options> = {}): Options => ({
   ...overrides,
 });
 
-const setup = (propsOverrides?: {}) => {
+const setup = (propsOverrides?: {}, renderOptions?: RenderOptions) => {
   const fieldConfig: FieldConfigSource = {
     defaults: {},
     overrides: [],
@@ -616,5 +654,5 @@ const setup = (propsOverrides?: {}) => {
     ...propsOverrides,
   };
 
-  return render(<PieChartPanel {...props} />);
+  return render(<PieChartPanel {...props} />, renderOptions);
 };

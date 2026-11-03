@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Subscription } from 'rxjs';
 
 import {
   DataHoverClearEvent,
   DataHoverEvent,
+  EventBusSrv,
   FALLBACK_COLOR,
   FieldColorModeId,
   type FieldDisplay,
@@ -14,6 +15,7 @@ import {
 import { PanelDataErrorView } from '@grafana/runtime';
 import { type HideSeriesConfig, SortOrder, LegendDisplayMode } from '@grafana/schema';
 import {
+  PanelContextProvider,
   SeriesVisibilityChangeBehavior,
   usePanelContext,
   useTheme2,
@@ -44,7 +46,12 @@ export function PieChartPanel(props: Props) {
   const { data, timeZone, fieldConfig, replaceVariables, width, height, options, id } = props;
 
   const theme = useTheme2();
-  const highlightedTitle = useSliceHighlightState();
+  const panelContext = usePanelContext();
+  // Slices and legend items talk over a bus of their own. Without cursor sync every panel shares the
+  // dashboard's bus, so hovering another panel's legend would highlight a slice here.
+  const [eventBus] = useState(() => new EventBusSrv());
+  const localPanelContext = useMemo(() => ({ ...panelContext, eventBus }), [panelContext, eventBus]);
+  const highlightedTitle = useSliceHighlightState(eventBus);
   const fieldDisplayValues = getFieldDisplayValues({
     fieldConfig,
     reduceOptions: options.reduceOptions,
@@ -106,23 +113,25 @@ export function PieChartPanel(props: Props) {
   const gradientFills = allGradientFills.size > 0 ? allGradientFills : undefined;
 
   return (
-    <VizLayout width={width} height={height} legend={getLegend(props, fieldDisplayValues, gradientFills)}>
-      {(vizWidth: number, vizHeight: number) => {
-        return (
-          <PieChart
-            width={vizWidth}
-            height={vizHeight}
-            highlightedTitle={highlightedTitle}
-            fieldDisplayValues={fieldDisplayValues}
-            tooltipOptions={options.tooltip}
-            pieType={options.pieType}
-            sort={options.sort}
-            displayLabels={options.displayLabels}
-            gradientFills={gradientFills}
-          />
-        );
-      }}
-    </VizLayout>
+    <PanelContextProvider value={localPanelContext}>
+      <VizLayout width={width} height={height} legend={getLegend(props, fieldDisplayValues, gradientFills)}>
+        {(vizWidth: number, vizHeight: number) => {
+          return (
+            <PieChart
+              width={vizWidth}
+              height={vizHeight}
+              highlightedTitle={highlightedTitle}
+              fieldDisplayValues={fieldDisplayValues}
+              tooltipOptions={options.tooltip}
+              pieType={options.pieType}
+              sort={options.sort}
+              displayLabels={options.displayLabels}
+              gradientFills={gradientFills}
+            />
+          );
+        }}
+      </VizLayout>
+    </PanelContextProvider>
   );
 }
 
@@ -218,9 +227,8 @@ function hasFrames(fieldDisplayValues: FieldDisplay[]) {
   return fieldDisplayValues.some((fd) => fd.view?.dataFrame.length);
 }
 
-function useSliceHighlightState() {
+function useSliceHighlightState(eventBus: EventBusSrv) {
   const [highlightedTitle, setHighlightedTitle] = useState<string>();
-  const { eventBus } = usePanelContext();
 
   useEffect(() => {
     const setHighlightedSlice = (event: DataHoverEvent) => {
