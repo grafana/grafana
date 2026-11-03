@@ -9,7 +9,6 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { plugin as statPlugin } from 'app/plugins/panel/stat/module';
 import { plugin as tablePlugin } from 'app/plugins/panel/table/module';
-import { plugin as textPlugin } from 'app/plugins/panel/text/module';
 import { plugin as timeseriesPlugin } from 'app/plugins/panel/timeseries/module';
 
 import {
@@ -74,7 +73,6 @@ describe('getPanelSidebarOptionIds', () => {
     ['timeseries', timeseriesPlugin],
     ['stat', statPlugin],
     ['table', tablePlugin],
-    ['text', textPlugin],
   ])('only lists options that exist in the %s option registry', (pluginId, plugin) => {
     const registered = getRegisteredItemIds(plugin);
     const missing = [...getPanelSidebarOptionIds(pluginId)!].filter((id) => !registered.has(id));
@@ -83,7 +81,7 @@ describe('getPanelSidebarOptionIds', () => {
   });
 
   it('has an entry for exactly the supported visualizations', () => {
-    expect(Object.keys(PANEL_SIDEBAR_OPTIONS)).toEqual(['timeseries', 'stat', 'table', 'text']);
+    expect(Object.keys(PANEL_SIDEBAR_OPTIONS)).toEqual(['timeseries', 'stat', 'table']);
   });
 });
 

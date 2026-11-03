@@ -15,7 +15,7 @@ import { filterOptionsPaneCategories, getPanelSidebarOptionIds } from './panelSi
 
 /**
  * The panel editor's visualization option categories, narrowed to the options configured for the
- * panel's visualization in PANEL_SIDEBAR_OPTIONS.
+ * panel's visualization in PANEL_SIDEBAR_OPTIONS. The new text panel gets its in-panel editor instead.
  */
 export function usePanelSidebarVizOptions(panel: VizPanel): OptionsPaneCategoryDescriptor[] {
   const { options, fieldConfig, pluginId, _pluginInstanceState } = panel.useState();
@@ -24,32 +24,35 @@ export function usePanelSidebarVizOptions(panel: VizPanel): OptionsPaneCategoryD
 
   return useMemo(() => {
     const itemIds = getPanelSidebarOptionIds(pluginId);
-    if (!itemIds || !plugin || plugin.meta.id !== pluginId) {
+    const isText = pluginId === 'text';
+    if ((!itemIds && !isText) || !plugin || plugin.meta.id !== pluginId) {
       return [];
     }
 
-    const categories = filterOptionsPaneCategories(
-      getVisualizationOptions2({
-        panel,
-        data,
-        plugin,
-        eventBus: panel.getPanelContext().eventBus,
-        instanceState: _pluginInstanceState,
-        currentOptions: options,
-        currentFieldConfig: fieldConfig,
-        onOptionsChange: (newOptions, name, category) => changePanelOptions(panel, newOptions, name, category),
-        onFieldConfigChange: (newFieldConfig, name, category) =>
-          changePanelFieldConfig(panel, newFieldConfig, name, category),
-      }),
-      itemIds
-    );
+    const allCategories = getVisualizationOptions2({
+      panel,
+      data,
+      plugin,
+      eventBus: panel.getPanelContext().eventBus,
+      instanceState: _pluginInstanceState,
+      currentOptions: options,
+      currentFieldConfig: fieldConfig,
+      onOptionsChange: (newOptions, name, category) => changePanelOptions(panel, newOptions, name, category),
+      onFieldConfigChange: (newFieldConfig, name, category) =>
+        changePanelFieldConfig(panel, newFieldConfig, name, category),
+    });
 
-    // The new text panel registers its content option as hidden and edits it inside the panel, so
-    // the mapped text options don't show and its in-panel editor takes their place. This looks at the
-    // loaded plugin rather than the grafana.newTextPanel flag, which can read differently by the time
-    // the edit pane renders than when the text module picked a version.
-    if (pluginId === 'text' && !hasItem(categories, 'content')) {
-      categories.push(getTextNGEditorCategory(panel));
+    let categories: OptionsPaneCategoryDescriptor[] = [];
+    if (isText) {
+      // Only the new text panel, which hides its content option and edits it inside the panel. The
+      // original text panel keeps the edit pane as it was. This looks at the loaded plugin rather than
+      // the grafana.newTextPanel flag, which can read differently by the time the edit pane renders
+      // than when the text module picked a version.
+      if (!hasItem(allCategories, 'content')) {
+        categories = [getTextNGEditorCategory(panel)];
+      }
+    } else if (itemIds) {
+      categories = filterOptionsPaneCategories(allCategories, itemIds);
     }
 
     const libraryPanel = getLibraryPanelBehavior(panel);

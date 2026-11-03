@@ -16,7 +16,8 @@ const sharedOptions = [
 /**
  * Visualization options shown in the dashboard edit pane for a selected panel, by panel plugin id.
  * Categories, order and editors come from the panel editor; this only picks which options to show.
- * Visualizations without an entry get no options in the edit pane.
+ * Visualizations without an entry get no options in the edit pane, except the new text panel, which
+ * gets its in-panel editor (see usePanelSidebarVizOptions).
  */
 export const PANEL_SIDEBAR_OPTIONS: Record<string, string[]> = {
   timeseries: [
@@ -49,13 +50,6 @@ export const PANEL_SIDEBAR_OPTIONS: Record<string, string[]> = {
     'fieldConfig.defaults.custom.align',
     'options.cellHeight',
     'options.showHeader',
-  ],
-  text: [
-    'options.mode',
-    'options.code.language',
-    'options.code.showLineNumbers',
-    'options.code.showMiniMap',
-    'options.content',
   ],
 };
 

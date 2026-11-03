@@ -128,14 +128,14 @@ describe('usePanelSidebarVizOptions', () => {
     expect(screen.queryByRole('textbox', { name: 'Content' })).not.toBeInTheDocument();
   });
 
-  it('shows the mapped options instead when the loaded text panel shows its content option', async () => {
+  it('adds nothing for the original text panel, which shows its content option', async () => {
     text = textV1;
     setTestFlags({ [FlagKeys.GrafanaNewTextPanel]: true });
     const { panel } = setup({ pluginId: 'text' });
     await waitFor(() => expect(panel.getPlugin()?.meta.id).toBe('text'));
 
-    expect(await screen.findByRole('textbox', { name: 'Content' })).toBeInTheDocument();
-    expect(screen.queryByRole('textbox', { name: 'Text content' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Text' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   });
 
   describe('library panels', () => {
