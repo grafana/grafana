@@ -30,6 +30,8 @@ const (
 	defaultDiscoveryInterval = 5 * time.Second
 	defaultDiscoveryTTL      = 15 * time.Second
 
+	// A leaving peer publishes here after deregistering so the others drop its
+	// route now rather than on their next tick.
 	discoveryWakeSubject = "grafana.internal.discovery.wake"
 )
 
@@ -122,7 +124,7 @@ func (d *discovery) connectWake() {
 		return
 	}
 	if _, err := nc.Subscribe(discoveryWakeSubject, func(*natsclient.Msg) {
-		d.metrics.discoveryWakesReceived.Inc()
+		d.metrics.recordDiscoveryWake()
 		select {
 		case d.wake <- struct{}{}:
 		default:
@@ -234,8 +236,8 @@ func (d *discovery) applyRoutes(routes map[string]struct{}) error {
 	return d.reload(urls)
 }
 
-// deregister removes this node's row so peers stop dialing it immediately instead
-// of waiting for the TTL. Best-effort: the TTL prune is the backstop.
+// deregister removes this node's row and wakes the peers so they stop dialing it
+// now instead of on their next tick. Best-effort: the TTL prune is the backstop.
 func (d *discovery) deregister(ctx context.Context) {
 	if err := d.registry.remove(ctx, d.self.ServerName); err != nil {
 		d.log.Warn("failed to deregister nats peer", "server_name", d.self.ServerName, "err", err)

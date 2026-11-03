@@ -170,13 +170,17 @@ func newServerMetrics(reg prometheus.Registerer) *serverMetrics {
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
 			Name:      "discovery_wakes_received_total",
-			Help:      "Total number of departing-peer hints this node received that triggered an early discovery tick.",
+			Help:      "Total number of wake hints received from peers leaving the cluster.",
 		}),
 	}
 
 	reg.MustRegister(m.embeddedServerUp, m.discoveryWakesReceived)
 
 	return m
+}
+
+func (m *serverMetrics) recordDiscoveryWake() {
+	m.discoveryWakesReceived.Inc()
 }
 
 // clusterTLSMetrics covers certificate reloads. It is registered only when
