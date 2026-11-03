@@ -11,11 +11,11 @@ const scalarOperators: Array<[EvalFunction, string]> = [
   [EvalFunction.IsGreaterThanEqual, '>='],
   [EvalFunction.IsLessThanEqual, '<='],
 ];
-const rangeOperators: Array<[EvalFunction, string, string]> = [
-  [EvalFunction.IsWithinRange, '> CASE', '< CASE'],
-  [EvalFunction.IsOutsideRange, '< CASE', '> CASE'],
-  [EvalFunction.IsWithinRangeIncluded, '>= CASE', '<= CASE'],
-  [EvalFunction.IsOutsideRangeIncluded, '<= CASE', '>= CASE'],
+const rangeOperators: Array<[EvalFunction, string, 'AND' | 'OR', string]> = [
+  [EvalFunction.IsWithinRange, '>', 'AND', '<'],
+  [EvalFunction.IsOutsideRange, '<', 'OR', '>'],
+  [EvalFunction.IsWithinRangeIncluded, '>=', 'AND', '<='],
+  [EvalFunction.IsOutsideRangeIncluded, '<=', 'OR', '>='],
 ];
 
 function policy(overrides: Partial<DynamicThresholdPolicyV1> = {}): DynamicThresholdPolicyV1 {
@@ -43,19 +43,29 @@ describe('buildDynamicThreshold', () => {
     }
   });
 
-  it.each(rangeOperators)('compiles range operator %s', (evaluator, lowerOperator, upperOperator) => {
-    const result = buildDynamicThreshold(
-      policy({ evaluator, mappings: [{ labelValue: 'production', thresholds: [2, 4] }], defaultThreshold: [5, 8] })
-    );
+  it.each(rangeOperators)(
+    'compiles range operator %s with the correct thresholds and connector',
+    (evaluator, lowerOperator, connector, upperOperator) => {
+      const result = buildDynamicThreshold(
+        policy({ evaluator, mappings: [{ labelValue: 'production', thresholds: [2, 4] }], defaultThreshold: [5, 8] })
+      );
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.expressionSql).toContain(`\`A\`.\`__value__\` ${lowerOperator} \`A\`.\`environment\``);
-      expect(result.expressionSql).toContain(`\`A\`.\`__value__\` ${upperOperator} \`A\`.\`environment\``);
-      expect(result.previewSql).toContain('`matched_threshold_lower`');
-      expect(result.previewSql).toContain('`matched_threshold_upper`');
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.expressionSql).toContain(`\`A\`.\`__value__\` ${lowerOperator} CASE \`A\`.\`environment\`
+      WHEN 'production' THEN 2
+      ELSE 5
+    END ${connector} \`A\`.\`__value__\` ${upperOperator} CASE \`A\`.\`environment\`
+      WHEN 'production' THEN 4
+      ELSE 8
+    END`);
+        expect(result.previewSql).toContain("WHEN 'production' THEN 2");
+        expect(result.previewSql).toContain("WHEN 'production' THEN 4");
+        expect(result.previewSql).toContain('`matched_threshold_lower`');
+        expect(result.previewSql).toContain('`matched_threshold_upper`');
+      }
     }
-  });
+  );
 
   it.each([
     [EvalFunction.IsAbove, [5], '`A`.`__value__` > 5', '5 AS `matched_threshold`'],
@@ -107,6 +117,24 @@ describe('buildDynamicThreshold', () => {
     }
   });
 
+  it('doubles backticks when quoting identifiers with backticks and spaces', () => {
+    const result = buildDynamicThreshold(
+      policy({
+        inputRefId: 'input `query',
+        valueField: 'value `field',
+        matchLabel: 'match `label',
+        labelColumns: ['match `label'],
+      })
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.expressionSql).toContain('`input ``query`.`value ``field`');
+      expect(result.expressionSql).toContain('`input ``query`.`match ``label` AS `match ``label`');
+      expect(result.expressionSql).toContain('FROM `input ``query`');
+    }
+  });
+
   it('escapes quotes and backslashes in adversarial label literals', () => {
     const result = buildDynamicThreshold(
       policy({
@@ -123,6 +151,23 @@ describe('buildDynamicThreshold', () => {
       expect(result.expressionSql).toContain("WHEN 'O''Reilly' THEN 1");
       expect(result.expressionSql).toContain("WHEN 'ending\\\\' THEN 2");
       expect(result.expressionSql).toContain("WHEN '\\\\'' OR 1=1 --' THEN 3");
+    }
+  });
+
+  it('keeps mapping values that differ only by case distinct', () => {
+    const result = buildDynamicThreshold(
+      policy({
+        mappings: [
+          { labelValue: 'Production', thresholds: [2] },
+          { labelValue: 'production', thresholds: [3] },
+        ],
+      })
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.expressionSql).toContain("WHEN 'Production' THEN 2");
+      expect(result.expressionSql).toContain("WHEN 'production' THEN 3");
     }
   });
 
@@ -178,6 +223,47 @@ FROM \`A\``);
   });
 
   it.each([
+    'alert_result',
+    'current_value',
+    'matched_threshold',
+    'matched_threshold_lower',
+    'matched_threshold_upper',
+    'condition_result',
+  ])('rejects label column collision with generated output %s', (generatedColumn) => {
+    const result = buildDynamicThreshold(policy({ matchLabel: generatedColumn, labelColumns: [generatedColumn] }));
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            code: 'labelColumnCollision',
+            location: { field: 'labelColumns' },
+          }),
+        ])
+      );
+    }
+  });
+
+  it.each([
+    ['preview SQL', 35],
+    ['alert expression SQL', 70],
+  ])('rejects generated %s over the 10,000 character limit', (_sqlKind, mappingCount) => {
+    const mappings = Array.from({ length: mappingCount }, (_, index) => ({
+      labelValue: `${String(index).padStart(3, '0')}-${'x'.repeat(150)}`,
+      thresholds: [index],
+    }));
+    const result = buildDynamicThreshold(policy({ mappings }));
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors).toEqual(
+        expect.arrayContaining([expect.objectContaining({ code: 'queryLength', location: { field: 'mappings' } })])
+      );
+    }
+  });
+
+  it.each([
     ['missing input', policy({ inputRefId: '' }), 'inputRefId', { field: 'inputRefId' }],
     ['missing value field', policy({ valueField: '' }), 'valueField', { field: 'valueField' }],
     ['missing match label', policy({ matchLabel: '' }), 'matchLabel', { field: 'matchLabel' }],
@@ -202,28 +288,44 @@ FROM \`A\``);
     ],
     ['invalid scalar arity', policy({ defaultThreshold: [1, 2] }), 'thresholdArity', { field: 'defaultThreshold' }],
     [
-      'non-finite threshold',
-      policy({ defaultThreshold: [Number.NaN] }),
+      'unsupported evaluator',
+      policy({ evaluator: 'unsupported' as EvalFunction }),
+      'evaluator',
+      { field: 'evaluator' },
+    ],
+    [
+      'infinite default threshold',
+      policy({ defaultThreshold: [Number.POSITIVE_INFINITY] }),
       'thresholdValue',
       { field: 'defaultThreshold' },
+    ],
+    [
+      'mapping threshold arity',
+      policy({ mappings: [{ labelValue: 'production', thresholds: [1, 2] }] }),
+      'thresholdArity',
+      { field: 'mappings', mappingIndex: 0 },
+    ],
+    [
+      'infinite mapping threshold',
+      policy({ mappings: [{ labelValue: 'production', thresholds: [Number.NEGATIVE_INFINITY] }] }),
+      'thresholdValue',
+      { field: 'mappings', mappingIndex: 0 },
+    ],
+    [
+      'mapping range bounds',
+      policy({
+        evaluator: EvalFunction.IsWithinRange,
+        mappings: [{ labelValue: 'production', thresholds: [3, 3] }],
+        defaultThreshold: [1, 2],
+      }),
+      'range',
+      { field: 'mappings', mappingIndex: 0 },
     ],
     [
       'invalid range bounds',
       policy({ evaluator: EvalFunction.IsWithinRange, mappings: [], defaultThreshold: [2, 2] }),
       'range',
       { field: 'defaultThreshold' },
-    ],
-    [
-      'lone high surrogate in mapping label',
-      policy({ mappings: [{ labelValue: '\ud800', thresholds: [1] }] }),
-      'invalidString',
-      { field: 'mappings', mappingIndex: 0 },
-    ],
-    [
-      'lone low surrogate in label column',
-      policy({ matchLabel: '\udc00', labelColumns: ['\udc00'] }),
-      'invalidString',
-      { field: 'matchLabel' },
     ],
   ] as const)('rejects %s with a UI-addressable location', (_name, input, errorCode, location) => {
     const result = buildDynamicThreshold(input);

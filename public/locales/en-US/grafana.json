@@ -9677,8 +9677,7 @@
       "error-default-threshold-value": "The default threshold must contain finite values.",
       "error-duplicate-mapping": "Mapping row {{row}} duplicates another label value.",
       "error-input-query": "Select an input query.",
-      "error-invalid-mapping-string": "Mapping row {{row}} contains invalid text.",
-      "error-invalid-string": "The selected field contains invalid text.",
+      "error-label-column-collision": "Label column {{column}} conflicts with a generated output column.",
       "error-label-column-names": "Label column names must be unique and non-empty.",
       "error-mapping-range": "Mapping row {{row}} must have a lower value that is less than its upper value.",
       "error-mapping-threshold-arity": "Mapping row {{row}} requires {{expectedArity}} threshold value(s).",
@@ -9686,7 +9685,7 @@
       "error-match-label": "Select a match label.",
       "error-match-label-schema": "The match label must be a known label column.",
       "error-operator": "Select an operator.",
-      "error-query-length": "Generated SQL is too long.",
+      "error-query-length": "Generated SQL must not exceed {{limit}} characters.",
       "error-value-field": "Select a numeric field.",
       "error-value-field-label": "The numeric value field cannot be a label column."
     },
