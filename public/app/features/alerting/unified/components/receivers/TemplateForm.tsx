@@ -124,9 +124,6 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   const [payload, setPayload] = useState(defaultPayloadString);
   const [payloadFormatError, setPayloadFormatError] = useState<string | null>(null);
 
-  // AI feedback state
-  const [aiGeneratedTemplate, setAiGeneratedTemplate] = useState(false);
-
   const { provenance } = useNotificationTemplateMetadata(originalTemplate);
   const isProvisioned = isProvisionedResource(provenance);
   const isImported = provenance === KnownProvenance.ConvertedPrometheus;
@@ -194,7 +191,6 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
 
   const handleTemplateGenerated = (template: string) => {
     setValue('content', template);
-    setAiGeneratedTemplate(true);
   };
 
   return (
@@ -397,8 +393,6 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                       setPayloadFormatError={setPayloadFormatError}
                       payloadFormatError={payloadFormatError}
                       className={cx(styles.templatePreview, styles.minEditorSize)}
-                      aiGeneratedTemplate={aiGeneratedTemplate}
-                      setAiGeneratedTemplate={setAiGeneratedTemplate}
                       kind={originalTemplate?.kind ?? 'grafana'}
                     />
                   </div>

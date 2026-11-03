@@ -500,7 +500,7 @@ Example response:
   "lastUsedAt": "2022-06-08T22:05:46.959Z",
   "createdAt": "2022-06-08T22:05:46.959Z",
   "updatedAt": "2022-06-08T22:05:46.959Z",
-  "token": "glc_eyJrIjoiZjI0YzZkNGEwZDBmZmZjMmUzNTU2ODcxMmY0ZWZlNTQ1NTljMDFjOCIsIm4iOiJteXRva2VuIiwiaWQiOjF9"
+  "token": "glc_<redacted-example-token>"
 }
 ```
 

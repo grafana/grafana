@@ -3,12 +3,14 @@ import { type DefaultBodyType, HttpResponse, type HttpResponseResolver, type Pat
 import { type PluginMeta } from '@grafana/data';
 import { invalidatePluginSettingsCache } from '@grafana/runtime/internal';
 import server from '@grafana/test-utils/server';
+import { type RulesAPIVersion } from 'app/features/alerting/unified/api/rulesApiVersion';
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
 import {
   getAlertmanagerConfigHandler,
   grafanaAlertingConfigurationStatusHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
 import { getFolderHandler } from 'app/features/alerting/unified/mocks/server/handlers/folders';
+import { getRulesAPIGroupHandler } from 'app/features/alerting/unified/mocks/server/handlers/k8s/alertRules.k8s';
 import { listNamespacedTimeIntervalHandler } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
 import {
   getDisabledPluginHandler,
@@ -91,11 +93,12 @@ export const setUpdateGrafanaRulerRuleNamespaceResolver = (
 
 export const setCreateGrafanaRuleResolver = (
   resolver: HttpResponseResolver<{ namespace: string }, DefaultBodyType, undefined>,
-  endpoint: 'alertrules' | 'recordingrules' = 'alertrules'
+  endpoint: 'alertrules' | 'recordingrules' = 'alertrules',
+  version: RulesAPIVersion = 'v1beta1'
 ) => {
   server.use(
     http.post<{ namespace: string }, DefaultBodyType, undefined>(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/${endpoint}`,
+      `/apis/rules.alerting.grafana.app/${version}/namespaces/:namespace/${endpoint}`,
       resolver
     )
   );
@@ -103,14 +106,20 @@ export const setCreateGrafanaRuleResolver = (
 
 export const setReplaceGrafanaRuleResolver = (
   resolver: HttpResponseResolver<{ namespace: string; name: string }, DefaultBodyType, undefined>,
-  endpoint: 'alertrules' | 'recordingrules' = 'alertrules'
+  endpoint: 'alertrules' | 'recordingrules' = 'alertrules',
+  version: RulesAPIVersion = 'v1beta1'
 ) => {
   server.use(
     http.put<{ namespace: string; name: string }, DefaultBodyType, undefined>(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/${endpoint}/:name`,
+      `/apis/rules.alerting.grafana.app/${version}/namespaces/:namespace/${endpoint}/:name`,
       resolver
     )
   );
+};
+
+/** Sets which versions the mocked apiserver serves for the rules API group. */
+export const setRulesAPIGroupVersions = (versions: RulesAPIVersion[]) => {
+  server.use(getRulesAPIGroupHandler(versions));
 };
 export const setUpdateRulerRuleNamespaceResolver = (
   resolver: HttpResponseResolver<{ dataSourceUid: string; namespace: string }, RulerRuleGroupDTO, undefined>

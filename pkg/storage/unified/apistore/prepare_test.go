@@ -97,7 +97,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.Empty(t, obj.GetGenerateName())
 		require.Empty(t, obj.GetResourceVersion())
 		require.Empty(t, obj.GetSelfLink())
-		require.Empty(t, obj.GetUpdatedBy())
+		require.Equal(t, "user:user-uid", obj.GetUpdatedBy())
 		require.Equal(t, obj.GetCreatedBy(), "user:user-uid")
 		updatedTS, err := obj.GetUpdatedTimestamp()
 		require.NoError(t, err)
@@ -160,7 +160,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, int64(1), meta.GetGeneration())
 		require.Equal(t, "user:user-uid", meta.GetCreatedBy())
-		require.Equal(t, "", meta.GetUpdatedBy()) // empty
+		require.Equal(t, "user:user-uid", meta.GetUpdatedBy())
 		ts, err := meta.GetUpdatedTimestamp()
 		require.NoError(t, err)
 		require.Nil(t, ts)
@@ -186,7 +186,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		// Update status without changing generation or update metadata
 		_, err = s.prepareObjectForUpdate(ctx, updatedObject, insertedObject)
 		require.NoError(t, err)
-		require.Equal(t, "", meta.GetUpdatedBy())
+		require.Equal(t, "user:user-uid", meta.GetUpdatedBy())
 		require.Equal(t, int64(1), meta.GetGeneration())
 
 		// Change the folder -- the generation should increase and the updatedBy metadata
@@ -351,7 +351,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		out := getPreparedObject(t, ctx, s, dash, nil)
 		require.Equal(t, int64(1), out.GetGeneration())
 		require.NotEmpty(t, out.GetAnnotation(utils.AnnoKeyCreatedBy))
-		require.Equal(t, "", out.GetAnnotation(utils.AnnoKeyUpdatedBy))
+		require.Equal(t, out.GetAnnotation(utils.AnnoKeyCreatedBy), out.GetAnnotation(utils.AnnoKeyUpdatedBy))
 		require.Equal(t, "", out.GetAnnotation(utils.AnnoKeyUpdatedTimestamp))
 
 		t.Run("increment when the spec changes", func(t *testing.T) {
@@ -838,14 +838,7 @@ func (f *fakeSearchIndex) Search(_ context.Context, req *resourcepb.ResourceSear
 			if !f.inUse[v] {
 				continue
 			}
-			if req.GetResultFormat() == resourcepb.ResourceSearchRequest_FIELD_VALUES {
-				rsp.Rows = append(rsp.Rows, &resourcepb.ResourceSearchRow{})
-			} else {
-				if rsp.Results == nil {
-					rsp.Results = &resourcepb.ResourceTable{}
-				}
-				rsp.Results.Rows = append(rsp.Results.Rows, &resourcepb.ResourceTableRow{})
-			}
+			rsp.Rows = append(rsp.Rows, &resourcepb.ResourceSearchRow{})
 		}
 	}
 	return rsp, nil
@@ -858,14 +851,16 @@ func TestSearchResponseHasRows(t *testing.T) {
 		wantErr  bool
 	}{
 		"nil response": {wantErr: true},
-		"old server table": {
-			response: &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
-				Rows: []*resourcepb.ResourceTableRow{{}},
-			}},
-			want: true,
+		"unspecified format": {
+			response: &resourcepb.ResourceSearchResponse{},
+			wantErr:  true,
 		},
-		"explicit table without rows": {
+		"table format": {
 			response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE},
+			wantErr:  true,
+		},
+		"field values without rows": {
+			response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES},
 		},
 		"field values": {
 			response: &resourcepb.ResourceSearchResponse{

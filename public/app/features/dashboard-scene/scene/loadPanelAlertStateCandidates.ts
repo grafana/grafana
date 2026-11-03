@@ -1,3 +1,4 @@
+import { AlertState } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import {
   PromAlertingRuleState,
@@ -64,4 +65,13 @@ function getAlertStateSeverity(state: PromAlertingRuleState) {
     return 1;
   }
   return 0;
+}
+
+export function promAlertStateToAlertState(state: PromAlertingRuleState): AlertState {
+  if (state === PromAlertingRuleState.Firing) {
+    return AlertState.Alerting;
+  } else if (state === PromAlertingRuleState.Pending) {
+    return AlertState.Pending;
+  }
+  return AlertState.OK;
 }

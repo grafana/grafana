@@ -122,13 +122,11 @@ func (c PostRankAuthzConfig) growWindow(base, nextWindow int) int {
 }
 
 // ensureSearchFields makes bleve load every stored field when the caller did not
-// request an explicit field set. The SEARCH_FIELD_ALL_FIELDS sentinel tells
-// hitsToTable to use the curated allFields column list.
+// request an explicit field set. The SEARCH_FIELD_ALL_FIELDS sentinel selects the
+// curated response field list.
 //
-// It also adds the resource version, which every result carries regardless of the
-// requested fields. Both happen here rather than in toBleveSearchRequest because
-// Search snapshots the response field list before calling this, so what is added
-// is loaded without becoming a response column.
+// Load the stored resource version after Search snapshots the response fields,
+// so its internal field name does not become a response field.
 func (b *bleveIndex) ensureSearchFields(searchrequest *bleve.SearchRequest, req *resourcepb.ResourceSearchRequest) error {
 	if len(req.Fields) < 1 && req.Limit > 0 {
 		f, err := b.index.Fields()
@@ -352,36 +350,46 @@ func (p *postRankPage) documents() search.DocumentMatchCollection {
 	return docs
 }
 
-// authzResources builds the resource-type -> verb map used to authorize hits.
-// The primary resource uses the verb implied by req.Permission; federated
+// authzResources builds the {group}/{resource} -> verb map used to authorize
+// hits. The primary resource uses the verb implied by req.Permission; federated
 // resources are read-only.
 //
-// A hit whose resource type is absent from the map is dropped, so a
-// namespace-wide index has to list every type it covers. Each hit is still
-// authorized against its own type and group, read from its document id.
+// A hit whose type is absent from the map is dropped. A namespace-wide index
+// answers every type under anyResourceType instead: its covered types change
+// with the manifests, and the search server limits each search to the ones it
+// may search with a filter. Each hit is still authorized against its own type and
+// group, read from its document id.
 func (b *bleveIndex) authzResources(req *resourcepb.ResourceSearchRequest) map[string]string {
 	verb := utils.VerbGet
 	if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
 		verb = utils.VerbUpdate
 	}
-	verbFor := func(group, res string) string {
-		if req.Permission == int64(dashboardaccess.PERMISSION_CREATE) && group == folderGroup && res == folderResource {
-			return utils.VerbCreate
-		}
-		return verb
-	}
 	resources := map[string]string{}
 	if b.key.IsGlobal() {
-		for _, gr := range resource.GlobalSearchResourceTypes() {
-			resources[gr.Resource] = verbFor(gr.Group, gr.Resource)
-		}
+		resources[anyResourceType] = verb
 	} else {
-		resources[b.key.Resource] = verbFor(b.key.Group, b.key.Resource)
+		resources[b.key.Group+"/"+b.key.Resource] = verb
+	}
+	if req.Permission == int64(dashboardaccess.PERMISSION_CREATE) && (b.key.IsGlobal() || (b.key.Group == folderGroup && b.key.Resource == folderResource)) {
+		resources[folderGroup+"/"+folderResource] = utils.VerbCreate
 	}
 	for _, federated := range req.Federated {
-		resources[federated.Resource] = utils.VerbGet
+		resources[federated.Group+"/"+federated.Resource] = utils.VerbGet
 	}
 	return resources
+}
+
+// anyResourceType keys the verb for every type in authzResources.
+const anyResourceType = "*"
+
+// authzVerb returns the verb a hit of the type is authorized with, and false
+// when hits of the type are not returned.
+func authzVerb(resources map[string]string, group, resourceType string) (string, bool) {
+	if verb, ok := resources[group+"/"+resourceType]; ok {
+		return verb, true
+	}
+	verb, ok := resources[anyResourceType]
+	return verb, ok
 }
 
 const (
@@ -422,7 +430,7 @@ func parseHitDocInfo(doc *search.DocumentMatch, resources map[string]string) (do
 		return docInfo{}, false
 	}
 	resourceType := parts[2]
-	verb, ok := resources[resourceType]
+	verb, ok := authzVerb(resources, parts[1], resourceType)
 	if !ok {
 		return docInfo{}, false
 	}
@@ -573,7 +581,7 @@ windows:
 			}
 		}
 
-		for info, err := range authorizeHits(ctx, access, candidateSeq, extractFn, trashAuthz) {
+		for info, err := range authorizeHits(ctx, access, candidateSeq, len(res.Hits), extractFn, trashAuthz) {
 			if err != nil {
 				return nil, err
 			}
@@ -655,18 +663,20 @@ windows:
 
 // authorizeHits filters ranked hits by the trash rule when trashAuthz is set,
 // otherwise by the read check. Same shape either way, so the scan loops do not
-// need to know which is running.
+// need to know which is running. sizeHint is how many hits candidates yields
+// at most.
 func authorizeHits(
 	ctx context.Context,
 	access authlib.AccessClient,
 	candidates iter.Seq[docInfo],
+	sizeHint int,
 	extractFn func(docInfo) authz.BatchCheckItem,
 	trashAuthz *resource.TrashAuthorizer,
 ) iter.Seq2[docInfo, error] {
 	if trashAuthz != nil {
 		return trashAuthorized(ctx, candidates, trashAuthz)
 	}
-	return authz.FilterAuthorized(ctx, access, candidates, extractFn, authz.WithTracer(tracer))
+	return authz.FilterAuthorized(ctx, access, candidates, extractFn, authz.WithTracer(tracer), authz.WithSizeHint(sizeHint))
 }
 
 func (b *bleveIndex) prepareFacetAggregation(
@@ -757,7 +767,7 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 				}
 			}
 		}
-		for info, err := range authorizeHits(ctx, access, candidateSeq, extractFn, trashAuthz) {
+		for info, err := range authorizeHits(ctx, access, candidateSeq, len(windowHits), extractFn, trashAuthz) {
 			if err != nil {
 				return nil, 0, false, err
 			}
@@ -859,7 +869,7 @@ func (b *bleveIndex) finalizePostFilter(
 	}
 
 	resultsConversionStart := time.Now()
-	if err := b.setSearchResults(ctx, response, selectFields, fieldValueSchema, page, sort, req.Explain); err != nil {
+	if err := b.setSearchResults(response, fieldValueSchema, page, sort); err != nil {
 		return err
 	}
 	if wantFacets {

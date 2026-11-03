@@ -45,7 +45,6 @@ async function publishDashboardSnapshot(
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
-    groupByVariable: true,
   },
   viewport: { width: 1920, height: 1080 },
 });

@@ -162,7 +162,9 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
         })
         .pipe(
           map((res: FetchResponse<BackendDataSourceResponse>) => {
-            const rsp = toDataQueryResponse(res, queries);
+            // Parse only the meta expression's result: source query frames are not the SQL-converted
+            // columns, and hidden source queries are omitted from the response entirely.
+            const rsp = toDataQueryResponse(res, [metaSqlExpressionQuery]);
             return rsp.data[0] ?? { fields: [] };
           })
         )

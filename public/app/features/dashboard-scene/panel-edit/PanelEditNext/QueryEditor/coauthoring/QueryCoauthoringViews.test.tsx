@@ -1,9 +1,10 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 
-import { QueryCoauthoringPromptInput } from './QueryCoauthoringViews';
+import { QueryCoauthoringPromptInput, QueryCoauthoringWorking } from './QueryCoauthoringViews';
+import { type QueryEditorCoauthoringContextV1 } from './internalCoauthoringContract';
 
 const initialPrompt = {
-  placeholder: 'Describe a quick change...',
+  placeholder: 'Describe a quick change…',
   ariaLabel: 'Describe a query change',
   actionLabel: 'Coauthor',
 };
@@ -257,6 +258,18 @@ describe('QueryCoauthoringPromptInput', () => {
     expect(prompt).toHaveFocus();
   });
 
+  it('preserves a deliberate outside click after the first prompt focus attempt', () => {
+    renderPrompt(initialPrompt);
+    const prompt = screen.getByRole('textbox', { name: 'Describe a query change' });
+    runFocusSettle();
+    expect(prompt).toHaveFocus();
+    const editor = screen.getByRole('button', { name: 'Monaco editor' });
+    fireEvent.pointerDown(editor);
+    editor.focus();
+    drainAnimationFrames();
+    expect(editor).toHaveFocus();
+  });
+
   it('does not steal focus when the user focuses another control during the settle', () => {
     renderPrompt(initialPrompt);
     const prompt = screen.getByRole('textbox', { name: 'Describe a query change' });
@@ -304,5 +317,21 @@ describe('QueryCoauthoringPromptInput', () => {
 
     expect(cancelAnimationFrameSpy).toHaveBeenCalledWith(focusFrame);
     expect(animationFrames.size).toBe(0);
+  });
+});
+
+describe('QueryCoauthoringWorking', () => {
+  it('degrades safely when an independently released datasource omits metadata', () => {
+    const context: QueryEditorCoauthoringContextV1 = {
+      revision: '1',
+      query: 'rate(http_requests_total[5m])',
+      focusRanges: [{ from: 0, to: 4 }],
+      language: { id: 'promql', displayName: 'PromQL' },
+      metadata: [],
+    };
+    Reflect.deleteProperty(context, 'metadata');
+    render(<QueryCoauthoringWorking context={context} mode="modify" onStop={jest.fn()} />);
+    expect(screen.getByText('Building query…')).toBeInTheDocument();
+    expect(screen.getByLabelText('Relevant query context')).toHaveTextContent('PromQL');
   });
 });

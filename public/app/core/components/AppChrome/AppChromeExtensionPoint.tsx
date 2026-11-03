@@ -1,17 +1,13 @@
 import type { JSX } from 'react';
 
 import { PluginExtensionPoints } from '@grafana/data';
-import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
+import { renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 export function AppChromeExtensionPoint(): JSX.Element | null {
   const { chrome } = useGrafana();
   const state = chrome.useState();
-
-  if (config.featureToggles.enableAppChromeExtensions !== true) {
-    return null;
-  }
 
   if (state.chromeless) {
     return null;
@@ -20,7 +16,7 @@ export function AppChromeExtensionPoint(): JSX.Element | null {
   return <InternalAppChromeExtensionPoint />;
 }
 
-// We have this "internal" component so we can prevent pre-loading the plugins associated with the extension-point if the feature is not enabled.
+// We have this "internal" component so we can prevent pre-loading the plugins associated with the extension-point when the chrome is hidden.
 function InternalAppChromeExtensionPoint(): JSX.Element | null {
   const { components, isLoading } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.AppChrome,

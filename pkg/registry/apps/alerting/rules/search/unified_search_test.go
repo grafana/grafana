@@ -33,12 +33,15 @@ func TestUnifiedBackendErrors(t *testing.T) {
 		response *resourcepb.ResourceSearchResponse
 		want     string
 	}{
-		{name: "unknown format", response: &resourcepb.ResourceSearchResponse{ResultFormat: 99}, want: "unsupported search result format"},
+		{name: "unspecified format", response: &resourcepb.ResourceSearchResponse{}, want: "unsupported search result format 0"},
+		{name: "table format", response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE}, want: "unsupported search result format 1"},
+		{name: "unknown format", response: &resourcepb.ResourceSearchResponse{ResultFormat: 99}, want: "unsupported search result format 99"},
 		{name: "missing key", response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, Rows: []*resourcepb.ResourceSearchRow{{}}}, want: "has no resource key"},
 		{name: "nil row", response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, Rows: []*resourcepb.ResourceSearchRow{nil}}, want: "has no resource key"},
-		{name: "column count mismatch", response: &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: fieldTitle}}, Rows: []*resourcepb.ResourceTableRow{{Key: &resourcepb.ResourceKey{Name: "a"}}},
-		}}, want: "row has 0 cells but the table declares 1 columns"},
+		{name: "invalid field index", response: fieldValueRows(&resourcepb.ResourceKey{Name: "a"}, nil, &resourcepb.ResourceSearchValue{StringValues: []string{"title"}}), want: "field index 0 is out of range"},
+		{name: "missing scalar", response: fieldValueRows(&resourcepb.ResourceKey{Name: "a"},
+			[]*resourcepb.ResourceSearchField{{Name: fieldTitle, Type: resourcepb.ResourceSearchField_STRING}}, &resourcepb.ResourceSearchValue{}), want: "scalar has 0 values"},
+		{name: "nil value", response: fieldValueRows(&resourcepb.ResourceKey{Name: "a"}, nil, nil), want: "nil field value"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			result, err := NewUnifiedClient(&fakeIndex{resp: tc.response}).Search(t.Context(), &Query{Fields: []string{fieldTitle}})
@@ -114,21 +117,40 @@ func TestUnifiedBackendTransportErrors(t *testing.T) {
 	}
 }
 
-func TestUnifiedBackendBadCellOmitsOnlyThatField(t *testing.T) {
-	response := &resourcepb.ResourceSearchResponse{TotalHits: 5, TotalHitsExact: true, Results: &resourcepb.ResourceTable{
-		Columns: []*resourcepb.ResourceTableColumnDefinition{searchColumns[fieldTitle], searchColumns[fieldPanelID]},
-		Rows:    []*resourcepb.ResourceTableRow{{Key: &resourcepb.ResourceKey{Name: "a"}, Cells: [][]byte{[]byte("title"), []byte("invalid")}}},
-	}}
+func TestUnifiedBackendPreservesTypedFields(t *testing.T) {
+	response := fieldValueRows(&resourcepb.ResourceKey{Name: "a"},
+		[]*resourcepb.ResourceSearchField{
+			{Name: fieldTitle, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: fieldPanelID, Type: resourcepb.ResourceSearchField_INT64},
+			{Name: fieldPaused, Type: resourcepb.ResourceSearchField_BOOLEAN},
+			{Name: fieldLabels, Type: resourcepb.ResourceSearchField_STRING, IsArray: true},
+			{Name: fieldFor, Type: resourcepb.ResourceSearchField_STRING},
+		},
+		&resourcepb.ResourceSearchValue{FieldIndex: 0, StringValues: []string{"title"}},
+		&resourcepb.ResourceSearchValue{FieldIndex: 1, Int64Values: []int64{9007199254740993}},
+		&resourcepb.ResourceSearchValue{FieldIndex: 2, BooleanValues: []bool{false}},
+		&resourcepb.ResourceSearchValue{FieldIndex: 3},
+		&resourcepb.ResourceSearchValue{FieldIndex: 4, StringValues: []string{"5m"}},
+	)
+	response.TotalHits = 5
 	backend := NewUnifiedClient(&fakeIndex{resp: response})
-	result, err := backend.Search(t.Context(), &Query{Resource: alertrule.ResourceInfo.GroupResource(), Fields: []string{fieldTitle, fieldPanelID}})
+	result, err := backend.Search(t.Context(), &Query{
+		Resource: alertrule.ResourceInfo.GroupResource(), Fields: []string{fieldTitle, fieldPanelID, fieldPaused, fieldLabels},
+	})
 	require.NoError(t, err)
-	require.Equal(t, []Hit{{Name: "a", Values: map[string]any{fieldTitle: "title"}}}, result.Hits)
+	require.Equal(t, []Hit{{Name: "a", Values: map[string]any{
+		fieldTitle: "title", fieldPanelID: int64(9007199254740993), fieldPaused: false, fieldLabels: []string{},
+	}}}, result.Hits)
 	require.Equal(t, int64(5), result.TotalHits)
 	require.True(t, result.TotalHitsExact)
 }
 
 func TestUnifiedBackendEmptyResponses(t *testing.T) {
-	for _, response := range []*resourcepb.ResourceSearchResponse{nil, {TotalHits: 10}} {
+	for _, response := range []*resourcepb.ResourceSearchResponse{
+		nil,
+		{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES},
+		{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, TotalHits: 10},
+	} {
 		result, err := NewUnifiedClient(&fakeIndex{resp: response}).Search(t.Context(), &Query{})
 		require.NoError(t, err)
 		require.Empty(t, result.Hits)

@@ -33,11 +33,13 @@ type discoveredGroup struct {
 // discovery group is left out.
 func discoverGroupResources(ctx context.Context, client *http.Client, baseURL string) ([]discoveredGroup, error) {
 	// A trailing slash would produce "//apis", which servers route differently.
+	// #nosec G704 -- baseURL is operator-controlled configuration: an aggregate target's url or st_discovery_url.
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimSuffix(baseURL, "/")+apisPrefix, nil)
 	if err != nil {
 		return nil, fmt.Errorf("router: building discovery request: %w", err)
 	}
 	req.Header.Set("Accept", aggregatedDiscoveryJSON+", application/json")
+	// #nosec G704 -- req targets the operator-configured base URL above.
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("router: discovery request to %s failed: %w", baseURL, err)
@@ -162,6 +164,7 @@ func newDiscoveredAggregateBackend(targetName string, discovered discoveredGroup
 			ModifyResponse: rejectBackendRedirects,
 			ErrorHandler:   proxyErrorHandler,
 			FlushInterval:  streamingFlushInterval,
+			BufferPool:     proxyBuffers,
 		},
 	}, nil
 }
@@ -176,18 +179,13 @@ func (b *aggregateBackend) Discovery() (apidiscoveryv2.APIGroupDiscovery, bool) 
 	return *b.discovery, true
 }
 
-// discoveredGroupKey fingerprints a discovered group. A group without
-// resources hashes exactly as before resources were kept, so its key is
-// unchanged.
+// discoveredGroupKey fingerprints a discovered group and its resources, so a
+// change to either is a new key.
 func discoveredGroupKey(d discoveredGroup) (string, error) {
-	var value any = d.group
-	if d.discovery != nil {
-		value = struct {
-			Group     metav1.APIGroup
-			Discovery *apidiscoveryv2.APIGroupDiscovery
-		}{d.group, d.discovery}
-	}
-	body, err := json.Marshal(value)
+	body, err := json.Marshal(struct {
+		Group     metav1.APIGroup
+		Discovery *apidiscoveryv2.APIGroupDiscovery
+	}{d.group, d.discovery})
 	if err != nil {
 		return "", err
 	}
@@ -195,7 +193,5 @@ func discoveredGroupKey(d discoveredGroup) (string, error) {
 	return hex.EncodeToString(sum[:])[:16], nil
 }
 func (b *aggregateBackend) Load(context.Context) (http.Handler, error) {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		b.proxy.ServeHTTP(w, req)
-	}), nil
+	return b.proxy, nil
 }

@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -196,5 +197,88 @@ func TestService_SignIdentity(t *testing.T) {
 		third, _, err := s.SignIdentity(context.Background(), ident)
 		require.NoError(t, err)
 		assert.NotEqual(t, first, third)
+	})
+
+	t.Run("should not reuse a token signed for another auth module of the same user", func(t *testing.T) {
+		s := ProvideService(
+			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
+			&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
+		)
+
+		newIdent := func(authenticatedBy string) *authn.Identity {
+			return &authn.Identity{
+				ID:              "1",
+				Type:            claims.TypeUser,
+				AuthenticatedBy: authenticatedBy,
+				Login:           "U1",
+				UID:             "edpu3nnt61se8e",
+				OrgID:           1,
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
+				Groups:          []string{"team-uid-1"},
+			}
+		}
+
+		// A render (e.g. a scheduled report) signs in as the user first.
+		renderToken, renderClaims, err := s.SignIdentity(context.Background(), newIdent(login.RenderModule))
+		require.NoError(t, err)
+		assert.Equal(t, login.RenderModule, renderClaims.Rest.AuthenticatedBy)
+
+		// The same user's browser session must get its own token, not the cached render token.
+		proxyToken, proxyClaims, err := s.SignIdentity(context.Background(), newIdent(login.AuthProxyAuthModule))
+		require.NoError(t, err)
+		assert.NotEqual(t, renderToken, proxyToken)
+		assert.Equal(t, login.AuthProxyAuthModule, proxyClaims.Rest.AuthenticatedBy)
+
+		// Each auth module still reuses its own cached token.
+		renderAgain, _, err := s.SignIdentity(context.Background(), newIdent(login.RenderModule))
+		require.NoError(t, err)
+		assert.Equal(t, renderToken, renderAgain)
+
+		proxyAgain, _, err := s.SignIdentity(context.Background(), newIdent(login.AuthProxyAuthModule))
+		require.NoError(t, err)
+		assert.Equal(t, proxyToken, proxyAgain)
+	})
+	t.Run("should return error and not cache when signer fails", func(t *testing.T) {
+		signErr := errors.New("failed to decode private key PEM")
+		var calls int
+		failing := &idtest.FakeSigner{
+			SignIDTokenFn: func(_ context.Context, _ *auth.IDClaims) (string, error) {
+				calls++
+				return "", signErr
+			},
+		}
+		s := ProvideService(
+			setting.NewCfg(), failing, remotecache.NewFakeCacheStorage(),
+			&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
+		)
+		ident := &authn.Identity{ID: "1", Type: claims.TypeUser}
+
+		token, gotClaims, err := s.SignIdentity(context.Background(), ident)
+		require.ErrorIs(t, err, signErr)
+		assert.Empty(t, token)
+		assert.Nil(t, gotClaims)
+
+		_, _, err = s.SignIdentity(context.Background(), ident)
+		require.ErrorIs(t, err, signErr)
+		assert.Equal(t, 2, calls, "failed signing must not be cached")
+	})
+}
+
+func TestService_SyncIDToken(t *testing.T) {
+	t.Run("should not fail authentication when signing fails", func(t *testing.T) {
+		failing := &idtest.FakeSigner{
+			SignIDTokenFn: func(_ context.Context, _ *auth.IDClaims) (string, error) {
+				return "", errors.New("boom")
+			},
+		}
+		s := ProvideService(
+			setting.NewCfg(), failing, remotecache.NewFakeCacheStorage(),
+			&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
+		)
+		ident := &authn.Identity{ID: "1", Type: claims.TypeUser}
+
+		require.NoError(t, s.SyncIDToken(context.Background(), ident, &authn.Request{}))
+		assert.Empty(t, ident.IDToken)
+		assert.Nil(t, ident.IDTokenClaims)
 	})
 }

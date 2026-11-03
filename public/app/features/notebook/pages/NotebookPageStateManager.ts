@@ -8,6 +8,12 @@ import { type Resource } from 'app/features/apiserver/types';
 import { dispatch } from 'app/store/store';
 
 import { NotebookAnalytics } from '../analytics/main';
+import {
+  NOTEBOOK_ENTRY_POINT,
+  NOTEBOOK_LOAD_SOURCE,
+  type NotebookEntryPoint,
+  type NotebookLoadSource,
+} from '../analytics/types';
 import { notebookResourceFor } from '../api/notebookResource';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { NotebookDeletedEvent } from '../scene/events';
@@ -61,6 +67,17 @@ export interface NotebookPageState {
 const sceneCache = new Map<string, { generation?: number; scene: NotebookScene }>();
 
 export class NotebookPageStateManager extends StateManagerBase<NotebookPageState> {
+  /**
+   * `embedded` is for a host other than the notebook route, which reports its loads as such. The route's
+   * singleton below leaves it off.
+   */
+  public constructor(
+    initialState: NotebookPageState,
+    private readonly embedded = false
+  ) {
+    super(initialState);
+  }
+
   private get cache() {
     return sceneCache;
   }
@@ -83,7 +100,8 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
   // throw away the scene someone is typing in, along with its caret and undo history.
   private unsavedScene?: NotebookScene;
 
-  public async loadNotebook(uid: string): Promise<void> {
+  /** `source` is where the reader came from, for the `loaded` event. A caller that knows nothing leaves it off. */
+  public async loadNotebook(uid: string, source: NotebookLoadSource = NOTEBOOK_LOAD_SOURCE.DIRECT): Promise<void> {
     const seq = ++this.requestSeq;
 
     if (this.adoptUnsavedScene(uid)) {
@@ -124,7 +142,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
         // resetting there would throw away a `?from=&to=` somebody was linked to, and its cleanup runs
         // after the scene's, by which point the router has moved on to the next page.
         cached.scene.autosave.discardViewOnlyTimeChanges();
-        NotebookAnalytics.loaded(cached.scene, true);
+        NotebookAnalytics.loaded(cached.scene, true, this.embedded, source);
         this.setState({ scene: cached.scene, isLoading: false });
         return;
       }
@@ -143,7 +161,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
       if (this.isSuperseded(seq)) {
         return;
       }
-      NotebookAnalytics.loaded(scene, false);
+      NotebookAnalytics.loaded(scene, false, this.embedded, source);
       this.setState({ scene, isLoading: false });
     } catch (error) {
       // A superseded failure must not surface either, or a stale 404 would replace the notebook the
@@ -170,7 +188,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
    * what leaves `uid` unset here. It is deliberately not cached either, because the cache is keyed by
    * uid and this notebook has none.
    */
-  public async newNotebook(): Promise<void> {
+  public async newNotebook(source: NotebookEntryPoint = NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST): Promise<void> {
     // A load already in flight would otherwise resolve on top of this and replace the blank notebook
     // with whichever one the page was previously asked for.
     const seq = ++this.requestSeq;
@@ -194,6 +212,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
 
       // Held so the page can keep this exact scene once its first save gives it a uid.
       this.unsavedScene = transformNotebookToScene(notebookResourceFor(undefined, spec));
+      this.unsavedScene.autosave.setEntryPoint(source);
 
       this.setState({ scene: this.unsavedScene, isLoading: false, loadError: undefined });
     } catch (error) {

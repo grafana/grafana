@@ -51,6 +51,47 @@ func testContext(t *testing.T) context.Context {
 	return identity.WithRequester(t.Context(), requester)
 }
 
+type failingStorageClient struct {
+	resourceclient.ResourceClient
+	value          []byte
+	readResponse   *resourcepb.ReadResponse
+	listResponse   *resourcepb.ListResponse
+	createResponse *resourcepb.CreateResponse
+	deleteResponse *resourcepb.DeleteResponse
+	updateResponse *resourcepb.UpdateResponse
+	err            error
+}
+
+func (c *failingStorageClient) Read(context.Context, *resourcepb.ReadRequest, ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
+	if c.readResponse != nil {
+		return c.readResponse, c.err
+	}
+	if c.value != nil {
+		return &resourcepb.ReadResponse{Value: c.value, ResourceVersion: 1}, nil
+	}
+	return nil, c.err
+}
+
+func (c *failingStorageClient) List(context.Context, *resourcepb.ListRequest, ...grpc.CallOption) (*resourcepb.ListResponse, error) {
+	return c.listResponse, c.err
+}
+
+func (c *failingStorageClient) Watch(context.Context, *resourcepb.WatchRequest, ...grpc.CallOption) (resourcepb.ResourceStore_WatchClient, error) {
+	return nil, c.err
+}
+
+func (c *failingStorageClient) Create(context.Context, *resourcepb.CreateRequest, ...grpc.CallOption) (*resourcepb.CreateResponse, error) {
+	return c.createResponse, c.err
+}
+
+func (c *failingStorageClient) Delete(context.Context, *resourcepb.DeleteRequest, ...grpc.CallOption) (*resourcepb.DeleteResponse, error) {
+	return c.deleteResponse, c.err
+}
+
+func (c *failingStorageClient) Update(context.Context, *resourcepb.UpdateRequest, ...grpc.CallOption) (*resourcepb.UpdateResponse, error) {
+	return c.updateResponse, c.err
+}
+
 func testObject(t *testing.T) []byte {
 	t.Helper()
 	obj := &unstructured.Unstructured{Object: map[string]any{
@@ -216,6 +257,38 @@ func (c *notFoundReadClient) Create(context.Context, *resourcepb.CreateRequest, 
 	return &resourcepb.CreateResponse{ResourceVersion: 1}, nil
 }
 
+func runFailingStorageOperation(t *testing.T, operation string, client *failingStorageClient) error {
+	t.Helper()
+	s := testStorage(t, client)
+	switch operation {
+	case "Get":
+		return s.Get(testContext(t), "example/test", storage.GetOptions{}, &unstructured.Unstructured{})
+	case "GetList":
+		return s.GetList(testContext(t), "example", storage.ListOptions{Recursive: true}, &unstructured.UnstructuredList{})
+	case "Watch":
+		_, err := s.Watch(testContext(t), "example/test", storage.ListOptions{})
+		return err
+	case "GuaranteedUpdate read":
+		tryUpdate := func(in runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
+			return in, nil, nil
+		}
+		return s.GuaranteedUpdate(testContext(t), "example/test", &unstructured.Unstructured{}, false, nil, tryUpdate, nil)
+	case "Create":
+		_, err := callCreate(t, testContext(t), client)
+		return err
+	case "Delete":
+		return s.Delete(testContext(t), "example/test", &unstructured.Unstructured{}, nil, nil, nil, storage.DeleteOptions{})
+	case "GuaranteedUpdate update":
+		tryUpdate := func(in runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
+			return in.(*unstructured.Unstructured).DeepCopy(), nil, nil
+		}
+		return s.GuaranteedUpdate(testContext(t), "example/test", &unstructured.Unstructured{}, false, &storage.Preconditions{}, tryUpdate, nil)
+	default:
+		t.Fatalf("unknown operation %q", operation)
+		return nil
+	}
+}
+
 func TestGuaranteedUpdateNotFoundAsGRPCError(t *testing.T) {
 	notFound := grpcErrorWithResult(grpccodes.NotFound, &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "not found"})
 
@@ -362,6 +435,68 @@ func requireKubernetesError(t *testing.T, err error) {
 }
 
 func TestNonRetryableGRPCErrorIsConverted(t *testing.T) {
+	operations := []string{"Get", "GetList", "Watch", "GuaranteedUpdate read", "Create", "Delete", "GuaranteedUpdate update"}
+	for _, operation := range operations {
+		shapes := []string{"unstructured transport"}
+		if operation != "Watch" {
+			shapes = append(shapes, "transport details", "response error")
+		}
+		for _, shape := range shapes {
+			t.Run(operation+"/"+shape, func(t *testing.T) {
+				structured := shape != "unstructured transport"
+				var result *resourcepb.ErrorResult
+				var transportErr error
+				if structured {
+					result = &resourcepb.ErrorResult{
+						Code:    http.StatusTooManyRequests,
+						Reason:  string(metav1.StatusReasonTooManyRequests),
+						Message: "storage is busy",
+						Details: &resourcepb.ErrorDetails{RetryAfterSeconds: 7},
+					}
+					transportErr = grpcErrorWithResult(grpccodes.ResourceExhausted, result)
+				} else {
+					transportErr = grpcstatus.Error(grpccodes.Unavailable, "private database details")
+				}
+
+				client := &failingStorageClient{err: transportErr}
+				if operation == "Delete" || operation == "GuaranteedUpdate update" {
+					client.value = testObject(t)
+				}
+				if shape == "response error" {
+					client.err = nil
+					switch operation {
+					case "Get", "GuaranteedUpdate read":
+						client.readResponse = &resourcepb.ReadResponse{Error: result}
+					case "GetList":
+						client.listResponse = &resourcepb.ListResponse{Error: result}
+					case "Create":
+						client.createResponse = &resourcepb.CreateResponse{Error: result}
+					case "Delete":
+						client.deleteResponse = &resourcepb.DeleteResponse{Error: result}
+					case "GuaranteedUpdate update":
+						client.updateResponse = &resourcepb.UpdateResponse{Error: result}
+					}
+				}
+				err := runFailingStorageOperation(t, operation, client)
+
+				requireKubernetesError(t, err)
+				var apiStatus apierrors.APIStatus
+				require.ErrorAs(t, err, &apiStatus)
+				status := apiStatus.Status()
+				if structured {
+					require.Equal(t, int32(http.StatusTooManyRequests), status.Code)
+					require.Equal(t, metav1.StatusReasonTooManyRequests, status.Reason)
+					require.Equal(t, "storage is busy", status.Message)
+					require.Equal(t, int32(7), status.Details.RetryAfterSeconds)
+				} else {
+					require.Equal(t, int32(http.StatusServiceUnavailable), status.Code)
+					require.Equal(t, "Service Unavailable", status.Message)
+					require.NotContains(t, status.Message, "private database details")
+				}
+			})
+		}
+	}
+
 	forbidden := grpcErrorWithResult(grpccodes.PermissionDenied, &resourcepb.ErrorResult{
 		Code:    http.StatusForbidden,
 		Reason:  string(metav1.StatusReasonForbidden),

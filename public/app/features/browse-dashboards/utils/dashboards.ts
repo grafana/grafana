@@ -1,7 +1,7 @@
 import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
-import { type ResourceRef } from 'app/features/provisioning/components/BulkActions/useBulkActionJob';
+import { type ResourceRef } from 'app/features/provisioning/types/job';
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
 
 import { type DashboardTreeSelection, type DashboardViewItemWithUIItems } from '../types';

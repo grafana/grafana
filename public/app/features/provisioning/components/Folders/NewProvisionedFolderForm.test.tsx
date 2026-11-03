@@ -292,7 +292,7 @@ describe('NewProvisionedFolderForm', () => {
     expect(posts).toBe(0);
   });
 
-  it('should create folder with branch workflow', async () => {
+  it('should create folder on a new branch', async () => {
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
@@ -308,7 +308,7 @@ describe('NewProvisionedFolderForm', () => {
     await user.clear(folderNameInput);
     await user.type(folderNameInput, 'Branch Folder');
 
-    // A new branch name moves the form off the configured branch, onto the branch workflow
+    // A new branch name moves the form off the configured branch onto a branch commit
     await user.type(screen.getByRole('combobox', { name: /branch/i }), 'feature/new-folder{Enter}');
 
     const submitButton = screen.getByRole('button', { name: /^create$/i });

@@ -2,7 +2,9 @@ import { isEqual } from 'lodash';
 
 import { locationService } from '@grafana/runtime';
 import {
+  AdHocFiltersVariable,
   NewSceneObjectAddedEvent,
+  sceneGraph,
   sceneUtils,
   type SceneObjectUrlValue,
   type SceneObjectUrlValues,
@@ -13,6 +15,7 @@ import { type DashboardScene } from '../../scene/DashboardScene';
 import { buildDashboardWithAccessInfoFromScene } from '../../serialization/buildDashboardWithAccessInfoFromScene';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
+import { applySupportsMultiValueOperators } from '../../utils/applySupportsMultiValueOperators';
 import { edit } from '../utils/edit';
 
 // Minimal structural type for the bits of DashboardSceneUrlSync the rebuild drives, without
@@ -28,9 +31,10 @@ export interface ApplyDashboardSpecProps {
   description: string;
   /** Where the spec edit came from, reported with undo/redo interactions. */
   scope: string;
+  actor?: string;
 }
 
-export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDashboardSpecProps): void {
+export function applyDashboardSpec({ scene, spec, description, scope, actor }: ApplyDashboardSpecProps): void {
   const dto = buildDashboardWithAccessInfoFromScene(scene, spec);
   const rebuilt = transformSaveModelSchemaV2ToScene(dto);
   // The URL state each spec produces on its own, before any URL is applied. Their difference is
@@ -48,7 +52,10 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
     // Template identity is not part of the dashboard spec or its access DTO.
     meta: { ...rebuilt.state.meta, isDashboardTemplate: scene.state.meta.isDashboardTemplate },
   });
-  const { loadingView: previousLoading, ...previousState } = scene.state;
+  // A plan's building screen is still up during the build's first write; undoing that write must
+  // not restore it, since nothing would be left to end it. Leaving `planning` out of the merge
+  // keeps whatever is current.
+  const { loadingView: previousLoading, planning: previousPlanning, ...previousState } = scene.state;
 
   // `setState` merges, so an open panel editor would survive the swap still driving the
   // VizPanel and layout item of the tree we just discarded: edits made through it never reach
@@ -61,9 +68,11 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
     scene.state.editPanel?.getUrlKey() ?? (typeof requestedPanel === 'string' ? requestedPanel : undefined);
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrow the base handler to the dashboard's own, which owns the hold below
   const urlSync = scene.urlSync as DashboardUrlSync | undefined;
+  // The first perform swaps in a fresh tree, which queries on its own; a later one is a redo.
+  let performed = false;
 
   edit({
-    meta: { actionId: 'dashboard.editSchema', scope },
+    meta: { actionId: 'dashboard.editSchema', scope, ...(actor ? { actor } : {}) },
     source: scene,
     description,
     perform: () => {
@@ -92,6 +101,11 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
       // Calling editModeChange rehydrates the panel's edit state (for example isDraggable state)
       scene.applyDashboardMode();
 
+      // Ad hoc variables look up whether their data source takes multi-value operators after the build,
+      // and set it on the objects the build made. The swap installed clones of those, so look it up again
+      // on the clones, or the lookups land on the discarded tree.
+      resolveAdHocMultiValueOperators(scene);
+
       scene.state.sidebar.refreshAfterRebuild();
 
       // The swapped-in children have never seen the URL, so url-only state is gone and a tabs
@@ -103,6 +117,11 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
       if (editPanelKey) {
         urlSync?.updateFromUrl({ editPanel: editPanelKey });
       }
+
+      if (performed) {
+        refreshSwappedInData(scene);
+      }
+      performed = true;
     },
     undo: () => {
       const outgoingKeys = Object.keys(sceneUtils.getUrlState(scene));
@@ -118,8 +137,15 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
         toSpec: getPreviousSpecUrl,
       });
       syncRebuiltChildrenFromUrl(scene, urlUpdates);
+      refreshSwappedInData(scene);
     },
   });
+}
+
+// Undo and redo swap back a tree whose query runners still hold the data they had when set aside, and
+// a runner only re-queries on activation once the time range has moved past that data.
+function refreshSwappedInData(scene: DashboardScene) {
+  sceneGraph.getTimeRange(scene).onRefresh();
 }
 
 /** The URL state of the spec the scene serializes to, rebuilt on its own. */
@@ -190,4 +216,12 @@ function syncRebuiltChildrenFromUrl(scene: DashboardScene, updates: SceneObjectU
 function isSameUrlValue(a: SceneObjectUrlValue, b: SceneObjectUrlValue) {
   const values = (value: SceneObjectUrlValue) => (value == null ? [] : Array.isArray(value) ? value : [value]);
   return isEqual(values(a), values(b));
+}
+
+function resolveAdHocMultiValueOperators(scene: DashboardScene) {
+  for (const variable of sceneGraph.findAllObjects(scene, (obj) => obj instanceof AdHocFiltersVariable)) {
+    if (variable instanceof AdHocFiltersVariable) {
+      applySupportsMultiValueOperators(variable, variable.state.datasource?.type);
+    }
+  }
 }

@@ -8,7 +8,7 @@ import { Text, useStyles2 } from '@grafana/ui';
 export function TimeAgoCell({ date }: { date?: Date | number }) {
   const styles = useStyles2(getStyles);
   return (
-    <span className={styles.age}>
+    <span className={styles.age} data-testid="time-ago">
       {date !== undefined && (
         <Text color="secondary" variant="bodySmall">
           {dateTimeFormatTimeAgoShort(date)}

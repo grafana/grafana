@@ -69,7 +69,7 @@ You can configure Grafana to dynamically add panels to a dashboard.
 A dynamic panel is a panel that the system creates based on the value of a multi-value variable.
 Variables dynamically change your queries across all panels in a dashboard.
 
-To see an example of repeating panels, refer to [this dashboard with repeating panels](https://play.grafana.org/d/testdata-repeating/testdata-repeating-panels?orgId=1).
+To see an example of repeating panels, refer to [this dashboard with repeating panels](https://play.grafana.org/d/000000025/templating-repeated-panels?orgId=1).
 
 For information about repeating rows and tabs, refer to [Configure repeat options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#configure-repeat-options).
 

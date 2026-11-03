@@ -35,6 +35,8 @@ import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/compon
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import getFactors from 'app/core/utils/factors';
 import kbn from 'app/core/utils/kbn';
+import { type CloudWatchMetricsQuery } from 'app/features/cloudwatch-helpers/dataquery';
+import { type LegacyAnnotationQuery } from 'app/features/cloudwatch-helpers/types';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import {
   type RefIdTransformerOptions,
@@ -42,15 +44,13 @@ import {
 } from 'app/features/transformers/timeSeriesTable/timeSeriesTableTransformer';
 import { isConstant, isMulti } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
-import { type CloudWatchMetricsQuery } from 'app/plugins/datasource/cloudwatch/dataquery.gen';
-import { type LegacyAnnotationQuery } from 'app/plugins/datasource/cloudwatch/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import {
   migrateCloudWatchQuery,
   migrateMultipleStatsAnnotationQuery,
   migrateMultipleStatsMetricsQuery,
-} from '../../../plugins/datasource/cloudwatch/migrations/dashboardMigrations';
+} from '../../cloudwatch-helpers/dashboardMigrations';
 
 import { type DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';

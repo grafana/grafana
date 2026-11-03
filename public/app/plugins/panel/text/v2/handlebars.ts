@@ -10,6 +10,8 @@ import {
   isDateTime,
 } from '@grafana/data';
 
+import { interpret } from './handlebarsInterpreter';
+
 /** One row of query data, keyed by field display name. */
 export type TemplateRow = Record<string, unknown>;
 
@@ -85,8 +87,9 @@ export function buildAllRowsContext(series: DataFrame[], maxRows = Infinity, onR
 export function compileTemplate(content: string, replaceVariables: InterpolateFunction): CompiledTemplate {
   const env = createEnvironment(replaceVariables);
 
-  // Parse up front so a syntax error throws here, not once per rendered row.
-  return env.compile(env.parse(content));
+  // Parse up front so a syntax error throws here, not once per rendered row. Interpreted, since
+  // compiling needs 'unsafe-eval'.
+  return interpret(env.parse(content), env);
 }
 
 const toNumber = (value: unknown): number => (typeof value === 'number' ? value : Number(value));

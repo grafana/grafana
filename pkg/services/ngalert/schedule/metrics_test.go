@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -33,60 +34,93 @@ func TestHashUIDs(t *testing.T) {
 }
 
 func TestSchedule_resetMetricsOnStop(t *testing.T) {
-	const orgID int64 = 1
+	synctest.Test(t, func(t *testing.T) {
+		const orgID int64 = 1
 
-	ruleStore := newFakeRulesStore()
-	reg := prometheus.NewPedanticRegistry()
-	mockedClock := clock.NewMock()
-	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil, nil, withSchedulerClock(mockedClock))
+		ruleStore := newFakeRulesStore()
+		reg := prometheus.NewPedanticRegistry()
+		realClock := clock.New()
+		sch := setupScheduler(t, ruleStore, nil, reg, nil, nil, nil, withSchedulerClock(realClock))
 
-	alertRule := models.RuleGen.With(
-		models.RuleGen.WithOrgID(orgID),
-		models.RuleGen.WithInterval(time.Second),
-		models.RuleGen.WithNotificationSettingsGen(models.NotificationSettingsGen()),
-		models.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
-		models.RuleGen.WithPrometheusOriginalRuleDefinition("test"),
-	).GenerateRef()
-	ruleStore.PutRule(context.Background(), alertRule)
+		alertRule := models.RuleGen.With(
+			models.RuleGen.WithOrgID(orgID),
+			models.RuleGen.WithInterval(time.Second),
+			models.RuleGen.WithNotificationSettingsGen(models.NotificationSettingsGen()),
+			models.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
+			models.RuleGen.WithPrometheusOriginalRuleDefinition("test"),
+		).GenerateRef()
+		ruleStore.PutRule(context.Background(), alertRule)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	stopped := make(chan struct{})
-	go func() {
-		_ = sch.Run(ctx)
-		close(stopped)
-	}()
+		ctx, cancel := context.WithCancel(context.Background())
+		stopped := make(chan struct{})
+		go func() {
+			_ = sch.Run(ctx)
+			close(stopped)
+		}()
 
-	// Advance mock clock to trigger ticks and populate metrics
-	for range 3 {
-		mockedClock.Add(time.Second)
+		// Initialize the scheduler ticker before advancing through rule evaluation.
+		synctest.Wait()
+
+		// Complete three scheduled ticks so rule and rule-group metrics are populated.
+		synctest.Sleep(3 * time.Second)
+
+		require.Positive(t, testutil.ToFloat64(sch.metrics.SchedulableAlertRules))
+
+		groupRulesCount, err := testutil.GatherAndCount(reg, "grafana_alerting_rule_group_rules")
+		require.NoError(t, err)
+		require.Greater(t, groupRulesCount, 0)
+
+		cancel()
+		<-stopped
+
+		// Verify metrics are reset after stop
+		require.Equal(t, 0.0, testutil.ToFloat64(sch.metrics.BehindSeconds))
+		require.Equal(t, 0.0, testutil.ToFloat64(sch.metrics.Ticker.LastTickTime))
+		require.Equal(t, 0.0, testutil.ToFloat64(sch.metrics.Ticker.NextTickTime))
+		require.Equal(t, 0.0, testutil.ToFloat64(sch.metrics.SchedulableAlertRules))
+		require.Equal(t, 0.0, testutil.ToFloat64(sch.metrics.SchedulableAlertRulesHash))
+
+		err = testutil.GatherAndCompare(reg, bytes.NewBufferString(""), "grafana_alerting_rule_group_rules")
+		require.NoError(t, err)
+		err = testutil.GatherAndCompare(reg, bytes.NewBufferString(""), "grafana_alerting_rule_groups")
+		require.NoError(t, err)
+		err = testutil.GatherAndCompare(reg, bytes.NewBufferString(""), "grafana_alerting_simple_routing_rules")
+		require.NoError(t, err)
+		err = testutil.GatherAndCompare(reg, bytes.NewBufferString(""), "grafana_alerting_simplified_editor_rules")
+		require.NoError(t, err)
+		err = testutil.GatherAndCompare(reg, bytes.NewBufferString(""), "grafana_alerting_prometheus_imported_rules")
+		require.NoError(t, err)
+	})
+}
+
+func TestIntervalBucketLabel(t *testing.T) {
+	tests := []struct {
+		seconds  int64
+		expected string
+	}{
+		{1, "<=10s"},
+		{10, "<=10s"},
+		{11, "10s-30s"},
+		{30, "10s-30s"},
+		{31, "30s-1m"},
+		{60, "30s-1m"},
+		{61, "1m-5m"},
+		{300, "1m-5m"},
+		{301, "5m-15m"},
+		{900, "5m-15m"},
+		{901, "15m-30m"},
+		{1800, "15m-30m"},
+		{1801, "30m-1h"},
+		{3600, "30m-1h"},
+		{3601, "1h-6h"},
+		{6 * 3600, "1h-6h"},
+		{6*3600 + 1, "6h-12h"},
+		{12 * 3600, "6h-12h"},
+		{12*3600 + 1, "12h-1d"},
+		{24 * 3600, "12h-1d"},
+		{24*3600 + 1, ">1d"},
 	}
-
-	require.Eventually(t, func() bool {
-		return testutil.ToFloat64(sch.metrics.SchedulableAlertRules) > 0
-	}, time.Second, 50*time.Millisecond)
-
-	groupRulesCount, err := testutil.GatherAndCount(reg, "grafana_alerting_rule_group_rules")
-	require.NoError(t, err)
-	require.Greater(t, groupRulesCount, 0)
-
-	cancel()
-	<-stopped
-
-	// Verify metrics are reset after stop
-	require.Equal(t, 0.0, testutil.ToFloat64(sch.metrics.BehindSeconds))
-	require.Equal(t, 0.0, testutil.ToFloat64(sch.metrics.Ticker.LastTickTime))
-	require.Equal(t, 0.0, testutil.ToFloat64(sch.metrics.Ticker.NextTickTime))
-	require.Equal(t, 0.0, testutil.ToFloat64(sch.metrics.SchedulableAlertRules))
-	require.Equal(t, 0.0, testutil.ToFloat64(sch.metrics.SchedulableAlertRulesHash))
-
-	err = testutil.GatherAndCompare(reg, bytes.NewBufferString(""), "grafana_alerting_rule_group_rules")
-	require.NoError(t, err)
-	err = testutil.GatherAndCompare(reg, bytes.NewBufferString(""), "grafana_alerting_rule_groups")
-	require.NoError(t, err)
-	err = testutil.GatherAndCompare(reg, bytes.NewBufferString(""), "grafana_alerting_simple_routing_rules")
-	require.NoError(t, err)
-	err = testutil.GatherAndCompare(reg, bytes.NewBufferString(""), "grafana_alerting_simplified_editor_rules")
-	require.NoError(t, err)
-	err = testutil.GatherAndCompare(reg, bytes.NewBufferString(""), "grafana_alerting_prometheus_imported_rules")
-	require.NoError(t, err)
+	for _, tc := range tests {
+		require.Equal(t, tc.expected, intervalBucketLabel(tc.seconds), "interval %ds", tc.seconds)
+	}
 }

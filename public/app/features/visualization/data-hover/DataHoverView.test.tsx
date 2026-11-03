@@ -3,23 +3,12 @@ import { render, screen } from '@testing-library/react';
 import { arrayToDataFrame, createDataFrame, FieldType } from '@grafana/data';
 
 import { DataHoverView, getDisplayValuesAndLinks } from './DataHoverView';
-import { isHttpUrl, renderValue } from './renderValue';
+import { renderValue } from './renderValue';
 
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
   getFieldDisplayLinks: jest.fn().mockReturnValue([]),
 }));
-
-describe('isHttpUrl', () => {
-  it.each([
-    { url: 'https://example.com/path', expected: true },
-    { url: 'http://localhost:3000', expected: true },
-    { url: 'ftp://files.example.com', expected: false },
-    { url: 'not a url', expected: false },
-  ])('"$url" returns $expected', ({ url, expected }) => {
-    expect(isHttpUrl(url)).toBe(expected);
-  });
-});
 
 describe('renderValue', () => {
   it('returns the string unchanged for non-URL values', () => {

@@ -95,7 +95,18 @@ function panel(): PanelKind {
 
 /** The heading button is the card's only control, and is what actually selects a notebook. */
 function selectNotebook(title: string) {
-  return screen.getByRole('button', { name: title });
+  return screen.getByRole('radio', { name: title });
+}
+
+function isNotebookRadio(el: Element | null) {
+  return el?.getAttribute('name') === 'notebook-picker';
+}
+
+/** Tabs forward until focus lands in the notebook list, so the test does not depend on what precedes it. */
+async function tabIntoNotebooks(user: ReturnType<typeof render>['user']) {
+  for (let i = 0; i < 30 && !isNotebookRadio(document.activeElement); i++) {
+    await user.tab();
+  }
 }
 
 /**
@@ -195,14 +206,14 @@ describe('AddPanelToNotebookModalBody', () => {
   });
 
   describe('the notebook cards', () => {
-    // Card offers a radio alongside the heading button, but it is inert and cannot be grouped with the
-    // others - hiding it left every card with a second tab stop and nothing to see at it.
-    it('offer one control each, not a heading button and a radio', async () => {
+    // Card's own heading button would make every card a tab stop of its own.
+    it('offer one control each, a radio in a single group', async () => {
       const { user } = renderModal();
       await chooseExisting(user);
 
-      expect(await screen.findByRole('button', { name: 'Q2 latency regression' })).toBeInTheDocument();
-      expect(screen.queryAllByRole('radio', { name: /latency|checkout/i })).toHaveLength(0);
+      const group = await screen.findByRole('radiogroup', { name: 'Notebooks' });
+      expect(within(group).getAllByRole('radio')).toHaveLength(2);
+      expect(within(group).queryAllByRole('button')).toHaveLength(0);
     });
 
     // The outline says which card is chosen to anyone who can see it; this is what says so to anyone
@@ -210,10 +221,79 @@ describe('AddPanelToNotebookModalBody', () => {
     it('say which one is chosen', async () => {
       const { user } = renderModal();
       await chooseExisting(user);
-      await user.click(await screen.findByRole('button', { name: 'Q2 latency regression' }));
+      await user.click(await screen.findByRole('radio', { name: 'Q2 latency regression' }));
 
-      expect(screen.getByRole('button', { name: 'Q2 latency regression (selected)' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Checkout error spike' })).toBeInTheDocument();
+      expect(selectNotebook('Q2 latency regression')).toBeChecked();
+      expect(selectNotebook('Checkout error spike')).not.toBeChecked();
+    });
+
+    describe('from the keyboard', () => {
+      it('enter the list on the first notebook when none is chosen', async () => {
+        const { user } = renderModal();
+        await chooseExisting(user);
+
+        await tabIntoNotebooks(user);
+
+        expect(selectNotebook('Q2 latency regression')).toHaveFocus();
+      });
+
+      it('enter the list on the chosen notebook', async () => {
+        const { user } = renderModal();
+        await chooseExisting(user);
+        await user.click(selectNotebook('Checkout error spike'));
+        await user.tab({ shift: true });
+
+        await tabIntoNotebooks(user);
+
+        expect(selectNotebook('Checkout error spike')).toHaveFocus();
+      });
+
+      it('choose with the arrow keys', async () => {
+        const { user } = renderModal();
+        await chooseExisting(user);
+        await user.click(selectNotebook('Q2 latency regression'));
+
+        await user.keyboard('{ArrowDown}');
+
+        expect(selectNotebook('Checkout error spike')).toHaveFocus();
+        expect(selectNotebook('Checkout error spike')).toBeChecked();
+        expect(selectNotebook('Q2 latency regression')).not.toBeChecked();
+      });
+
+      // The whole point: picking a notebook near the top must not mean tabbing past the rest.
+      it('leave the list with a single tab', async () => {
+        const { user } = renderModal();
+        await chooseExisting(user);
+        await user.click(selectNotebook('Q2 latency regression'));
+
+        await user.tab();
+
+        expect(isNotebookRadio(document.activeElement)).toBe(false);
+      });
+
+      // Arrows choose, so Enter is free to do what it does for any radio in a form: press the form's
+      // submit button. Asserted through the form owner rather than by pressing Enter, because
+      // user-event only finds a submit button inside the <form>, and this one is in the modal footer.
+      it('submit with Enter on the chosen notebook', async () => {
+        const { user } = renderModal();
+        await chooseExisting(user);
+        await user.click(selectNotebook('Checkout error spike'));
+
+        const radio = screen.getByRole<HTMLInputElement>('radio', { name: 'Checkout error spike' });
+        const submit = screen.getByRole<HTMLButtonElement>('button', { name: 'Add to notebook' });
+        expect(submit).toHaveAttribute('type', 'submit');
+        expect(submit).toBeEnabled();
+        expect(radio.form).not.toBeNull();
+        expect(radio.form).toBe(submit.form);
+      });
+    });
+
+    // The name is the title alone, so the rest of the card has to arrive as the description.
+    it('describe each notebook by its author and age', async () => {
+      const { user } = renderModal();
+      await chooseExisting(user);
+
+      expect(selectNotebook('Q2 latency regression')).toHaveAccessibleDescription(/Updated .* By Marcus Chen/);
     });
   });
 
@@ -242,7 +322,8 @@ describe('AddPanelToNotebookModalBody', () => {
           'nb2',
           [{ kind: 'panel', panel: panel(), isLibraryPanel: false }],
           'dashboard_panel',
-          'user'
+          'user',
+          false
         )
       );
       // Built on submit, so a panel edited while the modal was open is the one that lands.
@@ -264,7 +345,8 @@ describe('AddPanelToNotebookModalBody', () => {
           'nb2',
           [{ kind: 'panel', panel: panel(), isLibraryPanel: true }],
           'dashboard_panel',
-          'user'
+          'user',
+          false
         )
       );
     });
@@ -386,6 +468,18 @@ describe('AddPanelToNotebookModalBody', () => {
       expect(component).toBeDefined();
     });
 
+    // t() HTML-escapes interpolated values by default, which the toast would show as `Checkout&#39;s`.
+    it('leaves punctuation in the success toast alone', async () => {
+      createWithContent.mockResolvedValue({ uid: 'nb3', title: "Checkout's errors/sec" });
+      const { user, onDismiss } = renderModal();
+
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), "Checkout's errors/sec");
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() => expect(onDismiss).toHaveBeenCalled());
+      expect(mockCreateSuccessNotification.mock.calls[0][0]).toBe("Panel added to Checkout's errors/sec");
+    });
+
     // Saving a dashboard refuses a name already in use; a notebook that silently becomes the second
     // "Checkout latency" is the same confusion, one list further down.
     it('refuses a name another notebook already has', async () => {
@@ -450,7 +544,8 @@ describe('AddPanelToNotebookModalBody', () => {
           { title: 'New investigation' },
           [{ kind: 'panel', panel: panel(), isLibraryPanel: true }],
           'dashboard_panel',
-          'user'
+          'user',
+          false
         )
       );
     });
@@ -467,7 +562,8 @@ describe('AddPanelToNotebookModalBody', () => {
           { title: 'Checkout latency' },
           [{ kind: 'panel', panel: panel(), isLibraryPanel: false }],
           'dashboard_panel',
-          'user'
+          'user',
+          false
         )
       );
       expect(onDismiss).toHaveBeenCalled();
@@ -534,7 +630,8 @@ describe('AddPanelToNotebookModalBody', () => {
           'nb2',
           [{ kind: 'panel', panel: lockedPanel(), isLibraryPanel: false }],
           'dashboard_panel',
-          'user'
+          'user',
+          true
         )
       );
     });
@@ -552,7 +649,8 @@ describe('AddPanelToNotebookModalBody', () => {
           'nb2',
           [{ kind: 'panel', panel: panel(), isLibraryPanel: false }],
           'dashboard_panel',
-          'user'
+          'user',
+          false
         )
       );
     });
@@ -635,7 +733,7 @@ describe('AddPanelToNotebookModalBody', () => {
       const { user } = renderModal();
       await chooseExisting(user);
 
-      const card = screen.getByRole('button', { name: 'Q2 latency regression' });
+      const card = selectNotebook('Q2 latency regression');
       const scroller = card.closest('[tabindex="0"]');
       expect(scroller).not.toBeNull();
 
@@ -751,7 +849,7 @@ describe('AddPanelToNotebookModalBody', () => {
 
       expect(screen.queryByRole('radio', { name: 'New notebook' })).not.toBeInTheDocument();
       expect(screen.queryByRole('radio', { name: 'Existing notebook' })).not.toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Q2 latency regression' })).toBeInTheDocument();
+      expect(selectNotebook('Q2 latency regression')).toBeInTheDocument();
     });
 
     it('drops it the other way for a user who can only create', () => {
@@ -800,7 +898,14 @@ describe('AddPanelToNotebookModalBody', () => {
 
       await waitFor(() =>
         expect(failures).toEqual([
-          { notebookUid: 'nb1', source: 'dashboard_panel', target: 'existing', reason: 'conflict' },
+          {
+            notebookUid: 'nb1',
+            source: 'dashboard_panel',
+            target: 'existing',
+            reason: 'conflict',
+            lockTimeRange: false,
+            schema_version: 1,
+          },
         ])
       );
     });
@@ -815,7 +920,14 @@ describe('AddPanelToNotebookModalBody', () => {
 
       await waitFor(() =>
         expect(failures).toEqual([
-          { notebookUid: '', source: 'dashboard_panel', target: 'new', reason: 'write_failed' },
+          {
+            notebookUid: '',
+            source: 'dashboard_panel',
+            target: 'new',
+            reason: 'write_failed',
+            lockTimeRange: false,
+            schema_version: 1,
+          },
         ])
       );
     });
@@ -832,7 +944,14 @@ describe('AddPanelToNotebookModalBody', () => {
 
       await waitFor(() =>
         expect(failures).toEqual([
-          { notebookUid: '', source: 'dashboard_panel', target: 'new', reason: 'build_failed' },
+          {
+            notebookUid: '',
+            source: 'dashboard_panel',
+            target: 'new',
+            reason: 'build_failed',
+            lockTimeRange: false,
+            schema_version: 1,
+          },
         ])
       );
       expect(createWithContent).not.toHaveBeenCalled();
@@ -890,7 +1009,8 @@ describe('AddPanelToNotebookModalBody', () => {
             { kind: 'markdown', text: 'Done.' },
           ],
           'plugin',
-          'assistant'
+          'assistant',
+          false
         )
       );
       expect(mockCreateSuccessNotification).toHaveBeenCalledWith(

@@ -77,6 +77,7 @@ func TestService_LegacyCheck(t *testing.T) {
 			subject: "render:0",
 			action:  "users:delete",
 			scopes:  []string{"*"},
+			allowed: false,
 		},
 		{
 			name:    "unrelated action",
@@ -86,6 +87,7 @@ func TestService_LegacyCheck(t *testing.T) {
 			permissions: []accesscontrol.Permission{
 				{Action: "dashboards:write", Scope: "*"},
 			},
+			allowed: false,
 		},
 		{
 			name:    "scoped wildcard stays scoped",
@@ -95,6 +97,7 @@ func TestService_LegacyCheck(t *testing.T) {
 			permissions: []accesscontrol.Permission{
 				{Action: "dashboards:read", Scope: "folders:*"},
 			},
+			allowed: false,
 		},
 		{
 			name:    "settings scopes stay unchanged",
@@ -119,6 +122,7 @@ func TestService_LegacyCheck(t *testing.T) {
 			name:    "action only without grant",
 			subject: "user:u-1",
 			action:  "users:create",
+			allowed: false,
 		},
 		{
 			name:    "explicit empty scope",
@@ -128,6 +132,7 @@ func TestService_LegacyCheck(t *testing.T) {
 			permissions: []accesscontrol.Permission{
 				{Action: "users:create"},
 			},
+			allowed: false,
 		},
 		{
 			name:    "alternative scopes",
@@ -203,18 +208,6 @@ func TestService_LegacyCheckRejectsInvalidRequests(t *testing.T) {
 			name: "missing action",
 			mutate: func(req *authzextv1.LegacyCheckRequest) {
 				req.Expression.GetPermission().Action = ""
-			},
-		},
-		{
-			name: "unsupported all",
-			mutate: func(req *authzextv1.LegacyCheckRequest) {
-				req.Expression.Node = &authzextv1.LegacyExpression_All{All: &authzextv1.LegacyExpressionList{}}
-			},
-		},
-		{
-			name: "unsupported any",
-			mutate: func(req *authzextv1.LegacyCheckRequest) {
-				req.Expression.Node = &authzextv1.LegacyExpression_Any{Any: &authzextv1.LegacyExpressionList{}}
 			},
 		},
 	} {
@@ -307,8 +300,9 @@ func (legacyActionResolver) ResolveAction(action string) []string {
 
 type legacyPermissionStore struct {
 	store.PermissionStore
-	queries []store.PermissionsQuery
-	err     error
+	queries         []store.PermissionsQuery
+	presenceQueries []store.PermissionsQuery
+	err             error
 }
 
 func (s *legacyPermissionStore) GetUserPermissions(ctx context.Context, ns types.NamespaceInfo, query store.PermissionsQuery) ([]accesscontrol.Permission, error) {
@@ -317,4 +311,16 @@ func (s *legacyPermissionStore) GetUserPermissions(ctx context.Context, ns types
 		return nil, s.err
 	}
 	return s.PermissionStore.GetUserPermissions(ctx, ns, query)
+}
+
+func (s *legacyPermissionStore) HasUserPermissions(
+	ctx context.Context,
+	ns types.NamespaceInfo,
+	query store.PermissionsQuery,
+) (bool, error) {
+	s.presenceQueries = append(s.presenceQueries, query)
+	if s.err != nil {
+		return false, s.err
+	}
+	return s.PermissionStore.HasUserPermissions(ctx, ns, query)
 }

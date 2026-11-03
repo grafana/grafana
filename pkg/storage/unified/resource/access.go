@@ -135,18 +135,28 @@ func (c authzLimitedClient) checkServicePermission(ctx context.Context, id claim
 }
 
 // Check before scanning so an empty index cannot hide a missing service grant.
-func (s *searchServer) checkSearchServicePermissions(ctx context.Context, req *resourcepb.ResourceSearchRequest) error {
+//
+// It returns, as {group}/{resource}, the types of resources a search searches
+// and the ones it leaves out. A global search leaves out the types it cannot
+// search instead of failing: otherwise one type without a grant would break the
+// search for every type. It fails only when no type is left.
+func (s *searchServer) checkSearchServicePermissions(ctx context.Context, req *resourcepb.ResourceSearchRequest, resources []NamespacedResource) (searched, skipped []string, err error) {
 	id, ok := claims.AuthInfoFrom(ctx)
 	if !ok || id == nil {
 		if s.access == nil {
-			return nil
+			for _, resource := range resources {
+				searched = append(searched, resource.Group+"/"+resource.Resource)
+			}
+			return searched, nil, nil
 		}
-		return apierrors.NewUnauthorized(authz.ErrMissingAuthInfo.Error())
+		return nil, nil, apierrors.NewUnauthorized(authz.ErrMissingAuthInfo.Error())
 	}
 	key := req.Options.Key
 	if !claims.NamespaceMatches(id.GetNamespace(), key.Namespace) {
-		return claims.ErrNamespaceMismatch
+		return nil, nil, claims.ErrNamespaceMismatch
 	}
+	nsr := NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}
+	global := nsr.IsGlobal()
 
 	verb := utils.VerbGet
 	if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
@@ -155,23 +165,59 @@ func (s *searchServer) checkSearchServicePermissions(ctx context.Context, req *r
 	if req.IsDeleted {
 		verb = utils.VerbSetPermissions
 	}
-	resources := indexSources(NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource})
+	var lastErr error
 	for _, resource := range resources {
+		groupResource := resource.Group + "/" + resource.Resource
+		if global && !s.checksEachResult(resource.Group, resource.Resource) {
+			s.logUncheckedGlobalType(ctx, groupResource)
+			skipped = append(skipped, groupResource)
+			continue
+		}
 		group, name, resourceVerb := resource.Group, resource.Resource, verb
 		// Mirrors the folder check in search's batchCheckItem, which authorizes by dashboards:create.
 		if !req.IsDeleted && req.Permission == int64(dashboardaccess.PERMISSION_CREATE) && group == "folder.grafana.app" && name == "folders" {
 			group, name, resourceVerb = "dashboard.grafana.app", "dashboards", utils.VerbCreate
 		}
 		if err := s.checkSearchServicePermission(ctx, id, group, name, resourceVerb); err != nil {
-			return err
+			if !global {
+				return nil, nil, err
+			}
+			skipped = append(skipped, groupResource)
+			lastErr = err
+			continue
 		}
+		searched = append(searched, groupResource)
+	}
+	if global && len(resources) > 0 && len(searched) == 0 {
+		if lastErr != nil {
+			return nil, skipped, lastErr
+		}
+		return nil, skipped, errors.New("the global search covers no type whose results this server checks against the user")
 	}
 	for _, resource := range req.Federated {
 		if err := s.checkSearchServicePermission(ctx, id, resource.Group, resource.Resource, utils.VerbGet); err != nil {
-			return err
+			return nil, skipped, err
 		}
 	}
-	return nil
+	return searched, skipped, nil
+}
+
+// checksEachResult reports whether this server checks each result of the type
+// against the user. Unified storage only checks the types its access client
+// enforces; the others are returned to anyone.
+func (s *searchServer) checksEachResult(group, resource string) bool {
+	access, ok := s.access.(interface{ IsCompatibleWithRBAC(string, string) bool })
+	return !ok || access.IsCompatibleWithRBAC(group, resource)
+}
+
+// The set of such types only changes with the deployment's configuration, so
+// once per type is enough to explain why it is missing from global search.
+func (s *searchServer) logUncheckedGlobalType(ctx context.Context, groupResource string) {
+	if _, logged := s.uncheckedGlobalTypesLogged.LoadOrStore(groupResource, true); logged {
+		return
+	}
+	s.log.FromContext(ctx).Warn("Leaving a type out of global search: this server does not check its results against the user",
+		"group_resource", groupResource)
 }
 
 func (s *searchServer) checkSearchServicePermission(ctx context.Context, id claims.AuthInfo, group, resource, verb string) error {
@@ -218,7 +264,7 @@ func batchSizeBucket(n int) string {
 
 // rbacAllowlist is a map of group to resources that are compatible with RBAC.
 var rbacAllowlist = groupResource{
-	"dashboard.grafana.app": map[string]interface{}{"dashboards": nil, "variables": nil},
+	"dashboard.grafana.app": map[string]interface{}{"dashboards": nil, "variables": nil, "notebooks": nil},
 	"folder.grafana.app":    map[string]interface{}{"folders": nil},
 	"iam.grafana.app":       map[string]interface{}{"users": nil, "teams": nil, "serviceaccounts": nil},
 }

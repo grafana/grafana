@@ -6,6 +6,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -55,21 +56,32 @@ func eventToWrittenEvent(event Event, data []byte) *WrittenEvent {
 }
 
 func (k *kvStorageBackend) loadWatchSeed(ctx context.Context, handoffRV int64) (watchSeed, error) {
+	return k.loadWatchSeedWithLimit(ctx, handoffRV, defaultCacheMaxBytes)
+}
+
+func (k *kvStorageBackend) loadWatchSeedWithLimit(ctx context.Context, handoffRV, maxBytes int64) (watchSeed, error) {
 	seed := watchSeed{initialCacheFloor: handoffRV, highestRV: handoffRV}
+	if maxBytes <= 0 {
+		return seed, ctx.Err()
+	}
 	events, err := k.eventStore.latest(ctx, defaultCacheSize, handoffRV)
 	if err != nil {
 		return watchSeed{}, fmt.Errorf("read watch seed: %w", err)
 	}
 
 	keys := make([]DataKey, 0, len(events))
-	for _, event := range events {
+	eventsByKey := make(map[DataKey]Event, len(events))
+	for i := len(events) - 1; i >= 0; i-- {
+		event := events[i]
 		if event.PreviousRV < 0 {
 			continue
 		}
-		keys = append(keys, eventDataKey(event))
+		key := eventDataKey(event)
+		keys = append(keys, key)
+		eventsByKey[key] = event
 	}
 
-	values := make(map[DataKey][]byte, len(keys))
+	var sizeBytes int64
 	for obj, err := range k.dataStore.BatchGet(ctx, keys) {
 		if err != nil {
 			return watchSeed{}, fmt.Errorf("hydrate watch seed: %w", err)
@@ -77,25 +89,20 @@ func (k *kvStorageBackend) loadWatchSeed(ctx context.Context, handoffRV int64) (
 		if obj.Value == nil {
 			return watchSeed{}, fmt.Errorf("watch seed revision %q has no reader", obj.Key.String())
 		}
-		data, err := readAndClose(obj.Value)
+		data, err := kv.ReadAllAndClose(obj.Value)
 		if err != nil {
 			return watchSeed{}, fmt.Errorf("read watch seed payload: %w", err)
 		}
-		values[obj.Key] = data
-	}
-	for _, event := range events {
-		if event.PreviousRV < 0 {
-			continue
+		if int64(cap(data)) > maxBytes-sizeBytes {
+			break
 		}
-		key := eventDataKey(event)
-		data, ok := values[key]
-		if !ok {
-			// Event metadata can outlive payloads removed by history pruning.
-			k.log.Warn("no data for watch seed event, skipping", "key", key.String())
-			continue
+		sizeBytes += int64(cap(data))
+		seed.events = append(seed.events, eventToWrittenEvent(eventsByKey[obj.Key], data))
+		if sizeBytes == maxBytes {
+			break
 		}
-		seed.events = append(seed.events, eventToWrittenEvent(event, data))
 	}
+	slices.Reverse(seed.events)
 	if len(seed.events) > 0 {
 		seed.initialCacheFloor = seed.events[0].ResourceVersion
 	}

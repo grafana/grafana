@@ -401,6 +401,70 @@ describe('moment compatibility parity', () => {
     });
   });
 
+  describe('unknown time zones', () => {
+    it.each(['default', 'Mars/Olympus_Mons'])('falls back to UTC when constructing with %s', (zone) => {
+      const value = moment.tz('2024-05-06T12:00:00', zone);
+
+      expect(value.toISOString()).toBe('2024-05-06T12:00:00.000Z');
+      expect(value.utcOffset()).toBe(0);
+    });
+
+    it('interprets explicit offsets, arrays, and formatted input as UTC with an unknown zone', () => {
+      const zone = 'Mars/Olympus_Mons';
+
+      expect(moment.tz('2024-05-06T12:00:00-05:00', zone).toISOString()).toBe('2024-05-06T17:00:00.000Z');
+      expect(moment.tz([2024, 4, 6, 12, 0], zone).toISOString()).toBe('2024-05-06T12:00:00.000Z');
+      expect(moment.tz('06/05/2024 12:00', 'DD/MM/YYYY HH:mm', zone).toISOString()).toBe('2024-05-06T12:00:00.000Z');
+    });
+
+    it.each(['default', 'Mars/Olympus_Mons'])('converts a zoned input to UTC for %s', (zone) => {
+      const source = moment.tz('2024-05-06T12:00:00', 'America/New_York');
+      const value = moment.tz(source, zone);
+
+      expect(value.toISOString()).toBe('2024-05-06T16:00:00.000Z');
+      expect(value.format('YYYY-MM-DD HH:mm Z')).toBe('2024-05-06 16:00 +00:00');
+      expect(source.format('YYYY-MM-DD HH:mm Z')).toBe('2024-05-06 12:00 -04:00');
+    });
+
+    it.each(['default', 'Mars/Olympus_Mons'])(
+      'keeps the instant and offset of an existing instance for %s with either keepLocalTime setting',
+      (zone) => {
+        for (const keepLocalTime of [false, true]) {
+          const value = moment.tz('2024-05-06T12:00:00', 'America/New_York');
+          value.tz(zone, keepLocalTime);
+
+          expect(value.toISOString()).toBe('2024-05-06T16:00:00.000Z');
+          expect(value.format('YYYY-MM-DD HH:mm Z')).toBe('2024-05-06 12:00 -04:00');
+          expect(value.utcOffset()).toBe(-240);
+        }
+      }
+    );
+
+    it.each(['default', 'Mars/Olympus_Mons'])('freezes the offset after leaving a named zone for %s', (zone) => {
+      const value = moment.tz('2024-03-09T12:00:00', 'America/New_York').tz(zone);
+
+      expect(value.add(1, 'day').format('YYYY-MM-DD HH:mm Z')).toBe('2024-03-10 12:00 -05:00');
+      expect(value.toISOString()).toBe('2024-03-10T17:00:00.000Z');
+    });
+
+    it.each(['default', 'Mars/Olympus_Mons'])('does not turn malformed input into a valid date for %s', (zone) => {
+      const value = moment.tz('2024-02-30', zone);
+
+      expect(value.isValid()).toBe(false);
+      expect(value.toISOString()).toBeNull();
+    });
+
+    it.each(['default', 'Mars/Olympus_Mons'])('uses the current UTC instant for now and diff with %s', (zone) => {
+      Settings.now = () => 1714996800000;
+      const now = moment.tz(zone);
+      const earlier = moment.tz('2024-05-06T11:55:00', zone);
+
+      expect(now.valueOf()).toBe(1714996800000);
+      expect(now.format('YYYY-MM-DD HH:mm Z')).toBe('2024-05-06 12:00 +00:00');
+      expect(now.diff(earlier, 'minutes')).toBe(5);
+    });
+  });
+
   describe('parsing and invalid values', () => {
     it('makes explicit ISO parsing authoritative instead of accepting an RFC fallback', () => {
       expect(moment.utc('2024-05-06T12:00:00+02:00', moment.ISO_8601).toISOString()).toBe('2024-05-06T10:00:00.000Z');

@@ -79,7 +79,7 @@ describe('useImportProvisionedSave', () => {
           uid: 'custom-uid',
           folderUid: 'folder-abc',
           title: 'My Dashboard',
-          form: { ref: 'main', path: 'dashboards/my-dash.json', comment: 'Initial import', workflow: 'write' },
+          form: { ref: 'main', path: 'dashboards/my-dash.json', comment: 'Initial import' },
         })
       );
     });
@@ -117,7 +117,8 @@ describe('useImportProvisionedSave', () => {
           apiVersion: 'v2',
           folderUid: 'folder-xyz',
           title: 'V2 Dash',
-          form: { ref: 'feat-branch', path: 'v2-dash.json', workflow: 'branch' },
+          isNewBranch: true,
+          form: { ref: 'feat-branch', path: 'v2-dash.json' },
         })
       );
     });
@@ -150,7 +151,7 @@ describe('useImportProvisionedSave', () => {
       await result.current.save(
         makeSaveParams({
           title: 'My Dash',
-          form: { ref: 'main', path: 'test.json', comment: '', workflow: 'write' },
+          form: { ref: 'main', path: 'test.json', comment: '' },
         })
       );
     });
@@ -170,7 +171,7 @@ describe('useImportProvisionedSave', () => {
       await result.current.save(
         makeSaveParams({
           title: 'My Dash',
-          form: { ref: 'main', path: 'test.json', comment: '   ', workflow: 'write' },
+          form: { ref: 'main', path: 'test.json', comment: '   ' },
         })
       );
     });
@@ -194,7 +195,7 @@ describe('useImportProvisionedSave', () => {
       await result.current.save(
         makeSaveParams({
           title: 'My Dash',
-          form: { ref: 'main', path: 'test.json', comment: '', workflow: 'write' },
+          form: { ref: 'main', path: 'test.json', comment: '' },
         })
       );
     });
@@ -228,7 +229,7 @@ describe('useImportProvisionedSave', () => {
   });
 
   describe('save outcomes', () => {
-    it('navigates to the new dashboard after a write-workflow save', async () => {
+    it('navigates to the new dashboard after a configured-branch save', async () => {
       server.use(
         http.post(`${BASE}/repositories/:name/files/*`, () =>
           HttpResponse.json({ resource: { upsert: { metadata: { name: 'new-dash-uid' } } } })
@@ -241,7 +242,7 @@ describe('useImportProvisionedSave', () => {
         await result.current.save(
           makeSaveParams({
             title: 'My Dashboard',
-            form: { ref: 'main', path: 'dash.json', workflow: 'write' },
+            form: { ref: 'main', path: 'dash.json' },
           })
         );
       });
@@ -252,7 +253,7 @@ describe('useImportProvisionedSave', () => {
       expect(result.current.error).toBeUndefined();
     });
 
-    it('falls back to the folder view when write-workflow save returns no dashboard uid', async () => {
+    it('falls back to the folder view when configured-branch save returns no dashboard uid', async () => {
       server.use(
         http.post(`${BASE}/repositories/:name/files/*`, () => HttpResponse.json({ resource: { upsert: {} } }))
       );
@@ -263,7 +264,7 @@ describe('useImportProvisionedSave', () => {
         await result.current.save(
           makeSaveParams({
             folderUid: 'folder-abc',
-            form: { ref: 'main', path: 'dash.json', workflow: 'write' },
+            form: { ref: 'main', path: 'dash.json' },
           })
         );
       });
@@ -274,7 +275,7 @@ describe('useImportProvisionedSave', () => {
       expect(result.current.error).toBeUndefined();
     });
 
-    it('navigates to the preview page after a branch-workflow save', async () => {
+    it('navigates to the preview page after a new-branch save', async () => {
       server.use(
         http.post(`${BASE}/repositories/:name/files/*`, () =>
           HttpResponse.json({ ref: 'feat-branch', path: 'dash.json', resource: { upsert: {} } })
@@ -286,7 +287,8 @@ describe('useImportProvisionedSave', () => {
       await act(async () => {
         await result.current.save(
           makeSaveParams({
-            form: { ref: 'feat-branch', path: 'dash.json', workflow: 'branch' },
+            isNewBranch: true,
+            form: { ref: 'feat-branch', path: 'dash.json' },
           })
         );
       });
@@ -296,27 +298,6 @@ describe('useImportProvisionedSave', () => {
           '/dashboard/provisioning/my-repo/preview/dash.json?ref=feat-branch&repo_type=github'
         );
       });
-      expect(result.current.error).toBeUndefined();
-    });
-
-    it('does not navigate when branch-workflow response is missing the ref', async () => {
-      server.use(
-        http.post(`${BASE}/repositories/:name/files/*`, () =>
-          HttpResponse.json({ path: 'dash.json', resource: { upsert: {} } })
-        )
-      );
-
-      const { result } = renderImportSaveHook(repository);
-
-      await act(async () => {
-        await result.current.save(
-          makeSaveParams({
-            form: { ref: 'feat-branch', path: 'dash.json', workflow: 'branch' },
-          })
-        );
-      });
-
-      expect(mockNavigate).not.toHaveBeenCalled();
       expect(result.current.error).toBeUndefined();
     });
 
@@ -388,7 +369,7 @@ function makeSaveParams(overrides?: Partial<ImportProvisionedSaveParams>): Impor
     apiVersion: 'v1',
     folderUid: 'folder-1',
     title: 'Test',
-    form: { ref: 'main', path: 'test.json', workflow: 'write' },
+    form: { ref: 'main', path: 'test.json' },
     ...overrides,
   };
 }

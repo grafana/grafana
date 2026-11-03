@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/grafana/authlib/types"
@@ -135,6 +136,9 @@ type buildResourceServerOpts func(*ServerOptions, *resource.ResourceServerOption
 
 // buildResourceServerOptions builds the resource.ResourceServerOptions from sql.ServerOptions.
 func buildResourceServerOptions(opts *ServerOptions, withOpts ...buildResourceServerOpts) (*resource.ResourceServerOptions, error) {
+	if err := opts.Cfg.ValidateSharedVectorConfig(); err != nil {
+		return nil, fmt.Errorf("vector collection configuration: %w", err)
+	}
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	serverOptions := &resource.ResourceServerOptions{
 		Blob: resource.BlobConfig{
@@ -327,6 +331,11 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 	resourceOpts.IndexMetrics = opts.IndexMetrics
 	resourceOpts.OwnsIndexFn = opts.OwnsIndexFn
 
+	resourceOpts.Search.SharedExternalCollections = make([]string, 0, len(opts.Cfg.VectorSharedExternalCollections))
+	for collection := range opts.Cfg.VectorSharedExternalCollections {
+		resourceOpts.Search.SharedExternalCollections = append(resourceOpts.Search.SharedExternalCollections, collection)
+	}
+	slices.Sort(resourceOpts.Search.SharedExternalCollections)
 	if opts.VectorBackend != nil {
 		resourceOpts.Search.AllowedInternalCollections = opts.Cfg.VectorAllowedInternalCollections
 		resourceOpts.Search.AllowedExternalCollections = opts.Cfg.VectorAllowedExternalCollections
@@ -374,8 +383,13 @@ func withQuotaConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerO
 	for _, r := range opts.Cfg.EnforcedQuotaResources {
 		enforced[r] = true
 	}
+	logged := make(map[string]bool, len(opts.Cfg.LoggedQuotaResources))
+	for _, r := range opts.Cfg.LoggedQuotaResources {
+		logged[r] = true
+	}
 	resourceOpts.QuotasConfig = resource.QuotasConfig{
 		EnforcedResources: enforced,
+		LoggedResources:   logged,
 		SupportMessage:    opts.Cfg.QuotasErrorMessageSupportInfo,
 	}
 	return nil

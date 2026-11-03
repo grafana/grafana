@@ -18,6 +18,9 @@ import { EditDashboardSwitch } from './EditDashboardSwitch';
 jest.mock('app/features/dashboard-scene/utils/interactions', () => ({
   DashboardInteractions: {
     editSessionStarted: jest.fn(),
+    editPeriodStarted: jest.fn(),
+    editPeriodEnded: jest.fn(),
+    editActorFirstChange: jest.fn(),
     editButtonClicked: jest.fn(),
     exitEditButtonClicked: jest.fn(),
   },

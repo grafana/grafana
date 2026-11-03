@@ -1,5 +1,7 @@
 import { type EventProperty } from '@grafana/runtime/unstable';
 
+import { type NotebookBlockType } from '../scene/layout-notebook/edit/NotebookBlockTypeMenu';
+
 // One EventProperty interface per notebook event, plus the property groups that several events send.
 //
 // Share a group when one reader in shape.ts computes it in one go, and every event means the same
@@ -24,6 +26,8 @@ export interface NotebookShape extends EventProperty {
   textCellCount: number;
   /** Code cells among cellCount. */
   codeCellCount: number;
+  /** Deduplicated languages the notebook's code cells are written in. */
+  codeLanguages: string[];
   /** Panels among panelCount that have at least one real query configured. */
   configuredPanelCount: number;
   /** Distinct datasource types among datasourceTypes. */
@@ -54,20 +58,46 @@ interface AddedPanelProperties extends EventProperty, AddedPanelShape {
 export interface NotebookLoadedProperties extends EventProperty, NotebookShape {
   /** Identifier and join key for this notebook. Never the title, see the decisions doc. */
   notebookUid: string;
-  /** Whether the url opened the notebook in edit mode. A toggle later in the session does not change it. */
+  /**
+   * Whether the url opened the notebook in edit mode. A toggle later in the session does not change
+   * it. An embedded host has no notebook url, so this is always `view` there, and edit mode shows up
+   * on `edit_session_started`.
+   */
   mode: 'view' | 'edit';
   /** Whether this load came from the page's in-memory scene cache instead of a fetch. */
   wasCached: boolean;
+  /** Whether a host other than the notebook route is showing this notebook, such as the Assistant canvas. */
+  embedded: boolean;
+  /** Where the reader came from. `direct` when the link carried no source: a pasted link, a reload, the nav menu. */
+  source: NotebookLoadSource;
 }
+
+/**
+ * Where a notebook page was opened from, read off the `source` param the in-app links carry. The
+ * names match `NOTEBOOK_ENTRY_POINT` where the surface is the same one. `DIRECT` is everything that
+ * says nothing: the param is only ever added by the links listed here, and it is cleaned off the url
+ * once read.
+ */
+export const NOTEBOOK_LOAD_SOURCE = {
+  NOTEBOOK_LIST: 'notebook_list',
+  EXPLORE: 'explore',
+  DASHBOARD_PANEL: 'dashboard_panel',
+  PLUGIN: 'plugin',
+  DIRECT: 'direct',
+} as const;
+
+export type NotebookLoadSource = (typeof NOTEBOOK_LOAD_SOURCE)[keyof typeof NOTEBOOK_LOAD_SOURCE];
 
 /**
  * The surface a notebook came from, for every event that has to name one. `EXPLORE`,
  * `DASHBOARD_PANEL`, and `PLUGIN` are the callers of the add-panel modal, which creates a notebook
- * outright instead of opening a blank one, so only `created` sends them. Nothing sends `ASSISTANT`
- * or `WORKSPACE` yet.
+ * outright instead of opening a blank one, so only `created` sends them. `ASSISTANT` and `WORKSPACE`
+ * are sent by the Grafana Assistant app on `created`, for notebooks it creates itself.
  */
 export const NOTEBOOK_ENTRY_POINT = {
   NOTEBOOK_LIST: 'notebook_list',
+  COMMAND_PALETTE: 'command_palette',
+  QUICK_ADD: 'quick_add',
   EXPLORE: 'explore',
   DASHBOARD_PANEL: 'dashboard_panel',
   PLUGIN: 'plugin',
@@ -82,7 +112,9 @@ export type NotebookEntryPoint = (typeof NOTEBOOK_ENTRY_POINT)[keyof typeof NOTE
  * an arrival at `?edit=true`, such as the list's Edit action, a pasted link, or a reload. `NEW` is
  * a notebook with no uid yet. It wins over the other two: a notebook that does not exist yet is
  * the more useful fact. `ASSISTANT` is the mutation API rewriting the open document, same as
- * DashboardScene's own `'assistant'` edit source.
+ * DashboardScene's own `'assistant'` edit source. `PAGE_RESTORE` is the browser bringing back a page
+ * it kept in the back/forward cache after `pagehide` had ended the session: the notebook is still in
+ * edit mode, so a new session starts, and its end pairs with it.
  */
 export const NOTEBOOK_EDIT_SESSION_SOURCE = {
   TOGGLE: 'toggle',
@@ -90,6 +122,7 @@ export const NOTEBOOK_EDIT_SESSION_SOURCE = {
   NEW: 'new',
   ASSISTANT: 'assistant',
   ADD_TO_NOTEBOOK: 'add_to_notebook',
+  PAGE_RESTORE: 'page_restore',
 } as const;
 
 export type NotebookEditSessionSource =
@@ -105,11 +138,15 @@ export interface NotebookEditSessionStartedProperties extends EventProperty {
 /**
  * How an edit session ended. `TOGGLE` covers the Edit control turning edit mode off and the url
  * losing `?edit=true` while the notebook stays open. `NAVIGATION` is the notebook page itself
- * being torn down while a session was still open, such as navigating away or closing the tab.
+ * being torn down inside the app while a session was still open, such as navigating away or going
+ * back. `PAGE_HIDE` is the browser page going away with the session still open, such as closing the
+ * tab or reloading: nothing inside the app tears down then, so it is reported from `pagehide`. A page
+ * the browser keeps for Back comes back in edit mode and starts a new session, `page_restore`.
  */
 export const NOTEBOOK_EDIT_SESSION_END_REASON = {
   TOGGLE: 'toggle',
   NAVIGATION: 'navigation',
+  PAGE_HIDE: 'page_hide',
 } as const;
 
 export type NotebookEditSessionEndReason =
@@ -118,11 +155,21 @@ export type NotebookEditSessionEndReason =
 export interface NotebookEditSessionEndedProperties extends EventProperty, NotebookShape {
   /** Identifier and join key for this notebook. Empty for a session that ended before autosave created one. */
   notebookUid: string;
-  /** How long the session ran, from entering edit mode to leaving it. */
+  /**
+   * How long the session ran, from entering edit mode to leaving it. Wall-clock: it includes time
+   * the notebook sat in edit mode untouched, whatever the session's `source`.
+   */
   durationMs: number;
-  /** Edits recorded during the session. An edit rolled back before it stood is not counted. */
+  /**
+   * Edits recorded during the session. An edit rolled back before it stood is not counted. A whole-
+   * document write by the assistant is one edit.
+   */
   editCount: number;
-  /** Cells inserted during the session, by any gesture. Counts an insert that was later undone. */
+  /**
+   * Cells inserted during the session, by any gesture. Counts an insert that was later undone, and a
+   * panel sent by "Add to notebook" while the notebook is open. A whole-document write by the assistant
+   * is not counted here, so it undercounts for a session the assistant wrote into.
+   */
   cellsAdded: number;
   /** Cells deleted during the session. Counts a delete that was later undone. */
   cellsRemoved: number;
@@ -152,6 +199,10 @@ export interface NotebookCreatedProperties extends EventProperty, Partial<AddedP
   source: NotebookEntryPoint;
   /** Cells in the notebook at the moment it was created, excluding the trailing empty editor block. */
   cellCount: number;
+  /** `new` when the add-panel modal created it. Left off for a blank notebook, which was not an add. */
+  target?: NotebookAddTarget;
+  /** Whether the add-panel modal pinned the panel to the time range it was sent with. Left off with `target`. */
+  lockTimeRange?: boolean;
 }
 
 /**
@@ -187,12 +238,15 @@ export const NOTEBOOK_LINK_COPY_SOURCE = {
 export type NotebookLinkCopySource = (typeof NOTEBOOK_LINK_COPY_SOURCE)[keyof typeof NOTEBOOK_LINK_COPY_SOURCE];
 
 /**
- * Where an export sent the notebook. Every action writes the same markdown, so the destination is
- * the only thing that changes between them.
+ * Where an export sent the notebook. The markdown actions write the same document, so for them the
+ * destination is the only thing that changes. The PDF is rendered from the saved notebook instead.
  */
 export const NOTEBOOK_EXPORT_DESTINATION = {
   CLIPBOARD: 'clipboard',
   DOWNLOAD: 'download',
+  // Reported once the PDF tab is pointed at the renderer. The render itself happens in that tab, so
+  // this says the export started, not that a PDF came out.
+  PDF: 'pdf',
 } as const;
 
 export type NotebookExportDestination = (typeof NOTEBOOK_EXPORT_DESTINATION)[keyof typeof NOTEBOOK_EXPORT_DESTINATION];
@@ -283,19 +337,36 @@ export const NOTEBOOK_AUTOSAVE_FAILED_REASON = {
 export type NotebookAutosaveFailedReason =
   (typeof NOTEBOOK_AUTOSAVE_FAILED_REASON)[keyof typeof NOTEBOOK_AUTOSAVE_FAILED_REASON];
 
+/** What kind of cell "Add to notebook" appended. A chat answer can bring text next to its panels. */
+export const NOTEBOOK_ADDED_CELL_TYPE = {
+  PANEL: 'panel',
+  MARKDOWN: 'markdown',
+} as const;
+
+type NotebookAddedCellType = (typeof NOTEBOOK_ADDED_CELL_TYPE)[keyof typeof NOTEBOOK_ADDED_CELL_TYPE];
+
 /**
- * A cell added through the "Add to notebook" option. For a cell added inside an editing session, the
- * session counts it on `edit_session_ended` instead.
+ * A cell added through the "Add to notebook" option. A cell added from inside the notebook, by its own
+ * controls, is counted on `edit_session_ended` instead.
  *
- * No cell type: this option only ever appends a panel, so the value would be the same every time.
+ * The two overlap when the target notebook is open: it enters an edit session and inserts the cell as
+ * an ordinary edit, so `cellsAdded` on that session counts it as well. Do not add the two together.
+ *
+ * The panel properties are only there for a panel. A markdown cell has nothing to say about them.
  */
-export interface NotebookCellAddedFromAddToNotebookProperties extends EventProperty, AddedPanelProperties {
+export interface NotebookCellAddedFromAddToNotebookProperties extends EventProperty, Partial<AddedPanelProperties> {
   /** Identifier and join key for this notebook. */
   notebookUid: string;
+  /** Whether the appended cell is a panel or markdown. */
+  cellType: NotebookAddedCellType;
   /** Which surface the panel was sent from. */
   source: NotebookEntryPoint;
   /** Where the panel landed, counting from 0. Doubles as the notebook's size before the add. */
   position: number;
+  /** Always `existing`: a cell added to a notebook that was just created is counted on `created`. */
+  target: NotebookAddTarget;
+  /** Whether the add-panel modal pinned the panel to the time range it was sent with. */
+  lockTimeRange: boolean;
 }
 
 export interface NotebookAutosaveFailedProperties extends EventProperty {
@@ -361,6 +432,8 @@ export interface NotebookAddFailedProperties extends EventProperty {
   target: NotebookAddTarget;
   /** Why the attempt failed. */
   reason: NotebookAddFailedReason;
+  /** Whether the add-panel modal pinned the panel to the time range it was sent with. */
+  lockTimeRange: boolean;
 }
 
 export const NOTEBOOK_INCIDENT_ACTION = {
@@ -374,5 +447,103 @@ export interface NotebookIncidentActionClickedProperties extends EventProperty {
   /** Identifier and join key for this notebook. */
   notebookUid: string;
   /** Which IRM action was picked: declaring an incident, or attaching to an existing one. */
+  action: NotebookIncidentAction;
+}
+
+/**
+ * How a block came to be inserted. `PLUS_MENU` is the add button above a cell, `FOOTER` the buttons
+ * under the last one, `SLASH_MENU` a "/" typed into an empty paragraph, and `DUPLICATE` the cell's own
+ * duplicate action. Enter splitting a paragraph and the empty block the editor keeps at the bottom are
+ * not insertions anybody chose, so they send nothing.
+ */
+export const NOTEBOOK_BLOCK_INSERT_VIA = {
+  PLUS_MENU: 'plus_menu',
+  FOOTER: 'footer',
+  SLASH_MENU: 'slash_menu',
+  DUPLICATE: 'duplicate',
+} as const;
+
+export type NotebookBlockInsertVia = (typeof NOTEBOOK_BLOCK_INSERT_VIA)[keyof typeof NOTEBOOK_BLOCK_INSERT_VIA];
+
+export interface NotebookBlockInsertedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. Empty for one that has no uid yet. */
+  notebookUid: string;
+  /** Which block was inserted. A duplicated cell is described by the block it comes to. */
+  blockType: NotebookBlockType;
+  /** Which control inserted it. */
+  via: NotebookBlockInsertVia;
+}
+
+/**
+ * Why the leave prompt came up. `saving` is a notebook whose last changes autosave has not finished
+ * writing. `conflict` is one whose changes could not be saved because somebody else saved first.
+ */
+export const NOTEBOOK_LEAVE_PROMPT_REASON = {
+  SAVING: 'saving',
+  CONFLICT: 'conflict',
+} as const;
+
+export type NotebookLeavePromptReason =
+  (typeof NOTEBOOK_LEAVE_PROMPT_REASON)[keyof typeof NOTEBOOK_LEAVE_PROMPT_REASON];
+
+/**
+ * How the user answered the leave prompt. `stay` covers every way of not confirming, the Stay
+ * button, the close button and Escape. The browser's own prompt on a reload or a closed tab is not
+ * here: the page gives no way to read the answer.
+ */
+export const NOTEBOOK_LEAVE_PROMPT_RESOLUTION = {
+  LEAVE: 'leave',
+  STAY: 'stay',
+} as const;
+
+export type NotebookLeavePromptResolution =
+  (typeof NOTEBOOK_LEAVE_PROMPT_RESOLUTION)[keyof typeof NOTEBOOK_LEAVE_PROMPT_RESOLUTION];
+
+export interface NotebookLeavePromptResolvedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. */
+  notebookUid: string;
+  /** Why the prompt came up. */
+  reason: NotebookLeavePromptReason;
+  /** Which way the user answered. */
+  resolution: NotebookLeavePromptResolution;
+}
+
+/**
+ * How the user answered the "unsaved panel changes" prompt that edit mode asks before it starts.
+ * `discard` throws the changes away, `keep` carries them into the edit session, and `cancel` covers
+ * every way of not confirming and leaves the notebook as a read.
+ */
+export const NOTEBOOK_VIEW_ONLY_CHANGES_RESOLUTION = {
+  DISCARD: 'discard',
+  KEEP: 'keep',
+  CANCEL: 'cancel',
+} as const;
+
+export type NotebookViewOnlyChangesResolution =
+  (typeof NOTEBOOK_VIEW_ONLY_CHANGES_RESOLUTION)[keyof typeof NOTEBOOK_VIEW_ONLY_CHANGES_RESOLUTION];
+
+export interface NotebookViewOnlyChangesResolvedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. */
+  notebookUid: string;
+  /** Which way the user answered. */
+  resolution: NotebookViewOnlyChangesResolution;
+  /** Panels the reader had changed while viewing, which is what the prompt was about. */
+  changedPanelCount: number;
+}
+
+export interface NotebookAutosaveRetriedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. Empty for a notebook that has no uid yet. */
+  notebookUid: string;
+  /** Failures in a row for this notebook when the Retry button was pressed. */
+  attempt: number;
+}
+
+export interface NotebookIncidentActionCompletedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. */
+  notebookUid: string;
+  /**
+   * Which IRM action finished. Only `attach` is sent today: IRM's declare form gives the notebook no
+   * callback for the incident being created, only for it closing.
+   */
   action: NotebookIncidentAction;
 }

@@ -100,13 +100,13 @@ type FakeAdminConfigStore struct {
 	Configs map[int64]*models.AdminConfiguration
 }
 
-func (f *FakeAdminConfigStore) GetAdminConfiguration(orgID int64) (*models.AdminConfiguration, error) {
+func (f *FakeAdminConfigStore) GetAdminConfiguration(_ context.Context, orgID int64) (*models.AdminConfiguration, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	return f.Configs[orgID], nil
 }
 
-func (f *FakeAdminConfigStore) GetAdminConfigurations() ([]*models.AdminConfiguration, error) {
+func (f *FakeAdminConfigStore) GetAdminConfigurations(_ context.Context) ([]*models.AdminConfiguration, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	acs := make([]*models.AdminConfiguration, 0, len(f.Configs))
@@ -117,13 +117,13 @@ func (f *FakeAdminConfigStore) GetAdminConfigurations() ([]*models.AdminConfigur
 	return acs, nil
 }
 
-func (f *FakeAdminConfigStore) DeleteAdminConfiguration(orgID int64) error {
+func (f *FakeAdminConfigStore) DeleteAdminConfiguration(_ context.Context, orgID int64) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	delete(f.Configs, orgID)
 	return nil
 }
-func (f *FakeAdminConfigStore) UpdateAdminConfiguration(cmd UpdateAdminConfigurationCmd) error {
+func (f *FakeAdminConfigStore) UpdateAdminConfiguration(_ context.Context, cmd UpdateAdminConfigurationCmd) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.Configs[cmd.AdminConfiguration.OrgID] = cmd.AdminConfiguration

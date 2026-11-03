@@ -24,8 +24,10 @@ export interface SidebarContextValue {
   canGoBack?: boolean;
   onToggleDock?: () => void;
   onResize: (diff: number) => void;
-  /** Called when pane is closed or clicked outside of (in undocked mode) */
+  /** Called when the pane is closed. Also called for a pointer down outside an undocked pane, unless onClickAway is set. */
   onClosePane?: () => void;
+  /** Called instead of onClosePane for a pointer down outside an undocked pane */
+  onClickAway?: () => void;
   /** Open previous pane */
   onGoBack?: () => void;
   onToggleIsHidden: () => void;
@@ -52,8 +54,10 @@ export interface UseSideBarOptions {
   edgeMargin?: number;
   /** defaults to 2 grid units (16px) */
   contentMargin?: number;
-  /** Called when pane is closed or clicked outside of (in undocked mode) */
+  /** Called when the pane is closed. Also called for a pointer down outside an undocked pane, unless onClickAway is set. */
   onClosePane?: () => void;
+  /** Called instead of onClosePane for a pointer down outside an undocked pane */
+  onClickAway?: () => void;
   /** Disables go back button */
   canGoBack?: boolean;
   /** Open previous pane */
@@ -87,6 +91,7 @@ export function useSidebar({
   contentMargin = 2,
   persistenceKey,
   onClosePane,
+  onClickAway,
   onGoBack,
   canGoBack,
   defaultIsHidden = false,
@@ -177,6 +182,7 @@ export function useSidebar({
     isHidden: effectiveIsHidden,
     isHiddenPreference: isHidden,
     onClosePane,
+    onClickAway,
     onGoBack,
     canGoBack,
     onToggleIsHidden,

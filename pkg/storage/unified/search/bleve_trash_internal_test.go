@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// The two rules in validateTrashRequest apply to opposite kinds of request, so
+// The rules in validateTrashRequest apply to opposite kinds of request, so
 // each is checked against both kinds: a guard that fires on the wrong one is as
 // broken as a guard that never fires.
 func TestValidateTrashRequest(t *testing.T) {
@@ -32,6 +32,19 @@ func TestValidateTrashRequest(t *testing.T) {
 	}{
 		{name: "plain live search", deleted: false},
 		{name: "plain trash search", deleted: true},
+		{
+			name: "live recursive search", deleted: false,
+			mutate: func(q *resourcepb.ResourceSearchRequest) {
+				q.Options.Fields = []*resourcepb.Requirement{{Key: resource.SEARCH_FIELD_FOLDER_TREE, Operator: "in", Values: []string{"top"}}}
+			},
+		},
+		{
+			name: "recursive trash search", deleted: true,
+			mutate: func(q *resourcepb.ResourceSearchRequest) {
+				q.Options.Fields = []*resourcepb.Requirement{{Key: resource.SEARCH_FIELD_FOLDER_TREE, Operator: "in", Values: []string{"top"}}}
+			},
+			wantMsg: "searching deleted resources does not support " + resource.SEARCH_FIELD_FOLDER_TREE,
+		},
 		{
 			name:    "live search naming a trash field",
 			deleted: false,

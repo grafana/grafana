@@ -1,5 +1,4 @@
 import { t } from '@grafana/i18n';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type ResourceKindKey } from './resourceKinds';
@@ -50,11 +49,6 @@ type TemplateKey = (typeof TEMPLATE_KEYS)[number];
 
 const TEMPLATE_VAR = new RegExp(`\\{\\{(${TEMPLATE_KEYS.join('|')})\\}\\}`, 'g');
 const IDENTITY_KEY_SET: ReadonlySet<TemplateKey> = new Set(IDENTITY_KEYS);
-
-const TRAILER_KEY = 'Grafana-saved-by';
-// Match the trailer at the start of any line, case-insensitively, so a custom
-// comment/template that already provides one isn't duplicated.
-const TRAILER_PRESENT = new RegExp(`^${TRAILER_KEY}:`, 'im');
 
 /**
  * Collapses any newline/CR into a single space and trims. Used on the
@@ -125,95 +119,29 @@ export function renderCommitMessage(
   });
 }
 
-type SavedByVars = Pick<CommitTemplateVars, 'userName' | 'userLogin'>;
-
-/**
- * Builds the `Grafana-saved-by: ...` git trailer for the supplied user, or
- * undefined if there isn't enough info to identify the user. We prefer the
- * full name when available and append the login in parentheses so the trailer
- * remains greppable even if the display name is empty or duplicated.
- */
-function buildSavedByTrailer({ userName, userLogin }: SavedByVars): string | undefined {
-  const name = sanitizeLine(userName);
-  const login = sanitizeLine(userLogin);
-  if (!name && !login) {
-    return undefined;
-  }
-  if (name && login && name !== login) {
-    return `${TRAILER_KEY}: ${name} (${login})`;
-  }
-  return `${TRAILER_KEY}: ${name || login}`;
-}
-
-/**
- * Appends the `Grafana-saved-by:` git trailer to a commit message. Skips when
- * the message already contains a trailer (so templates / user comments that
- * spell it out themselves don't end up with a duplicate).
- */
-export function appendSavedByTrailer(message: string, vars: SavedByVars): string {
-  if (getFeatureFlagClient().getBooleanValue(FlagKeys.ProvisioningUserAttribution, false)) {
-    return message;
-  }
-  const trailer = buildSavedByTrailer(vars);
-  if (!trailer) {
-    return message;
-  }
-  if (TRAILER_PRESENT.test(message)) {
-    return message;
-  }
-  const trimmed = message.replace(/\s+$/, '');
-  if (!trimmed) {
-    return trailer;
-  }
-  // Git trailers live in a separate paragraph at the end of the message.
-  return `${trimmed}\n\n${trailer}`;
-}
-
-// Shared inputs for resolving a commit message: the template vars plus the editable comment and the
-// repository whose template/default is used. The single- and bulk-resource arg types both build on
-// this rather than one extending the other, so neither reads as a special case of the other.
 type ResourceCommitMessageArgs = CommitTemplateVars & {
   comment: string | undefined;
   repository: RepositoryView | undefined;
-};
-
-/**
- * Resolves the commit message for a single-resource UI operation. Whitespace-
- * only comments are treated as empty and fall through to the repo template
- * (or built-in default), so the user can't accidentally ship blank commits.
- * The `Grafana-saved-by:` trailer is appended in all three paths so the
- * Grafana user who triggered the commit is always recorded in git history.
- */
-export function getSingleResourceCommitMessage({ comment, repository, ...vars }: ResourceCommitMessageArgs): string {
-  const trimmed = comment?.trim();
-  const base = trimmed ? trimmed : renderCommitMessage(repository?.commit?.singleResourceMessageTemplate, vars);
-  return appendSavedByTrailer(base, vars);
-}
-
-type BulkResourceCommitMessageArgs = ResourceCommitMessageArgs & {
   /**
    * Multi-resource default used when no repo template is configured (e.g. "Delete resources"). Used
    * verbatim when it has non-whitespace content; an empty/whitespace-only value is treated as absent
    * and falls through to the built-in default rather than producing a blank commit.
    */
-  fallbackMessage: string;
+  fallbackMessage?: string;
 };
 
 /**
- * Resolves the commit message for a multi-resource (bulk) UI operation. Identical to
- * {@link getSingleResourceCommitMessage} except the no-template fallback is the caller-supplied bulk
- * default (e.g. "Delete resources") instead of the single-resource built-in. The
- * `Grafana-saved-by:` trailer is still appended exactly once in every path.
+ * Resolves the commit message for a UI operation: a non-blank comment wins, otherwise the repo template
+ * (or `fallbackMessage` / built-in default). Whitespace-only comments are treated as empty so the user
+ * can't accidentally ship blank commits.
  */
-export function getBulkResourceCommitMessage({
+export function getResourceCommitMessage({
   comment,
   repository,
   fallbackMessage,
   ...vars
-}: BulkResourceCommitMessageArgs): string {
-  const trimmed = comment?.trim();
-  const base = trimmed
-    ? trimmed
-    : renderCommitMessage(repository?.commit?.singleResourceMessageTemplate, vars, fallbackMessage);
-  return appendSavedByTrailer(base, vars);
+}: ResourceCommitMessageArgs): string {
+  return (
+    comment?.trim() || renderCommitMessage(repository?.commit?.singleResourceMessageTemplate, vars, fallbackMessage)
+  );
 }

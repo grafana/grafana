@@ -42,10 +42,38 @@ func TestServiceIdentityPluginGroups(t *testing.T) {
 	}
 }
 
+func TestServiceIdentityAlertReviewStoragePermissions(t *testing.T) {
+	_, requester := identity.WithServiceIdentity(context.Background(), 42)
+	for _, verb := range []string{"get", "create", "update"} {
+		result := authz.CheckServicePermissions(requester, "alertingassistant.grafana.app", "alert-rule-reviews", verb)
+		require.True(t, result.ServiceCall, verb)
+		require.True(t, result.Allowed, verb)
+	}
+	for _, verb := range []string{"list", "delete"} {
+		result := authz.CheckServicePermissions(requester, "alertingassistant.grafana.app", "alert-rule-reviews", verb)
+		require.True(t, result.ServiceCall, verb)
+		require.Equal(t, verb == "list", result.Allowed, verb)
+	}
+}
+
+func TestServiceIdentityRuleCleanupPermissions(t *testing.T) {
+	_, requester := identity.WithServiceIdentity(context.Background(), 42)
+	require.Equal(t, int64(42), requester.GetOrgID())
+	for _, action := range []string{"alert.rules:read", "alert.rules:delete", "rules.alerting.grafana.app/configs:delete"} {
+		require.Equal(t, []string{"*"}, requester.GetPermissions()[action])
+	}
+	for _, resource := range []string{"rulesequences", "alertrules", "recordingrules", "configs"} {
+		result := authz.CheckServicePermissions(requester, "rules.alerting.grafana.app", resource, "deletecollection")
+		require.True(t, result.ServiceCall)
+		require.True(t, result.Allowed, resource)
+	}
+}
+
 func TestWithProvisioningIdentity(t *testing.T) {
 	ctx, requester, err := identity.WithProvisioningIdentity(context.Background(), "default")
 	require.NoError(t, err)
 	require.NotNil(t, requester)
+	require.Equal(t, []string{"*"}, requester.GetPermissions()["plugins.app:access"])
 
 	fromCtx, err := identity.GetRequester(ctx)
 	require.NoError(t, err)
