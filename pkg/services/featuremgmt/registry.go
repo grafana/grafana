@@ -3228,7 +3228,7 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaFrontendNavigation,
 			Expression:  "false",
-			Generate:    Generate{Go: true, React: true},
+			Generate:    Generate{React: true},
 		},
 		{
 			Name:        "grafana.exploreMetricsSidebar",
