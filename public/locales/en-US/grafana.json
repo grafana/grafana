@@ -9677,6 +9677,25 @@
       "to": "TO",
       "when": "WHEN"
     },
+    "dynamic-threshold": {
+      "error-default-range": "The default threshold lower value must be less than its upper value.",
+      "error-default-threshold-arity": "The default threshold requires {{expectedArity}} value(s).",
+      "error-default-threshold-value": "The default threshold must contain finite values.",
+      "error-duplicate-mapping": "Mapping row {{row}} duplicates another label value.",
+      "error-input-query": "Select an input query.",
+      "error-invalid-mapping-string": "Mapping row {{row}} contains invalid text.",
+      "error-invalid-string": "The selected field contains invalid text.",
+      "error-label-column-names": "Label column names must be unique and non-empty.",
+      "error-mapping-range": "Mapping row {{row}} must have a lower value that is less than its upper value.",
+      "error-mapping-threshold-arity": "Mapping row {{row}} requires {{expectedArity}} threshold value(s).",
+      "error-mapping-threshold-value": "Mapping row {{row}} must contain finite threshold values.",
+      "error-match-label": "Select a match label.",
+      "error-match-label-schema": "The match label must be a known label column.",
+      "error-operator": "Select an operator.",
+      "error-query-length": "Generated SQL is too long.",
+      "error-value-field": "Select a numeric field.",
+      "error-value-field-label": "The numeric value field cannot be a label column."
+    },
     "expression-query-editor": {
       "helper-text-sql": "Run MySQL-dialect SQL against the tables returned from your data sources. Data source queries (ie \"A\", \"B\") are available as tables and referenced by query-name. Fields are available as columns, as returned from the data source.",
       "label-operation": "Operation"
