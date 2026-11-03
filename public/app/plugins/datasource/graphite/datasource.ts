@@ -74,10 +74,6 @@ function convertGlobToRegEx(text: string): string {
   }
 }
 
-/**
- * Replaces `#A` style references with the referenced query's target, recursively.
- * Unknown references are left as they are. Expansion stops when a reference cycle is found.
- */
 function expandSeriesReferences(
   target: string,
   targetsByRefId: Map<string, string>,
@@ -532,9 +528,8 @@ export class GraphiteDatasource
     return tags;
   }
 
-  // Callers such as SQL expressions send these queries straight to the backend, skipping `query()`.
-  // So `#A` references are resolved here too, from the other queries in the same call, into
-  // `targetFull`, which the backend prefers over `target`.
+  // SQL expressions send these queries to the backend without calling `query()`, so `#A`
+  // references are resolved here too. The backend uses `targetFull` before `target`.
   interpolateVariablesInQueries(queries: GraphiteQuery[], scopedVars: ScopedVars): GraphiteQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
@@ -544,8 +539,7 @@ export class GraphiteDatasource
       expandedQueries = queries.map((query) => {
         const target = query.target ?? '';
         const targetWithReferences = expandSeriesReferences(target, targetsByRefId);
-        // Keep the saved `targetFull` unless every reference resolved, so a partial expansion
-        // never replaces a complete one.
+        // A partial expansion must not replace a saved `targetFull`.
         const isFullyResolved = targetWithReferences !== target && !/#[A-Z]/.test(targetWithReferences);
         const targetFull = isFullyResolved ? targetWithReferences : query.targetFull;
         const expandedQuery = {
