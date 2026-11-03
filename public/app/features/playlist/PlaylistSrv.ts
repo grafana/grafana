@@ -1,8 +1,9 @@
 import { type Location } from 'history';
 import { pickBy } from 'lodash';
 
+import { type Slideshow } from '@grafana/api-clients/rtkq/collections/v1alpha1';
 import { locationUtil, urlUtil, rangeUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { getPlaylistItemKind, locationService } from '@grafana/runtime';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
 import { type Playlist } from '../../api/clients/playlist/v1';
@@ -24,11 +25,22 @@ export interface PlaylistSrvState {
   isPlaying: boolean;
 }
 
+/** An item ready to play: an in-app url and how long to stay on it, when it differs from the default. */
+interface PlayableItem {
+  url: string;
+  interval?: string;
+}
+
+type SlideshowToPlay = { spec: Pick<Slideshow['spec'], 'interval' | 'items'> };
+
 export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   private nextTimeoutId: ReturnType<typeof setTimeout> | undefined;
-  private urls: string[] = []; // the URLs we need to load
+  private items: PlayableItem[] = []; // the items we need to load
   private index = 0;
   declare private interval: number;
+  // Kiosk and display options are read once at start, because a page that rewrites its own url
+  // can drop them from the location.
+  private preservedParams: Record<string, unknown> = {};
   declare private startUrl: string;
   private numberOfLoops = 0;
   declare private validPlaylistUrl: string;
@@ -41,16 +53,17 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   }
 
   private navigateToDashboard(replaceHistoryEntry = false) {
-    const url = this.urls[this.index];
-    const queryParams = locationService.getSearchObject();
-    const filteredParams = pickBy(queryParams, (value: unknown, key: string) => queryParamsToPreserve[key]);
-    const nextDashboardUrl = locationUtil.stripBaseFromUrl(url);
+    const item = this.items[this.index];
+    const nextDashboardUrl = locationUtil.stripBaseFromUrl(item.url);
 
     this.index++;
     this.validPlaylistUrl = nextDashboardUrl;
-    this.nextTimeoutId = setTimeout(() => this.next(), this.interval);
+    this.nextTimeoutId = setTimeout(
+      () => this.next(),
+      item.interval ? rangeUtil.intervalToMs(item.interval) : this.interval
+    );
 
-    const urlWithParams = nextDashboardUrl + '?' + urlUtil.toUrlParams(filteredParams);
+    const urlWithParams = nextDashboardUrl + '?' + urlUtil.toUrlParams(this.preservedParams);
 
     // When starting the playlist from the PlaylistStartPage component using the playlist URL, we want to replace the
     // history entry to support the back button
@@ -65,7 +78,7 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   next() {
     clearTimeout(this.nextTimeoutId);
 
-    const playedAllDashboards = this.index > this.urls.length - 1;
+    const playedAllDashboards = this.index > this.items.length - 1;
     if (playedAllDashboards) {
       this.numberOfLoops++;
 
@@ -87,52 +100,97 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   }
 
   // Detect url changes not caused by playlist srv and stop playlist
-  locationUpdated(location: Location) {
-    if (location.pathname !== this.validPlaylistUrl) {
-      this.stop();
+  locationUpdated(location: Location, action?: string) {
+    if (location.pathname === this.validPlaylistUrl) {
+      return;
     }
+
+    // A page that corrects its own url does so with a replace. Anything else, such as a click,
+    // pushes a new entry and ends the playlist.
+    if (action === 'REPLACE') {
+      this.validPlaylistUrl = location.pathname;
+      return;
+    }
+
+    this.stop();
   }
 
+  /** Plays a dashboard playlist. */
   async start(playlist: Playlist) {
+    if (!playlist.spec?.items?.length) {
+      this.stop();
+      return;
+    }
+
+    this.begin();
+    const items: PlayableItem[] = [];
+    for (const item of await loadDashboards(playlist.spec.items)) {
+      for (const dash of item.dashboards ?? []) {
+        items.push({ url: dash.url, interval: item.interval });
+      }
+    }
+
+    this.play(items, playlist.spec.interval);
+  }
+
+  /**
+   * Plays a slideshow. Items whose kind is not registered, that no longer exist, or that the
+   * viewer cannot open are left out.
+   */
+  async startSlideshow(slideshow: SlideshowToPlay) {
+    this.begin();
+
+    const resolved = await Promise.all(
+      slideshow.spec.items.map(async (item): Promise<PlayableItem | undefined> => {
+        const kind = getPlaylistItemKind(item.group, item.resource);
+        if (!kind) {
+          return undefined;
+        }
+        try {
+          const found = await kind.resolve(item.name);
+          return found ? { url: found.url, interval: item.interval } : undefined;
+        } catch (err) {
+          console.warn(`Could not resolve slideshow item ${item.group}/${item.resource}/${item.name}`, err);
+          return undefined;
+        }
+      })
+    );
+
+    this.play(
+      resolved.filter((item) => item !== undefined),
+      slideshow.spec.interval
+    );
+  }
+
+  private begin() {
     this.stop();
 
     this.startUrl = window.location.href;
     this.index = 0;
+    this.preservedParams = pickBy(
+      locationService.getSearchObject(),
+      (value: unknown, key: string) => queryParamsToPreserve[key]
+    );
 
     this.setState({ isPlaying: true });
 
     // setup location tracking
     this.locationListenerUnsub = locationService.getHistory().listen(this.locationUpdated);
-    const urls: string[] = [];
+  }
 
-    if (!playlist.spec?.items?.length) {
-      // alert
-      return;
-    }
-
-    this.interval = rangeUtil.intervalToMs(playlist.spec?.interval);
-
-    const items = await loadDashboards(playlist.spec?.items);
-    for (const item of items) {
-      if (item.dashboards) {
-        for (const dash of item.dashboards) {
-          urls.push(dash.url);
-        }
-      }
-    }
-
-    if (!urls.length) {
+  private play(items: PlayableItem[], interval: string) {
+    if (!items.length) {
       // alert... not found, etc
+      this.stop();
       return;
     }
 
-    this.urls = urls;
-    this.setState({ isPlaying: true });
+    this.interval = rangeUtil.intervalToMs(interval);
+    this.items = items;
 
     // Replace current history entry with first dashboard instead of pushing
     // this is to avoid the back button to go back to the playlist start page which causes a redirection
     this.navigateToDashboard(true);
-    return;
   }
 
   stop() {

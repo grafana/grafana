@@ -1,7 +1,8 @@
 import { type Store } from 'redux';
 import configureMockStore from 'redux-mock-store';
 
-import { locationService } from '@grafana/runtime';
+import { locationService, registerPlaylistItemKind } from '@grafana/runtime';
+import { resetPlaylistItemKindsForTests } from '@grafana/runtime/internal';
 import { setStore } from 'app/store/store';
 
 import { type Playlist } from '../../api/clients/playlist/v1';
@@ -170,5 +171,201 @@ describe('PlaylistSrv', () => {
     // Verify the start page (/playlists/play/foo) is not in history
     const hasStartPage = entries.some((entry: { pathname: string }) => entry.pathname === '/playlists/play/foo');
     expect(hasStartPage).toBe(false);
+  });
+});
+
+describe('PlaylistSrv with slideshows', () => {
+  const kindThings = (resolve: (name: string) => Promise<{ url: string; title: string } | undefined>) => {
+    registerPlaylistItemKind({
+      group: 'things.example.app',
+      resource: 'things',
+      title: 'Things',
+      icon: 'file-alt',
+      resolve,
+      search: async () => [],
+    });
+  };
+  type TestItem = { group: string; resource: string; name: string; interval?: string };
+  const item = (name: string, interval?: string): TestItem => ({
+    group: 'things.example.app',
+    resource: 'things',
+    name,
+    interval,
+  });
+  const slideshow = (items: TestItem[], interval = '5m') => ({
+    spec: { title: 'Wall', interval, items },
+  });
+
+  let srv: PlaylistSrv;
+  let hrefMock: jest.Mock;
+  let unmockLocation: () => void;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    resetPlaylistItemKindsForTests();
+    srv = createPlaylistSrv();
+    [hrefMock, unmockLocation] = mockWindowLocation();
+    hrefMock.mockReturnValue('http://localhost/slideshows/play/wall');
+  });
+
+  afterEach(() => {
+    srv.stop();
+    unmockLocation();
+    jest.useRealTimers();
+  });
+
+  const pathname = () => locationService.getLocation().pathname;
+
+  it('plays a mixed list in order and loops', async () => {
+    kindThings(async (name) => ({ url: `/things/${name}`, title: name }));
+    registerPlaylistItemKind({
+      group: 'other.example.app',
+      resource: 'others',
+      title: 'Others',
+      icon: 'file-alt',
+      resolve: async (name) => ({ url: `/others/${name}`, title: name }),
+      search: async () => [],
+    });
+
+    await srv.startSlideshow(
+      slideshow([item('a'), { group: 'other.example.app', resource: 'others', name: 'b' }, item('c')])
+    );
+
+    const seen = [pathname()];
+    srv.next();
+    seen.push(pathname());
+    srv.next();
+    seen.push(pathname());
+    srv.next();
+    seen.push(pathname());
+
+    expect(seen).toEqual(['/things/a', '/others/b', '/things/c', '/things/a']);
+  });
+
+  it('skips items that are missing, forbidden, unknown or whose resolver fails', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation();
+    kindThings(async (name) => {
+      if (name === 'gone') {
+        return undefined;
+      }
+      if (name === 'broken') {
+        throw new Error('boom');
+      }
+      return { url: `/things/${name}`, title: name };
+    });
+
+    await srv.startSlideshow(
+      slideshow([
+        item('a'),
+        item('gone'),
+        item('broken'),
+        { group: 'removed.example.app', resource: 'stuff', name: 'x' },
+        item('b'),
+      ])
+    );
+
+    const seen = [pathname()];
+    srv.next();
+    seen.push(pathname());
+    srv.next();
+    seen.push(pathname());
+
+    expect(seen).toEqual(['/things/a', '/things/b', '/things/a']);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('things.example.app/things'), expect.any(Error));
+    warn.mockRestore();
+  });
+
+  it('does not start when every item is skipped', async () => {
+    kindThings(async () => undefined);
+
+    await srv.startSlideshow(slideshow([item('gone')]));
+
+    expect(pathname()).toBe('/playlists/foo');
+  });
+
+  it('uses an item interval instead of the slideshow interval', async () => {
+    jest.useFakeTimers();
+    kindThings(async (name) => ({ url: `/things/${name}`, title: name }));
+
+    await srv.startSlideshow(slideshow([item('a', '30s'), item('b')], '5m'));
+    expect(pathname()).toBe('/things/a');
+
+    jest.advanceTimersByTime(29_000);
+    expect(pathname()).toBe('/things/a');
+    jest.advanceTimersByTime(1_000);
+    expect(pathname()).toBe('/things/b');
+
+    // b has no interval of its own, so the slideshow's five minutes apply.
+    jest.advanceTimersByTime(4 * 60_000);
+    expect(pathname()).toBe('/things/b');
+    jest.advanceTimersByTime(60_000);
+    expect(pathname()).toBe('/things/a');
+  });
+
+  it('honors the interval of a dashboard playlist item', async () => {
+    jest.useFakeTimers();
+    const playlist: Playlist = {
+      ...mockPlaylist,
+      spec: {
+        ...mockPlaylist.spec,
+        interval: '5m',
+        items: [
+          { type: 'dashboard_by_uid', value: 'aaa', interval: '30s' },
+          { type: 'dashboard_by_uid', value: 'bbb' },
+        ],
+      },
+    };
+
+    await srv.start(playlist);
+    jest.advanceTimersByTime(30_000);
+
+    expect(pathname()).toBe('/url/to/bbb');
+  });
+
+  it('keeps playing when a page redirects with a history replace', async () => {
+    kindThings(async (name) => ({ url: `/things/${name}`, title: name }));
+    await srv.startSlideshow(slideshow([item('a'), item('b')]));
+
+    locationService.getHistory().replace('/things/a/with-slug');
+
+    expect(srv.state.isPlaying).toBe(true);
+    srv.next();
+    expect(pathname()).toBe('/things/b');
+    expect(srv.state.isPlaying).toBe(true);
+  });
+
+  it('stops when a redirect is a push', async () => {
+    kindThings(async (name) => ({ url: `/things/${name}`, title: name }));
+    await srv.startSlideshow(slideshow([item('a'), item('b')]));
+
+    locationService.push('/things/a/with-slug');
+
+    expect(srv.state.isPlaying).toBe(false);
+  });
+
+  it('stops when the user navigates after the page has redirected', async () => {
+    kindThings(async (name) => ({ url: `/things/${name}`, title: name }));
+    await srv.startSlideshow(slideshow([item('a'), item('b')]));
+
+    locationService.getHistory().replace('/things/a/with-slug');
+    locationService.push('/datasources');
+
+    expect(srv.state.isPlaying).toBe(false);
+  });
+
+  it('keeps kiosk and display options on every item even when a page drops them', async () => {
+    kindThings(async (name) => ({ url: `/things/${name}`, title: name }));
+    locationService.push('/slideshows/play/wall?kiosk=true&_dash.hideTimePicker=true&ignored=1');
+
+    await srv.startSlideshow(slideshow([item('a'), item('b')]));
+    expect(locationService.getSearchObject()).toMatchObject({ kiosk: true, '_dash.hideTimePicker': true });
+    expect(locationService.getSearchObject()).not.toHaveProperty('ignored');
+
+    // The page rewrites its own url and loses the query string.
+    locationService.getHistory().replace('/things/a/with-slug');
+    srv.next();
+
+    expect(pathname()).toBe('/things/b');
+    expect(locationService.getSearchObject()).toMatchObject({ kiosk: true, '_dash.hideTimePicker': true });
   });
 });
