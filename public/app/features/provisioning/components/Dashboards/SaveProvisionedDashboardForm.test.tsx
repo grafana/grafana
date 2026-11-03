@@ -269,9 +269,9 @@ describe('SaveProvisionedDashboardForm', () => {
     capturedRequest = null;
     jest.clearAllMocks();
     (validationSrv.validateNewDashboardName as jest.Mock).mockResolvedValue(true);
-    // locationUtil keeps module-level config, so reset it between tests
+    // Serve from a sub path: the router basename carries it, so navigate() must get bare paths
     locationUtil.initialize({
-      config: { appSubUrl: '' } as GrafanaConfig,
+      config: { appSubUrl: '/grafana' } as GrafanaConfig,
       getTimeRangeForUrl: jest.fn(),
       getVariablesUrlParams: jest.fn(),
     });
@@ -311,12 +311,6 @@ describe('SaveProvisionedDashboardForm', () => {
   });
 
   it('should save a new dashboard successfully', async () => {
-    // Serve from a sub path: the router basename carries it, so navigate() must get the bare path
-    locationUtil.initialize({
-      config: { appSubUrl: '/grafana' } as GrafanaConfig,
-      getTimeRangeForUrl: jest.fn(),
-      getVariablesUrlParams: jest.fn(),
-    });
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);

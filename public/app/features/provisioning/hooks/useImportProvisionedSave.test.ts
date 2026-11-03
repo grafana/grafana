@@ -48,9 +48,9 @@ describe('useImportProvisionedSave', () => {
     capturedRequest = null;
     jest.clearAllMocks();
     dashboardAPIVersionResolver.set({ v1: 'v1', v2: 'v2' });
-    // locationUtil keeps module-level config, so reset it between tests
+    // Serve from a sub path: the router basename carries it, so navigate() must get bare paths
     locationUtil.initialize({
-      config: { appSubUrl: '' } as GrafanaConfig,
+      config: { appSubUrl: '/grafana' } as GrafanaConfig,
       getTimeRangeForUrl: jest.fn(),
       getVariablesUrlParams: jest.fn(),
     });
@@ -236,15 +236,6 @@ describe('useImportProvisionedSave', () => {
   });
 
   describe('save outcomes', () => {
-    // Serve from a sub path: the router basename carries it, so navigate() must get bare paths
-    beforeEach(() => {
-      locationUtil.initialize({
-        config: { appSubUrl: '/grafana' } as GrafanaConfig,
-        getTimeRangeForUrl: jest.fn(),
-        getVariablesUrlParams: jest.fn(),
-      });
-    });
-
     it('navigates to the new dashboard after a configured-branch save', async () => {
       server.use(
         http.post(`${BASE}/repositories/:name/files/*`, () =>
