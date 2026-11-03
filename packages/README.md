@@ -47,7 +47,7 @@ Some packages have their own version instead of following the Grafana version. T
 
 A pull request that changes an independent package must have a title of the form `<type>: <description>`, for example `feat: Add useDataSourceInstanceList`. The `Check plugin-compat pull request title` workflow fails the pull request otherwise. The title becomes the squash-merged commit message that Nx reads, so the description should make sense to consumers.
 
-Do not add a scope such as `feat(plugin-compat): ...`; the check rejects it. Nx finds the package from the files a pull request changes, and a scope that does not match the project name makes it release a breaking change as a patch.
+Do not add a scope such as `feat(plugin-compat): ...`; the check rejects it. The one exception is `chore(deps): ...` (and `chore(deps-dev): ...`), the title Renovate uses for dependency updates, which never releases. Nx finds the package from the files a pull request changes, and a scope that does not match the project name makes it release a breaking change as a patch.
 
 Below 1.0 Nx shifts the bump down one level (its [`adjustSemverBumpsForZeroMajorVersion`](https://nx.dev/docs/reference/nx-json) option, on by default), so choose by intent:
 

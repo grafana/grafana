@@ -28,11 +28,13 @@ jobs:
     steps:
       # nx release reads the squash-merged title to decide the version bump. A scope is rejected because
       # one that does not match the project makes nx count the change as a patch, even a breaking one.
+      # chore(deps) is the one allowed scope because Renovate titles its pull requests that way, and
+      # a chore never releases.
       - name: Check title
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          pattern='^(feat|fix|perf|refactor|docs|build|types|chore|examples|test|style|ci|revert)!?: .+'
+          pattern='^((feat|fix|perf|refactor|docs|build|types|chore|examples|test|style|ci|revert)!?|chore\(deps(-dev)?\)): .+'
           if [[ "$PR_TITLE" =~ $pattern ]]; then
             echo "Title is a valid conventional commit for plugin-compat."
             exit 0
