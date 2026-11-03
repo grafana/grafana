@@ -428,12 +428,12 @@ type bulkBlobValidationBackend struct {
 	diskBacked bool
 }
 
-func (b *bulkBlobValidationBackend) ProcessBulk(_ context.Context, settings BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
+func (b *bulkBlobValidationBackend) ProcessBulk(ctx context.Context, settings BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
 	b.called = true
 	b.settings = settings
 	_, b.diskBacked = iter.(*spooledBulkRequests)
 	if batchIter, ok := iter.(BulkRequestBatchIterator); ok {
-		for batchIter.NextBatch() {
+		for batchIter.NextBatch(ctx) {
 			if batchIter.RollbackRequested() {
 				b.rollback = true
 				break
@@ -461,7 +461,7 @@ type corruptBulkSpoolBackend struct {
 	err        error
 }
 
-func (b *corruptBulkSpoolBackend) ProcessBulk(_ context.Context, _ BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
+func (b *corruptBulkSpoolBackend) ProcessBulk(ctx context.Context, _ BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
 	spool := iter.(*spooledBulkRequests)
 	if b.err = spool.file.Truncate(0); b.err != nil {
 		return &resourcepb.BulkResponse{}
@@ -477,7 +477,7 @@ func (b *corruptBulkSpoolBackend) ProcessBulk(_ context.Context, _ BulkSettings,
 	}
 	spool.reader.Reset(spool.file)
 	batchIter := iter.(BulkRequestBatchIterator)
-	for batchIter.NextBatch() {
+	for batchIter.NextBatch(ctx) {
 		if batchIter.RollbackRequested() {
 			b.rollback = true
 			break
