@@ -451,6 +451,7 @@ export function createDashboardSceneFromDashboardModel(
         refreshPicker: new SceneRefreshPicker({
           refresh: oldModel.refresh,
           intervals: oldModel.timepicker.refresh_intervals,
+          withText: true,
         }),
         hideTimeControls: oldModel.timepicker.hidden,
       }),
