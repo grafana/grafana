@@ -1,3 +1,6 @@
+# 0.7.0 (2026-11-03)
+Add `getPluginHealth` function.
+
 # 0.6.0 (2026-10-22)
 
 Add `useDataSourceInstanceList` and the `GetDataSourceInstanceListFilters` type to `@grafana/plugin-compat/datasources`. The hook uses the host's stable `@grafana/runtime` hook when available, then `@grafana/runtime/unstable`, then fetches through `getDataSourceInstanceList`, so it works on hosts without the async data source hooks.
