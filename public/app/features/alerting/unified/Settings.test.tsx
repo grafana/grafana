@@ -1,8 +1,10 @@
 import { screen, waitFor, within } from '@testing-library/react';
+import { HttpResponse, http } from 'msw';
 import { render } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import SettingsPage from './Settings';
+import history from './components/settings/mocks/api/alertmanager/grafana/config/history.json';
 import DataSourcesResponse from './components/settings/mocks/api/datasources.json';
 import { setupGrafanaManagedServer, withExternalOnlySetting } from './components/settings/mocks/server';
 import { setupMswServer } from './mockApi';
@@ -105,7 +107,15 @@ describe('Alerting settings', () => {
     expect(ui.saveConfigurationButton.query()).not.toBeInTheDocument();
   });
 
-  it('should be able to view versions', async () => {
+  it('should compare a previous configuration with the latest version', async () => {
+    server.use(
+      http.get('/api/alertmanager/grafana/config/history', () =>
+        HttpResponse.json([
+          { ...history[0], template_files: { 'test.tmpl': 'current template' } },
+          { ...history[1], template_files: { 'test.tmpl': 'previous template' } },
+        ])
+      )
+    );
     const { user } = render(<SettingsPage />);
 
     // wait for loading to be done
@@ -116,16 +126,14 @@ describe('Alerting settings', () => {
     await user.click(ui.viewConfigurationButton.get(internalAMCard));
     expect(await ui.configurationDrawer.find()).toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(ui.configurationDrawer.get()).toBeInTheDocument();
-    });
-
     // click versions tab
     await user.click(ui.versionsTab.get());
 
-    await waitFor(() => {
-      expect(screen.getByText(/last applied/i)).toBeInTheDocument();
-    });
+    expect(await screen.findByText(/last applied/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Compare' }));
+
+    expect(await screen.findByRole('textbox', { name: 'Original' })).toHaveTextContent('previous template');
+    expect(screen.getByRole('textbox', { name: 'Modified' })).toHaveTextContent('current template');
   });
 
   it('should correctly render provisioned data sources', async () => {
