@@ -51,11 +51,11 @@ Do not add a scope such as `feat(plugin-compat): ...`. Nx finds the package from
 
 Below 1.0 the bump is shifted down one level, so choose by intent:
 
-| Title        | Use for                         | Released as (from 0.6.0) |
+| Title        | Use for                         | Released as (from 0.7.0) |
 | ------------ | ------------------------------- | ------------------------ |
-| `feat!: ...` | A breaking change for consumers | 0.7.0                    |
-| `feat: ...`  | A new feature or export         | 0.6.1                    |
-| `fix: ...`   | A bug fix                       | 0.6.1                    |
+| `feat!: ...` | A breaking change for consumers | 0.8.0                    |
+| `feat: ...`  | A new feature or export         | 0.7.1                    |
+| `fix: ...`   | A bug fix                       | 0.7.1                    |
 | `chore: ...` | A change that needs no release  | no release               |
 
 `perf`, `refactor`, `docs`, `build`, `types`, `examples`, `test`, `style`, `ci` and `revert` do not release either. Use `fix` for an internal improvement that consumers should get. Several pull requests in one release combine into the highest bump, and every releasing title becomes a changelog entry.
