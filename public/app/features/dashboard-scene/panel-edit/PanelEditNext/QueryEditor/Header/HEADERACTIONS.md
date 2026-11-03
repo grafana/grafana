@@ -70,7 +70,7 @@ Header/
 └── DatasourceHelpPanel.tsx     # Data source help panel component
 ```
 
-`HeaderActions` acts on the selected card by default. The stacked view passes an explicit `target` per item, so each stacked header's actions act on its own query or transformation. Actions that open help or debug views select their target first, because those views only render for the selected card.
+`ContentHeader` and `HeaderActions` act on the selected card by default. The stacked view renders `ContentHeader` for every item with an explicit `target` and `variant="stacked"`, so each stacked header shows and acts on its own query or transformation. Actions that open help or debug views select their target first, because those views only render for the selected card.
 
 ### Plugin Extensibility
 

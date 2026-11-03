@@ -1,24 +1,16 @@
 import { css } from '@emotion/css';
-import { type ReactNode, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
-import { Icon, useStyles2 } from '@grafana/ui';
-import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
-import { isExpressionQuery } from 'app/features/expressions/guards';
+import { useStyles2 } from '@grafana/ui';
 
 import { QueryEditorType } from '../../constants';
+import { ContentHeaderSceneWrapper } from '../Header/ContentHeader';
 import { DatasourceHelpPanel } from '../Header/DatasourceHelpPanel';
-import { EditableQueryName } from '../Header/EditableQueryName';
-import { HeaderActions } from '../Header/HeaderActions';
-import { TransformationIdentifier } from '../Header/TransformationIdentifier';
-import { type HeaderActionTarget } from '../Header/headerActionTarget';
 import {
   useActionsContext,
   useDatasourceContext,
   usePanelContext,
-  useQueryEditorTypeConfig,
   useQueryEditorUIContext,
   useQueryRunnerContext,
 } from '../QueryEditorContext';
@@ -26,44 +18,8 @@ import { QueryEditorPanel } from '../QueryEditorRenderer';
 import { TransformationEditorPanel } from '../TransformationEditorRenderer';
 import { useQueryDatasource } from '../hooks/useQueryDatasource';
 import { type Transformation } from '../types';
-import { getExpressionSectionLabel } from '../utils';
 
 import { getStackedQueryEditorType } from './utils';
-
-interface StackedItemHeaderProps {
-  /** Rendered as the leading icon — typically a datasource logo or type icon. */
-  icon: ReactNode;
-  /** The middle label (e.g. datasource name or "Transformation"). Omitted if undefined. */
-  label?: ReactNode;
-  /** The trailing identifier (query refId or transformation name). */
-  identifier: ReactNode;
-  /** ID used by the section's aria-labelledby so screen readers announce this header. */
-  headingId: string;
-  /** The card this header's actions act on. */
-  target: HeaderActionTarget;
-}
-
-function StackedItemHeader({ icon, label, identifier, headingId, target }: StackedItemHeaderProps) {
-  const styles = useStyles2(getStyles);
-  const headerRef = useRef<HTMLDivElement>(null);
-
-  return (
-    <div ref={headerRef} className={styles.itemHeader}>
-      {/* Actions stay outside the heading so their labels don't leak into the section's accessible name. */}
-      <div id={headingId} className={styles.headerTitle}>
-        <span className={styles.headerIcon}>{icon}</span>
-        {label !== undefined && (
-          <>
-            <span className={styles.headerLabel}>{label}</span>
-            <span className={styles.headerSeparator} />
-          </>
-        )}
-        <span className={styles.headerRefId}>{identifier}</span>
-      </div>
-      <HeaderActions containerRef={headerRef} target={target} source="stacked_header" showFeedbackButton={false} />
-    </div>
-  );
-}
 
 interface StackedQueryItemProps {
   query: DataQuery;
@@ -74,7 +30,6 @@ interface StackedQueryItemProps {
 export function StackedQueryItem({ query, headingId, isCurrent }: StackedQueryItemProps) {
   const styles = useStyles2(getStyles);
 
-  const typeConfig = useQueryEditorTypeConfig();
   const { dsSettings } = useDatasourceContext();
   const { panel } = usePanelContext();
   const { queries, data } = useQueryRunnerContext();
@@ -82,27 +37,12 @@ export function StackedQueryItem({ query, headingId, isCurrent }: StackedQueryIt
   const { updateSelectedQuery, addQuery, runQueries, startQueryPreview } = useActionsContext();
   const { queryDsData, queryDsLoading } = useQueryDatasource(query, dsSettings, panel);
 
-  const editorType = getStackedQueryEditorType(query);
-  const isExpression = editorType === QueryEditorType.Expression;
-
-  const icon = isExpression ? (
-    <Icon name={typeConfig[editorType].icon} size="md" color={typeConfig[editorType].color} />
-  ) : (
-    <DataSourceLogo dataSource={queryDsData?.dsSettings} size={18} />
-  );
-
-  const label = isExpressionQuery(query) ? getExpressionSectionLabel(query) : queryDsData?.dsSettings.name;
-
   return (
     <>
-      <StackedItemHeader
-        icon={icon}
-        label={label}
-        identifier={
-          <EditableQueryName key={query.refId} query={query} queries={queries} onQueryUpdate={updateSelectedQuery} />
-        }
+      <ContentHeaderSceneWrapper
+        variant="stacked"
         headingId={headingId}
-        target={{ cardType: editorType, query, dsData: queryDsData, dsLoading: queryDsLoading }}
+        target={{ cardType: getStackedQueryEditorType(query), query, dsData: queryDsData, dsLoading: queryDsLoading }}
       />
       {isCurrent && showingDatasourceHelp && <DatasourceHelpPanel />}
       <div className={styles.itemBody}>
@@ -131,33 +71,14 @@ interface StackedTransformationItemProps {
 
 export function StackedTransformationItem({ transformation, headingId, isCurrent }: StackedTransformationItemProps) {
   const styles = useStyles2(getStyles);
-  const typeConfig = useQueryEditorTypeConfig();
   const { transformations } = usePanelContext();
   const { data } = useQueryRunnerContext();
   const { updateTransformation } = useActionsContext();
-  const transformationName = transformation.registryItem?.name || transformation.transformConfig.id;
-  const icon = (
-    <Icon
-      name={typeConfig[QueryEditorType.Transformation].icon}
-      size="md"
-      color={typeConfig[QueryEditorType.Transformation].color}
-    />
-  );
 
   return (
     <>
-      <StackedItemHeader
-        icon={icon}
-        label={<Trans i18nKey="query-editor-next.stacked.transformation">Transformation</Trans>}
-        identifier={
-          <TransformationIdentifier
-            transformation={transformation}
-            transformations={transformations}
-            data={data}
-            fallbackName={transformationName}
-            onUpdate={updateTransformation}
-          />
-        }
+      <ContentHeaderSceneWrapper
+        variant="stacked"
         headingId={headingId}
         target={{ cardType: QueryEditorType.Transformation, transformation }}
       />
@@ -175,46 +96,7 @@ export function StackedTransformationItem({ transformation, headingId, isCurrent
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  itemHeader: css({
-    minHeight: theme.spacing(5),
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: theme.spacing(1),
-    padding: theme.spacing(0.5, 1, 0.5, 2),
-    background: theme.colors.background.secondary,
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-  }),
-  headerTitle: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1.25),
-    minWidth: 0,
-  }),
-  headerIcon: css({
-    alignItems: 'center',
-    display: 'inline-flex',
-    flex: '0 0 auto',
-    justifyContent: 'center',
-    width: theme.spacing(2.25),
-  }),
-  headerLabel: css({
-    ...theme.typography.body,
-    color: theme.colors.text.secondary,
-    minWidth: 0,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  }),
-  headerRefId: css({
-    ...theme.typography.body,
-  }),
   itemBody: css({
     padding: theme.spacing(2),
-  }),
-  headerSeparator: css({
-    width: 1,
-    height: theme.spacing(3),
-    background: theme.colors.border.medium,
   }),
 });

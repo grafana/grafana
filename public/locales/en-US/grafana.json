@@ -16001,8 +16001,7 @@
       "exit-aria-label": "Exit stacked view",
       "scroll-area-aria-label": "Stacked editor items",
       "showing-items_one": "Showing {{count}} items",
-      "showing-items_other": "Showing {{count}} items",
-      "transformation": "Transformation"
+      "showing-items_other": "Showing {{count}} items"
     },
     "transformation-debug": {
       "copy-input-data": "Copy input data to clipboard",

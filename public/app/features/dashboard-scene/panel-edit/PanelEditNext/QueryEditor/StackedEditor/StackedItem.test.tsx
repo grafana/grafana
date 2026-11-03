@@ -1,10 +1,10 @@
 import { screen, within } from '@testing-library/react';
 
-import { type TransformerRegistryItem } from '@grafana/data';
+import { type DataSourceInstanceSettings, type TransformerRegistryItem } from '@grafana/data';
 import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../constants';
-import { makeStackedMode, renderWithQueryEditorProvider } from '../testUtils';
+import { ds1SettingsMock, makeStackedMode, renderWithQueryEditorProvider } from '../testUtils';
 import { type Transformation } from '../types';
 
 import { StackedSection } from './StackedSection';
@@ -27,6 +27,12 @@ jest.mock('../hooks/useQueryDatasource', () => ({
 
 jest.mock('../Header/PluginActions', () => ({
   PluginActions: () => null,
+}));
+
+jest.mock('app/features/datasources/components/picker/DataSourcePicker', () => ({
+  DataSourcePicker: ({ onChange }: { onChange: (ds: DataSourceInstanceSettings) => void }) => (
+    <button onClick={() => onChange(ds1SettingsMock)}>Change data source</button>
+  ),
 }));
 
 jest.mock('../Header/DatasourceHelpPanel', () => ({
@@ -93,6 +99,15 @@ describe('StackedSection header actions', () => {
     await user.click(sectionB.getByRole('button', { name: 'Remove Query' }));
     await user.click(sectionB.getByRole('button', { name: /confirm/i }));
     expect(deleteQuery).toHaveBeenCalledWith('B');
+  });
+
+  it('changes the data source of the query in that section', async () => {
+    const changeDataSource = jest.fn();
+    const { user } = renderSections({ actionsOverrides: { changeDataSource } });
+
+    await user.click(within(getSection('B')).getByRole('button', { name: 'Change data source' }));
+
+    expect(changeDataSource).toHaveBeenCalledWith(ds1SettingsMock, 'B');
   });
 
   it('disables the transformation in that section', async () => {
