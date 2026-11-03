@@ -20,23 +20,27 @@ weight: 100
 # Annotations API
 
 {{< admonition type="note" >}}
-This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+This API complies with the new Grafana API structure. To learn more refer to the [New API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis) documentation.
 
-This is an alpha API (`v0alpha1`) and might change. Availability depends on where you run Grafana:
-
-- **Grafana Cloud:** The API is rolling out gradually and might not be available on your stack yet.
-- **Self-managed Grafana:** The API is disabled by default. To enable it, set `enabled = true` in the [`[annotations.app_platform]`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#annotationsapp_platform) section of the Grafana configuration.
-
-The legacy [Annotations API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/annotations/) (`/api/annotations`) remains available. To learn about the differences, refer to [Migrate from the legacy Annotations API](#migrate-from-the-legacy-annotations-api).
+The legacy [Annotations API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/annotations/) is still available, and removal will be announced well in advance to avoid disruptions. Refer to [Migrate from the legacy Annotations API](#migrate-from-the-legacy-annotations-api) to learn more about how both APIs match, and how to migrate.
 {{< /admonition >}}
 
 Annotations mark points or regions in time with text and tags. An annotation that has a `dashboardUID` belongs to that dashboard, and can also belong to a single panel. An annotation without a `dashboardUID` is an organization annotation, which you can show on any dashboard that uses the Grafana annotations data source.
+
+## Before you begin
+
+**This API is in alpha (`v0alpha1`) and might change**. For more details about versioning, refer to [New API versioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api#version).
+
+Availability depends on where you run Grafana:
+
+- **Grafana Cloud:** The API is rolling out gradually and might not be available on your stack yet.
+- **Self-managed Grafana:** The API is disabled by default. To enable it, set `enabled = true` in the [`[annotations.app_platform]`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#annotationsapp_platform) section of the Grafana configuration.
 
 All paths use the `annotation.grafana.app` group and the `v0alpha1` version. Replace `:namespace` with your namespace. To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 ## Requirements
 
-If you are running Grafana Enterprise or Grafana Cloud, you need specific permissions. For more information, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
+If you're running Grafana Enterprise or Grafana Cloud, you need specific permissions. For more information, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
 
 | Operation                          | Action               |
 | ---------------------------------- | -------------------- |
@@ -45,7 +49,7 @@ If you are running Grafana Enterprise or Grafana Cloud, you need specific permis
 | Update and patch                   | `annotations:write`  |
 | Delete                             | `annotations:delete` |
 
-The scope you need depends on the annotation:
+The scope you need depends on the type of annotation:
 
 - **Organization annotations** (no `dashboardUID`): `annotations:*`, `annotations:type:*`, or `annotations:type:organization`.
 - **Dashboard annotations**: `dashboards:*` or `dashboards:uid:<DASHBOARD_UID>`, or the equivalent `folders:*` or `folders:uid:<FOLDER_UID>` scope for the folder that contains the dashboard.
@@ -540,6 +544,8 @@ Content-Type: application/json
 ```
 
 ## Status codes
+
+The Annotations HTTP API uses the following status codes:
 
 | Code | Description                                                                                                            |
 | ---- | ---------------------------------------------------------------------------------------------------------------------- |
