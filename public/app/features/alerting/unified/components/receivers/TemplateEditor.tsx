@@ -1,59 +1,59 @@
-/**
- * This file contains the template editor we'll be using for alertmanager templates.
- *
- * It includes auto-complete for template data and syntax highlighting
- */
-import { type IDisposable, type editor } from 'monaco-editor';
-import { type ComponentProps, useEffect, useRef } from 'react';
+import { css } from '@emotion/css';
+import { Suspense, lazy, useState } from 'react';
 
-import { CodeEditor } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { ErrorBoundaryAlert, LoadingPlaceholder } from '@grafana/ui';
+import { type CodeMirrorEditorProps } from '@grafana/ui/unstable';
 
-import { registerGoTemplateAutocomplete } from './editor/autocomplete';
-import goTemplateLanguageDefinition, { GO_TEMPLATE_LANGUAGE_ID } from './editor/definition';
-import { registerLanguage } from './editor/register';
+const TemplateCodeMirror = lazy(async () => {
+  const [{ CodeMirrorEditor }, { goTemplate }] = await Promise.all([
+    import('@grafana/ui/unstable'),
+    import('./editor/goTemplate'),
+  ]);
+  const extensions = [goTemplate()];
 
-type TemplateEditorProps = Omit<ComponentProps<typeof CodeEditor>, 'language' | 'theme'> & {
-  autoHeight?: boolean;
-};
-
-const TemplateEditor = (props: TemplateEditorProps) => {
-  const shouldAutoHeight = Boolean(props.autoHeight);
-  const disposeSuggestions = useRef<IDisposable | null>(null);
-
-  const onEditorDidMount = (editor: editor.IStandaloneCodeEditor) => {
-    if (shouldAutoHeight) {
-      const contentHeight = editor.getContentHeight();
-
-      try {
-        // we're passing NaN in to the width because the type definition wants a number (NaN is a number, go figure)
-        // but the width could be defined as a string "auto", passing NaN seems to just ignore our width update here
-        editor.layout({ height: contentHeight, width: NaN });
-      } catch (err) {}
-    }
+  return {
+    default: function TemplateCodeMirror(props: CodeMirrorEditorProps) {
+      return <CodeMirrorEditor {...props} extensions={extensions} />;
+    },
   };
+});
 
-  useEffect(() => {
-    return () => {
-      disposeSuggestions.current?.dispose();
-    };
-  }, []);
+interface TemplateEditorProps
+  extends Pick<CodeMirrorEditorProps, 'value' | 'onBlur' | 'readOnly' | 'height' | 'aria-label'> {
+  width?: number;
+  showLineNumbers?: boolean;
+}
+
+export function TemplateEditor({ value, width, showLineNumbers = true, ...props }: TemplateEditorProps) {
+  const [content, setContent] = useState({ value, draft: value });
+
+  if (value !== content.value) {
+    setContent({ value, draft: value });
+  }
 
   return (
-    <CodeEditor
-      showLineNumbers={true}
-      showMiniMap={false}
-      {...props}
-      monacoOptions={{
-        scrollBeyondLastLine: false,
-      }}
-      onEditorDidMount={onEditorDidMount}
-      onBeforeEditorMount={(monaco) => {
-        registerLanguage(monaco, goTemplateLanguageDefinition);
-        disposeSuggestions.current = registerGoTemplateAutocomplete(monaco);
-      }}
-      language={GO_TEMPLATE_LANGUAGE_ID}
-    />
+    <div className={editorContainer} style={{ width }}>
+      <ErrorBoundaryAlert
+        boundaryName="TemplateEditor"
+        title={t('grafana-ui.code-mirror.error-label', 'CodeMirror editor failed to load')}
+        style="page"
+      >
+        <Suspense fallback={<LoadingPlaceholder text={t('common.loading', 'Loading...')} />}>
+          <TemplateCodeMirror
+            {...props}
+            value={content.draft}
+            onChange={(draft) => setContent({ value, draft })}
+            basicSetup={{ lineNumbers: showLineNumbers, foldGutter: showLineNumbers }}
+          />
+        </Suspense>
+      </ErrorBoundaryAlert>
+    </div>
   );
-};
+}
 
-export { TemplateEditor };
+const editorContainer = css({
+  '.cm-editor': {
+    border: 'none',
+  },
+});
