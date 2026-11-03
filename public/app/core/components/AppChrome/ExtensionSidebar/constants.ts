@@ -1,4 +1,4 @@
-export const MIN_EXTENSION_SIDEBAR_WIDTH = 460;
+export const MIN_EXTENSION_SIDEBAR_WIDTH = 380;
 export const MAX_EXTENSION_SIDEBAR_WIDTH = Math.floor(window.innerWidth * (2 / 3));
 export const DEFAULT_EXTENSION_SIDEBAR_WIDTH = MIN_EXTENSION_SIDEBAR_WIDTH;
 
