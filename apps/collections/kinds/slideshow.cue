@@ -6,7 +6,8 @@ slideshowV1alpha1: {
 	scope:      "Namespaced"
 
 	// Slideshows are shared within an org and the list page reads them with a plain list, so
-	// nothing needs the generic search route or the indexing work behind it.
+	// nothing needs the generic list-keys or search routes or the indexing work behind them.
+	listKeys: false
 	search: {
 		endpoint: false
 	}

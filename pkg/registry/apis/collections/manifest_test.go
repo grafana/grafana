@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/apps/collections/pkg/apis/manifestdata"
 )
 
-// The generic search route is mounted for every kind unless the manifest opts out, so a
+// The generic search and list-keys routes are mounted for every kind unless the manifest opts out, so a
 // slideshow would be indexed and searchable without this.
 func TestSlideshowsDoNotServeGenericSearch(t *testing.T) {
 	found := false
@@ -17,6 +17,7 @@ func TestSlideshowsDoNotServeGenericSearch(t *testing.T) {
 			if kind.Kind == "Slideshow" {
 				found = true
 				require.False(t, kind.HasSearchEndpoint())
+				require.False(t, kind.HasListKeysEndpoint())
 			}
 		}
 	}
