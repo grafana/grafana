@@ -95,11 +95,11 @@ describe('ViewPanelSidePane', () => {
     it('lists the labels of multi-frame data', async () => {
       await setup('view', [seriesFrame('a'), seriesFrame('b')]);
 
+      expect(screen.getByText('Labels')).toBeInTheDocument();
       expect(screen.getByLabelText('bot_job')).toBeInTheDocument();
-      expect(screen.queryByText('Not available for wide data frames')).not.toBeInTheDocument();
     });
 
-    it('hides the labels for a wide frame', async () => {
+    it('hides the labels section for a wide frame', async () => {
       const wide = createDataFrame({
         fields: [
           { name: 'time', type: FieldType.time, values: [1] },
@@ -109,8 +109,8 @@ describe('ViewPanelSidePane', () => {
       });
       await setup('view', [wide]);
 
+      expect(screen.queryByText('Labels')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('bot_job')).not.toBeInTheDocument();
-      expect(screen.getByText('Not available for wide data frames')).toBeInTheDocument();
       expect(screen.getByLabelText('By series')).toBeInTheDocument();
     });
   });

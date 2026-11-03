@@ -6759,7 +6759,6 @@
         "fanout-category": "Fan-out by series or label",
         "fanout-labels": "Labels",
         "fanout-no-labels": "Data has no labels",
-        "fanout-wide-frames": "Not available for wide data frames",
         "pane-header": "View panel",
         "quick-toggles": "Quick toggles",
         "title": "View panel controls"

@@ -154,34 +154,32 @@ function ViewPanelFanoutOptions({ panel, pane }: ViewPaneFanoutOptionsProps) {
           onClick={() => pane.onSetMode(bySeriesMode)}
         />
       </Box>
-      <Box padding={1}>
-        <Text variant="bodySmall" weight="medium">
-          {t('dashboard.sidebar.view-panel.fanout-labels', 'Labels')}
-        </Text>
-      </Box>
-      <Box direction="column" gap={1} display="flex" paddingLeft={1}>
-        {hasWideFrames && (
-          <Text italic variant="bodySmall">
-            {t('dashboard.sidebar.view-panel.fanout-wide-frames', 'Not available for wide data frames')}
-          </Text>
-        )}
-        {!hasWideFrames && labels && labels.length === 0 && (
-          <Text italic variant="bodySmall">
-            {t('dashboard.sidebar.view-panel.fanout-no-labels', 'Data has no labels')}
-          </Text>
-        )}
-        {!hasWideFrames &&
-          labels?.map((label) => (
-            <RadioButtonDot
-              key={label}
-              name="fanout"
-              id={getModeForLabel(label)}
-              label={label}
-              checked={modeValue === getModeForLabel(label)}
-              onClick={() => pane.onSetMode(getModeForLabel(label))}
-            />
-          ))}
-      </Box>
+      {!hasWideFrames && (
+        <>
+          <Box padding={1}>
+            <Text variant="bodySmall" weight="medium">
+              {t('dashboard.sidebar.view-panel.fanout-labels', 'Labels')}
+            </Text>
+          </Box>
+          <Box direction="column" gap={1} display="flex" paddingLeft={1}>
+            {labels && labels.length === 0 && (
+              <Text italic variant="bodySmall">
+                {t('dashboard.sidebar.view-panel.fanout-no-labels', 'Data has no labels')}
+              </Text>
+            )}
+            {labels?.map((label) => (
+              <RadioButtonDot
+                key={label}
+                name="fanout"
+                id={getModeForLabel(label)}
+                label={label}
+                checked={modeValue === getModeForLabel(label)}
+                onClick={() => pane.onSetMode(getModeForLabel(label))}
+              />
+            ))}
+          </Box>
+        </>
+      )}
     </OptionsPaneCategory>
   );
 }
