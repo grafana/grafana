@@ -212,6 +212,15 @@ func (c *ControllerConfig) UnifiedStorageClient() (resources.ResourceStore, erro
 	return unified, nil
 }
 
+// SupportedResources is the configured provisionable set, which may name collections as wildcards.
+func (c *ControllerConfig) SupportedResources() ([]resources.SupportedResource, error) {
+	supported, err := resources.ParseSupportedResources(c.Settings.ProvisioningResources)
+	if err != nil {
+		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
+	}
+	return supported, nil
+}
+
 // Clients Clients are clients that are used to connect to the different API servers.
 func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	if c.clients != nil {
@@ -248,9 +257,9 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		provisioning.GROUP:                provisioningServerURL,
 	}
 
-	supportedResources, err := resources.ParseSupportedResources(c.Settings.ProvisioningResources)
+	supportedResources, err := c.SupportedResources()
 	if err != nil {
-		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
+		return nil, err
 	}
 
 	// Dashboards and folders have dedicated server URLs; everything else is served by the

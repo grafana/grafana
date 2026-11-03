@@ -13,7 +13,14 @@ import (
 	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	dynamicfake "k8s.io/client-go/dynamic/fake"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -27,7 +34,7 @@ func TestResourceListerFromSearch_ListErrors(t *testing.T) {
 				response = &resourcepb.ListManagedObjectsResponse{Error: tc.result}
 			}
 			store.EXPECT().ListManagedObjects(mock.Anything, mock.Anything).Return(response, tc.err).Once()
-			got, err := NewResourceLister(store).List(context.Background(), "default", "repo")
+			got, err := NewResourceLister(store, nil, nil).List(context.Background(), "default", "repo")
 			require.Nil(t, got)
 			tc.assertError(t, err)
 		})
@@ -43,7 +50,7 @@ func TestResourceListerFromSearch_CountErrors(t *testing.T) {
 				response = &resourcepb.CountManagedObjectsResponse{Error: tc.result}
 			}
 			store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(response, tc.err).Once()
-			got, err := NewResourceLister(store).Stats(context.Background(), "default", "")
+			got, err := NewResourceLister(store, nil, nil).Stats(context.Background(), "default", "")
 			require.Nil(t, got)
 			tc.assertError(t, err)
 		})
@@ -60,7 +67,7 @@ func TestResourceListerFromSearch_GetStatsErrors(t *testing.T) {
 				response = &resourcepb.ResourceStatsResponse{Error: tc.result}
 			}
 			store.EXPECT().GetStats(mock.Anything, mock.Anything).Return(response, tc.err).Once()
-			got, err := NewResourceLister(store).Stats(context.Background(), "default", "")
+			got, err := NewResourceLister(store, nil, nil).Stats(context.Background(), "default", "")
 			require.Nil(t, got)
 			tc.assertError(t, err)
 		})
@@ -98,4 +105,71 @@ func (tc resourceErrorCase) assertError(t *testing.T, err error) {
 	apiStatus, ok := err.(apierrors.APIStatus)
 	require.True(t, ok)
 	require.Equal(t, tc.want, apiStatus.Status())
+}
+
+func TestResourceListerFromSearch_ListsCollectionMembersThroughClients(t *testing.T) {
+	const (
+		repository = "repo"
+		collection = "datasource.grafana.app"
+		member     = "grafana-testdata-datasource." + collection
+	)
+	memberGVR := schema.GroupVersionResource{Group: member, Version: "v0alpha1", Resource: "datasources"}
+	memberGVK := schema.GroupVersionKind{Group: member, Version: "v0alpha1", Kind: "DataSource"}
+
+	// The index reports a stored member under the collection, which no API server serves.
+	store := resource.NewMockResourceClient(t)
+	store.EXPECT().ListManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.ListManagedObjectsResponse{
+		Items: []*resourcepb.ListManagedObjectsResponse_Item{
+			{Object: &resourcepb.ResourceKey{Group: collection, Resource: "datasources", Name: "ds-1"}, Path: "ds-1.json"},
+			{Object: &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Name: "pl-1"}, Path: "pl-1.json", Title: "Playlist 1"},
+		},
+	}, nil).Once()
+
+	scheme := runtime.NewScheme()
+	listGVK := memberGVK
+	listGVK.Kind += "List"
+	scheme.AddKnownTypeWithName(listGVK, &unstructured.UnstructuredList{})
+	scheme.AddKnownTypeWithName(memberGVK, &unstructured.Unstructured{})
+	dyn := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme,
+		map[schema.GroupVersionResource]string{memberGVR: listGVK.Kind},
+		managedDataSource(t, memberGVK, "ds-1", repository, "ds-1.json"),
+		managedDataSource(t, memberGVK, "ds-2", "another-repo", "ds-2.json"),
+	)
+
+	clients := NewMockResourceClients(t)
+	clients.EXPECT().SupportedResources().Return([]SupportedResource{
+		{GroupKind: memberGVK.GroupKind()},
+		{GroupKind: schema.GroupKind{Group: "playlist.grafana.app", Kind: "Playlist"}},
+	})
+	clients.EXPECT().ForKind(mock.Anything, memberGVK.GroupKind().WithVersion("")).
+		Return(dyn.Resource(memberGVR).Namespace("default"), memberGVR, nil).Once()
+
+	factory := NewMockClientFactory(t)
+	factory.EXPECT().Clients(mock.Anything, "default").Return(clients, nil).Once()
+
+	lister := NewResourceLister(store, factory, []SupportedResource{
+		{GroupKind: schema.GroupKind{Group: provisioningresources.WildcardGroupPrefix + collection, Kind: "DataSource"}},
+	})
+
+	got, err := lister.List(context.Background(), "default", repository)
+	require.NoError(t, err)
+	require.Equal(t, []provisioning.ResourceListItem{
+		{Path: "pl-1.json", Group: "playlist.grafana.app", Resource: "playlists", Name: "pl-1", Title: "Playlist 1"},
+		{Path: "ds-1.json", Group: member, Resource: "datasources", Name: "ds-1", Hash: "abc", Title: "Test data"},
+	}, got.Items, "the collection's index item is replaced by the one addressed through its served group")
+}
+
+func managedDataSource(t *testing.T, gvk schema.GroupVersionKind, name, repository, path string) *unstructured.Unstructured {
+	t.Helper()
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": gvk.GroupVersion().String(),
+		"kind":       gvk.Kind,
+		"metadata":   map[string]any{"name": name, "namespace": "default"},
+		"spec":       map[string]any{"title": "Test data"},
+	}}
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	meta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: repository})
+	meta.SetSourceProperties(utils.SourceProperties{Path: path, Checksum: "abc"})
+	return obj
 }
