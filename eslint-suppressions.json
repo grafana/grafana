@@ -1193,11 +1193,6 @@
       "count": 2
     }
   },
-  "public/app/core/components/ForgottenPassword/ForgottenPassword.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
   "public/app/core/components/GraphNG/GraphNG.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
