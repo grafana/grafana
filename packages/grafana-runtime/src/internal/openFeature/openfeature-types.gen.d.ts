@@ -176,6 +176,7 @@ declare module "@openfeature/core" {
     | "grafana.customizableMegaMenu"
     | "cujTracking"
     | "grafana.dashboardSettingsRedesign"
+    | "grafana.multiTenantHomepage"
     | "grafana.onDemandDiagnostics"
     | "assistant.dashboardPlanning"
     | "assistant.dashboardPlanBuildingScreen"
