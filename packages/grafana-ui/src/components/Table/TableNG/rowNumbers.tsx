@@ -31,10 +31,14 @@ export function withRowNumbers(result: GridColumns, rows: TableRow[], width: num
   if (!width) {
     return result;
   }
+  let key = ROW_NUMBER_KEY;
+  while (result.columns.some((column) => column.key === key)) {
+    key += '_';
+  }
   // Use displayed parent positions, independently of source indexes, pagination, and expansion placeholders.
   const positions = new Map(rows.filter((row) => row.__depth === 0).map((row, index) => [row, index + 1]));
   const column: Column<TableRow, TableSummaryRow> = {
-    key: ROW_NUMBER_KEY,
+    key,
     name: t('grafana-ui.table.row-numbers', 'Row numbers'),
     width,
     minWidth: width,
@@ -52,7 +56,7 @@ export function withRowNumbers(result: GridColumns, rows: TableRow[], width: num
   };
   return {
     columns: [column, ...result.columns],
-    cellRootRenderers: { ...result.cellRootRenderers, [ROW_NUMBER_KEY]: (key, props) => <Cell key={key} {...props} /> },
+    cellRootRenderers: { ...result.cellRootRenderers, [key]: (key, props) => <Cell key={key} {...props} /> },
   };
 }
 

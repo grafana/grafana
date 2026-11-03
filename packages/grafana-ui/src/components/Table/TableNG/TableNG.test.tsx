@@ -3846,6 +3846,15 @@ describe('generated row numbers', () => {
   const positions = (grid: HTMLElement) =>
     Array.from(grid.querySelectorAll('[role="gridcell"][aria-colindex="1"]'), (cell) => cell.textContent);
 
+  it('preserves fields whose display names resemble the generated gutter key', () => {
+    const frame = createBasicDataFrame();
+    frame.fields[0].config = { ...frame.fields[0].config, displayName: '__grafana_row_number__' };
+    frame.fields[1].config = { ...frame.fields[1].config, displayName: '__grafana_row_number___' };
+    render(<TableNG data={frame} width={800} height={600} rowNumbersEnabled showRowNumbers />);
+    const cells = screen.getAllByRole('gridcell').map((cell) => cell.textContent);
+    expect(cells).toEqual(['1', 'A1', '1', '2', 'A2', '2', '3', 'A3', '3']);
+  });
+
   it.each([false, true])(
     'respects feature availability and keeps the gutter outside the field list (enabled=%s)',
     async (enabled) => {

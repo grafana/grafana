@@ -2404,8 +2404,8 @@ it('ignores gutter resizing and preserves the field name and scope for ordinary 
   const onResize = jest.fn();
   const { result } = renderHook(() => useColumnResize(onResize, 'nested'));
   act(() => {
-    result.current!({ key: ROW_NUMBER_KEY, name: 'Row numbers' }, 32);
-    result.current!({ key: 'Value', name: 'Value' }, 140.9);
+    result.current!({ key: ROW_NUMBER_KEY + '__', name: 'Row numbers', resizable: false }, 32);
+    result.current!({ key: ROW_NUMBER_KEY, name: ROW_NUMBER_KEY }, 140.9);
   });
-  expect(onResize.mock.calls).toEqual([['Value', 140, 'nested']]);
+  expect(onResize.mock.calls).toEqual([[ROW_NUMBER_KEY, 140, 'nested']]);
 });
