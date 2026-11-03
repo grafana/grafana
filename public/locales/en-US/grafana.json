@@ -9680,6 +9680,12 @@
       "when": "WHEN"
     },
     "dynamic-threshold": {
+      "add-mapping": "Add mapping",
+      "change-label-body": "Changing the match label clears the existing mappings and default threshold.",
+      "change-label-confirm": "Change label",
+      "change-label-title": "Change match label?",
+      "default-threshold": "Default threshold",
+      "default-threshold-input": "Default threshold {{number}}",
       "error-default-range": "The default threshold lower value must be less than its upper value.",
       "error-default-threshold-arity": "The default threshold requires {{expectedArity}} value(s).",
       "error-default-threshold-value": "The default threshold must contain finite values.",
@@ -9695,7 +9701,23 @@
       "error-operator": "Select an operator.",
       "error-query-length": "Generated SQL must not exceed {{limit}} characters.",
       "error-value-field": "Select a numeric field.",
-      "error-value-field-label": "The numeric value field cannot be a label column."
+      "error-value-field-label": "The numeric value field cannot be a label column.",
+      "input-query": "Input query",
+      "label-value": "Label value",
+      "lower-threshold": "Lower threshold",
+      "match-label": "Match label",
+      "move-down": "Move mapping down",
+      "move-up": "Move mapping up",
+      "numeric-field": "Numeric field",
+      "operator": "Operator",
+      "remove-mapping": "Remove mapping",
+      "schema-empty": "No fields found",
+      "schema-empty-body": "The selected query returned no usable fields.",
+      "schema-error": "Unable to load source schema",
+      "schema-loading": "Loading source schema",
+      "threshold": "Threshold",
+      "threshold-input": "Threshold {{number}}",
+      "upper-threshold": "Upper threshold"
     },
     "expression-query-editor": {
       "helper-text-sql": "Run MySQL-dialect SQL against the tables returned from your data sources. Data source queries (ie \"A\", \"B\") are available as tables and referenced by query-name. Fields are available as columns, as returned from the data source.",

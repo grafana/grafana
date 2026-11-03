@@ -22,6 +22,7 @@ import { Threshold } from 'app/features/expressions/components/Threshold';
 import {
   type ExpressionQuery,
   ExpressionQueryType,
+  type SqlExpressionQuery,
   expressionTypes,
   getExpressionLabel,
 } from 'app/features/expressions/types';
@@ -37,11 +38,20 @@ import { AlertStateTag } from '../rules/AlertStateTag';
 import { ExpressionStatusIndicator } from './ExpressionStatusIndicator';
 import { formatLabels, formatSeriesValue, getSeriesLabels, getSeriesName, getSeriesValue, isEmptySeries } from './util';
 
+const DynamicThresholdEditor = lazy(() =>
+  import('app/features/expressions/components/DynamicThreshold/DynamicThresholdEditor').then((module) => ({
+    default: module.DynamicThresholdEditor,
+  }))
+);
 const SqlExpr = lazy(() =>
   import('app/features/expressions/components/SqlExpressions/SqlExpr').then((module) => ({
     default: module.SqlExpr,
   }))
 );
+
+function isDynamicThresholdQuery(query: ExpressionQuery): query is SqlExpressionQuery {
+  return 'dynamicThreshold' in query && Boolean(query.dynamicThreshold);
+}
 
 interface ExpressionProps {
   isAlertCondition?: boolean;
@@ -138,13 +148,17 @@ export const Expression: FC<ExpressionProps> = ({
         case ExpressionQueryType.sql:
           return (
             <Suspense fallback={null}>
-              <SqlExpr
-                onChange={(query) => onChangeQuery(query)}
-                query={query}
-                refIds={availableRefIds}
-                alerting
-                queries={[]}
-              />
+              {isDynamicThresholdQuery(query) ? (
+                <DynamicThresholdEditor query={query} queries={queries} onChange={onChangeQuery} />
+              ) : (
+                <SqlExpr
+                  onChange={(query) => onChangeQuery(query)}
+                  query={query}
+                  refIds={availableRefIds}
+                  alerting
+                  queries={[]}
+                />
+              )}
             </Suspense>
           );
 

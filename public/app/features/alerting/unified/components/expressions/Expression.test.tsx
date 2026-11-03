@@ -1,10 +1,75 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { times } from 'lodash';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import { type DataFrame, toDataFrame } from '@grafana/data';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import { ExpressionQueryType, type SqlExpressionQuery } from 'app/features/expressions/types';
 
-import { ExpressionResult, getGroupedByStateAndSeriesCount } from './Expression';
+import { EvalFunction } from '../../../state/alertDef';
+
+import { Expression, ExpressionResult, getGroupedByStateAndSeriesCount } from './Expression';
+
+jest.mock('app/features/expressions/components/DynamicThreshold/DynamicThresholdEditor', () => ({
+  DynamicThresholdEditor: () => <div data-testid="dynamic-threshold-editor" />,
+}));
+
+jest.mock('app/features/expressions/components/SqlExpressions/SqlExpr', () => ({
+  SqlExpr: ({ onChange, query }: { onChange: (query: SqlExpressionQuery) => void; query: SqlExpressionQuery }) => {
+    const React = jest.requireActual('react');
+    React.useEffect(() => onChange({ ...query, expression: 'SELECT * FROM placeholder' }), [onChange, query]);
+    return <div data-testid="sql-expression-editor" />;
+  },
+}));
+
+describe('Expression editor routing', () => {
+  it('does not mount SqlExpr or seed placeholder SQL for new dynamic threshold metadata', async () => {
+    const onChangeQuery = jest.fn();
+    const query: SqlExpressionQuery = {
+      refId: 'B',
+      datasource: ExpressionDatasourceRef,
+      type: ExpressionQueryType.sql,
+      expression: '',
+      format: 'alerting',
+      dynamicThreshold: {
+        version: 1,
+        policy: {
+          inputRefId: '',
+          valueField: '',
+          matchLabel: '',
+          labelColumns: [],
+          evaluator: EvalFunction.IsAbove,
+          mappings: [],
+          defaultThreshold: [],
+        },
+      },
+    };
+
+    function TestExpression() {
+      const form = useForm({ defaultValues: { type: 'grafana' } });
+      return (
+        <FormProvider {...form}>
+          <Expression
+            query={query}
+            queries={[]}
+            onSetCondition={jest.fn()}
+            onUpdateRefId={jest.fn()}
+            onRemoveExpression={jest.fn()}
+            onChangeQuery={onChangeQuery}
+          />
+        </FormProvider>
+      );
+    }
+
+    render(<TestExpression />);
+
+    expect(await screen.findByTestId('dynamic-threshold-editor')).toBeInTheDocument();
+    expect(screen.queryByTestId('sql-expression-editor')).not.toBeInTheDocument();
+    expect(onChangeQuery).not.toHaveBeenCalled();
+    expect(query.expression).toBe('');
+  });
+});
 
 describe('TestResult', () => {
   it('should be able to render', () => {
