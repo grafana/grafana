@@ -43,7 +43,7 @@ export function StackedAddBar({ variant, afterId }: StackedAddBarProps) {
           }}
         >
           <Icon name="plus" size="sm" />
-          {t('query-editor-next.stacked.add-bar.add-transformation', 'Add transformation')}
+          {t('query-editor-next.sidebar.add-transformation', 'Add transformation')}
         </button>
       </div>
     );
@@ -64,7 +64,7 @@ export function StackedAddBar({ variant, afterId }: StackedAddBarProps) {
           aria-label={t('query-editor-next.sidebar.add-below', 'Add below {{id}}', { id: afterId })}
         >
           <Icon name="plus" size="sm" />
-          {t('query-editor-next.stacked.add-bar.add', 'Add')}
+          {t('query-editor-next.sidebar.add', 'Add')}
         </button>
       </Dropdown>
     </div>

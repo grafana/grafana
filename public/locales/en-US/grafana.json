@@ -16013,10 +16013,6 @@
       "view-toggle": "View"
     },
     "stacked": {
-      "add-bar": {
-        "add": "Add",
-        "add-transformation": "Add transformation"
-      },
       "exit": "Exit stacked view",
       "exit-aria-label": "Exit stacked view",
       "hidden-aria-label": "Hidden",
