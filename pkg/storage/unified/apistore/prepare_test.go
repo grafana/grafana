@@ -518,16 +518,17 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 		require.NoError(t, s.ensureRepoManagedByParentFolder(context.Background(), obj))
 	})
 
-	t.Run("reads the parent folder from storage as the service and refuses an unmanaged resource in a repo-managed folder", func(t *testing.T) {
+	t.Run("reads the parent folder from storage as the caller and refuses an unmanaged resource in a repo-managed folder", func(t *testing.T) {
 		store := storedFolderStore(t, &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"})
 		serve := store.read
 		var gotKey *resourcepb.ResourceKey
 		store.read = func(ctx context.Context, req *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
 			gotKey = req.GetKey()
-			require.True(t, identity.IsServiceIdentity(ctx), "the folder should be read as the service")
-			requester, err := identity.GetRequester(ctx)
-			require.NoError(t, err)
-			require.Equal(t, "default", requester.GetNamespace())
+			require.False(t, identity.IsServiceIdentity(ctx), "the folder should be read as the caller")
+			caller, ok := authlib.AuthInfoFrom(ctx)
+			require.True(t, ok)
+			require.Equal(t, authlib.TypeUser, caller.GetIdentityType())
+			require.Equal(t, "u1", caller.GetIdentifier())
 			return serve(ctx, req)
 		}
 		s := &Storage{opts: StorageOptions{EnableFolderSupport: true}, store: store}

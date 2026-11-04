@@ -404,12 +404,12 @@ func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils
 	return ensureSameRepoManager(folder, obj)
 }
 
-// getParentFolder reads the folder that contains obj from storage as the service, so the
-// consistency check does not depend on whether the caller may read that folder.
+// getParentFolder reads the folder that contains obj from storage as the caller, so the
+// consistency check fails when the caller cannot read that folder.
 func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) (utils.GrafanaMetaAccessor, error) {
 	name := obj.GetFolder()
 	gr := folders.FolderResourceInfo.GroupResource()
-	rsp, err := s.store.Read(identity.WithServiceIdentityForSingleNamespaceContext(ctx, obj.GetNamespace()), &resourcepb.ReadRequest{
+	rsp, err := s.store.Read(ctx, &resourcepb.ReadRequest{
 		Key: &resourcepb.ResourceKey{
 			Group:     gr.Group,
 			Resource:  gr.Resource,
