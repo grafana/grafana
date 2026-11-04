@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 
+import { locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { ConfirmModal, EmptyState, LinkButton, TextLink } from '@grafana/ui';
+import { useFlagPlaylistSlideshows } from '@grafana/runtime/internal';
+import { ConfirmModal, EmptyState, LinkButton, Stack, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { useUrlParams } from 'app/core/navigation/hooks';
@@ -18,6 +20,7 @@ import { searchPlaylists, useCanWritePlaylists } from './utils';
 
 export const PlaylistPage = () => {
   const canWrite = useCanWritePlaylists();
+  const slideshowsEnabled = useFlagPlaylistSlideshows();
   const { data, isLoading } = useListPlaylistQuery({});
   const [deletePlaylist] = useDeletePlaylistMutation();
   // Set after a repository-managed playlist is committed to a new branch; surfaces the PR banner.
@@ -53,11 +56,18 @@ export const PlaylistPage = () => {
   return (
     <Page
       actions={
-        canWrite && showSearch ? (
-          <LinkButton href="/playlists/new">
-            <Trans i18nKey="playlist-page.create-button.title">New playlist</Trans>
-          </LinkButton>
-        ) : undefined
+        <Stack gap={1}>
+          {slideshowsEnabled && (
+            <LinkButton variant="secondary" href={locationUtil.assureBaseUrl('/slideshows')}>
+              <Trans i18nKey="playlist-page.slideshows-button.title">Try Slideshows (preview)</Trans>
+            </LinkButton>
+          )}
+          {canWrite && showSearch && (
+            <LinkButton href="/playlists/new">
+              <Trans i18nKey="playlist-page.create-button.title">New playlist</Trans>
+            </LinkButton>
+          )}
+        </Stack>
       }
       navId="dashboards/playlists"
     >

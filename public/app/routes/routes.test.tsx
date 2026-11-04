@@ -1,6 +1,7 @@
 import { type ComponentType, Suspense } from 'react';
-import { render, screen } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -215,4 +216,38 @@ describe('variables route guards', () => {
       expect(getRouteRolesGuard('/dashboards/variables/edit/:name')()).toEqual([]);
     }
   );
+});
+
+describe('slideshow routes', () => {
+  const slideshowPaths = ['/slideshows', '/slideshows/play/:uid', '/slideshows/new', '/slideshows/edit/:uid'];
+
+  afterEach(async () => {
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
+  it('are not registered while the toggle is off', async () => {
+    await act(async () => {
+      setTestFlags({ 'playlist.slideshows': false });
+    });
+
+    const paths = getAppRoutes().map((r) => r.path);
+    for (const path of slideshowPaths) {
+      expect(paths).not.toContain(path);
+    }
+    // The dashboard playlist routes next to them are unaffected.
+    expect(paths).toContain('/playlists');
+  });
+
+  it('are registered while the toggle is on', async () => {
+    await act(async () => {
+      setTestFlags({ 'playlist.slideshows': true });
+    });
+
+    const paths = getAppRoutes().map((r) => r.path);
+    for (const path of slideshowPaths) {
+      expect(paths).toContain(path);
+    }
+  });
 });

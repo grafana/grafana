@@ -50,6 +50,21 @@ describe('PlaylistPage', () => {
     });
   });
 
+  it('links to the slideshows preview while the slideshows toggle is on', async () => {
+    setTestFlags({ playlistsRBAC: false, 'playlist.slideshows': true });
+    setup();
+    expect(await screen.findByRole('link', { name: 'Try Slideshows (preview)' })).toHaveAttribute(
+      'href',
+      '/slideshows'
+    );
+  });
+
+  it('does not link to slideshows while the slideshows toggle is off', async () => {
+    setup();
+    expect(await screen.findByText('There are no playlists created yet')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Try Slideshows (preview)' })).not.toBeInTheDocument();
+  });
+
   describe('when mounted without a playlist', () => {
     it('page should load', () => {
       setup();
