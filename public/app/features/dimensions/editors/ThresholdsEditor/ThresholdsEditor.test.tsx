@@ -1,12 +1,21 @@
-import { screen, within } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { render as rtlRender, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { render } from 'test/test-utils';
+import { type ReactElement } from 'react';
 
 import { createTheme, type Threshold, ThresholdsMode } from '@grafana/data';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { mockThemeContext } from '@grafana/ui';
 
 import { ThresholdsEditor, type Props } from './ThresholdsEditor';
+
+function render(ui: ReactElement) {
+  return rtlRender(ui, {
+    wrapper: ({ children }) => (
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>{children}</OpenFeatureProvider>
+    ),
+  });
+}
 
 let props: Props;
 

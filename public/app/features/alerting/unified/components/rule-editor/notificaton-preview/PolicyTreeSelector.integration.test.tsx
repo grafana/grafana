@@ -166,7 +166,8 @@ describe('PolicyTreeSelector', () => {
 
       const { user } = renderRuleEditor();
 
-      await user.type(await ui.inputs.name.find(), 'my great new rule');
+      await user.click(await ui.inputs.name.find());
+      await user.paste('my great new rule');
       await selectFolderAndGroup(user);
 
       // Wait for the collapsed policy section
@@ -199,7 +200,8 @@ describe('PolicyTreeSelector', () => {
 
       const { user } = renderRuleEditor();
 
-      await user.type(await ui.inputs.name.find(), 'my great new rule');
+      await user.click(await ui.inputs.name.find());
+      await user.paste('my great new rule');
       await selectFolderAndGroup(user);
 
       // Wait for collapsed state

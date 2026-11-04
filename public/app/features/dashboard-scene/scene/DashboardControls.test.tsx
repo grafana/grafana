@@ -694,25 +694,6 @@ describe('DashboardControls', () => {
       );
     });
 
-    it('renders library panel actions instead of Discard/Back when editing a library panel', () => {
-      const { controls } = buildLibraryPanelEditControlsScene();
-
-      renderInGrafanaContext(<controls.Component model={controls} />);
-
-      expect(
-        screen.getByTestId(selectors.components.NavToolbar.editDashboard.discardChangesButton)
-      ).toBeInTheDocument();
-      expect(
-        screen.getByTestId(selectors.components.NavToolbar.editDashboard.unlinkLibraryPanelButton)
-      ).toBeInTheDocument();
-      expect(
-        screen.getByTestId(selectors.components.NavToolbar.editDashboard.saveLibraryPanelButton)
-      ).toBeInTheDocument();
-      expect(
-        screen.queryByTestId(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
-      ).not.toBeInTheDocument();
-    });
-
     it('discards the panel changes via PanelEditor.onDiscard when Discard is clicked', async () => {
       const { controls, editPanel } = buildPanelEditControlsScene({
         uid: 'panel-edit-discard',
@@ -786,11 +767,24 @@ describe('DashboardControls', () => {
       expect(saveSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('shortens the library panel action labels and keeps the full text in tooltips', async () => {
+    it('renders library panel actions with short labels and full tooltips instead of Back', async () => {
       const user = userEvent.setup();
       const { controls } = buildLibraryPanelEditControlsScene();
 
       renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.discardChangesButton)
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.unlinkLibraryPanelButton)
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.saveLibraryPanelButton)
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
+      ).not.toBeInTheDocument();
 
       const discardButton = screen.getByTestId(selectors.components.NavToolbar.editDashboard.discardChangesButton);
       const unlinkButton = screen.getByTestId(selectors.components.NavToolbar.editDashboard.unlinkLibraryPanelButton);
