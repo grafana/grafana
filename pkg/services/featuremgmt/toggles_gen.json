@@ -6530,7 +6530,8 @@
       "metadata": {
         "name": "useScopesNavigationEndpoint",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-03-31T15:20:00Z"
+        "creationTimestamp": "2025-03-31T15:20:00Z",
+        "deletionTimestamp": "2026-11-04T17:35:30Z"
       },
       "spec": {
         "description": "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
