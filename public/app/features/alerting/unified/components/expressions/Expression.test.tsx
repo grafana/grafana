@@ -168,6 +168,51 @@ describe('Expression editor routing', () => {
   });
 });
 
+describe('Expression header and description', () => {
+  const dynamicThresholdDescription = 'Create an alert condition with thresholds that vary by label value.';
+
+  beforeEach(() => {
+    setTestFlags({ [FlagKeys.AlertingDynamicThresholdExpression]: true });
+  });
+
+  it('shows the dynamic threshold title and description in builder mode', async () => {
+    renderExpression(makeSqlQuery(completePolicy, generatedSql(completePolicy)));
+
+    expect(await screen.findByTestId('dynamic-threshold-editor')).toBeInTheDocument();
+    expect(screen.getByText('Dynamic threshold')).toBeInTheDocument();
+    expect(screen.getByText(dynamicThresholdDescription)).toBeInTheDocument();
+    expect(screen.queryByText('SQL')).not.toBeInTheDocument();
+  });
+
+  it('shows SQL for plain SQL expressions', async () => {
+    renderExpression(makeSqlQuery(undefined, 'SELECT * FROM A'));
+
+    expect(await screen.findByTestId('sql-expression-editor')).toBeInTheDocument();
+    expect(screen.getByText('SQL')).toBeInTheDocument();
+    expect(screen.queryByText('Dynamic threshold')).not.toBeInTheDocument();
+    expect(screen.queryByText(dynamicThresholdDescription)).not.toBeInTheDocument();
+  });
+
+  it('shows SQL when the saved SQL does not match the policy', async () => {
+    renderExpression(makeSqlQuery(completePolicy, `${generatedSql(completePolicy)}\n-- hand edited`));
+
+    expect(await screen.findByText('Dynamic threshold settings discarded')).toBeInTheDocument();
+    expect(screen.getByText('SQL')).toBeInTheDocument();
+    expect(screen.queryByText('Dynamic threshold')).not.toBeInTheDocument();
+    expect(screen.queryByText(dynamicThresholdDescription)).not.toBeInTheDocument();
+  });
+
+  it('shows SQL when the feature flag is off', async () => {
+    setTestFlags({ [FlagKeys.AlertingDynamicThresholdExpression]: false });
+    renderExpression(makeSqlQuery(completePolicy, generatedSql(completePolicy)));
+
+    expect(await screen.findByTestId('sql-expression-editor')).toBeInTheDocument();
+    expect(screen.getByText('SQL')).toBeInTheDocument();
+    expect(screen.queryByText('Dynamic threshold')).not.toBeInTheDocument();
+    expect(screen.queryByText(dynamicThresholdDescription)).not.toBeInTheDocument();
+  });
+});
+
 describe('TestResult', () => {
   it('should be able to render', () => {
     expect(() => {
