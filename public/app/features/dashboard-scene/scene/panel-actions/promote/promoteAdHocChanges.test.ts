@@ -1,3 +1,5 @@
+import { waitFor } from 'test/test-utils';
+
 import { type PanelInteraction } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
@@ -44,7 +46,9 @@ async function buildScene(version: 'v1' | 'v2' = 'v2') {
   // Loaded dashboards keep the JSON they were built from.
   dashboard.serializer.initialSaveModel = dashboard.getSaveModel();
   activateFullSceneTree(dashboard);
-  await new Promise((r) => setTimeout(r, 1));
+  await waitFor(() => {
+    expect(panel.getPlugin()?.panelInteractions?.interactions).toHaveLength(2);
+  });
   panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, hideColumn);
   return { panel, dashboard };
 }

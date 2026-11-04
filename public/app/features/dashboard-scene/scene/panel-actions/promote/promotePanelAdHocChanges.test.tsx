@@ -1,3 +1,4 @@
+import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
@@ -15,11 +16,16 @@ import { DefaultGridLayoutManager } from '../../layout-default/DefaultGridLayout
 
 import { PromotePanelAdHocChangesEvent } from './utils';
 
-// The rebuilt dashboard runs its built-in annotation query, which is not under test.
+const annotationDataSource = new MockDataSourceApi('-- Grafana --');
+annotationDataSource.annotations = {};
+const datasourceSrv = new DatasourceSrvMock(annotationDataSource, {
+  '-- Grafana --': annotationDataSource,
+});
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({ get: () => new Promise(() => {}) }),
+  getDataSourceSrv: () => datasourceSrv,
 }));
+
 const mockSaveDashboard = jest.fn();
 jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
   ...jest.requireActual('app/features/browse-dashboards/api/browseDashboardsAPI'),
@@ -59,7 +65,9 @@ async function buildScene({ startEditing = false, withOtherTable = false } = {})
   // the rebuilt dashboard.
   let deactivateDashboard = dashboard.activate();
   deactivate.push(() => deactivateDashboard(), panel.activate());
-  await act(() => new Promise((r) => setTimeout(r, 1)));
+  await waitFor(() => {
+    expect(panel.getPlugin()?.panelInteractions?.interactions).toHaveLength(1);
+  });
   panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, [adHocChange]);
   if (withOtherTable) {
     otherPanel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, [otherAdHocChange]);

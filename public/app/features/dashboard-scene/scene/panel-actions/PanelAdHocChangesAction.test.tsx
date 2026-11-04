@@ -1,4 +1,4 @@
-import { act, render, screen, userEvent } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
@@ -76,7 +76,9 @@ async function buildScene({
   dashboard.serializer.initialSaveModel = dashboard.getSaveModel();
 
   activateFullSceneTree(dashboard);
-  await act(() => new Promise((r) => setTimeout(r, 1)));
+  await waitFor(() => {
+    expect(panel.getPlugin()?.panelInteractions?.interactions).toHaveLength(1);
+  });
 
   render(<PanelAdHocChangesAction panel={panel} />);
 
