@@ -886,6 +886,31 @@ func TestValidateJob(t *testing.T) {
 			},
 		},
 		{
+			// Filtering the disabled declaration first left the active collection covering it.
+			name: "push action with a member declared on its own and disabled",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{Name: "ds-1", Kind: "DataSource", Group: "prometheus.datasource.grafana.app"},
+						},
+					},
+				},
+			},
+			supportedResources: []provisioning.SupportedResource{
+				{Group: "prometheus.datasource.grafana.app", Kind: "DataSource", Disabled: true},
+				{Group: "*.datasource.grafana.app", Kind: "DataSource"},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0].group")
+				require.Contains(t, err.Error(), "prometheus.datasource.grafana.app")
+			},
+		},
+		{
 			name: "push action naming the collection group itself",
 			job: &provisioning.Job{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},

@@ -331,9 +331,28 @@ func TestExpandCollections(t *testing.T) {
 			{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
 			{Group: "loki.datasource.grafana.app", Kind: "DataSource"},
 		}, groupKinds(expanded))
-		require.Empty(t, expanded[0].Collection, "the explicit declaration keeps its own identity")
-		require.Equal(t, "datasource.grafana.app", expanded[1].Collection,
-			"an expanded member records the group it is stored under")
+		for _, r := range expanded {
+			require.Equal(t, "datasource.grafana.app", r.Collection,
+				"a member records the group it is stored under however it was declared")
+		}
+	})
+
+	// Filtering the disabled declaration before expansion let the collection put the member back.
+	t.Run("does not expand onto a member declared on its own and disabled", func(t *testing.T) {
+		configured, err := ParseSupportedResources([]string{
+			"prometheus.datasource.grafana.app/DataSource:disabled",
+			"*.datasource.grafana.app/DataSource",
+		})
+		require.NoError(t, err)
+
+		expanded, err := expandCollections(t.Context(), installed, configured)
+		require.NoError(t, err)
+		require.Equal(t, []schema.GroupKind{
+			{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
+			{Group: "loki.datasource.grafana.app", Kind: "DataSource"},
+		}, groupKinds(expanded))
+		require.False(t, expanded[0].IsActive(), "the declaration is what the pipeline acts on")
+		require.True(t, expanded[1].IsActive())
 	})
 
 	t.Run("expands a group covered by two patterns once", func(t *testing.T) {
@@ -429,16 +448,20 @@ func TestClientFactorySupportedResourcesRetriesAfterFailure(t *testing.T) {
 	require.Equal(t, 2, provider.calls, "the first success is cached")
 }
 
-// flakyClientsProvider fails until err is cleared, then serves a discovery client with no groups.
+// flakyClientsProvider fails until err is cleared, then serves discovery (no groups by default).
 type flakyClientsProvider struct {
-	err   error
-	calls int
+	err       error
+	calls     int
+	discovery client.DiscoveryClient
 }
 
 func (p *flakyClientsProvider) GetClientsForKind(context.Context, schema.GroupVersionKind) (dynamic.Interface, client.DiscoveryClient, error) {
 	p.calls++
 	if p.err != nil {
 		return nil, nil, p.err
+	}
+	if p.discovery != nil {
+		return nil, p.discovery, nil
 	}
 	return nil, emptyDiscoveryClient{}, nil
 }
@@ -451,4 +474,34 @@ type emptyDiscoveryClient struct{ client.DiscoveryClient }
 
 func (emptyDiscoveryClient) PreferredResources(context.Context, func(string) bool) ([]*metav1.APIResourceList, error) {
 	return nil, nil
+}
+
+// A disabled declaration must survive expansion: dropping it first let the collection covering it
+// put the member back, and the pipeline then acted on a resource configured as inert.
+func TestClientFactorySupportedResourcesDropsDisabledMembers(t *testing.T) {
+	configured, err := ParseSupportedResources([]string{
+		"prometheus.datasource.grafana.app/DataSource:disabled",
+		"*.datasource.grafana.app/DataSource",
+	})
+	require.NoError(t, err)
+
+	factory := &clientFactory{
+		clientsProvider:     &flakyClientsProvider{discovery: servedDiscoveryClient{}},
+		configuredResources: configured,
+	}
+
+	supported, err := factory.supportedResources(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, []schema.GroupKind{{Group: "loki.datasource.grafana.app", Kind: "DataSource"}},
+		groupKinds(supported))
+}
+
+// servedDiscoveryClient serves two data source plugin groups.
+type servedDiscoveryClient struct{ client.DiscoveryClient }
+
+func (servedDiscoveryClient) PreferredResources(context.Context, func(string) bool) ([]*metav1.APIResourceList, error) {
+	return []*metav1.APIResourceList{
+		{GroupVersion: "prometheus.datasource.grafana.app/v0alpha1", APIResources: []metav1.APIResource{{Name: "datasources", Kind: "DataSource"}}},
+		{GroupVersion: "loki.datasource.grafana.app/v0alpha1", APIResources: []metav1.APIResource{{Name: "datasources", Kind: "DataSource"}}},
+	}, nil
 }

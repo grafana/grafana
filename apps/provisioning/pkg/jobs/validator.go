@@ -198,6 +198,11 @@ func validateExportResourceRefs(base *field.Path, refs []provisioning.ResourceRe
 			}
 			kindOK = true
 			if r.Group != "" {
+				// A member declared on its own and disabled stays excluded, even though the
+				// collection covering it is active.
+				if declaredDisabled(supportedResources, r.Group, r.Kind) {
+					continue
+				}
 				if resources.CoversGroup(s.Group, r.Group) {
 					groupOK = true
 					break
@@ -245,6 +250,17 @@ func activeExportResources(supportedResources []provisioning.SupportedResource) 
 		}}
 	}
 	return active
+}
+
+// declaredDisabled reports whether a group and kind are declared as disabled. Only a served group
+// can match, so a disabled collection is never what answers here.
+func declaredDisabled(supportedResources []provisioning.SupportedResource, group, kind string) bool {
+	for _, r := range supportedResources {
+		if r.Disabled && r.Group == group && r.Kind == kind {
+			return true
+		}
+	}
+	return false
 }
 
 // supportedKinds returns the kinds in supported, for use in error messages.

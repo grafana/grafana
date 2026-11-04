@@ -209,12 +209,16 @@ func (f *clientFactory) supportedResources(ctx context.Context) ([]SupportedReso
 	if f.expanded != nil {
 		return f.expanded, nil
 	}
-	expanded, err := expandCollections(ctx, discoveryKinds(f.clientsProvider, f.configuredResources), f.configuredResources)
+	active := activeResources(f.configuredResources)
+	// Expansion sees the disabled declarations too: a member declared on its own and disabled is
+	// excluded even when an active collection covers it. Discovery does not, so a failure in a
+	// collection nobody acts on is tolerated like any other irrelevant group.
+	expanded, err := expandCollections(ctx, discoveryKinds(f.clientsProvider, active), f.configuredResources)
 	if err != nil {
 		return nil, err
 	}
-	f.expanded = expanded
-	return expanded, nil
+	f.expanded = activeResources(expanded)
+	return f.expanded, nil
 }
 
 // TODO: Rename to NamespacedClients
@@ -312,7 +316,7 @@ func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.G
 func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...SupportedResource) ClientFactory {
 	return &clientFactory{
 		clientsProvider:     newSingleAPIClients(configProvider),
-		configuredResources: activeResources(defaultSupportedResources(supported)),
+		configuredResources: defaultSupportedResources(supported),
 	}
 }
 
@@ -671,9 +675,9 @@ var nonProvisionableGroups = sets.New(
 func expandCollections(ctx context.Context, listKinds groupKindLister, configured []SupportedResource) ([]SupportedResource, error) {
 	var served []schema.GroupKind
 	var listed bool
-	// A pattern may cover a group that is also declared on its own, or that another pattern
+	// A collection may cover a group that is also declared on its own, or that another collection
 	// covers. The same group and kind twice would be listed twice, and full sync deletes the
-	// duplicate as an orphan at the same path. An explicit declaration wins over a pattern.
+	// duplicate as an orphan at the same path. An explicit declaration wins, disabled included.
 	emitted := sets.New[schema.GroupKind]()
 	for _, r := range configured {
 		if !provisioningresources.IsCollection(r.Group) {
@@ -684,6 +688,9 @@ func expandCollections(ctx context.Context, listKinds groupKindLister, configure
 	out := make([]SupportedResource, 0, len(configured))
 	for _, r := range configured {
 		if !provisioningresources.IsCollection(r.Group) {
+			// Stored under the collection that holds it, however it was declared: the index
+			// counts it there, and the export quota is checked against those counts.
+			r.Collection = storingCollection(configured, r.GroupKind)
 			out = append(out, r)
 			continue
 		}
@@ -707,6 +714,18 @@ func expandCollections(ctx context.Context, listKinds groupKindLister, configure
 		}
 	}
 	return out, nil
+}
+
+// storingCollection returns the group a declared resource is stored under, when a configured
+// collection covers it, and empty when none does.
+func storingCollection(configured []SupportedResource, gk schema.GroupKind) string {
+	for _, r := range configured {
+		if provisioningresources.IsCollection(r.Group) && r.Kind == gk.Kind &&
+			provisioningresources.CoversGroup(r.Group, gk.Group) {
+			return provisioningresources.CollectionGroup(r.Group)
+		}
+	}
+	return ""
 }
 
 // groupKindLister lists the group/kind pairs a server serves.
