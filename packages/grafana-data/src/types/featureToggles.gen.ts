@@ -1073,6 +1073,11 @@ export interface FeatureToggles {
   */
   kubernetesUsersRedirect?: boolean;
   /**
+  * Disables the remote cache for signed ID tokens; a new token is signed on every authentication
+  * @default false
+  */
+  idTokenCacheDisabled?: boolean;
+  /**
   * Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
   * @default false
   */

@@ -51,6 +51,8 @@ const originalElementsFromPoint = document.elementsFromPoint;
 let panelRect = { left: 100, top: 200, width: 400, height: 300 };
 /** Where the dashboard content (the overlay and its container) sits. */
 let contentRect = { left: 0, top: 0, width: 1024, height: 768 };
+/** Where the dashboard body's scroll container sits: over the whole content unless a test moves it. */
+let bodyRect: typeof contentRect | undefined;
 /** Where an extension sidebar element sits: none unless a test places one. */
 let sidebarRect = { left: 0, top: 0, width: 0, height: 0 };
 
@@ -60,6 +62,7 @@ beforeEach(() => {
   panelRect = { left: 100, top: 200, width: 400, height: 300 };
   contentRect = { left: 0, top: 0, width: 1024, height: 768 };
   sidebarRect = { left: 0, top: 0, width: 0, height: 0 };
+  bodyRect = undefined;
   jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
     const { left, top, width, height } = this.hasAttribute('data-viz-panel-key')
       ? panelRect
@@ -71,7 +74,11 @@ beforeEach(() => {
             ? { left: 0, top: 0, width: 1024, height: 64 }
             : this.getAttribute('data-dashboard-element-type') === 'variable'
               ? { left: 20, top: 10, width: 200, height: 40 }
-              : contentRect;
+              : this.hasAttribute('data-dashboard-actions')
+                ? { left: 600, top: 10, width: 400, height: 40 }
+                : this.getAttribute('data-testid') === 'data-testid DashboardSidebarSplitter body container'
+                  ? (bodyRect ?? contentRect)
+                  : contentRect;
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a measured rect without toJSON
     return { left, top, width, height, right: left + width, bottom: top + height, x: left, y: top } as DOMRect;
   });
@@ -1165,6 +1172,86 @@ describe('region capture', () => {
     }
   });
 
+  describe('a region drawn from the dashboard controls', () => {
+    const drawFromControls = async (to: { x: number; y: number }) => {
+      const { session, annotate } = setup();
+      const body = mountDashboardBody();
+      // The body scrolls below the 64px controls bar, as the sidebar layout renders it.
+      bodyRect = { left: 0, top: 64, width: 1024, height: 704 };
+      let pick: Promise<unknown> = Promise.resolve();
+      act(() => {
+        pick = session.pickRegion(live());
+      });
+      const overlay = screen.getByTestId('dashboard-composer-overlay');
+      fireEvent.pointerDown(overlay, { clientX: 20, clientY: 10, button: 0 });
+      fireEvent.pointerUp(overlay, { clientX: to.x, clientY: to.y });
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
+      const { regionId } = ((await pick) as { ref: { kind: 'region'; regionId: string } }).ref;
+      annotate([item({ id: 'r', ref: { kind: 'region', regionId }, point: { x: 1, y: 0 } })]);
+      const scrollBody = async (top: number) => {
+        body.scrollTop = top;
+        fireEvent.scroll(body);
+        await nextFrame();
+      };
+      return { session, body, regionId, scrollBody };
+    };
+
+    it('is captured, and stays on the controls while the body scrolls when it lies wholly on them', async () => {
+      const { session, body, regionId, scrollBody } = await drawFromControls({ x: 300, y: 50 });
+      try {
+        await expect(capture(session, regionId)).resolves.toMatchObject({ status: 'ready' });
+
+        await scrollBody(100);
+
+        expect(screen.getByTestId('composer-annotation-outline-r')).toHaveStyle({ left: '20px', top: '10px' });
+        await expect(capture(session, regionId)).resolves.toMatchObject({ status: 'ready' });
+      } finally {
+        body.remove();
+      }
+    });
+
+    it('is captured, and moves with the body content it covers when it runs into it', async () => {
+      const { session, body, regionId, scrollBody } = await drawFromControls({ x: 300, y: 300 });
+      try {
+        await expect(capture(session, regionId)).resolves.toMatchObject({ status: 'ready' });
+
+        await scrollBody(100);
+
+        expect(screen.getByTestId('composer-annotation-outline-r')).toHaveStyle({ left: '20px', top: '-90px' });
+        await expect(capture(session, regionId)).resolves.toEqual({ status: 'failed', reason: 'not_visible' });
+      } finally {
+        body.remove();
+      }
+    });
+  });
+
+  it("refuses a region over the dashboard's own buttons, and captures one beside them", async () => {
+    const { session } = setup();
+    const container = screen.getByTestId('dashboard-composer-overlay').parentElement!.parentElement!;
+    // The time picker, refresh, share and mode buttons, on the right of the controls bar.
+    const chrome = document.createElement('div');
+    chrome.setAttribute('data-dashboard-actions', '');
+    container.appendChild(chrome);
+    const draw = async (from: { x: number; y: number }, to: { x: number; y: number }) => {
+      let pick: Promise<unknown> = Promise.resolve();
+      act(() => {
+        pick = session.pickRegion(live());
+      });
+      const overlay = screen.getByTestId('dashboard-composer-overlay');
+      fireEvent.pointerDown(overlay, { clientX: from.x, clientY: from.y, button: 0 });
+      fireEvent.pointerUp(overlay, { clientX: to.x, clientY: to.y });
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
+      return ((await pick) as { ref: { kind: 'region'; regionId: string } }).ref.regionId;
+    };
+
+    const overButtons = await draw({ x: 500, y: 5 }, { x: 700, y: 300 });
+    await expect(capture(session, overButtons)).resolves.toEqual({ status: 'failed', reason: 'controls' });
+    expect(mockRenderNode).not.toHaveBeenCalled();
+
+    const overVariables = await draw({ x: 10, y: 5 }, { x: 590, y: 300 });
+    await expect(capture(session, overVariables)).resolves.toMatchObject({ status: 'ready' });
+  });
+
   it('reports tainted content as unsupported and an oversized dashboard as too_large', async () => {
     const { session } = setup();
     const regionId = await drawRegion(session);
@@ -1865,23 +1952,88 @@ describe('variables', () => {
     });
   });
 
-  it('leaves the value picker working', async () => {
+  it('picks a variable from a click on its value, like a panel, without opening the value picker', async () => {
     let scene: DashboardScene | undefined;
     const { startPick } = setup((s) => {
       withVariable(s);
       scene = s;
     });
-    const settled = jest.fn();
-    startPick().then(settled);
+    const pick = startPick();
+    const { value } = mountVariableControl(scene!);
+    const onOpen = jest.fn();
+    value.addEventListener('mousedown', onOpen);
+    value.addEventListener('click', onOpen);
+
+    fireEvent.pointerDown(value, { clientX: 150, clientY: 30, button: 0 });
+    fireEvent.mouseDown(value);
+    fireEvent.pointerUp(value, { clientX: 150, clientY: 30 });
+    fireEvent.click(value);
+
+    expect(onOpen).not.toHaveBeenCalled();
+    await expect(pick).resolves.toMatchObject({ ref: { kind: 'variable', name: 'env' }, label: 'Environment' });
+  });
+
+  it('draws a region from a drag that starts on a variable, and keeps its click from picking it', async () => {
+    let scene: DashboardScene | undefined;
+    const { startPick } = setup((s) => {
+      withVariable(s);
+      scene = s;
+    });
+    const pick = startPick();
+    const { value } = mountVariableControl(scene!);
+
+    fireEvent.pointerDown(value, { clientX: 150, clientY: 30, button: 0 });
+    fireEvent.pointerMove(window, { clientX: 400, clientY: 300 });
+    fireEvent.pointerUp(value, { clientX: 400, clientY: 300 });
+    fireEvent.click(value);
+
+    await expect(pick).resolves.toMatchObject({
+      ref: { kind: 'region' },
+      rect: { x: 150 / 1024, y: 30 / 768, width: 250 / 1024, height: 270 / 768 },
+    });
+  });
+
+  it('outlines a variable under the pointer, as it does a panel', async () => {
+    let scene: DashboardScene | undefined;
+    const { startPick } = setup((s) => {
+      withVariable(s);
+      scene = s;
+    });
+    startPick();
+    const { value } = mountVariableControl(scene!);
+
+    fireEvent.pointerMove(value, { clientX: 150, clientY: 30 });
+    await nextFrame();
+
+    // Nothing else is drawn yet: the only box on the drawn layer is the hover outline.
+    expect(screen.getByTestId('dashboard-composer-overlay').children).toHaveLength(1);
+    expect(screen.getByTestId('dashboard-composer-overlay').firstElementChild).toHaveStyle({
+      left: '20px',
+      top: '10px',
+      width: '200px',
+      height: '40px',
+    });
+    expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent(
+      'Click to comment on a variable, or drag to draw a region'
+    );
+  });
+
+  it('leaves the value picker working with the Region tool', async () => {
+    let scene: DashboardScene | undefined;
+    const { session } = setup((s) => {
+      withVariable(s);
+      scene = s;
+    });
+    act(() => {
+      session.pickRegion(new AbortController().signal);
+    });
     const { value } = mountVariableControl(scene!);
     const onOpen = jest.fn();
     value.addEventListener('click', onOpen);
 
     fireEvent.click(value);
-    await act(async () => {});
 
     expect(onOpen).toHaveBeenCalledTimes(1);
-    expect(settled).not.toHaveBeenCalled();
   });
 
   it('lists variables a region covers among its intersects', async () => {
