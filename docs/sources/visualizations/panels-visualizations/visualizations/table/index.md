@@ -179,9 +179,7 @@ To filter column values, follow these steps:
 
 Columns with filters applied have a filter icon displayed next to the title.
 
-{{< figure src="/static/img/docs/tables/filtered-column.png" max-width="100px" alt="Filtered column" class="docs-image--no-shadow" >}}
-
-<!-- TODO: Update screenshot -->
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-filtered-column-v13.3.png" max-width="140px" alt="Filtered column" >}}
 
 To remove the filter, click the filter icon and then click **Clear** or **Clear filter**.
 The icon no longer displays.
@@ -207,9 +205,7 @@ To enable cell filters, follow these steps:
 1. Mouse over the cell to display the menu icon.
 1. Click the menu and select either **Filter for value** or **Filter out value**:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-adhoc-filter-v12.2.png" max-width="500px" alt="Table with filter icon displayed on a cell" >}}
-
-<!-- TODO: Update screenshot -->
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-adhoc-filter-v13.3.png" max-width="350px" alt="Table with filter icon displayed on a cell" >}}
 
 For more information about applying filters this way, refer to [Cross-filtering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#dashboard-drilldown-with-filters).
 
@@ -217,10 +213,11 @@ For more information about applying filters this way, refer to [Cross-filtering]
 
 Click a column title to change the sort order from default to descending to ascending.
 Each time you click, the sort order changes to the next option in the cycle and then back to the default for the table.
-You can sort multiple columns by holding the `Cmd` or `Ctrl` key
-and clicking the column name.
+You can sort multiple columns by holding the `Cmd` or `Ctrl` key and clicking the column name.
 
-{{< figure src="/static/img/docs/tables/sort-descending.png" max-width="350px" alt="Sort descending" class="docs-image--no-shadow" >}}
+When you sort a column, an arrow displays next to column title indicating the direction of the sorting:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-sort-descending-v13.3.png" max-width="120px" alt="Sort descending" >}}
 
 ## Dataset selector
 
@@ -243,7 +240,7 @@ To sort nested and top-level rows in nested tables, click a column title to chan
 Each time you click, the sort order changes to the next option in the cycle.
 You can sort multiple columns by holding the `Cmd` or `Ctrl` key and clicking the column name.
 
-{{< figure src="/static/img/docs/tables/sort-descending.png" max-width="350px" alt="Sort descending" class="docs-image--no-shadow" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-sort-descending-v13.3.png" max-width="120px" alt="Sort descending" >}}
 
 To control the display of fields inside a nested table&mdash;for example, to apply thresholds, units, or a different cell type&mdash;use [field overrides](#field-overrides) with the **Target fields** option set to **Nested**.
 For more information, refer to [Apply overrides to nested table fields](#apply-overrides-to-nested-table-fields).
