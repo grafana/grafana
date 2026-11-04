@@ -223,6 +223,22 @@ describe('recording edits to pending changes', () => {
     expect(history.record).toHaveBeenCalledTimes(2);
   });
 
+  // Leaving would otherwise warn about an edit of the pending changes the reload replaced.
+  it('leaves nothing unsaved once the scene was reloaded in place after an edit failed to record', async () => {
+    let model = specWith({ hello: { title: 'Hello' } });
+    const scene = fakeScene(() => model);
+    startRecordingPendingChanges(scene, model);
+    const history = fakeHistory();
+    history.record.mockRejectedValueOnce(new Error('offline'));
+
+    model = specWith({ hello: { title: 'First' } });
+    await recordPendingChange(scene, history, 'First edit');
+    expect(hasUnrecordedPendingChange(scene)).toBe(true);
+
+    resumeRecordingPendingChanges(scene);
+    expect(hasUnrecordedPendingChange(scene)).toBe(false);
+  });
+
   // A queue that stayed rejected would fail Apply's and Undo's wait; a scene cleared of the conflict
   // would let them act on pending changes the page never loaded.
   it('keeps the scene superseded, and its edits unrecorded, after the reload for a conflict failed', async () => {

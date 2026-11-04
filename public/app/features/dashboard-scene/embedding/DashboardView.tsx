@@ -85,7 +85,8 @@ export function DashboardView({
     const open = stateManager.state.dashboard;
     const options = { uid, route: DashboardRoutes.Embedded, pendingChanges };
     void (async () => {
-      const inPlace = open ? await reloadDashboardInPlace(stateManager, open, options) : false;
+      // A reload in place that fails is tried as a fresh one, which reports its own failure.
+      const inPlace = open ? await reloadDashboardInPlace(stateManager, open, options).catch(() => false) : false;
       if (!inPlace) {
         await stateManager.reloadDashboardFresh(options);
       }

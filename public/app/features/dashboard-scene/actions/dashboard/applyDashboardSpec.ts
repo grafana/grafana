@@ -164,12 +164,15 @@ export function swapInReloadedDashboard(scene: DashboardScene, reloaded: Dashboa
   if (editPanelKey) {
     urlSync?.retainEditPanelAcrossRebuild(editPanelKey);
   }
-  const urlUpdates = urlUpdatesForSwap(scene, {
-    incoming,
-    outgoingKeys: Object.keys(sceneUtils.getUrlState(scene)),
-    fromSpec: () => specUrlState(scene),
-    toSpec: () => incoming,
-  });
+  // An embedded dashboard isn't synced with the page URL, which belongs to the page around it.
+  const urlUpdates = scene.state.meta.isEmbedded
+    ? {}
+    : urlUpdatesForSwap(scene, {
+        incoming,
+        outgoingKeys: Object.keys(sceneUtils.getUrlState(scene)),
+        fromSpec: () => specUrlState(scene),
+        toSpec: () => incoming,
+      });
   const { isEditing, editable, mode } = scene.state;
   const tabs = openTabs(scene);
   scene.setState({

@@ -89,11 +89,14 @@ export function startRecordingPendingChanges(scene: DashboardScene, stored: Dash
 /**
  * After newer pending changes were reloaded into `scene` in place: it shows them now, so it is no
  * longer superseded, and an edit session records onto them from here, as edit mode starting would.
- * Recordings queued before the reload are of the pending changes it replaced, and are dropped.
+ * Recordings queued before the reload, and an edit that failed to record, are of the pending changes
+ * it replaced: they are dropped.
  */
 export function resumeRecordingPendingChanges(scene: DashboardScene) {
   reloads.set(scene, (reloads.get(scene) ?? 0) + 1);
   superseded.delete(scene);
+  // An edit that failed to record was of the replaced pending changes too: nothing is left unsaved.
+  unrecorded.delete(scene);
   baselines.delete(scene);
   const preview = getScenePendingChangePreview(scene.state);
   if (scene.state.isEditing && preview && getPendingChangesHistory(scene.state)) {

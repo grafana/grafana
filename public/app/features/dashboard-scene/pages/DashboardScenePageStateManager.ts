@@ -1799,13 +1799,32 @@ setPendingChangesPageReload(async (uid, editing) => {
   return false;
 });
 
+/** Each scene's in-place reloads, one at a time, and the latest one asked for. */
+const inPlaceReloads = new WeakMap<DashboardScene, { latest: object; queue: Promise<unknown> }>();
+
 /**
  * Loads the dashboard `options` names again into `open`, the scene `manager` shows, without its
  * loading state or a new scene, so the view keeps its scroll position, URL state, tab and edit mode.
- * False when it can't, for the caller to fall back to a fresh load: a v1 dashboard, or the view moved
- * to another scene meanwhile.
+ * Reloads of one scene run one after another, and one a newer reload overtook is skipped: an older
+ * response can't replace a newer dashboard. True then, as the newer reload shows it. False when it
+ * can't, for the caller to fall back to a fresh load: a v1 dashboard, or the view moved to another
+ * scene meanwhile.
  */
-export async function reloadDashboardInPlace(
+export function reloadDashboardInPlace(
+  manager: UnifiedDashboardScenePageStateManager,
+  open: DashboardScene,
+  options: LoadDashboardOptions
+): Promise<boolean> {
+  const reloads = inPlaceReloads.get(open) ?? { latest: {}, queue: Promise.resolve() };
+  const reload = {};
+  reloads.latest = reload;
+  const run = reloads.queue.then(() => reloads.latest !== reload || swapInFromServer(manager, open, options));
+  reloads.queue = run.catch(() => undefined);
+  inPlaceReloads.set(open, reloads);
+  return run;
+}
+
+async function swapInFromServer(
   manager: UnifiedDashboardScenePageStateManager,
   open: DashboardScene,
   options: LoadDashboardOptions
@@ -1816,7 +1835,12 @@ export async function reloadDashboardInPlace(
   if (!rsp || !isDashboardV2Resource(rsp) || manager.state.dashboard !== open) {
     return false;
   }
-  const reloaded = manager.transformResponseToScene(rsp, options);
+  // As a load does: predefined variables (global, folder) join the dashboard's before it is built.
+  const enriched = await manager.enrichLoadOptions(rsp, options);
+  if (manager.state.dashboard !== open) {
+    return false;
+  }
+  const reloaded = manager.transformResponseToScene(rsp, enriched);
   if (!reloaded) {
     return false;
   }
