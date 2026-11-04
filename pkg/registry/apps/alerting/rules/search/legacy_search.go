@@ -5,6 +5,7 @@ import (
 	"time"
 
 	prom_model "github.com/prometheus/common/model"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/searchencoding"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -32,6 +33,10 @@ func (c *legacyClient) Search(ctx context.Context, req *Query) (*Result, error) 
 	}
 
 	f := extractFilters(req)
+	labelRegexes, err := compileLabelRegexes(req.Regexes)
+	if err != nil {
+		return nil, apierrors.NewBadRequest(err.Error())
+	}
 	if f.ruleType != "" && f.ruleType != ruleTypeForResource(req) {
 		return &Result{Hits: []Hit{}, TotalHitsExact: true}, nil
 	}
@@ -65,12 +70,15 @@ func (c *legacyClient) Search(ctx context.Context, req *Query) (*Result, error) 
 		if !matchLabels(r, f.labelMatchers) {
 			continue
 		}
+		if !matchLabelRegexes(r, labelRegexes) {
+			continue
+		}
 		if !matchSourceDatasourceUIDs(r, f.datasourceUIDs) {
 			continue
 		}
 		filtered = append(filtered, r)
 	}
-	perKindSortRules(filtered, f.sortField, f.sortDesc)
+	perKindSortRules(filtered, req.Sort)
 
 	total := len(filtered)
 	page := applyOffset(filtered, req.Offset, req.Limit)

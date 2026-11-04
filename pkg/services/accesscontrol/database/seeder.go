@@ -14,8 +14,24 @@ import (
 
 const basicRolePermBatchSize = 500
 
+// RoleStore implements accesscontrol.RoleStore. Every table name goes through
+// table, so callers can run the queries against a schema other than the
+// connection's default.
+type RoleStore struct {
+	sql   db.DB
+	table func(name string) string
+}
+
+func NewRoleStore(sql db.DB, table func(name string) string) *RoleStore {
+	return &RoleStore{sql: sql, table: table}
+}
+
+func (s *RoleStore) quotedTable(name string) string {
+	return s.sql.Quote(s.table(name))
+}
+
 // LoadRoles returns all fixed and plugin roles (global org) with permissions, indexed by role name.
-func (s *AccessControlStore) LoadRoles(ctx context.Context) (map[string]*accesscontrol.RoleDTO, error) {
+func (s *RoleStore) LoadRoles(ctx context.Context) (map[string]*accesscontrol.RoleDTO, error) {
 	out := map[string]*accesscontrol.RoleDTO{}
 
 	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
@@ -34,7 +50,7 @@ func (s *AccessControlStore) LoadRoles(ctx context.Context) (map[string]*accessc
 		}
 
 		roles := []roleRow{}
-		if err := sess.Table("role").
+		if err := sess.Table(s.table("role")).
 			Where("org_id = ?", accesscontrol.GlobalOrgID).
 			Where("(name LIKE ? OR name LIKE ?)", accesscontrol.FixedRolePrefix+"%", accesscontrol.PluginRolePrefix+"%").
 			Find(&roles); err != nil {
@@ -72,7 +88,7 @@ func (s *AccessControlStore) LoadRoles(ctx context.Context) (map[string]*accessc
 			Scope  string `xorm:"scope"`
 		}
 		perms := []permRow{}
-		if err := sess.Table("permission").In("role_id", roleIDs...).Find(&perms); err != nil {
+		if err := sess.Table(s.table("permission")).In("role_id", roleIDs...).Find(&perms); err != nil {
 			return err
 		}
 
@@ -94,13 +110,13 @@ func (s *AccessControlStore) LoadRoles(ctx context.Context) (map[string]*accessc
 	return out, err
 }
 
-func (s *AccessControlStore) SetRole(ctx context.Context, existingRole *accesscontrol.RoleDTO, wantedRole accesscontrol.RoleDTO) error {
+func (s *RoleStore) SetRole(ctx context.Context, existingRole *accesscontrol.RoleDTO, wantedRole accesscontrol.RoleDTO) error {
 	if existingRole == nil {
 		return nil
 	}
 
 	return s.sql.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Table("role").
+		_, err := sess.Table(s.table("role")).
 			Where("id = ? AND org_id = ?", existingRole.ID, accesscontrol.GlobalOrgID).
 			Update(map[string]any{
 				"display_name": wantedRole.DisplayName,
@@ -114,7 +130,7 @@ func (s *AccessControlStore) SetRole(ctx context.Context, existingRole *accessco
 	})
 }
 
-func (s *AccessControlStore) SetPermissions(ctx context.Context, existingRole *accesscontrol.RoleDTO, wantedRole accesscontrol.RoleDTO) error {
+func (s *RoleStore) SetPermissions(ctx context.Context, existingRole *accesscontrol.RoleDTO, wantedRole accesscontrol.RoleDTO) error {
 	if existingRole == nil {
 		return nil
 	}
@@ -161,13 +177,13 @@ func (s *AccessControlStore) SetPermissions(ctx context.Context, existingRole *a
 
 	return s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		if len(toRemove) > 0 {
-			if err := DeleteRolePermissionTuples(sess, s.sql.GetDBType(), existingRole.ID, toRemove); err != nil {
+			if err := deleteRolePermissionTuples(sess, s.sql.GetDBType(), s.quotedTable("permission"), existingRole.ID, toRemove); err != nil {
 				return err
 			}
 		}
 
 		if len(toAdd) > 0 {
-			_, err := sess.InsertMulti(toAdd)
+			_, err := sess.Table(s.table("permission")).InsertMulti(toAdd)
 			return err
 		}
 
@@ -175,7 +191,7 @@ func (s *AccessControlStore) SetPermissions(ctx context.Context, existingRole *a
 	})
 }
 
-func (s *AccessControlStore) CreateRole(ctx context.Context, role accesscontrol.RoleDTO) error {
+func (s *RoleStore) CreateRole(ctx context.Context, role accesscontrol.RoleDTO) error {
 	now := time.Now()
 	uid := role.UID
 	if uid == "" && (strings.HasPrefix(role.Name, accesscontrol.FixedRolePrefix) || strings.HasPrefix(role.Name, accesscontrol.PluginRolePrefix)) {
@@ -195,7 +211,7 @@ func (s *AccessControlStore) CreateRole(ctx context.Context, role accesscontrol.
 	}
 
 	return s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		if _, err := sess.Insert(&r); err != nil {
+		if _, err := sess.Table(s.table("role")).Insert(&r); err != nil {
 			return err
 		}
 
@@ -226,12 +242,12 @@ func (s *AccessControlStore) CreateRole(ctx context.Context, role accesscontrol.
 			perm.Kind, perm.Attribute, perm.Identifier = accesscontrol.SplitScope(perm.Scope)
 			perms = append(perms, perm)
 		}
-		_, err := sess.InsertMulti(perms)
+		_, err := sess.Table(s.table("permission")).InsertMulti(perms)
 		return err
 	})
 }
 
-func (s *AccessControlStore) DeleteRoles(ctx context.Context, roleUIDs []string) error {
+func (s *RoleStore) DeleteRoles(ctx context.Context, roleUIDs []string) error {
 	if len(roleUIDs) == 0 {
 		return nil
 	}
@@ -247,7 +263,7 @@ func (s *AccessControlStore) DeleteRoles(ctx context.Context, roleUIDs []string)
 			UID string `xorm:"uid"`
 		}
 		rows := []row{}
-		if err := sess.Table("role").
+		if err := sess.Table(s.table("role")).
 			Where("org_id = ?", accesscontrol.GlobalOrgID).
 			In("uid", uids...).
 			Find(&rows); err != nil {
@@ -264,31 +280,31 @@ func (s *AccessControlStore) DeleteRoles(ctx context.Context, roleUIDs []string)
 
 		// Remove permissions and assignments first to avoid FK issues (if enabled).
 		{
-			args := append([]any{"DELETE FROM permission WHERE role_id IN (?" + strings.Repeat(",?", len(roleIDs)-1) + ")"}, roleIDs...)
+			args := append([]any{"DELETE FROM " + s.quotedTable("permission") + " WHERE role_id IN (?" + strings.Repeat(",?", len(roleIDs)-1) + ")"}, roleIDs...)
 			if _, err := sess.Exec(args...); err != nil {
 				return err
 			}
 		}
 		{
-			args := append([]any{"DELETE FROM user_role WHERE role_id IN (?" + strings.Repeat(",?", len(roleIDs)-1) + ")"}, roleIDs...)
+			args := append([]any{"DELETE FROM " + s.quotedTable("user_role") + " WHERE role_id IN (?" + strings.Repeat(",?", len(roleIDs)-1) + ")"}, roleIDs...)
 			if _, err := sess.Exec(args...); err != nil {
 				return err
 			}
 		}
 		{
-			args := append([]any{"DELETE FROM team_role WHERE role_id IN (?" + strings.Repeat(",?", len(roleIDs)-1) + ")"}, roleIDs...)
+			args := append([]any{"DELETE FROM " + s.quotedTable("team_role") + " WHERE role_id IN (?" + strings.Repeat(",?", len(roleIDs)-1) + ")"}, roleIDs...)
 			if _, err := sess.Exec(args...); err != nil {
 				return err
 			}
 		}
 		{
-			args := append([]any{"DELETE FROM builtin_role WHERE role_id IN (?" + strings.Repeat(",?", len(roleIDs)-1) + ")"}, roleIDs...)
+			args := append([]any{"DELETE FROM " + s.quotedTable("builtin_role") + " WHERE role_id IN (?" + strings.Repeat(",?", len(roleIDs)-1) + ")"}, roleIDs...)
 			if _, err := sess.Exec(args...); err != nil {
 				return err
 			}
 		}
 
-		args := append([]any{"DELETE FROM role WHERE org_id = ? AND uid IN (?" + strings.Repeat(",?", len(uids)-1) + ")", accesscontrol.GlobalOrgID}, uids...)
+		args := append([]any{"DELETE FROM " + s.quotedTable("role") + " WHERE org_id = ? AND uid IN (?" + strings.Repeat(",?", len(uids)-1) + ")", accesscontrol.GlobalOrgID}, uids...)
 		_, err := sess.Exec(args...)
 		return err
 	})
@@ -424,6 +440,10 @@ func EnsureBasicRolesExist(sess *db.Session, defs map[string]*accesscontrol.Role
 // It uses a row-constructor IN clause where supported (MySQL, Postgres, SQLite) and falls back
 // to a WHERE ... OR ... form for MSSQL.
 func DeleteRolePermissionTuples(sess *db.Session, dbType core.DbType, roleID int64, perms []accesscontrol.SeedPermission) error {
+	return deleteRolePermissionTuples(sess, dbType, "permission", roleID, perms)
+}
+
+func deleteRolePermissionTuples(sess *db.Session, dbType core.DbType, permissionTable string, roleID int64, perms []accesscontrol.SeedPermission) error {
 	if len(perms) == 0 {
 		return nil
 	}
@@ -439,7 +459,7 @@ func DeleteRolePermissionTuples(sess *db.Session, dbType core.DbType, roleID int
 		}
 		_, err := sess.Exec(
 			append([]any{
-				"DELETE FROM permission WHERE role_id = ? AND (" + strings.Join(where, " OR ") + ")",
+				"DELETE FROM " + permissionTable + " WHERE role_id = ? AND (" + strings.Join(where, " OR ") + ")",
 			}, args...)...,
 		)
 		return err
@@ -450,7 +470,7 @@ func DeleteRolePermissionTuples(sess *db.Session, dbType core.DbType, roleID int
 	for _, p := range perms {
 		args = append(args, p.Action, p.Scope)
 	}
-	sql := "DELETE FROM permission WHERE role_id = ? AND (action, scope) IN (" +
+	sql := "DELETE FROM " + permissionTable + " WHERE role_id = ? AND (action, scope) IN (" +
 		strings.Repeat("(?, ?),", len(perms)-1) + "(?, ?))"
 	_, err := sess.Exec(append([]any{sql}, args...)...)
 	return err

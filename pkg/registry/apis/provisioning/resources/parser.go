@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -201,9 +202,9 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 
 	if parsed.GVK.Group == folder.GROUP && parsed.GVK.Kind == folder.FolderResourceInfo.GroupVersionKind().Kind {
 		// _folder.json is a system-managed folder manifest written by the provisioning
-		// layer when the provisioningFolderMetadata flag is on. It is the only folder-typed
-		// file allowed through the files endpoint (e.g. for GET requests).
-		if !r.folderMetadataEnabled || !IsFolderMetadataFile(info.Path) {
+		// layer. It is the only folder-typed file allowed through the files endpoint
+		// (e.g. for GET requests).
+		if !IsFolderMetadataFile(info.Path) {
 			return nil, NewResourceValidationError(errors.New("cannot declare folders through files"))
 		}
 	}
@@ -283,13 +284,12 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 }
 
 // resolveFolderID derives the folder annotation value for a folder-contained
-// resource from its file path. When folder metadata is enabled and the parent
-// directory has a _folder.json, its stable UID is preferred over the
-// hash-derived ID.
+// resource from its file path. When the parent directory has a _folder.json,
+// its stable UID is preferred over the hash-derived ID.
 func (r *parser) resolveFolderID(ctx context.Context, info *repository.FileInfo) string {
 	dirPath := safepath.Dir(info.Path)
 	// _folder.json represents the directory it lives in, so its parent is one level above.
-	if r.folderMetadataEnabled && IsFolderMetadataFile(info.Path) {
+	if IsFolderMetadataFile(info.Path) {
 		dirPath = safepath.Dir(dirPath)
 	}
 	if dirPath == "" {
@@ -297,9 +297,9 @@ func (r *parser) resolveFolderID(ctx context.Context, info *repository.FileInfo)
 	}
 
 	folderID := ParseFolder(dirPath, r.repo.Name).ID
-	// When folder metadata is enabled and the parent folder has a _folder.json,
+	// When the parent folder has a _folder.json,
 	// use the stable UID from that file instead of the hash-derived one.
-	if r.folderMetadataEnabled && r.reader != nil {
+	if r.reader != nil {
 		if meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, info.Ref); err == nil && meta.Name != "" {
 			folderID = meta.Name
 		} else if err != nil && errors.Is(err, repository.ErrRefNotFound) {
@@ -325,7 +325,7 @@ func (f *ParsedResource) SameIdentity(other *ParsedResource) bool {
 }
 
 // ExistingFolder returns the grafana.app/folder annotation from the existing
-// Grafana object, or "" if Existing is nil or has no folder annotation.
+// Grafana object, or "" when it has no real parent folder.
 func (f *ParsedResource) ExistingFolder() string {
 	if f.Existing == nil {
 		return ""
@@ -334,7 +334,17 @@ func (f *ParsedResource) ExistingFolder() string {
 	if err != nil {
 		return ""
 	}
-	return meta.GetFolder()
+	return foldermodel.ToLegacyFolderUID(meta.GetFolder())
+}
+
+func (f *ParsedResource) IsFolder() bool {
+	return f.GVR.GroupResource() == FolderResource.GroupResource()
+}
+
+// IsPreviewRead classifies a read using its ref; callers must use it only for reads.
+// Folder manifests retain their existing authorization.
+func (f *ParsedResource) IsPreviewRead(configuredBranch string) bool {
+	return !f.IsFolder() && f.Info != nil && f.Info.Ref != "" && f.Info.Ref != configuredBranch
 }
 
 func (f *ParsedResource) DryRun(ctx context.Context) error {

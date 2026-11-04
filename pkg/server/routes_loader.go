@@ -2,10 +2,14 @@ package server
 
 import (
 	"fmt"
+	"net"
+	"slices"
 
 	"github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/authz"
@@ -15,6 +19,8 @@ import (
 )
 
 func (s *ModuleServer) provideRoutesLoader() (router.RoutesLoader, error) {
+	defaultRouterCoreURL(s.cfg, s.log)
+
 	accessClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracer, s.registerer)
 	if err != nil {
 		return nil, fmt.Errorf("creating router authorization client: %w", err)
@@ -24,11 +30,44 @@ func (s *ModuleServer) provideRoutesLoader() (router.RoutesLoader, error) {
 	if err != nil {
 		return nil, fmt.Errorf("creating router unified storage client: %w", err)
 	}
-	return InitializeRoutesLoader(s.cfg, router.RoutesLoaderClients{
+	clients := router.RoutesLoaderClients{
 		Resource:           client,
 		RESTConfigProvider: router.NewLoopbackRestConfigProvider(s.httpServerRouter),
 		Access:             accessClient,
-	})
+	}
+
+	// Only the local plugin loader needs the SQL database, which
+	// InitializeRoutesLoader opens and migrates.
+	if cloud, err := router.ProvideCloudRoutesLoader(s.cfg, clients, s.tracer, s.features, s.registerer); err != nil || cloud != nil {
+		return cloud, err
+	}
+	return InitializeRoutesLoader(s.cfg, clients)
+}
+
+// defaultRouterCoreURL points core_url at cloud-core-apps-server on this process's
+// own HTTP server when both run in the process and core_url isn't set.
+func defaultRouterCoreURL(cfg *setting.Cfg, logger log.Logger) {
+	if !slices.Contains(cfg.Target, modules.CloudCoreAppsServer) {
+		return
+	}
+	// cloud-core-apps-server can serve only its operator, which leaves nothing at the path.
+	if !cfg.SectionWithEnvOverrides("cloud_core_apps_server").Key("manifests").MustBool(true) {
+		return
+	}
+	// The router's manifests client doesn't trust the instrumentation server's
+	// certificate.
+	if cfg.Protocol == setting.HTTPSScheme {
+		logger.Warn("The router cannot default core_url to cloud-core-apps-server in this process over HTTPS. Set [cloud_router] core_url to serve its apps.")
+		return
+	}
+	host := cfg.HTTPAddr
+	if ip := net.ParseIP(host); host == "" || (ip != nil && ip.IsUnspecified()) {
+		host = "127.0.0.1"
+	}
+	url := "http://" + net.JoinHostPort(host, cfg.HTTPPort) + modules.CloudCoreAppsServerPath
+	if router.SetDefaultCoreURL(cfg, url) {
+		logger.Info("The router has not been configured with core_url. Because cloud-core-apps-server runs in this process, the router is serving its apps from this process's HTTP server.", "core_url", url)
+	}
 }
 
 func (s *ModuleServer) routerStorageClient(accessClient types.AccessClient) (resource.ResourceClient, error) {

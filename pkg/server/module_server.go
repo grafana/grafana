@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/swagger"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -72,13 +73,12 @@ func NewModule(opts Options,
 	license licensing.Licensing,
 	moduleRegisterer ModuleRegisterer,
 	kvStore resourcekv.KV,
-	experimentalKV *resource.ExperimentalKVOptions, // Optional alternative KV for flagged use-cases; nil in OSS
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
 	reconcileCRDs []schema.GroupVersionResource,
 	reconcilerState reconciler.StateStore,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, vectorMetrics, reg, promGatherer, tracer, license, moduleRegisterer, kvStore, experimentalKV, hooksService, storeProvider, reconcileCRDs, reconcilerState)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, vectorMetrics, reg, promGatherer, tracer, license, moduleRegisterer, kvStore, hooksService, storeProvider, reconcileCRDs, reconcilerState)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,6 @@ func newModuleServer(opts Options,
 	license licensing.Licensing,
 	moduleRegisterer ModuleRegisterer,
 	kvStore resourcekv.KV,
-	experimentalKV *resource.ExperimentalKVOptions,
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
 	reconcileCRDs []schema.GroupVersionResource,
@@ -139,7 +138,6 @@ func newModuleServer(opts Options,
 		license:          license,
 		moduleRegisterer: moduleRegisterer,
 		kvStore:          kvStore,
-		experimentalKV:   experimentalKV,
 		hooksService:     hooksService,
 		searchClient:     searchClient,
 		healthNotifier:   NewHealthNotifier(),
@@ -169,8 +167,8 @@ type ModuleServer struct {
 	mtx              sync.Mutex
 	storageBackend   resource.StorageBackend
 	kvStore          resourcekv.KV
-	experimentalKV   *resource.ExperimentalKVOptions
 	watchExpiry      resource.WatchExpiry
+	blobBackend      resource.BlobSupport
 	natsPublisher    nats.Publisher
 	natsSubscriber   nats.Subscriber
 	vectorBackend    vector.VectorBackend
@@ -256,7 +254,7 @@ func (s *ModuleServer) Run() error {
 
 	// only run the instrumentation server module if were not running a module that already contains an http server
 	m.RegisterInvisibleModule(modules.InstrumentationServer, func() (services.Service, error) {
-		if m.IsModuleEnabled(modules.All) || m.IsModuleEnabled(modules.Core) || m.IsModuleEnabled(modules.FrontendServer) {
+		if m.IsModuleEnabled(modules.All) || m.IsModuleEnabled(modules.Core) || m.IsModuleEnabled(modules.FrontendServer) || m.IsModuleEnabled(modules.SwaggerServer) {
 			return services.NewBasicService(nil, nil, nil).WithName(modules.InstrumentationServer), nil
 		}
 		return s.initInstrumentationServer()
@@ -314,6 +312,10 @@ func (s *ModuleServer) Run() error {
 		return frontend.ProvideFrontendService(s.cfg, s.features, s.promGatherer, s.registerer, s.license, s.hooksService)
 	})
 
+	m.RegisterModule(modules.SwaggerServer, func() (services.Service, error) {
+		return swagger.ProvideSwaggerService(s.cfg, s.features, s.promGatherer, s.registerer, s.license), nil
+	})
+
 	m.RegisterModule(modules.Router, s.initRouterModule)
 
 	m.RegisterModule(modules.OperatorServer, s.initOperatorServer)
@@ -321,7 +323,7 @@ func (s *ModuleServer) Run() error {
 	m.RegisterModule(modules.All, nil)
 
 	// Register modules provided by other builds (e.g. enterprise).
-	s.moduleRegisterer.RegisterModules(m)
+	s.moduleRegisterer.RegisterModules(m, s)
 
 	return m.Run(s.context)
 }
@@ -331,24 +333,20 @@ func (s *ModuleServer) initRouterModule() (services.Service, error) {
 	if err != nil {
 		return nil, fmt.Errorf("creating routes loader: %w", err)
 	}
-	routerSvc, err := grafanarouter.ProvideService(s.cfg, s.features, loader, s.registerer)
+	r, err := grafanarouter.ProvideGrafanaRouter(s.cfg)
+	if err != nil {
+		return nil, err
+	}
+	routerSvc, err := grafanarouter.ProvideService(s.cfg, s.features, loader, s.registerer, r)
 	if err != nil {
 		return nil, err
 	}
 
+	// The router service runs the loader's own lifecycle, if it has one.
 	if err := routerSvc.RegisterTargetRoutes(s.httpServerRouter, s.healthNotifier); err != nil {
 		return nil, err
 	}
-
-	// Some editions' loaders own a background lifecycle of their own (e.g.
-	// informers watching a remote apiserver to feed Notify's wake signal).
-	// Run it alongside the router service under one module so it starts and
-	// stops with the router rather than leaking independently of it.
-	lifecycle, ok := loader.(services.Service)
-	if !ok {
-		return routerSvc, nil
-	}
-	return newCompositeService(routerSvc, lifecycle)
+	return routerSvc, nil
 }
 
 // newCompositeService runs several dskit services under one, so a module
@@ -453,12 +451,12 @@ func (s *ModuleServer) initUnifiedBackendModule(storageServicesEnabled bool) fun
 			}
 			opts := append([]sql.StorageBackendOption{sql.WithVectorBackend(s.vectorBackend)},
 				unified.NatsStorageBackendOptions(s.cfg, s.natsPublisher, s.natsSubscriber, s.watchExpiry)...)
-			if s.experimentalKV != nil {
-				opts = append(opts, sql.WithExperimentalKV(s.experimentalKV))
-			}
 			s.storageBackend, err = sql.NewStorageBackend(s.cfg, eDB, s.registerer, s.storageMetrics, disableStorageServices, kvStore, nil, opts...)
 			if err != nil {
 				return nil, err
+			}
+			if s.cfg.EnableSQLKVBackend && kvStore != nil {
+				s.blobBackend = resource.NewKVBlobSupport(kvStore)
 			}
 		}
 		if backendService, ok := s.storageBackend.(services.Service); ok {
@@ -493,7 +491,7 @@ func (s *ModuleServer) initStorageServerModule() (services.Service, error) {
 			return nil, err
 		}
 	}
-	serviceOptions := append(slices.Clone(s.StorageServiceOptions), sql.WithWatchExpiry(s.watchExpiry))
+	serviceOptions := s.unifiedServiceOptions()
 	if dashboardStats != nil {
 		serviceOptions = append(serviceOptions, sql.WithDashboardStats(dashboardStats))
 	}
@@ -512,6 +510,7 @@ func (s *ModuleServer) initStorageServerModule() (services.Service, error) {
 		resourcepb.ResourceIndex_ServiceDesc.ServiceName,
 		resourcepb.ManagedObjectIndex_ServiceDesc.ServiceName,
 		resourcepb.BlobStore_ServiceDesc.ServiceName,
+		resourcepb.BlobStoreStreaming_ServiceDesc.ServiceName,
 		resourcepb.BulkStore_ServiceDesc.ServiceName,
 		resourcepb.Diagnostics_ServiceDesc.ServiceName,
 		resourcepb.Quotas_ServiceDesc.ServiceName,
@@ -535,12 +534,16 @@ func (s *ModuleServer) initZanzanaServerModule() (services.Service, error) {
 	return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer, s.storeProvider, s.reconcileCRDs, reconcilerState)
 }
 
+func (s *ModuleServer) unifiedServiceOptions() []sql.ServiceOption {
+	return append(slices.Clone(s.StorageServiceOptions), sql.WithWatchExpiry(s.watchExpiry), sql.WithBlobBackend(s.blobBackend))
+}
+
 func (s *ModuleServer) initSearchServerModule() (services.Service, error) {
 	support, err := InitializeSearchSupport(s.cfg, s.features, s.tracer, s.registerer)
 	if err != nil {
 		return nil, err
 	}
-	serviceOptions := append(slices.Clone(s.StorageServiceOptions), sql.WithWatchExpiry(s.watchExpiry))
+	serviceOptions := append(s.unifiedServiceOptions(), sql.WithGRPCDrain(s.grpcService.Drain))
 	svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, support.DocBuilders, s.indexMetrics, s.vectorMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.reranker, s.grpcService, serviceOptions...)
 	if err != nil {
 		return nil, err

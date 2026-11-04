@@ -4,8 +4,7 @@ import { render } from 'test/test-utils';
 
 import { getDefaultTimeRange, LoadingState, toDataFrame, type PanelData, type ScopedVars } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { logError, setPluginImportUtils } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { logError, setPluginImportUtils, getDataSourceInstance } from '@grafana/runtime';
 import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -27,14 +26,10 @@ jest.mock('app/features/query/diagnostics/downloadDiagnostics', () => ({
 const interpolateVariablesInQueries = jest.fn(
   (queries: DataQuery[], _scopedVars?: ScopedVars, _filters?: unknown): DataQuery[] => queries
 );
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstance: jest.fn(() => Promise.resolve({ interpolateVariablesInQueries })),
-}));
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   logError: jest.fn(),
+  getDataSourceInstance: jest.fn(() => Promise.resolve({ interpolateVariablesInQueries })),
 }));
 
 setPluginImportUtils({

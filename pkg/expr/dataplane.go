@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 
 	"github.com/grafana/dataplane/sdata"
 	"github.com/grafana/dataplane/sdata/numeric"
@@ -125,7 +126,7 @@ func handleDataplaneNumeric(frames data.Frames, sortMetrics bool) (mathexp.Resul
 		return mathexp.Results{Values: mathexp.Values{noData}}, nil
 	}
 	if sortMetrics {
-		numeric.SortNumericMetricRef(nc.Refs)
+		sortNumericMetricRefs(nc.Refs)
 	}
 	res := mathexp.Results{}
 	res.Values = make([]mathexp.Value, 0, len(nc.Refs))
@@ -138,4 +139,39 @@ func handleDataplaneNumeric(frames data.Frames, sortMetrics bool) (mathexp.Resul
 	}
 
 	return res, nil
+}
+
+// sortNumericMetricRefs orders refs exactly as numeric.SortNumericMetricRef does, but builds
+// each label string once instead of on every comparison.
+func sortNumericMetricRefs(refs []numeric.MetricRef) {
+	type keyedRef struct {
+		ref       numeric.MetricRef
+		name      string
+		hasLabels bool
+		labels    string
+	}
+	keyed := make([]keyedRef, len(refs))
+	for i, r := range refs {
+		keyed[i] = keyedRef{ref: r, name: r.GetMetricName()}
+		if l := r.GetLabels(); l != nil {
+			keyed[i].hasLabels = true
+			keyed[i].labels = l.String()
+		}
+	}
+	sort.SliceStable(keyed, func(i, j int) bool {
+		a, b := &keyed[i], &keyed[j]
+		if a.name != b.name {
+			return a.name < b.name
+		}
+		if !a.hasLabels {
+			return true
+		}
+		if !b.hasLabels {
+			return false
+		}
+		return a.labels < b.labels
+	})
+	for i := range keyed {
+		refs[i] = keyed[i].ref
+	}
 }

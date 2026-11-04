@@ -4650,8 +4650,10 @@ export type CreateOrUpdateReport = {
 export type ReportEmail = {
   /** Comma-separated list of emails to which to send the report to. */
   emails?: string;
-  /** Send the report to the emails specified in the report. Required if emails is not present. */
+  /** Numeric ID of the report. Can send either ID or UID. If both are present, UID takes precedence. */
   id?: string;
+  /** UID of the report. Can send either ID or UID. If both are present, UID takes precedence. */
+  uid?: string;
   /** Send the report to the emails specified in the report. Required if emails is not present. */
   useEmailsFromReport?: boolean;
 };
@@ -5127,7 +5129,10 @@ export type PreferencesQueryHistoryPreference = {
   homeTab?: string;
 };
 export type PreferencesSpec = {
-  /** UID for the home dashboard */
+  /** UID for the home dashboard. The reserved value "global-home" is not a
+    dashboard UID: it selects the instance default home (home_page, the
+    configured home dashboard file, or the built-in home page) instead of
+    falling through to lower-precedence preferences. */
   homeDashboardUID?: string;
   /** Explicit home URL (NOTE: this can only be modified in the system settings) */
   homeURL?: string;

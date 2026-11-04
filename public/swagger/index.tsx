@@ -21,6 +21,8 @@ import 'swagger-ui-react/swagger-ui.css';
 
 import { createRoot } from 'react-dom/client';
 
+import { ManifestsPage } from './ManifestsPage';
+import { RouterStatusPage } from './RouterStatusPage';
 import { Page } from './SwaggerPage';
 
 window.onload = () => {
@@ -37,5 +39,22 @@ window.onload = () => {
     return;
   }
   const root = createRoot(rootElement);
-  root.render(<Page />);
+  const router = new URLSearchParams(window.location.search).get('router');
+  switch (router) {
+    case '': {
+      const url = new URL(window.location.href);
+      url.searchParams.set('router', 'status');
+      window.history.replaceState(null, '', url);
+      root.render(<RouterStatusPage />);
+      break;
+    }
+    case 'status':
+      root.render(<RouterStatusPage />);
+      break;
+    case 'manifests':
+      root.render(<ManifestsPage />);
+      break;
+    default:
+      root.render(<Page />);
+  }
 };

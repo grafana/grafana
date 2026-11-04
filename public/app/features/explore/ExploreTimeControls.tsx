@@ -1,5 +1,5 @@
 import { type TimeRange, type RawTimeRange, dateTimeForTimeZone, dateMath } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { type TimeZone } from '@grafana/schema';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
@@ -85,6 +85,7 @@ export const ExploreTimeControls = ({
     <TimePickerWithHistory
       isOnCanvas
       {...timePickerCommonProps}
+      quickRanges={config.quickRanges}
       timeSyncButton={timeSyncButton}
       isSynced={syncedTimes}
       widthOverride={splitted ? window.innerWidth / 2 : undefined}

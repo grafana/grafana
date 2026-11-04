@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
@@ -20,19 +21,21 @@ import (
 // emits: distinct owners (namespace, valid user, valid team), excluding
 // orphans. See countLegacy.
 func PreferencesCountValidation(resource schema.GroupResource) migrations.ValidatorFactory {
-	return func(client resourcepb.ResourceIndexClient, driverName string) migrations.Validator {
+	return func(client resourcepb.ResourceIndexClient, opts migrations.ValidatorOptions) migrations.Validator {
 		return &preferencesCountValidator{
-			resource:   resource,
-			client:     client,
-			driverName: driverName,
+			resource:           resource,
+			client:             client,
+			driverName:         opts.DriverName,
+			enableSQLKVBackend: opts.EnableSQLKVBackend,
 		}
 	}
 }
 
 type preferencesCountValidator struct {
-	resource   schema.GroupResource
-	client     resourcepb.ResourceIndexClient
-	driverName string
+	resource           schema.GroupResource
+	client             resourcepb.ResourceIndexClient
+	driverName         string
+	enableSQLKVBackend bool
 }
 
 func (v *preferencesCountValidator) Name() string { return "PreferencesCountValidator" }
@@ -153,17 +156,18 @@ func (v *preferencesCountValidator) countLegacy(sess *xorm.Session, orgID int64)
 
 func (v *preferencesCountValidator) countUnified(ctx context.Context, sess *xorm.Session, summary *resourcepb.BulkResponse_Summary) (int64, error) {
 	if v.driverName == migrator.SQLite {
-		return sess.Table("resource").
-			Where("namespace = ? AND `group` = ? AND resource = ?",
-				summary.Namespace, summary.Group, summary.Resource).
-			Count()
+		return migrations.CountUnifiedResourcesSQLite(ctx, sess, resource.ListRequestKey{
+			Namespace: summary.Namespace,
+			Group:     summary.Group,
+			Resource:  summary.Resource,
+		}, v.enableSQLKVBackend)
 	}
 
 	statsResp, err := v.client.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 		Namespace: summary.Namespace,
 		Kinds:     []string{fmt.Sprintf("%s/%s", summary.Group, summary.Resource)},
 	})
-	if err != nil {
+	if err := resource.ErrorFromResponse(statsResp.GetError(), err); err != nil {
 		return 0, err
 	}
 	for _, stat := range statsResp.Stats {

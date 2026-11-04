@@ -211,6 +211,14 @@ describe('XYChartPanel2', () => {
       expect(screen.queryByTestId('viz-legend')).toBeNull();
     });
 
+    it('does not render legend when displayMode is hidden, even if showLegend is true', () => {
+      renderPanel({
+        legend: { showLegend: true, placement: 'bottom', displayMode: LegendDisplayMode.Hidden, calcs: [] },
+      });
+      expect(screen.queryByTestId('viz-layout-legend')).toBeNull();
+      expect(screen.getByTestId('uplot-chart')).toBeVisible();
+    });
+
     it('builds legend items with correct labels', () => {
       const series1 = makeSeries({
         name: { value: 'cpu' },

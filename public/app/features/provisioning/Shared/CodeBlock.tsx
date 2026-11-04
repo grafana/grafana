@@ -1,8 +1,10 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
+import { noop } from 'lodash';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ClipboardButton, useStyles2, CodeEditor } from '@grafana/ui';
+import { ClipboardButton, useStyles2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
 interface Props {
   code: string;
@@ -15,7 +17,7 @@ export const CodeBlock = ({ code, copyCode = true }: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.container}>
+    <div className={cx(styles.container, useMinHeight && styles.minHeight)}>
       {copyCode && (
         <ClipboardButton
           aria-label={t('provisioning.code-block.aria-label-copy', 'Copy code to clipboard')}
@@ -26,20 +28,15 @@ export const CodeBlock = ({ code, copyCode = true }: Props) => {
           getText={() => code}
         />
       )}
-      <CodeEditor
+      <CodeMirrorEditor
         value={code}
         language="ini"
-        showLineNumbers={false}
-        showMiniMap={false}
+        aria-label={t('provisioning.code-block.aria-label-code', 'Code example')}
+        onChange={noop}
+        basicSetup={{ lineNumbers: false, foldGutter: false, highlightActiveLine: false }}
+        indentWithTab={false}
         height={useMinHeight ? '42px' : `${Math.min(lineCount * 24, 300)}px`}
         readOnly={true}
-        monacoOptions={{
-          scrollBeyondLastLine: false,
-          scrollbar: {
-            vertical: useMinHeight ? 'hidden' : 'auto',
-            horizontal: 'auto',
-          },
-        }}
       />
     </div>
   );
@@ -50,6 +47,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'relative',
     margin: `${theme.spacing(2)} 0`,
     border: `1px solid ${theme.colors.border.medium}`,
+    '& .cm-scroller': {
+      overflowX: 'auto',
+      overflowY: 'auto',
+    },
+  }),
+  minHeight: css({
+    '& .cm-scroller': {
+      overflowY: 'hidden',
+    },
   }),
   copyButton: css({
     position: 'absolute',

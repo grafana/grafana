@@ -252,7 +252,7 @@ export function VariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProp
   return (
     <Stack direction="column" gap={3}>
       <SortSelector value={staticOptionsOrder} onChange={onStaticOptionsOrderChange} />
-      <div>
+      <div data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.spreadsheet}>
         <table className={styles.table} ref={gridRef}>
           <thead>
             <tr>
@@ -415,7 +415,12 @@ function SpreadsheetRow(props: SpreadsheetRowProps) {
   return (
     <Draggable draggableId={option.id} index={index}>
       {(draggableProvided) => (
-        <tr className={styles.row} ref={draggableProvided.innerRef} {...draggableProvided.draggableProps}>
+        <tr
+          className={styles.row}
+          ref={draggableProvided.innerRef}
+          {...draggableProvided.draggableProps}
+          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.spreadsheetRow}
+        >
           <SpreadsheetRowCells {...props} dragHandleProps={draggableProvided.dragHandleProps} />
         </tr>
       )}

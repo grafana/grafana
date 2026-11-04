@@ -3,6 +3,7 @@ package notifier
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -281,6 +283,46 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration(t *testing.T) {
 	cfgs, err = mam.getLatestConfigs(ctx)
 	require.NoError(t, err)
 	require.JSONEq(t, defaultConfig, cfgs[2].AlertmanagerConfiguration)
+}
+
+func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration_LegacyTimeIntervalUID(t *testing.T) {
+	mam := setupMam(t, nil)
+	ctx := context.Background()
+	require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+	// A blob written before time interval UIDs were persisted.
+	legacy := `{"alertmanager_config":{"route":{"receiver":"recv"},"receivers":[{"name":"recv"}],"time_intervals":[{"name":"Business Hours","time_intervals":[{"weekdays":["monday"]}]}]}}`
+	require.NoError(t, mam.configStore.SaveAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: legacy,
+		ConfigurationVersion:      "v1",
+		OrgID:                     2,
+		LastApplied:               1,
+	}))
+	// The fake store assigns every history row the same ID, so give this one a distinct ID.
+	history := mam.configStore.(*fakeConfigStore).historicConfigs[2]
+	const legacyID = int64(42)
+	history[len(history)-1].ID = legacyID
+
+	postable, err := Load([]byte(defaultConfig))
+	require.NoError(t, err)
+	require.NoError(t, mam.saveAndApplyConfig(ctx, 2, mam.alertmanagers[2], postable))
+
+	require.NoError(t, mam.ActivateHistoricalConfiguration(ctx, 2, legacyID))
+
+	cfgs, err := mam.getLatestConfigs(ctx)
+	require.NoError(t, err)
+	var stored struct {
+		AlertmanagerConfig struct {
+			TimeIntervals []struct {
+				UID  string `json:"uid"`
+				Name string `json:"name"`
+			} `json:"time_intervals"`
+		} `json:"alertmanager_config"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(cfgs[2].AlertmanagerConfiguration), &stored))
+	require.Len(t, stored.AlertmanagerConfig.TimeIntervals, 1)
+	require.Equal(t, "Business Hours", stored.AlertmanagerConfig.TimeIntervals[0].Name)
+	require.Equal(t, string(v1.TimeIntervalUID("Business Hours")), stored.AlertmanagerConfig.TimeIntervals[0].UID)
 }
 
 func TestMultiOrgAlertmanager_Silences(t *testing.T) {

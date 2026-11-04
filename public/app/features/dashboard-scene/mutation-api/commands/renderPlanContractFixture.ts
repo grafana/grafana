@@ -33,3 +33,35 @@ export const renderPlanContractFixture = {
   ],
   variables: ['cluster', 'topic'],
 };
+
+/** The same contract for a tabs plan whose tabs hold rows rather than panels directly. */
+export const renderPlanNestedTabsContractFixture = {
+  planId: 'plan-2',
+  title: 'Checkout investigation',
+  description: 'Service health and order flow, with order breakdowns on their own tab.',
+  layout: 'tabs' as const,
+  sections: [
+    {
+      title: 'Overview',
+      panels: [],
+      sections: [
+        {
+          title: 'Service health',
+          panels: [
+            { title: 'Request rate', vizType: 'timeseries' },
+            { title: 'Error ratio', vizType: 'stat' },
+          ],
+        },
+        {
+          title: 'Order flow',
+          panels: [{ title: 'Revenue', vizType: 'timeseries' }],
+        },
+      ],
+    },
+    {
+      title: 'Order details',
+      panels: [{ title: 'Orders by country', vizType: 'barchart' }],
+    },
+  ],
+  variables: ['service_name'],
+};

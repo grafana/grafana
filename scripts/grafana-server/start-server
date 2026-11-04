@@ -53,6 +53,11 @@ elif [ -d "../e2e-playwright/test-plugins" ]; then
   cp -r "../e2e-playwright/test-plugins" "$RUNDIR/data/plugins"
 fi
 
+# conf/defaults.ini loads some plugins (e.g. canvas) as external, so they must come from the bundled plugins dir.
+# The make target only downloads again when scripts/catalog-plugins-defaults changes.
+make build-catalog-plugins-data
+ln -s "$(realpath ./data/plugins-bundled)" "$RUNDIR/data/plugins-bundled"
+
 if [ "$START_IMAGE_RENDERER" ]; then
   echo -e "Starting image renderer container"
   docker run -d --rm --name=grafana-image-renderer -p ${IR_DEFAULT_PORT}:${IR_DEFAULT_PORT} grafana/grafana-image-renderer:${IMAGE_RENDERER_VERSION:-latest}

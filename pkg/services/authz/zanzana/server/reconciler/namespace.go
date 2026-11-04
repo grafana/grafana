@@ -220,13 +220,12 @@ func (r *Reconciler) fetchAnonymousTuples(ctx context.Context, namespace string,
 // GlobalRole tuples are injected selectively: only GlobalRoles that are NOT referenced by any
 // namespace Role are added standalone. GlobalRoles that ARE referenced already have their
 // permissions inlined into the namespace Role's tuples via TranslateRoleToTuples composition.
-func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace string) (map[string]*openfgav1.TupleKey, error) {
+func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace string, globalRolePerms map[string][]*authzextv1.RolePermission) (map[string]*openfgav1.TupleKey, error) {
 	ctx, span := r.tracer.Start(ctx, "reconciler.fetchAndTranslateTuples", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 	))
 	defer span.End()
 
-	globalRolePerms := r.getGlobalRolePerms()
 	expectedMap := make(map[string]*openfgav1.TupleKey, len(globalRolePerms)*2)
 
 	// Track which GlobalRoles are referenced by namespace Roles via RoleRefs.

@@ -42,6 +42,7 @@ describe('Command consistency', () => {
         cmd.name === 'ENTER_EDIT_MODE' ||
         cmd.name === 'GET_LAYOUT' ||
         cmd.name === 'LIST_PANELS' ||
+        cmd.name === 'GET_PANEL_ERRORS' ||
         cmd.name === 'GET_DASHBOARD_INFO'
       ) {
         const result = cmd.payloadSchema.safeParse({});
@@ -59,11 +60,14 @@ describe('Command consistency', () => {
       'ADD_TAB',
       'ADD_VARIABLE',
       'APPLY_SPEC',
+      'END_BATCH',
       'END_PLANNING',
       'ENTER_EDIT_MODE',
       'GET_DASHBOARD_INFO',
+      'GET_LAST_ACTION',
       'GET_LAYOUT',
       'GET_METADATA_ANNOTATIONS',
+      'GET_PANEL_ERRORS',
       'GET_SPEC',
       'LIST_ANNOTATIONS',
       'LIST_PANELS',
@@ -71,12 +75,16 @@ describe('Command consistency', () => {
       'MOVE_PANEL',
       'MOVE_ROW',
       'MOVE_TAB',
+      'REDO',
+      'RELOAD_FROM_SERVER',
       'REMOVE_ANNOTATION',
       'REMOVE_PANEL',
       'REMOVE_ROW',
       'REMOVE_TAB',
       'REMOVE_VARIABLE',
       'RENDER_PLAN',
+      'START_BATCH',
+      'UNDO',
       'UPDATE_ANNOTATION',
       'UPDATE_DASHBOARD_SETTINGS',
       'UPDATE_LAYOUT',

@@ -1,4 +1,4 @@
-import { first, ReplaySubject } from 'rxjs';
+import { first, lastValueFrom, ReplaySubject } from 'rxjs';
 
 import {
   arrayToDataFrame,
@@ -13,6 +13,8 @@ import {
   type DataFrame,
   type AdHocVariableFilter,
   DataTopic,
+  type Field,
+  type FieldConfigSource,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
@@ -30,7 +32,7 @@ import {
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
-import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
+import { MIXED_REQUEST_PREFIX, mixedRequestId } from '../mixed/MixedDataSource';
 
 import { DashboardDatasource } from './datasource';
 import { type DashboardQuery } from './types';
@@ -922,6 +924,54 @@ describe('DashboardDatasource', () => {
     });
   });
 
+  describe('Source panel id', () => {
+    it('tags each series frame with its source panel id and keeps the existing meta', async () => {
+      const { query } = setupWithSourcePanels([{ panelId: 2 }]);
+
+      const rsp = await lastValueFrom(query({ refId: 'B', panelId: 2 }));
+
+      expect(rsp.data).toHaveLength(1);
+      expect(rsp.data[0].meta).toEqual({
+        executedQueryString: 'up',
+        custom: { x: 'kept', dashboardSourcePanelId: 2 },
+      });
+    });
+
+    it('keeps refIds, fields and field config as the source panel returns them', async () => {
+      const fieldConfig: FieldConfigSource = { defaults: { unit: 'percent', min: 0 }, overrides: [] };
+      const { query } = setupWithSourcePanels([{ panelId: 2, fieldConfig }]);
+
+      const rsp = await lastValueFrom(query({ refId: 'B', panelId: 2 }));
+
+      expect(rsp.data[0].refId).toBe('A');
+      expect(rsp.data[0].fields.map((field: Field) => field.config)).toEqual([{}, { decimals: 3 }]);
+      expect(rsp.data[0].fields[1].values).toEqual([10, 20]);
+    });
+
+    it('tags frames from several source panels in a Mixed panel with their own panel id', async () => {
+      const { query } = setupWithSourcePanels([{ panelId: 1 }, { panelId: 2 }]);
+
+      const [rspA, rspB] = await Promise.all([
+        lastValueFrom(query({ refId: 'A', panelId: 1 }, mixedRequestId(0))),
+        lastValueFrom(query({ refId: 'B', panelId: 2 }, mixedRequestId(1))),
+      ]);
+
+      expect(rspA.data[0].refId).toBe('A');
+      expect(rspA.data[0].meta?.custom?.dashboardSourcePanelId).toBe(1);
+      expect(rspB.data[0].refId).toBe('A');
+      expect(rspB.data[0].meta?.custom?.dashboardSourcePanelId).toBe(2);
+    });
+
+    it('leaves the annotations topic unchanged', async () => {
+      const rsp = await lastValueFrom(
+        setupWithAnnotations({ refId: 'B', panelId: 1, topic: DataTopic.Annotations }).observable
+      );
+
+      expect(rsp.data[0].refId).toBeUndefined();
+      expect(rsp.data[0].meta).toEqual({ dataTopic: DataTopic.Series });
+    });
+  });
+
   describe('Annotation Handling', () => {
     it('should NOT include annotations from source panel in regular query response', async () => {
       const { observable } = setupWithAnnotations({ refId: 'A', panelId: 1 });
@@ -1037,6 +1087,58 @@ function setupWithAnnotations(query: DashboardQuery, requestId?: string) {
   });
 
   return { observable, sourceData };
+}
+
+function makeSourceFrame(): DataFrame {
+  return {
+    refId: 'A',
+    fields: [
+      { name: 'time', type: FieldType.time, values: [1000, 2000], config: {} },
+      { name: 'value', type: FieldType.number, values: [10, 20], config: { decimals: 3 } },
+    ],
+    length: 2,
+    meta: { executedQueryString: 'up', custom: { x: 'kept' } },
+  };
+}
+
+function setupWithSourcePanels(sources: Array<{ panelId: number; fieldConfig?: FieldConfigSource }>) {
+  const scene = new SceneFlexLayout({
+    children: sources.map(
+      ({ panelId, fieldConfig }) =>
+        new SceneFlexItem({
+          body: new VizPanel({
+            key: getVizPanelKeyForPanelId(panelId),
+            ...(fieldConfig && { fieldConfig }),
+            $data: new SceneDataNode({
+              data: {
+                series: [makeSourceFrame()],
+                state: LoadingState.Done,
+                timeRange: getDefaultTimeRange(),
+              },
+            }),
+          }),
+        })
+    ),
+  });
+
+  const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
+
+  const query = (target: DashboardQuery, requestId = '') =>
+    ds.query({
+      timezone: 'utc',
+      targets: [target],
+      requestId,
+      interval: '',
+      intervalMs: 0,
+      range: getDefaultTimeRange(),
+      scopedVars: {
+        __sceneObject: new SafeSerializableSceneObject(scene),
+      },
+      app: '',
+      startTime: 0,
+    });
+
+  return { query };
 }
 
 function makeRange(fromIso: string, toIso: string) {

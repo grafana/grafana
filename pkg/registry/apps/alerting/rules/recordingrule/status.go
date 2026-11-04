@@ -12,9 +12,11 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"sigs.k8s.io/structured-merge-diff/v6/fieldpath"
 
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/convert"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
@@ -30,12 +32,15 @@ type ruleStatusWriter interface {
 // the parent dual-writer only writes spec to unified — status updates route here, so
 // this mirror is the only way the unified copy's status stays in sync (needed once
 // the resource advances past Mode0 for parity metrics and the eventual read-from-
-// unified cutover). In Mode0 unified is disabled and the mirror is a silent no-op.
+// unified cutover). The mirror is skipped in Mode0, see writesUnified.
 type statusDualWriter struct {
 	gv           schema.GroupVersion
 	status       *appsdkapiserver.StatusREST
 	legacy       *legacyStorage
 	statusWriter ruleStatusWriter
+	// writesUnified reports whether the resource writes to unified storage (modes 1-5).
+	// It is evaluated per request because the storage mode can change at runtime.
+	writesUnified func(ctx context.Context) bool
 }
 
 var (
@@ -50,11 +55,13 @@ func NewStatusStorage(
 	namespacer request.NamespaceMapper,
 	statusWriter ruleStatusWriter,
 	unified *appsdkapiserver.StatusREST,
+	writesUnified func(ctx context.Context) bool,
 ) rest.Storage {
 	return &statusDualWriter{
-		gv:           ResourceInfo.GroupVersionResource().GroupVersion(),
-		status:       unified,
-		statusWriter: statusWriter,
+		gv:            ResourceInfo.GroupVersionResource().GroupVersion(),
+		status:        unified,
+		statusWriter:  statusWriter,
+		writesUnified: writesUnified,
 		legacy: &legacyStorage{
 			service:        legacySvc,
 			namespacer:     namespacer,
@@ -86,7 +93,7 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 	if err != nil {
 		return nil, false, err
 	}
-	newRule, ok := obj.(*model.RecordingRule)
+	newRule, ok := obj.(*v1beta1.RecordingRule)
 	if !ok {
 		return nil, false, fmt.Errorf("expected RecordingRule but got %T", obj)
 	}
@@ -104,7 +111,9 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 		return nil, false, err
 	}
 
-	s.mirrorToUnified(ctx, name, newRule.Status, createValidation, updateValidation, options)
+	if s.writesUnified(ctx) {
+		s.mirrorToUnified(ctx, name, newRule.Status, createValidation, updateValidation, options)
+	}
 
 	// Re-read so the response reflects the stored rule (full spec/metadata + the
 	// persisted status), not the request object — a partial status update (e.g. the
@@ -117,10 +126,10 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 }
 
 // mirrorToUnified copies the persisted status onto the unified object, best-effort.
-// Legacy is the source of truth. When the object is not in unified storage — Mode0
-// (unified disabled) or a best-effort write lag in Mode1 — this is an expected skip,
-// so NotFound is swallowed silently; only unexpected errors are logged.
-func (s *statusDualWriter) mirrorToUnified(ctx context.Context, name string, status model.RecordingRuleStatus, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, options *metav1.UpdateOptions) {
+// Legacy is the source of truth. When the object is not in unified storage yet — a
+// best-effort write lag in Mode1 — this is an expected skip, so NotFound is swallowed
+// silently; other errors are logged as warnings.
+func (s *statusDualWriter) mirrorToUnified(ctx context.Context, name string, status v1beta1.RecordingRuleStatus, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, options *metav1.UpdateOptions) {
 	unified, err := s.status.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
@@ -128,12 +137,19 @@ func (s *statusDualWriter) mirrorToUnified(ctx context.Context, name string, sta
 		}
 		return
 	}
-	u, ok := unified.(*model.RecordingRule)
-	if !ok {
+	// The unified store serves the request version, which can be v0alpha1.
+	u, err := convert.Hub[*v1beta1.RecordingRule](unified)
+	if err != nil {
+		logging.FromContext(ctx).Warn("unable to convert unified recording rule for status mirroring", "error", err)
 		return
 	}
 	u.Status = status
-	if _, _, err := s.status.Update(ctx, name, rest.DefaultUpdatedObjectInfo(u), createValidation, updateValidation, false, options); err != nil {
+	out, err := convert.Like(u, unified.(resource.Object))
+	if err != nil {
+		logging.FromContext(ctx).Warn("unable to convert recording rule status for mirroring", "error", err)
+		return
+	}
+	if _, _, err := s.status.Update(ctx, name, rest.DefaultUpdatedObjectInfo(out), createValidation, updateValidation, false, options); err != nil {
 		logging.FromContext(ctx).Warn("failed to mirror recording rule status to unified storage", "error", err)
 	}
 }

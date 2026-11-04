@@ -54,10 +54,7 @@ func ProvideSearchDistributorServer(tracer trace.Tracer, cfg *setting.Cfg, ring 
 		&resourcepb.ResourceIndex_ServiceDesc,
 		&resourcepb.ManagedObjectIndex_ServiceDesc,
 	} {
-		if cfg.UnifiedStorageGRPCErrorResultToStatus {
-			desc = grpchan.InterceptServer(desc, UnaryErrorResultInterceptor(), nil)
-		}
-		srv.RegisterService(desc, s)
+		srv.RegisterService(grpchan.InterceptServer(desc, UnaryErrorResultInterceptor(), nil), s)
 	}
 	_, _ = grpcserver.ProvideReflectionService(cfg, provider)
 	s.BasicService = services.NewBasicService(nil, func(ctx context.Context) error {
@@ -186,9 +183,10 @@ func (ds *distributorServer) HybridSearch(ctx context.Context, r *resourcepb.Hyb
 	ctx, span := ds.tracing.Start(ctx, "distributor.HybridSearch")
 	defer span.End()
 
-	var ns string
-	if r.Key != nil {
-		ns = r.Key.Namespace
+	ns := r.GetNamespace()
+	//nolint:staticcheck // Continue routing requests from older clients.
+	if r.GetKey() != nil {
+		ns = r.GetKey().GetNamespace()
 	}
 	return distributeWithFailover(ctx, ds, ns, "HybridSearch", r, ResourceClient.HybridSearch)
 }
@@ -417,7 +415,7 @@ func callWithRetries[Req, Resp any](
 
 // callFailure returns the HTTP code and error of a failed call, or 0 and nil
 // on success. Search servers can report errors as a gRPC status or inside the
-// response, depending on the grpc_error_result_to_status setting.
+// response, depending on their version.
 func callFailure(resp any, err error) (int32, error) {
 	if err != nil {
 		return AsErrorResult(err).GetCode(), err

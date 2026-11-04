@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/resource"
-	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -61,8 +61,8 @@ type Syncer struct {
 	// goroutine until then.
 	clientGenerator     resource.ClientGenerator
 	mu                  sync.Mutex
-	alertRuleClient     *v0alpha1.AlertRuleClient
-	recordingRuleClient *v0alpha1.RecordingRuleClient
+	alertRuleClient     *v1beta1.AlertRuleClient
+	recordingRuleClient *v1beta1.RecordingRuleClient
 
 	// lastHash bounds write churn: a rule's status is only written when it changed
 	// since the last sync, so a steady state does not re-issue loopback writes.
@@ -87,17 +87,17 @@ func NewSyncer(orgs OrgStore, states StateReader, status StatusReader, namespace
 // clients builds the rule clients on first use and caches them. The
 // ClientGenerator blocks until the apiserver is ready, so this runs from the sync
 // goroutine rather than NewSyncer.
-func (s *Syncer) clients() (*v0alpha1.AlertRuleClient, *v0alpha1.RecordingRuleClient, error) {
+func (s *Syncer) clients() (*v1beta1.AlertRuleClient, *v1beta1.RecordingRuleClient, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.alertRuleClient != nil && s.recordingRuleClient != nil {
 		return s.alertRuleClient, s.recordingRuleClient, nil
 	}
-	ar, err := v0alpha1.NewAlertRuleClientFromGenerator(s.clientGenerator)
+	ar, err := v1beta1.NewAlertRuleClientFromGenerator(s.clientGenerator)
 	if err != nil {
 		return nil, nil, fmt.Errorf("alert rule client: %w", err)
 	}
-	rr, err := v0alpha1.NewRecordingRuleClientFromGenerator(s.clientGenerator)
+	rr, err := v1beta1.NewRecordingRuleClientFromGenerator(s.clientGenerator)
 	if err != nil {
 		return nil, nil, fmt.Errorf("recording rule client: %w", err)
 	}
@@ -208,12 +208,17 @@ func (s *Syncer) pruneOrg(orgID int64, seen map[string]struct{}) {
 	}
 }
 
-func (s *Syncer) syncAlertRule(ctx context.Context, orgID int64, rule *v0alpha1.AlertRule) {
+func (s *Syncer) syncAlertRule(ctx context.Context, orgID int64, rule *v1beta1.AlertRule) {
 	defer s.recoverRule(orgID, rule.Name)
 
 	key := ngmodels.AlertRuleKey{OrgID: orgID, UID: rule.Name}
 	states := s.states.GetStatesForRuleUID(ctx, orgID, rule.Name)
-	newStatus := toAlertRuleStatus(rule.Status, states, isPaused(rule.Spec.Paused))
+	execErrState, err := execErrStateFromSpec(rule.Spec)
+	if err != nil {
+		s.log.Warn("Invalid execErrState, using default", "org_id", orgID, "uid", rule.Name, "exec_err_state", rule.Spec.ExecErrState, "error", err)
+		execErrState = ngmodels.ErrorErrState
+	}
+	newStatus := toAlertRuleStatus(rule.Status, states, execErrState, isPaused(rule.Spec.Paused))
 
 	s.persist(ctx, key, newStatus, func(ctx context.Context) error {
 		rule.Status = newStatus
@@ -224,7 +229,7 @@ func (s *Syncer) syncAlertRule(ctx context.Context, orgID int64, rule *v0alpha1.
 	})
 }
 
-func (s *Syncer) syncRecordingRule(ctx context.Context, orgID int64, rule *v0alpha1.RecordingRule) {
+func (s *Syncer) syncRecordingRule(ctx context.Context, orgID int64, rule *v1beta1.RecordingRule) {
 	defer s.recoverRule(orgID, rule.Name)
 
 	key := ngmodels.AlertRuleKey{OrgID: orgID, UID: rule.Name}

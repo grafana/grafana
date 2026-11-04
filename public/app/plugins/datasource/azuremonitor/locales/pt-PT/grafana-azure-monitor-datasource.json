@@ -54,9 +54,9 @@
       "reset-symbol-client-secret": "Redefinir"
     },
     "auxiliary-logs-toggle": {
-      "aria-label-enable-auxiliary-logs": "",
-      "description-auxiliary-logs": "",
-      "label-enable-auxiliary-logs": ""
+      "aria-label-enable-auxiliary-logs": "Registos auxiliares",
+      "description-auxiliary-logs": "A ativação desta funcionalidade incorre em custos por consulta do Azure Monitor em painéis que consultam tabelas configuradas para <2>Registos básicos</2>. Os registos auxiliares não têm SLA de tempo de resposta, destinam-se apenas a consultas ad hoc e à exploração de dados e não devem ser utilizados para painéis de controlo que exijam dados em tempo real ou para alertas.",
+      "label-enable-auxiliary-logs": "Ativar registos auxiliares"
     },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "{{queryDisplayName}} consulta bruta",
@@ -187,47 +187,47 @@
       "tooltip-limit": "Restrinja o número de linhas devolvidas (a predefinição é 1000)."
     },
     "logs-management": {
-      "body-auxiliary-logs-queries": "",
+      "body-auxiliary-logs-queries": "Tem a certeza de que pretende mudar para Registos auxiliares?",
       "body-basic-logs-queries": "Tem a certeza de que pretende mudar para Registos básicos?",
       "confirmText-confirm": "Confirmar",
-      "description-auxiliary-logs-queries": "",
+      "description-auxiliary-logs-queries": "As consultas de registos auxiliares incorrem em custos com base na quantidade de dados lidos. Os registos auxiliares não têm SLA de tempo de resposta e não devem ser utilizados para painéis de controlo que exijam dados em tempo real ou para alertas.",
       "description-basic-logs-queries": "As consultas de registos básicos incorrem em custos com base na quantidade de dados lidos.",
-      "label-analytics": "",
-      "label-auxiliary": "",
-      "label-basic": "",
+      "label-analytics": "Analíticos",
+      "label-auxiliary": "Auxiliares",
+      "label-basic": "Básicos",
       "label-logs": "Registos",
-      "title-auxiliary-logs-queries": "",
+      "title-auxiliary-logs-queries": "Consultas de registos auxiliares",
       "title-basic-logs-queries": "Consultas de registos básicos",
       "tooltip-logs": "Especifica se deve ser executada uma consulta de registos básicos ou analíticos.",
-      "tooltip-logs-all": "",
-      "tooltip-logs-aux": ""
+      "tooltip-logs-all": "Especifica se deve ser executada uma consulta de registos analíticos, básicos ou auxiliares.",
+      "tooltip-logs-aux": "Especifica se deve ser executada uma consulta de registos analíticos ou auxiliares."
     },
     "logs-query-builder": {
       "title-no-tables": "Recurso carregado com sucesso, mas sem quaisquer tabelas"
     },
     "logs-query-editor": {
       "learn-more": "Saber mais",
-      "notice-auxiliary-single-resource": "",
-      "notice-basic-single-resource": "",
-      "notice-same-resource-type": "",
-      "tier-switch-body-analytics": "",
-      "tier-switch-body-auxiliary": "",
-      "tier-switch-body-basic": "",
-      "tier-switch-revert": "",
-      "tier-switch-title": "",
+      "notice-auxiliary-single-resource": "Ao utilizar Registos auxiliares, só pode selecionar um recurso de cada vez.",
+      "notice-basic-single-resource": "Ao utilizar Registos básicos, só pode selecionar um recurso de cada vez.",
+      "notice-same-resource-type": "Só pode escolher elementos do mesmo tipo de recurso.",
+      "tier-switch-body-analytics": "<0>{{tableName}}</0> é uma tabela de Análise.",
+      "tier-switch-body-auxiliary": "<0>{{tableName}}</0> é uma tabela de Registos auxiliares — acarreta custos por GiB analisado, não tem SLA de tempo de resposta e não é adequada para cenários em tempo real ou de alertas.",
+      "tier-switch-body-basic": "<0>{{tableName}}</0> é uma tabela de Registos básicos — acarreta custos por GiB analisado.",
+      "tier-switch-revert": "Reverter para {{fromTier}}",
+      "tier-switch-title": "Nível de consulta definido como {{toTier}}",
       "view-query": "Ver consulta no Portal do Azure",
-      "warning-auxiliary-data-ingested": "",
-      "warning-auxiliary-raw": "",
-      "warning-basic-raw": "",
-      "warning-data-ingested": ""
+      "warning-auxiliary-data-ingested": "Esta consulta de registos auxiliares está a processar {{dataIngested}} GiB quando é executada. Os Registos auxiliares não têm SLA de tempo de resposta e não são adequados para cenários em tempo real ou de alertas. ",
+      "warning-auxiliary-raw": "Esta é uma consulta de Registos auxiliares — utiliza o endpoint de pesquisa, acarreta custos por GiB analisado, não tem SLA de tempo de resposta e não é adequada para cenários em tempo real ou de alertas. As tabelas do plano de análise não podem ser consultadas neste modo (utilize o nível de análise para elas). ",
+      "warning-basic-raw": "Esta é uma consulta de Registos básicos — utiliza o endpoint de pesquisa e acarreta custos por GiB analisado. As tabelas do plano de análise não podem ser consultadas neste modo (utilize o nível de análise para elas). ",
+      "warning-data-ingested": "Esta consulta de registos auxiliares está a processar {{dataIngested}} GiB quando é executada. "
     },
     "logs-table-section": {
-      "description-auxiliary-disabled": "",
-      "description-auxiliary-enabled": "",
-      "description-basic-disabled": "",
-      "description-basic-enabled": "",
-      "description-plan-unavailable": "",
-      "label-all-columns": ""
+      "description-auxiliary-disabled": "Esta tabela está no plano de Registos auxiliares. Ative \"Registos auxiliares\" nas definições da origem de dados para a consultar.",
+      "description-auxiliary-enabled": "Selecionar esta tabela mudará o modo de consulta para Registos auxiliares",
+      "description-basic-disabled": "Esta tabela está no plano de Registos básicos. Ative \"Registos básicos\" nas definições da origem de dados para a consultar.",
+      "description-basic-enabled": "Selecionar esta tabela mudará o modo de consulta para Registos básicos",
+      "description-plan-unavailable": "Não é possível selecionar esta tabela porque não foi possível determinar o seu plano de Registos.",
+      "label-all-columns": "Todas colunas"
     },
     "metric-name-field": {
       "label-metric": "Métrica"
@@ -356,8 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "Selecionar espaço de nome personalizado",
-      "aria-label-select-dimension-name": "",
-      "aria-label-select-metric-name": "",
+      "aria-label-select-dimension-name": "Selecionar o nome da dimensão",
+      "aria-label-select-metric-name": "Selecionar o nome da métrica",
       "aria-label-select-namespace": "Selecionar espaço de nome",
       "aria-label-select-query-type": "Selecionar o tipo de consulta",
       "aria-label-select-region": "Selecione a região",
@@ -365,8 +365,8 @@
       "aria-label-select-resource-group": "Selecionar grupo de recursos",
       "aria-label-select-subscription": "Selecionar subscrição",
       "label-custom-namespace": "Espaço de nome personalizado",
-      "label-dimension-name": "",
-      "label-metric-name": "",
+      "label-dimension-name": "Nome da dimensão",
+      "label-metric-name": "Nome da métrica",
       "label-namespace": "Espaço de nome",
       "label-query-type": "Tipo de consulta",
       "label-region": "Região",

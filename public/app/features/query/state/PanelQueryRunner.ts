@@ -30,9 +30,8 @@ import {
   type StreamingDataFrame,
   DataTopic,
 } from '@grafana/data';
-import { toDataQueryError } from '@grafana/runtime';
+import { toDataQueryError, getDataSourceInstance } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 

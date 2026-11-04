@@ -1,6 +1,7 @@
 import { act, screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
+import { setPluginLinksHook } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 
 import { DashboardScene } from '../DashboardScene';
@@ -8,6 +9,8 @@ import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager
 
 import { TabItem } from './TabItem';
 import { TabsLayoutManager } from './TabsLayoutManager';
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 async function renderTab({ title = 'Overview', key = 'tab-1' } = {}) {
   const tab = new TabItem({

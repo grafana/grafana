@@ -1,7 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { TextBoxVariable } from '@grafana/scenes';
+
+import { addToEditedDashboard } from '../variableEditTestUtils';
 
 import { TextBoxVariableEditor } from './TextBoxVariableEditor';
 
@@ -50,6 +52,41 @@ describe('TextBoxVariableEditor', () => {
 
     const legend = screen.queryByText('Text options');
     expect(legend).not.toBeInTheDocument();
+  });
+});
+
+describe('TextBoxVariableEditor undo/redo', () => {
+  it('records a value change made inline as one undoable action', async () => {
+    const variable = new TextBoxVariable({ name: 'text', value: 'old' });
+    const sidebar = addToEditedDashboard(variable);
+    render(<TextBoxVariableEditor variable={variable} onChange={jest.fn()} inline={true} />);
+
+    await userEvent.clear(screen.getByRole('textbox'));
+    await userEvent.type(screen.getByRole('textbox'), 'new');
+    await userEvent.tab();
+    expect(variable.state.value).toBe('new');
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    act(() => sidebar.undoAction());
+    expect(variable.state.value).toBe('old');
+    expect(screen.getByRole('textbox')).toHaveValue('old');
+
+    act(() => sidebar.redoAction());
+    expect(variable.state.value).toBe('new');
+    expect(screen.getByRole('textbox')).toHaveValue('new');
+  });
+
+  it('does not record a value change made in the settings page', async () => {
+    const variable = new TextBoxVariable({ name: 'text', value: 'old' });
+    const sidebar = addToEditedDashboard(variable);
+    render(<TextBoxVariableEditor variable={variable} onChange={jest.fn()} />);
+
+    await userEvent.clear(screen.getByRole('textbox'));
+    await userEvent.type(screen.getByRole('textbox'), 'new');
+    await userEvent.tab();
+
+    expect(variable.state.value).toBe('new');
+    expect(sidebar.state.undoStack).toHaveLength(0);
   });
 });
 

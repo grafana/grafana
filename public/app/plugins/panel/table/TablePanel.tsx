@@ -1,26 +1,38 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
 import {
+  applyFieldOverrides,
+  CoreApp,
+  DataTransformerID,
   type DataFrame,
-  getFrameDisplayName,
   type GrafanaTheme2,
+  getFrameDisplayName,
   type PanelProps,
   type SelectableValue,
+  useDataLinksContext,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { PanelDataErrorView } from '@grafana/runtime';
+import { getPluginImportUtils, PanelDataErrorView } from '@grafana/runtime';
 import { TableCellHeight, type TableOptions } from '@grafana/schema';
 import { Combobox, Field, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
+import { getSourceFrameIndex } from '@grafana/ui/internal';
 import { TableNG } from '@grafana/ui/unstable';
 import {
+  TABLE_TRANSFORMATIONS_OWNER,
+  useAdHocColumnState,
   useCacheFieldDisplayNames,
   useCellActions,
   useCommonTableProps,
+  useTableRefreshNewFeatures,
   useTableSharedCrosshair,
 } from 'app/features/table/hooks';
-import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
+import { supportsColumnManagement, withAdHocTransformCapabilities } from 'app/features/table/tableCapabilities';
+import { getCurrentFrameIndex, notifyTableFilterError, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
+import { useTableCellAssistant } from './useTableCellAssistant';
+import { useTableFieldAssistant } from './useTableFieldAssistant';
 
 interface Props extends PanelProps<TableOptions> {
   initialRowIndex?: number;
@@ -43,14 +55,17 @@ export function TablePanel(props: Props) {
     fitContent,
   } = props;
 
-  useCacheFieldDisplayNames(data.series);
-
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const panelContext = usePanelContext();
+  const { dataLinkPostProcessor } = useDataLinksContext();
   const getActions = useCellActions(replaceVariables);
   const commonTableProps = useCommonTableProps(options, fieldConfig);
   const noPanelPadding = commonTableProps.tableRefreshEnabled;
+  const tableRefreshNewFeaturesEnabled = useTableRefreshNewFeatures();
+  const adHocTransformationsEnabled = tableRefreshNewFeaturesEnabled && panelContext.app !== CoreApp.PanelEditor;
+  const onFieldAddToAssistant = useTableFieldAssistant(props);
+  const onCellAddToAssistant = useTableCellAssistant(props);
   const enableSharedCrosshair = useTableSharedCrosshair();
   const frames = hasDeprecatedParentRowIndex(data.series)
     ? migrateFromParentRowIndexToNestedFrames(data.series)
@@ -58,7 +73,84 @@ export function TablePanel(props: Props) {
   const count = frames?.length;
   const hasFields = frames.some((frame) => frame.fields.length > 0);
   const currentIndex = getCurrentFrameIndex(frames, options);
-  const main = frames[currentIndex];
+  const outputMain = frames[currentIndex];
+  const sourceSeries = adHocTransformationsEnabled
+    ? panelContext.adHocTransformations?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER)
+    : undefined;
+  const sourceFrameIndex = sourceSeries ? getSourceFrameIndex(frames, currentIndex, sourceSeries) : -1;
+  const filterTargetIndex = sourceFrameIndex >= 0 ? sourceFrameIndex : currentIndex;
+  const existingRowFilter =
+    sourceSeries &&
+    panelContext.adHocTransformations
+      ?.get(TABLE_TRANSFORMATIONS_OWNER)
+      .find(
+        (config) =>
+          !config.disabled &&
+          config.id === DataTransformerID.filterByValue &&
+          config.options.target?.frameIndex === filterTargetIndex &&
+          config.options.target?.refId === outputMain?.refId
+      );
+  // A duplicate refId cannot identify a new source, but an existing filter has an exact source index.
+  const filterSourceFrameIndex =
+    sourceFrameIndex < 0 &&
+    existingRowFilter &&
+    sourceSeries?.length === frames.length &&
+    sourceSeries[currentIndex]?.refId === outputMain?.refId
+      ? currentIndex
+      : sourceFrameIndex;
+  const sourceFrames = sourceSeries ?? frames;
+  const sourceFrame = sourceFrames[filterSourceFrameIndex];
+  const sourceFrameKey = useMemo(
+    () => existingRowFilter?.options.target?.frameKey ?? JSON.stringify([sourceFrame?.refId, filterSourceFrameIndex]),
+    [existingRowFilter, sourceFrame?.refId, filterSourceFrameIndex]
+  );
+  // Rebuild against original rows while retaining cross-frame display and data-link context.
+  const sourceFramesWithOverrides = useMemo(
+    () =>
+      sourceSeries
+        ? applyFieldOverrides({
+            data: [...sourceSeries],
+            fieldConfig,
+            fieldConfigRegistry: getPluginImportUtils().getPanelPluginFromCache('table')?.fieldConfigRegistry,
+            theme,
+            timeZone: props.timeZone,
+            replaceVariables,
+            dataLinkPostProcessor,
+          })
+        : undefined,
+    [sourceSeries, fieldConfig, theme, props.timeZone, replaceVariables, dataLinkPostProcessor]
+  );
+  const displayFrames = filterSourceFrameIndex >= 0 && sourceFramesWithOverrides ? sourceFramesWithOverrides : frames;
+  useCacheFieldDisplayNames(displayFrames);
+  const rawMain = displayFrames[filterSourceFrameIndex >= 0 ? filterSourceFrameIndex : currentIndex] ?? outputMain;
+  const configuredSourceSeries = useMemo(
+    () =>
+      sourceSeries &&
+      sourceFramesWithOverrides?.map((frame, frameIndex) => ({
+        ...sourceSeries[frameIndex],
+        // Runtime transforms match source names, before display-name overrides are applied.
+        fields: frame.fields.map((field, fieldIndex) => {
+          const sourceField = sourceSeries[frameIndex].fields[fieldIndex];
+          return {
+            ...sourceField,
+            config: {
+              ...sourceField.config,
+              custom: { ...sourceField.config.custom, hideFrom: field.config.custom?.hideFrom },
+            },
+          };
+        }),
+      })),
+    [sourceSeries, sourceFramesWithOverrides]
+  );
+  const columnManagementEnabled = adHocTransformationsEnabled && supportsColumnManagement(rawMain);
+  const adHocColumns = useAdHocColumnState(frames, currentIndex, adHocTransformationsEnabled, configuredSourceSeries);
+  const main = useMemo(
+    () =>
+      tableRefreshNewFeaturesEnabled && rawMain
+        ? withAdHocTransformCapabilities(rawMain, Boolean(adHocColumns))
+        : rawMain,
+    [rawMain, tableRefreshNewFeaturesEnabled, adHocColumns]
+  );
 
   // Fit-content: the panel has no fixed height, so self-size from the row count.
   // The cell's CSS min/max bounds (and scrolls) the result.
@@ -81,6 +173,22 @@ export function TablePanel(props: Props) {
   const tableElement = (
     <TableNG
       {...commonTableProps}
+      {...adHocColumns}
+      reorderable={Boolean(adHocColumns)}
+      showColumnsSidebar={columnManagementEnabled && options.showColumnsSidebar}
+      rowTransformationsEnabled={adHocTransformationsEnabled}
+      localFilterScope={JSON.stringify([currentIndex, outputMain?.refId])}
+      onFilterError={notifyTableFilterError}
+      rowTransformations={
+        adHocTransformationsEnabled && panelContext.adHocTransformations && filterSourceFrameIndex >= 0
+          ? {
+              api: panelContext.adHocTransformations,
+              owner: TABLE_TRANSFORMATIONS_OWNER,
+              frameKey: sourceFrameKey,
+              frameIndex: filterSourceFrameIndex,
+            }
+          : undefined
+      }
       initialRowIndex={initialRowIndex}
       height={tableHeight}
       width={width}
@@ -91,7 +199,10 @@ export function TablePanel(props: Props) {
         onColumnResize(displayName, resizedWidth, fieldScope, props)
       }
       onCellFilterAdded={panelContext.onAddAdHocFilter}
+      onFieldAddToAssistant={onFieldAddToAssistant}
+      onCellAddToAssistant={onCellAddToAssistant}
       timeRange={timeRange}
+      timeZone={props.timeZone}
       enableSharedCrosshair={enableSharedCrosshair}
       fieldConfig={fieldConfig}
       getActions={getActions}

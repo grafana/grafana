@@ -22,6 +22,7 @@ import (
 const (
 	TestKVGet            = "get operations"
 	TestKVSave           = "save operations"
+	TestKVAllSections    = "all sections"
 	TestKVDelete         = "delete operations"
 	TestKVKeys           = "keys listing"
 	TestKVKeysWithLimits = "keys with limits and ranges"
@@ -73,6 +74,7 @@ func RunKVTest(t *testing.T, kv kvpkg.KV, opts *KVTestOptions) {
 	}{
 		{TestKVGet, runTestKVGet},
 		{TestKVSave, runTestKVSave},
+		{TestKVAllSections, runTestKVAllSections},
 		{TestKVDelete, runTestKVDelete},
 		{TestKVKeys, runTestKVKeys},
 		{TestKVKeysWithLimits, runTestKVKeysWithLimits},
@@ -255,6 +257,60 @@ func runTestKVSave(t *testing.T, kv kvpkg.KV, nsPrefix string) {
 		assert.Error(t, err)
 		assert.Equal(t, kvpkg.ErrNotFound, err)
 	})
+}
+
+// runTestKVAllSections ensures adding an official section checks persistence
+// support in every implementation that runs the shared suite.
+func runTestKVAllSections(t *testing.T, kv kvpkg.KV, nsPrefix string) {
+	nsPrefix += "-all-sections"
+
+	for _, section := range kvpkg.AllSections {
+		t.Run(section, func(t *testing.T) {
+			ctx := t.Context()
+			key := namespacedKey(nsPrefix, "key")
+			// Most SQL sections use text columns, so their fixtures must be valid text.
+			value := []byte(`{"value":"all-sections-test"}`)
+			switch section {
+			case kvpkg.SearchSnapshotDataSection, kvpkg.SearchSnapshotManifestSection:
+				// Search snapshots use binary columns and must preserve arbitrary bytes.
+				value = []byte{0x00, 0xff, 'a', 'b', 'c'}
+			case kvpkg.BlobDataSection:
+				// SQL decodes the resource identity and content type into separate columns.
+				// PostgreSQL requires the blob UID to be a valid UUID.
+				key = (kvpkg.BlobKey{Group: "group", Resource: "resource", Namespace: nsPrefix, Name: "name", UID: "00000000-0000-4000-8000-000000000001"}).String()
+				value = append(kvpkg.EncodeBlobValueHeader("application/octet-stream"), 0x00, 0xff, 'a', 'b', 'c')
+			case kvpkg.LastImportTimeSection:
+				// SQL stores the timestamp from the key and ignores the value.
+				key = kvpkg.LastImportTimeKey(nsPrefix, "group", "resource", time.Unix(1700000000, 0))
+			}
+
+			w, err := kv.Save(ctx, section, key)
+			require.NoError(t, err)
+			n, err := w.Write(value)
+			require.NoError(t, err)
+			require.Equal(t, len(value), n)
+			require.NoError(t, w.Close())
+
+			// SQL has no Get path for last import time; listing below verifies persistence.
+			if section != kvpkg.LastImportTimeSection {
+				r, err := kv.Get(ctx, section, key)
+				require.NoError(t, err)
+				got, err := io.ReadAll(r)
+				closeErr := r.Close()
+				require.NoError(t, err)
+				require.NoError(t, closeErr)
+				require.Equal(t, value, got)
+			}
+
+			var keys []string
+			for k, err := range kv.Keys(ctx, section, kvpkg.ListOptions{}) {
+				require.NoError(t, err)
+				keys = append(keys, k)
+			}
+			require.Contains(t, keys, key)
+			require.NoError(t, kv.Delete(ctx, section, key))
+		})
+	}
 }
 
 func runTestKVDelete(t *testing.T, kv kvpkg.KV, nsPrefix string) {

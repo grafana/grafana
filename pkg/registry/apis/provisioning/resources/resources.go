@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
 
 var (
@@ -157,7 +158,7 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	// TODO: how should we handle this?
 	// Only treat it as already-in-repository when a repository manager owns it;
 	// matching on identity alone would misclassify other manager kinds.
-	if manager.Kind == utils.ManagerKindRepo && manager.Identity == r.repo.Config().GetName() {
+	if isManagedByRepository(manager, r.repo.Config().GetName()) {
 		// If it's already in the repository, we don't need to write it
 		return "", 0, ErrAlreadyInRepository
 	}
@@ -171,9 +172,11 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	// Get the absolute path of the folder
 	rootFolder := RootFolder(r.repo.Config())
 
-	// If no folder is specified in the file, set it to the root to ensure everything is written under it
+	// No folder (or the "general" sentinel the apistore writes for root) means
+	// the repository root: route the write there and stamp the meta folder with
+	// the repo's root id rather than the generic "general".
 	var fid Folder
-	if folder == "" {
+	if foldermodel.IsRootFolderUID(folder) {
 		fid = Folder{ID: rootFolder}
 		meta.SetFolder(rootFolder) // Set the folder in the metadata to the root folder
 	} else {

@@ -7,8 +7,7 @@ import {
   type DataSourceInstanceSettings,
   FieldType,
 } from '@grafana/data';
-import { type BackendSrv, getBackendSrv } from '@grafana/runtime';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { type BackendSrv, getBackendSrv, getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime';
 
 import { resolveBackendInstance } from './probeUtils';
 import { runInstantQueries, runRangeQuery } from './promQuery';
@@ -42,14 +41,9 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: jest.fn(),
   getDataSourceSrv: jest.fn(),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(),
   getDataSourceInstanceSettings: jest.fn(),
 }));
-
 jest.mock('@grafana/api-clients', () => ({
   ...jest.requireActual('@grafana/api-clients'),
   getAPINamespace: jest.fn(),

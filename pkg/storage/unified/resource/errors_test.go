@@ -5,14 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -79,6 +82,99 @@ func TestAsErrorResult_NamespaceMismatchIsForbidden(t *testing.T) {
 	}
 }
 
+func TestAsErrorResult_ContextErrors(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name     string
+		err      error
+		httpCode int32
+		grpcCode codes.Code
+	}{
+		{"canceled", context.Canceled, 499, codes.Canceled},
+		{"deadline exceeded", context.DeadlineExceeded, http.StatusGatewayTimeout, codes.DeadlineExceeded},
+		{"grpc canceled", status.Error(codes.Canceled, "canceled read"), 499, codes.Canceled},
+		{"grpc deadline exceeded", status.Error(codes.DeadlineExceeded, "expired read"), http.StatusGatewayTimeout, codes.DeadlineExceeded},
+		{"backend failure", errors.New("storage failed"), http.StatusInternalServerError, codes.Internal},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			for name, err := range map[string]error{
+				"bare":        tc.err,
+				"wrapped":     fmt.Errorf("reading resource: %w", tc.err),
+				"joined":      errors.Join(tc.err),
+				"both joined": errors.Join(tc.err, fmt.Errorf("reading body: %w", tc.err)),
+				"nested join": fmt.Errorf("reading resource: %w", errors.Join(errors.Join(tc.err))),
+			} {
+				t.Run(name, func(t *testing.T) {
+					got := AsErrorResult(err)
+					require.Equal(t, tc.httpCode, got.Code)
+					require.Equal(t, err.Error(), got.Message)
+					require.Equal(t, tc.grpcCode, status.Code(GRPCStatusError(got)))
+				})
+			}
+		})
+	}
+}
+
+func TestAsErrorResult_MixedJoinedErrors(t *testing.T) {
+	t.Parallel()
+
+	backendErr := errors.New("storage failed")
+	withDetails := func(code codes.Code, httpCode int32) error {
+		st, err := status.New(code, "canceled read with details").WithDetails(&resourcepb.ErrorResult{Code: httpCode})
+		require.NoError(t, err)
+		return st.Err()
+	}
+	for _, cancellation := range []error{
+		context.Canceled,
+		context.DeadlineExceeded,
+		status.Error(codes.Canceled, "canceled read"),
+		status.Error(codes.DeadlineExceeded, "expired read"),
+		withDetails(codes.Canceled, 499),
+		withDetails(codes.DeadlineExceeded, http.StatusGatewayTimeout),
+	} {
+		t.Run(cancellation.Error(), func(t *testing.T) {
+			t.Parallel()
+			for name, err := range map[string]error{
+				"failure first":      errors.Join(backendErr, cancellation),
+				"cancellation first": errors.Join(cancellation, backendErr),
+				"nested join":        fmt.Errorf("reading resource: %w", errors.Join(cancellation, errors.Join(backendErr, cancellation))),
+			} {
+				t.Run(name, func(t *testing.T) {
+					got := AsErrorResult(err)
+					require.Equal(t, int32(http.StatusInternalServerError), got.Code)
+					require.Equal(t, err.Error(), got.Message)
+					require.Equal(t, codes.Internal, status.Code(GRPCStatusError(got)))
+					require.Equal(t, int32(http.StatusInternalServerError), AsErrorResult(StatusErrorFromResponse(nil, err)).Code)
+				})
+			}
+		})
+	}
+}
+
+func TestHandleQueueError_ContextErrors(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		err  error
+		want codes.Code
+	}{
+		{context.Canceled, codes.Canceled},
+		{context.DeadlineExceeded, codes.DeadlineExceeded},
+	} {
+		t.Run(tc.want.String(), func(t *testing.T) {
+			t.Parallel()
+			queueErr := fmt.Errorf("failed to enqueue for tenant stacks-13: %w", tc.err)
+			response, err := HandleQueueError(queueErr, func(e *resourcepb.ErrorResult) *resourcepb.ReadResponse {
+				return &resourcepb.ReadResponse{Error: e}
+			})
+			require.NoError(t, err)
+			require.Equal(t, tc.want, status.Code(GRPCStatusError(response.Error)))
+		})
+	}
+}
+
 func TestErrorFromResponse(t *testing.T) {
 	t.Parallel()
 
@@ -135,6 +231,100 @@ func TestErrorFromResponse(t *testing.T) {
 		fromDetails := AsErrorResult(ErrorFromResponse(respErr, detailsErr(http.StatusNotFound, "from details")))
 		require.Equal(t, "from details", fromDetails.Message)
 	})
+}
+
+func TestGRPCStatusError(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nil input returns nil", func(t *testing.T) {
+		t.Parallel()
+		require.NoError(t, GRPCStatusError(nil))
+	})
+
+	t.Run("encoding failure returns internal error without details", func(t *testing.T) {
+		t.Parallel()
+		// Invalid UTF-8 cannot be marshaled into a proto3 string field.
+		err := GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "\xff"})
+		st := status.Convert(err)
+		require.Equal(t, codes.Internal, st.Code())
+		require.Equal(t, "failed to encode error details", st.Message())
+		require.Empty(t, st.Details())
+	})
+
+	for _, tc := range []struct {
+		name   string
+		code   int32
+		reason metav1.StatusReason
+		want   codes.Code
+	}{
+		{"conflict 409", http.StatusConflict, metav1.StatusReasonConflict, codes.Aborted},
+		{"already exists 409", http.StatusConflict, metav1.StatusReasonAlreadyExists, codes.AlreadyExists},
+		{"invalid 422", http.StatusUnprocessableEntity, metav1.StatusReasonInvalid, codes.InvalidArgument},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			failure := &resourcepb.ErrorResult{
+				Code:    tc.code,
+				Reason:  string(tc.reason),
+				Message: "request failed",
+				Details: &resourcepb.ErrorDetails{
+					Group: "dashboard.grafana.app", Kind: "dashboards", Name: "dashboard", Uid: "uid",
+					RetryAfterSeconds: 12,
+					Causes: []*resourcepb.ErrorCause{{
+						Reason: string(metav1.CauseTypeFieldValueInvalid), Field: "metadata.resourceVersion", Message: "outdated version",
+					}},
+				},
+			}
+
+			err := GRPCStatusError(failure)
+
+			st, ok := status.FromError(err)
+			require.True(t, ok)
+			require.Equal(t, tc.want, st.Code())
+			require.Equal(t, failure.Message, st.Message())
+			details := st.Details()
+			require.Len(t, details, 1)
+			require.Empty(t, cmp.Diff(failure, details[0], protocmp.Transform()))
+			require.Empty(t, cmp.Diff(failure, AsErrorResult(err), protocmp.Transform()))
+		})
+	}
+}
+
+// Clients must observe the same Kubernetes error whether the server embeds an
+// ErrorResult in the response or returns it as a gRPC status.
+func TestGRPCStatusError_RoundTripMatchesEmbeddedError(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name   string
+		result *resourcepb.ErrorResult
+	}{
+		{"not found 404", NewNotFoundError(&resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "abc"})},
+		{"conflict 409", &resourcepb.ErrorResult{Code: http.StatusConflict, Reason: string(metav1.StatusReasonConflict), Message: "conflict"}},
+		{"already exists 409", &resourcepb.ErrorResult{Code: http.StatusConflict, Reason: string(metav1.StatusReasonAlreadyExists), Message: "exists"}},
+		{"invalid 422 with causes", &resourcepb.ErrorResult{
+			Code: http.StatusUnprocessableEntity, Reason: string(metav1.StatusReasonInvalid), Message: "invalid",
+			Details: &resourcepb.ErrorDetails{
+				Group: "dashboard.grafana.app", Kind: "dashboards", Name: "abc",
+				Causes: []*resourcepb.ErrorCause{{Reason: string(metav1.CauseTypeFieldValueInvalid), Field: "spec.title", Message: "required"}},
+			},
+		}},
+		{"service unavailable 503", NewServiceUnavailableError("try again later")},
+		{"too many requests 429", NewTooManyRequestsError("slow down")},
+		{"missing code", &resourcepb.ErrorResult{Message: "no code"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			embedded := StatusErrorFromResponse(tc.result, nil)
+			viaGRPC := StatusErrorFromGRPC(GRPCStatusError(tc.result))
+
+			var want, got apierrors.APIStatus
+			require.ErrorAs(t, embedded, &want)
+			require.ErrorAs(t, viaGRPC, &got)
+			require.Empty(t, cmp.Diff(want.Status(), got.Status()))
+		})
+	}
 }
 
 func TestGRPCCodeFromErrorResult(t *testing.T) {
@@ -250,6 +440,62 @@ func TestIsConflict(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			require.Equal(t, tc.expected, IsConflict(tc.err))
+		})
+	}
+}
+
+func TestStatusError_HTTPCode(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		code int32
+		want int32
+	}{
+		{name: "unspecified", want: http.StatusInternalServerError},
+		{name: "explicit client error", code: http.StatusTooManyRequests, want: http.StatusTooManyRequests},
+		{name: "explicit server error", code: http.StatusServiceUnavailable, want: http.StatusServiceUnavailable},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			for _, source := range []string{"direct", "embedded", "grpc details"} {
+				t.Run(source, func(t *testing.T) {
+					res := &resourcepb.ErrorResult{
+						Code:    tc.code,
+						Message: "search unavailable",
+						Reason:  string(metav1.StatusReasonServiceUnavailable),
+						Details: &resourcepb.ErrorDetails{
+							Group: "test.grafana.app", Kind: "tests", Name: "test", Uid: "uid",
+							RetryAfterSeconds: 12,
+							Causes:            []*resourcepb.ErrorCause{{Reason: "FieldValueInvalid", Field: "spec.query", Message: "invalid query"}},
+						},
+					}
+					original := proto.Clone(res)
+					var got error
+					switch source {
+					case "direct":
+						got = StatusError(res)
+					case "embedded":
+						got = StatusErrorFromResponse(res, nil)
+					case "grpc details":
+						st, err := status.New(codes.Unavailable, "transport message").WithDetails(res)
+						require.NoError(t, err)
+						got = StatusErrorFromResponse(nil, st.Err())
+					}
+
+					var apiStatus apierrors.APIStatus
+					require.ErrorAs(t, got, &apiStatus)
+					require.Equal(t, tc.want, apiStatus.Status().Code)
+					want := proto.Clone(res).(*resourcepb.ErrorResult)
+					want.Code = tc.want
+					require.Empty(t, cmp.Diff(want, AsErrorResult(got), protocmp.Transform()))
+					require.Empty(t, cmp.Diff(original, res, protocmp.Transform()))
+
+					w := httptest.NewRecorder()
+					// An unspecified status code (0) would panic in WriteHeader without the fallback.
+					require.NotPanics(t, func() {
+						require.Equal(t, int(tc.want), errhttp.Write(context.Background(), got, w))
+					})
+					require.Equal(t, int(tc.want), w.Code)
+				})
+			}
 		})
 	}
 }

@@ -3,7 +3,7 @@ import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { InlineSwitch, useStyles2 } from '@grafana/ui';
+import { InlineSwitch, Stack, useStyles2 } from '@grafana/ui';
 
 import { TextNGFooter } from '../TextNGFooter';
 
@@ -13,6 +13,7 @@ export interface TextNGEditorFooterProps {
   onShowLineNumbersChange: (showLineNumbers: boolean) => void;
   frameSelector?: ReactNode;
   pagination?: ReactNode;
+  notice?: ReactNode;
 }
 
 export function TextNGEditorFooter({
@@ -21,6 +22,7 @@ export function TextNGEditorFooter({
   onShowLineNumbersChange,
   frameSelector,
   pagination,
+  notice,
 }: TextNGEditorFooterProps) {
   const styles = useStyles2(getStyles);
 
@@ -29,15 +31,20 @@ export function TextNGEditorFooter({
       left={frameSelector}
       center={pagination}
       right={
-        showLineNumbersSwitch && (
-          <InlineSwitch
-            className={styles.lineNumbers}
-            showLabel
-            transparent
-            label={t('textng.editor.footer-line-numbers', 'Line numbers')}
-            value={showLineNumbers}
-            onChange={() => onShowLineNumbersChange(!showLineNumbers)}
-          />
+        (notice || showLineNumbersSwitch) && (
+          <Stack direction="row" gap={1} alignItems="center">
+            {notice}
+            {showLineNumbersSwitch && (
+              <InlineSwitch
+                className={styles.lineNumbers}
+                showLabel
+                transparent
+                label={t('textng.editor.footer-line-numbers', 'Line numbers')}
+                value={showLineNumbers}
+                onChange={() => onShowLineNumbersChange(!showLineNumbers)}
+              />
+            )}
+          </Stack>
         )
       }
     />

@@ -45,7 +45,7 @@ Not every Alertmanager configuration can be imported as-is. Refer to [limitation
 
 ## How it works
 
-Grafana imports the configuration as it is and evaluates it the way your source Alertmanager does. Receivers keep their Alertmanager fields, and they notify with the same logic and message format, because Grafana runs them as Mimir-compatible integrations instead of rewriting them into native Grafana ones.
+Grafana imports the configuration as it is and evaluates it the way your source Alertmanager does, for configurations from [supported versions](#limitations). Receivers keep their Alertmanager fields, and they notify with the same logic and message format, because Grafana runs them as Mimir-compatible integrations instead of rewriting them into native Grafana ones.
 
 Mimir-compatible integrations don't offer what a native Grafana integration adds on top, such as [images in notifications](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/images-in-notifications/). To use those features, promote the import and then rebuild the contact point as a Grafana one.
 
@@ -311,6 +311,8 @@ Reverting deletes the imported notification policy tree. Alert rules that route 
 
 Consider the following when you import an Alertmanager configuration:
 
+- **Mimir version**: Grafana supports notification configuration imports from Grafana Mimir up to 3.0.x. Later Mimir versions can use integrations and fields that the imported receivers don't support.
+- **Prometheus Alertmanager version**: Grafana supports notification configuration imports from Prometheus Alertmanager up to v0.27. Later versions add integrations and fields that the imported receivers don't support.
 - **Unsupported receiver fields**: Integration fields that read their values from elsewhere, including every `*_file` and `*_ref` variant, have no equivalent in Grafana. Grafana rejects a configuration that contains one, so nothing is imported. Supply the value inline in the matching field instead, and drop the `_file` or `_ref` variant.
 - **Data source support**: Grafana reads a configuration from a Mimir Alertmanager data source. Upstream Prometheus Alertmanager doesn't expose a configuration API, so those data sources aren't supported. Import a configuration YAML file instead.
 - **Global settings**: After you promote an import, the `global` section no longer exists as a section of its own. Grafana has resolved its values into each integration setting that relies on them, so a promoted contact point carries the resolved value rather than a reference to `global`.

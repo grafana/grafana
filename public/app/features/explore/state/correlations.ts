@@ -5,8 +5,7 @@ import {
   generatedAPI as correlationsAPIv0alpha1,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { type DataLinkTransformationConfig } from '@grafana/data';
-import { type CorrelationData, reportInteraction, config } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { type CorrelationData, reportInteraction, config, getDataSourceInstance } from '@grafana/runtime';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';

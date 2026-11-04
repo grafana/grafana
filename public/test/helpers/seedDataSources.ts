@@ -11,8 +11,8 @@ import {
   FALLBACK_TO_LEGACY_INSTANCE_WARNING,
   FALLBACK_TO_LEGACY_LIST_WARNING,
   FALLBACK_TO_LEGACY_SETTINGS_WARNING,
+  initDataSourceInstanceSettings,
   setDataSourcePluginImporter,
-  syncDataSourceInstanceSettings,
 } from '@grafana/runtime/internal';
 import { mockLogger } from '@grafana/test-utils/unstable';
 
@@ -65,10 +65,10 @@ export function seedDataSources(dataSources: SeedableDataSource[], options: Seed
   const defaultDataSourceName =
     fixtures.find((fixture) => fixture.settings.isDefault)?.settings.name ?? fixtures[0]?.settings.name ?? '';
 
-  // syncDataSourceInstanceSettings rather than initDataSourceInstanceSettings: it also clears the
-  // constructed-instance cache. Suites re-seed per test, and a cached instance built from the
-  // previous test's fixtures would otherwise be handed back for a uid this call just rebuilt.
-  syncDataSourceInstanceSettings({ datasources: settings, defaultDatasource: defaultDataSourceName });
+  // Synchronous on purpose: initDataSourceInstanceSettings also clears the constructed-instance
+  // cache. Suites re-seed per test, and a cached instance built from the previous test's fixtures
+  // would otherwise be handed back for a uid this call just rebuilt.
+  initDataSourceInstanceSettings(settings, defaultDataSourceName);
   setDataSourcePluginImporter(
     // The importer type is internal to @grafana/runtime; fixtures only need to supply what the
     // loader reads off the plugin.

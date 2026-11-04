@@ -1,13 +1,12 @@
 import { Navigate } from 'react-router-dom-v5-compat';
 
 import { config } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { type GrafanaRouteComponent, type RouteDescriptor } from 'app/core/navigation/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { evaluateAccess, evaluateAccessAll } from './routePermissions';
-import { shouldAllowRecoveringDeletedRules } from './unified/featureToggles';
+import { isNotificationHistoryEnabled, shouldUseGmaOnlyListView } from './unified/featureToggles';
 import { proxied } from './unified/plugin-proxy/withRouteProxy';
 import {
   PERMISSIONS_CONTACT_POINTS,
@@ -16,6 +15,7 @@ import {
   PERMISSIONS_TIME_INTERVALS_MODIFY,
   PERMISSIONS_TIME_INTERVALS_READ,
 } from './unified/utils/alertmanagerPermissions';
+import { alertActivityEnabled } from './unified/utils/pageAccess';
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
   const routes = [
@@ -95,6 +95,21 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         () =>
           import(
             /* webpackChunkName: "EditMuteTiming" */ 'app/features/alerting/unified/components/mute-timings/EditMuteTiming'
+          )
+      ),
+    }),
+    proxied({
+      path: '/alerting/routes/mute-timing/:name/edit',
+      roles: evaluateAccess([
+        AccessControlAction.AlertingNotificationsWrite,
+        AccessControlAction.AlertingNotificationsExternalWrite,
+        ...PERMISSIONS_TIME_INTERVALS_READ,
+        ...PERMISSIONS_TIME_INTERVALS_MODIFY,
+      ]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "EditMuteTimingByPath" */ 'app/features/alerting/unified/components/mute-timings/EditMuteTimingByPath'
           )
       ),
     }),
@@ -271,7 +286,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/notifications-history/view/:uuid',
-      component: cfg.featureToggles.alertingNotificationHistoryDetail
+      component: isNotificationHistoryEnabled(cfg)
         ? importAlertingComponent(
             () =>
               import(
@@ -283,14 +298,12 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/alerting/recently-deleted/',
       roles: () => ['Admin'],
-      component: shouldAllowRecoveringDeletedRules()
-        ? importAlertingComponent(
-            () =>
-              import(
-                /* webpackChunkName: "RecentlyDeleted" */ 'app/features/alerting/unified/components/rules/deleted-rules/DeletedRulesPage'
-              )
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "RecentlyDeleted" */ 'app/features/alerting/unified/components/rules/deleted-rules/DeletedRulesPage'
           )
-        : () => <Navigate replace to="/alerting/list" />,
+      ),
     },
     {
       path: '/alerting/import-datasource-managed-rules',
@@ -298,14 +311,12 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         AccessControlAction.AlertingRuleCreate,
         AccessControlAction.AlertingProvisioningSetStatus,
       ]),
-      component: config.featureToggles.alertingMigrationUI
-        ? importAlertingComponent(
-            () =>
-              import(
-                /* webpackChunkName: "AlertingImportFromDSRules"*/ 'app/features/alerting/unified/components/import-to-gma/ImportToGMARules'
-              )
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "AlertingImportFromDSRules"*/ 'app/features/alerting/unified/components/import-to-gma/ImportToGMARules'
           )
-        : () => <Navigate replace to="/alerting/list" />,
+      ),
     },
     {
       path: '/alerting/import-to-gma',
@@ -428,12 +439,36 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
   ];
 
-  if (getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingTriage, false)) {
+  if (alertActivityEnabled()) {
     routes.push({
       path: '/alerting/alerts',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertingTriage" */ 'app/features/alerting/unified/triage/Triage')
+      ),
+    });
+  }
+
+  if (shouldUseGmaOnlyListView()) {
+    // The GMA-only Alert rules page requires Grafana-managed read only, not the legacy GMA-or-DMA combo.
+    routes.push({
+      path: '/alerting/rules/alert',
+      roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "GmaAlertRulesPage" */ 'app/features/alerting/unified/gma-rule-list/alert-rules/AlertRulesPage'
+          )
+      ),
+    });
+    routes.push({
+      path: '/alerting/rules/recording',
+      roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "GmaRecordingRulesPage" */ 'app/features/alerting/unified/gma-rule-list/recording-rules/RecordingRulesPage'
+          )
       ),
     });
   }

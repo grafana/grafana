@@ -114,6 +114,8 @@ describe('NotebookExportMenu', () => {
         expect.objectContaining({ from: 'now-3h', to: 'now' })
       );
     });
+    // Reported as started: the render happens in the new tab, where nothing reports back.
+    expect(mockExported).toHaveBeenCalledWith('nb1', 'pdf', 'notebook_list');
   });
 
   it('flushes pending changes before navigating, so the PDF holds the latest edits', async () => {
@@ -151,6 +153,7 @@ describe('NotebookExportMenu', () => {
     expect(await screen.findByText('Failed to export notebook')).toBeInTheDocument();
     expect(mockNavigateToNotebookPdf).not.toHaveBeenCalled();
     expect(tab.close).toHaveBeenCalled();
+    expect(mockExported).not.toHaveBeenCalled();
   });
 
   it('exports without a flush when the surface has nothing pending', async () => {
@@ -188,6 +191,7 @@ describe('NotebookExportMenu', () => {
     expect(await screen.findByText('Failed to export notebook')).toBeInTheDocument();
     expect(mockNavigateToNotebookPdf).not.toHaveBeenCalled();
     expect(tab.close).toHaveBeenCalled();
+    expect(mockExported).not.toHaveBeenCalled();
   });
 
   it('copies the notebook as markdown', async () => {

@@ -21,17 +21,79 @@ const (
 // the mounted resource and the request's namespace. Embedding declarations do not
 // grant filtering capabilities: both search legs must support every filter.
 func TranslateHybridSearchQuery(q *searchv0.HybridSearchQuery, gvr schema.GroupVersionResource, namespace string) (*resourcepb.HybridSearchRequest, field.ErrorList) {
+	errs := validateHybridSearchQuery(q, gvr.GroupResource())
+	if q.Resources != nil {
+		errs = append(errs, field.Forbidden(field.NewPath("resources"), "only supported by global hybrid search"))
+	}
+	if len(errs) > 0 {
+		return nil, errs
+	}
+
+	req := translateHybridSearchQuery(q)
+	req.Key = &resourcepb.ResourceKey{ //nolint:staticcheck // Older search servers require key.
+		Namespace: namespace,
+		Group:     gvr.Group,
+		Resource:  gvr.Resource,
+	}
+	return req, nil
+}
+
+// TranslateGlobalHybridSearchQuery validates explicit resource targets and scopes
+// the merged hybrid search to the request's namespace.
+func TranslateGlobalHybridSearchQuery(q *searchv0.HybridSearchQuery, namespace string) (*resourcepb.HybridSearchRequest, field.ErrorList) {
+	var gr schema.GroupResource
+	if len(q.Resources) == 1 {
+		gr = schema.GroupResource{Group: q.Resources[0].Group, Resource: q.Resources[0].Resource}
+	}
+	errs := validateHybridSearchQuery(q, gr)
+	if len(q.Resources) == 0 {
+		errs = append(errs, field.Required(field.NewPath("resources"), "must contain at least one resource type"))
+	}
+	seen := make(map[searchv0.HybridSearchResource]bool, len(q.Resources))
+	for i, target := range q.Resources {
+		path := field.NewPath("resources").Index(i)
+		if strings.TrimSpace(target.Group) == "" {
+			errs = append(errs, field.Required(path.Child("group"), "must not be empty or whitespace"))
+		} else if target.Group != strings.ToLower(strings.TrimSpace(target.Group)) {
+			errs = append(errs, field.Invalid(path.Child("group"), target.Group, "must be lowercase with no surrounding whitespace"))
+		}
+		if strings.TrimSpace(target.Resource) == "" {
+			errs = append(errs, field.Required(path.Child("resource"), "must not be empty or whitespace"))
+		} else if target.Resource != strings.ToLower(strings.TrimSpace(target.Resource)) {
+			errs = append(errs, field.Invalid(path.Child("resource"), target.Resource, "must be lowercase with no surrounding whitespace"))
+		}
+		if seen[target] {
+			errs = append(errs, field.Duplicate(path, target))
+		}
+		seen[target] = true
+	}
+	if len(errs) > 0 {
+		return nil, errs
+	}
+
+	req := translateHybridSearchQuery(q)
+	req.Namespace = namespace
+	req.RequireHybridEnabled = true
+	req.Resources = make([]*resourcepb.HybridSearchRequest_Resource, 0, len(q.Resources))
+	for _, target := range q.Resources {
+		req.Resources = append(req.Resources, &resourcepb.HybridSearchRequest_Resource{
+			Group: target.Group, Resource: target.Resource,
+		})
+	}
+	return req, nil
+}
+
+func validateHybridSearchQuery(q *searchv0.HybridSearchQuery, gr schema.GroupResource) field.ErrorList {
 	errs := validateEnvelope(q.TypeMeta, searchv0.KindHybridSearchQuery)
 	if strings.TrimSpace(q.Query) == "" {
 		errs = append(errs, field.Required(field.NewPath("query"), "must not be empty or whitespace"))
 	}
 	if len(q.Query) > 1000 {
-		errs = append(errs, field.Invalid(field.NewPath("query"), q.Query, "must not exceed 1000 bytes"))
+		errs = append(errs, field.TooLong(field.NewPath("query"), q.Query, 1000))
 	}
 	if len(q.SemanticQuery) > 1000 {
-		errs = append(errs, field.Invalid(field.NewPath("semanticQuery"), q.SemanticQuery, "must not exceed 1000 bytes"))
-	}
-	if q.SemanticQuery != "" && strings.TrimSpace(q.SemanticQuery) == "" {
+		errs = append(errs, field.TooLong(field.NewPath("semanticQuery"), q.SemanticQuery, 1000))
+	} else if q.SemanticQuery != "" && strings.TrimSpace(q.SemanticQuery) == "" {
 		errs = append(errs, field.Invalid(field.NewPath("semanticQuery"), q.SemanticQuery, "must not be whitespace"))
 	}
 	if q.Limit < 0 {
@@ -46,21 +108,15 @@ func TranslateHybridSearchQuery(q *searchv0.HybridSearchQuery, gvr schema.GroupV
 			errs = append(errs, field.Invalid(field.NewPath("minRelevance"), q.MinRelevance, "cannot be combined with skipRerank"))
 		}
 	}
-	errs = append(errs, validateHybridFilters(q.Filters, gvr)...)
-	if len(errs) > 0 {
-		return nil, errs
-	}
+	return append(errs, validateHybridFilters(q.Filters, gr)...)
+}
 
+func translateHybridSearchQuery(q *searchv0.HybridSearchQuery) *resourcepb.HybridSearchRequest {
 	limit := q.Limit
 	if limit == 0 {
 		limit = defaultHybridLimit
 	}
 	req := &resourcepb.HybridSearchRequest{
-		Key: &resourcepb.ResourceKey{
-			Namespace: namespace,
-			Group:     gvr.Group,
-			Resource:  gvr.Resource,
-		},
 		Query:         q.Query,
 		SemanticQuery: q.SemanticQuery,
 		Limit:         min(limit, maxHybridLimit),
@@ -73,12 +129,12 @@ func TranslateHybridSearchQuery(q *searchv0.HybridSearchQuery, gvr schema.GroupV
 			Key: f.Field, Operator: string(selection.In), Values: f.Values,
 		})
 	}
-	return req, nil
+	return req
 }
 
-func validateHybridFilters(filters []searchv0.HybridSearchFilter, gvr schema.GroupVersionResource) field.ErrorList {
+func validateHybridFilters(filters []searchv0.HybridSearchFilter, gr schema.GroupResource) field.ErrorList {
 	allowed := []string{"uid", "folder"}
-	if gvr.Group == "dashboard.grafana.app" && gvr.Resource == "dashboards" {
+	if gr.Group == "dashboard.grafana.app" && gr.Resource == "dashboards" {
 		allowed = append(allowed, "datasource_uid", "language")
 	}
 	seen := make(map[string]bool, len(filters))

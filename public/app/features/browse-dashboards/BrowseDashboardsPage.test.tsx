@@ -53,8 +53,8 @@ const defaultTestDataSource = {
   type: 'grafana-testdata-datasource',
 } as DataSourceInstanceListItem;
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [defaultTestDataSource] })),
 }));
 
@@ -408,26 +408,14 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       expect(checkbox).toBeInTheDocument();
     });
 
-    describe('with starred folders enabled', () => {
-      beforeEach(() => {
-        setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
-      });
+    it('shows the star toggle as the first action, before "Recently deleted"', async () => {
+      render(<BrowseDashboardsPage queryParams={{}} />);
 
-      afterEach(async () => {
-        await act(async () => {
-          setTestFlags({});
-        });
-      });
+      const star = await screen.findByTestId(selectors.components.NavToolbar.markAsFavorite);
+      const recentlyDeleted = await screen.findByRole('link', { name: 'Recently deleted' });
 
-      it('shows the star toggle as the first action, before "Recently deleted"', async () => {
-        render(<BrowseDashboardsPage queryParams={{}} />);
-
-        const star = await screen.findByTestId(selectors.components.NavToolbar.markAsFavorite);
-        const recentlyDeleted = await screen.findByRole('link', { name: 'Recently deleted' });
-
-        // star precedes "Recently deleted" in document order, so it is the first action
-        expect(star.compareDocumentPosition(recentlyDeleted) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-      });
+      // star precedes "Recently deleted" in document order, so it is the first action
+      expect(star.compareDocumentPosition(recentlyDeleted) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
   });
 
@@ -490,6 +478,8 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         historyOptions: { initialEntries: ['/dashboards?starred'] },
       });
       expect(await screen.findByRole('heading', { name: 'Starred' })).toBeInTheDocument();
+      // The heading appears before the search completes; wait for real rows before cleanup.
+      expect(await screen.findByRole('link', { name: dashbdD.item.title })).toBeInTheDocument();
     });
 
     it('displays "Starred" as the page title for the starred=true shape the filter checkbox writes', async () => {
@@ -498,6 +488,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         historyOptions: { initialEntries: ['/dashboards?starred=true'] },
       });
       expect(await screen.findByRole('heading', { name: 'Starred' })).toBeInTheDocument();
+      expect(await screen.findByRole('link', { name: dashbdD.item.title })).toBeInTheDocument();
     });
   });
 });

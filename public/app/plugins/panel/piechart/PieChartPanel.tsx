@@ -21,6 +21,7 @@ import {
   VizLegend,
   type VizLegendItem,
 } from '@grafana/ui';
+import { shouldShowLegend } from '@grafana/ui/internal';
 
 import { PieChart, computeGradientFills } from './PieChart';
 import { type PieChartLegendOptions, PieChartLegendValues, type Options } from './panelcfg.gen';
@@ -56,6 +57,10 @@ export function PieChartPanel(props: Props) {
   if (!hasFrames(fieldDisplayValues)) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
   }
+
+  // The chart draws slices in this order, so sort here rather than in the legend,
+  // which is not rendered when the legend is hidden.
+  fieldDisplayValues.sort(comparePieChartItemsByValue(options.sort));
 
   // Compute gradient fills once here so both the chart and the legend share
   // the exact same color map (same rank order, same interpolated hex values).
@@ -124,15 +129,13 @@ export function PieChartPanel(props: Props) {
 function getLegend(props: Props, displayValues: FieldDisplay[], gradientFills?: Map<FieldDisplay, string>) {
   const legendOptions = props.options.legend ?? defaultLegendOptions;
 
-  if (legendOptions.showLegend === false) {
+  if (!shouldShowLegend(legendOptions)) {
     return undefined;
   }
 
-  const sortedDisplayValues = displayValues.sort(comparePieChartItemsByValue(props.options.sort));
-
   const total = displayValues.filter(filterDisplayItems).reduce(sumDisplayItemsReducer, 0);
 
-  const legendItems: VizLegendItem[] = sortedDisplayValues
+  const legendItems: VizLegendItem[] = displayValues
     .map<VizLegendItem | undefined>((value: FieldDisplay, idx: number) => {
       const hideFrom: HideSeriesConfig = value.field.custom?.hideFrom ?? {};
 

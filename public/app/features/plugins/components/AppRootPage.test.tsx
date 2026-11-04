@@ -6,9 +6,8 @@ import { render } from 'test/test-utils';
 import { AppPlugin, PluginType, type AppRootProps, type NavModelItem, PluginIncludeType, OrgRole } from '@grafana/data';
 import { getMockPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
-import { setEchoSrv } from '@grafana/runtime';
+import { getPluginSettings, setEchoSrv } from '@grafana/runtime';
 import { refetchPluginSettings } from '@grafana/runtime/internal';
-import { getPluginSettings } from '@grafana/runtime/unstable';
 import { GrafanaRouteWrapper } from 'app/core/navigation/GrafanaRoute';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
@@ -22,10 +21,6 @@ import { pluginImporter } from '../importer/pluginImporter';
 
 import AppRootPage from './AppRootPage';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  getPluginSettings: jest.fn(),
-}));
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   refetchPluginSettings: jest.fn(),
@@ -41,6 +36,7 @@ jest.mock('./pluginNavFallbacks', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  getPluginSettings: jest.fn(),
   config: {
     featureToggles: {},
     apps: {},

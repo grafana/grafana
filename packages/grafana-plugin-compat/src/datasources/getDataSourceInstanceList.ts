@@ -1,16 +1,23 @@
 /* eslint-disable @grafana/no-get-data-source-srv */
 import { type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
-import { type GetDataSourceListFilters, getDataSourceSrv } from '@grafana/runtime';
 import {
-  type GetDataSourceInstanceListFilters,
-  getDataSourceInstanceList as rtGetDataSourceInstanceList,
-} from '@grafana/runtime/unstable';
+  type GetDataSourceListFilters,
+  getDataSourceSrv,
+  getDataSourceInstanceList as stableGetDataSourceInstanceList,
+} from '@grafana/runtime';
+import { getDataSourceInstanceList as unstableGetDataSourceInstanceList } from '@grafana/runtime/unstable';
+
+import { type GetDataSourceInstanceListFilters } from './types';
 
 export async function getDataSourceInstanceList(
   filters?: GetDataSourceInstanceListFilters
 ): Promise<DataSourceInstanceListItem[]> {
-  if (typeof rtGetDataSourceInstanceList === 'function') {
-    return rtGetDataSourceInstanceList(filters);
+  if (typeof stableGetDataSourceInstanceList === 'function') {
+    return stableGetDataSourceInstanceList(filters);
+  }
+
+  if (typeof unstableGetDataSourceInstanceList === 'function') {
+    return unstableGetDataSourceInstanceList(filters);
   }
 
   return backwardsCompatibleGetDataSourceInstanceList(filters);
@@ -29,11 +36,9 @@ async function backwardsCompatibleGetDataSourceInstanceList(
 
 function toDataSourceInstanceListItem(item: DataSourceInstanceSettings): DataSourceInstanceListItem {
   return {
-    isDefault: item.isDefault ?? false,
     meta: { ...item.meta },
     name: item.name,
     type: item.type,
     uid: item.uid,
-    apiVersion: item.apiVersion,
   };
 }

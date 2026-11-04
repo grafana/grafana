@@ -199,7 +199,7 @@ func testQuotaBlockedCreateDoesNotAccessResource(t *testing.T, syncType string) 
 	require.False(t, tracker.TryAcquire(), "skipping a blocked file must not release another file's reservation")
 }
 
-func runManagerKindSync(t *testing.T, ctx context.Context, syncType string, changes []repository.VersionedFileChange, repoResources resources.RepositoryResources, progress *jobs.MockJobProgressRecorder, tracker quotas.QuotaTracker) error {
+func runManagerKindSync(t *testing.T, ctx context.Context, syncType string, changes []repository.VersionedFileChange, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder, tracker quotas.QuotaTracker) error {
 	t.Helper()
 	progress.On("SetTotal", mock.Anything, len(changes)).Return()
 	tracer := tracing.NewNoopTracerService()
@@ -212,12 +212,12 @@ func runManagerKindSync(t *testing.T, ctx context.Context, syncType string, chan
 			fullChanges[i] = ResourceFileChange{Path: change.Path, Action: change.Action}
 		}
 		compare := NewMockCompareFn(t)
-		compare.On("Execute", mock.Anything, repo, repoResources, "new-ref", false).Return(fullChanges, nil, nil, nil)
+		compare.On("Execute", mock.Anything, repo, repoResources, "new-ref", mock.Anything).Return(fullChanges, nil, nil, nil)
 		return FullSync(ctx, repo, compare.Execute, resources.NewMockResourceClients(t), "new-ref", repoResources, progress, tracer, 10, metrics, tracker, false, 0)
 	}
 	repo := repository.NewMockVersioned(t)
 	repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
 	progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
 	progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
-	return IncrementalSync(ctx, repo, "old-ref", "new-ref", repoResources, progress, tracer, metrics, tracker, false)
+	return IncrementalSync(ctx, withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracer, metrics, tracker, false)
 }

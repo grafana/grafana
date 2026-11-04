@@ -3,7 +3,8 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { type Props } from 'react-virtualized-auto-sizer';
 import { render } from 'test/test-utils';
 
-import { locationService } from '@grafana/runtime';
+import { locationService, setPluginLinksHook } from '@grafana/runtime';
+import { defaultSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import DashboardPageProxy, { type DashboardPageProxyProps } from './DashboardPageProxy';
@@ -20,10 +21,15 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => {
     return {
       get: jest.fn().mockResolvedValue({
-        apiVersion: 'dashboard.grafana.app/v1beta1',
+        apiVersion: 'dashboard.grafana.app/v2beta1',
         kind: 'DashboardWithAccessInfo',
-        metadata: { name: 'abc-def', generation: 1, creationTimestamp: '2024-01-01T00:00:00Z' },
-        spec: {},
+        metadata: {
+          name: 'abc-def',
+          generation: 1,
+          creationTimestamp: '2024-01-01T00:00:00Z',
+          annotations: {},
+        },
+        spec: defaultSpec(),
         access: {},
       }),
     };
@@ -39,6 +45,8 @@ jest.mock('react-virtualized-auto-sizer', () => {
       width: 1,
     });
 });
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 jest.mock('react-router-dom-v5-compat', () => ({
   ...jest.requireActual('react-router-dom-v5-compat'),

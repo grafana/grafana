@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,14 +14,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	clientrest "k8s.io/client-go/rest"
 
-	authnlib "github.com/grafana/authlib/authn"
 	authtypes "github.com/grafana/authlib/types"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	serviceauthn "github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -409,14 +406,9 @@ func TestManagedAuthorizer(t *testing.T) {
 		},
 		{
 			name: "audience includes provisioning group",
-			auth: &serviceauthn.Identity{
-				Type: authtypes.TypeAccessPolicy,
-				UID:  "access-policy:random-uid",
-				AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{
-					Claims: jwt.Claims{
-						Audience: []string{provisioning.GROUP},
-					},
-				},
+			auth: &audienceAuthInfo{
+				StaticRequester: &identity.StaticRequester{Type: authtypes.TypeAccessPolicy, UserUID: "random-uid"},
+				audience:        []string{provisioning.GROUP},
 			},
 			obj: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
@@ -607,6 +599,14 @@ func TestManagedResourceCommitMessage(t *testing.T) {
 		})
 	}
 }
+
+// audienceAuthInfo reports an access token audience, which StaticRequester does not.
+type audienceAuthInfo struct {
+	*identity.StaticRequester
+	audience []string
+}
+
+func (a *audienceAuthInfo) GetAudience() []string { return a.audience }
 
 // fakeRestConfigProvider returns a rest.Config pointing at an arbitrary host,
 // used so tests can capture proxied REST requests with an httptest.Server.

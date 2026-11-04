@@ -7,21 +7,29 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
+	appplugin "github.com/grafana/grafana-app-sdk/plugin"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
+	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/marketplacelicensing"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 )
 
 var _ envvars.Provider = (*EnvVarsProvider)(nil)
+
+const marketplaceLicenseEnvTimeout = 10 * time.Second
 
 type EnvVarsProvider struct {
 	cfg                  *PluginInstanceCfg
@@ -70,8 +78,9 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 
 	hostEnv = append(hostEnv, p.featureToggleEnableVars(ctx)...)
 
-	marketplaceEnvVars := p.marketplaceLicenseEnvVars(ctx, plugin.PluginID())
-	p.logger.Debug("Providing marketplace env vars", "pluginId", plugin.PluginID(), "envVars", envVarNames(marketplaceEnvVars))
+	licensePluginID := marketplaceLicensePluginID(plugin)
+	marketplaceEnvVars := p.marketplaceLicenseEnvVars(ctx, licensePluginID)
+	p.logger.Debug("Providing marketplace env vars", "pluginId", plugin.PluginID(), "licensePluginId", licensePluginID, "envVars", envVarNames(marketplaceEnvVars))
 	hostEnv = append(hostEnv, marketplaceEnvVars...)
 
 	hostEnv = append(hostEnv, p.awsEnvVars(plugin.PluginID())...)
@@ -81,6 +90,8 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	hostEnv = append(hostEnv, p.azureHostEnvVars(azureSettings, plugin.PluginID())...)
 	hostEnv = append(hostEnv, p.tracingEnvVars(plugin)...)
 	hostEnv = append(hostEnv, p.pluginSettingsEnvVars(plugin.PluginID())...)
+	hostEnv = append(hostEnv, p.signingKeysEnvVars(plugin)...)
+	hostEnv = append(hostEnv, p.apiAccessEnvVars(plugin)...)
 
 	// If SkipHostEnvVars is enabled, get some allowed variables from the current process and pass
 	// them down to the plugin. If the flag is not set, do not add anything else because ALL env vars
@@ -92,9 +103,24 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	return hostEnv
 }
 
+// marketplaceLicensePluginID returns the plugin ID whose marketplace license applies to plugin.
+// Nested plugins are distributed and licensed as part of their parent, so they use the parent's license.
+func marketplaceLicensePluginID(plugin *plugins.Plugin) string {
+	if plugin.Parent != nil {
+		return plugin.Parent.PluginID()
+	}
+	return plugin.PluginID()
+}
+
 func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginID string) []string {
-	// Marketplace plugins require the feature toggle and a valid Grafana Pro/Enterprise license.
-	if p.cfg.Features == nil || !p.cfg.Features.GetEnabled(ctx)[featuremgmt.FlagPluginsMarketplaceLicensing] {
+	// Plugin restarts reuse the context the plugin was initialized with, which can already be canceled
+	// (for example, the request that installed the plugin). Keep its values but not its cancellation, and
+	// bound both the feature flag evaluation and the license token lookup instead.
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), marketplaceLicenseEnvTimeout)
+	defer cancel()
+
+	// Marketplace plugins require the feature flag and a valid Grafana Pro/Enterprise license.
+	if !p.marketplaceLicensingEnabled(ctx) {
 		return nil
 	}
 	if p.license == nil || !p.license.HasValidLicense() {
@@ -126,6 +152,16 @@ func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginI
 		variables = append(variables, p.envVar("GF_MARKETPLACE_LICENSE_PATH", licensePath))
 	}
 	return variables
+}
+
+// marketplaceLicensingEnabled evaluates the marketplace licensing kill switch. Evaluation errors disable it.
+func (p *EnvVarsProvider) marketplaceLicensingEnabled(ctx context.Context) bool {
+	enabled, err := openfeature.NewDefaultClient().BooleanValue(ctx, featuremgmt.FlagPluginsMarketplaceLicensing, false, openfeature.TransactionContext(ctx))
+	if err != nil {
+		p.logger.Warn("Could not evaluate feature flag, not providing marketplace licenses", "flag", featuremgmt.FlagPluginsMarketplaceLicensing, "error", err)
+		return false
+	}
+	return enabled
 }
 
 func (p *EnvVarsProvider) featureToggleEnableVars(ctx context.Context) []string {
@@ -288,6 +324,80 @@ func (p *EnvVarsProvider) tracingEnvVars(plugin *plugins.Plugin) []string {
 		vars = append(vars, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))
 	}
 	return vars
+}
+
+// signingKeysEnvVars passes the plugin the keys that verify the access tokens
+// Grafana signs itself, so it can authenticate plugin protocol v3 requests
+// without insecure_skip_authentication.
+func (p *EnvVarsProvider) signingKeysEnvVars(plugin *plugins.Plugin) []string {
+	if !p.cfg.LocalPluginTokens {
+		return nil
+	}
+	jwks, err := v3.LocalSigningKeys()
+	if err != nil {
+		p.logger.Error("Failed to get the local plugin signing keys", "pluginId", plugin.PluginID(), "error", err)
+		return nil
+	}
+	return []string{p.envVar(appplugin.EnvVarGrafanaJWKS, jwks)}
+}
+
+// apiAccessHostEnvVars are the GF_API_ACCESS_* variables that configure where and
+// how the app SDK calls Grafana's API. go-plugin forwards the host environment
+// after the variables Grafana sets, so host values would win over them.
+var apiAccessHostEnvVars = []string{
+	appplugin.EnvVarAPIAccessRouterURL,
+	appplugin.EnvVarAPIAccessTokenExchangeURL,
+	appplugin.EnvVarAPIAccessCAPToken,
+	appplugin.EnvVarAPIAccessBearerToken, //nolint:gosec,staticcheck // SA1019: deprecated variable name, not a credential
+	// The app SDK still reads these unprefixed names when the GF_ ones are unset.
+	"API_ACCESS_ROUTER_URL",
+	"API_ACCESS_TOKEN_EXCHANGE_URL",
+	"API_ACCESS_CAP_TOKEN",
+	"API_ACCESS_BEARER_TOKEN",
+}
+
+// apiAccessEnvVars passes an app plugin the credentials for Grafana's API when
+// Grafana signs plugin access tokens itself: this Grafana's URL, the local token
+// exchange, and an access policy token for it (see
+// v3.IssueLocalAccessPolicyToken). The app SDK then exchanges tokens to act as
+// the plugin or on behalf of its caller, as with a cloud access policy.
+//
+// Grafana builds a plugin's environment each time it starts the plugin's
+// process, so each process gets its own token, which the plugin's process
+// manager revokes when that process stops or is replaced.
+func (p *EnvVarsProvider) apiAccessEnvVars(plugin *plugins.Plugin) []string {
+	// LocalAPIURL is only set when Grafana signs plugin tokens itself.
+	apiURL := strings.TrimRight(p.cfg.LocalAPIURL, "/")
+	if apiURL == "" || plugin.Type != plugins.TypeApp {
+		return nil
+	}
+	if !plugin.SkipHostEnvVars && slices.ContainsFunc(apiAccessHostEnvVars, func(key string) bool { return os.Getenv(key) != "" }) {
+		return nil
+	}
+	// The policy comes from the manifest of the plugin being started, not from
+	// other copies of it on disk. A plugin without one gets no credentials: a
+	// token on behalf of its caller would still carry the caller's org role.
+	if plugin.FS == nil {
+		return nil
+	}
+	manifest, err := definition.LoadManifest(plugin.FS)
+	if err != nil {
+		p.logger.Error("Failed to load the plugin's app manifest; it gets no credentials for Grafana's API", "pluginId", plugin.ID, "error", err)
+		return nil
+	}
+	if manifest == nil {
+		return nil
+	}
+	token, err := v3.IssueLocalAccessPolicyToken(plugin.ID, manifest)
+	if err != nil {
+		p.logger.Error("Failed to create the local plugin access policy token", "pluginId", plugin.ID, "error", err)
+		return nil
+	}
+	return []string{
+		p.envVar(appplugin.EnvVarAPIAccessRouterURL, apiURL),
+		p.envVar(appplugin.EnvVarAPIAccessTokenExchangeURL, apiURL+pluginauth.TokenExchangePath),
+		p.envVar(appplugin.EnvVarAPIAccessCAPToken, token),
+	}
 }
 
 // insecureSkipAuthenticationSetting makes a plugin serve plugin protocol v3

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -26,13 +25,29 @@ func UnaryErrorResultInterceptor() grpc.UnaryServerInterceptor {
 		if !ok || result.GetError() == nil {
 			return resp, nil
 		}
-		failure := result.GetError()
-		st, err := status.New(grpcCodeFromErrorResult(failure), failure.Message).WithDetails(failure)
-		if err != nil {
-			return nil, status.Error(codes.Internal, "failed to encode error details")
-		}
-		return nil, st.Err()
+		return nil, GRPCStatusError(result.GetError())
 	}
+}
+
+// BlobStreamErrorResultInterceptor converts embedded blob errors before sending
+// them, so no successful response is observed before the gRPC status error.
+func BlobStreamErrorResultInterceptor() grpc.StreamServerInterceptor {
+	return func(srv any, stream grpc.ServerStream, _ *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		return handler(srv, &blobErrorResultStream{ServerStream: stream})
+	}
+}
+
+type blobErrorResultStream struct {
+	grpc.ServerStream
+}
+
+func (s *blobErrorResultStream) SendMsg(msg any) error {
+	if result, ok := msg.(interface {
+		GetError() *resourcepb.ErrorResult
+	}); ok && result.GetError() != nil {
+		return GRPCStatusError(result.GetError())
+	}
+	return s.ServerStream.SendMsg(msg)
 }
 
 const listPathNotApplicable = "not_applicable"

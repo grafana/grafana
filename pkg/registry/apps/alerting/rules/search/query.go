@@ -1,16 +1,20 @@
 package search
 
 import (
+	"errors"
+	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/storage/unified/search/regex"
 )
 
 // negateMatcher flips a matcher to its complement, so a NotIn labels filter
@@ -54,8 +58,6 @@ type filters struct {
 	routingTree         string
 	metric              string
 	targetDatasourceUID string
-	sortField           string
-	sortDesc            bool
 	states              listFilter
 	healths             listFilter
 }
@@ -117,7 +119,7 @@ func extractFilters(req *Query) filters {
 	}
 	// Only the controlled group metadata label is selectable on the legacy store.
 	for _, r := range req.GroupFilters {
-		if r.Key != model.GroupLabelKey {
+		if r.Key != v1beta1.GroupLabelKey {
 			continue
 		}
 		if r.Operator == metav1.LabelSelectorOpNotIn {
@@ -125,10 +127,6 @@ func extractFilters(req *Query) filters {
 			continue
 		}
 		f.groupsInclude = append(f.groupsInclude, r.Values...)
-	}
-	if len(req.Sort) > 0 {
-		f.sortField = req.Sort[0].Field
-		f.sortDesc = req.Sort[0].Direction == sortDescending
 	}
 	return f
 }
@@ -239,6 +237,63 @@ func matchLabel(r *ngmodels.AlertRule, m labelMatcher) bool {
 		return !ok || v != m.value
 	}
 	return false
+}
+
+// labelRegexMatcher is a labels regex leaf compiled for in-memory evaluation.
+type labelRegexMatcher struct {
+	key    string
+	re     *regexp.Regexp
+	negate bool
+}
+
+// parseLabelRegex splits a "key=<value regex>" pattern on its first "=", as the
+// unified index does for flattened label terms, so the key is always literal.
+// The value is parsed with the regex subset unified search accepts.
+func parseLabelRegex(pattern string) (string, regex.Matcher, error) {
+	key, value, ok := strings.Cut(pattern, "=")
+	if !ok || key == "" {
+		return "", regex.Matcher{}, errors.New("must be a key=<value regex> expression with a literal key")
+	}
+	m, err := regex.Parse(value)
+	if err != nil {
+		return "", regex.Matcher{}, err
+	}
+	return key, m, nil
+}
+
+// compileLabelRegexes compiles each value regex anchored to the whole value, the
+// same construction the unified index uses.
+func compileLabelRegexes(preds []*searchv0.RegexPredicate) ([]labelRegexMatcher, error) {
+	matchers := make([]labelRegexMatcher, 0, len(preds))
+	for _, p := range preds {
+		key, m, err := parseLabelRegex(p.Pattern)
+		if err != nil {
+			return nil, fmt.Errorf("invalid regex %q: %w", p.Pattern, err)
+		}
+		pattern := m.Expression.String()
+		if m.CaseInsensitive {
+			pattern = "(?i:" + pattern + ")"
+		}
+		re, err := regexp.Compile("^(?:" + pattern + ")$")
+		if err != nil {
+			return nil, fmt.Errorf("invalid regex %q: %w", p.Pattern, err)
+		}
+		matchers = append(matchers, labelRegexMatcher{key: key, re: re, negate: p.Negate})
+	}
+	return matchers, nil
+}
+
+// matchLabelRegexes returns true when a rule satisfies every regex. A missing
+// label is evaluated as an empty value, as Prometheus matchers and the unified
+// index do, so "team=.*" matches rules without a team label and "team!~.*"
+// matches none.
+func matchLabelRegexes(r *ngmodels.AlertRule, matchers []labelRegexMatcher) bool {
+	for _, m := range matchers {
+		if m.re.MatchString(r.Labels[m.key]) == m.negate {
+			return false
+		}
+	}
+	return true
 }
 
 // isQueryDatasource reports whether a UID names a datasource a user actually

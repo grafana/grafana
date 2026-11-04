@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -104,6 +105,22 @@ func TestFullSyncOrg(t *testing.T) {
 		_, err := s.fullSyncOrg(context.Background(), 1)
 		require.NoError(t, err)
 		require.Equal(t, []string{HasRulesLabel + "=true"}, folders.lastFilter)
+	})
+
+	t.Run("attaches the per-org identity before resolving GetAllFoldersWithRules", func(t *testing.T) {
+		// A context-dependent LegacyDatabaseProvider resolves the target database from the
+		// requester on ctx; without this, every org would resolve against whatever (if any)
+		// identity the long-lived Run context happened to carry.
+		store := &fakeSyncerStore{}
+		s := newTestService(store, &fakeFolderClient{})
+
+		_, err := s.fullSyncOrg(context.Background(), 7)
+		require.NoError(t, err)
+
+		require.NotNil(t, store.gotCtx)
+		requester, err := identity.GetRequester(store.gotCtx)
+		require.NoError(t, err)
+		require.Equal(t, int64(7), requester.GetOrgID())
 	})
 
 	t.Run("surfaces errors from either side of the diff", func(t *testing.T) {

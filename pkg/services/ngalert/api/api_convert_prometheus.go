@@ -639,7 +639,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c 
 		TemplateFiles:      amCfg.TemplateFiles,
 		AlertmanagerConfig: amCfg.AlertmanagerConfig,
 	}
-	err = ec.Validate()
+	err = ec.ValidateStrict()
 	if err != nil {
 		logger.Error("Invalid alertmanager configuration", "error", err)
 		return errorToResponse(err)
@@ -860,10 +860,10 @@ func successfulResponse() response.Response {
 // if present. Otherwise, it returns the UID of the root folder.
 func getWorkingFolderUID(c *contextmodel.ReqContext) string {
 	folderUID := strings.TrimSpace(c.Req.Header.Get(folderUIDHeader))
-	if folderUID != "" {
-		return folderUID
+	if folder.IsRootFolderUID(folderUID) {
+		return folder.LegacyRootFolderUID // nolint:staticcheck // ""
 	}
-	return folder.LegacyRootFolderUID //nolint:staticcheck
+	return folderUID
 }
 
 func namespaceErrorResponse(err error) response.Response {

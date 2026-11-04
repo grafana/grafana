@@ -19,6 +19,14 @@ type Serializer interface {
 	Decode(ctx context.Context, data []byte, into runtime.Object) (runtime.Object, error)
 }
 
+// BatchDecoder optionally decodes list items together, for serializers that make
+// external calls. GetList invokes batches sequentially within a request.
+// Results must have the same length and order as data, with no nil objects.
+// Implementations must remain safe for concurrent requests.
+type BatchDecoder interface {
+	DecodeBatch(ctx context.Context, data [][]byte) ([]runtime.Object, error)
+}
+
 type codecSerializer struct {
 	codec       runtime.Codec
 	preserveGVK bool

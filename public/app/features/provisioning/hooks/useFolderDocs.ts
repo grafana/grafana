@@ -28,8 +28,6 @@ export interface UseFolderDocsResult {
  * Listing the whole repo (rather than probing each path) keeps this to a single
  * cached request that is shared with the resource tree view, and only the active
  * doc's content is fetched on demand (see `useFolderReadme`).
- *
- * Callers must gate on the `provisioning.readmes` OpenFeature toggle before mounting.
  */
 export function useFolderDocs(folderUID: string): UseFolderDocsResult {
   const { repository, folder, isLoading: isRepoLoading } = useGetResourceRepositoryView({ folderName: folderUID });

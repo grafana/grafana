@@ -3,8 +3,7 @@ import { from, merge, type Observable, of } from 'rxjs';
 import { catchError, filter, finalize, map, mergeAll, mergeMap, reduce, takeUntil } from 'rxjs/operators';
 
 import { type AnnotationQuery, type DataSourceApi } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { config, getDataSourceInstance } from '@grafana/runtime';
 import { PublicAnnotationsDataSource } from 'app/features/query/state/DashboardQueryRunner/PublicAnnotationsDataSource';
 
 import { AnnotationQueryFinished, AnnotationQueryStarted } from '../../../../types/events';

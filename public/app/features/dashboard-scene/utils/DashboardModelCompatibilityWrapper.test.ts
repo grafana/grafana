@@ -87,7 +87,8 @@ describe('DashboardModelCompatibilityWrapper', () => {
   });
 
   it('Can remove panel', () => {
-    const { wrapper } = setup();
+    const { scene, wrapper } = setup();
+    scene.activateSidebar();
 
     expect(wrapper.panels.length).toBe(5);
 

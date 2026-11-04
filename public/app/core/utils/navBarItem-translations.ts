@@ -42,7 +42,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'dashboards/library-panels':
       return t('nav.library-panels.title', 'Library panels');
     case 'dashboards/variables':
-      return t('nav.global-variables.title', 'Cross-dashboard variables');
+      return t('nav.global-variables.title', 'Variables');
     case 'reports':
       return t('nav.reporting.title', 'Reporting');
     case 'dashboards/public':
@@ -65,6 +65,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.drilldown.title', 'Drilldown');
     case 'notebooks':
       return t('nav.notebooks.title', 'Notebooks');
+    case 'notebooks/new':
+      return t('nav.new-notebook.title', 'New notebook');
     case 'alerting':
       return t('nav.alerting.title', 'Alerting');
     case 'plugin-page-grafana-oncall-app':

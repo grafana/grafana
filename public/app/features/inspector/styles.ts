@@ -1,13 +1,6 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { stylesFactory } from '@grafana/ui';
-
-/** @deprecated */
-export const getPanelInspectorStyles = stylesFactory(() => {
-  return getPanelInspectorStyles2(config.theme2);
-});
 
 export const getPanelInspectorStyles2 = (theme: GrafanaTheme2) => {
   return {

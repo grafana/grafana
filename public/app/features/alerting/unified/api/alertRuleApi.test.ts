@@ -1,7 +1,8 @@
-import { configureStore } from '@reduxjs/toolkit';
 import { waitFor } from '@testing-library/react';
 import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
+
+import { configureStore } from 'app/store/configureStore';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -17,18 +18,10 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-const createTestStore = () =>
-  configureStore({
-    reducer: {
-      [alertRuleApi.reducerPath]: alertRuleApi.reducer,
-    },
-    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(alertRuleApi.middleware),
-  });
-
 async function executePrometheusRuleNamespacesQuery(
   args: Partial<Parameters<typeof alertRuleApi.endpoints.prometheusRuleNamespaces.initiate>[0]> = {}
 ) {
-  const store = createTestStore();
+  const store = configureStore();
   await store.dispatch(
     alertRuleApi.endpoints.prometheusRuleNamespaces.initiate({
       ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
@@ -65,7 +58,7 @@ describe('alertRuleApi', () => {
       expect(request.params?.[PrometheusAPIFilters.LimitAlerts]).toBeUndefined();
     });
 
-    it('includes limit_limit value', async () => {
+    it('includes limit_alerts when value is set', async () => {
       const request = await executePrometheusRuleNamespacesQuery({ limitAlerts: 25 });
 
       expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -87,7 +80,7 @@ describe('alertRuleApi', () => {
     // provides CombinedAlertRule. Saving a group must invalidate that tag or the list stays stale
     // until the next poll — the create-from-panel drawer bug in the flag-off path.
     it('refetches combined rule queries after a group is saved', async () => {
-      const store = createTestStore();
+      const store = configureStore();
 
       // Count only the combined-rule GET requests. Counting *all* fetches would make this pass on the
       // mutation's own POST alone, so the test would still be green with the invalidation removed.

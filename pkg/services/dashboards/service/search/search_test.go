@@ -19,71 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
-// regression test - parsing int32 values from search results was causing a panic
 func TestParseResults(t *testing.T) {
-	t.Run("should parse results", func(t *testing.T) {
-		resSearchResp := &resourcepb.ResourceSearchResponse{
-			ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: builders.DASHBOARD_ERRORS_LAST_1_DAYS,
-						Type: resourcepb.ResourceTableColumnDefinition_INT64,
-					},
-					{
-						Name: builders.DASHBOARD_LINK_COUNT,
-						Type: resourcepb.ResourceTableColumnDefinition_INT32,
-					},
-					{
-						Name: "description",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: resource.SEARCH_FIELD_RV,
-						Type: resourcepb.ResourceTableColumnDefinition_INT64,
-					},
-					{
-						Name: resource.SEARCH_FIELD_LEGACY_ID,
-						Type: resourcepb.ResourceTableColumnDefinition_INT64,
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("Dashboard 1"),
-							[]byte("folder1"),
-							[]byte("100"),
-							[]byte("25"),
-							[]byte("description"),
-							[]byte("123"),
-							[]byte("42"),
-						},
-					},
-				},
-			},
-			TotalHits: 1,
-		}
-
-		results, err := ParseResults(resSearchResp, 0)
-		require.NoError(t, err)
-		require.Len(t, results.Hits, 1)
-		require.Equal(t, "description", results.Hits[0].Description)
-		assert.Equal(t, int64(123), results.Hits[0].Field.Object[resource.SEARCH_FIELD_RV])
-		assert.Equal(t, int64(42), results.Hits[0].Field.Object[resource.SEARCH_FIELD_LEGACY_ID])
-	})
-
 	t.Run("should parse field-value results", func(t *testing.T) {
 		score := 0.75
 		resSearchResp := &resourcepb.ResourceSearchResponse{
@@ -99,6 +35,7 @@ func TestParseResults(t *testing.T) {
 				{Name: builders.DASHBOARD_ERRORS_LAST_1_DAYS, Type: resourcepb.ResourceSearchField_INT64},
 				{Name: "customFlags", Type: resourcepb.ResourceSearchField_BOOLEAN, IsArray: true},
 				{Name: resource.SEARCH_FIELD_LEGACY_ID, Type: resourcepb.ResourceSearchField_INT64},
+				{Name: builders.DASHBOARD_LINK_COUNT, Type: resourcepb.ResourceSearchField_INT64},
 			},
 			Rows: []*resourcepb.ResourceSearchRow{{
 				Key:             &resourcepb.ResourceKey{Name: "uid", Resource: "dashboards"},
@@ -115,9 +52,15 @@ func TestParseResults(t *testing.T) {
 					{FieldIndex: 7, Int64Values: []int64{100}},
 					{FieldIndex: 8, BooleanValues: []bool{true, false}},
 					{FieldIndex: 9, Int64Values: []int64{42}},
+					{FieldIndex: 10, Int64Values: []int64{25}},
 				},
 			}},
 			TotalHits: 1,
+			QueryCost: 2,
+			MaxScore:  score,
+			Facet: map[string]*resourcepb.ResourceSearchResponse_Facet{
+				"tags": {Field: "tags", Total: 2, Missing: 1, Terms: []*resourcepb.ResourceSearchResponse_TermFacet{{Term: "tag1", Count: 1}, {Term: "tag2", Count: 1}}},
+			},
 		}
 
 		results, err := ParseResults(resSearchResp, 4)
@@ -125,6 +68,15 @@ func TestParseResults(t *testing.T) {
 		require.Len(t, results.Hits, 1)
 		hit := results.Hits[0]
 		assert.Equal(t, int64(4), results.Offset)
+		assert.Equal(t, int64(1), results.TotalHits)
+		assert.Equal(t, float64(2), results.QueryCost)
+		assert.Equal(t, score, results.MaxScore)
+		assert.Equal(t, "tags", results.Facets["tags"].Field)
+		assert.Equal(t, int64(2), results.Facets["tags"].Total)
+		assert.Equal(t, int64(1), results.Facets["tags"].Missing)
+		require.Len(t, results.Facets["tags"].Terms, 2)
+		assert.Equal(t, "tag1", results.Facets["tags"].Terms[0].Term)
+		assert.Equal(t, int64(1), results.Facets["tags"].Terms[0].Count)
 		assert.Equal(t, "Dashboard 1", hit.Title)
 		assert.Equal(t, "folder1", hit.Folder)
 		assert.Equal(t, []string{"tag1", "tag2"}, hit.Tags)
@@ -137,6 +89,23 @@ func TestParseResults(t *testing.T) {
 		assert.Equal(t, []any{true, false}, hit.Field.Object["customFlags"])
 		assert.Equal(t, int64(9007199254740993), hit.Field.Object[resource.SEARCH_FIELD_RV])
 		assert.Equal(t, int64(42), hit.Field.Object[resource.SEARCH_FIELD_LEGACY_ID])
+		assert.Equal(t, int64(25), hit.Field.Object[builders.DASHBOARD_LINK_COUNT])
+	})
+
+	t.Run("missing values keep defaults and omit the resource version", func(t *testing.T) {
+		results, err := ParseResults(&resourcepb.ResourceSearchResponse{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Rows:         []*resourcepb.ResourceSearchRow{{Key: &resourcepb.ResourceKey{Name: "uid", Resource: "dashboards"}}},
+		}, 0)
+		require.NoError(t, err)
+		require.Len(t, results.Hits, 1)
+		hit := results.Hits[0]
+		assert.Equal(t, "uid", hit.Name)
+		assert.Equal(t, "dashboards", hit.Resource)
+		assert.Equal(t, "(no title)", hit.Title)
+		assert.Empty(t, hit.Tags)
+		assert.Zero(t, hit.Score)
+		assert.NotContains(t, hit.Field.Object, resource.SEARCH_FIELD_RV)
 	})
 
 	t.Run("should reject an invalid field-value index", func(t *testing.T) {
@@ -153,53 +122,28 @@ func TestParseResults(t *testing.T) {
 		require.ErrorContains(t, err, "field index 1 is out of range")
 	})
 
-	t.Run("should return error when trying to parse results with mismatch length between Columns and row Cells", func(t *testing.T) {
-		resSearchResp := &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: builders.DASHBOARD_ERRORS_LAST_1_DAYS,
-						Type: resourcepb.ResourceTableColumnDefinition_INT64,
-					},
-					{
-						Name: builders.DASHBOARD_LINK_COUNT,
-						Type: resourcepb.ResourceTableColumnDefinition_INT32,
-					},
-					{
-						Name: resource.SEARCH_FIELD_LEGACY_ID,
-						Type: resourcepb.ResourceTableColumnDefinition_INT64,
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("Dashboard 1"),
-							[]byte("folder1"),
-							[]byte("100"),
-							[]byte("25"),
-						},
-					},
-				},
-			},
-			TotalHits: 1,
+	t.Run("rejects unsupported formats", func(t *testing.T) {
+		for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+			resourcepb.ResourceSearchRequest_UNSPECIFIED,
+			resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+			99,
+		} {
+			t.Run(format.String(), func(t *testing.T) {
+				_, err := ParseResults(&resourcepb.ResourceSearchResponse{ResultFormat: format}, 0)
+				require.ErrorContains(t, err, "unsupported search result format")
+			})
 		}
-
-		_, err := ParseResults(resSearchResp, 0)
-		require.Error(t, err)
 	})
 
+	t.Run("rejects rows without a resource key", func(t *testing.T) {
+		for _, row := range []*resourcepb.ResourceSearchRow{nil, {}} {
+			_, err := ParseResults(&resourcepb.ResourceSearchResponse{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Rows:         []*resourcepb.ResourceSearchRow{row},
+			}, 0)
+			require.ErrorContains(t, err, "has no resource key")
+		}
+	})
 	t.Run("should preserve the status of a response error", func(t *testing.T) {
 		resSearchResp := &resourcepb.ResourceSearchResponse{
 			Error: resource.AsErrorResult(apierrors.NewServiceUnavailable("search unavailable")),
@@ -212,44 +156,40 @@ func TestParseResults(t *testing.T) {
 	})
 }
 
-func makeRow(name string) *resourcepb.ResourceTableRow {
-	return &resourcepb.ResourceTableRow{
-		Key: &resourcepb.ResourceKey{
-			Name:     name,
-			Resource: "dashboards",
-		},
-		Cells: [][]byte{[]byte(name)},
-	}
-}
-
 func makeResponse(names []string, totalHits int64) *resourcepb.ResourceSearchResponse {
-	rows := make([]*resourcepb.ResourceTableRow, len(names))
-	for i, n := range names {
-		rows[i] = makeRow(n)
+	rows := make([]*resourcepb.ResourceSearchRow, len(names))
+	for i, name := range names {
+		rows[i] = &resourcepb.ResourceSearchRow{
+			Key:    &resourcepb.ResourceKey{Name: name, Resource: "dashboards"},
+			Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{name}}},
+		}
 	}
 	return &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{Name: "title", Type: resourcepb.ResourceTableColumnDefinition_STRING},
-			},
-			Rows: rows,
-		},
-		TotalHits: totalHits,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields:       []*resourcepb.ResourceSearchField{{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING}},
+		Rows:         rows,
+		TotalHits:    totalHits,
 	}
 }
 
 func TestSearchAll_Errors(t *testing.T) {
+	result := dashboardSearchRateLimitResult()
+	grpcStatus, err := status.New(codes.ResourceExhausted, result.Message).WithDetails(result)
+	require.NoError(t, err)
 	for _, tc := range []struct {
 		name string
 		resp *resourcepb.ResourceSearchResponse
 		err  error
 	}{
-		{name: "embedded", resp: &resourcepb.ResourceSearchResponse{Error: dashboardSearchRateLimitResult()}},
-		{name: "grpc", err: wrappedDashboardSearchRateLimitGRPCError(t)},
+		{name: "embedded", resp: &resourcepb.ResourceSearchResponse{Error: result}},
+		{name: "grpc", err: grpcStatus.Err()},
+		{name: "wrapped grpc", err: fmt.Errorf("search: %w", grpcStatus.Err())},
 		{name: "canceled", err: context.Canceled},
 		{name: "wrapped canceled", err: fmt.Errorf("search: %w", context.Canceled)},
 		{name: "deadline exceeded", err: context.DeadlineExceeded},
+		{name: "unstructured grpc", err: status.Error(codes.Unavailable, "private transport details")},
 		{name: "other transport error", err: fmt.Errorf("connection refused")},
+		{name: "transport takes precedence", resp: &resourcepb.ResourceSearchResponse{Error: result}, err: fmt.Errorf("connection refused")},
 	} {
 		for _, errorPage := range []int{1, 2} {
 			t.Run(fmt.Sprintf("%s/page %d", tc.name, errorPage), func(t *testing.T) {
@@ -266,7 +206,7 @@ func TestSearchAll_Errors(t *testing.T) {
 				results, err := SearchAll(context.Background(), 1, request, searchFn)
 
 				if tc.err != nil {
-					require.ErrorIs(t, err, tc.err, "transport errors must retain their original chain and gRPC status")
+					require.True(t, err == tc.err, "transport errors must be returned unchanged") //nolint:errorlint // Assert identity, not merely membership in the error chain.
 				} else {
 					requireDashboardSearchRateLimitStatus(t, err)
 				}
@@ -288,23 +228,16 @@ func dashboardSearchRateLimitResult() *resourcepb.ErrorResult {
 			Kind:              "dashboards",
 			Uid:               "uid",
 			RetryAfterSeconds: 12,
+			Causes:            []*resourcepb.ErrorCause{{Reason: "TooManyRequests", Field: "query", Message: "retry later"}},
 		},
 	}
-}
-
-func wrappedDashboardSearchRateLimitGRPCError(t *testing.T) error {
-	t.Helper()
-
-	grpcStatus, err := status.New(codes.ResourceExhausted, "search is busy").WithDetails(dashboardSearchRateLimitResult())
-	require.NoError(t, err)
-	return fmt.Errorf("search: %w", grpcStatus.Err())
 }
 
 func requireDashboardSearchRateLimitStatus(t *testing.T, err error) {
 	t.Helper()
 
-	var apiStatus apierrors.APIStatus
-	require.ErrorAs(t, err, &apiStatus)
+	require.IsType(t, &apierrors.StatusError{}, err)
+	apiStatus := err.(apierrors.APIStatus)
 	require.Equal(t, metav1.Status{
 		Status:  metav1.StatusFailure,
 		Code:    http.StatusTooManyRequests,
@@ -316,6 +249,7 @@ func requireDashboardSearchRateLimitStatus(t *testing.T, err error) {
 			Kind:              "dashboards",
 			UID:               "uid",
 			RetryAfterSeconds: 12,
+			Causes:            []metav1.StatusCause{{Type: "TooManyRequests", Field: "query", Message: "retry later"}},
 		},
 	}, apiStatus.Status())
 }
@@ -487,10 +421,7 @@ func TestSearchAll(t *testing.T) {
 	})
 }
 
-// Regression test: the FIELD_VALUES result format rejects response fields that have no typed
-// definition, while the table format silently skips them. Requesting IncludeFields as-is on a
-// field-value search therefore failed with `unknown response field "labels"`, which broke
-// folder search by title (and with it the library panel list's search box).
+// Bare labels and updatedBy have no typed definitions and would break folder search.
 func TestFieldValueIncludeFields(t *testing.T) {
 	assert.NotContains(t, FieldValueIncludeFields, resource.SEARCH_FIELD_LABELS)
 	assert.NotContains(t, FieldValueIncludeFields, resource.SEARCH_FIELD_UPDATED_BY)
@@ -498,16 +429,4 @@ func TestFieldValueIncludeFields(t *testing.T) {
 	// Per-label fields are typed by the "labels." prefix and must survive; the legacy ID is read
 	// back out of them.
 	assert.Contains(t, FieldValueIncludeFields, resource.SEARCH_FIELD_LABELS+"."+resource.SEARCH_FIELD_LEGACY_ID)
-
-	// Everything else carries over untouched.
-	for _, field := range IncludeFields {
-		if field == resource.SEARCH_FIELD_LABELS || field == resource.SEARCH_FIELD_UPDATED_BY {
-			continue
-		}
-		assert.Contains(t, FieldValueIncludeFields, field)
-	}
-
-	// Deriving the list must not mutate the original.
-	assert.Contains(t, IncludeFields, resource.SEARCH_FIELD_LABELS)
-	assert.Contains(t, IncludeFields, resource.SEARCH_FIELD_UPDATED_BY)
 }

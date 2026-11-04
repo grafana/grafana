@@ -6,15 +6,15 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/grafana/alerting/definition"
-	"github.com/prometheus/alertmanager/config"
+	config "github.com/prometheus/alertmanager/config/common"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v3"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
 )
 
 func TestReceivers(t *testing.T) {
@@ -146,7 +146,7 @@ func TestReceivers(t *testing.T) {
 
 func TestTimeIntervals(t *testing.T) {
 	ti := func(name string) v1.TimeInterval {
-		return v1.NewTimeInterval(name, nil, models.ProvenanceNone)
+		return v1.NewTimeInterval(v1.TimeIntervalUID(name), name, nil, models.ProvenanceNone)
 	}
 	toMap := func(intervals ...v1.TimeInterval) map[v1.ResourceUID]v1.TimeInterval {
 		m := make(map[v1.ResourceUID]v1.TimeInterval, len(intervals))
@@ -321,6 +321,37 @@ func TestTimeIntervals(t *testing.T) {
 	}
 }
 
+func TestTimeIntervals_UIDCollisionWithOrphanedExisting(t *testing.T) {
+	// An existing interval renamed away from "payments" keeps its old, name-derived UID (UID no
+	// longer moves with a rename). An incoming interval still named "payments" has no name
+	// collision to dedup against, so without the occupancy check it would compute the same UID
+	// and silently overwrite the existing entry.
+	orphanedUID := v1.TimeIntervalUID("payments")
+	existing := map[v1.ResourceUID]v1.TimeInterval{
+		orphanedUID: v1.NewTimeInterval(orphanedUID, "payments-platform", nil, models.ProvenanceNone),
+	}
+	incoming := []v1.TimeInterval{
+		v1.NewTimeInterval(v1.TimeIntervalUID("payments"), "payments", nil, models.ProvenanceNone),
+	}
+
+	result, renames, added := TimeIntervals(existing, incoming, "dupe")
+
+	assert.Empty(t, renames, "the name itself didn't collide, so it should not have been renamed")
+	require.Len(t, result, 2)
+
+	// The orphaned existing entry must survive untouched.
+	stillThere, ok := result[orphanedUID]
+	require.True(t, ok)
+	assert.Equal(t, "payments-platform", stillThere.Title)
+
+	// The incoming interval must have been given a different UID instead of colliding.
+	require.Len(t, added, 1)
+	assert.NotEqual(t, orphanedUID, added[0])
+	addedInterval, ok := result[added[0]]
+	require.True(t, ok)
+	assert.Equal(t, "payments", addedInterval.Title)
+}
+
 //go:embed testdata/mimir_no_intervals.yaml
 var fullMimirNoIntervals string
 
@@ -333,13 +364,15 @@ var fullMimirWithOnlyExtraReceiver string
 //go:embed testdata/mimir_swapped_intervals.yaml
 var fullMimirSwappedIntervals string
 
-func load(t *testing.T, yaml string, mutate ...func(cfg *v1.AMConfigV1)) *v1.AMConfigV1 {
+func load(t *testing.T, raw string, mutate ...func(cfg *v1.AMConfigV1)) *v1.AMConfigV1 {
 	t.Helper()
-	orig, err := definition.LoadCompat([]byte(yaml))
+	orig := store.AMConfigDB{
+		AlertmanagerConfig: store.AlertingConfigDB{},
+	}
+	err := yaml.Unmarshal([]byte(raw), &orig.AlertmanagerConfig)
 	require.NoError(t, err)
-	cfg := v1.ToModel(&definitions.PostableUserConfig{
-		AlertmanagerConfig: *orig,
-	})
+
+	cfg := v1.ToModel(&orig)
 	for _, m := range mutate {
 		m(cfg)
 	}
@@ -367,7 +400,7 @@ var mergedSuffixedReceiverConfig string
 //go:embed testdata/merged_renamed_intervals.json
 var mergedRenamedIntervalsConfig string
 
-// assertMergedConfig serializes the merged config to its DB (PostableUserConfig) form and compares it against a
+// assertMergedConfig serializes the merged config to its DB (AMConfigDB) form and compares it against a
 // snapshot of the expected merge result.
 func assertMergedConfig(t *testing.T, config v1.AMConfigV1, expected string) {
 	t.Helper()
@@ -381,7 +414,7 @@ func assertMergedConfig(t *testing.T, config v1.AMConfigV1, expected string) {
 func TestMergeExtraConfig(t *testing.T) {
 	identifier := "mimir-12345"
 
-	// withExtra wraps grafana and a raw mimir YAML string into a PostableUserConfig with ExtraConfigs.
+	// withExtra wraps grafana and a raw mimir YAML string into an AMConfigV1 with ExtraConfigs.
 	// Optional mutateFn can adjust the ExtraConfiguration before it's used.
 	withExtra := func(t *testing.T, grafana *v1.AMConfigV1, mimirYAML string, mutateFn ...func(*v1.ExtraConfiguration)) v1.AMConfigV1 {
 		t.Helper()

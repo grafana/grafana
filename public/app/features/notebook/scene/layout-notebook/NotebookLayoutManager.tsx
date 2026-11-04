@@ -3,7 +3,13 @@ import { DragDropContext, Droppable, type DragStart, type DragUpdate, type DropR
 import { isEqual } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import {
+  AppEvents,
+  filterFieldConfigOverrides,
+  type GrafanaTheme2,
+  isStandardFieldProp,
+  type PanelPluginVisualizationSuggestion,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   sceneGraph,
@@ -17,14 +23,18 @@ import {
 import { type DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { getUpdatedHoverHeader } from 'app/features/dashboard-scene/scene/panel-timerange/utils';
 import { type DashboardLayoutManager } from 'app/features/dashboard-scene/scene/types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from 'app/features/dashboard-scene/scene/types/LayoutRegistryItem';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { dashboardSceneGraph, type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
+import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { NotebookAnalytics } from '../../analytics/main';
+import { NOTEBOOK_BLOCK_INSERT_VIA, type NotebookBlockInsertVia } from '../../analytics/types';
 import {
   type CellContentKind,
   defaultCodeCellContentKind,
@@ -63,6 +73,11 @@ interface NotebookLayoutManagerState extends SceneObjectState {
    * reintroduces the dependency cycle.
    */
   isEditing?: boolean;
+  /**
+   * Set only by NotebookRenderPage. On screen the time picker already shows the range; a PDF has no
+   * picker, so the header carries it instead.
+   */
+  showTimeRange?: boolean;
 }
 
 // Keep typing useful to undo without storing every keystroke as a separate action.
@@ -96,6 +111,13 @@ interface PendingQueriesEdit {
   timer?: ReturnType<typeof setTimeout>;
 }
 
+interface PendingPanelTitleEdit {
+  elementName: string;
+  before: string;
+  after: string;
+  action: NotebookEditAction;
+}
+
 export class NotebookLayoutManager
   extends SceneObjectBase<NotebookLayoutManagerState>
   implements DashboardLayoutManager<{}, NotebookLayoutKind>
@@ -123,9 +145,12 @@ export class NotebookLayoutManager
 
   private pendingContentEdit?: PendingContentEdit;
   private pendingQueriesEdit?: PendingQueriesEdit;
+  private pendingPanelTitleEdit?: PendingPanelTitleEdit;
+  private pendingVizChanges = new Map<string, Promise<void>>();
 
   public constructor(state: NotebookLayoutManagerState) {
     super(state);
+    this.state.cells.forEach((cell) => cell.setPanelTitleEditing(Boolean(state.isEditing)));
 
     // Typing is grouped into one undo step that sits in a field until the typing stops. Without this,
     // closing the notebook mid-word would leave that step behind, and the next typing would join it.
@@ -182,6 +207,17 @@ export class NotebookLayoutManager
   }
 
   /**
+   * Reports a block somebody chose to insert. Nothing goes out for a manager with no scene above it,
+   * which has no notebook to name.
+   */
+  private reportBlockInserted(blockType: NotebookBlockType, via: NotebookBlockInsertVia): void {
+    const scene = this.notebookScene;
+    if (scene) {
+      NotebookAnalytics.blockInserted(scene.state.uid ?? '', blockType, via);
+    }
+  }
+
+  /**
    * The cells that are part of the notebook, as opposed to the ones that are part of the editor.
    *
    * Editing keeps an empty block at the bottom ready to type in (see appendSystemCell), and nothing
@@ -229,6 +265,12 @@ export class NotebookLayoutManager
    */
   public editModeChanged(isEditing: boolean): void {
     this.setState({ isEditing });
+    this.state.cells.forEach((cell) => cell.setPanelTitleEditing(isEditing));
+    for (const panel of this.getVizPanels()) {
+      panel.setState({
+        hoverHeader: isEditing ? false : getUpdatedHoverHeader(panel.state.title, panel.state.$timeRange?.state),
+      });
+    }
   }
 
   /** Refreshes the header's copy of the tags. NotebookScene owns them and pushes on every change. */
@@ -495,6 +537,206 @@ export class NotebookLayoutManager
     });
   }
 
+  public setPanelTitle(cell: NotebookCellItem, title: string): void {
+    const panel = cell.state.body;
+    if (!panel || isLibraryPanel(panel) || panel.state.title === title) {
+      return;
+    }
+
+    const elementName = cell.state.elementName;
+    const pending = this.pendingPanelTitleEdit;
+    if (pending?.elementName === elementName) {
+      pending.after = title;
+      this.applyPanelTitle(elementName, title);
+      if (pending.before === title) {
+        this.editHistory?.discard(pending.action);
+        this.pendingPanelTitleEdit = undefined;
+      }
+      return;
+    }
+
+    this.commitPendingEdits();
+    const history = this.editHistory;
+    if (!history) {
+      this.applyPanelTitle(elementName, title);
+      return;
+    }
+
+    const edit: PendingPanelTitleEdit = {
+      elementName,
+      before: panel.state.title,
+      after: title,
+      action: {
+        label: t('notebooks.history.rename-panel', 'Rename panel'),
+        kind: NOTEBOOK_EDIT_KIND.EDIT,
+        perform: () => {
+          this.commitPanelTitleEdit();
+          this.applyPanelTitle(edit.elementName, edit.after);
+        },
+        undo: () => {
+          this.commitPanelTitleEdit();
+          this.applyPanelTitle(edit.elementName, edit.before);
+        },
+      },
+    };
+    this.pendingPanelTitleEdit = edit;
+    this.applyPanelTitle(elementName, title);
+    history.record(edit.action);
+  }
+
+  public commitPanelTitleEdit(): void {
+    this.pendingPanelTitleEdit = undefined;
+  }
+
+  private applyPanelTitle(elementName: string, title: string): void {
+    for (const cell of this.state.cells) {
+      if (cell.state.elementName === elementName && cell.state.body) {
+        cell.state.body.setState({
+          title,
+          hoverHeader: this.state.isEditing
+            ? false
+            : getUpdatedHoverHeader(title, cell.state.body.state.$timeRange?.state),
+        });
+      }
+    }
+  }
+
+  public async changePanelVisualization(
+    cell: NotebookCellItem,
+    suggestion: PanelPluginVisualizationSuggestion
+  ): Promise<void> {
+    if (!cell.state.body || isLibraryPanel(cell.state.body)) {
+      return;
+    }
+
+    this.commitPendingEdits();
+    const elementName = cell.state.elementName;
+    let panels: VizPanel[] = [];
+    const wasEditing = this.notebookScene?.state.isEditing;
+    let before: Array<ReturnType<typeof snapshotVisualization>> = [];
+    let after: Array<ReturnType<typeof snapshotVisualization>> = [];
+    let failed = false;
+    const history = this.editHistory;
+    const replay = (getSnapshots: () => typeof before) => {
+      const wasEditing = this.notebookScene?.state.isEditing;
+      void this.enqueueVizChange(elementName, async () => {
+        if (failed) {
+          return;
+        }
+        let previous: typeof before = [];
+        try {
+          previous = panels.map(snapshotVisualization);
+          await applyVisualizations(panels, getSnapshots());
+        } catch {
+          failed = true;
+          const restored =
+            previous.length === panels.length &&
+            (await applyVisualizations(panels, previous).then(
+              () => true,
+              () => false
+            ));
+          history?.discard(action);
+          appEvents.emit(AppEvents.alertError, [
+            restored
+              ? t(
+                  'notebooks.history.visualization-replay-error',
+                  'Could not restore visualization. Try selecting the visualization again.'
+                )
+              : t(
+                  'notebooks.history.visualization-rollback-error',
+                  'Could not restore visualization. Check the panel before saving.'
+                ),
+          ]);
+          return;
+        }
+        this.notebookScene?.autosave.markVisualizationEdited(elementName, wasEditing);
+      });
+    };
+    const action: NotebookEditAction = {
+      label: t('notebooks.history.change-visualization', 'Change visualization'),
+      kind: NOTEBOOK_EDIT_KIND.EDIT,
+      perform: () => replay(() => after),
+      undo: () => replay(() => before),
+    };
+    history?.record(action);
+
+    try {
+      await this.enqueueVizChange(elementName, async () => {
+        panels = this.state.cells
+          .filter((candidate) => candidate.state.elementName === elementName)
+          .map((candidate) => candidate.state.body)
+          .filter((panel): panel is VizPanel => Boolean(panel));
+        before = panels.map(snapshotVisualization);
+        const results = await Promise.allSettled(
+          panels.map(async (panel) => {
+            const fieldConfig = {
+              defaults: { ...panel.state.fieldConfig.defaults, custom: {} },
+              overrides: filterFieldConfigOverrides(panel.state.fieldConfig.overrides, isStandardFieldProp),
+            };
+            const options = suggestion.options && structuredClone(suggestion.options);
+            const nextFieldConfig = structuredClone({
+              ...(suggestion.fieldConfig ?? fieldConfig),
+              overrides: fieldConfig.overrides,
+            });
+            await panel.changePluginType(
+              suggestion.pluginId,
+              structuredClone(options),
+              structuredClone(nextFieldConfig)
+            );
+            if (options) {
+              panel.onOptionsChange(options, true);
+            }
+            if (suggestion.fieldConfig) {
+              panel.onFieldConfigChange(nextFieldConfig, true);
+            }
+          })
+        );
+        const failure = results.find((result) => result.status === 'rejected');
+        if (failure) {
+          failed = true;
+          await applyVisualizations(panels, before);
+          throw failure.reason;
+        }
+        after = panels.map(snapshotVisualization);
+      });
+    } catch (error) {
+      history?.discard(action);
+      throw error;
+    }
+
+    if (isEqual(before, after)) {
+      history?.discard(action);
+    } else {
+      this.notebookScene?.autosave.markVisualizationEdited(elementName, wasEditing);
+    }
+  }
+
+  private enqueueVizChange(elementName: string, change: () => Promise<void>): Promise<void> {
+    const result = (this.pendingVizChanges.get(elementName) ?? Promise.resolve()).then(change);
+    const settled = result.then(
+      () => {},
+      () => {}
+    );
+    this.pendingVizChanges.set(elementName, settled);
+    void settled.then(() => {
+      if (this.pendingVizChanges.get(elementName) === settled) {
+        this.pendingVizChanges.delete(elementName);
+      }
+    });
+    return result;
+  }
+
+  public whenVizChangesSettled(): Promise<string[]> | undefined {
+    const pending = [...this.pendingVizChanges.entries()];
+    return pending.length
+      ? Promise.all(pending.map(([, change]) => change)).then(() => pending.map(([name]) => name))
+      : undefined;
+  }
+
+  public hasPendingVizChanges(): boolean {
+    return this.pendingVizChanges.size > 0;
+  }
+
   /**
    * Converts `cell`'s content to `type` in place — the trailing-slot markdown cell's "/" menu (see
    * NotebookCellRenderer) uses this rather than inserting a separate new cell the way the add-block
@@ -506,7 +748,13 @@ export class NotebookLayoutManager
    * starter content actually differs. The "/" menu does not hit this: typing "/" has already
    * claimed the slot before convertCell runs.
    */
-  public convertCell(cell: NotebookCellItem, type: NotebookBlockType): void {
+  public convertCell(cell: NotebookCellItem, type: NotebookBlockType, via?: NotebookBlockInsertVia): void {
+    // Reported when the pick is made, before the early returns below: picking Paragraph on an empty
+    // paragraph changes nothing, and it is still a block somebody asked for.
+    if (via) {
+      this.reportBlockInserted(type, via);
+    }
+
     if (type === 'visualization') {
       this.convertCellToPanel(cell);
       return;
@@ -558,7 +806,8 @@ export class NotebookLayoutManager
   /** A fresh, unconfigured Panel VizPanel — shared by buildCellFor (insert) and convertCellToPanel. */
   private buildVisualizationPanel(): VizPanel {
     const nextId = dashboardSceneGraph.getPanelIdGenerator(this);
-    return new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), nextId()));
+    const state = buildVizPanelState(defaultVisualizationPanelKind(), nextId());
+    return new VizPanel({ ...state, hoverHeader: this.state.isEditing ? false : state.hoverHeader });
   }
 
   /**
@@ -627,7 +876,11 @@ export class NotebookLayoutManager
    *
    * Returns the new cell so the caller can hand it the caret; undefined when nothing was inserted.
    */
-  public addCell = (type: NotebookBlockType, index: number): NotebookCellItem | undefined => {
+  public addCell = (
+    type: NotebookBlockType,
+    index: number,
+    via?: NotebookBlockInsertVia
+  ): NotebookCellItem | undefined => {
     // An insert past the trailing empty slot offers index === cells.length. Inserting *after*
     // that slot would leave it stranded mid-document once the invariant appends a replacement after
     // the new block. Inserting *before* it keeps the empty cell at the tail, and still goes through
@@ -649,6 +902,10 @@ export class NotebookLayoutManager
       perform: () => this.insertCell(built.cell, built.index),
       undo: () => this.removeCellInstance(built.cell),
     });
+
+    if (via) {
+      this.reportBlockInserted(type, via);
+    }
 
     return built.cell;
   };
@@ -678,7 +935,7 @@ export class NotebookLayoutManager
    * also needs a fresh panel key, for the same reasons duplicate() rekeys. Narrative content is cloned
    * rather than reused, so editing the copy cannot change the original.
    */
-  public duplicateCell(cell: NotebookCellItem): void {
+  public duplicateCell(cell: NotebookCellItem, via?: NotebookBlockInsertVia): void {
     const index = this.state.cells.indexOf(cell);
     if (index === -1) {
       return;
@@ -688,7 +945,9 @@ export class NotebookLayoutManager
     const copy = cell.clone({
       key: undefined,
       elementName: this.nextElementName(`${cell.state.elementName}-copy`),
-      body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
+      body: cell.state.body?.clone({
+        key: getVizPanelKeyForPanelId(nextId()),
+      }),
       ...(cell.state.content ? { content: structuredClone(cell.state.content) } : {}),
       // A bare .clone() would reuse the same $timeRange instance across both cells.
       ...(cell.state.$timeRange ? { $timeRange: cell.state.$timeRange.clone({ key: undefined }) } : {}),
@@ -700,6 +959,10 @@ export class NotebookLayoutManager
       perform: () => this.insertCell(copy, index + 1),
       undo: () => this.removeCellInstance(copy),
     });
+
+    if (via) {
+      this.reportBlockInserted(blockTypeOf(cell), via);
+    }
   }
 
   /**
@@ -734,6 +997,29 @@ export class NotebookLayoutManager
     return cell;
   }
 
+  /**
+   * Appends cells built outside the notebook, such as content added from another surface, as one
+   * undoable step. They go above the trailing empty block, which stays the typeable slot at the end.
+   * Returns the index the first one landed on.
+   */
+  public appendCells(cells: NotebookCellItem[], label: string): number {
+    const last = this.state.cells.at(-1);
+    const index = last && isEmptyMarkdown(last.state.content) ? this.state.cells.length - 1 : this.state.cells.length;
+
+    this.executeEdit({
+      label,
+      kind: NOTEBOOK_EDIT_KIND.ADD_CELL,
+      perform: () => {
+        const next = this.state.cells.filter((cell) => !cells.includes(cell));
+        next.splice(Math.min(index, next.length), 0, ...cells);
+        this.setState({ cells: next });
+      },
+      undo: () => this.setState({ cells: this.state.cells.filter((cell) => !cells.includes(cell)) }),
+    });
+
+    return index;
+  }
+
   public removeCell(cell: NotebookCellItem): void {
     const index = this.state.cells.indexOf(cell);
     if (index === -1) {
@@ -750,6 +1036,8 @@ export class NotebookLayoutManager
 
   private executeEdit(action: NotebookEditAction): void {
     this.commitPendingEdits();
+    // The title's own pending edit lives on the parent scene, not here.
+    this.notebookScene?.commitTitleEdit();
     const history = this.editHistory;
     if (history) {
       history.execute(action);
@@ -763,11 +1051,17 @@ export class NotebookLayoutManager
   public commitPendingEdits(): void {
     this.commitContentEdits();
     this.commitQueriesEdits();
+    this.commitPanelTitleEdit();
   }
 
   private insertCell(cell: NotebookCellItem, index: number): void {
     if (this.state.cells.includes(cell)) {
       return;
+    }
+
+    cell.setPanelTitleEditing(Boolean(this.state.isEditing));
+    if (this.state.isEditing) {
+      cell.state.body?.setState({ hoverHeader: false });
     }
 
     const cells = [...this.state.cells];
@@ -846,11 +1140,42 @@ export class NotebookLayoutManager
   }
 }
 
+function snapshotVisualization(panel: VizPanel) {
+  return {
+    pluginId: panel.state.pluginId,
+    options: structuredClone(panel.state.options),
+    fieldConfig: structuredClone(panel.state.fieldConfig),
+  };
+}
+
+async function applyVisualizations(panels: VizPanel[], snapshots: Array<ReturnType<typeof snapshotVisualization>>) {
+  const results = await Promise.allSettled(
+    panels.map(async (panel, index) => {
+      const snapshot = snapshots[index];
+      if (isEqual(snapshotVisualization(panel), snapshot)) {
+        return;
+      }
+      await panel.changePluginType(
+        snapshot.pluginId,
+        structuredClone(snapshot.options),
+        structuredClone(snapshot.fieldConfig)
+      );
+      panel.onOptionsChange(structuredClone(snapshot.options), true);
+      panel.onFieldConfigChange(structuredClone(snapshot.fieldConfig), true);
+    })
+  );
+  const failure = results.find((result) => result.status === 'rejected');
+  if (failure) {
+    throw failure.reason;
+  }
+}
+
 function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLayoutManager>) {
   const styles = useStyles2(getStyles);
-  const { cells, title, tags, isEditing, key } = model.useState();
+  const { cells, title, tags, isEditing, showTimeRange, key } = model.useState();
 
-  const timeRange = sceneGraph.getTimeRange(model).useState();
+  const sceneTimeRange = sceneGraph.getTimeRange(model);
+  const { value: timeRange } = sceneTimeRange.useState();
 
   const onTagsChange = useCallback((nextTags: string[]) => model.setTagsFromHeader(nextTags), [model]);
   const onTitleChange = useCallback((nextTitle: string) => model.setTitleFromHeader(nextTitle), [model]);
@@ -895,9 +1220,9 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
   }, [isEditing, cells, model, requestFocus]);
 
   const onAdd = useCallback(
-    (type: NotebookBlockType, index: number) => {
+    (type: NotebookBlockType, index: number, via: NotebookBlockInsertVia) => {
       // The reader asked for a block, so the caret belongs in it rather than one click away.
-      requestFocus(model.addCell(type, index)?.state.key);
+      requestFocus(model.addCell(type, index, via)?.state.key);
     },
     [model, requestFocus]
   );
@@ -944,8 +1269,8 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
         <NotebookDocumentHeader
           title={title}
           tags={tags}
-          timeFrom={timeRange.from}
-          timeTo={timeRange.to}
+          timeRange={showTimeRange ? timeRange : undefined}
+          timeZone={sceneTimeRange.getTimeZone()}
           isEditing={isEditing}
           onTagsChange={onTagsChange}
           onTitleChange={onTitleChange}
@@ -977,8 +1302,8 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                     }
                     isDragActive={drag !== null}
                     dropIndicator={getCellDropIndicator(drag, index)}
-                    onAdd={onAdd}
-                    onDuplicate={() => model.duplicateCell(cell)}
+                    onAdd={(type, cellIndex) => onAdd(type, cellIndex, NOTEBOOK_BLOCK_INSERT_VIA.PLUS_MENU)}
+                    onDuplicate={() => model.duplicateCell(cell, NOTEBOOK_BLOCK_INSERT_VIA.DUPLICATE)}
                     onDelete={() => confirmRemoveCell(model, cell)}
                     onAdvance={(remainder, marker) => {
                       // With neither a marker nor a remainder, insertCellAfter's own empty-paragraph
@@ -1005,7 +1330,9 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
           </Droppable>
         </DragDropContext>
 
-        {isEditing && <NotebookFooterAddCell onAdd={(type) => onAdd(type, cells.length)} />}
+        {isEditing && (
+          <NotebookFooterAddCell onAdd={(type) => onAdd(type, cells.length, NOTEBOOK_BLOCK_INSERT_VIA.FOOTER)} />
+        )}
       </div>
     </div>
   );
@@ -1087,9 +1414,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   document: css({
     maxWidth: 900,
     margin: '0 auto',
-    padding: theme.spacing(3, 4, 6, 4),
+    padding: theme.spacing(3, 4, 6, 8),
     [theme.breakpoints.up('md')]: {
-      paddingLeft: theme.spacing(7),
+      paddingLeft: theme.spacing(11),
       paddingRight: theme.spacing(7),
     },
     width: '100%',
@@ -1117,10 +1444,28 @@ const getStyles = (theme: GrafanaTheme2) => ({
     // the pointer wins: this hides the controls on every cell the pointer is not over. Whatever holds
     // focus stays visible, because a tab stop at opacity 0 is a focus trap. A control that pinned
     // itself stays too, which is how a control with an open menu keeps the menu anchored.
-    [`&:has(.${NOTEBOOK_CELL_FRAME_CLASS}:hover) .${NOTEBOOK_CELL_FRAME_CLASS}:not(:hover) > .${NOTEBOOK_CELL_CONTROLS_CLASS}:not(:focus-within):not(.${NOTEBOOK_CELL_CONTROLS_PINNED_CLASS})`]:
-      {
-        opacity: 0,
-        pointerEvents: 'none',
-      },
+    '@media (hover: hover)': {
+      [`&:has(.${NOTEBOOK_CELL_FRAME_CLASS}:hover) .${NOTEBOOK_CELL_FRAME_CLASS}:not(:hover) > .${NOTEBOOK_CELL_CONTROLS_CLASS}:not(:focus-within):not(.${NOTEBOOK_CELL_CONTROLS_PINNED_CLASS})`]:
+        {
+          opacity: 0,
+          pointerEvents: 'none',
+        },
+    },
   }),
 });
+
+/**
+ * The block a cell comes to when it is duplicated. A markdown cell is a heading when it opens with
+ * heading syntax and a paragraph otherwise, which is how the menu's two text blocks are told apart.
+ */
+function blockTypeOf(cell: NotebookCellItem): NotebookBlockType {
+  const { body, content } = cell.state;
+  if (body) {
+    return 'visualization';
+  }
+  if (content?.kind === 'Code') {
+    return 'code';
+  }
+
+  return content?.kind === 'Markdown' && /^\s{0,3}#{1,6}\s/.test(content.spec.text) ? 'heading' : 'paragraph';
+}

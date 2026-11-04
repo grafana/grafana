@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"strconv"
 	"strings"
 
 	mysql "github.com/dolthub/go-mysql-server/sql"
@@ -32,10 +33,11 @@ func (ft *FrameTable) String() string {
 
 func SchemaFromFrame(frame *data.Frame) mysql.Schema {
 	schema := make(mysql.Schema, len(frame.Fields))
+	names := uniqueColumnNames(frame.Fields)
 
 	for i, field := range frame.Fields {
 		schema[i] = &mysql.Column{
-			Name:     field.Name,
+			Name:     names[i],
 			Type:     convertDataType(field.Type()),
 			Nullable: field.Type().Nullable(),
 			Source:   strings.ToLower(frame.RefID),
@@ -43,6 +45,37 @@ func SchemaFromFrame(frame *data.Frame) mysql.Schema {
 	}
 
 	return schema
+}
+
+// uniqueColumnNames returns the field names with repeats renamed to
+// <name>_2, <name>_3, and so on. The engine matches column names
+// case-insensitively and fails on an ambiguous name, so repeats are found
+// case-insensitively. A suffix that another field already uses is skipped,
+// so fields that are not repeats keep their names.
+func uniqueColumnNames(fields []*data.Field) []string {
+	taken := make(map[string]struct{}, len(fields))
+	for _, field := range fields {
+		taken[strings.ToLower(field.Name)] = struct{}{}
+	}
+
+	seen := make(map[string]struct{}, len(fields))
+	names := make([]string, len(fields))
+	for i, field := range fields {
+		name := field.Name
+		if _, ok := seen[strings.ToLower(name)]; ok {
+			for n := 2; ; n++ {
+				candidate := fmt.Sprintf("%s_%d", field.Name, n)
+				if _, ok := taken[strings.ToLower(candidate)]; !ok {
+					name = candidate
+					break
+				}
+			}
+			taken[strings.ToLower(name)] = struct{}{}
+		}
+		seen[strings.ToLower(name)] = struct{}{}
+		names[i] = name
+	}
+	return names
 }
 
 // Schema implements the mysql.Table interface
@@ -102,6 +135,8 @@ func (ri *rowIter) Next(ctx *mysql.Context) (mysql.Row, error) {
 			if math.IsNaN(v) || math.IsInf(v, 0) {
 				continue
 			}
+		case data.EnumItemIndex:
+			val = enumText(field, v)
 		}
 
 		// If the field is JSON, convert json.RawMessage to types.JSONDocument
@@ -121,6 +156,35 @@ func (ri *rowIter) Next(ctx *mysql.Context) (mysql.Row, error) {
 
 	ri.row++
 	return row, nil
+}
+
+// enumText returns the display text for an enum index, or the index as text
+// when the field has no enum config or the index is out of range.
+func enumText(field *data.Field, idx data.EnumItemIndex) string {
+	if field.Config != nil && field.Config.TypeConfig != nil && field.Config.TypeConfig.Enum != nil {
+		if text := field.Config.TypeConfig.Enum.Text; int(idx) < len(text) {
+			return text[idx]
+		}
+	}
+	return strconv.Itoa(int(idx))
+}
+
+// SampleRow returns a copy of the row at rowIdx with values as SQL reads them,
+// so schema samples match what queries see.
+func SampleRow(frame *data.Frame, rowIdx int) []any {
+	row := frame.RowCopy(rowIdx)
+	for i, field := range frame.Fields {
+		switch v := row[i].(type) {
+		case data.EnumItemIndex:
+			row[i] = enumText(field, v)
+		case *data.EnumItemIndex:
+			if v != nil {
+				text := enumText(field, *v)
+				row[i] = &text
+			}
+		}
+	}
+	return row
 }
 
 // Close implements the mysql.RowIter interface.
@@ -176,7 +240,8 @@ func convertDataType(fieldType data.FieldType) mysql.Type {
 		return types.Float32
 	case data.FieldTypeFloat64, data.FieldTypeNullableFloat64:
 		return types.Float64
-	case data.FieldTypeString, data.FieldTypeNullableString:
+	case data.FieldTypeString, data.FieldTypeNullableString,
+		data.FieldTypeEnum, data.FieldTypeNullableEnum:
 		return types.Text
 	case data.FieldTypeBool, data.FieldTypeNullableBool:
 		return types.Boolean

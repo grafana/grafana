@@ -7,6 +7,7 @@ import (
 	"iter"
 	"maps"
 	"net/http"
+	"slices"
 	"sync"
 	"time"
 
@@ -31,8 +32,16 @@ type fakeStorage struct {
 	listErr  error
 	watchErr error
 	watchCh  chan *resource.WrittenEvent
-	itemErr  error // returned from the iterator partway through
-	itemErrI int   // index after which to inject itemErr
+
+	// WatchWrittenKeys: the channel it returns, or keysErr, and what each
+	// call asked for, so a test can check the watch and its cancellation.
+	keysErr   error
+	keysCh    chan *resource.WrittenEvent
+	keysCalls int
+	keysTypes []schema.GroupResource
+	keysCtx   context.Context
+	itemErr   error // returned from the iterator partway through
+	itemErrI  int   // index after which to inject itemErr
 
 	latestRvOverride int64 // RV reported as the snapshot ceiling, instead of the highest in changes
 	lookback         int64 // widens the listing floor to sinceRv-lookback, like the backend's searchLookback
@@ -58,18 +67,6 @@ func (f *fakeStorage) setFolderTitle(namespace, uid, title string) {
 		f.folders = map[string]string{}
 	}
 	f.folders[namespace+"/"+uid] = title
-}
-
-// emit synchronously delivers a watch event on the channel set up by
-// startWatch. Tests use it to drive the watch path.
-func (f *fakeStorage) emit(ev *resource.WrittenEvent) {
-	f.mu.Lock()
-	ch := f.watchCh
-	f.mu.Unlock()
-	if ch == nil {
-		return
-	}
-	ch <- ev
 }
 
 func (f *fakeStorage) WriteEvent(context.Context, resource.WriteEvent) (int64, error) {
@@ -100,7 +97,7 @@ func (f *fakeStorage) ListHistory(context.Context, *resourcepb.ListRequest, func
 }
 
 // WatchWriteEvents returns a channel the test can push events onto via
-// emit(). Closing happens when the parent ctx ends (handled by the test
+// its channel. Closing happens when the parent ctx ends (handled by the test
 // harness). Tests that need watch errors set watchErr.
 func (f *fakeStorage) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
 	f.mu.Lock()
@@ -112,6 +109,41 @@ func (f *fakeStorage) WatchWriteEvents(ctx context.Context) (<-chan *resource.Wr
 		f.watchCh = make(chan *resource.WrittenEvent, 16)
 	}
 	return f.watchCh, nil
+}
+
+func (f *fakeStorage) WatchWrittenKeys(ctx context.Context, types []schema.GroupResource, _ func(string)) (<-chan *resource.WrittenEvent, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.keysCalls++
+	f.keysTypes = types
+	f.keysCtx = ctx
+	if f.keysErr != nil {
+		return nil, f.keysErr
+	}
+	if f.keysCh == nil {
+		f.keysCh = make(chan *resource.WrittenEvent, 16)
+	}
+	return f.keysCh, nil
+}
+
+// keysWatch returns the channel and context of the latest WatchWrittenKeys
+// call, and how many calls there were.
+func (f *fakeStorage) keysWatch() (chan *resource.WrittenEvent, context.Context, int) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.keysCh, f.keysCtx, f.keysCalls
+}
+
+// publishKey delivers a written key the way NATS does: only to a watch
+// subscribed to its type.
+func (f *fakeStorage) publishKey(ev *resource.WrittenEvent) {
+	f.mu.Lock()
+	subscribed := slices.Contains(f.keysTypes, schema.GroupResource{Group: ev.Key.Group, Resource: ev.Key.Resource})
+	keys := f.keysCh
+	f.mu.Unlock()
+	if subscribed {
+		keys <- ev
+	}
 }
 
 // GetResourceStats returns one ResourceStats per distinct
@@ -236,6 +268,7 @@ type fakeVector struct {
 	lockAttempts    int
 	lockReleases    int
 
+	onSetLatestRV    func(int64)
 	setLatestRVCalls int
 	setLatestRVErr   error
 	getLatestRVErr   error
@@ -281,6 +314,10 @@ func (f *fakeVector) ResolveCollection(_ context.Context, group, resource string
 		return collection, true, nil
 	}
 	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
+}
+
+func (f *fakeVector) EnsureCollectionWithScope(ctx context.Context, group, resource string, isExternal bool, scope vector.CollectionScope) (vector.Collection, error) {
+	return f.EnsureCollection(ctx, group, resource, isExternal)
 }
 
 func (f *fakeVector) EnsureCollection(_ context.Context, group, resource string, isExternal bool) (vector.Collection, error) {
@@ -449,6 +486,9 @@ func (f *fakeVector) GetLatestRV(context.Context) (int64, error) {
 	return f.latestRV, nil
 }
 func (f *fakeVector) SetLatestRV(_ context.Context, rv int64) error {
+	if f.onSetLatestRV != nil {
+		f.onSetLatestRV(rv)
+	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.setLatestRVCalls++
@@ -579,46 +619,6 @@ func newFakeEmbedder(text *fakeText) *embedder.Embedder {
 }
 
 var errBoom = errors.New("boom")
-
-// fakeBroadcaster is the smallest viable resource.Broadcaster impl for
-// the reconciler tests. It returns a single subscriber channel, lets
-// the test push events via emit(), and records unsubscribe calls so
-// we can assert clean shutdown.
-type fakeBroadcaster struct {
-	mu              sync.Mutex
-	subscribeErr    error
-	ch              chan *resource.WrittenEvent
-	subscribeCalls  int
-	unsubscribeCh   <-chan *resource.WrittenEvent
-	unsubscribeOnce sync.Once
-}
-
-func newFakeBroadcaster() *fakeBroadcaster {
-	return &fakeBroadcaster{ch: make(chan *resource.WrittenEvent, 16)}
-}
-
-func (b *fakeBroadcaster) Subscribe(_ context.Context, _, _ string) (<-chan *resource.WrittenEvent, error) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	b.subscribeCalls++
-	if b.subscribeErr != nil {
-		return nil, b.subscribeErr
-	}
-	return b.ch, nil
-}
-
-func (b *fakeBroadcaster) Unsubscribe(ch <-chan *resource.WrittenEvent) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	b.unsubscribeCh = ch
-	// Closing once so consumeWatchEvents exits via the `!ok` branch
-	// (the real broadcaster has the same behavior on Unsubscribe).
-	b.unsubscribeOnce.Do(func() { close(b.ch) })
-}
-
-func (b *fakeBroadcaster) emit(ev *resource.WrittenEvent) {
-	b.ch <- ev
-}
 
 // fakeBuilder is a second embed.Builder, for the cross-builder cursor
 // behavior the single real builder can't reach.

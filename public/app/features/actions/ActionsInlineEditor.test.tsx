@@ -1,5 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { render } from 'test/test-utils';
 
 import {
   type Action,
@@ -131,7 +132,7 @@ describe('ActionsInlineEditor', () => {
 
     render(<ActionsInlineEditor {...defaultProps} actions={actions} />);
 
-    await user.click(await screen.findByRole('button', { name: /edit/i }));
+    await user.click(await screen.findByRole('button', { name: 'Edit' }));
     // Toggle method to GET inside the editor and save.
     await user.click(await screen.findByRole('radio', { name: 'GET' }));
     await user.click(screen.getByRole('button', { name: /^Save$/i }));

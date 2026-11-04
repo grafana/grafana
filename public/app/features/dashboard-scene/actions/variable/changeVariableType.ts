@@ -21,6 +21,7 @@ export function changeVariableType({ source, oldVariable, newVariable }: ChangeV
   varsAfterChange[variableIndex] = newVariable;
 
   edit({
+    meta: { actionId: 'variable.changeType' },
     description: t('dashboard.edit-actions.variable-type', 'Change variable type'),
     source,
     addedObject: newVariable,

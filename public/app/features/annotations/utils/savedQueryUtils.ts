@@ -5,7 +5,7 @@ import {
   hasQueryExportSupport,
   hasQueryImportSupport,
 } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
 import { standardAnnotationSupport } from '../standardAnnotationSupport';

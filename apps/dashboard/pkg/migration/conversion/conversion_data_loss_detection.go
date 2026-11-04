@@ -338,10 +338,50 @@ func collectStatsV2beta1(spec dashv2beta1.DashboardSpec) dashboardStats {
 	return dashboardStats{
 		panelCount:      countPanelsV2beta1(spec.Elements),
 		queryCount:      countQueriesV2beta1(spec.Elements),
-		annotationCount: countAnnotationsV2beta1(spec.Annotations),
+		annotationCount: countAnnotationsV2beta1(spec.Annotations) + countSectionAnnotationsV2beta1(spec.Layout),
 		linkCount:       countLinksV2beta1(spec.Links),
 		variableCount:   countVariablesV2beta1(spec.Variables),
 	}
+}
+
+func countSectionAnnotationsV2beta1(layout dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind) int {
+	count := 0
+	if layout.RowsLayoutKind != nil {
+		count += countRowAnnotationsV2beta1(layout.RowsLayoutKind)
+	}
+	if layout.TabsLayoutKind != nil {
+		count += countTabAnnotationsV2beta1(layout.TabsLayoutKind)
+	}
+	return count
+}
+
+func countRowAnnotationsV2beta1(rows *dashv2beta1.DashboardRowsLayoutKind) int {
+	count := 0
+	for _, row := range rows.Spec.Rows {
+		count += len(row.Spec.Annotations)
+		count += countRowChildAnnotationsV2beta1(row.Spec.Layout)
+	}
+	return count
+}
+
+func countRowChildAnnotationsV2beta1(layout dashv2beta1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind) int {
+	count := 0
+	if layout.RowsLayoutKind != nil {
+		count += countRowAnnotationsV2beta1(layout.RowsLayoutKind)
+	}
+	if layout.TabsLayoutKind != nil {
+		count += countTabAnnotationsV2beta1(layout.TabsLayoutKind)
+	}
+	return count
+}
+
+func countTabAnnotationsV2beta1(tabs *dashv2beta1.DashboardTabsLayoutKind) int {
+	count := 0
+	for _, tab := range tabs.Spec.Tabs {
+		count += len(tab.Spec.Annotations)
+		count += countSectionAnnotationsV2beta1(tab.Spec.Layout)
+	}
+	return count
 }
 
 func countPanelsV2(elements map[string]dashv2.DashboardElement) int {
@@ -370,10 +410,50 @@ func collectStatsV2(spec dashv2.DashboardSpec) dashboardStats {
 	return dashboardStats{
 		panelCount:      countPanelsV2(spec.Elements),
 		queryCount:      countQueriesV2(spec.Elements),
-		annotationCount: len(spec.Annotations),
+		annotationCount: len(spec.Annotations) + countSectionAnnotationsV2(spec.Layout),
 		linkCount:       len(spec.Links),
 		variableCount:   len(spec.Variables),
 	}
+}
+
+func countSectionAnnotationsV2(layout dashv2.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind) int {
+	count := 0
+	if layout.RowsLayoutKind != nil {
+		count += countRowAnnotationsV2(layout.RowsLayoutKind)
+	}
+	if layout.TabsLayoutKind != nil {
+		count += countTabAnnotationsV2(layout.TabsLayoutKind)
+	}
+	return count
+}
+
+func countRowAnnotationsV2(rows *dashv2.DashboardRowsLayoutKind) int {
+	count := 0
+	for _, row := range rows.Spec.Rows {
+		count += len(row.Spec.Annotations)
+		count += countRowChildAnnotationsV2(row.Spec.Layout)
+	}
+	return count
+}
+
+func countRowChildAnnotationsV2(layout dashv2.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind) int {
+	count := 0
+	if layout.RowsLayoutKind != nil {
+		count += countRowAnnotationsV2(layout.RowsLayoutKind)
+	}
+	if layout.TabsLayoutKind != nil {
+		count += countTabAnnotationsV2(layout.TabsLayoutKind)
+	}
+	return count
+}
+
+func countTabAnnotationsV2(tabs *dashv2.DashboardTabsLayoutKind) int {
+	count := 0
+	for _, tab := range tabs.Spec.Tabs {
+		count += len(tab.Spec.Annotations)
+		count += countSectionAnnotationsV2(tab.Spec.Layout)
+	}
+	return count
 }
 
 // detectConversionDataLoss detects if critical dashboard data was lost during conversion

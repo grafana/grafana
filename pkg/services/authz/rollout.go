@@ -7,6 +7,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/datasourcek8s"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
@@ -48,6 +49,7 @@ func newRolloutAccessClient(rbac, zanzana claims.AccessClient, rollout map[strin
 // because Zanzana only holds tuples for the actions its reconciler translates, so routing
 // a subresource it does not know about would silently deny access the user really has.
 func (c *rolloutAccessClient) clientFor(namespace, group, resource, subresource string) claims.AccessClient {
+	group, resource, subresource = datasourcek8s.AuthorizationResource(group, resource, subresource)
 	groupResource := common.FormatGroupResource(group, resource, subresource)
 	pct, ok := c.rollout[groupResource]
 	if !ok || pct <= 0 {
@@ -82,9 +84,10 @@ func (c *rolloutAccessClient) BatchCheck(ctx context.Context, id claims.AuthInfo
 	}
 
 	check := req.Checks[0]
-	group, resource, subresource := check.Group, check.Resource, check.Subresource
+	group, resource, subresource := datasourcek8s.AuthorizationResource(check.Group, check.Resource, check.Subresource)
 	for _, check := range req.Checks[1:] {
-		if check.Group != group || check.Resource != resource || check.Subresource != subresource {
+		checkGroup, checkResource, checkSubresource := datasourcek8s.AuthorizationResource(check.Group, check.Resource, check.Subresource)
+		if checkGroup != group || checkResource != resource || checkSubresource != subresource {
 			rolloutLog.Warn("batch contains mixed group/resource combinations, falling back to RBAC",
 				"namespace", req.Namespace,
 				"first_group", group, "first_resource", resource, "first_subresource", subresource,

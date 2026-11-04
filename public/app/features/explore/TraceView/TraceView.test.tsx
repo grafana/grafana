@@ -24,6 +24,7 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   useAppPluginInstalled: jest.fn(),
   reportInteraction: jest.fn(),
+  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
 }));
 
 // The summary-span minimap gradient emits fractional rgb() channels that real browsers accept
@@ -33,12 +34,6 @@ jest.mock('./components/TracePageHeader/SpanGraph/render-into-canvas', () => ({
   __esModule: true,
   default: jest.fn(),
 }));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
-}));
-
 const mockUseAppPluginInstalled = jest.mocked(useAppPluginInstalled);
 
 function mockPluginInstalled(installedPluginIds: string[] = []) {

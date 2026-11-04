@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
+	userutils "github.com/grafana/dskit/user"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -44,38 +45,29 @@ type distributorTestProvider struct {
 func (p distributorTestProvider) GetServer() *grpc.Server { return p.server }
 
 func TestSearchDistributorConvertsOwnErrors(t *testing.T) {
-	for _, enabled := range []bool{false, true} {
-		t.Run(fmt.Sprintf("enabled=%t", enabled), func(t *testing.T) {
-			srv := grpc.NewServer()
-			_, err := ProvideSearchDistributorServer(noop.NewTracerProvider().Tracer("test"),
-				&setting.Cfg{UnifiedStorageGRPCErrorResultToStatus: enabled}, nil, nil,
-				distributorTestProvider{server: srv})
-			require.NoError(t, err)
+	srv := grpc.NewServer()
+	_, err := ProvideSearchDistributorServer(noop.NewTracerProvider().Tracer("test"),
+		&setting.Cfg{}, nil, nil,
+		distributorTestProvider{server: srv})
+	require.NoError(t, err)
 
-			listener := bufconn.Listen(1024 * 1024)
-			t.Cleanup(srv.Stop)
-			go func() { _ = srv.Serve(listener) }()
-			conn, err := grpc.NewClient("passthrough:///bufnet",
-				grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) { return listener.Dial() }),
-				grpc.WithTransportCredentials(insecure.NewCredentials()))
-			require.NoError(t, err)
-			t.Cleanup(func() { _ = conn.Close() })
+	listener := bufconn.Listen(1024 * 1024)
+	t.Cleanup(srv.Stop)
+	go func() { _ = srv.Serve(listener) }()
+	conn, err := grpc.NewClient("passthrough:///bufnet",
+		grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) { return listener.Dial() }),
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close() })
 
-			resp, err := resourcepb.NewResourceIndexClient(conn).RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{
-				Namespace: "default", Keys: []*resourcepb.ResourceKey{{Namespace: "other"}},
-			})
-			want := NewBadRequestError("key namespace does not match request namespace")
-			if !enabled {
-				require.NoError(t, err)
-				require.True(t, proto.Equal(want, resp.GetError()))
-				return
-			}
-			require.Equal(t, codes.InvalidArgument, status.Code(err))
-			details := status.Convert(err).Details()
-			require.Len(t, details, 1)
-			require.True(t, proto.Equal(want, details[0].(*resourcepb.ErrorResult)))
-		})
-	}
+	_, err = resourcepb.NewResourceIndexClient(conn).RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{
+		Namespace: "default", Keys: []*resourcepb.ResourceKey{{Namespace: "other"}},
+	})
+	want := NewBadRequestError("key namespace does not match request namespace")
+	require.Equal(t, codes.InvalidArgument, status.Code(err))
+	details := status.Convert(err).Details()
+	require.Len(t, details, 1)
+	require.True(t, proto.Equal(want, details[0].(*resourcepb.ErrorResult)))
 }
 
 func TestSearchRingReadOpReplicaSetExtension(t *testing.T) {
@@ -195,12 +187,26 @@ func TestDistributorCheckHealth(t *testing.T) {
 	}
 }
 
+func newDistributorForwardingTestServer(t *testing.T, client ResourceClient) *distributorServer {
+	t.Helper()
+	testRing, _ := newSearchRingForTest(t, 1, ring.ACTIVE)
+	pool := ringclient.NewPool(RingName, ringclient.PoolConfig{}, nil,
+		ringclient.PoolInstFunc(func(ring.InstanceDesc) (ringclient.PoolClient, error) {
+			return &RingClient{Client: client}, nil
+		}), nil, gokitlog.NewNopLogger())
+	return &distributorServer{
+		ring:           testRing,
+		searchRingRead: newSearchRingReadOp(false),
+		clientPool:     pool,
+		tracing:        noop.NewTracerProvider().Tracer("test"),
+		log:            log.NewNopLogger(),
+	}
+}
+
 // VectorSearch must forward the incoming gRPC metadata (which carries the access
 // token) when distributing to a search instance. Dropping it makes the downstream
 // authenticator reject the call with "missing required token".
 func TestDistributorVectorSearchForwardsIncomingMetadata(t *testing.T) {
-	testRing, _ := newSearchRingForTest(t, 1, ring.ACTIVE)
-
 	var gotMD metadata.MD
 	mockClient := NewMockResourceClient(t)
 	mockClient.EXPECT().VectorSearch(mock.Anything, mock.Anything).RunAndReturn(
@@ -208,20 +214,7 @@ func TestDistributorVectorSearchForwardsIncomingMetadata(t *testing.T) {
 			gotMD, _ = metadata.FromOutgoingContext(ctx)
 			return &resourcepb.VectorSearchResponse{}, nil
 		})
-
-	pool := ringclient.NewPool(RingName, ringclient.PoolConfig{}, nil,
-		ringclient.PoolInstFunc(func(ring.InstanceDesc) (ringclient.PoolClient, error) {
-			return &RingClient{Client: mockClient}, nil
-		}), nil, gokitlog.NewNopLogger())
-
-	ds := &distributorServer{
-		ring:           testRing,
-		searchRingRead: newSearchRingReadOp(false),
-		clientPool:     pool,
-		tracing:        noop.NewTracerProvider().Tracer("test"),
-		log:            log.NewNopLogger(),
-	}
-
+	ds := newDistributorForwardingTestServer(t, mockClient)
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("x-access-token", "the-token"))
 	_, err := ds.VectorSearch(ctx, &resourcepb.VectorSearchRequest{
 		Key:   &resourcepb.ResourceKey{Namespace: "stacks-11794"},
@@ -230,6 +223,55 @@ func TestDistributorVectorSearchForwardsIncomingMetadata(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, []string{"the-token"}, gotMD.Get("x-access-token"))
+}
+
+func TestDistributorHybridSearchForwardsNamespaceAndCredentials(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		request *resourcepb.HybridSearchRequest
+	}{
+		{
+			name: "key selector",
+			request: &resourcepb.HybridSearchRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "stacks-11794",
+					Group:     "dashboard.grafana.app",
+					Resource:  "dashboards",
+				},
+				Query: "monitoring",
+			},
+		},
+		{
+			name: "resources selector",
+			request: &resourcepb.HybridSearchRequest{
+				Namespace: "stacks-11794",
+				Resources: []*resourcepb.HybridSearchRequest_Resource{
+					{Group: "dashboard.grafana.app", Resource: "dashboards"},
+					{Group: "folder.grafana.app", Resource: "folders"},
+				},
+				Query: "monitoring",
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			want := &resourcepb.HybridSearchResponse{Results: []*resourcepb.HybridSearchResult{{Title: "Monitoring"}}}
+			mockClient := NewMockResourceClient(t)
+			mockClient.EXPECT().HybridSearch(mock.Anything, test.request).RunAndReturn(
+				func(ctx context.Context, _ *resourcepb.HybridSearchRequest, _ ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
+					namespace, err := userutils.ExtractOrgID(ctx)
+					require.NoError(t, err)
+					require.Equal(t, "stacks-11794", namespace)
+					md, _ := metadata.FromOutgoingContext(ctx)
+					require.Equal(t, []string{"the-token"}, md.Get("x-access-token"))
+					return want, nil
+				}).Once()
+			ds := newDistributorForwardingTestServer(t, mockClient)
+			ctx := metadata.NewIncomingContext(t.Context(), metadata.Pairs("x-access-token", "the-token"))
+			response, err := ds.HybridSearch(ctx, test.request)
+			require.NoError(t, err)
+			require.Same(t, want, response)
+		})
+	}
 }
 
 // failoverTestClient records which instances were called and returns the
@@ -343,7 +385,8 @@ func TestDistributorSearchFailover(t *testing.T) {
 			ds := newFailoverTestDistributor(t, tt.replicationFactor, state)
 
 			resp, err := ds.Search(t.Context(), &resourcepb.ResourceSearchRequest{
-				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "stacks-1"}},
+				Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "stacks-1"}},
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			})
 			code, _ := callFailure(resp, err)
 			require.Equal(t, tt.wantCode, code)
@@ -372,7 +415,8 @@ func TestDistributorSearchReportsCancellation(t *testing.T) {
 	ds := newFailoverTestDistributor(t, 2, state)
 
 	_, err := ds.Search(ctx, &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "stacks-1"}},
+		Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "stacks-1"}},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
 	require.Equal(t, codes.Canceled, status.Code(err))
 	require.Len(t, state.calls, 1)

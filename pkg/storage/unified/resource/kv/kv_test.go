@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -29,6 +30,79 @@ func setupTestBadgerDB(t *testing.T) *badger.DB {
 func setupTestKV(t *testing.T) KV {
 	db := setupTestBadgerDB(t)
 	return NewBadgerKV(db)
+}
+
+type failingReadCloser struct {
+	readErr, closeErr error
+	closed            bool
+}
+
+func (r *failingReadCloser) Read([]byte) (int, error) { return 0, r.readErr }
+
+func (r *failingReadCloser) Close() error {
+	r.closed = true
+	return r.closeErr
+}
+
+func TestReadAllAndClose(t *testing.T) {
+	t.Run("hands out owned values without copying and consumes them", func(t *testing.T) {
+		value := []byte("stored value")
+		r := NewBytesValue(value)
+		got, err := ReadAllAndClose(r)
+		require.NoError(t, err)
+		require.Equal(t, value, got)
+		require.Same(t, &value[0], &got[0])
+
+		n, err := r.Read(make([]byte, 1))
+		require.Zero(t, n)
+		require.ErrorIs(t, err, io.EOF)
+
+		_, err = r.(io.Writer).Write([]byte("overwrite"))
+		require.NoError(t, err)
+		require.Equal(t, []byte("stored value"), got)
+	})
+
+	t.Run("returns only the unread part of an owned value", func(t *testing.T) {
+		r := NewBytesValue([]byte("stored value"))
+		_, err := io.ReadFull(r, make([]byte, len("stored ")))
+		require.NoError(t, err)
+		got, err := ReadAllAndClose(r)
+		require.NoError(t, err)
+		require.Equal(t, []byte("value"), got)
+	})
+
+	t.Run("reads other readers fully", func(t *testing.T) {
+		got, err := ReadAllAndClose(io.NopCloser(strings.NewReader("streamed value")))
+		require.NoError(t, err)
+		require.Equal(t, []byte("streamed value"), got)
+	})
+
+	t.Run("closes and returns both read and close errors", func(t *testing.T) {
+		readErr, closeErr := errors.New("read failed"), errors.New("close failed")
+		r := &failingReadCloser{readErr: readErr, closeErr: closeErr}
+		_, err := ReadAllAndClose(r)
+		require.ErrorIs(t, err, readErr)
+		require.ErrorIs(t, err, closeErr)
+		require.True(t, r.closed)
+	})
+}
+
+func TestAllSectionsSorted(t *testing.T) {
+	require.True(t, slices.IsSorted(AllSections), "AllSections must be sorted by value for binary search validation")
+}
+
+func TestIsSupportedSection(t *testing.T) {
+	for _, section := range AllSections {
+		t.Run(section, func(t *testing.T) {
+			require.True(t, IsSupportedSection(section))
+		})
+	}
+
+	for _, section := range []string{"", "unknown", "unified", DataSection + "/unknown"} {
+		t.Run("unsupported/"+section, func(t *testing.T) {
+			require.False(t, IsSupportedSection(section))
+		})
+	}
 }
 
 func TestPrefixRangeEnd(t *testing.T) {

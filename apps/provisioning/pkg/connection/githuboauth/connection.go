@@ -23,6 +23,10 @@ func (p *provider) Endpoint() oauth2.Endpoint {
 	return oauth2github.Endpoint
 }
 
+func (p *provider) Test(ctx context.Context) *provisioning.TestResults {
+	return oauth.TestByListingRepositories(ctx, p)
+}
+
 func (p *provider) ListRepositories(ctx context.Context) ([]provisioning.ExternalRepository, error) {
 	repos, err := p.client.ListRepositories(ctx)
 	if err != nil {
@@ -34,4 +38,7 @@ func (p *provider) ListRepositories(ctx context.Context) ([]provisioning.Externa
 	return repos, nil
 }
 
-var _ oauth.Provider = (*provider)(nil)
+var (
+	_ oauth.Provider              = (*provider)(nil)
+	_ connection.RepositoryLister = (*provider)(nil)
+)

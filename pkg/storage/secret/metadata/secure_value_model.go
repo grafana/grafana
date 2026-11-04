@@ -9,6 +9,7 @@ import (
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -42,7 +43,7 @@ type secureValueDB struct {
 	Ref         sql.NullString
 	ExternalID  string
 
-	// Gargbage collection
+	// Garbage collection
 	GCAttempts int
 }
 
@@ -128,7 +129,7 @@ func (sv *secureValueDB) toKubernetes() (*secretv1beta1.SecureValue, error) {
 func toCreateRow(createdAt, updatedAt int64, keeper string, sv *secretv1beta1.SecureValue, createdBy, updatedBy string) (*secureValueDB, error) {
 	row, err := toRow(keeper, sv, "")
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert SecureValue to secureValueDB: %w", err)
+		return nil, err
 	}
 
 	row.GUID = uuid.NewV4().String()
@@ -201,7 +202,7 @@ func toRow(keeper string, sv *secretv1beta1.SecureValue, externalID string) (*se
 
 	ownerReferences := meta.GetOwnerReferences()
 	if len(ownerReferences) > 1 {
-		return nil, fmt.Errorf("only one owner reference is supported, found %d", len(ownerReferences))
+		return nil, fmt.Errorf("only one owner reference is supported, found %d: %w", len(ownerReferences), contracts.ErrTooManyOwnerReferences)
 	}
 	if len(ownerReferences) == 1 {
 		ownerReference := ownerReferences[0]
@@ -259,4 +260,10 @@ func toNullString(s *string) sql.NullString {
 		String: *s,
 		Valid:  true,
 	}
+}
+
+type versionAndCreated struct {
+	createdAt int64
+	createdBy string
+	version   int64
 }

@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,9 +25,25 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
+
+func enableDeterministicUID(t *testing.T) {
+	t.Helper()
+	flag, err := setting.ParseFlag(featuremgmt.FlagKubernetesUsersDeterministicUID, "true")
+	require.NoError(t, err)
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagKubernetesUsersDeterministicUID: flag,
+	})
+	require.NoError(t, err)
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(nil))
+	})
+}
 
 func TestUserK8sService_Create(t *testing.T) {
 	tests := []struct {
@@ -37,6 +55,7 @@ func TestUserK8sService_Create(t *testing.T) {
 		nilProvider    bool
 		noReqContext   bool
 		expectErr      bool
+		expectErrIs    error
 		expectUser     *user.User
 	}{
 		{
@@ -302,6 +321,42 @@ func TestUserK8sService_Create(t *testing.T) {
 			expectErr: true,
 		},
 		{
+			name:           "maps AlreadyExists from k8s to ErrUserAlreadyExists",
+			requesterOrgID: 1,
+			cmd:            &user.CreateUserCommand{Login: "jdoe"},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusConflict)
+				_ = json.NewEncoder(w).Encode(metav1.Status{
+					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+					Status:   metav1.StatusFailure,
+					Reason:   metav1.StatusReasonAlreadyExists,
+					Message:  "user already exists",
+					Code:     http.StatusConflict,
+				})
+			},
+			expectErr:   true,
+			expectErrIs: user.ErrUserAlreadyExists,
+		},
+		{
+			name:           "maps Conflict from k8s to ErrUserAlreadyExists",
+			requesterOrgID: 1,
+			cmd:            &user.CreateUserCommand{Login: "jdoe"},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusConflict)
+				_ = json.NewEncoder(w).Encode(metav1.Status{
+					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+					Status:   metav1.StatusFailure,
+					Reason:   metav1.StatusReasonConflict,
+					Message:  "login 'jdoe' is already taken",
+					Code:     http.StatusConflict,
+				})
+			},
+			expectErr:   true,
+			expectErrIs: user.ErrUserAlreadyExists,
+		},
+		{
 			name:        "returns error when config provider not initialized",
 			cmd:         &user.CreateUserCommand{Login: "any-user", OrgID: 1},
 			nilProvider: true,
@@ -329,6 +384,9 @@ func TestUserK8sService_Create(t *testing.T) {
 
 			if tt.expectErr {
 				require.Error(t, err)
+				if tt.expectErrIs != nil {
+					require.ErrorIs(t, err, tt.expectErrIs)
+				}
 				return
 			}
 
@@ -346,6 +404,51 @@ func TestUserK8sService_Create(t *testing.T) {
 			assert.Equal(t, tt.expectUser.ExternalAuthInfo, result.ExternalAuthInfo)
 		})
 	}
+}
+
+func TestUserK8sService_Create_DeterministicUID(t *testing.T) {
+	sentName := func(t *testing.T, cmd *user.CreateUserCommand, serverResponse func(w http.ResponseWriter, r *http.Request)) string {
+		t.Helper()
+		var got string
+		svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+			requesterOrgID: 2,
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				var body map[string]any
+				_ = json.NewDecoder(r.Body).Decode(&body)
+				got = body["metadata"].(map[string]any)["name"].(string)
+				serverResponse(w, r)
+			},
+		})
+		_, err := svc.Create(ctx, cmd)
+		require.NoError(t, err)
+		return got
+	}
+
+	respond := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(v0alpha1.User{
+			ObjectMeta: metav1.ObjectMeta{Name: "ignored-in-this-test", Namespace: "org-2"},
+		})
+	}
+
+	t.Run("disabled by default: falls back to a random short UID", func(t *testing.T) {
+		name := sentName(t, &user.CreateUserCommand{Login: "jdoe", Email: "jdoe@example.com"}, respond)
+		assert.True(t, util.IsValidShortUID(name))
+		assert.NotEqual(t, user.GenerateDeterministicUID("org-2", "jdoe@example.com", "jdoe"), name)
+	})
+
+	t.Run("enabled: uses the deterministic hash of namespace, email and login", func(t *testing.T) {
+		enableDeterministicUID(t)
+		name := sentName(t, &user.CreateUserCommand{Login: "jdoe", Email: "jdoe@example.com"}, respond)
+		assert.Equal(t, user.GenerateDeterministicUID("org-2", "jdoe@example.com", "jdoe"), name)
+	})
+
+	t.Run("enabled: omitting login hashes the same as explicitly setting login to email", func(t *testing.T) {
+		enableDeterministicUID(t)
+		withLogin := sentName(t, &user.CreateUserCommand{Login: "jdoe@example.com", Email: "jdoe@example.com"}, respond)
+		withoutLogin := sentName(t, &user.CreateUserCommand{Email: "jdoe@example.com"}, respond)
+		assert.Equal(t, withLogin, withoutLogin, "mutate.go defaults Login from Email downstream, so the hash must use the same normalized identity either way")
+	})
 }
 
 func TestUserK8sService_GetByID(t *testing.T) {
@@ -2741,10 +2844,11 @@ func newTestK8sUser(uid, namespace, login, email string) v0alpha1.User {
 
 type testDirectRestConfigProvider struct {
 	serverURL string
+	transport http.RoundTripper
 }
 
 func (p *testDirectRestConfigProvider) GetDirectRestConfig(_ *contextmodel.ReqContext) *rest.Config {
-	return &rest.Config{Host: p.serverURL}
+	return &rest.Config{Host: p.serverURL, Transport: p.transport}
 }
 
 func (p *testDirectRestConfigProvider) DirectlyServeHTTP(_ http.ResponseWriter, _ *http.Request) {}
@@ -2836,4 +2940,76 @@ func TestUserK8sService_Search_MapsExtendedFields(t *testing.T) {
 	assert.True(t, got.IsProvisioned)
 	assert.Equal(t, created.UTC(), got.Created.UTC())
 	assert.Equal(t, lastSeen.UTC(), got.LastSeenAt.UTC())
+}
+
+func TestUserK8sService_UpdateLastSeenAtChecksKnownTimestampBeforeLookup(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		lastSeen time.Time
+		interval time.Duration
+		skip     bool
+	}{
+		{"recent", time.Now(), 5 * time.Minute, true},
+		{"stale", time.Now().Add(-10 * time.Minute), 5 * time.Minute, false},
+		{"unknown", time.Time{}, 5 * time.Minute, false},
+		{"future", time.Now().Add(time.Minute), 5 * time.Minute, true},
+		{"custom interval", time.Now().Add(-time.Minute), 30 * time.Second, false},
+		{"zero interval", time.Now().Add(-time.Second), 0, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+				cfg: &setting.Cfg{UserLastSeenUpdateInterval: tc.interval}, nilProvider: true,
+			})
+			err := svc.UpdateLastSeenAt(ctx, &user.UpdateUserLastSeenAtCommand{UserID: 42, OrgID: 1, LastSeenAt: tc.lastSeen})
+			if tc.skip {
+				require.ErrorIs(t, err, user.ErrLastSeenUpToDate)
+			} else {
+				require.EqualError(t, err, "config provider not initialized")
+			}
+		})
+	}
+}
+
+func TestUserK8sService_GetSignedInUserByUID(t *testing.T) {
+	for _, status := range []int{http.StatusOK, http.StatusNotFound, http.StatusForbidden} {
+		t.Run(strconv.Itoa(status), func(t *testing.T) {
+			calls := 0
+			svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+				serverResponse: func(w http.ResponseWriter, r *http.Request) {
+					calls++
+					assert.Equal(t, http.MethodGet, r.Method)
+					assert.Equal(t, "/apis/iam.grafana.app/v0alpha1/namespaces/default/users/12345", r.URL.Path)
+					assert.Empty(t, r.URL.RawQuery)
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(status)
+					if status != http.StatusOK {
+						_ = json.NewEncoder(w).Encode(metav1.Status{
+							TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+							Status:   metav1.StatusFailure, Code: int32(status),
+							Reason: metav1.StatusReason(http.StatusText(status)),
+						})
+						return
+					}
+					_ = json.NewEncoder(w).Encode(v0alpha1.User{
+						TypeMeta:   metav1.TypeMeta{APIVersion: v0alpha1.GroupVersion.Identifier(), Kind: "User"},
+						ObjectMeta: metav1.ObjectMeta{Name: "12345", Namespace: "default", Labels: map[string]string{"grafana.app/deprecatedInternalID": "42"}},
+						Spec:       v0alpha1.UserSpec{Login: "jdoe", Role: "Viewer"},
+					})
+				},
+			})
+			got, err := svc.GetSignedInUser(ctx, &user.GetSignedInUserQuery{UserUID: "12345", UserID: 42, OrgID: 1})
+			require.Equal(t, 1, calls)
+			switch status {
+			case http.StatusOK:
+				require.NoError(t, err)
+				require.Equal(t, "12345", got.UserUID)
+				require.Equal(t, int64(42), got.UserID)
+			case http.StatusNotFound:
+				require.ErrorIs(t, err, user.ErrUserNotFound)
+			default:
+				require.Error(t, err)
+				require.NotErrorIs(t, err, user.ErrUserNotFound)
+			}
+		})
+	}
 }

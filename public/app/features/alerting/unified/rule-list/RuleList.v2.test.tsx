@@ -285,9 +285,7 @@ describe('RuleListActions', () => {
   });
 
   describe('Import Alert Rules', () => {
-    testWithFeatureToggles({ enable: ['alertingMigrationUI'] });
-
-    it('should show "Import alert rules" option when user has required permissions and feature toggle is enabled', async () => {
+    it('should show "Import alert rules" option when user has required permissions', async () => {
       grantUserPermissions([
         AccessControlAction.AlertingRuleRead,
         AccessControlAction.AlertingRuleCreate,
@@ -343,6 +341,21 @@ describe('RuleListActions', () => {
       const menu = await ui.moreMenu.find();
 
       expect(ui.menuOptions.importToGma.query(menu)).toBeInTheDocument();
+    });
+
+    it('shows the wizard instead of "Import alert rules", never both', async () => {
+      grantUserPermissions([
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingProvisioningSetStatus,
+      ]);
+
+      const { user } = render(<RuleListActions />);
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      expect(ui.menuOptions.importToGma.get(menu)).toBeInTheDocument();
+      expect(ui.menuOptions.importAlertRules.query(menu)).not.toBeInTheDocument();
     });
 
     it('does not show "Import to Grafana Alerting" without import permissions', async () => {
@@ -446,7 +459,7 @@ describe('RuleListActions', () => {
 
   describe('Auto-sync Mimir Alertmanager — disables Alertmanager import menu items', () => {
     testWithFeatureToggles({
-      enable: ['alerting.syncExternalAlertmanager', 'alertingMigrationUI', 'alertingMigrationWizardUI'],
+      enable: ['alerting.syncExternalAlertmanager', 'alertingMigrationWizardUI'],
     });
 
     // Drive auto-sync state via the Config resource: for an API-configured org useIsAutoSyncActive
@@ -466,30 +479,6 @@ describe('RuleListActions', () => {
       // name expands beyond the original label — match via a name regex that ignores the suffix.
       return await byRole('menuitem', { name: /import to grafana alerting/i }).find(menu);
     }
-
-    // Auto-sync only mirrors the Alertmanager configuration, and the rule convert endpoints have no
-    // sync check, so the rules-only import stays available to admins and non-admins alike.
-    it.each([OrgRole.Admin, OrgRole.Editor])(
-      'keeps "Import alert rules" enabled for %s when sync is configured for the org',
-      async (role) => {
-        grantUserRole(role);
-        grantUserPermissions([
-          AccessControlAction.AlertingRuleRead,
-          AccessControlAction.AlertingRuleCreate,
-          AccessControlAction.AlertingProvisioningSetStatus,
-          AccessControlAction.ActionAlertingNotificationsConfigRead,
-        ]);
-        mockAutoSync('mimir-uid');
-
-        const { user } = render(<RuleListActions />);
-        await user.click(ui.moreButton.get());
-        const menu = await ui.moreMenu.find();
-
-        const item = ui.menuOptions.importAlertRules.get(menu);
-        expect(item).toHaveAttribute('href', '/alerting/import-datasource-managed-rules');
-        expect(item).not.toHaveAttribute('aria-disabled', 'true');
-      }
-    );
 
     it('disables "Import to Grafana Alerting" with a reason when sync is configured for the org', async () => {
       grantUserRole(OrgRole.Editor);
@@ -543,10 +532,7 @@ describe('RuleListActions', () => {
       await user.click(ui.moreButton.get());
       const menu = await ui.moreMenu.find();
 
-      const importItem = ui.menuOptions.importAlertRules.get(menu);
       const wizardItem = ui.menuOptions.importToGma.get(menu);
-      expect(importItem).toHaveAttribute('href', '/alerting/import-datasource-managed-rules');
-      expect(importItem).not.toHaveAttribute('aria-disabled', 'true');
       expect(wizardItem).toHaveAttribute('href', '/alerting/import-to-gma');
       expect(wizardItem).not.toHaveAttribute('aria-disabled', 'true');
     });

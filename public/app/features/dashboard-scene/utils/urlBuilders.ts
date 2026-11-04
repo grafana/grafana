@@ -1,16 +1,7 @@
-import { type AdHocVariableFilter, type DataQuery, type DataSourceInstanceSettings, locationUtil } from '@grafana/data';
-import { getTemplateSrv as getRuntimeTemplateSrv, locationService } from '@grafana/runtime';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
-import {
-  AdHocFiltersVariable,
-  sceneGraph,
-  type SceneObject,
-  type SceneQueryRunner,
-  type SceneVariable,
-  type SceneVariableSet,
-  type VizPanel,
-} from '@grafana/scenes';
-import { type DataSourceRef } from '@grafana/schema';
+import { locationUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import { sceneGraph, type VizPanel } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
@@ -23,7 +14,8 @@ export function getEditPanelUrl(panelId: number) {
   return locationUtil.getUrlForPartial(locationService.getLocation(), { editPanel: panelId, viewPanel: undefined });
 }
 
-export async function tryGetExploreUrlForPanel(vizPanel: VizPanel): Promise<string | undefined> {
+export function tryGetExploreUrlForPanel(vizPanel: VizPanel, queries?: DataQuery[]): Promise<string | undefined> {
+  //const dashboard = panel.getRoot();
   const panelPlugin = vizPanel.getPlugin();
   const queryRunner = getQueryRunnerFor(vizPanel);
 
@@ -73,7 +65,7 @@ export async function tryGetExploreUrlForPanel(vizPanel: VizPanel): Promise<stri
   const adhocFilters = await getAdhocFiltersForPanel(vizPanel, queryRunner, datasource);
 
   return getExploreUrl({
-    queries,
+    queries: queries ?? queryRunner.state.queries,
     dsRef: datasource,
     timeRange: timeRange.state.value,
     scopedVars: { __sceneObject: { value: vizPanel } },

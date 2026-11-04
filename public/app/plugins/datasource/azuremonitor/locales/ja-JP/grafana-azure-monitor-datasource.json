@@ -54,9 +54,9 @@
       "reset-symbol-client-secret": "リセット"
     },
     "auxiliary-logs-toggle": {
-      "aria-label-enable-auxiliary-logs": "",
-      "description-auxiliary-logs": "",
-      "label-enable-auxiliary-logs": ""
+      "aria-label-enable-auxiliary-logs": "補助ログ",
+      "description-auxiliary-logs": "この機能を有効にすると、<2>補助ログ</2>用に設定されたテーブルをクエリするダッシュボードパネルで、Azure Monitorのクエリごとのコストが発生します。補助ログには応答時間のSLAがなく、アドホッククエリとデータ探索のみを目的としているため、リアルタイムデータが必要なダッシュボードやアラートには使用しないでください。",
+      "label-enable-auxiliary-logs": "補助ログを有効にする"
     },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "{{queryDisplayName}}の生クエリ",
@@ -187,47 +187,47 @@
       "tooltip-limit": "返される行数を制限します（デフォルトは1000）。"
     },
     "logs-management": {
-      "body-auxiliary-logs-queries": "",
+      "body-auxiliary-logs-queries": "補助ログに切り替えてもよろしいですか？",
       "body-basic-logs-queries": "基本ログに切り替えてもよろしいですか？",
       "confirmText-confirm": "確認",
-      "description-auxiliary-logs-queries": "",
+      "description-auxiliary-logs-queries": "補助ログのクエリでは、スキャンしたデータ量に応じてコストが発生します。補助ログには応答時間のSLAがないため、リアルタイムデータが必要なダッシュボードやアラートには使用しないでください。",
       "description-basic-logs-queries": "基本ログクエリを使用すると、スキャンされたデータ量に基づいてコストが発生します。",
-      "label-analytics": "",
-      "label-auxiliary": "",
-      "label-basic": "",
+      "label-analytics": "分析",
+      "label-auxiliary": "補助",
+      "label-basic": "ベーシック",
       "label-logs": "ログ",
-      "title-auxiliary-logs-queries": "",
+      "title-auxiliary-logs-queries": "補助ログクエリ",
       "title-basic-logs-queries": "基本ログクエリ",
       "tooltip-logs": "基本ログクエリまたは分析ログクエリのどちらを実行するかを指定します。",
-      "tooltip-logs-all": "",
-      "tooltip-logs-aux": ""
+      "tooltip-logs-all": "分析ログ、ベーシックログ、補助ログのいずれのクエリを実行するかを指定します。",
+      "tooltip-logs-aux": "分析ログと補助ログのどちらのクエリを実行するかを指定します。"
     },
     "logs-query-builder": {
       "title-no-tables": "リソースは正常に読み込まれましたが、テーブルがありません"
     },
     "logs-query-editor": {
       "learn-more": "詳細を見る",
-      "notice-auxiliary-single-resource": "",
-      "notice-basic-single-resource": "",
-      "notice-same-resource-type": "",
-      "tier-switch-body-analytics": "",
-      "tier-switch-body-auxiliary": "",
-      "tier-switch-body-basic": "",
-      "tier-switch-revert": "",
-      "tier-switch-title": "",
+      "notice-auxiliary-single-resource": "補助ログを使用する場合、一度に選択できるリソースは1つだけです。",
+      "notice-basic-single-resource": "ベーシックログを使用する場合、一度に選択できるリソースは1つだけです。",
+      "notice-same-resource-type": "選択できるのは、同じリソースタイプの項目のみです。",
+      "tier-switch-body-analytics": "<0>{{tableName}}</0>は分析ログのテーブルです。",
+      "tier-switch-body-auxiliary": "<0>{{tableName}}</0>は補助ログのテーブルです。スキャンしたGiBごとにコストが発生し、応答時間のSLAはなく、リアルタイムやアラートの用途には適していません。",
+      "tier-switch-body-basic": "<0>{{tableName}}</0>はベーシックログのテーブルです。スキャンしたGiBごとにコストが発生します。",
+      "tier-switch-revert": "{{fromTier}}に戻す",
+      "tier-switch-title": "クエリのティアが{{toTier}}に設定されました",
       "view-query": "Azure Portalでクエリを表示",
-      "warning-auxiliary-data-ingested": "",
-      "warning-auxiliary-raw": "",
-      "warning-basic-raw": "",
-      "warning-data-ingested": ""
+      "warning-auxiliary-data-ingested": "この補助ログクエリは、実行時に{{dataIngested}}GiBを処理します。補助ログには応答時間のSLAがなく、リアルタイムやアラートの用途には適していません。",
+      "warning-auxiliary-raw": "これは補助ログのクエリです。検索エンドポイントを使用し、スキャンしたGiBごとにコストが発生します。応答時間のSLAはなく、リアルタイムやアラートの用途には適していません。このモードでは、分析プランのテーブルはクエリできません（その場合は分析ティアを使用してください）。",
+      "warning-basic-raw": "これはベーシックログのクエリです。検索エンドポイントを使用し、スキャンしたGiBごとにコストが発生します。このモードでは、分析プランのテーブルはクエリできません（その場合は分析ティアを使用してください）。",
+      "warning-data-ingested": "このクエリは、実行時に{{dataIngested}}GiBを処理します。 "
     },
     "logs-table-section": {
-      "description-auxiliary-disabled": "",
-      "description-auxiliary-enabled": "",
-      "description-basic-disabled": "",
-      "description-basic-enabled": "",
-      "description-plan-unavailable": "",
-      "label-all-columns": ""
+      "description-auxiliary-disabled": "このテーブルは補助ログプランです。クエリするには、データソースの設定で「補助ログ」を有効にしてください。",
+      "description-auxiliary-enabled": "このテーブルを選択すると、クエリモードが補助ログに切り替わります",
+      "description-basic-disabled": "このテーブルはベーシックログプランです。クエリするには、データソースの設定で「ベーシックログ」を有効にしてください。",
+      "description-basic-enabled": "このテーブルを選択すると、クエリモードがベーシックログに切り替わります",
+      "description-plan-unavailable": "このテーブルのログプランを特定できなかったため、選択できません。",
+      "label-all-columns": "すべての列"
     },
     "metric-name-field": {
       "label-metric": "メトリック"
@@ -356,8 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "カスタム名前空間を選択",
-      "aria-label-select-dimension-name": "",
-      "aria-label-select-metric-name": "",
+      "aria-label-select-dimension-name": "ディメンション名を選択",
+      "aria-label-select-metric-name": "メトリクス名を選択",
       "aria-label-select-namespace": "名前空間を選択",
       "aria-label-select-query-type": "クエリタイプを選択",
       "aria-label-select-region": "リージョンを選択",
@@ -365,8 +365,8 @@
       "aria-label-select-resource-group": "リソースグループを選択",
       "aria-label-select-subscription": "サブスクリプションを選択",
       "label-custom-namespace": "カスタム名前空間",
-      "label-dimension-name": "",
-      "label-metric-name": "",
+      "label-dimension-name": "ディメンション名",
+      "label-metric-name": "メトリクス名",
       "label-namespace": "名前空間",
       "label-query-type": "クエリタイプ",
       "label-region": "リージョン",

@@ -17,7 +17,7 @@ import { metricsDetection, metricsSolution } from '../solutions/metricsSolution'
 import { pluginAvailability, setupGuideEnabled } from '../solutions/pluginAvailability';
 import { accessibleAppPage } from '../solutions/pluginPages';
 import { solutionFilterStorageKey } from '../solutions/solutionFilter';
-import { syntheticsSolution } from '../solutions/syntheticsSolution';
+import { syntheticsDetection, syntheticsSolution } from '../solutions/syntheticsSolution';
 import { deferred, stubSolution } from '../solutions/test-utils';
 import { tracesSolution } from '../solutions/tracesSolution';
 import { useHomepageSolutions } from '../useHomepageSolutions';
@@ -52,7 +52,7 @@ jest.mock('../solutions/pluginPages', () => ({
 jest.mock('../solutions/logsSolution', () => ({ logsSolution: jest.fn() }));
 jest.mock('../solutions/metricsSolution', () => ({ metricsSolution: jest.fn(), metricsDetection: jest.fn() }));
 jest.mock('../solutions/tracesSolution', () => ({ tracesSolution: jest.fn() }));
-jest.mock('../solutions/syntheticsSolution', () => ({ syntheticsSolution: jest.fn() }));
+jest.mock('../solutions/syntheticsSolution', () => ({ syntheticsSolution: jest.fn(), syntheticsDetection: jest.fn() }));
 
 jest.mock('./useGuides', () => ({ useGuides: jest.fn() }));
 
@@ -67,6 +67,7 @@ beforeEach(() => {
   jest.mocked(metricsDetection).mockReturnValue(async () => ({ status: 'inactive', datasource: null }));
   jest.mocked(tracesSolution).mockImplementation(() => stubSolution('traces'));
   jest.mocked(syntheticsSolution).mockImplementation(() => stubSolution('synthetics'));
+  jest.mocked(syntheticsDetection).mockReturnValue(async () => ({ status: 'inactive', datasource: null }));
   window.localStorage.clear();
   jest.mocked(useGuides).mockReturnValue([]);
   jest.mocked(resolveKubernetesDatasource).mockReset();

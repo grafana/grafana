@@ -51,6 +51,7 @@ export function GrafanaRuleListItem({
     error: rule?.lastError,
     labels: labels,
     isProvisioned: Boolean(provenance),
+    provenance,
     isPaused: rule?.isPaused,
     application: 'grafana' as const,
     actions: <RuleActionsButtons promRule={rule} groupIdentifier={groupIdentifier} compact />,
