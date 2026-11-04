@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
 
@@ -85,7 +86,7 @@ func scopesOf(t *testing.T, x *xorm.Engine, roleID int64) map[string][]string {
 func TestReceiverUIDPermissionsMigration_CopiesPermissions(t *testing.T) {
 	x := setupTestDB(t)
 
-	var names []string
+	names := make([]string, 0, len(receiverNames))
 	for _, name := range receiverNames {
 		names = append(names, name)
 	}
@@ -134,7 +135,7 @@ func TestReceiverUIDPermissionsMigration_LeavesOtherPermissionsAlone(t *testing.
 
 	runReceiverUIDPermissionsMigration(t, x)
 
-	require.ElementsMatch(t, append(scopes, previousScope("a"), currentScope("a")), scopesOf(t, x, roleID)[actionReceiverRead])
+	require.ElementsMatch(t, slices.Concat(scopes, []string{previousScope("a"), currentScope("a")}), scopesOf(t, x, roleID)[actionReceiverRead])
 }
 
 // The receivers that the permissions are for are not looked up, so those of every role are copied, including the ones
