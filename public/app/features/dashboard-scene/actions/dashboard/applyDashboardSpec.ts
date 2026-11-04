@@ -5,6 +5,7 @@ import {
   AdHocFiltersVariable,
   NewSceneObjectAddedEvent,
   sceneGraph,
+  type SceneObject,
   sceneUtils,
   type SceneObjectUrlValue,
   type SceneObjectUrlValues,
@@ -12,6 +13,7 @@ import {
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
+import { type TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { buildDashboardWithAccessInfoFromScene } from '../../serialization/buildDashboardWithAccessInfoFromScene';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
@@ -169,6 +171,7 @@ export function swapInReloadedDashboard(scene: DashboardScene, reloaded: Dashboa
     toSpec: () => incoming,
   });
   const { isEditing, editable, mode } = scene.state;
+  const tabs = openTabs(scene);
   scene.setState({
     ...newState,
     // A fresh load starts in view mode; the page was editing, and goes on editing what it reloaded.
@@ -181,9 +184,34 @@ export function swapInReloadedDashboard(scene: DashboardScene, reloaded: Dashboa
   resolveAdHocMultiValueOperators(scene);
   scene.state.sidebar.refreshAfterRebuild();
   syncRebuiltChildrenFromUrl(scene, urlUpdates);
+  // A dashboard without URL sync (an embedded one) keeps its open tabs only in the tree just replaced.
+  reopenTabs(scene, tabs);
   if (editPanelKey) {
     urlSync?.updateFromUrl({ editPanel: editPanelKey });
   }
+}
+
+// A type import: the tabs layout's module imports this one's, so it is recognized by what it does.
+function isTabsLayout(object: SceneObject): object is TabsLayoutManager {
+  return 'switchToTab' in object && typeof object.switchToTab === 'function' && 'tabs' in object.state;
+}
+
+/** The tab each tabs layout of `scene` has open, in the tree's order. */
+function openTabs(scene: DashboardScene): Array<string | undefined> {
+  return sceneGraph
+    .findAllObjects(scene, isTabsLayout)
+    .flatMap((layout) => (isTabsLayout(layout) ? [layout.state.currentTabSlug] : []));
+}
+
+/** Opens `tabs` again, in the tree's order, where a tabs layout still has the tab. */
+function reopenTabs(scene: DashboardScene, tabs: Array<string | undefined>) {
+  const layouts = sceneGraph.findAllObjects(scene, isTabsLayout).filter(isTabsLayout);
+  layouts.forEach((layout, i) => {
+    const slug = tabs[i];
+    if (slug && slug !== layout.state.currentTabSlug && layout.state.tabs.some((tab) => tab.getSlug() === slug)) {
+      layout.setState({ currentTabSlug: slug });
+    }
+  });
 }
 
 // Undo and redo swap back a tree whose query runners still hold the data they had when set aside, and

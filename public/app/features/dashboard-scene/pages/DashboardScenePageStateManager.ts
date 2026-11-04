@@ -1784,7 +1784,11 @@ const managers: {
 setPendingChangesPageReload(async (uid, editing) => {
   const manager = getDashboardScenePageStateManager();
   const open = manager.state.dashboard;
-  if (open && previewedDashboardUid(open.state) === uid && (await reloadInPlace(manager, open, uid))) {
+  if (
+    open &&
+    previewedDashboardUid(open.state) === uid &&
+    (await reloadDashboardInPlace(manager, open, { uid, route: DashboardRoutes.Normal }))
+  ) {
     return true;
   }
   await manager.reloadDashboardFresh({ uid, route: DashboardRoutes.Normal });
@@ -1796,18 +1800,18 @@ setPendingChangesPageReload(async (uid, editing) => {
 });
 
 /**
- * Loads `uid` again into the open scene `open`, without the page's loading state or a new scene, so
- * the page keeps its scroll position, URL state and edit mode. False when it can't, for the caller to
- * fall back to a fresh load: a v1 dashboard, or the page moved to another scene meanwhile.
+ * Loads the dashboard `options` names again into `open`, the scene `manager` shows, without its
+ * loading state or a new scene, so the view keeps its scroll position, URL state, tab and edit mode.
+ * False when it can't, for the caller to fall back to a fresh load: a v1 dashboard, or the view moved
+ * to another scene meanwhile.
  */
-async function reloadInPlace(
+export async function reloadDashboardInPlace(
   manager: UnifiedDashboardScenePageStateManager,
   open: DashboardScene,
-  uid: string
+  options: LoadDashboardOptions
 ): Promise<boolean> {
-  const options = { uid, route: DashboardRoutes.Normal };
   manager.clearDashboardCache();
-  manager.removeSceneCache(uid);
+  manager.removeSceneCache(options.uid);
   const rsp = await manager.fetchDashboard(options);
   if (!rsp || !isDashboardV2Resource(rsp) || manager.state.dashboard !== open) {
     return false;
