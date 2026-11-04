@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDeepCompareEffect } from 'react-use';
 
-import { FieldType, generateUUID, getDefaultRelativeTimeRange, rangeUtil, type SelectableValue } from '@grafana/data';
+import { FieldType, generateUUID, type SelectableValue } from '@grafana/data';
 import { quoteIdentifierIfNecessary } from '@grafana/sql';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -11,6 +11,8 @@ import { interpolateSourceQueries } from '../../utils/interpolateSourceQueries';
 import { fetchSQLFields } from '../../utils/metaSqlExpr';
 import { SQL_EXPRESSIONS_DIALECT } from '../../utils/sqlIdentifier';
 import { type SQLSchemaField, useSQLSchemas } from '../SqlExpressions/hooks/useSQLSchemas';
+
+import { getSourceQueryKey, useSourceQueryTimeRange } from './utils';
 
 export interface DynamicThresholdSourceSchema {
   numericFields: string[];
@@ -45,27 +47,14 @@ export function classifySchemaFields(columns: SQLSchemaField[]): Omit<DynamicThr
 
 export function useDynamicThresholdSourcePreview(queries: AlertQuery[], inputRefId: string, matchLabel: string) {
   const sourceQuery = queries.find((query) => query.refId === inputRefId && !isExpressionQuery(query.model));
-  const relativeFrom = sourceQuery?.relativeTimeRange?.from;
-  const relativeTo = sourceQuery?.relativeTimeRange?.to;
-  // Derived from the source query's own relative range; the alert query runner's expression range can be invalid.
-  const timeRange = useMemo(() => {
-    const isValid =
-      typeof relativeFrom === 'number' &&
-      typeof relativeTo === 'number' &&
-      Number.isFinite(relativeFrom) &&
-      Number.isFinite(relativeTo) &&
-      relativeFrom >= relativeTo;
-    return rangeUtil.relativeToTimeRange(
-      isValid ? { from: relativeFrom, to: relativeTo } : getDefaultRelativeTimeRange()
-    );
-  }, [relativeFrom, relativeTo]);
+  const timeRange = useSourceQueryTimeRange(sourceQuery);
   const sourceQueries = useMemo(() => (sourceQuery ? [sourceQuery.model] : []), [sourceQuery]);
   const { schemas, loading, error, isFeatureEnabled, refetch } = useSQLSchemas({
     queries: sourceQueries,
     enabled: Boolean(sourceQuery),
     timeRange,
   });
-  const sourceKey = sourceQuery ? `${inputRefId}\0${JSON.stringify(sourceQuery.model)}` : '';
+  const sourceKey = getSourceQueryKey(inputRefId, sourceQuery);
   const previousSourceKey = useRef(sourceKey);
   const hasProcessedSource = useRef(false);
   const [schemaSourceKey, setSchemaSourceKey] = useState(sourceKey);

@@ -1,7 +1,7 @@
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { Graph } from 'app/core/utils/dag';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
-import { type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { type ExpressionQuery, ExpressionQueryType, type SqlExpressionQuery } from 'app/features/expressions/types';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import {
@@ -450,5 +450,51 @@ describe('getTargets', () => {
     };
 
     expect(getTargets(expression)).toEqual(['A']);
+  });
+
+  describe('dynamic threshold SQL expressions', () => {
+    const policy = {
+      inputRefId: 'A',
+      valueField: 'value',
+      matchLabel: 'region',
+      labelColumns: ['region'],
+      evaluator: EvalFunction.IsAbove,
+      mappings: [],
+      defaultThreshold: [1],
+    };
+    const dynamicThreshold = (inputRefId: string, expression: string): SqlExpressionQuery => ({
+      refId: 'B',
+      type: ExpressionQueryType.sql,
+      datasource: ExpressionDatasourceRef,
+      expression,
+      dynamicThreshold: { version: 1, policy: { ...policy, inputRefId } },
+    });
+
+    it('depends on the policy input even while the expression is empty', () => {
+      expect(getTargets(dynamicThreshold('A', ''))).toEqual(['A']);
+    });
+
+    it('prefers the policy input over refs parsed from stale SQL', () => {
+      expect(getTargets(dynamicThreshold('A', 'SELECT * FROM C'))).toEqual(['A']);
+    });
+
+    it('has no dependency before an input query is selected', () => {
+      expect(getTargets(dynamicThreshold('', ''))).toEqual([]);
+    });
+
+    it('links the expression to its input query in the graph', () => {
+      const queries: AlertQuery[] = [
+        { refId: 'A', model: { refId: 'A' }, datasourceUid: 'prom', queryType: '' },
+        { refId: 'B', model: dynamicThreshold('A', ''), datasourceUid: '__expr__', queryType: '' },
+      ];
+
+      expect(fingerprintGraph(createDagFromQueries(queries))).toBe('A:B: B::A');
+    });
+
+    it('keeps parsing refs from the SQL of ordinary SQL expressions', () => {
+      const { dynamicThreshold: _removed, ...ordinary } = dynamicThreshold('A', 'SELECT * FROM C');
+
+      expect(getTargets(ordinary)).toEqual(['C']);
+    });
   });
 });

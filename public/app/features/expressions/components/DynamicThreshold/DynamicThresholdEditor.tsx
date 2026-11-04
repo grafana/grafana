@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { Alert, ConfirmModal, Field, Input, Select, Spinner, Stack } from '@grafana/ui';
+import { Alert, Button, ConfirmModal, Field, Input, Select, Spinner, Stack } from '@grafana/ui';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { EvalFunction } from '../../../alerting/state/alertDef';
 import { type DynamicThresholdPolicyV1, type SqlExpressionQuery, thresholdFunctions } from '../../types';
+import { SqlEditor } from '../SqlExpressions/SqlEditor/SqlEditor';
 
 import { DynamicThresholdMappings } from './DynamicThresholdMappings';
+import { DynamicThresholdPreview } from './DynamicThresholdPreview';
 import { buildDynamicThreshold, isRangeEvaluator } from './buildDynamicThreshold';
 import { getDynamicThresholdSourceOptions, useDynamicThresholdSourcePreview } from './sourcePreview';
+import { withoutDynamicThreshold } from './utils';
 
 interface Props {
   query: SqlExpressionQuery;
@@ -20,6 +23,8 @@ interface Props {
 export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
   const policy = query.dynamicThreshold!.policy;
   const [pendingMatchLabel, setPendingMatchLabel] = useState<string | null>(null);
+  const [showSql, setShowSql] = useState(false);
+  const [confirmEditAsSql, setConfirmEditAsSql] = useState(false);
   const sourceOptions = useMemo(() => getDynamicThresholdSourceOptions(queries, query.refId), [queries, query.refId]);
   const source = useDynamicThresholdSourcePreview(queries, policy.inputRefId, policy.matchLabel);
   const result = buildDynamicThreshold(policy);
@@ -242,6 +247,55 @@ export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
           </Stack>
         </>
       </Field>
+
+      {result.ok && <DynamicThresholdPreview queries={queries} policy={policy} previewSql={result.previewSql} />}
+
+      <Stack direction="row" gap={1}>
+        <Button
+          variant="secondary"
+          size="sm"
+          icon={showSql ? 'eye-slash' : 'eye'}
+          disabled={!query.expression}
+          onClick={() => setShowSql((current) => !current)}
+        >
+          {showSql
+            ? t('expressions.dynamic-threshold.hide-sql', 'Hide SQL')
+            : t('expressions.dynamic-threshold.view-sql', 'View SQL')}
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          icon="pen"
+          disabled={!query.expression}
+          onClick={() => setConfirmEditAsSql(true)}
+        >
+          {t('expressions.dynamic-threshold.edit-as-sql', 'Edit as SQL')}
+        </Button>
+      </Stack>
+      {showSql && query.expression && (
+        <SqlEditor
+          value={query.expression}
+          onChange={() => {}}
+          readOnly
+          height="200px"
+          ariaLabel={t('expressions.dynamic-threshold.generated-sql', 'Generated SQL')}
+        />
+      )}
+
+      <ConfirmModal
+        isOpen={confirmEditAsSql}
+        title={t('expressions.dynamic-threshold.edit-as-sql-title', 'Edit as SQL?')}
+        body={t(
+          'expressions.dynamic-threshold.edit-as-sql-body',
+          'The generated SQL becomes a regular SQL expression. This conversion cannot be reversed automatically.'
+        )}
+        confirmText={t('expressions.dynamic-threshold.edit-as-sql-confirm', 'Edit as SQL')}
+        onConfirm={() => {
+          setConfirmEditAsSql(false);
+          onChange(withoutDynamicThreshold(query));
+        }}
+        onDismiss={() => setConfirmEditAsSql(false)}
+      />
 
       <ConfirmModal
         isOpen={pendingMatchLabel !== null}

@@ -1,10 +1,13 @@
 import { type RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
+import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
+import { buildDynamicThreshold } from 'app/features/expressions/components/DynamicThreshold/buildDynamicThreshold';
 import {
   ExpressionDatasourceUID,
   type ExpressionQuery,
   ExpressionQueryType,
   ReducerMode,
+  type SqlExpressionQuery,
 } from 'app/features/expressions/types';
 import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
@@ -502,5 +505,44 @@ describe('Query and expressions reducer', () => {
       optimizeReduceExpression({ updatedQueries: [alertQuery], expressionQueries: [thresholdExpression] })
     );
     expect(newState).toMatchSnapshot();
+  });
+
+  it('should regenerate the dynamic threshold SQL when the input refId is renamed', () => {
+    const policy = {
+      inputRefId: 'A',
+      valueField: 'value',
+      matchLabel: 'region',
+      labelColumns: ['region'],
+      evaluator: EvalFunction.IsAbove,
+      mappings: [],
+      defaultThreshold: [10],
+    };
+    const built = buildDynamicThreshold(policy);
+    if (!built.ok) {
+      throw new Error('test policy must compile');
+    }
+    const dynamicThresholdQuery: AlertQuery<SqlExpressionQuery> = {
+      refId: 'B',
+      queryType: '',
+      datasourceUid: ExpressionDatasourceUID,
+      model: {
+        refId: 'B',
+        type: ExpressionQueryType.sql,
+        datasource: { type: '__expr__', uid: '__expr__' },
+        format: 'alerting',
+        expression: built.expressionSql,
+        dynamicThreshold: { version: 1, policy },
+      },
+    };
+
+    const newState = queriesAndExpressionsReducer(
+      { queries: [alertQuery, dynamicThresholdQuery] },
+      updateExpressionRefId({ oldRefId: 'A', newRefId: 'C' })
+    );
+
+    const model = newState.queries[1].model as SqlExpressionQuery;
+    expect(newState.queries[0].refId).toBe('C');
+    expect(model.dynamicThreshold?.policy.inputRefId).toBe('C');
+    expect(model.expression).toContain('FROM `C`');
   });
 });
