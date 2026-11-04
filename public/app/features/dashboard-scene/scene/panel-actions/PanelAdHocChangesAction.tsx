@@ -6,6 +6,7 @@ import { type VizPanel } from '@grafana/scenes';
 import { Button, Dropdown, Icon, Menu } from '@grafana/ui';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 
+import { useIsMobileEditDeprecated } from '../../utils/mobileEditDeprecation';
 import { getDashboardSceneLike } from '../types/dashboard';
 
 import { PromotePanelAdHocChangesEvent, canPromoteAdHocChanges } from './promote/utils';
@@ -24,7 +25,9 @@ export function PanelAdHocChangesAction({ panel }: Props) {
   panel.useState();
   const hasInteractions = Boolean(panel.getPlugin()?.panelInteractions);
   const hasChanges = useHasAdHocTransformations(panel, hasInteractions);
-  const canPromote = Boolean(meta.canSave) && canPromoteAdHocChanges(panel);
+  // Saving goes through edit mode, which is not available on small screens.
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
+  const canPromote = Boolean(meta.canSave) && !isMobileEditDeprecated && canPromoteAdHocChanges(panel);
 
   // The dashboard saves the changes, see promotePanelAdHocChanges.
   const onSaveToDashboard = useCallback(

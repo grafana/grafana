@@ -26,9 +26,11 @@ export function promotePanelAdHocChanges(dashboard: DashboardScene, panel: VizPa
   const otherPanelsAdHocTransformations = collectAdHocTransformations(dashboard, panel);
 
   // Enter edit mode before changing anything, so discarding the edit restores the saved dashboard.
+  // Edit mode can be refused (e.g. on mobile), and without it the save drawer does nothing, leaving the dashboard
+  // changed with no way to restore the panel's ad hoc changes.
   const wasEditing = dashboard.state.isEditing;
-  if (!wasEditing) {
-    dashboard.onEnterEditMode('user', 'panel_menu');
+  if (!wasEditing && !dashboard.onEnterEditMode('user', 'panel_menu')) {
+    return;
   }
   // The edit is performed by the sidebar, which is not always mounted.
   dashboard.activateSidebar();

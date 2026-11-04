@@ -3,7 +3,9 @@ import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
@@ -168,6 +170,27 @@ describe('PanelAdHocChangesAction', () => {
 
     expect(await screen.findByRole('menuitem', { name: 'Remove changes' })).toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: 'Save to dashboard' })).not.toBeInTheDocument();
+  });
+
+  describe('on small screens where dashboard editing is not available', () => {
+    beforeAll(() => {
+      // The test environment's matchMedia always reports a viewport narrower than the sm breakpoint.
+      setTestFlags({ [FlagKeys.GrafanaMobileEditDeprecation]: true });
+    });
+
+    afterAll(() => {
+      setTestFlags({});
+    });
+
+    it('offers only "Remove changes"', async () => {
+      const { panel } = await buildScene({ canSave: true });
+      addAdHocChange(panel);
+
+      await userEvent.click(screen.getByTestId(buttonTestId));
+
+      expect(await screen.findByRole('menuitem', { name: 'Remove changes' })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Save to dashboard' })).not.toBeInTheDocument();
+    });
   });
 
   // The save drawer shows these dashboards their own save forms.

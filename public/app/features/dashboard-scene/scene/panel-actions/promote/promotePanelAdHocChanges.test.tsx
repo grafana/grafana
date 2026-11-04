@@ -4,6 +4,7 @@ import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 import { plugin as tablePlugin } from 'app/plugins/panel/table/module';
 
@@ -249,6 +250,29 @@ describe('promotePanelAdHocChanges', () => {
       },
     ]);
     expect(getAdHocTransformations(dashboard)).toEqual([]);
+  });
+
+  describe('when edit mode is blocked on mobile', () => {
+    beforeEach(() => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+    });
+
+    it('leaves the dashboard and the ad hoc changes untouched without opening the save drawer', async () => {
+      const { panel, dashboard } = await buildScene();
+
+      await requestPromotion(panel);
+
+      expect(dashboard.state.title).toBe('My dashboard');
+      expect(getAdHocTransformations(dashboard)).toEqual([adHocChange]);
+      expect(dashboard.state.isEditing).toBeFalsy();
+      expect(dashboard.state.overlay).toBeUndefined();
+    });
   });
 
   it('stays in edit mode after saving when the user was editing', async () => {
