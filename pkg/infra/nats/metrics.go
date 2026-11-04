@@ -1,6 +1,8 @@
 package nats
 
 import (
+	"time"
+
 	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -168,4 +170,44 @@ func newServerMetrics(reg prometheus.Registerer) *serverMetrics {
 	reg.MustRegister(m.embeddedServerUp)
 
 	return m
+}
+
+// clusterTLSMetrics covers certificate reloads. It is registered only when
+// cluster TLS is configured.
+type clusterTLSMetrics struct {
+	reloadFailures    *prometheus.CounterVec
+	lastReloadSuccess prometheus.Gauge
+}
+
+func newClusterTLSMetrics(reg prometheus.Registerer) *clusterTLSMetrics {
+	m := &clusterTLSMetrics{
+		reloadFailures: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "cluster_tls_reload_failures_total",
+			Help:      "Failed checks of the cluster TLS certificate files, by reason (read, invalid, apply). The last valid certificates stay in use.",
+		}, []string{"reason"}),
+		lastReloadSuccess: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "cluster_tls_last_reload_success_timestamp_seconds",
+			Help:      "Unix time of the last successful cluster TLS certificate load, at startup or on reload.",
+		}),
+	}
+	// Export every reason from the start so rate() sees the first failure.
+	for _, reason := range []string{clusterTLSReasonRead, clusterTLSReasonInvalid, clusterTLSReasonApply} {
+		m.reloadFailures.WithLabelValues(reason)
+	}
+
+	reg.MustRegister(m.reloadFailures, m.lastReloadSuccess)
+
+	return m
+}
+
+func (m *clusterTLSMetrics) recordReloadFailure(reason string) {
+	m.reloadFailures.WithLabelValues(reason).Inc()
+}
+
+func (m *clusterTLSMetrics) recordReloadSuccess(at time.Time) {
+	m.lastReloadSuccess.Set(float64(at.Unix()))
 }

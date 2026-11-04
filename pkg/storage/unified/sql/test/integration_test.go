@@ -492,7 +492,18 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	svc, err := sql.ProvideSearchGRPCService(cfg, features, log.New("test"), registerer, docBuilders, nil, nil, nil, kv.Config{}, nil, backend, nil, nil, nil, grpcService,
 		sql.WithAuthenticator(func(ctx context.Context) (context.Context, error) {
 			auth := grpcUtils.Authenticator{Tracer: otel.Tracer("test")}
-			return auth.Authenticate(ctx)
+			ctx, err := auth.Authenticate(ctx)
+			if err != nil {
+				return nil, err
+			}
+			// The legacy metadata authenticator does not carry a namespace, which
+			// namespace-checked RPCs such as Search require.
+			if user, err := identity.GetRequester(ctx); err == nil {
+				if static, isStatic := user.(*identity.StaticRequester); isStatic && static.Namespace == "" {
+					static.Namespace = types.OrgNamespaceFormatter(static.OrgID)
+				}
+			}
+			return ctx, nil
 		}),
 	)
 	require.NoError(t, err)
@@ -534,7 +545,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 		resp, err := client.Search(clientCtx, &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
-					Namespace: "namespace",
+					Namespace: "default",
 					Group:     "playlist.grafana.app",
 					Resource:  "playlists",
 				},
@@ -547,7 +558,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 
 	t.Run("GetStats returns stats", func(t *testing.T) {
 		resp, err := client.GetStats(clientCtx, &resourcepb.ResourceStatsRequest{
-			Namespace: "namespace",
+			Namespace: "default",
 		})
 		require.NoError(t, err)
 		require.NotNil(t, resp)
@@ -555,10 +566,10 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 
 	t.Run("RebuildIndexes triggers rebuild", func(t *testing.T) {
 		resp, err := client.RebuildIndexes(clientCtx, &resourcepb.RebuildIndexesRequest{
-			Namespace: "namespace",
+			Namespace: "default",
 			Keys: []*resourcepb.ResourceKey{
 				{
-					Namespace: "namespace",
+					Namespace: "default",
 					Group:     "playlist.grafana.app",
 					Resource:  "playlists",
 				},
@@ -570,7 +581,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 
 	t.Run("CountManagedObjects returns counts", func(t *testing.T) {
 		resp, err := client.CountManagedObjects(clientCtx, &resourcepb.CountManagedObjectsRequest{
-			Namespace: "namespace",
+			Namespace: "default",
 		})
 		require.NoError(t, err)
 		require.NotNil(t, resp)
@@ -578,7 +589,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 
 	t.Run("ListManagedObjects returns list", func(t *testing.T) {
 		resp, err := client.ListManagedObjects(clientCtx, &resourcepb.ListManagedObjectsRequest{
-			Namespace: "namespace",
+			Namespace: "default",
 		})
 		require.NoError(t, err)
 		require.NotNil(t, resp)

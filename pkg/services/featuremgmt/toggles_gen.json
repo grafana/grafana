@@ -2022,7 +2022,8 @@
       "metadata": {
         "name": "datasources.queryGatewaySlimAudit",
         "resourceVersion": "1790805819665",
-        "creationTimestamp": "2026-10-01T14:36:39Z"
+        "creationTimestamp": "2026-10-01T14:36:39Z",
+        "deletionTimestamp": "2026-11-04T14:12:07Z"
       },
       "spec": {
         "description": "Only attach query payloads to query gateway audit events when a guardrail fires",
@@ -2749,6 +2750,20 @@
         "frontend": true,
         "hideFromDocs": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.cmdkDashboardTags",
+        "resourceVersion": "1793290413642",
+        "creationTimestamp": "2026-10-29T16:13:33Z"
+      },
+      "spec": {
+        "description": "Shows dashboard tags in the command palette",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
@@ -3861,6 +3876,20 @@
       },
       "spec": {
         "description": "When storing datasource resource permissions, only store action sets and not the full list of underlying permissions",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "idTokenCacheDisabled",
+        "resourceVersion": "1793696077735",
+        "creationTimestamp": "2026-11-03T08:54:37Z"
+      },
+      "spec": {
+        "description": "Disables the remote cache for signed ID tokens; a new token is signed on every authentication",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
