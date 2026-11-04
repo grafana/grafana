@@ -274,7 +274,6 @@ export function transformSaveModelSchemaV2ToScene(
         refreshPicker: new SceneRefreshPicker({
           refresh: dashboard.timeSettings.autoRefresh,
           intervals: dashboard.timeSettings.autoRefreshIntervals,
-          withText: true,
         }),
         hideTimeControls: dashboard.timeSettings.hideTimepicker,
       }),
