@@ -124,6 +124,30 @@ describe('fillNullLists', () => {
     expect(spec.elements).toEqual({});
   });
 
+  it('skips null annotations and variables on rows and tabs', () => {
+    const section = { variables: null, annotations: null, layout: { kind: 'GridLayout', spec: { items: [] } } };
+    const spec = {
+      title: 'sections',
+      timeSettings: { from: 'now-6h', to: 'now' },
+      layout: {
+        kind: 'TabsLayout',
+        spec: {
+          tabs: [
+            {
+              kind: 'TabsLayoutTab',
+              spec: {
+                ...section,
+                layout: { kind: 'RowsLayout', spec: { rows: [{ kind: 'RowsLayoutRow', spec: section }] } },
+              },
+            },
+          ],
+        },
+      },
+    } as unknown as DashboardV2Spec;
+
+    expect(() => fillNullLists(spec)).not.toThrow();
+  });
+
   it('fills a panel that has no data or visualization config', () => {
     const spec = {
       title: 'partial',
