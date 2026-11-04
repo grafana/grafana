@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { waitFor } from '@testing-library/react';
-import { HttpResponse, delay, http } from 'msw';
+import { HttpResponse, http } from 'msw';
 import { type UnknownAction } from 'redux';
 
 import { setBackendSrv } from '@grafana/runtime';
@@ -31,8 +31,6 @@ jest.mock('@grafana/runtime/internal', () => {
 
 const NOTEBOOK_URL = '/apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks/:name';
 
-/** Long enough for a request made after this one to answer first. */
-const SLOW_RESPONSE_MS = 50;
 
 // The api client issues its requests through the backend service, which msw then intercepts.
 setBackendSrv(backendSrv);
@@ -115,16 +113,26 @@ function serveGenerations(...generations: number[]) {
   );
 }
 
-/** Holds `nb-slow` back, so a request made after it lands first. */
-function serveNotebooksHoldingSlowOne() {
+/** Holds `nb-slow` until the test releases it after the newer load completes. */
+function serveNotebooksHoldingSlowOne(
+  slowResponse: (name: string) => Response = (name) => HttpResponse.json(notebookResource(name))
+) {
+  let releaseSlow!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    releaseSlow = resolve;
+  });
+
   server.use(
     notebookHandler(async (name) => {
       if (name === 'nb-slow') {
-        await delay(SLOW_RESPONSE_MS);
+        await gate;
+        return slowResponse(name);
       }
       return HttpResponse.json(notebookResource(name));
     })
   );
+
+  return releaseSlow;
 }
 
 describe('NotebookPageStateManager', () => {
@@ -312,32 +320,32 @@ describe('NotebookPageStateManager', () => {
   // scene the page would end up on B's URL showing A, and stay there — nothing fires afterwards.
   // The slow/fast split reproduces the ordering inversion an RTK cache hit causes in practice.
   it('ignores a superseded load so fast navigation cannot show the previous notebook', async () => {
-    serveNotebooksHoldingSlowOne();
+    const releaseSlow = serveNotebooksHoldingSlowOne();
     const manager = new NotebookPageStateManager({ isLoading: false });
 
     const slow = manager.loadNotebook('nb-slow');
-    const fast = manager.loadNotebook('nb-fast');
-    await Promise.all([fast, slow]);
+    try {
+      await manager.loadNotebook('nb-fast');
+    } finally {
+      releaseSlow();
+      await slow;
+    }
 
     expect(manager.state.scene?.state.uid).toBe('nb-fast');
     expect(manager.state.loadError).toBeUndefined();
   });
 
   it('ignores a superseded failure so a stale error cannot replace a loaded notebook', async () => {
-    server.use(
-      notebookHandler(async (name) => {
-        if (name === 'nb-slow') {
-          await delay(SLOW_RESPONSE_MS);
-          return HttpResponse.json({ message: 'gone' }, { status: 404 });
-        }
-        return HttpResponse.json(notebookResource(name));
-      })
-    );
+    const releaseSlow = serveNotebooksHoldingSlowOne(() => HttpResponse.json({ message: 'gone' }, { status: 404 }));
     const manager = new NotebookPageStateManager({ isLoading: false });
 
     const slow = manager.loadNotebook('nb-slow');
-    const fast = manager.loadNotebook('nb-fast');
-    await Promise.all([fast, slow]);
+    try {
+      await manager.loadNotebook('nb-fast');
+    } finally {
+      releaseSlow();
+      await slow;
+    }
 
     expect(manager.state.loadError).toBeUndefined();
     expect(manager.state.scene?.state.uid).toBe('nb-fast');
@@ -428,12 +436,16 @@ describe('NotebookPageStateManager', () => {
     });
 
     it('fires only for the load that wins a superseded race', async () => {
-      serveNotebooksHoldingSlowOne();
+      const releaseSlow = serveNotebooksHoldingSlowOne();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
       const slow = manager.loadNotebook('nb-slow');
-      const fast = manager.loadNotebook('nb-fast');
-      await Promise.all([fast, slow]);
+      try {
+        await manager.loadNotebook('nb-fast');
+      } finally {
+        releaseSlow();
+        await slow;
+      }
 
       expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenCalledTimes(1);
       expect(manager.state.scene?.state.uid).toBe('nb-fast');
@@ -475,7 +487,7 @@ describe('NotebookPageStateManager', () => {
 
     // The reason for naming them at all: autosave creates these without asking for a name, so
     // notebooks made at different times have to be tellable apart in the list. The clock is stubbed
-    // through Date.now rather than with fake timers, which msw's delayed handlers would hang on.
+    // through Date.now rather than with fake timers, so MSW and RTK keep their real request timers.
     it('names each new notebook after the time it was created', async () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
@@ -511,12 +523,16 @@ describe('NotebookPageStateManager', () => {
     // Clicking New notebook while a notebook is still loading. `await` does not cancel, so without
     // the sequence bump the load would resolve on top of the blank page the user is now looking at.
     it('is not replaced by a load that was already in flight', async () => {
-      serveNotebooksHoldingSlowOne();
+      const releaseSlow = serveNotebooksHoldingSlowOne();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
       const slow = manager.loadNotebook('nb-slow');
-      await manager.newNotebook();
-      await slow;
+      try {
+        await manager.newNotebook();
+      } finally {
+        releaseSlow();
+        await slow;
+      }
 
       expect(manager.state.scene?.state.uid).toBeUndefined();
       expect(manager.state.loadError).toBeUndefined();

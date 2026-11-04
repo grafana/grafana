@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "rootDir": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2",
-  "startedAt": "2026-11-04T01:47:36.424Z",
+  "startedAt": "2026-11-04T04:19:26.389Z",
   "runnerHash": "43ceceb73d8ba9529afcb21f2eff53458190af95e1c8b2b16cf93d6e90268276",
-  "revision": "cb8c73f926bfb165858f2d9b51c5df3819854018",
+  "revision": "cba0191c1a363489ef7dc82331e54aefe7f11660",
   "trackedChanges": true,
   "node": "v26.13.0",
   "nodeOptions": "",
@@ -413,44 +413,42 @@
   ],
   "gcEnabled": true,
   "metricsEnabled": true,
-  "executionMs": 116951.042687,
-  "totalMs": 117775.685495,
+  "executionMs": 112807.486135,
+  "totalMs": 113621.073943,
   "exitCode": 0,
   "rss": {
     "supported": true,
     "intervalMs": 250,
-    "samples": 466,
-    "peakBytes": 5610512384,
-    "averageBytes": 3942742938.108726,
-    "durationMs": 116948.462686,
+    "samples": 451,
+    "peakBytes": 6037716992,
+    "averageBytes": 4034830392.58091,
+    "durationMs": 112805.201036,
     "errors": [
-      "/proc/108717/status: missing or invalid VmRSS",
-      "/proc/108773/status: missing or invalid VmRSS",
-      "/proc/108794/status: missing or invalid VmRSS"
+      "/proc/118890/status: missing or invalid VmRSS"
     ]
   },
   "processes": {
-    "workerStarts": 16,
-    "workerReplacements": 12,
+    "workerStarts": 14,
+    "workerReplacements": 10,
     "hasteMapWorkerStarts": 4,
     "otherWorkerStarts": 0,
-    "processStarts": 21,
-    "incompleteProcesses": 12,
+    "processStarts": 19,
+    "incompleteProcesses": 10,
     "gc": {
-      "count": 3793,
-      "durationMs": 20013.1359269917,
+      "count": 3534,
+      "durationMs": 26506.901843234897,
       "byKind": {
         "major": {
-          "count": 124,
-          "durationMs": 2934.7919519096613
+          "count": 116,
+          "durationMs": 9321.832154884934
         },
         "minor": {
-          "count": 3545,
-          "durationMs": 16902.841780036688
+          "count": 3301,
+          "durationMs": 17012.81646539271
         },
         "incremental": {
-          "count": 124,
-          "durationMs": 175.50219504535198
+          "count": 117,
+          "durationMs": 172.25322295725346
         },
         "weakcb": {
           "count": 0,
@@ -464,29 +462,29 @@
     },
     "processes": [
       {
-        "pid": 108672,
-        "ppid": 108587,
+        "pid": 118790,
+        "ppid": 118707,
         "workerId": null,
         "workerModule": null,
         "role": "coordinator",
-        "startedAt": "2026-11-04T01:47:36.429Z",
-        "lifetimeMs": 116937.056465,
+        "startedAt": "2026-11-04T04:19:26.393Z",
+        "lifetimeMs": 112794.434858,
         "complete": true,
         "gc": {
-          "count": 48,
-          "durationMs": 70.4367059469223,
+          "count": 45,
+          "durationMs": 66.27730503678322,
           "byKind": {
             "major": {
               "count": 3,
-              "durationMs": 20.345904976129532
+              "durationMs": 19.03421600162983
             },
             "minor": {
-              "count": 42,
-              "durationMs": 48.4312719553709
+              "count": 39,
+              "durationMs": 45.90279504656792
             },
             "incremental": {
               "count": 3,
-              "durationMs": 1.6595290154218674
+              "durationMs": 1.340293988585472
             },
             "weakcb": {
               "count": 0,
@@ -500,17 +498,53 @@
         }
       },
       {
-        "pid": 108688,
-        "ppid": 108672,
+        "pid": 118802,
+        "ppid": 118790,
         "workerId": "1",
         "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-haste-map@29.7.0/node_modules/jest-haste-map/build/worker.js",
         "role": "worker",
-        "startedAt": "2026-11-04T01:47:36.756Z",
-        "lifetimeMs": 342.829671,
+        "startedAt": "2026-11-04T04:19:26.715Z",
+        "lifetimeMs": 336.870879,
+        "complete": true,
+        "gc": {
+          "count": 43,
+          "durationMs": 5.5783159881830215,
+          "byKind": {
+            "major": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "minor": {
+              "count": 43,
+              "durationMs": 5.5783159881830215
+            },
+            "incremental": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 118803,
+        "ppid": 118790,
+        "workerId": "2",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-haste-map@29.7.0/node_modules/jest-haste-map/build/worker.js",
+        "role": "worker",
+        "startedAt": "2026-11-04T04:19:26.717Z",
+        "lifetimeMs": 334.635314,
         "complete": true,
         "gc": {
           "count": 42,
-          "durationMs": 5.600386947393417,
+          "durationMs": 5.769083946943283,
           "byKind": {
             "major": {
               "count": 0,
@@ -518,7 +552,7 @@
             },
             "minor": {
               "count": 42,
-              "durationMs": 5.600386947393417
+              "durationMs": 5.769083946943283
             },
             "incremental": {
               "count": 0,
@@ -536,61 +570,25 @@
         }
       },
       {
-        "pid": 108689,
-        "ppid": 108672,
-        "workerId": "2",
-        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-haste-map@29.7.0/node_modules/jest-haste-map/build/worker.js",
-        "role": "worker",
-        "startedAt": "2026-11-04T01:47:36.758Z",
-        "lifetimeMs": 340.316326,
-        "complete": true,
-        "gc": {
-          "count": 41,
-          "durationMs": 9.285331085324287,
-          "byKind": {
-            "major": {
-              "count": 0,
-              "durationMs": 0
-            },
-            "minor": {
-              "count": 41,
-              "durationMs": 9.285331085324287
-            },
-            "incremental": {
-              "count": 0,
-              "durationMs": 0
-            },
-            "weakcb": {
-              "count": 0,
-              "durationMs": 0
-            },
-            "other": {
-              "count": 0,
-              "durationMs": 0
-            }
-          }
-        }
-      },
-      {
-        "pid": 108695,
-        "ppid": 108672,
+        "pid": 118809,
+        "ppid": 118790,
         "workerId": "3",
         "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-haste-map@29.7.0/node_modules/jest-haste-map/build/worker.js",
         "role": "worker",
-        "startedAt": "2026-11-04T01:47:36.760Z",
-        "lifetimeMs": 338.397556,
+        "startedAt": "2026-11-04T04:19:26.719Z",
+        "lifetimeMs": 332.554551,
         "complete": true,
         "gc": {
-          "count": 43,
-          "durationMs": 8.924512013792992,
+          "count": 44,
+          "durationMs": 5.873389959335327,
           "byKind": {
             "major": {
               "count": 0,
               "durationMs": 0
             },
             "minor": {
-              "count": 43,
-              "durationMs": 8.924512013792992
+              "count": 44,
+              "durationMs": 5.873389959335327
             },
             "incremental": {
               "count": 0,
@@ -608,25 +606,25 @@
         }
       },
       {
-        "pid": 108697,
-        "ppid": 108672,
+        "pid": 118810,
+        "ppid": 118790,
         "workerId": "4",
         "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-haste-map@29.7.0/node_modules/jest-haste-map/build/worker.js",
         "role": "worker",
-        "startedAt": "2026-11-04T01:47:36.764Z",
-        "lifetimeMs": 334.687937,
+        "startedAt": "2026-11-04T04:19:26.721Z",
+        "lifetimeMs": 331.061129,
         "complete": true,
         "gc": {
-          "count": 43,
-          "durationMs": 5.483238086104393,
+          "count": 40,
+          "durationMs": 5.37786203622818,
           "byKind": {
             "major": {
               "count": 0,
               "durationMs": 0
             },
             "minor": {
-              "count": 43,
-              "durationMs": 5.483238086104393
+              "count": 40,
+              "durationMs": 5.37786203622818
             },
             "incremental": {
               "count": 0,
@@ -644,101 +642,29 @@
         }
       },
       {
-        "pid": 108716,
-        "ppid": 108672,
+        "pid": 118830,
+        "ppid": 118790,
         "workerId": "1",
         "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
         "role": "worker",
-        "startedAt": "2026-11-04T01:47:37.142Z",
-        "lifetimeMs": 34230.966235,
+        "startedAt": "2026-11-04T04:19:27.096Z",
+        "lifetimeMs": 27735.42366,
         "complete": false,
         "gc": {
-          "count": 286,
-          "durationMs": 1510.6343641281128,
-          "byKind": {
-            "major": {
-              "count": 8,
-              "durationMs": 195.44143199920654
-            },
-            "minor": {
-              "count": 270,
-              "durationMs": 1302.2241751104593
-            },
-            "incremental": {
-              "count": 8,
-              "durationMs": 12.968757018446922
-            },
-            "weakcb": {
-              "count": 0,
-              "durationMs": 0
-            },
-            "other": {
-              "count": 0,
-              "durationMs": 0
-            }
-          }
-        }
-      },
-      {
-        "pid": 108717,
-        "ppid": 108672,
-        "workerId": "2",
-        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
-        "role": "worker",
-        "startedAt": "2026-11-04T01:47:37.144Z",
-        "lifetimeMs": 38749.541372,
-        "complete": false,
-        "gc": {
-          "count": 310,
-          "durationMs": 1690.137444972992,
-          "byKind": {
-            "major": {
-              "count": 8,
-              "durationMs": 213.20325000584126
-            },
-            "minor": {
-              "count": 294,
-              "durationMs": 1465.1274829804897
-            },
-            "incremental": {
-              "count": 8,
-              "durationMs": 11.806711986660957
-            },
-            "weakcb": {
-              "count": 0,
-              "durationMs": 0
-            },
-            "other": {
-              "count": 0,
-              "durationMs": 0
-            }
-          }
-        }
-      },
-      {
-        "pid": 108718,
-        "ppid": 108672,
-        "workerId": "3",
-        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
-        "role": "worker",
-        "startedAt": "2026-11-04T01:47:37.146Z",
-        "lifetimeMs": 28926.436728,
-        "complete": false,
-        "gc": {
-          "count": 244,
-          "durationMs": 1016.0362038910389,
+          "count": 223,
+          "durationMs": 992.0208769738674,
           "byKind": {
             "major": {
               "count": 4,
-              "durationMs": 54.80823300778866
+              "durationMs": 48.48914700746536
             },
             "minor": {
-              "count": 236,
-              "durationMs": 957.3242148905993
+              "count": 215,
+              "durationMs": 939.7386099547148
             },
             "incremental": {
               "count": 4,
-              "durationMs": 3.9037559926509857
+              "durationMs": 3.7931200116872787
             },
             "weakcb": {
               "count": 0,
@@ -752,173 +678,29 @@
         }
       },
       {
-        "pid": 108725,
-        "ppid": 108672,
-        "workerId": "4",
-        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
-        "role": "worker",
-        "startedAt": "2026-11-04T01:47:37.148Z",
-        "lifetimeMs": 40273.939067,
-        "complete": false,
-        "gc": {
-          "count": 327,
-          "durationMs": 1649.6381240189075,
-          "byKind": {
-            "major": {
-              "count": 8,
-              "durationMs": 218.5257589817047
-            },
-            "minor": {
-              "count": 311,
-              "durationMs": 1419.4734820276499
-            },
-            "incremental": {
-              "count": 8,
-              "durationMs": 11.638883009552956
-            },
-            "weakcb": {
-              "count": 0,
-              "durationMs": 0
-            },
-            "other": {
-              "count": 0,
-              "durationMs": 0
-            }
-          }
-        }
-      },
-      {
-        "pid": 108757,
-        "ppid": 108672,
-        "workerId": "3",
-        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
-        "role": "worker",
-        "startedAt": "2026-11-04T01:48:07.897Z",
-        "lifetimeMs": 32481.458305,
-        "complete": false,
-        "gc": {
-          "count": 255,
-          "durationMs": 1361.2977499514818,
-          "byKind": {
-            "major": {
-              "count": 8,
-              "durationMs": 192.9644310027361
-            },
-            "minor": {
-              "count": 239,
-              "durationMs": 1156.2585529536009
-            },
-            "incremental": {
-              "count": 8,
-              "durationMs": 12.074765995144844
-            },
-            "weakcb": {
-              "count": 0,
-              "durationMs": 0
-            },
-            "other": {
-              "count": 0,
-              "durationMs": 0
-            }
-          }
-        }
-      },
-      {
-        "pid": 108765,
-        "ppid": 108672,
-        "workerId": "1",
-        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
-        "role": "worker",
-        "startedAt": "2026-11-04T01:48:12.846Z",
-        "lifetimeMs": 28724.487428,
-        "complete": false,
-        "gc": {
-          "count": 228,
-          "durationMs": 1301.5499930679798,
-          "byKind": {
-            "major": {
-              "count": 8,
-              "durationMs": 192.96520999073982
-            },
-            "minor": {
-              "count": 212,
-              "durationMs": 1097.2758850306273
-            },
-            "incremental": {
-              "count": 8,
-              "durationMs": 11.30889804661274
-            },
-            "weakcb": {
-              "count": 0,
-              "durationMs": 0
-            },
-            "other": {
-              "count": 0,
-              "durationMs": 0
-            }
-          }
-        }
-      },
-      {
-        "pid": 108773,
-        "ppid": 108672,
+        "pid": 118831,
+        "ppid": 118790,
         "workerId": "2",
         "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
         "role": "worker",
-        "startedAt": "2026-11-04T01:48:17.210Z",
-        "lifetimeMs": 34116.472593,
+        "startedAt": "2026-11-04T04:19:27.098Z",
+        "lifetimeMs": 37965.15269,
         "complete": false,
         "gc": {
-          "count": 273,
-          "durationMs": 1667.2262099385262,
-          "byKind": {
-            "major": {
-              "count": 10,
-              "durationMs": 292.63545997440815
-            },
-            "minor": {
-              "count": 253,
-              "durationMs": 1358.060923948884
-            },
-            "incremental": {
-              "count": 10,
-              "durationMs": 16.529826015233994
-            },
-            "weakcb": {
-              "count": 0,
-              "durationMs": 0
-            },
-            "other": {
-              "count": 0,
-              "durationMs": 0
-            }
-          }
-        }
-      },
-      {
-        "pid": 108781,
-        "ppid": 108672,
-        "workerId": "4",
-        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
-        "role": "worker",
-        "startedAt": "2026-11-04T01:48:18.147Z",
-        "lifetimeMs": 31772.815823,
-        "complete": false,
-        "gc": {
-          "count": 250,
-          "durationMs": 1482.6439230293036,
+          "count": 316,
+          "durationMs": 1998.0681441277266,
           "byKind": {
             "major": {
               "count": 8,
-              "durationMs": 219.26516897976398
+              "durationMs": 467.59751500189304
             },
             "minor": {
-              "count": 234,
-              "durationMs": 1250.9950140416622
+              "count": 300,
+              "durationMs": 1519.5584331005812
             },
             "incremental": {
               "count": 8,
-              "durationMs": 12.38374000787735
+              "durationMs": 10.912196025252342
             },
             "weakcb": {
               "count": 0,
@@ -932,65 +714,137 @@
         }
       },
       {
-        "pid": 108794,
-        "ppid": 108672,
-        "workerId": "1",
-        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
-        "role": "worker",
-        "startedAt": "2026-11-04T01:48:42.122Z",
-        "lifetimeMs": 28431.22357,
-        "complete": false,
-        "gc": {
-          "count": 231,
-          "durationMs": 1377.7395320087671,
-          "byKind": {
-            "major": {
-              "count": 9,
-              "durationMs": 214.02610301971436
-            },
-            "minor": {
-              "count": 213,
-              "durationMs": 1151.250571012497
-            },
-            "incremental": {
-              "count": 9,
-              "durationMs": 12.462857976555824
-            },
-            "weakcb": {
-              "count": 0,
-              "durationMs": 0
-            },
-            "other": {
-              "count": 0,
-              "durationMs": 0
-            }
-          }
-        }
-      },
-      {
-        "pid": 108802,
-        "ppid": 108672,
+        "pid": 118832,
+        "ppid": 118790,
         "workerId": "3",
         "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
         "role": "worker",
-        "startedAt": "2026-11-04T01:48:43.051Z",
-        "lifetimeMs": 34126.826042,
+        "startedAt": "2026-11-04T04:19:27.100Z",
+        "lifetimeMs": 37639.889817,
+        "complete": false,
+        "gc": {
+          "count": 313,
+          "durationMs": 2145.187474012375,
+          "byKind": {
+            "major": {
+              "count": 8,
+              "durationMs": 648.3435799777508
+            },
+            "minor": {
+              "count": 297,
+              "durationMs": 1483.7377830445766
+            },
+            "incremental": {
+              "count": 8,
+              "durationMs": 13.106110990047455
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 118842,
+        "ppid": 118790,
+        "workerId": "4",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-04T04:19:27.102Z",
+        "lifetimeMs": 36670.012993,
+        "complete": false,
+        "gc": {
+          "count": 309,
+          "durationMs": 2119.4557370096445,
+          "byKind": {
+            "major": {
+              "count": 9,
+              "durationMs": 651.8513789921999
+            },
+            "minor": {
+              "count": 291,
+              "durationMs": 1453.9613529890776
+            },
+            "incremental": {
+              "count": 9,
+              "durationMs": 13.643005028367043
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 118866,
+        "ppid": 118790,
+        "workerId": "1",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-04T04:19:57.619Z",
+        "lifetimeMs": 39936.693924,
+        "complete": false,
+        "gc": {
+          "count": 301,
+          "durationMs": 2684.404183059931,
+          "byKind": {
+            "major": {
+              "count": 10,
+              "durationMs": 1085.9592049866915
+            },
+            "minor": {
+              "count": 281,
+              "durationMs": 1581.7585580945015
+            },
+            "incremental": {
+              "count": 10,
+              "durationMs": 16.68641997873783
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 118874,
+        "ppid": 118790,
+        "workerId": "4",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-04T04:20:03.927Z",
+        "lifetimeMs": 33317.986134,
         "complete": false,
         "gc": {
           "count": 258,
-          "durationMs": 1646.7993308603764,
+          "durationMs": 1977.8610220998526,
           "byKind": {
             "major": {
-              "count": 10,
-              "durationMs": 271.32833997905254
+              "count": 9,
+              "durationMs": 614.6901240050793
             },
             "minor": {
-              "count": 238,
-              "durationMs": 1358.2225568890572
+              "count": 240,
+              "durationMs": 1351.004516094923
             },
             "incremental": {
-              "count": 10,
-              "durationMs": 17.248433992266655
+              "count": 9,
+              "durationMs": 12.166381999850273
             },
             "weakcb": {
               "count": 0,
@@ -1004,65 +858,29 @@
         }
       },
       {
-        "pid": 108811,
-        "ppid": 108672,
-        "workerId": "4",
-        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
-        "role": "worker",
-        "startedAt": "2026-11-04T01:48:50.084Z",
-        "lifetimeMs": 28372.481604,
-        "complete": false,
-        "gc": {
-          "count": 222,
-          "durationMs": 1386.356665045023,
-          "byKind": {
-            "major": {
-              "count": 9,
-              "durationMs": 247.2940330207348
-            },
-            "minor": {
-              "count": 204,
-              "durationMs": 1124.8010390251875
-            },
-            "incremental": {
-              "count": 9,
-              "durationMs": 14.261592999100685
-            },
-            "weakcb": {
-              "count": 0,
-              "durationMs": 0
-            },
-            "other": {
-              "count": 0,
-              "durationMs": 0
-            }
-          }
-        }
-      },
-      {
-        "pid": 108819,
-        "ppid": 108672,
+        "pid": 118882,
+        "ppid": 118790,
         "workerId": "2",
         "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
         "role": "worker",
-        "startedAt": "2026-11-04T01:48:51.979Z",
-        "lifetimeMs": 32367.633429,
+        "startedAt": "2026-11-04T04:20:06.025Z",
+        "lifetimeMs": 32754.673821,
         "complete": false,
         "gc": {
-          "count": 248,
-          "durationMs": 1553.0435949712992,
+          "count": 244,
+          "durationMs": 2302.932196840644,
           "byKind": {
             "major": {
-              "count": 11,
-              "durationMs": 301.3695659786463
+              "count": 10,
+              "durationMs": 996.1805179715157
             },
             "minor": {
-              "count": 226,
-              "durationMs": 1234.481783002615
+              "count": 224,
+              "durationMs": 1291.5196878612041
             },
             "incremental": {
-              "count": 11,
-              "durationMs": 17.192245990037918
+              "count": 10,
+              "durationMs": 15.23199100792408
             },
             "weakcb": {
               "count": 0,
@@ -1076,65 +894,29 @@
         }
       },
       {
-        "pid": 108828,
-        "ppid": 108672,
-        "workerId": "1",
-        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
-        "role": "worker",
-        "startedAt": "2026-11-04T01:49:13.472Z",
-        "lifetimeMs": 19749.483988,
-        "complete": true,
-        "gc": {
-          "count": 154,
-          "durationMs": 873.033082023263,
-          "byKind": {
-            "major": {
-              "count": 7,
-              "durationMs": 141.94665397703648
-            },
-            "minor": {
-              "count": 140,
-              "durationMs": 721.4129460602999
-            },
-            "incremental": {
-              "count": 7,
-              "durationMs": 9.673481985926628
-            },
-            "weakcb": {
-              "count": 0,
-              "durationMs": 0
-            },
-            "other": {
-              "count": 0,
-              "durationMs": 0
-            }
-          }
-        }
-      },
-      {
-        "pid": 108836,
-        "ppid": 108672,
+        "pid": 118890,
+        "ppid": 118790,
         "workerId": "3",
         "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
         "role": "worker",
-        "startedAt": "2026-11-04T01:49:18.460Z",
-        "lifetimeMs": 14761.481035,
-        "complete": true,
+        "startedAt": "2026-11-04T04:20:08.196Z",
+        "lifetimeMs": 27288.366879,
+        "complete": false,
         "gc": {
-          "count": 122,
-          "durationMs": 604.6239189952612,
+          "count": 225,
+          "durationMs": 1939.8314970135689,
           "byKind": {
             "major": {
-              "count": 5,
-              "durationMs": 78.5847119987011
+              "count": 8,
+              "durationMs": 745.088760972023
             },
             "minor": {
-              "count": 112,
-              "durationMs": 521.5293240100145
+              "count": 209,
+              "durationMs": 1184.1195800453424
             },
             "incremental": {
-              "count": 5,
-              "durationMs": 4.509882986545563
+              "count": 8,
+              "durationMs": 10.623155996203423
             },
             "weakcb": {
               "count": 0,
@@ -1148,29 +930,101 @@
         }
       },
       {
-        "pid": 108844,
-        "ppid": 108672,
+        "pid": 118900,
+        "ppid": 118790,
+        "workerId": "3",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-04T04:20:39.936Z",
+        "lifetimeMs": 33266.190663,
+        "complete": false,
+        "gc": {
+          "count": 253,
+          "durationMs": 2462.6018549501896,
+          "byKind": {
+            "major": {
+              "count": 10,
+              "durationMs": 1002.4857609719038
+            },
+            "minor": {
+              "count": 233,
+              "durationMs": 1443.775266006589
+            },
+            "incremental": {
+              "count": 10,
+              "durationMs": 16.340827971696854
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 118907,
+        "ppid": 118790,
+        "workerId": "1",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-04T04:20:40.067Z",
+        "lifetimeMs": 32664.755255,
+        "complete": false,
+        "gc": {
+          "count": 255,
+          "durationMs": 2415.817887097597,
+          "byKind": {
+            "major": {
+              "count": 11,
+              "durationMs": 990.8182100355625
+            },
+            "minor": {
+              "count": 233,
+              "durationMs": 1406.2812460362911
+            },
+            "incremental": {
+              "count": 11,
+              "durationMs": 18.718431025743484
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 118918,
+        "ppid": 118790,
         "workerId": "4",
         "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
         "role": "worker",
-        "startedAt": "2026-11-04T01:49:20.514Z",
-        "lifetimeMs": 12707.348762,
+        "startedAt": "2026-11-04T04:20:42.108Z",
+        "lifetimeMs": 36860.357953,
         "complete": true,
         "gc": {
-          "count": 108,
-          "durationMs": 536.5423190444708,
+          "count": 274,
+          "durationMs": 2642.117192044854,
           "byKind": {
             "major": {
-              "count": 5,
-              "durationMs": 57.46184802055359
+              "count": 10,
+              "durationMs": 1083.1353760063648
             },
             "minor": {
-              "count": 98,
-              "durationMs": 474.75191201269627
+              "count": 254,
+              "durationMs": 1543.9575990736485
             },
             "incremental": {
-              "count": 5,
-              "durationMs": 4.328559011220932
+              "count": 10,
+              "durationMs": 15.024216964840889
             },
             "weakcb": {
               "count": 0,
@@ -1184,29 +1038,101 @@
         }
       },
       {
-        "pid": 108852,
-        "ppid": 108672,
+        "pid": 118925,
+        "ppid": 118790,
         "workerId": "2",
         "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
         "role": "worker",
-        "startedAt": "2026-11-04T01:49:26.475Z",
-        "lifetimeMs": 6746.642985,
+        "startedAt": "2026-11-04T04:20:42.199Z",
+        "lifetimeMs": 36769.447243,
         "complete": true,
         "gc": {
-          "count": 60,
-          "durationMs": 256.10329696536064,
+          "count": 261,
+          "durationMs": 2425.4998210817575,
+          "byKind": {
+            "major": {
+              "count": 11,
+              "durationMs": 930.8776879608631
+            },
+            "minor": {
+              "count": 239,
+              "durationMs": 1472.7813031375408
+            },
+            "incremental": {
+              "count": 11,
+              "durationMs": 21.840829983353615
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 118934,
+        "ppid": 118790,
+        "workerId": "3",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-04T04:21:13.369Z",
+        "lifetimeMs": 5599.382491,
+        "complete": true,
+        "gc": {
+          "count": 42,
+          "durationMs": 173.06976503133774,
           "byKind": {
             "major": {
               "count": 3,
-              "durationMs": 22.62584699690342
+              "durationMs": 26.64020299911499
             },
             "minor": {
-              "count": 54,
-              "durationMs": 231.92717695236206
+              "count": 36,
+              "durationMs": 144.9360190331936
             },
             "incremental": {
               "count": 3,
-              "durationMs": 1.5502730160951614
+              "durationMs": 1.4935429990291595
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 118942,
+        "ppid": 118790,
+        "workerId": "1",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-04T04:21:15.075Z",
+        "lifetimeMs": 3939.438318,
+        "complete": true,
+        "gc": {
+          "count": 46,
+          "durationMs": 139.158234924078,
+          "byKind": {
+            "major": {
+              "count": 2,
+              "durationMs": 10.640471994876862
+            },
+            "minor": {
+              "count": 41,
+              "durationMs": 127.18506394326687
+            },
+            "incremental": {
+              "count": 3,
+              "durationMs": 1.3326989859342575
             },
             "weakcb": {
               "count": 0,
