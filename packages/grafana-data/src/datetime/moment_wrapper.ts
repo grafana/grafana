@@ -133,7 +133,8 @@ export const dateTimeForTimeZone = (
     if (typeof input === 'string' && formatInput) {
       result = tz(input, formatInput, timezone);
     } else {
-      result = tz(input, timezone);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- DateTime is a Moment at runtime; moment-timezone 0.6 dropped the `any` overload
+      result = tz(input as MomentInput, timezone);
     }
 
     if (isDateTime(result)) {
