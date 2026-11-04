@@ -692,12 +692,13 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 	// http:// URLs with a token are only allowed in development or when explicitly opted in,
 	// since the token would otherwise travel in cleartext.
 	allowInsecure := c.Settings.Env == setting.Dev || provisioningSec.Key("allow_insecure").MustBool(false)
+	userAgent := gitrepo.UserAgent(c.Settings.BuildVersion)
 
 	extras := make([]repository.Extra, 0)
 	for _, t := range repoTypes {
 		switch provisioning.RepositoryType(t) {
 		case provisioning.GitRepositoryType:
-			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure, operationMetrics, clientMetrics))
+			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure, operationMetrics, clientMetrics, userAgent))
 		case provisioning.GitHubRepositoryType:
 			var webhook *webhooks.WebhookExtraBuilder
 			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
@@ -711,7 +712,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 					),
 				)
 			}
-			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, allowInsecure, operationMetrics, clientMetrics))
+			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, allowInsecure, operationMetrics, clientMetrics, userAgent))
 		case provisioning.LocalRepositoryType:
 			homePath := operatorSec.Key("home_path").String()
 			if homePath == "" {
