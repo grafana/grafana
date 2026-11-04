@@ -18,13 +18,23 @@ describe('registerSlideshowKinds', () => {
     setTestFlags({});
   });
 
-  it('always registers dashboards', async () => {
+  it('registers dashboards', async () => {
+    setTestFlags({ 'playlist.slideshows': true });
     await registerSlideshowKinds();
 
     expect(getPlaylistItemKind('dashboard.grafana.app', 'dashboards')).toBeDefined();
   });
 
+  it('registers nothing while the slideshows toggle is off', async () => {
+    setTestFlags({ 'playlist.slideshows': false, 'dashboard.notebooks': true });
+    setAppPluginMetas({ 'grafana-assistant-app': assistantApp });
+    await registerSlideshowKinds();
+
+    expect(getPlaylistItemKinds()).toEqual([]);
+  });
+
   it('registers pages only when the assistant app is installed', async () => {
+    setTestFlags({ 'playlist.slideshows': true });
     setAppPluginMetas({});
     await registerSlideshowKinds();
     expect(getPlaylistItemKind('assistant.ext.grafana.app', 'pages')).toBeUndefined();
@@ -36,19 +46,19 @@ describe('registerSlideshowKinds', () => {
   });
 
   it('registers notebooks only when the notebooks toggle is on', async () => {
-    setTestFlags({ 'dashboard.notebooks': false });
+    setTestFlags({ 'playlist.slideshows': true, 'dashboard.notebooks': false });
     await registerSlideshowKinds();
     expect(getPlaylistItemKind('dashboard.grafana.app', 'notebooks')).toBeUndefined();
 
     resetPlaylistItemKindsForTests();
-    setTestFlags({ 'dashboard.notebooks': true });
+    setTestFlags({ 'playlist.slideshows': true, 'dashboard.notebooks': true });
     await registerSlideshowKinds();
     expect(getPlaylistItemKind('dashboard.grafana.app', 'notebooks')).toBeDefined();
   });
 
   it('opens a page and a notebook at their viewer urls', async () => {
     setAppPluginMetas({ 'grafana-assistant-app': assistantApp });
-    setTestFlags({ 'dashboard.notebooks': true });
+    setTestFlags({ 'playlist.slideshows': true, 'dashboard.notebooks': true });
     await registerSlideshowKinds();
 
     const get = jest.fn().mockResolvedValue({ spec: { title: 'T' } });

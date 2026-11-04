@@ -46,6 +46,44 @@ const NotebookPageComponent = SafeDynamicImport(
 );
 export const extraRoutes: RouteDescriptor[] = [];
 
+// Slideshows are experimental, so their routes only exist while the toggle is on and the
+// paths are not found otherwise.
+function getSlideshowRoutes(): RouteDescriptor[] {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PlaylistSlideshows, false)) {
+    return [];
+  }
+
+  return [
+    {
+      path: '/slideshows',
+      roles: getFeatureFlagClient().getBooleanValue(FlagKeys.PlaylistsRBAC, false)
+        ? () => contextSrv.evaluatePermission([AccessControlAction.PlaylistsRead])
+        : undefined,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SlideshowsPage"*/ 'app/features/slideshows/SlideshowsPage')
+      ),
+    },
+    {
+      path: '/slideshows/play/:uid',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SlideshowPlayPage"*/ 'app/features/slideshows/SlideshowPlayPage')
+      ),
+    },
+    {
+      path: '/slideshows/new',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SlideshowEditPage"*/ 'app/features/slideshows/SlideshowEditPage')
+      ),
+    },
+    {
+      path: '/slideshows/edit/:uid',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SlideshowEditPage"*/ 'app/features/slideshows/SlideshowEditPage')
+      ),
+    },
+  ];
+}
+
 export function getAppRoutes(): RouteDescriptor[] {
   const routes: Array<RouteDescriptor | undefined | false> = [
     // Based on the Grafana configuration standalone plugin pages can even override and extend existing core pages, or they can register new routes under existing ones.
@@ -581,33 +619,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "PlaylistEditPage"*/ 'app/features/playlist/PlaylistEditPage')
       ),
     },
-    {
-      path: '/slideshows',
-      roles: getFeatureFlagClient().getBooleanValue(FlagKeys.PlaylistsRBAC, false)
-        ? () => contextSrv.evaluatePermission([AccessControlAction.PlaylistsRead])
-        : undefined,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SlideshowsPage"*/ 'app/features/slideshows/SlideshowsPage')
-      ),
-    },
-    {
-      path: '/slideshows/play/:uid',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SlideshowPlayPage"*/ 'app/features/slideshows/SlideshowPlayPage')
-      ),
-    },
-    {
-      path: '/slideshows/new',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SlideshowEditPage"*/ 'app/features/slideshows/SlideshowEditPage')
-      ),
-    },
-    {
-      path: '/slideshows/edit/:uid',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SlideshowEditPage"*/ 'app/features/slideshows/SlideshowEditPage')
-      ),
-    },
+    ...getSlideshowRoutes(),
     {
       path: '/sandbox/benchmarks',
       component: SafeDynamicImport(

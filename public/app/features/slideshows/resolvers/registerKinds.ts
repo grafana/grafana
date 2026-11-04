@@ -15,6 +15,10 @@ const ASSISTANT_APP_ID = 'grafana-assistant-app';
  * cannot be played.
  */
 export async function registerSlideshowKinds() {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PlaylistSlideshows, false)) {
+    return;
+  }
+
   registerPlaylistItemKind(dashboardKind);
 
   // Core stand-in for the assistant app, which owns this kind and has not registered it itself.
