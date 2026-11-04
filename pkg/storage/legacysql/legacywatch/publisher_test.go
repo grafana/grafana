@@ -168,6 +168,24 @@ func TestContextPublisher(t *testing.T) {
 		require.Equal(t, "legacysql.watch.v1.iam.grafana.app.stacks-3.users", nats.messages[0].subject)
 	})
 
+	t.Run("a nil transport drops a dispatched event instead of panicking", func(t *testing.T) {
+		events := bus.ProvideBus(tracing.InitializeTracerForTest())
+		NewContextPublisher(nil).RegisterListener(events)
+
+		ctx := k8srequest.WithNamespace(context.Background(), "stacks-3")
+		require.NoError(t, events.Publish(ctx, &LegacyWatchNotification{Type: Modified, Resource: users, OrgID: 1, Name: "u1"}))
+	})
+
+	t.Run("a disabled transport receives no publish attempts from a dispatched event", func(t *testing.T) {
+		events := bus.ProvideBus(tracing.InitializeTracerForTest())
+		nats := &fakeBus{enabled: false}
+		NewContextPublisher(nats).RegisterListener(events)
+
+		ctx := k8srequest.WithNamespace(context.Background(), "stacks-3")
+		require.NoError(t, events.Publish(ctx, &LegacyWatchNotification{Type: Modified, Resource: users, OrgID: 1, Name: "u1"}))
+		require.Empty(t, nats.messages)
+	})
+
 	t.Run("nil publisher RegisterListener is a no-op", func(t *testing.T) {
 		var p *Publisher
 		p.RegisterListener(bus.ProvideBus(tracing.InitializeTracerForTest()))

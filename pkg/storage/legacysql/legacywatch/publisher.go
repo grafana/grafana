@@ -94,6 +94,11 @@ func ProvideDisabledPublisher() *Publisher {
 }
 
 func (p *Publisher) onNotification(ctx context.Context, n *LegacyWatchNotification) error {
+	// Runs after the SQL transaction has committed, so it must never panic: a nil
+	// or disabled transport drops the notification, as Publish does.
+	if !p.Enabled() {
+		return nil
+	}
 	p.publish(ctx, n.Type, n.Resource, n.OrgID, n.Name, n.ResourceVersion)
 	return nil
 }
