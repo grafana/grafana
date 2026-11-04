@@ -45,9 +45,9 @@ export function mobileEditNotAvailableMessage(): string {
 }
 
 /**
- * Warns the user that an edit-mode action was blocked on mobile. Call this at every
- * no-op/redirect site gated by `isMobileEditDeprecated()`, so a silent block (e.g. visiting
- * /dashboard/new directly) doesn't look like the app just did nothing.
+ * Show a warning notification when an edit action is blocked on mobile.
+ * Do not use this when removing blocked edit parameters from the URL.
+ * onEnterEditMode already shows this warning; its callers should not repeat it.
  */
 export function notifyMobileEditNotAvailable(): void {
   appEvents.emit(AppEvents.alertWarning, [mobileEditNotAvailableMessage()]);
