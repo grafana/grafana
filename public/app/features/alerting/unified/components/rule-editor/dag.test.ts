@@ -1,6 +1,7 @@
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { Graph } from 'app/core/utils/dag';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
+import { buildDynamicThreshold } from 'app/features/expressions/components/DynamicThreshold/buildDynamicThreshold';
 import { type ExpressionQuery, ExpressionQueryType, type SqlExpressionQuery } from 'app/features/expressions/types';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -474,8 +475,17 @@ describe('getTargets', () => {
       expect(getTargets(dynamicThreshold('A', ''))).toEqual(['A']);
     });
 
-    it('prefers the policy input over refs parsed from stale SQL', () => {
-      expect(getTargets(dynamicThreshold('A', 'SELECT * FROM C'))).toEqual(['A']);
+    it('prefers the policy input when the saved SQL matches the policy', () => {
+      const built = buildDynamicThreshold({ ...policy, inputRefId: 'A' });
+      if (!built.ok) {
+        throw new Error('test policy must compile');
+      }
+
+      expect(getTargets(dynamicThreshold('A', built.expressionSql))).toEqual(['A']);
+    });
+
+    it('parses refs from the SQL when it does not match the policy', () => {
+      expect(getTargets(dynamicThreshold('A', 'SELECT * FROM C'))).toEqual(['C']);
     });
 
     it('has no dependency before an input query is selected', () => {

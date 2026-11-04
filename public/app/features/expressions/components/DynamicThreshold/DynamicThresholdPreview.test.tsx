@@ -6,11 +6,12 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { EvalFunction } from '../../../alerting/state/alertDef';
 import { dataSource } from '../../ExpressionDatasource';
 import { type DynamicThresholdPolicyV1 } from '../../types';
+import { interpolateSourceQueries } from '../../utils/interpolateSourceQueries';
 
 import { DynamicThresholdPreview } from './DynamicThresholdPreview';
 
 jest.mock('../../utils/interpolateSourceQueries', () => ({
-  interpolateSourceQueries: (queries: unknown[]) => Promise.resolve(queries),
+  interpolateSourceQueries: jest.fn((queries: unknown[]) => Promise.resolve(queries)),
 }));
 jest.mock('app/core/services/backend_srv', () => ({ backendSrv: { resolveCancelerIfExists: jest.fn() } }));
 
@@ -63,6 +64,17 @@ beforeEach(() => {
 });
 
 describe('DynamicThresholdPreview', () => {
+  it('sends no request when cleanup happens while source interpolation is pending', async () => {
+    const pending = deferred<unknown[]>();
+    jest.mocked(interpolateSourceQueries).mockReturnValueOnce(pending.promise as never);
+    const { unmount } = render(<DynamicThresholdPreview queries={queries} policy={policy} previewSql="SELECT 1" />);
+
+    unmount();
+    await act(async () => pending.resolve([]));
+
+    expect(runMetaSQLExprQuery).not.toHaveBeenCalled();
+  });
+
   it('shows a loading state, then label columns, value, matched threshold, and condition result', async () => {
     const pending = deferred<DataFrame>();
     runMetaSQLExprQuery.mockReturnValue(pending.promise);

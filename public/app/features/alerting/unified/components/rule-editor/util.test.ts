@@ -241,6 +241,17 @@ describe('rule-editor', () => {
         expect(model.expression).toBe('');
       });
 
+      it('keeps mismatching SQL unchanged and strips the metadata on rename', () => {
+        const query = dynamicThresholdQuery('SELECT * FROM A WHERE edited = 1');
+
+        const [rewired] = queriesWithUpdatedReferences([query], 'A', 'C');
+
+        const model = rewired.model as SqlExpressionQuery;
+        expect(model.expression).toBe('SELECT * FROM A WHERE edited = 1');
+        expect(model).not.toHaveProperty('dynamicThreshold');
+        expect(model.format).toBe('alerting');
+      });
+
       it('leaves policies for other inputs untouched', () => {
         const query = dynamicThresholdQuery('SELECT 1', 'Z');
 

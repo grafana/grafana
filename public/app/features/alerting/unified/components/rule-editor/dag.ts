@@ -1,6 +1,7 @@
 import { compact, memoize, reject, uniq } from 'lodash';
 
 import { type Edge, Graph, type Node } from 'app/core/utils/dag';
+import { hasDynamicThresholdSqlMismatch } from 'app/features/expressions/components/DynamicThreshold/utils';
 import { isDynamicThresholdQuery, isExpressionQuery } from 'app/features/expressions/guards';
 import { type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
@@ -100,7 +101,7 @@ export function getTargets(model: ExpressionQuery) {
   }
   if (isSqlExpression) {
     // Builder metadata is the source of truth for the input, even while the generated SQL is still empty.
-    if (isDynamicThresholdQuery(model)) {
+    if (isDynamicThresholdQuery(model) && !hasDynamicThresholdSqlMismatch(model)) {
       const { inputRefId } = model.dynamicThreshold.policy;
       return inputRefId ? [inputRefId] : [];
     }

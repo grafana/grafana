@@ -106,7 +106,7 @@ export function useDynamicThresholdSourcePreview(queries: AlertQuery[], inputRef
     }
 
     let cancelled = false;
-    fetchSQLFields({ table: inputRefId }, [sourceQuery.model], { range: timeRange })
+    fetchSQLFields({ table: inputRefId }, [sourceQuery.model], { range: timeRange, isCancelled: () => cancelled })
       .then((fields) => {
         if (!cancelled) {
           setFallbackResult({
@@ -146,17 +146,19 @@ export function useDynamicThresholdSourcePreview(queries: AlertQuery[], inputRef
     const refId = `dynamic-threshold-label-values-${generateUUID()}`;
     interpolateSourceQueries([sourceQuery.model], {})
       .then((interpolatedQueries) =>
-        dataSource.runMetaSQLExprQuery(
-          {
-            rawSql: `SELECT DISTINCT ${label} FROM ${table} WHERE ${label} IS NOT NULL ORDER BY ${label} LIMIT 100`,
-            refId,
-          },
-          timeRange,
-          interpolatedQueries
-        )
+        cancelled
+          ? undefined
+          : dataSource.runMetaSQLExprQuery(
+              {
+                rawSql: `SELECT DISTINCT ${label} FROM ${table} WHERE ${label} IS NOT NULL ORDER BY ${label} LIMIT 100`,
+                refId,
+              },
+              timeRange,
+              interpolatedQueries
+            )
       )
       .then((frame) => {
-        if (!cancelled) {
+        if (!cancelled && frame) {
           const field = frame.fields.find((field) => field.name === matchLabel) ?? frame.fields[0];
           setLabelValueResult({
             key: `${sourceKey}\0${matchLabel}`,
