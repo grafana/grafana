@@ -3,13 +3,10 @@ import { Suspense, lazy, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { ErrorBoundaryAlert, LoadingPlaceholder } from '@grafana/ui';
-import { type CodeMirrorEditorProps } from '@grafana/ui/unstable';
+import { CodeMirrorEditor, type CodeMirrorEditorProps } from '@grafana/ui/unstable';
 
 const TemplateCodeMirror = lazy(async () => {
-  const [{ CodeMirrorEditor }, { goTemplate }] = await Promise.all([
-    import('@grafana/ui/unstable'),
-    import('./editor/goTemplate'),
-  ]);
+  const { goTemplate } = await import('./editor/goTemplate');
   const extensions = [goTemplate()];
 
   return {
@@ -27,6 +24,7 @@ interface TemplateEditorProps
 
 export function TemplateEditor({ value, width, showLineNumbers = true, ...props }: TemplateEditorProps) {
   const [content, setContent] = useState({ value, draft: value });
+  const loadingFallback = <LoadingPlaceholder text={t('common.loading', 'Loading...')} />;
 
   if (value !== content.value) {
     setContent({ value, draft: value });
@@ -39,9 +37,10 @@ export function TemplateEditor({ value, width, showLineNumbers = true, ...props 
         title={t('grafana-ui.code-mirror.error-label', 'CodeMirror editor failed to load')}
         style="page"
       >
-        <Suspense fallback={<LoadingPlaceholder text={t('common.loading', 'Loading...')} />}>
+        <Suspense fallback={loadingFallback}>
           <TemplateCodeMirror
             {...props}
+            loadingFallback={loadingFallback}
             value={content.draft}
             onChange={(draft) => setContent({ value, draft })}
             basicSetup={{ lineNumbers: showLineNumbers, foldGutter: showLineNumbers }}
