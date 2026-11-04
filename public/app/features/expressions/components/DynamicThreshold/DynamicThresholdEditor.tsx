@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { Alert, Button, ConfirmModal, InlineField, InlineFieldRow, Select, Spinner, Stack } from '@grafana/ui';
@@ -23,6 +23,8 @@ interface Props {
 
 export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
   const policy = query.dynamicThreshold!.policy;
+  const operatorId = useId();
+  const defaultThresholdId = useId();
   const [pendingMatchLabel, setPendingMatchLabel] = useState<string | null>(null);
   const [showSql, setShowSql] = useState(false);
   const [confirmEditAsSql, setConfirmEditAsSql] = useState(false);
@@ -77,8 +79,11 @@ export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
 
   const fieldError = (field: keyof DynamicThresholdPolicyV1) =>
     errors.find((error) => error.location.field === field && error.location.mappingIndex === undefined)?.message;
-  // The only numeric field is auto-selected and its row hidden, so its errors have no field to sit under.
-  const showNumericField = !(source.numericFields.length === 1 && source.numericFields[0] === '__value__');
+  // The row is hidden only while the auto-selected __value__ is the one numeric field; any other saved value stays editable.
+  const hasDefaultValueField = policy.valueField === '' || policy.valueField === '__value__';
+  const showNumericField = source.hasSchema
+    ? !(source.numericFields.length === 1 && source.numericFields[0] === '__value__' && hasDefaultValueField)
+    : !hasDefaultValueField;
   const supportedFields = new Set<keyof DynamicThresholdPolicyV1>([
     'inputRefId',
     ...(showNumericField ? (['valueField'] as const) : []),
@@ -87,7 +92,10 @@ export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
     'defaultThreshold',
   ]);
   const generalErrors = errors.filter(
-    (error) => error.location.mappingIndex === undefined && !supportedFields.has(error.location.field)
+    (error) =>
+      error.location.mappingIndex === undefined &&
+      !supportedFields.has(error.location.field) &&
+      !(error.location.field === 'valueField' && !source.hasSchema)
   );
 
   const changeMatchLabel = (matchLabel: string) => {
@@ -208,6 +216,7 @@ export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
           error={fieldError('evaluator')}
         >
           <ThresholdSelect
+            id={operatorId}
             aria-label={t('expressions.dynamic-threshold.operator', 'Operator')}
             value={thresholdFunctions.find((option) => option.value === policy.evaluator)}
             onChange={(option) => {
@@ -239,11 +248,13 @@ export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
         <InlineField
           label={t('expressions.dynamic-threshold.default-label', 'Default')}
           labelWidth={DYNAMIC_THRESHOLD_LABEL_WIDTH}
+          htmlFor={`${defaultThresholdId}-0`}
           invalid={fieldError('defaultThreshold') ? true : undefined}
           error={fieldError('defaultThreshold')}
           required
         >
           <ThresholdInputs
+            idPrefix={defaultThresholdId}
             thresholds={policy.defaultThreshold}
             thresholdCount={thresholdCount}
             getAriaLabel={(index) =>

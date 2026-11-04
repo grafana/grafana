@@ -494,6 +494,80 @@ describe('DynamicThresholdEditor', () => {
       expect(screen.getByRole('combobox', { name: 'Numeric field' })).toBeInTheDocument();
     });
 
+    it('keeps the numeric field visible when the saved value field is not __value__', () => {
+      mockSourcePreview.mockReturnValue({
+        numericFields: ['__value__'],
+        stringFields: ['region', 'cluster'],
+        labelValues: [],
+        loading: false,
+        error: null,
+        hasSchema: true,
+      });
+      render(
+        <DynamicThresholdEditor
+          query={makeQuery({ valueField: 'stale' })}
+          queries={[sourceQuery]}
+          onChange={jest.fn()}
+        />
+      );
+
+      expect(screen.getByRole('combobox', { name: 'Numeric field' })).toBeInTheDocument();
+    });
+
+    it('does not show the numeric field while the schema loads unless the saved value field is custom', () => {
+      mockSourcePreview.mockReturnValue({
+        numericFields: [],
+        stringFields: [],
+        labelValues: [],
+        loading: true,
+        error: null,
+        hasSchema: false,
+      });
+      const { unmount } = render(
+        <DynamicThresholdEditor query={makeQuery({ valueField: '' })} queries={[sourceQuery]} onChange={jest.fn()} />
+      );
+      expect(screen.queryByRole('combobox', { name: 'Numeric field' })).not.toBeInTheDocument();
+      expect(screen.queryByText('Unable to generate SQL')).not.toBeInTheDocument();
+      unmount();
+
+      render(
+        <DynamicThresholdEditor
+          query={makeQuery({ valueField: 'latency' })}
+          queries={[sourceQuery]}
+          onChange={jest.fn()}
+        />
+      );
+      expect(screen.getByRole('combobox', { name: 'Numeric field' })).toBeInTheDocument();
+    });
+
+    it('gives every control a unique id and points the Operator and Default labels at a control', () => {
+      render(
+        <DynamicThresholdEditor
+          query={makeQuery({
+            evaluator: EvalFunction.IsWithinRange,
+            mappings: [
+              { labelValue: 'us-east', thresholds: [1, 2] },
+              { labelValue: 'eu-west', thresholds: [3, 4] },
+            ],
+            defaultThreshold: [5, 6],
+          })}
+          queries={[sourceQuery]}
+          onChange={jest.fn()}
+        />
+      );
+
+      const ids = Array.from(document.querySelectorAll('input[id], button[id]')).map((element) => element.id);
+      expect(ids.filter((id, index) => ids.indexOf(id) !== index)).toEqual([]);
+      expect(screen.getByText('Operator').closest('label')).toHaveAttribute(
+        'for',
+        screen.getByRole('button', { name: 'Operator' }).id
+      );
+      expect(screen.getByText('Default *').closest('label')).toHaveAttribute(
+        'for',
+        screen.getByRole('spinbutton', { name: 'Default lower threshold' }).id
+      );
+    });
+
     it('compiles identical SQL whether or not the numeric field is shown', () => {
       const compiledFor = (numericFields: string[]) => {
         mockSourcePreview.mockReturnValue({
@@ -578,6 +652,37 @@ describe('DynamicThresholdEditor', () => {
 
       await user.type(screen.getByRole('spinbutton', { name: 'Mapping row 1 threshold' }), '4');
       expect(screen.getByText('Mapping row 1 requires a label value.')).toBeInTheDocument();
+    });
+
+    it('shows the error of a saved empty mapping row on mount', () => {
+      render(
+        <DynamicThresholdEditor
+          query={makeQuery({ mappings: [{ labelValue: '', thresholds: [] }] })}
+          queries={[sourceQuery]}
+          onChange={jest.fn()}
+        />
+      );
+
+      expect(screen.getByText(/Mapping row 1 requires a label value/)).toBeInTheDocument();
+    });
+
+    it('forgets touched rows when the mappings are cleared by a match label change', async () => {
+      const user = userEvent.setup();
+
+      function StatefulEditor() {
+        const [query, setQuery] = useState(makeQuery({ mappings: [{ labelValue: 'us-east', thresholds: [5] }] }));
+        return <DynamicThresholdEditor query={query} queries={[sourceQuery]} onChange={setQuery} />;
+      }
+
+      render(<StatefulEditor />);
+      await user.click(screen.getByRole('combobox', { name: 'Match label' }));
+      await user.click(screen.getByText('cluster'));
+      await user.click(screen.getByRole('button', { name: 'Change label' }));
+      expect(screen.queryByRole('combobox', { name: 'Mapping row 1 label value' })).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Add mapping' }));
+      expect(screen.getByRole('combobox', { name: 'Mapping row 1 label value' })).toBeInTheDocument();
+      expect(screen.queryByText(/Mapping row 1 requires/)).not.toBeInTheDocument();
     });
 
     it('shows a duplicate label value error under the offending row', () => {
