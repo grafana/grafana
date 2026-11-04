@@ -139,7 +139,7 @@ If you need to hide columns, you can do so using [data transformations](ref:data
 
 ## Column header and cell menus
 
-Columns headers and cells both have menus where you can access various table options.
+Column headers and cells both have menus where you can access various table options.
 
 Column header menus include filtering options, and column management options.
 Cell menus include filtering and cell value inspection options.
