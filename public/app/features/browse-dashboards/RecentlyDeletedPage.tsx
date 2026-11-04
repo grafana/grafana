@@ -50,7 +50,7 @@ const RecentlyDeletedPage = memo(() => {
   const pageNav = useDashboardsPageNav(NavID.dashboardsRecentlyDeleted);
 
   return (
-    <Page navId="dashboards/recently-deleted" pageNav={pageNav}>
+    <Page navId={NavID.dashboardsRecentlyDeleted} pageNav={pageNav}>
       <Page.Contents className={styles.pageContents}>
         <DeletedDashboardsLimitBanner />
         <div>

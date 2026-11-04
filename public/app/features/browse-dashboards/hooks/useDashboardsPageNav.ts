@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { type NavModelItem } from '@grafana/data';
 import { useFlagGrafanaNavigationInfoArchRefresh } from '@grafana/runtime/internal';
-import { DASHBOARDS_TAB_NAV_IDS, NavID } from 'app/core/navtree/constants';
+import { DASHBOARDS_TAB_NAV_IDS, type NavId, NavID } from 'app/core/navtree/constants';
 import { useSelector } from 'app/types/store';
 
 /**
@@ -16,33 +16,35 @@ import { useSelector } from 'app/types/store';
  * rules would drift from the first. An item the user cannot see is simply
  * missing from the section, so it is missing from the bar.
  *
- * Only the root list takes this. A folder has its own tabs, from useNavModel.
+ * Dashboard-level pages take this. A folder has its own tabs, from useNavModel.
  */
-export function useDashboardsPageNav(activeId: string, currentPageId = activeId): NavModelItem | undefined {
+export function useDashboardsPageNav(activeTabId: NavId, pageId: NavId = NavID.dashboards): NavModelItem | undefined {
   const isInfoArchRefresh = useFlagGrafanaNavigationInfoArchRefresh();
   const section = useSelector((state) => state.navIndex[NavID.dashboards]);
+  const page = useSelector((state) => state.navIndex[pageId]);
 
   return useMemo(() => {
-    if (!isInfoArchRefresh || !section) {
+    if (!isInfoArchRefresh || !section || !page) {
       return undefined;
     }
 
-    // The list is the section itself, so its tab is the one that has to be made
-    const listTab: NavModelItem = { id: NavID.dashboards, text: section.text, url: '/dashboards', icon: 'apps' };
-    const tabs = [listTab, ...DASHBOARDS_TAB_NAV_IDS.map((id) => section.children?.find((child) => child.id === id))]
-      .filter((tab) => tab !== undefined)
-      .map((tab) => ({ ...tab, active: tab.id === activeId }));
+    const tabItems = [
+      section,
+      ...DASHBOARDS_TAB_NAV_IDS.map((id) => section.children?.find((child) => child.id === id)),
+    ].filter((tab): tab is NavModelItem => tab !== undefined);
+    const activeTab = tabItems.find((tab) => tab.id === activeTabId);
+    const tabs = tabItems.map(({ id, text, url, icon }) => ({
+      id,
+      text,
+      url,
+      icon,
+      active: id === activeTabId,
+    }));
 
-    // Starred shares the tabs while retaining its own page identity. The tab pages use this
-    // synthetic nav for their breadcrumb and browser title, so it must remain visible for them.
-    const isDifferentPage = currentPageId !== activeId;
     return {
-      ...section,
-      // The hidden Starred copy must not participate in breadcrumb traversal or it suppresses the real page.
-      url: isDifferentPage ? undefined : section.url,
-      parentItem: isDifferentPage ? undefined : section.parentItem,
-      hideFromBreadcrumbs: isDifferentPage,
+      ...page,
+      subTitle: pageId === NavID.dashboards ? activeTab?.subTitle : page.subTitle,
       children: tabs,
     };
-  }, [activeId, currentPageId, isInfoArchRefresh, section]);
+  }, [activeTabId, isInfoArchRefresh, page, pageId, section]);
 }

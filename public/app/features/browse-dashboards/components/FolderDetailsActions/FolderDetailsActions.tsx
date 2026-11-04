@@ -5,7 +5,6 @@ import { type OwnerReference as OwnerReferenceType } from '@grafana/api-clients/
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { useFlagGrafanaNavigationInfoArchRefresh } from '@grafana/runtime/internal';
 import { LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type CombinedFolder, useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { OwnerReference } from 'app/core/components/OwnerReferences/OwnerReference';
@@ -24,7 +23,12 @@ import { refetchChildren } from '../../state/actions';
 import CreateNewButton from '../CreateNewButton';
 import { FolderActionsButton } from '../FolderActionsButton';
 
-export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder }) => {
+interface Props {
+  folderDTO?: CombinedFolder;
+  showRecentlyDeleted?: boolean;
+}
+
+export const FolderDetailsActions = ({ folderDTO, showRecentlyDeleted = true }: Props) => {
   // Fetch the root (aka general) folder if we're not in a specific folder
   const { data: rootFolderDTO } = useGetFolderQueryFacade(folderDTO ? undefined : 'general');
   // At the root this resolves no repository on purpose. Creating a folder in the database is always
@@ -47,11 +51,6 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
   };
 
   const canReadTeams = contextSrv.hasPermission(AccessControlAction.ActionTeamsRead);
-  // At root the browse view carries a Recently deleted tab, so the button would
-  // only repeat it. A folder has its own tabs and no such tab, so it keeps the
-  // button as its way there.
-  const isInfoArchRefresh = useFlagGrafanaNavigationInfoArchRefresh();
-  const showRecentlyDeleted = !isInfoArchRefresh || Boolean(folderDTO);
 
   return (
     <Stack alignItems="center" wrap>

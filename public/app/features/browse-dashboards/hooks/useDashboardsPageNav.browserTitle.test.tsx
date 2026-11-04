@@ -3,7 +3,7 @@ import { act, render, waitFor } from 'test/test-utils';
 import { type NavIndex, type NavModelItem } from '@grafana/data';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { Page } from 'app/core/components/Page/Page';
-import { NavID } from 'app/core/navtree/constants';
+import { type NavId, NavID } from 'app/core/navtree/constants';
 
 import { useDashboardsPageNav } from './useDashboardsPageNav';
 
@@ -40,10 +40,10 @@ function buildNavIndex(): NavIndex {
   };
 }
 
-function PageHarness({ activeId, currentPageId }: { activeId: string; currentPageId: string }) {
-  const pageNav = useDashboardsPageNav(activeId, currentPageId);
+function PageHarness({ activeId, navId, pageId }: { activeId: NavId; navId: NavId; pageId?: NavId }) {
+  const pageNav = useDashboardsPageNav(activeId, pageId);
   return (
-    <Page navId={currentPageId} pageNav={pageNav}>
+    <Page navId={navId} pageNav={pageNav}>
       <Page.Contents>{null}</Page.Contents>
     </Page>
   );
@@ -57,15 +57,20 @@ describe('dashboard page browser titles', () => {
   });
 
   it.each([
-    [NavID.dashboards, NavID.dashboards, 'Dashboards - Grafana'],
-    [NavID.dashboards, NavID.starred, 'Starred - Grafana'],
-    [NavID.dashboardsLibraryPanels, NavID.dashboardsLibraryPanels, 'Library panels - Dashboards - Grafana'],
-    [NavID.dashboardsVariables, NavID.dashboardsVariables, 'Variables - Dashboards - Grafana'],
-    [NavID.dashboardsRecentlyDeleted, NavID.dashboardsRecentlyDeleted, 'Recently deleted - Dashboards - Grafana'],
-  ])('sets the title for active tab %s on page %s', async (activeId, currentPageId, expectedTitle) => {
+    [NavID.dashboards, NavID.dashboards, undefined, 'Dashboards - Grafana'],
+    [NavID.dashboards, NavID.starred, NavID.starred, 'Starred - Grafana'],
+    [NavID.dashboardsLibraryPanels, NavID.dashboardsLibraryPanels, undefined, 'Library panels - Dashboards - Grafana'],
+    [NavID.dashboardsVariables, NavID.dashboardsVariables, undefined, 'Variables - Dashboards - Grafana'],
+    [
+      NavID.dashboardsRecentlyDeleted,
+      NavID.dashboardsRecentlyDeleted,
+      undefined,
+      'Recently deleted - Dashboards - Grafana',
+    ],
+  ])('sets the title for active tab %s on page %s', async (activeId, navId, pageId, expectedTitle) => {
     setTestFlags({ 'grafana.navigationInfoArchRefresh': true });
 
-    render(<PageHarness activeId={activeId} currentPageId={currentPageId} />, {
+    render(<PageHarness activeId={activeId} navId={navId} pageId={pageId} />, {
       preloadedState: { navIndex: buildNavIndex() },
     });
 

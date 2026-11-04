@@ -511,6 +511,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
 
         expect(await screen.findByRole('tab', { name: 'Dashboards' })).toHaveAttribute('aria-selected', 'true');
         expect(screen.queryByRole('tab', { name: 'Starred' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Recently deleted' })).not.toBeInTheDocument();
         await waitFor(() => expect(document.title).toBe('Starred - Grafana'));
       } finally {
         await act(async () => {

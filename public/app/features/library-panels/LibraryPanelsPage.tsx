@@ -13,7 +13,7 @@ export const LibraryPanelsPage = () => {
   const pageNav = useDashboardsPageNav(NavID.dashboardsLibraryPanels);
 
   return (
-    <Page navId="dashboards/library-panels" pageNav={pageNav}>
+    <Page navId={NavID.dashboardsLibraryPanels} pageNav={pageNav}>
       <Page.Contents>
         <LibraryPanelsSearch onClick={setSelected} showSecondaryActions showSort showPanelFilter showFolderFilter />
         {selected ? <OpenLibraryPanelModal onDismiss={() => setSelected(undefined)} libraryPanel={selected} /> : null}

@@ -1,8 +1,8 @@
 import { act, getWrapper, renderHook } from 'test/test-utils';
 
-import { type NavModelItem } from '@grafana/data';
+import { type NavIndex, type NavModelItem } from '@grafana/data';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { NavID } from 'app/core/navtree/constants';
+import { type NavId, NavID } from 'app/core/navtree/constants';
 import { configureStore } from 'app/store/configureStore';
 
 import { useDashboardsPageNav } from './useDashboardsPageNav';
@@ -18,17 +18,28 @@ const dashboardsSection: NavModelItem = {
     { id: 'dashboards/playlists', text: 'Playlists', url: '/playlists' },
     { id: NavID.dashboardsLibraryPanels, text: 'Library panels', url: '/library-panels' },
     { id: NavID.dashboardsVariables, text: 'Variables', url: '/dashboards/variables' },
-    { id: NavID.dashboardsRecentlyDeleted, text: 'Recently deleted', url: '/dashboard/recently-deleted' },
+    {
+      id: NavID.dashboardsRecentlyDeleted,
+      text: 'Recently deleted',
+      url: '/dashboard/recently-deleted',
+      subTitle: 'Deleted dashboards are kept for 30 days.',
+    },
   ],
 };
 
 function renderNav(
-  activeId: string,
+  activeTabId: NavId,
   section: NavModelItem | null = dashboardsSection,
-  currentPageId: string = activeId
+  pageId: NavId = NavID.dashboards
 ) {
-  const store = configureStore({ navIndex: section ? { [section.id!]: section } : {} });
-  return renderHook(() => useDashboardsPageNav(activeId, currentPageId), { wrapper: getWrapper({ store }) });
+  const navIndex: NavIndex = section
+    ? {
+        [section.id!]: section,
+        [NavID.starred]: { id: NavID.starred, text: 'Starred', url: '/dashboards?starred' },
+      }
+    : {};
+  const store = configureStore({ navIndex });
+  return renderHook(() => useDashboardsPageNav(activeTabId, pageId), { wrapper: getWrapper({ store }) });
 }
 
 describe('useDashboardsPageNav', () => {
@@ -76,16 +87,14 @@ describe('useDashboardsPageNav', () => {
 
     expect(tabs[0]).toMatchObject({ id: NavID.dashboards, text: 'Dashboards', active: true });
     expect(tabs.map((tab) => tab.id)).not.toContain(NavID.starred);
-    expect(pageNav).toMatchObject({ hideFromBreadcrumbs: true, url: undefined });
+    expect(pageNav).toMatchObject({ id: NavID.starred, text: 'Starred', url: '/dashboards?starred' });
   });
 
-  it('includes the synthetic page nav in breadcrumbs for Dashboard tabs but not Starred', () => {
+  it('uses the active tab subtitle on Dashboard tab pages', () => {
     setTestFlags({ [INFO_ARCH_REFRESH_FLAG]: true });
 
-    expect(renderNav(NavID.dashboards).result.current?.hideFromBreadcrumbs).toBe(false);
-    expect(renderNav(NavID.dashboardsVariables).result.current?.hideFromBreadcrumbs).toBe(false);
-    expect(renderNav(NavID.dashboards, dashboardsSection, NavID.starred).result.current?.hideFromBreadcrumbs).toBe(
-      true
+    expect(renderNav(NavID.dashboardsRecentlyDeleted).result.current?.subTitle).toBe(
+      'Deleted dashboards are kept for 30 days.'
     );
   });
 

@@ -116,8 +116,9 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   // At root the Dashboards pages share a tab bar; inside a folder the folder's
   // own tabs win
   const currentPageId = isStarredView ? NavID.starred : NavID.dashboards;
-  const dashboardsNav = useDashboardsPageNav(NavID.dashboards, currentPageId);
-  const navModel = folderUID ? folderNav : (dashboardsNav ?? folderNav);
+  const rootNav = useDashboardsPageNav(NavID.dashboards, currentPageId);
+  const tabsNav = folderUID ? undefined : rootNav;
+  const navModel = tabsNav ?? folderNav;
 
   const [saveFolder] = useUpdateFolder();
   const hasSelection = useHasSelection();
@@ -185,7 +186,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
       pageNav={navModel}
       onEditTitle={showEditTitle && !isProvisionedFolder ? onEditTitle : undefined}
       renderTitle={renderTitle}
-      actions={<FolderDetailsActions folderDTO={folderDTO} />}
+      actions={<FolderDetailsActions folderDTO={folderDTO} showRecentlyDeleted={!tabsNav} />}
     >
       <Page.Contents className={styles.pageContents}>
         <ProvisionedFolderPreviewBanner queryParams={queryParams} />

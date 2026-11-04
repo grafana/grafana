@@ -241,7 +241,7 @@ export default function VariablesManagementPage() {
     // If the list failed, still allow create with whatever names we have (may be empty).
     const showNewEditor = isNew && (!isLoading || isError);
     return (
-      <Page navId={originFolderUid ? 'dashboards/browse' : 'dashboards/variables'} pageNav={pageNav}>
+      <Page navId={originFolderUid ? NavID.dashboards : NavID.dashboardsVariables} pageNav={pageNav}>
         <Page.Contents isLoading={isNew ? isLoading && !isError : isLoading}>
           {showNewEditor || editVariable ? (
             // Key by route identity so local editor state resets when navigating
@@ -276,7 +276,7 @@ export default function VariablesManagementPage() {
 
   return (
     <Page
-      navId="dashboards/variables"
+      navId={NavID.dashboardsVariables}
       pageNav={listPageNav}
       actions={
         !isEmpty &&
