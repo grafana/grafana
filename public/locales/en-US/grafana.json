@@ -5404,6 +5404,21 @@
         "subtitle": "Connect your infrastructure to Grafana Cloud using data sources, integrations and apps. Use this page to add to manage everything from data ingestion to private connections and telemetry pipelines."
       }
     },
+    "cloud-provider-cards": {
+      "aws": {
+        "description": "CloudWatch, Athena, Redshift, and 7 more",
+        "name": "AWS data sources"
+      },
+      "azure": {
+        "description": "Azure Monitor, Data Explorer, and managed Prometheus",
+        "name": "Azure data sources"
+      },
+      "coming-soon": "Coming soon",
+      "gcp": {
+        "description": "BigQuery, Cloud Monitoring, and more",
+        "name": "Google Cloud data sources"
+      }
+    },
     "connect-data": {
       "apps-header": "Apps",
       "datasources-header": "Data Sources",

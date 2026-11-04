@@ -7,6 +7,8 @@ import { useStyles2 } from '@grafana/ui';
 import { CardGrid, type CardGridItem } from '../CardGrid/CardGrid';
 import { CategoryHeader } from '../CategoryHeader/CategoryHeader';
 
+import { CloudProviderCards, DS_ONBOARDING_PLUGIN_ID } from './CloudProviderCards';
+
 const getStyles = (theme: GrafanaTheme2) => ({
   spacer: css({
     height: theme.spacing(2),
@@ -29,6 +31,7 @@ export function PluginContentView({
   onClickCardGridItem,
 }: PluginContentViewProps) {
   const styles = useStyles2(getStyles);
+  const hasOnboardingApp = appsCardGridItems.some((item) => item.id === DS_ONBOARDING_PLUGIN_ID);
 
   if (groupBy === 'type') {
     return (
@@ -47,7 +50,16 @@ export function PluginContentView({
           <>
             <div className={styles.spacer} />
             <CategoryHeader iconName="apps" label={t('connections.connect-data.apps-header', 'Apps')} />
-            <CardGrid items={appsCardGridItems} onClickItem={onClickCardGridItem} />
+            {hasOnboardingApp && (
+              <>
+                <CloudProviderCards />
+                <div className={styles.spacer} />
+              </>
+            )}
+            <CardGrid
+              items={appsCardGridItems.filter((item) => item.id !== DS_ONBOARDING_PLUGIN_ID)}
+              onClickItem={onClickCardGridItem}
+            />
           </>
         )}
       </>

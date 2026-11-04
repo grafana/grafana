@@ -20,6 +20,7 @@ import { ROUTES } from '../../constants';
 import { CardGrid, type CardGridItem } from './CardGrid/CardGrid';
 import { CategoryHeader } from './CategoryHeader/CategoryHeader';
 import { NoAccessModal } from './NoAccessModal/NoAccessModal';
+import { CloudProviderCards, DS_ONBOARDING_PLUGIN_ID } from './components/CloudProviderCards';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   searchContainer: css({
@@ -131,6 +132,8 @@ export function AddNewConnectionLegacy() {
       })),
     [dataSourcesPlugins]
   );
+
+  const hasOnboardingApp = appsPlugins.some((plugin) => plugin.id === DS_ONBOARDING_PLUGIN_ID);
 
   const appsCardGridItems = useMemo(
     () =>
@@ -245,7 +248,16 @@ export function AddNewConnectionLegacy() {
               <>
                 <div className={styles.spacer} />
                 <CategoryHeader iconName="apps" label={t('connections.connect-data.apps-header', 'Apps')} />
-                <CardGrid items={appsCardGridItems} onClickItem={onClickCardGridItem} />
+                {hasOnboardingApp && (
+                  <>
+                    <CloudProviderCards />
+                    <div className={styles.spacer} />
+                  </>
+                )}
+                <CardGrid
+                  items={appsCardGridItems.filter((item) => item.id !== DS_ONBOARDING_PLUGIN_ID)}
+                  onClickItem={onClickCardGridItem}
+                />
               </>
             )}
           </>
