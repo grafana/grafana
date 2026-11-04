@@ -977,8 +977,9 @@ func TestNatsEventSourceWatch(t *testing.T) {
 		src := NewNatsEventSource(sub, reg, &logging.NoOpLogger{})
 
 		ready := make(chan error, 1)
-		missed := 0
-		out := src.Watch(t.Context(), WatchOptions{BufferSize: 1}, ready, func() { missed++ })
+		expiry := NewWatchExpiry()
+		generation := expiry.WatchInvalidation()
+		out := src.Watch(t.Context(), WatchOptions{BufferSize: 1}, ready, expiry)
 		require.NoError(t, <-ready)
 		require.Equal(t, resourcewatch.SubjectAllResources, sub.subject)
 
@@ -997,16 +998,16 @@ func TestNatsEventSourceWatch(t *testing.T) {
 		}
 
 		// Fill the output, then block the settle loop on it, then the input:
-		// the next drop is reported to this watch's own handler.
+		// the next drop is reported to this watch's own invalidator.
 		for range 2 {
 			sub.currentHandler()("some.subject", notification)
 			time.Sleep(time.Second)
 			synctest.Wait()
 		}
 		sub.currentHandler()("some.subject", notification)
-		require.Zero(t, missed)
+		require.Equal(t, generation, expiry.WatchInvalidation())
 		sub.currentHandler()("some.subject", notification)
-		require.Equal(t, 1, missed)
+		require.NotEqual(t, generation, expiry.WatchInvalidation())
 
 		count, err := testutil.GatherAndCount(reg, "grafana_storage_server_nats_notifier_dropped_events_total")
 		require.NoError(t, err)
