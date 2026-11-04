@@ -17,8 +17,6 @@ import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboards';
 import { useVisualRefreshNudge } from 'app/features/visual-refresh/useVisualRefreshNudge';
 
-import { AdministrationSectionNav, SECTION_NAV_WIDTH } from './AdministrationSectionNav/AdministrationSectionNav';
-import { useAdministrationSectionNav } from './AdministrationSectionNav/useAdministrationSectionNav';
 import { AppChromeMenu } from './AppChromeMenu';
 import { type AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
 import { ExtensionSidebar } from './ExtensionSidebar/ExtensionSidebar';
@@ -36,6 +34,7 @@ import { getChromeHeaderLevelHeight, useChromeHeaderLevels } from './TopBar/useC
 import { AutoOpenMegaMenuForScopedContent } from './useAutoOpenMegaMenuForScopedContent';
 
 export const EXTENSION_SIDEBAR_FLOATING_TESTID = 'extension-sidebar-floating';
+const SIDE_PANEL_WIDTH = '240px';
 
 const CommandPalette = lazy(() =>
   import('app/features/commandPalette/CommandPalette').then((module) => ({ default: module.CommandPalette }))
@@ -92,10 +91,7 @@ export function AppChrome({ children }: Props) {
   );
 
   const headerLevels = useChromeHeaderLevels();
-  const administrationSectionNav = useAdministrationSectionNav(state.pageNav ?? state.sectionNav.node);
-  const showAdministrationSectionNav = Boolean(
-    administrationSectionNav && !state.chromeless && !isScopesDashboardsOpen
-  );
+  const showSidePanel = Boolean(state.sidePanel && !state.chromeless && !isScopesDashboardsOpen);
   const styles = useStyles2(getStyles, headerLevels, getChromeHeaderLevelHeight(), visualRefreshEnabled);
   const contentSizeStyles = useStyles2(getContentSizeStyles, extensionSidebarWidth, floatingExtensionSidebarWidth);
   const dragStyles = useStyles2(getDragStyles, 'middle');
@@ -203,21 +199,21 @@ export function AppChrome({ children }: Props) {
               </ErrorBoundaryAlert>
             </div>
           )}
-          {administrationSectionNav && showAdministrationSectionNav && (
+          {showSidePanel && (
             <div
-              className={cx(styles.sectionNavContainer, {
-                [styles.sectionNavContainerDocked]: menuDockedAndOpen,
+              className={cx(styles.sidePanelContainer, {
+                [styles.sidePanelContainerDocked]: menuDockedAndOpen,
               })}
             >
-              <AdministrationSectionNav model={administrationSectionNav} />
+              {state.sidePanel}
             </div>
           )}
           <main
             className={cx(styles.pageContainer, {
               [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
               [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
-              [styles.pageContainerSectionNav]: showAdministrationSectionNav && !menuDockedAndOpen,
-              [styles.pageContainerSectionNavDocked]: showAdministrationSectionNav && menuDockedAndOpen,
+              [styles.pageContainerSidePanel]: showSidePanel && !menuDockedAndOpen,
+              [styles.pageContainerSidePanelDocked]: showSidePanel && menuDockedAndOpen,
               [styles.pageContainerWithSidebar]: !state.chromeless && isExtensionSidebarOpen,
               // Floating takes no width from the page, so the docked width is 0.
               [contentSizeStyles.contentWidth]:
@@ -420,18 +416,18 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       overflow: 'hidden',
       position: 'relative',
     }),
-    sectionNavContainer: css(
+    sidePanelContainer: css(
       {
         position: 'fixed',
         top: headerLevels * headerHeight,
         bottom: 0,
         left: 0,
-        width: SECTION_NAV_WIDTH,
+        width: SIDE_PANEL_WIDTH,
         overflowY: 'auto',
         zIndex: 1,
         borderRight: `1px solid ${theme.colors.border.weak}`,
       },
-      // Forms the left edge of the page card, so the card's own left border and corners are dropped (see pageContainerSectionNav)
+      // Forms the left edge of the page card, so the card's own left border and corners are dropped (see pageContainerSidePanel)
       visualRefreshEnabled && {
         bottom: theme.spacing(0.5),
         left: theme.spacing(0.5),
@@ -442,7 +438,7 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
         borderTopRightRadius: 'unset',
       }
     ),
-    sectionNavContainerDocked: css(
+    sidePanelContainerDocked: css(
       {
         left: MENU_WIDTH,
       },
@@ -450,23 +446,23 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
         left: `calc(${MENU_WIDTH} + ${theme.spacing(0.5)})`,
       }
     ),
-    pageContainerSectionNav: css(
+    pageContainerSidePanel: css(
       {
-        paddingLeft: SECTION_NAV_WIDTH,
+        paddingLeft: SIDE_PANEL_WIDTH,
       },
       visualRefreshEnabled && {
-        paddingLeft: `calc(${SECTION_NAV_WIDTH} + ${theme.spacing(0.5)})`,
-        ...pageCardFrame(`calc(${SECTION_NAV_WIDTH} + ${theme.spacing(0.5)})`),
+        paddingLeft: `calc(${SIDE_PANEL_WIDTH} + ${theme.spacing(0.5)})`,
+        ...pageCardFrame(`calc(${SIDE_PANEL_WIDTH} + ${theme.spacing(0.5)})`),
         '& [data-page-card]': pageCardJoinedToNav,
       }
     ),
-    pageContainerSectionNavDocked: css(
+    pageContainerSidePanelDocked: css(
       {
-        paddingLeft: `calc(${MENU_WIDTH} + ${SECTION_NAV_WIDTH})`,
+        paddingLeft: `calc(${MENU_WIDTH} + ${SIDE_PANEL_WIDTH})`,
       },
       visualRefreshEnabled && {
-        paddingLeft: `calc(${MENU_WIDTH} + ${SECTION_NAV_WIDTH} + ${theme.spacing(0.5)})`,
-        ...pageCardFrame(`calc(${MENU_WIDTH} + ${SECTION_NAV_WIDTH} + ${theme.spacing(0.5)})`),
+        paddingLeft: `calc(${MENU_WIDTH} + ${SIDE_PANEL_WIDTH} + ${theme.spacing(0.5)})`,
+        ...pageCardFrame(`calc(${MENU_WIDTH} + ${SIDE_PANEL_WIDTH} + ${theme.spacing(0.5)})`),
         '& [data-page-card]': pageCardJoinedToNav,
       }
     ),

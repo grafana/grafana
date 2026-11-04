@@ -24,6 +24,7 @@ import {
   type ExtensionSidebarContextType,
   useExtensionSidebarContext,
 } from './ExtensionSidebar/ExtensionSidebarProvider';
+import { SectionSidePanel } from './SectionNav/SectionSidePanel';
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -166,6 +167,7 @@ const setup = (children: ReactNode, { path, extraNav = [] }: { path?: string; ex
   const tree = (
     <KBarProvider>
       <AppChrome>
+        <SectionSidePanel />
         <div data-testid="page-children">{children}</div>
       </AppChrome>
     </KBarProvider>

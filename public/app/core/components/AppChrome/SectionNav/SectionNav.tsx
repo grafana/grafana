@@ -1,23 +1,19 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Icon, Link, useStyles2 } from '@grafana/ui';
 
-import { type AdministrationSectionNavModel } from './useAdministrationSectionNav';
-
-export const SECTION_NAV_WIDTH = '240px';
-
 interface Props {
-  model: AdministrationSectionNavModel;
+  label: string;
+  groups: NavModelItem[];
+  activeId?: string;
 }
 
-export function AdministrationSectionNav({ model }: Props) {
+export function SectionNav({ label, groups, activeId }: Props) {
   const styles = useStyles2(getStyles);
-  const { groups, activeId } = model;
 
   return (
-    <nav aria-label={t('navigation.administration-section-nav.label', 'Administration')} className={styles.nav}>
+    <nav aria-label={label} className={styles.nav}>
       {groups.map((group) => (
         <div key={group.id ?? group.text} className={styles.group}>
           <h2 className={styles.heading}>{group.text}</h2>
@@ -32,13 +28,7 @@ export function AdministrationSectionNav({ model }: Props) {
   );
 }
 
-function SectionNavLink({
-  item,
-  isActive,
-}: {
-  item: AdministrationSectionNavModel['groups'][number];
-  isActive: boolean;
-}) {
+function SectionNavLink({ item, isActive }: { item: NavModelItem; isActive: boolean }) {
   const styles = useStyles2(getStyles);
 
   return (

@@ -21,6 +21,7 @@ export interface AppChromeState {
   pageNav?: NavModelItem;
   actions?: React.ReactNode;
   breadcrumbActions?: React.ReactNode;
+  sidePanel?: React.ReactNode;
   megaMenuOpen: boolean;
   megaMenuDocked: boolean;
   kioskMode: KioskMode | null;
@@ -119,6 +120,13 @@ export class AppChromeService {
       this.state.next(newState);
     }
   }
+
+  public setSidePanel = (sidePanel: React.ReactNode) => {
+    const current = this.state.getValue();
+    if (current.sidePanel !== sidePanel) {
+      this.state.next({ ...current, sidePanel });
+    }
+  };
 
   public setReturnToPrevious = (returnToPrevious: ReturnToPreviousProps) => {
     const previousPage = this.state.getValue().returnToPrevious;
