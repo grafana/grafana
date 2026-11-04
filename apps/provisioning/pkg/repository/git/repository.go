@@ -250,33 +250,9 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 		r.SetBranch(branch)
 	}
 
-	// Check authorization
-	if ok, err := r.client.CanRead(ctx); err != nil || !ok {
-		// Map nanogit errors to repository errors for proper HTTP status codes
-		if err != nil {
-			err = mapNanogitError(err)
-			if result := checkHTTPError(err, field.NewPath("secure", "token")); result != nil {
-				return result, nil
-			}
-		}
-
-		detail := "not authorized"
-		if err != nil {
-			detail = fmt.Sprintf("failed check if authorized: %v", err)
-		}
-
-		return &provisioning.TestResults{
-			Code:    http.StatusUnauthorized,
-			Success: false,
-			Errors: []provisioning.ErrorDetails{{
-				Type:   metav1.CauseTypeFieldValueInvalid,
-				Field:  field.NewPath("secure", "token").String(),
-				Detail: detail,
-			}},
-		}, nil
-	}
-
-	// Check if repository exists
+	// Check that the repository exists and can be read. nanogit's CanRead reports a
+	// 401 and a 403 alike as "false", hiding the status the server answered with, so
+	// RepoExists (the same request) is used instead: it returns the typed error.
 	if ok, err := r.client.RepoExists(ctx); err != nil || !ok {
 		// Map nanogit errors to repository errors for proper HTTP status codes
 		if err != nil {
@@ -1219,7 +1195,7 @@ func checkHTTPError(err error, fieldPath *field.Path) *provisioning.TestResults 
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
 				Field:  field.NewPath("secure", "token").String(),
-				Detail: "authentication failed",
+				Detail: "authentication failed: the Git server returned HTTP 401 Unauthorized",
 			}},
 		}
 	}
@@ -1231,7 +1207,7 @@ func checkHTTPError(err error, fieldPath *field.Path) *provisioning.TestResults 
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
 				Field:  field.NewPath("secure", "token").String(),
-				Detail: "permission denied",
+				Detail: "permission denied: the Git server returned HTTP 403 Forbidden",
 			}},
 		}
 	}
