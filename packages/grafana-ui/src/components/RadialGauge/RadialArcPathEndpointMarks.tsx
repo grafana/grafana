@@ -97,9 +97,12 @@ export const RadialArcPathEndpointMarks = memo(
         const yOuter = centerY + radius * Math.sin(outerRadians);
         const xTip = markerAtStart ? xStart : xEnd;
         const yTip = markerAtStart ? yStart : yEnd;
+        // The start-side tip sits counterclockwise of the outer point, so the short arc
+        // back to the value must sweep the other way. Sweep 1 would pick the other ellipse.
+        const sweepFlag = markerAtStart ? 0 : 1;
         return (
           <path
-            d={`M ${xOuter} ${yOuter} A ${radius} ${radius} 0 0 1 ${xTip} ${yTip}`}
+            d={`M ${xOuter} ${yOuter} A ${radius} ${radius} 0 0 ${sweepFlag} ${xTip} ${yTip}`}
             fill="none"
             strokeWidth={barWidth}
             stroke={endpointMarkerGlowFilter}

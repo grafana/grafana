@@ -108,6 +108,17 @@ describe('RadialArcPathEndpointMarks', () => {
     );
   });
 
+  it('follows the bar when the glow marker is at the arc start', () => {
+    expectHTML(
+      render(
+        <svg role="img">
+          <RadialArcPathEndpointMarks {...defaultProps} markerAtStart endpointMarker="glow" color="#FF0000" />
+        </svg>
+      ),
+      '<svg role=\"img\"><path d=\"M 178.78462024097664 86.10814578664557 A 80 80 0 0 0 100 100\" fill=\"none\" stroke-width=\"20\" stroke-linecap=\"round\"/></svg>'
+    );
+  });
+
   it('renders the single point marker at the arc start when the value is left of neutral', () => {
     expectHTML(
       render(
