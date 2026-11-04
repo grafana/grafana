@@ -160,10 +160,21 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
             >
               <button
                 onClick={(evt) => {
-                  if (isEditing) {
-                    toggleRowCollapse(model);
+                  if (evt.altKey) {
+                    // Alt+click: collapse/expand all rows (GitHub-style)
+                    const parentLayout = model.getParentLayout();
+                    if (isCollapsed) {
+                      parentLayout.expandAllRows();
+                    } else {
+                      parentLayout.collapseAllRows();
+                    }
                   } else {
-                    model.onCollapseToggle();
+                    // Normal click: toggle this row only
+                    if (isEditing) {
+                      toggleRowCollapse(model);
+                    } else {
+                      model.onCollapseToggle();
+                    }
                   }
                   onClearSelection?.();
                 }}
@@ -176,6 +187,10 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                     : t('dashboard.rows-layout.row.collapse', 'Collapse row {{title}}', { title })
                 }
                 data-testid={selectors.components.DashboardRow.toggle(title)}
+                title={t(
+                  'dashboard.rows-layout.row.toggle-hint',
+                  'Click to toggle, Alt+click to toggle all rows'
+                )}
               >
                 <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
                 {!isEditing && titleElement}

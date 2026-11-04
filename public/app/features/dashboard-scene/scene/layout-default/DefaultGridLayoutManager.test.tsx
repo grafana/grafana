@@ -9,6 +9,7 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
+import { setPluginLinksHook } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { findVizPanelByKey } from '../../utils/findVizPanel';
@@ -21,6 +22,8 @@ import { type DashboardSceneState } from '../types/dashboard';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 afterEach(() => setTestFlags({}));
 
