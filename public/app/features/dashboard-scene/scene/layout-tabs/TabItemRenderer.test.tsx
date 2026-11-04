@@ -1,8 +1,8 @@
-import { act, screen } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { setPluginLinksHook } from '@grafana/runtime';
-import { SceneTimeRange } from '@grafana/scenes';
+import { locationService, setPluginLinksHook } from '@grafana/runtime';
+import { SceneTimeRange, UrlSyncContextProvider } from '@grafana/scenes';
 
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
@@ -30,6 +30,36 @@ async function renderTab({ title = 'Overview', key = 'tab-1' } = {}) {
 }
 
 describe('TabItemRenderer', () => {
+  it('switches normal dashboard tabs through URL synchronization', async () => {
+    const tabs = new TabsLayoutManager({
+      tabs: [new TabItem({ title: 'Overview' }), new TabItem({ title: 'Details' })],
+    });
+    const scene = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      body: tabs,
+    });
+    const { user } = await act(async () =>
+      render(
+        <UrlSyncContextProvider scene={scene}>
+          <scene.Component model={scene} />
+        </UrlSyncContextProvider>
+      )
+    );
+
+    const historyLength = locationService.getHistory().length;
+
+    await user.click(await screen.findByRole('tab', { name: 'Details' }));
+
+    expect(screen.getByRole('tab', { name: 'Details' })).toHaveAttribute('aria-selected', 'true');
+    expect(new URLSearchParams(locationService.getLocation().search).get('dtab')).toBe('Details');
+    expect(locationService.getHistory().length).toBe(historyLength + 1);
+
+    act(() => locationService.getHistory().goBack());
+
+    await waitFor(() => expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true'));
+    expect(screen.getByRole('tab', { name: 'Details' })).toHaveAttribute('aria-selected', 'false');
+  });
+
   it('stamps data-dashboard-element-key and data-dashboard-element-type on the tab', async () => {
     await renderTab({ key: 'tab-1', title: 'Overview' });
 

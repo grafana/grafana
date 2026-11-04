@@ -5,7 +5,6 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
@@ -127,7 +126,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
               });
               observer.observe(document.body, { childList: true, subtree: true });
 
-              locationService.partial({ [urlKey]: mySlug });
+              parentLayout.urlSync?.performBrowserHistoryAction?.(() => parentLayout.switchToTab(model));
             }}
             onPointerDown={(evt) => {
               evt.stopPropagation();
