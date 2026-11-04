@@ -2763,11 +2763,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/solo/ViewPanelSidePane.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/solo/ViewPanelWrapper.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
