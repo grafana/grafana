@@ -798,6 +798,10 @@ const (
 	// Redirects the requests of the user service to the app platform APIs
 	FlagKubernetesUsersRedirect = "kubernetesUsersRedirect"
 
+	// FlagIdTokenCacheDisabled
+	// Disables the remote cache for signed ID tokens; a new token is signed on every authentication
+	FlagIdTokenCacheDisabled = "idTokenCacheDisabled"
+
 	// FlagKubernetesUsersRedirectNoFallback
 	// Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
 	FlagKubernetesUsersRedirectNoFallback = "kubernetesUsersRedirectNoFallback"

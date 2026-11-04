@@ -5334,6 +5334,9 @@
       "preferences": "Einstellungen",
       "recent-dashboards": "Kürzliche Dashboards",
       "recent-scopes": "Aktuelle Bereiche"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -7650,10 +7653,10 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
+      "draft-discarded": "",
       "draft-title": "",
       "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
       "pending-changes-changed": "",
@@ -12399,7 +12402,6 @@
       "copy-log-line-json": "Log-Inhalte als JSON kopieren",
       "copy-shortlink": "Shortlink kopieren",
       "copy-to-clipboard": "In die Zwischenablage kopieren",
-      "displayed-fields-section": "Angezeigte Felder organisieren",
       "fields": {
         "adhoc-statistics": "Ad-hoc-Statistiken",
         "copy-value-to-clipboard": "Wert in die Zwischenablage kopieren",
@@ -12423,14 +12425,11 @@
       "log-attributes-field": "Log-Attribute",
       "log-line-field": "Log-Zeile",
       "log-line-section": "Log-Linie",
-      "move-displayed-field-down": "Nach unten",
-      "move-displayed-field-up": "Nach oben",
       "no-details": "Keine anzuzeigenden Felder.",
       "open-assistant": "",
       "open-value-in": "",
       "pin-line": "Log anheften",
       "prettify": "Formatieren",
-      "remove-displayed-field": "Feld entfernen",
       "remove-log": "Log entfernen",
       "scroll-to-logline": "Zur Logzeile scrollen",
       "search": {

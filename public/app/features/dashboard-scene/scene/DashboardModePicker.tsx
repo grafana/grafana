@@ -136,7 +136,7 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
           />
         </Dropdown>
       </ButtonGroup>
-      {composer && (
+      {composer && (inComposer || !isMobileEditDeprecated) && (
         <Tooltip
           placement="bottom"
           content={

@@ -1295,18 +1295,16 @@ export type DashboardSearchResults = {
 };
 export type SnapshotBlobReference = {
   contentType?: string;
+  /** Write-only base64-encoded dashboard JSON, replaced by a server-issued reference on write. */
+  data?: string;
   hash?: string;
   size?: number;
-  uid: string;
+  uid?: string;
 };
 export type SnapshotBlobs = {
   dashboard?: SnapshotBlobReference;
 };
 export type SnapshotSpec = {
-  /** The raw dashboard (unstructured for now) */
-  dashboard?: {
-    [key: string]: object;
-  };
   /** Snapshot delete key */
   deleteKey?: string;
   /** Optionally auto-remove the snapshot at a future date (Unix timestamp in seconds) */

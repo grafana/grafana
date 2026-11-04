@@ -542,9 +542,6 @@ type ResourceServerOptions struct {
 
 	StorageMetrics *StorageMetrics
 
-	// GRPCErrorResultToStatus enables conversion of embedded ErrorResults on in-process calls.
-	GRPCErrorResultToStatus bool
-
 	IndexMetrics *BleveIndexMetrics
 
 	VectorMetrics *VectorMetrics
@@ -747,7 +744,6 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		ctx:                            ctx,
 		cancel:                         cancel,
 		storageMetrics:                 opts.StorageMetrics,
-		grpcErrorResultToStatus:        opts.GRPCErrorResultToStatus,
 		maxPageSizeBytes:               opts.MaxPageSizeBytes,
 		authorizeBeforeFetchEnabled:    opts.AuthorizeBeforeFetchEnabled,
 		reg:                            opts.Reg,
@@ -845,24 +841,23 @@ func initializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
 var _ ResourceServer = (*server)(nil)
 
 type server struct {
-	log                     log.Logger
-	backend                 StorageBackend
-	vectorBackend           vector.VectorBackend
-	bulkBatchOptions        BulkBatchOptions
-	blob                    BlobSupport
-	blobTransfers           *blobTransfers
-	secure                  secrets.InlineSecureValueSupport
-	search                  *searchServer
-	searchClient            resourcepb.ResourceIndexClient
-	diagnostics             resourcepb.DiagnosticsServer //nolint:staticcheck
-	access                  claims.AccessClient
-	writeHooks              WriteAccessHooks
-	now                     func() int64
-	mostRecentRV            atomic.Int64 // The most recent resource version seen by the server
-	storageMetrics          *StorageMetrics
-	grpcErrorResultToStatus bool
-	overridesService        *OverridesService
-	quotasConfig            QuotasConfig
+	log              log.Logger
+	backend          StorageBackend
+	vectorBackend    vector.VectorBackend
+	bulkBatchOptions BulkBatchOptions
+	blob             BlobSupport
+	blobTransfers    *blobTransfers
+	secure           secrets.InlineSecureValueSupport
+	search           *searchServer
+	searchClient     resourcepb.ResourceIndexClient
+	diagnostics      resourcepb.DiagnosticsServer //nolint:staticcheck
+	access           claims.AccessClient
+	writeHooks       WriteAccessHooks
+	now              func() int64
+	mostRecentRV     atomic.Int64 // The most recent resource version seen by the server
+	storageMetrics   *StorageMetrics
+	overridesService *OverridesService
+	quotasConfig     QuotasConfig
 	// Kind declarations from the manifests, refreshed by the manifest watcher. List
 	// reads the selectable fields from it before asking an index about a selector.
 	// May be nil.
