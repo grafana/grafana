@@ -499,7 +499,7 @@ func TestNatsNotifierWatch_WaitsForTheSubscriberToStart(t *testing.T) {
 		n := newNatsNotifier(sub, expiry, nil, &logging.NoOpLogger{})
 
 		ready := make(chan error, 1)
-		n.Watch(t.Context(), WatchOptions{captureReady: ready})
+		n.Watch(t.Context(), WatchOptions{CaptureReady: ready})
 		time.Sleep(time.Minute)
 		synctest.Wait()
 		require.Zero(t, sub.calls.Load(), "subscribing before the subscriber started would fail and log an error")
@@ -968,4 +968,49 @@ func TestWatchWrittenKeysNeedsTheNatsNotifier(t *testing.T) {
 	sub := &subjectsSubscriber{}
 	assert.Nil(t, keysSubscriber(KVBackendOptions{EventSubscriber: sub, EnableNatsNotifierShadow: true}))
 	assert.Equal(t, EventSubscriber(sub), keysSubscriber(KVBackendOptions{EventSubscriber: sub, EnableNatsNotifier: true}))
+}
+
+func TestNewNatsNotifier(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := &fakeEventSubscriber{enabled: true}
+		reg := prometheus.NewRegistry()
+		expiry := NewWatchExpiry()
+		generation := expiry.WatchInvalidation()
+		n := NewNatsNotifier(sub, expiry, NewNatsNotifierDroppedMetric(reg), &logging.NoOpLogger{})
+
+		ready := make(chan error, 1)
+		out := n.Watch(t.Context(), WatchOptions{BufferSize: 1, CaptureReady: ready})
+		require.NoError(t, <-ready)
+		require.Equal(t, resourcewatch.SubjectAllResources, sub.subject)
+
+		notification := mustMarshalNotification(t, &resourcepb.WatchNotification{
+			Type: resourcepb.WatchNotification_ADDED, Group: "g", Resource: "r", Namespace: "ns", Name: "n", ResourceVersion: 10,
+		})
+		sub.currentHandler()("some.subject", notification)
+		// One settle tick emits the already settled event.
+		time.Sleep(time.Second)
+		synctest.Wait()
+		select {
+		case evt := <-out:
+			require.Equal(t, Event{Namespace: "ns", Group: "g", Resource: "r", Name: "n", ResourceVersion: 10, Action: DataActionCreated}, evt)
+		default:
+			t.Fatal("expected a settled event")
+		}
+
+		// Fill the output, then block the settle loop on it, then the input:
+		// the next drop is reported to this notifier's invalidator.
+		for range 2 {
+			sub.currentHandler()("some.subject", notification)
+			time.Sleep(time.Second)
+			synctest.Wait()
+		}
+		sub.currentHandler()("some.subject", notification)
+		require.Equal(t, generation, expiry.WatchInvalidation())
+		sub.currentHandler()("some.subject", notification)
+		require.NotEqual(t, generation, expiry.WatchInvalidation())
+
+		count, err := testutil.GatherAndCount(reg, "grafana_storage_server_nats_notifier_dropped_events_total")
+		require.NoError(t, err)
+		require.Equal(t, len(dropReasons), count)
+	})
 }

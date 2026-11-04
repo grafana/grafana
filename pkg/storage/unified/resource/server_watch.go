@@ -8,12 +8,30 @@ import (
 // Only KV opts into seeded startup. SQL's independently polled collections do
 // not satisfy the global ordering required by these resume boundaries.
 type seededWatchBackend interface {
-	watchWriteEventsWithSeed(context.Context) (watchSeed, <-chan *WrittenEvent, error)
+	// watchWriteEventsWithSeed calls captured once the bus captures every later
+	// write, before it reads the seed.
+	watchWriteEventsWithSeed(ctx context.Context, captured func()) (watchSeed, <-chan *WrittenEvent, error)
 }
 
 type watchStartup struct {
 	stopped     chan struct{}
 	broadcaster *broadcaster[*WrittenEvent]
+
+	mu sync.Mutex
+	// expiry is the watch expiry generation when capture last started.
+	expiry <-chan struct{}
+}
+
+func (w *watchStartup) setExpiry(expiry <-chan struct{}) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.expiry = expiry
+}
+
+func (w *watchStartup) expiryAtCapture() <-chan struct{} {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.expiry
 }
 
 func (s *server) initSeededWatcher(backend seededWatchBackend) {
@@ -26,7 +44,9 @@ func (s *server) initSeededWatcher(backend seededWatchBackend) {
 
 	var capture sync.WaitGroup
 	initialize := func(ctx context.Context) (cacheSeed[*WrittenEvent], error) {
-		seed, events, err := backend.watchWriteEventsWithSeed(ctx)
+		seed, events, err := backend.watchWriteEventsWithSeed(ctx, func() {
+			startup.setExpiry(s.watchExpiry.WatchInvalidation())
+		})
 		if err != nil {
 			if ctx.Err() == nil {
 				s.log.Error("failed to initialize watch cache", "error", err)
