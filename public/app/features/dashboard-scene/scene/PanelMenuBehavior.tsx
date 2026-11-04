@@ -29,8 +29,8 @@ import { appendExtensionsToPanelMenu } from 'app/features/dashboard/utils/append
 import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { InspectTab } from 'app/features/inspector/types';
 import { AddPanelToNotebookScene } from 'app/features/notebook/addPanel/AddPanelToNotebookScene';
-import { canAddPanelToNotebook, canEditNotebooks } from 'app/features/notebook/permissions';
-import { getOpenSidePanelNotebook } from 'app/features/notebook/sidePanel/openSidePanelNotebook';
+import { canAddPanelToNotebook, canCreateNotebooks } from 'app/features/notebook/permissions';
+import { isScratchpadOpen } from 'app/features/notebook/scratchpad/scratchpadOpen';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -405,36 +405,26 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       const openNotebookModal = () => {
         dashboard.showModal(new AddPanelToNotebookScene({ panelRef: panel.getRef() }));
       };
-      // The menu is rebuilt each time it opens, so this reflects the side panel as it is right now.
-      const openNotebook = canEditNotebooks() ? getOpenSidePanelNotebook() : undefined;
+      // The menu is rebuilt each time it opens, so this reflects the scratchpad as it is right now.
+      const scratchpadOpen = canCreateNotebooks() && isScratchpadOpen();
 
-      if (openNotebook) {
+      if (scratchpadOpen) {
         items.push({
           text: t('panel.header-menu.add-to-notebook', 'Add to notebook'),
           iconClassName: 'gf-notebook',
           type: 'submenu',
           subMenu: [
             {
-              text: openNotebook.title
-                ? t('panel.header-menu.add-to-open-notebook-titled', 'Add to open: {{title}}', {
-                    title: openNotebook.title,
-                    interpolation: { escapeValue: false },
-                  })
-                : t('panel.header-menu.add-to-open-notebook', 'Add to open notebook'),
+              text: t('panel.header-menu.add-to-scratchpad', 'Add to scratchpad'),
               iconClassName: 'gf-notebook',
               onClick: async () => {
                 // Loaded on click: the panel menu ships with every dashboard.
-                const [{ addPanelToOpenNotebook }, { NOTEBOOK_ENTRY_POINT }] = await Promise.all([
-                  import('app/features/notebook/addPanel/addToOpenNotebook'),
-                  import('app/features/notebook/analytics/types'),
-                ]);
+                const { addPanelToScratchpad } = await import('app/features/notebook/scratchpad/addToScratchpad');
                 const source = new AddPanelToNotebookScene({ panelRef: panel.getRef() });
-                await addPanelToOpenNotebook({
+                await addPanelToScratchpad({
                   buildPanel: source.buildPanel,
                   capturedTimeRange: source.getCapturedTimeRange(),
                   isLibraryPanel: source.isLibraryPanel(),
-                  entryPoint: NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL,
-                  open: openNotebook,
                 });
               },
             },

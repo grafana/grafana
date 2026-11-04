@@ -56,8 +56,8 @@ describe('getExploreExtensionConfigs', () => {
           category: 'Dashboards',
         },
         {
-          title: 'Add to open notebook',
-          description: 'Add the query and panel from explore to the notebook open in the side panel',
+          title: 'Add to scratchpad',
+          description: 'Add the query and panel from explore to the scratchpad',
           targets: [PluginExtensionPoints.ExploreToolbarAction],
           icon: 'gf-notebook',
           configure: expect.any(Function),
@@ -103,23 +103,21 @@ describe('getExploreExtensionConfigs', () => {
   // Explore's toolbar renders the bare "Add to dashboard" button only while one link is configured
   // and an "Add" dropdown past that, so a notebook link that survived configure() with the feature
   // off would change the toolbar for everyone.
-  describe('configure function for "add to open notebook" extension', () => {
+  describe('configure function for "add to scratchpad" extension', () => {
     afterEach(() => {
       contextSrvMock.hasPermission.mockRestore();
       setTestFlags({});
     });
 
-    const openNotebook = { uid: 'nb-1', title: 'Latency investigation' };
-
-    function openNotebookExtension() {
-      return getExploreExtensionConfigs().find((extension) => extension.title === 'Add to open notebook');
+    function scratchpadExtension() {
+      return getExploreExtensionConfigs().find((extension) => extension.title === 'Add to scratchpad');
     }
 
     // The context only matters to the one field this link reads.
-    function contextWith(open?: typeof openNotebook) {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial context: configure reads only openNotebook
-      return { openNotebook: open } as Parameters<
-        NonNullable<ReturnType<typeof openNotebookExtension>>['configure'] & Function
+    function contextWith(scratchpadOpen?: boolean) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial context: configure reads only scratchpadOpen
+      return { scratchpadOpen } as Parameters<
+        NonNullable<ReturnType<typeof scratchpadExtension>>['configure'] & Function
       >[0];
     }
 
@@ -127,37 +125,28 @@ describe('getExploreExtensionConfigs', () => {
       contextSrvMock.hasPermission.mockReturnValue(true);
       setTestFlags({ [FlagKeys.DashboardNotebooks]: false });
 
-      expect(openNotebookExtension()?.configure?.(contextWith(openNotebook))).toBeUndefined();
+      expect(scratchpadExtension()?.configure?.(contextWith(true))).toBeUndefined();
     });
 
-    it('is hidden when no notebook is open in the side panel', () => {
+    it('is hidden while the scratchpad is closed', () => {
       contextSrvMock.hasPermission.mockReturnValue(true);
       setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
 
-      expect(openNotebookExtension()?.configure?.(contextWith(undefined))).toBeUndefined();
+      expect(scratchpadExtension()?.configure?.(contextWith(false))).toBeUndefined();
     });
 
-    it('is hidden without permission to write notebooks', () => {
-      contextSrvMock.hasPermission.mockImplementation((action) => action !== 'notebooks:write');
+    it('is hidden without permission to create notebooks, which saving needs', () => {
+      contextSrvMock.hasPermission.mockImplementation((action) => action !== 'notebooks:create');
       setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
 
-      expect(openNotebookExtension()?.configure?.(contextWith(openNotebook))).toBeUndefined();
+      expect(scratchpadExtension()?.configure?.(contextWith(true))).toBeUndefined();
     });
 
-    it('is shown, naming the notebook, when one is open and the reader can write', () => {
+    it('is shown while the scratchpad is open and the reader can create notebooks', () => {
       contextSrvMock.hasPermission.mockReturnValue(true);
       setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
 
-      expect(openNotebookExtension()?.configure?.(contextWith(openNotebook))).toEqual({
-        title: 'Add to open: Latency investigation',
-      });
-    });
-
-    it('keeps the default title while the notebook has no name yet', () => {
-      contextSrvMock.hasPermission.mockReturnValue(true);
-      setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
-
-      expect(openNotebookExtension()?.configure?.(contextWith({ uid: 'nb-1', title: '' }))).toEqual({});
+      expect(scratchpadExtension()?.configure?.(contextWith(true))).toEqual({});
     });
   });
 

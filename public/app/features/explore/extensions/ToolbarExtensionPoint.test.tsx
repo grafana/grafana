@@ -9,10 +9,7 @@ import { usePluginLinks } from '@grafana/runtime';
 import { type DataQuery, LogsSortOrder } from '@grafana/schema';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
-import {
-  clearOpenSidePanelNotebook,
-  setOpenSidePanelNotebook,
-} from 'app/features/notebook/sidePanel/openSidePanelNotebook';
+import { setScratchpadOpen } from 'app/features/notebook/scratchpad/scratchpadOpen';
 import { configureStore } from 'app/store/configureStore';
 import { type ExplorePanelData, type ExploreState } from 'app/types/explore';
 
@@ -170,6 +167,7 @@ describe('ToolbarExtensionPoint', () => {
         timeZone: 'browser',
         timeRange: { from: 'now-1h', to: 'now' },
         shouldShowAddCorrelation: false,
+        scratchpadOpen: false,
       });
     });
 
@@ -211,23 +209,20 @@ describe('ToolbarExtensionPoint', () => {
       expect(context).toHaveProperty('panelsState', panelsState);
     });
 
-    it('passes the notebook open in the side panel, and re-queries links when it changes', async () => {
+    it('passes whether the scratchpad is open, and re-queries links when it changes', async () => {
       const targets = [{ refId: 'A' }];
       const data = createEmptyQueryResponse();
       renderWithExploreStore(setupToolbarExtensionPoint(), { targets, data });
-      expect(usePluginLinksMock.mock.calls.at(-1)?.[0].context).toHaveProperty('openNotebook', undefined);
+      expect(usePluginLinksMock.mock.calls.at(-1)?.[0].context).toHaveProperty('scratchpadOpen', false);
 
-      act(() => setOpenSidePanelNotebook({ uid: 'nb-1', title: 'Latency investigation' }));
-
+      act(() => setScratchpadOpen(true));
       await waitFor(() =>
-        expect(usePluginLinksMock.mock.calls.at(-1)?.[0].context).toHaveProperty('openNotebook', {
-          uid: 'nb-1',
-          title: 'Latency investigation',
-        })
+        expect(usePluginLinksMock.mock.calls.at(-1)?.[0].context).toHaveProperty('scratchpadOpen', true)
       );
-      act(() => clearOpenSidePanelNotebook());
+
+      act(() => setScratchpadOpen(false));
       await waitFor(() =>
-        expect(usePluginLinksMock.mock.calls.at(-1)?.[0].context).toHaveProperty('openNotebook', undefined)
+        expect(usePluginLinksMock.mock.calls.at(-1)?.[0].context).toHaveProperty('scratchpadOpen', false)
       );
     });
 

@@ -6,7 +6,7 @@ import { Spinner } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { isMobileEditDeprecated } from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
 import { ADD_PANEL_MODAL_WIDTH, addPanelToNotebookTitle } from 'app/features/notebook/addPanel/addPanelModal';
-import { canAddPanelToNotebook, canEditNotebooks } from 'app/features/notebook/permissions';
+import { canAddPanelToNotebook, canCreateNotebooks } from 'app/features/notebook/permissions';
 import { dispatch, getState } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -121,9 +121,9 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
       createAddedLinkConfig<PluginExtensionExploreContext>({
         // This is called at the top level, so will break if we add a translation here 😱
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        title: 'Add to open notebook',
+        title: 'Add to scratchpad',
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        description: 'Add the query and panel from explore to the notebook open in the side panel',
+        description: 'Add the query and panel from explore to the scratchpad',
         targets: [PluginExtensionPoints.ExploreToolbarAction],
         icon: 'gf-notebook',
         category: 'Dashboards',
@@ -132,19 +132,11 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
             return undefined;
           }
 
-          // Appending needs write, which is narrower than the create-or-write that shows "Add to notebook".
-          if (!canEditNotebooks() || !context?.openNotebook) {
-            return undefined;
-          }
-
-          // The menu shows the title, so the notebook's name goes there. configure() runs at module level
-          // too, outside React, so this is not translated (same as the static titles above).
-          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-          return context.openNotebook.title ? { title: `Add to open: ${context.openNotebook.title}` } : {};
+          // The draft is only ever written to a notebook by creating one.
+          return canCreateNotebooks() && context?.scratchpadOpen ? {} : undefined;
         },
         onClick: async (_, { context }) => {
-          const open = context?.openNotebook;
-          if (!open || !context) {
+          if (!context) {
             return;
           }
           const exploreItem = getExploreItemSelector(context.exploreId)(getState());
@@ -153,22 +145,18 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
           }
 
           // Loaded on click: this module is evaluated at startup.
-          const [{ addPanelToOpenNotebook }, { getExploreNotebookSource }, { NOTEBOOK_ENTRY_POINT }, { getTimeZone }] =
-            await Promise.all([
-              import('app/features/notebook/addPanel/addToOpenNotebook'),
-              import('./AddToNotebook/getExploreNotebookSource'),
-              import('app/features/notebook/analytics/types'),
-              import('app/features/profile/state/selectors'),
-            ]);
+          const [{ addPanelToScratchpad }, { getExploreNotebookSource }, { getTimeZone }] = await Promise.all([
+            import('app/features/notebook/scratchpad/addToScratchpad'),
+            import('./AddToNotebook/getExploreNotebookSource'),
+            import('app/features/profile/state/selectors'),
+          ]);
           const { buildPanel, capturedTimeRange } = getExploreNotebookSource(exploreItem, getTimeZone(getState().user));
 
-          await addPanelToOpenNotebook({
+          await addPanelToScratchpad({
             buildPanel,
             capturedTimeRange,
             // Explore builds its panel from the pane's queries, so there is no library panel to send.
             isLibraryPanel: false,
-            entryPoint: NOTEBOOK_ENTRY_POINT.EXPLORE,
-            open,
           });
         },
       }),
