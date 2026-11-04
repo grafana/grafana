@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type RefObject, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import {
@@ -301,23 +301,25 @@ export function TraceView(props: Props) {
     [openDetail, refocusSpanForSearch, revealSpan, search, setSearch, spanFilterMatches, traceProp]
   );
 
-  const expandLinkedSpan = useEffectEvent((spanId: string) => goToSpan(spanId, true));
-
-  const lastLinkedSpanId = useRef<string | undefined>(undefined);
+  const lastLinkedSpan = useRef<{ frame: DataFrame | undefined; spanId: string } | undefined>(undefined);
   const frame = props.dataFrames[0];
   useEffect(() => {
-    lastLinkedSpanId.current = undefined;
-  }, [frame]);
-  useEffect(() => {
-    if (lastLinkedSpanId.current === spanIdToExpand) {
+    if (!spanIdToExpand) {
+      lastLinkedSpan.current = undefined;
       return;
     }
-    lastLinkedSpanId.current = spanIdToExpand;
 
-    if (spanIdToExpand) {
-      expandLinkedSpan(spanIdToExpand);
-    }
-  }, [expandLinkedSpan, frame, spanIdToExpand]);
+    const linkedSpanId = spanIdToExpand;
+    const animationFrame = requestAnimationFrame(() => {
+      if (lastLinkedSpan.current?.frame === frame && lastLinkedSpan.current.spanId === linkedSpanId) {
+        return;
+      }
+      lastLinkedSpan.current = { frame, spanId: linkedSpanId };
+      goToSpan(linkedSpanId, true);
+    });
+
+    return () => cancelAnimationFrame(animationFrame);
+  }, [frame, goToSpan, spanIdToExpand]);
 
   // The Summary attributes accordion renders only on summary spans and is otherwise untracked;
   // report each toggle (with the resulting open state) so summary-attribute engagement is observable.
