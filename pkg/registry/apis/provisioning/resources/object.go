@@ -34,7 +34,7 @@ type ResourceListerFromSearch struct {
 	store ResourceStore
 	// clients lists a collection's members through the groups that serve them; nil without one.
 	clients ClientFactory
-	// collections are the configured wildcard entries, matched on group pattern and kind.
+	// collections are the configured collection entries, matched on group and kind.
 	collections []SupportedResource
 }
 
@@ -148,7 +148,7 @@ func (o *ResourceListerFromSearch) listCollectionMembers(ctx context.Context, na
 // its own, which is reported from the index and must not be listed here as well.
 func (o *ResourceListerFromSearch) isMember(gk schema.GroupKind) bool {
 	for _, r := range o.collections {
-		if r.Kind == gk.Kind && provisioningresources.MatchesGroup(r.Group, gk.Group) {
+		if r.Kind == gk.Kind && provisioningresources.CoversGroup(r.Group, gk.Group) {
 			return true
 		}
 	}

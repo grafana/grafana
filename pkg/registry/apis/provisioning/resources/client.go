@@ -90,7 +90,7 @@ func (r SupportedResource) IsFolderScoped() bool { return r.Capabilities.Has(Cap
 //	<group>/<Kind>[:cap[:cap...]]
 //
 // Group and kind are split on the last "/" (groups contain dots and may be multi-segment). The
-// group may be a wildcard pattern over a storage collection's served groups, optionally qualified
+// group may name a collection of served groups with a wildcard, optionally qualified
 // with the group those are stored under: "*.datasource.grafana.app", "grafana-*@plugins.grafana.app".
 // Capabilities are ":"-separated and must be in KnownCapabilities.
 // Parsing is strict and fails fast at startup: each entry must be "<group>/<Kind>" with a
@@ -139,16 +139,16 @@ func ParseSupportedResources(entries []string) ([]SupportedResource, error) {
 	return out, nil
 }
 
-// validateGroup checks a configured group, which may be a wildcard pattern. A pattern whose
-// literal part is not a dotted group must name the collection its members are stored under.
+// validateGroup checks a configured group, which may name a collection. A collection whose
+// literal part is not a dotted group must name the group its members are stored under.
 func validateGroup(entry, group string) error {
 	pattern, collection, qualified := strings.Cut(group, provisioningresources.CollectionSeparator)
 	switch {
-	case qualified && !provisioningresources.IsWildcardGroup(pattern):
+	case qualified && !provisioningresources.IsCollection(pattern):
 		return fmt.Errorf("invalid provisioning resource %q: only a wildcard group names a collection", entry)
 	case qualified:
 		group = collection
-	case provisioningresources.IsWildcardGroup(pattern) && !provisioningresources.IsDottedWildcardGroup(pattern):
+	case provisioningresources.IsCollection(pattern) && !provisioningresources.IsDottedCollection(pattern):
 		return fmt.Errorf("invalid provisioning resource %q: wildcard group %q must name the collection its members are stored in, e.g. %s@plugins.grafana.app",
 			entry, pattern, pattern)
 	default:
@@ -209,7 +209,7 @@ func (f *clientFactory) supportedResources(ctx context.Context) ([]SupportedReso
 	if f.expanded != nil {
 		return f.expanded, nil
 	}
-	expanded, err := expandWildcardGroups(ctx, discoveryKinds(f.clientsProvider, f.configuredResources), f.configuredResources)
+	expanded, err := expandCollections(ctx, discoveryKinds(f.clientsProvider, f.configuredResources), f.configuredResources)
 	if err != nil {
 		return nil, err
 	}
@@ -356,7 +356,7 @@ type multiClientFactory struct {
 	collections []string
 }
 
-// collectionPatterns returns the configured groups that are wildcard patterns.
+// collectionPatterns returns the configured groups that name a collection.
 func collectionPatterns(configured []SupportedResource) []string {
 	out := make([]string, 0, len(configured))
 	for _, r := range collectionResources(configured) {
@@ -365,11 +365,11 @@ func collectionPatterns(configured []SupportedResource) []string {
 	return out
 }
 
-// collectionResources returns the configured entries whose group is a wildcard pattern.
+// collectionResources returns the configured entries whose group names a collection.
 func collectionResources(configured []SupportedResource) []SupportedResource {
 	out := make([]SupportedResource, 0, len(configured))
 	for _, r := range configured {
-		if provisioningresources.IsWildcardGroup(r.Group) {
+		if provisioningresources.IsCollection(r.Group) {
 			out = append(out, r)
 		}
 	}
@@ -564,7 +564,7 @@ type multiResourceClients struct {
 	mutex                     sync.Mutex
 	resourceClientsByAPIGroup map[string]ResourceClients
 	supportedResources        []SupportedResource
-	// collections are the configured wildcard patterns a member group is resolved through.
+	// collections are the configured collections a member group is resolved through.
 	collections []string
 }
 
@@ -618,7 +618,7 @@ func (c *multiResourceClients) clientsFor(group string) (ResourceClients, bool) 
 		return clients, true
 	}
 	for _, pattern := range c.collections {
-		if !provisioningresources.MatchesGroup(pattern, group) {
+		if !provisioningresources.CoversGroup(pattern, group) {
 			continue
 		}
 		if clients, ok := c.resourceClientsByAPIGroup[provisioningresources.CollectionGroup(pattern)]; ok {
@@ -656,7 +656,7 @@ func ForEach(ctx context.Context, client dynamic.ResourceInterface, fn func(item
 	return nil
 }
 
-// nonProvisionableGroups are served groups a wildcard never expands to: the built-in data sources
+// nonProvisionableGroups are served groups a collection never expands to: the built-in data sources
 // hold no stored instances, so they would add an empty export list and inert settings rows.
 var nonProvisionableGroups = sets.New(
 	"grafana.datasource.grafana.app",
@@ -664,11 +664,11 @@ var nonProvisionableGroups = sets.New(
 	"dashboard.datasource.grafana.app",
 )
 
-// expandWildcardGroups turns each configured collection into one entry per API group that serves
+// expandCollections turns each configured collection into one entry per API group that serves
 // the kind inside it; an entry naming a served group passes through. Discovery is the source
 // rather than the installed plugin list: a plugin can be installed without its group being served,
 // and it is the served group a client has to address.
-func expandWildcardGroups(ctx context.Context, listKinds groupKindLister, configured []SupportedResource) ([]SupportedResource, error) {
+func expandCollections(ctx context.Context, listKinds groupKindLister, configured []SupportedResource) ([]SupportedResource, error) {
 	var served []schema.GroupKind
 	var listed bool
 	// A pattern may cover a group that is also declared on its own, or that another pattern
@@ -676,14 +676,14 @@ func expandWildcardGroups(ctx context.Context, listKinds groupKindLister, config
 	// duplicate as an orphan at the same path. An explicit declaration wins over a pattern.
 	emitted := sets.New[schema.GroupKind]()
 	for _, r := range configured {
-		if !provisioningresources.IsWildcardGroup(r.Group) {
+		if !provisioningresources.IsCollection(r.Group) {
 			emitted.Insert(r.GroupKind)
 		}
 	}
 
 	out := make([]SupportedResource, 0, len(configured))
 	for _, r := range configured {
-		if !provisioningresources.IsWildcardGroup(r.Group) {
+		if !provisioningresources.IsCollection(r.Group) {
 			out = append(out, r)
 			continue
 		}
@@ -696,7 +696,7 @@ func expandWildcardGroups(ctx context.Context, listKinds groupKindLister, config
 		}
 		collection := provisioningresources.CollectionGroup(r.Group)
 		for _, gk := range served {
-			if gk.Kind != r.Kind || !provisioningresources.MatchesGroup(r.Group, gk.Group) || nonProvisionableGroups.Has(gk.Group) {
+			if gk.Kind != r.Kind || !provisioningresources.CoversGroup(r.Group, gk.Group) || nonProvisionableGroups.Has(gk.Group) {
 				continue
 			}
 			if emitted.Has(gk) {
@@ -717,7 +717,7 @@ type groupKindLister func(ctx context.Context) ([]schema.GroupKind, error)
 func discoveryKinds(provider clientsProvider, configured []SupportedResource) groupKindLister {
 	relevant := func(group string) bool {
 		for _, r := range configured {
-			if provisioningresources.MatchesGroup(r.Group, group) {
+			if provisioningresources.CoversGroup(r.Group, group) {
 				return true
 			}
 		}

@@ -148,7 +148,7 @@ func TestResourceListerFromSearch_ListsCollectionMembersThroughClients(t *testin
 	factory.EXPECT().Clients(mock.Anything, "default").Return(clients, nil).Once()
 
 	lister := NewResourceLister(store, factory, []SupportedResource{
-		{GroupKind: schema.GroupKind{Group: provisioningresources.WildcardGroupPrefix + collection, Kind: "DataSource"}},
+		{GroupKind: schema.GroupKind{Group: provisioningresources.CollectionPrefix + collection, Kind: "DataSource"}},
 	})
 
 	got, err := lister.List(context.Background(), "default", repository)

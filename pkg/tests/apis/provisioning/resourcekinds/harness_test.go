@@ -50,7 +50,7 @@ type kindSpec struct {
 	// FeatureFlags are extra feature toggles the kind needs (raw toggle names, e.g. "playlistsRBAC").
 	FeatureFlags []string `json:"featureFlags"`
 	// Collection is the storage collection the kind's group belongs to, when several API groups
-	// share one. Setting it declares the kind as a wildcard, the way an operator would.
+	// share one. Setting it declares the kind as a collection, the way an operator would.
 	Collection string `json:"collection"`
 	// Manifest is a sample resource manifest; the harness patches its name and spec.title per instance.
 	Manifest json.RawMessage `json:"manifest"`
@@ -129,7 +129,7 @@ func (rk resourceKind) groupPrefix() string { return rk.group + "/" }
 func (rk resourceKind) token() string {
 	group := rk.group
 	if rk.collection != "" {
-		group = provisioningresources.WildcardGroupPrefix + rk.collection
+		group = provisioningresources.CollectionPrefix + rk.collection
 	}
 	if rk.folderScoped {
 		return group + "/" + rk.kind + ":folder"

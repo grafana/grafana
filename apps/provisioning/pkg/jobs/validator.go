@@ -198,7 +198,7 @@ func validateExportResourceRefs(base *field.Path, refs []provisioning.ResourceRe
 			}
 			kindOK = true
 			if r.Group != "" {
-				if resources.MatchesGroup(s.Group, r.Group) {
+				if resources.CoversGroup(s.Group, r.Group) {
 					groupOK = true
 					break
 				}
@@ -206,7 +206,7 @@ func validateExportResourceRefs(base *field.Path, refs []provisioning.ResourceRe
 			}
 			// A kind registered as a collection cannot resolve an omitted group: its members
 			// each serve their own, and reading through the wrong one finds nothing.
-			if resources.IsWildcardGroup(s.Group) {
+			if resources.IsCollection(s.Group) {
 				groupRequired = true
 				continue
 			}

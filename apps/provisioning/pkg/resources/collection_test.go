@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMatchesGroup(t *testing.T) {
+func TestCoversGroup(t *testing.T) {
 	tests := []struct {
 		name       string
 		configured string
@@ -36,24 +36,72 @@ func TestMatchesGroup(t *testing.T) {
 		{"trailing wildcard standing for nothing", "grafana-*@plugins.grafana.app", "grafana-", false},
 		{"wildcard between literals", "grafana-*-app@plugins.grafana.app", "grafana-slo-app", true},
 		{"wildcard between literals, wrong tail", "grafana-*-app@plugins.grafana.app", "grafana-slo-datasource", false},
+		{"a bare wildcard covers any served group", "*@plugins.grafana.app", "grafana-slo-app", true},
+		{"no served group", "*.datasource.grafana.app", "", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, tt.want, MatchesGroup(tt.configured, tt.served))
+			require.Equal(t, tt.want, CoversGroup(tt.configured, tt.served))
+		})
+	}
+}
+
+func TestIsCollection(t *testing.T) {
+	tests := []struct {
+		name  string
+		group string
+		want  bool
+	}{
+		{"served group", "playlist.grafana.app", false},
+		{"dotted pattern", "*.datasource.grafana.app", true},
+		{"trailing pattern", "grafana-*", true},
+		{"qualified pattern", "*-app@plugins.grafana.app", true},
+		{"no group", "", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, IsCollection(tt.group))
+		})
+	}
+}
+
+func TestIsDottedCollection(t *testing.T) {
+	tests := []struct {
+		name  string
+		group string
+		want  bool
+	}{
+		{"dotted pattern", "*.datasource.grafana.app", true},
+		{"literal part is not a group", "*-app", false},
+		{"literal part of a trailing pattern is not a group", "grafana-*", false},
+		{"one wildcard only", "*.*.grafana.app", false},
+		{"served group", "playlist.grafana.app", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, IsDottedCollection(tt.group))
 		})
 	}
 }
 
 func TestCollectionGroup(t *testing.T) {
-	require.Equal(t, "datasource.grafana.app", CollectionGroup("*.datasource.grafana.app"))
-	require.Equal(t, "playlist.grafana.app", CollectionGroup("playlist.grafana.app"))
-	require.Equal(t, "plugins.grafana.app", CollectionGroup("*-app@plugins.grafana.app"))
-}
-
-func TestIsDottedWildcardGroup(t *testing.T) {
-	require.True(t, IsDottedWildcardGroup("*.datasource.grafana.app"))
-	require.False(t, IsDottedWildcardGroup("*-app"), "the literal part is not a group")
-	require.False(t, IsDottedWildcardGroup("grafana-*"), "nor is the literal part of a trailing pattern")
-	require.False(t, IsDottedWildcardGroup("*.*.grafana.app"), "one wildcard only")
-	require.False(t, IsDottedWildcardGroup("playlist.grafana.app"))
+	tests := []struct {
+		name       string
+		configured string
+		want       string
+	}{
+		{"dotted pattern names its collection", "*.datasource.grafana.app", "datasource.grafana.app"},
+		{"served group is its own collection", "playlist.grafana.app", "playlist.grafana.app"},
+		{"qualifier wins", "*-app@plugins.grafana.app", "plugins.grafana.app"},
+		{"qualifier wins over the literal part", "*.datasource.grafana.app@shared.grafana.app", "shared.grafana.app"},
+		{"trailing pattern", "grafana-*@plugins.grafana.app", "plugins.grafana.app"},
+		// Unqualified and not dotted, which ParseSupportedResources rejects: there is no
+		// collection to name, so the pattern stands for itself.
+		{"unqualified non-dotted pattern", "*-app", "*-app"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, CollectionGroup(tt.configured))
+		})
+	}
 }

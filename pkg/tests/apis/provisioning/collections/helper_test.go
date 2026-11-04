@@ -8,14 +8,14 @@ import (
 )
 
 // One collection per pattern shape. Nothing serves a member of any of them here, which is the
-// interesting case: the wildcards are declared, discovery runs, and the pipeline is unaffected.
+// interesting case: the collections are declared, discovery runs, and the pipeline is unaffected.
 const (
 	datasourceCollection = "datasource.grafana.app"
 	extCollection        = "ext.grafana.app"
 	settingsCollection   = "plugins.grafana.app"
 )
 
-// env declares three kinds as wildcards, so the consumers of the configured set — settings
+// env declares three kinds as collections, so the consumers of the configured set — settings
 // endpoint, job admission, client factory — run against a real server.
 var env = common.NewSharedEnv(
 	common.WithoutProvisioningFolderMetadata,

@@ -172,9 +172,9 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// A wildcard entry is reported as the collection group, not expanded: that is the group the
-	// index counts members under, so it is the one the frontend matches stats against, and it keeps
-	// one entry per configured kind rather than one per installed member.
+	// A collection is reported as its own group, not expanded: that is the group the index counts
+	// its members under, so it is what the frontend matches stats and list rows against, and it
+	// keeps one entry per configured kind rather than one per installed member.
 	availableResources := make([]provisioning.SupportedResource, 0, len(b.supportedResources))
 	for _, r := range b.supportedResources {
 		availableResources = append(availableResources, provisioning.SupportedResource{

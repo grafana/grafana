@@ -188,7 +188,7 @@ func TestSingleAPIClients_PropagatesTraceContext(t *testing.T) {
 		"traceparent should carry the active span's trace id")
 }
 
-func TestExpandWildcardGroups(t *testing.T) {
+func TestExpandCollections(t *testing.T) {
 	// served builds a lister over "<group>/<Kind>" pairs, the shape discovery reports.
 	served := func(pairs ...string) groupKindLister {
 		kinds := make([]schema.GroupKind, 0, len(pairs))
@@ -210,7 +210,7 @@ func TestExpandWildcardGroups(t *testing.T) {
 		configured, err := ParseSupportedResources([]string{"*.datasource.grafana.app/DataSource"})
 		require.NoError(t, err)
 
-		expanded, err := expandWildcardGroups(t.Context(), installed, configured)
+		expanded, err := expandCollections(t.Context(), installed, configured)
 		require.NoError(t, err)
 		require.ElementsMatch(t, []schema.GroupKind{
 			{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
@@ -222,7 +222,7 @@ func TestExpandWildcardGroups(t *testing.T) {
 		configured, err := ParseSupportedResources([]string{"*.datasource.grafana.app/DataSource:disabled"})
 		require.NoError(t, err)
 
-		expanded, err := expandWildcardGroups(t.Context(), installed, configured)
+		expanded, err := expandCollections(t.Context(), installed, configured)
 		require.NoError(t, err)
 		require.Len(t, expanded, 2)
 		for _, r := range expanded {
@@ -234,7 +234,7 @@ func TestExpandWildcardGroups(t *testing.T) {
 		configured, err := ParseSupportedResources([]string{"playlist.grafana.app/Playlist"})
 		require.NoError(t, err)
 
-		expanded, err := expandWildcardGroups(t.Context(), func(context.Context) ([]schema.GroupKind, error) {
+		expanded, err := expandCollections(t.Context(), func(context.Context) ([]schema.GroupKind, error) {
 			t.Fatal("discovery should not be consulted without a wildcard entry")
 			return nil, nil
 		}, configured)
@@ -247,7 +247,7 @@ func TestExpandWildcardGroups(t *testing.T) {
 		configured, err := ParseSupportedResources([]string{"*.datasource.grafana.app/DataSource"})
 		require.NoError(t, err)
 
-		expanded, err := expandWildcardGroups(t.Context(), served("dashboard.grafana.app/Dashboard"), configured)
+		expanded, err := expandCollections(t.Context(), served("dashboard.grafana.app/Dashboard"), configured)
 		require.NoError(t, err)
 		require.Empty(t, expanded)
 	})
@@ -256,7 +256,7 @@ func TestExpandWildcardGroups(t *testing.T) {
 		configured, err := ParseSupportedResources([]string{"grafana-*@plugins.grafana.app/Settings"})
 		require.NoError(t, err)
 
-		expanded, err := expandWildcardGroups(t.Context(), served(
+		expanded, err := expandCollections(t.Context(), served(
 			"grafana-slo-app/Settings",
 			"acme-slo-app/Settings",
 			"plugins.grafana.app/Settings",
@@ -269,7 +269,7 @@ func TestExpandWildcardGroups(t *testing.T) {
 		configured, err := ParseSupportedResources([]string{"*-app@plugins.grafana.app/Settings"})
 		require.NoError(t, err)
 
-		expanded, err := expandWildcardGroups(t.Context(), served(
+		expanded, err := expandCollections(t.Context(), served(
 			"grafana-slo-app/Settings",
 			"grafana-app-sdk/Settings",
 			"plugins.grafana.app/Settings",
@@ -287,7 +287,7 @@ func TestExpandWildcardGroups(t *testing.T) {
 		require.NoError(t, err)
 
 		calls := 0
-		expanded, err := expandWildcardGroups(t.Context(), func(context.Context) ([]schema.GroupKind, error) {
+		expanded, err := expandCollections(t.Context(), func(context.Context) ([]schema.GroupKind, error) {
 			calls++
 			return []schema.GroupKind{
 				{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
@@ -307,7 +307,7 @@ func TestExpandWildcardGroups(t *testing.T) {
 		configured, err := ParseSupportedResources([]string{"*.grafana.app/Playlist"})
 		require.NoError(t, err)
 
-		expanded, err := expandWildcardGroups(t.Context(), served(
+		expanded, err := expandCollections(t.Context(), served(
 			"playlist.grafana.app/Playlist",
 			"dashboard.grafana.app/Dashboard",
 			"folder.grafana.app/Folder",
@@ -325,7 +325,7 @@ func TestExpandWildcardGroups(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		expanded, err := expandWildcardGroups(t.Context(), installed, configured)
+		expanded, err := expandCollections(t.Context(), installed, configured)
 		require.NoError(t, err)
 		require.Equal(t, []schema.GroupKind{
 			{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
@@ -343,7 +343,7 @@ func TestExpandWildcardGroups(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		expanded, err := expandWildcardGroups(t.Context(), installed, configured)
+		expanded, err := expandCollections(t.Context(), installed, configured)
 		require.NoError(t, err)
 		require.Equal(t, []schema.GroupKind{
 			{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
@@ -355,7 +355,7 @@ func TestExpandWildcardGroups(t *testing.T) {
 		configured, err := ParseSupportedResources([]string{"*.datasource.grafana.app/DataSource"})
 		require.NoError(t, err)
 
-		_, err = expandWildcardGroups(t.Context(), func(context.Context) ([]schema.GroupKind, error) {
+		_, err = expandCollections(t.Context(), func(context.Context) ([]schema.GroupKind, error) {
 			return nil, errors.New("apis unreachable")
 		}, configured)
 		require.ErrorContains(t, err, "apis unreachable")
