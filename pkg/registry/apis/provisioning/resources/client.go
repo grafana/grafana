@@ -143,6 +143,11 @@ func ParseSupportedResources(entries []string) ([]SupportedResource, error) {
 // literal part is not a dotted group must name the group its members are stored under.
 func validateGroup(entry, group string) error {
 	pattern, collection, qualified := strings.Cut(group, provisioningresources.CollectionSeparator)
+	// Only the first wildcard is matched against, so a second one is a literal that nothing
+	// serves: the collection would silently expand to no members.
+	if strings.Count(pattern, provisioningresources.CollectionWildcard) > 1 {
+		return fmt.Errorf("invalid provisioning resource %q: collection %q names more than one wildcard", entry, pattern)
+	}
 	switch {
 	case qualified && !provisioningresources.IsCollection(pattern):
 		return fmt.Errorf("invalid provisioning resource %q: only a wildcard group names a collection", entry)
@@ -734,9 +739,11 @@ type groupKindLister func(ctx context.Context) ([]schema.GroupKind, error)
 // discoveryKinds lists every kind the server serves. A discovery failure outside the configured
 // collections is tolerated; one inside is not, since a member would silently go missing.
 func discoveryKinds(provider clientsProvider, configured []SupportedResource) groupKindLister {
+	// Only a collection is expanded here, so only a failure inside one hides a member. A group
+	// declared on its own passes through, and resolves (or fails) when a client for it is taken.
 	relevant := func(group string) bool {
 		for _, r := range configured {
-			if provisioningresources.CoversGroup(r.Group, group) {
+			if provisioningresources.IsCollection(r.Group) && provisioningresources.CoversGroup(r.Group, group) {
 				return true
 			}
 		}

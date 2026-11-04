@@ -125,6 +125,9 @@ func TestParseSupportedResources(t *testing.T) {
 		{"unqualified non-dotted pattern", "*-app/Settings"},
 		{"unqualified trailing pattern", "grafana-*/Settings"},
 		{"two wildcards", "*.*.grafana.app/Thing"},
+		// The qualifier used to skip the single-wildcard check, and the collection then expanded
+		// to nothing because only the first wildcard is matched against.
+		{"two wildcards with a qualifier", "*.*.grafana.app@plugins.grafana.app/Settings"},
 		{"collection on a concrete group", "playlist.grafana.app@plugins.grafana.app/Playlist"},
 		{"collection without a dot", "*-app@plugins/Settings"},
 	} {
@@ -504,4 +507,34 @@ func (servedDiscoveryClient) PreferredResources(context.Context, func(string) bo
 		{GroupVersion: "prometheus.datasource.grafana.app/v0alpha1", APIResources: []metav1.APIResource{{Name: "datasources", Kind: "DataSource"}}},
 		{GroupVersion: "loki.datasource.grafana.app/v0alpha1", APIResources: []metav1.APIResource{{Name: "datasources", Kind: "DataSource"}}},
 	}, nil
+}
+
+// A group declared on its own passes through expansion, so a stale discovery failure there must
+// not stop the collections that are healthy from expanding.
+func TestDiscoveryKindsIgnoresFailuresOutsideCollections(t *testing.T) {
+	configured, err := ParseSupportedResources([]string{
+		"playlist.grafana.app/Playlist",
+		"*.datasource.grafana.app/DataSource",
+	})
+	require.NoError(t, err)
+
+	capture := &capturingDiscoveryClient{}
+	_, err = discoveryKinds(&flakyClientsProvider{discovery: capture}, configured)(t.Context())
+	require.NoError(t, err)
+	require.NotNil(t, capture.relevant, "the predicate is handed to discovery")
+	assert.False(t, capture.relevant("playlist.grafana.app"),
+		"a group declared on its own resolves, or fails, when a client for it is taken")
+	assert.True(t, capture.relevant("loki.datasource.grafana.app"),
+		"a member of a collection would otherwise go missing silently")
+}
+
+// capturingDiscoveryClient keeps the relevance predicate it was called with.
+type capturingDiscoveryClient struct {
+	client.DiscoveryClient
+	relevant func(string) bool
+}
+
+func (c *capturingDiscoveryClient) PreferredResources(_ context.Context, relevant func(string) bool) ([]*metav1.APIResourceList, error) {
+	c.relevant = relevant
+	return nil, nil
 }

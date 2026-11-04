@@ -59,7 +59,7 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 		return nil, err
 	}
 
-	members, covered, err := o.listCollectionMembers(ctx, namespace, repository)
+	scan, err := o.listCollectionMembers(ctx, namespace, repository)
 	if err != nil {
 		return nil, err
 	}
@@ -70,15 +70,17 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 		gr := schema.GroupResource{Group: v.Object.Group, Resource: v.Object.Resource}
 		// A member listed through its own API group is reported there, not from the index: the
 		// same resource twice is deleted as an orphan at a duplicate path by full sync.
-		if covered.Has(gr) {
+		if scan.covered.Has(gr) {
 			continue
 		}
 		// Indexed under the collection's own key, which names neither the serving group nor the
 		// served name, so no API server can be asked for it. Dropping it leaves a member of an
 		// unserved collection out of cleanup; reporting it fails every reconcile of the delete.
-		if collections.Has(v.Object.Group) {
+		// A kind declared under its own name is addressable and stays, even when it is stored in
+		// a group some collection also names.
+		if collections.Has(gr.Group) && !scan.declared.Has(gr) {
 			logging.FromContext(ctx).Warn("skipping indexed object of a collection no API group serves",
-				"group", v.Object.Group, "resource", v.Object.Resource, "name", v.Object.Name)
+				"group", gr.Group, "resource", gr.Resource, "name", v.Object.Name)
 			continue
 		}
 		items = append(items, provisioning.ResourceListItem{
@@ -93,7 +95,7 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 		})
 	}
 
-	return &provisioning.ResourceList{Items: append(items, members...)}, nil
+	return &provisioning.ResourceList{Items: append(items, scan.items...)}, nil
 }
 
 // collectionGroups returns the groups the configured collections are stored under.
@@ -105,31 +107,50 @@ func (o *ResourceListerFromSearch) collectionGroups() sets.Set[string] {
 	return groups
 }
 
+// collectionScan is what the member scan answered: the resources it listed, which the index no
+// longer has to report, and the resources of the kinds it did not list, which it still does.
+type collectionScan struct {
+	items    []provisioning.ResourceListItem
+	covered  sets.Set[schema.GroupResource]
+	declared sets.Set[schema.GroupResource]
+}
+
 // listCollectionMembers lists what a repository manages inside the configured collections, one
-// request per served group instead of one for the whole repository, and returns the resources it
-// answered for. The index cannot answer it: it reports a member under the collection's group, and
-// possibly a different name, so the object it describes cannot be addressed.
-func (o *ResourceListerFromSearch) listCollectionMembers(ctx context.Context, namespace, repository string) ([]provisioning.ResourceListItem, sets.Set[schema.GroupResource], error) {
-	covered := sets.New[schema.GroupResource]()
+// request per served group instead of one for the whole repository. The index cannot answer it: it
+// reports a member under the collection's group, and possibly a different name, so the object it
+// describes cannot be addressed.
+func (o *ResourceListerFromSearch) listCollectionMembers(ctx context.Context, namespace, repository string) (collectionScan, error) {
+	scan := collectionScan{
+		covered:  sets.New[schema.GroupResource](),
+		declared: sets.New[schema.GroupResource](),
+	}
 	if len(o.collections) == 0 || o.clients == nil {
-		return nil, covered, nil
+		return scan, nil
 	}
 
 	clients, err := o.clients.Clients(ctx, namespace)
 	if err != nil {
-		return nil, nil, fmt.Errorf("get clients for collection members: %w", err)
+		return scan, fmt.Errorf("get clients for collection members: %w", err)
 	}
 
+	collections := o.collectionGroups()
 	var items []provisioning.ResourceListItem
 	for _, supported := range clients.SupportedResources() {
-		if !o.isMember(supported.GroupKind) {
+		member := o.isMember(supported.GroupKind)
+		// A kind stored in a group a collection also names is resolved as well, so its index
+		// rows can be told apart by resource; no other kind needs a lookup here.
+		if !member && !collections.Has(supported.Group) {
 			continue
 		}
 		client, gvr, err := clients.ForKind(ctx, supported.WithVersion(""))
 		if err != nil {
-			return nil, nil, fmt.Errorf("get client for %s: %w", supported.GroupKind, err)
+			return scan, fmt.Errorf("get client for %s: %w", supported.GroupKind, err)
 		}
-		covered.Insert(gvr.GroupResource())
+		if !member {
+			scan.declared.Insert(gvr.GroupResource())
+			continue
+		}
+		scan.covered.Insert(gvr.GroupResource())
 		err = ForEach(ctx, client, func(obj *unstructured.Unstructured) error {
 			if item, ok := managedResourceItem(obj, gvr, repository); ok {
 				items = append(items, item)
@@ -137,10 +158,11 @@ func (o *ResourceListerFromSearch) listCollectionMembers(ctx context.Context, na
 			return nil
 		})
 		if err != nil {
-			return nil, nil, fmt.Errorf("list %s: %w", gvr, err)
+			return scan, fmt.Errorf("list %s: %w", gvr, err)
 		}
 	}
-	return items, covered, nil
+	scan.items = items
+	return scan, nil
 }
 
 // isMember reports whether a served group and kind belong to one of the configured collections.

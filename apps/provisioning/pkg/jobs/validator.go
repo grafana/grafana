@@ -190,33 +190,31 @@ func validateExportResourceRefs(base *field.Path, refs []provisioning.ResourceRe
 			continue
 		}
 
-		// A non-empty group must match the group registered for that kind.
-		var kindOK, groupOK, groupRequired bool
+		// A member declared on its own and disabled stays excluded, even though the collection
+		// covering it is active.
+		excluded := r.Group != "" && declaredDisabled(supportedResources, r.Group, r.Kind)
+
+		// A non-empty group must match the group registered for that kind. Every declaration of
+		// the kind is scanned: one collection among them decides whether a group is required,
+		// whatever else declares it.
+		var kindOK, groupOK, servedByCollection bool
 		for _, s := range supported {
 			if s.Kind != r.Kind {
 				continue
 			}
 			kindOK = true
-			if r.Group != "" {
-				// A member declared on its own and disabled stays excluded, even though the
-				// collection covering it is active.
-				if declaredDisabled(supportedResources, r.Group, r.Kind) {
-					continue
-				}
-				if resources.CoversGroup(s.Group, r.Group) {
-					groupOK = true
-					break
-				}
-				continue
-			}
-			// A kind registered as a collection cannot resolve an omitted group: its members
-			// each serve their own, and reading through the wrong one finds nothing.
 			if resources.IsCollection(s.Group) {
-				groupRequired = true
-				continue
+				servedByCollection = true
 			}
-			groupOK = true
-			break
+			if !excluded && r.Group != "" && resources.CoversGroup(s.Group, r.Group) {
+				groupOK = true
+			}
+		}
+		// An omitted group is resolved from the kind alone, which a collection cannot do: its
+		// members each serve their own, and reading through the wrong one finds nothing.
+		groupRequired := r.Group == "" && servedByCollection
+		if r.Group == "" && !servedByCollection {
+			groupOK = kindOK
 		}
 		switch {
 		case !kindOK:

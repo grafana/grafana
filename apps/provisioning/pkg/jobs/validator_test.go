@@ -911,6 +911,30 @@ func TestValidateJob(t *testing.T) {
 			},
 		},
 		{
+			// Breaking on the concrete declaration accepted an empty group, which no client in
+			// the operator can route and which picks an arbitrary member in-process.
+			name: "push action omitting the group when a collection also declares the kind",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "ds-1", Kind: "DataSource"}},
+					},
+				},
+			},
+			supportedResources: []provisioning.SupportedResource{
+				{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
+				{Group: "*.datasource.grafana.app", Kind: "DataSource"},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0].group")
+				require.Contains(t, err.Error(), "served by several groups")
+			},
+		},
+		{
 			name: "push action naming the collection group itself",
 			job: &provisioning.Job{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
