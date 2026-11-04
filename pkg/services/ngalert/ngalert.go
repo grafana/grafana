@@ -100,7 +100,7 @@ func ProvideService(
 	pluginsStore pluginstore.Store,
 	tracer tracing.Tracer,
 	alertingStore *store.DBstore,
-	ruleStore *rules.RuleStore,
+	ruleStore rules.Store,
 	provenanceStore *provenance.ProvenanceStore,
 	httpClientProvider httpclient.Provider,
 	pluginContextProvider *plugincontext.Provider,
@@ -204,7 +204,7 @@ type AlertNG struct {
 	FolderResourcePermissions accesscontrol.FolderPermissionsService
 	annotationsRepo           annotations.Repository
 	store                     *store.DBstore
-	ruleStore                 *rules.RuleStore
+	ruleStore                 rules.Store
 	provenanceStore           *provenance.ProvenanceStore
 	userService               user.Service
 	orgService                org.Service
