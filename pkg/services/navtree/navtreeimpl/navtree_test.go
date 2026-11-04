@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	playlistregistry "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -248,6 +249,86 @@ func TestBuildNotebooksNavLink(t *testing.T) {
 			}}, link.Children)
 		})
 	}
+}
+
+func TestBuildSlideshowsNavLink(t *testing.T) {
+	newService := func() *ServiceImpl {
+		return &ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+			features:      featuremgmt.WithFeatures(),
+		}
+	}
+
+	newReqCtx := func(signedIn, anonymous bool) *contextmodel.ReqContext {
+		httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+		return &contextmodel.ReqContext{
+			SignedInUser: &user.SignedInUser{IsAnonymous: anonymous, OrgRole: org.RoleViewer},
+			IsSignedIn:   signedIn,
+			Context:      &web.Context{Req: httpReq},
+		}
+	}
+
+	t.Run("Should show Slideshows for a signed-in Viewer", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagPlaylistSlideshows: true})
+		link := newService().buildSlideshowsNavLink(newReqCtx(true, false))
+
+		require.NotNil(t, link)
+		require.Equal(t, navtree.NavIDSlideshows, link.Id)
+		require.Equal(t, "/slideshows", link.Url)
+	})
+
+	t.Run("Should show Slideshows for an anonymous Viewer", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagPlaylistSlideshows: true})
+		require.NotNil(t, newService().buildSlideshowsNavLink(newReqCtx(false, true)))
+	})
+
+	t.Run("Should not show Slideshows for an unauthenticated user", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagPlaylistSlideshows: true})
+		require.Nil(t, newService().buildSlideshowsNavLink(newReqCtx(false, false)))
+	})
+
+	t.Run("Should not show Slideshows when the toggle is off", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagPlaylistSlideshows: false})
+		require.Nil(t, newService().buildSlideshowsNavLink(newReqCtx(true, false)))
+	})
+
+	t.Run("Should not show Slideshows when the toggle is not set", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{})
+		require.Nil(t, newService().buildSlideshowsNavLink(newReqCtx(true, false)))
+	})
+}
+
+func TestBuildSlideshowsNavLink_WithPlaylistsRBAC(t *testing.T) {
+	newService := func(permissions []ac.Permission) *ServiceImpl {
+		return &ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions(permissions),
+			features:      featuremgmt.WithFeatures(),
+		}
+	}
+	reqCtx := func() *contextmodel.ReqContext {
+		httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+		return &contextmodel.ReqContext{
+			SignedInUser: &user.SignedInUser{OrgRole: org.RoleNone},
+			IsSignedIn:   true,
+			Context:      &web.Context{Req: httpReq},
+		}
+	}
+	flags := map[string]bool{featuremgmt.FlagPlaylistSlideshows: true, featuremgmt.FlagPlaylistsRBAC: true}
+
+	t.Run("Should show Slideshows for a user with playlists:read", func(t *testing.T) {
+		setOpenFeatureFlags(t, flags)
+		link := newService([]ac.Permission{{Action: playlistregistry.ActionPlaylistsRead}}).buildSlideshowsNavLink(reqCtx())
+
+		require.NotNil(t, link)
+		require.Equal(t, navtree.NavIDSlideshows, link.Id)
+	})
+
+	t.Run("Should not show Slideshows for a user without playlists:read", func(t *testing.T) {
+		setOpenFeatureFlags(t, flags)
+		require.Nil(t, newService([]ac.Permission{{Action: playlistregistry.ActionPlaylistsWrite}}).buildSlideshowsNavLink(reqCtx()))
+	})
 }
 
 func TestBuildAlertNavLinks(t *testing.T) {
