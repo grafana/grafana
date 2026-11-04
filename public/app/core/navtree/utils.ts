@@ -192,7 +192,7 @@ export function sortNavTree(nodes: NavModelItem[]): NavModelItem[] {
  * Adds a section's shell when the tree has none. This supports finished trees,
  * where empty attachment targets have already been pruned and URLs prefixed.
  */
-export function ensureSection(tree: NavModelItem[], sectionId: string): NavModelItem[] {
+function ensureSection(tree: NavModelItem[], sectionId: string): NavModelItem[] {
   if (findNavById(tree, sectionId)) {
     return tree;
   }
