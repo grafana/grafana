@@ -4,11 +4,13 @@ import {
   SceneGridLayout,
   SceneVariableSet,
   TestVariable,
+  VizPanel,
 } from '@grafana/scenes';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { performRowRepeats } from '../scene/layout-rows/RowItemRepeater';
@@ -17,7 +19,7 @@ import { TabItem } from '../scene/layout-tabs/TabItem';
 import { performTabRepeats } from '../scene/layout-tabs/TabItemRepeater';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 
-import { cloneSectionVariableSet, getCloneKey, getRepeatSourceObject } from './clone';
+import { cloneSectionVariableSet, getCloneKey, getRenderedInstanceCount, getRepeatSourceObject } from './clone';
 
 function repeatVariable(name: string) {
   return new TestVariable({
@@ -128,6 +130,48 @@ describe('clone', () => {
       const nestedCloneLayer = layersOf(innerRowInTabClone.state.repeatedRows?.[0])[1];
       expect(getRepeatSourceObject(nestedCloneLayer)).toBe(layersOf(innerRow)[1]);
       expect(getRepeatSourceObject(layersOf(innerRowInTabClone)[0])).toBe(layersOf(innerRow)[0]);
+    });
+  });
+
+  describe('getRenderedInstanceCount', () => {
+    it('counts a panel that is not repeated once', () => {
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries' });
+      new DashboardGridItem({ body: panel });
+
+      expect(getRenderedInstanceCount(panel)).toBe(1);
+    });
+
+    it('counts the source panel plus the clones held by its grid item', () => {
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries' });
+      new DashboardGridItem({
+        body: panel,
+        repeatedPanels: [
+          new VizPanel({ key: getCloneKey('panel-1', 1), pluginId: 'timeseries' }),
+          new VizPanel({ key: getCloneKey('panel-1', 2), pluginId: 'timeseries' }),
+        ],
+      });
+
+      expect(getRenderedInstanceCount(panel)).toBe(3);
+    });
+
+    it('counts the source row plus its repeated rows', () => {
+      const row = new RowItem({
+        key: 'row-1',
+        title: 'Row',
+        repeatedRows: [new RowItem({ key: getCloneKey('row-1', 1), title: 'Row' })],
+      });
+
+      expect(getRenderedInstanceCount(row)).toBe(2);
+    });
+
+    it('counts the source tab plus its repeated tabs', () => {
+      const tab = new TabItem({
+        key: 'tab-1',
+        title: 'Tab',
+        repeatedTabs: [new TabItem({ key: getCloneKey('tab-1', 1), title: 'Tab' })],
+      });
+
+      expect(getRenderedInstanceCount(tab)).toBe(2);
     });
   });
 });

@@ -564,6 +564,51 @@ func TestGlobalHandler_EachResultNamesItsOwnType(t *testing.T) {
 	assert.Equal(t, searchv0.ResourceRef{Group: "other.grafana.app", Resource: "others", Kind: "", Name: "other-a"}, out.Items[2].Resource)
 }
 
+// A query can ask whether the caller may update, delete or set permissions on
+// each returned item. The verbs reach the search server once each, the answers
+// reach the caller as they came, and an unknown verb is rejected.
+func TestGlobalHandler_ReturnsAccessPerItem(t *testing.T) {
+	client := &fakeIndexClient{resp: &resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Rows: []*resourcepb.ResourceSearchRow{
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a"},
+				Access: map[string]bool{"update": true, "delete": false},
+			},
+			{Key: &resourcepb.ResourceKey{Namespace: "default", Group: "folder.grafana.app", Resource: "folders", Name: "folder-a"}},
+		},
+		TotalHits:      2,
+		TotalHitsExact: true,
+	}}
+	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+	query := func(access string) string {
+		return strings.TrimSuffix(globalQuery(""), "}") + `, "access": ` + access + `}`
+	}
+
+	w := doGlobalRequest(t, h, query(`["update", "delete", "update"]`))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	assert.Equal(t, []string{"delete", "update"}, client.got.AccessVerbs)
+	var out struct {
+		Items []map[string]json.RawMessage `json:"items"`
+	}
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &out))
+	require.Len(t, out.Items, 2)
+	assert.JSONEq(t, `{"update": true, "delete": false}`, string(out.Items[0]["access"]))
+	assert.NotContains(t, out.Items[1], "access", "an item without answers has no access")
+
+	client.got = nil
+	w = doGlobalRequest(t, h, query(`["update", "get"]`))
+	assert.Equal(t, http.StatusUnprocessableEntity, w.Code, w.Body.String())
+	assert.Contains(t, w.Body.String(), "access[1]")
+	assert.Nil(t, client.got)
+
+	// Only the global search offers it for now.
+	w = doRequest(t, h, `{"apiVersion": "`+searchv0.APIVERSION+`", "kind": "`+searchv0.KindSearchQuery+`", "access": ["update"]}`)
+	assert.Equal(t, http.StatusBadRequest, w.Code, w.Body.String())
+	assert.Contains(t, w.Body.String(), `unknown field \"access\"`)
+	assert.Nil(t, client.got)
+}
+
 // The search server names the kinds it takes from manifests read at runtime,
 // which this process may not know, and its names win over this process's.
 func TestGlobalHandler_UsesTheKindsTheServerReports(t *testing.T) {

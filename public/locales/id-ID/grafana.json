@@ -5284,6 +5284,9 @@
       "preferences": "Preferensi",
       "recent-dashboards": "Dasbor terbaru",
       "recent-scopes": "Cakupan terbaru"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -7596,10 +7599,10 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
+      "draft-discarded": "",
       "draft-title": "",
       "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
       "pending-changes-changed": "",
@@ -12295,7 +12298,6 @@
       "copy-log-line-json": "Salin konten log sebagai JSON",
       "copy-shortlink": "Salin tautan pendek",
       "copy-to-clipboard": "Salin ke papan klip",
-      "displayed-fields-section": "Susun bidang yang ditampilkan",
       "fields": {
         "adhoc-statistics": "Statistik ad-hoc",
         "copy-value-to-clipboard": "Salin nilai ke papan klip",
@@ -12319,14 +12321,11 @@
       "log-attributes-field": "Atribut log",
       "log-line-field": "Baris log",
       "log-line-section": "Baris log",
-      "move-displayed-field-down": "Pindahkan ke bawah",
-      "move-displayed-field-up": "Pindahkan ke atas",
       "no-details": "Tidak ada bidang untuk ditampilkan.",
       "open-assistant": "Jelaskan baris log di Asisten",
       "open-value-in": "",
       "pin-line": "Sematkan log",
       "prettify": "Rapikan",
-      "remove-displayed-field": "Hapus bidang",
       "remove-log": "Hapus log",
       "scroll-to-logline": "Gulir ke baris log",
       "search": {
