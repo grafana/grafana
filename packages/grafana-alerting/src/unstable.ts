@@ -39,6 +39,13 @@ export {
   isDefaultRoutingTree,
 } from './grafana/notificationPolicies/routingTree.utils';
 
+// Time intervals
+export {
+  useListTimeIntervals,
+  type TimeIntervalView,
+  type TimeIntervalsStatus,
+} from './grafana/muteTimings/hooks/useListTimeIntervals';
+
 // Notification settings
 export {
   type NotificationSettings,
