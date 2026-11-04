@@ -137,7 +137,7 @@ func TestNewRepository_SendsUserAgent(t *testing.T) {
 			require.NoError(t, err)
 
 			ok, err := gitRepo.(*gitRepository).client.CanRead(t.Context())
-			require.NoError(t, err)
+			require.ErrorIs(t, err, client.ErrUnauthorized)
 			require.False(t, ok)
 
 			mu.Lock()
@@ -379,6 +379,7 @@ func TestGitRepository_Test(t *testing.T) {
 		{
 			name: "success - all checks pass",
 			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.CanReadReturns(true, nil)
 				mockClient.RepoExistsReturns(true, nil)
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
@@ -396,8 +397,73 @@ func TestGitRepository_Test(t *testing.T) {
 			wantError: nil,
 		},
 		{
+			name: "failure - not authorized (error)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.CanReadReturns(false, errors.New("auth error"))
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("secure", "token").String(),
+						Detail: "failed check if authorized: auth error",
+					},
+				},
+				Code: http.StatusUnauthorized,
+			},
+			wantError: nil,
+		},
+		{
+			name: "failure - not authorized (false result)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.CanReadReturns(false, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("secure", "token").String(),
+						Detail: "not authorized",
+					},
+				},
+				Code: http.StatusUnauthorized,
+			},
+			wantError: nil,
+		},
+		{
+			name: "failure - repository not found (HTTP 404) from CanRead",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.CanReadReturns(false, client.NewRepositoryNotFoundError("GET", "info/refs", nil))
+				mockClient.RepoExistsReturns(false, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "test_type", "url").String(),
+						Detail: "repository not found",
+					},
+				},
+				Code: http.StatusNotFound,
+			},
+			wantError: nil,
+		},
+		{
 			name: "failure - repository not found (error)",
 			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.CanReadReturns(true, nil)
 				mockClient.RepoExistsReturns(false, errors.New("repo error"))
 			},
 			gitConfig: RepositoryConfig{
@@ -419,6 +485,7 @@ func TestGitRepository_Test(t *testing.T) {
 		{
 			name: "failure - repository not found (false result)",
 			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.CanReadReturns(true, nil)
 				mockClient.RepoExistsReturns(false, nil)
 			},
 			gitConfig: RepositoryConfig{
@@ -440,6 +507,7 @@ func TestGitRepository_Test(t *testing.T) {
 		{
 			name: "failure - branch not found (error)",
 			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.CanReadReturns(true, nil)
 				mockClient.RepoExistsReturns(true, nil)
 				mockClient.GetRefReturns(nanogit.Ref{}, errors.New("branch not found"))
 			},
@@ -462,6 +530,7 @@ func TestGitRepository_Test(t *testing.T) {
 		{
 			name: "failure - branch not found (other branches exist)",
 			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.CanReadReturns(true, nil)
 				mockClient.RepoExistsReturns(true, nil)
 				mockClient.GetRefReturns(nanogit.Ref{}, nanogit.ErrObjectNotFound)
 				mockClient.ListRefsReturns([]nanogit.Ref{
@@ -487,6 +556,7 @@ func TestGitRepository_Test(t *testing.T) {
 		{
 			name: "failure - branch not found (empty repository)",
 			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.CanReadReturns(true, nil)
 				mockClient.RepoExistsReturns(true, nil)
 				mockClient.GetRefReturns(nanogit.Ref{}, nanogit.ErrObjectNotFound)
 				mockClient.ListRefsReturns([]nanogit.Ref{}, nil)
@@ -515,6 +585,7 @@ func TestGitRepository_Test(t *testing.T) {
 					{Name: "refs/heads/main", Hash: hash.MustFromHex("a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2")},
 					{Name: "refs/heads/develop", Hash: hash.MustFromHex("b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3")},
 				}, nil)
+				mockClient.CanReadReturns(true, nil)
 				mockClient.RepoExistsReturns(true, nil)
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
@@ -539,6 +610,7 @@ func TestGitRepository_Test(t *testing.T) {
 					{Name: "refs/heads/master", Hash: hash.MustFromHex("a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2")},
 					{Name: "refs/heads/develop", Hash: hash.MustFromHex("b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3")},
 				}, nil)
+				mockClient.CanReadReturns(true, nil)
 				mockClient.RepoExistsReturns(true, nil)
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/master",
@@ -564,6 +636,7 @@ func TestGitRepository_Test(t *testing.T) {
 					{Name: "refs/heads/develop", Hash: hash.MustFromHex("b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3")},
 					{Name: "refs/heads/alpha", Hash: hash.MustFromHex("c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4")},
 				}, nil)
+				mockClient.CanReadReturns(true, nil)
 				mockClient.RepoExistsReturns(true, nil)
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/alpha",
@@ -617,9 +690,9 @@ func TestGitRepository_Test(t *testing.T) {
 			wantError:   errors.New("list refs: network error"),
 		},
 		{
-			name: "failure - unauthorized (HTTP 401) from RepoExists",
+			name: "failure - unauthorized (HTTP 401) from CanRead",
 			setupMock: func(mockClient *mocks.FakeClient) {
-				mockClient.RepoExistsReturns(false, client.NewUnauthorizedError("GET", "/info/refs", nil))
+				mockClient.CanReadReturns(false, client.NewUnauthorizedError("GET", "/info/refs", nil))
 			},
 			gitConfig: RepositoryConfig{
 				Branch: "main",
@@ -640,6 +713,7 @@ func TestGitRepository_Test(t *testing.T) {
 		{
 			name: "failure - permission denied (HTTP 403) from RepoExists",
 			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.CanReadReturns(true, nil)
 				mockClient.RepoExistsReturns(false, client.NewPermissionDeniedError("POST", "/git-receive-pack", nil))
 			},
 			gitConfig: RepositoryConfig{
@@ -661,6 +735,7 @@ func TestGitRepository_Test(t *testing.T) {
 		{
 			name: "failure - server unavailable (HTTP 503) from GetRef",
 			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.CanReadReturns(true, nil)
 				mockClient.RepoExistsReturns(true, nil)
 				mockClient.GetRefReturns(nanogit.Ref{}, client.NewServerUnavailableError("GET", 503, nil))
 			},
@@ -683,6 +758,7 @@ func TestGitRepository_Test(t *testing.T) {
 		{
 			name: "failure - unauthorized (HTTP 401) from GetRef",
 			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.CanReadReturns(true, nil)
 				mockClient.RepoExistsReturns(true, nil)
 				mockClient.GetRefReturns(nanogit.Ref{}, client.NewUnauthorizedError("GET", "/info/refs?service=git-upload-pack", nil))
 			},
@@ -705,6 +781,7 @@ func TestGitRepository_Test(t *testing.T) {
 		{
 			name: "failure - permission denied (HTTP 403) from GetRef",
 			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.CanReadReturns(true, nil)
 				mockClient.RepoExistsReturns(true, nil)
 				mockClient.GetRefReturns(nanogit.Ref{}, client.NewPermissionDeniedError("GET", "/info/refs", nil))
 			},
@@ -727,6 +804,7 @@ func TestGitRepository_Test(t *testing.T) {
 		{
 			name: "failure - server unavailable (HTTP 503) from RepoExists",
 			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.CanReadReturns(true, nil)
 				mockClient.RepoExistsReturns(false, client.NewServerUnavailableError("GET", 502, errors.New("bad gateway")))
 			},
 			gitConfig: RepositoryConfig{
@@ -748,6 +826,7 @@ func TestGitRepository_Test(t *testing.T) {
 		{
 			name: "success - write permission check passes when workflows are configured",
 			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.CanReadReturns(true, nil)
 				mockClient.RepoExistsReturns(true, nil)
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
@@ -769,6 +848,7 @@ func TestGitRepository_Test(t *testing.T) {
 		{
 			name: "failure - write permission denied when workflows are configured",
 			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.CanReadReturns(true, nil)
 				mockClient.RepoExistsReturns(true, nil)
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
@@ -796,6 +876,7 @@ func TestGitRepository_Test(t *testing.T) {
 		{
 			name: "failure - write permission check error when workflows are configured",
 			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.CanReadReturns(true, nil)
 				mockClient.RepoExistsReturns(true, nil)
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
@@ -823,6 +904,7 @@ func TestGitRepository_Test(t *testing.T) {
 		{
 			name: "failure - permission denied (HTTP 403) from CanWrite",
 			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.CanReadReturns(true, nil)
 				mockClient.RepoExistsReturns(true, nil)
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
@@ -850,6 +932,7 @@ func TestGitRepository_Test(t *testing.T) {
 		{
 			name: "success - read-only repository skips write permission check",
 			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.CanReadReturns(true, nil)
 				mockClient.RepoExistsReturns(true, nil)
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
@@ -871,6 +954,7 @@ func TestGitRepository_Test(t *testing.T) {
 		{
 			name: "success - empty workflows array skips write permission check",
 			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.CanReadReturns(true, nil)
 				mockClient.RepoExistsReturns(true, nil)
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
@@ -918,7 +1002,10 @@ func TestGitRepository_Test(t *testing.T) {
 				require.Equal(t, tt.wantResults, results, "Test results mismatch")
 
 				// Verify mock calls only when the flow reaches those steps.
-				require.Zero(t, mockClient.CanReadCallCount(), "CanRead hides the HTTP status; Test should rely on RepoExists")
+				// Cases that fail early (e.g., no branches from GetDefaultBranch) never call CanRead.
+				if mockClient.CanReadCallCount() > 0 {
+					require.Equal(t, 1, mockClient.CanReadCallCount(), "CanRead should be called exactly once")
+				}
 
 				if mockClient.RepoExistsCallCount() > 0 {
 					require.Equal(t, 1, mockClient.RepoExistsCallCount(), "RepoExists should be called at most once")
@@ -943,6 +1030,7 @@ func TestGitRepository_Test(t *testing.T) {
 func TestGitRepository_Test_CanWriteValidation(t *testing.T) {
 	t.Run("verifies CanWrite is called for repositories with write workflows", func(t *testing.T) {
 		mockClient := &mocks.FakeClient{}
+		mockClient.CanReadReturns(true, nil)
 		mockClient.RepoExistsReturns(true, nil)
 		mockClient.GetRefReturns(nanogit.Ref{
 			Name: "refs/heads/main",
@@ -975,6 +1063,7 @@ func TestGitRepository_Test_CanWriteValidation(t *testing.T) {
 
 	t.Run("verifies CanWrite is NOT called for read-only repositories", func(t *testing.T) {
 		mockClient := &mocks.FakeClient{}
+		mockClient.CanReadReturns(true, nil)
 		mockClient.RepoExistsReturns(true, nil)
 		mockClient.GetRefReturns(nanogit.Ref{
 			Name: "refs/heads/main",
@@ -1006,6 +1095,7 @@ func TestGitRepository_Test_CanWriteValidation(t *testing.T) {
 
 	t.Run("verifies CanWrite is called for branch workflow", func(t *testing.T) {
 		mockClient := &mocks.FakeClient{}
+		mockClient.CanReadReturns(true, nil)
 		mockClient.RepoExistsReturns(true, nil)
 		mockClient.GetRefReturns(nanogit.Ref{
 			Name: "refs/heads/main",
@@ -1038,6 +1128,7 @@ func TestGitRepository_Test_CanWriteValidation(t *testing.T) {
 
 	t.Run("verifies Test fails when CanWrite denies access", func(t *testing.T) {
 		mockClient := &mocks.FakeClient{}
+		mockClient.CanReadReturns(true, nil)
 		mockClient.RepoExistsReturns(true, nil)
 		mockClient.GetRefReturns(nanogit.Ref{
 			Name: "refs/heads/main",
