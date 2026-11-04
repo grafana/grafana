@@ -172,6 +172,17 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 {{< docs/shared lookup="visualizations/panel-pan-zoom.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+## Cross-filter from a series
+
+In time series, you can apply dashboard cross-filters directly from the visualization.
+Cross-filtering requires a **Group by** variable and a data source that supports dashboard filters, such as Prometheus or Loki.
+
+To enable cross-filtering, add a field override for each field you want to filter by, select **Standard options > Cross-filter**, and enable the **Cross-filter** switch.
+
+In the visualization, click a series, then select **Filter on this value** or **Filter out this value** to filter by its labels.
+
+For more information, refer to [Cross-filtering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#dashboard-drilldown-with-filters).
+
 ## Configuration options
 
 {{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
