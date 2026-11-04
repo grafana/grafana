@@ -109,7 +109,8 @@ export function useStackedItemScroll({
       }
     };
     // An add bar grows as it opens; re-pinning would scroll it out from under the pointer and
-    // close it again.
+    // close it again. pointermove, not pointerover: re-pinning itself scrolls bars under a still
+    // pointer, which fires pointerover.
     const onAddBarEngaged = (event: Event) => {
       if (event.target instanceof Element && event.target.closest('[data-stacked-add-bar]')) {
         autoFollowRef.current = false;
@@ -118,7 +119,7 @@ export function useStackedItemScroll({
     container.addEventListener('wheel', onUserScroll, { passive: true });
     container.addEventListener('touchmove', onUserScroll, { passive: true });
     container.addEventListener('keydown', onContainerKeyDown);
-    container.addEventListener('pointerover', onAddBarEngaged);
+    container.addEventListener('pointermove', onAddBarEngaged, { passive: true });
     container.addEventListener('focusin', onAddBarEngaged);
 
     return () => {
@@ -126,7 +127,7 @@ export function useStackedItemScroll({
       container.removeEventListener('wheel', onUserScroll);
       container.removeEventListener('touchmove', onUserScroll);
       container.removeEventListener('keydown', onContainerKeyDown);
-      container.removeEventListener('pointerover', onAddBarEngaged);
+      container.removeEventListener('pointermove', onAddBarEngaged);
       container.removeEventListener('focusin', onAddBarEngaged);
     };
   }, [containerRef, contentRef, scrollSelectedIntoView]);
