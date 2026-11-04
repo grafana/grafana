@@ -11,7 +11,7 @@ import { Alert, Badge, ErrorBoundaryAlert, LinkButton, Stack, Text, useStyles2 }
 import { type CombinedRule } from 'app/types/unified-alerting';
 
 import { type AlertDataQuery, type AlertQuery } from '../../../types/unified-alerting-dto';
-import { isExpressionQuery } from '../../expressions/guards';
+import { isDynamicThresholdQuery, isExpressionQuery } from '../../expressions/guards';
 import {
   type ExpressionQuery,
   ExpressionQueryType,
@@ -244,6 +244,16 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition, isLoading
         return <ThresholdExpressionViewer model={model} />;
 
       case ExpressionQueryType.sql:
+        if (isDynamicThresholdQuery(model)) {
+          return (
+            <Stack direction="column" gap={1}>
+              <Text color="secondary" variant="bodySmall">
+                <Trans i18nKey="alerting.expression-preview.dynamic-threshold-generated-sql">Generated SQL</Trans>
+              </Text>
+              <Preview rawSql={model.expression || ''} datasourceType={model.datasource?.type} />
+            </Stack>
+          );
+        }
         return <Preview rawSql={model.expression || ''} datasourceType={model.datasource?.type} />;
 
       default:
@@ -260,7 +270,9 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition, isLoading
       refId={refId}
       headerItems={[
         <Text color="secondary" key="expression-type">
-          {startCase(model.type)}
+          {isDynamicThresholdQuery(model)
+            ? t('alerting.expression-preview.dynamic-threshold', 'Dynamic threshold')
+            : startCase(model.type)}
         </Text>,
       ]}
       isAlertCondition={isAlertCondition}
