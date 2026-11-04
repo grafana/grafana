@@ -16,6 +16,7 @@ import (
 const (
 	envelopePkg               = "github.com/grafana/grafana/pkg/apis/search/v0alpha1."
 	searchQueryGoName         = envelopePkg + searchv0.KindSearchQuery
+	globalSearchQueryGoName   = envelopePkg + "GlobalSearchQuery"
 	searchResultsGoName       = envelopePkg + searchv0.KindSearchResults
 	globalSearchResultsGoName = envelopePkg + searchv0.KindGlobalSearchResults
 	trashQueryGoName          = envelopePkg + searchv0.KindTrashQuery

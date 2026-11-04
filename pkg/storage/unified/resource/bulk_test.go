@@ -111,6 +111,64 @@ func TestSpoolBulkRequestsReleasesBudgetAfterQuotaError(t *testing.T) {
 	require.EqualValues(t, 413, AsErrorResult(err).Code)
 }
 
+func TestSpoolBulkRequestsCancellation(t *testing.T) {
+	for _, cancelBeforeStart := range []bool{true, false} {
+		name := "after first batch"
+		if cancelBeforeStart {
+			name = "before first batch"
+		}
+		t.Run(name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			budget := newBulkSpoolBudget(1 << 20)
+			source := newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{newTestBulkRequest("item")})
+			iter := &checkingBulkIterator{
+				batchOnlyBulkIterator: source,
+				beforeNext: func() {
+					if source.idx == 0 {
+						require.Positive(t, budget.used())
+						cancel()
+					}
+				},
+			}
+			if cancelBeforeStart {
+				cancel()
+			}
+
+			spool, err := spoolBulkRequests(ctx, iter, DefaultBulkBatchOptions(), budget)
+
+			require.Nil(t, spool)
+			require.ErrorIs(t, err, context.Canceled)
+			require.Zero(t, budget.used())
+			if cancelBeforeStart {
+				require.Equal(t, -1, source.idx)
+			}
+		})
+	}
+}
+
+func TestSpooledBulkRequestsNextBatchCancellation(t *testing.T) {
+	budget := newBulkSpoolBudget(1 << 20)
+	iter := newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{
+		newTestBulkRequest("item-1"),
+		newTestBulkRequest("item-2"),
+	})
+	spool, err := spoolBulkRequests(t.Context(), iter, BulkBatchOptions{MaxItems: 1}, budget)
+	require.NoError(t, err)
+	t.Cleanup(spool.Close)
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	require.False(t, spool.NextBatch(ctx))
+	require.False(t, spool.RollbackRequested())
+	require.True(t, spool.NextBatch(t.Context()))
+	require.Equal(t, "item-1", spool.Batch()[0].Key.Name)
+	require.False(t, spool.NextBatch(ctx))
+	require.True(t, spool.NextBatch(t.Context()))
+	require.Equal(t, "item-2", spool.Batch()[0].Key.Name)
+	require.False(t, spool.NextBatch(t.Context()))
+}
+
 func TestBatchRunnerNextBatchHonorsMaxItemsAndEOF(t *testing.T) {
 	opts := testBulkBatchOptions(2, 1<<20, 0)
 	reqs := []*resourcepb.BulkRequest{
@@ -430,22 +488,4 @@ func (b *panicBulkBackend) GetResourceStats(context.Context, NamespacedResource,
 
 func (b *panicBulkBackend) GetResourceLastImportTime(context.Context, NamespacedResource) (time.Time, error) {
 	panic("not implemented")
-}
-
-func TestBulkSpoolCancellation(t *testing.T) {
-	ctx, cancel := context.WithCancel(t.Context())
-	cancel()
-	budget := newBulkSpoolBudget(1 << 20)
-	source := newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{newTestBulkRequest("item")})
-	spool, err := spoolBulkRequests(ctx, source, DefaultBulkBatchOptions(), budget)
-	require.ErrorIs(t, err, context.Canceled)
-	require.Nil(t, spool)
-	require.Zero(t, budget.used())
-
-	spool, err = spoolBulkRequests(t.Context(), source, DefaultBulkBatchOptions(), budget)
-	require.NoError(t, err)
-	t.Cleanup(spool.Close)
-	require.False(t, spool.NextBatch(ctx))
-	require.True(t, spool.NextBatch(t.Context()))
-	require.Equal(t, "item", spool.Batch()[0].Key.Name)
 }

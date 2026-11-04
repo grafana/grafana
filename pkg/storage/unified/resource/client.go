@@ -85,10 +85,8 @@ func NewLocalResourceClient(srv ResourceServer) ResourceClient {
 	grpcAuthInt := grpcutils.NewUnsafeAuthenticator(tracer)
 
 	var metricsInt grpc.UnaryServerInterceptor
-	convertErrors := false
 	if s, ok := srv.(*server); ok {
 		metricsInt = UnaryRequestDurationInterceptor(s.storageMetrics)
-		convertErrors = s.grpcErrorResultToStatus
 	}
 
 	for _, desc := range []*grpc.ServiceDesc{
@@ -104,13 +102,11 @@ func NewLocalResourceClient(srv ResourceServer) ResourceClient {
 	} {
 		isResourceStore := desc == &resourcepb.ResourceStore_ServiceDesc
 		isBlobStreaming := desc == &resourcepb.BlobStoreStreaming_ServiceDesc
-		if convertErrors {
-			var streamInterceptor grpc.StreamServerInterceptor
-			if isBlobStreaming {
-				streamInterceptor = BlobStreamErrorResultInterceptor()
-			}
-			desc = grpchan.InterceptServer(desc, UnaryErrorResultInterceptor(), streamInterceptor)
+		var streamInterceptor grpc.StreamServerInterceptor
+		if isBlobStreaming {
+			streamInterceptor = BlobStreamErrorResultInterceptor()
 		}
+		desc = grpchan.InterceptServer(desc, UnaryErrorResultInterceptor(), streamInterceptor)
 		if metricsInt != nil && isResourceStore {
 			desc = grpchan.InterceptServer(desc, metricsInt, nil)
 		}

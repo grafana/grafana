@@ -453,9 +453,6 @@ func spoolBulkRequests(ctx context.Context, source BulkRequestBatchIterator, opt
 			return nil, fmt.Errorf("bulk preprocessing failed")
 		}
 		for _, req := range source.Batch() {
-			if err = ctx.Err(); err != nil {
-				return nil, err
-			}
 			data, marshalErr := proto.Marshal(req)
 			if marshalErr != nil {
 				return nil, fmt.Errorf("marshal bulk request: %w", marshalErr)

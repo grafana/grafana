@@ -685,14 +685,11 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 }
 
 func (s *service) withErrorResultConversion(desc *grpc.ServiceDesc) *grpc.ServiceDesc {
-	if s.cfg != nil && s.cfg.UnifiedStorageGRPCErrorResultToStatus {
-		var streamInterceptor grpc.StreamServerInterceptor
-		if desc == &resourcepb.BlobStoreStreaming_ServiceDesc {
-			streamInterceptor = resource.BlobStreamErrorResultInterceptor()
-		}
-		return grpchan.InterceptServer(desc, resource.UnaryErrorResultInterceptor(), streamInterceptor)
+	var streamInterceptor grpc.StreamServerInterceptor
+	if desc == &resourcepb.BlobStoreStreaming_ServiceDesc {
+		streamInterceptor = resource.BlobStreamErrorResultInterceptor()
 	}
-	return desc
+	return grpchan.InterceptServer(desc, resource.UnaryErrorResultInterceptor(), streamInterceptor)
 }
 
 // BuildKVSnapshotStore wires a KVRemoteIndexStore that shares the KV

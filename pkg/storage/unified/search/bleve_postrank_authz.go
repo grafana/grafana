@@ -1084,9 +1084,14 @@ func (b *bleveIndex) addRowAccess(ctx context.Context, access authlib.AccessClie
 		recordAccess(checks, allowed)
 		return nil
 	}
-	if err := checkAll(checks); err == nil {
+	err := checkAll(checks)
+	if err == nil {
 		return
 	}
+	// Expected when the calling service may not check some type and verb, so not
+	// a warning: each type and verb is checked on its own next.
+	span.RecordError(err)
+	logger.Debug("Failed to check access to search results in one batch, checking each type and verb", "error", err)
 
 	var groups []string
 	byGroup := map[string][]accessCheck{}
