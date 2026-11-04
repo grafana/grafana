@@ -10,6 +10,8 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -373,6 +375,12 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 		return nil, err
 	}
 
+	if !create {
+		if err := r.keepCommittedSecureValues(ctx, parsed, opts.Path, opts.Ref); err != nil {
+			return nil, err
+		}
+	}
+
 	// Make sure the value is valid
 	if !opts.SkipDryRun {
 		if err := parsed.DryRun(ctx); err != nil {
@@ -669,6 +677,10 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 		return nil, fmt.Errorf("parse new file: %w", err)
 	}
 
+	if len(opts.Data) > 0 {
+		keepPlaintextSecureValues(parsed.Obj, newParsed.Obj)
+	}
+
 	// Make sure the new resource is valid
 	if !opts.SkipDryRun {
 		if err := newParsed.DryRun(ctx); err != nil {
@@ -852,4 +864,78 @@ func (r *DualReadWriter) shouldUpdateGrafanaDB(opts DualWriteOptions, parsed *Pa
 	}
 
 	return r.isConfiguredBranch(opts)
+}
+
+// keepCommittedSecureValues restores into the update the plaintext secure values
+// already committed at path. A client that saves back what the resource API
+// returned carries only the reference, which would otherwise drop the secret from
+// the repository and leave the file unable to provision the resource again.
+func (r *DualReadWriter) keepCommittedSecureValues(ctx context.Context, parsed *ParsedResource, path, ref string) error {
+	committed, err := r.repo.Read(ctx, path, ref)
+	if errors.Is(err, repository.ErrRefNotFound) && ref != "" {
+		// Target branch doesn't exist yet (e.g. a new PR branch); the file it
+		// will branch from is the one on the configured branch.
+		committed, err = r.repo.Read(ctx, path, "")
+	}
+	if err != nil {
+		if errors.Is(err, repository.ErrFileNotFound) || errors.Is(err, repository.ErrRefNotFound) || apierrors.IsNotFound(err) {
+			return nil
+		}
+		return fmt.Errorf("read committed file: %w", err)
+	}
+
+	obj, _, _, parseErr := ParseFileResource(ctx, committed)
+	if parseErr != nil {
+		// The update replaces a file we cannot read as a resource, so it has no
+		// secure values to keep.
+		return nil
+	}
+
+	keepPlaintextSecureValues(obj, parsed.Obj)
+
+	return nil
+}
+
+// keepPlaintextSecureValues copies every plaintext secure value of committed into
+// updated, unless the update sets its own value for that key.
+func keepPlaintextSecureValues(committed, updated *unstructured.Unstructured) {
+	previous, ok := committed.Object["secure"].(map[string]any)
+	if !ok {
+		return
+	}
+
+	current, _ := updated.Object["secure"].(map[string]any)
+	for key, value := range previous {
+		secureValue, ok := value.(map[string]any)
+		if !ok {
+			continue
+		}
+		if create, ok := secureValue["create"].(string); !ok || create == "" {
+			continue
+		}
+		if setsOwnSecureValue(current[key]) {
+			continue
+		}
+
+		if current == nil {
+			current = map[string]any{}
+			updated.Object["secure"] = current
+		}
+		current[key] = runtime.DeepCopyJSON(secureValue)
+	}
+}
+
+// setsOwnSecureValue reports whether an update declares the value itself, either
+// as a new plaintext or as a removal.
+func setsOwnSecureValue(value any) bool {
+	secureValue, ok := value.(map[string]any)
+	if !ok {
+		return false
+	}
+	if create, ok := secureValue["create"].(string); ok && create != "" {
+		return true
+	}
+	remove, _ := secureValue["remove"].(bool)
+
+	return remove
 }
