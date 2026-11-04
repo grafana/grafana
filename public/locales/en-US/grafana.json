@@ -6446,6 +6446,9 @@
           "hide-header": "Hide row header",
           "title": "Title"
         },
+        "section-annotations": {
+          "title": "Annotations"
+        },
         "section-filters": {
           "title": "Filters"
         },
@@ -6527,11 +6530,10 @@
         "data-source": "Data source",
         "display": "Show annotation controls in",
         "display-options": {
-          "above-dashboard": "Above dashboard",
           "controls-menu": "Controls menu",
-          "controls-menu-description": "Can be accessed when the controls menu is open",
+          "controls-menu-description": "Visible when the controls menu is open",
           "hidden": "Hidden",
-          "hidden-description": "Hides the toggle for turning this annotation on or off"
+          "hidden-description": "Only visible in edit mode"
         },
         "enabled": "Enabled",
         "enabled-description": "When enabled the annotation query is issued every dashboard refresh",
@@ -6815,6 +6817,9 @@
             "description": "Repeat this tab for each value in the selected variable.",
             "title": "Repeat by variable"
           }
+        },
+        "section-annotations": {
+          "title": "Annotations"
         },
         "section-filters": {
           "title": "Filters"
