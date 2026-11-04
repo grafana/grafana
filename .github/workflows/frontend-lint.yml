@@ -23,6 +23,7 @@ jobs:
     outputs:
       changed: ${{ steps.detect-changes.outputs.frontend }}
       prettier: ${{ steps.detect-changes.outputs.frontend == 'true' || steps.detect-changes.outputs.docs == 'true' }}
+      openapi: ${{ steps.detect-changes.outputs.openapi }}
       changed-frontend-packages: ${{ steps.detect-changes.outputs.frontend-packages }}
       changed-frontend-dependencies: ${{ steps.detect-changes.outputs.frontend-dependencies }}
     steps:
@@ -185,9 +186,9 @@ jobs:
         fi
   lint-frontend-openapi:
     needs: detect-changes
-    # Run this workflow for OSS only, and only when frontend code or this workflow
-    # file has changed (skips unrelated .github/** changes).
-    if: needs.detect-changes.outputs.changed == 'true'
+    # Run this workflow for OSS only, and only when frontend code, the OpenAPI snapshots/generated package,
+    # or this workflow file has changed (skips unrelated .github/** changes).
+    if: needs.detect-changes.outputs.changed == 'true' || needs.detect-changes.outputs.openapi == 'true'
     permissions:
       contents: read
       id-token: write
