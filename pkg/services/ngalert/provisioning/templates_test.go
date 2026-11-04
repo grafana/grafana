@@ -976,80 +976,64 @@ func TestUpdateTemplate(t *testing.T) {
 		prov.AssertExpectations(t)
 	})
 
-	testcases := []struct {
-		name        string
-		templateUid v1.ResourceUID
-	}{
-		{
-			name:        "by name",
-			templateUid: "",
-		},
-		{
-			name:        "by uid",
-			templateUid: v1.TemplateUID(tmpl.Kind, tmpl.Title),
-		},
-	}
+	t.Run("updates the current template", func(t *testing.T) {
+		tmpl.UID = v1.TemplateUID(tmpl.Kind, tmpl.Title)
+		t.Run("when version matches", func(t *testing.T) {
+			sut, store, prov := createTemplateServiceSut()
+			store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+				return revision(), nil
+			}
+			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
+			prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) {
+				assertInTransaction(t, ctx)
+			}).Return(nil)
 
-	for _, tt := range testcases {
-		t.Run(fmt.Sprintf("updates current template %s", tt.name), func(t *testing.T) {
-			t.Run("when version matches", func(t *testing.T) {
-				sut, store, prov := createTemplateServiceSut()
-				store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
-					return revision(), nil
-				}
-				prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
-				prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) {
-					assertInTransaction(t, ctx)
-				}).Return(nil)
+			result, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
 
-				tmpl.UID = tt.templateUid
-				result, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
+			require.NoError(t, err)
+			assert.Equal(t, v1.NewTemplateGroup("",
+				tmpl.Title,
+				tmpl.Content,
+				tmpl.Kind,
+				tmpl.Provenance,
+			), result)
 
-				require.NoError(t, err)
-				assert.Equal(t, v1.NewTemplateGroup("",
-					tmpl.Title,
-					tmpl.Content,
-					tmpl.Kind,
-					tmpl.Provenance,
-				), result)
+			require.Len(t, store.Calls, 2)
+			require.Equal(t, "Save", store.Calls[1].Method)
+			saved := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
+			assert.Equal(t, amConfigToken, saved.ConcurrencyToken)
+			assert.Contains(t, saved.Config.Templates, result.UID)
+			assert.Equal(t, result, saved.Config.Templates[result.UID])
 
-				require.Len(t, store.Calls, 2)
-				require.Equal(t, "Save", store.Calls[1].Method)
-				saved := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
-				assert.Equal(t, amConfigToken, saved.ConcurrencyToken)
-				assert.Contains(t, saved.Config.Templates, result.UID)
-				assert.Equal(t, result, saved.Config.Templates[result.UID])
-
-				prov.AssertExpectations(t)
-			})
-			t.Run("bypasses optimistic concurrency validation when version is empty", func(t *testing.T) {
-				sut, store, prov := createTemplateServiceSut()
-				store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
-					return revision(), nil
-				}
-				prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
-				prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) {
-					assertInTransaction(t, ctx)
-				}).Return(nil)
-
-				result, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
-
-				require.NoError(t, err)
-				assert.Equal(t, v1.NewTemplateGroup("",
-					tmpl.Title,
-					tmpl.Content,
-					tmpl.Kind,
-					tmpl.Provenance,
-				), result)
-
-				require.Equal(t, "Save", store.Calls[1].Method)
-				saved := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
-				assert.Equal(t, amConfigToken, saved.ConcurrencyToken)
-				assert.Contains(t, saved.Config.Templates, result.UID)
-				assert.Equal(t, result, saved.Config.Templates[result.UID])
-			})
+			prov.AssertExpectations(t)
 		})
-	}
+		t.Run("bypasses optimistic concurrency validation when version is empty", func(t *testing.T) {
+			sut, store, prov := createTemplateServiceSut()
+			store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+				return revision(), nil
+			}
+			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
+			prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) {
+				assertInTransaction(t, ctx)
+			}).Return(nil)
+
+			result, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
+
+			require.NoError(t, err)
+			assert.Equal(t, v1.NewTemplateGroup("",
+				tmpl.Title,
+				tmpl.Content,
+				tmpl.Kind,
+				tmpl.Provenance,
+			), result)
+
+			require.Equal(t, "Save", store.Calls[1].Method)
+			saved := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
+			assert.Equal(t, amConfigToken, saved.ConcurrencyToken)
+			assert.Contains(t, saved.Config.Templates, result.UID)
+			assert.Equal(t, result, saved.Config.Templates[result.UID])
+		})
+	})
 
 	t.Run("creates a new template and delete old one when template is renamed", func(t *testing.T) {
 		sut, store, prov := createTemplateServiceSut()
@@ -1171,6 +1155,7 @@ func TestUpdateTemplate(t *testing.T) {
 			Title:   "template1",
 			Content: "asdf-new",
 		}
+		template.UID = v1.TemplateUID(v1.TemplateKindGrafana, template.Title)
 		template.Provenance = models.ProvenanceNone
 
 		_, err := sut.UpdateTemplate(context.Background(), orgID, template)
@@ -1189,6 +1174,7 @@ func TestUpdateTemplate(t *testing.T) {
 			Title:   "template1",
 			Content: "asdf-new",
 			ResourceMetadata: v1.ResourceMetadata{
+				UID:        v1.TemplateUID(v1.TemplateKindGrafana, "template1"),
 				Version:    "bad-version",
 				Provenance: models.ProvenanceNone,
 			},
@@ -1692,8 +1678,9 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 
 		largeTmpl := v1.TemplateGroup{
-			Title:   existingTemplateName,
-			Content: "{{ define \"test\"}} this is a very long template content that exceeds the limit {{ end }}",
+			ResourceMetadata: v1.ResourceMetadata{UID: v1.TemplateUID(v1.TemplateKindGrafana, existingTemplateName)},
+			Title:            existingTemplateName,
+			Content:          "{{ define \"test\"}} this is a very long template content that exceeds the limit {{ end }}",
 		}
 
 		_, err := sut.UpdateTemplate(context.Background(), orgID, largeTmpl)
@@ -1720,8 +1707,9 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		updateTmpl := v1.TemplateGroup{
-			Title:   existingTemplateName,
-			Content: "{{ define \"test\"}} updated content {{ end }}",
+			ResourceMetadata: v1.ResourceMetadata{UID: v1.TemplateUID(v1.TemplateKindGrafana, existingTemplateName)},
+			Title:            existingTemplateName,
+			Content:          "{{ define \"test\"}} updated content {{ end }}",
 		}
 
 		// Update should succeed because count limit doesn't apply to updates
@@ -1748,4 +1736,119 @@ func generateTemplates(templates map[string]string, kind v1.TemplateKind) map[v1
 		templatesUIDs[tmpl.UID] = tmpl
 	}
 	return templatesUIDs
+}
+
+// A template is found by its title, and stays a single entry when it is changed, whatever UID it is stored under.
+func TestTemplateServiceWithUIDsNotDerivedFromTitles(t *testing.T) {
+	orgID := int64(1)
+	amConfigToken := util.GenerateShortUID()
+	const storedUID = v1.ResourceUID("stored-uid")
+	stored := v1.NewTemplateGroup(storedUID, "template1", "{{ define \"test\"}} test {{ end }}", v1.TemplateKindGrafana, models.ProvenanceNone)
+	revision := func() *legacy_storage.ConfigRevision {
+		return &legacy_storage.ConfigRevision{
+			Config: &v1.AMConfigV1{
+				Templates: map[v1.ResourceUID]v1.TemplateGroup{storedUID: stored},
+			},
+			ConcurrencyToken: amConfigToken,
+		}
+	}
+	newSut := func(t *testing.T) (*TemplateService, *legacy_storage.AlertmanagerConfigStoreFake, *MockProvisioningStore) {
+		sut, store, prov := createTemplateServiceSut()
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return revision(), nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
+		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+		prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+		return sut, store, prov
+	}
+	savedTemplates := func(t *testing.T, store *legacy_storage.AlertmanagerConfigStoreFake) map[v1.ResourceUID]v1.TemplateGroup {
+		require.Equal(t, "Save", store.Calls[len(store.Calls)-1].Method)
+		return store.Calls[len(store.Calls)-1].Args[1].(*legacy_storage.ConfigRevision).Config.Templates
+	}
+
+	t.Run("gets the template by name", func(t *testing.T) {
+		sut, _, _ := newSut(t)
+
+		result, err := sut.GetTemplate(context.Background(), orgID, stored.Title)
+
+		require.NoError(t, err)
+		assert.Equal(t, storedUID, result.UID)
+	})
+
+	t.Run("gets the template by UID", func(t *testing.T) {
+		sut, _, _ := newSut(t)
+
+		result, err := sut.GetTemplate(context.Background(), orgID, string(storedUID))
+
+		require.NoError(t, err)
+		assert.Equal(t, stored.Title, result.Title)
+	})
+
+	t.Run("does not update a template without a UID by its title", func(t *testing.T) {
+		sut, store, _ := newSut(t)
+		update := stored
+		update.UID = ""
+		update.Version = ""
+
+		_, err := sut.UpdateTemplate(context.Background(), orgID, update)
+
+		require.ErrorIs(t, err, ErrTemplateNotFound)
+		require.Len(t, store.Calls, 1, "nothing is saved")
+	})
+
+	t.Run("updates the template by UID", func(t *testing.T) {
+		sut, store, _ := newSut(t)
+		update := stored
+		update.Content = "{{ define \"test\"}} updated {{ end }}"
+		update.Version = ""
+
+		result, err := sut.UpdateTemplate(context.Background(), orgID, update)
+
+		require.NoError(t, err)
+		templates := savedTemplates(t, store)
+		require.Len(t, templates, 1, "the template must not be added next to the one that was stored")
+		assert.Equal(t, update.Content, templates[result.UID].Content)
+	})
+
+	t.Run("renames the template by UID", func(t *testing.T) {
+		sut, store, prov := newSut(t)
+		update := stored
+		update.Title = "renamed"
+		update.Version = ""
+
+		result, err := sut.UpdateTemplate(context.Background(), orgID, update)
+
+		require.NoError(t, err)
+		templates := savedTemplates(t, store)
+		require.Len(t, templates, 1, "the template must not be left under its previous entry")
+		assert.Equal(t, "renamed", templates[result.UID].Title)
+		prov.AssertCalled(t, "DeleteProvenance", mock.Anything, mock.MatchedBy(func(t *v1.TemplateGroup) bool {
+			return t.Title == stored.Title
+		}), orgID)
+	})
+
+	t.Run("upserts the template by title", func(t *testing.T) {
+		sut, store, _ := newSut(t)
+		update := stored
+		update.UID = ""
+		update.Content = "{{ define \"test\"}} updated {{ end }}"
+		update.Version = ""
+
+		result, err := sut.UpsertTemplate(context.Background(), orgID, update)
+
+		require.NoError(t, err)
+		templates := savedTemplates(t, store)
+		require.Len(t, templates, 1, "the template must not be added next to the one that was stored")
+		assert.Equal(t, update.Content, templates[result.UID].Content)
+	})
+
+	t.Run("deletes the template by name", func(t *testing.T) {
+		sut, store, _ := newSut(t)
+
+		err := sut.DeleteTemplate(context.Background(), orgID, stored.Title, models.ProvenanceNone, "")
+
+		require.NoError(t, err)
+		assert.Empty(t, savedTemplates(t, store))
+	})
 }

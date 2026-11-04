@@ -239,11 +239,6 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 		revision.Config.Templates = make(map[v1.ResourceUID]v1.TemplateGroup)
 	}
 
-	if tmpl.UID == "" {
-		// Not sure if we should allow Updates from k8s API without a UID, but some existing tests indirectly verify this behaviour, so I'll leave it in for now.
-		tmpl.UID = v1.TemplateUID(tmpl.Kind, tmpl.Title)
-	}
-
 	existing, found, err := t.getTemplateByUID(ctx, revision, orgID, string(tmpl.UID))
 	if err != nil {
 		return v1.TemplateGroup{}, err
@@ -281,9 +276,10 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 	updated := revision.SetTemplate(tmpl)
 
 	err = t.xact.InTransaction(ctx, func(ctx context.Context) error {
-		if existing.Title != updated.Title { // if template by was found by UID and it's name is different, then this is the rename operation. Delete old resources.
-			// Remove old entry. This is only needed because UID is currently computed from the title.
+		if existing.UID != updated.UID { // The template is stored under another UID now, so the old entry has to go.
 			delete(revision.Config.Templates, existing.UID)
+		}
+		if existing.Title != updated.Title { // if template by was found by UID and it's name is different, then this is the rename operation. Delete old provenance, which is keyed by the title.
 			err := t.provenanceStore.DeleteProvenance(ctx, &existing, orgID)
 			if err != nil {
 				return err
@@ -358,7 +354,7 @@ func (t *TemplateService) checkOptimisticConcurrency(existing v1.TemplateGroup, 
 }
 
 func (t *TemplateService) getTemplateByName(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, name string) (v1.TemplateGroup, bool, error) {
-	existingContent, ok := revision.Config.Templates[v1.TemplateUID(v1.TemplateKindGrafana, name)]
+	existingContent, ok := revision.FindTemplate(v1.TemplateKindGrafana, name)
 	if !ok {
 		return v1.TemplateGroup{}, false, nil
 	}
