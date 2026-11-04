@@ -60,6 +60,11 @@ type gitRepository struct {
 	clientMetrics metrics.Recorder
 }
 
+// userAgent identifies Grafana on every request nanogit sends. Without it
+// nanogit falls back to "nanogit/0", which GitHub has started rejecting with
+// 403, so every GitHub repository was reported as "not authorized".
+const userAgent = "grafana-provisioning"
+
 func NewRepository(
 	_ context.Context,
 	config *provisioning.Repository,
@@ -67,20 +72,7 @@ func NewRepository(
 	metrics *repository.OperationMetrics,
 	clientMetrics *ClientMetrics,
 ) (GitRepository, error) {
-	opts := []options.Option{options.WithCapabilityNegotiation()}
-	if gitConfig.SkipGitSuffix {
-		opts = append(opts, options.WithoutGitSuffix())
-	}
-	if !gitConfig.Token.IsZero() {
-		tokenUser := gitConfig.TokenUser
-		if tokenUser == "" {
-			tokenUser = "git"
-		}
-
-		opts = append(opts, options.WithBasicAuth(tokenUser, string(gitConfig.Token)))
-	}
-
-	client, err := nanogit.NewHTTPClient(gitConfig.URL, opts...)
+	client, err := nanogit.NewHTTPClient(gitConfig.URL, clientOptions(gitConfig)...)
 	if err != nil {
 		return nil, fmt.Errorf("create nanogit client: %w", err)
 	}
@@ -105,6 +97,27 @@ func NewRepository(
 		metrics:       metrics.Recorder(config.Spec.Type),
 		clientMetrics: clientMetrics.Recorder(config.Spec.Type),
 	}, nil
+}
+
+// clientOptions builds the nanogit options for a repository configuration.
+func clientOptions(gitConfig RepositoryConfig) []options.Option {
+	opts := []options.Option{
+		options.WithCapabilityNegotiation(),
+		options.WithUserAgent(userAgent),
+	}
+	if gitConfig.SkipGitSuffix {
+		opts = append(opts, options.WithoutGitSuffix())
+	}
+	if !gitConfig.Token.IsZero() {
+		tokenUser := gitConfig.TokenUser
+		if tokenUser == "" {
+			tokenUser = "git"
+		}
+
+		opts = append(opts, options.WithBasicAuth(tokenUser, string(gitConfig.Token)))
+	}
+
+	return opts
 }
 
 func (r *gitRepository) URL() string {

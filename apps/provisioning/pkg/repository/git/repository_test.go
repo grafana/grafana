@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/mocks"
+	"github.com/grafana/nanogit/options"
 	"github.com/grafana/nanogit/protocol"
 	"github.com/grafana/nanogit/protocol/client"
 	"github.com/grafana/nanogit/protocol/hash"
@@ -3204,6 +3205,32 @@ func TestGitRepository_ReadTree_EdgeCases(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestClientOptions(t *testing.T) {
+	t.Run("sets a Grafana user agent instead of the nanogit default", func(t *testing.T) {
+		resolved, err := options.Resolve(clientOptions(RepositoryConfig{
+			URL: "https://github.com/owner/repo.git",
+		})...)
+		require.NoError(t, err)
+		require.Equal(t, "grafana-provisioning", resolved.UserAgent)
+		require.Nil(t, resolved.BasicAuth)
+		require.False(t, resolved.SkipGitSuffix)
+	})
+
+	t.Run("keeps auth and suffix options", func(t *testing.T) {
+		resolved, err := options.Resolve(clientOptions(RepositoryConfig{
+			URL:           "https://git.example.com/owner/repo",
+			Token:         "secret",
+			SkipGitSuffix: true,
+		})...)
+		require.NoError(t, err)
+		require.Equal(t, "grafana-provisioning", resolved.UserAgent)
+		require.NotNil(t, resolved.BasicAuth)
+		require.Equal(t, "git", resolved.BasicAuth.Username)
+		require.Equal(t, "secret", resolved.BasicAuth.Password)
+		require.True(t, resolved.SkipGitSuffix)
+	})
 }
 
 func TestGitRepository_NewGitRepository_ClientError(t *testing.T) {
