@@ -9,8 +9,8 @@ import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types'
 import {
   applyUseCrossDashboardVariables,
   countPredefinedVariableOrigins,
-  getRequiredPredefinedVariables,
   getGlobalVariablesMode,
+  getPredefinedVariableDependents,
   isPredefinedNameSelected,
   isScopeNameSelected,
   mayInjectAnyPredefinedVariables,
@@ -21,6 +21,7 @@ import {
   setShownScopeNames,
   toggleSelectionName,
   toggleScopeName,
+  withDependenciesSelected,
   writeUseCrossDashboardVariables,
 } from './crossDashboardVariablesSelection';
 import { toControlSourceRef } from './predefinedVariables';
@@ -289,6 +290,18 @@ describe('resolvePredefinedVariablesForDashboard', () => {
       expect(select(variables, '{"global":["byUid","byMissing"],"folder":"none"}')).toEqual(['byUid', 'byMissing']);
     });
 
+    it('skips dependencies of a shadowed variable and shadowed dependencies', () => {
+      const variables = [makeDatasourceVar('ds', 'global'), makeQueryVar('labels', '${ds}', 'folder')];
+      const resolve = (localVariableNames: string[]) =>
+        resolvePredefinedVariablesForDashboard(variables, {
+          annotations: { [AnnoKeyUseCrossDashboardVariables]: '{"global":"none","folder":["labels"]}' },
+          localVariableNames,
+        }).map((v) => v.spec.name);
+
+      expect(resolve(['labels'])).toEqual([]);
+      expect(resolve(['ds'])).toEqual(['labels']);
+    });
+
     it('terminates on a self-reference', () => {
       const variables = [makeQueryVar('loop', '${loop}', 'global')];
 
@@ -297,24 +310,61 @@ describe('resolvePredefinedVariablesForDashboard', () => {
   });
 });
 
-describe('getRequiredPredefinedVariables', () => {
+describe('getPredefinedVariableDependents', () => {
   const ds = makeDatasourceVar('ds', 'global');
   const labels = makeQueryVar('labels', '${ds}', 'folder');
   const pods = makeQueryVar('pods', '${ds}', 'folder');
   const variables = [ds, labels, pods];
 
   it('maps an implicitly injected variable to every selected variable that requires it', () => {
-    const required = getRequiredPredefinedVariables(variables, { global: 'none', folder: ['pods', 'labels'] });
+    const dependents = getPredefinedVariableDependents(variables, { global: 'none', folder: ['pods', 'labels'] });
 
-    expect([...required]).toEqual([[ds, ['labels', 'pods']]]);
+    expect([...dependents]).toEqual([[ds, ['labels', 'pods']]]);
   });
 
-  it('does not report a variable that is also selected explicitly', () => {
-    expect(getRequiredPredefinedVariables(variables, { global: ['ds'], folder: ['labels'] }).size).toBe(0);
+  it('still reports a dependency that is also selected explicitly, so it stays locked', () => {
+    const dependents = getPredefinedVariableDependents(variables, { global: ['ds'], folder: ['labels'] });
+
+    expect([...dependents]).toEqual([[ds, ['labels']]]);
+  });
+
+  it('skips predefined variables shadowed by dashboard variables', () => {
+    expect(getPredefinedVariableDependents(variables, { global: 'none', folder: ['labels'] }, ['labels']).size).toBe(0);
+    expect(getPredefinedVariableDependents(variables, { global: 'none', folder: ['labels'] }, ['ds']).size).toBe(0);
   });
 
   it('reports nothing when the dashboard has not opted in', () => {
-    expect(getRequiredPredefinedVariables(variables, undefined).size).toBe(0);
+    expect(getPredefinedVariableDependents(variables, undefined).size).toBe(0);
+  });
+});
+
+describe('withDependenciesSelected', () => {
+  const ds = makeDatasourceVar('ds', 'global');
+  const labels = makeQueryVar('labels', '${ds}', 'folder');
+  const variables = [ds, labels];
+
+  it('adds a datasource dependency to its own scope', () => {
+    expect(withDependenciesSelected({ global: 'none', folder: ['labels'] }, variables)).toEqual({
+      global: ['ds'],
+      folder: ['labels'],
+    });
+  });
+
+  it('keeps the dependency once the variable that needed it is unchecked', () => {
+    const pinned = withDependenciesSelected({ global: 'none', folder: ['labels'] }, variables);
+    const unchecked = toggleSelectionName(pinned, 'folder', 'labels', false, ['labels']);
+
+    expect(
+      resolvePredefinedVariablesForDashboard(variables, {
+        annotations: { [AnnoKeyUseCrossDashboardVariables]: serializeUseCrossDashboardVariables(unchecked) },
+      }).map((v) => v.spec.name)
+    ).toEqual(['ds']);
+  });
+
+  it('leaves the selection alone when the dependency is shadowed by a dashboard variable', () => {
+    const selection = { global: 'none' as const, folder: ['labels'] };
+
+    expect(withDependenciesSelected(selection, variables, ['ds'])).toEqual(selection);
   });
 });
 

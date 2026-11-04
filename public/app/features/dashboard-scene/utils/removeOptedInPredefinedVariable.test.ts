@@ -1,4 +1,4 @@
-import { CustomVariable } from '@grafana/scenes';
+import { CustomVariable, DataSourceVariable, QueryVariable, SceneVariableSet } from '@grafana/scenes';
 import { defaultCustomVariableSpec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 
@@ -7,6 +7,7 @@ import { updateDashboardScopeVariable } from '../sidebar/dashboard/DashboardCros
 import { fetchPredefinedVariables, toControlSourceRef } from './predefinedVariables';
 import {
   allNamesForPredefinedRemoval,
+  getPredefinedDependentNames,
   namesForPredefinedRemoval,
   removeOptedInPredefinedVariable,
 } from './removeOptedInPredefinedVariable';
@@ -61,6 +62,31 @@ describe('allNamesForPredefinedRemoval', () => {
       'region',
       'env',
     ]);
+  });
+});
+
+describe('getPredefinedDependentNames', () => {
+  const global = toControlSourceRef({ type: 'global' });
+
+  function setup({ labelsIsPredefined = true } = {}) {
+    const ds = new DataSourceVariable({ name: 'ds', pluginId: 'prometheus', origin: global });
+    const labels = new QueryVariable({
+      name: 'labels',
+      datasource: { uid: '${ds}' },
+      origin: labelsIsPredefined ? global : undefined,
+    });
+    const pods = new QueryVariable({ name: 'pods', datasource: { uid: '$ds' }, origin: global });
+    const other = new QueryVariable({ name: 'other', datasource: { uid: 'prom-uid' }, origin: global });
+    new SceneVariableSet({ variables: [ds, labels, pods, other] });
+    return ds;
+  }
+
+  it('lists the predefined variables that use it as their datasource', () => {
+    expect(getPredefinedDependentNames(setup())).toEqual(['labels', 'pods']);
+  });
+
+  it('ignores dashboard variables that use it', () => {
+    expect(getPredefinedDependentNames(setup({ labelsIsPredefined: false }))).toEqual(['pods']);
   });
 });
 
@@ -137,6 +163,19 @@ describe('removeOptedInPredefinedVariable', () => {
     );
 
     expect(updateDashboardScopeVariable).toHaveBeenCalledWith(dashboard, 'global', 'env', false, ['env', 'region']);
+  });
+
+  it('does not opt out a variable another opted-in variable uses as its datasource', async () => {
+    jest.mocked(fetchPredefinedVariables).mockResolvedValue([makeCandidate('ds', 'global')]);
+    const origin = toControlSourceRef({ type: 'global' });
+    const ds = new DataSourceVariable({ name: 'ds', pluginId: 'prometheus', origin });
+    new SceneVariableSet({
+      variables: [ds, new QueryVariable({ name: 'labels', datasource: { uid: '${ds}' }, origin })],
+    });
+
+    await removeOptedInPredefinedVariable(ds);
+
+    expect(updateDashboardScopeVariable).not.toHaveBeenCalled();
   });
 });
 

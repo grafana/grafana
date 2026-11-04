@@ -11,7 +11,11 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { VariableEditorView } from './VariableEditorView';
 
 jest.mock('app/core/components/Select/FolderPicker', () => ({
-  FolderPicker: () => <div data-testid="folder-picker" />,
+  FolderPicker: ({ onChange }: { onChange: (uid: string) => void }) => (
+    <button data-testid="folder-picker" onClick={() => onChange('folder-b')}>
+      Move to folder-b
+    </button>
+  ),
 }));
 
 jest.mock('app/features/dashboard-scene/settings/variables/VariableEditorForm', () => ({
@@ -73,6 +77,7 @@ const folderOnlyHelp = 'Scope the variable to a folder you can edit';
 const fetchPredefinedVariablesMock = jest.mocked(fetchPredefinedVariables);
 
 beforeEach(() => {
+  fetchPredefinedVariablesMock.mockReset();
   fetchPredefinedVariablesMock.mockResolvedValue([]);
   updateVariable.mockReturnValue({ unwrap: () => Promise.resolve() });
 });
@@ -185,6 +190,11 @@ const queryVariable: Variable = {
   } as unknown as VariableSpec,
 };
 
+const folderQueryVariable: Variable = {
+  ...queryVariable,
+  metadata: { name: 'labels--folder-a', annotations: { [AnnoKeyFolder]: 'folder-a' } },
+};
+
 function getSceneContextVariableNames() {
   return sceneGraph.getVariables(window.__grafanaSceneContext).state.variables.map((v) => v.state.name);
 }
@@ -213,10 +223,50 @@ describe('VariableEditorView datasource variable references', () => {
   });
 
   it('limits a folder variable to the global scope and its own folder', async () => {
-    render(<VariableEditorView source={folderVariable} onBack={jest.fn()} />);
+    render(<VariableEditorView source={folderQueryVariable} onBack={jest.fn()} />);
 
     await screen.findByTestId('variable-editor-form');
     expect(fetchPredefinedVariablesMock).toHaveBeenCalledWith('folder-a');
+  });
+
+  it('does not fetch datasource variables for a type that cannot reference one', async () => {
+    render(<VariableEditorView source={folderVariable} onBack={jest.fn()} />);
+
+    await screen.findByTestId('variable-editor-form');
+    expect(fetchPredefinedVariablesMock).not.toHaveBeenCalled();
+    expect(await screen.findByRole('button', { name: 'Save' })).toBeEnabled();
+  });
+
+  it('blocks Save when the referenced datasource variable is not available in the scope', async () => {
+    fetchPredefinedVariablesMock.mockResolvedValue([]);
+
+    render(<VariableEditorView source={queryVariable} onBack={jest.fn()} />);
+
+    expect(await screen.findByText("Data source variable $ds isn't global or in this folder")).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+  });
+
+  it("drops the previous folder's datasource variables while the new folder's list loads", async () => {
+    let resolveFolderB: (variables: VariableKind[]) => void = () => {};
+    fetchPredefinedVariablesMock.mockImplementation((folderUid) =>
+      folderUid === 'folder-b'
+        ? new Promise((resolve) => {
+            resolveFolderB = resolve;
+          })
+        : Promise.resolve([predefined('DatasourceVariable', 'ds')])
+    );
+    const { user } = render(<VariableEditorView source={folderQueryVariable} onBack={jest.fn()} />);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled());
+
+    await user.click(screen.getByTestId('folder-picker'));
+
+    await waitFor(() => expect(getSceneContextVariableNames()).toEqual(['labels']));
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+
+    resolveFolderB([predefined('DatasourceVariable', 'ds')]);
+
+    await waitFor(() => expect(getSceneContextVariableNames()).toEqual(['ds', 'labels']));
+    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
   });
 
   it('does not load the stored copy of the datasource variable being edited', async () => {

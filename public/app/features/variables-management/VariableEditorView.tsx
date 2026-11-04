@@ -5,7 +5,16 @@ import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { EmbeddedScene, SceneFlexLayout, SceneTimeRange, type SceneVariable, SceneVariableSet } from '@grafana/scenes';
+import {
+  AdHocFiltersVariable,
+  EmbeddedScene,
+  GroupByVariable,
+  QueryVariable,
+  SceneFlexLayout,
+  SceneTimeRange,
+  type SceneVariable,
+  SceneVariableSet,
+} from '@grafana/scenes';
 import { Alert, Button, ConfirmModal, Field, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import {
   useCreateVariableMutation,
@@ -26,6 +35,7 @@ import {
 import { VariableEditorForm } from 'app/features/dashboard-scene/settings/variables/VariableEditorForm';
 import { type EditableVariableType, getVariableScene } from 'app/features/dashboard-scene/settings/variables/utils';
 import { fetchPredefinedVariables } from 'app/features/dashboard-scene/utils/predefinedVariables';
+import { getVariableName } from 'app/features/dashboard-scene/variables/utils';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -158,7 +168,8 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
   const isSaving = isCreating || isUpdating || isRecreating;
   const isBusy = isSaving || isDeleting;
 
-  const { name: logicalName } = sceneVariable.useState();
+  const variableState = sceneVariable.useState();
+  const logicalName = variableState.name;
   const { isChecking: isCheckingName, collisionError } = useVariableNameCollisionCheck(
     logicalName,
     folderUid,
@@ -166,11 +177,23 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
     hasNameError
   );
 
-  const datasourceVariables = useReferenceableDatasourceVariables(
+  const canReferenceDatasource = canReferenceDatasourceVariable(sceneVariable);
+  const { variables: datasourceVariables, hasLoaded: isSceneReady } = useReferenceableDatasourceVariables(
     folderUid,
-    source ? getVariableSpecName(source) : undefined
+    logicalName,
+    canReferenceDatasource
   );
-  const isSceneReady = datasourceVariables !== undefined;
+  const referencedDatasourceName =
+    canReferenceDatasource && 'datasource' in variableState
+      ? getDatasourceVariableName(variableState.datasource)
+      : undefined;
+  // A `${ds}` that isn't global or in the chosen folder would be broken on every dashboard.
+  const missingDatasourceVariable =
+    referencedDatasourceName &&
+    datasourceVariables &&
+    !datasourceVariables.some((v) => v.spec.name === referencedDatasourceName)
+      ? referencedDatasourceName
+      : undefined;
 
   const sourceFolderUid = source ? getVariableFolderUid(source) : undefined;
   // Folder CanEdit gates mutations the same way admission does. Skip the root/global
@@ -205,7 +228,8 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
   // so it needs delete rights or it leaves the original behind.
   const isRecreate = isRecreateVariableSave(source, logicalName, folderUid);
   const canSave =
-    isSceneReady &&
+    datasourceVariables !== undefined &&
+    !missingDatasourceVariable &&
     !isBusy &&
     !hasNameError &&
     !collisionError &&
@@ -232,18 +256,21 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
   );
 
   useEffect(() => {
-    if (!datasourceVariables) {
+    const variableSet = scene.state.$variables;
+    if (!(variableSet instanceof SceneVariableSet)) {
       return;
     }
-    const variableSet = scene.state.$variables;
-    if (variableSet instanceof SceneVariableSet) {
-      variableSet.setState({
-        variables: [
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          ...datasourceVariables.map((v) => createSceneVariableFromVariableModel(v as TypedVariableModelV2)),
-          sceneVariable,
-        ],
-      });
+    // While a new folder's list loads, offer nothing rather than the previous folder's variables.
+    variableSet.setState({
+      variables: [
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        ...(datasourceVariables ?? []).map((v) => createSceneVariableFromVariableModel(v as TypedVariableModelV2)),
+        sceneVariable,
+      ],
+    });
+    // The stored `${ds}` value is unchanged, so nothing re-runs the query against the swapped-in instance.
+    if (datasourceVariables && scene.isActive && sceneVariable instanceof QueryVariable) {
+      sceneVariable.refreshOptions();
     }
   }, [scene, sceneVariable, datasourceVariables]);
 
@@ -350,6 +377,16 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
       <Field
         noMargin
         className={styles.folderField}
+        invalid={Boolean(missingDatasourceVariable)}
+        error={
+          missingDatasourceVariable
+            ? t(
+                'variables-management.editor.missing-datasource-variable',
+                "Data source variable ${{name}} isn't global or in this folder",
+                { name: missingDatasourceVariable }
+              )
+            : undefined
+        }
         label={t('variables-management.editor.folder-label', 'Folder')}
         description={
           allowGlobalScope || folderUid === ''
@@ -431,16 +468,41 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
 /**
  * Datasource variables the edited variable may reference as `${ds}`: global ones, plus those
  * in its own folder when folder-scoped. Never other folders' — those are absent from dashboards
- * outside that folder. Undefined until the first fetch settles; later scope changes keep the
- * previous list until the new one arrives.
+ * outside that folder. `variables` is undefined while the current scope's list loads;
+ * `hasLoaded` stays true after the first load so the form isn't remounted on scope changes.
  */
-function useReferenceableDatasourceVariables(folderUid: string | undefined, excludeName: string | undefined) {
-  const { value } = useAsync(async () => {
+function useReferenceableDatasourceVariables(folderUid: string | undefined, excludeName: string, enabled: boolean) {
+  const { value, loading } = useAsync(async () => {
+    if (!enabled) {
+      return [];
+    }
     const variables = (await fetchPredefinedVariables(folderUid || undefined)) ?? [];
-    return variables.filter((v) => v.kind === 'DatasourceVariable' && v.spec.name !== excludeName);
-  }, [folderUid, excludeName]);
+    return variables.filter((v) => v.kind === 'DatasourceVariable');
+  }, [folderUid, enabled]);
 
-  return value;
+  const variables = useMemo(
+    () => (loading ? undefined : (value ?? []).filter((v) => v.spec.name !== excludeName)),
+    [loading, value, excludeName]
+  );
+  const [hasLoaded, setHasLoaded] = useState(!enabled);
+  if (!hasLoaded && variables !== undefined) {
+    setHasLoaded(true);
+  }
+
+  return { variables, hasLoaded };
+}
+
+function canReferenceDatasourceVariable(variable: SceneVariable): boolean {
+  return (
+    variable instanceof QueryVariable || variable instanceof AdHocFiltersVariable || variable instanceof GroupByVariable
+  );
+}
+
+function getDatasourceVariableName(datasource: unknown): string | undefined {
+  if (typeof datasource !== 'object' || datasource === null || !('uid' in datasource)) {
+    return undefined;
+  }
+  return typeof datasource.uid === 'string' ? getVariableName(datasource.uid) : undefined;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

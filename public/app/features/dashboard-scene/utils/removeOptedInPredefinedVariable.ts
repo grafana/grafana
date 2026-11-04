@@ -1,7 +1,15 @@
-import { sceneGraph, type SceneVariable } from '@grafana/scenes';
+import {
+  AdHocFiltersVariable,
+  GroupByVariable,
+  QueryVariable,
+  sceneGraph,
+  type SceneVariable,
+  SceneVariableSet,
+} from '@grafana/scenes';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { updateDashboardScopeVariable } from '../sidebar/dashboard/DashboardCrossDashboardVariablesOptions';
+import { getVariableName } from '../variables/utils';
 
 import { type PredefinedVariableScope, type ScopeSelection } from './crossDashboardVariablesSelection';
 import { parseUseCrossDashboardVariablesFromHost } from './persistUseCrossDashboardVariables';
@@ -47,10 +55,39 @@ export function allNamesForPredefinedRemoval(
   return namesForPredefinedRemoval(fetchedNames, name, namesOnDashboard);
 }
 
+/**
+ * Other opted-in global and folder variables that use this one as their datasource. While any
+ * exist, removing it is a no-op: the next refresh injects it again for them.
+ */
+export function getPredefinedDependentNames(variable: SceneVariable): string[] {
+  const set = variable.parent instanceof SceneVariableSet ? variable.parent : sceneGraph.getVariables(variable);
+  return set.state.variables
+    .filter(
+      (candidate) =>
+        candidate !== variable &&
+        getPredefinedOrigin(candidate.state.origin) &&
+        getDatasourceVariableName(candidate) === variable.state.name
+    )
+    .map((candidate) => candidate.state.name)
+    .sort();
+}
+
+function getDatasourceVariableName(variable: SceneVariable): string | undefined {
+  if (
+    variable instanceof QueryVariable ||
+    variable instanceof AdHocFiltersVariable ||
+    variable instanceof GroupByVariable
+  ) {
+    const uid = variable.state.datasource?.uid;
+    return uid ? getVariableName(uid) : undefined;
+  }
+  return undefined;
+}
+
 /** Opt a global or folder variable out of this dashboard. The variable definition is left in place. */
 export async function removeOptedInPredefinedVariable(variable: SceneVariable): Promise<void> {
   const origin = getPredefinedOrigin(variable.state.origin);
-  if (!origin) {
+  if (!origin || getPredefinedDependentNames(variable).length > 0) {
     return;
   }
 
