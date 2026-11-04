@@ -112,8 +112,10 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[resource.StoragePath()] = &starStorage{Storage: stars} // wrap List so we only return one value
 	storage[resource.StoragePath("update")] = &starsREST{store: stars}
 
-	// Without storage the kind is neither served nor advertised, so requests get a plain not found.
-	// The toggle is read when the group is installed, which is why changing it needs a restart.
+	// Without storage the kind is neither served nor advertised. This is the only place the toggle is
+	// read, once, when the group is installed (so changing it needs a restart). The authorizer never
+	// reads it: requests for a kind that is not served go through the normal slideshow rules and
+	// then end in a not found, so a toggle that later reads differently cannot open anything.
 	if slideshowsEnabled(context.Background()) {
 		// Slideshows only exist in unified storage: there is no legacy table to dual write to.
 		slideshows, err := grafanaregistry.NewRegistryStore(opts.Scheme, collections.SlideshowResourceInfo, opts.OptsGetter)

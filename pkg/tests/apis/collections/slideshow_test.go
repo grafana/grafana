@@ -3,6 +3,8 @@ package collections
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -217,8 +219,10 @@ func checkSlideshowAccess(t *testing.T, helper *apis.K8sTestHelper, want slidesh
 	}
 }
 
-// With the toggle off the kind is not served at all, so requests get a plain not found and the
-// kind is not advertised, while stars next to it keep working.
+// With the toggle off the kind is not served at all and is not advertised, while stars next to it
+// keep working. Requests are still authorized by the normal slideshow rules first, so callers who
+// may not write are forbidden and only callers who may are told the kind does not exist. Nobody
+// ever succeeds.
 func TestIntegrationSlideshowsDisabled(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -227,30 +231,71 @@ func TestIntegrationSlideshowsDisabled(t *testing.T) {
 		DisableAnonymous:     true,
 		EnableFeatureToggles: []string{featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs},
 	})
-	ctx := context.Background()
-	spec := map[string]any{"title": "Wall", "interval": "5m", "items": []any{}}
+	org := helper.Org1
+	base := "/apis/collections.grafana.app/v1alpha1/namespaces/default/slideshows"
+	body := []byte(`{"apiVersion":"collections.grafana.app/v1alpha1","kind":"Slideshow","metadata":{"name":"wall"},"spec":{"title":"Wall","interval":"5m","items":[]}}`)
 
-	for who, user := range map[string]apis.User{"admin": helper.Org1.Admin, "viewer": helper.Org1.Viewer} {
-		client := helper.GetResourceClient(apis.ResourceClientArgs{User: user, GVR: collections.SlideshowResourceInfo.GroupVersionResource()})
+	type actor struct {
+		params apis.RequestParams
+		// Statuses expected for reads and for writes.
+		read, write int
+	}
+	bearer := func(token string) apis.RequestParams {
+		return apis.RequestParams{Headers: map[string]string{"Authorization": "Bearer " + token}}
+	}
+	actors := map[string]actor{
+		"admin":                  {apis.RequestParams{User: org.Admin}, http.StatusNotFound, http.StatusNotFound},
+		"editor":                 {apis.RequestParams{User: org.Editor}, http.StatusNotFound, http.StatusNotFound},
+		"editor service account": {bearer(org.EditorServiceAccountToken), http.StatusNotFound, http.StatusNotFound},
+		"viewer":                 {apis.RequestParams{User: org.Viewer}, http.StatusNotFound, http.StatusForbidden},
+		"viewer service account": {bearer(org.ViewerServiceAccountToken), http.StatusNotFound, http.StatusForbidden},
+		"no role":                {apis.RequestParams{User: org.None}, http.StatusNotFound, http.StatusForbidden},
+		"anonymous":              {apis.RequestParams{}, http.StatusUnauthorized, http.StatusUnauthorized},
+	}
 
-		_, err := client.Resource.List(ctx, metav1.ListOptions{})
-		require.True(t, apierrors.IsNotFound(err), "%s list should be not found, got %v", who, err)
-		_, err = client.Resource.Get(ctx, "wall", metav1.GetOptions{})
-		require.True(t, apierrors.IsNotFound(err), "%s get should be not found, got %v", who, err)
-		_, err = client.Resource.Create(ctx, slideshowObject("wall", spec), metav1.CreateOptions{})
-		require.True(t, apierrors.IsNotFound(err), "%s create should be not found, got %v", who, err)
+	requests := []struct {
+		name, method, path string
+		body               []byte
+		contentType        string
+		write              bool
+	}{
+		{"list", http.MethodGet, base, nil, "", false},
+		{"get", http.MethodGet, base + "/wall", nil, "", false},
+		{"watch", http.MethodGet, base + "?watch=true&timeoutSeconds=1", nil, "", false},
+		{"create", http.MethodPost, base, body, "", true},
+		{"patch", http.MethodPatch, base + "/wall", []byte(`{"metadata":{"labels":{"x":"y"}}}`), "application/merge-patch+json", true},
+		{"delete", http.MethodDelete, base + "/wall", nil, "", true},
+		{"delete collection", http.MethodDelete, base, nil, "", true},
+	}
+
+	for who, a := range actors {
+		for _, r := range requests {
+			params := a.params
+			params.Method, params.Path, params.Body, params.ContentType = r.method, r.path, r.body, r.contentType
+			rsp := apis.DoRequest(helper, params, &map[string]any{})
+
+			want := a.read
+			if r.write {
+				want = a.write
+			}
+			// The org role rules do not let editors delete a whole collection, for playlists either.
+			if r.name == "delete collection" && strings.Contains(who, "editor") {
+				want = http.StatusForbidden
+			}
+			require.Equal(t, want, rsp.Response.StatusCode, "%s %s", who, r.name)
+		}
 	}
 
 	resources, err := helper.NewDiscoveryClient().ServerResourcesForGroupVersion(collections.GroupVersion.String())
 	require.NoError(t, err)
-	var names []string
+	names := make([]string, 0, len(resources.APIResources))
 	for _, r := range resources.APIResources {
 		names = append(names, r.Name)
 	}
 	require.Contains(t, names, "stars")
 	require.NotContains(t, names, "slideshows")
 
-	stars := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Admin, GVR: collections.StarsResourceInfo.GroupVersionResource()})
-	_, err = stars.Resource.List(ctx, metav1.ListOptions{})
+	stars := helper.GetResourceClient(apis.ResourceClientArgs{User: org.Admin, GVR: collections.StarsResourceInfo.GroupVersionResource()})
+	_, err = stars.Resource.List(context.Background(), metav1.ListOptions{})
 	require.NoError(t, err, "stars are unaffected")
 }

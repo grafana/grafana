@@ -230,21 +230,48 @@ func TestAccessClientNilIsIgnored(t *testing.T) {
 	require.Equal(t, authorizer.DecisionDeny, got)
 }
 
-// With the toggle off the kind has no storage, so the request is let through to be answered with
-// a not found instead of a misleading forbidden, whoever asks and however permissions are set.
-func TestSlideshowAuthorizationWhenSlideshowsAreOff(t *testing.T) {
+// The authorizer never reads the toggle: only the install decides whether the kind is served, so a
+// toggle that reads off later (the provider changed it, failed, or targets another namespace) must
+// not open anything. Whatever the flags say, callers without write access are never allowed to write.
+func TestSlideshowAuthorizationIgnoresTheToggle(t *testing.T) {
+	writes := []string{"create", "update", "patch", "delete", "deletecollection"}
+	callers := map[string]context.Context{
+		"viewer":                 userCtx(identity.RoleViewer, authlib.TypeUser),
+		"no role":                userCtx(identity.RoleNone, authlib.TypeUser),
+		"none service account":   userCtx(identity.RoleNone, authlib.TypeServiceAccount),
+		"viewer service account": userCtx(identity.RoleViewer, authlib.TypeServiceAccount),
+		"anonymous":              userCtx(identity.RoleViewer, authlib.TypeAnonymous),
+	}
+
 	for _, rbac := range []bool{true, false} {
-		for _, role := range []identity.RoleType{identity.RoleNone, identity.RoleViewer, identity.RoleAdmin} {
-			withFlags(t, rbac, false)
-			checker := &fakeChecker{allowed: false}
+		for _, slideshows := range []bool{true, false} {
+			for who, ctx := range callers {
+				for _, verb := range writes {
+					withFlags(t, rbac, slideshows)
+					// The access client denies, as it does for anyone without playlists:write.
+					checker := &fakeChecker{allowed: false}
 
-			got, _, err := newAuthorizer(checker, log.NewNopLogger()).
-				Authorize(userCtx(role, authlib.TypeUser), slideshowAttrs("create"))
+					got, _, err := newAuthorizer(checker, log.NewNopLogger()).Authorize(ctx, slideshowAttrs(verb))
 
-			require.NoError(t, err)
-			require.Equal(t, authorizer.DecisionAllow, got, "rbac=%v role=%v", rbac, role)
-			require.Empty(t, checker.requests)
+					require.NoError(t, err)
+					require.NotEqual(t, authorizer.DecisionAllow, got, "%s %s rbac=%v toggle=%v", who, verb, rbac, slideshows)
+				}
+			}
 		}
+	}
+}
+
+// The same holds when the provider cannot answer at all and every flag falls back to its default.
+func TestSlideshowAuthorizationWhenTheFlagProviderIsUnavailable(t *testing.T) {
+	flagProvider.UsingFlags(t, map[string]memprovider.InMemoryFlag{})
+	checker := &fakeChecker{allowed: false}
+
+	for _, verb := range []string{"create", "patch", "delete", "deletecollection"} {
+		got, _, err := newAuthorizer(checker, log.NewNopLogger()).
+			Authorize(userCtx(identity.RoleViewer, authlib.TypeAnonymous), slideshowAttrs(verb))
+
+		require.NoError(t, err)
+		require.NotEqual(t, authorizer.DecisionAllow, got, verb)
 	}
 }
 
