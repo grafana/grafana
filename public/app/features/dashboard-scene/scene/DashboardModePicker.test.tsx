@@ -142,11 +142,11 @@ async function openPicker(configure?: (scene: DashboardScene) => void) {
 
 const composerItem = () => screen.queryByRole('button', { name: 'Composer', hidden: true });
 
-it('offers Composer as a toolbar button with the crosshair when its flag is on and Assistant can be shown', () => {
+it('offers Composer as a toolbar button with the AI select icon when its flag is on and Assistant can be shown', () => {
   renderPicker();
   expect(composerItem()).toBeEnabled();
   expect(composerItem()).toHaveTextContent('');
-  expect(within(composerItem()!).getByTestId('icon-crosshair')).toBeInTheDocument();
+  expect(within(composerItem()!).getByTestId('icon-ai-select')).toBeInTheDocument();
   expect(composerItem()).toHaveAttribute('aria-pressed', 'false');
 });
 
@@ -304,7 +304,7 @@ it('shows Composer opening until Assistant settles the request, ignoring a secon
 
   act(() => settleComposerEnterRequest('picker-test'));
 
-  expect(within(composerItem()!).getByTestId('icon-crosshair')).toBeInTheDocument();
+  expect(within(composerItem()!).getByTestId('icon-ai-select')).toBeInTheDocument();
   expect(composerItem()).toHaveAttribute('aria-busy', 'false');
 });
 

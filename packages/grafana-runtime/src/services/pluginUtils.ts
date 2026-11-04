@@ -1,4 +1,4 @@
-import { config } from '../../config';
+import { config } from '../config';
 
 export function getApiVersion(): string {
   return 'v0alpha1';
