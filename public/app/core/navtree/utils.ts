@@ -3,7 +3,7 @@ import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient, isSignedInOrAnonymous } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { HOISTED_PAGE_WEIGHT_OFFSET, NavID, type NavId } from './constants';
+import { HOISTED_PAGE_WEIGHT_OFFSET, NavID, type NavId, PLUGIN_SECTION_SHELLS } from './constants';
 
 /** Whether to build the nav tree client-side, covering the static sections only. */
 export function isClientNavTreeEnabled(): boolean {
@@ -189,6 +189,27 @@ export function sortNavTree(nodes: NavModelItem[]): NavModelItem[] {
 }
 
 /**
+ * Adds a section's shell when the tree has none. This supports finished trees,
+ * where empty attachment targets have already been pruned and URLs prefixed.
+ */
+export function ensureSection(tree: NavModelItem[], sectionId: string): NavModelItem[] {
+  if (findNavById(tree, sectionId)) {
+    return tree;
+  }
+  const shell = PLUGIN_SECTION_SHELLS[sectionId]?.shell;
+  if (!shell) {
+    return tree;
+  }
+
+  // Insert at the shell's sorted position without re-sorting the finished tree:
+  // unweighted items have already acquired their effective positions by index.
+  const weightOf = (node: NavModelItem, index: number) => node.sortWeight || index + 1;
+  const found = tree.findIndex((node, index) => weightOf(node, index) > (shell.sortWeight ?? 0));
+  const at = found === -1 ? tree.length : found;
+  return [...tree.slice(0, at), { ...shell, url: withAppSubUrl(shell.url), children: [] }, ...tree.slice(at)];
+}
+
+/**
  * Removes attachment-target shells that ended up empty, in the server's order:
  * the admin subsections first (PRUNABLE_ADMIN_SECTIONS), then the top-level
  * sections (PRUNABLE_SECTIONS) — so Administration goes once its last
@@ -222,7 +243,12 @@ export function moveNavItemToSection(
   { sortWeight, hoistPages = false }: { sortWeight?: number; hoistPages?: boolean } = {}
 ): NavModelItem[] {
   const item = findNavById(tree, id);
-  if (!item || !findNavById(tree, sectionId)) {
+  if (!item) {
+    return tree;
+  }
+
+  const withSection = ensureSection(tree, sectionId);
+  if (!findNavById(withSection, sectionId)) {
     return tree;
   }
 
@@ -230,7 +256,7 @@ export function moveNavItemToSection(
     hoistPages && item.children?.length
       ? hoistAppPages(item)
       : [{ ...item, ...(sortWeight !== undefined && { sortWeight }) }];
-  const placed = appendIntoSection(removeNavById(tree, id), sectionId, entries);
+  const placed = appendIntoSection(removeNavById(withSection, id), sectionId, entries);
   if (!placed) {
     return tree;
   }

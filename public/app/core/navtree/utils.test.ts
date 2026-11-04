@@ -59,7 +59,16 @@ describe('moveNavItemToSection', () => {
     expect(findNavById(moved, 'plugin-page-moving-app')?.sortWeight).toBe(-1200);
   });
 
-  it('leaves the tree alone when either end is missing', () => {
+  it('creates a known target section only when the source item exists', () => {
+    const withoutSection = sectioned().slice(0, 1);
+    const moved = moveNavItemToSection(withoutSection, 'plugin-page-moving-app', 'apps');
+
+    expect(moved.map((item) => item.id)).toEqual(['apps']);
+    expect(findNavById(moved, 'plugin-page-moving-app')).toBeDefined();
+    expect(moveNavItemToSection(withoutSection, 'plugin-page-absent-app', 'apps')).toEqual(withoutSection);
+  });
+
+  it('leaves the tree alone when the source or target shell is unknown', () => {
     expect(moveNavItemToSection(sectioned(), 'plugin-page-absent-app', 'apps')).toEqual(sectioned());
     expect(moveNavItemToSection(sectioned(), 'plugin-page-moving-app', 'nonexistent')).toEqual(sectioned());
   });
