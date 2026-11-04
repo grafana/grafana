@@ -92,6 +92,11 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	}
 	features := featuremgmt.ProvideToggles(featureManager)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
+	// Which diff and which scheduler the sync uses. The two halves are chosen
+	// independently so either can be paired with the other's counterpart when a
+	// divergence has to be narrowed down.
+	convergePlanner := features.IsEnabledGlobally(featuremgmt.FlagProvisioningConvergePlanner) //nolint:staticcheck
+	resources.SetConvergePreflight(convergePlanner)
 	// Evaluated per job via OpenFeature so the flag behaves consistently with the
 	// API server (see performanceEnabled in the provisioning apiserver package).
 	perfTestingEnabled := func(ctx context.Context) bool {
@@ -125,7 +130,11 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 
 	metrics := jobs.RegisterJobMetrics(registry)
 
-	syncer := jobsync.NewSyncer(jobsync.Compare, jobsync.FullSync, jobsync.IncrementalSync, tracer, maxSyncWorkers, metrics, folderMetadataEnabled, cfg.ProvisioningSyncResourceTimeout)
+	compareFn, fullSyncFn := jobsync.Compare, jobsync.FullSync
+	if convergePlanner {
+		compareFn, fullSyncFn = jobsync.CompareViaConverge, jobsync.FullSyncViaConverge
+	}
+	syncer := jobsync.NewSyncer(compareFn, fullSyncFn, jobsync.IncrementalSync, tracer, maxSyncWorkers, metrics, folderMetadataEnabled, cfg.ProvisioningSyncResourceTimeout, convergePlanner)
 	syncWorker := jobsync.NewSyncWorker(
 		clients,
 		repositoryResources,

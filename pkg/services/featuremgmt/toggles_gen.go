@@ -87,6 +87,10 @@ const (
 	// Allow setting folder metadata for provisioned folders
 	FlagProvisioningFolderMetadata = "provisioningFolderMetadata"
 
+	// FlagProvisioningConvergePlanner
+	// Compute Git Sync changes with the converge reconciliation planner
+	FlagProvisioningConvergePlanner = "provisioningConvergePlanner"
+
 	// FlagProvisioningExport
 	// Enable export functionality for provisioned resources
 	FlagProvisioningExport = "provisioningExport"

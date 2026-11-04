@@ -212,6 +212,7 @@ func TestSyncer_Sync(t *testing.T) {
 				jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
 				false,
 				0,
+				false, // these cases exercise the hand-rolled dispatch
 			)
 
 			quotaTracker := quotas.NewMockQuotaTracker(t)
