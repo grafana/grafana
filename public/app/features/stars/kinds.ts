@@ -5,9 +5,8 @@ import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/
 import { type IconName, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { collectionsAPIv1alpha1, type StarsList } from 'app/api/clients/collections/v1alpha1';
-import { type StarredNavItem } from 'app/core/reducers/navBarTree';
 import { discoveryResources, getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
-import { getFolderURL, starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
+import { getFolderURL } from 'app/features/browse-dashboards/utils/dashboards';
 import { getIconForKind } from 'app/features/search/service/utils';
 import { dispatch, store } from 'app/store/store';
 
@@ -163,14 +162,19 @@ const appKindsAPI = collectionsAPIv1alpha1.injectEndpoints({
 
 export const { useDiscoverAppKindsQuery } = appKindsAPI;
 
-// Memoized on the discovery result, so repeated lookups share one set of kind objects
-const selectAppKinds = createSelector(appKindsAPI.endpoints.discoverAppKinds.select(), ({ data }) =>
-  appKindsFrom(data)
+/** The kinds whose stars Grafana shows, in display order. */
+export function starredKindsOf(appKinds: readonly KindSearchStarredKind[]): StarredKind[] {
+  return [...GRAFANA_KINDS, ...appKinds];
+}
+
+// Memoized on the discovery result, so repeated lookups share one list of kind objects
+const selectStarredKinds = createSelector(appKindsAPI.endpoints.discoverAppKinds.select(), ({ data }) =>
+  starredKindsOf(appKindsFrom(data))
 );
 
-/** The app kinds discovered so far; none until discovery has run, or before the store exists. */
-function loadedAppKinds(): readonly KindSearchStarredKind[] {
-  return store ? selectAppKinds(store.getState()) : NO_APP_KINDS;
+/** Grafana's own kinds, then the app kinds discovered so far; only Grafana's before the store exists. */
+export function getStarredKinds(): readonly StarredKind[] {
+  return store ? selectStarredKinds(store.getState()) : GRAFANA_KINDS;
 }
 
 /** Discovers the app kinds, or waits for the discovery already running. Resolves either way. */
@@ -191,44 +195,13 @@ export async function loadStarredKindsFor(stars: StarsList | undefined): Promise
   }
 }
 
-/** Only folders are gated: their stars show once the starred-folders flag is on. */
-function isStarrable(kind: StarredKind, foldersEnabled = starredFoldersEnabled()): boolean {
-  return kind !== FOLDER || foldersEnabled;
-}
-
-/** Among every kind Grafana can describe, its own and then the loaded app kinds. */
-function findKnownKind(predicate: (kind: StarredKind) => boolean): StarredKind | undefined {
-  return GRAFANA_KINDS.find(predicate) ?? loadedAppKinds().find(predicate);
-}
-
-/**
- * How a search row's or nav leaf's kind is shown, whether or not it can be starred right now;
- * undefined for kinds nobody can star, such as panels.
- */
-export function findKind(searchKind: string): StarredKind | undefined {
-  return findKnownKind((candidate) => candidate.searchKind === searchKind);
-}
-
-/** The kinds whose stars Grafana shows, in display order. */
-export function starredKindsOf(
-  foldersEnabled: boolean,
-  appKinds: readonly KindSearchStarredKind[] = NO_APP_KINDS
-): StarredKind[] {
-  return [...GRAFANA_KINDS, ...appKinds].filter((kind) => isStarrable(kind, foldersEnabled));
-}
-
-export function getStarredKinds(): StarredKind[] {
-  return starredKindsOf(starredFoldersEnabled(), loadedAppKinds());
-}
-
 export function findStarredKind(group: string, kind: string): StarredKind | undefined {
-  const found = findKnownKind((candidate) => candidate.group === group && candidate.kind === kind);
-  return found && isStarrable(found) ? found : undefined;
+  return getStarredKinds().find((candidate) => candidate.group === group && candidate.kind === kind);
 }
 
+/** The kind behind a search row's or nav leaf's kind string; undefined for kinds nobody can star, such as panels. */
 export function findStarredKindBySearchKind(searchKind: string): StarredKind | undefined {
-  const found = findKind(searchKind);
-  return found && isStarrable(found) ? found : undefined;
+  return getStarredKinds().find((candidate) => candidate.searchKind === searchKind);
 }
 
 /**
@@ -255,19 +228,4 @@ export function partitionStarred(resources: StarredNames[]): {
     }
   }
   return { indexed, app };
-}
-
-/** Whether starred lists need a kind icon per row: only when more than one kind can appear. */
-export function starredKindsNeedIcons(): boolean {
-  return getStarredKinds().length > 1;
-}
-
-/** Nav Starred entry (url, icon, sort rank, kind) for one starred object. */
-export function starredNavEntry(starredKind: StarredKind, id: string): Omit<StarredNavItem, 'id' | 'title'> {
-  return {
-    url: starredKind.url(id),
-    icon: starredKindsNeedIcons() ? starredKind.icon : undefined,
-    sortWeight: starredKind.sortWeight,
-    kind: starredKind.searchKind,
-  };
 }

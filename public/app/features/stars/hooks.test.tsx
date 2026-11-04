@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
 import { getKindDiscoveryHandler, getKindSearchHandler, kindSearchRoute } from '@grafana/test-utils/handlers';
@@ -11,7 +11,6 @@ import {
   setMockStarredDashboards,
   setMockStarredFolders,
   setMockStarredPluginKind,
-  setTestFlags,
 } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -126,14 +125,13 @@ describe('useSyncStarredItemsInNav', () => {
       });
     });
 
-    // Verify items appeared in the nav tree (sorted alphabetically). Per-kind icons are
-    // gated behind starredFoldersEnabled(): with starred folders disabled, synced rows
-    // must carry no icon at all (nav is unchanged from pre-feature behavior).
+    // Verify items appeared in the nav tree (sorted alphabetically), each carrying the
+    // dashboard kind icon that distinguishes them from starred folders.
     for (const dash of starredDashboards) {
       await waitFor(() => {
         expect(screen.getByTestId(`synced-starred/${dash.uid}`)).toBeInTheDocument();
       });
-      expect(screen.getByTestId(`synced-starred/${dash.uid}`)).not.toHaveAttribute('data-icon');
+      expect(screen.getByTestId(`synced-starred/${dash.uid}`)).toHaveAttribute('data-icon', 'apps');
     }
 
     expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
@@ -183,29 +181,6 @@ describe('useSyncStarredItemsInNav', () => {
     // Loading resolved instead of spinning forever, and no items were dispatched
     expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
     expect(screen.getByTestId('starred-list').children).toHaveLength(0);
-  });
-
-  it('turns on kind icons for dashboards once an app kind is listed', async () => {
-    const dashUid = dashbdD.item.uid;
-    setMockStarredDashboards([dashUid]);
-    setMockStarredPluginKind(THING_GROUP, THING_KIND, [THING_UUID]);
-    installThingsApp();
-    server.use(
-      getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [
-        { name: THING_UUID, title: 'My Thing', folder: folderA.item.uid },
-      ])
-    );
-    setupSearchMock([{ uid: dashUid, name: 'My Dashboard', url: `/d/${dashUid}`, kind: 'dashboard' }]);
-
-    render(<TestHarness />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId(`synced-starred/${THING_UUID}`)).toBeInTheDocument();
-    });
-
-    // Two kinds can appear, so the dashboard row needs its icon to be told apart from the plugin kind
-    expect(screen.getByTestId(`synced-starred/${dashUid}`)).toHaveAttribute('data-icon', 'apps');
-    expect(screen.getByTestId(`synced-starred/${THING_UUID}`)).toHaveAttribute('data-icon', 'cube');
   });
 
   it('loads the app kinds only once the stars hold one, then lists it', async () => {
@@ -275,20 +250,9 @@ describe('useSyncStarredItemsInNav', () => {
     // Nothing knows how to show a Ghost, so it is neither searched for nor listed
     expect(mockSearcher.search).toHaveBeenCalledWith({ name: [dashUid], kind: ['dashboard'], limit: 1 });
     expect(screen.getByTestId('starred-list').children).toHaveLength(1);
-    expect(screen.getByTestId(`synced-starred/${dashUid}`)).not.toHaveAttribute('data-icon');
   });
 
-  describe('when starredFolders is enabled', () => {
-    beforeEach(() => {
-      setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
-    });
-
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
-      });
-    });
-
+  describe('with starred folders in the star set', () => {
     it('syncs both a starred dashboard and folder, each with its per-kind icon', async () => {
       const dashUid = dashbdD.item.uid;
       const folderUid = folderA.item.uid;

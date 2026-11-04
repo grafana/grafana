@@ -15,7 +15,7 @@ import { type PanelPluginMetas } from '@grafana/runtime/internal';
 import { Checkbox, Icon, type IconName, TagList, Text, Tooltip } from '@grafana/ui';
 import { formatDate } from 'app/core/internationalization/dates';
 import { PluginIconName } from 'app/features/plugins/admin/types';
-import { findKind } from 'app/features/stars/kinds';
+import { findStarredKindBySearchKind } from 'app/features/stars/kinds';
 
 import { DescriptionTooltip } from '../../components/DescriptionTooltip';
 import { type QueryResponse, type SearchResultMeta } from '../../service/types';
@@ -457,11 +457,11 @@ function makeTypeColumn(
       let txt = 'Dashboard';
       if (kind) {
         txt = kind;
-        // Dashboards, folders and app kinds are described by the kinds registry, whether or not they can be starred
-        const known = findKind(kind);
-        if (known) {
-          icon = known.icon;
-          txt = known.title();
+        // Dashboards, folders and app kinds: the kinds people star, which the stars registry describes
+        const starredKind = findStarredKindBySearchKind(kind);
+        if (starredKind) {
+          icon = starredKind.icon;
+          txt = starredKind.title();
         }
         if (kind === 'panel') {
           icon = `${PluginIconName.panel}`;

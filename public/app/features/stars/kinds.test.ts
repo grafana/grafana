@@ -1,24 +1,20 @@
 import { http, HttpResponse } from 'msw';
-import { act } from 'test/test-utils';
 
 import { type GrafanaConfig, locationUtil, type NavModelItem } from '@grafana/data';
 import { config, setBackendSrv } from '@grafana/runtime';
 import { getKindDiscoveryHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { MOCK_STARRED_KIND_PAGE, MOCK_STARRED_KIND_SERVED, setTestFlags } from '@grafana/test-utils/unstable';
+import { MOCK_STARRED_KIND_PAGE, MOCK_STARRED_KIND_SERVED } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { configureStore } from 'app/store/configureStore';
 
 import {
-  findKind,
   findStarredKind,
   findStarredKindBySearchKind,
   getStarredKinds,
   loadStarredKinds,
   loadStarredKindsFor,
   partitionStarred,
-  starredKindsNeedIcons,
-  starredNavEntry,
 } from './kinds';
 
 setBackendSrv(backendSrv);
@@ -41,20 +37,12 @@ beforeEach(() => {
   server.use(getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED));
 });
 
-afterEach(async () => {
-  await act(async () => {
-    setTestFlags({});
-  });
-});
-
 describe('getStarredKinds', () => {
-  it('lists only dashboards when folders cannot be starred and no app kind is loaded', () => {
-    expect(getStarredKinds().map((kind) => kind.searchKind)).toEqual(['dashboard']);
-    expect(starredKindsNeedIcons()).toBe(false);
+  it("lists only Grafana's own kinds until app kinds are discovered", () => {
+    expect(getStarredKinds().map((kind) => kind.searchKind)).toEqual(['dashboard', 'folder']);
   });
 
   it('lists dashboards, folders, then the app kinds in discovery order with increasing ranks', async () => {
-    setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
     setNavTree(MOCK_STARRED_KIND_PAGE, { id: 'widgets', text: 'Widgets', url: '/a/test-widgets-app/widgets' });
     server.use(getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED, WIDGETS_SERVED));
 
@@ -66,20 +54,6 @@ describe('getStarredKinds', () => {
       [THING, 2, 'kind-search'],
       ['widgets.ext.grafana.app/Widget', 3, 'kind-search'],
     ]);
-    expect(starredKindsNeedIcons()).toBe(true);
-  });
-});
-
-describe('findKind', () => {
-  it('describes folders for display while their stars are not shown', () => {
-    const folder = findKind('folder');
-
-    expect([folder?.title(), folder?.icon]).toEqual(['Folder', 'folder']);
-    expect(findStarredKindBySearchKind('folder')).toBeUndefined();
-  });
-
-  it('describes nothing for a kind nobody can star', () => {
-    expect(findKind('panel')).toBeUndefined();
   });
 });
 
@@ -195,52 +169,24 @@ describe('loadStarredKindsFor', () => {
 describe('partitionStarred', () => {
   const thingResource = { group: MOCK_STARRED_KIND_SERVED.group, kind: MOCK_STARRED_KIND_SERVED.kind, names: ['t1'] };
   const dashboardResource = { group: 'dashboard.grafana.app', kind: 'Dashboard', names: ['d1', 'd2'] };
+  const folderResource = { group: 'folder.grafana.app', kind: 'Folder', names: ['f1'] };
 
   it('sends app kinds to their own search and the rest to the dashboard index, in display order', async () => {
     await loadStarredKinds();
 
-    const { indexed, app } = partitionStarred([thingResource, dashboardResource]);
+    const { indexed, app } = partitionStarred([thingResource, folderResource, dashboardResource]);
 
-    expect(indexed.map(({ kind, names }) => [kind.searchKind, names])).toEqual([['dashboard', ['d1', 'd2']]]);
+    expect(indexed.map(({ kind, names }) => [kind.searchKind, names])).toEqual([
+      ['dashboard', ['d1', 'd2']],
+      ['folder', ['f1']],
+    ]);
     expect(app.map(({ kind, names }) => [kind.searchKind, names])).toEqual([[THING, ['t1']]]);
   });
 
   it('leaves out kinds Grafana cannot show and kinds with nothing starred', () => {
-    const { indexed, app } = partitionStarred([
-      thingResource,
-      { group: 'folder.grafana.app', kind: 'Folder', names: ['f1'] },
-      { ...dashboardResource, names: [] },
-    ]);
+    const { indexed, app } = partitionStarred([thingResource, { ...dashboardResource, names: [] }]);
 
     expect(indexed).toEqual([]);
     expect(app).toEqual([]);
-  });
-});
-
-describe('starredNavEntry', () => {
-  it('leaves dashboard rows icon-free while dashboards are the only kind', () => {
-    expect(starredNavEntry(findStarredKindBySearchKind('dashboard')!, 'd1')).toEqual({
-      url: '/d/d1',
-      icon: undefined,
-      sortWeight: 0,
-      kind: 'dashboard',
-    });
-  });
-
-  it('gives every kind its icon and rank once an app kind is loaded', async () => {
-    await loadStarredKinds();
-
-    expect(starredNavEntry(findStarredKindBySearchKind('dashboard')!, 'd1')).toEqual({
-      url: '/d/d1',
-      icon: 'apps',
-      sortWeight: 0,
-      kind: 'dashboard',
-    });
-    expect(starredNavEntry(findStarredKindBySearchKind(THING)!, 't1')).toEqual({
-      url: '/a/test-things-app/things/t1',
-      icon: 'cube',
-      sortWeight: 2,
-      kind: THING,
-    });
   });
 });

@@ -12,7 +12,7 @@ import {
   starsRoute,
 } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { MOCK_STARRED_KIND_PAGE, MOCK_STARRED_KIND_SERVED, setTestFlags } from '@grafana/test-utils/unstable';
+import { MOCK_STARRED_KIND_PAGE, MOCK_STARRED_KIND_SERVED } from '@grafana/test-utils/unstable';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { setStore } from 'app/store/store';
@@ -265,8 +265,6 @@ describe('Unified Storage Searcher', () => {
     beforeEach(() => {
       searchRequests = [];
       thingsRequested.mockClear();
-      // One call — putConfiguration replaces the whole flag set, so a second call would drop the first.
-      setTestFlags({ foldersAppPlatformAPI: true, 'grafana.starredFolders': true });
       // starred() reads stars via an RTK Query dispatch on the global store, and the app kinds find their
       // plugin page in its nav tree, so wire one up with both.
       const store = configureStore({
@@ -279,11 +277,7 @@ describe('Unified Storage Searcher', () => {
       setStore(store as unknown as Store);
     });
 
-    afterEach(() => {
-      setTestFlags({});
-    });
-
-    it('searches for starred folders alongside dashboards when starred folders are enabled', async () => {
+    it('searches for starred folders alongside dashboards', async () => {
       server.use(starsHandler(bothStarredResources), captureSearchHandler(starredHits));
 
       const searcher = new UnifiedSearcher();
@@ -295,16 +289,6 @@ describe('Unified Storage Searcher', () => {
       const folderHit = response.view.get(1);
       expect(folderHit.kind).toBe('folder');
       expect(folderHit.url).toContain('/dashboards/f/f1');
-    });
-
-    it('keeps the search dashboards-only when the starred folders flag is off', async () => {
-      setTestFlags({});
-      server.use(starsHandler(bothStarredResources), captureSearchHandler(starredHits.slice(0, 1)));
-
-      const searcher = new UnifiedSearcher();
-      await searcher.starred({ kind: ['dashboard', 'folder'] });
-
-      expect(findStarredSearchRequest()?.searchParams.getAll('name')).toEqual(['d1']);
     });
 
     it('returns an empty response without searching when nothing is starred', async () => {

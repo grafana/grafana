@@ -7,7 +7,7 @@ import { setStarred } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { dispatch, store } from 'app/store/store';
 
-import { findStarredKind, isGrafanaKind, loadStarredKinds, type StarredKind, starredNavEntry } from './kinds';
+import { findStarredKind, isGrafanaKind, loadStarredKinds, type StarredKind } from './kinds';
 import { findStarredNames, userStarsFieldSelector } from './utils';
 
 /** Stars objects over the collections API and keeps Grafana's Starred nav and lists in sync. */
@@ -63,7 +63,8 @@ export class CollectionsStarsSrv implements StarsSrv {
     // of a kind Grafana cannot show is stored all the same; the nav just has nothing to do with it.
     const starredKind = await this.starredKindFor(group, kind);
     if (starredKind) {
-      dispatch(setStarred({ id, title, ...starredNavEntry(starredKind, id), isStarred }));
+      const { icon, sortWeight, searchKind } = starredKind;
+      dispatch(setStarred({ id, title, url: starredKind.url(id), icon, sortWeight, kind: searchKind, isStarred }));
     }
   }
 

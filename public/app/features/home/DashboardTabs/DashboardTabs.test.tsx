@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
-import { act, render, screen, waitFor, within } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { config, reportInteraction, setBackendSrv, setStarsSrv } from '@grafana/runtime';
@@ -8,7 +8,7 @@ import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { setMockStarredDashboards, setMockStarredFolders, setTestFlags } from '@grafana/test-utils/unstable';
+import { setMockStarredDashboards, setMockStarredFolders } from '@grafana/test-utils/unstable';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -240,7 +240,6 @@ describe('DashboardTabs', () => {
 
   describe('Starred folders', () => {
     beforeEach(() => {
-      setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
       setMockStarredFolders(['folder-1']);
       server.use(
         getCustomSearchHandler([
@@ -250,13 +249,8 @@ describe('DashboardTabs', () => {
       );
     });
 
-    afterEach(async () => {
+    afterEach(() => {
       setMockStarredFolders([]);
-      // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates while the
-      // component is still mounted.
-      await act(async () => {
-        setTestFlags({});
-      });
     });
 
     it('lists a starred folder as starred and drops it once unstarred', async () => {

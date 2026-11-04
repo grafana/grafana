@@ -39,17 +39,6 @@ const StarredFoldersList = () => {
 };
 
 describe('FolderDetailsActions', () => {
-  // starredFoldersEnabled() gates the star button on both of these flags
-  beforeEach(() => {
-    setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
-  });
-
-  afterEach(async () => {
-    await act(async () => {
-      setTestFlags({});
-    });
-  });
-
   it('refetches the starred folders list when a folder is starred', async () => {
     const { user } = render(
       <>
@@ -74,8 +63,13 @@ describe('FolderDetailsActions', () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
     });
 
-    afterEach(() => {
+    afterEach(async () => {
       jest.restoreAllMocks();
+      // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates while the
+      // component is still mounted.
+      await act(async () => {
+        setTestFlags({});
+      });
     });
 
     it('hides the New button when the user cannot create folders', async () => {

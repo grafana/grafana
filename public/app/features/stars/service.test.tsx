@@ -9,6 +9,7 @@ import {
   MOCK_STARRED_KIND_PAGE,
   MOCK_STARRED_KIND_SERVED,
   setMockStarredDashboards,
+  setMockStarredFolders,
 } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -65,6 +66,20 @@ describe('CollectionsStarsSrv.star', () => {
 
     const child = starredChildren().find((item) => item.id === `starred/${uid}`);
     expect(child).toMatchObject({ id: `starred/${uid}`, text: 'New Dashboard', url: `/d/${uid}` });
+  });
+
+  it('adds a starred folder to the nav Starred section with the folder url and icon', async () => {
+    const uid = 'new-folder';
+    setMockStarredFolders([]);
+
+    await srv.star({ group: 'folder.grafana.app', kind: 'Folder', id: uid, title: 'My Folder' });
+
+    expect(starredChildren().find((item) => item.id === `starred/${uid}`)).toMatchObject({
+      text: 'My Folder',
+      url: expect.stringContaining(`/dashboards/f/${uid}/`),
+      icon: 'folder',
+      starredKind: 'folder',
+    });
   });
 
   it('adds a starred app object to the nav Starred section under its kind, linking into the plugin', async () => {

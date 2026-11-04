@@ -1232,6 +1232,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "authz.useLegacyCheckShadow",
+			Description:  "Compare local access-control evaluations with the AuthZ LegacyCheck RPC in the background.",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "zanzana",
 			Description:  "Use openFGA as authorization engine.",
 			Stage:        FeatureStageExperimental,
@@ -1952,14 +1961,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "true",
-		},
-		{
-			Name:        "grafana.starredFolders",
-			Description: "Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{React: true},
-			Owner:       grafanaFrontendNavigation,
-			Expression:  "false",
 		},
 		{
 			Name:        "grafana.newTextPanel",
@@ -2911,6 +2912,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "grafana.cmdkDashboardTags",
+			Description: "Shows dashboard tags in the command palette",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "assistant.fullscreenWorkspace",
 			Description: "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
 			Stage:       FeatureStageExperimental,
@@ -3062,6 +3071,15 @@ var (
 			Generate:    Generate{React: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
+		},
+		{
+			Name:         "grafana.multiTenantHomepage",
+			Description:  "Hides homepage sections whose only backend is a legacy /api endpoint (firing alerts, IRM incidents and on-call, plugin offers) and skips the legacy datasource health probe, for multi-tenant stacks that do not serve /api",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendNavigation,
+			HideFromDocs: true,
+			Generate:     Generate{React: true},
+			Expression:   "false",
 		},
 		{
 			Name:            "kubernetesReporting",
