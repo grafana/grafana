@@ -24,6 +24,8 @@ const OWNER = TABLE_TRANSFORMATIONS_OWNER;
 const buttonTestId = selectors.components.Panels.Panel.PanelAdHocChangesHeaderAction;
 const promotionHandler = jest.fn((dashboard) => dashboard);
 
+const deactivate: Array<() => void> = [];
+
 setPluginImportUtils({
   importPanelPlugin: () =>
     Promise.resolve(
@@ -75,7 +77,7 @@ async function buildScene({
   // Loaded dashboards keep the JSON they were built from.
   dashboard.serializer.initialSaveModel = dashboard.getSaveModel();
 
-  activateFullSceneTree(dashboard);
+  deactivate.push(activateFullSceneTree(dashboard));
   await waitFor(() => {
     expect(panel.getPlugin()?.panelInteractions?.interactions).toHaveLength(1);
   });
@@ -90,6 +92,13 @@ function addAdHocChange(panel: VizPanel) {
 }
 
 describe('PanelAdHocChangesAction', () => {
+  afterEach(() => {
+    deactivate
+      .splice(0)
+      .reverse()
+      .forEach((cleanup) => cleanup());
+  });
+
   it('shows the button in edit mode when the panel has ad hoc changes', async () => {
     const { panel } = await buildScene({ isEditing: true });
 

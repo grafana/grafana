@@ -20,6 +20,8 @@ const promotions: Record<string, jest.Mock> = {
   second: jest.fn(),
 };
 
+const deactivate: Array<() => void> = [];
+
 function interaction(name: string): PanelInteraction {
   return { id: 0, name, mutates: ['TRANSFORMATION'], schema: [], promotionHandler: promotions[name] };
 }
@@ -45,7 +47,7 @@ async function buildScene(version: 'v1' | 'v2' = 'v2') {
   );
   // Loaded dashboards keep the JSON they were built from.
   dashboard.serializer.initialSaveModel = dashboard.getSaveModel();
-  activateFullSceneTree(dashboard);
+  deactivate.push(activateFullSceneTree(dashboard));
   await waitFor(() => {
     expect(panel.getPlugin()?.panelInteractions?.interactions).toHaveLength(2);
   });
@@ -57,6 +59,13 @@ describe('promoteAdHocChanges', () => {
   beforeEach(() => {
     promotions.first.mockReset().mockImplementation((json) => ({ ...json, title: `${json.title} (promoted)` }));
     promotions.second.mockReset().mockImplementation((json) => json);
+  });
+
+  afterEach(() => {
+    deactivate
+      .splice(0)
+      .reverse()
+      .forEach((cleanup) => cleanup());
   });
 
   it('passes the v2 dashboard JSON, the panel element key and its ad hoc transformations to the first promotion handler', async () => {
