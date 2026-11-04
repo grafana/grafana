@@ -9,10 +9,7 @@ import {
   getAlertmanagerConfigHandler,
   grafanaAlertingConfigurationStatusHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
-import {
-  getFolderAccessControlHandlers,
-  getFolderHandlers,
-} from 'app/features/alerting/unified/mocks/server/handlers/folders';
+import { getFolderAccessHandler, getFolderHandlers } from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import { getRulesAPIGroupHandler } from 'app/features/alerting/unified/mocks/server/handlers/k8s/alertRules.k8s';
 import { listNamespacedTimeIntervalHandler } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
 import {
@@ -72,7 +69,7 @@ export const setAlertmanagerChoices = (alertmanagersChoice: AlertmanagerChoice, 
  * Makes the mock server respond with different folder access control settings
  */
 export const setFolderAccessControl = (accessControl: FolderDTO['accessControl']) => {
-  server.use(...getFolderAccessControlHandlers(accessControl));
+  server.use(getFolderAccessHandler(accessControl));
 };
 
 /**

@@ -6,10 +6,10 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { ConfirmModal, Space, Text, useStyles2 } from '@grafana/ui';
+import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { getStatusFromError } from 'app/core/utils/errors';
 
 import { FolderPicker } from '../../../core/components/Select/FolderPicker';
-import { useGetFolderQuery } from '../api/browseDashboardsAPI';
 
 export interface RestoreModalProps {
   onConfirm: (restoreTarget: string) => Promise<void>;
@@ -48,13 +48,7 @@ export const RestoreModal = ({
   const [userTarget, setUserTarget] = useState<string | undefined>();
   const numberOfDashboards = selectedDashboards.length;
   const { error: originError, isFetching } = useGetFolderQuery(
-    originCandidate
-      ? {
-          folderUID: originCandidate,
-          accesscontrol: false,
-          isLegacyCall: true,
-        }
-      : skipToken,
+    originCandidate ? { name: originCandidate } : skipToken,
     { refetchOnMountOrArgChange: true }
   );
   const autoTarget = getAutoTarget(originCandidate, isFetching, getStatusFromError(originError));

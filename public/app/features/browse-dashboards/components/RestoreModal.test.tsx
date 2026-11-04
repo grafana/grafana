@@ -3,7 +3,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { folderHandlers, getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { RestoreModal, type RestoreModalProps } from './RestoreModal';
@@ -74,8 +74,10 @@ describe('RestoreModal', () => {
   });
 
   it('keeps the original folder selected when validation returns 403', async () => {
-    // Override the folder handler to return 403 for all UIDs
-    server.use(http.get('/api/folders/:uid', () => HttpResponse.json({ message: 'Forbidden' }, { status: 403 })));
+    // Override the folder lookup to return 403 for all UIDs
+    server.use(
+      http.get(folderHandlers.FOLDER_BY_NAME, () => HttpResponse.json({ message: 'Forbidden' }, { status: 403 }))
+    );
 
     renderRestoreModal({ originCandidate: folderA.item.uid });
 
@@ -90,7 +92,7 @@ describe('RestoreModal', () => {
   it('does not preselect while validation is in progress', async () => {
     // Keep the validation request pending indefinitely
     server.use(
-      http.get('/api/folders/:uid', async () => {
+      http.get(folderHandlers.FOLDER_BY_NAME, async () => {
         await delay('infinite');
         return HttpResponse.json({});
       })
@@ -107,7 +109,7 @@ describe('RestoreModal', () => {
     // Deferred response: validation stays pending until we resolve it
     let resolveValidation!: () => void;
     server.use(
-      http.get('/api/folders/:uid', () => {
+      http.get(folderHandlers.FOLDER_BY_NAME, () => {
         return new Promise<Response>((resolve) => {
           resolveValidation = () =>
             resolve(
@@ -126,9 +128,8 @@ describe('RestoreModal', () => {
     const trigger = await screen.findByRole('button', { name: 'Select folder' });
     await user.click(trigger);
 
-    // Folder list loads via default MSW handlers for /api/folders (list endpoint
-    // is NOT overridden — only /api/folders/:uid is). The root "Dashboards" item
-    // is always visible.
+    // The picker lists folders through the search API, which is not overridden; only the
+    // folder lookup is. The root "Dashboards" item is always visible.
     const dashboardsItem = await screen.findByLabelText('Dashboards');
     await user.click(dashboardsItem);
 

@@ -10,7 +10,6 @@ import { appEvents } from 'app/core/app_events';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
-import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type StoreState } from 'app/types/store';
@@ -19,7 +18,6 @@ import { AnnoKeyFolder, AnnoKeyGrantPermissions } from '../../../../features/api
 
 import {
   useGetFolderQueryFacade,
-  useDeleteMultipleFoldersMutationFacade,
   useMoveMultipleFoldersMutationFacade,
   getFolderByUidFacade,
   getFolderUrl,
@@ -97,15 +95,6 @@ const setupCreateFolderHandler = (onCreate?: jest.Mock) => {
   );
 };
 
-const setupDeleteFolderHandler = (onDelete: jest.Mock) => {
-  server.use(
-    http.delete('/api/folders/:uid', ({ params }) => {
-      onDelete(params.uid);
-      return HttpResponse.json({});
-    })
-  );
-};
-
 // Mutations kick off browse-tree refetches after they resolve. Waiting for the refetched collection both asserts the
 // refresh and keeps the request from being in flight when MSW resets handlers between tests.
 const expectChildrenRefetched = (store: Store<StoreState>, parentUID: string | undefined, expectedChildUid: string) =>
@@ -114,10 +103,6 @@ const expectChildrenRefetched = (store: Store<StoreState>, parentUID: string | u
     const collection = parentUID ? childrenByParentUID[parentUID] : rootItems;
     expect(collection?.items.map((item) => item.uid)).toContain(expectedChildUid);
   });
-
-// Legacy folder mutations also refetch the virtual team folders; the default /api/user/teams handler has no teams.
-const expectTeamFoldersRefetched = (store: Store<StoreState>) =>
-  waitFor(() => expect(store.getState().browseDashboards.childrenByParentUID[TEAM_FOLDERS_UID]?.items).toEqual([]));
 
 const originalProvisioningEnabled = config.provisioningEnabled;
 const originalPermissions = contextSrv.user.permissions;
@@ -243,41 +228,6 @@ describe('useGetFolderQueryFacade', () => {
     rerender({ uid: undefined });
 
     expect(result.current.data).toBeUndefined();
-  });
-});
-
-describe('useDeleteMultipleFoldersMutationFacade', () => {
-  // RTK Query logs a console.error because the legacy deleteFolders queryFn resolves { data: undefined }. Pin that one
-  // call so any other error (unhandled request, failed refetch) still fails the test.
-  let consoleErrorSpy: jest.SpyInstance;
-  beforeEach(() => {
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-  });
-  afterEach(() => {
-    consoleErrorSpy.mockRestore();
-  });
-
-  it('deletes each folder through the legacy API (app platform delete is not supported yet)', async () => {
-    const deleteSpy = jest.fn();
-    setupDeleteFolderHandler(deleteSpy);
-    const store = configureStore();
-    const folderUIDs = ['uid1', 'uid2'];
-    const { result } = renderHook(() => useDeleteMultipleFoldersMutationFacade(), {
-      wrapper: getWrapper({ store }),
-    });
-    await act(async () => {
-      await result.current({ folderUIDs });
-    });
-
-    expect(deleteSpy).toHaveBeenCalledTimes(2);
-    expect(deleteSpy).toHaveBeenNthCalledWith(1, 'uid1');
-    expect(deleteSpy).toHaveBeenNthCalledWith(2, 'uid2');
-    // deleted uids are unknown to the tree, so refreshParents falls back to the root
-    await expectChildrenRefetched(store, undefined, folderA.item.uid);
-    await expectTeamFoldersRefetched(store);
-    expect(consoleErrorSpy.mock.calls).toEqual([
-      [expect.stringContaining('Error encountered handling the endpoint deleteFolders'), { data: undefined }],
-    ]);
   });
 });
 

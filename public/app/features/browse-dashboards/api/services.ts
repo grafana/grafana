@@ -27,7 +27,7 @@ import {
 
 import { PAGE_SIZE } from './constants';
 
-async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE): Promise<NestedFolderDTO[]> {
+async function searchFolders(parentUID?: string, page = 1, pageSize = PAGE_SIZE): Promise<NestedFolderDTO[]> {
   const results = await getGrafanaSearcher().search({
     kind: ['folder'],
     location: parentUID || 'general',
@@ -63,7 +63,7 @@ export async function listFolders(
 ): Promise<DashboardViewItem[]> {
   let folders: NestedFolderDTO[] = [];
   if (contextSrv.hasPermission(AccessControlAction.FoldersRead)) {
-    folders = await searchNewAPI(parentUID, page, pageSize);
+    folders = await searchFolders(parentUID, page, pageSize);
   }
 
   return folders.map(({ uid, title, managedBy }) => {

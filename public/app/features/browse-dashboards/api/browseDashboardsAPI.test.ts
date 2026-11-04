@@ -16,6 +16,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
+import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { deletedDashboardsCache } from 'app/features/search/service/deletedDashboardsCache';
 import * as variablesManagementCache from 'app/features/variables-management/cache';
 import { setStore } from 'app/store/store';
@@ -163,37 +164,18 @@ describe('browseDashboardsAPI', () => {
     expect(saveDashboardV1).not.toHaveBeenCalled();
   });
 
-  it('does not refetch an active getFolder subscription after deleting that folder', async () => {
+  it('invalidates quota usage after deleting a folder', async () => {
     const store = createTestStore();
-    const folderQueryArg = { folderUID: 'folder-1', accesscontrol: true, isLegacyCall: false };
-
-    const getFolderSpy = jest.fn();
-    const deleteFolderSpy = jest.fn();
     const invalidateQuotaUsageSpy = jest.spyOn(quotasAPI, 'invalidateQuotaUsage');
 
     try {
-      server.use(
-        http.get('/api/folders/folder-1', () => {
-          getFolderSpy();
-          return HttpResponse.json({ uid: 'folder-1' });
-        }),
-        http.delete('/api/folders/folder-1', () => {
-          deleteFolderSpy();
-          return HttpResponse.json({});
-        })
-      );
+      server.use(http.delete('/api/folders/folder-1', () => HttpResponse.json({})));
 
-      const subscription = store.dispatch(browseDashboardsAPI.endpoints.getFolder.initiate(folderQueryArg));
-      await subscription;
       await store.dispatch(
         browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
       );
 
-      expect(getFolderSpy).toHaveBeenCalledTimes(1);
-      expect(deleteFolderSpy).toHaveBeenCalledTimes(1);
       expect(invalidateQuotaUsageSpy).toHaveBeenCalledTimes(1);
-
-      subscription.unsubscribe();
     } finally {
       invalidateQuotaUsageSpy.mockRestore();
     }
@@ -302,27 +284,33 @@ describe('browseDashboardsAPI', () => {
       consoleErrorSpy.mockRestore();
     });
 
-    it('does not refetch active folder queries during bulk delete', async () => {
-      const store = createTestStore();
-      const folderOneQueryArg = { folderUID: 'folder-1', accesscontrol: true, isLegacyCall: false };
-      const folderTwoQueryArg = { folderUID: 'folder-2', accesscontrol: true, isLegacyCall: false };
+    it('deletes each requested folder in order and refreshes the root and team folder trees', async () => {
+      const deletedUids: string[] = [];
+      const refetchParents: Array<string | undefined> = [];
+      const recorder: Middleware = () => (next) => (action) => {
+        if (isAnyOf(refetchChildren.pending)(action)) {
+          refetchParents.push(action.meta.arg.parentUID);
+        }
+        return next(action);
+      };
+      const store = makeRecorderStore(recorder);
 
       server.use(
-        http.get('/api/folders/folder-1', () => HttpResponse.json({ uid: 'folder-1' })),
-        http.get('/api/folders/folder-2', () => HttpResponse.json({ uid: 'folder-2' })),
-        http.delete('/api/folders/folder-1', () => HttpResponse.json({})),
-        http.delete('/api/folders/folder-2', () => HttpResponse.json({ message: 'Folder not found' }, { status: 404 }))
+        http.delete('/api/folders/:uid', ({ params }) => {
+          deletedUids.push(String(params.uid));
+          return HttpResponse.json({});
+        })
       );
 
-      const firstSubscription = store.dispatch(browseDashboardsAPI.endpoints.getFolder.initiate(folderOneQueryArg));
-      const secondSubscription = store.dispatch(browseDashboardsAPI.endpoints.getFolder.initiate(folderTwoQueryArg));
-      await Promise.all([firstSubscription, secondSubscription]);
       await store.dispatch(
         browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
       );
 
-      firstSubscription.unsubscribe();
-      secondSubscription.unsubscribe();
+      expect(deletedUids).toEqual(['folder-1', 'folder-2']);
+      // The deleted uids are unknown to the tree, so refreshParents falls back to the root.
+      await waitFor(() => {
+        expect(refetchParents).toEqual(expect.arrayContaining([undefined, TEAM_FOLDERS_UID]));
+      });
     });
 
     it('clears caches and invalidates quota usage when bulk delete yields no successes', async () => {

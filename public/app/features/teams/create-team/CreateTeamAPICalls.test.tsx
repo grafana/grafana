@@ -6,7 +6,7 @@ import { AppEvents } from '@grafana/data';
 import { getAppEvents, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import {
-  customCreateFolderHandlerAppPlatform,
+  customCreateFolderHandler,
   customCreateTeamHandler,
   customSetTeamRolesHandler,
 } from '@grafana/test-utils/unstable';
@@ -232,7 +232,7 @@ describe('useCreateTeamOrchestrate', () => {
 
   describe('folder creation', () => {
     it('sets loading before the folder API responds', async () => {
-      server.use(customCreateFolderHandlerAppPlatform(async () => delay('infinite')));
+      server.use(customCreateFolderHandler(async () => delay('infinite')));
 
       const { result, unmount } = renderHook(() => useCreateTeamOrchestrate([], true), {
         wrapper: getWrapper({}),
@@ -266,9 +266,7 @@ describe('useCreateTeamOrchestrate', () => {
 
     it('reports error when the app platform folder API returns an error response', async () => {
       server.use(
-        customCreateFolderHandlerAppPlatform(() =>
-          HttpResponse.json({ message: 'Internal server error' }, { status: 500 })
-        )
+        customCreateFolderHandler(() => HttpResponse.json({ message: 'Internal server error' }, { status: 500 }))
       );
 
       const { result } = renderHook(() => useCreateTeamOrchestrate([], true), { wrapper: getWrapper({}) });
@@ -294,7 +292,7 @@ describe('useCreateTeamOrchestrate', () => {
       let capturedTitle: string | undefined;
 
       server.use(
-        customCreateFolderHandlerAppPlatform(async ({ request }) => {
+        customCreateFolderHandler(async ({ request }) => {
           const body = (await request.json()) as { spec: { title: string } };
           capturedTitle = body.spec.title;
           return HttpResponse.json({ metadata: { name: 'new-folder' }, spec: { title: body.spec.title } });
@@ -407,7 +405,7 @@ describe('useCreateTeamOrchestrate', () => {
     });
 
     it('shows an error toast for folder creation failure instead of setting state', async () => {
-      server.use(customCreateFolderHandlerAppPlatform(() => HttpResponse.json({ message: 'error' }, { status: 500 })));
+      server.use(customCreateFolderHandler(() => HttpResponse.json({ message: 'error' }, { status: 500 })));
 
       const { result } = renderHook(() => useCreateTeamOrchestrate([], true), { wrapper: getWrapper({}) });
 

@@ -1,7 +1,7 @@
 import { QueryStatus } from '@reduxjs/toolkit/query';
 import { act, renderHook } from 'test/test-utils';
 
-import { useFoldersQueryAppPlatform } from './useFoldersQueryAppPlatform';
+import { useFoldersQuery } from './useFoldersQuery';
 
 let mockSelectorResult: unknown;
 let mockDispatchResult = jest.fn();
@@ -25,7 +25,7 @@ jest.mock('app/api/clients/dashboard/v0alpha1', () => ({
   },
 }));
 
-describe('useFoldersQueryAppPlatform', () => {
+describe('useFoldersQuery', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockDispatchResult = jest.fn();
@@ -38,7 +38,7 @@ describe('useFoldersQueryAppPlatform', () => {
     };
 
     const { result } = renderHook(() =>
-      useFoldersQueryAppPlatform({
+      useFoldersQuery({
         isBrowsing: true,
         openFolders: {},
         permission: 'edit',
@@ -68,7 +68,7 @@ describe('useFoldersQueryAppPlatform', () => {
     };
 
     const { result } = renderHook(() =>
-      useFoldersQueryAppPlatform({
+      useFoldersQuery({
         isBrowsing: true,
         openFolders: {},
         permission: 'edit',
@@ -94,7 +94,7 @@ describe('useFoldersQueryAppPlatform', () => {
     mockSelect.mockReturnValue(jest.fn());
 
     const { result } = renderHook(() =>
-      useFoldersQueryAppPlatform({
+      useFoldersQuery({
         isBrowsing: true,
         openFolders: {},
         permission: 'edit',

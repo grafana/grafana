@@ -14,12 +14,6 @@ import {
 } from 'app/api/clients/iam/v0alpha1';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { updateDashboardName } from 'app/core/reducers/navBarTree';
-import {
-  useDeleteFolderMutation as useDeleteFolderMutationLegacy,
-  useDeleteFoldersMutation as useDeleteFoldersMutationLegacy,
-  type MoveFoldersArgs,
-  type MoveFolderArgs,
-} from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
 import { getSelectedUIDs, getFolderURL as getStarredFolderURL } from 'app/features/browse-dashboards/utils/dashboards';
 import { type FolderDTO, type NewFolder } from 'app/types/folders';
@@ -79,6 +73,16 @@ export function getFolderUrl(uid: string, title: string): string {
 export type CombinedFolder = FolderDTO & {
   ownerReferences?: OwnerReference[];
 };
+
+interface MoveFoldersArgs {
+  destinationUID: string;
+  folderUIDs: string[];
+}
+
+interface MoveFolderArgs {
+  folderUID: string;
+  destinationUID: string;
+}
 
 function resolveDisplayName(userKey: string | undefined, userDisplay?: DisplayList): string {
   const anonymous = t('folders.api.anonymous-user', 'Anonymous');
@@ -173,9 +177,8 @@ export async function getFolderByUidFacade(uid: string) {
 }
 
 /**
- * A proxy function that uses either legacy folder client or the new app platform APIs to get the data in the same
- * format of a FolderDTO object. As the schema isn't the same, using the app platform needs multiple different calls
- * which are then stitched together.
+ * Reads a folder through the app platform API in the shape of a legacy FolderDTO. The folder, its access info and its
+ * parents are separate resources, so the three queries are stitched together.
  * @param uid
  */
 export function useGetFolderQueryFacade(uid?: string) {
@@ -252,20 +255,6 @@ export function useGetFolderQueryFacade(uid?: string) {
   }
 }
 
-export function useDeleteFolderMutationFacade() {
-  const [deleteFolderLegacy] = useDeleteFolderMutationLegacy();
-
-  // TODO right now the app platform backend does not support cascading delete of children so we cannot use it.
-  return deleteFolderLegacy;
-}
-
-export function useDeleteMultipleFoldersMutationFacade() {
-  const [deleteFoldersLegacy] = useDeleteFoldersMutationLegacy();
-
-  // TODO right now the app platform backend does not support cascading delete of children so we cannot use it.
-  return deleteFoldersLegacy;
-}
-
 export function useMoveMultipleFoldersMutationFacade() {
   const [updateFolder, updateFolderData] = useUpdateFolderMutation();
   const dispatch = useDispatch();
@@ -305,10 +294,10 @@ export function useMoveMultipleFoldersMutationFacade() {
 }
 
 export function useCreateFolder() {
-  const [createFolder, result] = useCreateFolderMutation();
+  const [createFolderMutation, result] = useCreateFolderMutation();
   const refresh = useRefreshFolders();
 
-  const createFolderAppPlatform = async (
+  const createFolder = async (
     payload: NewFolder & {
       /**
        * UIDs of teams to add as owner references to the new folder
@@ -355,7 +344,7 @@ export function useCreateFolder() {
       },
     };
 
-    const result = await createFolder(apiPayload);
+    const result = await createFolderMutation(apiPayload);
     if (!result.error) {
       refresh({ childrenOf: folder.parentUid });
       deletedDashboardsCache.clear();
@@ -368,14 +357,14 @@ export function useCreateFolder() {
     };
   };
 
-  return [createFolderAppPlatform, result] as const;
+  return [createFolder, result] as const;
 }
 
 export function useUpdateFolder() {
-  const [updateFolder, result] = useUpdateFolderMutation();
+  const [updateFolderMutation, result] = useUpdateFolderMutation();
   const refresh = useRefreshFolders();
 
-  const updateFolderAppPlatform = async (folder: Pick<FolderDTO, 'uid' | 'title' | 'version' | 'parentUid'>) => {
+  const updateFolder = async (folder: Pick<FolderDTO, 'uid' | 'title' | 'version' | 'parentUid'>) => {
     const payload: UpdateFolderApiArg = {
       name: folder.uid,
       patch: {
@@ -389,7 +378,7 @@ export function useUpdateFolder() {
       },
     };
 
-    const result = await updateFolder(payload);
+    const result = await updateFolderMutation(payload);
     refresh({ childrenOf: folder.parentUid });
     // Browse-tree refetch doesn't touch the mounted Starred nav row; update its label directly.
     if (!result.error && folder.title) {
@@ -402,7 +391,7 @@ export function useUpdateFolder() {
     };
   };
 
-  return [updateFolderAppPlatform, result] as const;
+  return [updateFolder, result] as const;
 }
 
 export function useMoveFolderMutationFacade() {

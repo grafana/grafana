@@ -51,16 +51,6 @@ interface MoveDashboardsArgs {
   dashboardUIDs: string[];
 }
 
-export interface MoveFoldersArgs {
-  destinationUID: string;
-  folderUIDs: string[];
-}
-
-export interface MoveFolderArgs {
-  folderUID: string;
-  destinationUID: string;
-}
-
 interface RestoreDashboardArgs {
   dashboard: Resource<Dashboard | DashboardV2Spec>;
 }
@@ -70,24 +60,9 @@ const deleteFolderParams = {
 } as const;
 
 export const browseDashboardsAPI = createApi({
-  tagTypes: ['getFolder'],
   reducerPath: 'browseDashboardsAPI',
   baseQuery: createBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
-    // get folder info (e.g. title, parents) but *not* children
-    getFolder: builder.query<FolderDTO, { folderUID: string; accesscontrol: boolean; isLegacyCall: boolean }>({
-      providesTags: (_result, _error, { folderUID }) => [{ type: 'getFolder', id: folderUID }],
-      query: ({ folderUID, accesscontrol, isLegacyCall }) => ({
-        url: `/folders/${folderUID}`,
-        params: {
-          accesscontrol,
-          // Add additional query param so we can tell when
-          // this was called for app platform compatibility purposes vs. actually needing to use the legacy API
-          isLegacyCall,
-        },
-      }),
-    }),
-
     // delete an *individual* folder. used in the folder actions menu.
     deleteFolder: builder.mutation<void, FolderDTO>({
       query: ({ uid }) => ({
@@ -113,7 +88,6 @@ export const browseDashboardsAPI = createApi({
 
     // move *multiple* dashboards. used in the move modal.
     moveDashboards: builder.mutation<void, MoveDashboardsArgs>({
-      invalidatesTags: ['getFolder'],
       queryFn: async ({ dashboardUIDs, destinationUID }, _api, _extraOptions, baseQuery) => {
         // Move all the dashboards sequentially
         // TODO error handling here
@@ -339,7 +313,6 @@ export const browseDashboardsAPI = createApi({
 
     // restore a dashboard that got deleted
     restoreDashboard: builder.mutation<{ name: string }, RestoreDashboardArgs>({
-      invalidatesTags: ['getFolder'],
       queryFn: async ({ dashboard }) => {
         try {
           const api = await getDashboardAPI();
@@ -387,7 +360,6 @@ export const {
   useDeleteFolderMutation,
   useDeleteFoldersMutation,
   useDeleteDashboardsMutation,
-  useGetFolderQuery,
   useMoveDashboardsMutation,
   useSaveDashboardMutation,
   useRestoreDashboardMutation,
