@@ -72,6 +72,8 @@ refs:
 {{< admonition type="note" >}}
 The updated table panel is currently in public preview and is being gradually rolled out to Cloud instances. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 
+Some screenshots in this documentation might not reflect the public preview experience.
+
 For information about the generally available experience, refer to the [latest OSS documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/table/).
 {{< /admonition >}}
 
