@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -29,7 +28,7 @@ func TestIntegrationEmbeddedLegacySnapshotMultipleChunks(t *testing.T) {
 		grants[i] = ac.Permission{Action: "users:create"}
 	}
 	catalog.Replace(map[string][]ac.Permission{"Viewer": grants})
-	client := legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(sql, catalog, resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &licensing.OSSLicensingService{}, nil), cfg)
+	client := legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(sql, catalog, resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, &licensing.OSSLicensingService{}, nil), cfg)
 	result, err := client.LegacyGetUserPermissions(context.Background(), legacypermissions.LegacyPermissionCaller("stacks-12"), legacyclient.LegacyGetUserPermissionsRequest{
 		Namespace: "stacks-12", Identity: legacyclient.LegacyPermissionIdentity{Type: types.TypeAnonymous, OrgRole: "Viewer"},
 	})

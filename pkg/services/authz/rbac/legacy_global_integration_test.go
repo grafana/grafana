@@ -77,7 +77,7 @@ func TestIntegrationLegacyCheckGlobalParity(t *testing.T) {
 				license.On("FeatureEnabled", "accesscontrol.enforcement").Return(enterprise)
 				cfg := setting.NewCfg()
 				cfg.RBAC.PermissionCache = cached
-				loader := legacypermissions.NewLoader(database, catalog, actions, localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), license, nil)
+				loader := legacypermissions.NewLoader(database, catalog, actions, localcache.New(0, 0), cfg, license, nil)
 				s := setupService().WithLegacyScopeResolvers(accesscontrol.NewScopeResolverRegistry(), types.OrgNamespaceFormatter)
 				s.store = store.NewStore(legacysql.NewDatabaseProvider(database), tracing.NewNoopTracerService())
 				s.userPermissionsEvaluator = loader
@@ -320,7 +320,7 @@ func TestIntegrationLegacyCheckGlobalManagedPermissions(t *testing.T) {
 			license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true)
 			cfg := setting.NewCfg()
 			cfg.RBAC.PermissionCache = cached
-			loader := legacypermissions.NewLoader(database, legacypermissions.NewRoleCatalog(), actions, localcache.New(0, 0), cfg, featuremgmt.WithFeatures(featuremgmt.FlagExcludeRedundantManagedPermissions), license, nil)
+			loader := legacypermissions.NewLoader(database, legacypermissions.NewRoleCatalog(), actions, localcache.New(0, 0), cfg, license, nil)
 			service := setupService().WithLegacyScopeResolvers(accesscontrol.NewScopeResolverRegistry(), types.OrgNamespaceFormatter)
 			service.store = store.NewStore(legacysql.NewDatabaseProvider(database), tracing.NewNoopTracerService())
 			service.userPermissionsEvaluator = loader

@@ -14,7 +14,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -49,16 +48,12 @@ func TestIntegrationGlobalManagedPermissionsParity(t *testing.T) {
 				t.Run(fmt.Sprintf("flag=%t/enforcement=%t/cache=%t", enabled, enforcement, cached), func(t *testing.T) {
 					actions := resourcepermissions.NewActionSetService()
 					actions.StoreActionSet("dashboards:view", []string{"dashboards:read"})
-					features := featuremgmt.WithFeatures()
-					if enabled {
-						features = featuremgmt.WithFeatures(featuremgmt.FlagExcludeRedundantManagedPermissions)
-					}
 					target := "disabled"
 					if enabled {
 						target = "enabled"
 					}
 					ctx := openfeature.WithTransactionContext(t.Context(), openfeature.NewEvaluationContext(target, nil))
-					loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), actions, localcache.New(0, 0), loaderConfig(cached), features, &enforcementLicense{enabled: enforcement}, nil)
+					loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), actions, localcache.New(0, 0), loaderConfig(cached), &enforcementLicense{enabled: enforcement}, nil)
 					requester := &user.SignedInUser{UserID: userID, UserUID: "checked-user", OrgID: ac.GlobalOrgID, OrgRole: org.RoleViewer}
 					for _, phase := range []struct {
 						name    string

@@ -33,7 +33,7 @@ func wireContractEmbeddedClient(s *Service) {
 		if s.zanzanaResolver != nil {
 			migrated = s.zanzanaResolver
 		}
-		return legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(s.sql, s.RoleCatalog(), s.actionResolver, s.cache, s.cfg, s.features, &licensing.OSSLicensingService{}, migrated), s.cfg)
+		return legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(s.sql, s.RoleCatalog(), s.actionResolver, s.cache, s.cfg, &licensing.OSSLicensingService{}, migrated), s.cfg)
 	})}
 }
 

@@ -53,7 +53,7 @@ type Loader struct {
 }
 
 func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver,
-	cache *localcache.CacheService, cfg *setting.Cfg, _ featuremgmt.FeatureToggles,
+	cache *localcache.CacheService, cfg *setting.Cfg,
 	license licensing.Licensing, zanzana MigratedPermissions,
 ) *Loader {
 	return &Loader{
