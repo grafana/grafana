@@ -1071,6 +1071,7 @@ func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
 		oldURL          string
 		newURL          string
 		newToken        common.InlineSecureValue
+		connectionName  string
 		wantErr         bool
 		wantErrContains string
 	}{
@@ -1094,6 +1095,12 @@ func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
 			newURL:  "https://github.com/grafana/repo",
 			wantErr: false,
 		},
+		{
+			name:           "allows url change with a connection",
+			oldURL:         "https://github.com/grafana/old",
+			newURL:         "https://github.com/grafana/new",
+			connectionName: "connection",
+		},
 	}
 
 	for _, tt := range tests {
@@ -1112,6 +1119,7 @@ func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
 
 			newRepo := newGitHubRepositoryForURLChangeTest(tt.newURL)
 			newRepo.Secure.Token = tt.newToken
+			newRepo.Spec.Connection = &provisioning.ConnectionInfo{Name: tt.connectionName}
 
 			attr := newAdmissionValidatorTestAttributes(newRepo, oldRepo, admission.Update)
 

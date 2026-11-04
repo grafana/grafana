@@ -465,3 +465,50 @@ func TestCopySecureValues(t *testing.T) {
 		})
 	}
 }
+
+func TestAdmissionMutator_ConnectionURLChange(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		url            string
+		connectionName string
+		token          common.InlineSecureValue
+		wantToken      common.InlineSecureValue
+		subresource    string
+	}{
+		{name: "omitted token", url: "https://git.example/org/new", connectionName: "connection", wantToken: common.InlineSecureValue{Remove: true}},
+		{name: "stored reference", url: "https://git.example/org/new", connectionName: "connection", token: common.InlineSecureValue{Name: "old-token"}, wantToken: common.InlineSecureValue{Remove: true}},
+		{name: "supplied token", url: "https://git.example/org/new", connectionName: "connection", token: common.InlineSecureValue{Create: "supplied-token"}, wantToken: common.InlineSecureValue{Remove: true}},
+		{name: "bundled status update", url: "https://git.example/org/new", connectionName: "connection", subresource: "status", wantToken: common.InlineSecureValue{Remove: true}},
+		{name: "unchanged URL", url: "https://git.example/org/old", connectionName: "connection", wantToken: common.InlineSecureValue{Name: "old-token"}},
+		{name: "no connection", url: "https://git.example/org/new", token: common.InlineSecureValue{Create: "supplied-token"}, wantToken: common.InlineSecureValue{Create: "supplied-token"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			old := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", Generation: 1},
+				Spec: provisioning.RepositorySpec{
+					Type:       provisioning.GitRepositoryType,
+					Git:        &provisioning.GitRepositoryConfig{URL: "https://git.example/org/old", Branch: "main"},
+					Connection: &provisioning.ConnectionInfo{Name: tc.connectionName},
+				},
+				Secure: provisioning.SecureValues{
+					Token:            common.InlineSecureValue{Name: "old-token"},
+					WebhookSecret:    common.InlineSecureValue{Name: "webhook-secret"},
+					CommitSigningKey: common.InlineSecureValue{Name: "signing-key"},
+				},
+			}
+			original := old.DeepCopy()
+			updated := old.DeepCopy()
+			updated.Spec.Git.URL = tc.url
+			updated.Secure = provisioning.SecureValues{Token: tc.token}
+			factory := NewMockFactory(t)
+			factory.EXPECT().Mutate(mock.Anything, updated, old).Return(nil).Once()
+			attrs := newMutatorTestAttributesWithSubresource(updated, old, admission.Update, tc.subresource)
+			require.NoError(t, NewAdmissionMutator(factory, time.Minute).Mutate(t.Context(), attrs, nil))
+			require.NoError(t, NewAdmissionValidator(nil).Validate(t.Context(), attrs, nil))
+			assert.Equal(t, tc.wantToken, updated.Secure.Token)
+			assert.Equal(t, old.Secure.WebhookSecret, updated.Secure.WebhookSecret)
+			assert.Equal(t, old.Secure.CommitSigningKey, updated.Secure.CommitSigningKey)
+			assert.Equal(t, original, old)
+		})
+	}
+}

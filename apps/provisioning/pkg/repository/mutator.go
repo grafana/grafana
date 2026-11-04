@@ -10,6 +10,7 @@ import (
 
 	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // AdmissionMutator handles mutation for Repository resources
@@ -72,6 +73,10 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 	if err := m.factory.Mutate(ctx, r, a.GetOldObject()); err != nil {
 		return fmt.Errorf("failed to mutate repository: %w", err)
 	}
+	if a.GetOperation() == admission.Update {
+		old, _ := a.GetOldObject().(*provisioning.Repository)
+		InvalidateTokenForURLChange(r, old)
+	}
 
 	return nil
 }
@@ -94,5 +99,12 @@ func CopySecureValues(new, old *provisioning.Repository) {
 }
 
 func RequiresNewTokenForURLChange(new, old *provisioning.Repository) bool {
-	return old != nil && new.URL() != old.URL() && new.Secure.Token.IsZero()
+	return old != nil && new.URL() != old.URL() && !new.HasConnection() && new.Secure.Token.IsZero()
+}
+
+func InvalidateTokenForURLChange(new, old *provisioning.Repository) {
+	if old != nil && new.URL() != old.URL() && new.HasConnection() {
+		// An empty value would restore the old token during admission and storage.
+		new.Secure.Token = common.InlineSecureValue{Remove: true}
+	}
 }
