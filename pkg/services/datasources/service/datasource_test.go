@@ -1702,6 +1702,8 @@ func TestIntegrationService_getConnections(t *testing.T) {
 		Name:  "CCC",
 		UID:   "ccc",
 		Type:  "test",
+
+		ReadOnly: true,
 	})
 	require.NoError(t, err)
 
@@ -1746,7 +1748,8 @@ func TestIntegrationService_getConnections(t *testing.T) {
 					"name": "ccc",
 					"group": "test.datasource.grafana.app",
 					"version": "v0alpha1",
-					"plugin": "test"
+					"plugin": "test",
+					"annotations": {"grafana.app/managedBy": "classic-file-provisioning"}
 				}
 			]
 		}`, string(jj))
