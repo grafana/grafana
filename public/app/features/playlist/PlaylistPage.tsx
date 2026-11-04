@@ -118,7 +118,13 @@ export const PlaylistPage = () => {
                   onDismiss={onDismissDelete}
                 />
               ))}
-            {startPlaylist && <StartModal playlist={startPlaylist} onDismiss={() => setStartPlaylist(undefined)} />}
+            {startPlaylist && (
+              <StartModal
+                title={startPlaylist.spec?.title ?? ''}
+                startUrl={`/playlists/play/${startPlaylist.metadata?.name}`}
+                onDismiss={() => setStartPlaylist(undefined)}
+              />
+            )}
           </>
         )}
       </Page.Contents>
