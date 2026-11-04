@@ -263,7 +263,7 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 				require.True(t, apierrors.IsInvalid(err), "%v", err)
 				object.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "missing-folder"})
 				_, err = resource.Create(ctx, object.DeepCopy(), metav1.CreateOptions{})
-				require.ErrorContains(t, err, "failed to read folder missing-folder")
+				require.True(t, apierrors.IsNotFound(err), "%v", err)
 				object.SetName("")
 				object.SetGenerateName("widget-")
 				object.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})

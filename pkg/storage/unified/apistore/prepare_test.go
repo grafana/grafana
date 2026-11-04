@@ -14,6 +14,8 @@ import (
 	"github.com/bwmarrin/snowflake"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -21,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/storage"
 
 	authlib "github.com/grafana/authlib/types"
@@ -552,26 +555,76 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 		require.NoError(t, s.ensureRepoManagedByParentFolder(context.Background(), obj))
 	})
 
-	t.Run("returns the transport error when the folder read fails", func(t *testing.T) {
-		s := &Storage{
-			opts:  StorageOptions{EnableFolderSupport: true},
-			store: failingFolderStore(errors.New("storage unavailable")),
+	t.Run("returns a failed folder read with the status the API server sends", func(t *testing.T) {
+		withErrorResult := func(code grpccodes.Code, res *resourcepb.ErrorResult) error {
+			st, err := grpcstatus.New(code, res.Message).WithDetails(res)
+			require.NoError(t, err)
+			return st.Err()
 		}
-		err := s.ensureRepoManagedByParentFolder(context.Background(), makeDashboard(t, "some-folder", nil))
-		require.ErrorContains(t, err, "failed to read folder some-folder")
-		require.ErrorContains(t, err, "storage unavailable")
-	})
-
-	t.Run("returns the response error when the folder read fails", func(t *testing.T) {
-		s := &Storage{
-			opts: StorageOptions{EnableFolderSupport: true},
-			store: &folderReadStore{read: func(context.Context, *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
-				return &resourcepb.ReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "folder not found"}}, nil
-			}},
+		for _, tc := range []struct {
+			name        string
+			rsp         *resourcepb.ReadResponse
+			err         error
+			wantCode    int32
+			wantMessage string
+		}{
+			{
+				name:        "response error: not found",
+				rsp:         &resourcepb.ReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "folder not found"}},
+				wantCode:    http.StatusNotFound,
+				wantMessage: "folder not found",
+			},
+			{
+				name:        "response error: forbidden",
+				rsp:         &resourcepb.ReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: "not allowed to read folders"}},
+				wantCode:    http.StatusForbidden,
+				wantMessage: "not allowed to read folders",
+			},
+			{
+				name:        "gRPC error: not found",
+				err:         grpcstatus.Error(grpccodes.NotFound, "folder not found"),
+				wantCode:    http.StatusNotFound,
+				wantMessage: "folder not found",
+			},
+			{
+				name:        "gRPC error: permission denied",
+				err:         grpcstatus.Error(grpccodes.PermissionDenied, "not allowed to read folders"),
+				wantCode:    http.StatusForbidden,
+				wantMessage: "not allowed to read folders",
+			},
+			{
+				name:        "gRPC error with an error result",
+				err:         withErrorResult(grpccodes.PermissionDenied, &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: "not allowed to read folders"}),
+				wantCode:    http.StatusForbidden,
+				wantMessage: "not allowed to read folders",
+			},
+			{
+				name:        "gRPC error: unavailable",
+				err:         grpcstatus.Error(grpccodes.Unavailable, "connection refused"),
+				wantCode:    http.StatusServiceUnavailable,
+				wantMessage: http.StatusText(http.StatusServiceUnavailable),
+			},
+			{
+				name:        "transport error without a status",
+				err:         errors.New("storage unavailable"),
+				wantCode:    http.StatusInternalServerError,
+				wantMessage: "storage unavailable",
+			},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				s := &Storage{
+					opts: StorageOptions{EnableFolderSupport: true},
+					store: &folderReadStore{read: func(context.Context, *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+						return tc.rsp, tc.err
+					}},
+				}
+				err := s.ensureRepoManagedByParentFolder(context.Background(), makeDashboard(t, "some-folder", nil))
+				require.Error(t, err)
+				status := responsewriters.ErrorToAPIStatus(err)
+				require.Equal(t, tc.wantCode, status.Code)
+				require.Contains(t, status.Message, tc.wantMessage)
+			})
 		}
-		err := s.ensureRepoManagedByParentFolder(context.Background(), makeDashboard(t, "some-folder", nil))
-		require.ErrorContains(t, err, "failed to read folder some-folder")
-		require.ErrorContains(t, err, "folder not found")
 	})
 
 	t.Run("create: dashboard in an unmanaged folder works", func(t *testing.T) {
