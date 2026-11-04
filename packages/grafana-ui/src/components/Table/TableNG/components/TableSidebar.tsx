@@ -29,9 +29,6 @@ interface TableSidebarProps {
   hiddenColumns: ReadonlySet<string>;
   onToggleColumn: (displayName: string, visible: boolean) => void;
   onColumnsReorder: (sourceColumnKey: string, targetColumnKey: string) => void;
-  showRowNumberToggle?: boolean;
-  showRowNumbers?: boolean;
-  onToggleRowNumbers?: (visible: boolean) => void;
   onClose: (restoreFocus: boolean) => void;
   headerHeight?: number;
   transparent?: boolean;
@@ -46,9 +43,6 @@ export function TableSidebar({
   hiddenColumns,
   onToggleColumn,
   onColumnsReorder,
-  showRowNumberToggle = false,
-  showRowNumbers = false,
-  onToggleRowNumbers,
   onClose,
   headerHeight = TABLE.HEADER_HEIGHT,
   transparent,
@@ -104,21 +98,6 @@ export function TableSidebar({
           />
         </Stack>
       </div>
-      {showRowNumberToggle && (
-        <div className={css(styles.row, styles.rowNumberControl)}>
-          <Stack direction="row" alignItems="center" gap={1}>
-            <Checkbox
-              value={showRowNumbers}
-              disabled={onToggleRowNumbers == null}
-              aria-label={t('grafana-ui.table.show-row-numbers', 'Show row numbers')}
-              onChange={(ev) => onToggleRowNumbers?.(ev.currentTarget.checked)}
-            />
-            <span className={styles.columnName}>
-              <Trans i18nKey="grafana-ui.table.row-numbers">Row numbers</Trans>
-            </span>
-          </Stack>
-        </div>
-      )}
       <div className={styles.columnList}>
         {columns.map(({ name: displayName, hideable }) => {
           const isVisible = !hiddenColumns.has(displayName);
@@ -262,10 +241,6 @@ const getStyles = memoize((theme: GrafanaTheme2, transparent: boolean | undefine
     '&:hover': {
       backgroundColor: theme.components.table.rowHoverBackground,
     },
-  }),
-  rowNumberControl: css({
-    flexShrink: 0,
-    borderBottom: `1px solid ${theme.components.table.border}`,
   }),
   rowDragOver: css({
     boxShadow: `inset 0 2px 0 0 ${theme.colors.primary.main}`,

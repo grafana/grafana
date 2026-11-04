@@ -18,15 +18,15 @@ import { getTextColorForBackground as _getTextColorForBackground } from '../../.
 import { usePanelContext } from '../../PanelChrome';
 import { type DataLinksActionsTooltipState } from '../cellUtils';
 
+import { TableDataGrid } from './TableDataGrid';
+import { EmptyTablePlaceholder } from './components/EmptyTablePlaceholder';
+import { RowExpander } from './components/RowExpander';
 import {
   createRowNumberColumn,
   getDisplayedParentRowNumbers,
   getRowNumberGutterWidth,
   ROW_NUMBER_COLUMN_KEY,
-} from './RowNumberColumn';
-import { TableDataGrid } from './TableDataGrid';
-import { EmptyTablePlaceholder } from './components/EmptyTablePlaceholder';
-import { RowExpander } from './components/RowExpander';
+} from './components/RowNumberColumn';
 import { COLUMN, NESTED_LAST_ROW_CLASS, TABLE } from './constants';
 import {
   useColumnResize,
@@ -238,12 +238,25 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   const headerTypographyCtx = useHeaderTypographyCtx(theme);
   const parentRowCount = sortedRows.reduce((count, row) => count + (row.__depth === 0 ? 1 : 0), 0);
   const parentGutterWidth = showRowNumbers
-    ? getRowNumberGutterWidth(parentRowCount, typographyCtx.monoCharWidth, noPanelPadding)
+    ? getRowNumberGutterWidth(
+        parentRowCount,
+        typographyCtx.monoCharWidth,
+        parseFloat(theme.spacing(4)),
+        parseFloat(theme.spacing(0.5)),
+        noPanelPadding
+      )
     : 0;
   // Each nested DataGrid starts numbering at one. Reserve enough room for the
   // largest nested result, not just the current virtualized/expanded rows.
   const maxNestedRows = nestedRows.reduce((count, entry) => Math.max(count, entry?.final.length ?? 0), 0);
-  const nestedGutterWidth = showRowNumbers ? getRowNumberGutterWidth(maxNestedRows, typographyCtx.monoCharWidth) : 0;
+  const nestedGutterWidth = showRowNumbers
+    ? getRowNumberGutterWidth(
+        maxNestedRows,
+        typographyCtx.monoCharWidth,
+        parseFloat(theme.spacing(4)),
+        parseFloat(theme.spacing(0.5))
+      )
+    : 0;
   // nested tables don't support frozen columns; subtract expander column width
   const frozenColumns = 0;
   const numFrozenColsFullyInView = 0;
@@ -664,7 +677,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
           nestedRows[row.__index].final
         );
         if (showRowNumbers) {
-          built.columns.unshift(createRowNumberColumn(1, theme, nestedGutterWidth));
+          built.columns.unshift(createRowNumberColumn(1, nestedGutterWidth));
           built.cellRootRenderers[ROW_NUMBER_COLUMN_KEY] = function renderNestedRowNumberCell(key, cellProps) {
             return <Cell key={key} {...cellProps} />;
           };
@@ -676,14 +689,14 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       }
     }
     return result;
-  }, [rows, nestedData, nestedRows, nestedFieldWidths, fromFields, showRowNumbers, theme, nestedGutterWidth]);
+  }, [rows, nestedData, nestedRows, nestedFieldWidths, fromFields, showRowNumbers, nestedGutterWidth]);
 
   const { columns, cellRootRenderers } = useMemo(() => {
     const result = fromFields(visibleFields, widths, data, rows, sortedRows, lastColumnExtraPadding);
 
     if (!firstRowNestedData) {
       if (showRowNumbers) {
-        result.columns.unshift(createRowNumberColumn(1, theme, parentGutterWidth));
+        result.columns.unshift(createRowNumberColumn(1, parentGutterWidth));
         result.cellRootRenderers[ROW_NUMBER_COLUMN_KEY] = function renderEmptyParentRowNumberCell(key, cellProps) {
           return <Cell key={key} {...cellProps} />;
         };
@@ -712,7 +725,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     if (showRowNumbers) {
       // Parent positions never count the depth-1 rows carrying expanded grids.
       result.columns.unshift(
-        createRowNumberColumn(1, theme, parentGutterWidth, (row) =>
+        createRowNumberColumn(1, parentGutterWidth, (row) =>
           row.__depth === 0 ? displayedParentRowNumbers.get(row.__index) : undefined
         )
       );
@@ -740,7 +753,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     widths,
     lastColumnExtraPadding,
     showRowNumbers,
-    theme,
     parentGutterWidth,
     displayedParentRowNumbers,
   ]);

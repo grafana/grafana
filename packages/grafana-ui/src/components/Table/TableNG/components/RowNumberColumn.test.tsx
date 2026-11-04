@@ -1,6 +1,7 @@
+import { FIRST_COLUMN_EXTRA_PADDING } from '../constants';
+import { type TableRow } from '../types';
+
 import { getDisplayedParentRowNumbers, getDisplayedRowNumber, getRowNumberGutterWidth } from './RowNumberColumn';
-import { FIRST_COLUMN_EXTRA_PADDING } from './constants';
-import { type TableRow } from './types';
 
 describe('getDisplayedRowNumber', () => {
   it.each([
@@ -16,16 +17,16 @@ describe('getDisplayedRowNumber', () => {
 
 describe('getRowNumberGutterWidth', () => {
   it('measures the maximum position using monospace character metrics at digit boundaries', () => {
-    expect(getRowNumberGutterWidth(0, 8)).toBe(32);
-    expect(getRowNumberGutterWidth(9, 8)).toBe(32);
-    expect(getRowNumberGutterWidth(99, 8)).toBe(33);
-    expect(getRowNumberGutterWidth(100, 8)).toBe(41);
-    expect(getRowNumberGutterWidth(1000, 8)).toBe(49);
+    expect(getRowNumberGutterWidth(0, 8, 32, 4)).toBe(32);
+    expect(getRowNumberGutterWidth(9, 8, 32, 4)).toBe(32);
+    expect(getRowNumberGutterWidth(99, 8, 32, 4)).toBe(33);
+    expect(getRowNumberGutterWidth(100, 8, 32, 4)).toBe(41);
+    expect(getRowNumberGutterWidth(1000, 8, 32, 4)).toBe(49);
   });
 
   it('reserves the panel-edge inset only when needed', () => {
-    expect(getRowNumberGutterWidth(100, 8, true)).toBe(
-      getRowNumberGutterWidth(100, 8, false) + FIRST_COLUMN_EXTRA_PADDING
+    expect(getRowNumberGutterWidth(100, 8, 32, 4, true)).toBe(
+      getRowNumberGutterWidth(100, 8, 32, 4, false) + FIRST_COLUMN_EXTRA_PADDING
     );
   });
 });

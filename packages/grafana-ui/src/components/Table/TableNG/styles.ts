@@ -190,6 +190,11 @@ export const getGridStyles = memoize(
         '.rdg-cell': {
           padding: TABLE.CELL_PADDING,
 
+          '&.grafana-row-number-gutter': {
+            backgroundColor: theme.colors.background.secondary,
+            borderInlineEnd: `1px solid ${theme.components.table.border}`,
+          },
+
           '&:last-child': {
             borderInlineEnd: 'none',
           },

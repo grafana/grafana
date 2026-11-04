@@ -3893,8 +3893,8 @@ describe('generated gutter layout', () => {
   });
 });
 
-describe('row number sidebar view state', () => {
-  it('toggles the gutter without persisting field changes, and follows a changed panel default', async () => {
+describe('row number configuration', () => {
+  it('follows the configured visibility without modifying the DataFrame or column state', () => {
     const frame = createBasicDataFrame();
     const originalFields = frame.fields;
     const onColumnOrderChange = jest.fn();
@@ -3904,32 +3904,24 @@ describe('row number sidebar view state', () => {
       width: 800,
       height: 600,
       showColumnsSidebar: true,
-      showRowNumberToggle: true,
       onColumnOrderChange,
       onHiddenColumnsChange,
     };
+
     const { rerender } = render(<TableNG {...props} />);
-    const toggle = screen.getByRole('checkbox', { name: 'Show row numbers' });
 
-    expect(toggle).not.toBeChecked();
     expect(screen.getAllByRole('columnheader')).toHaveLength(2);
-    onColumnOrderChange.mockClear();
-    onHiddenColumnsChange.mockClear();
-
-    await userEvent.click(toggle);
-    expect(toggle).toBeChecked();
-    expect(screen.getAllByRole('columnheader')).toHaveLength(3);
-    expect(frame.fields).toBe(originalFields);
-    expect(onColumnOrderChange).not.toHaveBeenCalled();
-    expect(onHiddenColumnsChange).not.toHaveBeenCalled();
-
-    rerender(<TableNG {...props} />);
-    expect(screen.getAllByRole('columnheader')).toHaveLength(3);
+    expect(screen.queryByRole('checkbox', { name: 'Show row numbers' })).not.toBeInTheDocument();
 
     rerender(<TableNG {...props} showRowNumbers />);
     expect(screen.getAllByRole('columnheader')).toHaveLength(3);
+
     rerender(<TableNG {...props} showRowNumbers={false} />);
     expect(screen.getAllByRole('columnheader')).toHaveLength(2);
+
+    expect(frame.fields).toBe(originalFields);
+    expect(onColumnOrderChange).not.toHaveBeenCalled();
+    expect(onHiddenColumnsChange).not.toHaveBeenCalled();
   });
 });
 
@@ -4109,23 +4101,21 @@ describe('generated gutter regression coverage', () => {
     );
   });
 
-  it('repeatedly shows and hides the gutter without mutating the DataFrame or column state', async () => {
+  it('updates grid widths when configured row-number visibility changes repeatedly', () => {
     const frame = createBasicDataFrame();
     const originalFields = frame.fields;
     const onColumnOrderChange = jest.fn();
     const onHiddenColumnsChange = jest.fn();
-    const { container } = render(
-      <TableNG
-        data={frame}
-        width={800}
-        height={600}
-        showColumnsSidebar
-        showRowNumberToggle
-        onColumnOrderChange={onColumnOrderChange}
-        onHiddenColumnsChange={onHiddenColumnsChange}
-      />
-    );
-    const toggle = screen.getByRole('checkbox', { name: 'Show row numbers' });
+    const props = {
+      data: frame,
+      width: 800,
+      height: 600,
+      showColumnsSidebar: true,
+      onColumnOrderChange,
+      onHiddenColumnsChange,
+    };
+
+    const { container, rerender } = render(<TableNG {...props} />);
     const headers = () => screen.getAllByRole('columnheader');
     const grid = container.querySelector<HTMLElement>('[role="grid"]')!;
     const widths = () => grid.style.gridTemplateColumns.split(' ').map((value) => Number.parseFloat(value));
@@ -4133,13 +4123,18 @@ describe('generated gutter regression coverage', () => {
     expect(headers()).toHaveLength(2);
     expect(widths()).toHaveLength(2);
 
-    await userEvent.click(toggle);
+    rerender(<TableNG {...props} showRowNumbers />);
     expect(headers()).toHaveLength(3);
     expect(widths()).toHaveLength(3);
 
-    await userEvent.click(toggle);
+    rerender(<TableNG {...props} showRowNumbers={false} />);
     expect(headers()).toHaveLength(2);
     expect(widths()).toHaveLength(2);
+
+    rerender(<TableNG {...props} showRowNumbers />);
+    expect(headers()).toHaveLength(3);
+    expect(widths()).toHaveLength(3);
+
     expect(frame.fields).toBe(originalFields);
     expect(onColumnOrderChange).not.toHaveBeenCalled();
     expect(onHiddenColumnsChange).not.toHaveBeenCalled();
