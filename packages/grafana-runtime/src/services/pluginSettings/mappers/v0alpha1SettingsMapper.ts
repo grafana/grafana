@@ -55,8 +55,8 @@ export function inlineSecureValuesMapper(data: Partial<PluginMeta>): v0alpha1Inl
       continue;
     }
 
-    // Key exists on the server but is marked for deletion, so we delete it in-place by sending `remove: true`.
-    if (secureJsonFields?.[key] === false) {
+    // A non-empty value wins over `false`: config pages leave the field `false` after a reset while the user types a new secret.
+    if (secureJsonFields?.[key] === false && secureValue === '') {
       result[key] = { remove: true };
       continue;
     }
@@ -70,7 +70,7 @@ export function inlineSecureValuesMapper(data: Partial<PluginMeta>): v0alpha1Inl
     const secureValue = secureJsonFields[key];
 
     // Key exists on the server but is marked for deletion, so we delete it in-place by sending `remove: true`.
-    if (secureValue === false) {
+    if (secureValue === false && !Object.hasOwn(result, key)) {
       result[key] = { remove: true };
     }
   }

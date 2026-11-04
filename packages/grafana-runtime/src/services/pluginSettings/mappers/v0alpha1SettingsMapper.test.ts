@@ -540,6 +540,24 @@ describe('inlineSecureValuesMapper', () => {
     });
   });
 
+  it('should create the new value when key is set to false in secureJsonFields but a new value was typed', () => {
+    expect(
+      inlineSecureValuesMapper({
+        secureJsonData: { password: 'newPass' },
+        secureJsonFields: { password: false },
+      })
+    ).toStrictEqual({
+      password: { create: 'newPass' },
+    });
+  });
+
+  it('should remove keys named like Object.prototype members', () => {
+    const result = inlineSecureValuesMapper({ secureJsonFields: { constructor: false } });
+
+    expect(Object.hasOwn(result, 'constructor')).toBe(true);
+    expect(JSON.parse(JSON.stringify(result))).toEqual({ constructor: { remove: true } });
+  });
+
   it('should skip keys with undefined values in secureJsonData', () => {
     expect(
       inlineSecureValuesMapper({
