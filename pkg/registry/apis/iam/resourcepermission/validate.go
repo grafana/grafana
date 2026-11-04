@@ -46,6 +46,11 @@ func ValidateCreateAndUpdateInput(ctx context.Context, v0ResourcePerm *v0alpha1.
 		return apierrors.NewBadRequest(fmt.Sprintf("mapper not found for group/resource %s/%s", grn.Group, grn.Resource))
 	}
 
+	// The legacy permission table stores the entire scope in varchar(190).
+	if len(mapper.Scope(grn.Name)) > 190 {
+		return apierrors.NewBadRequest("resource permission scope must not exceed 190 characters")
+	}
+
 	// Check for duplicate entities and validate kind/verb per permission
 	seen := make(map[string]bool)
 	for _, perm := range v0ResourcePerm.Spec.Permissions {
