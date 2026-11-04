@@ -27,6 +27,11 @@ func newAuthorizer(accessClient authlib.AccessChecker, logger log.Logger) author
 
 	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 		if attr.IsResourceRequest() && attr.GetResource() == "slideshows" {
+			if !slideshowsEnabled(ctx) {
+				// Nothing is served for the kind, so the request ends in a not found whatever the
+				// permissions say. Denying it here would answer forbidden for something that does not exist.
+				return authorizer.DecisionAllow, "", nil
+			}
 			return slideshows.Authorize(ctx, attr)
 		}
 		return owned.Authorize(ctx, attr)

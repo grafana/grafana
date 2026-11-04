@@ -33,7 +33,7 @@ func TestIntegrationSlideshows(t *testing.T) {
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction:    false, // required for experimental APIs
 		DisableAnonymous:     true,
-		EnableFeatureToggles: []string{featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs},
+		EnableFeatureToggles: []string{featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagPlaylistSlideshows},
 	})
 
 	gvr := collections.SlideshowResourceInfo.GroupVersionResource()
@@ -131,6 +131,7 @@ func TestIntegrationSlideshowsWithPlaylistsRBAC(t *testing.T) {
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 			featuremgmt.FlagPlaylistsRBAC,
+			featuremgmt.FlagPlaylistSlideshows,
 		},
 	})
 
@@ -214,4 +215,42 @@ func checkSlideshowAccess(t *testing.T, helper *apis.K8sTestHelper, want slidesh
 		require.NoError(t, err, "%s creates", who)
 		require.NoError(t, client.Resource.Delete(ctx, created, metav1.DeleteOptions{}), "%s deletes", who)
 	}
+}
+
+// With the toggle off the kind is not served at all, so requests get a plain not found and the
+// kind is not advertised, while stars next to it keep working.
+func TestIntegrationSlideshowsDisabled(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    false,
+		DisableAnonymous:     true,
+		EnableFeatureToggles: []string{featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs},
+	})
+	ctx := context.Background()
+	spec := map[string]any{"title": "Wall", "interval": "5m", "items": []any{}}
+
+	for who, user := range map[string]apis.User{"admin": helper.Org1.Admin, "viewer": helper.Org1.Viewer} {
+		client := helper.GetResourceClient(apis.ResourceClientArgs{User: user, GVR: collections.SlideshowResourceInfo.GroupVersionResource()})
+
+		_, err := client.Resource.List(ctx, metav1.ListOptions{})
+		require.True(t, apierrors.IsNotFound(err), "%s list should be not found, got %v", who, err)
+		_, err = client.Resource.Get(ctx, "wall", metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "%s get should be not found, got %v", who, err)
+		_, err = client.Resource.Create(ctx, slideshowObject("wall", spec), metav1.CreateOptions{})
+		require.True(t, apierrors.IsNotFound(err), "%s create should be not found, got %v", who, err)
+	}
+
+	resources, err := helper.NewDiscoveryClient().ServerResourcesForGroupVersion(collections.GroupVersion.String())
+	require.NoError(t, err)
+	var names []string
+	for _, r := range resources.APIResources {
+		names = append(names, r.Name)
+	}
+	require.Contains(t, names, "stars")
+	require.NotContains(t, names, "slideshows")
+
+	stars := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Admin, GVR: collections.StarsResourceInfo.GroupVersionResource()})
+	_, err = stars.Resource.List(ctx, metav1.ListOptions{})
+	require.NoError(t, err, "stars are unaffected")
 }

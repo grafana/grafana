@@ -1,8 +1,10 @@
 package collections
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -110,12 +112,16 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[resource.StoragePath()] = &starStorage{Storage: stars} // wrap List so we only return one value
 	storage[resource.StoragePath("update")] = &starsREST{store: stars}
 
-	// Slideshows only exist in unified storage: there is no legacy table to dual write to.
-	slideshows, err := grafanaregistry.NewRegistryStore(opts.Scheme, collections.SlideshowResourceInfo, opts.OptsGetter)
-	if err != nil {
-		return err
+	// Without storage the kind is neither served nor advertised, so requests get a plain not found.
+	// The toggle is read when the group is installed, which is why changing it needs a restart.
+	if slideshowsEnabled(context.Background()) {
+		// Slideshows only exist in unified storage: there is no legacy table to dual write to.
+		slideshows, err := grafanaregistry.NewRegistryStore(opts.Scheme, collections.SlideshowResourceInfo, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+		storage[collections.SlideshowResourceInfo.StoragePath()] = slideshows
 	}
-	storage[collections.SlideshowResourceInfo.StoragePath()] = slideshows
 
 	apiGroupInfo.VersionedResourcesStorageMap[collections.APIVersion] = storage
 	return nil
@@ -182,4 +188,8 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	oas.Paths.Paths[updateKey+"/{group}/{kind}/{id}"] = stars
 
 	return oas, nil
+}
+
+func slideshowsEnabled(ctx context.Context) bool {
+	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPlaylistSlideshows, false, openfeature.TransactionContext(ctx))
 }

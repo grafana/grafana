@@ -60,9 +60,15 @@ func userCtx(role identity.RoleType, identityType authlib.IdentityType) context.
 
 func withRBAC(t *testing.T, on bool) {
 	t.Helper()
+	withFlags(t, on, true)
+}
+
+func withFlags(t *testing.T, rbac, slideshows bool) {
+	t.Helper()
 	// The flag provider keys flags by running test, so it is set inside each test.
 	flagProvider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagPlaylistsRBAC: setting.NewInMemoryFlag(featuremgmt.FlagPlaylistsRBAC, on),
+		featuremgmt.FlagPlaylistsRBAC:      setting.NewInMemoryFlag(featuremgmt.FlagPlaylistsRBAC, rbac),
+		featuremgmt.FlagPlaylistSlideshows: setting.NewInMemoryFlag(featuremgmt.FlagPlaylistSlideshows, slideshows),
 	})
 }
 
@@ -221,5 +227,33 @@ func TestAccessClientNilIsIgnored(t *testing.T) {
 
 	got, _, err := b.GetAuthorizer().Authorize(userCtx(identity.RoleAdmin, authlib.TypeUser), slideshowAttrs("get"))
 	require.Error(t, err)
+	require.Equal(t, authorizer.DecisionDeny, got)
+}
+
+// With the toggle off the kind has no storage, so the request is let through to be answered with
+// a not found instead of a misleading forbidden, whoever asks and however permissions are set.
+func TestSlideshowAuthorizationWhenSlideshowsAreOff(t *testing.T) {
+	for _, rbac := range []bool{true, false} {
+		for _, role := range []identity.RoleType{identity.RoleNone, identity.RoleViewer, identity.RoleAdmin} {
+			withFlags(t, rbac, false)
+			checker := &fakeChecker{allowed: false}
+
+			got, _, err := newAuthorizer(checker, log.NewNopLogger()).
+				Authorize(userCtx(role, authlib.TypeUser), slideshowAttrs("create"))
+
+			require.NoError(t, err)
+			require.Equal(t, authorizer.DecisionAllow, got, "rbac=%v role=%v", rbac, role)
+			require.Empty(t, checker.requests)
+		}
+	}
+}
+
+func TestStarsAreAuthorizedTheSameWhenSlideshowsAreOff(t *testing.T) {
+	withFlags(t, true, false)
+
+	got, _, err := newAuthorizer(&fakeChecker{allowed: true}, log.NewNopLogger()).
+		Authorize(userCtx(identity.RoleViewer, authlib.TypeUser), attrs("stars", "get", "user-someone-else"))
+
+	require.NoError(t, err)
 	require.Equal(t, authorizer.DecisionDeny, got)
 }
