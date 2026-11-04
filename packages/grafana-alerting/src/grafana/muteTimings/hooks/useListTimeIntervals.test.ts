@@ -30,8 +30,8 @@ describe('useListTimeIntervals', () => {
 
     const { result } = renderList();
 
-    expect(result.current.status).toBe('loading');
-    await waitFor(() => expect(result.current.status).toBe('success'));
+    expect(result.current.status).toBe('resolving');
+    await waitFor(() => expect(result.current.status).toBe('found'));
     expect(result.current.timeIntervals).toEqual([{ name: 'business-hours', isImported: false }]);
   });
 
@@ -61,6 +61,19 @@ describe('useListTimeIntervals', () => {
     expect(result.current.timeIntervals[0].isImported).toBe(true);
   });
 
+  it('returns the same array across rerenders while the data is unchanged', async () => {
+    serveIntervals(TimeIntervalFactory.build({ spec: { name: 'weekends' } }));
+    const { result, rerender } = renderList();
+    const whileLoading = result.current.timeIntervals;
+    rerender();
+    expect(result.current.timeIntervals).toBe(whileLoading);
+
+    await waitFor(() => expect(result.current.timeIntervals).toHaveLength(1));
+    const loaded = result.current.timeIntervals;
+    rerender();
+    expect(result.current.timeIntervals).toBe(loaded);
+  });
+
   it('reports a failed fetch', async () => {
     server.use(listTimeIntervalHandler(() => new HttpResponse(null, { status: 500 })));
 
@@ -82,7 +95,7 @@ describe('useListTimeIntervals', () => {
     });
 
     expect(result.current.timeIntervals.map((interval) => interval.name)).toEqual(['weekends']);
-    expect(result.current.status).toBe('success');
+    expect(result.current.status).toBe('found');
   });
 
   it('makes no request while skipped, and loads once it is no longer skipped', async () => {

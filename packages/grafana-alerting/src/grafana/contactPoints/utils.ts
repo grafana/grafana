@@ -1,7 +1,7 @@
 import { countBy, isEmpty } from 'lodash';
 
 import { type ContactPoint, type Receiver } from '../api/notifications';
-import { isUsable } from '../common/isUsable';
+import { hasCanUseEnabled } from '../common/hasCanUseEnabled';
 
 /**
  * Minimal structural type that any k8s alerting entity satisfies.
@@ -20,7 +20,7 @@ type WithContactPointAnnotations = {
  * @returns `true` if the contact point can be used, `false` otherwise
  */
 export function isUsableContactPoint(contactPoint: ContactPoint | Receiver): boolean {
-  return isUsable(contactPoint);
+  return hasCanUseEnabled(contactPoint);
 }
 
 /**
