@@ -36,7 +36,7 @@ export type KindSearchStarredKind = StarredKindBase & { source: 'kind-search'; v
  */
 export type StarredKind = (StarredKindBase & { source: 'dashboard-search' }) | KindSearchStarredKind;
 
-export function resolvesThroughKindSearch(kind: StarredKind): kind is KindSearchStarredKind {
+function resolvesThroughKindSearch(kind: StarredKind): kind is KindSearchStarredKind {
   return kind.source === 'kind-search';
 }
 
