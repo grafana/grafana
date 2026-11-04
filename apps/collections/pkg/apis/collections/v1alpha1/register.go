@@ -32,6 +32,30 @@ var StarsResourceInfo = utils.NewResourceInfo(APIGroup, APIVersion,
 	},
 )
 
+var SlideshowResourceInfo = utils.NewResourceInfo(APIGroup, APIVersion,
+	"slideshows", "slideshow", "Slideshow",
+	func() runtime.Object { return &Slideshow{} },
+	func() runtime.Object { return &SlideshowList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Title", Type: "string"},
+			{Name: "Created At", Type: "date"},
+		},
+		Reader: func(obj any) ([]any, error) {
+			p, ok := obj.(*Slideshow)
+			if ok && p != nil {
+				return []any{
+					p.Name,
+					p.Spec.Title,
+					p.CreationTimestamp.UTC().Format(time.RFC3339),
+				}, nil
+			}
+			return nil, fmt.Errorf("expected slideshow")
+		},
+	},
+)
+
 var (
 	SchemeBuilder      runtime.SchemeBuilder
 	localSchemeBuilder = &SchemeBuilder
@@ -48,6 +72,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(schemeGroupVersion,
 		&Stars{},
 		&StarsList{},
+		&Slideshow{},
+		&SlideshowList{},
 	)
 	metav1.AddToGroupVersion(scheme, schemeGroupVersion)
 	return nil

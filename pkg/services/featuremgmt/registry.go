@@ -1040,6 +1040,16 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "playlist.slideshows",
+			Description: "Enables slideshows, playlists that can contain any kind of App Platform object",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Generate:    Generate{Go: true, React: true},
+			Expression:  "false",
+			// The API group installs the kind once, when the server starts.
+			RequiresRestart: true,
+		},
+		{
 			Name:        "savedQueriesRBAC",
 			Description: "Enables Saved queries (query library) RBAC permissions",
 			Stage:       FeatureStageGeneralAvailability,

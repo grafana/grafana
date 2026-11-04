@@ -4988,6 +4988,20 @@
     },
     {
       "metadata": {
+        "name": "playlist.slideshows",
+        "resourceVersion": "1793870015732",
+        "creationTimestamp": "2026-11-05T09:13:35Z"
+      },
+      "spec": {
+        "description": "Enables slideshows, playlists that can contain any kind of App Platform object",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "playlistsRBAC",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-03-19T14:43:19Z"
