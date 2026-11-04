@@ -109,7 +109,7 @@ func (k *kvStorageBackend) loadWatchSeedWithLimit(ctx context.Context, handoffRV
 	return seed, ctx.Err()
 }
 
-func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context) (watchSeed, <-chan *WrittenEvent, error) {
+func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context, captured func()) (watchSeed, <-chan *WrittenEvent, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	started := false
 	opts := k.watchOpts
@@ -145,6 +145,9 @@ func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context) (watchS
 		if err != nil {
 			return watchSeed{}, nil, fmt.Errorf("establish watch capture: %w", err)
 		}
+	}
+	if captured != nil {
+		captured()
 	}
 
 	// Fix the snapshot ceiling before settling. An unrestricted snapshot taken

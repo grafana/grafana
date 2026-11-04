@@ -2492,13 +2492,16 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	name := fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace)
 	var stream <-chan *WrittenEvent
 	if b := cached; b != nil && b.cache.identity != nil {
-		// Invalidations while the cache starts, such as the one when capture
-		// first starts, predate the stream a waiting watch subscribes to.
+		// Invalidations before capture starts, such as the one when it first
+		// starts, predate the stream a waiting watch subscribes to. Later ones,
+		// even before the cache is ready, still expire it.
 		if waitsForStartup {
 			if err := b.ensureReady(ctx); err != nil {
 				return err
 			}
-			watchExpiryC = s.watchExpiry.WatchInvalidation()
+			if expiry := s.watchStartup.expiryAtCapture(); expiry != nil {
+				watchExpiryC = expiry
+			}
 		}
 		var resume *watchResume
 		if req.Since > 0 && !req.SendInitialEvents {
