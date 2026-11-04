@@ -1,4 +1,4 @@
-import { act, screen } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import { createElement, Fragment } from 'react';
 import { of } from 'rxjs';
 import { render } from 'test/test-utils';
@@ -7,15 +7,19 @@ import {
   type DataQueryRequest,
   type DataSourceApi,
   type DataTransformerConfig,
+  FieldType,
   LoadingState,
   type PanelPlugin,
   store,
   standardTransformersRegistry,
+  toDataFrame,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import {
   type CancelActivationHandler,
   CustomVariable,
+  registerRuntimeDataSource,
+  RuntimeDataSource,
   SceneDataNode,
   SceneDataTransformer,
   sceneGraph,
@@ -58,13 +62,14 @@ import { getLocalStorageWithTTL, setLocalStorageWithTTL } from './PanelEditNext/
 import { PanelEditPanelWrapper } from './PanelEditPanelWrapper';
 import { buildPanelEditScene } from './PanelEditor';
 
-const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
+const loadingResponse = (ds: DataSourceApi, request: DataQueryRequest) => {
   return of({
     state: LoadingState.Loading,
     series: [],
     timeRange: request.range,
   });
-});
+};
+const runRequestMock = jest.fn().mockImplementation(loadingResponse);
 
 let pluginPromise: Promise<PanelPlugin> | undefined;
 
@@ -101,6 +106,17 @@ const dataSources = {
 };
 
 setupDataSources(...Object.values(dataSources));
+
+const RUNTIME_DS_UID = 'panel-editor-runtime-ds';
+
+class RuntimeTestDataSource extends RuntimeDataSource {
+  query() {
+    return of({ data: [] });
+  }
+}
+
+// Runtime datasources skip plugin loading, so query runners reach the mocked runRequest.
+registerRuntimeDataSource({ dataSource: new RuntimeTestDataSource('panel-editor-runtime-ds', RUNTIME_DS_UID) });
 
 jest.mock('app/store/store', () => ({
   ...jest.requireActual('app/store/store'),
@@ -283,6 +299,7 @@ describe('PanelEditor', () => {
       afterEach(() => {
         setTestFlags({});
         store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
+        runRequestMock.mockImplementation(loadingResponse);
       });
 
       it('keeps format edits synchronized after preview remounts and Table View changes', async () => {
@@ -294,17 +311,33 @@ describe('PanelEditor', () => {
         const transformer = panel.state.$data as SceneDataTransformer;
         const queryRunner = getQueryRunnerFor(panel)!;
         const dataPane = panelEditor.state.dataPane!;
-        transformer.setState({ transformations: [{ id: 'formatTime', options: { outputFormat: '' } }] });
+        transformer.setState({
+          transformations: [{ id: 'formatTime', options: { timeField: 'time', outputFormat: '' } }],
+        });
+        const formattedTime = () => transformer.state.data?.series[0]?.fields[0].values[0];
+
+        // Only the query returns the source frame, so each edit must reach the transformer's output: the classic
+        // editor reprocesses the transformations, and the next editor re-runs the query.
+        const sourceFrame = () =>
+          toDataFrame({ fields: [{ name: 'time', type: FieldType.time, values: [Date.UTC(2026, 0, 2, 12)] }] });
+        runRequestMock.mockImplementation((ds: DataSourceApi, request: DataQueryRequest) =>
+          of({ state: LoadingState.Done, series: [sourceFrame()], timeRange: request.range })
+        );
+        queryRunner.setState({ datasource: { uid: RUNTIME_DS_UID } });
 
         let preview = render(createElement(PanelEditPanelWrapper, { panel, dashboard }));
         act(() => {
           deactivatePanel!();
           deactivateNotices?.();
         });
-        const data = { state: LoadingState.Done, series: [], timeRange: sceneGraph.getTimeRange(panel).state.value };
         act(() => {
-          queryRunner.setState({ data });
-          transformer.setState({ data });
+          queryRunner.setState({
+            data: {
+              state: LoadingState.Done,
+              series: [sourceFrame()],
+              timeRange: sceneGraph.getTimeRange(panel).state.value,
+            },
+          });
         });
         const editor = render(
           dataPane instanceof PanelDataPaneNext
@@ -334,8 +367,9 @@ describe('PanelEditor', () => {
           await editor.user.type(format, 'YYYY');
           expect(format).toHaveValue('YYYY');
           expect(transformer.state.transformations).toEqual([
-            { id: 'formatTime', options: { outputFormat: 'YYYY', timeField: '', useTimezone: true } },
+            { id: 'formatTime', options: { outputFormat: 'YYYY', timeField: 'time', useTimezone: true } },
           ]);
+          await waitFor(() => expect(formattedTime()).toBe('2026'));
 
           act(() => panelEditor.onToggleTableView());
           preview.rerender(
@@ -347,8 +381,9 @@ describe('PanelEditor', () => {
           expect(transformer.isActive).toBe(true);
           expect(queryRunner.isActive).toBe(true);
           expect(transformer.state.transformations).toEqual([
-            { id: 'formatTime', options: { outputFormat: 'YYYY-MM', timeField: '', useTimezone: true } },
+            { id: 'formatTime', options: { outputFormat: 'YYYY-MM', timeField: 'time', useTimezone: true } },
           ]);
+          await waitFor(() => expect(formattedTime()).toBe('2026-01'));
 
           act(() => panelEditor.onToggleTableView());
           preview.rerender(
@@ -357,8 +392,9 @@ describe('PanelEditor', () => {
           await editor.user.type(format, '-DD');
           expect(format).toHaveValue('YYYY-MM-DD');
           expect(transformer.state.transformations).toEqual([
-            { id: 'formatTime', options: { outputFormat: 'YYYY-MM-DD', timeField: '', useTimezone: true } },
+            { id: 'formatTime', options: { outputFormat: 'YYYY-MM-DD', timeField: 'time', useTimezone: true } },
           ]);
+          await waitFor(() => expect(formattedTime()).toBe('2026-01-02'));
           expect(panelEditor.state.isDirty).toBe(true);
         } finally {
           editor.unmount();
