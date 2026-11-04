@@ -833,19 +833,9 @@ type ActionSetSvc struct {
 
 // NewActionSetService returns a new instance of InMemoryActionSetService.
 func NewActionSetService() ActionSetService {
-	service := &ActionSetSvc{
+	return &ActionSetSvc{
 		store: NewInMemoryActionSetStore(),
 	}
-	// Secure values have no legacy resource-permission service to register these sets.
-	service.StoreActionSet("secret.securevalues:view", []string{"secret.securevalues:read"})
-	service.StoreActionSet("secret.securevalues:edit", []string{
-		"secret.securevalues:read", "secret.securevalues:write", "secret.securevalues:delete",
-	})
-	service.StoreActionSet("secret.securevalues:admin", []string{
-		"secret.securevalues:read", "secret.securevalues:write", "secret.securevalues:delete",
-		"secret.securevalues.permissions:read", "secret.securevalues.permissions:write",
-	})
-	return service
 }
 
 // ResolveAction returns all the action sets that the action belongs to.

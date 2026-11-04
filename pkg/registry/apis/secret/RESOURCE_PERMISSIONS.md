@@ -2,7 +2,9 @@
 
 The IAM ResourcePermission API supports View, Edit, and Admin assignments for
 `secret.grafana.app/securevalues`. The target is the secure value's **name**, not
-its Kubernetes UID. Assignments reuse the subject's managed permissions role.
+its Kubernetes UID. New secure-value names are limited to 220 characters so
+the associated ResourcePermission name, including its group-resource prefix,
+fits unified storage. Assignments reuse the subject's managed permissions role.
 
 | Level | Access to the named secure value |
 | --- | --- |
@@ -37,7 +39,10 @@ Two fixed roles follow the existing resource-permission conventions:
 - `fixed:secret.securevalues.permissions:writer` grants permission reads and writes.
 
 Both default to organization Admin, subject to existing grant overrides. The
-four existing secret CRUD fixed roles retain their permissions. A provisioning
+four existing secret CRUD fixed roles retain their permissions. The creator role
+still uses the existing `secret.securevalues:*` collection scope. Named creation
+grants are not portable across RBAC and Zanzana; creation is not part of the
+View/Edit/Admin grants. A provisioning
 identity needs create authority and permission-write authority separately;
 granting a recipient Edit does not give that recipient either capability.
 

@@ -29,6 +29,16 @@ func TestValidateSecureValue(t *testing.T) {
 			Status: secretv1beta1.SecureValueStatus{Keeper: keeper},
 		}
 
+		t.Run("name leaves room for the resource permission prefix", func(t *testing.T) {
+			sv := validSecureValue.DeepCopy()
+			sv.Name = strings.Repeat("a", 220)
+			require.Empty(t, validator.Validate(sv, nil, admission.Create))
+			sv.Name += "a"
+			errs := validator.Validate(sv, nil, admission.Create)
+			require.Len(t, errs, 1)
+			require.Equal(t, "metadata.name", errs[0].Field)
+		})
+
 		t.Run("the `description` must be present", func(t *testing.T) {
 			sv := validSecureValue.DeepCopy()
 			sv.Spec.Description = ""

@@ -110,7 +110,12 @@ func TestIntegrationSecureValueLegacyPermissions(t *testing.T) {
 		{"secret.securevalues.permissions:read", []string{"get_permissions"}},
 		{"secret.securevalues.permissions:write", []string{"set_permissions"}},
 	} {
-		for _, scope := range []string{"secret.securevalues:uid:personal-one", "secret.securevalues:*"} {
+		scopes := []string{"secret.securevalues:uid:personal-one", "secret.securevalues:*"}
+		if grant.action == "secret.securevalues:create" {
+			// The existing creator role grants creation on the collection.
+			scopes = []string{"secret.securevalues:*"}
+		}
+		for _, scope := range scopes {
 			t.Run(grant.action+"/"+scope, func(t *testing.T) {
 				var permissions []accesscontrol.Permission
 				var rolePermissions []*v1.RolePermission
@@ -137,9 +142,7 @@ func TestIntegrationSecureValueLegacyPermissions(t *testing.T) {
 							require.Equal(t, want, rbacResult.GetAllowed(), "RBAC")
 							result, err := srv.Check(newContextWithNamespace(), req)
 							require.NoError(t, err)
-							// Zanzana checks creation on the collection, as used by the fixed creator role.
-							zanzanaWant := want && (verb != "create" || scope == "secret.securevalues:*")
-							require.Equal(t, zanzanaWant, result.GetAllowed(), "Zanzana")
+							require.Equal(t, want, result.GetAllowed(), "Zanzana")
 						})
 					}
 				}

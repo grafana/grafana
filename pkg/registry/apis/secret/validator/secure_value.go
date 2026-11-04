@@ -46,6 +46,11 @@ func (v *secureValueValidator) Validate(sv, oldSv *secretv1beta1.SecureValue, op
 
 		return errs
 	}
+	// Leave room for the group-resource prefix on the corresponding ResourcePermission.
+	if operation == admission.Create && len(sv.Name) > 220 {
+		errs = append(errs, field.TooLong(field.NewPath("metadata", "name"), sv.Name, 220))
+	}
+
 	if err := validation.IsDNS1123Subdomain(sv.Namespace); len(err) > 0 {
 		errs = append(
 			errs,
