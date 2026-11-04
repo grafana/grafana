@@ -33,6 +33,9 @@ import (
 // ErrNoBranches is returned when a repository has no branches (e.g., a completely empty repository).
 var ErrNoBranches = errors.New("no branches found in repository")
 
+// userAgent identifies Grafana to the Git server. The nanogit default ("nanogit/0") is rejected by github.com.
+const userAgent = "grafana-provisioning"
+
 type RepositoryConfig struct {
 	URL           string
 	Branch        string
@@ -109,7 +112,7 @@ func NewRepository(
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
 ) (GitRepository, error) {
-	opts := []options.Option{options.WithCapabilityNegotiation()}
+	opts := []options.Option{options.WithCapabilityNegotiation(), options.WithUserAgent(userAgent)}
 	if gitConfig.SkipGitSuffix {
 		opts = append(opts, options.WithoutGitSuffix())
 	}
