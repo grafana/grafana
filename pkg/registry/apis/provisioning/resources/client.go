@@ -326,16 +326,36 @@ func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...
 }
 
 // NewClientFactoryForMultipleAPIServers creates a ClientFactory for multiple API servers.
-// The supported set behaves as described on NewClientFactory.
+// The supported set behaves as described on NewClientFactory, except that each server is given
+// only the resources it stores, so one server's discovery cannot fail clients for the others.
 func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, supported ...SupportedResource) ClientFactory {
-	clientFactories := make(map[string]ClientFactory)
+	servers := sets.New[string]()
+	for api := range configProviders {
+		servers.Insert(api)
+	}
 
+	clientFactories := make(map[string]ClientFactory)
 	for api, configProvider := range configProviders {
-		clientFactory := NewClientFactory(configProvider, supported...)
+		clientFactory := NewClientFactory(configProvider, resourcesStoredIn(api, servers, supported)...)
 		clientFactories[api] = clientFactory
 	}
 
 	return &multiClientFactory{clientFactories: clientFactories, collections: collectionPatterns(supported)}
+}
+
+// resourcesStoredIn returns the configured resources an API server holds, which is what it can
+// expand and serve: a collection goes to the server registered for the group it is stored under.
+// An entry no server claims is kept everywhere, so it still surfaces and still fails loudly on the
+// client it cannot resolve rather than disappearing from the supported set.
+func resourcesStoredIn(api string, servers sets.Set[string], supported []SupportedResource) []SupportedResource {
+	out := make([]SupportedResource, 0, len(supported))
+	for _, r := range supported {
+		group := provisioningresources.CollectionGroup(r.Group)
+		if group == api || !servers.Has(group) {
+			out = append(out, r)
+		}
+	}
+	return out
 }
 
 // activeResources returns only the active resources. Disabled resources are declared (and

@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -282,4 +283,56 @@ func TestResourceListerFromSearch_KeepsADeclaredKindStoredInACollectionGroup(t *
 		{Path: "db-1.json", Group: collection, Resource: "dashboards", Name: "db-1", Title: "Dashboard 1"},
 		{Path: "lp-1.json", Group: collection, Resource: "librarypanels", Name: "lp-1", Hash: "abc", Title: "Test data"},
 	}, got.Items)
+}
+
+// A disabled kind is absent from the active set the member scan walks, so dropping every index row
+// under a collection's group took it along: repository delete and release then left those objects
+// behind, still managed by a repository that is gone.
+func TestResourceListerFromSearch_KeepsADisabledKindStoredInACollectionGroup(t *testing.T) {
+	const (
+		repository = "repo"
+		collection = "dashboard.grafana.app"
+	)
+	panelGVR := schema.GroupVersionResource{Group: collection, Version: "v0alpha1", Resource: "librarypanels"}
+	panelGVK := schema.GroupVersionKind{Group: collection, Version: "v0alpha1", Kind: "LibraryPanel"}
+	dashboardGK := schema.GroupKind{Group: collection, Kind: "Dashboard"}
+
+	store := resource.NewMockResourceClient(t)
+	store.EXPECT().ListManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.ListManagedObjectsResponse{
+		Items: []*resourcepb.ListManagedObjectsResponse_Item{
+			{Object: &resourcepb.ResourceKey{Group: collection, Resource: "dashboards", Name: "db-1"}, Path: "db-1.json", Title: "Dashboard 1"},
+		},
+	}, nil).Once()
+
+	scheme := runtime.NewScheme()
+	listGVK := panelGVK
+	listGVK.Kind += "List"
+	scheme.AddKnownTypeWithName(listGVK, &unstructured.UnstructuredList{})
+	scheme.AddKnownTypeWithName(panelGVK, &unstructured.Unstructured{})
+	dyn := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme,
+		map[schema.GroupVersionResource]string{panelGVR: listGVK.Kind})
+
+	// Dashboards are declared as disabled, so the expanded active set leaves them out.
+	clients := NewMockResourceClients(t)
+	clients.EXPECT().SupportedResources().Return([]SupportedResource{
+		{GroupKind: panelGVK.GroupKind(), Collection: collection},
+	})
+	clients.EXPECT().ForKind(mock.Anything, panelGVK.GroupKind().WithVersion("")).
+		Return(dyn.Resource(panelGVR).Namespace("default"), panelGVR, nil).Once()
+	clients.EXPECT().ForKind(mock.Anything, dashboardGK.WithVersion("")).
+		Return(nil, schema.GroupVersionResource{Group: collection, Version: "v1", Resource: "dashboards"}, nil).Once()
+
+	factory := NewMockClientFactory(t)
+	factory.EXPECT().Clients(mock.Anything, "default").Return(clients, nil).Once()
+
+	lister := NewResourceLister(store, factory, []SupportedResource{
+		{GroupKind: dashboardGK, Capabilities: sets.New(CapabilityDisabled)},
+		{GroupKind: schema.GroupKind{Group: provisioningresources.CollectionWildcard + provisioningresources.CollectionSeparator + collection, Kind: "LibraryPanel"}},
+	})
+
+	got, err := lister.List(context.Background(), "default", repository)
+	require.NoError(t, err)
+	require.Equal(t, []provisioning.ResourceListItem{
+		{Path: "db-1.json", Group: collection, Resource: "dashboards", Name: "db-1", Title: "Dashboard 1"},
+	}, got.Items, "the disabled kind is still managed, and still has to be cleaned up")
 }

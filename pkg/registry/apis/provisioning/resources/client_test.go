@@ -556,3 +556,27 @@ func (c *capturingDiscoveryClient) PreferredResources(_ context.Context, relevan
 	c.relevant = relevant
 	return nil, nil
 }
+
+// Every server used to expand every collection, so one server's discovery failure failed the
+// clients for all of them. A server only expands, and only serves, what it stores.
+func TestResourcesStoredIn(t *testing.T) {
+	configured, err := ParseSupportedResources([]string{
+		"dashboard.grafana.app/Dashboard:folder",
+		"*.datasource.grafana.app/DataSource",
+		"alerting.grafana.app/AlertRule",
+	})
+	require.NoError(t, err)
+	servers := sets.New("dashboard.grafana.app", "datasource.grafana.app")
+
+	require.Equal(t, []schema.GroupKind{
+		{Group: "dashboard.grafana.app", Kind: "Dashboard"},
+		{Group: "alerting.grafana.app", Kind: "AlertRule"},
+	}, groupKinds(resourcesStoredIn("dashboard.grafana.app", servers, configured)),
+		"a group no server claims is kept, so it still fails loudly on the client it cannot resolve")
+
+	require.Equal(t, []schema.GroupKind{
+		{Group: "*.datasource.grafana.app", Kind: "DataSource"},
+		{Group: "alerting.grafana.app", Kind: "AlertRule"},
+	}, groupKinds(resourcesStoredIn("datasource.grafana.app", servers, configured)),
+		"the collection is expanded by the server that stores it")
+}

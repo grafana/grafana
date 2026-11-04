@@ -34,6 +34,9 @@ type ResourceListerFromSearch struct {
 	store ResourceStore
 	// clients lists a collection's members through the groups that serve them; nil without one.
 	clients ClientFactory
+	// configured is the whole configured set, disabled entries included: a kind addressable under
+	// its own group keeps its index rows whether or not the pipeline acts on it.
+	configured []SupportedResource
 	// collections are the configured collection entries, matched on group and kind.
 	collections []SupportedResource
 }
@@ -44,6 +47,7 @@ func NewResourceLister(store ResourceStore, clients ClientFactory, configured []
 	return &ResourceListerFromSearch{
 		store:       store,
 		clients:     clients,
+		configured:  configured,
 		collections: collectionResources(configured),
 	}
 }
@@ -107,6 +111,25 @@ func (o *ResourceListerFromSearch) collectionGroups() sets.Set[string] {
 	return groups
 }
 
+// addressableResources returns every kind that can be addressed through its own API group: the
+// active set the pipeline acts on, plus the configured kinds left out of it. A disabled kind is
+// still managed by a repository, and cleanup lists it, so its index rows must survive the drop.
+func (o *ResourceListerFromSearch) addressableResources(clients ResourceClients) []SupportedResource {
+	active := clients.SupportedResources()
+	out := make([]SupportedResource, 0, len(active)+len(o.configured))
+	out = append(out, active...)
+	seen := sets.New[schema.GroupKind]()
+	for _, r := range active {
+		seen.Insert(r.GroupKind)
+	}
+	for _, r := range o.configured {
+		if !seen.Has(r.GroupKind) && !provisioningresources.IsCollection(r.Group) {
+			out = append(out, r)
+		}
+	}
+	return out
+}
+
 // collectionScan is what the member scan answered: the resources it listed, which the index no
 // longer has to report, and the resources of the kinds it did not list, which it still does.
 type collectionScan struct {
@@ -135,7 +158,7 @@ func (o *ResourceListerFromSearch) listCollectionMembers(ctx context.Context, na
 
 	collections := o.collectionGroups()
 	var items []provisioning.ResourceListItem
-	for _, supported := range clients.SupportedResources() {
+	for _, supported := range o.addressableResources(clients) {
 		member := o.isMember(supported.GroupKind)
 		// A kind stored in a group a collection also names is resolved as well, so its index
 		// rows can be told apart by resource; no other kind needs a lookup here.
