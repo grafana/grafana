@@ -3,7 +3,6 @@ package notifier
 import (
 	"context"
 	"fmt"
-	"maps"
 	"regexp"
 	"slices"
 	"strings"
@@ -14,6 +13,7 @@ import (
 	alertingnotifv1beta1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
@@ -140,9 +140,9 @@ func (s *ExternalAMSyncer) ensureSyncIdentifier(ctx context.Context, orgID int64
 	for name := range amCfg.ManagedRoutes {
 		taken[name] = struct{}{}
 	}
-	staged := make(map[string]struct{}, len(amCfg.ExtraConfigs))
+	staged := make(map[string]string, len(amCfg.ExtraConfigs))
 	for _, ec := range amCfg.ExtraConfigs {
-		staged[ec.Identifier] = struct{}{}
+		staged[ec.Identifier] = ec.ManagedBy
 	}
 
 	var candidate string
@@ -162,10 +162,14 @@ func (s *ExternalAMSyncer) ensureSyncIdentifier(ctx context.Context, orgID int64
 		taken[models.DefaultRoutingTreeNameAlias] = struct{}{}
 		base := syncIdentifierFromName(ds.Name)
 		candidate = uniqueSyncIdentifier(base, taken)
-		// Only one import can be staged and a save under another name is refused, so one staged under
-		// this datasource's name is its own, with the identifier lost from the status: reuse it.
-		if _, ours := staged[candidate]; !ours {
-			maps.Copy(taken, staged)
+		// Only one import can be staged, and a save under another name is refused. An import that
+		// auto-sync staged under this name is its own, with the identifier lost from the status, so
+		// reuse it. A manual import with this name is not ours. The sync would be refused on save, so
+		// the name counts as taken.
+		if staged[candidate] != v1.ExtraConfigManagedByAutoSync {
+			for name := range staged {
+				taken[name] = struct{}{}
+			}
 			candidate = uniqueSyncIdentifier(base, taken)
 		}
 	}

@@ -681,9 +681,10 @@ func (s *ExternalAMSyncer) readImportState(ctx context.Context, orgID int64, ide
 // resolveExternalAMUIDForOrg returns the datasource UID to use for external AM
 // sync for the given org and where it came from. The operator-level
 // ExternalAlertmanagerUID setting takes precedence over the per-org value.
-// The per-org value is read from the Config k8s resource; if its client
-// can't be constructed the sync fails for this tick rather than falling back to
-// anything. Returns "" when no UID is set (sync should be skipped).
+// The per-org value is read from the Config k8s resource. If that read fails,
+// the operator-level UID is still returned when set. Otherwise the error is
+// returned and the sync fails for this tick. Returns "" when no UID is set,
+// which means the sync is skipped.
 func (s *ExternalAMSyncer) resolveExternalAMUIDForOrg(ctx context.Context, orgID int64) (string, externalSyncOrigin, error) {
 	target, err := s.resolveSyncTarget(ctx, orgID)
 	if err != nil {
