@@ -21,7 +21,7 @@ func TestIntegrationSecureValuePermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	for _, level := range []string{"View", "Edit", "Admin"} {
-		for _, source := range []string{"resource permission", "managed role"} {
+		for _, source := range []string{"resource permission", "role"} {
 			t.Run(level+"/"+source, func(t *testing.T) {
 				permission := accesscontrol.Permission{
 					Action: "secret.securevalues:" + strings.ToLower(level),
