@@ -214,20 +214,23 @@ export function pruneEmptyNavSections(tree: NavModelItem[]): NavModelItem[] {
     .filter((node) => !isPrunable(PRUNABLE_SECTIONS, node));
 }
 
-/** Moves an item by id into a section, optionally resetting its weight, then re-sorts the section. */
+/** Moves an item by id into a section, optionally hoisting its pages, then re-sorts the section. */
 export function moveNavItemToSection(
   tree: NavModelItem[],
   id: string,
   sectionId: string,
-  sortWeight?: number
+  { sortWeight, hoistPages = false }: { sortWeight?: number; hoistPages?: boolean } = {}
 ): NavModelItem[] {
   const item = findNavById(tree, id);
   if (!item || !findNavById(tree, sectionId)) {
     return tree;
   }
 
-  const moved = { ...item, ...(sortWeight !== undefined && { sortWeight }) };
-  const placed = appendIntoSection(removeNavById(tree, id), sectionId, [moved]);
+  const entries =
+    hoistPages && item.children?.length
+      ? hoistAppPages(item)
+      : [{ ...item, ...(sortWeight !== undefined && { sortWeight }) }];
+  const placed = appendIntoSection(removeNavById(tree, id), sectionId, entries);
   if (!placed) {
     return tree;
   }
@@ -259,27 +262,6 @@ export function hoistAppPages(
       ...(url?.startsWith(appPrefix) && { id: hoistedPluginPageId(url) }),
     };
   });
-}
-
-/**
- * Replaces an app's node inside a section with its hoisted pages, for callers
- * working on a finished tree — where the plugin pass that would have hoisted them
- * has already run. Returns the tree untouched if the app, the section, or the
- * app's pages are missing.
- */
-export function hoistNavItemPages(tree: NavModelItem[], sectionId: string, id: string): NavModelItem[] {
-  const section = findNavById(tree, sectionId);
-  const item = section?.children?.find((child) => child.id === id);
-  if (!section || !item?.children?.length) {
-    return tree;
-  }
-
-  const hoisted = hoistAppPages(item);
-
-  return updateNavById(tree, sectionId, (node) => ({
-    ...node,
-    children: sortNavTree([...(node.children ?? []).filter((child) => child !== item), ...hoisted]),
-  }));
 }
 
 /** Nav id of an app plugin's own entry/section (matches the Go builder's ids) */

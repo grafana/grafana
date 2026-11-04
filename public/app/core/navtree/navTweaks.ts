@@ -2,8 +2,7 @@ import { type NavModelItem } from '@grafana/data';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { type NavId, NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
-import { type PluginNavOverride } from './pluginNavOverrides';
-import { findNavById, hoistNavItemPages, moveNavItemToSection, pluginPageId, withAppSubUrl } from './utils';
+import { findNavById, moveNavItemToSection, pluginPageId, withAppSubUrl } from './utils';
 
 /**
  * Transitional nav adjustments, every one of them meant to be deleted. Each
@@ -16,9 +15,10 @@ import { findNavById, hoistNavItemPages, moveNavItemToSection, pluginPageId, wit
 const isInfoArchRefresh = () =>
   getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNavigationInfoArchRefresh, false);
 
-// PluginNavOverride's shape, minus its plugin sets: these run on a finished
-// tree, where the apps that built it are no longer around to ask about
-type NavTweak = Pick<PluginNavOverride, 'when' | 'apply'>;
+interface NavTweak {
+  when: () => boolean;
+  apply: (tree: NavModelItem[]) => NavModelItem[];
+}
 
 const NAV_TWEAKS: NavTweak[] = [
   {
@@ -32,7 +32,10 @@ const NAV_TWEAKS: NavTweak[] = [
         return tree;
       }
       const withSection = ensureSection(tree, NavID.apps);
-      return hoistNavItemPages(moveNavItemToSection(withSection, id, NavID.apps, NavWeight.plugin), NavID.apps, id);
+      return moveNavItemToSection(withSection, id, NavID.apps, {
+        sortWeight: NavWeight.plugin,
+        hoistPages: true,
+      });
     },
   },
 ];
@@ -65,7 +68,7 @@ function ensureSection(tree: NavModelItem[], sectionId: NavId): NavModelItem[] {
 export function applyNavTweaks(tree: NavModelItem[], tweaks: NavTweak[] = NAV_TWEAKS): NavModelItem[] {
   return tweaks.reduce((current, tweak, index) => {
     try {
-      return tweak.when(current, new Set()) ? tweak.apply(current, new Set()) : current;
+      return tweak.when() ? tweak.apply(current) : current;
     } catch (error) {
       console.warn('[navtree] nav tweak failed', index, error);
       return current;

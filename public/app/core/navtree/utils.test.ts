@@ -1,7 +1,7 @@
 import { type NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { findNavById, findNavByUrl, hoistNavItemPages, moveNavItemToSection } from './utils';
+import { findNavById, findNavByUrl, moveNavItemToSection } from './utils';
 
 describe('findNavByUrl', () => {
   const tree: NavModelItem[] = [
@@ -41,7 +41,7 @@ describe('moveNavItemToSection', () => {
   ];
 
   it('appends into the section and re-sorts it around the given weight', () => {
-    const moved = moveNavItemToSection(sectioned(), 'plugin-page-moving-app', 'apps', -1700);
+    const moved = moveNavItemToSection(sectioned(), 'plugin-page-moving-app', 'apps', { sortWeight: -1700 });
 
     expect(moved.map((item) => item.id)).toEqual(['apps']);
     expect((findNavById(moved, 'apps')?.children ?? []).map((child) => child.id)).toEqual([
@@ -65,34 +65,33 @@ describe('moveNavItemToSection', () => {
   });
 });
 
-describe('hoistNavItemPages', () => {
+describe('moveNavItemToSection with hoisted pages', () => {
   const withApp = (): NavModelItem[] => [
+    {
+      id: 'plugin-page-grafana-ml-app',
+      text: 'Machine Learning',
+      url: '/a/grafana-ml-app',
+      // The app node carries its plugin id, which is what tells the hoist
+      // which children are the app's own pages
+      pluginId: 'grafana-ml-app',
+      sortWeight: -1200,
+      children: [
+        { id: 'ml-home', text: 'Home', url: '/a/grafana-ml-app/home' },
+        { id: 'ml-models', text: 'Models', url: '/a/grafana-ml-app/models', sortWeight: 2 },
+      ],
+    },
     {
       id: 'apps',
       text: 'More apps',
       url: '/apps',
-      children: [
-        { id: 'plugin-page-some-app', text: 'Some app', url: '/a/some-app', sortWeight: -1700 },
-        {
-          id: 'plugin-page-grafana-ml-app',
-          text: 'Machine Learning',
-          url: '/a/grafana-ml-app',
-          // The app node carries its plugin id, which is what tells the hoist
-          // which children are the app's own pages
-          pluginId: 'grafana-ml-app',
-          sortWeight: -1700,
-          children: [
-            { id: 'ml-home', text: 'Home', url: '/a/grafana-ml-app/home' },
-            { id: 'ml-models', text: 'Models', url: '/a/grafana-ml-app/models', sortWeight: 2 },
-          ],
-        },
-      ],
+      children: [{ id: 'plugin-page-some-app', text: 'Some app', url: '/a/some-app', sortWeight: -1700 }],
     },
   ];
 
   it('replaces the app with its pages, keyed and weighted as the plugin pass would', () => {
-    const hoisted = hoistNavItemPages(withApp(), 'apps', 'plugin-page-grafana-ml-app');
+    const hoisted = moveNavItemToSection(withApp(), 'plugin-page-grafana-ml-app', 'apps', { hoistPages: true });
 
+    expect(hoisted.map((item) => item.id)).toEqual(['apps']);
     const children = findNavById(hoisted, 'apps')?.children ?? [];
     // The offset was chosen to clear the small positive weights apps carry in a
     // configured section, so here — where More apps holds apps at NavWeight.plugin
@@ -109,14 +108,14 @@ describe('hoistNavItemPages', () => {
     const originalAppSubUrl = config.appSubUrl;
     config.appSubUrl = '/grafana';
     const tree = withApp();
-    const pages = tree[0].children?.[1].children ?? [];
+    const pages = findNavById(tree, 'plugin-page-grafana-ml-app')?.children ?? [];
     for (const page of pages) {
       page.id = undefined;
       page.url = `/grafana${page.url}`;
     }
 
     try {
-      const hoisted = hoistNavItemPages(tree, 'apps', 'plugin-page-grafana-ml-app');
+      const hoisted = moveNavItemToSection(tree, 'plugin-page-grafana-ml-app', 'apps', { hoistPages: true });
 
       expect((findNavById(hoisted, 'apps')?.children ?? []).map((child) => child.id)).toEqual([
         'plugin-page-some-app',
@@ -132,18 +131,33 @@ describe('hoistNavItemPages', () => {
   // /d/<uid> url as an app route and shadow the dashboard
   it('leaves a dashboard child without a standalone id', () => {
     const tree = withApp();
-    const app = tree[0].children?.[1];
+    const app = findNavById(tree, 'plugin-page-grafana-ml-app');
     app?.children?.push({ text: 'Overview dashboard', url: '/d/dash-uid' });
 
-    const hoisted = hoistNavItemPages(tree, 'apps', 'plugin-page-grafana-ml-app');
+    const hoisted = moveNavItemToSection(tree, 'plugin-page-grafana-ml-app', 'apps', { hoistPages: true });
 
     const dashboard = (findNavById(hoisted, 'apps')?.children ?? []).find((child) => child.url === '/d/dash-uid');
     expect(dashboard?.id).toBeUndefined();
   });
 
-  it('leaves the tree alone for a missing app, section, or an app with no pages', () => {
-    expect(hoistNavItemPages(withApp(), 'apps', 'plugin-page-absent-app')).toEqual(withApp());
-    expect(hoistNavItemPages(withApp(), 'nonexistent', 'plugin-page-grafana-ml-app')).toEqual(withApp());
-    expect(hoistNavItemPages(withApp(), 'apps', 'plugin-page-some-app')).toEqual(withApp());
+  it('leaves the tree alone for a missing app or section', () => {
+    expect(moveNavItemToSection(withApp(), 'plugin-page-absent-app', 'apps', { hoistPages: true })).toEqual(withApp());
+    expect(moveNavItemToSection(withApp(), 'plugin-page-grafana-ml-app', 'nonexistent', { hoistPages: true })).toEqual(
+      withApp()
+    );
+  });
+
+  it('moves the app itself when it has no pages', () => {
+    const tree = withApp();
+    const app = findNavById(tree, 'plugin-page-grafana-ml-app');
+    app!.children = undefined;
+
+    const moved = moveNavItemToSection(tree, 'plugin-page-grafana-ml-app', 'apps', {
+      sortWeight: -1700,
+      hoistPages: true,
+    });
+
+    expect(moved.map((item) => item.id)).toEqual(['apps']);
+    expect(findNavById(moved, 'plugin-page-grafana-ml-app')?.sortWeight).toBe(-1700);
   });
 });
