@@ -9,7 +9,13 @@ import {
 } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { TableCellDisplayMode } from '@grafana/schema';
-import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import {
+  type PanelKind,
+  type Spec as DashboardV2Spec,
+  type TransformationKind,
+  defaultPanelKind,
+  defaultSpec as defaultDashboardV2Spec,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
@@ -178,25 +184,13 @@ describe('table module', () => {
   const savedReduce = { kind: 'Transformation' as const, group: 'reduce', spec: { options: { reducers: ['max'] } } };
 
   function dashboardWith(elements: DashboardV2Spec['elements']): DashboardV2Spec {
-    return { title: 'Dashboard', elements } as DashboardV2Spec;
+    return { ...defaultDashboardV2Spec(), title: 'Dashboard', elements };
   }
 
-  function panel(transformations: Array<typeof savedReduce>) {
-    return {
-      kind: 'Panel' as const,
-      spec: {
-        id: 1,
-        title: 'Table',
-        links: [],
-        data: { kind: 'QueryGroup' as const, spec: { queries: [], transformations, queryOptions: {} } },
-        vizConfig: {
-          kind: 'VizConfig' as const,
-          group: 'table',
-          version: '',
-          spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } },
-        },
-      },
-    };
+  function panel(transformations: TransformationKind[]): PanelKind {
+    const element = defaultPanelKind();
+    element.spec.data.spec.transformations = transformations;
+    return element;
   }
 
   const hideColumnA = {
