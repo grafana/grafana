@@ -311,6 +311,11 @@ func (s *service) start(ctx context.Context) error {
 		}
 		pvs := s.scheme.PrioritizedVersionsForGroup(gvs[0].Group)
 
+		// Builders that authorize through the access client are given it before their authorizer is read.
+		if aware, ok := b.(builder.APIGroupAccessClientAware); ok {
+			aware.SetAccessClient(s.accessClient)
+		}
+
 		for _, gv := range pvs {
 			if a, ok := b.(builder.APIGroupAuthorizer); ok {
 				auth := a.GetAuthorizer()

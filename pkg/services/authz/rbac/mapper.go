@@ -668,22 +668,11 @@ func NewMapperRegistry() MapperRegistry {
 			// neither folder-scoped nor scope-checked by their own authorizer, so writes map
 			// to playlists:write and every verb skips scope. This lets the provisioning export
 			// preflight (run under the requesting user) authorize playlists like other kinds.
-			"playlists": translation{
-				resource:  "playlists",
-				attribute: "uid",
-				verbMapping: map[string]string{
-					utils.VerbGet:              "playlists:read",
-					utils.VerbList:             "playlists:read",
-					utils.VerbWatch:            "playlists:read",
-					utils.VerbCreate:           "playlists:write",
-					utils.VerbUpdate:           "playlists:write",
-					utils.VerbPatch:            "playlists:write",
-					utils.VerbDelete:           "playlists:write",
-					utils.VerbDeleteCollection: "playlists:write",
-				},
-				folderSupport:   false,
-				skipScopeOnVerb: skipScopeOnAllVerbs,
-			},
+			"playlists": newPlaylistTranslation(skipScopeOnAllVerbs),
+		},
+		"collections.grafana.app": {
+			// Slideshows are shared within an org like playlists and use the playlist permissions.
+			"slideshows": newPlaylistTranslation(skipScopeOnAllVerbs),
 		},
 		"iam.grafana.app": {
 			// Users is a special case. We translate user permissions from id to uid based.
@@ -888,4 +877,26 @@ func (m mapper) GetGroups() []string {
 		groups = append(groups, group)
 	}
 	return groups
+}
+
+// newPlaylistTranslation maps the verbs of a playlist-like resource to the playlist read and
+// write actions. There is no per-object scope, so every verb skips it. Slideshows share the
+// playlist actions and so the playlist resource kind, which grants are recorded against.
+func newPlaylistTranslation(skipScopeOnVerb map[string]bool) translation {
+	return translation{
+		resource:  "playlists",
+		attribute: "uid",
+		verbMapping: map[string]string{
+			utils.VerbGet:              "playlists:read",
+			utils.VerbList:             "playlists:read",
+			utils.VerbWatch:            "playlists:read",
+			utils.VerbCreate:           "playlists:write",
+			utils.VerbUpdate:           "playlists:write",
+			utils.VerbPatch:            "playlists:write",
+			utils.VerbDelete:           "playlists:write",
+			utils.VerbDeleteCollection: "playlists:write",
+		},
+		folderSupport:   false,
+		skipScopeOnVerb: skipScopeOnVerb,
+	}
 }

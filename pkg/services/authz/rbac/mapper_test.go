@@ -249,6 +249,34 @@ func TestMapperRegistry_Playlist(t *testing.T) {
 	assert.False(t, mapping.HasFolderSupport(), "playlists are not folder-scoped")
 }
 
+// TestMapperRegistry_Slideshows verifies slideshows are authorized with the playlist permissions,
+// because they are shared within an org the way playlists are.
+func TestMapperRegistry_Slideshows(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("collections.grafana.app", "slideshows", "")
+	require.True(t, ok, "slideshows should be registered in the mapper")
+	require.NotNil(t, mapping)
+
+	for _, verb := range []string{utils.VerbGet, utils.VerbList, utils.VerbWatch} {
+		action, ok := mapping.Action(verb)
+		assert.True(t, ok)
+		assert.Equal(t, "playlists:read", action, "verb %q should map to the playlist read action", verb)
+	}
+	for _, verb := range []string{utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection} {
+		action, ok := mapping.Action(verb)
+		assert.True(t, ok)
+		assert.Equal(t, "playlists:write", action, "verb %q should map to the playlist write action", verb)
+	}
+	for _, verb := range []string{utils.VerbGet, utils.VerbList, utils.VerbWatch, utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection} {
+		assert.True(t, mapping.SkipScope(verb), "verb %q must skip scope; playlist roles are unscoped", verb)
+	}
+	assert.False(t, mapping.HasFolderSupport(), "slideshows are not folder-scoped")
+
+	_, ok = reg.Get("collections.grafana.app", "stars", "")
+	assert.False(t, ok, "stars keep their own per-user authorization and are not mapped")
+}
+
 func TestMapperRegistry_InvalidDatasourceGroups(t *testing.T) {
 	reg := NewMapperRegistry()
 	for _, group := range []string{
