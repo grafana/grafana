@@ -121,7 +121,7 @@ func TestNewRepository_SendsUserAgent(t *testing.T) {
 	t.Cleanup(server.Close)
 
 	config := &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType}}
-	gitRepo, err := NewRepository(t.Context(), config, RepositoryConfig{URL: server.URL + "/owner/repo", Branch: "main"}, nil, nil)
+	gitRepo, err := NewRepository(t.Context(), config, RepositoryConfig{URL: server.URL + "/owner/repo", Branch: "main"})
 	require.NoError(t, err)
 
 	ok, err := gitRepo.(*gitRepository).client.CanRead(t.Context())
