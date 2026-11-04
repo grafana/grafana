@@ -90,10 +90,10 @@ export function FolderEntry({
         <div className={styles.iconNameContainer}>
           <Icon size={ICON_SIZE} name={isExpanded ? 'folder-open' : 'folder'} />
           <Text truncate>{folder.title}</Text>
-          {folder.resourceCount > 0 && (
+          {node.subtreeCount > 0 && (
             <Text variant="bodySmall" color="secondary" truncate>
               {t('provisioning.migrate.resources-folder-summary', '', {
-                count: folder.resourceCount,
+                count: node.subtreeCount,
                 defaultValue_one: '{{count}} resource',
                 defaultValue_other: '{{count}} resources',
               })}

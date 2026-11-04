@@ -5334,6 +5334,9 @@
       "preferences": "Preferenze",
       "recent-dashboards": "Dashboard recenti",
       "recent-scopes": "Ambiti recenti"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -7650,10 +7653,10 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
+      "draft-discarded": "",
       "draft-title": "",
       "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
       "pending-changes-changed": "",
@@ -12399,7 +12402,6 @@
       "copy-log-line-json": "Copia il contenuto del registro in formato JSON",
       "copy-shortlink": "Copia shortlink",
       "copy-to-clipboard": "Copia negli appunti",
-      "displayed-fields-section": "Organizza i campi visualizzati",
       "fields": {
         "adhoc-statistics": "Statistiche ad hoc",
         "copy-value-to-clipboard": "Copia valore negli appunti",
@@ -12423,14 +12425,11 @@
       "log-attributes-field": "Attributi del registro",
       "log-line-field": "Riga registro",
       "log-line-section": "Riga registro",
-      "move-displayed-field-down": "Sposta in basso",
-      "move-displayed-field-up": "Sposta in alto",
       "no-details": "Nessun campo da visualizzare.",
       "open-assistant": "",
       "open-value-in": "",
       "pin-line": "Fissa registro",
       "prettify": "Migliora",
-      "remove-displayed-field": "Rimuovi campo",
       "remove-log": "Rimuovi registro",
       "scroll-to-logline": "Scorri fino alla riga del registro",
       "search": {
