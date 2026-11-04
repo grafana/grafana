@@ -315,6 +315,25 @@ describe('PolicyTreeSelector', () => {
       });
       expect(policyTreeUi.policySelector.query()).not.toBeInTheDocument();
     });
+
+    it('fetches the routing tree of the newly selected policy for the notification preview', async () => {
+      mockPreviewApiResponse(server, [mockAlertmanagerAlert({ labels: { severity: 'critical' } })]);
+      const capture = captureRequests((r) => r.method === 'GET' && r.url.includes('/routingtrees/'));
+      const customPolicyName = 'Managed Policy - Empty Provisioned';
+
+      const { user } = renderRuleEditor();
+      await user.type(await ui.inputs.name.find(), 'my great new rule');
+      await selectFolderAndGroup(user);
+      await user.click(await policyTreeUi.changeButton.find());
+      await selectPolicyOption(user, new RegExp(customPolicyName, 'i'));
+      await user.click(screen.getByRole('button', { name: /preview routing/i }));
+
+      const requests = await capture;
+      await waitFor(() => {
+        const routingTreeUrls = requests.map((r) => r.url);
+        expect(routingTreeUrls.some((url) => url.includes(encodeURIComponent(customPolicyName)))).toBe(true);
+      });
+    });
   });
 
   // Regression test for bug #1 from PR #124697:
