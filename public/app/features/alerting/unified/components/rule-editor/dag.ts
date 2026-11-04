@@ -1,7 +1,7 @@
 import { compact, memoize, reject, uniq } from 'lodash';
 
 import { type Edge, Graph, type Node } from 'app/core/utils/dag';
-import { isExpressionQuery } from 'app/features/expressions/guards';
+import { isDynamicThresholdQuery, isExpressionQuery } from 'app/features/expressions/guards';
 import { type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -99,6 +99,11 @@ export function getTargets(model: ExpressionQuery) {
     return model.conditions?.map((c) => c.query.params[0]) ?? [];
   }
   if (isSqlExpression) {
+    // Builder metadata is the source of truth for the input, even while the generated SQL is still empty.
+    if (isDynamicThresholdQuery(model)) {
+      const { inputRefId } = model.dynamicThreshold.policy;
+      return inputRefId ? [inputRefId] : [];
+    }
     return parseRefsFromSqlExpression(model.expression ?? '');
   }
   return [model.expression];

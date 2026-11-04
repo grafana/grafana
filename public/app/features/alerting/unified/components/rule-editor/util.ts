@@ -11,7 +11,8 @@ import {
 import { config } from '@grafana/runtime';
 import { GraphThresholdsStyleMode } from '@grafana/schema';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
-import { isExpressionQuery } from 'app/features/expressions/guards';
+import { buildDynamicThreshold } from 'app/features/expressions/components/DynamicThreshold/buildDynamicThreshold';
+import { isDynamicThresholdQuery, isExpressionQuery } from 'app/features/expressions/guards';
 import { type ClassicCondition, ExpressionQueryType } from 'app/features/expressions/types';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -69,6 +70,22 @@ export function queriesWithUpdatedReferences(
       }));
 
       return { ...query, model: { ...query.model, conditions } };
+    }
+
+    if (isDynamicThresholdQuery(query.model)) {
+      const dynamicThreshold = query.model.dynamicThreshold;
+      if (dynamicThreshold.policy.inputRefId === previousRefId) {
+        const policy = { ...dynamicThreshold.policy, inputRefId: newRefId };
+        const built = buildDynamicThreshold(policy);
+        return {
+          ...query,
+          model: {
+            ...query.model,
+            expression: built.ok ? built.expressionSql : '',
+            dynamicThreshold: { ...dynamicThreshold, policy },
+          },
+        };
+      }
     }
 
     return query;

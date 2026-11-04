@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
@@ -8,6 +8,7 @@ import { EvalFunction } from '../../../alerting/state/alertDef';
 import { type DynamicThresholdPolicyV1, ExpressionQueryType, type SqlExpressionQuery } from '../../types';
 
 import { DynamicThresholdEditor } from './DynamicThresholdEditor';
+import { buildDynamicThreshold } from './buildDynamicThreshold';
 
 const mockSourcePreview = jest.fn();
 
@@ -15,6 +16,20 @@ jest.mock('./sourcePreview', () => ({
   getDynamicThresholdSourceOptions: (queries: Array<{ refId: string }>, selfRefId: string) =>
     queries.filter((query) => query.refId !== selfRefId).map((query) => ({ value: query.refId, label: query.refId })),
   useDynamicThresholdSourcePreview: (...args: unknown[]) => mockSourcePreview(...args),
+}));
+
+jest.mock('./DynamicThresholdPreview', () => ({
+  DynamicThresholdPreview: ({ previewSql }: { previewSql: string }) => (
+    <div data-testid="policy-preview">{previewSql}</div>
+  ),
+}));
+
+const mockSqlEditor = jest.fn();
+jest.mock('../SqlExpressions/SqlEditor/SqlEditor', () => ({
+  SqlEditor: (props: { value: string; readOnly?: boolean; ariaLabel?: string }) => {
+    mockSqlEditor(props);
+    return <pre aria-label={props.ariaLabel}>{props.value}</pre>;
+  },
 }));
 
 const sourceQuery = {
@@ -398,5 +413,93 @@ describe('DynamicThresholdEditor', () => {
         }),
       })
     );
+  });
+
+  describe('policy preview, SQL view, and conversion', () => {
+    function makeGeneratedQuery(): SqlExpressionQuery {
+      const query = makeQuery();
+      const built = buildDynamicThreshold(query.dynamicThreshold!.policy);
+      if (!built.ok) {
+        throw new Error('test policy must compile');
+      }
+      return { ...query, expression: built.expressionSql };
+    }
+
+    it('renders the policy preview with the transient preview SQL only for a compiled policy', () => {
+      const { rerender } = render(
+        <DynamicThresholdEditor query={makeGeneratedQuery()} queries={[sourceQuery]} onChange={jest.fn()} />
+      );
+      expect(screen.getByTestId('policy-preview')).toHaveTextContent('current_value');
+
+      rerender(
+        <DynamicThresholdEditor
+          query={{ ...makeQuery({ defaultThreshold: [] }), expression: '' }}
+          queries={[sourceQuery]}
+          onChange={jest.fn()}
+        />
+      );
+      expect(screen.queryByTestId('policy-preview')).not.toBeInTheDocument();
+    });
+
+    it('shows the generated SQL read-only and hides it again', async () => {
+      const query = makeGeneratedQuery();
+      const onChange = jest.fn();
+      render(<DynamicThresholdEditor query={query} queries={[sourceQuery]} onChange={onChange} />);
+
+      expect(screen.queryByLabelText('Generated SQL')).not.toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: 'View SQL' }));
+
+      expect(screen.getByLabelText('Generated SQL')).toHaveTextContent('SELECT');
+      expect(mockSqlEditor).toHaveBeenLastCalledWith(
+        expect.objectContaining({ value: query.expression, readOnly: true })
+      );
+      expect(onChange).not.toHaveBeenCalled();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Hide SQL' }));
+      expect(screen.queryByLabelText('Generated SQL')).not.toBeInTheDocument();
+    });
+
+    it('disables View SQL and Edit as SQL while there is no generated SQL', () => {
+      render(
+        <DynamicThresholdEditor
+          query={{ ...makeQuery({ defaultThreshold: [] }), expression: '' }}
+          queries={[sourceQuery]}
+          onChange={jest.fn()}
+        />
+      );
+
+      expect(screen.getByRole('button', { name: 'View SQL' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Edit as SQL' })).toBeDisabled();
+    });
+
+    it('converts to regular SQL after confirmation, keeping the SQL and removing the policy', async () => {
+      const query = makeGeneratedQuery();
+      const onChange = jest.fn();
+      render(<DynamicThresholdEditor query={query} queries={[sourceQuery]} onChange={onChange} />);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Edit as SQL' }));
+      expect(screen.getByText(/cannot be reversed automatically/)).toBeInTheDocument();
+      expect(onChange).not.toHaveBeenCalled();
+
+      const dialog = screen.getByRole('dialog');
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Edit as SQL' }));
+
+      expect(onChange).toHaveBeenCalledTimes(1);
+      const converted = onChange.mock.calls[0][0];
+      expect(converted.expression).toBe(query.expression);
+      expect(converted.format).toBe('alerting');
+      expect(converted).not.toHaveProperty('dynamicThreshold');
+    });
+
+    it('leaves the query unchanged when the conversion is cancelled', async () => {
+      const onChange = jest.fn();
+      render(<DynamicThresholdEditor query={makeGeneratedQuery()} queries={[sourceQuery]} onChange={onChange} />);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Edit as SQL' }));
+      await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }));
+
+      expect(onChange).not.toHaveBeenCalled();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
   });
 });

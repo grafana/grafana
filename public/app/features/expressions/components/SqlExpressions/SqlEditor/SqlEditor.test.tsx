@@ -32,4 +32,16 @@ describe('SqlEditor', () => {
 
     expect(overscrollRule?.cssText).toContain('overscroll-behavior-x: contain');
   });
+
+  it('is editable by default', () => {
+    render(<SqlEditor value="SELECT * FROM A" onChange={jest.fn()} />);
+
+    expect(editorProps?.readOnly).toBeUndefined();
+  });
+
+  it('passes readOnly through to the code editor', () => {
+    render(<SqlEditor value="SELECT * FROM A" onChange={jest.fn()} readOnly />);
+
+    expect(editorProps?.readOnly).toBe(true);
+  });
 });

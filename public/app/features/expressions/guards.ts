@@ -1,7 +1,13 @@
 import { isExpressionReference } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
-import { type ExpressionQuery, ExpressionQueryType, type ReducerType } from './types';
+import {
+  type DynamicThresholdMetadataV1,
+  type ExpressionQuery,
+  ExpressionQueryType,
+  type ReducerType,
+  type SqlExpressionQuery,
+} from './types';
 
 export const isExpressionQuery = (dataQuery?: DataQuery): dataQuery is ExpressionQuery => {
   if (!dataQuery) {
@@ -35,4 +41,10 @@ export function isReducerType(value: string): value is ReducerType {
     'percent_diff_abs',
     'count_non_null',
   ].includes(value);
+}
+
+export function isDynamicThresholdQuery(
+  query: ExpressionQuery
+): query is SqlExpressionQuery & { dynamicThreshold: DynamicThresholdMetadataV1 } {
+  return query.type === ExpressionQueryType.sql && 'dynamicThreshold' in query && Boolean(query.dynamicThreshold);
 }

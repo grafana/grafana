@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import { type FC, Suspense, lazy, useCallback, useState } from 'react';
+import { type FC, Suspense, lazy, useCallback, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import {
@@ -13,12 +13,18 @@ import {
   isTimeSeriesFrames,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { useFlagAlertingDynamicThresholdExpression } from '@grafana/runtime/internal';
 import { Alert, AutoSizeInput, Button, IconButton, Stack, Text, clearButtonStyles, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
+import {
+  hasDynamicThresholdSqlMismatch,
+  withoutDynamicThreshold,
+} from 'app/features/expressions/components/DynamicThreshold/utils';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
 import { Resample } from 'app/features/expressions/components/Resample';
 import { Threshold } from 'app/features/expressions/components/Threshold';
+import { isDynamicThresholdQuery } from 'app/features/expressions/guards';
 import {
   type ExpressionQuery,
   ExpressionQueryType,
@@ -49,8 +55,57 @@ const SqlExpr = lazy(() =>
   }))
 );
 
-function isDynamicThresholdQuery(query: ExpressionQuery): query is SqlExpressionQuery {
-  return 'dynamicThreshold' in query && Boolean(query.dynamicThreshold);
+interface SqlExpressionEditorProps {
+  query: SqlExpressionQuery;
+  queries: AlertQuery[];
+  refIds: Array<{ value: string; label: string }>;
+  onChange: (query: ExpressionQuery) => void;
+}
+
+function SqlExpressionEditor({ query, queries, refIds, onChange }: SqlExpressionEditorProps) {
+  const dynamicThresholdEnabled = useFlagAlertingDynamicThresholdExpression();
+  const [discardedPolicy, setDiscardedPolicy] = useState(false);
+  const hasMismatch =
+    dynamicThresholdEnabled && isDynamicThresholdQuery(query) && hasDynamicThresholdSqlMismatch(query);
+
+  if (hasMismatch && !discardedPolicy) {
+    setDiscardedPolicy(true);
+  }
+
+  // The saved SQL stays as it is; only the policy that no longer reproduces it is dropped from form state.
+  useEffect(() => {
+    if (hasMismatch) {
+      onChange(withoutDynamicThreshold(query));
+    }
+  }, [hasMismatch, onChange, query]);
+
+  if (dynamicThresholdEnabled && isDynamicThresholdQuery(query) && !hasMismatch) {
+    return <DynamicThresholdEditor query={query} queries={queries} onChange={onChange} />;
+  }
+
+  return (
+    <>
+      {discardedPolicy && (
+        <Alert
+          title={t('alerting.expression.dynamic-threshold-mismatch-title', 'Dynamic threshold settings discarded')}
+          severity="warning"
+        >
+          <Trans i18nKey="alerting.expression.dynamic-threshold-mismatch-body">
+            The saved SQL does not match the SQL generated from the dynamic threshold settings. The SQL is kept as it is
+            and is now edited as a regular SQL expression. The dynamic threshold settings are removed when you save the
+            rule.
+          </Trans>
+        </Alert>
+      )}
+      <SqlExpr
+        onChange={(sqlQuery) => onChange(withoutDynamicThreshold(sqlQuery))}
+        query={query}
+        refIds={refIds}
+        alerting
+        queries={[]}
+      />
+    </>
+  );
 }
 
 interface ExpressionProps {
@@ -148,17 +203,7 @@ export const Expression: FC<ExpressionProps> = ({
         case ExpressionQueryType.sql:
           return (
             <Suspense fallback={null}>
-              {isDynamicThresholdQuery(query) ? (
-                <DynamicThresholdEditor query={query} queries={queries} onChange={onChangeQuery} />
-              ) : (
-                <SqlExpr
-                  onChange={(query) => onChangeQuery(query)}
-                  query={query}
-                  refIds={availableRefIds}
-                  alerting
-                  queries={[]}
-                />
-              )}
+              <SqlExpressionEditor query={query} queries={queries} refIds={availableRefIds} onChange={onChangeQuery} />
             </Suspense>
           );
 
