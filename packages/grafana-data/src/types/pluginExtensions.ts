@@ -220,6 +220,7 @@ export enum PluginExtensionPoints {
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
   DashboardEmpty = 'grafana/dashboard/empty',
   DashboardSidebar = 'grafana/dashboard/sidebar/v1',
+  DashboardShare = 'grafana/dashboard/share/v1',
   DataSourceConfig = 'grafana/datasources/config',
   DataSourceConfigActions = 'grafana/datasources/config/actions',
   DataSourceConfigErrorStatus = 'grafana/datasources/config/error-status',
@@ -290,6 +291,17 @@ export type PluginExtensionPanelContext = {
    * Undefined in legacy dashboard contexts.
    */
   panelPathId?: string;
+};
+
+/**
+ * Links are rendered as items in the dashboard Share menu. Only available for saved dashboards,
+ * so `dashboardUid` is always set.
+ */
+export type PluginExtensionDashboardShareContext = {
+  dashboardUid: string;
+  dashboardTitle: string;
+  folderUid?: string;
+  folderTitle?: string;
 };
 
 export type CentralAlertHistorySceneV1Props = {
