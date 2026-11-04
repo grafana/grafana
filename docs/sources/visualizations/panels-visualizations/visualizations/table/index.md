@@ -173,7 +173,7 @@ To filter column values, follow these steps:
    - **Numeric ranges**: Use the slider to set exact boundaries for the range. You can also enter values in one or both of the **Minimum** and **Maximum** fields to constrain the range.
    - **Date ranges**: Enter values in one or both of the **Start** and **End** fields.
 
-     For numeric and date ranges, select **Include missing / non-finite values** to retain empty results, `null`, `NaN`, and other special values.
+     Select **Include missing** to retain empty results, `null`, `NaN`, and other special values.
 
 1. Click **Ok** or **Apply** to add the filters and close the dialog box.
 
