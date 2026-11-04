@@ -82,7 +82,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		existingTemplateGroup = actual
 	})
 
-	t.Run("update should rename template if name in the specification changes", func(t *testing.T) {
+	t.Run("update should rename template and keep its name if the title in the specification changes", func(t *testing.T) {
 		if existingTemplateGroup == nil {
 			t.Skip()
 		}
@@ -91,13 +91,28 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		actual, err := client.Update(ctx, updated, resource.UpdateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, updated.Spec, actual.Spec)
-		require.NotEqualf(t, updated.Name, actual.Name, "Update should change the resource name but it didn't")
+		require.Equalf(t, updated.Name, actual.Name, "Update should keep the resource name but it changed")
 
 		resource, err := client.Get(ctx, actual.GetStaticMetadata().Identifier())
 		require.NoError(t, err)
 		require.Equal(t, actual, resource)
 
 		existingTemplateGroup = actual
+	})
+
+	t.Run("update should fail if the title in the specification is the title of another template", func(t *testing.T) {
+		if existingTemplateGroup == nil {
+			t.Skip()
+		}
+		updated := existingTemplateGroup.Copy().(*v1beta1.TemplateGroup)
+		updated.Spec.Title = "chosenTemplateGroup"
+		_, err := client.Update(ctx, updated, resource.UpdateOptions{})
+		require.Error(t, err)
+		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got %s", err)
+
+		actual, err := client.Get(ctx, existingTemplateGroup.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		require.Equal(t, existingTemplateGroup.Spec, actual.Spec, "the template must not be changed")
 	})
 
 	var defaultTemplateGroup *v1beta1.TemplateGroup
