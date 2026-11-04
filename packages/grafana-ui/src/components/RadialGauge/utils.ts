@@ -12,6 +12,8 @@ import {
   ThresholdsMode,
 } from '@grafana/data';
 
+import { measureText } from '../../utils/measureText';
+
 import { type RadialGaugeDimensions } from './types';
 
 const DEFAULT_THRESHOLDS: ThresholdsConfig = {
@@ -341,6 +343,34 @@ export function getFormattedThresholds(
     formatted.push({ value: parseFloat(max.toFixed(decimals)), color: theme.visualization.getColorByName(last.color) });
   }
   return formatted;
+}
+
+/**
+ * SVG text has no `text-overflow`. This measures at 14px and scales, as `calculateFontSize` does,
+ * because rendered width is not linear in font size and a name it fit must not get cut.
+ */
+export function truncateToWidth(text: string, maxWidth: number, fontSize: number, fontWeight?: number): string {
+  const fits = (candidate: string) => (measureText(candidate, 14, fontWeight).width * fontSize) / 14 <= maxWidth;
+
+  if (fits(text)) {
+    return text;
+  }
+
+  // Code points, so that a surrogate pair is not cut in half.
+  const chars = Array.from(text);
+  let low = 0;
+  let high = chars.length - 1;
+
+  while (low < high) {
+    const mid = Math.ceil((low + high) / 2);
+    if (fits(`${chars.slice(0, mid).join('')}…`)) {
+      low = mid;
+    } else {
+      high = mid - 1;
+    }
+  }
+
+  return `${chars.slice(0, low).join('').trimEnd()}…`;
 }
 
 export const IS_SAFARI = (() => {

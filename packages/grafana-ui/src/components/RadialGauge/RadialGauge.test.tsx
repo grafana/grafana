@@ -108,6 +108,11 @@ describe('RadialGauge', () => {
       expect(screen.queryByText('55')).not.toBeInTheDocument();
     });
 
+    it('should cut a name that is too long for the gauge', () => {
+      render(<RadialGaugeExample textMode="name" seriesName={'a'.repeat(300)} value={55} />);
+      expect(screen.getByText(`${'a'.repeat(222)}…`)).toBeInTheDocument();
+    });
+
     it('should render `none` if the textMode is set to `none`', () => {
       render(<RadialGaugeExample textMode="none" seriesName="My series" value={55} />);
       expect(screen.getByRole('img')).toBeInTheDocument();

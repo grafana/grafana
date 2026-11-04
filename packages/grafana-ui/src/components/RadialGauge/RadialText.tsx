@@ -11,6 +11,7 @@ import {
 import { calculateFontSize } from '../../utils/measureText';
 
 import { type RadialShape, type RadialTextMode, type RadialGaugeDimensions } from './types';
+import { truncateToWidth } from './utils';
 
 interface RadialTextProps {
   displayValue: DisplayValue;
@@ -139,7 +140,7 @@ export const RadialText = memo(
             dominantBaseline="middle"
             fill={nameColor}
           >
-            {displayValue.title}
+            {truncateToWidth(displayValue.title ?? '', maxTextWidth, nameFontSize, theme.typography.body.fontWeight)}
           </text>
         )}
       </g>
