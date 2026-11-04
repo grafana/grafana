@@ -30,6 +30,9 @@ function Stack({ items, selectedItem, onActiveItemChange }: StackProps) {
             data-stacked-editor-item-type={item.type}
           />
         ))}
+        <div data-stacked-add-bar data-testid="add-bar">
+          <button data-testid="add-bar-button" />
+        </div>
       </div>
     </div>
   );
@@ -146,6 +149,36 @@ describe('useStackedItemScroll', () => {
     jest.advanceTimersByTime(1);
 
     expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops re-pinning once the user hovers an add bar', () => {
+    const items = [makeQueryItem('A'), makeQueryItem('B'), makeQueryItem('C')];
+    const { getByTestId } = render(<Stack items={items} selectedItem={queryRef('C')} onActiveItemChange={jest.fn()} />);
+
+    fireEvent.pointerOver(getByTestId('add-bar-button'));
+    jest.advanceTimersByTime(1);
+
+    expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops re-pinning once the user focuses an add bar', () => {
+    const items = [makeQueryItem('A'), makeQueryItem('B'), makeQueryItem('C')];
+    const { getByTestId } = render(<Stack items={items} selectedItem={queryRef('C')} onActiveItemChange={jest.fn()} />);
+
+    fireEvent.focusIn(getByTestId('add-bar-button'));
+    jest.advanceTimersByTime(1);
+
+    expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps re-pinning when the pointer moves over a card', () => {
+    const items = [makeQueryItem('A'), makeQueryItem('B'), makeQueryItem('C')];
+    const { getByTestId } = render(<Stack items={items} selectedItem={queryRef('C')} onActiveItemChange={jest.fn()} />);
+
+    fireEvent.pointerOver(getByTestId(`section-${QueryEditorType.Query}-A`));
+    jest.advanceTimersByTime(1);
+
+    expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
   });
 
   it('ignores scroll position while auto-following, then follows it after the user scrolls', () => {

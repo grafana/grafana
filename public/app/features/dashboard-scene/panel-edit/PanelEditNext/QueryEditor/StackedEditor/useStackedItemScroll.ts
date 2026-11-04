@@ -108,15 +108,26 @@ export function useStackedItemScroll({
         autoFollowRef.current = false;
       }
     };
+    // An add bar grows as it opens; re-pinning would scroll it out from under the pointer and
+    // close it again.
+    const onAddBarEngaged = (event: Event) => {
+      if (event.target instanceof Element && event.target.closest('[data-stacked-add-bar]')) {
+        autoFollowRef.current = false;
+      }
+    };
     container.addEventListener('wheel', onUserScroll, { passive: true });
     container.addEventListener('touchmove', onUserScroll, { passive: true });
     container.addEventListener('keydown', onContainerKeyDown);
+    container.addEventListener('pointerover', onAddBarEngaged);
+    container.addEventListener('focusin', onAddBarEngaged);
 
     return () => {
       resizeObserver.disconnect();
       container.removeEventListener('wheel', onUserScroll);
       container.removeEventListener('touchmove', onUserScroll);
       container.removeEventListener('keydown', onContainerKeyDown);
+      container.removeEventListener('pointerover', onAddBarEngaged);
+      container.removeEventListener('focusin', onAddBarEngaged);
     };
   }, [containerRef, contentRef, scrollSelectedIntoView]);
 
