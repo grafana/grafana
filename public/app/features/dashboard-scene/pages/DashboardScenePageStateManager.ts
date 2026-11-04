@@ -1819,6 +1819,9 @@ async function reloadInPlace(
   swapInReloadedDashboard(open, reloaded);
   open.rebaselineEditSession();
   resumeRecordingPendingChanges(open);
+  // The page draws what goes with the scene (the pending changes banner) when its state changes, as a
+  // load changes it. The scene is the same, so tell the page: it reads the pending changes loaded now.
+  manager.setState({ dashboard: open });
   return true;
 }
 
