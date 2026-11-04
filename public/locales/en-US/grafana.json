@@ -2047,7 +2047,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "Apply"
+      "apply": "Apply",
+      "editor-label": "Alert rule YAML"
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -5762,7 +5763,8 @@
       "apply-undo-title": "Assistant Composer edit",
       "overlay": {
         "hint-panel": "Click to comment on a panel, or drag to draw a region",
-        "hint-region": "Drag to draw a region"
+        "hint-region": "Drag to draw a region",
+        "hint-variable": "Click to comment on a variable, or drag to draw a region"
       },
       "region": "Region",
       "untitled-panel": "Panel {{panelId}}",
@@ -5944,6 +5946,9 @@
       "render-label": {
         "tooltip-remove-property": "Remove property"
       }
+    },
+    "edit": {
+      "mobile-not-available": "Dashboard editing is not available on small screens. Switch to a larger screen to continue."
     },
     "edit-actions": {
       "add": "Add {{typeName}}",
@@ -6626,6 +6631,8 @@
         "row": "Row",
         "rows": "Rows",
         "section-filters-set": "Filters",
+        "selected-panels_one": "{{count}} panel",
+        "selected-panels_other": "{{count}} panels",
         "tab": "Tab",
         "tabs": "Tabs",
         "variable": "{{type}} variable",
@@ -7584,6 +7591,7 @@
       "error-invalid-json": "Invalid JSON",
       "error-invalid-layout": "Layout JSON did not pass validation. Please check the JSON and try again.",
       "error-invalid-v2-panel": "Panel JSON did not pass validation. Please check the JSON and try again.",
+      "mobile-edit-unavailable": "Editing is unavailable on small screens",
       "validation-error": "Validation error"
     },
     "interval-variable-form": {
@@ -7761,6 +7769,8 @@
       "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-actions": {
+      "panels-selected_one": "{{count}} panel selected",
+      "panels-selected_other": "{{count}} panels selected",
       "tooltip-edit-panel-visualization": "Edit visualization",
       "tooltip-panel-settings": "Panel settings"
     },

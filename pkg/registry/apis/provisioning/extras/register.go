@@ -44,13 +44,14 @@ func ProvideProvisioningOSSRepositoryExtras(
 	// http:// URLs with a token are only allowed in development or when explicitly opted in,
 	// since the token would otherwise travel in cleartext.
 	allowInsecure := cfg.Env == setting.Dev || cfg.ProvisioningAllowInsecure
+	userAgent := git.UserAgent(cfg.BuildVersion)
 	return []repository.Extra{
 		local.Extra(
 			cfg.HomePath,
 			cfg.PermittedProvisioningPaths,
 			operationMetrics,
 		),
-		git.Extra(decrypter, allowInsecure, operationMetrics, clientMetrics),
+		git.Extra(decrypter, allowInsecure, operationMetrics, clientMetrics, userAgent),
 		github.Extra(
 			decrypter,
 			ghFactory,
@@ -58,6 +59,7 @@ func ProvideProvisioningOSSRepositoryExtras(
 			allowInsecure,
 			operationMetrics,
 			clientMetrics,
+			userAgent,
 		),
 	}
 }

@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, Tooltip, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
@@ -43,12 +43,20 @@ export function SettingsActionButton({ onClick, tooltip }: { onClick: () => void
 
 export const SHOW_COPIED_DURATION_MS = 2000;
 
-export function CopyActionButton({ onClick, isRepeated }: { onClick: () => void; isRepeated?: boolean }) {
+export function CopyActionButton({
+  onClick,
+  disabled,
+  disabledTooltip,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  disabledTooltip?: string;
+}) {
   const styles = useStyles2(getActionStyles);
   const [copied, setCopied] = useState(false);
-  const tooltip = isRepeated
-    ? t('dashboard-scene.control-edit-actions.copied-tooltip-disabled', "Repeated panels can't be copied individually")
-    : t('dashboard-scene.control-edit-actions.copy-clipboard-tooltip', 'Copy to clipboard');
+  const tooltip =
+    (disabled && disabledTooltip) ||
+    t('dashboard-scene.control-edit-actions.copy-clipboard-tooltip', 'Copy to clipboard');
 
   useEffect(() => {
     if (!copied) {
@@ -74,21 +82,25 @@ export function CopyActionButton({ onClick, isRepeated }: { onClick: () => void;
           onClick();
           setCopied(true);
         }}
-        disabled={isRepeated}
+        disabled={disabled}
       />
     </Tooltip>
   );
 }
 
-export function DuplicateActionButton({ onClick, isRepeated }: { onClick: () => void; isRepeated?: boolean }) {
+export function DuplicateActionButton({
+  onClick,
+  disabled,
+  disabledTooltip,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  disabledTooltip?: string;
+}) {
   const styles = useStyles2(getActionStyles);
 
-  const tooltip = isRepeated
-    ? t(
-        'dashboard-scene.control-edit-actions.duplicate-tooltip-disabled',
-        "Repeated panels can't be duplicated individually"
-      )
-    : t('dashboard-scene.control-edit-actions.duplicate-tooltip', 'Duplicate');
+  const tooltip =
+    (disabled && disabledTooltip) || t('dashboard-scene.control-edit-actions.duplicate-tooltip', 'Duplicate');
 
   return (
     <IconButton
@@ -100,7 +112,7 @@ export function DuplicateActionButton({ onClick, isRepeated }: { onClick: () => 
       aria-label={tooltip}
       tooltip={tooltip}
       tooltipPlacement="top"
-      disabled={isRepeated}
+      disabled={disabled}
     />
   );
 }
@@ -110,15 +122,17 @@ export function DeleteActionButton({
   text,
   yesText,
   onConfirm,
-  isRepeated,
-  tooltip: tooltipOverride,
+  tooltip,
+  disabled,
+  disabledTooltip,
 }: {
   title: string;
   text: string;
   yesText: string;
   onConfirm: () => void;
-  isRepeated?: boolean;
   tooltip?: string;
+  disabled?: boolean;
+  disabledTooltip?: string;
 }) {
   const styles = useStyles2(getActionStyles);
   const { closePopover } = useEditActionsPopover();
@@ -135,14 +149,8 @@ export function DeleteActionButton({
     );
   }, [closePopover, title, text, yesText, onConfirm]);
 
-  const tooltip =
-    tooltipOverride ??
-    (isRepeated
-      ? t(
-          'dashboard-scene.control-edit-actions.delete-tooltip-disabled',
-          "Repeated panels can't be deleted individually"
-        )
-      : t('dashboard-scene.control-edit-actions.delete-tooltip', 'Delete'));
+  tooltip =
+    tooltip ?? ((disabled && disabledTooltip) || t('dashboard-scene.control-edit-actions.delete-tooltip', 'Delete'));
 
   return (
     <IconButton
@@ -154,7 +162,37 @@ export function DeleteActionButton({
       aria-label={tooltip}
       tooltip={tooltip}
       tooltipPlacement="top"
-      disabled={isRepeated}
+      disabled={disabled}
+    />
+  );
+}
+
+export function GroupActionButton({
+  icon,
+  label,
+  tooltip,
+  disabled,
+  onClick,
+}: {
+  icon: IconName;
+  label: string;
+  tooltip?: string;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  const styles = useStyles2(getActionStyles);
+
+  return (
+    <IconButton
+      name={icon}
+      variant="secondary"
+      size="md"
+      className={styles.action}
+      aria-label={label}
+      tooltip={tooltip ?? label}
+      tooltipPlacement="top"
+      disabled={disabled}
+      onClick={onClick}
     />
   );
 }
@@ -168,7 +206,7 @@ export const getActionStyles = (theme: GrafanaTheme2) => ({
         duration: theme.transitions.duration.short,
       }),
     },
-    '&:hover, &:focus': {
+    '&:not(:disabled):not([aria-disabled="true"]):hover, &:not(:disabled):not([aria-disabled="true"]):focus': {
       color: theme.colors.text.maxContrast,
       background: 'transparent',
     },
@@ -182,7 +220,7 @@ export const getActionStyles = (theme: GrafanaTheme2) => ({
     fontWeight: theme.typography.fontWeightRegular,
   }),
   deleteAction: css({
-    '&:hover': {
+    '&:not(:disabled):not([aria-disabled="true"]):hover': {
       color: theme.colors.error.text,
     },
   }),
