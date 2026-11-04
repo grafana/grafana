@@ -53,10 +53,61 @@ func (DashboardPreferencesPanelDefaults) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPreferencesPanelDefaults"
 }
 
+// A field of DashboardDefaults or PanelDefaults, by its path from the spec. timeRange is one field
+// because from and to are set together.
+// +k8s:openapi-gen=true
+type DashboardPreferencesResetPath string
+
+const (
+	DashboardPreferencesResetPathDashboardPreload                 DashboardPreferencesResetPath = "dashboard.preload"
+	DashboardPreferencesResetPathDashboardAutoRefresh             DashboardPreferencesResetPath = "dashboard.autoRefresh"
+	DashboardPreferencesResetPathDashboardAutoRefreshIntervals    DashboardPreferencesResetPath = "dashboard.autoRefreshIntervals"
+	DashboardPreferencesResetPathDashboardTimeRange               DashboardPreferencesResetPath = "dashboard.timeRange"
+	DashboardPreferencesResetPathDashboardFiscalYearStartMonth    DashboardPreferencesResetPath = "dashboard.fiscalYearStartMonth"
+	DashboardPreferencesResetPathDashboardNowDelay                DashboardPreferencesResetPath = "dashboard.nowDelay"
+	DashboardPreferencesResetPathDashboardHideTimepicker          DashboardPreferencesResetPath = "dashboard.hideTimepicker"
+	DashboardPreferencesResetPathDashboardCursorSync              DashboardPreferencesResetPath = "dashboard.cursorSync"
+	DashboardPreferencesResetPathDashboardLayout                  DashboardPreferencesResetPath = "dashboard.layout"
+	DashboardPreferencesResetPathDashboardAutoGridMaxColumnCount  DashboardPreferencesResetPath = "dashboard.autoGrid.maxColumnCount"
+	DashboardPreferencesResetPathDashboardAutoGridColumnWidthMode DashboardPreferencesResetPath = "dashboard.autoGrid.columnWidthMode"
+	DashboardPreferencesResetPathDashboardAutoGridColumnWidth     DashboardPreferencesResetPath = "dashboard.autoGrid.columnWidth"
+	DashboardPreferencesResetPathDashboardAutoGridRowHeightMode   DashboardPreferencesResetPath = "dashboard.autoGrid.rowHeightMode"
+	DashboardPreferencesResetPathDashboardAutoGridRowHeight       DashboardPreferencesResetPath = "dashboard.autoGrid.rowHeight"
+	DashboardPreferencesResetPathDashboardAutoGridFillScreen      DashboardPreferencesResetPath = "dashboard.autoGrid.fillScreen"
+	DashboardPreferencesResetPathPanelsLegendShowLegend           DashboardPreferencesResetPath = "panels.legend.showLegend"
+	DashboardPreferencesResetPathPanelsLegendPlacement            DashboardPreferencesResetPath = "panels.legend.placement"
+	DashboardPreferencesResetPathPanelsLegendDisplayMode          DashboardPreferencesResetPath = "panels.legend.displayMode"
+	DashboardPreferencesResetPathPanelsTooltipMode                DashboardPreferencesResetPath = "panels.tooltip.mode"
+	DashboardPreferencesResetPathPanelsTooltipSort                DashboardPreferencesResetPath = "panels.tooltip.sort"
+	DashboardPreferencesResetPathPanelsTooltipHideZeros           DashboardPreferencesResetPath = "panels.tooltip.hideZeros"
+	DashboardPreferencesResetPathPanelsAxisAxisPlacement          DashboardPreferencesResetPath = "panels.axis.axisPlacement"
+	DashboardPreferencesResetPathPanelsAxisAxisGridShow           DashboardPreferencesResetPath = "panels.axis.axisGridShow"
+	DashboardPreferencesResetPathPanelsAxisAxisBorderShow         DashboardPreferencesResetPath = "panels.axis.axisBorderShow"
+	DashboardPreferencesResetPathPanelsAxisAxisCenteredZero       DashboardPreferencesResetPath = "panels.axis.axisCenteredZero"
+	DashboardPreferencesResetPathPanelsAxisScale                  DashboardPreferencesResetPath = "panels.axis.scale"
+	DashboardPreferencesResetPathPanelsGraphLineInterpolation     DashboardPreferencesResetPath = "panels.graph.lineInterpolation"
+	DashboardPreferencesResetPathPanelsGraphLineWidth             DashboardPreferencesResetPath = "panels.graph.lineWidth"
+	DashboardPreferencesResetPathPanelsGraphFillOpacity           DashboardPreferencesResetPath = "panels.graph.fillOpacity"
+	DashboardPreferencesResetPathPanelsGraphGradientMode          DashboardPreferencesResetPath = "panels.graph.gradientMode"
+	DashboardPreferencesResetPathPanelsGraphShowPoints            DashboardPreferencesResetPath = "panels.graph.showPoints"
+	DashboardPreferencesResetPathPanelsGraphPointSize             DashboardPreferencesResetPath = "panels.graph.pointSize"
+	DashboardPreferencesResetPathPanelsFieldDecimals              DashboardPreferencesResetPath = "panels.field.decimals"
+	DashboardPreferencesResetPathPanelsFrameTransparent           DashboardPreferencesResetPath = "panels.frame.transparent"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardPreferencesResetPath.
+func (DashboardPreferencesResetPath) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPreferencesResetPath"
+}
+
 // +k8s:openapi-gen=true
 type DashboardPreferencesSpec struct {
 	Dashboard *DashboardPreferencesDashboardDefaults `json:"dashboard,omitempty"`
 	Panels    *DashboardPreferencesPanelDefaults     `json:"panels,omitempty"`
+	// Fields that use Grafana's built-in default at this tier instead of inheriting from the next tier.
+	// A built-in default can't always be written as a value: decimals defaults to auto, and panel
+	// defaults differ by plugin. A field must not be both set and reset in one tier, or listed twice.
+	Reset []DashboardPreferencesResetPath `json:"reset,omitempty"`
 }
 
 // NewDashboardPreferencesSpec creates a new DashboardPreferencesSpec object.

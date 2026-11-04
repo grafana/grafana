@@ -7,13 +7,55 @@ import (
 
 // Nothing here has a CUE default or references dashboard_spec.cue or the shared viz types, because
 // the generated Go New*() and TS default*() constructors would write those defaults into new objects.
-// Every member is optional, so a merge-patch sets or clears one leaf at a time.
+// Every member is optional, so a merge-patch sets or clears one leaf at a time. reset is the exception:
+// a merge-patch replaces the whole list.
 
 // Defaults for new dashboards and panels at one tier: org, folder or user. Every field is optional; an absent field inherits from the next tier.
 DashboardPreferencesSpec: {
 	dashboard?: DashboardDefaults
 	panels?:    PanelDefaults
+	// Fields that use Grafana's built-in default at this tier instead of inheriting from the next tier.
+	// A built-in default can't always be written as a value: decimals defaults to auto, and panel
+	// defaults differ by plugin. A field must not be both set and reset in one tier, or listed twice.
+	reset?: [...ResetPath] & list.MaxItems(64)
 }
+
+// A field of DashboardDefaults or PanelDefaults, by its path from the spec. timeRange is one field
+// because from and to are set together.
+ResetPath: "dashboard.preload" |
+	"dashboard.autoRefresh" |
+	"dashboard.autoRefreshIntervals" |
+	"dashboard.timeRange" |
+	"dashboard.fiscalYearStartMonth" |
+	"dashboard.nowDelay" |
+	"dashboard.hideTimepicker" |
+	"dashboard.cursorSync" |
+	"dashboard.layout" |
+	"dashboard.autoGrid.maxColumnCount" |
+	"dashboard.autoGrid.columnWidthMode" |
+	"dashboard.autoGrid.columnWidth" |
+	"dashboard.autoGrid.rowHeightMode" |
+	"dashboard.autoGrid.rowHeight" |
+	"dashboard.autoGrid.fillScreen" |
+	"panels.legend.showLegend" |
+	"panels.legend.placement" |
+	"panels.legend.displayMode" |
+	"panels.tooltip.mode" |
+	"panels.tooltip.sort" |
+	"panels.tooltip.hideZeros" |
+	"panels.axis.axisPlacement" |
+	"panels.axis.axisGridShow" |
+	"panels.axis.axisBorderShow" |
+	"panels.axis.axisCenteredZero" |
+	"panels.axis.scale" |
+	"panels.graph.lineInterpolation" |
+	"panels.graph.lineWidth" |
+	"panels.graph.fillOpacity" |
+	"panels.graph.gradientMode" |
+	"panels.graph.showPoints" |
+	"panels.graph.pointSize" |
+	"panels.field.decimals" |
+	"panels.frame.transparent"
 
 DashboardDefaults: {
 	preload?: bool

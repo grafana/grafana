@@ -3743,6 +3743,20 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesSpec(ref common.Refer
 							Ref: ref(DashboardPreferencesPanelDefaults{}.OpenAPIModelName()),
 						},
 					},
+					"reset": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Fields that use Grafana's built-in default at this tier instead of inheriting from the next tier. A built-in default can't always be written as a value: decimals defaults to auto, and panel defaults differ by plugin. A field must not be both set and reset in one tier, or listed twice.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},

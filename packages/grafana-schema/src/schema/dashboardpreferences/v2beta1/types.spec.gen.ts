@@ -75,9 +75,21 @@ export interface PanelDefaults {
 export const defaultPanelDefaults = (): PanelDefaults => ({
 });
 
+/**
+ * A field of DashboardDefaults or PanelDefaults, by its path from the spec. timeRange is one field
+ * because from and to are set together.
+ */
+export type ResetPath = "dashboard.preload" | "dashboard.autoRefresh" | "dashboard.autoRefreshIntervals" | "dashboard.timeRange" | "dashboard.fiscalYearStartMonth" | "dashboard.nowDelay" | "dashboard.hideTimepicker" | "dashboard.cursorSync" | "dashboard.layout" | "dashboard.autoGrid.maxColumnCount" | "dashboard.autoGrid.columnWidthMode" | "dashboard.autoGrid.columnWidth" | "dashboard.autoGrid.rowHeightMode" | "dashboard.autoGrid.rowHeight" | "dashboard.autoGrid.fillScreen" | "panels.legend.showLegend" | "panels.legend.placement" | "panels.legend.displayMode" | "panels.tooltip.mode" | "panels.tooltip.sort" | "panels.tooltip.hideZeros" | "panels.axis.axisPlacement" | "panels.axis.axisGridShow" | "panels.axis.axisBorderShow" | "panels.axis.axisCenteredZero" | "panels.axis.scale" | "panels.graph.lineInterpolation" | "panels.graph.lineWidth" | "panels.graph.fillOpacity" | "panels.graph.gradientMode" | "panels.graph.showPoints" | "panels.graph.pointSize" | "panels.field.decimals" | "panels.frame.transparent";
+
+export const defaultResetPath = (): ResetPath => ("dashboard.preload");
+
 export interface Spec {
 	dashboard?: DashboardDefaults;
 	panels?: PanelDefaults;
+	// Fields that use Grafana's built-in default at this tier instead of inheriting from the next tier.
+	// A built-in default can't always be written as a value: decimals defaults to auto, and panel
+	// defaults differ by plugin. A field must not be both set and reset in one tier, or listed twice.
+	reset?: ResetPath[];
 }
 
 export const defaultSpec = (): Spec => ({

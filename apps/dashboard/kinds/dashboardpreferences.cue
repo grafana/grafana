@@ -12,7 +12,8 @@ dashboardPreferencesV2beta1: {
 	// - one object per tier; metadata.name identifies the tier:
 	//   org "namespace", folder "folder-<folderUID>", user "user-<userUID>"
 	// - a folder tier object also carries metadata.annotations["grafana.app/folder"], which must match its name
-	// - an absent spec field means "inherit from the next tier"
+	// - an absent spec field means "inherit from the next tier"; a field listed in spec.reset means "use
+	//   Grafana's built-in default"
 	// List returns only the caller's own objects. The generic list-keys, search and trash routes
 	// cannot apply that filtering, so the kind serves none of them.
 	listKeys: false
