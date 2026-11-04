@@ -58,7 +58,14 @@ type ExtensionV1 struct {
 	Type             string `json:"type"`
 }
 
+// Skill declares a Markdown instruction package bundled with the plugin.
+// Its identity is the plugin-local key in Extensions.Skills, independent of its path.
+type Skill struct {
+	Path string `json:"path"`
+}
+
 type ExtensionsV2 struct {
+	Skills            map[string]Skill   `json:"skills,omitempty"`
 	AddedLinks        []AddedLink        `json:"addedLinks"`
 	AddedComponents   []AddedComponent   `json:"addedComponents"`
 	ExposedComponents []ExposedComponent `json:"exposedComponents"`
@@ -78,6 +85,7 @@ func (e *Extensions) UnmarshalJSON(data []byte) error {
 		e.ExposedComponents = extensionsV2.ExposedComponents
 		e.ExtensionPoints = extensionsV2.ExtensionPoints
 		e.AddedFunctions = extensionsV2.AddedFunctions
+		e.Skills = extensionsV2.Skills
 
 		return nil
 	}

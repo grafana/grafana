@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/fs"
 	"path"
+	"regexp"
 	"runtime"
 	"strings"
 	"sync"
@@ -198,9 +199,20 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 	return plugin, nil
 }
 
+var skillSlugPattern = regexp.MustCompile(`^[a-z][a-z0-9-]{0,63}$`)
+var skillPathPattern = regexp.MustCompile(`^[A-Za-z0-9_-][A-Za-z0-9._/-]*\.md$`)
+
 func validatePluginJSON(data JSONData) error {
 	if data.ID == "" || !data.Type.IsValid() {
 		return ErrInvalidPluginJSON
+	}
+	for slug, skill := range data.Extensions.Skills {
+		if !skillSlugPattern.MatchString(slug) {
+			return fmt.Errorf("%w: invalid skill slug %q", ErrInvalidPluginJSON, slug)
+		}
+		if len(skill.Path) > 1024 || !fs.ValidPath(skill.Path) || !skillPathPattern.MatchString(skill.Path) {
+			return fmt.Errorf("%w: skill %q must reference a package-relative Markdown path", ErrInvalidPluginJSON, slug)
+		}
 	}
 	return nil
 }

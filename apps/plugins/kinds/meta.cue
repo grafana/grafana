@@ -236,6 +236,9 @@ metaV0Alpha1: {
 }
 
 #Extensions: {
+	// Bundled Markdown skills keyed by plugin-local slug.
+	skills?: [string]: {path: string}
+
 	// +listType=atomic
 	addedComponents?: [...{
 		// +listType=set

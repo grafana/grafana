@@ -1747,6 +1747,22 @@
               },
               "additionalProperties": false
             }
+          },
+          "skills": {
+            "additionalProperties": {
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path"
+              ],
+              "type": "object"
+            },
+            "description": "Bundled Markdown skills keyed by plugin-local slug.",
+            "type": "object"
           }
         },
         "additionalProperties": false
