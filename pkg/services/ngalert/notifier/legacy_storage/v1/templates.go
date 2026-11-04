@@ -9,9 +9,11 @@ import (
 
 	"github.com/grafana/alerting/definition"
 	"github.com/grafana/alerting/notify"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
 type TemplateGroup struct {
@@ -147,6 +149,24 @@ func TemplatesToManagedTemplates(templates map[ResourceUID]TemplateGroup) map[st
 		}
 	}
 	return out
+}
+
+// ValidateTemplateUID validates a template UID: non-empty, no ':', a valid DNS-1123 subdomain, and not longer than
+// ualert.UIDMaxLength. Mirrors ValidateTimeIntervalUID.
+func ValidateTemplateUID(uid string) error {
+	if strings.TrimSpace(uid) == "" {
+		return fmt.Errorf("template uid is required")
+	}
+	if strings.Contains(uid, ":") {
+		return fmt.Errorf("template uid cannot contain invalid character ':'")
+	}
+	if len(uid) > ualert.UIDMaxLength {
+		return fmt.Errorf("template uid cannot be longer than %d characters", ualert.UIDMaxLength)
+	}
+	if errs := k8svalidation.IsDNS1123Subdomain(uid); len(errs) > 0 {
+		return fmt.Errorf("template uid must be a valid DNS subdomain: %s", strings.Join(errs, ", "))
+	}
+	return nil
 }
 
 // TemplateUID generates a deterministic UID for a template based on its name.
