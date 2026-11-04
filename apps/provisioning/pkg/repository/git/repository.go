@@ -28,6 +28,9 @@ import (
 	"github.com/grafana/nanogit/retry"
 )
 
+// userAgent identifies Grafana to the Git server. The nanogit default ("nanogit/0") is rejected by github.com.
+const userAgent = "grafana-provisioning"
+
 type RepositoryConfig struct {
 	URL       string
 	Branch    string
@@ -48,7 +51,7 @@ func NewRepository(
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
 ) (GitRepository, error) {
-	var opts []options.Option
+	opts := []options.Option{options.WithUserAgent(userAgent)}
 	if !gitConfig.Token.IsZero() {
 		tokenUser := gitConfig.TokenUser
 		if tokenUser == "" {
