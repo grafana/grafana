@@ -134,6 +134,23 @@ func (t *TemplateService) GetTemplate(ctx context.Context, orgID int64, nameOrUi
 	return v1.TemplateGroup{}, ErrTemplateNotFound.Errorf("")
 }
 
+// GetTemplateByUID returns the template with the given UID. Unlike GetTemplate, a template with that title is not
+// taken for it.
+func (t *TemplateService) GetTemplateByUID(ctx context.Context, orgID int64, uid string) (v1.TemplateGroup, error) {
+	revision, err := t.configStore.Get(ctx, orgID)
+	if err != nil {
+		return v1.TemplateGroup{}, err
+	}
+	result, found, err := t.getTemplateByUID(ctx, revision, orgID, uid)
+	if err != nil {
+		return v1.TemplateGroup{}, err
+	}
+	if !found {
+		return v1.TemplateGroup{}, ErrTemplateNotFound.Errorf("")
+	}
+	return result, nil
+}
+
 // UpsertTemplate is used by the legacy provisioning API and matches by Name/Title only as the legacy provisioning API
 // does not support UIDs.
 func (t *TemplateService) UpsertTemplate(ctx context.Context, orgID int64, tmpl v1.TemplateGroup) (v1.TemplateGroup, error) {
@@ -298,18 +315,31 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 	return updated, nil
 }
 
+// DeleteTemplate deletes the template with the given name, or if there is none, with the given UID.
 func (t *TemplateService) DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance models.Provenance, version string) error {
+	return t.deleteTemplate(ctx, orgID, provenance, version, func(revision *legacy_storage.ConfigRevision) (v1.TemplateGroup, bool, error) {
+		existing, found, err := t.getTemplateByName(ctx, revision, orgID, nameOrUid)
+		if err != nil || found {
+			return existing, found, err
+		}
+		return t.getTemplateByUID(ctx, revision, orgID, nameOrUid)
+	})
+}
+
+// DeleteTemplateByUID deletes the template with the given UID. Unlike DeleteTemplate, a template with that title is
+// not taken for it.
+func (t *TemplateService) DeleteTemplateByUID(ctx context.Context, orgID int64, uid string, provenance models.Provenance, version string) error {
+	return t.deleteTemplate(ctx, orgID, provenance, version, func(revision *legacy_storage.ConfigRevision) (v1.TemplateGroup, bool, error) {
+		return t.getTemplateByUID(ctx, revision, orgID, uid)
+	})
+}
+
+func (t *TemplateService) deleteTemplate(ctx context.Context, orgID int64, provenance models.Provenance, version string, find func(*legacy_storage.ConfigRevision) (v1.TemplateGroup, bool, error)) error {
 	revision, err := t.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
 	}
-	existing, found, err := t.getTemplateByName(ctx, revision, orgID, nameOrUid)
-	if err != nil {
-		return err
-	}
-	if !found {
-		existing, found, err = t.getTemplateByUID(ctx, revision, orgID, nameOrUid)
-	}
+	existing, found, err := find(revision)
 	if err != nil {
 		return err
 	}

@@ -1852,3 +1852,67 @@ func TestTemplateServiceWithUIDsNotDerivedFromTitles(t *testing.T) {
 		assert.Empty(t, savedTemplates(t, store))
 	})
 }
+
+// Addressing a template by UID only never takes the title of another template for it, unlike addressing it by name or UID.
+func TestTemplateServiceByUID(t *testing.T) {
+	orgID := int64(1)
+	amConfigToken := util.GenerateShortUID()
+	const uid = v1.ResourceUID("template-uid")
+	target := v1.NewTemplateGroup(uid, "target", "{{ define \"target\"}} test {{ end }}", v1.TemplateKindGrafana, models.ProvenanceNone)
+	// This template has the UID of the target as its title.
+	decoy := v1.NewTemplateGroup("decoy-uid", string(uid), "{{ define \"decoy\"}} test {{ end }}", v1.TemplateKindGrafana, models.ProvenanceNone)
+	newSut := func(t *testing.T) (*TemplateService, *legacy_storage.AlertmanagerConfigStoreFake, *MockProvisioningStore) {
+		sut, store, prov := createTemplateServiceSut()
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return &legacy_storage.ConfigRevision{
+				Config: &v1.AMConfigV1{
+					Templates: map[v1.ResourceUID]v1.TemplateGroup{target.UID: target, decoy.UID: decoy},
+				},
+				ConcurrencyToken: amConfigToken,
+			}, nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
+		prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+		return sut, store, prov
+	}
+
+	t.Run("gets the template with the UID", func(t *testing.T) {
+		sut, _, _ := newSut(t)
+
+		byName, err := sut.GetTemplate(context.Background(), orgID, string(uid))
+		require.NoError(t, err)
+		require.Equal(t, decoy.UID, byName.UID, "by name, the title is looked at first")
+
+		byUID, err := sut.GetTemplateByUID(context.Background(), orgID, string(uid))
+		require.NoError(t, err)
+		assert.Equal(t, target.UID, byUID.UID)
+	})
+
+	t.Run("does not get a template by its title", func(t *testing.T) {
+		sut, _, _ := newSut(t)
+
+		_, err := sut.GetTemplateByUID(context.Background(), orgID, target.Title)
+
+		require.ErrorIs(t, err, ErrTemplateNotFound)
+	})
+
+	t.Run("deletes the template with the UID", func(t *testing.T) {
+		sut, store, _ := newSut(t)
+
+		err := sut.DeleteTemplateByUID(context.Background(), orgID, string(uid), models.ProvenanceNone, "")
+
+		require.NoError(t, err)
+		saved := store.Calls[len(store.Calls)-1].Args[1].(*legacy_storage.ConfigRevision).Config.Templates
+		assert.NotContains(t, saved, target.UID)
+		assert.Contains(t, saved, decoy.UID)
+	})
+
+	t.Run("does not delete a template by its title", func(t *testing.T) {
+		sut, store, _ := newSut(t)
+
+		err := sut.DeleteTemplateByUID(context.Background(), orgID, target.Title, models.ProvenanceNone, "")
+
+		require.NoError(t, err)
+		require.Len(t, store.Calls, 1, "nothing is saved as there is nothing to delete")
+	})
+}
