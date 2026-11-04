@@ -1138,6 +1138,10 @@ func TestIntegrationRBACParityRoleManagement(t *testing.T) {
 			{"roles:read", map[string]bool{utils.VerbGet: true, utils.VerbList: true, utils.VerbWatch: true}},
 			{"roles:delete", map[string]bool{utils.VerbDelete: true, utils.VerbDeleteCollection: true}},
 		} {
+			// IAM validation rejects delegate scopes on read actions.
+			if scope.kind == "permissions" && permission.action == "roles:read" {
+				continue
+			}
 			t.Run(scope.scope+"/"+permission.action, func(t *testing.T) {
 				srv := setupOpenFGAServer(t)
 				setupOpenFGADatabase(t, srv, zanzana.RoleManagementToTuples(paritySubject, zanzana.RolePermission{

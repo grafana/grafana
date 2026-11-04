@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -108,6 +109,24 @@ const (
 const dropLogInterval = 10 * time.Second
 
 var dropReasons = []string{dropReasonBufferFull, dropReasonUnmarshalError, dropReasonUnknownType}
+
+// NewNatsNotifierDroppedMetric registers the counter of notifications a NATS
+// notifier dropped.
+func NewNatsNotifierDroppedMetric(reg prometheus.Registerer) *prometheus.CounterVec {
+	return promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+		Name: "grafana_storage_server_nats_notifier_dropped_events_total",
+		Help: "Notifications dropped by the NATS notifier before delivery, by reason (unmarshal_error, unknown_type, buffer_full).",
+	}, []string{"reason"})
+}
+
+// NewNatsNotifier lets other backends reuse the NATS notifier's subscription,
+// decoding and settling. Events carry no body; the backend reads it from its
+// own storage. The invalidator is called when this notifier's watches may have
+// missed notifications and must not block. Register dropped once, with
+// NewNatsNotifierDroppedMetric, and share it across notifiers.
+func NewNatsNotifier(subscriber EventSubscriber, invalidator Invalidator, dropped *prometheus.CounterVec, log logging.Logger) EventWatcher {
+	return newNatsNotifier(subscriber, invalidator, dropped, log)
+}
 
 func newNatsNotifier(subscriber EventSubscriber, invalidator Invalidator, dropped *prometheus.CounterVec, logger logging.Logger) *natsNotifier {
 	if dropped != nil {

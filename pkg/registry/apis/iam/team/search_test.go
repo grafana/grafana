@@ -42,7 +42,7 @@ func TestSearchErrorStatus(t *testing.T) {
 	st, err := status.New(codes.ResourceExhausted, "search is busy").WithDetails(failure)
 	require.NoError(t, err)
 	for name, client := range map[string]*MockClient{
-		"embedded":  {MockResponses: []*resourcepb.ResourceSearchResponse{{Error: failure}}},
+		"detailed":  {MockError: st.Err()},
 		"transport": {MockError: fmt.Errorf("search: %w", st.Err())},
 		"plain":     {MockError: fmt.Errorf("private database failure")},
 		"internal":  {MockError: status.Error(codes.Internal, "private database failure")},
