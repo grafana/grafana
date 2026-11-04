@@ -20,9 +20,9 @@ func TestValidateNoOwnedFoldersErrorStatus(t *testing.T) {
 		resp *resourcepb.ResourceSearchResponse
 		err  error
 	}{
-		"embedded": {resp: &resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{
+		"detailed": {err: resource.GRPCStatusError(&resourcepb.ErrorResult{
 			Code: http.StatusServiceUnavailable, Message: "search unavailable",
-		}}},
+		})},
 		"transport": {err: fmt.Errorf("search: %w", status.Error(codes.Unavailable, "search unavailable"))},
 	} {
 		t.Run(name, func(t *testing.T) {
