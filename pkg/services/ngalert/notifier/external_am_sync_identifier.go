@@ -31,6 +31,9 @@ type syncTarget struct {
 	identifier string
 	// syncSucceeded is whether Config.status already reports a successful sync for this uid and origin.
 	syncSucceeded bool
+	// identifierUnknown is set when the Config read failed. No identifier was seen, which is not the
+	// same as none recorded. Choosing a name now could clash with the one already in use.
+	identifierUnknown bool
 }
 
 // identifierOrUID returns the recorded identifier, falling back to the datasource UID for syncs that
@@ -50,10 +53,10 @@ func (s *ExternalAMSyncer) resolveSyncTarget(ctx context.Context, orgID int64) (
 
 	cfg, err := s.getConfig(ctx, orgID)
 	if err != nil {
-		// The ini override doesn't need the Config resource, so sync still runs without it. It just
-		// can't see a recorded identifier, so it falls back to the UID like before.
+		// The ini override gives the data source without the Config. The recorded identifier lives
+		// in the Config, so callers must not act on one they cannot see.
 		if iniUID != "" {
-			return syncTarget{uid: iniUID, origin: originIni}, nil
+			return syncTarget{uid: iniUID, origin: originIni, identifierUnknown: true}, nil
 		}
 		return syncTarget{}, err
 	}
@@ -125,6 +128,11 @@ func reportsSyncSucceeded(status *alertingnotifv1beta1.ConfigStatus, uid string,
 func (s *ExternalAMSyncer) ensureSyncIdentifier(ctx context.Context, orgID int64, target syncTarget) (string, error) {
 	if target.identifier != "" {
 		return target.identifier, nil
+	}
+	if target.identifierUnknown {
+		// A name may be recorded and imported under already. Choosing one now, for example after a
+		// rename, could stage a second import. Wait until the Config can be read.
+		return "", &SyncError{Reason: ReasonConfigRead, Cause: fmt.Errorf("recorded sync identifier unavailable")}
 	}
 
 	raw, err := s.configReader.GetLatestAlertmanagerConfiguration(ctx, orgID)

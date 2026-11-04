@@ -320,7 +320,7 @@ func TestResolveSyncTarget_IniOverrideWorksWithoutTheConfigResource(t *testing.T
 
 	target, err := s.resolveSyncTarget(context.Background(), 1)
 	require.NoError(t, err)
-	assert.Equal(t, syncTarget{uid: "operator-uid", origin: originIni}, target)
+	assert.Equal(t, syncTarget{uid: "operator-uid", origin: originIni, identifierUnknown: true}, target)
 	assert.Equal(t, "operator-uid", target.identifierOrUID())
 }
 
@@ -386,6 +386,96 @@ func TestDeleteExtraConfiguration_NameBasedSyncImport(t *testing.T) {
 		require.NoError(t, err)
 		require.Empty(t, gettable.ExtraConfigs)
 	})
+}
+
+func TestSyncExternalAMs_RecordedIdentifierUnavailable(t *testing.T) {
+	ctx := context.Background()
+	signedIn := &user.SignedInUser{}
+	const syncedConfig = "route:\n  receiver: first\nreceivers:\n  - name: first"
+
+	// The ini override still gives the data source while the Config, which holds the recorded
+	// identifier, cannot be read.
+	setup := func(t *testing.T) (*MultiOrgAlertmanager, *fakeConfigClient, *datasources.DataSource, *fakeDatasourceProxy) {
+		proxy := singleAMProxy(t, "ds-1", syncedConfig)
+		ds := namedMimirDS("ds-1", "Mimir Prod", 1)
+		dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
+		adminCfg := newFakeConfigClient()
+		adminCfg.setUID(1, "ds-1")
+		moa, _ := buildSyncTestMOA(t, adminCfg, dsSvc, true, "ds-1", []int64{1}, proxy)
+		return moa, adminCfg, ds, proxy
+	}
+	stagedIdentifiers := func(t *testing.T, moa *MultiOrgAlertmanager) []string {
+		gettable, err := moa.GetAlertmanagerConfiguration(ctx, 1, false)
+		require.NoError(t, err)
+		ids := make([]string, 0, len(gettable.ExtraConfigs))
+		for _, ec := range gettable.ExtraConfigs {
+			ids = append(ids, ec.Identifier)
+		}
+		return ids
+	}
+
+	t.Run("deleting a name-based sync import is refused", func(t *testing.T) {
+		moa, adminCfg, _, _ := setup(t)
+		moa.SyncAlertmanagersForOrgs(ctx, []int64{1})
+		require.Equal(t, []string{"mimir-prod"}, stagedIdentifiers(t, moa))
+
+		adminCfg.setErr(1, fmt.Errorf("storage unavailable"))
+		err := moa.DeleteExtraConfiguration(ctx, 1, signedIn, noopExtraConfigAuthz{}, "mimir-prod")
+		require.ErrorContains(t, err, "resolve external alertmanager sync identifier")
+		adminCfg.setErr(1, nil)
+		require.Equal(t, []string{"mimir-prod"}, stagedIdentifiers(t, moa))
+	})
+
+	t.Run("deleting a manual import still works", func(t *testing.T) {
+		moa, adminCfg, _, _ := setup(t)
+		manual := v1.ExtraConfiguration{Identifier: "manual-import", AlertmanagerConfig: "route:\n  receiver: m\nreceivers:\n  - name: m"}
+		_, err := moa.SaveAndApplyExtraConfiguration(ctx, 1, signedIn, noopExtraConfigAuthz{}, manual, false, false, false)
+		require.NoError(t, err)
+
+		adminCfg.setErr(1, fmt.Errorf("storage unavailable"))
+		require.NoError(t, moa.DeleteExtraConfiguration(ctx, 1, signedIn, noopExtraConfigAuthz{}, "manual-import"))
+	})
+
+	t.Run("sync keeps its name through the outage and recovers after it", func(t *testing.T) {
+		moa, adminCfg, ds, proxy := setup(t)
+		moa.SyncAlertmanagersForOrgs(ctx, []int64{1})
+		require.Equal(t, []string{"mimir-prod"}, stagedIdentifiers(t, moa))
+
+		// A rename during the outage would otherwise lead to a second name.
+		ds.Name = "Mimir Renamed"
+		proxy.setResponse("ds-1", http.StatusOK, mimirConfigBody(t, "route:\n  receiver: second\nreceivers:\n  - name: second"))
+		adminCfg.setErr(1, fmt.Errorf("storage unavailable"))
+		moa.SyncAlertmanagersForOrgs(ctx, []int64{1})
+
+		assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", ReasonConfigRead.Label())))
+		assert.Equal(t, []string{"mimir-prod"}, stagedIdentifiers(t, moa))
+
+		adminCfg.setErr(1, nil)
+		obj, err := adminCfg.lookup("org-1")
+		require.NoError(t, err)
+		assert.Equal(t, "mimir-prod", recordedSyncIdentifier(&obj.Status, "ds-1"), "the recorded name is untouched")
+		moa.SyncAlertmanagersForOrgs(ctx, []int64{1})
+
+		assert.Equal(t, []string{"mimir-prod"}, stagedIdentifiers(t, moa))
+		assert.Zero(t, testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", ReasonIdentifierMismatch.Label())))
+		gettable, err := moa.GetAlertmanagerConfiguration(ctx, 1, false)
+		require.NoError(t, err)
+		assert.Contains(t, gettable.ExtraConfigs[0].AlertmanagerConfig, "second", "the sync resumed saving under the recorded name")
+		assert.Equal(t, "auto-sync", gettable.ExtraConfigs[0].ManagedBy)
+	})
+}
+
+func TestEnsureSyncIdentifier_ChoosesNothingWhileTheRecordedIdentifierIsUnavailable(t *testing.T) {
+	adminCfg := newFakeConfigClient()
+	adminCfg.setUID(1, "ds-1")
+	s := newIdentifierTestSyncer(t, adminCfg, fakeAMConfigReader{raw: validAMConfigBase}, namedMimirDS("ds-1", "Mimir Prod", 1))
+
+	_, err := s.ensureSyncIdentifier(context.Background(), 1, syncTarget{uid: "ds-1", origin: originIni, identifierUnknown: true})
+	require.Error(t, err)
+	assert.Equal(t, ReasonConfigRead, reasonOf(err))
+	obj, lookupErr := adminCfg.lookup("org-1")
+	require.NoError(t, lookupErr)
+	assert.Empty(t, recordedSyncIdentifier(&obj.Status, "ds-1"), "nothing is recorded")
 }
 
 // A sync that started before names were used has an import under the UID and no owner. The sync
