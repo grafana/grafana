@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -56,12 +57,40 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		},
 	}
 
-	t.Run("create should fail if object name is specified", func(t *testing.T) {
+	t.Run("create should fail if object name is not a valid UID", func(t *testing.T) {
+		for _, name := range []string{"Upper_Case", "with:colon", strings.Repeat("a", 41)} {
+			template := newTemplate.Copy().(*v1beta1.TemplateGroup)
+			template.Name = name
+			_, err := client.Create(ctx, template, resource.CreateOptions{})
+			assert.Error(t, err, name)
+			require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest for %q but got %s", name, err)
+		}
+	})
+
+	t.Run("create should fail if object name is the name of the default template", func(t *testing.T) {
 		template := newTemplate.Copy().(*v1beta1.TemplateGroup)
-		template.Name = "new-templateGroup"
+		template.Name = templates.DefaultTemplateName
 		_, err := client.Create(ctx, template, resource.CreateOptions{})
 		assert.Error(t, err)
 		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest but got %s", err)
+	})
+
+	t.Run("create should use the object name that is specified", func(t *testing.T) {
+		template := newTemplate.Copy().(*v1beta1.TemplateGroup)
+		template.Name = "chosen-name"
+		template.Spec.Title = "chosenTemplateGroup"
+		actual, err := client.Create(ctx, template, resource.CreateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "chosen-name", actual.Name)
+
+		t.Run("and fail if it is used by another template", func(t *testing.T) {
+			duplicate := newTemplate.Copy().(*v1beta1.TemplateGroup)
+			duplicate.Name = "chosen-name"
+			duplicate.Spec.Title = "anotherTemplateGroup"
+			_, err := client.Create(ctx, duplicate, resource.CreateOptions{})
+			require.Error(t, err)
+			require.Truef(t, errors.IsConflict(err), "Expected Conflict but got %s", err)
+		})
 	})
 
 	var resourceID resource.Identifier
