@@ -1,5 +1,5 @@
+import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
-import { render, screen } from 'test/test-utils';
 
 import { MARKDOWN_FORMAT_TOOLBAR_TEST_ID, MarkdownFormatToolbar } from './MarkdownFormatToolbar';
 

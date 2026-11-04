@@ -121,14 +121,17 @@ describe('ProviderConfigForm', () => {
   it('should save and enable on form submit', async () => {
     const { user } = setup(<ProviderConfigForm config={emptyConfig} provider={emptyConfig.provider} />);
 
-    await user.type(screen.getByRole('textbox', { name: /Client ID/i }), 'test-client-id');
-    await user.type(screen.getByLabelText(/Client secret/i), 'test-client-secret');
+    await user.click(screen.getByRole('textbox', { name: /Client ID/i }));
+    await user.paste('test-client-id');
+    await user.click(screen.getByLabelText(/Client secret/i));
+    await user.paste('test-client-secret');
     // Type a scope and press enter to select it
     await user.type(screen.getByRole('combobox', { name: /Scopes/i }), 'user:email{enter}');
     await user.click(screen.getByLabelText(/Auto login/i));
 
     await user.click(screen.getByText('User mapping'));
-    await user.type(screen.getByRole('textbox', { name: /Role attribute path/i }), 'new-attribute-path');
+    await user.click(screen.getByRole('textbox', { name: /Role attribute path/i }));
+    await user.paste('new-attribute-path');
     await user.click(screen.getByLabelText(/Role attribute strict mode/i));
     await user.type(screen.getByRole('combobox', { name: /Organization mapping/i }), 'Group A:1:Editor{enter}');
     await user.type(screen.getByRole('combobox', { name: /Organization mapping/i }), 'Group B:2:Admin{enter}');
@@ -183,8 +186,10 @@ describe('ProviderConfigForm', () => {
 
   it('should save on form submit', async () => {
     const { user } = setup(<ProviderConfigForm config={emptyConfig} provider={emptyConfig.provider} />);
-    await user.type(screen.getByRole('textbox', { name: /Client ID/i }), 'test-client-id');
-    await user.type(screen.getByLabelText(/Client secret/i), 'test-client-secret');
+    await user.click(screen.getByRole('textbox', { name: /Client ID/i }));
+    await user.paste('test-client-id');
+    await user.click(screen.getByLabelText(/Client secret/i));
+    await user.paste('test-client-secret');
     // Type a scope and press enter to select it
     await user.type(screen.getByRole('combobox', { name: /Scopes/i }), 'user:email{enter}');
     await user.click(screen.getByLabelText(/Auto login/i));

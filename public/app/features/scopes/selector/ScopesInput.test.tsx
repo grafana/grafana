@@ -1,5 +1,4 @@
-import { screen } from '@testing-library/react';
-import { render } from 'test/test-utils';
+import { render, screen } from '@testing-library/react';
 
 import { ScopesTooltip, type ScopesTooltipProps } from './ScopesInput';
 import { type NodesMap, type ScopesMap, type SelectedScope } from './types';

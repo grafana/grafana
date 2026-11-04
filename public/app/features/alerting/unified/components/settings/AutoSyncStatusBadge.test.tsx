@@ -1,4 +1,4 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen } from '@testing-library/react';
 
 import { type AutoSyncHealth, type AutoSyncState } from '../../utils/autoSync';
 
