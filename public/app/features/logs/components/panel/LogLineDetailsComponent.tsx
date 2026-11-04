@@ -208,7 +208,12 @@ const LogLineDetailsLegacyComponent = memo(
             />
           </LogLineDetailsCollapsible>
 
-          <LogLineDetailsError className={styles.errorContainer} fields={fieldsWithoutLinks} labels={labelsWithLinks} />
+          <LogLineDetailsError
+            className={styles.errorContainer}
+            fields={fieldsWithoutLinks}
+            labels={labelsWithLinks}
+            otelLanguage={log.otelLanguage}
+          />
 
           {trace && (
             <LogLineDetailsCollapsible
