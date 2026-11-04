@@ -175,7 +175,7 @@ To filter column values, follow these steps:
 
      Select **Include missing** to retain empty results, `null`, `NaN`, and other special values.
 
-1. Click **Ok** or **Apply** to add the filters and close the dialog box.
+1. Click **Apply** to add the filters and close the dialog box.
 
 ### Clear column filters
 
