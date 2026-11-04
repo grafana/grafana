@@ -4,7 +4,9 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
+import { plugin as tablePlugin } from 'app/plugins/panel/table/module';
 
+import { changeTitle } from '../../../actions/dashboard/changeTitle';
 import { SaveDashboardDrawer } from '../../../saving/SaveDashboardDrawer';
 import { SaveDashboardForm } from '../../../saving/SaveDashboardForm';
 import { dashboardSceneGraph } from '../../../utils/dashboardSceneGraph';
@@ -223,14 +225,22 @@ describe('promotePanelAdHocChanges', () => {
     expect(dashboard.state.title).toBe('My dashboard');
   });
 
-  it('returns to view mode after saving when the user was not editing', async () => {
+  it('saves the promoted transformations, clears the ad hoc changes and returns to view mode when the user was not editing', async () => {
+    promotionHandler.mockImplementation(tablePlugin.panelInteractions!.interactions[0].promotionHandler);
     const { panel, dashboard } = await buildScene();
 
     await requestPromotion(panel);
     await saveFromDrawer(dashboard);
 
     await waitFor(() => expect(dashboard.state.isEditing).toBe(false));
-    expect(dashboard.state.title).toBe('Promoted');
+    expect(mockSaveDashboard.mock.calls[0][0].dashboard.elements['panel-1'].spec.data.spec.transformations).toEqual([
+      {
+        kind: 'Transformation',
+        group: 'organize',
+        spec: { options: { excludeByName: { hidden: true } } },
+      },
+    ]);
+    expect(getAdHocTransformations(dashboard)).toEqual([]);
   });
 
   it('stays in edit mode after saving when the user was editing', async () => {
@@ -256,15 +266,25 @@ describe('promotePanelAdHocChanges', () => {
     expect(mockSaveDashboard).not.toHaveBeenCalled();
   });
 
-  it('undoes only the promotion and stays in edit mode when cancelled while the user was editing', async () => {
+  it('undoes only the promotion and preserves earlier unsaved edits when cancelled while editing', async () => {
     const { panel, dashboard } = await buildScene({ startEditing: true });
+    act(() => {
+      dashboard.activateSidebar();
+      changeTitle({ source: dashboard, oldValue: 'My dashboard', newValue: 'Unsaved title' });
+    });
+    expect(dashboard.state.title).toBe('Unsaved title');
+    expect(dashboard.state.sidebar.state.undoStack).toHaveLength(1);
 
     await requestPromotion(panel);
+    expect(dashboard.state.title).toBe('Promoted');
     await cancelFromDrawer(dashboard);
 
     expect(dashboard.state.isEditing).toBe(true);
-    expect(dashboard.state.title).toBe('My dashboard');
-    expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
+    expect(dashboard.state.title).toBe('Unsaved title');
+    expect(dashboard.state.sidebar.state.undoStack).toHaveLength(1);
     expect(getAdHocTransformations(dashboard)).toEqual([adHocChange]);
+    await waitFor(() => expect(dashboard.state.isDirty).toBe(true));
+    act(() => dashboard.state.sidebar.undoAction());
+    expect(dashboard.state.title).toBe('My dashboard');
   });
 });
