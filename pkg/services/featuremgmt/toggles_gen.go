@@ -1026,10 +1026,6 @@ const (
 	// Data source query gateway guardrails
 	FlagDatasourcesGatewayGuardrails = "datasources.gatewayGuardrails"
 
-	// FlagDatasourcesQueryGatewaySlimAudit
-	// Only attach query payloads to query gateway audit events when a guardrail fires
-	FlagDatasourcesQueryGatewaySlimAudit = "datasources.queryGatewaySlimAudit"
-
 	// FlagAlertingFolderHasRulesLabel
 	// Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector
 	FlagAlertingFolderHasRulesLabel = "alerting.folderHasRulesLabel"
