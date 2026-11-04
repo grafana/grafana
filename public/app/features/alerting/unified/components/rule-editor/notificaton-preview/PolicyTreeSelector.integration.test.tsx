@@ -316,23 +316,23 @@ describe('PolicyTreeSelector', () => {
       expect(policyTreeUi.policySelector.query()).not.toBeInTheDocument();
     });
 
-    it('fetches the routing tree of the newly selected policy for the notification preview', async () => {
+    it('previews routing through the policy picked after the form loaded', async () => {
       mockPreviewApiResponse(server, [mockAlertmanagerAlert({ labels: { severity: 'critical' } })]);
-      const capture = captureRequests((r) => r.method === 'GET' && r.url.includes('/routingtrees/'));
-      const customPolicyName = 'Managed Policy - Empty Provisioned';
 
       const { user } = renderRuleEditor();
       await user.type(await ui.inputs.name.find(), 'my great new rule');
       await selectFolderAndGroup(user);
+
+      // The default policy's catch-all route sends the alert to provisioned-contact-point
+      await user.click(screen.getByRole('button', { name: /preview routing/i }));
+      expect(await screen.findByText(/delivered to provisioned-contact-point/i)).toBeInTheDocument();
+
+      // This policy overrides routing for critical alerts
       await user.click(await policyTreeUi.changeButton.find());
-      await selectPolicyOption(user, new RegExp(customPolicyName, 'i'));
+      await selectPolicyOption(user, /Managed Policy - Override \+ Inherit/i);
       await user.click(screen.getByRole('button', { name: /preview routing/i }));
 
-      const requests = await capture;
-      await waitFor(() => {
-        const routingTreeUrls = requests.map((r) => r.url);
-        expect(routingTreeUrls.some((url) => url.includes(encodeURIComponent(customPolicyName)))).toBe(true);
-      });
+      expect(await screen.findByText(/delivered to lotsa-emails/i)).toBeInTheDocument();
     });
   });
 
