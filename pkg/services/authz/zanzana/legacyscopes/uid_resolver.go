@@ -87,6 +87,9 @@ func (r *UIDResolver) getDynamicClient(ctx context.Context, nsInfo types.Namespa
 }
 
 func (r *UIDResolver) getObjectID(ctx context.Context, nsInfo types.NamespaceInfo, gvr schema.GroupVersionResource, name string) (int64, error) {
+	if err := ctx.Err(); err != nil {
+		return 0, err
+	}
 	// Key by resource type so team/user UIDs can't collide, and by the namespace value the
 	// fetch actually scopes the Get on (cli.Namespace(nsInfo.Value) in fetchObjectID), so
 	// tenants stay isolated. Don't key on OrgID: multiple namespaces can share an OrgID

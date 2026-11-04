@@ -9,6 +9,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/grafana/authlib/types"
 
@@ -20,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-func TestScopeAliasesIndividualScopeIDs(t *testing.T) {
+func TestScopeAliasesBatchScopeIDs(t *testing.T) {
 	var mu sync.Mutex
 	counts := map[string]int{}
 	object := func(kind, name, id string) map[string]any {
@@ -34,6 +35,10 @@ func TestScopeAliasesIndividualScopeIDs(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		var body any
 		switch {
+		case strings.HasSuffix(path, "/users"):
+			body = map[string]any{"apiVersion": "iam.grafana.app/v0alpha1", "kind": "UserList", "items": []any{object("User", "user-one", "7"), object("User", "user-two", "8")}}
+		case strings.HasSuffix(path, "/teams"):
+			body = map[string]any{"apiVersion": "iam.grafana.app/v0alpha1", "kind": "TeamList", "items": []any{object("Team", "team-one", "42")}}
 		case strings.HasSuffix(path, "/users/user-one"):
 			body = object("User", "user-one", "7")
 		case strings.HasSuffix(path, "/users/user-two"):
@@ -68,10 +73,9 @@ func TestScopeAliasesIndividualScopeIDs(t *testing.T) {
 	mu.Lock()
 	defer mu.Unlock()
 	require.Equal(t, map[string]int{
-		"/apis/iam.grafana.app/v0alpha1/namespaces/default/users/user-one": 1,
-		"/apis/iam.grafana.app/v0alpha1/namespaces/default/users/user-two": 1,
-		"/apis/iam.grafana.app/v0alpha1/namespaces/default/teams/team-one": 1,
-	}, counts, "individual Gets should resolve each UID once and warm requests should reuse the mappings")
+		"/apis/iam.grafana.app/v0alpha1/namespaces/default/users": 1,
+		"/apis/iam.grafana.app/v0alpha1/namespaces/default/teams": 1,
+	}, counts, "namespace Lists should resolve all requested UIDs once and warm requests should reuse both mappings")
 }
 
 func TestScopeAliasesIndividualGetFailurePreservesUIDScope(t *testing.T) {
@@ -94,8 +98,8 @@ func (f aliasRESTConfig) GetRestConfig(ctx context.Context) (*clientrest.Config,
 
 func TestScopeAliasesReverseLookupRejectsAmbiguousMappings(t *testing.T) {
 	iam := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(t, utils.LabelKeyDeprecatedInternalID+"=42", r.URL.Query().Get("labelSelector"))
-		require.Equal(t, "2", r.URL.Query().Get("limit"))
+		require.Empty(t, r.URL.Query().Get("labelSelector"))
+		require.Equal(t, "1000", r.URL.Query().Get("limit"))
 		w.Header().Set("Content-Type", "application/json")
 		require.NoError(t, json.NewEncoder(w).Encode(map[string]any{"apiVersion": "iam.grafana.app/v0alpha1", "kind": "TeamList", "items": []any{
 			map[string]any{"apiVersion": "iam.grafana.app/v0alpha1", "kind": "Team", "metadata": map[string]any{"name": "one", "labels": map[string]string{utils.LabelKeyDeprecatedInternalID: "42"}}},
@@ -111,16 +115,48 @@ func TestScopeAliasesReverseLookupRejectsAmbiguousMappings(t *testing.T) {
 }
 
 func TestScopeAliasesUIDOnlyObjectNeverProducesIDZero(t *testing.T) {
+	var lists, gets atomic.Int64
+	var nowHasID atomic.Bool
 	iam := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasSuffix(r.URL.Path, "/serviceaccounts") {
+			gets.Add(1)
+			if nowHasID.Load() {
+				w.Header().Set("Content-Type", "application/json")
+				require.NoError(t, json.NewEncoder(w).Encode(map[string]any{"apiVersion": "iam.grafana.app/v0alpha1", "kind": "ServiceAccount", "metadata": map[string]any{"name": "uid-only", "namespace": "default", "labels": map[string]string{utils.LabelKeyDeprecatedInternalID: "9"}}}))
+			} else {
+				http.NotFound(w, r)
+			}
+			return
+		}
+		lists.Add(1)
 		w.Header().Set("Content-Type", "application/json")
-		require.NoError(t, json.NewEncoder(w).Encode(map[string]any{"apiVersion": "iam.grafana.app/v0alpha1", "kind": "ServiceAccount", "metadata": map[string]any{"name": "uid-only", "namespace": "default"}}))
+		require.NoError(t, json.NewEncoder(w).Encode(map[string]any{"apiVersion": "iam.grafana.app/v0alpha1", "kind": "ServiceAccountList", "items": []any{
+			map[string]any{"apiVersion": "iam.grafana.app/v0alpha1", "kind": "ServiceAccount", "metadata": map[string]any{"name": "uid-only", "namespace": "default"}},
+		}}))
 	}))
 	t.Cleanup(iam.Close)
 	resolver := NewUIDResolver(aliasRESTConfig(func(context.Context) (*clientrest.Config, error) { return &clientrest.Config{Host: iam.URL}, nil }))
 	input := []ac.Permission{{Action: "serviceaccounts:read", Scope: "serviceaccounts:uid:uid-only"}}
+	for range 2 {
+		got, err := WithAliases(t.Context(), "default", "", resolver, input)
+		require.NoError(t, err)
+		require.Equal(t, input, got)
+	}
+	require.Equal(t, int64(1), lists.Load())
+	require.Zero(t, gets.Load(), "a known UID-only object must not trigger fallback Gets")
+	ns := types.NamespaceInfo{Value: "default", OrgID: 1}
+	key := missingScopeKey(ns, ScopeReference{Resource: "serviceaccounts", Attribute: "uid", Value: "uid-only"})
+	_, expires, found := resolver.cache.GetWithExpiration(key)
+	require.True(t, found)
+	require.WithinDuration(t, time.Now().Add(time.Minute), expires, time.Second)
+	nowHasID.Store(true)
+	resolver.cache.Set(key, true, time.Nanosecond)
+	require.Eventually(t, func() bool { _, ok := resolver.cache.Get(key); return !ok }, time.Second, time.Millisecond)
 	got, err := WithAliases(t.Context(), "default", "", resolver, input)
 	require.NoError(t, err)
-	require.Equal(t, input, got)
+	require.Contains(t, got, ac.Permission{Action: "serviceaccounts:read", Scope: "serviceaccounts:id:9"})
+	require.Equal(t, int64(1), lists.Load(), "the namespace remains warm")
+	require.Equal(t, int64(1), gets.Load(), "refresh the missing mapping after its shorter cache lifetime")
 }
 
 func TestScopeAliasesReverseLookupFollowsFilteredPages(t *testing.T) {
