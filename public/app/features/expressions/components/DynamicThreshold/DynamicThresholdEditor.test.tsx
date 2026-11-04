@@ -18,12 +18,6 @@ jest.mock('./sourcePreview', () => ({
   useDynamicThresholdSourcePreview: (...args: unknown[]) => mockSourcePreview(...args),
 }));
 
-jest.mock('./DynamicThresholdPreview', () => ({
-  DynamicThresholdPreview: ({ previewSql }: { previewSql: string }) => (
-    <div data-testid="policy-preview">{previewSql}</div>
-  ),
-}));
-
 const mockSqlEditor = jest.fn();
 jest.mock('../SqlExpressions/SqlEditor/SqlEditor', () => ({
   SqlEditor: (props: { value: string; readOnly?: boolean; ariaLabel?: string }) => {
@@ -280,7 +274,7 @@ describe('DynamicThresholdEditor', () => {
       <DynamicThresholdEditor query={makeQuery()} queries={[sourceQuery]} onChange={onChange} />
     );
 
-    await user.click(screen.getByRole('combobox', { name: 'Operator' }));
+    await user.click(screen.getByRole('button', { name: 'Operator' }));
     await user.click(screen.getByText('Is within range'));
     expect(onChange.mock.calls.at(-1)?.[0].dynamicThreshold.policy.defaultThreshold).toEqual([10, undefined]);
     expect(onChange.mock.calls.at(-1)?.[0].dynamicThreshold.policy.mappings[0].thresholds).toEqual([5, undefined]);
@@ -296,7 +290,7 @@ describe('DynamicThresholdEditor', () => {
         onChange={onChange}
       />
     );
-    await user.click(screen.getByRole('combobox', { name: 'Operator' }));
+    await user.click(screen.getByRole('button', { name: 'Operator' }));
     await user.click(screen.getByText('Is above'));
     expect(onChange.mock.calls.at(-1)?.[0].dynamicThreshold.policy.defaultThreshold).toEqual([10]);
     expect(onChange.mock.calls.at(-1)?.[0].dynamicThreshold.policy.mappings[0].thresholds).toEqual([5]);
@@ -415,7 +409,196 @@ describe('DynamicThresholdEditor', () => {
     );
   });
 
-  describe('policy preview, SQL view, and conversion', () => {
+  describe('layout', () => {
+    it('labels the shared operator select and keeps the existing accessible names', () => {
+      render(<DynamicThresholdEditor query={makeQuery()} queries={[sourceQuery]} onChange={jest.fn()} />);
+
+      expect(screen.getByRole('button', { name: 'Operator' })).toHaveTextContent('Is above');
+      expect(screen.getByRole('combobox', { name: 'Input query' })).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: 'Match label' })).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: 'Mapping row 1 label value' })).toBeInTheDocument();
+      expect(screen.getByRole('spinbutton', { name: 'Mapping row 1 threshold' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Remove mapping row 1' })).toBeInTheDocument();
+      expect(screen.getByRole('spinbutton', { name: 'Default threshold' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Move mapping row/ })).not.toBeInTheDocument();
+    });
+
+    it('shows range inputs separated by TO for the default and every mapping row', async () => {
+      const onChange = jest.fn();
+      render(
+        <DynamicThresholdEditor
+          query={makeQuery({
+            evaluator: EvalFunction.IsWithinRange,
+            mappings: [{ labelValue: 'us-east', thresholds: [1, 2] }],
+            defaultThreshold: [3, 4],
+          })}
+          queries={[sourceQuery]}
+          onChange={onChange}
+        />
+      );
+
+      expect(screen.getByRole('spinbutton', { name: 'Mapping row 1 lower threshold' })).toBeInTheDocument();
+      expect(screen.getByRole('spinbutton', { name: 'Mapping row 1 upper threshold' })).toBeInTheDocument();
+      expect(screen.getByRole('spinbutton', { name: 'Default lower threshold' })).toBeInTheDocument();
+      expect(screen.getByRole('spinbutton', { name: 'Default upper threshold' })).toBeInTheDocument();
+      expect(screen.getAllByText('TO')).toHaveLength(2);
+    });
+
+    it('renders the default after the Add mapping button', () => {
+      render(<DynamicThresholdEditor query={makeQuery()} queries={[sourceQuery]} onChange={jest.fn()} />);
+
+      const add = screen.getByRole('button', { name: 'Add mapping' });
+      const defaultInput = screen.getByRole('spinbutton', { name: 'Default threshold' });
+      expect(add.compareDocumentPosition(defaultInput) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(screen.getByText('Default *')).toBeInTheDocument();
+    });
+
+    it('hides the numeric field when the only numeric field is __value__ but still selects it', () => {
+      const onChange = jest.fn();
+      mockSourcePreview.mockReturnValue({
+        numericFields: ['__value__'],
+        stringFields: ['region', 'cluster'],
+        labelValues: [],
+        loading: false,
+        error: null,
+        hasSchema: true,
+      });
+      render(
+        <DynamicThresholdEditor query={makeQuery({ valueField: '' })} queries={[sourceQuery]} onChange={onChange} />
+      );
+
+      expect(screen.queryByRole('combobox', { name: 'Numeric field' })).not.toBeInTheDocument();
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dynamicThreshold: expect.objectContaining({
+            policy: expect.objectContaining({ valueField: '__value__' }),
+          }),
+        })
+      );
+    });
+
+    it.each([
+      { name: 'one field with another name', numericFields: ['value'] },
+      { name: 'several fields', numericFields: ['__value__', 'peak'] },
+    ])('shows the numeric field for $name', ({ numericFields }) => {
+      mockSourcePreview.mockReturnValue({
+        numericFields,
+        stringFields: ['region', 'cluster'],
+        labelValues: [],
+        loading: false,
+        error: null,
+        hasSchema: true,
+      });
+      render(<DynamicThresholdEditor query={makeQuery()} queries={[sourceQuery]} onChange={jest.fn()} />);
+
+      expect(screen.getByRole('combobox', { name: 'Numeric field' })).toBeInTheDocument();
+    });
+
+    it('compiles identical SQL whether or not the numeric field is shown', () => {
+      const compiledFor = (numericFields: string[]) => {
+        mockSourcePreview.mockReturnValue({
+          numericFields,
+          stringFields: ['region', 'cluster'],
+          labelValues: [],
+          loading: false,
+          error: null,
+          hasSchema: true,
+        });
+        const onChange = jest.fn();
+        const { unmount } = render(
+          <DynamicThresholdEditor
+            query={makeQuery({ valueField: '__value__' })}
+            queries={[sourceQuery]}
+            onChange={onChange}
+          />
+        );
+        fireEvent.change(screen.getByRole('spinbutton', { name: 'Default threshold' }), { target: { value: '12' } });
+        const hidden = screen.queryByRole('combobox', { name: 'Numeric field' }) === null;
+        unmount();
+        return { hidden, expression: onChange.mock.calls.at(-1)?.[0].expression };
+      };
+
+      const hiddenField = compiledFor(['__value__']);
+      const shownField = compiledFor(['__value__', 'peak']);
+      expect(hiddenField.hidden).toBe(true);
+      expect(shownField.hidden).toBe(false);
+      expect(hiddenField.expression).toContain('`A`.`__value__`');
+      expect(hiddenField.expression).toBe(shownField.expression);
+    });
+  });
+
+  describe('input preselection', () => {
+    it('selects the first data source query when no input is set', () => {
+      const onChange = jest.fn();
+      render(
+        <DynamicThresholdEditor
+          query={makeQuery({ inputRefId: '', valueField: '', matchLabel: '', labelColumns: [], mappings: [] })}
+          queries={[sourceQuery]}
+          onChange={onChange}
+        />
+      );
+
+      expect(onChange.mock.calls[0][0].dynamicThreshold.policy.inputRefId).toBe('A');
+    });
+
+    it('does not override an existing input', () => {
+      const onChange = jest.fn();
+      render(<DynamicThresholdEditor query={makeQuery()} queries={[sourceQuery]} onChange={onChange} />);
+      expect(onChange).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('live validation', () => {
+    it('shows required errors for a fresh editor under the match label and default fields', () => {
+      render(
+        <DynamicThresholdEditor
+          query={makeQuery({ matchLabel: '', labelColumns: [], mappings: [], defaultThreshold: [] })}
+          queries={[sourceQuery]}
+          onChange={jest.fn()}
+        />
+      );
+
+      expect(screen.getByText('Select a match label.')).toBeInTheDocument();
+      expect(screen.getByText('The default threshold requires 1 value(s).')).toBeInTheDocument();
+    });
+
+    it('shows no error for a newly added empty mapping row until it is touched', async () => {
+      const user = userEvent.setup();
+
+      function StatefulEditor() {
+        const [query, setQuery] = useState(makeQuery({ mappings: [] }));
+        return <DynamicThresholdEditor query={query} queries={[sourceQuery]} onChange={setQuery} />;
+      }
+
+      render(<StatefulEditor />);
+      await user.click(screen.getByRole('button', { name: 'Add mapping' }));
+
+      expect(screen.getByRole('combobox', { name: 'Mapping row 1 label value' })).toBeInTheDocument();
+      expect(screen.queryByText(/Mapping row 1 requires/)).not.toBeInTheDocument();
+
+      await user.type(screen.getByRole('spinbutton', { name: 'Mapping row 1 threshold' }), '4');
+      expect(screen.getByText('Mapping row 1 requires a label value.')).toBeInTheDocument();
+    });
+
+    it('shows a duplicate label value error under the offending row', () => {
+      render(
+        <DynamicThresholdEditor
+          query={makeQuery({
+            mappings: [
+              { labelValue: 'us-east', thresholds: [1] },
+              { labelValue: 'us-east', thresholds: [2] },
+            ],
+          })}
+          queries={[sourceQuery]}
+          onChange={jest.fn()}
+        />
+      );
+
+      expect(screen.getByText('Mapping row 2 duplicates another label value.')).toBeInTheDocument();
+    });
+  });
+
+  describe('SQL view and conversion', () => {
     function makeGeneratedQuery(): SqlExpressionQuery {
       const query = makeQuery();
       const built = buildDynamicThreshold(query.dynamicThreshold!.policy);
@@ -424,22 +607,6 @@ describe('DynamicThresholdEditor', () => {
       }
       return { ...query, expression: built.expressionSql };
     }
-
-    it('renders the policy preview with the transient preview SQL only for a compiled policy', () => {
-      const { rerender } = render(
-        <DynamicThresholdEditor query={makeGeneratedQuery()} queries={[sourceQuery]} onChange={jest.fn()} />
-      );
-      expect(screen.getByTestId('policy-preview')).toHaveTextContent('current_value');
-
-      rerender(
-        <DynamicThresholdEditor
-          query={{ ...makeQuery({ defaultThreshold: [] }), expression: '' }}
-          queries={[sourceQuery]}
-          onChange={jest.fn()}
-        />
-      );
-      expect(screen.queryByTestId('policy-preview')).not.toBeInTheDocument();
-    });
 
     it('shows the generated SQL read-only and hides it again', async () => {
       const query = makeGeneratedQuery();

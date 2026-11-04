@@ -1,9 +1,16 @@
+import { css } from '@emotion/css';
+import { type ReactNode, useState } from 'react';
+
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, Field, IconButton, Input, Select, Stack } from '@grafana/ui';
+import { Button, IconButton, InlineField, InlineFieldRow, Select, Stack, useStyles2 } from '@grafana/ui';
 
 import { type DynamicThresholdMapping } from '../../types';
 
+import { ThresholdInputs } from './ThresholdInputs';
 import { type DynamicThresholdValidationError } from './buildDynamicThreshold';
+
+export const DYNAMIC_THRESHOLD_LABEL_WIDTH = 15;
 
 interface Props {
   mappings: DynamicThresholdMapping[];
@@ -14,58 +21,56 @@ interface Props {
 }
 
 export function DynamicThresholdMappings({ mappings, labelValues, thresholdCount, errors, onChange }: Props) {
+  const styles = useStyles2(getStyles);
+  // Rows are identified by position; a row that was just added stays quiet until the user edits it.
+  const [touchedRows, setTouchedRows] = useState<ReadonlySet<number>>(new Set());
+
+  const touch = (index: number) => setTouchedRows((current) => new Set(current).add(index));
   const update = (index: number, mapping: DynamicThresholdMapping) => {
+    touch(index);
     onChange(mappings.map((current, currentIndex) => (currentIndex === index ? mapping : current)));
   };
-  const move = (index: number, offset: number) => {
-    const next = [...mappings];
-    const [mapping] = next.splice(index, 1);
-    next.splice(index + offset, 0, mapping);
-    onChange(next);
+  const remove = (index: number) => {
+    setTouchedRows(
+      (current) => new Set(Array.from(current).flatMap((row) => (row === index ? [] : [row > index ? row - 1 : row])))
+    );
+    onChange(mappings.filter((_, currentIndex) => currentIndex !== index));
   };
 
   return (
-    <Stack direction="column" gap={1}>
+    <>
       {mappings.map((mapping, index) => {
         const rowNumber = index + 1;
-        const error = errors
-          .filter((error) => error.location.mappingIndex === index)
-          .map((error) => error.message)
-          .join(' ');
+        const hasContent = mapping.labelValue !== '' || mapping.thresholds.some((value) => value !== undefined);
+        const error =
+          touchedRows.has(index) || hasContent
+            ? errors
+                .filter((error) => error.location.mappingIndex === index)
+                .map((error) => error.message)
+                .join(' ')
+            : '';
         return (
-          <Stack key={index} direction="row" gap={1} alignItems="flex-start">
-            <Field
-              noMargin
-              label={index === 0 ? t('expressions.dynamic-threshold.label-value', 'Label value') : undefined}
-              invalid={error ? true : undefined}
-              error={error}
-            >
-              <Select
-                aria-label={t('expressions.dynamic-threshold.mapping-label-value', 'Mapping row {{row}} label value', {
-                  row: rowNumber,
-                })}
-                options={labelValues.map((value) => ({ value, label: value }))}
-                value={mapping.labelValue ? { value: mapping.labelValue, label: mapping.labelValue } : null}
-                allowCustomValue
-                onChange={(option) => update(index, { ...mapping, labelValue: option?.value ?? '' })}
-              />
-            </Field>
-            {Array.from({ length: thresholdCount }, (_, thresholdIndex) => (
-              <Field
-                noMargin
-                key={thresholdIndex}
-                label={
-                  index === 0
-                    ? thresholdCount === 1
-                      ? t('expressions.dynamic-threshold.threshold', 'Threshold')
-                      : thresholdIndex === 0
-                        ? t('expressions.dynamic-threshold.lower-threshold', 'Lower threshold')
-                        : t('expressions.dynamic-threshold.upper-threshold', 'Upper threshold')
-                    : undefined
-                }
-              >
-                <Input
-                  aria-label={
+          <InlineFieldRow key={index}>
+            <div className={styles.labelSpacer} />
+            <InlineField invalid={error ? true : undefined} error={error}>
+              <RowControls>
+                <Select
+                  width={20}
+                  aria-label={t(
+                    'expressions.dynamic-threshold.mapping-label-value',
+                    'Mapping row {{row}} label value',
+                    { row: rowNumber }
+                  )}
+                  placeholder={t('expressions.dynamic-threshold.label-value-placeholder', 'Select label value')}
+                  options={labelValues.map((value) => ({ value, label: value }))}
+                  value={mapping.labelValue ? { value: mapping.labelValue, label: mapping.labelValue } : null}
+                  allowCustomValue
+                  onChange={(option) => update(index, { ...mapping, labelValue: option?.value ?? '' })}
+                />
+                <ThresholdInputs
+                  thresholds={mapping.thresholds}
+                  thresholdCount={thresholdCount}
+                  getAriaLabel={(thresholdIndex) =>
                     thresholdCount === 1
                       ? t('expressions.dynamic-threshold.mapping-threshold-input', 'Mapping row {{row}} threshold', {
                           row: rowNumber,
@@ -82,50 +87,23 @@ export function DynamicThresholdMappings({ mappings, labelValues, thresholdCount
                             { row: rowNumber }
                           )
                   }
-                  type="number"
-                  value={mapping.thresholds[thresholdIndex] ?? ''}
-                  onChange={(event) => {
-                    const thresholds = [...mapping.thresholds];
-                    const value = event.currentTarget.value;
-                    if (value === '') {
-                      thresholds[thresholdIndex] = undefined;
-                    } else {
-                      thresholds[thresholdIndex] = Number(value);
-                    }
-                    update(index, { ...mapping, thresholds });
-                  }}
+                  onChange={(thresholds) => update(index, { ...mapping, thresholds })}
                 />
-              </Field>
-            ))}
-            <Stack direction="row" gap={0.5}>
-              <IconButton
-                name="arrow-up"
-                aria-label={t('expressions.dynamic-threshold.move-up', 'Move mapping row {{row}} up', {
-                  row: rowNumber,
-                })}
-                disabled={index === 0}
-                onClick={() => move(index, -1)}
-              />
-              <IconButton
-                name="arrow-down"
-                aria-label={t('expressions.dynamic-threshold.move-down', 'Move mapping row {{row}} down', {
-                  row: rowNumber,
-                })}
-                disabled={index === mappings.length - 1}
-                onClick={() => move(index, 1)}
-              />
-              <IconButton
-                name="trash-alt"
-                aria-label={t('expressions.dynamic-threshold.remove-mapping', 'Remove mapping row {{row}}', {
-                  row: rowNumber,
-                })}
-                onClick={() => onChange(mappings.filter((_, currentIndex) => currentIndex !== index))}
-              />
-            </Stack>
-          </Stack>
+                <IconButton
+                  name="trash-alt"
+                  className={styles.remove}
+                  aria-label={t('expressions.dynamic-threshold.remove-mapping', 'Remove mapping row {{row}}', {
+                    row: rowNumber,
+                  })}
+                  onClick={() => remove(index)}
+                />
+              </RowControls>
+            </InlineField>
+          </InlineFieldRow>
         );
       })}
-      <div>
+      <InlineFieldRow>
+        <div className={styles.labelSpacer} />
         <Button
           variant="secondary"
           size="sm"
@@ -134,7 +112,28 @@ export function DynamicThresholdMappings({ mappings, labelValues, thresholdCount
         >
           <Trans i18nKey="expressions.dynamic-threshold.add-mapping">Add mapping</Trans>
         </Button>
-      </div>
+      </InlineFieldRow>
+    </>
+  );
+}
+
+// InlineField injects validation props into its child; Stack would forward them to the DOM.
+function RowControls({ children }: { children: ReactNode }) {
+  return (
+    <Stack direction="row" gap={0.5} alignItems="flex-start">
+      {children}
     </Stack>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  // Matches an InlineLabel of DYNAMIC_THRESHOLD_LABEL_WIDTH plus its right margin so rows start in the control column.
+  labelSpacer: css({
+    flexShrink: 0,
+    width: theme.spacing(DYNAMIC_THRESHOLD_LABEL_WIDTH + 0.5),
+  }),
+  remove: css({
+    alignSelf: 'center',
+    marginLeft: theme.spacing(0.5),
+  }),
+});

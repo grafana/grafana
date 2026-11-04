@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { DynamicThresholdMappings } from './DynamicThresholdMappings';
 
 describe('DynamicThresholdMappings', () => {
-  it('adds, removes, and reorders explicit mappings without using suggestions as mappings', async () => {
+  it('adds and removes explicit mappings without using suggestions as mappings', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
     const mappings = [
@@ -23,8 +23,7 @@ describe('DynamicThresholdMappings', () => {
     );
 
     expect(screen.getAllByRole('combobox')).toHaveLength(2);
-    await user.click(screen.getByRole('button', { name: 'Move mapping row 1 down' }));
-    expect(onChange).toHaveBeenLastCalledWith([mappings[1], mappings[0]]);
+    expect(screen.queryByRole('button', { name: /Move mapping row/ })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Remove mapping row 1' }));
     expect(onChange).toHaveBeenLastCalledWith([mappings[1]]);
@@ -111,27 +110,6 @@ describe('DynamicThresholdMappings', () => {
     await user.type(screen.getByRole('spinbutton', { name: 'Mapping row 1 lower threshold' }), '1');
     await user.clear(screen.getByRole('spinbutton', { name: 'Mapping row 1 lower threshold' }));
     expect(onChange).toHaveBeenLastCalledWith([{ labelValue: 'production', thresholds: [undefined, 8] }]);
-  });
-
-  it('moves a mapping up with its row-specific control', async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    const mappings = [
-      { labelValue: 'production', thresholds: [2] },
-      { labelValue: 'staging', thresholds: [3] },
-    ];
-    render(
-      <DynamicThresholdMappings
-        mappings={mappings}
-        labelValues={[]}
-        thresholdCount={1}
-        errors={[]}
-        onChange={onChange}
-      />
-    );
-
-    await user.click(screen.getByRole('button', { name: 'Move mapping row 2 up' }));
-    expect(onChange).toHaveBeenCalledWith([mappings[1], mappings[0]]);
   });
 
   it('places structured mapping validation on the affected row and renders multiple errors', () => {
