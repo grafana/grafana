@@ -46,7 +46,7 @@ func (v *secureValueValidator) Validate(sv, oldSv *secretv1beta1.SecureValue, op
 
 		return errs
 	}
-	// Keep the full resource-permission scope within the legacy permission table limit.
+	// Keep resource identifiers within the legacy permission table limit.
 	if operation == admission.Create && len(sv.Name) > contracts.SecureValueNameMaxLength {
 		errs = append(errs, field.TooLong(field.NewPath("metadata", "name"), sv.Name, contracts.SecureValueNameMaxLength))
 	}

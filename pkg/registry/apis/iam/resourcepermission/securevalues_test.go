@@ -70,10 +70,10 @@ func TestIntegrationSecureValueResourcePermissions(t *testing.T) {
 	require.Equal(t, []accesscontrol.Permission{{Action: "secret.securevalues:edit", Scope: "secret.securevalues:uid:personal-two"}}, perms)
 }
 
-func TestSecureValueResourcePermissionScopeLength(t *testing.T) {
+func TestSecureValueResourcePermissionStorageLimits(t *testing.T) {
 	mappers := NewMappersRegistry()
 	mappers.RegisterMapper(schema.GroupResource{Group: "secret.grafana.app", Resource: "securevalues"}, NewMapper("secret.securevalues", defaultLevels), nil)
-	for _, length := range []int{166, 167} {
+	for _, length := range []int{40, 41, 166, 167} {
 		name := strings.Repeat("a", length)
 		permission := &iamv0.ResourcePermission{
 			ObjectMeta: metav1.ObjectMeta{Name: "secret.grafana.app-securevalues-" + name},
@@ -83,11 +83,15 @@ func TestSecureValueResourcePermissionScopeLength(t *testing.T) {
 			},
 		}
 		err := ValidateCreateAndUpdateInput(t.Context(), permission, mappers)
-		if length == 166 {
+		if length == 40 {
 			require.NoError(t, err)
 		} else {
 			require.True(t, apierrors.IsBadRequest(err))
-			require.ErrorContains(t, err, "scope must not exceed 190 characters")
+			if length > 166 {
+				require.ErrorContains(t, err, "scope must not exceed 190 characters")
+			} else {
+				require.ErrorContains(t, err, "identifier must not exceed 40 characters")
+			}
 		}
 	}
 }

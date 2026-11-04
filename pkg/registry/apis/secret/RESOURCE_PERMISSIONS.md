@@ -2,11 +2,13 @@
 
 The IAM ResourcePermission API supports View, Edit, and Admin assignments for
 `secret.grafana.app/securevalues`. The target is the secure value's **name**, not
-its Kubernetes UID. New secure-value names are limited to 166 characters so
-the full `secret.securevalues:uid:<name>` scope fits the legacy permission
-table's 190-character column. The associated ResourcePermission name also fits
-unified storage. Oversized permission scopes are rejected before storage,
-including grants for existing secrets with longer names. Assignments reuse the subject's managed permissions role.
+its Kubernetes UID. New secure-value names are limited to 40 characters so
+the complete name fits the legacy permission table's identifier column. The
+full `secret.securevalues:uid:<name>` scope and the prefixed ResourcePermission
+name also fit their storage limits. IAM rejects oversized identifiers and scopes
+before storage, including grants for existing secrets with longer names. Existing
+longer secrets remain updatable and deletable. Assignments reuse the subject's
+managed permissions role.
 
 | Level | Access to the named secure value |
 | --- | --- |

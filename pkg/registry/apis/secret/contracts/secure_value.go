@@ -13,8 +13,8 @@ import (
 // The maximum size of a secure value in bytes when written as raw input.
 const SecureValueRawInputMaxSizeBytes = 24 << 10 // 24 KiB
 
-// The legacy permission table allows 190 characters, including the scope prefix.
-const SecureValueNameMaxLength = 190 - len("secret.securevalues:uid:")
+// The legacy permission table stores resource identifiers in 40 characters.
+const SecureValueNameMaxLength = 40
 
 type DecryptSecureValue struct {
 	Keeper     *string
