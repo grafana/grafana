@@ -28,6 +28,7 @@ import {
 } from '../../hooks/useAbilities';
 import { getCloudRule, getGrafanaRule } from '../../mocks';
 import { mimirDataSource } from '../../mocks/server/configure';
+import { KnownProvenance } from '../../types/knownProvenance';
 
 import { RulesTable } from './RulesTable';
 
@@ -121,6 +122,25 @@ describe('RulesTable RBAC', () => {
     mocks.usePromRuleSilenceAbility.mockReturnValue(NotSupported);
     mocks.usePromRuleExportAbility.mockReturnValue(NotSupported);
     mocks.useEnrichmentAbilityNew.mockReturnValue(NotSupported);
+  });
+
+  it.each([
+    { provenance: KnownProvenance.ConvertedPrometheus, badge: 'Imported' },
+    { provenance: KnownProvenance.API, badge: 'Provisioned' },
+    { provenance: KnownProvenance.File, badge: 'Provisioned' },
+    { provenance: undefined, badge: undefined },
+  ])('shows only the expected badge for provenance "$provenance"', async ({ provenance, badge }) => {
+    const rule = getGrafanaRule({ name: 'Grafana badge rule' }, { provenance });
+
+    render(<RulesTable rules={[rule]} />);
+
+    expect(await screen.findByText(rule.name)).toBeInTheDocument();
+    if (badge) {
+      expect(screen.getByText(badge)).toBeInTheDocument();
+    }
+    for (const otherBadge of ['Imported', 'Provisioned'].filter((text) => text !== badge)) {
+      expect(screen.queryByText(otherBadge)).not.toBeInTheDocument();
+    }
   });
 
   describe('Grafana rules action buttons', () => {

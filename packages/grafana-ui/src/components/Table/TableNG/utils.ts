@@ -15,6 +15,7 @@ import {
   type DataFrame,
   type DisplayProcessor,
   isDataFrame,
+  isDataFrameWithValue,
   reduceField,
   ReducerID,
   type FieldSparkline,
@@ -739,7 +740,9 @@ export function getAlignmentFactor(
     const maxIndex = Math.min(field.values.length, rowIndex + 1000);
 
     for (let i = rowIndex + 1; i < maxIndex; i++) {
-      const nextDisplayValue = field.display?.(field.values[i]) ?? { text: String(field.values[i] ?? '') };
+      const rawValue = field.values[i];
+      const value = isDataFrame(rawValue) ? (isDataFrameWithValue(rawValue) ? rawValue.value : null) : rawValue;
+      const nextDisplayValue = field.display?.(value) ?? { text: String(value ?? '') };
       const nextLength = formattedValueToString(nextDisplayValue).length;
       if (nextLength > longestLength) {
         longest = nextDisplayValue;

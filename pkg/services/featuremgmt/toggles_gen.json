@@ -2753,6 +2753,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.cmdkDashboardTags",
+        "resourceVersion": "1793290413642",
+        "creationTimestamp": "2026-10-29T16:13:33Z"
+      },
+      "spec": {
+        "description": "Shows dashboard tags in the command palette",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.cmdkHybridSearch",
         "resourceVersion": "1793306194106",
         "creationTimestamp": "2026-08-20T12:34:45Z",
@@ -3632,7 +3646,8 @@
       "metadata": {
         "name": "grafana.starredFolders",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-06-24T07:52:23Z"
+        "creationTimestamp": "2026-06-24T07:52:23Z",
+        "deletionTimestamp": "2026-11-02T14:11:54Z"
       },
       "spec": {
         "description": "Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker",
