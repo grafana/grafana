@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import {
@@ -160,6 +160,10 @@ export function TraceView(props: Props) {
   });
 
   const focusedSpanId = focusedSpanIdFromProps ?? focusedSpanIdExplore;
+  const focusedSpanForSearchToDisplay =
+    focusedSpanForSearch?.source === 'link' && focusedSpanForSearch.spanID !== focusedSpanId
+      ? undefined
+      : focusedSpanForSearch;
   const createFocusSpanLink = createFocusSpanLinkFromProps ?? createFocusSpanLinkExplore;
   const expandSpan = useSelector((state) => state.explore.panes[exploreId!]?.panelsState.trace?.expandSpan === true);
   const spanIdToExpand = expandSpan ? focusedSpanId : undefined;
@@ -297,11 +301,7 @@ export function TraceView(props: Props) {
     [openDetail, refocusSpanForSearch, revealSpan, search, setSearch, spanFilterMatches, traceProp]
   );
 
-  useEffect(() => {
-    setFocusedSpanForSearch((current) =>
-      current?.source === 'link' && current.spanID !== focusedSpanId ? undefined : current
-    );
-  }, [focusedSpanId]);
+  const expandLinkedSpan = useEffectEvent((spanId: string) => goToSpan(spanId, true));
 
   const lastLinkedSpanId = useRef<string | undefined>(undefined);
   const frame = props.dataFrames[0];
@@ -315,9 +315,9 @@ export function TraceView(props: Props) {
     lastLinkedSpanId.current = spanIdToExpand;
 
     if (spanIdToExpand) {
-      goToSpan(spanIdToExpand, true);
+      expandLinkedSpan(spanIdToExpand);
     }
-  }, [frame, spanIdToExpand, goToSpan]);
+  }, [expandLinkedSpan, frame, spanIdToExpand]);
 
   // The Summary attributes accordion renders only on summary spans and is otherwise untracked;
   // report each toggle (with the resulting open state) so summary-attribute engagement is observable.
@@ -396,7 +396,7 @@ export function TraceView(props: Props) {
             createSpanLink={createSpanLink}
             scrollElement={scrollElement}
             focusedSpanId={focusedSpanId}
-            focusedSpanForSearch={focusedSpanForSearch}
+            focusedSpanForSearch={focusedSpanForSearchToDisplay}
             showSpanFilterMatchesOnly={search.matchesOnly}
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}
