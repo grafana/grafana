@@ -180,6 +180,7 @@ export interface PluginViewOptionsQuickToggles {
 
 type PanelInteractionMutation = 'TRANSFORMATION' | 'PANEL_SETTING' | 'FIELD_OVERRIDE';
 
+/** @alpha */
 export interface PanelInteraction {
   id: number;
   name: string;
@@ -191,6 +192,7 @@ export interface PanelInteraction {
   promotionHandler: (dashboard: DashboardV2Spec, context: PanelInteractionPromotionContext) => DashboardV2Spec;
 }
 
+/** @alpha */
 export interface PanelInteractionPromotionContext {
   /** Key of the panel in the dashboard JSON's `elements`. */
   elementKey: string;
@@ -198,6 +200,7 @@ export interface PanelInteractionPromotionContext {
   transformations: readonly DataTransformerConfig[];
 }
 
+/** @alpha */
 export interface PanelInteractions {
   interactions: PanelInteraction[];
 }
