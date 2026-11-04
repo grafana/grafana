@@ -1,7 +1,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 
-import { type DataFrame, dateTime, FieldType } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { dataSource } from '../../ExpressionDatasource';
 import { ExpressionQueryType } from '../../types';
@@ -248,32 +249,94 @@ describe('dynamic threshold source preview', () => {
     expect(result.current.hasSchema).toBe(false);
   });
 
-  it('uses the editor time range for schema fallback and label-value requests', async () => {
-    const timeRange = {
-      from: dateTime('2026-11-03T10:00:00Z'),
-      to: dateTime('2026-11-03T11:00:00Z'),
-      raw: { from: 'now-1h', to: 'now' },
-    };
-    mockUseSQLSchemas.mockReturnValue({
-      schemas: null,
-      loading: false,
-      error: null,
-      isFeatureEnabled: false,
-      refetch: jest.fn().mockResolvedValue(undefined),
+  describe('request time range', () => {
+    const relativeSource = (relativeTimeRange?: { from: number; to: number }): AlertQuery => ({
+      ...sourceQuery('A'),
+      relativeTimeRange,
     });
-    mockFetchSQLFields.mockResolvedValue([]);
-    const runMeta = jest
-      .spyOn(dataSource, 'runMetaSQLExprQuery')
-      .mockResolvedValue({ fields: [] } as unknown as DataFrame);
+    const mockFallbackMode = () => {
+      mockUseSQLSchemas.mockReturnValue({
+        schemas: null,
+        loading: false,
+        error: null,
+        isFeatureEnabled: false,
+        refetch: jest.fn().mockResolvedValue(undefined),
+      });
+      mockFetchSQLFields.mockResolvedValue([]);
+      return jest.spyOn(dataSource, 'runMetaSQLExprQuery').mockResolvedValue({ fields: [] } as unknown as DataFrame);
+    };
+    const lastSchemaRange = () => mockUseSQLSchemas.mock.calls.at(-1)![0].timeRange!;
+    const expectValid = (range: { from: { valueOf(): number }; to: { valueOf(): number } }) => {
+      expect(Number.isFinite(range.from.valueOf())).toBe(true);
+      expect(Number.isFinite(range.to.valueOf())).toBe(true);
+      expect(range.to.valueOf() - range.from.valueOf()).toBeGreaterThan(0);
+    };
 
-    const queries = [sourceQuery('A')];
-    renderHook(() => useDynamicThresholdSourcePreview(queries, 'A', 'region', timeRange));
+    afterEach(() => jest.restoreAllMocks());
 
-    await waitFor(() => expect(runMeta).toHaveBeenCalledTimes(1));
-    expect(mockUseSQLSchemas).toHaveBeenCalledWith(expect.objectContaining({ timeRange }));
-    expect(mockFetchSQLFields).toHaveBeenCalledWith({ table: 'A' }, [queries[0].model], { range: timeRange });
-    expect(runMeta.mock.calls[0][1]).toBe(timeRange);
-    runMeta.mockRestore();
+    it('passes one valid range from the input relativeTimeRange to schema, fallback and label-value requests', async () => {
+      const runMeta = mockFallbackMode();
+      const queries = [relativeSource({ from: 3600, to: 0 })];
+      renderHook(() => useDynamicThresholdSourcePreview(queries, 'A', 'region'));
+
+      await waitFor(() => expect(runMeta).toHaveBeenCalledTimes(1));
+      const range = lastSchemaRange();
+      expectValid(range);
+      expect(range.to.valueOf() - range.from.valueOf()).toBe(3600 * 1000);
+      expect(mockFetchSQLFields).toHaveBeenCalledWith({ table: 'A' }, [queries[0].model], { range });
+      expect(runMeta.mock.calls[0][1]).toBe(range);
+    });
+
+    it.each([
+      ['missing', undefined],
+      ['non-finite', { from: -Infinity, to: 0 }],
+      ['inverted', { from: 0, to: 3600 }],
+    ])('uses the default relative range when relativeTimeRange is %s', async (_name, relativeTimeRange) => {
+      const runMeta = mockFallbackMode();
+      const queries = [relativeSource(relativeTimeRange)];
+      renderHook(() => useDynamicThresholdSourcePreview(queries, 'A', 'region'));
+
+      await waitFor(() => expect(runMeta).toHaveBeenCalledTimes(1));
+      const range = lastSchemaRange();
+      expectValid(range);
+      expect(range.to.valueOf() - range.from.valueOf()).toBe(600 * 1000);
+      expect(runMeta.mock.calls[0][1]).toBe(range);
+    });
+
+    it('keeps the range identity and requests across rerenders with an unchanged source query', async () => {
+      const runMeta = mockFallbackMode();
+      const initialQueries = [relativeSource({ from: 600, to: 0 })];
+      const { rerender } = renderHook(({ queries }) => useDynamicThresholdSourcePreview(queries, 'A', 'region'), {
+        initialProps: { queries: initialQueries },
+      });
+      await waitFor(() => expect(runMeta).toHaveBeenCalledTimes(1));
+      const first = lastSchemaRange();
+
+      rerender({ queries: [initialQueries[0], sourceQuery('B')] });
+
+      expect(lastSchemaRange()).toBe(first);
+      expect(mockFetchSQLFields).toHaveBeenCalledTimes(1);
+      expect(runMeta).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not refetch schemas on unrelated rerenders', async () => {
+      const refetch = jest.fn().mockResolvedValue(undefined);
+      mockUseSQLSchemas.mockReturnValue({
+        schemas: null,
+        loading: false,
+        error: null,
+        isFeatureEnabled: true,
+        refetch,
+      });
+      const queries = [relativeSource({ from: 600, to: 0 })];
+      const { rerender } = renderHook(() => useDynamicThresholdSourcePreview(queries, 'A', ''));
+      const first = lastSchemaRange();
+
+      rerender();
+
+      expect(lastSchemaRange()).toBe(first);
+      expect(refetch).not.toHaveBeenCalled();
+    });
   });
 
   it('uses unique metadata request IDs for concurrent and reopened label-value requests', async () => {

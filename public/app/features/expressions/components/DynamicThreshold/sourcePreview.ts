@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDeepCompareEffect } from 'react-use';
 
-import { FieldType, generateUUID, getDefaultTimeRange, type SelectableValue, type TimeRange } from '@grafana/data';
+import { FieldType, generateUUID, getDefaultRelativeTimeRange, rangeUtil, type SelectableValue } from '@grafana/data';
 import { quoteIdentifierIfNecessary } from '@grafana/sql';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -43,13 +43,22 @@ export function classifySchemaFields(columns: SQLSchemaField[]): Omit<DynamicThr
   return { numericFields, stringFields };
 }
 
-export function useDynamicThresholdSourcePreview(
-  queries: AlertQuery[],
-  inputRefId: string,
-  matchLabel: string,
-  timeRange?: TimeRange
-) {
+export function useDynamicThresholdSourcePreview(queries: AlertQuery[], inputRefId: string, matchLabel: string) {
   const sourceQuery = queries.find((query) => query.refId === inputRefId && !isExpressionQuery(query.model));
+  const relativeFrom = sourceQuery?.relativeTimeRange?.from;
+  const relativeTo = sourceQuery?.relativeTimeRange?.to;
+  // Derived from the source query's own relative range; the alert query runner's expression range can be invalid.
+  const timeRange = useMemo(() => {
+    const isValid =
+      typeof relativeFrom === 'number' &&
+      typeof relativeTo === 'number' &&
+      Number.isFinite(relativeFrom) &&
+      Number.isFinite(relativeTo) &&
+      relativeFrom >= relativeTo;
+    return rangeUtil.relativeToTimeRange(
+      isValid ? { from: relativeFrom, to: relativeTo } : getDefaultRelativeTimeRange()
+    );
+  }, [relativeFrom, relativeTo]);
   const sourceQueries = useMemo(() => (sourceQuery ? [sourceQuery.model] : []), [sourceQuery]);
   const { schemas, loading, error, isFeatureEnabled, refetch } = useSQLSchemas({
     queries: sourceQueries,
@@ -153,7 +162,7 @@ export function useDynamicThresholdSourcePreview(
             rawSql: `SELECT DISTINCT ${label} FROM ${table} WHERE ${label} IS NOT NULL ORDER BY ${label} LIMIT 100`,
             refId,
           },
-          timeRange ?? getDefaultTimeRange(),
+          timeRange,
           interpolatedQueries
         )
       )

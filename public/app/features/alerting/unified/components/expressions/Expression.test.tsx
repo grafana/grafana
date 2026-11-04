@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { times } from 'lodash';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { type DataFrame, type PanelData, getDefaultTimeRange, toDataFrame } from '@grafana/data';
+import { type DataFrame, type PanelData, dateTime, getDefaultTimeRange, toDataFrame } from '@grafana/data';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { ExpressionQueryType, type SqlExpressionQuery } from 'app/features/expressions/types';
 
@@ -28,7 +28,7 @@ jest.mock('app/features/expressions/components/SqlExpressions/SqlExpr', () => ({
 describe('Expression editor routing', () => {
   it('does not mount SqlExpr or seed placeholder SQL for new dynamic threshold metadata', async () => {
     const onChangeQuery = jest.fn();
-    const timeRange = getDefaultTimeRange();
+    const timeRange = { ...getDefaultTimeRange(), from: dateTime(-Infinity) };
     const query: SqlExpressionQuery = {
       refId: 'B',
       datasource: ExpressionDatasourceRef,
@@ -70,7 +70,7 @@ describe('Expression editor routing', () => {
 
     expect(await screen.findByTestId('dynamic-threshold-editor')).toBeInTheDocument();
     expect(screen.queryByTestId('sql-expression-editor')).not.toBeInTheDocument();
-    expect(mockDynamicThresholdEditor).toHaveBeenCalledWith(expect.objectContaining({ timeRange }));
+    expect(mockDynamicThresholdEditor).toHaveBeenCalledWith(expect.not.objectContaining({ timeRange }));
     expect(onChangeQuery).not.toHaveBeenCalled();
     expect(query.expression).toBe('');
   });

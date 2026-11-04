@@ -149,12 +149,7 @@ export const Expression: FC<ExpressionProps> = ({
           return (
             <Suspense fallback={null}>
               {isDynamicThresholdQuery(query) ? (
-                <DynamicThresholdEditor
-                  query={query}
-                  queries={queries}
-                  timeRange={data?.timeRange}
-                  onChange={onChangeQuery}
-                />
+                <DynamicThresholdEditor query={query} queries={queries} onChange={onChangeQuery} />
               ) : (
                 <SqlExpr
                   onChange={(query) => onChangeQuery(query)}
@@ -175,7 +170,7 @@ export const Expression: FC<ExpressionProps> = ({
           );
       }
     },
-    [data?.timeRange, onChangeQuery, queries, onQueriesValidationError]
+    [onChangeQuery, queries, onQueriesValidationError]
   );
 
   const selectedExpressionType = expressionTypes.find((o) => o.value === queryType);
