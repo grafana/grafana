@@ -137,6 +137,15 @@ func (rk resourceKind) token() string {
 	return group + "/" + rk.kind
 }
 
+// summaryGroup is the group a job's status.summary reports this kind under: the storage
+// collection when the kind has one, since every member group aggregates onto it.
+func (rk resourceKind) summaryGroup() string {
+	if rk.collection != "" {
+		return rk.collection
+	}
+	return rk.group
+}
+
 // unifiedStorageKey is the [unified_storage] config key (<resource>.<group>) for this kind. The
 // plural resource is derived from the kind name; the descriptors under test follow the regular
 // lowercase-plural convention (Dashboard->dashboards, LibraryPanel->librarypanels). If a derived

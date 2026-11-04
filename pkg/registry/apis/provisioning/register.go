@@ -1314,6 +1314,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.registry,
 				&metrics,
 				nats.Enabled(b.natsSubscriber),
+				b.supportedResourceProvider.Configured(),
 				workers...,
 			)
 			if err != nil {

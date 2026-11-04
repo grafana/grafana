@@ -18,6 +18,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
@@ -57,6 +58,10 @@ type ConcurrentJobDriver struct {
 	metrics              *JobMetrics
 	tracer               tracing.Tracer
 	queue                workqueue.TypedRateLimitingInterface[string]
+
+	// supportedResources is the configured resource set, handed to each job's progress
+	// recorder so a collection's members are summarised under the collection.
+	supportedResources []resources.SupportedResource
 
 	// processed classifies each delivery and records the processing metrics. It
 	// encapsulates the delivery backend (natsBacked) and the resource label, so
@@ -101,6 +106,7 @@ func NewConcurrentJobDriver(
 	registry prometheus.Registerer,
 	metrics *JobMetrics,
 	natsBacked bool,
+	supportedResources []resources.SupportedResource,
 	workers ...Worker,
 ) (*ConcurrentJobDriver, error) {
 	if numDrivers <= 0 {
@@ -129,6 +135,7 @@ func NewConcurrentJobDriver(
 		historicJobs:         historicJobs,
 		workers:              workers,
 		metrics:              metrics,
+		supportedResources:   supportedResources,
 		processed:            usinformer.NewProcessedMetrics(registry, resourceLabelJobs, natsBacked),
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),
@@ -392,6 +399,7 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 				strconv.Itoa(driverID),
 				c.metrics,
 				c.processed,
+				c.supportedResources,
 				c.workers...,
 			)
 			processor.tracer = c.tracer

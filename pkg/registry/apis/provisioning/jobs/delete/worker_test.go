@@ -982,7 +982,7 @@ func TestDeleteWorker_ProcessMissingSourcePathStopsBeforeDeletion(t *testing.T) 
 	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
 	progress := jobs.NewJobProgressRecorder(func(context.Context, v0alpha1.JobStatus) error {
 		return nil
-	}, &metrics, v0alpha1.JobActionDelete)
+	}, &metrics, v0alpha1.JobActionDelete, nil)
 	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, mockResourcesFactory, metrics)
 
 	err := worker.Process(ctx, mockRepo, job, progress)
