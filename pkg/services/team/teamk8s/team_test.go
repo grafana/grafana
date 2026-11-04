@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -19,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -2032,17 +2035,27 @@ func TestTeamK8sService_GetUserTeamMembershipsByUID(t *testing.T) {
 		hits      []string
 		totalHits int64
 	}
+	// fullPage pads hits to a full search page by repeating the first hit: the service dedupes hits,
+	// so a full page costs a single team read instead of hundreds of rate-limited client requests.
+	fullPage := func(hits ...string) []string {
+		for len(hits) < common.DefaultListLimit {
+			hits = append(hits, hits[0])
+		}
+		return hits
+	}
 
 	tests := []struct {
-		name         string
-		userUID      string
-		external     bool
-		pages        map[string]searchPage
-		teams        map[string]*iamv0alpha1.Team
-		searchStatus int
-		failTeam     string
-		expectErr    string
-		expected     []team.UserTeamMembership
+		name                string
+		orgID               int64
+		userUID             string
+		external            bool
+		pages               map[string]searchPage
+		teams               map[string]*iamv0alpha1.Team
+		searchStatus        int
+		failTeam            string
+		expectErr           string
+		expectedSearchPages int
+		expected            []team.UserTeamMembership
 	}{
 		{
 			name:    "returns external and manual memberships from team members",
@@ -2074,16 +2087,61 @@ func TestTeamK8sService_GetUserTeamMembershipsByUID(t *testing.T) {
 			name:    "reads every search page and drops teams repeated across pages",
 			userUID: "user-1",
 			pages: map[string]searchPage{
-				"1": {hits: []string{"team-a"}, totalHits: membershipSearchPageSize + 1},
-				"2": {hits: []string{"team-a", "team-b"}, totalHits: membershipSearchPageSize + 1},
+				"1": {hits: fullPage("team-a"), totalHits: common.DefaultListLimit + 1},
+				"2": {hits: []string{"team-a", "team-b"}, totalHits: common.DefaultListLimit + 1},
 			},
 			teams: map[string]*iamv0alpha1.Team{
 				"team-a": newTeam("team-a", "10", externalAdmin),
 				"team-b": newTeam("team-b", "20", externalAdmin),
 			},
+			expectedSearchPages: 2,
 			expected: []team.UserTeamMembership{
 				{TeamID: 10, TeamUID: "team-a", External: true, Permission: team.PermissionTypeAdmin},
 				{TeamID: 20, TeamUID: "team-b", External: true, Permission: team.PermissionTypeAdmin},
+			},
+		},
+		{
+			name:    "reads past a full page when the total only counts hits seen so far",
+			userUID: "user-1",
+			pages: map[string]searchPage{
+				"1": {hits: fullPage("team-a"), totalHits: common.DefaultListLimit},
+				"2": {hits: []string{"team-b"}, totalHits: common.DefaultListLimit + 1},
+			},
+			teams: map[string]*iamv0alpha1.Team{
+				"team-a": newTeam("team-a", "10", externalAdmin),
+				"team-b": newTeam("team-b", "20", manualMember),
+			},
+			expectedSearchPages: 2,
+			expected: []team.UserTeamMembership{
+				{TeamID: 10, TeamUID: "team-a", External: true, Permission: team.PermissionTypeAdmin},
+				{TeamID: 20, TeamUID: "team-b", External: false, Permission: team.PermissionTypeMember},
+			},
+		},
+		{
+			name:    "stops on an empty page after a full page",
+			userUID: "user-1",
+			pages: map[string]searchPage{
+				"1": {hits: fullPage("team-a"), totalHits: 2 * common.DefaultListLimit},
+				"2": {totalHits: 2 * common.DefaultListLimit},
+			},
+			teams: map[string]*iamv0alpha1.Team{
+				"team-a": newTeam("team-a", "10", externalAdmin),
+			},
+			expectedSearchPages: 2,
+			expected: []team.UserTeamMembership{
+				{TeamID: 10, TeamUID: "team-a", External: true, Permission: team.PermissionTypeAdmin},
+			},
+		},
+		{
+			name:    "reads the query's org, not the caller's",
+			orgID:   2,
+			userUID: "user-1",
+			pages:   map[string]searchPage{"1": {hits: []string{"team-a"}, totalHits: 1}},
+			teams: map[string]*iamv0alpha1.Team{
+				"team-a": newTeam("team-a", "10", manualMember),
+			},
+			expected: []team.UserTeamMembership{
+				{TeamID: 10, TeamUID: "team-a", External: false, Permission: team.PermissionTypeMember},
 			},
 		},
 		{
@@ -2126,6 +2184,12 @@ func TestTeamK8sService_GetUserTeamMembershipsByUID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			orgID := tt.orgID
+			if orgID == 0 {
+				orgID = 1
+			}
+			expectedNamespace := request.GetNamespaceMapper(setting.NewCfg())(orgID)
+			var searchPages atomic.Int32
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				path := r.URL.Path
@@ -2133,9 +2197,18 @@ func TestTeamK8sService_GetUserTeamMembershipsByUID(t *testing.T) {
 				case strings.Contains(path, "/users"):
 					t.Errorf("unexpected users API request: %s %s", r.Method, path)
 					w.WriteHeader(http.StatusNotFound)
+					return
+				case !strings.Contains(path, "/namespaces/"+expectedNamespace+"/"):
+					t.Errorf("request outside namespace %s: %s %s", expectedNamespace, r.Method, path)
+					w.WriteHeader(http.StatusNotFound)
+					return
+				}
+				switch {
 				case strings.HasSuffix(path, "/searchTeams"):
+					searchPages.Add(1)
 					assert.Equal(t, tt.userUID, r.URL.Query().Get("member"))
 					assert.Equal(t, "500", r.URL.Query().Get("limit"))
+					assert.Empty(t, r.URL.Query().Get("membercount"), "member counts make the search handler fetch every team")
 					if tt.searchStatus != 0 {
 						w.WriteHeader(tt.searchStatus)
 						return
@@ -2174,7 +2247,7 @@ func TestTeamK8sService_GetUserTeamMembershipsByUID(t *testing.T) {
 			ctx := identity.WithRequester(contextWithReqContext(), &identity.StaticRequester{OrgID: 1})
 
 			result, err := svc.GetUserTeamMembershipsByUID(ctx, &team.GetUserTeamMembershipsByUIDQuery{
-				OrgID: 1, UserUID: tt.userUID, External: tt.external,
+				OrgID: orgID, UserUID: tt.userUID, External: tt.external,
 			})
 			if tt.expectErr != "" {
 				require.ErrorContains(t, err, tt.expectErr)
@@ -2182,6 +2255,9 @@ func TestTeamK8sService_GetUserTeamMembershipsByUID(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.Equal(t, tt.expected, result)
+			if tt.expectedSearchPages != 0 {
+				require.Equal(t, int32(tt.expectedSearchPages), searchPages.Load())
+			}
 		})
 	}
 }

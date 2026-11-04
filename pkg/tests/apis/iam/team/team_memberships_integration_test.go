@@ -16,6 +16,7 @@ import (
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -64,12 +65,15 @@ func TestIntegrationGetUserTeamMembershipsByUIDWithoutUsersAPI(t *testing.T) {
 					userUID := org.Viewer.Identity.GetIdentifier()
 					otherUID := org.Editor.Identity.GetIdentifier()
 					client := helper.GetResourceClient(apis.ResourceClientArgs{User: org.Admin, Namespace: namespace, GVR: gvrTeams})
-					createTeamWithMembers(t, client, "synced-team",
+					// Team names are unique per org so that reading the wrong namespace can't pass.
+					syncedTeam := fmt.Sprintf("synced-team-%d", orgID)
+					manualTeam := fmt.Sprintf("manual-team-%d", orgID)
+					syncedTeamID := createTeamWithMembers(t, client, syncedTeam,
 						teamMember(userUID, iamv0alpha1.TeamTeamPermissionAdmin, true),
 						teamMember(otherUID, iamv0alpha1.TeamTeamPermissionMember, true),
 					)
-					createTeamWithMembers(t, client, "manual-team", teamMember(userUID, iamv0alpha1.TeamTeamPermissionMember, false))
-					createTeamWithMembers(t, client, "unrelated-team", teamMember(otherUID, iamv0alpha1.TeamTeamPermissionMember, true))
+					manualTeamID := createTeamWithMembers(t, client, manualTeam, teamMember(userUID, iamv0alpha1.TeamTeamPermissionMember, false))
+					createTeamWithMembers(t, client, fmt.Sprintf("unrelated-team-%d", orgID), teamMember(otherUID, iamv0alpha1.TeamTeamPermissionMember, true))
 
 					otherOrg := helper.OrgB
 					if orgID == helper.OrgB.Admin.Identity.GetOrgID() {
@@ -95,15 +99,20 @@ func TestIntegrationGetUserTeamMembershipsByUIDWithoutUsersAPI(t *testing.T) {
 							got, err := teamSvc.GetUserTeamMembershipsByUID(ctx, query)
 							require.NoError(t, err)
 							assert.ElementsMatch(t, []team.UserTeamMembership{
-								{TeamUID: "synced-team", External: true, Permission: team.PermissionTypeAdmin},
-								{TeamUID: "manual-team", External: false, Permission: team.PermissionTypeMember},
-							}, withoutTeamIDs(got))
+								{TeamID: syncedTeamID, TeamUID: syncedTeam, External: true, Permission: team.PermissionTypeAdmin},
+								{TeamID: manualTeamID, TeamUID: manualTeam, External: false, Permission: team.PermissionTypeMember},
+							}, got)
 
 							external, err := teamSvc.GetUserTeamMembershipsByUID(ctx, &team.GetUserTeamMembershipsByUIDQuery{OrgID: orgID, UserUID: userUID, External: true})
 							require.NoError(t, err)
 							require.Equal(t, []team.UserTeamMembership{
-								{TeamUID: "synced-team", External: true, Permission: team.PermissionTypeAdmin},
-							}, withoutTeamIDs(external))
+								{TeamID: syncedTeamID, TeamUID: syncedTeam, External: true, Permission: team.PermissionTypeAdmin},
+							}, external)
+
+							// The other org's viewer has no teams in this org.
+							otherOrgUser, err := teamSvc.GetUserTeamMembershipsByUID(ctx, &team.GetUserTeamMembershipsByUIDQuery{OrgID: orgID, UserUID: otherOrg.Viewer.Identity.GetIdentifier()})
+							require.NoError(t, err)
+							require.Empty(t, otherOrgUser)
 						})
 					}
 				})
@@ -116,7 +125,8 @@ func teamMember(userUID string, permission iamv0alpha1.TeamTeamPermission, exter
 	return iamv0alpha1.TeamTeamMember{Kind: "User", Name: userUID, Permission: permission, External: external}
 }
 
-func createTeamWithMembers(t *testing.T, client *apis.K8sResourceClient, name string, members ...iamv0alpha1.TeamTeamMember) {
+// createTeamWithMembers returns the created team's deprecated internal ID.
+func createTeamWithMembers(t *testing.T, client *apis.K8sResourceClient, name string, members ...iamv0alpha1.TeamTeamMember) int64 {
 	t.Helper()
 	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&iamv0alpha1.Team{
 		TypeMeta:   metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "Team"},
@@ -124,8 +134,11 @@ func createTeamWithMembers(t *testing.T, client *apis.K8sResourceClient, name st
 		Spec:       iamv0alpha1.TeamSpec{Title: name, Members: members},
 	})
 	require.NoError(t, err)
-	_, err = client.Resource.Create(context.Background(), &unstructured.Unstructured{Object: obj}, metav1.CreateOptions{})
+	created, err := client.Resource.Create(context.Background(), &unstructured.Unstructured{Object: obj}, metav1.CreateOptions{})
 	require.NoError(t, err)
+	meta, err := utils.MetaAccessor(created)
+	require.NoError(t, err)
+	return meta.GetDeprecatedInternalID() // nolint:staticcheck
 }
 
 // serviceContextWithRequest mirrors a login-time caller: a request context is present,
@@ -143,13 +156,4 @@ func userContextWithRequest(t *testing.T, u apis.User) context.Context {
 	require.True(t, ok, "test user identity must be a *user.SignedInUser")
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	return context.WithValue(req.Context(), ctxkey.Key{}, &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: signedInUser})
-}
-
-func withoutTeamIDs(memberships []team.UserTeamMembership) []team.UserTeamMembership {
-	out := make([]team.UserTeamMembership, 0, len(memberships))
-	for _, m := range memberships {
-		m.TeamID = 0
-		out = append(out, m)
-	}
-	return out
 }
