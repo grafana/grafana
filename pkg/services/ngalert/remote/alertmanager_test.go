@@ -1673,22 +1673,6 @@ func integrationsDBToAPI(in []*v1store.PostableGrafanaReceiverDB) []*definition.
 	return out
 }
 
-func integrationsAPIToDB(in []*definition.PostableGrafanaReceiver) []*v1store.PostableGrafanaReceiverDB {
-	out := make([]*v1store.PostableGrafanaReceiverDB, 0, len(in))
-	for _, r := range in {
-		out = append(out, &v1store.PostableGrafanaReceiverDB{
-			UID:                   r.UID,
-			Name:                  r.Name,
-			Type:                  r.Type,
-			Version:               r.Version,
-			DisableResolveMessage: r.DisableResolveMessage,
-			Settings:              r.Settings,
-			SecureSettings:        r.SecureSettings,
-		})
-	}
-	return out
-}
-
 // encryptedGrafanaReceivers encrypts each receiver's secure settings.
 func encryptedGrafanaReceivers(receivers []*v1store.ReceiverDB, encryptFn ngmodels.EncryptFn) ([]*v1store.ReceiverDB, error) {
 	encrypted := make([]*v1store.ReceiverDB, len(receivers))

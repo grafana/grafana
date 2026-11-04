@@ -20,7 +20,7 @@ import (
 
 func TestReceivers(t *testing.T) {
 	ruid := func(uid v1.ResourceUID, name string) *v1.PostableApiReceiver {
-		return new(v1.NewReceiver(v1.ReceiverUID(name), name, []*v1.PostableGrafanaReceiver{}, models.ProvenanceNone))
+		return new(v1.NewReceiver(uid, name, []*v1.PostableGrafanaReceiver{}, models.ProvenanceNone))
 	}
 	r := func(name string) *v1.PostableApiReceiver {
 		return ruid(v1.ReceiverUID(name), name)
@@ -131,7 +131,7 @@ func TestReceivers(t *testing.T) {
 			},
 			expected: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 				ruid("uid2", "r2"), // Kept.
-				ruid(v1.TimeIntervalUID("r2"+suffix), "r2"+suffix), // Generated.
+				ruid(v1.ReceiverUID("r2"+suffix), "r2"+suffix), // Generated.
 			}),
 			expectedRenames: map[string]string{
 				"r2": "r2" + suffix,
