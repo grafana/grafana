@@ -5434,6 +5434,9 @@
       "preferences": "Preference",
       "recent-dashboards": "Nedávné nástěnky",
       "recent-scopes": "Nedávné rozsahy"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -7758,10 +7761,10 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
+      "draft-discarded": "",
       "draft-title": "",
       "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
       "pending-changes-changed": "",
@@ -12607,7 +12610,6 @@
       "copy-log-line-json": "Kopírovat obsah protokolu jako JSON",
       "copy-shortlink": "Kopírovat krátký odkaz",
       "copy-to-clipboard": "Kopírovat do schránky",
-      "displayed-fields-section": "Uspořádat zobrazená pole",
       "fields": {
         "adhoc-statistics": "Ad-hoc statistiky",
         "copy-value-to-clipboard": "Zkopírovat hodnotu do schránky",
@@ -12631,14 +12633,11 @@
       "log-attributes-field": "Atributy protokolu",
       "log-line-field": "Řádek protokolu",
       "log-line-section": "Řádek protokolu",
-      "move-displayed-field-down": "Přesunout dolů",
-      "move-displayed-field-up": "Přesunout nahoru",
       "no-details": "Žádná pole k zobrazení.",
       "open-assistant": "",
       "open-value-in": "",
       "pin-line": "Připnout protokol",
       "prettify": "Zkrášlit",
-      "remove-displayed-field": "Odebrat pole",
       "remove-log": "Odebrat protokol",
       "scroll-to-logline": "Posunout na řádek protokolu",
       "search": {

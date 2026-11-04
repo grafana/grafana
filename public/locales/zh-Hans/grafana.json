@@ -5284,6 +5284,9 @@
       "preferences": "首选项",
       "recent-dashboards": "最近的仪表板",
       "recent-scopes": "最近的范围"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -7596,10 +7599,10 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
+      "draft-discarded": "",
       "draft-title": "",
       "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
       "pending-changes-changed": "",
@@ -12295,7 +12298,6 @@
       "copy-log-line-json": "将日志内容复制为 JSON",
       "copy-shortlink": "复制短链接",
       "copy-to-clipboard": "复制到剪贴板",
-      "displayed-fields-section": "组织显示的字段",
       "fields": {
         "adhoc-statistics": "临时统计数据",
         "copy-value-to-clipboard": "将值复制到剪贴板",
@@ -12319,14 +12321,11 @@
       "log-attributes-field": "日志属性",
       "log-line-field": "日志行",
       "log-line-section": "日志行",
-      "move-displayed-field-down": "下移",
-      "move-displayed-field-up": "上移",
       "no-details": "没有要显示的字段。",
       "open-assistant": "在助手中解释日志行",
       "open-value-in": "",
       "pin-line": "固定日志",
       "prettify": "美化",
-      "remove-displayed-field": "移除字段",
       "remove-log": "移除日志",
       "scroll-to-logline": "滚动到日志行",
       "search": {
