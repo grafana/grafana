@@ -1046,6 +1046,8 @@ var (
 			Owner:       grafanaDashboardsSquad,
 			Generate:    Generate{Go: true, React: true},
 			Expression:  "false",
+			// The API group installs the kind once, when the server starts.
+			RequiresRestart: true,
 		},
 		{
 			Name:        "savedQueriesRBAC",

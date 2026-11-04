@@ -2754,10 +2754,10 @@
     {
       "metadata": {
         "name": "grafana.cmdkDashboardTags",
-        "resourceVersion": "1793783494537",
+        "resourceVersion": "1793785324232",
         "creationTimestamp": "2026-10-29T16:13:33Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-11-04 09:11:34.537228 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-11-04 09:42:04.232317 +0000 UTC"
         }
       },
       "spec": {
@@ -4974,13 +4974,17 @@
     {
       "metadata": {
         "name": "playlist.slideshows",
-        "resourceVersion": "1793783521833",
-        "creationTimestamp": "2026-11-04T09:12:01Z"
+        "resourceVersion": "1793785292132",
+        "creationTimestamp": "2026-11-04T09:12:01Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-04 09:41:32.132924 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables slideshows, playlists that can contain any kind of App Platform object",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
+        "requiresRestart": true,
         "expression": "false"
       }
     },
@@ -6011,20 +6015,6 @@
         "description": "Enable the secrets management app platform UI",
         "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
-        "name": "slideshows",
-        "resourceVersion": "1793783494537",
-        "creationTimestamp": "2026-11-04T09:11:34Z",
-        "deletionTimestamp": "2026-11-04T09:12:01Z"
-      },
-      "spec": {
-        "description": "Enables slideshows, playlists that can contain any kind of App Platform object",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
         "expression": "false"
       }
     },
