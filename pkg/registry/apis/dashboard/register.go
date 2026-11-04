@@ -1737,6 +1737,9 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	// Variables use classic variables:* when accessControl is wired; otherwise
 	// they fall through to the service authorizer (standalone / Cloud).
 	variableAuthorizer := newVariableAuthorizer(b.accessControl, serviceAuthorizer)
+	// Namespace search is authorized as a read of dashboards and folders
+	// rather than a grant on the search resource.
+	searchAuthorizer := newSearchAuthorizer(serviceAuthorizer)
 
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -1748,6 +1751,8 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 					return variableAuthorizer.Authorize(ctx, attr)
 				case dashv0.SnapshotResourceInfo.GetName():
 					return snapshotAuthorizer.Authorize(ctx, attr)
+				case searchResource:
+					return searchAuthorizer.Authorize(ctx, attr)
 				}
 			}
 			return serviceAuthorizer.Authorize(ctx, attr)
