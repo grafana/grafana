@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 
 import { type DataTransformerInfo, type TransformerRegistryItem } from '@grafana/data';
 import { type DataQuery } from '@grafana/schema';
@@ -32,6 +32,12 @@ jest.mock('./StackedSection', () => ({
       data-heading-id={headingId}
       aria-current={isCurrent ? 'true' : undefined}
     />
+  ),
+}));
+
+jest.mock('./StackedAddBar', () => ({
+  StackedAddBar: ({ variant, afterId }: { variant: string; afterId: string }) => (
+    <button data-testid={`add-bar-${variant}-${afterId}`} />
   ),
 }));
 
@@ -86,6 +92,36 @@ describe('StackedEditorRenderer', () => {
       { id: 'B', type: QueryEditorType.Query },
       { id: 'organize-0', type: QueryEditorType.Transformation },
     ]);
+  });
+
+  it('renders an add bar after every card with the matching variant', () => {
+    renderStackedEditor();
+
+    const order = screen
+      .getAllByTestId(/^(stacked-section|add-bar)-/)
+      .map((element) => element.getAttribute('data-testid'));
+
+    expect(order).toEqual([
+      `stacked-section-${QueryEditorType.Query}-A`,
+      'add-bar-query-A',
+      `stacked-section-${QueryEditorType.Query}-B`,
+      'add-bar-query-B',
+      `stacked-section-${QueryEditorType.Transformation}-organize-0`,
+      'add-bar-transformation-organize-0',
+    ]);
+  });
+
+  it('bars are reachable by keyboard in card order', async () => {
+    const { user } = renderStackedEditor();
+
+    act(() => screen.getByRole('button', { name: /exit stacked view/i }).focus());
+    const focused: Array<string | null> = [];
+    for (let i = 0; i < 3; i++) {
+      await user.tab();
+      focused.push(document.activeElement?.getAttribute('data-testid') ?? null);
+    }
+
+    expect(focused).toEqual(['add-bar-query-A', 'add-bar-query-B', 'add-bar-transformation-organize-0']);
   });
 
   it('shows the total item count in the header', () => {
