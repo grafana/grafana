@@ -6,6 +6,7 @@ import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { dataSource } from '../../ExpressionDatasource';
 import { ExpressionQueryType } from '../../types';
+import { interpolateSourceQueries } from '../../utils/interpolateSourceQueries';
 import { fetchSQLFields } from '../../utils/metaSqlExpr';
 import { useSQLSchemas } from '../SqlExpressions/hooks/useSQLSchemas';
 
@@ -18,7 +19,7 @@ import {
 jest.mock('../SqlExpressions/hooks/useSQLSchemas');
 jest.mock('../../utils/metaSqlExpr', () => ({ fetchSQLFields: jest.fn() }));
 jest.mock('../../utils/interpolateSourceQueries', () => ({
-  interpolateSourceQueries: (queries: unknown[]) => Promise.resolve(queries),
+  interpolateSourceQueries: jest.fn((queries: unknown[]) => Promise.resolve(queries)),
 }));
 
 const mockUseSQLSchemas = jest.mocked(useSQLSchemas);
@@ -171,6 +172,44 @@ describe('dynamic threshold source preview', () => {
     expect(result.current.numericFields).toEqual([]);
   });
 
+  it('sends no label-value request when cleanup happens while source interpolation is pending', async () => {
+    mockUseSQLSchemas.mockReturnValue({
+      schemas: null,
+      loading: false,
+      error: null,
+      isFeatureEnabled: true,
+      refetch: jest.fn().mockResolvedValue(undefined),
+    });
+    const runMetaSQLExprQuery = jest.spyOn(dataSource, 'runMetaSQLExprQuery');
+    let resolveInterpolation!: (queries: unknown[]) => void;
+    jest
+      .mocked(interpolateSourceQueries)
+      .mockReturnValueOnce(new Promise((resolve) => (resolveInterpolation = resolve)) as never);
+    const { unmount } = renderHook(() => useDynamicThresholdSourcePreview([sourceQuery('A')], 'A', 'region'));
+
+    unmount();
+    await act(async () => resolveInterpolation([]));
+
+    expect(runMetaSQLExprQuery).not.toHaveBeenCalled();
+  });
+
+  it('passes a cancellation check to the fallback field fetch', async () => {
+    mockUseSQLSchemas.mockReturnValue({
+      schemas: null,
+      loading: false,
+      error: null,
+      isFeatureEnabled: false,
+      refetch: jest.fn().mockResolvedValue(undefined),
+    });
+    mockFetchSQLFields.mockReturnValue(new Promise(() => {}));
+    const { unmount } = renderHook(() => useDynamicThresholdSourcePreview([sourceQuery('A')], 'A', ''));
+
+    const options = mockFetchSQLFields.mock.calls[0][2];
+    expect(options?.isCancelled?.()).toBe(false);
+    unmount();
+    expect(options?.isCancelled?.()).toBe(true);
+  });
+
   it('does not expose a stale fallback response after the source model changes', async () => {
     mockUseSQLSchemas.mockReturnValue({
       schemas: null,
@@ -283,7 +322,10 @@ describe('dynamic threshold source preview', () => {
       const range = lastSchemaRange();
       expectValid(range);
       expect(range.to.valueOf() - range.from.valueOf()).toBe(3600 * 1000);
-      expect(mockFetchSQLFields).toHaveBeenCalledWith({ table: 'A' }, [queries[0].model], { range });
+      expect(mockFetchSQLFields).toHaveBeenCalledWith({ table: 'A' }, [queries[0].model], {
+        range,
+        isCancelled: expect.any(Function),
+      });
       expect(runMeta.mock.calls[0][1]).toBe(range);
     });
 

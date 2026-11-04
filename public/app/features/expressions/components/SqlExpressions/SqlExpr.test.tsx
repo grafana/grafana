@@ -1051,6 +1051,24 @@ describe('fetchSQLFields', () => {
     expect(runMetaSQLExprQuery.mock.calls[0][2]).toEqual([interpolatedQuery]);
   });
 
+  it('sends no metadata query when cancelled while source queries are being interpolated', async () => {
+    const runMetaSQLExprQuery = jest.spyOn(dataSource, 'runMetaSQLExprQuery');
+    let cancelled = false;
+    mockDataSourceSrv.get.mockResolvedValueOnce({
+      interpolateVariablesInQueries: (queries: unknown[]) => {
+        cancelled = true;
+        return queries;
+      },
+    });
+
+    await expect(
+      fetchSQLFields({ table: 'A' }, [{ refId: 'A', datasource: { uid: 'p', type: 'prometheus' } }], {
+        isCancelled: () => cancelled,
+      })
+    ).resolves.toEqual([]);
+    expect(runMetaSQLExprQuery).not.toHaveBeenCalled();
+  });
+
   it('returns no fields without a table and skips metadata queries', async () => {
     const runMetaSQLExprQuery = jest.spyOn(dataSource, 'runMetaSQLExprQuery');
 

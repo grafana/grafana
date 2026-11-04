@@ -43,9 +43,11 @@ export function DynamicThresholdPreview({ queries, policy, previewSql }: Props) 
     const refId = `dynamic-threshold-preview-${generateUUID()}`;
     interpolateSourceQueries([sourceQuery.model], {})
       .then((interpolatedQueries) =>
-        dataSource.runMetaSQLExprQuery({ rawSql: previewSql, refId }, timeRange, interpolatedQueries)
+        cancelled
+          ? undefined
+          : dataSource.runMetaSQLExprQuery({ rawSql: previewSql, refId }, timeRange, interpolatedQueries)
       )
-      .then((frame) => !cancelled && setResult({ key: requestKey, frame }))
+      .then((frame) => !cancelled && frame && setResult({ key: requestKey, frame }))
       .catch((error) => !cancelled && setResult({ key: requestKey, error: getMessageFromError(error) }));
 
     return () => {

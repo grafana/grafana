@@ -12,6 +12,10 @@ import { config } from '@grafana/runtime';
 import { GraphThresholdsStyleMode } from '@grafana/schema';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { buildDynamicThreshold } from 'app/features/expressions/components/DynamicThreshold/buildDynamicThreshold';
+import {
+  hasDynamicThresholdSqlMismatch,
+  withoutDynamicThreshold,
+} from 'app/features/expressions/components/DynamicThreshold/utils';
 import { isDynamicThresholdQuery, isExpressionQuery } from 'app/features/expressions/guards';
 import { type ClassicCondition, ExpressionQueryType } from 'app/features/expressions/types';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
@@ -75,6 +79,10 @@ export function queriesWithUpdatedReferences(
     if (isDynamicThresholdQuery(query.model)) {
       const dynamicThreshold = query.model.dynamicThreshold;
       if (dynamicThreshold.policy.inputRefId === previousRefId) {
+        // User-edited SQL no longer follows the policy, so it becomes ordinary SQL and is never regenerated.
+        if (hasDynamicThresholdSqlMismatch(query.model)) {
+          return { ...query, model: withoutDynamicThreshold(query.model) };
+        }
         const policy = { ...dynamicThreshold.policy, inputRefId: newRefId };
         const built = buildDynamicThreshold(policy);
         return {
