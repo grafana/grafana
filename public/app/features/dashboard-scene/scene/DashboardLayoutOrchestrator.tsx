@@ -8,6 +8,7 @@ import {
   sceneGraph,
   type SceneComponentProps,
   SceneObjectBase,
+  type SceneObject,
   type SceneObjectRef,
   type SceneObjectState,
   VizPanel,
@@ -345,10 +346,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     }
 
     // Tabs can be dropped only to TabsLayoutManager, and not into one nested inside the dragged tab
-    if (
-      dropTarget instanceof TabsLayoutManager &&
-      !sceneGraph.findDescendents(this._tabDragState.tab, TabsLayoutManager).includes(dropTarget)
-    ) {
+    if (dropTarget instanceof TabsLayoutManager && !this._isInsideTab(dropTarget, this._tabDragState.tab)) {
       this._lastDropTarget = dropTarget;
     } else {
       this.cleanUpTabDropTarget();
@@ -869,6 +867,17 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       ?.getAttribute('data-tab-activation-key');
 
     return tabKey || null;
+  }
+
+  private _isInsideTab(obj: SceneObject, tab: TabItem): boolean {
+    let parent = obj.parent;
+    while (parent) {
+      if (parent === tab) {
+        return true;
+      }
+      parent = parent.parent;
+    }
+    return false;
   }
 
   private _findParentTabKey(item: RowItem | SceneGridItemLike): string | undefined {
