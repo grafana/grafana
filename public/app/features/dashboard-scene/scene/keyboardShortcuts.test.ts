@@ -18,6 +18,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { buildShareUrl } from '../sharing/ShareButton/utils';
 import { DashboardInteractions } from '../utils/interactions';
@@ -38,6 +39,7 @@ jest.mock('app/core/app_events', () => ({
   },
 }));
 jest.mock('app/core/services/KeybindingSet');
+jest.mock('../actions/layout/duplicatePanel');
 jest.mock('../sharing/ShareButton/utils');
 jest.mock('../utils/pathId', () => ({
   findVizPanelByPathId: jest.fn(),
@@ -520,15 +522,39 @@ describe('setupKeyboardShortcuts', () => {
       Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
     });
 
-    it('does not register the paste shortcut', () => {
+    it('blocks the p v (paste) shortcut and warns instead of pasting', () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
       Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
       jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(true);
-      mockScene.setState({ meta: { ...mockScene.state.meta, canSave: true } });
+      jest.spyOn(mockScene, 'pastePanel').mockImplementation();
+      localStorageMock.setItem(LS_PANEL_COPY_KEY, JSON.stringify({ panelId: 'panel-1' }));
+      const emitSpy = jest.spyOn(appEvents, 'emit');
 
       setupKeyboardShortcuts(mockScene);
+      const pvBinding = getBinding('p v');
+      expect(pvBinding).toBeDefined();
+      pvBinding!.onTrigger();
 
-      expect(getBinding('p v')).toBeUndefined();
+      expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertWarning, [
+        'Dashboard editing is not available on small screens. Switch to a larger screen to continue.',
+      ]);
+      expect(mockScene.pastePanel).not.toHaveBeenCalled();
+    });
+
+    it('enables the p v (paste) shortcut after widening a dashboard opened on mobile', () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(true);
+      jest.spyOn(mockScene, 'pastePanel').mockImplementation();
+      jest.spyOn(DashboardInteractions, 'trackPastePanelClick').mockImplementation();
+      localStorageMock.setItem(LS_PANEL_COPY_KEY, JSON.stringify({ panelId: 'panel-1' }));
+
+      setupKeyboardShortcuts(mockScene);
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+      mockScene.setState({ isEditing: true });
+      getBinding('p v')!.onTrigger();
+
+      expect(mockScene.pastePanel).toHaveBeenCalledTimes(1);
     });
 
     it('warns instead of opening settings when d s is pressed', () => {
@@ -624,6 +650,66 @@ describe('setupKeyboardShortcuts', () => {
         'Dashboard editing is not available on small screens. Switch to a larger screen to continue.',
       ]);
       expect(DashboardInteractions.panelActionClicked).not.toHaveBeenCalled();
+    });
+
+    describe('for a session already in full editing', () => {
+      function setupFullEditingOnMobile() {
+        const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
+        mockScene.setState({ isEditing: true, body: DefaultGridLayoutManager.fromVizPanels([panel]) });
+        jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(true);
+        jest.mocked(findVizPanelByPathId).mockReturnValue(panel);
+        jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+        setTestFlags({ 'grafana.mobileEditDeprecation': true });
+        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+        const emitSpy = jest.spyOn(appEvents, 'emit');
+
+        setupKeyboardShortcuts(mockScene);
+        const attentionHandler = jest.mocked(appEvents.subscribe).mock.calls[0][1];
+        attentionHandler(new SetPanelAttentionEvent({ panelId: 'panel-1' }));
+
+        return { emitSpy };
+      }
+
+      it('still opens panel edit with e', async () => {
+        locationService.replace('/d/test-uid');
+        const { emitSpy } = setupFullEditingOnMobile();
+
+        await getBinding('e')!.onTrigger();
+
+        expect(emitSpy).not.toHaveBeenCalled();
+        expect(locationService.getSearchObject().editPanel).toBe('1');
+      });
+
+      it('still deletes the panel with p r', () => {
+        const { emitSpy } = setupFullEditingOnMobile();
+
+        getBinding('p r')!.onTrigger();
+
+        expect(emitSpy).not.toHaveBeenCalled();
+        expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('delete', 1, 'keyboard');
+      });
+
+      it('still duplicates the panel with p d', () => {
+        const { emitSpy } = setupFullEditingOnMobile();
+
+        getBinding('p d')!.onTrigger();
+
+        expect(emitSpy).not.toHaveBeenCalled();
+        expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('duplicate', 1, 'keyboard');
+        expect(duplicatePanel).toHaveBeenCalled();
+      });
+
+      it('still pastes a panel with p v', () => {
+        jest.spyOn(mockScene, 'pastePanel').mockImplementation();
+        jest.spyOn(DashboardInteractions, 'trackPastePanelClick').mockImplementation();
+        localStorageMock.setItem(LS_PANEL_COPY_KEY, JSON.stringify({ panelId: 'panel-1' }));
+        const { emitSpy } = setupFullEditingOnMobile();
+
+        getBinding('p v')!.onTrigger();
+
+        expect(emitSpy).not.toHaveBeenCalled();
+        expect(mockScene.pastePanel).toHaveBeenCalledTimes(1);
+      });
     });
   });
 

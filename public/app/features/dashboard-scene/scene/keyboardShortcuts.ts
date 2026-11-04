@@ -22,7 +22,11 @@ import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
-import { isMobileEditDeprecated, notifyMobileEditNotAvailable } from '../utils/mobileEditDeprecation';
+import {
+  isEditEntryBlocked,
+  isMobileEditDeprecated,
+  notifyMobileEditNotAvailable,
+} from '../utils/mobileEditDeprecation';
 import { findVizPanelByPathId } from '../utils/pathId';
 import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
@@ -256,7 +260,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'e',
       onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-        if (isMobileEditDeprecated()) {
+        if (isEditEntryBlocked(scene)) {
           notifyMobileEditNotAvailable();
           return;
         }
@@ -310,7 +314,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'p r',
       onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-        if (isMobileEditDeprecated()) {
+        if (isEditEntryBlocked(scene)) {
           notifyMobileEditNotAvailable();
           return;
         }
@@ -327,7 +331,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'p d',
       onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-        if (isMobileEditDeprecated()) {
+        if (isEditEntryBlocked(scene)) {
           notifyMobileEditNotAvailable();
           return;
         }
@@ -338,21 +342,23 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       }),
     });
 
-    if (!isMobileEditDeprecated()) {
-      // paste panel (not panel-scoped: adds the copied panel to the dashboard)
-      keybindings.addBinding({
-        key: 'p v',
-        onTrigger: () => {
-          if (isFullDashboardEditing(scene.state) && store.exists(LS_PANEL_COPY_KEY)) {
-            const sidebar = scene.state.sidebar;
-            const selectedObj = sidebar.getSelectedObject();
-            sidebar.pastePanel(selectedObj);
+    // paste panel (not panel-scoped: adds the copied panel to the dashboard)
+    keybindings.addBinding({
+      key: 'p v',
+      onTrigger: () => {
+        if (isEditEntryBlocked(scene)) {
+          notifyMobileEditNotAvailable();
+          return;
+        }
+        if (isFullDashboardEditing(scene.state) && store.exists(LS_PANEL_COPY_KEY)) {
+          const sidebar = scene.state.sidebar;
+          const selectedObj = sidebar.getSelectedObject();
+          sidebar.pastePanel(selectedObj);
 
-            DashboardInteractions.trackPastePanelClick('keyboard', getLayoutType(selectedObj), 'keyboard');
-          }
-        },
-      });
-    }
+          DashboardInteractions.trackPastePanelClick('keyboard', getLayoutType(selectedObj), 'keyboard');
+        }
+      },
+    });
   }
 
   // collapse all rows
