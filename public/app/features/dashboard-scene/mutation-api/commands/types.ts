@@ -5,7 +5,7 @@
  * plus the MutationContext passed to handlers and reusable permission checks.
  */
 
-import type * as z from 'zod';
+import type * as z from 'zod/mini';
 
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
@@ -42,7 +42,7 @@ export interface MutationCommand<T = unknown, TScene = DashboardScene> {
   /** Human-readable description. */
   description: string;
   /** Zod schema for runtime payload validation. Single source of truth. */
-  payloadSchema: z.ZodType<T>;
+  payloadSchema: z.ZodMiniType<T>;
   /** Permission check run before execution. Must be a pure predicate (no side effects). */
   permission: PermissionCheck<TScene>;
   /**

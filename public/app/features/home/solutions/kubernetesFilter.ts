@@ -1,4 +1,4 @@
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { t } from '@grafana/i18n';
 
@@ -6,8 +6,8 @@ import { hasSelection } from './kubernetesData';
 import { fetchLabelValues } from './promQuery';
 import { DatasourceBoundFilterSchema, parseStoredFilter, TrimmedValues } from './solutionFilter';
 
-const KubernetesFilterSchema = DatasourceBoundFilterSchema.extend({
-  cluster: z.string().trim(),
+const KubernetesFilterSchema = z.extend(DatasourceBoundFilterSchema, {
+  cluster: z.string().check(z.trim()),
   namespaces: TrimmedValues,
   nodes: TrimmedValues,
 });

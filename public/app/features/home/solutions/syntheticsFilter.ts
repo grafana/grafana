@@ -1,4 +1,4 @@
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { t } from '@grafana/i18n';
 
@@ -6,7 +6,7 @@ import { fetchLabelValues } from './promQuery';
 import { DatasourceBoundFilterSchema, parseStoredFilter, TrimmedValues } from './solutionFilter';
 import { hasIgnores, type IgnoreLabel } from './syntheticsData';
 
-const SyntheticsFilterSchema = DatasourceBoundFilterSchema.extend({
+const SyntheticsFilterSchema = z.extend(DatasourceBoundFilterSchema, {
   job: TrimmedValues,
   instance: TrimmedValues,
   probe: TrimmedValues,

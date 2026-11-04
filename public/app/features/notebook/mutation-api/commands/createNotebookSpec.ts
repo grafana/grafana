@@ -8,7 +8,7 @@
  * mutation API being mounted only on a scene).
  */
 
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { locationService } from '@grafana/runtime';
 import { type MutationCommand } from 'app/features/dashboard-scene/mutation-api/commands/types';
@@ -21,32 +21,30 @@ import { requiresNotebookCreate } from './permissions';
 
 // Strict, like GET and APPLY, and most of all here: this is the only command on the surface that
 // persists, so an ignored key is a saved notebook.
-const createNotebookSpecPayloadSchema = z
-  .object({
-    spec: z
-      .record(z.string(), z.unknown())
-      .describe('A complete notebook spec to create (the same shape GET_NOTEBOOK_SPEC returns).'),
-    validate: z
-      .boolean()
-      .optional()
-      .default(true)
-      .describe(
+const createNotebookSpecPayloadSchema = z.strictObject({
+  spec: z
+    .record(z.string(), z.unknown())
+    .check(z.describe('A complete notebook spec to create (the same shape GET_NOTEBOOK_SPEC returns).')),
+  validate: z
+    ._default(z.boolean(), true)
+    .check(
+      z.describe(
         'Validate the spec against the notebook schema and reject before writing. On by default here, ' +
           'unlike the other commands, because a create is persisted.'
-      ),
-    open: z
-      .boolean()
-      .optional()
-      .default(true)
-      .describe(
+      )
+    ),
+  open: z
+    ._default(z.boolean(), true)
+    .check(
+      z.describe(
         'Navigate to the new notebook. Turn off to create one without leaving the current page. The ' +
           'response reports `opened`, which is whether the navigation was accepted, not whether the ' +
           'notebook page has finished mounting: the route is loaded lazily, so GET_NOTEBOOK_SPEC and ' +
           'APPLY_NOTEBOOK_SPEC can still reach the previous document for a moment afterwards. Check ' +
           'getAvailableCommands() rather than assuming.'
-      ),
-  })
-  .strict();
+      )
+    ),
+});
 
 export type CreateNotebookSpecPayload = z.infer<typeof createNotebookSpecPayloadSchema>;
 

@@ -5,7 +5,7 @@
  * and a trimmed elements map (title, description, vizConfig.group only).
  */
 
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import type { Element, PanelKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
@@ -108,7 +108,7 @@ function injectPaths(layout: any, prefix = ''): void {
 
 export const getLayoutCommand: MutationCommand<GetLayoutPayload> = {
   name: 'GET_LAYOUT',
-  description: payloads.getLayout.description ?? '',
+  description: z.globalRegistry.get(payloads.getLayout)?.description ?? '',
 
   payloadSchema: payloads.getLayout,
   permission: requiresNewDashboardLayoutsReadOnly,

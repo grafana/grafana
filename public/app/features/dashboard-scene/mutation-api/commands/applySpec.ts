@@ -11,7 +11,7 @@
  * url-synced part of that state is re-initialized from the URL after the swap.
  */
 
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { t } from '@grafana/i18n';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -29,7 +29,7 @@ export type ApplySpecPayload = z.infer<typeof applySpecPayloadSchema>;
 
 export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
   name: 'APPLY_SPEC',
-  description: payloads.applySpec.description ?? '',
+  description: z.globalRegistry.get(payloads.applySpec)?.description ?? '',
 
   payloadSchema: applySpecPayloadSchema,
   // Rebuilds the layout tree, so gate on the same toggle as the layout commands.

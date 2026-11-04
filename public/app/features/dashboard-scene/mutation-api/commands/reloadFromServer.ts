@@ -6,6 +6,8 @@
  * caller can let the user decide.
  */
 
+import * as z from 'zod/mini';
+
 import { locationService } from '@grafana/runtime';
 
 import {
@@ -22,7 +24,7 @@ import { readOnly, type MutationCommand } from './types';
 
 export const reloadFromServerCommand: MutationCommand<{ pendingChanges?: string | null }> = {
   name: 'RELOAD_FROM_SERVER',
-  description: payloads.reloadFromServer.description ?? '',
+  description: z.globalRegistry.get(payloads.reloadFromServer)?.description ?? '',
 
   payloadSchema: payloads.reloadFromServer,
   // Reloading never writes; the server already holds the newer version.

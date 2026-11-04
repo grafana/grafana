@@ -1,4 +1,4 @@
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { type RecordingRuleRecordingRuleHealth } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { type Labels } from 'app/types/unified-alerting-dto';
@@ -38,25 +38,25 @@ const RECORDING_RULE_HEALTHS = {
 // Search fields are untyped in the API. A field that is missing or fails its check reads as absent
 // instead of failing the whole hit.
 const recordingRuleSearchFieldsSchema = z.object({
-  title: z.string().optional().catch(undefined),
-  folder: z.string().optional().catch(undefined),
-  paused: z.boolean().optional().catch(undefined),
-  health: z.enum(RECORDING_RULE_HEALTHS).optional().catch(undefined),
-  lastError: z.string().optional().catch(undefined),
-  interval: z.string().optional().catch(undefined),
-  labels: z.array(z.string()).optional().catch(undefined),
-  datasourceUIDs: z.array(z.string()).optional().catch(undefined),
-  metric: z.string().optional().catch(undefined),
-  targetDatasourceUID: z.string().optional().catch(undefined),
+  title: z.catch(z.optional(z.string()), undefined),
+  folder: z.catch(z.optional(z.string()), undefined),
+  paused: z.catch(z.optional(z.boolean()), undefined),
+  health: z.catch(z.optional(z.enum(RECORDING_RULE_HEALTHS)), undefined),
+  lastError: z.catch(z.optional(z.string()), undefined),
+  interval: z.catch(z.optional(z.string()), undefined),
+  labels: z.catch(z.optional(z.array(z.string())), undefined),
+  datasourceUIDs: z.catch(z.optional(z.array(z.string())), undefined),
+  metric: z.catch(z.optional(z.string()), undefined),
+  targetDatasourceUID: z.catch(z.optional(z.string()), undefined),
 });
 
 /** Parses one search item straight into the row's shape. */
-export const recordingRuleSearchHitSchema = z
-  .object({
+export const recordingRuleSearchHitSchema = z.pipe(
+  z.object({
     resource: z.object({ name: z.string() }),
-    fields: recordingRuleSearchFieldsSchema.catch({}),
-  })
-  .transform(
+    fields: z.catch(recordingRuleSearchFieldsSchema, {}),
+  }),
+  z.transform(
     ({ resource, fields }): RecordingRuleSearchHit => ({
       uid: resource.name,
       title: fields.title ?? resource.name,
@@ -70,4 +70,5 @@ export const recordingRuleSearchHitSchema = z
       metric: fields.metric,
       targetDatasourceUID: fields.targetDatasourceUID,
     })
-  );
+  )
+);

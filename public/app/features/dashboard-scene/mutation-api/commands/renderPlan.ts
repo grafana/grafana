@@ -12,7 +12,7 @@
  * Never calls enterEditModeIfNeeded: the preview is a static, view-mode surface that must never
  * enter edit mode (see refuseWhilePlanning for the few actions still reachable without it).
  */
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { CustomVariable, SceneVariableSet, type SceneVariable, type VizPanel } from '@grafana/scenes';
 import { defaultPanelSpec, type PanelKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -60,7 +60,7 @@ function buildPlanPanel(title: string, vizType: string, id: number): VizPanel {
 
 export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
   name: 'RENDER_PLAN',
-  description: payloads.renderPlan.description ?? '',
+  description: z.globalRegistry.get(payloads.renderPlan)?.description ?? '',
   payloadSchema: payloads.renderPlan,
   permission: requiresEdit,
   readOnly: false,

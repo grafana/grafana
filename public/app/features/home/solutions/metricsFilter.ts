@@ -1,4 +1,4 @@
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { t } from '@grafana/i18n';
 import { isValidRE2Regex } from 'app/features/alerting/unified/utils/matchers';
@@ -45,10 +45,10 @@ export function patternIssue(regex: string): string | null {
 
 // The one normalizer: rows are trimmed and must pass the field rules, or the whole filter is refused.
 const ExcludesSchema = z
-  .array(z.object({ label: z.string().trim(), regex: z.string().trim() }))
-  .refine((rows) => rows.every((row) => !labelIssue(row.label) && !patternIssue(row.regex)));
+  .array(z.object({ label: z.string().check(z.trim()), regex: z.string().check(z.trim()) }))
+  .check(z.refine((rows) => rows.every((row) => !labelIssue(row.label) && !patternIssue(row.regex))));
 
-const MetricsFilterSchema = DatasourceBoundFilterSchema.extend({ excludes: ExcludesSchema });
+const MetricsFilterSchema = z.extend(DatasourceBoundFilterSchema, { excludes: ExcludesSchema });
 
 export type MetricsFilter = z.infer<typeof MetricsFilterSchema>;
 

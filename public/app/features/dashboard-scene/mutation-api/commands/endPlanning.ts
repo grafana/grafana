@@ -5,7 +5,7 @@
  * RENDER_PLAN can add content to a preview (view mode, no editing), so every panel/section/
  * variable present is tautologically the whole plan.
  */
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { SceneVariableSet } from '@grafana/scenes';
 
@@ -18,7 +18,7 @@ export type EndPlanningPayload = z.infer<typeof payloads.endPlanning>;
 
 export const endPlanningCommand: MutationCommand<EndPlanningPayload> = {
   name: 'END_PLANNING',
-  description: payloads.endPlanning.description ?? '',
+  description: z.globalRegistry.get(payloads.endPlanning)?.description ?? '',
   payloadSchema: payloads.endPlanning,
   permission: requiresEdit,
   readOnly: false,
