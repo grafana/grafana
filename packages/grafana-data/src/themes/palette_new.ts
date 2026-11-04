@@ -67,17 +67,17 @@ export const palette = {
   red950: '#2c0b10',
 
   // Orange. Brand
-  orange50: '#f4e2d7',
-  orange100: '#eccab7',
-  orange200: '#e5b193',
-  orange300: '#de976b',
-  orange400: '#d08048',
-  orange500: '#ba7240',
-  orange600: '#a46437',
-  orange700: '#8e562f',
-  orange800: '#694025',
-  orange900: '#452a1a',
-  orange950: '#241710',
+  orange50: '#f7e1d4',
+  orange100: '#f2c8af',
+  orange200: '#ecaf87',
+  orange300: '#e7935a',
+  orange400: '#db7a33',
+  orange500: '#c46d2d',
+  orange600: '#ad5f27',
+  orange700: '#965220',
+  orange800: '#6e3e1b',
+  orange900: '#482914',
+  orange950: '#25170b',
 
   // Yellow-orange. Status: warning, pending
   amber50: '#fff5e7',

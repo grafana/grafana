@@ -44,7 +44,7 @@
     "accent": {
       "main": "palette.orange500",
       "mainEmphasis": "palette.orange600",
-      "text": "palette.orange700",
+      "text": "palette.orange600",
       "textEmphasis": "palette.orange800",
       "background": "palette.orange700",
       "backgroundEmphasis": "palette.orange800",
@@ -152,8 +152,8 @@
       "borderColor": "palette.neutral200"
     },
     "checkbox": {
-      "activeBackground": "palette.orange700",
-      "activeBackgroundHover": "palette.orange800"
+      "activeBackground": "palette.orange500",
+      "activeBackgroundHover": "palette.orange600"
     },
     "drawer": {
       "background": "palette.neutral50",
@@ -170,8 +170,8 @@
       "borderColor": "palette.neutral200"
     },
     "switch": {
-      "activeBackground": "palette.orange700",
-      "activeBackgroundHover": "palette.orange800"
+      "activeBackground": "palette.orange500",
+      "activeBackgroundHover": "palette.orange600"
     },
     "tooltip": {
       "borderColor": "palette.neutral200"

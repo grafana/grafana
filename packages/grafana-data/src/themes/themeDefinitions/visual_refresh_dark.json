@@ -149,8 +149,8 @@
       "borderColor": "palette.ink700"
     },
     "checkbox": {
-      "activeBackground": "palette.orange700",
-      "activeBackgroundHover": "palette.orange600"
+      "activeBackground": "palette.orange600",
+      "activeBackgroundHover": "palette.orange500"
     },
     "drawer": {
       "background": "palette.ink900",
@@ -167,8 +167,8 @@
       "borderColor": "palette.ink700"
     },
     "switch": {
-      "activeBackground": "palette.orange700",
-      "activeBackgroundHover": "palette.orange600"
+      "activeBackground": "palette.orange600",
+      "activeBackgroundHover": "palette.orange500"
     },
     "tooltip": {
       "borderColor": "palette.ink700"
