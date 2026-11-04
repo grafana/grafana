@@ -31,7 +31,9 @@ import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DashboardControls, type DashboardControlsState } from './DashboardControls';
+import { DashboardDataLayerSet } from './DashboardDataLayerSet';
 import { DashboardScene } from './DashboardScene';
 
 jest.mock('app/core/services/context_srv', () => ({
@@ -310,6 +312,18 @@ describe('DashboardControls', () => {
         sceneBuilder: buildPanelEditVariablesScene,
         expectedVisible: ['ancestorVar', 'dashboardVar', 'dupVar'],
         expectedHidden: ['otherSectionVar'],
+      },
+      {
+        title: 'should include edited panel ancestor section annotations in panel edit mode',
+        sceneBuilder: () => buildPanelModeAnnotationsScene('edit'),
+        expectedVisible: ['ancestorAnnotation'],
+        expectedHidden: ['hiddenAnnotation', 'otherSectionAnnotation'],
+      },
+      {
+        title: 'should include viewed panel ancestor section annotations in panel view mode',
+        sceneBuilder: () => buildPanelModeAnnotationsScene('view'),
+        expectedVisible: ['ancestorAnnotation'],
+        expectedHidden: ['hiddenAnnotation', 'otherSectionAnnotation'],
       },
       {
         title: 'should hide repeat local section variables in panel edit mode',
@@ -1137,6 +1151,41 @@ function buildPanelViewVariablesScene() {
   });
 
   dashboard.setState({ editPanel: undefined, viewPanel: editedPanel.getPathId() });
+
+  return { controls };
+}
+
+function sectionAnnotation(name: string, isHidden = false) {
+  return new DashboardAnnotationsDataLayer({
+    name,
+    isHidden,
+    isEnabled: false,
+    query: { name, enable: false, iconColor: 'red' },
+  });
+}
+
+function buildPanelModeAnnotationsScene(mode: 'edit' | 'view') {
+  const { dashboard, controls, editedPanel } = buildPanelEditControlsScene({
+    uid: `panel-${mode}-annotations`,
+    editedPanelKey: 'edited-panel',
+    rows: [
+      new RowItem({
+        title: 'Ancestor row',
+        $data: new DashboardDataLayerSet({
+          annotationLayers: [sectionAnnotation('ancestorAnnotation'), sectionAnnotation('hiddenAnnotation', true)],
+        }),
+      }),
+      new RowItem({
+        title: 'Other row',
+        $data: new DashboardDataLayerSet({ annotationLayers: [sectionAnnotation('otherSectionAnnotation')] }),
+      }),
+    ],
+    dashboardVariables: [],
+  });
+
+  if (mode === 'view') {
+    dashboard.setState({ editPanel: undefined, viewPanel: editedPanel.getPathId() });
+  }
 
   return { controls };
 }

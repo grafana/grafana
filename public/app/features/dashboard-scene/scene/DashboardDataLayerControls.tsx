@@ -26,20 +26,23 @@ const AnnotationQueryEditorModal = lazy(() =>
 type DashboardDataLayerControlsProps = {
   dashboard: DashboardScene;
   inMenu?: boolean;
+  // Section layers shown after the dashboard layers, e.g. for the panel in panel edit or view panel
+  sectionLayers?: SceneDataLayerProvider[];
 };
 
-export function DashboardDataLayerControls({ dashboard, inMenu }: DashboardDataLayerControlsProps) {
+export function DashboardDataLayerControls({ dashboard, inMenu, sectionLayers }: DashboardDataLayerControlsProps) {
   // We render controls here (instead of the data layer set's default renderer) to
   // respect per-layer `placement` and edit-mode visibility rules.
   const dataLayerSet = sceneGraph.getData(dashboard);
   const state = dataLayerSet.useState();
 
   const visibleLayers = useMemo(() => {
-    if (!isDashboardDataLayerSetState(state) || !isDashboardDataLayerSet(dataLayerSet)) {
-      return [];
-    }
-    return state.annotationLayers.filter((layer) => !layer.state.isHidden && layer.state.placement === undefined);
-  }, [state, dataLayerSet]);
+    const dashboardLayers =
+      isDashboardDataLayerSetState(state) && isDashboardDataLayerSet(dataLayerSet)
+        ? state.annotationLayers.filter((layer) => !layer.state.isHidden && layer.state.placement === undefined)
+        : [];
+    return [...dashboardLayers, ...(sectionLayers ?? [])];
+  }, [state, dataLayerSet, sectionLayers]);
 
   return useMemo(
     () =>
