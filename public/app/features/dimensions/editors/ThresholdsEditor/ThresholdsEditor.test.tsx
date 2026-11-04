@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { type ReactElement } from 'react';
 
 import { createTheme, type Threshold, ThresholdsMode } from '@grafana/data';
-import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/feature-flags';
 import { mockThemeContext } from '@grafana/ui';
 
 import { ThresholdsEditor, type Props } from './ThresholdsEditor';

@@ -85,6 +85,27 @@ module.exports = class GrafanaHappyDOMEnvironment extends HappyDOMEnvironment {
 
     this.global.DOMException = createDOMException(this.getVmContext());
 
+    // Happy DOM exposes Node's observers, which otherwise outlive the window and retain test runtimes.
+    const NativePerformanceObserver = this.global.PerformanceObserver;
+    const disconnect = NativePerformanceObserver.prototype.disconnect;
+    const performanceObservers = new Set();
+    this.global.PerformanceObserver = class PerformanceObserver extends NativePerformanceObserver {
+      observe(...args) {
+        super.observe(...args);
+        performanceObservers.add(this);
+      }
+      disconnect() {
+        super.disconnect();
+        performanceObservers.delete(this);
+      }
+    };
+    this.disconnectPerformanceObservers = () => {
+      for (const observer of performanceObservers) {
+        disconnect.call(observer);
+      }
+      performanceObservers.clear();
+    };
+
     if (isStandardCircus(projectConfig.testRunner)) {
       // Only Jasmine needs upstream's per-call stack inspection; leave other runners unchanged.
       // Match Happy DOM's instance binding, keeping task tracking and detached calls intact.
@@ -128,18 +149,28 @@ module.exports = class GrafanaHappyDOMEnvironment extends HappyDOMEnvironment {
   }
 
   async teardown() {
+    const happyDOM = this.global?.happyDOM;
+    if (!happyDOM) {
+      return;
+    }
     try {
       await super.teardown();
     } finally {
-      for (const [prototype, descriptors] of this.prototypeDescriptors) {
-        for (const key of Reflect.ownKeys(prototype)) {
-          if (!Object.hasOwn(descriptors, key)) {
-            delete prototype[key];
+      try {
+        this.disconnectPerformanceObservers();
+        // window.close() ignores root windows. The detached API also releases Happy DOM's frame registry.
+        await happyDOM.close();
+      } finally {
+        for (const [prototype, descriptors] of this.prototypeDescriptors) {
+          for (const key of Reflect.ownKeys(prototype)) {
+            if (!Object.hasOwn(descriptors, key)) {
+              delete prototype[key];
+            }
           }
+          Object.defineProperties(prototype, descriptors);
         }
-        Object.defineProperties(prototype, descriptors);
+        this.prototypeDescriptors.clear();
       }
-      this.prototypeDescriptors.clear();
     }
   }
 };

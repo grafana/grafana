@@ -76,6 +76,8 @@ test('the separate harness configuration selects Jest suites, but not source or 
     'scripts/test-harness/regressions/coreExtensionInitialization.test.ts',
     'scripts/test-harness/regressions/datasourceFilter.test.ts',
     'scripts/test-harness/regressions/debugUtilities.test.ts',
+    'scripts/test-harness/regressions/featureFlagEntryPoint.test.ts',
+    'scripts/test-harness/regressions/lazyJestDomMatchers.test.ts',
     'scripts/test-harness/regressions/lazyMatchers.test.ts',
     'scripts/test-harness/regressions/paginationLimits.test.ts',
   ]);

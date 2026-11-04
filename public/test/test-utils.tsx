@@ -19,7 +19,7 @@ import {
   setChromeHeaderHeightHook,
   setLocationService,
 } from '@grafana/runtime';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/feature-flags';
 import { GrafanaContext, type GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { ModalsContextProvider } from 'app/core/context/ModalsContextProvider';
 import { configureStore } from 'app/store/configureStore';

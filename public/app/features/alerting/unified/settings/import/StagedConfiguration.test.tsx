@@ -4,8 +4,8 @@ import { render, screen } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { setBackendSrv } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from '../../mocks/server/utils';

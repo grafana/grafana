@@ -1,7 +1,6 @@
 // `structuredClone` is not yet in jsdom https://github.com/jsdom/jsdom/issues/3363
 import 'core-js/stable/structured-clone';
 import 'whatwg-fetch';
-import '@testing-library/jest-dom';
 import { configure } from '@testing-library/react';
 import i18next from 'i18next';
 import failOnConsole from 'jest-fail-on-console';
@@ -12,6 +11,8 @@ import { matchers } from '@grafana/test-utils';
 
 import { setPluginComponentsHook } from '../../packages/grafana-runtime/src/services/pluginExtensions/usePluginComponents';
 import { getEnvConfig } from '../../scripts/cli/env-util';
+
+import { jestDomMatchers } from './lazyJestDomMatchers';
 
 const config = getEnvConfig(path.resolve(__dirname, '../..'));
 
@@ -25,6 +26,7 @@ if (config.frontend_dev_fail_tests_on_console || process.env.CI) {
   });
 }
 
+expect.extend(jestDomMatchers);
 expect.extend(matchers);
 
 i18next.use(initReactI18next).init({
