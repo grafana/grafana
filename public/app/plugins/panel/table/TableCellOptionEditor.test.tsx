@@ -1,26 +1,36 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
+import { standardEditorsRegistry } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode, type TableCellOptions } from '@grafana/schema';
+import {
+  BarGaugeDisplayMode,
+  BarGaugeValueMode,
+  GraphDrawStyle,
+  TableCellDisplayMode,
+  type TableCellOptions,
+} from '@grafana/schema';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
+import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
 
-import { TableCellOptionEditor } from './TableCellOptionEditor';
+import { getTableCellOptionSearchTerms, TableCellOptionEditor } from './TableCellOptionEditor';
 
 mockComboboxRect();
+standardEditorsRegistry.setInit(getAllOptionEditors);
 
 // Render the editor the way the panel framework does — controlled, feeding each
 // onChange value back in as the next value — so type switches actually take effect.
-function setup(initial: TableCellOptions = { type: TableCellDisplayMode.Auto }) {
+function setup(initial: TableCellOptions = { type: TableCellDisplayMode.Auto }, searchQuery?: string) {
   const onChange = jest.fn();
   function Wrapper() {
     const [value, setValue] = useState<TableCellOptions>(initial);
     return (
       <TableCellOptionEditor
         value={value}
+        searchQuery={searchQuery}
         onChange={(v) => {
           onChange(v);
           setValue(v);
@@ -28,12 +38,12 @@ function setup(initial: TableCellOptions = { type: TableCellDisplayMode.Auto }) 
       />
     );
   }
-  render(
+  const { container } = render(
     <OpenFeatureProvider client={getTestFeatureFlagClient()}>
       <Wrapper />
     </OpenFeatureProvider>
   );
-  return { onChange };
+  return { onChange, container };
 }
 
 // The cell-type list is virtualized to the first several options, so these
@@ -95,6 +105,82 @@ describe('TableCellOptionEditor', () => {
   it('renders no sub-editor for cell types without extra options', () => {
     setup({ type: TableCellDisplayMode.Auto });
     expect(screen.queryByText('Gauge display mode')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    [{ type: TableCellDisplayMode.Gauge }, 'Gauge display mode'],
+    [{ type: TableCellDisplayMode.ColorBackground }, 'Background display mode'],
+    [{ type: TableCellDisplayMode.Image }, 'Alt text'],
+    [{ type: TableCellDisplayMode.Markdown }, 'Dynamic height'],
+  ] as Array<[TableCellOptions, string]>)(
+    'indexes the same registered fields that it renders: %s',
+    (cellOptions, fieldLabel) => {
+      setup(cellOptions);
+
+      expect(getTableCellOptionSearchTerms(cellOptions)).toContain(fieldLabel);
+      expect(getTableCellOptionSearchTerms(cellOptions)).not.toContain('Syntax highlighting');
+      expect(screen.getByText(fieldLabel)).toBeInTheDocument();
+    }
+  );
+
+  it.each([
+    [{ type: TableCellDisplayMode.Gauge }, 'Value display'],
+    [{ type: TableCellDisplayMode.ColorBackground }, 'Apply to entire row'],
+    [{ type: TableCellDisplayMode.Image }, 'Title text'],
+  ] as Array<[TableCellOptions, string]>)(
+    'indexes and renders every registered control: %s',
+    (cellOptions, fieldLabel) => {
+      setup(cellOptions);
+
+      expect(getTableCellOptionSearchTerms(cellOptions)).toContain(fieldLabel);
+      expect(screen.getByText(fieldLabel)).toBeInTheDocument();
+    }
+  );
+
+  it('does not index controls belonging to a different cell type', () => {
+    const terms = getTableCellOptionSearchTerms({ type: TableCellDisplayMode.Gauge });
+
+    expect(terms).toContain('Gauge display mode');
+    expect(terms).not.toContain('Alt text');
+    expect(terms).not.toContain('Dynamic height');
+  });
+
+  it('highlights matching cell editor labels with the panel editor search highlight', () => {
+    const { container } = setup({ type: TableCellDisplayMode.Gauge }, 'Gauge display');
+
+    expect(container.querySelector('.search-fragment-highlight')?.textContent).toBe('Gauge display');
+  });
+
+  it('does not highlight cell editor labels that do not match the search', () => {
+    const { container } = setup({ type: TableCellDisplayMode.Gauge }, 'No matching setting');
+
+    expect(container.querySelector('.search-fragment-highlight')).not.toBeInTheDocument();
+  });
+
+  it.each([false, true])(
+    'keeps JSON search terms in sync with the feature gated control when enabled=%s',
+    (enabled) => {
+      setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: enabled });
+      const cellOptions = { type: TableCellDisplayMode.JSONView } as const;
+      setup(cellOptions);
+      const indexed = getTableCellOptionSearchTerms(cellOptions);
+
+      expect(indexed.includes('Syntax highlighting')).toBe(enabled);
+      expect(Boolean(screen.queryByRole('switch', { name: 'Syntax highlighting' }))).toBe(enabled);
+    }
+  );
+
+  it('keeps sparkline search terms in sync with the controls visible for the selected draw style', async () => {
+    const cellOptions = { type: TableCellDisplayMode.Sparkline, drawStyle: GraphDrawStyle.Bars } as const;
+    await act(async () => {
+      setup(cellOptions);
+    });
+    const indexed = getTableCellOptionSearchTerms(cellOptions);
+
+    expect(indexed).toContain('Bar alignment');
+    expect(screen.getByText('Bar alignment')).toBeInTheDocument();
+    expect(indexed).not.toContain('Line interpolation');
+    expect(screen.queryByText('Line interpolation')).not.toBeInTheDocument();
   });
 
   it('discards the previous type settings when the cell type changes', async () => {

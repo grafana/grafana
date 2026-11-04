@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { type ReactNode } from 'react';
 import * as React from 'react';
-import Highlighter from 'react-highlight-words';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Field, Label, useStyles2 } from '@grafana/ui';
 import { getLabelStyles } from '@grafana/ui/internal';
 
+import { highlightOptionSearchTerm } from './OptionSearchHighlight';
 import { type OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemOverrides } from './OptionsPaneItemOverrides';
 import { useOptionsPaneReadOnly } from './OptionsPaneReadOnlyContext';
@@ -120,23 +120,23 @@ function renderOptionLabel(itemDescriptor: OptionsPaneItemDescriptor, searchQuer
   const categories: React.ReactNode[] = [];
 
   if (itemDescriptor.parent.parent) {
-    categories.push(highlightWord(itemDescriptor.parent.parent.props.title, searchQuery));
+    categories.push(highlightOptionSearchTerm(itemDescriptor.parent.parent.props.title, searchQuery));
   }
 
   if (itemDescriptor.parent.props.title !== title) {
-    categories.push(highlightWord(itemDescriptor.parent.props.title, searchQuery));
+    categories.push(highlightOptionSearchTerm(itemDescriptor.parent.props.title, searchQuery));
   }
 
   return (
-    <Label description={description && highlightWord(description, searchQuery)} category={categories} htmlFor={id}>
-      {highlightWord(title, searchQuery)}
+    <Label
+      description={description && highlightOptionSearchTerm(description, searchQuery)}
+      category={categories}
+      htmlFor={id}
+    >
+      {highlightOptionSearchTerm(title, searchQuery)}
       {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
     </Label>
   );
-}
-
-function highlightWord(word: string, query: string) {
-  return <Highlighter textToHighlight={word} searchWords={[query]} highlightClassName={'search-fragment-highlight'} />;
 }
 
 interface OptionPanelLabelProps {

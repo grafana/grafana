@@ -1,47 +1,52 @@
 import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { BarGaugeDisplayMode, BarGaugeValueMode, type TableBarGaugeCellOptions } from '@grafana/schema';
-import { Field, RadioButtonGroup } from '@grafana/ui';
+import { RadioButtonGroup } from '@grafana/ui';
 
-import { type TableCellEditorProps } from '../TableCellOptionEditor';
-import { CellOptionSearchLabel } from './CellOptionSearchLabel';
+import {
+  type TableCellOptionEditorDefinition,
+  type TableCellOptionEditorProps,
+  renderCellOptionEditors,
+} from './TableCellOptionEditorRegistry';
 
-type Props = TableCellEditorProps<TableBarGaugeCellOptions>;
-export const barGaugeCellOptionLabels = {
-  displayMode: t('table.bar-gauge-cell-options-editor.label-gauge-display-mode', 'Gauge display mode'),
-  valueDisplay: t('table.bar-gauge-cell-options-editor.label-value-display', 'Value display'),
-};
+type Props = TableCellOptionEditorProps<TableBarGaugeCellOptions>;
 
-export const BarGaugeCellOptionsEditor = ({ cellOptions, onChange, searchQuery }: Props) => (
-  <>
-    <Field
-      noMargin
-      label={<CellOptionSearchLabel label={barGaugeCellOptionLabels.displayMode} searchQuery={searchQuery} />}
-    >
-      <RadioButtonGroup<BarGaugeDisplayMode>
-        value={cellOptions?.mode ?? BarGaugeDisplayMode.Gradient}
-        onChange={(v) => {
-          cellOptions.mode = v;
-          onChange(cellOptions);
-        }}
-        options={barGaugeOpts}
-      />
-    </Field>
-    <Field
-      noMargin
-      label={<CellOptionSearchLabel label={barGaugeCellOptionLabels.valueDisplay} searchQuery={searchQuery} />}
-    >
-      <RadioButtonGroup<BarGaugeValueMode>
-        value={cellOptions?.valueDisplayMode ?? BarGaugeValueMode.Text}
-        onChange={(v) => {
-          cellOptions.valueDisplayMode = v;
-          onChange(cellOptions);
-        }}
-        options={valueModes}
-      />
-    </Field>
-  </>
+const BarGaugeDisplayModeEditor = ({ cellOptions, onChange }: Props) => (
+  <RadioButtonGroup<BarGaugeDisplayMode>
+    value={cellOptions?.mode ?? BarGaugeDisplayMode.Gradient}
+    onChange={(v) => {
+      cellOptions.mode = v;
+      onChange(cellOptions);
+    }}
+    options={barGaugeOpts}
+  />
 );
+
+const BarGaugeValueDisplayEditor = ({ cellOptions, onChange }: Props) => (
+  <RadioButtonGroup<BarGaugeValueMode>
+    value={cellOptions?.valueDisplayMode ?? BarGaugeValueMode.Text}
+    onChange={(v) => {
+      cellOptions.valueDisplayMode = v;
+      onChange(cellOptions);
+    }}
+    options={valueModes}
+  />
+);
+
+export const barGaugeCellOptionEditors: Array<TableCellOptionEditorDefinition<TableBarGaugeCellOptions>> = [
+  {
+    id: 'mode',
+    name: () => t('table.bar-gauge-cell-options-editor.label-gauge-display-mode', 'Gauge display mode'),
+    Editor: BarGaugeDisplayModeEditor,
+  },
+  {
+    id: 'valueDisplayMode',
+    name: () => t('table.bar-gauge-cell-options-editor.label-value-display', 'Value display'),
+    Editor: BarGaugeValueDisplayEditor,
+  },
+];
+
+export const BarGaugeCellOptionsEditor = (props: Props) => renderCellOptionEditors(barGaugeCellOptionEditors, props);
 
 const barGaugeOpts: SelectableValue[] = [
   { value: BarGaugeDisplayMode.Basic, label: 'Basic' },

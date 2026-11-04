@@ -3,31 +3,44 @@ import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { FlagKeys, getFeatureFlagClient, useFlagTableRefreshNewFeatures } from '@grafana/runtime/internal';
-import { type TableCellOptions } from '@grafana/schema';
+import { type TableCellOptions, type TableJsonViewCellOptions } from '@grafana/schema';
 import { Combobox, type ComboboxOption, Field, Stack, Switch, TableCellDisplayMode } from '@grafana/ui';
 
-import { barGaugeCellOptionLabels, BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
+import { barGaugeCellOptionEditors, BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import {
-  colorBackgroundCellOptionLabels,
+  colorBackgroundCellOptionEditors,
   ColorBackgroundCellOptionsEditor,
 } from './cells/ColorBackgroundCellOptionsEditor';
-import { imageCellOptionLabels, ImageCellOptionsEditor } from './cells/ImageCellOptionsEditor';
-import { markdownCellOptionLabel, MarkdownCellOptionsEditor } from './cells/MarkdownCellOptionsEditor';
+import { imageCellOptionEditors, ImageCellOptionsEditor } from './cells/ImageCellOptionsEditor';
+import { markdownCellOptionEditors, MarkdownCellOptionsEditor } from './cells/MarkdownCellOptionsEditor';
 import { getSparklineCellOptionSearchTerms, SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
-import { CellOptionSearchLabel } from './cells/CellOptionSearchLabel';
-
-const jsonCellOptionLabels = {
-  syntaxHighlighting: t('table.json-cell-options.syntax-highlighting', 'Syntax highlighting'),
-};
+import {
+  getCellOptionEditorSearchTerms,
+  renderCellOptionEditors,
+  type TableCellOptionEditorDefinition,
+  type TableCellOptionEditorProps,
+} from './cells/TableCellOptionEditorRegistry';
 
 // The props that any cell type editor are expected
 // to handle. In this case the generic type should
 // be a discriminated interface of TableCellOptions
-export interface TableCellEditorProps<T> {
-  cellOptions: T;
-  onChange: (value: T) => void;
-  searchQuery?: string;
-}
+export type TableCellEditorProps<T> = TableCellOptionEditorProps<T>;
+
+const JsonSyntaxHighlightingEditor = ({ cellOptions, onChange }: TableCellEditorProps<TableJsonViewCellOptions>) => (
+  <Switch
+    value={cellOptions.syntaxHighlighting !== false}
+    onChange={(event) => onChange({ ...cellOptions, syntaxHighlighting: event.currentTarget.checked })}
+  />
+);
+
+const jsonCellOptionEditors: Array<TableCellOptionEditorDefinition<TableJsonViewCellOptions>> = [
+  {
+    id: 'syntaxHighlighting',
+    name: () => t('table.json-cell-options.syntax-highlighting', 'Syntax highlighting'),
+    showIf: () => getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
+    Editor: JsonSyntaxHighlightingEditor,
+  },
+];
 
 interface Props {
   value: TableCellOptions;
@@ -61,24 +74,22 @@ export function getTableCellOptionSearchTerms(value?: TableCellOptions): string[
 
   switch (value?.type) {
     case TableCellDisplayMode.Gauge:
-      cellEditorOptions = Object.values(barGaugeCellOptionLabels);
+      cellEditorOptions = getCellOptionEditorSearchTerms(barGaugeCellOptionEditors, value);
       break;
     case TableCellDisplayMode.ColorBackground:
-      cellEditorOptions = Object.values(colorBackgroundCellOptionLabels);
+      cellEditorOptions = getCellOptionEditorSearchTerms(colorBackgroundCellOptionEditors, value);
       break;
     case TableCellDisplayMode.Sparkline:
       cellEditorOptions = getSparklineCellOptionSearchTerms(value);
       break;
     case TableCellDisplayMode.Image:
-      cellEditorOptions = Object.values(imageCellOptionLabels);
+      cellEditorOptions = getCellOptionEditorSearchTerms(imageCellOptionEditors, value);
       break;
     case TableCellDisplayMode.Markdown:
-      cellEditorOptions = [markdownCellOptionLabel];
+      cellEditorOptions = getCellOptionEditorSearchTerms(markdownCellOptionEditors, value);
       break;
     case TableCellDisplayMode.JSONView:
-      if (getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false)) {
-        cellEditorOptions = Object.values(jsonCellOptionLabels);
-      }
+      cellEditorOptions = getCellOptionEditorSearchTerms(jsonCellOptionEditors, value);
       break;
   }
 
@@ -143,23 +154,13 @@ export const TableCellOptionEditor = ({ value, onChange, id, searchQuery }: Prop
       {cellType === TableCellDisplayMode.Markdown && (
         <MarkdownCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} searchQuery={searchQuery} />
       )}
-      {value.type === TableCellDisplayMode.JSONView && jsonSyntaxHighlightingEnabled && (
-        <Field
-          noMargin
-          label={<CellOptionSearchLabel label={jsonCellOptionLabels.syntaxHighlighting} searchQuery={searchQuery} />}
-        >
-          <Switch
-            value={value.syntaxHighlighting !== false}
-            onChange={(event) =>
-              onCellOptionsChange({
-                ...value,
-                type: TableCellDisplayMode.JSONView,
-                syntaxHighlighting: event.currentTarget.checked,
-              })
-            }
-          />
-        </Field>
-      )}
+      {value.type === TableCellDisplayMode.JSONView &&
+        jsonSyntaxHighlightingEnabled &&
+        renderCellOptionEditors(jsonCellOptionEditors, {
+          cellOptions: value,
+          onChange: (next) => onCellOptionsChange({ ...next, type: TableCellDisplayMode.JSONView }),
+          searchQuery,
+        })}
     </Stack>
   );
 };

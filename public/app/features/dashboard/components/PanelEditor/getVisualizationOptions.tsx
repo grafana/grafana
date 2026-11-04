@@ -167,14 +167,23 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
         description: fieldOption.description,
         searchTerms: fieldOption.getSearchTerms?.(value),
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
-        render: function renderEditor() {
+        render: function renderEditor(_descriptor, searchQuery) {
           const onChange = (v: unknown) => {
             onFieldConfigsChange(
               updateDefaultFieldConfigValue(currentFieldConfig, fieldOption.path, v, fieldOption.isCustom)
             );
           };
 
-          return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={htmlId} />;
+          return (
+            <Editor
+              value={value}
+              onChange={onChange}
+              item={fieldOption}
+              context={context}
+              id={htmlId}
+              {...(fieldOption.getSearchTerms ? { searchQuery } : {})}
+            />
+          );
         },
       })
     );
@@ -327,7 +336,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
         description: fieldOption.description,
         searchTerms: fieldOption.getSearchTerms?.(value),
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
-        render: function renderEditor() {
+        render: function renderEditor(_descriptor, searchQuery) {
           const onChange = (v: unknown) => {
             const newFieldConfig = updateDefaultFieldConfigValue(
               currentFieldConfig,
@@ -349,7 +358,16 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
             });
           };
 
-          return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={htmlId} />;
+          return (
+            <Editor
+              value={value}
+              onChange={onChange}
+              item={fieldOption}
+              context={context}
+              id={htmlId}
+              {...(fieldOption.getSearchTerms ? { searchQuery } : {})}
+            />
+          );
         },
       })
     );
@@ -424,7 +442,7 @@ export function fillOptionsPaneItems(
               item={pluginOption}
               context={context}
               id={htmlId}
-              {...({ searchQuery } as { searchQuery?: string })}
+              {...(pluginOption.getSearchTerms ? { searchQuery } : {})}
             />
           );
         },

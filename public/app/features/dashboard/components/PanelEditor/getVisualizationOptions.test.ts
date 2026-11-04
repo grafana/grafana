@@ -264,6 +264,10 @@ describe('getVisualizationOptions', () => {
       expect(vizOptions.length).toEqual(1);
       expect(vizOptions[0].items.length).toEqual(3);
       expect(vizOptions[0].items[0].props.searchTerms).toEqual(['Nested custom control']);
+
+      const item = vizOptions[0].items[0];
+      const renderedEditor = item.props.render(item, 'Nested custom control');
+      expect(renderedEditor.props.searchQuery).toBe('Nested custom control');
     });
 
     it('should not show items when the showIf evaluates to false', () => {

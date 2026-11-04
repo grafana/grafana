@@ -28,6 +28,7 @@ describe('OptionSearchEngine', () => {
     const results = engine.search('Hide value');
 
     expect(results.optionHits.map((item) => item.props.title)).toEqual(['Cell type']);
+    expect(engine.search('Missing nested control').optionHits).toHaveLength(0);
   });
 
   it('When matching both title and description title should rank higher', () => {

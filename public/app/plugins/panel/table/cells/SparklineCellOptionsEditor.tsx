@@ -7,10 +7,11 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type GraphFieldConfig, type TableSparklineCellOptions } from '@grafana/schema';
 import { Field, useStyles2 } from '@grafana/ui';
 import { defaultSparklineCellConfig } from '@grafana/ui/internal';
+import { highlightOptionSearchTerm } from 'app/features/dashboard/components/PanelEditor/OptionSearchHighlight';
 
 import { getGraphFieldConfig } from '../../timeseries/config';
-import { type TableCellEditorProps } from '../TableCellOptionEditor';
-import { CellOptionSearchLabel } from './CellOptionSearchLabel';
+
+import { type TableCellOptionEditorProps } from './TableCellOptionEditorRegistry';
 
 type OptionKey = keyof TableSparklineCellOptions;
 
@@ -70,7 +71,7 @@ function getChartCellConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<Gr
   };
 }
 
-export const SparklineCellOptionsEditor = (props: TableCellEditorProps<TableSparklineCellOptions>) => {
+export const SparklineCellOptionsEditor = (props: TableCellOptionEditorProps<TableSparklineCellOptions>) => {
   const { cellOptions, onChange, searchQuery } = props;
 
   const registry = useMemo(() => {
@@ -100,7 +101,7 @@ export const SparklineCellOptionsEditor = (props: TableCellEditorProps<TableSpar
           <Field
             key={item.id}
             noMargin
-            label={<CellOptionSearchLabel label={item.name} searchQuery={searchQuery} />}
+            label={searchQuery ? highlightOptionSearchTerm(item.name, searchQuery) : item.name}
             className={style.field}
           >
             <Editor
