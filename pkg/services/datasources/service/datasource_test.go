@@ -1749,7 +1749,10 @@ func TestIntegrationService_getConnections(t *testing.T) {
 					"group": "test.datasource.grafana.app",
 					"version": "v0alpha1",
 					"plugin": "test",
-					"annotations": {"grafana.app/managedBy": "classic-file-provisioning"}
+					"annotations": {
+						"grafana.app/managedBy": "classic-file-provisioning",
+						"grafana.app/managerAllowsEdits": "false"
+					}
 				}
 			]
 		}`, string(jj))

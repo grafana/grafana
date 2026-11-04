@@ -322,7 +322,8 @@ func (s *Service) asConnection(ds *datasources.DataSource) (*queryV0.DataSourceC
 	var annotations map[string]string
 	if ds.ReadOnly {
 		annotations = map[string]string{
-			utils.AnnoKeyManagerKind: string(utils.ManagerKindClassicFP), // nolint:staticcheck
+			utils.AnnoKeyManagerKind:        string(utils.ManagerKindClassicFP), // nolint:staticcheck
+			utils.AnnoKeyManagerAllowsEdits: "false",
 		}
 	}
 
