@@ -84,6 +84,7 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
     .addNumberInput({
       path: 'tooltip.maxWidth',
       name: t('grafana-ui.builder.tooltip.name-max-width', 'Max width'),
+      description: t('grafana-ui.builder.tooltip.description-max-width', 'Maximum width of the tooltip, in pixels'),
       category,
       settings: {
         integer: true,
@@ -93,6 +94,7 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
     .addNumberInput({
       path: 'tooltip.maxHeight',
       name: t('grafana-ui.builder.tooltip.name-max-height', 'Max height'),
+      description: t('grafana-ui.builder.tooltip.description-max-height', 'Maximum height of the tooltip, in pixels'),
       category,
       defaultValue: undefined,
       settings: {
