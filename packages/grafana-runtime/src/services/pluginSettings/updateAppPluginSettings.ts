@@ -27,7 +27,11 @@ function updateLegacySettings(pluginId: string, data: Partial<PluginMeta>): Prom
 
 async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<v0alpha1Settings> {
   const spec = settingsSpecMapper(data);
-  const secure = inlineSecureValuesMapper(data);
+  const { metadata, ...stored } = await refetchCachedAppSettings(pluginId, false);
+
+  // The patch is a full diff, so a stored secret missing from `secure` would be removed. Start from the stored
+  // references and overlay the caller's changes, like the legacy API merging secureJsonData.
+  const secure = { ...stored.secure, ...inlineSecureValuesMapper(data) };
   const update = {
     apiVersion: `${pluginId}/${getApiVersion()}`,
     kind: 'Settings',
@@ -35,7 +39,6 @@ async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<P
     secure,
   };
 
-  const { metadata, ...stored } = await refetchCachedAppSettings(pluginId, false);
   const test: Operation = { op: 'test', path: '/metadata/resourceVersion', value: metadata.resourceVersion };
   const patch = [test, ...compare(stored, update)];
   logPluginSettingsDebug('PluginSettings: updating plugin settings', { pluginId });

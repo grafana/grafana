@@ -1,3 +1,5 @@
+import { applyPatch, type Operation } from 'fast-json-patch';
+
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
@@ -159,6 +161,73 @@ describe('settings', () => {
           undefined,
           { showErrorAlert: false, validatePath: true }
         );
+      });
+
+      describe('secrets are merged like the legacy API: omitted secrets are kept', () => {
+        const stored: v0alpha1Settings = {
+          ...myOrgTestAppSettings,
+          spec: { enabled: true, pinned: true, jsonData: { apiUrl: 'https://www.grafana.com/' } },
+          secure: {
+            apiKey: { name: 'some-secret-apiKey' },
+            password: { name: 'some-secret-password' },
+          },
+        };
+
+        // Asserts on the document the server ends up with, not on the shape of the patch.
+        async function updateAndApplyPatch(data: Parameters<typeof updateAppPluginSettings>[1]) {
+          backendSrv.get = jest.fn().mockResolvedValue(stored);
+          backendSrv.patch = jest.fn().mockResolvedValue(stored);
+
+          await updateAppPluginSettings(myOrgTestAppSettings.metadata.name, data);
+
+          const [, patch] = jest.mocked(backendSrv.patch).mock.calls[0];
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          return applyPatch(structuredClone(stored), patch as Operation[]).newDocument;
+        }
+
+        it('should keep all stored secrets when secureJsonData is omitted', async () => {
+          const result = await updateAndApplyPatch({ jsonData: { apiUrl: 'https://grafana.com/' } });
+
+          expect(result.secure).toEqual(stored.secure);
+          expect(result.spec.jsonData).toEqual({ apiUrl: 'https://grafana.com/' });
+        });
+
+        it('should keep stored secrets that are not part of secureJsonData', async () => {
+          const result = await updateAndApplyPatch({
+            jsonData: { apiUrl: 'https://grafana.com/' },
+            secureJsonData: { apiKey: 'the new api key' },
+            secureJsonFields: { apiKey: true, password: true },
+          });
+
+          expect(result.secure).toEqual({
+            apiKey: { create: 'the new api key' },
+            password: { name: 'some-secret-password' },
+          });
+        });
+
+        it('should only remove a secret that is explicitly marked for removal', async () => {
+          const result = await updateAndApplyPatch({
+            jsonData: { apiUrl: 'https://grafana.com/' },
+            secureJsonFields: { apiKey: true, password: false },
+          });
+
+          expect(result.secure).toEqual({
+            apiKey: { name: 'some-secret-apiKey' },
+            password: { remove: true },
+          });
+        });
+
+        it('should save a new secret when the key was reset and then retyped', async () => {
+          const result = await updateAndApplyPatch({
+            secureJsonData: { apiKey: 'the new api key' },
+            secureJsonFields: { apiKey: false, password: true },
+          });
+
+          expect(result.secure).toEqual({
+            apiKey: { create: 'the new api key' },
+            password: { name: 'some-secret-password' },
+          });
+        });
       });
 
       it('should cache updated settings from new apis', async () => {
