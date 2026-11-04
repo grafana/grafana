@@ -445,6 +445,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/notebooks-suite/ @grafana/sharing-squad
 /e2e-playwright/dashboard-cujs/ @grafana/dashboards-squad
 /e2e-playwright/journey-tracking/ @grafana/dashboards-squad
+/e2e-playwright/mt-instant-fallback-suite/ @grafana/grafana-frontend-platform
 /e2e-playwright/dashboard-cujs/scope-*.spec.ts @grafana/dashboards-squad @grafana/grafana-operator-experience-squad
 /e2e-playwright/utils/scope* @grafana/grafana-operator-experience-squad
 /e2e-playwright/dashboards-search-suite/ @grafana/dashboards-squad
