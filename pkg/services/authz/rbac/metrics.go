@@ -14,6 +14,7 @@ type metrics struct {
 	requestCount                  *prometheus.CounterVec
 	permissionCacheUsage          *prometheus.CounterVec
 	legacyCheckRequests           *prometheus.CounterVec
+	legacyCheckErrors             *prometheus.CounterVec
 	legacyCheckDuration           *prometheus.HistogramVec
 	legacyScopeResolutionDuration prometheus.Histogram
 }
@@ -24,6 +25,10 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 			Name: "grafana_authz_legacy_check_requests_total",
 			Help: "LegacyCheck requests by evaluation context and whether access was allowed. Failed checks are counted as not allowed.",
 		}, []string{"evaluation", "allowed"}),
+		legacyCheckErrors: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_authz_legacy_check_errors_total",
+			Help: "LegacyCheck failures by evaluation context and error type: rpc for returned Go errors, application for errors in the response body.",
+		}, []string{"evaluation", "error_type"}),
 		legacyCheckDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "grafana_authz_legacy_check_duration_seconds",
 			Help:    "Time spent handling LegacyCheck requests.",

@@ -59,11 +59,14 @@ func (s *Service) withLegacyCheckInstrumentation(
 
 	defer func() {
 		checkErr := err
+		errorType := "rpc"
 		// Application failures use a successful gRPC status, so inspect the response too.
 		if checkErr == nil && (response.GetError() != "" || response.GetErrorCode() != authzextv1.LegacyCheckErrorCode_LEGACY_CHECK_ERROR_CODE_UNSPECIFIED) {
 			checkErr = fmt.Errorf("legacy check failed (%s): %s", response.GetErrorCode(), response.GetError())
+			errorType = "application"
 		}
 		if checkErr != nil {
+			s.metrics.legacyCheckErrors.WithLabelValues(evaluation, errorType).Inc()
 			_ = tracing.Error(span, checkErr)
 		}
 
