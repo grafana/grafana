@@ -47,7 +47,8 @@ func TestUUIDV7TimeValidation(t *testing.T) {
 		require.True(t, ok, uid)
 		require.Equal(t, want, got)
 	}
-	invalid := []string{"", "blob", "00000000-0000-7xxx-xxxx-xxxxxxxxxxxx", valid[:35], valid + "0", "{" + valid + "}", "urn:uuid:" + valid, strings.ReplaceAll(valid, "-", "")}
+	invalid := make([]string, 0, 8+len(valid)+15+12)
+	invalid = append(invalid, "", "blob", "00000000-0000-7xxx-xxxx-xxxxxxxxxxxx", valid[:35], valid+"0", "{"+valid+"}", "urn:uuid:"+valid, strings.ReplaceAll(valid, "-", ""))
 	for i := range len(valid) {
 		invalid = append(invalid, valid[:i]+"x"+valid[i+1:])
 	}
