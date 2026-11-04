@@ -117,8 +117,9 @@ func newNatsNotifierDroppedMetric(reg prometheus.Registerer) *prometheus.Counter
 	}, []string{"reason"})
 }
 
-// NatsEventSource lets other backends reuse the KV NATS notifier. Events carry
-// no body.
+// NatsEventSource lets other backends reuse the NATS notifier's subscription,
+// decoding and settling. Events carry no body; the backend reads it from its
+// own storage.
 type NatsEventSource struct {
 	notifier *natsNotifier
 }
