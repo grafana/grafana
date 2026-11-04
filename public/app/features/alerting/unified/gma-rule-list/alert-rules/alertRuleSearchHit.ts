@@ -3,6 +3,7 @@ import * as z from 'zod';
 import {
   type AlertRuleAlertRuleHealth,
   type AlertRuleAlertRuleState,
+  type AlertRuleNotificationSettingsType,
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { type Labels } from 'app/types/unified-alerting-dto';
 
@@ -34,7 +35,7 @@ export interface AlertRuleSearchHit {
   totalsNoData?: number;
   totalsError?: number;
   /** Routing type; absent when the rule has no notification settings. */
-  notificationType?: 'SimplifiedRouting' | 'NamedRoutingTree';
+  notificationType?: AlertRuleNotificationSettingsType;
   /** Contact point name for SimplifiedRouting. */
   receiver?: string;
   /** Named policy for NamedRoutingTree; absent means the default policy. */
@@ -57,6 +58,12 @@ const ALERT_RULE_HEALTHS = {
   Error: 'Error',
   NoData: 'NoData',
 } satisfies Record<AlertRuleAlertRuleHealth, AlertRuleAlertRuleHealth>;
+
+// Keyed by the generated union so a value the API adds or drops fails the type check here.
+const NOTIFICATION_SETTING_TYPES = {
+  SimplifiedRouting: 'SimplifiedRouting',
+  NamedRoutingTree: 'NamedRoutingTree',
+} satisfies Record<AlertRuleNotificationSettingsType, AlertRuleNotificationSettingsType>;
 
 // annotations comes back as a JSON-encoded string; parse it safely via Zod.
 const annotationsSchema = z.record(z.string(), z.string());
@@ -110,7 +117,7 @@ const alertRuleSearchFieldsSchema = z.object({
   totalsRecovering: z.number().optional().catch(undefined),
   totalsNoData: z.number().optional().catch(undefined),
   totalsError: z.number().optional().catch(undefined),
-  notificationType: z.enum(['SimplifiedRouting', 'NamedRoutingTree']).optional().catch(undefined),
+  notificationType: z.enum(NOTIFICATION_SETTING_TYPES).optional().catch(undefined),
   receiver: z.string().optional().catch(undefined),
   routingTree: z.string().optional().catch(undefined),
 });

@@ -39,6 +39,13 @@ describe('RuleRouting', () => {
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
 
+  it('shows "Default policy" when routingTree is the default routing tree name', () => {
+    render(<RuleRouting searchHit={baseHit({ notificationType: 'NamedRoutingTree', routingTree: 'user-defined' })} />);
+
+    expect(screen.getByText('Default policy')).toBeInTheDocument();
+    expect(screen.queryByText(/Policy:/)).not.toBeInTheDocument();
+  });
+
   it('renders nothing for SimplifiedRouting when receiver is absent', () => {
     const { container } = render(<RuleRouting searchHit={baseHit({ notificationType: 'SimplifiedRouting' })} />);
     expect(container).toBeEmptyDOMElement();

@@ -2,19 +2,32 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { grafanaRulesNav } from '../../utils/navigation';
 import { type AlertRuleSearchHit } from '../alert-rules/alertRuleSearchHit';
 
-type ColorKey = 'firing' | 'pending' | 'recovering' | 'healthy' | 'nodata' | 'error';
+type InstanceState = 'firing' | 'pending' | 'recovering' | 'healthy' | 'nodata' | 'error';
 
-interface StateCount {
-  count: number;
-  label: string;
-  colorKey: ColorKey;
-  field: keyof AlertRuleSearchHit;
-}
+/** Keys of AlertRuleSearchHit whose values are numeric totals. */
+type TotalsField =
+  | 'totalsFiring'
+  | 'totalsPending'
+  | 'totalsRecovering'
+  | 'totalsHealthy'
+  | 'totalsNoData'
+  | 'totalsError';
+
+/** Maps each instance state to the search-hit field that carries its count. Adding a state to
+ * InstanceState requires adding it here, to labels, and to badge — TypeScript enforces all three. */
+const TOTALS_FIELDS = {
+  firing: 'totalsFiring',
+  pending: 'totalsPending',
+  recovering: 'totalsRecovering',
+  healthy: 'totalsHealthy',
+  nodata: 'totalsNoData',
+  error: 'totalsError',
+} satisfies Record<InstanceState, TotalsField>;
 
 interface RuleInstanceCountsProps {
   searchHit: AlertRuleSearchHit;
@@ -23,46 +36,19 @@ interface RuleInstanceCountsProps {
 export function RuleInstanceCounts({ searchHit }: RuleInstanceCountsProps) {
   const styles = useStyles2(getStyles);
 
-  const stateDefs = (
-    [
-      {
-        count: searchHit.totalsFiring ?? 0,
-        label: t('alerting.gma-rule-list.instances.firing', 'firing'),
-        colorKey: 'firing' as const,
-        field: 'totalsFiring' as const,
-      },
-      {
-        count: searchHit.totalsPending ?? 0,
-        label: t('alerting.gma-rule-list.instances.pending', 'pending'),
-        colorKey: 'pending' as const,
-        field: 'totalsPending' as const,
-      },
-      {
-        count: searchHit.totalsRecovering ?? 0,
-        label: t('alerting.gma-rule-list.instances.recovering', 'recovering'),
-        colorKey: 'recovering' as const,
-        field: 'totalsRecovering' as const,
-      },
-      {
-        count: searchHit.totalsHealthy ?? 0,
-        label: t('alerting.gma-rule-list.instances.healthy', 'normal'),
-        colorKey: 'healthy' as const,
-        field: 'totalsHealthy' as const,
-      },
-      {
-        count: searchHit.totalsNoData ?? 0,
-        label: t('alerting.gma-rule-list.instances.nodata', 'no data'),
-        colorKey: 'nodata' as const,
-        field: 'totalsNoData' as const,
-      },
-      {
-        count: searchHit.totalsError ?? 0,
-        label: t('alerting.gma-rule-list.instances.error', 'error'),
-        colorKey: 'error' as const,
-        field: 'totalsError' as const,
-      },
-    ] satisfies StateCount[]
-  ).filter(({ field, count }) => searchHit[field] !== undefined && count > 0);
+  const labels: Record<InstanceState, string> = {
+    firing: t('alerting.gma-rule-list.instances.firing', 'firing'),
+    pending: t('alerting.gma-rule-list.instances.pending', 'pending'),
+    recovering: t('alerting.gma-rule-list.instances.recovering', 'recovering'),
+    healthy: t('alerting.gma-rule-list.instances.healthy', 'normal'),
+    nodata: t('alerting.gma-rule-list.instances.nodata', 'no data'),
+    error: t('alerting.gma-rule-list.instances.error', 'error'),
+  };
+
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const stateDefs = (Object.entries(TOTALS_FIELDS) as Array<[InstanceState, TotalsField]>)
+    .map(([state, field]) => ({ state, count: searchHit[field] }))
+    .filter((entry): entry is { state: InstanceState; count: number } => entry.count !== undefined && entry.count > 0);
 
   if (stateDefs.length === 0) {
     return null;
@@ -73,16 +59,16 @@ export function RuleInstanceCounts({ searchHit }: RuleInstanceCountsProps) {
 
   return (
     <Tooltip content={viewLabel} placement="top">
-      <a href={href} aria-label={viewLabel} className={styles.link}>
+      <TextLink href={href} aria-label={viewLabel} inline={false}>
         <Stack direction="row" alignItems="center" gap={0.5}>
           <Icon name="layers-alt" size="xs" className={styles.icon} />
-          {stateDefs.map(({ count, label, colorKey }) => (
-            <span key={colorKey} className={styles.badge[colorKey]}>
-              {count} {label}
+          {stateDefs.map(({ state, count }) => (
+            <span key={state} className={styles.badge[state]}>
+              {count} {labels[state]}
             </span>
           ))}
         </Stack>
-      </a>
+      </TextLink>
     </Tooltip>
   );
 }
@@ -101,15 +87,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     });
 
   return {
-    link: css({
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: theme.spacing(0.5),
-      textDecoration: 'none',
-      borderRadius: theme.shape.radius.default,
-      padding: `1px ${theme.spacing(0.25)}`,
-      '&:hover': { background: theme.colors.action.hover },
-    }),
     icon: css({ color: theme.colors.text.secondary }),
     badge: {
       firing: badge(theme.colors.error.text, theme.colors.error.transparent),

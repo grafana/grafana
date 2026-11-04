@@ -1,3 +1,5 @@
+import { isDefaultRoutingTreeName } from '@grafana/alerting/unstable';
+import { type AlertRuleNotificationSettingsType } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, Stack, Text, TextLink } from '@grafana/ui';
 
@@ -29,7 +31,7 @@ export function RuleRouting({ searchHit }: RuleRoutingProps) {
 }
 
 interface RoutingLabelProps {
-  notificationType: 'SimplifiedRouting' | 'NamedRoutingTree';
+  notificationType: AlertRuleNotificationSettingsType;
   receiver?: string;
   routingTree?: string;
 }
@@ -52,7 +54,7 @@ function RoutingLabel({ notificationType, receiver, routingTree }: RoutingLabelP
     );
   }
 
-  if (routingTree) {
+  if (routingTree && !isDefaultRoutingTreeName(routingTree)) {
     return (
       <Text variant="bodySmall" color="secondary">
         {t('alerting.gma-rule-list.routing.policy', 'Policy: {{name}}', {
