@@ -82,28 +82,29 @@ func (r *ZanzanaPermissionResolver) ResolveCurrentUserPermissions(ctx context.Co
 
 // searchUsersPermissions searches for users' permissions using Zanzana
 func (r *ZanzanaPermissionResolver) SearchUsersPermissions(ctx context.Context, signedInUser identity.Requester, orgID int64, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
+	namespace := legacyscopes.PermissionNamespace(ctx, signedInUser)
 	// If we have a specific user ID, search for that user
 	if options.UserID > 0 {
-		return r.searchSingleUser(ctx, orgID, options.UserID, options)
+		return r.searchSingleUser(ctx, namespace, options.UserID, options)
 	}
 
 	// Otherwise, we need to search across all users with the given action
-	return r.searchAllUsers(ctx, signedInUser, orgID, options)
+	return r.searchAllUsers(ctx, signedInUser, orgID, namespace, options)
 }
 
 // searchSingleUser searches permissions for a single user.
-func (r *ZanzanaPermissionResolver) searchSingleUser(ctx context.Context, orgID, userID int64, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
+func (r *ZanzanaPermissionResolver) searchSingleUser(ctx context.Context, namespace string, userID int64, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
 	usr, err := r.userSvc.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
-	return r.searchPermissionsForIdentity(ctx, orgID, userID, usr.UID, usr.IsServiceAccount, options)
+	return r.searchPermissionsForIdentity(ctx, namespace, userID, usr.UID, usr.IsServiceAccount, options)
 }
 
 // searchPermissionsForIdentity resolves permissions when uid and account type are already known.
 // Used by searchAllUsers with data from user.Search (avoids one GetByID per user). Search results
 // only include non-service accounts; pass isServiceAccount accordingly for other call sites.
-func (r *ZanzanaPermissionResolver) searchPermissionsForIdentity(ctx context.Context, orgID, userID int64, uid string, isServiceAccount bool, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
+func (r *ZanzanaPermissionResolver) searchPermissionsForIdentity(ctx context.Context, namespace string, userID int64, uid string, isServiceAccount bool, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
 	result := make(map[int64][]ac.Permission)
 	permissions := []ac.Permission{}
 
@@ -113,8 +114,6 @@ func (r *ZanzanaPermissionResolver) searchPermissionsForIdentity(ctx context.Con
 	} else {
 		subject = types.NewTypeID(types.TypeUser, uid)
 	}
-
-	namespace := types.OrgNamespaceFormatter(orgID)
 
 	var err error
 	if options.Action != "" {
@@ -149,7 +148,7 @@ func (r *ZanzanaPermissionResolver) searchPermissionsForIdentity(ctx context.Con
 }
 
 // searchAllUsers searches permissions across all users for a given action
-func (r *ZanzanaPermissionResolver) searchAllUsers(ctx context.Context, signedInUser identity.Requester, orgID int64, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
+func (r *ZanzanaPermissionResolver) searchAllUsers(ctx context.Context, signedInUser identity.Requester, orgID int64, namespace string, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
 	result := make(map[int64][]ac.Permission)
 
 	if options.Action == "" && options.ActionPrefix == "" {
@@ -185,9 +184,9 @@ func (r *ZanzanaPermissionResolver) searchAllUsers(ctx context.Context, signedIn
 				var err error
 				// user.Search already returns id and uid; org user search excludes service accounts.
 				if userHit.UID != "" {
-					userPerms, err = r.searchPermissionsForIdentity(gctx, orgID, userHit.ID, userHit.UID, false, options)
+					userPerms, err = r.searchPermissionsForIdentity(gctx, namespace, userHit.ID, userHit.UID, false, options)
 				} else {
-					userPerms, err = r.searchSingleUser(gctx, orgID, userHit.ID, options)
+					userPerms, err = r.searchSingleUser(gctx, namespace, userHit.ID, options)
 				}
 				if err != nil {
 					if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {

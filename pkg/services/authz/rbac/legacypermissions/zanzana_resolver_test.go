@@ -13,11 +13,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 )
@@ -154,7 +156,7 @@ func TestSearchPermissionsForIdentity_NoActionOrPrefix_ListsAllSupportedActions(
 
 	result, err := r.searchPermissionsForIdentity(
 		context.Background(),
-		1,
+		claims.OrgNamespaceFormatter(1),
 		42,
 		"user-uid",
 		false,
@@ -188,7 +190,7 @@ func TestSearchPermissionsForIdentity_WithAction_DoesNotListAll(t *testing.T) {
 
 	result, err := r.searchPermissionsForIdentity(
 		context.Background(),
-		1,
+		claims.OrgNamespaceFormatter(1),
 		42,
 		"user-uid",
 		false,
@@ -359,7 +361,7 @@ func TestSearchPermissionsForIdentity_ServiceAccount_SubjectType(t *testing.T) {
 
 	_, err := r.searchPermissionsForIdentity(
 		context.Background(),
-		1,
+		claims.OrgNamespaceFormatter(1),
 		42,
 		"sa-uid-123",
 		true, // service account
@@ -381,7 +383,7 @@ func TestSearchPermissionsForIdentity_User_SubjectType(t *testing.T) {
 
 	_, err := r.searchPermissionsForIdentity(
 		context.Background(),
-		1,
+		claims.OrgNamespaceFormatter(1),
 		42,
 		"user-uid-456",
 		false, // regular user
@@ -407,7 +409,7 @@ func TestSearchPermissionsForIdentity_UnsupportedAction_ReturnsEmpty(t *testing.
 
 	result, err := r.searchPermissionsForIdentity(
 		context.Background(),
-		1,
+		claims.OrgNamespaceFormatter(1),
 		42,
 		"user-uid",
 		false,
@@ -435,7 +437,7 @@ func TestSearchPermissionsForIdentity_ActionPrefix_FiltersToMatchingActions(t *t
 
 	result, err := r.searchPermissionsForIdentity(
 		context.Background(),
-		1,
+		claims.OrgNamespaceFormatter(1),
 		42,
 		"user-uid",
 		false,
@@ -469,7 +471,7 @@ func TestSearchPermissionsForIdentity_ActionPrefix_WithScope(t *testing.T) {
 
 	result, err := r.searchPermissionsForIdentity(
 		context.Background(),
-		1,
+		claims.OrgNamespaceFormatter(1),
 		42,
 		"user-uid",
 		false,
@@ -504,6 +506,7 @@ func TestSearchAllUsers_NoActionOrPrefix_ReturnsEmpty(t *testing.T) {
 		context.Background(),
 		nil, // signedInUser not needed — early return
 		1,
+		claims.OrgNamespaceFormatter(1),
 		ac.SearchOptions{}, // no action, no prefix
 	)
 	require.NoError(t, err)
@@ -511,10 +514,10 @@ func TestSearchAllUsers_NoActionOrPrefix_ReturnsEmpty(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// Namespace is derived from orgID
+// Selected namespace is propagated to Zanzana
 // ---------------------------------------------------------------------------
 
-func TestSearchPermissionsForIdentity_NamespaceDerivedFromOrgID(t *testing.T) {
+func TestSearchPermissionsForIdentity_UsesSelectedNamespace(t *testing.T) {
 	fake := &capturingZanzanaClient{
 		fakeZanzanaClient: fakeZanzanaClient{
 			listResp: &authzv1.ListResponse{Items: []string{"dash-1"}},
@@ -524,7 +527,7 @@ func TestSearchPermissionsForIdentity_NamespaceDerivedFromOrgID(t *testing.T) {
 
 	_, err := r.searchPermissionsForIdentity(
 		context.Background(),
-		7, // orgID
+		"org-7", // selected namespace
 		42,
 		"user-uid",
 		false,
@@ -548,7 +551,7 @@ func TestSearchPermissionsForIdentity_ResultKeyedByUserID(t *testing.T) {
 
 	result, err := r.searchPermissionsForIdentity(
 		context.Background(),
-		1,
+		claims.OrgNamespaceFormatter(1),
 		99, // userID
 		"user-uid",
 		false,
@@ -569,7 +572,7 @@ func TestSearchPermissionsForIdentity_EmptyResult_OmitsUserKey(t *testing.T) {
 
 	result, err := r.searchPermissionsForIdentity(
 		context.Background(),
-		1,
+		claims.OrgNamespaceFormatter(1),
 		99,
 		"user-uid",
 		false,
@@ -1069,6 +1072,70 @@ func TestResolveCurrentUserPermissionsDoesNotFallbackToList(t *testing.T) {
 			require.Equal(t, code, status.Code(err))
 			require.Nil(t, result)
 			require.Empty(t, client.listCalls, "current-user enumeration must never retry through List")
+		})
+	}
+}
+
+type searchScopeResolverFunc func(context.Context, claims.NamespaceInfo, legacyscopes.ScopeReference) (string, error)
+
+func (f searchScopeResolverFunc) ResolveScope(ctx context.Context, ns claims.NamespaceInfo, ref legacyscopes.ScopeReference) (string, error) {
+	return f(ctx, ns, ref)
+}
+
+func TestSearchUserPermissionsKeepsAliasesInTenantNamespace(t *testing.T) {
+	for _, tc := range []struct {
+		name, namespace, transport, hitUID, scope string
+		orgID, userID                             int64
+		serviceAccount, prefix                    bool
+		wantNamespace, wantID                     string
+	}{
+		{name: "cloud user", namespace: "stacks-123", orgID: 1, userID: 42, wantNamespace: "stacks-123", wantID: "7"},
+		{name: "cloud service account with numeric filter", namespace: "stacks-123", orgID: 1, userID: 42, serviceAccount: true, scope: "teams:id:7", wantNamespace: "stacks-123", wantID: "7"},
+		{name: "cloud broad prefix search", namespace: "stacks-123", orgID: 1, hitUID: "target", prefix: true, wantNamespace: "stacks-123", wantID: "7"},
+		{name: "cloud broad search with UID fallback", namespace: "stacks-123", orgID: 1, wantNamespace: "stacks-123", wantID: "7"},
+		{name: "global requester uses transport tenant", namespace: "org-0", transport: "stacks-123", userID: 42, wantNamespace: "stacks-123", wantID: "7"},
+		{name: "legacy org fallback", orgID: 2, userID: 42, wantNamespace: "org-2", wantID: "8"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := t.Context()
+			if tc.transport != "" {
+				ctx = request.WithNamespace(ctx, tc.transport)
+			}
+			caller := &identity.StaticRequester{Type: claims.TypeUser, UserUID: "caller", OrgID: tc.orgID, Namespace: tc.namespace}
+			client := &capturingZanzanaClient{fakeZanzanaClient: fakeZanzanaClient{listResp: &authzv1.ListResponse{Items: []string{"shared"}}}}
+			users := &usertest.FakeUserService{
+				ExpectedUser:        &user.User{ID: 42, UID: "target", IsServiceAccount: tc.serviceAccount},
+				ExpectedSearchUsers: user.SearchUserQueryResult{TotalCount: 1, Users: []*user.UserSearchHitDTO{{ID: 42, UID: tc.hitUID}}},
+			}
+			r := NewZanzanaPermissionResolver(client, users, nil, false)
+			r.scopeResolver = searchScopeResolverFunc(func(_ context.Context, ns claims.NamespaceInfo, ref legacyscopes.ScopeReference) (string, error) {
+				if ref.Attribute == "id" {
+					return "shared", nil
+				}
+				return map[string]string{"stacks-123": "7", claims.OrgNamespaceFormatter(1): "99", claims.OrgNamespaceFormatter(2): "8"}[ns.Value], nil
+			})
+			options := ac.SearchOptions{UserID: tc.userID, Action: "teams:read", Scope: tc.scope}
+			if tc.prefix {
+				options.Action = ""
+				options.ActionPrefix = "teams:rea"
+			}
+			orgID := tc.orgID
+			if orgID == 0 {
+				orgID = 1
+			}
+			got, err := r.SearchUsersPermissions(ctx, caller, orgID, options)
+			require.NoError(t, err)
+			got, err = legacyscopes.ResolveSearchScopes(ctx, caller, tc.scope, r.scopeResolver, got)
+			require.NoError(t, err)
+			want := []ac.Permission{{Action: "teams:read", Scope: "teams:id:" + tc.wantID}}
+			if tc.scope == "" {
+				want = append(want, ac.Permission{Action: "teams:read", Scope: "teams:uid:shared"})
+			}
+			require.ElementsMatch(t, want, got[42], "aliases from another tenant must never survive the final formatting pass")
+			require.NotEmpty(t, client.listCalls)
+			for _, call := range client.listCalls {
+				require.Equal(t, tc.wantNamespace, call.Namespace)
+			}
 		})
 	}
 }

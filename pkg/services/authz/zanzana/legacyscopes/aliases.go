@@ -124,7 +124,7 @@ func ResolveUserScopes(ctx context.Context, user identity.Requester, resolver Sc
 	if resolver == nil {
 		return permissions, ctx.Err()
 	}
-	namespace := permissionNamespace(ctx, user)
+	namespace := PermissionNamespace(ctx, user)
 	return WithAliases(ctx, namespace, "", resolver, permissions)
 }
 
@@ -188,7 +188,7 @@ func ResolveSearchScopes(ctx context.Context, user identity.Requester, scope str
 	if resolver == nil {
 		return permissions, ctx.Err()
 	}
-	namespace := permissionNamespace(ctx, user)
+	namespace := PermissionNamespace(ctx, user)
 	result := make(map[int64][]ac.Permission, len(permissions))
 	for id, perms := range permissions {
 		normalized, err := WithAliases(ctx, namespace, scope, resolver, perms)
@@ -202,9 +202,10 @@ func ResolveSearchScopes(ctx context.Context, user identity.Requester, scope str
 	return result, nil
 }
 
+// PermissionNamespace selects the tenant for permission queries and IAM lookups.
 // Global and missing-membership requesters can retain a legacy namespace sentinel.
 // IAM lookups must use the validated transport tenant instead.
-func permissionNamespace(ctx context.Context, user identity.Requester) string {
+func PermissionNamespace(ctx context.Context, user identity.Requester) string {
 	namespace := user.GetNamespace()
 	if namespace != "" && (user.GetOrgID() > 0 || namespace != types.OrgNamespaceFormatter(user.GetOrgID())) {
 		return namespace
