@@ -15394,6 +15394,8 @@
     "resource-kind": {
       "dashboard": "dashboard",
       "dashboards": "Dashboards",
+      "datasource": "data source",
+      "datasources": "Data sources",
       "folder": "folder",
       "folders": "Folders",
       "library-panel": "library panel",

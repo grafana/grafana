@@ -9,6 +9,7 @@ import { type IconName } from '@grafana/ui';
 import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
+import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
@@ -16,6 +17,12 @@ import { getIconForKind, queryResultToViewItem } from 'app/features/search/servi
 import { type AppDispatch } from 'app/store/configureStore';
 
 import { isManaged } from './managedResource';
+
+/**
+ * The storage collection every data source plugin's API group is stored in. No API server serves
+ * it: each plugin serves its own `{plugin}.datasource.grafana.app`.
+ */
+const DATASOURCE_COLLECTION_GROUP = 'datasource.grafana.app';
 
 /**
  * A resource of some kind enumerated from the instance, in the minimal shape the
@@ -30,6 +37,11 @@ export interface ListedResource {
   parentUid?: string;
   /** Already owned by a manager (Git Sync, Terraform, …) — not a migration target. */
   managed: boolean;
+  /**
+   * The API group serving this resource, for a kind whose registry group is a collection and so
+   * cannot supply it. A job addresses a resource through the group that serves it.
+   */
+  group?: string;
 }
 
 /** Dependencies a kind's `list()` may need. `dispatch` lets a kind read through
@@ -132,6 +144,26 @@ export const resourceKindInfos = {
     list: () => listViaApiserver(DASHBOARD_API_GROUP, 'v0alpha1', 'librarypanels'),
     alwaysAvailable: false,
   },
+  datasource: {
+    key: 'datasource',
+    getLabel: () => t('provisioning.resource-kind.datasource', 'data source'),
+    pluralLabel: () => t('provisioning.resource-kind.datasources', 'Data sources'),
+    // The collection every data source plugin's own group is stored in, not a served group —
+    // see `collectionGroup`.
+    group: DATASOURCE_COLLECTION_GROUP,
+    collectionGroup: true,
+    kind: 'DataSource',
+    resource: 'datasources',
+    itemType: 'DataSource',
+    // getIconForKind doesn't know data sources, so use the connections nav icon.
+    icon: 'database',
+    getRoute: (name: string) => `/connections/datasources/edit/${name}`,
+    listRoute: '/connections/datasources',
+    // Data sources are org-scoped, not folder-contained.
+    folderScoped: false,
+    list: () => listCollectionMembers(DATASOURCE_COLLECTION_GROUP, 'datasources'),
+    alwaysAvailable: false,
+  },
 } as const;
 
 /**
@@ -181,6 +213,14 @@ export interface ResourceKindInfo {
   pluralLabel: () => string;
   /** API group, e.g. `dashboard.grafana.app`. */
   group: string;
+  /**
+   * Whether `group` names a storage collection served by one API group per member rather than a
+   * served group itself. Data sources are the case: each plugin serves
+   * `{plugin}.datasource.grafana.app`. Such a kind matches any group inside the collection, and is
+   * reported to the user as the collection — the plugin that served a resource is not what the
+   * kind is called.
+   */
+  collectionGroup?: boolean;
   /** Kubernetes Kind, e.g. `Dashboard`. */
   kind: string;
   /** Plural resource name as reported by the API (`ResourceListItem.resource`), e.g. `dashboards`. */
@@ -228,6 +268,24 @@ export interface ResourceKindInfo {
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
 /**
+ * Whether `group` identifies this kind. A collection kind also matches the groups served inside
+ * the collection, which is what the backend reports for an individual resource and for a job
+ * result.
+ */
+export function matchesGroup(info: ResourceKindInfo, group: string): boolean {
+  return info.group === group || (Boolean(info.collectionGroup) && group.endsWith(`.${info.group}`));
+}
+
+/**
+ * The group a kind is named by: the collection rather than the member group that served a given
+ * resource, so every member of a collection is reported as one kind.
+ */
+export function getReportedGroup(group?: string, kind?: string): string | undefined {
+  const info = getKindInfoByGroupKind(group, kind);
+  return info?.collectionGroup ? info.group : group;
+}
+
+/**
  * Builds the in-app route to view a repository's resources of the given kind.
  * Folder-scoped kinds resolve to the repository's own folder (named after the
  * repository) for folder-target repos; everything else — non-folder targets, a
@@ -267,7 +325,7 @@ export function getKindInfoByItemType(itemType: string): ResourceKindInfo | unde
  * share an API group, so the group alone does not always identify the kind.
  */
 export function getKindInfoByStatGroup(group?: string): ResourceKindInfo | undefined {
-  return allKindInfos.find((info) => info.group === group || info.resource === group);
+  return allKindInfos.find((info) => (group !== undefined && matchesGroup(info, group)) || info.resource === group);
 }
 
 /**
@@ -279,7 +337,7 @@ export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceK
   if (!group && !kind) {
     return undefined;
   }
-  return allKindInfos.find((info) => (!group || info.group === group) && (!kind || info.kind === kind));
+  return allKindInfos.find((info) => (!group || matchesGroup(info, group)) && (!kind || info.kind === kind));
 }
 
 /**
@@ -311,7 +369,9 @@ export function getAvailableResourceKinds(availableResources?: SupportedResource
     return allKindInfos;
   }
   return allKindInfos.filter((info) =>
-    availableResources.some((r) => r.group === info.group && r.kind === info.kind && !r.disabled)
+    availableResources.some(
+      (r) => r.group !== undefined && matchesGroup(info, r.group) && r.kind === info.kind && !r.disabled
+    )
   );
 }
 
@@ -452,6 +512,30 @@ async function listViaApiserver(group: string, version: string, resource: string
   const url = `${getAPIBaseURL(group, version)}/${resource}`;
   const response = await getBackendSrv().get<{ items?: ApiserverListItem[] }>(url);
   return toListedResources(response.items);
+}
+
+/**
+ * Lists a collection's members, through each of the groups serving the kind. There is no single
+ * group to list: a collection is a storage group no API server serves. Discovery is the source, as
+ * it is for the backend's own expansion — a plugin can be installed without its group being served,
+ * and it is the served group a resource is addressable through.
+ */
+async function listCollectionMembers(collection: string, resource: string): Promise<ListedResource[]> {
+  const apis = await getAPIGroupDiscoveryList();
+  const perGroup = await Promise.all(
+    apis.items
+      .filter((api) => api.metadata.name.endsWith(`.${collection}`))
+      .flatMap((api) => {
+        // Versions are listed preferred-first.
+        const version = api.versions.find((v) => v.resources.some((r) => r.resource === resource));
+        return version ? [{ group: api.metadata.name, version: version.version }] : [];
+      })
+      .map(async ({ group, version }) => {
+        const listed = await listViaApiserver(group, version, resource);
+        return listed.map((item) => ({ ...item, group }));
+      })
+  );
+  return perGroup.flat();
 }
 
 /**
