@@ -269,6 +269,21 @@
     },
     {
       "metadata": {
+        "name": "alerting.watchersBanner",
+        "resourceVersion": "1793828064729",
+        "creationTimestamp": "2026-11-04T21:34:24Z"
+      },
+      "spec": {
+        "description": "Show the Assistant Watchers banner on the alert rule list. Watchers are only available in Grafana Cloud.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingAIAnalyzeCentralStateHistory",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2025-07-16T16:42:42Z"
@@ -2755,13 +2770,16 @@
     {
       "metadata": {
         "name": "grafana.cmdkDashboardTags",
-        "resourceVersion": "1793290413642",
-        "creationTimestamp": "2026-10-29T16:13:33Z"
+        "resourceVersion": "1793828064729",
+        "creationTimestamp": "2026-10-29T16:13:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-04 21:34:24.729909 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Shows dashboard tags in the command palette",
         "stage": "experimental",
-        "codeowner": "@grafana/search-and-storage",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "expression": "false"
       }
@@ -2769,16 +2787,16 @@
     {
       "metadata": {
         "name": "grafana.cmdkHybridSearch",
-        "resourceVersion": "1793306194106",
+        "resourceVersion": "1793828064729",
         "creationTimestamp": "2026-08-20T12:34:45Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-10-29 20:36:34.106495 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-11-04 21:34:24.729909 +0000 UTC"
         }
       },
       "spec": {
         "description": "Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-search-and-storage",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "expression": "false"
       }
@@ -3723,16 +3741,16 @@
     {
       "metadata": {
         "name": "grafana.vectorSearchCmdk",
-        "resourceVersion": "1793306194106",
+        "resourceVersion": "1793828064729",
         "creationTimestamp": "2026-07-01T12:42:40Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-10-29 20:36:34.106495 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-11-04 21:34:24.729909 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables semantic (vector) dashboard search in the command palette",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-search-and-storage",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "expression": "false"
       }
