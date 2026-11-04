@@ -6,7 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Box, useStyles2 } from '@grafana/ui';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 
 import { EditorColumnHeader } from '../../../EditorColumnHeader';
 import { TemplateEditor } from '../../TemplateEditor';

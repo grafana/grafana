@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
@@ -217,7 +217,8 @@ describe('SeriesEditor', () => {
       expect(configAt(0)).toHaveLength(1);
     });
 
-    it('selects a series with the keyboard', () => {
+    it('selects a series with the keyboard', async () => {
+      const user = userEvent.setup();
       const twoSeries: XYSeriesConfig[] = [
         { ...defaultFrameMatcher, x: { matcher: { id: FieldMatcherID.byName, options: 'ax' } } },
         { ...defaultFrameMatcher, x: { matcher: { id: FieldMatcherID.byName, options: 'bx' } } },
@@ -230,7 +231,8 @@ describe('SeriesEditor', () => {
 
       expect(screen.getByTestId('field-name-picker-x')).toHaveTextContent('x (ax)');
 
-      fireEvent.keyPress(screen.getByRole('button', { name: /select series 2/i }), { key: 'Enter', charCode: 13 });
+      screen.getByRole('button', { name: /select series 2/i }).focus();
+      await user.keyboard('{Enter}');
 
       expect(screen.getByTestId('field-name-picker-x')).toHaveTextContent('x (bx)');
     });

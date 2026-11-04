@@ -37,7 +37,6 @@ import { appEvents } from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
 import { getSessionExpiry, hasRotatableSession } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
-import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type DashboardSearchItem } from 'app/features/search/types';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { type DashboardDTO } from 'app/types/dashboard';
@@ -681,7 +680,10 @@ export class BackendSrv implements BackendService {
     // NOTE: When this is removed, we can also remove most instances of:
     // jest.mock('app/features/live/dashboard/dashboardWatcher
     deprecationWarning('backend_srv', 'getDashboardByUid(uid)', 'getDashboardAPI().getDashboardDTO(uid)');
-    return getDashboardAPI('v1').then((api) => api.getDashboardDTO(uid));
+    // HTTP-only consumers do not need the dashboard API dependency graph.
+    return import('app/features/dashboard/api/dashboard_api')
+      .then(({ getDashboardAPI }) => getDashboardAPI('v1'))
+      .then((api) => api.getDashboardDTO(uid));
   }
 
   getPublicDashboardByUid(uid: string) {

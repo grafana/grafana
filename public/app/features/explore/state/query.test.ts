@@ -55,7 +55,11 @@ import * as actions from './query';
 import { createDefaultInitialState } from './testHelpers';
 import { makeExplorePaneState } from './utils';
 
-jest.mock('app/features/logs/logsModel');
+jest.mock('app/features/logs/logsModel', () => ({
+  ...jest.requireActual('app/features/logs/logsModel'),
+  queryLogsSample: jest.fn(),
+  queryLogsVolume: jest.fn(),
+}));
 
 const { testRange, defaultInitialState } = createDefaultInitialState();
 

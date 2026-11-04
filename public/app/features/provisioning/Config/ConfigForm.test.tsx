@@ -1,4 +1,4 @@
-import { HttpResponse, delay, http } from 'msw';
+import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { mockComboboxRect } from '@grafana/test-utils';
@@ -167,17 +167,27 @@ describe('ConfigForm', () => {
   });
 
   it('disables Save while the connection list is loading', async () => {
+    let resolveConnections!: () => void;
+    const connectionsReady = new Promise<void>((resolve) => {
+      resolveConnections = resolve;
+    });
     server.use(
       http.get(`${BASE}/connections`, async () => {
-        await delay(400);
+        await connectionsReady;
         return HttpResponse.json({ items: [gitlabConnection] });
       })
     );
-    render(<ConfigForm data={buildRepository(true)} />);
 
-    const saveButton = await screen.findByRole('button', { name: /Save/ });
-    expect(saveButton).toBeDisabled();
-    await waitFor(() => expect(saveButton).toBeEnabled());
+    try {
+      render(<ConfigForm data={buildRepository(true)} />);
+
+      const saveButton = await screen.findByRole('button', { name: /Save/ });
+      expect(saveButton).toBeDisabled();
+      resolveConnections();
+      await waitFor(() => expect(saveButton).toBeEnabled());
+    } finally {
+      resolveConnections();
+    }
   });
 
   it('falls back to server-side validation when the connection list fails to load', async () => {

@@ -15,7 +15,7 @@ import {
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { isGranted } from '../../../hooks/abilities/abilityUtils';
 import { useRuleAdministrationAbility } from '../../../hooks/abilities/rules/rulerRuleAbilities';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/constants';
 import { stringifyErrorLike } from '../../../utils/misc';
 
 import { ComparisonDrawer } from './version-history/ComparisonDrawer';

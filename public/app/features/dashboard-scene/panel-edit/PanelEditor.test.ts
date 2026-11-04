@@ -21,8 +21,8 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import * as libAPI from 'app/features/library-panels/state/api';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';

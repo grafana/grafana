@@ -1,10 +1,21 @@
 import { render, screen } from '@testing-library/react';
 
-import { createDataFrame, type DataFrame, FieldType, getDefaultTimeRange, LoadingState } from '@grafana/data';
+import {
+  applyFieldOverrides,
+  createDataFrame,
+  createFieldConfigRegistry,
+  createTheme,
+  type DataFrame,
+  type FieldConfigSource,
+  FieldType,
+  getDefaultTimeRange,
+  LoadingState,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VisibilityMode } from '@grafana/schema';
 
 import { getPanelProps } from '../test-utils';
+import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
 import { TrendPanel } from './TrendPanel';
 import { type Options } from './panelcfg.gen';
@@ -30,17 +41,35 @@ const defaultOptions: Options = {
   },
 };
 
-const validFrame = createDataFrame({
-  fields: [
-    { name: 'x', type: FieldType.number, values: [1, 2, 3], config: { custom: {} } },
-    { name: 'value', type: FieldType.number, values: [10, 20, 30], config: { custom: {} } },
-  ],
-});
+const graphFieldConfigRegistry = createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig, false), 'Trend');
+const theme = createTheme();
 
-function renderTrendPanel(options?: Partial<Options>, series: DataFrame[] = [validFrame]) {
+function createTrendFrame() {
+  return createDataFrame({
+    fields: [
+      { name: 'x', type: FieldType.number, values: [1, 2, 3] },
+      { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+    ],
+  });
+}
+
+function renderTrendPanel(options?: Partial<Options>, rawSeries: DataFrame[] = [createTrendFrame()]) {
+  const fieldConfig: FieldConfigSource = {
+    defaults: { custom: { ...defaultGraphConfig, pointSize: 5, showPoints: VisibilityMode.Auto } },
+    overrides: [],
+  };
+  // The panel framework supplies display processors, including one for the numeric X field.
+  const series = applyFieldOverrides({
+    data: rawSeries,
+    fieldConfig,
+    replaceVariables: (v) => v,
+    theme,
+    fieldConfigRegistry: graphFieldConfigRegistry,
+    timeZone: 'utc',
+  });
   const props = getPanelProps<Options>(
     { ...defaultOptions, ...options },
-    { data: { state: LoadingState.Done, series, timeRange: getDefaultTimeRange() } }
+    { data: { state: LoadingState.Done, series, timeRange: getDefaultTimeRange() }, fieldConfig }
   );
   return render(<TrendPanel {...props} />);
 }

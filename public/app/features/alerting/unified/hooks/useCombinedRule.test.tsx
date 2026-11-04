@@ -13,7 +13,7 @@ import {
   grafanaRulerNamespace,
   grafanaRulerRule,
 } from '../mocks/grafanaRulerApi';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 
 import { useCombinedRule } from './useCombinedRule';
 

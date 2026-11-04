@@ -1,5 +1,6 @@
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { useForm } from 'react-hook-form';
-import { render, screen } from 'test/test-utils';
 
 import { type RepositoryFormData } from '../types';
 
@@ -26,7 +27,8 @@ describe('BranchOptionsSection', () => {
   });
 
   it('reveals the branch name template and enforcement fields when expanded', async () => {
-    const { user } = render(<Wrapper />);
+    const user = userEvent.setup();
+    render(<Wrapper />);
 
     await user.click(screen.getByText('Branch options'));
 
@@ -35,7 +37,8 @@ describe('BranchOptionsSection', () => {
   });
 
   it('registers the inputs under the provided spec paths', async () => {
-    const { user } = render(<Wrapper />);
+    const user = userEvent.setup();
+    render(<Wrapper />);
 
     await user.click(screen.getByText('Branch options'));
 

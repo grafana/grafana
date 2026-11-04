@@ -102,6 +102,14 @@ describe('useRuleAdministrationAbility', () => {
     // Snapshot the initial loading state before the ruler resolves
     expect(result.current).toMatchSnapshot();
 
+    await waitFor(() => expect(result.current).not.toBeUndefined());
+
+    // These checks do not wait for loading to settle; update is initially LOADING.
+    expect(isSupported(result.current.update)).toBe(false);
+    expect(isNotSupported(result.current.restore)).toBe(true);
+    expect(isNotSupported(result.current.pause)).toBe(true);
+    expect(isNotSupported(result.current.deletePermanently)).toBe(true);
+
     // Drain the async queue so the test does not leave in-flight state updates
     await waitFor(() => expect(result.current.loading).toBe(false));
   });
@@ -166,36 +174,6 @@ describe('useRuleAdministrationAbility', () => {
     expect(isPluginManaged(result.current.duplicate)).toBe(false);
   });
 
-  it('returns NOT_SUPPORTED for cloud rules (ruler unavailable while loading)', async () => {
-    const mimirDs = mockDataSource({ uid: 'mimir', name: 'Mimir' });
-    setupDataSources(mimirDs);
-
-    const rule = getCloudRule({}, { rulesSource: mimirDs });
-    const groupId = groupIdentifier.fromCombinedRule(rule);
-
-    const { result } = renderHook(() => useRuleAdministrationAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
-
-    await waitFor(() => expect(result.current).not.toBeUndefined());
-
-    // Cloud rules without a connected ruler → NOT_SUPPORTED after loading
-    expect(isSupported(result.current.update)).toBe(false);
-  });
-
-  it('returns NOT_SUPPORTED for restore and pause when rule is not Grafana-managed', async () => {
-    const mimirDs = mockDataSource({ uid: 'mimir', name: 'Mimir' });
-    setupDataSources(mimirDs);
-
-    const rule = getCloudRule({}, { rulesSource: mimirDs });
-    const groupId = groupIdentifier.fromCombinedRule(rule);
-
-    const { result } = renderHook(() => useRuleAdministrationAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
-
-    await waitFor(() => expect(result.current).not.toBeUndefined());
-
-    expect(isNotSupported(result.current.restore)).toBe(true);
-    expect(isNotSupported(result.current.pause)).toBe(true);
-  });
-
   it('grants restore and pause for Grafana-managed rules with edit permission', async () => {
     setFolderAccessControl({ 'alert.rules:read': true, 'alert.rules:write': true, 'folders:read': true });
 
@@ -224,20 +202,6 @@ describe('useRuleAdministrationAbility', () => {
 
     // Non-existent plugin → not plugin-managed → duplicate checks create permission
     expect(isPluginManaged(result.current.duplicate)).toBe(false);
-  });
-
-  it('returns NOT_SUPPORTED for deletePermanently when rule is not Grafana-managed', async () => {
-    const mimirDs = mockDataSource({ uid: 'mimir', name: 'Mimir' });
-    setupDataSources(mimirDs);
-
-    const rule = getCloudRule({}, { rulesSource: mimirDs });
-    const groupId = groupIdentifier.fromCombinedRule(rule);
-
-    const { result } = renderHook(() => useRuleAdministrationAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
-
-    await waitFor(() => expect(result.current).not.toBeUndefined());
-
-    expect(isNotSupported(result.current.deletePermanently)).toBe(true);
   });
 
   it('returns INSUFFICIENT_PERMISSIONS for deletePermanently when user has delete permission but is not admin', async () => {
@@ -358,7 +322,7 @@ describe('useRuleExploreAbility', () => {
   it('grants explore when user has DataSourcesExplore permission', () => {
     grantUserPermissions([AccessControlAction.DataSourcesExplore]);
 
-    const { result } = renderHook(() => useRuleExploreAbility(), { wrapper: wrapper() });
+    const { result } = renderHook(() => useRuleExploreAbility());
 
     // Synchronous — no async needed
     expect(result.current.granted).toBe(true);
@@ -367,7 +331,7 @@ describe('useRuleExploreAbility', () => {
   it('returns INSUFFICIENT_PERMISSIONS when user lacks DataSourcesExplore', () => {
     grantUserPermissions([]);
 
-    const { result } = renderHook(() => useRuleExploreAbility(), { wrapper: wrapper() });
+    const { result } = renderHook(() => useRuleExploreAbility());
 
     expect(isInsufficientPermissions(result.current)).toBe(true);
     if (isInsufficientPermissions(result.current)) {
@@ -384,7 +348,7 @@ describe('useRuleExportAbility', () => {
   it('is applicable for Grafana-managed rules', () => {
     const rule = getGrafanaRule();
 
-    const { result } = renderHook(() => useRuleExportAbility(rule.rulerRule), { wrapper: wrapper() });
+    const { result } = renderHook(() => useRuleExportAbility(rule.rulerRule));
 
     expect(isSupported(result.current)).toBe(true);
   });
@@ -395,7 +359,7 @@ describe('useRuleExportAbility', () => {
 
     const rule = getCloudRule({}, { rulesSource: mimirDs });
 
-    const { result } = renderHook(() => useRuleExportAbility(rule.rulerRule), { wrapper: wrapper() });
+    const { result } = renderHook(() => useRuleExportAbility(rule.rulerRule));
 
     expect(isNotSupported(result.current)).toBe(true);
   });
@@ -405,17 +369,11 @@ describe('useRuleExportAbility', () => {
 
 /** Build a minimal GrafanaPromRuleDTO for testing */
 function makePromRule(overrides?: Partial<GrafanaPromRuleDTO>): GrafanaPromRuleDTO {
-  const rule = getGrafanaRule();
-  const rulerRule = rule.rulerRule!;
-  const folderUid =
-    'grafana_alert' in rulerRule
-      ? (rulerRule as { grafana_alert: { namespace_uid: string } }).grafana_alert.namespace_uid
-      : '';
   return {
     name: 'test rule',
     query: '{}',
     uid: 'test-uid',
-    folderUid,
+    folderUid: 'NAMESPACE_UID',
     isPaused: false,
     health: 'ok',
     state: PromAlertingRuleState.Inactive,
@@ -548,7 +506,7 @@ describe('usePromRuleSilenceAbility', () => {
 
 describe('usePromRuleExportAbility', () => {
   it('returns NOT_SUPPORTED for skipToken', () => {
-    const { result } = renderHook(() => usePromRuleExportAbility(skipToken), { wrapper: wrapper() });
+    const { result } = renderHook(() => usePromRuleExportAbility(skipToken));
 
     expect(isNotSupported(result.current)).toBe(true);
   });
@@ -556,7 +514,7 @@ describe('usePromRuleExportAbility', () => {
   it('returns NOT_SUPPORTED for a recording rule', () => {
     const promRule = makePromRule({ type: PromRuleType.Recording });
 
-    const { result } = renderHook(() => usePromRuleExportAbility(promRule), { wrapper: wrapper() });
+    const { result } = renderHook(() => usePromRuleExportAbility(promRule));
 
     expect(isNotSupported(result.current)).toBe(true);
   });
@@ -566,7 +524,7 @@ describe('usePromRuleExportAbility', () => {
 
     const promRule = makePromRule();
 
-    const { result } = renderHook(() => usePromRuleExportAbility(promRule), { wrapper: wrapper() });
+    const { result } = renderHook(() => usePromRuleExportAbility(promRule));
 
     expect(isSupported(result.current)).toBe(true);
     expect(result.current.granted).toBe(true);
@@ -579,7 +537,7 @@ describe('useGlobalRuleAbilities (React hook)', () => {
   it('returns granted abilities matching held permissions', () => {
     grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleCreate]);
 
-    const { result } = renderHook(() => useGlobalRuleAbilities(), { wrapper: wrapper() });
+    const { result } = renderHook(() => useGlobalRuleAbilities());
 
     expect(result.current[RuleAction.View].granted).toBe(true);
     expect(result.current[RuleAction.Create].granted).toBe(true);
@@ -593,7 +551,7 @@ describe('useExternalGlobalRuleAbilities (React hook)', () => {
   it('returns granted abilities matching held permissions', () => {
     grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 
-    const { result } = renderHook(() => useExternalGlobalRuleAbilities(), { wrapper: wrapper() });
+    const { result } = renderHook(() => useExternalGlobalRuleAbilities());
 
     expect(result.current[ExternalRuleAction.ViewAlertRule].granted).toBe(true);
     expect(result.current[ExternalRuleAction.CreateAlertRule].granted).toBe(false);
@@ -604,9 +562,7 @@ describe('useExternalGlobalRuleAbility (React hook)', () => {
   it('grants view when external read permission is held', () => {
     grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 
-    const { result } = renderHook(() => useExternalGlobalRuleAbility(ExternalRuleAction.ViewAlertRule), {
-      wrapper: wrapper(),
-    });
+    const { result } = renderHook(() => useExternalGlobalRuleAbility(ExternalRuleAction.ViewAlertRule));
 
     expect(result.current.granted).toBe(true);
   });
@@ -614,9 +570,7 @@ describe('useExternalGlobalRuleAbility (React hook)', () => {
   it('denies create when external write permission is not held', () => {
     grantUserPermissions([]);
 
-    const { result } = renderHook(() => useExternalGlobalRuleAbility(ExternalRuleAction.CreateAlertRule), {
-      wrapper: wrapper(),
-    });
+    const { result } = renderHook(() => useExternalGlobalRuleAbility(ExternalRuleAction.CreateAlertRule));
 
     expect(isInsufficientPermissions(result.current)).toBe(true);
     if (isInsufficientPermissions(result.current)) {

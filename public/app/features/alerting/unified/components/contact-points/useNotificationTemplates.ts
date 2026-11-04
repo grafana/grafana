@@ -23,7 +23,7 @@ import { KnownProvenance } from '../../types/knownProvenance';
 import { K8sAnnotations } from '../../utils/k8s/constants';
 import { getAnnotation, shouldUseK8sApi } from '../../utils/k8s/utils';
 import { ensureDefine } from '../../utils/templates';
-import { type TemplateFormValues } from '../receivers/TemplateForm';
+import { type TemplateFormValues } from '../receivers/templateFormDefaults';
 
 const apiVersion = `${API_GROUP}/${API_VERSION}`;
 const kind = 'TemplateGroup';

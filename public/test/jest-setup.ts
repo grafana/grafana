@@ -5,9 +5,9 @@ import { TransformStream } from 'node:stream/web';
 import { MessageChannel, type MessagePort } from 'node:worker_threads';
 import { TextEncoder, TextDecoder } from 'util';
 
-// we need to isolate the `@grafana/data` module here now that it depends on `@grafana/i18n`
+// Keep the event bus isolated without loading the @grafana/data barrel and its @grafana/i18n dependencies.
 jest.isolateModulesAsync(async () => {
-  const { EventBusSrv } = await import('@grafana/data');
+  const { EventBusSrv } = await import('../../packages/grafana-data/src/events/EventBus');
   const testAppEvents = new EventBusSrv();
   jest.mock('../app/core/app_events', () => ({
     ...jest.requireActual('../app/core/app_events'),

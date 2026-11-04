@@ -1,5 +1,5 @@
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 
 import { type StagedExtraConfig, isStagedExtraConfig } from './stagedConfig';
 

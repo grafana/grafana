@@ -156,18 +156,12 @@ describe('DataSourcePicker', () => {
       expect(screen.getByAltText(`${mockDS2.meta.name} logo`)).toBeVisible();
     });
 
-    it('should display the current ds on top', async () => {
-      //Mock ds is set as current, it appears on top
-      getInstanceSettingsMock.mockReturnValue(mockDS1);
-      await setupOpenDropdown(user, { onChange: jest.fn(), current: mockDS1.name });
-      let cards = await screen.findAllByTestId(/^data-testid data source card/);
-      expect(await findByText(cards[0], mockDS1.name, { selector: 'span' })).toBeInTheDocument();
-
-      //xMock ds is set as current, it appears on top
-      getInstanceSettingsMock.mockReturnValue(mockDS2);
-      await setupOpenDropdown(user, { onChange: jest.fn(), current: mockDS2.name });
-      cards = await screen.findAllByTestId(/^data-testid data source card/);
-      expect(await findByText(cards[0], mockDS2.name, { selector: 'span' })).toBeInTheDocument();
+    it.each([mockDS1, mockDS2])('should display the current ds $name on top', async (current) => {
+      // Each mock data source is set as current, so it appears on top.
+      getInstanceSettingsMock.mockReturnValue(current);
+      await setupOpenDropdown(userEvent.setup(), { onChange: jest.fn(), current: current.name });
+      const cards = await screen.findAllByTestId(/^data-testid data source card/);
+      expect(await findByText(cards[0], current.name, { selector: 'span' })).toBeInTheDocument();
     });
 
     it('should display the default DS as selected when `current` is not set', async () => {
@@ -231,13 +225,29 @@ describe('DataSourcePicker', () => {
     });
 
     it('should close the dropdown when the clear button is clicked while it is open', async () => {
-      const onClear = jest.fn();
-      await setupOpenDropdown(user, { onChange: jest.fn(), onClear, current: mockDS1.name });
-      expect(await screen.findByText(mockDS1.name, { selector: 'span' })).toBeInTheDocument();
+      const pointerEventDescriptor = Object.getOwnPropertyDescriptor(window, 'PointerEvent');
+      // Exercise React Aria's pointer-event dismissal path even in jsdom.
+      Object.defineProperty(window, 'PointerEvent', {
+        configurable: true,
+        writable: true,
+        value: window.PointerEvent ?? MouseEvent,
+      });
+      try {
+        const user = userEvent.setup();
+        const onClear = jest.fn();
+        await setupOpenDropdown(user, { onChange: jest.fn(), onClear, current: mockDS1.name });
+        expect(await screen.findByText(mockDS1.name, { selector: 'span' })).toBeInTheDocument();
 
-      await user.click(screen.getByRole('button', { name: 'Clear data source' }));
-      expect(onClear).toHaveBeenCalledTimes(1);
-      expect(screen.queryByText(mockDS1.name, { selector: 'span' })).not.toBeInTheDocument();
+        await user.click(screen.getByRole('button', { name: 'Clear data source' }));
+        expect(onClear).toHaveBeenCalledTimes(1);
+        expect(screen.queryByText(mockDS1.name, { selector: 'span' })).not.toBeInTheDocument();
+      } finally {
+        if (pointerEventDescriptor) {
+          Object.defineProperty(window, 'PointerEvent', pointerEventDescriptor);
+        } else {
+          Reflect.deleteProperty(window, 'PointerEvent');
+        }
+      }
     });
 
     it('should not set the default DS when setting `noDefault` to true and `current` is not provided', () => {
