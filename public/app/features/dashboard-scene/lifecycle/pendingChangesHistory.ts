@@ -44,6 +44,11 @@ const queues = new WeakMap<DashboardScene, Promise<void>>();
 const inFlight = new WeakMap<DashboardScene, number>();
 /** Scenes whose pending changes changed under them: their queued recordings would overwrite the newer ones. */
 const superseded = new WeakSet<DashboardScene>();
+/**
+ * How many times each scene was reloaded in place. A recording queued before the scene took newer
+ * pending changes in is of the ones they replaced: sent now, it would overwrite them.
+ */
+const reloads = new WeakMap<DashboardScene, number>();
 
 /**
  * Whether an edit on `scene` hasn't reached the plugin's history: still on its way, or failed. The
@@ -84,8 +89,10 @@ export function startRecordingPendingChanges(scene: DashboardScene, stored: Dash
 /**
  * After newer pending changes were reloaded into `scene` in place: it shows them now, so it is no
  * longer superseded, and an edit session records onto them from here, as edit mode starting would.
+ * Recordings queued before the reload are of the pending changes it replaced, and are dropped.
  */
 export function resumeRecordingPendingChanges(scene: DashboardScene) {
+  reloads.set(scene, (reloads.get(scene) ?? 0) + 1);
   superseded.delete(scene);
   baselines.delete(scene);
   const preview = getScenePendingChangePreview(scene.state);
@@ -147,8 +154,9 @@ export async function recordPendingChange(
     return;
   }
   inFlight.set(scene, (inFlight.get(scene) ?? 0) + 1);
+  const reload = reloads.get(scene) ?? 0;
   const sent = (queues.get(scene) ?? Promise.resolve())
-    .then(() => sendRecording(scene, history, proposed, description))
+    .then(() => sendRecording(scene, history, proposed, description, reload))
     .finally(() => inFlight.set(scene, (inFlight.get(scene) ?? 1) - 1));
   // The queue goes on past a recording that threw, so the later ones still go out.
   queues.set(scene, sent.then(ignore, ignore));
@@ -159,11 +167,16 @@ async function sendRecording(
   scene: DashboardScene,
   history: PendingChangesHistory,
   proposed: DashboardV2Spec,
-  description: string | undefined
+  description: string | undefined,
+  reload: number
 ): Promise<void> {
   // Its pending changes moved on, and the reload to them failed: this edit isn't kept, so leaving warns.
   if (superseded.has(scene)) {
     unrecorded.add(scene);
+    return;
+  }
+  // Made before the scene took newer pending changes in, which the user was told replaced it.
+  if ((reloads.get(scene) ?? 0) !== reload) {
     return;
   }
   let recorded: boolean;

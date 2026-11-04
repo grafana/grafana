@@ -1821,6 +1821,8 @@ export async function reloadDashboardInPlace(
     return false;
   }
   swapInReloadedDashboard(open, reloaded);
+  // As a load does: changes from here are measured against what was just loaded, not the spec before it.
+  open.setInitialSaveModel(rsp.spec, rsp.metadata, rsp.apiVersion);
   open.rebaselineEditSession();
   resumeRecordingPendingChanges(open);
   // The page draws what goes with the scene (the pending changes banner) when its state changes, as a

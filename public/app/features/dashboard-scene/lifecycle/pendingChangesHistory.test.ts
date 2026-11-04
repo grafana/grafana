@@ -13,6 +13,7 @@ import {
   pendingChangesSuperseded,
   recordPendingChange,
   reloadKeepingEditMode,
+  resumeRecordingPendingChanges,
   startRecordingPendingChanges,
   usePendingChangesHistoryState,
 } from './pendingChangesHistory';
@@ -192,6 +193,34 @@ describe('recording edits to pending changes', () => {
     expect(history.record).toHaveBeenCalledTimes(1);
     // Nothing may act on the older pending changes this scene showed, Apply included.
     expect(pendingChangesSuperseded(scene)).toBe(true);
+  });
+
+  // The same scene shows the newer pending changes after an in-place reload: an edit queued before it
+  // is of the ones they replaced, and sent now it would overwrite them.
+  it('drops the recordings queued before the scene was reloaded in place', async () => {
+    let model = specWith({ hello: { title: 'Hello' } });
+    const scene = fakeScene(() => model);
+    setPendingChangesPageReload(
+      jest.fn(async () => {
+        resumeRecordingPendingChanges(scene);
+        return true;
+      })
+    );
+    startRecordingPendingChanges(scene, model);
+    const history = fakeHistory();
+    history.record.mockResolvedValueOnce({ recorded: false });
+
+    model = specWith({ hello: { title: 'First' } });
+    const first = recordPendingChange(scene, history, 'First edit');
+    model = specWith({ hello: { title: 'Second' } });
+    await Promise.all([first, recordPendingChange(scene, history, 'Second edit')]);
+
+    expect(history.record).toHaveBeenCalledTimes(1);
+    // Showing the newer pending changes, the scene goes on recording onto them.
+    expect(pendingChangesSuperseded(scene)).toBe(false);
+    model = specWith({ hello: { title: 'Third' } });
+    await recordPendingChange(scene, history, 'Third edit');
+    expect(history.record).toHaveBeenCalledTimes(2);
   });
 
   // A queue that stayed rejected would fail Apply's and Undo's wait; a scene cleared of the conflict
