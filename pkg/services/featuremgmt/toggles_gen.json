@@ -6675,6 +6675,7 @@
         "name": "useScopesNavigationEndpoint",
         "resourceVersion": "1793297573258",
         "creationTimestamp": "2025-03-31T15:20:00Z",
+        "deletionTimestamp": "2026-11-10T05:28:16Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-10-29 18:12:53.258142666 +0000 UTC"
         }
