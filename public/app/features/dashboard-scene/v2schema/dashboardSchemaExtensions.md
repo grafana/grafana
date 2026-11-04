@@ -15,7 +15,7 @@ const extensions = createDashboardSchemaExtensions(schema, {
 Memoize extensions per schema, format, and callbacks. JSON extensions include the JSON
 language, schema completion, and syntax/schema diagnostics.
 
-JSON errors appear in an overview ruler beside the scrollbar. The ruler shows error locations
+JSON errors appear in an overview ruler within the scrollbar track. The ruler shows error locations
 across the whole buffer; clicking a marker selects and scrolls to the error. Markers clear
 when validation succeeds.
 

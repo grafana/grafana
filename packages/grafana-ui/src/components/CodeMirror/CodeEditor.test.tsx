@@ -2,7 +2,7 @@ import { acceptCompletion, autocompletion, startCompletion, type CompletionSourc
 import { diagnosticCount, linter, setDiagnostics } from '@codemirror/lint';
 import { EditorState } from '@codemirror/state';
 import { keymap, type EditorView as CodeMirrorEditorView } from '@codemirror/view';
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CodeMirror, { EditorView, type ReactCodeMirrorProps } from '@uiw/react-codemirror';
 
@@ -373,6 +373,66 @@ describe('CodeMirror CodeEditor', () => {
 
       act(() => view.dispatch(setDiagnostics(view.state, [])));
       expect(screen.queryByRole('group', { name: 'Errors' })).not.toBeInTheDocument();
+    });
+
+    it('scrolls both axes with thumb dragging, track clicks, and the keyboard, including without errors', async () => {
+      const user = userEvent.setup();
+      const value = Array.from({ length: 100 }, (_, index) => `Line ${index}`).join('\n');
+      const { rerender } = render(<CodeEditor value={value} onChange={jest.fn()} overviewRuler />);
+      const view = EditorView.findFromDOM(await screen.findByRole('textbox'))!;
+      const scroller = view.scrollDOM;
+      Object.defineProperties(scroller, {
+        clientHeight: { configurable: true, value: 200 },
+        clientWidth: { configurable: true, value: 400 },
+        scrollHeight: { configurable: true, value: 2000 },
+        scrollWidth: { configurable: true, value: 1000 },
+      });
+      // jsdom doesn't implement scrolling or layout; retain the browser's scroll event contract.
+      jest.spyOn(scroller, 'scrollTo').mockImplementation((leftOrOptions: number | ScrollToOptions, top?: number) => {
+        const options = typeof leftOrOptions === 'number' ? { left: leftOrOptions, top } : leftOrOptions;
+        scroller.scrollTop = options.top ?? scroller.scrollTop;
+        scroller.scrollLeft = options.left ?? scroller.scrollLeft;
+        fireEvent.scroll(scroller);
+      });
+      act(() => view.dispatch(setDiagnostics(view.state, [])));
+
+      const vertical = await screen.findByRole('scrollbar', { name: 'Scroll vertically' });
+      const horizontal = screen.getByRole('scrollbar', { name: 'Scroll horizontally' });
+      vertical.setPointerCapture = jest.fn();
+      horizontal.setPointerCapture = jest.fn();
+      expect(vertical).toHaveAttribute('aria-controls', scroller.id);
+      expect(vertical).toHaveAttribute('aria-valuemax', '1800');
+      expect(screen.queryByRole('group', { name: 'Errors' })).not.toBeInTheDocument();
+
+      await user.pointer([
+        { target: vertical, keys: '[MouseLeft>]', coords: { x: 405, y: 10 } },
+        { coords: { x: 405, y: 98 } },
+        { keys: '[/MouseLeft]' },
+      ]);
+      expect(scroller.scrollTop).toBe(900);
+      await waitFor(() => expect(vertical).toHaveAttribute('aria-valuenow', '900'));
+      await user.pointer({ target: vertical, coords: { x: 405, y: 120 } });
+      expect(scroller.scrollTop).toBe(900);
+
+      await user.keyboard('{End}');
+      expect(scroller.scrollTop).toBe(1800);
+      await user.keyboard('{Home}{ArrowDown}');
+      expect(scroller.scrollTop).toBe(40);
+
+      await user.pointer({ target: vertical.parentElement!, keys: '[MouseLeft]', coords: { x: 405, y: 190 } });
+      expect(scroller.scrollTop).toBe(1800);
+
+      await user.click(horizontal);
+      await user.keyboard('{ArrowRight}');
+      expect(scroller.scrollLeft).toBe(40);
+      await user.keyboard('{End}');
+      expect(scroller.scrollLeft).toBe(600);
+      await waitFor(() => expect(horizontal).toHaveAttribute('aria-valuenow', '600'));
+
+      rerender(<CodeEditor value={value} onChange={jest.fn()} overviewRuler={false} />);
+      expect(screen.queryByRole('scrollbar')).not.toBeInTheDocument();
+      expect(scroller).not.toHaveClass('cm-overview-ruler-horizontal');
+      expect(scroller).not.toHaveAttribute('id');
     });
   });
 });

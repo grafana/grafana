@@ -10739,7 +10739,9 @@
       "language-load-failed-description": "The editor will continue without language-specific features.",
       "loading-placeholder": "Loading editor",
       "overview-ruler": "Errors",
-      "overview-ruler-line": "Line"
+      "overview-ruler-line": "Line",
+      "scroll-horizontally": "Scroll horizontally",
+      "scroll-vertically": "Scroll vertically"
     },
     "color-picker": {
       "input-label": "RGBA value"

@@ -1,7 +1,7 @@
 import { forEachDiagnostic, setDiagnosticsEffect } from '@codemirror/lint';
 import { EditorView, ViewPlugin } from '@codemirror/view';
 import { css } from '@emotion/css';
-import { useLayoutEffect, useState } from 'react';
+import { useId, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -9,13 +9,22 @@ import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
+import { EditorScrollbar } from './EditorScrollbar';
+
 export interface OverviewRulerState {
   view: EditorView;
 }
 
 export function createOverviewRulerExtension(onChange: (editor: OverviewRulerState | null) => void) {
   return [
-    EditorView.theme({ '.cm-scroller': { marginRight: '12px' } }),
+    EditorView.theme({
+      '.cm-scroller': {
+        marginRight: '12px',
+        scrollbarWidth: 'none',
+        '&::-webkit-scrollbar': { display: 'none' },
+      },
+      '.cm-scroller.cm-overview-ruler-horizontal': { marginBottom: '12px' },
+    }),
     ViewPlugin.define((view) => {
       onChange({ view });
       return {
@@ -41,28 +50,62 @@ export function createOverviewRulerExtension(onChange: (editor: OverviewRulerSta
 export function OverviewRuler({ editor }: { editor: OverviewRulerState }) {
   const styles = useStyles2(getStyles);
   const { view } = editor;
-  const [bounds, setBounds] = useState({ top: 0, height: 0, left: 0 });
+  const scrollId = useId();
+  const [bounds, setBounds] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+    height: 0,
+    scrollWidth: 0,
+    scrollHeight: 0,
+    scrollTop: 0,
+    scrollLeft: 0,
+  });
+
+  useLayoutEffect(() => {
+    const scroller = view.scrollDOM;
+    const previousId = scroller.id;
+    scroller.setAttribute('id', previousId || scrollId);
+    return () => {
+      if (!previousId) {
+        scroller.removeAttribute('id');
+      }
+      scroller.classList.remove('cm-overview-ruler-horizontal');
+    };
+  }, [view, scrollId]);
 
   useLayoutEffect(() => {
     let active = true;
-    view.requestMeasure({
-      read: () => {
-        const editorBounds = view.dom.getBoundingClientRect();
-        const scroller = view.scrollDOM.getBoundingClientRect();
-        return {
-          top: scroller.top - editorBounds.top + 4,
-          height: Math.max(0, view.scrollDOM.clientHeight - 8),
-          left: scroller.right - editorBounds.left,
-        };
-      },
-      write: (bounds) => {
-        if (active) {
-          setBounds(bounds);
-        }
-      },
-    });
+    const scroller = view.scrollDOM;
+    const measure = () =>
+      view.requestMeasure({
+        key: setBounds,
+        read: () => {
+          const editorBounds = view.dom.getBoundingClientRect();
+          const scrollerBounds = scroller.getBoundingClientRect();
+          return {
+            top: scrollerBounds.top - editorBounds.top,
+            left: scrollerBounds.left - editorBounds.left,
+            width: scroller.clientWidth,
+            height: scroller.clientHeight,
+            scrollWidth: scroller.scrollWidth,
+            scrollHeight: scroller.scrollHeight,
+            scrollTop: scroller.scrollTop,
+            scrollLeft: scroller.scrollLeft,
+          };
+        },
+        write: (bounds) => {
+          if (active) {
+            scroller.classList.toggle('cm-overview-ruler-horizontal', bounds.scrollWidth > bounds.width);
+            setBounds(bounds);
+          }
+        },
+      });
+    measure();
+    scroller.addEventListener('scroll', measure);
     return () => {
       active = false;
+      scroller.removeEventListener('scroll', measure);
     };
   }, [editor, view]);
 
@@ -81,39 +124,59 @@ export function OverviewRuler({ editor }: { editor: OverviewRulerState }) {
     }
   });
 
-  if (errors.size === 0) {
-    return null;
-  }
-
   // Portal outside scrollDOM so off-screen errors stay visible while scrolling.
   return createPortal(
-    <div
-      className={styles.overview}
-      role="group"
-      aria-label={t('grafana-ui.code-mirror.overview-ruler', 'Errors')}
-      style={bounds}
-    >
-      {Array.from(errors, ([line, { from, to, messages }]) => {
-        const label = `${t('grafana-ui.code-mirror.overview-ruler-line', 'Line')} ${line}: ${messages.join('\n')}`;
-        return (
-          <button
-            key={line}
-            type="button"
-            className={styles.marker}
-            style={{ top: `${((line - 1) / Math.max(1, state.doc.lines - 1)) * 100}%` }}
-            title={label}
-            aria-label={label}
-            onClick={() => {
-              view.dispatch({
-                selection: { anchor: from, head: to },
-                effects: EditorView.scrollIntoView(from, { y: 'center' }),
-              });
-              view.focus();
-            }}
-          />
-        );
-      })}
-    </div>,
+    <>
+      <EditorScrollbar
+        scroller={view.scrollDOM}
+        orientation="vertical"
+        top={bounds.top}
+        left={bounds.left + bounds.width}
+        size={bounds.height}
+        contentSize={bounds.scrollHeight}
+        position={bounds.scrollTop}
+      >
+        {errors.size > 0 && (
+          <div
+            className={styles.overview}
+            role="group"
+            aria-label={t('grafana-ui.code-mirror.overview-ruler', 'Errors')}
+          >
+            {Array.from(errors, ([line, { from, to, messages }]) => {
+              const label = `${t('grafana-ui.code-mirror.overview-ruler-line', 'Line')} ${line}: ${messages.join('\n')}`;
+              return (
+                <button
+                  key={line}
+                  type="button"
+                  className={styles.marker}
+                  style={{ top: `${((line - 1) / Math.max(1, state.doc.lines - 1)) * 100}%` }}
+                  title={label}
+                  aria-label={label}
+                  onClick={() => {
+                    view.dispatch({
+                      selection: { anchor: from, head: to },
+                      effects: EditorView.scrollIntoView(from, { y: 'center' }),
+                    });
+                    view.focus();
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
+      </EditorScrollbar>
+      {bounds.scrollWidth > bounds.width && (
+        <EditorScrollbar
+          scroller={view.scrollDOM}
+          orientation="horizontal"
+          top={bounds.top + bounds.height}
+          left={bounds.left}
+          size={bounds.width}
+          contentSize={bounds.scrollWidth}
+          position={bounds.scrollLeft}
+        />
+      )}
+    </>,
     view.dom
   );
 }
@@ -121,7 +184,9 @@ export function OverviewRuler({ editor }: { editor: OverviewRulerState }) {
 const getStyles = (theme: GrafanaTheme2) => ({
   overview: css({
     position: 'absolute',
-    width: 12,
+    top: 4,
+    bottom: 4,
+    width: '100%',
     pointerEvents: 'none',
   }),
   marker: css({

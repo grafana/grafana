@@ -205,7 +205,7 @@ export interface CodeMirrorEditorProps {
    */
   lineWrapping?: boolean;
   /**
-   * Shows errors from installed lint extensions in a strip beside the scrollbar.
+   * Shows errors from installed lint extensions in the scrollbar track.
    * Defaults to `false`. Does not enable validation by itself.
    */
   overviewRuler?: boolean;
