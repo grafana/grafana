@@ -17,6 +17,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { type Repository, type ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
+import { useAppManifestKinds } from 'app/features/apiserver/appManifests';
 
 import { RecentJobs } from '../Job/RecentJobs';
 import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
@@ -42,6 +43,7 @@ function getColumnCount(hasWebhook: boolean): { xxlColumn: 5 | 4; lgColumn: 3 | 
 
 export function RepositoryOverview({ repo }: { repo: Repository }) {
   const styles = useStyles2(getStyles);
+  const manifestKinds = useAppManifestKinds();
   const repoName = repo.metadata?.name ?? '';
 
   const status = repo.status;
@@ -59,7 +61,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           return (
             <Stack direction="row" gap={1} alignItems="center">
               <Icon name={info?.icon ?? 'file-alt'} />
-              <span>{info?.kind ?? original.resource}</span>
+              <span>{info?.pluralLabel() ?? original.resource}</span>
             </Stack>
           );
         },
@@ -78,13 +80,14 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         header: '',
         cell: ({ row: { original } }: StatCell) => {
           const info = getKindInfoByStat(original);
+          const href = info && getRepositoryRoute(info, repo);
           // Unknown kinds have no destination, so no action.
-          if (!info) {
+          if (!href) {
             return null;
           }
           return (
             <Stack justifyContent="flex-end">
-              <LinkButton href={getRepositoryRoute(info, repo)} size="sm" variant="secondary">
+              <LinkButton href={href} size="sm" variant="secondary">
                 <Trans i18nKey="provisioning.repository-overview.view-resource">View</Trans>
               </LinkButton>
             </Stack>
@@ -93,7 +96,8 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         size: 100,
       },
     ],
-    [repo]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [repo, manifestKinds]
   );
   return (
     <Box padding={2}>

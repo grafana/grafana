@@ -12,6 +12,7 @@ import appPlatformCollectionsv1alpha1Handlers from './apis/collections.grafana.a
 import appPlatformDashboardv0alpha1Handlers from './apis/dashboard.grafana.app/v0alpha1/handlers';
 import appPlatformDashboardv1beta1Handlers from './apis/dashboard.grafana.app/v1beta1/handlers';
 import appPlatformDashboardv2beta1Handlers from './apis/dashboard.grafana.app/v2beta1/handlers';
+import appPlatformDiscoveryv1alpha2Handlers from './apis/discovery/v1alpha2/handlers';
 import appPlatformFolderv1beta1Handlers from './apis/folder.grafana.app/v1beta1/handlers';
 import appPlatformIamv0alpha1Handlers from './apis/iam.grafana.app/v0alpha1/handlers';
 import appPlatformPluginsv0alpha1Handlers from './apis/plugins.grafana.app/v0alpha1/handlers';
@@ -47,6 +48,7 @@ const allHandlers: HttpHandler[] = [
   ...appPlatformCollectionsv1alpha1Handlers,
   ...appPlatformProvisioningv0alpha1Handlers,
   ...appPlatformScopev0alpha1Handlers,
+  ...appPlatformDiscoveryv1alpha2Handlers,
 ];
 
 export default allHandlers;
