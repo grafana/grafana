@@ -659,6 +659,43 @@ func TestChannelNotifier(t *testing.T) {
 	})
 }
 
+func TestSettleEventsMicrosecondResourceVersions(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		// At a realistic date a snowflake threshold is far above any microsecond RV.
+		synctest.Sleep(time.Until(time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)))
+		raw := make(chan Event, 10)
+		out := make(chan Event, 10)
+		go settleEvents(t.Context(), raw, out, WatchOptions{SettleDelay: 3 * time.Second})
+
+		// Legacy SQL RVs: microsecond timestamps from the DB clock, arriving out
+		// of order from different instances.
+		now := time.Now()
+		later := Event{Name: "b", ResourceVersion: now.UnixMicro()}
+		earlier := Event{Name: "a", ResourceVersion: now.Add(-time.Millisecond).UnixMicro()}
+		raw <- later
+		raw <- earlier
+
+		time.Sleep(2 * time.Second)
+		synctest.Wait()
+		mustNotReceive(t, out)
+
+		time.Sleep(2 * time.Second)
+		synctest.Wait()
+		mustReceive(t, out, earlier)
+		mustReceive(t, out, later)
+	})
+}
+
+func TestSettledBeforeComparesEachFormat(t *testing.T) {
+	cutoff := time.Now()
+	settled := settledBefore(cutoff)
+
+	require.True(t, settled(cutoff.UnixMicro()))
+	require.False(t, settled(cutoff.Add(time.Millisecond).UnixMicro()))
+	require.True(t, settled(snowflakeFromTime(cutoff)))
+	require.False(t, settled(snowflakeFromTime(cutoff.Add(time.Second))))
+}
+
 func mustReceiveTimeout(t *testing.T, watcher <-chan Event, expected Event) {
 	t.Helper()
 	select {

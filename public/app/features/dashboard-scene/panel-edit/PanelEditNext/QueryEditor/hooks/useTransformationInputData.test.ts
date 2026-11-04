@@ -2,6 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import { Observable } from 'rxjs';
 
 import { type DataFrame, FrameMatcherID, transformDataFrame } from '@grafana/data';
+import { DataTopic } from '@grafana/schema';
 
 import { type Transformation } from '../types';
 
@@ -214,7 +215,9 @@ describe('useTransformationInputData', () => {
     ];
 
     it('narrows the raw data when nothing precedes the filtered transformation', () => {
-      const transformations = [makeTransformation('organize', { id: FrameMatcherID.byRefId, options: 'B' })];
+      const transformations = [
+        makeTransformation('organize', { filter: { id: FrameMatcherID.byRefId, options: 'B' } }),
+      ];
 
       const { result } = renderHook(() =>
         useTransformationInputData({
@@ -231,7 +234,7 @@ describe('useTransformationInputData', () => {
     it('narrows what the preceding transformations produced', () => {
       const transformations = [
         makeTransformation('merge'),
-        makeTransformation('organize', { id: FrameMatcherID.byRefId, options: 'A' }),
+        makeTransformation('organize', { filter: { id: FrameMatcherID.byRefId, options: 'A' } }),
       ];
       mockTransformDataFrame.mockReturnValue(
         new Observable((subscriber) => {
@@ -258,7 +261,9 @@ describe('useTransformationInputData', () => {
     });
 
     it('narrows by the resolved value of a filter written as a variable', () => {
-      const transformations = [makeTransformation('organize', { id: FrameMatcherID.byRefId, options: '$pickedRefId' })];
+      const transformations = [
+        makeTransformation('organize', { filter: { id: FrameMatcherID.byRefId, options: '$pickedRefId' } }),
+      ];
 
       const { result } = renderHook(() =>
         useTransformationInputData({
@@ -276,7 +281,9 @@ describe('useTransformationInputData', () => {
       jest.spyOn(console, 'error').mockImplementation(() => {});
       // `byName` runs its option through `stringToJsRegex`, which throws on a `/`-prefixed string
       // that is not a complete `/pattern/flags`.
-      const transformations = [makeTransformation('organize', { id: FrameMatcherID.byName, options: '/etc/hosts' })];
+      const transformations = [
+        makeTransformation('organize', { filter: { id: FrameMatcherID.byName, options: '/etc/hosts' } }),
+      ];
 
       const { result } = renderHook(() =>
         useTransformationInputData({
@@ -331,5 +338,32 @@ describe('useTransformationInputData', () => {
     unmount();
 
     expect(unsubscribe).toHaveBeenCalled();
+  });
+
+  it('replays only annotation-topic transformations ahead of an annotation-topic selection', () => {
+    const annotationTransformation = (id: string): Transformation => ({
+      ...makeTransformation(id),
+      transformConfig: { id, options: {}, topic: DataTopic.Annotations },
+    });
+    const transformations = [
+      makeTransformation('joinByField'),
+      annotationTransformation('filterByRefId'),
+      annotationTransformation('organize'),
+    ];
+    const annotationFrames = makeFrames(['annotation']);
+
+    renderHook(() =>
+      useTransformationInputData({
+        selectedTransformation: transformations[2],
+        allTransformations: transformations,
+        rawData: annotationFrames,
+      })
+    );
+
+    expect(mockTransformDataFrame).toHaveBeenCalledWith(
+      [transformations[1].transformConfig],
+      annotationFrames,
+      expect.any(Object)
+    );
   });
 });

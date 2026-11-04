@@ -126,6 +126,12 @@ A threshold returns `0` when the condition is false and `1` when true.
 
 If the threshold is set as the alert condition, the alert fires when the threshold returns `1`.
 
+{{< admonition type="note" >}}
+
+When a Threshold expression is the alert condition, changing the threshold value or the comparison function (for example, from **Is above** to **Is below**) doesn't reset the state of existing alert instances, and the same applies to changing the recovery threshold. This is because a Threshold expression only converts its input value to `0` or `1` and passes through the input series' labels unchanged, and those labels are what identify an alert instance. Only changing which query or expression the Threshold condition reads from can change those labels and reset the alert instances' state.
+
+{{< /admonition >}}
+
 ### Recovery threshold
 
 To reduce the noise from flapping alerts, you can set a recovery threshold so that the alert returns to the `Normal` or `Recovering` state only after the recovery threshold is crossed.

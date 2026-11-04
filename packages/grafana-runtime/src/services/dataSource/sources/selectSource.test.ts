@@ -1,3 +1,4 @@
+import { type CurrentUserDTO, OrgRole } from '@grafana/data';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { config } from '../../../config';
@@ -16,6 +17,11 @@ const allFlags = {
   [FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs]: true,
 };
 const logWarning = jest.fn();
+const originalUser = config.bootData.user;
+
+function setBootUser(user: Partial<CurrentUserDTO>) {
+  config.bootData.user = user as CurrentUserDTO;
+}
 
 beforeEach(() => {
   logWarning.mockClear();
@@ -28,10 +34,12 @@ beforeEach(() => {
   });
   setTestFlags(allFlags);
   config.publicDashboardAccessToken = undefined;
+  setBootUser({ isSignedIn: true, orgRole: OrgRole.Admin });
 });
 
 afterAll(() => {
   setTestFlags({});
+  config.bootData.user = originalUser;
 });
 
 describe('createDataSourceCacheSource', () => {
@@ -64,6 +72,33 @@ describe('createDataSourceCacheSource', () => {
 
     expect(createDataSourceCacheSource(boot).kind).toBe('bootData');
     expect(logWarning).not.toHaveBeenCalled();
+  });
+
+  it('selects the no-session source when there is no user session', () => {
+    setBootUser({ isSignedIn: false, orgRole: '' });
+
+    expect(createDataSourceCacheSource(boot).kind).toBe('noSession');
+    expect(logWarning).not.toHaveBeenCalled();
+  });
+
+  it('selects the MT source for an anonymous user', () => {
+    setBootUser({ isSignedIn: false, orgRole: OrgRole.Viewer });
+
+    expect(createDataSourceCacheSource(boot).kind).toBe('mt');
+  });
+
+  it('selects boot data in a public dashboard view without a user session', () => {
+    setBootUser({ isSignedIn: false, orgRole: '' });
+    config.publicDashboardAccessToken = 'token';
+
+    expect(createDataSourceCacheSource(boot).kind).toBe('bootData');
+  });
+
+  it('selects boot data without a user session when a prerequisite is off', () => {
+    setBootUser({ isSignedIn: false, orgRole: '' });
+    setTestFlags({ ...allFlags, [FlagKeys.PluginsUseMTPlugins]: false });
+
+    expect(createDataSourceCacheSource(boot).kind).toBe('bootData');
   });
 
   it.each([

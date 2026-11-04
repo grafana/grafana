@@ -517,6 +517,7 @@
         "save": "保存"
       },
       "error-title": "アラートルールの保存に失敗しました",
+      "form-errors": "",
       "no-group-success": "ルールを追加しました"
     },
     "alert-rule-name-and-metric": {
@@ -525,8 +526,8 @@
       "label-metric": "メトリック",
       "label-name": "名前",
       "message": {
-        "must-enter-a-metric-name": "メトリック名の入力が必要です",
-        "must-enter-a-name": "名前の入力が必要です",
+        "metric-name-required": "",
+        "name-required": "",
         "please-select-a-data-source": "データソースを選択してください"
       },
       "metric-aria-label-metric": "メトリック",
@@ -581,6 +582,7 @@
     },
     "alertmanager-config": {
       "confirmText-yes-reset-configuration": "はい、設定をリセットします",
+      "editor-label": "",
       "gma-manual-configuration-description": "内部Grafana Alertmanager設定は手動で変更できません。この設定を変更するには、UI経由で個々のリソースを編集してください。",
       "gma-manual-configuration-is-not-supported": "手動構成の変更はサポートされていません",
       "message": {
@@ -1090,6 +1092,7 @@
         "body": "この削除されたアラートルール定義を復元してもよろしいですか？",
         "confirm": "はい、削除されたルールを復元する",
         "error": "削除されたアラートルールを復元できませんでした",
+        "preview-aria-label": "",
         "title": "削除されたアラートルールを復元"
       },
       "table": {
@@ -1307,7 +1310,7 @@
     "folder-selector": {
       "description-select-folder": "ルールを保存するフォルダを選択します。",
       "message": {
-        "select-a-folder": "フォルダを選択"
+        "folder-required": ""
       }
     },
     "folderAndGroup": {
@@ -1459,7 +1462,14 @@
         "to": ""
       },
       "recording-rules": {
+        "folder-rules-error": "",
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
@@ -1558,11 +1568,10 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "グループを読み込み中...",
       "message": {
-        "must-be-a-positive-integer": "正の整数で入力してください。",
-        "must-enter-a-group-name": "グループ名の入力が必要です"
+        "evaluation-group-required": "",
+        "must-be-a-positive-integer": "正の整数で入力してください。"
       },
       "missing-series-resolve-placeholder": "デフォルト：2",
-      "or": "もしくは",
       "placeholder-select-an-evaluation-group": "評価グループを選択...",
       "text-configure-no-data-and-error-handling": "データなしとエラー処理を設定",
       "title-set-evaluation-behavior": "評価動作を設定"
@@ -1855,6 +1864,7 @@
         "will-import-rules": "ルールをインポートします",
         "will-import-rules-count_other": "{{count}}件のルールをインポートします"
       },
+      "rules-preview": "",
       "source": {
         "datasource": "既存のデータソース管理ルール",
         "datasource-description": "既存のデータソースからルールをインポート",
@@ -2974,7 +2984,7 @@
           "alerting": "このアラートルールの評価を一時停止するには、オンにします。",
           "recording": "この記録ルールの評価を一時停止するには、オンにします。"
         },
-        "select-folder-before": "評価グループと間隔を設定する前にフォルダを選択してください",
+        "select-folder-first-tooltip": "",
         "ungroup-warning": "この操作は元に戻せません。保存すると、再びグループに追加できなくなります。",
         "ungroup-warning-title": "これにより、アラートルールがグループから削除されます"
       },
@@ -3636,6 +3646,9 @@
       "switch-to-data-source-managed": "クエリで選択したデータソースはアラートルール管理に対応しています。Grafanaではなくデータソースでアラートルールを管理したい場合は、データソース管理に切り替えてください。",
       "switch-to-grafana-managed": "式、複数クエリ、通知内の画像などのさまざまな機能を使用するには、Grafanaによる管理に切り替えてください。",
       "title-alert-rule-types": "アラートルールタイプ"
+    },
+    "sql-query-preview": {
+      "aria-label": ""
     },
     "state-history": {
       "columns": {
@@ -5271,6 +5284,9 @@
       "preferences": "環境設定",
       "recent-dashboards": "最近のダッシュボード",
       "recent-scopes": "最近のスコープ"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -6188,6 +6204,7 @@
       "composer": "",
       "composer-description": "",
       "composer-no-permission": "",
+      "composer-opening": "",
       "composer-save-first": "",
       "composer-unsupported": "",
       "current": "",
@@ -7260,11 +7277,14 @@
         "keep-working": "",
         "save": "保存",
         "stop-and-leave": "",
+        "stop-and-switch": "",
         "text": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "save-changes-question": "変更内容を保存しますか？"
         },
         "title": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "unsaved-changes": "未保存の変更"
         }
@@ -7579,17 +7599,20 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
-      "draft-body-source": "",
+      "draft-discarded": "",
       "draft-title": "",
+      "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
+      "pending-changes-changed": "",
+      "pending-changes-changed-text": "",
       "pending-hint": "",
       "pending-stale": "",
       "pending-title": "",
       "preview-changes": "",
       "rebase": "",
+      "record-pending-change-failed": "",
       "save": "",
       "show-original-dashboard": "",
       "stop-highlighting-changes": "",
@@ -10628,6 +10651,8 @@
       "clear-button": "選択をクリア"
     },
     "code-mirror": {
+      "diff-modified": "",
+      "diff-original": "",
       "error-label": "CodeMirrorエディタの読み込みに失敗しました",
       "language-load-failed": "構文ハイライトの読み込みに失敗しました",
       "language-load-failed-description": "エディターは言語固有の機能なしで続行します。",
@@ -11434,11 +11459,8 @@
       "severity-low": "低",
       "severity-minor": "軽微",
       "severity-unknown": "不明",
-      "title": "発生中のアラート",
       "view-all": "発生中のアラートをすべて表示",
-      "view-rules": "アラートルールをすべて表示",
-      "critical-count_other": "{{count}}件（重大）",
-      "high-count_other": "{{count}}件（高）"
+      "view-rules": "アラートルールをすべて表示"
     },
     "header-actions": {
       "active-incidents": "アクティブなインシデント",
@@ -11464,21 +11486,13 @@
       "empty": "",
       "empty-selected-team": "",
       "error-title": "アクティブなインシデントを読み込めませんでした",
-      "title": "アクティブなインシデント",
       "view-all": "すべてのインシデントを表示"
     },
     "learn-more": "詳しく見る",
     "most-used-dashboards-tab": {
       "empty": "最も使用されているダッシュボードがここに表示されます。",
-      "empty-description": "組織にダッシュボードがあり、使用状況データが収集されると、過去30日間で最もビュー数の多いダッシュボードがここに表示されます。",
       "error-title": "最も使用されているダッシュボードを読み込めませんでした",
       "loading": "最も使用されているダッシュボードを読み込み中..."
-    },
-    "news-card": {
-      "empty": "最近のブログ投稿はありません。",
-      "error-title": "最近のブログ投稿を読み込めませんでした",
-      "read-more": "Grafana Labsブログの記事をもっと読む",
-      "title": "ブログの最新記事"
     },
     "on-call-card": {
       "current-shift": "",
@@ -11818,7 +11832,6 @@
     },
     "starred-dashboards-tab": {
       "empty": "お気に入りに登録したダッシュボードがここに表示されます。",
-      "empty-description": "ダッシュボードページで<1></1>をクリックすると、お気に入りのダッシュボードをスター付きにできます。",
       "error-title": "お気に入りダッシュボードを読み込めませんでした",
       "loading": "スター付きのダッシュボードを読み込み中..."
     },
@@ -12285,7 +12298,6 @@
       "copy-log-line-json": "ログ内容をJSONとしてコピー",
       "copy-shortlink": "ショートリンクをコピー",
       "copy-to-clipboard": "クリップボードにコピー",
-      "displayed-fields-section": "表示フィールドを整理",
       "fields": {
         "adhoc-statistics": "アドホック統計",
         "copy-value-to-clipboard": "値をクリップボードにコピー",
@@ -12309,14 +12321,11 @@
       "log-attributes-field": "ログ属性",
       "log-line-field": "ログ行",
       "log-line-section": "ログ行",
-      "move-displayed-field-down": "下へ移動",
-      "move-displayed-field-up": "上へ移動",
       "no-details": "表示するフィールドがありません。",
       "open-assistant": "",
       "open-value-in": "",
       "pin-line": "ログをピン留め",
       "prettify": "整形",
-      "remove-displayed-field": "フィールドを削除する",
       "remove-log": "ログを削除",
       "scroll-to-logline": "ログ行までスクロール",
       "search": {
@@ -13618,6 +13627,7 @@
       "add-title": "",
       "change-visualization": "",
       "edit-query": "",
+      "edit-with-assistant": "",
       "hide-query": "",
       "open-explore": "",
       "rename": "",
@@ -15657,20 +15667,8 @@
     "explain-or-modify": "説明または変更",
     "explain-query": "",
     "explaining": "",
-    "feedback-cancel": "キャンセル",
-    "feedback-description": "お寄せいただいたフィードバックは、Grafanaのクエリエクスペリエンスの改善に役立てられます。",
-    "feedback-error": "フィードバックを送信できませんでした。もう一度お試しください。",
     "feedback-helpful": "役に立った",
-    "feedback-label": "フィードバックを共有",
-    "feedback-negative-placeholder": "うまくいかなかった点と、代わりに期待していた点を説明してください。",
-    "feedback-negative-title": "うまくいかなかったことは何ですか？",
     "feedback-not-helpful": "役に立たなかった",
-    "feedback-positive-placeholder": "どのような点が良いと思われましたか？どのようにすればより良い結果が得られたのでしょうか？",
-    "feedback-positive-title": "うまくいったことは何ですか？",
-    "feedback-privacy": "",
-    "feedback-recipient": "お寄せいただいたフィードバックは、クエリに取り組むチームに送信されます。",
-    "feedback-send": "送信",
-    "feedback-sending": "送信中…",
     "focus": "",
     "follow-up-label": "",
     "follow-up-placeholder": "",
@@ -16866,6 +16864,8 @@
       "failures-description": "",
       "filter-placeholder": "",
       "filtered": "",
+      "internal": "",
+      "internal-description": "",
       "last-failed": "",
       "load-failures": "",
       "never": "",

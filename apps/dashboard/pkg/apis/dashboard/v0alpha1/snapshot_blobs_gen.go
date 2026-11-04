@@ -4,7 +4,9 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type SnapshotBlobReference struct {
-	Uid         string  `json:"uid"`
+	Uid *string `json:"uid,omitempty"`
+	// Write-only base64-encoded dashboard JSON, replaced by a server-issued reference on write.
+	Data        *string `json:"data,omitempty"`
 	Size        *int64  `json:"size,omitempty"`
 	Hash        *string `json:"hash,omitempty"`
 	ContentType *string `json:"contentType,omitempty"`
