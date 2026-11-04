@@ -79,11 +79,14 @@ describe('useDashboardsPageNav', () => {
     expect(pageNav).toMatchObject({ hideFromBreadcrumbs: true, url: undefined });
   });
 
-  it('only includes the synthetic page nav in breadcrumbs on the root Dashboards page', () => {
+  it('includes the synthetic page nav in breadcrumbs for Dashboard tabs but not Starred', () => {
     setTestFlags({ [INFO_ARCH_REFRESH_FLAG]: true });
 
     expect(renderNav(NavID.dashboards).result.current?.hideFromBreadcrumbs).toBe(false);
-    expect(renderNav(NavID.dashboardsVariables).result.current?.hideFromBreadcrumbs).toBe(true);
+    expect(renderNav(NavID.dashboardsVariables).result.current?.hideFromBreadcrumbs).toBe(false);
+    expect(renderNav(NavID.dashboards, dashboardsSection, NavID.starred).result.current?.hideFromBreadcrumbs).toBe(
+      true
+    );
   });
 
   // The nav tree gates each page — Variables needs its own flag and variables:read

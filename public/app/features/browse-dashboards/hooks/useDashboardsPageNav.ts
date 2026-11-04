@@ -33,12 +33,15 @@ export function useDashboardsPageNav(activeId: string, currentPageId = activeId)
       .filter((tab) => tab !== undefined)
       .map((tab) => ({ ...tab, active: tab.id === activeId }));
 
-    const hideFromBreadcrumbs = currentPageId !== NavID.dashboards;
+    // Starred shares the tabs while retaining its own page identity. The tab pages use this
+    // synthetic nav for their breadcrumb and browser title, so it must remain visible for them.
+    const isDifferentPage = currentPageId !== activeId;
     return {
       ...section,
-      // A hidden synthetic URL would suppress the real page when both normalize to /dashboards (Starred does).
-      url: hideFromBreadcrumbs ? undefined : section.url,
-      hideFromBreadcrumbs,
+      // The hidden Starred copy must not participate in breadcrumb traversal or it suppresses the real page.
+      url: isDifferentPage ? undefined : section.url,
+      parentItem: isDifferentPage ? undefined : section.parentItem,
+      hideFromBreadcrumbs: isDifferentPage,
       children: tabs,
     };
   }, [activeId, currentPageId, isInfoArchRefresh, section]);

@@ -19,23 +19,25 @@ const dashboardsSection: NavModelItem = {
 };
 
 function buildNavIndex(): NavIndex {
+  const home: NavModelItem = { id: 'home', text: 'Home', url: '/' };
   const section: NavModelItem = {
     ...dashboardsSection,
+    parentItem: home,
     children: dashboardsSection.children?.map((child) => ({ ...child })),
   };
-  const navIndex: NavIndex = {
-    [NavID.dashboards]: section,
-    [NavID.starred]: { id: NavID.starred, text: 'Starred', url: '/dashboards?starred' },
+  const starred: NavModelItem = {
+    id: NavID.starred,
+    text: 'Starred',
+    url: '/dashboards?starred',
+    parentItem: home,
   };
+  home.children = [section, starred];
 
-  for (const child of section.children ?? []) {
-    child.parentItem = section;
-    if (child.id) {
-      navIndex[child.id] = child;
-    }
-  }
-
-  return navIndex;
+  return {
+    home,
+    [NavID.dashboards]: section,
+    [NavID.starred]: starred,
+  };
 }
 
 function PageHarness({ activeId, currentPageId }: { activeId: string; currentPageId: string }) {
