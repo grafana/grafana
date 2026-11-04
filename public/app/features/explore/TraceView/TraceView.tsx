@@ -131,12 +131,14 @@ export function TraceView(props: Props) {
   // Search next/prev re-applies the current match whenever the matches Set is rebuilt
   // (every filter keystroke). Reuse the object when the id is unchanged so the timeline
   // does not jump. Go to span always allocates a new object so a repeat click still scrolls.
-  const [focusedSpanForSearch, setFocusedSpanForSearch] = useState<{ spanID: string } | undefined>();
+  const [focusedSpanForSearch, setFocusedSpanForSearch] = useState<{ spanID: string; source?: 'link' } | undefined>();
   const focusSpanForSearch = useCallback((spanID: string) => {
-    setFocusedSpanForSearch((current) => (current?.spanID === spanID ? current : { spanID }));
+    setFocusedSpanForSearch((current) =>
+      current?.spanID === spanID && current.source !== 'link' ? current : { spanID }
+    );
   }, []);
-  const refocusSpanForSearch = useCallback((spanID: string) => {
-    setFocusedSpanForSearch({ spanID });
+  const refocusSpanForSearch = useCallback((spanID: string, fromLink = false) => {
+    setFocusedSpanForSearch({ spanID, source: fromLink ? 'link' : undefined });
   }, []);
   const [showSpanFilters, setShowSpanFilters] = useToggle(false);
   const [headerHeight, setHeaderHeight] = useState(100);
@@ -280,7 +282,7 @@ export function TraceView(props: Props) {
   // expanded for its row to exist, its detail must be open, and the timeline must scroll to it.
   // A span hidden by the matches-only filter also has to be made visible first.
   const goToSpan = useCallback(
-    (spanID: string) => {
+    (spanID: string, fromLink = false) => {
       const span = traceProp?.spans.find((s) => s.spanID === spanID);
       if (!span) {
         return;
@@ -290,10 +292,16 @@ export function TraceView(props: Props) {
       if (search.matchesOnly && spanFilterMatches && !spanFilterMatches.has(spanID)) {
         setSearch({ ...search, matchesOnly: false });
       }
-      refocusSpanForSearch(spanID);
+      refocusSpanForSearch(spanID, fromLink);
     },
     [openDetail, refocusSpanForSearch, revealSpan, search, setSearch, spanFilterMatches, traceProp]
   );
+
+  useEffect(() => {
+    setFocusedSpanForSearch((current) =>
+      current?.source === 'link' && current.spanID !== focusedSpanId ? undefined : current
+    );
+  }, [focusedSpanId]);
 
   const lastLinkedSpanId = useRef<string | undefined>(undefined);
   const frame = props.dataFrames[0];
@@ -307,7 +315,7 @@ export function TraceView(props: Props) {
     lastLinkedSpanId.current = spanIdToExpand;
 
     if (spanIdToExpand) {
-      goToSpan(spanIdToExpand);
+      goToSpan(spanIdToExpand, true);
     }
   }, [frame, spanIdToExpand, goToSpan]);
 
@@ -431,6 +439,7 @@ function useFocusSpanLink(options: {
       changePanelState(options.exploreId, 'trace', {
         ...panelState,
         spanId,
+        expandSpan: undefined,
       })
     );
 
