@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useId, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -22,8 +22,14 @@ interface Props {
 
 export function DynamicThresholdMappings({ mappings, labelValues, thresholdCount, errors, onChange }: Props) {
   const styles = useStyles2(getStyles);
-  // Rows are identified by position; a row that was just added stays quiet until the user edits it.
-  const [touchedRows, setTouchedRows] = useState<ReadonlySet<number>>(new Set());
+  const idPrefix = useId();
+  // Rows are identified by position. Saved rows are checked right away; a row added in this session stays quiet until the user edits it.
+  const [touchedRows, setTouchedRows] = useState<ReadonlySet<number>>(() => new Set(mappings.keys()));
+
+  // Mappings cleared from outside (match label or input change) must not leave stale touched positions behind.
+  if (mappings.length === 0 && touchedRows.size > 0) {
+    setTouchedRows(new Set());
+  }
 
   const touch = (index: number) => setTouchedRows((current) => new Set(current).add(index));
   const update = (index: number, mapping: DynamicThresholdMapping) => {
@@ -55,6 +61,7 @@ export function DynamicThresholdMappings({ mappings, labelValues, thresholdCount
             <InlineField invalid={error ? true : undefined} error={error}>
               <RowControls>
                 <Select
+                  inputId={`${idPrefix}-${index}-label-value`}
                   width={20}
                   aria-label={t(
                     'expressions.dynamic-threshold.mapping-label-value',
@@ -68,6 +75,7 @@ export function DynamicThresholdMappings({ mappings, labelValues, thresholdCount
                   onChange={(option) => update(index, { ...mapping, labelValue: option?.value ?? '' })}
                 />
                 <ThresholdInputs
+                  idPrefix={`${idPrefix}-${index}-threshold`}
                   thresholds={mapping.thresholds}
                   thresholdCount={thresholdCount}
                   getAriaLabel={(thresholdIndex) =>
