@@ -10,8 +10,6 @@ import { useSelector } from 'app/types/store';
 import { getActiveItem } from '../MegaMenu/utils';
 
 export interface AdministrationSectionNavModel {
-  /** Destinations that sit directly under Administration, outside any group */
-  ungrouped: NavModelItem[];
   /** Groups with at least one destination */
   groups: NavModelItem[];
   activeId?: string;
@@ -66,7 +64,6 @@ export function useAdministrationSectionNav(
   }
 
   return {
-    ungrouped: destinations.filter((child) => !child.children),
     groups: destinations
       .filter((child) => child.children?.some((grandchild) => !grandchild.isCreateAction))
       .map((group) => ({ ...group, children: group.children?.filter((child) => !child.isCreateAction) })),

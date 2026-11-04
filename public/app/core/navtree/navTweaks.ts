@@ -62,18 +62,30 @@ const NAV_TWEAKS: NavTweak[] = [
     // With Administration folded to one mega menu row, its destinations are read
     // as groups in the section nav, so the ones that sat ungrouped join General
     // and General's destinations are put in the order the section nav shows.
-    // A missing item is left out rather than failing the rest.
+    // A missing item is left out rather than failing the rest. Any other
+    // destination left ungrouped, such as an app's page, joins General too, as the
+    // section nav has no place for it otherwise.
     when: isAdminSubNav,
     apply: (tree) => {
-      const regrouped = [...ADMIN_GENERAL_LEADING, ...ADMIN_GENERAL_TRAILING].reduce(
+      const placed = [...ADMIN_GENERAL_LEADING, ...ADMIN_GENERAL_TRAILING].reduce(
         (current, { id, sortWeight }) => moveNavItemToSection(current, id, NavID.cfgGeneral, { sortWeight }),
         tree
+      );
+      const regrouped = ungroupedAdministrationIds(placed).reduce(
+        (current, id) => moveNavItemToSection(current, id, NavID.cfgGeneral),
+        placed
       );
       // Without General nothing was regrouped, so there is nothing to restyle either
       return findNavById(regrouped, NavID.cfgGeneral) ? withAdminIcons(landOnDefaultPreferences(regrouped)) : regrouped;
     },
   },
 ];
+
+function ungroupedAdministrationIds(tree: NavModelItem[]): string[] {
+  return (findNavById(tree, NavID.cfg)?.children ?? [])
+    .filter((child) => !child.children && !child.isCreateAction && child.id)
+    .map((child) => child.id!);
+}
 
 /**
  * Points Administration and General at Default preferences, which the section

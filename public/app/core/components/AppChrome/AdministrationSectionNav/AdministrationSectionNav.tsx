@@ -14,17 +14,10 @@ interface Props {
 
 export function AdministrationSectionNav({ model }: Props) {
   const styles = useStyles2(getStyles);
-  const { ungrouped, groups, activeId } = model;
+  const { groups, activeId } = model;
 
   return (
     <nav aria-label={t('navigation.administration-section-nav.label', 'Administration')} className={styles.nav}>
-      {ungrouped.length > 0 && (
-        <ul className={styles.list}>
-          {ungrouped.map((item) => (
-            <SectionNavLink key={item.id ?? item.url} item={item} isActive={item.id === activeId} />
-          ))}
-        </ul>
-      )}
       {groups.map((group) => (
         <div key={group.id ?? group.text} className={styles.group}>
           <h2 className={styles.heading}>{group.text}</h2>
