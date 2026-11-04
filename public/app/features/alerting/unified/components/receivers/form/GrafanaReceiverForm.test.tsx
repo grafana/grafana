@@ -1078,7 +1078,7 @@ describe('GrafanaReceiverForm', () => {
       expect(screen.queryByRole('button', { name: 'Reset' })).not.toBeInTheDocument();
     });
 
-    it('should not show Save button when contact point is provisioned', async () => {
+    it('should not show Save, Duplicate or Delete buttons when contact point is provisioned', async () => {
       const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
         .withIntegrations((integrationFactory) => [
           integrationFactory
@@ -1090,25 +1090,9 @@ describe('GrafanaReceiverForm', () => {
 
       renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
 
-      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+      expect(await screen.findByRole('textbox', { name: /^Addresses/ })).toHaveValue('test@example.com');
 
       expect(ui.saveButton.query()).not.toBeInTheDocument();
-    });
-
-    it('should not show Duplicate or Delete buttons when contact point is provisioned', async () => {
-      const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
-        .withIntegrations((integrationFactory) => [
-          integrationFactory
-            .email()
-            .params({ settings: { addresses: 'test@example.com' } })
-            .build(),
-        ])
-        .build({ provenance: 'converted_prometheus' });
-
-      renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
-
-      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
-
       expect(screen.queryByRole('button', { name: /Duplicate/ })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /Delete/ })).not.toBeInTheDocument();
     });

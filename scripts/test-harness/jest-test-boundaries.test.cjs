@@ -72,6 +72,7 @@ test('the separate harness configuration selects Jest suites, but not source or 
     'scripts/test-harness/dependency-patches/FloatingFocusManager.test.tsx',
     'scripts/test-harness/helpers/events.test.ts',
     'scripts/test-harness/regressions/Drawer.test.tsx',
+    'scripts/test-harness/regressions/alertQueryEntryPoint.test.ts',
     'scripts/test-harness/regressions/backend_srv.dashboard.test.ts',
     'scripts/test-harness/regressions/coreExtensionInitialization.test.ts',
     'scripts/test-harness/regressions/datasourceFilter.test.ts',

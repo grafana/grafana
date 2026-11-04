@@ -459,7 +459,8 @@ describe('AddPanelToNotebookModalBody', () => {
     it('reports success with a link to the new notebook', async () => {
       const { user, onDismiss } = renderModal();
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('New investigation');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() => expect(onDismiss).toHaveBeenCalled());
@@ -473,7 +474,8 @@ describe('AddPanelToNotebookModalBody', () => {
       createWithContent.mockResolvedValue({ uid: 'nb3', title: "Checkout's errors/sec" });
       const { user, onDismiss } = renderModal();
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), "Checkout's errors/sec");
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste("Checkout's errors/sec");
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() => expect(onDismiss).toHaveBeenCalled());
@@ -523,7 +525,8 @@ describe('AddPanelToNotebookModalBody', () => {
     it('writes once even if the form is submitted twice before it re-renders', async () => {
       const { user } = renderModal();
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('New investigation');
 
       const form = document.getElementById('add-panel-to-notebook')!;
       fireEvent.submit(form);
@@ -536,7 +539,8 @@ describe('AddPanelToNotebookModalBody', () => {
     it('tells the create that the panel came from the library', async () => {
       const { user } = renderModal(undefined, true);
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('New investigation');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() =>
@@ -661,7 +665,8 @@ describe('AddPanelToNotebookModalBody', () => {
       const { user } = renderModal(undefined, false, RELATIVE_CAPTURE);
       await user.click(lockCheckbox());
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('New investigation');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() => expect(createWithContent).toHaveBeenCalled());
@@ -919,7 +924,8 @@ describe('AddPanelToNotebookModalBody', () => {
       createWithContent.mockRejectedValue(new Error('notebook is too large'));
       const { user } = renderModal();
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('New investigation');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() =>
@@ -943,7 +949,8 @@ describe('AddPanelToNotebookModalBody', () => {
       });
       const { user } = renderModal(buildPanel);
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('New investigation');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() =>
