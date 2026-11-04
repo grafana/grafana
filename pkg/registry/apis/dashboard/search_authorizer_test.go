@@ -132,6 +132,18 @@ func TestDashboardsAPIBuilderSearchAuthorizer(t *testing.T) {
 		}
 	}
 
+	t.Run("the rule applies to every API version", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(),
+			delegatedRequester("dashboard.grafana.app/dashboards:get", "folder.grafana.app/folders:get"))
+		for _, version := range []string{"v0alpha1", "v1", "v2beta1"} {
+			attr := searchAttributes("", "list").(authorizer.AttributesRecord)
+			attr.APIVersion = version
+			decision, _, err := authz.Authorize(ctx, attr)
+			require.NoError(t, err)
+			require.Equal(t, authorizer.DecisionAllow, decision, version)
+		}
+	})
+
 	t.Run("built-in service identity is allowed", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
 		decision, _, err := authz.Authorize(ctx, searchAttributes("", "list"))
@@ -153,10 +165,13 @@ func TestDashboardsAPIBuilderSearchAuthorizer(t *testing.T) {
 		withSearch := identity.WithRequester(context.Background(),
 			delegatedRequester("dashboard.grafana.app/search:*"))
 
-		other := []authorizer.Attributes{
+		other := make([]authorizer.Attributes, 0, 8)
+		other = append(other,
 			authorizer.AttributesRecord{ResourceRequest: true, APIGroup: dashv0.GROUP, Resource: "search", Name: "other", Verb: "get"},
 			authorizer.AttributesRecord{ResourceRequest: true, APIGroup: dashv0.GROUP, Resource: "search", Subresource: "x", Verb: "get"},
-			authorizer.AttributesRecord{ResourceRequest: true, APIGroup: dashv0.GROUP, Resource: "search", Verb: "create"},
+		)
+		for _, verb := range []string{"create", "update", "patch", "delete", "deletecollection", "watch"} {
+			other = append(other, authorizer.AttributesRecord{ResourceRequest: true, APIGroup: dashv0.GROUP, Resource: "search", Verb: verb})
 		}
 		for _, attr := range other {
 			decision, _, err := authz.Authorize(onlyDashboardsAndFolders, attr)
@@ -187,6 +202,7 @@ func TestDashboardsAPIBuilderSearchAuthorizer(t *testing.T) {
 type recordingAuthorizer struct {
 	decisions []authorizer.Decision
 	err       error
+	errAt     int // index of the check that returns err
 	asked     []authorizer.Attributes
 }
 
@@ -197,7 +213,7 @@ func (r *recordingAuthorizer) authorizer() authorizer.Authorizer {
 func (r *recordingAuthorizer) authorize(_ context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 	i := len(r.asked)
 	r.asked = append(r.asked, attr)
-	if r.err != nil {
+	if r.err != nil && i == r.errAt {
 		return authorizer.DecisionDeny, "", r.err
 	}
 	return r.decisions[i], "reason", nil
@@ -249,6 +265,24 @@ func TestNewSearchAuthorizer(t *testing.T) {
 		decision, _, err := newSearchAuthorizer(fake.authorizer()).Authorize(context.Background(), searchAttributes("", "list"))
 		require.ErrorIs(t, err, boom)
 		require.Equal(t, authorizer.DecisionDeny, decision)
+	})
+
+	t.Run("a denial from the folders check is returned", func(t *testing.T) {
+		fake := &recordingAuthorizer{decisions: []authorizer.Decision{authorizer.DecisionAllow, authorizer.DecisionDeny}}
+		decision, reason, err := newSearchAuthorizer(fake.authorizer()).Authorize(context.Background(), searchAttributes("", "list"))
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Equal(t, "reason", reason)
+		require.Len(t, fake.asked, 2)
+	})
+
+	t.Run("an error from the folders check is returned and denies", func(t *testing.T) {
+		boom := errors.New("boom")
+		fake := &recordingAuthorizer{decisions: []authorizer.Decision{authorizer.DecisionAllow}, err: boom, errAt: 1}
+		decision, _, err := newSearchAuthorizer(fake.authorizer()).Authorize(context.Background(), searchAttributes("", "list"))
+		require.ErrorIs(t, err, boom)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Len(t, fake.asked, 2)
 	})
 
 	t.Run("other requests go straight to the fallback", func(t *testing.T) {

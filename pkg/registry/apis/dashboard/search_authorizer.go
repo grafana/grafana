@@ -43,7 +43,9 @@ func newSearchAuthorizer(fallback authorizer.Authorizer) authorizer.Authorizer {
 }
 
 // isNamespaceSearchRequest matches the GET routes under the namespace search
-// resource: search itself and its sortable, vector and hybrid variants.
+// resource: search itself and its sortable, vector and hybrid variants. It does
+// not look at the namespace or API version: the checks delegated to the
+// fallback carry the namespace, and the route only exists for one version.
 func isNamespaceSearchRequest(attr authorizer.Attributes) bool {
 	if !attr.IsResourceRequest() || attr.GetResource() != searchResource || attr.GetSubresource() != "" {
 		return false

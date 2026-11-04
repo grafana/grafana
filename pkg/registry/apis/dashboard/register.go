@@ -1726,7 +1726,7 @@ func (b *DashboardsAPIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvalu
 }
 
 // GetAuthorizer returns a composite authorizer that dispatches by resource type.
-// Notebooks, snapshots, and variables use dedicated authorizers; other resources
+// Notebooks, snapshots, variables, and namespace search use dedicated authorizers; other resources
 // fall back to ServiceAuthorizer. Variables with no classic accessControl (standalone)
 // fall through to ServiceAuthorizer after the feature flag.
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
