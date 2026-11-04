@@ -6,6 +6,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -28,6 +29,79 @@ func setupSQLKVMock(t *testing.T, driverName string) (*SqlKV, *sql.DB, sqlmock.S
 	require.True(t, ok)
 
 	return sqlKV, db, mock
+}
+
+func TestSQLKVUnixTimestamp(t *testing.T) {
+	for _, tc := range []struct {
+		driverName string
+		query      string
+	}{
+		{driverName: "mysql", query: "SELECT UNIX_TIMESTAMP()"},
+		{driverName: "postgres", query: "SELECT FLOOR(EXTRACT(EPOCH FROM statement_timestamp()))::BIGINT"},
+		{driverName: "sqlite", query: "SELECT unixepoch('now')"},
+	} {
+		t.Run(tc.driverName, func(t *testing.T) {
+			store, _, mock := setupSQLKVMock(t, tc.driverName)
+			const expected int64 = 1234567890
+			mock.ExpectQuery(regexp.QuoteMeta(tc.query)).
+				WillReturnRows(sqlmock.NewRows([]string{"timestamp"}).AddRow(expected))
+
+			timestamp, err := store.UnixTimestamp(t.Context())
+			require.NoError(t, err)
+			require.Equal(t, expected, timestamp)
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func TestSQLKVUnixTimestampErrors(t *testing.T) {
+	queryErr := errors.New("query failed")
+	for _, tc := range []struct {
+		name string
+		rows *sqlmock.Rows
+		err  error
+	}{
+		{name: "query error", err: queryErr},
+		{name: "no rows", rows: sqlmock.NewRows([]string{"timestamp"}), err: sql.ErrNoRows},
+		{name: "invalid timestamp", rows: sqlmock.NewRows([]string{"timestamp"}).AddRow("invalid")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store, _, mock := setupSQLKVMock(t, "sqlite")
+			expectation := mock.ExpectQuery(regexp.QuoteMeta("SELECT unixepoch('now')"))
+			if tc.rows != nil {
+				expectation.WillReturnRows(tc.rows)
+			} else {
+				expectation.WillReturnError(tc.err)
+			}
+
+			timestamp, err := store.UnixTimestamp(t.Context())
+			require.ErrorContains(t, err, "failed to get unix timestamp")
+			if tc.err != nil {
+				require.ErrorIs(t, err, tc.err)
+			}
+			require.Zero(t, timestamp)
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func TestSQLKVUnixTimestampUsesContextTransaction(t *testing.T) {
+	store, db, mock := setupSQLKVMock(t, "sqlite")
+	db.SetMaxOpenConns(1)
+	mock.ExpectBegin()
+	tx, err := db.BeginTx(t.Context(), nil)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = tx.Rollback() })
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT unixepoch('now')")).
+		WillReturnRows(sqlmock.NewRows([]string{"timestamp"}).AddRow(int64(1234567890)))
+	mock.ExpectRollback()
+
+	timestamp, err := store.UnixTimestamp(ContextWithDBTX(t.Context(), tx))
+	require.NoError(t, err)
+	require.Equal(t, int64(1234567890), timestamp)
+	require.NoError(t, tx.Rollback())
+	require.NoError(t, mock.ExpectationsWereMet())
 }
 
 func TestSQLKVSaveRejectsUnknownSection(t *testing.T) {
