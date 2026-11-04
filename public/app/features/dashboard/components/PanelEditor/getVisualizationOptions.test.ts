@@ -213,6 +213,7 @@ describe('getVisualizationOptions', () => {
         override: jest.fn(),
         editor: jest.fn(),
         name: 'Property 1',
+        getSearchTerms: () => ['Nested custom control'],
       };
 
       const property2: FieldConfigPropertyItem = {
@@ -262,6 +263,7 @@ describe('getVisualizationOptions', () => {
 
       expect(vizOptions.length).toEqual(1);
       expect(vizOptions[0].items.length).toEqual(3);
+      expect(vizOptions[0].items[0].props.searchTerms).toEqual(['Nested custom control']);
     });
 
     it('should not show items when the showIf evaluates to false', () => {

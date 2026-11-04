@@ -16,6 +16,7 @@ export interface OptionsPaneItemInfo {
   title?: string;
   value?: unknown;
   description?: string;
+  searchTerms?: string[];
   popularRank?: number;
   render: (descriptor: OptionsPaneItemDescriptor) => React.ReactElement<Record<string, unknown>>;
   skipField?: boolean;

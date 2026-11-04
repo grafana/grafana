@@ -92,6 +92,16 @@ describe('table module', () => {
     );
   });
 
+  it('includes the selected cell type editor fields in option search terms', () => {
+    const getSearchTerms = customConfigItem('cellOptions').getSearchTerms;
+    if (!getSearchTerms) {
+      throw new Error('expected cell type options to provide search terms');
+    }
+
+    expect(getSearchTerms({ type: TableCellDisplayMode.Sparkline } as never)).toContain('Hide value');
+    expect(getSearchTerms({ type: TableCellDisplayMode.Gauge } as never)).toContain('Gauge display mode');
+  });
+
   it('replaces inherited footer calculations with override values', () => {
     expect(customConfigItem('footer.reducers').arrayOverrideStrategy).toBe('replace');
   });

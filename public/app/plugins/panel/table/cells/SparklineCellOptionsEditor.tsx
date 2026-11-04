@@ -28,6 +28,27 @@ const optionIds: Array<keyof TableSparklineCellOptions> = [
   'pointSize',
 ];
 
+let sparklineCellOptionsRegistry: ReturnType<typeof createFieldConfigRegistry> | undefined;
+
+function getSparklineCellOptionsRegistry() {
+  if (!sparklineCellOptionsRegistry) {
+    const config = getChartCellConfig(defaultSparklineCellConfig);
+    sparklineCellOptionsRegistry = createFieldConfigRegistry(config, 'ChartCell');
+  }
+
+  return sparklineCellOptionsRegistry;
+}
+
+export function getSparklineCellOptionSearchTerms(cellOptions?: TableSparklineCellOptions): string[] {
+  const values = { ...defaultSparklineCellConfig, ...cellOptions };
+  const context: StandardEditorContext<unknown> = { data: [] };
+
+  return getSparklineCellOptionsRegistry()
+    .list(optionIds.map((id) => `custom.${id}`))
+    .filter((item) => !item.showIf || item.showIf(values, context.data, context.annotations, context))
+    .map((item) => item.name);
+}
+
 function getChartCellConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<GraphFieldConfig> {
   const graphFieldConfig = getGraphFieldConfig(cfg);
   return {
@@ -52,8 +73,7 @@ export const SparklineCellOptionsEditor = (props: TableCellEditorProps<TableSpar
   const { cellOptions, onChange } = props;
 
   const registry = useMemo(() => {
-    const config = getChartCellConfig(defaultSparklineCellConfig);
-    return createFieldConfigRegistry(config, 'ChartCell');
+    return getSparklineCellOptionsRegistry();
   }, []);
 
   const style = useStyles2(getStyles);

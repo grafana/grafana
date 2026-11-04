@@ -31,6 +31,12 @@ export interface OptionEditorConfig<TOptions, TSettings = any, TValue = any, TCo
   name: string;
 
   /**
+   * Additional option names to include when searching for this editor.
+   * This is useful for custom editors that render controls not represented by the options registry.
+   */
+  getSearchTerms?: (value: TValue) => string[];
+
+  /**
    * Description of the option. Will be displayed in the UI as form element description.
    */
   description?: string;

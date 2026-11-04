@@ -165,6 +165,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
         id: htmlId,
         useFieldset: fieldOption.useFieldset,
         description: fieldOption.description,
+        searchTerms: fieldOption.getSearchTerms?.(value),
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
           const onChange = (v: unknown) => {
@@ -324,6 +325,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
         id: htmlId,
         useFieldset: fieldOption.useFieldset,
         description: fieldOption.description,
+        searchTerms: fieldOption.getSearchTerms?.(value),
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
           const onChange = (v: unknown) => {
@@ -410,6 +412,7 @@ export function fillOptionsPaneItems(
         title: pluginOption.name,
         id: htmlId,
         description: pluginOption.description,
+        searchTerms: pluginOption.getSearchTerms?.(access.getValue(pluginOption.path)),
         useFieldset: pluginOption.useFieldset,
         render: function renderEditor() {
           return (

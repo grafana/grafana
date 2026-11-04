@@ -10,7 +10,7 @@ import {
 import { addTableCustomConfig } from 'app/features/panel/table/addTableCustomConfig';
 import { addTableCustomPanelOptions } from 'app/features/panel/table/addTableCustomPanelOptions';
 
-import { TableCellOptionEditor } from './TableCellOptionEditor';
+import { getTableCellOptionSearchTerms, TableCellOptionEditor } from './TableCellOptionEditor';
 import { TablePanel } from './TablePanel';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { type FieldConfig, type Options } from './panelcfg.gen';
@@ -82,6 +82,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           editor: TableCellOptionEditor,
           override: TableCellOptionEditor,
           defaultValue: defaultTableFieldOptions.cellOptions,
+          getSearchTerms: getTableCellOptionSearchTerms,
           process: identityOverrideProcessor,
           category: cellCategory,
           shouldApply: () => true,

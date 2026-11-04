@@ -9,7 +9,7 @@ import { mockComboboxRect } from '@grafana/test-utils';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
 
-import { SparklineCellOptionsEditor } from './SparklineCellOptionsEditor';
+import { getSparklineCellOptionSearchTerms, SparklineCellOptionsEditor } from './SparklineCellOptionsEditor';
 
 // the graph field-config editors this component lists resolve standard option
 // editors from this registry; the panel framework normally initialises it
@@ -31,6 +31,17 @@ async function setup(cellOptions: Partial<TableSparklineCellOptions> = {}) {
 }
 
 describe('SparklineCellOptionsEditor', () => {
+  it('exposes the visible cell editor labels to the option search', () => {
+    const searchTerms = getSparklineCellOptionSearchTerms({
+      type: TableCellDisplayMode.Sparkline,
+      drawStyle: GraphDrawStyle.Bars,
+    });
+
+    expect(searchTerms).toContain('Hide value');
+    expect(searchTerms).toContain('Bar alignment');
+    expect(searchTerms).not.toContain('Line interpolation');
+  });
+
   it('renders the "Hide value" control it adds on top of the graph config', async () => {
     await setup();
     expect(screen.getByLabelText('Hide value')).toBeInTheDocument();

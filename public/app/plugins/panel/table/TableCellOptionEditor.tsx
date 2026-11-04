@@ -2,7 +2,7 @@ import { merge } from 'lodash';
 import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { useFlagTableRefreshNewFeatures } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient, useFlagTableRefreshNewFeatures } from '@grafana/runtime/internal';
 import { type TableCellOptions } from '@grafana/schema';
 import { Combobox, type ComboboxOption, Field, Stack, Switch, TableCellDisplayMode } from '@grafana/ui';
 
@@ -10,7 +10,7 @@ import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
 import { ImageCellOptionsEditor } from './cells/ImageCellOptionsEditor';
 import { MarkdownCellOptionsEditor } from './cells/MarkdownCellOptionsEditor';
-import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
+import { getSparklineCellOptionSearchTerms, SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
 
 // The props that any cell type editor are expected
 // to handle. In this case the generic type should
@@ -26,10 +26,8 @@ interface Props {
   id?: string;
 }
 
-export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
-  const jsonSyntaxHighlightingEnabled = useFlagTableRefreshNewFeatures();
-  const cellType = value.type;
-  const cellDisplayModeOptions: Array<ComboboxOption<TableCellOptions['type']>> = [
+function getCellDisplayModeOptions(): Array<ComboboxOption<TableCellOptions['type']>> {
+  return [
     { value: TableCellDisplayMode.Auto, label: t('table.cell-types.auto', 'Auto') },
     { value: TableCellDisplayMode.ColorText, label: t('table.cell-types.color-text', 'Colored text') },
     {
@@ -45,6 +43,51 @@ export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
     { value: TableCellDisplayMode.Image, label: t('table.cell-types.image', 'Image') },
     { value: TableCellDisplayMode.Actions, label: t('table.cell-types.actions', 'Actions') },
   ];
+}
+
+export function getTableCellOptionSearchTerms(value?: TableCellOptions): string[] {
+  const cellTypeOptions = getCellDisplayModeOptions().flatMap((option) => (option.label ? [option.label] : []));
+  let cellEditorOptions: string[] = [];
+
+  switch (value?.type) {
+    case TableCellDisplayMode.Gauge:
+      cellEditorOptions = [
+        t('table.bar-gauge-cell-options-editor.label-gauge-display-mode', 'Gauge display mode'),
+        t('table.bar-gauge-cell-options-editor.label-value-display', 'Value display'),
+      ];
+      break;
+    case TableCellDisplayMode.ColorBackground:
+      cellEditorOptions = [
+        t('table.color-background-cell-options-editor.label-background-display-mode', 'Background display mode'),
+        t('table.color-background-cell-options-editor.label-apply-to-entire-row', 'Apply to entire row'),
+      ];
+      break;
+    case TableCellDisplayMode.Sparkline:
+      cellEditorOptions = getSparklineCellOptionSearchTerms(value);
+      break;
+    case TableCellDisplayMode.Image:
+      cellEditorOptions = [
+        t('table.image-cell-options-editor.label-alt-text', 'Alt text'),
+        t('table.image-cell-options-editor.label-title-text', 'Title text'),
+      ];
+      break;
+    case TableCellDisplayMode.Markdown:
+      cellEditorOptions = [t('table.markdown-cell-options-editor.label-dynamic-height', 'Dynamic height')];
+      break;
+    case TableCellDisplayMode.JSONView:
+      if (getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false)) {
+        cellEditorOptions = [t('table.json-cell-options.syntax-highlighting', 'Syntax highlighting')];
+      }
+      break;
+  }
+
+  return [...cellTypeOptions, ...cellEditorOptions];
+}
+
+export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
+  const jsonSyntaxHighlightingEnabled = useFlagTableRefreshNewFeatures();
+  const cellType = value.type;
+  const cellDisplayModeOptions = getCellDisplayModeOptions();
   const currentMode = cellDisplayModeOptions.find((o) => o.value === cellType)!;
 
   let [settingCache, setSettingCache] = useState<Record<string, TableCellOptions>>({});

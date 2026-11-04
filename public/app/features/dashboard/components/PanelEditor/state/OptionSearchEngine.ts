@@ -42,6 +42,10 @@ export class OptionSearchEngine {
           hits.push({ item: item, rank: 2 });
           continue;
         }
+        if (item.props.searchTerms?.some((term) => searchRegex.test(term))) {
+          hits.push({ item: item, rank: 2 });
+          continue;
+        }
         if (categoryNameMatch) {
           hits.push({ item: item, rank: 3 });
         }

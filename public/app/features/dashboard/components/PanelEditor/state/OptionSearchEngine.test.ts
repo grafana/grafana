@@ -13,6 +13,23 @@ describe('OptionSearchEngine', () => {
     expect(results.optionHits[0].props.title).toBe('Min');
   });
 
+  it('Can search custom editors by the names of controls they render', () => {
+    const category = new OptionsPaneCategoryDescriptor({ id: 'Cell options', title: 'Cell options' });
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: 'Cell type',
+        id: 'cell-type',
+        searchTerms: ['Hide value'],
+        render: jest.fn(),
+      })
+    );
+
+    const engine = new OptionSearchEngine([category], []);
+    const results = engine.search('Hide value');
+
+    expect(results.optionHits.map((item) => item.props.title)).toEqual(['Cell type']);
+  });
+
   it('When matching both title and description title should rank higher', () => {
     const engine = new OptionSearchEngine(getOptionCategories(), []);
     const results = engine.search('DescriptionMatch');
