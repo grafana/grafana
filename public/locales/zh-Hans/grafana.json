@@ -1462,7 +1462,14 @@
         "to": ""
       },
       "recording-rules": {
+        "folder-rules-error": "",
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
@@ -5277,6 +5284,9 @@
       "preferences": "首选项",
       "recent-dashboards": "最近的仪表板",
       "recent-scopes": "最近的范围"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -6194,6 +6204,7 @@
       "composer": "",
       "composer-description": "",
       "composer-no-permission": "",
+      "composer-opening": "",
       "composer-save-first": "",
       "composer-unsupported": "",
       "current": "",
@@ -7266,11 +7277,14 @@
         "keep-working": "",
         "save": "保存",
         "stop-and-leave": "",
+        "stop-and-switch": "",
         "text": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "save-changes-question": "是否保存更改？"
         },
         "title": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "unsaved-changes": "未保存的更改"
         }
@@ -7585,17 +7599,20 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
-      "draft-body-source": "",
+      "draft-discarded": "",
       "draft-title": "",
+      "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
+      "pending-changes-changed": "",
+      "pending-changes-changed-text": "",
       "pending-hint": "",
       "pending-stale": "",
       "pending-title": "",
       "preview-changes": "",
       "rebase": "",
+      "record-pending-change-failed": "",
       "save": "",
       "show-original-dashboard": "",
       "stop-highlighting-changes": "",
@@ -10634,6 +10651,8 @@
       "clear-button": "清除选择"
     },
     "code-mirror": {
+      "diff-modified": "",
+      "diff-original": "",
       "error-label": "CodeMirror 编辑器加载失败",
       "language-load-failed": "语法高亮加载失败",
       "language-load-failed-description": "编辑器将继续运行，但不提供特定于语言的功能。",
@@ -12279,7 +12298,6 @@
       "copy-log-line-json": "将日志内容复制为 JSON",
       "copy-shortlink": "复制短链接",
       "copy-to-clipboard": "复制到剪贴板",
-      "displayed-fields-section": "组织显示的字段",
       "fields": {
         "adhoc-statistics": "临时统计数据",
         "copy-value-to-clipboard": "将值复制到剪贴板",
@@ -12303,14 +12321,11 @@
       "log-attributes-field": "日志属性",
       "log-line-field": "日志行",
       "log-line-section": "日志行",
-      "move-displayed-field-down": "下移",
-      "move-displayed-field-up": "上移",
       "no-details": "没有要显示的字段。",
       "open-assistant": "在助手中解释日志行",
       "open-value-in": "",
       "pin-line": "固定日志",
       "prettify": "美化",
-      "remove-displayed-field": "移除字段",
       "remove-log": "移除日志",
       "scroll-to-logline": "滚动到日志行",
       "search": {

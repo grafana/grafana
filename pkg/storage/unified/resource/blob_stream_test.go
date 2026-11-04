@@ -222,38 +222,22 @@ func TestBlobStreamLocalClient(t *testing.T) {
 }
 
 func TestBlobStreamLocalClientErrorResultConversion(t *testing.T) {
-	for _, enabled := range []bool{false, true} {
-		t.Run(map[bool]string{false: "disabled", true: "enabled"}[enabled], func(t *testing.T) {
-			srv, ac, _ := newBlobAuthzTestServer(t, nil)
-			srv.grpcErrorResultToStatus = enabled
-			srv.blob = &testStreamingBlob{stubBlobSupport: &stubBlobSupport{}}
-			ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return deny() }
-			client := NewLocalResourceClient(srv)
-			ctx := ctxWithUserInNs("default")
-			key := &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Namespace: "default", Name: "missing"}
-			put, err := client.PutBlob(ctx, &resourcepb.PutBlobRequest{Resource: key, Value: []byte("data")})
-			if enabled {
-				require.Nil(t, put)
-				require.Equal(t, codes.PermissionDenied, status.Code(err))
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, int32(403), put.GetError().GetCode())
-			}
-			get, err := client.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: key, MustProxyBytes: true})
-			if enabled {
-				require.Nil(t, get)
-				require.Equal(t, codes.NotFound, status.Code(err))
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, int32(404), get.GetError().GetCode())
-			}
-		})
-	}
+	srv, ac, _ := newBlobAuthzTestServer(t, nil)
+	srv.blob = &testStreamingBlob{stubBlobSupport: &stubBlobSupport{}}
+	ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return deny() }
+	client := NewLocalResourceClient(srv)
+	ctx := ctxWithUserInNs("default")
+	key := &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Namespace: "default", Name: "missing"}
+	put, err := client.PutBlob(ctx, &resourcepb.PutBlobRequest{Resource: key, Value: []byte("data")})
+	require.Nil(t, put)
+	require.Equal(t, codes.PermissionDenied, status.Code(err))
+	get, err := client.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: key, MustProxyBytes: true})
+	require.Nil(t, get)
+	require.Equal(t, codes.NotFound, status.Code(err))
 }
 
 func TestBlobStreamLocalClientInterceptorWithErrorConversion(t *testing.T) {
 	srv, _, _ := newBlobAuthzTestServer(t, nil)
-	srv.grpcErrorResultToStatus = true
 	client := NewLocalResourceClient(srv)
 
 	// The in-process token authenticates as the service in namespace "*".

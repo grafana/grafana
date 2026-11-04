@@ -1462,7 +1462,14 @@
         "to": ""
       },
       "recording-rules": {
+        "folder-rules-error": "",
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
@@ -5277,6 +5284,9 @@
       "preferences": "Preferensi",
       "recent-dashboards": "Dasbor terbaru",
       "recent-scopes": "Cakupan terbaru"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -6194,6 +6204,7 @@
       "composer": "",
       "composer-description": "",
       "composer-no-permission": "",
+      "composer-opening": "",
       "composer-save-first": "",
       "composer-unsupported": "",
       "current": "",
@@ -7266,11 +7277,14 @@
         "keep-working": "",
         "save": "Simpan",
         "stop-and-leave": "",
+        "stop-and-switch": "",
         "text": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "save-changes-question": "Ingin menyimpan perubahan?"
         },
         "title": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "unsaved-changes": "Perubahan belum tersimpan"
         }
@@ -7585,17 +7599,20 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
-      "draft-body-source": "",
+      "draft-discarded": "",
       "draft-title": "",
+      "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
+      "pending-changes-changed": "",
+      "pending-changes-changed-text": "",
       "pending-hint": "",
       "pending-stale": "",
       "pending-title": "",
       "preview-changes": "",
       "rebase": "",
+      "record-pending-change-failed": "",
       "save": "",
       "show-original-dashboard": "",
       "stop-highlighting-changes": "",
@@ -10634,6 +10651,8 @@
       "clear-button": "Hapus pilihan"
     },
     "code-mirror": {
+      "diff-modified": "",
+      "diff-original": "",
       "error-label": "Editor CodeMirror gagal dimuat",
       "language-load-failed": "Penyorotan sintaks gagal dimuat",
       "language-load-failed-description": "Editor akan melanjutkan tanpa fitur khusus bahasa.",
@@ -12279,7 +12298,6 @@
       "copy-log-line-json": "Salin konten log sebagai JSON",
       "copy-shortlink": "Salin tautan pendek",
       "copy-to-clipboard": "Salin ke papan klip",
-      "displayed-fields-section": "Susun bidang yang ditampilkan",
       "fields": {
         "adhoc-statistics": "Statistik ad-hoc",
         "copy-value-to-clipboard": "Salin nilai ke papan klip",
@@ -12303,14 +12321,11 @@
       "log-attributes-field": "Atribut log",
       "log-line-field": "Baris log",
       "log-line-section": "Baris log",
-      "move-displayed-field-down": "Pindahkan ke bawah",
-      "move-displayed-field-up": "Pindahkan ke atas",
       "no-details": "Tidak ada bidang untuk ditampilkan.",
       "open-assistant": "Jelaskan baris log di Asisten",
       "open-value-in": "",
       "pin-line": "Sematkan log",
       "prettify": "Rapikan",
-      "remove-displayed-field": "Hapus bidang",
       "remove-log": "Hapus log",
       "scroll-to-logline": "Gulir ke baris log",
       "search": {

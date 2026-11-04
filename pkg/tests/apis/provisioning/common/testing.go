@@ -3572,6 +3572,31 @@ func startGitServer(t *testing.T) *gittest.Server {
 	return gitServer
 }
 
+// StartPublicGitRemote starts a throwaway git server with one repository that has a
+// single commit on main. gittest repositories are readable without credentials, so
+// tests can exercise anonymous access without depending on a real Git host.
+func StartPublicGitRemote(t *testing.T, repoName string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	t.Helper()
+
+	gitServer := startGitServer(t)
+	user, err := gitServer.CreateUser(t.Context())
+	require.NoError(t, err, "failed to create user")
+	remote, err := gitServer.CreateRepo(t.Context(), repoName, user)
+	require.NoError(t, err, "failed to create remote repository")
+
+	local, err := gittest.NewLocalRepo(t.Context())
+	require.NoError(t, err, "failed to create local repository")
+	t.Cleanup(func() {
+		if err := local.Cleanup(); err != nil {
+			t.Logf("failed to cleanup local repo: %v", err)
+		}
+	})
+	_, err = local.InitWithRemote(user, remote)
+	require.NoError(t, err, "failed to initialize local repo with remote")
+
+	return remote, local
+}
+
 // GetHelper returns the shared helper, starting it on first use.
 func (e *SharedGitEnv) GetHelper(t *testing.T) *GitTestHelper {
 	t.Helper()
