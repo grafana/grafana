@@ -5334,6 +5334,9 @@
       "preferences": "Tercihler",
       "recent-dashboards": "Son panolar",
       "recent-scopes": "Son kapsamlar"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -7650,10 +7653,10 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
+      "draft-discarded": "",
       "draft-title": "",
       "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
       "pending-changes-changed": "",
@@ -12399,7 +12402,6 @@
       "copy-log-line-json": "Günlük içeriğini JSON olarak kopyala",
       "copy-shortlink": "Kısa bağlantıyı kopyala",
       "copy-to-clipboard": "Panoya kopyala",
-      "displayed-fields-section": "Görüntülenen alanları düzenle",
       "fields": {
         "adhoc-statistics": "Geçici istatistikler",
         "copy-value-to-clipboard": "Değeri panoya kopyala",
@@ -12423,14 +12425,11 @@
       "log-attributes-field": "Günlük kaydı öznitelikleri",
       "log-line-field": "Günlük satırı",
       "log-line-section": "Günlük satırı",
-      "move-displayed-field-down": "Aşağı taşı",
-      "move-displayed-field-up": "Yukarı taşı",
       "no-details": "Görüntülenecek alan yok.",
       "open-assistant": "Asistan'da günlük kaydı satırını açıklayın",
       "open-value-in": "",
       "pin-line": "Günlüğü sabitle",
       "prettify": "Düzgünleştir",
-      "remove-displayed-field": "Alanı kaldır",
       "remove-log": "Günlüğü kaldır",
       "scroll-to-logline": "Günlük satırına git",
       "search": {

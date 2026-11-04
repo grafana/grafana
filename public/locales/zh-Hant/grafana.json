@@ -5284,6 +5284,9 @@
       "preferences": "偏好設定",
       "recent-dashboards": "最近的儀表板",
       "recent-scopes": "最近的範圍"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -7596,10 +7599,10 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
+      "draft-discarded": "",
       "draft-title": "",
       "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
       "pending-changes-changed": "",
@@ -12295,7 +12298,6 @@
       "copy-log-line-json": "將記錄內容複製為 JSON",
       "copy-shortlink": "複製短連結",
       "copy-to-clipboard": "複製至剪貼簿",
-      "displayed-fields-section": "組織顯示的欄位",
       "fields": {
         "adhoc-statistics": "隨機統計資料",
         "copy-value-to-clipboard": "將此值複製到剪貼簿",
@@ -12319,14 +12321,11 @@
       "log-attributes-field": "記錄屬性",
       "log-line-field": "記錄行",
       "log-line-section": "記錄行",
-      "move-displayed-field-down": "下移",
-      "move-displayed-field-up": "上移",
       "no-details": "沒有要顯示的欄位。",
       "open-assistant": "在 Assistant 中解釋記錄行",
       "open-value-in": "",
       "pin-line": "固定記錄",
       "prettify": "美化",
-      "remove-displayed-field": "移除欄位",
       "remove-log": "移除記錄",
       "scroll-to-logline": "捲動到記錄行",
       "search": {

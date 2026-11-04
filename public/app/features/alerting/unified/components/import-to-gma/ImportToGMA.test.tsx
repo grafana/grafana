@@ -8,6 +8,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
+import { convertResponse } from '../../mocks/convertApi';
 import { setupDatasourcesEndpoint } from '../../mocks/server/configure/datasources';
 import {
   setupAutoSyncConfig,
@@ -196,7 +197,7 @@ testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
 beforeEach(() => {
   mockReportInteraction.mockClear();
   // Default: the notifications import succeeds. Individual tests override this to force a failure.
-  server.use(http.post(CONVERT_URL, () => HttpResponse.json({ status: 'success' })));
+  server.use(http.post(CONVERT_URL, () => HttpResponse.json(convertResponse())));
   grantUserPermissions([
     AccessControlAction.AlertingNotificationsWrite,
     AccessControlAction.AlertingRuleCreate,
@@ -274,7 +275,7 @@ describe('ImportToGMA wizard — stage analytics', () => {
     server.use(
       http.post(CONVERT_URL, ({ request }) =>
         request.headers.get('X-Grafana-Alerting-Dry-Run') === 'true'
-          ? HttpResponse.json({ status: 'success' })
+          ? HttpResponse.json(convertResponse())
           : new HttpResponse(null, { status: 500 })
       )
     );
@@ -300,7 +301,7 @@ describe('ImportToGMA wizard — step 1 dry-run gating & review', () => {
       http.post(CONVERT_URL, ({ request }) =>
         request.headers.get('X-Grafana-Alerting-Dry-Run') === 'true'
           ? new HttpResponse(null, { status: 500 })
-          : HttpResponse.json({ status: 'success' })
+          : HttpResponse.json(convertResponse())
       )
     );
     const { user } = render(<ImportWizardGate />);
@@ -844,7 +845,7 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
 
   it('does not enable Auto-sync when Notifications is skipped, even though Auto-sync was selected', async () => {
     const { patchSpy } = setupStatefulAutoSyncConfig(server);
-    server.use(http.post('/api/convert/prometheus/config/v1/rules', () => HttpResponse.json({})));
+    server.use(http.post('/api/convert/prometheus/config/v1/rules', () => HttpResponse.json(convertResponse())));
 
     const { user } = render(<ImportWizardGate />);
 
@@ -885,7 +886,7 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
     server.use(
       http.post(CONVERT_URL, () => {
         stagingImportCalled = true;
-        return HttpResponse.json({ status: 'success' });
+        return HttpResponse.json(convertResponse());
       })
     );
 
@@ -915,11 +916,11 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
     const { getStored } = setupStatefulAutoSyncConfig(server);
     let rulesImportCalled = false;
     server.use(
-      // Confirmed via convertToGMAApi.ts: useConvertToGMAMutation (rules import) posts here,
+      // The rules import (convertApi's postRuleGroups) posts here,
       // a different endpoint from CONVERT_URL (notifications/dry-run only).
       http.post('/api/convert/prometheus/config/v1/rules', () => {
         rulesImportCalled = true;
-        return HttpResponse.json({});
+        return HttpResponse.json(convertResponse());
       })
     );
 
@@ -1021,7 +1022,7 @@ describe('dry-run wiring (wizard-level)', () => {
     server.use(
       http.post(CONVERT_URL, ({ request }) => {
         identifiersSeen.push(request.headers.get('X-Grafana-Alerting-Config-Identifier'));
-        return HttpResponse.json({ status: 'success' });
+        return HttpResponse.json(convertResponse());
       })
     );
     const { user } = render(<ImportWizardGate />);
@@ -1050,7 +1051,7 @@ describe('dry-run wiring (wizard-level)', () => {
       http.post(CONVERT_URL, async () => {
         if (!previewDone) {
           previewDone = true;
-          return HttpResponse.json({ status: 'success' });
+          return HttpResponse.json(convertResponse());
         }
         await new Promise<void>((resolve) => {
           failCheck = resolve;
@@ -1076,7 +1077,7 @@ describe('dry-run wiring (wizard-level)', () => {
     server.use(
       http.post(CONVERT_URL, () => {
         requestCount += 1;
-        return HttpResponse.json({ status: 'success' });
+        return HttpResponse.json(convertResponse());
       })
     );
     const { user } = render(<ImportWizardGate />);
@@ -1115,7 +1116,7 @@ describe('dry-run wiring (wizard-level)', () => {
   });
 
   it('does not disable Next when navigating back to a Step 1 that is already valid', async () => {
-    server.use(http.post(CONVERT_URL, () => HttpResponse.json({ status: 'success' })));
+    server.use(http.post(CONVERT_URL, () => HttpResponse.json(convertResponse())));
     const { user } = render(<ImportWizardGate />);
 
     await screen.findByRole('group', { name: /import notification resources/i });
@@ -1150,7 +1151,7 @@ describe('dry-run wiring (wizard-level)', () => {
             resolveStalePreview = resolve;
           });
         }
-        return HttpResponse.json({ status: 'success' });
+        return HttpResponse.json(convertResponse());
       })
     );
 

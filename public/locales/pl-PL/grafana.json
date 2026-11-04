@@ -5434,6 +5434,9 @@
       "preferences": "Właściwości",
       "recent-dashboards": "Ostatnie pulpity",
       "recent-scopes": "Ostatnie zakresy"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -7758,10 +7761,10 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
+      "draft-discarded": "",
       "draft-title": "",
       "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
       "pending-changes-changed": "",
@@ -12607,7 +12610,6 @@
       "copy-log-line-json": "Kopiuj zawartość logu jako JSON",
       "copy-shortlink": "Kopiuj krótki link",
       "copy-to-clipboard": "Kopiuj do schowka",
-      "displayed-fields-section": "Uporządkuj wyświetlane pola",
       "fields": {
         "adhoc-statistics": "Statystyki ad hoc",
         "copy-value-to-clipboard": "Kopiuj wartość do schowka",
@@ -12631,14 +12633,11 @@
       "log-attributes-field": "Atrybuty logów",
       "log-line-field": "Wiersz logu",
       "log-line-section": "Wiersz logu",
-      "move-displayed-field-down": "Przesuń w dół",
-      "move-displayed-field-up": "Przesuń do góry",
       "no-details": "Brak pól do wyświetlenia.",
       "open-assistant": "Wyjaśnij wiersz logu w Asystencie",
       "open-value-in": "",
       "pin-line": "Przypnij log",
       "prettify": "Lepsze formatowanie",
-      "remove-displayed-field": "Usuń pole",
       "remove-log": "Usuń log",
       "scroll-to-logline": "Przewiń do wiersza logu",
       "search": {

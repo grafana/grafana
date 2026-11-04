@@ -2510,6 +2510,9 @@ func (b *bleveIndex) search(
 	// the match set, otherwise Bleve's unfiltered count with
 	// TotalHitsExact=false.
 	postRank := b.postRankAuthzEnabled && access != nil
+	// Not observed: checking access to the returned rows is not part of the
+	// search's own authorization.
+	rowAccess := access
 	access, authMetrics := withSearchAuthObservation(access, b.indexMetrics)
 	cursorFallback := false
 
@@ -2606,7 +2609,7 @@ func (b *bleveIndex) search(
 	stats.AddRequestConversionTime(time.Since(conversionStarts))
 
 	if postRank {
-		return b.runPostFilterAuthz(ctx, access, req, index, searchrequest, selectFields, fieldValueSchema, stats, response, trashAuthz)
+		return b.runPostFilterAuthz(ctx, access, rowAccess, req, index, searchrequest, selectFields, fieldValueSchema, stats, response, trashAuthz)
 	}
 
 	res, err := searchInContext(ctx, index, searchrequest)
@@ -2628,6 +2631,7 @@ func (b *bleveIndex) search(
 	if err := b.setSearchResults(response, fieldValueSchema, res.Hits, searchrequest.Sort); err != nil {
 		return nil, err
 	}
+	b.addRowAccess(ctx, rowAccess, req.AccessVerbs, response, res.Hits)
 
 	// parse the facet fields
 	for k, v := range res.Facets {

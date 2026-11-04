@@ -594,13 +594,6 @@ func TestParseResults(t *testing.T) {
 		assert.Zero(t, sr.TotalHits)
 	})
 
-	t.Run("error in response is propagated", func(t *testing.T) {
-		_, err := parseResults(&resourcepb.ResourceSearchResponse{
-			Error: &resourcepb.ErrorResult{Code: 500, Message: "boom"},
-		})
-		require.Error(t, err)
-	})
-
 	t.Run("missing rows preserve totals and scores", func(t *testing.T) {
 		sr, err := parseResults(&resourcepb.ResourceSearchResponse{
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, TotalHits: 5, QueryCost: 1.5, MaxScore: 2.5,

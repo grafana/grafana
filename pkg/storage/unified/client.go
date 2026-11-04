@@ -190,9 +190,8 @@ func newClient(opts options.StorageOptions,
 		}
 
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend:                 backend,
-			SeededWatchesEnabled:    cfg.SeededWatchesEnabled,
-			GRPCErrorResultToStatus: cfg.UnifiedStorageGRPCErrorResultToStatus,
+			Backend:              backend,
+			SeededWatchesEnabled: cfg.SeededWatchesEnabled,
 			Blob: resource.BlobConfig{
 				URL: opts.BlobStoreURL,
 			},

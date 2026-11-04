@@ -297,6 +297,18 @@ func (b *broadcaster[T]) ensureReady(ctx context.Context) error {
 	return b.waitForInitialization(ctx, attempt)
 }
 
+// starting reports whether the cache has not been initialized yet.
+func (b *broadcaster[T]) starting() bool {
+	b.initMu.Lock()
+	defer b.initMu.Unlock()
+	select {
+	case <-b.initAttempt.done:
+		return b.initAttempt.err != nil
+	default:
+		return true
+	}
+}
+
 func (b *broadcaster[T]) waitForInitialization(ctx context.Context, attempt *initializationAttempt) error {
 	select {
 	case <-ctx.Done():

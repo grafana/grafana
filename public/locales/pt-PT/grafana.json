@@ -5334,6 +5334,9 @@
       "preferences": "Preferências",
       "recent-dashboards": "Painéis de controlo recentes",
       "recent-scopes": "Âmbitos recentes"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -7650,10 +7653,10 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
+      "draft-discarded": "",
       "draft-title": "",
       "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
       "pending-changes-changed": "",
@@ -12399,7 +12402,6 @@
       "copy-log-line-json": "Copiar conteúdo do registo como JSON",
       "copy-shortlink": "Copiar link curto",
       "copy-to-clipboard": "Copiar para a área de transferência",
-      "displayed-fields-section": "Organizar campos exibidos",
       "fields": {
         "adhoc-statistics": "Estatísticas ad-hoc",
         "copy-value-to-clipboard": "Copiar o valor para a área de transferência",
@@ -12423,14 +12425,11 @@
       "log-attributes-field": "Atributos de registo",
       "log-line-field": "Linha de registo",
       "log-line-section": "Linha de registo",
-      "move-displayed-field-down": "Mover para baixo",
-      "move-displayed-field-up": "Mover para cima",
       "no-details": "Nenhum campo a mostrar.",
       "open-assistant": "",
       "open-value-in": "",
       "pin-line": "Afixar registo",
       "prettify": "Embelezar",
-      "remove-displayed-field": "Remover o campo",
       "remove-log": "Remover registo",
       "scroll-to-logline": "Deslizar para a linha de registo",
       "search": {
