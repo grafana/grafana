@@ -46,7 +46,13 @@ function mockPluginInstalled(installedPluginIds: string[] = []) {
   }));
 }
 
-function getTraceView(frames: DataFrame[], spanFilters?: TraceSearchProps, spanId?: string, expandSpan?: boolean) {
+function getTraceView(
+  frames: DataFrame[],
+  spanFilters?: TraceSearchProps,
+  spanId?: string,
+  expandSpan?: boolean,
+  exploreId?: string
+) {
   const store = configureStore({
     explore: {
       ...initialExploreState,
@@ -60,7 +66,7 @@ function getTraceView(frames: DataFrame[], spanFilters?: TraceSearchProps, spanI
   return (
     <Provider store={store}>
       <TraceView
-        exploreId="left"
+        exploreId={exploreId}
         dataFrames={frames}
         splitOpenFn={() => {}}
         traceProp={transformDataFrames(frames[0])!}
@@ -298,7 +304,7 @@ describe('TraceView', () => {
     const childSpanId = '35118c298fc91f68';
 
     it('opens the linked span attributes and resource attributes with expandSpan=true and allows closing its details', async () => {
-      render(getTraceView([frameOld], undefined, childSpanId, true));
+      render(getTraceView([frameOld], undefined, childSpanId, true, 'left'));
       await waitFor(() => expect(screen.getByText('client-uuid-3')).toBeInTheDocument());
       expect(screen.getByText(/Span attributes/)).toBeInTheDocument();
 
