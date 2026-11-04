@@ -270,8 +270,8 @@
     {
       "metadata": {
         "name": "alerting.watchersBanner",
-        "resourceVersion": "1793828064729",
-        "creationTimestamp": "2026-11-04T21:34:24Z"
+        "resourceVersion": "1793832854718",
+        "creationTimestamp": "2026-11-04T22:54:14Z"
       },
       "spec": {
         "description": "Show the Assistant Watchers banner on the alert rule list. Watchers are only available in Grafana Cloud.",
@@ -2770,10 +2770,10 @@
     {
       "metadata": {
         "name": "grafana.cmdkDashboardTags",
-        "resourceVersion": "1793828064729",
+        "resourceVersion": "1793824807529",
         "creationTimestamp": "2026-10-29T16:13:33Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-11-04 21:34:24.729909 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-11-04 20:40:07.529765 +0000 UTC"
         }
       },
       "spec": {
@@ -2787,10 +2787,10 @@
     {
       "metadata": {
         "name": "grafana.cmdkHybridSearch",
-        "resourceVersion": "1793828064729",
+        "resourceVersion": "1793824807529",
         "creationTimestamp": "2026-08-20T12:34:45Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-11-04 21:34:24.729909 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-11-04 20:40:07.529765 +0000 UTC"
         }
       },
       "spec": {
@@ -3741,10 +3741,10 @@
     {
       "metadata": {
         "name": "grafana.vectorSearchCmdk",
-        "resourceVersion": "1793828064729",
+        "resourceVersion": "1793824807529",
         "creationTimestamp": "2026-07-01T12:42:40Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-11-04 21:34:24.729909 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-11-04 20:40:07.529765 +0000 UTC"
         }
       },
       "spec": {
