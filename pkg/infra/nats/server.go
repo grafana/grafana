@@ -280,14 +280,16 @@ func isLoopbackRouteURL(routeURL string) bool {
 
 func (s *Server) serverOptions() *natsserver.Options {
 	return &natsserver.Options{
-		ServerName:            defaultServerNamePrefix + randomSuffix(),
-		Host:                  s.cfg.ListenAddress,
-		Port:                  s.cfg.ClientPort,
-		NoSigs:                true,
-		JetStream:             false,
-		NoSystemAccount:       true,
-		ConnectErrorReports:   1,
-		ReconnectErrorReports: 1,
+		ServerName:      defaultServerNamePrefix + randomSuffix(),
+		Host:            s.cfg.ListenAddress,
+		Port:            s.cfg.ClientPort,
+		NoSigs:          true,
+		JetStream:       false,
+		NoSystemAccount: true,
+		// Report the first failed route dial, then every 5th, so a dead peer that
+		// stays routed until the discovery TTL does not log an error per second.
+		ConnectErrorReports:   5,
+		ReconnectErrorReports: 5,
 		Cluster: natsserver.ClusterOpts{
 			Name:      "grafana",
 			Host:      s.cfg.ListenAddress,
