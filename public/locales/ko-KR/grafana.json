@@ -5284,6 +5284,9 @@
       "preferences": "기본 설정",
       "recent-dashboards": "최근 대시보드",
       "recent-scopes": "최근 범위"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -7596,10 +7599,10 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
+      "draft-discarded": "",
       "draft-title": "",
       "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
       "pending-changes-changed": "",
@@ -12295,7 +12298,6 @@
       "copy-log-line-json": "로그 내용을 JSON 형식으로 복사",
       "copy-shortlink": "단축 링크 복사",
       "copy-to-clipboard": "클립보드로 복사",
-      "displayed-fields-section": "표시된 필드 구성",
       "fields": {
         "adhoc-statistics": "즉석 통계",
         "copy-value-to-clipboard": "값을 클립보드로 복사",
@@ -12319,14 +12321,11 @@
       "log-attributes-field": "로그 속성",
       "log-line-field": "로그 라인",
       "log-line-section": "로그 선",
-      "move-displayed-field-down": "아래로 이동",
-      "move-displayed-field-up": "위로 이동",
       "no-details": "표시할 필드가 없습니다.",
       "open-assistant": "Assistant에서 로그 줄 설명",
       "open-value-in": "",
       "pin-line": "로그 고정",
       "prettify": "보기 좋게 정리",
-      "remove-displayed-field": "필드 제거",
       "remove-log": "로그 제거",
       "scroll-to-logline": "로그 라인으로 스크롤",
       "search": {

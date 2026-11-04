@@ -232,7 +232,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
             {!hideVariableControls && <VariableControls dashboard={dashboard} />}
             {!hideVariableControls && dashboardNewLayoutsEnabled && <AddControlsButton dashboard={dashboard} />}
-            <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
+            <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)} data-dashboard-actions>
               <div className={styles.fixedControls}>
                 <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
               </div>
@@ -256,7 +256,8 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
 
   return (
     <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
-      <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
+      {/* Composer does not capture a region that covers the dashboard's own buttons. */}
+      <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)} data-dashboard-actions>
         {!hideTimeControls && (
           <div className={styles.fixedControls}>
             <timePicker.Component model={timePicker} />
