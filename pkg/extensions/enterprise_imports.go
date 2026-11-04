@@ -266,6 +266,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	_ "github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	_ "github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
+	_ "github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission/rpclient"
 	_ "github.com/grafana/grafana/pkg/registry/apis/iam/roleeffective"
 	_ "github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	_ "github.com/grafana/grafana/pkg/registry/apis/preferences"
