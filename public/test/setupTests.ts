@@ -35,6 +35,14 @@ i18next.use(initReactI18next).init({
   lng: 'en-US', // this should be the locale of the phrases in our source JSX
 });
 
+// FingerprintJS randomly sends installation telemetry during load, independently of backend requests.
+// Keep real fingerprint generation, but do not send third-party telemetry from tests.
+jest.mock('@fingerprintjs/fingerprintjs', () => {
+  const actual = jest.requireActual<typeof import('@fingerprintjs/fingerprintjs')>('@fingerprintjs/fingerprintjs');
+  const load: typeof actual.load = (options) => actual.load({ ...options, monitoring: false });
+  return { ...actual, __esModule: true, load, default: { ...actual.default, load } };
+});
+
 // Pre-resolve dashboard API version resolver with beta defaults so tests
 // don't trigger real network requests via getDashboardAPI() -> resolve().
 // Tests that need to test the resolver itself should call reset() in beforeEach.
