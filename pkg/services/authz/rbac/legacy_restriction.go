@@ -3,6 +3,11 @@ package rbac
 import (
 	"context"
 	"slices"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 func (r legacyScopeRequest) permitsAction(action string) bool {
@@ -25,7 +30,21 @@ func (r legacyScopeRequest) filterActions(actions []string) []string {
 	return filtered
 }
 
-func (s *Service) getLegacyPermissions(ctx context.Context, req legacyScopeRequest, actions []string) (map[string][]string, error) {
+func (s *Service) getLegacyPermissions(ctx context.Context, req legacyScopeRequest, actions []string) (permissions map[string][]string, err error) {
+	ctx, span := s.tracer.Start(
+		ctx,
+		"authz_direct_db.service.getLegacyPermissions",
+		trace.WithAttributes(
+			attribute.Int("action_count", len(actions)),
+		))
+	defer func() {
+		if err != nil {
+			_ = tracing.Error(span, err)
+		}
+		span.SetAttributes(attribute.Int("granted_action_count", len(permissions)))
+		span.End()
+	}()
+
 	actions = req.filterActions(actions)
 	if len(actions) == 0 && (req.restrictedActions != nil || req.globalIdentity != nil) {
 		return map[string][]string{}, nil
