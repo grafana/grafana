@@ -214,10 +214,10 @@ func (f *clientFactory) supportedResources(ctx context.Context) ([]SupportedReso
 	if f.expanded != nil {
 		return f.expanded, nil
 	}
-	active := activeResources(f.configuredResources)
 	// Expansion sees the disabled declarations too: a member declared on its own and disabled is
-	// excluded even when an active collection covers it. Discovery does not, so a failure in a
-	// collection nobody acts on is tolerated like any other irrelevant group.
+	// excluded even when an active collection covers it. Discovery sees only the active ones, so
+	// a failure in a collection nobody acts on cannot fail the expansion.
+	active := activeResources(f.configuredResources)
 	expanded, err := expandCollections(ctx, discoveryKinds(f.clientsProvider, active), f.configuredResources)
 	if err != nil {
 		return nil, err
@@ -697,6 +697,13 @@ func expandCollections(ctx context.Context, listKinds groupKindLister, configure
 			// counts it there, and the export quota is checked against those counts.
 			r.Collection = storingCollection(configured, r.GroupKind)
 			out = append(out, r)
+			continue
+		}
+		// A collection nobody acts on is not expanded: its members would be filtered out of the
+		// result anyway, and asking discovery for them lets an inert declaration fail the clients
+		// every active resource needs. Only a failure inside an active collection is relevant,
+		// and a provider or non-ErrGroupDiscoveryFailed error is not filtered at all.
+		if !r.IsActive() {
 			continue
 		}
 		if !listed {

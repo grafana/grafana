@@ -222,15 +222,33 @@ func TestExpandCollections(t *testing.T) {
 	})
 
 	t.Run("carries the collection's capabilities onto every member", func(t *testing.T) {
-		configured, err := ParseSupportedResources([]string{"*.datasource.grafana.app/DataSource:disabled"})
+		configured, err := ParseSupportedResources([]string{"*.datasource.grafana.app/DataSource:skipvalidation"})
 		require.NoError(t, err)
 
 		expanded, err := expandCollections(t.Context(), installed, configured)
 		require.NoError(t, err)
 		require.Len(t, expanded, 2)
 		for _, r := range expanded {
-			require.False(t, r.IsActive(), "member of a disabled collection stays disabled")
+			require.False(t, r.IsValidated(), "member of the collection inherits its capabilities")
 		}
+	})
+
+	// Its members are filtered out of the result anyway, and asking discovery for them makes an
+	// inert declaration able to fail the clients every active resource needs: a provider error, or
+	// a discovery error other than ErrGroupDiscoveryFailed, is not filtered by the predicate.
+	t.Run("does not expand a disabled collection", func(t *testing.T) {
+		configured, err := ParseSupportedResources([]string{
+			"playlist.grafana.app/Playlist",
+			"*.datasource.grafana.app/DataSource:disabled",
+		})
+		require.NoError(t, err)
+
+		expanded, err := expandCollections(t.Context(), func(context.Context) ([]schema.GroupKind, error) {
+			t.Fatal("discovery should not be consulted for a collection nobody acts on")
+			return nil, nil
+		}, configured)
+		require.NoError(t, err)
+		require.Equal(t, []schema.GroupKind{{Group: "playlist.grafana.app", Kind: "Playlist"}}, groupKinds(expanded))
 	})
 
 	t.Run("passes a concrete group through without asking discovery", func(t *testing.T) {
