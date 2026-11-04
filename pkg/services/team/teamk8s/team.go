@@ -1101,10 +1101,16 @@ func (s *TeamK8sService) GetUserTeamMembershipsByUID(ctx context.Context, query 
 		return fail(errors.New("user UID is required"))
 	}
 
+	// Read as a service identity for the query's org: team search scopes to the caller's namespace
+	// and filters by the caller's permissions, but memberships must be complete for the given org,
+	// as on the legacy path.
+	namespace := s.namespaceMapper(query.OrgID)
+	svcCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
+
 	var teamUIDs []string
 	seen := make(map[string]struct{})
 	for page := 1; ; page++ {
-		result, err := s.SearchTeams(ctx, &team.SearchTeamsQuery{
+		result, err := s.SearchTeams(svcCtx, &team.SearchTeamsQuery{
 			OrgID:     query.OrgID,
 			MemberUID: query.UserUID,
 			Limit:     membershipSearchPageSize,
@@ -1124,7 +1130,7 @@ func (s *TeamK8sService) GetUserTeamMembershipsByUID(ctx context.Context, query 
 		}
 	}
 
-	teams, err := s.listTeamsByUIDs(ctx, s.namespaceMapper(query.OrgID), teamUIDs)
+	teams, err := s.listTeamsByUIDs(svcCtx, namespace, teamUIDs)
 	if err != nil {
 		return fail(fmt.Errorf("failed to fetch user teams: %w", err))
 	}

@@ -21,6 +21,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -70,24 +71,41 @@ func TestIntegrationGetUserTeamMembershipsByUIDWithoutUsersAPI(t *testing.T) {
 					createTeamWithMembers(t, client, "manual-team", teamMember(userUID, iamv0alpha1.TeamTeamPermissionMember, false))
 					createTeamWithMembers(t, client, "unrelated-team", teamMember(otherUID, iamv0alpha1.TeamTeamPermissionMember, true))
 
-					ctx := serviceContextWithRequest(namespace)
+					otherOrg := helper.OrgB
+					if orgID == helper.OrgB.Admin.Identity.GetOrgID() {
+						otherOrg = helper.Org1
+					}
+					// The result must not depend on the caller's org or permissions.
+					callers := map[string]context.Context{
+						"service identity":  serviceContextWithRequest(namespace),
+						"org viewer":        userContextWithRequest(t, org.Viewer),
+						"other org's admin": userContextWithRequest(t, otherOrg.Admin),
+					}
 					query := &team.GetUserTeamMembershipsByUIDQuery{OrgID: orgID, UserUID: userUID}
 
 					// Unified search indexes asynchronously, so wait for the new teams to be searchable.
 					require.EventuallyWithT(t, func(c *assert.CollectT) {
-						got, err := teamSvc.GetUserTeamMembershipsByUID(ctx, query)
+						got, err := teamSvc.GetUserTeamMembershipsByUID(callers["service identity"], query)
 						require.NoError(c, err)
-						assert.ElementsMatch(c, []team.UserTeamMembership{
-							{TeamUID: "synced-team", External: true, Permission: team.PermissionTypeAdmin},
-							{TeamUID: "manual-team", External: false, Permission: team.PermissionTypeMember},
-						}, withoutTeamIDs(got))
+						assert.Len(c, got, 2)
 					}, 10*time.Second, 100*time.Millisecond)
 
-					external, err := teamSvc.GetUserTeamMembershipsByUID(ctx, &team.GetUserTeamMembershipsByUIDQuery{OrgID: orgID, UserUID: userUID, External: true})
-					require.NoError(t, err)
-					require.Equal(t, []team.UserTeamMembership{
-						{TeamUID: "synced-team", External: true, Permission: team.PermissionTypeAdmin},
-					}, withoutTeamIDs(external))
+					for name, ctx := range callers {
+						t.Run(name, func(t *testing.T) {
+							got, err := teamSvc.GetUserTeamMembershipsByUID(ctx, query)
+							require.NoError(t, err)
+							assert.ElementsMatch(t, []team.UserTeamMembership{
+								{TeamUID: "synced-team", External: true, Permission: team.PermissionTypeAdmin},
+								{TeamUID: "manual-team", External: false, Permission: team.PermissionTypeMember},
+							}, withoutTeamIDs(got))
+
+							external, err := teamSvc.GetUserTeamMembershipsByUID(ctx, &team.GetUserTeamMembershipsByUIDQuery{OrgID: orgID, UserUID: userUID, External: true})
+							require.NoError(t, err)
+							require.Equal(t, []team.UserTeamMembership{
+								{TeamUID: "synced-team", External: true, Permission: team.PermissionTypeAdmin},
+							}, withoutTeamIDs(external))
+						})
+					}
 				})
 			}
 		})
@@ -116,6 +134,15 @@ func serviceContextWithRequest(namespace string) context.Context {
 	req := httptest.NewRequest(http.MethodPost, "/login", nil)
 	ctx := context.WithValue(req.Context(), ctxkey.Key{}, &contextmodel.ReqContext{Context: &web.Context{Req: req}})
 	return identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
+}
+
+// userContextWithRequest mirrors a per-request caller signed in as u.
+func userContextWithRequest(t *testing.T, u apis.User) context.Context {
+	t.Helper()
+	signedInUser, ok := u.Identity.(*user.SignedInUser)
+	require.True(t, ok, "test user identity must be a *user.SignedInUser")
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	return context.WithValue(req.Context(), ctxkey.Key{}, &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: signedInUser})
 }
 
 func withoutTeamIDs(memberships []team.UserTeamMembership) []team.UserTeamMembership {
