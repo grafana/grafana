@@ -1,4 +1,4 @@
-import { render, screen } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
 import { DataSourceApi, DataSourcePlugin, type DataSourcePluginMeta, type QueryEditorProps } from '@grafana/data';
 import { setDataSourcePluginImporter } from '@grafana/runtime/internal';
@@ -33,11 +33,13 @@ function StubQueryEditor({ query, onChange }: QueryEditorProps<DataSourceApi, Da
 
 const NO_EDITOR_PLUGIN_ID = 'prometheus-without-editor';
 const FAILING_PLUGIN_ID = 'prometheus-failing-import';
+const SLOW_PLUGIN_ID = 'prometheus-slow-import';
 
 const prometheus = mockDataSource({ uid: 'prom-uid', name: 'Prometheus' });
 const loki = mockDataSource({ uid: 'loki-uid', name: 'Loki', type: DataSourceType.Loki }, { id: DataSourceType.Loki });
 const noEditor = mockDataSource({ uid: 'no-editor-uid', name: 'No editor' }, { id: NO_EDITOR_PLUGIN_ID });
 const failingImport = mockDataSource({ uid: 'failing-uid', name: 'Failing' }, { id: FAILING_PLUGIN_ID });
+const slowImport = mockDataSource({ uid: 'slow-uid', name: 'Slow' }, { id: SLOW_PLUGIN_ID });
 
 async function importPlugin(meta: DataSourcePluginMeta) {
   if (meta.id === FAILING_PLUGIN_ID) {
@@ -45,6 +47,18 @@ async function importPlugin(meta: DataSourcePluginMeta) {
   }
   const plugin = new DataSourcePlugin<DataSourceApi>(TestDataSource);
   return meta.id === NO_EDITOR_PLUGIN_ID ? plugin : plugin.setQueryEditor(StubQueryEditor);
+}
+
+function holdSlowPluginImport() {
+  let finishImport!: () => void;
+  const imported = new Promise<void>((resolve) => (finishImport = resolve));
+  setDataSourcePluginImporter(async (meta) => {
+    if (meta.id === SLOW_PLUGIN_ID) {
+      await imported;
+    }
+    return importPlugin(meta);
+  });
+  return finishImport;
 }
 
 function renderRecordingRuleEditor(props: Partial<RecordingRuleEditorProps> = {}) {
@@ -66,8 +80,12 @@ function renderRecordingRuleEditor(props: Partial<RecordingRuleEditorProps> = {}
 }
 
 beforeEach(() => {
-  setupDataSources(prometheus, loki, noEditor, failingImport);
+  setupDataSources(prometheus, loki, noEditor, failingImport, slowImport);
   setDataSourcePluginImporter(importPlugin);
+});
+
+afterEach(() => {
+  jest.useRealTimers();
 });
 
 describe('RecordingRuleEditor', () => {
@@ -96,6 +114,22 @@ describe('RecordingRuleEditor', () => {
         model: expect.objectContaining({ expr: 'u', queryType: 'instant' }),
       }),
     ]);
+  });
+
+  it('shows a skeleton after 300 ms of plugin loading, then replaces it with the query editor', async () => {
+    jest.useFakeTimers();
+    const finishImport = holdSlowPluginImport();
+    renderRecordingRuleEditor({ dataSourceUid: slowImport.uid });
+
+    await act(() => jest.advanceTimersByTimeAsync(299));
+    expect(screen.queryByTestId('recording-rule-editor-skeleton')).not.toBeInTheDocument();
+
+    await act(() => jest.advanceTimersByTimeAsync(1));
+    expect(screen.getByTestId('recording-rule-editor-skeleton')).toBeInTheDocument();
+
+    await act(async () => finishImport());
+    expect(await screen.findByRole('textbox', { name: 'Expression' })).toBeInTheDocument();
+    expect(screen.queryByTestId('recording-rule-editor-skeleton')).not.toBeInTheDocument();
   });
 
   it.each([

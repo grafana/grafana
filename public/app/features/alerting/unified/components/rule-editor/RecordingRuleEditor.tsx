@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { type FC, useCallback, useEffect, useState } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { CoreApp, type GrafanaTheme2, LoadingState, type PanelData } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -12,9 +13,13 @@ import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { LokiQueryType } from '../../../../loki-helpers/types';
+import { useSlowQuery } from '../../hooks/useSlowQuery';
 import { isPromOrLokiQuery } from '../../utils/rule-form';
 
 import { VizWrapper } from './VizWrapper';
+
+// Loads faster than this show nothing, so a cached data source does not flash a loading indicator.
+const LOADING_INDICATOR_DELAY_MS = 300;
 
 export interface RecordingRuleEditorProps {
   queries: AlertQuery[];
@@ -44,6 +49,9 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
   }, [panelData, queries]);
 
   const { dataSource, isLoading, error } = useDataSourceInstance(dataSourceUid);
+  // The hook keeps the previous instance for one render after dataSourceUid changes
+  const isLoadingEditor = isLoading || (dataSource !== undefined && dataSource.uid !== dataSourceUid);
+  const isSlow = useSlowQuery(isLoadingEditor, { threshold: LOADING_INDICATOR_DELAY_MS });
 
   const handleChangedQuery = useCallback(
     (changedQuery: DataQuery) => {
@@ -82,16 +90,15 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
     [dataSource, queries, onChangeQuery]
   );
 
-  if (isLoading) {
-    return null;
+  if (isLoadingEditor) {
+    return isSlow ? <RecordingRuleEditorSkeleton /> : null;
   }
 
   if (error) {
     return <LoadError message={error.message} />;
   }
 
-  // The hook keeps the previous instance for one render after dataSourceUid changes
-  if (!dataSource || dataSource.uid !== dataSourceUid) {
+  if (!dataSource) {
     return null;
   }
 
@@ -126,6 +133,15 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
     </>
   );
 };
+
+function RecordingRuleEditorSkeleton() {
+  return (
+    <div data-testid="recording-rule-editor-skeleton">
+      <Skeleton width={200} height={24} />
+      <Skeleton height={64} />
+    </div>
+  );
+}
 
 function LoadError({ message: errorMessage }: { message: string }) {
   return (
