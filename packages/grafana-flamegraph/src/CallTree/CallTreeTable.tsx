@@ -9,7 +9,7 @@ import {
   type TableBodyProps,
 } from 'react-table';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { type CallTreeNode } from './utils';
@@ -210,6 +210,14 @@ function getColumnStyle(
 }
 
 function getStyles(theme: GrafanaTheme2) {
+  const background = theme.colors.background.primary;
+  // Search paints a translucent warning color. Sticky cells copy the row fill, so flatten it
+  // or a scrolled function name shows through the Color Bar, Self, and Total columns.
+  const searchFill = colorManipulator.onBackground(theme.colors.warning.transparent, background).toRgbString();
+  const searchHoverFill = colorManipulator
+    .onBackground(theme.colors.emphasize(theme.colors.warning.transparent, 0.1), background)
+    .toRgbString();
+
   return {
     scrollContainer: css({
       '&::-webkit-scrollbar': {
@@ -264,38 +272,39 @@ function getStyles(theme: GrafanaTheme2) {
       backgroundColor: theme.colors.background.primary,
     }),
     tr: css({
+      backgroundColor: background,
       '&:hover': {
-        backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.03),
+        backgroundColor: theme.colors.emphasize(background, 0.03),
       },
     }),
     focusedRow: css({
-      backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.08),
+      backgroundColor: theme.colors.emphasize(background, 0.08),
       fontWeight: theme.typography.fontWeightMedium,
       '& > td:first-of-type': {
         boxShadow: `inset 3px 0 0 0 ${theme.colors.accent.main}`,
       },
       '&:hover': {
-        backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.1),
+        backgroundColor: theme.colors.emphasize(background, 0.1),
       },
     }),
     callersTargetRow: css({
-      backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.08),
+      backgroundColor: theme.colors.emphasize(background, 0.08),
       fontWeight: theme.typography.fontWeightMedium,
       '& > td:first-of-type': {
         boxShadow: `inset 3px 0 0 0 ${theme.colors.info.main}`,
       },
       '&:hover': {
-        backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.1),
+        backgroundColor: theme.colors.emphasize(background, 0.1),
       },
     }),
     searchMatchRow: css({
-      backgroundColor: theme.colors.warning.transparent,
+      backgroundColor: searchFill,
       fontWeight: theme.typography.fontWeightMedium,
       '& > td:first-of-type': {
         boxShadow: `inset 3px 0 0 0 ${theme.colors.warning.main}`,
       },
       '&:hover': {
-        backgroundColor: theme.colors.emphasize(theme.colors.warning.transparent, 0.1),
+        backgroundColor: searchHoverFill,
       },
     }),
     td: css({
@@ -320,8 +329,8 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     pinnedCell: css({
       zIndex: 1,
-      // Solid, so a scrolled function name does not show through the value columns.
-      backgroundColor: theme.colors.background.primary,
+      // Follow the row highlight. The row fill is opaque, so a scrolled name does not show through.
+      backgroundColor: 'inherit',
     }),
   };
 }

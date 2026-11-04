@@ -299,4 +299,20 @@ describe('FlameGraphCallTreeContainer', () => {
     // Restore fake timers for other tests
     jest.useFakeTimers();
   });
+
+  it('paints pinned value cells with the row background', async () => {
+    await setup({ search: 'runtime.mallocgc' });
+
+    const rows = screen.getAllByRole('row').slice(1);
+    const pinned = rows.flatMap((row) =>
+      within(row)
+        .getAllByRole('cell')
+        .filter((cell) => cell.style.position === 'sticky')
+    );
+
+    // Color Bar, Self, and Total on every body row, including the search match.
+    expect(pinned).toHaveLength(rows.length * 3);
+    // jsdom reports the inherit keyword instead of the row fill it resolves to.
+    expect(pinned.map((cell) => window.getComputedStyle(cell).backgroundColor)).toEqual(pinned.map(() => 'inherit'));
+  });
 });
